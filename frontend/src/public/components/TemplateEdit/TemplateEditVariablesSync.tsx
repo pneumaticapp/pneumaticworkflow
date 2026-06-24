@@ -1,15 +1,15 @@
 import { useEffect } from 'react';
 
 import { useSelector } from 'react-redux';
-import { ITemplate } from '../../types/template';
+import { ITemplateClient } from '../../types/template';
 import { TLoadTemplateVariablesSuccessPayload } from '../../redux/actions';
 import { getVariables } from './TaskForm/utils/getTaskVariables';
 
 import { getFieldsetsCatalogByApiName } from '../../redux/selectors/fieldsets';
 
 export interface ITemplateEditVariablesSyncProps {
-  template: ITemplate;
-  prevTemplate: ITemplate | undefined;
+  template: ITemplateClient;
+  prevTemplate: ITemplateClient | undefined;
   loadTemplateVariablesSuccess(payload: TLoadTemplateVariablesSuccessPayload): void;
 }
 

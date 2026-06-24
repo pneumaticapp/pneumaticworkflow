@@ -1,6 +1,6 @@
-import { EExtraFieldType, IFieldsetData, IKickoff, ITemplateTask } from '../../../../../../types/template';
+import { EExtraFieldType, IFieldsetData, IKickoffClient, ITemplateTaskClient } from '../../../../../../types/template';
 import { makeExtraField } from '../../../../../../__stubs__/fields.factory';
-import { makeFieldsetData } from '../../../../../../__stubs__/fieldsets.factory';
+import { makeFieldsetData, makeFieldsetBindingClient } from '../../../../../../__stubs__/fieldsets.factory';
 import { createEmptyTaskDueDate } from '../../../../../../utils/dueDate/createEmptyTaskDueDate';
 import { getRuleTargetOptions } from '../getRuleTargetOptions';
 
@@ -8,7 +8,7 @@ jest.mock('../../../../../UI', () => ({
   DropdownList: jest.fn(() => null),
 }));
 
-const makeTask = (overrides: Partial<ITemplateTask> = {}): ITemplateTask => ({
+const makeTask = (overrides: Partial<ITemplateTaskClient> = {}): ITemplateTaskClient => ({
   id: 1,
   apiName: 'task-1',
   name: 'Task 1',
@@ -29,7 +29,7 @@ const makeTask = (overrides: Partial<ITemplateTask> = {}): ITemplateTask => ({
   ...overrides,
 });
 
-const makeKickoff = (overrides: Partial<IKickoff> = {}): IKickoff => ({
+const makeKickoff = (overrides: Partial<IKickoffClient> = {}): IKickoffClient => ({
   description: '',
   fields: [],
   fieldsets: [],
@@ -69,7 +69,7 @@ describe('getRuleTargetOptions', () => {
     });
 
     const kickoff = makeKickoff({
-      fieldsets: [{ apiName: fieldsetApiName, order: 0 }],
+      fieldsets: [makeFieldsetBindingClient({ apiName: fieldsetApiName })],
     });
 
     const fieldsetsByApiName = new Map<string, IFieldsetData>([

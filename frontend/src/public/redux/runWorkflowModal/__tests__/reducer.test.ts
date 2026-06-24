@@ -2,8 +2,9 @@
 /* prettier-ignore */
 import { reducer, INIT_STATE } from '../reducer';
 import { openRunWorkflowModal } from '../actions';
-import { IKickoff, EExtraFieldType } from '../../../types/template';
+import { IKickoffClient, EExtraFieldType } from '../../../types/template';
 import { EFieldLabelPosition } from '../../../types/fieldset';
+import { makeFieldsetBindingClient } from '../../../__stubs__/fieldsets.factory';
 
 describe('runWorkflowModal reducer', () => {
   it('openRunWorkflowModal open modal window', () => {
@@ -21,7 +22,7 @@ describe('runWorkflowModal reducer', () => {
       wfNameTemplate: '',
     };
 
-    const kickoff: IKickoff = {
+    const kickoff: IKickoffClient = {
       description:
         'youtube: \nhttps://www.youtube.com/watch?v=JZRm7NKTPhk\n loom:\nhttps://www.loom.com/share/29f210bc12484eaa81ca462381fb4415?t=0\n 404 loom:\n\nhttps://www.loom.com/share/9853f0790ad2408094a3717bfcf4a0c0\nYoutube 404 :\n\nhttps://www.youtube.com/watch?v=D6hIeqZt22g',
       fields: [
@@ -186,7 +187,7 @@ describe('OpenModal — fieldsets acceptance', () => {
       kickoff: {
         description: '',
         fields: [],
-        fieldsets: [{ apiName: 'fs-contacts', order: 0 }],
+        fieldsets: [makeFieldsetBindingClient({ apiName: 'fs-contacts' })],
       },
       loadedFieldsets: [mockFieldsetData],
     });
@@ -200,8 +201,8 @@ describe('OpenModal — fieldsets acceptance', () => {
     }
 
     expect(result.workflow.kickoff.fieldsets).toHaveLength(1);
-    expect(result.workflow.kickoff.fieldsets).toEqual([
-      { apiName: 'fs-contacts', order: 0 },
+    expect(result.workflow.kickoff.fieldsets).toMatchObject([
+      { apiName: 'fs-contacts' },
     ]);
 
     expect(result.workflow.loadedFieldsets).toHaveLength(1);

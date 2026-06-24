@@ -2,12 +2,10 @@ import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { IFieldsetData, ITaskFieldset } from '../../../../types/template';
+import { IFieldsetData } from '../../../../types/template';
 import { makeExtraField } from '../../../../__stubs__/fields.factory';
-import { makeFieldsetData as makeFieldsetDataBase } from '../../../../__stubs__/fieldsets.factory';
+import { makeFieldsetData as makeFieldsetDataBase, makeFieldsetBindingClient } from '../../../../__stubs__/fieldsets.factory';
 import { FieldsetOutputsPreview } from '../FieldsetOutputsPreview';
-
-const makeTaskFieldset = (apiName: string, order = 0): ITaskFieldset => ({ apiName, order });
 
 const makeFieldsetData = (apiName: string, fieldsCount: number): IFieldsetData =>
   makeFieldsetDataBase({
@@ -47,7 +45,7 @@ describe('FieldsetOutputsPreview', () => {
 
     const { container } = render(
       React.createElement(FieldsetOutputsPreview, {
-        fieldsets: [makeTaskFieldset('not-in-map'), makeTaskFieldset('empty-fields')],
+        fieldsets: [makeFieldsetBindingClient({ apiName: 'not-in-map' }), makeFieldsetBindingClient({ apiName: 'empty-fields' })],
         fieldsetsByApiName,
       }),
     );
@@ -62,7 +60,7 @@ describe('FieldsetOutputsPreview', () => {
 
     render(
       React.createElement(FieldsetOutputsPreview, {
-        fieldsets: [makeTaskFieldset('fs-a'), makeTaskFieldset('fs-b')],
+        fieldsets: [makeFieldsetBindingClient({ apiName: 'fs-a' }), makeFieldsetBindingClient({ apiName: 'fs-b' })],
         fieldsetsByApiName,
         onGroupClick: jest.fn(),
       }),
@@ -81,7 +79,7 @@ describe('FieldsetOutputsPreview', () => {
 
     render(
       React.createElement(FieldsetOutputsPreview, {
-        fieldsets: [makeTaskFieldset('fs-a')],
+        fieldsets: [makeFieldsetBindingClient({ apiName: 'fs-a' })],
         fieldsetsByApiName,
         onGroupClick,
       }),

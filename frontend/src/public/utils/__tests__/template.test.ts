@@ -3,7 +3,7 @@ import {
   ETemplateOwnerRole,
   ETaskPerformerType,
   ITemplateResponse,
-  ITemplate,
+  ITemplateClient,
   EExtraFieldType,
   IFieldsetData,
 } from '../../types/template';
@@ -12,7 +12,7 @@ import { TUserListItem, EUserStatus } from '../../types/user';
 import { getNormalizedTemplate, mapTemplateRequest, getEmptyKickoff, cleanTemplateReferences, collectFieldApiNames } from '../template';
 import { EConditionAction, EConditionOperators, EConditionLogicOperations, TConditionRule } from '../../components/TemplateEdit/TaskForm/Conditions/types';
 import { makeExtraField } from '../../__stubs__/fields.factory';
-import { makeFieldsetData } from '../../__stubs__/fieldsets.factory';
+import { makeFieldsetBindingClient, makeFieldsetData } from '../../__stubs__/fieldsets.factory';
 
 const emptyFieldsetsMap: ReadonlyMap<string, IFieldsetData> = new Map();
 
@@ -90,7 +90,7 @@ const createMockTemplateResponse = (
   ...overrides,
 });
 
-const createMockTemplate = (overrides: Partial<ITemplate> = {}): ITemplate => ({
+const createMockTemplate = (overrides: Partial<ITemplateClient> = {}): ITemplateClient => ({
   id: 1,
   name: 'Test Template',
   description: 'Test description',
@@ -428,7 +428,7 @@ describe('template utilities', () => {
         kickoff: {
           ...getEmptyKickoff(),
           fields: [makeExtraField({ apiName: 'direct-field', type: EExtraFieldType.Text, name: 'Direct', order: 1 })],
-          fieldsets: [{ apiName: 'my-fieldset', order: 1 }],
+          fieldsets: [makeFieldsetBindingClient({ apiName: 'my-fieldset', apiNameBinding: 'my-fieldset' })],
         },
       });
 

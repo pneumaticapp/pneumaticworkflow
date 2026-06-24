@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useIntl } from 'react-intl';
 import classNames from 'classnames';
 
-import { IExtraField, IFieldsetData, ITaskFieldset } from '../../../types/template';
+import { IExtraField, IFieldsetData, IFieldsetBindingClient } from '../../../types/template';
 import { isArrayWithItems } from '../../../utils/helpers';
 
 import styles from './FieldsetOutputsPreview.css';
@@ -10,7 +10,7 @@ import styles from './FieldsetOutputsPreview.css';
 
 
 export interface IFieldsetOutputsPreviewProps {
-  fieldsets: ITaskFieldset[];
+  fieldsets: IFieldsetBindingClient[];
   fieldsetsByApiName: ReadonlyMap<string, IFieldsetData>;
   onGroupClick?(): void;
 }

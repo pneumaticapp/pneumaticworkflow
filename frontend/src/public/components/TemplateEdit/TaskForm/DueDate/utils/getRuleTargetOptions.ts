@@ -1,8 +1,8 @@
 import {
   EExtraFieldType,
   IFieldsetData,
-  IKickoff,
-  ITemplateTask,
+  IKickoffClient,
+  ITemplateTaskClient,
   TDueDateRuleTarget,
 } from '../../../../../types/template';
 import { TDropdownOptionBase } from '../../../../UI';
@@ -15,9 +15,9 @@ export type TRuleTargetOption = TDropdownOptionBase & {
 };
 
 export function getRuleTargetOptions(
-  currentTask: ITemplateTask,
-  tasks: ITemplateTask[],
-  kickoff: IKickoff,
+  currentTask: ITemplateTaskClient,
+  tasks: ITemplateTaskClient[],
+  kickoff: IKickoffClient,
   fieldsetsByApiName?: ReadonlyMap<string, IFieldsetData>,
 ): readonly [TRuleTargetOption[], TRuleTargetOption[], TRuleTargetOption[]] {
   const prevTasks = getPreviousTasks(currentTask, tasks);

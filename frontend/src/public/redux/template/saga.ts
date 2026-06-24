@@ -50,7 +50,7 @@ import { getTemplateData } from '../selectors/template';
 import { getTemplate } from '../../api/getTemplate';
 import { getSystemTemplate } from '../../api/getSystemTemplate';
 import { checkSomeRouteIsActive, history } from '../../utils/history';
-import { ITemplate, ITemplateRequest, ITemplateResponse } from '../../types/template';
+import { ITemplateClient, ITemplateRequest, ITemplateResponse } from '../../types/template';
 import { logger } from '../../utils/logger';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { updateTemplate } from '../../api/updateTemplate';
@@ -111,9 +111,9 @@ function* patchTemplateSaga({ payload: { changedFields, onSuccess, onFailed } }:
 
   yield put(setTemplateStatus(ETemplateStatus.Saving));
 
-  const nonDeactivativeFields: (keyof ITemplate)[] = ['isActive', 'isPublic', 'publicUrl'];
+  const nonDeactivativeFields: (keyof ITemplateClient)[] = ['isActive', 'isPublic', 'publicUrl'];
   let shouldDeactivateTemplate = Object.keys(changedFields).some(
-    (key) => !nonDeactivativeFields.includes(key as keyof ITemplate),
+    (key) => !nonDeactivativeFields.includes(key as keyof ITemplateClient),
   );
 
   if (Object.keys(changedFields).length === 1 && changedFields.hasOwnProperty('kickoff')) {
@@ -121,7 +121,7 @@ function* patchTemplateSaga({ payload: { changedFields, onSuccess, onFailed } }:
       changedFields.kickoff?.description === template.kickoff.description ? shouldDeactivateTemplate : false;
   }
 
-  const mergedTemplate: ITemplate = {
+  const mergedTemplate: ITemplateClient = {
     ...template,
     ...changedFields,
     ...(shouldDeactivateTemplate && { isActive: false }),
@@ -214,7 +214,7 @@ function* fetchSaveTemplate(onSuccess?: () => void, onFailed?: () => void) {
   const fieldsetsByApiName: ReturnType<typeof getFieldsetsCatalogByApiName> = yield select(getFieldsetsCatalogByApiName);
   const templateRequest = mapTemplateRequest(editingTemplate, fieldsetsByApiName);
 
-  const savedTemplate: ITemplate | null = yield createOrUpdateTemplate(templateRequest, isSubscribed, users);
+  const savedTemplate: ITemplateClient | null = yield createOrUpdateTemplate(templateRequest, isSubscribed, users);
   const lastTemplateState: ReturnType<typeof getTemplateData> = yield select(getTemplateData);
 
   if (!savedTemplate) {
@@ -227,7 +227,7 @@ function* fetchSaveTemplate(onSuccess?: () => void, onFailed?: () => void) {
 
   const isTemplateCreated = !templateRequest.id;
 
-  const newTemplateState: ITemplate = {
+  const newTemplateState: ITemplateClient = {
     ...insertId(lastTemplateState, savedTemplate),
     updatedBy: savedTemplate.updatedBy,
     dateUpdated: savedTemplate.dateUpdated,

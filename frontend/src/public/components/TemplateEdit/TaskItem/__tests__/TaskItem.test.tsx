@@ -2,8 +2,8 @@ import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { ITemplateTask, IFieldsetData } from '../../../../types/template';
-import { makeFieldsetData } from '../../../../__stubs__/fieldsets.factory';
+import { ITemplateTaskClient, IFieldsetData } from '../../../../types/template';
+import { makeFieldsetData, makeFieldsetBindingClient } from '../../../../__stubs__/fieldsets.factory';
 import { ETaskFormParts } from '../../types';
 
 jest.mock('react', () => {
@@ -75,7 +75,7 @@ import {
 import { getFieldsetsCatalogByApiName } from '../../../../redux/selectors/fieldsets';
 
 describe('TaskItem', () => {
-  const makeTask = (overrides: Partial<ITemplateTask> = {}): ITemplateTask => ({
+  const makeTask = (overrides: Partial<ITemplateTaskClient> = {}): ITemplateTaskClient => ({
     id: 1,
     apiName: 'task-1',
     name: 'Task 1',
@@ -85,7 +85,7 @@ describe('TaskItem', () => {
     requireCompletionByAll: false,
     skipForStarter: false,
     fields: [],
-    fieldsets: [{ apiName: 'fs-1', order: 0 }],
+    fieldsets: [makeFieldsetBindingClient({ apiName: 'fs-1' })],
     delay: null,
     rawDueDate: null as any,
     conditions: [],

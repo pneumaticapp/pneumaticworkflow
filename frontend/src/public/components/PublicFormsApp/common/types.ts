@@ -1,6 +1,6 @@
-import { IKickoff, IFieldsetData } from '../../../types/template';
+import { IKickoffClient, IFieldsetData } from '../../../types/template';
 
-export interface IPublicFormKickoff extends Omit<IKickoff, 'fieldsets'> {
+export interface IPublicFormKickoff extends Omit<IKickoffClient, 'fieldsets'> {
   fieldsets: IFieldsetData[];
 }
 

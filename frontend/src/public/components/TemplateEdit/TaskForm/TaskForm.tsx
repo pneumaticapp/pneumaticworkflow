@@ -6,7 +6,7 @@ import { useSelector } from 'react-redux';
 import { TaskDescriptionEditor } from './TaskDescriptionEditor';
 import { scrollToElement } from '../../../utils/helpers';
 import { TUserListItem } from '../../../types/user';
-import { IKickoff, ITemplateTask } from '../../../types/template';
+import { IKickoffClient, ITemplateTaskClient } from '../../../types/template';
 import { TTaskVariable, TTaskFormPart, ETaskFormParts } from '../types';
 import { OutputFormIntl } from '../OutputForm/OutputForm';
 import { ShowMore } from '../../UI/ShowMore';
@@ -31,14 +31,14 @@ import { TaskRenderReturnInfo } from '../TaskRenderReturnInfo';
 import { StepName } from '../../StepName';
 
 export interface ITaskFormProps {
-  task: ITemplateTask;
+  task: ITemplateTaskClient;
   users: TUserListItem[];
   isSubscribed: boolean;
   scrollTarget: TTaskFormPart;
   accountId: number;
   isTeamInvitesModalOpen: boolean;
-  tasks: ITemplateTask[];
-  kickoff: IKickoff;
+  tasks: ITemplateTaskClient[];
+  kickoff: IKickoffClient;
   patchTask(args: TPatchTaskPayload): void;
 }
 
@@ -118,11 +118,11 @@ export function TaskForm({
     if (scrollTo) scrollToElement(scrollTo);
   }, []);
 
-  const setCurrentTask = (changedFields: Partial<ITemplateTask>) => {
+  const setCurrentTask = (changedFields: Partial<ITemplateTaskClient>) => {
     patchTask({ taskUUID: task.uuid, changedFields });
   };
 
-  const handleTaskFieldChange = (field: keyof ITemplateTask) => (value: ITemplateTask[keyof ITemplateTask]) => {
+  const handleTaskFieldChange = (field: keyof ITemplateTaskClient) => (value: ITemplateTaskClient[keyof ITemplateTaskClient]) => {
     setCurrentTask({ [field]: value });
   };
 

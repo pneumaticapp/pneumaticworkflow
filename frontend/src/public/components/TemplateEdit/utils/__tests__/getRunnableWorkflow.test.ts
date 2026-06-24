@@ -1,6 +1,6 @@
-import { ETaskPerformerType, EExtraFieldType, ITemplateResponse, ETemplateOwnerType, ETemplateOwnerRole, IKickoff, IFieldsetData } from '../../../../types/template';
+import { ETaskPerformerType, EExtraFieldType, ITemplateResponse, ETemplateOwnerType, ETemplateOwnerRole, IKickoffClient, IFieldsetData } from '../../../../types/template';
 import { makeExtraField } from '../../../../__stubs__/fields.factory';
-import { makeFieldsetData } from '../../../../__stubs__/fieldsets.factory';
+import { makeFieldsetData, makeFieldsetBindingClient } from '../../../../__stubs__/fieldsets.factory';
 import { getRunnableWorkflow, loadFieldsetsData, loadDatasetsMap } from '../getRunnableWorkflow';
 import { getFieldsets } from '../../../../api/fieldsets/getFieldsets';
 import { getDataset } from '../../../../api/datasets/getDataset';
@@ -315,7 +315,7 @@ describe('getRunnableWorkflow.', () => {
   });
 
   it('loadFieldsetsData returns [] and does not call getFieldsets when kickoff.fieldsets is empty', async () => {
-    const kickoff: IKickoff = { description: '', fields: [], fieldsets: [] };
+    const kickoff: IKickoffClient = { description: '', fields: [], fieldsets: [] };
 
     const result = await loadFieldsetsData(kickoff, 42);
 
@@ -324,12 +324,12 @@ describe('getRunnableWorkflow.', () => {
   });
 
   it('loadFieldsetsData filters catalog by selected apiNames and inherits order from kickoff', async () => {
-    const kickoff: IKickoff = {
+    const kickoff: IKickoffClient = {
       description: '',
       fields: [],
       fieldsets: [
-        { apiName: 'fs-a', order: 5 },
-        { apiName: 'fs-b', order: 10 },
+        makeFieldsetBindingClient({ apiName: 'fs-a', order: 5 }),
+        makeFieldsetBindingClient({ apiName: 'fs-b', order: 10 }),
       ],
     };
     (getFieldsets as jest.Mock).mockResolvedValue({
@@ -350,7 +350,7 @@ describe('getRunnableWorkflow.', () => {
   });
 
   it('loadDatasetsMap returns {} and does not call getDataset when there are no dataset ids', async () => {
-    const kickoff: IKickoff = { description: '', fields: [], fieldsets: [] };
+    const kickoff: IKickoffClient = { description: '', fields: [], fieldsets: [] };
 
     const result = await loadDatasetsMap(kickoff, []);
 
@@ -359,7 +359,7 @@ describe('getRunnableWorkflow.', () => {
   });
 
   it('loadDatasetsMap dedups dataset id shared by a kickoff field and a fieldset field', async () => {
-    const kickoff: IKickoff = {
+    const kickoff: IKickoffClient = {
       description: '',
       fields: [makeExtraField({ apiName: 'k-f', name: 'K', type: EExtraFieldType.Checkbox, dataset: 7 })],
       fieldsets: [],

@@ -1,6 +1,6 @@
-import { ITemplate, IFieldsetData } from '../../types/template';
+import { ITemplateClient, IFieldsetData } from '../../types/template';
 
-export interface IRunWorkflow extends Pick<ITemplate, 'wfNameTemplate' | 'name' | 'kickoff' | 'description'> {
+export interface IRunWorkflow extends Pick<ITemplateClient, 'wfNameTemplate' | 'name' | 'kickoff' | 'description'> {
   id: number;
   tasksCount: number;
   performersCount: number;

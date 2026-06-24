@@ -7,7 +7,9 @@ import {
 } from '../components/TemplateEdit/TaskForm/Conditions';
 import { TUploadedFile } from '../utils/uploadFiles';
 import { TSystemField } from '../components/Workflows/WorkflowsTablePage/WorkflowsTable/types';
-import { EFieldLabelPosition, IFieldsetBindingClient, IFieldsetBindingMeta } from './fieldset';
+import { EFieldLabelPosition, IFieldsetBinding, IFieldsetBindingClient, IFieldsetBindingMeta } from './fieldset';
+
+export type { IFieldsetBindingClient } from './fieldset';
 
 export interface ITemplate {
   id?: number;
@@ -150,18 +152,20 @@ export enum ETaskPerformerType {
   Manager = 'manager',
 }
 
-export interface ITemplateResponse extends Omit<ITemplate, 'id' | 'tasks' | 'tasksCount' | 'performersCount'> {
+export interface ITemplateResponse extends Omit<ITemplate, 'id' | 'tasks' | 'tasksCount' | 'performersCount' | 'kickoff'> {
   id: number;
   tasks: ITemplateTaskResponse[];
+  kickoff: Omit<IKickoff, 'fieldsets'> & { fieldsets: IFieldsetBinding[] };
 }
 
 export interface ITemplateTaskResponse
-  extends Omit<ITemplateTask, 'uuid' | 'conditions' | 'rawDueDate' | 'apiName' | 'id'> {
+  extends Omit<ITemplateTask, 'uuid' | 'conditions' | 'rawDueDate' | 'apiName' | 'id' | 'fieldsets'> {
   id: number;
   conditions: IConditionResponse[];
   rawDueDate: IDueDateAPI | null;
   dueIn?: string | null; // deprecated
   apiName?: string;
+  fieldsets: IFieldsetBinding[];
 }
 
 export interface ITemplateRequest extends Omit<ITemplate, 'tasks' | 'kickoff'> {

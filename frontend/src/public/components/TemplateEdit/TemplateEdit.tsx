@@ -22,7 +22,7 @@ import { NotificationManager } from '../UI/Notifications';
 import { isArrayWithItems } from '../../utils/helpers';
 import { createOwnerApiName, createPerformerApiName, createTaskApiName, createUUID } from '../../utils/createId';
 import { EMoveDirections } from '../../types/workflow';
-import { ETaskPerformerType, ETemplateOwnerRole, ETemplateOwnerType, ITemplate, ITemplateTask } from '../../types/template';
+import { ETaskPerformerType, ETemplateOwnerRole, ETemplateOwnerType, ITemplateClient, ITemplateTaskClient } from '../../types/template';
 import { TLoadTemplateVariablesSuccessPayload } from '../../redux/actions';
 import { ETemplateStatus, IAuthUser } from '../../types/redux';
 import { getKickoffConditions } from './TaskForm/Conditions/utils/getKickoffConditions';
@@ -44,8 +44,8 @@ export interface ITemplateEditProps {
   match: any;
   location: any;
   authUser: IAuthUser;
-  template: ITemplate;
-  aiTemplate: ITemplate | null;
+  template: ITemplateClient;
+  aiTemplate: ITemplateClient | null;
   templateStatus: ETemplateStatus;
   users: TUserListItem[];
   isSubscribed: boolean;
@@ -53,7 +53,7 @@ export interface ITemplateEditProps {
   loadTemplateFromSystem(id: string): void;
   resetTemplateStore(): void;
   saveTemplate(): void;
-  setTemplate(payload: ITemplate): void;
+  setTemplate(payload: ITemplateClient): void;
   setTemplateStatus(status: ETemplateStatus): void;
   loadTemplateVariablesSuccess(payload: TLoadTemplateVariablesSuccessPayload): void;
 }
@@ -179,7 +179,7 @@ export function TemplateEdit({
 
   const sortedTasks = () => [...tasks].sort((a, b) => a.number - b.number);
 
-  const getNewTask = (templateTask?: Partial<ITemplateTask>): ITemplateTask => {
+  const getNewTask = (templateTask?: Partial<ITemplateTaskClient>): ITemplateTaskClient => {
     const taskApiName = createTaskApiName();
 
     return {
@@ -210,7 +210,7 @@ export function TemplateEdit({
     };
   };
 
-  const getEmptyTemplate = () => {
+  const getEmptyTemplate = (): ITemplateClient => {
     return {
       description: '',
       kickoff: getEmptyKickoff(),
@@ -246,15 +246,17 @@ export function TemplateEdit({
         users,
       ),
       wfNameTemplate: '{{date}} — {{template-name}}',
-    } as ITemplate;
+      completionNotification: false,
+      reminderNotification: false,
+    };
   };
 
-  const handleChangeTemplateField = (field: keyof ITemplate) => (value: ITemplate[keyof ITemplate]) => {
+  const handleChangeTemplateField = (field: keyof ITemplateClient) => (value: ITemplateClient[keyof ITemplateClient]) => {
     const workflow = template;
     setTemplateStatus(ETemplateStatus.Saving);
 
     if (field === 'isActive') {
-      const newWorkflow: ITemplate = {
+      const newWorkflow: ITemplateClient = {
         ...workflow,
         isActive: value as boolean,
       };
@@ -265,7 +267,7 @@ export function TemplateEdit({
       return;
     }
 
-    const updatedWorkflow: ITemplate = {
+    const updatedWorkflow: ITemplateClient = {
       ...workflow,
       [field]: value,
       isActive: false,
@@ -279,11 +281,11 @@ export function TemplateEdit({
     submitDebounced();
   };
 
-  const changeTasks = (newTasks: ITemplateTask[]) => {
+  const changeTasks = (newTasks: ITemplateTaskClient[]) => {
     handleChangeTemplateField('tasks')(newTasks);
   };
 
-  const handleRemoveTask = (targetTask: ITemplateTask) => () => {
+  const handleRemoveTask = (targetTask: ITemplateTaskClient) => () => {
     const newTasks = tasks
       .filter((task) => task.uuid !== targetTask.uuid)
       .map((task, index) => ({ ...task, number: index + 1 }));
@@ -322,7 +324,7 @@ export function TemplateEdit({
     changeTasks(newTasks);
   };
 
-  const getTasksWithNewTask = (newTask: ITemplateTask, newTaskIndex: number) => {
+  const getTasksWithNewTask = (newTask: ITemplateTaskClient, newTaskIndex: number) => {
     const newTasks = [...tasks.slice(0, newTaskIndex), newTask, ...tasks.slice(newTaskIndex)].map((task, index) => ({
       ...task,
       number: index + 1,
@@ -331,14 +333,14 @@ export function TemplateEdit({
     return newTasks;
   };
 
-  const handleCloneTask = (targetTask: ITemplateTask) => () => {
+  const handleCloneTask = (targetTask: ITemplateTaskClient) => () => {
     const newTask = getClonedTask(targetTask);
     const newTasks = getTasksWithNewTask(newTask, targetTask.number);
     changeTasks(newTasks);
     toggleIsOpenTask(newTask.uuid);
   };
 
-  const handleAddTaskBefore = (targetTask: ITemplateTask) => (previousTaskApiName?: string) => {
+  const handleAddTaskBefore = (targetTask: ITemplateTaskClient) => (previousTaskApiName?: string) => {
     const newTaskName = `New Step ${tasks.length + 1}`;
     const newTask = getNewTask({
       name: newTaskName,
@@ -365,7 +367,7 @@ export function TemplateEdit({
   };
 
   const handleEditTaskField =
-    (targetTask: ITemplateTask) => (field: keyof ITemplateTask) => (value: ITemplateTask[keyof ITemplateTask]) => {
+    (targetTask: ITemplateTaskClient) => (field: keyof ITemplateTaskClient) => (value: ITemplateTaskClient[keyof ITemplateTaskClient]) => {
       const newTasks = tasks.map((task) => {
         if (targetTask.uuid === task.uuid) {
           return {
@@ -380,7 +382,7 @@ export function TemplateEdit({
       handleChangeTemplateField('tasks')(newTasks);
     };
 
-  const addDelay = (targetTask: ITemplateTask) => () => {
+  const addDelay = (targetTask: ITemplateTaskClient) => () => {
     if (targetTask.delay) {
       const message = formatMessage({ id: 'template.delay-task-has-delay-error' });
       NotificationManager.warning({ message });
@@ -410,7 +412,7 @@ export function TemplateEdit({
     changeTasks(newTasks);
   };
 
-  const editDelay = (targetTask: ITemplateTask) => (delay: string) => {
+  const editDelay = (targetTask: ITemplateTaskClient) => (delay: string) => {
     const newTasks = tasks.map((task) => {
       if (task.uuid === targetTask.uuid) return { ...targetTask, delay };
 
@@ -420,7 +422,7 @@ export function TemplateEdit({
     changeTasks(newTasks);
   };
 
-  const deleteDelay = (targetTask: ITemplateTask) => () => {
+  const deleteDelay = (targetTask: ITemplateTaskClient) => () => {
     if (!targetTask.delay) return;
 
     handleEditTaskField(targetTask)('delay')('');
@@ -434,7 +436,7 @@ export function TemplateEdit({
 
   const submitDebounced = debounce(350, saveTemplate);
 
-  const getTaskListItem = (task: ITemplateTask, index: number, tasksLocal: ITemplateTask[]) => {
+  const getTaskListItem = (task: ITemplateTaskClient, index: number, tasksLocal: ITemplateTaskClient[]) => {
     const isTaskOpen = Boolean(openedTasks[task.uuid]);
     const isDelayOpen = Boolean(openedDelays[task.uuid]);
     const previousTask = index > 0 ? tasksLocal[index - 1] : null;

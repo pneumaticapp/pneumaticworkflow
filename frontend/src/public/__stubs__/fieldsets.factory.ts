@@ -1,5 +1,21 @@
-import { EFieldLabelPosition, IFieldsetCatalogItem, IFieldsetTemplateRule } from '../types/fieldset';
+import {
+  EFieldLabelPosition, IFieldsetBindingClient, IFieldsetCatalogItem, IFieldsetField, IFieldsetTemplateRule,
+} from '../types/fieldset';
 import { IFieldsetData } from '../types/template';
+
+export const makeFieldsetField = (overrides: Partial<IFieldsetField> = {}): IFieldsetField => ({
+  apiName: 'field-1',
+  name: 'Field 1',
+  description: '',
+  type: 'string',
+  isRequired: false,
+  isHidden: false,
+  order: 0,
+  default: '',
+  dataset: null,
+  selections: [],
+  ...overrides,
+});
 
 export const makeFieldsetData = (overrides: Partial<IFieldsetData> = {}): IFieldsetData => ({
   id: 1,
@@ -25,6 +41,21 @@ export const makeFieldsetTemplateRule = (overrides: Partial<IFieldsetTemplateRul
 export const makeFieldsetCatalogItem = (overrides: Partial<IFieldsetCatalogItem> = {}): IFieldsetCatalogItem => ({
   id: 1,
   apiName: 'fs-1',
+  name: 'Test Fieldset',
+  description: '',
+  labelPosition: EFieldLabelPosition.Top,
+  layout: 'vertical',
+  order: 0,
+  title: '',
+  rules: [],
+  fields: [],
+  ...overrides,
+});
+
+export const makeFieldsetBindingClient = (overrides: Partial<IFieldsetBindingClient> = {}): IFieldsetBindingClient => ({
+  sharedFieldsetId: 1,
+  apiName: 'fs-1',
+  apiNameBinding: 'fs-binding-1',
   name: 'Test Fieldset',
   description: '',
   labelPosition: EFieldLabelPosition.Top,

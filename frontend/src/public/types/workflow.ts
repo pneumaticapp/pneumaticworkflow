@@ -2,7 +2,7 @@ import { TUserId } from './user';
 import { TUploadedFile } from '../utils/uploadFiles';
 import { ITask, ITemplateStep, TaskWithTsp } from './tasks';
 import {
-  IKickoff,
+  IKickoffClient,
   IExtraField,
   IFieldsetData,
   ITemplateTitle,
@@ -73,7 +73,7 @@ export interface IWorkflowDetails {
 
 export interface IWorkflowEditData {
   name?: string;
-  kickoff?: IKickoff | null;
+  kickoff?: IKickoffClient | null;
 }
 
 export interface IWorkflowEdit {

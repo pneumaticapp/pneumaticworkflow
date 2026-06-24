@@ -9,7 +9,7 @@ import { getVariables } from '../TaskForm/utils/getTaskVariables';
 import { getFieldsetsCatalogByApiName } from '../../../redux/selectors/fieldsets';
 import { FieldsetOutputsPreview } from '../FieldsetOutputsPreview/FieldsetOutputsPreview';
 
-import { ITemplateTask } from '../../../types/template';
+import { ITemplateTaskClient } from '../../../types/template';
 import { ETaskFormParts } from '../types';
 
 import { TaskItemUsers } from './TaskItemUsers';
@@ -21,7 +21,7 @@ import styles from '../TemplateEdit.css';
 import { TaskRenderConditionsInfo } from '../TaskRenderConditionsInfo';
 
 export interface ITaskItemProps {
-  task: ITemplateTask;
+  task: ITemplateTaskClient;
   toggleIsOpenTask(): void;
   setScrollTarget(target: ETaskFormParts): void;
 }

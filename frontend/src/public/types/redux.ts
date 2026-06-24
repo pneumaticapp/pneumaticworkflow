@@ -19,7 +19,7 @@ import { IHighlightsItem, EHighlightsDateFilter } from './highlights';
 import { EDashboardTimeRange, IGettingStartedChecklist } from './dashboard';
 import { EAuthUserFailType, ETaskStatus, ETemplatesSystemStatus } from '../redux/actions';
 import {
-  ITemplate,
+  ITemplateClient,
   ITemplateListItem,
   ISystemTemplate,
   TTemplateIntegrationStats,
@@ -304,12 +304,12 @@ export enum ETemplateStatus {
 }
 
 export interface ITemplateStore {
-  data: ITemplate;
+  data: ITemplateClient;
   status: ETemplateStatus;
   AITemplate: {
     isModalOpened: boolean;
     generationStatus: TAITemplateGenerationStatus;
-    generatedData: ITemplate | null;
+    generatedData: ITemplateClient | null;
   };
 }
 

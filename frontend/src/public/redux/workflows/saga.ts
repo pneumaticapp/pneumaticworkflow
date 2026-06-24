@@ -114,7 +114,7 @@ import { sendWorkflowComment } from '../../api/sendWorkflowComment';
 import { finishWorkflow } from '../../api/finishWorkflow';
 import { editWorkflow, IEditWorkflowResponse } from '../../api/editWorkflow';
 import { getTemplatesTitles, TGetTemplatesTitlesResponse } from '../../api/getTemplatesTitles';
-import { IKickoff, ITemplateResponse, TTemplatePreset } from '../../types/template';
+import { IKickoffClient, ITemplateResponse, TTemplatePreset } from '../../types/template';
 import { getWorkflowLogStore } from '../selectors/workflowLog';
 import { deleteRemovedFilesFromFields } from '../../api/deleteRemovedFilesFromFields';
 import { TChannelAction } from '../tasks/saga';
@@ -628,7 +628,7 @@ export function* cloneWorkflowSaga({
       return;
     }
 
-    const kickoff: IKickoff = yield getClonedKickoff(formattedworkflowDetails.kickoff, template.kickoff);
+    const kickoff: IKickoffClient = yield getClonedKickoff(formattedworkflowDetails.kickoff, template.kickoff);
 
     yield put(
       openRunWorkflowModal({

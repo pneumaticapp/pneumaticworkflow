@@ -2,7 +2,7 @@ import {
   IDueDate,
   IExtraField,
   IExtraFieldSelection,
-  ITemplateTask,
+  ITemplateTaskClient,
   ITemplateTaskPerformer,
   TOutputChecklist,
   TOutputChecklistItem,
@@ -23,7 +23,7 @@ import {
 import { omit } from '../../../utils/helpers';
 import { ICondition, TConditionRule } from '../TaskForm/Conditions';
 
-export function getClonedTask(task: ITemplateTask) {
+export function getClonedTask(task: ITemplateTaskClient) {
   const mapChecklist: { [old: string]: string } = {};
   const mapSelectionsChecklist: { [old: string]: string } = {};
 
@@ -130,7 +130,7 @@ export function getClonedTask(task: ITemplateTask) {
   const createdTaskApiName = createTaskApiName();
   const clonedRawDueDate = cloneRawDueDate(task.rawDueDate, createdTaskApiName);
 
-  const clonedTask: ITemplateTask = {
+  const clonedTask: ITemplateTaskClient = {
     ...omit(task, [
       'id',
       'apiName',

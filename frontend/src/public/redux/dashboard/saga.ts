@@ -43,7 +43,7 @@ import { getTemplate } from '../../api/getTemplate';
 
 import { openRunWorkflowModal } from '../runWorkflowModal/actions';
 import { getRunnableWorkflow, loadDatasetsMap, loadFieldsetsData } from '../../components/TemplateEdit/utils/getRunnableWorkflow';
-import { ITemplateResponse, IExtraField, IFieldsetData, ITaskFieldset } from '../../types/template';
+import { ITemplateResponse, IExtraField, IFieldsetData, IKickoffClient } from '../../types/template';
 import { mapFieldsetTemplateToFieldsetData } from '../../utils/mapFieldsetTemplateToFieldsetData';
 import { getGettingStartedChecklist } from '../../api/getGettingStartedChecklist';
 import { IGettingStartedChecklist } from '../../types/dashboard';
@@ -186,10 +186,10 @@ export function* openRunWorflowByTemplateDataSaga({
       }),
     );
 
-    const kickoff = {
+    const kickoff: IKickoffClient = {
       description: '',
       fields: kickoffFields,
-      fieldsets: [] as ITaskFieldset[],
+      fieldsets: [],
     };
 
     // Load datasets for both kickoff fields and fieldset fields

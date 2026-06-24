@@ -1,5 +1,5 @@
 import { IWorkflowDetailsKickoff } from '../../../../../../types/workflow';
-import { EExtraFieldType, IKickoff } from '../../../../../../types/template';
+import { EExtraFieldType, IKickoffClient } from '../../../../../../types/template';
 import { EFieldLabelPosition } from '../../../../../../types/fieldset';
 import { getClonedKickoff } from '../getClonedKickoff';
 
@@ -117,7 +117,7 @@ const mockWorkflowDetailKickoff: IWorkflowDetailsKickoff = {
   ],
 };
 
-const templateKickoffMock: IKickoff = {
+const templateKickoffMock: IKickoffClient = {
   description:
     ' youtube: \nhttps://www.youtube.com/watch?v=JZRm7NKTPhk\n loom:\nhttps://www.loom.com/share/29f210bc12484eaa81ca462381fb4415?t=0\n 404 loom:\n\nhttps://www.loom.com/share/9853f0790ad2408094a3717bfcf4a0c0\nYoutube 404 :\n\nhttps://www.youtube.com/watch?v=D6hIeqZt22g',
   fields: [
@@ -345,7 +345,7 @@ describe('getClonedKickoff.', () => {
         ],
       };
 
-      const emptyTemplateKickoff: IKickoff = {
+      const emptyTemplateKickoff: IKickoffClient = {
         description: '',
         fields: [],
         fieldsets: [],
@@ -383,7 +383,7 @@ describe('getClonedKickoff.', () => {
         ],
       };
 
-      const templateKickoff: IKickoff = {
+      const templateKickoff: IKickoffClient = {
         description: '',
         fields: [
           {
@@ -423,7 +423,7 @@ describe('getClonedKickoff.', () => {
         ],
       };
 
-      const templateKickoff: IKickoff = {
+      const templateKickoff: IKickoffClient = {
         description: '',
         fields: [
           {

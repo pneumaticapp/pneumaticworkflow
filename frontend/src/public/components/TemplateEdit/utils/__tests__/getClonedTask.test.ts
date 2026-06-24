@@ -1,4 +1,5 @@
-import { EExtraFieldType, ITemplateTask } from '../../../../types/template';
+import { EExtraFieldType, ITemplateTaskClient } from '../../../../types/template';
+import { makeFieldsetBindingClient } from '../../../../__stubs__/fieldsets.factory';
 import { createEmptyTaskDueDate } from '../../../../utils/dueDate/createEmptyTaskDueDate';
 import { omit } from '../../../../utils/helpers';
 import { EConditionAction, EConditionLogicOperations, EConditionOperators } from '../../TaskForm/Conditions';
@@ -6,7 +7,7 @@ import { getClonedTask } from '../getClonedTask';
 
 describe('getClonedTask', () => {
   it("returns initial task's copy", () => {
-    const mockTask: ITemplateTask = {
+    const mockTask: ITemplateTaskClient = {
       id: 3048,
       apiName: 'task-1',
       name: 'Task 1',
@@ -88,7 +89,7 @@ describe('getClonedTask', () => {
 
     const clonedTask = getClonedTask(mockTask);
 
-    const diffFields: (keyof ITemplateTask)[] = [
+    const diffFields: (keyof ITemplateTaskClient)[] = [
       'id',
       'apiName',
       'uuid',
@@ -111,7 +112,7 @@ describe('getClonedTask', () => {
   });
 
   it('preserves task.fieldsets on clone (KNOWN BUG: apiName is reused, see follow-up task)', () => {
-    const mockTask: ITemplateTask = {
+    const mockTask: ITemplateTaskClient = {
       id: 1,
       apiName: 'task-source',
       name: 'Task',
@@ -129,14 +130,14 @@ describe('getClonedTask', () => {
       revertTask: null,
       ancestors: [],
       fieldsets: [
-        { apiName: 'fs-a', order: 0 },
-        { apiName: 'fs-b', order: 5 },
+        makeFieldsetBindingClient({ apiName: 'fs-a', order: 0 }),
+        makeFieldsetBindingClient({ apiName: 'fs-b', order: 5 }),
       ],
     };
 
     const clonedTask = getClonedTask(mockTask);
 
-    expect(clonedTask.fieldsets).toEqual([
+    expect(clonedTask.fieldsets).toMatchObject([
       { apiName: 'fs-a', order: 0 },
       { apiName: 'fs-b', order: 5 },
     ]);

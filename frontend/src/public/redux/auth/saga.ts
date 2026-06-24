@@ -89,7 +89,7 @@ import { getBrowserConfig } from '../../utils/getConfig';
 import { getCustomerPortalLink } from '../../api/getCustomerPortalLink';
 import { setSentryUser } from '../../utils/sentryUser';
 import { createTemplateFromName } from './utils/createTemplateFromName';
-import { ITemplate } from '../../types/template';
+import { ITemplateResponse } from '../../types/template';
 import { removeLocalStorage } from '../../utils/localStorage';
 import { isEnvBilling } from '../../constants/enviroment';
 import { activateVacation, deactivateVacation } from '../../api/vacation';
@@ -564,7 +564,7 @@ export function* onAfterPaymentDetailsProvidedSaga() {
   }
 
   try {
-    const templateId: Pick<ITemplate, 'name'> = yield createTemplateFromName();
+    const templateId: Pick<ITemplateResponse, 'name'> = yield createTemplateFromName();
 
     if (templateId) {
       history.push(ERoutes.TemplatesEdit.replace(':id', String(templateId)));

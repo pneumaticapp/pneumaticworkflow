@@ -6,7 +6,7 @@ import { useSelector } from 'react-redux';
 import { DropdownList, Duration } from '../../../UI';
 import { TrashIcon } from '../../../icons';
 
-import { IDueDate, IKickoff, ITemplateTask } from '../../../../types/template';
+import { IDueDate, IKickoffClient, ITemplateTaskClient } from '../../../../types/template';
 import { START_DURATION } from '../../constants';
 import { getFieldsetsCatalogByApiName } from '../../../../redux/selectors/fieldsets';
 import { getRuleTargetOptions, TRuleTargetOption } from './utils/getRuleTargetOptions';
@@ -17,14 +17,14 @@ import styles from './DueDate.css';
 import stylesTaskForm from '../TaskForm.css';
 
 interface IDueInProps {
-  currentTask: ITemplateTask;
-  tasks: ITemplateTask[];
-  kickoff: IKickoff;
+  currentTask: ITemplateTaskClient;
+  tasks: ITemplateTaskClient[];
+  kickoff: IKickoffClient;
   onChange(value: IDueDate): void;
-  dueDate: ITemplateTask['rawDueDate'];
+  dueDate: ITemplateTaskClient['rawDueDate'];
 }
 
-type TDueDateKeys = keyof ITemplateTask['rawDueDate'];
+type TDueDateKeys = keyof ITemplateTaskClient['rawDueDate'];
 
 export function DueDate({ dueDate, currentTask, tasks, kickoff, onChange }: IDueInProps) {
   const fieldsetsByApiName = useSelector(getFieldsetsCatalogByApiName);
@@ -61,7 +61,7 @@ export function DueDate({ dueDate, currentTask, tasks, kickoff, onChange }: IDue
 
   const handleChange =
     <T extends TDueDateKeys>(field: T) =>
-      (value: ITemplateTask['rawDueDate'][T]) => {
+      (value: ITemplateTaskClient['rawDueDate'][T]) => {
         onChange({ ...dueDate, [field]: value });
       };
 

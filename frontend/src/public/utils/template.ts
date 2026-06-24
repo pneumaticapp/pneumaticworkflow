@@ -2,9 +2,10 @@
 /* prettier-ignore */
 import {
   ITemplate,
+  ITemplateClient,
+  ITemplateTaskClient,
+  IKickoffClient,
   ITemplateRequest,
-  ITemplateTask,
-  IKickoff,
   ITemplateTaskRequest,
   ITemplateResponse,
   ITemplateTaskResponse,
@@ -47,7 +48,7 @@ export function getTemplateIdFromUrl(url: string) {
   return Number(template) ? template : null;
 }
 
-export function getEmptyKickoff(): IKickoff {
+export function getEmptyKickoff(): IKickoffClient {
   return {
     description: '',
     fields: [],
@@ -60,7 +61,7 @@ export const getNormalizedTemplate = (
   isSubscribed: boolean,
   users: TUserListItem[],
   billingPlan: ESubscriptionPlan,
-): ITemplate => {
+): ITemplateClient => {
   const normalizedKickoff = {
     ...getEmptyKickoff(),
     ...(template.kickoff || {}),
@@ -128,7 +129,7 @@ export const getNormalizedTask = (
   task: ITemplateTaskResponse,
   isSubscribed: boolean,
   prevTask?: ITemplateTaskResponse,
-): ITemplateTask => {
+): ITemplateTaskClient => {
   const conditions = isArrayWithItems(task.conditions)
     ? normalizeConditiosForFrontend(task.conditions)
     : getEmptyConditions(isSubscribed);
@@ -167,9 +168,9 @@ export const collectFieldApiNames = (
 };
 
 export const cleanTemplateReferences = (
-  template: ITemplate,
+  template: ITemplateClient,
   fieldsetsByApiName: ReadonlyMap<string, IFieldsetData>,
-): ITemplate => {
+): ITemplateClient => {
   // System variables that the backend recognizes and skips during validation.
   // Must stay in sync with backend/src/processes/enums.py :: SystemVariable
   const TASK_SYSTEM_VARS = new Set(['workflow-starter']);
@@ -279,7 +280,7 @@ function mapFieldsetForApi({
 }
 
 export const mapTemplateRequest = (
-  template: ITemplate,
+  template: ITemplateClient,
   fieldsetsByApiName: ReadonlyMap<string, IFieldsetData>,
 ): ITemplateRequest => {
   const cleanedTemplate = cleanTemplateReferences(template, fieldsetsByApiName);
@@ -295,7 +296,7 @@ export const mapTemplateRequest = (
       delay: normalizeDuration(task.delay),
       conditions: normalizeConditionForBackend(task.conditions),
       rawDueDate: normalizeDueDateForBackend(task.rawDueDate),
-      fieldsets: (task.fieldsets as IFieldsetBindingClient[]).map(mapFieldsetForApi),
+      fieldsets: task.fieldsets.map(mapFieldsetForApi),
     };
   });
 
@@ -305,7 +306,7 @@ export const mapTemplateRequest = (
     tasks: normilizedTasks,
     kickoff: {
       ...cleanedTemplate.kickoff,
-      fieldsets: (cleanedTemplate.kickoff.fieldsets as IFieldsetBindingClient[]).map(mapFieldsetForApi),
+      fieldsets: cleanedTemplate.kickoff.fieldsets.map(mapFieldsetForApi),
     },
     publicSuccessUrl: cleanedTemplate.publicSuccessUrl || null,
   };

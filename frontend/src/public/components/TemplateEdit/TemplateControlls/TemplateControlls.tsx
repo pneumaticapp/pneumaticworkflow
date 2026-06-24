@@ -15,7 +15,7 @@ import { ShowMore } from '../../UI/ShowMore';
 import { getLinkToWorkflows } from '../../../utils/routes/getLinkToWorkflows';
 import { getLinkToHighlightsByTemplate } from '../../../utils/routes/getLinkToHighlightsByTemplate';
 import { Button } from '../../UI/Buttons/Button';
-import { ETemplateOwnerRole, ITemplateOwner, ITemplate } from '../../../types/template';
+import { ETemplateOwnerRole, ITemplateOwner, ITemplateClient } from '../../../types/template';
 import {
   TCloneTemplatePayload,
   TDeleteTemplatePayload,
@@ -41,7 +41,7 @@ import { getSubscriptionPlan } from '../../../redux/selectors/user';
 import { ESubscriptionPlan } from '../../../types/account';
 
 export interface ITemplateControllsProps {
-  template: ITemplate;
+  template: ITemplateClient;
   templateStatus: ETemplateStatus;
   isSubscribed: boolean;
   cloneTemplate(payload: TCloneTemplatePayload): void;
@@ -115,7 +115,7 @@ export function TemplateControlls({
     }
   };
 
-  const handleChangeIsActive = (value: ITemplate['isActive'], redirectUrl?: string) => {
+  const handleChangeIsActive = (value: ITemplateClient['isActive'], redirectUrl?: string) => {
     if (!value) {
       patchTemplate({ changedFields: { isActive: false } });
       return;

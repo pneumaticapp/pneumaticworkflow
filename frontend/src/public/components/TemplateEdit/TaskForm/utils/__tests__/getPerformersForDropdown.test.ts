@@ -1,6 +1,6 @@
 /// <reference types="jest" />
 import { intlMock } from '../../../../../__stubs__/intlMock';
-import { ETaskPerformerType, ITemplateTask } from '../../../../../types/template';
+import { ETaskPerformerType, ITemplateTaskClient } from '../../../../../types/template';
 import { getPerformersForDropdown } from '../getPerformersForDropdown';
 import { EOptionTypes } from '../../../../UI/form/UsersDropdown';
 
@@ -12,7 +12,7 @@ describe('getPerformersForDropdown', () => {
   const t = (id: string, values?: Record<string, string>) => intlMock.formatMessage({ id }, values);
   const MANAGER_LABEL = (step: string) => t('tasks.task-manager-of-step', { step });
 
-  const makeTask = (overrides: Partial<ITemplateTask> = {}): ITemplateTask => ({
+  const makeTask = (overrides: Partial<ITemplateTaskClient> = {}): ITemplateTaskClient => ({
     apiName: 'task-1',
     number: 1,
     name: 'First Step',

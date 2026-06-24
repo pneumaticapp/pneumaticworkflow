@@ -2,18 +2,18 @@ import * as React from 'react';
 import { useMemo } from 'react';
 import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
-import { ITemplateTask, ITaskFieldset } from '../../../types/template';
+import { ITemplateTaskClient, IFieldsetBindingClient } from '../../../types/template';
 import styles from '../ExtraFields/utils/ExtraFieldsLabels/ExtraFieldsLabels.css';
 import { getTriplePlural } from '../../../utils/helpers';
 import { getFieldsetsCatalogByApiName } from '../../../redux/selectors/fieldsets';
 
 interface ITaskRenderExtraFieldsInfoProps {
-  task: ITemplateTask;
+  task: ITemplateTaskClient;
   onClick: () => void;
 }
 
 function countFieldsetOutputFields(
-  fieldsets: ITaskFieldset[] | undefined,
+  fieldsets: IFieldsetBindingClient[] | undefined,
   fieldsetsByApiName: ReadonlyMap<string, { fields: unknown[] }>,
 ): number {
   if (!fieldsets?.length) {

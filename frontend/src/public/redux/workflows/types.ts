@@ -1,7 +1,7 @@
 import { TUploadedFile } from '../../utils/uploadFiles';
 
 import { ITemplateStep } from '../../types/tasks';
-import { IKickoff, TOrderedFields } from '../../types/template';
+import { IKickoffClient, TOrderedFields } from '../../types/template';
 import { EWorkflowsLogSorting, IWorkflowClient } from '../../types/workflow';
 
 export type TOpenWorkflowLogPopupPayload = {
@@ -28,7 +28,7 @@ export type TRemoveWorkflowFromListPayload = {
 export type TEditWorkflowPayload = {
   typeChange?: string;
   name?: string;
-  kickoff?: IKickoff | null;
+  kickoff?: IKickoffClient | null;
   isUrgent?: boolean;
   dueDate?: string | null;
   workflowId: number;

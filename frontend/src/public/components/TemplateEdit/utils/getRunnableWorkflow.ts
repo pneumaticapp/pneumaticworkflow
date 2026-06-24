@@ -1,22 +1,22 @@
 /* eslint-disable */
 /* prettier-ignore */
-import { ITemplate, ITemplateTask, IKickoff, IFieldsetData, IExtraField, ITaskFieldset } from '../../../types/template';
+import { ITemplateClient, ITemplateTaskClient, IKickoffClient, IFieldsetData, IExtraField, IFieldsetBindingClient } from '../../../types/template';
 import { setPerformersCounts } from '../../../utils/template';
 import { IRunWorkflow } from '../../WorkflowEditPopup/types';
 import { normalizeSelections } from './normalizeSelections';
 
 type TTemplateToRunWorkflow = Pick<
-  ITemplate,
+  ITemplateClient,
   'id' | 'name' | 'kickoff' | 'description' | 'isActive' | 'wfNameTemplate'
 > & {
-  tasks: Pick<ITemplateTask, 'rawPerformers'>[];
+  tasks: Pick<ITemplateTaskClient, 'rawPerformers'>[];
 };
 
 import { getDataset } from '../../../api/datasets/getDataset';
 import { getFieldsets } from '../../../api/fieldsets/getFieldsets';
 import { mapFieldsetTemplateToFieldsetData } from '../../../utils/mapFieldsetTemplateToFieldsetData';
 
-function getKickoffDatasetIds(kickoff: IKickoff, fieldsets: IFieldsetData[] = []): number[] {
+function getKickoffDatasetIds(kickoff: IKickoffClient, fieldsets: IFieldsetData[] = []): number[] {
   const ids = new Set<number>();
   for (const field of kickoff.fields) {
     if (field.dataset) ids.add(field.dataset);
@@ -29,7 +29,7 @@ function getKickoffDatasetIds(kickoff: IKickoff, fieldsets: IFieldsetData[] = []
   return [...ids];
 }
 
-export async function loadDatasetsMap(kickoff: IKickoff, fieldsets: IFieldsetData[] = []): Promise<Record<number, string[]>> {
+export async function loadDatasetsMap(kickoff: IKickoffClient, fieldsets: IFieldsetData[] = []): Promise<Record<number, string[]>> {
   const datasetIds = getKickoffDatasetIds(kickoff, fieldsets);
   if (datasetIds.length === 0) {
     return {};
@@ -47,8 +47,8 @@ export async function loadDatasetsMap(kickoff: IKickoff, fieldsets: IFieldsetDat
   return datasetsMap;
 }
 
-export async function loadFieldsetsData(kickoff: IKickoff, templateId: number): Promise<IFieldsetData[]> {
-  const TemplateKickoffFieldsets: ITaskFieldset[] = kickoff.fieldsets || [];
+export async function loadFieldsetsData(kickoff: IKickoffClient, templateId: number): Promise<IFieldsetData[]> {
+  const TemplateKickoffFieldsets: IFieldsetBindingClient[] = kickoff.fieldsets || [];
   if (TemplateKickoffFieldsets.length === 0) {
     return [];
   }
@@ -76,7 +76,7 @@ function applyDatasetsToFields(fields: IExtraField[], datasetsMap: Record<number
   }));
 }
 
-function convertSelectionsToValues(kickoff: IKickoff, datasetsMap: Record<number, string[]>): IKickoff {
+function convertSelectionsToValues(kickoff: IKickoffClient, datasetsMap: Record<number, string[]>): IKickoffClient {
   return {
     ...kickoff,
     fields: applyDatasetsToFields(kickoff.fields, datasetsMap),
