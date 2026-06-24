@@ -11,7 +11,7 @@ from src.processes.models.templates.conditions import (
 )
 from src.processes.models.templates.fieldset import (
     FieldsetTemplate,
-    FieldsetTemplateRuleOld,
+    FieldsetTemplateRule,
 )
 from src.processes.models.templates.fields import (
     FieldTemplate,
@@ -38,8 +38,9 @@ class SelectionSchemaV1(serializers.ModelSerializer):
 
 class FieldsetTemplateRuleSchemaV1(serializers.ModelSerializer):
 
+    # TODO Fix rule
     class Meta:
-        model = FieldsetTemplateRuleOld
+        model = FieldsetTemplateRule
         fields = (
             'api_name',
             'type',

@@ -63,7 +63,7 @@ class FieldTemplate(
     )
     # TODO Deprecated
     rules = models.ManyToManyField(
-        'processes.FieldsetTemplateRuleOld',
+        'processes.FieldsetTemplateRule',
         blank=True,
         related_name='fields',
     )
@@ -145,7 +145,7 @@ class FieldTemplateRuleSet(
     field = models.ForeignKey(
         FieldTemplate,
         on_delete=models.CASCADE,
-        related_name='rule_sets',
+        related_name='rulesets',
     )
     type = models.CharField(
         max_length=50,
@@ -213,50 +213,17 @@ class FieldTemplateRuleGroupAnd(
         ]
 
     api_name_prefix = 'field-rule-group-and'
-    template = models.ForeignKey(
-        Template,
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        related_name='field_ruleset_groups_and',
-    )
     group_or = models.ForeignKey(
         FieldTemplateRuleGroupOr,
         on_delete=models.CASCADE,
         related_name='groups_and',
     )
-
-    def __str__(self):
-        return self.api_name
-
-
-class FieldTemplateRule(
-    BaseApiNameModel,
-    AccountBaseMixin,
-):
-
-    class Meta:
-        ordering = ['id']
-        constraints = [
-            UniqueConstraint(
-                fields=['template', 'api_name', 'account'],
-                condition=Q(is_deleted=False),
-                name='fieldtemplaterule_group_and_api_name_unique',
-            ),
-        ]
-
-    api_name_prefix = 'field-rule'
     template = models.ForeignKey(
         Template,
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-        related_name='field_rules',
-    )
-    group_and = models.ForeignKey(
-        FieldTemplateRuleGroupAnd,
-        on_delete=models.CASCADE,
-        related_name='field_rules',
+        related_name='field_rules_group_and',
     )
     operator = models.CharField(
         max_length=50,
@@ -266,7 +233,7 @@ class FieldTemplateRule(
     field = models.ForeignKey(
         FieldTemplate,
         on_delete=models.CASCADE,
-        related_name='field_rules',
+        related_name='groups_and',
         null=True,
         blank=True,
     )

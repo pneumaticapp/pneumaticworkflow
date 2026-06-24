@@ -1,38 +1,18 @@
 from rest_framework.fields import CharField
 from rest_framework.serializers import ModelSerializer
 from src.generics.fields import (
-    RelatedApiNameListField, AccountPrimaryKeyRelatedField,
+    AccountPrimaryKeyRelatedField,
 )
 from src.generics.mixins.serializers import CustomValidationErrorMixin
 from src.processes.models.templates.fieldset import (
     FieldsetTemplate,
-    FieldsetTemplateRuleOld,
 )
 from src.processes.serializers.templates.field import (
     FieldTemplateSerializer,
 )
-
-
-class FieldsetTemplateRuleSerializer(
-    CustomValidationErrorMixin,
-    ModelSerializer,
-):
-
-    class Meta:
-        model = FieldsetTemplateRuleOld
-        fields = (
-            'type',
-            'value',
-            'api_name',
-            'fields',
-        )
-
-    api_name = CharField(required=False, max_length=200)
-    fields = RelatedApiNameListField(
-        required=False,
-        allow_empty=True,
-        default=list,
-    )
+from src.processes.serializers.templates.fieldset_rule import (
+    FieldSetTemplateRuleSetSerializer,
+)
 
 
 class FieldsetTemplateSerializer(
@@ -68,10 +48,11 @@ class FieldsetTemplateSerializer(
         required=True,
     )
     api_name = CharField(required=False, max_length=200)
-    rules = FieldsetTemplateRuleSerializer(
+    rules = FieldSetTemplateRuleSetSerializer(
         many=True,
         required=False,
         default=list,
+        source='rulesets',
     )
     fields = FieldTemplateSerializer(
         many=True,
@@ -100,10 +81,11 @@ class SharedFieldsetTemplateSerializer(
             'fields',
         )
 
-    rules = FieldsetTemplateRuleSerializer(
+    rules = FieldSetTemplateRuleSetSerializer(
         many=True,
         required=False,
         default=list,
+        source='rulesets',
     )
     fields = FieldTemplateSerializer(
         many=True,

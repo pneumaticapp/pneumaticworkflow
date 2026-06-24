@@ -531,7 +531,6 @@ class TaskTemplateSerializer(
             and not hasattr(self.instance, 'raw_due_date')
             and validated_data.get('raw_due_date')
         )
-        validated_data.pop('fieldsettemplatetasktemplate_set', None)
         instance = self.create_or_update_instance(
             instance=instance,
             validated_data={

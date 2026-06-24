@@ -7,7 +7,7 @@ from src.processes.enums import (
 from src.processes.messages.fieldset import MSG_FS_0007
 from src.processes.models.templates.fieldset import (
     FieldsetTemplate,
-    FieldsetTemplateRuleOld,
+    FieldsetTemplateRule,
 )
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.models.workflows.fieldset import (
@@ -375,7 +375,7 @@ def test__create_rules__with_template__ok(mocker):
         account=account,
         name='Fieldset',
     )
-    rule_template = FieldsetTemplateRuleOld.objects.create(
+    rule_template = FieldsetTemplateRule.objects.create(
         account=account,
         fieldset=fieldset_template,
         type=FieldSetRuleType.SUM_EQUAL,

@@ -5,7 +5,7 @@ from src.generics.base.service import BaseModelService
 from src.processes.enums import FieldSetRuleType, FieldType
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.models.templates.fieldset import (
-    FieldsetTemplateRuleOld,
+    FieldsetTemplateRule,
 )
 from src.processes.services.exceptions import (
     FieldsetTemplateRuleSumMaxFieldsNotNumber,
@@ -57,7 +57,8 @@ class FieldsetTemplateRuleService(BaseModelService):
         }
         if api_name:
             create_kwargs['api_name'] = api_name
-        self.instance = FieldsetTemplateRuleOld.objects.create(**create_kwargs)
+        # TODO Fix rule
+        self.instance = FieldsetTemplateRule.objects.create(**create_kwargs)
         return self.instance
 
     def _create_related(
@@ -104,7 +105,7 @@ class FieldsetTemplateRuleService(BaseModelService):
     def create(
         self,
         **kwargs,
-    ) -> FieldsetTemplateRuleOld:
+    ) -> FieldsetTemplateRule:
 
         with transaction.atomic():
             self._create_instance(**kwargs)
@@ -113,7 +114,7 @@ class FieldsetTemplateRuleService(BaseModelService):
             self._validate(**kwargs)
         return self.instance
 
-    def partial_update(self, **update_kwargs) -> FieldsetTemplateRuleOld:
+    def partial_update(self, **update_kwargs) -> FieldsetTemplateRule:
         fields = update_kwargs.pop('fields', None)
         with transaction.atomic():
             result = super().partial_update(**update_kwargs, force_save=True)

@@ -7,7 +7,7 @@ from src.processes.enums import (
 from src.processes.messages import fieldset as fs_messages
 from src.processes.models.templates.fieldset import (
     FieldsetTemplate,
-    FieldsetTemplateRuleOld,
+    FieldsetTemplateRule,
 )
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.services.exceptions import (
@@ -128,7 +128,7 @@ def test__validate_sum_equal__valid__ok():
         api_name='num',
         order=1,
     )
-    rule = FieldsetTemplateRuleOld.objects.create(
+    rule = FieldsetTemplateRule.objects.create(
         account=account,
         fieldset=fieldset,
         type=FieldSetRuleType.SUM_EQUAL,
@@ -164,7 +164,7 @@ def test__validate_sum_equal__empty_value__raise_exception():
         account=account,
         name='Fieldset',
     )
-    rule = FieldsetTemplateRuleOld.objects.create(
+    rule = FieldsetTemplateRule.objects.create(
         account=account,
         fieldset=fieldset,
         type=FieldSetRuleType.SUM_EQUAL,
@@ -200,7 +200,7 @@ def test__validate_sum_equal__non_numeric__raise_exception():
         account=account,
         name='Fieldset',
     )
-    rule = FieldsetTemplateRuleOld.objects.create(
+    rule = FieldsetTemplateRule.objects.create(
         account=account,
         fieldset=fieldset,
         type=FieldSetRuleType.SUM_EQUAL,
@@ -258,7 +258,7 @@ def test__validate_sum_equal__non_number_type__raise_exception(field_type):
         api_name='str_field',
         order=1,
     )
-    rule = FieldsetTemplateRuleOld.objects.create(
+    rule = FieldsetTemplateRule.objects.create(
         account=account,
         fieldset=fieldset,
         type=FieldSetRuleType.SUM_EQUAL,
@@ -291,7 +291,7 @@ def test__validate__call_method_by_type__ok(mocker):
         account=account,
         name='Fieldset',
     )
-    rule = FieldsetTemplateRuleOld.objects.create(
+    rule = FieldsetTemplateRule.objects.create(
         account=account,
         fieldset=fieldset,
         type=FieldSetRuleType.SUM_EQUAL,
@@ -354,7 +354,7 @@ def test_get_valid_fields__all_found__ok():
         is_superuser=False,
         auth_type=AuthTokenType.USER,
     )
-    service.instance = FieldsetTemplateRuleOld.objects.create(
+    service.instance = FieldsetTemplateRule.objects.create(
         account=account,
         fieldset=fieldset,
         type=FieldSetRuleType.SUM_EQUAL,
@@ -398,7 +398,7 @@ def test_get_valid_fields__type_from_kwargs__ok():
         is_superuser=False,
         auth_type=AuthTokenType.USER,
     )
-    service.instance = FieldsetTemplateRuleOld.objects.create(
+    service.instance = FieldsetTemplateRule.objects.create(
         account=account,
         fieldset=fieldset,
         type=FieldSetRuleType.SUM_EQUAL,
@@ -443,7 +443,7 @@ def test_get_valid_fields__type_from_instance__ok():
         is_superuser=False,
         auth_type=AuthTokenType.USER,
     )
-    service.instance = FieldsetTemplateRuleOld.objects.create(
+    service.instance = FieldsetTemplateRule.objects.create(
         account=account,
         fieldset=fieldset,
         type=FieldSetRuleType.SUM_EQUAL,
@@ -486,7 +486,7 @@ def test_get_valid_fields__one_failed__raise_exception():
         is_superuser=False,
         auth_type=AuthTokenType.USER,
     )
-    service.instance = FieldsetTemplateRuleOld.objects.create(
+    service.instance = FieldsetTemplateRule.objects.create(
         account=account,
         fieldset=fieldset,
         type=FieldSetRuleType.SUM_EQUAL,
@@ -523,7 +523,7 @@ def test_get_valid_fields__two_failed__raise_exception():
         is_superuser=False,
         auth_type=AuthTokenType.USER,
     )
-    service.instance = FieldsetTemplateRuleOld.objects.create(
+    service.instance = FieldsetTemplateRule.objects.create(
         account=account,
         fieldset=fieldset,
         type=FieldSetRuleType.SUM_EQUAL,
@@ -574,7 +574,7 @@ def test_set_fields__fields_provided__set_fields(mocker):
         is_superuser=False,
         auth_type=AuthTokenType.USER,
     )
-    rule = FieldsetTemplateRuleOld.objects.create(
+    rule = FieldsetTemplateRule.objects.create(
         account=account,
         fieldset=fieldset,
         type=FieldSetRuleType.SUM_EQUAL,
@@ -618,7 +618,7 @@ def test_set_fields__fields_not_provided__clear_fields(mocker):
         api_name='num',
         order=1,
     )
-    rule = FieldsetTemplateRuleOld.objects.create(
+    rule = FieldsetTemplateRule.objects.create(
         account=account,
         fieldset=fieldset,
         type=FieldSetRuleType.SUM_EQUAL,
@@ -741,7 +741,7 @@ def test_create__valid_data__ok(mocker):
         account=account,
         name='Fieldset',
     )
-    rule = FieldsetTemplateRuleOld.objects.create(
+    rule = FieldsetTemplateRule.objects.create(
         account=account,
         fieldset=fieldset,
         type=FieldSetRuleType.SUM_EQUAL,
@@ -803,7 +803,7 @@ def test_partial_update__with_fields__ok(mocker):
         account=account,
         name='Fieldset',
     )
-    rule = FieldsetTemplateRuleOld.objects.create(
+    rule = FieldsetTemplateRule.objects.create(
         account=account,
         fieldset=fieldset,
         type=FieldSetRuleType.SUM_EQUAL,
@@ -854,7 +854,7 @@ def test_partial_update__without_fields__ok(mocker):
         account=account,
         name='Fieldset',
     )
-    rule = FieldsetTemplateRuleOld.objects.create(
+    rule = FieldsetTemplateRule.objects.create(
         account=account,
         fieldset=fieldset,
         type=FieldSetRuleType.SUM_EQUAL,

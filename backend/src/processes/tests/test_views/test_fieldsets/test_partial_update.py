@@ -13,7 +13,7 @@ from src.processes.enums import (
     FieldSetRuleType,
     FieldType,
 )
-from src.processes.models.templates.fieldset import FieldsetTemplateRuleOld
+from src.processes.models.templates.fieldset import FieldsetTemplateRule
 from src.processes.services.fieldsets.fieldset import (
     FieldSetTemplateService,
 )
@@ -213,7 +213,7 @@ def test_partial_update__with_rule_fields__ok(api_client, mocker):
 
     # Pre-add the field to the fieldset for the mock response verification
     field = fieldset.fields.first()
-    rule = FieldsetTemplateRuleOld.objects.create(
+    rule = FieldsetTemplateRule.objects.create(
         account=account,
         fieldset=fieldset,
         type=FieldSetRuleType.SUM_EQUAL,

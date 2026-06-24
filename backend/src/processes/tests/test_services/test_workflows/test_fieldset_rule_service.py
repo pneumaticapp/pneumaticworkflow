@@ -8,7 +8,7 @@ from src.processes.enums import (
 from src.processes.messages import fieldset as fs_messages
 from src.processes.models.templates.fieldset import (
     FieldsetTemplate,
-    FieldsetTemplateRuleOld,
+    FieldsetTemplateRule,
 )
 from src.processes.models.workflows.fields import TaskField
 from src.processes.services.exceptions import FieldsetServiceException
@@ -47,7 +47,7 @@ def test__create_instance__with_template__ok():
         account=account,
         name='Fieldset tmpl',
     )
-    rule_template = FieldsetTemplateRuleOld.objects.create(
+    rule_template = FieldsetTemplateRule.objects.create(
         account=account,
         fieldset=fieldset_template,
         type=FieldSetRuleType.SUM_EQUAL,

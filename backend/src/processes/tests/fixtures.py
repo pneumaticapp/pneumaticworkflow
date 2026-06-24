@@ -49,7 +49,7 @@ from src.processes.models.templates.conditions import (
 )
 from src.processes.models.templates.fieldset import (
     FieldsetTemplate,
-    FieldsetTemplateRuleOld,
+    FieldsetTemplateRule,
 )
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.models.templates.kickoff import Kickoff
@@ -856,7 +856,8 @@ def create_test_shared_fieldset(
         is_shared=True,
     )
     if rule_type:
-        FieldsetTemplateRuleOld.objects.create(
+        # TODO fix rule
+        FieldsetTemplateRule.objects.create(
             fieldset=fieldset,
             account=account,
             api_name=f'{fieldset.api_name}-rule-1',
@@ -918,7 +919,7 @@ def create_test_fieldset_template(
         shared_fieldset=shared_fieldset,
     )
     for shared_rule in shared_fieldset.rules.all():
-        FieldsetTemplateRuleOld.objects.create(
+        FieldsetTemplateRule.objects.create(
             fieldset=fieldset,
             account=account,
             api_name=f'{fieldset.api_name}-rule-1',

@@ -25,6 +25,9 @@ from src.processes.serializers.templates.mixins import (
     CreateOrUpdateRelatedMixin,
     CustomValidationApiNameMixin,
 )
+from src.processes.serializers.templates.field_rule import (
+    FieldTemplateRuleSetSerializer,
+)
 from src.processes.serializers.templates.selection import (
     FieldTemplateSelectionSerializer,
 )
@@ -83,6 +86,7 @@ class FieldTemplateSerializer(
             'default',
             'dataset',
             'order',
+            'rules',
         )
         create_or_update_fields = {
             'type',
@@ -110,6 +114,12 @@ class FieldTemplateSerializer(
     selections = FieldTemplateSelectionSerializer(
         many=True,
         required=False,
+    )
+    rules = FieldTemplateRuleSetSerializer(
+        many=True,
+        required=False,
+        default=list,
+        source='rulesets',
     )
 
     def additional_validate(self, data: Dict[str, Any]):
@@ -174,6 +184,18 @@ class FieldTemplateSerializer(
                 **self.context,
             },
         )
+        self.create_or_update_related(
+            data=validated_data.get('rulesets'),
+            ancestors_data={
+                'field': instance,
+                'template': self.context['template'],
+            },
+            slz_cls=FieldTemplateRuleSetSerializer,
+            slz_context={
+                'field': instance,
+                **self.context,
+            },
+        )
         return instance
 
     def update(
@@ -209,6 +231,18 @@ class FieldTemplateSerializer(
             slz_cls=FieldTemplateSelectionSerializer,
             slz_context={
                 'field_template': instance,
+                **self.context,
+            },
+        )
+        self.create_or_update_related(
+            data=validated_data.get('rule_sets'),
+            ancestors_data={
+                'field': instance,
+                'template': self.context['template'],
+            },
+            slz_cls=FieldTemplateRuleSetSerializer,
+            slz_context={
+                'field': instance,
                 **self.context,
             },
         )

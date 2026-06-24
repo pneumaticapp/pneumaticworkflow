@@ -75,7 +75,7 @@ class FieldsetTemplate(
         return self.name
 
 
-class FieldsetTemplateRuleOld(
+class FieldsetTemplateRule(
     BaseApiNameModel,
     BaseFieldSetRuleMixin,
     AccountBaseMixin,
@@ -85,7 +85,6 @@ class FieldsetTemplateRuleOld(
 
     class Meta:
         ordering = ['-id']
-        db_table = 'processes_fieldsettemplate_rule_old'
         constraints = [
             UniqueConstraint(
                 fields=['api_name', 'fieldset'],
@@ -151,11 +150,11 @@ class FieldSetTemplateRuleSet(
     fields = models.ManyToManyField(
         'processes.FieldTemplate',
         blank=True,
-        related_name='fieldset_validator_rulesets',
+        related_name='fieldset_rulesets',
     )
 
     def __str__(self):
-        return f'{self.fieldset_id} / {self.type} / {self.api_name}'
+        return f'{self.type} / {self.api_name}'
 
 
 class FieldSetTemplateRuleGroupOr(
@@ -184,7 +183,7 @@ class FieldSetTemplateRuleGroupOr(
     fieldset_rule = models.ForeignKey(
         FieldSetTemplateRuleSet,
         on_delete=models.CASCADE,
-        related_name='group_or',
+        related_name='groups_or',
         null=True,
         blank=True,
     )
@@ -214,45 +213,12 @@ class FieldSetTemplateRuleGroupAnd(
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-        related_name='fieldset_ruleset_groups_and',
+        related_name='fieldset_rules_group_and',
     )
     group_or = models.ForeignKey(
         FieldSetTemplateRuleGroupOr,
         on_delete=models.CASCADE,
-        related_name='group_and',
-    )
-
-    def __str__(self):
-        return self.api_name
-
-
-class FieldSetTemplateRule(
-    BaseApiNameModel,
-    AccountBaseMixin,
-):
-
-    class Meta:
-        ordering = ['id']
-        constraints = [
-            UniqueConstraint(
-                fields=['template', 'api_name', 'account'],
-                condition=Q(is_deleted=False),
-                name='fieldsetrulecondition_group_and_api_name_unique',
-            ),
-        ]
-
-    api_name_prefix = 'fieldset-rule'
-    template = models.ForeignKey(
-        Template,
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        related_name='ruleset_rules',
-    )
-    group_and = models.ForeignKey(
-        FieldSetTemplateRuleGroupAnd,
-        on_delete=models.CASCADE,
-        related_name='ruleset_rules',
+        related_name='groups_and',
     )
     operator = models.CharField(
         max_length=50,
