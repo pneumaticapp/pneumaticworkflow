@@ -154,17 +154,17 @@ describe('fieldsets slice', () => {
   });
 
   describe('loadFieldsetsCatalogFailed', () => {
-    it('resets isCatalogLoading and clears catalogLoadedForTemplateId', () => {
+    it('resets isCatalogLoading and sets isCatalogLoaded to false', () => {
       const state: IFieldsetsStore = {
         ...initialState,
         isCatalogLoading: true,
-        catalogLoadedForTemplateId: 42,
+        isCatalogLoaded: true,
       };
 
       const result = fieldsetsReducer(state, loadFieldsetsCatalogFailed());
 
       expect(result.isCatalogLoading).toBe(false);
-      expect(result.catalogLoadedForTemplateId).toBeNull();
+      expect(result.isCatalogLoaded).toBe(false);
     });
   });
 
@@ -177,6 +177,7 @@ describe('fieldsets slice', () => {
 
       expect(result.catalogAllFieldsets).toEqual(items);
       expect(result.isCatalogLoading).toBe(false);
+      expect(result.isCatalogLoaded).toBe(true);
     });
   });
 });

@@ -413,7 +413,7 @@ export type IFieldsetsStore = {
 
   catalogAllFieldsets: IFieldsetCatalogItem[];
   isCatalogLoading: boolean;
-  catalogLoadedForTemplateId: number | null;
+  isCatalogLoaded: boolean;
 };
 
 export interface IAction<Type> {

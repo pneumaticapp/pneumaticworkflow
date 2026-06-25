@@ -62,7 +62,7 @@ import { TUserListItem } from '../../types/user';
 import { loadTemplateIntegrationsStats, loadTemplates } from '../actions';
 import { loadFieldsetsCatalog } from '../fieldsets/slice';
 import { loadFieldsetsCatalogSuccess, loadFieldsetsCatalogFailed } from '../fieldsets/slice';
-import { getFieldsetsCatalogByApiName, getCatalogLoadedForTemplateId } from '../selectors/fieldsets';
+import { getFieldsetsCatalogByApiName, getIsCatalogLoaded } from '../selectors/fieldsets';
 import { copyTemplate } from '../../api/copyTemplate';
 import { deleteTemplate } from '../../api/deleteTemplate';
 import { setGeneralLoaderVisibility } from '../general/actions';
@@ -90,9 +90,9 @@ export function* fetchTemplate({ payload: id }: TLoadTemplate) {
     const template: ITemplateResponse = yield getTemplate(id);
     yield setTemplateByTemplateResponse(template);
 
-    const catalogTemplateId: ReturnType<typeof getCatalogLoadedForTemplateId> = yield select(getCatalogLoadedForTemplateId);
-    if (catalogTemplateId !== template.id) {
-      yield put(loadFieldsetsCatalog({ templateId: template.id }));
+    const isCatalogLoaded: ReturnType<typeof getIsCatalogLoaded> = yield select(getIsCatalogLoaded);
+    if (!isCatalogLoaded) {
+      yield put(loadFieldsetsCatalog());
       yield take([loadFieldsetsCatalogSuccess.type, loadFieldsetsCatalogFailed.type]);
     }
 

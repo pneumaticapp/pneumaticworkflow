@@ -18,6 +18,7 @@ import { LIMIT_LOAD_FIELDSETS } from '../../constants/defaultValues';
 import { getFieldsetsStore } from '../selectors/fieldsets';
 import { getFieldsets } from '../../api/fieldsets/getFieldsets';
 import { getFieldset } from '../../api/fieldsets/getFieldset';
+import { getAllFieldsetsCatalog } from '../../api/fieldsets/getAllFieldsetsCatalog';
 import { createFieldset } from '../../api/fieldsets/createFieldset';
 import { updateFieldset } from '../../api/fieldsets/updateFieldset';
 import { deleteFieldset } from '../../api/fieldsets/deleteFieldset';
@@ -163,12 +164,9 @@ function* loadFieldsetsCatalogSaga() {
   const abortController = new AbortController();
 
   try {
-    const data: IGetFieldsetsResponse = yield call(getFieldsets, {
-      limit: 1000,
-      signal: abortController.signal,
-    });
+    const data: IFieldsetCatalogItem[] = yield call(getAllFieldsetsCatalog, abortController.signal);
 
-    yield put(loadFieldsetsCatalogSuccess(data.results || []));
+    yield put(loadFieldsetsCatalogSuccess(data));
   } catch (error) {
     if (isRequestCanceled(error)) return;
     yield put(loadFieldsetsCatalogFailed());

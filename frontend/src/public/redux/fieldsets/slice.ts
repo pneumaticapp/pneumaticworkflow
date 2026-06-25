@@ -26,7 +26,7 @@ export const initialState: IFieldsetsStore = {
 
   catalogAllFieldsets: [],
   isCatalogLoading: false,
-  catalogLoadedForTemplateId: null,
+  isCatalogLoaded: false,
 };
 
 const fieldsetsSlice = createSlice({
@@ -106,7 +106,7 @@ const fieldsetsSlice = createSlice({
     },
 
     createFieldsetAction: (state, _action: PayloadAction<ICreateFieldsetParams>) => {
-      // saga handles side effect
+      state.isCatalogLoaded = false;
     },
 
     updateFieldsetAction: (state, action: PayloadAction<IUpdateFieldsetParams>) => {
@@ -119,10 +119,12 @@ const fieldsetsSlice = createSlice({
         if (action.payload.rules) state.currentFieldset.rules = action.payload.rules;
         if (action.payload.fields) state.currentFieldset.fields = action.payload.fields as any;
       }
+      state.isCatalogLoaded = false;
     },
 
     deleteFieldsetAction: (state, _action: PayloadAction<TDeleteFieldsetPayload>) => {
       state.isLoading = true;
+      state.isCatalogLoaded = false;
     },
 
     removeFieldsetFromList: (state, action: PayloadAction<number>) => {
@@ -130,18 +132,19 @@ const fieldsetsSlice = createSlice({
       state.fieldsetsList.count -= 1;
       state.isLoading = false;
     },
-    loadFieldsetsCatalog: (state, _action: PayloadAction<{ templateId: number }>) => {
+    loadFieldsetsCatalog: (state) => {
       state.isCatalogLoading = true;
     },
 
     loadFieldsetsCatalogSuccess: (state, action: PayloadAction<IFieldsetCatalogItem[]>) => {
       state.catalogAllFieldsets = action.payload;
       state.isCatalogLoading = false;
+      state.isCatalogLoaded = true;
     },
 
     loadFieldsetsCatalogFailed: (state) => {
       state.isCatalogLoading = false;
-      state.catalogLoadedForTemplateId = null;
+      state.isCatalogLoaded = false;
     },
   },
 });
