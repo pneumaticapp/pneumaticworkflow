@@ -1,6 +1,7 @@
 // <reference types="jest" />
 import { uploadFileToFileService } from '../fileServiceUpload';
 import { commonRequest } from '../commonRequest';
+import { ETimeouts } from '../../constants/defaultValues';
 
 jest.mock('../commonRequest', () => ({
   commonRequest: jest.fn(),
@@ -38,7 +39,7 @@ describe('fileServiceUpload', () => {
     expect(url).toBe('/files/upload');
     expect(options.method).toBe('POST');
     expect(options.data).toBeInstanceOf(FormData);
-    expect(extra).toEqual({ type: 'fileService', shouldThrow: true });
+    expect(extra).toEqual({ type: 'fileService', shouldThrow: true, timeOut: ETimeouts.Long });
   });
 
   it('appends file to FormData with correct filename', async () => {
