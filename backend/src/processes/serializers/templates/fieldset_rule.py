@@ -45,6 +45,7 @@ class FieldSetTemplateRuleGroupOrSerializer(
     api_name = CharField(max_length=200, required=False)
     group_and = FieldSetTemplateRuleGroupAndSerializer(
         many=True,
+        source='groups_and',
     )
 
 
@@ -70,4 +71,5 @@ class FieldSetTemplateRuleSetSerializer(
     )
     group_or = FieldSetTemplateRuleGroupOrSerializer(
         many=True,
+        source='groups_or',
     )

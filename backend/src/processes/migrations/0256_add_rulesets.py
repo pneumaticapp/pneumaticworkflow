@@ -157,7 +157,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='fieldsettemplaterule',
-            constraint=models.UniqueConstraint(condition=models.Q(is_deleted=False), fields=('api_name', 'fieldset'), name='fieldsettemplate_api_name_template_unique'),
+            constraint=models.UniqueConstraint(condition=models.Q(is_deleted=False), fields=('api_name', 'fieldset'), name='fieldsettemplaterule_api_name_fieldset_unique'),
         ),
         migrations.AddConstraint(
             model_name='fieldtemplate',
@@ -165,7 +165,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='fieldtemplateselection',
-            constraint=models.UniqueConstraint(condition=models.Q(is_deleted=False), fields=('template', 'api_name', 'account'), name='processes_fieldtemplateselection_template_api_name_unique'),
+            constraint=models.UniqueConstraint(condition=models.Q(is_deleted=False), fields=('template', 'api_name'), name='processes_fieldtemplateselection_template_api_name_unique'),
         ),
         migrations.DeleteModel(
             name='FieldsetTemplateKickoff',
@@ -291,10 +291,10 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='fieldsettemplaterulegroupor',
-            constraint=models.UniqueConstraint(condition=models.Q(is_deleted=False), fields=('api_name', 'template', 'account'), name='rulegroupor_field_rule_api_name_unique'),
+            constraint=models.UniqueConstraint(condition=models.Q(is_deleted=False), fields=('api_name', 'template', 'account'), name='fieldset_rulegroupor_field_rule_api_name_unique'),
         ),
         migrations.AddConstraint(
             model_name='fieldsettemplaterulegroupand',
-            constraint=models.UniqueConstraint(condition=models.Q(is_deleted=False), fields=('template', 'api_name', 'account'), name='rulegroupand_group_or_api_name_unique'),
+            constraint=models.UniqueConstraint(condition=models.Q(is_deleted=False), fields=('template', 'api_name', 'account'), name='fieldset_rulegroupand_group_or_api_name_unique'),
         ),
     ]

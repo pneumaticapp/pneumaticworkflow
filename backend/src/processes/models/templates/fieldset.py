@@ -168,7 +168,7 @@ class FieldSetTemplateRuleGroupOr(
             UniqueConstraint(
                 fields=['api_name', 'template', 'account'],
                 condition=Q(is_deleted=False),
-                name='rulegroupor_field_rule_api_name_unique',
+                name='fieldset_rulegroupor_field_rule_api_name_unique',
             ),
         ]
 
@@ -203,7 +203,7 @@ class FieldSetTemplateRuleGroupAnd(
             UniqueConstraint(
                 fields=['template', 'api_name', 'account'],
                 condition=Q(is_deleted=False),
-                name='rulegroupand_group_or_api_name_unique',
+                name='fieldset_rulegroupand_group_or_api_name_unique',
             ),
         ]
 

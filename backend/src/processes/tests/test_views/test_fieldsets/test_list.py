@@ -8,6 +8,14 @@ from src.accounts.enums import BillingPlanType
 from src.accounts.messages import MSG_A_0035, MSG_A_0037, MSG_A_0041
 from src.processes.enums import (
     FieldSetRuleType,
+    FieldSetRuleOperator,
+    FieldRuleType,
+    FieldRuleOperator,
+)
+from src.processes.models.templates.fields import (
+    FieldTemplateRuleSet,
+    FieldTemplateRuleGroupOr,
+    FieldTemplateRuleGroupAnd,
 )
 from src.processes.tests.fixtures import (
     create_test_account,
@@ -24,7 +32,7 @@ pytestmark = pytest.mark.django_db
 
 
 def test_list_fieldsets__all_data__ok(api_client):
-    """List fieldsets returning all fields including title and order"""
+    """ List fieldsets returning all fields including title and order """
 
     # arrange
     account = create_test_account()
@@ -43,7 +51,32 @@ def test_list_fieldsets__all_data__ok(api_client):
         rule_value=rule_value,
     )
     field = fieldset.fields.get()
-    rule = fieldset.rules.get()
+    rule = fieldset.rulesets.first()
+    group_or = rule.groups_or.first()
+    group_and = group_or.groups_and.first()
+
+    field_rule_type = FieldRuleType.SHOW
+    field_ruleset = FieldTemplateRuleSet.objects.create(
+        field=field,
+        account=account,
+        api_name=f'{field.api_name}-ruleset-1',
+        type=field_rule_type,
+        order=0,
+    )
+    field_group_or = FieldTemplateRuleGroupOr.objects.create(
+        field_rule=field_ruleset,
+        account=account,
+        api_name=f'{field.api_name}-group-or-1',
+    )
+    field_rule_value = 'some value'
+    field_group_and = FieldTemplateRuleGroupAnd.objects.create(
+        group_or=field_group_or,
+        account=account,
+        api_name=f'{field.api_name}-group-and-1',
+        operator=FieldRuleOperator.EQUAL,
+        value=field_rule_value,
+        field=field,
+    )
 
     api_client.token_authenticate(user=user)
 
@@ -64,27 +97,60 @@ def test_list_fieldsets__all_data__ok(api_client):
     assert item_1['label_position'] == fieldset.label_position
 
     assert len(item_1['rules']) == 1
-    rules_data = item_1['rules']
-    assert rules_data[0]['type'] == rule_type
-    assert rules_data[0]['value'] == rule_value
-    assert rules_data[0]['api_name'] == rule.api_name
+    rule_data = item_1['rules'][0]
+    assert rule_data['api_name'] == rule.api_name
+    assert rule_data['type'] == rule_type
+    assert rule_data['message'] is None
+    assert rule_data['order'] == 0
+    assert rule_data['fields'] == []
+
+    assert len(rule_data['group_or']) == 1
+    group_or_data = rule_data['group_or'][0]
+    assert group_or_data['api_name'] == group_or.api_name
+
+    assert len(group_or_data['group_and']) == 1
+    group_and_data = group_or_data['group_and'][0]
+    assert group_and_data['api_name'] == group_and.api_name
+    assert group_and_data['operator'] == FieldSetRuleOperator.SUM_EQUAL
+    assert group_and_data['value'] == rule_value
 
     assert len(item_1['fields']) == 1
-    fields_data = item_1['fields']
-    assert fields_data[0]['name'] == field.name
-    assert fields_data[0]['type'] == field.type
-    assert fields_data[0]['api_name'] == field.api_name
-    assert fields_data[0]['description'] == ''
-    assert fields_data[0]['is_required'] is False
-    assert fields_data[0]['is_hidden'] is False
-    assert fields_data[0]['default'] == ''
-    assert 'dataset' not in fields_data[0]
-    assert 'selections' not in fields_data[0]
+    field_data = item_1['fields'][0]
+    assert field_data['name'] == field.name
+    assert field_data['type'] == field.type
+    assert field_data['api_name'] == field.api_name
+    assert field_data['description'] == ''
+    assert field_data['is_required'] is False
+    assert field_data['is_hidden'] is False
+    assert field_data['default'] == ''
+    assert field_data['order'] == field.order
+    assert len(field_data['rules']) == 1
+    field_rule_data = field_data['rules'][0]
+    assert field_rule_data['api_name'] == field_ruleset.api_name
+    assert field_rule_data['type'] == field_rule_type
+    assert field_rule_data['message'] is None
+    assert field_rule_data['order'] == 0
+
+    assert len(field_rule_data['group_or']) == 1
+    field_group_or_data = field_rule_data['group_or'][0]
+    assert field_group_or_data['api_name'] == field_group_or.api_name
+
+    assert len(field_group_or_data['group_and']) == 1
+    field_group_and_data = field_group_or_data['group_and'][0]
+    assert field_group_and_data['api_name'] == field_group_and.api_name
+    assert field_group_and_data['field'] == field.api_name
+    assert field_group_and_data['operator'] == FieldRuleOperator.EQUAL
+    assert field_group_and_data['value'] == field_rule_value
+
+    assert 'dataset' not in field_data
+    assert 'selections' not in field_data
 
 
-def test_list_fieldsets__shared_fieldset_has_rules_and_fields__ok(api_client):
+def test_list_fieldsets__shared_fieldset_has_rules_and_fields__ok(
+    api_client,
+):
 
-    """List shared fieldsets returns rules and fields"""
+    """ List shared fieldsets returns rules and fields """
 
     # arrange
     account = create_test_account()
@@ -97,7 +163,7 @@ def test_list_fieldsets__shared_fieldset_has_rules_and_fields__ok(api_client):
         rule_value=rule_value,
     )
     field = fieldset.fields.get()
-    rule = fieldset.rules.get()
+    rule = fieldset.rulesets.first()
 
     api_client.token_authenticate(user=user)
 
@@ -115,7 +181,7 @@ def test_list_fieldsets__shared_fieldset_has_rules_and_fields__ok(api_client):
 
 
 def test_list_fieldsets__pagination__ok(api_client):
-    """Paginated list returns correct count and slice"""
+    """ Paginated list returns correct count and slice """
 
     # arrange
     account = create_test_account()
@@ -155,7 +221,7 @@ def test_list_fieldsets__pagination__ok(api_client):
 
 
 def test_list_fieldsets__different_accounts__ok(api_client):
-    """List fieldsets filtered by account — other accounts excluded"""
+    """ List fieldsets filtered by account — other accounts excluded """
 
     # arrange
     account_1 = create_test_account(name='Account 1')
@@ -189,7 +255,7 @@ def test_list_fieldsets__different_accounts__ok(api_client):
 
 
 def test_list_fieldsets__rule_with_fields__ok(api_client):
-    """List fieldsets returning rules mapping to fields"""
+    """ List fieldsets returning rules mapping to fields """
 
     # arrange
     account = create_test_account()
@@ -206,7 +272,7 @@ def test_list_fieldsets__rule_with_fields__ok(api_client):
         rule_value=rule_value,
     )
     field = fieldset.fields.get()
-    rule = fieldset.rules.get()
+    rule = fieldset.rulesets.first()
     rule.fields.add(field)
 
     api_client.token_authenticate(user=user)
@@ -224,98 +290,8 @@ def test_list_fieldsets__rule_with_fields__ok(api_client):
     assert rules_data[0]['fields'] == [field.api_name]
 
 
-def test_list_fieldsets__unauthenticated__unauthorized(api_client):
-    """Unauthenticated request returns 401"""
-
-    # act
-    response = api_client.get('/fieldsets')
-
-    # assert
-    assert response.status_code == 401
-
-
-def test_list_fieldsets__expired_sub__permission_denied(api_client):
-    """Expired subscription returns 403"""
-
-    # arrange
-    account = create_test_account(
-        plan=BillingPlanType.PREMIUM,
-        plan_expiration=timezone.now() - timedelta(days=1),
-    )
-    user = create_test_owner(account=account)
-
-    api_client.token_authenticate(user=user)
-
-    # act
-    response = api_client.get('/fieldsets')
-
-    # assert
-    assert response.status_code == 403
-    assert response.data['detail'] == MSG_A_0035
-
-
-def test_list_fieldsets__billing_plan__permission_denied(api_client):
-    """Billing plan permission denied returns 403"""
-
-    # arrange
-    account = create_test_account(plan=None)
-    user = create_test_owner(account=account)
-
-    api_client.token_authenticate(user=user)
-
-    # act
-    response = api_client.get('/fieldsets')
-
-    # assert
-    assert response.status_code == 403
-    assert response.data['detail'] == MSG_A_0041
-
-
-def test_list_fieldsets__users_overlimit__permission_denied(api_client):
-    """Users overlimited returns 403"""
-
-    # arrange
-    account = create_test_account(
-        plan=BillingPlanType.PREMIUM,
-        max_users=1,
-    )
-    user = create_test_owner(account=account)
-    create_test_not_admin(
-        account=account,
-        email='extra@pneumatic.app',
-    )
-    account.active_users = 2
-    account.save()
-
-    api_client.token_authenticate(user=user)
-
-    # act
-    response = api_client.get('/fieldsets')
-
-    # assert
-    assert response.status_code == 403
-    assert response.data['detail'] == MSG_A_0037
-
-
-def test_list_fieldsets__non_admin__permission_denied(api_client):
-    """Non-admin non-owner user returns 403"""
-
-    # arrange
-    account = create_test_account()
-    create_test_owner(account=account)
-    user = create_test_not_admin(account=account)
-
-    api_client.token_authenticate(user=user)
-
-    # act
-    response = api_client.get('/fieldsets')
-
-    # assert
-    assert response.status_code == 403
-
-
 def test_list_fieldsets__admin__ok(api_client):
-    """Admin (non-owner) user can list fieldsets"""
+    """ Admin (non-owner) user can list fieldsets """
 
     # arrange
     account = create_test_account()
@@ -718,6 +694,8 @@ def test_list_fieldsets__soft_deleted__ok(api_client):
 
 def test_list_fieldsets__not_shared__empty_list(api_client):
 
+    """ Non-shared fieldset is excluded from the list """
+
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
@@ -735,3 +713,93 @@ def test_list_fieldsets__not_shared__empty_list(api_client):
     # assert
     assert response.status_code == 200
     assert len(response.data) == 0
+
+
+def test_list_fieldsets__unauthenticated__unauthorized(api_client):
+    """ Unauthenticated request returns 401 """
+
+    # act
+    response = api_client.get('/fieldsets')
+
+    # assert
+    assert response.status_code == 401
+
+
+def test_list_fieldsets__expired_sub__permission_denied(api_client):
+    """ Expired subscription returns 403 """
+
+    # arrange
+    account = create_test_account(
+        plan=BillingPlanType.PREMIUM,
+        plan_expiration=timezone.now() - timedelta(days=1),
+    )
+    user = create_test_owner(account=account)
+
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get('/fieldsets')
+
+    # assert
+    assert response.status_code == 403
+    assert response.data['detail'] == MSG_A_0035
+
+
+def test_list_fieldsets__billing_plan__permission_denied(api_client):
+    """ Billing plan permission denied returns 403 """
+
+    # arrange
+    account = create_test_account(plan=None)
+    user = create_test_owner(account=account)
+
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get('/fieldsets')
+
+    # assert
+    assert response.status_code == 403
+    assert response.data['detail'] == MSG_A_0041
+
+
+def test_list_fieldsets__users_overlimit__permission_denied(api_client):
+    """ Users overlimited returns 403 """
+
+    # arrange
+    account = create_test_account(
+        plan=BillingPlanType.PREMIUM,
+        max_users=1,
+    )
+    user = create_test_owner(account=account)
+    create_test_not_admin(
+        account=account,
+        email='extra@pneumatic.app',
+    )
+    account.active_users = 2
+    account.save()
+
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get('/fieldsets')
+
+    # assert
+    assert response.status_code == 403
+    assert response.data['detail'] == MSG_A_0037
+
+
+def test_list_fieldsets__non_admin__permission_denied(api_client):
+    """ Non-admin non-owner user returns 403 """
+
+    # arrange
+    account = create_test_account()
+    create_test_owner(account=account)
+    user = create_test_not_admin(account=account)
+
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get('/fieldsets')
+
+    # assert
+    assert response.status_code == 403

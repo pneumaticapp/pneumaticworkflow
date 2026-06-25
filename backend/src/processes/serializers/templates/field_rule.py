@@ -1,11 +1,12 @@
 from rest_framework.fields import CharField
 from rest_framework.serializers import ModelSerializer
 
-from src.generics.fields import RelatedApiNameField
+from src.generics.fields import AccountOnlyRelatedApiNameField
 from src.generics.mixins.serializers import (
     CustomValidationErrorMixin,
 )
 from src.processes.models.templates.fields import (
+    FieldTemplate,
     FieldTemplateRuleGroupAnd,
     FieldTemplateRuleGroupOr,
     FieldTemplateRuleSet,
@@ -27,7 +28,9 @@ class FieldTemplateRuleGroupAndSerializer(
         )
 
     api_name = CharField(max_length=200, required=False)
-    field = RelatedApiNameField()
+    field = AccountOnlyRelatedApiNameField(
+        queryset=FieldTemplate.objects.all(),
+    )
 
 
 class FieldTemplateRuleGroupOrSerializer(
@@ -45,6 +48,7 @@ class FieldTemplateRuleGroupOrSerializer(
     api_name = CharField(max_length=200, required=False)
     group_and = FieldTemplateRuleGroupAndSerializer(
         many=True,
+        source='groups_and',
     )
 
 
@@ -66,4 +70,5 @@ class FieldTemplateRuleSetSerializer(
     api_name = CharField(max_length=200, required=False)
     group_or = FieldTemplateRuleGroupOrSerializer(
         many=True,
+        source='groups_or',
     )
