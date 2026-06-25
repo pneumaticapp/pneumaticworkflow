@@ -4,11 +4,11 @@ import userEvent from '@testing-library/user-event';
 
 import { intlMock } from '../../../../__stubs__/intlMock';
 import { makeExtraField } from '../../../../__stubs__/fields.factory';
-import { makeFieldsetData } from '../../../../__stubs__/fieldsets.factory';
+import { makeFieldsetBindingClient, makeFieldsetData } from '../../../../__stubs__/fieldsets.factory';
 import {
   IExtraField,
   IFieldsetData,
-  ITemplateTask,
+  ITemplateTaskClient,
 } from '../../../../types/template';
 
 jest.mock('../../ExtraFields/utils/useDatasetOptions', () => ({
@@ -134,7 +134,7 @@ import { OutputFormTaskMerged } from '../OutputFormTaskMerged';
 import { getEmptyField } from '../../KickoffRedux/utils/getEmptyField';
 
 describe('OutputFormTaskMerged', () => {
-  const makeTask = (overrides: Partial<ITemplateTask> = {}): ITemplateTask => ({
+  const makeTask = (overrides: Partial<ITemplateTaskClient> = {}): ITemplateTaskClient => ({
     id: 1,
     apiName: 'task-1',
     name: 'Task',
@@ -167,7 +167,7 @@ describe('OutputFormTaskMerged', () => {
   });
 
   const renderForm = (props: {
-    task: ITemplateTask;
+    task: ITemplateTaskClient;
     fieldsetsByApiName?: ReadonlyMap<string, IFieldsetData>;
     patchTask?: jest.Mock;
   }) => {
@@ -201,7 +201,7 @@ describe('OutputFormTaskMerged', () => {
     it('renders rows table when there are fieldsets but no own fields', () => {
       const fsData = makeFieldsetData({ apiName: 'fs-1' });
       renderForm({
-        task: makeTask({ fields: [], fieldsets: [{ apiName: 'fs-1', order: 0 }] }),
+        task: makeTask({ fields: [], fieldsets: [makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 0 })] }),
         fieldsetsByApiName: new Map([['fs-1', fsData]]),
       });
       expect(screen.getByTestId('merged-rows')).toBeInTheDocument();
@@ -214,7 +214,7 @@ describe('OutputFormTaskMerged', () => {
       const { patchTask } = renderForm({
         task: makeTask({
           fields: [existingField],
-          fieldsets: [{ apiName: 'fs-1', order: 1 }],
+          fieldsets: [makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 1 })],
         }),
         fieldsetsByApiName: new Map([['fs-1', makeFieldsetData()]]),
       });
@@ -238,7 +238,7 @@ describe('OutputFormTaskMerged', () => {
       const { patchTask } = renderForm({
         task: makeTask({
           fields: [existingField],
-          fieldsets: [{ apiName: 'fs-1', order: 0 }],
+          fieldsets: [makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 0 })],
         }),
         fieldsetsByApiName: new Map([['fs-1', makeFieldsetData()]]),
       });
@@ -257,7 +257,7 @@ describe('OutputFormTaskMerged', () => {
       const { patchTask } = renderForm({
         task: makeTask({
           fields: [fieldA, fieldB],
-          fieldsets: [{ apiName: 'fs-1', order: 0 }],
+          fieldsets: [makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 0 })],
         }),
         fieldsetsByApiName: new Map([['fs-1', makeFieldsetData()]]),
       });
@@ -297,7 +297,7 @@ describe('OutputFormTaskMerged', () => {
     it('does not send PATCH when adding an already-connected fieldset', () => {
       const fsData = makeFieldsetData({ apiName: 'fs-1' });
       const { patchTask } = renderForm({
-        task: makeTask({ fields: [], fieldsets: [{ apiName: 'fs-1', order: 0 }] }),
+        task: makeTask({ fields: [], fieldsets: [makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 0 })] }),
         fieldsetsByApiName: new Map([['fs-1', fsData]]),
       });
 
@@ -313,8 +313,8 @@ describe('OutputFormTaskMerged', () => {
         task: makeTask({
           fields: [],
           fieldsets: [
-            { apiName: 'fs-a', order: 0 },
-            { apiName: 'fs-b', order: 1 },
+            makeFieldsetBindingClient({ apiNameBinding: 'fs-a', order: 0 }),
+            makeFieldsetBindingClient({ apiNameBinding: 'fs-b', order: 1 }),
           ],
         }),
         fieldsetsByApiName: new Map([
@@ -341,7 +341,7 @@ describe('OutputFormTaskMerged', () => {
       const { patchTask } = renderForm({
         task: makeTask({
           fields: [fieldA],
-          fieldsets: [{ apiName: 'fs-1', order: 0 }],
+          fieldsets: [makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 0 })],
         }),
         fieldsetsByApiName: new Map([['fs-1', fsData]]),
       });

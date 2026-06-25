@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { makeExtraField } from '../../../../__stubs__/fields.factory';
-import { makeFieldsetData as makeFieldsetDataBase } from '../../../../__stubs__/fieldsets.factory';
+import { makeFieldsetData as makeFieldsetDataBase, makeFieldsetBindingClient } from '../../../../__stubs__/fieldsets.factory';
 import { IExtraField, IFieldsetData } from '../../../../types/template';
 import { intlMock } from '../../../../__stubs__/intlMock';
 import { MergedOutputRows, IMergedOutputRowsProps } from '../MergedOutputRows';
@@ -79,10 +79,9 @@ const fieldRow = (apiName: string): TMergedTaskOutputRow => ({
   field: makeField(apiName),
 });
 
-const fieldsetRow = (apiName: string): TMergedTaskOutputRow => ({
+const fieldsetRow = (apiNameBinding: string): TMergedTaskOutputRow => ({
+  ...makeFieldsetBindingClient({ apiName: apiNameBinding, apiNameBinding }),
   kind: 'fieldset',
-  apiName,
-  order: 0,
 });
 
 describe('MergedOutputRows', () => {

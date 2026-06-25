@@ -11,6 +11,7 @@ import {
   buildMergedTaskOutputRows,
   buildRowsWithAddedFieldset,
   buildRowsWithRemovedFieldset,
+  createFieldsetBinding,
   moveMergedRow,
   normalizeMergedTaskOutputOrders,
   TMergedTaskOutputRow,
@@ -19,7 +20,8 @@ import { MergedOutputRows } from '../TaskOutputFlow/MergedOutputRows';
 
 import { KickoffMenu } from './KickoffMenu';
 import { IntlMessages } from '../../IntlMessages';
-import {  EExtraFieldType, IKickoff, IExtraField, ITemplate, ETemplateParts } from '../../../types/template';
+import {  EExtraFieldType, IExtraField, ETemplateParts, IKickoffClient, ITemplateClient } from '../../../types/template';
+import { IFieldsetCatalogItem } from '../../../types/fieldset';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { ExtraFieldsMap } from '../ExtraFields/utils/ExtraFieldsMap';
 import { ExtraFieldIcon } from '../ExtraFields/utils/ExtraFieldIcon';
@@ -38,11 +40,11 @@ import { InputWithVariables } from '../InputWithVariables';
 import { useDatasetOptions } from '../ExtraFields/utils/useDatasetOptions';
 
 export interface IKickoffReduxProps {
-  template: ITemplate;
+  template: ITemplateClient;
   intl: IntlShape;
   accountId: number;
   templateStatus: ETemplateStatus;
-  setKickoff(value: IKickoff): void;
+  setKickoff(value: IKickoffClient): void;
 }
 
 export function KickoffRedux({
@@ -64,7 +66,7 @@ export function KickoffRedux({
     [kickoff.fields, kickoff.fieldsets],
   );
 
-  const editTemplate = (templateFields: Partial<ITemplate>) => {
+  const editTemplate = (templateFields: Partial<ITemplateClient>) => {
     dispatch(patchTemplate({ changedFields: templateFields }));
   };
 
@@ -83,7 +85,7 @@ export function KickoffRedux({
     setIsOpen(!isOpen);
   };
 
-  const handleChangeKickoff = (newKickoff: IKickoff) => {
+  const handleChangeKickoff = (newKickoff: IKickoffClient) => {
     setKickoff(newKickoff);
   };
 
@@ -105,12 +107,13 @@ export function KickoffRedux({
   };
 
   const saveOutputOrders = (rows: TMergedTaskOutputRow[], allFields?: IExtraField[]) => {
-    const { nextFields, fieldsetOrderPatches } = normalizeMergedTaskOutputOrders(rows, allFields ?? kickoff.fields);
-    handleChangeKickoff({ ...kickoff, fields: nextFields, fieldsets: fieldsetOrderPatches });
+    const { nextFields, nextFieldsets } = normalizeMergedTaskOutputOrders(rows, allFields ?? kickoff.fields);
+    handleChangeKickoff({ ...kickoff, fields: nextFields, fieldsets: nextFieldsets });
   };
 
-  const handleAddFieldset = (fieldsetApiName: string) => {
-    const rows = buildRowsWithAddedFieldset(kickoff.fields, kickoff.fieldsets || [], fieldsetApiName);
+  const handleAddKickoffFieldset = (fieldsetCatalogItem: IFieldsetCatalogItem) => {
+    const newFieldsetBinding = createFieldsetBinding(fieldsetCatalogItem);
+    const rows = buildRowsWithAddedFieldset(kickoff.fields, kickoff.fieldsets || [], newFieldsetBinding);
     if (rows) saveOutputOrders(rows);
   };
 
@@ -166,8 +169,8 @@ export function KickoffRedux({
             templateId={templateId}
             fieldsetsByApiName={fieldsetsByApiName}
             fieldsetsCatalogLoading={fieldsetsCatalogLoading}
-            selectedFieldsetApiNames={(kickoff.fieldsets || []).map((fieldset) => fieldset.apiName)}
-            onSelectFieldset={handleAddFieldset}
+            selectedFieldsetIds={(kickoff.fieldsets || []).map((fieldset) => fieldset.sharedFieldsetId)}
+            onSelectFieldset={handleAddKickoffFieldset}
             onRemoveFieldset={handleRemoveFieldset}
           />
         </div>

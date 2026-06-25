@@ -3,7 +3,8 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import classNames from 'classnames';
 import { IntlShape } from 'react-intl';
 
-import { EExtraFieldType, IExtraField, IFieldsetData, ITemplateTask } from '../../../types/template';
+import { EExtraFieldType, IExtraField, IFieldsetData, ITemplateTaskClient } from '../../../types/template';
+import { IFieldsetCatalogItem } from '../../../types/fieldset';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { useDatasetOptions } from '../ExtraFields/utils/useDatasetOptions';
 import { getEditedFields } from '../ExtraFields/utils/getEditedFields';
@@ -18,6 +19,7 @@ import {
   buildMergedTaskOutputRows,
   buildRowsWithAddedFieldset,
   buildRowsWithRemovedFieldset,
+  createFieldsetBinding,
   moveMergedRow,
   normalizeMergedTaskOutputOrders,
   TMergedTaskOutputRow,
@@ -27,7 +29,7 @@ import styles from './OutputForm.css';
 import stylesTaskForm from '../TaskForm/TaskForm.css';
 
 export interface IOutputFormTaskMergedOwnProps {
-  task: ITemplateTask;
+  task: ITemplateTaskClient;
   fieldsetsByApiName: ReadonlyMap<string, IFieldsetData>;
   fieldsetsCatalogLoading: boolean;
   templateId: number | undefined;
@@ -69,10 +71,10 @@ export function OutputFormTaskMerged({
       allFieldsSource?: IExtraField[],
     ) => {
       const allFields = allFieldsSource ?? task.fields ?? [];
-      const { nextFields, fieldsetOrderPatches } = normalizeMergedTaskOutputOrders(rows, allFields);
+      const { nextFields, nextFieldsets } = normalizeMergedTaskOutputOrders(rows, allFields);
       patchTask({
         taskUUID: task.uuid,
-        changedFields: { fields: nextFields, fieldsets: fieldsetOrderPatches },
+        changedFields: { fields: nextFields, fieldsets: nextFieldsets },
       });
     },
     [patchTask, task.fields, task.fieldsets, task.uuid],
@@ -117,8 +119,9 @@ export function OutputFormTaskMerged({
   );
 
   const handleAddFieldset = useCallback(
-    (fieldsetApiName: string) => {
-      const rows = buildRowsWithAddedFieldset(task.fields || [], task.fieldsets || [], fieldsetApiName);
+    (fieldsetCatalogItem: IFieldsetCatalogItem) => {
+      const newFieldsetBinding = createFieldsetBinding(fieldsetCatalogItem);
+      const rows = buildRowsWithAddedFieldset(task.fields || [], task.fieldsets || [], newFieldsetBinding);
       if (rows) saveOutputOrders(rows).catch(() => undefined);
     },
     [saveOutputOrders, task.fieldsets, task.fields],
@@ -145,7 +148,7 @@ export function OutputFormTaskMerged({
           templateId={templateId}
           fieldsetsByApiName={fieldsetsByApiName}
           fieldsetsCatalogLoading={fieldsetsCatalogLoading}
-          selectedFieldsetApiNames={(task.fieldsets || []).map((fieldset) => fieldset.apiName)}
+          selectedFieldsetIds={(task.fieldsets || []).map((fieldset) => fieldset.sharedFieldsetId)}
           onSelectFieldset={handleAddFieldset}
           onRemoveFieldset={handleRemoveFieldset}
         />

@@ -4,12 +4,12 @@ import userEvent from '@testing-library/user-event';
 
 import { intlMock } from '../../../../__stubs__/intlMock';
 import { makeExtraField } from '../../../../__stubs__/fields.factory';
-import { makeFieldsetData } from '../../../../__stubs__/fieldsets.factory';
+import { makeFieldsetBindingClient, makeFieldsetData } from '../../../../__stubs__/fieldsets.factory';
 import {
   IExtraField,
   IFieldsetData,
-  IKickoff,
-  ITemplate,
+  IKickoffClient,
+  ITemplateClient,
 } from '../../../../types/template';
 import { ETemplateStatus } from '../../../../types/redux';
 
@@ -173,18 +173,18 @@ describe('KickoffRedux', () => {
     ...overrides,
   });
 
-  const makeKickoff = (overrides: Partial<IKickoff> = {}): IKickoff => ({
+  const makeKickoff = (overrides: Partial<IKickoffClient> = {}): IKickoffClient => ({
     description: '',
     fields: [],
     fieldsets: [],
     ...overrides,
   });
 
-  const makeTemplate = (kickoff: IKickoff): ITemplate => ({
+  const makeTemplate = (kickoff: IKickoffClient): ITemplateClient => ({
     id: 1,
     kickoff,
     wfNameTemplate: '',
-  } as unknown as ITemplate);
+  } as unknown as ITemplateClient);
 
   const NEW_FIELD: IExtraField = makeExtraField({
     apiName: 'new-field',
@@ -193,7 +193,7 @@ describe('KickoffRedux', () => {
   });
 
   const renderKickoff = (params: {
-    kickoff: IKickoff;
+    kickoff: IKickoffClient;
     catalog?: ReadonlyMap<string, IFieldsetData>;
     setKickoff?: jest.Mock;
   }) => {
@@ -234,7 +234,7 @@ describe('KickoffRedux', () => {
       });
       renderKickoff({
         kickoff: makeKickoff({
-          fieldsets: [{ apiName: 'fs-1', order: 0 }],
+          fieldsets: [makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 0 })],
         }),
         catalog: new Map([['fs-1', fsData]]),
       });
@@ -247,7 +247,7 @@ describe('KickoffRedux', () => {
       const fsData = makeFieldsetData({ apiName: 'fs-1', fields: [] });
       renderKickoff({
         kickoff: makeKickoff({
-          fieldsets: [{ apiName: 'fs-1', order: 0 }],
+          fieldsets: [makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 0 })],
         }),
         catalog: new Map([['fs-1', fsData]]),
       });
@@ -263,7 +263,7 @@ describe('KickoffRedux', () => {
       const fsData = makeFieldsetData({ apiName: 'fs-1' });
       renderKickoff({
         kickoff: makeKickoff({
-          fieldsets: [{ apiName: 'fs-1', order: 0 }],
+          fieldsets: [makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 0 })],
         }),
         catalog: new Map([['fs-1', fsData]]),
       });
@@ -299,7 +299,7 @@ describe('KickoffRedux', () => {
       const fsData = makeFieldsetData({ apiName: 'fs-1' });
       const { setKickoff } = renderKickoff({
         kickoff: makeKickoff({
-          fieldsets: [{ apiName: 'fs-1', order: 0 }],
+          fieldsets: [makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 0 })],
         }),
         catalog: new Map([['fs-1', fsData]]),
       });
@@ -316,7 +316,7 @@ describe('KickoffRedux', () => {
       const fsData = makeFieldsetData({ apiName: 'fs-1' });
       const { setKickoff } = renderKickoff({
         kickoff: makeKickoff({
-          fieldsets: [{ apiName: 'fs-1', order: 0 }],
+          fieldsets: [makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 0 })],
         }),
         catalog: new Map([['fs-1', fsData]]),
       });
@@ -344,7 +344,7 @@ describe('KickoffRedux', () => {
       const { setKickoff } = renderKickoff({
         kickoff: makeKickoff({
           fields: [makeField({ apiName: 'f-1' })],
-          fieldsets: [{ apiName: 'fs-1', order: 0 }],
+          fieldsets: [makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 0 })],
           description: 'desc',
         }),
         catalog: new Map([['fs-1', fsData]]),

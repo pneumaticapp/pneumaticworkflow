@@ -1,6 +1,5 @@
-import { ITaskFieldset } from '../../../../types/template';
 import { makeExtraField } from '../../../../__stubs__/fields.factory';
-import { makeFieldsetData } from '../../../../__stubs__/fieldsets.factory';
+import { makeFieldsetBindingClient, makeFieldsetData } from '../../../../__stubs__/fieldsets.factory';
 import {
   buildMergedTaskOutputRows,
   buildRuntimeMergedOutputParts,
@@ -26,25 +25,28 @@ const field = (apiName: string, order: number) =>
 const fs = (id: number, order: number) =>
   makeFieldsetData({ id, apiName: `fs-${id}`, name: `FS ${id}`, order });
 
-const taskFs = (apiName: string, order: number): ITaskFieldset => ({ apiName, order });
-
 describe('mergeTaskOutputFlow', () => {
   it('buildMergedTaskOutputRows sorts by order descending with stable tie-break', () => {
     const rows = buildMergedTaskOutputRows(
       [field('a', 0), field('b', 3)],
-      [taskFs('fs-10', 1), taskFs('fs-20', 2)],
+      [
+        makeFieldsetBindingClient({ apiNameBinding: 'fs-10', order: 1 }),
+        makeFieldsetBindingClient({ apiNameBinding: 'fs-20', order: 2 }),
+      ],
     );
     expect(rows.map((r) => (r.kind === 'field' ? r.field.apiName : r.apiName))).toEqual(['b', 'fs-20', 'fs-10', 'a']);
   });
 
   it('normalizeMergedTaskOutputOrders assigns contiguous orders', () => {
     const fields = [field('a', 10), field('b', 5)];
-    const rows = buildMergedTaskOutputRows(fields, [taskFs('fs-1', 7)]);
-    const { nextFields, fieldsetOrderPatches } = normalizeMergedTaskOutputOrders(rows, fields);
+    const rows = buildMergedTaskOutputRows(fields, [
+      makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 7 }),
+    ]);
+    const { nextFields, nextFieldsets } = normalizeMergedTaskOutputOrders(rows, fields);
     const byApi = Object.fromEntries(nextFields.map((f) => [f.apiName, f.order]));
     expect(byApi.a).toBe(2);
     expect(byApi.b).toBe(0);
-    expect(fieldsetOrderPatches).toContainEqual({ apiName: 'fs-1', order: 1 });
+    expect(nextFieldsets).toContainEqual(expect.objectContaining({ apiNameBinding: 'fs-1', order: 1 }));
   });
 
   it('moveMergedRow swaps adjacent items and does not mutate the input', () => {
@@ -85,8 +87,8 @@ describe('mergeTaskOutputFlow', () => {
     it('adds fieldset to rows when it is not already present', () => {
       const result = buildRowsWithAddedFieldset(
         [field('a', 0)],
-        [taskFs('fs-1', 1)],
-        'fs-new',
+        [makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 1 })],
+        makeFieldsetBindingClient({ apiNameBinding: 'fs-new', order: 0, sharedFieldsetId: 99 }),
       );
       const rows = assertRowsDefined(result);
       const apiNames = rows.map((r) => (r.kind === 'field' ? r.field.apiName : r.apiName));
@@ -96,8 +98,8 @@ describe('mergeTaskOutputFlow', () => {
     it('returns null when fieldset with that apiName is already present', () => {
       const result = buildRowsWithAddedFieldset(
         [field('a', 0)],
-        [taskFs('fs-1', 1)],
-        'fs-1',
+        [makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 1 })],
+        makeFieldsetBindingClient({ apiNameBinding: 'fs-1-dup', order: 0, sharedFieldsetId: 1 }),
       );
       expect(result).toBeNull();
     });
@@ -105,8 +107,8 @@ describe('mergeTaskOutputFlow', () => {
     it('places the newly added fieldset as the last row in the merged list', () => {
       const result = buildRowsWithAddedFieldset(
         [field('a', 5), field('b', 3)],
-        [taskFs('fs-1', 1)],
-        'fs-new',
+        [makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 1 })],
+        makeFieldsetBindingClient({ apiNameBinding: 'fs-new', order: 0, sharedFieldsetId: 99 }),
       );
       const rows = assertRowsDefined(result);
       const lastRow = rows[rows.length - 1];
@@ -119,7 +121,10 @@ describe('mergeTaskOutputFlow', () => {
     it('removes fieldset by apiName, other rows are preserved', () => {
       const rows = buildRowsWithRemovedFieldset(
         [field('a', 0)],
-        [taskFs('fs-1', 1), taskFs('fs-2', 2)],
+        [
+          makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 1 }),
+          makeFieldsetBindingClient({ apiNameBinding: 'fs-2', order: 2, sharedFieldsetId: 2 }),
+        ],
         'fs-1',
       );
       const apiNames = rows.map((r) => (r.kind === 'field' ? r.field.apiName : r.apiName));
@@ -131,7 +136,7 @@ describe('mergeTaskOutputFlow', () => {
     it('does not throw when fieldset is absent — returns rows unchanged', () => {
       const rows = buildRowsWithRemovedFieldset(
         [field('a', 0)],
-        [taskFs('fs-1', 1)],
+        [makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 1 })],
         'fs-missing',
       );
       const apiNames = rows.map((r) => (r.kind === 'field' ? r.field.apiName : r.apiName));
@@ -142,8 +147,8 @@ describe('mergeTaskOutputFlow', () => {
 
   it('normalizeMergedTaskOutputOrders with empty rowsInDisplayOrder returns fields unchanged and empty patches', () => {
     const originalFields = [field('a', 5), field('b', 3)];
-    const { nextFields, fieldsetOrderPatches } = normalizeMergedTaskOutputOrders([], originalFields);
-    expect(fieldsetOrderPatches).toEqual([]);
+    const { nextFields, nextFieldsets } = normalizeMergedTaskOutputOrders([], originalFields);
+    expect(nextFieldsets).toEqual([]);
     expect(nextFields).toEqual(originalFields);
   });
 });

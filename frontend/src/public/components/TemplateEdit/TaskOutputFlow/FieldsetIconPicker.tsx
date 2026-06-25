@@ -1,9 +1,12 @@
 import * as React from 'react';
 import { useCallback, useMemo, useRef } from 'react';
 import { useIntl } from 'react-intl';
+import { useSelector } from 'react-redux';
 import classNames from 'classnames';
 
 import { IFieldsetData } from '../../../types/template';
+import { IFieldsetCatalogItem } from '../../../types/fieldset';
+import { getFieldsetsCatalogItems } from '../../../redux/selectors/fieldsets';
 import { CustomTooltip } from '../../UI/CustomTooltip';
 import { Dropdown, type TDropdownOption } from '../../UI';
 import { FieldsetIcon } from '../../icons/FieldsetIcon';
@@ -24,9 +27,9 @@ export interface IFieldsetIconPickerProps {
   templateId: number | undefined;
   fieldsetsByApiName: ReadonlyMap<string, IFieldsetData>;
   fieldsetsCatalogLoading: boolean;
-  selectedFieldsetApiNames: string[];
-  onSelectFieldset: (apiName: string) => void;
-  onRemoveFieldset: (apiName: string) => void;
+  selectedFieldsetIds: number[];
+  onSelectFieldset: (fieldsetCatalogItem: IFieldsetCatalogItem) => void;
+  onRemoveFieldset: (sharedFieldsetId: number) => void;
 }
 
 const isReadyTemplateId = (id: number | undefined): id is number => typeof id === 'number';
@@ -54,25 +57,29 @@ export const FieldsetIconPicker = ({
   templateId,
   fieldsetsByApiName,
   fieldsetsCatalogLoading,
-  selectedFieldsetApiNames,
+  selectedFieldsetIds,
   onSelectFieldset,
   onRemoveFieldset,
 }: IFieldsetIconPickerProps) => {
   const { formatMessage } = useIntl();
   const triggerRef = useRef<HTMLSpanElement>(null);
+  const fieldsetsCatalogItems = useSelector(getFieldsetsCatalogItems);
 
   const catalogRows = useMemo(() => buildCatalogPickerRows(fieldsetsByApiName), [fieldsetsByApiName]);
   const showListLoading = fieldsetsCatalogLoading && catalogRows.length === 0;
 
   const handleToggleFieldset = useCallback(
-    (apiName: string) => {
-      if (selectedFieldsetApiNames.includes(apiName)) {
-        onRemoveFieldset(apiName);
+    (sharedFieldsetId: number) => {
+      if (selectedFieldsetIds.includes(sharedFieldsetId)) {
+        onRemoveFieldset(sharedFieldsetId);
         return;
       }
-      onSelectFieldset(apiName);
+      const fieldsetCatalogItem = fieldsetsCatalogItems.find((item) => item.id === sharedFieldsetId);
+      if (fieldsetCatalogItem) {
+        onSelectFieldset(fieldsetCatalogItem);
+      }
     },
-    [onRemoveFieldset, onSelectFieldset, selectedFieldsetApiNames],
+    [fieldsetsCatalogItems, onRemoveFieldset, onSelectFieldset, selectedFieldsetIds],
   );
 
   const catalogDropdownOption = useMemo((): TDropdownOption => {
@@ -95,13 +102,13 @@ export const FieldsetIconPicker = ({
 
           {!showListLoading
             && catalogRows.map((row) => {
-              const isSelected = selectedFieldsetApiNames.includes(row.apiName);
+              const isSelected = selectedFieldsetIds.includes(row.id);
               return (
                 <button
                   key={row.id}
                   type="button"
                   className={pickerStyles['fieldset-picker__option']}
-                  onClick={() => handleToggleFieldset(row.apiName)}
+                  onClick={() => handleToggleFieldset(row.id)}
                   id={`task-output-fieldset-option-${row.id}`}
                 >
                   <input
@@ -128,7 +135,7 @@ export const FieldsetIconPicker = ({
     catalogRows,
     formatMessage,
     handleToggleFieldset,
-    selectedFieldsetApiNames,
+    selectedFieldsetIds,
     showListLoading,
   ]);
 

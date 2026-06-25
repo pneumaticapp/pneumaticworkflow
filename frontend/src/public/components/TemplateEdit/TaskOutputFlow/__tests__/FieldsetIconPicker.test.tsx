@@ -57,7 +57,7 @@ describe('FieldsetIconPicker', () => {
     templateId: 1,
     fieldsetsByApiName: new Map(),
     fieldsetsCatalogLoading: false,
-    selectedFieldsetApiNames: [],
+    selectedFieldsetIds: [],
     onSelectFieldset: jest.fn(),
     onRemoveFieldset: jest.fn(),
     ...overrides,
@@ -126,7 +126,7 @@ describe('FieldsetIconPicker', () => {
         FieldsetIconPicker,
         makeProps({
           fieldsetsByApiName: map,
-          selectedFieldsetApiNames: [],
+          selectedFieldsetIds: [],
           onSelectFieldset,
           onRemoveFieldset,
         }),
@@ -136,7 +136,7 @@ describe('FieldsetIconPicker', () => {
     userEvent.click(screen.getByRole('button'));
 
     expect(onSelectFieldset).toHaveBeenCalledTimes(1);
-    expect(onSelectFieldset).toHaveBeenCalledWith('fs-1');
+    expect(onSelectFieldset).toHaveBeenCalledWith(expect.objectContaining({ id: 1 }));
     expect(onRemoveFieldset).not.toHaveBeenCalled();
   });
 
@@ -152,7 +152,7 @@ describe('FieldsetIconPicker', () => {
         FieldsetIconPicker,
         makeProps({
           fieldsetsByApiName: map,
-          selectedFieldsetApiNames: ['fs-1'],
+          selectedFieldsetIds: [1],
           onSelectFieldset,
           onRemoveFieldset,
         }),
@@ -162,7 +162,7 @@ describe('FieldsetIconPicker', () => {
     userEvent.click(screen.getByRole('button'));
 
     expect(onRemoveFieldset).toHaveBeenCalledTimes(1);
-    expect(onRemoveFieldset).toHaveBeenCalledWith('fs-1');
+    expect(onRemoveFieldset).toHaveBeenCalledWith(1);
     expect(onSelectFieldset).not.toHaveBeenCalled();
   });
 
@@ -176,7 +176,7 @@ describe('FieldsetIconPicker', () => {
         FieldsetIconPicker,
         makeProps({
           fieldsetsByApiName: map,
-          selectedFieldsetApiNames: ['fs-1'],
+          selectedFieldsetIds: [1],
         }),
       ),
     );
@@ -195,7 +195,7 @@ describe('FieldsetIconPicker', () => {
         FieldsetIconPicker,
         makeProps({
           fieldsetsByApiName: map,
-          selectedFieldsetApiNames: [],
+          selectedFieldsetIds: [],
         }),
       ),
     );

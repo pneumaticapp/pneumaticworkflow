@@ -1,8 +1,10 @@
-import { IExtraField, IFieldsetData, ITaskFieldset, TRuntimeMergedOutputPart, TTemplateFieldFieldset } from '../../../types/template';
+import { IExtraField, IFieldsetData, TRuntimeMergedOutputPart, TTemplateFieldFieldset } from '../../../types/template';
+import { IFieldsetCatalogItem, IFieldsetBindingClient } from '../../../types/fieldset';
+import { createFieldsetBindingApiName } from '../../../utils/createId';
 
 export type TMergedTaskOutputRow =
   | { kind: 'field'; field: IExtraField }
-  | { kind: 'fieldset'; apiName: string; order: number };
+  | (IFieldsetBindingClient & { kind: 'fieldset' });
 
 function rowOrder(row: TMergedTaskOutputRow): number {
   return row.kind === 'field' ? row.field.order : row.order;
@@ -10,17 +12,11 @@ function rowOrder(row: TMergedTaskOutputRow): number {
 
 export function buildMergedTaskOutputRows(
   fields: IExtraField[],
-  fieldsets: ITaskFieldset[],
+  fieldsets: IFieldsetBindingClient[],
 ): TMergedTaskOutputRow[] {
   const rows: TMergedTaskOutputRow[] = [
     ...fields.map((field) => ({ kind: 'field' as const, field })),
-    ...fieldsets.map(({apiName, order}) => {
-      return {
-        kind: 'fieldset' as const,
-        apiName,
-        order,
-      };
-    }),
+    ...fieldsets.map((fieldset) => ({ ...fieldset, kind: 'fieldset' as const })),
   ];
   return rows.sort((a, b) => {
     const delta = rowOrder(b) - rowOrder(a);
@@ -28,7 +24,7 @@ export function buildMergedTaskOutputRows(
       return delta;
     }
     if (a.kind === 'fieldset' && b.kind === 'fieldset') {
-      return b.apiName.localeCompare(a.apiName);
+      return b.apiNameBinding!.localeCompare(a.apiNameBinding!);
     }
     if (a.kind === 'field' && b.kind === 'field') {
       return b.field.apiName.localeCompare(a.field.apiName);
@@ -39,7 +35,7 @@ export function buildMergedTaskOutputRows(
 
 export interface INormalizeMergedTaskOutputResult {
   nextFields: IExtraField[];
-  fieldsetOrderPatches: { apiName: string; order: number }[];
+  nextFieldsets: IFieldsetBindingClient[];
 }
 
 export function normalizeMergedTaskOutputOrders(
@@ -47,18 +43,19 @@ export function normalizeMergedTaskOutputOrders(
   allTaskFields: IExtraField[],
 ): INormalizeMergedTaskOutputResult {
   if (rowsInDisplayOrder.length === 0) {
-    return { nextFields: [...allTaskFields], fieldsetOrderPatches: [] };
+    return { nextFields: [...allTaskFields], nextFieldsets: [] };
   }
   const total = rowsInDisplayOrder.length;
   const orderByFieldApiName = new Map<string, number>();
-  const fieldsetOrderPatches: { apiName: string; order: number }[] = [];
+  const nextFieldsets: IFieldsetBindingClient[] = [];
 
   rowsInDisplayOrder.forEach((row, index) => {
     const order = total - index - 1;
     if (row.kind === 'field') {
       orderByFieldApiName.set(row.field.apiName, order);
     } else {
-      fieldsetOrderPatches.push({ apiName: row.apiName, order });
+      const { kind, ...fieldsetBinding } = row;
+      nextFieldsets.push({ ...fieldsetBinding, order });
     }
   });
 
@@ -67,7 +64,7 @@ export function normalizeMergedTaskOutputOrders(
     order: orderByFieldApiName.get(field.apiName) ?? field.order,
   }));
 
-  return { nextFields, fieldsetOrderPatches };
+  return { nextFields, nextFieldsets };
 }
 
 function runtimeOrder(part: TRuntimeMergedOutputPart): number {
@@ -118,22 +115,39 @@ export function moveMergedRow(
 
 export function buildRowsWithAddedFieldset(
   fields: IExtraField[],
-  fieldsets: ITaskFieldset[],
-  fieldsetApiName: string,
+  fieldsets: IFieldsetBindingClient[],
+  newFieldsetBinding: IFieldsetBindingClient,
 ): TMergedTaskOutputRow[] | null {
-  if (fieldsets.some((fieldset) => fieldset.apiName === fieldsetApiName)) {
+  if (fieldsets.some((fieldset) => fieldset.sharedFieldsetId === newFieldsetBinding.sharedFieldsetId)) {
     return null;
   }
-  const newFieldset: ITaskFieldset = { apiName: fieldsetApiName, order: -1 };
-  const nextFieldsets = [...fieldsets, newFieldset];
+  const nextFieldsets = [...fieldsets, newFieldsetBinding];
   return buildMergedTaskOutputRows(fields, nextFieldsets);
 }
 
 export function buildRowsWithRemovedFieldset(
   fields: IExtraField[],
-  fieldsets: ITaskFieldset[],
+  fieldsets: IFieldsetBindingClient[],
   fieldsetApiName: string,
 ): TMergedTaskOutputRow[] {
   const nextFieldsets = fieldsets.filter((fieldset) => fieldset.apiName !== fieldsetApiName);
   return buildMergedTaskOutputRows(fields, nextFieldsets);
+}
+
+export function createFieldsetBinding(catalogItem: IFieldsetCatalogItem): IFieldsetBindingClient {
+  const apiNameBinding = createFieldsetBindingApiName();
+
+  return {
+    sharedFieldsetId: catalogItem.id,
+    apiName: apiNameBinding,
+    apiNameBinding,
+    name: catalogItem.name,
+    title: catalogItem.title,
+    description: catalogItem.description,
+    order: -1,
+    labelPosition: catalogItem.labelPosition,
+    layout: catalogItem.layout,
+    rules: catalogItem.rules,
+    fields: catalogItem.fields,
+  };
 }
