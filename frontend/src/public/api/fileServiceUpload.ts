@@ -1,4 +1,5 @@
 import { commonRequest } from './commonRequest';
+import { ETimeouts } from '../constants/defaultValues';
 import { getBrowserConfigEnv } from '../utils/getConfig';
 
 export interface IFileServiceUploadRequest {
@@ -33,6 +34,7 @@ export async function uploadFileToFileService({
     {
       type: 'fileService',
       shouldThrow: true,
+      timeOut: ETimeouts.Long,
     },
   );
 

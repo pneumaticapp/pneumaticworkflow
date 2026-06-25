@@ -1,7 +1,12 @@
+from typing import Optional
 from urllib.parse import urlparse
 
 from django.conf import settings
+from django.http import HttpRequest, HttpResponse
 from django.utils.deprecation import MiddlewareMixin
+
+COOKIE_NAME = 'file_service_auth'
+COOKIE_MAX_AGE = 86400  # 24 hours
 
 
 class FileServiceAuthMiddleware(MiddlewareMixin):
@@ -10,7 +15,13 @@ class FileServiceAuthMiddleware(MiddlewareMixin):
     Sets cookie with authorization token for file access.
     """
 
-    def process_response(self, request, response):
+    def __init__(self, get_response=None):
+        super().__init__(get_response)
+        self._cookie_domain = self._resolve_cookie_domain()
+
+    def process_response(
+        self, request: HttpRequest, response: HttpResponse,
+    ) -> HttpResponse:
         """
         Sets authorization cookie for file service.
         """
@@ -27,20 +38,17 @@ class FileServiceAuthMiddleware(MiddlewareMixin):
             return response
 
         # Skip if cookie already matches (avoid redundant Set-Cookie headers)
-        existing_token = request.COOKIES.get('file_service_auth')
+        existing_token = request.COOKIES.get(COOKIE_NAME)
         if existing_token == auth_token:
             return response
 
-        # Get domain from FRONTEND_URL
-        domain = self._get_cookie_domain()
-
         # Set cookie for file service authorization
         response.set_cookie(
-            key='file_service_auth',
+            key=COOKIE_NAME,
             value=auth_token,
-            domain=domain,
+            domain=self._cookie_domain,
             path='/',
-            max_age=86400,  # 24 hours
+            max_age=COOKIE_MAX_AGE,
             secure=not settings.DEBUG,
             httponly=True,
             samesite='Lax',
@@ -48,7 +56,9 @@ class FileServiceAuthMiddleware(MiddlewareMixin):
 
         return response
 
-    def _get_auth_token(self, request):
+    def _get_auth_token(
+        self, request: HttpRequest,
+    ) -> Optional[str]:
         """
         Gets authorization token from request.
         Supports various token types.
@@ -63,26 +73,28 @@ class FileServiceAuthMiddleware(MiddlewareMixin):
             return auth_header.split(' ')[1]
 
         # Get token from cookie (for JWT)
-        if hasattr(request, 'COOKIES'):
-            jwt_token = request.COOKIES.get('access_token')
-            if jwt_token:
-                return jwt_token
+        jwt_token = request.COOKIES.get('access_token')
+        if jwt_token:
+            return jwt_token
 
         return None
 
-    def _get_cookie_domain(self):
+    @staticmethod
+    def _resolve_cookie_domain() -> Optional[str]:
         """
-        Gets cookie domain from settings.
-        Extracts domain from FRONTEND_URL.
+        Extracts root domain from FRONTEND_URL for cross-subdomain
+        cookie sharing.
+
+        Returns root domain (e.g. '.pneumatic.app') so that a cookie
+        set by api-dev.pneumatic.app is also visible on
+        dev.pneumatic.app and dev.pneumatic.app/files/*.
+        Without this, the browser rejects Set-Cookie because
+        api-dev ≠ dev (RFC 6265 domain-match).
         """
         frontend_url = settings.FRONTEND_URL
-
         if not frontend_url:
             return None
-
-        # Extract domain from URL
-        try:
-            parsed = urlparse(frontend_url)
-            return parsed.hostname
-        except (ValueError, AttributeError):
+        hostname = urlparse(frontend_url).hostname
+        if not hostname or '.' not in hostname:
             return None
+        return '.' + '.'.join(hostname.split('.')[-2:])
