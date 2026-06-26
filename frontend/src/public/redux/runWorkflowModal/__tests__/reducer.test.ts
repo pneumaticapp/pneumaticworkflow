@@ -187,7 +187,7 @@ describe('OpenModal — fieldsets acceptance', () => {
       kickoff: {
         description: '',
         fields: [],
-        fieldsets: [makeFieldsetBindingClient({ apiName: 'fs-contacts' })],
+        fieldsets: [makeFieldsetBindingClient({ apiNameBinding: 'fs-contacts' })],
       },
       loadedFieldsets: [mockFieldsetData],
     });
@@ -202,7 +202,7 @@ describe('OpenModal — fieldsets acceptance', () => {
 
     expect(result.workflow.kickoff.fieldsets).toHaveLength(1);
     expect(result.workflow.kickoff.fieldsets).toMatchObject([
-      { apiName: 'fs-contacts' },
+      { apiNameBinding: 'fs-contacts' },
     ]);
 
     expect(result.workflow.loadedFieldsets).toHaveLength(1);

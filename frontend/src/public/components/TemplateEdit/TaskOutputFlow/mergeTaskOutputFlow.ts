@@ -24,7 +24,7 @@ export function buildMergedTaskOutputRows(
       return delta;
     }
     if (a.kind === 'fieldset' && b.kind === 'fieldset') {
-      return b.apiNameBinding!.localeCompare(a.apiNameBinding!);
+      return b.apiNameBinding.localeCompare(a.apiNameBinding);
     }
     if (a.kind === 'field' && b.kind === 'field') {
       return b.field.apiName.localeCompare(a.field.apiName);
@@ -139,7 +139,6 @@ export function createFieldsetBinding(catalogItem: IFieldsetCatalogItem): IField
 
   return {
     sharedFieldsetId: catalogItem.id,
-    apiName: apiNameBinding,
     apiNameBinding,
     name: catalogItem.name,
     title: catalogItem.title,

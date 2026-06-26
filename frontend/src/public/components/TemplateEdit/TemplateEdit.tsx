@@ -34,7 +34,7 @@ import { getUserFullName } from '../../utils/users';
 import { getSubscriptionPlan } from '../../redux/selectors/user';
 import { ESubscriptionPlan } from '../../types/account';
 import { TemplateSettings } from './TemplateSettings';
-import { getFieldsetsCatalogByApiName } from '../../redux/selectors/fieldsets';
+
 import { TemplateEditVariablesSync } from './TemplateEditVariablesSync';
 
 import styles from './TemplateEdit.css';
@@ -91,7 +91,7 @@ export function TemplateEdit({
   const { formatMessage } = useIntl();
   const { tasks, owners } = template;
   const billingPlan = useSelector(getSubscriptionPlan);
-  const fieldsetsByApiName = useSelector(getFieldsetsCatalogByApiName);
+
   const isFreePlan = billingPlan === ESubscriptionPlan.Free;
   const accessConditions = isSubscribed || isFreePlan;
 
@@ -274,7 +274,7 @@ export function TemplateEdit({
     };
 
     const newWorkflow = (field === 'kickoff' || field === 'tasks')
-      ? cleanTemplateReferences(updatedWorkflow, fieldsetsByApiName)
+      ? cleanTemplateReferences(updatedWorkflow)
       : updatedWorkflow;
 
     setTemplate(newWorkflow);

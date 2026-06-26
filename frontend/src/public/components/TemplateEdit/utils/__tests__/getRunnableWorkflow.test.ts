@@ -328,8 +328,8 @@ describe('getRunnableWorkflow.', () => {
       description: '',
       fields: [],
       fieldsets: [
-        makeFieldsetBindingClient({ apiName: 'fs-a', order: 5 }),
-        makeFieldsetBindingClient({ apiName: 'fs-b', order: 10 }),
+        makeFieldsetBindingClient({ apiNameBinding: 'fs-a', order: 5 }),
+        makeFieldsetBindingClient({ apiNameBinding: 'fs-b', order: 10 }),
       ],
     };
     (getFieldsets as jest.Mock).mockResolvedValue({

@@ -80,7 +80,7 @@ const fieldRow = (apiName: string): TMergedTaskOutputRow => ({
 });
 
 const fieldsetRow = (apiNameBinding: string): TMergedTaskOutputRow => ({
-  ...makeFieldsetBindingClient({ apiName: apiNameBinding, apiNameBinding }),
+  ...makeFieldsetBindingClient({ apiNameBinding }),
   kind: 'fieldset',
 });
 

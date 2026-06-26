@@ -5,16 +5,14 @@ import {
   ITemplateResponse,
   ITemplateClient,
   EExtraFieldType,
-  IFieldsetData,
 } from '../../types/template';
 import { ESubscriptionPlan } from '../../types/account';
 import { TUserListItem, EUserStatus } from '../../types/user';
 import { getNormalizedTemplate, mapTemplateRequest, getEmptyKickoff, cleanTemplateReferences, collectFieldApiNames } from '../template';
 import { EConditionAction, EConditionOperators, EConditionLogicOperations, TConditionRule } from '../../components/TemplateEdit/TaskForm/Conditions/types';
 import { makeExtraField } from '../../__stubs__/fields.factory';
-import { makeFieldsetBindingClient, makeFieldsetData } from '../../__stubs__/fieldsets.factory';
+import { makeFieldsetBindingClient, makeFieldsetField } from '../../__stubs__/fieldsets.factory';
 
-const emptyFieldsetsMap: ReadonlyMap<string, IFieldsetData> = new Map();
 
 const createMockUser = (overrides: Partial<TUserListItem> = {}): TUserListItem => ({
   id: 1,
@@ -342,7 +340,7 @@ describe('template utilities', () => {
       ];
       const template = createMockTemplate({ owners });
 
-      const result = mapTemplateRequest(template, emptyFieldsetsMap);
+      const result = mapTemplateRequest(template);
 
       expect(result.owners).toEqual(owners);
     });
@@ -350,7 +348,7 @@ describe('template utilities', () => {
     it('preserves template name', () => {
       const template = createMockTemplate({ name: 'Custom Template Name' });
 
-      const result = mapTemplateRequest(template, emptyFieldsetsMap);
+      const result = mapTemplateRequest(template);
 
       expect(result.name).toBe('Custom Template Name');
     });
@@ -358,7 +356,7 @@ describe('template utilities', () => {
     it('uses default name when template name is empty', () => {
       const template = createMockTemplate({ name: '' });
 
-      const result = mapTemplateRequest(template, emptyFieldsetsMap);
+      const result = mapTemplateRequest(template);
 
       expect(result.name).toBe('New Template');
     });
@@ -366,7 +364,7 @@ describe('template utilities', () => {
     it('preserves publicSuccessUrl', () => {
       const template = createMockTemplate({ publicSuccessUrl: 'https://example.com/success' });
 
-      const result = mapTemplateRequest(template, emptyFieldsetsMap);
+      const result = mapTemplateRequest(template);
 
       expect(result.publicSuccessUrl).toBe('https://example.com/success');
     });
@@ -374,10 +372,12 @@ describe('template utilities', () => {
     it('sets publicSuccessUrl to null when empty', () => {
       const template = createMockTemplate({ publicSuccessUrl: '' });
 
-      const result = mapTemplateRequest(template, emptyFieldsetsMap);
+      const result = mapTemplateRequest(template);
 
       expect(result.publicSuccessUrl).toBeNull();
     });
+  });
+
   describe('cleanTemplateReferences', () => {
     it('removes invalid field references from template and task text fields but preserves system vars', () => {
       const template = createMockTemplate({
@@ -403,7 +403,7 @@ describe('template utilities', () => {
         ],
       });
 
-      const cleaned = cleanTemplateReferences(template, emptyFieldsetsMap);
+      const cleaned = cleanTemplateReferences(template);
 
       // wfNameTemplate: {{template-name}} is a WF_NAME system var, preserved; {{invalid-field}} removed
       expect(cleaned.wfNameTemplate).toBe('Name: {{valid-field}} and  and {{template-name}}');
@@ -415,24 +415,22 @@ describe('template utilities', () => {
     });
 
     it('preserves kickoff fieldset field references in wfNameTemplate', () => {
-      const fieldsetFields = [
-        makeExtraField({ apiName: 'fieldset-field-1', type: EExtraFieldType.Text, name: 'Fieldset Field 1', order: 1 }),
-        makeExtraField({ apiName: 'fieldset-field-2', type: EExtraFieldType.Text, name: 'Fieldset Field 2', order: 2 }),
-      ];
-      const fieldsetsMap = new Map<string, IFieldsetData>([
-        ['my-fieldset', makeFieldsetData({ apiName: 'my-fieldset', name: 'My Fieldset', fields: fieldsetFields })],
-      ]);
-
       const template = createMockTemplate({
         wfNameTemplate: 'Name: {{direct-field}} and {{fieldset-field-1}} and {{fieldset-field-2}} and {{invalid-field}} and {{date}}',
         kickoff: {
           ...getEmptyKickoff(),
           fields: [makeExtraField({ apiName: 'direct-field', type: EExtraFieldType.Text, name: 'Direct', order: 1 })],
-          fieldsets: [makeFieldsetBindingClient({ apiName: 'my-fieldset', apiNameBinding: 'my-fieldset' })],
+          fieldsets: [makeFieldsetBindingClient({
+            apiNameBinding: 'my-fieldset',
+            fields: [
+              makeFieldsetField({ apiName: 'fieldset-field-1', type: 'text', name: 'Fieldset Field 1', order: 1 }),
+              makeFieldsetField({ apiName: 'fieldset-field-2', type: 'text', name: 'Fieldset Field 2', order: 2 }),
+            ],
+          })],
         },
       });
 
-      const cleaned = cleanTemplateReferences(template, fieldsetsMap);
+      const cleaned = cleanTemplateReferences(template);
 
       expect(cleaned.wfNameTemplate).toBe('Name: {{direct-field}} and {{fieldset-field-1}} and {{fieldset-field-2}} and  and {{date}}');
     });
@@ -461,7 +459,7 @@ describe('template utilities', () => {
         },
       });
 
-      const cleaned = cleanTemplateReferences(template, emptyFieldsetsMap);
+      const cleaned = cleanTemplateReferences(template);
       const rules = cleaned.tasks[0].conditions[0].rules;
       expect(rules).toHaveLength(1);
       expect(rules[0].field).toBe('valid-field');
@@ -477,7 +475,7 @@ describe('template utilities', () => {
           },
         ],
       });
-      const cleaned = cleanTemplateReferences(template, emptyFieldsetsMap);
+      const cleaned = cleanTemplateReferences(template);
       expect(cleaned.tasks[0].name).toBe('');
     });
 
@@ -498,7 +496,7 @@ describe('template utilities', () => {
           },
         ],
       });
-      const cleaned = cleanTemplateReferences(template, emptyFieldsetsMap);
+      const cleaned = cleanTemplateReferences(template);
       expect(cleaned.tasks[0].rawPerformers).toHaveLength(2);
       expect(cleaned.tasks[0].rawPerformers.map((p) => p.apiName)).toEqual(['2', '3']);
     });
@@ -526,7 +524,7 @@ describe('template utilities', () => {
           },
         ]
       });
-      const cleaned = cleanTemplateReferences(template, emptyFieldsetsMap);
+      const cleaned = cleanTemplateReferences(template);
       expect(cleaned.tasks[0].rawDueDate?.sourceId).toBe('valid-date-field');
       expect(cleaned.tasks[0].rawDueDate?.ruleTarget).toBe('field');
       expect(cleaned.tasks[1].rawDueDate?.duration).toBeNull();
@@ -556,8 +554,7 @@ describe('template utilities', () => {
           },
         ],
       });
-
-      const cleaned = cleanTemplateReferences(template, emptyFieldsetsMap);
+      const cleaned = cleanTemplateReferences(template);
       const rules = cleaned.tasks[0].conditions[0].rules;
       
       expect(rules).toHaveLength(4);
@@ -582,7 +579,7 @@ describe('template utilities', () => {
         ],
       });
 
-      const cleaned = cleanTemplateReferences(template, emptyFieldsetsMap);
+      const cleaned = cleanTemplateReferences(template);
 
       expect(cleaned.tasks[0].rawPerformers).toHaveLength(1);
       expect(cleaned.tasks[0].rawPerformers[0].type).toBe(ETaskPerformerType.User);
@@ -604,7 +601,7 @@ describe('template utilities', () => {
         ],
       });
 
-      const cleaned = cleanTemplateReferences(template, emptyFieldsetsMap);
+      const cleaned = cleanTemplateReferences(template);
 
       expect(cleaned.tasks[1].rawPerformers).toHaveLength(1);
       expect(cleaned.tasks[1].rawPerformers[0].type).toBe(ETaskPerformerType.Manager);
@@ -624,39 +621,35 @@ describe('template utilities', () => {
         ],
       });
 
-      const cleaned = cleanTemplateReferences(template, emptyFieldsetsMap);
+      const cleaned = cleanTemplateReferences(template);
 
       expect(cleaned.tasks[0].rawPerformers).toHaveLength(0);
     });
   });
-});
 
   describe('collectFieldApiNames', () => {
     it('does not crash and leaves Set empty for empty fields and fieldsets', () => {
       const validApiNames = new Set<string>();
 
-      collectFieldApiNames([], [], emptyFieldsetsMap, validApiNames);
+      collectFieldApiNames([], [], validApiNames);
 
       expect(validApiNames.size).toBe(0);
     });
 
-    it('collects apiNames from direct fields and fieldset fields', () => {
+    it('collects apiNames from direct fields and embedded fieldset fields', () => {
       const fields = [
         makeExtraField({ apiName: 'direct-field', type: EExtraFieldType.Text, name: 'Direct' }),
       ];
-      const fieldsets = [{ apiName: 'my-fs', order: 0 }];
-      const fieldsetsMap = new Map<string, IFieldsetData>([
-        ['my-fs', makeFieldsetData({
-          apiName: 'my-fs', name: 'FS',
-          fields: [
-            makeExtraField({ apiName: 'fs-field-1', name: 'F1' }),
-            makeExtraField({ apiName: 'fs-field-2', type: EExtraFieldType.Number, name: 'F2', order: 1 }),
-          ],
-        })],
-      ]);
+      const fieldsets = [makeFieldsetBindingClient({
+        apiNameBinding: 'my-fs',
+        fields: [
+          makeFieldsetField({ apiName: 'fs-field-1', name: 'F1' }),
+          makeFieldsetField({ apiName: 'fs-field-2', type: 'number', name: 'F2', order: 1 }),
+        ],
+      })];
       const validApiNames = new Set<string>();
 
-      collectFieldApiNames(fields, fieldsets, fieldsetsMap, validApiNames);
+      collectFieldApiNames(fields, fieldsets, validApiNames);
 
       expect(validApiNames.has('direct-field')).toBe(true);
       expect(validApiNames.has('fs-field-1')).toBe(true);
@@ -664,11 +657,10 @@ describe('template utilities', () => {
       expect(validApiNames.size).toBe(3);
     });
 
-    it('ignores fieldset missing from catalog without crashing', () => {
-      const fieldsets = [{ apiName: 'non-existent-fs', order: 0 }];
+    it('handles fieldset with no fields without crashing', () => {
+      const fieldsets = [makeFieldsetBindingClient({ apiNameBinding: 'empty-fs' })];
       const validApiNames = new Set<string>();
-
-      collectFieldApiNames([], fieldsets, emptyFieldsetsMap, validApiNames);
+      collectFieldApiNames([], fieldsets, validApiNames);
 
       expect(validApiNames.size).toBe(0);
     });

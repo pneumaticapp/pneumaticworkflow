@@ -85,7 +85,7 @@ describe('TaskItem', () => {
     requireCompletionByAll: false,
     skipForStarter: false,
     fields: [],
-    fieldsets: [makeFieldsetBindingClient({ apiName: 'fs-1' })],
+    fieldsets: [makeFieldsetBindingClient({ apiNameBinding: 'fs-1' })],
     delay: null,
     rawDueDate: null as any,
     conditions: [],

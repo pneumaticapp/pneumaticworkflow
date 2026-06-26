@@ -157,7 +157,7 @@ describe('getTaskVariables', () => {
   it('appends variables from selected task fieldsets with combined subtitles', () => {
     const taskWithFieldset: ITemplateTaskClient = {
       ...mockTask1,
-      fieldsets: [makeFieldsetBindingClient({ apiName: mockFieldsetData.apiName })],
+      fieldsets: [makeFieldsetBindingClient({ apiNameBinding: mockFieldsetData.apiName })],
     };
     const tasks: ITemplateTaskClient[] = [taskWithFieldset, mockTask2];
     const actualResult = getTaskVariables(mockKikoff, tasks, mockTask2, undefined, mockFieldsetsById);
@@ -209,7 +209,7 @@ describe('getKickoffVariables with fieldsets', () => {
   it('adds kickoff fieldset fields after regular kickoff fields', () => {
     const kickoff: IKickoffClient = {
       ...mockKikoff,
-      fieldsets: [makeFieldsetBindingClient({ apiName: mockFieldsetData.apiName })],
+      fieldsets: [makeFieldsetBindingClient({ apiNameBinding: mockFieldsetData.apiName })],
     };
     const vars = getKickoffVariables(kickoff, mockFieldsetsById);
 
@@ -225,8 +225,8 @@ describe('getKickoffVariables with fieldsets', () => {
     const kickoff: IKickoffClient = {
       ...mockKikoff,
       fieldsets: [
-        makeFieldsetBindingClient({ apiName: 'missing-fs' }),
-        makeFieldsetBindingClient({ apiName: mockFieldsetData.apiName, order: 1 }),
+        makeFieldsetBindingClient({ apiNameBinding: 'missing-fs' }),
+        makeFieldsetBindingClient({ apiNameBinding: mockFieldsetData.apiName, order: 1 }),
       ],
     };
 
@@ -394,7 +394,7 @@ describe('useWorkflowNameVariables', () => {
           order: 1,
         }),
       ],
-      fieldsets: [makeFieldsetBindingClient({ apiName: 'fs-name' })],
+      fieldsets: [makeFieldsetBindingClient({ apiNameBinding: 'fs-name' })],
     };
 
     const catalog = new Map<string, IFieldsetData>([['fs-name', fieldsetData]]);

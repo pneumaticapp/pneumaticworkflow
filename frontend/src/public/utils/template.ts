@@ -14,12 +14,10 @@ import {
   ETemplateOwnerRole,
   ITemplateOwner,
   IExtraField,
-  ITaskFieldset,
 } from '../types/template';
 import { IFieldsetBindingClient, IFieldsetBindingMeta } from '../types/fieldset';
 import { getUrlParams } from './getUrlParams';
 import { DEFAULT_TEMPLATE_NAME } from '../components/TemplateEdit/constants';
-import { IFieldsetData } from '../types/template';
 
 import { getNormalizeFieldsOrders } from './workflows';
 import { createOwnerApiName, createTaskApiName, createUUID } from './createId';
@@ -66,9 +64,9 @@ export const getNormalizedTemplate = (
     ...getEmptyKickoff(),
     ...(template.kickoff || {}),
     fieldsets: template.kickoff
-      ? template.kickoff.fieldsets.map((fieldset) => ({
-          ...fieldset,
-          apiNameBinding: fieldset.apiName,
+      ? template.kickoff.fieldsets.map(({ apiName, ...rest }) => ({
+          ...rest,
+          apiNameBinding: apiName,
         }))
       : [],
   };
@@ -143,33 +141,30 @@ export const getNormalizedTask = (
     uuid: createUUID(),
     conditions,
     rawDueDate,
-    fieldsets: task.fieldsets.map((fieldset) => ({
-      ...fieldset,
-      apiNameBinding: fieldset.apiName,
+    fieldsets: task.fieldsets.map(({ apiName, ...rest }) => ({
+      ...rest,
+      apiNameBinding: apiName,
     })),
   };
 };
 
 export const collectFieldApiNames = (
   fields: IExtraField[],
-  fieldsets: ITaskFieldset[],
-  fieldsetsByApiName: ReadonlyMap<string, IFieldsetData>,
+  fieldsets: IFieldsetBindingClient[],
   validApiNames: Set<string>,
 ) => {
-  fields.forEach((f) => {
-    if (f.apiName) validApiNames.add(f.apiName);
+  fields.forEach((field) => {
+    if (field.apiName) validApiNames.add(field.apiName);
   });
-  fieldsets.forEach((fs) => {
-    const fieldsetData = fieldsetsByApiName?.get(fs.apiName);
-    fieldsetData?.fields?.forEach((f) => {
-      if (f.apiName) validApiNames.add(f.apiName);
+  fieldsets.forEach((fieldset) => {
+    fieldset.fields?.forEach((field) => {
+      if (field.apiName) validApiNames.add(field.apiName);
     });
   });
 };
 
 export const cleanTemplateReferences = (
   template: ITemplateClient,
-  fieldsetsByApiName: ReadonlyMap<string, IFieldsetData>,
 ): ITemplateClient => {
   // System variables that the backend recognizes and skips during validation.
   // Must stay in sync with backend/src/processes/enums.py :: SystemVariable
@@ -177,7 +172,7 @@ export const cleanTemplateReferences = (
   const WF_NAME_SYSTEM_VARS = new Set(['date', 'template-name', 'workflow-id', 'workflow-starter']);
 
   const validApiNames = new Set<string>();
-  collectFieldApiNames(template.kickoff.fields, template.kickoff.fieldsets, fieldsetsByApiName, validApiNames);
+  collectFieldApiNames(template.kickoff.fields, template.kickoff.fieldsets, validApiNames);
 
   const removeInvalidReferences = (
     text: string | null | undefined,
@@ -237,7 +232,7 @@ export const cleanTemplateReferences = (
       }
     }
 
-    collectFieldApiNames(task.fields, task.fieldsets, fieldsetsByApiName, validApiNames);
+    collectFieldApiNames(task.fields, task.fieldsets, validApiNames);
 
     return {
       ...task,
@@ -250,7 +245,7 @@ export const cleanTemplateReferences = (
   });
 
   const validKickoffApiNames = new Set<string>();
-  collectFieldApiNames(template.kickoff.fields, template.kickoff.fieldsets, fieldsetsByApiName, validKickoffApiNames);
+  collectFieldApiNames(template.kickoff.fields, template.kickoff.fieldsets, validKickoffApiNames);
 
   return {
     ...template,
@@ -275,15 +270,14 @@ function mapFieldsetForApi({
     order,
     title,
     description,
-    ...(apiNameBinding ? { apiName: apiNameBinding } : {}),
+    apiName: apiNameBinding,
   };
 }
 
 export const mapTemplateRequest = (
   template: ITemplateClient,
-  fieldsetsByApiName: ReadonlyMap<string, IFieldsetData>,
 ): ITemplateRequest => {
-  const cleanedTemplate = cleanTemplateReferences(template, fieldsetsByApiName);
+  const cleanedTemplate = cleanTemplateReferences(template);
   const { tasks } = cleanedTemplate;
 
   const normilizedTasks: ITemplateTaskRequest[] = tasks?.map((task) => {

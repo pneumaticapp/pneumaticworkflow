@@ -45,7 +45,7 @@ describe('FieldsetOutputsPreview', () => {
 
     const { container } = render(
       React.createElement(FieldsetOutputsPreview, {
-        fieldsets: [makeFieldsetBindingClient({ apiName: 'not-in-map' }), makeFieldsetBindingClient({ apiName: 'empty-fields' })],
+        fieldsets: [makeFieldsetBindingClient({ apiNameBinding: 'not-in-map' }), makeFieldsetBindingClient({ apiNameBinding: 'empty-fields' })],
         fieldsetsByApiName,
       }),
     );
@@ -60,7 +60,7 @@ describe('FieldsetOutputsPreview', () => {
 
     render(
       React.createElement(FieldsetOutputsPreview, {
-        fieldsets: [makeFieldsetBindingClient({ apiName: 'fs-a' }), makeFieldsetBindingClient({ apiName: 'fs-b' })],
+        fieldsets: [makeFieldsetBindingClient({ apiNameBinding: 'fs-a' }), makeFieldsetBindingClient({ apiNameBinding: 'fs-b' })],
         fieldsetsByApiName,
         onGroupClick: jest.fn(),
       }),
@@ -79,7 +79,7 @@ describe('FieldsetOutputsPreview', () => {
 
     render(
       React.createElement(FieldsetOutputsPreview, {
-        fieldsets: [makeFieldsetBindingClient({ apiName: 'fs-a' })],
+        fieldsets: [makeFieldsetBindingClient({ apiNameBinding: 'fs-a' })],
         fieldsetsByApiName,
         onGroupClick,
       }),

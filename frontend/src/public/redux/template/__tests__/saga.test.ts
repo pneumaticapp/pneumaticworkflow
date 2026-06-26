@@ -358,7 +358,6 @@ describe('patchTemplateSaga — fieldsets reference cleanup', () => {
     expect(cleanTemplateReferences).toHaveBeenCalledTimes(1);
     expect(cleanTemplateReferences).toHaveBeenCalledWith(
       expect.objectContaining({ tasks: newTasks }),
-      expect.any(Map),
     );
   });
 
@@ -370,7 +369,6 @@ describe('patchTemplateSaga — fieldsets reference cleanup', () => {
     expect(cleanTemplateReferences).toHaveBeenCalledTimes(1);
     expect(cleanTemplateReferences).toHaveBeenCalledWith(
       expect.objectContaining({ kickoff: newKickoff }),
-      expect.any(Map),
     );
   });
 
@@ -431,7 +429,7 @@ describe('fetchSaveTemplate — fieldsets in mapTemplateRequest', () => {
     },
   });
 
-  it('passes fieldsetsByApiName from selector to mapTemplateRequest', async () => {
+  it('passes template data to mapTemplateRequest', async () => {
     const mockState = makeSaveMockState();
     (checkSomeRouteIsActive as jest.Mock).mockReturnValue(true);
     (mapTemplateRequest as jest.Mock).mockReturnValue({ id: 99, name: 'Test' });
@@ -466,7 +464,6 @@ describe('fetchSaveTemplate — fieldsets in mapTemplateRequest', () => {
     expect(mapTemplateRequest).toHaveBeenCalledTimes(1);
     expect(mapTemplateRequest).toHaveBeenCalledWith(
       mockState.template.data,
-      expect.any(Map),
     );
   });
 });

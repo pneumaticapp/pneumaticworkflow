@@ -130,8 +130,8 @@ describe('getClonedTask', () => {
       revertTask: null,
       ancestors: [],
       fieldsets: [
-        makeFieldsetBindingClient({ apiName: 'fs-a', order: 0 }),
-        makeFieldsetBindingClient({ apiName: 'fs-b', order: 5 }),
+        makeFieldsetBindingClient({ apiNameBinding: 'fs-a', order: 0 }),
+        makeFieldsetBindingClient({ apiNameBinding: 'fs-b', order: 5 }),
       ],
     };
 

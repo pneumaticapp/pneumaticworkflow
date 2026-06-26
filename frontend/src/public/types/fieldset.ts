@@ -41,8 +41,8 @@ export interface IFieldsetBinding extends Omit<IFieldsetCatalogItem, 'id'> {
   sharedFieldsetId: number;
 }
 
-export interface IFieldsetBindingClient extends IFieldsetBinding {
-  apiNameBinding?: string;
+export interface IFieldsetBindingClient extends Omit<IFieldsetBinding, 'apiName'> {
+  apiNameBinding: string;
 }
 
 export interface IFieldsetBindingMeta {

@@ -46,7 +46,7 @@ describe('TaskRenderExtraFieldsInfo', () => {
       React.createElement(TaskRenderExtraFieldsInfo as React.FC<any>, {
         task: makeTask(
           [makeField('field-1'), makeField('field-2')],
-          [makeFieldsetBindingClient({ apiName: 'missing' })],
+          [makeFieldsetBindingClient({ apiNameBinding: 'missing' })],
         ),
         onClick: jest.fn(),
       }),
@@ -62,7 +62,7 @@ describe('TaskRenderExtraFieldsInfo', () => {
       React.createElement(TaskRenderExtraFieldsInfo as React.FC<any>, {
         task: makeTask(
           [makeField('field-1')],
-          [makeFieldsetBindingClient({ apiName: 'fs-1' })],
+          [makeFieldsetBindingClient({ apiNameBinding: 'fs-1' })],
         ),
         onClick: jest.fn(),
       }),
@@ -83,7 +83,7 @@ describe('TaskRenderExtraFieldsInfo', () => {
       React.createElement(TaskRenderExtraFieldsInfo as React.FC<any>, {
         task: makeTask(
           [],
-          [makeFieldsetBindingClient({ apiName: 'fs-1' }), makeFieldsetBindingClient({ apiName: 'fs-2' })],
+          [makeFieldsetBindingClient({ apiNameBinding: 'fs-1' }), makeFieldsetBindingClient({ apiNameBinding: 'fs-2' })],
         ),
         onClick: jest.fn(),
       }),
@@ -95,7 +95,7 @@ describe('TaskRenderExtraFieldsInfo', () => {
   it('recomputes counter when fieldsets catalog is updated', () => {
     (useSelector as jest.Mock).mockReturnValue(new Map());
 
-    const task = makeTask([], [makeFieldsetBindingClient({ apiName: 'fs-1' })]);
+    const task = makeTask([], [makeFieldsetBindingClient({ apiNameBinding: 'fs-1' })]);
 
     const { rerender } = render(
       React.createElement(TaskRenderExtraFieldsInfo as React.FC<any>, {

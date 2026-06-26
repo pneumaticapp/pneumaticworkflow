@@ -69,7 +69,7 @@ describe('getRuleTargetOptions', () => {
     });
 
     const kickoff = makeKickoff({
-      fieldsets: [makeFieldsetBindingClient({ apiName: fieldsetApiName })],
+      fieldsets: [makeFieldsetBindingClient({ apiNameBinding: fieldsetApiName })],
     });
 
     const fieldsetsByApiName = new Map<string, IFieldsetData>([

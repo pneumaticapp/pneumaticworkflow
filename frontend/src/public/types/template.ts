@@ -34,7 +34,7 @@ export interface ITemplate {
   performersCount: number;
 }
 
-export interface ITemplateClient extends ITemplate {
+export interface ITemplateClient extends Omit<ITemplate, 'kickoff' | 'tasks'> {
   tasks: ITemplateTaskClient[];
   kickoff: IKickoffClient;
 }
@@ -94,7 +94,7 @@ export interface ITemplateTask {
   ancestors: string[];
 }
 
-export interface ITemplateTaskClient extends ITemplateTask {
+export interface ITemplateTaskClient extends Omit<ITemplateTask, 'fieldsets'> {
   fieldsets: IFieldsetBindingClient[];
 }
 
@@ -251,7 +251,7 @@ export interface IKickoff {
   fieldsets: ITaskFieldset[];
 }
 
-export interface IKickoffClient extends IKickoff {
+export interface IKickoffClient extends Omit<IKickoff, 'fieldsets'> {
   fieldsets: IFieldsetBindingClient[];
 }
 

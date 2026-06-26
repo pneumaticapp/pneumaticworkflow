@@ -62,7 +62,7 @@ import { TUserListItem } from '../../types/user';
 import { loadTemplateIntegrationsStats, loadTemplates } from '../actions';
 import { loadFieldsetsCatalog } from '../fieldsets/slice';
 import { loadFieldsetsCatalogSuccess, loadFieldsetsCatalogFailed } from '../fieldsets/slice';
-import { getFieldsetsCatalogByApiName, getIsCatalogLoaded } from '../selectors/fieldsets';
+import { getIsCatalogLoaded } from '../selectors/fieldsets';
 import { copyTemplate } from '../../api/copyTemplate';
 import { deleteTemplate } from '../../api/deleteTemplate';
 import { setGeneralLoaderVisibility } from '../general/actions';
@@ -128,8 +128,7 @@ function* patchTemplateSaga({ payload: { changedFields, onSuccess, onFailed } }:
   };
 
   const needsCleanup = changedFields.hasOwnProperty('tasks') || changedFields.hasOwnProperty('kickoff');
-  const fieldsetsByApiName: ReturnType<typeof getFieldsetsCatalogByApiName> = yield select(getFieldsetsCatalogByApiName);
-  const newTemplate = needsCleanup ? cleanTemplateReferences(mergedTemplate, fieldsetsByApiName) : mergedTemplate;
+  const newTemplate = needsCleanup ? cleanTemplateReferences(mergedTemplate) : mergedTemplate;
 
   yield put(setTemplate(newTemplate));
   yield delay(350);
@@ -211,8 +210,7 @@ function* fetchSaveTemplate(onSuccess?: () => void, onFailed?: () => void) {
   const users: ReturnType<typeof getUsers> = yield select(getUsers);
 
   const editingTemplate: ReturnType<typeof getTemplateData> = yield select(getTemplateData);
-  const fieldsetsByApiName: ReturnType<typeof getFieldsetsCatalogByApiName> = yield select(getFieldsetsCatalogByApiName);
-  const templateRequest = mapTemplateRequest(editingTemplate, fieldsetsByApiName);
+  const templateRequest = mapTemplateRequest(editingTemplate);
 
   const savedTemplate: ITemplateClient | null = yield createOrUpdateTemplate(templateRequest, isSubscribed, users);
   const lastTemplateState: ReturnType<typeof getTemplateData> = yield select(getTemplateData);
