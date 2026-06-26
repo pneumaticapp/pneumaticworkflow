@@ -207,7 +207,7 @@ def test_init__google__gcs_params(mocker):
 
     # assert
     assert service._client_params['endpoint_url'] == 'https://gcs'
-    assert service._config.signature_version == 's3'
+    assert service._config.signature_version == 's3v4'
 
 
 def test_init__pool_connections__is_20(
@@ -246,6 +246,7 @@ async def test_upload__ok__no_error(
         Bucket='bucket',
         Key='key',
         ExtraArgs={'ContentType': 'image/png'},
+        Config=svc._transfer_config,
     )
 
 
@@ -272,6 +273,7 @@ async def test_upload__with_content_type__extra_args(
         Bucket='b',
         Key='k',
         ExtraArgs={'ContentType': 'application/pdf'},
+        Config=svc._transfer_config,
     )
 
 
@@ -298,6 +300,7 @@ async def test_upload__no_content_type__empty_extra(
         Bucket='b',
         Key='k',
         ExtraArgs={},
+        Config=svc._transfer_config,
     )
 
 
@@ -337,12 +340,14 @@ async def test_upload__no_bucket__create_and_retry(
                 Bucket='bucket',
                 Key='key',
                 ExtraArgs={},
+                Config=svc._transfer_config,
             ),
             call(
                 Fileobj=stream,
                 Bucket='bucket',
                 Key='key',
                 ExtraArgs={},
+                Config=svc._transfer_config,
             ),
         ],
     )
