@@ -49,6 +49,7 @@ async def test_upload__valid_data__ok(
         Bucket='test-bucket',
         Key='test-file.txt',
         ExtraArgs={'ContentType': 'text/plain'},
+        Config=service._transfer_config,
     )
 
 

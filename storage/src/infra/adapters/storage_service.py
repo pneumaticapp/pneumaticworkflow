@@ -7,6 +7,7 @@ from collections.abc import AsyncGenerator
 import aioboto3
 from aiobotocore.config import AioConfig
 from aiobotocore.response import StreamingBody
+from boto3.s3.transfer import TransferConfig
 from botocore.exceptions import ClientError
 
 from src.shared_kernel.config import get_settings
@@ -27,12 +28,16 @@ class StorageService:
         self._storage_type = self._settings.STORAGE_TYPE
         self._session = aioboto3.Session()
 
-        # GCS requires signature_version='s3' (legacy), not 's3v4'!
-        signature_version = 's3' if self._storage_type == 'google' else 's3v4'
         self._config = AioConfig(
             max_pool_connections=20,
+            request_checksum_calculation='when_required',
+            response_checksum_validation='when_required',
             retries={'max_attempts': 3, 'mode': 'standard'},
-            signature_version=signature_version,
+            signature_version='s3v4',
+        )
+
+        self._transfer_config = TransferConfig(
+            multipart_threshold=100 * 1024 * 1024,
         )
 
         # Connection parameters depending on storage type
@@ -147,6 +152,7 @@ class StorageService:
                 Bucket=bucket_name,
                 Key=file_path,
                 ExtraArgs=extra_args,
+                Config=self._transfer_config,
             )
         except ClientError as e:
             if e.response['Error']['Code'] == 'NoSuchBucket':
@@ -164,6 +170,7 @@ class StorageService:
                         Bucket=bucket_name,
                         Key=file_path,
                         ExtraArgs=extra_args,
+                        Config=self._transfer_config,
                     )
                     return  # noqa: TRY300
                 except ClientError as upload_e:
