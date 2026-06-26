@@ -36,6 +36,7 @@ class Command(BaseCommand):
                 password=password,
                 host=host,
                 port=port,
+                sslmode='require',
             )
             self._verify_table(conn)
         except psycopg2.OperationalError:
@@ -50,6 +51,7 @@ class Command(BaseCommand):
                     password=password,
                     host='localhost',
                     port='5433',
+                    sslmode='prefer',
                 )
                 self._verify_table(conn)
             except Exception as e:
