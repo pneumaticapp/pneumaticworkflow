@@ -128,9 +128,9 @@ export function buildRowsWithAddedFieldset(
 export function buildRowsWithRemovedFieldset(
   fields: IExtraField[],
   fieldsets: IFieldsetBindingClient[],
-  fieldsetApiName: string,
+  sharedFieldsetId: number,
 ): TMergedTaskOutputRow[] {
-  const nextFieldsets = fieldsets.filter((fieldset) => fieldset.apiName !== fieldsetApiName);
+  const nextFieldsets = fieldsets.filter((fieldset) => fieldset.sharedFieldsetId !== sharedFieldsetId);
   return buildMergedTaskOutputRows(fields, nextFieldsets);
 }
 

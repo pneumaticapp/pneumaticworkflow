@@ -65,9 +65,9 @@ jest.mock('../../ExtraFields/utils/ExtraFieldsLabels', () => ({
 jest.mock('../../TaskOutputFlow/FieldsetIconPicker', () => ({
   FieldsetIconPicker: (props: {
     fieldsetsByApiName: ReadonlyMap<string, IFieldsetData>;
-    selectedFieldsetApiNames: string[];
+    selectedFieldsetIds: number[];
     onSelectFieldset: (apiName: string) => void;
-    onRemoveFieldset: (apiName: string) => void;
+    onRemoveFieldset: (sharedFieldsetId: number) => void;
   }) =>
     React.createElement(
       'div',

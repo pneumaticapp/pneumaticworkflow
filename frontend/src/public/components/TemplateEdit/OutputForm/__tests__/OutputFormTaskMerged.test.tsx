@@ -35,9 +35,9 @@ jest.mock('../../ExtraFields/utils/ExtraFieldIcon', () => ({
 jest.mock('../../TaskOutputFlow/FieldsetIconPicker', () => ({
   FieldsetIconPicker: (props: {
     fieldsetsByApiName: ReadonlyMap<string, IFieldsetData>;
-    selectedFieldsetApiNames: string[];
+    selectedFieldsetIds: number[];
     onSelectFieldset: (apiName: string) => void;
-    onRemoveFieldset: (apiName: string) => void;
+    onRemoveFieldset: (sharedFieldsetId: number) => void;
   }) =>
     React.createElement(
       'div',
@@ -53,15 +53,15 @@ jest.mock('../../TaskOutputFlow/FieldsetIconPicker', () => ({
           `Add fieldset ${fs.name}`,
         ),
       ),
-      props.selectedFieldsetApiNames.map((apiName) =>
+      props.selectedFieldsetIds.map((id) =>
         React.createElement(
           'button',
           {
-            key: `remove-${apiName}`,
+            key: `remove-${id}`,
             type: 'button',
-            onClick: () => props.onRemoveFieldset(apiName),
+            onClick: () => props.onRemoveFieldset(id),
           },
-          `Remove fieldset ${apiName}`,
+          `Remove fieldset ${id}`,
         ),
       ),
     ),
@@ -313,8 +313,8 @@ describe('OutputFormTaskMerged', () => {
         task: makeTask({
           fields: [],
           fieldsets: [
-            makeFieldsetBindingClient({ apiNameBinding: 'fs-a', order: 0 }),
-            makeFieldsetBindingClient({ apiNameBinding: 'fs-b', order: 1 }),
+             makeFieldsetBindingClient({ apiNameBinding: 'fs-a', order: 0, sharedFieldsetId: 10 }),
+            makeFieldsetBindingClient({ apiNameBinding: 'fs-b', order: 1, sharedFieldsetId: 20 }),
           ],
         }),
         fieldsetsByApiName: new Map([
@@ -323,7 +323,7 @@ describe('OutputFormTaskMerged', () => {
         ]),
       });
 
-      userEvent.click(screen.getByRole('button', { name: 'Remove fieldset fs-a' }));
+      userEvent.click(screen.getByRole('button', { name: 'Remove fieldset 10' }));
 
       expect(patchTask).toHaveBeenCalledTimes(1);
       const arg = patchTask.mock.calls[0][0];

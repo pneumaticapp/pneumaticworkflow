@@ -118,14 +118,14 @@ describe('mergeTaskOutputFlow', () => {
   });
 
   describe('buildRowsWithRemovedFieldset', () => {
-    it('removes fieldset by apiName, other rows are preserved', () => {
+    it('removes fieldset by sharedFieldsetId, other rows are preserved', () => {
       const rows = buildRowsWithRemovedFieldset(
         [field('a', 0)],
         [
           makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 1 }),
           makeFieldsetBindingClient({ apiNameBinding: 'fs-2', order: 2, sharedFieldsetId: 2 }),
         ],
-        'fs-1',
+        1,
       );
       const apiNames = rows.map((r) => (r.kind === 'field' ? r.field.apiName : r.apiName));
       expect(apiNames).not.toContain('fs-1');
@@ -137,7 +137,7 @@ describe('mergeTaskOutputFlow', () => {
       const rows = buildRowsWithRemovedFieldset(
         [field('a', 0)],
         [makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 1 })],
-        'fs-missing',
+        999,
       );
       const apiNames = rows.map((r) => (r.kind === 'field' ? r.field.apiName : r.apiName));
       expect(apiNames).toContain('fs-1');

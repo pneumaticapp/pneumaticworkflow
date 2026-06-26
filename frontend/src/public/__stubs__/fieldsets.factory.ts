@@ -54,7 +54,7 @@ export const makeFieldsetCatalogItem = (overrides: Partial<IFieldsetCatalogItem>
 
 export const makeFieldsetBindingClient = (overrides: Partial<IFieldsetBindingClient> = {}): IFieldsetBindingClient => ({
   sharedFieldsetId: 1,
-  apiName: 'fs-1',
+  apiName: overrides.apiNameBinding ?? 'fs-1',
   apiNameBinding: 'fs-binding-1',
   name: 'Test Fieldset',
   description: '',

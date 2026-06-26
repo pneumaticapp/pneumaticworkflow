@@ -128,8 +128,8 @@ export function OutputFormTaskMerged({
   );
 
   const handleRemoveFieldset = useCallback(
-    (fieldsetApiName: string) => {
-      const rows = buildRowsWithRemovedFieldset(task.fields || [], task.fieldsets || [], fieldsetApiName);
+    (sharedFieldsetId: number) => {
+      const rows = buildRowsWithRemovedFieldset(task.fields || [], task.fieldsets || [], sharedFieldsetId);
       saveOutputOrders(rows).catch(() => undefined);
     },
     [saveOutputOrders, task.fieldsets, task.fields],

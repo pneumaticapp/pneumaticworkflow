@@ -176,7 +176,7 @@ describe('MergedOutputRows', () => {
     expect(screen.getByRole('button', { name: 'Remove' })).toBeInTheDocument();
   });
 
-  it('click Remove → onRemoveFieldset("fs-1") called once', () => {
+  it('click Remove → onRemoveFieldset(sharedFieldsetId) called once', () => {
     const onRemoveFieldset = jest.fn();
     const map = new Map<string, IFieldsetData>([['fs-1', makeFieldsetData('fs-1', 0)]]);
 
@@ -190,7 +190,7 @@ describe('MergedOutputRows', () => {
     userEvent.click(screen.getByRole('button', { name: 'Remove' }));
 
     expect(onRemoveFieldset).toHaveBeenCalledTimes(1);
-    expect(onRemoveFieldset).toHaveBeenCalledWith('fs-1');
+    expect(onRemoveFieldset).toHaveBeenCalledWith(1);
   });
 
   it('click Up → onMoveRow(0, "up") called once, "down" not called', () => {

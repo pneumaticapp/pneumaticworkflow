@@ -117,8 +117,8 @@ export function KickoffRedux({
     if (rows) saveOutputOrders(rows);
   };
 
-  const handleRemoveFieldset = (fieldsetApiName: string) => {
-    const rows = buildRowsWithRemovedFieldset(kickoff.fields, kickoff.fieldsets || [], fieldsetApiName);
+  const handleRemoveFieldset = (sharedFieldsetId: number) => {
+    const rows = buildRowsWithRemovedFieldset(kickoff.fields, kickoff.fieldsets || [], sharedFieldsetId);
     saveOutputOrders(rows);
   };
   const handleDeleteField = (apiName: string) => {

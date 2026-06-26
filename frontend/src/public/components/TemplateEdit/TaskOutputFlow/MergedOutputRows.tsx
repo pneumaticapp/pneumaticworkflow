@@ -19,7 +19,7 @@ export interface IMergedOutputRowsProps {
   onDeleteField: (apiName: string) => void;
   onMoveRow: (index: number, direction: 'up' | 'down') => void;
   onEditField: (apiName: string) => (changedProps: Partial<IExtraField>) => void;
-  onRemoveFieldset: (apiName: string) => void;
+  onRemoveFieldset: (sharedFieldsetId: number) => void;
   datasetOptions: { value: string; label: string }[];
   accountId: number;
   formatMessage: (descriptor: { id: string }) => string;
@@ -95,7 +95,7 @@ export function MergedOutputRows({
                 isLastItem={isLast}
                 onMoveUp={() => onMoveRow(index, 'up')}
                 onMoveDown={() => onMoveRow(index, 'down')}
-                onRemove={() => onRemoveFieldset(row.apiName)}
+                onRemove={() => onRemoveFieldset(row.sharedFieldsetId)}
               />
             </div>
           </div>
