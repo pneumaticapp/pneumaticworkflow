@@ -16,11 +16,11 @@ export function UnassignedTasksWarning() {
   const links = [
     {
       title: 'How to invite your team',
-      url: 'https://support.pneumatic.app/en/articles/5579977-inviting-your-team-to-pneumatic',
+      url: 'https://support.pneumatic.app/articles/5579977-inviting-your-team-to-pneumatic',
     },
     {
       title: 'How to add free external users',
-      url: 'https://support.pneumatic.app/en/articles/6145048-free-external-users',
+      url: 'https://support.pneumatic.app/articles/6145048-free-external-users',
     },
   ];
 

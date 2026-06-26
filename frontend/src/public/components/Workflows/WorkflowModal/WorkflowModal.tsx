@@ -30,6 +30,7 @@ import { getWorkflowProgressColor } from '../utils/getWorkflowProgressColor';
 import { getEditedFields } from '../../TemplateEdit/ExtraFields/utils/getEditedFields';
 import { UserData } from '../../UserData';
 import { DateFormat } from '../../UI/DateFormat';
+import { RichText } from '../../RichText';
 
 import styles from './WorkflowModal.css';
 import {
@@ -77,6 +78,10 @@ export interface IWorkflowModalStoreProps {
 
 export type IWorkflowModalProps = IWorkflowModalOwnProps & IWorkflowModalStoreProps;
 
+const syncWorkflowModalPrintMode = (isOpen: boolean) => {
+  document.body.classList.toggle('workflow-modal-print-mode', isOpen);
+};
+
 export class WorkflowModal extends React.Component<IWorkflowModalProps> {
   private processProgress: number | undefined;
 
@@ -85,8 +90,11 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps> {
     this.processProgress = this.calculateWorkflowProgress();
   }
 
+
+
   public componentDidMount() {
-    const { workflow, setWorkflowEdit } = this.props;
+    const { workflow, setWorkflowEdit, isOpen } = this.props;
+    syncWorkflowModalPrintMode(isOpen);
     if (!workflow) {
       return;
     }
@@ -98,7 +106,11 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps> {
   }
 
   public componentDidUpdate(prevProps: IWorkflowModalStoreProps) {
-    const { workflow, setWorkflowEdit } = this.props;
+    const { workflow, setWorkflowEdit, isOpen } = this.props;
+
+    if (prevProps.isOpen !== isOpen) {
+      syncWorkflowModalPrintMode(isOpen);
+    }
     if (!workflow) {
       return;
     }
@@ -112,6 +124,10 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps> {
     }
 
     this.processProgress = this.calculateWorkflowProgress();
+  }
+
+  public componentWillUnmount() {
+    syncWorkflowModalPrintMode(false);
   }
 
   private calculateWorkflowProgress = () => {
@@ -192,7 +208,7 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps> {
                 &nbsp;&nbsp;
                 <button
                   type="button"
-                  className={styles['popup-title__edit']}
+                  className={classnames(styles['popup-title__edit'], 'no-print')}
                   onClick={() => setIsEditWorkflowName(true)}
                   aria-label="Edit workflow name"
                 >
@@ -357,7 +373,7 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps> {
     return (
       <>
         <div className={classnames(styles['popup-header'])}>
-          <ModalCloseIcon onClick={this.closeModal} className={styles['close-icon']} />
+          <ModalCloseIcon onClick={this.closeModal} className={classnames(styles['close-icon'], 'no-print')} />
 
           <div className={styles['header-popup-body']}>
             <div className={styles['popup-general-info-container']}>
@@ -410,7 +426,11 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps> {
     const workflowDescription = workflow?.description;
 
     if (workflowDescription) {
-      return <div className={styles['popup-description']}>{workflowDescription}</div>;
+      return (
+        <div className={styles['popup-description']}>
+          <RichText text={workflowDescription} embedVideos={false} />
+        </div>
+      );
     }
 
     return null;

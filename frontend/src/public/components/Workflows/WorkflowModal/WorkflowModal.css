@@ -318,3 +318,97 @@
     text-align: left;
   }
 }
+
+@media print {
+  :global(body:not(.workflow-modal-print-mode) .processes-inwork-popup) {
+    display: none !important;
+  }
+
+  :global(body.workflow-modal-print-mode .processes-inwork-popup) {
+    position: static !important;
+    z-index: auto !important;
+    padding: 0 !important;
+    display: block !important;
+    overflow: visible !important;
+    width: 100% !important;
+    max-width: none !important;
+    height: auto !important;
+    min-height: 0 !important;
+    background: white !important;
+    opacity: 1 !important;
+
+    :global(.modal) {
+      position: static !important;
+      overflow: visible !important;
+      width: auto !important;
+      max-width: none !important;
+      height: auto !important;
+      max-height: none !important;
+    }
+
+    :global(.modal-dialog) {
+      position: static !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      width: auto !important;
+      max-width: none !important;
+      height: auto !important;
+      min-height: 0 !important;
+      transform: none !important;
+    }
+
+    :global(.modal-content) {
+      margin: 0 !important;
+      padding: 0 !important;
+      display: block !important;
+      overflow: visible !important;
+      height: auto !important;
+      min-height: 0 !important;
+      max-height: none !important;
+      background: white !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+    }
+
+    :global(.modal-content > div),
+    :global(.modal-content > form),
+    :global(.modal-body) {
+      overflow: visible !important;
+      height: auto !important;
+      min-height: 0 !important;
+      max-height: none !important;
+    }
+
+    :global(.modal-body) {
+      padding: 0 !important;
+      background: white !important;
+      border-radius: 0 !important;
+    }
+
+    :global(a) {
+      text-decoration: none !important;
+      color: inherit !important;
+    }
+
+    .popup-header {
+      padding: 0 !important;
+      min-height: 0 !important;
+      background: white !important;
+      border-radius: 0 !important;
+    }
+
+    .inwork-popup-content {
+      background: white !important;
+      border-radius: 0 !important;
+    }
+
+    .progress-container-desktop {
+      display: flex !important;
+    }
+
+    .progress-container-mobile {
+      display: none !important;
+    }
+  }
+}

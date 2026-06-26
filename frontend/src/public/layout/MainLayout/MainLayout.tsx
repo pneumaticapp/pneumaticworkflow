@@ -27,9 +27,6 @@ import { isEnvAnalytics, isEnvPush } from '../../constants/enviroment';
 import { IUnsavedUser, TUserListItem } from '../../types/user';
 import { checkIsTemplateOwner, loadGroups } from '../../redux/actions';
 import { getIsAdmin } from '../../redux/selectors/user';
-import { closeAllConnections, hasActiveConnections } from '../../redux/utils/webSocketConnections';
-import { promiseDelay } from '../../utils/timeouts';
-
 import styles from './MainLayout.css';
 
 export interface IMainLayoutComponentStoreProps {
@@ -101,13 +98,7 @@ export function MainLayout({
 
   React.useEffect(() => {
     if (billingPlan) {
-      if (hasActiveConnections()) {
-        closeAllConnections()
-          .then(() => promiseDelay(500))
-          .then(() => watchUserWSEventsAction());
-      } else {
-        watchUserWSEventsAction();
-      }
+      watchUserWSEventsAction();
 
       loadNotificationsList();
       loadTasksCount();

@@ -130,9 +130,10 @@ export const FieldWithName = forwardRef<HTMLInputElement, IKickoffFormFieldWithN
         classnames(
           getInputNameBackground(labelBackgroundColor),
           styles['kick-off-input__name'],
+          isKickoffEditorMode && styles['kick-off-input__name_kickoff-edit'],
           fieldNameError && styles['kick-off-input__name_error'],
         ),
-      [labelBackgroundColor, fieldNameError],
+      [labelBackgroundColor, fieldNameError, isKickoffEditorMode],
     );
 
     const labelReplacementClassName = useMemo(

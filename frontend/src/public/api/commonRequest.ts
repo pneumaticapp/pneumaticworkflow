@@ -9,6 +9,9 @@ import { identifyAppPartOnClient } from '../utils/identifyAppPart/identifyAppPar
 import { getCurrentToken } from '../utils/auth';
 import { envBackendURL } from '../constants/enviroment';
 import { isRequestCanceled } from '../utils/isRequestCanceled';
+import { isExpectedClientError } from '../utils/expectedClientErrors';
+
+export class InterceptorError extends Error {}
 
 export type TRequestType = 'public' | 'local';
 export type TResponseType = 'json' | 'text' | 'empty';
@@ -80,23 +83,31 @@ axiosInstance.interceptors.response.use(
     }
 
     if (error.response) {
-      logger.error('Response Error:', error.response.data);
+      const responseData = error.response.data;
+      if (isExpectedClientError(responseData)) {
+        logger.info('Response Error:', error.response.status, responseData);
+      } else {
+        logger.error('Response Error:', error.response.status, responseData);
+      }
     } else if (error.request) {
-      logger.error('Request Error:', error.request);
+      // Don't log error.request (XMLHttpRequest) — contains auth tokens via __sentry_xhr_v3__
+      // Don't log error.config.headers — contains Authorization Bearer token
+      logger.error('Request Error:', {
+        message: error.message,
+        code: error.code,
+        status: error.status,
+        method: error.config?.method,
+        url: error.config?.url,
+        baseURL: error.config?.baseURL,
+        timeout: error.config?.timeout,
+      });
     } else {
       logger.error('Error:', error.message);
     }
 
     const data = error.response?.data;
     const payload = typeof data === 'string' ? { error: data } : data ?? {};
-    const rejectedError = Object.assign(new Error(), payload, { status: error.response?.status });
-
-    if (!rejectedError.message) {
-      const hasPayloadData = Object.keys(payload).length > 0;
-      rejectedError.message = hasPayloadData
-        ? JSON.stringify({ ...payload, status: error.response?.status })
-        : error.message || 'Request failed';
-    }
+    const rejectedError = Object.assign(new InterceptorError(), payload, { status: error.response?.status });
 
     return Promise.reject(rejectedError);
   },
@@ -150,7 +161,9 @@ export async function commonRequest<T>(
     if (shouldThrow) {
       throw error;
     }
-    logger.error(error);
+    if (!(error instanceof InterceptorError)) {
+      logger.error(error);
+    }
     
   }
 }

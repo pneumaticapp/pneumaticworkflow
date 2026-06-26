@@ -202,6 +202,7 @@ export function TopNav({
   return (
     <div
       className={classnames(
+        'no-print',
         styles['top-wrapper'],
         isFromWorkflowsLayout && styles['top-wrapper--workflows-layout'],
         isPaywallVisible && styles['top-wrapper_with-paywall'],
