@@ -55,6 +55,7 @@ class Command(BaseCommand):
                 password=password,
                 host=host,
                 port=port,
+                sslmode='require',
             )
         except psycopg2.OperationalError:
             self.stdout.write(self.style.WARNING(
@@ -66,6 +67,7 @@ class Command(BaseCommand):
                 password=password,
                 host='localhost',
                 port='5433',
+                sslmode='prefer',
             )
 
     def handle(self, *args, **options):
@@ -134,7 +136,7 @@ class Command(BaseCommand):
         try:
             for attr in attachments.iterator(chunk_size=batch_size):
                 file_id = attr.file_id
-                size = attr.size if attr.size else 0
+                size = attr.size or 0
                 filename = attr.name or "unnamed"
 
                 content_type, _ = mimetypes.guess_type(filename)
