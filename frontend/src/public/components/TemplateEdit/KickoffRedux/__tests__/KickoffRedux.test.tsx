@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 
 import { intlMock } from '../../../../__stubs__/intlMock';
 import { makeExtraField } from '../../../../__stubs__/fields.factory';
-import { makeFieldsetBindingClient, makeFieldsetData } from '../../../../__stubs__/fieldsets.factory';
+import { makeFieldsetBindingClient, makeFieldsetData, makeFieldsetField } from '../../../../__stubs__/fieldsets.factory';
 import {
   IExtraField,
   IFieldsetData,
@@ -234,7 +234,11 @@ describe('KickoffRedux', () => {
       });
       renderKickoff({
         kickoff: makeKickoff({
-          fieldsets: [makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 0 })],
+          fieldsets: [makeFieldsetBindingClient({
+            apiNameBinding: 'fs-1',
+            order: 0,
+            fields: [makeFieldsetField({ apiName: 'fs-field-1' })],
+          })],
         }),
         catalog: new Map([['fs-1', fsData]]),
       });

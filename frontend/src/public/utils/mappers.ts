@@ -170,7 +170,7 @@ export const mapEndOfDayTsp = (fields: IExtraField[]): IExtraField[] => {
   }));
 };
 
-export const getNormalizedKickoff = (kickoff: IKickoffClient): { [key: string]: string } => {
+export const getNormalizedKickoff = (kickoff: Pick<IKickoffClient, 'fields'>): { [key: string]: string } => {
   const mappedKickoffFields = new ExtraFieldsHelper(kickoff.fields).normalizeFieldsValues();
   const mappedKickoff = isArrayWithItems(mappedKickoffFields) ? Object.assign({}, ...mappedKickoffFields) : null;
   return mappedKickoff;

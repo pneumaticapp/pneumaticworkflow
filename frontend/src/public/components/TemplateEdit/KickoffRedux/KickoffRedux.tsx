@@ -197,7 +197,7 @@ export function KickoffRedux({
   const renderKickoffLabels = () => {
     const { fields, fieldsets } = kickoff;
     const hasFieldsetChips = (fieldsets || []).some(
-      (taskFieldset) => isArrayWithItems(fieldsetsByApiName.get(taskFieldset.apiName)?.fields ?? []),
+      (taskFieldset) => isArrayWithItems(taskFieldset.fields),
     );
 
     if (!isArrayWithItems(fields) && !hasFieldsetChips) {

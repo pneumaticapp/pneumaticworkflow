@@ -34,7 +34,7 @@ describe('mergeTaskOutputFlow', () => {
         makeFieldsetBindingClient({ apiNameBinding: 'fs-20', order: 2 }),
       ],
     );
-    expect(rows.map((r) => (r.kind === 'field' ? r.field.apiName : r.apiName))).toEqual(['b', 'fs-20', 'fs-10', 'a']);
+    expect(rows.map((row) => (row.kind === 'field' ? row.field.apiName : row.apiNameBinding))).toEqual(['b', 'fs-20', 'fs-10', 'a']);
   });
 
   it('normalizeMergedTaskOutputOrders assigns contiguous orders', () => {
@@ -55,7 +55,7 @@ describe('mergeTaskOutputFlow', () => {
       [],
     );
     const apiNamesOf = (rows: ReturnType<typeof buildMergedTaskOutputRows>) =>
-      rows.map((r) => (r.kind === 'field' ? r.field.apiName : r.apiName));
+      rows.map((row) => (row.kind === 'field' ? row.field.apiName : row.apiNameBinding));
     const snapshotBefore = apiNamesOf(original);
     expect(snapshotBefore).toEqual(['a', 'b', 'c', 'd']);
 
@@ -91,7 +91,7 @@ describe('mergeTaskOutputFlow', () => {
         makeFieldsetBindingClient({ apiNameBinding: 'fs-new', order: 0, sharedFieldsetId: 99 }),
       );
       const rows = assertRowsDefined(result);
-      const apiNames = rows.map((r) => (r.kind === 'field' ? r.field.apiName : r.apiName));
+      const apiNames = rows.map((row) => (row.kind === 'field' ? row.field.apiName : row.apiNameBinding));
       expect(apiNames).toContain('fs-new');
     });
 
@@ -113,7 +113,7 @@ describe('mergeTaskOutputFlow', () => {
       const rows = assertRowsDefined(result);
       const lastRow = rows[rows.length - 1];
       expect(lastRow.kind).toBe('fieldset');
-      expect(lastRow.kind === 'fieldset' && lastRow.apiName).toBe('fs-new');
+      expect(lastRow.kind === 'fieldset' && lastRow.apiNameBinding).toBe('fs-new');
     });
   });
 
@@ -127,7 +127,7 @@ describe('mergeTaskOutputFlow', () => {
         ],
         1,
       );
-      const apiNames = rows.map((r) => (r.kind === 'field' ? r.field.apiName : r.apiName));
+      const apiNames = rows.map((row) => (row.kind === 'field' ? row.field.apiName : row.apiNameBinding));
       expect(apiNames).not.toContain('fs-1');
       expect(apiNames).toContain('fs-2');
       expect(apiNames).toContain('a');
@@ -139,7 +139,7 @@ describe('mergeTaskOutputFlow', () => {
         [makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 1 })],
         999,
       );
-      const apiNames = rows.map((r) => (r.kind === 'field' ? r.field.apiName : r.apiName));
+      const apiNames = rows.map((row) => (row.kind === 'field' ? row.field.apiName : row.apiNameBinding));
       expect(apiNames).toContain('fs-1');
       expect(apiNames).toContain('a');
     });

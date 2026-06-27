@@ -21,7 +21,6 @@ import { useCheckDevice } from '../../../hooks/useCheckDevice';
 import { Webhooks } from './Webhook/Webhooks';
 import { useHashLink } from '../../../hooks/useHashLink';
 import { ETemplateParts } from '../../../types/template';
-import { getFieldsetsCatalogByApiName } from '../../../redux/selectors/fieldsets';
 import { mapRequestBody } from '../../../utils/mappers';
 
 import styles from './TemplateIntegrations.css';
@@ -68,12 +67,11 @@ export function TemplateIntegrations() {
   const dispatch = useDispatch();
 
   const templateData = useSelector(getTemplateData);
-  const fieldsetsByApiName = useSelector(getFieldsetsCatalogByApiName);
 
   const [isExpanded, setIsExpanded] = useState(false);
   const [currentTab, setCurrentTab] = useState<EIntergrationTabs>(EIntergrationTabs.AppDirectory);
 
-  const apiCode = mapRequestBody(mapTemplateRequest(templateData, fieldsetsByApiName), 'prettify');
+  const apiCode = mapRequestBody(mapTemplateRequest(templateData), 'prettify');
 
   const apiKey = useSelector(getUserApiKey);
   const apiKeyValue = apiKey.isLoading ? formatMessage({ id: 'integrations.loading-api-key' }) : apiKey.data;

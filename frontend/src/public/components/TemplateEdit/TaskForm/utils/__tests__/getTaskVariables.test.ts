@@ -177,7 +177,7 @@ describe('getTaskVariables', () => {
 
   it('expands task-fieldset with inline `fields` without using the catalog', () => {
     const inlineFieldset = makeFieldsetBindingClient({
-      apiName: 'fs-inline',
+      apiNameBinding: 'fs-inline',
       name: 'Inline Set',
       fields: [
         makeFieldsetField({
