@@ -6,7 +6,8 @@ import { useIntl } from 'react-intl';
 import { RichText } from '../RichText';
 import { Attachments } from '../Attachments';
 import { EWorkflowLogEvent } from '../../types/workflow';
-import { EExtraFieldType, IExtraField, IFieldsetData } from '../../types/template';
+import { EExtraFieldType, IExtraField } from '../../types/template';
+import { IFieldsetRuntime } from '../../types/fieldset';
 import { IHighlightsItem } from '../../types/highlights';
 import { isArrayWithItems } from '../../utils/helpers';
 import { EKickoffOutputsViewModes, KickoffOutputs } from '../KickoffOutputs';
@@ -69,7 +70,7 @@ export function FeedItemHeader({
       [EWorkflowLogEvent.TaskRevert]: taskOutput,
     };
 
-    const FIELDSETS_MAP: { [key in EWorkflowLogEvent]?: IFieldsetData[] } = {
+    const FIELDSETS_MAP: { [key in EWorkflowLogEvent]?: IFieldsetRuntime[] } = {
       [EWorkflowLogEvent.WorkflowRun]: kickoffFieldsets,
       [EWorkflowLogEvent.WorkflowComplete]: taskFieldsets,
       [EWorkflowLogEvent.TaskComplete]: taskFieldsets,

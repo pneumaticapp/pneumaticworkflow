@@ -7,10 +7,7 @@ import {
 } from '../components/TemplateEdit/TaskForm/Conditions';
 import { TUploadedFile } from '../utils/uploadFiles';
 import { TSystemField } from '../components/Workflows/WorkflowsTablePage/WorkflowsTable/types';
-import {
-  EFieldLabelPosition, IFieldsetBinding, IFieldsetBindingClient,
-  IFieldsetBindingMeta, IFieldsetTemplateRule, TFieldSetLayout,
-} from './fieldset';
+import { IFieldsetBinding, IFieldsetBindingClient, IFieldsetBindingMeta, IFieldsetRuntime } from './fieldset';
 
 export type { IFieldsetBindingClient } from './fieldset';
 
@@ -60,7 +57,7 @@ export type ITemplateStarter = ITemplateOwner;
 
 export type TRuntimeMergedOutputPart =
   | { kind: 'field'; field: IExtraField }
-  | { kind: 'fieldset'; data: IFieldsetData | TTemplateFieldFieldset }
+  | { kind: 'fieldset'; data: IFieldsetRuntime | TTemplateFieldFieldset }
   | { kind: 'system'; field: TSystemField };
 
 export type TTransformedTask = {
@@ -75,7 +72,9 @@ export interface ITaskFieldset {
   order: number;
 }
 
-export type TTemplateFieldFieldset = Pick<IFieldsetData, 'name' | 'description' | 'apiNameBinding' | 'fields' | 'order' | 'labelPosition'>;
+export type TTemplateFieldFieldset = Pick<
+  IFieldsetRuntime, 'name' | 'description' | 'apiNameBinding' | 'fields' | 'order' | 'labelPosition'
+>;
 
 export interface ITemplateTask {
   id?: number;
@@ -215,20 +214,6 @@ export type TConditionRulePredicateResponse = {
   operator: EConditionOperators;
 } & TConditionPredicateValue;
 
-/** Fieldset instance from runtime API response (kickoff / task) */
-export interface IFieldsetData {
-  name: string;
-  description: string;
-  fields: IExtraField[];
-  order: number;
-  labelPosition: EFieldLabelPosition;
-  rulesCount?: number;
-  sharedFieldsetId: number;
-  apiNameBinding: string;
-  layout: TFieldSetLayout;
-  title: string;
-  rules: IFieldsetTemplateRule[];
-}
 
 /** Fieldset template object from list API response (camelCased by commonRequest) */
 export interface IFieldsetTemplateData {

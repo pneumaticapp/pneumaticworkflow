@@ -24,7 +24,8 @@ import { mapTemplateFieldsetsToRuntime } from '../../../utils/mapTemplateFieldse
 import { getClonedKickoff } from '../../../components/Workflows/WorkflowsGridPage/WorkflowCard/utils/getClonedKickoff';
 import { getTemplateSteps } from '../../../api/getTemplateSteps';
 import { handleLoadTemplateVariables } from '../../templates/saga';
-import { IFieldsetData, IKickoff } from '../../../types/template';
+import { IKickoff } from '../../../types/template';
+import { IFieldsetRuntime } from '../../../types/fieldset';
 import { loadFilterSteps } from '../slice';
 
 jest.mock('../../../api/getWorkflow', () => ({
@@ -159,7 +160,7 @@ describe('cloneWorkflowSaga — fieldsets loading on clone', () => {
     status: 'running',
   };
 
-  const mockLoadedFieldsets: Pick<IFieldsetData, 'apiNameBinding' | 'name' | 'fields' | 'order'>[] = [
+  const mockLoadedFieldsets: Pick<IFieldsetRuntime, 'apiNameBinding' | 'name' | 'fields' | 'order'>[] = [
     { apiNameBinding: 'fs-1', name: 'Fieldset 1', fields: [], order: 0 },
   ];
 

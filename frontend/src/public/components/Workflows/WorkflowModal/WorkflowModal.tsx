@@ -11,7 +11,8 @@ import {
   IWorkflowEditData,
   IWorkflowLogItem,
 } from '../../../types/workflow';
-import { IExtraField, IFieldsetData } from '../../../types/template';
+import { IExtraField } from '../../../types/template';
+import { IFieldsetRuntime } from '../../../types/fieldset';
 import { Avatar } from '../../UI/Avatar';
 import { EditIcon, ModalCloseIcon } from '../../icons';
 import { EditKickoffContainer } from '../../KickoffEdit';
@@ -78,7 +79,7 @@ export interface IWorkflowModalStoreProps {
 export type IWorkflowModalProps = IWorkflowModalOwnProps & IWorkflowModalStoreProps;
 
 interface IWorkflowModalState {
-  fieldsetFields: IFieldsetData[];
+  fieldsetFields: IFieldsetRuntime[];
 }
 
 const syncWorkflowModalPrintMode = (isOpen: boolean) => {
@@ -133,7 +134,7 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps, IWorkflo
     this.processProgress = this.calculateWorkflowProgress();
   }
 
-  private static getFieldsetsFromProps(props: IWorkflowModalProps): IFieldsetData[] {
+  private static getFieldsetsFromProps(props: IWorkflowModalProps): IFieldsetRuntime[] {
     return (props.workflow?.kickoff?.fieldsets || []).map((fs) => ({ ...fs, fields: [...fs.fields] }));
   }
 

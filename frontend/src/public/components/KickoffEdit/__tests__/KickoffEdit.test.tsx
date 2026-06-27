@@ -5,8 +5,9 @@ import { enMessages } from '../../../lang/locales/en_US';
 
 import { EditKickoff } from '../KickoffEdit';
 import { makeExtraField } from '../../../__stubs__/fields.factory';
-import { makeFieldsetData } from '../../../__stubs__/fieldsets.factory';
-import { IExtraField, IFieldsetData } from '../../../types/template';
+import { makeFieldsetRuntime } from '../../../__stubs__/fieldsets.factory';
+import { IExtraField } from '../../../types/template';
+import { IFieldsetRuntime } from '../../../types/fieldset';
 import { MergedOutputList } from '../../MergedOutputList';
 
 jest.mock('../../MergedOutputList', () => ({
@@ -41,7 +42,7 @@ const makeField = (apiName: string, order: number, overrides: Partial<IExtraFiel
   ...overrides,
 });
 
-const makeFieldset = (overrides: Partial<IFieldsetData> & { fields: IExtraField[] }) => makeFieldsetData({
+const makeFieldset = (overrides: Partial<IFieldsetRuntime> & { fields: IExtraField[] }) => makeFieldsetRuntime({
   name: 'Fieldset',
   ...overrides,
 });
@@ -127,7 +128,7 @@ describe('KickoffEdit', () => {
       fieldsets: [],
     };
 
-    const fieldsets: IFieldsetData[] = [
+    const fieldsets: IFieldsetRuntime[] = [
       makeFieldset({
         fields: [
           makeField('fs-field-1', 1, { isRequired: true, value: '' }),
@@ -156,7 +157,7 @@ describe('KickoffEdit', () => {
       fieldsets: [],
     };
 
-    const fieldsets: IFieldsetData[] = [
+    const fieldsets: IFieldsetRuntime[] = [
       makeFieldset({
         fields: [
           makeField('fs-field-1', 1, { isRequired: true, value: 'also filled' }),
@@ -200,7 +201,7 @@ describe('KickoffEdit', () => {
       fieldsets: [],
     };
 
-    const fieldsets: IFieldsetData[] = [
+    const fieldsets: IFieldsetRuntime[] = [
       makeFieldset({
         fields: [makeField('fs-field-1', 1)],
         order: 1,
@@ -235,7 +236,7 @@ describe('KickoffEdit', () => {
       fieldsets: [],
     };
 
-    const fieldsets: IFieldsetData[] = [
+    const fieldsets: IFieldsetRuntime[] = [
       makeFieldset({
         fields: [makeField('fs-field-1', 1)],
         order: 1,

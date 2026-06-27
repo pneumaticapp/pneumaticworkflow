@@ -12,7 +12,8 @@ import { ERoutes } from '../../constants/routes';
 import { history } from '../../utils/history';
 import { IntlMessages } from '../IntlMessages';
 import { EInputNameBackgroundColor } from '../../types/workflow';
-import { IExtraField, IFieldsetData } from '../../types/template';
+import { IExtraField } from '../../types/template';
+import { IFieldsetRuntime } from '../../types/fieldset';
 import { getPluralNoun, isArrayWithItems } from '../../utils/helpers';
 import { getEditedFields } from '../TemplateEdit/ExtraFields/utils/getEditedFields';
 import { MergedOutputList } from '../MergedOutputList';
@@ -75,7 +76,7 @@ function WorkflowEditPopupComponent({
     workflow.wfNameTemplate || `${reactElementToText(<DateFormat />)} — ${workflow.name}`,
   );
   const [kickoffState, setKickoffState] = useState(getInitialKickoff(workflow.kickoff));
-  const [fieldsetStates, setFieldsetStates] = useState<IFieldsetData[]>(workflow.loadedFieldsets || []);
+  const [fieldsetStates, setFieldsetStates] = useState<IFieldsetRuntime[]>(workflow.loadedFieldsets || []);
 
   const [isUrgent, setIsUrgent] = useState(false);
 

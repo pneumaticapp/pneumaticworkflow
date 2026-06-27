@@ -6,8 +6,9 @@ import { enMessages } from '../../../../../../lang/locales/en_US';
 import { WorkflowLogTaskComplete } from '../WorkflowLogTaskComplete';
 import { KickoffOutputs } from '../../../../../KickoffOutputs';
 import { makeExtraField } from '../../../../../../__stubs__/fields.factory';
-import { makeFieldsetData } from '../../../../../../__stubs__/fieldsets.factory';
-import { IExtraField, IFieldsetData } from '../../../../../../types/template';
+import { makeFieldsetRuntime } from '../../../../../../__stubs__/fieldsets.factory';
+import { IExtraField } from '../../../../../../types/template';
+import { IFieldsetRuntime } from '../../../../../../types/fieldset';
 import { IWorkflowLogTask } from '../../../../../../types/workflow';
 
 jest.mock('../../../../../KickoffOutputs', () => ({
@@ -47,7 +48,7 @@ const makeField = (overrides: Partial<IExtraField> = {}) => makeExtraField({
   ...overrides,
 });
 
-const makeFieldset = (overrides: Partial<IFieldsetData> = {}) => makeFieldsetData({
+const makeFieldset = (overrides: Partial<IFieldsetRuntime> = {}) => makeFieldsetRuntime({
   name: 'Fieldset',
   fields: [makeField()],
   ...overrides,

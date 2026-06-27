@@ -1,7 +1,8 @@
 import { outputStorage, fieldsetsStorage } from '../storageOutputs';
 import { makeExtraField } from '../../../../__stubs__/fields.factory';
-import { makeFieldsetData } from '../../../../__stubs__/fieldsets.factory';
-import { IExtraField, IFieldsetData } from '../../../../types/template';
+import { makeFieldsetRuntime } from '../../../../__stubs__/fieldsets.factory';
+import { IExtraField } from '../../../../types/template';
+import { IFieldsetRuntime } from '../../../../types/fieldset';
 
 const OUTPUT_STORAGE_KEY = 'tasks_outputs';
 const FIELDSETS_STORAGE_KEY = 'tasks_fieldsets_outputs';
@@ -14,8 +15,8 @@ describe('storageOutputs', () => {
 
   it('keeps outputStorage and fieldsetsStorage isolated from each other', () => {
     const outputs: IExtraField[] = [makeExtraField({ apiName: 'plain', name: 'Field plain', value: 'plain-value' })];
-    const fieldsets: IFieldsetData[] = [
-      makeFieldsetData({ apiNameBinding: 'fs-1', name: 'Fieldset fs-1', fields: [makeExtraField({ apiName: 'fs-field', name: 'Field fs-field', value: 'fs-value' })] }),
+    const fieldsets: IFieldsetRuntime[] = [
+      makeFieldsetRuntime({ apiNameBinding: 'fs-1', name: 'Fieldset fs-1', fields: [makeExtraField({ apiName: 'fs-field', name: 'Field fs-field', value: 'fs-value' })] }),
     ];
 
     outputStorage.save(1, outputs);
@@ -31,8 +32,8 @@ describe('storageOutputs', () => {
   });
 
   it('save → get round-trip preserves the real fieldset structure 1-to-1', () => {
-    const fieldsets: IFieldsetData[] = [
-      makeFieldsetData({
+    const fieldsets: IFieldsetRuntime[] = [
+      makeFieldsetRuntime({
         apiNameBinding: 'contacts',
         name: 'Contacts',
         description: 'Reachout details',
@@ -43,7 +44,7 @@ describe('storageOutputs', () => {
           makeExtraField({ apiName: 'phone', name: 'Field phone', value: '+1', isRequired: true }),
         ],
       }),
-      makeFieldsetData({
+      makeFieldsetRuntime({
         apiNameBinding: 'address',
         name: 'Fieldset address',
         sharedFieldsetId: 43,
@@ -58,14 +59,14 @@ describe('storageOutputs', () => {
   });
 
   it('subsequent save for the same taskId replaces the entry without duplicating', () => {
-    fieldsetsStorage.save(1, [makeFieldsetData({ apiNameBinding: 'fs', name: 'Fieldset fs', fields: [makeExtraField({ apiName: 'a', name: 'Field a', value: 'v1' })] })]);
-    fieldsetsStorage.save(1, [makeFieldsetData({ apiNameBinding: 'fs', name: 'Fieldset fs', fields: [makeExtraField({ apiName: 'a', name: 'Field a', value: 'v2' })] })]);
+    fieldsetsStorage.save(1, [makeFieldsetRuntime({ apiNameBinding: 'fs', name: 'Fieldset fs', fields: [makeExtraField({ apiName: 'a', name: 'Field a', value: 'v1' })] })]);
+    fieldsetsStorage.save(1, [makeFieldsetRuntime({ apiNameBinding: 'fs', name: 'Fieldset fs', fields: [makeExtraField({ apiName: 'a', name: 'Field a', value: 'v2' })] })]);
 
     const raw = localStorage.getItem(FIELDSETS_STORAGE_KEY);
     if (raw === null) {
       throw new Error('Expected localStorage to contain fieldsets entry');
     }
-    const stored = JSON.parse(raw) as Array<{ taskId: number; data: IFieldsetData[] }>;
+    const stored = JSON.parse(raw) as Array<{ taskId: number; data: IFieldsetRuntime[] }>;
 
     expect(stored).toHaveLength(1);
     expect(stored[0].taskId).toBe(1);
@@ -79,8 +80,8 @@ describe('storageOutputs', () => {
   });
 
   it('remove deletes only the entry for the given taskId, leaving other tasks intact', () => {
-    const fs1: IFieldsetData[] = [makeFieldsetData({ apiNameBinding: 'fs-1', name: 'Fieldset fs-1', fields: [makeExtraField({ apiName: 'a', name: 'Field a', value: 'task-1-value' })] })];
-    const fs2: IFieldsetData[] = [makeFieldsetData({ apiNameBinding: 'fs-2', name: 'Fieldset fs-2', fields: [makeExtraField({ apiName: 'b', name: 'Field b', value: 'task-2-value' })] })];
+    const fs1: IFieldsetRuntime[] = [makeFieldsetRuntime({ apiNameBinding: 'fs-1', name: 'Fieldset fs-1', fields: [makeExtraField({ apiName: 'a', name: 'Field a', value: 'task-1-value' })] })];
+    const fs2: IFieldsetRuntime[] = [makeFieldsetRuntime({ apiNameBinding: 'fs-2', name: 'Fieldset fs-2', fields: [makeExtraField({ apiName: 'b', name: 'Field b', value: 'task-2-value' })] })];
 
     fieldsetsStorage.save(1, fs1);
     fieldsetsStorage.save(2, fs2);

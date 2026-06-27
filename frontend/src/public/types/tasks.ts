@@ -1,5 +1,6 @@
 import { IWorkflow, IWorkflowClient, WorkflowWithTsp } from './workflow';
-import { IExtraField, IFieldsetData, ITemplateTitleBaseWithCount, RawPerformer } from './template';
+import { IExtraField, ITemplateTitleBaseWithCount, RawPerformer } from './template';
+import { IFieldsetRuntime } from './fieldset';
 
 export type TTaskWorkflow = Pick<IWorkflow, 'id' | 'name' | 'status' | 'dateCompleted'> & {
   templateName: string;
@@ -21,7 +22,7 @@ export type TaskWithTsp<T> = Omit<T, keyof TaskWithDateFields> & TaskWithTspFiel
 
 export type TFormatTaskDates = {
   output?: IExtraField[];
-  fieldsets?: IFieldsetData[];
+  fieldsets?: IFieldsetRuntime[];
   subWorkflows?: WorkflowWithTsp<IWorkflow>[] | null;
   dueDateTsp?: number | null;
   dateStartedTsp?: number;
@@ -46,7 +47,7 @@ export interface ITask {
   id: number;
   name: string;
   output: IExtraField[];
-  fieldsets?: IFieldsetData[];
+  fieldsets?: IFieldsetRuntime[];
   description: string | null;
   workflow: TTaskWorkflow;
   performers: RawPerformer[];

@@ -4,8 +4,9 @@ import userEvent from '@testing-library/user-event';
 
 import { TaskCard, ETaskCardViewMode } from '../TaskCard';
 import { makeExtraField } from '../../../__stubs__/fields.factory';
-import { makeFieldsetData } from '../../../__stubs__/fieldsets.factory';
-import {ETemplateOwnerType, IExtraField, IFieldsetData } from '../../../types/template';
+import { makeFieldsetRuntime } from '../../../__stubs__/fieldsets.factory';
+import {ETemplateOwnerType, IExtraField } from '../../../types/template';
+import { IFieldsetRuntime } from '../../../types/fieldset';
 import { ETaskStatus } from '../../../redux/actions';
 import { EWorkflowStatus, EWorkflowsLogSorting } from '../../../types/workflow';
 import { IAuthUser, ELoggedState } from '../../../types/redux';
@@ -299,7 +300,7 @@ describe('TaskCard', () => {
 
   it('renders MergedOutputList and passes fields and fieldsets', async () => {
     const fieldsets = [
-      makeFieldsetData({ name: 'FS', order: 2 }),
+      makeFieldsetRuntime({ name: 'FS', order: 2 }),
     ];
     const task = {
       ...baseTask,
@@ -374,7 +375,7 @@ describe('TaskCard', () => {
     const { fieldsetsStorage } = require('../utils/storageOutputs');
 
     const fieldsets = [
-      makeFieldsetData({ name: 'FS', fields: [makeExtraField({ apiName: 'f-1' })] }),
+      makeFieldsetRuntime({ name: 'FS', fields: [makeExtraField({ apiName: 'f-1' })] }),
     ];
     const task = { ...baseTask, output: [], fieldsets };
     render(<TaskCard {...baseProps} task={task} />);
@@ -396,19 +397,19 @@ describe('TaskCard', () => {
   it('restores fieldset values from localStorage draft and merges them with server data', async () => {
     const { fieldsetsStorage } = require('../utils/storageOutputs');
 
-    const storageFs: IFieldsetData = makeFieldsetData({
+    const storageFs: IFieldsetRuntime = makeFieldsetRuntime({
       name: 'FS-1',
       order: 1,
       fields: [makeExtraField({ apiName: 'email', value: 'draft@x.com' })],
     });
     (fieldsetsStorage.get as jest.Mock).mockReturnValue([storageFs]);
 
-    const serverFs1: IFieldsetData = makeFieldsetData({
+    const serverFs1: IFieldsetRuntime = makeFieldsetRuntime({
       name: 'FS-1',
       order: 1,
       fields: [makeExtraField({ apiName: 'email', value: 'server@x.com' })],
     });
-    const serverFs2: IFieldsetData = makeFieldsetData({
+    const serverFs2: IFieldsetRuntime = makeFieldsetRuntime({
       sharedFieldsetId: 2,
       apiNameBinding: 'fs-2',
       name: 'FS-2',
@@ -429,7 +430,7 @@ describe('TaskCard', () => {
     const lastCall = (MergedOutputList as jest.Mock).mock.calls[
       (MergedOutputList as jest.Mock).mock.calls.length - 1
     ];
-    const passedFieldsets: IFieldsetData[] = lastCall[0].fieldsets;
+    const passedFieldsets: IFieldsetRuntime[] = lastCall[0].fieldsets;
     expect(passedFieldsets).toHaveLength(2);
     expect(passedFieldsets[1].fields[0].value).toBe('server-phone');
   });
@@ -437,7 +438,7 @@ describe('TaskCard', () => {
   it('ignores a foreign fieldset from the draft that does not belong to the current task', async () => {
     const { fieldsetsStorage } = require('../utils/storageOutputs');
 
-    const strangerFs: IFieldsetData = makeFieldsetData({
+    const strangerFs: IFieldsetRuntime = makeFieldsetRuntime({
       sharedFieldsetId: 999,
       apiNameBinding: 'fs-stranger',
       name: 'Stranger',
@@ -445,7 +446,7 @@ describe('TaskCard', () => {
     });
     (fieldsetsStorage.get as jest.Mock).mockReturnValue([strangerFs]);
 
-    const serverFs: IFieldsetData = makeFieldsetData({
+    const serverFs: IFieldsetRuntime = makeFieldsetRuntime({
       name: 'FS-1',
       order: 1,
       fields: [makeExtraField({ apiName: 'email' })],
@@ -461,7 +462,7 @@ describe('TaskCard', () => {
     const lastCall = (MergedOutputList as jest.Mock).mock.calls[
       (MergedOutputList as jest.Mock).mock.calls.length - 1
     ];
-    const passedFieldsets: IFieldsetData[] = lastCall[0].fieldsets;
+    const passedFieldsets: IFieldsetRuntime[] = lastCall[0].fieldsets;
     expect(passedFieldsets).toHaveLength(1);
     expect(passedFieldsets[0].apiNameBinding).toBe('fs-1');
     expect(
@@ -475,7 +476,7 @@ describe('TaskCard', () => {
     (fieldsetsStorage.get as jest.Mock).mockImplementation((id: number) => {
       if (id === 100) {
         return [
-          makeFieldsetData({
+          makeFieldsetRuntime({
             apiNameBinding: 'fs',
             name: 'FS',
             fields: [makeExtraField({ apiName: 'k', value: 'draft-A' })],
@@ -484,7 +485,7 @@ describe('TaskCard', () => {
       }
       if (id === 200) {
         return [
-          makeFieldsetData({
+          makeFieldsetRuntime({
             apiNameBinding: 'fs',
             name: 'FS',
             fields: [makeExtraField({ apiName: 'k', value: 'draft-B' })],
@@ -494,7 +495,7 @@ describe('TaskCard', () => {
       return undefined;
     });
 
-    const serverFs = (value: string): IFieldsetData => makeFieldsetData({
+    const serverFs = (value: string): IFieldsetRuntime => makeFieldsetRuntime({
       apiNameBinding: 'fs',
       name: 'FS',
       fields: [makeExtraField({ apiName: 'k', value })],
@@ -523,13 +524,13 @@ describe('TaskCard', () => {
 
   it('on Complete click submits a combined payload: plain outputs + fields of all fieldsets', async () => {
     const setTaskCompleted = jest.fn();
-    const fieldsets: IFieldsetData[] = [
-      makeFieldsetData({
+    const fieldsets: IFieldsetRuntime[] = [
+      makeFieldsetRuntime({
         name: 'FS-1',
         order: 2,
         fields: [makeExtraField({ apiName: 'a' }), makeExtraField({ apiName: 'b' })],
       }),
-      makeFieldsetData({
+      makeFieldsetRuntime({
         sharedFieldsetId: 2,
         apiNameBinding: 'fs-2',
         name: 'FS-2',
@@ -568,8 +569,8 @@ describe('TaskCard', () => {
   });
 
   it('renders the outputs block when the task has only fieldsets and no plain fields', async () => {
-    const fieldsets: IFieldsetData[] = [
-      makeFieldsetData({
+    const fieldsets: IFieldsetRuntime[] = [
+      makeFieldsetRuntime({
         name: 'FS',
         fields: [makeExtraField({ apiName: 'k' })],
       }),
@@ -598,11 +599,11 @@ describe('TaskCard', () => {
       ...baseTask,
       output: [makeExtraField({ apiName: 'a' })],
       fieldsets: [
-        makeFieldsetData({
+        makeFieldsetRuntime({
           name: 'FS',
           fields: [makeExtraField({ apiName: 'k' })],
         }),
-      ] as IFieldsetData[],
+      ] as IFieldsetRuntime[],
     };
 
     render(<TaskCard {...baseProps} task={task} status={ETaskStatus.Completed} />);
@@ -616,8 +617,8 @@ describe('TaskCard', () => {
     jest.useFakeTimers();
     const { fieldsetsStorage } = require('../utils/storageOutputs');
 
-    const fieldsets: IFieldsetData[] = [
-      makeFieldsetData({
+    const fieldsets: IFieldsetRuntime[] = [
+      makeFieldsetRuntime({
         name: 'FS-1',
         fields: [makeExtraField({ apiName: 'email', value: 'old@x.com' })],
       }),
@@ -642,7 +643,7 @@ describe('TaskCard', () => {
     const saveCalls = (fieldsetsStorage.save as jest.Mock).mock.calls;
     const lastSaveArgs = saveCalls[saveCalls.length - 1];
     expect(lastSaveArgs[0]).toBe(42);
-    const savedFieldsets: IFieldsetData[] = lastSaveArgs[1];
+    const savedFieldsets: IFieldsetRuntime[] = lastSaveArgs[1];
     expect(savedFieldsets).toHaveLength(1);
     expect(savedFieldsets[0].apiNameBinding).toBe('fs-1');
     expect(savedFieldsets[0].fields[0].value).toBe('new@x.com');

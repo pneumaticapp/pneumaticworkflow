@@ -1,6 +1,6 @@
 import { IWorkflowDetailsKickoff } from '../../../../../../types/workflow';
 import { EExtraFieldType, IKickoffClient } from '../../../../../../types/template';
-import { makeFieldsetData } from '../../../../../../__stubs__/fieldsets.factory';
+import { makeFieldsetRuntime } from '../../../../../../__stubs__/fieldsets.factory';
 import { makeExtraField } from '../../../../../../__stubs__/fields.factory';
 import { getClonedKickoff } from '../getClonedKickoff';
 
@@ -324,7 +324,7 @@ describe('getClonedKickoff.', () => {
         description: '',
         output: [],
         fieldsets: [
-          makeFieldsetData({
+          makeFieldsetRuntime({
             sharedFieldsetId: 10,
             apiNameBinding: 'fs-1',
             name: 'Fieldset 1',

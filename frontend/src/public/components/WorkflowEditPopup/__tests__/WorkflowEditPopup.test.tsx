@@ -5,9 +5,10 @@ import { IntlProvider } from 'react-intl';
 import { enMessages } from '../../../lang/locales/en_US';
 
 import { WorkflowEditPopup } from '../WorkflowEditPopup';
-import { IExtraField, IFieldsetData } from '../../../types/template';
+import { IExtraField } from '../../../types/template';
+import { IFieldsetRuntime } from '../../../types/fieldset';
 import { makeExtraField } from '../../../__stubs__/fields.factory';
-import { makeFieldsetData } from '../../../__stubs__/fieldsets.factory';
+import { makeFieldsetRuntime } from '../../../__stubs__/fieldsets.factory';
 import { MergedOutputList } from '../../MergedOutputList';
 import { InputWithVariables } from '../../TemplateEdit/InputWithVariables';
 import { intlMock } from '../../../__stubs__/intlMock';
@@ -67,7 +68,7 @@ const makeField = (overrides: Partial<IExtraField> = {}) => makeExtraField({
   ...overrides,
 });
 
-const makeFieldset = (overrides: Partial<IFieldsetData> & { fields: IExtraField[] }) => makeFieldsetData({
+const makeFieldset = (overrides: Partial<IFieldsetRuntime> & { fields: IExtraField[] }) => makeFieldsetRuntime({
   name: 'Fieldset',
   ...overrides,
 });

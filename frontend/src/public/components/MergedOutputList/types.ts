@@ -1,9 +1,10 @@
-import { IExtraField, IFieldsetData } from '../../types/template';
+import { IExtraField } from '../../types/template';
+import { IFieldsetRuntime } from '../../types/fieldset';
 import { EInputNameBackgroundColor } from '../../types/workflow';
 
 export interface IMergedOutputListProps {
   fields: IExtraField[];
-  fieldsets?: IFieldsetData[];
+  fieldsets?: IFieldsetRuntime[];
   onEditField(apiName: string): (changedProps: Partial<IExtraField>) => void;
   onEditFieldsetField(apiName: string): (changedProps: Partial<IExtraField>) => void;
   labelBackgroundColor: EInputNameBackgroundColor;

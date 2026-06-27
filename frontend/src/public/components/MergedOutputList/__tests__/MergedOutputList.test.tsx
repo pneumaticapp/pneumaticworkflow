@@ -2,7 +2,7 @@ import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 import { MergedOutputList } from '../MergedOutputList';
 import { makeExtraField } from '../../../__stubs__/fields.factory';
-import { makeFieldsetData } from '../../../__stubs__/fieldsets.factory';
+import { makeFieldsetRuntime } from '../../../__stubs__/fieldsets.factory';
 import { IExtraField } from '../../../types/template';
 import { EInputNameBackgroundColor } from '../../../types/workflow';
 
@@ -37,7 +37,7 @@ describe('MergedOutputList', () => {
       makeExtraField({ apiName: 'field-a', name: 'field-a', order: 1 }),
       makeExtraField({ apiName: 'field-b', name: 'field-b', order: 3 }),
     ];
-    const fieldsets = [makeFieldsetData({ sharedFieldsetId: 10, apiNameBinding: 'fs-10', name: 'Fieldset Middle', order: 2 })];
+    const fieldsets = [makeFieldsetRuntime({ sharedFieldsetId: 10, apiNameBinding: 'fs-10', name: 'Fieldset Middle', order: 2 })];
 
     const { container } = render(
       <MergedOutputList {...baseProps} fields={fields} fieldsets={fieldsets} />,
@@ -61,7 +61,7 @@ describe('MergedOutputList', () => {
   });
 
   it('renders only fieldsets when fields array is empty', () => {
-    const fieldsets = [makeFieldsetData({ name: 'Only FS' })];
+    const fieldsets = [makeFieldsetRuntime({ name: 'Only FS' })];
 
     render(<MergedOutputList {...baseProps} fields={[]} fieldsets={fieldsets} />);
 

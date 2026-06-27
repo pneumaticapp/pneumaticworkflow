@@ -4,13 +4,13 @@ import { ITask, ITemplateStep, TaskWithTsp } from './tasks';
 import {
   IKickoffClient,
   IExtraField,
-  IFieldsetData,
   ITemplateTitle,
   ETemplateOwnerType,
   RawPerformer,
   ITableViewFields,
   TTemplatePreset,
 } from './template';
+import { IFieldsetRuntime } from './fieldset';
 import { EProgressbarColor } from '../components/Workflows/utils/getWorfkflowClientProperties';
 
 export type WorkflowWithDateFields = {
@@ -88,7 +88,7 @@ export interface IWorkflowDetailsKickoff {
   id: number;
   description: string | null;
   output: IExtraField[];
-  fieldsets?: IFieldsetData[];
+  fieldsets?: IFieldsetRuntime[];
 }
 
 export interface IWorkflowLogItem {

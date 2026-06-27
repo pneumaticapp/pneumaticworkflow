@@ -43,10 +43,11 @@ import { getTemplate } from '../../api/getTemplate';
 
 import { openRunWorkflowModal } from '../runWorkflowModal/actions';
 import { getRunnableWorkflow, loadDatasetsMap } from '../../components/TemplateEdit/utils/getRunnableWorkflow';
-import { ITemplateResponse, IExtraField, IFieldsetData, IKickoffClient } from '../../types/template';
+import { ITemplateResponse, IExtraField, IKickoffClient } from '../../types/template';
+import { IFieldsetRuntime } from '../../types/fieldset';
 import { mapTemplateFieldsetsToRuntime } from '../../utils/mapTemplateFieldsetsToRuntime';
 import { mapFieldsetBindingsToClient } from '../../utils/mapFieldsetBindingsToClient';
-import { mapFieldsetBindingClientToRuntime } from '../../utils/mapFieldsetBindingClientToRuntime';
+import { mapFieldsetBindingClientToRuntime, mapFieldsToExtraFields } from '../../utils/mapFieldsetBindingClientToRuntime';
 import { getGettingStartedChecklist } from '../../api/getGettingStartedChecklist';
 import { IGettingStartedChecklist } from '../../types/dashboard';
 import { loadTemplateIntegrationsStats } from '../actions';
@@ -168,28 +169,11 @@ export function* openRunWorflowByTemplateDataSaga({
   try {
     yield put(setGeneralLoaderVisibility(true));
 
-    // Map fieldsets from template list API (IFieldsetBinding[] after commonRequest) to IFieldsetData[]
     const kickoffFieldsets = templateData.kickoff?.fieldsets || [];
     const clientFieldsets = mapFieldsetBindingsToClient(kickoffFieldsets);
     const loadedFieldsets = clientFieldsets.map(mapFieldsetBindingClientToRuntime);
 
-    // Map kickoff fields from list API format to IExtraField[]
-    const kickoffFields: IExtraField[] = (templateData.kickoff?.fields || []).map(
-      (f: any, index: number) => ({
-        apiName: f.apiName || f.api_name || '',
-        name: f.name || '',
-        description: f.description || '',
-        type: f.type || 'string',
-        isRequired: f.isRequired ?? f.is_required ?? false,
-        isHidden: f.isHidden ?? f.is_hidden ?? false,
-        order: f.order ?? index,
-        value: f.default || '',
-        selections: f.selections || [],
-        dataset: f.dataset || null,
-        userId: null,
-        groupId: null,
-      }),
-    );
+    const kickoffFields = mapFieldsToExtraFields(templateData.kickoff?.fields || []);
 
     const kickoff: IKickoffClient = {
       description: '',
@@ -211,7 +195,7 @@ export function* openRunWorflowByTemplateDataSaga({
             : field.selections,
         })),
       },
-      loadedFieldsets: loadedFieldsets.map((fs: IFieldsetData) => ({
+      loadedFieldsets: loadedFieldsets.map((fs: IFieldsetRuntime) => ({
         ...fs,
         fields: fs.fields.map((field: IExtraField) => ({
           ...field,

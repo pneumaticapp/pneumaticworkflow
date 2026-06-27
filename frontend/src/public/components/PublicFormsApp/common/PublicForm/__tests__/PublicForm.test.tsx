@@ -9,8 +9,9 @@ import { runPublicForm } from '../../../../../api/runPublicForm';
 import { MergedOutputList } from '../../../../MergedOutputList';
 import { NotificationManager } from '../../../../UI/Notifications';
 import { makeExtraField } from '../../../../../__stubs__/fields.factory';
-import { makeFieldsetData } from '../../../../../__stubs__/fieldsets.factory';
-import { IExtraField, IFieldsetData } from '../../../../../types/template';
+import { makeFieldsetRuntime } from '../../../../../__stubs__/fieldsets.factory';
+import { IExtraField } from '../../../../../types/template';
+import { IFieldsetRuntime } from '../../../../../types/fieldset';
 import { intlMock } from '../../../../../__stubs__/intlMock';
 
 jest.mock('../../../../../api/getPublicForm', () => ({
@@ -100,7 +101,7 @@ const SUBMIT_LABEL = formatMsg('public-form.launch');
 
 const makePublicFormResponse = (overrides: {
   fields?: IExtraField[];
-  fieldsets?: IFieldsetData[];
+  fieldsets?: IFieldsetRuntime[];
 } = {}) => ({
   accountId: 1,
   name: 'Test Form',
@@ -117,7 +118,7 @@ const getLastMergedOutputListProps = () => {
   const mock = MergedOutputList as jest.Mock;
   return mock.mock.calls[mock.mock.calls.length - 1][0] as {
     fields: IExtraField[];
-    fieldsets: IFieldsetData[];
+    fieldsets: IFieldsetRuntime[];
     onEditField: (apiName: string) => (changedProps: Partial<IExtraField>) => void;
     onEditFieldsetField: (apiName: string) => (changedProps: Partial<IExtraField>) => void;
   };
@@ -157,7 +158,7 @@ describe('PublicForm', () => {
 
   describe('Fieldsets: rendering', () => {
     it('passes fieldsets to MergedOutputList', async () => {
-      const fieldset = makeFieldsetData({
+      const fieldset = makeFieldsetRuntime({
         fields: [makeExtraField({ apiName: 'fs-field-1', order: 1 })],
         order: 1,
       });
@@ -189,7 +190,7 @@ describe('PublicForm', () => {
 
   describe('Fieldsets: isHidden filtering', () => {
     it('filters out isHidden fields inside fieldsets', async () => {
-      const fieldset = makeFieldsetData({
+      const fieldset = makeFieldsetRuntime({
         fields: [
           makeExtraField({ apiName: 'fs-hidden', isHidden: true, order: 1 }),
           makeExtraField({ apiName: 'fs-visible', isHidden: false, order: 2 }),
@@ -223,7 +224,7 @@ describe('PublicForm', () => {
         makePublicFormResponse({
           fields: [makeExtraField({ apiName: 'k1', value: 'filled' })],
           fieldsets: [
-            makeFieldsetData({
+            makeFieldsetRuntime({
               fields: [makeExtraField({ apiName: 'fs-req', isRequired: true, value: '', order: 1 })],
               order: 1,
             }),
@@ -242,7 +243,7 @@ describe('PublicForm', () => {
         makePublicFormResponse({
           fields: [makeExtraField({ apiName: 'k1', value: 'filled' })],
           fieldsets: [
-            makeFieldsetData({
+            makeFieldsetRuntime({
               fields: [makeExtraField({ apiName: 'fs-req', isRequired: true, value: 'also filled', order: 1 })],
               order: 1,
             }),
@@ -260,13 +261,13 @@ describe('PublicForm', () => {
       (getPublicForm as jest.Mock).mockResolvedValue(
         makePublicFormResponse({
           fieldsets: [
-            makeFieldsetData({
+            makeFieldsetRuntime({
               sharedFieldsetId: 1,
               apiNameBinding: 'fs-ok',
               fields: [makeExtraField({ apiName: 'ok-field', isRequired: true, value: 'filled', order: 1 })],
               order: 1,
             }),
-            makeFieldsetData({
+            makeFieldsetRuntime({
               sharedFieldsetId: 2,
               apiNameBinding: 'fs-bad',
               fields: [makeExtraField({ apiName: 'bad-field', isRequired: true, value: '', order: 1 })],
@@ -289,7 +290,7 @@ describe('PublicForm', () => {
         makePublicFormResponse({
           fields: [makeExtraField({ apiName: 'k1', value: 'kickoff-val' })],
           fieldsets: [
-            makeFieldsetData({
+            makeFieldsetRuntime({
               fields: [makeExtraField({ apiName: 'fs1', value: 'fs-val', order: 1 })],
               order: 1,
             }),
@@ -321,7 +322,7 @@ describe('PublicForm', () => {
       (getPublicForm as jest.Mock).mockResolvedValue(
         makePublicFormResponse({
           fieldsets: [
-            makeFieldsetData({
+            makeFieldsetRuntime({
               fields: [makeExtraField({ apiName: 'fs-edit-1', value: 'old-value', order: 1 })],
               order: 1,
             }),

@@ -2,7 +2,8 @@ import * as React from 'react';
 import { useEffect } from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
-import { IExtraField, IKickoffClient, IFieldsetData } from '../../types/template';
+import { IExtraField, IKickoffClient } from '../../types/template';
+import { IFieldsetRuntime } from '../../types/fieldset';
 import { EInputNameBackgroundColor } from '../../types/workflow';
 import { isArrayWithItems } from '../../utils/helpers';
 import { IntlMessages } from '../IntlMessages';
@@ -17,7 +18,7 @@ import styles from './KickoffEdit.css';
 
 export interface IEditKickoffProps {
   kickoff: IKickoffClient | null;
-  fieldsets?: IFieldsetData[];
+  fieldsets?: IFieldsetRuntime[];
   isLoading?: boolean;
   accountId: number;
   onEditField(apiName: string): (changedProps: Partial<IExtraField>) => void;
@@ -114,4 +115,3 @@ export function EditKickoff({
     <div className={styles['container']}>{renderKickoffFields()}</div>
   );
 }
-

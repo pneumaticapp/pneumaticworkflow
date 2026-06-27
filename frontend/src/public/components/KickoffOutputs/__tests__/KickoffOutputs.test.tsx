@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 
 import { KickoffOutputs, EKickoffOutputsViewModes } from '../KickoffOutputs';
 import { makeExtraField } from '../../../__stubs__/fields.factory';
-import { makeFieldsetData } from '../../../__stubs__/fieldsets.factory';
+import { makeFieldsetRuntime } from '../../../__stubs__/fieldsets.factory';
 import { EExtraFieldType, IExtraField } from '../../../types/template';
 import { Attachments } from '../../Attachments';
 
@@ -60,12 +60,12 @@ describe('KickoffOutputs', () => {
   it('interleaves plain fields and fieldsets in a single list ordered by `order` descending', () => {
     const fieldA = makeExtraField({ apiName: 'fa', order: 1, value: 'av' });
     const fieldB = makeExtraField({ apiName: 'fb', order: 4, value: 'bv' });
-    const fsM = makeFieldsetData({
+    const fsM = makeFieldsetRuntime({
       apiNameBinding: 'fs-m',
       order: 3,
       fields: [makeExtraField({ apiName: 'fs-m-1', value: 'mv' })],
     });
-    const fsN = makeFieldsetData({
+    const fsN = makeFieldsetRuntime({
       apiNameBinding: 'fs-n',
       order: 2,
       fields: [makeExtraField({ apiName: 'fs-n-1', value: 'nv' })],
@@ -87,7 +87,7 @@ describe('KickoffOutputs', () => {
   });
 
   it('in full mode renders fieldset group: name, description and only non-empty fields', () => {
-    const fieldset = makeFieldsetData({
+    const fieldset = makeFieldsetRuntime({
       name: 'Contacts',
       description: 'Reachout details',
       order: 1,
@@ -121,7 +121,7 @@ describe('KickoffOutputs', () => {
       attachments: [{ id: 1, url: 'doc.pdf', name: 'doc.pdf', size: 10 }],
     });
 
-    const fieldset = makeFieldsetData({
+    const fieldset = makeFieldsetRuntime({
       name: 'Docs',
       fields: [fileField],
     });
@@ -136,7 +136,7 @@ describe('KickoffOutputs', () => {
   });
 
   it('in truncated mode renders fieldset group title and only the first field', () => {
-    const fieldset = makeFieldsetData({
+    const fieldset = makeFieldsetRuntime({
       name: 'Profile',
       order: 5,
       fields: [
@@ -160,7 +160,7 @@ describe('KickoffOutputs', () => {
   });
 
   it('in truncated mode does not crash on a fieldset with an empty fields list', () => {
-    const fieldset = makeFieldsetData({
+    const fieldset = makeFieldsetRuntime({
       name: 'Empty Group',
       order: 1,
     });
@@ -194,7 +194,7 @@ describe('KickoffOutputs', () => {
         value: 'some text',
       });
 
-      const fieldset = makeFieldsetData({
+      const fieldset = makeFieldsetRuntime({
         order: 1,
         fields: [
           makeExtraField({ type: EExtraFieldType.File, attachments: [attachment2] }),

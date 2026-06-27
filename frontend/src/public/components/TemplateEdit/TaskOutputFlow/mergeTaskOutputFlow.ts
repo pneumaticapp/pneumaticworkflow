@@ -1,5 +1,5 @@
-import { IExtraField, IFieldsetData, TRuntimeMergedOutputPart, TTemplateFieldFieldset } from '../../../types/template';
-import { IFieldsetCatalogItem, IFieldsetBindingClient } from '../../../types/fieldset';
+import { IExtraField, TRuntimeMergedOutputPart, TTemplateFieldFieldset } from '../../../types/template';
+import { IFieldsetRuntime, IFieldsetCatalogItem, IFieldsetBindingClient } from '../../../types/fieldset';
 import { createFieldsetBindingApiName } from '../../../utils/createId';
 
 export type TMergedTaskOutputRow =
@@ -76,7 +76,7 @@ function runtimeOrder(part: TRuntimeMergedOutputPart): number {
 
 export function buildRuntimeMergedOutputParts(
   output: IExtraField[],
-  fieldsets: IFieldsetData[] | TTemplateFieldFieldset[] | undefined,
+  fieldsets: IFieldsetRuntime[] | TTemplateFieldFieldset[] | undefined,
 ): TRuntimeMergedOutputPart[] {
   const rows: TRuntimeMergedOutputPart[] = [
     ...output.map((field) => ({ kind: 'field' as const, field })),

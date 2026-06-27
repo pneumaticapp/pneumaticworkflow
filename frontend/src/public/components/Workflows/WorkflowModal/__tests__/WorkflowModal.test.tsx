@@ -7,11 +7,11 @@ import { WorkflowModal } from '../WorkflowModal';
 import { KickoffOutputs } from '../../../KickoffOutputs';
 import { EditKickoffContainer } from '../../../KickoffEdit';
 import { makeExtraField } from '../../../../__stubs__/fields.factory';
-import { makeFieldsetData } from '../../../../__stubs__/fieldsets.factory';
+import { makeFieldsetRuntime } from '../../../../__stubs__/fieldsets.factory';
 import {
   IExtraField,
-  IFieldsetData,
 } from '../../../../types/template';
+import { IFieldsetRuntime } from '../../../../types/fieldset';
 import {
   EWorkflowStatus,
   EWorkflowsLogSorting,
@@ -127,7 +127,7 @@ const makeField = (overrides: Partial<IExtraField> = {}) => makeExtraField({
   ...overrides,
 });
 
-const makeFieldset = (overrides: Partial<IFieldsetData> & { fields: IExtraField[] }) => makeFieldsetData({
+const makeFieldset = (overrides: Partial<IFieldsetRuntime> & { fields: IExtraField[] }) => makeFieldsetRuntime({
   name: 'Fieldset',
   ...overrides,
 });
@@ -235,7 +235,7 @@ describe('WorkflowModal', () => {
 
   describe('Fieldsets: view, edit, merge, cancel', () => {
     it('view mode: KickoffOutputs receives fieldsets from workflow.kickoff.fieldsets', () => {
-      const fieldsets: IFieldsetData[] = [
+      const fieldsets: IFieldsetRuntime[] = [
         makeFieldset({ fields: [makeField({ apiName: 'fs-f1', value: 'v1' })], order: 1 }),
       ];
 
@@ -283,7 +283,7 @@ describe('WorkflowModal', () => {
 
     it('edit mode: EditKickoffContainer receives fieldsets from local state', () => {
       const fsField = makeField({ apiName: 'fs-e1', value: 'edit-val' });
-      const fieldsets: IFieldsetData[] = [
+      const fieldsets: IFieldsetRuntime[] = [
         makeFieldset({ fields: [fsField], order: 1 }),
       ];
 
@@ -311,10 +311,10 @@ describe('WorkflowModal', () => {
     });
 
     it('reinitializes fieldsetFields from new kickoff when workflow changes', () => {
-      const fieldsets1: IFieldsetData[] = [
+      const fieldsets1: IFieldsetRuntime[] = [
         makeFieldset({ fields: [makeField({ apiName: 'old-field' })], order: 1 }),
       ];
-      const fieldsets2: IFieldsetData[] = [
+      const fieldsets2: IFieldsetRuntime[] = [
         makeFieldset({
           sharedFieldsetId: 2,
           apiNameBinding: 'fs-new',
@@ -366,7 +366,7 @@ describe('WorkflowModal', () => {
     it('save merges fieldset fields into kickoff.fields and calls editWorkflow', () => {
       const kickoffField = makeField({ apiName: 'k1', value: 'kick-val' });
       const fsField = makeField({ apiName: 'fs-s1', value: 'fs-val' });
-      const fieldsets: IFieldsetData[] = [
+      const fieldsets: IFieldsetRuntime[] = [
         makeFieldset({ fields: [fsField], order: 1 }),
       ];
 
@@ -406,7 +406,7 @@ describe('WorkflowModal', () => {
 
     it('cancel calls setIsEditKickoff(false) and resets setWorkflowEdit', () => {
       const fsField = makeField({ apiName: 'fs-c1', value: 'original' });
-      const fieldsets: IFieldsetData[] = [
+      const fieldsets: IFieldsetRuntime[] = [
         makeFieldset({ fields: [fsField], order: 1 }),
       ];
 

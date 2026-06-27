@@ -4,7 +4,8 @@ import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
 import { EditIcon } from '../icons';
-import { EExtraFieldType, IExtraField, IFieldsetData } from '../../types/template';
+import { EExtraFieldType, IExtraField } from '../../types/template';
+import { IFieldsetRuntime } from '../../types/fieldset';
 import { TOutputItem } from './types';
 
 import { CheckboxOutput } from './CheckboxOutput';
@@ -30,7 +31,7 @@ export interface IKickoffOutputs {
   description?: string | null;
   viewMode: EKickoffOutputsViewModes;
   outputs?: IExtraField[];
-  fieldsets: IFieldsetData[];
+  fieldsets: IFieldsetRuntime[];
   onEdit?(): void;
   isOnlyAttachmentsShown?: boolean;
   isTruncated?: boolean;
@@ -91,7 +92,7 @@ export function KickoffOutputs({
     return !isEmpty ? <OutputComponent key={key} {...output} /> : null;
   };
 
-  const renderFieldsetGroup = (fieldset: IFieldsetData, children: React.ReactNode, key?: string) => (
+  const renderFieldsetGroup = (fieldset: IFieldsetRuntime, children: React.ReactNode, key?: string) => (
     <div key={key} className={styles['fieldset-output-group']}>
       {fieldset.name && <p className={styles['fieldset-output-group__title']}>{fieldset.name}</p>}
       {fieldset.description && <p className={styles['fieldset-output-group__description']}>{fieldset.description}</p>}
@@ -182,4 +183,3 @@ export function KickoffOutputs({
     </div>
   );
 }
-

@@ -1,6 +1,7 @@
-import { ETaskPerformerType, EExtraFieldType, IKickoffClient, IFieldsetData } from '../../../../types/template';
+import { ETaskPerformerType, EExtraFieldType, IKickoffClient } from '../../../../types/template';
+import { IFieldsetRuntime } from '../../../../types/fieldset';
 import { makeExtraField } from '../../../../__stubs__/fields.factory';
-import { makeFieldsetData } from '../../../../__stubs__/fieldsets.factory';
+import { makeFieldsetRuntime } from '../../../../__stubs__/fieldsets.factory';
 import { getRunnableWorkflow, loadDatasetsMap, TTemplateToRunWorkflow } from '../getRunnableWorkflow';
 import { getDataset } from '../../../../api/datasets/getDataset';
 
@@ -213,8 +214,8 @@ describe('getRunnableWorkflow.', () => {
       fields: [makeExtraField({ apiName: 'k-f', name: 'K', type: EExtraFieldType.Checkbox, dataset: 7 })],
       fieldsets: [],
     };
-    const fieldsets: IFieldsetData[] = [
-      makeFieldsetData({
+    const fieldsets: IFieldsetRuntime[] = [
+      makeFieldsetRuntime({
         name: 'FS',
         fields: [makeExtraField({ apiName: 'fs-f', name: 'F', type: EExtraFieldType.Checkbox, dataset: 7 })],
       }),
@@ -246,8 +247,8 @@ describe('getRunnableWorkflow.', () => {
         { value: 'Q', apiName: 's-2' },
       ],
     });
-    const loadedFieldsets: IFieldsetData[] = [
-      makeFieldsetData({ name: 'FS', fields: [fieldWithDataset, fieldWithObjectSelections] }),
+    const loadedFieldsets: IFieldsetRuntime[] = [
+      makeFieldsetRuntime({ name: 'FS', fields: [fieldWithDataset, fieldWithObjectSelections] }),
     ];
 
     const result = assertNonNull(

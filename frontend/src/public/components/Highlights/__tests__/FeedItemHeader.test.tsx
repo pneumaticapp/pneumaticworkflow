@@ -5,9 +5,10 @@ import userEvent from '@testing-library/user-event';
 import { FeedItemHeader } from '../FeedItemHeader';
 import { KickoffOutputs } from '../../KickoffOutputs';
 import { EWorkflowLogEvent, EWorkflowStatus } from '../../../types/workflow';
-import { EExtraFieldType, IExtraField, IFieldsetData } from '../../../types/template';
+import { EExtraFieldType, IExtraField } from '../../../types/template';
+import { IFieldsetRuntime } from '../../../types/fieldset';
 import { makeExtraField } from '../../../__stubs__/fields.factory';
-import { makeFieldsetData } from '../../../__stubs__/fieldsets.factory';
+import { makeFieldsetRuntime } from '../../../__stubs__/fieldsets.factory';
 import { IHighlightsItem } from '../../../types/highlights';
 import { Ellipsis } from '../Ellipsis';
 
@@ -86,8 +87,8 @@ describe('FeedItemHeader', () => {
         makeField({ apiName: 'f2', order: 2, value: 'world' }),
       ];
 
-      const kickoffFieldsets: IFieldsetData[] = [
-        makeFieldsetData({
+      const kickoffFieldsets: IFieldsetRuntime[] = [
+        makeFieldsetRuntime({
           fields: [
             makeField({ apiName: 'fs1-f1', order: 1, value: 'fieldset value' }),
           ],
@@ -126,7 +127,7 @@ describe('FeedItemHeader', () => {
   });
 
   describe('Fieldsets handling in highlights', () => {
-    const makeFieldset = (overrides: Partial<IFieldsetData> & { fields: IExtraField[] }) => makeFieldsetData({
+    const makeFieldset = (overrides: Partial<IFieldsetRuntime> & { fields: IExtraField[] }) => makeFieldsetRuntime({
       name: 'Test Fieldset',
       ...overrides,
     });

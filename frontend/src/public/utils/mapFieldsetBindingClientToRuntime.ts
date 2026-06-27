@@ -1,5 +1,5 @@
-import { IFieldsetBindingClient, EFieldLabelPosition, IFieldsetField } from '../types/fieldset';
-import { IFieldsetData, IExtraField, EExtraFieldType } from '../types/template';
+import { IFieldsetBindingClient, IFieldsetRuntime, EFieldLabelPosition, IFieldsetField } from '../types/fieldset';
+import { IExtraField, EExtraFieldType } from '../types/template';
 
 export function mapFieldsToExtraFields(fields: IFieldsetField[]): IExtraField[] {
   return (fields || []).map(
@@ -35,7 +35,7 @@ export function mapFieldsetBindingClientToRuntime({
   rules,
   layout,
   title,
-}: IFieldsetBindingClient): IFieldsetData {
+}: IFieldsetBindingClient): IFieldsetRuntime {
   const fields = mapFieldsToExtraFields(rawFields || []);
   const rulesCount = Array.isArray(rules) ? rules.length : 0;
 

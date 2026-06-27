@@ -1,4 +1,5 @@
-import { ITemplateResponse, IFieldsetData } from '../types/template';
+import { ITemplateResponse } from '../types/template';
+import { IFieldsetRuntime } from '../types/fieldset';
 import { mapFieldsetBindingsToClient } from './mapFieldsetBindingsToClient';
 import { mapFieldsetBindingClientToRuntime } from './mapFieldsetBindingClientToRuntime';
 
@@ -11,7 +12,7 @@ export function mapTemplateFieldsetsToRuntime(template: ITemplateResponse) {
     fieldsets: clientFieldsets,
   };
   const normalizedTemplate = { ...template, kickoff: normalizedKickoff };
-  const loadedFieldsets: IFieldsetData[] = clientFieldsets.map(
+  const loadedFieldsets: IFieldsetRuntime[] = clientFieldsets.map(
     mapFieldsetBindingClientToRuntime,
   );
 

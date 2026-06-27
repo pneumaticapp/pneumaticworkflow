@@ -3,7 +3,7 @@
 import { reducer, INIT_STATE } from '../reducer';
 import { openRunWorkflowModal } from '../actions';
 import { IKickoffClient, EExtraFieldType } from '../../../types/template';
-import { makeFieldsetBindingClient, makeFieldsetData } from '../../../__stubs__/fieldsets.factory';
+import { makeFieldsetBindingClient, makeFieldsetRuntime } from '../../../__stubs__/fieldsets.factory';
 import { makeExtraField } from '../../../__stubs__/fields.factory';
 
 describe('runWorkflowModal reducer', () => {
@@ -154,7 +154,7 @@ describe('OpenModal — fieldsets acceptance', () => {
   });
 
   it('preserves kickoff.fieldsets and loadedFieldsets without data loss', () => {
-    const mockFieldsetData = makeFieldsetData({
+    const mockFieldsetData = makeFieldsetRuntime({
       apiNameBinding: 'fs-contacts',
       name: 'Contacts',
       description: 'Contact information',

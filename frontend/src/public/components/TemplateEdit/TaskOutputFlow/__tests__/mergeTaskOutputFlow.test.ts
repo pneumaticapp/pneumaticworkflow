@@ -1,5 +1,5 @@
 import { makeExtraField } from '../../../../__stubs__/fields.factory';
-import { makeFieldsetBindingClient, makeFieldsetData } from '../../../../__stubs__/fieldsets.factory';
+import { makeFieldsetBindingClient, makeFieldsetRuntime } from '../../../../__stubs__/fieldsets.factory';
 import {
   buildMergedTaskOutputRows,
   buildRuntimeMergedOutputParts,
@@ -23,7 +23,7 @@ const field = (apiName: string, order: number) =>
   makeExtraField({ apiName, name: apiName, order });
 
 const fs = (id: number, order: number) =>
-  makeFieldsetData({ sharedFieldsetId: id, apiNameBinding: `fs-${id}`, name: `FS ${id}`, order });
+  makeFieldsetRuntime({ sharedFieldsetId: id, apiNameBinding: `fs-${id}`, name: `FS ${id}`, order });
 
 describe('mergeTaskOutputFlow', () => {
   it('buildMergedTaskOutputRows sorts by order descending with stable tie-break', () => {

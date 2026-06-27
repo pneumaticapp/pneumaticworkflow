@@ -9,10 +9,9 @@ import {
   ITemplateTaskClient,
   IFieldsetBindingClient,
   EExtraFieldType,
-  IFieldsetData,
   TTemplateFieldFieldset,
 } from '../../../../types/template';
-import { IFieldsetField } from '../../../../types/fieldset';
+import { IFieldsetField, IFieldsetRuntime } from '../../../../types/fieldset';
 import { normalizeSelections } from '../../utils/normalizeSelections';
 import { TTaskVariable } from '../../types';
 import { IGetLocalizedSystemVariableParams, IGetLocalizedSystemVariableReturn } from './types';
@@ -57,8 +56,8 @@ type TGetVariablesParam = {
 
 function getVariablesFromSelectedFieldsets(
   fieldsets: (IFieldsetBindingClient | TTemplateFieldFieldset)[] | undefined,
-  getSubtitle: (fieldset: Pick<IFieldsetData, 'name'>) => string,
-  getRichSubtitle: (fieldset: Pick<IFieldsetData, 'name'>) => React.ReactNode,
+  getSubtitle: (fieldset: Pick<IFieldsetRuntime, 'name'>) => string,
+  getRichSubtitle: (fieldset: Pick<IFieldsetRuntime, 'name'>) => React.ReactNode,
 ): TTaskVariable[] {
   if (!fieldsets?.length) {
     return [];

@@ -1,3 +1,5 @@
+import type { IExtraField } from './template';
+
 export interface IFieldsetTemplateRule {
   apiName: string;
   type: string;
@@ -43,6 +45,11 @@ export interface IFieldsetBinding extends Omit<IFieldsetCatalogItem, 'id'> {
 
 export interface IFieldsetBindingClient extends Omit<IFieldsetBinding, 'apiName'> {
   apiNameBinding: string;
+}
+
+export interface IFieldsetRuntime extends Omit<IFieldsetBindingClient, 'fields'> {
+  fields: IExtraField[];
+  rulesCount?: number;
 }
 
 export interface IFieldsetBindingMeta {

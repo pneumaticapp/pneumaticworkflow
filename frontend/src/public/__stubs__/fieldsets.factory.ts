@@ -1,7 +1,7 @@
 import {
-  EFieldLabelPosition, IFieldsetBindingClient, IFieldsetCatalogItem, IFieldsetField, IFieldsetTemplateRule,
+  EFieldLabelPosition, IFieldsetBindingClient, IFieldsetCatalogItem,
+  IFieldsetField, IFieldsetRuntime, IFieldsetTemplateRule,
 } from '../types/fieldset';
-import { IFieldsetData } from '../types/template';
 
 export const makeFieldsetField = (overrides: Partial<IFieldsetField> = {}): IFieldsetField => ({
   apiName: 'field-1',
@@ -17,7 +17,7 @@ export const makeFieldsetField = (overrides: Partial<IFieldsetField> = {}): IFie
   ...overrides,
 });
 
-export const makeFieldsetData = (overrides: Partial<IFieldsetData> = {}): IFieldsetData => ({
+export const makeFieldsetRuntime = (overrides: Partial<IFieldsetRuntime> = {}): IFieldsetRuntime => ({
   sharedFieldsetId: 1,
   apiNameBinding: 'fs-1',
   name: 'Fieldset 1',

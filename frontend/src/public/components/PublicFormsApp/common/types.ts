@@ -1,7 +1,8 @@
-import { IKickoffClient, IFieldsetData } from '../../../types/template';
+import { IKickoffClient } from '../../../types/template';
+import { IFieldsetRuntime } from '../../../types/fieldset';
 
 export interface IPublicFormKickoff extends Omit<IKickoffClient, 'fieldsets'> {
-  fieldsets: IFieldsetData[];
+  fieldsets: IFieldsetRuntime[];
 }
 
 export interface IPublicForm {

@@ -1,9 +1,10 @@
 import { createElement } from 'react';
 import { render, screen } from '@testing-library/react';
 
-import { EExtraFieldType, IFieldsetData, IKickoffClient, ITemplateTaskClient } from '../../../../../types/template';
+import { EExtraFieldType, IKickoffClient, ITemplateTaskClient } from '../../../../../types/template';
+import { IFieldsetRuntime } from '../../../../../types/fieldset';
 import { makeExtraField } from '../../../../../__stubs__/fields.factory';
-import { makeFieldsetData, makeFieldsetBindingClient, makeFieldsetField } from '../../../../../__stubs__/fieldsets.factory';
+import { makeFieldsetRuntime, makeFieldsetBindingClient, makeFieldsetField } from '../../../../../__stubs__/fieldsets.factory';
 import { createEmptyTaskDueDate } from '../../../../../utils/dueDate/createEmptyTaskDueDate';
 import { TTaskVariable } from '../../../types';
 import {
@@ -86,7 +87,7 @@ const mockTask2: ITemplateTaskClient = {
   fieldsets: [],
 };
 
-const mockFieldsetData: IFieldsetData = makeFieldsetData({
+const mockFieldsetData: IFieldsetRuntime = makeFieldsetRuntime({
   sharedFieldsetId: 99,
   apiNameBinding: 'fs-99',
   name: 'Extra Set',

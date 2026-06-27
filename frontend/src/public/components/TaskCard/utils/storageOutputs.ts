@@ -1,6 +1,7 @@
 /* eslint-disable */
 /* prettier-ignore */
-import { IExtraField, IFieldsetData } from '../../../types/template';
+import { IExtraField } from '../../../types/template';
+import { IFieldsetRuntime } from '../../../types/fieldset';
 
 type TStorageEntry<T> = {
   taskId: number;
@@ -64,4 +65,4 @@ function createTaskStorage<T>(storageKey: string) {
 
 export const outputStorage = createTaskStorage<IExtraField[]>('tasks_outputs');
 
-export const fieldsetsStorage = createTaskStorage<IFieldsetData[]>('tasks_fieldsets_outputs');
+export const fieldsetsStorage = createTaskStorage<IFieldsetRuntime[]>('tasks_fieldsets_outputs');

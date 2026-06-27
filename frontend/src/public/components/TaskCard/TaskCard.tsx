@@ -7,7 +7,8 @@ import { debounce } from 'throttle-debounce';
 import { useSelector } from 'react-redux';
 
 import { autoFocusFirstField } from '../../utils/autoFocusFirstField';
-import { ETaskPerformerType, ETemplateOwnerType, IExtraField, IFieldsetData } from '../../types/template';
+import { ETaskPerformerType, ETemplateOwnerType, IExtraField } from '../../types/template';
+import { IFieldsetRuntime } from '../../types/fieldset';
 import { sanitizeText } from '../../utils/strings';
 import { ITask } from '../../types/tasks';
 import {
@@ -138,7 +139,7 @@ export function TaskCard({
   const wrapperRef = useRef(null);
   const workflowLinkRef = useRef(null);
   const [outputValues, setOutputValues] = useState([] as IExtraField[]);
-  const [fieldsetOutputValues, setFieldsetOutputValues] = useState<IFieldsetData[]>(task.fieldsets || []);
+  const [fieldsetOutputValues, setFieldsetOutputValues] = useState<IFieldsetRuntime[]>(task.fieldsets || []);
   const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
 
