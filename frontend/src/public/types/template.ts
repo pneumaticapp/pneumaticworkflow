@@ -225,9 +225,9 @@ export interface IFieldsetData {
   rulesCount?: number;
   sharedFieldsetId: number;
   apiNameBinding: string;
-  layout?: TFieldSetLayout;
-  title?: string;
-  rules?: IFieldsetTemplateRule[];
+  layout: TFieldSetLayout;
+  title: string;
+  rules: IFieldsetTemplateRule[];
 }
 
 /** Fieldset template object from list API response (camelCased by commonRequest) */

@@ -93,7 +93,7 @@ describe('fetchTemplate saga', () => {
   });
 
   interface IMockFieldsetsOverrides {
-    fieldsets?: { catalogLoadedForTemplateId: number | null };
+    fieldsets?: { isCatalogLoaded?: boolean };
   }
 
   const makeMockState = (overrides: IMockFieldsetsOverrides = {}) => ({
@@ -107,7 +107,7 @@ describe('fetchTemplate saga', () => {
       users: [],
     },
     fieldsets: {
-      catalogLoadedForTemplateId: null,
+      isCatalogLoaded: false,
       ...overrides.fieldsets,
     },
   });
@@ -200,7 +200,7 @@ describe('fetchTemplate saga', () => {
       (getTemplate as jest.Mock).mockResolvedValue(template);
 
       const mockState = makeMockState({
-        fieldsets: { catalogLoadedForTemplateId: 42 },
+        fieldsets: { isCatalogLoaded: true },
       });
 
       const dispatched = await runFetchTemplate(42, mockState);

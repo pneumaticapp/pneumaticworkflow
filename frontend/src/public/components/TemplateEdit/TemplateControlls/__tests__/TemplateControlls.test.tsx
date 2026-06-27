@@ -16,6 +16,7 @@ import {
 import { mapFieldsetBindingClientToRuntime } from '../../../../utils/mapFieldsetBindingClientToRuntime';
 import { discardTemplateChanges } from '../../../../redux/actions';
 import { getTemplate } from '../../../../__stubs__/templates';
+import { makeFieldsetBindingClient } from '../../../../__stubs__/fieldsets.factory';
 
 jest.mock('../../../../utils/history', () => ({
   history: { push: jest.fn() },
@@ -150,6 +151,11 @@ describe('TemplateControlls — fieldset logic', () => {
 
     const template = getTemplate('5');
     template.isActive = true;
+    template.kickoff = {
+      description: '',
+      fields: [],
+      fieldsets: [makeFieldsetBindingClient({ apiNameBinding: 'fs-1' })],
+    };
 
     render(
       React.createElement(

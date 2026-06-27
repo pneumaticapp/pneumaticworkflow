@@ -45,7 +45,8 @@ import { openRunWorkflowModal } from '../runWorkflowModal/actions';
 import { getRunnableWorkflow, loadDatasetsMap } from '../../components/TemplateEdit/utils/getRunnableWorkflow';
 import { ITemplateResponse, IExtraField, IFieldsetData, IKickoffClient } from '../../types/template';
 import { mapTemplateFieldsetsToRuntime } from '../../utils/mapTemplateFieldsetsToRuntime';
-import { mapFieldsetTemplateToFieldsetData } from '../../utils/mapFieldsetTemplateToFieldsetData';
+import { mapFieldsetBindingsToClient } from '../../utils/mapFieldsetBindingsToClient';
+import { mapFieldsetBindingClientToRuntime } from '../../utils/mapFieldsetBindingClientToRuntime';
 import { getGettingStartedChecklist } from '../../api/getGettingStartedChecklist';
 import { IGettingStartedChecklist } from '../../types/dashboard';
 import { loadTemplateIntegrationsStats } from '../actions';
@@ -167,9 +168,10 @@ export function* openRunWorflowByTemplateDataSaga({
   try {
     yield put(setGeneralLoaderVisibility(true));
 
-    // Map fieldsets from template list API (full objects) to IFieldsetData[]
+    // Map fieldsets from template list API (IFieldsetBinding[] after commonRequest) to IFieldsetData[]
     const kickoffFieldsets = templateData.kickoff?.fieldsets || [];
-    const loadedFieldsets = kickoffFieldsets.map(mapFieldsetTemplateToFieldsetData);
+    const clientFieldsets = mapFieldsetBindingsToClient(kickoffFieldsets);
+    const loadedFieldsets = clientFieldsets.map(mapFieldsetBindingClientToRuntime);
 
     // Map kickoff fields from list API format to IExtraField[]
     const kickoffFields: IExtraField[] = (templateData.kickoff?.fields || []).map(

@@ -26,6 +26,9 @@ export const makeFieldsetData = (overrides: Partial<IFieldsetData> = {}): IField
   fields: [],
   labelPosition: EFieldLabelPosition.Top,
   rulesCount: 0,
+  layout: 'vertical',
+  title: '',
+  rules: [],
   ...overrides,
 });
 

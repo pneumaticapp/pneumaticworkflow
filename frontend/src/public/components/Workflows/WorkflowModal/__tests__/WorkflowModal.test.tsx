@@ -257,7 +257,7 @@ describe('WorkflowModal', () => {
       expect(lastCallProps.fieldsets).toHaveLength(1);
       expect(lastCallProps.fieldsets).toEqual(
         expect.arrayContaining([
-          expect.objectContaining({ apiName: 'fs-1' }),
+          expect.objectContaining({ apiNameBinding: 'fs-1' }),
         ]),
       );
     });
@@ -355,7 +355,7 @@ describe('WorkflowModal', () => {
       const ekMock = EditKickoffContainer as unknown as jest.Mock;
       const lastCallProps = ekMock.mock.calls[ekMock.mock.calls.length - 1][0];
       expect(lastCallProps.fieldsets).toHaveLength(1);
-      expect(lastCallProps.fieldsets[0].apiName).toBe('fs-new');
+      expect(lastCallProps.fieldsets[0].apiNameBinding).toBe('fs-new');
       expect(lastCallProps.fieldsets[0].fields).toEqual(
         expect.arrayContaining([
           expect.objectContaining({ apiName: 'new-field' }),

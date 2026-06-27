@@ -179,7 +179,7 @@ describe('PublicForm', () => {
       expect(MergedOutputList).toHaveBeenCalledWith(
         expect.objectContaining({
           fieldsets: expect.arrayContaining([
-            expect.objectContaining({ apiName: 'fs-1' }),
+            expect.objectContaining({ apiNameBinding: 'fs-1' }),
           ]),
         }),
         expect.anything(),
