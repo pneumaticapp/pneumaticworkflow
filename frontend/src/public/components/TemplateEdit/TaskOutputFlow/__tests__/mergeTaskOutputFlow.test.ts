@@ -23,7 +23,7 @@ const field = (apiName: string, order: number) =>
   makeExtraField({ apiName, name: apiName, order });
 
 const fs = (id: number, order: number) =>
-  makeFieldsetData({ id, apiName: `fs-${id}`, name: `FS ${id}`, order });
+  makeFieldsetData({ sharedFieldsetId: id, apiName: `fs-${id}`, name: `FS ${id}`, order });
 
 describe('mergeTaskOutputFlow', () => {
   it('buildMergedTaskOutputRows sorts by order descending with stable tie-break', () => {

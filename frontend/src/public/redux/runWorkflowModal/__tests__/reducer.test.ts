@@ -155,7 +155,7 @@ describe('OpenModal — fieldsets acceptance', () => {
 
   it('preserves kickoff.fieldsets and loadedFieldsets without data loss', () => {
     const mockFieldsetData = {
-      id: 1,
+      sharedFieldsetId: 1,
       apiName: 'fs-contacts',
       name: 'Contacts',
       description: 'Contact information',

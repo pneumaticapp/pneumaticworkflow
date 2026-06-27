@@ -324,7 +324,7 @@ describe('getClonedKickoff.', () => {
         output: [],
         fieldsets: [
           {
-            id: 10,
+            sharedFieldsetId: 10,
             apiName: 'fs-1',
             name: 'Fieldset 1',
             description: '',

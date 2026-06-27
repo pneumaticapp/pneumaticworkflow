@@ -217,7 +217,6 @@ export type TConditionRulePredicateResponse = {
 
 /** Fieldset instance from runtime API response (kickoff / task) */
 export interface IFieldsetData {
-  id: number;
   apiName: string;
   name: string;
   description: string;
@@ -225,7 +224,7 @@ export interface IFieldsetData {
   order: number;
   labelPosition: EFieldLabelPosition;
   rulesCount?: number;
-  sharedFieldsetId?: number;
+  sharedFieldsetId: number;
   apiNameBinding?: string;
   layout?: TFieldSetLayout;
   title?: string;

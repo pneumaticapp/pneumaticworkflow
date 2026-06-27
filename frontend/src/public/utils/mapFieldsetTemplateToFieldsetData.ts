@@ -12,7 +12,7 @@ export function mapFieldsetTemplateToFieldsetData(
   const rulesCount = Array.isArray(rules) ? rules.length : 0;
 
   return {
-    id: fieldsetTemplate.id,
+    sharedFieldsetId: fieldsetTemplate.id,
     apiName: fieldsetTemplate.apiName || `fieldset-${fieldsetTemplate.id}`,
     name: fieldsetTemplate.name || '',
     description: fieldsetTemplate.description || '',

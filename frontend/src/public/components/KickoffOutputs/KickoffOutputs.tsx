@@ -127,9 +127,9 @@ export function KickoffOutputs({
           return renderFieldsetGroup(
             fieldset,
             fieldset.fields.map((output, fieldIndex) =>
-              renderSingleOutput(output, `fieldset-${fieldset.id}-${output.apiName || fieldIndex}`),
+              renderSingleOutput(output, `fieldset-${fieldset.sharedFieldsetId}-${output.apiName || fieldIndex}`),
             ),
-            `fieldset-${fieldset.id}`,
+            `fieldset-${fieldset.sharedFieldsetId}`,
           );
         })}
       </>

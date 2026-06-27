@@ -13,7 +13,7 @@ describe('mapFieldsetTemplateToFieldsetData', () => {
 
       const result = mapFieldsetTemplateToFieldsetData(template);
 
-      expect(result.id).toBe(1);
+      expect(result.sharedFieldsetId).toBe(1);
       expect(result.apiName).toBe('fs-1');
       expect(result.name).toBe('Test Fieldset');
       expect(result.description).toBe('');

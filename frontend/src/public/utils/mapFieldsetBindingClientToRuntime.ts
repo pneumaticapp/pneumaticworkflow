@@ -40,7 +40,6 @@ export function mapFieldsetBindingClientToRuntime({
   const rulesCount = Array.isArray(rules) ? rules.length : 0;
 
   return {
-    id: sharedFieldsetId,
     sharedFieldsetId,
     apiName: apiNameBinding,
     apiNameBinding,
