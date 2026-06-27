@@ -67,10 +67,6 @@ export type TTransformedTask = {
   mergedOutputs: TRuntimeMergedOutputPart[];
 };
 
-export interface ITaskFieldset {
-  apiName: string;
-  order: number;
-}
 
 export type TTemplateFieldFieldset = Pick<
   IFieldsetRuntime, 'name' | 'description' | 'apiNameBinding' | 'fields' | 'order' | 'labelPosition'
@@ -88,7 +84,7 @@ export interface ITemplateTask {
   skipForStarter: boolean;
   rawPerformers: ITemplateTaskPerformer[];
   fields: IExtraField[];
-  fieldsets: ITaskFieldset[];
+  fieldsets: IFieldsetBinding[];
   uuid: string;
   conditions: ICondition[];
   checklists: TOutputChecklist[];
@@ -238,7 +234,7 @@ export interface IFieldsetTemplateData {
 export interface IKickoff {
   description: string;
   fields: IExtraField[];
-  fieldsets: ITaskFieldset[];
+  fieldsets: IFieldsetBinding[];
 }
 
 export interface IKickoffClient extends Omit<IKickoff, 'fieldsets'> {

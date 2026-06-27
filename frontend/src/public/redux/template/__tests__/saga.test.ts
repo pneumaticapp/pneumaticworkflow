@@ -315,7 +315,7 @@ describe('patchTemplateSaga — fieldsets reference cleanup', () => {
       data: makeTemplate(templateOverrides),
     },
     fieldsets: {
-      catalogLoadedForTemplateId: 42,
+      isCatalogLoaded: true,
       catalogAllFieldsets: [],
     },
   });
@@ -424,7 +424,7 @@ describe('fetchSaveTemplate — fieldsets in mapTemplateRequest', () => {
       data: makeTemplate({ id: 99 }),
     },
     fieldsets: {
-      catalogLoadedForTemplateId: 99,
+      isCatalogLoaded: true,
       catalogAllFieldsets: [],
     },
   });

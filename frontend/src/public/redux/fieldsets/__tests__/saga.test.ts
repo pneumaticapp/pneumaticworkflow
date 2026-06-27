@@ -60,7 +60,7 @@ describe('loadFieldsetsSaga', () => {
     fieldsets: {
       fieldsetsList: { items: [], count: 0, offset: 0 },
       fieldsetsListSorting: '-date',
-      catalogLoadedForTemplateId: null,
+      isCatalogLoaded: false,
     },
   });
 
