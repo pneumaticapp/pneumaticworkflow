@@ -4,17 +4,16 @@ import userEvent from '@testing-library/user-event';
 
 import { intlMock } from '../../../../__stubs__/intlMock';
 import { makeExtraField } from '../../../../__stubs__/fields.factory';
-import { makeFieldsetBindingClient, makeFieldsetData, makeFieldsetField } from '../../../../__stubs__/fieldsets.factory';
+import { makeFieldsetBindingClient, makeFieldsetField } from '../../../../__stubs__/fieldsets.factory';
 import {
   IExtraField,
-  IFieldsetData,
   IKickoffClient,
   ITemplateClient,
 } from '../../../../types/template';
+import { IFieldsetCatalogItem } from '../../../../types/fieldset';
 import { ETemplateStatus } from '../../../../types/redux';
 
 jest.mock('../../../../redux/selectors/fieldsets', () => ({
-  getFieldsetsCatalogByApiName: jest.fn(),
   getFieldsetsCatalogIsLoading: jest.fn(() => false),
 }));
 
@@ -64,24 +63,33 @@ jest.mock('../../ExtraFields/utils/ExtraFieldsLabels', () => ({
 
 jest.mock('../../TaskOutputFlow/FieldsetIconPicker', () => ({
   FieldsetIconPicker: (props: {
-    fieldsetsByApiName: ReadonlyMap<string, IFieldsetData>;
     selectedFieldsetIds: number[];
-    onSelectFieldset: (apiName: string) => void;
+    onSelectFieldset: (item: IFieldsetCatalogItem) => void;
     onRemoveFieldset: (sharedFieldsetId: number) => void;
   }) =>
     React.createElement(
       'div',
-      null,
-      Array.from(props.fieldsetsByApiName.entries()).map(([apiName, fs]) =>
-        React.createElement(
-          'button',
-          {
-            key: `add-${apiName}`,
-            type: 'button',
-            onClick: () => props.onSelectFieldset(apiName),
-          },
-          `Add fieldset ${fs.name}`,
-        ),
+      { 'data-testid': 'fieldset-icon-picker' },
+      React.createElement(
+        'button',
+        {
+          type: 'button',
+          'data-testid': 'add-fieldset-btn',
+          onClick: () =>
+            props.onSelectFieldset({
+              id: 200,
+              apiName: 'fs-new',
+              name: 'New Set',
+              description: '',
+              fields: [],
+              rules: [],
+              order: 0,
+              labelPosition: 'top',
+              layout: 'vertical',
+              title: '',
+            } as IFieldsetCatalogItem),
+        },
+        'Add fieldset New Set',
       ),
     ),
 }));
@@ -93,22 +101,17 @@ jest.mock('../../TaskOutputFlow/MergedOutputRows', () => ({
 
 jest.mock('../../FieldsetOutputsPreview/FieldsetOutputsPreview', () => ({
   FieldsetOutputsPreview: (props: {
-    fieldsets: { apiName: string }[];
-    fieldsetsByApiName: ReadonlyMap<string, { fields: unknown[] }>;
+    fieldsets: { apiNameBinding: string; fields?: unknown[] }[];
   }) => {
-    const groups = props.fieldsets
-      .map((f) => {
-        const data = props.fieldsetsByApiName.get(f.apiName);
-        if (!data || !data.fields || data.fields.length === 0) return null;
-        return f.apiName;
-      })
-      .filter((apiName): apiName is string => apiName !== null);
+    const groups = props.fieldsets.filter(
+      (fieldset) => fieldset.fields && fieldset.fields.length > 0,
+    );
     if (!groups.length) return null;
     return React.createElement(
       'div',
       { 'data-testid': 'fieldset-outputs-preview' },
-      groups.map((apiName) =>
-        React.createElement('span', { key: apiName }, apiName),
+      groups.map((fieldset) =>
+        React.createElement('span', { key: fieldset.apiNameBinding }, fieldset.apiNameBinding),
       ),
     );
   },
@@ -163,7 +166,6 @@ import { KickoffRedux } from '../KickoffRedux';
 import { getEmptyField } from '../utils/getEmptyField';
 import { useSelector } from 'react-redux';
 import {
-  getFieldsetsCatalogByApiName,
   getFieldsetsCatalogIsLoading,
 } from '../../../../redux/selectors/fieldsets';
 
@@ -194,13 +196,10 @@ describe('KickoffRedux', () => {
 
   const renderKickoff = (params: {
     kickoff: IKickoffClient;
-    catalog?: ReadonlyMap<string, IFieldsetData>;
     setKickoff?: jest.Mock;
   }) => {
     const setKickoff = params.setKickoff ?? jest.fn();
-    const catalog = params.catalog ?? new Map<string, IFieldsetData>();
 
-    (getFieldsetsCatalogByApiName as jest.Mock).mockReturnValue(catalog);
     (getFieldsetsCatalogIsLoading as jest.Mock).mockReturnValue(false);
 
     render(
@@ -226,12 +225,7 @@ describe('KickoffRedux', () => {
   });
 
   describe('collapsed kickoff: labels block', () => {
-    it('renders FieldsetOutputsPreview when a fieldset in catalog has fields', () => {
-      const fsData = makeFieldsetData({
-        apiName: 'fs-1',
-        name: 'Set One',
-        fields: [makeField({ apiName: 'fs-field-1' })],
-      });
+    it('renders FieldsetOutputsPreview when a fieldset binding has fields', () => {
       renderKickoff({
         kickoff: makeKickoff({
           fieldsets: [makeFieldsetBindingClient({
@@ -240,20 +234,17 @@ describe('KickoffRedux', () => {
             fields: [makeFieldsetField({ apiName: 'fs-field-1' })],
           })],
         }),
-        catalog: new Map([['fs-1', fsData]]),
       });
 
       expect(screen.getByTestId('fieldset-outputs-preview')).toBeInTheDocument();
       expect(screen.queryByTestId('extra-fields-labels')).not.toBeInTheDocument();
     });
 
-    it('renders no labels block at all when no own fields and catalog fieldset has empty fields', () => {
-      const fsData = makeFieldsetData({ apiName: 'fs-1', fields: [] });
+    it('renders no labels block at all when no own fields and fieldset binding has empty fields', () => {
       renderKickoff({
         kickoff: makeKickoff({
           fieldsets: [makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 0 })],
         }),
-        catalog: new Map([['fs-1', fsData]]),
       });
 
       expect(screen.queryByTestId('fieldset-outputs-preview')).not.toBeInTheDocument();
@@ -264,12 +255,10 @@ describe('KickoffRedux', () => {
 
   describe('expanded kickoff: isFormEmpty accounts for fieldsets', () => {
     it('renders MergedOutputRows when only fieldsets are present (no own fields or description)', () => {
-      const fsData = makeFieldsetData({ apiName: 'fs-1' });
       renderKickoff({
         kickoff: makeKickoff({
           fieldsets: [makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 0 })],
         }),
-        catalog: new Map([['fs-1', fsData]]),
       });
 
       userEvent.click(screen.getByTestId('kickoff-toggle'));
@@ -280,49 +269,30 @@ describe('KickoffRedux', () => {
 
   describe('add fieldset', () => {
     it('calls setKickoff with the new fieldset added to the array', () => {
-      const fsData = makeFieldsetData({ apiName: 'fs-new', name: 'New Set' });
       const { setKickoff } = renderKickoff({
         kickoff: makeKickoff(),
-        catalog: new Map([['fs-new', fsData]]),
       });
 
       userEvent.click(screen.getByTestId('kickoff-toggle'));
-      userEvent.click(screen.getByRole('button', { name: 'Add fieldset New Set' }));
+      userEvent.click(screen.getByTestId('add-fieldset-btn'));
 
       expect(setKickoff).toHaveBeenCalledTimes(1);
       expect(setKickoff).toHaveBeenCalledWith(
         expect.objectContaining({
           fieldsets: expect.arrayContaining([
-            expect.objectContaining({ apiName: 'fs-new' }),
+            expect.objectContaining({ sharedFieldsetId: 200 }),
           ]),
         }),
       );
-    });
-
-    it('does not call setKickoff when re-adding an already connected fieldset', () => {
-      const fsData = makeFieldsetData({ apiName: 'fs-1' });
-      const { setKickoff } = renderKickoff({
-        kickoff: makeKickoff({
-          fieldsets: [makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 0 })],
-        }),
-        catalog: new Map([['fs-1', fsData]]),
-      });
-
-      userEvent.click(screen.getByTestId('kickoff-toggle'));
-      userEvent.click(screen.getByRole('button', { name: 'Add fieldset Fieldset 1' }));
-
-      expect(setKickoff).not.toHaveBeenCalled();
     });
   });
 
   describe('create field when fieldsets are connected', () => {
     it('calls setKickoff with updated fields AND fieldset order patches', () => {
-      const fsData = makeFieldsetData({ apiName: 'fs-1' });
       const { setKickoff } = renderKickoff({
         kickoff: makeKickoff({
           fieldsets: [makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 0 })],
         }),
-        catalog: new Map([['fs-1', fsData]]),
       });
 
       userEvent.click(screen.getByTestId('kickoff-toggle'));
@@ -335,7 +305,7 @@ describe('KickoffRedux', () => {
             expect.objectContaining({ apiName: 'new-field' }),
           ]),
           fieldsets: expect.arrayContaining([
-            expect.objectContaining({ apiName: 'fs-1' }),
+            expect.objectContaining({ apiNameBinding: 'fs-1' }),
           ]),
         }),
       );
@@ -344,14 +314,12 @@ describe('KickoffRedux', () => {
 
   describe('clear kickoff', () => {
     it('calls setKickoff with empty fields AND empty fieldsets', () => {
-      const fsData = makeFieldsetData({ apiName: 'fs-1' });
       const { setKickoff } = renderKickoff({
         kickoff: makeKickoff({
           fields: [makeField({ apiName: 'f-1' })],
           fieldsets: [makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 0 })],
           description: 'desc',
         }),
-        catalog: new Map([['fs-1', fsData]]),
       });
 
       userEvent.click(screen.getByTestId('kickoff-clear'));

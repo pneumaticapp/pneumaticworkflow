@@ -1,7 +1,5 @@
 import { EFieldsetsSorting, IFieldsetCatalogItem } from '../../types/fieldset';
 import { IApplicationState, IFieldsetsStore, IFieldsetsList } from '../../types/redux';
-import { IFieldsetData } from '../../types/template';
-import { mapFieldsetTemplateToFieldsetData } from '../../utils/mapFieldsetTemplateToFieldsetData';
 
 export const getFieldsetsStore = (state: IApplicationState): IFieldsetsStore => state.fieldsets;
 
@@ -26,24 +24,4 @@ export const getFieldsetsCatalogItems = (state: IApplicationState): IFieldsetCat
 export const getFieldsetsCatalogIsLoading = (state: IApplicationState): boolean => state.fieldsets.isCatalogLoading;
 
 export const getIsCatalogLoaded = (state: IApplicationState): boolean => state.fieldsets.isCatalogLoaded;
-
-let cachedCatalogItems: IFieldsetCatalogItem[] = [];
-let cachedCatalogMap: ReadonlyMap<string, IFieldsetData> = new Map();
-
-export const getFieldsetsCatalogByApiName = (state: IApplicationState): ReadonlyMap<string, IFieldsetData> => {
-  const items = getFieldsetsCatalogItems(state);
-  if (items === cachedCatalogItems) {
-    return cachedCatalogMap;
-  }
-
-  const nextMap = new Map<string, IFieldsetData>();
-  items.forEach((item) => {
-    const fieldsetData = mapFieldsetTemplateToFieldsetData(item);
-    nextMap.set(fieldsetData.apiName, fieldsetData);
-  });
-
-  cachedCatalogItems = items;
-  cachedCatalogMap = nextMap;
-  return cachedCatalogMap;
-};
 

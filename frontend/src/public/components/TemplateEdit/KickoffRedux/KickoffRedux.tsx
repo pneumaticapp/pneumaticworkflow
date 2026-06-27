@@ -31,7 +31,7 @@ import { ExtraFieldsLabels } from '../ExtraFields/utils/ExtraFieldsLabels';
 import { getEmptyKickoff } from '../../../utils/template';
 import { useHashLink } from '../../../hooks/useHashLink';
 import { useWorkflowNameVariables } from '../TaskForm/utils/getTaskVariables';
-import { getFieldsetsCatalogByApiName, getFieldsetsCatalogIsLoading } from '../../../redux/selectors/fieldsets';
+import { getFieldsetsCatalogIsLoading } from '../../../redux/selectors/fieldsets';
 import { FieldsetOutputsPreview } from '../FieldsetOutputsPreview/FieldsetOutputsPreview';
 
 import styles from './KickoffRedux.css';
@@ -54,10 +54,9 @@ export function KickoffRedux({
   accountId,
 }: IKickoffReduxProps) {
   const dispatch = useDispatch();
-  const fieldsetsByApiName = useSelector(getFieldsetsCatalogByApiName);
   const [isOpen, setIsOpen] = React.useState(false);
   const containerRef = React.useRef<HTMLDivElement | null>(null);
-  const variables = useWorkflowNameVariables(kickoff, fieldsetsByApiName);
+  const variables = useWorkflowNameVariables(kickoff);
   const datasetOptions = useDatasetOptions(kickoff.fields);
   const fieldsetsCatalogLoading = useSelector(getFieldsetsCatalogIsLoading);
   

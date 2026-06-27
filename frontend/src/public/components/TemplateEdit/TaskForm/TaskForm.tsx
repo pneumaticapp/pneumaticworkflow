@@ -17,7 +17,7 @@ import { TPatchTaskPayload } from '../../../redux/actions';
 
 import { ReturnTo } from './ReturnTo';
 import { DueDate } from './DueDate';
-import { getFieldsetsCatalogByApiName, getFieldsetsCatalogIsLoading } from '../../../redux/selectors/fieldsets';
+import { getFieldsetsCatalogIsLoading } from '../../../redux/selectors/fieldsets';
 import { getSingleLineVariables, getSystemVariables, getTaskVariables, getVariables } from './utils/getTaskVariables';
 
 import styles from '../TemplateEdit.css';
@@ -56,17 +56,16 @@ export function TaskForm({
 }: ITaskFormProps & { templateId: number | undefined }) {
   if (!task) return null;
   const { formatMessage } = useIntl();
-  const fieldsetsByApiName = useSelector(getFieldsetsCatalogByApiName);
   const fieldsetsCatalogLoading = useSelector(getFieldsetsCatalogIsLoading);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const taskName = task.name || '';
   const listVariables = useMemo(
-    () => getTaskVariables(kickoff, tasks, task, templateId, fieldsetsByApiName),
-    [fieldsetsByApiName, kickoff, task, tasks, templateId],
+    () => getTaskVariables(kickoff, tasks, task, templateId),
+    [kickoff, task, tasks, templateId],
   );
   const templateVariables = useMemo(
-    () => getVariables({ kickoff, tasks, templateId, fieldsetsByApiName }),
-    [fieldsetsByApiName, kickoff, tasks, templateId],
+    () => getVariables({ kickoff, tasks, templateId }),
+    [kickoff, tasks, templateId],
   );
   const listSystemVariables = useMemo(() => [
     ...getSystemVariables(),

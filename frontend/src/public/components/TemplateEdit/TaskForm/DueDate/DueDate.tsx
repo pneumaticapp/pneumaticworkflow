@@ -2,13 +2,11 @@ import React, { useState, useMemo } from 'react';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
 
-import { useSelector } from 'react-redux';
 import { DropdownList, Duration } from '../../../UI';
 import { TrashIcon } from '../../../icons';
 
 import { IDueDate, IKickoffClient, ITemplateTaskClient } from '../../../../types/template';
 import { START_DURATION } from '../../constants';
-import { getFieldsetsCatalogByApiName } from '../../../../redux/selectors/fieldsets';
 import { getRuleTargetOptions, TRuleTargetOption } from './utils/getRuleTargetOptions';
 import { getRulePrepositionOptions, TRulePrepositionOption } from './utils/getRulePrepositionOptions';
 import { useUpdatePreposition } from './hooks/useUpdatePreposition';
@@ -27,7 +25,6 @@ interface IDueInProps {
 type TDueDateKeys = keyof ITemplateTaskClient['rawDueDate'];
 
 export function DueDate({ dueDate, currentTask, tasks, kickoff, onChange }: IDueInProps) {
-  const fieldsetsByApiName = useSelector(getFieldsetsCatalogByApiName);
   const { formatMessage } = useIntl();
   const { duration, durationMonths, ruleTarget, rulePreposition, sourceId } = dueDate;
   const [isDueDate, setIsDueDate] = useState(Boolean(duration || durationMonths));
@@ -37,8 +34,8 @@ export function DueDate({ dueDate, currentTask, tasks, kickoff, onChange }: IDue
   }, [ruleTarget]);
 
   const [systemRules, dateFieldsRules, tasksRules] = useMemo(() => {
-    return getRuleTargetOptions(currentTask, tasks, kickoff, fieldsetsByApiName);
-  }, [currentTask, fieldsetsByApiName, kickoff, tasks]);
+    return getRuleTargetOptions(currentTask, tasks, kickoff);
+  }, [currentTask, kickoff, tasks]);
 
   const currentPrepositionOption = useMemo(() => {
     return prepositionOptions.find((rule) => rule.rulePreposition === rulePreposition) || null;

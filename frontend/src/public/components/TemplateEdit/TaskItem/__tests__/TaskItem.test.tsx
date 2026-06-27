@@ -2,8 +2,8 @@ import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { ITemplateTaskClient, IFieldsetData } from '../../../../types/template';
-import { makeFieldsetData, makeFieldsetBindingClient } from '../../../../__stubs__/fieldsets.factory';
+import { ITemplateTaskClient } from '../../../../types/template';
+import { makeFieldsetBindingClient } from '../../../../__stubs__/fieldsets.factory';
 import { ETaskFormParts } from '../../types';
 
 jest.mock('react', () => {
@@ -17,31 +17,27 @@ jest.mock('../../../../redux/selectors/template', () => ({
   getTemplateData: jest.fn(),
 }));
 
-jest.mock('../../../../redux/selectors/fieldsets', () => ({
-  getFieldsetsCatalogByApiName: jest.fn(),
-}));
-
 jest.mock('../../TaskForm/utils/getTaskVariables', () => ({
   getVariables: jest.fn(() => []),
 }));
 
 jest.mock('../../FieldsetOutputsPreview/FieldsetOutputsPreview', () => ({
   FieldsetOutputsPreview: (props: {
-    fieldsets: Array<{ apiName: string }>;
+    fieldsets: Array<{ apiNameBinding: string }>;
     onGroupClick?: () => void;
   }) =>
     React.createElement(
       'div',
       null,
-      props.fieldsets.map((fs) =>
+      props.fieldsets.map((fieldset) =>
         React.createElement(
           'button',
           {
-            key: fs.apiName,
+            key: fieldset.apiNameBinding,
             type: 'button',
             onClick: props.onGroupClick,
           },
-          fs.apiName,
+          fieldset.apiNameBinding,
         ),
       ),
     ),
@@ -72,7 +68,6 @@ import {
   getTemplateTasks,
   getTemplateData,
 } from '../../../../redux/selectors/template';
-import { getFieldsetsCatalogByApiName } from '../../../../redux/selectors/fieldsets';
 
 describe('TaskItem', () => {
   const makeTask = (overrides: Partial<ITemplateTaskClient> = {}): ITemplateTaskClient => ({
@@ -96,16 +91,11 @@ describe('TaskItem', () => {
     ...overrides,
   });
 
-  const fieldsetData = makeFieldsetData({ id: 100, name: 'My Fieldset' });
-
   beforeEach(() => {
     jest.clearAllMocks();
     (getKickoff as jest.Mock).mockReturnValue({ fields: [], fieldsets: [] });
     (getTemplateTasks as jest.Mock).mockReturnValue([]);
     (getTemplateData as jest.Mock).mockReturnValue({ id: 1 });
-    (getFieldsetsCatalogByApiName as jest.Mock).mockReturnValue(
-      new Map<string, IFieldsetData>([['fs-1', fieldsetData]]),
-    );
   });
 
   describe('click on fieldset preview', () => {

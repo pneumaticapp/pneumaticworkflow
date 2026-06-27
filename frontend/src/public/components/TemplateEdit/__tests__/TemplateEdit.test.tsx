@@ -6,7 +6,6 @@ import { useSelector } from 'react-redux';
 import { TemplateEdit } from '../TemplateEdit';
 import { cleanTemplateReferences } from '../../../utils/template';
 import { KickoffReduxContainer } from '../KickoffRedux';
-import { getFieldsetsCatalogByApiName } from '../../../redux/selectors/fieldsets';
 import { getSubscriptionPlan } from '../../../redux/selectors/user';
 import { ETemplateStatus } from '../../../types/redux';
 
@@ -95,9 +94,7 @@ jest.mock('../utils/getClonedTask', () => ({
   getClonedTask: jest.fn((task: any) => task),
 }));
 
-jest.mock('../../../redux/selectors/fieldsets', () => ({
-  getFieldsetsCatalogByApiName: jest.fn(),
-}));
+jest.mock('../../../redux/selectors/fieldsets', () => ({}));
 jest.mock('../../../redux/selectors/user', () => ({
   getSubscriptionPlan: jest.fn(),
 }));
@@ -106,7 +103,6 @@ jest.mock('../../UI/Notifications', () => ({
   NotificationManager: { warning: jest.fn() },
 }));
 
-const FIELDSETS_MAP = new Map<string, any>();
 const SUBSCRIPTION_PLAN = 'unlimited_month';
 
 describe('TemplateEdit', () => {
@@ -155,28 +151,26 @@ describe('TemplateEdit', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (useSelector as jest.Mock).mockImplementation((selector: unknown) => {
-      if (selector === getFieldsetsCatalogByApiName) return FIELDSETS_MAP;
       if (selector === getSubscriptionPlan) return SUBSCRIPTION_PLAN;
       return undefined;
     });
   });
 
   describe('cleanup of references to fieldset fields', () => {
-    it('changing tasks runs cleanTemplateReferences with fieldsets catalog and pipes the result into setTemplate', () => {
+    it('changing tasks runs cleanTemplateReferences and pipes the result into setTemplate', () => {
       const props = baseProps();
       render(React.createElement(TemplateEdit, props as any));
 
       userEvent.click(screen.getByRole('button', { name: 'Add' }));
 
       expect(cleanTemplateReferences).toHaveBeenCalledTimes(1);
-      const [updatedWorkflow, fieldsetsArg] = (cleanTemplateReferences as jest.Mock).mock.calls[0];
+      const [updatedWorkflow] = (cleanTemplateReferences as jest.Mock).mock.calls[0];
       expect(updatedWorkflow.tasks).toHaveLength(2);
-      expect(fieldsetsArg).toBe(FIELDSETS_MAP);
       expect(props.setTemplate).toHaveBeenCalledTimes(1);
       expect(props.setTemplate).toHaveBeenCalledWith(updatedWorkflow);
     });
 
-    it('changing kickoff runs cleanTemplateReferences with fieldsets catalog and pipes the result into setTemplate', () => {
+    it('changing kickoff runs cleanTemplateReferences and pipes the result into setTemplate', () => {
       const props = baseProps();
       render(React.createElement(TemplateEdit, props as any));
 
@@ -192,9 +186,8 @@ describe('TemplateEdit', () => {
       setKickoff(newKickoff);
 
       expect(cleanTemplateReferences).toHaveBeenCalledTimes(1);
-      const [updatedWorkflow, fieldsetsArg] = (cleanTemplateReferences as jest.Mock).mock.calls[0];
+      const [updatedWorkflow] = (cleanTemplateReferences as jest.Mock).mock.calls[0];
       expect(updatedWorkflow.kickoff).toBe(newKickoff);
-      expect(fieldsetsArg).toBe(FIELDSETS_MAP);
       expect(props.setTemplate).toHaveBeenCalledTimes(1);
       expect(props.setTemplate).toHaveBeenCalledWith(updatedWorkflow);
     });

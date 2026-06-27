@@ -105,7 +105,20 @@ const mockFieldsetData: IFieldsetData = makeFieldsetData({
   ],
 });
 
-const mockFieldsetsById = new Map<string, IFieldsetData>([[mockFieldsetData.apiName, mockFieldsetData]]);
+const mockBindingFields = [
+  makeFieldsetField({
+    name: 'Assignee',
+    type: EExtraFieldType.User,
+    apiName: 'assignee-fs',
+  }),
+  makeFieldsetField({
+    name: 'Kickoff date',
+    type: EExtraFieldType.Date,
+    apiName: 'kickoff-date-fs',
+    order: 1,
+  }),
+];
+
 
 describe('getTaskVariables', () => {
   it("correctly gets 1st task's variables", () => {
@@ -157,10 +170,14 @@ describe('getTaskVariables', () => {
   it('appends variables from selected task fieldsets with combined subtitles', () => {
     const taskWithFieldset: ITemplateTaskClient = {
       ...mockTask1,
-      fieldsets: [makeFieldsetBindingClient({ apiNameBinding: mockFieldsetData.apiName })],
+      fieldsets: [makeFieldsetBindingClient({
+        apiNameBinding: mockFieldsetData.apiName,
+        name: mockFieldsetData.name,
+        fields: mockBindingFields,
+      })],
     };
     const tasks: ITemplateTaskClient[] = [taskWithFieldset, mockTask2];
-    const actualResult = getTaskVariables(mockKikoff, tasks, mockTask2, undefined, mockFieldsetsById);
+    const actualResult = getTaskVariables(mockKikoff, tasks, mockTask2);
 
     expect(actualResult.map((v) => v.apiName)).toEqual([
       'client-name-3967',
@@ -192,8 +209,7 @@ describe('getTaskVariables', () => {
     };
     const tasks: ITemplateTaskClient[] = [taskWithInline, mockTask2];
 
-    const emptyCatalog = new Map<string, IFieldsetData>();
-    const actualResult = getTaskVariables(mockKikoff, tasks, mockTask2, undefined, emptyCatalog);
+    const actualResult = getTaskVariables(mockKikoff, tasks, mockTask2);
 
     const inlineVar = actualResult.find((v) => v.apiName === 'inline-field-1');
     expect(inlineVar).toBeDefined();
@@ -209,9 +225,13 @@ describe('getKickoffVariables with fieldsets', () => {
   it('adds kickoff fieldset fields after regular kickoff fields', () => {
     const kickoff: IKickoffClient = {
       ...mockKikoff,
-      fieldsets: [makeFieldsetBindingClient({ apiNameBinding: mockFieldsetData.apiName })],
+      fieldsets: [makeFieldsetBindingClient({
+        apiNameBinding: mockFieldsetData.apiName,
+        name: mockFieldsetData.name,
+        fields: mockBindingFields,
+      })],
     };
-    const vars = getKickoffVariables(kickoff, mockFieldsetsById);
+    const vars = getKickoffVariables(kickoff);
 
     expect(vars.map((v) => v.apiName)).toEqual(['client-name-3967', 'assignee-fs', 'kickoff-date-fs']);
     expect(vars[1]).toMatchObject({
@@ -226,11 +246,16 @@ describe('getKickoffVariables with fieldsets', () => {
       ...mockKikoff,
       fieldsets: [
         makeFieldsetBindingClient({ apiNameBinding: 'missing-fs' }),
-        makeFieldsetBindingClient({ apiNameBinding: mockFieldsetData.apiName, order: 1 }),
+        makeFieldsetBindingClient({
+          apiNameBinding: mockFieldsetData.apiName,
+          name: mockFieldsetData.name,
+          fields: mockBindingFields,
+          order: 1,
+        }),
       ],
     };
 
-    const vars = getKickoffVariables(kickoff, mockFieldsetsById);
+    const vars = getKickoffVariables(kickoff);
 
     expect(vars.map((v) => v.apiName)).toEqual(['client-name-3967', 'assignee-fs', 'kickoff-date-fs']);
   });
@@ -335,12 +360,10 @@ describe('getSingleLineVariables', () => {
 describe('useWorkflowNameVariables', () => {
   function TestWrapper({
     kickoff,
-    fieldsetsByApiName,
   }: {
     kickoff?: Parameters<typeof useWorkflowNameVariables>[0];
-    fieldsetsByApiName?: Parameters<typeof useWorkflowNameVariables>[1];
   }) {
-    const vars = useWorkflowNameVariables(kickoff, fieldsetsByApiName);
+    const vars = useWorkflowNameVariables(kickoff);
     return createElement(
       'div',
       null,
@@ -355,30 +378,6 @@ describe('useWorkflowNameVariables', () => {
   }
 
   it('includes 4 system variables plus single-line kickoff and fieldset fields, filters out multi-line types', () => {
-    const fieldsetData: IFieldsetData = makeFieldsetData({
-      id: 100,
-      apiName: 'fs-name',
-      name: 'Name Set',
-      fields: [
-        makeExtraField({
-          apiName: 'fs-date',
-          name: 'FS Date',
-          type: EExtraFieldType.Date,
-        }),
-        makeExtraField({
-          apiName: 'fs-number',
-          name: 'FS Number',
-          type: EExtraFieldType.Number,
-          order: 1,
-        }),
-        makeExtraField({
-          apiName: 'fs-text',
-          name: 'FS Text',
-          type: EExtraFieldType.Text,
-          order: 2,
-        }),
-      ],
-    });
 
     const kickoff: IKickoffClient = {
       description: '',
@@ -394,12 +393,31 @@ describe('useWorkflowNameVariables', () => {
           order: 1,
         }),
       ],
-      fieldsets: [makeFieldsetBindingClient({ apiNameBinding: 'fs-name' })],
+      fieldsets: [makeFieldsetBindingClient({
+        apiNameBinding: 'fs-name',
+        fields: [
+          makeFieldsetField({
+            apiName: 'fs-date',
+            name: 'FS Date',
+            type: EExtraFieldType.Date,
+          }),
+          makeFieldsetField({
+            apiName: 'fs-number',
+            name: 'FS Number',
+            type: EExtraFieldType.Number,
+            order: 1,
+          }),
+          makeFieldsetField({
+            apiName: 'fs-text',
+            name: 'FS Text',
+            type: EExtraFieldType.Text,
+            order: 2,
+          }),
+        ],
+      })],
     };
 
-    const catalog = new Map<string, IFieldsetData>([['fs-name', fieldsetData]]);
-
-    render(createElement(TestWrapper, { kickoff, fieldsetsByApiName: catalog }));
+    render(createElement(TestWrapper, { kickoff }));
 
     expect(screen.getByTestId('var-date')).toBeInTheDocument();
     expect(screen.getByTestId('var-template-name')).toBeInTheDocument();

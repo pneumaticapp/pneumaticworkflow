@@ -1,6 +1,5 @@
 import {
   EExtraFieldType,
-  IFieldsetData,
   IKickoffClient,
   ITemplateTaskClient,
   TDueDateRuleTarget,
@@ -18,10 +17,9 @@ export function getRuleTargetOptions(
   currentTask: ITemplateTaskClient,
   tasks: ITemplateTaskClient[],
   kickoff: IKickoffClient,
-  fieldsetsByApiName?: ReadonlyMap<string, IFieldsetData>,
 ): readonly [TRuleTargetOption[], TRuleTargetOption[], TRuleTargetOption[]] {
   const prevTasks = getPreviousTasks(currentTask, tasks);
-  const prevDateVariables = getTaskVariables(kickoff, tasks, currentTask, undefined, fieldsetsByApiName).filter(
+  const prevDateVariables = getTaskVariables(kickoff, tasks, currentTask).filter(
     (variable) => variable.type === EExtraFieldType.Date,
   );
 

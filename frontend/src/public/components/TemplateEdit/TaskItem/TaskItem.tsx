@@ -6,7 +6,6 @@ import { getKickoff, getTemplateData, getTemplateTasks } from '../../../redux/se
 
 import { ExtraFieldsLabels } from '../ExtraFields/utils/ExtraFieldsLabels';
 import { getVariables } from '../TaskForm/utils/getTaskVariables';
-import { getFieldsetsCatalogByApiName } from '../../../redux/selectors/fieldsets';
 import { FieldsetOutputsPreview } from '../FieldsetOutputsPreview/FieldsetOutputsPreview';
 
 import { ITemplateTaskClient } from '../../../types/template';
@@ -32,12 +31,10 @@ export const TaskItem = ({ task, toggleIsOpenTask, setScrollTarget }: ITaskItemP
   const kickoff = useSelector(getKickoff);
   const tasks = useSelector(getTemplateTasks);
   const template = useSelector(getTemplateData);
-  const fieldsetsByApiName = useSelector(getFieldsetsCatalogByApiName);
   const allVariables = getVariables({
     kickoff,
     tasks,
     templateId: template.id,
-    fieldsetsByApiName,
   });
 
   const handleClickOnLabel = (taskFormParts: ETaskFormParts) => {

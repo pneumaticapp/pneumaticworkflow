@@ -1,11 +1,8 @@
 import { useEffect } from 'react';
 
-import { useSelector } from 'react-redux';
 import { ITemplateClient } from '../../types/template';
 import { TLoadTemplateVariablesSuccessPayload } from '../../redux/actions';
 import { getVariables } from './TaskForm/utils/getTaskVariables';
-
-import { getFieldsetsCatalogByApiName } from '../../redux/selectors/fieldsets';
 
 export interface ITemplateEditVariablesSyncProps {
   template: ITemplateClient;
@@ -18,14 +15,11 @@ export function TemplateEditVariablesSync({
   prevTemplate,
   loadTemplateVariablesSuccess,
 }: ITemplateEditVariablesSyncProps) {
-  const fieldsetsByApiName = useSelector(getFieldsetsCatalogByApiName);
-
   useEffect(() => {
     const variables = getVariables({
       kickoff: template.kickoff,
       tasks: template.tasks,
       templateId: template.id,
-      fieldsetsByApiName,
     });
     let prevVariables = [];
     if (prevTemplate) {
@@ -33,14 +27,13 @@ export function TemplateEditVariablesSync({
         kickoff: prevTemplate.kickoff,
         tasks: prevTemplate.tasks,
         templateId: prevTemplate.id,
-        fieldsetsByApiName,
       });
     }
 
     if (variables.length !== prevVariables.length && template.id) {
       loadTemplateVariablesSuccess({ templateId: template.id, variables });
     }
-  }, [fieldsetsByApiName, loadTemplateVariablesSuccess, prevTemplate, template]);
+  }, [loadTemplateVariablesSuccess, prevTemplate, template]);
 
   return null;
 }

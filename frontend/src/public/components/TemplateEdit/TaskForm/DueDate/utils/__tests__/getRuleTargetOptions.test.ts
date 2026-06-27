@@ -1,6 +1,5 @@
-import { EExtraFieldType, IFieldsetData, IKickoffClient, ITemplateTaskClient } from '../../../../../../types/template';
-import { makeExtraField } from '../../../../../../__stubs__/fields.factory';
-import { makeFieldsetData, makeFieldsetBindingClient } from '../../../../../../__stubs__/fieldsets.factory';
+import { EExtraFieldType, IKickoffClient, ITemplateTaskClient } from '../../../../../../types/template';
+import { makeFieldsetField, makeFieldsetBindingClient } from '../../../../../../__stubs__/fieldsets.factory';
 import { createEmptyTaskDueDate } from '../../../../../../utils/dueDate/createEmptyTaskDueDate';
 import { getRuleTargetOptions } from '../getRuleTargetOptions';
 
@@ -60,28 +59,21 @@ describe('getRuleTargetOptions', () => {
   it('only Date fields from kickoff fieldset appear in dateFieldsRules, String fields are filtered out', () => {
     const fieldsetApiName = 'fs-kickoff';
 
-    const fieldsetData = makeFieldsetData({
-      apiName: fieldsetApiName,
-      fields: [
-        makeExtraField({ apiName: 'date-field', name: 'Date Field', type: EExtraFieldType.Date }),
-        makeExtraField({ apiName: 'string-field', name: 'String Field', order: 1 }),
-      ],
-    });
-
     const kickoff = makeKickoff({
-      fieldsets: [makeFieldsetBindingClient({ apiNameBinding: fieldsetApiName })],
+      fieldsets: [makeFieldsetBindingClient({
+        apiNameBinding: fieldsetApiName,
+        fields: [
+          makeFieldsetField({ apiName: 'date-field', name: 'Date Field', type: EExtraFieldType.Date }),
+          makeFieldsetField({ apiName: 'string-field', name: 'String Field', order: 1 }),
+        ],
+      })],
     });
-
-    const fieldsetsByApiName = new Map<string, IFieldsetData>([
-      [fieldsetApiName, fieldsetData],
-    ]);
 
     const currentTask = makeTask();
     const [systemRules, dateFieldsRules] = getRuleTargetOptions(
       currentTask,
       [currentTask],
       kickoff,
-      fieldsetsByApiName,
     );
 
     expect(systemRules).toHaveLength(2);
