@@ -16,6 +16,7 @@ import {
   IExtraField,
 } from '../types/template';
 import { IFieldsetBindingClient, IFieldsetBindingMeta } from '../types/fieldset';
+import { mapFieldsetBindingsToClient } from './mapFieldsetBindingsToClient';
 import { getUrlParams } from './getUrlParams';
 import { DEFAULT_TEMPLATE_NAME } from '../components/TemplateEdit/constants';
 
@@ -64,10 +65,7 @@ export const getNormalizedTemplate = (
     ...getEmptyKickoff(),
     ...(template.kickoff || {}),
     fieldsets: template.kickoff
-      ? template.kickoff.fieldsets.map(({ apiName, ...rest }) => ({
-          ...rest,
-          apiNameBinding: apiName,
-        }))
+      ? mapFieldsetBindingsToClient(template.kickoff.fieldsets)
       : [],
   };
   const normalizedTasks = [...template.tasks]
@@ -141,10 +139,7 @@ export const getNormalizedTask = (
     uuid: createUUID(),
     conditions,
     rawDueDate,
-    fieldsets: task.fieldsets.map(({ apiName, ...rest }) => ({
-      ...rest,
-      apiNameBinding: apiName,
-    })),
+    fieldsets: mapFieldsetBindingsToClient(task.fieldsets),
   };
 };
 

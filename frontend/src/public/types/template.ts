@@ -7,7 +7,10 @@ import {
 } from '../components/TemplateEdit/TaskForm/Conditions';
 import { TUploadedFile } from '../utils/uploadFiles';
 import { TSystemField } from '../components/Workflows/WorkflowsTablePage/WorkflowsTable/types';
-import { EFieldLabelPosition, IFieldsetBinding, IFieldsetBindingClient, IFieldsetBindingMeta } from './fieldset';
+import {
+  EFieldLabelPosition, IFieldsetBinding, IFieldsetBindingClient,
+  IFieldsetBindingMeta, IFieldsetTemplateRule, TFieldSetLayout,
+} from './fieldset';
 
 export type { IFieldsetBindingClient } from './fieldset';
 
@@ -221,8 +224,12 @@ export interface IFieldsetData {
   fields: IExtraField[];
   order: number;
   labelPosition: EFieldLabelPosition;
-  /** From template list API; used for catalog UI (e.g. fieldset picker meta). */
   rulesCount?: number;
+  sharedFieldsetId?: number;
+  apiNameBinding?: string;
+  layout?: TFieldSetLayout;
+  title?: string;
+  rules?: IFieldsetTemplateRule[];
 }
 
 /** Fieldset template object from list API response (camelCased by commonRequest) */

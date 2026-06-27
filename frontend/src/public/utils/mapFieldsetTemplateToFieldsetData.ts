@@ -1,40 +1,37 @@
-/* eslint-disable */
-/* prettier-ignore */
-import { IFieldsetData, IExtraField } from '../types/template';
-import { EFieldLabelPosition } from '../types/fieldset';
+import { IFieldsetData, IExtraField, EExtraFieldType } from '../types/template';
+import { EFieldLabelPosition, IFieldsetField, IFieldsetCatalogItem } from '../types/fieldset';
 
-/**
- * Maps a fieldset template object (from API response, already camelCased by commonRequest)
- * into a runtime IFieldsetData used by FieldsetFieldGroup component.
- * Handles both camelCase and snake_case field names for safety.
- */
-export function mapFieldsetTemplateToFieldsetData(
-  fieldsetTemplate: any,
-): IFieldsetData {
-  const fields: IExtraField[] = (fieldsetTemplate.fields || []).map(
-    (f: any, index: number) => ({
-      apiName: f.apiName || f.api_name || '',
-      name: f.name || '',
-      description: f.description || '',
-      type: f.type || 'string',
-      isRequired: f.isRequired ?? f.is_required ?? false,
-      isHidden: f.isHidden ?? f.is_hidden ?? false,
-      order: f.order ?? index,
-      value: f.default || '',
-      selections: f.selections || [],
-      dataset: f.dataset || null,
+export function mapFieldsToExtraFields(fields: IFieldsetField[]): IExtraField[] {
+  return (fields || []).map(
+    (field, index) => ({
+      apiName: field.apiName || '',
+      name: field.name || '',
+      description: field.description || '',
+      type: field.type as EExtraFieldType || EExtraFieldType.String,
+      isRequired: field.isRequired ?? false,
+      isHidden: field.isHidden ?? false,
+      order: field.order ?? index,
+      value: field.default || '',
+      selections: field.selections || [],
+      dataset: field.dataset || null,
       userId: null,
       groupId: null,
     }),
   );
+}
 
-  const labelPosition = fieldsetTemplate.labelPosition ?? fieldsetTemplate.label_position;
-  const rules = fieldsetTemplate.rules;
+export function mapFieldsetTemplateToFieldsetData(
+  fieldsetTemplate: IFieldsetCatalogItem,
+): IFieldsetData {
+  const fields = mapFieldsToExtraFields(fieldsetTemplate.fields);
+
+  const {labelPosition} = fieldsetTemplate;
+  const {rules} = fieldsetTemplate;
   const rulesCount = Array.isArray(rules) ? rules.length : 0;
 
   return {
     id: fieldsetTemplate.id,
-    apiName: fieldsetTemplate.apiName || fieldsetTemplate.api_name || `fieldset-${fieldsetTemplate.id}`,
+    apiName: fieldsetTemplate.apiName || `fieldset-${fieldsetTemplate.id}`,
     name: fieldsetTemplate.name || '',
     description: fieldsetTemplate.description || '',
     fields,
