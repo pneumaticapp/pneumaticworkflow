@@ -125,7 +125,8 @@ import { handleLoadTemplateVariables } from '../templates/saga';
 
 import { deleteWorkflow } from '../../api/deleteWorkflow';
 import { getTemplate } from '../../api/getTemplate';
-import { getRunnableWorkflow, loadDatasetsMap, loadFieldsetsData } from '../../components/TemplateEdit/utils/getRunnableWorkflow';
+import { getRunnableWorkflow, loadDatasetsMap } from '../../components/TemplateEdit/utils/getRunnableWorkflow';
+import { mapTemplateFieldsetsToRuntime } from '../../utils/mapTemplateFieldsetsToRuntime';
 import { getClonedKickoff } from '../../components/Workflows/WorkflowsGridPage/WorkflowCard/utils/getClonedKickoff';
 import { getWorkflowsCurrentPerformerCounters } from '../../api/getWorkflowsCurrentPerformerCounters';
 import { getWorkflowsStartersCounters } from '../../api/getWorkflowsStartersCounters';
@@ -620,15 +621,19 @@ export function* cloneWorkflowSaga({
       throw new Error('failed to prepare runnable workflow object');
     }
 
-    const loadedFieldsets: any[] = yield call(loadFieldsetsData, template.kickoff, template.id);
-    const datasetsMap: Record<number, string[]> = yield call(loadDatasetsMap, template.kickoff, loadedFieldsets);
+    const { normalizedTemplate, loadedFieldsets } = mapTemplateFieldsetsToRuntime(template);
+    const datasetsMap: Record<number, string[]> = yield call(
+      loadDatasetsMap, normalizedTemplate.kickoff, loadedFieldsets,
+    );
 
-    const runnableWorkflow = getRunnableWorkflow(template, datasetsMap, loadedFieldsets);
+    const runnableWorkflow = getRunnableWorkflow(normalizedTemplate, datasetsMap, loadedFieldsets);
     if (!runnableWorkflow) {
       return;
     }
 
-    const kickoff: IKickoffClient = yield getClonedKickoff(formattedworkflowDetails.kickoff, template.kickoff);
+    const kickoff: IKickoffClient = yield getClonedKickoff(
+      formattedworkflowDetails.kickoff, normalizedTemplate.kickoff,
+    );
 
     yield put(
       openRunWorkflowModal({

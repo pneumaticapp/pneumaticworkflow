@@ -17,10 +17,10 @@ import { call } from 'redux-saga/effects';
 import { getWorkflow } from '../../../api/getWorkflow';
 import { getTemplate } from '../../../api/getTemplate';
 import {
-  loadFieldsetsData,
   loadDatasetsMap,
   getRunnableWorkflow,
 } from '../../../components/TemplateEdit/utils/getRunnableWorkflow';
+import { mapTemplateFieldsetsToRuntime } from '../../../utils/mapTemplateFieldsetsToRuntime';
 import { getClonedKickoff } from '../../../components/Workflows/WorkflowsGridPage/WorkflowCard/utils/getClonedKickoff';
 import { getTemplateSteps } from '../../../api/getTemplateSteps';
 import { handleLoadTemplateVariables } from '../../templates/saga';
@@ -36,9 +36,12 @@ jest.mock('../../../api/getTemplate', () => ({
 }));
 
 jest.mock('../../../components/TemplateEdit/utils/getRunnableWorkflow', () => ({
-  loadFieldsetsData: jest.fn(),
   loadDatasetsMap: jest.fn(),
   getRunnableWorkflow: jest.fn(),
+}));
+
+jest.mock('../../../utils/mapTemplateFieldsetsToRuntime', () => ({
+  mapTemplateFieldsetsToRuntime: jest.fn(),
 }));
 
 jest.mock('../../../components/Workflows/WorkflowsGridPage/WorkflowCard/utils/getClonedKickoff', () => ({
@@ -156,8 +159,8 @@ describe('cloneWorkflowSaga — fieldsets loading on clone', () => {
     status: 'running',
   };
 
-  const mockLoadedFieldsets: Pick<IFieldsetData, 'apiName' | 'name' | 'fields' | 'order'>[] = [
-    { apiName: 'fs-1', name: 'Fieldset 1', fields: [], order: 0 },
+  const mockLoadedFieldsets: Pick<IFieldsetData, 'apiName' | 'apiNameBinding' | 'name' | 'fields' | 'order'>[] = [
+    { apiName: 'fs-1', apiNameBinding: 'fs-1', name: 'Fieldset 1', fields: [], order: 0 },
   ];
 
   const mockDatasetsMap: Record<number, string[]> = {};
@@ -165,7 +168,10 @@ describe('cloneWorkflowSaga — fieldsets loading on clone', () => {
   it('loads fieldsets, enriches datasets and passes to getRunnableWorkflow', async () => {
     (getWorkflow as jest.Mock).mockResolvedValue(mockWorkflow);
     (getTemplate as jest.Mock).mockResolvedValue(mockTemplate);
-    (loadFieldsetsData as jest.Mock).mockResolvedValue(mockLoadedFieldsets);
+    (mapTemplateFieldsetsToRuntime as jest.Mock).mockReturnValue({
+      normalizedTemplate: mockTemplate,
+      loadedFieldsets: mockLoadedFieldsets,
+    });
     (loadDatasetsMap as jest.Mock).mockResolvedValue(mockDatasetsMap);
     (getRunnableWorkflow as jest.Mock).mockReturnValue({
       templateId: 10,
@@ -193,8 +199,8 @@ describe('cloneWorkflowSaga — fieldsets loading on clone', () => {
       wrapper,
     ).toPromise();
 
-    expect(loadFieldsetsData).toHaveBeenCalledTimes(1);
-    expect(loadFieldsetsData).toHaveBeenCalledWith(mockTemplate.kickoff, mockTemplate.id);
+    expect(mapTemplateFieldsetsToRuntime).toHaveBeenCalledTimes(1);
+    expect(mapTemplateFieldsetsToRuntime).toHaveBeenCalledWith(mockTemplate);
 
     expect(loadDatasetsMap).toHaveBeenCalledTimes(1);
     expect(loadDatasetsMap).toHaveBeenCalledWith(mockTemplate.kickoff, mockLoadedFieldsets);

@@ -9,8 +9,8 @@ import { getTemplate } from '../../../../api/getTemplate';
 import {
   getRunnableWorkflow,
   loadDatasetsMap,
-  loadFieldsetsData,
 } from '../../../TemplateEdit/utils/getRunnableWorkflow';
+import { mapTemplateFieldsetsToRuntime } from '../../../../utils/mapTemplateFieldsetsToRuntime';
 import { EWorkflowsLoadingStatus, EWorkflowsView } from '../../../../types/workflow';
 import { ITemplateTitle } from '../../../../types/template';
 import { intlMock } from '../../../../__stubs__/intlMock';
@@ -25,9 +25,12 @@ jest.mock('../../../../api/getTemplate', () => ({
 }));
 
 jest.mock('../../../TemplateEdit/utils/getRunnableWorkflow', () => ({
-  loadFieldsetsData: jest.fn(),
   loadDatasetsMap: jest.fn(),
   getRunnableWorkflow: jest.fn(),
+}));
+
+jest.mock('../../../../utils/mapTemplateFieldsetsToRuntime', () => ({
+  mapTemplateFieldsetsToRuntime: jest.fn(),
 }));
 
 jest.mock('../../../../utils/logger', () => ({
@@ -119,7 +122,7 @@ const fakeTemplate = {
 };
 
 const fakeRunnable = { id: 1, name: 'Template A', kickoff: { description: '', fields: [] } };
-const fakeFieldsets = [{ id: 1, apiName: 'fs-1', name: 'FS', fields: [], description: '', order: 0 }];
+const fakeFieldsets = [{ id: 1, apiName: 'fs-1', apiNameBinding: 'fs-1', name: 'FS', fields: [], description: '', order: 0 }];
 const fakeDatasetsMap = {};
 
 describe('WorkflowsGridPage', () => {
@@ -138,7 +141,10 @@ describe('WorkflowsGridPage', () => {
   describe('Fieldsets: loading orchestration on Run Workflow', () => {
     it('calls the full fieldsets loading chain when a single template is in the filter', async () => {
       (getTemplate as jest.Mock).mockResolvedValue(fakeTemplate);
-      (loadFieldsetsData as jest.Mock).mockResolvedValue(fakeFieldsets);
+      (mapTemplateFieldsetsToRuntime as jest.Mock).mockReturnValue({
+        normalizedTemplate: fakeTemplate,
+        loadedFieldsets: fakeFieldsets,
+      });
       (loadDatasetsMap as jest.Mock).mockResolvedValue(fakeDatasetsMap);
       (getRunnableWorkflow as jest.Mock).mockReturnValue(fakeRunnable);
 
@@ -158,8 +164,8 @@ describe('WorkflowsGridPage', () => {
       expect(getTemplate).toHaveBeenCalledTimes(1);
       expect(getTemplate).toHaveBeenCalledWith(42);
 
-      expect(loadFieldsetsData).toHaveBeenCalledTimes(1);
-      expect(loadFieldsetsData).toHaveBeenCalledWith(fakeTemplate.kickoff, fakeTemplate.id);
+      expect(mapTemplateFieldsetsToRuntime).toHaveBeenCalledTimes(1);
+      expect(mapTemplateFieldsetsToRuntime).toHaveBeenCalledWith(fakeTemplate);
 
       expect(loadDatasetsMap).toHaveBeenCalledTimes(1);
       expect(loadDatasetsMap).toHaveBeenCalledWith(fakeTemplate.kickoff, fakeFieldsets);
@@ -181,7 +187,7 @@ describe('WorkflowsGridPage', () => {
       clickRunButton();
 
       expect(baseProps.openSelectTemplateModal).toHaveBeenCalledTimes(1);
-      expect(loadFieldsetsData).not.toHaveBeenCalled();
+      expect(mapTemplateFieldsetsToRuntime).not.toHaveBeenCalled();
       expect(getTemplate).not.toHaveBeenCalled();
     });
 
@@ -199,7 +205,7 @@ describe('WorkflowsGridPage', () => {
       expect(baseProps.openSelectTemplateModal).toHaveBeenCalledWith(
         expect.objectContaining({ templatesIdsFilter: [1, 2] }),
       );
-      expect(loadFieldsetsData).not.toHaveBeenCalled();
+      expect(mapTemplateFieldsetsToRuntime).not.toHaveBeenCalled();
     });
 
     it('falls back to SelectTemplateModal when getTemplate returns null', async () => {
@@ -218,7 +224,7 @@ describe('WorkflowsGridPage', () => {
         expect(baseProps.openSelectTemplateModal).toHaveBeenCalledTimes(1);
       });
 
-      expect(loadFieldsetsData).not.toHaveBeenCalled();
+      expect(mapTemplateFieldsetsToRuntime).not.toHaveBeenCalled();
       expect(baseProps.openRunWorkflowModal).not.toHaveBeenCalled();
     });
   });

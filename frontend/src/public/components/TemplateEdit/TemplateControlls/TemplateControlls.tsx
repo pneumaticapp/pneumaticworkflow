@@ -22,7 +22,8 @@ import {
   TPatchTemplatePayload,
   discardTemplateChanges,
 } from '../../../redux/actions';
-import { getRunnableWorkflow, loadDatasetsMap, loadFieldsetsData } from '../utils/getRunnableWorkflow';
+import { getRunnableWorkflow, loadDatasetsMap } from '../utils/getRunnableWorkflow';
+import { mapFieldsetBindingClientToRuntime } from '../../../utils/mapFieldsetBindingClientToRuntime';
 import { ETemplateStatus } from '../../../types/redux';
 import { IRunWorkflow } from '../../WorkflowEditPopup/types';
 import { WarningPopup } from '../../UI/WarningPopup';
@@ -107,7 +108,7 @@ export function TemplateControlls({
 
   const handleRunProcess = async () => {
     if (!template.id) return;
-    const loadedFieldsets = await loadFieldsetsData(template.kickoff, template.id);
+    const loadedFieldsets = template.kickoff.fieldsets.map(mapFieldsetBindingClientToRuntime);
     const datasetsMap = await loadDatasetsMap(template.kickoff, loadedFieldsets);
     const runnableWorkflow = getRunnableWorkflow(template, datasetsMap, loadedFieldsets);
     if (runnableWorkflow) {

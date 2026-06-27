@@ -11,8 +11,7 @@ import { EPageTitle } from '../../../constants/defaultValues';
 import { SearchLargeIcon, StartRoundIcon } from '../../icons';
 import { getTemplate } from '../../../api/getTemplate';
 import { getRunnableWorkflow, loadDatasetsMap } from '../../TemplateEdit/utils/getRunnableWorkflow';
-import { mapFieldsetBindingsToClient } from '../../../utils/mapFieldsetBindingsToClient';
-import { mapFieldsetBindingClientToRuntime } from '../../../utils/mapFieldsetBindingClientToRuntime';
+import { mapTemplateFieldsetsToRuntime } from '../../../utils/mapTemplateFieldsetsToRuntime';
 import { logger } from '../../../utils/logger';
 import { NotificationManager } from '../../UI/Notifications';
 import { getErrorMessage } from '../../../utils/getErrorMessage';
@@ -94,11 +93,8 @@ export const WorkflowsGridPage = function Workflows({
 
         return;
       }
-      const clientFieldsets = mapFieldsetBindingsToClient(template.kickoff.fieldsets || []);
-      const normalizedKickoff = { ...template.kickoff, fieldsets: clientFieldsets };
-      const normalizedTemplate = { ...template, kickoff: normalizedKickoff };
-      const loadedFieldsets = clientFieldsets.map(mapFieldsetBindingClientToRuntime);
-      const datasetsMap = await loadDatasetsMap(normalizedKickoff, loadedFieldsets);
+      const { normalizedTemplate, loadedFieldsets } = mapTemplateFieldsetsToRuntime(template);
+      const datasetsMap = await loadDatasetsMap(normalizedTemplate.kickoff, loadedFieldsets);
 
       const runnableWorkflow = getRunnableWorkflow(normalizedTemplate, datasetsMap, loadedFieldsets);
       if (!runnableWorkflow) {

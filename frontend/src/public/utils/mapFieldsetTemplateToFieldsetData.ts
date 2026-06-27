@@ -1,24 +1,6 @@
-import { IFieldsetData, IExtraField, EExtraFieldType } from '../types/template';
-import { EFieldLabelPosition, IFieldsetField, IFieldsetCatalogItem } from '../types/fieldset';
-
-export function mapFieldsToExtraFields(fields: IFieldsetField[]): IExtraField[] {
-  return (fields || []).map(
-    (field, index) => ({
-      apiName: field.apiName || '',
-      name: field.name || '',
-      description: field.description || '',
-      type: field.type as EExtraFieldType || EExtraFieldType.String,
-      isRequired: field.isRequired ?? false,
-      isHidden: field.isHidden ?? false,
-      order: field.order ?? index,
-      value: field.default || '',
-      selections: field.selections || [],
-      dataset: field.dataset || null,
-      userId: null,
-      groupId: null,
-    }),
-  );
-}
+import { IFieldsetData } from '../types/template';
+import { EFieldLabelPosition, IFieldsetCatalogItem } from '../types/fieldset';
+import { mapFieldsToExtraFields } from './mapFieldsetBindingClientToRuntime';
 
 export function mapFieldsetTemplateToFieldsetData(
   fieldsetTemplate: IFieldsetCatalogItem,

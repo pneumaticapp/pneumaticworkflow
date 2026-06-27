@@ -1,6 +1,27 @@
-import { IFieldsetBindingClient, EFieldLabelPosition } from '../types/fieldset';
-import { IFieldsetData } from '../types/template';
-import { mapFieldsToExtraFields } from './mapFieldsetTemplateToFieldsetData';
+import { IFieldsetBindingClient, EFieldLabelPosition, IFieldsetField } from '../types/fieldset';
+import { IFieldsetData, IExtraField, EExtraFieldType } from '../types/template';
+
+export function mapFieldsToExtraFields(fields: IFieldsetField[]): IExtraField[] {
+  return (fields || []).map(
+    ({
+      apiName, name, description, type, isRequired, isHidden,
+      order, default: defaultValue, selections, dataset,
+    }, index) => ({
+      apiName: apiName || '',
+      name: name || '',
+      description: description || '',
+      type: type as EExtraFieldType || EExtraFieldType.String,
+      isRequired: isRequired ?? false,
+      isHidden: isHidden ?? false,
+      order: order ?? index,
+      value: defaultValue || '',
+      selections: selections || [],
+      dataset: dataset || null,
+      userId: null,
+      groupId: null,
+    }),
+  );
+}
 
 
 export function mapFieldsetBindingClientToRuntime({

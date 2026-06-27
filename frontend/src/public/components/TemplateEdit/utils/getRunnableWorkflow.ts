@@ -1,11 +1,11 @@
 /* eslint-disable */
 /* prettier-ignore */
-import { ITemplateClient, ITemplateTaskClient, IKickoffClient, IFieldsetData, IExtraField, IFieldsetBindingClient } from '../../../types/template';
+import { ITemplateClient, ITemplateTaskClient, IKickoffClient, IFieldsetData, IExtraField } from '../../../types/template';
 import { setPerformersCounts } from '../../../utils/template';
 import { IRunWorkflow } from '../../WorkflowEditPopup/types';
 import { normalizeSelections } from './normalizeSelections';
 
-type TTemplateToRunWorkflow = Pick<
+export type TTemplateToRunWorkflow = Pick<
   ITemplateClient,
   'id' | 'name' | 'kickoff' | 'description' | 'isActive' | 'wfNameTemplate'
 > & {
@@ -13,8 +13,6 @@ type TTemplateToRunWorkflow = Pick<
 };
 
 import { getDataset } from '../../../api/datasets/getDataset';
-import { getFieldsets } from '../../../api/fieldsets/getFieldsets';
-import { mapFieldsetTemplateToFieldsetData } from '../../../utils/mapFieldsetTemplateToFieldsetData';
 
 function getKickoffDatasetIds(kickoff: IKickoffClient, fieldsets: IFieldsetData[] = []): number[] {
   const ids = new Set<number>();
@@ -45,25 +43,6 @@ export async function loadDatasetsMap(kickoff: IKickoffClient, fieldsets: IField
   });
 
   return datasetsMap;
-}
-
-export async function loadFieldsetsData(kickoff: IKickoffClient, templateId: number): Promise<IFieldsetData[]> {
-  const TemplateKickoffFieldsets: IFieldsetBindingClient[] = kickoff.fieldsets || [];
-  if (TemplateKickoffFieldsets.length === 0) {
-    return [];
-  }
-
-    const selectedApiNames = new Set(TemplateKickoffFieldsets.map((fieldset) => fieldset.apiName));
-
-    const response = await getFieldsets({ limit: 1000 });
-
-    const catalogFieldsets = response.results.filter((fieldset) => selectedApiNames.has(fieldset.apiName));
-
-  return catalogFieldsets.map((fieldset) => {
-    const fieldsetData = mapFieldsetTemplateToFieldsetData(fieldset);
-    const TemplateFieldsetOrder = TemplateKickoffFieldsets.find((kickoffFieldset) => kickoffFieldset.apiName === fieldsetData.apiName)?.order;
-    return { ...fieldsetData, order: TemplateFieldsetOrder ?? 0 };
-  });
 }
 
 

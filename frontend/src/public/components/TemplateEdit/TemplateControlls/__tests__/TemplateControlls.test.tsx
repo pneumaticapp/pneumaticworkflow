@@ -12,8 +12,8 @@ import { RouteLeavingGuard } from '../../../UI';
 import {
   getRunnableWorkflow,
   loadDatasetsMap,
-  loadFieldsetsData,
 } from '../../utils/getRunnableWorkflow';
+import { mapFieldsetBindingClientToRuntime } from '../../../../utils/mapFieldsetBindingClientToRuntime';
 import { discardTemplateChanges } from '../../../../redux/actions';
 import { getTemplate } from '../../../../__stubs__/templates';
 
@@ -102,7 +102,10 @@ jest.mock('../../../Templates', () => ({
 jest.mock('../../utils/getRunnableWorkflow', () => ({
   getRunnableWorkflow: jest.fn(),
   loadDatasetsMap: jest.fn(),
-  loadFieldsetsData: jest.fn(),
+}));
+
+jest.mock('../../../../utils/mapFieldsetBindingClientToRuntime', () => ({
+  mapFieldsetBindingClientToRuntime: jest.fn(),
 }));
 
 jest.mock('../../utils/validateTemplate', () => ({
@@ -137,14 +140,12 @@ describe('TemplateControlls — fieldset logic', () => {
   });
 
 
-  it('clicking Run on an active saved template runs the chain loadFieldsets → loadDatasets → getRunnable → openModal', async () => {
+  it('clicking Run on an active saved template runs the chain mapFieldsets → loadDatasets → getRunnable → openModal', async () => {
     const openRunWorkflowModal = jest.fn();
-    const loadedFieldsets = [{ apiName: 'fs-1' }];
-    const datasetsMap = { ds1: ['v1'] };
     const runnableWorkflow = { kickoff: {}, tasks: [] };
 
-    (loadFieldsetsData as jest.Mock).mockResolvedValue(loadedFieldsets);
-    (loadDatasetsMap as jest.Mock).mockResolvedValue(datasetsMap);
+    (mapFieldsetBindingClientToRuntime as jest.Mock).mockReturnValue({ apiName: 'fs-1', apiNameBinding: 'fs-1', fields: [] });
+    (loadDatasetsMap as jest.Mock).mockResolvedValue({});
     (getRunnableWorkflow as jest.Mock).mockReturnValue(runnableWorkflow);
 
     const template = getTemplate('5');
@@ -161,15 +162,19 @@ describe('TemplateControlls — fieldset logic', () => {
 
     await waitFor(() => expect(openRunWorkflowModal).toHaveBeenCalledTimes(1));
 
-    expect(loadFieldsetsData).toHaveBeenCalledTimes(1);
-    expect(loadFieldsetsData).toHaveBeenCalledWith(template.kickoff, 5);
 
     expect(loadDatasetsMap).toHaveBeenCalledTimes(1);
-    expect(loadDatasetsMap).toHaveBeenCalledWith(template.kickoff, loadedFieldsets);
+    expect(loadDatasetsMap).toHaveBeenCalledWith(
+      template.kickoff,
+      [{ apiName: 'fs-1', apiNameBinding: 'fs-1', fields: [] }],
+    );
 
     expect(getRunnableWorkflow).toHaveBeenCalledTimes(1);
-    expect(getRunnableWorkflow).toHaveBeenCalledWith(template, datasetsMap, loadedFieldsets);
-
+    expect(getRunnableWorkflow).toHaveBeenCalledWith(
+      template,
+      {},
+      [{ apiName: 'fs-1', apiNameBinding: 'fs-1', fields: [] }],
+    );
     expect(openRunWorkflowModal).toHaveBeenCalledWith(runnableWorkflow);
   });
 

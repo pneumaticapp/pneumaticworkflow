@@ -42,8 +42,9 @@ import { isArrayWithItems } from '../../utils/helpers';
 import { getTemplate } from '../../api/getTemplate';
 
 import { openRunWorkflowModal } from '../runWorkflowModal/actions';
-import { getRunnableWorkflow, loadDatasetsMap, loadFieldsetsData } from '../../components/TemplateEdit/utils/getRunnableWorkflow';
+import { getRunnableWorkflow, loadDatasetsMap } from '../../components/TemplateEdit/utils/getRunnableWorkflow';
 import { ITemplateResponse, IExtraField, IFieldsetData, IKickoffClient } from '../../types/template';
+import { mapTemplateFieldsetsToRuntime } from '../../utils/mapTemplateFieldsetsToRuntime';
 import { mapFieldsetTemplateToFieldsetData } from '../../utils/mapFieldsetTemplateToFieldsetData';
 import { getGettingStartedChecklist } from '../../api/getGettingStartedChecklist';
 import { IGettingStartedChecklist } from '../../types/dashboard';
@@ -142,10 +143,12 @@ export function* openRunWorflowSaga({ payload: { templateId, ancestorTaskId } }:
     yield put(setGeneralLoaderVisibility(true));
     const resData: ITemplateResponse = yield getTemplate(templateId);
 
-    const loadedFieldsets: any[] = yield call(loadFieldsetsData, resData.kickoff, resData.id);
-    const datasetsMap: Record<number, string[]> = yield call(loadDatasetsMap, resData.kickoff, loadedFieldsets);
+    const { normalizedTemplate, loadedFieldsets } = mapTemplateFieldsetsToRuntime(resData);
+    const datasetsMap: Record<number, string[]> = yield call(
+      loadDatasetsMap, normalizedTemplate.kickoff, loadedFieldsets,
+    );
 
-    const templateData = getRunnableWorkflow(resData, datasetsMap, loadedFieldsets);
+    const templateData = getRunnableWorkflow(normalizedTemplate, datasetsMap, loadedFieldsets);
 
     if (templateData) {
       yield put(openRunWorkflowModal({ ...templateData, ancestorTaskId }));

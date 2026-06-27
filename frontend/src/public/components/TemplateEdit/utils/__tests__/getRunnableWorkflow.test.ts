@@ -1,35 +1,19 @@
-import { ETaskPerformerType, EExtraFieldType, ITemplateResponse, ETemplateOwnerType, ETemplateOwnerRole, IKickoffClient, IFieldsetData } from '../../../../types/template';
+import { ETaskPerformerType, EExtraFieldType, IKickoffClient, IFieldsetData } from '../../../../types/template';
 import { makeExtraField } from '../../../../__stubs__/fields.factory';
-import { makeFieldsetData, makeFieldsetBindingClient } from '../../../../__stubs__/fieldsets.factory';
-import { getRunnableWorkflow, loadFieldsetsData, loadDatasetsMap } from '../getRunnableWorkflow';
-import { getFieldsets } from '../../../../api/fieldsets/getFieldsets';
+import { makeFieldsetData } from '../../../../__stubs__/fieldsets.factory';
+import { getRunnableWorkflow, loadDatasetsMap, TTemplateToRunWorkflow } from '../getRunnableWorkflow';
 import { getDataset } from '../../../../api/datasets/getDataset';
-
-jest.mock('../../../../api/fieldsets/getFieldsets', () => ({
-  getFieldsets: jest.fn(),
-}));
 
 jest.mock('../../../../api/datasets/getDataset', () => ({
   getDataset: jest.fn(),
 }));
 
-const templateResponseMock: ITemplateResponse = {
+const templateResponseMock: TTemplateToRunWorkflow = {
   id: 4654,
   name: 'End Template',
   description: '12346789',
   tasks: [
     {
-      id: 14702,
-      name: 'First Step',
-      number: 1,
-      description: '12',
-      requireCompletionByAll: false,
-      skipForStarter: false,
-      delay: null,
-      rawDueDate: null,
-      fields: [],
-      conditions: [],
-      apiName: 'task-059819',
       rawPerformers: [
         {
           sourceId: '306',
@@ -44,35 +28,8 @@ const templateResponseMock: ITemplateResponse = {
           apiName: 'raw-performer-024t43',
         },
       ],
-      checklists: [],
-      revertTask: null,
-      ancestors: [],
-      fieldsets: [],
     },
     {
-      id: 14703,
-      name: 'New Step 2',
-      number: 2,
-      description: '1233',
-      requireCompletionByAll: false,
-      skipForStarter: false,
-      delay: null,
-      rawDueDate: null,
-      fields: [
-        {
-          id: 21478,
-          type: EExtraFieldType.String,
-          name: '12 21 12 12 12222222222',
-          description: '',
-          isRequired: false,
-          order: 0,
-          apiName: 'field-27fb3d',
-          userId: null,
-          groupId: null,
-        },
-      ],
-      conditions: [],
-      apiName: 'task-4e99a7',
       rawPerformers: [
         {
           sourceId: '306',
@@ -81,23 +38,8 @@ const templateResponseMock: ITemplateResponse = {
           apiName: 'raw-performer-024t43',
         },
       ],
-      checklists: [],
-      revertTask: null,
-      ancestors: ['task-059819'],
-      fieldsets: [],
     },
     {
-      id: 14707,
-      name: 'New Step 3',
-      number: 3,
-      description: '',
-      requireCompletionByAll: false,
-      skipForStarter: false,
-      delay: null,
-      rawDueDate: null,
-      fields: [],
-      conditions: [],
-      apiName: 'task-a889d4',
       rawPerformers: [
         {
           sourceId: '306',
@@ -106,23 +48,8 @@ const templateResponseMock: ITemplateResponse = {
           apiName: 'raw-performer-024t43',
         },
       ],
-      checklists: [],
-      revertTask: null,
-      ancestors: ['task-059819', 'task-4e99a7'],
-      fieldsets: [],
     },
     {
-      id: 14708,
-      name: 'New Step 4',
-      number: 4,
-      description: '',
-      requireCompletionByAll: false,
-      skipForStarter: false,
-      delay: null,
-      rawDueDate: null,
-      fields: [],
-      conditions: [],
-      apiName: 'task-1e9ba6',
       rawPerformers: [
         {
           sourceId: '306',
@@ -131,24 +58,8 @@ const templateResponseMock: ITemplateResponse = {
           apiName: 'raw-performer-024t43',
         },
       ],
-      checklists: [],
-      revertTask: null,
-      ancestors: ['task-059819', 'task-4e99a7', 'task-a889d4'],
-      fieldsets: [],
     },
     {
-      id: 14709,
-      name: 'New Step 5',
-      number: 5,
-      description: '',
-      requireCompletionByAll: false,
-      skipForStarter: false,
-      delay: null,
-      dueIn: null,
-      rawDueDate: null,
-      fields: [],
-      conditions: [],
-      apiName: 'task-05a887',
       rawPerformers: [
         {
           sourceId: '306',
@@ -157,10 +68,6 @@ const templateResponseMock: ITemplateResponse = {
           apiName: 'raw-performer-024t43',
         },
       ],
-      checklists: [],
-      revertTask: null,
-      ancestors: ['task-059819', 'task-4e99a7', 'task-a889d4', 'task-1e9ba6'],
-      fieldsets: [],
     },
   ],
   kickoff: {
@@ -168,31 +75,7 @@ const templateResponseMock: ITemplateResponse = {
     fields: [],
     fieldsets: [],
   },
-  owners: [
-    {
-      sourceId: '306',
-      type: ETemplateOwnerType.User,
-      apiName: 'owner-024t43',
-      role: ETemplateOwnerRole.Owner,
-    },
-    {
-      sourceId: '1896',
-      type: ETemplateOwnerType.User,
-      apiName: 'owner-024t12',
-      role: ETemplateOwnerRole.Owner,
-    },
-  ],
   isActive: true,
-  isPublic: false,
-  publicUrl: null,
-  publicSuccessUrl: null,
-  embedUrl: null,
-  isEmbedded: false,
-  finalizable: true,
-  completionNotification: false,
-  reminderNotification: false,
-  updatedBy: 306,
-  dateUpdated: '2021-10-13T14:24:43.980066Z',
   wfNameTemplate: null,
 };
 
@@ -314,40 +197,6 @@ describe('getRunnableWorkflow.', () => {
     ).toBeNull();
   });
 
-  it('loadFieldsetsData returns [] and does not call getFieldsets when kickoff.fieldsets is empty', async () => {
-    const kickoff: IKickoffClient = { description: '', fields: [], fieldsets: [] };
-
-    const result = await loadFieldsetsData(kickoff, 42);
-
-    expect(result).toEqual([]);
-    expect(getFieldsets).not.toHaveBeenCalled();
-  });
-
-  it('loadFieldsetsData filters catalog by selected apiNames and inherits order from kickoff', async () => {
-    const kickoff: IKickoffClient = {
-      description: '',
-      fields: [],
-      fieldsets: [
-        makeFieldsetBindingClient({ apiNameBinding: 'fs-a', order: 5 }),
-        makeFieldsetBindingClient({ apiNameBinding: 'fs-b', order: 10 }),
-      ],
-    };
-    (getFieldsets as jest.Mock).mockResolvedValue({
-      results: [
-        { id: 1, apiName: 'fs-a', name: 'A', fields: [], order: 0 },
-        { id: 2, apiName: 'fs-b', name: 'B', fields: [], order: 0 },
-        { id: 3, apiName: 'fs-c', name: 'C', fields: [], order: 0 },
-      ],
-    });
-
-    const result = await loadFieldsetsData(kickoff, 42);
-
-    expect(result.length).toBe(2);
-    const byApiName = Object.fromEntries(result.map((fs) => [fs.apiName, fs.order]));
-    expect(byApiName['fs-a']).toBe(5);
-    expect(byApiName['fs-b']).toBe(10);
-    expect(result.find((fs) => fs.apiName === 'fs-c')).toBeUndefined();
-  });
 
   it('loadDatasetsMap returns {} and does not call getDataset when there are no dataset ids', async () => {
     const kickoff: IKickoffClient = { description: '', fields: [], fieldsets: [] };
