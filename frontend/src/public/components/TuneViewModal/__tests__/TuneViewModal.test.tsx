@@ -93,12 +93,12 @@ const makeField = (overrides: Partial<IExtraField> = {}) => makeExtraField({
 });
 
 const makeFieldsetOutput = (
-  apiName: string,
+  apiNameBinding: string,
   name: string,
   fields: IExtraField[],
 ): TRuntimeMergedOutputPart => ({
   kind: 'fieldset' as const,
-  data: { apiName, name, description: '', fields, order: 0, labelPosition: EFieldLabelPosition.Top },
+  data: { apiNameBinding, name, description: '', fields, order: 0, labelPosition: EFieldLabelPosition.Top },
 });
 
 const makeFieldOutput = (field: IExtraField): TRuntimeMergedOutputPart => ({

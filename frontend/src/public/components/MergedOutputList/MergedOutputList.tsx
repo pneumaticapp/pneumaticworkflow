@@ -44,7 +44,7 @@ export function MergedOutputList({
         }
         if (mergedOutput.kind === 'fieldset') {
           const {
-            apiName: fieldsetApiName,
+            apiNameBinding: fieldsetApiName,
             name: fieldsetName,
             description: fieldsetDescription,
             fields: fieldsetFields,

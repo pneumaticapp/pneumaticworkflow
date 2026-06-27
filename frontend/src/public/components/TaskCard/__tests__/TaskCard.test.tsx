@@ -410,7 +410,7 @@ describe('TaskCard', () => {
     });
     const serverFs2: IFieldsetData = makeFieldsetData({
       sharedFieldsetId: 2,
-      apiName: 'fs-2',
+      apiNameBinding: 'fs-2',
       name: 'FS-2',
       order: 2,
       fields: [makeExtraField({ apiName: 'phone', value: 'server-phone' })],
@@ -439,7 +439,7 @@ describe('TaskCard', () => {
 
     const strangerFs: IFieldsetData = makeFieldsetData({
       sharedFieldsetId: 999,
-      apiName: 'fs-stranger',
+      apiNameBinding: 'fs-stranger',
       name: 'Stranger',
       fields: [makeExtraField({ apiName: 'wrong', value: 'wrong' })],
     });
@@ -463,9 +463,9 @@ describe('TaskCard', () => {
     ];
     const passedFieldsets: IFieldsetData[] = lastCall[0].fieldsets;
     expect(passedFieldsets).toHaveLength(1);
-    expect(passedFieldsets[0].apiName).toBe('fs-1');
+    expect(passedFieldsets[0].apiNameBinding).toBe('fs-1');
     expect(
-      passedFieldsets.find((fs) => fs.apiName === 'fs-stranger'),
+      passedFieldsets.find((fs) => fs.apiNameBinding === 'fs-stranger'),
     ).toBeUndefined();
   });
 
@@ -476,7 +476,7 @@ describe('TaskCard', () => {
       if (id === 100) {
         return [
           makeFieldsetData({
-            apiName: 'fs',
+            apiNameBinding: 'fs',
             name: 'FS',
             fields: [makeExtraField({ apiName: 'k', value: 'draft-A' })],
           }),
@@ -485,7 +485,7 @@ describe('TaskCard', () => {
       if (id === 200) {
         return [
           makeFieldsetData({
-            apiName: 'fs',
+            apiNameBinding: 'fs',
             name: 'FS',
             fields: [makeExtraField({ apiName: 'k', value: 'draft-B' })],
           }),
@@ -495,7 +495,7 @@ describe('TaskCard', () => {
     });
 
     const serverFs = (value: string): IFieldsetData => makeFieldsetData({
-      apiName: 'fs',
+      apiNameBinding: 'fs',
       name: 'FS',
       fields: [makeExtraField({ apiName: 'k', value })],
     });
@@ -531,7 +531,7 @@ describe('TaskCard', () => {
       }),
       makeFieldsetData({
         sharedFieldsetId: 2,
-        apiName: 'fs-2',
+        apiNameBinding: 'fs-2',
         name: 'FS-2',
         order: 3,
         fields: [makeExtraField({ apiName: 'c' })],
@@ -644,7 +644,7 @@ describe('TaskCard', () => {
     expect(lastSaveArgs[0]).toBe(42);
     const savedFieldsets: IFieldsetData[] = lastSaveArgs[1];
     expect(savedFieldsets).toHaveLength(1);
-    expect(savedFieldsets[0].apiName).toBe('fs-1');
+    expect(savedFieldsets[0].apiNameBinding).toBe('fs-1');
     expect(savedFieldsets[0].fields[0].value).toBe('new@x.com');
 
     jest.useRealTimers();

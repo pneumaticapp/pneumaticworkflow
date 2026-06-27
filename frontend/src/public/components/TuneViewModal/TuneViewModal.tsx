@@ -210,7 +210,7 @@ export function TuneViewModal() {
                   {mergedOutputs.map((output) => {
                     if (output.kind === 'fieldset') {
                       return (
-                        <div key={output.data.apiName} className={STYLES.fieldsetGroup}>
+                        <div key={output.data.apiNameBinding} className={STYLES.fieldsetGroup}>
                           <div className={STYLES.fieldsetTitle}>{output.data.name}</div>
                           {output.data.fields.map(renderFieldCheckbox)}
                         </div>

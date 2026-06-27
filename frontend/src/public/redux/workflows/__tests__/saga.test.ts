@@ -159,8 +159,8 @@ describe('cloneWorkflowSaga — fieldsets loading on clone', () => {
     status: 'running',
   };
 
-  const mockLoadedFieldsets: Pick<IFieldsetData, 'apiName' | 'apiNameBinding' | 'name' | 'fields' | 'order'>[] = [
-    { apiName: 'fs-1', apiNameBinding: 'fs-1', name: 'Fieldset 1', fields: [], order: 0 },
+  const mockLoadedFieldsets: Pick<IFieldsetData, 'apiNameBinding' | 'name' | 'fields' | 'order'>[] = [
+    { apiNameBinding: 'fs-1', name: 'Fieldset 1', fields: [], order: 0 },
   ];
 
   const mockDatasetsMap: Record<number, string[]> = {};

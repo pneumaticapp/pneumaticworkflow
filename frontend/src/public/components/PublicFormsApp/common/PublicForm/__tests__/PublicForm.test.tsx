@@ -262,13 +262,13 @@ describe('PublicForm', () => {
           fieldsets: [
             makeFieldsetData({
               sharedFieldsetId: 1,
-              apiName: 'fs-ok',
+              apiNameBinding: 'fs-ok',
               fields: [makeExtraField({ apiName: 'ok-field', isRequired: true, value: 'filled', order: 1 })],
               order: 1,
             }),
             makeFieldsetData({
               sharedFieldsetId: 2,
-              apiName: 'fs-bad',
+              apiNameBinding: 'fs-bad',
               fields: [makeExtraField({ apiName: 'bad-field', isRequired: true, value: '', order: 1 })],
               order: 2,
             }),

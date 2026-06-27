@@ -75,7 +75,7 @@ export interface ITaskFieldset {
   order: number;
 }
 
-export type TTemplateFieldFieldset = Pick<IFieldsetData, 'name' | 'description' | 'apiName' | 'fields' | 'order' | 'labelPosition'>;
+export type TTemplateFieldFieldset = Pick<IFieldsetData, 'name' | 'description' | 'apiNameBinding' | 'fields' | 'order' | 'labelPosition'>;
 
 export interface ITemplateTask {
   id?: number;
@@ -217,7 +217,6 @@ export type TConditionRulePredicateResponse = {
 
 /** Fieldset instance from runtime API response (kickoff / task) */
 export interface IFieldsetData {
-  apiName: string;
   name: string;
   description: string;
   fields: IExtraField[];
@@ -225,7 +224,7 @@ export interface IFieldsetData {
   labelPosition: EFieldLabelPosition;
   rulesCount?: number;
   sharedFieldsetId: number;
-  apiNameBinding?: string;
+  apiNameBinding: string;
   layout?: TFieldSetLayout;
   title?: string;
   rules?: IFieldsetTemplateRule[];

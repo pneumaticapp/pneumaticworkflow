@@ -164,9 +164,9 @@ export function TaskCard({
     setOutputValues(outputFieldsWithValues);
 
     const storageFieldsets = fieldsetsStorage.get(id);
-    const storageFieldsetsMap = new Map(storageFieldsets?.map((fieldset) => [fieldset.apiName, fieldset]) || []);
+    const storageFieldsetsMap = new Map(storageFieldsets?.map((fieldset) => [fieldset.apiNameBinding, fieldset]) || []);
     const mergedFieldsets = (fieldsets || []).map((fieldset) => {
-      return storageFieldsetsMap.get(fieldset.apiName) || fieldset;
+      return storageFieldsetsMap.get(fieldset.apiNameBinding) || fieldset;
     });
     setFieldsetOutputValues(mergedFieldsets);
   }, [task.id]);

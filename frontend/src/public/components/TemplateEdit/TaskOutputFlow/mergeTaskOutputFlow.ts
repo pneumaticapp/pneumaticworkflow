@@ -88,7 +88,7 @@ export function buildRuntimeMergedOutputParts(
       return delta;
     }
     if (a.kind === 'fieldset' && b.kind === 'fieldset') {
-      return b.data.apiName.localeCompare(a.data.apiName);
+      return b.data.apiNameBinding.localeCompare(a.data.apiNameBinding);
     }
     if (a.kind === 'field' && b.kind === 'field') {
       return b.field.apiName.localeCompare(a.field.apiName);

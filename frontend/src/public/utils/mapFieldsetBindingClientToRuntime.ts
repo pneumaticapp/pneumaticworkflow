@@ -41,7 +41,6 @@ export function mapFieldsetBindingClientToRuntime({
 
   return {
     sharedFieldsetId,
-    apiName: apiNameBinding,
     apiNameBinding,
     name: name || '',
     description: description || '',

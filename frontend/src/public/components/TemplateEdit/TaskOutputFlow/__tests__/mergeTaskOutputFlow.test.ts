@@ -23,7 +23,7 @@ const field = (apiName: string, order: number) =>
   makeExtraField({ apiName, name: apiName, order });
 
 const fs = (id: number, order: number) =>
-  makeFieldsetData({ sharedFieldsetId: id, apiName: `fs-${id}`, name: `FS ${id}`, order });
+  makeFieldsetData({ sharedFieldsetId: id, apiNameBinding: `fs-${id}`, name: `FS ${id}`, order });
 
 describe('mergeTaskOutputFlow', () => {
   it('buildMergedTaskOutputRows sorts by order descending with stable tie-break', () => {
@@ -71,7 +71,7 @@ describe('mergeTaskOutputFlow', () => {
       [field('x', 1), field('y', 3)],
       [fs(9, 2)],
     );
-    expect(parts.map((output) => (output.kind === 'fieldset' ? output.data.apiName : output.field.apiName))).toEqual(['y', 'fs-9', 'x']);
+    expect(parts.map((output) => (output.kind === 'fieldset' ? output.data.apiNameBinding : output.field.apiName))).toEqual(['y', 'fs-9', 'x']);
   });
 
   it('buildRuntimeMergedOutputParts returns only fields when fieldsets is undefined', () => {

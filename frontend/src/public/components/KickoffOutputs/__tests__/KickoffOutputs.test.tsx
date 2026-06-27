@@ -61,12 +61,12 @@ describe('KickoffOutputs', () => {
     const fieldA = makeExtraField({ apiName: 'fa', order: 1, value: 'av' });
     const fieldB = makeExtraField({ apiName: 'fb', order: 4, value: 'bv' });
     const fsM = makeFieldsetData({
-      apiName: 'fs-m',
+      apiNameBinding: 'fs-m',
       order: 3,
       fields: [makeExtraField({ apiName: 'fs-m-1', value: 'mv' })],
     });
     const fsN = makeFieldsetData({
-      apiName: 'fs-n',
+      apiNameBinding: 'fs-n',
       order: 2,
       fields: [makeExtraField({ apiName: 'fs-n-1', value: 'nv' })],
     });

@@ -1,6 +1,7 @@
 import { IWorkflowDetailsKickoff } from '../../../../../../types/workflow';
 import { EExtraFieldType, IKickoffClient } from '../../../../../../types/template';
-import { EFieldLabelPosition } from '../../../../../../types/fieldset';
+import { makeFieldsetData } from '../../../../../../__stubs__/fieldsets.factory';
+import { makeExtraField } from '../../../../../../__stubs__/fields.factory';
 import { getClonedKickoff } from '../getClonedKickoff';
 
 const mockWorkflowDetailKickoff: IWorkflowDetailsKickoff = {
@@ -323,25 +324,12 @@ describe('getClonedKickoff.', () => {
         description: '',
         output: [],
         fieldsets: [
-          {
+          makeFieldsetData({
             sharedFieldsetId: 10,
-            apiName: 'fs-1',
+            apiNameBinding: 'fs-1',
             name: 'Fieldset 1',
-            description: '',
-            order: 0,
-            labelPosition: EFieldLabelPosition.Top,
-            fields: [
-              {
-                apiName: 'fs-field-1',
-                name: 'FS Field',
-                type: EExtraFieldType.String,
-                value: 'data',
-                order: 0,
-                userId: null,
-                groupId: null,
-              },
-            ],
-          },
+            fields: [makeExtraField({ apiName: 'fs-field-1', name: 'FS Field', value: 'data' })],
+          }),
         ],
       };
 

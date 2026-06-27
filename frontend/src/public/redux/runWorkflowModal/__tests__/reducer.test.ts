@@ -3,8 +3,8 @@
 import { reducer, INIT_STATE } from '../reducer';
 import { openRunWorkflowModal } from '../actions';
 import { IKickoffClient, EExtraFieldType } from '../../../types/template';
-import { EFieldLabelPosition } from '../../../types/fieldset';
-import { makeFieldsetBindingClient } from '../../../__stubs__/fieldsets.factory';
+import { makeFieldsetBindingClient, makeFieldsetData } from '../../../__stubs__/fieldsets.factory';
+import { makeExtraField } from '../../../__stubs__/fields.factory';
 
 describe('runWorkflowModal reducer', () => {
   it('openRunWorkflowModal open modal window', () => {
@@ -154,28 +154,12 @@ describe('OpenModal — fieldsets acceptance', () => {
   });
 
   it('preserves kickoff.fieldsets and loadedFieldsets without data loss', () => {
-    const mockFieldsetData = {
-      sharedFieldsetId: 1,
-      apiName: 'fs-contacts',
+    const mockFieldsetData = makeFieldsetData({
+      apiNameBinding: 'fs-contacts',
       name: 'Contacts',
       description: 'Contact information',
-      order: 0,
-      labelPosition: EFieldLabelPosition.Top,
-      fields: [
-        {
-          apiName: 'contact-name',
-          name: 'Contact Name',
-          type: EExtraFieldType.String,
-          isRequired: true,
-          isHidden: false,
-          order: 0,
-          value: '',
-          selections: [],
-          userId: null,
-          groupId: null,
-        },
-      ],
-    };
+      fields: [makeExtraField({ apiName: 'contact-name', name: 'Contact Name', isRequired: true, value: '' })],
+    });
 
     const action = openRunWorkflowModal({
       id: 10,

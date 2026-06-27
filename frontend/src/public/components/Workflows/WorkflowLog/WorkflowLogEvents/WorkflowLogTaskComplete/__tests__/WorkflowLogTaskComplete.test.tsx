@@ -96,7 +96,7 @@ describe('WorkflowLogTaskComplete', () => {
       expect(koMock).toHaveBeenCalledTimes(1);
       const lastCallProps = koMock.mock.calls[koMock.mock.calls.length - 1][0];
       expect(lastCallProps.fieldsets).toHaveLength(1);
-      expect(lastCallProps.fieldsets[0].apiName).toBe('fs-1');
+      expect(lastCallProps.fieldsets[0].apiNameBinding).toBe('fs-1');
     });
 
     it('does not render KickoffOutputs when both output and fieldsets are empty', () => {
@@ -120,7 +120,7 @@ describe('WorkflowLogTaskComplete', () => {
       const outputField = makeField({ apiName: 'out-1', value: 'output-val' });
       const task = makeTask({
         output: [outputField],
-        fieldsets: [makeFieldset({ apiName: 'fs-data' })],
+        fieldsets: [makeFieldset({ apiNameBinding: 'fs-data' })],
       });
 
       renderWithIntl(
@@ -138,7 +138,7 @@ describe('WorkflowLogTaskComplete', () => {
         expect.objectContaining({ apiName: 'out-1' }),
       ]));
       expect(lastCallProps.fieldsets).toEqual(expect.arrayContaining([
-        expect.objectContaining({ apiName: 'fs-data' }),
+        expect.objectContaining({ apiNameBinding: 'fs-data' }),
       ]));
       expect(lastCallProps.viewMode).toBe('Short');
     });

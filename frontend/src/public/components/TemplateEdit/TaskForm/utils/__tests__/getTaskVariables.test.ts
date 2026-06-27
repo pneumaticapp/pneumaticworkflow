@@ -88,7 +88,7 @@ const mockTask2: ITemplateTaskClient = {
 
 const mockFieldsetData: IFieldsetData = makeFieldsetData({
   sharedFieldsetId: 99,
-  apiName: 'fs-99',
+  apiNameBinding: 'fs-99',
   name: 'Extra Set',
   fields: [
     makeExtraField({
@@ -171,7 +171,7 @@ describe('getTaskVariables', () => {
     const taskWithFieldset: ITemplateTaskClient = {
       ...mockTask1,
       fieldsets: [makeFieldsetBindingClient({
-        apiNameBinding: mockFieldsetData.apiName,
+        apiNameBinding: mockFieldsetData.apiNameBinding,
         name: mockFieldsetData.name,
         fields: mockBindingFields,
       })],
@@ -226,7 +226,7 @@ describe('getKickoffVariables with fieldsets', () => {
     const kickoff: IKickoffClient = {
       ...mockKikoff,
       fieldsets: [makeFieldsetBindingClient({
-        apiNameBinding: mockFieldsetData.apiName,
+        apiNameBinding: mockFieldsetData.apiNameBinding,
         name: mockFieldsetData.name,
         fields: mockBindingFields,
       })],
@@ -247,7 +247,7 @@ describe('getKickoffVariables with fieldsets', () => {
       fieldsets: [
         makeFieldsetBindingClient({ apiNameBinding: 'missing-fs' }),
         makeFieldsetBindingClient({
-          apiNameBinding: mockFieldsetData.apiName,
+          apiNameBinding: mockFieldsetData.apiNameBinding,
           name: mockFieldsetData.name,
           fields: mockBindingFields,
           order: 1,
