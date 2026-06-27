@@ -167,7 +167,6 @@ export function KickoffRedux({
           ))}
           <FieldsetIconPicker
             templateId={templateId}
-            fieldsetsByApiName={fieldsetsByApiName}
             fieldsetsCatalogLoading={fieldsetsCatalogLoading}
             selectedFieldsetIds={(kickoff.fieldsets || []).map((fieldset) => fieldset.sharedFieldsetId)}
             onSelectFieldset={handleAddKickoffFieldset}

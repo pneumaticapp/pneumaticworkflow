@@ -4,7 +4,6 @@ import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
 import classNames from 'classnames';
 
-import { IFieldsetData } from '../../../types/template';
 import { IFieldsetCatalogItem } from '../../../types/fieldset';
 import { getFieldsetsCatalogItems } from '../../../redux/selectors/fieldsets';
 import { CustomTooltip } from '../../UI/CustomTooltip';
@@ -21,11 +20,11 @@ interface IFieldsetCatalogPickerRow {
   name: string;
   fieldsCount: number;
   rulesCount: number;
+  order: number;
 }
 
 export interface IFieldsetIconPickerProps {
   templateId: number | undefined;
-  fieldsetsByApiName: ReadonlyMap<string, IFieldsetData>;
   fieldsetsCatalogLoading: boolean;
   selectedFieldsetIds: number[];
   onSelectFieldset: (fieldsetCatalogItem: IFieldsetCatalogItem) => void;
@@ -34,19 +33,18 @@ export interface IFieldsetIconPickerProps {
 
 const isReadyTemplateId = (id: number | undefined): id is number => typeof id === 'number';
 
-const buildCatalogPickerRows = (map: ReadonlyMap<string, IFieldsetData>): IFieldsetCatalogPickerRow[] => {
-  const rows = Array.from(map.values()).map<IFieldsetCatalogPickerRow>((d) => ({
-    id: d.id,
-    apiName: d.apiName,
-    name: d.name,
-    fieldsCount: d.fields.length,
-    rulesCount: d.rulesCount ?? 0,
+const buildCatalogPickerRows = (catalogFieldsetItems: IFieldsetCatalogItem[]): IFieldsetCatalogPickerRow[] => {
+  const rows = catalogFieldsetItems.map<IFieldsetCatalogPickerRow>((catalogFieldsetItem) => ({
+    id: catalogFieldsetItem.id,
+    apiName: catalogFieldsetItem.apiName,
+    name: catalogFieldsetItem.name,
+    fieldsCount: catalogFieldsetItem.fields.length,
+    rulesCount: catalogFieldsetItem.rules.length,
+    order: catalogFieldsetItem.order,
   }));
   rows.sort((a, b) => {
-    const orderA = map.get(a.apiName)?.order ?? 0;
-    const orderB = map.get(b.apiName)?.order ?? 0;
-    if (orderA !== orderB) {
-      return orderA - orderB;
+    if (a.order !== b.order) {
+      return a.order - b.order;
     }
     return a.name.localeCompare(b.name);
   });
@@ -55,7 +53,6 @@ const buildCatalogPickerRows = (map: ReadonlyMap<string, IFieldsetData>): IField
 
 export const FieldsetIconPicker = ({
   templateId,
-  fieldsetsByApiName,
   fieldsetsCatalogLoading,
   selectedFieldsetIds,
   onSelectFieldset,
@@ -65,7 +62,7 @@ export const FieldsetIconPicker = ({
   const triggerRef = useRef<HTMLSpanElement>(null);
   const fieldsetsCatalogItems = useSelector(getFieldsetsCatalogItems);
 
-  const catalogRows = useMemo(() => buildCatalogPickerRows(fieldsetsByApiName), [fieldsetsByApiName]);
+  const catalogRows = useMemo(() => buildCatalogPickerRows(fieldsetsCatalogItems), [fieldsetsCatalogItems]);
   const showListLoading = fieldsetsCatalogLoading && catalogRows.length === 0;
 
   const handleToggleFieldset = useCallback(

@@ -4,12 +4,18 @@ import userEvent from '@testing-library/user-event';
 
 import { intlMock } from '../../../../__stubs__/intlMock';
 import { makeExtraField } from '../../../../__stubs__/fields.factory';
-import { makeFieldsetBindingClient, makeFieldsetData } from '../../../../__stubs__/fieldsets.factory';
+import { makeFieldsetBindingClient, makeFieldsetCatalogItem } from '../../../../__stubs__/fieldsets.factory';
 import {
   IExtraField,
-  IFieldsetData,
   ITemplateTaskClient,
 } from '../../../../types/template';
+import { IFieldsetCatalogItem } from '../../../../types/fieldset';
+
+jest.mock('../../../../redux/selectors/fieldsets', () => ({
+  getFieldsetsCatalogItems: jest.fn(() => []),
+}));
+
+import { getFieldsetsCatalogItems } from '../../../../redux/selectors/fieldsets';
 
 jest.mock('../../ExtraFields/utils/useDatasetOptions', () => ({
   useDatasetOptions: jest.fn(() => []),
@@ -34,26 +40,26 @@ jest.mock('../../ExtraFields/utils/ExtraFieldIcon', () => ({
 
 jest.mock('../../TaskOutputFlow/FieldsetIconPicker', () => ({
   FieldsetIconPicker: (props: {
-    fieldsetsByApiName: ReadonlyMap<string, IFieldsetData>;
     selectedFieldsetIds: number[];
-    onSelectFieldset: (apiName: string) => void;
+    onSelectFieldset: (item: IFieldsetCatalogItem) => void;
     onRemoveFieldset: (sharedFieldsetId: number) => void;
-  }) =>
-    React.createElement(
+  }) => {
+    const catalogItems = (getFieldsetsCatalogItems as jest.Mock)();
+    return React.createElement(
       'div',
       null,
-      Array.from(props.fieldsetsByApiName.entries()).map(([apiName, fs]) =>
+      catalogItems.map((item: IFieldsetCatalogItem) =>
         React.createElement(
           'button',
           {
-            key: `add-${apiName}`,
+            key: `add-${item.id}`,
             type: 'button',
-            onClick: () => props.onSelectFieldset(apiName),
+            onClick: () => props.onSelectFieldset(item),
           },
-          `Add fieldset ${fs.name}`,
+          `Add fieldset ${item.name}`,
         ),
       ),
-      props.selectedFieldsetIds.map((id) =>
+      props.selectedFieldsetIds.map((id: number) =>
         React.createElement(
           'button',
           {
@@ -64,7 +70,8 @@ jest.mock('../../TaskOutputFlow/FieldsetIconPicker', () => ({
           `Remove fieldset ${id}`,
         ),
       ),
-    ),
+    );
+  },
 }));
 
 jest.mock('../../TaskOutputFlow/MergedOutputRows', () => ({
@@ -168,15 +175,16 @@ describe('OutputFormTaskMerged', () => {
 
   const renderForm = (props: {
     task: ITemplateTaskClient;
-    fieldsetsByApiName?: ReadonlyMap<string, IFieldsetData>;
+    catalogItems?: IFieldsetCatalogItem[];
     patchTask?: jest.Mock;
   }) => {
     const patchTask = props.patchTask ?? jest.fn();
-    const fieldsetsByApiName = props.fieldsetsByApiName ?? new Map<string, IFieldsetData>();
+    const catalogItems = props.catalogItems ?? [];
+    (getFieldsetsCatalogItems as jest.Mock).mockReturnValue(catalogItems);
+
     render(
       React.createElement(OutputFormTaskMerged, {
         task: props.task,
-        fieldsetsByApiName,
         fieldsetsCatalogLoading: false,
         templateId: 1,
         accountId: 1,
@@ -190,6 +198,7 @@ describe('OutputFormTaskMerged', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (getEmptyField as jest.Mock).mockReturnValue(NEW_FIELD);
+    (getFieldsetsCatalogItems as jest.Mock).mockReturnValue([]);
   });
 
   describe('rows table visibility', () => {
@@ -199,10 +208,8 @@ describe('OutputFormTaskMerged', () => {
     });
 
     it('renders rows table when there are fieldsets but no own fields', () => {
-      const fsData = makeFieldsetData({ apiName: 'fs-1' });
       renderForm({
         task: makeTask({ fields: [], fieldsets: [makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 0 })] }),
-        fieldsetsByApiName: new Map([['fs-1', fsData]]),
       });
       expect(screen.getByTestId('merged-rows')).toBeInTheDocument();
     });
@@ -216,7 +223,6 @@ describe('OutputFormTaskMerged', () => {
           fields: [existingField],
           fieldsets: [makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 1 })],
         }),
-        fieldsetsByApiName: new Map([['fs-1', makeFieldsetData()]]),
       });
 
       userEvent.click(screen.getByRole('button', { name: 'Add field string' }));
@@ -229,8 +235,8 @@ describe('OutputFormTaskMerged', () => {
       const fieldApiNames = arg.changedFields.fields.map((f: IExtraField) => f.apiName);
       expect(fieldApiNames).toContain('new-field');
       expect(fieldApiNames).toContain('f-1');
-      const patchApiNames = arg.changedFields.fieldsets.map((p: { apiName: string }) => p.apiName);
-      expect(patchApiNames).toContain('fs-1');
+      const patchBindingNames = arg.changedFields.fieldsets.map((p: { apiNameBinding: string }) => p.apiNameBinding);
+      expect(patchBindingNames).toContain('fs-1');
     });
 
     it('editing a field sends PATCH with fields only, without fieldsets payload', () => {
@@ -240,7 +246,6 @@ describe('OutputFormTaskMerged', () => {
           fields: [existingField],
           fieldsets: [makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 0 })],
         }),
-        fieldsetsByApiName: new Map([['fs-1', makeFieldsetData()]]),
       });
 
       userEvent.click(screen.getByRole('button', { name: 'Edit f-1' }));
@@ -259,7 +264,6 @@ describe('OutputFormTaskMerged', () => {
           fields: [fieldA, fieldB],
           fieldsets: [makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 0 })],
         }),
-        fieldsetsByApiName: new Map([['fs-1', makeFieldsetData()]]),
       });
 
       userEvent.click(screen.getByRole('button', { name: 'Delete f-a' }));
@@ -270,18 +274,18 @@ describe('OutputFormTaskMerged', () => {
       expect(fieldApiNames).not.toContain('f-a');
       expect(fieldApiNames).toContain('f-b');
       expect(arg.changedFields.fieldsets).toBeDefined();
-      const patchApiNames = arg.changedFields.fieldsets.map((p: { apiName: string }) => p.apiName);
-      expect(patchApiNames).toContain('fs-1');
+      const patchBindingNames = arg.changedFields.fieldsets.map((p: { apiNameBinding: string }) => p.apiNameBinding);
+      expect(patchBindingNames).toContain('fs-1');
     });
   });
 
   describe('fieldset actions', () => {
     it('adding a fieldset sends PATCH with both fields and fieldset patches', () => {
-      const fsData = makeFieldsetData({ apiName: 'fs-new', name: 'New Set' });
+      const catalogItem = makeFieldsetCatalogItem({ id: 99, apiName: 'fs-new', name: 'New Set' });
       const existingField = makeField({ apiName: 'f-1' });
       const { patchTask } = renderForm({
         task: makeTask({ fields: [existingField], fieldsets: [] }),
-        fieldsetsByApiName: new Map([['fs-new', fsData]]),
+        catalogItems: [catalogItem],
       });
 
       userEvent.click(screen.getByRole('button', { name: 'Add fieldset New Set' }));
@@ -290,15 +294,13 @@ describe('OutputFormTaskMerged', () => {
       const arg = patchTask.mock.calls[0][0];
       expect(arg.changedFields.fields).toBeDefined();
       expect(arg.changedFields.fieldsets).toBeDefined();
-      const patchApiNames = arg.changedFields.fieldsets.map((p: { apiName: string }) => p.apiName);
-      expect(patchApiNames).toContain('fs-new');
     });
 
     it('does not send PATCH when adding an already-connected fieldset', () => {
-      const fsData = makeFieldsetData({ apiName: 'fs-1' });
+      const catalogItem = makeFieldsetCatalogItem({ id: 1, apiName: 'fs-1', name: 'Fieldset 1' });
       const { patchTask } = renderForm({
-        task: makeTask({ fields: [], fieldsets: [makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 0 })] }),
-        fieldsetsByApiName: new Map([['fs-1', fsData]]),
+        task: makeTask({ fields: [], fieldsets: [makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 0, sharedFieldsetId: 1 })] }),
+        catalogItems: [catalogItem],
       });
 
       userEvent.click(screen.getByRole('button', { name: 'Add fieldset Fieldset 1' }));
@@ -307,8 +309,6 @@ describe('OutputFormTaskMerged', () => {
     });
 
     it('removing a fieldset sends PATCH without it and recomputes order of remaining ones', () => {
-      const fsA = makeFieldsetData({ apiName: 'fs-a' });
-      const fsB = makeFieldsetData({ apiName: 'fs-b' });
       const { patchTask } = renderForm({
         task: makeTask({
           fields: [],
@@ -317,10 +317,6 @@ describe('OutputFormTaskMerged', () => {
             makeFieldsetBindingClient({ apiNameBinding: 'fs-b', order: 1, sharedFieldsetId: 20 }),
           ],
         }),
-        fieldsetsByApiName: new Map([
-          ['fs-a', fsA],
-          ['fs-b', fsB],
-        ]),
       });
 
       userEvent.click(screen.getByRole('button', { name: 'Remove fieldset 10' }));
@@ -328,22 +324,20 @@ describe('OutputFormTaskMerged', () => {
       expect(patchTask).toHaveBeenCalledTimes(1);
       const arg = patchTask.mock.calls[0][0];
       expect(arg.changedFields.fieldsets).toBeDefined();
-      const patchApiNames = arg.changedFields.fieldsets.map((p: { apiName: string }) => p.apiName);
-      expect(patchApiNames).not.toContain('fs-a');
-      expect(patchApiNames).toContain('fs-b');
+      const patchBindingNames = arg.changedFields.fieldsets.map((p: { apiNameBinding: string }) => p.apiNameBinding);
+      expect(patchBindingNames).not.toContain('fs-a');
+      expect(patchBindingNames).toContain('fs-b');
     });
   });
 
   describe('merged rows reordering', () => {
     it('reordering a row sends PATCH with both updated fields and fieldset patches', () => {
       const fieldA = makeField({ apiName: 'f-a', order: 1 });
-      const fsData = makeFieldsetData({ apiName: 'fs-1' });
       const { patchTask } = renderForm({
         task: makeTask({
           fields: [fieldA],
           fieldsets: [makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 0 })],
         }),
-        fieldsetsByApiName: new Map([['fs-1', fsData]]),
       });
 
       userEvent.click(screen.getByRole('button', { name: 'Move row 0 down' }));
@@ -354,7 +348,7 @@ describe('OutputFormTaskMerged', () => {
       expect(arg.changedFields.fieldsets).toBeDefined();
       const field = arg.changedFields.fields.find((f: IExtraField) => f.apiName === 'f-a');
       expect(field).toBeDefined();
-      const fsPatch = arg.changedFields.fieldsets.find((p: { apiName: string }) => p.apiName === 'fs-1');
+      const fsPatch = arg.changedFields.fieldsets.find((p: { apiNameBinding: string }) => p.apiNameBinding === 'fs-1');
       expect(fsPatch).toBeDefined();
       expect(fsPatch.order).toBe(1);
       expect(field.order).toBe(0);

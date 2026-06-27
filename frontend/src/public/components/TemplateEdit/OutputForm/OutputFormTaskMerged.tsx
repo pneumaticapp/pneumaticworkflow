@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import classNames from 'classnames';
 import { IntlShape } from 'react-intl';
 
-import { EExtraFieldType, IExtraField, IFieldsetData, ITemplateTaskClient } from '../../../types/template';
+import { EExtraFieldType, IExtraField, ITemplateTaskClient } from '../../../types/template';
 import { IFieldsetCatalogItem } from '../../../types/fieldset';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { useDatasetOptions } from '../ExtraFields/utils/useDatasetOptions';
@@ -30,7 +30,6 @@ import stylesTaskForm from '../TaskForm/TaskForm.css';
 
 export interface IOutputFormTaskMergedOwnProps {
   task: ITemplateTaskClient;
-  fieldsetsByApiName: ReadonlyMap<string, IFieldsetData>;
   fieldsetsCatalogLoading: boolean;
   templateId: number | undefined;
   accountId: number;
@@ -42,7 +41,6 @@ export interface IOutputFormTaskMergedOwnProps {
 
 export function OutputFormTaskMerged({
   task,
-  fieldsetsByApiName,
   fieldsetsCatalogLoading,
   templateId,
   accountId,
@@ -146,7 +144,6 @@ export function OutputFormTaskMerged({
         ))}
         <FieldsetIconPicker
           templateId={templateId}
-          fieldsetsByApiName={fieldsetsByApiName}
           fieldsetsCatalogLoading={fieldsetsCatalogLoading}
           selectedFieldsetIds={(task.fieldsets || []).map((fieldset) => fieldset.sharedFieldsetId)}
           onSelectFieldset={handleAddFieldset}

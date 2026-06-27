@@ -1,15 +1,26 @@
 import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useSelector } from 'react-redux';
 
 import { makeExtraField } from '../../../../__stubs__/fields.factory';
-import { makeFieldsetData as makeFieldsetDataBase } from '../../../../__stubs__/fieldsets.factory';
-import { IFieldsetData } from '../../../../types/template';
-import { EFieldLabelPosition } from '../../../../types/fieldset';
+import { makeFieldsetCatalogItem } from '../../../../__stubs__/fieldsets.factory';
+import { IFieldsetCatalogItem } from '../../../../types/fieldset';
 import { intlMock } from '../../../../__stubs__/intlMock';
 import { Dropdown } from '../../../UI';
 import { IDropdownProps, TDropdownOption } from '../../../UI/Dropdown/Dropdown';
 import { FieldsetIconPicker, IFieldsetIconPickerProps } from '../FieldsetIconPicker';
+import {
+  getFieldsetsCatalogItems,
+} from '../../../../redux/selectors/fieldsets';
+
+jest.mock('react-redux', () => ({
+  useSelector: jest.fn(),
+}));
+
+jest.mock('../../../../redux/selectors/fieldsets', () => ({
+  getFieldsetsCatalogItems: jest.fn(() => []),
+}));
 
 jest.mock('../../../UI', () => ({
   Dropdown: jest.fn(({ options }: IDropdownProps) => {
@@ -27,16 +38,17 @@ jest.mock('../../../icons/FieldsetIcon', () => ({
   FieldsetIcon: () => null,
 }));
 
-const makeFieldsetLocalData = (
+
+const makeCatalogItem = (
   id: number,
   apiName: string,
   name: string,
   order: number,
-): IFieldsetData => makeFieldsetDataBase({
+): IFieldsetCatalogItem => makeFieldsetCatalogItem({
   id,
   apiName,
   name,
-  ...(order !== 0 && { order }),
+  order,
 });
 
 const getDropdownProps = (): IDropdownProps => {
@@ -52,10 +64,11 @@ const makeField = (apiName: string) => makeExtraField({
 const formatMsg = (id: string, defaultMessage?: string) =>
   intlMock.formatMessage({ id, defaultMessage });
 
+const EMPTY_STATE = {};
+
 describe('FieldsetIconPicker', () => {
   const makeProps = (overrides: Partial<IFieldsetIconPickerProps> = {}): IFieldsetIconPickerProps => ({
     templateId: 1,
-    fieldsetsByApiName: new Map(),
     fieldsetsCatalogLoading: false,
     selectedFieldsetIds: [],
     onSelectFieldset: jest.fn(),
@@ -65,6 +78,10 @@ describe('FieldsetIconPicker', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    (useSelector as jest.Mock).mockImplementation((selector: unknown) =>
+      (selector as (s: unknown) => unknown)(EMPTY_STATE),
+    );
+    (getFieldsetsCatalogItems as jest.Mock).mockReturnValue([]);
   });
 
   it('templateId=undefined → Dropdown receives isDisabled: true', () => {
@@ -81,7 +98,7 @@ describe('FieldsetIconPicker', () => {
     render(
       React.createElement(
         FieldsetIconPicker,
-        makeProps({ fieldsetsCatalogLoading: true, fieldsetsByApiName: new Map() }),
+        makeProps({ fieldsetsCatalogLoading: true }),
       ),
     );
     expect(
@@ -93,20 +110,23 @@ describe('FieldsetIconPicker', () => {
     render(
       React.createElement(
         FieldsetIconPicker,
-        makeProps({ fieldsetsCatalogLoading: false, fieldsetsByApiName: new Map() }),
+        makeProps({ fieldsetsCatalogLoading: false }),
       ),
     );
     expect(screen.getByText(formatMsg('template.fieldset-picker.empty'))).toBeInTheDocument();
   });
 
   it('renders fieldsets sorted by order property', () => {
-    const map = new Map<string, IFieldsetData>([
-      ['fs-a', makeFieldsetLocalData(1, 'fs-a', 'Alpha', 2)],
-      ['fs-b', makeFieldsetLocalData(2, 'fs-b', 'Zeta', 0)],
-      ['fs-c', makeFieldsetLocalData(3, 'fs-c', 'Beta', 1)],
-    ]);
+    // Бизнес: филдсеты отображаются в порядке, заданном в каталоге (поле order).
+    // Идентификатор: каталожный id (1, 2, 3). Order определяет визуальный порядок.
+    const catalogItems: IFieldsetCatalogItem[] = [
+      makeCatalogItem(1, 'fs-a', 'Alpha', 2),
+      makeCatalogItem(2, 'fs-b', 'Zeta', 0),
+      makeCatalogItem(3, 'fs-c', 'Beta', 1),
+    ];
+    (getFieldsetsCatalogItems as jest.Mock).mockReturnValue(catalogItems);
 
-    render(React.createElement(FieldsetIconPicker, makeProps({ fieldsetsByApiName: map })));
+    render(React.createElement(FieldsetIconPicker, makeProps()));
 
     const buttons = screen.getAllByRole('button');
     expect(buttons[0]).toHaveTextContent('Zeta');
@@ -117,15 +137,15 @@ describe('FieldsetIconPicker', () => {
   it('click on unselected fieldset calls onSelectFieldset, onRemoveFieldset not called', () => {
     const onSelectFieldset = jest.fn();
     const onRemoveFieldset = jest.fn();
-    const map = new Map<string, IFieldsetData>([
-      ['fs-1', makeFieldsetLocalData(1, 'fs-1', 'My Fieldset', 0)],
-    ]);
+    const catalogItems: IFieldsetCatalogItem[] = [
+      makeCatalogItem(1, 'fs-1', 'My Fieldset', 0),
+    ];
+    (getFieldsetsCatalogItems as jest.Mock).mockReturnValue(catalogItems);
 
     render(
       React.createElement(
         FieldsetIconPicker,
         makeProps({
-          fieldsetsByApiName: map,
           selectedFieldsetIds: [],
           onSelectFieldset,
           onRemoveFieldset,
@@ -143,15 +163,15 @@ describe('FieldsetIconPicker', () => {
   it('click on selected fieldset calls onRemoveFieldset, onSelectFieldset not called', () => {
     const onSelectFieldset = jest.fn();
     const onRemoveFieldset = jest.fn();
-    const map = new Map<string, IFieldsetData>([
-      ['fs-1', makeFieldsetLocalData(1, 'fs-1', 'My Fieldset', 0)],
-    ]);
+    const catalogItems: IFieldsetCatalogItem[] = [
+      makeCatalogItem(1, 'fs-1', 'My Fieldset', 0),
+    ];
+    (getFieldsetsCatalogItems as jest.Mock).mockReturnValue(catalogItems);
 
     render(
       React.createElement(
         FieldsetIconPicker,
         makeProps({
-          fieldsetsByApiName: map,
           selectedFieldsetIds: [1],
           onSelectFieldset,
           onRemoveFieldset,
@@ -167,15 +187,15 @@ describe('FieldsetIconPicker', () => {
   });
 
   it('selected fieldset renders checkbox in checked state', () => {
-    const map = new Map<string, IFieldsetData>([
-      ['fs-1', makeFieldsetLocalData(1, 'fs-1', 'My Fieldset', 0)],
-    ]);
+    const catalogItems: IFieldsetCatalogItem[] = [
+      makeCatalogItem(1, 'fs-1', 'My Fieldset', 0),
+    ];
+    (getFieldsetsCatalogItems as jest.Mock).mockReturnValue(catalogItems);
 
     render(
       React.createElement(
         FieldsetIconPicker,
         makeProps({
-          fieldsetsByApiName: map,
           selectedFieldsetIds: [1],
         }),
       ),
@@ -186,15 +206,15 @@ describe('FieldsetIconPicker', () => {
   });
 
   it('unselected fieldset renders checkbox in unchecked state', () => {
-    const map = new Map<string, IFieldsetData>([
-      ['fs-1', makeFieldsetLocalData(1, 'fs-1', 'My Fieldset', 0)],
-    ]);
+    const catalogItems: IFieldsetCatalogItem[] = [
+      makeCatalogItem(1, 'fs-1', 'My Fieldset', 0),
+    ];
+    (getFieldsetsCatalogItems as jest.Mock).mockReturnValue(catalogItems);
 
     render(
       React.createElement(
         FieldsetIconPicker,
         makeProps({
-          fieldsetsByApiName: map,
           selectedFieldsetIds: [],
         }),
       ),
@@ -205,14 +225,15 @@ describe('FieldsetIconPicker', () => {
   });
 
   it('background catalog load does not show loading text when list is not empty', () => {
-    const map = new Map<string, IFieldsetData>([
-      ['fs-1', makeFieldsetLocalData(1, 'fs-1', 'My Set', 0)],
-    ]);
+    const catalogItems: IFieldsetCatalogItem[] = [
+      makeCatalogItem(1, 'fs-1', 'My Set', 0),
+    ];
+    (getFieldsetsCatalogItems as jest.Mock).mockReturnValue(catalogItems);
 
     render(
       React.createElement(
         FieldsetIconPicker,
-        makeProps({ fieldsetsCatalogLoading: true, fieldsetsByApiName: map }),
+        makeProps({ fieldsetsCatalogLoading: true }),
       ),
     );
 
@@ -223,31 +244,27 @@ describe('FieldsetIconPicker', () => {
   });
 
   it('meta line shows "<fieldsCount> fields · <rulesCount> rules" with real numbers', () => {
-    const fieldset: IFieldsetData = makeFieldsetDataBase({
+    const catalogItem = makeFieldsetCatalogItem({
       name: 'My Set',
-      fields: [makeField('a'), makeField('b'), makeField('c')],
-      rulesCount: 5,
+      fields: [makeField('a'), makeField('b'), makeField('c')] as any,
+      rules: [{}, {}, {}, {}, {}] as any,
     });
-    const map = new Map<string, IFieldsetData>([['fs-1', fieldset]]);
+    (getFieldsetsCatalogItems as jest.Mock).mockReturnValue([catalogItem]);
 
-    render(React.createElement(FieldsetIconPicker, makeProps({ fieldsetsByApiName: map })));
+    render(React.createElement(FieldsetIconPicker, makeProps()));
 
     expect(screen.getByText('3 fields · 5 rules')).toBeInTheDocument();
   });
 
-  it('meta line falls back to "0 rules" when rulesCount is undefined', () => {
-    const fieldset: IFieldsetData = {
-      id: 1,
-      apiName: 'fs-1',
+  it('meta line shows "0 fields · 0 rules" when fields and rules are empty', () => {
+    const catalogItem = makeFieldsetCatalogItem({
       name: 'My Set',
-      description: '',
-      order: 0,
-      labelPosition: EFieldLabelPosition.Top,
       fields: [],
-    };
-    const map = new Map<string, IFieldsetData>([['fs-1', fieldset]]);
+      rules: [],
+    });
+    (getFieldsetsCatalogItems as jest.Mock).mockReturnValue([catalogItem]);
 
-    render(React.createElement(FieldsetIconPicker, makeProps({ fieldsetsByApiName: map })));
+    render(React.createElement(FieldsetIconPicker, makeProps()));
 
     expect(screen.getByText('0 fields · 0 rules')).toBeInTheDocument();
   });

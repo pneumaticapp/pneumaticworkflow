@@ -179,7 +179,6 @@ export function TaskForm({
         <OutputFormIntl
           mode="taskMerged"
           task={task}
-          fieldsetsByApiName={fieldsetsByApiName}
           fieldsetsCatalogLoading={fieldsetsCatalogLoading}
           templateId={templateId}
           accountId={accountId}
