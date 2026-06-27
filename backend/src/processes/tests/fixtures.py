@@ -25,6 +25,8 @@ from src.authentication.enums import AuthTokenType
 from src.payment.enums import BillingPeriod
 from src.processes.enums import (
     ConditionAction,
+    FieldRuleOperator,
+    FieldRuleType,
     FieldSetLayout,
     FieldSetRuleOperator,
     FieldSetRuleType,
@@ -55,7 +57,12 @@ from src.processes.models.templates.fieldset import (
     FieldSetTemplateRuleGroupOr,
     FieldSetTemplateRuleGroupAnd,
 )
-from src.processes.models.templates.fields import FieldTemplate
+from src.processes.models.templates.fields import (
+    FieldTemplate,
+    FieldTemplateRuleSet,
+    FieldTemplateRuleGroupOr,
+    FieldTemplateRuleGroupAnd,
+)
 from src.processes.models.templates.kickoff import Kickoff
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.templates.preset import (
@@ -845,6 +852,10 @@ def create_test_shared_fieldset(
     rule_value: Optional[str] = None,
     rule_message: Optional[str] = None,
     api_name: Optional[str] = None,
+    field_rule_type: Optional[FieldRuleType.LITERALS] = None,
+    field_rule_operator: Optional[FieldRuleOperator.LITERALS] = None,
+    field_rule_value: Optional[str] = None,
+    field_rule_message: Optional[str] = None,
 ) -> FieldsetTemplate:
 
     """Creating fieldset templates."""
@@ -885,7 +896,7 @@ def create_test_shared_fieldset(
     else:
         field_type = FieldType.STRING
 
-    FieldTemplate.objects.create(
+    field = FieldTemplate.objects.create(
         name='Fieldset field',
         type=field_type,
         fieldset=fieldset,
@@ -893,6 +904,28 @@ def create_test_shared_fieldset(
         api_name=f'{fieldset.api_name}-field-1',
         account=account,
     )
+    if field_rule_type:
+        field_ruleset = FieldTemplateRuleSet.objects.create(
+            account=account,
+            field=field,
+            api_name=f'{fieldset.api_name}-field-ruleset-1',
+            type=field_rule_type,
+            message=field_rule_message,
+            order=1,
+        )
+        field_group_or = FieldTemplateRuleGroupOr.objects.create(
+            account=account,
+            field_rule=field_ruleset,
+            api_name=f'{fieldset.api_name}-field-group-or-1',
+        )
+        FieldTemplateRuleGroupAnd.objects.create(
+            account=account,
+            group_or=field_group_or,
+            api_name=f'{fieldset.api_name}-field-group-and-1',
+            field=field,
+            operator=field_rule_operator or FieldRuleOperator.EQUAL,
+            value=field_rule_value,
+        )
     return fieldset
 
 

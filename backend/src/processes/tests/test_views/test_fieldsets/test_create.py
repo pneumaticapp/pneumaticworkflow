@@ -1178,11 +1178,6 @@ def test_create__rule_invalid_type__validation_error(api_client, mocker):
 
 def test_create__rule_operator_sum_more_than__ok(api_client, mocker):
 
-    """
-    Create fieldset with a group_and using SUM_MORE_THAN operator and verify
-    the response returns the correct operator value.
-    """
-
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
@@ -1195,7 +1190,9 @@ def test_create__rule_operator_sum_more_than__ok(api_client, mocker):
                     {
                         'group_and': [
                             {
-                                'operator': FieldSetRuleOperator.SUM_MORE_THAN,
+                                'operator': (
+                                    FieldSetRuleOperator.SUM_GREATER_THAN
+                                ),
                                 'value': '0',
                             },
                         ],
@@ -1213,7 +1210,7 @@ def test_create__rule_operator_sum_more_than__ok(api_client, mocker):
     ruleset = fieldset.rulesets.first()
     group_or = ruleset.groups_or.first()
     group_and = group_or.groups_and.first()
-    group_and.operator = FieldSetRuleOperator.SUM_MORE_THAN
+    group_and.operator = FieldSetRuleOperator.SUM_GREATER_THAN
     group_and.save()
     fieldset_service_init_mock = mocker.patch.object(
         FieldSetTemplateService,
@@ -1233,7 +1230,7 @@ def test_create__rule_operator_sum_more_than__ok(api_client, mocker):
     # assert
     assert response.status_code == 201
     group_and_resp = response.data['rules'][0]['group_or'][0]['group_and'][0]
-    assert group_and_resp['operator'] == FieldSetRuleOperator.SUM_MORE_THAN
+    assert group_and_resp['operator'] == FieldSetRuleOperator.SUM_GREATER_THAN
     assert group_and_resp['value'] == '0'
     fieldset_service_init_mock.assert_called_once_with(
         user=user,
@@ -1466,7 +1463,7 @@ def test_create__rule_multiple_group_and__ok(api_client, mocker):
 
     """
     Create fieldset with a single group_or containing two group_and entries
-    (SUM_MORE_THAN 0 AND SUM_LESS_THAN 100) and verify both are returned
+    (SUM_GREATER_THAN 0 AND SUM_LESS_THAN 100) and verify both are returned
     in the response.
     """
 
@@ -1482,7 +1479,9 @@ def test_create__rule_multiple_group_and__ok(api_client, mocker):
                     {
                         'group_and': [
                             {
-                                'operator': FieldSetRuleOperator.SUM_MORE_THAN,
+                                'operator': (
+                                    FieldSetRuleOperator.SUM_GREATER_THAN
+                                ),
                                 'value': '0',
                             },
                             {
@@ -1504,7 +1503,7 @@ def test_create__rule_multiple_group_and__ok(api_client, mocker):
     ruleset = fieldset.rulesets.first()
     group_or = ruleset.groups_or.first()
     group_and_1 = group_or.groups_and.first()
-    group_and_1.operator = FieldSetRuleOperator.SUM_MORE_THAN
+    group_and_1.operator = FieldSetRuleOperator.SUM_GREATER_THAN
     group_and_1.save()
     FieldSetTemplateRuleGroupAnd.objects.create(
         group_or=group_or,
@@ -1534,7 +1533,7 @@ def test_create__rule_multiple_group_and__ok(api_client, mocker):
     assert len(group_or_resp['group_and']) == 2
     assert (
         group_or_resp['group_and'][0]['operator']
-        == FieldSetRuleOperator.SUM_MORE_THAN
+        == FieldSetRuleOperator.SUM_GREATER_THAN
     )
     assert group_or_resp['group_and'][0]['value'] == '0'
     assert (

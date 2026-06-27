@@ -788,28 +788,28 @@ class FieldRuleType:
 class FieldRuleOperator:
 
     EQUAL = 'equal'
-    MORE_THAN = 'more_than'
+    GREATER_THAN = 'greater_than'
     LESS_THAN = 'less_than'
 
     CHOICES = (
         (EQUAL, 'Equal'),
-        (MORE_THAN, 'More than'),
+        (GREATER_THAN, 'Greater than'),
         (LESS_THAN, 'Less than'),
     )
 
-    LITERALS = Literal[EQUAL, MORE_THAN, LESS_THAN]
+    LITERALS = Literal[EQUAL, GREATER_THAN, LESS_THAN]
 
 
 class FieldSetRuleOperator:
 
     SUM_EQUAL = 'sum_equal'
-    SUM_MORE_THAN = 'sum_more_than'
+    SUM_GREATER_THAN = 'sum_greater_than'
     SUM_LESS_THAN = 'sum_less_than'
 
     CHOICES = (
         (SUM_EQUAL, 'Sum equal'),
-        (SUM_MORE_THAN, 'Sum more than'),
+        (SUM_GREATER_THAN, 'Sum greater than'),
         (SUM_LESS_THAN, 'Sum less than'),
     )
 
-    LITERALS = Literal[SUM_EQUAL, SUM_MORE_THAN, SUM_LESS_THAN]
+    LITERALS = Literal[SUM_EQUAL, SUM_GREATER_THAN, SUM_LESS_THAN]
