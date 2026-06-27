@@ -69,7 +69,6 @@ export const TaskItem = ({ task, toggleIsOpenTask, setScrollTarget }: ITaskItemP
           <ExtraFieldsLabels extraFields={fields} onClick={() => handleClickOnLabel(ETaskFormParts.Fields)} />
           <FieldsetOutputsPreview
             fieldsets={task.fieldsets || []}
-            fieldsetsByApiName={fieldsetsByApiName}
             onGroupClick={() => handleClickOnLabel(ETaskFormParts.Fields)}
           />
           {TaskRenderConditionsInfo({

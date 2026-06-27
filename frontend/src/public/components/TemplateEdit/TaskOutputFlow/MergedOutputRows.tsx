@@ -2,7 +2,8 @@ import * as React from 'react';
 import classNames from 'classnames';
 
 import { EInputNameBackgroundColor } from '../../../types/workflow';
-import { EExtraFieldMode, IExtraField, IFieldsetData } from '../../../types/template';
+import { EExtraFieldMode, IExtraField } from '../../../types/template';
+import { mapFieldsetBindingClientToRuntime } from '../../../utils/mapFieldsetBindingClientToRuntime';
 import { EFieldLabelPosition } from '../../../types/fieldset';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { ExtraFieldIntl } from '../ExtraFields';
@@ -15,7 +16,6 @@ import kickoffStyles from '../KickoffRedux/KickoffRedux.css';
 
 export interface IMergedOutputRowsProps {
   mergedRows: TMergedTaskOutputRow[];
-  fieldsetsByApiName: ReadonlyMap<string, IFieldsetData>;
   onDeleteField: (apiName: string) => void;
   onMoveRow: (index: number, direction: 'up' | 'down') => void;
   onEditField: (apiName: string) => (changedProps: Partial<IExtraField>) => void;
@@ -28,7 +28,6 @@ export interface IMergedOutputRowsProps {
 
 export function MergedOutputRows({
   mergedRows,
-  fieldsetsByApiName,
   onDeleteField,
   onMoveRow,
   onEditField,
@@ -65,11 +64,11 @@ export function MergedOutputRows({
             />
           );
         }
-        const fs = fieldsetsByApiName.get(row.apiName);
-        const fieldsetTitle = fs?.name || formatMessage({ id: 'tasks.task-fieldsets' });
+        const { name, fields, apiNameBinding } = mapFieldsetBindingClientToRuntime(row);
+        const fieldsetTitle = name || formatMessage({ id: 'tasks.task-fieldsets' });
         return (
           <div
-            key={`fieldset-${row.apiName}`}
+            key={`fieldset-${apiNameBinding}`}
             className={classNames(
               kickoffStyles['with-label'],
               kickoffStyles['kick-off-input'],
@@ -82,13 +81,14 @@ export function MergedOutputRows({
               >
                 {formatMessage({ id: 'fieldsets.title' })}: {fieldsetTitle}
               </div>
-              {fs && isArrayWithItems(fs.fields) &&
+              {isArrayWithItems(fields) &&
                 <div className={styles['flow__fieldset-nested-fields']}>
-                  <ExtraFieldsLabels extraFields={fs.fields} />
+                  <ExtraFieldsLabels extraFields={fields} />
                 </div>
               }
             </div>
             <div className={kickoffStyles['kick-off-input__dropdown']}>
+              {/* sharedFieldsetId is synced with FieldsetIconPicker — do not replace with apiNameBinding */}
               <FieldsetFlowRowDropdown
                 headerTitle={fieldsetTitle}
                 isFirstItem={isFirst}

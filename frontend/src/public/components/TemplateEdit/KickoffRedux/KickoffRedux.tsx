@@ -178,7 +178,6 @@ export function KickoffRedux({
           <div className={styles['fields']}>
             <MergedOutputRows
               mergedRows={mergedRows}
-              fieldsetsByApiName={fieldsetsByApiName}
               onDeleteField={handleDeleteField}
               onMoveRow={handleMoveMergedIndex}
               onEditField={handleEditField}
@@ -219,7 +218,7 @@ export function KickoffRedux({
         aria-label="Toggle expand"
       >
         {isArrayWithItems(fields) && <ExtraFieldsLabels extraFields={fields} />}
-        <FieldsetOutputsPreview fieldsets={fieldsets || []} fieldsetsByApiName={fieldsetsByApiName} />
+        <FieldsetOutputsPreview fieldsets={fieldsets || []} />
       </div>
     );
   };

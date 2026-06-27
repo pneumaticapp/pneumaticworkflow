@@ -1,11 +1,9 @@
 import * as React from 'react';
 import { useMemo } from 'react';
 import { useIntl } from 'react-intl';
-import { useSelector } from 'react-redux';
 import { ITemplateTaskClient, IFieldsetBindingClient } from '../../../types/template';
 import styles from '../ExtraFields/utils/ExtraFieldsLabels/ExtraFieldsLabels.css';
 import { getTriplePlural } from '../../../utils/helpers';
-import { getFieldsetsCatalogByApiName } from '../../../redux/selectors/fieldsets';
 
 interface ITaskRenderExtraFieldsInfoProps {
   task: ITemplateTaskClient;
@@ -14,22 +12,20 @@ interface ITaskRenderExtraFieldsInfoProps {
 
 function countFieldsetOutputFields(
   fieldsets: IFieldsetBindingClient[] | undefined,
-  fieldsetsByApiName: ReadonlyMap<string, { fields: unknown[] }>,
 ): number {
   if (!fieldsets?.length) {
     return 0;
   }
 
-  return fieldsets.reduce((acc, taskFieldset) => acc + (fieldsetsByApiName.get(taskFieldset.apiName)?.fields.length ?? 0), 0);
+  return fieldsets.reduce((acc, taskFieldset) => acc + taskFieldset.fields.length, 0);
 }
 
 export const TaskRenderExtraFieldsInfo = ({ task: { fields, fieldsets }, onClick }: ITaskRenderExtraFieldsInfoProps) => {
   const { formatMessage } = useIntl();
-  const fieldsetsByApiName = useSelector(getFieldsetsCatalogByApiName);
 
   const totalCount = useMemo(() => {
-    return fields.length + countFieldsetOutputFields(fieldsets, fieldsetsByApiName);
-  }, [fieldsets, fieldsetsByApiName, fields.length]);
+    return fields.length + countFieldsetOutputFields(fieldsets);
+  }, [fieldsets, fields.length]);
 
   const extraFieldsText = getTriplePlural({
     counter: totalCount,

@@ -2,49 +2,37 @@ import * as React from 'react';
 import { useIntl } from 'react-intl';
 import classNames from 'classnames';
 
-import { IExtraField, IFieldsetData, IFieldsetBindingClient } from '../../../types/template';
+import { IFieldsetBindingClient } from '../../../types/template';
 import { isArrayWithItems } from '../../../utils/helpers';
 
 import styles from './FieldsetOutputsPreview.css';
 
-
-
 export interface IFieldsetOutputsPreviewProps {
   fieldsets: IFieldsetBindingClient[];
-  fieldsetsByApiName: ReadonlyMap<string, IFieldsetData>;
   onGroupClick?(): void;
 }
 
-export function FieldsetOutputsPreview({ fieldsets, fieldsetsByApiName, onGroupClick }: IFieldsetOutputsPreviewProps) {
+export function FieldsetOutputsPreview({ fieldsets, onGroupClick }: IFieldsetOutputsPreviewProps) {
   const { formatMessage } = useIntl();
 
   if (!fieldsets.length) {
     return null;
   }
 
-  const groups = fieldsets
-    .map((taskFieldset) => {
-      const fieldsetData = fieldsetsByApiName.get(taskFieldset.apiName);
-      if (!fieldsetData || !isArrayWithItems(fieldsetData.fields)) {
-        return null;
-      }
+  const fieldsetsWithFields = fieldsets.filter((fieldset) => isArrayWithItems(fieldset.fields));
 
-      return { apiName: taskFieldset.apiName, fieldsetData, fields: fieldsetData.fields };
-    })
-    .filter((g): g is { apiName: string; fieldsetData: IFieldsetData; fields: IExtraField[] } => g !== null);
-
-  if (!groups.length) {
+  if (!fieldsetsWithFields.length) {
     return null;
   }
 
   return (
     <div className={styles['fieldset-outputs-preview']}>
-      {groups.map(({ apiName, fieldsetData }) => (
-        <button type="button" className={classNames( styles['fieldset-outputs-preview__group'])} key={apiName} onClick={onGroupClick}>
+      {fieldsetsWithFields.map(({ apiNameBinding, name }) => (
+        <button type="button" className={classNames(styles['fieldset-outputs-preview__group'])} key={apiNameBinding} onClick={onGroupClick}>
           <span className={styles['fieldset-outputs-preview__title']}>
-            { formatMessage({ id: 'fieldsets.title' }) }: { fieldsetData.name}
+            {formatMessage({ id: 'fieldsets.title' })}: {name}
           </span>
- </button>
+        </button>
       ))}
     </div>
   );

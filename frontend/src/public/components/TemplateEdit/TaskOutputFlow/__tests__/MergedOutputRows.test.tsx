@@ -3,8 +3,8 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { makeExtraField } from '../../../../__stubs__/fields.factory';
-import { makeFieldsetData as makeFieldsetDataBase, makeFieldsetBindingClient } from '../../../../__stubs__/fieldsets.factory';
-import { IExtraField, IFieldsetData } from '../../../../types/template';
+import { makeFieldsetBindingClient, makeFieldsetField } from '../../../../__stubs__/fieldsets.factory';
+import { IExtraField } from '../../../../types/template';
 import { intlMock } from '../../../../__stubs__/intlMock';
 import { MergedOutputRows, IMergedOutputRowsProps } from '../MergedOutputRows';
 import { TMergedTaskOutputRow } from '../mergeTaskOutputFlow';
@@ -67,27 +67,25 @@ const makeField = (apiName: string) => makeExtraField({
   name: `Field ${apiName}`,
 });
 
-const makeFieldsetData = (apiName: string, fieldsCount: number): IFieldsetData =>
-  makeFieldsetDataBase({
-    apiName,
-    name: `Fieldset ${apiName}`,
-    fields: Array.from({ length: fieldsCount }, (_, i) => makeField(`${apiName}-field-${i}`)),
-  });
-
 const fieldRow = (apiName: string): TMergedTaskOutputRow => ({
   kind: 'field',
   field: makeField(apiName),
 });
 
-const fieldsetRow = (apiNameBinding: string): TMergedTaskOutputRow => ({
-  ...makeFieldsetBindingClient({ apiNameBinding }),
+const fieldsetRow = (apiNameBinding: string, name = 'Test Fieldset', fieldsCount = 0): TMergedTaskOutputRow => ({
+  ...makeFieldsetBindingClient({
+    apiNameBinding,
+    name,
+    fields: Array.from({ length: fieldsCount }, (_, index) =>
+      makeFieldsetField({ apiName: `${apiNameBinding}-field-${index}` }),
+    ),
+  }),
   kind: 'fieldset',
 });
 
 describe('MergedOutputRows', () => {
   const makeProps = (overrides: Partial<IMergedOutputRowsProps> = {}): IMergedOutputRowsProps => ({
     mergedRows: [],
-    fieldsetsByApiName: new Map(),
     onDeleteField: jest.fn(),
     onMoveRow: jest.fn(),
     onEditField: jest.fn(() => jest.fn()),
@@ -98,10 +96,6 @@ describe('MergedOutputRows', () => {
     ...overrides,
   });
 
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
   it('field row renders ExtraFieldIntl with the field name', () => {
     render(
       React.createElement(MergedOutputRows, makeProps({ mergedRows: [fieldRow('f-1')] })),
@@ -109,28 +103,27 @@ describe('MergedOutputRows', () => {
     expect(screen.getByText('Field f-1')).toBeInTheDocument();
   });
 
-  it('fieldset found in fieldsetsByApiName → renders "<prefix>: <name>" with exact text', () => {
-    const map = new Map<string, IFieldsetData>([['fs-1', makeFieldsetData('fs-1', 0)]]);
+  it('fieldset with name → renders "<prefix>: <name>" with exact text', () => {
     const prefix = intlMock.formatMessage({ id: 'fieldsets.title' });
 
     render(
       React.createElement(
         MergedOutputRows,
-        makeProps({ mergedRows: [fieldsetRow('fs-1')], fieldsetsByApiName: map }),
+        makeProps({ mergedRows: [fieldsetRow('fs-1', 'Fieldset Alpha')] }),
       ),
     );
 
-    expect(screen.getByText(`${prefix}: Fieldset fs-1`)).toBeInTheDocument();
+    expect(screen.getByText(`${prefix}: Fieldset Alpha`)).toBeInTheDocument();
   });
 
-  it('fieldset not found in map → renders "<prefix>: <fallback>" with exact text', () => {
+  it('fieldset with empty name → renders "<prefix>: <fallback>" with exact text', () => {
     const prefix = intlMock.formatMessage({ id: 'fieldsets.title' });
     const fallback = intlMock.formatMessage({ id: 'tasks.task-fieldsets' });
 
     render(
       React.createElement(
         MergedOutputRows,
-        makeProps({ mergedRows: [fieldsetRow('fs-missing')], fieldsetsByApiName: new Map() }),
+        makeProps({ mergedRows: [fieldsetRow('fs-empty', '')] }),
       ),
     );
 
@@ -138,12 +131,10 @@ describe('MergedOutputRows', () => {
   });
 
   it('renders ExtraFieldsLabels when fieldset has fields', () => {
-    const map = new Map<string, IFieldsetData>([['fs-1', makeFieldsetData('fs-1', 2)]]);
-
     render(
       React.createElement(
         MergedOutputRows,
-        makeProps({ mergedRows: [fieldsetRow('fs-1')], fieldsetsByApiName: map }),
+        makeProps({ mergedRows: [fieldsetRow('fs-1', 'Fieldset A', 2)] }),
       ),
     );
 
@@ -151,12 +142,10 @@ describe('MergedOutputRows', () => {
   });
 
   it('does NOT render ExtraFieldsLabels when fieldset has no fields', () => {
-    const map = new Map<string, IFieldsetData>([['fs-1', makeFieldsetData('fs-1', 0)]]);
-
     render(
       React.createElement(
         MergedOutputRows,
-        makeProps({ mergedRows: [fieldsetRow('fs-1')], fieldsetsByApiName: map }),
+        makeProps({ mergedRows: [fieldsetRow('fs-1', 'Fieldset A', 0)] }),
       ),
     );
 
@@ -164,12 +153,10 @@ describe('MergedOutputRows', () => {
   });
 
   it('renders FieldsetFlowRowDropdown for kind=fieldset rows', () => {
-    const map = new Map<string, IFieldsetData>([['fs-1', makeFieldsetData('fs-1', 0)]]);
-
     render(
       React.createElement(
         MergedOutputRows,
-        makeProps({ mergedRows: [fieldsetRow('fs-1')], fieldsetsByApiName: map }),
+        makeProps({ mergedRows: [fieldsetRow('fs-1')] }),
       ),
     );
 
@@ -178,12 +165,11 @@ describe('MergedOutputRows', () => {
 
   it('click Remove → onRemoveFieldset(sharedFieldsetId) called once', () => {
     const onRemoveFieldset = jest.fn();
-    const map = new Map<string, IFieldsetData>([['fs-1', makeFieldsetData('fs-1', 0)]]);
 
     render(
       React.createElement(
         MergedOutputRows,
-        makeProps({ mergedRows: [fieldsetRow('fs-1')], fieldsetsByApiName: map, onRemoveFieldset }),
+        makeProps({ mergedRows: [fieldsetRow('fs-1')], onRemoveFieldset }),
       ),
     );
 
@@ -195,12 +181,11 @@ describe('MergedOutputRows', () => {
 
   it('click Up → onMoveRow(0, "up") called once, "down" not called', () => {
     const onMoveRow = jest.fn();
-    const map = new Map<string, IFieldsetData>([['fs-1', makeFieldsetData('fs-1', 0)]]);
 
     render(
       React.createElement(
         MergedOutputRows,
-        makeProps({ mergedRows: [fieldsetRow('fs-1')], fieldsetsByApiName: map, onMoveRow }),
+        makeProps({ mergedRows: [fieldsetRow('fs-1')], onMoveRow }),
       ),
     );
 
@@ -213,12 +198,11 @@ describe('MergedOutputRows', () => {
 
   it('click Down → onMoveRow(0, "down") called once, "up" not called', () => {
     const onMoveRow = jest.fn();
-    const map = new Map<string, IFieldsetData>([['fs-1', makeFieldsetData('fs-1', 0)]]);
 
     render(
       React.createElement(
         MergedOutputRows,
-        makeProps({ mergedRows: [fieldsetRow('fs-1')], fieldsetsByApiName: map, onMoveRow }),
+        makeProps({ mergedRows: [fieldsetRow('fs-1')], onMoveRow }),
       ),
     );
 

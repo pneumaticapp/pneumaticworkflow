@@ -158,7 +158,6 @@ export function OutputFormTaskMerged({
         <div className={styles['fields']}>
           <MergedOutputRows
             mergedRows={mergedRows}
-            fieldsetsByApiName={fieldsetsByApiName}
             onDeleteField={handleDeleteField}
             onMoveRow={handleMoveMergedIndex}
             onEditField={handleEditField}
