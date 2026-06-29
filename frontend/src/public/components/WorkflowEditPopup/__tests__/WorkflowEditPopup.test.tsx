@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { IntlProvider } from 'react-intl';
 import { enMessages } from '../../../lang/locales/en_US';
 
@@ -97,6 +97,21 @@ describe('WorkflowEditPopup', () => {
       renderWithIntl(<WorkflowEditPopup {...baseProps} workflow={workflow} />);
 
       expect(screen.getAllByTestId('extra-field')).toHaveLength(2);
+    });
+  });
+
+  describe('Template description', () => {
+    it('renders markdown in template description', async () => {
+      const workflow = {
+        ...baseWorkflow,
+        description: '**Bold description**',
+      };
+
+      renderWithIntl(<WorkflowEditPopup {...baseProps} workflow={workflow} />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Bold description')).toBeInTheDocument();
+      });
     });
   });
 });

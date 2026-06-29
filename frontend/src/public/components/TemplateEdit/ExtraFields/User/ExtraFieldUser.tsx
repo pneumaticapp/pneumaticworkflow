@@ -62,7 +62,6 @@ export function ExtraFieldUser({
 
   const renderKickoffField = () => (
     <FieldWithName
-      inputClassName={inputStyles['kickoff-dropdown-field']}
       labelBackgroundColor={labelBackgroundColor}
       field={field}
       descriptionPlaceholder={descriptionPlaceholder}

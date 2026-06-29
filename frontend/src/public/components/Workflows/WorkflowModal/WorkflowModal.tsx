@@ -30,6 +30,7 @@ import { getWorkflowProgressColor } from '../utils/getWorkflowProgressColor';
 import { getEditedFields } from '../../TemplateEdit/ExtraFields/utils/getEditedFields';
 import { UserData } from '../../UserData';
 import { DateFormat } from '../../UI/DateFormat';
+import { RichText } from '../../RichText';
 
 import styles from './WorkflowModal.css';
 import {
@@ -425,7 +426,11 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps> {
     const workflowDescription = workflow?.description;
 
     if (workflowDescription) {
-      return <div className={styles['popup-description']}>{workflowDescription}</div>;
+      return (
+        <div className={styles['popup-description']}>
+          <RichText text={workflowDescription} embedVideos={false} />
+        </div>
+      );
     }
 
     return null;

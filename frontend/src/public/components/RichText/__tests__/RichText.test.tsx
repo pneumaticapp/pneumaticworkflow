@@ -28,6 +28,22 @@ import {
 describe('RichText', () => {
   const LOCALIZED_WF_STARTER_TITLE = intlMock.formatMessage({ id: 'kickoff.system-varibale-workflow-starter' });
 
+  it('renders multiple paragraphs without empty nbsp blocks', () => {
+    const props: IRichTextProps = {
+      text: 'Paragraph 1\n\nParagraph 2\n\n## Heading\n\nText below',
+      isMarkdownMode: true,
+    };
+
+    const { container } = render(<RichText {...props} />);
+
+    expect(container.querySelectorAll('p')).toHaveLength(3);
+    expect(container.innerHTML).not.toContain('&nbsp;');
+    expect(container.textContent).toContain('Paragraph 1');
+    expect(container.textContent).toContain('Paragraph 2');
+    expect(container.textContent).toContain('Heading');
+    expect(container.textContent).toContain('Text below');
+  });
+
   it('renders correct html for mentions and links', () => {
     const props: IRichTextProps = {
       text: 'Hello, [Jyoti Puri|3], look here: link: http://pneumatic.app/',
