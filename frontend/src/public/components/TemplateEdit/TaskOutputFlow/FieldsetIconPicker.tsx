@@ -24,14 +24,11 @@ interface IFieldsetCatalogPickerRow {
 }
 
 export interface IFieldsetIconPickerProps {
-  templateId: number | undefined;
   fieldsetsCatalogLoading: boolean;
   selectedFieldsetIds: number[];
   onSelectFieldset: (fieldsetCatalogItem: IFieldsetCatalogItem) => void;
   onRemoveFieldset: (sharedFieldsetId: number) => void;
 }
-
-const isReadyTemplateId = (id: number | undefined): id is number => typeof id === 'number';
 
 const buildCatalogPickerRows = (catalogFieldsetItems: IFieldsetCatalogItem[]): IFieldsetCatalogPickerRow[] => {
   const rows = catalogFieldsetItems.map<IFieldsetCatalogPickerRow>((catalogFieldsetItem) => ({
@@ -52,7 +49,6 @@ const buildCatalogPickerRows = (catalogFieldsetItems: IFieldsetCatalogItem[]): I
 };
 
 export const FieldsetIconPicker = ({
-  templateId,
   fieldsetsCatalogLoading,
   selectedFieldsetIds,
   onSelectFieldset,
@@ -139,7 +135,6 @@ export const FieldsetIconPicker = ({
   return (
     <div className={flowStyles['flow__fieldset-icon-slot']}>
       <Dropdown
-        isDisabled={!isReadyTemplateId(templateId)}
         direction="left"
         menuPositionFixed
         toggleProps={{id: 'task-output-fieldset-icon'}}

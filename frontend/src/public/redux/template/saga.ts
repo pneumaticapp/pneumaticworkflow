@@ -62,7 +62,7 @@ import { TUserListItem } from '../../types/user';
 import { loadTemplateIntegrationsStats, loadTemplates } from '../actions';
 import { loadFieldsetsCatalog } from '../fieldsets/slice';
 import { loadFieldsetsCatalogSuccess, loadFieldsetsCatalogFailed } from '../fieldsets/slice';
-import { getIsCatalogLoaded } from '../selectors/fieldsets';
+import { getIsCatalogLoaded, getFieldsetsCatalogIsLoading } from '../selectors/fieldsets';
 import { copyTemplate } from '../../api/copyTemplate';
 import { deleteTemplate } from '../../api/deleteTemplate';
 import { setGeneralLoaderVisibility } from '../general/actions';
@@ -91,8 +91,13 @@ export function* fetchTemplate({ payload: id }: TLoadTemplate) {
     yield setTemplateByTemplateResponse(template);
 
     const isCatalogLoaded: ReturnType<typeof getIsCatalogLoaded> = yield select(getIsCatalogLoaded);
-    if (!isCatalogLoaded) {
+    const isCatalogLoading: ReturnType<typeof getFieldsetsCatalogIsLoading> = yield select(getFieldsetsCatalogIsLoading);
+
+    if (!isCatalogLoaded && !isCatalogLoading) {
       yield put(loadFieldsetsCatalog());
+    }
+
+    if (!isCatalogLoaded) {
       yield take([loadFieldsetsCatalogSuccess.type, loadFieldsetsCatalogFailed.type]);
     }
 

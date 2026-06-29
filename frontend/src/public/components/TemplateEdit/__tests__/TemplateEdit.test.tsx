@@ -1,12 +1,13 @@
 import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 
 import { TemplateEdit } from '../TemplateEdit';
 import { cleanTemplateReferences } from '../../../utils/template';
 import { KickoffReduxContainer } from '../KickoffRedux';
 import { getSubscriptionPlan } from '../../../redux/selectors/user';
+import { getIsCatalogLoaded } from '../../../redux/selectors/fieldsets';
 import { ETemplateStatus } from '../../../types/redux';
 
 jest.mock('../../../utils/template', () => ({
@@ -94,7 +95,9 @@ jest.mock('../utils/getClonedTask', () => ({
   getClonedTask: jest.fn((task: any) => task),
 }));
 
-jest.mock('../../../redux/selectors/fieldsets', () => ({}));
+jest.mock('../../../redux/selectors/fieldsets', () => ({
+  getIsCatalogLoaded: jest.fn(),
+}));
 jest.mock('../../../redux/selectors/user', () => ({
   getSubscriptionPlan: jest.fn(),
 }));
@@ -150,8 +153,10 @@ describe('TemplateEdit', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    (useDispatch as jest.Mock).mockReturnValue(jest.fn());
     (useSelector as jest.Mock).mockImplementation((selector: unknown) => {
       if (selector === getSubscriptionPlan) return SUBSCRIPTION_PLAN;
+      if (selector === getIsCatalogLoaded) return true;
       return undefined;
     });
   });

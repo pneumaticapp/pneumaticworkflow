@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
 import { RouteComponentProps } from 'react-router-dom';
 import { debounce } from 'throttle-debounce';
@@ -32,6 +32,8 @@ import { usePrevious } from '../../hooks/usePrevious';
 import { ConditionsBanner } from './ConditionsBanner';
 import { getUserFullName } from '../../utils/users';
 import { getSubscriptionPlan } from '../../redux/selectors/user';
+import { getIsCatalogLoaded } from '../../redux/selectors/fieldsets';
+import { loadFieldsetsCatalog } from '../../redux/fieldsets/slice';
 import { ESubscriptionPlan } from '../../types/account';
 import { TemplateSettings } from './TemplateSettings';
 
@@ -89,8 +91,10 @@ export function TemplateEdit({
   loadTemplateVariablesSuccess,
 }: TTemplateEditProps) {
   const { formatMessage } = useIntl();
+  const dispatch = useDispatch();
   const { tasks, owners } = template;
   const billingPlan = useSelector(getSubscriptionPlan);
+  const isCatalogLoaded = useSelector(getIsCatalogLoaded);
 
   const isFreePlan = billingPlan === ESubscriptionPlan.Free;
   const accessConditions = isSubscribed || isFreePlan;
@@ -104,6 +108,10 @@ export function TemplateEdit({
 
   useEffect(() => {
     initPage();
+
+    if (!isCatalogLoaded) {
+      dispatch(loadFieldsetsCatalog());
+    }
 
     return () => {
       resetTemplateStore();

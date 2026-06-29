@@ -31,7 +31,6 @@ import stylesTaskForm from '../TaskForm/TaskForm.css';
 export interface IOutputFormTaskMergedOwnProps {
   task: ITemplateTaskClient;
   fieldsetsCatalogLoading: boolean;
-  templateId: number | undefined;
   accountId: number;
   show?: boolean;
   patchTask: (args: TPatchTaskPayload) => void;
@@ -42,7 +41,6 @@ export interface IOutputFormTaskMergedOwnProps {
 export function OutputFormTaskMerged({
   task,
   fieldsetsCatalogLoading,
-  templateId,
   accountId,
   show,
   patchTask,
@@ -143,7 +141,6 @@ export function OutputFormTaskMerged({
           <ExtraFieldIcon {...field} key={field.id} onClick={() => handleCreateField(field.id)} />
         ))}
         <FieldsetIconPicker
-          templateId={templateId}
           fieldsetsCatalogLoading={fieldsetsCatalogLoading}
           selectedFieldsetIds={(task.fieldsets || []).map((fieldset) => fieldset.sharedFieldsetId)}
           onSelectFieldset={handleAddFieldset}

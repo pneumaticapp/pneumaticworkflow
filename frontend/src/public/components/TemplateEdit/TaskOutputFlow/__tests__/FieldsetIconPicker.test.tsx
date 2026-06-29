@@ -68,7 +68,6 @@ const EMPTY_STATE = {};
 
 describe('FieldsetIconPicker', () => {
   const makeProps = (overrides: Partial<IFieldsetIconPickerProps> = {}): IFieldsetIconPickerProps => ({
-    templateId: 1,
     fieldsetsCatalogLoading: false,
     selectedFieldsetIds: [],
     onSelectFieldset: jest.fn(),
@@ -84,14 +83,9 @@ describe('FieldsetIconPicker', () => {
     (getFieldsetsCatalogItems as jest.Mock).mockReturnValue([]);
   });
 
-  it('templateId=undefined → Dropdown receives isDisabled: true', () => {
-    render(React.createElement(FieldsetIconPicker, makeProps({ templateId: undefined })));
-    expect(getDropdownProps().isDisabled).toBe(true);
-  });
-
-  it('templateId=number → Dropdown receives isDisabled: false', () => {
-    render(React.createElement(FieldsetIconPicker, makeProps({ templateId: 42 })));
-    expect(getDropdownProps().isDisabled).toBe(false);
+  it('Dropdown does not receive isDisabled prop', () => {
+    render(React.createElement(FieldsetIconPicker, makeProps()));
+    expect(getDropdownProps().isDisabled).toBeUndefined();
   });
 
   it('fieldsetsCatalogLoading=true and empty catalog → loading text is rendered', () => {

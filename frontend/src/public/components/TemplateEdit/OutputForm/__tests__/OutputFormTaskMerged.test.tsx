@@ -186,7 +186,6 @@ describe('OutputFormTaskMerged', () => {
       React.createElement(OutputFormTaskMerged, {
         task: props.task,
         fieldsetsCatalogLoading: false,
-        templateId: 1,
         accountId: 1,
         patchTask,
         intl: intlMock,

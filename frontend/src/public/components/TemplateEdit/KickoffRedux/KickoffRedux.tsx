@@ -48,7 +48,7 @@ export interface IKickoffReduxProps {
 }
 
 export function KickoffRedux({
-  template: { id: templateId, kickoff, wfNameTemplate },
+  template: { kickoff, wfNameTemplate },
   intl: { formatMessage },
   setKickoff,
   accountId,
@@ -165,7 +165,6 @@ export function KickoffRedux({
             <ExtraFieldIcon {...x} key={x.id} onClick={() => handleCreateField(x.id)} />
           ))}
           <FieldsetIconPicker
-            templateId={templateId}
             fieldsetsCatalogLoading={fieldsetsCatalogLoading}
             selectedFieldsetIds={(kickoff.fieldsets || []).map((fieldset) => fieldset.sharedFieldsetId)}
             onSelectFieldset={handleAddKickoffFieldset}

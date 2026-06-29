@@ -179,7 +179,6 @@ export function TaskForm({
           mode="taskMerged"
           task={task}
           fieldsetsCatalogLoading={fieldsetsCatalogLoading}
-          templateId={templateId}
           accountId={accountId}
           show={ETaskFormParts.Fields === scrollTarget || ETaskFormParts.Fieldsets === scrollTarget}
           patchTask={patchTask}
