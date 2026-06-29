@@ -94,13 +94,15 @@ export function useTaskFormParts({
   }, [startingOrder, currentTask.conditions, onEdit]);
 
   const createWidget = useCallback(
-    (Component: (props: IWidgetProps & { onClick: () => void }) => React.ReactNode, props: IWidgetProps) => {
-      return (toggle: () => void) => Component({
-        task: props.task,
-        onClick: toggle,
-        isInTaskForm: props.isInTaskForm,
-        isStartTask: props.isStartTask,
-      });
+    (Component: React.ComponentType<IWidgetProps & { onClick: () => void }>, props: IWidgetProps) => {
+      return (toggle: () => void) => (
+        <Component
+          task={props.task}
+          onClick={toggle}
+          isInTaskForm={props.isInTaskForm}
+          isStartTask={props.isStartTask}
+        />
+      );
     },
     [],
   );
