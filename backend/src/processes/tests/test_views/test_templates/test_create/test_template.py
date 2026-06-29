@@ -3834,7 +3834,7 @@ def test_create__invalid_wf_name_template__validation_error(
     templates_created_mock.assert_not_called()
 
 
-def test_create__kickoff_only_required_data__ok(
+def test_create__kickoff_fieldset_only_required_data__ok(
     mocker,
     api_client,
 ):
@@ -3964,7 +3964,7 @@ def test_create__kickoff_only_required_data__ok(
     assert field_data['api_name'] == field.api_name
 
 
-def test_create__kickoff_all_fieldset_data__ok(
+def test_create__kickoff_fieldset_all_fieldset_data__ok(
     mocker,
     api_client,
 ):
@@ -4251,7 +4251,7 @@ def test_create__task_fieldset_only_required_data__ok(
     assert field_data['api_name'] == field.api_name
 
 
-def test_create__task_all_fieldset_data__ok(
+def test_create__task_fieldset_all_fieldset_data__ok(
     mocker,
     api_client,
 ):
