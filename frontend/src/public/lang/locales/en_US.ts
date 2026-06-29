@@ -957,7 +957,7 @@ export const enMessages = {
   'workflows.comment-reaction-button': 'Toggle reaction',
   'workflow.tune-view-button': 'Tune View',
   'workflow.tune-view-tooltip': 'To fine-tune the table view — select a Template',
-  'workflows.export-menu': 'export',
+  'workflows.export-menu': 'Export',
   'workflows.export-menu-aria': 'Export workflows',
   'workflows.export-as-excel': 'Excel (.xlsx)',
   'workflows.export-as-csv': 'CSV (.csv)',
