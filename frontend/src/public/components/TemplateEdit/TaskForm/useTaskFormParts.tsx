@@ -5,7 +5,6 @@ import { useIntl } from 'react-intl';
 import { TUserListItem } from '../../../types/user';
 import { IKickoff, ITemplateTask } from '../../../types/template';
 import { TTaskVariable, ETaskFormParts } from '../types';
-import { TPatchTaskPayload } from '../../../redux/actions';
 import { OutputFormIntl } from '../OutputForm';
 import { StepName } from '../../StepName';
 import { TaskItemUsers } from '../TaskItem/TaskItemUsers';
@@ -33,7 +32,6 @@ interface IUseTaskFormPartsProps {
   templateId: number | undefined;
   users: TUserListItem[];
   handleTaskFieldChange(field: keyof ITemplateTask): (value: ITemplateTask[keyof ITemplateTask]) => void;
-  patchTask(args: TPatchTaskPayload): void;
   setCurrentTask(changedFields: Partial<ITemplateTask>): void;
 }
 
@@ -58,7 +56,6 @@ export function useTaskFormParts({
   isTeamInvitesModalOpen,
   kickoff,
   listVariables,
-  patchTask,
   isFieldsSectionShown,
   setCurrentTask,
   tasks,
@@ -82,16 +79,16 @@ export function useTaskFormParts({
       })),
   ], [currentTask.apiName, formatMessage, tasks, templateId]);
 
-  const onEdit = useCallback(
+  const onRemoveDeletedTasks = useCallback(
     (conditions: ICondition[]) => {
-      patchTask({ taskUUID: currentTask.uuid, changedFields: { conditions } });
+      setCurrentTask({ conditions });
     },
-    [patchTask, currentTask.uuid],
+    [setCurrentTask],
   );
 
   useEffect(() => {
-    removeDeletedTasks(startingOrder, currentTask.conditions, onEdit);
-  }, [startingOrder, currentTask.conditions, onEdit]);
+    removeDeletedTasks(startingOrder, currentTask.conditions, onRemoveDeletedTasks);
+  }, [startingOrder, currentTask.conditions, onRemoveDeletedTasks]);
 
   const createWidget = useCallback(
     (Component: React.ComponentType<IWidgetProps & { onClick: () => void }>, props: IWidgetProps) => {

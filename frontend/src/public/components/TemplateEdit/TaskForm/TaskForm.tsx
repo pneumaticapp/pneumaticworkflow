@@ -84,7 +84,6 @@ export function TaskForm({
             isTeamInvitesModalOpen={isTeamInvitesModalOpen}
             kickoff={kickoff}
             listVariables={listVariables}
-            patchTask={patchTask}
             scrollTarget={scrollTarget}
             setCurrentTask={setCurrentTask}
             tasks={tasks}

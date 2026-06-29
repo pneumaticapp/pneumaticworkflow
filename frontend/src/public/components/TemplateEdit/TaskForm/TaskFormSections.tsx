@@ -5,7 +5,6 @@ import { useIntl } from 'react-intl';
 import { TUserListItem } from '../../../types/user';
 import { IKickoff, ITemplateTask } from '../../../types/template';
 import { TTaskVariable, TTaskFormPart, ETaskFormParts } from '../types';
-import { TPatchTaskPayload } from '../../../redux/actions';
 import { scrollToElement } from '../../../utils/helpers';
 import { ShowMore } from '../../UI/ShowMore';
 import { useTaskFormParts } from './useTaskFormParts';
@@ -25,7 +24,6 @@ interface ITaskFormSectionsProps {
   users: TUserListItem[];
   wrapperRef: React.RefObject<HTMLDivElement>;
   handleTaskFieldChange(field: keyof ITemplateTask): (value: ITemplateTask[keyof ITemplateTask]) => void;
-  patchTask(args: TPatchTaskPayload): void;
   setCurrentTask(changedFields: Partial<ITemplateTask>): void;
 }
 
@@ -37,7 +35,6 @@ export function TaskFormSections({
   isTeamInvitesModalOpen,
   kickoff,
   listVariables,
-  patchTask,
   scrollTarget,
   setCurrentTask,
   tasks,
@@ -62,7 +59,6 @@ export function TaskFormSections({
     isTeamInvitesModalOpen,
     kickoff,
     listVariables,
-    patchTask,
     isFieldsSectionShown: ETaskFormParts.Fields === scrollTarget,
     setCurrentTask,
     tasks,
