@@ -1,6 +1,6 @@
 import { ITemplateResponse } from '../types/template';
 import { IFieldsetRuntime } from '../types/fieldset';
-import { mapFieldsetBindingsToClient } from './mapFieldsetBindingsToClient';
+import { mapFieldsetBindingsToClient } from './mapFieldsetsAPIToClient';
 import { mapFieldsetBindingClientToRuntime } from './mapFieldsetBindingClientToRuntime';
 
 export function mapTemplateFieldsetsToRuntime(template: ITemplateResponse) {

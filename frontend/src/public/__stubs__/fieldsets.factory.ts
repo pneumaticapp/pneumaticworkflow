@@ -24,10 +24,8 @@ export const makeFieldsetRuntime = (overrides: Partial<IFieldsetRuntime> = {}): 
   order: 0,
   fields: [],
   labelPosition: EFieldLabelPosition.Top,
-  rulesCount: 0,
   layout: 'vertical',
   title: '',
-  rules: [],
   ...overrides,
 });
 

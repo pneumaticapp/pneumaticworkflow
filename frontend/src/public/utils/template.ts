@@ -16,7 +16,7 @@ import {
   IExtraField,
 } from '../types/template';
 import { IFieldsetBindingClient, IFieldsetBindingMeta } from '../types/fieldset';
-import { mapFieldsetBindingsToClient } from './mapFieldsetBindingsToClient';
+import { mapFieldsetBindingsToClient } from './mapFieldsetsAPIToClient';
 import { getUrlParams } from './getUrlParams';
 import { DEFAULT_TEMPLATE_NAME } from '../components/TemplateEdit/constants';
 

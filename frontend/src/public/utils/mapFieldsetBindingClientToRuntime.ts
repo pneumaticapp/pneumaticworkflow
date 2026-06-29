@@ -31,12 +31,10 @@ export function mapFieldsetBindingClientToRuntime({
   fields: rawFields,
   order,
   labelPosition,
-  rules,
   layout,
   title,
 }: IFieldsetBindingClient): IFieldsetRuntime {
   const fields = mapFieldsToExtraFields(rawFields || []);
-  const rulesCount = Array.isArray(rules) ? rules.length : 0;
 
   return {
     apiNameBinding,
@@ -47,9 +45,7 @@ export function mapFieldsetBindingClientToRuntime({
     labelPosition: labelPosition === EFieldLabelPosition.Left
       ? EFieldLabelPosition.Left
       : EFieldLabelPosition.Top,
-    rulesCount,
     layout,
     title,
-    rules,
   };
 }

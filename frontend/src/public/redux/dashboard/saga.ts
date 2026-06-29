@@ -46,7 +46,7 @@ import { getRunnableWorkflow, loadDatasetsMap } from '../../components/TemplateE
 import { ITemplateResponse, IExtraField, IKickoffClient } from '../../types/template';
 import { IFieldsetRuntime } from '../../types/fieldset';
 import { mapTemplateFieldsetsToRuntime } from '../../utils/mapTemplateFieldsetsToRuntime';
-import { mapFieldsetBindingsToClient } from '../../utils/mapFieldsetBindingsToClient';
+import { mapFieldsetBindingsToClient } from '../../utils/mapFieldsetsAPIToClient';
 import { mapFieldsetBindingClientToRuntime, mapFieldsToExtraFields } from '../../utils/mapFieldsetBindingClientToRuntime';
 import { getGettingStartedChecklist } from '../../api/getGettingStartedChecklist';
 import { IGettingStartedChecklist } from '../../types/dashboard';
