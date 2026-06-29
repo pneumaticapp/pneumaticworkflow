@@ -134,15 +134,6 @@ export function RichText({
     replaceLogic: any;
   }[] = [
     {
-      // This is a hacky way to correctly render new lines in markdown
-      regExp: /\n/g,
-      replaceLogic: (match: string, offset: number, str: string) => {
-        const nextSymbol = str[offset + 1];
-
-        return nextSymbol === '\n' ? '\n&nbsp;\n' : match;
-      },
-    },
-    {
       regExp: mentionsRegex,
       replaceLogic: `<span class='${styles['mention']}'>@$1</span>`,
     },

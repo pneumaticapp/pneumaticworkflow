@@ -70,6 +70,21 @@ describe('RichText', () => {
     expect(container.firstChild).toMatchSnapshot();
   });
 
+  it('does not append trailing space to paragraphs separated by blank lines', () => {
+    const props: IRichTextProps = {
+      text: 'Paragraph one\n\nParagraph two\n\n',
+      isMarkdownMode: true,
+    };
+
+    const { container } = render(<RichText {...props} />);
+    const paragraphs = container.querySelectorAll('p');
+
+    expect(paragraphs).toHaveLength(2);
+    expect(paragraphs[0].textContent).toBe('Paragraph one');
+    expect(paragraphs[1].textContent).toBe('Paragraph two');
+    expect(container.innerHTML).not.toContain('&nbsp;');
+  });
+
   it('clears xss', () => {
     const props: IRichTextProps = {
       text: '<script>console.log("I\'ll try to hack you")</script>',
