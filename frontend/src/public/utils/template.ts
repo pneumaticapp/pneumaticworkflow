@@ -20,7 +20,6 @@ import { mapFieldsetBindingsToClient } from './mapFieldsetsAPIToClient';
 import { getUrlParams } from './getUrlParams';
 import { DEFAULT_TEMPLATE_NAME } from '../components/TemplateEdit/constants';
 
-import { getNormalizeFieldsOrders } from './workflows';
 import { createOwnerApiName, createTaskApiName, createUUID } from './createId';
 import { isArrayWithItems, omit } from './helpers';
 import { getEmptyConditions } from '../components/TemplateEdit/TaskForm/Conditions/utils/getEmptyConditions';
@@ -135,7 +134,6 @@ export const getNormalizedTask = (
   return {
     ...omit(task, ['dueIn']),
     apiName: task.apiName || createTaskApiName(),
-    fields: getNormalizeFieldsOrders(task.fields),
     uuid: createUUID(),
     conditions,
     rawDueDate,
