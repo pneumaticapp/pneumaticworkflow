@@ -173,7 +173,8 @@
   }
 
   svg {
-    margin-bottom: 0.2rem;
+    position: relative;
+    top: -0.2rem;
   }
 
   &:hover {
@@ -191,6 +192,7 @@
     position: relative;
     z-index: 1;
     margin: 0 1.2rem -1rem;
+    padding: 0 1.2rem;
     display: inline-flex;
     box-sizing: border-box;
     min-width: 0;
@@ -202,7 +204,6 @@
 
     input,
     .kick-off-input__name-textarea {
-      padding: 0 1.2rem;
       overflow: hidden;
       box-sizing: border-box;
       font-family: Nunito, sans-serif;
@@ -229,6 +230,7 @@
     }
 
     .kick-off-input__name-textarea {
+      padding: 0;
       box-sizing: border-box;
       flex: 1 1 auto;
       min-width: 0;
@@ -269,6 +271,18 @@
       white-space: pre-line;
       word-break: break-word;
       flex: none;
+    }
+  }
+
+  .kick-off-input__name_kickoff-edit {
+    width: fit-content;
+    max-width: calc(100% - 2.4rem);
+    align-self: flex-start;
+
+    .kick-off-input__name-textarea {
+      flex: 0 1 auto;
+      width: auto;
+      max-width: 100%;
     }
   }
 
@@ -498,11 +512,8 @@
   color: var(--pneumatic-color-warning);
 }
 
+.without-label,
 .with-label {
-  margin-top: 2.3rem;
-}
-
-.without-label {
   margin-top: 1.6rem;
 }
 
@@ -603,7 +614,7 @@
 .kick-off-edit-name {
   all: unset;
   flex-shrink: 0;
-  padding-right: 0.4rem;
+  margin-left: 0.4rem;
   color: var(--pneumatic-color-link);
   background-color: var(--pneumatic-color-white);
   transition: color 0.1s ease-in-out;
@@ -614,8 +625,6 @@
 }
 
 .kick-off-required-sign {
-  position: relative;
-  left: -0.3rem;
   flex-shrink: 0;
   display: inline-block;
   width: 0.68rem;
@@ -632,11 +641,6 @@
   .kick-off-required-sign {
     background-color: var(--pneumatic-color-beige);
   }
-}
-
-.kick-off-required-sign + .kick-off-edit-name {
-  position: relative;
-  left: -0.3rem;
 }
 
 .workflow-name-field-container {

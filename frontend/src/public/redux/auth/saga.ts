@@ -1,4 +1,5 @@
-import { all, call, fork, put, takeEvery, takeLatest, select, takeLeading } from 'redux-saga/effects';
+import type { Task } from 'redux-saga';
+import { all, call, cancel, fork, put, takeEvery, takeLatest, select, takeLeading } from 'redux-saga/effects';
 import { auth } from '../../api/auth';
 import {
   accountEditFailed,
@@ -66,6 +67,7 @@ import { getUTMParams, IUserUtm } from '../../views/user/utils/utmParams';
 import { clearAppFilters, setGeneralLoaderVisibility } from '../general/actions';
 import { getQueryStringParams, history } from '../../utils/history';
 import { watchWsEvents } from '../realtime/watchWsEvents';
+import { closeAllConnections } from '../utils/webSocketConnections';
 import { TUploadedFile, uploadUserAvatar } from '../../utils/uploadFiles';
 import { changePhotoProfile } from '../../api/changePhotoProfile';
 import { ELoggedState, IAuthUser } from '../../types/redux';
@@ -268,6 +270,7 @@ export function* registerWithInvite({ payload }: TRegisterUserInvited) {
 }
 
 function* handleLogoutUnsubscribing({ shouldExpireToken }: { shouldExpireToken: boolean }) {
+  yield call(stopWatchWsEvents);
   yield put(clearAppFilters());
   resetFirebaseDeviceToken();
   resetSuperuserToken();
@@ -688,12 +691,24 @@ export function* watchSetUserToken() {
   yield takeEvery(EAuthActions.SetToken, handleSetUserToken);
 }
 
+let watchWsEventsTask: Task | undefined;
+
+function* stopWatchWsEvents() {
+  if (watchWsEventsTask) {
+    yield cancel(watchWsEventsTask);
+    watchWsEventsTask = undefined;
+  }
+
+  yield call(closeAllConnections);
+}
+
 function* handleWatchUserWSEvents() {
-  yield fork(watchWsEvents);
+  yield call(stopWatchWsEvents);
+  watchWsEventsTask = yield fork(watchWsEvents);
 }
 
 export function* watchUserWSEvents() {
-  yield takeEvery(EAuthActions.WatchUserWSEvents, handleWatchUserWSEvents);
+  yield takeLeading(EAuthActions.WatchUserWSEvents, handleWatchUserWSEvents);
 }
 
 export function* watchUploadUserPhoto() {

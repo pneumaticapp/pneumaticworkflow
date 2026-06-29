@@ -317,19 +317,9 @@
   width: 100%;
   font-size: 1.3rem;
   line-height: 1.6rem;
-  white-space: pre-wrap;
   text-overflow: ellipsis;
   word-break: break-word;
   color: var(--pneumatic-warning-color);
-}
-
-.description_more {
-  cursor: pointer;
-  color: var(--pneumatic-color-link) !important;
-
-  .more_delimeter {
-    color: var(--pneumatic-warning-color);
-  }
 }
 
 .popup-buttons {

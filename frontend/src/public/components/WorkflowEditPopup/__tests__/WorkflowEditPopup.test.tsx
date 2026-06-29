@@ -10,6 +10,7 @@ import { IFieldsetRuntime } from '../../../types/fieldset';
 import { makeExtraField } from '../../../__stubs__/fields.factory';
 import { makeFieldsetRuntime } from '../../../__stubs__/fieldsets.factory';
 import { MergedOutputList } from '../../MergedOutputList';
+import { RichText } from '../../RichText';
 import { InputWithVariables } from '../../TemplateEdit/InputWithVariables';
 import { intlMock } from '../../../__stubs__/intlMock';
 
@@ -56,7 +57,7 @@ jest.mock('../../UI', () => ({
 }));
 
 jest.mock('../../RichText', () => ({
-  RichText: ({ text }: { text: string }) => React.createElement('span', null, text),
+  RichText: jest.fn(({ text }: { text: string }) => React.createElement('span', null, text)),
 }));
 
 jest.mock('../../icons', () => ({
@@ -357,6 +358,23 @@ describe('WorkflowEditPopup', () => {
       const lastCallProps = mergedMock.mock.calls[mergedMock.mock.calls.length - 1][0];
       expect(lastCallProps.fields).toHaveLength(0);
       expect(lastCallProps.fieldsets).toHaveLength(1);
+    });
+  });
+
+  describe('Template description', () => {
+    it('renders template description via RichText', () => {
+      const workflow = {
+        ...baseWorkflow,
+        description: '**Bold description**',
+      };
+
+      renderWithIntl(<WorkflowEditPopup {...baseProps} workflow={workflow} />);
+
+      expect(RichText as jest.Mock).toHaveBeenCalledTimes(1);
+      expect(RichText as jest.Mock).toHaveBeenCalledWith(
+        expect.objectContaining({ text: '**Bold description**' }),
+        {},
+      );
     });
   });
 });

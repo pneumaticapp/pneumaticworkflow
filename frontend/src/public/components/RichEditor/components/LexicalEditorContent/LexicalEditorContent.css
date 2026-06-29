@@ -86,6 +86,43 @@
   min-height: 2rem;
 }
 
+:global(.lexical-rich-editor-heading-h1),
+:global(.lexical-rich-editor-heading-h2),
+:global(.lexical-rich-editor-heading-h3),
+:global(.lexical-rich-editor-heading-h4),
+:global(.lexical-rich-editor-heading-h5),
+:global(.lexical-rich-editor-heading-h6) {
+  margin: 0;
+  padding: 0;
+  font-weight: 800;
+  line-height: 1.3;
+  color: var(--pneumatic-color-black100);
+}
+
+:global(.lexical-rich-editor-heading-h1) {
+  font-size: 2.4rem;
+}
+
+:global(.lexical-rich-editor-heading-h2) {
+  font-size: 2rem;
+}
+
+:global(.lexical-rich-editor-heading-h3) {
+  font-size: 1.8rem;
+}
+
+:global(.lexical-rich-editor-heading-h4) {
+  font-size: 1.6rem;
+}
+
+:global(.lexical-rich-editor-heading-h5) {
+  font-size: 1.5rem;
+}
+
+:global(.lexical-rich-editor-heading-h6) {
+  font-size: 1.4rem;
+}
+
 :global(.lexical-rich-editor-link) {
   color: var(--pneumatic-color-link-dark);
   transition: color 0.1s ease-in-out;

@@ -271,6 +271,7 @@ export const WorkflowLog = ({
           <WorkflowLogTaskComplete currentTask={eventTask} isOnlyAttachmentsShown={isOnlyAttachmentsShown} {...event} />
         ),
         [EWorkflowLogEvent.WorkflowFinished]: <WorkflowLogWorkflowFinished {...event} />,
+        [EWorkflowLogEvent.WorkflowComplete]: <WorkflowLogWorkflowFinished {...event} />,
         [EWorkflowLogEvent.WorkflowSnoozed]: <WorkflowLogDelay delay={delay} theme={theme} />,
         [EWorkflowLogEvent.WorkflowSnoozedManually]: <WorkflowLogWorkflowSnoozedManually {...event} delay={delay!} />,
         [EWorkflowLogEvent.WorkflowResumed]: <WorkflowLogWorkflowResumed {...event} />,
@@ -298,7 +299,6 @@ export const WorkflowLog = ({
         [EWorkflowLogEvent.AddedPerformer]: <WorkflowLogAddedPerformer {...event} />,
         [EWorkflowLogEvent.RemovedPerformer]: <WorkflowLogRemovedPerformer {...event} />,
         [EWorkflowLogEvent.DueDateChanged]: <WorkflowLogDueDateChanged {...event} />,
-        [EWorkflowLogEvent.WorkflowComplete]: null,
         [EWorkflowLogEvent.WorkflowRun]: null,
         [EWorkflowLogEvent.AddedPerformerGroup]: <WorkflowLogAddedPerformerGroup {...event} />,
         [EWorkflowLogEvent.RemovedPerformerGroup]: <WorkflowLogRemovedPerformerGroup {...event} />,

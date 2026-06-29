@@ -1,6 +1,7 @@
 import { call, put, select } from 'redux-saga/effects';
 
 import type { IRealtimeWsEnvelope } from '../types';
+import type { IStoreTask, IStoreWorkflows } from '../../../types/redux';
 import { ERealtimeEnvelopeType } from '../types';
 
 import { handleAddTask, handleRemoveTask } from '../../tasks/saga';
@@ -17,7 +18,6 @@ import { getUserTimezone } from '../../selectors/user';
 import { updateWorkflowLogItem } from '../../workflows/slice';
 import { isWorkflowEndedEventType } from './isWorkflowEndedEventType';
 import { mapBackendNewEventToRedux } from '../../../utils/mappers';
-import type { IStoreTask, IStoreWorkflows } from '../../../types/redux';
 import { getWorkflowsStore } from '../../selectors/workflows';
 import { getTaskStore } from '../../selectors/task';
 
@@ -86,16 +86,14 @@ export function* routeRealtimeEvent(envelope: IRealtimeWsEnvelope) {
       if (item) {
         yield call(prependNotificationItem, item);
       } else {
-        logger.error(`unhandled WebSocket event: ${envelope.type}, id=${envelope.id}`);
+        logger.error(`unhandled WebSocket event: ${envelope.type}`);
       }
 
       break;
     }
     default: {
       const unexpectedEnvelope = envelope as IRealtimeWsEnvelope;
-      logger.error(
-        `unhandled WebSocket event: ${unexpectedEnvelope.type}, id=${unexpectedEnvelope.id}`,
-      );
+      logger.error(`unhandled WebSocket event: ${String(unexpectedEnvelope.type)}`);
       break;
     }
   }

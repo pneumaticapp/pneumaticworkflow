@@ -59,10 +59,11 @@ export function FieldLabel({
       classnames(
         getInputNameBackground(labelBackgroundColor),
         styles['kick-off-input__name'],
+        isKickoffEditorMode && styles['kick-off-input__name_kickoff-edit'],
         fieldNameError && styles['kick-off-input__name_error'],
         className,
       ),
-    [labelBackgroundColor, fieldNameError, className],
+    [labelBackgroundColor, fieldNameError, isKickoffEditorMode, className],
   );
 
   return (

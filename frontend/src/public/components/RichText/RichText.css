@@ -1,18 +1,70 @@
 /* stylelint-disable selector-max-compound-selectors */
-.container * {
-  margin: 0;
-  max-width: 100%;
-  font-size: inherit;
-  line-height: inherit;
-  white-space: pre-wrap;
-}
-
 .container {
   overflow-wrap: anywhere;
 
+  * + * {
+    /* stylelint-disable-next-line declaration-no-important */
+    margin-top: 2rem !important;
+  }
+
+  li + li {
+    /* stylelint-disable-next-line declaration-no-important */
+    margin-top: 0.8rem !important;
+  }
+
+  p,
+  li,
+  blockquote,
+  pre,
+  code {
+    margin: 0;
+    max-width: 100%;
+    white-space: pre-wrap;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    margin: 0.8rem 0 0.4rem;
+    font-weight: 800;
+    line-height: 1.3;
+    color: inherit;
+  }
+
+  h1 {
+    font-size: 2.4rem;
+  }
+
+  h2 {
+    font-size: 2rem;
+  }
+
+  h3 {
+    font-size: 1.8rem;
+  }
+
+  h4 {
+    font-size: 1.6rem;
+  }
+
+  h5 {
+    font-size: 1.5rem;
+  }
+
+  h6 {
+    font-size: 1.4rem;
+  }
+
+  strong {
+    font-weight: 800;
+  }
+
   hr {
-    margin: 16px 0;
-    max-width: 370px;
+    margin: 1.6rem 0;
+    max-width: 37rem;
   }
 
   a {
@@ -26,8 +78,8 @@
 
   ul,
   ol {
-    padding-left: 32px;
-    list-style-position: inside;
+    padding-left: 3.2rem;
+    list-style-position: outside;
 
     li::marker {
       font-weight: bold;
@@ -65,7 +117,7 @@
   img {
     display: block;
     width: auto;
-    max-height: 500px;
+    max-height: 50rem;
     cursor: pointer;
   }
 }
@@ -83,30 +135,36 @@
 
 .loading-image {
   width: 100%;
-  min-height: 64px;
+  min-height: 6.4rem;
   pointer-events: none;
-  background-color: #f6f6f6;
-  background-image: linear-gradient(90deg, #f6f6f6, white, #f6f6f6);
+  background-color: var(--pneumatic-color-beige);
+  background-image:
+    linear-gradient(
+      90deg,
+      var(--pneumatic-color-beige),
+      var(--pneumatic-color-white),
+      var(--pneumatic-color-beige)
+    );
   background-repeat: no-repeat;
-  background-size: 200px 100%;
-  border-radius: 4px;
+  background-size: 20rem 100%;
+  border-radius: 0.4rem;
   animation: loading-animation 1.8s ease-in-out infinite;
 }
 
 @keyframes loading-animation {
   0% {
-    background-position: -200px 0;
+    background-position: -20rem 0;
   }
   100% {
-    background-position: calc(200px + 100%) 0;
+    background-position: calc(20rem + 100%) 0;
   }
 }
 
 .checklist {
-  margin: 16px 32px;
+  margin: 1.6rem 3.2rem;
 
   @media (--mobile) {
-    margin: 16px 0;
+    margin: 1.6rem 0;
   }
 }
 
@@ -116,10 +174,10 @@
 
 .checkbox-wrapper {
   display: flex;
-  min-height: 20px;
+  min-height: 2rem;
 
   &:not(:last-child) {
-    margin-bottom: 8px;
+    margin-bottom: 0.8rem;
   }
 }
 
@@ -132,11 +190,11 @@
 }
 
 .checkbox-content {
-  margin-left: 28px;
+  margin-left: 2.8rem;
 }
 
 .progressbar-container {
-  margin-bottom: 6px;
+  margin-bottom: 0.6rem;
 }
 
 .progressbar {
@@ -145,18 +203,56 @@
 }
 
 .progressbar-hint {
-  margin-left: 8px;
+  margin-left: 0.8rem;
 }
 
 .progressbar-hint-icon {
   display: flex;
 }
 
+.container_collapsed {
+  /* stylelint-disable-next-line value-no-vendor-prefix */
+  display: -webkit-box;
+  overflow: hidden;
+  /* stylelint-disable-next-line property-no-vendor-prefix */
+  -webkit-box-orient: vertical;
+}
+
+.wrapper {
+  width: 100%;
+}
+
+.wrapper_collapsed {
+  position: relative;
+}
+
+.more-link {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  padding-left: 1rem;
+  line-height: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+  /* stylelint-disable-next-line declaration-no-important */
+  color: var(--pneumatic-color-link) !important;
+  background:
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      var(--rich-text-more-fade-color, var(--pneumatic-color-white)) 0.75rem
+    );
+}
+
+.more-link__delimiter {
+  color: var(--pneumatic-warning-color);
+}
+
 .checkbox-fake-placeholder {
   position: absolute;
-  width: 20px;
-  height: 20px;
+  width: 2rem;
+  height: 2rem;
   background-color: transparent;
   border: 1px solid var(--pneumatic-color-black16);
-  border-radius: 4px;
+  border-radius: 0.4rem;
 }

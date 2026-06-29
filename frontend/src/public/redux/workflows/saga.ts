@@ -100,6 +100,7 @@ import {
   getLastLoadedTemplateIdForTable,
 } from '../selectors/workflows';
 import { getCurrentTask } from '../selectors/task';
+import { syncRenamedWorkflowToTasks } from './utils/syncRenamedWorkflowToTasks';
 import { getEditKickoff, mapFilesToRequest } from '../../utils/workflows';
 import { getErrorMessage } from '../../utils/getErrorMessage';
 import { getWorkflows } from '../../api/getWorkflows';
@@ -472,6 +473,14 @@ function* editWorkflowInWork({ payload }: PayloadAction<TEditWorkflowPayload>) {
             }),
           ),
         ),
+      );
+    }
+    if (name) {
+      yield syncRenamedWorkflowToTasks(
+        task,
+        payload.workflowId,
+        formattedEditedWorkflow.name,
+        formattedWorkflow.tasks,
       );
     }
     // yield put(loadWorkflowsList(0));
