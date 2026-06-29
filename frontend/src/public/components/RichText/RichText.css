@@ -2,16 +2,6 @@
 .container {
   overflow-wrap: anywhere;
 
-  * + * {
-    /* stylelint-disable-next-line declaration-no-important */
-    margin-top: 2rem !important;
-  }
-
-  li + li {
-    /* stylelint-disable-next-line declaration-no-important */
-    margin-top: 0.8rem !important;
-  }
-
   p,
   li,
   blockquote,
@@ -19,7 +9,6 @@
   code {
     margin: 0;
     max-width: 100%;
-    white-space: pre-wrap;
   }
 
   h1,
@@ -133,6 +122,10 @@
   width: 100%;
 }
 
+.video-container {
+  width: 100%;
+}
+
 .loading-image {
   width: 100%;
   min-height: 6.4rem;
@@ -210,12 +203,32 @@
   display: flex;
 }
 
+.markdown-content {
+  p,
+  img,
+  ul,
+  ol {
+    margin: 2rem 0;
+  }
+
+  li + li {
+    margin-top: 0.8rem;
+  }
+
+  .video-container {
+    margin: 2rem 0;
+  }
+}
+
 .container_collapsed {
   /* stylelint-disable-next-line value-no-vendor-prefix */
   display: -webkit-box;
   overflow: hidden;
   /* stylelint-disable-next-line property-no-vendor-prefix */
   -webkit-box-orient: vertical;
+  /* stylelint-disable-next-line property-no-vendor-prefix */
+  -webkit-line-clamp: var(--rich-text-line-clamp);
+  line-clamp: var(--rich-text-line-clamp);
 }
 
 .wrapper {
@@ -234,14 +247,7 @@
   line-height: inherit;
   white-space: nowrap;
   cursor: pointer;
-  /* stylelint-disable-next-line declaration-no-important */
-  color: var(--pneumatic-color-link) !important;
-  background:
-    linear-gradient(
-      90deg,
-      transparent 0%,
-      var(--rich-text-more-fade-color, var(--pneumatic-color-white)) 0.75rem
-    );
+  color: var(--pneumatic-color-link);
 }
 
 .more-link__delimiter {

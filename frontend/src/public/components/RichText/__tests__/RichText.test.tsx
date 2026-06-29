@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { render } from '@testing-library/react';
-import { RichText, IRichTextProps } from '../RichText';
+import { RichText } from '../RichText';
+import type { IRichTextProps } from '../types';
 
 jest.mock('react-dom/server', () => ({
   __esModule: true,
@@ -109,7 +110,8 @@ describe('RichText', () => {
 
     const { container } = render(<RichText {...props} />);
 
-    expect(container.textContent).toContain('<script>console.log("I\'ll try to hack you")</script>');
+    expect(container.querySelector('script')).toBeNull();
+    expect(container.innerHTML).not.toMatch(/<script/i);
   });
 
   it('empty render if text prop is null', () => {
@@ -256,6 +258,28 @@ describe('RichText', () => {
     expect(link).not.toBeNull();
     expect(link?.textContent).toBe('ewfer[ergerg]ergerg');
     expect(container.innerHTML).not.toContain('[ewfer[ergerg]');
+  });
+
+  it('does not treat markdown links as mentions when followed by a real mention', () => {
+    const props: IRichTextProps = {
+      text: 'Final: [help link](https://pneumatic.app/help), variable {{client-name-3967}}, mention [Support Team|12].',
+      isMarkdownMode: true,
+      variables: [
+        {
+          apiName: 'client-name-3967',
+          title: 'Client name',
+          type: EExtraFieldType.String,
+        },
+      ],
+    };
+
+    const { container } = render(<RichText {...props} />);
+    const helpLink = container.querySelector('a[href="https://pneumatic.app/help"]');
+
+    expect(helpLink).not.toBeNull();
+    expect(helpLink?.textContent).toBe('help link');
+    expect(container.textContent).toContain('@Support Team');
+    expect(container.innerHTML).not.toContain('@help link');
   });
 
   it('renders image attachment with ] in alt text', () => {
