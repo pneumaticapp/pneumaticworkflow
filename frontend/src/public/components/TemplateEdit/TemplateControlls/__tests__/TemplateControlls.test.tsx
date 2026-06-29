@@ -1,20 +1,15 @@
 import * as React from 'react';
-import { render, screen, waitFor, act } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { useDispatch } from 'react-redux';
 
 import { intlMock } from '../../../../__stubs__/intlMock';
-import { history } from '../../../../utils/history';
 import { TemplateControlls, ITemplateControllsProps } from '../TemplateControlls';
-import { ERoutes } from '../../../../constants/routes';
 import { ETemplateStatus } from '../../../../types/redux';
-import { RouteLeavingGuard } from '../../../UI';
 import {
   getRunnableWorkflow,
   loadDatasetsMap,
 } from '../../utils/getRunnableWorkflow';
 import { mapFieldsetBindingClientToRuntime } from '../../../../utils/mapFieldsetBindingClientToRuntime';
-import { discardTemplateChanges } from '../../../../redux/actions';
 import { getTemplate } from '../../../../__stubs__/templates';
 import { makeFieldsetBindingClient } from '../../../../__stubs__/fieldsets.factory';
 
@@ -184,33 +179,5 @@ describe('TemplateControlls — fieldset logic', () => {
     expect(openRunWorkflowModal).toHaveBeenCalledWith(runnableWorkflow);
   });
 
-  it('after Discard, calling onReject with a fieldsets path redirects to /templates/ instead of fieldsets', () => {
-    const mockDispatch = jest.fn();
-    (useDispatch as jest.Mock).mockReturnValue(mockDispatch);
 
-    const template = getTemplate('1');
-    template.isActive = false;
-
-    render(React.createElement(TemplateControlls, makeProps({ template })));
-
-    userEvent.click(
-      screen.getByRole('button', { name: formatMsg('templates.discard-changes') }),
-    );
-
-    const guardMock = RouteLeavingGuard as unknown as jest.Mock;
-    const lastProps = guardMock.mock.calls[guardMock.mock.calls.length - 1][0];
-    const onReject = lastProps.onReject as (path: string) => void;
-
-    act(() => {
-      onReject('/templates/1/fieldsets/');
-    });
-
-    expect(history.push).toHaveBeenCalledTimes(1);
-    expect(history.push).toHaveBeenCalledWith(ERoutes.Templates);
-
-    expect(discardTemplateChanges).toHaveBeenCalledTimes(1);
-    expect(discardTemplateChanges).toHaveBeenCalledWith(
-      expect.objectContaining({ templateId: 1 }),
-    );
-  });
 });

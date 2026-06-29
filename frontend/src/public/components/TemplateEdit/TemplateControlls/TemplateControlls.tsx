@@ -76,7 +76,6 @@ export function TemplateControlls({
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isTemplateActivating, setIsTemplateActivating] = useState(false);
   const [isTemplateDeleted, setIsTemplateDeleted] = useState(false);
-  const [isDiscarding, setIsDiscarding] = useState(false);
 
   useEffect(() => {
     // sets warning only when integrations are initially loaded
@@ -187,13 +186,7 @@ export function TemplateControlls({
           handleChangeIsActive(true, path);
         }}
         onReject={(path) => {
-          if (isDiscarding && path.includes('/fieldsets')) {
-            setIsDiscarding(false);
-            history.push(ERoutes.Templates);
-          } else {
-            setIsDiscarding(false);
-            history.push(path);
-          }
+          history.push(path);
         }}
         shouldBlockNavigation={(location) => {
           return !checkSomeRouteMatchesLocation(location.pathname, [
@@ -225,7 +218,6 @@ export function TemplateControlls({
                   type="button"
                   className={classnames('cancel-button', styles['keep-draf-button'])}
                   onClick={() => {
-                    setIsDiscarding(true);
                     dispatch(discardTemplateChanges({ templateId, onSuccess: reject }));
                   }}
                 >
