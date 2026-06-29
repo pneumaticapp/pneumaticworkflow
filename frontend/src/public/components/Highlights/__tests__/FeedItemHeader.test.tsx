@@ -178,10 +178,10 @@ describe('FeedItemHeader', () => {
       EWorkflowLogEvent.WorkflowsReturned,
     ])('uses task.fieldsets instead of kickoff.fieldsets for %s', (eventType) => {
       const kickoffFieldsets = [
-        makeFieldset({ sharedFieldsetId: 10, name: 'Kickoff FS', fields: [makeField({ value: 'kickoff-val', order: 1 })] }),
+        makeFieldset({ apiNameBinding: 'fs-kickoff', name: 'Kickoff FS', fields: [makeField({ value: 'kickoff-val', order: 1 })] }),
       ];
       const taskFieldsets = [
-        makeFieldset({ sharedFieldsetId: 20, name: 'Task FS', fields: [makeField({ value: 'task-val', order: 1 })] }),
+        makeFieldset({ apiNameBinding: 'fs-task', name: 'Task FS', fields: [makeField({ value: 'task-val', order: 1 })] }),
       ];
 
       const props = makeBaseProps({
@@ -216,7 +216,7 @@ describe('FeedItemHeader', () => {
 
     it('does not render KickoffOutputs for TaskRevert', () => {
       const taskFieldsets = [
-        makeFieldset({ sharedFieldsetId: 20, name: 'Task FS', fields: [makeField({ value: 'task-val', order: 1 })] }),
+        makeFieldset({ apiNameBinding: 'fs-task-2', name: 'Task FS', fields: [makeField({ value: 'task-val', order: 1 })] }),
       ];
 
       const props = makeBaseProps({
@@ -279,7 +279,7 @@ describe('FeedItemHeader', () => {
     it('removes fieldsets with all empty fields after filtering', () => {
       const fieldsets = [
         makeFieldset({
-          sharedFieldsetId: 1,
+          apiNameBinding: 'fs-empty',
           name: 'All Empty',
           fields: [
             makeField({ apiName: 'e1', value: '', order: 1 }),
@@ -287,7 +287,7 @@ describe('FeedItemHeader', () => {
           ],
         }),
         makeFieldset({
-          sharedFieldsetId: 2,
+          apiNameBinding: 'fs-has-val',
           name: 'Has Value',
           fields: [
             makeField({ apiName: 'f1', value: 'data', order: 1 }),

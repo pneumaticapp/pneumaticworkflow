@@ -325,7 +325,6 @@ describe('getClonedKickoff.', () => {
         output: [],
         fieldsets: [
           makeFieldsetRuntime({
-            sharedFieldsetId: 10,
             apiNameBinding: 'fs-1',
             name: 'Fieldset 1',
             fields: [makeExtraField({ apiName: 'fs-field-1', name: 'FS Field', value: 'data' })],

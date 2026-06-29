@@ -260,7 +260,7 @@ describe('WorkflowEditPopup', () => {
         },
         loadedFieldsets: [
           makeFieldset({ fields: [fsField1], order: 1 }),
-          makeFieldset({ sharedFieldsetId: 2, apiNameBinding: 'fs-2', fields: [fsField2], order: 2 }),
+          makeFieldset({ apiNameBinding: 'fs-2', fields: [fsField2], order: 2 }),
         ],
       };
 
@@ -322,13 +322,11 @@ describe('WorkflowEditPopup', () => {
         kickoff: { description: '', fields: [], fieldsets: [] },
         loadedFieldsets: [
           makeFieldset({
-            sharedFieldsetId: 1,
             apiNameBinding: 'fs-ok',
             fields: [makeField({ apiName: 'ok-field', isRequired: true, value: 'filled' })],
             order: 1,
           }),
           makeFieldset({
-            sharedFieldsetId: 2,
             apiNameBinding: 'fs-bad',
             fields: [makeField({ apiName: 'bad-field', isRequired: true, value: '' })],
             order: 2,

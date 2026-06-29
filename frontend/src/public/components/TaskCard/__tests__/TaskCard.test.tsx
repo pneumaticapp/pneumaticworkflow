@@ -410,7 +410,6 @@ describe('TaskCard', () => {
       fields: [makeExtraField({ apiName: 'email', value: 'server@x.com' })],
     });
     const serverFs2: IFieldsetRuntime = makeFieldsetRuntime({
-      sharedFieldsetId: 2,
       apiNameBinding: 'fs-2',
       name: 'FS-2',
       order: 2,
@@ -439,7 +438,6 @@ describe('TaskCard', () => {
     const { fieldsetsStorage } = require('../utils/storageOutputs');
 
     const strangerFs: IFieldsetRuntime = makeFieldsetRuntime({
-      sharedFieldsetId: 999,
       apiNameBinding: 'fs-stranger',
       name: 'Stranger',
       fields: [makeExtraField({ apiName: 'wrong', value: 'wrong' })],
@@ -531,7 +529,6 @@ describe('TaskCard', () => {
         fields: [makeExtraField({ apiName: 'a' }), makeExtraField({ apiName: 'b' })],
       }),
       makeFieldsetRuntime({
-        sharedFieldsetId: 2,
         apiNameBinding: 'fs-2',
         name: 'FS-2',
         order: 3,

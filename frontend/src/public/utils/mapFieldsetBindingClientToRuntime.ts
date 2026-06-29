@@ -25,7 +25,6 @@ export function mapFieldsToExtraFields(fields: IFieldsetField[]): IExtraField[] 
 
 
 export function mapFieldsetBindingClientToRuntime({
-  sharedFieldsetId,
   apiNameBinding,
   name,
   description,
@@ -40,7 +39,6 @@ export function mapFieldsetBindingClientToRuntime({
   const rulesCount = Array.isArray(rules) ? rules.length : 0;
 
   return {
-    sharedFieldsetId,
     apiNameBinding,
     name: name || '',
     description: description || '',

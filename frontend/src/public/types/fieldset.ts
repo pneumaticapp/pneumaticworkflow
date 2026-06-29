@@ -47,7 +47,7 @@ export interface IFieldsetBindingClient extends Omit<IFieldsetBinding, 'apiName'
   apiNameBinding: string;
 }
 
-export interface IFieldsetRuntime extends Omit<IFieldsetBindingClient, 'fields'> {
+export interface IFieldsetRuntime extends Omit<IFieldsetBindingClient, 'fields' | 'sharedFieldsetId'> {
   fields: IExtraField[];
   rulesCount?: number;
 }

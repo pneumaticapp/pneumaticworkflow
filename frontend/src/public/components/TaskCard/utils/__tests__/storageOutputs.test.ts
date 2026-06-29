@@ -38,7 +38,6 @@ describe('storageOutputs', () => {
         name: 'Contacts',
         description: 'Reachout details',
         order: 1,
-        sharedFieldsetId: 42,
         fields: [
           makeExtraField({ apiName: 'email', name: 'Field email', value: 'a@b.com' }),
           makeExtraField({ apiName: 'phone', name: 'Field phone', value: '+1', isRequired: true }),
@@ -47,7 +46,6 @@ describe('storageOutputs', () => {
       makeFieldsetRuntime({
         apiNameBinding: 'address',
         name: 'Fieldset address',
-        sharedFieldsetId: 43,
         order: 2,
         fields: [makeExtraField({ apiName: 'city', name: 'Field city', value: 'NY' })],
       }),

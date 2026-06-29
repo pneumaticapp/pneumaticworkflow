@@ -18,7 +18,6 @@ export const makeFieldsetField = (overrides: Partial<IFieldsetField> = {}): IFie
 });
 
 export const makeFieldsetRuntime = (overrides: Partial<IFieldsetRuntime> = {}): IFieldsetRuntime => ({
-  sharedFieldsetId: 1,
   apiNameBinding: 'fs-1',
   name: 'Fieldset 1',
   description: '',

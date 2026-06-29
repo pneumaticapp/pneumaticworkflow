@@ -316,7 +316,6 @@ describe('WorkflowModal', () => {
       ];
       const fieldsets2: IFieldsetRuntime[] = [
         makeFieldset({
-          sharedFieldsetId: 2,
           apiNameBinding: 'fs-new',
           fields: [makeField({ apiName: 'new-field' })],
           order: 1,

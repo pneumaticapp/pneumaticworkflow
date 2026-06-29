@@ -37,7 +37,7 @@ describe('MergedOutputList', () => {
       makeExtraField({ apiName: 'field-a', name: 'field-a', order: 1 }),
       makeExtraField({ apiName: 'field-b', name: 'field-b', order: 3 }),
     ];
-    const fieldsets = [makeFieldsetRuntime({ sharedFieldsetId: 10, apiNameBinding: 'fs-10', name: 'Fieldset Middle', order: 2 })];
+    const fieldsets = [makeFieldsetRuntime({ apiNameBinding: 'fs-10', name: 'Fieldset Middle', order: 2 })];
 
     const { container } = render(
       <MergedOutputList {...baseProps} fields={fields} fieldsets={fieldsets} />,

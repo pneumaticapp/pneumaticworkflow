@@ -88,7 +88,6 @@ const mockTask2: ITemplateTaskClient = {
 };
 
 const mockFieldsetData: IFieldsetRuntime = makeFieldsetRuntime({
-  sharedFieldsetId: 99,
   apiNameBinding: 'fs-99',
   name: 'Extra Set',
   fields: [
