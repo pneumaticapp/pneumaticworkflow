@@ -769,7 +769,7 @@ def test_update_rules__existing_rule__ok(mocker):
         auth_type=AuthTokenType.USER,
         instance=fieldset,
     )
-    rules_data = [{'id': rule_1.id, 'value': '200'}]
+    rules_data = [{'api_name': rule_1.api_name, 'value': '200'}]
 
     # mock
     fieldset_template_rule_service_init_mock = mocker.patch.object(
@@ -898,7 +898,7 @@ def test_update_rules__orphan_rules__deleted(mocker):
         auth_type=AuthTokenType.USER,
         instance=fieldset,
     )
-    rules_data = [{'id': rule_1.id, 'value': '150'}]
+    rules_data = [{'api_name': rule_1.api_name, 'value': '150'}]
 
     # mock
     fs_rule_init_mock = mocker.patch.object(
