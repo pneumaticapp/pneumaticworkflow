@@ -5,8 +5,7 @@ const commonConfig = require('../../../config/common.json');
 
 import { IUnsavedUser } from '../types/user';
 import { IInvitedUser } from '../types/redux';
-// @ts-ignore
-import * as merge from 'lodash.merge';
+import merge from 'lodash.merge';
 import { get, set } from '../../server/utils/helpers';
 import { IPages } from '../redux/pages/types';
 

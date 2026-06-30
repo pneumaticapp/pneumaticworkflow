@@ -1,7 +1,7 @@
 /* eslint-disable */
 /* prettier-ignore */
 import * as React from 'react';
-import * as classnames from 'classnames';
+import classnames from 'classnames';
 
 import { isArrayWithItems } from '../../utils/helpers';
 import { TUploadedFile } from '../../utils/uploadFiles';
