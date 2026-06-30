@@ -29,6 +29,8 @@ from src.processes.enums import (
     TaskStatus,
     WorkflowEventType,
     WorkflowStatus,
+    LabelPosition,
+    FieldSetLayout,
 )
 from src.processes.messages import workflow as messages
 from src.processes.messages.fieldset import MSG_FS_0002
@@ -79,7 +81,7 @@ from src.processes.tests.fixtures import (
     create_test_user,
     create_test_workflow,
     create_wf_completed_webhook,
-    create_wf_created_webhook,
+    create_wf_created_webhook, create_test_shared_fieldset,
 )
 from src.utils.dates import date_format
 from src.utils.validation import ErrorCode
@@ -5202,14 +5204,33 @@ def test_run__kickoff_with_one_fieldset__ok(mocker, api_client):
         is_active=True,
         tasks_count=1,
     )
+    fs_title = 'Some title'
+    fs_description = 'Some desc'
+    fs_name = 'Some name'
+    fs_order = 3
+    label_position = LabelPosition.LEFT
+    layout = FieldSetLayout.HORIZONTAL
+    rule_type = FieldSetRuleType.SUM_EQUAL
+    rule_value = '100'
+    shared_fieldset = create_test_shared_fieldset(
+        account=account,
+        title=fs_title,
+        description=fs_description,
+        name=fs_name,
+        label_position=label_position,
+        layout=layout,
+        rule_type=rule_type,
+        rule_value=rule_value,
+    )
     fieldset_template = create_test_fieldset_template(
         account=user.account,
         template=template,
         kickoff=template.kickoff_instance,
-        order=11,
+        order=fs_order,
+        shared_fieldset=shared_fieldset,
     )
     field_template = fieldset_template.fields.first()
-    field_value = 'test value'
+    field_value = '100'
     mocker.patch(
         'src.processes.services.workflow_action.'
         'WorkflowEventService.workflow_run_event',
@@ -5243,9 +5264,9 @@ def test_run__kickoff_with_one_fieldset__ok(mocker, api_client):
     fieldset_data = fieldsets_data[0]
     assert fieldset_data['id'] == fieldset.id
     assert fieldset_data['api_name'] == fieldset_template.api_name
-    assert fieldset_data['name'] == fieldset_template.name
-    assert fieldset_data['description'] == fieldset_template.description
-    assert fieldset_data['order'] == 11
+    assert fieldset_data['name'] == fs_name
+    assert fieldset_data['description'] == fs_description
+    assert fieldset_data['order'] == fs_order
     assert fieldset_data['label_position'] == fieldset_template.label_position
     assert fieldset_data['layout'] == fieldset_template.layout
 
@@ -5281,19 +5302,27 @@ def test_run__kickoff_with_multiple_fieldsets__ok(mocker, api_client):
         tasks_count=1,
     )
     kickoff = template.kickoff_instance
+    shared_fieldset_1 = create_test_shared_fieldset(
+        account=account,
+        title='First fieldset',
+    )
     fieldset_1 = create_test_fieldset_template(
         account=user.account,
         template=template,
         kickoff=kickoff,
-        title='First fieldset',
         order=0,
+        shared_fieldset=shared_fieldset_1,
+    )
+    shared_fieldset_2 = create_test_shared_fieldset(
+        account=account,
+        title='Second fieldset',
     )
     fieldset_2 = create_test_fieldset_template(
         account=user.account,
         template=template,
         kickoff=kickoff,
-        title='Second fieldset',
         order=1,
+        shared_fieldset=shared_fieldset_2,
     )
     field_1 = fieldset_1.fields.first()
     field_2 = fieldset_2.fields.first()
