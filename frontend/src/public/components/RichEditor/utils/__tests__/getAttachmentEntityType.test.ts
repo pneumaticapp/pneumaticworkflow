@@ -1,13 +1,21 @@
 import { ECustomEditorEntities } from '../types';
-import { getAttachmentEntityType } from '../getAttachmentEntityType';
+import {
+  getAttachmentEntityType,
+  getAttachmentEntityTypeByFilename,
+} from '../getAttachmentEntityType';
 
 jest.mock('../../../Attachments/utils/getAttachmentType', () => ({
   getAttachmentTypeByUrl: jest.fn(),
+  getAttachmentTypeByFilename: jest.fn(),
 }));
 
 const {
   getAttachmentTypeByUrl,
-}: { getAttachmentTypeByUrl: jest.Mock } = require('../../../Attachments/utils/getAttachmentType');
+  getAttachmentTypeByFilename,
+}: {
+  getAttachmentTypeByUrl: jest.Mock;
+  getAttachmentTypeByFilename: jest.Mock;
+} = require('../../../Attachments/utils/getAttachmentType');
 
 describe('getAttachmentEntityType', () => {
   beforeEach(() => {
@@ -63,5 +71,45 @@ describe('getAttachmentEntityType', () => {
         ECustomEditorEntities.File,
       );
     });
+  });
+});
+
+describe('getAttachmentEntityTypeByFilename', () => {
+  beforeEach(() => {
+    getAttachmentTypeByFilename.mockReset();
+  });
+
+  it('returns Link when getAttachmentTypeByFilename returns null', () => {
+    getAttachmentTypeByFilename.mockReturnValue(null);
+    expect(getAttachmentEntityTypeByFilename('no-extension-file')).toBe(
+      ECustomEditorEntities.Link,
+    );
+  });
+
+  it('returns File when type is file', () => {
+    getAttachmentTypeByFilename.mockReturnValue('file');
+    expect(getAttachmentEntityTypeByFilename('report.pdf')).toBe(
+      ECustomEditorEntities.File,
+    );
+  });
+
+  it('returns Image when type is image', () => {
+    getAttachmentTypeByFilename.mockReturnValue('image');
+    expect(getAttachmentEntityTypeByFilename('screenshot.png')).toBe(
+      ECustomEditorEntities.Image,
+    );
+  });
+
+  it('returns Video when type is video', () => {
+    getAttachmentTypeByFilename.mockReturnValue('video');
+    expect(getAttachmentEntityTypeByFilename('clip.mp4')).toBe(
+      ECustomEditorEntities.Video,
+    );
+  });
+
+  it('calls getAttachmentTypeByFilename with the given filename', () => {
+    getAttachmentTypeByFilename.mockReturnValue('image');
+    getAttachmentEntityTypeByFilename('photo.jpg');
+    expect(getAttachmentTypeByFilename).toHaveBeenCalledWith('photo.jpg');
   });
 });
