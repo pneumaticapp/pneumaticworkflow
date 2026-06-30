@@ -104,7 +104,7 @@ export const WithVariables: Story = {
 
 export const WithFileAttachment: Story = {
   args: {
-    text: '![report\\[Q1\\].pdf](https://example.com/report.pdf "entityType:file")',
+    text: '![report\\[Q1\\]regerogiherpoigherpiogherpiugherpiugherpiughrepiugheroigherpoigheroighrepoighrepoigherpiughiu.pdf](https://example.com/report.pdf "entityType:file")',
     isMarkdownMode: true,
   },
 };
@@ -118,7 +118,7 @@ export const WithImage: Story = {
 
 export const WithChecklist: Story = {
   args: {
-    text: 'Task checklist:\n[clist:my-list|item-1]Review requirements[/clist]\n[clist:my-list|item-2]Submit for approval[/clist]',
+    text: 'Task checklist:\n[clist:my-list|item-1]Review requirements ferfberuig beruigbre uygbreu bgu[/clist]\n[clist:my-list|item-2]Submit for approval[/clist]',
     isMarkdownMode: true,
     interactiveChecklists: false,
   },
@@ -139,7 +139,7 @@ const onboardingStoryTask = createStoryTask({
 export const WithInteractiveChecklist: Story = {
   render: (args) => <InteractiveRichText {...args} task={myListStoryTask} />,
   args: {
-    text: 'Interactive checklist:\n[clist:my-list|item-1]Review requirements[/clist]\n[clist:my-list|item-2]Submit for approval[/clist]',
+    text: 'Interactive checklist:\n[clist:my-list|item-1]Review requiremReview requiremReview requiremReview requiremReview requiremReview requirements[/clist]\n[clist:my-list|item-2]Submit for approval[/clist]',
     isMarkdownMode: true,
   },
 };
@@ -162,14 +162,7 @@ Next line in the same block.
 
 ## Mentions
 
-Hello, [Alex Karpov|4] and [Jyoti Puri|3] — please loop in [Support Team|12] before sign-off.
-
-## Variables
-
-Client: {{client-name-3967}}. Workflow started by: {{workflow-starter}}.
-
-## Links
-
+Hello, [Alex K 
 Auto-linkified URL: https://pneumatic.app/
 
 Markdown link: [Pneumatic developers docs](https://pneumatic.app/developers)
@@ -192,7 +185,7 @@ Inline image in text: before ![inline icon](https://picsum.photos/120/80 "entity
 
 ![Report\\[Q1\\].pdf](https://example.com/files/report-q1.pdf "attachment_id:17 entityType:file")
 
-Another file: ![Contract.docx](https://example.com/files/contract.docx "entityType:file")
+Another file: ![Contract gregerghergopiheriguherilughreioguehrgpiuhergiopuehrgoperhgoipheroigheo.docx](https://example.com/files/contract.docx "entityType:file")
 
 ## Embedded external videos (linkify)
 
@@ -228,7 +221,7 @@ Wistia: ${DASHBOARD_VIDEO_URL}
 [clist:onboarding|step-2]Validate client data for {{client-name-3967}}[/clist]
 [clist:onboarding|step-3]Attach architecture screenshot: ![System diagram](https://picsum.photos/640/360 "entityType:image")[/clist]
 [clist:onboarding|step-4]Watch training video: https://www.youtube.com/watch?v=jNQXAC9IVRw[/clist]
-[clist:onboarding|step-5]Upload signed SOW: ![SOW\\[2026\\].pdf](https://example.com/sow.pdf "entityType:file")[/clist]
+[clist:onboarding|step-5]Upload signed SOW: ![SOW\\[2026\\]gregberhgbehrbhuebrghiuberugyhreougyhreoiughreoiugheoriughoeirughreoiughreoiuhgoieurhgireuhgireuhgoieurhgipuerhgoireh.pdf](https://example.com/sow.pdf "entityType:file")[/clist]
 
 ---
 
@@ -260,6 +253,6 @@ export const LongMarkdownTruncated: Story = {
   args: {
     ...longMarkdownStoryArgs,
     interactiveChecklists: false,
-    maxLines: 8,
+    maxLines: 5,
   },
 };
