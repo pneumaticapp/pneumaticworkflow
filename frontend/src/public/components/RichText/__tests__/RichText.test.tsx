@@ -363,6 +363,18 @@ describe('RichText', () => {
     expect(container.textContent).toContain('report.pdf');
   });
 
+  it('renders markdown image syntax with file extension as document attachment', () => {
+    const props: IRichTextProps = {
+      text: '![report.pdf](https://example.com/report.pdf)',
+      isMarkdownMode: true,
+    };
+
+    const { container } = render(<RichText {...props} />);
+
+    expect(container.querySelector('img')).toBeNull();
+    expect(container.textContent).toContain('report.pdf');
+  });
+
   describe('file-service URLs (no extension in URL)', () => {
     const FILE_SERVICE_URL = 'https://app.pneumatic.app/files';
 

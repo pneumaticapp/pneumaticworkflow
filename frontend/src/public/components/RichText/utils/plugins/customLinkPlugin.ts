@@ -44,19 +44,19 @@ const getLinkEntityType = (
       : getAttachmentEntityType(url);
   }
 
+  if (name) {
+    const entityTypeByName = getAttachmentEntityTypeByFilename(name);
+    if (entityTypeByName !== ECustomEditorEntities.Link) {
+      return entityTypeByName;
+    }
+  }
+
   if (isImageMarkdown) {
     return ECustomEditorEntities.Image;
   }
 
   if (url.includes(googleBucket)) {
     return getAttachmentEntityType(url);
-  }
-
-  if (name) {
-    const entityTypeByName = getAttachmentEntityTypeByFilename(name);
-    if (entityTypeByName !== ECustomEditorEntities.Link) {
-      return entityTypeByName;
-    }
   }
 
   return ECustomEditorEntities.Link;
