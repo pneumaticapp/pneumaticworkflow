@@ -60,6 +60,12 @@ from src.processes.tests.fixtures import (
     create_test_user,
     create_test_workflow,
 )
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
+from src.processes.tests.guardian_helpers import (
+    assert_guardian_view,
+)
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db
@@ -1239,7 +1245,8 @@ class TestTaskPerformersService:
         )
 
         # assert
-        assert user_performer in workflow.members.all()
+        assert WorkflowPermissionService.has_view(user_performer, workflow)
+        assert_guardian_view(workflow, user_performer)
         send_new_task_websocket_mock.assert_not_called()
         send_new_task_notification_mock.assert_called_once_with(
             logging=account.log_api_requests,
@@ -1324,7 +1331,8 @@ class TestTaskPerformersService:
         )
 
         # assert
-        assert user_performer in workflow.members.all()
+        assert WorkflowPermissionService.has_view(user_performer, workflow)
+        assert_guardian_view(workflow, user_performer)
         send_new_task_websocket_mock.assert_not_called()
         send_new_task_notification_mock.assert_not_called()
         assert WorkflowEvent.objects.filter(
@@ -1548,7 +1556,8 @@ class TestTaskPerformersService:
             ).data,
         ).count() == 1
         workflow.refresh_from_db()
-        assert transfer_performer in workflow.members.all()
+        assert WorkflowPermissionService.has_view(transfer_performer, workflow)
+        assert_guardian_view(workflow, transfer_performer)
 
     def test_create_actions__with_deleted_group_taskperformer__ok(
         self,
@@ -1613,7 +1622,8 @@ class TestTaskPerformersService:
         )
 
         # assert
-        assert user_performer in workflow.members.all()
+        assert WorkflowPermissionService.has_view(user_performer, workflow)
+        assert_guardian_view(workflow, user_performer)
         send_new_task_websocket_mock.assert_not_called()
         send_new_task_notification_mock.assert_not_called()
         assert WorkflowEvent.objects.filter(

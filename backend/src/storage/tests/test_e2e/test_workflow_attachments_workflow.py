@@ -13,6 +13,9 @@ from src.storage.enums import AccessType, SourceType
 from src.storage.models import Attachment
 from src.storage.services.attachments import AttachmentService
 from src.storage.utils import refresh_attachments
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -40,7 +43,7 @@ class TestWorkflowAttachmentsE2E:
         owner = create_test_admin()
         member = create_test_user(account=owner.account)
         workflow = create_test_workflow(user=owner, tasks_count=1)
-        workflow.members.add(member)
+        WorkflowPermissionService.grant_view(member, workflow)
         workflow.description = (
             'Workflow file: '
             '[file](https://example.com/files/workflow_e2e_123)'
@@ -80,7 +83,7 @@ class TestWorkflowAttachmentsE2E:
         owner = create_test_admin()
         member = create_test_user(account=owner.account)
         workflow = create_test_workflow(user=owner, tasks_count=1)
-        workflow.members.add(member)
+        WorkflowPermissionService.grant_view(member, workflow)
         workflow.description = ''
         workflow.save()
         kickoff = workflow.kickoff_instance
@@ -230,7 +233,7 @@ class TestWorkflowAttachmentsE2E:
             email='wf_member2@test.pneumatic.app',
         )
         workflow = create_test_workflow(user=owner, tasks_count=1)
-        workflow.members.add(member1)
+        WorkflowPermissionService.grant_view(member1, workflow)
         workflow.description = (
             'File: [f](https://example.com/files/wf_member_e2e)'
         )
@@ -251,7 +254,7 @@ class TestWorkflowAttachmentsE2E:
         )
 
         # act
-        workflow.members.add(member2)
+        WorkflowPermissionService.grant_view(member2, workflow)
         refresh_attachments(source=workflow, user=owner)
 
         # assert
@@ -271,7 +274,7 @@ class TestWorkflowAttachmentsE2E:
         owner = create_test_admin()
         member = create_test_user(account=owner.account)
         workflow = create_test_workflow(user=owner, tasks_count=1)
-        workflow.members.add(member)
+        WorkflowPermissionService.grant_view(member, workflow)
         workflow.description = (
             'Files: '
             '[a](https://example.com/files/wf_multi_1_e2e) '
@@ -355,7 +358,9 @@ class TestWorkflowAttachmentsE2E:
         owner1 = create_test_admin()
         owner2 = create_test_user(account=owner1.account, is_admin=True)
         workflow = create_test_workflow(user=owner1, tasks_count=1)
-        workflow.owners.add(owner1, owner2)
+        WorkflowPermissionService.grant_manage(owner1, workflow)
+
+        WorkflowPermissionService.grant_manage(owner2, workflow)
         workflow.description = (
             'File: [f](https://example.com/files/wf_owners_e2e)'
         )

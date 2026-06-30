@@ -17,6 +17,9 @@ from src.storage.enums import AccessType, SourceType
 from src.storage.models import Attachment
 from src.storage.services.attachments import AttachmentService
 from src.storage.utils import reassign_restricted_permissions_for_task
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -483,7 +486,7 @@ class TestTemplateFileInheritance:
         )
         workflow = create_test_workflow(user=owner, tasks_count=1)
         task = workflow.tasks.first()
-        workflow.members.add(performer)
+        WorkflowPermissionService.grant_view(performer, workflow)
         attachment = create_test_attachment(
             account=owner.account,
             source_type=SourceType.TEMPLATE,
@@ -677,7 +680,7 @@ class TestTemplateFileInheritance:
             user=performer_t2,
             type=PerformerType.USER,
         )
-        workflow.members.add(performer_t2)
+        WorkflowPermissionService.grant_view(performer_t2, workflow)
         attachment = create_test_attachment(
             account=owner.account,
             source_type=SourceType.TEMPLATE,

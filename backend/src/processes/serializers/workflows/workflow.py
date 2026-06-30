@@ -55,6 +55,9 @@ from src.processes.serializers.workflows.task import (
 from src.processes.services.urgent import (
     UrgentService,
 )
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 from src.processes.utils.common import (
     contains_fields_vars,
     insert_fields_values_to_text,
@@ -118,7 +121,7 @@ class WorkflowListSerializer(serializers.ModelSerializer):
         return []
 
     def get_owners(self, instance: Workflow):
-        return [e.id for e in instance.owners_ids]
+        return WorkflowPermissionService.get_owner_ids(instance)
 
 
 class WorkflowCreateSerializer(
@@ -396,6 +399,7 @@ class WorkflowDetailsSerializer(serializers.ModelSerializer):
         source='date_completed',
         read_only=True,
     )
+    owners = serializers.SerializerMethodField()
     is_read_only_viewer = serializers.SerializerMethodField()
 
     def get_kickoff(self, instance: Workflow):
@@ -423,6 +427,9 @@ class WorkflowDetailsSerializer(serializers.ModelSerializer):
         if kickoff:
             return KickoffValueInfoSerializer(kickoff).data
         return None
+
+    def get_owners(self, instance: Workflow):
+        return WorkflowPermissionService.get_owner_ids(instance)
 
     def get_tasks(self, instance: Workflow):
         tasks = instance.tasks.exclude(status=TaskStatus.SKIPPED)
@@ -555,7 +562,7 @@ class WorkflowListFilterSerializer(
     def validate_search(self, value: str) -> str:
         removed_chars_regex = r'\s\s+'
         clear_text = re.sub(removed_chars_regex, '', value).strip()
-        return clear_text if clear_text else None
+        return clear_text or None
 
     def validate(self, data):
         status = data.get('status')

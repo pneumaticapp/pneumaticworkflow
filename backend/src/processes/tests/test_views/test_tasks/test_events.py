@@ -18,6 +18,9 @@ from src.processes.tests.fixtures import (
     create_test_user,
     create_test_workflow, create_test_dataset,
 )
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db
@@ -102,7 +105,7 @@ def test_events__admin__ok(api_client):
         is_account_owner=False,
         is_admin=True,
     )
-    workflow.members.add(user)
+    WorkflowPermissionService.grant_view(user, workflow)
     event = create_test_event(
         workflow=workflow,
         user=user,
@@ -131,7 +134,7 @@ def test_events__not_admin__ok(api_client):
         is_account_owner=False,
         is_admin=False,
     )
-    workflow.members.add(user)
+    WorkflowPermissionService.grant_view(user, workflow)
     event = create_test_event(
         workflow=workflow,
         user=account_owner,
@@ -525,7 +528,7 @@ def test_events__user_is_member_in_deleted_task__not_found(api_client):
     admin = create_test_admin(account=user.account)
     api_client.token_authenticate(admin)
     workflow = create_test_workflow(user, tasks_count=1)
-    workflow.members.add(admin)
+    WorkflowPermissionService.grant_view(admin, workflow)
     task = workflow.tasks.get(number=1)
     task.delete()
 

@@ -16,6 +16,9 @@ from src.processes.tests.fixtures import (
 from src.storage.enums import AccessType, SourceType
 from src.storage.services.attachments import AttachmentService
 from src.storage.utils import reassign_restricted_permissions_for_task
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -78,7 +81,7 @@ class TestAttachmentServiceTaskPermissions:
         owner = create_test_admin()
         member = create_test_user(account=owner.account)
         workflow = create_test_workflow(user=owner, tasks_count=1)
-        workflow.members.add(member)
+        WorkflowPermissionService.grant_view(member, workflow)
         task = workflow.tasks.first()
         service = AttachmentService(user=owner)
 
@@ -392,7 +395,7 @@ class TestAttachmentServiceWorkflowPermissions:
         owner = create_test_admin()
         member = create_test_user(account=owner.account)
         workflow = create_test_workflow(user=owner, tasks_count=1)
-        workflow.members.add(member)
+        WorkflowPermissionService.grant_view(member, workflow)
         service = AttachmentService(user=owner)
 
         # act
@@ -1218,7 +1221,7 @@ class TestAttachmentServiceBulkCreatePermissions:
         owner = create_test_admin()
         member = create_test_user(account=owner.account)
         workflow = create_test_workflow(user=owner, tasks_count=1)
-        workflow.members.add(member)
+        WorkflowPermissionService.grant_view(member, workflow)
         service = AttachmentService(user=owner)
         file_ids = ['bulk_wf_1', 'bulk_wf_2']
 

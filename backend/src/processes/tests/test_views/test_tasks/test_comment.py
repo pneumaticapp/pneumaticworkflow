@@ -29,6 +29,9 @@ from src.processes.tests.fixtures import (
     create_test_workflow,
 )
 from src.utils.validation import ErrorCode
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -87,7 +90,7 @@ def test_create__by_member__ok(api_client, mocker):
     workflow = create_test_workflow(owner)
     task = workflow.tasks.get(number=1)
     member = create_test_admin(account=account)
-    workflow.members.add(member)
+    WorkflowPermissionService.grant_view(member, workflow)
     event = WorkflowEventService.comment_created_event(
         text='Some comment',
         task=task,
@@ -516,7 +519,7 @@ def test_create__user_is_member_in_deleted_task__not_found(api_client):
     user = create_test_owner()
     admin = create_test_admin(account=user.account)
     workflow = create_test_workflow(user, tasks_count=1)
-    workflow.members.add(admin)
+    WorkflowPermissionService.grant_view(admin, workflow)
     task = workflow.tasks.get(number=1)
     task.delete()
     api_client.token_authenticate(admin)

@@ -23,6 +23,12 @@ from src.processes.tests.fixtures import (
     create_test_template,
     create_test_workflow,
 )
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
+from src.processes.tests.guardian_helpers import (
+    assert_guardian_view,
+)
 
 
 pytestmark = pytest.mark.django_db
@@ -82,7 +88,8 @@ def test_delegate_vacation_tasks__delegates__ok(mocker):
         user=owner,
         substitute_group=group,
     )
-    assert workflow.members.filter(id=substitute.id).exists()
+    assert WorkflowPermissionService.has_view(substitute, workflow)
+    assert_guardian_view(workflow, substitute)
 
 
 def test_delegate_vacation_tasks__skips_already_delegated__ok(mocker):
@@ -464,9 +471,7 @@ def test_delegate__error__rolls_back_user(mocker):
         group=group,
         type=PerformerType.GROUP,
     ).exists()
-    assert not workflow.members.filter(
-        id=substitute.id,
-    ).exists()
+    assert not WorkflowPermissionService.has_view(substitute, workflow)
 
 
 def test_delegate__skips_non_running_workflow__ok(mocker):

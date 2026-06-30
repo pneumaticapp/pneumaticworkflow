@@ -23,6 +23,9 @@ from src.processes.tests.fixtures import (
     create_test_workflow,
 )
 from src.utils.validation import ErrorCode
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db
@@ -78,7 +81,7 @@ def test_create__user_in_group__ok(
     )
     group = create_test_group(user.account, users=[performer])
     workflow = create_test_workflow(user)
-    workflow.owners.add(performer)
+    WorkflowPermissionService.grant_manage(performer, workflow)
     task = workflow.tasks.get(number=1)
     TaskPerformer.objects.create(
         task_id=task.id,
@@ -158,7 +161,7 @@ def test_delete__user_in_group__ok(
     )
     group = create_test_group(user.account, users=[performer])
     workflow = create_test_workflow(user)
-    workflow.owners.add(performer)
+    WorkflowPermissionService.grant_manage(performer, workflow)
     task = workflow.tasks.get(number=1)
     TaskPerformer.objects.create(
         task_id=task.id,

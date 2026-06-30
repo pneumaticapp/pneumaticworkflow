@@ -31,6 +31,9 @@ from src.processes.models.templates.template import Template
 from src.processes.services.templates.integrations import (
     TemplateIntegrationsService,
 )
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 from src.processes.tests.fixtures import (
     create_invited_user,
     create_test_account,
@@ -1256,10 +1259,10 @@ class TestUpdateTemplate:
         # assert
         workflow.refresh_from_db()
         assert response.status_code == 200
-        workflow_owners = list(workflow.owners.all())
-        assert len(workflow_owners) == 2
-        assert user in workflow_owners
-        assert user_2 in workflow_owners
+        owner_ids = WorkflowPermissionService.get_owner_ids(workflow)
+        assert len(owner_ids) == 2
+        assert user.id in owner_ids
+        assert user_2.id in owner_ids
 
     def test_update__workflow_changed_owners_empty_group__ok(
         self,
@@ -1336,10 +1339,10 @@ class TestUpdateTemplate:
         # assert
         workflow.refresh_from_db()
         assert response.status_code == 200
-        workflow_owners = list(workflow.owners.all())
-        assert len(workflow_owners) == 2
-        assert user in workflow_owners
-        assert user_2 in workflow_owners
+        owner_ids = WorkflowPermissionService.get_owner_ids(workflow)
+        assert len(owner_ids) == 2
+        assert user.id in owner_ids
+        assert user_2.id in owner_ids
 
     def test_update__change_template_owners__ok(
         self,

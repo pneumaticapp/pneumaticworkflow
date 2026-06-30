@@ -57,6 +57,14 @@ from src.processes.tests.fixtures import (
     create_test_template,
     create_test_workflow,
 )
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
+from src.processes.tests.guardian_helpers import (
+    assert_guardian_manage,
+    assert_guardian_view,
+    assert_no_guardian_view,
+)
 
 UserModel = get_user_model()
 
@@ -189,10 +197,12 @@ class TestWorkflowUpdateVersionService:
             sync=False,
         )
         update_tasks_status_mock.assert_called_once_with()
-        assert workflow.owners.count() == 1
-        assert workflow.owners.first().id == user.id
-        assert workflow.members.count() == 2
-        assert user in workflow.members.all()
+        assert len(WorkflowPermissionService.get_owner_ids(workflow)) == 1
+        assert WorkflowPermissionService.has_manage(user, workflow)
+        assert len(WorkflowPermissionService.get_viewer_ids(workflow)) == 2
+        assert WorkflowPermissionService.has_view(user, workflow)
+        assert_guardian_manage(workflow, user)
+        assert_guardian_view(workflow, user)
 
     def test_update_from_version__all_instances__ok(self):
 
@@ -754,7 +764,8 @@ class TestWorkflowUpdateVersionService:
 
         # assert
         workflow.refresh_from_db()
-        assert workflow.members.filter(id=invited.id).exists()
+        assert WorkflowPermissionService.has_view(invited, workflow)
+        assert_guardian_view(workflow, invited)
 
     def test_update_from_version__remove_user_from_current_task__ok(
         self,
@@ -794,7 +805,8 @@ class TestWorkflowUpdateVersionService:
 
         # assert
         workflow.refresh_from_db()
-        assert workflow.members.filter(id=user_2.id).exists()
+        assert not WorkflowPermissionService.has_view(user_2, workflow)
+        assert_no_guardian_view(workflow, user_2)
 
     def test_update_from_version__prev_task_checklist__not_changed(
         self,

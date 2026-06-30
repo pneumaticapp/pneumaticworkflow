@@ -4,21 +4,20 @@ from celery import shared_task
 from django.db import transaction
 
 from src.authentication.enums import AuthTokenType
-from src.executor import RawSqlExecutor
 from src.processes.enums import WorkflowStatus
 from src.processes.models.templates.template import (
     Template,
     TemplateVersion,
 )
 from src.processes.models.workflows.workflow import Workflow
-from src.processes.queries import (
-    UpdateWorkflowMemberQuery,
-    UpdateWorkflowOwnersQuery,
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
 )
 from src.processes.services.workflows.workflow_version import (
     WorkflowUpdateVersionService,
 )
 from src.processes.tasks.tasks import UserModel
+from src.storage.tasks import sync_workflow_attachment_permissions
 
 
 def _update_workflows(
@@ -50,7 +49,10 @@ def _update_workflows(
                 template_owner_ids = Template.objects.filter(
                     id=workflow.template_id,
                 ).get_owners_as_users()
-                workflow.owners.set(template_owner_ids)
+                # Guardian: set owners for completed workflow
+                WorkflowPermissionService.set_owners(
+                    workflow, list(template_owner_ids),
+                )
             else:
                 version_service = WorkflowUpdateVersionService(
                     instance=workflow,
@@ -86,16 +88,35 @@ def update_workflows(**kwargs):
     },
 )
 def update_workflow_owners(template_ids: List[int]):
-    with transaction.atomic():
-        Workflow.owners.through.objects.filter(
-            workflow__template_id__in=template_ids,
-        ).delete()
-        for template_id in template_ids:
-            query_workflow = UpdateWorkflowOwnersQuery(
-                template_id=template_id,
-            )
-            RawSqlExecutor.execute(*query_workflow.insert_sql())
-            query_member = UpdateWorkflowMemberQuery(
-                template_id=template_id,
-            )
-            RawSqlExecutor.execute(*query_member.insert_sql())
+    """Rebuild Guardian permissions when template owners change.
+
+    For each workflow belonging to the given templates:
+    1. Set change_workflow + view_workflow for current template owners
+    2. Re-sync view_workflow for all entitled users (performers,
+       mentioned users) — also REVOKES view from users who lost
+       access (e.g. removed from a group)
+    3. Sync attachment permissions (async) so removed owners
+       lose access_attachment along with change_workflow
+    """
+    for template_id in template_ids:
+        template_owner_ids = list(
+            Template.objects.filter(
+                id=template_id,
+            ).get_owners_as_users(),
+        )
+        workflows = Workflow.objects.filter(
+            template_id=template_id,
+            is_deleted=False,
+        )
+        for workflow in workflows:
+            with transaction.atomic():
+                # Set owners (clears old manage + sets new manage + view)
+                WorkflowPermissionService.set_owners(
+                    workflow, template_owner_ids,
+                )
+                # Full re-sync: grant view to entitled users AND
+                # revoke view from users who lost all access sources
+                # (e.g. removed from performer group, template owners)
+                WorkflowPermissionService.set_viewers(workflow)
+            # Sync attachment permissions after workflow perms are updated
+            sync_workflow_attachment_permissions.delay(workflow.id)

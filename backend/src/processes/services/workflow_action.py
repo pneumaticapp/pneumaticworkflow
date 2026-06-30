@@ -53,6 +53,9 @@ from src.processes.tasks.webhooks import (
 )
 from src.services.markdown import MarkdownService
 from src.webhooks.models import WebHook
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 
 UserModel = get_user_model()
 
@@ -435,7 +438,10 @@ class WorkflowActionService:
             .by_task(task.id)
             .get_user_ids_set()
         )
-        self.workflow.members.add(*users_performers_set)
+        # Guardian: grant view to all task performers
+        WorkflowPermissionService.grant_view_bulk(
+            users_performers_set, self.workflow,
+        )
         self.continue_task(task=task, is_returned=is_returned)
 
     def continue_task(self, task: Task, is_returned: bool = False):

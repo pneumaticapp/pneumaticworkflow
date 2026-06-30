@@ -521,7 +521,14 @@ class Task(
         Notification.objects.exclude_users(
             union_user_ids,
         ).by_task(self.id).delete()
-        self.workflow.members.add(*created_performers_user_ids)
+        # Guardian: grant view to newly created performers
+        if created_performers_user_ids:
+            from src.processes.services.workflow_permissions import (
+                WorkflowPermissionService,
+            )
+            WorkflowPermissionService.grant_view_bulk(
+                created_performers_user_ids, self.workflow,
+            )
         return (
             created_performers_user_ids,
             created_performers_group_ids,
@@ -554,6 +561,14 @@ class Task(
                 deleted_user_ids.append(performer_to_delete.user_id)
         if deleted_user_ids or deleted_group_ids:
             performers_to_delete.delete()
+            from src.processes.services.workflow_permissions import (
+                WorkflowPermissionService,
+            )
+            WorkflowPermissionService.set_viewers(self.workflow)
+            from src.storage.tasks import (
+                sync_workflow_attachment_permissions,
+            )
+            sync_workflow_attachment_permissions.delay(self.workflow_id)
         return deleted_user_ids, deleted_group_ids
 
     def delete_raw_performer(

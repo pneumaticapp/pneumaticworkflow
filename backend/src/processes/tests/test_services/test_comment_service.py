@@ -31,6 +31,12 @@ from src.processes.tests.fixtures import (
 )
 from src.storage.models import Attachment
 from src.storage.enums import SourceType, AccessType
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
+from src.processes.tests.guardian_helpers import (
+    assert_guardian_view,
+)
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db
@@ -371,7 +377,8 @@ def test_create_mentioned_users__ok(mocker):
     )
     comment_added_analysis_mock.assert_not_called()
     send_comment_notification_mock.assert_not_called()
-    assert workflow.members.filter(id=user.id).exists()
+    assert WorkflowPermissionService.has_view(user, workflow)
+    assert_guardian_view(workflow, user)
     task.refresh_from_db()
     assert task.contains_comments is True
 
@@ -1193,7 +1200,7 @@ def test_get_updated_comment_recipients__already_mentioned__not_send():
         is_account_owner=False,
         is_admin=True,
     )
-    workflow.members.add(user)
+    WorkflowPermissionService.grant_view(user, workflow)
     text = f'Go [Joe Stalin|{user.id}] testing'
     event = WorkflowEvent.objects.create(
         account=account,
@@ -1233,7 +1240,7 @@ def test_get_updated_comment_recipients__not_mention__not_send():
         is_account_owner=False,
         is_admin=True,
     )
-    workflow.members.add(user)
+    WorkflowPermissionService.grant_view(user, workflow)
     text = f'Go {user.name} testing'
     event = WorkflowEvent.objects.create(
         account=account,
@@ -1956,6 +1963,16 @@ def test_update__notified_users__ok(mocker):
         'src.processes.services.events.'
         'send_mention_notification.delay',
     )
+    # suppressed — partial_update is mocked so DB text stays old;
+    # set_viewers would revoke the just-granted permission
+    set_viewers_mock = mocker.patch(
+        'src.processes.services.events.'
+        'WorkflowPermissionService.set_viewers',
+    )
+    sync_perms_mock = mocker.patch(
+        'src.processes.services.events.'
+        'sync_workflow_attachment_permissions.delay',
+    )
 
     service = CommentService(
         instance=event,
@@ -2004,7 +2021,14 @@ def test_update__notified_users__ok(mocker):
         users_ids=(user.id,),
         text=event.text,
     )
-    assert workflow.members.filter(id=user.id).exists()
+    assert WorkflowPermissionService.has_view(user, workflow)
+    assert_guardian_view(workflow, user)
+    set_viewers_mock.assert_called_once_with(
+        workflow,
+    )
+    sync_perms_mock.assert_called_once_with(
+        workflow.id,
+    )
 
 
 def test_update__mentioned_users__ok(mocker):
@@ -2073,6 +2097,16 @@ def test_update__mentioned_users__ok(mocker):
         'src.processes.services.events.'
         'AnalyticService.comment_edited',
     )
+    # suppressed — partial_update is mocked so DB text stays old;
+    # set_viewers would revoke the just-granted permission
+    set_viewers_mock = mocker.patch(
+        'src.processes.services.events.'
+        'WorkflowPermissionService.set_viewers',
+    )
+    sync_perms_mock = mocker.patch(
+        'src.processes.services.events.'
+        'sync_workflow_attachment_permissions.delay',
+    )
 
     service = CommentService(
         instance=event,
@@ -2105,13 +2139,20 @@ def test_update__mentioned_users__ok(mocker):
         updated=date_updated,
         force_save=True,
     )
-    assert workflow.members.filter(id=user.id).exists()
+    assert WorkflowPermissionService.has_view(user, workflow)
+    assert_guardian_view(workflow, user)
     comment_edited_analysis_mock.assert_called_once_with(
         text=clear_text,
         user=account_owner,
         is_superuser=is_superuser,
         auth_type=auth_type,
         workflow=workflow,
+    )
+    set_viewers_mock.assert_called_once_with(
+        workflow,
+    )
+    sync_perms_mock.assert_called_once_with(
+        workflow.id,
     )
 
 

@@ -17,6 +17,9 @@ from src.processes.enums import (
 from src.processes.models.workflows.task import Task, TaskPerformer
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.services.events import WorkflowEventService
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 
 UserModel = get_user_model()
 
@@ -377,16 +380,11 @@ class VacationDelegationService:
         wf_ids: Set[int],
         substitute_user_ids: List[int],
     ) -> None:
-        members_to_create = [
-            Workflow.members.through(
-                workflow_id=wf_id,
-                user_id=sub_id,
-            )
-            for wf_id in wf_ids
-            for sub_id in substitute_user_ids
-        ]
-        if members_to_create:
-            Workflow.members.through.objects.bulk_create(
-                members_to_create,
-                ignore_conflicts=True,
+        """Grant view access to substitute users on workflows."""
+        if not wf_ids or not substitute_user_ids:
+            return
+        workflows = Workflow.objects.filter(id__in=wf_ids)
+        for workflow in workflows:
+            WorkflowPermissionService.grant_view_bulk(
+                list(substitute_user_ids), workflow,
             )

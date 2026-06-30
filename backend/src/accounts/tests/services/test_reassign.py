@@ -19,7 +19,6 @@ from src.processes.models.workflows.conditions import (
     Predicate,
     Rule,
 )
-from src.processes.models.workflows.workflow import Workflow
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
@@ -27,6 +26,9 @@ from src.processes.tests.fixtures import (
     create_test_template,
     create_test_user,
     create_test_workflow,
+)
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
 )
 
 pytestmark = pytest.mark.django_db
@@ -1123,26 +1125,8 @@ class TestReassignService:
         new_user = create_test_user(account=account, email='new@example.com')
         template = create_test_template(user, tasks_count=1, is_active=True)
 
-        workflow_owners_filter_mock = mocker.patch(
-            'src.processes.models.workflows.workflow.'
-            'Workflow.owners.through.objects.filter',
-        )
-        workflow_owners_delete_mock = (
-            workflow_owners_filter_mock.return_value.delete
-        )
-        update_query_mock = mocker.patch(
-            'src.accounts.services.reassign.'
-            'UpdateWorkflowOwnersQuery.__init__',
-            return_value=None,
-        )
-        query_insert_sql_mock = mocker.patch(
-            'src.accounts.services.reassign.'
-            'UpdateWorkflowOwnersQuery.insert_sql',
-            return_value=('SQL_QUERY', {'params': 'values'}),
-        )
-        sql_execute_mock = mocker.patch(
-            'src.accounts.services.reassign.'
-            'RawSqlExecutor.execute',
+        update_task_mock = mocker.patch(
+            'src.accounts.services.reassign.update_workflow_owners',
         )
 
         service = ReassignService(old_user=old_user, new_user=new_user)
@@ -1152,15 +1136,8 @@ class TestReassignService:
         service._reassign_in_workflow_owners(affected_template_ids)
 
         # assert
-        workflow_owners_filter_mock.assert_called_once_with(
-            workflow__template_id__in=affected_template_ids,
-            workflow__account=account,
-        )
-        workflow_owners_delete_mock.assert_called_once()
-        update_query_mock.assert_called_once_with(template_id=template.id)
-        query_insert_sql_mock.assert_called_once_with()
-        sql_execute_mock.assert_called_once_with(
-            'SQL_QUERY', {'params': 'values'},
+        update_task_mock.delay.assert_called_once_with(
+            template_ids=affected_template_ids,
         )
 
     def test_reassign_in_workflow_owners_with__empty_template_ids__ok(
@@ -1172,21 +1149,8 @@ class TestReassignService:
         old_user = create_test_user(account=account, email='old@example.com')
         new_user = create_test_user(account=account, email='new@example.com')
 
-        workflow_owners_filter_mock = mocker.patch(
-            'src.processes.models.workflows.workflow.'
-            'Workflow.owners.through.objects.filter',
-        )
-        workflow_owners_delete_mock = (
-            workflow_owners_filter_mock.return_value.delete
-        )
-        query_mock = mocker.patch(
-            'src.accounts.services.reassign.'
-            'UpdateWorkflowOwnersQuery.insert_sql',
-            return_value=('SQL_QUERY', {'params': 'values'}),
-        )
-        sql_execute_mock = mocker.patch(
-            'src.accounts.services.reassign.'
-            'RawSqlExecutor.execute',
+        update_task_mock = mocker.patch(
+            'src.accounts.services.reassign.update_workflow_owners',
         )
 
         service = ReassignService(old_user=old_user, new_user=new_user)
@@ -1196,10 +1160,7 @@ class TestReassignService:
         service._reassign_in_workflow_owners(affected_template_ids)
 
         # assert
-        workflow_owners_filter_mock.assert_not_called()
-        workflow_owners_delete_mock.assert_not_called()
-        query_mock.assert_not_called()
-        sql_execute_mock.assert_not_called()
+        update_task_mock.delay.assert_not_called()
 
     def test_affected_template_ids__with_old_user_ok(self, mocker):
         # arrange
@@ -1268,35 +1229,15 @@ class TestReassignService:
 
     def test_reassign_in_workflow_members__with_old_and_new_user__ok(
         self,
-        mocker,
     ):
         # arrange
         account = create_test_account(name='test_account')
         old_user = create_test_user(account=account, email='old@example.com')
         new_user = create_test_user(account=account, email='new@example.com')
+        workflow = create_test_workflow(user=old_user, tasks_count=1)
 
-        query_init_mock = mocker.patch(
-            'src.accounts.services.reassign.'
-            'DeleteUserFromWorkflowMembersQuery.__init__',
-            return_value=None,
-        )
-        query_get_sql_mock = mocker.patch(
-            'src.accounts.services.reassign.'
-            'DeleteUserFromWorkflowMembersQuery.get_sql',
-            return_value=('SQL_QUERY', {'params': 'values'}),
-        )
-        sql_execute_mock = mocker.patch(
-            'src.accounts.services.reassign.'
-            'RawSqlExecutor.execute',
-        )
-        filter_mock = mocker.patch(
-            'src.accounts.services.reassign.'
-            'Workflow.members.through.objects.filter',
-            return_value=Workflow.members.through.objects.none(),
-        )
-        update_mock = mocker.patch.object(
-            filter_mock.return_value, 'update',
-        )
+        # Grant old_user view permission
+        WorkflowPermissionService.grant_view_bulk([old_user.id], workflow)
 
         service = ReassignService(old_user=old_user, new_user=new_user)
 
@@ -1304,19 +1245,8 @@ class TestReassignService:
         service._reassign_in_workflow_members()
 
         # assert
-        query_init_mock.assert_called_once_with(
-            user_to_delete=old_user.id,
-            user_to_substitution=new_user.id,
-        )
-        query_get_sql_mock.assert_called_once()
-        sql_execute_mock.assert_called_once_with(
-            'SQL_QUERY', {'params': 'values'},
-        )
-        filter_mock.assert_called_once_with(
-            user_id=old_user.id,
-            workflow__account=account,
-        )
-        update_mock.assert_called_once_with(user_id=new_user.id)
+        assert not WorkflowPermissionService.has_view(old_user, workflow)
+        assert WorkflowPermissionService.has_view(new_user, workflow)
 
     def test_reassign_in_template_conditions__with_old_and_new_user__ok(self):
         # arrange
@@ -1537,7 +1467,7 @@ class TestReassignService:
         account = create_test_account(name='test_account')
         old_user = create_test_admin(account=account, email='old@example.com')
         new_user = create_test_admin(account=account, email='new@example.com')
-        workflow = create_test_workflow(old_user, tasks_count=1)
+        workflow = create_test_workflow(user=old_user, tasks_count=1)
         task = workflow.tasks.get(number=1)
         condition = Condition.objects.create(
             task=task,
@@ -1674,7 +1604,7 @@ class TestReassignService:
         account = create_test_account(name='test_account')
         old_user = create_test_admin(account=account, email='old@example.com')
         new_group = create_test_group(account, name='new_group')
-        workflow = create_test_workflow(old_user, tasks_count=1)
+        workflow = create_test_workflow(user=old_user, tasks_count=1)
         task = workflow.tasks.get(number=1)
         condition = Condition.objects.create(
             task=task,
