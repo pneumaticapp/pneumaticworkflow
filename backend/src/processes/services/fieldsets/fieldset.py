@@ -342,7 +342,7 @@ class FieldSetTemplateService(BaseModelService):
                     fieldset_id=self.instance.id,
                     **rule_data,
                 )
-                rule_api_names.add(rule.id)
+                rule_api_names.add(rule.api_name)
 
         self.instance.rules.exclude(api_name__in=rule_api_names).delete()
 
