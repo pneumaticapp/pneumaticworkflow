@@ -114,6 +114,29 @@ describe('RichText', () => {
     expect(container.innerHTML).not.toMatch(/<script/i);
   });
 
+  it('escapes raw HTML in non-markdown mode', () => {
+    const props: IRichTextProps = {
+      text: '<a href="https://phish.example">Approve</a>',
+      isMarkdownMode: false,
+    };
+
+    const { container } = render(<RichText {...props} />);
+
+    expect(container.querySelector('a')).toBeNull();
+    expect(container.textContent).toContain('<a href="https://phish.example">Approve</a>');
+  });
+
+  it('keeps stable hook order when text changes from empty to non-empty', () => {
+    const props: IRichTextProps = { text: null, isMarkdownMode: true };
+    const { container, rerender } = render(<RichText {...props} />);
+
+    expect(container.firstChild).toBeNull();
+
+    rerender(<RichText text="Loaded content" isMarkdownMode />);
+
+    expect(container.textContent).toContain('Loaded content');
+  });
+
   it('empty render if text prop is null', () => {
     const props: IRichTextProps = { text: null, isMarkdownMode: true };
 
@@ -129,7 +152,9 @@ describe('RichText', () => {
     };
 
     const { container } = render(<RichText {...props} />);
+    const iframe = container.querySelector('iframe');
 
+    expect(iframe?.getAttribute('src')).toBe('//www.youtube.com/embed/jNQXAC9IVRw');
     expect(container.firstChild).toMatchSnapshot();
   });
 
@@ -140,7 +165,9 @@ describe('RichText', () => {
     };
 
     const { container } = render(<RichText {...props} />);
+    const iframe = container.querySelector('iframe');
 
+    expect(iframe?.getAttribute('src')).toBe('https://www.useloom.com/embed/7f68fa7f01e349cab91b0c36168f68c3');
     expect(container.firstChild).toMatchSnapshot();
   });
 
@@ -151,7 +178,10 @@ describe('RichText', () => {
     };
 
     const { container } = render(<RichText {...props} />);
+    const iframes = container.querySelectorAll('iframe');
 
+    expect(iframes[0]?.getAttribute('src')).toBe('https://www.useloom.com/embed/7f68fa7f01e349cab91b0c36168f68c3');
+    expect(iframes[1]?.getAttribute('src')).toBe('//www.youtube.com/embed/jNQXAC9IVRw');
     expect(container.firstChild).toMatchSnapshot();
   });
 
@@ -174,6 +204,17 @@ describe('RichText', () => {
 
     expect(container.textContent).toContain(LOCALIZED_WF_STARTER_TITLE);
     expect(container.textContent).not.toContain('{{workflow-starter}}');
+  });
+
+  it('renders mention with ] in display name', () => {
+    const props: IRichTextProps = {
+      text: 'Reviewer: [John\\] Doe|42].',
+      isMarkdownMode: true,
+    };
+
+    const { container } = render(<RichText {...props} />);
+
+    expect(container.textContent).toContain('@John] Doe');
   });
 
   it('renders original title in badge for regular variable', () => {
@@ -293,6 +334,45 @@ describe('RichText', () => {
 
     expect(image).not.toBeNull();
     expect(container.innerHTML).not.toContain('![img');
+  });
+
+  it('renders standard markdown image without entityType as img preview', () => {
+    const props: IRichTextProps = {
+      text: '![Architecture diagram](https://picsum.photos/400/200)',
+      isMarkdownMode: true,
+    };
+
+    const { container } = render(<RichText {...props} />);
+    const image = container.querySelector('img[src="https://picsum.photos/400/200"]');
+    const link = container.querySelector('a[href="https://picsum.photos/400/200"]');
+
+    expect(image).not.toBeNull();
+    expect(link).toBeNull();
+    expect(container.innerHTML).not.toContain('![Architecture diagram');
+  });
+
+  it('renders markdown image with entityType file as document attachment', () => {
+    const props: IRichTextProps = {
+      text: '![report.pdf](https://example.com/report.pdf "entityType:file")',
+      isMarkdownMode: true,
+    };
+
+    const { container } = render(<RichText {...props} />);
+
+    expect(container.querySelector('img')).toBeNull();
+    expect(container.textContent).toContain('report.pdf');
+  });
+
+  it('renders markdown image syntax with file extension as document attachment', () => {
+    const props: IRichTextProps = {
+      text: '![report.pdf](https://example.com/report.pdf)',
+      isMarkdownMode: true,
+    };
+
+    const { container } = render(<RichText {...props} />);
+
+    expect(container.querySelector('img')).toBeNull();
+    expect(container.textContent).toContain('report.pdf');
   });
 
   describe('file-service URLs (no extension in URL)', () => {

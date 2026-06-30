@@ -6,6 +6,8 @@ import { createMarkdownToken, IMarkdownToken } from '../createMarkdownToken';
 import { IRenderEmbedVideoHtmlOptions, renderLinkHtml } from '../renderEmbedVideoHtml';
 
 const LINK_SCAN_RE = /www|@|:\/\//;
+const HTML_ANCHOR_OPEN_RE = /^<a\b/i;
+const HTML_ANCHOR_CLOSE_RE = /<\/a\s*>/i;
 
 interface ICollectedLink {
   text: string;
@@ -56,6 +58,17 @@ export const linkifyInlineChildren = (
 
     if (token.type === 'link_close') {
       linkDepth = Math.max(0, linkDepth - 1);
+      result.push(token);
+      continue;
+    }
+
+    if (token.type === 'html_inline') {
+      if (HTML_ANCHOR_OPEN_RE.test(token.content)) {
+        linkDepth += 1;
+      } else if (HTML_ANCHOR_CLOSE_RE.test(token.content)) {
+        linkDepth = Math.max(0, linkDepth - 1);
+      }
+
       result.push(token);
       continue;
     }

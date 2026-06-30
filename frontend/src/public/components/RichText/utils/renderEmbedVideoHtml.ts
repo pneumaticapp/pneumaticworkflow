@@ -33,6 +33,12 @@ const EMBED_VIDEO_RULES: IEmbedVideoRule[] = [
   },
 ];
 
+const getVideoUrlMatch = (url: string, regExp: RegExp): RegExpMatchArray | null => {
+  const matchRegExp = new RegExp(regExp.source, regExp.flags.replace('g', ''));
+
+  return matchRegExp.exec(url);
+};
+
 const renderEmbedIframeHtml = (
   embedSrc: string,
   { videoClassName, videoContainerClassName }: IRenderEmbedVideoHtmlOptions,
@@ -51,13 +57,13 @@ export const renderEmbedVideoHtml = (
   url: string,
   options: IRenderEmbedVideoHtmlOptions,
 ): string | null => {
-  const matchedRule = EMBED_VIDEO_RULES.find(({ regExp }) => regExp.test(url));
+  const matchedRule = EMBED_VIDEO_RULES.find(({ regExp }) => getVideoUrlMatch(url, regExp));
 
   if (!matchedRule) {
     return null;
   }
 
-  const match = url.match(matchedRule.regExp);
+  const match = getVideoUrlMatch(url, matchedRule.regExp);
 
   if (!match) {
     return null;

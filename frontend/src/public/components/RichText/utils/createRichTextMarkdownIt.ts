@@ -1,5 +1,5 @@
 import { IntlShape } from 'react-intl';
-import markdownit from 'markdown-it'
+import MarkdownIt from 'markdown-it';
 
 import { TTaskVariable } from '../../TemplateEdit/types';
 import { createCheckPlaceholderId } from '../../TaskCard/checklist/createCheckPlaceholderId';
@@ -36,7 +36,7 @@ export const createRichTextMarkdownIt = ({
   badgeClassName,
   specificityBadgeClassName,
 }: ICreateRichTextMarkdownItOptions): any => {
-  const md = markdownit({
+  const md = MarkdownIt({
     html: true,
     linkify: false,
   });

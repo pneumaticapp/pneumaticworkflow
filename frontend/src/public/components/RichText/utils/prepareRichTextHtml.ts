@@ -9,6 +9,8 @@ import { truncateString } from '../../../utils/truncateString';
 import { prepareChecklistsForRendering } from '../../../utils/checklists/prepareChecklistsForRendering';
 import { TTaskVariable } from '../../TemplateEdit/types';
 import { getLocalizedSystemVariable } from '../../TemplateEdit/TaskForm/utils/getTaskVariables';
+import { unescapeMarkdownLinkText } from '../../RichEditor/utils/converters/markdownLinkText';
+import { escapeHtmlData } from './escapeHtmlData';
 
 const MAX_VARIABLE_LENGTH = 20;
 
@@ -40,7 +42,9 @@ export function prepareRichTextHtml(
     ? [
       {
         regExp: mentionsRegex,
-        replaceLogic: `<span class='${mentionClassName}'>@$1</span>`,
+        replaceLogic: (_match: string, mentionName: string) => (
+          `<span class='${mentionClassName}'>@${unescapeMarkdownLinkText(mentionName)}</span>`
+        ),
       },
       {
         regExp: variableRegex,
@@ -69,7 +73,9 @@ export function prepareRichTextHtml(
     ]
     : [];
 
-  const preparedText = prepareChecklistsForRendering(text);
+  const preparedText = replaceInlineTokens
+    ? escapeHtmlData(prepareChecklistsForRendering(text))
+    : prepareChecklistsForRendering(text);
 
   return replaceRules.reduce((acc, { regExp, replaceLogic }) => {
     const replaceRegex = new RegExp(regExp, 'gi');

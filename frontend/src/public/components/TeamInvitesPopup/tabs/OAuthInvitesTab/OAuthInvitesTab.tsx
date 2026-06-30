@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import * as PerfectScrollbar from 'react-perfect-scrollbar';
+import PerfectScrollbar from 'react-perfect-scrollbar';
 import { useIntl } from 'react-intl';
 import { useDispatch } from 'react-redux';
 

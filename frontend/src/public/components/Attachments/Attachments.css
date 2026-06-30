@@ -74,6 +74,7 @@
 .comment-attachments__documents-list {
   display: flex;
   flex-flow: column;
+  gap: 0.8rem;
   width: 100%;
   min-width: 0;
 }

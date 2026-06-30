@@ -5,7 +5,10 @@ import {
   parseGeneralMarkdownLinkFromStart,
   unescapeMarkdownLinkText,
 } from '../../../RichEditor/utils/converters/markdownLinkText';
-import { getAttachmentEntityType } from '../../../RichEditor/utils/getAttachmentEntityType';
+import {
+  getAttachmentEntityType,
+  getAttachmentEntityTypeByFilename,
+} from '../../../RichEditor/utils/getAttachmentEntityType';
 import { ECustomEditorEntities } from '../../../RichEditor/utils/types';
 import { renderAttachmentHtml } from '../renderAttachmentHtml';
 import { IRenderEmbedVideoHtmlOptions, renderLinkHtml } from '../renderEmbedVideoHtml';
@@ -22,7 +25,12 @@ interface IPneumaticLinkMeta {
   isLinkified: boolean;
 }
 
-const getLinkEntityType = (url: string, entityType: string | undefined): ECustomEditorEntities => {
+const getLinkEntityType = (
+  url: string,
+  entityType: string | undefined,
+  name?: string,
+  isImageMarkdown = false,
+): ECustomEditorEntities => {
   const googleBucket = 'https://storage.googleapis.com/';
   const attachmentEntityTypes = [
     ECustomEditorEntities.Image,
@@ -34,6 +42,17 @@ const getLinkEntityType = (url: string, entityType: string | undefined): ECustom
     return attachmentEntityTypes.includes(entityType as ECustomEditorEntities)
       ? (entityType as ECustomEditorEntities)
       : getAttachmentEntityType(url);
+  }
+
+  if (name) {
+    const entityTypeByName = getAttachmentEntityTypeByFilename(name);
+    if (entityTypeByName !== ECustomEditorEntities.Link) {
+      return entityTypeByName;
+    }
+  }
+
+  if (isImageMarkdown) {
+    return ECustomEditorEntities.Image;
   }
 
   if (url.includes(googleBucket)) {
@@ -59,7 +78,8 @@ export const customLinkPlugin = (
 
     const [, nameRaw, url, , entityTypeRaw] = match;
     const name = unescapeMarkdownLinkText(nameRaw ?? '');
-    const entityType = getLinkEntityType(url, entityTypeRaw);
+    const isImageMarkdown = match[0].startsWith('![');
+    const entityType = getLinkEntityType(url, entityTypeRaw, name, isImageMarkdown);
 
     if (!silent) {
       const token = state.push('pneumatic_link', '', 0);
