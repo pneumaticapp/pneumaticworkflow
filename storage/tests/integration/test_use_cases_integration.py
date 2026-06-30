@@ -2,7 +2,7 @@
 
 import io
 from datetime import UTC, datetime
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, Mock
 
 import pytest
 
@@ -200,6 +200,7 @@ async def test_download__full_integration__ok(
 
     mock_body = AsyncMock()
     mock_body.iter_chunks = mock_iter_chunks
+    mock_body.close = Mock()
     mock_s3_client.get_object.return_value = {
         'Body': mock_body,
     }

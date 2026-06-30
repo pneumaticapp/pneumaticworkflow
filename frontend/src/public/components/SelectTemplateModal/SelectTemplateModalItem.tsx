@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import { ITemplateListItem } from '../../types/template';
+import { RichText } from '../RichText';
 import { SideModalCard } from '../UI/SideModalCard';
 
 import styles from './SelectTemplateModal.css';
@@ -14,7 +15,11 @@ export function StartProcessModalItem({ name, description, selectWorkflow }: ISt
     <SideModalCard className={styles['item-container']} onClick={selectWorkflow}>
       <SideModalCard.Title className={styles['item__title']}>{name}</SideModalCard.Title>
 
-      {description && <SideModalCard.Body className={styles['item__body']}>{description}</SideModalCard.Body>}
+      {description && (
+        <SideModalCard.Body className={styles['item__body']}>
+          <RichText text={description} embedVideos={false} />
+        </SideModalCard.Body>
+      )}
     </SideModalCard>
   );
 }

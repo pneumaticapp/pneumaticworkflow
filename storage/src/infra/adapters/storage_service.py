@@ -6,6 +6,8 @@ from collections.abc import AsyncGenerator
 
 import aioboto3
 from aiobotocore.config import AioConfig
+from aiobotocore.response import StreamingBody
+from boto3.s3.transfer import TransferConfig
 from botocore.exceptions import ClientError
 
 from src.shared_kernel.config import get_settings
@@ -26,12 +28,16 @@ class StorageService:
         self._storage_type = self._settings.STORAGE_TYPE
         self._session = aioboto3.Session()
 
-        # GCS requires signature_version='s3' (legacy), not 's3v4'!
-        signature_version = 's3' if self._storage_type == 'google' else 's3v4'
         self._config = AioConfig(
             max_pool_connections=20,
+            request_checksum_calculation='when_required',
+            response_checksum_validation='when_required',
             retries={'max_attempts': 3, 'mode': 'standard'},
-            signature_version=signature_version,
+            signature_version='s3v4',
+        )
+
+        self._transfer_config = TransferConfig(
+            multipart_threshold=100 * 1024 * 1024,
         )
 
         # Connection parameters depending on storage type
@@ -60,6 +66,20 @@ class StorageService:
         # Persistent S3 client (lazy-initialized)
         self._s3_client: typing.Any | None = None
         self._s3_context: typing.Any | None = None
+
+    @staticmethod
+    async def _stream_s3_body(
+        body: StreamingBody,
+        chunk_size: int,
+    ) -> AsyncGenerator[bytes, None]:
+        """Yield chunks from S3 response body and handle disconnects."""
+        try:
+            async for chunk in body.iter_chunks(chunk_size=chunk_size):
+                yield chunk
+        except ClientError as stream_err:
+            raise asyncio.CancelledError from stream_err
+        finally:
+            body.close()
 
     async def _get_client(self) -> typing.Any:  # noqa: ANN401
         """Get or create persistent S3 client.
@@ -132,6 +152,7 @@ class StorageService:
                 Bucket=bucket_name,
                 Key=file_path,
                 ExtraArgs=extra_args,
+                Config=self._transfer_config,
             )
         except ClientError as e:
             if e.response['Error']['Code'] == 'NoSuchBucket':
@@ -149,6 +170,7 @@ class StorageService:
                         Bucket=bucket_name,
                         Key=file_path,
                         ExtraArgs=extra_args,
+                        Config=self._transfer_config,
                     )
                     return  # noqa: TRY300
                 except ClientError as upload_e:
@@ -173,8 +195,8 @@ class StorageService:
             file_path: File path in storage.
             range_header: Optional HTTP Range header.
 
-        Yields:
-            bytes: File chunks.
+        Returns:
+            AsyncGenerator[bytes, None]: File chunks stream.
 
         Raises:
             StorageError: On download error.
@@ -192,12 +214,7 @@ class StorageService:
                 kwargs['Range'] = range_header
 
             response = await s3.get_object(**kwargs)
-
-            body = response['Body']
-            async for chunk in body.iter_chunks(
-                chunk_size=chunk_size,
-            ):
-                yield chunk
+            return self._stream_s3_body(response['Body'], chunk_size)
 
         except ClientError as e:
             error_code = e.response['Error']['Code']

@@ -1,5 +1,6 @@
 import { eventChannel } from 'redux-saga';
 import { mapToCamelCase } from '../../utils/mappers';
+import { logger } from '../../utils/logger';
 import { addConnection } from './webSocketConnections';
 
 export interface WebSocketWithRemoveFlag extends WebSocket {
@@ -54,8 +55,16 @@ export function createWebSocketChannel(url: string) {
           return;
         }
 
-        const data = mapToCamelCase(JSON.parse(message.data));
-        emit(data);
+        try {
+          const data = mapToCamelCase(JSON.parse(message.data));
+          emit(data);
+        } catch (error) {
+          logger.error('Invalid WebSocket message', message.data, error);
+        }
+      };
+
+      ws.onerror = (event) => {
+        logger.error('WebSocket connection error', event);
       };
 
       ws.onclose = () => {
@@ -72,6 +81,7 @@ export function createWebSocketChannel(url: string) {
         clearInterval(heartbeatInterval);
         heartbeatInterval = null;
       }
+      ws.shouldRemove = true;
       ws.close();
     };
   });

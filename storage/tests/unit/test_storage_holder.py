@@ -207,7 +207,7 @@ def test_init__google__gcs_params(mocker):
 
     # assert
     assert service._client_params['endpoint_url'] == 'https://gcs'
-    assert service._config.signature_version == 's3'
+    assert service._config.signature_version == 's3v4'
 
 
 def test_init__pool_connections__is_20(
@@ -246,6 +246,7 @@ async def test_upload__ok__no_error(
         Bucket='bucket',
         Key='key',
         ExtraArgs={'ContentType': 'image/png'},
+        Config=svc._transfer_config,
     )
 
 
@@ -272,6 +273,7 @@ async def test_upload__with_content_type__extra_args(
         Bucket='b',
         Key='k',
         ExtraArgs={'ContentType': 'application/pdf'},
+        Config=svc._transfer_config,
     )
 
 
@@ -298,6 +300,7 @@ async def test_upload__no_content_type__empty_extra(
         Bucket='b',
         Key='k',
         ExtraArgs={},
+        Config=svc._transfer_config,
     )
 
 
@@ -337,12 +340,14 @@ async def test_upload__no_bucket__create_and_retry(
                 Bucket='bucket',
                 Key='key',
                 ExtraArgs={},
+                Config=svc._transfer_config,
             ),
             call(
                 Fileobj=stream,
                 Bucket='bucket',
                 Key='key',
                 ExtraArgs={},
+                Config=svc._transfer_config,
             ),
         ],
     )
@@ -419,11 +424,10 @@ async def test_download__no_such_key__not_found(
 
     # act
     with pytest.raises(StorageError) as exc_info:
-        async for _ in svc.download_file(
+        await svc.download_file(
             bucket_name='bucket',
             file_path='path',
-        ):
-            pass
+        )
 
     # assert
     assert exc_info.value.error_code.code == 'STORAGE_005'
@@ -442,11 +446,10 @@ async def test_download__internal_err__raise(
 
     # act
     with pytest.raises(StorageError) as exc_info:
-        async for _ in svc.download_file(
+        await svc.download_file(
             bucket_name='bucket',
             file_path='path',
-        ):
-            pass
+        )
 
     # assert
     assert exc_info.value.error_code.code == 'STORAGE_003'
@@ -465,17 +468,19 @@ async def test_download__with_range__range_in_kwargs(
 
     mock_body = AsyncMock()
     mock_body.iter_chunks = _fake_iter
+    mock_body.close = Mock()
     mock_s3.get_object = AsyncMock(
         return_value={'Body': mock_body},
     )
 
     # act
     chunks = []
-    async for chunk in svc.download_file(
+    stream = await svc.download_file(
         bucket_name='b',
         file_path='k',
         range_header='bytes=0-100',
-    ):
+    )
+    async for chunk in stream:
         chunks.append(chunk)
 
     # assert

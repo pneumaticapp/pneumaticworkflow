@@ -21,5 +21,3 @@ RUN poetry install --no-interaction --no-ansi --no-root --only=main \
 COPY . .
 
 ENV PYTHONPATH=/app
-
-CMD ["sh", "-c", "poetry run alembic -c src/shared_kernel/database/alembic.ini upgrade head && poetry run python -m src.main"]

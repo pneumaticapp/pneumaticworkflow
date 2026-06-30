@@ -62,7 +62,13 @@ class Command(BaseCommand):
 
         for attr in attachments:
             try:
-                if Attachment.objects.filter(file_id=attr.file_id).exists():
+                if Attachment.objects.filter(
+                    file_id=attr.file_id,
+                    account_id=attr.account_id,
+                    workflow_id=attr.workflow_id,
+                    event_id=attr.event_id,
+                    output_id=attr.output_id,
+                ).exists():
                     skipped += 1
                     continue
 
