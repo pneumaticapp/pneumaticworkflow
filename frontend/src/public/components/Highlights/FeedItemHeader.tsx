@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import * as React from 'react';
+import { useState, useEffect, useRef } from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
@@ -6,6 +7,7 @@ import { RichText } from '../RichText';
 import { Attachments } from '../Attachments';
 import { EWorkflowLogEvent } from '../../types/workflow';
 import { EExtraFieldType, IExtraField } from '../../types/template';
+import { IFieldsetRuntime } from '../../types/fieldset';
 import { IHighlightsItem } from '../../types/highlights';
 import { isArrayWithItems } from '../../utils/helpers';
 import { EKickoffOutputsViewModes, KickoffOutputs } from '../KickoffOutputs';
@@ -50,37 +52,60 @@ export function FeedItemHeader({
   };
 
   const renderOutputsContents = () => {
-    if (!task) {
+    const { output: taskOutput, fieldsets: taskFieldsets } = task || {};
+    const { output: kickoffOutput, fieldsets: kickoffFieldsets } = kickoff || {};
+
+    if (
+      !isArrayWithItems(taskOutput) && !isArrayWithItems(kickoffOutput)
+      && !isArrayWithItems(taskFieldsets) && !isArrayWithItems(kickoffFieldsets)
+    ) {
       return null;
     }
-    const { output: taskOutput } = task;
+
     const OUTPUTS_MAP: { [key in EWorkflowLogEvent]?: IExtraField[] } = {
-      [EWorkflowLogEvent.WorkflowRun]: kickoff?.output,
+      [EWorkflowLogEvent.WorkflowRun]: kickoffOutput,
       [EWorkflowLogEvent.WorkflowComplete]: taskOutput,
       [EWorkflowLogEvent.TaskComplete]: taskOutput,
       [EWorkflowLogEvent.WorkflowsReturned]: taskOutput,
       [EWorkflowLogEvent.TaskRevert]: taskOutput,
     };
 
-    const outputs = OUTPUTS_MAP[type];
+    const FIELDSETS_MAP: { [key in EWorkflowLogEvent]?: IFieldsetRuntime[] } = {
+      [EWorkflowLogEvent.WorkflowRun]: kickoffFieldsets,
+      [EWorkflowLogEvent.WorkflowComplete]: taskFieldsets,
+      [EWorkflowLogEvent.TaskComplete]: taskFieldsets,
+      [EWorkflowLogEvent.WorkflowsReturned]: taskFieldsets,
+      [EWorkflowLogEvent.TaskRevert]: taskFieldsets,
+    };
 
-    if (!outputs || !isArrayWithItems(outputs)) {
+    const outputs = OUTPUTS_MAP[type];
+    const fieldsets = FIELDSETS_MAP[type];
+
+    if (!isArrayWithItems(outputs) && !isArrayWithItems(fieldsets)) {
       return null;
     }
 
-    const filteredOutputs = outputs.filter((output) => {
+    const filterField = (output: IExtraField) => {
       const value = output.type === EExtraFieldType.User ? output.userId || output.groupId : output.value;
       return value || output.attachments?.length;
-    });
+    };
+
+    const filteredOutputs = (outputs || []).filter(filterField);
+
+    const filteredFieldsets = (fieldsets || []).map((fs) => ({
+      ...fs,
+      fields: fs.fields.filter(filterField),
+    })).filter((fs) => fs.fields.length > 0);
 
     return (
       <>
         <KickoffOutputs
           outputs={filteredOutputs}
+          fieldsets={filteredFieldsets}
           viewMode={EKickoffOutputsViewModes.Short}
           isTruncated={!isTextExpanded}
         />
-        {filteredOutputs.length > 1 && !isTextExpanded && renderElipsis()}
+        {(filteredOutputs.length + filteredFieldsets.flatMap((fs) => fs.fields).length) > 1 && !isTextExpanded && renderElipsis()}
       </>
     );
   };

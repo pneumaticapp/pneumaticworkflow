@@ -7,6 +7,9 @@ import {
 } from '../components/TemplateEdit/TaskForm/Conditions';
 import { TUploadedFile } from '../utils/uploadFiles';
 import { TSystemField } from '../components/Workflows/WorkflowsTablePage/WorkflowsTable/types';
+import { IFieldsetBinding, IFieldsetBindingClient, IFieldsetBindingMeta, IFieldsetRuntime } from './fieldset';
+
+export type { IFieldsetBindingClient } from './fieldset';
 
 export interface ITemplate {
   id?: number;
@@ -31,6 +34,11 @@ export interface ITemplate {
   performersCount: number;
 }
 
+export interface ITemplateClient extends Omit<ITemplate, 'kickoff' | 'tasks'> {
+  tasks: ITemplateTaskClient[];
+  kickoff: IKickoffClient;
+}
+
 export enum ETemplateOwnerRole {
   Owner = 'owner',
   Viewer = 'viewer',
@@ -47,10 +55,22 @@ export interface ITemplateOwner {
 export type ITemplateViewer = ITemplateOwner;
 export type ITemplateStarter = ITemplateOwner;
 
-export type TTransformedTask =
-  | { apiName: string; name: string; needSteName: null; fields: TSystemField[] }
-  | (Pick<ITemplateTask, 'apiName' | 'fields' | 'name'> & { needSteName?: boolean })
-  | (Pick<IKickoff, 'fields'> & { apiName: string; name: string; needSteName: null });
+export type TRuntimeMergedOutputPart =
+  | { kind: 'field'; field: IExtraField }
+  | { kind: 'fieldset'; data: IFieldsetRuntime | TTemplateFieldFieldset }
+  | { kind: 'system'; field: TSystemField };
+
+export type TTransformedTask = {
+  apiName: string;
+  name: string;
+  needSteName?: boolean | null;
+  mergedOutputs: TRuntimeMergedOutputPart[];
+};
+
+
+export type TTemplateFieldFieldset = Pick<
+  IFieldsetRuntime, 'name' | 'description' | 'apiNameBinding' | 'fields' | 'order' | 'labelPosition'
+>;
 
 export interface ITemplateTask {
   id?: number;
@@ -64,11 +84,16 @@ export interface ITemplateTask {
   skipForStarter: boolean;
   rawPerformers: ITemplateTaskPerformer[];
   fields: IExtraField[];
+  fieldsets: IFieldsetBinding[];
   uuid: string;
   conditions: ICondition[];
   checklists: TOutputChecklist[];
   revertTask: string | null;
   ancestors: string[];
+}
+
+export interface ITemplateTaskClient extends Omit<ITemplateTask, 'fieldsets'> {
+  fieldsets: IFieldsetBindingClient[];
 }
 
 export type TDueDateRuleTarget = 'field' | 'workflow started' | 'task started' | 'task completed';
@@ -125,27 +150,35 @@ export enum ETaskPerformerType {
   Manager = 'manager',
 }
 
-export interface ITemplateResponse extends Omit<ITemplate, 'id' | 'tasks' | 'tasksCount' | 'performersCount'> {
+export interface ITemplateResponse extends Omit<ITemplate, 'id' | 'tasks' | 'tasksCount' | 'performersCount' | 'kickoff'> {
   id: number;
   tasks: ITemplateTaskResponse[];
+  kickoff: Omit<IKickoff, 'fieldsets'> & { fieldsets: IFieldsetBinding[] };
 }
 
 export interface ITemplateTaskResponse
-  extends Omit<ITemplateTask, 'uuid' | 'conditions' | 'rawDueDate' | 'apiName' | 'id'> {
+  extends Omit<ITemplateTask, 'uuid' | 'conditions' | 'rawDueDate' | 'apiName' | 'id' | 'fieldsets'> {
   id: number;
   conditions: IConditionResponse[];
   rawDueDate: IDueDateAPI | null;
   dueIn?: string | null; // deprecated
   apiName?: string;
+  fieldsets: IFieldsetBinding[];
 }
 
-export interface ITemplateRequest extends Omit<ITemplate, 'tasks'> {
+export interface ITemplateRequest extends Omit<ITemplate, 'tasks' | 'kickoff'> {
   tasks: ITemplateTaskRequest[];
+  kickoff: ITemplateKickoffRequest;
 }
 
-export interface ITemplateTaskRequest extends Omit<ITemplateTask, 'uuid' | 'conditions' | 'rawDueDate'> {
+export interface ITemplateTaskRequest extends Omit<ITemplateTask, 'uuid' | 'conditions' | 'rawDueDate' | 'fieldsets'> {
   conditions: IConditionResponse[];
   rawDueDate: IDueDateAPI | null;
+  fieldsets: IFieldsetBindingMeta[];
+}
+
+export interface ITemplateKickoffRequest extends Omit<IKickoff, 'fieldsets'> {
+  fieldsets: IFieldsetBindingMeta[];
 }
 
 export interface IConditionResponse {
@@ -177,9 +210,51 @@ export type TConditionRulePredicateResponse = {
   operator: EConditionOperators;
 } & TConditionPredicateValue;
 
+
+/** Fieldset template object from list API response (camelCased by commonRequest) */
+export interface IFieldsetTemplateData {
+  id: number;
+  name: string;
+  description: string;
+  rules: { id: number; type: string; value: string }[];
+  fields: {
+    type: string;
+    name: string;
+    description?: string;
+    isRequired?: boolean;
+    isHidden?: boolean;
+    selections?: string[];
+    dataset?: number | null;
+    order: number;
+    apiName: string;
+    default?: string;
+  }[];
+}
+
 export interface IKickoff {
   description: string;
   fields: IExtraField[];
+  fieldsets: IFieldsetBinding[];
+}
+
+export interface IKickoffClient extends Omit<IKickoff, 'fieldsets'> {
+  fieldsets: IFieldsetBindingClient[];
+}
+
+/** Kickoff shape from template list APIs (GET /templates/, GET /templates/titles-by-owners) */
+export interface IKickoffList {
+  fields: {
+    name: string;
+    type: string;
+    isRequired?: boolean;
+    isHidden?: boolean;
+    description?: string;
+    apiName: string;
+    selections?: string[];
+    dataset?: number | null;
+    order: number;
+  }[];
+  fieldsets: IFieldsetTemplateData[];
 }
 
 export interface ITemplateListItem {
@@ -192,7 +267,7 @@ export interface ITemplateListItem {
   tasksCount: number;
   performersCount: number;
   owners: number[];
-  kickoff: IKickoff | null;
+  kickoff: IKickoffList | null;
   isEditable: boolean;
 }
 
@@ -324,6 +399,7 @@ export type TAddTemplatePreset = Omit<TTemplatePreset, 'id' | 'author' | 'dateCr
 export enum ETemplatesTab {
   Templates = 'templates',
   Datasets = 'datasets',
+  Fieldsets = 'fieldsets',
 }
 
 export interface ITemplatesLayoutProps {

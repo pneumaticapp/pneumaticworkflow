@@ -24,12 +24,16 @@ const errorMapper: { [key: string]: string } = {
   'Failed to fetch': 'error.fetch-failed',
 };
 
-export const getErrorMessage = (error?: ICustomError) => {
-  if (!error) {
+export const getErrorMessage = (error?: ICustomError | unknown): string => {
+  if (error === undefined || error === null) {
     return UNKNOWN_ERROR;
   }
 
-  const { code, message, details, detail } = error;
+  if (typeof error !== 'object') {
+    return UNKNOWN_ERROR;
+  }
+
+  const { code, message, details, detail } = error as ICustomError;
 
   const dictionaryErrorMessage = errorMapper[code] ?? errorMapper[message];
 

@@ -36,6 +36,8 @@ from src.processes.models.workflows.task import (
     TaskPerformer,
 )
 from src.processes.models.workflows.workflow import Workflow
+from src.processes.models.workflows.fields import TaskField
+from src.processes.models.workflows.fieldset import FieldSet
 from src.processes.services.events import (
     WorkflowEventService,
 )
@@ -54,6 +56,7 @@ from src.processes.tests.fixtures import (
     create_test_template,
     create_test_user,
     create_test_workflow,
+    create_test_event,
 )
 
 pytestmark = pytest.mark.django_db
@@ -1716,3 +1719,166 @@ def test_workflow_events__template_starter_own_workflow__ok(api_client):
 
     # assert
     assert response.status_code == status.HTTP_200_OK
+
+
+def test_events__task_complete_fieldsets_present__ok(api_client):
+
+    """
+    GET workflow events: TASK_COMPLETE row includes non-null task.fieldsets
+    when the task has at least one FieldSet.
+    """
+
+    # arrange
+
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task_1 = workflow.tasks.get(number=1)
+    fieldset = FieldSet.objects.create(
+        account=account,
+        workflow=workflow,
+        task=task_1,
+        name='Fieldset 1',
+        order=1,
+    )
+    field_1 = TaskField.objects.create(
+        account=account,
+        workflow=workflow,
+        task=task_1,
+        fieldset=fieldset,
+        name='Field 1',
+        type=FieldType.TEXT,
+        order=1,
+    )
+    field_2 = TaskField.objects.create(
+        account=account,
+        workflow=workflow,
+        task=task_1,
+        fieldset=fieldset,
+        name='Field 2',
+        type=FieldType.NUMBER,
+        order=2,
+    )
+    WorkflowEventService.task_complete_event(
+        task=task_1,
+        user=user,
+        after_create_actions=False,
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+
+    response = api_client.get(
+        path=f'/workflows/{workflow.id}/events',
+    )
+
+    # assert
+
+    assert response.status_code == 200
+    event_data = response.data[0]
+    assert event_data['type'] == WorkflowEventType.TASK_COMPLETE
+    fieldsets_data = event_data['task']['fieldsets']
+    assert fieldsets_data is not None
+    assert len(fieldsets_data) == 1
+    fieldset.refresh_from_db()
+    field_1.refresh_from_db()
+    field_2.refresh_from_db()
+    fieldset_data = fieldsets_data[0]
+    assert fieldset_data['id'] == fieldset.id
+    assert fieldset_data['api_name'] == fieldset.api_name
+    assert fieldset_data['name'] == fieldset.name
+    assert fieldset_data['description'] == fieldset.description
+    assert fieldset_data['order'] == fieldset.order
+    assert fieldset_data['label_position'] == fieldset.label_position
+    assert fieldset_data['layout'] == fieldset.layout
+    fields_data = fieldset_data['fields']
+    assert len(fields_data) == 2
+    field_2_data = fields_data[0]
+    assert field_2_data['id'] == field_2.id
+    assert field_2_data['order'] == field_2.order
+    assert field_2_data['type'] == field_2.type
+    assert field_2_data['is_required'] == field_2.is_required
+    assert field_2_data['is_hidden'] == field_2.is_hidden
+    assert field_2_data['description'] == field_2.description
+    assert field_2_data['api_name'] == field_2.api_name
+    assert field_2_data['name'] == field_2.name
+    assert field_2_data['value'] == field_2.value
+    assert field_2_data['markdown_value'] == field_2.markdown_value
+    assert field_2_data['clear_value'] == field_2.clear_value
+    assert field_2_data['user_id'] == field_2.user_id
+    assert field_2_data['group_id'] == field_2.group_id
+    assert field_2_data['selections'] == []
+    assert field_2_data['attachments'] == []
+    field_1_data = fields_data[1]
+    assert field_1_data['id'] == field_1.id
+
+
+def test_events__task_complete_fieldsets_absent__ok(api_client):
+
+    """
+    GET workflow events: TASK_COMPLETE row has task.fieldsets equal to null
+    when the task has no FieldSet rows.
+    """
+
+    # arrange
+
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task_1 = workflow.tasks.get(number=1)
+    WorkflowEventService.task_complete_event(
+        task=task_1,
+        user=user,
+        after_create_actions=False,
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+
+    response = api_client.get(
+        path=f'/workflows/{workflow.id}/events',
+    )
+
+    # assert
+
+    assert response.status_code == 200
+    item_1 = response.data[0]
+    assert item_1['type'] == WorkflowEventType.TASK_COMPLETE
+    task_payload = item_1['task']
+    assert task_payload['fieldsets'] is None
+
+
+def test_events__non_complete_task_fieldsets_null__ok(api_client):
+
+    """
+    GET workflow events: non-TASK_COMPLETE event still exposes task.fieldsets
+    as null in serialized task payload.
+    """
+
+    # arrange
+
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task_1 = workflow.tasks.get(number=1)
+    create_test_event(
+        workflow=workflow,
+        user=user,
+        task=task_1,
+        type_event=WorkflowEventType.COMMENT,
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+
+    response = api_client.get(
+        path=f'/workflows/{workflow.id}/events',
+    )
+
+    # assert
+
+    assert response.status_code == 200
+    item_1 = response.data[0]
+    assert item_1['type'] == WorkflowEventType.COMMENT
+    task_payload = item_1['task']
+    assert task_payload['fieldsets'] is None

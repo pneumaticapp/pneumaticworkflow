@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError
@@ -37,7 +37,7 @@ class DataSetService(BaseModelService):
 
     def _create_related(
         self,
-        items: Optional[List[Dict[str, Any]]] = None,
+        items: Optional[List[Dict]] = None,
         **kwargs,
     ):
         if items:
@@ -82,7 +82,7 @@ class DataSetService(BaseModelService):
 
     def create_items(
         self,
-        items_data: List[Dict[str, Any]],
+        items_data: List[Dict],
     ):
         service = DataSetItemService(
             user=self.user,
@@ -97,7 +97,7 @@ class DataSetService(BaseModelService):
 
     def update_items(
         self,
-        items_data: List[Dict[str, Any]],
+        items_data: List[Dict],
     ):
         """ All dataset items will be updated """
 

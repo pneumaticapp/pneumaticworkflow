@@ -7,14 +7,16 @@ import classnames from 'classnames';
 import { useDispatch } from 'react-redux';
 
 import { NotificationManager } from '../../../UI/Notifications';
-import { ExtraFieldIntl } from '../../../TemplateEdit/ExtraFields';
-import { EExtraFieldMode, IExtraField } from '../../../../types/template';
+import { IExtraField } from '../../../../types/template';
 import { Button } from '../../../UI/Buttons/Button';
 import { getEditedFields } from '../../../TemplateEdit/ExtraFields/utils/getEditedFields';
 import { EInputNameBackgroundColor } from '../../../../types/workflow';
 import { getPublicForm } from '../../../../api/getPublicForm';
 import { EPublicFormState, IPublicForm } from '../types';
 import { logger } from '../../../../utils/logger';
+import { getErrorMessage } from '../../../../utils/getErrorMessage';
+import { MergedOutputList } from '../../../MergedOutputList';
+
 import { runPublicForm } from '../../../../api/runPublicForm';
 import { checkExtraFieldsAreValid } from '../../../WorkflowEditPopup/utils/areKickoffFieldsValid';
 import { ExtraFieldsHelper } from '../../../TemplateEdit/ExtraFields/utils/ExtraFieldsHelper';
@@ -91,8 +93,14 @@ export function PublicForm({ type }: IPublicFormsAppProps) {
     try {
       setFormState(EPublicFormState.Submitting);
 
-      await deleteRemovedFilesFromFields(publicForm.kickoff.fields);
-      const normalizedKickoffFileds = getNormalizedKickoff(publicForm.kickoff);
+      const allFieldsetFields = publicForm.kickoff.fieldsets.flatMap((fieldset) => fieldset.fields);
+      const mergedKickoff = {
+        ...publicForm.kickoff,
+        fields: [...publicForm.kickoff.fields, ...allFieldsetFields],
+      };
+
+      await deleteRemovedFilesFromFields(mergedKickoff.fields);
+      const normalizedKickoffFileds = getNormalizedKickoff(mergedKickoff);
       const runFormResult = await runPublicForm(captcha, normalizedKickoffFileds);
 
       if (runFormResult?.redirectUrl) {
@@ -103,28 +111,32 @@ export function PublicForm({ type }: IPublicFormsAppProps) {
 
       setFormState(EPublicFormState.Submitted);
     } catch (error) {
-      NotificationManager.notifyApiError(error, { message: 'public-form.submit-failed' });
+      NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
       logger.error('Failed to run public form', error);
       setFormState(EPublicFormState.WaitingForAction);
     }
   };
 
-  const handleEditField = (apiName: string) => (changedProps: Partial<IExtraField>) => {
+
+  const updatePublicForm = (updater: (draft: IPublicForm) => void) => {
     setPublicForm((prevPublicForm) => {
-      if (!prevPublicForm) {
-        return prevPublicForm;
-      }
+      if (!prevPublicForm) return prevPublicForm;
+      return produce(prevPublicForm, updater);
+    });
+  };
 
-      const oldFields = prevPublicForm.kickoff.fields;
-      const newFields = getEditedFields(oldFields, apiName, changedProps);
+  const handleEditField = (apiName: string) => (changedProps: Partial<IExtraField>) => {
+    updatePublicForm((draft) => {
+      draft.kickoff.fields = getEditedFields(draft.kickoff.fields, apiName, changedProps);
+    });
+  };
 
-      const newPublicForm = produce(prevPublicForm, (draftPublicForm) => {
-        if (draftPublicForm) {
-          draftPublicForm.kickoff.fields = newFields;
-        }
-      });
-
-      return newPublicForm;
+  const handleEditFieldsetField = (apiName: string) => (changedProps: Partial<IExtraField>) => {
+    updatePublicForm((draft) => {
+      draft.kickoff.fieldsets = draft.kickoff.fieldsets.map((fieldset) => ({
+        ...fieldset,
+        fields: getEditedFields(fieldset.fields, apiName, changedProps),
+      }));
     });
   };
 
@@ -139,22 +151,18 @@ export function PublicForm({ type }: IPublicFormsAppProps) {
 
     return (
       <>
-        {publicForm.kickoff.fields
-          .filter((field) => !field.isHidden)
-          .map((field) => (
-            <ExtraFieldIntl
-              key={field.apiName}
-              field={field}
-              editField={handleEditField(field.apiName)}
-              showDropdown={false}
-              mode={EExtraFieldMode.ProcessRun}
-              labelBackgroundColor={EInputNameBackgroundColor.OrchidWhite}
-              namePlaceholder={field.name}
-              descriptionPlaceholder={field.description}
-              wrapperClassName={styles['output__field']}
-              accountId={publicForm.accountId}
-            />
-          ))}
+        <MergedOutputList
+          fields={publicForm.kickoff.fields.filter((field) => !field.isHidden)}
+          fieldsets={publicForm.kickoff.fieldsets.map((fieldset) => ({
+            ...fieldset,
+            fields: fieldset.fields.filter((field) => !field.isHidden),
+          }))}
+          onEditField={handleEditField}
+          onEditFieldsetField={handleEditFieldsetField}
+          labelBackgroundColor={EInputNameBackgroundColor.OrchidWhite}
+          fieldClassName={styles['output__field']}
+          accountId={publicForm.accountId}
+        />
 
         {isEnvCaptcha && publicForm?.showCaptcha && (
           <div className={styles['captcha']}>
@@ -224,6 +232,7 @@ export function PublicForm({ type }: IPublicFormsAppProps) {
   const isCompleteDisabled = [
     formState !== EPublicFormState.WaitingForAction,
     !checkExtraFieldsAreValid(publicForm?.kickoff.fields),
+    publicForm?.kickoff.fieldsets?.some((fieldset) => !checkExtraFieldsAreValid(fieldset.fields)),
     publicForm?.showCaptcha && !captcha,
   ].some(Boolean);
 

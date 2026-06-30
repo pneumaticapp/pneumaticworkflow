@@ -1,8 +1,8 @@
 import * as React from 'react';
-import * as classnames from 'classnames';
+import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
-import { ITemplateTask } from '../../../types/template';
+import { ITemplateTaskClient } from '../../../types/template';
 import { ArrowDownIcon, ArrowUpIcon, ClockIcon, EditIcon, MoreIcon, TrashIcon, UnionIcon } from '../../icons';
 import { Dropdown, TDropdownOption } from '../../UI';
 import { TTaskFormPart } from '../types';
@@ -11,14 +11,14 @@ import styles from './TaskMenu.css';
 
 interface ITaskMenuProps {
   tasksCount?: number;
-  task: ITemplateTask;
+  task: ITemplateTaskClient;
   isTaskOpen: boolean;
   removeTask(): void;
   cloneTask(): void;
   addDelay(): void;
   moveTaskDown(): void;
   moveTaskUp(): void;
-  toggleIsOpenTask(task: ITemplateTask): void;
+  toggleIsOpenTask(task: ITemplateTaskClient): void;
   setScrollTarget(defaultOpenTaskFormPart: TTaskFormPart): void;
 }
 

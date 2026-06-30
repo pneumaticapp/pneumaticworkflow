@@ -1,7 +1,7 @@
 /* eslint-disable */
 /* prettier-ignore */
 import { copyAttachment } from '../../../../../api/copyAttachment';
-import { EExtraFieldType, IExtraField, IKickoff, TExtraFieldValue } from '../../../../../types/template';
+import { EExtraFieldType, IExtraField, IKickoffClient, TExtraFieldValue } from '../../../../../types/template';
 import { IWorkflowDetailsKickoff } from '../../../../../types/workflow';
 import { TUploadedFile } from '../../../../../utils/uploadFiles';
 import { getEditKickoff } from '../../../../../utils/workflows';
@@ -9,8 +9,8 @@ import { normalizeSelections } from '../../../../TemplateEdit/utils/normalizeSel
 
 export async function getClonedKickoff(
   workflowKickoff: IWorkflowDetailsKickoff,
-  templateKickoff: IKickoff,
-): Promise<IKickoff> {
+  templateKickoff: IKickoffClient,
+): Promise<IKickoffClient> {
   const kickoff = getEditKickoff(workflowKickoff);
   const normalizedKickoffFieldsPromises = kickoff.fields.map((field) => {
     const templateField = templateKickoff.fields.find((templateField) => templateField.apiName === field.apiName);

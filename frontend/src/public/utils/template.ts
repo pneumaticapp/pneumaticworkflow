@@ -2,9 +2,10 @@
 /* prettier-ignore */
 import {
   ITemplate,
+  ITemplateClient,
+  ITemplateTaskClient,
+  IKickoffClient,
   ITemplateRequest,
-  ITemplateTask,
-  IKickoff,
   ITemplateTaskRequest,
   ITemplateResponse,
   ITemplateTaskResponse,
@@ -12,11 +13,13 @@ import {
   ETemplateOwnerType,
   ETemplateOwnerRole,
   ITemplateOwner,
+  IExtraField,
 } from '../types/template';
+import { IFieldsetBindingClient, IFieldsetBindingMeta } from '../types/fieldset';
+import { mapFieldsetBindingsToClient } from './mapFieldsetsAPIToClient';
 import { getUrlParams } from './getUrlParams';
 import { DEFAULT_TEMPLATE_NAME } from '../components/TemplateEdit/constants';
 
-import { getNormalizeFieldsOrders } from './workflows';
 import { createOwnerApiName, createTaskApiName, createUUID } from './createId';
 import { isArrayWithItems, omit } from './helpers';
 import { getEmptyConditions } from '../components/TemplateEdit/TaskForm/Conditions/utils/getEmptyConditions';
@@ -43,10 +46,11 @@ export function getTemplateIdFromUrl(url: string) {
   return Number(template) ? template : null;
 }
 
-export function getEmptyKickoff(): IKickoff {
+export function getEmptyKickoff(): IKickoffClient {
   return {
     description: '',
     fields: [],
+    fieldsets: [],
   };
 }
 
@@ -55,8 +59,14 @@ export const getNormalizedTemplate = (
   isSubscribed: boolean,
   users: TUserListItem[],
   billingPlan: ESubscriptionPlan,
-): ITemplate => {
-  const normalizedKickoff = template.kickoff || getEmptyKickoff();
+): ITemplateClient => {
+  const normalizedKickoff = {
+    ...getEmptyKickoff(),
+    ...(template.kickoff || {}),
+    fieldsets: template.kickoff
+      ? mapFieldsetBindingsToClient(template.kickoff.fieldsets)
+      : [],
+  };
   const normalizedTasks = [...template.tasks]
     .sort((a, b) => a.number - b.number)
     .map((task, index, tasks) => getNormalizedTask(task, isSubscribed, tasks[index - 1]));
@@ -114,7 +124,7 @@ export const getNormalizedTask = (
   task: ITemplateTaskResponse,
   isSubscribed: boolean,
   prevTask?: ITemplateTaskResponse,
-): ITemplateTask => {
+): ITemplateTaskClient => {
   const conditions = isArrayWithItems(task.conditions)
     ? normalizeConditiosForFrontend(task.conditions)
     : getEmptyConditions(isSubscribed);
@@ -124,24 +134,38 @@ export const getNormalizedTask = (
   return {
     ...omit(task, ['dueIn']),
     apiName: task.apiName || createTaskApiName(),
-    fields: getNormalizeFieldsOrders(task.fields),
     uuid: createUUID(),
     conditions,
     rawDueDate,
+    fieldsets: mapFieldsetBindingsToClient(task.fieldsets),
   };
 };
 
-export const cleanTemplateReferences = (template: ITemplate): ITemplate => {
+export const collectFieldApiNames = (
+  fields: IExtraField[],
+  fieldsets: IFieldsetBindingClient[],
+  validApiNames: Set<string>,
+) => {
+  fields.forEach((field) => {
+    if (field.apiName) validApiNames.add(field.apiName);
+  });
+  fieldsets.forEach((fieldset) => {
+    fieldset.fields?.forEach((field) => {
+      if (field.apiName) validApiNames.add(field.apiName);
+    });
+  });
+};
+
+export const cleanTemplateReferences = (
+  template: ITemplateClient,
+): ITemplateClient => {
   // System variables that the backend recognizes and skips during validation.
   // Must stay in sync with backend/src/processes/enums.py :: SystemVariable
   const TASK_SYSTEM_VARS = new Set(['workflow-starter']);
   const WF_NAME_SYSTEM_VARS = new Set(['date', 'template-name', 'workflow-id', 'workflow-starter']);
 
   const validApiNames = new Set<string>();
-
-  template.kickoff?.fields?.forEach((f) => {
-    if (f.apiName) validApiNames.add(f.apiName);
-  });
+  collectFieldApiNames(template.kickoff.fields, template.kickoff.fieldsets, validApiNames);
 
   const removeInvalidReferences = (
     text: string | null | undefined,
@@ -201,9 +225,7 @@ export const cleanTemplateReferences = (template: ITemplate): ITemplate => {
       }
     }
 
-    (task.fields || []).forEach((f) => {
-      if (f.apiName) validApiNames.add(f.apiName);
-    });
+    collectFieldApiNames(task.fields, task.fieldsets, validApiNames);
 
     return {
       ...task,
@@ -216,18 +238,38 @@ export const cleanTemplateReferences = (template: ITemplate): ITemplate => {
   });
 
   const validKickoffApiNames = new Set<string>();
-  template.kickoff?.fields?.forEach((f) => {
-    if (f.apiName) validKickoffApiNames.add(f.apiName);
-  });
+  collectFieldApiNames(template.kickoff.fields, template.kickoff.fieldsets, validKickoffApiNames);
 
   return {
     ...template,
-    wfNameTemplate: removeInvalidReferences(template.wfNameTemplate, validKickoffApiNames, WF_NAME_SYSTEM_VARS),
+    wfNameTemplate: removeInvalidReferences(
+      template.wfNameTemplate,
+      validKickoffApiNames,
+      WF_NAME_SYSTEM_VARS
+    ),
     tasks: cleanedTasks,
   };
 };
 
-export const mapTemplateRequest = (template: ITemplate): ITemplateRequest => {
+function mapFieldsetForApi({
+  sharedFieldsetId,
+  order,
+  title,
+  description,
+  apiNameBinding,
+}: IFieldsetBindingClient): IFieldsetBindingMeta {
+  return {
+    sharedFieldsetId,
+    order,
+    title,
+    description,
+    apiName: apiNameBinding,
+  };
+}
+
+export const mapTemplateRequest = (
+  template: ITemplateClient,
+): ITemplateRequest => {
   const cleanedTemplate = cleanTemplateReferences(template);
   const { tasks } = cleanedTemplate;
 
@@ -241,6 +283,7 @@ export const mapTemplateRequest = (template: ITemplate): ITemplateRequest => {
       delay: normalizeDuration(task.delay),
       conditions: normalizeConditionForBackend(task.conditions),
       rawDueDate: normalizeDueDateForBackend(task.rawDueDate),
+      fieldsets: task.fieldsets.map(mapFieldsetForApi),
     };
   });
 
@@ -248,6 +291,10 @@ export const mapTemplateRequest = (template: ITemplate): ITemplateRequest => {
     ...cleanedTemplate,
     name: cleanedTemplate.name || DEFAULT_TEMPLATE_NAME,
     tasks: normilizedTasks,
+    kickoff: {
+      ...cleanedTemplate.kickoff,
+      fieldsets: cleanedTemplate.kickoff.fieldsets.map(mapFieldsetForApi),
+    },
     publicSuccessUrl: cleanedTemplate.publicSuccessUrl || null,
   };
 };

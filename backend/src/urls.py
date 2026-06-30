@@ -22,6 +22,9 @@ from src.processes.views.task import (
     TasksListView,
     TaskViewSet,
 )
+from src.processes.views.fieldset import (
+    SharedFieldsetTemplateViewSet,
+)
 from src.datasets.views import DatasetViewSet, DatasetItemViewSet
 from src.processes.views.template import (
     TemplateViewSet,
@@ -54,7 +57,11 @@ router.register('payment/subscription', SubscriptionViewSet, basename='subs')
 router.register('faq', FaqViewSet, basename='faq')
 router.register('datasets', DatasetViewSet, basename='datasets')
 router.register('datasets/items', DatasetItemViewSet, basename='dataset-items')
-
+router.register(
+    prefix='fieldsets',
+    viewset=SharedFieldsetTemplateViewSet,
+    basename='fieldsets',
+)
 
 urlpatterns = [
     path('', views.index, name='index'),
