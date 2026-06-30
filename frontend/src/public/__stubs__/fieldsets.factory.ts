@@ -1,7 +1,8 @@
 import {
-  EFieldLabelPosition, IFieldsetBindingClient, IFieldsetCatalogItem,
-  IFieldsetField, IFieldsetRuntime, IFieldsetTemplateRule,
+  EFieldLabelPosition, IFieldsetBinding, IFieldsetBindingClient, IFieldsetCatalogItem,
+  IFieldsetField, IFieldsetRuntime, IFieldsetTaskAPI, IFieldsetTemplateRule,
 } from '../types/fieldset';
+import { IExtraField } from '../types/template';
 
 export const makeFieldsetField = (overrides: Partial<IFieldsetField> = {}): IFieldsetField => ({
   apiName: 'field-1',
@@ -63,5 +64,32 @@ export const makeFieldsetBindingClient = (overrides: Partial<IFieldsetBindingCli
   title: '',
   rules: [],
   fields: [],
+  ...overrides,
+});
+
+export const makeFieldsetBinding = (overrides: Partial<IFieldsetBinding> = {}): IFieldsetBinding => ({
+  apiName: 'catalog-fs-1',
+  sharedFieldsetId: 10,
+  name: 'Test Fieldset',
+  description: '',
+  labelPosition: EFieldLabelPosition.Top,
+  layout: 'vertical',
+  order: 0,
+  title: '',
+  rules: [],
+  fields: [],
+  ...overrides,
+});
+
+export const makeFieldsetTaskAPI = (overrides: Partial<IFieldsetTaskAPI> = {}): IFieldsetTaskAPI => ({
+  id: 100,
+  apiName: 'task-fs-1',
+  name: 'Task Fieldset',
+  description: '',
+  order: 0,
+  labelPosition: EFieldLabelPosition.Top,
+  layout: 'vertical',
+  title: '',
+  fields: [] as IExtraField[],
   ...overrides,
 });

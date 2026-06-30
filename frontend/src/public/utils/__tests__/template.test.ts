@@ -7,12 +7,12 @@ import {
   EExtraFieldType,
 } from '../../types/template';
 import { ESubscriptionPlan } from '../../types/account';
+import { EFieldLabelPosition, IFieldsetBinding } from '../../types/fieldset';
 import { TUserListItem, EUserStatus } from '../../types/user';
 import { getNormalizedTemplate, mapTemplateRequest, getEmptyKickoff, cleanTemplateReferences, collectFieldApiNames } from '../template';
 import { EConditionAction, EConditionOperators, EConditionLogicOperations, TConditionRule } from '../../components/TemplateEdit/TaskForm/Conditions/types';
 import { makeExtraField } from '../../__stubs__/fields.factory';
-import { makeFieldsetBindingClient, makeFieldsetField } from '../../__stubs__/fieldsets.factory';
-
+import { makeFieldsetBinding, makeFieldsetBindingClient, makeFieldsetField } from '../../__stubs__/fieldsets.factory';
 
 const createMockUser = (overrides: Partial<TUserListItem> = {}): TUserListItem => ({
   id: 1,
@@ -314,6 +314,86 @@ describe('template utilities', () => {
 
       expect(result.performersCount).toBe(1);
     });
+
+    it('maps kickoff fieldsets via mapFieldsetBindingsToClient (apiName → apiNameBinding)', () => {
+      const kickoffFieldsets: IFieldsetBinding[] = [
+        makeFieldsetBinding({
+          apiName: 'kickoff-fs-1',
+          sharedFieldsetId: 10,
+          name: 'Budget Fieldset',
+          description: 'desc',
+          labelPosition: EFieldLabelPosition.Left,
+          layout: 'horizontal',
+          title: 'Budget',
+          fields: [makeFieldsetField({ apiName: 'amount', name: 'Amount' })],
+        }),
+      ];
+      const templateResponse = createMockTemplateResponse({
+        kickoff: {
+          description: 'kickoff desc',
+          fields: [],
+          fieldsets: kickoffFieldsets,
+        },
+      });
+
+      const result = getNormalizedTemplate(
+        templateResponse,
+        true,
+        mockUsers,
+        ESubscriptionPlan.Premium,
+      );
+
+      expect(result.kickoff.fieldsets).toHaveLength(1);
+      expect(result.kickoff.fieldsets[0].apiNameBinding).toBe('kickoff-fs-1');
+      expect(result.kickoff.fieldsets[0]).not.toHaveProperty('apiName');
+      expect(result.kickoff.fieldsets[0].name).toBe('Budget Fieldset');
+      expect(result.kickoff.fieldsets[0].fields).toHaveLength(1);
+    });
+
+    it('maps task fieldsets via mapFieldsetBindingsToClient', () => {
+      const taskFieldsets: IFieldsetBinding[] = [
+        makeFieldsetBinding({
+          apiName: 'task-fs-1',
+          sharedFieldsetId: 20,
+          name: 'Review Fieldset',
+          labelPosition: EFieldLabelPosition.Top,
+          layout: 'vertical',
+        }),
+      ];
+      const templateResponse = createMockTemplateResponse({
+        tasks: [
+          {
+            ...createMockTemplateResponse().tasks[0],
+            fieldsets: taskFieldsets,
+          },
+        ],
+      });
+
+      const result = getNormalizedTemplate(
+        templateResponse,
+        true,
+        mockUsers,
+        ESubscriptionPlan.Premium,
+      );
+
+      expect(result.tasks[0].fieldsets).toHaveLength(1);
+      expect(result.tasks[0].fieldsets[0].apiNameBinding).toBe('task-fs-1');
+      expect(result.tasks[0].fieldsets[0]).not.toHaveProperty('apiName');
+    });
+
+    it('handles null kickoff by returning empty fieldsets', () => {
+      const templateResponse = createMockTemplateResponse();
+      Object.assign(templateResponse, { kickoff: null });
+
+      const result = getNormalizedTemplate(
+        templateResponse,
+        true,
+        mockUsers,
+        ESubscriptionPlan.Premium,
+      );
+
+      expect(result.kickoff.fieldsets).toEqual([]);
+    });
   });
 
   describe('mapTemplateRequest', () => {
@@ -375,6 +455,69 @@ describe('template utilities', () => {
       const result = mapTemplateRequest(template);
 
       expect(result.publicSuccessUrl).toBeNull();
+    });
+    it('converts task fieldset apiNameBinding back to apiName for API', () => {
+      const template = createMockTemplate({
+        tasks: [
+          {
+            ...createMockTemplate().tasks[0],
+            fieldsets: [
+              makeFieldsetBindingClient({
+                apiNameBinding: 'fs-bind-abc',
+                sharedFieldsetId: 42,
+                order: 3,
+                title: 'Budget',
+                description: 'desc',
+              }),
+            ],
+          },
+        ],
+      });
+
+      const result = mapTemplateRequest(template);
+
+      expect(result.tasks[0].fieldsets).toHaveLength(1);
+      expect(result.tasks[0].fieldsets[0].apiName).toBe('fs-bind-abc');
+      expect(result.tasks[0].fieldsets[0].sharedFieldsetId).toBe(42);
+      expect(result.tasks[0].fieldsets[0].order).toBe(3);
+      expect(result.tasks[0].fieldsets[0]).not.toHaveProperty('apiNameBinding');
+    });
+
+    it('converts kickoff fieldset apiNameBinding back to apiName for API', () => {
+      const template = createMockTemplate({
+        kickoff: {
+          ...getEmptyKickoff(),
+          fieldsets: [
+            makeFieldsetBindingClient({
+              apiNameBinding: 'kickoff-bind-xyz',
+              sharedFieldsetId: 99,
+              order: 0,
+            }),
+            makeFieldsetBindingClient({
+              apiNameBinding: 'kickoff-bind-abc',
+              sharedFieldsetId: 50,
+              order: 1,
+            }),
+          ],
+        },
+      });
+
+      const result = mapTemplateRequest(template);
+
+      expect(result.kickoff.fieldsets).toHaveLength(2);
+      expect(result.kickoff.fieldsets[0].apiName).toBe('kickoff-bind-xyz');
+      expect(result.kickoff.fieldsets[0].sharedFieldsetId).toBe(99);
+      expect(result.kickoff.fieldsets[1].apiName).toBe('kickoff-bind-abc');
+      expect(result.kickoff.fieldsets[1].sharedFieldsetId).toBe(50);
+    });
+
+    it('handles empty fieldsets arrays in mapTemplateRequest', () => {
+      const template = createMockTemplate();
+
+      const result = mapTemplateRequest(template);
+
+      expect(result.tasks[0].fieldsets).toEqual([]);
+      expect(result.kickoff.fieldsets).toEqual([]);
     });
   });
 

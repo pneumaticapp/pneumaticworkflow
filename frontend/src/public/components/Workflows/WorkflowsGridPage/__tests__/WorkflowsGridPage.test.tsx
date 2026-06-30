@@ -14,6 +14,7 @@ import { mapTemplateFieldsetsToRuntime } from '../../../../utils/mapTemplateFiel
 import { EWorkflowsLoadingStatus, EWorkflowsView } from '../../../../types/workflow';
 import { ITemplateTitle } from '../../../../types/template';
 import { intlMock } from '../../../../__stubs__/intlMock';
+import { makeFieldsetRuntime } from '../../../../__stubs__/fieldsets.factory';
 
 const renderWithIntl = (ui: React.ReactElement) =>
   render(
@@ -122,7 +123,7 @@ const fakeTemplate = {
 };
 
 const fakeRunnable = { id: 1, name: 'Template A', kickoff: { description: '', fields: [] } };
-const fakeFieldsets = [{ id: 1, apiName: 'fs-1', apiNameBinding: 'fs-1', name: 'FS', fields: [], description: '', order: 0 }];
+const fakeFieldsets = [makeFieldsetRuntime({ apiNameBinding: 'fs-1', name: 'FS' })];
 const fakeDatasetsMap = {};
 
 describe('WorkflowsGridPage', () => {

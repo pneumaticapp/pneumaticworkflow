@@ -5,6 +5,7 @@ import userEvent from '@testing-library/user-event';
 import { intlMock } from '../../../../__stubs__/intlMock';
 import { makeExtraField } from '../../../../__stubs__/fields.factory';
 import { makeFieldsetBindingClient, makeFieldsetCatalogItem } from '../../../../__stubs__/fieldsets.factory';
+import { makeTemplateTaskClient } from '../../../../__stubs__/templates.factory';
 import {
   IExtraField,
   ITemplateTaskClient,
@@ -141,26 +142,7 @@ import { OutputFormTaskMerged } from '../OutputFormTaskMerged';
 import { getEmptyField } from '../../KickoffRedux/utils/getEmptyField';
 
 describe('OutputFormTaskMerged', () => {
-  const makeTask = (overrides: Partial<ITemplateTaskClient> = {}): ITemplateTaskClient => ({
-    id: 1,
-    apiName: 'task-1',
-    name: 'Task',
-    description: '',
-    number: 1,
-    rawPerformers: [],
-    requireCompletionByAll: false,
-    skipForStarter: false,
-    fields: [],
-    fieldsets: [],
-    delay: null,
-    rawDueDate: null as any,
-    conditions: [],
-    uuid: 'task-uuid',
-    checklists: [],
-    revertTask: null,
-    ancestors: [],
-    ...overrides,
-  });
+  const makeTask = makeTemplateTaskClient;
 
   const makeField = (overrides: Partial<IExtraField> = {}) => makeExtraField({
     name: 'Field 1',

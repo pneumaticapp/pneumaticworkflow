@@ -25,8 +25,9 @@ import { getClonedKickoff } from '../../../components/Workflows/WorkflowsGridPag
 import { getTemplateSteps } from '../../../api/getTemplateSteps';
 import { handleLoadTemplateVariables } from '../../templates/saga';
 import { IKickoff } from '../../../types/template';
-import { IFieldsetRuntime } from '../../../types/fieldset';
 import { loadFilterSteps } from '../slice';
+import { makeFieldsetRuntime } from '../../../__stubs__/fieldsets.factory';
+import { makeTemplateResponse } from '../../../__stubs__/templates.factory';
 
 jest.mock('../../../api/getWorkflow', () => ({
   getWorkflow: jest.fn(),
@@ -129,28 +130,11 @@ describe('cloneWorkflowSaga — fieldsets loading on clone', () => {
 
   const mockKickoff: IKickoff = { fields: [], fieldsets: [], description: '' };
 
-  const mockTemplate = {
+  const mockTemplate = makeTemplateResponse({
     id: 10,
     name: 'Test Template',
     kickoff: mockKickoff,
-    tasks: [],
-    description: '',
-    isActive: true,
-    finalizable: false,
-    dateUpdated: null,
-    updatedBy: null,
-    isPublic: false,
-    publicUrl: null,
-    publicSuccessUrl: null,
-    isEmbedded: false,
-    embedUrl: null,
-    wfNameTemplate: null,
-    tasksCount: 0,
-    performersCount: 0,
-    owners: [],
-    completionNotification: false,
-    reminderNotification: false,
-  };
+  });
 
   const mockWorkflow = {
     id: 1,
@@ -160,8 +144,8 @@ describe('cloneWorkflowSaga — fieldsets loading on clone', () => {
     status: 'running',
   };
 
-  const mockLoadedFieldsets: Pick<IFieldsetRuntime, 'apiNameBinding' | 'name' | 'fields' | 'order'>[] = [
-    { apiNameBinding: 'fs-1', name: 'Fieldset 1', fields: [], order: 0 },
+  const mockLoadedFieldsets = [
+    makeFieldsetRuntime({ apiNameBinding: 'fs-1', name: 'Fieldset 1' }),
   ];
 
   const mockDatasetsMap: Record<number, string[]> = {};

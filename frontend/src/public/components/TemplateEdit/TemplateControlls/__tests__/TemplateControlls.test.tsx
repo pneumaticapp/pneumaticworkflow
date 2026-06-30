@@ -11,7 +11,7 @@ import {
 } from '../../utils/getRunnableWorkflow';
 import { mapFieldsetBindingClientToRuntime } from '../../../../utils/mapFieldsetBindingClientToRuntime';
 import { getTemplate } from '../../../../__stubs__/templates';
-import { makeFieldsetBindingClient } from '../../../../__stubs__/fieldsets.factory';
+import { makeFieldsetBindingClient, makeFieldsetRuntime } from '../../../../__stubs__/fieldsets.factory';
 
 jest.mock('../../../../utils/history', () => ({
   history: { push: jest.fn() },
@@ -135,12 +135,12 @@ describe('TemplateControlls — fieldset logic', () => {
     jest.clearAllMocks();
   });
 
-
   it('clicking Run on an active saved template runs the chain mapFieldsets → loadDatasets → getRunnable → openModal', async () => {
     const openRunWorkflowModal = jest.fn();
     const runnableWorkflow = { kickoff: {}, tasks: [] };
+    const mappedFieldset = makeFieldsetRuntime({ apiNameBinding: 'fs-1' });
 
-    (mapFieldsetBindingClientToRuntime as jest.Mock).mockReturnValue({ apiName: 'fs-1', apiNameBinding: 'fs-1', fields: [] });
+    (mapFieldsetBindingClientToRuntime as jest.Mock).mockReturnValue(mappedFieldset);
     (loadDatasetsMap as jest.Mock).mockResolvedValue({});
     (getRunnableWorkflow as jest.Mock).mockReturnValue(runnableWorkflow);
 
@@ -163,18 +163,17 @@ describe('TemplateControlls — fieldset logic', () => {
 
     await waitFor(() => expect(openRunWorkflowModal).toHaveBeenCalledTimes(1));
 
-
     expect(loadDatasetsMap).toHaveBeenCalledTimes(1);
     expect(loadDatasetsMap).toHaveBeenCalledWith(
       template.kickoff,
-      [{ apiName: 'fs-1', apiNameBinding: 'fs-1', fields: [] }],
+      [mappedFieldset],
     );
 
     expect(getRunnableWorkflow).toHaveBeenCalledTimes(1);
     expect(getRunnableWorkflow).toHaveBeenCalledWith(
       template,
       {},
-      [{ apiName: 'fs-1', apiNameBinding: 'fs-1', fields: [] }],
+      [mappedFieldset],
     );
     expect(openRunWorkflowModal).toHaveBeenCalledWith(runnableWorkflow);
   });

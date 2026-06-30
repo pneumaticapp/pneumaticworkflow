@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 
 import { ITemplateTaskClient } from '../../../../types/template';
 import { makeFieldsetBindingClient } from '../../../../__stubs__/fieldsets.factory';
+import { makeTemplateTaskClient } from '../../../../__stubs__/templates.factory';
 import { ETaskFormParts } from '../../types';
 
 jest.mock('react', () => {
@@ -70,24 +71,9 @@ import {
 } from '../../../../redux/selectors/template';
 
 describe('TaskItem', () => {
-  const makeTask = (overrides: Partial<ITemplateTaskClient> = {}): ITemplateTaskClient => ({
-    id: 1,
-    apiName: 'task-1',
+  const makeTask = (overrides: Partial<ITemplateTaskClient> = {}) => makeTemplateTaskClient({
     name: 'Task 1',
-    description: '',
-    number: 1,
-    rawPerformers: [],
-    requireCompletionByAll: false,
-    skipForStarter: false,
-    fields: [],
     fieldsets: [makeFieldsetBindingClient({ apiNameBinding: 'fs-1' })],
-    delay: null,
-    rawDueDate: null as any,
-    conditions: [],
-    uuid: 'uuid-1',
-    checklists: [],
-    revertTask: null,
-    ancestors: [],
     ...overrides,
   });
 
