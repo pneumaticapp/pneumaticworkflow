@@ -270,7 +270,6 @@ class TaskViewSet(
             queryset = queryset.prefetch_related(
                 'checklists__selections',
                 'output__storage_attachments',
-                'output__attachments',
                 Prefetch(
                     'output__selections',
                     queryset=FieldSelection.objects.order_by('id'),
@@ -528,7 +527,6 @@ class TaskViewSet(
                             queryset=DatasetItem.objects.order_by('order'),
                             to_attr='dataset_values',
                         ),
-                        'attachments',
                     ),
                 ),
             ).get(pk=task.pk),
