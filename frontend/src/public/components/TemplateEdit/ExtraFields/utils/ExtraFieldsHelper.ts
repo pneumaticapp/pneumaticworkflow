@@ -1,6 +1,7 @@
 /* eslint-disable */
 import { EExtraFieldType, IExtraField, TExtraFieldValue } from '../../../../types/template';
 import { getEndOfDayTsp } from '../../../../utils/dateTime';
+import { parseMarkdownToFiles } from '../../../../utils/parseMarkdownFiles';
 
 type TFieldDispatchRecord = {
   [key in EExtraFieldType]: (field: IExtraField) => IExtraField | null;
@@ -89,15 +90,13 @@ export class ExtraFieldsHelper {
       return { ...field, value: this.getFieldValue(field.value, '', field.apiName) };
     },
     [EExtraFieldType.File]: (field: IExtraField) => {
-      const isNoInitialAttachments = Array.isArray(field.attachments) && field.attachments.length === 0;
-      const initialAttachments = isNoInitialAttachments
-        ? null
-        : field.attachments?.filter(({ isRemoved }) => !isRemoved);
+      const serverAttachments = parseMarkdownToFiles(field.markdownValue);
+      const initialAttachments = serverAttachments.length > 0 ? serverAttachments : null;
       const storageAttachments = this.getStorageField(field.apiName)?.attachments?.filter(
         ({ isRemoved }) => !isRemoved,
       );
       const attachments = storageAttachments || initialAttachments || [];
-      const value = attachments.map(({ id }) => String(id));
+      const value = attachments.map(({ name, url }) => `[${name}](${url})`);
 
       return {
         ...field,

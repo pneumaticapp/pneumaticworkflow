@@ -1,0 +1,100 @@
+"""FastAPI application entry point."""
+
+import contextlib
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
+import uvicorn
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from src.infra.adapters import StorageServiceHolder
+from src.infra.http_client import close_shared_client, get_shared_client
+from src.presentation.api import files_router
+from src.shared_kernel.auth import close_redis_client
+from src.shared_kernel.config import get_settings
+from src.shared_kernel.exceptions import register_exception_handlers
+from src.shared_kernel.middleware import AuthenticationMiddleware
+from src.shared_kernel.middleware.rate_limit import RateLimitMiddleware
+from src.shared_kernel.middleware.security_headers import (
+    SecurityHeadersMiddleware,
+)
+
+# Get settings
+settings = get_settings()
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+    """Application lifespan event handlers."""
+    # Initialize shared HTTP client
+    get_shared_client()
+    yield
+    # Close services on shutdown
+    with contextlib.suppress(Exception):
+        await StorageServiceHolder.close()
+    with contextlib.suppress(Exception):
+        await close_redis_client()
+    with contextlib.suppress(Exception):
+        await close_shared_client()
+
+
+# Create application
+app = FastAPI(
+    title='Pneumatic Files Service',
+    description='File storage microservice (SeaweedFS / GCS)',
+    version='1.0.0',
+    root_path=settings.root_path,
+    openapi_url='/openapi.json',
+    docs_url='/docs',
+    redoc_url='/redoc',
+    lifespan=lifespan,
+)
+
+
+# CORS configuration
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.ALLOWED_ORIGINS,
+    allow_credentials=True,
+    allow_methods=['GET', 'POST', 'PUT', 'DELETE'],
+    allow_headers=[
+        'Authorization',
+        'Content-Type',
+        'X-Guest-Authorization',
+        'X-Public-Authorization',
+    ],
+)
+
+# Authentication middleware
+app.add_middleware(
+    AuthenticationMiddleware,  # type: ignore[arg-type]
+    require_auth=True,
+)
+
+# Rate limiting middleware
+app.add_middleware(
+    RateLimitMiddleware,
+    enabled=settings.RATE_LIMIT_ENABLED,
+)
+
+# Security headers middleware
+app.add_middleware(
+    SecurityHeadersMiddleware,
+    include_hsts=settings.HSTS_ENABLED,
+)
+
+# Register exception handlers
+register_exception_handlers(app)
+
+# Include routers
+app.include_router(files_router)
+
+if __name__ == '__main__':
+    uvicorn.run(
+        'src.main:app',
+        host='0.0.0.0',  # noqa: S104
+        port=settings.PORT,
+        reload=settings.RELOAD,
+        workers=settings.WORKERS,
+    )

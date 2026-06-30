@@ -269,7 +269,7 @@ class TaskViewSet(
         if self.action == 'retrieve':
             queryset = queryset.prefetch_related(
                 'checklists__selections',
-                'output__attachments',
+                'output__storage_attachments',
                 Prefetch(
                     'output__selections',
                     queryset=FieldSelection.objects.order_by('id'),
@@ -461,7 +461,7 @@ class TaskViewSet(
         task = self.get_object()
         qst = (
             WorkflowEvent.objects
-            .prefetch_related('attachments')
+            .prefetch_related('storage_attachments')
             .on_task(task.id)
             .type_in(WorkflowEventType.TASK_EVENTS)
         )
@@ -527,7 +527,6 @@ class TaskViewSet(
                             queryset=DatasetItem.objects.order_by('order'),
                             to_attr='dataset_values',
                         ),
-                        'attachments',
                     ),
                 ),
             ).get(pk=task.pk),

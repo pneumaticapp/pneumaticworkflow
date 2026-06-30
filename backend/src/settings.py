@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 import datetime
 import os
 from os import environ as env
+from urllib.parse import urlparse
 
 from configurations import Configuration, values
 from corsheaders.defaults import default_headers
@@ -74,9 +75,26 @@ class Common(Configuration):
             'Please define FORMS_URL in your .env file.',
         )
 
+    # File Service
+    FILE_SERVICE_URL = env.get('FILE_SERVICE_URL')
+    FILE_SERVICE_HOST_PATH = None
+    if FILE_SERVICE_URL:
+        parsed = urlparse(FILE_SERVICE_URL)
+        FILE_SERVICE_HOST_PATH = parsed.netloc + parsed.path.rstrip('/')
+
+    FILE_POSTGRES_DB = env.get('FILE_POSTGRES_DB')
+    FILE_POSTGRES_USER = env.get('FILE_POSTGRES_USER')
+    FILE_POSTGRES_PASSWORD = env.get('FILE_POSTGRES_PASSWORD')
+    FILE_POSTGRES_HOST = env.get('FILE_POSTGRES_HOST')
+    FILE_POSTGRES_PORT = env.get('FILE_POSTGRES_PORT')
+
     # Auth
     AUTH_USER_MODEL = 'accounts.User'
     AUTH_TOKEN_ITERATIONS = int(env.get('AUTH_TOKEN_ITERATIONS', '1'))
+    AUTHENTICATION_BACKENDS = (
+        'django.contrib.auth.backends.ModelBackend',
+        'guardian.backends.ObjectPermissionBackend',
+    )
 
     # Tokens lifetime
     DIGEST_UNSUB_TOKEN_IN_DAYS = 7
@@ -126,9 +144,10 @@ class Common(Configuration):
     # A list of origins echoed back to the client in the
     # Access-Control-Allow-Origin header. Defaults to [].
     CORS_ORIGIN_WHITELIST = [FRONTEND_URL]
-    if FRONTEND_URL not in FORMS_URL:
-        # Add if FORMS_URL customized
-        CORS_ORIGIN_WHITELIST.append(FORMS_URL)
+    _parsed_forms = urlparse(FORMS_URL)
+    _forms_origin = f'{_parsed_forms.scheme}://{_parsed_forms.netloc}'
+    if _forms_origin != FRONTEND_URL:
+        CORS_ORIGIN_WHITELIST.append(_forms_origin)
     EXTRA_CORS_ORIGIN_WHITELIST = env.get('CORS_ORIGIN_WHITELIST')
     if EXTRA_CORS_ORIGIN_WHITELIST:
         CORS_ORIGIN_WHITELIST.extend(EXTRA_CORS_ORIGIN_WHITELIST.split(' '))
@@ -153,6 +172,8 @@ class Common(Configuration):
         'django_filters',
         'django_celery_beat',
         'drf_recaptcha',
+        'src.permissions',
+        'guardian',
         'src.accounts',
         'src.authentication',
         'src.applications',
@@ -172,7 +193,10 @@ class Common(Configuration):
         'src.ai',
         'src.payment',
         'src.logs',
+        'src.storage',
     ]
+
+    GUARDIAN_GROUP_OBJ_PERMS_MODEL = 'permissions.GroupObjectPermission'
 
     MIDDLEWARE = [
         'django.middleware.security.SecurityMiddleware',
@@ -183,6 +207,7 @@ class Common(Configuration):
         'django.middleware.csrf.CsrfViewMiddleware',
         'src.authentication.middleware.UserAgentMiddleware',
         'src.authentication.middleware.AuthMiddleware',
+        'src.storage.middleware.FileServiceAuthMiddleware',
         'django.contrib.messages.middleware.MessageMiddleware',
         'django.middleware.clickjacking.XFrameOptionsMiddleware',
     ]
@@ -323,9 +348,6 @@ class Common(Configuration):
     if PRIVATE_API_IP_WHITELIST:
         PRIVATE_API_IP_WHITELIST = PRIVATE_API_IP_WHITELIST.split(' ')
 
-    # Google Cloud
-    GCLOUD_DEFAULT_BUCKET_NAME = env.get('GCLOUD_BUCKET_NAME')
-
     # Slack
     SLACK = env.get('SLACK') == 'yes'
     SLACK_CONFIG = {
@@ -360,7 +382,6 @@ class Common(Configuration):
         'src.processes.tasks.webhooks',
         'src.reports.tasks',
         'src.analysis.tasks',
-        'src.storage.tasks',
     ]
 
     # reCaptcha
@@ -426,8 +447,6 @@ class Common(Configuration):
         'AI_PROVIDER': env.get('AI_PROVIDER'),
         'PUSH': env.get('PUSH') == 'yes',
         'PUSH_PROVIDER': env.get('PUSH_PROVIDER'),
-        'STORAGE': env.get('STORAGE') == 'yes',
-        'STORAGE_PROVIDER': env.get('STORAGE_PROVIDER'),
         'SENTRY_DSN': env.get('SENTRY_DSN'),
     }
 
@@ -547,6 +566,11 @@ class Development(Common):
         },
     }
 
+    # Django Guardian - using built-in models
+    # Disable anonymous user creation (not needed for this project)
+    ANONYMOUS_USER_NAME = None
+    ANONYMOUS_USER_ID = -1
+
 
 class Staging(Development):
 
@@ -568,8 +592,6 @@ class Staging(Development):
             'PORT': env.get('POSTGRES_REPLICA_PORT', '5432'),
         },
     }
-
-
 
     MAX_INVITES = 10
 

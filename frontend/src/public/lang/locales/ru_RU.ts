@@ -1235,12 +1235,20 @@ export const ruMessages = {
   'notification-warning-no': 'Нет',
   'legacy-template': '(Устаревший шаблон)',
   'file-upload.label-upload-button': 'Загрузить файл',
-  'file-upload.error-storage': 'Сохранение файлов недоступно, настройте хранилище файлов',
   'file-upload.error': 'Не удалось загрузить файл',
   'file-upload.max-file-size-error': 'Максимальный размер файла составляет 100 МБ',
   'file-upload.wrong-dimension':
     'Извините, изображение, которое вы пытаетесь загрузить, имеет неправильный размер. Его размер {width}x{height}пикс.,' +
     ' но мы принимаем только изображения размером {expectedWidth}x{expectedHeight}пикс.',
+  'file-service.file-not-found': 'Файл не найден',
+  'file-service.access-denied': 'Доступ к файлу запрещён',
+  'file-service.size-exceeded': 'Превышен максимальный размер файла',
+  'file-service.auth-failed': 'Ошибка аутентификации',
+  'file-service.permission-denied': 'Нет прав доступа',
+  'file-service.invalid-file-size': 'Некорректный размер файла',
+  'file-service.missing-required-field': 'Отсутствует обязательное поле',
+  'file-service.upload-failed': 'Не удалось загрузить файл',
+  'file-service.download-failed': 'Не удалось скачать файл',
   'integrations.title': 'Интеграции',
   'integrations.title.tooltip':
     'Получите свой API-ключ и перейдите на Zapier или создайте ссылку для связи Pneumatic с внешними приложениями.',

@@ -107,9 +107,16 @@ describe('getAttachmentEntityTypeByFilename', () => {
     );
   });
 
+  it('returns Link for empty filename', () => {
+    getAttachmentTypeByFilename.mockReturnValue(null);
+    expect(getAttachmentEntityTypeByFilename('')).toBe(
+      ECustomEditorEntities.Link,
+    );
+  });
+
   it('calls getAttachmentTypeByFilename with the given filename', () => {
-    getAttachmentTypeByFilename.mockReturnValue('image');
-    getAttachmentEntityTypeByFilename('photo.jpg');
-    expect(getAttachmentTypeByFilename).toHaveBeenCalledWith('photo.jpg');
+    getAttachmentTypeByFilename.mockReturnValue('file');
+    getAttachmentEntityTypeByFilename('document.docx');
+    expect(getAttachmentTypeByFilename).toHaveBeenCalledWith('document.docx');
   });
 });

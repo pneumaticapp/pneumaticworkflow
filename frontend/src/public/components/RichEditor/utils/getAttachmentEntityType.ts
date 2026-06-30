@@ -20,6 +20,11 @@ export function getAttachmentEntityType(fileUrl: string): ECustomEditorEntities 
   return ATTACHMENT_ENTITIES_MAP[attachmentType];
 }
 
+/**
+ * Determines entity type from a filename (link text).
+ * Returns Link when the filename has no recognizable extension,
+ * so callers can distinguish "unknown" from "file".
+ */
 export function getAttachmentEntityTypeByFilename(filename: string): ECustomEditorEntities {
   const attachmentType = getAttachmentTypeByFilename(filename);
   if (!attachmentType) {
