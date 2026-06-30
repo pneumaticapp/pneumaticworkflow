@@ -200,24 +200,6 @@ describe('enviroment constants', () => {
       });
     });
 
-    describe('isEnvStorage', () => {
-      it('returns false when STORAGE is "no"', () => {
-        process.env.STORAGE = 'no';
-
-        const mod = loadModule();
-
-        expect(mod.isEnvStorage).toBe(false);
-      });
-
-      it('returns true when STORAGE is undefined', () => {
-        delete process.env.STORAGE;
-
-        const mod = loadModule();
-
-        expect(mod.isEnvStorage).toBe(true);
-      });
-    });
-
     describe('isEnvAnalytics', () => {
       it('returns false when ANALYTICS is "no"', () => {
         process.env.ANALYTICS = 'no';

@@ -1,7 +1,7 @@
 /* eslint-disable */
 /* prettier-ignore */
 import * as React from 'react';
-import * as classnames from 'classnames';
+import classnames from 'classnames';
 
 import { DeleteBoldIcon, DocumentInfoIcon, VideoInfoIcon } from '../icons';
 import { TUploadedFile } from '../../utils/uploadFiles';

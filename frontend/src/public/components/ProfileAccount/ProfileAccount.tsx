@@ -148,7 +148,7 @@ function isValidState({ name }: TEditableFields) {
 
 const getFileByUrl = (url: string): TUploadedFile => {
   return {
-    id: -1,
+    id: '-1',
     url,
     thumbnailUrl: url,
     name: '',

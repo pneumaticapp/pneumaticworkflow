@@ -6,12 +6,14 @@ import { useIntl } from 'react-intl';
 import { Attachments } from '../Attachments';
 import { IExtraField } from '../../types/template';
 import { isArrayWithItems } from '../../utils/helpers';
+import { parseMarkdownToFiles } from '../../utils/parseMarkdownFiles';
 
 import styles from './KickoffOutputs.css';
 
 export function FileOutput({
   name,
   attachments,
+  markdownValue,
 }: IExtraField) {
   const { formatMessage } = useIntl();
 
@@ -22,8 +24,12 @@ export function FileOutput({
       </span>
     );
 
-    return isArrayWithItems(attachments) ? (
-      <Attachments attachments={attachments} isEdit={false} />
+    const files = isArrayWithItems(attachments)
+      ? attachments
+      : parseMarkdownToFiles(markdownValue);
+
+    return isArrayWithItems(files) ? (
+      <Attachments attachments={files} isEdit={false} />
     ) : defaultValue;
   };
 

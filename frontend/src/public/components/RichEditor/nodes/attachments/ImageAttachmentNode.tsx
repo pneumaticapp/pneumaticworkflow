@@ -47,7 +47,7 @@ function ImageAttachmentComponent({
 export class ImageAttachmentNode extends DecoratorNode<React.ReactElement> {
   attachmentUrl: string;
 
-  attachmentId?: number;
+  attachmentId?: number | string;
 
   attachmentName?: string;
 
@@ -86,7 +86,7 @@ export class ImageAttachmentNode extends DecoratorNode<React.ReactElement> {
     };
   }
 
-  constructor(url: string, id?: number, name?: string, key?: NodeKey) {
+  constructor(url: string, id?: number | string, name?: string, key?: NodeKey) {
     super(key);
     this.attachmentUrl = url;
     this.attachmentId = id;
