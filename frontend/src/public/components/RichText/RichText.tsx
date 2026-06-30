@@ -2,26 +2,15 @@ import * as React from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
-import { TTaskVariable } from '../TemplateEdit/types';
 import { useRichTextLineClamp } from './useRichTextLineClamp';
 import { useRichTextContainer } from './useRichTextContainer';
 import { prepareRichTextHtml } from './utils/prepareRichTextHtml';
-import { createRichTextRemarkable } from './utils/createRichTextRemarkable';
-import { RichTextMoreLink } from './RichTextMoreLink';
+import { createRichTextMarkdownIt } from './utils/createRichTextMarkdownIt';
+import { sanitizeRichTextHtml } from './utils/sanitizeRichTextHtml';
+import { RichTextMoreLink } from './components/RichTextMoreLink';
 import styles from './RichText.css';
 import badgeStyles from '../../utils/badge/Badge.css';
-
-export interface IRichTextProps {
-  text: string | null;
-  isMarkdownMode?: boolean;
-  embedVideos?: boolean;
-  variables?: TTaskVariable[];
-  renderExtensions?: React.ReactNode[];
-  interactiveChecklists?: boolean;
-  hideIcon?: boolean;
-  maxLines?: number;
-  className?: string;
-}
+import type { IRichTextProps } from './types';
 
 export function RichText({
   text,
@@ -34,13 +23,58 @@ export function RichText({
   maxLines,
   className,
 }: IRichTextProps): React.ReactElement | null {
+  if (!text) {
+    return null;
+  }
+
+  const { formatMessage } = useIntl();
   const [isRendered, setIsRendered] = React.useState(false);
   const [isExpanded, setIsExpanded] = React.useState(false);
   const containerRef = React.useRef<HTMLDivElement>(null);
-  const { formatMessage } = useIntl();
 
   const safeText = text ?? '';
+  const isCollapsed = Boolean(maxLines) && !isExpanded;
   const isTruncated = useRichTextLineClamp(containerRef, maxLines, isExpanded, safeText);
+  const containerStyle = maxLines
+    ? ({ '--rich-text-line-clamp': maxLines } as React.CSSProperties)
+    : undefined;
+
+  const markdownIt = React.useMemo(
+    () => createRichTextMarkdownIt({
+      embedVideos,
+      hideIcon,
+      interactiveChecklists,
+      checkboxPlaceholderClassName: styles['checklist__inactive-placeholder'],
+      videoClassName: styles['video'],
+      videoContainerClassName: styles['video__container'],
+      mentionClassName: styles['mention'],
+      variables,
+      formatMessage,
+      badgeClassName: badgeStyles['badge'],
+      specificityBadgeClassName: badgeStyles['specifity'],
+    }),
+    [embedVideos, hideIcon, interactiveChecklists, variables, formatMessage],
+  );
+
+  const preparedText = React.useMemo(
+    () => prepareRichTextHtml(safeText, {
+      variables,
+      formatMessage,
+      mentionClassName: styles['mention'],
+      badgeClassName: badgeStyles['badge'],
+      specificityBadgeClassName: badgeStyles['specifity'],
+      replaceInlineTokens: !isMarkdownMode,
+    }),
+    [safeText, variables, formatMessage, isMarkdownMode],
+  );
+
+  const renderedHtml = React.useMemo(() => {
+    const html = isMarkdownMode ? markdownIt.render(preparedText) : preparedText;
+
+    return sanitizeRichTextHtml(html);
+  }, [isMarkdownMode, markdownIt, preparedText]);
+
+  useRichTextContainer(containerRef, renderedHtml);
 
   React.useEffect(() => {
     setIsExpanded(false);
@@ -50,83 +84,44 @@ export function RichText({
     setIsRendered(true);
   }, []);
 
-  const remarkable = React.useMemo(
-    () => createRichTextRemarkable({
-      embedVideos,
-      hideIcon,
-      interactiveChecklists,
-      checkboxPlaceholderClassName: styles['checkbox-fake-placeholder'],
-      videoClassName: styles['video'],
-    }),
-    [embedVideos, hideIcon, interactiveChecklists],
-  );
-
-  const htmlString = React.useMemo(
-    () => prepareRichTextHtml(safeText, {
-      variables,
-      formatMessage,
-      mentionClassName: styles['mention'],
-      badgeClassName: badgeStyles['badge'],
-      specificityBadgeClassName: badgeStyles['specifity'],
-    }),
-    [safeText, variables, formatMessage],
-  );
-
-  const renderedHtml = React.useMemo(
-    () => (isMarkdownMode ? remarkable.render(htmlString) : htmlString),
-    [isMarkdownMode, remarkable, htmlString],
-  );
-
-  useRichTextContainer(containerRef, renderedHtml);
-
   const handleExpand = React.useCallback((
-    event: React.MouseEvent<HTMLAnchorElement> | React.KeyboardEvent<HTMLAnchorElement>,
+    event: React.MouseEvent<HTMLButtonElement> | React.KeyboardEvent<HTMLButtonElement>,
   ) => {
     event.preventDefault();
     setIsExpanded(true);
   }, []);
 
-  if (!text) {
-    return null;
-  }
-
-  const isCollapsed = Boolean(maxLines) && !isExpanded;
-  const collapsedStyle = isCollapsed && maxLines
-    ? ({
-      WebkitLineClamp: maxLines,
-      lineClamp: maxLines,
-    } as React.CSSProperties)
-    : undefined;
-
   const content = (
     <>
-      {isMarkdownMode && isRendered && renderExtensions}
-      {/* eslint-disable-next-line react/no-danger */}
       <div
         ref={containerRef}
-        className={classnames(styles['container'], isCollapsed && styles['container_collapsed'])}
-        style={collapsedStyle}
+        className={classnames(
+          styles['markdown-content'],
+          isCollapsed && styles['collapsed-content'],
+        )}
+        style={containerStyle}
+        /* eslint-disable-next-line react/no-danger */
         dangerouslySetInnerHTML={{ __html: renderedHtml }}
       />
+      {isMarkdownMode && isRendered && renderExtensions}
     </>
   );
 
   const needsWrapper = Boolean(maxLines) || Boolean(className);
 
-  if (!needsWrapper) {
-    return content;
+  if (needsWrapper) {
+    return (
+      <div
+        className={classnames(
+          className,
+          maxLines && isCollapsed && styles['collapsed-content'],
+        )}
+        >
+        {isCollapsed && isTruncated && <RichTextMoreLink onExpand={handleExpand} />}
+        {content}
+      </div>
+    );
   }
 
-  return (
-    <div
-      className={classnames(
-        maxLines && styles['wrapper'],
-        className,
-        maxLines && isCollapsed && styles['wrapper_collapsed'],
-      )}
-    >
-      {content}
-      {isCollapsed && isTruncated && <RichTextMoreLink onExpand={handleExpand} />}
-    </div>
-  );
+  return content;
 }

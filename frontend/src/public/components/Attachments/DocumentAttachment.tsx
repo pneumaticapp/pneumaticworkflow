@@ -54,7 +54,9 @@ export function DocumentAttachment({
         onClick={(event) => !isClickable && event.preventDefault()}
       >
         {!hideIcon && <Icon className={styles['document__icon']} />}
-        <span className={styles['document__filename']}>{name}</span>
+        <span className={styles['document__filename']}>
+          <span className={styles['document__filename-text']}>{name}</span>
+        </span>
       </a>
       {isEdit && (
         <button className={styles['document__delete-button']} onClick={onDeleteIconClick}>
