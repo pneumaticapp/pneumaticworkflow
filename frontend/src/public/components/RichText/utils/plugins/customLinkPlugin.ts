@@ -29,6 +29,7 @@ const getLinkEntityType = (
   url: string,
   entityType: string | undefined,
   name?: string,
+  isImageMarkdown = false,
 ): ECustomEditorEntities => {
   const googleBucket = 'https://storage.googleapis.com/';
   const attachmentEntityTypes = [
@@ -41,6 +42,10 @@ const getLinkEntityType = (
     return attachmentEntityTypes.includes(entityType as ECustomEditorEntities)
       ? (entityType as ECustomEditorEntities)
       : getAttachmentEntityType(url);
+  }
+
+  if (isImageMarkdown) {
+    return ECustomEditorEntities.Image;
   }
 
   if (url.includes(googleBucket)) {
@@ -73,7 +78,8 @@ export const customLinkPlugin = (
 
     const [, nameRaw, url, , entityTypeRaw] = match;
     const name = unescapeMarkdownLinkText(nameRaw ?? '');
-    const entityType = getLinkEntityType(url, entityTypeRaw, name);
+    const isImageMarkdown = match[0].startsWith('![');
+    const entityType = getLinkEntityType(url, entityTypeRaw, name, isImageMarkdown);
 
     if (!silent) {
       const token = state.push('pneumatic_link', '', 0);
