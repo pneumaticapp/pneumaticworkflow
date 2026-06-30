@@ -1,5 +1,5 @@
 import { IntlShape } from 'react-intl';
-import * as MarkdownItModule from 'markdown-it';
+import markdownit from 'markdown-it'
 
 import { TTaskVariable } from '../../TemplateEdit/types';
 import { createCheckPlaceholderId } from '../../TaskCard/checklist/createCheckPlaceholderId';
@@ -10,13 +10,6 @@ import { customLinkPlugin } from './plugins/customLinkPlugin';
 import { mentionPlugin } from './plugins/mentionPlugin';
 import { variablePlugin } from './plugins/variablePlugin';
 import type { IRenderEmbedVideoHtmlOptions } from './renderEmbedVideoHtml';
-
-type TMarkdownIt = import('markdown-it');
-type TMarkdownItConstructor = new (
-  options?: ConstructorParameters<typeof import('markdown-it')>[0],
-) => TMarkdownIt;
-
-const MarkdownIt = MarkdownItModule as unknown as TMarkdownItConstructor;
 
 export interface ICreateRichTextMarkdownItOptions extends IRenderEmbedVideoHtmlOptions {
   embedVideos: boolean;
@@ -42,8 +35,8 @@ export const createRichTextMarkdownIt = ({
   formatMessage,
   badgeClassName,
   specificityBadgeClassName,
-}: ICreateRichTextMarkdownItOptions): TMarkdownIt => {
-  const md = new MarkdownIt({
+}: ICreateRichTextMarkdownItOptions): any => {
+  const md = markdownit({
     html: true,
     linkify: false,
   });
