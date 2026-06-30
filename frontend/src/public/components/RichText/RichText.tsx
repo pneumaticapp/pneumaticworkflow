@@ -23,10 +23,6 @@ export function RichText({
   maxLines,
   className,
 }: IRichTextProps): React.ReactElement | null {
-  if (!text) {
-    return null;
-  }
-
   const { formatMessage } = useIntl();
   const [isRendered, setIsRendered] = React.useState(false);
   const [isExpanded, setIsExpanded] = React.useState(false);
@@ -90,6 +86,10 @@ export function RichText({
     event.preventDefault();
     setIsExpanded(true);
   }, []);
+
+  if (!text) {
+    return null;
+  }
 
   const content = (
     <>

@@ -1,6 +1,7 @@
 import type MarkdownIt from 'markdown-it';
 
 import { mentionsRegex } from '../../../../constants/defaultValues';
+import { unescapeMarkdownLinkText } from '../../../RichEditor/utils/converters/markdownLinkText';
 
 interface IMentionPluginOptions {
   className: string;
@@ -19,7 +20,7 @@ export const mentionPlugin = (md: MarkdownIt, { className }: IMentionPluginOptio
     if (!silent) {
       const token = state.push('pneumatic_mention', '', 0);
       const [, mentionName] = match;
-      token.content = mentionName;
+      token.content = unescapeMarkdownLinkText(mentionName ?? '');
     }
 
     state.pos += match[0].length;
