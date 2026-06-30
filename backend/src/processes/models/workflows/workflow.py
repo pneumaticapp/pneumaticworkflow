@@ -50,9 +50,6 @@ class Workflow(
         help_text='Template is deleted',
         default=False,
     )
-    # NOTE: members/owners M2M fields removed — replaced by Guardian
-    # object-level permissions (view_workflow, change_workflow).
-    # See: WorkflowPermissionService
     workflow_starter = models.ForeignKey(
         UserModel,
         on_delete=models.SET_NULL,
