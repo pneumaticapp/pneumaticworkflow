@@ -1,3 +1,4 @@
+from itertools import groupby
 from typing import List, Optional, Dict
 from django.contrib.auth import get_user_model
 
@@ -77,7 +78,31 @@ class FieldSetService(BaseModelService):
         self._create_rules(instance_template, **kwargs)
         self._create_fields(instance_template, **kwargs)
 
-    def validate_rules(self):
-        for rule in self.instance.rules.all():
-            service = FieldSetRuleService(user=self.user, instance=rule)
-            service.validate()
+    def validate_rules(self) -> bool:
+        rules = list(self.instance.rules.order_by('type').all())
+        for _, group in groupby(rules, key=lambda r: r.type):
+            group_rules = list(group)
+            if len(group_rules) == 1:
+                # Single rule of this type — standard validation
+                service = FieldSetRuleService(
+                    user=self.user,
+                    instance=group_rules[0],
+                )
+                service.validate()
+            else:
+                # Multiple rules of the same type — OR logic:
+                # validation passes if at least one rule succeeds
+                ex_counter = 0
+                exception = None
+                for rule in group_rules:
+                    try:
+                        service = FieldSetRuleService(
+                            user=self.user,
+                            instance=rule,
+                        )
+                        service.validate()
+                    except FieldsetServiceException as ex:
+                        ex_counter += 1
+                        exception = ex
+                if len(group_rules) == ex_counter:
+                    raise exception
