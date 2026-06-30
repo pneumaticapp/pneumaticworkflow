@@ -31,3 +31,10 @@ MSG_FS_0009 = _(
 )
 MSG_FS_0010 = _('shared_fieldset_id is required for a template fieldset.')
 MSG_FS_0011 = _('template_id is required for a template fieldset.')
+MSG_FS_0012 = lambda values: format_lazy(
+    _(
+        'The sum of the fields in this field set must equal one of '
+        'the following values: "{values}".',
+    ),
+    values=values,
+)

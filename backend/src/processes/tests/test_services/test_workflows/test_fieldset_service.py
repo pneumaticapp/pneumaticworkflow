@@ -7,6 +7,7 @@ from src.processes.enums import (
 from src.processes.messages.fieldset import (
     MSG_FS_0002,
     MSG_FS_0007,
+    MSG_FS_0012,
 )
 from src.processes.models.templates.fieldset import (
     FieldsetTemplate,
@@ -610,7 +611,8 @@ def test_validate_rules__two_same_type_rules__none_matches__raise():
     """
     Two sum_equal rules with different values.
     Fields sum does not match any rule value —
-    raises FieldsetServiceException.
+    raises FieldsetServiceException with MSG_FS_0012
+    listing all values from the group.
     """
 
     # arrange
@@ -644,4 +646,4 @@ def test_validate_rules__two_same_type_rules__none_matches__raise():
         service.validate_rules()
 
     # assert
-    assert ex.value.message == MSG_FS_0002('0')
+    assert ex.value.message == MSG_FS_0012('100, 0')

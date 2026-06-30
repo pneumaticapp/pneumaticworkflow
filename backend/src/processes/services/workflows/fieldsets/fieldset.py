@@ -3,7 +3,7 @@ from typing import List, Optional, Dict
 from django.contrib.auth import get_user_model
 
 from src.generics.base.service import BaseModelService
-from src.processes.messages.fieldset import MSG_FS_0007
+from src.processes.messages.fieldset import MSG_FS_0007, MSG_FS_0012
 from src.processes.models.templates.fieldset import FieldsetTemplate
 from src.processes.models.workflows.fieldset import FieldSet
 from src.processes.services.exceptions import FieldsetServiceException
@@ -93,7 +93,6 @@ class FieldSetService(BaseModelService):
                 # Multiple rules of the same type — OR logic:
                 # validation passes if at least one rule succeeds
                 ex_counter = 0
-                exception = None
                 for rule in group_rules:
                     try:
                         service = FieldSetRuleService(
@@ -101,8 +100,12 @@ class FieldSetService(BaseModelService):
                             instance=rule,
                         )
                         service.validate()
-                    except FieldsetServiceException as ex:
+                    except FieldsetServiceException:
                         ex_counter += 1
-                        exception = ex
                 if len(group_rules) == ex_counter:
-                    raise exception
+                    values = ', '.join(
+                        str(rule.value) for rule in group_rules
+                    )
+                    raise FieldsetServiceException(
+                        message=MSG_FS_0012(values),
+                    )
