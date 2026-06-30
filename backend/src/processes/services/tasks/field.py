@@ -15,6 +15,7 @@ from src.processes.models.templates.fields import (
     FieldTemplate,
 )
 from src.processes.models.workflows.attachment import FileAttachment
+from src.processes.models.workflows.fieldset import FieldSetRule
 from src.processes.models.workflows.fields import TaskField
 from src.processes.services.base import BaseWorkflowService
 from src.processes.services.tasks.exceptions import TaskFieldException
@@ -287,6 +288,7 @@ class TaskFieldService(BaseWorkflowService):
         self.instance = TaskField(
             kickoff_id=kwargs.get('kickoff_id'),
             task_id=kwargs.get('task_id'),
+            fieldset_id=kwargs.get('fieldset_id'),
             type=instance_template.type,
             is_required=instance_template.is_required,
             is_hidden=instance_template.is_hidden,
@@ -320,6 +322,8 @@ class TaskFieldService(BaseWorkflowService):
             self._link_new_attachments(raw_value)
         elif self.instance.type in FieldType.TYPES_WITH_SELECTIONS:
             self._create_selections(instance_template)
+        if instance_template.rules.all().exists():
+            self._link_rules(instance_template, **kwargs)
 
     def _link_new_attachments(
         self,
@@ -353,6 +357,22 @@ class TaskFieldService(BaseWorkflowService):
                 instance_template=selection_template,
                 field_id=self.instance.id,
             )
+
+    def _link_rules(
+        self,
+        instance_template: FieldTemplate,
+        **kwargs,
+    ):
+
+        rule_api_names = set(
+            instance_template.rules.values_list('api_name', flat=True),
+        )
+        rules = FieldSetRule.objects.filter(
+            account=self.account,
+            fieldset_id=kwargs['fieldset_id'],
+            api_name__in=rule_api_names,
+        )
+        self.instance.rules.set(rules)
 
     def _remove_unused_attachments(
         self,

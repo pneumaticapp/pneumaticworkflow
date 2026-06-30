@@ -2,6 +2,7 @@ import pytest
 from django.contrib.auth import get_user_model
 
 from src.processes.enums import (
+    FieldSetRuleType,
     FieldType,
     WorkflowEventType,
 )
@@ -10,8 +11,14 @@ from src.processes.models.templates.fields import (
     FieldTemplate,
     FieldTemplateSelection,
 )
+from src.processes.models.templates.fieldset import (
+    FieldsetTemplateRule,
+)
 from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.workflows.event import WorkflowEvent
+from src.processes.models.workflows.fieldset import (
+    FieldSetRule,
+)
 from src.processes.models.workflows.fields import (
     TaskField,
     FieldSelection,
@@ -34,7 +41,10 @@ from src.processes.tests.fixtures import (
     create_test_owner,
     create_test_template,
     create_test_user,
-    create_test_workflow, create_test_dataset,
+    create_test_workflow,
+    create_test_dataset,
+    create_test_fieldset_template,
+    create_test_fieldset,
 )
 
 UserModel = get_user_model()
@@ -869,6 +879,10 @@ def test__create_related__file_type_not_skip__ok(mocker):
         'src.processes.services.tasks.field.'
         'TaskFieldService._create_selections',
     )
+    link_rules_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._link_rules',
+    )
     service = TaskFieldService(instance=task_field, user=user)
     raw_value = ['123']
 
@@ -882,6 +896,7 @@ def test__create_related__file_type_not_skip__ok(mocker):
     # assert
     link_new_attachments_mock.assert_called_once_with(raw_value)
     create_selections_mock.assert_not_called()
+    link_rules_mock.assert_not_called()
 
 
 def test__create_related__file_type_skip__skip(mocker):
@@ -917,6 +932,10 @@ def test__create_related__file_type_skip__skip(mocker):
         'src.processes.services.tasks.field.'
         'TaskFieldService._create_selections',
     )
+    link_rules_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._link_rules',
+    )
     service = TaskFieldService(instance=task_field, user=user)
 
     # act
@@ -929,6 +948,7 @@ def test__create_related__file_type_skip__skip(mocker):
     # assert
     link_new_attachments_mock.assert_not_called()
     create_selections_mock.assert_not_called()
+    link_rules_mock.assert_not_called()
 
 
 def test__create_related__selection_type__ok(mocker):
@@ -964,6 +984,10 @@ def test__create_related__selection_type__ok(mocker):
         'src.processes.services.tasks.field.'
         'TaskFieldService._create_selections',
     )
+    link_rules_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._link_rules',
+    )
     service = TaskFieldService(instance=task_field, user=user)
 
     # act
@@ -974,6 +998,7 @@ def test__create_related__selection_type__ok(mocker):
     # assert
     create_selections_mock.assert_called_once_with(field_template)
     link_new_attachments_mock.assert_not_called()
+    link_rules_mock.assert_not_called()
 
 
 def test__create_related__other_type__skip(mocker):
@@ -1009,6 +1034,10 @@ def test__create_related__other_type__skip(mocker):
         'src.processes.services.tasks.field.'
         'TaskFieldService._create_selections',
     )
+    link_rules_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._link_rules',
+    )
     service = TaskFieldService(instance=task_field, user=user)
 
     # act
@@ -1019,6 +1048,59 @@ def test__create_related__other_type__skip(mocker):
     # assert
     link_new_attachments_mock.assert_not_called()
     create_selections_mock.assert_not_called()
+    link_rules_mock.assert_not_called()
+
+
+def test__create_related__with_rules__ok(mocker):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    task_template = template.tasks.first()
+    fieldset_template = create_test_fieldset_template(
+        account=account,
+        template=template,
+        task=task_template,
+        rule_type=FieldSetRuleType.SUM_EQUAL,
+    )
+    field_template = fieldset_template.fields.first()
+    rule_template = fieldset_template.rules.first()
+    rule_template.fields.add(field_template)
+    workflow = create_test_workflow(user=user, template=template)
+    task = workflow.tasks.get(number=1)
+    task_field = TaskField.objects.create(
+        task=task,
+        api_name='string-field-1',
+        type=FieldType.STRING,
+        workflow=workflow,
+        account=account,
+    )
+    link_new_attachments_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._link_new_attachments',
+    )
+    create_selections_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._create_selections',
+    )
+    link_rules_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._link_rules',
+    )
+    service = TaskFieldService(instance=task_field, user=user)
+    kwargs = {'some': 'data'}
+
+    # act
+    service._create_related(
+        instance_template=field_template,
+        **kwargs,
+    )
+
+    # assert
+    link_new_attachments_mock.assert_not_called()
+    create_selections_mock.assert_not_called()
+    link_rules_mock.assert_called_once_with(field_template, **kwargs)
 
 
 def test_partial_update__ok(mocker):
@@ -2391,3 +2473,315 @@ def test__get_valid_value__not_required_and_null_value__ok(
     # assert
     assert result == FieldData()
     get_valid_string_value_mock.assert_not_called()
+
+
+def test__link_rules__one_rule__ok():
+
+    """One template rule → one FieldSetRule linked"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        tasks_count=1,
+    )
+    task_template = template.tasks.first()
+    fieldset_api_name = 'fs1'
+    fieldset_template = create_test_fieldset_template(
+        account=account,
+        template=template,
+        task=task_template,
+        api_name=fieldset_api_name,
+        rule_type=FieldSetRuleType.SUM_EQUAL,
+    )
+    field_template = fieldset_template.fields.first()
+    rule_template = fieldset_template.rules.first()
+    rule_template.fields.add(field_template)
+
+    workflow = create_test_workflow(
+        user=user,
+        template=template,
+    )
+    task = workflow.tasks.get(number=1)
+    fieldset = create_test_fieldset(
+        workflow=workflow,
+        task=task,
+        api_name=fieldset_api_name,
+        rule_type=FieldSetRuleType.SUM_EQUAL,
+    )
+    rule = fieldset.rules.first()
+    task_field = fieldset.fields.first()
+
+    service = TaskFieldService(
+        instance=task_field,
+        user=user,
+    )
+
+    # act
+    service._link_rules(
+        instance_template=field_template,
+        fieldset_id=fieldset.id,
+    )
+
+    # assert
+    assert task_field.rules.count() == 1
+    assert task_field.rules.first() == rule
+
+
+def test__link_rules__multiple_rules__ok():
+
+    """Two template rules → two FieldSetRules linked"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        tasks_count=1,
+    )
+    task_template = template.tasks.first()
+    fieldset_api_name = 'fs1'
+    fieldset_template = create_test_fieldset_template(
+        account=account,
+        template=template,
+        task=task_template,
+        api_name=fieldset_api_name,
+        rule_type=FieldSetRuleType.SUM_EQUAL,
+    )
+    rule_tmpl_2 = FieldsetTemplateRule.objects.create(
+        fieldset=fieldset_template,
+        account=account,
+        api_name=f'{fieldset_api_name}-rule-2',
+        type=FieldSetRuleType.SUM_EQUAL,
+        value='200',
+    )
+    field_template = fieldset_template.fields.first()
+    rule_tmpl_1 = fieldset_template.rules.get(
+        api_name=f'{fieldset_api_name}-rule-1',
+    )
+    field_template.rules.set(
+        [rule_tmpl_1, rule_tmpl_2],
+    )
+
+    workflow = create_test_workflow(
+        user=user,
+        template=template,
+    )
+    task = workflow.tasks.get(number=1)
+    fieldset = create_test_fieldset(
+        workflow=workflow,
+        task=task,
+        api_name=fieldset_api_name,
+        rule_type=FieldSetRuleType.SUM_EQUAL,
+    )
+    rule_2 = FieldSetRule.objects.create(
+        fieldset=fieldset,
+        account=account,
+        api_name=f'{fieldset_api_name}-rule-2',
+        type=FieldSetRuleType.SUM_EQUAL,
+        value='200',
+    )
+    rule_1 = fieldset.rules.exclude(id=rule_2.id).first()
+    task_field = fieldset.fields.first()
+
+    service = TaskFieldService(
+        instance=task_field,
+        user=user,
+    )
+
+    # act
+    service._link_rules(
+        instance_template=field_template,
+        fieldset_id=fieldset.id,
+    )
+
+    # assert
+    assert task_field.rules.count() == 2
+    linked_ids = set(
+        task_field.rules.values_list('id', flat=True),
+    )
+    assert linked_ids == {rule_1.id, rule_2.id}
+
+
+def test__link_rules__partial_match__ok():
+
+    """Two template rules, only one FieldSetRule exists
+    — only matched one linked"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        tasks_count=1,
+    )
+    task_template = template.tasks.first()
+    fieldset_api_name = 'fs1'
+    fieldset_template = create_test_fieldset_template(
+        account=account,
+        template=template,
+        task=task_template,
+        api_name=fieldset_api_name,
+        rule_type=FieldSetRuleType.SUM_EQUAL,
+    )
+    rule_tmpl_2 = FieldsetTemplateRule.objects.create(
+        fieldset=fieldset_template,
+        account=account,
+        api_name=f'{fieldset_api_name}-rule-2',
+        type=FieldSetRuleType.SUM_EQUAL,
+        value='200',
+    )
+    field_template = fieldset_template.fields.first()
+    rule_tmpl_1 = fieldset_template.rules.get(
+        api_name=f'{fieldset_api_name}-rule-1',
+    )
+    field_template.rules.set(
+        [rule_tmpl_1, rule_tmpl_2],
+    )
+
+    workflow = create_test_workflow(
+        user=user,
+        template=template,
+    )
+    task = workflow.tasks.get(number=1)
+    fieldset = create_test_fieldset(
+        workflow=workflow,
+        task=task,
+        api_name=fieldset_api_name,
+        rule_type=FieldSetRuleType.SUM_EQUAL,
+    )
+    rule = fieldset.rules.first()
+    task_field = fieldset.fields.first()
+
+    service = TaskFieldService(
+        instance=task_field,
+        user=user,
+    )
+
+    # act
+    service._link_rules(
+        instance_template=field_template,
+        fieldset_id=fieldset.id,
+    )
+
+    # assert
+    assert task_field.rules.count() == 1
+    assert task_field.rules.first() == rule
+
+
+def test__link_rules__no_matching_rules__empty():
+
+    """Template has rule, but no FieldSetRule
+    with that api_name — M2M stays empty"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        tasks_count=1,
+    )
+    task_template = template.tasks.first()
+    fieldset_api_name = 'fs1'
+    fieldset_template = create_test_fieldset_template(
+        account=account,
+        template=template,
+        task=task_template,
+        api_name=fieldset_api_name,
+        rule_type=FieldSetRuleType.SUM_EQUAL,
+    )
+    field_template = fieldset_template.fields.first()
+    rule_template = fieldset_template.rules.first()
+    rule_template.fields.add(field_template)
+
+    workflow = create_test_workflow(
+        user=user,
+        template=template,
+    )
+    task = workflow.tasks.get(number=1)
+    fieldset = create_test_fieldset(
+        workflow=workflow,
+        task=task,
+        api_name=fieldset_api_name,
+    )
+    FieldSetRule.objects.create(
+        fieldset=fieldset,
+        account=account,
+        api_name='different-rule',
+        type=FieldSetRuleType.SUM_EQUAL,
+        value='999',
+    )
+    task_field = fieldset.fields.first()
+
+    service = TaskFieldService(
+        instance=task_field,
+        user=user,
+    )
+
+    # act
+    service._link_rules(
+        instance_template=field_template,
+        fieldset_id=fieldset.id,
+    )
+
+    # assert
+    assert task_field.rules.count() == 0
+
+
+def test__link_rules__another_fieldset_rule__not_linked():
+
+    """FieldSetRule has matching api_name
+    but belongs to another fieldset — not linked"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        tasks_count=1,
+    )
+    task_template = template.tasks.first()
+    fieldset_api_name = 'fs1'
+    fieldset_template = create_test_fieldset_template(
+        account=account,
+        template=template,
+        task=task_template,
+        api_name=fieldset_api_name,
+        rule_type=FieldSetRuleType.SUM_EQUAL,
+    )
+    field_template = fieldset_template.fields.first()
+    rule_template = fieldset_template.rules.first()
+    rule_template.fields.add(field_template)
+
+    workflow = create_test_workflow(
+        user=user,
+        template=template,
+    )
+    task = workflow.tasks.get(number=1)
+    fieldset_1 = create_test_fieldset(
+        workflow=workflow,
+        task=task,
+        api_name=fieldset_api_name,
+    )
+    task_field = fieldset_1.fields.first()
+    create_test_fieldset(
+        workflow=workflow,
+        task=task,
+        api_name='fs2',
+        rule_type=FieldSetRuleType.SUM_EQUAL,
+    )
+
+    service = TaskFieldService(
+        instance=task_field,
+        user=user,
+    )
+
+    # act
+    service._link_rules(
+        instance_template=field_template,
+        fieldset_id=fieldset_1.id,
+    )
+
+    # assert
+    assert task_field.rules.count() == 0

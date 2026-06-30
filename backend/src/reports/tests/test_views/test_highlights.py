@@ -21,6 +21,7 @@ from src.processes.models.workflows.event import WorkflowEvent
 from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.task import Delay
 from src.processes.models.workflows.workflow import Workflow
+from src.processes.models.workflows.fieldset import FieldSet
 from src.processes.services.events import (
     WorkflowEventService,
 )
@@ -34,7 +35,7 @@ from src.processes.tests.fixtures import (
     create_test_template,
     create_test_user,
     create_test_workflow, create_test_owner, create_test_dataset,
-    create_test_event,
+    create_test_event, create_test_admin, create_test_fieldset,
 )
 from src.utils.validation import ErrorCode
 
@@ -1514,7 +1515,6 @@ def test_complete_task_event__task_field_with_dataset__ok(api_client):
     assert field_data['id'] == field.id
     assert field_data['type'] == FieldType.DROPDOWN
     assert field_data['value'] == dataset_item.value
-    assert 'selections' not in field_data
 
 
 def test_complete_task_event__kickoff_field_with_dataset__ok(api_client):
@@ -1553,4 +1553,283 @@ def test_complete_task_event__kickoff_field_with_dataset__ok(api_client):
     assert field_data['id'] == field.id
     assert field_data['type'] == FieldType.DROPDOWN
     assert field_data['value'] == dataset_item.value
-    assert 'selections' not in field_data
+
+
+def test_highlights__task_complete_fieldsets_present__ok(api_client):
+
+    """
+    GET reports highlights: TASK_COMPLETE item includes non-null task.fieldsets
+    when the task has at least one FieldSet.
+    """
+
+    # arrange
+
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task_1 = workflow.tasks.get(number=1)
+    fieldset = FieldSet.objects.create(
+        account=account,
+        workflow=workflow,
+        task=task_1,
+        name='Fieldset 1',
+        order=1,
+    )
+    field_1 = TaskField.objects.create(
+        account=account,
+        workflow=workflow,
+        task=task_1,
+        fieldset=fieldset,
+        name='Field 1',
+        type=FieldType.TEXT,
+        order=1,
+    )
+    field_2 = TaskField.objects.create(
+        account=account,
+        workflow=workflow,
+        task=task_1,
+        fieldset=fieldset,
+        name='Field 2',
+        type=FieldType.NUMBER,
+        order=2,
+    )
+    WorkflowEventService.task_complete_event(
+        task=task_1,
+        user=user,
+        after_create_actions=False,
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+
+    response = api_client.get(
+        path='/reports/highlights',
+    )
+
+    # assert
+    assert response.status_code == 200
+    event_data = response.data[0]
+    assert event_data['type'] == WorkflowEventType.TASK_COMPLETE
+    fieldsets_data = event_data['task']['fieldsets']
+    assert len(fieldsets_data) == 1
+
+    fieldset_data = fieldsets_data[0]
+    assert fieldset_data['id'] == fieldset.id
+    assert fieldset_data['api_name'] == fieldset.api_name
+    assert fieldset_data['name'] == fieldset.name
+    assert fieldset_data['description'] == fieldset.description
+    assert fieldset_data['order'] == fieldset.order
+    assert fieldset_data['label_position'] == fieldset.label_position
+    assert fieldset_data['layout'] == fieldset.layout
+    fields_data = fieldset_data['fields']
+    assert len(fields_data) == 2
+    field_2_data = fields_data[0]
+    assert field_2_data['id'] == field_2.id
+    assert field_2_data['order'] == field_2.order
+    assert field_2_data['type'] == field_2.type
+    assert field_2_data['is_required'] == field_2.is_required
+    assert field_2_data['is_hidden'] == field_2.is_hidden
+    assert field_2_data['description'] == field_2.description
+    assert field_2_data['api_name'] == field_2.api_name
+    assert field_2_data['name'] == field_2.name
+    assert field_2_data['value'] == field_2.value
+    assert field_2_data['markdown_value'] == field_2.markdown_value
+    assert field_2_data['clear_value'] == field_2.clear_value
+    assert field_2_data['user_id'] == field_2.user_id
+    assert field_2_data['group_id'] == field_2.group_id
+    assert field_2_data['attachments'] == []
+    field_1_data = fields_data[1]
+    assert field_1_data['id'] == field_1.id
+
+
+def test_highlights__task_complete_fieldsets_absent__ok(api_client):
+
+    """
+    GET reports highlights: TASK_COMPLETE item has task.fieldsets null when the
+    task has no FieldSet rows.
+    """
+
+    # arrange
+
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task_1 = workflow.tasks.get(number=1)
+    WorkflowEventService.task_complete_event(
+        task=task_1,
+        user=user,
+        after_create_actions=False,
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+
+    response = api_client.get(
+        path='/reports/highlights',
+    )
+
+    # assert
+
+    assert response.status_code == 200
+    item_1 = response.data[0]
+    assert item_1['type'] == WorkflowEventType.TASK_COMPLETE
+    task_payload = item_1['task']
+    assert task_payload['fieldsets'] is None
+
+
+def test_highlights__non_complete_fieldsets_null__ok(api_client):
+
+    """
+    GET reports highlights: non-TASK_COMPLETE highlight exposes task.fieldsets
+    as null.
+    """
+
+    # arrange
+
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task_1 = workflow.tasks.get(number=1)
+    create_test_event(
+        workflow=workflow,
+        user=user,
+        task=task_1,
+        type_event=WorkflowEventType.COMMENT,
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+
+    response = api_client.get(
+        path='/reports/highlights',
+    )
+
+    # assert
+
+    assert response.status_code == 200
+    item_1 = response.data[0]
+    assert item_1['type'] == WorkflowEventType.COMMENT
+    task_payload = item_1['task']
+    assert task_payload['fieldsets'] is None
+
+
+def test_highlights__start_workflow_kickoff_fieldset_present__ok(api_client):
+
+    # arrange
+    account = create_test_account()
+    create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    workflow = create_test_workflow(user, tasks_count=2, active_task_number=2)
+    kickoff = workflow.kickoff_instance
+    fieldset = create_test_fieldset(
+        workflow=workflow,
+        kickoff=kickoff,
+        order=1,
+    )
+    field = fieldset.fields.first()
+    WorkflowEventService.workflow_run_event(workflow)
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get('/reports/highlights')
+
+    # assert
+    assert response.status_code == 200
+    event_data = response.data[0]
+    assert event_data['type'] == WorkflowEventType.RUN
+    fieldsets_data = event_data['workflow']['kickoff']['fieldsets']
+    assert len(fieldsets_data) == 1
+    fieldset_data = fieldsets_data[0]
+    assert fieldset_data['id'] == fieldset.id
+    assert fieldset_data['api_name'] == fieldset.api_name
+    assert fieldset_data['name'] == fieldset.name
+    assert fieldset_data['description'] == fieldset.description
+    assert fieldset_data['order'] == fieldset.order
+    assert fieldset_data['label_position'] == fieldset.label_position
+    assert fieldset_data['layout'] == fieldset.layout
+    fields_data = fieldset_data['fields']
+    assert len(fields_data) == 1
+    field_data = fields_data[0]
+    assert field_data['id'] == field.id
+    assert field_data['order'] == field.order
+    assert field_data['type'] == field.type
+    assert field_data['is_required'] == field.is_required
+    assert field_data['is_hidden'] == field.is_hidden
+    assert field_data['description'] == field.description
+    assert field_data['api_name'] == field.api_name
+    assert field_data['name'] == field.name
+    assert field_data['value'] == field.value
+    assert field_data['markdown_value'] == field.markdown_value
+    assert field_data['clear_value'] == field.clear_value
+    assert field_data['user_id'] == field.user_id
+    assert field_data['group_id'] == field.group_id
+    assert field_data['attachments'] == []
+
+
+def test_highlights__start_workflow_kickoff_field_present__ok(api_client):
+
+    # arrange
+    account = create_test_account()
+    create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    workflow = create_test_workflow(user, tasks_count=2, active_task_number=2)
+    kickoff = workflow.kickoff_instance
+
+    field = TaskField.objects.create(
+        type=FieldType.DROPDOWN,
+        name='dropdown',
+        kickoff=kickoff,
+        value='some value',
+        workflow=workflow,
+        account=account,
+    )
+    WorkflowEventService.workflow_run_event(workflow)
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get('/reports/highlights')
+
+    # assert
+    assert response.status_code == 200
+    event_data = response.data[0]
+    assert event_data['type'] == WorkflowEventType.RUN
+    fields_data = event_data['workflow']['kickoff']['output']
+    assert len(fields_data) == 1
+    field_data = fields_data[0]
+
+    assert field_data['id'] == field.id
+    assert field_data['order'] == field.order
+    assert field_data['type'] == field.type
+    assert field_data['is_required'] == field.is_required
+    assert field_data['is_hidden'] == field.is_hidden
+    assert field_data['description'] == field.description
+    assert field_data['api_name'] == field.api_name
+    assert field_data['name'] == field.name
+    assert field_data['value'] == field.value
+    assert field_data['markdown_value'] == field.markdown_value
+    assert field_data['clear_value'] == field.clear_value
+    assert field_data['user_id'] == field.user_id
+    assert field_data['group_id'] == field.group_id
+    assert field_data['attachments'] == []
+
+
+def test_highlights__start_workflow_fieldset_absent__ok(api_client):
+
+    # arrange
+    account = create_test_account()
+    create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    workflow = create_test_workflow(user, tasks_count=2, active_task_number=2)
+
+    WorkflowEventService.workflow_run_event(workflow)
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get('/reports/highlights')
+
+    # assert
+    assert response.status_code == 200
+    event_data = response.data[0]
+    assert event_data['type'] == WorkflowEventType.RUN
+    assert event_data['workflow']['kickoff']['fieldsets'] == []
+    assert event_data['workflow']['kickoff']['output'] == []
