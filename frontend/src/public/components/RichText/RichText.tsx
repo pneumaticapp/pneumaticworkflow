@@ -7,7 +7,7 @@ import { useRichTextContainer } from './useRichTextContainer';
 import { prepareRichTextHtml } from './utils/prepareRichTextHtml';
 import { createRichTextMarkdownIt } from './utils/createRichTextMarkdownIt';
 import { sanitizeRichTextHtml } from './utils/sanitizeRichTextHtml';
-import { RichTextMoreLink } from './RichTextMoreLink';
+import { RichTextMoreLink } from './components/RichTextMoreLink';
 import styles from './RichText.css';
 import badgeStyles from '../../utils/badge/Badge.css';
 import type { IRichTextProps } from './types';
@@ -23,6 +23,10 @@ export function RichText({
   maxLines,
   className,
 }: IRichTextProps): React.ReactElement | null {
+  if (!text) {
+    return null;
+  }
+
   const { formatMessage } = useIntl();
   const [isRendered, setIsRendered] = React.useState(false);
   const [isExpanded, setIsExpanded] = React.useState(false);
@@ -40,9 +44,9 @@ export function RichText({
       embedVideos,
       hideIcon,
       interactiveChecklists,
-      checkboxPlaceholderClassName: styles['checkbox-fake-placeholder'],
+      checkboxPlaceholderClassName: styles['checklist__inactive-placeholder'],
       videoClassName: styles['video'],
-      videoContainerClassName: styles['video-container'],
+      videoContainerClassName: styles['video__container'],
       mentionClassName: styles['mention'],
       variables,
       formatMessage,
@@ -81,21 +85,20 @@ export function RichText({
   }, []);
 
   const handleExpand = React.useCallback((
-    event: React.MouseEvent<HTMLAnchorElement> | React.KeyboardEvent<HTMLAnchorElement>,
+    event: React.MouseEvent<HTMLButtonElement> | React.KeyboardEvent<HTMLButtonElement>,
   ) => {
     event.preventDefault();
     setIsExpanded(true);
   }, []);
 
-  if (!text) {
-    return null;
-  }
-
   const content = (
     <>
       <div
         ref={containerRef}
-        className={classnames(styles['container'], isCollapsed && styles['container_collapsed'], styles['markdown-content'])}
+        className={classnames(
+          styles['markdown-content'],
+          isCollapsed && styles['collapsed-content'],
+        )}
         style={containerStyle}
         /* eslint-disable-next-line react/no-danger */
         dangerouslySetInnerHTML={{ __html: renderedHtml }}
@@ -110,13 +113,12 @@ export function RichText({
     return (
       <div
         className={classnames(
-          maxLines && styles['wrapper'],
           className,
-          maxLines && isCollapsed && styles['wrapper_collapsed'],
+          maxLines && isCollapsed && styles['collapsed-content'],
         )}
-      >
-        {content}
+        >
         {isCollapsed && isTruncated && <RichTextMoreLink onExpand={handleExpand} />}
+        {content}
       </div>
     );
   }

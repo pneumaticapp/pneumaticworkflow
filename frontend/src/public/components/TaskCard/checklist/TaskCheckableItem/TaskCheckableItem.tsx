@@ -49,7 +49,6 @@ export function TaskCheckableItem({
     <Checkbox
       checked={isChecked}
       containerClassName={styles['checkbox']}
-      labelClassName={styles['checkbox-label']}
       onChange={handleChange}
       disabled={disabled}
     />,

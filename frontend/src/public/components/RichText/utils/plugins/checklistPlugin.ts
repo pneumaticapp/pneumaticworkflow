@@ -72,9 +72,7 @@ export const checklistPlugin = (
 
     const tokenInline = state.push('inline', '', 0);
     tokenInline.content = totalLabelContent;
-    tokenInline.map = [startLine, currentLine + 1];
     tokenInline.children = [];
-    md.inline.parse(totalLabelContent, md, state.env, tokenInline.children);
 
     state.push('pneumatic_checklist_close', '', -1);
 
@@ -93,7 +91,7 @@ export const checklistPlugin = (
     const checkbox = renderCheckPlaceholder(listApiName, itemApiName);
     const progressbar = renderProgressbarPlaceholder(listApiName);
 
-    const checklistWrapperClass = `${styles['checklist']} ${interactiveChecklists ? styles['checklist_interactive'] : ''}`;
+    const checklistWrapperClass = `${styles['checklist']} ${interactiveChecklists ? styles['is-interactive'] : ''}`;
 
     let result = '';
 
@@ -102,12 +100,12 @@ export const checklistPlugin = (
     }
 
     if (isFirst && progressbar) {
-      result += `<div class="${styles['progressbar-container']}">${progressbar}</div>`;
+      result += `<div class="${styles['progressbar__container']}">${progressbar}</div>`;
     }
 
-    result += `<div class="${styles['checkbox-wrapper']}">`;
+    result += `<div class="${styles['checklist__item']}">`;
     result += checkbox;
-    result += `<span class="${styles['checkbox-content']}">`;
+    result += `<span class="${styles['checklist__content']}">`;
 
     return result;
   };
