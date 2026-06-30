@@ -1,4 +1,5 @@
-from rest_framework.fields import CharField
+from django.core.validators import MinValueValidator
+from rest_framework.fields import CharField, IntegerField
 from rest_framework.serializers import ModelSerializer
 from src.generics.fields import (
     RelatedApiNameListField, AccountPrimaryKeyRelatedField,
@@ -77,6 +78,11 @@ class FieldsetTemplateSerializer(
         many=True,
         required=False,
         default=list,
+    )
+    order = IntegerField(
+        required=False,
+        default=0,
+        validators=[MinValueValidator(0)],
     )
 
 

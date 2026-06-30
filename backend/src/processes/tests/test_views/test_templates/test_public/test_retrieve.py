@@ -14,7 +14,8 @@ from src.processes.tests.fixtures import (
     create_test_fieldset_template,
     create_test_owner,
     create_test_dataset,
-    create_test_account, create_test_shared_fieldset,
+    create_test_account,
+    create_test_shared_fieldset,
 )
 
 pytestmark = pytest.mark.django_db

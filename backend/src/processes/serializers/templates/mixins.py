@@ -264,7 +264,7 @@ class FieldsetMixin:
         existing_fieldsets = {f.api_name: f for f in instance.fieldsets.all()}
         fieldsets_api_names = set()
         for fieldset_data in fieldsets_data:
-            fieldset_api_name = fieldset_data.pop('api_name', None)
+            fieldset_api_name = fieldset_data.get('api_name')
             if fieldset_api_name and fieldset_api_name in existing_fieldsets:
                 fieldset = existing_fieldsets[fieldset_api_name]
                 update_kwargs = {}
