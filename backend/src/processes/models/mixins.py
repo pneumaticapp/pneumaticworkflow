@@ -15,7 +15,8 @@ from src.processes.enums import (
     FieldSetLayout,
     PerformerType,
     PredicateOperator,
-    PredicateType, FieldSetRuleType,
+    PredicateType,
+    FieldSetRuleType,
 )
 from src.datasets.models import Dataset
 

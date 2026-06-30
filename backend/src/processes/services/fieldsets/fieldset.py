@@ -317,19 +317,21 @@ class FieldSetTemplateService(BaseModelService):
     ):
         """ All dataset items will be updated """
 
-        existing_rules = {rule.id: rule for rule in self.instance.rules.all()}
-        rules_ids = set()
+        existing_rules = {
+            rule.api_name: rule for rule in self.instance.rules.all()
+        }
+        rule_api_names = set()
         for rule_data in rules_data:
-            rule_id = rule_data.pop('id', None)
-            if rule_id and rule_id in existing_rules:
+            rule_api_name = rule_data.pop('api_name', None)
+            if rule_api_name and rule_api_name in existing_rules:
                 service = FieldsetTemplateRuleService(
                     user=self.user,
                     is_superuser=self.is_superuser,
                     auth_type=self.auth_type,
-                    instance=existing_rules[rule_id],
+                    instance=existing_rules[rule_api_name],
                 )
                 service.partial_update(**rule_data)
-                rules_ids.add(rule_id)
+                rule_api_names.add(rule_api_name)
             else:
                 service = FieldsetTemplateRuleService(
                     user=self.user,
@@ -340,9 +342,9 @@ class FieldSetTemplateService(BaseModelService):
                     fieldset_id=self.instance.id,
                     **rule_data,
                 )
-                rules_ids.add(rule.id)
+                rule_api_names.add(rule.api_name)
 
-        self.instance.rules.exclude(id__in=rules_ids).delete()
+        self.instance.rules.exclude(api_name__in=rule_api_names).delete()
 
     @staticmethod
     def to_json(fieldset: FieldsetTemplate) -> dict:

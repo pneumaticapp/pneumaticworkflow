@@ -20,7 +20,10 @@ from src.processes.enums import (
     OwnerRole,
     OwnerType,
     PerformerType,
-    PredicateOperator, FieldSetRuleType, LabelPosition, FieldSetLayout,
+    PredicateOperator,
+    FieldSetRuleType,
+    LabelPosition,
+    FieldSetLayout,
 )
 from src.processes.messages import template as messages
 from src.processes.models.templates.conditions import (

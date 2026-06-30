@@ -4,14 +4,17 @@ from src.processes.enums import (
     FieldSetRuleType,
     FieldType,
 )
-from src.processes.messages.fieldset import MSG_FS_0007
+from src.processes.messages.fieldset import (
+    MSG_FS_0002,
+    MSG_FS_0007,
+    MSG_FS_0012,
+)
 from src.processes.models.templates.fieldset import (
     FieldsetTemplate,
     FieldsetTemplateRule,
 )
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.models.workflows.fieldset import (
-    FieldSet,
     FieldSetRule,
 )
 from src.processes.services.exceptions import FieldsetServiceException
@@ -24,9 +27,11 @@ from src.processes.services.workflows.fieldsets.fieldset_rule import (
 )
 from src.processes.tests.fixtures import (
     create_test_account,
+    create_test_fieldset,
     create_test_owner,
     create_test_template,
-    create_test_workflow, create_test_fieldset_template,
+    create_test_workflow,
+    create_test_fieldset_template,
 )
 
 pytestmark = pytest.mark.django_db
@@ -44,7 +49,6 @@ def test__create_instance__with_kickoff__ok():
     template = create_test_template(user=user, tasks_count=1)
     workflow = create_test_workflow(user=user, template=template)
     kickoff = workflow.kickoff_instance
-    workflow.tasks.first()
     order = 11
     fieldset_template = FieldsetTemplate.objects.create(
         template=template,
@@ -80,6 +84,10 @@ def test__create_instance__with_kickoff__ok():
 
 
 def test__create_instance__with_task__ok():
+
+    """
+    Call with task
+    """
 
     # arrange
     account = create_test_account()
@@ -178,11 +186,8 @@ def test__create_fields__default_params__ok(mocker):
         type=FieldType.NUMBER,
         order=1,
     )
-    fieldset = FieldSet.objects.create(
-        account=account,
+    fieldset = create_test_fieldset(
         workflow=workflow,
-        name='Fieldset',
-        order=1,
     )
     service = FieldSetService(
         user=user,
@@ -190,8 +195,6 @@ def test__create_fields__default_params__ok(mocker):
         auth_type=AuthTokenType.USER,
         instance=fieldset,
     )
-
-    # mock
     task_field_service_init_mock = mocker.patch.object(
         TaskFieldService,
         attribute='__init__',
@@ -245,11 +248,8 @@ def test__create_fields__with_fields_data__ok(mocker):
         type=FieldType.NUMBER,
         order=1,
     )
-    fieldset = FieldSet.objects.create(
-        account=account,
+    fieldset = create_test_fieldset(
         workflow=workflow,
-        name='Fieldset',
-        order=1,
     )
     service = FieldSetService(
         user=user,
@@ -258,8 +258,6 @@ def test__create_fields__with_fields_data__ok(mocker):
         instance=fieldset,
     )
     fields_data = {field_template_1.api_name: '42'}
-
-    # mock
     task_field_service_init_mock = mocker.patch.object(
         TaskFieldService,
         attribute='__init__',
@@ -314,11 +312,8 @@ def test__create_fields__skip_value_true__ok(mocker):
         type=FieldType.NUMBER,
         order=1,
     )
-    fieldset = FieldSet.objects.create(
-        account=account,
+    fieldset = create_test_fieldset(
         workflow=workflow,
-        name='Fieldset',
-        order=1,
     )
     service = FieldSetService(
         user=user,
@@ -326,8 +321,6 @@ def test__create_fields__skip_value_true__ok(mocker):
         auth_type=AuthTokenType.USER,
         instance=fieldset,
     )
-
-    # mock
     task_field_service_init_mock = mocker.patch.object(
         TaskFieldService,
         attribute='__init__',
@@ -381,11 +374,8 @@ def test__create_rules__with_template__ok(mocker):
         type=FieldSetRuleType.SUM_EQUAL,
         value='100',
     )
-    fieldset = FieldSet.objects.create(
-        account=account,
+    fieldset = create_test_fieldset(
         workflow=workflow,
-        name='Fieldset',
-        order=1,
     )
     service = FieldSetService(
         user=user,
@@ -393,8 +383,6 @@ def test__create_rules__with_template__ok(mocker):
         auth_type=AuthTokenType.USER,
         instance=fieldset,
     )
-
-    # mock
     field_set_rule_service_init_mock = mocker.patch.object(
         FieldSetRuleService,
         attribute='__init__',
@@ -439,8 +427,6 @@ def test__create_related__with_template__ok(mocker):
         is_superuser=False,
         auth_type=AuthTokenType.USER,
     )
-
-    # mock
     create_fields_mock = mocker.patch(
         'src.processes.services.workflows.fieldsets.fieldset.'
         'FieldSetService._create_fields',
@@ -454,15 +440,15 @@ def test__create_related__with_template__ok(mocker):
     service._create_related(instance_template=fieldset_template)
 
     # assert
-    create_fields_mock.assert_called_once_with(
-        fieldset_template,
-    )
     create_rules_mock.assert_called_once_with(
         fieldset_template,
     )
+    create_fields_mock.assert_called_once_with(
+        fieldset_template,
+    )
 
 
-def test_validate_rules__with_rules__ok(mocker):
+def test_validate_rules__one_rule__ok(mocker):
 
     """
     Call with rules
@@ -473,26 +459,18 @@ def test_validate_rules__with_rules__ok(mocker):
     user = create_test_owner(account=account)
     template = create_test_template(user=user, tasks_count=1)
     workflow = create_test_workflow(user=user, template=template)
-    fieldset = FieldSet.objects.create(
-        account=account,
+    fieldset = create_test_fieldset(
         workflow=workflow,
-        name='Fieldset',
-        order=1,
+        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_value='100',
     )
-    rule = FieldSetRule.objects.create(
-        account=account,
-        fieldset=fieldset,
-        type=FieldSetRuleType.SUM_EQUAL,
-        value='100',
-    )
+    rule = fieldset.rules.first()
     service = FieldSetService(
         user=user,
         is_superuser=False,
         auth_type=AuthTokenType.USER,
         instance=fieldset,
     )
-
-    # mock
     field_set_rule_service_init_mock = mocker.patch.object(
         FieldSetRuleService,
         attribute='__init__',
@@ -512,3 +490,160 @@ def test_validate_rules__with_rules__ok(mocker):
         instance=rule,
     )
     field_set_rule_service_validate_mock.assert_called_once_with()
+
+
+def test_validate_rules__one_rule_none_matches__raise_exception(mocker):
+
+    """
+    Call with rules
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    workflow = create_test_workflow(user=user, template=template)
+    fieldset = create_test_fieldset(
+        workflow=workflow,
+        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_value='100',
+    )
+    field = fieldset.fields.first()
+    rule_100 = fieldset.rules.first()
+    rule_100.fields.add(field)
+    service = FieldSetService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+        instance=fieldset,
+    )
+
+    # act
+    with pytest.raises(FieldsetServiceException) as ex:
+        service.validate_rules()
+
+    # assert
+    assert ex.value.message == MSG_FS_0002('100')
+
+
+def test_validate_rules__two_same_type_rules__first_value_matches__ok():
+
+    """
+    Two sum_equal rules with different values.
+    Fields sum equals first rule value — OR-logic: validation passes.
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(user=user)
+    fieldset = create_test_fieldset(
+        workflow=workflow,
+        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_value='10',
+    )
+    field = fieldset.fields.first()
+    rule_10 = fieldset.rules.first()
+    rule_10.fields.add(field)
+    rule_0 = FieldSetRule.objects.create(
+        account=account,
+        fieldset=fieldset,
+        type=FieldSetRuleType.SUM_EQUAL,
+        value='0',
+    )
+    rule_0.fields.add(field)
+    service = FieldSetService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+        instance=fieldset,
+    )
+
+    # act
+    service.validate_rules()
+
+    # assert
+    assert service.instance == fieldset
+
+
+def test_validate_rules__two_same_type_rules__second_value_matches__ok():
+
+    """
+    Two sum_equal rules with different values.
+    Fields sum equals second rule value — OR-logic: validation passes.
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(user=user)
+    fieldset = create_test_fieldset(
+        workflow=workflow,
+        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_value='100',
+    )
+    field = fieldset.fields.first()
+    rule_100 = fieldset.rules.first()
+    rule_100.fields.add(field)
+    rule_10 = FieldSetRule.objects.create(
+        account=account,
+        fieldset=fieldset,
+        type=FieldSetRuleType.SUM_EQUAL,
+        value='10',
+    )
+    rule_10.fields.add(field)
+    service = FieldSetService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+        instance=fieldset,
+    )
+
+    # act
+    service.validate_rules()
+
+    # assert
+    assert service.instance == fieldset
+
+
+def test_validate_rules__two_same_type_rules__none_matches__raise():
+
+    """
+    Two sum_equal rules with different values.
+    Fields sum does not match any rule value —
+    raises FieldsetServiceException with MSG_FS_0012
+    listing all values from the group.
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(user=user)
+    fieldset = create_test_fieldset(
+        workflow=workflow,
+        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_value='100',
+    )
+    field = fieldset.fields.first()
+    rule_100 = fieldset.rules.first()
+    rule_100.fields.add(field)
+    rule_0 = FieldSetRule.objects.create(
+        account=account,
+        fieldset=fieldset,
+        type=FieldSetRuleType.SUM_EQUAL,
+        value='0',
+    )
+    rule_0.fields.add(field)
+    service = FieldSetService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+        instance=fieldset,
+    )
+
+    # act
+    with pytest.raises(FieldsetServiceException) as ex:
+        service.validate_rules()
+
+    # assert
+    assert ex.value.message == MSG_FS_0012('100, 0')
