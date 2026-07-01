@@ -15,7 +15,12 @@ interface ITemplateFieldContextValue {
   setValues: TSetValues;
 }
 
+interface ITemplatePersistContextValue {
+  consumePendingChanges(): Partial<ITemplate>;
+}
+
 const TemplateFieldContext = createContext<ITemplateFieldContextValue | null>(null);
+const TemplatePersistContext = createContext<ITemplatePersistContextValue | null>(null);
 
 export { TemplateFieldContext };
 
@@ -36,6 +41,16 @@ export function useTemplateField(): ITemplateFieldContextValue {
 
   if (!ctx) {
     throw new Error('useTemplateField must be used inside the Edit Template form provider');
+  }
+
+  return ctx;
+}
+
+export function useTemplatePersist(): ITemplatePersistContextValue {
+  const ctx = useContext(TemplatePersistContext);
+
+  if (!ctx) {
+    throw new Error('useTemplatePersist must be used inside the Edit Template form provider');
   }
 
   return ctx;
@@ -133,6 +148,10 @@ function shouldDeactivateTemplate(
   changedFields: Partial<ITemplate>,
   previousTemplate: ITemplate,
 ): boolean {
+  if (changedFields.isActive === true) {
+    return false;
+  }
+
   let shouldDeactivate = Object.keys(changedFields).some(
     (key) => !NON_DEACTIVATIVE_FIELDS.includes(key as keyof ITemplate),
   );
@@ -183,43 +202,57 @@ export function TemplateFormPersistProvider({ dirtyRef, children }: ITemplateFor
   dirtyRefRef.current = dirtyRef;
   setFieldValueRef.current = setFieldValue;
 
-  const flushPersist = useCallback((currentValues: ITemplate) => {
-    if (previousValuesRef.current === currentValues) {
-      return;
+  const consumePendingChanges = useCallback(() => {
+    if (previousValuesRef.current === valuesRef.current) {
+      return {};
     }
 
-    const previousValues = previousValuesRef.current;
-    const changedFields = getChangedFields(previousValues, currentValues);
+    const changedFields = getChangedFields(previousValuesRef.current, valuesRef.current);
     const isUserEdit = dirtyRefRef.current.current;
-    previousValuesRef.current = currentValues;
+    previousValuesRef.current = valuesRef.current;
     dirtyRefRef.current.current = false;
 
-    if (isUserEdit && Object.keys(changedFields).length > 0) {
+    return isUserEdit ? changedFields : {};
+  }, []);
+
+  const flushPersist = useCallback(() => {
+    const previousValues = previousValuesRef.current;
+    const changedFields = consumePendingChanges();
+
+    if (Object.keys(changedFields).length > 0) {
       if (shouldDeactivateTemplate(changedFields, previousValues)) {
         setFieldValueRef.current('isActive', false, false);
       }
 
       dispatchRef.current(patchTemplate({ changedFields }));
     }
-  }, []);
+  }, [consumePendingChanges]);
 
   useEffect(() => {
     if (previousValuesRef.current === values) {
       return undefined;
     }
 
-    const capturedValues = values;
     const timeoutId = window.setTimeout(() => {
-      flushPersist(valuesRef.current);
+      flushPersist();
     }, 0);
 
     return () => {
       window.clearTimeout(timeoutId);
-      flushPersist(capturedValues);
+      flushPersist();
     };
   }, [values, flushPersist]);
 
-  return children as React.ReactElement;
+  const persistContextValue = useMemo<ITemplatePersistContextValue>(
+    () => ({ consumePendingChanges }),
+    [consumePendingChanges],
+  );
+
+  return (
+    <TemplatePersistContext.Provider value={persistContextValue}>
+      {children as React.ReactElement}
+    </TemplatePersistContext.Provider>
+  );
 }
 
 const TaskFormScopeContext = createContext<string | null>(null);

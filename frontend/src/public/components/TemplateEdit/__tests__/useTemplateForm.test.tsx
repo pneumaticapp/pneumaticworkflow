@@ -3,7 +3,7 @@ import * as React from 'react';
 import { act, render } from '@testing-library/react';
 
 import { ITemplate, ITemplateTask } from '../../../types/template';
-import { TemplateForm, useTemplateField, useTemplateForm } from '../useTemplateForm';
+import { TemplateForm, useTemplateField, useTemplateForm, useTemplatePersist } from '../useTemplateForm';
 import { patchTemplate } from '../../../redux/actions';
 
 jest.mock('react-redux', () => ({
@@ -63,6 +63,7 @@ const makeTemplate = (overrides: Partial<ITemplate> = {}): ITemplate =>
 interface ISpyHandle {
   values: ITemplate;
   setFieldValue: (field: string, value: unknown, shouldValidate?: boolean) => void;
+  consumePendingChanges: () => Partial<ITemplate>;
 }
 
 // Drain the persist provider's `setTimeout(0)` flush plus the follow-up tick it
@@ -85,7 +86,8 @@ function TemplateFormHarness({
 
   const Spy: React.FC = () => {
     const { values, setFieldValue: contextSetFieldValue } = useTemplateField();
-    spy({ values, setFieldValue: contextSetFieldValue });
+    const { consumePendingChanges } = useTemplatePersist();
+    spy({ values, setFieldValue: contextSetFieldValue, consumePendingChanges });
     return null;
   };
 
@@ -166,6 +168,96 @@ describe('TemplateFormPersistProvider deactivation', () => {
 
     await flushPersist();
 
+    expect(handle!.values.isActive).toBe(false);
+  });
+
+  it('lets submit consume pending edits before the autosave dispatches', async () => {
+    const template = makeTemplate({ isActive: true, owners: [] });
+    let handle: ISpyHandle | null = null;
+    const owners = [{ id: 1, role: 'owner' }] as any;
+
+    render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
+
+    act(() => {
+      handle!.setFieldValue('owners', owners, false);
+    });
+
+    let pendingChanges: Partial<ITemplate> = {};
+    act(() => {
+      pendingChanges = handle!.consumePendingChanges();
+    });
+    await flushPersist();
+
+    expect(pendingChanges).toEqual({ owners });
+    expect(patchTemplate).not.toHaveBeenCalled();
+  });
+
+  it('persists the latest value when two edits land before the deferred flush runs', async () => {
+    const template = makeTemplate({ isActive: true, description: 'old' });
+    let handle: ISpyHandle | null = null;
+
+    render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
+
+    act(() => {
+      handle!.setFieldValue('description', 'first edit', false);
+      handle!.setFieldValue('description', 'second edit', false);
+    });
+    await flushPersist();
+
+    expect(patchTemplate).toHaveBeenCalledTimes(1);
+    expect((patchTemplate as unknown as jest.Mock).mock.calls[0][0].changedFields).toEqual({
+      description: 'second edit',
+    });
+  });
+
+  it('persists the latest value when two separate edits each render before the deferred flush runs', async () => {
+    const template = makeTemplate({ isActive: false, description: 'old' });
+    let handle: ISpyHandle | null = null;
+
+    render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
+
+    // Two separate user events (separate acts) — each produces its own render
+    // and its own effect, but neither setTimeout(0) flush is allowed to fire
+    // until both have landed. This is the scenario the persist provider's
+    // effect cleanup is meant to handle: the first effect's cleanup must not
+    // swallow the second edit.
+    act(() => {
+      handle!.setFieldValue('description', 'first edit', false);
+    });
+    act(() => {
+      handle!.setFieldValue('description', 'second edit', false);
+    });
+    await flushPersist();
+
+    const calls = (patchTemplate as unknown as jest.Mock).mock.calls;
+    const descriptionPatches = calls
+      .map((c: any[]) => c[0]?.changedFields?.description)
+      .filter((v: unknown) => v !== undefined);
+
+    expect(descriptionPatches).toEqual(['second edit']);
+    expect(patchTemplate).toHaveBeenCalledTimes(1);
+  });
+
+  it('still persists a second edit when the first triggers an isActive deactivation', async () => {
+    const template = makeTemplate({ isActive: true, description: 'old' });
+    let handle: ISpyHandle | null = null;
+
+    render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
+
+    act(() => {
+      handle!.setFieldValue('description', 'first edit', false);
+    });
+    act(() => {
+      handle!.setFieldValue('description', 'second edit', false);
+    });
+    await flushPersist();
+
+    const calls = (patchTemplate as unknown as jest.Mock).mock.calls;
+    const descriptionPatches = calls
+      .map((c: any[]) => c[0]?.changedFields?.description)
+      .filter((v: unknown) => v !== undefined);
+
+    expect(descriptionPatches).toEqual(['second edit']);
     expect(handle!.values.isActive).toBe(false);
   });
 });

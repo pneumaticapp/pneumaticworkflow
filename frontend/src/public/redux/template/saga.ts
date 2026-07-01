@@ -103,9 +103,9 @@ function* patchTemplateSaga({ payload: { changedFields, onSuccess, onFailed } }:
   yield put(setTemplateStatus(ETemplateStatus.Saving));
 
   const nonDeactivativeFields: (keyof ITemplate)[] = ['isActive', 'isPublic', 'publicUrl'];
-  let shouldDeactivateTemplate = Object.keys(changedFields).some(
-    (key) => !nonDeactivativeFields.includes(key as keyof ITemplate),
-  );
+  let shouldDeactivateTemplate = changedFields.isActive === true
+    ? false
+    : Object.keys(changedFields).some((key) => !nonDeactivativeFields.includes(key as keyof ITemplate));
 
   if (Object.keys(changedFields).length === 1 && changedFields.hasOwnProperty('kickoff')) {
     shouldDeactivateTemplate =

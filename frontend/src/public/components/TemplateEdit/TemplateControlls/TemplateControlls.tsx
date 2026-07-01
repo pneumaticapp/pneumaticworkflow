@@ -39,7 +39,7 @@ import { checkShowDraftTemplateWarning } from '../../Templates';
 import styles from './TemplateControlls.css';
 import { getSubscriptionPlan, getIsUserSubsribed } from '../../../redux/selectors/user';
 import { ESubscriptionPlan } from '../../../types/account';
-import { useTemplateField } from '../useTemplateForm';
+import { useTemplateField, useTemplatePersist } from '../useTemplateForm';
 
 export interface ITemplateControllsProps {
   cloneTemplate(payload: TCloneTemplatePayload): void;
@@ -60,6 +60,7 @@ export function TemplateControlls({
   const { formatMessage } = intl;
   const dispatch = useDispatch();
   const { values: template, setFieldValue } = useTemplateField();
+  const { consumePendingChanges } = useTemplatePersist();
   const templateStatus = useSelector(getTemplateStatus);
   const isSubscribed = useSelector(getIsUserSubsribed);
   const billingPlan = useSelector(getSubscriptionPlan);
@@ -111,7 +112,7 @@ export function TemplateControlls({
 
   const handleChangeIsActive = (value: ITemplate['isActive'], redirectUrl?: string) => {
     if (!value) {
-      patchTemplate({ changedFields: { isActive: false } });
+      patchTemplate({ changedFields: { ...consumePendingChanges(), isActive: false } });
       return;
     }
 
@@ -127,8 +128,11 @@ export function TemplateControlls({
 
     setIsTemplateActivating(true);
 
+    const pendingChanges = consumePendingChanges();
+
     patchTemplate({
       changedFields: {
+        ...pendingChanges,
         isActive: true,
       },
       onSuccess: () => {
