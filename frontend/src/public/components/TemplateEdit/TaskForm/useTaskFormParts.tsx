@@ -17,12 +17,12 @@ import { ReturnTo } from './ReturnTo';
 import { TaskPerformers } from './TaskPerformers';
 import { CheckIfConditions, ICondition, removeDeletedTasks, StartAfterCondition } from './Conditions';
 import { EStartingType } from './Conditions/utils/getDropdownOperators';
+import { useTaskForm } from './useTaskForm';
 
 import styles from '../TemplateEdit.css';
 
 interface IUseTaskFormPartsProps {
   accountId: number;
-  currentTask: ITemplateTask;
   isSubscribed: boolean;
   isTeamInvitesModalOpen: boolean;
   kickoff: IKickoff;
@@ -31,8 +31,6 @@ interface IUseTaskFormPartsProps {
   tasks: ITemplateTask[];
   templateId: number | undefined;
   users: TUserListItem[];
-  handleTaskFieldChange(field: keyof ITemplateTask): (value: ITemplateTask[keyof ITemplateTask]) => void;
-  setCurrentTask(changedFields: Partial<ITemplateTask>): void;
 }
 
 interface IWidgetProps {
@@ -50,19 +48,17 @@ export interface ITaskFormPart {
 
 export function useTaskFormParts({
   accountId,
-  currentTask,
-  handleTaskFieldChange,
   isSubscribed,
   isTeamInvitesModalOpen,
   kickoff,
   listVariables,
   isFieldsSectionShown,
-  setCurrentTask,
   tasks,
   templateId,
   users,
 }: IUseTaskFormPartsProps): ITaskFormPart[] {
   const { formatMessage } = useIntl();
+  const { task, updateTask, updateField } = useTaskForm();
   const startingOrder: TTaskVariable[] = useMemo(() => [
     {
       title: formatMessage({ id: 'templates.conditions.starting-order.kick-off' }),
@@ -70,25 +66,25 @@ export function useTaskFormParts({
       type: EStartingType.Kickoff,
     },
     ...tasks
-      .filter((localTask) => currentTask.apiName !== localTask.apiName)
+      .filter((localTask) => task.apiName !== localTask.apiName)
       .map((localTask) => ({
         apiName: localTask.apiName,
         title: localTask.name,
         type: EStartingType.Task,
         richSubtitle: <StepName initialStepName={localTask.name} templateId={templateId || 0} />,
       })),
-  ], [currentTask.apiName, formatMessage, tasks, templateId]);
+  ], [task.apiName, formatMessage, tasks, templateId]);
 
   const onRemoveDeletedTasks = useCallback(
     (conditions: ICondition[]) => {
-      setCurrentTask({ conditions });
+      updateTask({ conditions });
     },
-    [setCurrentTask],
+    [updateTask],
   );
 
   useEffect(() => {
-    removeDeletedTasks(startingOrder, currentTask.conditions, onRemoveDeletedTasks);
-  }, [startingOrder, currentTask.conditions, onRemoveDeletedTasks]);
+    removeDeletedTasks(startingOrder, task.conditions, onRemoveDeletedTasks);
+  }, [startingOrder, task.conditions, onRemoveDeletedTasks]);
 
   const createWidget = useCallback(
     (Component: React.ComponentType<IWidgetProps & { onClick: () => void }>, props: IWidgetProps) => {
@@ -111,14 +107,12 @@ export function useTaskFormParts({
       component: (
         <TaskPerformers
           users={users}
-          task={currentTask}
           tasks={tasks}
           variables={listVariables}
-          setCurrentTask={setCurrentTask}
           isTeamInvitesModalOpen={isTeamInvitesModalOpen}
         />
       ),
-      widget: createWidget(TaskItemUsers, { task: currentTask }),
+      widget: createWidget(TaskItemUsers, { task }),
     },
     {
       formPartId: ETaskFormParts.DueIn,
@@ -126,29 +120,29 @@ export function useTaskFormParts({
       component: (
         <div className={styles['task-fields-wrapper']}>
           <DueDate
-            dueDate={currentTask.rawDueDate}
-            onChange={handleTaskFieldChange('rawDueDate')}
-            currentTask={currentTask}
+            dueDate={task.rawDueDate}
+            onChange={updateField('rawDueDate')}
+            currentTask={task}
             kickoff={kickoff}
             tasks={tasks}
           />
         </div>
       ),
-      widget: createWidget(TaskRenderDueIn, { task: currentTask, isInTaskForm: true }),
+      widget: createWidget(TaskRenderDueIn, { task, isInTaskForm: true }),
     },
     {
       formPartId: ETaskFormParts.Fields,
       title: 'tasks.task-outputs-create-help',
       component: (
         <OutputFormIntl
-          fields={currentTask.fields}
-          onOutputChange={handleTaskFieldChange('fields')}
+          fields={task.fields}
+          onOutputChange={updateField('fields')}
           isDisabled={false}
           show={isFieldsSectionShown}
           accountId={accountId}
         />
       ),
-      widget: createWidget(TaskRenderExtraFieldsInfo, { task: currentTask }),
+      widget: createWidget(TaskRenderExtraFieldsInfo, { task }),
     },
     {
       formPartId: ETaskFormParts.StartsAfter,
@@ -156,15 +150,15 @@ export function useTaskFormParts({
       component: (
         <StartAfterCondition
           isSubscribed={isSubscribed}
-          conditions={currentTask.conditions}
+          conditions={task.conditions}
           startingOrder={startingOrder}
           variables={listVariables}
           users={users}
-          onEdit={handleTaskFieldChange('conditions')}
+          onEdit={updateField('conditions')}
         />
       ),
       widget: createWidget(TaskRenderConditionsInfo, {
-        task: currentTask,
+        task,
         isInTaskForm: true,
         isStartTask: true,
       }),
@@ -175,14 +169,14 @@ export function useTaskFormParts({
       component: (
         <CheckIfConditions
           isSubscribed={isSubscribed}
-          conditions={currentTask.conditions}
+          conditions={task.conditions}
           startingOrder={startingOrder}
           variables={listVariables}
           users={users}
-          onEdit={handleTaskFieldChange('conditions')}
+          onEdit={updateField('conditions')}
         />
       ),
-      widget: createWidget(TaskRenderConditionsInfo, { task: currentTask, isInTaskForm: true, isStartTask: false }),
+      widget: createWidget(TaskRenderConditionsInfo, { task, isInTaskForm: true, isStartTask: false }),
     },
     {
       formPartId: ETaskFormParts.ReturnTo,
@@ -191,12 +185,10 @@ export function useTaskFormParts({
         <ReturnTo
           variables={listVariables}
           tasks={tasks}
-          currentTaskRevertTask={currentTask.revertTask}
-          setCurrentTask={setCurrentTask}
-          taskAncestors={new Set(currentTask.ancestors)}
+          taskAncestors={new Set(task.ancestors)}
         />
       ),
-      widget: createWidget(TaskRenderReturnInfo, { task: currentTask }),
+      widget: createWidget(TaskRenderReturnInfo, { task }),
     },
   ];
 }

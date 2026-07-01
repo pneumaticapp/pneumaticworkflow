@@ -1,10 +1,12 @@
 /// <reference types="jest" />
 import * as React from 'react';
-import { render } from '@testing-library/react';
+import { act, render } from '@testing-library/react';
+import { FormikProvider, useFormik } from 'formik';
 
 import { intlMock } from '../../../../__stubs__/intlMock';
 import { Checkbox } from '../../../UI/Fields/Checkbox';
 import { ITemplateTask } from '../../../../types/template';
+import { TaskFormPersistProvider } from '../useTaskForm';
 
 // TaskPerformers uses `import React from 'react'` (default import),
 // which doesn't work with ts-jest without esModuleInterop.
@@ -51,7 +53,7 @@ describe('TaskPerformers', () => {
   const t = (id: string) => intlMock.formatMessage({ id });
   const SKIP_LABEL = t('templates.task-skip-for-starter');
 
-  const mockSetCurrentTask = jest.fn();
+  const mockPatchTask = jest.fn();
 
   const makeTask = (overrides: Partial<ITemplateTask> = {}): ITemplateTask => ({
     apiName: 'task-1',
@@ -72,17 +74,42 @@ describe('TaskPerformers', () => {
     ...overrides,
   });
 
+  const createTaskFormWrapper = (task: ITemplateTask, patchTask = mockPatchTask) => {
+    function TaskFormTestWrapper({ children }: { children: React.ReactNode }) {
+      const formik = useFormik<ITemplateTask>({
+        initialValues: task,
+        enableReinitialize: true,
+        onSubmit: () => undefined,
+      });
+
+      return React.createElement(
+        FormikProvider,
+        { value: formik },
+        React.createElement(
+          TaskFormPersistProvider,
+          { patchTask, task, children },
+        ),
+      );
+    }
+
+    return TaskFormTestWrapper;
+  };
+
   const renderComponent = (taskOverrides: Partial<ITemplateTask> = {}) => {
     const task = makeTask(taskOverrides);
+    const Wrapper = createTaskFormWrapper(task);
+
     return render(
-      React.createElement(TaskPerformers, {
-        task,
-        tasks: [task],
-        users: [],
-        variables: [],
-        isTeamInvitesModalOpen: false,
-        setCurrentTask: mockSetCurrentTask,
-      }),
+      React.createElement(
+        Wrapper,
+        null,
+        React.createElement(TaskPerformers, {
+          tasks: [task],
+          users: [],
+          variables: [],
+          isTeamInvitesModalOpen: false,
+        }),
+      ),
     );
   };
 
@@ -103,31 +130,37 @@ describe('TaskPerformers', () => {
   const renderTwoTasks = () => {
     const task1 = makeTask({ apiName: 'task-1' });
     const task2 = makeTask({ apiName: 'task-2' });
-    const setCurrentTask1 = jest.fn();
-    const setCurrentTask2 = jest.fn();
+    const mockPatchTask1 = jest.fn();
+    const mockPatchTask2 = jest.fn();
+    const Wrapper1 = createTaskFormWrapper(task1, mockPatchTask1);
+    const Wrapper2 = createTaskFormWrapper(task2, mockPatchTask2);
 
     render(
       React.createElement('div', null,
-        React.createElement(TaskPerformers, {
-          task: task1,
-          tasks: [task1, task2],
-          users: [],
-          variables: [],
-          isTeamInvitesModalOpen: false,
-          setCurrentTask: setCurrentTask1,
-        }),
-        React.createElement(TaskPerformers, {
-          task: task2,
-          tasks: [task1, task2],
-          users: [],
-          variables: [],
-          isTeamInvitesModalOpen: false,
-          setCurrentTask: setCurrentTask2,
-        }),
+        React.createElement(
+          Wrapper1,
+          null,
+          React.createElement(TaskPerformers, {
+            tasks: [task1, task2],
+            users: [],
+            variables: [],
+            isTeamInvitesModalOpen: false,
+          }),
+        ),
+        React.createElement(
+          Wrapper2,
+          null,
+          React.createElement(TaskPerformers, {
+            tasks: [task1, task2],
+            users: [],
+            variables: [],
+            isTeamInvitesModalOpen: false,
+          }),
+        ),
       ),
     );
 
-    return { setCurrentTask1, setCurrentTask2 };
+    return { mockPatchTask1, mockPatchTask2 };
   };
 
   beforeEach(() => {
@@ -158,8 +191,8 @@ describe('TaskPerformers', () => {
       const completeByAllIds = checkboxIds.filter((id: string) => id?.startsWith('completeByAll-'));
       const skipForStarterIds = checkboxIds.filter((id: string) => id?.startsWith('skipForStarter-'));
 
-      expect(completeByAllIds).toEqual(['completeByAll-task-1', 'completeByAll-task-2']);
-      expect(skipForStarterIds).toEqual(['skipForStarter-task-1', 'skipForStarter-task-2']);
+      expect([...new Set(completeByAllIds)]).toEqual(['completeByAll-task-1', 'completeByAll-task-2']);
+      expect([...new Set(skipForStarterIds)]).toEqual(['skipForStarter-task-1', 'skipForStarter-task-2']);
     });
 
     it('uses checkboxId prop (not id) to ensure proper label-input binding', () => {
@@ -200,16 +233,19 @@ describe('TaskPerformers', () => {
       expect(call![0].checked).toBe(false);
     });
 
-    it('calls setCurrentTask with requireCompletionByAll on onChange', () => {
+    it('calls patchTask with requireCompletionByAll on onChange', () => {
       renderComponent({ requireCompletionByAll: false });
 
       const call = getCompleteByAllCall();
       const onChangeFn = call![0].onChange;
-      onChangeFn({ currentTarget: { checked: true } });
+      act(() => {
+        onChangeFn({ currentTarget: { checked: true } });
+      });
 
-      expect(mockSetCurrentTask).toHaveBeenCalledWith(
-        { requireCompletionByAll: true },
-      );
+      expect(mockPatchTask).toHaveBeenCalledWith({
+        taskUUID: 'uuid-1',
+        changedFields: { requireCompletionByAll: true },
+      });
     });
   });
 
@@ -239,28 +275,34 @@ describe('TaskPerformers', () => {
       expect(skipCall![0].checked).toBe(false);
     });
 
-    it('calls setCurrentTask with true on onChange', () => {
+    it('calls patchTask with true on onChange', () => {
       renderComponent({ skipForStarter: false });
 
       const skipCall = getSkipCheckboxCall();
       const onChangeFn = skipCall![0].onChange;
-      onChangeFn({ currentTarget: { checked: true } });
+      act(() => {
+        onChangeFn({ currentTarget: { checked: true } });
+      });
 
-      expect(mockSetCurrentTask).toHaveBeenCalledWith(
-        { skipForStarter: true },
-      );
+      expect(mockPatchTask).toHaveBeenCalledWith({
+        taskUUID: 'uuid-1',
+        changedFields: { skipForStarter: true },
+      });
     });
 
-    it('calls setCurrentTask with false on checkbox uncheck', () => {
+    it('calls patchTask with false on checkbox uncheck', () => {
       renderComponent({ skipForStarter: true });
 
       const skipCall = getSkipCheckboxCall();
       const onChangeFn = skipCall![0].onChange;
-      onChangeFn({ currentTarget: { checked: false } });
+      act(() => {
+        onChangeFn({ currentTarget: { checked: false } });
+      });
 
-      expect(mockSetCurrentTask).toHaveBeenCalledWith(
-        { skipForStarter: false },
-      );
+      expect(mockPatchTask).toHaveBeenCalledWith({
+        taskUUID: 'uuid-1',
+        changedFields: { skipForStarter: false },
+      });
     });
   });
 });

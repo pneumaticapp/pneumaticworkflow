@@ -1,30 +1,27 @@
 import * as React from 'react';
 import { useIntl } from 'react-intl';
 
-import { ITemplateTask } from '../../../types/template';
 import { TTaskVariable } from '../types';
 import { InputWithVariables } from '../InputWithVariables';
 import { TaskDescriptionEditor } from './TaskDescriptionEditor';
 import { getSingleLineVariables } from './utils/getTaskVariables';
+import { useTaskForm } from './useTaskForm';
 
 import styles from '../TemplateEdit.css';
 
 interface ITaskFormHeaderProps {
   accountId: number;
-  currentTask: ITemplateTask;
   listSystemVariables: TTaskVariable[];
   templateVariables: TTaskVariable[];
-  handleTaskFieldChange(field: keyof ITemplateTask): (value: ITemplateTask[keyof ITemplateTask]) => void;
 }
 
 export function TaskFormHeader({
   accountId,
-  currentTask,
-  handleTaskFieldChange,
   listSystemVariables,
   templateVariables,
 }: ITaskFormHeaderProps) {
   const { formatMessage } = useIntl();
+  const { task, updateField } = useTaskForm();
 
   return (
     <div className={styles['task-fields-wrapper']}>
@@ -32,9 +29,9 @@ export function TaskFormHeader({
         placeholder={formatMessage({ id: 'tasks.task-task-name-placeholder' })}
         listVariables={getSingleLineVariables(listSystemVariables)}
         templateVariables={templateVariables}
-        value={currentTask.name || ''}
+        value={task.name || ''}
         onChange={(value: string) => {
-          handleTaskFieldChange('name')(value);
+          updateField('name')(value);
 
           return Promise.resolve(value);
         }}
@@ -43,12 +40,12 @@ export function TaskFormHeader({
       />
       <TaskDescriptionEditor
         handleChange={(value: string) => {
-          handleTaskFieldChange('description')(value);
+          updateField('description')(value);
 
           return Promise.resolve(value);
         }}
-        handleChangeChecklists={handleTaskFieldChange('checklists')}
-        value={currentTask.description || ''}
+        handleChangeChecklists={updateField('checklists')}
+        value={task.description || ''}
         listVariables={listSystemVariables}
         templateVariables={templateVariables}
         accountId={accountId}

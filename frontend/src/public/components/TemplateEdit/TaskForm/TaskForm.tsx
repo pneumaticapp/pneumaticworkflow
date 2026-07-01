@@ -10,6 +10,7 @@ import { TPatchTaskPayload } from '../../../redux/actions';
 import { getSystemVariables } from './utils/getTaskVariables';
 import { TaskFormHeader } from './TaskFormHeader';
 import { TaskFormSections } from './TaskFormSections';
+import { TaskFormPersistProvider } from './useTaskForm';
 
 import styles from '../TemplateEdit.css';
 
@@ -49,50 +50,37 @@ export function TaskForm({
     enableReinitialize: true,
     onSubmit: () => undefined,
   });
-  const currentTask = formik.values;
   const listSystemVariables = useMemo(() => [
     ...getSystemVariables(),
     ...listVariables,
   ], [listVariables]);
 
-  const setCurrentTask = (changedFields: Partial<ITemplateTask>) => {
-    Object.entries(changedFields).forEach(([field, value]) => formik.setFieldValue(field, value, false));
-    patchTask({ taskUUID: currentTask.uuid, changedFields });
-  };
-
-  const handleTaskFieldChange = (field: keyof ITemplateTask) => (value: ITemplateTask[keyof ITemplateTask]) => {
-    setCurrentTask({ [field]: value });
-  };
-
   return (
     <FormikProvider value={formik}>
-      <div ref={wrapperRef} className={styles['task_form']}>
-        <div className={styles['task_form-popover']}>
-          <TaskFormHeader
-            accountId={accountId}
-            currentTask={currentTask}
-            handleTaskFieldChange={handleTaskFieldChange}
-            listSystemVariables={listSystemVariables}
-            templateVariables={templateVariables}
-          />
+      <TaskFormPersistProvider patchTask={patchTask} task={task}>
+        <div ref={wrapperRef} className={styles['task_form']}>
+          <div className={styles['task_form-popover']}>
+            <TaskFormHeader
+              accountId={accountId}
+              listSystemVariables={listSystemVariables}
+              templateVariables={templateVariables}
+            />
 
-          <TaskFormSections
-            accountId={accountId}
-            currentTask={currentTask}
-            handleTaskFieldChange={handleTaskFieldChange}
-            isSubscribed={isSubscribed}
-            isTeamInvitesModalOpen={isTeamInvitesModalOpen}
-            kickoff={kickoff}
-            listVariables={listVariables}
-            scrollTarget={scrollTarget}
-            setCurrentTask={setCurrentTask}
-            tasks={tasks}
-            templateId={templateId}
-            users={users}
-            wrapperRef={wrapperRef}
-          />
+            <TaskFormSections
+              accountId={accountId}
+              isSubscribed={isSubscribed}
+              isTeamInvitesModalOpen={isTeamInvitesModalOpen}
+              kickoff={kickoff}
+              listVariables={listVariables}
+              scrollTarget={scrollTarget}
+              tasks={tasks}
+              templateId={templateId}
+              users={users}
+              wrapperRef={wrapperRef}
+            />
+          </div>
         </div>
-      </div>
+      </TaskFormPersistProvider>
     </FormikProvider>
   );
 }

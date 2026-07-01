@@ -13,7 +13,6 @@ import styles from '../TemplateEdit.css';
 
 interface ITaskFormSectionsProps {
   accountId: number;
-  currentTask: ITemplateTask;
   isSubscribed: boolean;
   isTeamInvitesModalOpen: boolean;
   kickoff: IKickoff;
@@ -23,20 +22,15 @@ interface ITaskFormSectionsProps {
   templateId: number | undefined;
   users: TUserListItem[];
   wrapperRef: React.RefObject<HTMLDivElement>;
-  handleTaskFieldChange(field: keyof ITemplateTask): (value: ITemplateTask[keyof ITemplateTask]) => void;
-  setCurrentTask(changedFields: Partial<ITemplateTask>): void;
 }
 
 export function TaskFormSections({
   accountId,
-  currentTask,
-  handleTaskFieldChange,
   isSubscribed,
   isTeamInvitesModalOpen,
   kickoff,
   listVariables,
   scrollTarget,
-  setCurrentTask,
   tasks,
   templateId,
   users,
@@ -53,14 +47,11 @@ export function TaskFormSections({
   };
   const taskFormParts = useTaskFormParts({
     accountId,
-    currentTask,
-    handleTaskFieldChange,
     isSubscribed,
     isTeamInvitesModalOpen,
     kickoff,
     listVariables,
     isFieldsSectionShown: ETaskFormParts.Fields === scrollTarget,
-    setCurrentTask,
     tasks,
     templateId,
     users,
