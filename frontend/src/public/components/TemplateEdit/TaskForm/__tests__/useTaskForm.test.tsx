@@ -131,6 +131,56 @@ describe('TaskFormPersistProvider', () => {
     });
   });
 
+  it('applies updateField changes when followed synchronously by updateTask', async () => {
+    const patchTask = jest.fn();
+    const task = makeTask({ description: 'old', rawPerformers: [] });
+    const newPerformers = [{
+      apiName: 'performer-1',
+      type: ETaskPerformerType.User,
+      label: 'User 1',
+      sourceId: '1',
+    }];
+
+    function MixedEditor() {
+      const { updateField, updateTask } = useTaskForm();
+
+      return (
+        <button
+          type="button"
+          onClick={() => {
+            updateField('description')('new description');
+            updateTask({ rawPerformers: newPerformers });
+          }}
+        >
+          edit
+        </button>
+      );
+    }
+
+    const { getByRole } = render(
+      <TaskFormHarness task={task} patchTask={patchTask}>
+        <MixedEditor />
+      </TaskFormHarness>,
+    );
+
+    await flushPersist();
+    patchTask.mockClear();
+
+    act(() => {
+      getByRole('button', { name: 'edit' }).click();
+    });
+    await flushPersist();
+
+    expect(patchTask).toHaveBeenCalledTimes(1);
+    expect(patchTask).toHaveBeenCalledWith({
+      taskUUID: 'uuid-1',
+      changedFields: {
+        description: 'new description',
+        rawPerformers: newPerformers,
+      },
+    });
+  });
+
   it('applies consecutive updateTask calls without dropping earlier changes', async () => {
     const patchTask = jest.fn();
     const task = makeTask({ rawPerformers: [], requireCompletionByAll: false });

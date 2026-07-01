@@ -98,6 +98,7 @@ export function useTaskForm() {
 
   const updateField = useCallback(
     <K extends keyof ITemplateTask>(field: K) => (value: ITemplateTask[K]) => {
+      valuesRef.current = { ...valuesRef.current, [field]: value };
       setFieldValue(field, value, false);
     },
     [setFieldValue],
