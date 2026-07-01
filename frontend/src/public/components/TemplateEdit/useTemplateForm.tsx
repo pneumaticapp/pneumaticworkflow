@@ -94,7 +94,7 @@ interface ITemplateFormProps {
  * persist provider so `TemplateEdit` only has to render `<TemplateForm .../>`.
  */
 export function TemplateForm({ formik, setFieldValue, setValues, dirtyRef, children }: ITemplateFormProps) {
-  const { values } = useFormikContext<ITemplate>();
+  const { values } = formik;
   const fieldContextValue = useMemo<ITemplateFieldContextValue>(
     () => ({ values, setFieldValue, setValues }),
     [values, setFieldValue, setValues],
@@ -121,6 +121,32 @@ function getChangedFields(previous: ITemplate, next: ITemplate): Partial<ITempla
   return changedFields;
 }
 
+// Keep in sync with `patchTemplateSaga` in redux/template/saga.ts. The saga
+// flips `isActive` to false server-side whenever a non-activation field changes
+// and only reflects it back to Formik via a Redux `setTemplate` reinitialize.
+// Mirroring that decision here lets Formik (and the controls that read from it
+// via `useTemplateField`) deactivate immediately, instead of staying "active"
+// through the persist flush + saga + reinitialize round-trip.
+const NON_DEACTIVATIVE_FIELDS: (keyof ITemplate)[] = ['isActive', 'isPublic', 'publicUrl'];
+
+function shouldDeactivateTemplate(
+  changedFields: Partial<ITemplate>,
+  previousTemplate: ITemplate,
+): boolean {
+  let shouldDeactivate = Object.keys(changedFields).some(
+    (key) => !NON_DEACTIVATIVE_FIELDS.includes(key as keyof ITemplate),
+  );
+
+  if (Object.keys(changedFields).length === 1 && Object.prototype.hasOwnProperty.call(changedFields, 'kickoff')) {
+    shouldDeactivate =
+      changedFields.kickoff?.description === previousTemplate.kickoff.description
+        ? shouldDeactivate
+        : false;
+  }
+
+  return shouldDeactivate;
+}
+
 interface ITemplateFormPersistProviderProps {
   dirtyRef: React.MutableRefObject<boolean>;
   children: React.ReactNode;
@@ -136,30 +162,43 @@ interface ITemplateFormPersistProviderProps {
  * reinitializes (template load, save response with server-stamped fields,
  * owners normalization, ...) update `previousValuesRef` but never dispatch, so
  * they cannot cause a save loop.
+ *
+ * When a user edit touches a non-activation field, we also flip `isActive` to
+ * false in Formik right away — the saga makes the same call server-side, but
+ * only reinitializes Formik after the save round-trip, so without this the
+ * controls would keep rendering the template as active (no draft warning, no
+ * enable button) until Redux catches up.
  */
 export function TemplateFormPersistProvider({ dirtyRef, children }: ITemplateFormPersistProviderProps) {
-  const { values } = useFormikContext<ITemplate>();
+  const { values, setFieldValue } = useFormikContext<ITemplate>();
   const dispatch = useDispatch();
   const previousValuesRef = useRef<ITemplate>(values);
   const valuesRef = useRef(values);
   const dispatchRef = useRef(dispatch);
   const dirtyRefRef = useRef(dirtyRef);
+  const setFieldValueRef = useRef(setFieldValue);
 
   valuesRef.current = values;
   dispatchRef.current = dispatch;
   dirtyRefRef.current = dirtyRef;
+  setFieldValueRef.current = setFieldValue;
 
   const flushPersist = useCallback((currentValues: ITemplate) => {
     if (previousValuesRef.current === currentValues) {
       return;
     }
 
-    const changedFields = getChangedFields(previousValuesRef.current, currentValues);
+    const previousValues = previousValuesRef.current;
+    const changedFields = getChangedFields(previousValues, currentValues);
     const isUserEdit = dirtyRefRef.current.current;
     previousValuesRef.current = currentValues;
     dirtyRefRef.current.current = false;
 
     if (isUserEdit && Object.keys(changedFields).length > 0) {
+      if (shouldDeactivateTemplate(changedFields, previousValues)) {
+        setFieldValueRef.current('isActive', false, false);
+      }
+
       dispatchRef.current(patchTemplate({ changedFields }));
     }
   }, []);

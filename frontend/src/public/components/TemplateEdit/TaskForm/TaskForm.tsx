@@ -2,45 +2,52 @@ import * as React from 'react';
 import { useMemo, useRef } from 'react';
 
 import { TUserListItem } from '../../../types/user';
-import { IKickoff, ITemplateTask } from '../../../types/template';
-import { TTaskVariable, TTaskFormPart } from '../types';
+import { ITemplateTask } from '../../../types/template';
+import { TTaskFormPart } from '../types';
 
-import { getSystemVariables } from './utils/getTaskVariables';
+import { getSystemVariables, getTaskVariables, getVariables } from './utils/getTaskVariables';
 import { TaskFormHeader } from './TaskFormHeader';
 import { TaskFormSections } from './TaskFormSections';
-import { TaskFormScopeProvider } from '../useTemplateForm';
+import { TaskFormScopeProvider, useTemplateField } from '../useTemplateForm';
 
 import styles from '../TemplateEdit.css';
 
 export interface ITaskFormProps {
-  listVariables: TTaskVariable[];
-  templateVariables: TTaskVariable[];
   task: ITemplateTask;
   users: TUserListItem[];
   isSubscribed: boolean;
   scrollTarget: TTaskFormPart;
   accountId: number;
   isTeamInvitesModalOpen: boolean;
-  tasks: ITemplateTask[];
-  kickoff: IKickoff;
 }
 
 export function TaskForm({
-  listVariables,
-  templateVariables,
   task,
   users,
   isSubscribed,
   accountId,
   scrollTarget,
   isTeamInvitesModalOpen,
-  tasks,
-  kickoff,
-  templateId,
-}: ITaskFormProps & { templateId: number | undefined }) {
+}: ITaskFormProps) {
   if (!task) return null;
 
   const wrapperRef = useRef<HTMLDivElement>(null);
+  // `kickoff`, `tasks`, and the variable lists are read from the Formik form
+  // state rather than Redux. Field edits land in Formik first and only get
+  // patched into Redux later (debounced by `TemplateFormPersistProvider`), so
+  // reading from Redux here would render sections like conditions, due dates,
+  // and return-to against stale task/kickoff data.
+  const { values } = useTemplateField();
+  const { kickoff, tasks, id: templateId } = values;
+
+  const listVariables = useMemo(
+    () => getTaskVariables(kickoff, tasks, task, templateId),
+    [kickoff, tasks, task, templateId],
+  );
+  const templateVariables = useMemo(
+    () => getVariables({ kickoff, tasks, templateId }),
+    [kickoff, tasks, templateId],
+  );
   const listSystemVariables = useMemo(() => [
     ...getSystemVariables(),
     ...listVariables,
