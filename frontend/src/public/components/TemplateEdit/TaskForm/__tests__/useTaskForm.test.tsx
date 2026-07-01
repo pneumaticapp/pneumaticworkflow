@@ -181,6 +181,47 @@ describe('TaskFormPersistProvider', () => {
     });
   });
 
+  it('persists pending changes when switching tasks before the debounced effect runs', () => {
+    const patchTask = jest.fn();
+    const task1 = makeTask({ uuid: 'uuid-1', name: 'Task 1' });
+    const task2 = makeTask({ uuid: 'uuid-2', name: 'Task 2' });
+
+    function NameEditor() {
+      const { updateField } = useTaskForm();
+
+      return (
+        <button
+          type="button"
+          onClick={() => updateField('name')('Updated Task 1')}
+        >
+          edit
+        </button>
+      );
+    }
+
+    const { getByRole, rerender } = render(
+      <TaskFormHarness task={task1} patchTask={patchTask}>
+        <NameEditor />
+      </TaskFormHarness>,
+    );
+
+    act(() => {
+      getByRole('button', { name: 'edit' }).click();
+    });
+
+    rerender(
+      <TaskFormHarness task={task2} patchTask={patchTask}>
+        <span />
+      </TaskFormHarness>,
+    );
+
+    expect(patchTask).toHaveBeenCalledTimes(1);
+    expect(patchTask).toHaveBeenCalledWith({
+      taskUUID: 'uuid-1',
+      changedFields: { name: 'Updated Task 1' },
+    });
+  });
+
   it('persists pending changes when unmounting before the debounced effect runs', () => {
     const patchTask = jest.fn();
     const task = makeTask({ name: 'Original' });

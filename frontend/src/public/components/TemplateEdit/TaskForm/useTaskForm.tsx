@@ -19,16 +19,12 @@ export function TaskFormPersistProvider({ patchTask, task, children }: ITaskForm
   const externalTaskRef = useRef<ITemplateTask>(task);
   const skipNextPersistRef = useRef(false);
   const valuesRef = useRef(values);
-  const taskRef = useRef(task);
   const patchTaskRef = useRef(patchTask);
 
   valuesRef.current = values;
-  taskRef.current = task;
   patchTaskRef.current = patchTask;
 
-  const flushPersist = useCallback(() => {
-    const currentValues = valuesRef.current;
-
+  const flushPersistForTask = useCallback((taskUuid: string, currentValues: ITemplateTask) => {
     if (previousValuesRef.current === currentValues) {
       return;
     }
@@ -37,7 +33,7 @@ export function TaskFormPersistProvider({ patchTask, task, children }: ITaskForm
     previousValuesRef.current = currentValues;
 
     if (Object.keys(changedFields).length > 0) {
-      patchTaskRef.current({ taskUUID: taskRef.current.uuid, changedFields });
+      patchTaskRef.current({ taskUUID: taskUuid, changedFields });
     }
   }, []);
 
@@ -51,19 +47,23 @@ export function TaskFormPersistProvider({ patchTask, task, children }: ITaskForm
       skipNextPersistRef.current = false;
       previousValuesRef.current = values;
     } else if (previousValuesRef.current !== values) {
-      timeoutId = window.setTimeout(flushPersist, 0);
+      const capturedValues = values;
+      const capturedTaskUuid = task.uuid;
+
+      timeoutId = window.setTimeout(() => {
+        flushPersistForTask(capturedTaskUuid, valuesRef.current);
+      }, 0);
+
+      return () => {
+        if (timeoutId !== undefined) {
+          window.clearTimeout(timeoutId);
+          flushPersistForTask(capturedTaskUuid, capturedValues);
+        }
+      };
     }
 
-    return () => {
-      if (timeoutId !== undefined) {
-        window.clearTimeout(timeoutId);
-
-        if (taskRef.current.uuid === task.uuid) {
-          flushPersist();
-        }
-      }
-    };
-  }, [values, task, flushPersist]);
+    return undefined;
+  }, [values, task, flushPersistForTask]);
 
   return children as React.ReactElement;
 }
