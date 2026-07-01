@@ -1,8 +1,11 @@
 import type { TAttachmentType } from '../../../types/attachments';
-import { getAttachmentTypeByFilename, getAttachmentTypeByUrl } from '../../Attachments/utils/getAttachmentType';
+import {
+  getAttachmentTypeByFilename,
+  getAttachmentTypeByUrl,
+} from '../../Attachments/utils/getAttachmentType';
 import { ECustomEditorEntities } from './types';
 
-const entitiesMap: { [key in TAttachmentType]: ECustomEditorEntities } = {
+const ATTACHMENT_ENTITIES_MAP: { [key in TAttachmentType]: ECustomEditorEntities } = {
   file: ECustomEditorEntities.File,
   video: ECustomEditorEntities.Video,
   image: ECustomEditorEntities.Image,
@@ -14,7 +17,7 @@ export function getAttachmentEntityType(fileUrl: string): ECustomEditorEntities 
     return ECustomEditorEntities.File;
   }
 
-  return entitiesMap[attachmentType];
+  return ATTACHMENT_ENTITIES_MAP[attachmentType];
 }
 
 /**
@@ -28,5 +31,5 @@ export function getAttachmentEntityTypeByFilename(filename: string): ECustomEdit
     return ECustomEditorEntities.Link;
   }
 
-  return entitiesMap[attachmentType];
+  return ATTACHMENT_ENTITIES_MAP[attachmentType];
 }

@@ -1,4 +1,3 @@
-import * as xssFilters from 'xss-filters';
 import { IntlShape } from 'react-intl';
 
 import {
@@ -10,6 +9,8 @@ import { truncateString } from '../../../utils/truncateString';
 import { prepareChecklistsForRendering } from '../../../utils/checklists/prepareChecklistsForRendering';
 import { TTaskVariable } from '../../TemplateEdit/types';
 import { getLocalizedSystemVariable } from '../../TemplateEdit/TaskForm/utils/getTaskVariables';
+import { unescapeMarkdownLinkText } from '../../RichEditor/utils/converters/markdownLinkText';
+import { escapeHtmlData } from './escapeHtmlData';
 
 const MAX_VARIABLE_LENGTH = 20;
 
@@ -19,6 +20,7 @@ interface IPrepareRichTextHtmlOptions {
   mentionClassName: string;
   badgeClassName: string;
   specificityBadgeClassName: string;
+  replaceInlineTokens?: boolean;
 }
 
 type TReplaceRule =
@@ -33,40 +35,47 @@ export function prepareRichTextHtml(
     mentionClassName,
     badgeClassName,
     specificityBadgeClassName,
+    replaceInlineTokens = true,
   }: IPrepareRichTextHtmlOptions,
 ): string {
-  const replaceRules: TReplaceRule[] = [
-    {
-      regExp: mentionsRegex,
-      replaceLogic: `<span class='${mentionClassName}'>@$1</span>`,
-    },
-    {
-      regExp: variableRegex,
-      replaceLogic: (match: string, variableApiName: string) => {
-        if (!isArrayWithItems(variables)) {
-          return match;
-        }
-
-        const variable = variables.find((item) => variableApiName === item.apiName);
-        if (!variable) {
-          return match;
-        }
-
-        const { title } = getLocalizedSystemVariable({
-          apiName: variableApiName,
-          title: variable.title,
-          formatMessage,
-        });
-
-        return `<span class="${badgeClassName} ${specificityBadgeClassName}">${truncateString(
-          title,
-          MAX_VARIABLE_LENGTH,
-        )}</span>`;
+  const replaceRules: TReplaceRule[] = replaceInlineTokens
+    ? [
+      {
+        regExp: mentionsRegex,
+        replaceLogic: (_match: string, mentionName: string) => (
+          `<span class='${mentionClassName}'>@${unescapeMarkdownLinkText(mentionName)}</span>`
+        ),
       },
-    },
-  ];
+      {
+        regExp: variableRegex,
+        replaceLogic: (match: string, variableApiName: string) => {
+          if (!isArrayWithItems(variables)) {
+            return match;
+          }
 
-  const sanitizedText = xssFilters.inHTMLData(prepareChecklistsForRendering(text));
+          const variable = variables.find((item) => variableApiName === item.apiName);
+          if (!variable) {
+            return match;
+          }
+
+          const { title } = getLocalizedSystemVariable({
+            apiName: variableApiName,
+            title: variable.title,
+            formatMessage,
+          });
+
+          return `<span class="${badgeClassName} ${specificityBadgeClassName}">${truncateString(
+            title,
+            MAX_VARIABLE_LENGTH,
+          )}</span>`;
+        },
+      },
+    ]
+    : [];
+
+  const preparedText = replaceInlineTokens
+    ? escapeHtmlData(prepareChecklistsForRendering(text))
+    : prepareChecklistsForRendering(text);
 
   return replaceRules.reduce((acc, { regExp, replaceLogic }) => {
     const replaceRegex = new RegExp(regExp, 'gi');
@@ -76,5 +85,5 @@ export function prepareRichTextHtml(
     }
 
     return acc.replace(replaceRegex, replaceLogic);
-  }, sanitizedText);
+  }, preparedText);
 }

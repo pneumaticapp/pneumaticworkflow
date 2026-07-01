@@ -37,6 +37,6 @@ export const createChecklistRenderer = (config: TConfig) => (md: Remarkable) => 
     const isLast = tokens[idx + 1]?.type !== 'clist_open';
     const wrapper = isLast ? '</div>' : '';
 
-    return `<span></div>${wrapper}`;
+    return `</span></div>${wrapper}`;
   }
 }

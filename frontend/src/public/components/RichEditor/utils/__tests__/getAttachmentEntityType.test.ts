@@ -1,5 +1,8 @@
 import { ECustomEditorEntities } from '../types';
-import { getAttachmentEntityType, getAttachmentEntityTypeByFilename } from '../getAttachmentEntityType';
+import {
+  getAttachmentEntityType,
+  getAttachmentEntityTypeByFilename,
+} from '../getAttachmentEntityType';
 
 jest.mock('../../../Attachments/utils/getAttachmentType', () => ({
   getAttachmentTypeByUrl: jest.fn(),
@@ -76,31 +79,31 @@ describe('getAttachmentEntityTypeByFilename', () => {
     getAttachmentTypeByFilename.mockReset();
   });
 
-  it('returns Image for image filename', () => {
-    getAttachmentTypeByFilename.mockReturnValue('image');
-    expect(getAttachmentEntityTypeByFilename('photo.jpg')).toBe(
-      ECustomEditorEntities.Image,
+  it('returns Link when getAttachmentTypeByFilename returns null', () => {
+    getAttachmentTypeByFilename.mockReturnValue(null);
+    expect(getAttachmentEntityTypeByFilename('no-extension-file')).toBe(
+      ECustomEditorEntities.Link,
     );
   });
 
-  it('returns Video for video filename', () => {
-    getAttachmentTypeByFilename.mockReturnValue('video');
-    expect(getAttachmentEntityTypeByFilename('clip.mp4')).toBe(
-      ECustomEditorEntities.Video,
-    );
-  });
-
-  it('returns File for document filename', () => {
+  it('returns File when type is file', () => {
     getAttachmentTypeByFilename.mockReturnValue('file');
     expect(getAttachmentEntityTypeByFilename('report.pdf')).toBe(
       ECustomEditorEntities.File,
     );
   });
 
-  it('returns Link when filename has no recognizable extension', () => {
-    getAttachmentTypeByFilename.mockReturnValue(null);
-    expect(getAttachmentEntityTypeByFilename('no-extension')).toBe(
-      ECustomEditorEntities.Link,
+  it('returns Image when type is image', () => {
+    getAttachmentTypeByFilename.mockReturnValue('image');
+    expect(getAttachmentEntityTypeByFilename('screenshot.png')).toBe(
+      ECustomEditorEntities.Image,
+    );
+  });
+
+  it('returns Video when type is video', () => {
+    getAttachmentTypeByFilename.mockReturnValue('video');
+    expect(getAttachmentEntityTypeByFilename('clip.mp4')).toBe(
+      ECustomEditorEntities.Video,
     );
   });
 
