@@ -7,6 +7,7 @@ import { intlMock } from '../../../../__stubs__/intlMock';
 import { Checkbox } from '../../../UI/Fields/Checkbox';
 import { ITemplateTask } from '../../../../types/template';
 import { TaskPerformers } from '../TaskPerformers';
+import { TaskFormPersistProvider } from '../useTaskForm';
 
 jest.mock('../../../UI/Fields/Checkbox', () => ({
   Checkbox: jest.fn(() => null),
@@ -60,6 +61,10 @@ describe('TaskPerformers', () => {
     revertTask: null,
     ancestors: [],
     ...overrides,
+  });
+
+  const flushPersist = () => act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0));
   });
 
   const createTaskFormWrapper = (task: ITemplateTask, patchTask = mockPatchTask) => {
@@ -221,7 +226,7 @@ describe('TaskPerformers', () => {
       expect(call![0].checked).toBe(false);
     });
 
-    it('calls patchTask with requireCompletionByAll on onChange', () => {
+    it('calls patchTask with requireCompletionByAll on onChange', async () => {
       renderComponent({ requireCompletionByAll: false });
 
       const call = getCompleteByAllCall();
@@ -229,6 +234,7 @@ describe('TaskPerformers', () => {
       act(() => {
         onChangeFn({ currentTarget: { checked: true } });
       });
+      await flushPersist();
 
       expect(mockPatchTask).toHaveBeenCalledWith({
         taskUUID: 'uuid-1',
@@ -263,7 +269,7 @@ describe('TaskPerformers', () => {
       expect(skipCall![0].checked).toBe(false);
     });
 
-    it('calls patchTask with true on onChange', () => {
+    it('calls patchTask with true on onChange', async () => {
       renderComponent({ skipForStarter: false });
 
       const skipCall = getSkipCheckboxCall();
@@ -271,6 +277,7 @@ describe('TaskPerformers', () => {
       act(() => {
         onChangeFn({ currentTarget: { checked: true } });
       });
+      await flushPersist();
 
       expect(mockPatchTask).toHaveBeenCalledWith({
         taskUUID: 'uuid-1',
@@ -278,7 +285,7 @@ describe('TaskPerformers', () => {
       });
     });
 
-    it('calls patchTask with false on checkbox uncheck', () => {
+    it('calls patchTask with false on checkbox uncheck', async () => {
       renderComponent({ skipForStarter: true });
 
       const skipCall = getSkipCheckboxCall();
@@ -286,6 +293,7 @@ describe('TaskPerformers', () => {
       act(() => {
         onChangeFn({ currentTarget: { checked: false } });
       });
+      await flushPersist();
 
       expect(mockPatchTask).toHaveBeenCalledWith({
         taskUUID: 'uuid-1',

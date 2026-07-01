@@ -17,30 +17,40 @@ export function TaskFormPersistProvider({ patchTask, task, children }: ITaskForm
   const { values } = useFormikContext<ITemplateTask>();
   const previousValuesRef = useRef<ITemplateTask>(values);
   const externalTaskRef = useRef<ITemplateTask>(task);
+  const skipNextPersistRef = useRef(false);
 
   useEffect(() => {
-    // The task prop changed from the store (reinitialize): adopt the new
-    // Formik values as the baseline instead of echoing them back as a patch.
+    let timeoutId: number | undefined;
+
     if (externalTaskRef.current !== task) {
       externalTaskRef.current = task;
+      skipNextPersistRef.current = true;
+    } else if (skipNextPersistRef.current) {
+      skipNextPersistRef.current = false;
       previousValuesRef.current = values;
+    } else if (previousValuesRef.current !== values) {
+      timeoutId = window.setTimeout(() => {
+        if (previousValuesRef.current === values) {
+          return;
+        }
 
-      return;
+        const changedFields = getChangedFields(previousValuesRef.current, values);
+        previousValuesRef.current = values;
+
+        if (Object.keys(changedFields).length > 0) {
+          patchTask({ taskUUID: task.uuid, changedFields });
+        }
+      }, 0);
     }
 
-    if (previousValuesRef.current === values) {
-      return;
-    }
-
-    const changedFields = getChangedFields(previousValuesRef.current, values);
-    previousValuesRef.current = values;
-
-    if (Object.keys(changedFields).length > 0) {
-      patchTask({ taskUUID: task.uuid, changedFields });
-    }
+    return () => {
+      if (timeoutId !== undefined) {
+        window.clearTimeout(timeoutId);
+      }
+    };
   }, [values, task, patchTask]);
 
-  return children;
+  return children as React.ReactElement;
 }
 
 function getChangedFields(previous: ITemplateTask, next: ITemplateTask): Partial<ITemplateTask> {
@@ -56,15 +66,13 @@ function getChangedFields(previous: ITemplateTask, next: ITemplateTask): Partial
 }
 
 export function useTaskForm() {
-  const { values, setFieldValue } = useFormikContext<ITemplateTask>();
+  const { values, setFieldValue, setValues } = useFormikContext<ITemplateTask>();
 
   const updateTask = useCallback(
     (changedFields: Partial<ITemplateTask>) => {
-      Object.entries(changedFields).forEach(([field, value]) => {
-        setFieldValue(field, value, false);
-      });
+      setValues({ ...values, ...changedFields }, false);
     },
-    [setFieldValue],
+    [setValues, values],
   );
 
   const updateField = useCallback(
