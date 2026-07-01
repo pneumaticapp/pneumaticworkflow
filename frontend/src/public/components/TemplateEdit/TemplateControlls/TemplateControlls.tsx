@@ -3,8 +3,8 @@ import Switch from 'rc-switch';
 import { Link } from 'react-router-dom';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
-
 import { useDispatch, useSelector } from 'react-redux';
+
 import { TemplateOwners } from '../TemplateOwners';
 import { TemplateViewers } from '../TemplateViewers';
 import { TemplateStarters } from '../TemplateStarters';
@@ -23,6 +23,7 @@ import {
 } from '../../../redux/actions';
 import { getRunnableWorkflow, loadDatasetsMap } from '../utils/getRunnableWorkflow';
 import { ETemplateStatus } from '../../../types/redux';
+import { getTemplateStatus } from '../../../redux/selectors/template';
 import { IRunWorkflow } from '../../WorkflowEditPopup/types';
 import { WarningPopup } from '../../UI/WarningPopup';
 import { validateTemplate } from '../utils/validateTemplate';
@@ -36,13 +37,11 @@ import { useTemplateIntegrationsList } from '../../TemplateIntegrationsStats';
 import { checkShowDraftTemplateWarning } from '../../Templates';
 
 import styles from './TemplateControlls.css';
-import { getSubscriptionPlan } from '../../../redux/selectors/user';
+import { getSubscriptionPlan, getIsUserSubsribed } from '../../../redux/selectors/user';
 import { ESubscriptionPlan } from '../../../types/account';
+import { useTemplateField } from '../useTemplateForm';
 
 export interface ITemplateControllsProps {
-  template: ITemplate;
-  templateStatus: ETemplateStatus;
-  isSubscribed: boolean;
   cloneTemplate(payload: TCloneTemplatePayload): void;
   patchTemplate(payload: TPatchTemplatePayload): void;
   deleteTemplate(payload: TDeleteTemplatePayload): void;
@@ -51,9 +50,6 @@ export interface ITemplateControllsProps {
 }
 
 export function TemplateControlls({
-  template,
-  templateStatus,
-  isSubscribed,
   patchTemplate,
   cloneTemplate,
   deleteTemplate,
@@ -63,6 +59,9 @@ export function TemplateControlls({
   const intl = useIntl();
   const { formatMessage } = intl;
   const dispatch = useDispatch();
+  const { values: template, setFieldValue } = useTemplateField();
+  const templateStatus = useSelector(getTemplateStatus);
+  const isSubscribed = useSelector(getIsUserSubsribed);
   const billingPlan = useSelector(getSubscriptionPlan);
   const isFreePlan = billingPlan === ESubscriptionPlan.Free;
   const accessConditions = isSubscribed || isFreePlan;
@@ -272,7 +271,7 @@ export function TemplateControlls({
           <TemplateOwners
             templateOwners={pureOwners}
             onChangeTemplateOwners={(newTemplateOwners) =>
-              patchTemplate({ changedFields: { owners: [...newTemplateOwners, ...viewers, ...starters] } })
+              setFieldValue('owners', [...newTemplateOwners, ...viewers, ...starters], false)
             }
           />
         </ShowMore>
@@ -283,7 +282,7 @@ export function TemplateControlls({
           <TemplateViewers
             templateViewers={viewers}
             onChangeTemplateViewers={(newViewers) =>
-              patchTemplate({ changedFields: { owners: [...pureOwners, ...newViewers, ...starters] } })
+              setFieldValue('owners', [...pureOwners, ...newViewers, ...starters], false)
             }
           />
         </ShowMore>
@@ -294,7 +293,7 @@ export function TemplateControlls({
           <TemplateStarters
             templateStarters={starters}
             onChangeTemplateStarters={(newStarters) =>
-              patchTemplate({ changedFields: { owners: [...pureOwners, ...viewers, ...newStarters] } })
+              setFieldValue('owners', [...pureOwners, ...viewers, ...newStarters], false)
             }
           />
         </ShowMore>
@@ -353,7 +352,7 @@ export function TemplateControlls({
             checked={isTemplateFinalizable}
             checkedChildren={null}
             unCheckedChildren={null}
-            onChange={(value) => patchTemplate({ changedFields: { finalizable: value } })}
+            onChange={(value) => setFieldValue('finalizable', value, false)}
           />
         </div>
         <div className={styles['info-control']}>
@@ -368,7 +367,7 @@ export function TemplateControlls({
             checked={isCompletionNotification}
             checkedChildren={null}
             unCheckedChildren={null}
-            onChange={(value) => patchTemplate({ changedFields: { completionNotification: value } })}
+            onChange={(value) => setFieldValue('completionNotification', value, false)}
           />
         </div>
         <div className={styles['info-control']}>
@@ -383,7 +382,7 @@ export function TemplateControlls({
             checked={isReminderNotification}
             checkedChildren={null}
             unCheckedChildren={null}
-            onChange={(value) => patchTemplate({ changedFields: { reminderNotification: value } })}
+            onChange={(value) => setFieldValue('reminderNotification', value, false)}
           />
         </div>
       </div>

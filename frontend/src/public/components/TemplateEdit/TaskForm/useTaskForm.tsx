@@ -1,111 +1,50 @@
-import * as React from 'react';
-import { useCallback, useEffect, useRef } from 'react';
-import { useFormikContext } from 'formik';
+import { useCallback, useRef } from 'react';
 
 import { ITemplateTask } from '../../../types/template';
-import { TPatchTaskPayload } from '../../../redux/actions';
+import { useTaskFormScope, useTemplateField } from '../useTemplateForm';
 
-type TPatchTaskFn = (payload: TPatchTaskPayload) => void;
-
-interface ITaskFormPersistProviderProps {
-  patchTask: TPatchTaskFn;
-  task: ITemplateTask;
-  children: React.ReactNode;
-}
-
-export function TaskFormPersistProvider({ patchTask, task, children }: ITaskFormPersistProviderProps) {
-  const { values } = useFormikContext<ITemplateTask>();
-  const previousValuesRef = useRef<ITemplateTask>(values);
-  const externalTaskUuidRef = useRef(task.uuid);
-  const skipNextPersistRef = useRef(false);
-  const valuesRef = useRef(values);
-  const patchTaskRef = useRef(patchTask);
-
-  valuesRef.current = values;
-  patchTaskRef.current = patchTask;
-
-  const flushPersistForTask = useCallback((taskUuid: string, currentValues: ITemplateTask) => {
-    if (previousValuesRef.current === currentValues) {
-      return;
-    }
-
-    const changedFields = getChangedFields(previousValuesRef.current, currentValues);
-    previousValuesRef.current = currentValues;
-
-    if (Object.keys(changedFields).length > 0) {
-      patchTaskRef.current({ taskUUID: taskUuid, changedFields });
-    }
-  }, []);
-
-  useEffect(() => {
-    let timeoutId: number | undefined;
-
-    if (externalTaskUuidRef.current !== task.uuid) {
-      externalTaskUuidRef.current = task.uuid;
-      skipNextPersistRef.current = true;
-    } else if (skipNextPersistRef.current) {
-      skipNextPersistRef.current = false;
-      previousValuesRef.current = values;
-    } else if (previousValuesRef.current !== values) {
-      const capturedValues = values;
-      const capturedTaskUuid = task.uuid;
-
-      timeoutId = window.setTimeout(() => {
-        flushPersistForTask(capturedTaskUuid, valuesRef.current);
-      }, 0);
-
-      return () => {
-        if (timeoutId !== undefined) {
-          window.clearTimeout(timeoutId);
-          flushPersistForTask(capturedTaskUuid, capturedValues);
-        }
-      };
-    }
-
-    return undefined;
-  }, [values, task, flushPersistForTask]);
-
-  return children as React.ReactElement;
-}
-
-function getChangedFields(previous: ITemplateTask, next: ITemplateTask): Partial<ITemplateTask> {
-  const changedFields: Partial<ITemplateTask> = {};
-
-  (Object.keys(next) as (keyof ITemplateTask)[]).forEach((key) => {
-    if (previous[key] !== next[key]) {
-      (changedFields[key] as ITemplateTask[keyof ITemplateTask]) = next[key];
-    }
-  });
-
-  return changedFields;
-}
-
+/**
+ * Task-level Formik binding backed by the root `ITemplate` Formik context.
+ *
+ * Returns the same `{ task, updateTask, updateField }` shape the section
+ * components already consume, so they don't need to change. `updateField` /
+ * `updateTask` write through the wrapped `setFieldValue('tasks[index]...', ...)`
+ * from `useTemplateField`, so the root `TemplateFormPersistProvider` saves them
+ * from the single centralized save point.
+ */
 export function useTaskForm() {
-  const { values, setFieldValue, setValues } = useFormikContext<ITemplateTask>();
-  const valuesRef = useRef(values);
+  const { values, setFieldValue } = useTemplateField();
+  const taskUuid = useTaskFormScope();
 
-  valuesRef.current = values;
+  const index = values.tasks.findIndex((task) => task.uuid === taskUuid);
+  const task = values.tasks[index];
+  const taskRef = useRef(task);
+  taskRef.current = task;
 
   const updateTask = useCallback(
     (changedFields: Partial<ITemplateTask>) => {
-      const nextValues = { ...valuesRef.current, ...changedFields };
-
-      valuesRef.current = nextValues;
-      setValues(nextValues, false);
+      const nextTask = { ...taskRef.current, ...changedFields };
+      taskRef.current = nextTask;
+      setFieldValue(`tasks.${index}`, nextTask, false);
     },
-    [setValues],
+    [index, setFieldValue],
   );
 
   const updateField = useCallback(
     <K extends keyof ITemplateTask>(field: K) => (value: ITemplateTask[K]) => {
-      valuesRef.current = { ...valuesRef.current, [field]: value };
-      setFieldValue(field, value, false);
+      const nextTask = { ...taskRef.current, [field]: value };
+      taskRef.current = nextTask;
+      setFieldValue(`tasks.${index}.${String(field)}`, value, false);
     },
-    [setFieldValue],
+    [index, setFieldValue],
   );
 
+  if (!task) {
+    throw new Error(`Task with uuid "${taskUuid}" is not present in the template form state`);
+  }
+
   return {
-    task: values,
+    task,
     updateTask,
     updateField,
   };

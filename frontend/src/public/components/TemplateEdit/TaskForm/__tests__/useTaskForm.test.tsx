@@ -1,10 +1,10 @@
 /// <reference types="jest" />
 import * as React from 'react';
 import { act, render } from '@testing-library/react';
-import { FormikProvider, useFormik } from 'formik';
 
-import { ETaskPerformerType, ITemplateTask } from '../../../../types/template';
-import { TaskFormPersistProvider, useTaskForm } from '../useTaskForm';
+import { ETaskPerformerType, ITemplate, ITemplateTask } from '../../../../types/template';
+import { TaskFormScopeProvider, TemplateFieldContext } from '../../useTemplateForm';
+import { useTaskForm } from '../useTaskForm';
 
 const makeTask = (overrides: Partial<ITemplateTask> = {}): ITemplateTask => ({
   apiName: 'task-1',
@@ -25,331 +25,166 @@ const makeTask = (overrides: Partial<ITemplateTask> = {}): ITemplateTask => ({
   ...overrides,
 });
 
-const flushPersist = () => act(async () => {
-  await new Promise((resolve) => setTimeout(resolve, 0));
-});
+const makeTemplate = (tasks: ITemplateTask[]): ITemplate =>
+  ({
+    id: 1,
+    name: 'Template',
+    description: '',
+    isActive: false,
+    finalizable: false,
+    completionNotification: false,
+    reminderNotification: false,
+    dateUpdated: null,
+    updatedBy: null,
+    owners: [],
+    kickoff: { description: '', fields: [] } as any,
+    tasks,
+    isPublic: false,
+    publicUrl: null,
+    publicSuccessUrl: null,
+    isEmbedded: false,
+    embedUrl: null,
+    wfNameTemplate: null,
+    tasksCount: tasks.length,
+    performersCount: 0,
+  }) as ITemplate;
 
-interface IHarnessProps {
-  task: ITemplateTask;
-  patchTask: jest.Mock;
-  children: React.ReactNode;
+interface IFormikBag {
+  values: ITemplate;
+  setFieldValue: jest.Mock;
 }
 
-function TaskFormHarness({ task, patchTask, children }: IHarnessProps) {
-  const formik = useFormik<ITemplateTask>({
-    initialValues: task,
-    enableReinitialize: true,
-    onSubmit: () => undefined,
-  });
-
+function TaskFormHarness({
+  bag,
+  taskUuid,
+  children,
+}: {
+  bag: IFormikBag;
+  taskUuid: string;
+  children: React.ReactNode;
+}) {
   return (
-    <FormikProvider value={formik}>
-      <TaskFormPersistProvider patchTask={patchTask} task={task}>
-        {children}
-      </TaskFormPersistProvider>
-    </FormikProvider>
+    <TemplateFieldContext.Provider
+      value={{ values: bag.values, setFieldValue: bag.setFieldValue, setValues: jest.fn() }}
+    >
+      <TaskFormScopeProvider taskUuid={taskUuid}>{children}</TaskFormScopeProvider>
+    </TemplateFieldContext.Provider>
   );
 }
 
-describe('TaskFormPersistProvider', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
+describe('useTaskForm', () => {
+  it('throws when used outside <TaskFormScopeProvider>', () => {
+    const Spy: React.FC = () => {
+      useTaskForm();
+      return null;
+    };
 
-  it('does not patch when the external task prop changes', async () => {
-    const patchTask = jest.fn();
-    const task1 = makeTask({ uuid: 'uuid-1', name: 'Task 1' });
-    const task2 = makeTask({ uuid: 'uuid-2', name: 'Task 2' });
+    const bag: IFormikBag = {
+      values: makeTemplate([makeTask()]),
+      setFieldValue: jest.fn(),
+    };
 
-    const { rerender } = render(
-      <TaskFormHarness task={task1} patchTask={patchTask}>
-        <span />
-      </TaskFormHarness>,
-    );
+    const spy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
 
-    await flushPersist();
-    patchTask.mockClear();
-
-    rerender(
-      <TaskFormHarness task={task2} patchTask={patchTask}>
-        <span />
-      </TaskFormHarness>,
-    );
-
-    await flushPersist();
-
-    expect(patchTask).not.toHaveBeenCalled();
-  });
-
-  it('batches rapid field updates into a single patch', async () => {
-    const patchTask = jest.fn();
-    const task = makeTask({ description: 'old', checklists: [] });
-
-    function DescriptionEditorSimulator() {
-      const { updateField } = useTaskForm();
-
-      return (
-        <button
-          type="button"
-          onClick={() => {
-            updateField('checklists')([{
-              apiName: 'checklist-1',
-              selections: [{ apiName: 'item-1', value: 'Item' }],
-            }]);
-            updateField('description')('new description');
-          }}
+    expect(() =>
+      render(
+        <TemplateFieldContext.Provider
+          value={{ values: bag.values, setFieldValue: bag.setFieldValue, setValues: jest.fn() }}
         >
-          edit
-        </button>
-      );
-    }
+          <Spy />
+        </TemplateFieldContext.Provider>,
+      ),
+    ).toThrow(/TaskFormScopeProvider/);
 
-    const { getByRole } = render(
-      <TaskFormHarness task={task} patchTask={patchTask}>
-        <DescriptionEditorSimulator />
+    spy.mockRestore();
+  });
+
+  it('binds updateField to tasks[index].<field> via setFieldValue', () => {
+    const setFieldValue = jest.fn();
+    const task = makeTask({ uuid: 'uuid-1', name: 'Old' });
+    const bag: IFormikBag = { values: makeTemplate([task]), setFieldValue };
+
+    let form: ReturnType<typeof useTaskForm> | null = null;
+    const Spy: React.FC = () => {
+      form = useTaskForm();
+      return null;
+    };
+
+    render(
+      <TaskFormHarness bag={bag} taskUuid="uuid-1">
+        <Spy />
       </TaskFormHarness>,
     );
-
-    await flushPersist();
-    patchTask.mockClear();
 
     act(() => {
-      getByRole('button', { name: 'edit' }).click();
+      form!.updateField('name')('New name');
     });
-    await flushPersist();
 
-    expect(patchTask).toHaveBeenCalledTimes(1);
-    expect(patchTask).toHaveBeenCalledWith({
-      taskUUID: 'uuid-1',
-      changedFields: {
-        checklists: [{
-          apiName: 'checklist-1',
-          selections: [{ apiName: 'item-1', value: 'Item' }],
-        }],
-        description: 'new description',
+    expect(setFieldValue).toHaveBeenCalledWith('tasks.0.name', 'New name', false);
+  });
+
+  it('binds updateTask to tasks[index] via setFieldValue, merging onto the current task', () => {
+    const setFieldValue = jest.fn();
+    const task = makeTask({ uuid: 'uuid-1', description: 'old', rawPerformers: [] });
+    const bag: IFormikBag = { values: makeTemplate([task]), setFieldValue };
+
+    let form: ReturnType<typeof useTaskForm> | null = null;
+    const Spy: React.FC = () => {
+      form = useTaskForm();
+      return null;
+    };
+
+    render(
+      <TaskFormHarness bag={bag} taskUuid="uuid-1">
+        <Spy />
+      </TaskFormHarness>,
+    );
+
+    const newPerformers = [
+      {
+        apiName: 'performer-1',
+        type: ETaskPerformerType.User,
+        label: 'User 1',
+        sourceId: '1',
       },
-    });
-  });
-
-  it('applies updateField changes when followed synchronously by updateTask', async () => {
-    const patchTask = jest.fn();
-    const task = makeTask({ description: 'old', rawPerformers: [] });
-    const newPerformers = [{
-      apiName: 'performer-1',
-      type: ETaskPerformerType.User,
-      label: 'User 1',
-      sourceId: '1',
-    }];
-
-    function MixedEditor() {
-      const { updateField, updateTask } = useTaskForm();
-
-      return (
-        <button
-          type="button"
-          onClick={() => {
-            updateField('description')('new description');
-            updateTask({ rawPerformers: newPerformers });
-          }}
-        >
-          edit
-        </button>
-      );
-    }
-
-    const { getByRole } = render(
-      <TaskFormHarness task={task} patchTask={patchTask}>
-        <MixedEditor />
-      </TaskFormHarness>,
-    );
-
-    await flushPersist();
-    patchTask.mockClear();
+    ];
 
     act(() => {
-      getByRole('button', { name: 'edit' }).click();
+      form!.updateTask({ rawPerformers: newPerformers, requireCompletionByAll: true });
     });
-    await flushPersist();
 
-    expect(patchTask).toHaveBeenCalledTimes(1);
-    expect(patchTask).toHaveBeenCalledWith({
-      taskUUID: 'uuid-1',
-      changedFields: {
-        description: 'new description',
-        rawPerformers: newPerformers,
-      },
-    });
+    expect(setFieldValue).toHaveBeenCalledTimes(1);
+    expect(setFieldValue).toHaveBeenCalledWith(
+      'tasks.0',
+      { ...task, rawPerformers: newPerformers, requireCompletionByAll: true },
+      false,
+    );
   });
 
-  it('applies consecutive updateTask calls without dropping earlier changes', async () => {
-    const patchTask = jest.fn();
-    const task = makeTask({ rawPerformers: [], requireCompletionByAll: false });
-    const newPerformers = [{
-      apiName: 'performer-1',
-      type: ETaskPerformerType.User,
-      label: 'User 1',
-      sourceId: '1',
-    }];
+  it('targets the correct index when the scoped task is not the first one', () => {
+    const setFieldValue = jest.fn();
+    const task1 = makeTask({ uuid: 'uuid-1', name: 'First' });
+    const task2 = makeTask({ uuid: 'uuid-2', name: 'Second', number: 2 });
+    const bag: IFormikBag = { values: makeTemplate([task1, task2]), setFieldValue };
 
-    function PerformerEditor() {
-      const { updateTask } = useTaskForm();
+    let form: ReturnType<typeof useTaskForm> | null = null;
+    const Spy: React.FC = () => {
+      form = useTaskForm();
+      return null;
+    };
 
-      return (
-        <button
-          type="button"
-          onClick={() => {
-            updateTask({ rawPerformers: newPerformers });
-            updateTask({ requireCompletionByAll: true });
-          }}
-        >
-          edit
-        </button>
-      );
-    }
-
-    const { getByRole } = render(
-      <TaskFormHarness task={task} patchTask={patchTask}>
-        <PerformerEditor />
+    render(
+      <TaskFormHarness bag={bag} taskUuid="uuid-2">
+        <Spy />
       </TaskFormHarness>,
     );
 
-    await flushPersist();
-    patchTask.mockClear();
+    expect(form!.task).toEqual(task2);
 
     act(() => {
-      getByRole('button', { name: 'edit' }).click();
-    });
-    await flushPersist();
-
-    expect(patchTask).toHaveBeenCalledTimes(1);
-    expect(patchTask).toHaveBeenCalledWith({
-      taskUUID: 'uuid-1',
-      changedFields: {
-        rawPerformers: newPerformers,
-        requireCompletionByAll: true,
-      },
-    });
-  });
-
-  it('persists pending changes when switching tasks before the debounced effect runs', () => {
-    const patchTask = jest.fn();
-    const task1 = makeTask({ uuid: 'uuid-1', name: 'Task 1' });
-    const task2 = makeTask({ uuid: 'uuid-2', name: 'Task 2' });
-
-    function NameEditor() {
-      const { updateField } = useTaskForm();
-
-      return (
-        <button
-          type="button"
-          onClick={() => updateField('name')('Updated Task 1')}
-        >
-          edit
-        </button>
-      );
-    }
-
-    const { getByRole, rerender } = render(
-      <TaskFormHarness task={task1} patchTask={patchTask}>
-        <NameEditor />
-      </TaskFormHarness>,
-    );
-
-    act(() => {
-      getByRole('button', { name: 'edit' }).click();
+      form!.updateField('name')('Updated second');
     });
 
-    rerender(
-      <TaskFormHarness task={task2} patchTask={patchTask}>
-        <span />
-      </TaskFormHarness>,
-    );
-
-    expect(patchTask).toHaveBeenCalledTimes(1);
-    expect(patchTask).toHaveBeenCalledWith({
-      taskUUID: 'uuid-1',
-      changedFields: { name: 'Updated Task 1' },
-    });
-  });
-
-  it('persists user edits when the store passes a fresh object for the same task', async () => {
-    const patchTask = jest.fn();
-    const task = makeTask({ name: 'Original' });
-
-    function NameEditor() {
-      const { updateField } = useTaskForm();
-
-      return (
-        <button
-          type="button"
-          onClick={() => updateField('name')('Updated')}
-        >
-          edit
-        </button>
-      );
-    }
-
-    const { getByRole, rerender } = render(
-      <TaskFormHarness task={task} patchTask={patchTask}>
-        <NameEditor />
-      </TaskFormHarness>,
-    );
-
-    await flushPersist();
-    patchTask.mockClear();
-
-    act(() => {
-      getByRole('button', { name: 'edit' }).click();
-    });
-
-    rerender(
-      <TaskFormHarness task={{ ...task }} patchTask={patchTask}>
-        <NameEditor />
-      </TaskFormHarness>,
-    );
-
-    await flushPersist();
-
-    expect(patchTask).toHaveBeenCalledTimes(1);
-    expect(patchTask).toHaveBeenCalledWith({
-      taskUUID: 'uuid-1',
-      changedFields: { name: 'Updated' },
-    });
-  });
-
-  it('persists pending changes when unmounting before the debounced effect runs', () => {
-    const patchTask = jest.fn();
-    const task = makeTask({ name: 'Original' });
-
-    function NameEditor() {
-      const { updateField } = useTaskForm();
-
-      return (
-        <button
-          type="button"
-          onClick={() => updateField('name')('Updated')}
-        >
-          edit
-        </button>
-      );
-    }
-
-    const { getByRole, unmount } = render(
-      <TaskFormHarness task={task} patchTask={patchTask}>
-        <NameEditor />
-      </TaskFormHarness>,
-    );
-
-    act(() => {
-      getByRole('button', { name: 'edit' }).click();
-    });
-
-    unmount();
-
-    expect(patchTask).toHaveBeenCalledTimes(1);
-    expect(patchTask).toHaveBeenCalledWith({
-      taskUUID: 'uuid-1',
-      changedFields: { name: 'Updated' },
-    });
+    expect(setFieldValue).toHaveBeenCalledWith('tasks.1.name', 'Updated second', false);
   });
 });
