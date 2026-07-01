@@ -72,6 +72,7 @@ interface ISpyHandle {
   consumePendingChanges: () => Partial<ITemplate>;
   confirmConsumedChanges: () => void;
   revertConsumedChanges: () => void;
+  abandonPendingChanges: () => void;
 }
 
 // Drain the persist provider's `setTimeout(0)` flush plus the follow-up tick it
@@ -94,8 +95,8 @@ function TemplateFormHarness({
 
   const Spy: React.FC = () => {
     const { values, setFieldValue: contextSetFieldValue } = useTemplateField();
-    const { consumePendingChanges, confirmConsumedChanges, revertConsumedChanges } = useTemplatePersist();
-    spy({ values, setFieldValue: contextSetFieldValue, consumePendingChanges, confirmConsumedChanges, revertConsumedChanges });
+    const { consumePendingChanges, confirmConsumedChanges, revertConsumedChanges, abandonPendingChanges } = useTemplatePersist();
+    spy({ values, setFieldValue: contextSetFieldValue, consumePendingChanges, confirmConsumedChanges, revertConsumedChanges, abandonPendingChanges });
     return null;
   };
 
@@ -308,7 +309,7 @@ describe('TemplateFormPersistProvider deactivation', () => {
     expect(patchTemplate).toHaveBeenCalledTimes(1);
   });
 
-  it('does not dispatch patchTemplate on unmount when pending edits were not flushed', async () => {
+  it('does not dispatch patchTemplate on unmount after abandoning pending edits', async () => {
     const template = makeTemplate({ isActive: true, description: 'old' });
     let handle: ISpyHandle | null = null;
 
@@ -318,6 +319,7 @@ describe('TemplateFormPersistProvider deactivation', () => {
 
     act(() => {
       handle!.setFieldValue('description', 'discarded edit', false);
+      handle!.abandonPendingChanges();
     });
 
     act(() => {
@@ -327,6 +329,29 @@ describe('TemplateFormPersistProvider deactivation', () => {
     await flushPersist();
 
     expect(patchTemplate).not.toHaveBeenCalled();
+  });
+
+  it('dispatches patchTemplate on unmount when pending edits were not flushed', async () => {
+    const template = makeTemplate({ isActive: true, description: 'old' });
+    let handle: ISpyHandle | null = null;
+
+    const { unmount } = render(
+      <TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />,
+    );
+
+    act(() => {
+      handle!.setFieldValue('description', 'unsaved edit', false);
+    });
+
+    act(() => {
+      unmount();
+    });
+
+    expect(patchTemplate).toHaveBeenCalledTimes(1);
+    expect((patchTemplate as unknown as jest.Mock).mock.calls[0][0].changedFields).toEqual({
+      description: 'unsaved edit',
+      isActive: false,
+    });
   });
 
   it('still persists a second edit when the first triggers an isActive deactivation', async () => {
@@ -453,6 +478,40 @@ describe('useTemplateForm reinitialize', () => {
       tasks: [expect.objectContaining({ skipForStarter: true })],
     });
     expect(Object.prototype.hasOwnProperty.call(hookResult!.pendingUserEditsRef.current, 'tasks.0')).toBe(false);
+  });
+
+  it('preserves incoming-only tasks when Redux reinitializes during pending task edits', () => {
+    const task1 = makeTask({ apiName: 'task-1', uuid: 'uuid-1', number: 1, name: 'Original' });
+    const task2 = makeTask({ apiName: 'task-2', uuid: 'uuid-2', number: 2, name: 'Server Added' });
+    const template = makeTemplate({ tasks: [task1], dateUpdated: null });
+    let hookResult: ReturnType<typeof useTemplateForm> | null = null;
+
+    const { rerender } = render(
+      <HookHarness
+        currentTemplate={template}
+        onReady={(result) => { hookResult = result; }}
+      />,
+    );
+
+    act(() => {
+      hookResult!.setFieldValue('tasks.0.name', 'Edited Task', false);
+    });
+
+    rerender(
+      <HookHarness
+        currentTemplate={{
+          ...template,
+          tasks: [task1, task2],
+          dateUpdated: '2026-07-01T00:00:00Z',
+        }}
+        onReady={(result) => { hookResult = result; }}
+      />,
+    );
+
+    expect(hookResult!.formik.values.tasks).toHaveLength(2);
+    expect(hookResult!.formik.values.tasks[0].name).toBe('Edited Task');
+    expect(hookResult!.formik.values.tasks[1].name).toBe('Server Added');
+    expect(hookResult!.formik.values.dateUpdated).toBe('2026-07-01T00:00:00Z');
   });
 });
 

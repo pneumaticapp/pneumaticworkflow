@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef } from 'react';
 import { FormikProvider, useFormik, useFormikContext } from 'formik';
 import { useDispatch } from 'react-redux';
 
@@ -22,6 +22,8 @@ interface ITemplatePersistContextValue {
   confirmConsumedChanges(): void;
   /** Restores the persist baseline when an explicit `patchTemplate` fails. */
   revertConsumedChanges(): void;
+  /** Drops uncommitted edits without dispatching (e.g. after "Discard changes"). */
+  abandonPendingChanges(): void;
 }
 
 const TemplateFieldContext = createContext<ITemplateFieldContextValue | null>(null);
@@ -113,19 +115,26 @@ function mergePreservedTasks(
   incomingTasks: ITemplateTask[],
   preservedTasks: ITemplateTask[],
 ): ITemplateTask[] {
-  return preservedTasks.map((task) => {
-    const incoming = incomingTasks.find((candidate) => candidate.uuid === task.uuid);
+  const preservedByUuid = new Map(preservedTasks.map((task) => [task.uuid, task]));
 
-    if (!incoming || task === incoming) {
-      return task;
+  const mergedIncoming = incomingTasks.map((incoming) => {
+    const preserved = preservedByUuid.get(incoming.uuid);
+
+    if (!preserved || preserved === incoming) {
+      return preserved || incoming;
     }
 
-    const onlyAncestorsDiffer = (Object.keys(task) as (keyof ITemplateTask)[]).every(
-      (key) => key === 'ancestors' || task[key] === incoming[key],
+    const onlyAncestorsDiffer = (Object.keys(preserved) as (keyof ITemplateTask)[]).every(
+      (key) => key === 'ancestors' || preserved[key] === incoming[key],
     );
 
-    return onlyAncestorsDiffer ? { ...task, ancestors: incoming.ancestors } : task;
+    return onlyAncestorsDiffer ? { ...preserved, ancestors: incoming.ancestors } : preserved;
   });
+
+  const incomingUuids = new Set(incomingTasks.map((task) => task.uuid));
+  const preservedOnlyTasks = preservedTasks.filter((task) => !incomingUuids.has(task.uuid));
+
+  return [...mergedIncoming, ...preservedOnlyTasks];
 }
 
 function getKickoffFieldApiNames(kickoff: IKickoff): string[] {
@@ -375,6 +384,10 @@ interface ITemplateFormPersistProviderProps {
  * `applyImmediateDeactivation`) so controls like `RouteLeavingGuard` react
  * immediately. The saga makes the same call server-side but only reinitializes
  * Formik after the save round-trip.
+ *
+ * On unmount the values effect cleanup calls `flushPersist` so edits made just
+ * before leaving the page are not lost. Call `abandonPendingChanges` before
+ * navigating away after "Discard changes" so those edits are not re-dispatched.
  */
 export function TemplateFormPersistProvider({
   dirtyRef,
@@ -462,6 +475,13 @@ export function TemplateFormPersistProvider({
     consumedPendingRef.current = null;
   }, []);
 
+  const abandonPendingChanges = useCallback(() => {
+    previousValuesRef.current = valuesRef.current;
+    dirtyRefRef.current.current = false;
+    pendingUserEditsRefRef.current.current = {};
+    consumedPendingRef.current = null;
+  }, []);
+
   const flushPersist = useCallback(() => {
     const changedFields = takePendingChanges();
 
@@ -469,17 +489,6 @@ export function TemplateFormPersistProvider({
       dispatchRef.current(patchTemplate({ changedFields }));
     }
   }, [takePendingChanges]);
-
-  // useLayoutEffect so this cleanup runs before passive effect cleanups on
-  // unmount. The values effect cleanup calls `flushPersist`; clearing the
-  // pending diff here first prevents discarded edits from being dispatched when
-  // the user leaves the page (e.g. "Discard changes" + navigate away).
-  useLayoutEffect(() => {
-    return () => {
-      previousValuesRef.current = valuesRef.current;
-      dirtyRefRef.current.current = false;
-    };
-  }, []);
 
   useEffect(() => {
     if (previousValuesRef.current === values) {
@@ -497,8 +506,13 @@ export function TemplateFormPersistProvider({
   }, [values, flushPersist]);
 
   const persistContextValue = useMemo<ITemplatePersistContextValue>(
-    () => ({ consumePendingChanges, confirmConsumedChanges, revertConsumedChanges }),
-    [consumePendingChanges, confirmConsumedChanges, revertConsumedChanges],
+    () => ({
+      consumePendingChanges,
+      confirmConsumedChanges,
+      revertConsumedChanges,
+      abandonPendingChanges,
+    }),
+    [consumePendingChanges, confirmConsumedChanges, revertConsumedChanges, abandonPendingChanges],
   );
 
   return (

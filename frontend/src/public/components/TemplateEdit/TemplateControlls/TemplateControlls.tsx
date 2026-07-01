@@ -60,7 +60,12 @@ export function TemplateControlls({
   const { formatMessage } = intl;
   const dispatch = useDispatch();
   const { values: template, setFieldValue } = useTemplateField();
-  const { consumePendingChanges, confirmConsumedChanges, revertConsumedChanges } = useTemplatePersist();
+  const {
+    consumePendingChanges,
+    confirmConsumedChanges,
+    revertConsumedChanges,
+    abandonPendingChanges,
+  } = useTemplatePersist();
   const templateStatus = useSelector(getTemplateStatus);
   const isSubscribed = useSelector(getIsUserSubsribed);
   const billingPlan = useSelector(getSubscriptionPlan);
@@ -223,7 +228,13 @@ export function TemplateControlls({
                 <button
                   type="button"
                   className={classnames('cancel-button', styles['keep-draf-button'])}
-                  onClick={() => dispatch(discardTemplateChanges({ templateId, onSuccess: reject }))}
+                  onClick={() => dispatch(discardTemplateChanges({
+                    templateId,
+                    onSuccess: () => {
+                      abandonPendingChanges();
+                      reject();
+                    },
+                  }))}
                 >
                   {formatMessage({ id: 'templates.discard-changes' })}
                 </button>
