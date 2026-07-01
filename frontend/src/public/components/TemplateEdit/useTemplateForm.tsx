@@ -101,6 +101,14 @@ function applyPendingEdits(initialValues: ITemplate, pendingEdits: Partial<ITemp
   return mergedValues;
 }
 
+function overlayPendingEdits(formikValues: ITemplate, pendingEdits: Partial<ITemplate>): ITemplate {
+  if (Object.keys(pendingEdits).length === 0) {
+    return formikValues;
+  }
+
+  return applyPendingEdits(formikValues, pendingEdits);
+}
+
 function mergePreservedTasks(
   incomingTasks: ITemplateTask[],
   preservedTasks: ITemplateTask[],
@@ -222,10 +230,7 @@ export function useTemplateForm(initialValues: ITemplate) {
   const setFieldValue = useCallback<TSetFieldValue>(
     (field, value, shouldValidate) => {
       dirtyRef.current = true;
-      const currentValues = applyPendingEdits(
-        lastSyncedInitialValuesRef.current,
-        pendingUserEditsRef.current,
-      );
+      const currentValues = overlayPendingEdits(formik.values, pendingUserEditsRef.current);
       let nextValues = setNestedFieldValue(currentValues, field, value);
       const runCleanup = shouldRunReferenceCleanup(field, currentValues, nextValues);
 

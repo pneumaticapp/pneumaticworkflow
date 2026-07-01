@@ -669,6 +669,97 @@ describe('useTemplateForm reference cleanup', () => {
     expect(patchTemplate).not.toHaveBeenCalled();
   });
 
+  it('preserves flushed Formik edits when kickoff cleanup runs before Redux reinitializes', async () => {
+    const template = makeTemplate({
+      isActive: true,
+      description: 'old',
+      kickoff: {
+        description: '',
+        fields: [
+          { apiName: 'valid-field', name: 'Valid', order: 1 } as any,
+          { apiName: 'removed-field', name: 'Removed', order: 2 } as any,
+        ],
+      } as any,
+      tasks: [
+        makeTask({
+          conditions: [
+            {
+              apiName: 'cond-1',
+              order: 1,
+              action: EConditionAction.StartTask,
+              rules: [
+                {
+                  field: 'removed-field',
+                  operator: EConditionOperators.Equal,
+                  logicOperation: EConditionLogicOperations.And,
+                  predicateApiName: '1',
+                } as TConditionRule,
+              ],
+            },
+          ],
+        }),
+      ],
+    });
+    let handle: ISpyHandle | null = null;
+
+    render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
+
+    act(() => {
+      handle!.setFieldValue('description', 'saved edit', false);
+    });
+    await flushPersist();
+
+    act(() => {
+      handle!.setFieldValue('name', 'unsaved edit', false);
+      handle!.setFieldValue(
+        'kickoff',
+        { description: '', fields: [{ apiName: 'valid-field', name: 'Valid', order: 1 }] },
+        false,
+      );
+    });
+
+    expect(handle!.values.description).toBe('saved edit');
+    expect(handle!.values.name).toBe('unsaved edit');
+    expect(handle!.values.isActive).toBe(false);
+    expect(handle!.values.tasks[0].conditions[0].rules).toHaveLength(0);
+  });
+
+  it('preserves flushed Formik edits when full tasks replacement runs before Redux reinitializes', async () => {
+    const deletedTask = makeTask({ apiName: 'task-deleted', uuid: 'uuid-deleted', number: 1 });
+    const remainingTask = makeTask({
+      apiName: 'task-2',
+      uuid: 'uuid-2',
+      number: 2,
+      rawPerformers: [
+        { type: ETaskPerformerType.Manager, sourceId: 'task-deleted', label: 'Manager', apiName: 'perf-1' } as any,
+      ],
+    });
+    const template = makeTemplate({
+      isActive: true,
+      description: 'old',
+      tasks: [deletedTask, remainingTask],
+    });
+    let handle: ISpyHandle | null = null;
+
+    render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
+
+    act(() => {
+      handle!.setFieldValue('description', 'saved edit', false);
+    });
+    await flushPersist();
+
+    act(() => {
+      handle!.setFieldValue('name', 'unsaved edit', false);
+      handle!.setFieldValue('tasks', [{ ...remainingTask, number: 1 }], false);
+    });
+
+    expect(handle!.values.description).toBe('saved edit');
+    expect(handle!.values.name).toBe('unsaved edit');
+    expect(handle!.values.isActive).toBe(false);
+    expect(handle!.values.tasks).toHaveLength(1);
+    expect(handle!.values.tasks[0].rawPerformers).toHaveLength(0);
+  });
+
   it('cleans stale performer references synchronously when a task output field is removed', () => {
     const taskWithOutput = makeTask({
       apiName: 'task-1',
