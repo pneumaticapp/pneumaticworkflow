@@ -3,8 +3,9 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef } fr
 import { FormikProvider, useFormik, useFormikContext } from 'formik';
 import { useDispatch } from 'react-redux';
 
-import { ITemplate, ITemplateTask } from '../../types/template';
+import { ITemplate, ITemplateTask, IKickoff } from '../../types/template';
 import { patchTemplate } from '../../redux/actions';
+import { cleanTemplateReferences } from '../../utils/template';
 
 type TSetFieldValue = (field: string, value: unknown, shouldValidate?: boolean) => void;
 type TSetValues = (values: ITemplate, shouldValidate?: boolean) => void;
@@ -119,6 +120,46 @@ function mergePreservedTasks(
   });
 }
 
+function getKickoffFieldApiNames(kickoff: IKickoff): string[] {
+  return (kickoff.fields || [])
+    .map((field) => field.apiName)
+    .filter(Boolean)
+    .sort();
+}
+
+function didKickoffFieldsChange(previous: IKickoff, next: IKickoff): boolean {
+  const previousNames = getKickoffFieldApiNames(previous);
+  const nextNames = getKickoffFieldApiNames(next);
+
+  return previousNames.length !== nextNames.length
+    || previousNames.some((name, index) => name !== nextNames[index]);
+}
+
+function shouldRunReferenceCleanup(field: string, previous: ITemplate, next: ITemplate): boolean {
+  if (field === 'tasks') {
+    return true;
+  }
+
+  if (field === 'kickoff') {
+    return didKickoffFieldsChange(previous.kickoff, next.kickoff);
+  }
+
+  return false;
+}
+
+function applyReferenceCleanup(template: ITemplate): ITemplate {
+  const cleaned = cleanTemplateReferences(template);
+  const wfNameTemplate = template.wfNameTemplate == null && cleaned.wfNameTemplate === ''
+    ? template.wfNameTemplate
+    : cleaned.wfNameTemplate;
+
+  return {
+    ...template,
+    tasks: cleaned.tasks,
+    wfNameTemplate,
+  };
+}
+
 function getChangedFields(previous: ITemplate, next: ITemplate): Partial<ITemplate> {
   const changedFields: Partial<ITemplate> = {};
 
@@ -181,13 +222,24 @@ export function useTemplateForm(initialValues: ITemplate) {
   const setFieldValue = useCallback<TSetFieldValue>(
     (field, value, shouldValidate) => {
       dirtyRef.current = true;
-      const nextValues = setNestedFieldValue(
-        applyPendingEdits(lastSyncedInitialValuesRef.current, pendingUserEditsRef.current),
-        field,
-        value,
+      const currentValues = applyPendingEdits(
+        lastSyncedInitialValuesRef.current,
+        pendingUserEditsRef.current,
       );
+      let nextValues = setNestedFieldValue(currentValues, field, value);
+      const runCleanup = shouldRunReferenceCleanup(field, currentValues, nextValues);
+
+      if (runCleanup) {
+        nextValues = applyReferenceCleanup(nextValues);
+      }
+
       pendingUserEditsRef.current = getChangedFields(lastSyncedInitialValuesRef.current, nextValues);
-      formik.setFieldValue(field, value, shouldValidate);
+
+      if (runCleanup) {
+        formik.setValues(nextValues, shouldValidate);
+      } else {
+        formik.setFieldValue(field, value, shouldValidate);
+      }
     },
     [formik],
   );

@@ -2,12 +2,18 @@
 import * as React from 'react';
 import { act, render } from '@testing-library/react';
 
-import { ITemplate, ITemplateTask } from '../../../types/template';
+import {
+  ITemplate,
+  ITemplateTask,
+  ETaskPerformerType,
+} from '../../../types/template';
+import { EConditionAction, EConditionOperators, EConditionLogicOperations, TConditionRule } from '../TaskForm/Conditions/types';
 import { TemplateForm, useTemplateField, useTemplateForm, useTemplatePersist } from '../useTemplateForm';
 import { patchTemplate } from '../../../redux/actions';
 
 jest.mock('react-redux', () => ({
   useDispatch: jest.fn(() => jest.fn()),
+  connect: () => (component: unknown) => component,
 }));
 
 jest.mock('../../../redux/actions', () => ({
@@ -576,5 +582,90 @@ describe('TemplateFormPersistProvider reinitialize', () => {
       (patchTemplate as unknown as jest.Mock).mock.calls[0][0].changedFields,
       'tasks.0.name',
     )).toBe(false);
+  });
+});
+
+describe('useTemplateForm reference cleanup', () => {
+  beforeEach(() => {
+    (patchTemplate as unknown as jest.Mock).mockClear();
+  });
+
+  it('cleans stale condition rules synchronously when kickoff fields are removed', () => {
+    const template = makeTemplate({
+      kickoff: {
+        description: '',
+        fields: [
+          { apiName: 'valid-field', name: 'Valid', order: 1 } as any,
+          { apiName: 'removed-field', name: 'Removed', order: 2 } as any,
+        ],
+      } as any,
+      tasks: [
+        makeTask({
+          conditions: [
+            {
+              apiName: 'cond-1',
+              order: 1,
+              action: EConditionAction.StartTask,
+              rules: [
+                {
+                  field: 'valid-field',
+                  operator: EConditionOperators.Equal,
+                  logicOperation: EConditionLogicOperations.And,
+                  predicateApiName: '1',
+                } as TConditionRule,
+                {
+                  field: 'removed-field',
+                  operator: EConditionOperators.Equal,
+                  logicOperation: EConditionLogicOperations.And,
+                  predicateApiName: '2',
+                } as TConditionRule,
+              ],
+            },
+          ],
+        }),
+      ],
+    });
+    let handle: ISpyHandle | null = null;
+
+    render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
+
+    act(() => {
+      handle!.setFieldValue(
+        'kickoff',
+        { description: '', fields: [{ apiName: 'valid-field', name: 'Valid', order: 1 }] },
+        false,
+      );
+    });
+
+    const rules = handle!.values.tasks[0].conditions[0].rules;
+    expect(rules).toHaveLength(1);
+    expect(rules[0].field).toBe('valid-field');
+    expect(patchTemplate).not.toHaveBeenCalled();
+  });
+
+  it('cleans stale performer references synchronously when tasks are removed', () => {
+    const deletedTask = makeTask({ apiName: 'task-deleted', uuid: 'uuid-deleted', number: 1 });
+    const remainingTask = makeTask({
+      apiName: 'task-2',
+      uuid: 'uuid-2',
+      number: 2,
+      rawPerformers: [
+        { type: ETaskPerformerType.Manager, sourceId: 'task-deleted', label: 'Manager', apiName: 'perf-1' } as any,
+        { type: ETaskPerformerType.User, sourceId: '1', label: 'User', apiName: 'perf-2' } as any,
+      ],
+    });
+    const template = makeTemplate({ tasks: [deletedTask, remainingTask] });
+    let handle: ISpyHandle | null = null;
+
+    render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
+
+    act(() => {
+      handle!.setFieldValue('tasks', [{ ...remainingTask, number: 1 }], false);
+    });
+
+    expect(handle!.values.tasks).toHaveLength(1);
+    expect(handle!.values.tasks[0].rawPerformers).toHaveLength(1);
+    expect(handle!.values.tasks[0].rawPerformers[0].apiName).toBe('perf-2');
+    expect(patchTemplate).not.toHaveBeenCalled();
   });
 });
