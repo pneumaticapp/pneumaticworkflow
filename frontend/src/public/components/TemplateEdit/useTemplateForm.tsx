@@ -76,6 +76,21 @@ export function useTemplateForm(initialValues: ITemplate) {
   });
 
   const dirtyRef = useRef(false);
+  const initialValuesRef = useRef(initialValues);
+
+  // Formik reinitializes `values` from `initialValues` whenever the Redux
+  // `template` prop changes (enableReinitialize). That change is NOT a user
+  // edit, so a dirty flag left set by a prior wrapped setter (e.g. the
+  // `setFieldValue('isActive', false)` issued by `flushPersist` right before
+  // its `patchTemplate` dispatch) must be cleared before the persist effect
+  // runs — otherwise the next flush treats the reinitialized values as a user
+  // edit and dispatches a `patchTemplate` diffing against an outdated
+  // `previousValuesRef`. Doing this during render (rather than in an effect)
+  // guarantees the flag is cleared before the child persist effect fires.
+  if (initialValuesRef.current !== initialValues) {
+    initialValuesRef.current = initialValues;
+    dirtyRef.current = false;
+  }
 
   const setFieldValue = useCallback<TSetFieldValue>(
     (field, value, shouldValidate) => {
@@ -227,6 +242,17 @@ export function TemplateFormPersistProvider({ dirtyRef, children }: ITemplateFor
       dispatchRef.current(patchTemplate({ changedFields }));
     }
   }, [consumePendingChanges]);
+
+  // Registered before the values effect so its cleanup runs first on unmount
+  // and clears the pending diff before the values effect cleanup calls
+  // `flushPersist`, preventing discarded edits from being dispatched when the
+  // user leaves the page (e.g. "Discard changes" + navigate away).
+  useEffect(() => {
+    return () => {
+      previousValuesRef.current = valuesRef.current;
+      dirtyRefRef.current.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (previousValuesRef.current === values) {

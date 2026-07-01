@@ -86,7 +86,6 @@ export function TemplateEdit({
   loadTemplateVariablesSuccess,
 }: TTemplateEditProps) {
   const { formatMessage } = useIntl();
-  const { owners } = template;
   const { formik, setFieldValue, setValues, dirtyRef } = useTemplateForm(template);
   const { tasks } = formik.values;
   const billingPlan = useSelector(getSubscriptionPlan);
@@ -138,8 +137,15 @@ export function TemplateEdit({
     }
 
     if (users.length !== prevUsers?.length) {
-      const newTemplateOwners = getNormalizedTemplateOwners(owners, accessConditions, users);
-      setTemplate({ ...template, owners: newTemplateOwners });
+      // Build from the current Formik values, not the Redux `template` prop.
+      // Field edits live in Formik until `TemplateFormPersistProvider` flushes
+      // them to Redux, so the Redux snapshot can lag behind. Formik uses
+      // `enableReinitialize`, so a `setTemplate` built from the stale Redux
+      // prop would reset Formik to that snapshot and discard any uncommitted
+      // edits. Spreading from `formik.values` carries those edits into the
+      // new Redux state so the reinitialize is a no-op for them.
+      const newTemplateOwners = getNormalizedTemplateOwners(formik.values.owners, accessConditions, users);
+      setTemplate({ ...formik.values, owners: newTemplateOwners });
     }
   }, [prevTemplate, prevLocation, prevUsers]);
 

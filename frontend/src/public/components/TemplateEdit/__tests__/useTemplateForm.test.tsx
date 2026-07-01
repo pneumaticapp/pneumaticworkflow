@@ -238,6 +238,25 @@ describe('TemplateFormPersistProvider deactivation', () => {
     expect(patchTemplate).toHaveBeenCalledTimes(1);
   });
 
+  it('does not dispatch patchTemplate on unmount when pending edits were not flushed', async () => {
+    const template = makeTemplate({ isActive: true, description: 'old' });
+    let handle: ISpyHandle | null = null;
+
+    const { unmount } = render(
+      <TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />,
+    );
+
+    act(() => {
+      handle!.setFieldValue('description', 'discarded edit', false);
+    });
+
+    unmount();
+
+    await flushPersist();
+
+    expect(patchTemplate).not.toHaveBeenCalled();
+  });
+
   it('still persists a second edit when the first triggers an isActive deactivation', async () => {
     const template = makeTemplate({ isActive: true, description: 'old' });
     let handle: ISpyHandle | null = null;
