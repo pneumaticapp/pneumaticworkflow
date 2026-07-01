@@ -150,7 +150,7 @@ class TestTaskUpdateVersionService:
         data = {
             'id': 27,
             'api_name': 'task-r5btf7',
-            'name': 'Task тДЦ1',
+            'name': 'Task #1',
             'description': None,
             'number': 1,
             'require_completion_by_all': False,
@@ -249,7 +249,7 @@ class TestTaskUpdateVersionService:
         data = {
             'id': 27,
             'api_name': 'task-r5btf7',
-            'name': 'Task тДЦ1',
+            'name': 'Task #1',
             'description': '*Some text*',
             'clear_description': 'Some text',
             'number': 1,
@@ -399,7 +399,7 @@ class TestTaskUpdateVersionService:
         data = {
             'id': 27,
             'api_name': 'task-r5btf7',
-            'name': 'Task тДЦ1',
+            'name': 'Task #1',
             'description': None,
             'number': 1,
             'require_completion_by_all': False,
@@ -500,7 +500,7 @@ class TestTaskUpdateVersionService:
         data = {
             'id': 27,
             'api_name': 'task-r5btf7',
-            'name': 'Task тДЦ1',
+            'name': 'Task #1',
             'description': None,
             'number': 1,
             'require_completion_by_all': False,
@@ -602,7 +602,7 @@ class TestTaskUpdateVersionService:
         data = {
             'id': 27,
             'api_name': 'task-r5btf7',
-            'name': 'Task тДЦ1',
+            'name': 'Task #1',
             'description': None,
             'number': 1,
             'require_completion_by_all': False,

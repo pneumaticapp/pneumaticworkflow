@@ -21,7 +21,6 @@ import { ExtraFieldsHelper } from '../../../TemplateEdit/ExtraFields/utils/Extra
 import { getNormalizedKickoff } from '../../../../utils/mappers';
 import { Header } from '../../../UI/Typeography/Header';
 import { getPublicFormConfig } from '../../../../utils/getConfig';
-import { deleteRemovedFilesFromFields } from '../../../../api/deleteRemovedFilesFromFields';
 import { RichText } from '../../../RichText';
 import { usersFetchStarted } from '../../../../redux/accounts/slice';
 import { TPublicFormType } from '../../../../types/publicForms';
@@ -91,7 +90,6 @@ export function PublicForm({ type }: IPublicFormsAppProps) {
     try {
       setFormState(EPublicFormState.Submitting);
 
-      await deleteRemovedFilesFromFields(publicForm.kickoff.fields);
       const normalizedKickoffFileds = getNormalizedKickoff(publicForm.kickoff);
       const runFormResult = await runPublicForm(captcha, normalizedKickoffFileds);
 

@@ -1,7 +1,7 @@
 /* eslint-disable react/no-children-prop */
 import * as React from 'react';
 import { Route, Link, LinkProps } from 'react-router-dom';
-import * as H from 'history';
+import type * as H from 'history';
 
 import { history } from '../../utils/history';
 

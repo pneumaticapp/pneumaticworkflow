@@ -2,7 +2,7 @@
 /* prettier-ignore */
 import * as React from 'react';
 import { useIntl } from 'react-intl';
-import * as classnames from 'classnames';
+import classnames from 'classnames';
 
 import { getPublicFormConfig } from '../../../../utils/getConfig';
 

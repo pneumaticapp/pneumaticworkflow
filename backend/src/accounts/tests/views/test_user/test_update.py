@@ -21,26 +21,213 @@ from src.processes.models.workflows.task import TaskPerformer
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_guest,
-    create_test_group,
     create_test_owner,
     create_test_workflow,
     create_test_not_admin,
+    create_test_group,
 )
+from src.payment.stripe.service import StripeService
 from src.utils.validation import ErrorCode
 
 pytestmark = pytest.mark.django_db
+date_format = '%Y-%m-%dT%H:%M:%S.%fZ'
 
 
 def test_put__all_fields__ok(api_client, mocker):
 
     # arrange
-    account = create_test_account()
-    owner = create_test_owner(account=account)
-    group = create_test_group(account=account, users=[owner])
-    first_name = 'First'
-    last_name = 'Last'
-    password = 'some password'
+    analysis_mock = mocker.patch(
+        'src.accounts.services.user.AnalyticService.'
+        'users_digest',
+    )
+    user = create_test_owner()
+    old_photo = user.photo
+    request_data = {
+        'first_name': 'First',
+        'last_name': 'Last',
+        'photo': 'https://my.lovely.photo.jpg',
+        'phone': '79999999990',
+        'is_tasks_digest_subscriber': False,
+        'is_digest_subscriber': False,
+        'is_comments_mentions_subscriber': False,
+        'is_new_tasks_subscriber': False,
+        'is_complete_tasks_subscriber': False,
+        'is_newsletters_subscriber': False,
+        'is_special_offers_subscriber': False,
+        'language': 'en',
+        'timezone': 'America/Anchorage',
+        'date_fmt': UserDateFormat.API_USA_24,
+        'date_fdw': UserFirstDayWeek.THURSDAY,
+    }
+    stripe_service_init_mock = mocker.patch.object(
+        StripeService,
+        attribute='__init__',
+        return_value=None,
+    )
+    update_customer_mock = mocker.patch(
+        'src.payment.stripe.service.StripeService.'
+        'update_customer',
+    )
+    send_user_updated_mock = mocker.patch(
+        'src.notifications.tasks.'
+        'send_user_updated_notification.delay',
+    )
+    sync_account_file_fields_mock = mocker.patch(
+        'src.accounts.views.user.sync_account_file_fields',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.put(
+        path='/accounts/user',
+        data=request_data,
+    )
+
+    # assert
+    assert response.status_code == 200
+    sync_account_file_fields_mock.assert_called_once_with(
+        account=user.account,
+        user=user,
+        old_values=[old_photo],
+        new_values=[request_data['photo']],
+    )
+    data = response.data
+    assert data['id'] == user.id
+    assert data['email'] == user.email
+    assert data['phone'] == request_data['phone']
+    assert data['photo'] == request_data['photo']
+    assert data['first_name'] == request_data['first_name']
+    assert data['last_name'] == request_data['last_name']
+    assert data['type'] == user.type
+    assert data['date_joined_tsp'] == user.date_joined.timestamp()
+    assert data['is_admin'] == user.is_admin
+    assert data['is_account_owner'] == user.is_account_owner
+    assert data['language'] == request_data['language']
+    assert data['timezone'] == request_data['timezone']
+    assert data['is_tasks_digest_subscriber'] == (
+        request_data['is_tasks_digest_subscriber']
+    )
+    assert data['is_digest_subscriber'] == (
+        request_data['is_digest_subscriber']
+    )
+    assert data['is_newsletters_subscriber'] == (
+        request_data['is_newsletters_subscriber']
+    )
+    assert data['is_special_offers_subscriber'] == (
+        request_data['is_special_offers_subscriber']
+    )
+    assert data['is_new_tasks_subscriber'] == (
+        request_data['is_new_tasks_subscriber']
+    )
+    assert data['is_complete_tasks_subscriber'] == (
+        request_data['is_complete_tasks_subscriber']
+    )
+    assert data['is_comments_mentions_subscriber'] == (
+        request_data['is_comments_mentions_subscriber']
+    )
+
+    user.refresh_from_db()
+    assert user.language == request_data['language']
+    assert user.timezone == request_data['timezone']
+    assert user.date_fmt == UserDateFormat.PY_USA_24
+    assert user.date_fdw == request_data['date_fdw']
+    assert user.first_name == request_data['first_name']
+    assert user.last_name == request_data['last_name']
+    assert user.photo == request_data['photo']
+    assert user.phone == request_data['phone']
+    assert user.is_tasks_digest_subscriber == (
+        request_data['is_tasks_digest_subscriber']
+    )
+    assert user.is_digest_subscriber == (
+        request_data['is_digest_subscriber']
+    )
+    assert user.is_comments_mentions_subscriber == (
+        request_data['is_comments_mentions_subscriber']
+    )
+    assert user.is_new_tasks_subscriber == (
+        request_data['is_new_tasks_subscriber']
+    )
+    assert user.is_complete_tasks_subscriber == (
+        request_data['is_complete_tasks_subscriber']
+    )
+    assert user.is_newsletters_subscriber == (
+        request_data['is_newsletters_subscriber']
+    )
+    assert user.is_special_offers_subscriber == (
+        request_data['is_special_offers_subscriber']
+    )
+    analysis_mock.assert_called_once_with(
+        user=user,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+    stripe_service_init_mock.assert_called_once_with(
+        user=user,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+    update_customer_mock.assert_called_once()
+    send_user_updated_mock.assert_called_once_with(
+        logging=user.account.log_api_requests,
+        account_id=user.account_id,
+        user_data={
+            'id': user.id,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'email': user.email,
+            'photo': user.photo,
+            'is_admin': user.is_admin,
+            'is_account_owner': user.is_account_owner,
+            'manager_id': user.manager_id,
+            'subordinates_ids': [],
+        },
+    )
+
+
+def test_put__photo_unchanged__no_sync_called(api_client, mocker):
+
+    # arrange
+    user = create_test_owner()
+    user.photo = 'https://my.lovely.photo.jpg'
+    user.save()
+    request_data = {
+        'first_name': 'Updated',
+        'photo': 'https://my.lovely.photo.jpg',
+    }
+    mocker.patch.object(
+        StripeService,
+        attribute='__init__',
+        return_value=None,
+    )
+    mocker.patch(
+        'src.payment.stripe.service.StripeService.update_customer',
+    )
+    sync_account_file_fields_mock = mocker.patch(
+        'src.accounts.views.user.sync_account_file_fields',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.put(
+        path='/accounts/user',
+        data=request_data,
+    )
+
+    # assert
+    assert response.status_code == 200
+    sync_account_file_fields_mock.assert_not_called()
+
+
+def test_update__partial__update_request_fields(mocker, api_client):
+
+    # arrange
+    owner = create_test_owner()
+    group = create_test_group(owner.account)
+    group.users.add(owner)
+    password = 'new password'
     is_admin = True
+    first_name = 'Old first name'
+    last_name = 'Old last name'
     photo = 'https://my.lovely.photo.jpg'
     phone = '79999999990'
     is_tasks_digest_subscriber = False

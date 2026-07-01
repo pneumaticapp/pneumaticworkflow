@@ -6,15 +6,7 @@ import { FormikProvider, useFormik } from 'formik';
 import { intlMock } from '../../../../__stubs__/intlMock';
 import { Checkbox } from '../../../UI/Fields/Checkbox';
 import { ITemplateTask } from '../../../../types/template';
-import { TaskFormPersistProvider } from '../useTaskForm';
-
-// TaskPerformers uses `import React from 'react'` (default import),
-// which doesn't work with ts-jest without esModuleInterop.
-// Mocking the react module so that default === module
-jest.mock('react', () => {
-  const actual = jest.requireActual('react');
-  return { ...actual, default: actual, __esModule: true };
-});
+import { TaskPerformers } from '../TaskPerformers';
 
 jest.mock('../../../UI/Fields/Checkbox', () => ({
   Checkbox: jest.fn(() => null),
@@ -44,10 +36,6 @@ jest.mock('../../../../utils/users', () => ({
 jest.mock('../../../../utils/createId', () => ({
   createPerformerApiName: jest.fn(() => 'perf-mock'),
 }));
-
-// Deferred import after react mock
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { TaskPerformers } = require('../TaskPerformers');
 
 describe('TaskPerformers', () => {
   const t = (id: string) => intlMock.formatMessage({ id });

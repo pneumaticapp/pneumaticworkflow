@@ -111,6 +111,7 @@ class SignUpMixin:
         gclid: Optional[str] = None,
         billing_sync: bool = True,
         request: Optional[HttpRequest] = None,
+        ms_graph_user_id: Optional[str] = None,
     ) -> Tuple[UserModel, PneumaticToken]:
 
         request = request or self.request
