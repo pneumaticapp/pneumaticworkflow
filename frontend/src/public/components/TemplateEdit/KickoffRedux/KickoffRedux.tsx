@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { IntlShape } from 'react-intl';
-import { useDispatch } from 'react-redux';
 
 import { getEmptyField } from './utils/getEmptyField';
 import { KickoffShareForm } from './KickoffShareForm';
@@ -9,47 +8,38 @@ import { isKickoffCleared } from './utils/isKickoffCleared';
 import { KickoffMenu } from './KickoffMenu';
 import { IntlMessages } from '../../IntlMessages';
 import { EMoveDirections, EInputNameBackgroundColor } from '../../../types/workflow';
-import { EExtraFieldMode, EExtraFieldType, IKickoff, IExtraField, ITemplate, ETemplateParts } from '../../../types/template';
+import { EExtraFieldMode, EExtraFieldType, IKickoff, IExtraField, ETemplateParts } from '../../../types/template';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { getNormalizeFieldsOrders, moveWorkflowField } from '../../../utils/workflows';
 import { ExtraFieldsMap } from '../ExtraFields/utils/ExtraFieldsMap';
 import { ExtraFieldIcon } from '../ExtraFields/utils/ExtraFieldIcon';
 import { ExtraFieldIntl } from '../ExtraFields';
 import { getEditedFields } from '../ExtraFields/utils/getEditedFields';
-import { ETemplateStatus } from '../../../types/redux';
 import { ExtraFieldsLabels } from '../ExtraFields/utils/ExtraFieldsLabels';
 import { getEmptyKickoff } from '../../../utils/template';
 import { useHashLink } from '../../../hooks/useHashLink';
 import { useWorkflowNameVariables } from '../TaskForm/utils/getTaskVariables';
 
 import styles from './KickoffRedux.css';
-import { patchTemplate } from '../../../redux/actions';
 import { InputWithVariables } from '../InputWithVariables';
 import { useDatasetOptions } from '../ExtraFields/utils/useDatasetOptions';
+import { useTemplateField } from '../useTemplateForm';
 
 export interface IKickoffReduxProps {
-  template: ITemplate;
   intl: IntlShape;
   accountId: number;
-  templateStatus: ETemplateStatus;
-  setKickoff(value: IKickoff): void;
 }
 
 export function KickoffRedux({
-  template: { kickoff, wfNameTemplate },
   intl: { formatMessage },
-  setKickoff,
   accountId,
 }: IKickoffReduxProps) {
-  const dispatch = useDispatch();
+  const { values, setFieldValue } = useTemplateField();
+  const { kickoff, wfNameTemplate } = values;
   const [isOpen, setIsOpen] = React.useState(false);
   const containerRef = React.useRef<HTMLDivElement | null>(null);
   const variables = useWorkflowNameVariables(kickoff);
   const datasetOptions = useDatasetOptions(kickoff.fields);
-
-  const editTemplate = (templateFields: Partial<ITemplate>) => {
-    dispatch(patchTemplate({ changedFields: templateFields }));
-  };
 
   useHashLink([
     {
@@ -70,12 +60,12 @@ export function KickoffRedux({
   };
 
   const handleChangeKickoff = (newKickoff: IKickoff) => {
-    setKickoff(newKickoff);
+    setFieldValue('kickoff', newKickoff, false);
   };
 
   const handleClearKickoff = () => {
     const newKickoff = { ...getEmptyKickoff() };
-    setKickoff(newKickoff);
+    handleChangeKickoff(newKickoff);
   };
 
   const handleCreateField = (type: EExtraFieldType) => {
@@ -125,9 +115,7 @@ export function KickoffRedux({
             templateVariables={variables}
             value={wfNameTemplate || ''}
             onChange={(value: string) => {
-              editTemplate({
-                wfNameTemplate: value,
-              });
+              setFieldValue('wfNameTemplate', value, false);
 
               return Promise.resolve(value);
             }}

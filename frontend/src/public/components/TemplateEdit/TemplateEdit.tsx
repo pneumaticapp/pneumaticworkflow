@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
 import { RouteComponentProps } from 'react-router-dom';
-import { debounce } from 'throttle-debounce';
 
 import { IInfoWarningProps } from './InfoWarningsModal';
 import { getClonedTask } from './utils/getClonedTask';
@@ -14,7 +13,7 @@ import { getVariables } from './TaskForm/utils/getTaskVariables';
 import { TemplateIntegrations } from './Integrations';
 import { ERoutes } from '../../constants/routes';
 import { TUserListItem } from '../../types/user';
-import { cleanTemplateReferences, getEmptyKickoff, getNormalizedTemplateOwners, getTemplateIdFromUrl } from '../../utils/template';
+import { getEmptyKickoff, getNormalizedTemplateOwners, getTemplateIdFromUrl } from '../../utils/template';
 import { checkSomeRouteIsActive, isCreateTemplate } from '../../utils/history';
 import { KickoffReduxContainer } from './KickoffRedux';
 import { moveTask } from '../../utils/workflows';
@@ -34,6 +33,7 @@ import { getUserFullName } from '../../utils/users';
 import { getSubscriptionPlan } from '../../redux/selectors/user';
 import { ESubscriptionPlan } from '../../types/account';
 import { TemplateSettings } from './TemplateSettings';
+import { TemplateForm, useTemplateForm } from './useTemplateForm';
 
 import styles from './TemplateEdit.css';
 import { getEmptyConditions } from './TaskForm/Conditions/utils/getEmptyConditions';
@@ -83,11 +83,11 @@ export function TemplateEdit({
   resetTemplateStore,
   saveTemplate,
   setTemplate,
-  setTemplateStatus,
   loadTemplateVariablesSuccess,
 }: TTemplateEditProps) {
   const { formatMessage } = useIntl();
-  const { tasks, owners } = template;
+  const { formik, setFieldValue, setValues, dirtyRef, pendingUserEditsRef, persistBaselineSyncRef } = useTemplateForm(template);
+  const { tasks } = formik.values;
   const billingPlan = useSelector(getSubscriptionPlan);
   const isFreePlan = billingPlan === ESubscriptionPlan.Free;
   const accessConditions = isSubscribed || isFreePlan;
@@ -137,8 +137,15 @@ export function TemplateEdit({
     }
 
     if (users.length !== prevUsers?.length) {
-      const newTemplateOwners = getNormalizedTemplateOwners(owners, accessConditions, users);
-      setTemplate({ ...template, owners: newTemplateOwners });
+      // Build from the current Formik values, not the Redux `template` prop.
+      // Field edits live in Formik until `TemplateFormPersistProvider` flushes
+      // them to Redux, so the Redux snapshot can lag behind. Formik uses
+      // `enableReinitialize`, so a `setTemplate` built from the stale Redux
+      // prop would reset Formik to that snapshot and discard any uncommitted
+      // edits. Spreading from `formik.values` carries those edits into the
+      // new Redux state so the reinitialize is a no-op for them.
+      const newTemplateOwners = getNormalizedTemplateOwners(formik.values.owners, accessConditions, users);
+      setTemplate({ ...formik.values, owners: newTemplateOwners });
     }
   }, [prevTemplate, prevLocation, prevUsers]);
 
@@ -253,38 +260,8 @@ export function TemplateEdit({
     } as ITemplate;
   };
 
-  const handleChangeTemplateField = (field: keyof ITemplate) => (value: ITemplate[keyof ITemplate]) => {
-    const workflow = template;
-    setTemplateStatus(ETemplateStatus.Saving);
-
-    if (field === 'isActive') {
-      const newWorkflow: ITemplate = {
-        ...workflow,
-        isActive: value as boolean,
-      };
-
-      setTemplate(newWorkflow);
-      submitDebounced();
-
-      return;
-    }
-
-    const updatedWorkflow: ITemplate = {
-      ...workflow,
-      [field]: value,
-      isActive: false,
-    };
-
-    const newWorkflow = (field === 'kickoff' || field === 'tasks')
-      ? cleanTemplateReferences(updatedWorkflow)
-      : updatedWorkflow;
-
-    setTemplate(newWorkflow);
-    submitDebounced();
-  };
-
   const changeTasks = (newTasks: ITemplateTask[]) => {
-    handleChangeTemplateField('tasks')(newTasks);
+    setFieldValue('tasks', newTasks, false);
   };
 
   const handleRemoveTask = (targetTask: ITemplateTask) => () => {
@@ -381,7 +358,7 @@ export function TemplateEdit({
         return task;
       });
 
-      handleChangeTemplateField('tasks')(newTasks);
+      changeTasks(newTasks);
     };
 
   const addDelay = (targetTask: ITemplateTask) => () => {
@@ -436,8 +413,6 @@ export function TemplateEdit({
     setOpenedDelays({ ...openedDelays, [taskUUID]: !isDelayOpen });
   };
 
-  const submitDebounced = debounce(350, saveTemplate);
-
   const getTaskListItem = (task: ITemplateTask, index: number, tasksLocal: ITemplateTask[]) => {
     const isTaskOpen = Boolean(openedTasks[task.uuid]);
     const isDelayOpen = Boolean(openedDelays[task.uuid]);
@@ -472,32 +447,41 @@ export function TemplateEdit({
   }
 
   return (
-    <div className={styles['container']}>
-      <AutoSaveStatusContainer onRetry={saveTemplate} />
+    <TemplateForm
+      formik={formik}
+      setFieldValue={setFieldValue}
+      setValues={setValues}
+      dirtyRef={dirtyRef}
+      pendingUserEditsRef={pendingUserEditsRef}
+      persistBaselineSyncRef={persistBaselineSyncRef}
+    >
+      <div className={styles['container']}>
+        <AutoSaveStatusContainer onRetry={saveTemplate} />
 
-      <div className={styles['template-wrapper']}>
-        <div className={styles['template-wrapper__info']}>
-          <TemplateSettings />
-        </div>
-        <div className={styles['template-wrapper__tasks']}>
-          {!accessConditions && <ConditionsBanner />}
-          <div className={styles['tasks']}>
-            <div className={styles['kickoff-wrapper']}>
-              <KickoffReduxContainer setKickoff={handleChangeTemplateField('kickoff')} />
+        <div className={styles['template-wrapper']}>
+          <div className={styles['template-wrapper__info']}>
+            <TemplateSettings />
+          </div>
+          <div className={styles['template-wrapper__tasks']}>
+            {!accessConditions && <ConditionsBanner />}
+            <div className={styles['tasks']}>
+              <div className={styles['kickoff-wrapper']}>
+                <KickoffReduxContainer />
+              </div>
+              {sortedTasks().map(getTaskListItem)}
+              <AddEntityButton
+                entities={[
+                  {
+                    title: EEntityTitle.Task,
+                    onAddEntity: handleAddTask,
+                  },
+                ]}
+              />
+              <TemplateIntegrations />
             </div>
-            {sortedTasks().map(getTaskListItem)}
-            <AddEntityButton
-              entities={[
-                {
-                  title: EEntityTitle.Task,
-                  onAddEntity: handleAddTask,
-                },
-              ]}
-            />
-            <TemplateIntegrations />
           </div>
         </div>
       </div>
-    </div>
+    </TemplateForm>
   );
 }
