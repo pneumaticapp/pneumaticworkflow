@@ -382,6 +382,64 @@ describe('useTemplateForm reinitialize', () => {
     expect(hookResult!.formik.values.name).toBe('unsaved edit');
     expect(hookResult!.formik.values.dateUpdated).toBe('2026-07-01T00:00:00Z');
   });
+
+  it('merges nested task field edits instead of storing dotted Formik paths as top-level keys', () => {
+    const task = makeTask({ name: 'Original Task' });
+    const template = makeTemplate({ tasks: [task], dateUpdated: null });
+    let hookResult: ReturnType<typeof useTemplateForm> | null = null;
+
+    const { rerender } = render(
+      <HookHarness
+        currentTemplate={template}
+        onReady={(result) => { hookResult = result; }}
+      />,
+    );
+
+    act(() => {
+      hookResult!.setFieldValue('tasks.0.name', 'Edited Task', false);
+    });
+
+    expect(hookResult!.pendingUserEditsRef.current).toEqual({
+      tasks: [expect.objectContaining({ name: 'Edited Task' })],
+    });
+    expect(Object.prototype.hasOwnProperty.call(hookResult!.pendingUserEditsRef.current, 'tasks.0.name')).toBe(false);
+
+    rerender(
+      <HookHarness
+        currentTemplate={{
+          ...template,
+          dateUpdated: '2026-07-01T00:00:00Z',
+        }}
+        onReady={(result) => { hookResult = result; }}
+      />,
+    );
+
+    expect(hookResult!.formik.values.tasks[0].name).toBe('Edited Task');
+    expect(hookResult!.formik.values.dateUpdated).toBe('2026-07-01T00:00:00Z');
+    expect(Object.prototype.hasOwnProperty.call(hookResult!.formik.values, 'tasks.0.name')).toBe(false);
+  });
+
+  it('merges whole-task updates via tasks[index] paths into pending edits', () => {
+    const task = makeTask({ name: 'Original Task', skipForStarter: false });
+    const template = makeTemplate({ tasks: [task], dateUpdated: null });
+    let hookResult: ReturnType<typeof useTemplateForm> | null = null;
+
+    render(
+      <HookHarness
+        currentTemplate={template}
+        onReady={(result) => { hookResult = result; }}
+      />,
+    );
+
+    act(() => {
+      hookResult!.setFieldValue('tasks.0', { ...task, skipForStarter: true }, false);
+    });
+
+    expect(hookResult!.pendingUserEditsRef.current).toEqual({
+      tasks: [expect.objectContaining({ skipForStarter: true })],
+    });
+    expect(Object.prototype.hasOwnProperty.call(hookResult!.pendingUserEditsRef.current, 'tasks.0')).toBe(false);
+  });
 });
 
 describe('TemplateFormPersistProvider reinitialize', () => {
@@ -478,5 +536,45 @@ describe('TemplateFormPersistProvider reinitialize', () => {
     await flushPersist();
 
     expect(patchTemplate).not.toHaveBeenCalled();
+  });
+
+  it('preserves nested task edits and sends valid changedFields after Redux reinitializes', async () => {
+    const task = makeTask({ name: 'Original Task' });
+    const template = makeTemplate({ isActive: true, tasks: [task], dateUpdated: null });
+    let handle: ISpyHandle | null = null;
+
+    const { rerender } = render(
+      <StatefulTemplateFormHarness
+        initialTemplate={template}
+        spy={(h) => { handle = h; }}
+      />,
+    );
+
+    act(() => {
+      handle!.setFieldValue('tasks.0.name', 'Edited Task', false);
+      rerender(
+        <StatefulTemplateFormHarness
+          initialTemplate={{
+            ...template,
+            dateUpdated: '2026-07-01T00:00:00Z',
+          }}
+          spy={(h) => { handle = h; }}
+        />,
+      );
+    });
+
+    await flushPersist();
+
+    expect(handle!.values.tasks[0].name).toBe('Edited Task');
+    expect(handle!.values.dateUpdated).toBe('2026-07-01T00:00:00Z');
+    expect(Object.prototype.hasOwnProperty.call(handle!.values, 'tasks.0.name')).toBe(false);
+    expect(patchTemplate).toHaveBeenCalledTimes(1);
+    expect((patchTemplate as unknown as jest.Mock).mock.calls[0][0].changedFields).toEqual({
+      tasks: [expect.objectContaining({ name: 'Edited Task' })],
+    });
+    expect(Object.prototype.hasOwnProperty.call(
+      (patchTemplate as unknown as jest.Mock).mock.calls[0][0].changedFields,
+      'tasks.0.name',
+    )).toBe(false);
   });
 });

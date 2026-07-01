@@ -60,6 +60,46 @@ export function useTemplatePersist(): ITemplatePersistContextValue {
   return ctx;
 }
 
+function setNestedFieldValue(obj: ITemplate, path: string, value: unknown): ITemplate {
+  const taskPathMatch = path.match(/^tasks\.(\d+)(?:\.(.+))?$/);
+
+  if (taskPathMatch) {
+    const index = Number(taskPathMatch[1]);
+    const taskField = taskPathMatch[2];
+    const tasks = [...obj.tasks];
+
+    if (!taskField) {
+      tasks[index] = value as ITemplateTask;
+    } else {
+      tasks[index] = {
+        ...tasks[index],
+        [taskField]: value,
+      };
+    }
+
+    return { ...obj, tasks };
+  }
+
+  return { ...obj, [path]: value };
+}
+
+function applyPendingEdits(initialValues: ITemplate, pendingEdits: Partial<ITemplate>): ITemplate {
+  if (Object.keys(pendingEdits).length === 0) {
+    return initialValues;
+  }
+
+  let mergedValues: ITemplate = { ...initialValues, ...pendingEdits };
+
+  if (pendingEdits.tasks && initialValues.tasks) {
+    mergedValues = {
+      ...mergedValues,
+      tasks: mergePreservedTasks(initialValues.tasks, pendingEdits.tasks),
+    };
+  }
+
+  return mergedValues;
+}
+
 function mergePreservedTasks(
   incomingTasks: ITemplateTask[],
   preservedTasks: ITemplateTask[],
@@ -123,14 +163,7 @@ export function useTemplateForm(initialValues: ITemplate) {
     const rawPending = dirtyRef.current ? pendingUserEditsRef.current : {};
 
     if (Object.keys(rawPending).length > 0) {
-      let mergedValues: ITemplate = { ...initialValues, ...rawPending };
-
-      if (rawPending.tasks && initialValues.tasks) {
-        mergedValues = {
-          ...mergedValues,
-          tasks: mergePreservedTasks(initialValues.tasks, rawPending.tasks),
-        };
-      }
+      const mergedValues = applyPendingEdits(initialValues, rawPending);
 
       pendingUserEditsRef.current = getChangedFields(initialValues, mergedValues);
       dirtyRef.current = true;
@@ -148,7 +181,12 @@ export function useTemplateForm(initialValues: ITemplate) {
   const setFieldValue = useCallback<TSetFieldValue>(
     (field, value, shouldValidate) => {
       dirtyRef.current = true;
-      pendingUserEditsRef.current = { ...pendingUserEditsRef.current, [field]: value };
+      const nextValues = setNestedFieldValue(
+        applyPendingEdits(lastSyncedInitialValuesRef.current, pendingUserEditsRef.current),
+        field,
+        value,
+      );
+      pendingUserEditsRef.current = getChangedFields(lastSyncedInitialValuesRef.current, nextValues);
       formik.setFieldValue(field, value, shouldValidate);
     },
     [formik],
