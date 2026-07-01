@@ -349,7 +349,6 @@ describe('FieldsetDetails', () => {
           labelPosition: 'top',
         })),
       );
-      expect(screen.queryByText(UNSAVED_SETTINGS_HINT)).not.toBeInTheDocument();
     });
   });
 
@@ -459,8 +458,6 @@ describe('FieldsetDetails', () => {
       fieldsPayload.forEach((field: Record<string, unknown>) => {
         expect(field).not.toHaveProperty('id');
       });
-
-      expect(screen.queryByText(UNSAVED_FIELDS_HINT)).not.toBeInTheDocument();
     });
   });
 
@@ -539,8 +536,6 @@ describe('FieldsetDetails', () => {
 
       const rulesPayload = getUpdateActionMock().mock.calls[0][0].rules;
       expect(rulesPayload[0].apiName).toBeUndefined();
-
-      expect(screen.queryByText(UNSAVED_RULES_HINT)).not.toBeInTheDocument();
     });
   });
 

@@ -112,7 +112,7 @@ function* createFieldsetSaga({ payload }: PayloadAction<ICreateFieldsetParams>) 
   }
 }
 
-function* updateFieldsetSaga({ payload }: PayloadAction<IUpdateFieldsetParams>) {
+export function* updateFieldsetSaga({ payload }: PayloadAction<IUpdateFieldsetParams>) {
   const abortController = new AbortController();
 
   try {
@@ -120,9 +120,9 @@ function* updateFieldsetSaga({ payload }: PayloadAction<IUpdateFieldsetParams>) 
     yield put(setCurrentFieldset(updatedFieldset));
   } catch (error) {
     if (isRequestCanceled(error)) return;
-    yield put(loadCurrentFieldsetFailed());
     NotificationManager.warning({ message: getErrorMessage(error) });
     logger.error('failed to update fieldset', error);
+    yield put(loadCurrentFieldset({ id: payload.id }));
   } finally {
     abortController.abort();
   }

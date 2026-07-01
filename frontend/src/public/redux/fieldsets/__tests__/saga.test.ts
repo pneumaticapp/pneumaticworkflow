@@ -2,14 +2,17 @@
 import { runSaga } from 'redux-saga';
 import { call } from 'redux-saga/effects';
 
-import { loadFieldsetsSaga, loadCurrentFieldsetSaga, deleteFieldsetSaga } from '../saga';
+import { loadFieldsetsSaga, loadCurrentFieldsetSaga, deleteFieldsetSaga, updateFieldsetSaga } from '../saga';
 import { getFieldsets } from '../../../api/fieldsets/getFieldsets';
 import { getFieldset } from '../../../api/fieldsets/getFieldset';
 import { deleteFieldset } from '../../../api/fieldsets/deleteFieldset';
+import { updateFieldset } from '../../../api/fieldsets/updateFieldset';
 import {
   loadFieldsets, loadFieldsetsSuccess, loadFieldsetsFailed,
   loadCurrentFieldset, loadCurrentFieldsetSuccess,
   removeFieldsetFromList,
+  setCurrentFieldset,
+  updateFieldsetAction,
 } from '../slice';
 import { initialState } from '../slice';
 import { history } from '../../../utils/history';
@@ -322,5 +325,78 @@ describe('deleteFieldsetSaga', () => {
         expect.objectContaining({ type: loadFieldsetsFailed.type }),
       ]),
     );
+  });
+});
+
+describe('updateFieldsetSaga', () => {
+  beforeEach(() => { jest.clearAllMocks(); });
+
+  const FIELDSET_ID = 10;
+
+  const runUpdateFieldset = async (payload: { id: number; name?: string; description?: string }) => {
+    const dispatched: IDispatchedAction[] = [];
+
+    await runSaga(
+      {
+        dispatch: (a: IDispatchedAction) => dispatched.push(a),
+        getState: () => ({ fieldsets: { ...initialState } }),
+      },
+      function* wrapper() {
+        yield call(updateFieldsetSaga, {
+          type: updateFieldsetAction.type,
+          payload,
+        });
+      },
+    ).toPromise();
+
+    return dispatched;
+  };
+
+  it('dispatches setCurrentFieldset on API success', async () => {
+    const updatedFieldset = makeFieldsetCatalogItem({ id: FIELDSET_ID, name: 'Updated' });
+    (updateFieldset as jest.Mock).mockResolvedValue(updatedFieldset);
+
+    const dispatched = await runUpdateFieldset({ id: FIELDSET_ID, name: 'Updated' });
+
+    expect(updateFieldset).toHaveBeenCalledTimes(1);
+    expect(dispatched).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ type: setCurrentFieldset.type }),
+      ]),
+    );
+    expect(dispatched).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ type: loadCurrentFieldset.type }),
+      ]),
+    );
+  });
+
+  it('dispatches loadCurrentFieldset on API error to rollback UI state', async () => {
+    (updateFieldset as jest.Mock).mockRejectedValue(new Error('Cannot modify bound fieldset'));
+
+    const dispatched = await runUpdateFieldset({ id: FIELDSET_ID, description: 'new desc' });
+
+    expect(dispatched).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: loadCurrentFieldset.type,
+          payload: { id: FIELDSET_ID },
+        }),
+      ]),
+    );
+    expect(dispatched).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ type: setCurrentFieldset.type }),
+      ]),
+    );
+  });
+
+  it('does nothing on canceled request', async () => {
+    (updateFieldset as jest.Mock).mockRejectedValue(new Error('canceled'));
+    (isRequestCanceled as jest.Mock).mockReturnValueOnce(true);
+
+    const dispatched = await runUpdateFieldset({ id: FIELDSET_ID, name: 'x' });
+
+    expect(dispatched).toEqual([]);
   });
 });

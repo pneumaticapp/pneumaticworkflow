@@ -9,7 +9,7 @@ import fieldsetsReducer, {
   loadFieldsetsCatalogSuccess,
 } from '../slice';
 import { IFieldsetCatalogItem } from '../../../types/fieldset';
-import { makeFieldsetCatalogItem, makeFieldsetTemplateRule } from '../../../__stubs__/fieldsets.factory';
+import { makeFieldsetCatalogItem } from '../../../__stubs__/fieldsets.factory';
 import { IFieldsetsStore } from '../../../types/redux';
 
 const makeStateWithList = (items: IFieldsetCatalogItem[], overrides: Partial<IFieldsetsStore> = {}): IFieldsetsStore => ({
@@ -89,53 +89,18 @@ describe('fieldsets slice', () => {
   });
 
   describe('updateFieldsetAction', () => {
-    it('applies provided fields when id matches', () => {
+    it('resets isCatalogLoaded and does NOT mutate currentFieldset', () => {
       const state: IFieldsetsStore = {
         ...initialState,
-        currentFieldset: makeFieldsetCatalogItem({ id: 5, name: 'Old', description: 'Desc' }),
+        isCatalogLoaded: true,
+        currentFieldset: makeFieldsetCatalogItem({ id: 5, name: 'Original' }),
       };
 
       const result = fieldsetsReducer(state, updateFieldsetAction({ id: 5, name: 'Updated' }));
 
-      if (result.currentFieldset === null) throw new Error('expected currentFieldset');
-      expect(result.currentFieldset.name).toBe('Updated');
-      expect(result.currentFieldset.description).toBe('Desc');
-    });
-
-    it('does NOT apply when id does not match', () => {
-      const state: IFieldsetsStore = {
-        ...initialState,
-        currentFieldset: makeFieldsetCatalogItem({ id: 5, name: 'Original' }),
-      };
-
-      const result = fieldsetsReducer(state, updateFieldsetAction({ id: 999, name: 'Should Not Apply' }));
-
+      expect(result.isCatalogLoaded).toBe(false);
       if (result.currentFieldset === null) throw new Error('expected currentFieldset');
       expect(result.currentFieldset.name).toBe('Original');
-    });
-
-    it('does NOT apply when currentFieldset is null', () => {
-      const state: IFieldsetsStore = { ...initialState, currentFieldset: null };
-
-      const result = fieldsetsReducer(state, updateFieldsetAction({ id: 5, name: 'Should Not Apply' }));
-
-      expect(result.currentFieldset).toBeNull();
-    });
-
-    it('overwrites rules entirely', () => {
-      const state: IFieldsetsStore = {
-        ...initialState,
-        currentFieldset: makeFieldsetCatalogItem({
-          id: 5,
-          rules: [makeFieldsetTemplateRule({ apiName: 'rule-1', type: 'show', value: 'old' })],
-        }),
-      };
-      const newRules = [makeFieldsetTemplateRule({ apiName: 'rule-2', type: 'hide', value: 'new', fields: ['f1'] })];
-
-      const result = fieldsetsReducer(state, updateFieldsetAction({ id: 5, rules: newRules }));
-
-      if (result.currentFieldset === null) throw new Error('expected currentFieldset');
-      expect(result.currentFieldset.rules).toEqual(newRules);
     });
   });
 

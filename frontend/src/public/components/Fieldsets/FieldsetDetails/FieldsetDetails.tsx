@@ -133,8 +133,6 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId } } }: TFieldsetD
     setHasUnsavedSettingsChanges(true);
   };
 
-
-
   const handleSaveSettings = () => {
     if (!fieldset) return;
     dispatch(updateFieldsetAction({
@@ -142,7 +140,6 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId } } }: TFieldsetD
       description: localDescription,
       labelPosition: localLabelPosition,
     }));
-    setHasUnsavedSettingsChanges(false);
   };
 
   const getSortedFields = useCallback(() => {
@@ -183,7 +180,6 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId } } }: TFieldsetD
       id: fieldset.id,
       fields: fieldsPayload as any,
     }));
-    setHasUnsavedChanges(false);
   };
 
   // Rules handlers
@@ -238,7 +234,6 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId } } }: TFieldsetD
       id: fieldset.id,
       rules: rulesPayload as IFieldsetTemplateRule[],
     }));
-    setHasUnsavedRuleChanges(false);
   };
 
   if (isLoading) {
