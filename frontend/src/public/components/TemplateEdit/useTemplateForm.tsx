@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef } from 'react';
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { FormikProvider, useFormik, useFormikContext } from 'formik';
 import { useDispatch } from 'react-redux';
 
@@ -470,11 +470,11 @@ export function TemplateFormPersistProvider({
     }
   }, [takePendingChanges]);
 
-  // Registered before the values effect so its cleanup runs first on unmount
-  // and clears the pending diff before the values effect cleanup calls
-  // `flushPersist`, preventing discarded edits from being dispatched when the
-  // user leaves the page (e.g. "Discard changes" + navigate away).
-  useEffect(() => {
+  // useLayoutEffect so this cleanup runs before passive effect cleanups on
+  // unmount. The values effect cleanup calls `flushPersist`; clearing the
+  // pending diff here first prevents discarded edits from being dispatched when
+  // the user leaves the page (e.g. "Discard changes" + navigate away).
+  useLayoutEffect(() => {
     return () => {
       previousValuesRef.current = valuesRef.current;
       dirtyRefRef.current.current = false;

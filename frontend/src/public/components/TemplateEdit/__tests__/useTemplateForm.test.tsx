@@ -320,7 +320,9 @@ describe('TemplateFormPersistProvider deactivation', () => {
       handle!.setFieldValue('description', 'discarded edit', false);
     });
 
-    unmount();
+    act(() => {
+      unmount();
+    });
 
     await flushPersist();
 
