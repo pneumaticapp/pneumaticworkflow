@@ -1,4 +1,5 @@
 import { ApiError } from '../commonRequest';
+import { createApiError } from '../utils/createApiError';
 
 describe('ApiError', () => {
   it('creates an instance with message, data, and status', () => {
@@ -57,28 +58,11 @@ describe('ApiError', () => {
   });
 });
 
-/**
- * Tests for the error interceptor logic.
- *
- * The interceptor (commonRequest.ts:94-111) does:
- *   const data = error.response?.data;
- *   const payload = typeof data === 'string' ? { error: data } : data ?? {};
- *   const message = payload.message || payload.error || error.message;
- *   return Promise.reject(new ApiError(message, payload, error.response?.status));
- *
- * We test the logic inline since the actual interceptor is attached to an
- * axios instance that requires extensive mocking of config, env, and auth.
- */
 describe('error interceptor logic (unit)', () => {
-  // Replicate the interceptor's payload extraction logic
   function extractPayload(responseData: any) {
     const data = responseData;
     const payload = typeof data === 'string' ? { error: data } : data ?? {};
     return payload;
-  }
-
-  function extractMessage(payload: any, fallbackMessage: string) {
-    return payload.message || payload.error || fallbackMessage;
   }
 
   it('extracts data from response.data object', () => {
@@ -110,40 +94,15 @@ describe('error interceptor logic (unit)', () => {
     expect(payload).toEqual({});
   });
 
-  it('creates ApiError with message from payload.message', () => {
-    const payload = { code: 'FILE_003', message: 'File size exceeds limit' };
-    const message = extractMessage(payload, 'Axios fallback');
-
-    expect(message).toBe('File size exceeds limit');
-  });
-
-  it('falls back to payload.error when no message', () => {
-    const payload = { error: 'Service unavailable' };
-    const message = extractMessage(payload, 'Axios fallback');
-
-    expect(message).toBe('Service unavailable');
-  });
-
-  it('falls back to error.message when no payload message/error', () => {
-    const payload = {};
-    const message = extractMessage(payload, 'Network Error');
-
-    expect(message).toBe('Network Error');
-  });
-
   it('preserves file service error format through pipeline', () => {
-    // Simulate full interceptor flow for a File Service error
     const responseData = {
       code: 'FILE_003',
       message: 'File size exceeds limit',
       details: { reason: 'Maximum allowed size is 100MB' },
     };
 
-    const payload = extractPayload(responseData);
-    const message = extractMessage(payload, 'fallback');
-    const error = new ApiError(message, payload, 413);
+    const error = createApiError(responseData, 413);
 
-    // Verify the complete error matches what getErrorMessage expects
     expect(error.message).toBe('File size exceeds limit');
     expect(error.status).toBe(413);
     expect((error.data as any).code).toBe('FILE_003');
@@ -151,14 +110,25 @@ describe('error interceptor logic (unit)', () => {
   });
 
   it('preserves code field from file service response (no camelCase)', () => {
-    // Key test: error interceptor does NOT apply mapToCamelCase to errors
-    // so 'code' stays 'code' (not transformed)
     const responseData = { code: 'AUTH_001', message: 'Authentication failed' };
 
     const payload = extractPayload(responseData);
-
-    // 'code' is already camelCase-safe, but verify it's not mangled
     expect(payload.code).toBe('AUTH_001');
     expect(payload.message).toBe('Authentication failed');
   });
+  it('copies payload.message to error.message via Object.assign', () => {
+    const error = createApiError({ message: 'Permission denied', code: 'PERM_001' }, 403);
+
+    expect(error.message).toBe('Permission denied');
+    expect(error.status).toBe(403);
+  });
+
+  it('creates ApiError with empty message for payload without message field (regression #47550)', () => {
+    const error = createApiError({ detail: 'Some technical error from Django' }, 500);
+
+    expect(error.message).toBe('');
+    expect(error.data).toEqual({ detail: 'Some technical error from Django' });
+    expect(error.status).toBe(500);
+  });
 });
+
