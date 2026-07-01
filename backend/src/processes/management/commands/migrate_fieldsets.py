@@ -1,4 +1,6 @@
-# ruff: noqa: T201 BLE001
+# ruff: noqa: T201
+import copy
+
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from src.processes.models.templates.fieldset import FieldsetTemplate
@@ -8,188 +10,175 @@ from src.processes.services.fieldsets.fieldset import FieldSetTemplateService
 
 class Command(BaseCommand):
 
-    def get_drafts_by_fieldsets(self) -> dict:
-        """
-        Returns a dict where the key is fieldset api_name
-        and the value is a list of template IDs that contain that fieldset.
-        """
-        result = {}
-
-        for draft_obj in TemplateDraft.objects.all():
-            draft = draft_obj.draft
-            if not isinstance(draft, dict):
-                continue
-
-            # Process tasks -> fieldsets
-            for task in draft.get('tasks') or []:
-                for fieldset in task.get('fieldsets') or []:
-                    if isinstance(fieldset, dict):
-                        api_name = fieldset.get('api_name')
-                        if api_name:
-                            result.setdefault(api_name, set())
-                            result[api_name].add(draft_obj.id)
-
-            # Process kickoff -> fieldsets
-            kickoff = draft.get('kickoff')
-            if isinstance(kickoff, dict):
-                for fieldset in kickoff.get('fieldsets') or []:
-                    if isinstance(fieldset, dict):
-                        api_name = fieldset.get('api_name')
-                        if api_name:
-                            result.setdefault(api_name, set())
-                            result[api_name].add(draft_obj.id)
-
-        return result
-
     def update_draft_fieldset(
         self,
-        draft_id: int,
+        template_draft: TemplateDraft,
         fieldset_data: dict,
         fieldset_api_name: str,
-        shared_fieldset_id: int,
     ):
-        draft_obj = TemplateDraft.objects.get(id=draft_id)
-        draft = draft_obj.draft
+        draft = template_draft.draft
         if not isinstance(draft, dict):
             return
 
+        print('--- update template draft')
         updated = False
+        # Update matching fieldsets in kickoff
+        kickoff = draft.get('kickoff')
+        new_kickoff_fieldsets = []
+        if isinstance(kickoff, dict):
+            kickoff_fieldsets = kickoff.get('fieldsets') or []
+            for i in range(len(kickoff_fieldsets)):
+                api_name = kickoff_fieldsets[i].get('api_name')
+                if api_name == fieldset_api_name:
+                    if not updated:
+                        new_kickoff_fieldsets.append(fieldset_data)
+                        print('---|--- new kickoff fieldset')
+                        updated = True
+                    else:
+                        print('---|--- duplicate kickoff fieldset - removed')
+                else:
+                    new_kickoff_fieldsets.append(kickoff_fieldsets[i])
+            kickoff['fieldsets'] = new_kickoff_fieldsets
 
         # Update matching fieldsets in tasks
         for task in draft.get('tasks') or []:
-            for fieldset in task.get('fieldsets') or []:
-                if fieldset.get('api_name') == fieldset_api_name:
-                    fieldset.update(fieldset_data)
-                    fieldset['shared_fieldset_id'] = shared_fieldset_id
-                    updated = True
-                    print(
-                        f'*** Draft {draft_id} '
-                        f'(template {draft_obj.draft["name"]})'
-                        f' - task "{task.get("name", "?")}"'
-                        f' - fieldset "{fieldset_data["name"]}" updated',
-                    )
-
-        # Update matching fieldsets in kickoff
-        kickoff = draft.get('kickoff')
-        if isinstance(kickoff, dict):
-            for fieldset in kickoff.get('fieldsets') or []:
-                if fieldset.get('api_name') == fieldset_api_name:
-                    fieldset.update(fieldset_data)
-                    fieldset['shared_fieldset_id'] = shared_fieldset_id
-                    updated = True
-                    print(
-                        f'*** Draft {draft_id} '
-                        f'(template {draft_obj.draft["name"]})'
-                        f' - kickoff'
-                        f' - fieldset "{fieldset_data["name"]}" updated',
-                    )
-
-        if updated:
-            draft_obj.save(update_fields=('draft',))
-            print(f'  Draft {draft_id} saved')
+            new_task_fieldsets = []
+            task_fieldsets = task.get('fieldsets') or []
+            for i in range(len(task_fieldsets)):
+                api_name = task_fieldsets[i].get('api_name')
+                if api_name == fieldset_api_name:
+                    if not updated:
+                        task_fieldsets.append(fieldset_data)
+                        print(
+                            f'---|--- new task fieldset: '
+                            f'task: "{task["name"]}"',
+                        )
+                        updated = True
+                    else:
+                        print('---|--- duplicate kickoff fieldset - removed')
+                        del task_fieldsets[i]
+                else:
+                    new_task_fieldsets.append(task_fieldsets[i])
+            task['fieldsets'] = new_kickoff_fieldsets
+        template_draft.save(update_fields=('draft',))
 
     def handle(self, *args, **options):
-        drafts_by_old_fieldsets = self.get_drafts_by_fieldsets()
         old_fieldsets = (
             FieldsetTemplate.objects
             .filter(is_shared=True)
+            .exclude(template_id=None)
             .order_by('account_id')
         )
         with transaction.atomic():
-            for old_fieldset in old_fieldsets:
+            for old_shared_fieldset in old_fieldsets:
+                print(
+                    f'\nProcessed old shared fieldset: '
+                    f'{old_shared_fieldset.name} ({old_shared_fieldset.id})',
+                )
+                template = old_shared_fieldset.template
+                if template.is_active:
+                    template_draft = None
+                    print('--- template is active')
+                else:
+                    template_draft = template.draft
+                    print('--- template not active')
+
                 # Ensure the original is marked as shared
-                old_fieldset.template_id = None
-                old_fieldset.is_shared = True
+                old_shared_fieldset.template_id = None
 
                 # Build the serialized representation of the shared fieldset
-                fieldset_data = FieldSetTemplateService.to_json(old_fieldset)
-                fieldset_data.pop('id')
-                fieldset_data.pop('api_name')
-                fieldset_data.pop('order')
-                shared_fieldset_data = (
-                    FieldSetTemplateService._replace_api_names(fieldset_data)
+                old_shared_fieldset_data = FieldSetTemplateService.to_json(
+                    old_shared_fieldset,
                 )
-                old_fieldset.fields.delete()
-                old_fieldset.rules.delete()
-                user = old_fieldset.account.get_owner()
+                template_fieldset_data = copy.deepcopy(
+                    old_shared_fieldset_data,
+                )
+
+                old_shared_fieldset_data.pop('id')
+                old_shared_fieldset_data.pop('api_name')
+                old_shared_fieldset_data.pop('order')
+                # Recreate shared fieldset with new api_names
+                new_shared_fieldset_data = (
+                    FieldSetTemplateService._replace_api_names(
+                        old_shared_fieldset_data,
+                    )
+                )
+                old_shared_fieldset.fields.all().delete()
+                old_shared_fieldset.rules.all().delete()
+                user = old_shared_fieldset.account.get_owner()
 
                 shared_service = FieldSetTemplateService(user=user)
-                shared_fieldset = shared_service.create(
-                    is_shared=True,
-                    **shared_fieldset_data,
+                new_shared_fieldset = shared_service.create_shared_fieldset(
+                    **new_shared_fieldset_data,
                 )
-                print(
-                    f'Shared - {shared_fieldset.name} : {shared_fieldset.id}',
+                template_fieldset_data['shared_fieldset_id'] = (
+                    new_shared_fieldset.id
                 )
+                template_fieldset_data.pop('order', None)
+                print(f'--- new shared fieldset id: {new_shared_fieldset.id}')
 
                 # update drafts
-                for draft_id in drafts_by_old_fieldsets.get(
-                    old_fieldset.api_name, [],
-                ):
+                if template_draft:
                     self.update_draft_fieldset(
-                        draft_id=draft_id,
-                        fieldset_data=fieldset_data,
-                        fieldset_api_name=old_fieldset.api_name,
-                        shared_fieldset_id=shared_fieldset.id,
+                        template_draft=template_draft,
+                        fieldset_data=template_fieldset_data,
+                        fieldset_api_name=old_shared_fieldset.api_name,
                     )
 
-                kickoff_links = old_fieldset.kickoffs.through.objects.filter(
-                    fieldset=old_fieldset,
-                    is_deleted=False,
+                updated = False
+                # update kickoff fieldsets
+                kickoff_links = (
+                    old_shared_fieldset.kickoffs
+                    .through.objects.filter(
+                        fieldset=old_shared_fieldset,
+                        is_deleted=False,
+                    )
                 )
                 for link in kickoff_links:
-                    if not FieldsetTemplate.objects.filter(
-                        shared_fieldset_id=shared_fieldset.id,
-                        is_shared=False,
-                        kickoff_id=link.kickoff_id,
-                    ).exists():
+                    if not updated:
                         service = FieldSetTemplateService(user=user)
-                        new_fs = service.create(
-                            **fieldset_data,
+                        new_template_fieldset = service.create(
+                            **template_fieldset_data,
                             is_shared=False,
-                            shared_fieldset_id=shared_fieldset.id,
                             order=link.order,
                             kickoff_id=link.kickoff_id,
                             template_id=link.kickoff.template_id,
                         )
+                        updated = True
                         print(
-                            f'+++ {link.kickoff.template.name} : '
-                            f'{link.kickoff.template_id} - '
-                            f'{new_fs.name} : {new_fs.id}',
+                            f'--- new kickoff fieldset: '
+                            f'{new_template_fieldset.id}. '
+                            f'template: {link.kickoff.template.name} '
+                            f'({link.kickoff.template_id})',
                         )
+                    else:
+                        print('--- duplicate kickoff fieldset - removed')
                     link.delete()
 
-                task_links = old_fieldset.tasks.through.objects.filter(
-                    fieldset=old_fieldset,
+                # update tasks fieldsets
+                task_links = old_shared_fieldset.tasks.through.objects.filter(
+                    fieldset=old_shared_fieldset,
                     is_deleted=False,
                 )
 
                 for link in task_links:
-                    if not FieldsetTemplate.objects.filter(
-                        shared_fieldset_id=shared_fieldset.id,
-                        is_shared=False,
-                        task_id=link.task_id,
-                    ).exists():
+                    if not updated:
                         service = FieldSetTemplateService(user=user)
-                        try:
-                            new_fs = service.create(
-                                **fieldset_data,
-                                is_shared=False,
-                                shared_fieldset_id=shared_fieldset.id,
-                                order=link.order,
-                                task_id=link.task_id,
-                                template_id=link.task.template_id,
-                            )
-                            print(
-                                f'+++ {link.task.template.name} : '
-                                f'{link.task.template_id} - '
-                                f'{new_fs.name} : {new_fs.id}',
-                            )
-                        except Exception:
-                            print(
-                                f'--- Duplicate '
-                                f'{link.task.template.name} : '
-                                f'{link.task.template_id}',
-                            )
+                        new_template_fieldset = service.create(
+                            **template_fieldset_data,
+                            is_shared=False,
+                            order=link.order,
+                            task_id=link.task_id,
+                            template_id=link.task.template_id,
+                        )
+                        updated = True
+                        print(
+                            f'--- new task fieldset: '
+                            f'{new_template_fieldset.id}. '
+                            f'task: "{link.task.name}" '
+                            f'({link.task.id})',
+                        )
+                    else:
+                        print('--- duplicate task fieldset - removed')
                     link.delete()
-                old_fieldset.delete()
+                old_shared_fieldset.delete()

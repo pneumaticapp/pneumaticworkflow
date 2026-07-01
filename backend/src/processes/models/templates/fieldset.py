@@ -30,7 +30,7 @@ class FieldsetTemplate(
             UniqueConstraint(
                 fields=['api_name', 'template', 'is_shared'],
                 condition=Q(is_deleted=False),
-                name='fieldsettemplate_api_name_template_unique',
+                name='fieldsettemplate_template_api_name_is_shared_unique',
             ),
         ]
 
