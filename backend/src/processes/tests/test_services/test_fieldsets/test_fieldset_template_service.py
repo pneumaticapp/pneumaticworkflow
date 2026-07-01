@@ -3,6 +3,7 @@ from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
     FieldSetLayout,
     FieldSetRuleType,
+    FieldType,
     LabelPosition,
 )
 from src.processes.messages import fieldset as fs_messages
@@ -30,6 +31,7 @@ from src.processes.tests.fixtures import (
     create_test_owner,
     create_test_template,
     create_test_fieldset_template,
+    create_test_shared_fieldset,
 )
 
 pytestmark = pytest.mark.django_db
@@ -769,7 +771,7 @@ def test_update_rules__existing_rule__ok(mocker):
         auth_type=AuthTokenType.USER,
         instance=fieldset,
     )
-    rules_data = [{'id': rule_1.id, 'value': '200'}]
+    rules_data = [{'api_name': rule_1.api_name, 'value': '200'}]
 
     # mock
     fieldset_template_rule_service_init_mock = mocker.patch.object(
@@ -832,7 +834,7 @@ def test_update_rules__new_rule__ok(mocker):
 
     # mock
     create_return = mocker.Mock()
-    create_return.id = 999
+    create_return.api_name = 'new-rule-api'
     fs_rule_init_mock = mocker.patch.object(
         FieldsetTemplateRuleService,
         attribute='__init__',
@@ -898,7 +900,7 @@ def test_update_rules__orphan_rules__deleted(mocker):
         auth_type=AuthTokenType.USER,
         instance=fieldset,
     )
-    rules_data = [{'id': rule_1.id, 'value': '150'}]
+    rules_data = [{'api_name': rule_1.api_name, 'value': '150'}]
 
     # mock
     fs_rule_init_mock = mocker.patch.object(
@@ -923,6 +925,76 @@ def test_update_rules__orphan_rules__deleted(mocker):
     assert FieldsetTemplateRule.objects.filter(
         id=rule_1.id,
     ).exists()
+
+
+def test_update_rules__two_rules_same_type_no_api_name__create_new_rule():
+
+    """
+    Two rules with the same type in rules_data:
+    one existing (with api_name) and one new (without api_name).
+    Both rules must be persisted after update_rules completes.
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    fieldset = create_test_shared_fieldset(
+        account=account,
+        rule_type=FieldSetRuleType.SUM_EQUAL,
+    )
+    field_1 = fieldset.fields.first()
+    field_2 = FieldTemplate.objects.create(
+        account=account,
+        name='Field 2',
+        type=FieldType.NUMBER,
+        api_name='f2',
+        fieldset=fieldset,
+    )
+    existing_rule = fieldset.rules.first()
+    existing_rule.fields.add(field_1)
+    existing_rule.fields.add(field_2)
+
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+        instance=fieldset,
+    )
+    rules_data = [
+        {
+            'type': FieldSetRuleType.SUM_EQUAL,
+            'value': '1',
+            'fields': [field_1.api_name, field_2.api_name],
+            'api_name': existing_rule.api_name,
+        },
+        {
+            'type': FieldSetRuleType.SUM_EQUAL,
+            'value': '100',
+            'fields': [field_1.api_name, field_2.api_name],
+        },
+    ]
+
+    # act
+    service.update_rules(rules_data=rules_data)
+
+    # assert
+    assert fieldset.rules.count() == 2
+    existing_rule.refresh_from_db()
+    assert existing_rule.value == '1'
+    assert existing_rule.type == FieldSetRuleType.SUM_EQUAL
+    assert existing_rule.fields.count() == 2
+    assert existing_rule.fields.get(id=field_1.id)
+    assert existing_rule.fields.get(id=field_2.id)
+
+    new_rule = fieldset.rules.exclude(
+        fieldset=fieldset,
+        api_name=existing_rule.api_name,
+    ).get()
+    assert new_rule.type == FieldSetRuleType.SUM_EQUAL
+    assert new_rule.value == '100'
+    assert new_rule.fields.count() == 2
+    assert new_rule.fields.get(id=field_1.id)
+    assert new_rule.fields.get(id=field_2.id)
 
 
 def test_partial_update_name__ok(mocker):

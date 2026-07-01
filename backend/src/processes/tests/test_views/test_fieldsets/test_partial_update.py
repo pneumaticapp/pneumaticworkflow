@@ -14,6 +14,7 @@ from src.processes.enums import (
     FieldType,
 )
 from src.processes.models.templates.fieldset import FieldsetTemplateRule
+from src.processes.models.templates.fields import FieldTemplate
 from src.processes.services.fieldsets.fieldset import (
     FieldSetTemplateService,
 )
@@ -733,3 +734,77 @@ def test_partial_update__not_shared__not_found(api_client, mocker):
     assert response.status_code == 404
     fieldset_service_init_mock.assert_not_called()
     fieldset_partial_update_mock.assert_not_called()
+
+
+def test_partial_update__two_rules_same_type__ok(api_client, mocker):
+
+    """
+    Partial update with two rules of the same type:
+    one existing (with api_name) and one new (without api_name).
+    Both rules reference the same fields.
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    fieldset = create_test_shared_fieldset(
+        account=account,
+        rule_type=FieldSetRuleType.SUM_EQUAL,
+    )
+    field_1 = fieldset.fields.first()
+    field_2 = FieldTemplate.objects.create(
+        account=account,
+        name='Field 2',
+        type=FieldType.NUMBER,
+        api_name='f2',
+        fieldset=fieldset,
+    )
+    existing_rule = fieldset.rules.first()
+    existing_rule.fields.add(field_1)
+    existing_rule.fields.add(field_2)
+
+    data = {
+        'rules': [
+            {
+                'type': FieldSetRuleType.SUM_EQUAL,
+                'value': '1',
+                'fields': [field_1.api_name, field_2.api_name],
+                'api_name': existing_rule.api_name,
+            },
+            {
+                'type': FieldSetRuleType.SUM_EQUAL,
+                'value': '100',
+                'fields': [field_1.api_name, field_2.api_name],
+            },
+        ],
+    }
+
+    fieldset_service_init_mock = mocker.patch.object(
+        FieldSetTemplateService,
+        attribute='__init__',
+        return_value=None,
+    )
+    fieldset_partial_update_mock = mocker.patch(
+        'src.processes.views.fieldset.FieldSetTemplateService.partial_update',
+        return_value=fieldset,
+    )
+
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.patch(
+        f'/fieldsets/{fieldset.id}',
+        data=data,
+    )
+
+    # assert
+    assert response.status_code == 200
+    fieldset_service_init_mock.assert_called_once_with(
+        user=user,
+        instance=fieldset,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    fieldset_partial_update_mock.assert_called_once_with(
+        rules=data['rules'],
+    )
