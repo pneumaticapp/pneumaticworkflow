@@ -60,7 +60,7 @@ export function TemplateControlls({
   const { formatMessage } = intl;
   const dispatch = useDispatch();
   const { values: template, setFieldValue } = useTemplateField();
-  const { consumePendingChanges } = useTemplatePersist();
+  const { consumePendingChanges, confirmConsumedChanges, revertConsumedChanges } = useTemplatePersist();
   const templateStatus = useSelector(getTemplateStatus);
   const isSubscribed = useSelector(getIsUserSubsribed);
   const billingPlan = useSelector(getSubscriptionPlan);
@@ -112,7 +112,13 @@ export function TemplateControlls({
 
   const handleChangeIsActive = (value: ITemplate['isActive'], redirectUrl?: string) => {
     if (!value) {
-      patchTemplate({ changedFields: { ...consumePendingChanges(), isActive: false } });
+      const pendingChanges = consumePendingChanges();
+
+      patchTemplate({
+        changedFields: { ...pendingChanges, isActive: false },
+        onSuccess: confirmConsumedChanges,
+        onFailed: revertConsumedChanges,
+      });
       return;
     }
 
@@ -136,6 +142,7 @@ export function TemplateControlls({
         isActive: true,
       },
       onSuccess: () => {
+        confirmConsumedChanges();
         setIsTemplateActivating(false);
 
         if (redirectUrl) {
@@ -143,6 +150,7 @@ export function TemplateControlls({
         }
       },
       onFailed: () => {
+        revertConsumedChanges();
         setIsTemplateActivating(false);
       },
     });

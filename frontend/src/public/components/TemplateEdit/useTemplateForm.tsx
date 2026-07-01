@@ -3,7 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef } fr
 import { FormikProvider, useFormik, useFormikContext } from 'formik';
 import { useDispatch } from 'react-redux';
 
-import { ITemplate } from '../../types/template';
+import { ITemplate, ITemplateTask } from '../../types/template';
 import { patchTemplate } from '../../redux/actions';
 
 type TSetFieldValue = (field: string, value: unknown, shouldValidate?: boolean) => void;
@@ -17,6 +17,10 @@ interface ITemplateFieldContextValue {
 
 interface ITemplatePersistContextValue {
   consumePendingChanges(): Partial<ITemplate>;
+  /** Clears a revert snapshot after an explicit `patchTemplate` succeeds. */
+  confirmConsumedChanges(): void;
+  /** Restores the persist baseline when an explicit `patchTemplate` fails. */
+  revertConsumedChanges(): void;
 }
 
 const TemplateFieldContext = createContext<ITemplateFieldContextValue | null>(null);
@@ -56,6 +60,37 @@ export function useTemplatePersist(): ITemplatePersistContextValue {
   return ctx;
 }
 
+function mergePreservedTasks(
+  incomingTasks: ITemplateTask[],
+  preservedTasks: ITemplateTask[],
+): ITemplateTask[] {
+  return preservedTasks.map((task) => {
+    const incoming = incomingTasks.find((candidate) => candidate.uuid === task.uuid);
+
+    if (!incoming || task === incoming) {
+      return task;
+    }
+
+    const onlyAncestorsDiffer = (Object.keys(task) as (keyof ITemplateTask)[]).every(
+      (key) => key === 'ancestors' || task[key] === incoming[key],
+    );
+
+    return onlyAncestorsDiffer ? { ...task, ancestors: incoming.ancestors } : task;
+  });
+}
+
+function getChangedFields(previous: ITemplate, next: ITemplate): Partial<ITemplate> {
+  const changedFields: Partial<ITemplate> = {};
+
+  (Object.keys(next) as (keyof ITemplate)[]).forEach((key) => {
+    if (previous[key] !== next[key]) {
+      (changedFields[key] as ITemplate[keyof ITemplate]) = next[key];
+    }
+  });
+
+  return changedFields;
+}
+
 /**
  * Root Formik context for the whole Edit Template page.
  *
@@ -69,32 +104,51 @@ export function useTemplatePersist(): ITemplatePersistContextValue {
  * callbacks, so both onChange and submit share one save path.
  */
 export function useTemplateForm(initialValues: ITemplate) {
+  const dirtyRef = useRef(false);
+  const pendingUserEditsRef = useRef<Partial<ITemplate>>({});
+  const lastSyncedInitialValuesRef = useRef(initialValues);
+  const persistBaselineSyncRef = useRef<((reduxTemplate: ITemplate, currentValues: ITemplate) => void) | null>(null);
+
   const formik = useFormik<ITemplate>({
     initialValues,
-    enableReinitialize: true,
+    enableReinitialize: false,
     onSubmit: () => undefined,
   });
 
-  const dirtyRef = useRef(false);
-  const initialValuesRef = useRef(initialValues);
+  // Redux `template` updates must be merged into Formik without discarding edits
+  // that still live only in the form (e.g. typed while a save is in flight).
+  // Wrapped setters accumulate those edits in `pendingUserEditsRef` because a
+  // Redux snapshot can land in the same render and overwrite Formik state.
+  if (lastSyncedInitialValuesRef.current !== initialValues) {
+    const rawPending = dirtyRef.current ? pendingUserEditsRef.current : {};
 
-  // Formik reinitializes `values` from `initialValues` whenever the Redux
-  // `template` prop changes (enableReinitialize). That change is NOT a user
-  // edit, so a dirty flag left set by a prior wrapped setter (e.g. the
-  // `setFieldValue('isActive', false)` issued by `flushPersist` right before
-  // its `patchTemplate` dispatch) must be cleared before the persist effect
-  // runs — otherwise the next flush treats the reinitialized values as a user
-  // edit and dispatches a `patchTemplate` diffing against an outdated
-  // `previousValuesRef`. Doing this during render (rather than in an effect)
-  // guarantees the flag is cleared before the child persist effect fires.
-  if (initialValuesRef.current !== initialValues) {
-    initialValuesRef.current = initialValues;
-    dirtyRef.current = false;
+    if (Object.keys(rawPending).length > 0) {
+      let mergedValues: ITemplate = { ...initialValues, ...rawPending };
+
+      if (rawPending.tasks && initialValues.tasks) {
+        mergedValues = {
+          ...mergedValues,
+          tasks: mergePreservedTasks(initialValues.tasks, rawPending.tasks),
+        };
+      }
+
+      pendingUserEditsRef.current = getChangedFields(initialValues, mergedValues);
+      dirtyRef.current = true;
+      formik.setValues(mergedValues, false);
+      persistBaselineSyncRef.current?.(initialValues, mergedValues);
+    } else {
+      pendingUserEditsRef.current = {};
+      dirtyRef.current = false;
+      formik.resetForm({ values: initialValues });
+    }
+
+    lastSyncedInitialValuesRef.current = initialValues;
   }
 
   const setFieldValue = useCallback<TSetFieldValue>(
     (field, value, shouldValidate) => {
       dirtyRef.current = true;
+      pendingUserEditsRef.current = { ...pendingUserEditsRef.current, [field]: value };
       formik.setFieldValue(field, value, shouldValidate);
     },
     [formik],
@@ -103,12 +157,16 @@ export function useTemplateForm(initialValues: ITemplate) {
   const setValues = useCallback<TSetValues>(
     (values, shouldValidate) => {
       dirtyRef.current = true;
+      pendingUserEditsRef.current = {
+        ...pendingUserEditsRef.current,
+        ...getChangedFields(formik.values, values),
+      };
       formik.setValues(values, shouldValidate);
     },
-    [formik],
+    [formik, formik.values],
   );
 
-  return { formik, setFieldValue, setValues, dirtyRef };
+  return { formik, setFieldValue, setValues, dirtyRef, pendingUserEditsRef, persistBaselineSyncRef };
 }
 
 interface ITemplateFormProps {
@@ -116,6 +174,8 @@ interface ITemplateFormProps {
   setFieldValue: TSetFieldValue;
   setValues: TSetValues;
   dirtyRef: React.MutableRefObject<boolean>;
+  pendingUserEditsRef: React.MutableRefObject<Partial<ITemplate>>;
+  persistBaselineSyncRef: React.MutableRefObject<((reduxTemplate: ITemplate, currentValues: ITemplate) => void) | null>;
   children: React.ReactNode;
 }
 
@@ -123,7 +183,15 @@ interface ITemplateFormProps {
  * Bundles the Formik provider, the wrapped-setter context, and the single
  * persist provider so `TemplateEdit` only has to render `<TemplateForm .../>`.
  */
-export function TemplateForm({ formik, setFieldValue, setValues, dirtyRef, children }: ITemplateFormProps) {
+export function TemplateForm({
+  formik,
+  setFieldValue,
+  setValues,
+  dirtyRef,
+  pendingUserEditsRef,
+  persistBaselineSyncRef,
+  children,
+}: ITemplateFormProps) {
   const { values } = formik;
   const fieldContextValue = useMemo<ITemplateFieldContextValue>(
     () => ({ values, setFieldValue, setValues }),
@@ -133,22 +201,16 @@ export function TemplateForm({ formik, setFieldValue, setValues, dirtyRef, child
   return (
     <FormikProvider value={formik}>
       <TemplateFieldContext.Provider value={fieldContextValue}>
-        <TemplateFormPersistProvider dirtyRef={dirtyRef}>{children}</TemplateFormPersistProvider>
+        <TemplateFormPersistProvider
+          dirtyRef={dirtyRef}
+          pendingUserEditsRef={pendingUserEditsRef}
+          persistBaselineSyncRef={persistBaselineSyncRef}
+        >
+          {children}
+        </TemplateFormPersistProvider>
       </TemplateFieldContext.Provider>
     </FormikProvider>
   );
-}
-
-function getChangedFields(previous: ITemplate, next: ITemplate): Partial<ITemplate> {
-  const changedFields: Partial<ITemplate> = {};
-
-  (Object.keys(next) as (keyof ITemplate)[]).forEach((key) => {
-    if (previous[key] !== next[key]) {
-      (changedFields[key] as ITemplate[keyof ITemplate]) = next[key];
-    }
-  });
-
-  return changedFields;
 }
 
 // Keep in sync with `patchTemplateSaga` in redux/template/saga.ts. The saga
@@ -183,6 +245,8 @@ function shouldDeactivateTemplate(
 
 interface ITemplateFormPersistProviderProps {
   dirtyRef: React.MutableRefObject<boolean>;
+  pendingUserEditsRef: React.MutableRefObject<Partial<ITemplate>>;
+  persistBaselineSyncRef: React.MutableRefObject<((reduxTemplate: ITemplate, currentValues: ITemplate) => void) | null>;
   children: React.ReactNode;
 }
 
@@ -203,36 +267,97 @@ interface ITemplateFormPersistProviderProps {
  * controls would keep rendering the template as active (no draft warning, no
  * enable button) until Redux catches up.
  */
-export function TemplateFormPersistProvider({ dirtyRef, children }: ITemplateFormPersistProviderProps) {
+export function TemplateFormPersistProvider({
+  dirtyRef,
+  pendingUserEditsRef,
+  persistBaselineSyncRef,
+  children,
+}: ITemplateFormPersistProviderProps) {
   const { values, setFieldValue } = useFormikContext<ITemplate>();
   const dispatch = useDispatch();
   const previousValuesRef = useRef<ITemplate>(values);
   const valuesRef = useRef(values);
   const dispatchRef = useRef(dispatch);
   const dirtyRefRef = useRef(dirtyRef);
+  const pendingUserEditsRefRef = useRef(pendingUserEditsRef);
+  const persistBaselineSyncRefRef = useRef(persistBaselineSyncRef);
   const setFieldValueRef = useRef(setFieldValue);
 
   valuesRef.current = values;
   dispatchRef.current = dispatch;
   dirtyRefRef.current = dirtyRef;
+  pendingUserEditsRefRef.current = pendingUserEditsRef;
+  persistBaselineSyncRefRef.current = persistBaselineSyncRef;
   setFieldValueRef.current = setFieldValue;
 
-  const consumePendingChanges = useCallback(() => {
+  useEffect(() => {
+    persistBaselineSyncRefRef.current.current = (reduxTemplate, currentValues) => {
+      const pendingEdits = pendingUserEditsRefRef.current.current;
+      previousValuesRef.current = { ...currentValues };
+
+      (Object.keys(pendingEdits) as (keyof ITemplate)[]).forEach((key) => {
+        (previousValuesRef.current[key] as ITemplate[keyof ITemplate]) = reduxTemplate[key];
+      });
+    };
+
+    return () => {
+      persistBaselineSyncRefRef.current.current = null;
+    };
+  }, []);
+
+  const consumedPendingRef = useRef<{ previousBaseline: ITemplate; isUserEdit: boolean } | null>(null);
+
+  const takePendingChanges = useCallback((trackForRevert = false) => {
     if (previousValuesRef.current === valuesRef.current) {
       return {};
     }
 
     const changedFields = getChangedFields(previousValuesRef.current, valuesRef.current);
     const isUserEdit = dirtyRefRef.current.current;
+
+    if (trackForRevert && isUserEdit && Object.keys(changedFields).length > 0) {
+      consumedPendingRef.current = {
+        previousBaseline: previousValuesRef.current,
+        isUserEdit,
+      };
+    }
+
     previousValuesRef.current = valuesRef.current;
     dirtyRefRef.current.current = false;
+
+    if (isUserEdit && Object.keys(changedFields).length > 0 && !trackForRevert) {
+      pendingUserEditsRefRef.current.current = {};
+    }
 
     return isUserEdit ? changedFields : {};
   }, []);
 
+  const consumePendingChanges = useCallback(() => takePendingChanges(true), [takePendingChanges]);
+
+  const confirmConsumedChanges = useCallback(() => {
+    consumedPendingRef.current = null;
+    pendingUserEditsRefRef.current.current = {};
+  }, []);
+
+  const revertConsumedChanges = useCallback(() => {
+    const consumed = consumedPendingRef.current;
+
+    if (!consumed) {
+      return;
+    }
+
+    previousValuesRef.current = consumed.previousBaseline;
+    dirtyRefRef.current.current = consumed.isUserEdit;
+    pendingUserEditsRefRef.current.current = getChangedFields(
+      consumed.previousBaseline,
+      valuesRef.current,
+    );
+    consumedPendingRef.current = null;
+  }, []);
+
   const flushPersist = useCallback(() => {
     const previousValues = previousValuesRef.current;
-    const changedFields = consumePendingChanges();
+    const changedFields = takePendingChanges();
 
     if (Object.keys(changedFields).length > 0) {
       if (shouldDeactivateTemplate(changedFields, previousValues)) {
@@ -241,7 +366,7 @@ export function TemplateFormPersistProvider({ dirtyRef, children }: ITemplateFor
 
       dispatchRef.current(patchTemplate({ changedFields }));
     }
-  }, [consumePendingChanges]);
+  }, [takePendingChanges]);
 
   // Registered before the values effect so its cleanup runs first on unmount
   // and clears the pending diff before the values effect cleanup calls
@@ -270,8 +395,8 @@ export function TemplateFormPersistProvider({ dirtyRef, children }: ITemplateFor
   }, [values, flushPersist]);
 
   const persistContextValue = useMemo<ITemplatePersistContextValue>(
-    () => ({ consumePendingChanges }),
-    [consumePendingChanges],
+    () => ({ consumePendingChanges, confirmConsumedChanges, revertConsumedChanges }),
+    [consumePendingChanges, confirmConsumedChanges, revertConsumedChanges],
   );
 
   return (

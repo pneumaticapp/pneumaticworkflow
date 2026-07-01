@@ -86,7 +86,7 @@ export function TemplateEdit({
   loadTemplateVariablesSuccess,
 }: TTemplateEditProps) {
   const { formatMessage } = useIntl();
-  const { formik, setFieldValue, setValues, dirtyRef } = useTemplateForm(template);
+  const { formik, setFieldValue, setValues, dirtyRef, pendingUserEditsRef, persistBaselineSyncRef } = useTemplateForm(template);
   const { tasks } = formik.values;
   const billingPlan = useSelector(getSubscriptionPlan);
   const isFreePlan = billingPlan === ESubscriptionPlan.Free;
@@ -452,6 +452,8 @@ export function TemplateEdit({
       setFieldValue={setFieldValue}
       setValues={setValues}
       dirtyRef={dirtyRef}
+      pendingUserEditsRef={pendingUserEditsRef}
+      persistBaselineSyncRef={persistBaselineSyncRef}
     >
       <div className={styles['container']}>
         <AutoSaveStatusContainer onRetry={saveTemplate} />

@@ -64,6 +64,8 @@ interface ISpyHandle {
   values: ITemplate;
   setFieldValue: (field: string, value: unknown, shouldValidate?: boolean) => void;
   consumePendingChanges: () => Partial<ITemplate>;
+  confirmConsumedChanges: () => void;
+  revertConsumedChanges: () => void;
 }
 
 // Drain the persist provider's `setTimeout(0)` flush plus the follow-up tick it
@@ -82,20 +84,37 @@ function TemplateFormHarness({
   initialTemplate: ITemplate;
   spy: (handle: ISpyHandle) => void;
 }) {
-  const { formik, setFieldValue, setValues, dirtyRef } = useTemplateForm(initialTemplate);
+  const { formik, setFieldValue, setValues, dirtyRef, pendingUserEditsRef, persistBaselineSyncRef } = useTemplateForm(initialTemplate);
 
   const Spy: React.FC = () => {
     const { values, setFieldValue: contextSetFieldValue } = useTemplateField();
-    const { consumePendingChanges } = useTemplatePersist();
-    spy({ values, setFieldValue: contextSetFieldValue, consumePendingChanges });
+    const { consumePendingChanges, confirmConsumedChanges, revertConsumedChanges } = useTemplatePersist();
+    spy({ values, setFieldValue: contextSetFieldValue, consumePendingChanges, confirmConsumedChanges, revertConsumedChanges });
     return null;
   };
 
   return (
-    <TemplateForm formik={formik} setFieldValue={setFieldValue} setValues={setValues} dirtyRef={dirtyRef}>
+    <TemplateForm
+      formik={formik}
+      setFieldValue={setFieldValue}
+      setValues={setValues}
+      dirtyRef={dirtyRef}
+      pendingUserEditsRef={pendingUserEditsRef}
+      persistBaselineSyncRef={persistBaselineSyncRef}
+    >
       <Spy />
     </TemplateForm>
   );
+}
+
+function StatefulTemplateFormHarness({
+  initialTemplate,
+  spy,
+}: {
+  initialTemplate: ITemplate;
+  spy: (handle: ISpyHandle) => void;
+}) {
+  return <TemplateFormHarness initialTemplate={initialTemplate} spy={spy} />;
 }
 
 describe('TemplateFormPersistProvider deactivation', () => {
@@ -192,6 +211,47 @@ describe('TemplateFormPersistProvider deactivation', () => {
     expect(patchTemplate).not.toHaveBeenCalled();
   });
 
+  it('restores the persist baseline when an explicit submit fails after consume', async () => {
+    const template = makeTemplate({ isActive: true, owners: [] });
+    let handle: ISpyHandle | null = null;
+    const owners = [{ id: 1, role: 'owner' }] as any;
+
+    render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
+
+    act(() => {
+      handle!.setFieldValue('owners', owners, false);
+    });
+
+    act(() => {
+      handle!.consumePendingChanges();
+      handle!.revertConsumedChanges();
+    });
+    await flushPersist();
+
+    expect(patchTemplate).toHaveBeenCalledTimes(1);
+    expect((patchTemplate as unknown as jest.Mock).mock.calls[0][0].changedFields).toEqual({ owners });
+  });
+
+  it('does not restore the persist baseline after an explicit submit succeeds', async () => {
+    const template = makeTemplate({ isActive: true, owners: [] });
+    let handle: ISpyHandle | null = null;
+    const owners = [{ id: 1, role: 'owner' }] as any;
+
+    render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
+
+    act(() => {
+      handle!.setFieldValue('owners', owners, false);
+    });
+
+    act(() => {
+      handle!.consumePendingChanges();
+      handle!.confirmConsumedChanges();
+    });
+    await flushPersist();
+
+    expect(patchTemplate).not.toHaveBeenCalled();
+  });
+
   it('persists the latest value when two edits land before the deferred flush runs', async () => {
     const template = makeTemplate({ isActive: true, description: 'old' });
     let handle: ISpyHandle | null = null;
@@ -278,5 +338,145 @@ describe('TemplateFormPersistProvider deactivation', () => {
 
     expect(descriptionPatches).toEqual(['second edit']);
     expect(handle!.values.isActive).toBe(false);
+  });
+});
+
+describe('useTemplateForm reinitialize', () => {
+  function HookHarness({
+    currentTemplate,
+    onReady,
+  }: {
+    currentTemplate: ITemplate;
+    onReady(result: ReturnType<typeof useTemplateForm>): void;
+  }) {
+    const result = useTemplateForm(currentTemplate);
+    onReady(result);
+    return null;
+  }
+
+  it('merges pending user edits into resolved Formik initialValues', () => {
+    const template = makeTemplate({ name: 'Original', dateUpdated: null });
+    let hookResult: ReturnType<typeof useTemplateForm> | null = null;
+
+    const { rerender } = render(
+      <HookHarness
+        currentTemplate={template}
+        onReady={(result) => { hookResult = result; }}
+      />,
+    );
+
+    act(() => {
+      hookResult!.setFieldValue('name', 'unsaved edit', false);
+    });
+
+    rerender(
+      <HookHarness
+        currentTemplate={{
+          ...template,
+          dateUpdated: '2026-07-01T00:00:00Z',
+        }}
+        onReady={(result) => { hookResult = result; }}
+      />,
+    );
+
+    expect(hookResult!.formik.values.name).toBe('unsaved edit');
+    expect(hookResult!.formik.values.dateUpdated).toBe('2026-07-01T00:00:00Z');
+  });
+});
+
+describe('TemplateFormPersistProvider reinitialize', () => {
+  beforeEach(() => {
+    (patchTemplate as unknown as jest.Mock).mockClear();
+  });
+
+  it('preserves Formik-only edits when Redux reinitializes during an in-flight save', async () => {
+    const template = makeTemplate({ isActive: true, name: 'Original', dateUpdated: null });
+    let handle: ISpyHandle | null = null;
+
+    const { rerender } = render(
+      <StatefulTemplateFormHarness
+        initialTemplate={template}
+        spy={(h) => { handle = h; }}
+      />,
+    );
+
+    act(() => {
+      handle!.setFieldValue('description', 'saved edit', false);
+    });
+    await flushPersist();
+
+    rerender(
+      <StatefulTemplateFormHarness
+        initialTemplate={{
+          ...template,
+          description: 'saved edit',
+          isActive: false,
+        }}
+        spy={(h) => { handle = h; }}
+      />,
+    );
+    await flushPersist();
+
+    (patchTemplate as unknown as jest.Mock).mockClear();
+
+    act(() => {
+      handle!.setFieldValue('name', 'unsaved edit', false);
+      rerender(
+        <StatefulTemplateFormHarness
+          initialTemplate={{
+            ...template,
+            description: 'saved edit',
+            isActive: false,
+            dateUpdated: '2026-07-01T00:00:00Z',
+          }}
+          spy={(h) => { handle = h; }}
+        />,
+      );
+    });
+
+    await flushPersist();
+
+    expect(handle!.values.name).toBe('unsaved edit');
+    expect(handle!.values.description).toBe('saved edit');
+    expect(handle!.values.dateUpdated).toBe('2026-07-01T00:00:00Z');
+    expect(patchTemplate).toHaveBeenCalledTimes(1);
+    expect((patchTemplate as unknown as jest.Mock).mock.calls[0][0].changedFields).toEqual({
+      name: 'unsaved edit',
+    });
+  });
+
+  it('does not treat a Redux reinitialize as a user edit when Formik has no pending changes', async () => {
+    const template = makeTemplate({ isActive: true, description: 'old', dateUpdated: null });
+    let handle: ISpyHandle | null = null;
+
+    const { rerender } = render(
+      <StatefulTemplateFormHarness
+        initialTemplate={template}
+        spy={(h) => { handle = h; }}
+      />,
+    );
+
+    act(() => {
+      handle!.setFieldValue('description', 'new', false);
+    });
+    await flushPersist();
+
+    (patchTemplate as unknown as jest.Mock).mockClear();
+
+    rerender(
+      <StatefulTemplateFormHarness
+        initialTemplate={{
+          ...template,
+          description: 'new',
+          isActive: false,
+          dateUpdated: '2026-07-01T00:00:00Z',
+        }}
+        spy={(h) => { handle = h; }}
+      />,
+    );
+
+    await flushPersist();
+
+    expect(patchTemplate).not.toHaveBeenCalled();
   });
 });
