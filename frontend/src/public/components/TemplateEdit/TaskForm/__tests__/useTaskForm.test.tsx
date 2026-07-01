@@ -222,6 +222,51 @@ describe('TaskFormPersistProvider', () => {
     });
   });
 
+  it('persists user edits when the store passes a fresh object for the same task', async () => {
+    const patchTask = jest.fn();
+    const task = makeTask({ name: 'Original' });
+
+    function NameEditor() {
+      const { updateField } = useTaskForm();
+
+      return (
+        <button
+          type="button"
+          onClick={() => updateField('name')('Updated')}
+        >
+          edit
+        </button>
+      );
+    }
+
+    const { getByRole, rerender } = render(
+      <TaskFormHarness task={task} patchTask={patchTask}>
+        <NameEditor />
+      </TaskFormHarness>,
+    );
+
+    await flushPersist();
+    patchTask.mockClear();
+
+    act(() => {
+      getByRole('button', { name: 'edit' }).click();
+    });
+
+    rerender(
+      <TaskFormHarness task={{ ...task }} patchTask={patchTask}>
+        <NameEditor />
+      </TaskFormHarness>,
+    );
+
+    await flushPersist();
+
+    expect(patchTask).toHaveBeenCalledTimes(1);
+    expect(patchTask).toHaveBeenCalledWith({
+      taskUUID: 'uuid-1',
+      changedFields: { name: 'Updated' },
+    });
+  });
+
   it('persists pending changes when unmounting before the debounced effect runs', () => {
     const patchTask = jest.fn();
     const task = makeTask({ name: 'Original' });

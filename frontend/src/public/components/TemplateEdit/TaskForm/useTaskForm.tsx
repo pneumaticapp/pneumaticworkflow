@@ -16,7 +16,7 @@ interface ITaskFormPersistProviderProps {
 export function TaskFormPersistProvider({ patchTask, task, children }: ITaskFormPersistProviderProps) {
   const { values } = useFormikContext<ITemplateTask>();
   const previousValuesRef = useRef<ITemplateTask>(values);
-  const externalTaskRef = useRef<ITemplateTask>(task);
+  const externalTaskUuidRef = useRef(task.uuid);
   const skipNextPersistRef = useRef(false);
   const valuesRef = useRef(values);
   const patchTaskRef = useRef(patchTask);
@@ -40,8 +40,8 @@ export function TaskFormPersistProvider({ patchTask, task, children }: ITaskForm
   useEffect(() => {
     let timeoutId: number | undefined;
 
-    if (externalTaskRef.current !== task) {
-      externalTaskRef.current = task;
+    if (externalTaskUuidRef.current !== task.uuid) {
+      externalTaskUuidRef.current = task.uuid;
       skipNextPersistRef.current = true;
     } else if (skipNextPersistRef.current) {
       skipNextPersistRef.current = false;
