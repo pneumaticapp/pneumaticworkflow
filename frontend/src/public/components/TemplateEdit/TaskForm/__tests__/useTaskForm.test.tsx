@@ -3,7 +3,7 @@ import * as React from 'react';
 import { act, render } from '@testing-library/react';
 import { FormikProvider, useFormik } from 'formik';
 
-import { ITemplateTask } from '../../../../types/template';
+import { ETaskPerformerType, ITemplateTask } from '../../../../types/template';
 import { TaskFormPersistProvider, useTaskForm } from '../useTaskForm';
 
 const makeTask = (overrides: Partial<ITemplateTask> = {}): ITemplateTask => ({
@@ -128,6 +128,92 @@ describe('TaskFormPersistProvider', () => {
         }],
         description: 'new description',
       },
+    });
+  });
+
+  it('applies consecutive updateTask calls without dropping earlier changes', async () => {
+    const patchTask = jest.fn();
+    const task = makeTask({ rawPerformers: [], requireCompletionByAll: false });
+    const newPerformers = [{
+      apiName: 'performer-1',
+      type: ETaskPerformerType.User,
+      label: 'User 1',
+      sourceId: '1',
+    }];
+
+    function PerformerEditor() {
+      const { updateTask } = useTaskForm();
+
+      return (
+        <button
+          type="button"
+          onClick={() => {
+            updateTask({ rawPerformers: newPerformers });
+            updateTask({ requireCompletionByAll: true });
+          }}
+        >
+          edit
+        </button>
+      );
+    }
+
+    const { getByRole } = render(
+      <TaskFormHarness task={task} patchTask={patchTask}>
+        <PerformerEditor />
+      </TaskFormHarness>,
+    );
+
+    await flushPersist();
+    patchTask.mockClear();
+
+    act(() => {
+      getByRole('button', { name: 'edit' }).click();
+    });
+    await flushPersist();
+
+    expect(patchTask).toHaveBeenCalledTimes(1);
+    expect(patchTask).toHaveBeenCalledWith({
+      taskUUID: 'uuid-1',
+      changedFields: {
+        rawPerformers: newPerformers,
+        requireCompletionByAll: true,
+      },
+    });
+  });
+
+  it('persists pending changes when unmounting before the debounced effect runs', () => {
+    const patchTask = jest.fn();
+    const task = makeTask({ name: 'Original' });
+
+    function NameEditor() {
+      const { updateField } = useTaskForm();
+
+      return (
+        <button
+          type="button"
+          onClick={() => updateField('name')('Updated')}
+        >
+          edit
+        </button>
+      );
+    }
+
+    const { getByRole, unmount } = render(
+      <TaskFormHarness task={task} patchTask={patchTask}>
+        <NameEditor />
+      </TaskFormHarness>,
+    );
+
+    act(() => {
+      getByRole('button', { name: 'edit' }).click();
+    });
+
+    unmount();
+
+    expect(patchTask).toHaveBeenCalledTimes(1);
+    expect(patchTask).toHaveBeenCalledWith({
+      taskUUID: 'uuid-1',
+      changedFields: { name: 'Updated' },
     });
   });
 });

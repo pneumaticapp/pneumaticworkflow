@@ -18,6 +18,28 @@ export function TaskFormPersistProvider({ patchTask, task, children }: ITaskForm
   const previousValuesRef = useRef<ITemplateTask>(values);
   const externalTaskRef = useRef<ITemplateTask>(task);
   const skipNextPersistRef = useRef(false);
+  const valuesRef = useRef(values);
+  const taskRef = useRef(task);
+  const patchTaskRef = useRef(patchTask);
+
+  valuesRef.current = values;
+  taskRef.current = task;
+  patchTaskRef.current = patchTask;
+
+  const flushPersist = useCallback(() => {
+    const currentValues = valuesRef.current;
+
+    if (previousValuesRef.current === currentValues) {
+      return;
+    }
+
+    const changedFields = getChangedFields(previousValuesRef.current, currentValues);
+    previousValuesRef.current = currentValues;
+
+    if (Object.keys(changedFields).length > 0) {
+      patchTaskRef.current({ taskUUID: taskRef.current.uuid, changedFields });
+    }
+  }, []);
 
   useEffect(() => {
     let timeoutId: number | undefined;
@@ -29,26 +51,19 @@ export function TaskFormPersistProvider({ patchTask, task, children }: ITaskForm
       skipNextPersistRef.current = false;
       previousValuesRef.current = values;
     } else if (previousValuesRef.current !== values) {
-      timeoutId = window.setTimeout(() => {
-        if (previousValuesRef.current === values) {
-          return;
-        }
-
-        const changedFields = getChangedFields(previousValuesRef.current, values);
-        previousValuesRef.current = values;
-
-        if (Object.keys(changedFields).length > 0) {
-          patchTask({ taskUUID: task.uuid, changedFields });
-        }
-      }, 0);
+      timeoutId = window.setTimeout(flushPersist, 0);
     }
 
     return () => {
       if (timeoutId !== undefined) {
         window.clearTimeout(timeoutId);
+
+        if (taskRef.current.uuid === task.uuid) {
+          flushPersist();
+        }
       }
     };
-  }, [values, task, patchTask]);
+  }, [values, task, flushPersist]);
 
   return children as React.ReactElement;
 }
@@ -67,12 +82,18 @@ function getChangedFields(previous: ITemplateTask, next: ITemplateTask): Partial
 
 export function useTaskForm() {
   const { values, setFieldValue, setValues } = useFormikContext<ITemplateTask>();
+  const valuesRef = useRef(values);
+
+  valuesRef.current = values;
 
   const updateTask = useCallback(
     (changedFields: Partial<ITemplateTask>) => {
-      setValues({ ...values, ...changedFields }, false);
+      const nextValues = { ...valuesRef.current, ...changedFields };
+
+      valuesRef.current = nextValues;
+      setValues(nextValues, false);
     },
-    [setValues, values],
+    [setValues],
   );
 
   const updateField = useCallback(
