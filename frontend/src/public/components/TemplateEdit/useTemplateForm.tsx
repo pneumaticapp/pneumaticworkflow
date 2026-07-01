@@ -136,7 +136,7 @@ function didKickoffFieldsChange(previous: IKickoff, next: IKickoff): boolean {
 }
 
 function shouldRunReferenceCleanup(field: string, previous: ITemplate, next: ITemplate): boolean {
-  if (field === 'tasks') {
+  if (field === 'tasks' || field.startsWith('tasks.')) {
     return true;
   }
 

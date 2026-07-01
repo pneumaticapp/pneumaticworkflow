@@ -668,4 +668,34 @@ describe('useTemplateForm reference cleanup', () => {
     expect(handle!.values.tasks[0].rawPerformers[0].apiName).toBe('perf-2');
     expect(patchTemplate).not.toHaveBeenCalled();
   });
+
+  it('cleans stale performer references synchronously when a task output field is removed', () => {
+    const taskWithOutput = makeTask({
+      apiName: 'task-1',
+      uuid: 'uuid-1',
+      number: 1,
+      fields: [{ apiName: 'deleted-output', name: 'Output', order: 1 } as any],
+    });
+    const dependentTask = makeTask({
+      apiName: 'task-2',
+      uuid: 'uuid-2',
+      number: 2,
+      rawPerformers: [
+        { type: ETaskPerformerType.OutputUser, sourceId: 'deleted-output', label: 'Output', apiName: 'perf-1' } as any,
+        { type: ETaskPerformerType.User, sourceId: '1', label: 'User', apiName: 'perf-2' } as any,
+      ],
+    });
+    const template = makeTemplate({ tasks: [taskWithOutput, dependentTask] });
+    let handle: ISpyHandle | null = null;
+
+    render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
+
+    act(() => {
+      handle!.setFieldValue('tasks.0.fields', [], false);
+    });
+
+    expect(handle!.values.tasks[1].rawPerformers).toHaveLength(1);
+    expect(handle!.values.tasks[1].rawPerformers[0].apiName).toBe('perf-2');
+    expect(patchTemplate).not.toHaveBeenCalled();
+  });
 });
