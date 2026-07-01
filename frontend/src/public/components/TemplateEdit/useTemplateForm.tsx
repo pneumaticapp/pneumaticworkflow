@@ -238,9 +238,10 @@ export function useTemplateForm(initialValues: ITemplate) {
         nextValues = applyReferenceCleanup(nextValues);
       }
 
+      nextValues = applyImmediateDeactivation(currentValues, nextValues);
       pendingUserEditsRef.current = getChangedFields(lastSyncedInitialValuesRef.current, nextValues);
 
-      if (runCleanup) {
+      if (runCleanup || nextValues.isActive !== currentValues.isActive) {
         formik.setValues(nextValues, shouldValidate);
       } else {
         formik.setFieldValue(field, value, shouldValidate);
@@ -252,11 +253,10 @@ export function useTemplateForm(initialValues: ITemplate) {
   const setValues = useCallback<TSetValues>(
     (values, shouldValidate) => {
       dirtyRef.current = true;
-      pendingUserEditsRef.current = {
-        ...pendingUserEditsRef.current,
-        ...getChangedFields(formik.values, values),
-      };
-      formik.setValues(values, shouldValidate);
+      const currentValues = overlayPendingEdits(formik.values, pendingUserEditsRef.current);
+      const nextValues = applyImmediateDeactivation(currentValues, values);
+      pendingUserEditsRef.current = getChangedFields(lastSyncedInitialValuesRef.current, nextValues);
+      formik.setValues(nextValues, shouldValidate);
     },
     [formik, formik.values],
   );
@@ -311,9 +311,9 @@ export function TemplateForm({
 // Keep in sync with `patchTemplateSaga` in redux/template/saga.ts. The saga
 // flips `isActive` to false server-side whenever a non-activation field changes
 // and only reflects it back to Formik via a Redux `setTemplate` reinitialize.
-// Mirroring that decision here lets Formik (and the controls that read from it
-// via `useTemplateField`) deactivate immediately, instead of staying "active"
-// through the persist flush + saga + reinitialize round-trip.
+// `applyImmediateDeactivation` mirrors that decision in the wrapped setters so
+// Formik (and controls like `RouteLeavingGuard` that read from it) deactivate
+// on the same tick as the edit instead of waiting for the deferred persist flush.
 const NON_DEACTIVATIVE_FIELDS: (keyof ITemplate)[] = ['isActive', 'isPublic', 'publicUrl'];
 
 function shouldDeactivateTemplate(
@@ -338,6 +338,20 @@ function shouldDeactivateTemplate(
   return shouldDeactivate;
 }
 
+function applyImmediateDeactivation(previous: ITemplate, next: ITemplate): ITemplate {
+  if (!previous.isActive) {
+    return next;
+  }
+
+  const changedFields = getChangedFields(previous, next);
+
+  if (shouldDeactivateTemplate(changedFields, previous)) {
+    return { ...next, isActive: false };
+  }
+
+  return next;
+}
+
 interface ITemplateFormPersistProviderProps {
   dirtyRef: React.MutableRefObject<boolean>;
   pendingUserEditsRef: React.MutableRefObject<Partial<ITemplate>>;
@@ -356,11 +370,11 @@ interface ITemplateFormPersistProviderProps {
  * owners normalization, ...) update `previousValuesRef` but never dispatch, so
  * they cannot cause a save loop.
  *
- * When a user edit touches a non-activation field, we also flip `isActive` to
- * false in Formik right away — the saga makes the same call server-side, but
- * only reinitializes Formik after the save round-trip, so without this the
- * controls would keep rendering the template as active (no draft warning, no
- * enable button) until Redux catches up.
+ * When a user edit touches a non-activation field, the wrapped `setFieldValue`/
+ * `setValues` flip `isActive` to false in Formik synchronously (see
+ * `applyImmediateDeactivation`) so controls like `RouteLeavingGuard` react
+ * immediately. The saga makes the same call server-side but only reinitializes
+ * Formik after the save round-trip.
  */
 export function TemplateFormPersistProvider({
   dirtyRef,
@@ -368,7 +382,7 @@ export function TemplateFormPersistProvider({
   persistBaselineSyncRef,
   children,
 }: ITemplateFormPersistProviderProps) {
-  const { values, setFieldValue } = useFormikContext<ITemplate>();
+  const { values } = useFormikContext<ITemplate>();
   const dispatch = useDispatch();
   const previousValuesRef = useRef<ITemplate>(values);
   const valuesRef = useRef(values);
@@ -376,14 +390,12 @@ export function TemplateFormPersistProvider({
   const dirtyRefRef = useRef(dirtyRef);
   const pendingUserEditsRefRef = useRef(pendingUserEditsRef);
   const persistBaselineSyncRefRef = useRef(persistBaselineSyncRef);
-  const setFieldValueRef = useRef(setFieldValue);
 
   valuesRef.current = values;
   dispatchRef.current = dispatch;
   dirtyRefRef.current = dirtyRef;
   pendingUserEditsRefRef.current = pendingUserEditsRef;
   persistBaselineSyncRefRef.current = persistBaselineSyncRef;
-  setFieldValueRef.current = setFieldValue;
 
   useEffect(() => {
     persistBaselineSyncRefRef.current.current = (reduxTemplate, currentValues) => {
@@ -451,14 +463,9 @@ export function TemplateFormPersistProvider({
   }, []);
 
   const flushPersist = useCallback(() => {
-    const previousValues = previousValuesRef.current;
     const changedFields = takePendingChanges();
 
     if (Object.keys(changedFields).length > 0) {
-      if (shouldDeactivateTemplate(changedFields, previousValues)) {
-        setFieldValueRef.current('isActive', false, false);
-      }
-
       dispatchRef.current(patchTemplate({ changedFields }));
     }
   }, [takePendingChanges]);

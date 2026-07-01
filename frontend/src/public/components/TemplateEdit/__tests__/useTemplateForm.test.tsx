@@ -138,9 +138,9 @@ describe('TemplateFormPersistProvider deactivation', () => {
       handle!.setFieldValue('description', 'new description', false);
     });
 
-    await flushPersist();
-
     expect(handle!.values.isActive).toBe(false);
+
+    await flushPersist();
     expect(patchTemplate).toHaveBeenCalledTimes(1);
   });
 
@@ -213,7 +213,7 @@ describe('TemplateFormPersistProvider deactivation', () => {
     });
     await flushPersist();
 
-    expect(pendingChanges).toEqual({ owners });
+    expect(pendingChanges).toEqual({ owners, isActive: false });
     expect(patchTemplate).not.toHaveBeenCalled();
   });
 
@@ -235,7 +235,10 @@ describe('TemplateFormPersistProvider deactivation', () => {
     await flushPersist();
 
     expect(patchTemplate).toHaveBeenCalledTimes(1);
-    expect((patchTemplate as unknown as jest.Mock).mock.calls[0][0].changedFields).toEqual({ owners });
+    expect((patchTemplate as unknown as jest.Mock).mock.calls[0][0].changedFields).toEqual({
+      owners,
+      isActive: false,
+    });
   });
 
   it('does not restore the persist baseline after an explicit submit succeeds', async () => {
@@ -273,6 +276,7 @@ describe('TemplateFormPersistProvider deactivation', () => {
     expect(patchTemplate).toHaveBeenCalledTimes(1);
     expect((patchTemplate as unknown as jest.Mock).mock.calls[0][0].changedFields).toEqual({
       description: 'second edit',
+      isActive: false,
     });
   });
 
@@ -406,6 +410,7 @@ describe('useTemplateForm reinitialize', () => {
     });
 
     expect(hookResult!.pendingUserEditsRef.current).toEqual({
+      isActive: false,
       tasks: [expect.objectContaining({ name: 'Edited Task' })],
     });
     expect(Object.prototype.hasOwnProperty.call(hookResult!.pendingUserEditsRef.current, 'tasks.0.name')).toBe(false);
@@ -442,6 +447,7 @@ describe('useTemplateForm reinitialize', () => {
     });
 
     expect(hookResult!.pendingUserEditsRef.current).toEqual({
+      isActive: false,
       tasks: [expect.objectContaining({ skipForStarter: true })],
     });
     expect(Object.prototype.hasOwnProperty.call(hookResult!.pendingUserEditsRef.current, 'tasks.0')).toBe(false);
@@ -576,6 +582,7 @@ describe('TemplateFormPersistProvider reinitialize', () => {
     expect(Object.prototype.hasOwnProperty.call(handle!.values, 'tasks.0.name')).toBe(false);
     expect(patchTemplate).toHaveBeenCalledTimes(1);
     expect((patchTemplate as unknown as jest.Mock).mock.calls[0][0].changedFields).toEqual({
+      isActive: false,
       tasks: [expect.objectContaining({ name: 'Edited Task' })],
     });
     expect(Object.prototype.hasOwnProperty.call(
