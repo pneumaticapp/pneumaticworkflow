@@ -12,6 +12,7 @@ import { isRequestCanceled } from '../utils/isRequestCanceled';
 import { isExpectedClientError } from '../utils/expectedClientErrors';
 
 import { InterceptorError } from './InterceptorError';
+import { createApiError } from './utils/createApiError';
 
 export { InterceptorError };
 
@@ -129,13 +130,7 @@ axiosInstance.interceptors.response.use(
       logger.error('Error:', error.message);
     }
 
-    const data = error.response?.data;
-    const payload = typeof data === 'string' ? { error: data } : data ?? {};
-    const hasPayloadData = Object.keys(payload).length > 0;
-    const message = payload.message || payload.error
-      || (hasPayloadData ? JSON.stringify({ ...payload, status: error.response?.status }) : null)
-      || error.message || 'Request failed';
-    return Promise.reject(new ApiError(message, payload, error.response?.status));
+    return Promise.reject(createApiError(error.response?.data, error.response?.status));
   },
 );
 
