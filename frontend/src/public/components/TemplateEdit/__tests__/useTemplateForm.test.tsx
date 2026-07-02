@@ -514,6 +514,45 @@ describe('useTemplateForm reinitialize', () => {
     expect(hookResult!.formik.values.dateUpdated).toBe('2026-07-01T00:00:00Z');
   });
 
+  it('interleaves server-added tasks by number when Redux reinitializes during pending task edits', () => {
+    const task1 = makeTask({ apiName: 'task-1', uuid: 'uuid-1', number: 1, name: 'Task 1' });
+    const task3 = makeTask({ apiName: 'task-3', uuid: 'uuid-3', number: 3, name: 'Task 3' });
+    const task2 = makeTask({ apiName: 'task-2', uuid: 'uuid-2', number: 2, name: 'Server Inserted' });
+    const template = makeTemplate({ tasks: [task1, task3], dateUpdated: null });
+    let hookResult: ReturnType<typeof useTemplateForm> | null = null;
+
+    const { rerender } = render(
+      <HookHarness
+        currentTemplate={template}
+        onReady={(result) => { hookResult = result; }}
+      />,
+    );
+
+    act(() => {
+      hookResult!.setFieldValue('tasks.0.name', 'Edited Task 1', false);
+      hookResult!.setFieldValue('tasks.1.name', 'Edited Task 3', false);
+    });
+
+    rerender(
+      <HookHarness
+        currentTemplate={{
+          ...template,
+          tasks: [task1, task2, task3],
+          dateUpdated: '2026-07-01T00:00:00Z',
+        }}
+        onReady={(result) => { hookResult = result; }}
+      />,
+    );
+
+    expect(hookResult!.formik.values.tasks).toHaveLength(3);
+    expect(hookResult!.formik.values.tasks.map((task) => task.name)).toEqual([
+      'Edited Task 1',
+      'Server Inserted',
+      'Edited Task 3',
+    ]);
+    expect(hookResult!.formik.values.tasks.map((task) => task.number)).toEqual([1, 2, 3]);
+  });
+
   it('does not restore locally deleted tasks when Redux reinitializes before the deletion is saved', () => {
     const task1 = makeTask({ apiName: 'task-1', uuid: 'uuid-1', number: 1, name: 'Task 1' });
     const task2 = makeTask({ apiName: 'task-2', uuid: 'uuid-2', number: 2, name: 'Task 2' });
@@ -676,6 +715,53 @@ describe('TemplateFormPersistProvider reinitialize', () => {
     await flushPersist();
 
     expect(patchTemplate).not.toHaveBeenCalled();
+  });
+
+  it('does not re-dispatch externally reinitialized fields when a different edit is pending', async () => {
+    const template = makeTemplate({
+      isActive: true,
+      name: 'Original',
+      dateUpdated: null,
+      owners: [],
+    });
+    let handle: ISpyHandle | null = null;
+
+    const { rerender } = render(
+      <StatefulTemplateFormHarness
+        initialTemplate={template}
+        spy={(h) => { handle = h; }}
+      />,
+    );
+
+    act(() => {
+      handle!.setFieldValue('name', 'unsaved edit', false);
+    });
+
+    (patchTemplate as unknown as jest.Mock).mockClear();
+
+    act(() => {
+      rerender(
+        <StatefulTemplateFormHarness
+          initialTemplate={{
+            ...template,
+            dateUpdated: '2026-07-01T00:00:00Z',
+            owners: [{ id: 1, role: 'owner' }] as any,
+          }}
+          spy={(h) => { handle = h; }}
+        />,
+      );
+    });
+
+    await flushPersist();
+
+    expect(handle!.values.name).toBe('unsaved edit');
+    expect(handle!.values.dateUpdated).toBe('2026-07-01T00:00:00Z');
+    expect(handle!.values.owners).toEqual([{ id: 1, role: 'owner' }]);
+    expect(patchTemplate).toHaveBeenCalledTimes(1);
+    expect((patchTemplate as unknown as jest.Mock).mock.calls[0][0].changedFields).toEqual({
+      name: 'unsaved edit',
+      isActive: false,
+    });
   });
 
   it('preserves nested task edits and sends valid changedFields after Redux reinitializes', async () => {

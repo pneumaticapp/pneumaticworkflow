@@ -146,7 +146,29 @@ function mergePreservedTasks(
     (task) => !baselineUuids.has(task.uuid) && !preservedUuids.has(task.uuid),
   );
 
-  return [...mergedFromPreserved, ...serverAddedTasks];
+  if (serverAddedTasks.length === 0) {
+    return mergedFromPreserved;
+  }
+
+  const sortedServerAdded = [...serverAddedTasks].sort((a, b) => a.number - b.number);
+  const preservedOrderNumber = (task: ITemplateTask) =>
+    incomingByUuid.get(task.uuid)?.number ?? task.number;
+
+  const insertState = { serverIndex: 0 };
+
+  const interleaved = mergedFromPreserved.reduce<ITemplateTask[]>((result, preserved) => {
+    while (
+      insertState.serverIndex < sortedServerAdded.length
+      && sortedServerAdded[insertState.serverIndex].number < preservedOrderNumber(preserved)
+    ) {
+      result.push(sortedServerAdded[insertState.serverIndex]);
+      insertState.serverIndex += 1;
+    }
+    result.push(preserved);
+    return result;
+  }, []);
+
+  return [...interleaved, ...sortedServerAdded.slice(insertState.serverIndex)];
 }
 
 function getKickoffFieldApiNames(kickoff: IKickoff): string[] {
@@ -217,7 +239,7 @@ export function useTemplateForm(initialValues: ITemplate) {
   const dirtyRef = useRef(false);
   const pendingUserEditsRef = useRef<Partial<ITemplate>>({});
   const lastSyncedInitialValuesRef = useRef(initialValues);
-  const persistBaselineSyncRef = useRef<((reduxTemplate: ITemplate, currentValues: ITemplate) => void) | null>(null);
+  const persistBaselineSyncRef = useRef<((reduxTemplate: ITemplate) => void) | null>(null);
 
   const formik = useFormik<ITemplate>({
     initialValues,
@@ -238,7 +260,7 @@ export function useTemplateForm(initialValues: ITemplate) {
       pendingUserEditsRef.current = getChangedFields(initialValues, mergedValues);
       dirtyRef.current = true;
       formik.setValues(mergedValues, false);
-      persistBaselineSyncRef.current?.(initialValues, mergedValues);
+      persistBaselineSyncRef.current?.(initialValues);
     } else {
       pendingUserEditsRef.current = {};
       dirtyRef.current = false;
@@ -299,7 +321,7 @@ interface ITemplateFormProps {
   setValues: TSetValues;
   dirtyRef: React.MutableRefObject<boolean>;
   pendingUserEditsRef: React.MutableRefObject<Partial<ITemplate>>;
-  persistBaselineSyncRef: React.MutableRefObject<((reduxTemplate: ITemplate, currentValues: ITemplate) => void) | null>;
+  persistBaselineSyncRef: React.MutableRefObject<((reduxTemplate: ITemplate) => void) | null>;
   children: React.ReactNode;
 }
 
@@ -384,7 +406,7 @@ function applyImmediateDeactivation(previous: ITemplate, next: ITemplate): ITemp
 interface ITemplateFormPersistProviderProps {
   dirtyRef: React.MutableRefObject<boolean>;
   pendingUserEditsRef: React.MutableRefObject<Partial<ITemplate>>;
-  persistBaselineSyncRef: React.MutableRefObject<((reduxTemplate: ITemplate, currentValues: ITemplate) => void) | null>;
+  persistBaselineSyncRef: React.MutableRefObject<((reduxTemplate: ITemplate) => void) | null>;
   children: React.ReactNode;
 }
 
@@ -431,13 +453,11 @@ export function TemplateFormPersistProvider({
   persistBaselineSyncRefRef.current = persistBaselineSyncRef;
 
   useEffect(() => {
-    persistBaselineSyncRefRef.current.current = (reduxTemplate, currentValues) => {
-      const pendingEdits = pendingUserEditsRefRef.current.current;
-      previousValuesRef.current = { ...currentValues };
-
-      (Object.keys(pendingEdits) as (keyof ITemplate)[]).forEach((key) => {
-        (previousValuesRef.current[key] as ITemplate[keyof ITemplate]) = reduxTemplate[key];
-      });
+    persistBaselineSyncRefRef.current.current = (reduxTemplate) => {
+      // Baseline must mirror the latest Redux snapshot for every field so
+      // server-stamped or normalized values (dateUpdated, owners, ...) are not
+      // diffed as user edits on the next flush.
+      previousValuesRef.current = { ...reduxTemplate };
     };
 
     return () => {
