@@ -285,6 +285,13 @@ export function TemplateFormPersistProvider({
       return undefined;
     }
 
+    if (
+      dirtyRefRef.current.current
+      && Object.keys(getChangedFields(previousValuesRef.current, values)).length > 0
+    ) {
+      dispatchRef.current(setTemplateStatus(ETemplateStatus.Saving));
+    }
+
     const timeoutId = window.setTimeout(() => {
       flushPersist();
     }, 0);

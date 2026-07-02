@@ -9,7 +9,8 @@ import {
 } from '../../../types/template';
 import { EConditionAction, EConditionOperators, EConditionLogicOperations, TConditionRule } from '../TaskForm/Conditions/types';
 import { TemplateForm, useTemplateField, useTemplateForm, useTemplatePersist, useTemplateSaveRetry } from '../useTemplateForm';
-import { patchTemplate, saveTemplate } from '../../../redux/actions';
+import { patchTemplate, saveTemplate, setTemplateStatus } from '../../../redux/actions';
+import { ETemplateStatus } from '../../../types/redux';
 import { resetAutosavePersistRequestsForTests } from '../../../redux/template/persistRequest';
 
 const mockDispatch = jest.fn();
@@ -176,6 +177,24 @@ describe('TemplateFormPersistProvider deactivation', () => {
 
     expect(handle!.values.isActive).toBe(true);
     expect(patchTemplate).toHaveBeenCalledTimes(1);
+  });
+
+  it('marks template as Saving before the deferred autosave flush', () => {
+    const template = makeTemplate({ isActive: true, isPublic: false });
+    let handle: ISpyHandle | null = null;
+
+    render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
+
+    mockDispatch.mockClear();
+    (patchTemplate as unknown as jest.Mock).mockClear();
+
+    act(() => {
+      handle!.setFieldValue('isPublic', true, false);
+    });
+
+    expect(handle!.values.isActive).toBe(true);
+    expect(mockDispatch).toHaveBeenCalledWith(setTemplateStatus(ETemplateStatus.Saving));
+    expect(patchTemplate).not.toHaveBeenCalled();
   });
 
   it('does not deactivate when only kickoff.description changes (matches saga special case)', async () => {
@@ -1533,7 +1552,7 @@ describe('useTemplateSaveRetry', () => {
     });
 
     expect(saveTemplate).not.toHaveBeenCalled();
-    expect(mockDispatch).toHaveBeenCalledTimes(1);
+    expect(mockDispatch).toHaveBeenCalledWith(setTemplateStatus(ETemplateStatus.Saving));
     expect(patchTemplate).toHaveBeenCalledWith({
       changedFields: { name: 'Retry edit', isActive: false },
       onSuccess: expect.any(Function),
