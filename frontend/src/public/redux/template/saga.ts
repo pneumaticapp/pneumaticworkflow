@@ -103,42 +103,50 @@ function* patchTemplateSaga({ payload: { changedFields, onSuccess, onFailed, req
     return;
   }
 
-  const template: ReturnType<typeof getTemplateData> = yield select(getTemplateData);
+  try {
+    const template: ReturnType<typeof getTemplateData> = yield select(getTemplateData);
 
-  yield put(setTemplateStatus(ETemplateStatus.Saving));
+    yield put(setTemplateStatus(ETemplateStatus.Saving));
 
-  const nonDeactivativeFields: (keyof ITemplate)[] = ['isActive', 'isPublic', 'publicUrl'];
-  let shouldDeactivateTemplate = changedFields.isActive === true
-    ? false
-    : Object.keys(changedFields).some((key) => !nonDeactivativeFields.includes(key as keyof ITemplate));
+    const nonDeactivativeFields: (keyof ITemplate)[] = ['isActive', 'isPublic', 'publicUrl'];
+    let shouldDeactivateTemplate = changedFields.isActive === true
+      ? false
+      : Object.keys(changedFields).some((key) => !nonDeactivativeFields.includes(key as keyof ITemplate));
 
-  if (Object.keys(changedFields).length === 1 && changedFields.hasOwnProperty('kickoff')) {
-    const kickoffChanged = changedFields.kickoff;
-    const previousKickoff = template.kickoff;
+    if (Object.keys(changedFields).length === 1 && changedFields.hasOwnProperty('kickoff')) {
+      const kickoffChanged = changedFields.kickoff;
+      const previousKickoff = template.kickoff;
 
-    if (haveSameKickoffFields(kickoffChanged?.fields, previousKickoff.fields)) {
-      shouldDeactivateTemplate =
-        kickoffChanged?.description === previousKickoff.description ? shouldDeactivateTemplate : false;
+      if (haveSameKickoffFields(kickoffChanged?.fields, previousKickoff.fields)) {
+        shouldDeactivateTemplate =
+          kickoffChanged?.description === previousKickoff.description ? shouldDeactivateTemplate : false;
+      }
+    }
+
+    const mergedTemplate: ITemplate = {
+      ...template,
+      ...changedFields,
+      ...(shouldDeactivateTemplate && { isActive: false }),
+    };
+
+    const needsCleanup = changedFields.hasOwnProperty('tasks') || changedFields.hasOwnProperty('kickoff');
+    const newTemplate = needsCleanup ? cleanTemplateReferences(mergedTemplate) : mergedTemplate;
+
+    yield put(setTemplate(newTemplate));
+    yield delay(350);
+
+    if (!isAutosavePersistRequestCurrent(requestId)) {
+      yield put(setTemplateStatus(ETemplateStatus.Saved));
+      return;
+    }
+
+    yield put(saveTemplate({ onSuccess, onFailed, requestId }));
+  } finally {
+    if (yield cancelled()) {
+      yield put(setTemplateStatus(ETemplateStatus.Saved));
+      onFailed?.();
     }
   }
-
-  const mergedTemplate: ITemplate = {
-    ...template,
-    ...changedFields,
-    ...(shouldDeactivateTemplate && { isActive: false }),
-  };
-
-  const needsCleanup = changedFields.hasOwnProperty('tasks') || changedFields.hasOwnProperty('kickoff');
-  const newTemplate = needsCleanup ? cleanTemplateReferences(mergedTemplate) : mergedTemplate;
-
-  yield put(setTemplate(newTemplate));
-  yield delay(350);
-
-  if (!isAutosavePersistRequestCurrent(requestId)) {
-    return;
-  }
-
-  yield put(saveTemplate({ onSuccess, onFailed, requestId }));
 }
 
 function* patchTaskSaga({ payload: { taskUUID, changedFields } }: TPatchTask) {
@@ -213,6 +221,9 @@ function* fetchSaveTemplate(onSuccess?: () => void, onFailed?: () => void, reque
   if (!isTemplatePage) return;
 
   if (!isAutosavePersistRequestCurrent(requestId)) {
+    if (requestId !== undefined) {
+      yield put(setTemplateStatus(ETemplateStatus.Saved));
+    }
     return;
   }
 
@@ -225,6 +236,9 @@ function* fetchSaveTemplate(onSuccess?: () => void, onFailed?: () => void, reque
   const savedTemplate: ITemplate | null = yield createOrUpdateTemplate(templateRequest, isSubscribed, users);
 
   if (!isAutosavePersistRequestCurrent(requestId)) {
+    if (requestId !== undefined) {
+      yield put(setTemplateStatus(ETemplateStatus.Saved));
+    }
     return;
   }
 
