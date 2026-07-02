@@ -9,6 +9,7 @@ import { getSubscriptionPlan } from '../../redux/selectors/user';
 import { ESubscriptionPlan } from '../../types/account';
 import { ETemplateStatus } from '../../types/redux';
 import { TemplateForm, useTemplateForm } from './useTemplateForm';
+import { resolveTemplateFormIdentity } from './useTemplateForm/templateFormUtils';
 
 import { TTemplateEditProps } from './templateEditPage.types';
 
@@ -31,11 +32,17 @@ export function TemplateEdit({
   loadTemplateVariablesSuccess,
 }: TTemplateEditProps) {
   const { formatMessage } = useIntl();
-  const createSessionKeyRef = useRef('create');
-  const templateFormKey = template.id ?? createSessionKeyRef.current;
+  const templateIdentity = resolveTemplateFormIdentity(template, location);
+  const createSessionKeyRef = useRef<string | undefined>(undefined);
+
+  if (!template.id && typeof templateIdentity === 'string') {
+    createSessionKeyRef.current = templateIdentity;
+  }
+
+  const templateFormKey = template.id ?? createSessionKeyRef.current ?? 'create';
   const { formik, setFieldValue, setValues, dirtyRef, pendingUserEditsRef, persistBaselineSyncRef } = useTemplateForm(
     template,
-    template.id,
+    templateIdentity,
   );
   const billingPlan = useSelector(getSubscriptionPlan);
   const isFreePlan = billingPlan === ESubscriptionPlan.Free;

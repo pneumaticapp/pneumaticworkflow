@@ -1,4 +1,21 @@
 import { ITemplate, ITemplateTask } from '../../../types/template';
+import { getTemplateIdFromUrl } from '../../../utils/template';
+
+export function resolveTemplateFormIdentity(
+  template: ITemplate,
+  location: { pathname: string; search: string },
+): string | number | undefined {
+  if (template.id) {
+    return template.id;
+  }
+
+  const systemTemplateId = getTemplateIdFromUrl(location.search);
+  if (systemTemplateId) {
+    return `create:system:${systemTemplateId}`;
+  }
+
+  return `create:${location.pathname}`;
+}
 
 export function setNestedFieldValue(obj: ITemplate, path: string, value: unknown): ITemplate {
   const taskPathMatch = path.match(/^tasks\.(\d+)(?:\.(.+))?$/);
@@ -156,7 +173,9 @@ export function hasTemplateIdentityChanged(
 
   // First id assignment after create — same template session.
   const isCreateSessionIdentity = (identity: string | number | undefined) =>
-    identity === undefined || identity === 'create';
+    identity === undefined
+    || identity === 'create'
+    || (typeof identity === 'string' && identity.startsWith('create:'));
 
   if (isCreateSessionIdentity(previousIdentity) && typeof nextIdentity === 'number') {
     return false;

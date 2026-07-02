@@ -326,6 +326,36 @@ describe('TemplateFormPersistProvider deactivation', () => {
     });
   });
 
+  it('re-queues autosave on failed activation when isActive was not flipped in Formik', () => {
+    const template = makeTemplate({ isActive: false, name: 'Original', dateUpdated: null });
+    let handle: ISpyHandle | null = null;
+
+    render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
+
+    act(() => {
+      handle!.setFieldValue('name', 'Unsaved edit', false);
+    });
+
+    act(() => {
+      handle!.consumePendingChanges({ isActive: true });
+    });
+
+    const callsBeforeRevert = (patchTemplate as unknown as jest.Mock).mock.calls.length;
+
+    act(() => {
+      handle!.revertConsumedChanges();
+    });
+
+    const callsAfterRevert = (patchTemplate as unknown as jest.Mock).mock.calls.slice(callsBeforeRevert);
+
+    expect(handle!.values.name).toBe('Unsaved edit');
+    expect(handle!.values.isActive).toBe(false);
+    expect(callsAfterRevert).toHaveLength(1);
+    expect(callsAfterRevert[0][0].changedFields).toEqual({
+      name: 'Unsaved edit',
+    });
+  });
+
   it('re-queues autosave after a failed explicit submit when Redux reinitializes during the in-flight patch', async () => {
     const template = makeTemplate({ isActive: true, owners: [] });
     let handle: ISpyHandle | null = null;
@@ -708,7 +738,7 @@ describe('useTemplateForm reinitialize', () => {
     const { rerender } = render(
       <HookHarness
         currentTemplate={newTemplate}
-        templateIdentityKey={undefined}
+        templateIdentityKey="create:/templates/create/"
         onReady={(result) => { hookResult = result; }}
       />,
     );
@@ -728,6 +758,35 @@ describe('useTemplateForm reinitialize', () => {
     expect(hookResult!.formik.values.name).toBe('Edited during create save');
     expect(hookResult!.pendingUserEditsRef.current.name).toBe('Edited during create save');
     expect(hookResult!.dirtyRef.current).toBe(true);
+  });
+
+  it('drops pending edits when switching between create flows', () => {
+    const newTemplate = makeTemplate({ id: undefined, name: 'Draft', dateUpdated: null });
+    let hookResult: ReturnType<typeof useTemplateForm> | null = null;
+
+    const { rerender } = render(
+      <HookHarness
+        currentTemplate={newTemplate}
+        templateIdentityKey="create:/templates/create/"
+        onReady={(result) => { hookResult = result; }}
+      />,
+    );
+
+    act(() => {
+      hookResult!.setFieldValue('name', 'Manual draft', false);
+    });
+
+    rerender(
+      <HookHarness
+        currentTemplate={{ ...newTemplate, name: 'AI Template' }}
+        templateIdentityKey="create:/templates/create-with-ai/"
+        onReady={(result) => { hookResult = result; }}
+      />,
+    );
+
+    expect(hookResult!.formik.values.name).toBe('AI Template');
+    expect(hookResult!.pendingUserEditsRef.current).toEqual({});
+    expect(hookResult!.dirtyRef.current).toBe(false);
   });
 
   it('merges pending user edits into resolved Formik initialValues', () => {

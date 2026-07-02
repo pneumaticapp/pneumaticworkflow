@@ -175,18 +175,34 @@ export function TemplateFormPersistProvider({
 
     consumedPendingRef.current = null;
 
-    let revertedValues: ITemplate = { ...valuesRef.current };
+    let valuesChangedByExplicitRevert = false;
 
     if (consumed.explicitFields) {
+      let revertedValues: ITemplate = { ...valuesRef.current };
+
       (Object.keys(consumed.explicitFields) as (keyof ITemplate)[]).forEach((key) => {
+        if (valuesRef.current[key] !== consumed.previousBaseline[key]) {
+          valuesChangedByExplicitRevert = true;
+        }
         revertedValues = {
           ...revertedValues,
           [key]: consumed.previousBaseline[key],
         };
       });
+
+      if (valuesChangedByExplicitRevert) {
+        setValuesRef.current(revertedValues);
+      }
     }
 
-    setValuesRef.current(revertedValues);
+    // When explicit fields (e.g. isActive) were reverted in Formik, the values
+    // effect will re-queue autosave. Otherwise consumed user edits are still
+    // visible but no longer match the restored baseline — flush now so they
+    // are not stranded without autosave (e.g. failed activation in
+    // TemplateControlls never flips isActive in Formik before the patch).
+    if (previousValuesRef.current !== valuesRef.current && !valuesChangedByExplicitRevert) {
+      flushPersistRef.current();
+    }
   }, []);
 
   const consumePendingChanges = useCallback((explicitFields?: Partial<ITemplate>) => {
