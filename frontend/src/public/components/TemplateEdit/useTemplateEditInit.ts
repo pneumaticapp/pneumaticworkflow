@@ -95,11 +95,13 @@ export function useTemplateEditInit({
     };
   }, []);
 
+  const firstTaskUuid = formik.values.tasks[0]?.uuid;
+
   useEffect(() => {
     if (checkSomeRouteIsActive(ERoutes.TemplatesCreate) || checkSomeRouteIsActive(ERoutes.TemplatesCreateAI)) {
-      openTask(formik.values.tasks[0]?.uuid);
+      openTask(firstTaskUuid);
     }
-  }, [formik.values.tasks, location.pathname, openTask]);
+  }, [firstTaskUuid, location.pathname, openTask]);
 
   useEffect(() => {
     // Derive variables from Formik, not the Redux `template` prop. Kickoff/task

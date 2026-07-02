@@ -84,4 +84,39 @@ describe('useTemplateEditTasks', () => {
       false,
     );
   });
+
+  it('keeps a stable openTask reference and does not re-open an already opened task', () => {
+    const task = makeTask();
+    const setFieldValue = jest.fn();
+    const openTaskRefs: Array<(taskUUID?: string) => void> = [];
+
+    function Harness() {
+      const { openTask } = useTemplateEditTasks({
+        authUser: { account: { id: 1 } } as any,
+        formik: { values: makeTemplate([task]) } as FormikProps<ITemplate>,
+        setFieldValue,
+        users: [],
+        accessConditions: true,
+        formatMessage: intlMock.formatMessage,
+        isSubscribed: true,
+      });
+
+      openTaskRefs.push(openTask);
+      return null;
+    }
+
+    const { rerender } = render(React.createElement(Harness));
+
+    act(() => {
+      openTaskRefs[0]!(task.uuid);
+    });
+
+    rerender(React.createElement(Harness));
+
+    expect(openTaskRefs[0]).toBe(openTaskRefs[1]);
+
+    act(() => {
+      openTaskRefs[1]!(task.uuid);
+    });
+  });
 });

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { FormikProps } from 'formik';
 import { IntlShape } from 'react-intl';
 
@@ -43,10 +43,16 @@ export function useTemplateEditTasks({
     setFieldValue('tasks', newTasks, false);
   };
 
-  const openTask = (taskUUID?: string) => {
+  const openTask = useCallback((taskUUID?: string) => {
     if (!taskUUID) return;
-    setOpenedTasks((prev) => ({ ...prev, [taskUUID]: true }));
-  };
+    setOpenedTasks((prev) => {
+      if (prev[taskUUID]) {
+        return prev;
+      }
+
+      return { ...prev, [taskUUID]: true };
+    });
+  }, []);
 
   const toggleIsOpenTask = (taskUUID: string) => {
     setOpenedTasks((prev) => ({ ...prev, [taskUUID]: !prev[taskUUID] }));
