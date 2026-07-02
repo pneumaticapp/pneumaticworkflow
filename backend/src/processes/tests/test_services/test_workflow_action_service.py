@@ -522,112 +522,6 @@ def test_delay_task__ok__set_delayed_save_fire_event(mocker):
     )
 
 
-def test__task_can_be_completed__task_is_completed__return_false(mocker):
-
-    # arrange
-    account = create_test_account()
-    owner = create_test_owner(account=account)
-    workflow = create_test_workflow(user=owner)
-    task = workflow.tasks.get(number=1)
-    task.status = TaskStatus.COMPLETED
-    task.save()
-    service = WorkflowActionService(user=owner, workflow=workflow)
-
-    # act
-    result = service._task_can_be_completed(task)
-
-    # assert
-    assert result is False
-
-
-def test__task_can_be_completed__not_by_all_has_completed_perf__true(mocker):
-
-    # arrange
-    account = create_test_account()
-    owner = create_test_owner(account=account)
-    workflow = create_test_workflow(user=owner)
-    task = workflow.tasks.get(number=1)
-    task.require_completion_by_all = False
-    task.save()
-    task.taskperformer_set.update(
-        is_completed=True,
-        date_completed=timezone.now(),
-    )
-    service = WorkflowActionService(user=owner, workflow=workflow)
-
-    # act
-    result = service._task_can_be_completed(task)
-
-    # assert
-    assert result is True
-
-
-def test__task_can_be_completed__by_all_no_incomplete_perf__true(mocker):
-
-    # arrange
-    account = create_test_account()
-    owner = create_test_owner(account=account)
-    workflow = create_test_workflow(user=owner)
-    task = workflow.tasks.get(number=1)
-    task.require_completion_by_all = True
-    task.save()
-    task.taskperformer_set.update(
-        is_completed=True,
-        date_completed=timezone.now(),
-    )
-    service = WorkflowActionService(user=owner, workflow=workflow)
-
-    # act
-    result = service._task_can_be_completed(task)
-
-    # assert
-    assert result is True
-
-
-def test__task_can_be_completed__not_by_all_no_completed_perf__false(mocker):
-
-    # arrange
-    account = create_test_account()
-    owner = create_test_owner(account=account)
-    workflow = create_test_workflow(user=owner)
-    task = workflow.tasks.get(number=1)
-    task.require_completion_by_all = False
-    task.save()
-    task.taskperformer_set.update(is_completed=False, date_completed=None)
-    not_performer = create_test_not_admin(account=account)
-    service = WorkflowActionService(user=not_performer, workflow=workflow)
-
-    # act
-    result = service._task_can_be_completed(task)
-
-    # assert
-    assert result is False
-
-
-def test__task_can_be_completed__by_all_has_incomplete_perf__false(mocker):
-
-    # arrange
-    account = create_test_account()
-    owner = create_test_owner(account=account)
-    workflow = create_test_workflow(user=owner)
-    task = workflow.tasks.get(number=1)
-    task.require_completion_by_all = True
-    task.save()
-    performers = list(task.taskperformer_set.all())
-    if performers:
-        performers[0].is_completed = False
-        performers[0].date_completed = None
-        performers[0].save()
-    not_performer = create_test_not_admin(account=account)
-    service = WorkflowActionService(user=not_performer, workflow=workflow)
-
-    # act
-    result = service._task_can_be_completed(task)
-
-    # assert
-    assert result is False
-
-
 def test_force_complete_workflow__has_active_tasks__send_removed_notif(
     mocker,
 ):
@@ -2711,10 +2605,12 @@ def test_update_tasks_status__active_start_task_completable__complete(mocker):
     # arrange
     account = create_test_account()
     owner = create_test_owner(account=account)
-    workflow = create_test_workflow(user=owner)
-    workflow.tasks.filter(
-        number__in=(2, 3),
-    ).update(status=TaskStatus.COMPLETED)
+    workflow = create_test_workflow(user=owner, tasks_count=3)
+    (
+        workflow.tasks
+        .filter(number__in=(2, 3))
+        .update(status=TaskStatus.COMPLETED)
+    )
     task = workflow.tasks.get(number=1)
     task.taskperformer_set.update(
         is_completed=True,
@@ -2802,10 +2698,6 @@ def test_complete_task_for_user__workflow_delayed__raise_exception(mocker):
         'src.processes.services.tasks.field.TaskFieldService'
         '.partial_update',
     )
-    task_can_be_completed_mock = mocker.patch(
-        'src.processes.services.workflow_action.WorkflowActionService'
-        '._task_can_be_completed',
-    )
     complete_task_mock = mocker.patch(
         'src.processes.services.workflow_action.WorkflowActionService'
         '.complete_task',
@@ -2839,7 +2731,6 @@ def test_complete_task_for_user__workflow_delayed__raise_exception(mocker):
     assert ex.value.message == str(messages.MSG_PW_0004)
     task_field_service_init_mock.assert_not_called()
     partial_update_mock.assert_not_called()
-    task_can_be_completed_mock.assert_not_called()
     task_completed_analytics_mock.assert_not_called()
     task_complete_event_mock.assert_not_called()
     complete_task_mock.assert_not_called()
@@ -2861,10 +2752,6 @@ def test_complete_task_for_user__workflow_completed__raise_exception(mocker):
     partial_update_mock = mocker.patch(
         'src.processes.services.tasks.field.TaskFieldService'
         '.partial_update',
-    )
-    task_can_be_completed_mock = mocker.patch(
-        'src.processes.services.workflow_action.WorkflowActionService'
-        '._task_can_be_completed',
     )
     complete_task_mock = mocker.patch(
         'src.processes.services.workflow_action.WorkflowActionService'
@@ -2899,7 +2786,6 @@ def test_complete_task_for_user__workflow_completed__raise_exception(mocker):
     assert ex.value.message == str(messages.MSG_PW_0008)
     task_field_service_init_mock.assert_not_called()
     partial_update_mock.assert_not_called()
-    task_can_be_completed_mock.assert_not_called()
     task_completed_analytics_mock.assert_not_called()
     task_complete_event_mock.assert_not_called()
     complete_task_mock.assert_not_called()
@@ -2934,10 +2820,6 @@ def test_complete_task_for_user__task_inactive__raise_exception(
         'src.processes.services.tasks.field.TaskFieldService'
         '.partial_update',
     )
-    task_can_be_completed_mock = mocker.patch(
-        'src.processes.services.workflow_action.WorkflowActionService'
-        '._task_can_be_completed',
-    )
     complete_task_mock = mocker.patch(
         'src.processes.services.workflow_action.WorkflowActionService'
         '.complete_task',
@@ -2971,7 +2853,6 @@ def test_complete_task_for_user__task_inactive__raise_exception(
     assert ex.value.message == str(messages.MSG_PW_0086)
     task_field_service_init_mock.assert_not_called()
     partial_update_mock.assert_not_called()
-    task_can_be_completed_mock.assert_not_called()
     task_completed_analytics_mock.assert_not_called()
     task_complete_event_mock.assert_not_called()
     complete_task_mock.assert_not_called()
@@ -3008,10 +2889,6 @@ def test_complete_task_for_user__performer_complete_task__raise_exception(
         'src.processes.services.tasks.field.TaskFieldService'
         '.partial_update',
     )
-    task_can_be_completed_mock = mocker.patch(
-        'src.processes.services.workflow_action.WorkflowActionService'
-        '._task_can_be_completed',
-    )
     complete_task_mock = mocker.patch(
         'src.processes.services.workflow_action.WorkflowActionService'
         '.complete_task',
@@ -3045,7 +2922,6 @@ def test_complete_task_for_user__performer_complete_task__raise_exception(
     assert ex.value.message == str(messages.MSG_PW_0007)
     task_field_service_init_mock.assert_not_called()
     partial_update_mock.assert_not_called()
-    task_can_be_completed_mock.assert_not_called()
     task_completed_analytics_mock.assert_not_called()
     task_complete_event_mock.assert_not_called()
     complete_task_mock.assert_not_called()
@@ -3073,10 +2949,6 @@ def test_complete_task_for_user__user_not_performer__raise(mocker):
     partial_update_mock = mocker.patch(
         'src.processes.services.tasks.field.TaskFieldService'
         '.partial_update',
-    )
-    task_can_be_completed_mock = mocker.patch(
-        'src.processes.services.workflow_action.WorkflowActionService'
-        '._task_can_be_completed',
     )
     complete_task_mock = mocker.patch(
         'src.processes.services.workflow_action.WorkflowActionService'
@@ -3111,7 +2983,6 @@ def test_complete_task_for_user__user_not_performer__raise(mocker):
     assert ex.value.message == str(messages.MSG_PW_0087)
     task_field_service_init_mock.assert_not_called()
     partial_update_mock.assert_not_called()
-    task_can_be_completed_mock.assert_not_called()
     task_completed_analytics_mock.assert_not_called()
     task_complete_event_mock.assert_not_called()
     complete_task_mock.assert_not_called()
@@ -3135,10 +3006,6 @@ def test_complete_task_for_user__checklist_incomplete__raise_exception(
     partial_update_mock = mocker.patch(
         'src.processes.services.tasks.field.TaskFieldService'
         '.partial_update',
-    )
-    task_can_be_completed_mock = mocker.patch(
-        'src.processes.services.workflow_action.WorkflowActionService'
-        '._task_can_be_completed',
     )
     complete_task_mock = mocker.patch(
         'src.processes.services.workflow_action.WorkflowActionService'
@@ -3180,7 +3047,6 @@ def test_complete_task_for_user__checklist_incomplete__raise_exception(
     partial_update_mock.assert_not_called()
     task_completed_analytics_mock.assert_not_called()
     task_complete_event_mock.assert_not_called()
-    task_can_be_completed_mock.assert_not_called()
     complete_task_mock.assert_not_called()
     send_task_deleted_notification_mock.assert_not_called()
 
@@ -3205,10 +3071,6 @@ def test_complete_task_for_user__sub_wf_running__raise_exception(mocker):
     partial_update_mock = mocker.patch(
         'src.processes.services.tasks.field.TaskFieldService'
         '.partial_update',
-    )
-    task_can_be_completed_mock = mocker.patch(
-        'src.processes.services.workflow_action.WorkflowActionService'
-        '._task_can_be_completed',
     )
     complete_task_mock = mocker.patch(
         'src.processes.services.workflow_action.WorkflowActionService'
@@ -3243,7 +3105,6 @@ def test_complete_task_for_user__sub_wf_running__raise_exception(mocker):
     assert ex.value.message == str(messages.MSG_PW_0070)
     task_field_service_init_mock.assert_not_called()
     partial_update_mock.assert_not_called()
-    task_can_be_completed_mock.assert_not_called()
     task_completed_analytics_mock.assert_not_called()
     task_complete_event_mock.assert_not_called()
     complete_task_mock.assert_not_called()
@@ -3268,10 +3129,6 @@ def test_complete_task_for_user__account_owner_no_performer__force_complete(
     partial_update_mock = mocker.patch(
         'src.processes.services.tasks.field.TaskFieldService'
         '.partial_update',
-    )
-    task_can_be_completed_mock = mocker.patch(
-        'src.processes.services.workflow_action.WorkflowActionService'
-        '._task_can_be_completed',
     )
     complete_task_mock = mocker.patch(
         'src.processes.services.workflow_action.WorkflowActionService'
@@ -3306,7 +3163,6 @@ def test_complete_task_for_user__account_owner_no_performer__force_complete(
     assert result.id == task.id
     task_field_service_init_mock.assert_not_called()
     partial_update_mock.assert_not_called()
-    task_can_be_completed_mock.assert_not_called()
     task_completed_analytics_mock.assert_called_once_with(
         user=owner,
         is_superuser=is_superuser,
@@ -3344,8 +3200,7 @@ def test_complete_task_for_user__user_performer_last_completion__ok(
         '.partial_update',
     )
     task_can_be_completed_mock = mocker.patch(
-        'src.processes.services.workflow_action.WorkflowActionService'
-        '._task_can_be_completed',
+        'src.processes.services.workflow_action.Task.can_be_completed',
         return_value=True,
     )
     complete_task_mock = mocker.patch(
@@ -3380,7 +3235,7 @@ def test_complete_task_for_user__user_performer_last_completion__ok(
     assert result.id == task.id
     task_field_service_init_mock.assert_not_called()
     partial_update_mock.assert_not_called()
-    task_can_be_completed_mock.assert_called_once_with(task)
+    task_can_be_completed_mock.assert_called_once_with(by_user=user)
     task_completed_analytics_mock.assert_called_once_with(
         user=user,
         is_superuser=is_superuser,
@@ -3418,8 +3273,7 @@ def test_complete_task_for_user__user_performer_first_completion__ok(
         '.partial_update',
     )
     task_can_be_completed_mock = mocker.patch(
-        'src.processes.services.workflow_action.WorkflowActionService'
-        '._task_can_be_completed',
+        'src.processes.services.workflow_action.Task.can_be_completed',
         return_value=False,
     )
     complete_task_mock = mocker.patch(
@@ -3459,7 +3313,7 @@ def test_complete_task_for_user__user_performer_first_completion__ok(
     assert result.id == task.id
     task_field_service_init_mock.assert_not_called()
     partial_update_mock.assert_not_called()
-    task_can_be_completed_mock.assert_called_once_with(task)
+    task_can_be_completed_mock.assert_called_once_with(by_user=user)
     task_completed_analytics_mock.assert_called_once_with(
         user=user,
         is_superuser=is_superuser,
@@ -3504,8 +3358,7 @@ def test_complete_task_for_user__guest_performer_first_completion__ok(
         '.partial_update',
     )
     task_can_be_completed_mock = mocker.patch(
-        'src.processes.services.workflow_action.WorkflowActionService'
-        '._task_can_be_completed',
+        'src.processes.services.workflow_action.Task.can_be_completed',
         return_value=False,
     )
     complete_task_mock = mocker.patch(
@@ -3545,7 +3398,7 @@ def test_complete_task_for_user__guest_performer_first_completion__ok(
     assert result.id == task.id
     task_field_service_init_mock.assert_not_called()
     partial_update_mock.assert_not_called()
-    task_can_be_completed_mock.assert_called_once_with(task)
+    task_can_be_completed_mock.assert_called_once_with(by_user=guest)
     task_completed_analytics_mock.assert_called_once_with(
         user=guest,
         is_superuser=is_superuser,

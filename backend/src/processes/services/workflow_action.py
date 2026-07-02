@@ -4,7 +4,6 @@ from typing import Callable, Iterable, Optional, Tuple
 
 from django.contrib.auth import get_user_model
 from django.db import transaction
-from django.db.models import Q
 from django.utils import timezone
 
 from src.analysis.services import AnalyticService
@@ -785,30 +784,6 @@ class WorkflowActionService:
                 payload=task.webhook_payload(),
             )
 
-    def _task_can_be_completed(self, task: Task) -> bool:
-
-        """ Implies that the specified user has completed the task """
-
-        if task.is_completed is True:
-            return False
-        task_performers = (
-            task.taskperformer_set.exclude_directly_deleted()
-        )
-        completed_performers = task_performers.filter(
-            Q(is_completed=True)
-            | Q(is_completed=False, user_id=self.user.id)
-            | Q(is_completed=False, group__users=self.user.id),
-        ).exists()
-        incompleted_performers = task_performers.not_completed().exclude(
-            Q(user_id=self.user.id)
-            | Q(is_completed=False, group__users=self.user.id),
-        ).exists()
-        by_all = task.require_completion_by_all
-        return (
-            (not by_all and completed_performers) or
-            (by_all and not incompleted_performers)
-        )
-
     def complete_task_for_user(
         self,
         task: Task,
@@ -864,7 +839,7 @@ class WorkflowActionService:
                 user=self.user,
             )
             if task_performer:
-                if self._task_can_be_completed(task):
+                if task.can_be_completed(by_user=self.user):
                     self.complete_task(task=task)
                 else:
                     # completed only for user and send ws remove task

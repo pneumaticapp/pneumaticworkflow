@@ -706,7 +706,7 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
         return raw_qst
 
 
-class TasksQuerySet(TasksBaseQuerySet):
+class TaskQuerySet(TasksBaseQuerySet):
 
     def by_number(self, number):
         return self.filter(number=number)
