@@ -155,7 +155,10 @@ export function hasTemplateIdentityChanged(
   }
 
   // First id assignment after create — same template session.
-  if (previousIdentity === undefined && typeof nextIdentity === 'number') {
+  const isCreateSessionIdentity = (identity: string | number | undefined) =>
+    identity === undefined || identity === 'create';
+
+  if (isCreateSessionIdentity(previousIdentity) && typeof nextIdentity === 'number') {
     return false;
   }
 

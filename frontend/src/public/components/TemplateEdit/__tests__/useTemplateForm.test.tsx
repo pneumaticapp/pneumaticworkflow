@@ -300,6 +300,32 @@ describe('TemplateFormPersistProvider deactivation', () => {
     });
   });
 
+  it('reverts explicit activation fields in Formik after a failed submit', async () => {
+    const template = makeTemplate({ isActive: false, name: 'Original', dateUpdated: null });
+    let handle: ISpyHandle | null = null;
+
+    render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
+
+    act(() => {
+      handle!.setFieldValue('name', 'Unsaved edit', false);
+      handle!.setFieldValue('isActive', true, false);
+    });
+
+    act(() => {
+      handle!.consumePendingChanges({ isActive: true });
+      handle!.revertConsumedChanges();
+    });
+
+    expect(handle!.values.name).toBe('Unsaved edit');
+    expect(handle!.values.isActive).toBe(false);
+    await flushPersist();
+
+    expect(patchTemplate).toHaveBeenCalledTimes(1);
+    expect((patchTemplate as unknown as jest.Mock).mock.calls[0][0].changedFields).toEqual({
+      name: 'Unsaved edit',
+    });
+  });
+
   it('re-queues autosave after a failed explicit submit when Redux reinitializes during the in-flight patch', async () => {
     const template = makeTemplate({ isActive: true, owners: [] });
     let handle: ISpyHandle | null = null;
@@ -672,6 +698,36 @@ describe('useTemplateForm reinitialize', () => {
     expect(hookResult!.formik.values.name).toBe('Template B');
     expect(hookResult!.pendingUserEditsRef.current).toEqual({});
     expect(hookResult!.dirtyRef.current).toBe(false);
+  });
+
+  it('preserves pending edits when a new template receives its first id after create autosave', () => {
+    const newTemplate = makeTemplate({ id: undefined, name: 'New', dateUpdated: null });
+    const savedTemplate = { ...newTemplate, id: 42 };
+    let hookResult: ReturnType<typeof useTemplateForm> | null = null;
+
+    const { rerender } = render(
+      <HookHarness
+        currentTemplate={newTemplate}
+        templateIdentityKey={undefined}
+        onReady={(result) => { hookResult = result; }}
+      />,
+    );
+
+    act(() => {
+      hookResult!.setFieldValue('name', 'Edited during create save', false);
+    });
+
+    rerender(
+      <HookHarness
+        currentTemplate={savedTemplate}
+        templateIdentityKey={42}
+        onReady={(result) => { hookResult = result; }}
+      />,
+    );
+
+    expect(hookResult!.formik.values.name).toBe('Edited during create save');
+    expect(hookResult!.pendingUserEditsRef.current.name).toBe('Edited during create save');
+    expect(hookResult!.dirtyRef.current).toBe(true);
   });
 
   it('merges pending user edits into resolved Formik initialValues', () => {

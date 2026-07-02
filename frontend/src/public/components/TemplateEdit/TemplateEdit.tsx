@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
 
@@ -10,7 +10,7 @@ import { ESubscriptionPlan } from '../../types/account';
 import { ETemplateStatus } from '../../types/redux';
 import { TemplateForm, useTemplateForm } from './useTemplateForm';
 
-import { ITemplateEditParams, TTemplateEditProps } from './templateEditPage.types';
+import { TTemplateEditProps } from './templateEditPage.types';
 
 export * from './templateEditPage.types';
 
@@ -31,10 +31,11 @@ export function TemplateEdit({
   loadTemplateVariablesSuccess,
 }: TTemplateEditProps) {
   const { formatMessage } = useIntl();
-  const templateIdentityKey = (match.params as ITemplateEditParams).id ?? 'create';
+  const createSessionKeyRef = useRef('create');
+  const templateFormKey = template.id ?? createSessionKeyRef.current;
   const { formik, setFieldValue, setValues, dirtyRef, pendingUserEditsRef, persistBaselineSyncRef } = useTemplateForm(
     template,
-    templateIdentityKey,
+    template.id,
   );
   const billingPlan = useSelector(getSubscriptionPlan);
   const isFreePlan = billingPlan === ESubscriptionPlan.Free;
@@ -74,7 +75,7 @@ export function TemplateEdit({
 
   return (
     <TemplateForm
-      key={templateIdentityKey}
+      key={templateFormKey}
       formik={formik}
       setFieldValue={setFieldValue}
       setValues={setValues}

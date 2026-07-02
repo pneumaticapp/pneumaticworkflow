@@ -11,7 +11,7 @@ import {
   allocateAutosavePersistRequestId,
   isAutosavePersistRequestCurrent,
 } from '../../../redux/template/persistRequest';
-import { TemplatePersistContext } from './contexts';
+import { TemplatePersistContext, useTemplateField } from './contexts';
 import { getChangedFields, getUnconsumedPendingEdits } from './templateFormUtils';
 import { ITemplatePersistContextValue } from './types';
 
@@ -59,6 +59,7 @@ export function TemplateFormPersistProvider({
   children,
 }: ITemplateFormPersistProviderProps) {
   const { values } = useFormikContext<ITemplate>();
+  const { setValues } = useTemplateField();
   const dispatch = useDispatch();
   const latestReduxBaselineRef = useRef<ITemplate | null>(null);
   const previousValuesRef = useRef<ITemplate>(values);
@@ -71,12 +72,14 @@ export function TemplateFormPersistProvider({
   const retryExplicitPatchRef = useRef<Partial<ITemplate>>({});
   const pendingDispatchRef = useRef<{ requestId: number; dispatchedValues: ITemplate } | null>(null);
   const flushPersistRef = useRef<() => void>(() => undefined);
+  const setValuesRef = useRef(setValues);
 
   valuesRef.current = values;
   dispatchRef.current = dispatch;
   dirtyRefRef.current = dirtyRef;
   pendingUserEditsRefRef.current = pendingUserEditsRef;
   persistBaselineSyncRefRef.current = persistBaselineSyncRef;
+  setValuesRef.current = setValues;
 
   useEffect(() => {
     persistBaselineSyncRefRef.current.current = (reduxTemplate) => {
@@ -172,13 +175,18 @@ export function TemplateFormPersistProvider({
 
     consumedPendingRef.current = null;
 
-    // Formik `values` are unchanged, so the `[values]` effect will not re-run.
-    // Re-queue autosave directly against the restored baseline instead of
-    // relying on `setValues`, which would diff against a Redux snapshot that may
-    // already include the consumed (but unsaved) fields from the failed patch.
-    if (consumed.isUserEdit && previousValuesRef.current !== valuesRef.current) {
-      flushPersistRef.current();
+    let revertedValues: ITemplate = { ...valuesRef.current };
+
+    if (consumed.explicitFields) {
+      (Object.keys(consumed.explicitFields) as (keyof ITemplate)[]).forEach((key) => {
+        revertedValues = {
+          ...revertedValues,
+          [key]: consumed.previousBaseline[key],
+        };
+      });
     }
+
+    setValuesRef.current(revertedValues);
   }, []);
 
   const consumePendingChanges = useCallback((explicitFields?: Partial<ITemplate>) => {
