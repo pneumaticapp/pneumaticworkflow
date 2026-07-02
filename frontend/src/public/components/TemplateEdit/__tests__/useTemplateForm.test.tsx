@@ -8,17 +8,20 @@ import {
   ETaskPerformerType,
 } from '../../../types/template';
 import { EConditionAction, EConditionOperators, EConditionLogicOperations, TConditionRule } from '../TaskForm/Conditions/types';
-import { TemplateForm, useTemplateField, useTemplateForm, useTemplatePersist } from '../useTemplateForm';
-import { patchTemplate } from '../../../redux/actions';
+import { TemplateForm, useTemplateField, useTemplateForm, useTemplatePersist, useTemplateSaveRetry } from '../useTemplateForm';
+import { patchTemplate, saveTemplate } from '../../../redux/actions';
+
+const mockDispatch = jest.fn();
 
 jest.mock('react-redux', () => ({
-  useDispatch: jest.fn(() => jest.fn()),
+  useDispatch: jest.fn(() => mockDispatch),
   connect: () => (component: unknown) => component,
 }));
 
 jest.mock('../../../redux/actions', () => ({
   ...jest.requireActual('../../../redux/actions'),
   patchTemplate: jest.fn((payload: unknown) => ({ type: 'PATCH_TEMPLATE', payload })),
+  saveTemplate: jest.fn((payload?: unknown) => ({ type: 'SAVE_TEMPLATE', payload })),
 }));
 
 const makeTask = (overrides: Partial<ITemplateTask> = {}): ITemplateTask =>
@@ -197,6 +200,24 @@ describe('TemplateFormPersistProvider deactivation', () => {
     expect(handle!.values.isActive).toBe(false);
   });
 
+  it('deactivates when kickoff fields change even if description also changes', async () => {
+    const template = makeTemplate({
+      isActive: true,
+      kickoff: { description: 'old kickoff', fields: [{ apiName: 'f-1' }] } as any,
+    });
+    let handle: ISpyHandle | null = null;
+
+    render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
+
+    act(() => {
+      handle!.setFieldValue('kickoff', { description: 'new kickoff', fields: [] }, false);
+    });
+
+    await flushPersist();
+
+    expect(handle!.values.isActive).toBe(false);
+  });
+
   it('lets submit consume pending edits before the autosave dispatches', async () => {
     const template = makeTemplate({ isActive: true, owners: [] });
     let handle: ISpyHandle | null = null;
@@ -261,6 +282,50 @@ describe('TemplateFormPersistProvider deactivation', () => {
     expect(patchTemplate).toHaveBeenCalledTimes(1);
     expect((patchTemplate as unknown as jest.Mock).mock.calls[0][0].changedFields).toEqual({
       name: 'Unsaved edit',
+      isActive: false,
+    });
+  });
+
+  it('re-queues autosave after a failed explicit submit when Redux reinitializes during the in-flight patch', async () => {
+    const template = makeTemplate({ isActive: true, owners: [] });
+    let handle: ISpyHandle | null = null;
+    const owners = [{ id: 1, role: 'owner' }] as any;
+
+    const { rerender } = render(
+      <StatefulTemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />,
+    );
+
+    act(() => {
+      handle!.setFieldValue('owners', owners, false);
+    });
+
+    act(() => {
+      handle!.consumePendingChanges();
+    });
+
+    act(() => {
+      rerender(
+        <StatefulTemplateFormHarness
+          initialTemplate={{
+            ...template,
+            owners,
+            isActive: false,
+          }}
+          spy={(h) => { handle = h; }}
+        />,
+      );
+    });
+
+    expect(handle!.values.owners).toEqual(owners);
+
+    act(() => {
+      handle!.revertConsumedChanges();
+    });
+    await flushPersist();
+
+    expect(patchTemplate).toHaveBeenCalledTimes(1);
+    expect((patchTemplate as unknown as jest.Mock).mock.calls[0][0].changedFields).toEqual({
+      owners,
       isActive: false,
     });
   });
@@ -1094,5 +1159,95 @@ describe('useTemplateForm reference cleanup', () => {
     expect(handle!.values.tasks[1].rawPerformers).toHaveLength(1);
     expect(handle!.values.tasks[1].rawPerformers[0].apiName).toBe('perf-2');
     expect(patchTemplate).not.toHaveBeenCalled();
+  });
+});
+
+describe('useTemplateSaveRetry', () => {
+  beforeEach(() => {
+    mockDispatch.mockClear();
+    (patchTemplate as unknown as jest.Mock).mockClear();
+    (saveTemplate as unknown as jest.Mock).mockClear();
+  });
+
+  function SaveRetryHarness({
+    initialTemplate,
+    onReady,
+  }: {
+    initialTemplate: ITemplate;
+    onReady(retry: () => void, setFieldValue: (field: string, value: unknown, shouldValidate?: boolean) => void): void;
+  }) {
+    const { formik, setFieldValue, setValues, dirtyRef, pendingUserEditsRef, persistBaselineSyncRef } = useTemplateForm(initialTemplate);
+
+    const RetrySpy: React.FC = () => {
+      const { setFieldValue: contextSetFieldValue } = useTemplateField();
+      const retryFailedSave = useTemplateSaveRetry();
+      onReady(retryFailedSave, contextSetFieldValue);
+      return null;
+    };
+
+    return (
+      <TemplateForm
+        formik={formik}
+        setFieldValue={setFieldValue}
+        setValues={setValues}
+        dirtyRef={dirtyRef}
+        pendingUserEditsRef={pendingUserEditsRef}
+        persistBaselineSyncRef={persistBaselineSyncRef}
+      >
+        <RetrySpy />
+      </TemplateForm>
+    );
+  }
+
+  it('flushes pending Formik edits through patchTemplate instead of saveTemplate', () => {
+    const template = makeTemplate({ isActive: true, name: 'Original' });
+    let retryFailedSave: (() => void) | null = null;
+    let editField: ((field: string, value: unknown, shouldValidate?: boolean) => void) | null = null;
+
+    render(
+      <SaveRetryHarness
+        initialTemplate={template}
+        onReady={(retry, setFieldValue) => {
+          retryFailedSave = retry;
+          editField = setFieldValue;
+        }}
+      />,
+    );
+
+    act(() => {
+      editField!('name', 'Retry edit', false);
+    });
+
+    act(() => {
+      retryFailedSave!();
+    });
+
+    expect(saveTemplate).not.toHaveBeenCalled();
+    expect(mockDispatch).toHaveBeenCalledTimes(1);
+    expect(patchTemplate).toHaveBeenCalledWith({
+      changedFields: { name: 'Retry edit', isActive: false },
+      onSuccess: expect.any(Function),
+      onFailed: expect.any(Function),
+    });
+  });
+
+  it('retries the Redux snapshot when Formik has no unflushed edits', () => {
+    const template = makeTemplate({ isActive: true, name: 'Original' });
+    let retryFailedSave: (() => void) | null = null;
+
+    render(
+      <SaveRetryHarness
+        initialTemplate={template}
+        onReady={(retry) => { retryFailedSave = retry; }}
+      />,
+    );
+
+    act(() => {
+      retryFailedSave!();
+    });
+
+    expect(patchTemplate).not.toHaveBeenCalled();
+    expect(mockDispatch).toHaveBeenCalledTimes(1);
+    expect(saveTemplate).toHaveBeenCalled();
   });
 });

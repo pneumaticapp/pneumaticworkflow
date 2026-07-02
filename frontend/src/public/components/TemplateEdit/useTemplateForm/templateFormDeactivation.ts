@@ -1,4 +1,5 @@
 import { ITemplate } from '../../../types/template';
+import { haveSameKickoffFields } from '../../../utils/template';
 import { getChangedFields } from './templateFormUtils';
 
 // Keep in sync with `patchTemplateSaga` in redux/template/saga.ts. The saga
@@ -22,10 +23,13 @@ function shouldDeactivateTemplate(
   );
 
   if (Object.keys(changedFields).length === 1 && Object.prototype.hasOwnProperty.call(changedFields, 'kickoff')) {
-    shouldDeactivate =
-      changedFields.kickoff?.description === previousTemplate.kickoff.description
-        ? shouldDeactivate
-        : false;
+    const kickoffChanged = changedFields.kickoff;
+    const previousKickoff = previousTemplate.kickoff;
+
+    if (haveSameKickoffFields(kickoffChanged?.fields, previousKickoff.fields)) {
+      shouldDeactivate =
+        kickoffChanged?.description === previousKickoff.description ? shouldDeactivate : false;
+    }
   }
 
   return shouldDeactivate;

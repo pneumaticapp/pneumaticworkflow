@@ -43,7 +43,6 @@ export function TemplateForm({
           dirtyRef={dirtyRef}
           pendingUserEditsRef={pendingUserEditsRef}
           persistBaselineSyncRef={persistBaselineSyncRef}
-          setValues={setValues}
         >
           {children}
         </TemplateFormPersistProvider>

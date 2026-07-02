@@ -7,13 +7,12 @@ import { ITemplate } from '../../../types/template';
 import { patchTemplate } from '../../../redux/actions';
 import { TemplatePersistContext } from './contexts';
 import { getChangedFields, getUnconsumedPendingEdits } from './templateFormUtils';
-import { ITemplatePersistContextValue, TSetValues } from './types';
+import { ITemplatePersistContextValue } from './types';
 
 interface ITemplateFormPersistProviderProps {
   dirtyRef: React.MutableRefObject<boolean>;
   pendingUserEditsRef: React.MutableRefObject<Partial<ITemplate>>;
   persistBaselineSyncRef: React.MutableRefObject<((reduxTemplate: ITemplate) => void) | null>;
-  setValues: TSetValues;
   children: React.ReactNode;
 }
 
@@ -42,7 +41,6 @@ export function TemplateFormPersistProvider({
   dirtyRef,
   pendingUserEditsRef,
   persistBaselineSyncRef,
-  setValues,
   children,
 }: ITemplateFormPersistProviderProps) {
   const { values } = useFormikContext<ITemplate>();
@@ -53,17 +51,22 @@ export function TemplateFormPersistProvider({
   const dirtyRefRef = useRef(dirtyRef);
   const pendingUserEditsRefRef = useRef(pendingUserEditsRef);
   const persistBaselineSyncRefRef = useRef(persistBaselineSyncRef);
-  const setValuesRef = useRef(setValues);
 
   valuesRef.current = values;
   dispatchRef.current = dispatch;
   dirtyRefRef.current = dirtyRef;
   pendingUserEditsRefRef.current = pendingUserEditsRef;
   persistBaselineSyncRefRef.current = persistBaselineSyncRef;
-  setValuesRef.current = setValues;
 
   useEffect(() => {
     persistBaselineSyncRefRef.current.current = (reduxTemplate) => {
+      // While an explicit submit has consumed pending edits and is waiting for
+      // confirm/revert, keep the pre-submit baseline so a Redux reinitialize from
+      // the in-flight patch does not collapse the diff we need to restore.
+      if (consumedPendingRef.current) {
+        return;
+      }
+
       // Baseline must mirror the latest Redux snapshot for every field so
       // server-stamped or normalized values (dateUpdated, owners, ...) are not
       // diffed as user edits on the next flush.
@@ -98,7 +101,14 @@ export function TemplateFormPersistProvider({
     }
 
     previousValuesRef.current = valuesRef.current;
-    dirtyRefRef.current.current = false;
+
+    // Explicit submit flows (activate/deactivate) consume pending edits before
+    // `patchTemplate` returns. Keep the form dirty until confirm/revert so a
+    // Redux reinitialize from the in-flight patch does not reset Formik and
+    // drop the consumed-but-unsaved edits.
+    if (!trackForRevert) {
+      dirtyRefRef.current.current = false;
+    }
 
     if (isUserEdit && Object.keys(changedFields).length > 0 && !trackForRevert) {
       pendingUserEditsRefRef.current.current = {};
@@ -120,6 +130,10 @@ export function TemplateFormPersistProvider({
     }
 
     consumedPendingRef.current = null;
+
+    if (Object.keys(pendingUserEditsRefRef.current.current).length === 0) {
+      dirtyRefRef.current.current = false;
+    }
   }, []);
 
   const flushPersist = useCallback(() => {
@@ -138,15 +152,18 @@ export function TemplateFormPersistProvider({
     }
 
     previousValuesRef.current = consumed.previousBaseline;
+    pendingUserEditsRefRef.current.current = { ...consumed.pendingUserEdits };
+    dirtyRefRef.current.current = consumed.isUserEdit;
     consumedPendingRef.current = null;
 
-    // Restoring the baseline does not change Formik `values`, so the values
-    // effect won't re-run. Re-apply the current values through the wrapped
-    // setter so dirty state, pending edits, and the autosave effect stay aligned.
+    // Formik `values` are unchanged, so the `[values]` effect will not re-run.
+    // Re-queue autosave directly against the restored baseline instead of
+    // relying on `setValues`, which would diff against a Redux snapshot that may
+    // already include the consumed (but unsaved) fields from the failed patch.
     if (consumed.isUserEdit && previousValuesRef.current !== valuesRef.current) {
-      setValuesRef.current({ ...valuesRef.current }, false);
+      flushPersist();
     }
-  }, []);
+  }, [flushPersist]);
 
   const abandonPendingChanges = useCallback(() => {
     previousValuesRef.current = valuesRef.current;

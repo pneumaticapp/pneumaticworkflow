@@ -22,7 +22,7 @@ export function createNewTemplateTask(
 ): ITemplateTask {
   const taskApiName = createTaskApiName();
 
-  return {
+  const task = {
     apiName: taskApiName,
     delay: null,
     description: '',
@@ -41,11 +41,15 @@ export function createNewTemplateTask(
     requireCompletionByAll: false,
     skipForStarter: false,
     conditions: getEmptyConditions(accessConditions),
-    rawDueDate: createEmptyTaskDueDate(taskApiName),
     checklists: [],
     ...templateTask,
     revertTask: null,
     ancestors: [],
+  };
+
+  return {
+    ...task,
+    rawDueDate: createEmptyTaskDueDate(task.apiName),
   };
 }
 
@@ -53,6 +57,7 @@ export function createEmptyTemplate(
   authUser: IAuthUser,
   users: TUserListItem[],
   accessConditions: boolean,
+  isSubscribed: boolean,
 ): ITemplate {
   return {
     description: '',
@@ -85,7 +90,7 @@ export function createEmptyTemplate(
           role: ETemplateOwnerRole.Owner,
         },
       ],
-      accessConditions,
+      isSubscribed,
       users,
     ),
     wfNameTemplate: '{{date}} — {{template-name}}',

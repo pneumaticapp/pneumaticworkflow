@@ -8,6 +8,7 @@ import { KickoffReduxContainer } from './KickoffRedux';
 import { ConditionsBanner } from './ConditionsBanner';
 import { TemplateSettings } from './TemplateSettings';
 import { ITemplateTask } from '../../types/template';
+import { useTemplateSaveRetry } from './useTemplateForm';
 
 import styles from './TemplateEdit.css';
 
@@ -15,7 +16,6 @@ type TTaskListItemProps = React.ComponentProps<typeof TemplateEntity> & { key: s
 
 interface ITemplateEditLayoutProps {
   accessConditions: boolean;
-  saveTemplate(): void;
   sortedTasks(): ITemplateTask[];
   getTaskListItem(task: ITemplateTask, index: number, tasksLocal: ITemplateTask[]): TTaskListItemProps;
   handleAddTask(): void;
@@ -23,16 +23,16 @@ interface ITemplateEditLayoutProps {
 
 export function TemplateEditLayout({
   accessConditions,
-  saveTemplate,
   sortedTasks,
   getTaskListItem,
   handleAddTask,
 }: ITemplateEditLayoutProps) {
   const tasksLocal = sortedTasks();
+  const retryFailedSave = useTemplateSaveRetry();
 
   return (
     <div className={styles['container']}>
-      <AutoSaveStatusContainer onRetry={saveTemplate} />
+      <AutoSaveStatusContainer onRetry={retryFailedSave} />
 
       <div className={styles['template-wrapper']}>
         <div className={styles['template-wrapper__info']}>

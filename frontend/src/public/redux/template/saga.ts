@@ -54,7 +54,7 @@ import { ITemplate, ITemplateRequest, ITemplateResponse } from '../../types/temp
 import { logger } from '../../utils/logger';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { updateTemplate } from '../../api/updateTemplate';
-import { cleanTemplateReferences, getNormalizedTemplate, mapTemplateRequest } from '../../utils/template';
+import { cleanTemplateReferences, getNormalizedTemplate, haveSameKickoffFields, mapTemplateRequest } from '../../utils/template';
 import { getErrorMessage, isPaidFeatureError } from '../../utils/getErrorMessage';
 import { insertId } from '../../utils/templates/insertId';
 import { ETemplateStatus } from '../../types/redux';
@@ -108,8 +108,13 @@ function* patchTemplateSaga({ payload: { changedFields, onSuccess, onFailed } }:
     : Object.keys(changedFields).some((key) => !nonDeactivativeFields.includes(key as keyof ITemplate));
 
   if (Object.keys(changedFields).length === 1 && changedFields.hasOwnProperty('kickoff')) {
-    shouldDeactivateTemplate =
-      changedFields.kickoff?.description === template.kickoff.description ? shouldDeactivateTemplate : false;
+    const kickoffChanged = changedFields.kickoff;
+    const previousKickoff = template.kickoff;
+
+    if (haveSameKickoffFields(kickoffChanged?.fields, previousKickoff.fields)) {
+      shouldDeactivateTemplate =
+        kickoffChanged?.description === previousKickoff.description ? shouldDeactivateTemplate : false;
+    }
   }
 
   const mergedTemplate: ITemplate = {

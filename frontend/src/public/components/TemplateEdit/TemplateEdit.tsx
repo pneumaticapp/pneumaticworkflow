@@ -57,6 +57,7 @@ export function TemplateEdit({
     aiTemplate,
     users,
     accessConditions,
+    isSubscribed,
     authUser,
     formik,
     openTask,
@@ -84,7 +85,6 @@ export function TemplateEdit({
     >
       <TemplateEditLayout
         accessConditions={accessConditions}
-        saveTemplate={saveTemplate}
         sortedTasks={sortedTasks}
         getTaskListItem={getTaskListItem}
         handleAddTask={handleAddTask}
