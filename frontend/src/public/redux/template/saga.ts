@@ -136,14 +136,12 @@ function* patchTemplateSaga({ payload: { changedFields, onSuccess, onFailed, req
     yield delay(350);
 
     if (!isAutosavePersistRequestCurrent(requestId)) {
-      yield put(setTemplateStatus(ETemplateStatus.Saved));
       return;
     }
 
     yield put(saveTemplate({ onSuccess, onFailed, requestId }));
   } finally {
     if (yield cancelled()) {
-      yield put(setTemplateStatus(ETemplateStatus.Saved));
       onFailed?.();
     }
   }
@@ -221,9 +219,6 @@ function* fetchSaveTemplate(onSuccess?: () => void, onFailed?: () => void, reque
   if (!isTemplatePage) return;
 
   if (!isAutosavePersistRequestCurrent(requestId)) {
-    if (requestId !== undefined) {
-      yield put(setTemplateStatus(ETemplateStatus.Saved));
-    }
     return;
   }
 
@@ -236,9 +231,6 @@ function* fetchSaveTemplate(onSuccess?: () => void, onFailed?: () => void, reque
   const savedTemplate: ITemplate | null = yield createOrUpdateTemplate(templateRequest, isSubscribed, users);
 
   if (!isAutosavePersistRequestCurrent(requestId)) {
-    if (requestId !== undefined) {
-      yield put(setTemplateStatus(ETemplateStatus.Saved));
-    }
     return;
   }
 

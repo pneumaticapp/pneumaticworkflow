@@ -4,7 +4,8 @@ import { useFormikContext } from 'formik';
 import { useDispatch } from 'react-redux';
 
 import { ITemplate } from '../../../types/template';
-import { patchTemplate } from '../../../redux/actions';
+import { patchTemplate, setTemplateStatus } from '../../../redux/actions';
+import { ETemplateStatus } from '../../../types/redux';
 import {
   abandonAutosavePersistRequests,
   allocateAutosavePersistRequestId,
@@ -245,6 +246,7 @@ export function TemplateFormPersistProvider({
   const abandonPendingChanges = useCallback(() => {
     abandonAutosavePersistRequests();
     // Cancel a debounced autosave saga (`takeLatest`) without enqueueing a save.
+    dispatchRef.current(setTemplateStatus(ETemplateStatus.Saved));
     dispatchRef.current(patchTemplate({ changedFields: {} }));
     previousValuesRef.current = valuesRef.current;
     dirtyRefRef.current.current = false;
