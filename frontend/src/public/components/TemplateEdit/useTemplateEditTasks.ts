@@ -126,7 +126,7 @@ export function useTemplateEditTasks({
   const handleEditTaskField =
     (targetTask: ITemplateTask) => (field: keyof ITemplateTask) => (value: ITemplateTask[keyof ITemplateTask]) => {
       changeTasks(
-        tasks.map((task) => (targetTask.uuid === task.uuid ? { ...targetTask, [field]: value } : task)),
+        tasks.map((task) => (targetTask.uuid === task.uuid ? { ...task, [field]: value } : task)),
       );
     };
 
@@ -152,7 +152,7 @@ export function useTemplateEditTasks({
   };
 
   const editDelay = (targetTask: ITemplateTask) => (delay: string) => {
-    changeTasks(tasks.map((task) => (task.uuid === targetTask.uuid ? { ...targetTask, delay } : task)));
+    changeTasks(tasks.map((task) => (task.uuid === targetTask.uuid ? { ...task, delay } : task)));
   };
 
   const deleteDelay = (targetTask: ITemplateTask) => () => {
