@@ -86,7 +86,11 @@ export function TemplateEdit({
   loadTemplateVariablesSuccess,
 }: TTemplateEditProps) {
   const { formatMessage } = useIntl();
-  const { formik, setFieldValue, setValues, dirtyRef, pendingUserEditsRef, persistBaselineSyncRef } = useTemplateForm(template);
+  const templateIdentityKey = (match.params as ITemplateEditParams).id ?? 'create';
+  const { formik, setFieldValue, setValues, dirtyRef, pendingUserEditsRef, persistBaselineSyncRef } = useTemplateForm(
+    template,
+    templateIdentityKey,
+  );
   const { tasks } = formik.values;
   const billingPlan = useSelector(getSubscriptionPlan);
   const isFreePlan = billingPlan === ESubscriptionPlan.Free;
@@ -448,6 +452,7 @@ export function TemplateEdit({
 
   return (
     <TemplateForm
+      key={templateIdentityKey}
       formik={formik}
       setFieldValue={setFieldValue}
       setValues={setValues}

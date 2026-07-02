@@ -235,9 +235,32 @@ describe('TemplateFormPersistProvider deactivation', () => {
     });
     await flushPersist();
 
+    expect(handle!.values.owners).toEqual(owners);
     expect(patchTemplate).toHaveBeenCalledTimes(1);
     expect((patchTemplate as unknown as jest.Mock).mock.calls[0][0].changedFields).toEqual({
       owners,
+      isActive: false,
+    });
+  });
+
+  it('keeps consumed edits visible in Formik after a failed explicit submit', async () => {
+    const template = makeTemplate({ isActive: true, name: 'Original', dateUpdated: null });
+    let handle: ISpyHandle | null = null;
+
+    render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
+
+    act(() => {
+      handle!.setFieldValue('name', 'Unsaved edit', false);
+      handle!.consumePendingChanges();
+      handle!.revertConsumedChanges();
+    });
+
+    expect(handle!.values.name).toBe('Unsaved edit');
+    await flushPersist();
+
+    expect(patchTemplate).toHaveBeenCalledTimes(1);
+    expect((patchTemplate as unknown as jest.Mock).mock.calls[0][0].changedFields).toEqual({
+      name: 'Unsaved edit',
       isActive: false,
     });
   });
@@ -260,6 +283,36 @@ describe('TemplateFormPersistProvider deactivation', () => {
     await flushPersist();
 
     expect(patchTemplate).not.toHaveBeenCalled();
+  });
+
+  it('preserves edits made after consume when an explicit submit succeeds', () => {
+    const template = makeTemplate({ isActive: true, name: 'Original', dateUpdated: null });
+    let handle: ISpyHandle | null = null;
+
+    const { rerender } = render(
+      <StatefulTemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />,
+    );
+
+    act(() => {
+      handle!.setFieldValue('name', 'Submit edit', false);
+      handle!.consumePendingChanges();
+      handle!.setFieldValue('name', 'Post-submit edit', false);
+      handle!.confirmConsumedChanges();
+    });
+
+    rerender(
+      <StatefulTemplateFormHarness
+        initialTemplate={{
+          ...template,
+          name: 'Submit edit',
+          isActive: false,
+          dateUpdated: '2026-07-01T00:00:00Z',
+        }}
+        spy={(h) => { handle = h; }}
+      />,
+    );
+
+    expect(handle!.values.name).toBe('Post-submit edit');
   });
 
   it('persists the latest value when two edits land before the deferred flush runs', async () => {
@@ -381,15 +434,47 @@ describe('TemplateFormPersistProvider deactivation', () => {
 describe('useTemplateForm reinitialize', () => {
   function HookHarness({
     currentTemplate,
+    templateIdentityKey,
     onReady,
   }: {
     currentTemplate: ITemplate;
+    templateIdentityKey?: string | number;
     onReady(result: ReturnType<typeof useTemplateForm>): void;
   }) {
-    const result = useTemplateForm(currentTemplate);
+    const result = useTemplateForm(currentTemplate, templateIdentityKey);
     onReady(result);
     return null;
   }
+
+  it('drops pending edits from a previous template when the template identity changes', () => {
+    const templateA = makeTemplate({ id: 1, name: 'Template A', dateUpdated: null });
+    const templateB = makeTemplate({ id: 2, name: 'Template B', dateUpdated: null });
+    let hookResult: ReturnType<typeof useTemplateForm> | null = null;
+
+    const { rerender } = render(
+      <HookHarness
+        currentTemplate={templateA}
+        templateIdentityKey={1}
+        onReady={(result) => { hookResult = result; }}
+      />,
+    );
+
+    act(() => {
+      hookResult!.setFieldValue('name', 'Edited on A', false);
+    });
+
+    rerender(
+      <HookHarness
+        currentTemplate={templateB}
+        templateIdentityKey={2}
+        onReady={(result) => { hookResult = result; }}
+      />,
+    );
+
+    expect(hookResult!.formik.values.name).toBe('Template B');
+    expect(hookResult!.pendingUserEditsRef.current).toEqual({});
+    expect(hookResult!.dirtyRef.current).toBe(false);
+  });
 
   it('merges pending user edits into resolved Formik initialValues', () => {
     const template = makeTemplate({ name: 'Original', dateUpdated: null });
