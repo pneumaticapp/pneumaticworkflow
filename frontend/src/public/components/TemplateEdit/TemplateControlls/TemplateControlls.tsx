@@ -59,7 +59,7 @@ export function TemplateControlls({
   const intl = useIntl();
   const { formatMessage } = intl;
   const dispatch = useDispatch();
-  const { values: template, setFieldValue, setValues } = useTemplateField();
+  const { values: template, setFieldValue } = useTemplateField();
   const {
     consumePendingChanges,
     confirmConsumedChanges,
@@ -117,16 +117,12 @@ export function TemplateControlls({
 
   const handleChangeIsActive = (value: ITemplate['isActive'], redirectUrl?: string) => {
     if (!value) {
-      const valuesSnapshot = template;
       const pendingChanges = consumePendingChanges({ isActive: false });
 
       patchTemplate({
         changedFields: { ...pendingChanges, isActive: false },
         onSuccess: confirmConsumedChanges,
-        onFailed: () => {
-          setValues(valuesSnapshot);
-          revertConsumedChanges();
-        },
+        onFailed: revertConsumedChanges,
       });
       return;
     }
@@ -143,7 +139,6 @@ export function TemplateControlls({
 
     setIsTemplateActivating(true);
 
-    const valuesSnapshot = template;
     const pendingChanges = consumePendingChanges({ isActive: true });
 
     patchTemplate({
@@ -160,7 +155,6 @@ export function TemplateControlls({
         }
       },
       onFailed: () => {
-        setValues(valuesSnapshot);
         revertConsumedChanges();
         setIsTemplateActivating(false);
       },
