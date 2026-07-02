@@ -20,7 +20,6 @@ type TUseTemplateEditInitParams = {
   aiTemplate: ITemplate | null;
   users: TUserListItem[];
   accessConditions: boolean;
-  isSubscribed: boolean;
   authUser: IAuthUser;
   formik: FormikProps<ITemplate>;
   openTask(taskUUID?: string): void;
@@ -39,7 +38,6 @@ export function useTemplateEditInit({
   aiTemplate,
   users,
   accessConditions,
-  isSubscribed,
   authUser,
   formik,
   openTask,
@@ -68,14 +66,14 @@ export function useTemplateEditInit({
       {
         check: checkSomeRouteIsActive(ERoutes.TemplatesCreateAI),
         init: () => {
-          const templateLocal = aiTemplate || createEmptyTemplate(authUser, users, accessConditions, isSubscribed);
+          const templateLocal = aiTemplate || createEmptyTemplate(authUser, users, accessConditions);
           setTemplate(templateLocal);
           saveTemplate();
         },
       },
       {
         check: isCreateWorflowPage && !workflowTemplateId,
-        init: () => setTemplate(createEmptyTemplate(authUser, users, accessConditions, isSubscribed)),
+        init: () => setTemplate(createEmptyTemplate(authUser, users, accessConditions)),
       },
       {
         check: isEditWorkflow,
@@ -136,7 +134,7 @@ export function useTemplateEditInit({
       // prop would reset Formik to that snapshot and discard any uncommitted
       // edits. Spreading from `formik.values` carries those edits into the
       // new Redux state so the reinitialize is a no-op for them.
-      const newTemplateOwners = getNormalizedTemplateOwners(formik.values.owners, isSubscribed, users);
+      const newTemplateOwners = getNormalizedTemplateOwners(formik.values.owners, accessConditions, users);
       setTemplate({ ...formik.values, owners: newTemplateOwners });
     }
   }, [location, users, template, formik.values]);

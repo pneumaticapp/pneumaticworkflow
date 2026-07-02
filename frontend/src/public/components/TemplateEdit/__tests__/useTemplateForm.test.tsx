@@ -439,6 +439,77 @@ describe('TemplateFormPersistProvider deactivation', () => {
     expect(patchTemplate).toHaveBeenCalledTimes(1);
   });
 
+  it('flushes edits made during an in-flight autosave after the first patch succeeds', async () => {
+    const template = makeTemplate({ isActive: true, description: 'old', name: 'Original' });
+    let handle: ISpyHandle | null = null;
+
+    render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
+
+    act(() => {
+      handle!.setFieldValue('description', 'first edit', false);
+    });
+
+    await flushPersist({ confirmSuccess: false });
+
+    act(() => {
+      const calls = (patchTemplate as unknown as jest.Mock).mock.calls;
+      calls[calls.length - 1][0].onSuccess();
+    });
+
+    act(() => {
+      handle!.setFieldValue('name', 'second edit', false);
+    });
+
+    await flushPersist();
+
+    expect(patchTemplate).toHaveBeenCalledTimes(2);
+    expect((patchTemplate as unknown as jest.Mock).mock.calls[1][0].changedFields).toEqual({
+      name: 'second edit',
+    });
+  });
+
+  it('ignores stale autosave callbacks superseded by a newer patchTemplate dispatch', async () => {
+    const template = makeTemplate({ isActive: true, description: 'old', name: 'Original' });
+    let handle: ISpyHandle | null = null;
+
+    render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
+
+    act(() => {
+      handle!.setFieldValue('description', 'first edit', false);
+    });
+    await flushPersist({ confirmSuccess: false });
+
+    const firstOnSuccess = (patchTemplate as unknown as jest.Mock).mock.calls[0][0].onSuccess;
+
+    act(() => {
+      handle!.setFieldValue('name', 'second edit', false);
+    });
+    await flushPersist({ confirmSuccess: false });
+
+    expect(patchTemplate).toHaveBeenCalledTimes(2);
+
+    act(() => {
+      firstOnSuccess();
+    });
+
+    expect(handle!.values.name).toBe('second edit');
+
+    act(() => {
+      const calls = (patchTemplate as unknown as jest.Mock).mock.calls;
+      calls[calls.length - 1][0].onSuccess();
+    });
+
+    act(() => {
+      handle!.setFieldValue('description', 'third edit', false);
+    });
+    await flushPersist();
+
+    expect(patchTemplate).toHaveBeenCalledTimes(3);
+    expect((patchTemplate as unknown as jest.Mock).mock.calls[2][0].changedFields).toEqual({
+      description: 'third edit',
+    });
+  });
+
   it('does not dispatch patchTemplate on unmount after abandoning pending edits', async () => {
     const template = makeTemplate({ isActive: true, description: 'old' });
     let handle: ISpyHandle | null = null;
@@ -1141,6 +1212,26 @@ describe('useTemplateForm reference cleanup', () => {
     expect(handle!.values.isActive).toBe(false);
     expect(handle!.values.tasks).toHaveLength(1);
     expect(handle!.values.tasks[0].rawPerformers).toHaveLength(0);
+  });
+
+  it('does not run reference cleanup when only a task name changes', () => {
+    const template = makeTemplate({
+      tasks: [
+        makeTask({
+          name: 'Step with {{missing-field}}',
+        }),
+      ],
+    });
+    let handle: ISpyHandle | null = null;
+
+    render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
+
+    act(() => {
+      handle!.setFieldValue('tasks.0.name', 'Renamed {{missing-field}}', false);
+    });
+
+    expect(handle!.values.tasks[0].name).toBe('Renamed {{missing-field}}');
+    expect(patchTemplate).not.toHaveBeenCalled();
   });
 
   it('cleans stale performer references synchronously when a task output field is removed', () => {

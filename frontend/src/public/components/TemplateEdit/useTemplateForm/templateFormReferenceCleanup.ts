@@ -1,8 +1,15 @@
-import { IKickoff, ITemplate } from '../../../types/template';
+import { IKickoff, ITemplate, ITemplateTask } from '../../../types/template';
 import { cleanTemplateReferences } from '../../../utils/template';
 
 function getKickoffFieldApiNames(kickoff: IKickoff): string[] {
   return (kickoff.fields || [])
+    .map((field) => field.apiName)
+    .filter(Boolean)
+    .sort();
+}
+
+function getTaskOutputFieldApiNames(task: ITemplateTask | undefined): string[] {
+  return (task?.fields || [])
     .map((field) => field.apiName)
     .filter(Boolean)
     .sort();
@@ -16,13 +23,32 @@ function didKickoffFieldsChange(previous: IKickoff, next: IKickoff): boolean {
     || previousNames.some((name, index) => name !== nextNames[index]);
 }
 
+function didTaskOutputFieldsChange(previousTask: ITemplateTask | undefined, nextTask: ITemplateTask | undefined): boolean {
+  const previousNames = getTaskOutputFieldApiNames(previousTask);
+  const nextNames = getTaskOutputFieldApiNames(nextTask);
+
+  return previousNames.length !== nextNames.length
+    || previousNames.some((name, index) => name !== nextNames[index]);
+}
+
 export function shouldRunReferenceCleanup(field: string, previous: ITemplate, next: ITemplate): boolean {
-  if (field === 'tasks' || field.startsWith('tasks.')) {
+  if (field === 'tasks') {
     return true;
   }
 
   if (field === 'kickoff') {
     return didKickoffFieldsChange(previous.kickoff, next.kickoff);
+  }
+
+  const taskFieldsMatch = /^tasks\.(\d+)\.fields$/.exec(field);
+  if (taskFieldsMatch) {
+    return true;
+  }
+
+  const wholeTaskMatch = /^tasks\.(\d+)$/.exec(field);
+  if (wholeTaskMatch) {
+    const taskIndex = Number(wholeTaskMatch[1]);
+    return didTaskOutputFieldsChange(previous.tasks[taskIndex], next.tasks[taskIndex]);
   }
 
   return false;

@@ -57,7 +57,6 @@ export function TemplateEdit({
     aiTemplate,
     users,
     accessConditions,
-    isSubscribed,
     authUser,
     formik,
     openTask,

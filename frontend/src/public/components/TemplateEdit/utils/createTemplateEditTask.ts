@@ -57,7 +57,6 @@ export function createEmptyTemplate(
   authUser: IAuthUser,
   users: TUserListItem[],
   accessConditions: boolean,
-  isSubscribed: boolean,
 ): ITemplate {
   return {
     description: '',
@@ -90,7 +89,7 @@ export function createEmptyTemplate(
           role: ETemplateOwnerRole.Owner,
         },
       ],
-      isSubscribed,
+      accessConditions,
       users,
     ),
     wfNameTemplate: '{{date}} — {{template-name}}',

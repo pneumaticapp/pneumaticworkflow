@@ -21,6 +21,8 @@ type TConsumedPending = {
   isUserEdit: boolean;
   pendingUserEdits: Partial<ITemplate>;
   explicitFields?: Partial<ITemplate>;
+  /** Formik snapshot covered by the in-flight autosave patch. */
+  dispatchedValues?: ITemplate;
 };
 
 /**
@@ -60,7 +62,8 @@ export function TemplateFormPersistProvider({
   const persistBaselineSyncRefRef = useRef(persistBaselineSyncRef);
   const consumedPendingRef = useRef<TConsumedPending | null>(null);
   const retryExplicitPatchRef = useRef<Partial<ITemplate>>({});
-  const persistInFlightRef = useRef(false);
+  const persistRequestIdRef = useRef(0);
+  const pendingDispatchRef = useRef<{ requestId: number; dispatchedValues: ITemplate } | null>(null);
   const flushPersistRef = useRef<() => void>(() => undefined);
 
   valuesRef.current = values;
@@ -102,6 +105,7 @@ export function TemplateFormPersistProvider({
         previousBaseline: previousValuesRef.current,
         isUserEdit,
         pendingUserEdits: { ...pendingUserEditsRefRef.current.current },
+        ...(mode === 'flush' ? { dispatchedValues: valuesRef.current } : {}),
       };
     }
 
@@ -128,7 +132,7 @@ export function TemplateFormPersistProvider({
 
     consumedPendingRef.current = null;
     retryExplicitPatchRef.current = {};
-    previousValuesRef.current = valuesRef.current;
+    previousValuesRef.current = consumed?.dispatchedValues ?? valuesRef.current;
 
     if (Object.keys(pendingUserEditsRefRef.current.current).length === 0) {
       dirtyRefRef.current.current = false;
@@ -186,23 +190,38 @@ export function TemplateFormPersistProvider({
   }, [takePendingChanges]);
 
   const flushPersist = useCallback(() => {
-    if (persistInFlightRef.current) {
+    if (previousValuesRef.current === valuesRef.current) {
+      return;
+    }
+
+    // Skip duplicate flushes for the same Formik snapshot while a patch is
+    // already queued. A newer edit changes `valuesRef`, which supersedes the
+    // in-flight patch via `takeLatest` and bumps `persistRequestIdRef`.
+    if (pendingDispatchRef.current?.dispatchedValues === valuesRef.current) {
       return;
     }
 
     const changedFields = takePendingChanges('flush');
 
     if (Object.keys(changedFields).length > 0) {
-      persistInFlightRef.current = true;
+      const requestId = persistRequestIdRef.current + 1;
+      persistRequestIdRef.current = requestId;
+      pendingDispatchRef.current = { requestId, dispatchedValues: valuesRef.current };
       dispatchRef.current(
         patchTemplate({
           changedFields,
           onSuccess: () => {
-            persistInFlightRef.current = false;
+            if (requestId !== persistRequestIdRef.current) {
+              return;
+            }
+            pendingDispatchRef.current = null;
             confirmConsumedChanges();
           },
           onFailed: () => {
-            persistInFlightRef.current = false;
+            if (requestId !== persistRequestIdRef.current) {
+              return;
+            }
+            pendingDispatchRef.current = null;
             revertConsumedChanges();
           },
         }),
@@ -218,10 +237,11 @@ export function TemplateFormPersistProvider({
     pendingUserEditsRefRef.current.current = {};
     consumedPendingRef.current = null;
     retryExplicitPatchRef.current = {};
+    pendingDispatchRef.current = null;
   }, []);
 
   useEffect(() => {
-    if (previousValuesRef.current === values || persistInFlightRef.current) {
+    if (previousValuesRef.current === values) {
       return undefined;
     }
 
