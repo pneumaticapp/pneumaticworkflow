@@ -10,6 +10,7 @@ import {
 import { EConditionAction, EConditionOperators, EConditionLogicOperations, TConditionRule } from '../TaskForm/Conditions/types';
 import { TemplateForm, useTemplateField, useTemplateForm, useTemplatePersist, useTemplateSaveRetry } from '../useTemplateForm';
 import { patchTemplate, saveTemplate } from '../../../redux/actions';
+import { resetAutosavePersistRequestsForTests } from '../../../redux/template/persistRequest';
 
 const mockDispatch = jest.fn();
 
@@ -142,6 +143,7 @@ function StatefulTemplateFormHarness({
 describe('TemplateFormPersistProvider deactivation', () => {
   beforeEach(() => {
     (patchTemplate as unknown as jest.Mock).mockClear();
+    resetAutosavePersistRequestsForTests();
   });
 
   it('flips isActive to false in Formik immediately when a non-activation field changes', async () => {
@@ -529,7 +531,55 @@ describe('TemplateFormPersistProvider deactivation', () => {
 
     await flushPersist();
 
-    expect(patchTemplate).not.toHaveBeenCalled();
+    expect(patchTemplate).toHaveBeenCalledTimes(1);
+    expect((patchTemplate as unknown as jest.Mock).mock.calls[0][0].changedFields).toEqual({});
+  });
+
+  it('ignores in-flight autosave callbacks after abandoning pending edits', async () => {
+    const template = makeTemplate({ isActive: true, description: 'old', name: 'Original' });
+    let handle: ISpyHandle | null = null;
+
+    render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
+
+    act(() => {
+      handle!.setFieldValue('description', 'discarded edit', false);
+    });
+    await flushPersist({ confirmSuccess: false });
+
+    const abandonedOnSuccess = (patchTemplate as unknown as jest.Mock).mock.calls[0][0].onSuccess;
+
+    act(() => {
+      handle!.abandonPendingChanges();
+    });
+
+    expect(patchTemplate).toHaveBeenCalledTimes(2);
+    expect((patchTemplate as unknown as jest.Mock).mock.calls[1][0].changedFields).toEqual({});
+
+    act(() => {
+      handle!.setFieldValue('name', 'kept edit', false);
+    });
+    await flushPersist({ confirmSuccess: false });
+
+    act(() => {
+      abandonedOnSuccess();
+    });
+
+    expect(handle!.values.name).toBe('kept edit');
+
+    act(() => {
+      const calls = (patchTemplate as unknown as jest.Mock).mock.calls;
+      calls[calls.length - 1][0].onSuccess();
+    });
+
+    act(() => {
+      handle!.setFieldValue('description', 'next edit', false);
+    });
+    await flushPersist();
+
+    expect(patchTemplate).toHaveBeenCalledTimes(4);
+    expect((patchTemplate as unknown as jest.Mock).mock.calls[3][0].changedFields).toEqual({
+      description: 'next edit',
+    });
   });
 
   it('dispatches patchTemplate on unmount when pending edits were not flushed', async () => {
@@ -994,6 +1044,48 @@ describe('TemplateFormPersistProvider reinitialize', () => {
     expect((patchTemplate as unknown as jest.Mock).mock.calls[0][0].changedFields).toEqual({
       name: 'unsaved edit',
       isActive: false,
+    });
+  });
+
+  it('does not re-dispatch server-stamped fields on the next edit after autosave succeeds', async () => {
+    const template = makeTemplate({ isActive: true, description: 'old', dateUpdated: null });
+    let handle: ISpyHandle | null = null;
+
+    const { rerender } = render(
+      <StatefulTemplateFormHarness
+        initialTemplate={template}
+        spy={(h) => { handle = h; }}
+      />,
+    );
+
+    act(() => {
+      handle!.setFieldValue('description', 'saved edit', false);
+    });
+    await flushPersist();
+
+    rerender(
+      <StatefulTemplateFormHarness
+        initialTemplate={{
+          ...template,
+          description: 'saved edit',
+          isActive: false,
+          dateUpdated: '2026-07-01T00:00:00Z',
+        }}
+        spy={(h) => { handle = h; }}
+      />,
+    );
+    await flushPersist();
+
+    (patchTemplate as unknown as jest.Mock).mockClear();
+
+    act(() => {
+      handle!.setFieldValue('name', 'next edit', false);
+    });
+    await flushPersist();
+
+    expect(patchTemplate).toHaveBeenCalledTimes(1);
+    expect((patchTemplate as unknown as jest.Mock).mock.calls[0][0].changedFields).toEqual({
+      name: 'next edit',
     });
   });
 

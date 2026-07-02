@@ -5,6 +5,11 @@ import { useDispatch } from 'react-redux';
 
 import { ITemplate } from '../../../types/template';
 import { patchTemplate } from '../../../redux/actions';
+import {
+  abandonAutosavePersistRequests,
+  allocateAutosavePersistRequestId,
+  isAutosavePersistRequestCurrent,
+} from '../../../redux/template/persistRequest';
 import { TemplatePersistContext } from './contexts';
 import { getChangedFields, getUnconsumedPendingEdits } from './templateFormUtils';
 import { ITemplatePersistContextValue } from './types';
@@ -54,6 +59,7 @@ export function TemplateFormPersistProvider({
 }: ITemplateFormPersistProviderProps) {
   const { values } = useFormikContext<ITemplate>();
   const dispatch = useDispatch();
+  const latestReduxBaselineRef = useRef<ITemplate | null>(null);
   const previousValuesRef = useRef<ITemplate>(values);
   const valuesRef = useRef(values);
   const dispatchRef = useRef(dispatch);
@@ -62,7 +68,6 @@ export function TemplateFormPersistProvider({
   const persistBaselineSyncRefRef = useRef(persistBaselineSyncRef);
   const consumedPendingRef = useRef<TConsumedPending | null>(null);
   const retryExplicitPatchRef = useRef<Partial<ITemplate>>({});
-  const persistRequestIdRef = useRef(0);
   const pendingDispatchRef = useRef<{ requestId: number; dispatchedValues: ITemplate } | null>(null);
   const flushPersistRef = useRef<() => void>(() => undefined);
 
@@ -84,6 +89,7 @@ export function TemplateFormPersistProvider({
       // Baseline must mirror the latest Redux snapshot for every field so
       // server-stamped or normalized values (dateUpdated, owners, ...) are not
       // diffed as user edits on the next flush.
+      latestReduxBaselineRef.current = reduxTemplate;
       previousValuesRef.current = { ...reduxTemplate };
     };
 
@@ -132,7 +138,12 @@ export function TemplateFormPersistProvider({
 
     consumedPendingRef.current = null;
     retryExplicitPatchRef.current = {};
-    previousValuesRef.current = consumed?.dispatchedValues ?? valuesRef.current;
+    // Prefer the latest Redux snapshot from `persistBaselineSyncRef` (server-
+    // stamped fields). Until Redux reinitializes Formik after save, fall back
+    // to the in-flight Formik snapshot so post-save edits diff correctly.
+    previousValuesRef.current = latestReduxBaselineRef.current
+      ? { ...latestReduxBaselineRef.current }
+      : (consumed?.dispatchedValues ?? valuesRef.current);
 
     if (Object.keys(pendingUserEditsRefRef.current.current).length === 0) {
       dirtyRefRef.current.current = false;
@@ -204,21 +215,21 @@ export function TemplateFormPersistProvider({
     const changedFields = takePendingChanges('flush');
 
     if (Object.keys(changedFields).length > 0) {
-      const requestId = persistRequestIdRef.current + 1;
-      persistRequestIdRef.current = requestId;
+      const requestId = allocateAutosavePersistRequestId();
       pendingDispatchRef.current = { requestId, dispatchedValues: valuesRef.current };
       dispatchRef.current(
         patchTemplate({
           changedFields,
+          requestId,
           onSuccess: () => {
-            if (requestId !== persistRequestIdRef.current) {
+            if (!isAutosavePersistRequestCurrent(requestId)) {
               return;
             }
             pendingDispatchRef.current = null;
             confirmConsumedChanges();
           },
           onFailed: () => {
-            if (requestId !== persistRequestIdRef.current) {
+            if (!isAutosavePersistRequestCurrent(requestId)) {
               return;
             }
             pendingDispatchRef.current = null;
@@ -232,6 +243,9 @@ export function TemplateFormPersistProvider({
   flushPersistRef.current = flushPersist;
 
   const abandonPendingChanges = useCallback(() => {
+    abandonAutosavePersistRequests();
+    // Cancel a debounced autosave saga (`takeLatest`) without enqueueing a save.
+    dispatchRef.current(patchTemplate({ changedFields: {} }));
     previousValuesRef.current = valuesRef.current;
     dirtyRefRef.current.current = false;
     pendingUserEditsRefRef.current.current = {};

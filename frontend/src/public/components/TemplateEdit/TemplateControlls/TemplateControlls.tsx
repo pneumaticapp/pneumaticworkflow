@@ -228,13 +228,15 @@ export function TemplateControlls({
                 <button
                   type="button"
                   className={classnames('cancel-button', styles['keep-draf-button'])}
-                  onClick={() => dispatch(discardTemplateChanges({
-                    templateId,
-                    onSuccess: () => {
-                      abandonPendingChanges();
-                      reject();
-                    },
-                  }))}
+                  onClick={() => {
+                    abandonPendingChanges();
+                    dispatch(discardTemplateChanges({
+                      templateId,
+                      onSuccess: () => {
+                        reject();
+                      },
+                    }));
+                  }}
                 >
                   {formatMessage({ id: 'templates.discard-changes' })}
                 </button>

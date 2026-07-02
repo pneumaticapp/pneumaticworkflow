@@ -42,6 +42,7 @@ import {
   TSaveTemplate,
   TStopAITemplateGeneration,
 } from './actions';
+import { isAutosavePersistRequestCurrent } from './persistRequest';
 
 import { getIsUserSubsribed, getSubscriptionPlan, getUsers } from '../selectors/user';
 import { createTemplate } from '../../api/createTemplate';
@@ -97,7 +98,11 @@ function* fetchTemplate({ payload: id }: TLoadTemplate) {
   }
 }
 
-function* patchTemplateSaga({ payload: { changedFields, onSuccess, onFailed } }: TPatchTemplate) {
+function* patchTemplateSaga({ payload: { changedFields, onSuccess, onFailed, requestId } }: TPatchTemplate) {
+  if (Object.keys(changedFields).length === 0) {
+    return;
+  }
+
   const template: ReturnType<typeof getTemplateData> = yield select(getTemplateData);
 
   yield put(setTemplateStatus(ETemplateStatus.Saving));
@@ -128,7 +133,12 @@ function* patchTemplateSaga({ payload: { changedFields, onSuccess, onFailed } }:
 
   yield put(setTemplate(newTemplate));
   yield delay(350);
-  yield put(saveTemplate({ onSuccess, onFailed }));
+
+  if (!isAutosavePersistRequestCurrent(requestId)) {
+    return;
+  }
+
+  yield put(saveTemplate({ onSuccess, onFailed, requestId }));
 }
 
 function* patchTaskSaga({ payload: { taskUUID, changedFields } }: TPatchTask) {
@@ -191,7 +201,7 @@ function* createOrUpdateTemplate(template: ITemplateRequest, isSubscribed: boole
   }
 }
 
-function* fetchSaveTemplate(onSuccess?: () => void, onFailed?: () => void) {
+function* fetchSaveTemplate(onSuccess?: () => void, onFailed?: () => void, requestId?: number) {
   const isTemplatePage = checkSomeRouteIsActive(
     ERoutes.TemplateView,
     ERoutes.TemplatesCreate,
@@ -202,6 +212,10 @@ function* fetchSaveTemplate(onSuccess?: () => void, onFailed?: () => void) {
 
   if (!isTemplatePage) return;
 
+  if (!isAutosavePersistRequestCurrent(requestId)) {
+    return;
+  }
+
   const isSubscribed: ReturnType<typeof getIsUserSubsribed> = yield select(getIsUserSubsribed);
   const users: ReturnType<typeof getUsers> = yield select(getUsers);
 
@@ -209,6 +223,11 @@ function* fetchSaveTemplate(onSuccess?: () => void, onFailed?: () => void) {
   const templateRequest = mapTemplateRequest(editingTemplate);
 
   const savedTemplate: ITemplate | null = yield createOrUpdateTemplate(templateRequest, isSubscribed, users);
+
+  if (!isAutosavePersistRequestCurrent(requestId)) {
+    return;
+  }
+
   const lastTemplateState: ReturnType<typeof getTemplateData> = yield select(getTemplateData);
 
   if (!savedTemplate) {
@@ -366,7 +385,7 @@ export function* watchSaveTemplate() {
   );
   while (true) {
     const { payload }: TSaveTemplate = yield take(autosaveChannel);
-    yield call(fetchSaveTemplate, payload?.onSuccess, payload?.onFailed);
+    yield call(fetchSaveTemplate, payload?.onSuccess, payload?.onFailed, payload?.requestId);
   }
 }
 

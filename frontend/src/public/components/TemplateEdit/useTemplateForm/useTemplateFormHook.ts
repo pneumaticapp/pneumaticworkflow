@@ -69,6 +69,7 @@ export function useTemplateForm(
       pendingUserEditsRef.current = {};
       dirtyRef.current = false;
       formik.resetForm({ values: initialValues });
+      persistBaselineSyncRef.current?.(initialValues);
     }
 
     lastSyncedInitialValuesRef.current = initialValues;
