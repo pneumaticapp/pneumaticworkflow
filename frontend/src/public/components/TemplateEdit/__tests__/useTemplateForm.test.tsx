@@ -218,7 +218,7 @@ describe('TemplateFormPersistProvider deactivation', () => {
     expect(patchTemplate).not.toHaveBeenCalled();
   });
 
-  it('restores the persist baseline when an explicit submit fails after consume', async () => {
+  it('restores the persist baseline and re-queues autosave when an explicit submit fails after consume', async () => {
     const template = makeTemplate({ isActive: true, owners: [] });
     let handle: ISpyHandle | null = null;
     const owners = [{ id: 1, role: 'owner' }] as any;
@@ -511,6 +511,73 @@ describe('useTemplateForm reinitialize', () => {
     expect(hookResult!.formik.values.tasks).toHaveLength(2);
     expect(hookResult!.formik.values.tasks[0].name).toBe('Edited Task');
     expect(hookResult!.formik.values.tasks[1].name).toBe('Server Added');
+    expect(hookResult!.formik.values.dateUpdated).toBe('2026-07-01T00:00:00Z');
+  });
+
+  it('does not restore locally deleted tasks when Redux reinitializes before the deletion is saved', () => {
+    const task1 = makeTask({ apiName: 'task-1', uuid: 'uuid-1', number: 1, name: 'Task 1' });
+    const task2 = makeTask({ apiName: 'task-2', uuid: 'uuid-2', number: 2, name: 'Task 2' });
+    const template = makeTemplate({ tasks: [task1, task2], dateUpdated: null });
+    let hookResult: ReturnType<typeof useTemplateForm> | null = null;
+
+    const { rerender } = render(
+      <HookHarness
+        currentTemplate={template}
+        onReady={(result) => { hookResult = result; }}
+      />,
+    );
+
+    act(() => {
+      hookResult!.setFieldValue('tasks', [task1], false);
+    });
+
+    expect(hookResult!.formik.values.tasks).toHaveLength(1);
+    expect(hookResult!.formik.values.tasks[0].uuid).toBe('uuid-1');
+
+    rerender(
+      <HookHarness
+        currentTemplate={{
+          ...template,
+          dateUpdated: '2026-07-01T00:00:00Z',
+        }}
+        onReady={(result) => { hookResult = result; }}
+      />,
+    );
+
+    expect(hookResult!.formik.values.tasks).toHaveLength(1);
+    expect(hookResult!.formik.values.tasks[0].uuid).toBe('uuid-1');
+    expect(hookResult!.formik.values.dateUpdated).toBe('2026-07-01T00:00:00Z');
+  });
+
+  it('preserves locally added tasks when Redux reinitializes before the addition is saved', () => {
+    const task1 = makeTask({ apiName: 'task-1', uuid: 'uuid-1', number: 1, name: 'Task 1' });
+    const localTask = makeTask({ apiName: 'task-local', uuid: 'uuid-local', number: 2, name: 'Local Task' });
+    const template = makeTemplate({ tasks: [task1], dateUpdated: null });
+    let hookResult: ReturnType<typeof useTemplateForm> | null = null;
+
+    const { rerender } = render(
+      <HookHarness
+        currentTemplate={template}
+        onReady={(result) => { hookResult = result; }}
+      />,
+    );
+
+    act(() => {
+      hookResult!.setFieldValue('tasks', [task1, localTask], false);
+    });
+
+    rerender(
+      <HookHarness
+        currentTemplate={{
+          ...template,
+          dateUpdated: '2026-07-01T00:00:00Z',
+        }}
+        onReady={(result) => { hookResult = result; }}
+      />,
+    );
+
+    expect(hookResult!.formik.values.tasks).toHaveLength(2);
+    expect(hookResult!.formik.values.tasks.map((task) => task.uuid)).toEqual(['uuid-1', 'uuid-local']);
     expect(hookResult!.formik.values.dateUpdated).toBe('2026-07-01T00:00:00Z');
   });
 });

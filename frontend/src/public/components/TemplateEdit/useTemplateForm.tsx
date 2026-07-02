@@ -20,7 +20,7 @@ interface ITemplatePersistContextValue {
   consumePendingChanges(): Partial<ITemplate>;
   /** Clears a revert snapshot after an explicit `patchTemplate` succeeds. */
   confirmConsumedChanges(): void;
-  /** Restores the persist baseline when an explicit `patchTemplate` fails. */
+  /** Restores the persist baseline and re-queues autosave when an explicit `patchTemplate` fails. */
   revertConsumedChanges(): void;
   /** Drops uncommitted edits without dispatching (e.g. after "Discard changes"). */
   abandonPendingChanges(): void;
@@ -86,7 +86,11 @@ function setNestedFieldValue(obj: ITemplate, path: string, value: unknown): ITem
   return { ...obj, [path]: value };
 }
 
-function applyPendingEdits(initialValues: ITemplate, pendingEdits: Partial<ITemplate>): ITemplate {
+function applyPendingEdits(
+  initialValues: ITemplate,
+  pendingEdits: Partial<ITemplate>,
+  baselineValues: ITemplate,
+): ITemplate {
   if (Object.keys(pendingEdits).length === 0) {
     return initialValues;
   }
@@ -96,32 +100,38 @@ function applyPendingEdits(initialValues: ITemplate, pendingEdits: Partial<ITemp
   if (pendingEdits.tasks && initialValues.tasks) {
     mergedValues = {
       ...mergedValues,
-      tasks: mergePreservedTasks(initialValues.tasks, pendingEdits.tasks),
+      tasks: mergePreservedTasks(initialValues.tasks, pendingEdits.tasks, baselineValues.tasks),
     };
   }
 
   return mergedValues;
 }
 
-function overlayPendingEdits(formikValues: ITemplate, pendingEdits: Partial<ITemplate>): ITemplate {
+function overlayPendingEdits(
+  formikValues: ITemplate,
+  pendingEdits: Partial<ITemplate>,
+  baselineValues: ITemplate,
+): ITemplate {
   if (Object.keys(pendingEdits).length === 0) {
     return formikValues;
   }
 
-  return applyPendingEdits(formikValues, pendingEdits);
+  return applyPendingEdits(formikValues, pendingEdits, baselineValues);
 }
 
 function mergePreservedTasks(
   incomingTasks: ITemplateTask[],
   preservedTasks: ITemplateTask[],
+  baselineTasks: ITemplateTask[],
 ): ITemplateTask[] {
-  const preservedByUuid = new Map(preservedTasks.map((task) => [task.uuid, task]));
+  const incomingByUuid = new Map(incomingTasks.map((task) => [task.uuid, task]));
+  const baselineUuids = new Set(baselineTasks.map((task) => task.uuid));
 
-  const mergedIncoming = incomingTasks.map((incoming) => {
-    const preserved = preservedByUuid.get(incoming.uuid);
+  const mergedFromPreserved = preservedTasks.map((preserved) => {
+    const incoming = incomingByUuid.get(preserved.uuid);
 
-    if (!preserved || preserved === incoming) {
-      return preserved || incoming;
+    if (!incoming || preserved === incoming) {
+      return preserved;
     }
 
     const onlyAncestorsDiffer = (Object.keys(preserved) as (keyof ITemplateTask)[]).every(
@@ -131,10 +141,12 @@ function mergePreservedTasks(
     return onlyAncestorsDiffer ? { ...preserved, ancestors: incoming.ancestors } : preserved;
   });
 
-  const incomingUuids = new Set(incomingTasks.map((task) => task.uuid));
-  const preservedOnlyTasks = preservedTasks.filter((task) => !incomingUuids.has(task.uuid));
+  const preservedUuids = new Set(preservedTasks.map((task) => task.uuid));
+  const serverAddedTasks = incomingTasks.filter(
+    (task) => !baselineUuids.has(task.uuid) && !preservedUuids.has(task.uuid),
+  );
 
-  return [...mergedIncoming, ...preservedOnlyTasks];
+  return [...mergedFromPreserved, ...serverAddedTasks];
 }
 
 function getKickoffFieldApiNames(kickoff: IKickoff): string[] {
@@ -221,7 +233,7 @@ export function useTemplateForm(initialValues: ITemplate) {
     const rawPending = dirtyRef.current ? pendingUserEditsRef.current : {};
 
     if (Object.keys(rawPending).length > 0) {
-      const mergedValues = applyPendingEdits(initialValues, rawPending);
+      const mergedValues = applyPendingEdits(initialValues, rawPending, lastSyncedInitialValuesRef.current);
 
       pendingUserEditsRef.current = getChangedFields(initialValues, mergedValues);
       dirtyRef.current = true;
@@ -239,7 +251,11 @@ export function useTemplateForm(initialValues: ITemplate) {
   const setFieldValue = useCallback<TSetFieldValue>(
     (field, value, shouldValidate) => {
       dirtyRef.current = true;
-      const currentValues = overlayPendingEdits(formik.values, pendingUserEditsRef.current);
+      const currentValues = overlayPendingEdits(
+        formik.values,
+        pendingUserEditsRef.current,
+        lastSyncedInitialValuesRef.current,
+      );
       let nextValues = setNestedFieldValue(currentValues, field, value);
       const runCleanup = shouldRunReferenceCleanup(field, currentValues, nextValues);
 
@@ -262,7 +278,11 @@ export function useTemplateForm(initialValues: ITemplate) {
   const setValues = useCallback<TSetValues>(
     (values, shouldValidate) => {
       dirtyRef.current = true;
-      const currentValues = overlayPendingEdits(formik.values, pendingUserEditsRef.current);
+      const currentValues = overlayPendingEdits(
+        formik.values,
+        pendingUserEditsRef.current,
+        lastSyncedInitialValuesRef.current,
+      );
       const nextValues = applyImmediateDeactivation(currentValues, values);
       pendingUserEditsRef.current = getChangedFields(lastSyncedInitialValuesRef.current, nextValues);
       formik.setValues(nextValues, shouldValidate);
@@ -459,6 +479,14 @@ export function TemplateFormPersistProvider({
     pendingUserEditsRefRef.current.current = {};
   }, []);
 
+  const flushPersist = useCallback(() => {
+    const changedFields = takePendingChanges();
+
+    if (Object.keys(changedFields).length > 0) {
+      dispatchRef.current(patchTemplate({ changedFields }));
+    }
+  }, [takePendingChanges]);
+
   const revertConsumedChanges = useCallback(() => {
     const consumed = consumedPendingRef.current;
 
@@ -473,7 +501,13 @@ export function TemplateFormPersistProvider({
       valuesRef.current,
     );
     consumedPendingRef.current = null;
-  }, []);
+
+    // Restoring the baseline does not change Formik `values`, so the values
+    // effect won't re-run and re-dispatch. This runs from a saga `onFailed`
+    // callback (outside React render), so it's safe to persist the restored
+    // edits right away instead of stranding them.
+    flushPersist();
+  }, [flushPersist]);
 
   const abandonPendingChanges = useCallback(() => {
     previousValuesRef.current = valuesRef.current;
@@ -481,14 +515,6 @@ export function TemplateFormPersistProvider({
     pendingUserEditsRefRef.current.current = {};
     consumedPendingRef.current = null;
   }, []);
-
-  const flushPersist = useCallback(() => {
-    const changedFields = takePendingChanges();
-
-    if (Object.keys(changedFields).length > 0) {
-      dispatchRef.current(patchTemplate({ changedFields }));
-    }
-  }, [takePendingChanges]);
 
   useEffect(() => {
     if (previousValuesRef.current === values) {
