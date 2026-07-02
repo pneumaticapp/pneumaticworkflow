@@ -709,7 +709,7 @@ class WorkflowActionService:
             else:
                 self.continue_workflow(task=task, is_returned=is_returned)
 
-    def complete_task(self, task: Task, by_user: bool = False):
+    def complete_task(self, task: Task):
 
         """ Complete workflow task if it <= current task
             Only for current task run complete actions """
@@ -773,20 +773,6 @@ class WorkflowActionService:
                 is_completed=True,
             )
         )
-        if by_user:
-            AnalyticService.task_completed(
-                user=self.user,
-                is_superuser=self.is_superuser,
-                auth_type=self.auth_type,
-                workflow=self.workflow,
-                task=task,
-            )
-            # Need run after save completed task (and performers)
-            # and before start next tasks
-            WorkflowEventService.task_complete_event(
-                task=task,
-                user=self.user,
-            )
         self._start_next_tasks(parent_task=task)
         if (
             WebHook.objects
@@ -864,9 +850,22 @@ class WorkflowActionService:
                     value=fields_values.get(task_field.api_name),
                     force_save=True,
                 )
+            AnalyticService.task_completed(
+                user=self.user,
+                is_superuser=self.is_superuser,
+                auth_type=self.auth_type,
+                workflow=self.workflow,
+                task=task,
+            )
+            # Need run after save completed task (and performers)
+            # and before start next tasks
+            WorkflowEventService.task_complete_event(
+                task=task,
+                user=self.user,
+            )
             if task_performer:
                 if self._task_can_be_completed(task):
-                    self.complete_task(task=task, by_user=True)
+                    self.complete_task(task=task)
                 else:
                     # completed only for user and send ws remove task
                     # if "requires completion by all", sending message
@@ -886,7 +885,7 @@ class WorkflowActionService:
             elif self.user.is_account_owner:
                 # account owner force completion
                 # not complete performers, but send ws remove task
-                self.complete_task(task=task, by_user=True)
+                self.complete_task(task=task)
         return task
 
     def _get_not_skipped_revert_task(self, task: Task) -> Optional[Task]:
