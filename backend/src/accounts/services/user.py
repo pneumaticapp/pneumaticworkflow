@@ -37,6 +37,7 @@ from src.analysis.services import AnalyticService
 from src.authentication.tokens import PneumaticToken
 from src.generics.base.service import BaseModelService
 from src.notifications.tasks import (
+    send_user_created_notification,
     send_user_deleted_notification,
     send_user_updated_notification,
 )
@@ -166,6 +167,11 @@ class UserService(
             user=self.user,
             old_values=[None],
             new_values=[self.instance.photo],
+        )
+        send_user_created_notification.delay(
+            logging=self.instance.account.log_api_requests,
+            account_id=self.instance.account.id,
+            user_data=UserWebsocketSerializer(self.instance).data,
         )
         if self.instance.is_account_owner:
             self.instance.incoming_invites.not_accepted().delete()

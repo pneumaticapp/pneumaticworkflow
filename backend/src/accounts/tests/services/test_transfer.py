@@ -355,10 +355,14 @@ def test_after_transfer_actions__premium__ok(mocker):
             'last_name': user.last_name,
             'email': user.email,
             'photo': user.photo,
+            'phone': user.phone,
+            'status': user.status,
             'is_admin': user.is_admin,
             'is_account_owner': user.is_account_owner,
             'manager_id': None,
             'subordinates_ids': [],
+            'invite_id': None,
+            'vacation': None,
         },
     )
 
@@ -416,10 +420,14 @@ def test_after_transfer_actions__unlimited__ok(mocker):
             'last_name': user.last_name,
             'email': user.email,
             'photo': user.photo,
+            'phone': user.phone,
+            'status': user.status,
             'is_admin': user.is_admin,
             'is_account_owner': user.is_account_owner,
             'manager_id': None,
             'subordinates_ids': [],
+            'invite_id': None,
+            'vacation': None,
         },
     )
 
@@ -481,10 +489,14 @@ def test_after_transfer_actions__disable_billing__ok(mocker, plan):
             'last_name': user.last_name,
             'email': user.email,
             'photo': user.photo,
+            'phone': user.phone,
+            'status': user.status,
             'is_admin': user.is_admin,
             'is_account_owner': user.is_account_owner,
             'manager_id': None,
             'subordinates_ids': [],
+            'invite_id': None,
+            'vacation': None,
         },
     )
 
@@ -813,6 +825,10 @@ def test_activate_user__ok(mocker):
     update_users_counts_mock = mocker.patch(
         'src.accounts.services.account.AccountService.update_users_counts',
     )
+    send_user_updated_mock = mocker.patch(
+        'src.accounts.services.user_transfer'
+        '.send_user_updated_notification.delay',
+    )
 
     # act
     service._activate_user()
@@ -828,3 +844,22 @@ def test_activate_user__ok(mocker):
         user=account_2_new_user,
     )
     update_users_counts_mock.assert_called_once()
+    send_user_updated_mock.assert_called_once_with(
+        logging=account_2_new_user.account.log_api_requests,
+        account_id=account_2_new_user.account_id,
+        user_data={
+            'id': account_2_new_user.id,
+            'first_name': account_2_new_user.first_name,
+            'last_name': account_2_new_user.last_name,
+            'email': account_2_new_user.email,
+            'photo': account_2_new_user.photo,
+            'phone': account_2_new_user.phone,
+            'status': UserStatus.ACTIVE,
+            'is_admin': account_2_new_user.is_admin,
+            'is_account_owner': account_2_new_user.is_account_owner,
+            'manager_id': None,
+            'subordinates_ids': [],
+            'invite_id': None,
+            'vacation': None,
+        },
+    )
