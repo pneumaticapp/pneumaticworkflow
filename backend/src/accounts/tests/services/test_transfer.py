@@ -355,10 +355,14 @@ def test_after_transfer_actions__premium__ok(mocker):
             'last_name': user.last_name,
             'email': user.email,
             'photo': user.photo,
+            'phone': user.phone,
+            'status': user.status,
             'is_admin': user.is_admin,
             'is_account_owner': user.is_account_owner,
             'manager_id': None,
             'subordinates_ids': [],
+            'invite_id': None,
+            'vacation': None,
         },
     )
 
@@ -416,10 +420,14 @@ def test_after_transfer_actions__unlimited__ok(mocker):
             'last_name': user.last_name,
             'email': user.email,
             'photo': user.photo,
+            'phone': user.phone,
+            'status': user.status,
             'is_admin': user.is_admin,
             'is_account_owner': user.is_account_owner,
             'manager_id': None,
             'subordinates_ids': [],
+            'invite_id': None,
+            'vacation': None,
         },
     )
 
@@ -481,10 +489,14 @@ def test_after_transfer_actions__disable_billing__ok(mocker, plan):
             'last_name': user.last_name,
             'email': user.email,
             'photo': user.photo,
+            'phone': user.phone,
+            'status': user.status,
             'is_admin': user.is_admin,
             'is_account_owner': user.is_account_owner,
             'manager_id': None,
             'subordinates_ids': [],
+            'invite_id': None,
+            'vacation': None,
         },
     )
 
