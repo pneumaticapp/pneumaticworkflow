@@ -72,7 +72,7 @@ const makeTemplate = (overrides: Partial<ITemplate> = {}): ITemplate =>
 interface ISpyHandle {
   values: ITemplate;
   setFieldValue: (field: string, value: unknown, shouldValidate?: boolean) => void;
-  consumePendingChanges: () => Partial<ITemplate>;
+  consumePendingChanges: (explicitFields?: Partial<ITemplate>) => Partial<ITemplate>;
   confirmConsumedChanges: () => void;
   revertConsumedChanges: () => void;
   abandonPendingChanges: () => void;
@@ -80,11 +80,23 @@ interface ISpyHandle {
 
 // Drain the persist provider's `setTimeout(0)` flush plus the follow-up tick it
 // schedules when it mirrors the saga's `isActive` deactivation, so no React
-// state update leaks outside `act`.
-const flushPersist = () =>
+// state update leaks outside `act`. By default, simulates a successful autosave
+// so the persist baseline advances before the next edit.
+const flushPersist = (options?: { confirmSuccess?: boolean }) =>
   act(async () => {
     await new Promise((resolve) => { setTimeout(resolve, 0); });
     await new Promise((resolve) => { setTimeout(resolve, 0); });
+
+    if (options?.confirmSuccess === false) {
+      return;
+    }
+
+    const calls = (patchTemplate as unknown as jest.Mock).mock.calls;
+    const lastCall = calls[calls.length - 1];
+
+    if (lastCall?.[0]?.onSuccess) {
+      lastCall[0].onSuccess();
+    }
   });
 
 function TemplateFormHarness({
@@ -1249,5 +1261,97 @@ describe('useTemplateSaveRetry', () => {
     expect(patchTemplate).not.toHaveBeenCalled();
     expect(mockDispatch).toHaveBeenCalledTimes(1);
     expect(saveTemplate).toHaveBeenCalled();
+  });
+
+  it('retries pending Formik edits after an autosave failure instead of saveTemplate', async () => {
+    const template = makeTemplate({ isActive: true, name: 'Original' });
+    let retryFailedSave: (() => void) | null = null;
+    let editField: ((field: string, value: unknown, shouldValidate?: boolean) => void) | null = null;
+
+    render(
+      <SaveRetryHarness
+        initialTemplate={template}
+        onReady={(retry, setFieldValue) => {
+          retryFailedSave = retry;
+          editField = setFieldValue;
+        }}
+      />,
+    );
+
+    act(() => {
+      editField!('name', 'Retry edit', false);
+    });
+
+    await flushPersist({ confirmSuccess: false });
+
+    act(() => {
+      const calls = (patchTemplate as unknown as jest.Mock).mock.calls;
+      const lastCall = calls[calls.length - 1];
+      lastCall![0].onFailed();
+    });
+
+    mockDispatch.mockClear();
+    (patchTemplate as unknown as jest.Mock).mockClear();
+
+    act(() => {
+      retryFailedSave!();
+    });
+
+    expect(saveTemplate).not.toHaveBeenCalled();
+    expect(patchTemplate).toHaveBeenCalledWith({
+      changedFields: { name: 'Retry edit', isActive: false },
+      onSuccess: expect.any(Function),
+      onFailed: expect.any(Function),
+    });
+  });
+
+  it('retries a failed activation with isActive true', () => {
+    const template = makeTemplate({ isActive: false, name: 'Original' });
+    let retryFailedSave: (() => void) | null = null;
+    let persist: Pick<ISpyHandle, 'consumePendingChanges' | 'revertConsumedChanges'> | null = null;
+
+    function ActivationRetryHarness() {
+      const { formik, setFieldValue, setValues, dirtyRef, pendingUserEditsRef, persistBaselineSyncRef } = useTemplateForm(template);
+
+      const RetrySpy: React.FC = () => {
+        retryFailedSave = useTemplateSaveRetry();
+        persist = useTemplatePersist();
+        return null;
+      };
+
+      return (
+        <TemplateForm
+          formik={formik}
+          setFieldValue={setFieldValue}
+          setValues={setValues}
+          dirtyRef={dirtyRef}
+          pendingUserEditsRef={pendingUserEditsRef}
+          persistBaselineSyncRef={persistBaselineSyncRef}
+        >
+          <RetrySpy />
+        </TemplateForm>
+      );
+    }
+
+    render(<ActivationRetryHarness />);
+
+    act(() => {
+      persist!.consumePendingChanges({ isActive: true });
+      persist!.revertConsumedChanges();
+    });
+
+    mockDispatch.mockClear();
+    (patchTemplate as unknown as jest.Mock).mockClear();
+
+    act(() => {
+      retryFailedSave!();
+    });
+
+    expect(saveTemplate).not.toHaveBeenCalled();
+    expect(patchTemplate).toHaveBeenCalledWith({
+      changedFields: { isActive: true },
+      onSuccess: expect.any(Function),
+      onFailed: expect.any(Function),
+    });
   });
 });

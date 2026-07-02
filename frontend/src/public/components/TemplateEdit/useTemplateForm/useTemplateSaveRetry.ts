@@ -15,17 +15,22 @@ export function useTemplateSaveRetry(): () => void {
   const dispatch = useDispatch();
   const {
     consumePendingChanges,
+    getRetryExplicitPatch,
     confirmConsumedChanges,
     revertConsumedChanges,
   } = useTemplatePersist();
 
   return useCallback(() => {
     const pendingChanges = consumePendingChanges();
+    const changedFields = {
+      ...pendingChanges,
+      ...getRetryExplicitPatch(),
+    };
 
-    if (Object.keys(pendingChanges).length > 0) {
+    if (Object.keys(changedFields).length > 0) {
       dispatch(
         patchTemplate({
-          changedFields: pendingChanges,
+          changedFields,
           onSuccess: confirmConsumedChanges,
           onFailed: revertConsumedChanges,
         }),
@@ -34,5 +39,5 @@ export function useTemplateSaveRetry(): () => void {
     }
 
     dispatch(saveTemplate());
-  }, [consumePendingChanges, confirmConsumedChanges, dispatch, revertConsumedChanges]);
+  }, [consumePendingChanges, confirmConsumedChanges, dispatch, getRetryExplicitPatch, revertConsumedChanges]);
 }

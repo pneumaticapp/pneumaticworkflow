@@ -117,7 +117,7 @@ export function TemplateControlls({
 
   const handleChangeIsActive = (value: ITemplate['isActive'], redirectUrl?: string) => {
     if (!value) {
-      const pendingChanges = consumePendingChanges();
+      const pendingChanges = consumePendingChanges({ isActive: false });
 
       patchTemplate({
         changedFields: { ...pendingChanges, isActive: false },
@@ -139,7 +139,7 @@ export function TemplateControlls({
 
     setIsTemplateActivating(true);
 
-    const pendingChanges = consumePendingChanges();
+    const pendingChanges = consumePendingChanges({ isActive: true });
 
     patchTemplate({
       changedFields: {

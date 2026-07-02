@@ -101,7 +101,7 @@ export function useTemplateEditInit({
     if (checkSomeRouteIsActive(ERoutes.TemplatesCreate) || checkSomeRouteIsActive(ERoutes.TemplatesCreateAI)) {
       openTask(template.tasks[0]?.uuid);
     }
-  }, [template.tasks, prevLocation?.pathname]);
+  }, [template.tasks, location.pathname]);
 
   useEffect(() => {
     // Derive variables from Formik, not the Redux `template` prop. Kickoff/task
@@ -139,5 +139,5 @@ export function useTemplateEditInit({
       const newTemplateOwners = getNormalizedTemplateOwners(formik.values.owners, isSubscribed, users);
       setTemplate({ ...formik.values, owners: newTemplateOwners });
     }
-  }, [prevFormikValues, prevTemplate, prevLocation, prevUsers]);
+  }, [location, users, template, formik.values]);
 }

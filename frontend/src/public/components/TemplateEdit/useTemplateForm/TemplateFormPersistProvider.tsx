@@ -16,6 +16,13 @@ interface ITemplateFormPersistProviderProps {
   children: React.ReactNode;
 }
 
+type TConsumedPending = {
+  previousBaseline: ITemplate;
+  isUserEdit: boolean;
+  pendingUserEdits: Partial<ITemplate>;
+  explicitFields?: Partial<ITemplate>;
+};
+
 /**
  * Single save point for every user edit on the Edit Template page.
  *
@@ -51,6 +58,10 @@ export function TemplateFormPersistProvider({
   const dirtyRefRef = useRef(dirtyRef);
   const pendingUserEditsRefRef = useRef(pendingUserEditsRef);
   const persistBaselineSyncRefRef = useRef(persistBaselineSyncRef);
+  const consumedPendingRef = useRef<TConsumedPending | null>(null);
+  const retryExplicitPatchRef = useRef<Partial<ITemplate>>({});
+  const persistInFlightRef = useRef(false);
+  const flushPersistRef = useRef<() => void>(() => undefined);
 
   valuesRef.current = values;
   dispatchRef.current = dispatch;
@@ -78,13 +89,7 @@ export function TemplateFormPersistProvider({
     };
   }, []);
 
-  const consumedPendingRef = useRef<{
-    previousBaseline: ITemplate;
-    isUserEdit: boolean;
-    pendingUserEdits: Partial<ITemplate>;
-  } | null>(null);
-
-  const takePendingChanges = useCallback((trackForRevert = false) => {
+  const takePendingChanges = useCallback((mode: 'flush' | 'consume') => {
     if (previousValuesRef.current === valuesRef.current) {
       return {};
     }
@@ -92,7 +97,7 @@ export function TemplateFormPersistProvider({
     const changedFields = getChangedFields(previousValuesRef.current, valuesRef.current);
     const isUserEdit = dirtyRefRef.current.current;
 
-    if (trackForRevert && isUserEdit && Object.keys(changedFields).length > 0) {
+    if (isUserEdit && Object.keys(changedFields).length > 0) {
       consumedPendingRef.current = {
         previousBaseline: previousValuesRef.current,
         isUserEdit,
@@ -100,24 +105,16 @@ export function TemplateFormPersistProvider({
       };
     }
 
-    previousValuesRef.current = valuesRef.current;
-
-    // Explicit submit flows (activate/deactivate) consume pending edits before
-    // `patchTemplate` returns. Keep the form dirty until confirm/revert so a
-    // Redux reinitialize from the in-flight patch does not reset Formik and
-    // drop the consumed-but-unsaved edits.
-    if (!trackForRevert) {
-      dirtyRefRef.current.current = false;
-    }
-
-    if (isUserEdit && Object.keys(changedFields).length > 0 && !trackForRevert) {
-      pendingUserEditsRefRef.current.current = {};
+    // Explicit submit flows advance the baseline immediately so the autosave
+    // effect does not re-dispatch the same diff while the patch is in flight.
+    if (mode === 'consume') {
+      previousValuesRef.current = valuesRef.current;
     }
 
     return isUserEdit ? changedFields : {};
   }, []);
 
-  const consumePendingChanges = useCallback(() => takePendingChanges(true), [takePendingChanges]);
+  const getRetryExplicitPatch = useCallback(() => retryExplicitPatchRef.current, []);
 
   const confirmConsumedChanges = useCallback(() => {
     const consumed = consumedPendingRef.current;
@@ -130,19 +127,17 @@ export function TemplateFormPersistProvider({
     }
 
     consumedPendingRef.current = null;
+    retryExplicitPatchRef.current = {};
+    previousValuesRef.current = valuesRef.current;
 
     if (Object.keys(pendingUserEditsRefRef.current.current).length === 0) {
       dirtyRefRef.current.current = false;
     }
-  }, []);
 
-  const flushPersist = useCallback(() => {
-    const changedFields = takePendingChanges();
-
-    if (Object.keys(changedFields).length > 0) {
-      dispatchRef.current(patchTemplate({ changedFields }));
+    if (previousValuesRef.current !== valuesRef.current) {
+      flushPersistRef.current();
     }
-  }, [takePendingChanges]);
+  }, []);
 
   const revertConsumedChanges = useCallback(() => {
     const consumed = consumedPendingRef.current;
@@ -154,6 +149,11 @@ export function TemplateFormPersistProvider({
     previousValuesRef.current = consumed.previousBaseline;
     pendingUserEditsRefRef.current.current = { ...consumed.pendingUserEdits };
     dirtyRefRef.current.current = consumed.isUserEdit;
+
+    if (consumed.explicitFields && Object.keys(consumed.explicitFields).length > 0) {
+      retryExplicitPatchRef.current = { ...consumed.explicitFields };
+    }
+
     consumedPendingRef.current = null;
 
     // Formik `values` are unchanged, so the `[values]` effect will not re-run.
@@ -161,19 +161,67 @@ export function TemplateFormPersistProvider({
     // relying on `setValues`, which would diff against a Redux snapshot that may
     // already include the consumed (but unsaved) fields from the failed patch.
     if (consumed.isUserEdit && previousValuesRef.current !== valuesRef.current) {
-      flushPersist();
+      flushPersistRef.current();
     }
-  }, [flushPersist]);
+  }, []);
+
+  const consumePendingChanges = useCallback((explicitFields?: Partial<ITemplate>) => {
+    const changedFields = takePendingChanges('consume');
+
+    if (explicitFields && Object.keys(explicitFields).length > 0) {
+      if (consumedPendingRef.current) {
+        consumedPendingRef.current.explicitFields = explicitFields;
+      } else {
+        consumedPendingRef.current = {
+          previousBaseline: previousValuesRef.current,
+          isUserEdit: false,
+          pendingUserEdits: {},
+          explicitFields,
+        };
+        previousValuesRef.current = valuesRef.current;
+      }
+    }
+
+    return changedFields;
+  }, [takePendingChanges]);
+
+  const flushPersist = useCallback(() => {
+    if (persistInFlightRef.current) {
+      return;
+    }
+
+    const changedFields = takePendingChanges('flush');
+
+    if (Object.keys(changedFields).length > 0) {
+      persistInFlightRef.current = true;
+      dispatchRef.current(
+        patchTemplate({
+          changedFields,
+          onSuccess: () => {
+            persistInFlightRef.current = false;
+            confirmConsumedChanges();
+          },
+          onFailed: () => {
+            persistInFlightRef.current = false;
+            revertConsumedChanges();
+          },
+        }),
+      );
+    }
+  }, [takePendingChanges, confirmConsumedChanges, revertConsumedChanges]);
+
+  flushPersistRef.current = flushPersist;
 
   const abandonPendingChanges = useCallback(() => {
     previousValuesRef.current = valuesRef.current;
     dirtyRefRef.current.current = false;
     pendingUserEditsRefRef.current.current = {};
     consumedPendingRef.current = null;
+    retryExplicitPatchRef.current = {};
   }, []);
 
   useEffect(() => {
-    if (previousValuesRef.current === values) {
+    if (previousValuesRef.current === values || persistInFlightRef.current) {
       return undefined;
     }
 
@@ -190,11 +238,12 @@ export function TemplateFormPersistProvider({
   const persistContextValue = useMemo<ITemplatePersistContextValue>(
     () => ({
       consumePendingChanges,
+      getRetryExplicitPatch,
       confirmConsumedChanges,
       revertConsumedChanges,
       abandonPendingChanges,
     }),
-    [consumePendingChanges, confirmConsumedChanges, revertConsumedChanges, abandonPendingChanges],
+    [consumePendingChanges, getRetryExplicitPatch, confirmConsumedChanges, revertConsumedChanges, abandonPendingChanges],
   );
 
   return (
