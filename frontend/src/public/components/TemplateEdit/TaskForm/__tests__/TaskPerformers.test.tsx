@@ -1,11 +1,13 @@
 /// <reference types="jest" />
 import * as React from 'react';
-import { render } from '@testing-library/react';
+import { act, render } from '@testing-library/react';
+import { FormikProvider, useFormik } from 'formik';
 
 import { intlMock } from '../../../../__stubs__/intlMock';
 import { Checkbox } from '../../../UI/Fields/Checkbox';
-import { ITemplateTask } from '../../../../types/template';
+import { ITemplate, ITemplateTask } from '../../../../types/template';
 import { TaskPerformers } from '../TaskPerformers';
+import { TaskFormScopeProvider, TemplateFieldContext } from '../../useTemplateForm';
 
 jest.mock('../../../UI/Fields/Checkbox', () => ({
   Checkbox: jest.fn(() => null),
@@ -40,8 +42,6 @@ describe('TaskPerformers', () => {
   const t = (id: string) => intlMock.formatMessage({ id });
   const SKIP_LABEL = t('templates.task-skip-for-starter');
 
-  const mockSetCurrentTask = jest.fn();
-
   const makeTask = (overrides: Partial<ITemplateTask> = {}): ITemplateTask => ({
     apiName: 'task-1',
     number: 1,
@@ -61,62 +61,54 @@ describe('TaskPerformers', () => {
     ...overrides,
   });
 
-  const renderComponent = (taskOverrides: Partial<ITemplateTask> = {}) => {
-    const task = makeTask(taskOverrides);
-    return render(
-      React.createElement(TaskPerformers, {
-        task,
-        tasks: [task],
-        users: [],
-        variables: [],
-        isTeamInvitesModalOpen: false,
-        setCurrentTask: mockSetCurrentTask,
-      }),
-    );
-  };
+  const makeTemplate = (tasks: ITemplateTask[]): ITemplate =>
+    ({
+      id: 1,
+      name: 'Template',
+      description: '',
+      isActive: false,
+      finalizable: false,
+      completionNotification: false,
+      reminderNotification: false,
+      dateUpdated: null,
+      updatedBy: null,
+      owners: [],
+      kickoff: { description: '', fields: [] } as any,
+      tasks,
+      isPublic: false,
+      publicUrl: null,
+      publicSuccessUrl: null,
+      isEmbedded: false,
+      embedUrl: null,
+      wfNameTemplate: null,
+      tasksCount: tasks.length,
+      performersCount: 0,
+    }) as ITemplate;
 
-  const getSkipCheckboxCall = () => {
-    const calls = (Checkbox as jest.Mock).mock.calls;
-    return calls.find(
-      (c: any[]) => c[0].checkboxId === 'skipForStarter-task-1',
-    );
-  };
+  const flushPersist = () => act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
 
-  const getCompleteByAllCall = () => {
-    const calls = (Checkbox as jest.Mock).mock.calls;
-    return calls.find(
-      (c: any[]) => c[0].checkboxId === 'completeByAll-task-1',
-    );
-  };
+  const createTaskFormWrapper = (task: ITemplateTask, setFieldValue = jest.fn()) => {
+    function TaskFormTestWrapper({ children }: { children: React.ReactNode }) {
+      const formik = useFormik<ITemplate>({
+        initialValues: makeTemplate([task]),
+        enableReinitialize: true,
+        onSubmit: () => undefined,
+      });
 
-  const renderTwoTasks = () => {
-    const task1 = makeTask({ apiName: 'task-1' });
-    const task2 = makeTask({ apiName: 'task-2' });
-    const setCurrentTask1 = jest.fn();
-    const setCurrentTask2 = jest.fn();
+      return (
+        <FormikProvider value={formik}>
+          <TemplateFieldContext.Provider
+            value={{ values: formik.values, setFieldValue, setValues: jest.fn() }}
+          >
+            <TaskFormScopeProvider taskUuid={task.uuid}>{children}</TaskFormScopeProvider>
+          </TemplateFieldContext.Provider>
+        </FormikProvider>
+      );
+    }
 
-    render(
-      React.createElement('div', null,
-        React.createElement(TaskPerformers, {
-          task: task1,
-          tasks: [task1, task2],
-          users: [],
-          variables: [],
-          isTeamInvitesModalOpen: false,
-          setCurrentTask: setCurrentTask1,
-        }),
-        React.createElement(TaskPerformers, {
-          task: task2,
-          tasks: [task1, task2],
-          users: [],
-          variables: [],
-          isTeamInvitesModalOpen: false,
-          setCurrentTask: setCurrentTask2,
-        }),
-      ),
-    );
-
-    return { setCurrentTask1, setCurrentTask2 };
+    return TaskFormTestWrapper;
   };
 
   beforeEach(() => {
@@ -125,7 +117,22 @@ describe('TaskPerformers', () => {
 
   describe('checkbox identifiers', () => {
     it('generates unique checkboxId using task.apiName to prevent HTML id collisions', () => {
-      renderComponent({ apiName: 'custom-task-123' });
+      const task = makeTask({ apiName: 'custom-task-123' });
+      const setFieldValue = jest.fn();
+      const Wrapper = createTaskFormWrapper(task, setFieldValue);
+
+      render(
+        React.createElement(
+          Wrapper,
+          null,
+          React.createElement(TaskPerformers, {
+            tasks: [task],
+            users: [],
+            variables: [],
+            isTeamInvitesModalOpen: false,
+          }),
+        ),
+      );
 
       const calls = (Checkbox as jest.Mock).mock.calls;
       const completeByAllCall = calls.find((c: any[]) => c[0].checkboxId?.startsWith('completeByAll-'));
@@ -138,21 +145,23 @@ describe('TaskPerformers', () => {
       expect(skipForStarterCall![0].checkboxId).toBe('skipForStarter-custom-task-123');
     });
 
-    it('two tasks produce different checkboxIds (no DOM id collisions)', () => {
-      renderTwoTasks();
-
-      const calls = (Checkbox as jest.Mock).mock.calls;
-      const checkboxIds = calls.map((c: any[]) => c[0].checkboxId);
-
-      const completeByAllIds = checkboxIds.filter((id: string) => id?.startsWith('completeByAll-'));
-      const skipForStarterIds = checkboxIds.filter((id: string) => id?.startsWith('skipForStarter-'));
-
-      expect(completeByAllIds).toEqual(['completeByAll-task-1', 'completeByAll-task-2']);
-      expect(skipForStarterIds).toEqual(['skipForStarter-task-1', 'skipForStarter-task-2']);
-    });
-
     it('uses checkboxId prop (not id) to ensure proper label-input binding', () => {
-      renderComponent();
+      const task = makeTask();
+      const setFieldValue = jest.fn();
+      const Wrapper = createTaskFormWrapper(task, setFieldValue);
+
+      render(
+        React.createElement(
+          Wrapper,
+          null,
+          React.createElement(TaskPerformers, {
+            tasks: [task],
+            users: [],
+            variables: [],
+            isTeamInvitesModalOpen: false,
+          }),
+        ),
+      );
 
       const calls = (Checkbox as jest.Mock).mock.calls;
 
@@ -165,91 +174,241 @@ describe('TaskPerformers', () => {
 
   describe('requireCompletionByAll checkbox', () => {
     it('passes title with correct localization text', () => {
-      renderComponent();
+      const task = makeTask();
+      const setFieldValue = jest.fn();
+      const Wrapper = createTaskFormWrapper(task, setFieldValue);
 
-      const call = getCompleteByAllCall();
+      render(
+        React.createElement(
+          Wrapper,
+          null,
+          React.createElement(TaskPerformers, {
+            tasks: [task],
+            users: [],
+            variables: [],
+            isTeamInvitesModalOpen: false,
+          }),
+        ),
+      );
+
+      const calls = (Checkbox as jest.Mock).mock.calls;
+      const call = calls.find((c: any[]) => c[0].checkboxId === 'completeByAll-task-1');
 
       expect(call).toBeDefined();
       expect(call![0].title).toBe(t('templates.task-require-completion-by-all'));
     });
 
     it('passes checked=true when requireCompletionByAll=true', () => {
-      renderComponent({ requireCompletionByAll: true });
+      const task = makeTask({ requireCompletionByAll: true });
+      const setFieldValue = jest.fn();
+      const Wrapper = createTaskFormWrapper(task, setFieldValue);
 
-      const call = getCompleteByAllCall();
+      render(
+        React.createElement(
+          Wrapper,
+          null,
+          React.createElement(TaskPerformers, {
+            tasks: [task],
+            users: [],
+            variables: [],
+            isTeamInvitesModalOpen: false,
+          }),
+        ),
+      );
+
+      const calls = (Checkbox as jest.Mock).mock.calls;
+      const call = calls.find((c: any[]) => c[0].checkboxId === 'completeByAll-task-1');
 
       expect(call![0].checked).toBe(true);
     });
 
     it('passes checked=false when requireCompletionByAll=false', () => {
-      renderComponent({ requireCompletionByAll: false });
+      const task = makeTask({ requireCompletionByAll: false });
+      const setFieldValue = jest.fn();
+      const Wrapper = createTaskFormWrapper(task, setFieldValue);
 
-      const call = getCompleteByAllCall();
+      render(
+        React.createElement(
+          Wrapper,
+          null,
+          React.createElement(TaskPerformers, {
+            tasks: [task],
+            users: [],
+            variables: [],
+            isTeamInvitesModalOpen: false,
+          }),
+        ),
+      );
+
+      const calls = (Checkbox as jest.Mock).mock.calls;
+      const call = calls.find((c: any[]) => c[0].checkboxId === 'completeByAll-task-1');
 
       expect(call![0].checked).toBe(false);
     });
 
-    it('calls setCurrentTask with requireCompletionByAll on onChange', () => {
-      renderComponent({ requireCompletionByAll: false });
+    it('calls setFieldValue with tasks.0.requireCompletionByAll on onChange', async () => {
+      const task = makeTask({ requireCompletionByAll: false });
+      const setFieldValue = jest.fn();
+      const Wrapper = createTaskFormWrapper(task, setFieldValue);
 
-      const call = getCompleteByAllCall();
-      const onChangeFn = call![0].onChange;
-      onChangeFn({ currentTarget: { checked: true } });
-
-      expect(mockSetCurrentTask).toHaveBeenCalledWith(
-        { requireCompletionByAll: true },
+      render(
+        React.createElement(
+          Wrapper,
+          null,
+          React.createElement(TaskPerformers, {
+            tasks: [task],
+            users: [],
+            variables: [],
+            isTeamInvitesModalOpen: false,
+          }),
+        ),
       );
+
+      const calls = (Checkbox as jest.Mock).mock.calls;
+      const call = calls.find((c: any[]) => c[0].checkboxId === 'completeByAll-task-1');
+      const onChangeFn = call![0].onChange;
+
+      act(() => {
+        onChangeFn({ currentTarget: { checked: true } });
+      });
+      await flushPersist();
+
+      expect(setFieldValue).toHaveBeenCalledWith('tasks.0', { ...task, requireCompletionByAll: true }, false);
     });
   });
 
   describe('skipForStarter checkbox', () => {
     it('passes title with correct localization text', () => {
-      renderComponent();
+      const task = makeTask();
+      const setFieldValue = jest.fn();
+      const Wrapper = createTaskFormWrapper(task, setFieldValue);
 
-      const skipCall = getSkipCheckboxCall();
+      render(
+        React.createElement(
+          Wrapper,
+          null,
+          React.createElement(TaskPerformers, {
+            tasks: [task],
+            users: [],
+            variables: [],
+            isTeamInvitesModalOpen: false,
+          }),
+        ),
+      );
+
+      const calls = (Checkbox as jest.Mock).mock.calls;
+      const skipCall = calls.find((c: any[]) => c[0].checkboxId === 'skipForStarter-task-1');
 
       expect(skipCall).toBeDefined();
       expect(skipCall![0].title).toBe(SKIP_LABEL);
     });
 
     it('passes checked=true when skipForStarter=true', () => {
-      renderComponent({ skipForStarter: true });
+      const task = makeTask({ skipForStarter: true });
+      const setFieldValue = jest.fn();
+      const Wrapper = createTaskFormWrapper(task, setFieldValue);
 
-      const skipCall = getSkipCheckboxCall();
+      render(
+        React.createElement(
+          Wrapper,
+          null,
+          React.createElement(TaskPerformers, {
+            tasks: [task],
+            users: [],
+            variables: [],
+            isTeamInvitesModalOpen: false,
+          }),
+        ),
+      );
+
+      const calls = (Checkbox as jest.Mock).mock.calls;
+      const skipCall = calls.find((c: any[]) => c[0].checkboxId === 'skipForStarter-task-1');
 
       expect(skipCall![0].checked).toBe(true);
     });
 
     it('passes checked=false when skipForStarter=false', () => {
-      renderComponent({ skipForStarter: false });
+      const task = makeTask({ skipForStarter: false });
+      const setFieldValue = jest.fn();
+      const Wrapper = createTaskFormWrapper(task, setFieldValue);
 
-      const skipCall = getSkipCheckboxCall();
+      render(
+        React.createElement(
+          Wrapper,
+          null,
+          React.createElement(TaskPerformers, {
+            tasks: [task],
+            users: [],
+            variables: [],
+            isTeamInvitesModalOpen: false,
+          }),
+        ),
+      );
+
+      const calls = (Checkbox as jest.Mock).mock.calls;
+      const skipCall = calls.find((c: any[]) => c[0].checkboxId === 'skipForStarter-task-1');
 
       expect(skipCall![0].checked).toBe(false);
     });
 
-    it('calls setCurrentTask with true on onChange', () => {
-      renderComponent({ skipForStarter: false });
+    it('calls setFieldValue with true on onChange', async () => {
+      const task = makeTask({ skipForStarter: false });
+      const setFieldValue = jest.fn();
+      const Wrapper = createTaskFormWrapper(task, setFieldValue);
 
-      const skipCall = getSkipCheckboxCall();
-      const onChangeFn = skipCall![0].onChange;
-      onChangeFn({ currentTarget: { checked: true } });
-
-      expect(mockSetCurrentTask).toHaveBeenCalledWith(
-        { skipForStarter: true },
+      render(
+        React.createElement(
+          Wrapper,
+          null,
+          React.createElement(TaskPerformers, {
+            tasks: [task],
+            users: [],
+            variables: [],
+            isTeamInvitesModalOpen: false,
+          }),
+        ),
       );
+
+      const calls = (Checkbox as jest.Mock).mock.calls;
+      const skipCall = calls.find((c: any[]) => c[0].checkboxId === 'skipForStarter-task-1');
+      const onChangeFn = skipCall![0].onChange;
+
+      act(() => {
+        onChangeFn({ currentTarget: { checked: true } });
+      });
+      await flushPersist();
+
+      expect(setFieldValue).toHaveBeenCalledWith('tasks.0', { ...task, skipForStarter: true }, false);
     });
 
-    it('calls setCurrentTask with false on checkbox uncheck', () => {
-      renderComponent({ skipForStarter: true });
+    it('calls setFieldValue with false on checkbox uncheck', async () => {
+      const task = makeTask({ skipForStarter: true });
+      const setFieldValue = jest.fn();
+      const Wrapper = createTaskFormWrapper(task, setFieldValue);
 
-      const skipCall = getSkipCheckboxCall();
-      const onChangeFn = skipCall![0].onChange;
-      onChangeFn({ currentTarget: { checked: false } });
-
-      expect(mockSetCurrentTask).toHaveBeenCalledWith(
-        { skipForStarter: false },
+      render(
+        React.createElement(
+          Wrapper,
+          null,
+          React.createElement(TaskPerformers, {
+            tasks: [task],
+            users: [],
+            variables: [],
+            isTeamInvitesModalOpen: false,
+          }),
+        ),
       );
+
+      const calls = (Checkbox as jest.Mock).mock.calls;
+      const skipCall = calls.find((c: any[]) => c[0].checkboxId === 'skipForStarter-task-1');
+      const onChangeFn = skipCall![0].onChange;
+
+      act(() => {
+        onChangeFn({ currentTarget: { checked: false } });
+      });
+      await flushPersist();
+
+      expect(setFieldValue).toHaveBeenCalledWith('tasks.0', { ...task, skipForStarter: false }, false);
     });
   });
 });

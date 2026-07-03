@@ -18,11 +18,13 @@ export const TaskRenderExtraFieldsInfo = ({ task: { fields }, onClick }: ITaskRe
     formatMessage,
   });
 
+  if (!fields.length) {
+    return null;
+  }
+
   return (
-    fields.length > 0 && (
-      <button className={styles['extra-field-label']} onClick={onClick} type="button">
-        {extraFieldsText}
-      </button>
-    )
+    <button className={styles['extra-field-label']} onClick={onClick} type="button">
+      {extraFieldsText}
+    </button>
   );
 };

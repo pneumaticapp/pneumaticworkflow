@@ -4,12 +4,10 @@ import Switch from 'rc-switch';
 import * as React from 'react';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { default as TextareaAutosize } from 'react-textarea-autosize';
 import { useMemo, useState } from 'react';
 
-import { patchTemplate } from '../../../../redux/actions';
-import { getTemplateData } from '../../../../redux/selectors/template';
 import { getIsUserSubsribed, getSubscriptionPlan } from '../../../../redux/selectors/user';
 import { copyToClipboard } from '../../../../utils/helpers';
 import { NotificationManager } from '../../../UI/Notifications';
@@ -21,6 +19,7 @@ import { trackShareKickoffForm } from '../../../../utils/analytics';
 import { TPublicFormType } from '../../../../types/publicForms';
 import { generateEmbedCode } from './utils/generateEmbedCode';
 import { ESubscriptionPlan } from '../../../../types/account';
+import { useTemplateField } from '../../useTemplateForm';
 
 import styles from './KickoffShareForm.css';
 
@@ -29,12 +28,12 @@ interface IKickoffShareFormProps {
 }
 
 export function KickoffShareForm({ className }: IKickoffShareFormProps) {
-  const dispatch = useDispatch();
   const { formatMessage } = useIntl();
+  const { values, setFieldValue } = useTemplateField();
   const isSubscribed = useSelector(getIsUserSubsribed);
   const subcriptionPlan = useSelector(getSubscriptionPlan);
   const accessSharedForm = isSubscribed || subcriptionPlan === ESubscriptionPlan.Free;
-  const { publicUrl, isPublic, publicSuccessUrl, embedUrl, isEmbedded } = useSelector(getTemplateData);
+  const { publicUrl, isPublic, publicSuccessUrl, embedUrl, isEmbedded } = values;
 
   const TABS: { id: TPublicFormType; label: string }[] = useMemo(
     () => [
@@ -62,7 +61,9 @@ export function KickoffShareForm({ className }: IKickoffShareFormProps) {
   }, [embedUrl]);
 
   const editTemplate = (templateFields: Partial<ITemplate>) => {
-    dispatch(patchTemplate({ changedFields: templateFields }));
+    (Object.keys(templateFields) as (keyof ITemplate)[]).forEach((key) => {
+      setFieldValue(key as string, templateFields[key], false);
+    });
   };
 
   useDidUpdateEffect(() => {

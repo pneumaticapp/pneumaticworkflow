@@ -55,6 +55,8 @@ export type TSaveTemplatePayload =
   | {
       onSuccess?(): void;
       onFailed?(): void;
+      /** Autosave generation from `TemplateFormPersistProvider`; stale saves are skipped after discard. */
+      requestId?: number;
     }
   | undefined;
 export type TSaveTemplate = ITypedReduxAction<ETemplateActions.Save, TSaveTemplatePayload>;
@@ -97,6 +99,8 @@ export type TPatchTemplatePayload = {
   changedFields: Partial<ITemplate>;
   onSuccess?(): void;
   onFailed?(): void;
+  /** Autosave generation from `TemplateFormPersistProvider`; stale saves are skipped after discard. */
+  requestId?: number;
 };
 export type TPatchTemplate = ITypedReduxAction<ETemplateActions.PatchTemplate, TPatchTemplatePayload>;
 export const patchTemplate: (payload: TPatchTemplatePayload) => TPatchTemplate = actionGenerator<

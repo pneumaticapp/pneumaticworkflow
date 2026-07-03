@@ -42,6 +42,7 @@ import {
   TSaveTemplate,
   TStopAITemplateGeneration,
 } from './actions';
+import { isAutosavePersistRequestCurrent } from './persistRequest';
 
 import { getIsUserSubsribed, getSubscriptionPlan, getUsers } from '../selectors/user';
 import { createTemplate } from '../../api/createTemplate';
@@ -54,7 +55,7 @@ import { ITemplate, ITemplateRequest, ITemplateResponse } from '../../types/temp
 import { logger } from '../../utils/logger';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { updateTemplate } from '../../api/updateTemplate';
-import { cleanTemplateReferences, getNormalizedTemplate, mapTemplateRequest } from '../../utils/template';
+import { cleanTemplateReferences, getNormalizedTemplate, haveSameKickoffFields, mapTemplateRequest } from '../../utils/template';
 import { getErrorMessage, isPaidFeatureError } from '../../utils/getErrorMessage';
 import { insertId } from '../../utils/templates/insertId';
 import { ETemplateStatus } from '../../types/redux';
@@ -65,6 +66,35 @@ import { deleteTemplate } from '../../api/deleteTemplate';
 import { setGeneralLoaderVisibility } from '../general/actions';
 import { generateAITemplate } from '../../api/generateAITemplate';
 import { discardTemplateChanges } from '../../api/discardTemplateChanges';
+
+function applySavedTemplateIds(lastTemplateState: ITemplate, savedTemplate: ITemplate): ITemplate {
+  const savedTasksMap = new Map(savedTemplate.tasks.map((task) => [task.apiName, task]));
+
+  return {
+    ...insertId(lastTemplateState, savedTemplate),
+    publicUrl: savedTemplate.publicUrl,
+    embedUrl: savedTemplate.embedUrl,
+    tasks: lastTemplateState.tasks.map((task) => ({
+      ...task,
+      ancestors: savedTasksMap.get(task.apiName)?.ancestors || [],
+    })),
+  };
+}
+
+function* mergeSupersededCreateResponse(savedTemplate: ITemplate, wasCreate: boolean) {
+  if (!wasCreate || !savedTemplate.id) {
+    return;
+  }
+
+  const lastTemplateState: ReturnType<typeof getTemplateData> = yield select(getTemplateData);
+
+  if (lastTemplateState.id) {
+    return;
+  }
+
+  yield put(setTemplate(applySavedTemplateIds(lastTemplateState, savedTemplate)));
+  history.replace(ERoutes.TemplatesEdit.replace(':id', String(savedTemplate.id)));
+}
 
 function* setTemplateByTemplateResponse(template: ITemplateResponse) {
   const isSubscribed: ReturnType<typeof getIsUserSubsribed> = yield select(getIsUserSubsribed);
@@ -97,19 +127,28 @@ function* fetchTemplate({ payload: id }: TLoadTemplate) {
   }
 }
 
-function* patchTemplateSaga({ payload: { changedFields, onSuccess, onFailed } }: TPatchTemplate) {
+function* patchTemplateSaga({ payload: { changedFields, onSuccess, onFailed, requestId } }: TPatchTemplate) {
+  if (Object.keys(changedFields).length === 0) {
+    return;
+  }
+
   const template: ReturnType<typeof getTemplateData> = yield select(getTemplateData);
 
   yield put(setTemplateStatus(ETemplateStatus.Saving));
 
   const nonDeactivativeFields: (keyof ITemplate)[] = ['isActive', 'isPublic', 'publicUrl'];
-  let shouldDeactivateTemplate = Object.keys(changedFields).some(
-    (key) => !nonDeactivativeFields.includes(key as keyof ITemplate),
-  );
+  let shouldDeactivateTemplate = changedFields.isActive === true
+    ? false
+    : Object.keys(changedFields).some((key) => !nonDeactivativeFields.includes(key as keyof ITemplate));
 
   if (Object.keys(changedFields).length === 1 && changedFields.hasOwnProperty('kickoff')) {
-    shouldDeactivateTemplate =
-      changedFields.kickoff?.description === template.kickoff.description ? shouldDeactivateTemplate : false;
+    const kickoffChanged = changedFields.kickoff;
+    const previousKickoff = template.kickoff;
+
+    if (haveSameKickoffFields(kickoffChanged?.fields, previousKickoff.fields)) {
+      shouldDeactivateTemplate =
+        kickoffChanged?.description === previousKickoff.description ? shouldDeactivateTemplate : false;
+    }
   }
 
   const mergedTemplate: ITemplate = {
@@ -123,7 +162,12 @@ function* patchTemplateSaga({ payload: { changedFields, onSuccess, onFailed } }:
 
   yield put(setTemplate(newTemplate));
   yield delay(350);
-  yield put(saveTemplate({ onSuccess, onFailed }));
+
+  if (!isAutosavePersistRequestCurrent(requestId)) {
+    return;
+  }
+
+  yield put(saveTemplate({ onSuccess, onFailed, requestId }));
 }
 
 function* patchTaskSaga({ payload: { taskUUID, changedFields } }: TPatchTask) {
@@ -186,7 +230,7 @@ function* createOrUpdateTemplate(template: ITemplateRequest, isSubscribed: boole
   }
 }
 
-function* fetchSaveTemplate(onSuccess?: () => void, onFailed?: () => void) {
+function* fetchSaveTemplate(onSuccess?: () => void, onFailed?: () => void, requestId?: number) {
   const isTemplatePage = checkSomeRouteIsActive(
     ERoutes.TemplateView,
     ERoutes.TemplatesCreate,
@@ -197,13 +241,27 @@ function* fetchSaveTemplate(onSuccess?: () => void, onFailed?: () => void) {
 
   if (!isTemplatePage) return;
 
+  if (!isAutosavePersistRequestCurrent(requestId)) {
+    return;
+  }
+
   const isSubscribed: ReturnType<typeof getIsUserSubsribed> = yield select(getIsUserSubsribed);
   const users: ReturnType<typeof getUsers> = yield select(getUsers);
 
   const editingTemplate: ReturnType<typeof getTemplateData> = yield select(getTemplateData);
   const templateRequest = mapTemplateRequest(editingTemplate);
 
+  const isTemplateCreated = !templateRequest.id;
   const savedTemplate: ITemplate | null = yield createOrUpdateTemplate(templateRequest, isSubscribed, users);
+
+  if (!isAutosavePersistRequestCurrent(requestId)) {
+    if (savedTemplate) {
+      yield mergeSupersededCreateResponse(savedTemplate, isTemplateCreated);
+    }
+
+    return;
+  }
+
   const lastTemplateState: ReturnType<typeof getTemplateData> = yield select(getTemplateData);
 
   if (!savedTemplate) {
@@ -214,22 +272,11 @@ function* fetchSaveTemplate(onSuccess?: () => void, onFailed?: () => void) {
     return;
   }
 
-  const isTemplateCreated = !templateRequest.id;
-
   const newTemplateState: ITemplate = {
-    ...insertId(lastTemplateState, savedTemplate),
+    ...applySavedTemplateIds(lastTemplateState, savedTemplate),
     updatedBy: savedTemplate.updatedBy,
     dateUpdated: savedTemplate.dateUpdated,
-    publicUrl: savedTemplate.publicUrl,
-    embedUrl: savedTemplate.embedUrl,
     owners: savedTemplate.owners ?? lastTemplateState.owners,
-    tasks: (() => {
-      const savedTasksMap = new Map(savedTemplate.tasks.map((task) => [task.apiName, task]));
-      return lastTemplateState.tasks.map((task) => ({
-        ...task,
-        ancestors: savedTasksMap.get(task.apiName)?.ancestors || [],
-      }));
-    })(),
   };
 
   yield put(setTemplate(newTemplateState));
@@ -361,7 +408,7 @@ export function* watchSaveTemplate() {
   );
   while (true) {
     const { payload }: TSaveTemplate = yield take(autosaveChannel);
-    yield call(fetchSaveTemplate, payload?.onSuccess, payload?.onFailed);
+    yield call(fetchSaveTemplate, payload?.onSuccess, payload?.onFailed, payload?.requestId);
   }
 }
 
