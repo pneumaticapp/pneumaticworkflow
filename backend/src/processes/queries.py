@@ -1940,6 +1940,7 @@ class HighlightsQuery(SqlQueryObject):
           we.created,
           we.user_id,
           we.target_user_id,
+          we.target_group_id,
           we.workflow_id
         FROM processes_workflowevent we
         LEFT JOIN processes_workflow workflow ON
