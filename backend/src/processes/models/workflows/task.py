@@ -807,4 +807,8 @@ class TaskPerformer(
     is_completed = models.BooleanField(default=False)
     date_completed = models.DateTimeField(null=True)
 
+    @property
+    def type_group(self):
+        return self.type == PerformerType.GROUP
+
     objects = BaseSoftDeleteManager.from_queryset(TaskPerformerQuerySet)()

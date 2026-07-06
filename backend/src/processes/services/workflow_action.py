@@ -23,7 +23,7 @@ from src.processes.enums import (
     ConditionAction,
     DirectlyStatus,
     TaskStatus,
-    WorkflowStatus,
+    WorkflowStatus, PerformerType,
 )
 from src.processes.messages import workflow as messages
 from src.processes.models.workflows.task import (
@@ -804,6 +804,12 @@ class WorkflowActionService:
             .first()
         )
         if task_performer:
+            if task_performer.type_group:
+                task_performer, _ = TaskPerformer.objects.get_or_create(
+                    user_id=self.user.id,
+                    task_id=task.id,
+                    type=PerformerType.GROUP_USER,
+                )
             if task_performer.is_completed:
                 raise exceptions.UserAlreadyCompleteTask
         elif not self.user.is_account_owner:
