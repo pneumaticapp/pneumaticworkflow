@@ -25,8 +25,9 @@ const DEFAULT_FIELD_INPUT_WIDTH = 120;
 
 export function ExtraFieldRadio({
   field,
-  field: { isRequired = false, name, value: selectedOption },
+  field: { isRequired = false, name, value: selectedOption, apiName: fieldApiName },
   intl,
+  validationPathPrefix,
   namePlaceholder = intl.formatMessage({ id: 'template.kick-off-form-field-name-placeholder' }),
   mode = EExtraFieldMode.Kickoff,
   deleteField,
@@ -129,6 +130,11 @@ export function ExtraFieldRadio({
       <li
         key={optionIndex}
         className={fieldStyles['kickoff-create-field-option']}
+        data-template-validation-anchor={
+          validationPathPrefix
+            ? `${validationPathPrefix}.fields.${fieldApiName}.selections.${field.apiName}`
+            : undefined
+        }
         onMouseOver={() => setActiveOptionIndex(optionIndex)}
         onMouseLeave={() => setActiveOptionIndex(null)}
       >

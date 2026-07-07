@@ -26,6 +26,7 @@ interface IConditionValueFieldProps {
   users: TUserListItem[];
   operator?: EConditionOperators | null;
   isDisabled: boolean;
+  errorMessage?: string;
   changeRuleValue(value: TConditionRule[keyof TConditionRule], kind?: 'user' | 'group'): void;
 }
 
@@ -35,6 +36,7 @@ export function ConditionValueField({
   rule,
   users,
   isDisabled,
+  errorMessage,
   changeRuleValue,
 }: IConditionValueFieldProps) {
   const { formatMessage } = useIntl();
@@ -72,6 +74,7 @@ export function ConditionValueField({
         labelClassName={styles['text-field']}
         placeholder={formatMessage({ id: 'templates.conditions.value-placeholder' })}
         value={rule.value!}
+        errorMessage={errorMessage}
         onChange={(e: ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
           changeRuleValue(e.target.value);
         }}
@@ -126,6 +129,7 @@ export function ConditionValueField({
             : option.label
         }
         classNames={{ menu: () => styles['condition__value-field-select-menu'] }}
+        errorMessage={errorMessage}
       />
     );
   }
@@ -177,6 +181,7 @@ export function ConditionValueField({
             : option.label
         }
         classNames={{ menu: () => styles['condition__value-field-select-menu'] }}
+        errorMessage={errorMessage}
       />
     );
   }

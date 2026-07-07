@@ -113,6 +113,7 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
         restProps.isDisabled && 'is-disabled',
         className,
         restProps.staticMenu && 'is-static',
+        restProps.errorMessage && styles['has-error'],
       )}
     >
       {label && (

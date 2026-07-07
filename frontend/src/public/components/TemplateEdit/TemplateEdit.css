@@ -84,6 +84,18 @@
   }
 }
 
+.add-task-section {
+  display: flex;
+  flex-flow: column;
+  align-items: center;
+  width: 100%;
+}
+
+.add-task-section__error {
+  margin-top: 0.8rem;
+  text-align: center;
+}
+
 .task-wrapper {
   width: 100%;
   transition: height 0.3s;

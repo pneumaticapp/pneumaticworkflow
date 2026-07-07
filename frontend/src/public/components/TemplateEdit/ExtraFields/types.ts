@@ -7,6 +7,7 @@ import { EInputNameBackgroundColor } from '../../../types/workflow';
 export interface IWorkflowExtraFieldProps {
   field: IExtraField;
   intl: IntlShape;
+  validationPathPrefix?: string;
   showDropdown?: boolean;
   mode: EExtraFieldMode;
   namePlaceholder?: string;

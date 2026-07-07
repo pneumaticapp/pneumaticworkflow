@@ -36,7 +36,9 @@ export interface IDropdownSelection {
 
 export function ExtraFieldCreatable({
   field,
+  field: { apiName: fieldApiName },
   intl,
+  validationPathPrefix,
   descriptionPlaceholder = intl.formatMessage({ id: 'template.kick-off-form-field-description-placeholder' }),
   namePlaceholder = intl.formatMessage({ id: 'template.kick-off-form-field-name-placeholder' }),
   mode = EExtraFieldMode.Kickoff,
@@ -134,6 +136,11 @@ export function ExtraFieldCreatable({
       <li
         key={optionIndex}
         className={inputStyles['kickoff-create-field-option']}
+        data-template-validation-anchor={
+          validationPathPrefix
+            ? `${validationPathPrefix}.fields.${fieldApiName}.selections.${apiName}`
+            : undefined
+        }
         onMouseOver={() => setActiveOptionIndex(optionIndex)}
         onMouseLeave={() => setActiveOptionIndex(null)}
       >

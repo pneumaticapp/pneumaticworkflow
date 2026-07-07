@@ -23,7 +23,7 @@ import { useWorkflowNameVariables } from '../TaskForm/utils/getTaskVariables';
 import styles from './KickoffRedux.css';
 import { InputWithVariables } from '../InputWithVariables';
 import { useDatasetOptions } from '../ExtraFields/utils/useDatasetOptions';
-import { useTemplateField } from '../useTemplateForm';
+import { useTemplateField, useTemplateValidationOptional } from '../useTemplateForm';
 
 export interface IKickoffReduxProps {
   intl: IntlShape;
@@ -36,6 +36,7 @@ export function KickoffRedux({
 }: IKickoffReduxProps) {
   const { values, setFieldValue } = useTemplateField();
   const { kickoff, wfNameTemplate } = values;
+  const templateValidation = useTemplateValidationOptional();
   const [isOpen, setIsOpen] = React.useState(false);
   const containerRef = React.useRef<HTMLDivElement | null>(null);
   const variables = useWorkflowNameVariables(kickoff);
@@ -50,6 +51,12 @@ export function KickoffRedux({
       },
     },
   ]);
+
+  React.useEffect(() => {
+    if (templateValidation?.consumeExpandKickoffRequest()) {
+      setIsOpen(true);
+    }
+  }, [templateValidation?.blockingErrors, templateValidation]);
 
   const getSortedFields = () => {
     return [...kickoff.fields].sort((a, b) => b.order - a.order);
@@ -137,20 +144,25 @@ export function KickoffRedux({
         {!isFormEmpty && (
           <div className={styles['fields']}>
             {getSortedFields().map((field, index) => (
-              <ExtraFieldIntl
+              <div
                 key={field.apiName}
-                id={index}
-                field={field}
-                fieldsCount={kickoff.fields.length}
-                labelBackgroundColor={EInputNameBackgroundColor.White}
-                deleteField={() => handleDeleteField(index)}
-                moveFieldUp={() => handleMoveField(index, EMoveDirections.Up)}
-                moveFieldDown={() => handleMoveField(index, EMoveDirections.Down)}
-                editField={handleEditField(field.apiName)}
-                mode={EExtraFieldMode.Kickoff}
-                datasetOptions={datasetOptions}
-                accountId={accountId}
-              />
+                data-template-validation-anchor={`kickoff.fields.${field.apiName}.name`}
+              >
+                <ExtraFieldIntl
+                  id={index}
+                  field={field}
+                  fieldsCount={kickoff.fields.length}
+                  labelBackgroundColor={EInputNameBackgroundColor.White}
+                  deleteField={() => handleDeleteField(index)}
+                  moveFieldUp={() => handleMoveField(index, EMoveDirections.Up)}
+                  moveFieldDown={() => handleMoveField(index, EMoveDirections.Down)}
+                  editField={handleEditField(field.apiName)}
+                  mode={EExtraFieldMode.Kickoff}
+                  validationPathPrefix="kickoff"
+                  datasetOptions={datasetOptions}
+                  accountId={accountId}
+                />
+              </div>
             ))}
           </div>
         )}
@@ -186,7 +198,7 @@ export function KickoffRedux({
   };
 
   return (
-    <div className={styles['kick-off']} ref={containerRef}>
+    <div className={styles['kick-off']} ref={containerRef} data-template-validation-anchor="kickoff">
       <KickoffMenu
         isKickoffOpen={isOpen}
         isClearDisabled={isKickoffCleared(kickoff)}

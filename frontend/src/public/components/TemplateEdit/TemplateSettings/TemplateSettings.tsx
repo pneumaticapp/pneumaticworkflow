@@ -10,13 +10,17 @@ import { isArrayWithItems } from '../../../utils/helpers';
 import { IInfoWarningProps, InfoWarningsModal } from '../InfoWarningsModal';
 import { TemplateLastUpdateInfo } from '../TemplateLastUpdateInfo';
 import { RichEditor } from '../../RichEditor';
-import { useTemplateField } from '../useTemplateForm';
+import { useTemplateField, useTemplateValidation } from '../useTemplateForm';
+import { useLocalizedValidationMessage } from '../templateValidation';
 
 import styles from './TemplateSettings.css';
 
 export function TemplateSettings() {
   const { formatMessage } = useIntl();
   const { values, setFieldValue } = useTemplateField();
+  const { getError, isValidationVisible } = useTemplateValidation();
+  const nameErrorId = isValidationVisible ? getError('name') : undefined;
+  const nameErrorMessage = useLocalizedValidationMessage(nameErrorId);
   const [isInfoWarningsModaOpen, setIsInfoWarningsModaOpen] = useState(false);
   const [infoWarnings, setInfoWarnings] = useState<any>([]);
 
@@ -49,6 +53,8 @@ export function TemplateSettings() {
           onChangeText={handleChangeTextField('name')}
           placeholder={formatMessage({ id: 'template.name-placeholder' })}
           editButtonHint={formatMessage({ id: 'template.edit-name' })}
+          errorMessage={nameErrorMessage}
+          validationAnchor="name"
         />
         <div className={styles['description']}>
           <RichEditor

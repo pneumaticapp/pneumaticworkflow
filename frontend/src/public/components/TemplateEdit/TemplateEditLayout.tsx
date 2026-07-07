@@ -8,7 +8,8 @@ import { KickoffReduxContainer } from './KickoffRedux';
 import { ConditionsBanner } from './ConditionsBanner';
 import { TemplateSettings } from './TemplateSettings';
 import { ITemplateTask } from '../../types/template';
-import { useTemplateSaveRetry } from './useTemplateForm';
+import { useTemplateSaveRetry, useTemplateValidation } from './useTemplateForm';
+import { TemplateValidationMessage } from './templateValidation';
 
 import styles from './TemplateEdit.css';
 
@@ -29,6 +30,8 @@ export function TemplateEditLayout({
 }: ITemplateEditLayoutProps) {
   const tasksLocal = sortedTasks();
   const retryFailedSave = useTemplateSaveRetry();
+  const { getError, isValidationVisible } = useTemplateValidation();
+  const tasksErrorId = isValidationVisible ? getError('tasks') : undefined;
 
   return (
     <div className={styles['container']}>
@@ -48,14 +51,17 @@ export function TemplateEditLayout({
               const { key, ...taskProps } = getTaskListItem(task, index, tasksLocal);
               return <TemplateEntity key={key} {...taskProps} />;
             })}
-            <AddEntityButton
-              entities={[
-                {
-                  title: EEntityTitle.Task,
-                  onAddEntity: handleAddTask,
-                },
-              ]}
-            />
+            <div className={styles['add-task-section']} data-template-validation-anchor="tasks">
+              <AddEntityButton
+                entities={[
+                  {
+                    title: EEntityTitle.Task,
+                    onAddEntity: handleAddTask,
+                  },
+                ]}
+              />
+              <TemplateValidationMessage messageId={tasksErrorId} className={styles['add-task-section__error']} />
+            </div>
             <TemplateIntegrations />
           </div>
         </div>

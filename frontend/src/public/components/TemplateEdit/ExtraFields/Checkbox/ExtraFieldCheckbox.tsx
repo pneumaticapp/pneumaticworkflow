@@ -31,8 +31,9 @@ function normalizeCheckboxValue(value: unknown): string[] {
 
 export function ExtraFieldCheckbox({
   field,
-  field: { isRequired = false, name, value },
+  field: { isRequired = false, name, value, apiName: fieldApiName },
   intl,
+  validationPathPrefix,
   namePlaceholder = intl.formatMessage({ id: 'template.kick-off-form-field-name-placeholder' }),
   mode = EExtraFieldMode.Kickoff,
   deleteField,
@@ -137,6 +138,11 @@ export function ExtraFieldCheckbox({
       <li
         key={optionIndex}
         className={fieldStyles['kickoff-create-field-option']}
+        data-template-validation-anchor={
+          validationPathPrefix
+            ? `${validationPathPrefix}.fields.${fieldApiName}.selections.${field.apiName}`
+            : undefined
+        }
         onMouseOver={() => setActiveOptionIndex(optionIndex)}
         onMouseLeave={() => setActiveOptionIndex(null)}
       >

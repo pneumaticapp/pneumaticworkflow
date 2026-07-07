@@ -125,6 +125,7 @@ function TemplateFormHarness({
       dirtyRef={dirtyRef}
       pendingUserEditsRef={pendingUserEditsRef}
       persistBaselineSyncRef={persistBaselineSyncRef}
+      openTask={jest.fn()}
     >
       <Spy />
     </TemplateForm>
@@ -1522,6 +1523,7 @@ describe('useTemplateSaveRetry', () => {
         dirtyRef={dirtyRef}
         pendingUserEditsRef={pendingUserEditsRef}
         persistBaselineSyncRef={persistBaselineSyncRef}
+        openTask={jest.fn()}
       >
         <RetrySpy />
       </TemplateForm>
@@ -1644,6 +1646,7 @@ describe('useTemplateSaveRetry', () => {
           dirtyRef={dirtyRef}
           pendingUserEditsRef={pendingUserEditsRef}
           persistBaselineSyncRef={persistBaselineSyncRef}
+          openTask={jest.fn()}
         >
           <RetrySpy />
         </TemplateForm>

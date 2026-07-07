@@ -518,6 +518,9 @@ export const ruMessages = {
   'template.task-validation-error': 'Пожалуйста, проверьте данные в формах задачи',
   'template.task-conditions-validation-error': 'Пожалуйста, заполните все условия в заданиях:',
   'template.kickoff-validation-error': 'Пожалуйста, проверьте данные в форме старта',
+  'template.validation.condition-field-required': 'Пожалуйста, выберите поле',
+  'template.validation.condition-operator-required': 'Пожалуйста, выберите оператор',
+  'template.validation.condition-value-required': 'Пожалуйста, введите значение',
   'template.generate-with-ai.title': 'Генератор Шаблонов',
   'template.generate-with-ai.description':
     'Позвольте Pneumatic создать шаги для нового шаблона на основе вашего описания бизнес-процесса, который вам нужен.',

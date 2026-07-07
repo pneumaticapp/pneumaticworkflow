@@ -12,6 +12,8 @@ import { TrashIcon } from '../../../icons';
 import { EConditionLogicOperations, EConditionOperators, TConditionRule } from './types';
 import { TUserListItem } from '../../../../types/user';
 import { IDropdownVariable } from './CheckIfConditions';
+import { useTaskForm } from '../useTaskForm';
+import { useLocalizedValidationMessage, useTemplateValidation } from '../../useTemplateForm';
 
 import styles from './Conditions.css';
 import stylesTaskForm from '../TaskForm.css';
@@ -29,6 +31,7 @@ interface IPredicateProps {
   users?: TUserListItem[];
   handleRemoveRule: (conditionIndex?: number) => (ruleIndex: number) => () => void;
   conditionIndex?: number;
+  conditionApiName: string;
   isCheckIs?: boolean;
   options: {
     label: string;
@@ -49,13 +52,28 @@ export function Predicate({
   users,
   handleRemoveRule,
   conditionIndex,
+  conditionApiName,
   isCheckIs,
   options,
 }: IPredicateProps) {
   const { formatMessage } = useIntl();
+  const { task } = useTaskForm();
+  const { getError, isValidationVisible } = useTemplateValidation();
+  const ruleBasePath = `tasks.${task.uuid}.conditions.${conditionApiName}.rules.${rule.ruleApiName}`;
+  const fieldErrorId = isValidationVisible ? getError(`${ruleBasePath}.field`) : undefined;
+  const operatorErrorId = isValidationVisible ? getError(`${ruleBasePath}.operator`) : undefined;
+  const valueErrorId = isValidationVisible ? getError(`${ruleBasePath}.value`) : undefined;
+  const fieldErrorText = useLocalizedValidationMessage(fieldErrorId);
+  const operatorErrorText = useLocalizedValidationMessage(operatorErrorId);
+  const valueErrorText = useLocalizedValidationMessage(valueErrorId);
+  const ruleValidationAnchor = fieldErrorId || operatorErrorId || valueErrorId ? `${ruleBasePath}.field` : undefined;
 
   return (
-    <div key={`${rule.ruleApiName}-${rule.predicateApiName}`} className={styles['condition-rule']}>
+    <div
+      key={`${rule.ruleApiName}-${rule.predicateApiName}`}
+      className={styles['condition-rule']}
+      data-template-validation-anchor={ruleValidationAnchor}
+    >
       {ruleIndex !== 0 && (
         <div className={styles['condition-rule__logic-operation']}>
           {rule.logicOperation && (
@@ -99,6 +117,7 @@ export function Predicate({
               }}
               isClearable={false}
               options={options}
+              errorMessage={fieldErrorText}
             />
           </div>
           {isCheckIs && (
@@ -129,20 +148,24 @@ export function Predicate({
                       })
                     : option.label
                 }
+                errorMessage={operatorErrorText}
               />
             </div>
           )}
           {isCheckIs && (
-            <ConditionValueField
-              isDisabled={!accessConditions}
-              variable={selectedVariable || null}
-              operator={selectedOperator?.operator}
-              rule={rule}
-              users={users || []}
-              changeRuleValue={(value, kind) =>
-                changeCurrentRule({ value, ...(kind ? { fieldType: kind as any } : {}) })
-              }
-            />
+            <div className={styles['condition-rule__setting']}>
+              <ConditionValueField
+                isDisabled={!accessConditions}
+                variable={selectedVariable || null}
+                operator={selectedOperator?.operator}
+                rule={rule}
+                users={users || []}
+                errorMessage={valueErrorText}
+                changeRuleValue={(value, kind) =>
+                  changeCurrentRule({ value, ...(kind ? { fieldType: kind as any } : {}) })
+                }
+              />
+            </div>
           )}
           <button
             type="button"

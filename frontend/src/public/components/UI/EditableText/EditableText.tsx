@@ -14,6 +14,8 @@ export interface IEditableTextProps {
   placeholder?: string;
   onChangeText(value: string): void;
   editButtonHint?: string;
+  errorMessage?: string;
+  validationAnchor?: string;
 }
 
 export function EditableText({
@@ -23,6 +25,8 @@ export function EditableText({
   placeholder,
   editButtonHint,
   onChangeText,
+  errorMessage,
+  validationAnchor,
 }: IEditableTextProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editableText, setEditableText] = useState(text);
@@ -35,9 +39,10 @@ export function EditableText({
 
   if (!isEditing) {
     return (
-      <div
-        className={classnames(className, styles['text'])}
-        onClick={startEditState}
+      <div data-template-validation-anchor={validationAnchor}>
+        <div
+          className={classnames(className, styles['text'], errorMessage && styles['text_error'])}
+          onClick={startEditState}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             startEditState();
@@ -65,6 +70,8 @@ export function EditableText({
           </span>
         </span>
       </div>
+        {errorMessage && <p className={styles['error-message']} role="alert">{errorMessage}</p>}
+      </div>
     );
   }
 
@@ -82,7 +89,11 @@ export function EditableText({
   };
 
   return (
-    <form className={className} onSubmit={(e) => e.preventDefault()}>
+    <form
+      className={classnames(className, errorMessage && styles['form_error'])}
+      data-template-validation-anchor={validationAnchor}
+      onSubmit={(e) => e.preventDefault()}
+    >
       <Loader isLoading={isLoading} />
       <TextareaAutosize
         translate={undefined}
@@ -95,6 +106,7 @@ export function EditableText({
         placeholder={placeholder}
         spellCheck={false}
       />
+      {errorMessage && <p className={styles['error-message']} role="alert">{errorMessage}</p>}
     </form>
   );
 }

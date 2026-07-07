@@ -24,6 +24,19 @@
   }
 }
 
+.text_error,
+.form_error .textarea {
+  color: var(--pneumatic-color-red);
+}
+
+.error-message {
+  margin-top: 0.4rem;
+  font-family: Nunito, sans-serif;
+  font-size: 1.3rem;
+  line-height: 1.8rem;
+  color: var(--pneumatic-color-red);
+}
+
 .textarea {
   padding: 0;
   display: block;

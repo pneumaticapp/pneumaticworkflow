@@ -185,6 +185,7 @@ export function CheckIfConditions({
                 users={users}
                 handleRemoveRule={handleRemoveRule}
                 conditionIndex={conditionIndex}
+                conditionApiName={condition.apiName}
                 isCheckIs
                 options={options}
               />

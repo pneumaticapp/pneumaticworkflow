@@ -89,6 +89,7 @@ export function TemplateEdit({
       dirtyRef={dirtyRef}
       pendingUserEditsRef={pendingUserEditsRef}
       persistBaselineSyncRef={persistBaselineSyncRef}
+      openTask={openTask}
     >
       <TemplateEditLayout
         accessConditions={accessConditions}

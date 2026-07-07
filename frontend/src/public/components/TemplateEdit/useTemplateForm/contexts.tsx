@@ -68,3 +68,7 @@ export function useTaskFormScope(): string {
 
   return taskUuid;
 }
+
+export function useTaskFormScopeOptional(): string | null {
+  return useContext(TaskFormScopeContext);
+}

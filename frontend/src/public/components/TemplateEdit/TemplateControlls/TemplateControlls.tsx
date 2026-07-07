@@ -28,18 +28,18 @@ import { IRunWorkflow } from '../../WorkflowEditPopup/types';
 import { WarningPopup } from '../../UI/WarningPopup';
 import { validateTemplate } from '../utils/validateTemplate';
 import { isArrayWithItems } from '../../../utils/helpers';
-import { NotificationManager } from '../../UI/Notifications';
 import { IInfoWarningProps } from '../InfoWarningsModal';
 import { isCreateTemplate, history, checkSomeRouteMatchesLocation } from '../../../utils/history';
 import { ERoutes } from '../../../constants/routes';
 import { RouteLeavingGuard } from '../../UI';
 import { useTemplateIntegrationsList } from '../../TemplateIntegrationsStats';
 import { checkShowDraftTemplateWarning } from '../../Templates';
+import { useTemplateField, useTemplatePersist, useTemplateValidation } from '../useTemplateForm';
+import { TemplateValidationMessage } from '../templateValidation';
 
 import styles from './TemplateControlls.css';
 import { getSubscriptionPlan, getIsUserSubsribed } from '../../../redux/selectors/user';
 import { ESubscriptionPlan } from '../../../types/account';
-import { useTemplateField, useTemplatePersist } from '../useTemplateForm';
 
 export interface ITemplateControllsProps {
   cloneTemplate(payload: TCloneTemplatePayload): void;
@@ -66,6 +66,8 @@ export function TemplateControlls({
     revertConsumedChanges,
     abandonPendingChanges,
   } = useTemplatePersist();
+  const { revealBlockingErrors, getError, isValidationVisible } = useTemplateValidation();
+  const ownersErrorId = isValidationVisible ? getError('owners') : undefined;
   const templateStatus = useSelector(getTemplateStatus);
   const isSubscribed = useSelector(getIsUserSubsribed);
   const billingPlan = useSelector(getSubscriptionPlan);
@@ -127,13 +129,13 @@ export function TemplateControlls({
       return;
     }
 
-    const { commonWarnings, infoWarnings } = validateTemplate(template, accessConditions, intl);
+    const { blockingErrors, infoWarnings } = validateTemplate(template, accessConditions, intl);
     if (isArrayWithItems(infoWarnings)) {
       setInfoWarnings(infoWarnings);
       return;
     }
-    if (isArrayWithItems(commonWarnings)) {
-      commonWarnings.forEach((message) => NotificationManager.warning({ message }));
+    if (isArrayWithItems(blockingErrors)) {
+      revealBlockingErrors(blockingErrors);
       return;
     }
 
@@ -291,7 +293,7 @@ export function TemplateControlls({
       {renderDeleteTemplateModal()}
       {templateId && renderLeavingGuard()}
 
-      <div className={styles['settings-block']}>
+      <div className={styles['settings-block']} data-template-validation-anchor="owners">
         <ShowMore label={formatMessage({ id: 'template.owners' })} isInitiallyVisible={isCreateTemplate()}>
           <TemplateOwners
             templateOwners={pureOwners}
@@ -299,6 +301,7 @@ export function TemplateControlls({
               setFieldValue('owners', [...newTemplateOwners, ...viewers, ...starters], false)
             }
           />
+          <TemplateValidationMessage messageId={ownersErrorId} />
         </ShowMore>
       </div>
 

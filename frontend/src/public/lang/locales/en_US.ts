@@ -608,6 +608,9 @@ export const enMessages = {
   'template.task-validation-error': 'Please check the data in the task forms',
   'template.task-conditions-validation-error': 'Please fill in all conditions in tasks:',
   'template.kickoff-validation-error': 'Please check the data in the Kick-off form',
+  'template.validation.condition-field-required': 'Please select a field',
+  'template.validation.condition-operator-required': 'Please select an operator',
+  'template.validation.condition-value-required': 'Please enter a value',
   'template.generate-with-ai.title': 'Template Generator',
   'template.generate-with-ai.description':
     'Let Pneumatic generate steps for a new template based on your description of the business process you need',

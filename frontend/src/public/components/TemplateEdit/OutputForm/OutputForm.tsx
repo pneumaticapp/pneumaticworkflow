@@ -14,6 +14,7 @@ import { ExtraFieldIcon } from '../ExtraFields/utils/ExtraFieldIcon';
 import { ExtraFieldIntl } from '../ExtraFields';
 import { getEditedFields } from '../ExtraFields/utils/getEditedFields';
 import { getEmptyField } from '../KickoffRedux/utils/getEmptyField';
+import { useTaskForm } from '../TaskForm/useTaskForm';
 
 import styles from './OutputForm.css';
 import stylesTaskForm from '../TaskForm/TaskForm.css';
@@ -29,6 +30,8 @@ export interface IOutputFormOwnProps {
 }
 
 export function OutputForm({ fields, onOutputChange, intl, isDisabled, show, accountId }: IOutputFormOwnProps) {
+  const { task } = useTaskForm();
+  const validationPathPrefix = `tasks.${task.uuid}`;
   const outputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
@@ -90,22 +93,27 @@ export function OutputForm({ fields, onOutputChange, intl, isDisabled, show, acc
       {!isFormEmpty && (
         <div className={styles['fields']}>
           {sortedFields.map((field, index) => (
-            <ExtraFieldIntl
-              key={index}
-              id={index}
-              field={{ ...field }}
-              fieldsCount={sortedFields.length}
-              labelBackgroundColor={EInputNameBackgroundColor.White}
-              deleteField={() => handleDeleteField(index)}
-              moveFieldUp={() => handleMoveField(index, EMoveDirections.Up)}
-              moveFieldDown={() => handleMoveField(index, EMoveDirections.Down)}
-              editField={handleEditField(field.apiName)}
-              mode={EExtraFieldMode.Kickoff}
-              datasetOptions={datasetOptions}
-              isDisabled={isDisabled}
-              innerRef={outputRef}
-              accountId={accountId}
-            />
+            <div
+              key={field.apiName}
+              data-template-validation-anchor={`${validationPathPrefix}.fields.${field.apiName}.name`}
+            >
+              <ExtraFieldIntl
+                id={index}
+                field={{ ...field }}
+                fieldsCount={sortedFields.length}
+                labelBackgroundColor={EInputNameBackgroundColor.White}
+                deleteField={() => handleDeleteField(index)}
+                moveFieldUp={() => handleMoveField(index, EMoveDirections.Up)}
+                moveFieldDown={() => handleMoveField(index, EMoveDirections.Down)}
+                editField={handleEditField(field.apiName)}
+                mode={EExtraFieldMode.Kickoff}
+                validationPathPrefix={validationPathPrefix}
+                datasetOptions={datasetOptions}
+                isDisabled={isDisabled}
+                innerRef={outputRef}
+                accountId={accountId}
+              />
+            </div>
           ))}
         </div>
       )}

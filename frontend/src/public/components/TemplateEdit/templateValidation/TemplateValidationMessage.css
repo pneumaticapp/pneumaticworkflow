@@ -1,0 +1,7 @@
+.validation-error {
+  margin-top: 0.4rem;
+  font-family: Nunito, sans-serif;
+  font-size: 1.3rem;
+  line-height: 1.8rem;
+  color: var(--pneumatic-color-red);
+}

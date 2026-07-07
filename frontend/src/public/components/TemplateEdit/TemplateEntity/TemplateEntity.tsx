@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { EMoveDirections } from '../../../types/workflow';
 import { AddEntityButton, EEntityTitle, ITemplateEntity } from '../AddEntityButton';
 import { Delay } from '../Delay';
@@ -6,6 +6,7 @@ import { WorkflowTaskFormContainer } from '../TaskForm';
 import { TaskItem } from '../TaskItem';
 import { TaskMenu } from '../TaskMenu';
 import { TTaskFormPart } from '../types';
+import { useTemplateValidation } from '../useTemplateForm';
 import { ITemplateEntityProps } from './TemplateEntity.props';
 import styles from './TemplateEntity.css';
 
@@ -28,6 +29,14 @@ export function TemplateEntity({
   actualPreviousTaskApiName,
 }: ITemplateEntityProps) {
   const [scrollTarget, setScrollTarget] = useState<TTaskFormPart>(null);
+  const { consumeTaskFocusRequest } = useTemplateValidation();
+
+  useEffect(() => {
+    const requestedFormPart = consumeTaskFocusRequest(task.uuid);
+    if (requestedFormPart) {
+      setScrollTarget(requestedFormPart);
+    }
+  }, [consumeTaskFocusRequest, isTaskOpen, task.uuid]);
 
   const renderAddWorkflowEntityButton = () => {
     const canAddDelay = task.number !== 1 && !task.delay;

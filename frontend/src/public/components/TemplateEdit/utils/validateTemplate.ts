@@ -3,97 +3,22 @@
 import { IntlShape } from 'react-intl';
 
 import { ITemplate } from '../../../types/template';
-import { isArrayWithItems } from '../../../utils/helpers';
-import { validateWorkflowName } from '../../../utils/validators';
-import { UnassignedTasksWarning, PremiumFeaturesWarning, IInfoWarningProps } from '../InfoWarningsModal/warnings';
-import { areConditionsValid, isNumberConditionsValid } from '../TaskForm/Conditions/utils/conditionsValidators';
-import { areExtraFieldsValid } from './areExtraFieldsValid';
-import { isValidTaskForm } from './isValidTaskForm';
+import { IInfoWarningProps } from '../InfoWarningsModal/warnings';
+import { collectTemplateValidationErrors } from '../templateValidation/collectTemplateValidationErrors';
 
-type TWarningRule<T> = {
-  check(): boolean;
-  getMessage(): T;
-};
-
+/**
+ * @deprecated Prefer `collectTemplateValidationErrors` for field-level errors.
+ * Kept for callers that still expect formatted toast strings.
+ */
 export function validateTemplate(template: ITemplate, isSubscribed: boolean, intl: IntlShape) {
-  const { owners, name, tasks, kickoff } = template;
   const { formatMessage } = intl;
-
-  const taskWithInvalidConditions = tasks.filter((task) => !areConditionsValid(task.conditions));
-  const tasksWithInvalidNumberFormat = tasks.filter((task) => !isNumberConditionsValid(task.conditions));
-
-  const commonWarningRules: TWarningRule<string>[] = [
-    {
-      check: () => !owners.length,
-      getMessage: () => formatMessage({ id: 'template.no-run-allowers' }),
-    },
-    {
-      check: () => !tasks.length,
-      getMessage: () => formatMessage({ id: 'template.no-tasks' }),
-    },
-    {
-      check: () => Boolean(validateWorkflowName(name)),
-      getMessage: () => formatMessage({ id: validateWorkflowName(name) }),
-    },
-    {
-      check: () => !tasks.every(isValidTaskForm),
-      getMessage: () => formatMessage({ id: 'template.task-validation-error' }),
-    },
-    {
-      check: () => !areExtraFieldsValid(kickoff!.fields),
-      getMessage: () => formatMessage({ id: 'template.kickoff-validation-error' }),
-    },
-    {
-      check: () => isArrayWithItems(taskWithInvalidConditions),
-      getMessage: () => {
-        const baseMessage = formatMessage({ id: 'template.task-conditions-validation-error' });
-        const formattedTaskNames = taskWithInvalidConditions.map(({ name }) => name).join(',\n');
-        const message = `${baseMessage}\n${formattedTaskNames}`;
-
-        return message;
-      },
-    },
-    {
-      check: () => isArrayWithItems(tasksWithInvalidNumberFormat),
-      getMessage: () => {
-        const baseMessage = formatMessage({ id: 'validation.number-invalid-format' });
-        const formattedTaskNames = tasksWithInvalidNumberFormat.map(({ name }) => name).join(',\n');
-        const message = `${baseMessage}\n${formattedTaskNames}`;
-
-        return message;
-      },
-    },
-  ];
-
-  const infoWarningRules: TWarningRule<(props: IInfoWarningProps) => JSX.Element>[] = [
-    {
-      check: () => {
-        const hasTaskWithoutPerformers = tasks.some((task) => !isArrayWithItems(task.rawPerformers));
-
-        return hasTaskWithoutPerformers;
-      },
-      getMessage: () => UnassignedTasksWarning,
-    },
-    {
-      check: () => {
-        if (isSubscribed) {
-          return false;
-        }
-        const hasTaskWithConditionRules = tasks.some(({ conditions }) =>
-          conditions.some(({ rules }) => isArrayWithItems(rules)),
-        );
-
-        return hasTaskWithConditionRules;
-      },
-      getMessage: () => PremiumFeaturesWarning,
-    },
-  ];
-
-  const getWarnings = <T>(rules: TWarningRule<T>[]) =>
-    rules.filter(({ check }) => check()).map(({ getMessage }) => getMessage());
+  const { blockingErrors, infoWarnings } = collectTemplateValidationErrors(template, isSubscribed);
 
   return {
-    commonWarnings: getWarnings(commonWarningRules),
-    infoWarnings: getWarnings(infoWarningRules),
+    blockingErrors,
+    infoWarnings,
+    commonWarnings: blockingErrors.map(({ messageId }) => formatMessage({ id: messageId })),
   };
 }
+
+export type { IInfoWarningProps };
