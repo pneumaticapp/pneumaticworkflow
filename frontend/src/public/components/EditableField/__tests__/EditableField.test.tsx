@@ -42,14 +42,15 @@ describe('EditableField', () => {
   it('on click to edit, sets the caret in the desired position', () => {
     const focus = jest.fn();
     const current = {textContent: 'test', focus};
-    jest.spyOn(React, 'createRef').mockReturnValueOnce({current});
     const range = {collapse: jest.fn(), selectNodeContents: jest.fn()};
     const selection = {addRange: jest.fn(), removeAllRanges: jest.fn()};
     window.getSelection = jest.fn().mockReturnValueOnce(selection as unknown as Selection);
     document.createRange = jest.fn().mockReturnValueOnce(range as unknown as Range);
     const wrapper = shallow(<EditableField {...mockProps} hiddenIcon />);
+    const instance = wrapper.instance() as EditableField;
+    instance.fieldRef = {current} as unknown as React.RefObject<HTMLSpanElement>;
 
-    wrapper.find('span > span').simulate('click')
+    wrapper.find('span > span').simulate('click');
 
     expect(focus).toHaveBeenCalled();
     expect(range.selectNodeContents).toHaveBeenCalledWith(current);
@@ -60,11 +61,12 @@ describe('EditableField', () => {
   it('on click to edit, places the caret in the correct position', () => {
     const focus = jest.fn();
     const current = {textContent: 'test', focus};
-    jest.spyOn(React, 'createRef').mockReturnValueOnce({current});
     const range = {collapse: jest.fn(), selectNodeContents: jest.fn()};
     window.getSelection = jest.fn().mockReturnValueOnce(undefined as unknown as Selection);
     document.createRange = jest.fn().mockReturnValueOnce(range as unknown as Range);
     const wrapper = shallow(<EditableField {...mockProps} hiddenIcon />);
+    const instance = wrapper.instance() as EditableField;
+    instance.fieldRef = {current} as unknown as React.RefObject<HTMLSpanElement>;
 
     wrapper.find('span > span').simulate('click');
 
