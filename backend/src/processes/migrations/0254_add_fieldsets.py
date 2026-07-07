@@ -6,6 +6,7 @@ import src.generics.mixins.models
 class Migration(migrations.Migration):
 
     dependencies = [
+        ('accounts', '0144_auto_20260609_1910'),
         ('processes', '0253_add_completed_or_skipped_predicate'),
     ]
 
@@ -18,13 +19,12 @@ class Migration(migrations.Migration):
                 ('api_name', models.CharField(max_length=200)),
                 ('label_position', models.CharField(choices=[('top', 'Top'), ('left', 'Left')], default='top', max_length=20)),
                 ('name', models.TextField(max_length=1000)),
+                ('title', models.TextField(blank=True, default='')),
+                ('order', models.IntegerField(default=0)),
                 ('description', models.TextField(blank=True, default='')),
                 ('layout', models.CharField(choices=[('horizontal', 'Horizontal'), ('vertical', 'Vertical')], default='vertical', max_length=200)),
-                ('order', models.IntegerField(default=0)),
                 ('account', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='accounts.Account')),
                 ('kickoff', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='fieldsets', to='processes.KickoffValue')),
-                ('task', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='fieldsets', to='processes.Task')),
-                ('workflow', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='fieldsets', to='processes.Workflow')),
             ],
             options={
                 'ordering': ['-id'],
@@ -55,11 +55,17 @@ class Migration(migrations.Migration):
                 ('api_name', models.CharField(max_length=200)),
                 ('label_position', models.CharField(choices=[('top', 'Top'), ('left', 'Left')], default='top', max_length=20)),
                 ('name', models.TextField(max_length=1000)),
+                ('title', models.TextField(blank=True, default='')),
+                ('order', models.IntegerField(default=0)),
                 ('description', models.TextField(blank=True, default='')),
                 ('layout', models.CharField(choices=[('horizontal', 'Horizontal'), ('vertical', 'Vertical')], default='vertical', max_length=200)),
                 ('date_created', models.DateTimeField(auto_now_add=True)),
+                ('is_shared', models.BooleanField(default=True)),
                 ('account', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='accounts.Account')),
-                ('template', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='fieldsets', to='processes.Template')),
+                ('kickoff', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='fieldsets', to='processes.Kickoff')),
+                ('shared_fieldset', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='child_fieldsets', to='processes.FieldsetTemplate')),
+                ('task', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='fieldsets', to='processes.TaskTemplate')),
+                ('template', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='fieldsets', to='processes.Template')),
             ],
             options={
                 'ordering': ['-id'],
@@ -82,58 +88,25 @@ class Migration(migrations.Migration):
             },
             bases=(src.generics.mixins.models.SoftDeleteMixin, models.Model),
         ),
-        migrations.CreateModel(
-            name='FieldsetTemplateTaskTemplate',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('is_deleted', models.BooleanField(default=False)),
-                ('order', models.IntegerField(default=0)),
-                ('fieldset', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='processes.FieldsetTemplate')),
-                ('task', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='processes.TaskTemplate')),
-            ],
-            options={
-                'db_table': 'processes_fieldsettemplate_tasktemplate',
-                'ordering': ['order'],
-            },
-            bases=(src.generics.mixins.models.SoftDeleteMixin, models.Model),
-        ),
-        migrations.CreateModel(
-            name='FieldsetTemplateKickoff',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True,
-                                        serialize=False, verbose_name='ID')),
-                ('is_deleted', models.BooleanField(default=False)),
-                ('order', models.IntegerField(default=0)),
-                ('fieldset', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='processes.FieldsetTemplate')),
-                ('kickoff', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='processes.Kickoff')),
-            ],
-            options={
-                'db_table': 'processes_fieldsettemplate_kickoff',
-                'ordering': ['order'],
-            },
-            bases=(src.generics.mixins.models.SoftDeleteMixin, models.Model),
-        ),
-        migrations.AddField(
-            model_name='fieldsettemplate',
-            name='kickoffs',
-            field=models.ManyToManyField(blank=True, related_name='fieldsets', through='processes.FieldsetTemplateKickoff', to='processes.Kickoff'),
-        ),
-        migrations.AddConstraint(
-            model_name='fieldsettemplate',
-            constraint=models.UniqueConstraint(
-                condition=models.Q(is_deleted=False),
-                fields=('template', 'api_name'),
-                name='fieldsettemplate_api_name_template_unique'),
-        ),
-        migrations.AddField(
-            model_name='fieldsettemplate',
-            name='tasks',
-            field=models.ManyToManyField(blank=True, related_name='fieldsets', through='processes.FieldsetTemplateTaskTemplate', to='processes.TaskTemplate'),
-        ),
         migrations.AlterField(
             model_name='fieldtemplate',
             name='template',
             field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='fields', to='processes.Template'),
+        ),
+        migrations.AlterField(
+            model_name='fieldtemplateselection',
+            name='template',
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='selections', to='processes.Template'),
+        ),
+        migrations.AddField(
+            model_name='fieldset',
+            name='task',
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='fieldsets', to='processes.Task'),
+        ),
+        migrations.AddField(
+            model_name='fieldset',
+            name='workflow',
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='fieldsets', to='processes.Workflow'),
         ),
         migrations.AddField(
             model_name='fieldtemplate',
@@ -154,5 +127,13 @@ class Migration(migrations.Migration):
             model_name='taskfield',
             name='rules',
             field=models.ManyToManyField(blank=True, related_name='fields', to='processes.FieldSetRule'),
+        ),
+        migrations.AddConstraint(
+            model_name='fieldsettemplaterule',
+            constraint=models.UniqueConstraint(condition=models.Q(is_deleted=False), fields=('api_name', 'fieldset'), name='fieldsettemplate_api_name_template_unique'),
+        ),
+        migrations.AddConstraint(
+            model_name='fieldsettemplate',
+            constraint=models.UniqueConstraint(condition=models.Q(is_deleted=False), fields=('api_name', 'template', 'is_shared'), name='fieldsettemplate_template_api_name_is_shared_unique'),
         ),
     ]
