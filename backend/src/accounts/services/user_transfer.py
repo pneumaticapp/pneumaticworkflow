@@ -167,6 +167,11 @@ class UserTransferService(
             user=self.user,
         )
         service.update_users_counts()
+        send_user_updated_notification.delay(
+            logging=self.user.account.log_api_requests,
+            account_id=self.user.account_id,
+            user_data=UserWebsocketSerializer(self.user).data,
+        )
 
     def accept_transfer(
         self,
