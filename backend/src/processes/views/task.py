@@ -114,8 +114,12 @@ class TasksListView(ListAPIView):
 
     def list(self, request, *args, **kwargs):
         user = request.user
+        filter_data = {
+            k: v for k, v in request.GET.items()
+            if v != 'null'
+        }
         filter_slz = TaskListFilterSerializer(
-            data=request.GET,
+            data=filter_data,
             context={'user': user},
         )
         filter_slz.is_valid(raise_exception=True)
