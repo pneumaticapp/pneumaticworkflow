@@ -132,27 +132,6 @@ def test_get_last_delay__no_delays__none():
     assert result is None
 
 
-def test_exclude_directly_deleted_taskperformer_set__called__ok():
-    """
-    Returns queryset with directly-deleted performers excluded
-    """
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    workflow = create_test_workflow(
-        user=user,
-        tasks_count=1,
-    )
-    task = workflow.tasks.get(number=1)
-
-    # act
-    result = task.taskperformer_set.exclude_directly_deleted()
-
-    # assert
-    assert result is not None
-
-
 def test_get_raw_performers_api_names__has_performers__ok():
     """
     Returns set of api_names from raw_performers

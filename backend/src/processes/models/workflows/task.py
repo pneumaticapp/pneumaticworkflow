@@ -195,9 +195,6 @@ class Task(
         raw_performer.save()
         return raw_performer
 
-    def exclude_directly_deleted_taskperformer_set(self):
-        return self.taskperformer_set.exclude_directly_deleted()
-
     def get_default_performer(self) -> UserModel:
 
         """ Returns user, that may be used as default task performer:
