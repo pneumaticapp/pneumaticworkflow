@@ -1,0 +1,24 @@
+set -eu
+
+HOOK_DIR=$(CDPATH= cd "$(dirname "$0")" && pwd)
+FRONTEND_DIR=$(dirname "$HOOK_DIR")
+
+cd "$FRONTEND_DIR"
+
+has_refs=false
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  [ -z "$local_sha" ] && continue
+
+  case "$local_sha" in
+    0000000000000000000000000000000000000000) continue ;;
+  esac
+
+  has_refs=true
+  echo "pre-push: testing $local_ref ($local_sha)"
+  npm run test:related -- "$local_sha"
+done
+
+if [ "$has_refs" = false ]; then
+  npm run test:related
+fi
