@@ -659,6 +659,10 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
                             queryset=(
                                 TaskPerformer.objects
                                 .exclude_directly_deleted()
+                                .filter(type__in=(
+                                    PerformerType.USER,
+                                    PerformerType.GROUP,
+                                ))
                                 .select_related('group')
                             ),
                         ),

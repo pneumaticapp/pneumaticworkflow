@@ -147,7 +147,7 @@ def test_exclude_directly_deleted_taskperformer_set__called__ok():
     task = workflow.tasks.get(number=1)
 
     # act
-    result = task.exclude_directly_deleted_taskperformer_set()
+    result = task.taskperformer_set.exclude_directly_deleted()
 
     # assert
     assert result is not None
