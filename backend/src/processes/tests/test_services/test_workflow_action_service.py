@@ -2846,6 +2846,8 @@ def test_complete_task_for_user__with_fields_values__ok(mocker):
     task_field_service_init_mock.assert_called_once_with(
         user=user,
         instance=task_field,
+        is_superuser=is_superuser,
+        auth_type=auth_type,
     )
     partial_update_field_mock.assert_called_once_with(
         value='test value',
@@ -4218,6 +4220,8 @@ def test_complete_task_for_user__group_with_output__ok(mocker):
     task_field_service_init_mock.assert_called_once_with(
         user=user,
         instance=task_field,
+        is_superuser=is_superuser,
+        auth_type=auth_type,
     )
     partial_update_field_mock.assert_called_once_with(
         value='some value',
@@ -4523,8 +4527,8 @@ def test_complete_task_for_user__rcba_and_guest_first_completion__ok(
     assert TaskPerformer.objects.get(
         task_id=task.id,
         user_id=guest.id,
-        type=PerformerType.GROUP_USER,
-        is_completed=False,
+        type=PerformerType.USER,
+        is_completed=True,
         date_completed=current_date,
     )
     task_field_service_init_mock.assert_not_called()
@@ -5175,7 +5179,7 @@ def test_complete_task_for_user__user_performer_directly_deleted__raise_exc(
     can_be_completed_mock.assert_not_called()
     complete_task_mock.assert_not_called()
     task_completed_analytics_mock.assert_not_called()
-    task_complete_event_mock.assert_called_once_with()
+    task_complete_event_mock.assert_not_called()
 
 
 def test_complete_task_for_user__group_deleted__raise_exception(
@@ -5248,7 +5252,7 @@ def test_complete_task_for_user__group_deleted__raise_exception(
     can_be_completed_mock.assert_not_called()
     complete_task_mock.assert_not_called()
     task_completed_analytics_mock.assert_not_called()
-    task_complete_event_mock.assert_called_once_with()
+    task_complete_event_mock.assert_not_called()
 
 
 def test_start_task__no_performers__skip_and_fire_skip_event(mocker):

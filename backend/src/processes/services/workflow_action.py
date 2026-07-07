@@ -826,6 +826,8 @@ class WorkflowActionService:
                 service = TaskFieldService(
                     user=self.user,
                     instance=task_field,
+                    is_superuser=self.is_superuser,
+                    auth_type=self.auth_type,
                 )
                 service.partial_update(
                     value=fields_values.get(task_field.api_name),
