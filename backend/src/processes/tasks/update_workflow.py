@@ -132,6 +132,12 @@ def update_workflow_viewers(workflow_ids: List[int]):
     """Rebuild Guardian view_workflow permissions for specific workflows.
 
     Used when users/groups are reassigned in active workflows.
+
+    After each workflow's viewers are recalculated, an async
+    ``sync_workflow_attachment_permissions`` task is dispatched so
+    restricted attachment ACLs stay consistent with the updated
+    view_workflow set. Without this, users who lose view access
+    (or newly gain it) would have stale access_attachment rows.
     """
     workflows = Workflow.objects.filter(
         id__in=workflow_ids,
@@ -141,3 +147,4 @@ def update_workflow_viewers(workflow_ids: List[int]):
         with transaction.atomic():
             perm_svc = WorkflowPermissionService(workflow)
             perm_svc.set_viewers()
+        sync_workflow_attachment_permissions.delay(workflow.id)

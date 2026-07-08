@@ -350,28 +350,28 @@ class ReassignService:
     def _reassign_in_workflow_members(self):
         """Update Guardian view_workflow permissions.
 
-        Rebuilds view permissions for all workflows
-        affected by this reassignment.
+        Rebuilds view permissions for all workflows affected by
+        this reassignment.
+
+        Source-tracked rows (PERFORMER, PERFORMER_GROUP,
+        TEMPLATE_OWNER, MENTION) are recalculated asynchronously
+        by ``update_workflow_viewers`` — its ``set_viewers()``
+        diff removes stale ``old_user`` rows whose source of truth
+        (TaskPerformer, TemplateOwner, ...) already points at
+        ``new_user`` after the preceding reassign steps.
+
+        Legacy WORKFLOW_VIEWER rows have no source of truth to
+        rebuild from, so they are transferred synchronously
+        from ``old_user`` to ``new_user`` here — otherwise the
+        async diff would preserve them on ``old_user`` (see
+        ``_collect_entitled_sources`` section 5) and ``new_user``
+        would never receive them.
         """
         affected_workflow_ids = self._affected_workflow_ids()
 
-        # Delete old permissions synchronously
-        ct = ContentType.objects.get_for_model(Workflow)
-        if self.old_user:
-            UserObjectPermission.objects.filter(
-                user=self.old_user,
-                content_type=ct,
-                permission__codename=CODENAME_VIEW,
-            ).delete()
-        if self.old_group:
-            UserObjectPermission.objects.filter(
-                source_type=PermissionSource.PERFORMER_GROUP,
-                source_id=self.old_group.id,
-                content_type=ct,
-                permission__codename=CODENAME_VIEW,
-            ).delete()
+        if self.old_user and self.new_user:
+            self._transfer_workflow_viewer_rows()
 
-        # Dispatch async task to recalculate viewers
         if affected_workflow_ids:
             from src.processes.tasks.update_workflow import (  # noqa: PLC0415
                 update_workflow_viewers,
@@ -379,6 +379,36 @@ class ReassignService:
             transaction.on_commit(
                 lambda: update_workflow_viewers.delay(affected_workflow_ids),
             )
+
+    def _transfer_workflow_viewer_rows(self):
+        """Reassign legacy WORKFLOW_VIEWER rows old_user -> new_user.
+
+        Uses UPDATE (not delete + insert) to preserve source_id
+        and avoid unique-constraint conflicts when new_user already
+        has a WORKFLOW_VIEWER row for the same workflow.
+
+        Conflicting rows (new_user already viewer of the same
+        workflow) are removed for old_user first, so the UPDATE
+        cannot violate the (user, permission, ct, object_pk,
+        source_type, source_id) uniqueness constraint.
+        """
+        ct = ContentType.objects.get_for_model(Workflow)
+        base_qs = UserObjectPermission.objects.filter(
+            content_type=ct,
+            permission__codename=CODENAME_VIEW,
+            source_type=PermissionSource.WORKFLOW_VIEWER,
+        )
+        conflicting_object_pks = list(
+            base_qs.filter(user=self.new_user).values_list(
+                'object_pk', flat=True,
+            ),
+        )
+        if conflicting_object_pks:
+            base_qs.filter(
+                user=self.old_user,
+                object_pk__in=conflicting_object_pks,
+            ).delete()
+        base_qs.filter(user=self.old_user).update(user=self.new_user)
 
     def _affected_template_ids(self):
         affected_template_ids = []

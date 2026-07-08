@@ -141,7 +141,7 @@ class Migration(migrations.Migration):
         ('processes', '0254_add_fileattachment_fields'),
         ('contenttypes', '0002_remove_content_type_name'),
         ('auth', '0011_update_proxy_permissions'),
-        ('guardian', '0002_generic_permissions_index'),
+        ('permissions', '0002_user_object_permission'),
     ]
 
     operations = [

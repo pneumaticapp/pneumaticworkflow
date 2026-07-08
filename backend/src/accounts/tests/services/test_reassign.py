@@ -1,7 +1,10 @@
 import pytest
+from django.contrib.contenttypes.models import ContentType
 
 from src.accounts.services import exceptions
 from src.accounts.services.reassign import ReassignService
+from src.permissions.enums import PermissionSource
+from src.permissions.models import UserObjectPermission
 from src.processes.enums import (
     ConditionAction,
     OwnerType,
@@ -19,6 +22,10 @@ from src.processes.models.workflows.conditions import (
     Predicate,
     Rule,
 )
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
@@ -27,10 +34,6 @@ from src.processes.tests.fixtures import (
     create_test_template,
     create_test_user,
     create_test_workflow,
-)
-from src.permissions.enums import PermissionSource
-from src.processes.services.workflow_permissions import (
-    WorkflowPermissionService,
 )
 
 pytestmark = pytest.mark.django_db
@@ -1247,13 +1250,19 @@ class TestReassignService:
         self,
         mocker,
     ):
+        """
+        _reassign_in_workflow_members must schedule
+        update_workflow_viewers via on_commit and NOT synchronously
+        purge source-tracked view rows (PERFORMER etc.) — cleanup
+        of stale rows for old_user is deferred to the async
+        set_viewers() diff.
+        """
         # arrange
         account = create_test_account(name='test_account')
         old_user = create_test_user(account=account, email='old@example.com')
         new_user = create_test_user(account=account, email='new@example.com')
         workflow = create_test_workflow(user=old_user, tasks_count=1)
 
-        # Grant old_user view permission
         WorkflowPermissionService(workflow).grant_view_bulk(
             [old_user.id],
             source_type=PermissionSource.PERFORMER,
@@ -1273,7 +1282,7 @@ class TestReassignService:
         service._reassign_in_workflow_members()
 
         # assert
-        assert not WorkflowPermissionService(workflow).has_view(old_user)
+        assert WorkflowPermissionService(workflow).has_view(old_user)
         on_commit_mock.assert_called_once()
         on_commit_mock.call_args[0][0]()
         update_task_mock.delay.assert_called_once_with([workflow.id])
@@ -1675,10 +1684,12 @@ class TestReassignService:
         ).exists()
 
 
-def test_reassign_workflow_members__copies_view_only(mocker):
+def test_reassign_workflow_members__dispatches_async_task__ok(mocker):
     """
-    _reassign_in_workflow_members must delete old view_workflow and
-    dispatch update_workflow_viewers task.
+    _reassign_in_workflow_members must dispatch update_workflow_viewers
+    via on_commit for all affected workflows and NOT synchronously
+    delete source-tracked view_workflow rows — the async
+    set_viewers() diff handles PERFORMER/TEMPLATE_OWNER cleanup.
     """
 
     # arrange
@@ -1689,7 +1700,6 @@ def test_reassign_workflow_members__copies_view_only(mocker):
     )
     workflow = create_test_workflow(user=old_user, tasks_count=1)
 
-    assert WorkflowPermissionService(workflow).has_change(user=old_user)
     assert WorkflowPermissionService(workflow).has_view(user=old_user)
 
     update_task_mock = mocker.patch(
@@ -1705,12 +1715,193 @@ def test_reassign_workflow_members__copies_view_only(mocker):
     service._reassign_in_workflow_members()
 
     # assert
-    assert not WorkflowPermissionService(workflow).has_view(user=old_user)
-    assert WorkflowPermissionService(workflow).has_change(user=old_user)
+    assert WorkflowPermissionService(workflow).has_view(user=old_user)
 
     on_commit_mock.assert_called_once()
     on_commit_mock.call_args[0][0]()
     update_task_mock.delay.assert_called_once_with([workflow.id])
+
+
+def test_reassign_workflow_members__transfers_workflow_viewer__ok(mocker):
+    """
+    Legacy WORKFLOW_VIEWER rows have no source of truth, so they must
+    be transferred synchronously from old_user to new_user; otherwise
+    set_viewers() would preserve them on old_user and new_user would
+    never receive them.
+    """
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    old_user = create_test_admin(
+        account=account, email='old@test.test',
+    )
+    new_user = create_test_admin(
+        account=account, email='new@test.test',
+    )
+    workflow = create_test_workflow(user=account_owner, tasks_count=1)
+    WorkflowPermissionService(workflow).grant_view(
+        old_user,
+        source_type=PermissionSource.WORKFLOW_VIEWER,
+        source_id=workflow.pk,
+    )
+
+    mocker.patch(
+        'src.processes.tasks.update_workflow.update_workflow_viewers',
+    )
+    mocker.patch(
+        'src.accounts.services.reassign.transaction.on_commit',
+    )
+
+    service = ReassignService(old_user=old_user, new_user=new_user)
+
+    # act
+    service._reassign_in_workflow_members()
+
+    # assert
+    ct = ContentType.objects.get_for_model(Workflow)
+    assert UserObjectPermission.objects.filter(
+        user=new_user,
+        content_type=ct,
+        object_pk=str(workflow.pk),
+        source_type=PermissionSource.WORKFLOW_VIEWER,
+    ).exists()
+    assert not UserObjectPermission.objects.filter(
+        user=old_user,
+        content_type=ct,
+        object_pk=str(workflow.pk),
+        source_type=PermissionSource.WORKFLOW_VIEWER,
+    ).exists()
+
+
+def test_reassign_workflow_members__viewer_conflict__resolved(mocker):
+    """
+    When new_user already has a WORKFLOW_VIEWER row for the same
+    workflow, the old_user duplicate must be deleted (not left dangling)
+    so the transfer UPDATE cannot violate the uniqueness constraint.
+    """
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    old_user = create_test_admin(
+        account=account, email='old@test.test',
+    )
+    new_user = create_test_admin(
+        account=account, email='new@test.test',
+    )
+    workflow = create_test_workflow(user=account_owner, tasks_count=1)
+    perm_svc = WorkflowPermissionService(workflow)
+    perm_svc.grant_view(
+        old_user,
+        source_type=PermissionSource.WORKFLOW_VIEWER,
+        source_id=workflow.pk,
+    )
+    perm_svc.grant_view(
+        new_user,
+        source_type=PermissionSource.WORKFLOW_VIEWER,
+        source_id=workflow.pk,
+    )
+
+    mocker.patch(
+        'src.processes.tasks.update_workflow.update_workflow_viewers',
+    )
+    mocker.patch(
+        'src.accounts.services.reassign.transaction.on_commit',
+    )
+
+    service = ReassignService(old_user=old_user, new_user=new_user)
+
+    # act
+    service._reassign_in_workflow_members()
+
+    # assert
+    ct = ContentType.objects.get_for_model(Workflow)
+    new_user_rows = UserObjectPermission.objects.filter(
+        user=new_user,
+        content_type=ct,
+        object_pk=str(workflow.pk),
+        source_type=PermissionSource.WORKFLOW_VIEWER,
+    ).count()
+    old_user_rows = UserObjectPermission.objects.filter(
+        user=old_user,
+        content_type=ct,
+        object_pk=str(workflow.pk),
+        source_type=PermissionSource.WORKFLOW_VIEWER,
+    ).count()
+    assert new_user_rows == 1
+    assert old_user_rows == 0
+
+
+def test_reassign_workflow_members__old_group_only__no_viewer_transfer(mocker):
+    """
+    Group reassign (no old_user) must not attempt WORKFLOW_VIEWER
+    transfer — that source_type is user-only, and there is no
+    old_user to read from.
+    """
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    old_group = create_test_group(account, name='old grp')
+    new_group = create_test_group(account, name='new grp')
+    workflow = create_test_workflow(user=account_owner, tasks_count=1)
+
+    mocker.patch(
+        'src.processes.tasks.update_workflow.update_workflow_viewers',
+    )
+    mocker.patch(
+        'src.accounts.services.reassign.transaction.on_commit',
+    )
+    transfer_mock = mocker.patch.object(
+        ReassignService, '_transfer_workflow_viewer_rows',
+    )
+
+    service = ReassignService(old_group=old_group, new_group=new_group)
+
+    # act
+    service._reassign_in_workflow_members()
+
+    # assert
+    transfer_mock.assert_not_called()
+    assert workflow.id is not None
+
+
+def test_reassign_workflow_members__user_to_group__no_viewer_transfer(mocker):
+    """
+    When old_user is replaced by new_group (no new_user), legacy
+    WORKFLOW_VIEWER rows cannot be transferred to a group (that
+    source_type is user-only) and must be left untouched — the async
+    set_viewers() diff preserves them via section 5.
+    """
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    old_user = create_test_admin(
+        account=account, email='old@test.test',
+    )
+    new_group = create_test_group(account, name='new grp')
+    workflow = create_test_workflow(user=account_owner, tasks_count=1)
+
+    mocker.patch(
+        'src.processes.tasks.update_workflow.update_workflow_viewers',
+    )
+    mocker.patch(
+        'src.accounts.services.reassign.transaction.on_commit',
+    )
+    transfer_mock = mocker.patch.object(
+        ReassignService, '_transfer_workflow_viewer_rows',
+    )
+
+    service = ReassignService(old_user=old_user, new_group=new_group)
+
+    # act
+    service._reassign_in_workflow_members()
+
+    # assert
+    transfer_mock.assert_not_called()
+    assert workflow.id is not None
 
 
 def test_reassign_workflow_owners__uses_on_commit(mocker):
