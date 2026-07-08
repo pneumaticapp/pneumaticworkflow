@@ -27,7 +27,12 @@ from src.processes.services.workflow_action import (
     WorkflowActionService,
     WorkflowEventService,
 )
+from src.storage.tasks import sync_workflow_attachment_permissions
 from src.storage.utils import reassign_restricted_permissions_for_task
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
+from src.permissions.enums import PermissionSource
 
 UserModel = get_user_model()
 
@@ -140,10 +145,18 @@ class TaskPerformersService(BasePerformersService):
                     account_id=task.account_id,
                 )
 
+        # CRITICAL: set_viewers() MUST run before
+        # reassign_restricted_permissions
+        # Guardian: recalculate view permissions after performer removal
+        WorkflowPermissionService(task.workflow).set_viewers()
+
         reassign_restricted_permissions_for_task(
             task=task,
             user=request_user,
         )
+
+        # Sync attachment permissions so removed performer loses file access
+        sync_workflow_attachment_permissions.delay(task.workflow_id)
 
     @classmethod
     def _create_actions(
@@ -168,7 +181,11 @@ class TaskPerformersService(BasePerformersService):
             is_superuser=is_superuser,
         )
         if not task.get_active_delay():
-            task.workflow.members.add(user)
+            WorkflowPermissionService(task.workflow).grant_view(
+                user,
+                source_type=PermissionSource.PERFORMER,
+                source_id=task.id,
+            )
             task_performer_users = (
                 UserModel.objects
                 .get_users_taskperformer_groups(task=task)

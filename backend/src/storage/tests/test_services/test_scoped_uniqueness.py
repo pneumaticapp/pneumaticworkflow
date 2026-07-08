@@ -1,7 +1,8 @@
 import pytest
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
-from guardian.shortcuts import assign_perm
+from src.permissions.enums import PermissionSource
+from src.permissions.models import UserObjectPermission
 
 from src.permissions.models import GroupObjectPermission
 from src.processes.tests.fixtures import (
@@ -219,7 +220,19 @@ def test_check_perm__multi_att_perm_on_one__ok():
         task=task_2,
         access_type=AccessType.RESTRICTED,
     )
-    assign_perm('storage.access_attachment', owner, att_2)
+    att_ctype = ContentType.objects.get_for_model(att_2)
+    att_perm = Permission.objects.get(
+        content_type=att_ctype,
+        codename='access_attachment',
+    )
+    UserObjectPermission.objects.create(
+        user=owner,
+        permission=att_perm,
+        content_type=att_ctype,
+        object_pk=str(att_2.pk),
+        source_type=PermissionSource.PERFORMER,
+        source_id='0',
+    )
 
     service = AttachmentService(user=owner)
 
@@ -518,7 +531,19 @@ def test_check_perm__soft_deleted_att__not_granting():
         task=task,
         access_type=AccessType.RESTRICTED,
     )
-    assign_perm('storage.access_attachment', owner, att)
+    att_ctype = ContentType.objects.get_for_model(att)
+    att_perm = Permission.objects.get(
+        content_type=att_ctype,
+        codename='access_attachment',
+    )
+    UserObjectPermission.objects.create(
+        user=owner,
+        permission=att_perm,
+        content_type=att_ctype,
+        object_pk=str(att.pk),
+        source_type=PermissionSource.PERFORMER,
+        source_id='0',
+    )
 
     # soft-delete
     att.is_deleted = True

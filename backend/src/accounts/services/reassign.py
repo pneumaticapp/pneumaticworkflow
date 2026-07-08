@@ -1,6 +1,7 @@
 from typing import Optional
 
 from django.contrib.auth import get_user_model
+from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
 
 from src.accounts.models import UserGroup
@@ -23,7 +24,6 @@ from src.accounts.queries import (
     DeleteUserFromTaskPerformerQuery,
     DeleteUserFromTemplateConditionsQuery,
     DeleteUserFromTemplateOwnerQuery,
-    DeleteUserFromWorkflowMembersQuery,
     DeleteUserGroupFromConditionsQuery,
     DeleteUserGroupFromRawPerformerQuery,
     DeleteUserGroupFromRawPerformerTemplateQuery,
@@ -37,6 +37,7 @@ from src.accounts.services.vacation import (
 )
 from src.authentication.enums import AuthTokenType
 from src.executor import RawSqlExecutor
+from src.permissions.models import UserObjectPermission
 from src.processes.enums import (
     OwnerType,
     PerformerType,
@@ -51,8 +52,9 @@ from src.processes.models.workflows.conditions import Predicate
 from src.processes.models.workflows.raw_performer import RawPerformer
 from src.processes.models.workflows.task import TaskPerformer
 from src.processes.models.workflows.workflow import Workflow
-from src.processes.queries import UpdateWorkflowOwnersQuery
+from src.processes.tasks.update_workflow import update_workflow_owners
 from src.processes.tasks.tasks import complete_tasks
+from src.processes.services.workflow_permissions import CODENAME_VIEW
 
 UserModel = get_user_model()
 
@@ -320,18 +322,66 @@ class ReassignService:
                     template__account=self.account,
                 ).update(user=self.new_user)
 
-    def _reassign_in_workflow_members(self):
-        if self.old_user and self.new_user:
-            delete_query = DeleteUserFromWorkflowMembersQuery(
-                user_to_delete=self.old_user.id,
-                user_to_substitution=self.new_user.id,
-            )
-            RawSqlExecutor.execute(*delete_query.get_sql())
+    def _affected_workflow_ids(self) -> list:
+        """Find all workflows where the old user/group had view permissions."""
+        ct = ContentType.objects.get_for_model(Workflow)
+        workflow_ids = set()
 
-            Workflow.members.through.objects.filter(
-                user_id=self.old_user.id,
-                workflow__account=self.account,
-            ).update(user_id=self.new_user.id)
+        if self.old_user:
+            uop_pks = UserObjectPermission.objects.filter(
+                user=self.old_user,
+                content_type=ct,
+                permission__codename=CODENAME_VIEW,
+            ).values_list('object_pk', flat=True)
+            workflow_ids.update(int(pk) for pk in uop_pks)
+
+        if self.old_group:
+            from src.permissions.models import (  # noqa: PLC0415
+                GroupObjectPermission,
+            )
+            gop_pks = GroupObjectPermission.objects.filter(
+                group=self.old_group,
+                content_type=ct,
+                permission__codename=CODENAME_VIEW,
+            ).values_list('object_pk', flat=True)
+            workflow_ids.update(int(pk) for pk in gop_pks)
+
+        return list(workflow_ids)
+
+    def _reassign_in_workflow_members(self):
+        """Update Guardian view_workflow permissions.
+
+        Rebuilds view permissions for all workflows
+        affected by this reassignment.
+        """
+        affected_workflow_ids = self._affected_workflow_ids()
+
+        # Delete old permissions synchronously
+        ct = ContentType.objects.get_for_model(Workflow)
+        if self.old_user:
+            UserObjectPermission.objects.filter(
+                user=self.old_user,
+                content_type=ct,
+                permission__codename=CODENAME_VIEW,
+            ).delete()
+        if self.old_group:
+            from src.permissions.models import (  # noqa: PLC0415
+                GroupObjectPermission,
+            )
+            GroupObjectPermission.objects.filter(
+                group=self.old_group,
+                content_type=ct,
+                permission__codename=CODENAME_VIEW,
+            ).delete()
+
+        # Dispatch async task to recalculate viewers
+        if affected_workflow_ids:
+            from src.processes.tasks.update_workflow import (  # noqa: PLC0415
+                update_workflow_viewers,
+            )
+            transaction.on_commit(
+                lambda: update_workflow_viewers.delay(affected_workflow_ids),
+            )
 
     def _affected_template_ids(self):
         affected_template_ids = []
@@ -355,20 +405,18 @@ class ReassignService:
         return affected_template_ids
 
     def _reassign_in_workflow_owners(self, affected_template_ids: list):
+        """Rebuild Guardian change_workflow permissions via celery task.
+
+        Uses on_commit to ensure the task runs after the enclosing
+        transaction commits, preventing stale reads.
+        """
         if not affected_template_ids:
             return
-
-        with transaction.atomic():
-            Workflow.owners.through.objects.filter(
-                workflow__template_id__in=affected_template_ids,
-                workflow__account=self.account,
-            ).delete()
-
-            for template_id in affected_template_ids:
-                query = UpdateWorkflowOwnersQuery(
-                    template_id=template_id,
-                )
-                RawSqlExecutor.execute(*query.insert_sql())
+        transaction.on_commit(
+            lambda: update_workflow_owners.delay(
+                template_ids=affected_template_ids,
+            ),
+        )
 
     def _reassign_in_template_conditions(self):
         if self.old_group:
@@ -506,8 +554,10 @@ class ReassignService:
                 user_id = self.new_group.users.first().id
             else:
                 user_id = self.account.get_owner().id
-            complete_tasks.delay(
-                user_id=user_id,
-                is_superuser=self.is_superuser,
-                auth_type=self.auth_type,
+            transaction.on_commit(
+                lambda: complete_tasks.delay(
+                    user_id=user_id,
+                    is_superuser=self.is_superuser,
+                    auth_type=self.auth_type,
+                ),
             )

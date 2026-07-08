@@ -19,14 +19,18 @@ from src.processes.models.workflows.conditions import (
     Predicate,
     Rule,
 )
-from src.processes.models.workflows.workflow import Workflow
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
     create_test_group,
+    create_test_owner,
     create_test_template,
     create_test_user,
     create_test_workflow,
+)
+from src.permissions.enums import PermissionSource
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
 )
 
 pytestmark = pytest.mark.django_db
@@ -145,8 +149,10 @@ class TestReassignService:
             '_reassign_in_conditions',
         )
         complete_tasks_mock = mocker.patch(
-            'src.processes.tasks.tasks.'
-            'complete_tasks.delay',
+            'src.accounts.services.reassign.complete_tasks',
+        )
+        on_commit_mock = mocker.patch(
+            'src.accounts.services.reassign.transaction.on_commit',
         )
         service = ReassignService(
             old_user=deleted_user,
@@ -166,7 +172,8 @@ class TestReassignService:
         reassign_in_workflow_owners_mock.assert_called_once_with([1, 2])
         reassign_in_template_conditions_mock.assert_called_once()
         reassign_in_conditions_mock.assert_called_once()
-        complete_tasks_mock.assert_called_once_with(
+        on_commit_mock.call_args_list[-1][0][0]()
+        complete_tasks_mock.delay.assert_called_once_with(
             user_id=new_user.id,
             is_superuser=False,
             auth_type='User',
@@ -226,8 +233,10 @@ class TestReassignService:
             '_reassign_in_conditions',
         )
         complete_tasks_mock = mocker.patch(
-            'src.processes.tasks.tasks.'
-            'complete_tasks.delay',
+            'src.accounts.services.reassign.complete_tasks',
+        )
+        on_commit_mock = mocker.patch(
+            'src.accounts.services.reassign.transaction.on_commit',
         )
         service = ReassignService(
             old_user=deleted_user,
@@ -247,7 +256,8 @@ class TestReassignService:
         reassign_in_workflow_owners_mock.assert_called_once_with([1, 2])
         reassign_in_template_conditions_mock.assert_called_once()
         reassign_in_conditions_mock.assert_called_once()
-        complete_tasks_mock.assert_called_once_with(
+        on_commit_mock.call_args_list[-1][0][0]()
+        complete_tasks_mock.delay.assert_called_once_with(
             user_id=new_user.id,
             is_superuser=False,
             auth_type='User',
@@ -309,8 +319,10 @@ class TestReassignService:
             '_reassign_in_conditions',
         )
         complete_tasks_mock = mocker.patch(
-            'src.processes.tasks.tasks.'
-            'complete_tasks.delay',
+            'src.accounts.services.reassign.complete_tasks',
+        )
+        on_commit_mock = mocker.patch(
+            'src.accounts.services.reassign.transaction.on_commit',
         )
         service = ReassignService(
             old_user=deleted_user,
@@ -330,7 +342,8 @@ class TestReassignService:
         reassign_in_workflow_owners_mock.assert_called_once_with([1, 2])
         reassign_in_template_conditions_mock.assert_called_once()
         reassign_in_conditions_mock.assert_called_once()
-        complete_tasks_mock.assert_called_once_with(
+        on_commit_mock.call_args_list[-1][0][0]()
+        complete_tasks_mock.delay.assert_called_once_with(
             user_id=new_user.id,
             is_superuser=False,
             auth_type='User',
@@ -1123,26 +1136,11 @@ class TestReassignService:
         new_user = create_test_user(account=account, email='new@example.com')
         template = create_test_template(user, tasks_count=1, is_active=True)
 
-        workflow_owners_filter_mock = mocker.patch(
-            'src.processes.models.workflows.workflow.'
-            'Workflow.owners.through.objects.filter',
+        update_task_mock = mocker.patch(
+            'src.accounts.services.reassign.update_workflow_owners',
         )
-        workflow_owners_delete_mock = (
-            workflow_owners_filter_mock.return_value.delete
-        )
-        update_query_mock = mocker.patch(
-            'src.accounts.services.reassign.'
-            'UpdateWorkflowOwnersQuery.__init__',
-            return_value=None,
-        )
-        query_insert_sql_mock = mocker.patch(
-            'src.accounts.services.reassign.'
-            'UpdateWorkflowOwnersQuery.insert_sql',
-            return_value=('SQL_QUERY', {'params': 'values'}),
-        )
-        sql_execute_mock = mocker.patch(
-            'src.accounts.services.reassign.'
-            'RawSqlExecutor.execute',
+        on_commit_mock = mocker.patch(
+            'src.accounts.services.reassign.transaction.on_commit',
         )
 
         service = ReassignService(old_user=old_user, new_user=new_user)
@@ -1152,15 +1150,10 @@ class TestReassignService:
         service._reassign_in_workflow_owners(affected_template_ids)
 
         # assert
-        workflow_owners_filter_mock.assert_called_once_with(
-            workflow__template_id__in=affected_template_ids,
-            workflow__account=account,
-        )
-        workflow_owners_delete_mock.assert_called_once()
-        update_query_mock.assert_called_once_with(template_id=template.id)
-        query_insert_sql_mock.assert_called_once_with()
-        sql_execute_mock.assert_called_once_with(
-            'SQL_QUERY', {'params': 'values'},
+        on_commit_mock.assert_called_once()
+        on_commit_mock.call_args[0][0]()
+        update_task_mock.delay.assert_called_once_with(
+            template_ids=affected_template_ids,
         )
 
     def test_reassign_in_workflow_owners_with__empty_template_ids__ok(
@@ -1172,21 +1165,8 @@ class TestReassignService:
         old_user = create_test_user(account=account, email='old@example.com')
         new_user = create_test_user(account=account, email='new@example.com')
 
-        workflow_owners_filter_mock = mocker.patch(
-            'src.processes.models.workflows.workflow.'
-            'Workflow.owners.through.objects.filter',
-        )
-        workflow_owners_delete_mock = (
-            workflow_owners_filter_mock.return_value.delete
-        )
-        query_mock = mocker.patch(
-            'src.accounts.services.reassign.'
-            'UpdateWorkflowOwnersQuery.insert_sql',
-            return_value=('SQL_QUERY', {'params': 'values'}),
-        )
-        sql_execute_mock = mocker.patch(
-            'src.accounts.services.reassign.'
-            'RawSqlExecutor.execute',
+        update_task_mock = mocker.patch(
+            'src.accounts.services.reassign.update_workflow_owners',
         )
 
         service = ReassignService(old_user=old_user, new_user=new_user)
@@ -1196,10 +1176,7 @@ class TestReassignService:
         service._reassign_in_workflow_owners(affected_template_ids)
 
         # assert
-        workflow_owners_filter_mock.assert_not_called()
-        workflow_owners_delete_mock.assert_not_called()
-        query_mock.assert_not_called()
-        sql_execute_mock.assert_not_called()
+        update_task_mock.delay.assert_not_called()
 
     def test_affected_template_ids__with_old_user_ok(self, mocker):
         # arrange
@@ -1274,28 +1251,16 @@ class TestReassignService:
         account = create_test_account(name='test_account')
         old_user = create_test_user(account=account, email='old@example.com')
         new_user = create_test_user(account=account, email='new@example.com')
+        workflow = create_test_workflow(user=old_user, tasks_count=1)
 
-        query_init_mock = mocker.patch(
-            'src.accounts.services.reassign.'
-            'DeleteUserFromWorkflowMembersQuery.__init__',
-            return_value=None,
+        # Grant old_user view permission
+        WorkflowPermissionService(workflow).grant_view_bulk([old_user.id], source_type=PermissionSource.PERFORMER, source_id='0')
+
+        update_task_mock = mocker.patch(
+            'src.processes.tasks.update_workflow.update_workflow_viewers',
         )
-        query_get_sql_mock = mocker.patch(
-            'src.accounts.services.reassign.'
-            'DeleteUserFromWorkflowMembersQuery.get_sql',
-            return_value=('SQL_QUERY', {'params': 'values'}),
-        )
-        sql_execute_mock = mocker.patch(
-            'src.accounts.services.reassign.'
-            'RawSqlExecutor.execute',
-        )
-        filter_mock = mocker.patch(
-            'src.accounts.services.reassign.'
-            'Workflow.members.through.objects.filter',
-            return_value=Workflow.members.through.objects.none(),
-        )
-        update_mock = mocker.patch.object(
-            filter_mock.return_value, 'update',
+        on_commit_mock = mocker.patch(
+            'src.accounts.services.reassign.transaction.on_commit',
         )
 
         service = ReassignService(old_user=old_user, new_user=new_user)
@@ -1304,19 +1269,10 @@ class TestReassignService:
         service._reassign_in_workflow_members()
 
         # assert
-        query_init_mock.assert_called_once_with(
-            user_to_delete=old_user.id,
-            user_to_substitution=new_user.id,
-        )
-        query_get_sql_mock.assert_called_once()
-        sql_execute_mock.assert_called_once_with(
-            'SQL_QUERY', {'params': 'values'},
-        )
-        filter_mock.assert_called_once_with(
-            user_id=old_user.id,
-            workflow__account=account,
-        )
-        update_mock.assert_called_once_with(user_id=new_user.id)
+        assert not WorkflowPermissionService(workflow).has_view(old_user)
+        on_commit_mock.assert_called_once()
+        on_commit_mock.call_args[0][0]()
+        update_task_mock.delay.assert_called_once_with([workflow.id])
 
     def test_reassign_in_template_conditions__with_old_and_new_user__ok(self):
         # arrange
@@ -1537,7 +1493,7 @@ class TestReassignService:
         account = create_test_account(name='test_account')
         old_user = create_test_admin(account=account, email='old@example.com')
         new_user = create_test_admin(account=account, email='new@example.com')
-        workflow = create_test_workflow(old_user, tasks_count=1)
+        workflow = create_test_workflow(user=old_user, tasks_count=1)
         task = workflow.tasks.get(number=1)
         condition = Condition.objects.create(
             task=task,
@@ -1674,7 +1630,7 @@ class TestReassignService:
         account = create_test_account(name='test_account')
         old_user = create_test_admin(account=account, email='old@example.com')
         new_group = create_test_group(account, name='new_group')
-        workflow = create_test_workflow(old_user, tasks_count=1)
+        workflow = create_test_workflow(user=old_user, tasks_count=1)
         task = workflow.tasks.get(number=1)
         condition = Condition.objects.create(
             task=task,
@@ -1713,3 +1669,111 @@ class TestReassignService:
             field='user_field',
             user=old_user,
         ).exists()
+
+
+def test_reassign_workflow_members__copies_view_only(mocker):
+    """_reassign_in_workflow_members must delete old view_workflow and dispatch update_workflow_viewers task."""
+
+    # arrange
+    account = create_test_account()
+    old_user = create_test_owner(account=account)
+    new_user = create_test_admin(
+        account=account, email='new@test.test',
+    )
+    workflow = create_test_workflow(user=old_user, tasks_count=1)
+
+    assert WorkflowPermissionService(workflow=workflow).has_change(user=old_user)
+    assert WorkflowPermissionService(workflow=workflow).has_view(user=old_user)
+
+    update_task_mock = mocker.patch(
+        'src.processes.tasks.update_workflow.update_workflow_viewers',
+    )
+    on_commit_mock = mocker.patch(
+        'src.accounts.services.reassign.transaction.on_commit',
+    )
+
+    service = ReassignService(old_user=old_user, new_user=new_user)
+
+    # act
+    service._reassign_in_workflow_members()
+
+    # assert
+    assert not WorkflowPermissionService(workflow=workflow).has_view(user=old_user)
+    assert WorkflowPermissionService(workflow=workflow).has_change(user=old_user)
+
+    on_commit_mock.assert_called_once()
+    on_commit_mock.call_args[0][0]()
+    update_task_mock.delay.assert_called_once_with([workflow.id])
+
+
+def test_reassign_workflow_owners__uses_on_commit(mocker):
+    """update_workflow_owners.delay must be wrapped in on_commit."""
+
+    # arrange
+    account = create_test_account()
+    old_user = create_test_owner(account=account)
+    new_user = create_test_admin(
+        account=account, email='new@test.test',
+    )
+    on_commit_mock = mocker.patch(
+        'src.accounts.services.reassign.transaction.on_commit',
+    )
+    service = ReassignService(old_user=old_user, new_user=new_user)
+
+    # act
+    service._reassign_in_workflow_owners(affected_template_ids=[1, 2])
+
+    # assert
+    on_commit_mock.assert_called_once()
+
+
+def test_reassign_everywhere__complete_tasks_uses_on_commit(mocker):
+    """complete_tasks.delay must be wrapped in on_commit."""
+
+    # arrange
+    account = create_test_account()
+    old_user = create_test_owner(account=account)
+    new_user = create_test_admin(
+        account=account, email='new@test.test',
+    )
+    mocker.patch.object(
+        ReassignService, '_reassign_in_raw_performer_templates',
+    )
+    mocker.patch.object(
+        ReassignService, '_reassign_in_template_owners',
+    )
+    mocker.patch.object(
+        ReassignService, '_reassign_in_raw_performers',
+    )
+    mocker.patch.object(
+        ReassignService, '_reassign_in_performers',
+    )
+    mocker.patch.object(
+        ReassignService, '_affected_template_ids',
+        return_value=[1],
+    )
+    mocker.patch.object(
+        ReassignService, '_reassign_in_workflow_members',
+    )
+    mocker.patch.object(
+        ReassignService, '_reassign_in_workflow_owners',
+    )
+    mocker.patch.object(
+        ReassignService, '_reassign_in_template_conditions',
+    )
+    mocker.patch.object(
+        ReassignService, '_reassign_in_conditions',
+    )
+    mocker.patch.object(
+        ReassignService, '_cleanup_personal_groups',
+    )
+    on_commit_mock = mocker.patch(
+        'src.accounts.services.reassign.transaction.on_commit',
+    )
+    service = ReassignService(old_user=old_user, new_user=new_user)
+
+    # act
+    service.reassign_everywhere()
+
+    # assert
+    assert on_commit_mock.call_count == 1

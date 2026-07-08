@@ -112,4 +112,5 @@ def _delegate_tasks_for_user(user):
     VacationDelegationService.add_members_bulk(
         wf_ids=wf_ids,
         substitute_user_ids=sub_ids,
+        user_id=user.id,
     )

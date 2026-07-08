@@ -1,5 +1,9 @@
 import pytest
-from guardian.shortcuts import assign_perm
+from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.models import ContentType
+
+from src.permissions.models import UserObjectPermission
+from src.permissions.enums import PermissionSource
 from django.test import override_settings
 
 from src.processes.tests.fixtures import (
@@ -75,7 +79,19 @@ class TestListView:
             access_type=AccessType.RESTRICTED,
             task=task,
         )
-        assign_perm('storage.access_attachment', user, attachment)
+        att_ctype = ContentType.objects.get_for_model(attachment)
+        att_perm = Permission.objects.get(
+            content_type=att_ctype,
+            codename='access_attachment',
+        )
+        UserObjectPermission.objects.create(
+            user=user,
+            permission=att_perm,
+            content_type=att_ctype,
+            object_pk=str(attachment.pk),
+            source_type=PermissionSource.PERFORMER,
+            source_id='0',
+        )
 
         # act
         response = api_client.get('/attachments')

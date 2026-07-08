@@ -14,6 +14,10 @@ from src.processes.tests.fixtures import (
     create_test_user,
     create_test_workflow,
 )
+from src.permissions.enums import PermissionSource
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 
 UserModel = get_user_model()
 
@@ -197,7 +201,7 @@ class TestWorkflowMemberOrViewerPermission:
             account=account,
             email='member@test.com',
         )
-        workflow.members.add(member_user)
+        WorkflowPermissionService(workflow).grant_view(member_user, source_type=PermissionSource.PERFORMER, source_id='0')
 
         request = Mock()
         request.user = member_user

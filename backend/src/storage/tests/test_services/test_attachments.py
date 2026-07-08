@@ -1,7 +1,7 @@
 import pytest
 from django.contrib.contenttypes.models import ContentType
-from guardian.models import UserObjectPermission
-from guardian.shortcuts import assign_perm
+from src.permissions.models import UserObjectPermission
+from django.contrib.auth.models import Permission
 
 from src.permissions.models import GroupObjectPermission
 from src.processes.enums import PerformerType
@@ -17,6 +17,10 @@ from src.storage.enums import AccessType, SourceType
 from src.storage.models import Attachment
 from src.storage.services.attachments import AttachmentService
 from src.storage.utils import reassign_restricted_permissions_for_task
+from src.permissions.enums import PermissionSource
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -272,7 +276,19 @@ class TestAttachmentServiceCheckPermission:
             task=task,
         )
 
-        assign_perm('storage.access_attachment', user, attachment)
+        att_ctype = ContentType.objects.get_for_model(attachment)
+        att_perm = Permission.objects.get(
+            content_type=att_ctype,
+            codename='access_attachment',
+        )
+        UserObjectPermission.objects.create(
+            user=user,
+            permission=att_perm,
+            content_type=att_ctype,
+            object_pk=str(attachment.pk),
+            source_type=PermissionSource.PERFORMER,
+            source_id='0',
+        )
 
         service = AttachmentService(user=user)
 
@@ -483,7 +499,11 @@ class TestTemplateFileInheritance:
         )
         workflow = create_test_workflow(user=owner, tasks_count=1)
         task = workflow.tasks.first()
-        workflow.members.add(performer)
+        WorkflowPermissionService(workflow).grant_view(
+            performer,
+            source_type=PermissionSource.WORKFLOW_VIEWER,
+            source_id=workflow.pk,
+        )
         attachment = create_test_attachment(
             account=owner.account,
             source_type=SourceType.TEMPLATE,
@@ -677,7 +697,11 @@ class TestTemplateFileInheritance:
             user=performer_t2,
             type=PerformerType.USER,
         )
-        workflow.members.add(performer_t2)
+        WorkflowPermissionService(workflow).grant_view(
+            performer_t2,
+            source_type=PermissionSource.PERFORMER,
+            source_id=TaskPerformer.objects.get(task=task_2, user=performer_t2).pk,
+        )
         attachment = create_test_attachment(
             account=owner.account,
             source_type=SourceType.TEMPLATE,

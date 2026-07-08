@@ -31,6 +31,9 @@ from src.accounts.tokens import (
 from src.processes.services.system_workflows import (
     SystemWorkflowService,
 )
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 from src.processes.tests.fixtures import (
     create_invited_user,
     create_test_account,
@@ -402,7 +405,7 @@ def test_user_create_actions__premium__ok(mocker, plan):
 
     # assert
     workflow.refresh_from_db()
-    assert invited_user not in workflow.members.all()
+    assert not WorkflowPermissionService(workflow).has_view(invited_user)
     template = workflow.template
     assert invited_user not in template.owners.all()
     assert APIKey.objects.get(
@@ -457,7 +460,7 @@ def test_user_create_actions__freemium__ok(mocker):
 
     # assert
     workflow.refresh_from_db()
-    assert invited_user not in workflow.members.all()
+    assert not WorkflowPermissionService(workflow).has_view(invited_user)
     template = workflow.template
     assert invited_user not in template.owners.all()
     assert APIKey.objects.get(

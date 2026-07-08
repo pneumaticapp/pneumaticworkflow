@@ -22,6 +22,9 @@ from src.processes.services.workflows.kickoff_version import (
 from src.processes.services.workflows.workflow import (
     WorkflowService,
 )
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 
 UserModel = get_user_model()
 
@@ -122,8 +125,10 @@ class WorkflowUpdateVersionService(BaseUpdateVersionService):
         template_owners_ids = Template.objects.filter(
             id=data['id'],
         ).get_owners_as_users()
-        self.instance.owners.set(template_owners_ids)
-        self.instance.members.add(*template_owners_ids)
+        # Guardian: set workflow owners from template
+        WorkflowPermissionService(self.instance).set_owners(
+            template_owners_ids,
+        )
         self._update_tasks_from_version(
             tasks_data=data['tasks'],
             version=version,

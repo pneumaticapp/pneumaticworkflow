@@ -9,7 +9,7 @@ import pytest
 
 from django.contrib.contenttypes.models import ContentType
 from django.db import connection
-from guardian.models import UserObjectPermission
+from src.permissions.models import UserObjectPermission
 
 from src.accounts.models import Contact
 from src.permissions.models import GroupObjectPermission
@@ -40,6 +40,10 @@ from src.storage.models import Attachment
 from src.storage.queries import AttachmentListQuery
 from src.storage.services.attachments import AttachmentService
 from .conftest import GCS_API, GCS_CLOUD, FS_DOMAIN, gcs_url
+from src.permissions.enums import PermissionSource
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -189,7 +193,7 @@ def test_e2e__wf_member_not_owner__gets_perm(
     workflow = create_test_workflow(
         user=user, tasks_count=1,
     )
-    workflow.members.add(member)
+    WorkflowPermissionService(workflow).grant_view(member, source_type=PermissionSource.PERFORMER, source_id='0')
     create_fa(
         account=user.account,
         file_key='member_file.pdf',

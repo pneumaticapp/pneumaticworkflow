@@ -20,6 +20,7 @@ from src.notifications.tasks import (
     send_resumed_workflow_notification,
     send_completed_workflow_notification,
 )
+from src.permissions.enums import PermissionSource
 from src.processes.enums import (
     ConditionAction,
     DirectlyStatus,
@@ -50,6 +51,9 @@ from src.processes.tasks.webhooks import (
     send_task_returned_webhook,
     send_workflow_completed_webhook,
     send_workflow_started_webhook,
+)
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
 )
 from src.services.markdown import MarkdownService
 from src.webhooks.models import WebHook
@@ -435,7 +439,12 @@ class WorkflowActionService:
             .by_task(task.id)
             .get_user_ids_set()
         )
-        self.workflow.members.add(*users_performers_set)
+        # Guardian: grant view to all task performers
+        WorkflowPermissionService(self.workflow).grant_view_bulk(
+            user_ids=users_performers_set,
+            source_type=PermissionSource.PERFORMER,
+            source_id=task.id,
+        )
         self.continue_task(task=task, is_returned=is_returned)
 
     def continue_task(self, task: Task, is_returned: bool = False):

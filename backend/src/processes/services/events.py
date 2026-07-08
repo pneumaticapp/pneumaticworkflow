@@ -1,4 +1,3 @@
-import re
 from typing import List, Optional, Tuple
 
 from django.contrib.auth import get_user_model
@@ -15,6 +14,7 @@ from src.notifications.tasks import (
     send_event_created,
     send_event_updated,
 )
+from src.permissions.enums import PermissionSource
 from src.processes.enums import (
     CommentStatus,
     WorkflowEventActionType,
@@ -41,10 +41,15 @@ from src.processes.services.exceptions import (
     CommentIsDeleted,
     CommentTextRequired,
 )
+from src.processes.services.workflow_permissions import (
+    MENTION_RE,
+    WorkflowPermissionService,
+)
 from src.services.markdown import MarkdownService
 from src.storage.services.attachments import (
     clear_guardian_permissions_for_attachment_ids,
 )
+from src.storage.tasks import sync_workflow_attachment_permissions
 from src.storage.utils import refresh_attachments
 
 UserModel = get_user_model()
@@ -613,7 +618,7 @@ class CommentService(BaseModelService):
         text: str,
         exclude_ids: List[int],
     ) -> Tuple[int]:
-        list_of_ids = re.findall(r'\[.*?\|\s*([0-9]+)\]', text)
+        list_of_ids = MENTION_RE.findall(text)
         if not list_of_ids:
             return ()
         return UserModel.objects.filter(
@@ -649,10 +654,11 @@ class CommentService(BaseModelService):
         workflow = self.instance.workflow
         mentioned_users_ids = ()
         if self.instance.text:
-            # Only new mentioned users
+            # Exclude users who already have view access via Guardian
+            exclude_ids = WorkflowPermissionService(workflow).get_viewer_ids()
             mentioned_users_ids = self._get_mentioned_users_ids(
                 text=self.instance.text,
-                exclude_ids=workflow.members.values_list('id', flat=True),
+                exclude_ids=exclude_ids,
             )
         return mentioned_users_ids
 
@@ -707,15 +713,22 @@ class CommentService(BaseModelService):
                 self._get_new_comment_recipients(task)
             )
             if mentioned_users_ids:
-                workflow.members.add(*mentioned_users_ids)
-                send_mention_notification.delay(
-                    logging=self.user.account.log_api_requests,
-                    logo_lg=self.user.account.logo_lg,
-                    author_id=self.user.id,
-                    event_id=self.instance.id,
-                    account_id=self.user.account.id,
-                    users_ids=mentioned_users_ids,
-                    text=self.instance.text,
+                # Guardian: grant view to mentioned users
+                WorkflowPermissionService(workflow).grant_view_bulk(
+                    user_ids=mentioned_users_ids,
+                    source_type=PermissionSource.MENTION,
+                    source_id=self.instance.id,
+                )
+                transaction.on_commit(
+                    lambda: send_mention_notification.delay(
+                        logging=self.user.account.log_api_requests,
+                        logo_lg=self.user.account.logo_lg,
+                        author_id=self.user.id,
+                        event_id=self.instance.id,
+                        account_id=self.user.account.id,
+                        users_ids=mentioned_users_ids,
+                        text=self.instance.text,
+                    ),
                 )
                 AnalyticService.mentions_created(
                     text=clear_text,
@@ -725,14 +738,16 @@ class CommentService(BaseModelService):
                     workflow=workflow,
                 )
             if notify_users_ids:
-                send_comment_notification.delay(
-                    logging=self.account.log_api_requests,
-                    logo_lg=self.account.logo_lg,
-                    author_id=self.user.id,
-                    event_id=self.instance.id,
-                    account_id=self.account.id,
-                    users_ids=notify_users_ids,
-                    text=self.instance.text,
+                transaction.on_commit(
+                    lambda: send_comment_notification.delay(
+                        logging=self.account.log_api_requests,
+                        logo_lg=self.account.logo_lg,
+                        author_id=self.user.id,
+                        event_id=self.instance.id,
+                        account_id=self.account.id,
+                        users_ids=notify_users_ids,
+                        text=self.instance.text,
+                    ),
                 )
                 AnalyticService.comment_added(
                     text=clear_text,
@@ -769,20 +784,36 @@ class CommentService(BaseModelService):
                 **kwargs,
             )
             refresh_attachments(source=self.instance, user=self.user)
-            new_mentioned_users_ids = self._get_updated_comment_recipients()
-            if new_mentioned_users_ids:
-                self.instance.workflow.members.add(*new_mentioned_users_ids)
+            # Diff-based permission sync for this comment's mentions:
+            # parse ALL mentions from new text, let the service compute
+            # the delta — only truly added/removed users hit the DB.
+            all_mentioned_ids = self._get_mentioned_users_ids(
+                text=self.instance.text,
+                exclude_ids=[self.user.id],
+            ) if self.instance.text else ()
+
+            perm_service = WorkflowPermissionService(self.instance.workflow)
+            added_ids = perm_service.sync_view_by_source(
+                source_type=PermissionSource.MENTION,
+                source_id=self.instance.id,
+                desired_user_ids=all_mentioned_ids,
+            )
+
+            if added_ids:
                 send_mention_notification.delay(
                     logging=self.user.account.log_api_requests,
                     logo_lg=self.user.account.logo_lg,
                     author_id=self.user.id,
                     event_id=self.instance.id,
                     account_id=self.user.account.id,
-                    users_ids=new_mentioned_users_ids,
+                    users_ids=tuple(added_ids),
                     text=self.instance.text,
                 )
 
         self._send_event_updated()
+        sync_workflow_attachment_permissions.delay(
+            self.instance.workflow_id,
+        )
         AnalyticService.comment_edited(
             text=clear_text,
             user=self.user,
@@ -801,15 +832,26 @@ class CommentService(BaseModelService):
             raise CommentedTaskNotActive
         storage_attachments = self.instance.storage_attachments
         ids_to_delete = list(storage_attachments.values_list('id', flat=True))
-        clear_guardian_permissions_for_attachment_ids(ids_to_delete)
-        storage_attachments.delete()
-        super().partial_update(
-            status=CommentStatus.DELETED,
-            with_attachments=False,
-            text=None,
-            force_save=True,
-        )
+        with transaction.atomic():
+            clear_guardian_permissions_for_attachment_ids(ids_to_delete)
+            storage_attachments.delete()
+            super().partial_update(
+                status=CommentStatus.DELETED,
+                with_attachments=False,
+                text=None,
+                force_save=True,
+            )
+            # Targeted revoke: only remove mention-permissions
+            WorkflowPermissionService(
+                self.instance.workflow,
+            ).revoke_view_by_source(
+                source_type=PermissionSource.MENTION,
+                source_id=self.instance.id,
+            )
         self._send_event_updated()
+        sync_workflow_attachment_permissions.delay(
+            self.instance.workflow_id,
+        )
         AnalyticService.comment_deleted(
             text=self.instance.clear_text,
             user=self.user,

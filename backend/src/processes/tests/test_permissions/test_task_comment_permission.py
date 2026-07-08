@@ -6,6 +6,10 @@ from src.processes.enums import OwnerRole, OwnerType
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.workflows.task import TaskPerformer
 from src.processes.permissions import TaskCommentPermission
+from src.permissions.enums import PermissionSource
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_group,
@@ -88,7 +92,7 @@ class TestTaskCommentPermission:
             is_account_owner=False,
             is_admin=False,
         )
-        workflow.members.add(member_user)
+        WorkflowPermissionService(workflow).grant_view(member_user, source_type=PermissionSource.PERFORMER, source_id='0')
 
         request = Mock()
         request.user = member_user
@@ -118,7 +122,7 @@ class TestTaskCommentPermission:
             is_account_owner=False,
             is_admin=False,
         )
-        workflow.owners.add(workflow_owner)
+        WorkflowPermissionService(workflow).grant_change(workflow_owner, source_type=PermissionSource.TEMPLATE_OWNER, source_id='0')
 
         request = Mock()
         request.user = workflow_owner

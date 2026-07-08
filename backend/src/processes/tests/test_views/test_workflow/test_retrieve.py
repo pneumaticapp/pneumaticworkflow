@@ -38,6 +38,10 @@ from src.processes.tests.fixtures import (
     create_test_user,
     create_test_workflow, create_test_dataset,
 )
+from src.permissions.enums import PermissionSource
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -500,7 +504,7 @@ def test_retrieve__not_admin_user_workflow_member__ok(api_client):
         is_account_owner=False,
     )
     workflow = create_test_workflow(user, tasks_count=1)
-    workflow.members.add(not_admin_user)
+    WorkflowPermissionService(workflow).grant_view(not_admin_user, source_type=PermissionSource.PERFORMER, source_id='0')
     api_client.token_authenticate(user=not_admin_user)
 
     # act

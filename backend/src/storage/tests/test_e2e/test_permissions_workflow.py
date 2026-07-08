@@ -4,7 +4,10 @@ Tests full workflow without mocks - real database operations.
 """
 
 import pytest
-from guardian.shortcuts import assign_perm
+from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.models import ContentType
+
+from src.permissions.models import UserObjectPermission
 
 from src.processes.tests.fixtures import (
     create_test_account,
@@ -18,6 +21,10 @@ from src.processes.tests.fixtures import (
 )
 from src.storage.enums import AccessType, SourceType
 from src.storage.services.attachments import AttachmentService
+from src.permissions.enums import PermissionSource
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -126,7 +133,19 @@ class TestPermissionsWorkflowE2E:
             access_type=AccessType.RESTRICTED,
             source_type=SourceType.ACCOUNT,
         )
-        assign_perm('storage.access_attachment', user, attachment)
+        att_ctype = ContentType.objects.get_for_model(attachment)
+        att_perm = Permission.objects.get(
+            content_type=att_ctype,
+            codename='access_attachment',
+        )
+        UserObjectPermission.objects.create(
+            user=user,
+            permission=att_perm,
+            content_type=att_ctype,
+            object_pk=str(attachment.pk),
+            source_type=PermissionSource.PERFORMER,
+            source_id='0',
+        )
         service = AttachmentService(user=user)
 
         # act
@@ -319,7 +338,11 @@ class TestPermissionsWorkflowE2E:
         owner = create_test_admin()
         member = create_test_user(account=owner.account)
         workflow = create_test_workflow(user=owner, tasks_count=2)
-        workflow.members.add(member)
+        WorkflowPermissionService(workflow).grant_view(
+            member,
+            source_type=PermissionSource.WORKFLOW_VIEWER,
+            source_id=workflow.pk,
+        )
         task1 = workflow.tasks.first()
         task2 = workflow.tasks.last()
 

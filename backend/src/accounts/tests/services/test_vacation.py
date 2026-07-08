@@ -18,6 +18,9 @@ from src.processes.tests.fixtures import (
     create_test_template,
     create_test_workflow,
 )
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 
 
 pytestmark = pytest.mark.django_db
@@ -351,7 +354,7 @@ def test_activate__no_user_groups__ok(mocker):
 def test_activate__adds_members__ok(mocker):
 
     """
-    Adds substitutes to workflow.members.
+    Grants substitutes view_workflow permission via Guardian.
     """
 
     # arrange
@@ -380,7 +383,7 @@ def test_activate__adds_members__ok(mocker):
     service.activate(substitute_user_ids=[substitute.id])
 
     # assert
-    assert workflow.members.filter(id=substitute.id).exists()
+    assert WorkflowPermissionService(workflow).has_view(substitute)
     task_delegation_event_mock.assert_called_once_with(
         task=mocker.ANY,
         user=owner,
@@ -753,7 +756,7 @@ def test_activate__update_existing__creates_perfs__ok(mocker):
         group=group,
     ).exists()
     assert group_perf_exists is True
-    assert workflow.members.filter(id=substitute.id).exists()
+    assert WorkflowPermissionService(workflow).has_view(substitute)
     task_delegation_event_mock.assert_called_once_with(
         task=task,
         user=owner,
@@ -1688,9 +1691,7 @@ def test_update_existing__skips_non_running_wf__ok(mocker):
     service.activate(substitute_user_ids=[substitute.id])
 
     # assert
-    assert not done_wf.members.filter(
-        id=substitute.id,
-    ).exists()
+    assert not WorkflowPermissionService(done_wf).has_view(substitute)
     event_mock.assert_not_called()
 
 

@@ -314,62 +314,6 @@ class DeleteUserFromTemplateOwnerQuery(BaseDeleteTemplateOwnerQuery):
     substitution_field = "user_id"
 
 
-class DeleteUserFromWorkflowMembersQuery(SqlQueryObject):
-
-    """ Deletes membership records for user_to_delete
-        where user_to_substitution exists in workflow """
-
-    def __init__(
-        self,
-        user_to_delete: int,
-        user_to_substitution: int,
-    ):
-        self.user_to_delete = user_to_delete
-        self.user_to_substitution = user_to_substitution
-
-    def get_sql(self):
-        return """
-        DELETE FROM processes_workflow_members
-        WHERE
-          user_id = %(user_to_delete)s AND
-          workflow_id IN (
-            SELECT workflow_id FROM processes_workflow_members
-            WHERE user_id = %(user_to_substitution)s
-          )
-        """, {
-            'user_to_delete': self.user_to_delete,
-            'user_to_substitution': self.user_to_substitution,
-        }
-
-
-class DeleteUserFromWorkflowOwnersQuery(SqlQueryObject):
-
-    """ Deletes ownership records for user_to_delete
-        where user_to_substitution exists in workflow """
-
-    def __init__(
-        self,
-        user_to_delete: int,
-        user_to_substitution: int,
-    ):
-        self.user_to_delete = user_to_delete
-        self.user_to_substitution = user_to_substitution
-
-    def get_sql(self):
-        return """
-        DELETE FROM processes_workflow_owners
-        WHERE
-          user_id = %(user_to_delete)s AND
-          workflow_id IN (
-            SELECT workflow_id FROM processes_workflow_owners
-            WHERE user_id = %(user_to_substitution)s
-          )
-        """, {
-            'user_to_delete': self.user_to_delete,
-            'user_to_substitution': self.user_to_substitution,
-        }
-
-
 class BaseDeleteTemplateConditionsQuery(SqlQueryObject):
     def __init__(self, delete_id: int, substitution_id: int):
         self.delete_id = delete_id

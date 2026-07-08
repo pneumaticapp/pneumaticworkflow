@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 import pytest
+from guardian.shortcuts import remove_perm
 from rest_framework import status
 from django.utils import timezone
 
@@ -54,6 +55,10 @@ from src.processes.tests.fixtures import (
     create_test_workflow, create_test_dataset,
 )
 from src.utils.dates import date_format
+from src.permissions.enums import PermissionSource
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -174,7 +179,7 @@ def test_retrieve__workflow_member__ok(api_client):
         is_account_owner=False,
     )
     workflow = create_test_workflow(user)
-    workflow.members.add(another_user)
+    WorkflowPermissionService(workflow).grant_view(another_user, source_type=PermissionSource.PERFORMER, source_id='0')
     tasks = workflow.tasks.order_by('number')
     task = tasks[0]
 
@@ -218,7 +223,7 @@ def test_retrieve__admin_not_workflow_member__permission_denied(api_client):
         is_account_owner=False,
     )
     workflow = create_test_workflow(user)
-    workflow.members.remove(another_user)
+    remove_perm('view_workflow', another_user, workflow)
     tasks = workflow.tasks.order_by('number')
     task = tasks[0]
 
@@ -1529,7 +1534,7 @@ def test_retrieve__user_in_group_task_performer__ok(api_client, mocker):
     group_user = create_test_admin(account=account)
     group = create_test_group(account, users=[group_user])
     workflow = create_test_workflow(user=owner, tasks_count=1)
-    workflow.members.add(group_user)
+    WorkflowPermissionService(workflow).grant_view(group_user, source_type=PermissionSource.PERFORMER, source_id='0')
     task = workflow.tasks.get(number=1)
     TaskPerformer.objects.create(
         task_id=task.id,
@@ -1597,7 +1602,7 @@ def test_retrieve__user_is_member_in_deleted_task__not_found(api_client):
     admin = create_test_admin(account=user.account)
     api_client.token_authenticate(admin)
     workflow = create_test_workflow(user, tasks_count=1)
-    workflow.members.add(admin)
+    WorkflowPermissionService(workflow).grant_view(admin, source_type=PermissionSource.PERFORMER, source_id='0')
     task = workflow.tasks.get(number=1)
     task.delete()
 
@@ -1982,7 +1987,7 @@ def test_retrieve__task_performer__is_read_only_viewer_false(
         task=task,
         user=performer_user,
     )
-    workflow.members.add(performer_user)
+    WorkflowPermissionService(workflow).grant_view(performer_user, source_type=PermissionSource.PERFORMER, source_id='0')
 
     api_client.token_authenticate(performer_user)
 
@@ -2026,7 +2031,7 @@ def test_retrieve__workflow_member__ok_read_only(
         is_account_owner=False,
         is_admin=False,
     )
-    workflow.members.add(member_user)
+    WorkflowPermissionService(workflow).grant_view(member_user, source_type=PermissionSource.PERFORMER, source_id='0')
 
     api_client.token_authenticate(member_user)
 

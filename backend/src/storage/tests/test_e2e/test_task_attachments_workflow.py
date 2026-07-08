@@ -16,6 +16,10 @@ from src.storage.utils import _refresh_workflow_event_attachments
 from src.storage.models import Attachment
 from src.storage.services.attachments import AttachmentService
 from src.storage.utils import refresh_attachments
+from src.permissions.enums import PermissionSource
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -330,7 +334,10 @@ class TestTaskAttachmentsE2E:
             email='member2@test.pneumatic.app',
         )
         workflow = create_test_workflow(user=owner, tasks_count=1)
-        workflow.members.add(member1, member2)
+        WorkflowPermissionService(workflow).grant_view_bulk(
+            [member1.id, member2.id],
+            source_type=PermissionSource.PERFORMER, source_id='0',
+        )
         task = workflow.tasks.first()
         task.description = (
             'File: [f](https://example.com/files/members_file_e2e)'

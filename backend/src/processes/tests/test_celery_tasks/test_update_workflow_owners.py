@@ -18,6 +18,9 @@ from src.processes.tests.fixtures import (
     create_test_user,
     create_test_workflow,
 )
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db
@@ -55,7 +58,7 @@ def test__delete_group_owner_only__ok():
     update_workflow_owners([template.id])
 
     # assert
-    assert workflow.owners.all().count() == 0
+    assert len(WorkflowPermissionService(workflow).get_owner_ids()) == 0
 
 
 def test__add_template_owner_is_deleted__ok():
@@ -91,8 +94,8 @@ def test__add_template_owner_is_deleted__ok():
     update_workflow_owners([template.id])
 
     # assert
-    assert workflow.owners.all().count() == 0
-    assert workflow.members.all().count() == 0
+    assert len(WorkflowPermissionService(workflow).get_owner_ids()) == 0
+    assert len(WorkflowPermissionService(workflow).get_viewer_ids()) == 0
 
 
 def test__delete_group_owner_user_owner_persists_same_user__ok():
@@ -126,8 +129,8 @@ def test__delete_group_owner_user_owner_persists_same_user__ok():
     update_workflow_owners([template.id])
 
     # assert
-    assert workflow.owners.all().count() == 1
-    assert workflow.owners.get(id=user.id)
+    assert len(WorkflowPermissionService(workflow).get_owner_ids()) == 1
+    assert WorkflowPermissionService(workflow).has_change(user)
 
 
 def test__delete_group_owner_user_owner_persists_different_user__ok():
@@ -162,8 +165,8 @@ def test__delete_group_owner_user_owner_persists_different_user__ok():
     update_workflow_owners([template.id])
 
     # assert
-    assert workflow.owners.all().count() == 1
-    assert workflow.owners.get(id=user_2.id)
+    assert len(WorkflowPermissionService(workflow).get_owner_ids()) == 1
+    assert WorkflowPermissionService(workflow).has_change(user_2)
 
 
 def test__delete_group_owner_with_users_user_owner_persists__ok():
@@ -197,8 +200,8 @@ def test__delete_group_owner_with_users_user_owner_persists__ok():
     update_workflow_owners([template.id])
 
     # assert
-    assert workflow.owners.all().count() == 1
-    assert workflow.owners.get(id=user.id)
+    assert len(WorkflowPermissionService(workflow).get_owner_ids()) == 1
+    assert WorkflowPermissionService(workflow).has_change(user)
 
 
 def test__delete_one_group_owner_user_owner_persists_empty_group__ok():
@@ -239,8 +242,8 @@ def test__delete_one_group_owner_user_owner_persists_empty_group__ok():
     update_workflow_owners([template.id])
 
     # assert
-    assert workflow.owners.all().count() == 1
-    assert workflow.owners.get(id=user.id)
+    assert len(WorkflowPermissionService(workflow).get_owner_ids()) == 1
+    assert WorkflowPermissionService(workflow).has_change(user)
 
 
 def test__delete_one_group_owner_other_group_owner_persists__ok():
@@ -285,8 +288,8 @@ def test__delete_one_group_owner_other_group_owner_persists__ok():
     update_workflow_owners([template.id])
 
     # assert
-    assert workflow.owners.all().count() == 1
-    assert workflow.owners.get(id=user.id)
+    assert len(WorkflowPermissionService(workflow).get_owner_ids()) == 1
+    assert WorkflowPermissionService(workflow).has_change(user)
 
 
 def test__delete_group_owner_other_template_unchanged__ok():
@@ -335,12 +338,12 @@ def test__delete_group_owner_other_template_unchanged__ok():
     update_workflow_owners([template_2.id])
 
     # assert
-    assert template.owners.all().count() == 1
+    assert template.owners.count() == 1
     assert template.owners.get(group_id=group.id)
-    assert workflow.owners.all().count() == 1
-    assert workflow.owners.get(id=user.id)
-    assert template_2.owners.all().count() == 0
-    assert workflow_2.owners.all().count() == 0
+    assert len(WorkflowPermissionService(workflow).get_owner_ids()) == 1
+    assert WorkflowPermissionService(workflow).has_change(user)
+    assert template_2.owners.count() == 0
+    assert len(WorkflowPermissionService(workflow_2).get_owner_ids()) == 0
 
 
 def test__delete_group_owner_different_account_unchanged__ok():
@@ -402,12 +405,14 @@ def test__delete_group_owner_different_account_unchanged__ok():
     update_workflow_owners([template_account_another.id])
 
     # assert
-    assert template.owners.all().count() == 1
+    assert template.owners.count() == 1
     assert template.owners.get(group_id=group.id)
-    assert workflow.owners.all().count() == 1
-    assert workflow.owners.get(id=user.id)
-    assert template_account_another.owners.all().count() == 0
-    assert workflow_account_another.owners.all().count() == 0
+    assert len(WorkflowPermissionService(workflow).get_owner_ids()) == 1
+    assert WorkflowPermissionService(workflow).has_change(user)
+    assert template_account_another.owners.count() == 0
+    assert len(
+        WorkflowPermissionService(workflow_account_another).get_owner_ids(),
+    ) == 0
 
 
 def test__update_group_owner_user_in_owners_and_members__ok():
@@ -437,10 +442,10 @@ def test__update_group_owner_user_in_owners_and_members__ok():
     update_workflow_owners([template.id])
 
     # assert
-    assert workflow.owners.all().count() == 1
-    assert workflow.owners.get(id=user.id)
-    assert workflow.members.all().count() == 1
-    assert workflow.members.get(id=user.id)
+    assert len(WorkflowPermissionService(workflow).get_owner_ids()) == 1
+    assert WorkflowPermissionService(workflow).has_change(user)
+    assert len(WorkflowPermissionService(workflow).get_viewer_ids()) == 1
+    assert WorkflowPermissionService(workflow).has_view(user)
 
 
 def test__update_group_owner_new_user_one_owner_two_members__ok():
@@ -477,11 +482,11 @@ def test__update_group_owner_new_user_one_owner_two_members__ok():
     update_workflow_owners([template.id])
 
     # assert
-    assert workflow.owners.all().count() == 1
-    assert workflow.owners.get(id=user_2.id)
-    assert workflow.members.all().count() == 2
-    assert workflow.members.filter(id=user.id).exists()
-    assert workflow.members.filter(id=user_2.id).exists()
+    assert len(WorkflowPermissionService(workflow).get_owner_ids()) == 1
+    assert WorkflowPermissionService(workflow).has_change(user_2)
+    assert len(WorkflowPermissionService(workflow).get_viewer_ids()) == 2
+    assert WorkflowPermissionService(workflow).has_view(user)
+    assert WorkflowPermissionService(workflow).has_view(user_2)
 
 
 def test__add_group_in_taskperformer__ok():
@@ -513,7 +518,7 @@ def test__add_group_in_taskperformer__ok():
     update_workflow_owners([template.id])
 
     # assert
-    assert workflow.members.filter(id=user_in_group.id).exists()
+    assert WorkflowPermissionService(workflow).has_view(user_in_group)
 
 
 def test__add_user_in_taskperformer__ok():
@@ -544,7 +549,7 @@ def test__add_user_in_taskperformer__ok():
     update_workflow_owners([template.id])
 
     # assert
-    assert workflow.members.filter(id=task_performer_user.id).exists()
+    assert WorkflowPermissionService(workflow).has_view(task_performer_user)
 
 
 def test__add_group_and_user_in_taskperformer__ok():
@@ -585,8 +590,8 @@ def test__add_group_and_user_in_taskperformer__ok():
     update_workflow_owners([template.id])
 
     # assert
-    assert workflow.members.filter(id=group_user.id).exists()
-    assert workflow.members.filter(id=direct_user.id).exists()
+    assert WorkflowPermissionService(workflow).has_view(group_user)
+    assert WorkflowPermissionService(workflow).has_view(direct_user)
 
 
 def test__add_user_in_owner_and_taskperformer__ok():
@@ -623,7 +628,8 @@ def test__add_user_in_owner_and_taskperformer__ok():
     update_workflow_owners([template.id])
 
     # assert
-    assert workflow.members.filter(id=common_user.id).count() == 1
+    has_view = WorkflowPermissionService(workflow).has_view(common_user)
+    assert (1 if has_view else 0) == 1
 
 
 def test__add_performer_with_status_deleted__ok():
@@ -655,7 +661,7 @@ def test__add_performer_with_status_deleted__ok():
     update_workflow_owners([template.id])
 
     # assert
-    assert not workflow.members.filter(id=deleted_performer.id).exists()
+    assert not WorkflowPermissionService(workflow).has_view(deleted_performer)
 
 
 def test__update_group_taskperformer_add_members__ok(api_client):
@@ -690,4 +696,4 @@ def test__update_group_taskperformer_add_members__ok(api_client):
     update_workflow_owners([template.id])
 
     # assert
-    assert workflow.members.filter(id=user_in_group.id).exists()
+    assert WorkflowPermissionService(workflow).has_view(user_in_group)

@@ -32,7 +32,11 @@ class TemplatePresetViewSet(
     GenericViewSet,
 ):
     serializer_class = TemplatePresetSerializer
-    queryset = TemplatePreset.objects.all()
+
+    def get_queryset(self):
+        return TemplatePreset.objects.filter(
+            account_id=self.request.user.account_id,
+        )
 
     def get_permissions(self):
         return (

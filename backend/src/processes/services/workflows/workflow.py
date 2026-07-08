@@ -31,6 +31,9 @@ from src.processes.utils.common import (
 )
 from src.storage.utils import refresh_attachments
 from src.utils.dates import date_to_user_fmt
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 
 UserModel = get_user_model()
 
@@ -244,5 +247,4 @@ class WorkflowService(
         user_ids = Template.objects.filter(
             id=self.instance.template_id,
         ).get_owners_as_users()
-        self.instance.owners.set(user_ids)
-        self.instance.members.add(*user_ids)
+        WorkflowPermissionService(self.instance).set_owners(user_ids)

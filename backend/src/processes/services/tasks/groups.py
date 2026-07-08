@@ -8,6 +8,7 @@ from src.notifications.tasks import (
     send_new_task_websocket,
     send_task_deleted_notification,
 )
+from src.permissions.enums import PermissionSource
 from src.processes.enums import DirectlyStatus, PerformerType
 from src.processes.messages.workflow import MSG_PW_0082
 from src.processes.models.workflows.task import TaskPerformer
@@ -21,6 +22,10 @@ from src.processes.services.workflow_action import (
     WorkflowActionService,
     WorkflowEventService,
 )
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
+from src.storage.tasks import sync_workflow_attachment_permissions
 from src.storage.utils import reassign_restricted_permissions_for_task
 
 UserModel = get_user_model()
@@ -126,10 +131,18 @@ class GroupPerformerService(BasePerformerService2):
                     account_id=self.task.account_id,
                 )
 
+        # CRITICAL: set_viewers() MUST run before
+        # reassign_restricted_permissions to revoke stale
+        # permissions before restricted attachments are
+        # reassigned
+        WorkflowPermissionService(self.task.workflow).set_viewers()
         reassign_restricted_permissions_for_task(
             task=self.task,
             user=self.user,
         )
+
+        # Sync attachment permissions so removed group loses file access
+        sync_workflow_attachment_permissions.delay(self.task.workflow_id)
 
     def _create_group_actions(self, group: UserGroup) -> None:
         WorkflowEventService.performer_group_created_event(
@@ -152,7 +165,12 @@ class GroupPerformerService(BasePerformerService2):
         )
         users = group_users - task_performer_users
         if users and not self.task.get_active_delay():
-            self.task.workflow.members.add(*users)
+            # Guardian: grant view to group users
+            WorkflowPermissionService(self.task.workflow).grant_view_bulk(
+                user_ids=users,
+                source_type=PermissionSource.PERFORMER_GROUP,
+                source_id=group.id,
+            )
             if self.user.id in users:
                 send_new_task_websocket.delay(
                     logging=self.user.account.log_api_requests,

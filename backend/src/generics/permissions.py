@@ -41,3 +41,14 @@ class StagingPermission(BasePermission):
             settings.CONFIGURATION_TESTING,
             settings.CONFIGURATION_STAGING,
         }
+
+
+class DenyAll(BasePermission):
+    """Default-deny permission for unrecognized viewset actions.
+
+    Used as the fallback in get_permissions() to replace
+    super().get_permissions() which is a fail-open antipattern.
+    """
+
+    def has_permission(self, request, view):
+        return False

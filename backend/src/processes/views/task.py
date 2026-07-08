@@ -22,6 +22,7 @@ from src.generics.mixins.views import (
     CustomViewSetMixin,
 )
 from src.generics.permissions import (
+    DenyAll,
     IsAuthenticated,
     UserIsAuthenticated,
 )
@@ -95,6 +96,9 @@ from src.processes.services.tasks.performers import (
 from src.processes.services.tasks.task import TaskService
 from src.processes.services.workflow_action import (
     WorkflowActionService,
+)
+from src.processes.queries import (
+    WorkflowPermissionQuery,
 )
 from src.processes.throttling import TaskPerformerGuestThrottle
 from src.utils.validation import raise_validation_error
@@ -200,7 +204,7 @@ class TaskViewSet(
                 ExpiredSubscriptionPermission(),
                 BillingPlanPermission(),
             )
-        return super().get_permissions()
+        return (DenyAll(),)
 
     action_serializer_classes = {
         'retrieve': TaskSerializer,
@@ -239,7 +243,9 @@ class TaskViewSet(
             queryset = queryset.with_date_first_started()
         elif self.action == 'webhook_example':
             queryset = queryset.filter(
-                workflow__owners=user.id,
+                WorkflowPermissionQuery.change_q(
+                    user.id, pk_field='workflow_id',
+                ),
             ).order_by('-date_started')
         return self.prefetch_queryset(queryset)
 
@@ -270,7 +276,6 @@ class TaskViewSet(
             queryset = queryset.prefetch_related(
                 'checklists__selections',
                 'output__storage_attachments',
-                'output__attachments',
                 Prefetch(
                     'output__selections',
                     queryset=FieldSelection.objects.order_by('id'),
@@ -528,7 +533,7 @@ class TaskViewSet(
                             queryset=DatasetItem.objects.order_by('order'),
                             to_attr='dataset_values',
                         ),
-                        'attachments',
+                        'storage_attachments',
                     ),
                 ),
             ).get(pk=task.pk),
