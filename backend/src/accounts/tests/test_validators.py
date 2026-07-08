@@ -101,7 +101,7 @@ class TestWorkflowTask:
             account=user.account,
         )
         task = workflow.tasks.get(number=1)
-        task.performers.all().delete()
+        task.taskperformer_set.all().delete()
         task.raw_performers.all().delete()
         task.add_raw_performer(user_performer)
         TaskPerformer.objects.create(
@@ -121,7 +121,7 @@ class TestWorkflowTask:
         user = create_test_user()
         workflow = create_test_workflow(user, tasks_count=1)
         task = workflow.tasks.get(number=1)
-        task.performers.all().delete()
+        task.taskperformer_set.all().delete()
         task.raw_performers.all().delete()
 
         user_2 = create_test_user(
@@ -155,7 +155,7 @@ class TestWorkflowTask:
         workflow = create_test_workflow(owner, tasks_count=1)
         performer = create_test_admin(account=account)
         task = workflow.tasks.get(number=1)
-        task.performers.all().delete()
+        task.taskperformer_set.all().delete()
         task.raw_performers.all().delete()
         TaskPerformer.objects.create(
             task_id=task.id,
@@ -183,7 +183,7 @@ class TestWorkflowTask:
             account=user.account,
         )
         task = workflow.tasks.get(number=1)
-        task.performers.all().delete()
+        task.taskperformer_set.all().delete()
         task.raw_performers.all().delete()
         task.status = status
         task.save()
@@ -213,7 +213,7 @@ class TestWorkflowTask:
             account=user.account,
         )
         task = workflow.tasks.get(number=1)
-        task.performers.all().delete()
+        task.taskperformer_set.all().delete()
         task.raw_performers.all().delete()
         task.status = status
         task.save()

@@ -1856,7 +1856,7 @@ def test_continue_task__external_workflow__skip_wf_starter_notification(
     workflow.workflow_starter = None
     workflow.save()
     task = workflow.tasks.get(number=1)
-    task.performers.all().delete()
+    task.taskperformer_set.all().delete()
     TaskPerformer.objects.create(
         task_id=task.id,
         user_id=user.id,
@@ -1940,7 +1940,7 @@ def test_complete_task__user_performer__ok(mocker):
     user = create_test_not_admin(account=account)
     workflow = create_test_workflow(user=owner)
     task = workflow.tasks.get(number=1)
-    task.performers.all().delete()
+    task.taskperformer_set.all().delete()
     task_performer = TaskPerformer.objects.create(
         task_id=task.id,
         user_id=user.id,
@@ -2028,7 +2028,7 @@ def test_complete_task__exist_webhook_subscription__send_webhook(mocker):
     user = create_test_not_admin(account=account)
     workflow = create_test_workflow(user=owner)
     task = workflow.tasks.get(number=1)
-    task.performers.all().delete()
+    task.taskperformer_set.all().delete()
     TaskPerformer.objects.create(
         task_id=task.id,
         user_id=user.id,
@@ -2698,7 +2698,7 @@ def test_complete_task_for_user__one_user_performer__ok(mocker):
     user = create_test_admin(account=account)
     workflow = create_test_workflow(user=owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
-    task.performers.all().delete()
+    task.taskperformer_set.all().delete()
     TaskPerformer.objects.create(
         task_id=task.id,
         user_id=user.id,
@@ -2781,7 +2781,7 @@ def test_complete_task_for_user__with_fields_values__ok(mocker):
     workflow = create_test_workflow(user=owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
     group = create_test_group(account=account, users=[user])
-    task.performers.all().delete()
+    task.taskperformer_set.all().delete()
     TaskPerformer.objects.create(
         task_id=task.id,
         group=group,
@@ -3508,7 +3508,7 @@ def test_complete_task_for_user__user_performer_last_completion__ok(
     user = create_test_admin(account=account)
     workflow = create_test_workflow(user=owner)
     task = workflow.tasks.get(number=1)
-    task.performers.all().delete()
+    task.taskperformer_set.all().delete()
     TaskPerformer.objects.create(
         task_id=task.id,
         user_id=user.id,
@@ -3594,7 +3594,7 @@ def test_complete_task_for_user__user_performer_first_completion__ok(
     user = create_test_admin(account=account)
     workflow = create_test_workflow(user=owner)
     task = workflow.tasks.get(number=1)
-    task.performers.all().delete()
+    task.taskperformer_set.all().delete()
     task_performer = TaskPerformer.objects.create(
         task_id=task.id,
         user_id=user.id,
@@ -3778,7 +3778,7 @@ def test_complete_task_for_user__group_performer_one_user__ok(mocker):
     workflow = create_test_workflow(user=owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
     group = create_test_group(account=account, users=[user])
-    task.performers.all().delete()
+    task.taskperformer_set.all().delete()
     TaskPerformer.objects.create(
         task_id=task.id,
         group=group,
@@ -3869,7 +3869,7 @@ def test_complete_task_for_user__group_performer_existent_perf__ok(mocker):
     workflow = create_test_workflow(user=owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
     group = create_test_group(account=account, users=[user])
-    task.performers.all().delete()
+    task.taskperformer_set.all().delete()
     TaskPerformer.objects.create(
         task_id=task.id,
         group=group,
@@ -3968,7 +3968,7 @@ def test_complete_task_for_user__group_user_already_completed__raise_exc(
     workflow = create_test_workflow(user=owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
     group = create_test_group(account=account, users=[user])
-    task.performers.all().delete()
+    task.taskperformer_set.all().delete()
     TaskPerformer.objects.create(
         task_id=task.id,
         group=group,
@@ -4064,7 +4064,7 @@ def test_complete_task_for_user__group_user__checklist_incomplete__raise(
     workflow = create_test_workflow(user=owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
     group = create_test_group(account=account, users=[user])
-    task.performers.all().delete()
+    task.taskperformer_set.all().delete()
     TaskPerformer.objects.create(
         task_id=task.id,
         group=group,
@@ -4155,7 +4155,7 @@ def test_complete_task_for_user__group_with_output__ok(mocker):
     workflow = create_test_workflow(user=owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
     group = create_test_group(account=account, users=[user])
-    task.performers.all().delete()
+    task.taskperformer_set.all().delete()
     TaskPerformer.objects.create(
         task_id=task.id,
         group=group,
@@ -4260,7 +4260,7 @@ def test_complete_task_for_user__group_can_complete__ok(mocker):
     workflow = create_test_workflow(user=owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
     group = create_test_group(account=account, users=[user])
-    task.performers.all().delete()
+    task.taskperformer_set.all().delete()
     TaskPerformer.objects.create(
         task_id=task.id,
         group=group,
@@ -4357,7 +4357,7 @@ def test_complete_task_for_user__rcba_and_group_user_first_completion__ok(
     task.require_completion_by_all = True
     task.save()
     group = create_test_group(account=account, users=[user_1, user_2])
-    task.performers.all().delete()
+    task.taskperformer_set.all().delete()
     TaskPerformer.objects.create(
         task_id=task.id,
         group=group,
@@ -4565,7 +4565,7 @@ def test_complete_task_for_user__account_owner_not_performer__ok(mocker):
     user = create_test_admin(account=account)
     workflow = create_test_workflow(user=owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
-    task.performers.all().delete()
+    task.taskperformer_set.all().delete()
     TaskPerformer.objects.create(
         task_id=task.id,
         user_id=user.id,
@@ -4660,7 +4660,7 @@ def test_complete_task_for_user__one_user_and_multiple_groups__ok(mocker):
         name='Group 2',
         users=[user_2],
     )
-    task.performers.all().delete()
+    task.taskperformer_set.all().delete()
     TaskPerformer.objects.create(
         task_id=task.id,
         group=group_1,
@@ -4764,7 +4764,7 @@ def test_complete_task_for_user__one_user_in_two_groups__ok(mocker):
         name='Group 2',
         users=[user],
     )
-    task.performers.all().delete()
+    task.taskperformer_set.all().delete()
     TaskPerformer.objects.create(
         task_id=task.id,
         group=group_1,
@@ -4859,7 +4859,7 @@ def test_complete_task_for_user__user_and_group_performer__ok(mocker):
     workflow = create_test_workflow(user=owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
     group = create_test_group(account=account, users=[user])
-    task.performers.all().delete()
+    task.taskperformer_set.all().delete()
     TaskPerformer.objects.create(
         task_id=task.id,
         user_id=user.id,
@@ -4952,7 +4952,7 @@ def test_complete_task_for_user__account_owner_in_group__ok(mocker):
     owner = create_test_owner(account=account)
     workflow = create_test_workflow(user=owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
-    task.performers.all().delete()
+    task.taskperformer_set.all().delete()
     group = create_test_group(account=account, users=[owner])
     TaskPerformer.objects.create(
         task_id=task.id,
@@ -5045,7 +5045,7 @@ def test_complete_task_for_user__group_performer_directly_deleted__raise_exc(
     workflow = create_test_workflow(user=owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
     group = create_test_group(account=account, users=[user])
-    task.performers.all().delete()
+    task.taskperformer_set.all().delete()
     TaskPerformer.objects.create(
         task_id=task.id,
         group=group,
@@ -5122,7 +5122,7 @@ def test_complete_task_for_user__user_performer_directly_deleted__raise_exc(
     user = create_test_not_admin(account=account)
     workflow = create_test_workflow(user=owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
-    task.performers.all().delete()
+    task.taskperformer_set.all().delete()
     TaskPerformer.objects.create(
         task_id=task.id,
         user=user,
@@ -5195,7 +5195,7 @@ def test_complete_task_for_user__group_deleted__raise_exception(
     workflow = create_test_workflow(user=owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
     group = create_test_group(account=account, users=[user])
-    task.performers.all().delete()
+    task.taskperformer_set.all().delete()
     TaskPerformer.objects.create(
         task_id=task.id,
         group=group,
@@ -6551,7 +6551,7 @@ def test_revert__user_performer__ok(mocker):
     user = create_test_admin(account=account)
     workflow = create_test_workflow(user=owner, active_task_number=2)
     revert_from_task = workflow.tasks.get(number=2)
-    revert_from_task.performers.all().delete()
+    revert_from_task.taskperformer_set.all().delete()
     TaskPerformer.objects.create(
         task_id=revert_from_task.id,
         user_id=user.id,

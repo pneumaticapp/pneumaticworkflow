@@ -434,7 +434,7 @@ class TestCanBeCompleted:
         workflow = create_test_workflow(user=owner, tasks_count=1)
         workflow.tasks.update(require_completion_by_all=True)
         task = workflow.tasks.get(number=1)
-        task.performers.all().delete()
+        task.taskperformer_set.all().delete()
         TaskPerformer.objects.create(
             task=task,
             group=group,

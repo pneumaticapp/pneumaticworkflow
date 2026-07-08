@@ -611,7 +611,7 @@ def test_events__performer_type_group_user__skip(api_client):
     group = create_test_group(account=account, users=[user])
     workflow = create_test_workflow(user=owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
-    task.performers.all().delete()
+    task.taskperformer_set.all().delete()
     TaskPerformer.objects.create(
         task_id=task.id,
         group_id=group.id,

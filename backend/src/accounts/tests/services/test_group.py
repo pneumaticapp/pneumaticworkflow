@@ -2087,7 +2087,7 @@ class TestUserGroupService:
         task = workflow.tasks.get(number=1)
         task.require_completion_by_all = True
         task.save()
-        task.performers.all().delete()
+        task.taskperformer_set.all().delete()
 
         TaskPerformer.objects.create(
             task=task,
