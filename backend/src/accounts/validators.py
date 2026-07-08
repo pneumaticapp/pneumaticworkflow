@@ -12,6 +12,8 @@ def user_is_last_performer(user: User):
     if (
         Task.objects.on_performer(user.id)
         .exclude_directly_deleted()
+        .filter(taskperformer__is_deleted=False)
+        .filter(raw_performers__is_deleted=False)
         .raw_performers_count(1)
         .filter(
             status__in=(

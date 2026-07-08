@@ -803,9 +803,7 @@ class TaskQuerySet(TasksBaseQuerySet):
     def exclude_directly_deleted(self):
         """Exclude tasks where performer has DELETED directly_status."""
         return self.exclude(
-            taskperformer__directly_status__in=(
-                DirectlyStatus.DELETED,
-            ),
+            taskperformer__directly_status=DirectlyStatus.DELETED,
         )
 
     def apd_status(self):

@@ -176,12 +176,10 @@ class TestWorkflowTask:
     def test_user_is_last_performer__active_task__ok(self, status):
 
         # arrange
-        user = create_test_user()
-        workflow = create_test_workflow(user, tasks_count=1)
-        user_performer = create_test_user(
-            email='performer@test.test',
-            account=user.account,
-        )
+        account = create_test_account()
+        owner = create_test_user(account=account)
+        workflow = create_test_workflow(owner, tasks_count=1)
+        user_performer = create_test_admin(account=account)
         task = workflow.tasks.get(number=1)
         task.taskperformer_set.all().delete()
         task.raw_performers.all().delete()
@@ -206,12 +204,10 @@ class TestWorkflowTask:
     def test_user_is_last_performer__not_active_task__not_found(self, status):
 
         # arrange
-        user = create_test_user()
-        workflow = create_test_workflow(user, tasks_count=1)
-        user_performer = create_test_user(
-            email='performer@test.test',
-            account=user.account,
-        )
+        account = create_test_account()
+        owner = create_test_user(account=account)
+        workflow = create_test_workflow(owner, tasks_count=1)
+        user_performer = create_test_admin(account=account)
         task = workflow.tasks.get(number=1)
         task.taskperformer_set.all().delete()
         task.raw_performers.all().delete()
