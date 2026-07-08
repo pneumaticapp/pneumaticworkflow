@@ -2507,10 +2507,7 @@ class GetIncompletedTaskPerformersQuery(SqlQueryObject):
             FROM processes_taskperformer ptp
             JOIN accounts_user au ON au.id = ptp.user_id
             WHERE ptp.task_id = %(task_id)s
-              AND ptp.type IN (
-                '{PerformerType.USER}',
-                '{PerformerType.MANAGER}'
-              )
+              AND ptp.type = '{PerformerType.USER}'
               AND ptp.is_completed = FALSE
               AND ptp.is_deleted IS FALSE
               AND ptp.directly_status != '{DirectlyStatus.DELETED}'
@@ -2521,6 +2518,8 @@ class GetIncompletedTaskPerformersQuery(SqlQueryObject):
 
             SELECT DISTINCT au.id
             FROM processes_taskperformer ptp_group
+            JOIN accounts_usergroup aug
+              ON aug.id = ptp_group.group_id
             JOIN accounts_usergroup_users ugu
               ON ugu.usergroup_id = ptp_group.group_id
             JOIN accounts_user au
@@ -2533,11 +2532,14 @@ class GetIncompletedTaskPerformersQuery(SqlQueryObject):
               )
               AND ptp_user.user_id = au.id
               AND ptp_user.is_completed = TRUE
+              AND ptp_user.is_deleted IS FALSE
+              AND ptp_user.directly_status != '{DirectlyStatus.DELETED}'
             WHERE ptp_group.task_id = %(task_id)s
               AND ptp_group.type = '{PerformerType.GROUP}'
               AND ptp_group.is_deleted IS FALSE
               AND ptp_group.directly_status != '{DirectlyStatus.DELETED}'
               AND ptp_user.id IS NULL
+              AND aug.is_deleted IS FALSE
               AND au.is_deleted IS FALSE
               AND au.status = '{UserStatus.ACTIVE}'
         """, self.params

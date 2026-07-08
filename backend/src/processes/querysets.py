@@ -979,7 +979,7 @@ class TemplateDraftQuerySet(BaseQuerySet):
         )
 
 
-class TaskPerformerQuerySet(BaseHardQuerySet):
+class TaskPerformerQuerySet(BaseQuerySet, BaseHardQuerySet):
 
     def with_tasks_after(self, task):
         return self.filter(task__number__gte=task.number)

@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, List, Optional, Set, Tuple
 
 from django.contrib.auth import get_user_model
 from django.db import models
+from django.db.models.constraints import UniqueConstraint
 from django.utils import timezone
 from django.db.models import Q
 
@@ -770,12 +771,16 @@ class Delay(SoftDeleteModel):
     objects = BaseSoftDeleteManager.from_queryset(DelayBaseQuerySet)()
 
 
-class TaskPerformer(
-    SoftDeleteModel,
-):
+class TaskPerformer(SoftDeleteModel):
 
     class Meta:
-        unique_together = ('user', 'task')
+        constraints = [
+            UniqueConstraint(
+                fields=['task', 'user', 'type'],
+                condition=Q(is_deleted=False),
+                name='processes_taskperformer_user_id_task_id_type_unique',
+            ),
+        ]
         ordering = ('user_id',)
 
     user = models.ForeignKey(
