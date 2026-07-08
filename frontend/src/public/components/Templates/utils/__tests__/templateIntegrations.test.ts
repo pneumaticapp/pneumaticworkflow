@@ -36,7 +36,7 @@ describe('checkShowDraftTemplateWarning', () => {
     expect(checkShowDraftTemplateWarning(false, false, [EIntegrations.Zapier])).toBe(true);
   });
 
-  it('returns false for inactive template with only webhooks', () => {
-    expect(checkShowDraftTemplateWarning(false, false, [])).toBe(false);
+  it('returns true for inactive template with only webhooks', () => {
+    expect(checkShowDraftTemplateWarning(false, false, [EIntegrations.Webhooks])).toBe(true);
   });
 });

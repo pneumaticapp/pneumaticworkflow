@@ -32,8 +32,12 @@ export function TemplateCardFooter({
   onRunWorkflow,
 }: ITemplateCardFooterProps) {
   const { formatMessage } = useIntl();
-  const templateIntegrations = useTemplateIntegrationsList(templateId, TEMPLATE_CARD_INTEGRATIONS_EXCLUDE);
-  const hasIntegrations = hasTemplateIntegrations(isPublic, templateIntegrations);
+  const templateIntegrations = useTemplateIntegrationsList(templateId);
+  const cardIntegrations = templateIntegrations.filter(
+    integration => !TEMPLATE_CARD_INTEGRATIONS_EXCLUDE.includes(integration),
+  );
+  const hasIntegrations = hasTemplateIntegrations(isPublic, cardIntegrations);
+  const showIntegrationsIndicator = isActive || hasIntegrations;
   const showDraftWarning = checkShowDraftTemplateWarning(isActive, isPublic, templateIntegrations);
 
   const renderRunWorkflowButton = () => {
@@ -99,7 +103,7 @@ export function TemplateCardFooter({
   return (
     <div className={styles['card__footer']}>
       <div className={styles['card-footer__left']}>
-        {hasIntegrations && (
+        {showIntegrationsIndicator && (
           <TemplateIntegrationsIndicator
             templateId={templateId}
             exlcude={TEMPLATE_CARD_INTEGRATIONS_EXCLUDE}
