@@ -39,21 +39,9 @@ export function ChecklistProgressbar({ listApiName, checkedItems, totalItems }: 
           background="#fdf7ee"
         />
 
-        <div className={styles['progressbar-hint']}>
-          <Tooltip
-            content={
-              <>
-                {formatMessage({ id: 'task.progressbar-hint' })}
-
-                {/* <div>
-                <a target="_blank" rel="noreferrer" href={ELearnMoreLinks.Checklists}>
-                  {formatMessage({ id: 'dashboard.integrations-tooltip-link' })}
-                </a>
-              </div> */}
-              </>
-            }
-          >
-            <span className={styles['progressbar-hint-icon']}>
+        <div className={styles['progressbar__hint']}>
+          <Tooltip content={formatMessage({ id: 'task.progressbar-hint' })}>
+            <span className={styles['progressbar__hint-icon']}>
               <StarIcon />
             </span>
           </Tooltip>

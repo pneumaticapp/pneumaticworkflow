@@ -1,5 +1,5 @@
 import * as React from 'react';
-import * as classnames from 'classnames';
+import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
 import { ITemplateTask } from '../../../types/template';
