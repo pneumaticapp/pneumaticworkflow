@@ -56,7 +56,11 @@ def test_send_event_created__system_task_event__ok(mocker):
     guest = create_test_guest(account=account)
 
     workflow = create_test_workflow(account_owner, tasks_count=1)
-    WorkflowPermissionService(workflow).grant_view(member, source_type=PermissionSource.PERFORMER, source_id='0')
+    WorkflowPermissionService(workflow).grant_view(
+        member,
+        source_type=PermissionSource.PERFORMER,
+        source_id=0,
+    )
     task = workflow.tasks.get(number=1)
     task.performers.add(guest)
 
@@ -147,7 +151,11 @@ def test_send_event_created__system_workflow_event__ok(mocker):
     create_test_user(email='another@test.test')
     guest = create_test_guest(account=account)
     workflow = create_test_workflow(account_owner, tasks_count=1)
-    WorkflowPermissionService(workflow).grant_view(member, source_type=PermissionSource.PERFORMER, source_id='0')
+    WorkflowPermissionService(workflow).grant_view(
+        member,
+        source_type=PermissionSource.PERFORMER,
+        source_id=0,
+    )
     task = workflow.tasks.get(number=1)
     task.performers.add(guest)
 
@@ -228,7 +236,11 @@ def test_send_event_created__user_task_event__ok(mocker):
     create_test_user(email='another@test.test')
     guest = create_test_guest(account=account)
     workflow = create_test_workflow(account_owner, tasks_count=1)
-    WorkflowPermissionService(workflow).grant_view(member, source_type=PermissionSource.PERFORMER, source_id='0')
+    WorkflowPermissionService(workflow).grant_view(
+        member,
+        source_type=PermissionSource.PERFORMER,
+        source_id=0,
+    )
     task = workflow.tasks.get(number=1)
     task.performers.add(guest)
 
@@ -320,7 +332,11 @@ def test_send_event_created__comment_event__ok(mocker):
     create_test_user(email='another@test.test')
     guest = create_test_guest(account=account)
     workflow = create_test_workflow(account_owner, tasks_count=1)
-    WorkflowPermissionService(workflow).grant_view(member, source_type=PermissionSource.PERFORMER, source_id='0')
+    WorkflowPermissionService(workflow).grant_view(
+        member,
+        source_type=PermissionSource.PERFORMER,
+        source_id=0,
+    )
     task = workflow.tasks.get(number=1)
     task.performers.add(guest)
 

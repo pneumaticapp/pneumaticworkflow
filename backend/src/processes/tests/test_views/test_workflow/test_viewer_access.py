@@ -495,7 +495,11 @@ class TestWorkflowViewerAccess:
             task=task,
             user=performer_user,
         )
-        WorkflowPermissionService(workflow).grant_view(performer_user, source_type=PermissionSource.PERFORMER, source_id='0')
+        WorkflowPermissionService(workflow).grant_view(
+            performer_user,
+            source_type=PermissionSource.PERFORMER,
+            source_id=0,
+        )
 
         api_client.token_authenticate(performer_user)
         url = reverse('workflows-detail', args=[workflow.id])
@@ -527,7 +531,11 @@ class TestWorkflowViewerAccess:
             is_admin=False,
             is_account_owner=False,
         )
-        WorkflowPermissionService(workflow).grant_view(member_user, source_type=PermissionSource.PERFORMER, source_id='0')
+        WorkflowPermissionService(workflow).grant_view(
+            member_user,
+            source_type=PermissionSource.PERFORMER,
+            source_id=0,
+        )
 
         api_client.token_authenticate(member_user)
         url = reverse('workflows-detail', args=[workflow.id])
@@ -566,7 +574,11 @@ class TestWorkflowViewerAccess:
             is_admin=False,
             is_account_owner=False,
         )
-        WorkflowPermissionService(workflow).grant_view(member_user, source_type=PermissionSource.PERFORMER, source_id='0')
+        WorkflowPermissionService(workflow).grant_view(
+            member_user,
+            source_type=PermissionSource.PERFORMER,
+            source_id=0,
+        )
 
         api_client.token_authenticate(member_user)
         url = reverse('workflows-detail', args=[workflow.id])

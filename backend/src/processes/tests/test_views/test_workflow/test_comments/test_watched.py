@@ -86,7 +86,11 @@ def test_watched__workflow_member__ok(api_client, mocker):
         is_account_owner=False,
     )
     workflow = create_test_workflow(owner)
-    WorkflowPermissionService(workflow).grant_view(user, source_type=PermissionSource.PERFORMER, source_id='0')
+    WorkflowPermissionService(workflow).grant_view(
+        user,
+        source_type=PermissionSource.PERFORMER,
+        source_id=0,
+    )
     task = workflow.tasks.get(number=1)
     event = WorkflowEventService.comment_created_event(
         text='Some comment',

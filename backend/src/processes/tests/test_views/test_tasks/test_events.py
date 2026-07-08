@@ -106,7 +106,11 @@ def test_events__admin__ok(api_client):
         is_account_owner=False,
         is_admin=True,
     )
-    WorkflowPermissionService(workflow).grant_view(user, source_type=PermissionSource.PERFORMER, source_id='0')
+    WorkflowPermissionService(workflow).grant_view(
+        user,
+        source_type=PermissionSource.PERFORMER,
+        source_id=0,
+    )
     event = create_test_event(
         workflow=workflow,
         user=user,
@@ -135,7 +139,11 @@ def test_events__not_admin__ok(api_client):
         is_account_owner=False,
         is_admin=False,
     )
-    WorkflowPermissionService(workflow).grant_view(user, source_type=PermissionSource.PERFORMER, source_id='0')
+    WorkflowPermissionService(workflow).grant_view(
+        user,
+        source_type=PermissionSource.PERFORMER,
+        source_id=0,
+    )
     event = create_test_event(
         workflow=workflow,
         user=account_owner,
@@ -529,7 +537,11 @@ def test_events__user_is_member_in_deleted_task__not_found(api_client):
     admin = create_test_admin(account=user.account)
     api_client.token_authenticate(admin)
     workflow = create_test_workflow(user, tasks_count=1)
-    WorkflowPermissionService(workflow).grant_view(admin, source_type=PermissionSource.PERFORMER, source_id='0')
+    WorkflowPermissionService(workflow).grant_view(
+        admin,
+        source_type=PermissionSource.PERFORMER,
+        source_id=0,
+    )
     task = workflow.tasks.get(number=1)
     task.delete()
 

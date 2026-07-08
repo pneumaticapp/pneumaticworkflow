@@ -201,7 +201,11 @@ class TestWorkflowMemberOrViewerPermission:
             account=account,
             email='member@test.com',
         )
-        WorkflowPermissionService(workflow).grant_view(member_user, source_type=PermissionSource.PERFORMER, source_id='0')
+        WorkflowPermissionService(workflow).grant_view(
+            member_user,
+            source_type=PermissionSource.PERFORMER,
+            source_id=0,
+        )
 
         request = Mock()
         request.user = member_user

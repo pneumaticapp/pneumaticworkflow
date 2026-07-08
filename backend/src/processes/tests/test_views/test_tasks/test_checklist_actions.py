@@ -54,7 +54,11 @@ class TestChecklistRetrieve:
         )
         create_checklist_template(task_template=template.tasks.first())
         workflow = create_test_workflow(template=template, user=user)
-        WorkflowPermissionService(workflow).grant_view(user_2, source_type=PermissionSource.PERFORMER, source_id='0')
+        WorkflowPermissionService(workflow).grant_view(
+            user_2,
+            source_type=PermissionSource.PERFORMER,
+            source_id=0,
+        )
         task = workflow.tasks.first()
         task.performers.add(user_2)
         checklist = task.checklists.first()
@@ -207,7 +211,11 @@ class TestChecklistRetrieve:
         )
         create_checklist_template(task_template=template.tasks.first())
         workflow = create_test_workflow(template=template, user=user)
-        WorkflowPermissionService(workflow).grant_view(user_2, source_type=PermissionSource.PERFORMER, source_id='0')
+        WorkflowPermissionService(workflow).grant_view(
+            user_2,
+            source_type=PermissionSource.PERFORMER,
+            source_id=0,
+        )
         task = workflow.tasks.first()
         TaskPerformersService.create_performer(
             request_user=user,

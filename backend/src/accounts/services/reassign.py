@@ -54,6 +54,7 @@ from src.processes.models.workflows.task import TaskPerformer
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.tasks.update_workflow import update_workflow_owners
 from src.processes.tasks.tasks import complete_tasks
+from src.permissions.enums import PermissionSource
 from src.processes.services.workflow_permissions import CODENAME_VIEW
 
 UserModel = get_user_model()
@@ -336,15 +337,13 @@ class ReassignService:
             workflow_ids.update(int(pk) for pk in uop_pks)
 
         if self.old_group:
-            from src.permissions.models import (  # noqa: PLC0415
-                GroupObjectPermission,
-            )
-            gop_pks = GroupObjectPermission.objects.filter(
-                group=self.old_group,
+            uop_group_pks = UserObjectPermission.objects.filter(
+                source_type=PermissionSource.PERFORMER_GROUP,
+                source_id=self.old_group.id,
                 content_type=ct,
                 permission__codename=CODENAME_VIEW,
             ).values_list('object_pk', flat=True)
-            workflow_ids.update(int(pk) for pk in gop_pks)
+            workflow_ids.update(int(pk) for pk in uop_group_pks)
 
         return list(workflow_ids)
 
@@ -365,11 +364,9 @@ class ReassignService:
                 permission__codename=CODENAME_VIEW,
             ).delete()
         if self.old_group:
-            from src.permissions.models import (  # noqa: PLC0415
-                GroupObjectPermission,
-            )
-            GroupObjectPermission.objects.filter(
-                group=self.old_group,
+            UserObjectPermission.objects.filter(
+                source_type=PermissionSource.PERFORMER_GROUP,
+                source_id=self.old_group.id,
                 content_type=ct,
                 permission__codename=CODENAME_VIEW,
             ).delete()

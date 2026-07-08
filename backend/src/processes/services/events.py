@@ -647,21 +647,6 @@ class CommentService(BaseModelService):
         )
         return mentioned_users_ids, notify_users_ids
 
-    def _get_updated_comment_recipients(self) -> Tuple[int]:
-
-        """ Return only new mentioned users """
-
-        workflow = self.instance.workflow
-        mentioned_users_ids = ()
-        if self.instance.text:
-            # Exclude users who already have view access via Guardian
-            exclude_ids = WorkflowPermissionService(workflow).get_viewer_ids()
-            mentioned_users_ids = self._get_mentioned_users_ids(
-                text=self.instance.text,
-                exclude_ids=exclude_ids,
-            )
-        return mentioned_users_ids
-
     def _send_event_updated(self):
         data = WorkflowEventSerializer(instance=self.instance).data
         send_event_updated.delay(
@@ -800,14 +785,16 @@ class CommentService(BaseModelService):
             )
 
             if added_ids:
-                send_mention_notification.delay(
-                    logging=self.user.account.log_api_requests,
-                    logo_lg=self.user.account.logo_lg,
-                    author_id=self.user.id,
-                    event_id=self.instance.id,
-                    account_id=self.user.account.id,
-                    users_ids=tuple(added_ids),
-                    text=self.instance.text,
+                transaction.on_commit(
+                    lambda: send_mention_notification.delay(
+                        logging=self.user.account.log_api_requests,
+                        logo_lg=self.user.account.logo_lg,
+                        author_id=self.user.id,
+                        event_id=self.instance.id,
+                        account_id=self.user.account.id,
+                        users_ids=tuple(added_ids),
+                        text=self.instance.text,
+                    ),
                 )
 
         self._send_event_updated()

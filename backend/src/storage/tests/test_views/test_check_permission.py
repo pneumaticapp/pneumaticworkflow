@@ -42,7 +42,7 @@ class TestCheckPermissionView:
             content_type=att_ctype,
             object_pk=str(attachment.pk),
             source_type=PermissionSource.PERFORMER,
-            source_id='0',
+            source_id=0,
         )
 
         # act
@@ -159,7 +159,7 @@ class TestCheckPermissionView:
             content_type=att_ctype,
             object_pk=str(attachment.pk),
             source_type=PermissionSource.PERFORMER,
-            source_id='0',
+            source_id=0,
         )
 
         # act

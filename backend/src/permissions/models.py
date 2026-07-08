@@ -70,8 +70,7 @@ class UserObjectPermission(UserObjectPermissionAbstract):
         choices=PermissionSource.CHOICES,
         help_text='The model/entity that provided this permission.',
     )
-    source_id = models.CharField(
-        max_length=255,
+    source_id = models.IntegerField(
         help_text='PK of the source entity.',
     )
 

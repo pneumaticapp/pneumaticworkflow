@@ -52,8 +52,8 @@ def test_set_owners__grants_manage_and_view():
     WorkflowPermissionService(workflow).set_owners(user_ids=[new_owner.id])
 
     # assert
-    assert WorkflowPermissionService(workflow=workflow).has_change(user=new_owner)
-    assert WorkflowPermissionService(workflow=workflow).has_view(user=new_owner)
+    assert WorkflowPermissionService(workflow).has_change(user=new_owner)
+    assert WorkflowPermissionService(workflow).has_view(user=new_owner)
 
 
 def test_set_owners__replaces_previous():
@@ -69,14 +69,14 @@ def test_set_owners__replaces_previous():
     workflow = create_test_workflow(
         user=owner, template=template,
     )
-    assert WorkflowPermissionService(workflow=workflow).has_change(user=owner)
+    assert WorkflowPermissionService(workflow).has_change(user=owner)
 
     # act
     WorkflowPermissionService(workflow).set_owners(user_ids=[new_owner.id])
 
     # assert
-    assert not WorkflowPermissionService(workflow=workflow).has_change(user=owner)
-    assert WorkflowPermissionService(workflow=workflow).has_change(user=new_owner)
+    assert not WorkflowPermissionService(workflow).has_change(user=owner)
+    assert WorkflowPermissionService(workflow).has_change(user=new_owner)
 
 
 def test_set_owners__empty__clears_all():
@@ -84,14 +84,14 @@ def test_set_owners__empty__clears_all():
     account = create_test_account()
     owner = create_test_owner(account=account)
     workflow = create_test_workflow(user=owner, tasks_count=1)
-    assert WorkflowPermissionService(workflow=workflow).has_change(user=owner)
+    assert WorkflowPermissionService(workflow).has_change(user=owner)
 
     # act
     WorkflowPermissionService(workflow).set_owners(user_ids=[])
 
     # assert
-    assert not WorkflowPermissionService(workflow=workflow).has_change(user=owner)
-    assert not WorkflowPermissionService(workflow=workflow).get_owner_ids()
+    assert not WorkflowPermissionService(workflow).has_change(user=owner)
+    assert not WorkflowPermissionService(workflow).get_owner_ids()
 
 
 def test_set_owners__duplicate_ids__deduped():
@@ -106,9 +106,9 @@ def test_set_owners__duplicate_ids__deduped():
     )
 
     # assert
-    owner_ids = WorkflowPermissionService(workflow=workflow).get_owner_ids()
+    owner_ids = WorkflowPermissionService(workflow).get_owner_ids()
     assert owner_ids == [owner.id]
-    assert WorkflowPermissionService(workflow=workflow).has_change(user=owner)
+    assert WorkflowPermissionService(workflow).has_change(user=owner)
 
 
 # -- grant_view_bulk
@@ -127,15 +127,15 @@ def test_grant_view_bulk__multiple_users():
     workflow = create_test_workflow(user=owner, tasks_count=1)
 
     # act
-    WorkflowPermissionService(workflow=workflow).grant_view_bulk(
+    WorkflowPermissionService(workflow).grant_view_bulk(
         user_ids=[user_a.id, user_b.id],
         source_type=PermissionSource.PERFORMER,
-        source_id='0',
+        source_id=0,
     )
 
     # assert
-    assert WorkflowPermissionService(workflow=workflow).has_view(user=user_a)
-    assert WorkflowPermissionService(workflow=workflow).has_view(user=user_b)
+    assert WorkflowPermissionService(workflow).has_view(user=user_a)
+    assert WorkflowPermissionService(workflow).has_view(user=user_b)
 
 
 def test_grant_view_bulk__empty__noop():
@@ -145,14 +145,14 @@ def test_grant_view_bulk__empty__noop():
     workflow = create_test_workflow(user=owner, tasks_count=1)
 
     # act
-    WorkflowPermissionService(workflow=workflow).grant_view_bulk(
+    WorkflowPermissionService(workflow).grant_view_bulk(
         user_ids=[],
         source_type=PermissionSource.PERFORMER,
-        source_id='0',
+        source_id=0,
     )
 
     # assert
-    assert WorkflowPermissionService(workflow=workflow).has_view(user=owner)
+    assert WorkflowPermissionService(workflow).has_view(user=owner)
 
 
 def test_grant_view_bulk__idempotent():
@@ -162,15 +162,15 @@ def test_grant_view_bulk__idempotent():
     workflow = create_test_workflow(user=owner, tasks_count=1)
 
     # act
-    WorkflowPermissionService(workflow=workflow).grant_view_bulk(
+    WorkflowPermissionService(workflow).grant_view_bulk(
         user_ids=[owner.id],
         source_type=PermissionSource.PERFORMER,
-        source_id='0',
+        source_id=0,
     )
-    WorkflowPermissionService(workflow=workflow).grant_view_bulk(
+    WorkflowPermissionService(workflow).grant_view_bulk(
         user_ids=[owner.id],
         source_type=PermissionSource.PERFORMER,
-        source_id='0',
+        source_id=0,
     )
 
     # assert
@@ -190,15 +190,17 @@ def test_grant_view__gives_view_not_manage():
     workflow = create_test_workflow(user=owner, tasks_count=1)
 
     # act
-    WorkflowPermissionService(workflow=workflow).grant_view(
+    WorkflowPermissionService(workflow).grant_view(
         user=user,
         source_type=PermissionSource.PERFORMER,
-        source_id='0',
+        source_id=0,
     )
 
     # assert
-    assert WorkflowPermissionService(workflow=workflow).has_view(user=user)
-    assert not WorkflowPermissionService(workflow=workflow).has_change(user=user)
+    assert WorkflowPermissionService(workflow).has_view(user=user)
+    assert not WorkflowPermissionService(workflow).has_change(
+        user=user,
+    )
 
 
 def test_grant_manage__gives_both():
@@ -211,15 +213,15 @@ def test_grant_manage__gives_both():
     workflow = create_test_workflow(user=owner, tasks_count=1)
 
     # act
-    WorkflowPermissionService(workflow=workflow).grant_change(
+    WorkflowPermissionService(workflow).grant_change(
         user=user,
         source_type=PermissionSource.TEMPLATE_OWNER,
-        source_id='0',
+        source_id=0,
     )
 
     # assert
-    assert WorkflowPermissionService(workflow=workflow).has_view(user=user)
-    assert WorkflowPermissionService(workflow=workflow).has_change(user=user)
+    assert WorkflowPermissionService(workflow).has_view(user=user)
+    assert WorkflowPermissionService(workflow).has_change(user=user)
 
 
 def test_grant_manage__idempotent():
@@ -230,20 +232,20 @@ def test_grant_manage__idempotent():
     workflow = create_test_workflow(user=owner, tasks_count=1)
 
     # act
-    WorkflowPermissionService(workflow=workflow).grant_change(
+    WorkflowPermissionService(workflow).grant_change(
         user=admin,
         source_type=PermissionSource.TEMPLATE_OWNER,
-        source_id='0',
+        source_id=0,
     )
-    WorkflowPermissionService(workflow=workflow).grant_change(
+    WorkflowPermissionService(workflow).grant_change(
         user=admin,
         source_type=PermissionSource.TEMPLATE_OWNER,
-        source_id='0',
+        source_id=0,
     )
 
     # assert
-    assert WorkflowPermissionService(workflow=workflow).has_change(user=admin)
-    owner_ids = WorkflowPermissionService(workflow=workflow).get_owner_ids()
+    assert WorkflowPermissionService(workflow).has_change(user=admin)
+    owner_ids = WorkflowPermissionService(workflow).get_owner_ids()
     assert owner_ids.count(admin.id) == 1
 
 
@@ -257,7 +259,7 @@ def test_has_view__true_for_viewer():
     workflow = create_test_workflow(user=owner, tasks_count=1)
 
     # act
-    result = WorkflowPermissionService(workflow=workflow).has_view(user=owner)
+    result = WorkflowPermissionService(workflow).has_view(user=owner)
 
     # assert
     assert result is True
@@ -273,7 +275,7 @@ def test_has_view__false_for_stranger():
     workflow = create_test_workflow(user=owner, tasks_count=1)
 
     # act
-    result = WorkflowPermissionService(workflow=workflow).has_view(user=stranger)
+    result = WorkflowPermissionService(workflow).has_view(user=stranger)
 
     # assert
     assert result is False
@@ -286,7 +288,7 @@ def test_has_manage__true_for_manager():
     workflow = create_test_workflow(user=owner, tasks_count=1)
 
     # act
-    result = WorkflowPermissionService(workflow=workflow).has_change(user=owner)
+    result = WorkflowPermissionService(workflow).has_change(user=owner)
 
     # assert
     assert result is True
@@ -300,10 +302,14 @@ def test_has_manage__false_for_viewer_only():
         account=account, email='viewer@test.test',
     )
     workflow = create_test_workflow(user=owner, tasks_count=1)
-    WorkflowPermissionService(workflow=workflow).grant_view(user=viewer, source_type=PermissionSource.PERFORMER, source_id='0')
+    WorkflowPermissionService(workflow).grant_view(
+        user=viewer,
+        source_type=PermissionSource.PERFORMER,
+        source_id=0,
+    )
 
     # act
-    result = WorkflowPermissionService(workflow=workflow).has_change(user=viewer)
+    result = WorkflowPermissionService(workflow).has_change(user=viewer)
 
     # assert
     assert result is False
@@ -317,14 +323,14 @@ def test_get_viewer_ids__returns_all():
         account=account, email='extra@test.test',
     )
     workflow = create_test_workflow(user=owner, tasks_count=1)
-    WorkflowPermissionService(workflow=workflow).grant_view(
+    WorkflowPermissionService(workflow).grant_view(
         user=extra,
         source_type=PermissionSource.PERFORMER,
-        source_id='0',
+        source_id=0,
     )
 
     # act
-    viewer_ids = WorkflowPermissionService(workflow=workflow).get_viewer_ids()
+    viewer_ids = WorkflowPermissionService(workflow).get_viewer_ids()
 
     # assert
     assert owner.id in viewer_ids
@@ -339,14 +345,14 @@ def test_get_owner_ids__returns_sorted():
         account=account, email='coowner@test.test',
     )
     workflow = create_test_workflow(user=owner, tasks_count=1)
-    WorkflowPermissionService(workflow=workflow).grant_change(
+    WorkflowPermissionService(workflow).grant_change(
         user=co_owner,
         source_type=PermissionSource.TEMPLATE_OWNER,
-        source_id='0',
+        source_id=0,
     )
 
     # act
-    owner_ids = WorkflowPermissionService(workflow=workflow).get_owner_ids()
+    owner_ids = WorkflowPermissionService(workflow).get_owner_ids()
 
     # assert
     assert owner.id in owner_ids
@@ -362,7 +368,7 @@ def test_get_owner_ids__empty_when_no_managers():
     WorkflowPermissionService(workflow).set_owners(user_ids=[])
 
     # act
-    owner_ids = WorkflowPermissionService(workflow=workflow).get_owner_ids()
+    owner_ids = WorkflowPermissionService(workflow).get_owner_ids()
 
     # assert
     assert not owner_ids
@@ -427,10 +433,10 @@ def test_manager_q__excludes_viewer_only():
         account=account, email='viewer@test.test',
     )
     workflow = create_test_workflow(user=owner, tasks_count=1)
-    WorkflowPermissionService(workflow=workflow).grant_view(
+    WorkflowPermissionService(workflow).grant_view(
         user=viewer,
         source_type=PermissionSource.PERFORMER,
-        source_id='0',
+        source_id=0,
     )
 
     # act
@@ -487,7 +493,7 @@ def test_manager_q__task_workflow_id_field():
     WorkflowPermissionService(workflow=wf_1).grant_change(
         user=admin,
         source_type=PermissionSource.TEMPLATE_OWNER,
-        source_id='0',
+        source_id=0,
     )
 
     # act
@@ -519,10 +525,10 @@ def test_set_owners__clears_manage_preserves_view():
         user=owner, template=template,
     )
     WorkflowPermissionService(workflow).set_viewers()
-    WorkflowPermissionService(workflow=workflow).grant_change(
+    WorkflowPermissionService(workflow).grant_change(
         user=admin,
         source_type=PermissionSource.TEMPLATE_OWNER,
-        source_id='0',
+        source_id=0,
     )
 
     # act
@@ -530,8 +536,8 @@ def test_set_owners__clears_manage_preserves_view():
     WorkflowPermissionService(workflow).set_viewers()
 
     # assert
-    assert not WorkflowPermissionService(workflow=workflow).has_change(user=admin)
-    assert WorkflowPermissionService(workflow=workflow).has_view(user=admin)
+    assert not WorkflowPermissionService(workflow).has_change(user=admin)
+    assert WorkflowPermissionService(workflow).has_view(user=admin)
 
 
 def test_set_owners__clears_both_for_non_performer():
@@ -540,10 +546,10 @@ def test_set_owners__clears_both_for_non_performer():
     owner = create_test_owner(account=account)
     admin = create_test_admin(account=account)
     workflow = create_test_workflow(user=owner, tasks_count=1)
-    WorkflowPermissionService(workflow=workflow).grant_change(
+    WorkflowPermissionService(workflow).grant_change(
         user=admin,
         source_type=PermissionSource.TEMPLATE_OWNER,
-        source_id='0',
+        source_id=0,
     )
 
     # act
@@ -551,8 +557,8 @@ def test_set_owners__clears_both_for_non_performer():
     WorkflowPermissionService(workflow).set_viewers()
 
     # assert
-    assert not WorkflowPermissionService(workflow=workflow).has_change(user=admin)
-    assert not WorkflowPermissionService(workflow=workflow).has_view(user=admin)
+    assert not WorkflowPermissionService(workflow).has_change(user=admin)
+    assert not WorkflowPermissionService(workflow).has_view(user=admin)
 
 
 # -- permissions persist after completion
@@ -577,7 +583,7 @@ def test_view__persists_after_done():
     workflow.save(update_fields=['status'])
 
     # act
-    result = WorkflowPermissionService(workflow=workflow).has_view(user=user)
+    result = WorkflowPermissionService(workflow).has_view(user=user)
 
     # assert
     assert result is True
@@ -588,16 +594,16 @@ def test_manage__persists_after_done():
     account = create_test_account()
     owner = create_test_owner(account=account)
     workflow = create_test_workflow(user=owner, tasks_count=1)
-    WorkflowPermissionService(workflow=workflow).grant_change(
+    WorkflowPermissionService(workflow).grant_change(
         user=owner,
         source_type=PermissionSource.TEMPLATE_OWNER,
-        source_id='0',
+        source_id=0,
     )
     workflow.status = WorkflowStatus.DONE
     workflow.save(update_fields=['status'])
 
     # act
-    result = WorkflowPermissionService(workflow=workflow).has_change(user=owner)
+    result = WorkflowPermissionService(workflow).has_change(user=owner)
 
     # assert
     assert result is True
@@ -616,23 +622,23 @@ def test_toggle__grant_revoke_grant__view_ok():
     workflow = create_test_workflow(user=owner, tasks_count=1)
 
     # act
-    WorkflowPermissionService(workflow=workflow).grant_view(
+    WorkflowPermissionService(workflow).grant_view(
         user=user,
         source_type=PermissionSource.PERFORMER,
-        source_id='0',
+        source_id=0,
     )
     WorkflowPermissionService(workflow).set_viewers()
 
-    assert not WorkflowPermissionService(workflow=workflow).has_view(user=user)
+    assert not WorkflowPermissionService(workflow).has_view(user=user)
 
-    WorkflowPermissionService(workflow=workflow).grant_view(
+    WorkflowPermissionService(workflow).grant_view(
         user=user,
         source_type=PermissionSource.PERFORMER,
-        source_id='0',
+        source_id=0,
     )
 
     # assert
-    assert WorkflowPermissionService(workflow=workflow).has_view(user=user)
+    assert WorkflowPermissionService(workflow).has_view(user=user)
 
 
 def test_toggle__owners_empty_then_restore():
@@ -640,19 +646,19 @@ def test_toggle__owners_empty_then_restore():
     account = create_test_account()
     owner = create_test_owner(account=account)
     workflow = create_test_workflow(user=owner, tasks_count=1)
-    WorkflowPermissionService(workflow=workflow).grant_change(
+    WorkflowPermissionService(workflow).grant_change(
         user=owner,
         source_type=PermissionSource.TEMPLATE_OWNER,
-        source_id='0',
+        source_id=0,
     )
     WorkflowPermissionService(workflow).set_owners(user_ids=[])
-    assert not WorkflowPermissionService(workflow=workflow).has_change(user=owner)
+    assert not WorkflowPermissionService(workflow).has_change(user=owner)
 
     # act
     WorkflowPermissionService(workflow).set_owners(user_ids=[owner.id])
 
     # assert
-    assert WorkflowPermissionService(workflow=workflow).has_change(user=owner)
+    assert WorkflowPermissionService(workflow).has_change(user=owner)
 
 
 # -- multiple workflows independence
@@ -668,12 +674,12 @@ def test_set_owners_on_wf1__no_effect_on_wf2():
     WorkflowPermissionService(workflow=wf_1).grant_change(
         user=admin,
         source_type=PermissionSource.TEMPLATE_OWNER,
-        source_id='0',
+        source_id=0,
     )
     WorkflowPermissionService(workflow=wf_2).grant_change(
         user=admin,
         source_type=PermissionSource.TEMPLATE_OWNER,
-        source_id='0',
+        source_id=0,
     )
 
     # act

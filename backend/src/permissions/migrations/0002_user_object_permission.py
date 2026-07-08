@@ -40,9 +40,8 @@ class Migration(migrations.Migration):
                     ),
                     max_length=50,
                 )),
-                ('source_id', models.CharField(
+                ('source_id', models.IntegerField(
                     help_text='PK of the source entity.',
-                    max_length=255,
                 )),
                 ('content_type', models.ForeignKey(
                     on_delete=django.db.models.deletion.CASCADE,

@@ -193,7 +193,11 @@ def test_e2e__wf_member_not_owner__gets_perm(
     workflow = create_test_workflow(
         user=user, tasks_count=1,
     )
-    WorkflowPermissionService(workflow).grant_view(member, source_type=PermissionSource.PERFORMER, source_id='0')
+    WorkflowPermissionService(workflow).grant_view(
+        member,
+        source_type=PermissionSource.PERFORMER,
+        source_id=0,
+    )
     create_fa(
         account=user.account,
         file_key='member_file.pdf',
@@ -828,7 +832,7 @@ def test_e2e__contact_photo__replaced(
         account=user.account,
         user=user,
         source='google',
-        source_id='123',
+        source_id=123,
         email='contact@test.com',
     )
     create_fa(

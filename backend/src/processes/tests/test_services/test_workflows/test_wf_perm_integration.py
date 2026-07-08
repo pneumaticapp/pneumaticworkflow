@@ -93,7 +93,7 @@ def test_delete_performer__revokes_view(mocker):
     )
     task = workflow.tasks.first()
     WorkflowPermissionService(workflow).set_viewers()
-    assert WorkflowPermissionService(workflow=workflow).has_view(user=performer)
+    assert WorkflowPermissionService(workflow).has_view(user=performer)
 
     # act
     TaskPerformersService.delete_performer(
@@ -106,7 +106,7 @@ def test_delete_performer__revokes_view(mocker):
 
     # assert
     workflow.refresh_from_db()
-    assert not WorkflowPermissionService(workflow=workflow).has_view(user=performer)
+    assert not WorkflowPermissionService(workflow).has_view(user=performer)
     assert_no_guardian_view(workflow, performer)
 
 
@@ -147,7 +147,7 @@ def test_create_performer__grants_view(mocker):
         user=owner, template=template,
     )
     task = workflow.tasks.first()
-    assert not WorkflowPermissionService(workflow=workflow).has_view(user=new_perf)
+    assert not WorkflowPermissionService(workflow).has_view(user=new_perf)
 
     # act
     TaskPerformersService.create_performer(
@@ -160,7 +160,7 @@ def test_create_performer__grants_view(mocker):
     )
 
     # assert
-    assert WorkflowPermissionService(workflow=workflow).has_view(user=new_perf)
+    assert WorkflowPermissionService(workflow).has_view(user=new_perf)
     assert_guardian_view(workflow, new_perf)
 
 
@@ -208,7 +208,7 @@ def test_delete_group_performer__revokes_view(mocker):
         directly_status=DirectlyStatus.CREATED,
     )
     WorkflowPermissionService(workflow).set_viewers()
-    assert WorkflowPermissionService(workflow=workflow).has_view(user=member)
+    assert WorkflowPermissionService(workflow).has_view(user=member)
 
     # act
     service = GroupPerformerService(
@@ -221,7 +221,7 @@ def test_delete_group_performer__revokes_view(mocker):
 
     # assert
     workflow.refresh_from_db()
-    assert not WorkflowPermissionService(workflow=workflow).has_view(user=member)
+    assert not WorkflowPermissionService(workflow).has_view(user=member)
     assert_no_guardian_view(workflow, member)
 
 
@@ -263,7 +263,7 @@ def test_create_group_performer__grants_view(mocker):
         user=owner, template=template,
     )
     task = workflow.tasks.first()
-    assert not WorkflowPermissionService(workflow=workflow).has_view(user=member)
+    assert not WorkflowPermissionService(workflow).has_view(user=member)
 
     # act
     service = GroupPerformerService(
@@ -275,7 +275,7 @@ def test_create_group_performer__grants_view(mocker):
     service.create_performer(group_id=group.id)
 
     # assert
-    assert WorkflowPermissionService(workflow=workflow).has_view(user=member)
+    assert WorkflowPermissionService(workflow).has_view(user=member)
     assert_guardian_view(workflow, member)
 
 
@@ -302,7 +302,7 @@ def test_celery_update_owners__grants_manage(mocker):
         user=owner, template=template,
     )
     WorkflowPermissionService(workflow).set_viewers()
-    assert not WorkflowPermissionService(workflow=workflow).has_change(user=admin)
+    assert not WorkflowPermissionService(workflow).has_change(user=admin)
     TemplateOwner.objects.create(
         template=template, type=OwnerType.USER, user=admin,
         account=account,
@@ -313,8 +313,8 @@ def test_celery_update_owners__grants_manage(mocker):
 
     # assert
     workflow.refresh_from_db()
-    assert WorkflowPermissionService(workflow=workflow).has_change(user=admin)
-    assert WorkflowPermissionService(workflow=workflow).has_view(user=admin)
+    assert WorkflowPermissionService(workflow).has_change(user=admin)
+    assert WorkflowPermissionService(workflow).has_view(user=admin)
 
 
 def test_celery_update_owners__revokes_removed(mocker):
@@ -335,19 +335,19 @@ def test_celery_update_owners__revokes_removed(mocker):
     workflow = create_test_workflow(
         user=owner, template=template,
     )
-    WorkflowPermissionService(workflow=workflow).grant_change(
+    WorkflowPermissionService(workflow).grant_change(
         user=admin,
         source_type=PermissionSource.TEMPLATE_OWNER,
-        source_id='0',
+        source_id=0,
     )
-    assert WorkflowPermissionService(workflow=workflow).has_change(user=admin)
+    assert WorkflowPermissionService(workflow).has_change(user=admin)
 
     # act
     update_workflow_owners(template_ids=[template.id])
 
     # assert
     workflow.refresh_from_db()
-    assert not WorkflowPermissionService(workflow=workflow).has_change(user=admin)
+    assert not WorkflowPermissionService(workflow).has_change(user=admin)
 
 
 # ── continue_workflow — grant_view_bulk ───────────────────
@@ -379,7 +379,7 @@ def test_continue_wf__performers_get_view(mocker):
     workflow = create_test_workflow(
         user=owner, template=template,
     )
-    assert not WorkflowPermissionService(workflow=workflow).has_view(user=performer)
+    assert not WorkflowPermissionService(workflow).has_view(user=performer)
     task_2 = workflow.tasks.get(number=2)
 
     # Add raw performer to the workflow task directly
@@ -393,7 +393,7 @@ def test_continue_wf__performers_get_view(mocker):
     service.continue_workflow(task=task_2)
 
     # assert
-    assert WorkflowPermissionService(workflow=workflow).has_view(user=performer)
+    assert WorkflowPermissionService(workflow).has_view(user=performer)
     assert_guardian_view(workflow, performer)
 
 
@@ -432,7 +432,7 @@ def test_comment_create__mention_grants_view(mocker):
     workflow = create_test_workflow(
         user=owner, template=template,
     )
-    assert not WorkflowPermissionService(workflow=workflow).has_view(user=mentioned)
+    assert not WorkflowPermissionService(workflow).has_view(user=mentioned)
     task = workflow.tasks.first()
     task.update_performers(restore_performers=True)
     task.status = TaskStatus.ACTIVE
@@ -448,7 +448,7 @@ def test_comment_create__mention_grants_view(mocker):
     )
 
     # assert
-    assert WorkflowPermissionService(workflow=workflow).has_view(user=mentioned)
+    assert WorkflowPermissionService(workflow).has_view(user=mentioned)
     assert_guardian_view(workflow, mentioned)
 
 
@@ -493,7 +493,7 @@ def test_comment_update__new_mention_grants_view(mocker):
         text='Hello',
         status=CommentStatus.CREATED,
     )
-    assert not WorkflowPermissionService(workflow=workflow).has_view(user=mentioned)
+    assert not WorkflowPermissionService(workflow).has_view(user=mentioned)
 
     # act
     service = CommentService(
@@ -505,7 +505,7 @@ def test_comment_update__new_mention_grants_view(mocker):
     )
 
     # assert
-    assert WorkflowPermissionService(workflow=workflow).has_view(user=mentioned)
+    assert WorkflowPermissionService(workflow).has_view(user=mentioned)
 
 
 # ── CommentService.delete — attachment Guardian ───────────
@@ -632,8 +632,8 @@ def test_wf_create__tmpl_owner_gets_manage():
     )
 
     # assert
-    assert WorkflowPermissionService(workflow=workflow).has_change(user=owner)
-    assert WorkflowPermissionService(workflow=workflow).has_view(user=owner)
+    assert WorkflowPermissionService(workflow).has_change(user=owner)
+    assert WorkflowPermissionService(workflow).has_view(user=owner)
 
 
 def test_wf_create__multiple_tmpl_owners():
@@ -656,9 +656,9 @@ def test_wf_create__multiple_tmpl_owners():
     )
 
     # assert
-    assert WorkflowPermissionService(workflow=workflow).has_change(user=owner)
-    assert WorkflowPermissionService(workflow=workflow).has_change(user=admin)
-    ids = WorkflowPermissionService(workflow=workflow).get_owner_ids()
+    assert WorkflowPermissionService(workflow).has_change(user=owner)
+    assert WorkflowPermissionService(workflow).has_change(user=admin)
+    ids = WorkflowPermissionService(workflow).get_owner_ids()
     assert set(ids) == {owner.id, admin.id}
 
 
@@ -688,7 +688,7 @@ def test_version_update__sets_owners_from_tmpl(mocker):
         user=owner, template=template,
     )
     WorkflowPermissionService(workflow).set_owners(user_ids=[owner.id])
-    assert not WorkflowPermissionService(workflow=workflow).has_change(user=admin)
+    assert not WorkflowPermissionService(workflow).has_change(user=admin)
     tmpl_owner_ids = list(
         TemplateOwner.objects.filter(
             template=template,
@@ -704,8 +704,8 @@ def test_version_update__sets_owners_from_tmpl(mocker):
     )
 
     # assert
-    assert WorkflowPermissionService(workflow=workflow).has_change(user=owner)
-    assert WorkflowPermissionService(workflow=workflow).has_change(user=admin)
+    assert WorkflowPermissionService(workflow).has_change(user=owner)
+    assert WorkflowPermissionService(workflow).has_change(user=admin)
 
 
 def test_version_update__removed_owner__loses_manage():
@@ -723,7 +723,7 @@ def test_version_update__removed_owner__loses_manage():
     WorkflowPermissionService(workflow).set_owners(
         user_ids=[owner.id, admin.id],
     )
-    assert WorkflowPermissionService(workflow=workflow).has_change(user=admin)
+    assert WorkflowPermissionService(workflow).has_change(user=admin)
     tmpl_owner_ids = list(
         TemplateOwner.objects.filter(
             template=template,
@@ -739,8 +739,8 @@ def test_version_update__removed_owner__loses_manage():
     )
 
     # assert
-    assert WorkflowPermissionService(workflow=workflow).has_change(user=owner)
-    assert not WorkflowPermissionService(workflow=workflow).has_change(user=admin)
+    assert WorkflowPermissionService(workflow).has_change(user=owner)
+    assert not WorkflowPermissionService(workflow).has_change(user=admin)
 
 
 # ── Task.update_performers — grant_view_bulk ──────────────
@@ -765,7 +765,7 @@ def test_update_performers__grants_view():
     )
 
     # assert
-    assert WorkflowPermissionService(workflow=workflow).has_view(user=user)
+    assert WorkflowPermissionService(workflow).has_view(user=user)
 
 
 # ── Serializer get_owners ─────────────────────────────────
@@ -785,7 +785,7 @@ def test_get_owner_ids__returns_guardian_ids():
     )
 
     # assert
-    ids = WorkflowPermissionService(workflow=workflow).get_owner_ids()
+    ids = WorkflowPermissionService(workflow).get_owner_ids()
     assert set(ids) == {owner.id, admin.id}
 
 
@@ -795,18 +795,18 @@ def test_get_owner_ids__empty_after_clear():
     account = create_test_account()
     owner = create_test_owner(account=account)
     workflow = create_test_workflow(user=owner, tasks_count=1)
-    WorkflowPermissionService(workflow=workflow).grant_change(
+    WorkflowPermissionService(workflow).grant_change(
         user=owner,
         source_type=PermissionSource.TEMPLATE_OWNER,
-        source_id='0',
+        source_id=0,
     )
-    assert WorkflowPermissionService(workflow=workflow).get_owner_ids() != []
+    assert WorkflowPermissionService(workflow).get_owner_ids() != []
 
     # act
     WorkflowPermissionService(workflow).set_owners(user_ids=[])
 
     # assert
-    assert WorkflowPermissionService(workflow=workflow).get_owner_ids() == []
+    assert WorkflowPermissionService(workflow).get_owner_ids() == []
 
 
 # ── CommentService — mention revocation ───────────────────
@@ -858,7 +858,7 @@ def test_comment_update__remove_mention__revokes_view(mocker):
         status=CommentStatus.CREATED,
     )
     WorkflowPermissionService(workflow).set_viewers()
-    assert WorkflowPermissionService(workflow=workflow).has_view(user=mentioned)
+    assert WorkflowPermissionService(workflow).has_view(user=mentioned)
 
     # act
     service = CommentService(
@@ -870,7 +870,7 @@ def test_comment_update__remove_mention__revokes_view(mocker):
     )
 
     # assert
-    assert not WorkflowPermissionService(workflow=workflow).has_view(user=mentioned)
+    assert not WorkflowPermissionService(workflow).has_view(user=mentioned)
     assert_no_guardian_view(workflow, mentioned)
 
 
@@ -923,7 +923,7 @@ def test_comment_update__replace_mention__old_revoked(mocker):
         status=CommentStatus.CREATED,
     )
     WorkflowPermissionService(workflow).set_viewers()
-    assert WorkflowPermissionService(workflow=workflow).has_view(user=user_old)
+    assert WorkflowPermissionService(workflow).has_view(user=user_old)
 
     # act
     service = CommentService(
@@ -935,9 +935,9 @@ def test_comment_update__replace_mention__old_revoked(mocker):
     )
 
     # assert
-    assert not WorkflowPermissionService(workflow=workflow).has_view(user=user_old)
+    assert not WorkflowPermissionService(workflow).has_view(user=user_old)
     assert_no_guardian_view(workflow, user_old)
-    assert WorkflowPermissionService(workflow=workflow).has_view(user=user_new)
+    assert WorkflowPermissionService(workflow).has_view(user=user_new)
     assert_guardian_view(workflow, user_new)
 
 
@@ -988,7 +988,7 @@ def test_comment_update__remove_mention__still_performer(mocker):
         status=CommentStatus.CREATED,
     )
     WorkflowPermissionService(workflow).set_viewers()
-    assert WorkflowPermissionService(workflow=workflow).has_view(user=performer)
+    assert WorkflowPermissionService(workflow).has_view(user=performer)
 
     # act
     service = CommentService(
@@ -1000,7 +1000,7 @@ def test_comment_update__remove_mention__still_performer(mocker):
     )
 
     # assert — still has view because performer role remains
-    assert WorkflowPermissionService(workflow=workflow).has_view(user=performer)
+    assert WorkflowPermissionService(workflow).has_view(user=performer)
     assert_guardian_view(workflow, performer)
 
 
@@ -1043,7 +1043,7 @@ def test_comment_delete__mentioned_user__revokes_view(mocker):
         status=CommentStatus.CREATED,
     )
     WorkflowPermissionService(workflow).set_viewers()
-    assert WorkflowPermissionService(workflow=workflow).has_view(user=mentioned)
+    assert WorkflowPermissionService(workflow).has_view(user=mentioned)
 
     # act
     service = CommentService(
@@ -1052,7 +1052,7 @@ def test_comment_delete__mentioned_user__revokes_view(mocker):
     service.delete()
 
     # assert
-    assert not WorkflowPermissionService(workflow=workflow).has_view(user=mentioned)
+    assert not WorkflowPermissionService(workflow).has_view(user=mentioned)
     assert_no_guardian_view(workflow, mentioned)
 
 
@@ -1104,7 +1104,7 @@ def test_comment_delete__mentioned_in_two__keeps_view(mocker):
         status=CommentStatus.CREATED,
     )
     WorkflowPermissionService(workflow).set_viewers()
-    assert WorkflowPermissionService(workflow=workflow).has_view(user=mentioned)
+    assert WorkflowPermissionService(workflow).has_view(user=mentioned)
 
     # act — delete only the first comment
     service = CommentService(
@@ -1113,5 +1113,5 @@ def test_comment_delete__mentioned_in_two__keeps_view(mocker):
     service.delete()
 
     # assert — still has view via second comment
-    assert WorkflowPermissionService(workflow=workflow).has_view(user=mentioned)
+    assert WorkflowPermissionService(workflow).has_view(user=mentioned)
     assert_guardian_view(workflow, mentioned)

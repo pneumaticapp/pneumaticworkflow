@@ -504,7 +504,11 @@ def test_retrieve__not_admin_user_workflow_member__ok(api_client):
         is_account_owner=False,
     )
     workflow = create_test_workflow(user, tasks_count=1)
-    WorkflowPermissionService(workflow).grant_view(not_admin_user, source_type=PermissionSource.PERFORMER, source_id='0')
+    WorkflowPermissionService(workflow).grant_view(
+        not_admin_user,
+        source_type=PermissionSource.PERFORMER,
+        source_id=0,
+    )
     api_client.token_authenticate(user=not_admin_user)
 
     # act

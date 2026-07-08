@@ -122,7 +122,7 @@ class TestCommentAttachmentsE2E:
         workflow = create_test_workflow(user=owner, tasks_count=1)
         WorkflowPermissionService(workflow).grant_view_bulk(
             [member1.id, member2.id],
-            source_type=PermissionSource.PERFORMER, source_id='0',
+            source_type=PermissionSource.PERFORMER, source_id=0,
         )
         comment_event = WorkflowEvent.objects.create(
             workflow=workflow,
@@ -342,7 +342,11 @@ class TestCommentAttachmentsE2E:
         performer = create_test_user(account=owner.account)
         member = create_test_user(email='tt@gmail.com', account=owner.account)
         workflow = create_test_workflow(user=owner, tasks_count=1)
-        WorkflowPermissionService(workflow).grant_view(member, source_type=PermissionSource.PERFORMER, source_id='0')
+        WorkflowPermissionService(workflow).grant_view(
+            member,
+            source_type=PermissionSource.PERFORMER,
+            source_id=0,
+        )
         task = workflow.tasks.first()
         task.taskperformer_set.create(user=performer)
         comment_event = WorkflowEvent.objects.create(

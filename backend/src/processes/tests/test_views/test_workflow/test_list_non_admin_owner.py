@@ -67,7 +67,11 @@ class TestNonAdminWorkflowOwnerRetrieve:
             user=admin_owner,
             template=template,
         )
-        WorkflowPermissionService(workflow).grant_change(non_admin_owner, source_type=PermissionSource.TEMPLATE_OWNER, source_id='0')
+        WorkflowPermissionService(workflow).grant_change(
+            non_admin_owner,
+            source_type=PermissionSource.TEMPLATE_OWNER,
+            source_id=0,
+        )
         api_client.token_authenticate(non_admin_owner)
 
         # act
@@ -140,7 +144,11 @@ class TestNonAdminWorkflowOwnerUpdate:
             user=admin_owner,
             template=template,
         )
-        WorkflowPermissionService(workflow).grant_change(non_admin_owner, source_type=PermissionSource.TEMPLATE_OWNER, source_id='0')
+        WorkflowPermissionService(workflow).grant_change(
+            non_admin_owner,
+            source_type=PermissionSource.TEMPLATE_OWNER,
+            source_id=0,
+        )
         api_client.token_authenticate(non_admin_owner)
 
         # act
@@ -211,7 +219,11 @@ class TestNonAdminWorkflowOwnerList:
             user=admin_owner,
             template=template,
         )
-        WorkflowPermissionService(workflow).grant_change(non_admin_owner, source_type=PermissionSource.TEMPLATE_OWNER, source_id='0')
+        WorkflowPermissionService(workflow).grant_change(
+            non_admin_owner,
+            source_type=PermissionSource.TEMPLATE_OWNER,
+            source_id=0,
+        )
         api_client.token_authenticate(non_admin_owner)
 
         # act
@@ -451,7 +463,11 @@ class TestRoleChangeFromOwnerToViewer:
             user=account_owner,
             template=template,
         )
-        WorkflowPermissionService(workflow).grant_change(admin_user, source_type=PermissionSource.TEMPLATE_OWNER, source_id='0')
+        WorkflowPermissionService(workflow).grant_change(
+            admin_user,
+            source_type=PermissionSource.TEMPLATE_OWNER,
+            source_id=0,
+        )
 
         template_owner.is_deleted = True
         template_owner.save()
@@ -504,7 +520,11 @@ class TestRoleChangeFromOwnerToViewer:
             user=account_owner,
             template=template,
         )
-        WorkflowPermissionService(workflow).grant_change(admin_user, source_type=PermissionSource.TEMPLATE_OWNER, source_id='0')
+        WorkflowPermissionService(workflow).grant_change(
+            admin_user,
+            source_type=PermissionSource.TEMPLATE_OWNER,
+            source_id=0,
+        )
 
         template_owner.is_deleted = True
         template_owner.save()
@@ -567,7 +587,11 @@ class TestNonAdminRoleChangeReadOnly:
             user=account_owner,
             template=template,
         )
-        WorkflowPermissionService(workflow).grant_change(non_admin_user, source_type=PermissionSource.TEMPLATE_OWNER, source_id='0')
+        WorkflowPermissionService(workflow).grant_change(
+            non_admin_user,
+            source_type=PermissionSource.TEMPLATE_OWNER,
+            source_id=0,
+        )
 
         template_owner.is_deleted = True
         template_owner.save()
@@ -620,7 +644,11 @@ class TestNonAdminRoleChangeReadOnly:
             user=account_owner,
             template=template,
         )
-        WorkflowPermissionService(workflow).grant_change(non_admin_user, source_type=PermissionSource.TEMPLATE_OWNER, source_id='0')
+        WorkflowPermissionService(workflow).grant_change(
+            non_admin_user,
+            source_type=PermissionSource.TEMPLATE_OWNER,
+            source_id=0,
+        )
 
         template_owner.is_deleted = True
         template_owner.save()

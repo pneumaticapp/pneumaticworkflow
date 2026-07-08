@@ -231,7 +231,7 @@ def test_check_perm__multi_att_perm_on_one__ok():
         content_type=att_ctype,
         object_pk=str(att_2.pk),
         source_type=PermissionSource.PERFORMER,
-        source_id='0',
+        source_id=0,
     )
 
     service = AttachmentService(user=owner)
@@ -542,7 +542,7 @@ def test_check_perm__soft_deleted_att__not_granting():
         content_type=att_ctype,
         object_pk=str(att.pk),
         source_type=PermissionSource.PERFORMER,
-        source_id='0',
+        source_id=0,
     )
 
     # soft-delete

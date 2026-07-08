@@ -86,7 +86,11 @@ def test_wf_owner_perm__admin_manager__allowed():
     workflow = create_test_workflow(
         user=owner, template=template,
     )
-    WorkflowPermissionService(workflow=workflow).grant_change(user=admin, source_type=PermissionSource.TEMPLATE_OWNER, source_id='0')
+    WorkflowPermissionService(workflow=workflow).grant_change(
+        user=admin,
+        source_type=PermissionSource.TEMPLATE_OWNER,
+        source_id=0,
+    )
     perm = WorkflowOwnerPermission()
 
     # act
@@ -106,7 +110,11 @@ def test_wf_owner_perm__non_admin__denied():
         account=account, email='nonadmin@test.test',
     )
     workflow = create_test_workflow(user=owner, tasks_count=1)
-    WorkflowPermissionService(workflow=workflow).grant_change(user=non_admin, source_type=PermissionSource.TEMPLATE_OWNER, source_id='0')
+    WorkflowPermissionService(workflow=workflow).grant_change(
+        user=non_admin,
+        source_type=PermissionSource.TEMPLATE_OWNER,
+        source_id=0,
+    )
     perm = WorkflowOwnerPermission()
 
     # act
@@ -253,7 +261,11 @@ def test_task_wf_owner__admin_manager__allowed():
         user=owner, template=template,
     )
     task = workflow.tasks.first()
-    WorkflowPermissionService(workflow=workflow).grant_change(user=admin, source_type=PermissionSource.TEMPLATE_OWNER, source_id='0')
+    WorkflowPermissionService(workflow=workflow).grant_change(
+        user=admin,
+        source_type=PermissionSource.TEMPLATE_OWNER,
+        source_id=0,
+    )
     perm = TaskWorkflowOwnerPermission()
 
     # act
@@ -294,7 +306,11 @@ def test_task_wf_member__viewer__allowed():
     )
     workflow = create_test_workflow(user=owner, tasks_count=1)
     task = workflow.tasks.first()
-    WorkflowPermissionService(workflow=workflow).grant_view(user=viewer, source_type=PermissionSource.PERFORMER, source_id='0')
+    WorkflowPermissionService(workflow=workflow).grant_view(
+        user=viewer,
+        source_type=PermissionSource.PERFORMER,
+        source_id=0,
+    )
     perm = TaskWorkflowMemberPermission()
 
     # act
@@ -334,7 +350,11 @@ def test_wf_member_or_viewer__viewer__allowed():
         account=account, email='v@t.t',
     )
     workflow = create_test_workflow(user=owner, tasks_count=1)
-    WorkflowPermissionService(workflow=workflow).grant_view(user=viewer, source_type=PermissionSource.PERFORMER, source_id='0')
+    WorkflowPermissionService(workflow=workflow).grant_view(
+        user=viewer,
+        source_type=PermissionSource.PERFORMER,
+        source_id=0,
+    )
     perm = WorkflowMemberOrViewerPermission()
 
     # act
@@ -374,7 +394,11 @@ def test_task_wf_member_or_viewer__viewer__ok():
     )
     workflow = create_test_workflow(user=owner, tasks_count=1)
     task = workflow.tasks.first()
-    WorkflowPermissionService(workflow=workflow).grant_view(user=viewer, source_type=PermissionSource.PERFORMER, source_id='0')
+    WorkflowPermissionService(workflow=workflow).grant_view(
+        user=viewer,
+        source_type=PermissionSource.PERFORMER,
+        source_id=0,
+    )
     perm = TaskWorkflowMemberOrViewerPermission()
 
     # act
@@ -523,7 +547,11 @@ def test_reaction__viewer__allowed():
         text='Hello',
         status=CommentStatus.CREATED,
     )
-    WorkflowPermissionService(workflow=workflow).grant_view(user=viewer, source_type=PermissionSource.PERFORMER, source_id='0')
+    WorkflowPermissionService(workflow=workflow).grant_view(
+        user=viewer,
+        source_type=PermissionSource.PERFORMER,
+        source_id=0,
+    )
     perm = CommentReactionPermission()
 
     # act
@@ -577,7 +605,11 @@ def test_tmpl_fields__viewer__allowed():
     workflow = create_test_workflow(
         user=owner, template=template,
     )
-    WorkflowPermissionService(workflow=workflow).grant_view(user=viewer, source_type=PermissionSource.PERFORMER, source_id='0')
+    WorkflowPermissionService(workflow=workflow).grant_view(
+        user=viewer,
+        source_type=PermissionSource.PERFORMER,
+        source_id=0,
+    )
     perm = TemplateFieldsPermission()
 
     # act
@@ -702,7 +734,11 @@ def test_cross_account__viewer__denied_by_filter():
     outsider = create_test_owner(
         account=account_b, email='outsider@test.test',
     )
-    WorkflowPermissionService(workflow=wf_a).grant_view(user=outsider, source_type=PermissionSource.PERFORMER, source_id='0')
+    WorkflowPermissionService(workflow=wf_a).grant_view(
+        user=outsider,
+        source_type=PermissionSource.PERFORMER,
+        source_id=0,
+    )
 
     # act
     qs = Workflow.objects.filter(
@@ -725,7 +761,11 @@ def test_cross_account__manager__denied_by_filter():
     outsider = create_test_owner(
         account=account_b, email='outsider@test.test',
     )
-    WorkflowPermissionService(workflow=wf_a).grant_change(user=outsider, source_type=PermissionSource.TEMPLATE_OWNER, source_id='0')
+    WorkflowPermissionService(workflow=wf_a).grant_change(
+        user=outsider,
+        source_type=PermissionSource.TEMPLATE_OWNER,
+        source_id=0,
+    )
 
     # act
     qs = Workflow.objects.filter(
@@ -750,7 +790,11 @@ def test_non_admin__with_manage__denied():
         account=account, email='r@t.t',
     )
     workflow = create_test_workflow(user=owner, tasks_count=1)
-    WorkflowPermissionService(workflow=workflow).grant_change(user=regular, source_type=PermissionSource.TEMPLATE_OWNER, source_id='0')
+    WorkflowPermissionService(workflow=workflow).grant_change(
+        user=regular,
+        source_type=PermissionSource.TEMPLATE_OWNER,
+        source_id=0,
+    )
     perm = WorkflowOwnerPermission()
 
     # act

@@ -286,7 +286,11 @@ class TestFinishWorkflow:
             is_account_owner=False,
             is_admin=True,
         )
-        WorkflowPermissionService(workflow).grant_view(another_user, source_type=PermissionSource.PERFORMER, source_id='0')
+        WorkflowPermissionService(workflow).grant_view(
+            another_user,
+            source_type=PermissionSource.PERFORMER,
+            source_id=0,
+        )
         api_client.token_authenticate(another_user)
 
         # act

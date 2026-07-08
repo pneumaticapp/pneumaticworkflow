@@ -1,6 +1,6 @@
 """
 Unit tests for WorkflowPermissionService.set_viewers
-and _get_mentioned_user_ids.
+and _get_mentioned_sources.
 """
 
 import pytest
@@ -42,16 +42,16 @@ from src.processes.tests.guardian_helpers import (
 pytestmark = pytest.mark.django_db
 
 
-# ── _get_mentioned_user_ids ───────────────────────────────
+# -- _get_mentioned_sources ----------------------------
 
 
-def test_get_mentioned_ids__single__returns_id():
+def test_get_mentioned_sources__single__returns_tuple():
     # arrange
     account = create_test_account()
     owner = create_test_owner(account=account)
     workflow = create_test_workflow(user=owner, tasks_count=1)
     task = workflow.tasks.first()
-    WorkflowEvent.objects.create(
+    event = WorkflowEvent.objects.create(
         type=WorkflowEventType.COMMENT,
         account=account,
         workflow=workflow,
@@ -62,21 +62,23 @@ def test_get_mentioned_ids__single__returns_id():
     )
 
     # act
-    result = WorkflowPermissionService._get_mentioned_user_ids(
+    result = WorkflowPermissionService._get_mentioned_sources(
         workflow,
     )
 
     # assert
-    assert result == {999}
+    assert result == {
+        (999, PermissionSource.MENTION, event.id),
+    }
 
 
-def test_get_mentioned_ids__multiple_comments__all():
+def test_get_mentioned_sources__multiple_comments__all():
     # arrange
     account = create_test_account()
     owner = create_test_owner(account=account)
     workflow = create_test_workflow(user=owner, tasks_count=1)
     task = workflow.tasks.first()
-    WorkflowEvent.objects.create(
+    ev1 = WorkflowEvent.objects.create(
         type=WorkflowEventType.COMMENT,
         account=account,
         workflow=workflow,
@@ -85,7 +87,7 @@ def test_get_mentioned_ids__multiple_comments__all():
         text='[User A| 10] check this',
         status=CommentStatus.CREATED,
     )
-    WorkflowEvent.objects.create(
+    ev2 = WorkflowEvent.objects.create(
         type=WorkflowEventType.COMMENT,
         account=account,
         workflow=workflow,
@@ -96,15 +98,18 @@ def test_get_mentioned_ids__multiple_comments__all():
     )
 
     # act
-    result = WorkflowPermissionService._get_mentioned_user_ids(
+    result = WorkflowPermissionService._get_mentioned_sources(
         workflow,
     )
 
     # assert
-    assert result == {10, 20, 30}
+    assert (10, PermissionSource.MENTION, ev1.id) in result
+    assert (20, PermissionSource.MENTION, ev2.id) in result
+    assert (30, PermissionSource.MENTION, ev2.id) in result
+    assert len(result) == 3
 
 
-def test_get_mentioned_ids__deleted__excluded():
+def test_get_mentioned_sources__deleted__excluded():
     # arrange
     account = create_test_account()
     owner = create_test_owner(account=account)
@@ -121,7 +126,7 @@ def test_get_mentioned_ids__deleted__excluded():
     )
 
     # act
-    result = WorkflowPermissionService._get_mentioned_user_ids(
+    result = WorkflowPermissionService._get_mentioned_sources(
         workflow,
     )
 
@@ -129,14 +134,14 @@ def test_get_mentioned_ids__deleted__excluded():
     assert result == set()
 
 
-def test_get_mentioned_ids__no_comments__empty():
+def test_get_mentioned_sources__no_comments__empty():
     # arrange
     account = create_test_account()
     owner = create_test_owner(account=account)
     workflow = create_test_workflow(user=owner, tasks_count=1)
 
     # act
-    result = WorkflowPermissionService._get_mentioned_user_ids(
+    result = WorkflowPermissionService._get_mentioned_sources(
         workflow,
     )
 
@@ -144,7 +149,7 @@ def test_get_mentioned_ids__no_comments__empty():
     assert result == set()
 
 
-def test_get_mentioned_ids__non_comment__ignored():
+def test_get_mentioned_sources__non_comment__ignored():
     # arrange
     account = create_test_account()
     owner = create_test_owner(account=account)
@@ -160,7 +165,7 @@ def test_get_mentioned_ids__non_comment__ignored():
     )
 
     # act
-    result = WorkflowPermissionService._get_mentioned_user_ids(
+    result = WorkflowPermissionService._get_mentioned_sources(
         workflow,
     )
 
@@ -168,13 +173,13 @@ def test_get_mentioned_ids__non_comment__ignored():
     assert result == set()
 
 
-def test_get_mentioned_ids__mix_deleted_active__ok():
+def test_get_mentioned_sources__mix_deleted_active__ok():
     # arrange
     account = create_test_account()
     owner = create_test_owner(account=account)
     workflow = create_test_workflow(user=owner, tasks_count=1)
     task = workflow.tasks.first()
-    WorkflowEvent.objects.create(
+    ev_active = WorkflowEvent.objects.create(
         type=WorkflowEventType.COMMENT,
         account=account,
         workflow=workflow,
@@ -194,13 +199,15 @@ def test_get_mentioned_ids__mix_deleted_active__ok():
     )
 
     # act
-    result = WorkflowPermissionService._get_mentioned_user_ids(
+    result = WorkflowPermissionService._get_mentioned_sources(
         workflow,
     )
 
     # assert
-    assert 100 in result
-    assert 200 not in result
+    expected = (100, PermissionSource.MENTION, ev_active.id)
+    assert expected in result
+    user_ids = {t[0] for t in result}
+    assert 200 not in user_ids
 
 
 # ── set_viewers — GRANT ───────────────────────────────────
@@ -611,7 +618,7 @@ def test_set_viewers__revoke_one_wf__no_side_effect():
     WorkflowPermissionService(wf_2).grant_view(
         user,
         source_type=PermissionSource.PERFORMER,
-        source_id='0',
+        source_id=0,
     )
     task = wf_1.tasks.first()
     task.taskperformer_set.filter(user=user).update(
@@ -801,7 +808,7 @@ def test_set_viewers__preserves_view_for_non_performer_manager():
     WorkflowPermissionService(workflow).grant_change(
         manager,
         source_type=PermissionSource.TEMPLATE_OWNER,
-        source_id='0',
+        source_id=0,
     )
     assert WorkflowPermissionService(workflow).has_view(manager)
 
@@ -828,7 +835,7 @@ def test_set_viewers__set_owners_then_set_viewers__manager_keeps_view():
     WorkflowPermissionService(workflow).grant_change(
         admin,
         source_type=PermissionSource.TEMPLATE_OWNER,
-        source_id='0',
+        source_id=0,
     )
 
     # act

@@ -52,7 +52,7 @@ def test_webhook_wf__manager__200(api_client):
     ).grant_change(
         user=admin,
         source_type=PermissionSource.TEMPLATE_OWNER,
-        source_id='0',
+        source_id=0,
     )
     api_client.token_authenticate(admin)
 
@@ -79,7 +79,7 @@ def test_webhook_task__manager__200(api_client):
     ).grant_change(
         user=owner,
         source_type=PermissionSource.TEMPLATE_OWNER,
-        source_id='0',
+        source_id=0,
     )
     api_client.token_authenticate(owner)
 
@@ -218,7 +218,7 @@ def test_wf_terminate__admin_manager__204(
     ).grant_change(
         user=admin,
         source_type=PermissionSource.TEMPLATE_OWNER,
-        source_id='0',
+        source_id=0,
     )
     api_client.token_authenticate(admin)
 
@@ -283,7 +283,7 @@ def test_wf_terminate__non_admin__403(
     ).grant_change(
         user=regular,
         source_type=PermissionSource.TEMPLATE_OWNER,
-        source_id='0',
+        source_id=0,
     )
     api_client.token_authenticate(regular)
 

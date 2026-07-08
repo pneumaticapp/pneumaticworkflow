@@ -44,7 +44,11 @@ class TestWorkflowAttachmentsE2E:
         owner = create_test_admin()
         member = create_test_user(account=owner.account)
         workflow = create_test_workflow(user=owner, tasks_count=1)
-        WorkflowPermissionService(workflow).grant_view(member, source_type=PermissionSource.PERFORMER, source_id='0')
+        WorkflowPermissionService(workflow).grant_view(
+            member,
+            source_type=PermissionSource.PERFORMER,
+            source_id=0,
+        )
         workflow.description = (
             'Workflow file: '
             '[file](https://example.com/files/workflow_e2e_123)'
@@ -84,7 +88,11 @@ class TestWorkflowAttachmentsE2E:
         owner = create_test_admin()
         member = create_test_user(account=owner.account)
         workflow = create_test_workflow(user=owner, tasks_count=1)
-        WorkflowPermissionService(workflow).grant_view(member, source_type=PermissionSource.PERFORMER, source_id='0')
+        WorkflowPermissionService(workflow).grant_view(
+            member,
+            source_type=PermissionSource.PERFORMER,
+            source_id=0,
+        )
         workflow.description = ''
         workflow.save()
         kickoff = workflow.kickoff_instance
@@ -234,7 +242,11 @@ class TestWorkflowAttachmentsE2E:
             email='wf_member2@test.pneumatic.app',
         )
         workflow = create_test_workflow(user=owner, tasks_count=1)
-        WorkflowPermissionService(workflow).grant_view(member1, source_type=PermissionSource.PERFORMER, source_id='0')
+        WorkflowPermissionService(workflow).grant_view(
+            member1,
+            source_type=PermissionSource.PERFORMER,
+            source_id=0,
+        )
         workflow.description = (
             'File: [f](https://example.com/files/wf_member_e2e)'
         )
@@ -255,7 +267,11 @@ class TestWorkflowAttachmentsE2E:
         )
 
         # act
-        WorkflowPermissionService(workflow).grant_view(member2, source_type=PermissionSource.PERFORMER, source_id='0')
+        WorkflowPermissionService(workflow).grant_view(
+            member2,
+            source_type=PermissionSource.PERFORMER,
+            source_id=0,
+        )
         refresh_attachments(source=workflow, user=owner)
 
         # assert
@@ -275,7 +291,11 @@ class TestWorkflowAttachmentsE2E:
         owner = create_test_admin()
         member = create_test_user(account=owner.account)
         workflow = create_test_workflow(user=owner, tasks_count=1)
-        WorkflowPermissionService(workflow).grant_view(member, source_type=PermissionSource.PERFORMER, source_id='0')
+        WorkflowPermissionService(workflow).grant_view(
+            member,
+            source_type=PermissionSource.PERFORMER,
+            source_id=0,
+        )
         workflow.description = (
             'Files: '
             '[a](https://example.com/files/wf_multi_1_e2e) '
@@ -359,9 +379,17 @@ class TestWorkflowAttachmentsE2E:
         owner1 = create_test_admin()
         owner2 = create_test_user(account=owner1.account, is_admin=True)
         workflow = create_test_workflow(user=owner1, tasks_count=1)
-        WorkflowPermissionService(workflow).grant_change(owner1, source_type=PermissionSource.TEMPLATE_OWNER, source_id='0')
+        WorkflowPermissionService(workflow).grant_change(
+            owner1,
+            source_type=PermissionSource.TEMPLATE_OWNER,
+            source_id=0,
+        )
 
-        WorkflowPermissionService(workflow).grant_change(owner2, source_type=PermissionSource.TEMPLATE_OWNER, source_id='0')
+        WorkflowPermissionService(workflow).grant_change(
+            owner2,
+            source_type=PermissionSource.TEMPLATE_OWNER,
+            source_id=0,
+        )
         workflow.description = (
             'File: [f](https://example.com/files/wf_owners_e2e)'
         )

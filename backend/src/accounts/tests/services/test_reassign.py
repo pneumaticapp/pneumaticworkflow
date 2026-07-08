@@ -1254,7 +1254,11 @@ class TestReassignService:
         workflow = create_test_workflow(user=old_user, tasks_count=1)
 
         # Grant old_user view permission
-        WorkflowPermissionService(workflow).grant_view_bulk([old_user.id], source_type=PermissionSource.PERFORMER, source_id='0')
+        WorkflowPermissionService(workflow).grant_view_bulk(
+            [old_user.id],
+            source_type=PermissionSource.PERFORMER,
+            source_id=0,
+        )
 
         update_task_mock = mocker.patch(
             'src.processes.tasks.update_workflow.update_workflow_viewers',
@@ -1672,7 +1676,10 @@ class TestReassignService:
 
 
 def test_reassign_workflow_members__copies_view_only(mocker):
-    """_reassign_in_workflow_members must delete old view_workflow and dispatch update_workflow_viewers task."""
+    """
+    _reassign_in_workflow_members must delete old view_workflow and
+    dispatch update_workflow_viewers task.
+    """
 
     # arrange
     account = create_test_account()
@@ -1682,8 +1689,8 @@ def test_reassign_workflow_members__copies_view_only(mocker):
     )
     workflow = create_test_workflow(user=old_user, tasks_count=1)
 
-    assert WorkflowPermissionService(workflow=workflow).has_change(user=old_user)
-    assert WorkflowPermissionService(workflow=workflow).has_view(user=old_user)
+    assert WorkflowPermissionService(workflow).has_change(user=old_user)
+    assert WorkflowPermissionService(workflow).has_view(user=old_user)
 
     update_task_mock = mocker.patch(
         'src.processes.tasks.update_workflow.update_workflow_viewers',
@@ -1698,8 +1705,8 @@ def test_reassign_workflow_members__copies_view_only(mocker):
     service._reassign_in_workflow_members()
 
     # assert
-    assert not WorkflowPermissionService(workflow=workflow).has_view(user=old_user)
-    assert WorkflowPermissionService(workflow=workflow).has_change(user=old_user)
+    assert not WorkflowPermissionService(workflow).has_view(user=old_user)
+    assert WorkflowPermissionService(workflow).has_change(user=old_user)
 
     on_commit_mock.assert_called_once()
     on_commit_mock.call_args[0][0]()

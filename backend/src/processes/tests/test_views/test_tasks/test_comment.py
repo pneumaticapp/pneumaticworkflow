@@ -91,7 +91,11 @@ def test_create__by_member__ok(api_client, mocker):
     workflow = create_test_workflow(owner)
     task = workflow.tasks.get(number=1)
     member = create_test_admin(account=account)
-    WorkflowPermissionService(workflow).grant_view(member, source_type=PermissionSource.PERFORMER, source_id='0')
+    WorkflowPermissionService(workflow).grant_view(
+        member,
+        source_type=PermissionSource.PERFORMER,
+        source_id=0,
+    )
     event = WorkflowEventService.comment_created_event(
         text='Some comment',
         task=task,
@@ -520,7 +524,11 @@ def test_create__user_is_member_in_deleted_task__not_found(api_client):
     user = create_test_owner()
     admin = create_test_admin(account=user.account)
     workflow = create_test_workflow(user, tasks_count=1)
-    WorkflowPermissionService(workflow).grant_view(admin, source_type=PermissionSource.PERFORMER, source_id='0')
+    WorkflowPermissionService(workflow).grant_view(
+        admin,
+        source_type=PermissionSource.PERFORMER,
+        source_id=0,
+    )
     task = workflow.tasks.get(number=1)
     task.delete()
     api_client.token_authenticate(admin)

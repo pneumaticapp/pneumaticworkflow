@@ -17,4 +17,4 @@ class GroupResolver(Resolver):
             Q(kickoff__workflow_id=self._workflow_id),
             api_name=self._predicate.field,
         )
-        self.field_value = field.group_id if field.group_id else None
+        self.field_value = field.group_id or None

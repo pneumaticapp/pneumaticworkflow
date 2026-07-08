@@ -230,7 +230,11 @@ def test_events__not_admin_user__ok(api_client):
         email='no@admin.com',
     )
     workflow = create_test_workflow(owner)
-    WorkflowPermissionService(workflow).grant_view(user, source_type=PermissionSource.PERFORMER, source_id='0')
+    WorkflowPermissionService(workflow).grant_view(
+        user,
+        source_type=PermissionSource.PERFORMER,
+        source_id=0,
+    )
 
     task_1 = workflow.tasks.get(number=1)
     WorkflowEventService.task_started_event(task_1)

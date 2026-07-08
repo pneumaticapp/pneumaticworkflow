@@ -82,7 +82,11 @@ class TestAttachmentServiceTaskPermissions:
         owner = create_test_admin()
         member = create_test_user(account=owner.account)
         workflow = create_test_workflow(user=owner, tasks_count=1)
-        WorkflowPermissionService(workflow).grant_view(member, source_type=PermissionSource.PERFORMER, source_id='0')
+        WorkflowPermissionService(workflow).grant_view(
+            member,
+            source_type=PermissionSource.PERFORMER,
+            source_id=0,
+        )
         task = workflow.tasks.first()
         service = AttachmentService(user=owner)
 
@@ -396,7 +400,11 @@ class TestAttachmentServiceWorkflowPermissions:
         owner = create_test_admin()
         member = create_test_user(account=owner.account)
         workflow = create_test_workflow(user=owner, tasks_count=1)
-        WorkflowPermissionService(workflow).grant_view(member, source_type=PermissionSource.PERFORMER, source_id='0')
+        WorkflowPermissionService(workflow).grant_view(
+            member,
+            source_type=PermissionSource.PERFORMER,
+            source_id=0,
+        )
         service = AttachmentService(user=owner)
 
         # act
@@ -1222,7 +1230,11 @@ class TestAttachmentServiceBulkCreatePermissions:
         owner = create_test_admin()
         member = create_test_user(account=owner.account)
         workflow = create_test_workflow(user=owner, tasks_count=1)
-        WorkflowPermissionService(workflow).grant_view(member, source_type=PermissionSource.PERFORMER, source_id='0')
+        WorkflowPermissionService(workflow).grant_view(
+            member,
+            source_type=PermissionSource.PERFORMER,
+            source_id=0,
+        )
         service = AttachmentService(user=owner)
         file_ids = ['bulk_wf_1', 'bulk_wf_2']
 

@@ -1153,134 +1153,6 @@ def test_get_new_comment_recipients__not_performer_mentioned__send_mention():
     assert mentioned[0] == user.id
 
 
-def test_get_updated_comment_recipients__new_mentioned__send_mention():
-
-    # arrange
-    account = create_test_account()
-    account_owner = create_test_user(
-        is_account_owner=True,
-        account=account,
-    )
-    workflow = create_test_workflow(account_owner, tasks_count=1)
-    task = workflow.tasks.get(number=1)
-    user = create_test_user(
-        account=account,
-        email='user@test.test',
-        is_account_owner=False,
-        is_admin=True,
-    )
-    text = f'Go [Joe Stalin|{user.id}] testing'
-    event = WorkflowEvent.objects.create(
-        account=account,
-        type=WorkflowEventType.COMMENT,
-        text=text,
-        clear_text=text,
-        with_attachments=False,
-        workflow=workflow,
-        task=task,
-        user=account_owner,
-    )
-    service = CommentService(
-        user=account_owner,
-        instance=event,
-    )
-
-    # act
-    mentioned = service._get_updated_comment_recipients()
-
-    # assert
-    assert len(mentioned) == 1
-    assert mentioned[0] == user.id
-
-
-def test_get_updated_comment_recipients__already_mentioned__not_send():
-
-    # arrange
-    account = create_test_account()
-    account_owner = create_test_user(
-        is_account_owner=True,
-        account=account,
-    )
-    workflow = create_test_workflow(account_owner, tasks_count=1)
-    task = workflow.tasks.get(number=1)
-    user = create_test_user(
-        account=account,
-        email='user@test.test',
-        is_account_owner=False,
-        is_admin=True,
-    )
-    WorkflowPermissionService(workflow).grant_view(
-        user,
-        source_type=PermissionSource.WORKFLOW_VIEWER,
-        source_id=workflow.pk,
-    )
-    text = f'Go [Joe Stalin|{user.id}] testing'
-    event = WorkflowEvent.objects.create(
-        account=account,
-        type=WorkflowEventType.COMMENT,
-        text=text,
-        clear_text=text,
-        with_attachments=False,
-        workflow=workflow,
-        task=task,
-        user=account_owner,
-    )
-    service = CommentService(
-        user=account_owner,
-        instance=event,
-    )
-
-    # act
-    mentioned = service._get_updated_comment_recipients()
-
-    # assert
-    assert len(mentioned) == 0
-
-
-def test_get_updated_comment_recipients__not_mention__not_send():
-
-    # arrange
-    account = create_test_account()
-    account_owner = create_test_user(
-        is_account_owner=True,
-        account=account,
-    )
-    workflow = create_test_workflow(account_owner, tasks_count=1)
-    task = workflow.tasks.get(number=1)
-    user = create_test_user(
-        account=account,
-        email='user@test.test',
-        is_account_owner=False,
-        is_admin=True,
-    )
-    WorkflowPermissionService(workflow).grant_view(
-        user,
-        source_type=PermissionSource.WORKFLOW_VIEWER,
-        source_id=workflow.pk,
-    )
-    text = f'Go {user.name} testing'
-    event = WorkflowEvent.objects.create(
-        account=account,
-        type=WorkflowEventType.COMMENT,
-        text=text,
-        clear_text=text,
-        with_attachments=False,
-        workflow=workflow,
-        task=task,
-        user=account_owner,
-    )
-    service = CommentService(
-        user=account_owner,
-        instance=event,
-    )
-
-    # act
-    mentioned = service._get_updated_comment_recipients()
-
-    # assert
-    assert len(mentioned) == 0
-
-
 @pytest.mark.parametrize(
     'status',
     (
@@ -1996,6 +1868,10 @@ def test_update__notified_users__ok(mocker):
     send_mention_notification_mock = mocker.patch(
         'src.processes.services.events.'
         'send_mention_notification.delay',
+    )
+    mocker.patch(
+        'src.processes.services.events.transaction.on_commit',
+        side_effect=lambda f: f(),
     )
     # update() uses diff-based sync_view_by_source
     sync_view_mock = mocker.patch(

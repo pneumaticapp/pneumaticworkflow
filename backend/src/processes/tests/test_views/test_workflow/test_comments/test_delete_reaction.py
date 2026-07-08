@@ -86,7 +86,11 @@ def test_delete_reaction__workflow_member__ok(api_client, mocker):
     )
     workflow = create_test_workflow(owner)
     task = workflow.tasks.get(number=1)
-    WorkflowPermissionService(workflow).grant_view(user, source_type=PermissionSource.PERFORMER, source_id='0')
+    WorkflowPermissionService(workflow).grant_view(
+        user,
+        source_type=PermissionSource.PERFORMER,
+        source_id=0,
+    )
     event = WorkflowEventService.comment_created_event(
         text='Some comment',
         task=task,

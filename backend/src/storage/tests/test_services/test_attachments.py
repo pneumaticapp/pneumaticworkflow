@@ -287,7 +287,7 @@ class TestAttachmentServiceCheckPermission:
             content_type=att_ctype,
             object_pk=str(attachment.pk),
             source_type=PermissionSource.PERFORMER,
-            source_id='0',
+            source_id=0,
         )
 
         service = AttachmentService(user=user)
@@ -700,7 +700,10 @@ class TestTemplateFileInheritance:
         WorkflowPermissionService(workflow).grant_view(
             performer_t2,
             source_type=PermissionSource.PERFORMER,
-            source_id=TaskPerformer.objects.get(task=task_2, user=performer_t2).pk,
+            source_id=TaskPerformer.objects.get(
+                task=task_2,
+                user=performer_t2,
+            ).pk,
         )
         attachment = create_test_attachment(
             account=owner.account,

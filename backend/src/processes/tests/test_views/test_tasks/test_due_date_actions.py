@@ -82,7 +82,11 @@ def test_create__user_in_group__ok(
     )
     group = create_test_group(user.account, users=[performer])
     workflow = create_test_workflow(user)
-    WorkflowPermissionService(workflow).grant_change(performer, source_type=PermissionSource.TEMPLATE_OWNER, source_id='0')
+    WorkflowPermissionService(workflow).grant_change(
+        performer,
+        source_type=PermissionSource.TEMPLATE_OWNER,
+        source_id=0,
+    )
     task = workflow.tasks.get(number=1)
     TaskPerformer.objects.create(
         task_id=task.id,
@@ -162,7 +166,11 @@ def test_delete__user_in_group__ok(
     )
     group = create_test_group(user.account, users=[performer])
     workflow = create_test_workflow(user)
-    WorkflowPermissionService(workflow).grant_change(performer, source_type=PermissionSource.TEMPLATE_OWNER, source_id='0')
+    WorkflowPermissionService(workflow).grant_change(
+        performer,
+        source_type=PermissionSource.TEMPLATE_OWNER,
+        source_id=0,
+    )
     task = workflow.tasks.get(number=1)
     TaskPerformer.objects.create(
         task_id=task.id,

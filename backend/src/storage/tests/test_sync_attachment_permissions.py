@@ -102,7 +102,11 @@ def test_sync_wf_att_perms__removed_performer__loses_access():
     )
 
     # Grant view_workflow to performer
-    WorkflowPermissionService(workflow).grant_view(performer, source_type=PermissionSource.PERFORMER, source_id=task.id)
+    WorkflowPermissionService(workflow).grant_view(
+        performer,
+        source_type=PermissionSource.PERFORMER,
+        source_id=task.id,
+    )
 
     # Create attachment and assign permissions
     attachment = create_test_attachment(

@@ -336,7 +336,7 @@ class TestTaskAttachmentsE2E:
         workflow = create_test_workflow(user=owner, tasks_count=1)
         WorkflowPermissionService(workflow).grant_view_bulk(
             [member1.id, member2.id],
-            source_type=PermissionSource.PERFORMER, source_id='0',
+            source_type=PermissionSource.PERFORMER, source_id=0,
         )
         task = workflow.tasks.first()
         task.description = (

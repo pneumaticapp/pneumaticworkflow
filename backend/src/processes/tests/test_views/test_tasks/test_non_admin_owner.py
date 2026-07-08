@@ -74,7 +74,11 @@ class TestNonAdminWorkflowOwnerTaskRetrieve:
             user=admin_owner,
             template=template,
         )
-        WorkflowPermissionService(workflow).grant_change(non_admin_owner, source_type=PermissionSource.TEMPLATE_OWNER, source_id='0')
+        WorkflowPermissionService(workflow).grant_change(
+            non_admin_owner,
+            source_type=PermissionSource.TEMPLATE_OWNER,
+            source_id=0,
+        )
         task = workflow.tasks.get(number=1)
         api_client.token_authenticate(non_admin_owner)
 
@@ -162,7 +166,11 @@ class TestNonAdminWorkflowOwnerTaskPerformer:
             user=admin_owner,
             template=template,
         )
-        WorkflowPermissionService(workflow).grant_change(non_admin_owner, source_type=PermissionSource.TEMPLATE_OWNER, source_id='0')
+        WorkflowPermissionService(workflow).grant_change(
+            non_admin_owner,
+            source_type=PermissionSource.TEMPLATE_OWNER,
+            source_id=0,
+        )
         task = workflow.tasks.get(number=1)
         api_client.token_authenticate(non_admin_owner)
 
@@ -241,7 +249,11 @@ class TestNonAdminWorkflowOwnerTaskPerformer:
             user=admin_owner,
             template=template,
         )
-        WorkflowPermissionService(workflow).grant_change(non_admin_owner, source_type=PermissionSource.TEMPLATE_OWNER, source_id='0')
+        WorkflowPermissionService(workflow).grant_change(
+            non_admin_owner,
+            source_type=PermissionSource.TEMPLATE_OWNER,
+            source_id=0,
+        )
         task = workflow.tasks.get(number=1)
         performer = task.taskperformer_set.first()
         api_client.token_authenticate(non_admin_owner)
@@ -288,7 +300,11 @@ class TestNonAdminWorkflowOwnerTaskDueDate:
             user=admin_owner,
             template=template,
         )
-        WorkflowPermissionService(workflow).grant_change(non_admin_owner, source_type=PermissionSource.TEMPLATE_OWNER, source_id='0')
+        WorkflowPermissionService(workflow).grant_change(
+            non_admin_owner,
+            source_type=PermissionSource.TEMPLATE_OWNER,
+            source_id=0,
+        )
         task = workflow.tasks.get(number=1)
         api_client.token_authenticate(non_admin_owner)
         new_due_date = timezone.now() + timezone.timedelta(days=7)
@@ -512,7 +528,11 @@ class TestRoleChangeFromOwnerToViewerTask:
             user=account_owner,
             template=template,
         )
-        WorkflowPermissionService(workflow).grant_change(admin_user, source_type=PermissionSource.TEMPLATE_OWNER, source_id='0')
+        WorkflowPermissionService(workflow).grant_change(
+            admin_user,
+            source_type=PermissionSource.TEMPLATE_OWNER,
+            source_id=0,
+        )
         task = workflow.tasks.get(number=1)
 
         template_owner.is_deleted = True
@@ -567,7 +587,11 @@ class TestRoleChangeFromOwnerToViewerTask:
             user=account_owner,
             template=template,
         )
-        WorkflowPermissionService(workflow).grant_change(admin_user, source_type=PermissionSource.TEMPLATE_OWNER, source_id='0')
+        WorkflowPermissionService(workflow).grant_change(
+            admin_user,
+            source_type=PermissionSource.TEMPLATE_OWNER,
+            source_id=0,
+        )
         task = workflow.tasks.get(number=1)
 
         template_owner.is_deleted = True
@@ -631,7 +655,11 @@ class TestNonAdminRoleChangeTaskReadOnly:
             user=account_owner,
             template=template,
         )
-        WorkflowPermissionService(workflow).grant_change(non_admin_user, source_type=PermissionSource.TEMPLATE_OWNER, source_id='0')
+        WorkflowPermissionService(workflow).grant_change(
+            non_admin_user,
+            source_type=PermissionSource.TEMPLATE_OWNER,
+            source_id=0,
+        )
         task = workflow.tasks.get(number=1)
 
         template_owner.is_deleted = True
@@ -686,7 +714,11 @@ class TestNonAdminRoleChangeTaskReadOnly:
             user=account_owner,
             template=template,
         )
-        WorkflowPermissionService(workflow).grant_change(non_admin_user, source_type=PermissionSource.TEMPLATE_OWNER, source_id='0')
+        WorkflowPermissionService(workflow).grant_change(
+            non_admin_user,
+            source_type=PermissionSource.TEMPLATE_OWNER,
+            source_id=0,
+        )
         task = workflow.tasks.get(number=1)
 
         template_owner.is_deleted = True

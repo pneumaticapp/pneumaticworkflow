@@ -369,10 +369,30 @@ class VacationDelegationService:
             # Delete substitute group performers and group.
             substitute_group = vacation.substitute_group
             if substitute_group:
+                # Collect affected workflow IDs before deleting performers
+                affected_wf_ids = set(
+                    TaskPerformer.objects.filter(
+                        group=substitute_group,
+                    ).values_list(
+                        'task__workflow_id', flat=True,
+                    ),
+                )
+
                 TaskPerformer.objects.filter(
                     group=substitute_group,
                 ).delete()
                 substitute_group.delete()
+
+                # Revoke VACATION-sourced view permissions and rebuild
+                # viewers for affected workflows so substitutes lose
+                # access they no longer need.
+                for wf in Workflow.objects.filter(id__in=affected_wf_ids):
+                    svc = WorkflowPermissionService(wf)
+                    svc.revoke_view_by_source(
+                        source_type=PermissionSource.VACATION,
+                        source_id=self.user.id,
+                    )
+                    svc.set_viewers()
 
             vacation.delete()
 

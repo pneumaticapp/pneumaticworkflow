@@ -172,7 +172,11 @@ def test_fields__workflow_member__ok(api_client):
     template = create_test_template(user=owner, tasks_count=1)
     user = create_test_admin(account=account)
     workflow = create_test_workflow(user=owner, template=template)
-    WorkflowPermissionService(workflow).grant_view(user, source_type=PermissionSource.PERFORMER, source_id='0')
+    WorkflowPermissionService(workflow).grant_view(
+        user,
+        source_type=PermissionSource.PERFORMER,
+        source_id=0,
+    )
     api_client.token_authenticate(user)
 
     # act
@@ -340,7 +344,11 @@ def test_fields__workflow_member_and_template_owner__ok(api_client):
         type=OwnerType.USER,
         user_id=request_user.id,
     )
-    WorkflowPermissionService(workflow).grant_view(request_user, source_type=PermissionSource.PERFORMER, source_id='0')
+    WorkflowPermissionService(workflow).grant_view(
+        request_user,
+        source_type=PermissionSource.PERFORMER,
+        source_id=0,
+    )
     api_client.token_authenticate(request_user)
 
     # act
@@ -365,7 +373,11 @@ def test_fields__not_authenticated__permission_denied(api_client):
         type=OwnerType.USER,
         user_id=request_user.id,
     )
-    WorkflowPermissionService(workflow).grant_view(request_user, source_type=PermissionSource.PERFORMER, source_id='0')
+    WorkflowPermissionService(workflow).grant_view(
+        request_user,
+        source_type=PermissionSource.PERFORMER,
+        source_id=0,
+    )
 
     # act
     response = api_client.get(f'/templates/{template.id}/fields')
@@ -396,7 +408,11 @@ def test_fields__guest_performer__permission_denied(api_client):
     )
     # Extra case
     create_test_admin(email=guest.email, account=account)
-    WorkflowPermissionService(workflow).grant_view(guest, source_type=PermissionSource.PERFORMER, source_id='0')
+    WorkflowPermissionService(workflow).grant_view(
+        guest,
+        source_type=PermissionSource.PERFORMER,
+        source_id=0,
+    )
     str_token = GuestJWTAuthService.get_str_token(
         task_id=task.id,
         user_id=guest.id,
