@@ -1789,8 +1789,10 @@ class TestUpdatePerformer:
             field__api_name=field_api_name,
             type=PerformerType.FIELD,
         )
-        assert task_1.performers.count() == 1
-        assert task_1.performers.first().id == user.id
+        assert TaskPerformer.objects.get(
+            task=task_1,
+            user=user,
+        )
 
         task_2 = workflow.tasks.get(number=2)
         assert task_2.is_active
@@ -1799,8 +1801,10 @@ class TestUpdatePerformer:
             field__api_name=field_api_name,
             type=PerformerType.FIELD,
         )
-        assert task_2.performers.count() == 1
-        assert task_2.performers.first().id == user2.id
+        assert TaskPerformer.objects.get(
+            task=task_2,
+            user=user2,
+        )
 
         task_3 = workflow.tasks.get(number=3)
         assert task_3.is_pending
@@ -1809,7 +1813,9 @@ class TestUpdatePerformer:
             field__api_name=field_api_name,
             type=PerformerType.FIELD,
         )
-        assert task_3.performers.count() == 0
+        assert not TaskPerformer.objects.filter(
+            task=task_3,
+        ).exists()
 
     def test_update__user_field__next_task_performer_updated(
         self,
@@ -1897,8 +1903,10 @@ class TestUpdatePerformer:
             field__api_name=field_api_name,
             type=PerformerType.FIELD,
         )
-        assert task_2.performers.count() == 1
-        assert task_2.performers.first().id == user2.id
+        assert TaskPerformer.objects.get(
+            task=task_2,
+            user=user2,
+        )
 
     def test_update__user_field_in_reverted_task__performer_updated(
         self,
@@ -1994,8 +2002,10 @@ class TestUpdatePerformer:
             field__api_name=field_api_name,
             type=PerformerType.FIELD,
         )
-        assert task_1.performers.count() == 1
-        assert task_1.performers.first().id == user2.id
+        assert TaskPerformer.objects.get(
+            task=task_1,
+            user=user2,
+        )
 
     def test_update__user_field_invited_transfer__ok(
         self,

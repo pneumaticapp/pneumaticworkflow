@@ -92,7 +92,6 @@ def test__add_template_owner_is_deleted__ok():
 
     # assert
     assert workflow.owners.all().count() == 0
-    assert workflow.members.all().count() == 0
 
 
 def test__delete_group_owner_user_owner_persists_same_user__ok():

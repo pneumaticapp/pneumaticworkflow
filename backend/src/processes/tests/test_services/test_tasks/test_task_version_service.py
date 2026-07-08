@@ -1398,8 +1398,8 @@ class TestTaskUpdateVersionService:
         update_performers_mock.assert_called_once()
         add_raw_performer_mock.assert_called_once_with(owner)
         task.refresh_from_db()
-        assert task.performers.count() == 1
-        assert task.performers.get(id=owner.id)
+        assert TaskPerformer.objects.filter(task=task).count() == 1
+        assert TaskPerformer.objects.get(task=task, user=owner)
         get_data_for_list_mock.assert_called_once()
         send_new_task_notification_mock.assert_called_once_with(
             logging=account.log_api_requests,
@@ -1505,8 +1505,8 @@ class TestTaskUpdateVersionService:
         update_performers_mock.assert_called_once()
         add_raw_performer_mock.assert_called_once_with(workflow_starter)
         task.refresh_from_db()
-        assert task.performers.count() == 1
-        assert task.performers.get(id=workflow_starter.id)
+        assert TaskPerformer.objects.filter(task=task).count() == 1
+        assert TaskPerformer.objects.get(task=task, user=workflow_starter)
         get_data_for_list_mock.assert_called_once()
         send_new_task_notification_mock.assert_called_once_with(
             logging=account.log_api_requests,
