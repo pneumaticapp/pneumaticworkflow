@@ -110,6 +110,7 @@ class EventHighlightsSerializer(serializers.ModelSerializer):
             'created_tsp',
             'user_id',
             'target_user_id',
+            'target_group_id',
             'workflow',
         )
 
