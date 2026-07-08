@@ -34,6 +34,7 @@ import { ERoutes } from '../../../constants/routes';
 import { RouteLeavingGuard } from '../../UI';
 import { useTemplateIntegrationsList } from '../../TemplateIntegrationsStats';
 import { checkShowDraftTemplateWarning } from '../../Templates';
+import { TEMPLATE_CARD_INTEGRATIONS_EXCLUDE } from '../../Templates/utils/templateIntegrations';
 
 import styles from './TemplateControlls.css';
 import { getSubscriptionPlan } from '../../../redux/selectors/user';
@@ -67,7 +68,7 @@ export function TemplateControlls({
   const isFreePlan = billingPlan === ESubscriptionPlan.Free;
   const accessConditions = isSubscribed || isFreePlan;
 
-  const templateIntegrations = useTemplateIntegrationsList(template.id);
+  const templateIntegrations = useTemplateIntegrationsList(template.id, TEMPLATE_CARD_INTEGRATIONS_EXCLUDE);
   const [showDraftWarning, setShowDraftWarning] = useState(
     checkShowDraftTemplateWarning(template.isActive, template.isPublic, templateIntegrations),
   );
