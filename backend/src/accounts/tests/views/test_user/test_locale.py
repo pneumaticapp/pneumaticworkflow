@@ -236,3 +236,18 @@ def test_comment__locale__guest_wins_over_bearer(api_client):
     assert response.status_code == 400
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['message'] == expected_msg
+
+
+def test_put__locale__unauthenticated_uses_accept_language(api_client):
+    """Anonymous requests fall back to Accept-Language."""
+
+    response = api_client.put(
+        path='/accounts/user',
+        data={'photo': 'invalid_url'},
+        HTTP_ACCEPT_LANGUAGE='de',
+    )
+
+    assert response.status_code == 401
+    assert response.data['detail'] == (
+        'Authentifizierungsdaten wurden nicht bereitgestellt.'
+    )

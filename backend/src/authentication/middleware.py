@@ -9,13 +9,10 @@ from django.utils.deprecation import MiddlewareMixin
 from rest_framework.authentication import get_authorization_header
 
 from src.authentication.enums import AuthTokenType
-from src.authentication.locale import install_api_locale_activation
 from src.authentication.tokens import PneumaticToken
 from src.generics.mixins.views import AnonymousMixin
 from src.logs.service import AccountLogService
 from src.utils.user_agent import get_user_agent
-
-install_api_locale_activation()
 
 
 class UserAgentMiddleware(MiddlewareMixin):
@@ -105,16 +102,11 @@ class AuthMiddleware(
 
 
 class UserLocaleMiddleware(MiddlewareMixin):
-    """Clear thread-local locale after each request.
+    """Set Accept-Language at request start; reset locale at request end."""
 
-    translation.activate() runs in APIView.perform_authentication;
-    Django middleware must reset it so worker threads do not leak locale
-    into the next request (or into post-response code).
-    """
+    def process_request(self, request):
+        translation.activate(translation.get_language_from_request(request))
 
     def process_response(self, request, response):
         translation.deactivate()
         return response
-
-    def process_exception(self, request, exception):
-        translation.deactivate()
