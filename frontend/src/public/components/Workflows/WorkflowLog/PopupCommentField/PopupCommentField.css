@@ -19,6 +19,7 @@
 .comment-field__avatar-container {
   margin-right: 16px;
   align-self: flex-start;
+  flex-shrink: 0;
 
   @media (--mobile) {
     display: none;
@@ -29,6 +30,7 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
+  object-fit: cover;
 
   @media (--mobile) {
     width: 32px;
