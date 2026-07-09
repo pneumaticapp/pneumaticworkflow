@@ -2255,14 +2255,7 @@ def test_list__sql_injection_in_search__ok(api_client, injection):
     assert len(response.data['results']) == 1
 
 
-@pytest.mark.parametrize(
-    "query_string", [
-        'template_id=null',
-        'template_task_api_name=null',
-        'template_id=null&template_task_api_name=null',
-    ],
-)
-def test_list__filter_null_string__ok(api_client, query_string):
+def test_list__template_id_null_string__ok(api_client):
 
     # arrange
     user = create_test_owner()
@@ -2271,7 +2264,43 @@ def test_list__filter_null_string__ok(api_client, query_string):
     task = workflow.tasks.get(number=1)
 
     # act
-    response = api_client.get(f'/v3/tasks?{query_string}')
+    response = api_client.get('/v3/tasks?template_id=null')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 1
+    assert response.data[0]['id'] == task.id
+
+
+def test_list__template_task_api_name_null_string__ok(api_client):
+
+    # arrange
+    user = create_test_owner()
+    api_client.token_authenticate(user=user)
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+
+    # act
+    response = api_client.get('/v3/tasks?template_task_api_name=null')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 1
+    assert response.data[0]['id'] == task.id
+
+
+def test_list__template_id_and_template_task_api_name_null_string__ok(api_client):
+
+    # arrange
+    user = create_test_owner()
+    api_client.token_authenticate(user=user)
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+
+    # act
+    response = api_client.get(
+        '/v3/tasks?template_id=null&template_task_api_name=null',
+    )
 
     # assert
     assert response.status_code == 200
