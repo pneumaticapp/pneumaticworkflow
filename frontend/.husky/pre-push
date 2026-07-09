@@ -15,10 +15,11 @@ while read -r local_ref local_sha remote_ref remote_sha; do
   esac
 
   has_refs=true
-  echo "pre-push: testing $local_ref ($local_sha)"
-  npm run test:related -- "$local_sha"
+  echo "pre-push: testing $local_ref ($remote_sha..$local_sha)"
+  npm run test:related -- "$local_sha" "$remote_sha"
 done
 
 if [ "$has_refs" = false ]; then
-  npm run test:related
+  echo "pre-push: no commits to push, skipping tests"
+  exit 0
 fi

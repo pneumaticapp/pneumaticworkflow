@@ -20,6 +20,7 @@ is_protected_branch() {
 is_feature_branch() {
   branch=$1
 
+  # In `case`, `*` spans `/`, so these match any depth (e.g. frontend/area/id__name).
   case "$branch" in
     frontend/*|backend/*|storage/*)
       return 0
