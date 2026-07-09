@@ -89,6 +89,7 @@ class PneumaticToken:
             'user_ip': user_ip,
             'for_api_key': for_api_key,
             'is_superuser': for_superuser,
+            'language': user.language,
         }
 
         cls.set_key_value(encrypted_token, cache_values)

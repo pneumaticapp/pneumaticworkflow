@@ -207,6 +207,7 @@ class Common(Configuration):
         'django.middleware.csrf.CsrfViewMiddleware',
         'src.authentication.middleware.UserAgentMiddleware',
         'src.authentication.middleware.AuthMiddleware',
+        'src.authentication.middleware.UserLocaleMiddleware',
         'src.storage.middleware.FileServiceAuthMiddleware',
         'django.contrib.messages.middleware.MessageMiddleware',
         'django.middleware.clickjacking.XFrameOptionsMiddleware',
