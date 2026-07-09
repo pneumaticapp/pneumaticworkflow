@@ -415,7 +415,7 @@ export function WorkflowsTable({
         const colWidth = col.width as number;
 
         if (id === 'system-column-performer') {
-          newWidths[id] = Math.max(newWidths[id] ?? 0, colWidth);
+          newWidths[id] = colWidth;
         } else if (!newWidths[id]) {
           newWidths[id] = colWidth;
         }
