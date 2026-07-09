@@ -135,6 +135,14 @@ describe('TopNav', () => {
       expect(option.isHidden).toBe(true);
     });
 
+    it('hides My subscription when plan is unknown', () => {
+      renderTopNav({ plan: 'unknown' as any, isAccountOwner: true, leaseLevel: 'standard' });
+
+      const option = findOption(CUSTOMER_PORTAL_LABEL);
+      expect(option).toBeDefined();
+      expect(option.isHidden).toBe(true);
+    });
+
     it('hides My subscription for tenant lease level', () => {
       renderTopNav({ plan: 'premium' as any, isAccountOwner: true, leaseLevel: 'tenant' });
 

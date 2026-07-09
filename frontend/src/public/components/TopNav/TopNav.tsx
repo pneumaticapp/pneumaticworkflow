@@ -76,7 +76,10 @@ export function TopNav({
   const rightNavbarClassname = classnames('navbar-right', styles['navbar-right']);
 
   const showCustomerPortalLink =
-    plan !== ESubscriptionPlan.Free && isAccountOwner && leaseLevel !== 'tenant';
+    plan !== ESubscriptionPlan.Free &&
+    plan !== ESubscriptionPlan.Unknown &&
+    isAccountOwner &&
+    leaseLevel !== 'tenant';
 
   const getColorSuperMode = (billingPlan: ESubscriptionPlan, isTrial: boolean, status: TAccountLeaseLevel) => {
     const statusClassesMap = {
