@@ -9,7 +9,7 @@ import {
   redirectToCustomerPortal,
 } from '../../redux/actions';
 import { getPaywallType } from './utils/getPaywallType';
-import { getUserPendingActions } from '../../redux/selectors/user';
+import { getUserPendingActions, getSubscriptionPlan } from '../../redux/selectors/user';
 import { getBrowserConfig } from '../../utils/getConfig';
 
 type TStoreProps = Pick<
@@ -42,7 +42,7 @@ const mapStateToProps = (state: IApplicationState): TStoreProps => {
     paywallType,
     pendingActions,
     unreadNotificationsCount,
-    plan: authUser.account.plan,
+    plan: getSubscriptionPlan(state),
     isSupermode,
     tenantName: authUser.account.tenantName,
     leaseLevel: authUser.account.leaseLevel,

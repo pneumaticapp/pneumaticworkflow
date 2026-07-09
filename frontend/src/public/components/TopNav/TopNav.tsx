@@ -162,7 +162,7 @@ export function TopNav({
       isHidden: leaseLevel === 'tenant',
       Icon: SuitcaseIcon,
     },
-    {
+    isEnvBilling && {
       label: formatMessage({ id: 'nav.customer-portal' }),
       onClick: redirectToCustomerPortal,
       isHidden: !showCustomerPortalLink,
