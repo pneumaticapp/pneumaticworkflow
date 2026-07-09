@@ -231,13 +231,18 @@ export function WorkflowsTable({
     [workflowsList.items],
   );
 
+  const performerColumnMinWidth = useMemo(
+    () => getPerformersAvatarsWidth(maxPerformersCount),
+    [maxPerformersCount],
+  );
+
   const performerColumnWidth = useMemo(
     () =>
       Math.max(
         savedGlobalWidths['system-column-performer'] || ETableViewFieldsWidth['system-column-performer'],
-        getPerformersAvatarsWidth(maxPerformersCount),
+        performerColumnMinWidth,
       ),
-    [maxPerformersCount, savedGlobalWidths],
+    [performerColumnMinWidth, savedGlobalWidths],
   );
 
   const columns: Column<TableColumns>[] = useMemo(() => {
@@ -330,7 +335,7 @@ export function WorkflowsTable({
             accessor: 'system-column-performer',
             Cell: ColumnCells.PerformerColumn,
             width: performerColumnWidth,
-            minWidth: EColumnWidthMinWidth['system-column-performer'],
+            minWidth: performerColumnMinWidth,
             columnType: 'system-column-performer',
           },
         ]
@@ -367,6 +372,7 @@ export function WorkflowsTable({
     fieldsColumns.length,
     selectedFieldsSet,
     performerColumnWidth,
+    performerColumnMinWidth,
   ]);
 
   const data = useMemo((): TableColumns[] => {
@@ -394,24 +400,29 @@ export function WorkflowsTable({
   };
 
   useEffect(() => {
-    if (workflowsLoadingStatus === EWorkflowsLoadingStatus.Loaded) {
-      setColWidths((prev) => {
-        const newWidths = { ...prev };
-
-        columns.forEach((col) => {
-          const id = col.accessor as string;
-          const colWidth = col.width as number;
-
-          if (id === 'system-column-performer') {
-            newWidths[id] = Math.max(newWidths[id] ?? 0, colWidth);
-          } else if (!newWidths[id]) {
-            newWidths[id] = colWidth;
-          }
-        });
-
-        return newWidths;
-      });
+    if (
+      workflowsLoadingStatus !== EWorkflowsLoadingStatus.Loaded &&
+      workflowsLoadingStatus !== EWorkflowsLoadingStatus.LoadingNextPage
+    ) {
+      return;
     }
+
+    setColWidths((prev) => {
+      const newWidths = { ...prev };
+
+      columns.forEach((col) => {
+        const id = col.accessor as string;
+        const colWidth = col.width as number;
+
+        if (id === 'system-column-performer') {
+          newWidths[id] = Math.max(newWidths[id] ?? 0, colWidth);
+        } else if (!newWidths[id]) {
+          newWidths[id] = colWidth;
+        }
+      });
+
+      return newWidths;
+    });
   }, [columns, workflowsLoadingStatus, performerColumnWidth]);
 
   const handleMouseDown = createResizeHandler(colWidths, setColWidths, currentUser?.id, templatesIdsFilter[0]);

@@ -1,3 +1,4 @@
 .performer-column-width {
-  width: fit-content;
+  overflow: hidden;
+  max-width: 100%;
 }
