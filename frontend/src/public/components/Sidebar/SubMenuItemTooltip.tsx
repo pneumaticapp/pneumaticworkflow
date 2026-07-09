@@ -36,8 +36,8 @@ export const SubMenuTooltip = ({
   let styleHideSubMenu = '';
   const targetCurrent = document.querySelector(`#${target}`)!;
   const planClassNameMap = {
-    [ESubscriptionPlan.Unknown]: s['plan-free'],
-    [ESubscriptionPlan.Free]: s['plan-free'],
+    [ESubscriptionPlan.Unknown]: s['plan-premium'],
+    [ESubscriptionPlan.Free]: s['plan-premium'],
     [ESubscriptionPlan.Trial]: s['plan-trial'],
     [ESubscriptionPlan.Premium]: s['plan-premium'],
     [ESubscriptionPlan.Unlimited]: s['plan-premium'],

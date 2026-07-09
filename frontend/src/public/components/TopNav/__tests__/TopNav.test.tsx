@@ -39,11 +39,12 @@ describe('TopNav', () => {
   const TEAM_LABEL = t('nav.team');
   const INTEGRATION_LABEL = t('nav.integration');
   const PROFILE_LABEL = t('nav.profile');
+  const CUSTOMER_PORTAL_LABEL = t('nav.customer-portal');
 
   const baseProps: TTopNavProps = {
     pendingActions: [],
     paywallType: null,
-    isSubscribed: false,
+    plan: 'free' as any,
     unreadNotificationsCount: 0,
     isSupermode: false,
     tenantName: '',
@@ -114,6 +115,32 @@ describe('TopNav', () => {
       expect(teamOption.isHidden).toBe(true);
       expect(integrationOption).toBeDefined();
       expect(integrationOption.isHidden).toBe(true);
+    });
+  });
+
+  describe('My subscription visibility', () => {
+    it('shows My subscription when plan is not free and user is account owner', () => {
+      renderTopNav({ plan: 'premium' as any, isAccountOwner: true, leaseLevel: 'standard' });
+
+      const option = findOption(CUSTOMER_PORTAL_LABEL);
+      expect(option).toBeDefined();
+      expect(option.isHidden).toBe(false);
+    });
+
+    it('hides My subscription when plan is free', () => {
+      renderTopNav({ plan: 'free' as any, isAccountOwner: true, leaseLevel: 'standard' });
+
+      const option = findOption(CUSTOMER_PORTAL_LABEL);
+      expect(option).toBeDefined();
+      expect(option.isHidden).toBe(true);
+    });
+
+    it('hides My subscription for tenant lease level', () => {
+      renderTopNav({ plan: 'premium' as any, isAccountOwner: true, leaseLevel: 'tenant' });
+
+      const option = findOption(CUSTOMER_PORTAL_LABEL);
+      expect(option).toBeDefined();
+      expect(option.isHidden).toBe(true);
     });
   });
 

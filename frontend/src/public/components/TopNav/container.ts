@@ -9,7 +9,7 @@ import {
   redirectToCustomerPortal,
 } from '../../redux/actions';
 import { getPaywallType } from './utils/getPaywallType';
-import { getIsUserSubsribed, getUserPendingActions } from '../../redux/selectors/user';
+import { getUserPendingActions } from '../../redux/selectors/user';
 import { getBrowserConfig } from '../../utils/getConfig';
 
 type TStoreProps = Pick<
@@ -17,7 +17,7 @@ type TStoreProps = Pick<
   | 'paywallType'
   | 'pendingActions'
   | 'unreadNotificationsCount'
-  | 'isSubscribed'
+  | 'plan'
   | 'isSupermode'
   | 'tenantName'
   | 'leaseLevel'
@@ -36,14 +36,13 @@ const mapStateToProps = (state: IApplicationState): TStoreProps => {
   const { user } = getBrowserConfig();
   const paywallType = getPaywallType(billingPlan, authUser.account.isBlocked);
   const pendingActions = getUserPendingActions(state);
-  const isSubscribed = getIsUserSubsribed(state);
   const isSupermode = Boolean(authUser.isSupermode);
 
   return {
     paywallType,
     pendingActions,
     unreadNotificationsCount,
-    isSubscribed,
+    plan: authUser.account.plan,
     isSupermode,
     tenantName: authUser.account.tenantName,
     leaseLevel: authUser.account.leaseLevel,

@@ -56,14 +56,15 @@ export const getNormalizedTemplate = (
   users: TUserListItem[],
   billingPlan: ESubscriptionPlan,
 ): ITemplate => {
+  const hasFullAccess = isSubscribed || billingPlan === ESubscriptionPlan.Free;
   const normalizedKickoff = template.kickoff || getEmptyKickoff();
   const normalizedTasks = [...template.tasks]
     .sort((a, b) => a.number - b.number)
-    .map((task, index, tasks) => getNormalizedTask(task, isSubscribed, tasks[index - 1]));
+    .map((task, index, tasks) => getNormalizedTask(task, hasFullAccess, tasks[index - 1]));
 
   const performersCount = setPerformersCounts(normalizedTasks);
   const normalizedTemplateOwners =
-    !isSubscribed && billingPlan !== ESubscriptionPlan.Free
+    !hasFullAccess
       ? getNormalizedTemplateOwners(template.owners, isSubscribed, users)
       : template.owners;
 

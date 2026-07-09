@@ -272,7 +272,7 @@ export function Sidebar({
         <LogoContainer
           className={classnames('active', styles['logo'])}
           size="sm"
-          theme={plan === ESubscriptionPlan.Free ? 'dark' : 'light'}
+          theme="light"
         />
         <RibbonTail className={styles['sidebar-ribbon-tail']} />
       </NavLink>
@@ -281,7 +281,7 @@ export function Sidebar({
           <LogoContainer
             size="md"
             className={classnames('active', styles['logo'])}
-            theme={plan === ESubscriptionPlan.Free ? 'dark' : 'light'}
+            theme="light"
           />
         </NavLink>
 
