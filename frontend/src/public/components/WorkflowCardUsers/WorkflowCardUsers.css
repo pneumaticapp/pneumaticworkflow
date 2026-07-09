@@ -4,14 +4,9 @@
 }
 
 .card-user {
-  margin-left: -4px;
   width: 20px;
   height: 20px;
   flex-shrink: 0;
-
-  &:first-child {
-    margin-left: 0;
-  }
 
   img {
     width: 100%;
@@ -22,12 +17,22 @@
   }
 }
 
+.card-users > .card-user:not(:first-child) {
+  margin-left: -4px;
+}
+
 .card-users button {
   padding: 0;
+  width: 20px;
+  height: 20px;
   cursor: pointer;
   background: transparent;
   border: none;
   flex-shrink: 0;
+}
+
+.card-users > button:not(:first-child) {
+  margin-left: -4px;
 }
 
 .card-users__more {
