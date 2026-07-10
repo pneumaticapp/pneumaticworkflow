@@ -4,7 +4,6 @@ from typing import Any, Dict, List, Optional
 
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-from rest_framework.fields import empty
 
 from src.generics.fields import TimeStampField
 from src.generics.serializers import CustomValidationErrorMixin
@@ -257,31 +256,6 @@ class TaskListSerializer(serializers.ModelSerializer):
         )
 
 
-class _NullQueryParamAsAbsentMixin:
-
-    """Treat the literal query-string 'null' as an absent optional param."""
-
-    def get_value(self, dictionary):
-        value = super().get_value(dictionary)
-        if value == 'null':
-            return empty
-        return value
-
-
-class _NullableQueryIntegerField(
-    _NullQueryParamAsAbsentMixin,
-    serializers.IntegerField,
-):
-    pass
-
-
-class _NullableQueryCharField(
-    _NullQueryParamAsAbsentMixin,
-    serializers.CharField,
-):
-    pass
-
-
 class TaskListFilterSerializer(
     CustomValidationErrorMixin,
     serializers.Serializer,
@@ -292,10 +266,10 @@ class TaskListFilterSerializer(
         required=False,
         choices=TaskOrdering.CHOICES,
     )
-    assigned_to = _NullableQueryIntegerField(required=False)
+    assigned_to = serializers.IntegerField(required=False)
     search = serializers.CharField(required=False)
-    template_id = _NullableQueryIntegerField(required=False)
-    template_task_api_name = _NullableQueryCharField(required=False)
+    template_id = serializers.IntegerField(required=False)
+    template_task_api_name = serializers.CharField(required=False)
     limit = serializers.IntegerField(required=False)
     offset = serializers.IntegerField(required=False)
 
@@ -307,6 +281,11 @@ class TaskListFilterSerializer(
     def validate_assigned_to(self, value):
         if not self.context['user'].is_admin:
             raise ValidationError(MSG_PW_0057)
+        return value
+
+    def validate_template_task_api_name(self, value):
+        if value == 'null':
+            self.fields['template_task_api_name'].fail('null')
         return value
 
 
