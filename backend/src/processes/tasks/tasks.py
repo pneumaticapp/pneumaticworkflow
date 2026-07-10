@@ -1,5 +1,5 @@
 import logging
-
+from typing import List
 from celery import shared_task
 from django.contrib.auth import get_user_model
 from django.db import transaction
@@ -52,6 +52,27 @@ def complete_tasks(
             auth_type=auth_type,
         )
         service.complete_task(task)
+
+
+@shared_task
+def check_and_complete_tasks(
+    task_ids: List[int],
+    is_superuser: bool,
+    auth_type: AuthTokenType.LITERALS,
+    account_id: int,
+):
+
+    user = UserModel.objects.get(account_id=account_id, is_account_owner=True)
+    tasks = Task.objects.filter(id__in=task_ids).select_related('workflow')
+    for task in tasks:
+        if task.can_be_completed():
+            service = WorkflowActionService(
+                is_superuser=is_superuser,
+                auth_type=auth_type,
+                user=user,
+                workflow=task.workflow,
+            )
+            service.complete_task(task)
 
 
 @shared_task

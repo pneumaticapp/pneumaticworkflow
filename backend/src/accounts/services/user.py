@@ -43,6 +43,8 @@ from src.notifications.tasks import (
 from src.payment.stripe.exceptions import StripeServiceException
 from src.payment.stripe.service import StripeService
 from src.processes.enums import FieldType
+from src.processes.tasks.tasks import check_and_complete_tasks
+from src.processes.models.workflows.task import Task
 from src.processes.models.workflows.fields import TaskField
 from src.processes.services.remove_user_from_draft import (
     remove_user_from_draft,
@@ -338,6 +340,25 @@ class UserService(
             subordinate.manager = None
             self._schedule_ws_notification(subordinate)
 
+    def _check_and_complete_tasks(self):
+
+        """ Check if it is possible to complete tasks
+            where the performer user is """
+
+        user_performer_tasks_ids = list(
+            Task.objects
+            .active()
+            .active_for_user(self.instance.id)
+            .values_list('id'),
+        )
+        if user_performer_tasks_ids:
+            check_and_complete_tasks.delay(
+                task_ids=user_performer_tasks_ids,
+                is_superuser=self.is_superuser,
+                auth_type=self.auth_type,
+                account_id=self.account.id,
+            )
+
     def _deactivate(self):
         user = self.instance
         old_manager = user.manager
@@ -374,6 +395,7 @@ class UserService(
                 user=user,
             )
             service.update_users_counts()
+            self._check_and_complete_tasks()
             self.identify(user)
 
         if old_manager is not None:

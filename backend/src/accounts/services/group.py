@@ -28,10 +28,12 @@ from src.processes.enums import (
 )
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.workflows.fields import TaskField
-from src.processes.models.workflows.task import TaskPerformer
+from src.processes.models.workflows.task import TaskPerformer, Task
 from src.processes.tasks.update_workflow import (
     update_workflow_owners,
 )
+from src.processes.tasks.tasks import check_and_complete_tasks
+
 
 UserModel = get_user_model()
 
@@ -154,6 +156,25 @@ class UserGroupService(BaseModelService):
             send_notification_task=send_task_deleted_notification,
         )
 
+    def _check_and_complete_tasks(self):
+
+        """ Check if it is possible to complete tasks
+            where the performer group is """
+
+        group_performer_tasks_ids = list(
+            Task.objects
+            .active()
+            .active_for_group(self.instance.id)
+            .values_list('id'),
+        )
+        if group_performer_tasks_ids:
+            check_and_complete_tasks.delay(
+                task_ids=group_performer_tasks_ids,
+                is_superuser=self.is_superuser,
+                auth_type=self.auth_type,
+                account_id=self.instance.account_id,
+            )
+
     def partial_update(
         self,
         force_save: bool = False,
@@ -226,6 +247,7 @@ class UserGroupService(BaseModelService):
             self._send_added_users_notifications(added_users_ids)
         if removed_users_ids:
             self._send_removed_users_notifications(removed_users_ids)
+            self._check_and_complete_tasks()
         return result
 
     def delete(self):
@@ -233,7 +255,7 @@ class UserGroupService(BaseModelService):
         users = list(self.instance.users.values_list('id', flat=True))
         if users:
             self._send_removed_users_notifications(users)
-
+        self._check_and_complete_tasks()
         send_group_deleted_notification.delay(
             logging=self.account.log_api_requests,
             account_id=self.user.account_id,
