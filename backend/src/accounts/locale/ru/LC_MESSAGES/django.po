@@ -90,7 +90,7 @@ msgid "Important dates"
 msgstr "Важные даты"
 
 msgid "This field is required."
-msgstr "Поле обязательно."
+msgstr "Обязательное поле."
 
 #. Translators: Create tenant from admin
 msgid "\"Master account\" does not exists."

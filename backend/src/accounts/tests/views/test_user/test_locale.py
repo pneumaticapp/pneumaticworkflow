@@ -195,10 +195,10 @@ def test_comment__locale__guest_localized_validation_error(api_client):
     )
 
     # assert
-    expected_msg = 'Поле обязательно.'
+    expected_msg = 'Обязательное поле.'
     assert response.status_code == 400
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['message'] == expected_msg
+    assert str(response.data['message']) == expected_msg
 
 
 def test_comment__locale__guest_wins_over_bearer(api_client):
@@ -232,10 +232,10 @@ def test_comment__locale__guest_wins_over_bearer(api_client):
     )
 
     # assert
-    expected_msg = 'Поле обязательно.'
+    expected_msg = 'Обязательное поле.'
     assert response.status_code == 400
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['message'] == expected_msg
+    assert str(response.data['message']) == expected_msg
 
 
 def test_put__locale__unauthenticated_uses_accept_language(api_client):
