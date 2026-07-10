@@ -207,6 +207,7 @@ class Common(Configuration):
         'django.middleware.csrf.CsrfViewMiddleware',
         'src.authentication.middleware.UserAgentMiddleware',
         'src.authentication.middleware.AuthMiddleware',
+        'src.authentication.middleware.UserLocaleMiddleware',
         'src.storage.middleware.FileServiceAuthMiddleware',
         'django.contrib.messages.middleware.MessageMiddleware',
         'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -257,7 +258,7 @@ class Common(Configuration):
             'src.authentication.services.guest_auth.GuestJWTAuthService',
             'src.authentication.services.user_auth.'
             'PneumaticTokenAuthentication',
-            'rest_framework_simplejwt.authentication.JWTAuthentication',
+            'src.authentication.services.jwt_auth.PneumaticJWTAuthentication',
         ),
         'NON_FIELD_ERRORS_KEY': 'errors',
         'TEST_REQUEST_DEFAULT_FORMAT': 'json',
