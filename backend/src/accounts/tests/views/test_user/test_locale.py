@@ -248,6 +248,5 @@ def test_put__locale__unauthenticated_uses_accept_language(api_client):
     )
 
     assert response.status_code == 401
-    assert response.data['detail'] == (
-        'Authentifizierungsdaten wurden nicht bereitgestellt.'
-    )
+    # DRF de locale (not Django's gettext for the same msgid)
+    assert str(response.data['detail']) == 'Anmeldedaten fehlen.'
