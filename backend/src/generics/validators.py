@@ -7,6 +7,21 @@ from django.core.validators import (
     _lazy_re_compile,
     validate_ipv6_address,
 )
+from django.utils.translation import gettext_lazy as _
+from rest_framework.exceptions import ValidationError as DRFValidationError
+
+
+class RejectNullStringValidator:
+
+    message = _('This field may not be null.')
+    code = 'null'
+
+    def __call__(self, value):
+        if value == 'null':
+            raise DRFValidationError(self.message, code=self.code)
+
+    def __eq__(self, other):
+        return isinstance(other, RejectNullStringValidator)
 
 
 class NoSchemaURLValidator(URLValidator):

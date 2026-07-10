@@ -2133,7 +2133,7 @@ def test_list__filter_template_task_api_name_null_string__validation_error(
     assert response.data['details']['name'] == 'template_task_api_name'
 
 
-def test_list__filter_template_id_and_template_task_api_name_null_string__validation_error(
+def test_list__filter_both_null_strings__validation_error(
     api_client,
 ):
 
