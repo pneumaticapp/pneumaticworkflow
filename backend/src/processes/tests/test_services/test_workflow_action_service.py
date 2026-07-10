@@ -2412,19 +2412,65 @@ def test_force_resume_workflow__workflow_running__return_early(mocker):
     continue_task_mock.assert_not_called()
 
 
-def test_force_resume_workflow__workflow_completed__raise_exception(mocker):
+def test_force_resume_workflow__workflow_done__resume_ok(mocker):
 
     # arrange
     account = create_test_account()
     owner = create_test_owner(account=account)
-    workflow = create_test_workflow(user=owner)
-    workflow.status = WorkflowStatus.DONE
-    workflow.save()
+    workflow = create_test_workflow(user=owner, status=WorkflowStatus.DONE)
+    force_resume_event_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowEventService'
+        '.force_resume_workflow_event',
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action'
+        '.send_resumed_workflow_notification.delay',
+    )
     service = WorkflowActionService(user=owner, workflow=workflow)
 
-    # act / assert
-    with pytest.raises(exceptions.ResumeCompletedWorkflow):
-        service.force_resume_workflow()
+    # act
+    service.force_resume_workflow()
+
+    # assert
+    workflow.refresh_from_db()
+    assert workflow.status == WorkflowStatus.RUNNING
+    assert workflow.date_completed is None
+    force_resume_event_mock.assert_called_once_with(
+        workflow=workflow,
+        user=owner,
+    )
+
+
+def test_force_resume_workflow__workflow_done__active_task_unchanged(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(
+        user=owner,
+        status=WorkflowStatus.DONE,
+        tasks_count=3,
+    )
+    task = workflow.tasks.get(number=1)
+    mocker.patch(
+        'src.processes.services.workflow_action.WorkflowEventService'
+        '.force_resume_workflow_event',
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action'
+        '.send_resumed_workflow_notification.delay',
+    )
+    service = WorkflowActionService(user=owner, workflow=workflow)
+
+    # act
+    service.force_resume_workflow()
+
+    # assert
+    workflow.refresh_from_db()
+    task.refresh_from_db()
+    assert workflow.status == WorkflowStatus.RUNNING
+    assert workflow.date_completed is None
+    assert task.status == TaskStatus.ACTIVE
 
 
 def test_force_resume_workflow__workflow_delayed__resume_and_notify(mocker):

@@ -176,12 +176,14 @@ class WorkflowActionService:
 
         if self.workflow.is_running:
             return
-        if self.workflow.is_completed:
-            raise exceptions.ResumeCompletedWorkflow
 
         with transaction.atomic():
+            update_fields = ['status']
+            if self.workflow.is_completed:
+                self.workflow.date_completed = None
+                update_fields.append('date_completed')
             self.workflow.status = WorkflowStatus.RUNNING
-            self.workflow.save(update_fields=['status'])
+            self.workflow.save(update_fields=update_fields)
             WorkflowEventService.force_resume_workflow_event(
                 workflow=self.workflow,
                 user=self.user,
