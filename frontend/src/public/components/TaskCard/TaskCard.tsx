@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useEffect, useState, useRef, MouseEvent } from 'react';
+import { useEffect, useState, useRef, MouseEvent, useMemo } from 'react';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
 import { Link } from 'react-router-dom';
@@ -131,7 +131,19 @@ export function TaskCard({
   const { isMobile } = useCheckDevice();
 
   const groups = useSelector(getRegularGroupsList);
-  const saveOutputsToStorageDebounced = debounce(300, addOrUpdateStorageOutput);
+  const saveOutputsToStorageDebounced = useMemo(() => debounce(300, addOrUpdateStorageOutput), []);
+  const taskOutputSignature = useMemo(
+    () =>
+      JSON.stringify(
+        task.output.map(({ apiName, value, markdownValue, attachments }) => ({
+          apiName,
+          value,
+          markdownValue,
+          attachments: attachments?.map(({ id, url, isRemoved }) => ({ id, url, isRemoved })),
+        })),
+      ),
+    [task.output],
+  );
 
   const guestsControllerRef = useRef<React.ElementRef<typeof GuestController> | null>(null);
   const wrapperRef = useRef(null);
@@ -161,7 +173,11 @@ export function TaskCard({
     const outputFieldsWithValues = new ExtraFieldsHelper(output, storageOutput).getFieldsWithValues();
 
     setOutputValues(outputFieldsWithValues);
-  }, [task.id]);
+
+    return () => {
+      saveOutputsToStorageDebounced.cancel();
+    };
+  }, [task.id, taskOutputSignature, saveOutputsToStorageDebounced]);
 
   const handleOpenWorkflowPopup = (workflowId: number | null) => (e: MouseEvent) => {
     e.preventDefault();
@@ -416,7 +432,7 @@ export function TaskCard({
         {visibleOutputs
           .map((field) => (
             <ExtraFieldIntl
-              key={field.apiName}
+              key={`${task.id}-${field.apiName}`}
               field={field}
               editField={handleEditField(field.apiName)}
               showDropdown={false}
@@ -437,6 +453,7 @@ export function TaskCard({
       taskId: task.id,
       viewMode,
       comment,
+      clearOutputTaskIds: [task.id, ...task.revertTasks.map(({ id }) => id)],
     });
     setIsReturnModalOpen(false);
   };

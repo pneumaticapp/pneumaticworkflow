@@ -31,13 +31,19 @@ export function ExtraFieldFile({
 }: IWorkflowExtraFieldProps) {
   const { useCallback, useState, useEffect, createRef } = React;
   const [isUploading, setUploadingState] = useState(false);
-  const initialFiles = field.attachments?.length
-    ? field.attachments
-    : parseMarkdownToFiles(field.markdownValue);
-  const [filesToUpload, setFilesToUploadState] = useState<TUploadedFile[]>(initialFiles);
+  const getFieldFiles = useCallback((): TUploadedFile[] => {
+    return field.attachments?.length
+      ? field.attachments
+      : parseMarkdownToFiles(field.markdownValue);
+  }, [field.attachments, field.markdownValue]);
+  const [filesToUpload, setFilesToUploadState] = useState<TUploadedFile[]>(getFieldFiles);
   const fieldNameInputRef = React.useRef<HTMLInputElement | null>(null);
   const [isFocused, setIsFocused] = React.useState(false);
   const { formatMessage } = useIntl();
+
+  useEffect(() => {
+    setFilesToUploadState(getFieldFiles());
+  }, [getFieldFiles]);
   useEffect(() => {
     const { current } = uploadFieldRef;
 

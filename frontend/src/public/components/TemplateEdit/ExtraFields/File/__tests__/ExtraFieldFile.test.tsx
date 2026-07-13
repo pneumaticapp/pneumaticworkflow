@@ -128,6 +128,35 @@ describe('ExtraFieldFile', () => {
       expect(screen.queryByText('old.pdf')).not.toBeInTheDocument();
     });
 
+    it('syncs displayed files when field attachments change', () => {
+      const attachments: TUploadedFile[] = [
+        { id: 'att-1', name: 'report.pdf', url: 'https://files.example.com/att-1', size: 1024 },
+      ];
+
+      const { rerender } = render(
+        React.createElement(ExtraFieldFile as React.FC<any>, {
+          ...baseProps,
+          field: createFileField({ attachments }),
+        }),
+      );
+
+      expect(screen.getByText('report.pdf')).toBeInTheDocument();
+
+      const updatedAttachments: TUploadedFile[] = [
+        { id: 'att-2', name: 'updated.pdf', url: 'https://files.example.com/att-2', size: 2048 },
+      ];
+
+      rerender(
+        React.createElement(ExtraFieldFile as React.FC<any>, {
+          ...baseProps,
+          field: createFileField({ attachments: updatedAttachments }),
+        }),
+      );
+
+      expect(screen.queryByText('report.pdf')).not.toBeInTheDocument();
+      expect(screen.getByText('updated.pdf')).toBeInTheDocument();
+    });
+
     it('renders nothing when no attachments and no markdownValue', () => {
       const { container } = render(
         React.createElement(ExtraFieldFile as React.FC<any>, {

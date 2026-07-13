@@ -51,7 +51,10 @@ import { patchTaskInList, shiftTaskList, ETaskListActions } from '../tasks/slice
 
 import { getErrorMessage } from '../../utils/getErrorMessage';
 import { getAuthUser, getUsers, getUserTimezone } from '../selectors/user';
-import { removeOutputFromLocalStorage } from '../../components/TaskCard/utils/storageOutputs';
+import {
+  removeOutputFromLocalStorage,
+  removeOutputsFromLocalStorage,
+} from '../../components/TaskCard/utils/storageOutputs';
 import { ETaskCardViewMode } from '../../components/TaskCard';
 
 import { TChannelAction } from '../tasks/saga';
@@ -328,7 +331,7 @@ export function* setTaskCompleted({ payload: { taskId, output, viewMode } }: TSe
   }
 }
 
-export function* setTaskReverted({ payload: { viewMode, taskId, comment } }: TSetTaskReverted) {
+export function* setTaskReverted({ payload: { viewMode, taskId, comment, clearOutputTaskIds } }: TSetTaskReverted) {
   const {
     authUser: { id: currentUserId },
   }: ReturnType<typeof getAuthUser> = yield select(getAuthUser);
@@ -341,6 +344,8 @@ export function* setTaskReverted({ payload: { viewMode, taskId, comment } }: TSe
     yield put(setCurrentTaskStatus(ETaskStatus.Returning));
 
     yield revertTask({ id: taskId, comment });
+
+    removeOutputsFromLocalStorage(clearOutputTaskIds ?? [taskId]);
 
     NotificationManager.success({ message: 'tasks.task-success-revert' });
 
