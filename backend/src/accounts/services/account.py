@@ -50,7 +50,6 @@ class AccountService(
         tenant_name: str,
     ) -> Account:
 
-        billing_enabled = master_account.billing_sync
         account = Account(
             is_verified=True,
             name='Company name',
@@ -75,7 +74,7 @@ class AccountService(
         ):
             account.billing_plan = BillingPlanType.FREEMIUM
         elif master_account.billing_plan == BillingPlanType.UNLIMITED:
-            if billing_enabled:
+            if master_account.billing_sync:
                 # Need buy
                 account.billing_plan = None
             else:
@@ -95,7 +94,7 @@ class AccountService(
         name: Optional[str] = None,
         tenant_name: Optional[str] = None,
         master_account: Optional[Account] = None,
-        billing_sync: bool = True,
+        billing_sync: bool = settings.PROJECT_CONF['BILLING'],
         **kwargs,
     ) -> Account:
 
@@ -105,13 +104,12 @@ class AccountService(
                 tenant_name=tenant_name,
             )
         else:
-            billing_enabled = billing_sync
             self.instance = Account(
                 is_verified=is_verified,
                 name=name or 'Company name',
                 billing_sync=billing_sync,
             )
-            if not billing_enabled:
+            if not billing_sync:
                 self.instance.billing_plan = BillingPlanType.FREEMIUM
                 self.instance.billing_sync = False
             self.instance.save()

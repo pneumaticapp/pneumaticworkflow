@@ -109,7 +109,7 @@ class SignUpMixin:
         utm_term: Optional[str] = None,
         utm_content: Optional[str] = None,
         gclid: Optional[str] = None,
-        billing_sync: bool = True,
+        billing_sync: bool = settings.PROJECT_CONF['BILLING'],
         request: Optional[HttpRequest] = None,
         ms_graph_user_id: Optional[str] = None,
     ) -> Tuple[UserModel, PneumaticToken]:
