@@ -93,32 +93,6 @@ def update_workflows(**kwargs):
     autoretry_for=(Exception,),
     retry_kwargs={
         'max_retries': 3,
-        'countdown': 5,
-    },
-)
-def sync_workflow_performer_permissions(workflow_id: int):
-    """Realign PERFORMER / PERFORMER_GROUP UOP rows for one
-    workflow after bulk reassignment.
-
-    Called asynchronously via on_commit so the main request
-    returns faster.
-    """
-    try:
-        workflow = Workflow.objects.get(
-            id=workflow_id,
-            is_deleted=False,
-        )
-    except Workflow.DoesNotExist:
-        return
-    WorkflowPermissionService(workflow).sync_performer_sources()
-    schedule_sync_workflow_attachment_permissions(workflow_id)
-
-
-@shared_task(
-    acks_late=True,
-    autoretry_for=(Exception,),
-    retry_kwargs={
-        'max_retries': 3,
         'countdown': 2,
     },
 )

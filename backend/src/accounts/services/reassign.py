@@ -54,10 +54,13 @@ from src.processes.models.workflows.conditions import Predicate
 from src.processes.models.workflows.raw_performer import RawPerformer
 from src.processes.models.workflows.task import TaskPerformer
 from src.processes.models.workflows.workflow import Workflow
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 from src.processes.tasks.tasks import complete_tasks
-from src.processes.tasks.update_workflow import (
-    sync_workflow_performer_permissions,
-    update_workflow_owners,
+from src.processes.tasks.update_workflow import update_workflow_owners
+from src.storage.tasks import (
+    schedule_sync_workflow_attachment_permissions,
 )
 
 UserModel = get_user_model()
@@ -327,7 +330,7 @@ class ReassignService:
                 ).update(user=self.new_user)
 
     def _affected_workflow_ids(self) -> list:
-        """Find all workflows where the old user/group had view permissions."""
+        """Find account workflows where old user/group had view perms."""
         ct = ContentType.objects.get_for_model(Workflow)
         workflow_ids = set()
 
@@ -348,7 +351,15 @@ class ReassignService:
             ).values_list('object_pk', flat=True)
             workflow_ids.update(int(pk) for pk in uop_group_pks)
 
-        return list(workflow_ids)
+        if not workflow_ids:
+            return []
+
+        return list(
+            Workflow.objects.filter(
+                id__in=workflow_ids,
+                account=self.account,
+            ).values_list('id', flat=True),
+        )
 
     def _reassign_in_workflow_members(self):
         """Update Guardian view_workflow permissions.
@@ -374,25 +385,29 @@ class ReassignService:
         if not affected_workflow_ids:
             return
 
-        live_wf_ids = list(
-            Workflow.objects.filter(
-                id__in=affected_workflow_ids,
-                is_deleted=False,
-            ).values_list('id', flat=True),
+        workflows = Workflow.objects.filter(
+            id__in=affected_workflow_ids,
+            account=self.account,
+            is_deleted=False,
         )
-        for wf_id in live_wf_ids:
-            transaction.on_commit(
-                lambda _id=wf_id: (
-                    sync_workflow_performer_permissions.delay(_id)
-                ),
+        for workflow in workflows:
+            WorkflowPermissionService(workflow).sync_performer_sources()
+            schedule_sync_workflow_attachment_permissions(
+                workflow.id,
             )
 
     def _workflow_viewer_base_qs(self):
         ct = ContentType.objects.get_for_model(Workflow)
+        account_wf_pks = [
+            str(pk) for pk in Workflow.objects.filter(
+                account=self.account,
+            ).values_list('id', flat=True)
+        ]
         return UserObjectPermission.objects.filter(
             content_type=ct,
             permission__codename=WorkflowPermission.VIEW,
             source_type=PermissionSource.WORKFLOW_VIEWER,
+            object_pk__in=account_wf_pks,
         )
 
     def _transfer_workflow_viewer_rows(self):

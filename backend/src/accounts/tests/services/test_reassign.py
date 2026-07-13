@@ -1,4 +1,5 @@
 import pytest
+from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 
 from src.accounts.services import exceptions
@@ -11,6 +12,7 @@ from src.processes.enums import (
     PerformerType,
     PredicateOperator,
     PredicateType,
+    WorkflowPermission,
 )
 from src.processes.models.templates.conditions import (
     ConditionTemplate,
@@ -25,9 +27,6 @@ from src.processes.models.workflows.conditions import (
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.services.workflow_permissions import (
     WorkflowPermissionService,
-)
-from src.processes.tasks.update_workflow import (
-    sync_workflow_performer_permissions,
 )
 from src.processes.tests.fixtures import (
     create_test_account,
@@ -1249,9 +1248,9 @@ class TestReassignService:
         mocker,
     ):
         """
-        _reassign_in_workflow_members schedules performer-source
-        sync via sync_workflow_performer_permissions (on_commit);
-        the task clears stale PERFORMER UOP and schedules attachment ACL.
+        _reassign_in_workflow_members must sync performer sources
+        synchronously (stale PERFORMER UOP cleared) and schedule
+        attachment ACL sync via schedule_sync_*.
         """
         # arrange
         account = create_test_account(name='test_account')
@@ -1275,18 +1274,9 @@ class TestReassignService:
             source_id=0,
         )
 
-        mocker.patch(
-            'src.accounts.services.reassign.transaction.on_commit',
-            side_effect=lambda fn: fn(),
-        )
         attach_mock = mocker.patch(
-            'src.processes.tasks.update_workflow.'
-            'schedule_sync_workflow_attachment_permissions',
-        )
-        sync_delay_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'sync_workflow_performer_permissions.delay',
-            side_effect=sync_workflow_performer_permissions,
+            'schedule_sync_workflow_attachment_permissions',
         )
 
         service = ReassignService(old_user=old_user, new_user=new_user)
@@ -1298,7 +1288,6 @@ class TestReassignService:
         assert not WorkflowPermissionService(workflow).has_view(
             user=old_user,
         )
-        sync_delay_mock.assert_called_once_with(workflow.id)
         attach_mock.assert_called_once_with(workflow.id)
 
     def test_reassign_in_template_conditions__with_old_and_new_user__ok(self):
@@ -1698,10 +1687,11 @@ class TestReassignService:
         ).exists()
 
 
-def test_reassign_workflow_members__dispatches_async_task__ok(mocker):
+def test_reassign_workflow_members__syncs_performer_sources__ok(mocker):
     """
-    _reassign_in_workflow_members schedules performer-source sync
-    via sync_workflow_performer_permissions.delay on commit.
+    _reassign_in_workflow_members must sync performer sources
+    synchronously (stale PERFORMER UOP cleared) and schedule
+    attachment ACL sync via schedule_sync_*.
     """
 
     # arrange
@@ -1724,13 +1714,9 @@ def test_reassign_workflow_members__dispatches_async_task__ok(mocker):
     )
     assert WorkflowPermissionService(workflow).has_view(user=old_user)
 
-    mocker.patch(
-        'src.accounts.services.reassign.transaction.on_commit',
-        side_effect=lambda fn: fn(),
-    )
-    sync_delay_mock = mocker.patch(
+    attach_mock = mocker.patch(
         'src.accounts.services.reassign.'
-        'sync_workflow_performer_permissions.delay',
+        'schedule_sync_workflow_attachment_permissions',
     )
 
     service = ReassignService(old_user=old_user, new_user=new_user)
@@ -1739,7 +1725,10 @@ def test_reassign_workflow_members__dispatches_async_task__ok(mocker):
     service._reassign_in_workflow_members()
 
     # assert
-    sync_delay_mock.assert_called_once_with(workflow.id)
+    assert not WorkflowPermissionService(workflow).has_view(
+        user=old_user,
+    )
+    attach_mock.assert_called_once_with(workflow.id)
 
 
 def test_reassign_workflow_members__transfers_workflow_viewer__ok(mocker):
@@ -1767,7 +1756,8 @@ def test_reassign_workflow_members__transfers_workflow_viewer__ok(mocker):
     )
 
     mocker.patch(
-        'src.storage.tasks.schedule_sync_workflow_attachment_permissions',
+        'src.accounts.services.reassign.'
+        'schedule_sync_workflow_attachment_permissions',
     )
     mocker.patch(
         'src.accounts.services.reassign.transaction.on_commit',
@@ -1825,7 +1815,8 @@ def test_reassign_workflow_members__viewer_conflict__resolved(mocker):
     )
 
     mocker.patch(
-        'src.storage.tasks.schedule_sync_workflow_attachment_permissions',
+        'src.accounts.services.reassign.'
+        'schedule_sync_workflow_attachment_permissions',
     )
     mocker.patch(
         'src.accounts.services.reassign.transaction.on_commit',
@@ -1871,7 +1862,8 @@ def test_reassign_workflow_members__old_group_only__no_viewer_transfer(
     workflow = create_test_workflow(user=account_owner, tasks_count=1)
 
     mocker.patch(
-        'src.storage.tasks.schedule_sync_workflow_attachment_permissions',
+        'src.accounts.services.reassign.'
+        'schedule_sync_workflow_attachment_permissions',
     )
     mocker.patch(
         'src.accounts.services.reassign.transaction.on_commit',
@@ -1918,7 +1910,8 @@ def test_reassign_workflow_members__user_to_group__revokes_viewer__ok(
     )
 
     mocker.patch(
-        'src.storage.tasks.schedule_sync_workflow_attachment_permissions',
+        'src.accounts.services.reassign.'
+        'schedule_sync_workflow_attachment_permissions',
     )
     mocker.patch(
         'src.accounts.services.reassign.transaction.on_commit',
@@ -1955,7 +1948,8 @@ def test_reassign_workflow_members__user_to_group__calls_revoke_not_transfer(
     create_test_workflow(user=account_owner, tasks_count=1)
 
     mocker.patch(
-        'src.storage.tasks.schedule_sync_workflow_attachment_permissions',
+        'src.accounts.services.reassign.'
+        'schedule_sync_workflow_attachment_permissions',
     )
     mocker.patch(
         'src.accounts.services.reassign.transaction.on_commit',
@@ -2004,7 +1998,8 @@ def test_reassign_workflow_members__user_to_group__preserves_mention__ok(
     )
 
     mocker.patch(
-        'src.storage.tasks.schedule_sync_workflow_attachment_permissions',
+        'src.accounts.services.reassign.'
+        'schedule_sync_workflow_attachment_permissions',
     )
     mocker.patch(
         'src.accounts.services.reassign.transaction.on_commit',
@@ -2059,7 +2054,8 @@ def test_reassign_workflow_members__user_to_user__preserves_mention__ok(
         source_id=comment_id,
     )
     mocker.patch(
-        'src.storage.tasks.schedule_sync_workflow_attachment_permissions',
+        'src.accounts.services.reassign.'
+        'schedule_sync_workflow_attachment_permissions',
     )
     mocker.patch(
         'src.accounts.services.reassign.transaction.on_commit',
@@ -2112,7 +2108,8 @@ def test_reassign_workflow_members__user_to_group__preserves_template_owner(
     )
 
     mocker.patch(
-        'src.storage.tasks.schedule_sync_workflow_attachment_permissions',
+        'src.accounts.services.reassign.'
+        'schedule_sync_workflow_attachment_permissions',
     )
     mocker.patch(
         'src.accounts.services.reassign.transaction.on_commit',
@@ -2160,7 +2157,8 @@ def test_reassign_workflow_members__user_to_group__multiple_workflows__ok(
         )
 
     mocker.patch(
-        'src.storage.tasks.schedule_sync_workflow_attachment_permissions',
+        'src.accounts.services.reassign.'
+        'schedule_sync_workflow_attachment_permissions',
     )
     mocker.patch(
         'src.accounts.services.reassign.transaction.on_commit',
@@ -2201,7 +2199,8 @@ def test_reassign_workflow_members__user_to_group__no_viewer_rows__ok(
     workflow = create_test_workflow(user=account_owner, tasks_count=1)
 
     mocker.patch(
-        'src.storage.tasks.schedule_sync_workflow_attachment_permissions',
+        'src.accounts.services.reassign.'
+        'schedule_sync_workflow_attachment_permissions',
     )
     mocker.patch(
         'src.accounts.services.reassign.transaction.on_commit',
@@ -2237,7 +2236,8 @@ def test_reassign_workflow_members__group_to_user__no_viewer_revoke(
     create_test_workflow(user=account_owner, tasks_count=1)
 
     mocker.patch(
-        'src.storage.tasks.schedule_sync_workflow_attachment_permissions',
+        'src.accounts.services.reassign.'
+        'schedule_sync_workflow_attachment_permissions',
     )
     mocker.patch(
         'src.accounts.services.reassign.transaction.on_commit',
@@ -2274,7 +2274,8 @@ def test_reassign_workflow_members__user_to_user__calls_transfer_not_revoke(
     create_test_workflow(user=account_owner, tasks_count=1)
 
     mocker.patch(
-        'src.storage.tasks.schedule_sync_workflow_attachment_permissions',
+        'src.accounts.services.reassign.'
+        'schedule_sync_workflow_attachment_permissions',
     )
     mocker.patch(
         'src.accounts.services.reassign.transaction.on_commit',
@@ -2294,6 +2295,192 @@ def test_reassign_workflow_members__user_to_user__calls_transfer_not_revoke(
     # assert
     transfer_mock.assert_called_once_with()
     revoke_mock.assert_not_called()
+
+
+def test_transfer_workflow_viewer__scopes_to_account__ok(mocker):
+    """user→user must not transfer WORKFLOW_VIEWER outside account."""
+
+    # arrange
+    account_a = create_test_account(name='account_a')
+    account_b = create_test_account(name='account_b')
+    owner_a = create_test_owner(
+        account=account_a, email='owner_a@test.test',
+    )
+    owner_b = create_test_owner(
+        account=account_b, email='owner_b@test.test',
+    )
+    old_user = create_test_admin(
+        account=account_a, email='old@a.test',
+    )
+    new_user = create_test_admin(
+        account=account_a, email='new@a.test',
+    )
+    wf_a = create_test_workflow(user=owner_a, tasks_count=1)
+    wf_b = create_test_workflow(user=owner_b, tasks_count=1)
+    WorkflowPermissionService(wf_a).grant_view(
+        user=old_user,
+        source_type=PermissionSource.WORKFLOW_VIEWER,
+        source_id=wf_a.pk,
+    )
+    # Bypass grant_view account guard to simulate orphan UOP
+    ct = ContentType.objects.get_for_model(Workflow)
+    view_perm = Permission.objects.get(
+        content_type=ct,
+        codename=WorkflowPermission.VIEW,
+    )
+    UserObjectPermission.objects.create(
+        user=old_user,
+        permission=view_perm,
+        content_type=ct,
+        object_pk=str(wf_b.pk),
+        source_type=PermissionSource.WORKFLOW_VIEWER,
+        source_id=wf_b.pk,
+    )
+    mocker.patch(
+        'src.accounts.services.reassign.'
+        'schedule_sync_workflow_attachment_permissions',
+    )
+
+    service = ReassignService(old_user=old_user, new_user=new_user)
+
+    # act
+    service._reassign_in_workflow_members()
+
+    # assert
+    assert UserObjectPermission.objects.filter(
+        user=new_user,
+        content_type=ct,
+        object_pk=str(wf_a.pk),
+        source_type=PermissionSource.WORKFLOW_VIEWER,
+    ).exists()
+    assert not UserObjectPermission.objects.filter(
+        user=old_user,
+        content_type=ct,
+        object_pk=str(wf_a.pk),
+        source_type=PermissionSource.WORKFLOW_VIEWER,
+    ).exists()
+    assert UserObjectPermission.objects.filter(
+        user=old_user,
+        content_type=ct,
+        object_pk=str(wf_b.pk),
+        source_type=PermissionSource.WORKFLOW_VIEWER,
+    ).exists()
+    assert not UserObjectPermission.objects.filter(
+        user=new_user,
+        content_type=ct,
+        object_pk=str(wf_b.pk),
+        source_type=PermissionSource.WORKFLOW_VIEWER,
+    ).exists()
+
+
+def test_revoke_workflow_viewer__scopes_to_account__ok(mocker):
+    """user→group must not revoke WORKFLOW_VIEWER outside account."""
+
+    # arrange
+    account_a = create_test_account(name='account_a')
+    account_b = create_test_account(name='account_b')
+    owner_a = create_test_owner(
+        account=account_a, email='owner_a2@test.test',
+    )
+    owner_b = create_test_owner(
+        account=account_b, email='owner_b2@test.test',
+    )
+    old_user = create_test_admin(
+        account=account_a, email='old@a.test',
+    )
+    new_group = create_test_group(account_a, name='new grp')
+    wf_a = create_test_workflow(user=owner_a, tasks_count=1)
+    wf_b = create_test_workflow(user=owner_b, tasks_count=1)
+    WorkflowPermissionService(wf_a).grant_view(
+        user=old_user,
+        source_type=PermissionSource.WORKFLOW_VIEWER,
+        source_id=wf_a.pk,
+    )
+    ct = ContentType.objects.get_for_model(Workflow)
+    view_perm = Permission.objects.get(
+        content_type=ct,
+        codename=WorkflowPermission.VIEW,
+    )
+    UserObjectPermission.objects.create(
+        user=old_user,
+        permission=view_perm,
+        content_type=ct,
+        object_pk=str(wf_b.pk),
+        source_type=PermissionSource.WORKFLOW_VIEWER,
+        source_id=wf_b.pk,
+    )
+    mocker.patch(
+        'src.accounts.services.reassign.'
+        'schedule_sync_workflow_attachment_permissions',
+    )
+
+    service = ReassignService(old_user=old_user, new_group=new_group)
+
+    # act
+    service._reassign_in_workflow_members()
+
+    # assert
+    assert not UserObjectPermission.objects.filter(
+        user=old_user,
+        content_type=ct,
+        object_pk=str(wf_a.pk),
+        source_type=PermissionSource.WORKFLOW_VIEWER,
+    ).exists()
+    assert UserObjectPermission.objects.filter(
+        user=old_user,
+        content_type=ct,
+        object_pk=str(wf_b.pk),
+        source_type=PermissionSource.WORKFLOW_VIEWER,
+    ).exists()
+
+
+def test_affected_workflow_ids__scopes_to_account__ok():
+    """Performer sync must not target workflows from other accounts."""
+
+    # arrange
+    account_a = create_test_account(name='account_a')
+    account_b = create_test_account(name='account_b')
+    owner_a = create_test_owner(
+        account=account_a, email='owner_a3@test.test',
+    )
+    owner_b = create_test_owner(
+        account=account_b, email='owner_b3@test.test',
+    )
+    old_user = create_test_admin(
+        account=account_a, email='old@a.test',
+    )
+    new_user = create_test_admin(
+        account=account_a, email='new@a.test',
+    )
+    wf_a = create_test_workflow(user=owner_a, tasks_count=1)
+    wf_b = create_test_workflow(user=owner_b, tasks_count=1)
+    WorkflowPermissionService(wf_a).grant_view(
+        user=old_user,
+        source_type=PermissionSource.PERFORMER,
+        source_id=0,
+    )
+    ct = ContentType.objects.get_for_model(Workflow)
+    view_perm = Permission.objects.get(
+        content_type=ct,
+        codename=WorkflowPermission.VIEW,
+    )
+    UserObjectPermission.objects.create(
+        user=old_user,
+        permission=view_perm,
+        content_type=ct,
+        object_pk=str(wf_b.pk),
+        source_type=PermissionSource.PERFORMER,
+        source_id=0,
+    )
+
+    service = ReassignService(old_user=old_user, new_user=new_user)
+
+    # act
+    affected = service._affected_workflow_ids()
+
+    # assert
+    assert wf_a.id in affected
+    assert wf_b.id not in affected
 
 
 def test_revoke_workflow_viewer_rows__only_viewer_source__ok():
