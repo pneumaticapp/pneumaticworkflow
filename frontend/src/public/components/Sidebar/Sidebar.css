@@ -21,19 +21,19 @@
 .sidebar_free {
   .sidebar_menu,
   .logo-mobile {
-    background: var(--sidebar-bg-free);
+    background: var(--pneumatic-color-black88);
   }
 
   :global(.active) .sidebar__link {
-    color: white;
+    color: var(--pneumatic-color-link-hover);
   }
 
   .sidebar__link {
-    color: var(--pneumatic-color-link-dark);
+    color: var(--pneumatic-color-black16);
     transition: color 0.1s ease-in-out;
 
     &:hover {
-      color: var(--sidebar-color-hover-free);
+      color: var(--pneumatic-color-link-hover);
     }
   }
 

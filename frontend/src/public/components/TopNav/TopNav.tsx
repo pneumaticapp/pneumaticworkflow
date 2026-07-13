@@ -21,7 +21,7 @@ import { EWorkflowsView } from '../../types/workflow';
 export interface ITopNavProps {
   pendingActions: EPlanActions[];
   paywallType: EPaywallReminderType | null;
-  isSubscribed: boolean;
+  plan: ESubscriptionPlan;
   unreadNotificationsCount: number;
   isSupermode: boolean;
   tenantName: string;
@@ -51,7 +51,7 @@ export type TTopNavProps = ITopNavProps & ITopNavDispatchProps & ITopNavOwnProps
 export function TopNav({
   pendingActions,
   paywallType,
-  isSubscribed,
+  plan,
   unreadNotificationsCount,
   isSupermode,
   tenantName,
@@ -75,7 +75,11 @@ export function TopNav({
   const isPaywallVisible = Boolean(paywallType);
   const rightNavbarClassname = classnames('navbar-right', styles['navbar-right']);
 
-  const showCustomerPortalLink = isSubscribed && isAccountOwner && leaseLevel !== 'tenant';
+  const showCustomerPortalLink =
+    plan !== ESubscriptionPlan.Free &&
+    plan !== ESubscriptionPlan.Unknown &&
+    isAccountOwner &&
+    leaseLevel !== 'tenant';
 
   const getColorSuperMode = (billingPlan: ESubscriptionPlan, isTrial: boolean, status: TAccountLeaseLevel) => {
     const statusClassesMap = {
