@@ -127,12 +127,21 @@ function* fetchTemplate({ payload: id }: TLoadTemplate) {
   }
 }
 
-function* patchTemplateSaga({ payload: { changedFields, onSuccess, onFailed, requestId } }: TPatchTemplate) {
+function* patchTemplateSaga({
+  payload: {
+    changedFields,
+    onSuccess,
+    onFailed,
+    requestId,
+    templateSnapshot,
+  },
+}: TPatchTemplate) {
   if (Object.keys(changedFields).length === 0) {
     return;
   }
 
-  const template: ReturnType<typeof getTemplateData> = yield select(getTemplateData);
+  const reduxTemplate: ReturnType<typeof getTemplateData> = yield select(getTemplateData);
+  const template = templateSnapshot || reduxTemplate;
 
   yield put(setTemplateStatus(ETemplateStatus.Saving));
 
@@ -143,7 +152,7 @@ function* patchTemplateSaga({ payload: { changedFields, onSuccess, onFailed, req
 
   if (Object.keys(changedFields).length === 1 && changedFields.hasOwnProperty('kickoff')) {
     const kickoffChanged = changedFields.kickoff;
-    const previousKickoff = template.kickoff;
+    const previousKickoff = reduxTemplate.kickoff;
 
     if (haveSameKickoffFields(kickoffChanged?.fields, previousKickoff.fields)) {
       shouldDeactivateTemplate =
@@ -161,13 +170,23 @@ function* patchTemplateSaga({ payload: { changedFields, onSuccess, onFailed, req
   const newTemplate = needsCleanup ? cleanTemplateReferences(mergedTemplate) : mergedTemplate;
 
   yield put(setTemplate(newTemplate));
-  yield delay(350);
+
+  // Formik autosave is already debounced before it reaches Redux. Legacy
+  // patchTemplate callers still rely on the saga-level debounce.
+  if (requestId === undefined) {
+    yield delay(350);
+  }
 
   if (!isAutosavePersistRequestCurrent(requestId)) {
     return;
   }
 
-  yield put(saveTemplate({ onSuccess, onFailed, requestId }));
+  yield put(saveTemplate({
+    onSuccess,
+    onFailed,
+    requestId,
+    templateSnapshot: templateSnapshot ? newTemplate : undefined,
+  }));
 }
 
 function* patchTaskSaga({ payload: { taskUUID, changedFields } }: TPatchTask) {
@@ -230,7 +249,12 @@ function* createOrUpdateTemplate(template: ITemplateRequest, isSubscribed: boole
   }
 }
 
-function* fetchSaveTemplate(onSuccess?: () => void, onFailed?: () => void, requestId?: number) {
+function* fetchSaveTemplate(
+  onSuccess?: () => void,
+  onFailed?: () => void,
+  requestId?: number,
+  templateSnapshot?: ITemplate,
+) {
   const isTemplatePage = checkSomeRouteIsActive(
     ERoutes.TemplateView,
     ERoutes.TemplatesCreate,
@@ -239,7 +263,9 @@ function* fetchSaveTemplate(onSuccess?: () => void, onFailed?: () => void, reque
     ERoutes.Templates,
   );
 
-  if (!isTemplatePage) return;
+  // An unmount flush may run after navigation has already committed. It must
+  // save the captured Formik snapshot without depending on the current route.
+  if (!isTemplatePage && !templateSnapshot) return;
 
   if (!isAutosavePersistRequestCurrent(requestId)) {
     return;
@@ -248,7 +274,8 @@ function* fetchSaveTemplate(onSuccess?: () => void, onFailed?: () => void, reque
   const isSubscribed: ReturnType<typeof getIsUserSubsribed> = yield select(getIsUserSubsribed);
   const users: ReturnType<typeof getUsers> = yield select(getUsers);
 
-  const editingTemplate: ReturnType<typeof getTemplateData> = yield select(getTemplateData);
+  const editingTemplate: ReturnType<typeof getTemplateData> =
+    templateSnapshot || (yield select(getTemplateData));
   const templateRequest = mapTemplateRequest(editingTemplate);
 
   const isTemplateCreated = !templateRequest.id;
@@ -256,7 +283,15 @@ function* fetchSaveTemplate(onSuccess?: () => void, onFailed?: () => void, reque
 
   if (!isAutosavePersistRequestCurrent(requestId)) {
     if (savedTemplate) {
-      yield mergeSupersededCreateResponse(savedTemplate, isTemplateCreated);
+      const canSyncEditorState = !templateSnapshot || checkSomeRouteIsActive(
+        ERoutes.TemplatesCreate,
+        ERoutes.TemplatesCreateAI,
+        ERoutes.TemplatesEdit,
+      );
+
+      if (canSyncEditorState) {
+        yield mergeSupersededCreateResponse(savedTemplate, isTemplateCreated);
+      }
     }
 
     return;
@@ -265,10 +300,29 @@ function* fetchSaveTemplate(onSuccess?: () => void, onFailed?: () => void, reque
   const lastTemplateState: ReturnType<typeof getTemplateData> = yield select(getTemplateData);
 
   if (!savedTemplate) {
-    yield put(setTemplate({ ...lastTemplateState, isActive: false }));
+    const canSyncEditorState = !templateSnapshot || checkSomeRouteIsActive(
+      ERoutes.TemplatesCreate,
+      ERoutes.TemplatesCreateAI,
+      ERoutes.TemplatesEdit,
+    );
+
+    if (isTemplatePage && canSyncEditorState) {
+      yield put(setTemplate({ ...lastTemplateState, isActive: false }));
+    }
 
     onFailed?.();
 
+    return;
+  }
+
+  // Do not repopulate the editor store or redirect after the page has been
+  // left. The server save is complete; only mounted editor state needs syncing.
+  if (templateSnapshot && !checkSomeRouteIsActive(
+    ERoutes.TemplatesCreate,
+    ERoutes.TemplatesCreateAI,
+    ERoutes.TemplatesEdit,
+  )) {
+    onSuccess?.();
     return;
   }
 
@@ -408,7 +462,13 @@ export function* watchSaveTemplate() {
   );
   while (true) {
     const { payload }: TSaveTemplate = yield take(autosaveChannel);
-    yield call(fetchSaveTemplate, payload?.onSuccess, payload?.onFailed, payload?.requestId);
+    yield call(
+      fetchSaveTemplate,
+      payload?.onSuccess,
+      payload?.onFailed,
+      payload?.requestId,
+      payload?.templateSnapshot,
+    );
   }
 }
 

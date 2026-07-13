@@ -15,6 +15,9 @@ import { TemplatePersistContext, useTemplateField } from './contexts';
 import { getChangedFields, getUnconsumedPendingEdits } from './templateFormUtils';
 import { ITemplatePersistContextValue } from './types';
 
+/** Batches rapid keystrokes before Redux synchronization and persistence. */
+export const TEMPLATE_FORM_PERSIST_DEBOUNCE_MS = 350;
+
 interface ITemplateFormPersistProviderProps {
   dirtyRef: React.MutableRefObject<boolean>;
   pendingUserEditsRef: React.MutableRefObject<Partial<ITemplate>>;
@@ -48,9 +51,10 @@ type TConsumedPending = {
  * immediately. The saga makes the same call server-side but only reinitializes
  * Formik after the save round-trip.
  *
- * On unmount the values effect cleanup calls `flushPersist` so edits made just
- * before leaving the page are not lost. Call `abandonPendingChanges` before
- * navigating away after "Discard changes" so those edits are not re-dispatched.
+ * On unmount a dedicated cleanup calls `flushPersist` with the latest Formik
+ * snapshot so edits made just before leaving the page are not lost. Call
+ * `abandonPendingChanges` before navigating away after "Discard changes" so
+ * those edits are not re-dispatched.
  */
 export function TemplateFormPersistProvider({
   dirtyRef,
@@ -158,7 +162,7 @@ export function TemplateFormPersistProvider({
     }
   }, []);
 
-  const revertConsumedChanges = useCallback(() => {
+  const revertConsumedChanges = useCallback((requeue = true) => {
     const consumed = consumedPendingRef.current;
 
     if (!consumed) {
@@ -200,7 +204,7 @@ export function TemplateFormPersistProvider({
     // visible but no longer match the restored baseline — flush now so they
     // are not stranded without autosave (e.g. failed activation in
     // TemplateControlls never flips isActive in Formik before the patch).
-    if (previousValuesRef.current !== valuesRef.current && !valuesChangedByExplicitRevert) {
+    if (requeue && previousValuesRef.current !== valuesRef.current && !valuesChangedByExplicitRevert) {
       flushPersistRef.current();
     }
   }, []);
@@ -246,6 +250,7 @@ export function TemplateFormPersistProvider({
         patchTemplate({
           changedFields,
           requestId,
+          templateSnapshot: valuesRef.current,
           onSuccess: () => {
             if (!isAutosavePersistRequestCurrent(requestId)) {
               return;
@@ -258,7 +263,9 @@ export function TemplateFormPersistProvider({
               return;
             }
             pendingDispatchRef.current = null;
-            revertConsumedChanges();
+            // Keep edits pending for the explicit Retry action. Re-dispatching
+            // here retries every failed API call forever.
+            revertConsumedChanges(false);
           },
         }),
       );
@@ -294,13 +301,16 @@ export function TemplateFormPersistProvider({
 
     const timeoutId = window.setTimeout(() => {
       flushPersist();
-    }, 0);
+    }, TEMPLATE_FORM_PERSIST_DEBOUNCE_MS);
 
     return () => {
       window.clearTimeout(timeoutId);
-      flushPersist();
     };
   }, [values, flushPersist]);
+
+  useEffect(() => () => {
+    flushPersistRef.current();
+  }, []);
 
   const persistContextValue = useMemo<ITemplatePersistContextValue>(
     () => ({

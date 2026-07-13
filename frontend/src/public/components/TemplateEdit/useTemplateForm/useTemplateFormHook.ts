@@ -42,6 +42,8 @@ export function useTemplateForm(
     enableReinitialize: false,
     onSubmit: () => undefined,
   });
+  const formikRef = useRef(formik);
+  formikRef.current = formik;
 
   if (hasTemplateIdentityChanged(lastTemplateIdentityRef.current, resolvedIdentity)) {
     dirtyRef.current = false;
@@ -63,7 +65,15 @@ export function useTemplateForm(
 
       pendingUserEditsRef.current = getChangedFields(initialValues, mergedValues);
       dirtyRef.current = true;
-      formik.setValues(mergedValues, false);
+
+      // Optimistic `setTemplate` from autosave can land while the user is still
+      // typing. Skip a redundant Formik write when the merged snapshot already
+      // matches what the form is showing.
+      const resyncDiff = getChangedFields(formik.values, mergedValues);
+      if (Object.keys(resyncDiff).length > 0) {
+        formik.setValues(mergedValues, false);
+      }
+
       persistBaselineSyncRef.current?.(initialValues);
     } else {
       pendingUserEditsRef.current = {};
@@ -77,9 +87,10 @@ export function useTemplateForm(
 
   const setFieldValue = useCallback<TSetFieldValue>(
     (field, value, shouldValidate) => {
+      const currentFormik = formikRef.current;
       dirtyRef.current = true;
       const currentValues = overlayPendingEdits(
-        formik.values,
+        currentFormik.values,
         pendingUserEditsRef.current,
         lastSyncedInitialValuesRef.current,
       );
@@ -94,27 +105,28 @@ export function useTemplateForm(
       pendingUserEditsRef.current = getChangedFields(lastSyncedInitialValuesRef.current, nextValues);
 
       if (runCleanup || nextValues.isActive !== currentValues.isActive) {
-        formik.setValues(nextValues, shouldValidate);
+        currentFormik.setValues(nextValues, shouldValidate);
       } else {
-        formik.setFieldValue(field, value, shouldValidate);
+        currentFormik.setFieldValue(field, value, shouldValidate);
       }
     },
-    [formik],
+    [],
   );
 
   const setValues = useCallback<TSetValues>(
     (values, shouldValidate) => {
+      const currentFormik = formikRef.current;
       dirtyRef.current = true;
       const currentValues = overlayPendingEdits(
-        formik.values,
+        currentFormik.values,
         pendingUserEditsRef.current,
         lastSyncedInitialValuesRef.current,
       );
       const nextValues = applyImmediateDeactivation(currentValues, values);
       pendingUserEditsRef.current = getChangedFields(lastSyncedInitialValuesRef.current, nextValues);
-      formik.setValues(nextValues, shouldValidate);
+      currentFormik.setValues(nextValues, shouldValidate);
     },
-    [formik, formik.values],
+    [],
   );
 
   return { formik, setFieldValue, setValues, dirtyRef, pendingUserEditsRef, persistBaselineSyncRef };
