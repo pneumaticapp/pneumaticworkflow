@@ -136,6 +136,7 @@ def test_create__all_fields__ok(
         utm_campaign=utm_campaign,
         utm_term=utm_term,
         utm_content=utm_content,
+        billing_sync=True,
         gclid=gclid,
     )
 
@@ -295,7 +296,7 @@ def test_create__account_service_exception__validation_error(
         utm_term=None,
         utm_content=None,
         gclid=None,
-        billing_sync=True,
+        billing_sync=False,
     )
     user_create_mock.assert_not_called()
     stripe_service_init_mock.assert_not_called()
@@ -417,7 +418,7 @@ def test_create__user_service_exception__validation_error(
         utm_term=None,
         utm_content=None,
         gclid=None,
-        billing_sync=True,
+        billing_sync=False,
     )
     user_create_mock.assert_called_once_with(
         account=user.account,
@@ -567,6 +568,7 @@ def test_create__stripe_service_exception__skip_sync(
         utm_campaign=utm_campaign,
         utm_term=utm_term,
         utm_content=utm_content,
+        billing_sync=True,
         gclid=gclid,
     )
 
