@@ -13,7 +13,12 @@ import { TEMPLATE_FORM_PERSIST_DEBOUNCE_MS } from '../useTemplateForm/TemplateFo
 import { getTemplateVariablesFingerprint } from '../useTemplateForm/templateFormUtils';
 import { patchTemplate, saveTemplate, setTemplateStatus } from '../../../redux/actions';
 import { ETemplateStatus } from '../../../types/redux';
-import { resetAutosavePersistRequestsForTests } from '../../../redux/template/persistRequest';
+import {
+  abandonAutosavePersistRequests,
+  allocateAutosavePersistRequest,
+  createAutosavePersistScope,
+  isAutosavePersistRequestCurrent,
+} from '../../../redux/template/persistRequest';
 
 const mockDispatch = jest.fn();
 
@@ -84,6 +89,19 @@ const makeTemplate = (overrides: Partial<ITemplate> = {}): ITemplate =>
     performersCount: 0,
     ...overrides,
   }) as ITemplate;
+
+describe('autosave persist request scope', () => {
+  it('does not invalidate another editor session', () => {
+    const firstScope = createAutosavePersistScope();
+    const secondScope = createAutosavePersistScope();
+    const firstRequest = allocateAutosavePersistRequest(firstScope);
+
+    allocateAutosavePersistRequest(secondScope);
+    abandonAutosavePersistRequests(secondScope);
+
+    expect(isAutosavePersistRequestCurrent(firstRequest)).toBe(true);
+  });
+});
 
 describe('getTemplateVariablesFingerprint', () => {
   it('changes when variable metadata changes without changing the field count', () => {
@@ -183,7 +201,6 @@ function StatefulTemplateFormHarness({
 describe('TemplateFormPersistProvider deactivation', () => {
   beforeEach(() => {
     (patchTemplate as unknown as jest.Mock).mockClear();
-    resetAutosavePersistRequestsForTests();
   });
 
   it('flips isActive to false in Formik immediately when a non-activation field changes', async () => {

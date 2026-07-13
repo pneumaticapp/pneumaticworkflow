@@ -42,7 +42,7 @@ import {
   TSaveTemplate,
   TStopAITemplateGeneration,
 } from './actions';
-import { isAutosavePersistRequestCurrent } from './persistRequest';
+import { isAutosavePersistRequestCurrent, TAutosavePersistRequest } from './persistRequest';
 
 import { getIsUserSubsribed, getSubscriptionPlan, getUsers } from '../selectors/user';
 import { createTemplate } from '../../api/createTemplate';
@@ -252,7 +252,7 @@ function* createOrUpdateTemplate(template: ITemplateRequest, isSubscribed: boole
 function* fetchSaveTemplate(
   onSuccess?: () => void,
   onFailed?: () => void,
-  requestId?: number,
+  requestId?: TAutosavePersistRequest,
   templateSnapshot?: ITemplate,
 ) {
   const isTemplatePage = checkSomeRouteIsActive(

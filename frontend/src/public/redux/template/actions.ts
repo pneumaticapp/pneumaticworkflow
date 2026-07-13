@@ -3,6 +3,7 @@
 import { ETemplateStatus, ITypedReduxAction } from '../../types/redux';
 import { actionGenerator } from '../../utils/redux';
 import { ITemplate, ITemplateTask, TAITemplateGenerationStatus } from '../../types/template';
+import { TAutosavePersistRequest } from './persistRequest';
 
 export const enum ETemplateActions {
   Load = 'LOAD_TEMPLATE',
@@ -56,7 +57,7 @@ export type TSaveTemplatePayload =
       onSuccess?(): void;
       onFailed?(): void;
       /** Autosave generation from `TemplateFormPersistProvider`; stale saves are skipped after discard. */
-      requestId?: number;
+      requestId?: TAutosavePersistRequest;
       /** Immutable form snapshot used when the editor unmounts before the save runs. */
       templateSnapshot?: ITemplate;
     }
@@ -102,7 +103,7 @@ export type TPatchTemplatePayload = {
   onSuccess?(): void;
   onFailed?(): void;
   /** Autosave generation from `TemplateFormPersistProvider`; stale saves are skipped after discard. */
-  requestId?: number;
+  requestId?: TAutosavePersistRequest;
   /** Immutable form snapshot used instead of reading potentially reset Redux state. */
   templateSnapshot?: ITemplate;
 };

@@ -8,8 +8,10 @@ import { patchTemplate, setTemplateStatus } from '../../../redux/actions';
 import { ETemplateStatus } from '../../../types/redux';
 import {
   abandonAutosavePersistRequests,
-  allocateAutosavePersistRequestId,
+  allocateAutosavePersistRequest,
+  createAutosavePersistScope,
   isAutosavePersistRequestCurrent,
+  TAutosavePersistRequest,
 } from '../../../redux/template/persistRequest';
 import { TemplatePersistContext, useTemplateField } from './contexts';
 import { getChangedFields, getUnconsumedPendingEdits } from './templateFormUtils';
@@ -74,7 +76,11 @@ export function TemplateFormPersistProvider({
   const persistBaselineSyncRefRef = useRef(persistBaselineSyncRef);
   const consumedPendingRef = useRef<TConsumedPending | null>(null);
   const retryExplicitPatchRef = useRef<Partial<ITemplate>>({});
-  const pendingDispatchRef = useRef<{ requestId: number; dispatchedValues: ITemplate } | null>(null);
+  const persistScopeRef = useRef(createAutosavePersistScope());
+  const pendingDispatchRef = useRef<{
+    requestId: TAutosavePersistRequest;
+    dispatchedValues: ITemplate;
+  } | null>(null);
   const flushPersistRef = useRef<() => void>(() => undefined);
   const setValuesRef = useRef(setValues);
 
@@ -236,7 +242,7 @@ export function TemplateFormPersistProvider({
 
     // Skip duplicate flushes for the same Formik snapshot while a patch is
     // already queued. A newer edit changes `valuesRef`, which supersedes the
-    // in-flight patch via `takeLatest` and bumps `persistRequestIdRef`.
+    // in-flight patch via `takeLatest` and advances this editor's request generation.
     if (pendingDispatchRef.current?.dispatchedValues === valuesRef.current) {
       return;
     }
@@ -244,7 +250,7 @@ export function TemplateFormPersistProvider({
     const changedFields = takePendingChanges('flush');
 
     if (Object.keys(changedFields).length > 0) {
-      const requestId = allocateAutosavePersistRequestId();
+      const requestId = allocateAutosavePersistRequest(persistScopeRef.current);
       pendingDispatchRef.current = { requestId, dispatchedValues: valuesRef.current };
       dispatchRef.current(
         patchTemplate({
@@ -275,7 +281,7 @@ export function TemplateFormPersistProvider({
   flushPersistRef.current = flushPersist;
 
   const abandonPendingChanges = useCallback(() => {
-    abandonAutosavePersistRequests();
+    abandonAutosavePersistRequests(persistScopeRef.current);
     // Cancel a debounced autosave saga (`takeLatest`) without enqueueing a save.
     dispatchRef.current(setTemplateStatus(ETemplateStatus.Saved));
     dispatchRef.current(patchTemplate({ changedFields: {} }));
