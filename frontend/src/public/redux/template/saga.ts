@@ -223,7 +223,12 @@ function* fetchTemplateFromSystem({ payload: id }: TLoadTemplateFromSystem) {
   }
 }
 
-function* createOrUpdateTemplate(template: ITemplateRequest, isSubscribed: boolean, users: TUserListItem[]) {
+export function* createOrUpdateTemplate(
+  template: ITemplateRequest,
+  isSubscribed: boolean,
+  users: TUserListItem[],
+  requestId?: TAutosavePersistRequest,
+) {
   try {
     const saveTemplatePromise = !template.id ? createTemplate(template) : updateTemplate(template.id, template);
     const result: ITemplateResponse = yield saveTemplatePromise;
@@ -231,6 +236,10 @@ function* createOrUpdateTemplate(template: ITemplateRequest, isSubscribed: boole
 
     return getNormalizedTemplate(result, isSubscribed, users, billingPlan);
   } catch (error) {
+    if (!isAutosavePersistRequestCurrent(requestId)) {
+      return null;
+    }
+
     if (isPaidFeatureError(error)) {
       yield put(saveTemplateCanceled());
 
@@ -279,7 +288,12 @@ function* fetchSaveTemplate(
   const templateRequest = mapTemplateRequest(editingTemplate);
 
   const isTemplateCreated = !templateRequest.id;
-  const savedTemplate: ITemplate | null = yield createOrUpdateTemplate(templateRequest, isSubscribed, users);
+  const savedTemplate: ITemplate | null = yield createOrUpdateTemplate(
+    templateRequest,
+    isSubscribed,
+    users,
+    requestId,
+  );
 
   if (!isAutosavePersistRequestCurrent(requestId)) {
     if (savedTemplate) {
