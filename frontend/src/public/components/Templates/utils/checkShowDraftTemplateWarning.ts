@@ -1,10 +1,11 @@
-import { EIntegrations } from "../../../types/integrations";
-import { isArrayWithItems } from "../../../utils/helpers";
+import { EIntegrations } from '../../../types/integrations';
+
+import { hasTemplateIntegrations } from './templateIntegrations';
 
 export function checkShowDraftTemplateWarning(
   isTemplateActive: boolean,
   isTemplatePublic: boolean,
-  templateIntegrations: EIntegrations[]
+  templateIntegrations: EIntegrations[],
 ) {
-  return !isTemplateActive && (isArrayWithItems(templateIntegrations) || isTemplatePublic);
+  return !isTemplateActive && hasTemplateIntegrations(isTemplatePublic, templateIntegrations);
 }
