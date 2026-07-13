@@ -31,6 +31,7 @@ import { useIsTableWiderThanScreen, useWorkflowsTableRef } from './WorkflowsTabl
 
 import styles from './WorkflowsTable.css';
 import { EColumnWidthMinWidth, ETableViewFieldsWidth } from './Columns/Cells/WorkflowTableConstants';
+import { getPerformersAvatarsWidth } from '../../../WorkflowCardUsers/utils/getPerformersAvatarsWidth';
 import { WorkflowsTableActions } from './WorkflowsTableActions';
 import { useCheckDevice } from '../../../../hooks/useCheckDevice';
 import { createResizeHandler } from './utils/resizeUtils';
@@ -224,6 +225,26 @@ export function WorkflowsTable({
       workflowsList.items.length === 0 &&
       String(lastLoadedTemplateIdForTable) === String(currentTemplateId));
 
+  const maxPerformersCount = useMemo(
+    () =>
+      workflowsList.items.reduce((max, workflow) => Math.max(max, workflow.selectedUsers?.length ?? 0), 0),
+    [workflowsList.items],
+  );
+
+  const performerColumnMinWidth = useMemo(
+    () => getPerformersAvatarsWidth(maxPerformersCount),
+    [maxPerformersCount],
+  );
+
+  const performerColumnWidth = useMemo(
+    () =>
+      Math.max(
+        savedGlobalWidths['system-column-performer'] || ETableViewFieldsWidth['system-column-performer'],
+        performerColumnMinWidth,
+      ),
+    [performerColumnMinWidth, savedGlobalWidths],
+  );
+
   const columns: Column<TableColumns>[] = useMemo(() => {
     if (shouldSkeletonOptionalTable) {
       return cashTableStructureRef.current;
@@ -313,8 +334,8 @@ export function WorkflowsTable({
             ),
             accessor: 'system-column-performer',
             Cell: ColumnCells.PerformerColumn,
-            width: savedGlobalWidths['system-column-performer'] || ETableViewFieldsWidth['system-column-performer'],
-            minWidth: EColumnWidthMinWidth['system-column-performer'],
+            width: performerColumnWidth,
+            minWidth: performerColumnMinWidth,
             columnType: 'system-column-performer',
           },
         ]
@@ -350,6 +371,8 @@ export function WorkflowsTable({
     workflowStartersCounters,
     fieldsColumns.length,
     selectedFieldsSet,
+    performerColumnWidth,
+    performerColumnMinWidth,
   ]);
 
   const data = useMemo((): TableColumns[] => {
@@ -377,21 +400,30 @@ export function WorkflowsTable({
   };
 
   useEffect(() => {
-    if (workflowsLoadingStatus === EWorkflowsLoadingStatus.Loaded) {
-      setColWidths((prev) => {
-        const newWidths = { ...prev };
-
-        columns.forEach((col) => {
-          const id = col.accessor as string;
-          if (!newWidths[id]) {
-            newWidths[id] = col.width as number;
-          }
-        });
-
-        return newWidths;
-      });
+    if (
+      workflowsLoadingStatus !== EWorkflowsLoadingStatus.Loaded &&
+      workflowsLoadingStatus !== EWorkflowsLoadingStatus.LoadingNextPage
+    ) {
+      return;
     }
-  }, [columns.length, workflowsLoadingStatus]);
+
+    setColWidths((prev) => {
+      const newWidths = { ...prev };
+
+      columns.forEach((col) => {
+        const id = col.accessor as string;
+        const colWidth = col.width as number;
+
+        if (id === 'system-column-performer' && newWidths[id]) {
+          newWidths[id] = Math.max(newWidths[id], colWidth);
+        } else if (!newWidths[id]) {
+          newWidths[id] = colWidth;
+        }
+      });
+
+      return newWidths;
+    });
+  }, [columns, workflowsLoadingStatus, performerColumnWidth]);
 
   const handleMouseDown = createResizeHandler(colWidths, setColWidths, currentUser?.id, templatesIdsFilter[0]);
 

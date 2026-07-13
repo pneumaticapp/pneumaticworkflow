@@ -8,10 +8,16 @@
   border-radius: 50%;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 
   &.is-group {
     color: var(--pneumatic-color-black72);
   }
+}
+
+img.avatar {
+  max-width: none;
+  object-fit: cover;
 }
 
 .avatar_xxl {
