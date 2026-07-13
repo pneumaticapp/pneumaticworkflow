@@ -3,6 +3,8 @@ from typing import Optional
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
+from django.db.models import CharField
+from django.db.models.functions import Cast
 
 from src.accounts.models import UserGroup
 from src.accounts.queries import (
@@ -329,10 +331,49 @@ class ReassignService:
                     template__account=self.account,
                 ).update(user=self.new_user)
 
-    def _affected_workflow_ids(self) -> list:
-        """Find account workflows where old user/group had view perms."""
+    def _tp_affected_workflow_ids(self) -> set:
+        """Workflow IDs from TaskPerformer for old user/group.
+
+        Must be called BEFORE ``_reassign_in_performers`` updates
+        TaskPerformer rows, so the query uses the old identity.
+        Covers the case where an empty group has no UOP rows but
+        does have TaskPerformer rows.
+        """
+        tp_filter = {
+            'task__account': self.account,
+            'task__workflow__is_deleted': False,
+        }
+        tp_exclude = {'task__status': TaskStatus.COMPLETED}
+        if self.old_user:
+            return set(
+                TaskPerformer.objects
+                .filter(user_id=self.old_user.id, **tp_filter)
+                .exclude(**tp_exclude)
+                .values_list('task__workflow_id', flat=True)
+                .distinct(),
+            )
+        if self.old_group:
+            return set(
+                TaskPerformer.objects
+                .filter(group_id=self.old_group.id, **tp_filter)
+                .exclude(**tp_exclude)
+                .values_list('task__workflow_id', flat=True)
+                .distinct(),
+            )
+        return set()
+
+    def _affected_workflow_ids(
+        self,
+        tp_workflow_ids: set,
+    ) -> list:
+        """Find account workflows needing performer-source sync.
+
+        Merges UOP-based discovery (legacy/stale grants) with
+        TaskPerformer-based IDs collected before performer rows
+        were updated.
+        """
         ct = ContentType.objects.get_for_model(Workflow)
-        workflow_ids = set()
+        workflow_ids = set(tp_workflow_ids)
 
         if self.old_user:
             uop_pks = UserObjectPermission.objects.filter(
@@ -361,7 +402,10 @@ class ReassignService:
             ).values_list('id', flat=True),
         )
 
-    def _reassign_in_workflow_members(self):
+    def _reassign_in_workflow_members(
+        self,
+        tp_workflow_ids: set,
+    ):
         """Update Guardian view_workflow permissions.
 
         PERFORMER / PERFORMER_GROUP rows are realigned synchronously
@@ -375,7 +419,9 @@ class ReassignService:
         - user→group: revoke on old_user (cannot move to a group)
         MENTION rows are left untouched (comment still mentions user).
         """
-        affected_workflow_ids = self._affected_workflow_ids()
+        affected_workflow_ids = self._affected_workflow_ids(
+            tp_workflow_ids,
+        )
 
         if self.old_user and self.new_user:
             self._transfer_workflow_viewer_rows()
@@ -398,11 +444,11 @@ class ReassignService:
 
     def _workflow_viewer_base_qs(self):
         ct = ContentType.objects.get_for_model(Workflow)
-        account_wf_pks = [
-            str(pk) for pk in Workflow.objects.filter(
-                account=self.account,
-            ).values_list('id', flat=True)
-        ]
+        account_wf_pks = Workflow.objects.filter(
+            account=self.account,
+        ).annotate(
+            pk_str=Cast('id', CharField()),
+        ).values('pk_str')
         return UserObjectPermission.objects.filter(
             content_type=ct,
             permission__codename=WorkflowPermission.VIEW,
@@ -601,11 +647,12 @@ class ReassignService:
         with transaction.atomic():
             self._reassign_in_raw_performer_templates()
             self._reassign_in_raw_performers()
+            tp_workflow_ids = self._tp_affected_workflow_ids()
             self._reassign_in_performers()
             affected_template_ids = self._affected_template_ids()
             self._reassign_in_template_owners()
             self._reassign_in_workflow_owners(affected_template_ids)
-            self._reassign_in_workflow_members()
+            self._reassign_in_workflow_members(tp_workflow_ids)
             self._reassign_in_template_conditions()
             self._reassign_in_conditions()
             self._cleanup_personal_groups()

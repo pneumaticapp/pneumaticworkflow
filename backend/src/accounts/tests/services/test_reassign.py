@@ -24,6 +24,7 @@ from src.processes.models.workflows.conditions import (
     Predicate,
     Rule,
 )
+from src.processes.models.workflows.task import TaskPerformer
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.services.workflow_permissions import (
     WorkflowPermissionService,
@@ -1282,7 +1283,7 @@ class TestReassignService:
         service = ReassignService(old_user=old_user, new_user=new_user)
 
         # act
-        service._reassign_in_workflow_members()
+        service._reassign_in_workflow_members(tp_workflow_ids=set())
 
         # assert
         assert not WorkflowPermissionService(workflow).has_view(
@@ -1722,7 +1723,7 @@ def test_reassign_workflow_members__syncs_performer_sources__ok(mocker):
     service = ReassignService(old_user=old_user, new_user=new_user)
 
     # act
-    service._reassign_in_workflow_members()
+    service._reassign_in_workflow_members(tp_workflow_ids=set())
 
     # assert
     assert not WorkflowPermissionService(workflow).has_view(
@@ -1766,7 +1767,7 @@ def test_reassign_workflow_members__transfers_workflow_viewer__ok(mocker):
     service = ReassignService(old_user=old_user, new_user=new_user)
 
     # act
-    service._reassign_in_workflow_members()
+    service._reassign_in_workflow_members(tp_workflow_ids=set())
 
     # assert
     ct = ContentType.objects.get_for_model(Workflow)
@@ -1825,7 +1826,7 @@ def test_reassign_workflow_members__viewer_conflict__resolved(mocker):
     service = ReassignService(old_user=old_user, new_user=new_user)
 
     # act
-    service._reassign_in_workflow_members()
+    service._reassign_in_workflow_members(tp_workflow_ids=set())
 
     # assert
     ct = ContentType.objects.get_for_model(Workflow)
@@ -1878,7 +1879,7 @@ def test_reassign_workflow_members__old_group_only__no_viewer_transfer(
     service = ReassignService(old_group=old_group, new_group=new_group)
 
     # act
-    service._reassign_in_workflow_members()
+    service._reassign_in_workflow_members(tp_workflow_ids=set())
 
     # assert
     transfer_mock.assert_not_called()
@@ -1920,7 +1921,7 @@ def test_reassign_workflow_members__user_to_group__revokes_viewer__ok(
     service = ReassignService(old_user=old_user, new_group=new_group)
 
     # act
-    service._reassign_in_workflow_members()
+    service._reassign_in_workflow_members(tp_workflow_ids=set())
 
     # assert
     ct = ContentType.objects.get_for_model(Workflow)
@@ -1964,7 +1965,7 @@ def test_reassign_workflow_members__user_to_group__calls_revoke_not_transfer(
     service = ReassignService(old_user=old_user, new_group=new_group)
 
     # act
-    service._reassign_in_workflow_members()
+    service._reassign_in_workflow_members(tp_workflow_ids=set())
 
     # assert
     transfer_mock.assert_not_called()
@@ -2008,7 +2009,7 @@ def test_reassign_workflow_members__user_to_group__preserves_mention__ok(
     service = ReassignService(old_user=old_user, new_group=new_group)
 
     # act
-    service._reassign_in_workflow_members()
+    service._reassign_in_workflow_members(tp_workflow_ids=set())
 
     # assert
     ct = ContentType.objects.get_for_model(Workflow)
@@ -2063,7 +2064,7 @@ def test_reassign_workflow_members__user_to_user__preserves_mention__ok(
     service = ReassignService(old_user=old_user, new_user=new_user)
 
     # act
-    service._reassign_in_workflow_members()
+    service._reassign_in_workflow_members(tp_workflow_ids=set())
 
     # assert
     ct = ContentType.objects.get_for_model(Workflow)
@@ -2118,7 +2119,7 @@ def test_reassign_workflow_members__user_to_group__preserves_template_owner(
     service = ReassignService(old_user=old_user, new_group=new_group)
 
     # act
-    service._reassign_in_workflow_members()
+    service._reassign_in_workflow_members(tp_workflow_ids=set())
 
     # assert
     ct = ContentType.objects.get_for_model(Workflow)
@@ -2167,7 +2168,7 @@ def test_reassign_workflow_members__user_to_group__multiple_workflows__ok(
     service = ReassignService(old_user=old_user, new_group=new_group)
 
     # act
-    service._reassign_in_workflow_members()
+    service._reassign_in_workflow_members(tp_workflow_ids=set())
 
     # assert
     ct = ContentType.objects.get_for_model(Workflow)
@@ -2209,7 +2210,7 @@ def test_reassign_workflow_members__user_to_group__no_viewer_rows__ok(
     service = ReassignService(old_user=old_user, new_group=new_group)
 
     # act
-    service._reassign_in_workflow_members()
+    service._reassign_in_workflow_members(tp_workflow_ids=set())
 
     # assert
     ct = ContentType.objects.get_for_model(Workflow)
@@ -2252,7 +2253,7 @@ def test_reassign_workflow_members__group_to_user__no_viewer_revoke(
     service = ReassignService(old_group=old_group, new_user=new_user)
 
     # act
-    service._reassign_in_workflow_members()
+    service._reassign_in_workflow_members(tp_workflow_ids=set())
 
     # assert
     transfer_mock.assert_not_called()
@@ -2290,7 +2291,7 @@ def test_reassign_workflow_members__user_to_user__calls_transfer_not_revoke(
     service = ReassignService(old_user=old_user, new_user=new_user)
 
     # act
-    service._reassign_in_workflow_members()
+    service._reassign_in_workflow_members(tp_workflow_ids=set())
 
     # assert
     transfer_mock.assert_called_once_with()
@@ -2344,7 +2345,7 @@ def test_transfer_workflow_viewer__scopes_to_account__ok(mocker):
     service = ReassignService(old_user=old_user, new_user=new_user)
 
     # act
-    service._reassign_in_workflow_members()
+    service._reassign_in_workflow_members(tp_workflow_ids=set())
 
     # assert
     assert UserObjectPermission.objects.filter(
@@ -2417,7 +2418,7 @@ def test_revoke_workflow_viewer__scopes_to_account__ok(mocker):
     service = ReassignService(old_user=old_user, new_group=new_group)
 
     # act
-    service._reassign_in_workflow_members()
+    service._reassign_in_workflow_members(tp_workflow_ids=set())
 
     # assert
     assert not UserObjectPermission.objects.filter(
@@ -2476,7 +2477,7 @@ def test_affected_workflow_ids__scopes_to_account__ok():
     service = ReassignService(old_user=old_user, new_user=new_user)
 
     # act
-    affected = service._affected_workflow_ids()
+    affected = service._affected_workflow_ids(tp_workflow_ids=set())
 
     # assert
     assert wf_a.id in affected
@@ -2612,3 +2613,102 @@ def test_reassign_everywhere__complete_tasks_uses_on_commit(mocker):
 
     # assert
     assert on_commit_mock.call_count == 1
+
+
+def test_tp_affected_workflow_ids__empty_group__ok():
+    """Empty group has no UOP rows; TaskPerformer is source of truth.
+
+    _tp_affected_workflow_ids must be called BEFORE
+    _reassign_in_performers so it queries the old identity.
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    old_group = create_test_group(account, name='old grp', users=[])
+    new_group = create_test_group(account, name='new grp')
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    TaskPerformer.objects.filter(task=task).delete()
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP,
+        group_id=old_group.id,
+    )
+    service = ReassignService(old_group=old_group, new_group=new_group)
+
+    # act
+    tp_ids = service._tp_affected_workflow_ids()
+
+    # assert
+    assert workflow.id in tp_ids
+
+
+def test_affected_workflow_ids__merges_tp_and_uop__ok():
+    """_affected_workflow_ids unions TaskPerformer IDs with UOP IDs."""
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    old_user = create_test_admin(
+        account=account, email='old@test.test',
+    )
+    new_user = create_test_admin(
+        account=account, email='new@test.test',
+    )
+    wf_uop = create_test_workflow(user=owner, tasks_count=1)
+    wf_tp = create_test_workflow(user=owner, tasks_count=1)
+    WorkflowPermissionService(wf_uop).grant_view(
+        user=old_user,
+        source_type=PermissionSource.PERFORMER,
+        source_id=0,
+    )
+    service = ReassignService(old_user=old_user, new_user=new_user)
+
+    # act
+    affected = service._affected_workflow_ids(
+        tp_workflow_ids={wf_tp.id},
+    )
+
+    # assert
+    assert wf_uop.id in affected
+    assert wf_tp.id in affected
+
+
+def test_reassign_workflow_members__empty_group_to_group__syncs__ok(
+    mocker,
+):
+    """group→group on empty old_group must sync PERFORMER_GROUP view."""
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    member = create_test_admin(
+        account=account, email='member@test.test',
+    )
+    old_group = create_test_group(account, name='old grp', users=[])
+    new_group = create_test_group(
+        account, name='new grp', users=[member],
+    )
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    TaskPerformer.objects.filter(task=task).delete()
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP,
+        group_id=old_group.id,
+    )
+    attach_mock = mocker.patch(
+        'src.accounts.services.reassign.'
+        'schedule_sync_workflow_attachment_permissions',
+    )
+    service = ReassignService(old_group=old_group, new_group=new_group)
+    tp_ids = service._tp_affected_workflow_ids()
+    service._reassign_in_performers()
+
+    # act
+    service._reassign_in_workflow_members(tp_workflow_ids=tp_ids)
+
+    # assert
+    assert WorkflowPermissionService(workflow).has_view(user=member)
+    attach_mock.assert_called_once_with(workflow.id)
