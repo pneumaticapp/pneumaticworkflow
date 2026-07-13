@@ -29,24 +29,32 @@ export function ExtraFieldFile({
   isDisabled = false,
   accountId,
 }: IWorkflowExtraFieldProps) {
-  const { useCallback, useState, useEffect, createRef } = React;
+  const { useCallback, useState, useEffect, createRef, useRef } = React;
   const [isUploading, setUploadingState] = useState(false);
-  const initialFiles = field.attachments?.length
-    ? field.attachments
-    : parseMarkdownToFiles(field.markdownValue);
-  const [filesToUpload, setFilesToUploadState] = useState<TUploadedFile[]>(initialFiles);
+  const getFieldFiles = useCallback((): TUploadedFile[] => {
+    return field.attachments?.length
+      ? field.attachments
+      : parseMarkdownToFiles(field.markdownValue);
+  }, [field.attachments, field.markdownValue]);
+  const [filesToUpload, setFilesToUploadState] = useState<TUploadedFile[]>(getFieldFiles);
+  const filesToUploadRef = useRef<TUploadedFile[]>(getFieldFiles());
   const fieldNameInputRef = React.useRef<HTMLInputElement | null>(null);
   const [isFocused, setIsFocused] = React.useState(false);
   const { formatMessage } = useIntl();
 
   useEffect(() => {
-    const nextFiles = field.attachments?.length
-      ? field.attachments
-      : parseMarkdownToFiles(field.markdownValue);
+    filesToUploadRef.current = filesToUpload;
+  }, [filesToUpload]);
 
+  useEffect(() => {
+    if (isUploading) {
+      return;
+    }
+
+    const nextFiles = getFieldFiles();
     setFilesToUploadState(nextFiles);
-  }, [field.apiName, field.attachments, field.markdownValue]);
-
+    filesToUploadRef.current = nextFiles;
+  }, [getFieldFiles, isUploading]);
   useEffect(() => {
     const { current } = uploadFieldRef;
 
@@ -74,7 +82,7 @@ export function ExtraFieldFile({
       setUploadingState(true);
       const uploadedFiles = await uploadFiles(files);
       const successFiles = uploadedFiles.filter((file) => !file.error);
-      const newUploadedFiles = [...filesToUpload, ...(successFiles as TUploadedFile[])];
+      const newUploadedFiles = [...filesToUploadRef.current, ...(successFiles as TUploadedFile[])];
       const newUploadedFilesIds = newUploadedFiles.filter((file) => !file.isRemoved).map((file) => `[${file.name}](${file.url})`);
 
       setFilesToUploadState(newUploadedFiles);
@@ -88,7 +96,7 @@ export function ExtraFieldFile({
   };
 
   const handleDeleteFile = (id: string) => async () => {
-    const newUploadedFiles = filesToUpload.map((file) => (file.id === id ? { ...file, isRemoved: true } : file));
+    const newUploadedFiles = filesToUploadRef.current.map((file) => (file.id === id ? { ...file, isRemoved: true } : file));
     const newUploadedFilesIds = newUploadedFiles.filter((file) => !file.isRemoved).map((file) => `[${file.name}](${file.url})`);
 
     setFilesToUploadState(newUploadedFiles);

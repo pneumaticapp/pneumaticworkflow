@@ -1,14 +1,18 @@
 import * as React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 
 import { TaskCard, ETaskCardViewMode } from '../TaskCard';
 import { EExtraFieldType, ETemplateOwnerType, IExtraField } from '../../../types/template';
 import { ETaskStatus } from '../../../redux/actions';
 import { EWorkflowStatus, EWorkflowsLogSorting } from '../../../types/workflow';
+import { ExtraFieldIntl } from '../../TemplateEdit/ExtraFields';
+import { addOrUpdateStorageOutput } from '../utils/storageOutputs';
 
 jest.mock('../../TemplateEdit/ExtraFields', () => ({
   ExtraFieldIntl: jest.fn(() => <div data-testid="extra-field" />),
 }));
+
+const mockExtraFieldIntl = ExtraFieldIntl as unknown as jest.Mock;
 
 jest.mock('../utils/storageOutputs', () => ({
   getOutputFromStorage: jest.fn(() => undefined),
@@ -70,8 +74,14 @@ jest.mock('../HelpModal/HelpModal', () => ({
   HelpModal: () => null,
 }));
 
+let returnModalOnConfirm: ((comment: string) => void) | undefined;
+
 jest.mock('../ReturnModal', () => ({
-  ReturnModal: () => null,
+  ReturnModal: ({ onConfirm }: { onConfirm: (comment: string) => void }) => {
+    returnModalOnConfirm = onConfirm;
+
+    return null;
+  },
 }));
 
 jest.mock('react-router-dom', () => ({
@@ -265,6 +275,7 @@ const baseProps = {
 describe('TaskCard', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    returnModalOnConfirm = undefined;
   });
 
   describe('Performer dropdown', () => {
@@ -335,8 +346,6 @@ describe('TaskCard', () => {
 
   describe('Output field ordering', () => {
     it('renders output fields sorted by order descending to match the template', async () => {
-      const { ExtraFieldIntl } = jest.requireMock('../../TemplateEdit/ExtraFields');
-
       const task = {
         ...baseTask,
         output: [
@@ -348,12 +357,152 @@ describe('TaskCard', () => {
       render(<TaskCard {...baseProps} task={task} />);
 
       await waitFor(() => {
-        expect(ExtraFieldIntl).toHaveBeenCalled();
+        expect(mockExtraFieldIntl).toHaveBeenCalled();
       });
 
-      const renderedApiNames = ExtraFieldIntl.mock.calls.map((call: any[]) => call[0].field.apiName);
+      const renderedApiNames = mockExtraFieldIntl.mock.calls.map((call: any[]) => call[0].field.apiName);
 
       expect(renderedApiNames).toEqual(['file-field', 'url-field']);
+    });
+  });
+
+  describe('Output draft persistence', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('flushes pending output edits before task output updates from the server', async () => {
+      const outputField = makeField({ apiName: 'notes', type: EExtraFieldType.Text, value: '' });
+      const task = {
+        ...baseTask,
+        output: [outputField],
+      };
+
+      const { rerender } = render(<TaskCard {...baseProps} task={task} />);
+
+      await waitFor(() => {
+        expect(mockExtraFieldIntl).toHaveBeenCalled();
+      });
+
+      const editField = mockExtraFieldIntl.mock.calls[0][0].editField;
+
+      act(() => {
+        editField({ value: 'draft text' });
+      });
+
+      expect(addOrUpdateStorageOutput).not.toHaveBeenCalled();
+
+      rerender(
+        <TaskCard
+          {...baseProps}
+          task={{
+            ...task,
+            output: [{ ...outputField, value: 'server value' }],
+          }}
+        />,
+      );
+
+      expect(addOrUpdateStorageOutput).toHaveBeenCalledWith(1, [
+        expect.objectContaining({ apiName: 'notes', value: 'draft text' }),
+      ]);
+    });
+
+    it('discards pending output edits when the task restarts', async () => {
+      const outputField = makeField({ apiName: 'notes', type: EExtraFieldType.Text, value: '' });
+      const task = {
+        ...baseTask,
+        output: [outputField],
+      };
+
+      const { rerender } = render(<TaskCard {...baseProps} task={task} />);
+
+      await waitFor(() => {
+        expect(mockExtraFieldIntl).toHaveBeenCalled();
+      });
+
+      const editField = mockExtraFieldIntl.mock.calls[0][0].editField;
+
+      act(() => {
+        editField({ value: 'stale draft' });
+      });
+
+      rerender(
+        <TaskCard
+          {...baseProps}
+          task={{
+            ...task,
+            dateStarted: '2024-02-01',
+          }}
+        />,
+      );
+
+      expect(addOrUpdateStorageOutput).not.toHaveBeenCalled();
+    });
+
+    it('flushes pending output edits on unmount', async () => {
+      const outputField = makeField({ apiName: 'notes', type: EExtraFieldType.Text, value: '' });
+      const task = {
+        ...baseTask,
+        output: [outputField],
+      };
+
+      const { unmount } = render(<TaskCard {...baseProps} task={task} />);
+
+      await waitFor(() => {
+        expect(mockExtraFieldIntl).toHaveBeenCalled();
+      });
+
+      const editField = mockExtraFieldIntl.mock.calls[0][0].editField;
+
+      act(() => {
+        editField({ value: 'draft text' });
+      });
+
+      unmount();
+
+      expect(addOrUpdateStorageOutput).toHaveBeenCalledWith(1, [
+        expect.objectContaining({ apiName: 'notes', value: 'draft text' }),
+      ]);
+    });
+
+    it('does not flush pending output edits after task revert clears drafts', async () => {
+      const outputField = makeField({ apiName: 'notes', type: EExtraFieldType.Text, value: '' });
+      const task = {
+        ...baseTask,
+        output: [outputField],
+        revertTasks: [{ id: 2, name: 'Previous task', apiName: 'task-2' }],
+      };
+
+      const { unmount } = render(<TaskCard {...baseProps} task={task} />);
+
+      await waitFor(() => {
+        expect(mockExtraFieldIntl).toHaveBeenCalled();
+      });
+
+      const editField = mockExtraFieldIntl.mock.calls[0][0].editField;
+
+      act(() => {
+        editField({ value: 'draft text' });
+      });
+
+      act(() => {
+        returnModalOnConfirm?.('revert comment');
+      });
+
+      expect(baseProps.setTaskReverted).toHaveBeenCalledWith({
+        taskId: 1,
+        viewMode: ETaskCardViewMode.Single,
+        comment: 'revert comment',
+        clearOutputTaskIds: [1, 2],
+      });
+
+      unmount();
+
+      expect(addOrUpdateStorageOutput).not.toHaveBeenCalled();
     });
   });
 });

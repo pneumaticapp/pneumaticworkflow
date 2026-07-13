@@ -3,7 +3,6 @@ import { useEffect, useMemo, useState, useRef, MouseEvent } from 'react';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
 import { Link } from 'react-router-dom';
-import { debounce } from 'throttle-debounce';
 import { useSelector } from 'react-redux';
 
 import { autoFocusFirstField } from '../../utils/autoFocusFirstField';
@@ -52,6 +51,7 @@ import { TUserListItem } from '../../types/user';
 import { trackInviteTeamInPage } from '../../utils/analytics';
 import { Tooltip } from '../UI';
 import { addOrUpdateStorageOutput, getOutputFromStorage } from './utils/storageOutputs';
+import { createFlushableDebounce } from './utils/createFlushableDebounce';
 import { getTaskOutputFingerprint } from './utils/getTaskOutputFingerprint';
 import { TaskCarkSkeleton } from './TaskCarkSkeleton';
 import { GuestController } from './GuestsController';
@@ -134,7 +134,7 @@ export function TaskCard({
 
   const groups = useSelector(getRegularGroupsList);
   const saveOutputsToStorageDebounced = useMemo(
-    () => debounce(300, addOrUpdateStorageOutput),
+    () => createFlushableDebounce(300, addOrUpdateStorageOutput),
     [],
   );
 
@@ -161,10 +161,11 @@ export function TaskCard({
     autoFocusFirstField(wrapperRef.current);
 
     return () => {
+      saveOutputsToStorageDebounced.flush();
       setCurrentTask(null);
       clearWorkflow();
     };
-  }, []);
+  }, [saveOutputsToStorageDebounced]);
 
   useEffect(() => {
     guestsControllerRef.current?.updateDropdownPosition();
@@ -184,6 +185,9 @@ export function TaskCard({
 
     if (isNewTask || isTaskRestarted) {
       saveOutputsToStorageDebounced.cancel();
+    } else {
+      // Persist the local edit before merging a changed server snapshot.
+      saveOutputsToStorageDebounced.flush();
     }
 
     const storageOutput = getOutputFromStorage(id);
@@ -451,7 +455,7 @@ export function TaskCard({
         {visibleOutputs
           .map((field) => (
             <ExtraFieldIntl
-              key={field.apiName}
+              key={`${task.id}-${field.apiName}`}
               field={field}
               editField={handleEditField(field.apiName)}
               showDropdown={false}
@@ -468,10 +472,12 @@ export function TaskCard({
   };
 
   const handleReturnTask = (comment: string) => {
+    saveOutputsToStorageDebounced.cancel();
     setTaskReverted({
       taskId: task.id,
       viewMode,
       comment,
+      clearOutputTaskIds: [task.id, ...task.revertTasks.map(({ id }) => id)],
     });
     setIsReturnModalOpen(false);
   };
@@ -505,13 +511,14 @@ export function TaskCard({
       return (
         <Button
           isLoading={status === ETaskStatus.Completing}
-          onClick={() =>
+          onClick={() => {
+            saveOutputsToStorageDebounced.cancel();
             setTaskCompleted({
               taskId,
               viewMode,
               output: outputValues,
-            })
-          }
+            });
+          }}
           label={formatMessage({ id: 'processes.complete-task' })}
           size="md"
           disabled={isDisabled}

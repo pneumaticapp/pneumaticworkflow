@@ -37,8 +37,17 @@ export function getOutputFromStorage(taskId: number) {
 }
 
 export function removeOutputFromLocalStorage(taskId: number) {
+  removeOutputsFromLocalStorage([taskId]);
+}
+
+export function removeOutputsFromLocalStorage(taskIds: number[]) {
+  if (taskIds.length === 0) {
+    return;
+  }
+
+  const taskIdsSet = new Set(taskIds);
   const savedOutputs = getOutputsFromStorage();
-  const newOutputs = savedOutputs.filter(output => output.taskId !== taskId);
+  const newOutputs = savedOutputs.filter(output => !taskIdsSet.has(output.taskId));
   saveOutputsToStorage(newOutputs);
 }
 
@@ -63,6 +72,12 @@ function getOutputsFromStorage(): TLocalStorageOutput[] {
 }
 
 function saveOutputsToStorage(outputs: TLocalStorageOutput[]) {
+  if (outputs.length === 0) {
+    localStorage.removeItem(OUTPUT_LOCALSTORAGE_KEY);
+
+    return;
+  }
+
   const ouputsJSON = JSON.stringify(outputs);
 
   localStorage.setItem(OUTPUT_LOCALSTORAGE_KEY, ouputsJSON);

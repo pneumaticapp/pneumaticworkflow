@@ -121,6 +121,7 @@ export type TSetTaskRevertedPayload = {
   taskId: number;
   viewMode: ETaskCardViewMode;
   comment: string;
+  clearOutputTaskIds?: number[];
 };
 export type TSetTaskReverted = ITypedReduxAction<ETaskActions.SetTaskReverted, TSetTaskRevertedPayload>;
 export const setTaskReverted: (payload: TSetTaskRevertedPayload) => TSetTaskReverted = actionGenerator<
