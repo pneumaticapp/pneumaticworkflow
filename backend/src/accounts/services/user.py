@@ -349,7 +349,9 @@ class UserService(
             Task.objects
             .active()
             .active_for_user(self.instance.id)
-            .values_list('id'),
+            .order_by('id')
+            .distinct('id')
+            .values_list('id', flat=True),
         )
         if user_performer_tasks_ids:
             check_and_complete_tasks.delay(
