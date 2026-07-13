@@ -144,7 +144,9 @@ export function getUnconsumedPendingEdits(
   const remainder: Partial<ITemplate> = {};
 
   (Object.keys(current) as (keyof ITemplate)[]).forEach((key) => {
-    if (current[key] !== consumed[key]) {
+    // Redux normalization recreates nested arrays/objects after every save.
+    // Only keep edits whose value actually changed while the request was in flight.
+    if (JSON.stringify(current[key]) !== JSON.stringify(consumed[key])) {
       (remainder[key] as ITemplate[keyof ITemplate]) = current[key];
     }
   });
@@ -161,6 +163,27 @@ export function resolveTemplateIdentity(
   }
 
   return initialValues.id;
+}
+
+/** Stable key for every source property represented in `getVariables()`. */
+export function getTemplateVariablesFingerprint(values: ITemplate): string {
+  const getFieldSignature = (field: ITemplate['kickoff']['fields'][number]) => ({
+    apiName: field.apiName,
+    name: field.name,
+    type: field.type,
+    selections: field.selections,
+    dataset: field.dataset,
+  });
+
+  return JSON.stringify({
+    id: values.id ?? 'new',
+    kickoff: (values.kickoff?.fields ?? []).map(getFieldSignature),
+    tasks: values.tasks.map((task) => ({
+      uuid: task.uuid,
+      name: task.name,
+      fields: (task.fields ?? []).map(getFieldSignature),
+    })),
+  });
 }
 
 export function hasTemplateIdentityChanged(

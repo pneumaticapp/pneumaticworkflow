@@ -9,9 +9,16 @@ import {
 } from '../../../types/template';
 import { EConditionAction, EConditionOperators, EConditionLogicOperations, TConditionRule } from '../TaskForm/Conditions/types';
 import { TemplateForm, useTemplateField, useTemplateForm, useTemplatePersist, useTemplateSaveRetry } from '../useTemplateForm';
+import { TEMPLATE_FORM_PERSIST_DEBOUNCE_MS } from '../useTemplateForm/TemplateFormPersistProvider';
+import { getTemplateVariablesFingerprint } from '../useTemplateForm/templateFormUtils';
 import { patchTemplate, saveTemplate, setTemplateStatus } from '../../../redux/actions';
 import { ETemplateStatus } from '../../../types/redux';
-import { resetAutosavePersistRequestsForTests } from '../../../redux/template/persistRequest';
+import {
+  abandonAutosavePersistRequests,
+  allocateAutosavePersistRequest,
+  createAutosavePersistScope,
+  isAutosavePersistRequestCurrent,
+} from '../../../redux/template/persistRequest';
 
 const mockDispatch = jest.fn();
 
@@ -25,6 +32,18 @@ jest.mock('../../../redux/actions', () => ({
   patchTemplate: jest.fn((payload: unknown) => ({ type: 'PATCH_TEMPLATE', payload })),
   saveTemplate: jest.fn((payload?: unknown) => ({ type: 'SAVE_TEMPLATE', payload })),
 }));
+
+beforeAll(() => {
+  jest.useFakeTimers();
+});
+
+afterEach(() => {
+  jest.clearAllTimers();
+});
+
+afterAll(() => {
+  jest.useRealTimers();
+});
 
 const makeTask = (overrides: Partial<ITemplateTask> = {}): ITemplateTask =>
   ({
@@ -71,8 +90,47 @@ const makeTemplate = (overrides: Partial<ITemplate> = {}): ITemplate =>
     ...overrides,
   }) as ITemplate;
 
+describe('autosave persist request scope', () => {
+  it('does not invalidate another editor session', () => {
+    const firstScope = createAutosavePersistScope();
+    const secondScope = createAutosavePersistScope();
+    const firstRequest = allocateAutosavePersistRequest(firstScope);
+
+    allocateAutosavePersistRequest(secondScope);
+    abandonAutosavePersistRequests(secondScope);
+
+    expect(isAutosavePersistRequestCurrent(firstRequest)).toBe(true);
+  });
+});
+
+describe('getTemplateVariablesFingerprint', () => {
+  it('changes when variable metadata changes without changing the field count', () => {
+    const field = {
+      apiName: 'field-1',
+      name: 'Original',
+      type: 'string',
+      selections: [],
+      dataset: null,
+    } as any;
+    const template = makeTemplate({
+      kickoff: { description: '', fields: [field] } as any,
+    });
+
+    expect(getTemplateVariablesFingerprint(template)).not.toBe(
+      getTemplateVariablesFingerprint({
+        ...template,
+        kickoff: {
+          ...template.kickoff,
+          fields: [{ ...field, name: 'Renamed' }],
+        },
+      }),
+    );
+  });
+});
+
 interface ISpyHandle {
   values: ITemplate;
+  dirtyRef: React.MutableRefObject<boolean>;
   setFieldValue: (field: string, value: unknown, shouldValidate?: boolean) => void;
   consumePendingChanges: (explicitFields?: Partial<ITemplate>) => Partial<ITemplate>;
   confirmConsumedChanges: () => void;
@@ -80,14 +138,14 @@ interface ISpyHandle {
   abandonPendingChanges: () => void;
 }
 
-// Drain the persist provider's `setTimeout(0)` flush plus the follow-up tick it
+// Drain the persist provider's debounced flush plus the follow-up tick it
 // schedules when it mirrors the saga's `isActive` deactivation, so no React
 // state update leaks outside `act`. By default, simulates a successful autosave
 // so the persist baseline advances before the next edit.
 const flushPersist = (options?: { confirmSuccess?: boolean }) =>
   act(async () => {
-    await new Promise((resolve) => { setTimeout(resolve, 0); });
-    await new Promise((resolve) => { setTimeout(resolve, 0); });
+    jest.advanceTimersByTime(TEMPLATE_FORM_PERSIST_DEBOUNCE_MS);
+    await Promise.resolve();
 
     if (options?.confirmSuccess === false) {
       return;
@@ -113,7 +171,7 @@ function TemplateFormHarness({
   const Spy: React.FC = () => {
     const { values, setFieldValue: contextSetFieldValue } = useTemplateField();
     const { consumePendingChanges, confirmConsumedChanges, revertConsumedChanges, abandonPendingChanges } = useTemplatePersist();
-    spy({ values, setFieldValue: contextSetFieldValue, consumePendingChanges, confirmConsumedChanges, revertConsumedChanges, abandonPendingChanges });
+    spy({ values, dirtyRef, setFieldValue: contextSetFieldValue, consumePendingChanges, confirmConsumedChanges, revertConsumedChanges, abandonPendingChanges });
     return null;
   };
 
@@ -144,7 +202,6 @@ function StatefulTemplateFormHarness({
 describe('TemplateFormPersistProvider deactivation', () => {
   beforeEach(() => {
     (patchTemplate as unknown as jest.Mock).mockClear();
-    resetAutosavePersistRequestsForTests();
   });
 
   it('flips isActive to false in Formik immediately when a non-activation field changes', async () => {
@@ -317,6 +374,34 @@ describe('TemplateFormPersistProvider deactivation', () => {
       name: 'Unsaved edit',
       isActive: false,
     });
+  });
+
+  it('keeps a clean form clean when reverting a failed explicit save', async () => {
+    const template = makeTemplate({ isActive: false });
+    let handle: ISpyHandle | null = null;
+
+    const { rerender } = render(
+      <StatefulTemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />,
+    );
+
+    act(() => {
+      handle!.consumePendingChanges({ isActive: true });
+      rerender(
+        <StatefulTemplateFormHarness
+          initialTemplate={{ ...template, isActive: true }}
+          spy={(h) => { handle = h; }}
+        />,
+      );
+    });
+
+    act(() => {
+      handle!.revertConsumedChanges();
+    });
+    await flushPersist();
+
+    expect(handle!.values.isActive).toBe(false);
+    expect(handle!.dirtyRef.current).toBe(false);
+    expect(patchTemplate).not.toHaveBeenCalled();
   });
 
   it('reverts explicit activation fields in Formik after a failed submit', async () => {
@@ -495,10 +580,8 @@ describe('TemplateFormPersistProvider deactivation', () => {
     render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
 
     // Two separate user events (separate acts) — each produces its own render
-    // and its own effect, but neither setTimeout(0) flush is allowed to fire
-    // until both have landed. This is the scenario the persist provider's
-    // effect cleanup is meant to handle: the first effect's cleanup must not
-    // swallow the second edit.
+    // and resets the debounced flush timer. After the debounce window, only the
+    // latest value should be persisted.
     act(() => {
       handle!.setFieldValue('description', 'first edit', false);
     });
@@ -675,6 +758,11 @@ describe('TemplateFormPersistProvider deactivation', () => {
 
     expect(patchTemplate).toHaveBeenCalledTimes(1);
     expect((patchTemplate as unknown as jest.Mock).mock.calls[0][0].changedFields).toEqual({
+      description: 'unsaved edit',
+      isActive: false,
+    });
+    expect((patchTemplate as unknown as jest.Mock).mock.calls[0][0].templateSnapshot).toEqual({
+      ...template,
       description: 'unsaved edit',
       isActive: false,
     });
@@ -1181,6 +1269,40 @@ describe('TemplateFormPersistProvider reinitialize', () => {
     });
   });
 
+  it('does not re-dispatch normalized nested values after autosave succeeds', async () => {
+    const task = makeTask({ name: 'Original Task' });
+    const template = makeTemplate({ isActive: true, tasks: [task], dateUpdated: null });
+    let handle: ISpyHandle | null = null;
+
+    const { rerender } = render(
+      <StatefulTemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />,
+    );
+
+    act(() => {
+      handle!.setFieldValue('tasks.0.name', 'Edited Task', false);
+    });
+    await flushPersist({ confirmSuccess: false });
+
+    rerender(
+      <StatefulTemplateFormHarness
+        initialTemplate={{
+          ...template,
+          isActive: false,
+          tasks: [{ ...task, name: 'Edited Task', ancestors: [] }],
+          dateUpdated: '2026-07-01T00:00:00Z',
+        }}
+        spy={(h) => { handle = h; }}
+      />,
+    );
+
+    act(() => {
+      (patchTemplate as unknown as jest.Mock).mock.calls[0][0].onSuccess();
+      jest.advanceTimersByTime(TEMPLATE_FORM_PERSIST_DEBOUNCE_MS);
+    });
+
+    expect(patchTemplate).toHaveBeenCalledTimes(1);
+  });
+
   it('does not re-dispatch server-stamped fields on the next edit after autosave succeeds', async () => {
     const template = makeTemplate({ isActive: true, description: 'old', dateUpdated: null });
     let handle: ISpyHandle | null = null;
@@ -1606,6 +1728,8 @@ describe('useTemplateSaveRetry', () => {
       const lastCall = calls[calls.length - 1];
       lastCall![0].onFailed();
     });
+
+    expect(patchTemplate).toHaveBeenCalledTimes(1);
 
     mockDispatch.mockClear();
     (patchTemplate as unknown as jest.Mock).mockClear();
