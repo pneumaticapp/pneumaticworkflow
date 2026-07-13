@@ -17,7 +17,9 @@ from src.processes.services.workflows.workflow_version import (
     WorkflowUpdateVersionService,
 )
 from src.processes.tasks.tasks import UserModel
-from src.storage.tasks import sync_workflow_attachment_permissions
+from src.storage.tasks import (
+    schedule_sync_workflow_attachment_permissions,
+)
 
 
 def _update_workflows(
@@ -33,10 +35,13 @@ def _update_workflows(
         return
 
     updated_by = UserModel.objects.get(id=updated_by)
-    version_dict = TemplateVersion.objects.filter(
+    template_version = TemplateVersion.objects.filter(
         template_id=template_id,
         version=version,
-    ).first().data
+    ).first()
+    if template_version is None:
+        return
+    version_dict = template_version.data
 
     for _workflow in template.workflows.all().only('id'):
         with transaction.atomic():
@@ -44,14 +49,19 @@ def _update_workflows(
                 id=_workflow.id,
             )
             if not workflow.is_version_lower(version):
-                return
+                continue
             if workflow.status == WorkflowStatus.DONE:
                 template_owner_ids = Template.objects.filter(
                     id=workflow.template_id,
                 ).get_owners_as_users()
-                # Guardian: set owners for completed workflow
+                # Guardian: set change + TEMPLATE_OWNER view
                 perm_svc = WorkflowPermissionService(workflow)
-                perm_svc.set_owners(list(template_owner_ids))
+                perm_svc.set_view_and_change(
+                    user_ids=list(template_owner_ids),
+                )
+                schedule_sync_workflow_attachment_permissions(
+                    workflow.id,
+                )
             else:
                 version_service = WorkflowUpdateVersionService(
                     instance=workflow,
@@ -87,15 +97,12 @@ def update_workflows(**kwargs):
     },
 )
 def update_workflow_owners(template_ids: List[int]):
-    """Rebuild Guardian permissions when template owners change.
+    """Rebuild Guardian change_workflow when template owners change.
 
-    For each workflow belonging to the given templates:
-    1. Set change_workflow + view_workflow for current template owners
-    2. Re-sync view_workflow for all entitled users (performers,
-       mentioned users) — also REVOKES view from users who lost
-       access (e.g. removed from a group)
-    3. Sync attachment permissions (async) so removed owners
-       lose access_attachment along with change_workflow
+    Only updates TEMPLATE_OWNER / change rows via set_view_and_change.
+    Performer UOP is unchanged when owners change — do not call
+    sync_performer_sources here (avoids double work with reassign
+    members sync and unnecessary load).
     """
     for template_id in template_ids:
         template_owner_ids = list(
@@ -109,42 +116,7 @@ def update_workflow_owners(template_ids: List[int]):
         )
         for workflow in workflows:
             with transaction.atomic():
-                perm_svc = WorkflowPermissionService(workflow)
-                # Set owners (clears old manage + sets new manage + view)
-                perm_svc.set_owners(template_owner_ids)
-                # Full re-sync: grant view to entitled users AND
-                # revoke view from users who lost all access sources
-                # (e.g. removed from performer group, template owners)
-                perm_svc.set_viewers()
-            # Sync attachment permissions after workflow perms are updated
-            sync_workflow_attachment_permissions.delay(workflow.id)
-
-
-@shared_task(
-    acks_late=True,
-    autoretry_for=(Exception, ),
-    retry_kwargs={
-        'max_retries': 3,
-        'countdown': 2,
-    },
-)
-def update_workflow_viewers(workflow_ids: List[int]):
-    """Rebuild Guardian view_workflow permissions for specific workflows.
-
-    Used when users/groups are reassigned in active workflows.
-
-    After each workflow's viewers are recalculated, an async
-    ``sync_workflow_attachment_permissions`` task is dispatched so
-    restricted attachment ACLs stay consistent with the updated
-    view_workflow set. Without this, users who lose view access
-    (or newly gain it) would have stale access_attachment rows.
-    """
-    workflows = Workflow.objects.filter(
-        id__in=workflow_ids,
-        is_deleted=False,
-    )
-    for workflow in workflows:
-        with transaction.atomic():
-            perm_svc = WorkflowPermissionService(workflow)
-            perm_svc.set_viewers()
-        sync_workflow_attachment_permissions.delay(workflow.id)
+                WorkflowPermissionService(workflow).set_view_and_change(
+                    user_ids=template_owner_ids,
+                )
+            schedule_sync_workflow_attachment_permissions(workflow.id)

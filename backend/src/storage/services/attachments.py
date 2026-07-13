@@ -12,10 +12,15 @@ from src.permissions.models import (
     UserObjectPermission,
 )
 from src.permissions.enums import PermissionSource
-from src.processes.enums import OwnerType
+from src.processes.enums import (
+    DirectlyStatus,
+    OwnerType,
+    PerformerType,
+    WorkflowPermission,
+)
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.templates.template import Template
-from src.processes.models.workflows.task import Task
+from src.processes.models.workflows.task import Task, TaskPerformer
 from src.processes.models.workflows.workflow import Workflow
 from src.storage.enums import AccessType, SourceType
 from src.storage.models import Attachment
@@ -102,14 +107,9 @@ class AttachmentService(BaseModelService):
         """
         Additively grant task participants access to given attachments.
 
-        Unlike _assign_task_permissions (which clears + reassigns for a
-        single task-level attachment), this method only ADDS permissions
-        without removing existing ones. Used for template-level attachments
-        that are shared across multiple workflows — clearing would revoke
-        access granted by other workflows.
-
-        Optimized: uses bulk_create(ignore_conflicts=True) to assign
-        permissions in 2-3 queries instead of NxM individual calls.
+        Prefer ``rebuild_template_attachment_permissions`` for
+        template-level files shared across workflows — additive
+        grants cannot revoke access when a user leaves a workflow.
         """
 
         # Reload task to get latest performers
@@ -137,7 +137,7 @@ class AttachmentService(BaseModelService):
         # Collect workflow viewers from Guardian
         workflow = task.workflow
         wf_perm_service = WorkflowPermissionService(workflow)
-        viewer_ids = wf_perm_service.get_viewer_ids()
+        viewer_ids = wf_perm_service.get_users_with_view()
         if viewer_ids:
             for viewer in UserModel.objects.filter(id__in=viewer_ids):
                 user_sources.add((
@@ -212,6 +212,148 @@ class AttachmentService(BaseModelService):
                     ignore_conflicts=True,
                 )
 
+    def rebuild_template_attachment_permissions(
+        self,
+        template_id: int,
+    ) -> None:
+        """Full recalc of restricted TEMPLATE attachment ACL.
+
+        Desired users:
+          - template owners (USER)
+          - any user with view_workflow on a live workflow
+            of this template
+        Desired groups:
+          - template owners (GROUP)
+          - active GROUP performers on tasks of those workflows
+
+        Clear + rebuild (not additive) so users who lost all
+        workflow access also lose template file access, while
+        users still on another workflow of the same template keep it.
+        """
+        attachments = list(
+            Attachment.objects.filter(
+                template_id=template_id,
+                source_type=SourceType.TEMPLATE,
+                access_type=AccessType.RESTRICTED,
+            ).only('id'),
+        )
+        if not attachments:
+            return
+
+        owner_user_sources = []
+        owner_user_ids = set()
+        owner_group_ids = set()
+        template_owners = TemplateOwner.objects.filter(
+            template_id=template_id,
+            is_deleted=False,
+        ).only('id', 'type', 'user_id', 'group_id')
+        for owner in template_owners:
+            if (
+                owner.type == OwnerType.USER
+                and owner.user_id is not None
+            ):
+                owner_user_ids.add(owner.user_id)
+                owner_user_sources.append((
+                    owner.user_id,
+                    PermissionSource.TEMPLATE_OWNER,
+                    owner.pk,
+                ))
+            elif (
+                owner.type == OwnerType.GROUP
+                and owner.group_id is not None
+            ):
+                owner_group_ids.add(owner.group_id)
+
+        wf_ids = list(
+            Workflow.objects.filter(
+                template_id=template_id,
+                is_deleted=False,
+            ).values_list('id', flat=True),
+        )
+
+        viewer_ids = set()
+        perf_group_ids = set()
+        if wf_ids:
+            wf_ct = ContentType.objects.get(
+                app_label='processes',
+                model='workflow',
+            )
+            viewer_ids = set(
+                UserObjectPermission.objects.filter(
+                    content_type=wf_ct,
+                    permission__codename=WorkflowPermission.VIEW,
+                    object_pk__in=[str(wid) for wid in wf_ids],
+                ).values_list('user_id', flat=True),
+            )
+            perf_group_ids = set(
+                TaskPerformer.objects.filter(
+                    task__workflow_id__in=wf_ids,
+                    type=PerformerType.GROUP,
+                )
+                .exclude(directly_status=DirectlyStatus.DELETED)
+                .exclude(group_id__isnull=True)
+                .values_list('group_id', flat=True),
+            )
+
+        derived_viewer_ids = viewer_ids - owner_user_ids
+        desired_user_sources = list(owner_user_sources)
+        for uid in derived_viewer_ids:
+            desired_user_sources.append((
+                uid,
+                PermissionSource.WORKFLOW_VIEWER,
+                template_id,
+            ))
+        desired_group_ids = owner_group_ids | perf_group_ids
+
+        ctype = ContentType.objects.get_for_model(Attachment)
+        perm = Permission.objects.get(
+            content_type=ctype,
+            codename='access_attachment',
+        )
+        obj_pks = [str(att.pk) for att in attachments]
+
+        with transaction.atomic():
+            UserObjectPermission.objects.filter(
+                content_type=ctype,
+                object_pk__in=obj_pks,
+            ).delete()
+            GroupObjectPermission.objects.filter(
+                content_type=ctype,
+                object_pk__in=obj_pks,
+            ).delete()
+
+            if desired_user_sources:
+                UserObjectPermission.objects.bulk_create(
+                    [
+                        UserObjectPermission(
+                            user_id=uid,
+                            permission=perm,
+                            content_type=ctype,
+                            object_pk=obj_pk,
+                            source_type=st,
+                            source_id=sid,
+                        )
+                        for uid, st, sid in desired_user_sources
+                        for obj_pk in obj_pks
+                    ],
+                    ignore_conflicts=True,
+                )
+
+            if desired_group_ids:
+                GroupObjectPermission.objects.bulk_create(
+                    [
+                        GroupObjectPermission(
+                            group_id=gid,
+                            permission=perm,
+                            content_type=ctype,
+                            object_pk=obj_pk,
+                        )
+                        for gid in desired_group_ids
+                        for obj_pk in obj_pks
+                    ],
+                    ignore_conflicts=True,
+                )
+
     def _assign_task_permissions(self):
         """Assigns permissions for task."""
         task = self.instance.task
@@ -258,7 +400,9 @@ class AttachmentService(BaseModelService):
         # Assign permissions to workflow viewers
         workflow = task.workflow
         if workflow:
-            viewer_ids = WorkflowPermissionService(workflow).get_viewer_ids()
+            viewer_ids = WorkflowPermissionService(
+                workflow,
+            ).get_users_with_view()
             if viewer_ids:
                 for viewer in UserModel.objects.filter(id__in=viewer_ids):
                     UserObjectPermission.objects.get_or_create(
@@ -379,6 +523,10 @@ class AttachmentService(BaseModelService):
     def _assign_workflow_permissions(self):
         """Assigns permissions for workflow."""
         workflow = self.instance.workflow
+        if not workflow and self.instance.event_id:
+            workflow = getattr(
+                self.instance.event, 'workflow', None,
+            )
         if not workflow:
             return
 
@@ -408,7 +556,9 @@ class AttachmentService(BaseModelService):
         # Assign permissions to task performers
         tasks = workflow.tasks.all()
         for task in tasks:
-            task_performers = task.taskperformer_set.all()
+            task_performers = (
+                task.taskperformer_set.exclude_directly_deleted()
+            )
             for performer in task_performers:
                 if performer.user:
                     UserObjectPermission.objects.get_or_create(
@@ -421,7 +571,7 @@ class AttachmentService(BaseModelService):
                     )
 
         # Assign permissions to workflow viewers
-        viewer_ids = WorkflowPermissionService(workflow).get_viewer_ids()
+        viewer_ids = WorkflowPermissionService(workflow).get_users_with_view()
         if viewer_ids:
             for viewer in UserModel.objects.filter(id__in=viewer_ids):
                 UserObjectPermission.objects.get_or_create(
@@ -454,7 +604,9 @@ class AttachmentService(BaseModelService):
 
         # Assign permissions to groups from task performers
         for task in tasks:
-            task_performers = task.taskperformer_set.all()
+            task_performers = (
+                task.taskperformer_set.exclude_directly_deleted()
+            )
             for performer in task_performers:
                 if performer.group:
                     GroupObjectPermission.objects.get_or_create(
@@ -689,11 +841,12 @@ class AttachmentService(BaseModelService):
             return False
 
         # Fetch only PKs of RESTRICTED attachments (no full objects)
-        restricted_pks = list(
-            base_qs.filter(
-                access_type=AccessType.RESTRICTED,
-            ).values_list('id', flat=True),
+        restricted_qs = base_qs.filter(
+            access_type=AccessType.RESTRICTED,
         )
+        if account_id is not None:
+            restricted_qs = restricted_qs.filter(account_id=account_id)
+        restricted_pks = list(restricted_qs.values_list('id', flat=True))
         if not restricted_pks:
             return False
 

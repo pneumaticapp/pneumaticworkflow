@@ -1259,7 +1259,7 @@ class TestUpdateTemplate:
         # assert
         workflow.refresh_from_db()
         assert response.status_code == 200
-        owner_ids = WorkflowPermissionService(workflow).get_owner_ids()
+        owner_ids = WorkflowPermissionService(workflow).get_users_with_change()
         assert len(owner_ids) == 2
         assert user.id in owner_ids
         assert user_2.id in owner_ids
@@ -1339,7 +1339,7 @@ class TestUpdateTemplate:
         # assert
         workflow.refresh_from_db()
         assert response.status_code == 200
-        owner_ids = WorkflowPermissionService(workflow).get_owner_ids()
+        owner_ids = WorkflowPermissionService(workflow).get_users_with_change()
         assert len(owner_ids) == 2
         assert user.id in owner_ids
         assert user_2.id in owner_ids

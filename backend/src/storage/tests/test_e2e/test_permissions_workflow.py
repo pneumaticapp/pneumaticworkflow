@@ -339,7 +339,7 @@ class TestPermissionsWorkflowE2E:
         member = create_test_user(account=owner.account)
         workflow = create_test_workflow(user=owner, tasks_count=2)
         WorkflowPermissionService(workflow).grant_view(
-            member,
+            user=member,
             source_type=PermissionSource.WORKFLOW_VIEWER,
             source_id=workflow.pk,
         )

@@ -45,7 +45,7 @@ class TestWorkflowAttachmentsE2E:
         member = create_test_user(account=owner.account)
         workflow = create_test_workflow(user=owner, tasks_count=1)
         WorkflowPermissionService(workflow).grant_view(
-            member,
+            user=member,
             source_type=PermissionSource.PERFORMER,
             source_id=0,
         )
@@ -89,7 +89,7 @@ class TestWorkflowAttachmentsE2E:
         member = create_test_user(account=owner.account)
         workflow = create_test_workflow(user=owner, tasks_count=1)
         WorkflowPermissionService(workflow).grant_view(
-            member,
+            user=member,
             source_type=PermissionSource.PERFORMER,
             source_id=0,
         )
@@ -243,7 +243,7 @@ class TestWorkflowAttachmentsE2E:
         )
         workflow = create_test_workflow(user=owner, tasks_count=1)
         WorkflowPermissionService(workflow).grant_view(
-            member1,
+            user=member1,
             source_type=PermissionSource.PERFORMER,
             source_id=0,
         )
@@ -268,7 +268,7 @@ class TestWorkflowAttachmentsE2E:
 
         # act
         WorkflowPermissionService(workflow).grant_view(
-            member2,
+            user=member2,
             source_type=PermissionSource.PERFORMER,
             source_id=0,
         )
@@ -292,7 +292,7 @@ class TestWorkflowAttachmentsE2E:
         member = create_test_user(account=owner.account)
         workflow = create_test_workflow(user=owner, tasks_count=1)
         WorkflowPermissionService(workflow).grant_view(
-            member,
+            user=member,
             source_type=PermissionSource.PERFORMER,
             source_id=0,
         )
@@ -380,13 +380,13 @@ class TestWorkflowAttachmentsE2E:
         owner2 = create_test_user(account=owner1.account, is_admin=True)
         workflow = create_test_workflow(user=owner1, tasks_count=1)
         WorkflowPermissionService(workflow).grant_change(
-            owner1,
+            user=owner1,
             source_type=PermissionSource.TEMPLATE_OWNER,
             source_id=0,
         )
 
         WorkflowPermissionService(workflow).grant_change(
-            owner2,
+            user=owner2,
             source_type=PermissionSource.TEMPLATE_OWNER,
             source_id=0,
         )

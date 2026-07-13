@@ -9,10 +9,10 @@ from src.analysis.services import AnalyticService
 from src.generics.base.service import BaseModelService
 from src.notifications.tasks import (
     send_comment_notification,
-    send_mention_notification,
-    send_reaction_notification,
     send_event_created,
     send_event_updated,
+    send_mention_notification,
+    send_reaction_notification,
 )
 from src.permissions.enums import PermissionSource
 from src.processes.enums import (
@@ -42,14 +42,16 @@ from src.processes.services.exceptions import (
     CommentTextRequired,
 )
 from src.processes.services.workflow_permissions import (
-    MENTION_RE,
     WorkflowPermissionService,
 )
-from src.services.markdown import MarkdownService
+from src.processes.utils.common import MENTION_RE
+from src.services.markdown import MarkdownPatterns, MarkdownService
 from src.storage.services.attachments import (
     clear_guardian_permissions_for_attachment_ids,
 )
-from src.storage.tasks import sync_workflow_attachment_permissions
+from src.storage.tasks import (
+    schedule_sync_workflow_attachment_permissions,
+)
 from src.storage.utils import refresh_attachments
 
 UserModel = get_user_model()
@@ -627,25 +629,42 @@ class CommentService(BaseModelService):
             self.account.id,
         ).only_ids()
 
+    @staticmethod
+    def _text_has_attachment_markers(text: Optional[str]) -> bool:
+        if not text:
+            return False
+        if 'attachment_id:' in text:
+            return True
+        if MarkdownPatterns.LINK_MARKDOWN_PATTERN.search(text):
+            return True
+        return bool(MarkdownPatterns.IMAGE_MARKDOWN_PATTERN.search(text))
+
     def _get_new_comment_recipients(
         self,
         task: Task,
-    ) -> Tuple[Tuple[int], Tuple[int]]:
+    ) -> Tuple[Tuple[int], Tuple[int], Tuple[int]]:
 
-        """ Return mentioned users and comment notification receipenes """
-
-        mentioned_users_ids = ()
-        notify_users_ids = task.taskperformer_set.exclude_directly_deleted(
-        ).exclude(user_id=self.user.id).user_ids()
-        if self.instance.text:
-            mentioned_users_ids = self._get_mentioned_users_ids(
-                text=self.instance.text,
-                exclude_ids=notify_users_ids,
-            )
-        notify_users_ids = tuple(
-            set(notify_users_ids) - set(mentioned_users_ids),
+        performer_ids = (
+            task.taskperformer_set.exclude_directly_deleted()
+            .exclude(user_id=self.user.id)
+            .user_ids()
         )
-        return mentioned_users_ids, notify_users_ids
+        performer_set = set(performer_ids)
+        all_mention_ids = ()
+        if self.instance.text:
+            all_mention_ids = self._get_mentioned_users_ids(
+                text=self.instance.text,
+                exclude_ids=[self.user.id],
+            )
+        mentioned_for_notify = tuple(
+            uid for uid in all_mention_ids
+            if uid not in performer_set
+        )
+        return (
+            all_mention_ids,
+            mentioned_for_notify,
+            tuple(performer_ids),
+        )
 
     def _send_event_updated(self):
         data = WorkflowEventSerializer(instance=self.instance).data
@@ -694,16 +713,23 @@ class CommentService(BaseModelService):
                 task.save(update_fields=['contains_comments'])
             refresh_attachments(source=self.instance, user=self.user)
             WorkflowEventService._after_create_actions(self.instance)
-            mentioned_users_ids, notify_users_ids = (
+            all_mention_ids, mentioned_users_ids, notify_users_ids = (
                 self._get_new_comment_recipients(task)
             )
-            if mentioned_users_ids:
-                # Guardian: grant view to mentioned users
-                WorkflowPermissionService(workflow).grant_view_bulk(
-                    user_ids=mentioned_users_ids,
+            if all_mention_ids:
+                WorkflowPermissionService(workflow).sync_view(
+                    user_ids=all_mention_ids,
                     source_type=PermissionSource.MENTION,
                     source_id=self.instance.id,
                 )
+            if (
+                all_mention_ids
+                or self._text_has_attachment_markers(text)
+            ):
+                schedule_sync_workflow_attachment_permissions(
+                    workflow.id,
+                )
+            if mentioned_users_ids:
                 transaction.on_commit(
                     lambda: send_mention_notification.delay(
                         logging=self.user.account.log_api_requests,
@@ -741,7 +767,7 @@ class CommentService(BaseModelService):
                     auth_type=self.auth_type,
                     workflow=workflow,
                 )
-            return self.instance
+        return self.instance
 
     def update(
         self,
@@ -769,19 +795,16 @@ class CommentService(BaseModelService):
                 **kwargs,
             )
             refresh_attachments(source=self.instance, user=self.user)
-            # Diff-based permission sync for this comment's mentions:
-            # parse ALL mentions from new text, let the service compute
-            # the delta — only truly added/removed users hit the DB.
             all_mentioned_ids = self._get_mentioned_users_ids(
                 text=self.instance.text,
                 exclude_ids=[self.user.id],
             ) if self.instance.text else ()
 
             perm_service = WorkflowPermissionService(self.instance.workflow)
-            added_ids = perm_service.sync_view_by_source(
+            added_ids = perm_service.sync_view(
+                user_ids=all_mentioned_ids,
                 source_type=PermissionSource.MENTION,
                 source_id=self.instance.id,
-                desired_user_ids=all_mentioned_ids,
             )
 
             if added_ids:
@@ -798,7 +821,7 @@ class CommentService(BaseModelService):
                 )
 
         self._send_event_updated()
-        sync_workflow_attachment_permissions.delay(
+        schedule_sync_workflow_attachment_permissions(
             self.instance.workflow_id,
         )
         AnalyticService.comment_edited(
@@ -831,12 +854,12 @@ class CommentService(BaseModelService):
             # Targeted revoke: only remove mention-permissions
             WorkflowPermissionService(
                 self.instance.workflow,
-            ).revoke_view_by_source(
+            ).revoke_view(
                 source_type=PermissionSource.MENTION,
                 source_id=self.instance.id,
             )
         self._send_event_updated()
-        sync_workflow_attachment_permissions.delay(
+        schedule_sync_workflow_attachment_permissions(
             self.instance.workflow_id,
         )
         AnalyticService.comment_deleted(

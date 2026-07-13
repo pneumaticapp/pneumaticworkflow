@@ -40,13 +40,13 @@ class TestWorkflowCountsByWorkflowStarter:
         create_test_workflow(user_1)
         workflow_3 = create_test_workflow(user_2)
         WorkflowPermissionService(workflow_3).grant_change(
-            user_1,
+            user=user_1,
             source_type=PermissionSource.TEMPLATE_OWNER,
             source_id=0,
         )
         workflow_4 = create_test_workflow(user_2)
         WorkflowPermissionService(workflow_4).grant_change(
-            user_1,
+            user=user_1,
             source_type=PermissionSource.TEMPLATE_OWNER,
             source_id=0,
         )
@@ -110,7 +110,7 @@ class TestWorkflowCountsByWorkflowStarter:
         create_test_workflow(user_1)
         workflow_3 = create_test_workflow(user_2)
         WorkflowPermissionService(workflow_3).grant_change(
-            user_1,
+            user=user_1,
             source_type=PermissionSource.TEMPLATE_OWNER,
             source_id=0,
         )
@@ -118,7 +118,7 @@ class TestWorkflowCountsByWorkflowStarter:
         workflow_done.status = WorkflowStatus.DONE
         workflow_done.save()
         WorkflowPermissionService(workflow_done).grant_change(
-            user_1,
+            user=user_1,
             source_type=PermissionSource.TEMPLATE_OWNER,
             source_id=0,
         )
@@ -298,7 +298,7 @@ class TestWorkflowCountsByWorkflowStarter:
             is_account_owner=False,
         )
         WorkflowPermissionService(workflow).grant_change(
-            request_user,
+            user=request_user,
             source_type=PermissionSource.TEMPLATE_OWNER,
             source_id=0,
         )
@@ -349,7 +349,7 @@ class TestWorkflowCountsByWorkflowStarter:
             is_account_owner=False,
         )
         WorkflowPermissionService(workflow_1).grant_change(
-            request_user,
+            user=request_user,
             source_type=PermissionSource.TEMPLATE_OWNER,
             source_id=0,
         )
@@ -366,7 +366,7 @@ class TestWorkflowCountsByWorkflowStarter:
             is_account_owner=False,
         )
         WorkflowPermissionService(workflow_2).grant_change(
-            request_user,
+            user=request_user,
             source_type=PermissionSource.TEMPLATE_OWNER,
             source_id=0,
         )
@@ -455,7 +455,7 @@ class TestWorkflowCountsByWorkflowStarter:
         )
 
         WorkflowPermissionService(workflow).grant_change(
-            request_user,
+            user=request_user,
             source_type=PermissionSource.TEMPLATE_OWNER,
             source_id=0,
         )
@@ -511,7 +511,7 @@ class TestWorkflowCountsByWorkflowStarter:
             is_account_owner=False,
         )
         WorkflowPermissionService(workflow_1).grant_change(
-            request_user,
+            user=request_user,
             source_type=PermissionSource.TEMPLATE_OWNER,
             source_id=0,
         )
@@ -533,7 +533,7 @@ class TestWorkflowCountsByWorkflowStarter:
             is_account_owner=False,
         )
         WorkflowPermissionService(workflow_2).grant_change(
-            request_user,
+            user=request_user,
             source_type=PermissionSource.TEMPLATE_OWNER,
             source_id=0,
         )
@@ -579,7 +579,7 @@ class TestWorkflowCountsByWorkflowStarter:
             is_account_owner=False,
         )
         WorkflowPermissionService(workflow_1).grant_change(
-            request_user,
+            user=request_user,
             source_type=PermissionSource.TEMPLATE_OWNER,
             source_id=0,
         )
@@ -601,7 +601,7 @@ class TestWorkflowCountsByWorkflowStarter:
             is_account_owner=False,
         )
         WorkflowPermissionService(workflow_2).grant_change(
-            request_user,
+            user=request_user,
             source_type=PermissionSource.TEMPLATE_OWNER,
             source_id=0,
         )
@@ -676,7 +676,7 @@ class TestWorkflowCountsByCPerformer:
         create_test_workflow(user_1)
         workflow_3 = create_test_workflow(user_2)
         WorkflowPermissionService(workflow_3).grant_change(
-            user_1,
+            user=user_1,
             source_type=PermissionSource.TEMPLATE_OWNER,
             source_id=0,
         )
@@ -707,7 +707,7 @@ class TestWorkflowCountsByCPerformer:
             is_account_owner=False,
         )
         WorkflowPermissionService(workflow).grant_change(
-            user_1,
+            user=user_1,
             source_type=PermissionSource.TEMPLATE_OWNER,
             source_id=0,
         )
@@ -830,19 +830,19 @@ class TestWorkflowCountsByCPerformer:
             is_external=True,
         )
         WorkflowPermissionService(workflow_1).grant_change(
-            user_2,
+            user=user_2,
             source_type=PermissionSource.TEMPLATE_OWNER,
             source_id=0,
         )
         workflow_2 = create_test_workflow(user_1, template=template_2)
         WorkflowPermissionService(workflow_2).grant_change(
-            user_2,
+            user=user_2,
             source_type=PermissionSource.TEMPLATE_OWNER,
             source_id=0,
         )
         workflow_3 = create_test_workflow(user_1, template=template_3)
         WorkflowPermissionService(workflow_3).grant_change(
-            user_2,
+            user=user_2,
             source_type=PermissionSource.TEMPLATE_OWNER,
             source_id=0,
         )

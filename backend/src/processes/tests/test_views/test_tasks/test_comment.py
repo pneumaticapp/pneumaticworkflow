@@ -92,7 +92,7 @@ def test_create__by_member__ok(api_client, mocker):
     task = workflow.tasks.get(number=1)
     member = create_test_admin(account=account)
     WorkflowPermissionService(workflow).grant_view(
-        member,
+        user=member,
         source_type=PermissionSource.PERFORMER,
         source_id=0,
     )
@@ -525,7 +525,7 @@ def test_create__user_is_member_in_deleted_task__not_found(api_client):
     admin = create_test_admin(account=user.account)
     workflow = create_test_workflow(user, tasks_count=1)
     WorkflowPermissionService(workflow).grant_view(
-        admin,
+        user=admin,
         source_type=PermissionSource.PERFORMER,
         source_id=0,
     )

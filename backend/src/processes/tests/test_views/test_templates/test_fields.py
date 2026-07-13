@@ -173,7 +173,7 @@ def test_fields__workflow_member__ok(api_client):
     user = create_test_admin(account=account)
     workflow = create_test_workflow(user=owner, template=template)
     WorkflowPermissionService(workflow).grant_view(
-        user,
+        user=user,
         source_type=PermissionSource.PERFORMER,
         source_id=0,
     )
@@ -345,7 +345,7 @@ def test_fields__workflow_member_and_template_owner__ok(api_client):
         user_id=request_user.id,
     )
     WorkflowPermissionService(workflow).grant_view(
-        request_user,
+        user=request_user,
         source_type=PermissionSource.PERFORMER,
         source_id=0,
     )
@@ -374,7 +374,7 @@ def test_fields__not_authenticated__permission_denied(api_client):
         user_id=request_user.id,
     )
     WorkflowPermissionService(workflow).grant_view(
-        request_user,
+        user=request_user,
         source_type=PermissionSource.PERFORMER,
         source_id=0,
     )
@@ -409,7 +409,7 @@ def test_fields__guest_performer__permission_denied(api_client):
     # Extra case
     create_test_admin(email=guest.email, account=account)
     WorkflowPermissionService(workflow).grant_view(
-        guest,
+        user=guest,
         source_type=PermissionSource.PERFORMER,
         source_id=0,
     )

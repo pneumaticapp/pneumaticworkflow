@@ -1,33 +1,27 @@
-import re
-from typing import Iterable, Set, Tuple, TYPE_CHECKING, List, Dict
 from collections import defaultdict
+from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Set
 
+from django.apps import apps
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
-from django.db.models import Q
 from django.utils.functional import cached_property
 
+from src.accounts.models import UserGroup
 from src.permissions.enums import PermissionSource
 from src.permissions.models import UserObjectPermission
 from src.processes.enums import (
-    CommentStatus,
     DirectlyStatus,
     PerformerType,
-    WorkflowEventType,
+    WorkflowPermission,
 )
+from src.processes.models.workflows.task import Task, TaskPerformer
 
 UserModel = get_user_model()
 
 if TYPE_CHECKING:
     from src.processes.models.workflows.workflow import Workflow
-
-# Matches: [John Doe| 123] -> captures "123"
-MENTION_RE = re.compile(r'\[.*?\|\s*([0-9]+)\]')
-
-CODENAME_VIEW = 'view_workflow'
-CODENAME_CHANGE = 'change_workflow'
 
 
 class WorkflowPermissionService:
@@ -49,48 +43,58 @@ class WorkflowPermissionService:
                           (replaces owners M2M)
     """
 
-    # Type alias for source-aware entitled set (uid, type, id)
-    _SourceTuple = Tuple[int, str, int]
-
-    _ct_cache = None
-
     def __init__(self, workflow: 'Workflow'):
         self.workflow = workflow
-        if WorkflowPermissionService._ct_cache is None:
-            WorkflowPermissionService._ct_cache = (
-                ContentType.objects.get_for_model(workflow)
-            )
-        self._ct = WorkflowPermissionService._ct_cache
+        self._ct = self._get_content_type()
         self._object_pk = str(workflow.pk)
 
-    # ── Private helpers ───────────────────────────────────
+    @classmethod
+    def _get_content_type(cls) -> ContentType:
+        """Get Workflow ContentType (Django caches internally)."""
+        workflow_model = apps.get_model('processes', 'Workflow')
+        return ContentType.objects.get_for_model(workflow_model)
+
+    def _filter_account_user_ids(
+        self,
+        user_ids: Iterable[int],
+    ) -> List[int]:
+        """Keep only users that belong to the workflow account."""
+        ids = [uid for uid in user_ids if uid is not None]
+        if not ids:
+            return []
+        return list(
+            UserModel.objects.filter(
+                id__in=ids,
+                account_id=self.workflow.account_id,
+            ).values_list('id', flat=True),
+        )
 
     @cached_property
-    def _view_perm(self):
+    def _view_perm(self) -> Permission:
         return Permission.objects.get(
-            codename=CODENAME_VIEW,
+            codename=WorkflowPermission.VIEW,
             content_type=self._ct,
         )
 
     @cached_property
-    def _change_perm(self):
+    def _change_perm(self) -> Permission:
         return Permission.objects.get(
-            codename=CODENAME_CHANGE,
+            codename=WorkflowPermission.CHANGE,
             content_type=self._ct,
         )
-
-    # ── Write operations ──────────────────────────────────
 
     def grant_view(
         self,
         user: UserModel,
-        source_type: str,
+        source_type: PermissionSource.LITERALS,
         source_id: int,
     ):
         """Grant view access to a single user, tagged with source.
 
         Replaces: workflow.members.add(user)
         """
+        if user.account_id != self.workflow.account_id:
+            return
         # ignore_conflicts: skip if this exact source-permission already exists
         UserObjectPermission.objects.bulk_create(
             [UserObjectPermission(
@@ -107,7 +111,7 @@ class WorkflowPermissionService:
     def grant_change(
         self,
         user: UserModel,
-        source_type: str,
+        source_type: PermissionSource.LITERALS,
         source_id: int,
     ):
         """Grant change + view access to a single user.
@@ -115,6 +119,8 @@ class WorkflowPermissionService:
         Replaces: workflow.owners.add(user)
         Change implies view — owner can always see their workflow.
         """
+        if user.account_id != self.workflow.account_id:
+            return
         UserObjectPermission.objects.bulk_create(
             [
                 UserObjectPermission(
@@ -133,13 +139,14 @@ class WorkflowPermissionService:
     def grant_view_bulk(
         self,
         user_ids: Iterable[int],
-        source_type: str,
+        source_type: PermissionSource.LITERALS,
         source_id: int,
     ):
         """Bulk-grant view access, tagged with source.
 
         Replaces: workflow.members.add(*user_ids)
         """
+        user_ids = self._filter_account_user_ids(user_ids)
         if not user_ids:
             return
         perm = self._view_perm
@@ -159,9 +166,9 @@ class WorkflowPermissionService:
             ignore_conflicts=True,
         )
 
-    def revoke_view_by_source(
+    def revoke_view(
         self,
-        source_type: str,
+        source_type: PermissionSource.LITERALS,
         source_id: int,
     ):
         """Remove view permissions granted by a specific source.
@@ -178,16 +185,16 @@ class WorkflowPermissionService:
             source_id=source_id,
         ).delete()
 
-    def sync_view_by_source(
+    def sync_view(
         self,
-        source_type: str,
+        user_ids: Iterable[int],
+        source_type: PermissionSource.LITERALS,
         source_id: int,
-        desired_user_ids: Iterable[int],
     ) -> Set[int]:
         """Diff-based sync of view permissions for a given source.
 
         Compares the current set of users who hold a view permission
-        from (source_type, source_id) against ``desired_user_ids``:
+        from (source_type, source_id) against ``user_ids``:
         - users no longer desired are revoked,
         - users not yet present are granted,
         - users already present are left untouched.
@@ -197,7 +204,7 @@ class WorkflowPermissionService:
             Callers can use this to send notifications only
             for truly new mentions.
         """
-        desired = set(desired_user_ids)
+        desired = set(self._filter_account_user_ids(user_ids))
 
         current = set(
             UserObjectPermission.objects.filter(
@@ -242,16 +249,19 @@ class WorkflowPermissionService:
         return to_add
 
     @transaction.atomic
-    def set_owners(self, user_ids: Iterable[int]):
-        """Replace all owners for a workflow.
+    def set_view_and_change(self, user_ids: Iterable[int]):
+        """Replace change_workflow (+ matching TEMPLATE_OWNER view).
 
-        Replaces: workflow.owners.set(user_ids)
-        Clears existing change perms, then assigns to the new set.
-        Owners use source_type=TEMPLATE_OWNER since they derive from
-        the template configuration.
+        Clears existing change perms and all TEMPLATE_OWNER view
+        rows, then grants change + view to the new set.
         """
         change_perm = self._change_perm
         view_perm = self._view_perm
+        source_id = self.workflow.template_id or 0
+        # Dedupe while preserving order
+        unique_ids = list(dict.fromkeys(
+            self._filter_account_user_ids(user_ids),
+        ))
 
         UserObjectPermission.objects.filter(
             permission=change_perm,
@@ -259,8 +269,20 @@ class WorkflowPermissionService:
             object_pk=self._object_pk,
         ).delete()
 
+        # Drop every TEMPLATE_OWNER view row (any source_id) so
+        # stale grants with a mismatched source_id cannot linger.
+        UserObjectPermission.objects.filter(
+            permission=view_perm,
+            content_type=self._ct,
+            object_pk=self._object_pk,
+            source_type=PermissionSource.TEMPLATE_OWNER,
+        ).delete()
+
+        if not unique_ids:
+            return
+
         objs = []
-        for uid in user_ids:
+        for uid in unique_ids:
             for perm in (change_perm, view_perm):
                 objs.append(UserObjectPermission(
                     user_id=uid,
@@ -268,231 +290,130 @@ class WorkflowPermissionService:
                     content_type=self._ct,
                     object_pk=self._object_pk,
                     source_type=PermissionSource.TEMPLATE_OWNER,
-                    # 0 = workflow has no linked template (legacy data)
-                    source_id=self.workflow.template_id or 0,
+                    source_id=source_id,
                 ))
-        if objs:
-            # ignore_conflicts: skip if view row already exists from
-            # another source (e.g. performer or mention)
-            UserObjectPermission.objects.bulk_create(
-                objs,
-                ignore_conflicts=True,
-            )
+        UserObjectPermission.objects.bulk_create(
+            objs,
+            ignore_conflicts=True,
+        )
 
     @transaction.atomic
-    def set_viewers(self):
-        """Recalculate view_workflow permissions for a workflow.
+    def sync_performer_sources(self):
+        """Align PERFORMER / PERFORMER_GROUP rows with TaskPerformer.
 
-        Collects all (user_id, source_type, source_id) tuples from
-        active sources and performs a precise diff:
-        - Removes UOP rows whose (user, source_type, source_id)
-          no longer appears in the entitled set.
-        - Adds UOP rows for new (user, source_type, source_id)
-          combinations.
-
-        This ensures each UOP row tracks exactly why it was
-        granted and can be surgically revoked later.
+        Used after bulk reassignment where many performer rows change
+        at once. Does not touch mention, vacation, template-owner,
+        or legacy viewer sources.
         """
-        view_perm = self._view_perm
-
-        entitled = self._collect_entitled_sources()
-
-        # All entitled user IDs (for the removal diff)
-        entitled_user_ids = {uid for uid, _, _ in entitled}
-
-        # Existing rows: (user_id, source_type, source_id)
-        existing_rows = set(
-            UserObjectPermission.objects.select_for_update().filter(
-                permission=view_perm,
-                content_type=self._ct,
-                object_pk=self._object_pk,
-            ).values_list('user_id', 'source_type', 'source_id'),
-        )
-        existing_user_ids = {uid for uid, _, _ in existing_rows}
-
-        # 1. Remove all rows for users who lost ALL sources
-        users_to_purge = existing_user_ids - entitled_user_ids
-        if users_to_purge:
-            UserObjectPermission.objects.filter(
-                permission=view_perm,
-                content_type=self._ct,
-                object_pk=self._object_pk,
-                user_id__in=users_to_purge,
-            ).delete()
-
-        # 2. For users who still have at least one source,
-        #    remove individual rows whose source is no longer entitled.
-        kept_existing = {
-            row for row in existing_rows if row[0] not in users_to_purge
-        }
-        orphaned_source_rows = kept_existing - entitled
-        if orphaned_source_rows:
-            q_filter = Q()
-            for uid, st, sid in orphaned_source_rows:
-                q_filter |= Q(
-                    user_id=uid,
-                    source_type=st,
-                    source_id=sid,
-                )
-            UserObjectPermission.objects.filter(
-                q_filter,
-                permission=view_perm,
-                content_type=self._ct,
-                object_pk=self._object_pk,
-            ).delete()
-
-        # 3. Add new source rows
-        new_rows = entitled - existing_rows
-        if new_rows:
-            UserObjectPermission.objects.bulk_create(
-                [
-                    UserObjectPermission(
-                        user_id=uid,
-                        permission=view_perm,
-                        content_type=self._ct,
-                        object_pk=self._object_pk,
-                        source_type=st,
-                        source_id=sid,
-                    )
-                    for uid, st, sid in new_rows
-                ],
-                ignore_conflicts=True,
-            )
-
-    def _collect_entitled_sources(self) -> Set[_SourceTuple]:
-        """Collect all (user_id, source_type, source_id) tuples.
-
-        Each tuple represents one reason why a user should have
-        view_workflow permission. Multiple tuples per user are
-        normal (e.g. user is both a performer and mentioned).
-        """
-        from src.processes.models.workflows.task import TaskPerformer  # noqa: PLC0415
-
-        entitled: Set[WorkflowPermissionService._SourceTuple] = set()
-        workflow = self.workflow
-
-        # 1. Template owners → source: TemplateOwner:<template_id>
-        if workflow.template_id:
-            from src.processes.models.templates.template import Template  # noqa: PLC0415
-            owner_ids = Template.objects.filter(
-                id=workflow.template_id,
-            ).get_owners_as_users()
-            for uid in owner_ids:
-                entitled.add((
-                    uid,
-                    PermissionSource.TEMPLATE_OWNER,
-                    workflow.template_id,
-                ))
-
-        # 2. Active task performers
+        # Task.objects excludes soft-deleted tasks (cascade soft-deletes
+        # performers, but query via Task manager stays explicit/safe).
+        task_ids = Task.objects.filter(
+            workflow_id=self.workflow.id,
+        ).values_list('id', flat=True)
         active_performers = (
             TaskPerformer.objects
-            .filter(task__workflow=workflow)
+            .filter(task_id__in=task_ids)
             .exclude(directly_status=DirectlyStatus.DELETED)
-            .exclude(task__is_deleted=True)
         )
-        # 2a. Direct user performers → source: Performer:<task_id>
+
+        # USER performers → sync per task
+        task_users: Dict[int, Set[int]] = defaultdict(set)
         for task_id, uid in (
             active_performers
             .filter(type=PerformerType.USER)
             .values_list('task_id', 'user_id')
         ):
             if uid is not None:
-                entitled.add((
-                    uid,
-                    PermissionSource.PERFORMER,
-                    task_id,
-                ))
+                task_users[task_id].add(uid)
 
-        # 2b. Group performer members → source: PerformerGroup:<group_id>
-        from src.accounts.models import UserGroup  # noqa: PLC0415
-        group_ids = list(
+        existing_performer_task_ids = set(
+            UserObjectPermission.objects.filter(
+                permission=self._view_perm,
+                content_type=self._ct,
+                object_pk=self._object_pk,
+                source_type=PermissionSource.PERFORMER,
+            ).values_list('source_id', flat=True),
+        )
+        for task_id in existing_performer_task_ids | set(task_users):
+            self.sync_view(
+                user_ids=task_users.get(task_id, set()),
+                source_type=PermissionSource.PERFORMER,
+                source_id=task_id,
+            )
+
+        # GROUP performers → sync per group
+        group_ids = set(
             active_performers
             .filter(type=PerformerType.GROUP)
             .values_list('group_id', flat=True),
         )
+        group_members: Dict[int, Set[int]] = defaultdict(set)
         if group_ids:
-            group_members = (
+            for gid, uid in (
                 UserGroup.include_personal
                 .filter(id__in=group_ids, is_deleted=False)
                 .values_list('id', 'users__id')
-            )
-            for gid, uid in group_members:
+            ):
                 if uid is not None:
-                    entitled.add((
-                        uid,
-                        PermissionSource.PERFORMER_GROUP,
-                        gid,
-                    ))
+                    group_members[gid].add(uid)
 
-        # 3. Users mentioned in non-deleted comments
-        #    → source: Mention:<workflow_event_id>
-        entitled.update(
-            self._get_mentioned_sources(workflow),
+        existing_group_ids = set(
+            UserObjectPermission.objects.filter(
+                permission=self._view_perm,
+                content_type=self._ct,
+                object_pk=self._object_pk,
+                source_type=PermissionSource.PERFORMER_GROUP,
+            ).values_list('source_id', flat=True),
         )
-
-        # 4. Users with change_workflow (managers always need view)
-        #    Their view rows use the SAME source as their change rows
-        for uid, st, sid in (
-            UserObjectPermission.objects.filter(
-                permission=self._change_perm,
-                content_type=self._ct,
-                object_pk=self._object_pk,
-            ).values_list('user_id', 'source_type', 'source_id')
-        ):
-            entitled.add((uid, st, sid))
-
-        # 5. Legacy migrated viewers -> source: WorkflowViewer:<workflow_id>
-        for uid, st, sid in (
-            UserObjectPermission.objects.filter(
-                permission=self._view_perm,
-                content_type=self._ct,
-                object_pk=self._object_pk,
-                source_type=PermissionSource.WORKFLOW_VIEWER,
-            ).values_list('user_id', 'source_type', 'source_id')
-        ):
-            entitled.add((uid, st, sid))
-
-        # 6. Vacation substitutes -> source: Vacation:<user_id>
-        for uid, st, sid in (
-            UserObjectPermission.objects.filter(
-                permission=self._view_perm,
-                content_type=self._ct,
-                object_pk=self._object_pk,
-                source_type=PermissionSource.VACATION,
-            ).values_list('user_id', 'source_type', 'source_id')
-        ):
-            entitled.add((uid, st, sid))
-
-        return entitled
-
-    @staticmethod
-    def _get_mentioned_sources(
-        workflow: 'Workflow',
-    ) -> Set['WorkflowPermissionService._SourceTuple']:
-        """Extract (user_id, MENTION, event_id) tuples from comments."""
-        from src.processes.models.workflows.event import WorkflowEvent  # noqa: PLC0415
-        comments = (
-            WorkflowEvent.objects
-            .filter(
-                workflow=workflow,
-                type=WorkflowEventType.COMMENT,
-                text__isnull=False,
+        for gid in existing_group_ids | group_ids:
+            self.sync_view(
+                user_ids=group_members.get(gid, set()),
+                source_type=PermissionSource.PERFORMER_GROUP,
+                source_id=gid,
             )
-            .exclude(status=CommentStatus.DELETED)
-            .values_list('id', 'text')
-        )
-        result: Set[WorkflowPermissionService._SourceTuple] = set()
-        for event_id, text in comments:
-            for uid_str in MENTION_RE.findall(text):
-                result.add((
-                    int(uid_str),
-                    PermissionSource.MENTION,
-                    event_id,
-                ))
-        return result
 
-    # ── Read operations ───────────────────────────────────
+    def sync_performer_group(
+        self,
+        group_id: int,
+        member_ids: Optional[Iterable[int]] = None,
+    ):
+        """Sync or revoke PERFORMER_GROUP view for one group.
+
+        If the group is still an active performer on any task of
+        this workflow, align UOP with ``member_ids`` (or current
+        group membership). Otherwise revoke the source entirely.
+        """
+        task_ids = Task.objects.filter(
+            workflow_id=self.workflow.id,
+        ).values_list('id', flat=True)
+        still_on_workflow = (
+            TaskPerformer.objects
+            .filter(
+                task_id__in=task_ids,
+                type=PerformerType.GROUP,
+                group_id=group_id,
+            )
+            .exclude(directly_status=DirectlyStatus.DELETED)
+            .exists()
+        )
+        if not still_on_workflow:
+            self.revoke_view(
+                source_type=PermissionSource.PERFORMER_GROUP,
+                source_id=group_id,
+            )
+            return
+
+        if member_ids is None:
+            member_ids = (
+                UserGroup.include_personal
+                .filter(id=group_id, is_deleted=False)
+                .values_list('users__id', flat=True)
+            )
+        self.sync_view(
+            user_ids=[uid for uid in member_ids if uid is not None],
+            source_type=PermissionSource.PERFORMER_GROUP,
+            source_id=group_id,
+        )
 
     def has_view(self, user: UserModel) -> bool:
         """Check if user can view workflow.
@@ -503,7 +424,7 @@ class WorkflowPermissionService:
         """
         return UserObjectPermission.objects.filter(
             user=user,
-            permission__codename=CODENAME_VIEW,
+            permission=self._view_perm,
             content_type=self._ct,
             object_pk=self._object_pk,
         ).exists()
@@ -517,12 +438,12 @@ class WorkflowPermissionService:
         """
         return UserObjectPermission.objects.filter(
             user=user,
-            permission__codename=CODENAME_CHANGE,
+            permission=self._change_perm,
             content_type=self._ct,
             object_pk=self._object_pk,
         ).exists()
 
-    def get_viewer_ids(self) -> Set[int]:
+    def get_users_with_view(self) -> Set[int]:
         """Get all user IDs who can view this workflow.
 
         Replaces: workflow.members.values_list('id', flat=True)
@@ -536,8 +457,8 @@ class WorkflowPermissionService:
             ).values_list('user_id', flat=True),
         )
 
-    def get_owner_ids(self) -> List[int]:
-        """Get sorted list of user IDs who can manage this workflow.
+    def get_users_with_change(self) -> List[int]:
+        """Get sorted list of user IDs with change_workflow.
 
         Replaces: workflow.owners.values_list('id', flat=True)
         Used by API serializers to populate the 'owners' response field.
@@ -551,23 +472,24 @@ class WorkflowPermissionService:
         )
 
     @staticmethod
-    def get_owners_map(workflow_ids: List[int]) -> Dict[int, List[int]]:
-        """Batch fetch owner IDs for multiple workflows."""
-        from src.processes.models.workflows.workflow import Workflow  # noqa: PLC0415
+    def get_users_with_change_map(
+        workflow_ids: List[int],
+    ) -> Dict[int, List[int]]:
+        """Batch fetch change_workflow user IDs for workflows.
 
-        ct = (
-            WorkflowPermissionService._ct_cache or
-            ContentType.objects.get_for_model(Workflow)
-        )
-        WorkflowPermissionService._ct_cache = ct
+        Dedupes user IDs per workflow (same user may hold change from
+        multiple sources) and returns sorted lists, matching
+        ``get_users_with_change``.
+        """
+        ct = WorkflowPermissionService._get_content_type()
 
         rows = UserObjectPermission.objects.filter(
-            permission__codename=CODENAME_CHANGE,
+            permission__codename=WorkflowPermission.CHANGE,
             content_type=ct,
             object_pk__in=[str(wid) for wid in workflow_ids],
         ).values_list('object_pk', 'user_id')
 
-        result = defaultdict(list)
+        result: Dict[int, Set[int]] = defaultdict(set)
         for pk, uid in rows:
-            result[int(pk)].append(uid)
-        return result
+            result[int(pk)].add(uid)
+        return {wid: sorted(uids) for wid, uids in result.items()}

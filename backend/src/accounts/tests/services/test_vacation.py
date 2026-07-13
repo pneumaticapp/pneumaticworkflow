@@ -26,6 +26,45 @@ from src.processes.services.workflow_permissions import (
 pytestmark = pytest.mark.django_db
 
 
+def test_sync_members__replaces_vacation_view__ok(mocker):
+
+    # arrange
+    schedule_sync_mock = mocker.patch(
+        'src.accounts.services.vacation.'
+        'schedule_sync_workflow_attachment_permissions',
+    )
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    sub1 = create_test_admin(
+        account=account,
+        email='s1@pneumatic.app',
+    )
+    sub2 = create_test_admin(
+        account=account,
+        email='s2@pneumatic.app',
+    )
+    workflow = create_test_workflow(user=owner)
+    VacationDelegationService.sync_members(
+        wf_ids={workflow.id},
+        substitute_user_ids=[sub1.id],
+        user_id=owner.id,
+    )
+    schedule_sync_mock.reset_mock()
+
+    # act
+    VacationDelegationService.sync_members(
+        wf_ids={workflow.id},
+        substitute_user_ids=[sub2.id],
+        user_id=owner.id,
+    )
+
+    # assert
+    perm_svc = WorkflowPermissionService(workflow)
+    assert not perm_svc.has_view(user=sub1)
+    assert perm_svc.has_view(user=sub2)
+    schedule_sync_mock.assert_called_once_with(workflow.id)
+
+
 def test_init__default__ok():
 
     """
@@ -383,7 +422,7 @@ def test_activate__adds_members__ok(mocker):
     service.activate(substitute_user_ids=[substitute.id])
 
     # assert
-    assert WorkflowPermissionService(workflow).has_view(substitute)
+    assert WorkflowPermissionService(workflow).has_view(user=substitute)
     task_delegation_event_mock.assert_called_once_with(
         task=mocker.ANY,
         user=owner,
@@ -756,7 +795,7 @@ def test_activate__update_existing__creates_perfs__ok(mocker):
         group=group,
     ).exists()
     assert group_perf_exists is True
-    assert WorkflowPermissionService(workflow).has_view(substitute)
+    assert WorkflowPermissionService(workflow).has_view(user=substitute)
     task_delegation_event_mock.assert_called_once_with(
         task=task,
         user=owner,
@@ -1243,6 +1282,55 @@ def test_deactivate__cleans_group_performers__ok(mocker):
     assert not UserVacation.objects.filter(user=owner).exists()
 
 
+def test_deactivate__revokes_vacation_and_group_view__ok(mocker):
+
+    # arrange
+    schedule_sync_mock = mocker.patch(
+        'src.accounts.services.vacation.'
+        'schedule_sync_workflow_attachment_permissions',
+    )
+    send_user_updated_mock = mocker.patch(
+        'src.accounts.services.vacation.'
+        'send_user_updated_notification.delay',
+    )
+    mocker.patch(
+        'src.processes.services.events.'
+        'WorkflowEventService.task_delegation_event',
+    )
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    substitute = create_test_admin(
+        account=account,
+        email='sub_rev@pneumatic.app',
+    )
+    template = create_test_template(
+        user=owner,
+        tasks_count=1,
+        is_active=True,
+    )
+    workflow = create_test_workflow(
+        user=owner,
+        template=template,
+    )
+    service = VacationDelegationService(user=owner)
+    service.activate(substitute_user_ids=[substitute.id])
+    schedule_sync_mock.reset_mock()
+    send_user_updated_mock.reset_mock()
+
+    # act
+    service.deactivate()
+
+    # assert
+    perm_svc = WorkflowPermissionService(workflow)
+    assert not perm_svc.has_view(user=substitute)
+    schedule_sync_mock.assert_called_once_with(workflow.id)
+    send_user_updated_mock.assert_called_once_with(
+        logging=owner.account.log_api_requests,
+        account_id=owner.account_id,
+        user_data=mocker.ANY,
+    )
+
+
 def test_activate__update_replaces_subs__ok(mocker):
 
     """
@@ -1270,13 +1358,16 @@ def test_activate__update_replaces_subs__ok(mocker):
         tasks_count=1,
         is_active=True,
     )
-    create_test_workflow(
+    workflow = create_test_workflow(
         user=owner,
         template=template,
     )
     mocker.patch(
         'src.processes.services.events.'
         'WorkflowEventService.task_delegation_event',
+    )
+    mocker.patch(
+        'src.storage.tasks.schedule_sync_workflow_attachment_permissions',
     )
 
     # activate with sub1, sub2
@@ -1300,6 +1391,12 @@ def test_activate__update_replaces_subs__ok(mocker):
         .values_list('id', flat=True),
     )
     assert member_ids == {sub2.id, sub3.id}
+
+    # Removed substitute must lose VACATION view
+    perm_svc = WorkflowPermissionService(workflow)
+    assert not perm_svc.has_view(user=sub1)
+    assert perm_svc.has_view(user=sub2)
+    assert perm_svc.has_view(user=sub3)
 
 
 def test_clear_sub_groups__removes_user__ok():
@@ -1691,7 +1788,7 @@ def test_update_existing__skips_non_running_wf__ok(mocker):
     service.activate(substitute_user_ids=[substitute.id])
 
     # assert
-    assert not WorkflowPermissionService(done_wf).has_view(substitute)
+    assert not WorkflowPermissionService(done_wf).has_view(user=substitute)
     event_mock.assert_not_called()
 
 

@@ -197,10 +197,14 @@ class TestWorkflowUpdateVersionService:
             sync=False,
         )
         update_tasks_status_mock.assert_called_once_with()
-        assert len(WorkflowPermissionService(workflow).get_owner_ids()) == 1
-        assert WorkflowPermissionService(workflow).has_change(user)
-        assert len(WorkflowPermissionService(workflow).get_viewer_ids()) == 2
-        assert WorkflowPermissionService(workflow).has_view(user)
+        assert len(
+            WorkflowPermissionService(workflow).get_users_with_change(),
+        ) == 1
+        assert WorkflowPermissionService(workflow).has_change(user=user)
+        assert len(
+            WorkflowPermissionService(workflow).get_users_with_view(),
+        ) == 2
+        assert WorkflowPermissionService(workflow).has_view(user=user)
         assert_guardian_manage(workflow, user)
         assert_guardian_view(workflow, user)
 
@@ -749,6 +753,10 @@ class TestWorkflowUpdateVersionService:
         template.refresh_from_db()
         template = TemplateVersioningService(TemplateSchemaV1).save(template)
 
+        mocker.patch(
+            'src.storage.tasks.'
+            'schedule_sync_workflow_attachment_permissions',
+        )
         version_service = WorkflowUpdateVersionService(
             instance=workflow,
             user=user,
@@ -764,7 +772,7 @@ class TestWorkflowUpdateVersionService:
 
         # assert
         workflow.refresh_from_db()
-        assert WorkflowPermissionService(workflow).has_view(invited)
+        assert WorkflowPermissionService(workflow).has_view(user=invited)
         assert_guardian_view(workflow, invited)
 
     def test_update_from_version__remove_user_from_current_task__ok(
@@ -790,6 +798,10 @@ class TestWorkflowUpdateVersionService:
         template.save()
         template.refresh_from_db()
         template = TemplateVersioningService(TemplateSchemaV1).save(template)
+        mocker.patch(
+            'src.storage.tasks.'
+            'schedule_sync_workflow_attachment_permissions',
+        )
         version_service = WorkflowUpdateVersionService(
             instance=workflow,
             user=owner,
@@ -805,7 +817,7 @@ class TestWorkflowUpdateVersionService:
 
         # assert
         workflow.refresh_from_db()
-        assert not WorkflowPermissionService(workflow).has_view(user_2)
+        assert not WorkflowPermissionService(workflow).has_view(user=user_2)
         assert_no_guardian_view(workflow, user_2)
 
     def test_update_from_version__prev_task_checklist__not_changed(

@@ -92,7 +92,7 @@ def test_delete_performer__revokes_view(mocker):
         user=owner, template=template,
     )
     task = workflow.tasks.first()
-    WorkflowPermissionService(workflow).set_viewers()
+    WorkflowPermissionService(workflow).sync_performer_sources()
     assert WorkflowPermissionService(workflow).has_view(user=performer)
 
     # act
@@ -207,7 +207,7 @@ def test_delete_group_performer__revokes_view(mocker):
         type=PerformerType.GROUP,
         directly_status=DirectlyStatus.CREATED,
     )
-    WorkflowPermissionService(workflow).set_viewers()
+    WorkflowPermissionService(workflow).sync_performer_sources()
     assert WorkflowPermissionService(workflow).has_view(user=member)
 
     # act
@@ -288,8 +288,8 @@ def test_celery_update_owners__grants_manage(mocker):
 
     # suppressed — not part of test scope
     mocker.patch(
-        'src.storage.tasks'
-        '.sync_workflow_attachment_permissions.delay',
+        'src.processes.tasks.update_workflow.'
+        'schedule_sync_workflow_attachment_permissions',
     )
     account = create_test_account()
     owner = create_test_owner(account=account)
@@ -301,7 +301,7 @@ def test_celery_update_owners__grants_manage(mocker):
     workflow = create_test_workflow(
         user=owner, template=template,
     )
-    WorkflowPermissionService(workflow).set_viewers()
+    WorkflowPermissionService(workflow).sync_performer_sources()
     assert not WorkflowPermissionService(workflow).has_change(user=admin)
     TemplateOwner.objects.create(
         template=template, type=OwnerType.USER, user=admin,
@@ -323,8 +323,8 @@ def test_celery_update_owners__revokes_removed(mocker):
 
     # suppressed — not part of test scope
     mocker.patch(
-        'src.storage.tasks'
-        '.sync_workflow_attachment_permissions.delay',
+        'src.processes.tasks.update_workflow.'
+        'schedule_sync_workflow_attachment_permissions',
     )
     account = create_test_account()
     owner = create_test_owner(account=account)
@@ -350,7 +350,7 @@ def test_celery_update_owners__revokes_removed(mocker):
     assert not WorkflowPermissionService(workflow).has_change(user=admin)
 
 
-# ── continue_workflow — grant_view_bulk ───────────────────
+# ── continue_workflow — sync_performer_sources ────────────
 
 
 def test_continue_wf__performers_get_view(mocker):
@@ -365,6 +365,10 @@ def test_continue_wf__performers_get_view(mocker):
     mocker.patch(
         'src.processes.services.workflow_action'
         '.send_new_task_websocket.delay',
+    )
+    mocker.patch(
+        'src.storage.tasks.'
+        'schedule_sync_workflow_attachment_permissions',
     )
     account = create_test_account()
     owner = create_test_owner(account=account)
@@ -614,7 +618,7 @@ def test_comment_delete_with_attach__passes_ids(mocker):
     )
 
 
-# ── WorkflowCreation — set_owners lifecycle ───────────────
+# ── WorkflowCreation — set_view_and_change lifecycle ───────
 
 
 def test_wf_create__tmpl_owner_gets_manage():
@@ -658,11 +662,11 @@ def test_wf_create__multiple_tmpl_owners():
     # assert
     assert WorkflowPermissionService(workflow).has_change(user=owner)
     assert WorkflowPermissionService(workflow).has_change(user=admin)
-    ids = WorkflowPermissionService(workflow).get_owner_ids()
+    ids = WorkflowPermissionService(workflow).get_users_with_change()
     assert set(ids) == {owner.id, admin.id}
 
 
-# ── VersionService — set_owners on update ─────────────────
+# ── VersionService — set_view_and_change on update ─────────
 
 
 def test_version_update__sets_owners_from_tmpl(mocker):
@@ -687,7 +691,9 @@ def test_version_update__sets_owners_from_tmpl(mocker):
     workflow = create_test_workflow(
         user=owner, template=template,
     )
-    WorkflowPermissionService(workflow).set_owners(user_ids=[owner.id])
+    WorkflowPermissionService(workflow).set_view_and_change(
+        user_ids=[owner.id],
+    )
     assert not WorkflowPermissionService(workflow).has_change(user=admin)
     tmpl_owner_ids = list(
         TemplateOwner.objects.filter(
@@ -699,7 +705,7 @@ def test_version_update__sets_owners_from_tmpl(mocker):
     )
 
     # act
-    WorkflowPermissionService(workflow).set_owners(
+    WorkflowPermissionService(workflow).set_view_and_change(
         user_ids=tmpl_owner_ids,
     )
 
@@ -720,7 +726,7 @@ def test_version_update__removed_owner__loses_manage():
     workflow = create_test_workflow(
         user=owner, template=template,
     )
-    WorkflowPermissionService(workflow).set_owners(
+    WorkflowPermissionService(workflow).set_view_and_change(
         user_ids=[owner.id, admin.id],
     )
     assert WorkflowPermissionService(workflow).has_change(user=admin)
@@ -734,7 +740,7 @@ def test_version_update__removed_owner__loses_manage():
     )
 
     # act
-    WorkflowPermissionService(workflow).set_owners(
+    WorkflowPermissionService(workflow).set_view_and_change(
         user_ids=tmpl_owner_ids,
     )
 
@@ -771,7 +777,7 @@ def test_update_performers__grants_view():
 # ── Serializer get_owners ─────────────────────────────────
 
 
-def test_get_owner_ids__returns_guardian_ids():
+def test_get_users_with_change__returns_guardian_ids():
 
     # arrange
     account = create_test_account()
@@ -780,16 +786,16 @@ def test_get_owner_ids__returns_guardian_ids():
     workflow = create_test_workflow(user=owner, tasks_count=1)
 
     # act
-    WorkflowPermissionService(workflow).set_owners(
+    WorkflowPermissionService(workflow).set_view_and_change(
         user_ids=[owner.id, admin.id],
     )
 
     # assert
-    ids = WorkflowPermissionService(workflow).get_owner_ids()
+    ids = WorkflowPermissionService(workflow).get_users_with_change()
     assert set(ids) == {owner.id, admin.id}
 
 
-def test_get_owner_ids__empty_after_clear():
+def test_get_users_with_change__empty_after_clear():
 
     # arrange
     account = create_test_account()
@@ -800,13 +806,13 @@ def test_get_owner_ids__empty_after_clear():
         source_type=PermissionSource.TEMPLATE_OWNER,
         source_id=0,
     )
-    assert WorkflowPermissionService(workflow).get_owner_ids() != []
+    assert WorkflowPermissionService(workflow).get_users_with_change() != []
 
     # act
-    WorkflowPermissionService(workflow).set_owners(user_ids=[])
+    WorkflowPermissionService(workflow).set_view_and_change(user_ids=[])
 
     # assert
-    assert WorkflowPermissionService(workflow).get_owner_ids() == []
+    assert WorkflowPermissionService(workflow).get_users_with_change() == []
 
 
 # ── CommentService — mention revocation ───────────────────
@@ -829,8 +835,8 @@ def test_comment_update__remove_mention__revokes_view(mocker):
         'src.processes.services.events.refresh_attachments',
     )
     mocker.patch(
-        'src.storage.tasks'
-        '.sync_workflow_attachment_permissions.delay',
+        'src.processes.services.events.'
+        'schedule_sync_workflow_attachment_permissions',
     )
     account = create_test_account()
     owner = create_test_owner(account=account)
@@ -857,7 +863,11 @@ def test_comment_update__remove_mention__revokes_view(mocker):
         text=f'Hey [User| {mentioned.id}]',
         status=CommentStatus.CREATED,
     )
-    WorkflowPermissionService(workflow).set_viewers()
+    WorkflowPermissionService(workflow).grant_view(
+        user=mentioned,
+        source_type=PermissionSource.MENTION,
+        source_id=comment.id,
+    )
     assert WorkflowPermissionService(workflow).has_view(user=mentioned)
 
     # act
@@ -891,8 +901,8 @@ def test_comment_update__replace_mention__old_revoked(mocker):
         'src.processes.services.events.refresh_attachments',
     )
     mocker.patch(
-        'src.storage.tasks'
-        '.sync_workflow_attachment_permissions.delay',
+        'src.processes.services.events.'
+        'schedule_sync_workflow_attachment_permissions',
     )
     account = create_test_account()
     owner = create_test_owner(account=account)
@@ -922,7 +932,11 @@ def test_comment_update__replace_mention__old_revoked(mocker):
         text=f'Hey [Old| {user_old.id}]',
         status=CommentStatus.CREATED,
     )
-    WorkflowPermissionService(workflow).set_viewers()
+    WorkflowPermissionService(workflow).grant_view(
+        user=user_old,
+        source_type=PermissionSource.MENTION,
+        source_id=comment.id,
+    )
     assert WorkflowPermissionService(workflow).has_view(user=user_old)
 
     # act
@@ -958,8 +972,8 @@ def test_comment_update__remove_mention__still_performer(mocker):
         'src.processes.services.events.refresh_attachments',
     )
     mocker.patch(
-        'src.storage.tasks'
-        '.sync_workflow_attachment_permissions.delay',
+        'src.processes.services.events.'
+        'schedule_sync_workflow_attachment_permissions',
     )
     account = create_test_account()
     owner = create_test_owner(account=account)
@@ -987,7 +1001,7 @@ def test_comment_update__remove_mention__still_performer(mocker):
         text=f'Hey [Perf| {performer.id}]',
         status=CommentStatus.CREATED,
     )
-    WorkflowPermissionService(workflow).set_viewers()
+    WorkflowPermissionService(workflow).sync_performer_sources()
     assert WorkflowPermissionService(workflow).has_view(user=performer)
 
     # act
@@ -1014,8 +1028,8 @@ def test_comment_delete__mentioned_user__revokes_view(mocker):
         '.send_event_updated.delay',
     )
     mocker.patch(
-        'src.storage.tasks'
-        '.sync_workflow_attachment_permissions.delay',
+        'src.processes.services.events.'
+        'schedule_sync_workflow_attachment_permissions',
     )
     account = create_test_account()
     owner = create_test_owner(account=account)
@@ -1042,7 +1056,11 @@ def test_comment_delete__mentioned_user__revokes_view(mocker):
         text=f'[User| {mentioned.id}]',
         status=CommentStatus.CREATED,
     )
-    WorkflowPermissionService(workflow).set_viewers()
+    WorkflowPermissionService(workflow).grant_view(
+        user=mentioned,
+        source_type=PermissionSource.MENTION,
+        source_id=comment.id,
+    )
     assert WorkflowPermissionService(workflow).has_view(user=mentioned)
 
     # act
@@ -1066,8 +1084,8 @@ def test_comment_delete__mentioned_in_two__keeps_view(mocker):
         '.send_event_updated.delay',
     )
     mocker.patch(
-        'src.storage.tasks'
-        '.sync_workflow_attachment_permissions.delay',
+        'src.processes.services.events.'
+        'schedule_sync_workflow_attachment_permissions',
     )
     account = create_test_account()
     owner = create_test_owner(account=account)
@@ -1094,7 +1112,7 @@ def test_comment_delete__mentioned_in_two__keeps_view(mocker):
         text=f'[User| {mentioned.id}] first',
         status=CommentStatus.CREATED,
     )
-    WorkflowEvent.objects.create(
+    comment_2 = WorkflowEvent.objects.create(
         type=WorkflowEventType.COMMENT,
         account=account,
         workflow=workflow,
@@ -1103,8 +1121,18 @@ def test_comment_delete__mentioned_in_two__keeps_view(mocker):
         text=f'[User| {mentioned.id}] second',
         status=CommentStatus.CREATED,
     )
-    WorkflowPermissionService(workflow).set_viewers()
-    assert WorkflowPermissionService(workflow).has_view(user=mentioned)
+    perm_svc = WorkflowPermissionService(workflow)
+    perm_svc.grant_view(
+        user=mentioned,
+        source_type=PermissionSource.MENTION,
+        source_id=comment_1.id,
+    )
+    perm_svc.grant_view(
+        user=mentioned,
+        source_type=PermissionSource.MENTION,
+        source_id=comment_2.id,
+    )
+    assert perm_svc.has_view(user=mentioned)
 
     # act — delete only the first comment
     service = CommentService(

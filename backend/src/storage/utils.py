@@ -520,9 +520,9 @@ def reassign_restricted_permissions_for_task(
 ) -> None:
     """
     Reassign restricted permissions for all attachments linked to task.
-    Also grants access on template-level attachments (inheritance:
-    template files are visible to all workflow task performers).
-    Call after task performers change so new performers get access.
+    Rebuilds template-level attachments for the shared template
+    (desired-set, safe across multiple workflows).
+    Call after task performers change so ACL stays in sync.
     """
     service = AttachmentService(user=user)
 
@@ -533,19 +533,13 @@ def reassign_restricted_permissions_for_task(
     ):
         service.reassign_restricted_permissions(att)
 
-    # 2. Additive permissions for template-level attachments.
-    #    Template files are shared across all workflows from the template,
-    #    so we only ADD permissions (never clear others' access).
+    # 2. Template files are shared across workflows — full recalc
+    #    synchronously so permission checks after performer changes
+    #    see the new ACL immediately.
     template_id = task.workflow.template_id
     if template_id:
-        template_attachments = Attachment.objects.filter(
+        service.rebuild_template_attachment_permissions(
             template_id=template_id,
-            source_type=SourceType.TEMPLATE,
-            access_type=AccessType.RESTRICTED,
-        )
-        service.assign_task_permissions_for_attachments(
-            task=task,
-            attachments=template_attachments,
         )
 
 

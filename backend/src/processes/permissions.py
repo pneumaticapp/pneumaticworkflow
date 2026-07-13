@@ -243,7 +243,7 @@ class WorkflowMemberPermission(BasePermission):
             pk=workflow_id,
             account_id=user.account_id,
         ).filter(
-            WorkflowPermissionQuery.member_or_viewer_q(user_id),
+            WorkflowPermissionQuery.viewer_q(user_id),
         ).exists()
 
 
@@ -346,7 +346,7 @@ class TaskWorkflowMemberPermission(BasePermission):
             id=task_id,
             account_id=user.account_id,
         ).filter(
-            WorkflowPermissionQuery.member_or_viewer_q(
+            WorkflowPermissionQuery.viewer_q(
                 user_id, prefix='workflow__',
             ),
         ).exists()
@@ -414,7 +414,7 @@ class TaskCommentPermission(BasePermission):
         )
 
         is_workflow_member = base_qst.filter(
-            WorkflowPermissionQuery.member_or_viewer_q(user_id),
+            WorkflowPermissionQuery.viewer_q(user_id),
         ).exists()
         if is_workflow_member:
             return True
@@ -454,7 +454,7 @@ class WorkflowCommentPermission(BasePermission):
         base_qst = Workflow.objects.by_id(workflow_id).on_account(account_id)
 
         is_workflow_member = base_qst.filter(
-            WorkflowPermissionQuery.member_or_viewer_q(user_id),
+            WorkflowPermissionQuery.viewer_q(user_id),
         ).exists()
         if is_workflow_member:
             return True
@@ -502,7 +502,7 @@ class GuestWorkflowEventsPermission(BasePermission):
                 return Task.objects.filter(
                     id=request.task_id,
                     workflow_id=workflow_id,
-                ).exists()
+                ).active().exists()
         else:
             return True
 
@@ -626,7 +626,7 @@ class CommentReactionPermission(BasePermission):
 
         # Check workflow members
         is_member = qst.filter(
-            WorkflowPermissionQuery.member_or_viewer_q(
+            WorkflowPermissionQuery.viewer_q(
                 user_id, prefix='workflow__',
             ),
         ).exists()

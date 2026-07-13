@@ -496,7 +496,7 @@ class TestWorkflowViewerAccess:
             user=performer_user,
         )
         WorkflowPermissionService(workflow).grant_view(
-            performer_user,
+            user=performer_user,
             source_type=PermissionSource.PERFORMER,
             source_id=0,
         )
@@ -532,7 +532,7 @@ class TestWorkflowViewerAccess:
             is_account_owner=False,
         )
         WorkflowPermissionService(workflow).grant_view(
-            member_user,
+            user=member_user,
             source_type=PermissionSource.PERFORMER,
             source_id=0,
         )
@@ -575,7 +575,7 @@ class TestWorkflowViewerAccess:
             is_account_owner=False,
         )
         WorkflowPermissionService(workflow).grant_view(
-            member_user,
+            user=member_user,
             source_type=PermissionSource.PERFORMER,
             source_id=0,
         )

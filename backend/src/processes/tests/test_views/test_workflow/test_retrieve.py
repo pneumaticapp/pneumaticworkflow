@@ -505,7 +505,7 @@ def test_retrieve__not_admin_user_workflow_member__ok(api_client):
     )
     workflow = create_test_workflow(user, tasks_count=1)
     WorkflowPermissionService(workflow).grant_view(
-        not_admin_user,
+        user=not_admin_user,
         source_type=PermissionSource.PERFORMER,
         source_id=0,
     )
@@ -695,6 +695,11 @@ def test_retrieve__user_in_group_task_performer__ok(api_client):
         task_id=task.id,
         type=PerformerType.GROUP,
         group_id=group.id,
+    )
+    WorkflowPermissionService(workflow).sync_view(
+        user_ids=[group_user.id],
+        source_type=PermissionSource.PERFORMER_GROUP,
+        source_id=group.id,
     )
     api_client.token_authenticate(group_user)
 

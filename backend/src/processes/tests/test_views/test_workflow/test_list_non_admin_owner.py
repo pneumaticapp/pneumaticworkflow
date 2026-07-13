@@ -13,6 +13,7 @@ from guardian.shortcuts import remove_perm
 from src.processes.enums import (
     OwnerRole,
     OwnerType,
+    WorkflowPermission,
 )
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.tests.fixtures import (
@@ -68,7 +69,7 @@ class TestNonAdminWorkflowOwnerRetrieve:
             template=template,
         )
         WorkflowPermissionService(workflow).grant_change(
-            non_admin_owner,
+            user=non_admin_owner,
             source_type=PermissionSource.TEMPLATE_OWNER,
             source_id=0,
         )
@@ -145,7 +146,7 @@ class TestNonAdminWorkflowOwnerUpdate:
             template=template,
         )
         WorkflowPermissionService(workflow).grant_change(
-            non_admin_owner,
+            user=non_admin_owner,
             source_type=PermissionSource.TEMPLATE_OWNER,
             source_id=0,
         )
@@ -220,7 +221,7 @@ class TestNonAdminWorkflowOwnerList:
             template=template,
         )
         WorkflowPermissionService(workflow).grant_change(
-            non_admin_owner,
+            user=non_admin_owner,
             source_type=PermissionSource.TEMPLATE_OWNER,
             source_id=0,
         )
@@ -464,7 +465,7 @@ class TestRoleChangeFromOwnerToViewer:
             template=template,
         )
         WorkflowPermissionService(workflow).grant_change(
-            admin_user,
+            user=admin_user,
             source_type=PermissionSource.TEMPLATE_OWNER,
             source_id=0,
         )
@@ -521,15 +522,15 @@ class TestRoleChangeFromOwnerToViewer:
             template=template,
         )
         WorkflowPermissionService(workflow).grant_change(
-            admin_user,
+            user=admin_user,
             source_type=PermissionSource.TEMPLATE_OWNER,
             source_id=0,
         )
 
         template_owner.is_deleted = True
         template_owner.save()
-        remove_perm('change_workflow', admin_user, workflow)
-        remove_perm('view_workflow', admin_user, workflow)
+        remove_perm(WorkflowPermission.CHANGE, admin_user, workflow)
+        remove_perm(WorkflowPermission.VIEW, admin_user, workflow)
         TemplateOwner.objects.create(
             role=OwnerRole.STARTER,
             template=template,
@@ -588,7 +589,7 @@ class TestNonAdminRoleChangeReadOnly:
             template=template,
         )
         WorkflowPermissionService(workflow).grant_change(
-            non_admin_user,
+            user=non_admin_user,
             source_type=PermissionSource.TEMPLATE_OWNER,
             source_id=0,
         )
@@ -645,15 +646,15 @@ class TestNonAdminRoleChangeReadOnly:
             template=template,
         )
         WorkflowPermissionService(workflow).grant_change(
-            non_admin_user,
+            user=non_admin_user,
             source_type=PermissionSource.TEMPLATE_OWNER,
             source_id=0,
         )
 
         template_owner.is_deleted = True
         template_owner.save()
-        remove_perm('change_workflow', non_admin_user, workflow)
-        remove_perm('view_workflow', non_admin_user, workflow)
+        remove_perm(WorkflowPermission.CHANGE, non_admin_user, workflow)
+        remove_perm(WorkflowPermission.VIEW, non_admin_user, workflow)
         TemplateOwner.objects.create(
             role=OwnerRole.STARTER,
             template=template,

@@ -93,7 +93,7 @@ class TestTaskCommentPermission:
             is_admin=False,
         )
         WorkflowPermissionService(workflow).grant_view(
-            member_user,
+            user=member_user,
             source_type=PermissionSource.PERFORMER,
             source_id=0,
         )
@@ -127,7 +127,7 @@ class TestTaskCommentPermission:
             is_admin=False,
         )
         WorkflowPermissionService(workflow).grant_change(
-            workflow_owner,
+            user=workflow_owner,
             source_type=PermissionSource.TEMPLATE_OWNER,
             source_id=0,
         )
@@ -163,6 +163,11 @@ class TestTaskCommentPermission:
         TaskPerformer.objects.create(
             task_id=task.id,
             user_id=performer_user.id,
+        )
+        WorkflowPermissionService(workflow).grant_view(
+            user=performer_user,
+            source_type=PermissionSource.PERFORMER,
+            source_id=task.id,
         )
 
         request = Mock()

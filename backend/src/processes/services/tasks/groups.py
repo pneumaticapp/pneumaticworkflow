@@ -8,7 +8,6 @@ from src.notifications.tasks import (
     send_new_task_websocket,
     send_task_deleted_notification,
 )
-from src.permissions.enums import PermissionSource
 from src.processes.enums import DirectlyStatus, PerformerType
 from src.processes.messages.workflow import MSG_PW_0082
 from src.processes.models.workflows.task import TaskPerformer
@@ -25,7 +24,9 @@ from src.processes.services.workflow_action import (
 from src.processes.services.workflow_permissions import (
     WorkflowPermissionService,
 )
-from src.storage.tasks import sync_workflow_attachment_permissions
+from src.storage.tasks import (
+    schedule_sync_workflow_attachment_permissions,
+)
 from src.storage.utils import reassign_restricted_permissions_for_task
 
 UserModel = get_user_model()
@@ -35,7 +36,7 @@ class GroupPerformerService(BasePerformerService2):
     def _get_group(
         self,
         group_id: int,
-    ) -> UserModel:
+    ) -> UserGroup:
         try:
             return UserGroup.include_personal.get(
                 account_id=self.user.account_id,
@@ -94,28 +95,34 @@ class GroupPerformerService(BasePerformerService2):
         )
         self.task.refresh_from_db()
         if self.task.can_be_completed():
-            first_completed_user = (
+            first_completed = (
                 self.task.taskperformer_set.completed()
                 .exclude_directly_deleted()
                 .exclude(type=PerformerType.GROUP)
-                .first().user
+                .first()
+            )
+            first_completed_user = (
+                first_completed.user if first_completed else None
             )
             if first_completed_user is None:
-                group = (
+                group_performer = (
                     self.task.taskperformer_set.completed()
                     .exclude_directly_deleted()
                     .filter(type=PerformerType.GROUP)
                     .first()
-                    .group
                 )
-                first_completed_user = group.users.first().user
-            service = WorkflowActionService(
-                user=first_completed_user,
-                workflow=self.task.workflow,
-                is_superuser=False,
-                auth_type=AuthTokenType.USER,
-            )
-            service.complete_task(task=self.task)
+                if group_performer and group_performer.group_id:
+                    first_completed_user = (
+                        group_performer.group.users.first()
+                    )
+            if first_completed_user is not None:
+                service = WorkflowActionService(
+                    user=first_completed_user,
+                    workflow=self.task.workflow,
+                    is_superuser=False,
+                    auth_type=AuthTokenType.USER,
+                )
+                service.complete_task(task=self.task)
         else:
             group_users = set(group.users.values_list('id', 'email'))
             task_performers = set(
@@ -130,19 +137,19 @@ class GroupPerformerService(BasePerformerService2):
                     recipients=recipients,
                     account_id=self.task.account_id,
                 )
-
-        # CRITICAL: set_viewers() MUST run before
-        # reassign_restricted_permissions to revoke stale
-        # permissions before restricted attachments are
-        # reassigned
-        WorkflowPermissionService(self.task.workflow).set_viewers()
+        WorkflowPermissionService(
+            self.task.workflow,
+        ).sync_performer_group(
+            group_id=group.id,
+            member_ids=group.users.values_list('id', flat=True),
+        )
         reassign_restricted_permissions_for_task(
             task=self.task,
             user=self.user,
         )
-
-        # Sync attachment permissions so removed group loses file access
-        sync_workflow_attachment_permissions.delay(self.task.workflow_id)
+        schedule_sync_workflow_attachment_permissions(
+            self.task.workflow_id,
+        )
 
     def _create_group_actions(self, group: UserGroup) -> None:
         WorkflowEventService.performer_group_created_event(
@@ -164,13 +171,16 @@ class GroupPerformerService(BasePerformerService2):
             .user_ids_set()
         )
         users = group_users - task_performer_users
+        WorkflowPermissionService(
+            self.task.workflow,
+        ).sync_performer_group(
+            group_id=group.id,
+            member_ids=group_users,
+        )
+        schedule_sync_workflow_attachment_permissions(
+            self.task.workflow_id,
+        )
         if users and not self.task.get_active_delay():
-            # Guardian: grant view to group users
-            WorkflowPermissionService(self.task.workflow).grant_view_bulk(
-                user_ids=users,
-                source_type=PermissionSource.PERFORMER_GROUP,
-                source_id=group.id,
-            )
             if self.user.id in users:
                 send_new_task_websocket.delay(
                     logging=self.user.account.log_api_requests,

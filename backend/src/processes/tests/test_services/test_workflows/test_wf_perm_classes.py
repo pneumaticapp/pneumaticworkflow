@@ -154,7 +154,7 @@ def test_wf_member_perm__mentioned__allowed():
     )
     workflow = create_test_workflow(user=owner, tasks_count=1)
     task = workflow.tasks.first()
-    WorkflowEvent.objects.create(
+    comment = WorkflowEvent.objects.create(
         type=WorkflowEventType.COMMENT,
         account=account,
         workflow=workflow,
@@ -163,7 +163,11 @@ def test_wf_member_perm__mentioned__allowed():
         text=f'[User| {mentioned.id}]',
         status=CommentStatus.CREATED,
     )
-    WorkflowPermissionService(workflow).set_viewers()
+    WorkflowPermissionService(workflow).grant_view(
+        user=mentioned,
+        source_type=PermissionSource.MENTION,
+        source_id=comment.id,
+    )
     perm = WorkflowMemberPermission()
 
     # act
@@ -197,7 +201,7 @@ def test_wf_member_perm__stranger__denied():
 def test_wf_member_perm__deleted_performer__denied():
     """
     After performer removal (directly_status=DELETED) and
-    set_viewers recalculation, the performer must lose access.
+    sync_performer_sources recalculation, the performer must lose access.
     Both the Q-based check and Guardian view are revoked.
     """
     # arrange
@@ -213,12 +217,12 @@ def test_wf_member_perm__deleted_performer__denied():
     workflow = create_test_workflow(
         user=owner, template=template,
     )
-    WorkflowPermissionService(workflow).set_viewers()
+    WorkflowPermissionService(workflow).sync_performer_sources()
     task = workflow.tasks.first()
     task.taskperformer_set.filter(user=performer).update(
         directly_status=DirectlyStatus.DELETED,
     )
-    WorkflowPermissionService(workflow).set_viewers()
+    WorkflowPermissionService(workflow).sync_performer_sources()
     perm = WorkflowMemberPermission()
 
     # act
@@ -439,7 +443,7 @@ def test_task_comment__mentioned__allowed():
     )
     workflow = create_test_workflow(user=owner, tasks_count=1)
     task = workflow.tasks.first()
-    WorkflowEvent.objects.create(
+    comment = WorkflowEvent.objects.create(
         type=WorkflowEventType.COMMENT,
         account=account,
         workflow=workflow,
@@ -448,7 +452,11 @@ def test_task_comment__mentioned__allowed():
         text=f'[User| {viewer.id}]',
         status=CommentStatus.CREATED,
     )
-    WorkflowPermissionService(workflow).set_viewers()
+    WorkflowPermissionService(workflow).grant_view(
+        user=viewer,
+        source_type=PermissionSource.MENTION,
+        source_id=comment.id,
+    )
     perm = TaskCommentPermission()
 
     # act
@@ -489,7 +497,7 @@ def test_wf_comment__mentioned__allowed():
     )
     workflow = create_test_workflow(user=owner, tasks_count=1)
     task = workflow.tasks.first()
-    WorkflowEvent.objects.create(
+    comment = WorkflowEvent.objects.create(
         type=WorkflowEventType.COMMENT,
         account=account,
         workflow=workflow,
@@ -498,7 +506,11 @@ def test_wf_comment__mentioned__allowed():
         text=f'[User| {viewer.id}]',
         status=CommentStatus.CREATED,
     )
-    WorkflowPermissionService(workflow).set_viewers()
+    WorkflowPermissionService(workflow).grant_view(
+        user=viewer,
+        source_type=PermissionSource.MENTION,
+        source_id=comment.id,
+    )
     perm = WorkflowCommentPermission()
 
     # act
@@ -651,7 +663,7 @@ def test_bypass__wf_owner_perm__no_guardian__ok():
     account = create_test_account()
     owner = create_test_owner(account=account)
     workflow = create_test_workflow(user=owner, tasks_count=1)
-    WorkflowPermissionService(workflow).set_owners(user_ids=[])
+    WorkflowPermissionService(workflow).set_view_and_change(user_ids=[])
     perm = WorkflowOwnerPermission()
 
     # act
@@ -668,8 +680,8 @@ def test_bypass__wf_member_perm__no_guardian__ok():
     account = create_test_account()
     owner = create_test_owner(account=account)
     workflow = create_test_workflow(user=owner, tasks_count=1)
-    WorkflowPermissionService(workflow).set_owners(user_ids=[])
-    WorkflowPermissionService(workflow).set_viewers()
+    WorkflowPermissionService(workflow).set_view_and_change(user_ids=[])
+    WorkflowPermissionService(workflow).sync_performer_sources()
     perm = WorkflowMemberPermission()
 
     # act
@@ -687,7 +699,7 @@ def test_bypass__task_wf_owner__no_guardian__ok():
     owner = create_test_owner(account=account)
     workflow = create_test_workflow(user=owner, tasks_count=1)
     task = workflow.tasks.first()
-    WorkflowPermissionService(workflow).set_owners(user_ids=[])
+    WorkflowPermissionService(workflow).set_view_and_change(user_ids=[])
     perm = TaskWorkflowOwnerPermission()
 
     # act
@@ -772,7 +784,7 @@ def test_cross_account__manager__denied_by_filter():
         pk=wf_a.pk,
         account_id=outsider.account_id,
     ).filter(
-        WorkflowPermissionQuery.manager_q(outsider.id),
+        WorkflowPermissionQuery.change_q(outsider.id),
     )
 
     # assert
@@ -875,12 +887,12 @@ def test_task_wf_member__deleted_performer__denied():
     workflow = create_test_workflow(
         user=owner, template=template,
     )
-    WorkflowPermissionService(workflow).set_viewers()
+    WorkflowPermissionService(workflow).sync_performer_sources()
     task = workflow.tasks.first()
     task.taskperformer_set.filter(user=performer).update(
         directly_status=DirectlyStatus.DELETED,
     )
-    WorkflowPermissionService(workflow).set_viewers()
+    WorkflowPermissionService(workflow).sync_performer_sources()
     perm = TaskWorkflowMemberPermission()
 
     # act
@@ -907,12 +919,12 @@ def test_task_comment__deleted_performer__denied():
     workflow = create_test_workflow(
         user=owner, template=template,
     )
-    WorkflowPermissionService(workflow).set_viewers()
+    WorkflowPermissionService(workflow).sync_performer_sources()
     task = workflow.tasks.first()
     task.taskperformer_set.filter(user=performer).update(
         directly_status=DirectlyStatus.DELETED,
     )
-    WorkflowPermissionService(workflow).set_viewers()
+    WorkflowPermissionService(workflow).sync_performer_sources()
     perm = TaskCommentPermission()
 
     # act
@@ -939,12 +951,12 @@ def test_wf_comment__deleted_performer__denied():
     workflow = create_test_workflow(
         user=owner, template=template,
     )
-    WorkflowPermissionService(workflow).set_viewers()
+    WorkflowPermissionService(workflow).sync_performer_sources()
     task = workflow.tasks.first()
     task.taskperformer_set.filter(user=performer).update(
         directly_status=DirectlyStatus.DELETED,
     )
-    WorkflowPermissionService(workflow).set_viewers()
+    WorkflowPermissionService(workflow).sync_performer_sources()
     perm = WorkflowCommentPermission()
 
     # act
@@ -971,7 +983,7 @@ def test_reaction__deleted_performer__denied():
     workflow = create_test_workflow(
         user=owner, template=template,
     )
-    WorkflowPermissionService(workflow).set_viewers()
+    WorkflowPermissionService(workflow).sync_performer_sources()
     task = workflow.tasks.first()
     comment = WorkflowEvent.objects.create(
         type=WorkflowEventType.COMMENT,
@@ -985,7 +997,7 @@ def test_reaction__deleted_performer__denied():
     task.taskperformer_set.filter(user=performer).update(
         directly_status=DirectlyStatus.DELETED,
     )
-    WorkflowPermissionService(workflow).set_viewers()
+    WorkflowPermissionService(workflow).sync_performer_sources()
     perm = CommentReactionPermission()
 
     # act

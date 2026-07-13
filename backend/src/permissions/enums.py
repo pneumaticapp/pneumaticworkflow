@@ -1,3 +1,6 @@
+from typing_extensions import Literal
+
+
 class PermissionSource:
     """Source that granted a permission.
 
@@ -24,3 +27,11 @@ class PermissionSource:
         (VACATION, 'Vacation substitute'),
     )
 
+    LITERALS = Literal[
+        PERFORMER,
+        PERFORMER_GROUP,
+        MENTION,
+        TEMPLATE_OWNER,
+        WORKFLOW_VIEWER,
+        VACATION,
+    ]

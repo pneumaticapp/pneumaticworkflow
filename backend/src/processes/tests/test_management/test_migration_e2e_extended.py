@@ -194,7 +194,7 @@ def test_e2e__wf_member_not_owner__gets_perm(
         user=user, tasks_count=1,
     )
     WorkflowPermissionService(workflow).grant_view(
-        member,
+        user=member,
         source_type=PermissionSource.PERFORMER,
         source_id=0,
     )

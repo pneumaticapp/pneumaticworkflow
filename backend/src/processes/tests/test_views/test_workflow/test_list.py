@@ -1955,7 +1955,7 @@ def test_list__filter_multiple_current_performer__ok(api_client):
     workflow1 = create_test_workflow(user=user1)
     workflow2 = create_test_workflow(user=user2)
     WorkflowPermissionService(workflow2).grant_change(
-        user1,
+        user=user1,
         source_type=PermissionSource.TEMPLATE_OWNER,
         source_id=0,
     )
@@ -2073,13 +2073,13 @@ def test_list__filter_multiple_workflow_starter__ok(api_client):
     create_test_workflow(user=user)
     workflow1 = create_test_workflow(user=user1)
     WorkflowPermissionService(workflow1).grant_change(
-        user,
+        user=user,
         source_type=PermissionSource.TEMPLATE_OWNER,
         source_id=0,
     )
     workflow2 = create_test_workflow(user=user2)
     WorkflowPermissionService(workflow2).grant_change(
-        user,
+        user=user,
         source_type=PermissionSource.TEMPLATE_OWNER,
         source_id=0,
     )
@@ -2685,7 +2685,7 @@ def test_list__legacy_template_on_freemium__ok(api_client):
     workflow_1 = create_test_workflow(user)
     workflow_2 = create_test_workflow(another_user)
     WorkflowPermissionService(workflow_2).grant_change(
-        user,
+        user=user,
         source_type=PermissionSource.TEMPLATE_OWNER,
         source_id=0,
     )

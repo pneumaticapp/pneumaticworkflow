@@ -405,7 +405,7 @@ def test_user_create_actions__premium__ok(mocker, plan):
 
     # assert
     workflow.refresh_from_db()
-    assert not WorkflowPermissionService(workflow).has_view(invited_user)
+    assert not WorkflowPermissionService(workflow).has_view(user=invited_user)
     template = workflow.template
     assert invited_user not in template.owners.all()
     assert APIKey.objects.get(
@@ -460,7 +460,7 @@ def test_user_create_actions__freemium__ok(mocker):
 
     # assert
     workflow.refresh_from_db()
-    assert not WorkflowPermissionService(workflow).has_view(invited_user)
+    assert not WorkflowPermissionService(workflow).has_view(user=invited_user)
     template = workflow.template
     assert invited_user not in template.owners.all()
     assert APIKey.objects.get(

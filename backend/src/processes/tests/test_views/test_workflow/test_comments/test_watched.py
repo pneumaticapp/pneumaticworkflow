@@ -3,7 +3,12 @@ from guardian.shortcuts import remove_perm
 
 from src.authentication.enums import AuthTokenType
 from src.authentication.services.guest_auth import GuestJWTAuthService
-from src.processes.enums import PerformerType
+from src.processes.enums import (
+    OwnerRole,
+    OwnerType,
+    PerformerType,
+    WorkflowPermission,
+)
 from src.processes.models.workflows.task import TaskPerformer
 from src.processes.services.events import (
     CommentService,
@@ -12,7 +17,6 @@ from src.processes.services.events import (
 from src.processes.services.exceptions import (
     CommentServiceException,
 )
-from src.processes.enums import OwnerRole, OwnerType
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.tests.fixtures import (
     create_test_account,
@@ -41,7 +45,7 @@ def test_watched__account_owner__ok(api_client, mocker):
         is_account_owner=False,
     )
     workflow = create_test_workflow(user)
-    remove_perm('view_workflow', owner, workflow)
+    remove_perm(WorkflowPermission.VIEW, owner, workflow)
     task = workflow.tasks.get(number=1)
     event = WorkflowEventService.comment_created_event(
         text='Some comment',
@@ -73,7 +77,7 @@ def test_watched__account_owner__ok(api_client, mocker):
         is_superuser=False,
     )
     comment_watched_mock.assert_called_once()
-    assert not WorkflowPermissionService(workflow).has_view(owner)
+    assert not WorkflowPermissionService(workflow).has_view(user=owner)
 
 
 def test_watched__workflow_member__ok(api_client, mocker):
@@ -87,7 +91,7 @@ def test_watched__workflow_member__ok(api_client, mocker):
     )
     workflow = create_test_workflow(owner)
     WorkflowPermissionService(workflow).grant_view(
-        user,
+        user=user,
         source_type=PermissionSource.PERFORMER,
         source_id=0,
     )
@@ -139,6 +143,11 @@ def test_watched__user_in_group_task_performer__ok(api_client, mocker):
         task_id=task.id,
         type=PerformerType.GROUP,
         group_id=group.id,
+    )
+    WorkflowPermissionService(workflow).sync_view(
+        user_ids=[group_user.id],
+        source_type=PermissionSource.PERFORMER_GROUP,
+        source_id=group.id,
     )
     event = WorkflowEventService.comment_created_event(
         text='Some comment',

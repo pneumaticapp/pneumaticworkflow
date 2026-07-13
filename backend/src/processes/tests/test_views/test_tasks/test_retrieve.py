@@ -16,6 +16,7 @@ from src.processes.enums import (
     OwnerType,
     PerformerType,
     TaskStatus,
+    WorkflowPermission,
     WorkflowStatus,
 )
 from src.processes.models.templates.checklist import (
@@ -180,7 +181,7 @@ def test_retrieve__workflow_member__ok(api_client):
     )
     workflow = create_test_workflow(user)
     WorkflowPermissionService(workflow).grant_view(
-        another_user,
+        user=another_user,
         source_type=PermissionSource.PERFORMER,
         source_id=0,
     )
@@ -227,7 +228,7 @@ def test_retrieve__admin_not_workflow_member__permission_denied(api_client):
         is_account_owner=False,
     )
     workflow = create_test_workflow(user)
-    remove_perm('view_workflow', another_user, workflow)
+    remove_perm(WorkflowPermission.VIEW, another_user, workflow)
     tasks = workflow.tasks.order_by('number')
     task = tasks[0]
 
@@ -1539,7 +1540,7 @@ def test_retrieve__user_in_group_task_performer__ok(api_client, mocker):
     group = create_test_group(account, users=[group_user])
     workflow = create_test_workflow(user=owner, tasks_count=1)
     WorkflowPermissionService(workflow).grant_view(
-        group_user,
+        user=group_user,
         source_type=PermissionSource.PERFORMER,
         source_id=0,
     )
@@ -1567,9 +1568,6 @@ def test_retrieve__user_in_group_task_performer_but_not_member__ok(
     mocker,
 ):
 
-    # TODO Temporary fix for users who are newly assigned to a groups
-    #  Remove when the workflow members are removed
-
     # arrange
     identify_mock = mocker.patch(
         'src.processes.views.task.TaskViewSet.'
@@ -1589,6 +1587,12 @@ def test_retrieve__user_in_group_task_performer_but_not_member__ok(
         task_id=task.id,
         type=PerformerType.GROUP,
         group_id=group.id,
+    )
+    # UOP is SSOT: group performer access is mirrored via PERFORMER_GROUP
+    WorkflowPermissionService(workflow).sync_view(
+        user_ids=[group_user.id],
+        source_type=PermissionSource.PERFORMER_GROUP,
+        source_id=group.id,
     )
     api_client.token_authenticate(group_user)
 
@@ -1611,7 +1615,7 @@ def test_retrieve__user_is_member_in_deleted_task__not_found(api_client):
     api_client.token_authenticate(admin)
     workflow = create_test_workflow(user, tasks_count=1)
     WorkflowPermissionService(workflow).grant_view(
-        admin,
+        user=admin,
         source_type=PermissionSource.PERFORMER,
         source_id=0,
     )
@@ -2000,7 +2004,7 @@ def test_retrieve__task_performer__is_read_only_viewer_false(
         user=performer_user,
     )
     WorkflowPermissionService(workflow).grant_view(
-        performer_user,
+        user=performer_user,
         source_type=PermissionSource.PERFORMER,
         source_id=0,
     )
@@ -2048,7 +2052,7 @@ def test_retrieve__workflow_member__ok_read_only(
         is_admin=False,
     )
     WorkflowPermissionService(workflow).grant_view(
-        member_user,
+        user=member_user,
         source_type=PermissionSource.PERFORMER,
         source_id=0,
     )

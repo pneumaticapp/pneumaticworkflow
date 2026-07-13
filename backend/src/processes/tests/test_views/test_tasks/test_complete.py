@@ -337,7 +337,7 @@ def test_complete__user_not_performer__permission_denied(
     task = workflow.tasks.get(number=1)
     user = create_test_admin(account=account)
     WorkflowPermissionService(workflow).grant_view(
-        user,
+        user=user,
         source_type=PermissionSource.PERFORMER,
         source_id=0,
     )

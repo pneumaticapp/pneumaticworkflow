@@ -202,7 +202,7 @@ class TestWorkflowMemberOrViewerPermission:
             email='member@test.com',
         )
         WorkflowPermissionService(workflow).grant_view(
-            member_user,
+            user=member_user,
             source_type=PermissionSource.PERFORMER,
             source_id=0,
         )

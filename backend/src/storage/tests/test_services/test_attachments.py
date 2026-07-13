@@ -500,7 +500,7 @@ class TestTemplateFileInheritance:
         workflow = create_test_workflow(user=owner, tasks_count=1)
         task = workflow.tasks.first()
         WorkflowPermissionService(workflow).grant_view(
-            performer,
+            user=performer,
             source_type=PermissionSource.WORKFLOW_VIEWER,
             source_id=workflow.pk,
         )
@@ -698,7 +698,7 @@ class TestTemplateFileInheritance:
             type=PerformerType.USER,
         )
         WorkflowPermissionService(workflow).grant_view(
-            performer_t2,
+            user=performer_t2,
             source_type=PermissionSource.PERFORMER,
             source_id=TaskPerformer.objects.get(
                 task=task_2,

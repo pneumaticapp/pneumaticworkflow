@@ -6,7 +6,9 @@ from django.db import transaction
 
 from src.accounts.enums import AbsenceStatus, UserGroupType
 from src.accounts.models import UserGroup, UserVacation
+from src.accounts.serializers.user import UserWebsocketSerializer
 from src.notifications.tasks import (
+    send_user_updated_notification,
     send_vacation_delegation_notification,
 )
 from src.processes.enums import (
@@ -20,6 +22,9 @@ from src.permissions.enums import PermissionSource
 from src.processes.services.events import WorkflowEventService
 from src.processes.services.workflow_permissions import (
     WorkflowPermissionService,
+)
+from src.storage.tasks import (
+    schedule_sync_workflow_attachment_permissions,
 )
 
 UserModel = get_user_model()
@@ -119,6 +124,11 @@ class VacationDelegationService:
         self._notify_substitutes(
             substitute_user_ids=substitute_user_ids,
             task_ids=task_ids,
+        )
+        send_user_updated_notification.delay(
+            logging=self.user.account.log_api_requests,
+            account_id=self.user.account_id,
+            user_data=UserWebsocketSerializer(self.user).data,
         )
 
         return self.user
@@ -273,7 +283,7 @@ class VacationDelegationService:
         )
         wf_ids = existing_wf_ids | new_wf_ids
 
-        self.add_members_bulk(
+        self.sync_members(
             wf_ids=wf_ids,
             substitute_user_ids=substitute_user_ids,
             user_id=self.user.id,
@@ -336,7 +346,7 @@ class VacationDelegationService:
 
         task_ids, wf_ids = self.delegate_tasks(group=group)
 
-        self.add_members_bulk(
+        self.sync_members(
             wf_ids=wf_ids,
             substitute_user_ids=substitute_user_ids,
             user_id=self.user.id,
@@ -369,6 +379,7 @@ class VacationDelegationService:
             # Delete substitute group performers and group.
             substitute_group = vacation.substitute_group
             if substitute_group:
+                substitute_group_id = substitute_group.id
                 # Collect affected workflow IDs before deleting performers
                 affected_wf_ids = set(
                     TaskPerformer.objects.filter(
@@ -383,35 +394,48 @@ class VacationDelegationService:
                 ).delete()
                 substitute_group.delete()
 
-                # Revoke VACATION-sourced view permissions and rebuild
-                # viewers for affected workflows so substitutes lose
-                # access they no longer need.
+                # Revoke VACATION view and any PERFORMER_GROUP rows
+                # that may have been synced from substitute TaskPerformers.
                 for wf in Workflow.objects.filter(id__in=affected_wf_ids):
                     svc = WorkflowPermissionService(wf)
-                    svc.revoke_view_by_source(
+                    svc.revoke_view(
                         source_type=PermissionSource.VACATION,
                         source_id=self.user.id,
                     )
-                    svc.set_viewers()
+                    svc.revoke_view(
+                        source_type=PermissionSource.PERFORMER_GROUP,
+                        source_id=substitute_group_id,
+                    )
+                    schedule_sync_workflow_attachment_permissions(wf.id)
 
             vacation.delete()
 
+        send_user_updated_notification.delay(
+            logging=self.user.account.log_api_requests,
+            account_id=self.user.account_id,
+            user_data=UserWebsocketSerializer(self.user).data,
+        )
         return self.user
 
     @staticmethod
-    def add_members_bulk(
+    def sync_members(
         wf_ids: Set[int],
         substitute_user_ids: List[int],
         user_id: int,
     ) -> None:
-        """Grant view access to substitute users on workflows."""
-        if not wf_ids or not substitute_user_ids:
+        """Diff-sync VACATION view for substitutes on workflows.
+
+        Grants view to current substitutes and revokes it from users
+        no longer in the list. Schedules attachment ACL sync.
+        """
+        if not wf_ids:
             return
 
         workflows = Workflow.objects.filter(id__in=wf_ids)
         for workflow in workflows:
-            WorkflowPermissionService(workflow).grant_view_bulk(
-                list(substitute_user_ids),
+            WorkflowPermissionService(workflow).sync_view(
+                user_ids=substitute_user_ids,
                 source_type=PermissionSource.VACATION,
                 source_id=user_id,
             )
+            schedule_sync_workflow_attachment_permissions(workflow.id)

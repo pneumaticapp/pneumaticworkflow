@@ -70,7 +70,8 @@ class WorkflowOwnersMixin:
     """Shared owners resolution for list and detail serializers.
 
     On list endpoints the view pre-populates ``context['owners_map']``
-    via ``WorkflowPermissionService.get_owners_map()`` (single query),
+    via ``WorkflowPermissionService.get_users_with_change_map()``
+    (single query),
     so each instance just does a dict lookup instead of a DB hit.
     On detail endpoints the map is absent and we fall back to a
     per-instance query.
@@ -80,7 +81,7 @@ class WorkflowOwnersMixin:
         owners_map = self.context.get('owners_map')
         if owners_map is not None:
             return sorted(owners_map.get(instance.id, []))
-        return WorkflowPermissionService(instance).get_owner_ids()
+        return WorkflowPermissionService(instance).get_users_with_change()
 
 
 class WorkflowListSerializer(WorkflowOwnersMixin, serializers.ModelSerializer):
@@ -477,7 +478,7 @@ class WorkflowDetailsSerializer(
         is_performer = TaskPerformer.objects.filter(
             task__workflow=instance,
             task__account_id=user.account_id,
-        ).filter(
+        ).exclude_directly_deleted().filter(
             Q(user_id=user.id) |
             Q(group__users__id=user.id),
         ).exists()

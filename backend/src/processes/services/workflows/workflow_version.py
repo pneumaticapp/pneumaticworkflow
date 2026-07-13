@@ -25,6 +25,9 @@ from src.processes.services.workflows.workflow import (
 from src.processes.services.workflow_permissions import (
     WorkflowPermissionService,
 )
+from src.storage.tasks import (
+    schedule_sync_workflow_attachment_permissions,
+)
 
 UserModel = get_user_model()
 
@@ -123,16 +126,21 @@ class WorkflowUpdateVersionService(BaseUpdateVersionService):
             force_save=True,
         )
         template_owners_ids = Template.objects.filter(
-            id=data['id'],
+            id=self.instance.template_id,
         ).get_owners_as_users()
         # Guardian: set workflow owners from template
-        WorkflowPermissionService(self.instance).set_owners(
-            template_owners_ids,
+        WorkflowPermissionService(self.instance).set_view_and_change(
+            user_ids=template_owners_ids,
         )
         self._update_tasks_from_version(
             tasks_data=data['tasks'],
             version=version,
         )
+        # Align PERFORMER / PERFORMER_GROUP UOP with TaskPerformer
+        # after raw performers were updated from the new version.
+        perm_svc = WorkflowPermissionService(self.instance)
+        perm_svc.sync_performer_sources()
+        schedule_sync_workflow_attachment_permissions(self.instance.id)
         action_service = WorkflowActionService(
             workflow=self.instance,
             user=self.user,

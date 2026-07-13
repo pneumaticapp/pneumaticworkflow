@@ -462,7 +462,7 @@ def create_test_workflow(
 
     # Guardian: set owners for test fixture workflow
     perm_svc = WorkflowPermissionService(workflow)
-    perm_svc.set_owners(template_owners_ids)
+    perm_svc.set_view_and_change(user_ids=template_owners_ids)
 
     KickoffValue.objects.create(
         workflow=workflow,

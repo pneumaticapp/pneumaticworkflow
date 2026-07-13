@@ -83,7 +83,7 @@ class TestAttachmentServiceTaskPermissions:
         member = create_test_user(account=owner.account)
         workflow = create_test_workflow(user=owner, tasks_count=1)
         WorkflowPermissionService(workflow).grant_view(
-            member,
+            user=member,
             source_type=PermissionSource.PERFORMER,
             source_id=0,
         )
@@ -401,7 +401,7 @@ class TestAttachmentServiceWorkflowPermissions:
         member = create_test_user(account=owner.account)
         workflow = create_test_workflow(user=owner, tasks_count=1)
         WorkflowPermissionService(workflow).grant_view(
-            member,
+            user=member,
             source_type=PermissionSource.PERFORMER,
             source_id=0,
         )
@@ -1231,7 +1231,7 @@ class TestAttachmentServiceBulkCreatePermissions:
         member = create_test_user(account=owner.account)
         workflow = create_test_workflow(user=owner, tasks_count=1)
         WorkflowPermissionService(workflow).grant_view(
-            member,
+            user=member,
             source_type=PermissionSource.PERFORMER,
             source_id=0,
         )

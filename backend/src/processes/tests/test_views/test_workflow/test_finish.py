@@ -287,7 +287,7 @@ class TestFinishWorkflow:
             is_admin=True,
         )
         WorkflowPermissionService(workflow).grant_view(
-            another_user,
+            user=another_user,
             source_type=PermissionSource.PERFORMER,
             source_id=0,
         )

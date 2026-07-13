@@ -122,7 +122,7 @@ def test_wf_retrieve__viewer__200(api_client):
     workflow = create_test_workflow(
         user=owner, template=template,
     )
-    WorkflowPermissionService(workflow).set_viewers()
+    WorkflowPermissionService(workflow).sync_performer_sources()
     api_client.token_authenticate(viewer)
 
     # act
@@ -166,7 +166,7 @@ def test_task_retrieve__viewer__200(api_client):
     workflow = create_test_workflow(
         user=owner, template=template,
     )
-    WorkflowPermissionService(workflow).set_viewers()
+    WorkflowPermissionService(workflow).sync_performer_sources()
     task = workflow.tasks.first()
     api_client.token_authenticate(viewer)
 

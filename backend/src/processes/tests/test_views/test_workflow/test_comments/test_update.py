@@ -156,7 +156,7 @@ def test_update__admin__ok(api_client, mocker):
     task = workflow.tasks.get(number=1)
     task.performers.add(user)
     WorkflowPermissionService(workflow).grant_view(
-        user,
+        user=user,
         source_type=PermissionSource.PERFORMER,
         source_id=0,
     )
@@ -229,7 +229,7 @@ def test_update__not_admin__ok(api_client, mocker):
     task = workflow.tasks.get(number=1)
     task.performers.add(user)
     WorkflowPermissionService(workflow).grant_view(
-        user,
+        user=user,
         source_type=PermissionSource.PERFORMER,
         source_id=0,
     )

@@ -1245,7 +1245,9 @@ class TestTaskPerformersService:
         )
 
         # assert
-        assert WorkflowPermissionService(workflow).has_view(user_performer)
+        assert WorkflowPermissionService(workflow).has_view(
+            user=user_performer,
+        )
         assert_guardian_view(workflow, user_performer)
         send_new_task_websocket_mock.assert_not_called()
         send_new_task_notification_mock.assert_called_once_with(
@@ -1331,7 +1333,9 @@ class TestTaskPerformersService:
         )
 
         # assert
-        assert WorkflowPermissionService(workflow).has_view(user_performer)
+        assert WorkflowPermissionService(workflow).has_view(
+            user=user_performer,
+        )
         assert_guardian_view(workflow, user_performer)
         send_new_task_websocket_mock.assert_not_called()
         send_new_task_notification_mock.assert_not_called()
@@ -1556,8 +1560,9 @@ class TestTaskPerformersService:
             ).data,
         ).count() == 1
         workflow.refresh_from_db()
-        assert WorkflowPermissionService(workflow).has_view(transfer_performer)
-        assert_guardian_view(workflow, transfer_performer)
+        assert not WorkflowPermissionService(workflow).has_view(
+            user=transfer_performer,
+        )
 
     def test_create_actions__with_deleted_group_taskperformer__ok(
         self,
@@ -1622,7 +1627,9 @@ class TestTaskPerformersService:
         )
 
         # assert
-        assert WorkflowPermissionService(workflow).has_view(user_performer)
+        assert WorkflowPermissionService(workflow).has_view(
+            user=user_performer,
+        )
         assert_guardian_view(workflow, user_performer)
         send_new_task_websocket_mock.assert_not_called()
         send_new_task_notification_mock.assert_not_called()
@@ -3994,7 +4001,7 @@ class TestTaskPerformersDeleteAttachmentSync:
         mocker,
     ):
         """_delete_actions must trigger sync_workflow_attachment_permissions
-        after set_viewers to revoke stale file access."""
+        after sync_view to revoke stale file access."""
 
         # arrange
         account = create_test_account()
@@ -4012,11 +4019,11 @@ class TestTaskPerformersDeleteAttachmentSync:
         task = workflow.tasks.first()
         sync_mock = mocker.patch(
             'src.processes.services.tasks.performers.'
-            'sync_workflow_attachment_permissions.delay',
+            'schedule_sync_workflow_attachment_permissions',
         )
         mocker.patch(
             'src.processes.services.tasks.performers.'
-            'WorkflowPermissionService.set_viewers',
+            'WorkflowPermissionService.sync_view',
         )
         mocker.patch(
             'src.processes.services.events.'
@@ -4051,7 +4058,7 @@ class TestGroupPerformerDeleteAttachmentSync:
         mocker,
     ):
         """_delete_group_actions must trigger
-        sync_workflow_attachment_permissions after set_viewers
+        sync_workflow_attachment_permissions after revoke/sync_view
         and reassign_restricted_permissions_for_task
         to revoke stale file access for removed group."""
 
@@ -4077,11 +4084,11 @@ class TestGroupPerformerDeleteAttachmentSync:
         )
         sync_mock = mocker.patch(
             'src.processes.services.tasks.groups.'
-            'sync_workflow_attachment_permissions.delay',
+            'schedule_sync_workflow_attachment_permissions',
         )
         mocker.patch(
             'src.processes.services.tasks.groups.'
-            'WorkflowPermissionService.set_viewers',
+            'WorkflowPermissionService.sync_performer_group',
         )
         mocker.patch(
             'src.processes.services.events.'

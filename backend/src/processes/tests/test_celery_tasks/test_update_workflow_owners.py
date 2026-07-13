@@ -13,9 +13,10 @@ from src.processes.tasks.update_workflow import (
 )
 from src.processes.tests.fixtures import (
     create_test_account,
+    create_test_admin,
     create_test_group,
+    create_test_owner,
     create_test_template,
-    create_test_user,
     create_test_workflow,
 )
 from src.processes.services.workflow_permissions import (
@@ -34,14 +35,15 @@ def test__delete_group_owner_only__ok():
 
     # arrange
     account = create_test_account()
-    user = create_test_user(account=account)
+    user = create_test_owner(account=account)
     template = create_test_template(
         user=user,
         is_active=True,
         tasks_count=1,
     )
     TemplateOwner.objects.all().delete()
-    group = create_test_group(account, users=[user])
+    group = create_test_group(
+        account=account, users=[user])
     TemplateOwner.objects.create(
         template=template,
         account=account,
@@ -58,7 +60,9 @@ def test__delete_group_owner_only__ok():
     update_workflow_owners([template.id])
 
     # assert
-    assert len(WorkflowPermissionService(workflow).get_owner_ids()) == 0
+    assert len(
+        WorkflowPermissionService(workflow).get_users_with_change(),
+    ) == 0
 
 
 def test__add_template_owner_is_deleted__ok():
@@ -68,14 +72,15 @@ def test__add_template_owner_is_deleted__ok():
     """
     # arrange
     account = create_test_account()
-    user = create_test_user(account=account)
+    user = create_test_owner(account=account)
     template = create_test_template(
         user=user,
         is_active=True,
         tasks_count=1,
     )
     TemplateOwner.objects.all().delete()
-    group = create_test_group(account, users=[user])
+    group = create_test_group(
+        account=account, users=[user])
     workflow = create_test_workflow(
         user=user,
         template=template,
@@ -94,8 +99,10 @@ def test__add_template_owner_is_deleted__ok():
     update_workflow_owners([template.id])
 
     # assert
-    assert len(WorkflowPermissionService(workflow).get_owner_ids()) == 0
-    assert len(WorkflowPermissionService(workflow).get_viewer_ids()) == 0
+    assert len(
+        WorkflowPermissionService(workflow).get_users_with_change(),
+    ) == 0
+    assert len(WorkflowPermissionService(workflow).get_users_with_view()) == 0
 
 
 def test__delete_group_owner_user_owner_persists_same_user__ok():
@@ -106,13 +113,14 @@ def test__delete_group_owner_user_owner_persists_same_user__ok():
 
     # arrange
     account = create_test_account()
-    user = create_test_user(account=account)
+    user = create_test_owner(account=account)
     template = create_test_template(
         user=user,
         is_active=True,
         tasks_count=1,
     )
-    group_to_delete = create_test_group(account, users=[user])
+    group_to_delete = create_test_group(
+        account=account, users=[user])
     TemplateOwner.objects.create(
         template=template,
         account=account,
@@ -129,8 +137,10 @@ def test__delete_group_owner_user_owner_persists_same_user__ok():
     update_workflow_owners([template.id])
 
     # assert
-    assert len(WorkflowPermissionService(workflow).get_owner_ids()) == 1
-    assert WorkflowPermissionService(workflow).has_change(user)
+    assert len(
+        WorkflowPermissionService(workflow).get_users_with_change(),
+    ) == 1
+    assert WorkflowPermissionService(workflow).has_change(user=user)
 
 
 def test__delete_group_owner_user_owner_persists_different_user__ok():
@@ -141,14 +151,15 @@ def test__delete_group_owner_user_owner_persists_different_user__ok():
 
     # arrange
     account = create_test_account()
-    user = create_test_user(account=account)
-    user_2 = create_test_user(account=account, email='test1@test.test')
+    user = create_test_owner(account=account)
+    user_2 = create_test_admin(account=account, email='test1@test.test')
     template = create_test_template(
         user_2,
         is_active=True,
         tasks_count=1,
     )
-    group_to_delete = create_test_group(account, users=[user])
+    group_to_delete = create_test_group(
+        account=account, users=[user])
     TemplateOwner.objects.create(
         template=template,
         account=account,
@@ -165,8 +176,10 @@ def test__delete_group_owner_user_owner_persists_different_user__ok():
     update_workflow_owners([template.id])
 
     # assert
-    assert len(WorkflowPermissionService(workflow).get_owner_ids()) == 1
-    assert WorkflowPermissionService(workflow).has_change(user_2)
+    assert len(
+        WorkflowPermissionService(workflow).get_users_with_change(),
+    ) == 1
+    assert WorkflowPermissionService(workflow).has_change(user=user_2)
 
 
 def test__delete_group_owner_with_users_user_owner_persists__ok():
@@ -175,15 +188,16 @@ def test__delete_group_owner_with_users_user_owner_persists__ok():
 
     # arrange
     account = create_test_account()
-    user = create_test_user(account=account)
-    user_2 = create_test_user(account=account, email='test1@test.test')
-    user_3 = create_test_user(account=account, email='test2@test.test')
+    user = create_test_owner(account=account)
+    user_2 = create_test_admin(account=account, email='test1@test.test')
+    user_3 = create_test_admin(account=account, email='test2@test.test')
     template = create_test_template(
         user=user,
         is_active=True,
         tasks_count=1,
     )
-    group_to_delete = create_test_group(account, users=[user_2, user_3])
+    group_to_delete = create_test_group(
+        account=account, users=[user_2, user_3])
     TemplateOwner.objects.create(
         template=template,
         account=account,
@@ -200,8 +214,10 @@ def test__delete_group_owner_with_users_user_owner_persists__ok():
     update_workflow_owners([template.id])
 
     # assert
-    assert len(WorkflowPermissionService(workflow).get_owner_ids()) == 1
-    assert WorkflowPermissionService(workflow).has_change(user)
+    assert len(
+        WorkflowPermissionService(workflow).get_users_with_change(),
+    ) == 1
+    assert WorkflowPermissionService(workflow).has_change(user=user)
 
 
 def test__delete_one_group_owner_user_owner_persists_empty_group__ok():
@@ -210,15 +226,16 @@ def test__delete_one_group_owner_user_owner_persists_empty_group__ok():
 
     # arrange
     account = create_test_account()
-    user = create_test_user(account=account)
-    user_2 = create_test_user(account=account, email='test1@test.test')
-    user_3 = create_test_user(account=account, email='test2@test.test')
+    user = create_test_owner(account=account)
+    user_2 = create_test_admin(account=account, email='test1@test.test')
+    user_3 = create_test_admin(account=account, email='test2@test.test')
     template = create_test_template(
         user=user,
         is_active=True,
         tasks_count=1,
     )
-    group_to_delete = create_test_group(account, users=[user_2, user_3])
+    group_to_delete = create_test_group(
+        account=account, users=[user_2, user_3])
     group = create_test_group(name='group 2', account=account)
     TemplateOwner.objects.create(
         template=template,
@@ -242,8 +259,10 @@ def test__delete_one_group_owner_user_owner_persists_empty_group__ok():
     update_workflow_owners([template.id])
 
     # assert
-    assert len(WorkflowPermissionService(workflow).get_owner_ids()) == 1
-    assert WorkflowPermissionService(workflow).has_change(user)
+    assert len(
+        WorkflowPermissionService(workflow).get_users_with_change(),
+    ) == 1
+    assert WorkflowPermissionService(workflow).has_change(user=user)
 
 
 def test__delete_one_group_owner_other_group_owner_persists__ok():
@@ -252,15 +271,16 @@ def test__delete_one_group_owner_other_group_owner_persists__ok():
 
     # arrange
     account = create_test_account()
-    user = create_test_user(account=account)
-    user_2 = create_test_user(account=account, email='test1@test.test')
+    user = create_test_owner(account=account)
+    user_2 = create_test_admin(account=account, email='test1@test.test')
     template = create_test_template(
         user=user,
         is_active=True,
         tasks_count=1,
     )
     TemplateOwner.objects.filter(user_id=user.id).delete()
-    group = create_test_group(account, users=[user])
+    group = create_test_group(
+        account=account, users=[user])
     group_to_delete = create_test_group(
         name='group 2',
         account=account,
@@ -288,8 +308,10 @@ def test__delete_one_group_owner_other_group_owner_persists__ok():
     update_workflow_owners([template.id])
 
     # assert
-    assert len(WorkflowPermissionService(workflow).get_owner_ids()) == 1
-    assert WorkflowPermissionService(workflow).has_change(user)
+    assert len(
+        WorkflowPermissionService(workflow).get_users_with_change(),
+    ) == 1
+    assert WorkflowPermissionService(workflow).has_change(user=user)
 
 
 def test__delete_group_owner_other_template_unchanged__ok():
@@ -298,7 +320,7 @@ def test__delete_group_owner_other_template_unchanged__ok():
 
     # arrange
     account = create_test_account()
-    user = create_test_user(account=account)
+    user = create_test_owner(account=account)
     template = create_test_template(
         user=user,
         is_active=True,
@@ -310,14 +332,16 @@ def test__delete_group_owner_other_template_unchanged__ok():
         tasks_count=1,
     )
     TemplateOwner.objects.filter(user_id=user.id).delete()
-    group = create_test_group(account, users=[user])
+    group = create_test_group(
+        account=account, users=[user])
     TemplateOwner.objects.create(
         template=template,
         account=account,
         type=OwnerType.GROUP,
         group_id=group.id,
     )
-    group_to_delete = create_test_group(account, name='group 2', users=[user])
+    group_to_delete = create_test_group(
+        account=account, name='group 2', users=[user])
     TemplateOwner.objects.create(
         template=template_2,
         account=account,
@@ -340,10 +364,14 @@ def test__delete_group_owner_other_template_unchanged__ok():
     # assert
     assert template.owners.count() == 1
     assert template.owners.get(group_id=group.id)
-    assert len(WorkflowPermissionService(workflow).get_owner_ids()) == 1
-    assert WorkflowPermissionService(workflow).has_change(user)
+    assert len(
+        WorkflowPermissionService(workflow).get_users_with_change(),
+    ) == 1
+    assert WorkflowPermissionService(workflow).has_change(user=user)
     assert template_2.owners.count() == 0
-    assert len(WorkflowPermissionService(workflow_2).get_owner_ids()) == 0
+    assert len(
+        WorkflowPermissionService(workflow_2).get_users_with_change(),
+    ) == 0
 
 
 def test__delete_group_owner_different_account_unchanged__ok():
@@ -352,14 +380,15 @@ def test__delete_group_owner_different_account_unchanged__ok():
 
     # arrange
     account = create_test_account()
-    user = create_test_user(account=account)
+    user = create_test_owner(account=account)
     template = create_test_template(
         user=user,
         is_active=True,
         tasks_count=1,
     )
     TemplateOwner.objects.filter(user_id=user.id).delete()
-    group = create_test_group(account, users=[user])
+    group = create_test_group(
+        account=account, users=[user])
     TemplateOwner.objects.create(
         template=template,
         account=account,
@@ -371,12 +400,12 @@ def test__delete_group_owner_different_account_unchanged__ok():
         template=template,
     )
     account_another = create_test_account()
-    user_account_another = create_test_user(
+    user_account_another = create_test_owner(
         account=account_another,
         email='test1@test.test',
     )
     template_account_another = create_test_template(
-        user_account_another,
+        user=user_account_another,
         is_active=True,
         tasks_count=1,
     )
@@ -407,11 +436,15 @@ def test__delete_group_owner_different_account_unchanged__ok():
     # assert
     assert template.owners.count() == 1
     assert template.owners.get(group_id=group.id)
-    assert len(WorkflowPermissionService(workflow).get_owner_ids()) == 1
-    assert WorkflowPermissionService(workflow).has_change(user)
+    assert len(
+        WorkflowPermissionService(workflow).get_users_with_change(),
+    ) == 1
+    assert WorkflowPermissionService(workflow).has_change(user=user)
     assert template_account_another.owners.count() == 0
     assert len(
-        WorkflowPermissionService(workflow_account_another).get_owner_ids(),
+        WorkflowPermissionService(
+            workflow_account_another,
+        ).get_users_with_change(),
     ) == 0
 
 
@@ -419,14 +452,15 @@ def test__update_group_owner_user_in_owners_and_members__ok():
 
     # arrange
     account = create_test_account()
-    user = create_test_user(account=account)
+    user = create_test_owner(account=account)
     template = create_test_template(
         user=user,
         is_active=True,
         tasks_count=1,
     )
     TemplateOwner.objects.filter(user_id=user.id).delete()
-    group = create_test_group(account, users=[user])
+    group = create_test_group(
+        account=account, users=[user])
     TemplateOwner.objects.create(
         template=template,
         account=account,
@@ -442,10 +476,12 @@ def test__update_group_owner_user_in_owners_and_members__ok():
     update_workflow_owners([template.id])
 
     # assert
-    assert len(WorkflowPermissionService(workflow).get_owner_ids()) == 1
-    assert WorkflowPermissionService(workflow).has_change(user)
-    assert len(WorkflowPermissionService(workflow).get_viewer_ids()) == 1
-    assert WorkflowPermissionService(workflow).has_view(user)
+    assert len(
+        WorkflowPermissionService(workflow).get_users_with_change(),
+    ) == 1
+    assert WorkflowPermissionService(workflow).has_change(user=user)
+    assert len(WorkflowPermissionService(workflow).get_users_with_view()) == 1
+    assert WorkflowPermissionService(workflow).has_view(user=user)
 
 
 def test__update_group_owner_new_user_one_owner_two_members__ok():
@@ -453,8 +489,8 @@ def test__update_group_owner_new_user_one_owner_two_members__ok():
     owner and two members."""
     # arrange
     account = create_test_account()
-    user = create_test_user(account=account)
-    user_2 = create_test_user(
+    user = create_test_owner(account=account)
+    user_2 = create_test_admin(
         account=account,
         email='master@test.test',
     )
@@ -464,7 +500,8 @@ def test__update_group_owner_new_user_one_owner_two_members__ok():
         tasks_count=1,
     )
     TemplateOwner.objects.filter(user_id=user.id).delete()
-    group = create_test_group(account, users=[user])
+    group = create_test_group(
+        account=account, users=[user])
     TemplateOwner.objects.create(
         template=template,
         account=account,
@@ -482,18 +519,20 @@ def test__update_group_owner_new_user_one_owner_two_members__ok():
     update_workflow_owners([template.id])
 
     # assert
-    assert len(WorkflowPermissionService(workflow).get_owner_ids()) == 1
-    assert WorkflowPermissionService(workflow).has_change(user_2)
-    assert len(WorkflowPermissionService(workflow).get_viewer_ids()) == 2
-    assert WorkflowPermissionService(workflow).has_view(user)
-    assert WorkflowPermissionService(workflow).has_view(user_2)
+    assert len(
+        WorkflowPermissionService(workflow).get_users_with_change(),
+    ) == 1
+    assert WorkflowPermissionService(workflow).has_change(user=user_2)
+    assert len(WorkflowPermissionService(workflow).get_users_with_view()) == 2
+    assert WorkflowPermissionService(workflow).has_view(user=user)
+    assert WorkflowPermissionService(workflow).has_view(user=user_2)
 
 
 def test__add_group_in_taskperformer__ok():
     # arrange
     account = create_test_account()
-    user = create_test_user(account=account)
-    user_in_group = create_test_user(
+    user = create_test_owner(account=account)
+    user_in_group = create_test_admin(
         account=account,
         email='groupuser@test.test',
     )
@@ -506,7 +545,8 @@ def test__add_group_in_taskperformer__ok():
         user=user,
         template=template,
     )
-    group = create_test_group(account, users=[user_in_group])
+    group = create_test_group(
+        account=account, users=[user_in_group])
     task = workflow.tasks.first()
     TaskPerformer.objects.create(
         task=task,
@@ -514,18 +554,18 @@ def test__add_group_in_taskperformer__ok():
         type=PerformerType.GROUP,
     )
 
-    # act
-    update_workflow_owners([template.id])
+    # act — owners task does not sync performers; use surgical sync
+    WorkflowPermissionService(workflow).sync_performer_sources()
 
     # assert
-    assert WorkflowPermissionService(workflow).has_view(user_in_group)
+    assert WorkflowPermissionService(workflow).has_view(user=user_in_group)
 
 
 def test__add_user_in_taskperformer__ok():
     # arrange
     account = create_test_account()
-    user = create_test_user(account=account)
-    task_performer_user = create_test_user(
+    user = create_test_owner(account=account)
+    task_performer_user = create_test_admin(
         account=account,
         email='taskperformer@test.test',
     )
@@ -546,21 +586,23 @@ def test__add_user_in_taskperformer__ok():
     )
 
     # act
-    update_workflow_owners([template.id])
+    WorkflowPermissionService(workflow).sync_performer_sources()
 
     # assert
-    assert WorkflowPermissionService(workflow).has_view(task_performer_user)
+    assert WorkflowPermissionService(workflow).has_view(
+        user=task_performer_user,
+    )
 
 
 def test__add_group_and_user_in_taskperformer__ok():
     # arrange
     account = create_test_account()
-    user = create_test_user(account=account)
-    group_user = create_test_user(
+    user = create_test_owner(account=account)
+    group_user = create_test_admin(
         account=account,
         email='groupuser@test.test',
     )
-    direct_user = create_test_user(
+    direct_user = create_test_admin(
         account=account,
         email='directuser@test.test',
     )
@@ -573,7 +615,8 @@ def test__add_group_and_user_in_taskperformer__ok():
         user=user,
         template=template,
     )
-    group = create_test_group(account, users=[group_user])
+    group = create_test_group(
+        account=account, users=[group_user])
     task = workflow.tasks.first()
     TaskPerformer.objects.create(
         task=task,
@@ -587,18 +630,18 @@ def test__add_group_and_user_in_taskperformer__ok():
     )
 
     # act
-    update_workflow_owners([template.id])
+    WorkflowPermissionService(workflow).sync_performer_sources()
 
     # assert
-    assert WorkflowPermissionService(workflow).has_view(group_user)
-    assert WorkflowPermissionService(workflow).has_view(direct_user)
+    assert WorkflowPermissionService(workflow).has_view(user=group_user)
+    assert WorkflowPermissionService(workflow).has_view(user=direct_user)
 
 
 def test__add_user_in_owner_and_taskperformer__ok():
     # arrange
     account = create_test_account()
-    user = create_test_user(account=account)
-    common_user = create_test_user(
+    user = create_test_owner(account=account)
+    common_user = create_test_admin(
         account=account,
         email='common@test.test',
     )
@@ -627,16 +670,16 @@ def test__add_user_in_owner_and_taskperformer__ok():
     # act
     update_workflow_owners([template.id])
 
-    # assert
-    has_view = WorkflowPermissionService(workflow).has_view(common_user)
+    # assert — TEMPLATE_OWNER view from set_view_and_change
+    has_view = WorkflowPermissionService(workflow).has_view(user=common_user)
     assert (1 if has_view else 0) == 1
 
 
 def test__add_performer_with_status_deleted__ok():
     # arrange
     account = create_test_account()
-    user = create_test_user(account=account)
-    deleted_performer = create_test_user(
+    user = create_test_owner(account=account)
+    deleted_performer = create_test_admin(
         account=account,
         email='deleted@test.test',
     )
@@ -658,17 +701,19 @@ def test__add_performer_with_status_deleted__ok():
     )
 
     # act
-    update_workflow_owners([template.id])
+    WorkflowPermissionService(workflow).sync_performer_sources()
 
     # assert
-    assert not WorkflowPermissionService(workflow).has_view(deleted_performer)
+    assert not WorkflowPermissionService(workflow).has_view(
+        user=deleted_performer,
+    )
 
 
 def test__update_group_taskperformer_add_members__ok(api_client):
     # arrange
     account = create_test_account()
-    user = create_test_user(account=account)
-    user_in_group = create_test_user(
+    user = create_test_owner(account=account)
+    user_in_group = create_test_admin(
         account=account,
         email='groupuser@test.test',
     )
@@ -688,12 +733,12 @@ def test__update_group_taskperformer_add_members__ok(api_client):
         group=group,
         type=PerformerType.GROUP,
     )
-    update_workflow_owners([template.id])
+    WorkflowPermissionService(workflow).sync_performer_sources()
     group.users.set([user, user_in_group])
     group.save()
 
     # act
-    update_workflow_owners([template.id])
+    WorkflowPermissionService(workflow).sync_performer_sources()
 
     # assert
-    assert WorkflowPermissionService(workflow).has_view(user_in_group)
+    assert WorkflowPermissionService(workflow).has_view(user=user_in_group)

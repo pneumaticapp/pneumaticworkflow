@@ -4,6 +4,10 @@ from datetime import datetime
 from typing import List, Optional, Tuple
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.models import ContentType
+from django.db.models import IntegerField, Q, Subquery
+from django.db.models.functions import Cast
 
 from src.accounts.models import User, UserGroup
 from src.generics.mixins.managers import SearchSqlQueryMixin
@@ -11,6 +15,7 @@ from src.generics.mixins.queries import (
     DereferencedOwnersMixin,
     DereferencedPerformersMixin,
 )
+from src.permissions.models import UserObjectPermission
 from src.processes.enums import (
     DirectlyStatus,
     OwnerRole,
@@ -22,6 +27,7 @@ from src.processes.enums import (
     WorkflowApiStatus,
     WorkflowEventType,
     WorkflowOrdering,
+    WorkflowPermission,
     WorkflowStatus, SearchContentType,
 )
 from src.processes.messages.workflow import (
@@ -55,15 +61,11 @@ class GuardianOwnerJoinMixin:
         workflow_col: str,
         params: dict,
     ) -> str:
-        from django.contrib.auth.models import Permission
-        from django.contrib.contenttypes.models import ContentType
-        from src.permissions.models import UserObjectPermission
-
         ct = ContentType.objects.get(
             app_label='processes', model='workflow',
         )
         perm = Permission.objects.get(
-            codename='change_workflow',
+            codename=WorkflowPermission.CHANGE,
             content_type=ct,
         )
         params['_guardian_ct_id'] = ct.id
@@ -1904,6 +1906,8 @@ class HighlightsQuery(GuardianOwnerJoinMixin, SqlQueryObject):
         WorkflowEventType.NOT_URGENT,
         WorkflowEventType.TASK_PERFORMER_CREATED,
         WorkflowEventType.TASK_PERFORMER_DELETED,
+        WorkflowEventType.TASK_PERFORMER_GROUP_CREATED,
+        WorkflowEventType.TASK_PERFORMER_GROUP_DELETED,
         WorkflowEventType.FORCE_DELAY,
         WorkflowEventType.FORCE_RESUME,
         WorkflowEventType.DUE_DATE_CHANGED,
@@ -1977,6 +1981,7 @@ class HighlightsQuery(GuardianOwnerJoinMixin, SqlQueryObject):
           we.created,
           we.user_id,
           we.target_user_id,
+          we.target_group_id,
           we.workflow_id
         FROM processes_workflowevent we
         LEFT JOIN processes_workflow workflow ON
@@ -2462,14 +2467,15 @@ class WorkflowPermissionQuery:
         Uses direct query on permissions_userobjectpermission table.
         Cast object_pk (varchar) to integer so PostgreSQL can
         compare with workflow.id without type mismatch.
-        """
-        from django.contrib.contenttypes.models import ContentType
-        from django.db.models import Subquery, IntegerField
-        from django.db.models.functions import Cast
-        from src.permissions.models import UserObjectPermission
-        from src.processes.models.workflows.workflow import Workflow
 
-        ct = ContentType.objects.get_for_model(Workflow)
+        ContentType is resolved by app_label/model (not
+        get_for_model(Workflow)) to avoid circular import:
+        Workflow → querysets → queries.
+        """
+        ct = ContentType.objects.get(
+            app_label='processes',
+            model='workflow',
+        )
         return Subquery(
             UserObjectPermission.objects.filter(
                 user_id=user_id,
@@ -2494,65 +2500,17 @@ class WorkflowPermissionQuery:
             Workflow.objects.filter(viewer_q(user.id))
             Task.objects.filter(viewer_q(user.id, prefix='workflow__'))
         """
-        from django.db.models import Q
         return Q(**{
             f'{prefix}{pk_field}__in': cls._get_perm_subquery(
-                user_id, 'view_workflow',
+                user_id, WorkflowPermission.VIEW,
             ),
         })
 
     @classmethod
     def change_q(cls, user_id: int, pk_field: str = 'pk', prefix: str = ''):
         """Return Q() filter for workflows user can change (manage)."""
-        from django.db.models import Q
         return Q(**{
             f'{prefix}{pk_field}__in': cls._get_perm_subquery(
-                user_id, 'change_workflow',
+                user_id, WorkflowPermission.CHANGE,
             ),
         })
-
-    @classmethod
-    def manager_q(cls, user_id: int, pk_field: str = 'pk', prefix: str = ''):
-        """Alias for change_q (backward compat)."""
-        return cls.change_q(user_id, pk_field, prefix)
-
-    @classmethod
-    def member_or_viewer_q(
-        cls, user_id: int, pk_field: str = 'pk', prefix: str = '',
-    ):
-        """Return Q() filter for workflows user can view OR is a performer on.
-
-        Combines Guardian view_workflow permission with direct task
-        performer membership (user or via group).
-
-        Args:
-            user_id: The user to check permissions for.
-            pk_field: The field name for the workflow PK lookup.
-            prefix: Optional prefix for related model traversal
-                    (e.g. 'workflow__' when filtering from Task or
-                     WorkflowEvent).
-        """
-        from django.db.models import Q
-        from src.processes.enums import DirectlyStatus
-
-        performer_q = (
-            Q(**{f'{prefix}tasks__taskperformer__user_id': user_id})
-            & ~Q(**{
-                f'{prefix}tasks__taskperformer__directly_status': (
-                    DirectlyStatus.DELETED
-                ),
-            })
-        ) | (
-            Q(**{
-                f'{prefix}tasks__taskperformer__group__users__id': user_id,
-                f'{prefix}tasks__taskperformer__group__is_deleted': False,
-            })
-            & ~Q(**{
-                f'{prefix}tasks__taskperformer__directly_status': (
-                    DirectlyStatus.DELETED
-                ),
-            })
-        )
-        return cls.viewer_q(user_id, pk_field, prefix) | performer_q
-
-

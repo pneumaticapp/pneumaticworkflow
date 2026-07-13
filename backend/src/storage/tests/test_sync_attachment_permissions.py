@@ -4,6 +4,7 @@ from unittest.mock import call
 from src.permissions.enums import PermissionSource
 from src.processes.enums import PerformerType
 from src.processes.models.workflows.task import TaskPerformer
+from src.processes.services.events import WorkflowEventService
 from src.processes.services.workflow_permissions import (
     WorkflowPermissionService,
 )
@@ -71,10 +72,118 @@ def test_sync_wf_att_perms__basic__reassigns_permissions():
 
 
 @pytest.mark.django_db
+def test_sync_wf_att_perms__task_only_no_workflow_fk__reassigns():
+    """Task description files often have workflow_id=NULL.
+
+    sync_workflow_attachment_permissions must still find them
+    via task__workflow and reassign ACL (e.g. after mention).
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    mentioned = create_test_not_admin(
+        account=account,
+        email='mentioned@test.test',
+    )
+    template = create_test_template(
+        user=owner,
+        is_active=True,
+        tasks_count=1,
+    )
+    workflow = create_test_workflow(
+        user=owner,
+        template=template,
+    )
+    task = workflow.tasks.get(number=1)
+    attachment = create_test_attachment(
+        account=account,
+        file_id='task_desc_only.pdf',
+        task=task,
+        workflow=None,
+        access_type=AccessType.RESTRICTED,
+        source_type=SourceType.TASK,
+    )
+    service = AttachmentService()
+    service.assign_permissions(attachment)
+    WorkflowPermissionService(workflow).grant_view(
+        user=mentioned,
+        source_type=PermissionSource.MENTION,
+        source_id=1,
+    )
+
+    # act
+    sync_workflow_attachment_permissions(workflow.id)
+
+    # assert
+    assert service.check_user_permission(
+        user_id=mentioned.id,
+        account_id=mentioned.account_id,
+        file_id=attachment.file_id,
+    )
+
+
+@pytest.mark.django_db
+def test_sync_wf_att_perms__event_only_no_workflow_fk__ok():
+
+    """Event attachments with workflow_id=NULL must still sync
+    via event__workflow."""
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    viewer = create_test_not_admin(
+        account=account,
+        email='ev_viewer@test.test',
+    )
+    template = create_test_template(
+        user=owner,
+        is_active=True,
+        tasks_count=1,
+    )
+    workflow = create_test_workflow(
+        user=owner,
+        template=template,
+    )
+    task = workflow.tasks.get(number=1)
+    event = WorkflowEventService.task_started_event(
+        task=task,
+        after_create_actions=False,
+    )
+    attachment = create_test_attachment(
+        account=account,
+        file_id='event_only.pdf',
+        event=event,
+        workflow=None,
+        task=None,
+        access_type=AccessType.RESTRICTED,
+        source_type=SourceType.WORKFLOW,
+    )
+    service = AttachmentService()
+    service.assign_permissions(attachment)
+
+    WorkflowPermissionService(workflow).grant_view(
+        user=viewer,
+        source_type=PermissionSource.MENTION,
+        source_id=1,
+    )
+
+    # act
+    sync_workflow_attachment_permissions(workflow.id)
+
+    # assert
+    assert service.check_user_permission(
+        user_id=viewer.id,
+        account_id=viewer.account_id,
+        file_id=attachment.file_id,
+    )
+
+
+@pytest.mark.django_db
 def test_sync_wf_att_perms__removed_performer__loses_access():
-    """When a performer is removed from a task and set_viewers()
-    recalculates workflow permissions, the Celery task also
-    revokes access_attachment on related files."""
+    """When a performer is removed from a task and
+    sync_performer_sources() recalculates workflow permissions,
+    the Celery task also revokes access_attachment on related files."""
 
     # arrange
     account = create_test_account()
@@ -103,7 +212,7 @@ def test_sync_wf_att_perms__removed_performer__loses_access():
 
     # Grant view_workflow to performer
     WorkflowPermissionService(workflow).grant_view(
-        performer,
+        user=performer,
         source_type=PermissionSource.PERFORMER,
         source_id=task.id,
     )
@@ -134,7 +243,7 @@ def test_sync_wf_att_perms__removed_performer__loses_access():
     ).delete()
 
     # Recalculate workflow viewers
-    WorkflowPermissionService(workflow).set_viewers()
+    WorkflowPermissionService(workflow).sync_performer_sources()
 
     # act
     sync_workflow_attachment_permissions(workflow.id)
@@ -368,15 +477,15 @@ def test_update_wf_owners__owner_change__att_perms_synced(
     )
 
     sync_wf_att_perms_mock = mocker.patch(
-        'src.processes.tasks.update_workflow'
-        '.sync_workflow_attachment_permissions',
+        'src.processes.tasks.update_workflow.'
+        'schedule_sync_workflow_attachment_permissions',
     )
 
     # act
     update_workflow_owners([template.id])
 
     # assert
-    sync_wf_att_perms_mock.delay.assert_called_once_with(
+    sync_wf_att_perms_mock.assert_called_once_with(
         workflow.id,
     )
 
@@ -405,16 +514,16 @@ def test_update_wf_owners__multiple_wfs__each_synced(
     )
 
     sync_wf_att_perms_mock = mocker.patch(
-        'src.processes.tasks.update_workflow'
-        '.sync_workflow_attachment_permissions',
+        'src.processes.tasks.update_workflow.'
+        'schedule_sync_workflow_attachment_permissions',
     )
 
     # act
     update_workflow_owners([template.id])
 
     # assert
-    assert sync_wf_att_perms_mock.delay.call_count == 2
-    sync_wf_att_perms_mock.delay.assert_has_calls(
+    assert sync_wf_att_perms_mock.call_count == 2
+    sync_wf_att_perms_mock.assert_has_calls(
         [
             call(workflow_1.id),
             call(workflow_2.id),
@@ -427,8 +536,9 @@ def test_update_wf_owners__multiple_wfs__each_synced(
 def test_delete_orphaned_perfs__orphan__triggers_att_sync(
     mocker,
 ):
-    """When orphaned performers are deleted and set_viewers
-    is called, attachment sync is also triggered via Celery."""
+    """When orphaned performers are deleted and
+    sync_performer_sources is called, attachment sync is also
+    triggered via Celery."""
 
     # arrange
     account = create_test_account()
@@ -449,8 +559,8 @@ def test_delete_orphaned_perfs__orphan__triggers_att_sync(
     task = workflow.tasks.get(number=1)
 
     sync_wf_att_perms_mock = mocker.patch(
-        'src.storage.tasks'
-        '.sync_workflow_attachment_permissions',
+        'src.storage.tasks.'
+        'schedule_sync_workflow_attachment_permissions',
     )
 
     # Create a performer without raw performer (orphan)
@@ -464,6 +574,6 @@ def test_delete_orphaned_perfs__orphan__triggers_att_sync(
     task._delete_orphaned_performers()
 
     # assert
-    sync_wf_att_perms_mock.delay.assert_called_once_with(
+    sync_wf_att_perms_mock.assert_called_once_with(
         workflow.id,
     )

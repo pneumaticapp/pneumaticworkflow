@@ -14,6 +14,7 @@ from src.processes.enums import (
     OwnerRole,
     OwnerType,
     PerformerType,
+    WorkflowPermission,
 )
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.tests.fixtures import (
@@ -75,7 +76,7 @@ class TestNonAdminWorkflowOwnerTaskRetrieve:
             template=template,
         )
         WorkflowPermissionService(workflow).grant_change(
-            non_admin_owner,
+            user=non_admin_owner,
             source_type=PermissionSource.TEMPLATE_OWNER,
             source_id=0,
         )
@@ -167,7 +168,7 @@ class TestNonAdminWorkflowOwnerTaskPerformer:
             template=template,
         )
         WorkflowPermissionService(workflow).grant_change(
-            non_admin_owner,
+            user=non_admin_owner,
             source_type=PermissionSource.TEMPLATE_OWNER,
             source_id=0,
         )
@@ -250,7 +251,7 @@ class TestNonAdminWorkflowOwnerTaskPerformer:
             template=template,
         )
         WorkflowPermissionService(workflow).grant_change(
-            non_admin_owner,
+            user=non_admin_owner,
             source_type=PermissionSource.TEMPLATE_OWNER,
             source_id=0,
         )
@@ -301,7 +302,7 @@ class TestNonAdminWorkflowOwnerTaskDueDate:
             template=template,
         )
         WorkflowPermissionService(workflow).grant_change(
-            non_admin_owner,
+            user=non_admin_owner,
             source_type=PermissionSource.TEMPLATE_OWNER,
             source_id=0,
         )
@@ -529,7 +530,7 @@ class TestRoleChangeFromOwnerToViewerTask:
             template=template,
         )
         WorkflowPermissionService(workflow).grant_change(
-            admin_user,
+            user=admin_user,
             source_type=PermissionSource.TEMPLATE_OWNER,
             source_id=0,
         )
@@ -588,7 +589,7 @@ class TestRoleChangeFromOwnerToViewerTask:
             template=template,
         )
         WorkflowPermissionService(workflow).grant_change(
-            admin_user,
+            user=admin_user,
             source_type=PermissionSource.TEMPLATE_OWNER,
             source_id=0,
         )
@@ -596,8 +597,8 @@ class TestRoleChangeFromOwnerToViewerTask:
 
         template_owner.is_deleted = True
         template_owner.save()
-        remove_perm('change_workflow', admin_user, workflow)
-        remove_perm('view_workflow', admin_user, workflow)
+        remove_perm(WorkflowPermission.CHANGE, admin_user, workflow)
+        remove_perm(WorkflowPermission.VIEW, admin_user, workflow)
         TemplateOwner.objects.create(
             role=OwnerRole.STARTER,
             template=template,
@@ -656,7 +657,7 @@ class TestNonAdminRoleChangeTaskReadOnly:
             template=template,
         )
         WorkflowPermissionService(workflow).grant_change(
-            non_admin_user,
+            user=non_admin_user,
             source_type=PermissionSource.TEMPLATE_OWNER,
             source_id=0,
         )
@@ -715,7 +716,7 @@ class TestNonAdminRoleChangeTaskReadOnly:
             template=template,
         )
         WorkflowPermissionService(workflow).grant_change(
-            non_admin_user,
+            user=non_admin_user,
             source_type=PermissionSource.TEMPLATE_OWNER,
             source_id=0,
         )
@@ -723,8 +724,8 @@ class TestNonAdminRoleChangeTaskReadOnly:
 
         template_owner.is_deleted = True
         template_owner.save()
-        remove_perm('change_workflow', non_admin_user, workflow)
-        remove_perm('view_workflow', non_admin_user, workflow)
+        remove_perm(WorkflowPermission.CHANGE, non_admin_user, workflow)
+        remove_perm(WorkflowPermission.VIEW, non_admin_user, workflow)
         TemplateOwner.objects.create(
             role=OwnerRole.STARTER,
             template=template,

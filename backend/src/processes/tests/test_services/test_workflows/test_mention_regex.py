@@ -4,7 +4,7 @@ Unit tests for MENTION_RE regex pattern.
 Pure unit tests — no database required.
 """
 
-from src.processes.services.workflow_permissions import MENTION_RE
+from src.processes.utils.common import MENTION_RE
 
 
 def test_mention_re__single__returns_id():

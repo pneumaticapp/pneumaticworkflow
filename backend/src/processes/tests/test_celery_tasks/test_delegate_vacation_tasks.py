@@ -88,7 +88,7 @@ def test_delegate_vacation_tasks__delegates__ok(mocker):
         user=owner,
         substitute_group=group,
     )
-    assert WorkflowPermissionService(workflow).has_view(substitute)
+    assert WorkflowPermissionService(workflow).has_view(user=substitute)
     assert_guardian_view(workflow, substitute)
 
 
@@ -471,7 +471,7 @@ def test_delegate__error__rolls_back_user(mocker):
         group=group,
         type=PerformerType.GROUP,
     ).exists()
-    assert not WorkflowPermissionService(workflow).has_view(substitute)
+    assert not WorkflowPermissionService(workflow).has_view(user=substitute)
 
 
 def test_delegate__skips_non_running_workflow__ok(mocker):
@@ -539,7 +539,7 @@ def test_delegate__all_delegated__skips_members(mocker):
 
     """
     When all tasks are already delegated, wf_ids is empty
-    and add_members_bulk is not called (early return).
+    and sync_members is not called (early return).
     """
 
     # arrange
@@ -590,7 +590,7 @@ def test_delegate__all_delegated__skips_members(mocker):
     )
     add_members_mock = mocker.patch(
         'src.accounts.services.vacation.'
-        'VacationDelegationService.add_members_bulk',
+        'VacationDelegationService.sync_members',
     )
 
     # act

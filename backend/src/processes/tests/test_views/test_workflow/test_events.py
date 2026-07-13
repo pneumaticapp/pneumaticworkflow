@@ -231,7 +231,7 @@ def test_events__not_admin_user__ok(api_client):
     )
     workflow = create_test_workflow(owner)
     WorkflowPermissionService(workflow).grant_view(
-        user,
+        user=user,
         source_type=PermissionSource.PERFORMER,
         source_id=0,
     )

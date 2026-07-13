@@ -11,6 +11,7 @@ from src.processes.services.events import (
 from src.processes.services.exceptions import (
     CommentServiceException,
 )
+from src.processes.enums import WorkflowPermission
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_guest,
@@ -37,7 +38,7 @@ def test_delete_reaction__account_owner__ok(api_client, mocker):
     )
     workflow = create_test_workflow(user)
     task = workflow.tasks.get(number=1)
-    remove_perm('view_workflow', owner, workflow)
+    remove_perm(WorkflowPermission.VIEW, owner, workflow)
     event = WorkflowEventService.comment_created_event(
         text='Some comment',
         task=task,
@@ -72,7 +73,7 @@ def test_delete_reaction__account_owner__ok(api_client, mocker):
         is_superuser=False,
     )
     delete_reaction_mock.assert_called_once_with(value=value)
-    assert not WorkflowPermissionService(workflow).has_view(owner)
+    assert not WorkflowPermissionService(workflow).has_view(user=owner)
 
 
 def test_delete_reaction__workflow_member__ok(api_client, mocker):
@@ -87,7 +88,7 @@ def test_delete_reaction__workflow_member__ok(api_client, mocker):
     workflow = create_test_workflow(owner)
     task = workflow.tasks.get(number=1)
     WorkflowPermissionService(workflow).grant_view(
-        user,
+        user=user,
         source_type=PermissionSource.PERFORMER,
         source_id=0,
     )

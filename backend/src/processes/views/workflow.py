@@ -255,7 +255,7 @@ class WorkflowViewSet(
         instances = page if page is not None else qst
         wf_ids = [w.id for w in instances]
         owners_map = (
-            WorkflowPermissionService.get_owners_map(wf_ids)
+            WorkflowPermissionService.get_users_with_change_map(wf_ids)
             if wf_ids else {}
         )
         serializer = self.get_serializer(

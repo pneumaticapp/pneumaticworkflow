@@ -1138,11 +1138,15 @@ def _send_event_created(
 
     """ Send ws when workflow event created """
 
-    workflow = Workflow.objects.get(id=data['workflow_id'])
+    try:
+        workflow = Workflow.objects.get(id=data['workflow_id'])
+    except Workflow.DoesNotExist:
+        return
     users = (
         UserModel.objects
+        .on_account(account_id)
         .filter(
-            id__in=WorkflowPermissionService(workflow).get_viewer_ids(),
+            id__in=WorkflowPermissionService(workflow).get_users_with_view(),
             status=UserStatus.ACTIVE,
         )
         .order_by('id')
@@ -1195,11 +1199,15 @@ def _send_event_updated(
 
     """ Send ws when workflow event updated """
 
-    workflow = Workflow.objects.get(id=data['workflow_id'])
+    try:
+        workflow = Workflow.objects.get(id=data['workflow_id'])
+    except Workflow.DoesNotExist:
+        return
     users = (
         UserModel.objects
+        .on_account(account_id)
         .filter(
-            id__in=WorkflowPermissionService(workflow).get_viewer_ids(),
+            id__in=WorkflowPermissionService(workflow).get_users_with_view(),
             status=UserStatus.ACTIVE,
         )
         .order_by('id')
