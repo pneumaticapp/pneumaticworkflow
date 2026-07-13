@@ -74,8 +74,14 @@ jest.mock('../HelpModal/HelpModal', () => ({
   HelpModal: () => null,
 }));
 
+let returnModalOnConfirm: ((comment: string) => void) | undefined;
+
 jest.mock('../ReturnModal', () => ({
-  ReturnModal: () => null,
+  ReturnModal: ({ onConfirm }: { onConfirm: (comment: string) => void }) => {
+    returnModalOnConfirm = onConfirm;
+
+    return null;
+  },
 }));
 
 jest.mock('react-router-dom', () => ({
@@ -269,6 +275,7 @@ const baseProps = {
 describe('TaskCard', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    returnModalOnConfirm = undefined;
   });
 
   describe('Performer dropdown', () => {
@@ -406,6 +413,42 @@ describe('TaskCard', () => {
       expect(addOrUpdateStorageOutput).toHaveBeenCalledWith(1, [
         expect.objectContaining({ apiName: 'notes', value: 'draft text' }),
       ]);
+    });
+
+    it('does not flush pending output edits after task revert clears drafts', async () => {
+      const outputField = makeField({ apiName: 'notes', type: EExtraFieldType.Text, value: '' });
+      const task = {
+        ...baseTask,
+        output: [outputField],
+        revertTasks: [{ id: 2, name: 'Previous task', apiName: 'task-2' }],
+      };
+
+      const { unmount } = render(<TaskCard {...baseProps} task={task} />);
+
+      await waitFor(() => {
+        expect(mockExtraFieldIntl).toHaveBeenCalled();
+      });
+
+      const editField = mockExtraFieldIntl.mock.calls[0][0].editField;
+
+      act(() => {
+        editField({ value: 'draft text' });
+      });
+
+      act(() => {
+        returnModalOnConfirm?.('revert comment');
+      });
+
+      expect(baseProps.setTaskReverted).toHaveBeenCalledWith({
+        taskId: 1,
+        viewMode: ETaskCardViewMode.Single,
+        comment: 'revert comment',
+        clearOutputTaskIds: [1, 2],
+      });
+
+      unmount();
+
+      expect(addOrUpdateStorageOutput).not.toHaveBeenCalled();
     });
   });
 });

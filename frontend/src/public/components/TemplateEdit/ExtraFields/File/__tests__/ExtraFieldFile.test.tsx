@@ -1,10 +1,10 @@
 // <reference types="jest" />
 import * as React from 'react';
-import { render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 
 import { ExtraFieldFile } from '../ExtraFieldFile';
 import { EExtraFieldMode, EExtraFieldType, IExtraField } from '../../../../../types/template';
-import { TUploadedFile } from '../../../../../utils/uploadFiles';
+import { TUploadedFile, uploadFiles } from '../../../../../utils/uploadFiles';
 import { intlMock } from '../../../../../__stubs__/intlMock';
 
 jest.mock('../../../../../utils/uploadFiles', () => ({
@@ -181,6 +181,63 @@ describe('ExtraFieldFile', () => {
       );
 
       expect(screen.getByDisplayValue('Attachments')).toBeInTheDocument();
+    });
+  });
+
+  describe('upload handling', () => {
+    it('merges uploaded files against current state when field attachments change during upload', async () => {
+      let resolveUpload: (files: TUploadedFile[]) => void = () => undefined;
+
+      (uploadFiles as jest.Mock).mockImplementation(
+        () =>
+          new Promise<TUploadedFile[]>((resolve) => {
+            resolveUpload = resolve;
+          }),
+      );
+
+      const attachments: TUploadedFile[] = [
+        { id: 'att-1', name: 'existing.pdf', url: 'https://files.example.com/att-1', size: 1024 },
+      ];
+
+      const { container, rerender } = render(
+        React.createElement(ExtraFieldFile as React.FC<any>, {
+          ...baseProps,
+          field: createFileField({ attachments }),
+        }),
+      );
+
+      const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
+      const file = new File(['content'], 'uploaded.pdf', { type: 'application/pdf' });
+
+      fireEvent.change(fileInput, { target: { files: [file] } });
+
+      const updatedAttachments: TUploadedFile[] = [
+        { id: 'att-2', name: 'server.pdf', url: 'https://files.example.com/att-2', size: 2048 },
+      ];
+
+      rerender(
+        React.createElement(ExtraFieldFile as React.FC<any>, {
+          ...baseProps,
+          field: createFileField({ attachments: updatedAttachments }),
+        }),
+      );
+
+      await act(async () => {
+        resolveUpload([
+          { id: 'new-1', name: 'uploaded.pdf', url: 'https://files.example.com/new-1', size: 100 },
+        ]);
+      });
+
+      expect(editFieldMock).toHaveBeenCalledWith({
+        value: [
+          '[existing.pdf](https://files.example.com/att-1)',
+          '[uploaded.pdf](https://files.example.com/new-1)',
+        ],
+        attachments: [
+          attachments[0],
+          { id: 'new-1', name: 'uploaded.pdf', url: 'https://files.example.com/new-1', size: 100 },
+        ],
+      });
     });
   });
 });

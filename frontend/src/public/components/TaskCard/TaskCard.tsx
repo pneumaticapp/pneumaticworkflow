@@ -452,6 +452,7 @@ export function TaskCard({
   };
 
   const handleReturnTask = (comment: string) => {
+    saveOutputsToStorageDebounced.cancel();
     setTaskReverted({
       taskId: task.id,
       viewMode,
@@ -490,13 +491,14 @@ export function TaskCard({
       return (
         <Button
           isLoading={status === ETaskStatus.Completing}
-          onClick={() =>
+          onClick={() => {
+            saveOutputsToStorageDebounced.cancel();
             setTaskCompleted({
               taskId,
               viewMode,
               output: outputValues,
-            })
-          }
+            });
+          }}
           label={formatMessage({ id: 'processes.complete-task' })}
           size="md"
           disabled={isDisabled}
