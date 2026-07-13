@@ -151,7 +151,7 @@ class SignUpMixin:
             except (AccountServiceException, UserServiceException) as ex:
                 raise_validation_error(message=ex.message)
             else:
-                if settings.PROJECT_CONF['BILLING'] and billing_sync:
+                if billing_sync:
                     try:
                         stripe_service = StripeService(user=account_owner)
                         stripe_service.update_customer()

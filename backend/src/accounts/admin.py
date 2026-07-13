@@ -737,8 +737,6 @@ class AccountAdmin(ModelAdmin):
         with transaction.atomic():
             if obj.billing_plan == BillingPlanType.PREMIUM:
                 max_users = obj.get_paid_users_count()
-            elif obj.billing_plan == BillingPlanType.FREEMIUM:
-                max_users = settings.DEFAULT_MAX_USERS
             else:
                 max_users = 1000
             obj = service.partial_update(

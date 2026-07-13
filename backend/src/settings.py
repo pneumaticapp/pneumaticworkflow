@@ -336,7 +336,7 @@ class Common(Configuration):
     else:
         STRIPE_WEBHOOK_IP_WHITELIST = []
 
-    DEFAULT_MAX_USERS = 5
+    DEFAULT_MAX_USERS = 1000
 
     # Account verification
     VERIFICATION_CHECK = env.get('VERIFICATION_CHECK') == 'yes'
@@ -474,6 +474,11 @@ class Common(Configuration):
             },
         }
 
+    # Django Guardian - using built-in models
+    # Disable anonymous user creation (not needed for this project)
+    ANONYMOUS_USER_NAME = None
+    ANONYMOUS_USER_ID = -1
+
 
 class Testing(Common):
 
@@ -567,10 +572,6 @@ class Development(Common):
         },
     }
 
-    # Django Guardian - using built-in models
-    # Disable anonymous user creation (not needed for this project)
-    ANONYMOUS_USER_NAME = None
-    ANONYMOUS_USER_ID = -1
 
 
 class Staging(Development):
@@ -599,4 +600,4 @@ class Staging(Development):
 
 class Production(Staging):
 
-    MAX_INVITES = 100
+    MAX_INVITES = 1000
