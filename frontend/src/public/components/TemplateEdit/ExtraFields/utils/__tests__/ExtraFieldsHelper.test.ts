@@ -88,9 +88,40 @@ describe('ExtraFieldsHelper', () => {
       expect(result[0].value).toEqual([]);
     });
 
-    it('prefers storageOutput attachments over markdownValue', () => {
+    it('prefers server markdownValue over stale storageOutput attachments', () => {
       const serverField = createFileField({
         markdownValue: '[old.pdf](https://files.example.com/old)',
+      });
+
+      const storageAttachments: TUploadedFile[] = [
+        {
+          id: 'new-id',
+          name: 'new.pdf',
+          url: 'https://files.example.com/new',
+          size: 500,
+        },
+      ];
+
+      const storageField = createFileField({
+        attachments: storageAttachments,
+      });
+
+      const helper = new ExtraFieldsHelper([serverField], [storageField]);
+      const result = helper.getFieldsWithValues();
+
+      expect(result[0].attachments).toEqual([
+        {
+          id: 'old',
+          name: 'old.pdf',
+          url: 'https://files.example.com/old',
+          size: 0,
+        },
+      ]);
+    });
+
+    it('uses storageOutput attachments when server field has no value', () => {
+      const serverField = createFileField({
+        markdownValue: '',
       });
 
       const storageAttachments: TUploadedFile[] = [
@@ -117,7 +148,7 @@ describe('ExtraFieldsHelper', () => {
 
     it('filters out isRemoved files from storageOutput', () => {
       const serverField = createFileField({
-        markdownValue: '[doc.pdf](https://files.example.com/1)',
+        markdownValue: '',
       });
 
       const storageField = createFileField({

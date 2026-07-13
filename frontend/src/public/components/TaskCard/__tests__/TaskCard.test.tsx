@@ -332,4 +332,28 @@ describe('TaskCard', () => {
       });
     });
   });
+
+  describe('Output field ordering', () => {
+    it('renders output fields sorted by order descending to match the template', async () => {
+      const { ExtraFieldIntl } = jest.requireMock('../../TemplateEdit/ExtraFields');
+
+      const task = {
+        ...baseTask,
+        output: [
+          makeField({ apiName: 'url-field', name: 'Presentation URL', type: EExtraFieldType.Url, order: 0 }),
+          makeField({ apiName: 'file-field', name: 'Presentation file', type: EExtraFieldType.File, order: 1 }),
+        ],
+      };
+
+      render(<TaskCard {...baseProps} task={task} />);
+
+      await waitFor(() => {
+        expect(ExtraFieldIntl).toHaveBeenCalled();
+      });
+
+      const renderedApiNames = ExtraFieldIntl.mock.calls.map((call: any[]) => call[0].field.apiName);
+
+      expect(renderedApiNames).toEqual(['file-field', 'url-field']);
+    });
+  });
 });

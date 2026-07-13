@@ -38,6 +38,15 @@ export function ExtraFieldFile({
   const fieldNameInputRef = React.useRef<HTMLInputElement | null>(null);
   const [isFocused, setIsFocused] = React.useState(false);
   const { formatMessage } = useIntl();
+
+  useEffect(() => {
+    const nextFiles = field.attachments?.length
+      ? field.attachments
+      : parseMarkdownToFiles(field.markdownValue);
+
+    setFilesToUploadState(nextFiles);
+  }, [field.apiName, field.attachments, field.markdownValue]);
+
   useEffect(() => {
     const { current } = uploadFieldRef;
 

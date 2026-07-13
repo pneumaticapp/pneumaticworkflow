@@ -343,6 +343,7 @@ export function* setTaskReverted({ payload: { viewMode, taskId, comment } }: TSe
     yield revertTask({ id: taskId, comment });
 
     NotificationManager.success({ message: 'tasks.task-success-revert' });
+    removeOutputFromLocalStorage(taskId);
 
     if (viewMode === ETaskCardViewMode.List) {
       yield put(shiftTaskList({ currentTaskId: taskId }));

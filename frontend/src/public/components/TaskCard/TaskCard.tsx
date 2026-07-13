@@ -40,6 +40,7 @@ import {
   IWorkflowDetails,
 } from '../../types/workflow';
 import { getEditedFields } from '../TemplateEdit/ExtraFields/utils/getEditedFields';
+import { sortFieldsByOrder } from '../../utils/workflows';
 import { IntlMessages } from '../IntlMessages';
 import { Button } from '../UI/Buttons/Button';
 import { IAuthUser, IWorkflowLog } from '../../types/redux';
@@ -158,10 +159,12 @@ export function TaskCard({
   useEffect(() => {
     const { output, id } = task;
     const storageOutput = getOutputFromStorage(id);
-    const outputFieldsWithValues = new ExtraFieldsHelper(output, storageOutput).getFieldsWithValues();
+    const outputFieldsWithValues = sortFieldsByOrder(
+      new ExtraFieldsHelper(output, storageOutput).getFieldsWithValues(),
+    );
 
     setOutputValues(outputFieldsWithValues);
-  }, [task.id]);
+  }, [task.id, task.output]);
 
   const handleOpenWorkflowPopup = (workflowId: number | null) => (e: MouseEvent) => {
     e.preventDefault();

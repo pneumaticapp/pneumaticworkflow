@@ -139,6 +139,28 @@ describe('ExtraFieldFile', () => {
       // No files grid should appear
       expect(container.querySelector('[class*="files-grid"]')).toBeNull();
     });
+
+    it('updates displayed files when field attachments change', () => {
+      const { rerender } = render(
+        React.createElement(ExtraFieldFile as React.FC<any>, {
+          ...baseProps,
+          field: createFileField({ attachments: [] }),
+        }),
+      );
+
+      rerender(
+        React.createElement(ExtraFieldFile as React.FC<any>, {
+          ...baseProps,
+          field: createFileField({
+            attachments: [
+              { id: 'new', name: 'updated.pdf', url: 'https://files.example.com/updated', size: 100 },
+            ],
+          }),
+        }),
+      );
+
+      expect(screen.getByText('updated.pdf')).toBeInTheDocument();
+    });
   });
 
   describe('kickoff mode rendering', () => {

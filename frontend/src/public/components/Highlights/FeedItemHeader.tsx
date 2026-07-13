@@ -72,7 +72,9 @@ export function FeedItemHeader({
 
     const filteredOutputs = outputs.filter((output) => {
       const value = output.type === EExtraFieldType.User ? output.userId || output.groupId : output.value;
-      return value || output.attachments?.length;
+      const hasFileValue = output.type === EExtraFieldType.File && Boolean(output.markdownValue);
+
+      return value || output.attachments?.length || hasFileValue;
     });
 
     return (

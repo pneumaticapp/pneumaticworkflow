@@ -66,28 +66,50 @@ export class ExtraFieldsHelper {
     return this.storageOutput.find((field) => field.apiName === fieldApiName);
   };
 
+  private hasServerValue = (field: IExtraField): boolean => {
+    if (field.type === EExtraFieldType.File) {
+      return Boolean(field.markdownValue) || Boolean(field.attachments?.length);
+    }
+
+    if (field.type === EExtraFieldType.User) {
+      return Boolean(field.userId || field.groupId);
+    }
+
+    if (field.type === EExtraFieldType.Checkbox) {
+      return Array.isArray(field.value) && field.value.length > 0;
+    }
+
+    return Boolean(field.value);
+  };
+
   private getFieldValue = (
     initialValue: TExtraFieldValue | undefined,
     defaultValue: TExtraFieldValue,
     fieldApiName: string,
+    field: IExtraField,
   ) => {
     const normalizedInitialValue = Array.isArray(initialValue) && initialValue.length === 0 ? null : initialValue;
+    const storageValue = this.getStorageField(fieldApiName)?.value;
 
-    return this.getStorageField(fieldApiName)?.value || normalizedInitialValue || defaultValue;
+    if (this.hasServerValue(field)) {
+      return normalizedInitialValue ?? defaultValue;
+    }
+
+    return storageValue ?? normalizedInitialValue ?? defaultValue;
   };
 
   private fieldValuesDispatch: TFieldDispatchRecord = {
     [EExtraFieldType.Number]: (field: IExtraField) => {
-      return { ...field, value: this.getFieldValue(field.value, '', field.apiName) };
+      return { ...field, value: this.getFieldValue(field.value, '', field.apiName, field) };
     },
     [EExtraFieldType.Text]: (field: IExtraField) => {
-      return { ...field, value: this.getFieldValue(field.value, '', field.apiName) };
+      return { ...field, value: this.getFieldValue(field.value, '', field.apiName, field) };
     },
     [EExtraFieldType.String]: (field: IExtraField) => {
-      return { ...field, value: this.getFieldValue(field.value, '', field.apiName) };
+      return { ...field, value: this.getFieldValue(field.value, '', field.apiName, field) };
     },
     [EExtraFieldType.Url]: (field: IExtraField) => {
-      return { ...field, value: this.getFieldValue(field.value, '', field.apiName) };
+      return { ...field, value: this.getFieldValue(field.value, '', field.apiName, field) };
     },
     [EExtraFieldType.File]: (field: IExtraField) => {
       const serverAttachments = parseMarkdownToFiles(field.markdownValue);
@@ -95,7 +117,9 @@ export class ExtraFieldsHelper {
       const storageAttachments = this.getStorageField(field.apiName)?.attachments?.filter(
         ({ isRemoved }) => !isRemoved,
       );
-      const attachments = storageAttachments || initialAttachments || [];
+      const attachments = this.hasServerValue(field)
+        ? initialAttachments || []
+        : storageAttachments || initialAttachments || [];
       const value = attachments.map(({ name, url }) => `[${name}](${url})`);
 
       return {
@@ -105,16 +129,16 @@ export class ExtraFieldsHelper {
       };
     },
     [EExtraFieldType.Date]: (field: IExtraField) => {
-      return { ...field, value: this.getFieldValue(field.value, '', field.apiName) };
+      return { ...field, value: this.getFieldValue(field.value, '', field.apiName, field) };
     },
     [EExtraFieldType.Checkbox]: (field: IExtraField) => {
-      return { ...field, value: this.getFieldValue(field.value, [], field.apiName) };
+      return { ...field, value: this.getFieldValue(field.value, [], field.apiName, field) };
     },
     [EExtraFieldType.Radio]: (field: IExtraField) => {
       if (!field.selections || field.selections.length === 0) {
         return null;
       }
-      return { ...field, value: this.getFieldValue(field.value, null, field.apiName) };
+      return { ...field, value: this.getFieldValue(field.value, null, field.apiName, field) };
     },
 
     [EExtraFieldType.Creatable]: (field: IExtraField) => {
@@ -122,11 +146,11 @@ export class ExtraFieldsHelper {
         return null;
       }
 
-      return { ...field, value: this.getFieldValue(field.value, null, field.apiName) };
+      return { ...field, value: this.getFieldValue(field.value, null, field.apiName, field) };
     },
 
     [EExtraFieldType.User]: (field: IExtraField) => {
-      return { ...field, value: this.getFieldValue(field.value, '', field.apiName) };
+      return { ...field, value: this.getFieldValue(field.value, '', field.apiName, field) };
     },
   };
 }
