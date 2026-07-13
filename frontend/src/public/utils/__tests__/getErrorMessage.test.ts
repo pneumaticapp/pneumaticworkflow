@@ -361,6 +361,42 @@ describe('getErrorMessage', () => {
     };
     expect(getErrorMessage(error)).toBe('error.fetch-failed');
   });
+
+  it('maps blank checklist item value to validation.checklist-item-empty', () => {
+    const error: ICustomError = {
+      code: 'validation_error',
+      message: 'Value: this field may not be blank.',
+      details: {
+        api_name: 'citem-abc123',
+        reason: 'Value: this field may not be blank.',
+      },
+    };
+    expect(getErrorMessage(error)).toBe('validation.checklist-item-empty');
+  });
+
+  it('maps blank value without checklist api_name to validation.field-empty', () => {
+    const error: ICustomError = {
+      code: 'validation_error',
+      message: 'Value: this field may not be blank.',
+      details: {
+        api_name: 'predicate-abc123',
+        reason: 'Value: this field may not be blank.',
+      },
+    };
+    expect(getErrorMessage(error)).toBe('validation.field-empty');
+  });
+
+  it('maps empty checklist error to validation.checklist-items-invalid', () => {
+    const error: ICustomError = {
+      code: 'validation_error',
+      message: 'Checklist items not exists or invalid.',
+      details: {
+        api_name: 'clist-abc123',
+        reason: 'Checklist items not exists or invalid.',
+      },
+    };
+    expect(getErrorMessage(error)).toBe('validation.checklist-items-invalid');
+  });
 });
 
 // ========================================================================

@@ -452,6 +452,8 @@ export const enMessages = {
   'validation.number-invalid-format': 'Invalid number format',
   'validation.company-name-empty': 'Please enter your company name',
   'validation.field-empty': 'This field cannot be empty',
+  'validation.checklist-item-empty': 'Checklist item cannot be empty',
+  'validation.checklist-items-invalid': 'Checklist must contain at least one item',
   'validation.process-name-empty': 'Please enter a template name',
   'validation.process-name-to-long': 'The template name is longer than 120 characters',
   'validation.task-name-empty': 'A step name cannot be empty',

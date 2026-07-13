@@ -3,10 +3,14 @@ export interface ICustomError {
   message: string;
   details?: {
     name?: string;
+    api_name?: string;
     reason: string;
   };
   detail?: string;
 }
+
+const BLANK_VALUE_ERROR = 'value: this field may not be blank.';
+const CHECKLIST_ITEM_API_NAME_PREFIX = 'citem-';
 
 export const DEFAULT_ERROR_CODE = 'error__unknown_code';
 export const UNKNOWN_ERROR = 'Something Went Wrong';
@@ -33,6 +37,25 @@ const errorMapper: { [key: string]: string } = {
   VAL_002: 'file-service.missing-required-field',
   STORAGE_002: 'file-service.upload-failed',
   STORAGE_003: 'file-service.download-failed',
+
+  'Checklist items not exists or invalid.': 'validation.checklist-items-invalid',
+};
+
+const mapValidationMessage = (normalized: ICustomError): string | undefined => {
+  const messageLower = normalized.message?.trim()?.toLowerCase() || '';
+  const reasonLower = normalized.details?.reason?.trim()?.toLowerCase() || '';
+  const isBlankValueError = messageLower === BLANK_VALUE_ERROR || reasonLower === BLANK_VALUE_ERROR;
+
+  if (!isBlankValueError) {
+    return undefined;
+  }
+
+  const apiName = normalized.details?.api_name || '';
+  if (apiName.startsWith(CHECKLIST_ITEM_API_NAME_PREFIX)) {
+    return 'validation.checklist-item-empty';
+  }
+
+  return 'validation.field-empty';
 };
 
 /**
@@ -102,6 +125,11 @@ export const getErrorMessage = (error?: unknown) => {
 
   if (typeof dictionaryErrorMessage === 'string') {
     return dictionaryErrorMessage;
+  }
+
+  const validationMessage = mapValidationMessage(normalized);
+  if (validationMessage) {
+    return validationMessage;
   }
 
   if (detail) {
