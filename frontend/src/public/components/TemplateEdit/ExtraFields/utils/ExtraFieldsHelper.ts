@@ -112,8 +112,13 @@ export class ExtraFieldsHelper {
       return { ...field, value: this.getFieldValue(field.value, '', field.apiName, field) };
     },
     [EExtraFieldType.File]: (field: IExtraField) => {
-      const serverAttachments = parseMarkdownToFiles(field.markdownValue);
-      const initialAttachments = serverAttachments.length > 0 ? serverAttachments : null;
+      const serverAttachmentsFromMarkdown = parseMarkdownToFiles(field.markdownValue);
+      const serverAttachmentsFromField = field.attachments?.filter(({ isRemoved }) => !isRemoved) ?? [];
+      const initialAttachments = serverAttachmentsFromMarkdown.length > 0
+        ? serverAttachmentsFromMarkdown
+        : serverAttachmentsFromField.length > 0
+          ? serverAttachmentsFromField
+          : null;
       const storageAttachments = this.getStorageField(field.apiName)?.attachments?.filter(
         ({ isRemoved }) => !isRemoved,
       );

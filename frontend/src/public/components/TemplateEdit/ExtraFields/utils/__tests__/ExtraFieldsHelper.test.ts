@@ -176,6 +176,35 @@ describe('ExtraFieldsHelper', () => {
       expect(result[0].attachments![0].name).toBe('kept.pdf');
     });
 
+    it('uses server attachments when markdownValue is absent', () => {
+      const serverField = createFileField({
+        markdownValue: undefined,
+        attachments: [
+          {
+            id: 'server-att',
+            name: 'server.pdf',
+            url: 'https://files.example.com/server',
+            size: 100,
+          },
+        ],
+      });
+
+      const helper = new ExtraFieldsHelper([serverField]);
+      const result = helper.getFieldsWithValues();
+
+      expect(result[0].attachments).toEqual([
+        {
+          id: 'server-att',
+          name: 'server.pdf',
+          url: 'https://files.example.com/server',
+          size: 100,
+        },
+      ]);
+      expect(result[0].value).toEqual([
+        '[server.pdf](https://files.example.com/server)',
+      ]);
+    });
+
     it('falls back to markdownValue when storageOutput has no matching field', () => {
       const serverField = createFileField({
         apiName: 'field-server',

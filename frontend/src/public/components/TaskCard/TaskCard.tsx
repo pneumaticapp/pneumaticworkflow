@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useEffect, useState, useRef, MouseEvent } from 'react';
+import { useEffect, useMemo, useState, useRef, MouseEvent } from 'react';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
 import { Link } from 'react-router-dom';
@@ -52,6 +52,7 @@ import { TUserListItem } from '../../types/user';
 import { trackInviteTeamInPage } from '../../utils/analytics';
 import { Tooltip } from '../UI';
 import { addOrUpdateStorageOutput, getOutputFromStorage } from './utils/storageOutputs';
+import { getTaskOutputFingerprint } from './utils/getTaskOutputFingerprint';
 import { TaskCarkSkeleton } from './TaskCarkSkeleton';
 import { GuestController } from './GuestsController';
 import { createChecklistExtension, createProgressbarExtension } from './checklist';
@@ -132,7 +133,10 @@ export function TaskCard({
   const { isMobile } = useCheckDevice();
 
   const groups = useSelector(getRegularGroupsList);
-  const saveOutputsToStorageDebounced = debounce(300, addOrUpdateStorageOutput);
+  const saveOutputsToStorageDebounced = useMemo(
+    () => debounce(300, addOrUpdateStorageOutput),
+    [],
+  );
 
   const guestsControllerRef = useRef<React.ElementRef<typeof GuestController> | null>(null);
   const wrapperRef = useRef(null);
@@ -140,6 +144,16 @@ export function TaskCard({
   const [outputValues, setOutputValues] = useState([] as IExtraField[]);
   const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
+  const outputSyncStateRef = useRef({
+    taskId: null as number | null,
+    dateStarted: null as string | null,
+    outputFingerprint: '',
+  });
+
+  const taskOutputFingerprint = useMemo(
+    () => getTaskOutputFingerprint(task.output),
+    [task.output],
+  );
 
   const helpTextLocal = helpText ?? workflow?.description ?? null;
 
@@ -157,14 +171,32 @@ export function TaskCard({
   }, [task.performers.length]);
 
   useEffect(() => {
-    const { output, id } = task;
+    const { output, id, dateStarted } = task;
+    const syncState = outputSyncStateRef.current;
+    const isNewTask = syncState.taskId !== id;
+    const isTaskRestarted = syncState.taskId === id && syncState.dateStarted !== dateStarted;
+    const isServerOutputChanged =
+      syncState.taskId === id && syncState.outputFingerprint !== taskOutputFingerprint;
+
+    if (!isNewTask && !isTaskRestarted && !isServerOutputChanged) {
+      return;
+    }
+
+    if (isNewTask || isTaskRestarted) {
+      saveOutputsToStorageDebounced.cancel();
+    }
+
     const storageOutput = getOutputFromStorage(id);
     const outputFieldsWithValues = sortFieldsByOrder(
       new ExtraFieldsHelper(output, storageOutput).getFieldsWithValues(),
     );
 
     setOutputValues(outputFieldsWithValues);
-  }, [task.id, task.output]);
+
+    syncState.taskId = id;
+    syncState.dateStarted = dateStarted;
+    syncState.outputFingerprint = taskOutputFingerprint;
+  }, [task.id, task.dateStarted, taskOutputFingerprint, saveOutputsToStorageDebounced]);
 
   const handleOpenWorkflowPopup = (workflowId: number | null) => (e: MouseEvent) => {
     e.preventDefault();
