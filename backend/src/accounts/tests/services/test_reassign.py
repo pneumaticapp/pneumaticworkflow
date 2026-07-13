@@ -26,6 +26,9 @@ from src.processes.models.workflows.workflow import Workflow
 from src.processes.services.workflow_permissions import (
     WorkflowPermissionService,
 )
+from src.processes.tasks.update_workflow import (
+    sync_workflow_performer_permissions,
+)
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
@@ -44,7 +47,7 @@ class TestReassignService:
     def test_init__to_the_same_user__raise_exception(self):
 
         # arrange
-        user = create_test_user()
+        user = create_test_owner()
 
         # act
         with pytest.raises(exceptions.ReassignUserSameUser):
@@ -53,7 +56,7 @@ class TestReassignService:
     def test_init__to_the_same_group__raise_exception(self):
 
         # arrange
-        user = create_test_user()
+        user = create_test_owner()
         group = create_test_group(user.account)
 
         # act
@@ -63,7 +66,7 @@ class TestReassignService:
     def test_init__only_old_group__raise_exception(self):
 
         # arrange
-        user = create_test_user()
+        user = create_test_owner()
         group = create_test_group(user.account)
 
         # act
@@ -73,7 +76,7 @@ class TestReassignService:
     def test_init__only_old_user__raise_exception(self):
 
         # arrange
-        user = create_test_user()
+        user = create_test_owner()
 
         # act
         with pytest.raises(exceptions.ReassignNewUserDoesNotExist):
@@ -82,7 +85,7 @@ class TestReassignService:
     def test_init__only_new_group__raise_exception(self):
 
         # arrange
-        user = create_test_user()
+        user = create_test_owner()
         group = create_test_group(user.account)
 
         # act
@@ -92,7 +95,7 @@ class TestReassignService:
     def test_init__only_new_user__raise_exception(self):
 
         # arrange
-        user = create_test_user()
+        user = create_test_owner()
 
         # act
         with pytest.raises(exceptions.ReassignOldUserDoesNotExist):
@@ -1246,9 +1249,9 @@ class TestReassignService:
         mocker,
     ):
         """
-        _reassign_in_workflow_members must sync performer sources
-        synchronously (stale PERFORMER UOP cleared) and schedule
-        attachment ACL sync via schedule_sync_*.
+        _reassign_in_workflow_members schedules performer-source
+        sync via sync_workflow_performer_permissions (on_commit);
+        the task clears stale PERFORMER UOP and schedules attachment ACL.
         """
         # arrange
         account = create_test_account(name='test_account')
@@ -1272,9 +1275,18 @@ class TestReassignService:
             source_id=0,
         )
 
+        mocker.patch(
+            'src.accounts.services.reassign.transaction.on_commit',
+            side_effect=lambda fn: fn(),
+        )
         attach_mock = mocker.patch(
-            'src.accounts.services.reassign.'
+            'src.processes.tasks.update_workflow.'
             'schedule_sync_workflow_attachment_permissions',
+        )
+        sync_delay_mock = mocker.patch(
+            'src.accounts.services.reassign.'
+            'sync_workflow_performer_permissions.delay',
+            side_effect=sync_workflow_performer_permissions,
         )
 
         service = ReassignService(old_user=old_user, new_user=new_user)
@@ -1286,6 +1298,7 @@ class TestReassignService:
         assert not WorkflowPermissionService(workflow).has_view(
             user=old_user,
         )
+        sync_delay_mock.assert_called_once_with(workflow.id)
         attach_mock.assert_called_once_with(workflow.id)
 
     def test_reassign_in_template_conditions__with_old_and_new_user__ok(self):
@@ -1687,9 +1700,8 @@ class TestReassignService:
 
 def test_reassign_workflow_members__dispatches_async_task__ok(mocker):
     """
-    _reassign_in_workflow_members must sync performer sources
-    synchronously (stale PERFORMER UOP cleared) and schedule
-    attachment ACL sync via schedule_sync_*.
+    _reassign_in_workflow_members schedules performer-source sync
+    via sync_workflow_performer_permissions.delay on commit.
     """
 
     # arrange
@@ -1712,9 +1724,13 @@ def test_reassign_workflow_members__dispatches_async_task__ok(mocker):
     )
     assert WorkflowPermissionService(workflow).has_view(user=old_user)
 
-    attach_mock = mocker.patch(
+    mocker.patch(
+        'src.accounts.services.reassign.transaction.on_commit',
+        side_effect=lambda fn: fn(),
+    )
+    sync_delay_mock = mocker.patch(
         'src.accounts.services.reassign.'
-        'schedule_sync_workflow_attachment_permissions',
+        'sync_workflow_performer_permissions.delay',
     )
 
     service = ReassignService(old_user=old_user, new_user=new_user)
@@ -1723,10 +1739,7 @@ def test_reassign_workflow_members__dispatches_async_task__ok(mocker):
     service._reassign_in_workflow_members()
 
     # assert
-    assert not WorkflowPermissionService(workflow).has_view(
-        user=old_user,
-    )
-    attach_mock.assert_called_once_with(workflow.id)
+    sync_delay_mock.assert_called_once_with(workflow.id)
 
 
 def test_reassign_workflow_members__transfers_workflow_viewer__ok(mocker):

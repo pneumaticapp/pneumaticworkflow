@@ -417,8 +417,8 @@ class VacationDelegationService:
         )
         return self.user
 
-    @staticmethod
     def sync_members(
+        self,
         wf_ids: Set[int],
         substitute_user_ids: List[int],
         user_id: int,
@@ -431,7 +431,10 @@ class VacationDelegationService:
         if not wf_ids:
             return
 
-        workflows = Workflow.objects.filter(id__in=wf_ids)
+        workflows = Workflow.objects.filter(
+            id__in=wf_ids,
+            account_id=self.user.account_id,
+        )
         for workflow in workflows:
             WorkflowPermissionService(workflow).sync_view(
                 user_ids=substitute_user_ids,

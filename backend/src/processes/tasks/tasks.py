@@ -109,7 +109,7 @@ def _delegate_tasks_for_user(user):
     sub_ids = list(
         sub_group.users.values_list('id', flat=True),
     )
-    VacationDelegationService.sync_members(
+    service.sync_members(
         wf_ids=wf_ids,
         substitute_user_ids=sub_ids,
         user_id=user.id,

@@ -672,7 +672,7 @@ def test__add_user_in_owner_and_taskperformer__ok():
 
     # assert — TEMPLATE_OWNER view from set_view_and_change
     has_view = WorkflowPermissionService(workflow).has_view(user=common_user)
-    assert (1 if has_view else 0) == 1
+    assert has_view is True
 
 
 def test__add_performer_with_status_deleted__ok():

@@ -502,7 +502,7 @@ class GuestWorkflowEventsPermission(BasePermission):
                 return Task.objects.filter(
                     id=request.task_id,
                     workflow_id=workflow_id,
-                ).active().exists()
+                ).exists()
         else:
             return True
 

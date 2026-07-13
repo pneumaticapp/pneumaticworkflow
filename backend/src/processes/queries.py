@@ -2464,13 +2464,13 @@ class WorkflowPermissionQuery:
     def _get_perm_subquery(cls, user_id: int, codename: str):
         """Return a Subquery of workflow PKs that user has permission for.
 
-        Uses direct query on permissions_userobjectpermission table.
-        Cast object_pk (varchar) to integer so PostgreSQL can
-        compare with workflow.id without type mismatch.
+        Casts ``object_pk`` to integer for comparison with workflow PKs.
+        Guardian stores ``object_pk`` as varchar; casting inside the
+        subquery keeps the outer ``__in`` lookup type-safe.
 
         ContentType is resolved by app_label/model (not
         get_for_model(Workflow)) to avoid circular import:
-        Workflow → querysets → queries.
+        Workflow -> querysets -> queries.
         """
         ct = ContentType.objects.get(
             app_label='processes',
@@ -2508,7 +2508,7 @@ class WorkflowPermissionQuery:
 
     @classmethod
     def change_q(cls, user_id: int, pk_field: str = 'pk', prefix: str = ''):
-        """Return Q() filter for workflows user can change (manage)."""
+        """Return Q() filter for workflows user can change."""
         return Q(**{
             f'{prefix}{pk_field}__in': cls._get_perm_subquery(
                 user_id, WorkflowPermission.CHANGE,

@@ -54,13 +54,10 @@ from src.processes.models.workflows.conditions import Predicate
 from src.processes.models.workflows.raw_performer import RawPerformer
 from src.processes.models.workflows.task import TaskPerformer
 from src.processes.models.workflows.workflow import Workflow
-from src.processes.services.workflow_permissions import (
-    WorkflowPermissionService,
-)
 from src.processes.tasks.tasks import complete_tasks
-from src.processes.tasks.update_workflow import update_workflow_owners
-from src.storage.tasks import (
-    schedule_sync_workflow_attachment_permissions,
+from src.processes.tasks.update_workflow import (
+    sync_workflow_performer_permissions,
+    update_workflow_owners,
 )
 
 UserModel = get_user_model()
@@ -377,16 +374,17 @@ class ReassignService:
         if not affected_workflow_ids:
             return
 
-        workflows = Workflow.objects.filter(
-            id__in=affected_workflow_ids,
-            is_deleted=False,
+        live_wf_ids = list(
+            Workflow.objects.filter(
+                id__in=affected_workflow_ids,
+                is_deleted=False,
+            ).values_list('id', flat=True),
         )
-        for workflow in workflows:
-            WorkflowPermissionService(workflow).sync_performer_sources()
-
-        for workflow_id in affected_workflow_ids:
-            schedule_sync_workflow_attachment_permissions(
-                workflow_id,
+        for wf_id in live_wf_ids:
+            transaction.on_commit(
+                lambda _id=wf_id: (
+                    sync_workflow_performer_permissions.delay(_id)
+                ),
             )
 
     def _workflow_viewer_base_qs(self):

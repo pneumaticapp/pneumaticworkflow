@@ -15,6 +15,7 @@ Processes in batches to avoid memory issues on large datasets.
 """
 
 from django.db import migrations
+from django.db.models import F
 # Hardcoded to avoid importing from app code — migration must be
 # immune to future changes in PermissionSource / enum values.
 SOURCE_WORKFLOW_VIEWER = 'WorkflowViewer'
@@ -172,7 +173,6 @@ def forward(apps, schema_editor):
     # --- owners → change_workflow + view_workflow (TemplateOwner) ---
     if hasattr(Workflow, 'owners'):
         through = Workflow.owners.through
-        from django.db.models import F
         rows = through.objects.annotate(
             template_id=F('workflow__template_id'),
         ).values_list(

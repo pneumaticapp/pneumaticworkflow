@@ -730,15 +730,20 @@ class CommentService(BaseModelService):
                     workflow.id,
                 )
             if mentioned_users_ids:
+                _event_id = self.instance.id
+                _event_text = self.instance.text
                 transaction.on_commit(
-                    lambda: send_mention_notification.delay(
-                        logging=self.user.account.log_api_requests,
-                        logo_lg=self.user.account.logo_lg,
-                        author_id=self.user.id,
-                        event_id=self.instance.id,
-                        account_id=self.user.account.id,
-                        users_ids=mentioned_users_ids,
-                        text=self.instance.text,
+                    lambda _eid=_event_id, _etxt=_event_text,
+                    _uids=mentioned_users_ids: (
+                        send_mention_notification.delay(
+                            logging=self.user.account.log_api_requests,
+                            logo_lg=self.user.account.logo_lg,
+                            author_id=self.user.id,
+                            event_id=_eid,
+                            account_id=self.user.account.id,
+                            users_ids=_uids,
+                            text=_etxt,
+                        )
                     ),
                 )
                 AnalyticService.mentions_created(
@@ -749,15 +754,20 @@ class CommentService(BaseModelService):
                     workflow=workflow,
                 )
             if notify_users_ids:
+                _event_id = self.instance.id
+                _event_text = self.instance.text
                 transaction.on_commit(
-                    lambda: send_comment_notification.delay(
-                        logging=self.account.log_api_requests,
-                        logo_lg=self.account.logo_lg,
-                        author_id=self.user.id,
-                        event_id=self.instance.id,
-                        account_id=self.account.id,
-                        users_ids=notify_users_ids,
-                        text=self.instance.text,
+                    lambda _eid=_event_id, _etxt=_event_text,
+                    _uids=notify_users_ids: (
+                        send_comment_notification.delay(
+                            logging=self.account.log_api_requests,
+                            logo_lg=self.account.logo_lg,
+                            author_id=self.user.id,
+                            event_id=_eid,
+                            account_id=self.account.id,
+                            users_ids=_uids,
+                            text=_etxt,
+                        )
                     ),
                 )
                 AnalyticService.comment_added(
@@ -808,15 +818,21 @@ class CommentService(BaseModelService):
             )
 
             if added_ids:
+                _event_id = self.instance.id
+                _event_text = self.instance.text
+                _added = tuple(added_ids)
                 transaction.on_commit(
-                    lambda: send_mention_notification.delay(
-                        logging=self.user.account.log_api_requests,
-                        logo_lg=self.user.account.logo_lg,
-                        author_id=self.user.id,
-                        event_id=self.instance.id,
-                        account_id=self.user.account.id,
-                        users_ids=tuple(added_ids),
-                        text=self.instance.text,
+                    lambda _eid=_event_id, _etxt=_event_text,
+                    _uids=_added: (
+                        send_mention_notification.delay(
+                            logging=self.user.account.log_api_requests,
+                            logo_lg=self.user.account.logo_lg,
+                            author_id=self.user.id,
+                            event_id=_eid,
+                            account_id=self.user.account.id,
+                            users_ids=_uids,
+                            text=_etxt,
+                        )
                     ),
                 )
 

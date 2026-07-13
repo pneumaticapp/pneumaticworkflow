@@ -45,13 +45,15 @@ from src.processes.tests.fixtures import (
 pytestmark = pytest.mark.django_db
 
 
-def _req(user):
+def mock_request(user):
+    """Build a mock DRF request with .user set."""
     r = MagicMock()
     r.user = user
     return r
 
 
-def _vw(**kwargs):
+def mock_view(**kwargs):
+    """Build a mock DRF view with .kwargs as strings."""
     v = MagicMock()
     v.kwargs = {k: str(val) for k, val in kwargs.items()}
     return v
@@ -66,7 +68,7 @@ def test_wf_owner_perm__account_owner__allowed():
 
     # act
     result = perm.has_permission(
-        _req(owner), _vw(pk=workflow.pk),
+        mock_request(owner), mock_view(pk=workflow.pk),
     )
 
     # assert
@@ -95,7 +97,7 @@ def test_wf_owner_perm__admin_manager__allowed():
 
     # act
     result = perm.has_permission(
-        _req(admin), _vw(pk=workflow.pk),
+        mock_request(admin), mock_view(pk=workflow.pk),
     )
 
     # assert
@@ -119,7 +121,7 @@ def test_wf_owner_perm__non_admin__denied():
 
     # act
     result = perm.has_permission(
-        _req(non_admin), _vw(pk=workflow.pk),
+        mock_request(non_admin), mock_view(pk=workflow.pk),
     )
 
     # assert
@@ -138,7 +140,7 @@ def test_wf_owner_perm__admin_no_manage__denied():
 
     # act
     result = perm.has_permission(
-        _req(admin), _vw(pk=workflow.pk),
+        mock_request(admin), mock_view(pk=workflow.pk),
     )
 
     # assert
@@ -172,7 +174,7 @@ def test_wf_member_perm__mentioned__allowed():
 
     # act
     result = perm.has_permission(
-        _req(mentioned), _vw(pk=workflow.pk),
+        mock_request(mentioned), mock_view(pk=workflow.pk),
     )
 
     # assert
@@ -191,7 +193,7 @@ def test_wf_member_perm__stranger__denied():
 
     # act
     result = perm.has_permission(
-        _req(stranger), _vw(pk=workflow.pk),
+        mock_request(stranger), mock_view(pk=workflow.pk),
     )
 
     # assert
@@ -227,7 +229,7 @@ def test_wf_member_perm__deleted_performer__denied():
 
     # act
     result = perm.has_permission(
-        _req(performer), _vw(pk=workflow.pk),
+        mock_request(performer), mock_view(pk=workflow.pk),
     )
 
     # assert
@@ -244,7 +246,7 @@ def test_task_wf_owner__account_owner__allowed():
 
     # act
     result = perm.has_permission(
-        _req(owner), _vw(pk=task.pk),
+        mock_request(owner), mock_view(pk=task.pk),
     )
 
     # assert
@@ -274,7 +276,7 @@ def test_task_wf_owner__admin_manager__allowed():
 
     # act
     result = perm.has_permission(
-        _req(admin), _vw(pk=task.pk),
+        mock_request(admin), mock_view(pk=task.pk),
     )
 
     # assert
@@ -294,7 +296,7 @@ def test_task_wf_owner__admin_no_manage__denied():
 
     # act
     result = perm.has_permission(
-        _req(admin), _vw(pk=task.pk),
+        mock_request(admin), mock_view(pk=task.pk),
     )
 
     # assert
@@ -319,7 +321,7 @@ def test_task_wf_member__viewer__allowed():
 
     # act
     result = perm.has_permission(
-        _req(viewer), _vw(pk=task.pk),
+        mock_request(viewer), mock_view(pk=task.pk),
     )
 
     # assert
@@ -339,7 +341,7 @@ def test_task_wf_member__stranger__denied():
 
     # act
     result = perm.has_permission(
-        _req(stranger), _vw(pk=task.pk),
+        mock_request(stranger), mock_view(pk=task.pk),
     )
 
     # assert
@@ -363,7 +365,7 @@ def test_wf_member_or_viewer__viewer__allowed():
 
     # act
     result = perm.has_permission(
-        _req(viewer), _vw(pk=workflow.pk),
+        mock_request(viewer), mock_view(pk=workflow.pk),
     )
 
     # assert
@@ -382,7 +384,7 @@ def test_wf_member_or_viewer__stranger__denied():
 
     # act
     result = perm.has_permission(
-        _req(stranger), _vw(pk=wf.pk),
+        mock_request(stranger), mock_view(pk=wf.pk),
     )
 
     # assert
@@ -407,7 +409,7 @@ def test_task_wf_member_or_viewer__viewer__ok():
 
     # act
     result = perm.has_permission(
-        _req(viewer), _vw(pk=task.pk),
+        mock_request(viewer), mock_view(pk=task.pk),
     )
 
     # assert
@@ -427,7 +429,7 @@ def test_task_wf_member_or_viewer__stranger__denied():
 
     # act
     result = perm.has_permission(
-        _req(stranger), _vw(pk=task.pk),
+        mock_request(stranger), mock_view(pk=task.pk),
     )
 
     # assert
@@ -461,7 +463,7 @@ def test_task_comment__mentioned__allowed():
 
     # act
     result = perm.has_permission(
-        _req(viewer), _vw(pk=task.pk),
+        mock_request(viewer), mock_view(pk=task.pk),
     )
 
     # assert
@@ -481,7 +483,7 @@ def test_task_comment__stranger__denied():
 
     # act
     result = perm.has_permission(
-        _req(stranger), _vw(pk=task.pk),
+        mock_request(stranger), mock_view(pk=task.pk),
     )
 
     # assert
@@ -515,7 +517,7 @@ def test_wf_comment__mentioned__allowed():
 
     # act
     result = perm.has_permission(
-        _req(viewer), _vw(pk=workflow.pk),
+        mock_request(viewer), mock_view(pk=workflow.pk),
     )
 
     # assert
@@ -534,7 +536,7 @@ def test_wf_comment__stranger__denied():
 
     # act
     result = perm.has_permission(
-        _req(stranger), _vw(pk=workflow.pk),
+        mock_request(stranger), mock_view(pk=workflow.pk),
     )
 
     # assert
@@ -568,7 +570,7 @@ def test_reaction__viewer__allowed():
 
     # act
     result = perm.has_permission(
-        _req(viewer), _vw(pk=comment.pk),
+        mock_request(viewer), mock_view(pk=comment.pk),
     )
 
     # assert
@@ -597,7 +599,7 @@ def test_reaction__stranger__denied():
 
     # act
     result = perm.has_permission(
-        _req(stranger), _vw(pk=comment.pk),
+        mock_request(stranger), mock_view(pk=comment.pk),
     )
 
     # assert
@@ -626,7 +628,7 @@ def test_tmpl_fields__viewer__allowed():
 
     # act
     result = perm.has_permission(
-        _req(viewer), _vw(pk=template.pk),
+        mock_request(viewer), mock_view(pk=template.pk),
     )
 
     # assert
@@ -648,7 +650,7 @@ def test_tmpl_fields__stranger__denied():
 
     # act
     result = perm.has_permission(
-        _req(stranger), _vw(pk=template.pk),
+        mock_request(stranger), mock_view(pk=template.pk),
     )
 
     # assert
@@ -668,7 +670,7 @@ def test_bypass__wf_owner_perm__no_guardian__ok():
 
     # act
     result = perm.has_permission(
-        _req(owner), _vw(pk=workflow.pk),
+        mock_request(owner), mock_view(pk=workflow.pk),
     )
 
     # assert
@@ -686,7 +688,7 @@ def test_bypass__wf_member_perm__no_guardian__ok():
 
     # act
     result = perm.has_permission(
-        _req(owner), _vw(pk=workflow.pk),
+        mock_request(owner), mock_view(pk=workflow.pk),
     )
 
     # assert
@@ -704,7 +706,7 @@ def test_bypass__task_wf_owner__no_guardian__ok():
 
     # act
     result = perm.has_permission(
-        _req(owner), _vw(pk=task.pk),
+        mock_request(owner), mock_view(pk=task.pk),
     )
 
     # assert
@@ -727,7 +729,7 @@ def test_guest__wf_member_perm__allowed():
 
     # act
     result = perm.has_permission(
-        _req(guest), _vw(pk=workflow.pk),
+        mock_request(guest), mock_view(pk=workflow.pk),
     )
 
     # assert
@@ -811,7 +813,7 @@ def test_non_admin__with_manage__denied():
 
     # act
     result = perm.has_permission(
-        _req(regular), _vw(pk=workflow.pk),
+        mock_request(regular), mock_view(pk=workflow.pk),
     )
 
     # assert
@@ -829,7 +831,7 @@ def test_wf_owner_perm__invalid_pk__denied():
 
     # act
     result = perm.has_permission(
-        _req(owner), _vw(pk='abc'),
+        mock_request(owner), mock_view(pk='abc'),
     )
 
     # assert
@@ -847,7 +849,7 @@ def test_wf_owner_perm__nonexistent_pk__denied():
 
     # act
     result = perm.has_permission(
-        _req(admin), _vw(pk=999999),
+        mock_request(admin), mock_view(pk=999999),
     )
 
     # assert
@@ -863,7 +865,7 @@ def test_wf_member_perm__none_pk__denied():
     perm = WorkflowMemberPermission()
 
     # act
-    result = perm.has_permission(_req(owner), view)
+    result = perm.has_permission(mock_request(owner), view)
 
     # assert
     assert result is False
@@ -897,7 +899,7 @@ def test_task_wf_member__deleted_performer__denied():
 
     # act
     result = perm.has_permission(
-        _req(performer), _vw(pk=task.pk),
+        mock_request(performer), mock_view(pk=task.pk),
     )
 
     # assert
@@ -929,7 +931,7 @@ def test_task_comment__deleted_performer__denied():
 
     # act
     result = perm.has_permission(
-        _req(performer), _vw(pk=task.pk),
+        mock_request(performer), mock_view(pk=task.pk),
     )
 
     # assert
@@ -961,7 +963,7 @@ def test_wf_comment__deleted_performer__denied():
 
     # act
     result = perm.has_permission(
-        _req(performer), _vw(pk=workflow.pk),
+        mock_request(performer), mock_view(pk=workflow.pk),
     )
 
     # assert
@@ -1002,7 +1004,7 @@ def test_reaction__deleted_performer__denied():
 
     # act
     result = perm.has_permission(
-        _req(performer), _vw(pk=comment.pk),
+        mock_request(performer), mock_view(pk=comment.pk),
     )
 
     # assert

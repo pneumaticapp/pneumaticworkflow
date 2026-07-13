@@ -26,11 +26,7 @@ from src.processes.tests.fixtures import (
 from src.storage.enums import AccessType, SourceType
 from src.storage.models import Attachment
 from src.storage.services.attachments import AttachmentService
-from src.storage.tasks import (
-    schedule_sync_template_attachment_permissions,
-    sync_template_attachment_permissions,
-    sync_workflow_attachment_permissions,
-)
+from src.storage.tasks import sync_workflow_attachment_permissions
 from src.storage.utils import reassign_restricted_permissions_for_task
 
 pytestmark = pytest.mark.django_db
@@ -455,28 +451,6 @@ def test_rebuild_template_att__owner_not_duplicated_as_viewer():
     ).exists()
 
 
-def test_sync_template_attachment_permissions__task__ok():
-
-    # arrange
-    account = create_test_account()
-    owner = create_test_owner(account=account)
-    template = create_test_template(
-        user=owner, is_active=True, tasks_count=1,
-    )
-    attachment = create_test_attachment(
-        account=account,
-        file_id='tpl_task.pdf',
-        template=template,
-        source_type=SourceType.TEMPLATE,
-    )
-
-    # act
-    sync_template_attachment_permissions(template.id)
-
-    # assert
-    assert _has_attachment_access(owner, attachment.file_id)
-
-
 def test_sync_workflow_attachment_permissions__also_rebuilds_template():
 
     # arrange
@@ -607,26 +581,6 @@ def test_reassign_for_task__removed_viewer_loses_template_access():
 
     # assert
     assert not _has_attachment_access(viewer, attachment.file_id)
-
-
-def test_schedule_sync_template_attachment_permissions__enqueues(
-    mocker,
-):
-
-    # arrange
-    delay_mock = mocker.patch(
-        'src.storage.tasks.sync_template_attachment_permissions.delay',
-    )
-    mocker.patch(
-        'src.storage.tasks.transaction.on_commit',
-        side_effect=lambda fn: fn(),
-    )
-
-    # act
-    schedule_sync_template_attachment_permissions(42)
-
-    # assert
-    delay_mock.assert_called_once_with(42)
 
 
 def test_rebuild_template_att__ignores_public_and_task_files():

@@ -44,7 +44,8 @@ def test_sync_members__replaces_vacation_view__ok(mocker):
         email='s2@pneumatic.app',
     )
     workflow = create_test_workflow(user=owner)
-    VacationDelegationService.sync_members(
+    service = VacationDelegationService(user=owner)
+    service.sync_members(
         wf_ids={workflow.id},
         substitute_user_ids=[sub1.id],
         user_id=owner.id,
@@ -52,7 +53,7 @@ def test_sync_members__replaces_vacation_view__ok(mocker):
     schedule_sync_mock.reset_mock()
 
     # act
-    VacationDelegationService.sync_members(
+    service.sync_members(
         wf_ids={workflow.id},
         substitute_user_ids=[sub2.id],
         user_id=owner.id,

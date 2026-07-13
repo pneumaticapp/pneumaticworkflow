@@ -23,17 +23,6 @@ def schedule_sync_workflow_attachment_permissions(
     )
 
 
-def schedule_sync_template_attachment_permissions(
-    template_id: int,
-) -> None:
-    """Enqueue template attachment ACL rebuild after TX commit."""
-    transaction.on_commit(
-        lambda tid=template_id: (
-            sync_template_attachment_permissions.delay(tid)
-        ),
-    )
-
-
 @shared_task(
     acks_late=True,
     autoretry_for=(Exception,),
@@ -81,26 +70,6 @@ def sync_workflow_attachment_permissions(workflow_id: int):
         service.reassign_restricted_permissions(att)
 
     if workflow.template_id:
-        schedule_sync_template_attachment_permissions(
+        service.rebuild_template_attachment_permissions(
             workflow.template_id,
         )
-
-
-@shared_task(
-    acks_late=True,
-    autoretry_for=(Exception,),
-    retry_kwargs={
-        'max_retries': 3,
-        'countdown': 5,
-    },
-)
-def sync_template_attachment_permissions(template_id: int):
-    """Rebuild restricted TEMPLATE attachment ACL for a template.
-
-    Uses desired-set recalculation so access is kept when the user
-    still has view on another workflow of the same template, and
-    revoked when they no longer have any.
-    """
-    AttachmentService().rebuild_template_attachment_permissions(
-        template_id=template_id,
-    )

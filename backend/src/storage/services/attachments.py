@@ -5,6 +5,7 @@ from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.db import IntegrityError, models, transaction
 from django.db.models import Q
+from django.utils.functional import cached_property
 
 from src.generics.base.service import BaseModelService
 from src.permissions.models import (
@@ -58,6 +59,14 @@ class AttachmentService(BaseModelService):
     Service for working with attachments.
     Automatically assigns access permissions on creation.
     """
+
+    @cached_property
+    def _access_attachment_perm(self) -> Permission:
+        ctype = ContentType.objects.get_for_model(Attachment)
+        return Permission.objects.get(
+            content_type=ctype,
+            codename='access_attachment',
+        )
 
     def _create_instance(self, **kwargs):
         """Creates Attachment instance."""
@@ -166,10 +175,7 @@ class AttachmentService(BaseModelService):
             return
 
         ctype = ContentType.objects.get_for_model(Attachment)
-        perm = Permission.objects.get(
-            content_type=ctype,
-            codename='access_attachment',
-        )
+        perm = self._access_attachment_perm
 
         att_pks = [str(att.pk) for att in attachments]
         if not att_pks:
@@ -306,10 +312,7 @@ class AttachmentService(BaseModelService):
         desired_group_ids = owner_group_ids | perf_group_ids
 
         ctype = ContentType.objects.get_for_model(Attachment)
-        perm = Permission.objects.get(
-            content_type=ctype,
-            codename='access_attachment',
-        )
+        perm = self._access_attachment_perm
         obj_pks = [str(att.pk) for att in attachments]
 
         with transaction.atomic():
@@ -379,86 +382,94 @@ class AttachmentService(BaseModelService):
             object_pk=obj_pk,
         ).delete()
 
-        perm = Permission.objects.get(
-            content_type=ctype,
-            codename='access_attachment',
-        )
+        perm = self._access_attachment_perm
 
-        # Assign permissions to task performers
         task_performers = task.taskperformer_set.exclude_directly_deleted()
+        user_perms = []
+        group_perms = []
+
         for performer in task_performers:
             if performer.user:
-                UserObjectPermission.objects.get_or_create(
-                    user=performer.user,
-                    permission=perm,
-                    content_type=ctype,
-                    object_pk=obj_pk,
-                    source_type=PermissionSource.PERFORMER,
-                    source_id=performer.pk,
+                user_perms.append(
+                    UserObjectPermission(
+                        user=performer.user,
+                        permission=perm,
+                        content_type=ctype,
+                        object_pk=obj_pk,
+                        source_type=PermissionSource.PERFORMER,
+                        source_id=performer.pk,
+                    ),
+                )
+            if performer.group:
+                group_perms.append(
+                    GroupObjectPermission(
+                        group=performer.group,
+                        permission=perm,
+                        content_type=ctype,
+                        object_pk=obj_pk,
+                    ),
                 )
 
-        # Assign permissions to workflow viewers
         workflow = task.workflow
         if workflow:
             viewer_ids = WorkflowPermissionService(
                 workflow,
             ).get_users_with_view()
-            if viewer_ids:
-                for viewer in UserModel.objects.filter(id__in=viewer_ids):
-                    UserObjectPermission.objects.get_or_create(
-                        user=viewer,
+            for uid in viewer_ids:
+                user_perms.append(
+                    UserObjectPermission(
+                        user_id=uid,
                         permission=perm,
                         content_type=ctype,
                         object_pk=obj_pk,
                         source_type=PermissionSource.WORKFLOW_VIEWER,
                         source_id=workflow.pk,
-                    )
+                    ),
+                )
 
-            # Assign permissions to template owners
             if workflow.template:
                 template_user_owners = TemplateOwner.objects.filter(
                     template_id=workflow.template_id,
                     type=OwnerType.USER,
                     user__isnull=False,
                     is_deleted=False,
-                ).select_related('user')
-                for template_owner in template_user_owners:
-                    if template_owner.user:
-                        UserObjectPermission.objects.get_or_create(
-                            user=template_owner.user,
+                )
+                for to in template_user_owners:
+                    user_perms.append(
+                            UserObjectPermission(
+                                user_id=to.user_id,
+                                permission=perm,
+                                content_type=ctype,
+                                object_pk=obj_pk,
+                                source_type=PermissionSource.TEMPLATE_OWNER,
+                                source_id=to.pk,
+                            ),
+                    )
+
+                template_group_owners = TemplateOwner.objects.filter(
+                    template_id=workflow.template_id,
+                    type=OwnerType.GROUP,
+                    group__isnull=False,
+                    is_deleted=False,
+                )
+                for to in template_group_owners:
+                    group_perms.append(
+                        GroupObjectPermission(
+                            group_id=to.group_id,
                             permission=perm,
                             content_type=ctype,
                             object_pk=obj_pk,
-                            source_type=PermissionSource.TEMPLATE_OWNER,
-                            source_id=template_owner.pk,
-                        )
-
-        # Assign permissions to groups (UserGroup)
-        for performer in task_performers:
-            if performer.group:
-                GroupObjectPermission.objects.get_or_create(
-                    group=performer.group,
-                    permission=perm,
-                    content_type=ctype,
-                    object_pk=obj_pk,
-                )
-
-        # Assign permissions to template owner groups
-        if workflow and workflow.template:
-            template_group_owners = TemplateOwner.objects.filter(
-                template_id=workflow.template_id,
-                type=OwnerType.GROUP,
-                group__isnull=False,
-                is_deleted=False,
-            ).select_related('group')
-            for template_owner in template_group_owners:
-                if template_owner.group:
-                    GroupObjectPermission.objects.get_or_create(
-                        group=template_owner.group,
-                        permission=perm,
-                        content_type=ctype,
-                        object_pk=obj_pk,
+                        ),
                     )
+
+        if user_perms:
+            UserObjectPermission.objects.bulk_create(
+                user_perms, ignore_conflicts=True,
+            )
+        if group_perms:
+            GroupObjectPermission.objects.bulk_create(
+                group_perms, ignore_conflicts=True,
+            )
 
     def _assign_template_permissions(self):
         """Assigns permissions for template."""
@@ -483,42 +494,42 @@ class AttachmentService(BaseModelService):
             object_pk=obj_pk,
         ).delete()
 
-        # Assign permissions to template owners (exclude soft-deleted)
-        template_owners = template.owners.filter(
+        perm = self._access_attachment_perm
+        user_perms = []
+        group_perms = []
+
+        for owner in template.owners.filter(
             is_deleted=False,
-            type=OwnerType.USER,
-            user__isnull=False,
-        )
-        perm = Permission.objects.get(
-            content_type=ctype,
-            codename='access_attachment',
-        )
-        obj_pk = str(self.instance.pk)
-        for owner in template_owners:
-            if owner.user:
-                UserObjectPermission.objects.get_or_create(
-                    user=owner.user,
-                    permission=perm,
-                    content_type=ctype,
-                    object_pk=obj_pk,
-                    source_type=PermissionSource.TEMPLATE_OWNER,
-                    source_id=owner.pk,
+        ):
+            if owner.type == OwnerType.USER and owner.user_id:
+                user_perms.append(
+                    UserObjectPermission(
+                        user_id=owner.user_id,
+                        permission=perm,
+                        content_type=ctype,
+                        object_pk=obj_pk,
+                        source_type=PermissionSource.TEMPLATE_OWNER,
+                        source_id=owner.pk,
+                    ),
+                )
+            elif owner.type == OwnerType.GROUP and owner.group_id:
+                group_perms.append(
+                    GroupObjectPermission(
+                        group_id=owner.group_id,
+                        permission=perm,
+                        content_type=ctype,
+                        object_pk=obj_pk,
+                    ),
                 )
 
-        # Assign permissions to template owner groups
-        template_group_owners = template.owners.filter(
-            is_deleted=False,
-            type=OwnerType.GROUP,
-            group__isnull=False,
-        ).select_related('group')
-        for owner in template_group_owners:
-            if owner.group:
-                GroupObjectPermission.objects.get_or_create(
-                    group=owner.group,
-                    permission=perm,
-                    content_type=ctype,
-                    object_pk=str(self.instance.pk),
-                )
+        if user_perms:
+            UserObjectPermission.objects.bulk_create(
+                user_perms, ignore_conflicts=True,
+            )
+        if group_perms:
+            GroupObjectPermission.objects.bulk_create(
+                group_perms, ignore_conflicts=True,
+            )
 
     def _assign_workflow_permissions(self):
         """Assigns permissions for workflow."""
@@ -547,91 +558,86 @@ class AttachmentService(BaseModelService):
             object_pk=obj_pk,
         ).delete()
 
-        # Assign permissions to workflow participants
-        perm = Permission.objects.get(
-            content_type=ctype,
-            codename='access_attachment',
-        )
+        perm = self._access_attachment_perm
+        user_perms = []
+        group_perms = []
 
-        # Assign permissions to task performers
         tasks = workflow.tasks.all()
         for task in tasks:
-            task_performers = (
+            performers = (
                 task.taskperformer_set.exclude_directly_deleted()
             )
-            for performer in task_performers:
-                if performer.user:
-                    UserObjectPermission.objects.get_or_create(
-                        user=performer.user,
-                        permission=perm,
-                        content_type=ctype,
-                        object_pk=obj_pk,
-                        source_type=PermissionSource.PERFORMER,
-                        source_id=performer.pk,
+            for performer in performers:
+                if performer.user_id:
+                    user_perms.append(
+                        UserObjectPermission(
+                            user_id=performer.user_id,
+                            permission=perm,
+                            content_type=ctype,
+                            object_pk=obj_pk,
+                            source_type=PermissionSource.PERFORMER,
+                            source_id=performer.pk,
+                        ),
+                    )
+                if performer.group_id:
+                    group_perms.append(
+                        GroupObjectPermission(
+                            group_id=performer.group_id,
+                            permission=perm,
+                            content_type=ctype,
+                            object_pk=obj_pk,
+                        ),
                     )
 
-        # Assign permissions to workflow viewers
-        viewer_ids = WorkflowPermissionService(workflow).get_users_with_view()
-        if viewer_ids:
-            for viewer in UserModel.objects.filter(id__in=viewer_ids):
-                UserObjectPermission.objects.get_or_create(
-                    user=viewer,
+        viewer_ids = WorkflowPermissionService(
+            workflow,
+        ).get_users_with_view()
+        for uid in viewer_ids:
+            user_perms.append(
+                UserObjectPermission(
+                    user_id=uid,
                     permission=perm,
                     content_type=ctype,
                     object_pk=obj_pk,
                     source_type=PermissionSource.WORKFLOW_VIEWER,
                     source_id=workflow.pk,
-                )
-
-        # Assign permissions to template owners
-        if workflow.template:
-            template_user_owners = TemplateOwner.objects.filter(
-                template_id=workflow.template_id,
-                type=OwnerType.USER,
-                user__isnull=False,
-                is_deleted=False,
-            ).select_related('user')
-            for template_owner in template_user_owners:
-                if template_owner.user:
-                    UserObjectPermission.objects.get_or_create(
-                        user=template_owner.user,
-                        permission=perm,
-                        content_type=ctype,
-                        object_pk=obj_pk,
-                        source_type=PermissionSource.TEMPLATE_OWNER,
-                        source_id=template_owner.pk,
-                    )
-
-        # Assign permissions to groups from task performers
-        for task in tasks:
-            task_performers = (
-                task.taskperformer_set.exclude_directly_deleted()
+                ),
             )
-            for performer in task_performers:
-                if performer.group:
-                    GroupObjectPermission.objects.get_or_create(
-                        group=performer.group,
-                        permission=perm,
-                        content_type=ctype,
-                        object_pk=obj_pk,
+
+        if workflow.template:
+            for to in TemplateOwner.objects.filter(
+                template_id=workflow.template_id,
+                is_deleted=False,
+            ):
+                if to.type == OwnerType.USER and to.user_id:
+                    user_perms.append(
+                        UserObjectPermission(
+                            user_id=to.user_id,
+                            permission=perm,
+                            content_type=ctype,
+                            object_pk=obj_pk,
+                            source_type=PermissionSource.TEMPLATE_OWNER,
+                            source_id=to.pk,
+                        ),
+                    )
+                elif to.type == OwnerType.GROUP and to.group_id:
+                    group_perms.append(
+                        GroupObjectPermission(
+                            group_id=to.group_id,
+                            permission=perm,
+                            content_type=ctype,
+                            object_pk=obj_pk,
+                        ),
                     )
 
-        # Assign permissions to template owner groups
-        if workflow.template:
-            template_group_owners = TemplateOwner.objects.filter(
-                template_id=workflow.template_id,
-                type=OwnerType.GROUP,
-                group__isnull=False,
-                is_deleted=False,
-            ).select_related('group')
-            for template_owner in template_group_owners:
-                if template_owner.group:
-                    GroupObjectPermission.objects.get_or_create(
-                        group=template_owner.group,
-                        permission=perm,
-                        content_type=ctype,
-                        object_pk=obj_pk,
-                    )
+        if user_perms:
+            UserObjectPermission.objects.bulk_create(
+                user_perms, ignore_conflicts=True,
+            )
+        if group_perms:
+            GroupObjectPermission.objects.bulk_create(
+                group_perms, ignore_conflicts=True,
+            )
 
     def bulk_create(
         self,

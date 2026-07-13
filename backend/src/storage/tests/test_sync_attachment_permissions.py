@@ -1,5 +1,6 @@
 import pytest
 from unittest.mock import call
+from django.contrib.contenttypes.models import ContentType
 
 from src.permissions.enums import PermissionSource
 from src.processes.enums import PerformerType
@@ -17,7 +18,9 @@ from src.processes.tests.fixtures import (
     create_test_template,
     create_test_workflow,
 )
+from src.permissions.models import UserObjectPermission
 from src.storage.enums import AccessType, SourceType
+from src.storage.models import Attachment
 from src.storage.services.attachments import AttachmentService
 from src.storage.tasks import sync_workflow_attachment_permissions
 
@@ -287,11 +290,19 @@ def test_sync_wf_att_perms__soft_deleted_wf__skips_silently():
     )
     workflow.is_deleted = True
     workflow.save(update_fields=['is_deleted'])
+    att_ct = ContentType.objects.get_for_model(Attachment)
+    perm_count_before = UserObjectPermission.objects.filter(
+        content_type=att_ct,
+    ).count()
 
     # act
     sync_workflow_attachment_permissions(workflow.id)
 
-    # assert — no exception raised
+    # assert
+    perm_count_after = UserObjectPermission.objects.filter(
+        content_type=att_ct,
+    ).count()
+    assert perm_count_after == perm_count_before
 
 
 @pytest.mark.django_db
