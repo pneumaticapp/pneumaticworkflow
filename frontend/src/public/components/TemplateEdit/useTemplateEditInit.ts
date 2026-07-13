@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { FormikProps } from 'formik';
 
 import { ITemplateEditParams } from './templateEditPage.types';
@@ -12,6 +12,9 @@ import { ITemplate } from '../../types/template';
 import { TUserListItem } from '../../types/user';
 import { TLoadTemplateVariablesSuccessPayload } from '../../redux/actions';
 import { IAuthUser } from '../../types/redux';
+import { getTemplateVariablesFingerprint } from './useTemplateForm/templateFormUtils';
+
+const TEMPLATE_VARIABLES_SYNC_DEBOUNCE_MS = 350;
 
 type TUseTemplateEditInitParams = {
   match: { params: ITemplateEditParams };
@@ -51,7 +54,11 @@ export function useTemplateEditInit({
   const prevUsers = usePrevious(users);
   const prevLocation = usePrevious(location);
   const prevTemplate = usePrevious(template);
-  const prevFormikValues = usePrevious(formik.values);
+  const hasSyncedVariablesRef = useRef(false);
+  const formikValuesRef = useRef(formik.values);
+  formikValuesRef.current = formik.values;
+
+  const variablesFingerprint = getTemplateVariablesFingerprint(formik.values);
 
   const initPage = () => {
     const { id } = match.params;
@@ -104,16 +111,6 @@ export function useTemplateEditInit({
   }, [firstTaskUuid, location.pathname, openTask]);
 
   useEffect(() => {
-    // Derive variables from Formik, not the Redux `template` prop. Kickoff/task
-    // field edits update Formik immediately while Redux stays stale until autosave.
-    const variables = getVariables(formik.values);
-    const prevVariables = prevFormikValues ? getVariables(prevFormikValues) : [];
-    if (variables.length !== prevVariables.length) {
-      if (formik.values.id) {
-        loadTemplateVariablesSuccess({ templateId: formik.values.id, variables });
-      }
-    }
-
     const [pathName, prevPathName] = [location.pathname, prevLocation?.pathname];
     const isPreviousPathIsCreate = prevPathName === ERoutes.TemplatesCreate;
     const isCurrentPathIsEdit = checkSomeRouteIsActive(ERoutes.TemplatesEdit);
@@ -125,19 +122,51 @@ export function useTemplateEditInit({
       if (!isFirstRender) {
         initPage();
       }
+    }
+  }, [location, template]);
+
+  useEffect(() => {
+    if (users.length === prevUsers?.length) {
       return;
     }
 
-    if (users.length !== prevUsers?.length) {
-      // Build from the current Formik values, not the Redux `template` prop.
-      // Field edits live in Formik until `TemplateFormPersistProvider` flushes
-      // them to Redux, so the Redux snapshot can lag behind. Formik uses
-      // `enableReinitialize`, so a `setTemplate` built from the stale Redux
-      // prop would reset Formik to that snapshot and discard any uncommitted
-      // edits. Spreading from `formik.values` carries those edits into the
-      // new Redux state so the reinitialize is a no-op for them.
-      const newTemplateOwners = getNormalizedTemplateOwners(formik.values.owners, accessConditions, users);
-      setTemplate({ ...formik.values, owners: newTemplateOwners });
+    // Build from the current Formik values, not the Redux `template` prop.
+    // Field edits live in Formik until `TemplateFormPersistProvider` flushes
+    // them to Redux, so the Redux snapshot can lag behind. Formik uses
+    // `enableReinitialize`, so a `setTemplate` built from the stale Redux
+    // prop would reset Formik to that snapshot and discard any uncommitted
+    // edits. Spreading from `formik.values` carries those edits into the
+    // new Redux state so the reinitialize is a no-op for them.
+    const currentValues = formikValuesRef.current;
+    const newTemplateOwners = getNormalizedTemplateOwners(currentValues.owners, accessConditions, users);
+    setTemplate({ ...currentValues, owners: newTemplateOwners });
+  }, [users, accessConditions, prevUsers?.length, setTemplate]);
+
+  useEffect(() => {
+    const syncVariables = () => {
+      const currentValues = formikValuesRef.current;
+
+      if (currentValues.id) {
+        loadTemplateVariablesSuccess({
+          templateId: currentValues.id,
+          variables: getVariables(currentValues),
+        });
+      }
+    };
+
+    // Populate the map immediately when the template first loads. Subsequent
+    // metadata edits are debounced so typing a task/field name does not rebuild
+    // every variable and dispatch Redux work for each keystroke.
+    if (!hasSyncedVariablesRef.current) {
+      hasSyncedVariablesRef.current = true;
+      syncVariables();
+      return undefined;
     }
-  }, [location, users, template, formik.values]);
+
+    const timeoutId = window.setTimeout(syncVariables, TEMPLATE_VARIABLES_SYNC_DEBOUNCE_MS);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [variablesFingerprint, loadTemplateVariablesSuccess]);
 }

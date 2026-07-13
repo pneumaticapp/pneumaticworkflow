@@ -57,6 +57,8 @@ export type TSaveTemplatePayload =
       onFailed?(): void;
       /** Autosave generation from `TemplateFormPersistProvider`; stale saves are skipped after discard. */
       requestId?: number;
+      /** Immutable form snapshot used when the editor unmounts before the save runs. */
+      templateSnapshot?: ITemplate;
     }
   | undefined;
 export type TSaveTemplate = ITypedReduxAction<ETemplateActions.Save, TSaveTemplatePayload>;
@@ -101,6 +103,8 @@ export type TPatchTemplatePayload = {
   onFailed?(): void;
   /** Autosave generation from `TemplateFormPersistProvider`; stale saves are skipped after discard. */
   requestId?: number;
+  /** Immutable form snapshot used instead of reading potentially reset Redux state. */
+  templateSnapshot?: ITemplate;
 };
 export type TPatchTemplate = ITypedReduxAction<ETemplateActions.PatchTemplate, TPatchTemplatePayload>;
 export const patchTemplate: (payload: TPatchTemplatePayload) => TPatchTemplate = actionGenerator<
