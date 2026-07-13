@@ -3,7 +3,6 @@ import { useEffect, useState, useRef, MouseEvent, useMemo } from 'react';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
 import { Link } from 'react-router-dom';
-import { debounce } from 'throttle-debounce';
 import { useSelector } from 'react-redux';
 
 import { autoFocusFirstField } from '../../utils/autoFocusFirstField';
@@ -51,6 +50,7 @@ import { TUserListItem } from '../../types/user';
 import { trackInviteTeamInPage } from '../../utils/analytics';
 import { Tooltip } from '../UI';
 import { addOrUpdateStorageOutput, getOutputFromStorage } from './utils/storageOutputs';
+import { createFlushableDebounce } from './utils/createFlushableDebounce';
 import { TaskCarkSkeleton } from './TaskCarkSkeleton';
 import { GuestController } from './GuestsController';
 import { createChecklistExtension, createProgressbarExtension } from './checklist';
@@ -131,7 +131,10 @@ export function TaskCard({
   const { isMobile } = useCheckDevice();
 
   const groups = useSelector(getRegularGroupsList);
-  const saveOutputsToStorageDebounced = useMemo(() => debounce(300, addOrUpdateStorageOutput), []);
+  const saveOutputsToStorageDebounced = useMemo(
+    () => createFlushableDebounce(300, addOrUpdateStorageOutput),
+    [],
+  );
   const taskOutputSignature = useMemo(
     () =>
       JSON.stringify(
@@ -175,7 +178,7 @@ export function TaskCard({
     setOutputValues(outputFieldsWithValues);
 
     return () => {
-      saveOutputsToStorageDebounced.cancel();
+      saveOutputsToStorageDebounced.flush();
     };
   }, [task.id, taskOutputSignature, saveOutputsToStorageDebounced]);
 

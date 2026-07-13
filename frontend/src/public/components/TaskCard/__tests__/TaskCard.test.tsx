@@ -1,14 +1,18 @@
 import * as React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 
 import { TaskCard, ETaskCardViewMode } from '../TaskCard';
 import { EExtraFieldType, ETemplateOwnerType, IExtraField } from '../../../types/template';
 import { ETaskStatus } from '../../../redux/actions';
 import { EWorkflowStatus, EWorkflowsLogSorting } from '../../../types/workflow';
+import { ExtraFieldIntl } from '../../TemplateEdit/ExtraFields';
+import { addOrUpdateStorageOutput } from '../utils/storageOutputs';
 
 jest.mock('../../TemplateEdit/ExtraFields', () => ({
   ExtraFieldIntl: jest.fn(() => <div data-testid="extra-field" />),
 }));
+
+const mockExtraFieldIntl = ExtraFieldIntl as unknown as jest.Mock;
 
 jest.mock('../utils/storageOutputs', () => ({
   getOutputFromStorage: jest.fn(() => undefined),
@@ -330,6 +334,78 @@ describe('TaskCard', () => {
       await waitFor(() => {
         expect(screen.getAllByTestId('extra-field')).toHaveLength(2);
       });
+    });
+  });
+
+  describe('Output draft persistence', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('flushes pending output edits before task output updates from the server', async () => {
+      const outputField = makeField({ apiName: 'notes', type: EExtraFieldType.Text, value: '' });
+      const task = {
+        ...baseTask,
+        output: [outputField],
+      };
+
+      const { rerender } = render(<TaskCard {...baseProps} task={task} />);
+
+      await waitFor(() => {
+        expect(mockExtraFieldIntl).toHaveBeenCalled();
+      });
+
+      const editField = mockExtraFieldIntl.mock.calls[0][0].editField;
+
+      act(() => {
+        editField({ value: 'draft text' });
+      });
+
+      expect(addOrUpdateStorageOutput).not.toHaveBeenCalled();
+
+      rerender(
+        <TaskCard
+          {...baseProps}
+          task={{
+            ...task,
+            output: [{ ...outputField, value: 'server value' }],
+          }}
+        />,
+      );
+
+      expect(addOrUpdateStorageOutput).toHaveBeenCalledWith(1, [
+        expect.objectContaining({ apiName: 'notes', value: 'draft text' }),
+      ]);
+    });
+
+    it('flushes pending output edits on unmount', async () => {
+      const outputField = makeField({ apiName: 'notes', type: EExtraFieldType.Text, value: '' });
+      const task = {
+        ...baseTask,
+        output: [outputField],
+      };
+
+      const { unmount } = render(<TaskCard {...baseProps} task={task} />);
+
+      await waitFor(() => {
+        expect(mockExtraFieldIntl).toHaveBeenCalled();
+      });
+
+      const editField = mockExtraFieldIntl.mock.calls[0][0].editField;
+
+      act(() => {
+        editField({ value: 'draft text' });
+      });
+
+      unmount();
+
+      expect(addOrUpdateStorageOutput).toHaveBeenCalledWith(1, [
+        expect.objectContaining({ apiName: 'notes', value: 'draft text' }),
+      ]);
     });
   });
 });
