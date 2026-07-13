@@ -202,6 +202,10 @@ export function TemplateFormPersistProvider({
 
       if (valuesChangedByExplicitRevert) {
         setValuesRef.current(revertedValues);
+        // The wrapped setter marks every call as a user edit. A failed explicit
+        // save is a system revert, so restore the consumed dirty state.
+        pendingUserEditsRefRef.current.current = { ...consumed.pendingUserEdits };
+        dirtyRefRef.current.current = consumed.isUserEdit;
       }
     }
 

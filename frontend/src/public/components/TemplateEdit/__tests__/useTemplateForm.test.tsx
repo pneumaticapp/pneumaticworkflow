@@ -130,6 +130,7 @@ describe('getTemplateVariablesFingerprint', () => {
 
 interface ISpyHandle {
   values: ITemplate;
+  dirtyRef: React.MutableRefObject<boolean>;
   setFieldValue: (field: string, value: unknown, shouldValidate?: boolean) => void;
   consumePendingChanges: (explicitFields?: Partial<ITemplate>) => Partial<ITemplate>;
   confirmConsumedChanges: () => void;
@@ -170,7 +171,7 @@ function TemplateFormHarness({
   const Spy: React.FC = () => {
     const { values, setFieldValue: contextSetFieldValue } = useTemplateField();
     const { consumePendingChanges, confirmConsumedChanges, revertConsumedChanges, abandonPendingChanges } = useTemplatePersist();
-    spy({ values, setFieldValue: contextSetFieldValue, consumePendingChanges, confirmConsumedChanges, revertConsumedChanges, abandonPendingChanges });
+    spy({ values, dirtyRef, setFieldValue: contextSetFieldValue, consumePendingChanges, confirmConsumedChanges, revertConsumedChanges, abandonPendingChanges });
     return null;
   };
 
@@ -373,6 +374,34 @@ describe('TemplateFormPersistProvider deactivation', () => {
       name: 'Unsaved edit',
       isActive: false,
     });
+  });
+
+  it('keeps a clean form clean when reverting a failed explicit save', async () => {
+    const template = makeTemplate({ isActive: false });
+    let handle: ISpyHandle | null = null;
+
+    const { rerender } = render(
+      <StatefulTemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />,
+    );
+
+    act(() => {
+      handle!.consumePendingChanges({ isActive: true });
+      rerender(
+        <StatefulTemplateFormHarness
+          initialTemplate={{ ...template, isActive: true }}
+          spy={(h) => { handle = h; }}
+        />,
+      );
+    });
+
+    act(() => {
+      handle!.revertConsumedChanges();
+    });
+    await flushPersist();
+
+    expect(handle!.values.isActive).toBe(false);
+    expect(handle!.dirtyRef.current).toBe(false);
+    expect(patchTemplate).not.toHaveBeenCalled();
   });
 
   it('reverts explicit activation fields in Formik after a failed submit', async () => {
