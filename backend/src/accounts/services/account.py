@@ -50,9 +50,7 @@ class AccountService(
         tenant_name: str,
     ) -> Account:
 
-        billing_enabled = (
-            settings.PROJECT_CONF['BILLING'] and master_account.billing_sync
-        )
+        billing_enabled = master_account.billing_sync
         account = Account(
             is_verified=True,
             name='Company name',
@@ -107,7 +105,7 @@ class AccountService(
                 tenant_name=tenant_name,
             )
         else:
-            billing_enabled = settings.PROJECT_CONF['BILLING'] and billing_sync
+            billing_enabled = billing_sync
             self.instance = Account(
                 is_verified=is_verified,
                 name=name or 'Company name',
@@ -286,7 +284,7 @@ class AccountService(
                     ],
                 )
             self._update_tenants()
-            if settings.PROJECT_CONF['BILLING'] and self.instance.billing_sync:
+            if self.instance.billing_sync:
                 self._update_stripe_account(**update_kwargs)
             self._identify_users()
             self.group(user=self.user, account=self.instance)
