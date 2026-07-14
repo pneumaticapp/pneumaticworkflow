@@ -4,9 +4,8 @@ import { useSelector } from 'react-redux';
 import classNames from 'classnames';
 
 import { Checkbox } from '../../UI/Fields/Checkbox';
+import { ETaskPerformerType, ITemplateTaskPerformer } from '../../../types/template';
 import { TUserListItem } from '../../../types/user';
-import { ETaskPerformerType, ITemplateTask, ITemplateTaskPerformer } from '../../../types/template';
-import { TTaskVariable } from '../types';
 import { trackInviteTeamInPage } from '../../../utils/analytics';
 import { EOptionTypes, TUsersDropdownOption, UsersDropdown, getUsersDropdownOptionValue } from '../../UI/form/UsersDropdown';
 import { getUserFullName } from '../../../utils/users';
@@ -14,17 +13,11 @@ import { getPerformersForDropdown } from './utils/getPerformersForDropdown';
 import { EBgColorTypes, UserPerformer } from '../../UI/UserPerformer';
 import { getRegularGroupsList } from '../../../redux/selectors/groups';
 import { useTaskForm } from './useTaskForm';
+import { ITaskPerformersProps } from './types';
 
 import styles from '../TemplateEdit.css';
 import stylesTaskForm from './TaskForm.css';
 import { createPerformerApiName } from '../../../utils/createId';
-
-export interface ITaskPerformersProps {
-  tasks: ITemplateTask[];
-  users: TUserListItem[];
-  variables: TTaskVariable[];
-  isTeamInvitesModalOpen: boolean;
-}
 
 export function TaskPerformers({ tasks, users, variables }: ITaskPerformersProps) {
   const { formatMessage } = useIntl();

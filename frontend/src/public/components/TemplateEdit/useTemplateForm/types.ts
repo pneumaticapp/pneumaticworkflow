@@ -1,7 +1,32 @@
+import * as React from 'react';
+import { useFormik } from 'formik';
+
 import { ITemplate } from '../../../types/template';
 
 export type TSetFieldValue = (field: string, value: unknown, shouldValidate?: boolean) => void;
 export type TSetValues = (values: ITemplate, shouldValidate?: boolean) => void;
+
+export interface ITemplateFormProps {
+  formik: ReturnType<typeof useFormik<ITemplate>>;
+  setFieldValue: TSetFieldValue;
+  setValues: TSetValues;
+  dirtyRef: React.MutableRefObject<boolean>;
+  pendingUserEditsRef: React.MutableRefObject<Partial<ITemplate>>;
+  persistBaselineSyncRef: React.MutableRefObject<((reduxTemplate: ITemplate) => void) | null>;
+  children: React.ReactNode;
+}
+
+export interface ITemplateFormPersistProviderProps {
+  dirtyRef: React.MutableRefObject<boolean>;
+  pendingUserEditsRef: React.MutableRefObject<Partial<ITemplate>>;
+  persistBaselineSyncRef: React.MutableRefObject<((reduxTemplate: ITemplate) => void) | null>;
+  children: React.ReactNode;
+}
+
+export interface ITaskFormScopeProviderProps {
+  taskUuid: string;
+  children: React.ReactNode;
+}
 
 export interface ITemplateFieldContextValue {
   values: ITemplate;

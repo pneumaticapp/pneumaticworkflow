@@ -2,27 +2,13 @@ import * as React from 'react';
 import { useLayoutEffect, useRef } from 'react';
 import { useIntl } from 'react-intl';
 
-import { TUserListItem } from '../../../types/user';
-import { IKickoff, ITemplateTask } from '../../../types/template';
-import { TTaskVariable, TTaskFormPart, ETaskFormParts } from '../types';
+import { ETaskFormParts } from '../types';
 import { scrollToElement } from '../../../utils/helpers';
 import { ShowMore } from '../../UI/ShowMore';
 import { useTaskFormParts } from './useTaskFormParts';
+import { ITaskFormSectionsProps } from './types';
 
 import styles from '../TemplateEdit.css';
-
-interface ITaskFormSectionsProps {
-  accountId: number;
-  isSubscribed: boolean;
-  isTeamInvitesModalOpen: boolean;
-  kickoff: IKickoff;
-  listVariables: TTaskVariable[];
-  scrollTarget: TTaskFormPart;
-  tasks: ITemplateTask[];
-  templateId: number | undefined;
-  users: TUserListItem[];
-  wrapperRef: React.RefObject<HTMLDivElement>;
-}
 
 export function TaskFormSections({
   accountId,

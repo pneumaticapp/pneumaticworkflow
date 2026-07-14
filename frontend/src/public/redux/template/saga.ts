@@ -1,5 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
 /* tslint:disable:max-file-line-count */
 import {
   actionChannel,
@@ -150,7 +148,10 @@ function* patchTemplateSaga({
     ? false
     : Object.keys(changedFields).some((key) => !nonDeactivativeFields.includes(key as keyof ITemplate));
 
-  if (Object.keys(changedFields).length === 1 && changedFields.hasOwnProperty('kickoff')) {
+  if (
+    Object.keys(changedFields).length === 1
+    && Object.prototype.hasOwnProperty.call(changedFields, 'kickoff')
+  ) {
     const kickoffChanged = changedFields.kickoff;
     const previousKickoff = reduxTemplate.kickoff;
 
@@ -166,7 +167,8 @@ function* patchTemplateSaga({
     ...(shouldDeactivateTemplate && { isActive: false }),
   };
 
-  const needsCleanup = changedFields.hasOwnProperty('tasks') || changedFields.hasOwnProperty('kickoff');
+  const needsCleanup = Object.prototype.hasOwnProperty.call(changedFields, 'tasks')
+    || Object.prototype.hasOwnProperty.call(changedFields, 'kickoff');
   const newTemplate = needsCleanup ? cleanTemplateReferences(mergedTemplate) : mergedTemplate;
 
   yield put(setTemplate(newTemplate));
@@ -243,7 +245,7 @@ export function* createOrUpdateTemplate(
     if (isPaidFeatureError(error)) {
       yield put(saveTemplateCanceled());
 
-      return;
+      return null;
     }
 
     logger.error('failed to save template:', error);
@@ -437,7 +439,7 @@ function* generateAITemplateSaga(action: TGenerateAITemplate | TStopAITemplateGe
   }
 }
 
-function* applyAITemplateSaga() {
+function applyAITemplateSaga() {
   history.push(ERoutes.TemplatesCreateAI);
 }
 
