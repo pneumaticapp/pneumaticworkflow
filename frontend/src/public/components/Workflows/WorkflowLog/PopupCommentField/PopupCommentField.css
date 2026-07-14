@@ -17,7 +17,7 @@
 }
 
 .comment-field__avatar-container {
-  margin-right: 16px;
+  margin-right: 1.6rem;
   align-self: flex-start;
   flex-shrink: 0;
 
@@ -27,19 +27,19 @@
 }
 
 .comment-field__avatar {
-  width: 40px;
-  height: 40px;
+  width: 4rem;
+  height: 4rem;
   border-radius: 50%;
   object-fit: cover;
 
   @media (--mobile) {
-    width: 32px;
-    height: 32px;
+    width: 3.2rem;
+    height: 3.2rem;
   }
 }
 
 .comment-field__icon {
-  margin-top: 10px;
+  margin-top: 1rem;
   align-self: flex-start;
   cursor: pointer;
   transition: 0.1s ease-in-out fill;
@@ -49,9 +49,9 @@
 .comment-field__icon_disabled {
   cursor: none;
   pointer-events: none;
-  fill: #62625f;
+  fill: var(--pneumatic-color-black72);
 }
 
 .editor {
-  min-height: 125px;
+  min-height: 12.5rem;
 }
