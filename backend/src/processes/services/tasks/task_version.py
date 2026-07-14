@@ -533,7 +533,8 @@ class TaskUpdateVersionService(
             fields_values=tasks_fields_values,
         )
         self._update_fields(data=data.get('fields'))
-        self._update_fieldsets(data=data.get('fieldsets'))
+        if data.get('fieldsets') is not None:
+            self._update_fieldsets(data=data['fieldsets'])
         self._update_conditions(data=data.get('conditions'))
         self._update_checklists(
             data=data.get('checklists'),
