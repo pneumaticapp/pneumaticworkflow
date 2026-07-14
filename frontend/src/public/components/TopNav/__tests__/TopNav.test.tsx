@@ -10,6 +10,10 @@ jest.mock('../../../utils/history', () => ({
   history: { push: jest.fn(), location: { pathname: '/' }, listen: jest.fn() },
 }));
 
+jest.mock('../../../constants/enviroment', () => ({
+  isEnvBilling: false,
+}));
+
 jest.mock('../PaywallReminder', () => ({
   PaywallReminder: () => null,
 }));
@@ -119,8 +123,8 @@ describe('TopNav', () => {
   });
 
   describe('My subscription visibility', () => {
-    it('shows My subscription when plan is not free and user is account owner', () => {
-      renderTopNav({ plan: 'premium' as any, isAccountOwner: true, leaseLevel: 'standard' });
+    it('shows My subscription when billing is disabled and plan is paid', () => {
+      renderTopNav({ plan: 'premium' as any, isAccountOwner: true });
 
       const option = findOption(CUSTOMER_PORTAL_LABEL);
       expect(option).toBeDefined();
@@ -128,15 +132,23 @@ describe('TopNav', () => {
     });
 
     it('hides My subscription when plan is free', () => {
-      renderTopNav({ plan: 'free' as any, isAccountOwner: true, leaseLevel: 'standard' });
+      renderTopNav({ plan: 'free' as any, isAccountOwner: true });
 
       const option = findOption(CUSTOMER_PORTAL_LABEL);
       expect(option).toBeDefined();
       expect(option.isHidden).toBe(true);
     });
 
+    it('shows My subscription for a paid partner account owner', () => {
+      renderTopNav({ plan: 'premium' as any, isAccountOwner: true, leaseLevel: 'partner' });
+
+      const option = findOption(CUSTOMER_PORTAL_LABEL);
+      expect(option).toBeDefined();
+      expect(option.isHidden).toBe(false);
+    });
+
     it('hides My subscription when plan is unknown', () => {
-      renderTopNav({ plan: 'unknown' as any, isAccountOwner: true, leaseLevel: 'standard' });
+      renderTopNav({ plan: 'unknown' as any, isAccountOwner: true });
 
       const option = findOption(CUSTOMER_PORTAL_LABEL);
       expect(option).toBeDefined();
