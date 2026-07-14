@@ -270,7 +270,10 @@ class TaskListFilterSerializer(
     assigned_to = serializers.IntegerField(required=False)
     search = serializers.CharField(required=False)
     template_id = serializers.IntegerField(required=False)
-    template_task_api_name = serializers.CharField(required=False, validators=[RejectNullStringValidator()])
+    template_task_api_name = serializers.CharField(
+        required=False,
+        validators=[RejectNullStringValidator()],
+    )
     limit = serializers.IntegerField(required=False)
     offset = serializers.IntegerField(required=False)
 
