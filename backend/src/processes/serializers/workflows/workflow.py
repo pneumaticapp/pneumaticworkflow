@@ -55,6 +55,9 @@ from src.processes.serializers.workflows.task import (
 from src.processes.services.urgent import (
     UrgentService,
 )
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 from src.processes.utils.common import (
     contains_fields_vars,
     insert_fields_values_to_text,
@@ -63,7 +66,25 @@ from src.processes.utils.common import (
 UserModel = get_user_model()
 
 
-class WorkflowListSerializer(serializers.ModelSerializer):
+class WorkflowOwnersMixin:
+    """Shared owners resolution for list and detail serializers.
+
+    On list endpoints the view pre-populates ``context['owners_map']``
+    via ``WorkflowPermissionService.get_users_with_change_map()``
+    (single query),
+    so each instance just does a dict lookup instead of a DB hit.
+    On detail endpoints the map is absent and we fall back to a
+    per-instance query.
+    """
+
+    def get_owners(self, instance: Workflow):
+        owners_map = self.context.get('owners_map')
+        if owners_map is not None:
+            return sorted(owners_map.get(instance.id, []))
+        return WorkflowPermissionService(instance).get_users_with_change()
+
+
+class WorkflowListSerializer(WorkflowOwnersMixin, serializers.ModelSerializer):
 
     class Meta:
         model = Workflow
@@ -116,9 +137,6 @@ class WorkflowListSerializer(serializers.ModelSerializer):
                 many=True,
             ).data
         return []
-
-    def get_owners(self, instance: Workflow):
-        return [e.id for e in instance.owners_ids]
 
 
 class WorkflowCreateSerializer(
@@ -357,7 +375,9 @@ class WorkflowFinishSerializer(
         return data
 
 
-class WorkflowDetailsSerializer(serializers.ModelSerializer):
+class WorkflowDetailsSerializer(
+    WorkflowOwnersMixin, serializers.ModelSerializer,
+):
 
     class Meta:
         model = Workflow
@@ -396,6 +416,7 @@ class WorkflowDetailsSerializer(serializers.ModelSerializer):
         source='date_completed',
         read_only=True,
     )
+    owners = serializers.SerializerMethodField()
     is_read_only_viewer = serializers.SerializerMethodField()
 
     def get_kickoff(self, instance: Workflow):
@@ -457,7 +478,7 @@ class WorkflowDetailsSerializer(serializers.ModelSerializer):
         is_performer = TaskPerformer.objects.filter(
             task__workflow=instance,
             task__account_id=user.account_id,
-        ).filter(
+        ).exclude_directly_deleted().filter(
             Q(user_id=user.id) |
             Q(group__users__id=user.id),
         ).exists()
@@ -555,7 +576,7 @@ class WorkflowListFilterSerializer(
     def validate_search(self, value: str) -> str:
         removed_chars_regex = r'\s\s+'
         clear_text = re.sub(removed_chars_regex, '', value).strip()
-        return clear_text if clear_text else None
+        return clear_text or None
 
     def validate(self, data):
         status = data.get('status')

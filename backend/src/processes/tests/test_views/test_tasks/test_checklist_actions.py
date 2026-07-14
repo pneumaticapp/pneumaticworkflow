@@ -1,8 +1,10 @@
 import pytest
+from guardian.shortcuts import remove_perm
 from django.contrib.auth import get_user_model
 
 from src.authentication.enums import AuthTokenType
 from src.authentication.services.guest_auth import GuestJWTAuthService
+from src.processes.enums import WorkflowPermission
 from src.processes.models.workflows.checklist import (
     ChecklistSelection,
 )
@@ -22,6 +24,10 @@ from src.processes.tests.fixtures import (
     create_test_workflow,
 )
 from src.utils.validation import ErrorCode
+from src.permissions.enums import PermissionSource
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db
@@ -49,7 +55,11 @@ class TestChecklistRetrieve:
         )
         create_checklist_template(task_template=template.tasks.first())
         workflow = create_test_workflow(template=template, user=user)
-        workflow.members.add(user_2)
+        WorkflowPermissionService(workflow).grant_view(
+            user=user_2,
+            source_type=PermissionSource.PERFORMER,
+            source_id=0,
+        )
         task = workflow.tasks.first()
         task.performers.add(user_2)
         checklist = task.checklists.first()
@@ -168,7 +178,7 @@ class TestChecklistRetrieve:
         )
         create_checklist_template(task_template=template.tasks.first())
         workflow = create_test_workflow(template=template, user=user)
-        workflow.members.remove(user_2)
+        remove_perm(WorkflowPermission.VIEW, user_2, workflow)
         task = workflow.tasks.first()
         checklist = task.checklists.first()
         api_client.token_authenticate(user_2)
@@ -179,10 +189,10 @@ class TestChecklistRetrieve:
         # assert
         assert response.status_code == 404
         assert user_2.is_account_owner is False
-        assert not workflow.members.filter(id=user_2.id).exists()
+        assert not WorkflowPermissionService(workflow).has_view(user=user_2)
         assert not task.performers.filter(id=user_2.id).exists()
 
-    def test_retrieve__deleted_performer__ok(
+    def test_retrieve__deleted_performer__not_found(
         self,
         api_client,
     ):
@@ -202,8 +212,12 @@ class TestChecklistRetrieve:
         )
         create_checklist_template(task_template=template.tasks.first())
         workflow = create_test_workflow(template=template, user=user)
-        workflow.members.add(user_2)
         task = workflow.tasks.first()
+        WorkflowPermissionService(workflow).grant_view(
+            user=user_2,
+            source_type=PermissionSource.PERFORMER,
+            source_id=task.id,
+        )
         TaskPerformersService.create_performer(
             request_user=user,
             user_key=user_2.id,
@@ -225,8 +239,8 @@ class TestChecklistRetrieve:
         # act
         response = api_client.get(f'/v2/tasks/checklists/{checklist.id}')
 
-        # assert
-        assert response.status_code == 200
+        # assert — deleted performer loses view access (permission revocation)
+        assert response.status_code == 404
 
 
 class TestChecklistMark:

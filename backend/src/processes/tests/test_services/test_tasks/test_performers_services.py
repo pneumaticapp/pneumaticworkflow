@@ -60,6 +60,12 @@ from src.processes.tests.fixtures import (
     create_test_user,
     create_test_workflow,
 )
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
+from src.processes.tests.guardian_helpers import (
+    assert_guardian_view,
+)
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db
@@ -1239,7 +1245,10 @@ class TestTaskPerformersService:
         )
 
         # assert
-        assert user_performer in workflow.members.all()
+        assert WorkflowPermissionService(workflow).has_view(
+            user=user_performer,
+        )
+        assert_guardian_view(workflow, user_performer)
         send_new_task_websocket_mock.assert_not_called()
         send_new_task_notification_mock.assert_called_once_with(
             logging=account.log_api_requests,
@@ -1324,7 +1333,10 @@ class TestTaskPerformersService:
         )
 
         # assert
-        assert user_performer in workflow.members.all()
+        assert WorkflowPermissionService(workflow).has_view(
+            user=user_performer,
+        )
+        assert_guardian_view(workflow, user_performer)
         send_new_task_websocket_mock.assert_not_called()
         send_new_task_notification_mock.assert_not_called()
         assert WorkflowEvent.objects.filter(
@@ -1548,7 +1560,9 @@ class TestTaskPerformersService:
             ).data,
         ).count() == 1
         workflow.refresh_from_db()
-        assert transfer_performer in workflow.members.all()
+        assert not WorkflowPermissionService(workflow).has_view(
+            user=transfer_performer,
+        )
 
     def test_create_actions__with_deleted_group_taskperformer__ok(
         self,
@@ -1613,7 +1627,10 @@ class TestTaskPerformersService:
         )
 
         # assert
-        assert user_performer in workflow.members.all()
+        assert WorkflowPermissionService(workflow).has_view(
+            user=user_performer,
+        )
+        assert_guardian_view(workflow, user_performer)
         send_new_task_websocket_mock.assert_not_called()
         send_new_task_notification_mock.assert_not_called()
         assert WorkflowEvent.objects.filter(
@@ -3975,3 +3992,118 @@ class TestReassignPermissionsCalledFromActions:
         )
         group_deleted_event_mock.assert_called_once()
         send_deleted_notification_mock.assert_not_called()
+
+
+class TestTaskPerformersDeleteAttachmentSync:
+
+    def test_delete_actions__calls_sync_attachment_permissions(
+        self,
+        mocker,
+    ):
+        """_delete_actions must trigger sync_workflow_attachment_permissions
+        after sync_view to revoke stale file access."""
+
+        # arrange
+        account = create_test_account()
+        owner = create_test_owner(account=account)
+        performer = create_test_not_admin(
+            account=account, email='perf@test.test',
+        )
+        template = create_test_template(
+            user=owner, is_active=True, tasks_count=1,
+        )
+        template.tasks.first().add_raw_performer(user=performer)
+        workflow = create_test_workflow(
+            user=owner, template=template,
+        )
+        task = workflow.tasks.first()
+        sync_mock = mocker.patch(
+            'src.processes.services.tasks.performers.'
+            'schedule_sync_workflow_attachment_permissions',
+        )
+        mocker.patch(
+            'src.processes.services.tasks.performers.'
+            'WorkflowPermissionService.sync_view',
+        )
+        mocker.patch(
+            'src.processes.services.events.'
+            'WorkflowEventService.performer_deleted_event',
+        )
+        mocker.patch(
+            'src.analysis.services.AnalyticService.'
+            'task_performer_deleted',
+        )
+        mocker.patch(
+            'src.processes.services.tasks.performers.'
+            'reassign_restricted_permissions_for_task',
+        )
+
+        # act
+        TaskPerformersService._delete_actions(
+            task=task,
+            user=performer,
+            request_user=owner,
+            is_superuser=False,
+            auth_type='User',
+        )
+
+        # assert
+        sync_mock.assert_called_once_with(task.workflow_id)
+
+
+class TestGroupPerformerDeleteAttachmentSync:
+
+    def test_delete_group_actions__calls_sync_attachments(
+        self,
+        mocker,
+    ):
+        """_delete_group_actions must trigger
+        sync_workflow_attachment_permissions after revoke/sync_view
+        and reassign_restricted_permissions_for_task
+        to revoke stale file access for removed group."""
+
+        # arrange
+        account = create_test_account()
+        user = create_test_admin(account=account)
+        user2 = create_test_not_admin(
+            account=account,
+            email='g_att@test.test',
+        )
+        group = create_test_group(account, users=[user2])
+        workflow = create_test_workflow(user=user)
+        task = workflow.tasks.get(number=1)
+        task.taskperformer_set.create(
+            user=user2,
+            is_completed=False,
+        )
+        service = GroupPerformerService(
+            user=user,
+            task=task,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER,
+        )
+        sync_mock = mocker.patch(
+            'src.processes.services.tasks.groups.'
+            'schedule_sync_workflow_attachment_permissions',
+        )
+        mocker.patch(
+            'src.processes.services.tasks.groups.'
+            'WorkflowPermissionService.sync_performer_group',
+        )
+        mocker.patch(
+            'src.processes.services.events.'
+            'WorkflowEventService'
+            '.performer_group_deleted_event',
+        )
+        mocker.patch(
+            'src.processes.services.tasks.groups.'
+            'reassign_restricted_permissions_for_task',
+        )
+
+        # act
+        service._delete_group_actions(group=group)
+
+        # assert
+        sync_mock.assert_called_once_with(
+            task.workflow_id,
+        )

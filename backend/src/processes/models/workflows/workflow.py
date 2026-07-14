@@ -50,15 +50,6 @@ class Workflow(
         help_text='Template is deleted',
         default=False,
     )
-    members = models.ManyToManyField(
-        UserModel,
-        related_name='workflows',
-    )
-    owners = models.ManyToManyField(
-        UserModel,
-        related_name='owners',
-        verbose_name='owners',
-    )
     workflow_starter = models.ForeignKey(
         UserModel,
         on_delete=models.SET_NULL,
