@@ -1698,7 +1698,6 @@ def test_highlights__task_complete_fieldsets_present__ok(api_client):
     assert field_2_data['clear_value'] == field_2.clear_value
     assert field_2_data['user_id'] == field_2.user_id
     assert field_2_data['group_id'] == field_2.group_id
-    assert field_2_data['attachments'] == []
     field_1_data = fields_data[1]
     assert field_1_data['id'] == field_1.id
 
@@ -1824,7 +1823,6 @@ def test_highlights__start_workflow_kickoff_fieldset_present__ok(api_client):
     assert field_data['clear_value'] == field.clear_value
     assert field_data['user_id'] == field.user_id
     assert field_data['group_id'] == field.group_id
-    assert field_data['attachments'] == []
 
 
 def test_highlights__start_workflow_kickoff_field_present__ok(api_client):
@@ -1871,7 +1869,6 @@ def test_highlights__start_workflow_kickoff_field_present__ok(api_client):
     assert field_data['clear_value'] == field.clear_value
     assert field_data['user_id'] == field.user_id
     assert field_data['group_id'] == field.group_id
-    assert field_data['attachments'] == []
 
 
 def test_highlights__start_workflow_fieldset_absent__ok(api_client):

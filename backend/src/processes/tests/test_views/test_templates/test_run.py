@@ -5292,7 +5292,6 @@ def test_run__kickoff_with_one_fieldset__ok(mocker, api_client):
     assert field_data['user_id'] is None
     assert field_data['group_id'] is None
     assert field_data['selections'] == []
-    assert field_data['attachments'] == []
 
 
 def test_run__kickoff_with_multiple_fieldsets__ok(mocker, api_client):

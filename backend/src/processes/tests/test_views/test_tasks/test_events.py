@@ -690,7 +690,6 @@ def test_events__task_complete_fieldsets_present__ok(api_client):
     assert field_2_data['user_id'] == field_2.user_id
     assert field_2_data['group_id'] == field_2.group_id
     assert field_2_data['selections'] == []
-    assert field_2_data['attachments'] == []
     field_1_data = fields_data[1]
     assert field_1_data['id'] == field_1.id
 

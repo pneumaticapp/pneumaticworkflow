@@ -7,7 +7,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('accounts', '0144_auto_20260609_1910'),
-        ('processes', '0253_add_completed_or_skipped_predicate'),
+        ('processes', '0254_add_fileattachment_fields'),
     ]
 
     operations = [
