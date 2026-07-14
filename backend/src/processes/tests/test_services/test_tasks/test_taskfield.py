@@ -15,8 +15,6 @@ from src.processes.models.templates.fields import (
 from src.processes.models.templates.fieldset import (
     FieldsetTemplateRule,
 )
-from src.processes.models.workflows.attachment import FileAttachment
-from src.processes.models.workflows.event import WorkflowEvent
 from src.processes.models.workflows.fieldset import (
     FieldSetRule,
 )

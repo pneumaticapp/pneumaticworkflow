@@ -15,7 +15,6 @@ from src.processes.messages import workflow as messages
 from src.processes.models.templates.fields import (
     FieldTemplate,
 )
-from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.workflows.fieldset import FieldSetRule
 from src.processes.models.workflows.fields import TaskField
 from src.processes.services.base import BaseWorkflowService

@@ -130,6 +130,62 @@ def test__validate_sum_equal__within_threshold__ok():
     assert result is True
 
 
+def test__validate_sum_equal__float_precision__ok():
+
+    """
+    Decimal sum avoids float accumulation errors (0.1 + 0.2 == 0.3).
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    workflow = create_test_workflow(user=user, template=template)
+    fieldset = create_test_fieldset(
+        workflow=workflow,
+        name='Fieldset',
+        order=1,
+        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_value='0.3',
+    )
+    rule = fieldset.rules.first()
+    field_1 = TaskField.objects.create(
+        account=account,
+        workflow=workflow,
+        fieldset=fieldset,
+        name='Field 1',
+        type=FieldType.NUMBER,
+        value='0.1',
+        order=1,
+    )
+    field_1.rules.add(rule)
+    field_2 = TaskField.objects.create(
+        account=account,
+        workflow=workflow,
+        fieldset=fieldset,
+        name='Field 2',
+        type=FieldType.NUMBER,
+        value='0.2',
+        order=2,
+    )
+    field_2.rules.add(rule)
+    service = FieldSetRuleService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+        instance=rule,
+    )
+
+    # act
+    result = service._validate_sum_equal(
+        fieldset=fieldset,
+        value='0.3',
+    )
+
+    # assert
+    assert result is True
+
+
 def test__validate_sum_equal__one_not_required_field_blank__not_count():
 
     # arrange
