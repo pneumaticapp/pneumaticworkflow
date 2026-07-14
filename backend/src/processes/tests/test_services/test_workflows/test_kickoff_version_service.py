@@ -858,11 +858,7 @@ def test__update_fieldsets__provided__ok(mocker):
             'api_name': 'fs-1',
             'name': 'Fieldset 1',
             'description': 'Desc',
-            'kickoff_links': [
-                {
-                    'order': 11,
-                },
-            ],
+            'order': 11,
             'label_position': LabelPosition.TOP,
             'layout': FieldSetLayout.VERTICAL,
             'rules': rules_data_1,
