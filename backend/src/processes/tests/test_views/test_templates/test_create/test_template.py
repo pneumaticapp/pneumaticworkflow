@@ -4486,3 +4486,86 @@ def test_create__kickoff_fieldset_non_shared_id__validation_error(
         is_shared=False,
         shared_fieldset=non_shared_fieldset,
     ).count() == 0
+
+
+def test_create__draft_fieldset_from_another_account__excluded(
+    mocker,
+    api_client,
+):
+
+    # arrange
+    mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.'
+        'create_integrations_for_template',
+    )
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_created',
+    )
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_kickoff_created',
+    )
+    account = create_test_account(name='Account 1')
+    user = create_test_user(account=account)
+    api_client.token_authenticate(user)
+    other_account = create_test_account(name='Account 2')
+    other_shared_fieldset = create_test_shared_fieldset(
+        account=other_account,
+        title='Private title',
+        description='Private description',
+        name='Private fieldset',
+        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_value='100',
+    )
+    request_data = {
+        'name': 'Draft with foreign fieldset',
+        'owners': [
+            {
+                'type': OwnerType.USER,
+                'source_id': user.id,
+                'role': OwnerRole.OWNER,
+            },
+        ],
+        'is_active': False,
+        'kickoff': {
+            'fieldsets': [
+                {
+                    'shared_fieldset_id': other_shared_fieldset.id,
+                },
+            ],
+        },
+        'tasks': [
+            {
+                'number': 1,
+                'name': 'First step',
+                'raw_performers': [
+                    {
+                        'type': PerformerType.USER,
+                        'source_id': user.id,
+                    },
+                ],
+                'fieldsets': [
+                    {
+                        'shared_fieldset_id': other_shared_fieldset.id,
+                    },
+                ],
+            },
+        ],
+    }
+
+    # act
+    response = api_client.post(
+        path='/templates',
+        data=request_data,
+    )
+
+    # assert
+    assert response.status_code == 200
+    template = Template.objects.get(id=response.data['id'])
+    draft = template.draft.draft
+    assert draft['kickoff']['fieldsets'] == []
+    assert draft['tasks'][0]['fieldsets'] == []
+    assert response.data['kickoff']['fieldsets'] == []
+    assert response.data['tasks'][0]['fieldsets'] == []
