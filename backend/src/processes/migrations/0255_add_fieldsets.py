@@ -130,7 +130,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='fieldsettemplaterule',
-            constraint=models.UniqueConstraint(condition=models.Q(is_deleted=False), fields=('api_name', 'fieldset'), name='fieldsettemplate_api_name_template_unique'),
+            constraint=models.UniqueConstraint(condition=models.Q(is_deleted=False), fields=('api_name', 'fieldset'), name='fieldsettemplate_rule_api_name_template_unique'),
         ),
         migrations.AddConstraint(
             model_name='fieldsettemplate',
