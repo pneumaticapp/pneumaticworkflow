@@ -16,6 +16,20 @@ http {
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_prefer_server_ciphers on;
 
+    # Reject requests whose Host does not match any server_name below.
+    # Uses the main domain certificate only to complete the TLS handshake.
+    server {
+        listen 80 default_server;
+        listen 8001 ssl default_server;
+        listen 443 ssl default_server;
+        server_name _;
+
+        ssl_certificate     /etc/keys/${SERVER_ADDRESS}/fullchain.pem;
+        ssl_certificate_key /etc/keys/${SERVER_ADDRESS}/privkey.pem;
+
+        return 444;
+    }
+
     ##
     # Backend
     ##
@@ -30,6 +44,7 @@ http {
 
         server_name ${SERVER_ADDRESS};
 
+        include /etc/nginx/includes/location_bot_block.conf;
         location / {
             include /etc/nginx/includes/proxy_to_backend.conf;
         }
@@ -43,7 +58,7 @@ http {
         index index.html index.htm index.nginx-debian.html;
 
         server_name pneumatic-nginx;
-
+        include /etc/nginx/includes/location_bot_block.conf;
         location / {
             include /etc/nginx/includes/proxy_to_private_backend.conf;
         }
@@ -70,7 +85,7 @@ http {
         index index.html index.nginx-debian.html;
 
         server_name ${SERVER_ADDRESS};
-
+        include /etc/nginx/includes/location_bot_block.conf;
         include /etc/nginx/includes/location_frontend_common.conf;
     }
 
@@ -87,7 +102,7 @@ http {
         index index.html index.nginx-debian.html;
 
         server_name ${FORM_DOMAIN};
-
+        include /etc/nginx/includes/location_bot_block.conf;
         include /etc/nginx/includes/location_frontend_common.conf;
 
     }
