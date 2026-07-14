@@ -2055,6 +2055,86 @@ def test__update_field_selections__selections_exist__ok():
     ).exists()
 
 
+def test__update_fields__preserves_fieldset_fields(mocker):
+
+    """
+    Deletes stale top-level fields only; fieldset fields are preserved
+    for `_update_fieldsets` to handle.
+    """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    fieldset = create_test_fieldset(
+        workflow=workflow,
+        task=task,
+    )
+    field = TaskField.objects.create(
+        task=task,
+        workflow=workflow,
+        account=user.account,
+        api_name='field-1',
+        name='Field 1',
+        type=FieldType.STRING,
+        order=1,
+    )
+    stale_field = TaskField.objects.create(
+        task=task,
+        workflow=workflow,
+        account=user.account,
+        api_name='field-stale',
+        name='Stale',
+        type=FieldType.STRING,
+        order=2,
+    )
+    fieldset_field = TaskField.objects.create(
+        task=task,
+        workflow=workflow,
+        account=user.account,
+        api_name='fieldset-field-1',
+        name='Fieldset Field',
+        type=FieldType.STRING,
+        order=1,
+        fieldset=fieldset,
+    )
+    service = TaskUpdateVersionService(
+        user=user,
+        instance=task,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+    field_data = {
+        'api_name': 'field-1',
+        'name': 'Field 1',
+        'description': '',
+        'type': FieldType.STRING,
+        'is_required': False,
+        'is_hidden': False,
+        'order': 1,
+        'dataset_id': None,
+    }
+    update_field_mock = mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._update_field',
+        return_value=(field, True),
+    )
+    update_field_selections_mock = mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._update_field_selections',
+    )
+
+    # act
+    service._update_fields(data=[field_data])
+
+    # assert
+    update_field_mock.assert_called_once_with(field_data, fieldset=None)
+    update_field_selections_mock.assert_called_once_with(field, field_data)
+    assert TaskField.objects.filter(id=field.id).exists()
+    assert not TaskField.objects.filter(id=stale_field.id).exists()
+    assert TaskField.objects.filter(id=fieldset_field.id).exists()
+
+
 def test__update_fieldset_rules__rules_data_none__skip():
 
     """

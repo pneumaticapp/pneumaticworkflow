@@ -93,7 +93,9 @@ class TaskUpdateVersionService(
                 field, _ = self._update_field(field_data, fieldset=None)
                 field_ids.append(field.id)
                 self._update_field_selections(field, field_data)
-        self.instance.output.exclude(id__in=field_ids).delete()
+        self.instance.output.filter(
+            fieldset__isnull=True,
+        ).exclude(id__in=field_ids).delete()
 
     def _update_delay(self, new_duration: Optional[str] = None):
 

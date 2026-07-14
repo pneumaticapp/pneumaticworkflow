@@ -130,7 +130,7 @@ def test__validate_sum_equal__within_threshold__ok():
     assert result is True
 
 
-def test__validate_sum_equal__float_precision__ok():
+def test__validate_sum_equal__decimal_precision__ok():
 
     """
     Decimal sum avoids float accumulation errors (0.1 + 0.2 == 0.3).
