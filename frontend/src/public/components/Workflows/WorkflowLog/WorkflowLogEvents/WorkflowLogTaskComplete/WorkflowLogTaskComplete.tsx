@@ -8,16 +8,9 @@ import { getUserFullName } from '../../../../../utils/users';
 import { EKickoffOutputsViewModes, KickoffOutputs } from '../../../../KickoffOutputs';
 import { isArrayWithItems } from '../../../../../utils/helpers';
 import { UserData } from '../../../../UserData';
-import { IWorkflowLogItem, IWorkflowLogTask } from '../../../../../types/workflow';
+import { IWorkflowLogTaskCompleteProps } from './types';
 
 import styles from './WorkflowLogTaskComplete.css';
-
-export type TWorkflowLogTaskCompleteProps = Pick<IWorkflowLogItem, 'userId' | 'created'>;
-
-export interface IWorkflowLogTaskCompleteProps extends TWorkflowLogTaskCompleteProps {
-  currentTask: IWorkflowLogTask | null;
-  isOnlyAttachmentsShown?: boolean;
-}
 
 export function WorkflowLogTaskComplete({
   userId,

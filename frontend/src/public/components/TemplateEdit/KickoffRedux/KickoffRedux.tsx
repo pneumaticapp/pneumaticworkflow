@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { IntlShape } from 'react-intl';
+import { useIntl } from 'react-intl';
+import { useSelector } from 'react-redux';
 
 import { getEmptyField } from './utils/getEmptyField';
 import { KickoffShareForm } from './KickoffShareForm';
@@ -15,7 +16,6 @@ import { ExtraFieldsMap } from '../ExtraFields/utils/ExtraFieldsMap';
 import { ExtraFieldIcon } from '../ExtraFields/utils/ExtraFieldIcon';
 import { ExtraFieldIntl } from '../ExtraFields';
 import { getEditedFields } from '../ExtraFields/utils/getEditedFields';
-import { ExtraFieldsLabels } from '../ExtraFields/utils/ExtraFieldsLabels';
 import { getEmptyKickoff } from '../../../utils/template';
 import { useHashLink } from '../../../hooks/useHashLink';
 import { useWorkflowNameVariables } from '../TaskForm/utils/getTaskVariables';
@@ -24,16 +24,12 @@ import styles from './KickoffRedux.css';
 import { InputWithVariables } from '../InputWithVariables';
 import { useDatasetOptions } from '../ExtraFields/utils/useDatasetOptions';
 import { useTemplateField } from '../useTemplateForm';
+import { getAccountId } from '../../../redux/selectors/user';
+import { KickoffLabels } from './KickoffLabels';
 
-export interface IKickoffReduxProps {
-  intl: IntlShape;
-  accountId: number;
-}
-
-export function KickoffRedux({
-  intl: { formatMessage },
-  accountId,
-}: IKickoffReduxProps) {
+export function KickoffRedux() {
+  const { formatMessage } = useIntl();
+  const accountId = useSelector(getAccountId);
   const { values, setFieldValue } = useTemplateField();
   const { kickoff, wfNameTemplate } = values;
   const [isOpen, setIsOpen] = React.useState(false);
@@ -160,31 +156,6 @@ export function KickoffRedux({
     );
   };
 
-  const renderKickoffLabels = () => {
-    const { fields } = kickoff;
-
-    if (!isArrayWithItems(fields)) {
-      return null;
-    }
-
-    return (
-      <div
-        className={styles['description__short']}
-        onClick={toggleExpanded}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            toggleExpanded();
-          }
-        }}
-        tabIndex={0}
-        role="button"
-        aria-label="Toggle expand"
-      >
-        <ExtraFieldsLabels extraFields={fields} />
-      </div>
-    );
-  };
-
   return (
     <div className={styles['kick-off']} ref={containerRef}>
       <KickoffMenu
@@ -210,7 +181,7 @@ export function KickoffRedux({
         </span>
       </div>
 
-      {isOpen ? renderKickoffForm() : renderKickoffLabels()}
+      {isOpen ? renderKickoffForm() : <KickoffLabels fields={kickoff.fields} onToggle={toggleExpanded} />}
     </div>
   );
 }

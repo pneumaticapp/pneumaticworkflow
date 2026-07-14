@@ -1,7 +1,11 @@
 import * as React from 'react';
 import { createContext, useContext } from 'react';
 
-import { ITemplateFieldContextValue, ITemplatePersistContextValue } from './types';
+import {
+  ITaskFormScopeProviderProps,
+  ITemplateFieldContextValue,
+  ITemplatePersistContextValue,
+} from './types';
 
 export const TemplateFieldContext = createContext<ITemplateFieldContextValue | null>(null);
 const TemplatePersistContext = createContext<ITemplatePersistContextValue | null>(null);
@@ -40,11 +44,6 @@ export function useTemplatePersist(): ITemplatePersistContextValue {
 }
 
 export { TemplatePersistContext };
-
-interface ITaskFormScopeProviderProps {
-  taskUuid: string;
-  children: React.ReactNode;
-}
 
 /**
  * Scopes the task form sections to a single task inside the root `ITemplate`

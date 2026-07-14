@@ -1,5 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
 import {
   ITemplate,
   ITemplateRequest,
@@ -34,7 +32,7 @@ export function getTemplateIdFromUrl(url: string) {
     return null;
   }
 
-  const { template } = getUrlParams(location.search);
+  const { template } = getUrlParams(window.location.search);
 
   if (!template) {
     return null;
@@ -59,7 +57,7 @@ export const getNormalizedTemplate = (
   const normalizedKickoff = template.kickoff || getEmptyKickoff();
   const normalizedTasks = [...template.tasks]
     .sort((a, b) => a.number - b.number)
-    .map((task, index, tasks) => getNormalizedTask(task, isSubscribed, tasks[index - 1]));
+    .map((task) => getNormalizedTask(task, isSubscribed));
 
   const performersCount = setPerformersCounts(normalizedTasks);
   const normalizedTemplateOwners =
@@ -131,7 +129,6 @@ export const getNormalizedTemplateOwners = (
 export const getNormalizedTask = (
   task: ITemplateTaskResponse,
   isSubscribed: boolean,
-  prevTask?: ITemplateTaskResponse,
 ): ITemplateTask => {
   const conditions = isArrayWithItems(task.conditions)
     ? normalizeConditiosForFrontend(task.conditions)
@@ -206,7 +203,7 @@ export const cleanTemplateReferences = (template: ITemplate): ITemplate => {
       return true;
     });
 
-    let rawDueDate = task.rawDueDate;
+    let {rawDueDate} = task;
     if (rawDueDate && rawDueDate.ruleTarget === 'field') {
       if (rawDueDate.sourceId && !validApiNames.has(rawDueDate.sourceId)) {
         rawDueDate = {

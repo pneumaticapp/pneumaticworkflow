@@ -1,5 +1,4 @@
-/* eslint-disable indent */
-import React, { ReactNode, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
 
@@ -9,24 +8,12 @@ import { TrashIcon } from '../../../icons';
 import { getFormattedDropdownOption } from '../Conditions/utils/getFormattedDropdownOption';
 import { useCheckDevice } from '../../../../hooks/useCheckDevice';
 
-import { TTaskVariable } from '../../types';
 import { ITemplateTask } from '../../../../types/template';
 import { useTaskForm } from '../useTaskForm';
+import { IDropdownTask, IReturnToProps } from './types';
 
 import styles from './ReturnTo.css';
 import stylesTaskForm from '../TaskForm.css';
-
-interface IReturnToProps {
-  variables: TTaskVariable[];
-  tasks: ITemplateTask[];
-  taskAncestors: Set<string>;
-}
-
-interface IDropdownTask {
-  label: string;
-  apiName: string | null;
-  richLabel: ReactNode;
-}
 
 export function ReturnTo({ variables, tasks, taskAncestors }: IReturnToProps) {
   const { task, updateTask } = useTaskForm();
@@ -79,9 +66,9 @@ export function ReturnTo({ variables, tasks, taskAncestors }: IReturnToProps) {
   const formatOptionLabel = (option: IDropdownTask, { context }: { context: string }) => {
     return context === 'menu'
       ? getFormattedDropdownOption({
-          label: option.richLabel,
-          isSelected: option.apiName === task.revertTask,
-        })
+        label: option.richLabel,
+        isSelected: option.apiName === task.revertTask,
+      })
       : option.richLabel;
   };
 

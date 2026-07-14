@@ -2,9 +2,7 @@ import * as React from 'react';
 import { useCallback, useEffect, useMemo } from 'react';
 import { useIntl } from 'react-intl';
 
-import { TUserListItem } from '../../../types/user';
-import { IKickoff, ITemplateTask } from '../../../types/template';
-import { TTaskVariable, ETaskFormParts } from '../types';
+import { ETaskFormParts, TTaskVariable } from '../types';
 import { OutputFormIntl } from '../OutputForm';
 import { StepName } from '../../StepName';
 import { TaskItemUsers } from '../TaskItem/TaskItemUsers';
@@ -18,33 +16,9 @@ import { TaskPerformers } from './TaskPerformers';
 import { CheckIfConditions, ICondition, removeDeletedTasks, StartAfterCondition } from './Conditions';
 import { EStartingType } from './Conditions/utils/getDropdownOperators';
 import { useTaskForm } from './useTaskForm';
+import { ITaskFormPart, IUseTaskFormPartsProps, IWidgetProps } from './types';
 
 import styles from '../TemplateEdit.css';
-
-interface IUseTaskFormPartsProps {
-  accountId: number;
-  isSubscribed: boolean;
-  isTeamInvitesModalOpen: boolean;
-  kickoff: IKickoff;
-  listVariables: TTaskVariable[];
-  isFieldsSectionShown: boolean;
-  tasks: ITemplateTask[];
-  templateId: number | undefined;
-  users: TUserListItem[];
-}
-
-interface IWidgetProps {
-  task: ITemplateTask;
-  isInTaskForm?: boolean;
-  isStartTask?: boolean;
-}
-
-export interface ITaskFormPart {
-  formPartId: ETaskFormParts;
-  title: string;
-  component: React.ReactNode;
-  widget(toggle: () => void): React.ReactNode;
-}
 
 export function useTaskFormParts({
   accountId,
