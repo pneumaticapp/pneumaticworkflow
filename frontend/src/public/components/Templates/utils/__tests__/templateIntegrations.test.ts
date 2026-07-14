@@ -1,21 +1,19 @@
 import { EIntegrations } from '../../../../types/integrations';
 
 import { checkShowDraftTemplateWarning } from '../checkShowDraftTemplateWarning';
-import { hasTemplateIntegrations } from '../templateIntegrations';
+import { hasTemplateCardIntegrations } from '../templateIntegrations';
 
-describe('templateIntegrations', () => {
-  describe('hasTemplateIntegrations', () => {
-    it('returns false when template has no integrations', () => {
-      expect(hasTemplateIntegrations(false, [])).toBe(false);
-    });
+describe('hasTemplateCardIntegrations', () => {
+  it('returns false when template has no integrations', () => {
+    expect(hasTemplateCardIntegrations([])).toBe(false);
+  });
 
-    it('returns true when template is public', () => {
-      expect(hasTemplateIntegrations(true, [])).toBe(true);
-    });
+  it('returns false when template has only account-wide webhooks', () => {
+    expect(hasTemplateCardIntegrations([EIntegrations.Webhooks])).toBe(false);
+  });
 
-    it('returns true when template has connected integrations', () => {
-      expect(hasTemplateIntegrations(false, [EIntegrations.API])).toBe(true);
-    });
+  it('returns true when template has connected integrations', () => {
+    expect(hasTemplateCardIntegrations([EIntegrations.API])).toBe(true);
   });
 });
 

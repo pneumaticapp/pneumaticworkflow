@@ -8,37 +8,25 @@ import { PlayLogoIcon, WarningIcon } from '../../icons';
 import { Button, Tooltip } from '../../UI';
 import { TemplateIntegrationsIndicator, useTemplateIntegrationsList } from '../../TemplateIntegrationsStats';
 
-import { checkShowDraftTemplateWarning } from '../utils/checkShowDraftTemplateWarning';
 import {
-  hasTemplateIntegrations,
+  hasTemplateCardIntegrations,
   TEMPLATE_CARD_INTEGRATIONS_EXCLUDE,
 } from '../utils/templateIntegrations';
 
 import styles from '../Templates.css';
-
-export interface ITemplateCardFooterProps {
-  templateId: number;
-  tasksCount: number;
-  isActive: boolean;
-  isPublic: boolean;
-  onRunWorkflow(): void;
-}
+import { ITemplateCardFooterProps } from './types';
 
 export function TemplateCardFooter({
   templateId,
   tasksCount,
   isActive,
-  isPublic,
   onRunWorkflow,
 }: ITemplateCardFooterProps) {
   const { formatMessage } = useIntl();
   const templateIntegrations = useTemplateIntegrationsList(templateId);
-  const cardIntegrations = templateIntegrations.filter(
-    integration => !TEMPLATE_CARD_INTEGRATIONS_EXCLUDE.includes(integration),
-  );
-  const hasIntegrations = hasTemplateIntegrations(isPublic, cardIntegrations);
+  const hasIntegrations = hasTemplateCardIntegrations(templateIntegrations);
   const showIntegrationsIndicator = isActive || hasIntegrations;
-  const showDraftWarning = checkShowDraftTemplateWarning(isActive, isPublic, templateIntegrations);
+  const showDraftWarning = !isActive && hasIntegrations;
 
   const renderRunWorkflowButton = () => {
     return (
