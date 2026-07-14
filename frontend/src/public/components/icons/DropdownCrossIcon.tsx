@@ -1,5 +1,4 @@
-/* eslint-disable */
-/* prettier-ignore */
+/* eslint-disable max-len */
 import * as React from 'react';
 
 export type TDropdownCrossIconProps = React.SVGAttributes<SVGElement>;

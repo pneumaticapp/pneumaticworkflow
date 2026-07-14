@@ -2,6 +2,7 @@ import pytest
 
 from src.accounts.enums import AbsenceStatus, UserGroupType
 from src.accounts.models import UserGroup, UserVacation
+from src.accounts.serializers.user import UserWebsocketSerializer
 from src.accounts.services.vacation import VacationDelegationService
 from src.processes.enums import (
     DirectlyStatus,
@@ -1740,3 +1741,97 @@ def test_get_unique_group_name__collision__ok():
 
     # assert
     assert result == f'{base_name} (2)'
+
+
+def test_activate__sends_ws_user_updated__ok(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    substitute = create_test_admin(
+        account=account,
+        email='sub@pneumatic.app',
+    )
+    template = create_test_template(
+        user=owner,
+        tasks_count=1,
+        is_active=True,
+    )
+    create_test_workflow(
+        user=owner,
+        template=template,
+    )
+    mocker.patch(
+        'src.processes.services.events.'
+        'WorkflowEventService.task_delegation_event',
+    )
+    mocker.patch(
+        'src.accounts.services.vacation.'
+        'send_vacation_delegation_notification.delay',
+    )
+    ws_mock = mocker.patch(
+        'src.accounts.services.vacation.'
+        'send_user_updated_notification.delay',
+    )
+
+    # act
+    service = VacationDelegationService(user=owner)
+    service.activate(substitute_user_ids=[substitute.id])
+
+    # assert
+    owner.refresh_from_db()
+    ws_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        user_data=UserWebsocketSerializer(owner).data,
+    )
+
+
+def test_deactivate__sends_ws_user_updated__ok(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    substitute = create_test_admin(
+        account=account,
+        email='sub@pneumatic.app',
+    )
+    template = create_test_template(
+        user=owner,
+        tasks_count=1,
+        is_active=True,
+    )
+    create_test_workflow(
+        user=owner,
+        template=template,
+    )
+    mocker.patch(
+        'src.processes.services.events.'
+        'WorkflowEventService.task_delegation_event',
+    )
+    mocker.patch(
+        'src.accounts.services.vacation.'
+        'send_vacation_delegation_notification.delay',
+    )
+    mocker.patch(
+        'src.accounts.services.vacation.'
+        'send_user_updated_notification.delay',
+    )
+    service = VacationDelegationService(user=owner)
+    service.activate(substitute_user_ids=[substitute.id])
+
+    ws_mock = mocker.patch(
+        'src.accounts.services.vacation.'
+        'send_user_updated_notification.delay',
+    )
+
+    # act
+    service.deactivate()
+
+    # assert
+    owner.refresh_from_db()
+    ws_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        user_data=UserWebsocketSerializer(owner).data,
+    )

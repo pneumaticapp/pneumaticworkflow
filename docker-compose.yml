@@ -140,10 +140,6 @@ services:
       PUSH: ${PUSH:-no}
       PUSH_PROVIDER: ${PUSH_PROVIDER:-}
       FIREBASE_PUSH_APPLICATION_CREDENTIALS: ${FIREBASE_PUSH_APPLICATION_CREDENTIALS:-/pneumatic_backend/firebase-push.json}
-      STORAGE: ${STORAGE:-no}
-      STORAGE_PROVIDER: ${STORAGE_PROVIDER:-}
-      GCLOUD_BUCKET_NAME: ${GCLOUD_BUCKET_NAME:-pneumatic}
-      GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS:-/pneumatic_backend/google_api_credentials.json}
       SENTRY_DSN: ${SENTRY_DSN:-}
       POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
       POSTGRES_USER: ${POSTGRES_USER:-postgres_user}
@@ -168,6 +164,14 @@ services:
       CORS_ALLOW_CREDENTIALS: yes
       CORS_ORIGIN_WHITELIST: "http://localhost:8000"
       ENABLE_LOGGING: ${ENABLE_LOGGING:-no}
+      FILE_SERVICE_URL: ${FILE_SERVICE_URL:-http://localhost/files}
+      # Migration only: direct DB access for sync_files_to_file_service / run_file_migration.
+      # Can be removed after all accounts are migrated to file-service.
+      FILE_POSTGRES_USER: ${FILE_POSTGRES_USER:-pneumatic}
+      FILE_POSTGRES_PASSWORD: ${FILE_POSTGRES_PASSWORD:-pneumatic}
+      FILE_POSTGRES_DB: ${FILE_POSTGRES_DB:-pneumatic}
+      FILE_POSTGRES_HOST: ${FILE_POSTGRES_HOST:-file-postgres}
+      FILE_POSTGRES_PORT: ${FILE_POSTGRES_PORT:-5432}
     volumes:
       - ./backend:/pneumatic_backend
       - backend-socket:/tmp/gunicorn
@@ -261,10 +265,6 @@ services:
       PUSH: ${PUSH:-no}
       PUSH_PROVIDER: ${PUSH_PROVIDER:-}
       FIREBASE_PUSH_APPLICATION_CREDENTIALS: ${FIREBASE_PUSH_APPLICATION_CREDENTIALS:-/pneumatic_backend/firebase-push.json}
-      STORAGE: ${STORAGE:-no}
-      STORAGE_PROVIDER: ${STORAGE_PROVIDER:-}
-      GCLOUD_BUCKET_NAME: ${GCLOUD_BUCKET_NAME:-pneumatic}
-      GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS:-/pneumatic_backend/google_api_credentials.json}
       SENTRY_DSN: ${SENTRY_DSN:-}
       POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
       POSTGRES_USER: ${POSTGRES_USER:-postgres_user}
@@ -289,6 +289,14 @@ services:
       CORS_ALLOW_CREDENTIALS: yes
       CORS_ORIGIN_WHITELIST: "http://localhost:8000"
       ENABLE_LOGGING: ${ENABLE_LOGGING:-no}
+      FILE_SERVICE_URL: ${FILE_SERVICE_URL:-http://localhost/files}
+      # Migration only: direct DB access for sync_files_to_file_service / run_file_migration.
+      # Can be removed after all accounts are migrated to file-service.
+      FILE_POSTGRES_USER: ${FILE_POSTGRES_USER:-pneumatic}
+      FILE_POSTGRES_PASSWORD: ${FILE_POSTGRES_PASSWORD:-pneumatic}
+      FILE_POSTGRES_DB: ${FILE_POSTGRES_DB:-pneumatic}
+      FILE_POSTGRES_HOST: ${FILE_POSTGRES_HOST:-file-postgres}
+      FILE_POSTGRES_PORT: ${FILE_POSTGRES_PORT:-5432}
     volumes:
       - ./backend:/pneumatic_backend
     command: >
@@ -377,10 +385,6 @@ services:
       PUSH: ${PUSH:-no}
       PUSH_PROVIDER: ${PUSH_PROVIDER:-}
       FIREBASE_PUSH_APPLICATION_CREDENTIALS: ${FIREBASE_PUSH_APPLICATION_CREDENTIALS:-/pneumatic_backend/firebase-push.json}
-      STORAGE: ${STORAGE:-no}
-      STORAGE_PROVIDER: ${STORAGE_PROVIDER:-}
-      GCLOUD_BUCKET_NAME: ${GCLOUD_BUCKET_NAME:-pneumatic}
-      GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS:-/pneumatic_backend/google_api_credentials.json}
       SENTRY_DSN: ${SENTRY_DSN:-}
       POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
       POSTGRES_USER: ${POSTGRES_USER:-postgres_user}
@@ -405,6 +409,14 @@ services:
       CORS_ALLOW_CREDENTIALS: yes
       CORS_ORIGIN_WHITELIST: "http://localhost:8000"
       ENABLE_LOGGING: ${ENABLE_LOGGING:-no}
+      FILE_SERVICE_URL: ${FILE_SERVICE_URL:-http://localhost/files}
+      # Migration only: direct DB access for sync_files_to_file_service / run_file_migration.
+      # Can be removed after all accounts are migrated to file-service.
+      FILE_POSTGRES_USER: ${FILE_POSTGRES_USER:-pneumatic}
+      FILE_POSTGRES_PASSWORD: ${FILE_POSTGRES_PASSWORD:-pneumatic}
+      FILE_POSTGRES_DB: ${FILE_POSTGRES_DB:-pneumatic}
+      FILE_POSTGRES_HOST: ${FILE_POSTGRES_HOST:-file-postgres}
+      FILE_POSTGRES_PORT: ${FILE_POSTGRES_PORT:-5432}
     volumes:
       - ./backend:/pneumatic_backend
     command: celery --pidfile= --app src.celery_app:app beat -l warning -S django
@@ -441,7 +453,7 @@ services:
       SSO_PROVIDER: ${SSO_PROVIDER:-} # Allowed values: okta, auth0
       AI: ${AI:-no}
       PUSH: ${PUSH:-no}
-      STORAGE: ${STORAGE:-no}
+      FILE_SERVICE_URL: ${FILE_SERVICE_URL:-http://localhost/files}
       RELEASE: ${RELEASE:-1.0.0}
       SENTRY_DSN: ${SENTRY_FRONTEND_DSN:-}
       SENTRY_RELEASE: ${RELEASE:-1.0.0}
@@ -486,6 +498,121 @@ services:
     depends_on:
       - backend
       - frontend
+      - file-service
+    restart: always
+
+  file-service:
+    build:
+      context: ./storage
+    container_name: pneumatic-file-service
+    environment:
+      DEBUG: ${FILE_DEBUG:-false}
+      CONFIG: ${FILE_CONFIG:-Production}
+      WORKERS: ${FILE_WORKERS:-1}
+      PORT: ${FILE_PORT:-8000}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+      FORMS_URL: ${FORMS_URL:-http://localhost/forms}
+      POSTGRES_USER: ${FILE_POSTGRES_USER:-pneumatic}
+      POSTGRES_PASSWORD: ${FILE_POSTGRES_PASSWORD:-pneumatic}
+      POSTGRES_DB: ${FILE_POSTGRES_DB:-pneumatic}
+      POSTGRES_HOST: ${FILE_POSTGRES_HOST:-file-postgres}
+      POSTGRES_PORT: ${FILE_POSTGRES_PORT:-5432}
+      STORAGE_TYPE: ${FILE_STORAGE_TYPE:-local}
+      SEAWEEDFS_S3_ENDPOINT: ${FILE_SEAWEEDFS_S3_ENDPOINT:-http://seaweedfs-filer:8333}
+      SEAWEEDFS_S3_ACCESS_KEY: ${FILE_SEAWEEDFS_S3_ACCESS_KEY:-any-secret-key-will-work}
+      SEAWEEDFS_S3_SECRET_KEY: ${FILE_SEAWEEDFS_S3_SECRET_KEY:-any-secret-key-will-work}
+      SEAWEEDFS_S3_REGION: ${FILE_SEAWEEDFS_S3_REGION:-us-central1}
+      SEAWEEDFS_S3_USE_SSL: ${FILE_SEAWEEDFS_S3_USE_SSL:-false}
+      GCS_S3_ENDPOINT: ${FILE_GCS_S3_ENDPOINT:-}
+      GCS_S3_ACCESS_KEY: ${FILE_GCS_S3_ACCESS_KEY:-}
+      GCS_S3_SECRET_KEY: ${FILE_GCS_S3_SECRET_KEY:-}
+      GCS_S3_REGION: ${FILE_GCS_S3_REGION:-}
+      FASTAPI_BASE_URL: ${FILE_FASTAPI_BASE_URL:-http://localhost/files}
+      BUCKET_PREFIX: ${FILE_BUCKET_PREFIX:-pneumatic-dev-test}
+      MAX_FILE_SIZE: ${FILE_MAX_FILE_SIZE:-104857600}
+      CHUNK_SIZE: ${FILE_CHUNK_SIZE:-1048576}
+      AUTH_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/1"
+      KEY_PREFIX_REDIS: ${FILE_KEY_PREFIX_REDIS:-:1:}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-django_secret_django_secret_django_secret}
+      AUTH_TOKEN_ITERATIONS: ${FILE_AUTH_TOKEN_ITERATIONS:-1}
+      BACKEND_PRIVATE_URL: ${BACKEND_PRIVATE_URL:-http://pneumatic-nginx/}
+    depends_on:
+      file-postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    expose:
+      - 8000
+    networks:
+      - pneumatic
+    restart: always
+
+  file-postgres:
+    image: postgres:15-bookworm
+    container_name: pneumatic-file-postgres
+    environment:
+      POSTGRES_DB: ${FILE_POSTGRES_DB:-pneumatic}
+      POSTGRES_USER: ${FILE_POSTGRES_USER:-pneumatic}
+      POSTGRES_PASSWORD: ${FILE_POSTGRES_PASSWORD:-pneumatic}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pneumatic -d pneumatic"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    expose:
+      - 5432
+    volumes:
+      - ./file-postgres/data:/var/lib/postgresql/data:rw
+    networks:
+      - pneumatic
+    restart: always
+
+  seaweedfs-master:
+    image: chrislusf/seaweedfs:3.95
+    container_name: pneumatic-seaweedfs-master
+    command: master -ip=seaweedfs-master -port=9333
+    expose:
+      - 9333
+    volumes:
+      - ./seaweedfs/master/data:/data:rw
+    networks:
+      - pneumatic
+    restart: always
+
+  seaweedfs-volume:
+    image: chrislusf/seaweedfs:3.95
+    container_name: pneumatic-seaweedfs-volume
+    command:
+      - volume
+      - -mserver=seaweedfs-master:9333
+      - -port=8080
+      - -ip=seaweedfs-volume
+      - -publicUrl=localhost:8080
+    expose:
+      - 8080
+    depends_on:
+      - seaweedfs-master
+    volumes:
+      - ./seaweedfs/volume/data:/data:rw
+    networks:
+      - pneumatic
+    restart: always
+
+  seaweedfs-filer:
+    image: chrislusf/seaweedfs:3.95
+    container_name: pneumatic-seaweedfs-filer
+    command: filer -master="seaweedfs-master:9333" -s3 -s3.port=8333 -s3.config=/etc/seaweedfs/s3.json
+    expose:
+      - 8333
+    depends_on:
+      - seaweedfs-master
+      - seaweedfs-volume
+    volumes:
+      - ./storage/seaweedfs/filer.toml:/etc/seaweedfs/filer.toml
+      - ./storage/seaweedfs/s3.json:/etc/seaweedfs/s3.json:ro
+      - ./seaweedfs/filer/data:/data:rw
+    networks:
+      - pneumatic
     restart: always
 
 networks:
@@ -494,3 +621,5 @@ networks:
 volumes:
   backend-staticfiles:
   backend-socket:
+
+

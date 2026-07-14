@@ -1,4 +1,4 @@
-import { TUploadedFile } from '../../utils/uploadFiles';
+
 
 import { ITemplateStep } from '../../types/tasks';
 import { IKickoff, TOrderedFields } from '../../types/template';
@@ -47,7 +47,6 @@ export type TSetWorkflowFinishedPayload = {
 
 export interface ISendWorkflowLogComment {
   text: string;
-  attachments: TUploadedFile[];
   taskId?: number;
 }
 

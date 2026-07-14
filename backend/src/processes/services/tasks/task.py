@@ -50,6 +50,7 @@ from src.processes.utils.common import (
     insert_fields_values_to_text,
 )
 from src.services.markdown import MarkdownService
+from src.storage.utils import refresh_attachments
 
 UserModel = get_user_model()
 
@@ -116,6 +117,9 @@ class TaskService(
                 workflow=self.instance.workflow,
             )
 
+        # Update attachments for task
+        refresh_attachments(self.instance, self.user)
+
     def partial_update(
         self,
         force_save=False,
@@ -134,6 +138,10 @@ class TaskService(
                 self.update_fields.add('date_first_started')
         if force_save:
             self.save()
+
+        # Update attachments when description changes
+        if 'description' in update_kwargs:
+            refresh_attachments(self.instance, self.user)
 
     def insert_fields_values(
         self,
@@ -154,6 +162,7 @@ class TaskService(
         )
         self.update_fields.add('name')
         self.save()
+        refresh_attachments(self.instance, self.user)
         for checklist in self.instance.checklists.all():
             checklist_service = ChecklistService(
                 instance=checklist,

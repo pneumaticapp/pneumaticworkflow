@@ -27,7 +27,7 @@ export type TAttachmentEntityType = 'image' | 'video' | 'file';
 export function buildAttachmentMarkdownString(
   name: string,
   url: string,
-  id: number | undefined,
+  id: number | string | undefined,
   entityType: TAttachmentEntityType,
 ): string {
   const escapedName = escapeAttachmentNameForMarkdown(name);

@@ -5,6 +5,7 @@ import classnames from 'classnames';
 import { EExtraFieldMode } from '../../../../types/template';
 import { PencilSmallIcon } from '../../../icons';
 import { TUploadedFile, uploadFiles } from '../../../../utils/uploadFiles';
+import { parseMarkdownToFiles } from '../../../../utils/parseMarkdownFiles';
 import { NotificationManager } from '../../../UI/Notifications';
 import { ExtraFieldFilesGrid } from './ExtraFieldFilesGrid';
 import { logger } from '../../../../utils/logger';
@@ -30,7 +31,10 @@ export function ExtraFieldFile({
 }: IWorkflowExtraFieldProps) {
   const { useCallback, useState, useEffect, createRef } = React;
   const [isUploading, setUploadingState] = useState(false);
-  const [filesToUpload, setFilesToUploadState] = useState<TUploadedFile[]>(field.attachments || []);
+  const initialFiles = field.attachments?.length
+    ? field.attachments
+    : parseMarkdownToFiles(field.markdownValue);
+  const [filesToUpload, setFilesToUploadState] = useState<TUploadedFile[]>(initialFiles);
   const fieldNameInputRef = React.useRef<HTMLInputElement | null>(null);
   const [isFocused, setIsFocused] = React.useState(false);
   const { formatMessage } = useIntl();
@@ -59,9 +63,10 @@ export function ExtraFieldFile({
 
     try {
       setUploadingState(true);
-      const uploadedFiles = await uploadFiles(files, accountId);
-      const newUploadedFiles = [...filesToUpload, ...(uploadedFiles as TUploadedFile[])];
-      const newUploadedFilesIds = newUploadedFiles.filter((file) => !file.isRemoved).map((file) => String(file.id));
+      const uploadedFiles = await uploadFiles(files);
+      const successFiles = uploadedFiles.filter((file) => !file.error);
+      const newUploadedFiles = [...filesToUpload, ...(successFiles as TUploadedFile[])];
+      const newUploadedFilesIds = newUploadedFiles.filter((file) => !file.isRemoved).map((file) => `[${file.name}](${file.url})`);
 
       setFilesToUploadState(newUploadedFiles);
       editField({ value: newUploadedFilesIds, attachments: newUploadedFiles });
@@ -73,9 +78,9 @@ export function ExtraFieldFile({
     }
   };
 
-  const handleDeleteFile = (id: number) => async () => {
+  const handleDeleteFile = (id: string) => async () => {
     const newUploadedFiles = filesToUpload.map((file) => (file.id === id ? { ...file, isRemoved: true } : file));
-    const newUploadedFilesIds = newUploadedFiles.filter((file) => !file.isRemoved).map((file) => String(file.id));
+    const newUploadedFilesIds = newUploadedFiles.filter((file) => !file.isRemoved).map((file) => `[${file.name}](${file.url})`);
 
     setFilesToUploadState(newUploadedFiles);
     editField({ value: newUploadedFilesIds, attachments: newUploadedFiles });

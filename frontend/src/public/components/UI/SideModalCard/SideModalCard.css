@@ -1,37 +1,25 @@
 .card-container {
-  padding: 16px;
+  padding: 1.6rem;
   display: flex;
   overflow: hidden;
-  background: #fdf7ee;
-  border: none;
-  border-radius: 16px;
-  transition: 0.1s ease-in-out background;
   flex-flow: column;
-}
-
-.card-container:hover {
-  background: white;
-
-  .card__title {
-    color: currencolor;
-  }
+  background: var(--pneumatic-color-beige);
+  border: none;
+  border-radius: 1.6rem;
+  transition: background 0.1s ease-in-out;
 }
 
 .card__title {
-  overflow: hidden;
-  font-family: 'Abhaya Libre', 'Times New Roman', Arial;
-  font-size: 20px;
+  @mixin h6;
+
   font-weight: 800;
-  line-height: 24px;
-  text-overflow: ellipsis;
   word-break: break-word;
-  color: #262522;
+  color: var(--pneumatic-color-black100);
 }
 
 .card__footer {
+  @mixin text-small;
+
   margin-top: auto;
-  font-family: Nunito, sans-serif;
-  font-size: 13px;
-  line-height: 16px;
-  color: #979795;
+  color: var(--pneumatic-color-black48);
 }

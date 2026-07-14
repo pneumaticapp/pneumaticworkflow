@@ -103,8 +103,8 @@ export function Groups() {
 
   return (
     <div className={styles['container']}>
-      <PageTitle titleId={EPageTitle.Team} withUnderline={false} />
       <AddGuestsBanner />
+      <PageTitle titleId={EPageTitle.Team} withUnderline={false} />
       <section className={styles['search']}>{renderSearch()}</section>
       <AddButton
         title={formatMessage({ id: 'team.groups.add-group.title' })}

@@ -35,6 +35,7 @@ from src.processes.models.workflows.task import (
 )
 from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.workflow import Workflow
+from src.storage.utils import reassign_restricted_permissions_for_task
 from src.processes.services import exceptions
 from src.processes.services.condition_check.service import (
     ConditionCheckService,
@@ -663,6 +664,10 @@ class WorkflowActionService:
         fields_values = self.workflow.get_fields_markdown_values()
         task_service.insert_fields_values(fields_values=fields_values)
         task.update_performers(restore_performers=True)
+        reassign_restricted_permissions_for_task(
+            task=task,
+            user=self.user or task.account.get_owner(),
+        )
         task_performers_exists = (
             TaskPerformer.objects.exclude_directly_deleted().by_task(
                 task.id,

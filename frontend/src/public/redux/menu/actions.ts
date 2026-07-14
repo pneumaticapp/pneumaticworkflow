@@ -1,6 +1,6 @@
 /* eslint-disable */
 /* prettier-ignore */
-import * as classNames from 'classnames';
+import classNames from 'classnames';
 import { IMenu, ITypedReduxAction } from '../../types/redux';
 import { actionGenerator } from '../../utils/redux';
 import { IMenuItem } from '../../types/menu';

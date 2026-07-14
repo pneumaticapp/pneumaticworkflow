@@ -47,6 +47,7 @@ from src.processes.services.tasks.task import (
 from src.processes.utils.common import (
     insert_fields_values_to_text,
 )
+from src.storage.utils import reassign_restricted_permissions_for_task
 
 UserModel = get_user_model()
 
@@ -415,6 +416,10 @@ class TaskUpdateVersionService(
                     default_performer.is_new_tasks_subscriber,
                 ),
             )
+        reassign_restricted_permissions_for_task(
+            task=self.instance,
+            user=self.user,
+        )
         if deleted_group_ids:
             for user in (
                 account.users.

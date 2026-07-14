@@ -57,13 +57,13 @@ describe('useAttachmentUpload', () => {
   });
 
   describe('successful upload', () => {
-    it('calls uploadFiles with files array and accountId', async () => {
+    it('calls uploadFiles with files array', async () => {
       uploadFiles.mockResolvedValue([{ url: 'https://cdn.example.com/a.pdf', id: 1, name: 'a.pdf' }]);
       render(<TestWrapper editorRef={editorRef} accountId={42} />);
       const input = screen.getByTestId('file-input');
       const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
       await userEvent.upload(input, file);
-      expect(uploadFiles).toHaveBeenCalledWith([file], 42);
+      expect(uploadFiles).toHaveBeenCalledWith([file]);
     });
 
     it('dispatches INSERT_ATTACHMENT_COMMAND for each uploaded file with url', async () => {
@@ -210,7 +210,7 @@ describe('usePasteUpload', () => {
   }
 
   describe('successful upload', () => {
-    it('calls uploadFiles with files array and accountId', async () => {
+    it('calls uploadFiles with files array', async () => {
       const handlerRef: React.MutableRefObject<((files: File[]) => Promise<void>) | null> = {
         current: null,
       };
@@ -218,7 +218,7 @@ describe('usePasteUpload', () => {
       render(<TestPasteWrapper editorRef={editorRef} accountId={42} handlerRef={handlerRef} />);
       const file = new File(['content'], 'pasted.png', { type: 'image/png' });
       await handlerRef.current!([file]);
-      expect(uploadFiles).toHaveBeenCalledWith([file], 42);
+      expect(uploadFiles).toHaveBeenCalledWith([file]);
     });
 
     it('dispatches INSERT_ATTACHMENT_COMMAND for each uploaded file', async () => {

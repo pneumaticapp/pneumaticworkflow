@@ -1,6 +1,6 @@
 /* eslint-disable */
 /* prettier-ignore */
-import * as moment from 'moment';
+import moment from 'moment';
 import { ITaskList } from '../../../types/redux';
 import { ETaskListCompleteSorting, ETaskListSorting, ITaskListItem } from '../../../types/tasks';
 
@@ -18,6 +18,7 @@ export function getTaskListWithNewTask(
   const firstNotUrgentIndex = tasksItems.findIndex(task => {
     return !task.isUrgent;
   });
+  const urgentItemsEndIndex = firstNotUrgentIndex === -1 ? tasksItems.length : firstNotUrgentIndex;
   const tasksItemsLength = tasksItems.length;
 
   const insertTaskMap:
@@ -62,8 +63,8 @@ export function getTaskListWithNewTask(
   };
 
   if (newTask.isUrgent) {
-    const newTaskList = insertTaskMap[sorting](tasksItems.slice(0, firstNotUrgentIndex));
-    const items = [...newTaskList, ...tasksItems.slice(firstNotUrgentIndex)];
+    const newTaskList = insertTaskMap[sorting](tasksItems.slice(0, urgentItemsEndIndex));
+    const items = [...newTaskList, ...tasksItems.slice(urgentItemsEndIndex)];
     const offset = items.length - tasksItems.length;
 
     return {
@@ -72,8 +73,8 @@ export function getTaskListWithNewTask(
       offset: tasksOffset + offset,
     };
   }
-  const newTaskList = insertTaskMap[sorting](tasksItems.slice(firstNotUrgentIndex));
-  const items = [...tasksItems.slice(0, firstNotUrgentIndex), ...newTaskList];
+  const newTaskList = insertTaskMap[sorting](tasksItems.slice(urgentItemsEndIndex));
+  const items = [...tasksItems.slice(0, urgentItemsEndIndex), ...newTaskList];
   const offset = items.length - tasksItems.length;
 
   return {

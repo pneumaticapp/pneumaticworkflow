@@ -100,7 +100,8 @@ import {
   getLastLoadedTemplateIdForTable,
 } from '../selectors/workflows';
 import { getCurrentTask } from '../selectors/task';
-import { getEditKickoff, mapFilesToRequest } from '../../utils/workflows';
+import { syncRenamedWorkflowToTasks } from './utils/syncRenamedWorkflowToTasks';
+import { getEditKickoff } from '../../utils/workflows';
 import { getErrorMessage } from '../../utils/getErrorMessage';
 import { getWorkflows } from '../../api/getWorkflows';
 import { getWorkflow } from '../../api/getWorkflow';
@@ -116,7 +117,7 @@ import { editWorkflow, IEditWorkflowResponse } from '../../api/editWorkflow';
 import { getTemplatesTitles, TGetTemplatesTitlesResponse } from '../../api/getTemplatesTitles';
 import { IKickoff, ITemplateResponse, TTemplatePreset } from '../../types/template';
 import { getWorkflowLogStore } from '../selectors/workflowLog';
-import { deleteRemovedFilesFromFields } from '../../api/deleteRemovedFilesFromFields';
+
 import { TChannelAction } from '../tasks/saga';
 import { ITemplateStep } from '../../types/tasks';
 import { getTemplateSteps } from '../../api/getTemplateSteps';
@@ -358,7 +359,7 @@ function* fetchWorkflowsList({ payload: offset = 0 }: PayloadAction<number>) {
   }
 }
 
-function* saveWorkflowLogComment({ payload: { text, attachments } }: PayloadAction<ISendWorkflowLogComment>) {
+function* saveWorkflowLogComment({ payload: { text } }: PayloadAction<ISendWorkflowLogComment>) {
   const {
     items,
     workflowId: processId,
@@ -369,14 +370,11 @@ function* saveWorkflowLogComment({ payload: { text, attachments } }: PayloadActi
     return;
   }
 
-  const normalizedAttachments = mapFilesToRequest(attachments);
-
   try {
     yield put(setGeneralLoaderVisibility(true));
     const newComment: IWorkflowLogItem = yield sendWorkflowComment({
       id: processId,
       text,
-      attachments: normalizedAttachments,
     });
 
     const preLoadedProcessLogMap = {
@@ -405,7 +403,6 @@ function* editWorkflowInWork({ payload }: PayloadAction<TEditWorkflowPayload>) {
   if (name) yield put(setIsSavingWorkflowName(true));
   if (kickoff) yield put(setIsSavingKickoff(true));
 
-  yield deleteRemovedFilesFromFields(payload.kickoff?.fields);
 
   try {
     yield put(setGeneralLoaderVisibility(true));
@@ -471,6 +468,14 @@ function* editWorkflowInWork({ payload }: PayloadAction<TEditWorkflowPayload>) {
             }),
           ),
         ),
+      );
+    }
+    if (name) {
+      yield syncRenamedWorkflowToTasks(
+        task,
+        payload.workflowId,
+        formattedEditedWorkflow.name,
+        formattedWorkflow.tasks,
       );
     }
     // yield put(loadWorkflowsList(0));
@@ -887,10 +892,10 @@ export function* deleteCommentSaga({ payload: { id } }: PayloadAction<IDeleteCom
   }
 }
 
-export function* editCommentSaga({ payload: { id, text, attachments } }: PayloadAction<IEditComment>) {
+export function* editCommentSaga({ payload: { id, text } }: PayloadAction<IEditComment>) {
   try {
     yield put(setGeneralLoaderVisibility(true));
-    const updateComment: IWorkflowLogItem = yield editComment({ id, text, attachments });
+    const updateComment: IWorkflowLogItem = yield editComment({ id, text });
     yield put(updateWorkflowLogItem(updateComment));
     yield put(updateTaskWorkflowLogItem(updateComment));
   } catch (error) {

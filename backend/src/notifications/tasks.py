@@ -1248,8 +1248,7 @@ def _send_workflow_comment_watched():
         modified_events_ids = (el.id for el in modified_events)
         events = (
             WorkflowEvent.objects
-            .prefetch_related('attachments')
-            .select_related('account')
+            .select_related('account', 'workflow')
             .filter(id__in=modified_events_ids)
             .type_comment()
         )

@@ -253,6 +253,7 @@ export function Sidebar({
     <div
       ref={(node) => (container = node)}
       className={classnames(
+        'no-print',
         'sidebar',
         styles['sidebar'],
         trialIsActive ? styles['sidebar_trial'] : statusClassesMap[plan],
