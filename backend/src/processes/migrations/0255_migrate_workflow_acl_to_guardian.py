@@ -24,6 +24,7 @@ SOURCE_PERFORMER = 'Performer'
 SOURCE_PERFORMER_GROUP = 'PerformerGroup'
 PERFORMER_TYPE_USER = 'user'
 PERFORMER_TYPE_GROUP = 'group'
+USER_TYPE_USER = 'user'
 DIRECTLY_DELETED = 1
 
 BATCH_SIZE = 2000
@@ -63,21 +64,38 @@ def forward(apps, schema_editor):
         defaults={'name': 'Can change workflow'},
     )
 
+    # Same-account regular users only (matches WorkflowPermissionService
+    # + guests must not get Guardian view_workflow).
+    same_account_user = {
+        'user__type': USER_TYPE_USER,
+        'user__account_id': F('workflow__account_id'),
+    }
+    same_account_performer_user = {
+        'user__type': USER_TYPE_USER,
+        'user__account_id': F('task__workflow__account_id'),
+    }
+
     # (workflow_id, user_id) covered by PERFORMER* or owners —
     # must not also get WORKFLOW_VIEWER from members, otherwise
     # remove-performer / remove-owner cannot revoke view.
     covered = set()
     if hasattr(Workflow, 'owners'):
         covered.update(
-            Workflow.owners.through.objects.values_list(
+            Workflow.owners.through.objects.filter(
+                **same_account_user,
+            ).values_list(
                 'workflow_id', 'user_id',
             ),
         )
 
     # --- active USER performers → Performer ---
+    # Guests excluded: GuestPerformersService never grants Guardian UOP.
     user_rows = (
         TaskPerformer.objects
-        .filter(type=PERFORMER_TYPE_USER)
+        .filter(
+            type=PERFORMER_TYPE_USER,
+            **same_account_performer_user,
+        )
         .exclude(directly_status=DIRECTLY_DELETED)
         .exclude(user_id__isnull=True)
         .values_list('task_id', 'task__workflow_id', 'user_id')
@@ -101,7 +119,10 @@ def forward(apps, schema_editor):
     # --- active GROUP performers → PerformerGroup ---
     group_rows = (
         TaskPerformer.objects
-        .filter(type=PERFORMER_TYPE_GROUP)
+        .filter(
+            type=PERFORMER_TYPE_GROUP,
+            group__account_id=F('task__workflow__account_id'),
+        )
         .exclude(directly_status=DIRECTLY_DELETED)
         .exclude(group_id__isnull=True)
         .values_list('task__workflow_id', 'group_id')
@@ -125,7 +146,11 @@ def forward(apps, schema_editor):
         through = UserGroup.users.through
         for gid, uid in (
             through.objects
-            .filter(usergroup_id__in=active_group_ids)
+            .filter(
+                usergroup_id__in=active_group_ids,
+                user__type=USER_TYPE_USER,
+                user__account_id=F('usergroup__account_id'),
+            )
             .values_list('usergroup_id', 'user_id')
             .iterator(chunk_size=BATCH_SIZE)
         ):
@@ -150,7 +175,9 @@ def forward(apps, schema_editor):
     # --- remaining members → WorkflowViewer (mentions / legacy) ---
     if hasattr(Workflow, 'members'):
         through = Workflow.members.through
-        rows = through.objects.all().values_list(
+        rows = through.objects.filter(
+            **same_account_user,
+        ).values_list(
             'workflow_id', 'user_id',
         ).iterator(chunk_size=BATCH_SIZE)
 
@@ -173,7 +200,9 @@ def forward(apps, schema_editor):
     # --- owners → change_workflow + view_workflow (TemplateOwner) ---
     if hasattr(Workflow, 'owners'):
         through = Workflow.owners.through
-        rows = through.objects.annotate(
+        rows = through.objects.filter(
+            **same_account_user,
+        ).annotate(
             template_id=F('workflow__template_id'),
         ).values_list(
             'workflow_id', 'user_id', 'template_id',
