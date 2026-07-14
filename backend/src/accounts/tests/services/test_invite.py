@@ -424,10 +424,14 @@ def test_user_create_actions__premium__ok(mocker, plan):
             'last_name': invited_user.last_name,
             'email': invited_user.email,
             'photo': invited_user.photo,
+            'phone': invited_user.phone,
+            'status': invited_user.status,
             'is_admin': invited_user.is_admin,
             'is_account_owner': invited_user.is_account_owner,
             'manager_id': None,
             'subordinates_ids': [],
+            'invite_id': str(invited_user.invite.id),
+            'vacation': None,
         },
     )
 
@@ -479,10 +483,14 @@ def test_user_create_actions__freemium__ok(mocker):
             'last_name': invited_user.last_name,
             'email': invited_user.email,
             'photo': invited_user.photo,
+            'phone': invited_user.phone,
+            'status': invited_user.status,
             'is_admin': invited_user.is_admin,
             'is_account_owner': invited_user.is_account_owner,
             'manager_id': None,
             'subordinates_ids': [],
+            'invite_id': str(invited_user.invite.id),
+            'vacation': None,
         },
     )
 
@@ -1926,10 +1934,14 @@ def test__accept__all_fields__ok(identify_mock, group_mock, mocker):
             'last_name': invited_user.last_name,
             'email': invited_user.email,
             'photo': invited_user.photo,
+            'phone': invited_user.phone,
+            'status': invited_user.status,
             'is_admin': invited_user.is_admin,
             'is_account_owner': invited_user.is_account_owner,
             'manager_id': None,
             'subordinates_ids': [],
+            'invite_id': None,
+            'vacation': None,
         },
     )
 
@@ -2033,9 +2045,13 @@ def test__accept__only_required_fields__ok(identify_mock, group_mock, mocker):
             'last_name': invited_user.last_name,
             'email': invited_user.email,
             'photo': invited_user.photo,
+            'phone': invited_user.phone,
+            'status': invited_user.status,
             'is_admin': invited_user.is_admin,
             'is_account_owner': invited_user.is_account_owner,
             'manager_id': None,
             'subordinates_ids': [],
+            'invite_id': None,
+            'vacation': None,
         },
     )
