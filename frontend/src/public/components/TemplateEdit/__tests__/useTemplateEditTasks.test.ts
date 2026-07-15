@@ -1,5 +1,5 @@
 /// <reference types="jest" />
-import * as React from 'react';
+import { createElement } from 'react';
 import { act, render } from '@testing-library/react';
 import { FormikProps } from 'formik';
 
@@ -72,7 +72,7 @@ describe('useTemplateEditTasks', () => {
       return null;
     }
 
-    render(React.createElement(Harness));
+    render(createElement(Harness));
 
     act(() => {
       editDelay!('2d');
@@ -105,13 +105,13 @@ describe('useTemplateEditTasks', () => {
       return null;
     }
 
-    const { rerender } = render(React.createElement(Harness));
+    const { rerender } = render(createElement(Harness));
 
     act(() => {
       openTaskRefs[0]!(task.uuid);
     });
 
-    rerender(React.createElement(Harness));
+    rerender(createElement(Harness));
 
     expect(openTaskRefs[0]).toBe(openTaskRefs[1]);
 

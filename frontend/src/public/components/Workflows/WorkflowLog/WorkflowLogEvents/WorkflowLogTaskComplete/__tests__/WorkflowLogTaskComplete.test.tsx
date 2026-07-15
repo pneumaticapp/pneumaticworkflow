@@ -1,11 +1,12 @@
-import * as React from 'react';
+import React from 'react';
+import type { ReactNode } from 'react';
 import { render, screen } from '@testing-library/react';
 import { IntlProvider } from 'react-intl';
 
 import { WorkflowLogTaskComplete } from '../WorkflowLogTaskComplete';
 
 jest.mock('../../../../../UserData', () => ({
-  UserData: ({ children }: { children(user: unknown): React.ReactNode }) => children({ firstName: 'Test', lastName: 'User' }),
+  UserData: ({ children }: { children(user: unknown): ReactNode }) => children({ firstName: 'Test', lastName: 'User' }),
 }));
 
 jest.mock('../../../../../KickoffOutputs', () => ({

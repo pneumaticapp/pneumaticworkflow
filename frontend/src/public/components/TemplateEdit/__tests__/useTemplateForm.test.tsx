@@ -1,5 +1,6 @@
 /// <reference types="jest" />
-import * as React from 'react';
+import React from 'react';
+import type { FC, MutableRefObject } from 'react';
 import { act, render } from '@testing-library/react';
 
 import {
@@ -130,7 +131,7 @@ describe('getTemplateVariablesFingerprint', () => {
 
 interface ISpyHandle {
   values: ITemplate;
-  dirtyRef: React.MutableRefObject<boolean>;
+  dirtyRef: MutableRefObject<boolean>;
   setFieldValue: (field: string, value: unknown, shouldValidate?: boolean) => void;
   consumePendingChanges: (explicitFields?: Partial<ITemplate>) => Partial<ITemplate>;
   confirmConsumedChanges: () => void;
@@ -168,7 +169,7 @@ function TemplateFormHarness({
 }) {
   const { formik, setFieldValue, setValues, dirtyRef, pendingUserEditsRef, persistBaselineSyncRef } = useTemplateForm(initialTemplate);
 
-  const Spy: React.FC = () => {
+  const Spy: FC = () => {
     const { values, setFieldValue: contextSetFieldValue } = useTemplateField();
     const { consumePendingChanges, confirmConsumedChanges, revertConsumedChanges, abandonPendingChanges } = useTemplatePersist();
     spy({ values, dirtyRef, setFieldValue: contextSetFieldValue, consumePendingChanges, confirmConsumedChanges, revertConsumedChanges, abandonPendingChanges });
@@ -1629,7 +1630,7 @@ describe('useTemplateSaveRetry', () => {
   }) {
     const { formik, setFieldValue, setValues, dirtyRef, pendingUserEditsRef, persistBaselineSyncRef } = useTemplateForm(initialTemplate);
 
-    const RetrySpy: React.FC = () => {
+    const RetrySpy: FC = () => {
       const { setFieldValue: contextSetFieldValue } = useTemplateField();
       const retryFailedSave = useTemplateSaveRetry();
       onReady(retryFailedSave, contextSetFieldValue);
@@ -1754,7 +1755,7 @@ describe('useTemplateSaveRetry', () => {
     function ActivationRetryHarness() {
       const { formik, setFieldValue, setValues, dirtyRef, pendingUserEditsRef, persistBaselineSyncRef } = useTemplateForm(template);
 
-      const RetrySpy: React.FC = () => {
+      const RetrySpy: FC = () => {
         retryFailedSave = useTemplateSaveRetry();
         persist = useTemplatePersist();
         return null;

@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 
 import { AutoSaveStatusContainer } from './AutoSaveStatus';
 import { TemplateEntity } from './TemplateEntity';
@@ -8,7 +8,7 @@ import { KickoffReduxContainer } from './KickoffRedux';
 import { ConditionsBanner } from './ConditionsBanner';
 import { TemplateSettings } from './TemplateSettings';
 import { useTemplateSaveRetry } from './useTemplateForm';
-import { ITemplateEditLayoutProps } from './templateEditPage.types';
+import { ITemplateEditLayoutProps } from './types';
 
 import styles from './TemplateEdit.css';
 

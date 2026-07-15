@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react';
+import { useDispatch } from 'react-redux';
 import { FormikProps } from 'formik';
 
-import { ITemplateEditParams } from './templateEditPage.types';
+import { ITemplateEditParams } from './types';
 import { createEmptyTemplate } from './utils/createTemplateEditTask';
 import { getVariables } from './TaskForm/utils/getTaskVariables';
 import { ERoutes } from '../../constants/routes';
@@ -10,7 +11,14 @@ import { checkSomeRouteIsActive, isCreateTemplate } from '../../utils/history';
 import { usePrevious } from '../../hooks/usePrevious';
 import { ITemplate } from '../../types/template';
 import { TUserListItem } from '../../types/user';
-import { TLoadTemplateVariablesSuccessPayload } from '../../redux/actions';
+import {
+  loadTemplate,
+  loadTemplateFromSystem,
+  loadTemplateVariablesSuccess,
+  resetTemplateStore,
+  saveTemplate,
+  setTemplate,
+} from '../../redux/actions';
 import { IAuthUser } from '../../types/redux';
 import { getTemplateVariablesFingerprint } from './useTemplateForm/templateFormUtils';
 
@@ -26,12 +34,6 @@ type TUseTemplateEditInitParams = {
   authUser: IAuthUser;
   formik: FormikProps<ITemplate>;
   openTask(taskUUID?: string): void;
-  loadTemplate(id: number): void;
-  loadTemplateFromSystem(id: string): void;
-  resetTemplateStore(): void;
-  saveTemplate(): void;
-  setTemplate(payload: ITemplate): void;
-  loadTemplateVariablesSuccess(payload: TLoadTemplateVariablesSuccessPayload): void;
 };
 
 export function useTemplateEditInit({
@@ -44,13 +46,8 @@ export function useTemplateEditInit({
   authUser,
   formik,
   openTask,
-  loadTemplate,
-  loadTemplateFromSystem,
-  resetTemplateStore,
-  saveTemplate,
-  setTemplate,
-  loadTemplateVariablesSuccess,
 }: TUseTemplateEditInitParams) {
+  const dispatch = useDispatch();
   const prevUsers = usePrevious(users);
   const prevLocation = usePrevious(location);
   const prevTemplate = usePrevious(template);
@@ -68,23 +65,23 @@ export function useTemplateEditInit({
     const initMap = [
       {
         check: isCreateWorflowPage && workflowTemplateId,
-        init: () => loadTemplateFromSystem(workflowTemplateId!),
+        init: () => dispatch(loadTemplateFromSystem(workflowTemplateId!)),
       },
       {
         check: checkSomeRouteIsActive(ERoutes.TemplatesCreateAI),
         init: () => {
           const templateLocal = aiTemplate || createEmptyTemplate(authUser, users, accessConditions);
-          setTemplate(templateLocal);
-          saveTemplate();
+          dispatch(setTemplate(templateLocal));
+          dispatch(saveTemplate());
         },
       },
       {
         check: isCreateWorflowPage && !workflowTemplateId,
-        init: () => setTemplate(createEmptyTemplate(authUser, users, accessConditions)),
+        init: () => dispatch(setTemplate(createEmptyTemplate(authUser, users, accessConditions))),
       },
       {
         check: isEditWorkflow,
-        init: () => loadTemplate(Number(id)),
+        init: () => dispatch(loadTemplate(Number(id))),
       },
     ];
     const currentPageInit = initMap.find(({ check }) => check);
@@ -98,7 +95,7 @@ export function useTemplateEditInit({
     initPage();
 
     return () => {
-      resetTemplateStore();
+      dispatch(resetTemplateStore());
     };
   }, []);
 
@@ -139,18 +136,18 @@ export function useTemplateEditInit({
     // new Redux state so the reinitialize is a no-op for them.
     const currentValues = formikValuesRef.current;
     const newTemplateOwners = getNormalizedTemplateOwners(currentValues.owners, accessConditions, users);
-    setTemplate({ ...currentValues, owners: newTemplateOwners });
-  }, [users, accessConditions, prevUsers?.length, setTemplate]);
+    dispatch(setTemplate({ ...currentValues, owners: newTemplateOwners }));
+  }, [users, accessConditions, prevUsers?.length, dispatch]);
 
   useEffect(() => {
     const syncVariables = () => {
       const currentValues = formikValuesRef.current;
 
       if (currentValues.id) {
-        loadTemplateVariablesSuccess({
+        dispatch(loadTemplateVariablesSuccess({
           templateId: currentValues.id,
           variables: getVariables(currentValues),
-        });
+        }));
       }
     };
 
@@ -168,5 +165,5 @@ export function useTemplateEditInit({
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [variablesFingerprint, loadTemplateVariablesSuccess]);
+  }, [variablesFingerprint, dispatch]);
 }
