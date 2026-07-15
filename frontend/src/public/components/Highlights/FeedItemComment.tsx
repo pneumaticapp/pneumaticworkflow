@@ -32,7 +32,7 @@ export function FeedItemComment({
     const commentTextHeight = commentTextRef.current?.offsetHeight || 0;
 
     setIsCommentExpandable(commentTextHeight > MAX_TRUNCATED_COMMENT_HEIGHT || hasAttachments);
-  }, [commentTextRef.current]);
+  }, [attachments, hasAttachments, text]);
 
   if (!text) {
     return null;

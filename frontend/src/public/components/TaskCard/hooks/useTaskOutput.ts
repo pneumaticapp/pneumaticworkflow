@@ -6,7 +6,11 @@ import { sortFieldsByOrder } from '../../../utils/workflows';
 import { ExtraFieldsHelper } from '../../TemplateEdit/ExtraFields/utils/ExtraFieldsHelper';
 import { getEditedFields } from '../../TemplateEdit/ExtraFields/utils/getEditedFields';
 import { ITask } from '../../../types/tasks';
-import { addOrUpdateStorageOutput, getOutputFromStorage } from '../utils/storageOutputs';
+import {
+  addOrUpdateStorageOutput,
+  getOutputFromStorage,
+  removeOutputFromLocalStorage,
+} from '../utils/storageOutputs';
 import { getTaskOutputFingerprint } from '../utils/getTaskOutputFingerprint';
 
 export function useTaskOutput(task: ITask) {
@@ -38,7 +42,11 @@ export function useTaskOutput(task: ITask) {
 
     saveOutputsToStorageDebounced.cancel();
 
-    const storageOutput = getOutputFromStorage(id);
+    if (isTaskRestarted || isServerOutputChanged) {
+      removeOutputFromLocalStorage(id);
+    }
+
+    const storageOutput = isNewTask ? getOutputFromStorage(id) : undefined;
     const outputFieldsWithValues = sortFieldsByOrder(
       new ExtraFieldsHelper(output, storageOutput).getFieldsWithValues(),
     );

@@ -13,6 +13,7 @@ jest.mock('../../TemplateEdit/ExtraFields', () => ({
 jest.mock('../utils/storageOutputs', () => ({
   getOutputFromStorage: jest.fn(() => undefined),
   addOrUpdateStorageOutput: jest.fn(),
+  removeOutputFromLocalStorage: jest.fn(),
 }));
 
 jest.mock('../../../utils/autoFocusFirstField', () => ({
@@ -31,7 +32,7 @@ jest.mock('../../../redux/selectors/groups', () => ({
   getRegularGroupsList: () => [{ id: 5, name: 'Group Five', type: 'regular' }],
 }));
 
-const mockUsersDropdown = jest.fn((_props?: unknown) => null);
+const mockUsersDropdown = jest.fn();
 
 jest.mock('../../UI/form/UsersDropdown', () => ({
   UsersDropdown: (props: unknown) => {
@@ -75,7 +76,7 @@ jest.mock('../ReturnModal', () => ({
 }));
 
 jest.mock('react-router-dom', () => ({
-  Link: ({ children }: { children: ReactNode }) => <a>{children}</a>,
+  Link: ({ children }: { children: ReactNode }) => <a href="/">{children}</a>,
 }));
 
 jest.mock('../../RichText', () => ({
@@ -124,7 +125,7 @@ jest.mock('../../UI/Typeography/Header', () => ({
 }));
 
 jest.mock('../../UI/Buttons/Button', () => ({
-  Button: () => <button />,
+  Button: () => <button type="button" aria-label="Action" />,
 }));
 
 jest.mock('../../IntlMessages', () => ({
@@ -392,6 +393,29 @@ describe('TaskCard', () => {
       } finally {
         jest.useRealTimers();
       }
+    });
+
+    it('discards a stale draft when server output is cleared', async () => {
+      const { ExtraFieldIntl } = jest.requireMock('../../TemplateEdit/ExtraFields');
+      const { getOutputFromStorage, removeOutputFromLocalStorage } = jest.requireMock('../utils/storageOutputs');
+      const field = makeField({ apiName: 'url-field', value: 'https://server.example' });
+      getOutputFromStorage.mockReturnValue([{ ...field, value: 'https://draft.example' }]);
+      const { rerender } = render(
+        <TaskCard {...baseProps} task={{ ...baseTask, output: [field] }} />,
+      );
+
+      rerender(
+        <TaskCard
+          {...baseProps}
+          task={{ ...baseTask, output: [{ ...field, value: '' }] }}
+        />,
+      );
+
+      await waitFor(() => {
+        const lastCall = ExtraFieldIntl.mock.calls[ExtraFieldIntl.mock.calls.length - 1];
+        expect(lastCall[0].field.value).toBe('');
+      });
+      expect(removeOutputFromLocalStorage).toHaveBeenCalledWith(baseTask.id);
     });
   });
 });
