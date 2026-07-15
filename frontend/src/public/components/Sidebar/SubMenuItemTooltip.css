@@ -1,23 +1,27 @@
 .sub-menu {
-  width: 13.25rem;
-  max-width: 13.25rem;
+  width: 21.2rem;
+  max-width: 21.2rem;
   font-family: Nunito, sans-serif;
-  border-radius: 1.5rem;
+  border-radius: 2.4rem;
 
   :global(.tippy-content) {
     padding: 0;
   }
 
   &:global(.tippy-box)[data-placement^='right'] > :global(.tippy-svg-arrow) {
-    left: -0.5rem;
-    width: 0.5rem;
-    height: 1.5rem;
+    left: -0.8rem;
+    width: 0.8rem;
+    height: 2.4rem;
 
     > * {
-      width: 1.5rem;
-      height: 0.5rem;
+      width: 2.4rem;
+      height: 0.8rem;
     }
   }
+}
+
+.sub-menu__trigger {
+  width: 100%;
 }
 
 .sub-menu__inner {
@@ -25,11 +29,11 @@
 
   ul {
     margin: 0;
-    padding: 2rem;
+    padding: 3.2rem;
     list-style: none;
-    font-size: 0.94rem;
+    font-size: 1.5rem;
     text-align: left;
-    border-radius: 1.5rem;
+    border-radius: 2.4rem;
   }
 
   li {
@@ -38,7 +42,7 @@
   }
 
   li + li {
-    margin-top: 1rem;
+    margin-top: 1.6rem;
   }
 }
 

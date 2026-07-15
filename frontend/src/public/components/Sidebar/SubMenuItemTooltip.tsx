@@ -51,9 +51,9 @@ export const SubMenuTooltip = ({
       delay={[delay, delay]}
       duration={300}
       placement="right"
-      size="auto"
+      size="lg"
     >
-      {children}
+      <div className={styles['sub-menu__trigger']}>{children}</div>
     </Tooltip>
   );
 };
