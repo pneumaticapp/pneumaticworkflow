@@ -106,7 +106,7 @@ export function AppRoutes({ containerClassnames, user }: IAppRoutesProps) {
             <ProtectedRoute path={ERoutes.TemplatesEdit} hasAccess={user.isAdmin}>
               <TemplateView />
             </ProtectedRoute>
-            <ProtectedRoute path={ERoutes.Templates} hasAccess={canAccessTemplates}>
+            <ProtectedRoute path={ERoutes.Templates} hasAccess={user.isAdmin}>
               <TemplatesView />
             </ProtectedRoute>
             <Route path={ERoutes.Tasks} component={TasksView} />
