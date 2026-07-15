@@ -12,7 +12,7 @@ const startX = { current: 0 };
 const startWidth = { current: 0 };
 const resizingCol = { current: null as string | null };
 
-const saveIntoLocalStorage = (widths: Record<string, number>, currentUserId: number, templateId: number) => {
+const saveIntoLocalStorage = (widths: Record<string, number>, currentUserId?: number, templateId?: number) => {
   if (!currentUserId) return;
   const updatedWidths = { ...widths };
 
@@ -34,15 +34,15 @@ const saveIntoLocalStorage = (widths: Record<string, number>, currentUserId: num
   }
 };
 
-const debouncedSave = debounce(300, (widths: Record<string, number>, currentUserId: number, templateId: number) => {
+const debouncedSave = debounce(300, (widths: Record<string, number>, currentUserId?: number, templateId?: number) => {
   saveIntoLocalStorage(widths, currentUserId, templateId);
 });
 
 export const createResizeHandler = (
   colWidths: Record<string, number>,
   setColWidths: (widths: Record<string, number> | ((prev: Record<string, number>) => Record<string, number>)) => void,
-  currentUserId: number,
-  templateId: number,
+  currentUserId?: number,
+  templateId?: number,
 ) => {
   return (e: React.MouseEvent, colId: string, minWidth: number) => {
     startX.current = e.clientX;
