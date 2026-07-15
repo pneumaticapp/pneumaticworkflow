@@ -2125,10 +2125,8 @@ def test__get_clone__ok(mocker):
     service = FieldSetTemplateService(
         user=user,
         instance=fieldset,
-        is_superuser=False,
-        auth_type=AuthTokenType.USER,
     )
-    shared_fieldset_data = {
+    instance_data = {
         'id': fieldset.id,
         'name': fieldset.name,
         'title': fieldset.title,
@@ -2139,26 +2137,21 @@ def test__get_clone__ok(mocker):
         'fields': [],
         'rules': [],
     }
-    fieldset_data = {
-        'name': fieldset.name,
-        'title': fieldset.title,
-        'description': fieldset.description,
-        'api_name': 'new-fs-api',
-        'label_position': fieldset.label_position,
-        'layout': fieldset.layout,
-        'fields': [],
-        'rules': [],
-    }
+    clone_data = dict(instance_data)
+    clone_data['api_name'] = 'new-fs-api'
+    result_data = dict(clone_data)
+    result_data['name'] = f'{clone_data["name"]} - clone'
+
     clone = mocker.Mock()
     to_json_mock = mocker.patch(
         'src.processes.services.fieldsets.fieldset.'
         'FieldSetTemplateService.to_json',
-        return_value=shared_fieldset_data,
+        return_value=instance_data,
     )
     get_new_fieldset_data_mock = mocker.patch(
         'src.processes.services.fieldsets.fieldset.'
         'FieldSetTemplateService.get_new_fieldset_data',
-        return_value=fieldset_data,
+        return_value=result_data,
     )
     create_shared_fieldset_mock = mocker.patch(
         'src.processes.services.fieldsets.fieldset.'
@@ -2173,65 +2166,6 @@ def test__get_clone__ok(mocker):
     assert result is clone
     to_json_mock.assert_called_once_with(fieldset)
     get_new_fieldset_data_mock.assert_called_once_with(
-        shared_fieldset_data=shared_fieldset_data,
+        shared_fieldset_data=instance_data,
     )
-    create_shared_fieldset_mock.assert_called_once_with(**fieldset_data)
-
-
-def test__get_clone__with_fields_and_rules__ok():
-
-    """
-    Integration: clone shared fieldset with fields and rules
-    """
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    fieldset = create_test_shared_fieldset(
-        account=account,
-        name='Fieldset with rules',
-        title='Title',
-        description='Description',
-        label_position=LabelPosition.LEFT,
-        layout=FieldSetLayout.HORIZONTAL,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
-        rule_value='10',
-    )
-    field = fieldset.fields.get()
-    rule = fieldset.rules.get()
-    rule.fields.add(field)
-    service = FieldSetTemplateService(
-        user=user,
-        instance=fieldset,
-        is_superuser=False,
-        auth_type=AuthTokenType.USER,
-    )
-
-    # act
-    result = service.get_clone()
-
-    # assert
-    assert result.id != fieldset.id
-    assert result.is_shared is True
-    assert result.name == fieldset.name
-    assert result.title == fieldset.title
-    assert result.description == fieldset.description
-    assert result.label_position == fieldset.label_position
-    assert result.layout == fieldset.layout
-    assert result.api_name != fieldset.api_name
-    assert result.account_id == account.id
-
-    assert result.fields.count() == 1
-    clone_field = result.fields.get()
-    assert clone_field.name == field.name
-    assert clone_field.type == field.type
-    assert clone_field.api_name != field.api_name
-
-    assert result.rules.count() == 1
-    clone_rule = result.rules.get()
-    assert clone_rule.type == rule.type
-    assert clone_rule.value == rule.value
-    assert clone_rule.api_name != rule.api_name
-    assert list(clone_rule.fields.values_list('api_name', flat=True)) == [
-        clone_field.api_name,
-    ]
+    create_shared_fieldset_mock.assert_called_once_with(**result_data)

@@ -128,15 +128,6 @@ class FieldSetTemplateService(BaseModelService):
             template_id=template_id,
         )
 
-    def get_clone(self) -> FieldsetTemplate:
-
-        """ Creates a shared FieldSetTemplate clone of self.instance """
-
-        fieldset_data = self.get_new_fieldset_data(
-            shared_fieldset_data=self.to_json(self.instance),
-        )
-        return self.create_shared_fieldset(**fieldset_data)
-
     def _create_related(
         self,
         rules: Optional[List[Dict]] = None,
@@ -368,3 +359,14 @@ class FieldSetTemplateService(BaseModelService):
             )
             slz_cls = FieldsetTemplateSerializer
         return dict(slz_cls(fieldset).data)
+
+    def get_clone(self) -> FieldsetTemplate:
+
+        """ Creates a shared FieldSetTemplate clone of self.instance """
+
+        instance_data = self.to_json(self.instance)
+        clone_data = self.get_new_fieldset_data(
+            shared_fieldset_data=instance_data,
+        )
+        clone_data['name'] = clone_data['name'] + ' - clone'
+        return self.create_shared_fieldset(**clone_data)
