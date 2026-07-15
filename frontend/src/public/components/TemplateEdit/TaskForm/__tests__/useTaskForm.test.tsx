@@ -1,5 +1,6 @@
 /// <reference types="jest" />
-import * as React from 'react';
+import React from 'react';
+import type { FC, ReactNode } from 'react';
 import { act, render } from '@testing-library/react';
 
 import { ETaskPerformerType, ITemplate, ITemplateTask } from '../../../../types/template';
@@ -61,7 +62,7 @@ function TaskFormHarness({
 }: {
   bag: IFormikBag;
   taskUuid: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <TemplateFieldContext.Provider
@@ -74,7 +75,7 @@ function TaskFormHarness({
 
 describe('useTaskForm', () => {
   it('throws when used outside <TaskFormScopeProvider>', () => {
-    const Spy: React.FC = () => {
+    const Spy: FC = () => {
       useTaskForm();
       return null;
     };
@@ -105,7 +106,7 @@ describe('useTaskForm', () => {
     const bag: IFormikBag = { values: makeTemplate([task]), setFieldValue };
 
     let form: ReturnType<typeof useTaskForm> | null = null;
-    const Spy: React.FC = () => {
+    const Spy: FC = () => {
       form = useTaskForm();
       return null;
     };
@@ -129,7 +130,7 @@ describe('useTaskForm', () => {
     const bag: IFormikBag = { values: makeTemplate([task]), setFieldValue };
 
     let form: ReturnType<typeof useTaskForm> | null = null;
-    const Spy: React.FC = () => {
+    const Spy: FC = () => {
       form = useTaskForm();
       return null;
     };
@@ -168,7 +169,7 @@ describe('useTaskForm', () => {
     const bag: IFormikBag = { values: makeTemplate([task1, task2]), setFieldValue };
 
     let form: ReturnType<typeof useTaskForm> | null = null;
-    const Spy: React.FC = () => {
+    const Spy: FC = () => {
       form = useTaskForm();
       return null;
     };

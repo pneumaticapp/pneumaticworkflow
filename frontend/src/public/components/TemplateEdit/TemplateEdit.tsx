@@ -5,33 +5,28 @@ import { useIntl } from 'react-intl';
 import { TemplateEditLayout } from './TemplateEditLayout';
 import { useTemplateEditInit } from './useTemplateEditInit';
 import { useTemplateEditTasks } from './useTemplateEditTasks';
-import { getSubscriptionPlan } from '../../redux/selectors/user';
+import { getCurrentUser } from '../../redux/selectors/authUser';
+import { getNotDeletedAccountsUsers } from '../../redux/selectors/accounts';
+import { getIsUserSubsribed, getSubscriptionPlan } from '../../redux/selectors/user';
+import { getAITemplate, getTemplateData, getTemplateStatus } from '../../redux/selectors/template';
 import { ESubscriptionPlan } from '../../types/account';
 import { ETemplateStatus } from '../../types/redux';
 import { TemplateForm, useTemplateForm } from './useTemplateForm';
 import { resolveTemplateFormIdentity } from './useTemplateForm/templateFormUtils';
 
-import { TTemplateEditProps } from './templateEditPage.types';
-
-export * from './templateEditPage.types';
+import { TTemplateEditProps } from './types';
 
 export function TemplateEdit({
   match,
   location,
-  authUser,
-  template,
-  aiTemplate,
-  templateStatus,
-  users,
-  isSubscribed,
-  loadTemplate,
-  loadTemplateFromSystem,
-  resetTemplateStore,
-  saveTemplate,
-  setTemplate,
-  loadTemplateVariablesSuccess,
 }: TTemplateEditProps) {
   const { formatMessage } = useIntl();
+  const authUser = useSelector(getCurrentUser);
+  const users = useSelector(getNotDeletedAccountsUsers);
+  const template = useSelector(getTemplateData);
+  const aiTemplate = useSelector(getAITemplate);
+  const templateStatus = useSelector(getTemplateStatus);
+  const isSubscribed = useSelector(getIsUserSubsribed);
   const templateIdentity = resolveTemplateFormIdentity(template, location);
   const createSessionKeyRef = useRef<string | undefined>(undefined);
 
@@ -68,12 +63,6 @@ export function TemplateEdit({
     authUser,
     formik,
     openTask,
-    loadTemplate,
-    loadTemplateFromSystem,
-    resetTemplateStore,
-    saveTemplate,
-    setTemplate,
-    loadTemplateVariablesSuccess,
   });
 
   if (templateStatus === ETemplateStatus.Loading) {

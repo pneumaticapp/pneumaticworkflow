@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React, { createElement, createRef } from 'react';
 import { render, waitFor, act } from '@testing-library/react';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
@@ -13,7 +13,7 @@ import {
   $createRangeSelection,
   $setSelection,
 } from 'lexical';
-import type { MutableRefObject } from 'react';
+import type { MutableRefObject, ReactElement } from 'react';
 import type { LexicalEditor } from 'lexical';
 import { CopyAttachmentPlugin } from '../CopyAttachmentPlugin';
 import { SetEditorRefPlugin } from '../../SetEditorRefPlugin';
@@ -43,7 +43,7 @@ function findNodeDeep(nodes: SerializedNode[], type: string): SerializedNode | u
 beforeAll(() => {
   jest
     .spyOn(ImageAttachmentNode.prototype, 'decorate')
-    .mockReturnValue(React.createElement('div', { 'data-testid': 'mock-img' }));
+    .mockReturnValue(createElement('div', { 'data-testid': 'mock-img' }));
 });
 
 afterAll(() => {
@@ -92,7 +92,7 @@ function TestHarness({
   editorRef,
 }: {
   editorRef: MutableRefObject<LexicalEditor | null>;
-}): React.ReactElement {
+}): ReactElement {
   return (
     <LexicalComposer initialConfig={initialConfig}>
       <RichTextPlugin
@@ -106,7 +106,7 @@ function TestHarness({
 }
 
 async function setupEditor(): Promise<LexicalEditor> {
-  const editorRef = React.createRef<LexicalEditor | null>() as MutableRefObject<LexicalEditor | null>;
+  const editorRef = createRef<LexicalEditor | null>() as MutableRefObject<LexicalEditor | null>;
   render(<TestHarness editorRef={editorRef} />);
   await waitFor(() => expect(editorRef.current).not.toBeNull());
   return editorRef.current!;

@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 
 import { ExtraFieldsLabels } from '../ExtraFields/utils/ExtraFieldsLabels';
 import { isArrayWithItems } from '../../../utils/helpers';

@@ -1,4 +1,4 @@
-import * as React from 'react';
+import type { ReactNode, RefObject } from 'react';
 
 import { IKickoff, ITemplateTask } from '../../../types/template';
 import { TUserListItem } from '../../../types/user';
@@ -26,7 +26,7 @@ export interface ITaskFormSectionsProps {
   tasks: ITemplateTask[];
   templateId: number | undefined;
   users: TUserListItem[];
-  wrapperRef: React.RefObject<HTMLDivElement>;
+  wrapperRef: RefObject<HTMLDivElement>;
 }
 
 export interface ITaskPerformersProps {
@@ -57,6 +57,6 @@ export interface IWidgetProps {
 export interface ITaskFormPart {
   formPartId: ETaskFormParts;
   title: string;
-  component: React.ReactNode;
-  widget(toggle: () => void): React.ReactNode;
+  component: ReactNode;
+  widget(toggle: () => void): ReactNode;
 }

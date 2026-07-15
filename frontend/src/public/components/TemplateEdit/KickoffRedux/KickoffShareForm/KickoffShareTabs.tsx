@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import classnames from 'classnames';
 import TextareaAutosize from 'react-textarea-autosize';
 import Switch from 'rc-switch';

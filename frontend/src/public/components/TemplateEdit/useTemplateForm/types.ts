@@ -1,4 +1,4 @@
-import * as React from 'react';
+import type { MutableRefObject, ReactNode } from 'react';
 import { useFormik } from 'formik';
 
 import { ITemplate } from '../../../types/template';
@@ -10,22 +10,22 @@ export interface ITemplateFormProps {
   formik: ReturnType<typeof useFormik<ITemplate>>;
   setFieldValue: TSetFieldValue;
   setValues: TSetValues;
-  dirtyRef: React.MutableRefObject<boolean>;
-  pendingUserEditsRef: React.MutableRefObject<Partial<ITemplate>>;
-  persistBaselineSyncRef: React.MutableRefObject<((reduxTemplate: ITemplate) => void) | null>;
-  children: React.ReactNode;
+  dirtyRef: MutableRefObject<boolean>;
+  pendingUserEditsRef: MutableRefObject<Partial<ITemplate>>;
+  persistBaselineSyncRef: MutableRefObject<((reduxTemplate: ITemplate) => void) | null>;
+  children: ReactNode;
 }
 
 export interface ITemplateFormPersistProviderProps {
-  dirtyRef: React.MutableRefObject<boolean>;
-  pendingUserEditsRef: React.MutableRefObject<Partial<ITemplate>>;
-  persistBaselineSyncRef: React.MutableRefObject<((reduxTemplate: ITemplate) => void) | null>;
-  children: React.ReactNode;
+  dirtyRef: MutableRefObject<boolean>;
+  pendingUserEditsRef: MutableRefObject<Partial<ITemplate>>;
+  persistBaselineSyncRef: MutableRefObject<((reduxTemplate: ITemplate) => void) | null>;
+  children: ReactNode;
 }
 
 export interface ITaskFormScopeProviderProps {
   taskUuid: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 export interface ITemplateFieldContextValue {

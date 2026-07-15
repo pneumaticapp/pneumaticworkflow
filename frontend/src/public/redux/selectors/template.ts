@@ -7,6 +7,8 @@ export const getTemplateData = (state: IApplicationState): ITemplate => {
 
 export const getTemplateStatus = (state: IApplicationState) => state.template.status;
 
+export const getAITemplate = (state: IApplicationState) => state.template.AITemplate.generatedData;
+
 export const getKickoff = (state: IApplicationState): IKickoff =>
   state.template.data.kickoff;
 

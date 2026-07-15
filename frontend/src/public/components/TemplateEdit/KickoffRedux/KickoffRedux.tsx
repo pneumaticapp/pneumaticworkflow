@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React, { useRef, useState } from 'react';
 import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
 
@@ -32,8 +32,8 @@ export function KickoffRedux() {
   const accountId = useSelector(getAccountId);
   const { values, setFieldValue } = useTemplateField();
   const { kickoff, wfNameTemplate } = values;
-  const [isOpen, setIsOpen] = React.useState(false);
-  const containerRef = React.useRef<HTMLDivElement | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const variables = useWorkflowNameVariables(kickoff);
   const datasetOptions = useDatasetOptions(kickoff.fields);
 
