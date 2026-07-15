@@ -17,16 +17,20 @@ export function createFlushableDebounce<T extends unknown[]>(
     }
   };
 
+  const invokePending = () => {
+    const args = pendingArgs;
+    pendingArgs = null;
+    timeoutId = null;
+
+    if (args) {
+      callback(...args);
+    }
+  };
+
   const fn = (...args: T) => {
     pendingArgs = args;
     clearPendingTimeout();
-    timeoutId = setTimeout(() => {
-      if (pendingArgs) {
-        callback(...pendingArgs);
-        pendingArgs = null;
-      }
-      timeoutId = null;
-    }, delay);
+    timeoutId = setTimeout(invokePending, delay);
   };
 
   fn.cancel = () => {
@@ -37,8 +41,7 @@ export function createFlushableDebounce<T extends unknown[]>(
   fn.flush = () => {
     if (pendingArgs) {
       clearPendingTimeout();
-      callback(...pendingArgs);
-      pendingArgs = null;
+      invokePending();
     }
   };
 
