@@ -29,7 +29,7 @@ export function FeedItemComment({
   const hasAttachments = Boolean(text && attachments && isArrayWithItems(attachments));
 
   useEffect(() => {
-    const commentTextHeight = commentTextRef.current?.offsetHeight || 0;
+    const commentTextHeight = commentTextRef.current?.scrollHeight || 0;
 
     setIsCommentExpandable(commentTextHeight > MAX_TRUNCATED_COMMENT_HEIGHT || hasAttachments);
   }, [attachments, hasAttachments, text]);

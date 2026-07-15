@@ -266,6 +266,8 @@ const baseProps = {
 describe('TaskCard', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    const { getOutputFromStorage } = jest.requireMock('../utils/storageOutputs');
+    getOutputFromStorage.mockReturnValue(undefined);
   });
 
   describe('Performer dropdown', () => {
@@ -397,7 +399,7 @@ describe('TaskCard', () => {
 
     it('discards a stale draft when server output is cleared', async () => {
       const { ExtraFieldIntl } = jest.requireMock('../../TemplateEdit/ExtraFields');
-      const { getOutputFromStorage, removeOutputFromLocalStorage } = jest.requireMock('../utils/storageOutputs');
+      const { addOrUpdateStorageOutput, getOutputFromStorage } = jest.requireMock('../utils/storageOutputs');
       const field = makeField({ apiName: 'url-field', value: 'https://server.example' });
       getOutputFromStorage.mockReturnValue([{ ...field, value: 'https://draft.example' }]);
       const { rerender } = render(
@@ -415,7 +417,41 @@ describe('TaskCard', () => {
         const lastCall = ExtraFieldIntl.mock.calls[ExtraFieldIntl.mock.calls.length - 1];
         expect(lastCall[0].field.value).toBe('');
       });
-      expect(removeOutputFromLocalStorage).toHaveBeenCalledWith(baseTask.id);
+      expect(addOrUpdateStorageOutput).toHaveBeenCalledWith(baseTask.id, []);
+    });
+
+    it('preserves drafts for unchanged empty fields when another server field changes', async () => {
+      const { ExtraFieldIntl } = jest.requireMock('../../TemplateEdit/ExtraFields');
+      const { addOrUpdateStorageOutput, getOutputFromStorage } = jest.requireMock('../utils/storageOutputs');
+      const emptyField = makeField({ apiName: 'empty-field', order: 1, value: '' });
+      const changedField = makeField({ apiName: 'changed-field', order: 0, value: 'server value' });
+      const emptyFieldDraft = { ...emptyField, value: 'local draft' };
+      const changedFieldDraft = { ...changedField, value: 'stale local draft' };
+      getOutputFromStorage.mockReturnValue([emptyFieldDraft, changedFieldDraft]);
+      const { rerender } = render(
+        <TaskCard {...baseProps} task={{ ...baseTask, output: [emptyField, changedField] }} />,
+      );
+
+      rerender(
+        <TaskCard
+          {...baseProps}
+          task={{
+            ...baseTask,
+            output: [emptyField, { ...changedField, value: 'updated server value' }],
+          }}
+        />,
+      );
+
+      await waitFor(() => {
+        const renderedFields = ExtraFieldIntl.mock.calls
+          .slice(-2)
+          .map((call: Array<{ field: IExtraField }>) => call[0].field);
+        expect(renderedFields).toEqual([
+          expect.objectContaining({ apiName: 'empty-field', value: 'local draft' }),
+          expect.objectContaining({ apiName: 'changed-field', value: 'updated server value' }),
+        ]);
+      });
+      expect(addOrUpdateStorageOutput).toHaveBeenCalledWith(baseTask.id, [emptyFieldDraft]);
     });
   });
 });

@@ -24,8 +24,8 @@ jest.mock('../utils/TruncatedContent', () => ({
 describe('FeedItemComment', () => {
   it('remeasures expandability when comment text changes', async () => {
     let commentHeight = 0;
-    const offsetHeightMock = jest
-      .spyOn(HTMLElement.prototype, 'offsetHeight', 'get')
+    const scrollHeightMock = jest
+      .spyOn(HTMLElement.prototype, 'scrollHeight', 'get')
       .mockImplementation(() => commentHeight);
     const props: IFeedItemCommentProps = {
       attachments: [],
@@ -43,6 +43,6 @@ describe('FeedItemComment', () => {
     rerender(<FeedItemComment {...props} text="Updated long comment" />);
 
     await waitFor(() => expect(screen.getByTestId('ellipsis')).toBeInTheDocument());
-    offsetHeightMock.mockRestore();
+    scrollHeightMock.mockRestore();
   });
 });

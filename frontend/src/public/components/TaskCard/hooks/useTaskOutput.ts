@@ -23,6 +23,7 @@ export function useTaskOutput(task: ITask) {
     taskId: null as number | null,
     dateStarted: null as string | null,
     outputFingerprint: '',
+    fieldFingerprints: {} as Record<string, string>,
   });
   const taskOutputFingerprint = useMemo(
     () => getTaskOutputFingerprint(task.output),
@@ -42,11 +43,27 @@ export function useTaskOutput(task: ITask) {
 
     saveOutputsToStorageDebounced.cancel();
 
-    if (isTaskRestarted || isServerOutputChanged) {
+    const fieldFingerprints = Object.fromEntries(
+      output.map((field) => [field.apiName, getTaskOutputFingerprint([field])]),
+    );
+    let storageOutput: IExtraField[] | undefined;
+
+    if (isNewTask) {
+      storageOutput = getOutputFromStorage(id);
+    } else if (isTaskRestarted) {
       removeOutputFromLocalStorage(id);
+    } else if (isServerOutputChanged) {
+      const savedOutput = getOutputFromStorage(id);
+
+      storageOutput = savedOutput?.filter(
+        (field) => syncState.fieldFingerprints[field.apiName] === fieldFingerprints[field.apiName],
+      );
+
+      if (savedOutput) {
+        addOrUpdateStorageOutput(id, storageOutput ?? []);
+      }
     }
 
-    const storageOutput = isNewTask ? getOutputFromStorage(id) : undefined;
     const outputFieldsWithValues = sortFieldsByOrder(
       new ExtraFieldsHelper(output, storageOutput).getFieldsWithValues(),
     );
@@ -55,6 +72,7 @@ export function useTaskOutput(task: ITask) {
     syncState.taskId = id;
     syncState.dateStarted = dateStarted;
     syncState.outputFingerprint = taskOutputFingerprint;
+    syncState.fieldFingerprints = fieldFingerprints;
   }, [task.id, task.dateStarted, taskOutputFingerprint, saveOutputsToStorageDebounced]);
 
   const editField = (apiName: string) => (changedProps: Partial<IExtraField>) => {
