@@ -365,7 +365,6 @@ describe('TaskCard', () => {
       expect(renderedApiNames).toEqual(['file-field', 'url-field']);
     });
   });
-
   describe('Output draft persistence', () => {
     beforeEach(() => {
       jest.useFakeTimers();
@@ -375,7 +374,7 @@ describe('TaskCard', () => {
       jest.useRealTimers();
     });
 
-    it('flushes pending output edits before task output updates from the server', async () => {
+    it('cancels pending output edits when task output updates from the server', async () => {
       const outputField = makeField({ apiName: 'notes', type: EExtraFieldType.Text, value: '' });
       const task = {
         ...baseTask,
@@ -406,9 +405,11 @@ describe('TaskCard', () => {
         />,
       );
 
-      expect(addOrUpdateStorageOutput).toHaveBeenCalledWith(1, [
-        expect.objectContaining({ apiName: 'notes', value: 'draft text' }),
-      ]);
+      act(() => {
+        jest.advanceTimersByTime(300);
+      });
+
+      expect(addOrUpdateStorageOutput).not.toHaveBeenCalled();
     });
 
     it('discards pending output edits when the task restarts', async () => {

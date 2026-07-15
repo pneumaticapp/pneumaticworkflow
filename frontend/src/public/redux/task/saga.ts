@@ -362,6 +362,7 @@ export function* setTaskReverted({ payload: { viewMode, taskId, comment, clearOu
       message: getErrorMessage(err),
     });
   } finally {
+    removeOutputFromLocalStorage(taskId);
     yield put(setCurrentTaskStatus(ETaskStatus.WaitingForAction));
   }
 }

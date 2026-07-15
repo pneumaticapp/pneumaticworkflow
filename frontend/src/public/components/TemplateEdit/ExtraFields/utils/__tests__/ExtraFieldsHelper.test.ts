@@ -248,6 +248,24 @@ describe('ExtraFieldsHelper', () => {
       expect(result[0].value).toBe('hello');
     });
 
+    it('prefers a zero server number over a stale stored value', () => {
+      const serverField: IExtraField = {
+        apiName: 'field-number',
+        name: 'Number Field',
+        type: EExtraFieldType.Number,
+        order: 1,
+        userId: null,
+        groupId: null,
+        value: 0,
+      };
+      const storageField = { ...serverField, value: 10 };
+
+      const helper = new ExtraFieldsHelper([serverField], [storageField]);
+      const result = helper.getFieldsWithValues();
+
+      expect(result[0].value).toBe(0);
+    });
+
     it('returns null for radio field with no selections', () => {
       const field: IExtraField = {
         apiName: 'field-radio',
@@ -263,6 +281,42 @@ describe('ExtraFieldsHelper', () => {
       const result = helper.getFieldsWithValues();
 
       expect(result).toHaveLength(0);
+    });
+
+    it('normalizes an empty radio value to null', () => {
+      const field: IExtraField = {
+        apiName: 'field-radio',
+        name: 'Radio Field',
+        type: EExtraFieldType.Radio,
+        order: 1,
+        userId: null,
+        groupId: null,
+        selections: ['first', 'second'],
+        value: '',
+      };
+
+      const helper = new ExtraFieldsHelper([field]);
+      const result = helper.getFieldsWithValues();
+
+      expect(result[0].value).toBeNull();
+    });
+
+    it('normalizes an empty stored radio value to null', () => {
+      const field: IExtraField = {
+        apiName: 'field-radio',
+        name: 'Radio Field',
+        type: EExtraFieldType.Radio,
+        order: 1,
+        userId: null,
+        groupId: null,
+        selections: ['first', 'second'],
+        value: '',
+      };
+
+      const helper = new ExtraFieldsHelper([field], [{ ...field }]);
+      const result = helper.getFieldsWithValues();
+
+      expect(result[0].value).toBeNull();
     });
   });
 

@@ -183,12 +183,7 @@ export function TaskCard({
       return;
     }
 
-    if (isNewTask || isTaskRestarted) {
-      saveOutputsToStorageDebounced.cancel();
-    } else {
-      // Persist the local edit before merging a changed server snapshot.
-      saveOutputsToStorageDebounced.flush();
-    }
+    saveOutputsToStorageDebounced.cancel();
 
     const storageOutput = getOutputFromStorage(id);
     const outputFieldsWithValues = sortFieldsByOrder(

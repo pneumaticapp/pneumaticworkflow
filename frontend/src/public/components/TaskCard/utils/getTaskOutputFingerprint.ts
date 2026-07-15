@@ -2,20 +2,19 @@ import { IExtraField } from '../../../types/template';
 
 export function getTaskOutputFingerprint(output: IExtraField[]): string {
   return JSON.stringify(
-    output.map((field) => ({
-      apiName: field.apiName,
-      order: field.order,
-      type: field.type,
-      value: field.value,
-      markdownValue: field.markdownValue,
-      userId: field.userId,
-      groupId: field.groupId,
-      attachments: field.attachments?.map(({ id, name, url, isRemoved }) => ({
-        id,
-        name,
-        url,
-        isRemoved,
-      })),
-    })),
+    output
+      .map(({ apiName, value, userId, groupId, markdownValue, attachments }) => ({
+        apiName,
+        value,
+        userId,
+        groupId,
+        markdownValue,
+        attachments: attachments?.map(({ name, url, isRemoved }) => ({
+          name,
+          url,
+          isRemoved,
+        })),
+      }))
+      .sort((firstField, secondField) => firstField.apiName.localeCompare(secondField.apiName)),
   );
 }
