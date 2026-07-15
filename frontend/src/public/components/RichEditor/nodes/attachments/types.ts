@@ -1,5 +1,5 @@
 export type TAttachmentPayload = {
-  id?: number;
+  id?: number | string;
   url: string;
   name?: string;
 };

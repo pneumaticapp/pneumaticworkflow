@@ -1,3 +1,4 @@
+from decimal import Decimal, DecimalException
 from typing import List, Optional
 from django.contrib.auth import get_user_model
 from django.db import transaction
@@ -20,14 +21,14 @@ UserModel = get_user_model()
 
 class FieldsetTemplateRuleService(BaseModelService):
 
-    def _validate_sum_equal(self, **kwargs) -> float:
+    def _validate_sum_equal(self, **kwargs) -> Decimal:
 
         value = self.instance.value
         if not value:
             raise FieldsetTemplateRuleSumMaxInvalidValue
         try:
-            result = float(value)
-        except (ValueError, TypeError) as ex:
+            result = Decimal(value)
+        except (ValueError, TypeError, DecimalException) as ex:
             raise FieldsetTemplateRuleSumMaxInvalidValue from ex
 
         if self.instance.fields.exclude(type=FieldType.NUMBER).exists():

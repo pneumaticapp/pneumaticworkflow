@@ -22,10 +22,6 @@ jest.mock('../../../../../api/runPublicForm', () => ({
   runPublicForm: jest.fn().mockResolvedValue({ redirectUrl: null }),
 }));
 
-jest.mock('../../../../../api/deleteRemovedFilesFromFields', () => ({
-  deleteRemovedFilesFromFields: jest.fn().mockResolvedValue(undefined),
-}));
-
 jest.mock('../../../../../utils/mappers', () => ({
   getNormalizedKickoff: jest.fn((kickoff: { fields: IExtraField[] }) => {
     const result: Record<string, string> = {};

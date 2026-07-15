@@ -160,7 +160,7 @@ class TestTaskUpdateVersionService:
         data = {
             'id': 27,
             'api_name': 'task-r5btf7',
-            'name': 'Task тДЦ1',
+            'name': 'Task #1',
             'description': None,
             'number': 1,
             'require_completion_by_all': False,
@@ -259,7 +259,7 @@ class TestTaskUpdateVersionService:
         data = {
             'id': 27,
             'api_name': 'task-r5btf7',
-            'name': 'Task тДЦ1',
+            'name': 'Task #1',
             'description': '*Some text*',
             'clear_description': 'Some text',
             'number': 1,
@@ -409,7 +409,7 @@ class TestTaskUpdateVersionService:
         data = {
             'id': 27,
             'api_name': 'task-r5btf7',
-            'name': 'Task тДЦ1',
+            'name': 'Task #1',
             'description': None,
             'number': 1,
             'require_completion_by_all': False,
@@ -510,7 +510,7 @@ class TestTaskUpdateVersionService:
         data = {
             'id': 27,
             'api_name': 'task-r5btf7',
-            'name': 'Task тДЦ1',
+            'name': 'Task #1',
             'description': None,
             'number': 1,
             'require_completion_by_all': False,
@@ -612,7 +612,7 @@ class TestTaskUpdateVersionService:
         data = {
             'id': 27,
             'api_name': 'task-r5btf7',
-            'name': 'Task тДЦ1',
+            'name': 'Task #1',
             'description': None,
             'number': 1,
             'require_completion_by_all': False,
@@ -2055,6 +2055,86 @@ def test__update_field_selections__selections_exist__ok():
     ).exists()
 
 
+def test__update_fields__preserves_fieldset_fields(mocker):
+
+    """
+    Deletes stale top-level fields only; fieldset fields are preserved
+    for `_update_fieldsets` to handle.
+    """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    fieldset = create_test_fieldset(
+        workflow=workflow,
+        task=task,
+    )
+    field = TaskField.objects.create(
+        task=task,
+        workflow=workflow,
+        account=user.account,
+        api_name='field-1',
+        name='Field 1',
+        type=FieldType.STRING,
+        order=1,
+    )
+    stale_field = TaskField.objects.create(
+        task=task,
+        workflow=workflow,
+        account=user.account,
+        api_name='field-stale',
+        name='Stale',
+        type=FieldType.STRING,
+        order=2,
+    )
+    fieldset_field = TaskField.objects.create(
+        task=task,
+        workflow=workflow,
+        account=user.account,
+        api_name='fieldset-field-1',
+        name='Fieldset Field',
+        type=FieldType.STRING,
+        order=1,
+        fieldset=fieldset,
+    )
+    service = TaskUpdateVersionService(
+        user=user,
+        instance=task,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+    field_data = {
+        'api_name': 'field-1',
+        'name': 'Field 1',
+        'description': '',
+        'type': FieldType.STRING,
+        'is_required': False,
+        'is_hidden': False,
+        'order': 1,
+        'dataset_id': None,
+    }
+    update_field_mock = mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._update_field',
+        return_value=(field, True),
+    )
+    update_field_selections_mock = mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._update_field_selections',
+    )
+
+    # act
+    service._update_fields(data=[field_data])
+
+    # assert
+    update_field_mock.assert_called_once_with(field_data, fieldset=None)
+    update_field_selections_mock.assert_called_once_with(field, field_data)
+    assert TaskField.objects.filter(id=field.id).exists()
+    assert not TaskField.objects.filter(id=stale_field.id).exists()
+    assert TaskField.objects.filter(id=fieldset_field.id).exists()
+
+
 def test__update_fieldset_rules__rules_data_none__skip():
 
     """
@@ -2756,3 +2836,266 @@ def test__update_field_rules__nonexistent_api_name__skip():
 
     # assert
     assert field.rules.count() == 0
+
+
+def test_update_from_version__fieldsets__ok(mocker):
+
+    """
+    fieldsets provided (not None)
+    """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    service = TaskUpdateVersionService(
+        user=user,
+        instance=task,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+    fieldsets_data = [{'api_name': 'fs-1'}]
+    data = {
+        'id': 27,
+        'api_name': 'task-r5btf7',
+        'name': 'Task #1',
+        'description': None,
+        'number': 1,
+        'require_completion_by_all': False,
+        'raw_performers': [
+            {
+                'id': 55,
+                'type': 'user',
+                'user_id': 27,
+                'api_name': 'raw-performer-1',
+            },
+        ],
+        'fieldsets': fieldsets_data,
+    }
+    mocker.patch(
+        'src.processes.models.workflows.workflow.Workflow.'
+        'get_fields_markdown_values',
+        return_value={},
+    )
+    mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._create_or_update_instance',
+    )
+    mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._update_fields',
+    )
+    update_fieldsets_mock = mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._update_fieldsets',
+    )
+    mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._update_conditions',
+    )
+    mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._update_checklists',
+    )
+    mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._update_raw_due_date',
+    )
+    mocker.patch(
+        'src.processes.services.tasks.task.'
+        'TaskService.set_due_date_from_template',
+    )
+    mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._update_performers',
+    )
+    mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._update_delay',
+    )
+
+    # act
+    service.update_from_version(
+        data=data,
+        version=1,
+        workflow=workflow,
+    )
+
+    # assert
+    update_fieldsets_mock.assert_called_once_with(
+        data=fieldsets_data,
+    )
+
+
+def test_update_from_version__fieldsets_empty__ok(mocker):
+
+    """
+    fieldsets key present with empty list — update runs (clears fieldsets)
+    """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    service = TaskUpdateVersionService(
+        user=user,
+        instance=task,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+    fieldsets_data = []
+    data = {
+        'id': 27,
+        'api_name': 'task-r5btf7',
+        'name': 'Task #1',
+        'description': None,
+        'number': 1,
+        'require_completion_by_all': False,
+        'raw_performers': [
+            {
+                'id': 55,
+                'type': 'user',
+                'user_id': 27,
+                'api_name': 'raw-performer-1',
+            },
+        ],
+        'fieldsets': fieldsets_data,
+    }
+    mocker.patch(
+        'src.processes.models.workflows.workflow.Workflow.'
+        'get_fields_markdown_values',
+        return_value={},
+    )
+    mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._create_or_update_instance',
+    )
+    mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._update_fields',
+    )
+    update_fieldsets_mock = mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._update_fieldsets',
+    )
+    mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._update_conditions',
+    )
+    mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._update_checklists',
+    )
+    mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._update_raw_due_date',
+    )
+    mocker.patch(
+        'src.processes.services.tasks.task.'
+        'TaskService.set_due_date_from_template',
+    )
+    mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._update_performers',
+    )
+    mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._update_delay',
+    )
+
+    # act
+    service.update_from_version(
+        data=data,
+        version=1,
+        workflow=workflow,
+    )
+
+    # assert
+    update_fieldsets_mock.assert_called_once_with(
+        data=fieldsets_data,
+    )
+
+
+def test_update_from_version__no_fieldsets__skip(mocker):
+
+    """
+    fieldsets key missing — skip update so existing fieldsets are preserved
+    """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    service = TaskUpdateVersionService(
+        user=user,
+        instance=task,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+    data = {
+        'id': 27,
+        'api_name': 'task-r5btf7',
+        'name': 'Task #1',
+        'description': None,
+        'number': 1,
+        'require_completion_by_all': False,
+        'raw_performers': [
+            {
+                'id': 55,
+                'type': 'user',
+                'user_id': 27,
+                'api_name': 'raw-performer-1',
+            },
+        ],
+    }
+    mocker.patch(
+        'src.processes.models.workflows.workflow.Workflow.'
+        'get_fields_markdown_values',
+        return_value={},
+    )
+    mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._create_or_update_instance',
+    )
+    mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._update_fields',
+    )
+    update_fieldsets_mock = mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._update_fieldsets',
+    )
+    mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._update_conditions',
+    )
+    mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._update_checklists',
+    )
+    mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._update_raw_due_date',
+    )
+    mocker.patch(
+        'src.processes.services.tasks.task.'
+        'TaskService.set_due_date_from_template',
+    )
+    mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._update_performers',
+    )
+    mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._update_delay',
+    )
+
+    # act
+    service.update_from_version(
+        data=data,
+        version=1,
+        workflow=workflow,
+    )
+
+    # assert
+    update_fieldsets_mock.assert_not_called()

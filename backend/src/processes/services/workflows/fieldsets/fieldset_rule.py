@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from src.processes.messages.fieldset import MSG_FS_0002
@@ -15,16 +17,16 @@ class FieldSetRuleService(BaseModelService):
 
     def _validate_sum_equal(self, **kwargs):
 
-        total = 0
+        total = Decimal(0)
         values_exists = False
         for field in self.instance.fields.all():
             if field.value in self.NULL_VALUES:
                 if field.is_required:
                     values_exists = True
             else:
-                total += float(field.value)
+                total += Decimal(field.value)
                 values_exists = True
-        if values_exists and total != float(self.instance.value):
+        if values_exists and total != Decimal(self.instance.value):
             raise FieldsetServiceException(
                 message=MSG_FS_0002(self.instance.value),
             )

@@ -53,7 +53,7 @@ import { getErrorMessage } from '../../utils/getErrorMessage';
 import { getAuthUser, getUsers, getUserTimezone } from '../selectors/user';
 import { outputStorage, fieldsetsStorage } from '../../components/TaskCard/utils/storageOutputs';
 import { ETaskCardViewMode } from '../../components/TaskCard';
-import { deleteRemovedFilesFromFields } from '../../api/deleteRemovedFilesFromFields';
+
 import { TChannelAction } from '../tasks/saga';
 import { getCurrentTask, getTaskPerformers, getTaskStore } from '../selectors/task';
 import { addTaskPerformer } from '../../api/addTaskPerformer';
@@ -88,7 +88,7 @@ import {
   IWorkflowLogItem,
   TWorkflowDetailsResponse,
 } from '../../types/workflow';
-import { mapFilesToRequest } from '../../utils/workflows';
+
 import { ETemplateOwnerType, RawPerformer } from '../../types/template';
 import { getTaskWorkflowLog } from '../../api/getTaskWorkflowLog';
 import { sendTaskComment } from '../../api/sendTaskComment';
@@ -217,7 +217,7 @@ function* loadTaskWorkflowLog({
   }
 }
 
-function* saveWorkflowLogComment({ payload: { text, attachments, taskId } }: PayloadAction<ISendWorkflowLogComment>) {
+function* saveWorkflowLogComment({ payload: { text, taskId } }: PayloadAction<ISendWorkflowLogComment>) {
   const {
     workflowLog: { items, workflowId: processId, sorting },
   }: ReturnType<typeof getTaskStore> = yield select(getTaskStore);
@@ -226,14 +226,11 @@ function* saveWorkflowLogComment({ payload: { text, attachments, taskId } }: Pay
     return;
   }
 
-  const normalizedAttachments = mapFilesToRequest(attachments);
-
   try {
     yield put(setGeneralLoaderVisibility(true));
     const newComment: IWorkflowLogItem = yield sendTaskComment({
       taskId: taskId || 0,
       text,
-      attachments: normalizedAttachments,
     });
 
     const preLoadedProcessLogMap = {
@@ -300,7 +297,6 @@ export function* setTaskCompleted({ payload: { taskId, output, viewMode } }: TSe
   }
 
   try {
-    yield deleteRemovedFilesFromFields(output);
 
     const mappedOutput = mapOutputToCompleteTask(output);
 

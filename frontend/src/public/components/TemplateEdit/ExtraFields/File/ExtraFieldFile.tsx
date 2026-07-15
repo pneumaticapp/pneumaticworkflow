@@ -7,6 +7,7 @@ import { EFieldLabelPosition } from '../../../../types/fieldset';
 import { FieldLabel } from '../utils/FieldLabel';
 import { PencilSmallIcon } from '../../../icons';
 import { TUploadedFile, uploadFiles } from '../../../../utils/uploadFiles';
+import { parseMarkdownToFiles } from '../../../../utils/parseMarkdownFiles';
 import { NotificationManager } from '../../../UI/Notifications';
 import { ExtraFieldFilesGrid } from './ExtraFieldFilesGrid';
 import { logger } from '../../../../utils/logger';
@@ -33,8 +34,11 @@ export function ExtraFieldFile({
 }: IWorkflowExtraFieldProps): JSX.Element {
   const { useCallback, useState, useEffect, createRef } = React;
   const [isUploading, setUploadingState] = useState(false);
-  const [filesToUpload, setFilesToUploadState] = useState<TUploadedFile[]>(field.attachments || []);
+
+  const initialFiles = field.attachments?.length ? field.attachments : parseMarkdownToFiles(field.markdownValue);
+  const [filesToUpload, setFilesToUploadState] = useState<TUploadedFile[]>(initialFiles);
   const fieldNameInputRef = React.useRef<HTMLTextAreaElement | null>(null);
+
   const [isFocused, setIsFocused] = React.useState(false);
   const { formatMessage } = useIntl();
   useEffect(() => {
@@ -62,9 +66,12 @@ export function ExtraFieldFile({
 
     try {
       setUploadingState(true);
-      const uploadedFiles = await uploadFiles(files, accountId);
-      const newUploadedFiles = [...filesToUpload, ...(uploadedFiles as TUploadedFile[])];
-      const newUploadedFilesIds = newUploadedFiles.filter((file) => !file.isRemoved).map((file) => String(file.id));
+      const uploadedFiles = await uploadFiles(files);
+      const successFiles = uploadedFiles.filter((file) => !file.error);
+      const newUploadedFiles = [...filesToUpload, ...(successFiles as TUploadedFile[])];
+      const newUploadedFilesIds = newUploadedFiles
+        .filter((file) => !file.isRemoved)
+        .map((file) => `[${file.name}](${file.url})`);
 
       setFilesToUploadState(newUploadedFiles);
       editField({ value: newUploadedFilesIds, attachments: newUploadedFiles });
@@ -76,9 +83,11 @@ export function ExtraFieldFile({
     }
   };
 
-  const handleDeleteFile = (id: number) => async () => {
+  const handleDeleteFile = (id: string) => async () => {
     const newUploadedFiles = filesToUpload.map((file) => (file.id === id ? { ...file, isRemoved: true } : file));
-    const newUploadedFilesIds = newUploadedFiles.filter((file) => !file.isRemoved).map((file) => String(file.id));
+    const newUploadedFilesIds = newUploadedFiles
+      .filter((file) => !file.isRemoved)
+      .map((file) => `[${file.name}](${file.url})`);
 
     setFilesToUploadState(newUploadedFiles);
     editField({ value: newUploadedFilesIds, attachments: newUploadedFiles });
@@ -87,10 +96,12 @@ export function ExtraFieldFile({
   const isKickoffFieldNameValid = !Boolean(fieldNameErrorMessage);
 
   const renderKickoffView = () => (
-    <div className={classnames(
-      styles['extra-field-file__conteiner--template'],
-      labelPosition === EFieldLabelPosition.Left && kickoffStyles['kick-off-input__field_label-left'],
-    )}>
+    <div
+      className={classnames(
+        styles['extra-field-file__conteiner--template'],
+        labelPosition === EFieldLabelPosition.Left && kickoffStyles['kick-off-input__field_label-left'],
+      )}
+    >
       {labelPosition === EFieldLabelPosition.Left ? (
         <FieldLabel
           name={name}
@@ -102,26 +113,26 @@ export function ExtraFieldFile({
         />
       ) : (
         <div className={styles['extra-field-file__input--template']}>
-            <textarea
-              ref={(ref) => (fieldNameInputRef.current = ref)}
-              className={classnames(
-                styles['extra-field-file__input-name--template'],
-                !isKickoffFieldNameValid && styles['extra-field-file__input-name-error--template'],
-              )}
-              onChange={handleChangeName}
-              placeholder={namePlaceholder}
-              value={name}
-              disabled={isDisabled}
-              rows={1}
-              onFocus={() => setIsFocused(true)}
-              onBlur={() => setIsFocused(false)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') {
-                  setIsFocused(false);
-                  event.currentTarget.blur();
-                }
-              }}
-            />
+          <textarea
+            ref={(ref) => (fieldNameInputRef.current = ref)}
+            className={classnames(
+              styles['extra-field-file__input-name--template'],
+              !isKickoffFieldNameValid && styles['extra-field-file__input-name-error--template'],
+            )}
+            onChange={handleChangeName}
+            placeholder={namePlaceholder}
+            value={name}
+            disabled={isDisabled}
+            rows={1}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                setIsFocused(false);
+                event.currentTarget.blur();
+              }
+            }}
+          />
           {isRequired && <span className={kickoffStyles['kick-off-required-sign']} />}
           {!isFocused && mode === EExtraFieldMode.Kickoff && (
             <button

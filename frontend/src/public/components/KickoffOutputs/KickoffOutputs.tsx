@@ -17,6 +17,7 @@ import { UserOutput } from './UserOutput';
 import { isArrayWithItems } from '../../utils/helpers';
 import { Attachments } from '../Attachments';
 import { TUploadedFile } from '../../utils/uploadFiles';
+import { parseMarkdownToFiles } from '../../utils/parseMarkdownFiles';
 import { RichText } from '../RichText';
 
 import styles from './KickoffOutputs.css';
@@ -49,7 +50,6 @@ export function KickoffOutputs({
 }: IKickoffOutputs) {
   if ((!outputs || !isArrayWithItems(outputs)) && !isArrayWithItems(fieldsets)) return null;
 
-
   const orderedOutputs: TOutputItem[] = [
     ...(outputs || []).map((field): TOutputItem => ({ kind: 'field', order: field.order, data: field })),
     ...(fieldsets || []).map((fs): TOutputItem => ({ kind: 'fieldset', order: fs.order, data: fs })),
@@ -58,12 +58,20 @@ export function KickoffOutputs({
   if (isOnlyAttachmentsShown) {
     const fileAttachments = orderedOutputs.flatMap((item) => {
       if (item.kind === 'field') {
-        return item.data.type === EExtraFieldType.File ? (item.data.attachments || []) : [];
+        if (item.data.type !== EExtraFieldType.File) {
+          return [];
+        }
+
+        return isArrayWithItems(item.data.attachments)
+          ? item.data.attachments
+          : parseMarkdownToFiles(item.data.markdownValue);
       }
 
       return item.data.fields
         .filter(({ type }) => type === EExtraFieldType.File)
-        .flatMap(({ attachments }) => attachments || []);
+        .flatMap(({ attachments, markdownValue }) =>
+          isArrayWithItems(attachments) ? attachments : parseMarkdownToFiles(markdownValue),
+        );
     }) as TUploadedFile[];
 
     return <Attachments attachments={fileAttachments} />;
@@ -109,10 +117,7 @@ export function KickoffOutputs({
 
       if (firstItem.data.fields.length) {
         const fieldset = firstItem.data;
-        return renderFieldsetGroup(
-          fieldset,
-          renderSingleOutput(fieldset.fields[0], 'truncated-fieldset-field'),
-        );
+        return renderFieldsetGroup(fieldset, renderSingleOutput(fieldset.fields[0], 'truncated-fieldset-field'));
       }
     }
 

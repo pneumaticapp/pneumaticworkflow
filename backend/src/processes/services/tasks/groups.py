@@ -21,6 +21,7 @@ from src.processes.services.workflow_action import (
     WorkflowActionService,
     WorkflowEventService,
 )
+from src.storage.utils import reassign_restricted_permissions_for_task
 
 UserModel = get_user_model()
 
@@ -125,6 +126,11 @@ class GroupPerformerService(BasePerformerService2):
                     account_id=self.task.account_id,
                 )
 
+        reassign_restricted_permissions_for_task(
+            task=self.task,
+            user=self.user,
+        )
+
     def _create_group_actions(self, group: UserGroup) -> None:
         WorkflowEventService.performer_group_created_event(
             user=self.user,
@@ -190,3 +196,8 @@ class GroupPerformerService(BasePerformerService2):
                     logo_lg=self.task.account.logo_lg,
                     is_returned=False,
                 )
+
+        reassign_restricted_permissions_for_task(
+            task=self.task,
+            user=self.user,
+        )

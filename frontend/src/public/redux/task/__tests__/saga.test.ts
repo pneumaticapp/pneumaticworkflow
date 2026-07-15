@@ -13,10 +13,6 @@ jest.mock('../../../components/TaskCard/utils/storageOutputs', () => ({
   fieldsetsStorage: { remove: jest.fn() },
 }));
 
-jest.mock('../../../api/deleteRemovedFilesFromFields', () => ({
-  deleteRemovedFilesFromFields: jest.fn(() => Promise.resolve()),
-}));
-
 jest.mock('../../../utils/mappers', () => ({
   mapOutputToCompleteTask: jest.fn((x) => x),
   getNormalizeOutputUsersToEmails: jest.fn((x) => x),
@@ -62,11 +58,9 @@ describe('setTaskCompleted — fieldsets draft cleanup', () => {
     },
   });
 
-  const step = (gen: Generator, value?: unknown) =>
-    (gen.next as (v?: unknown) => IteratorResult<unknown>)(value);
+  const step = (gen: Generator, value?: unknown) => (gen.next as (v?: unknown) => IteratorResult<unknown>)(value);
 
-  const stepThrow = (gen: Generator, error: Error) =>
-    (gen.throw as (e: Error) => IteratorResult<unknown>)(error);
+  const stepThrow = (gen: Generator, error: Error) => (gen.throw as (e: Error) => IteratorResult<unknown>)(error);
 
   const advanceToCompleteTask = (action: TSetTaskCompleted) => {
     (completeTask as jest.Mock).mockReturnValue(Promise.resolve());
@@ -78,8 +72,6 @@ describe('setTaskCompleted — fieldsets draft cleanup', () => {
 
     step(saga);
     step(saga, { id: TASK_ID, areChecklistsHandling: false });
-
-    step(saga);
 
     step(saga, []);
 

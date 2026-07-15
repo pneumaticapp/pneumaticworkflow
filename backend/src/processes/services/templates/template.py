@@ -22,6 +22,7 @@ from src.processes.utils.common import (
     create_api_name,
     insert_fields_values_to_text,
 )
+from src.storage.utils import refresh_attachments
 from src.utils.logging import (
     SentryLogLevel,
     capture_sentry_message,
@@ -36,13 +37,28 @@ class TemplateService(BaseModelService):
         self,
         **kwargs,
     ):
-        pass
+        # Update attachments for template
+        if self.instance:
+            refresh_attachments(self.instance, self.user)
 
     def _create_instance(
         self,
         **kwargs,
     ):
         pass
+
+    def partial_update(
+        self,
+        force_save=False,
+        **update_kwargs,
+    ) -> Template:
+        result = super().partial_update(
+            force_save=force_save,
+            **update_kwargs,
+        )
+        if 'description' in update_kwargs and self.instance:
+            refresh_attachments(self.instance, self.user)
+        return result
 
     def fill_template_data(self, initial_data: dict) -> dict:
 
@@ -103,7 +119,7 @@ class TemplateService(BaseModelService):
                     fields_values[api_name] = '{{%s}}' % api_name
                 else:
                     field_data['api_name'] = create_api_name(
-                        prefix=TaskTemplate.api_name_prefix,
+                        prefix=FieldTemplate.api_name_prefix,
                     )
             if task_data.get('description'):
                 task_data['description'] = insert_fields_values_to_text(

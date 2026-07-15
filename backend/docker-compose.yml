@@ -5,11 +5,11 @@ services:
     container_name: pneumatic-postgres
     environment:
       PGDATA: ${PGDATA:-var/lib/postgresql/data}
-      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_HOST: postgres
       POSTGRES_USER: ${POSTGRES_USER:-postgres_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres_password}
       POSTGRES_DB: ${POSTGRES_DB:-postgres_db}
-      POSTGRES_REPLICA_HOST: ${POSTGRES_REPLICA_HOST:-postgres}
+      POSTGRES_REPLICA_HOST: postgres
       POSTGRES_REPLICA_USER: ${POSTGRES_REPLICA_USER:-postgres_user}
       POSTGRES_REPLICA_PASSWORD: ${POSTGRES_REPLICA_PASSWORD:-postgres_password}
       POSTGRES_REPLICA_DB: ${POSTGRES_REPLICA_DB:-postgres_db}
@@ -143,11 +143,11 @@ services:
       GCLOUD_BUCKET_NAME: ${GCLOUD_BUCKET_NAME:-pneumatic}
       GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS:-/pneumatic_backend/google_api_credentials.json}
       SENTRY_DSN: ${SENTRY_DSN:-}
-      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_HOST: postgres
       POSTGRES_USER: ${POSTGRES_USER:-postgres_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres_password}
       POSTGRES_DB: ${POSTGRES_DB:-postgres_db}
-      POSTGRES_REPLICA_HOST: ${POSTGRES_REPLICA_HOST:-postgres}
+      POSTGRES_REPLICA_HOST: postgres
       POSTGRES_REPLICA_USER: ${POSTGRES_REPLICA_USER:-postgres_user}
       POSTGRES_REPLICA_PASSWORD: ${POSTGRES_REPLICA_PASSWORD:-postgres_password}
       POSTGRES_REPLICA_DB: ${POSTGRES_REPLICA_DB:-postgres_db}
@@ -258,11 +258,11 @@ services:
       GCLOUD_BUCKET_NAME: ${GCLOUD_BUCKET_NAME:-pneumatic}
       GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS:-/pneumatic_backend/google_api_credentials.json}
       SENTRY_DSN: ${SENTRY_DSN:-}
-      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_HOST: postgres
       POSTGRES_USER: ${POSTGRES_USER:-postgres_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres_password}
       POSTGRES_DB: ${POSTGRES_DB:-postgres_db}
-      POSTGRES_REPLICA_HOST: ${POSTGRES_REPLICA_HOST:-postgres}
+      POSTGRES_REPLICA_HOST: postgres
       POSTGRES_REPLICA_USER: ${POSTGRES_REPLICA_USER:-postgres_user}
       POSTGRES_REPLICA_PASSWORD: ${POSTGRES_REPLICA_PASSWORD:-postgres_password}
       POSTGRES_REPLICA_DB: ${POSTGRES_REPLICA_DB:-postgres_db}

@@ -68,12 +68,14 @@ class KickoffSerializer(
                 **validated_data,
             },
         )
-        self.create_or_update_fieldsets(
-            fieldsets_data=validated_data.pop('fieldsets', []),
-            template=template,
-            kickoff=instance,
-            user=self.context['user'],
-        )
+        fieldsets_data = validated_data.pop('fieldsets', None)
+        if fieldsets_data is not None:
+            self.create_or_update_fieldsets(
+                fieldsets_data=fieldsets_data,
+                template=template,
+                kickoff=instance,
+                user=self.context['user'],
+            )
         self.create_or_update_related(
             data=validated_data.get('fields'),
             ancestors_data={
@@ -103,12 +105,14 @@ class KickoffSerializer(
                 **validated_data,
             },
         )
-        self.create_or_update_fieldsets(
-            fieldsets_data=validated_data.pop('fieldsets', []),
-            template=template,
-            kickoff=instance,
-            user=self.context['user'],
-        )
+        fieldsets_data = validated_data.pop('fieldsets', None)
+        if fieldsets_data is not None:
+            self.create_or_update_fieldsets(
+                fieldsets_data=fieldsets_data,
+                template=template,
+                kickoff=instance,
+                user=self.context['user'],
+            )
         self.create_or_update_related(
             data=validated_data.get('fields'),
             ancestors_data={

@@ -1,7 +1,7 @@
 /* eslint-disable */
 /* prettier-ignore */
 import * as React from 'react';
-import * as classnames from 'classnames';
+import classnames from 'classnames';
 
 import { getDueInData } from '../../DueIn/utils/getDueInData';
 import { ETaskListCompletionStatus, ITaskListItem } from '../../../types/tasks';

@@ -195,4 +195,115 @@ describe('saga', () => {
       result.next();
     });
   });
+
+  describe('handleUploadUserPhoto', () => {
+    let handleUploadUserPhoto: any;
+    let handleDeleteUserPhoto: any;
+
+    const mockNotifyApiError = jest.fn();
+    const mockGetErrorMessage = jest.fn();
+
+    beforeEach(() => {
+      jest.resetModules();
+      jest.clearAllMocks();
+
+      jest.mock('../../../utils/getConfig', () => ({
+        getBrowserConfigEnv: jest.fn().mockReturnValue(configMock),
+        getBrowserConfig: jest.fn().mockReturnValue(configMock),
+      }));
+      jest.mock('../../../components/UI/Notifications', () => ({
+        NotificationManager: { notifyApiError: mockNotifyApiError },
+      }));
+      jest.mock('../../../utils/getErrorMessage', () => ({
+        getErrorMessage: mockGetErrorMessage,
+      }));
+      jest.mock('../../../utils/logger', () => ({
+        logger: { error: jest.fn() },
+      }));
+
+      const saga = require('../saga');
+      handleUploadUserPhoto = saga.handleUploadUserPhoto;
+      handleDeleteUserPhoto = saga.handleDeleteUserPhoto;
+    });
+
+    it('shows notification with mapped message on FILE_003 error', () => {
+      const fsError = Object.assign(new Error('File size exceeds limit'), {
+        code: 'FILE_003',
+        status: 413,
+      });
+      mockGetErrorMessage.mockReturnValue('file-service.size-exceeded');
+
+      const photo = new File(['data'], 'big.zip', { type: 'application/zip' });
+      const gen = handleUploadUserPhoto({
+        payload: { photo, onComplete: jest.fn() },
+      });
+
+      // put(setGeneralLoaderVisibility(true))
+      gen.next();
+      // yield uploadUserAvatar(photo) — throw to simulate error
+      gen.throw(fsError);
+
+      expect(mockGetErrorMessage).toHaveBeenCalledWith(fsError);
+      expect(mockNotifyApiError).toHaveBeenCalledWith(
+        fsError,
+        { message: 'file-service.size-exceeded' },
+      );
+    });
+
+    it('shows fallback notification on network error', () => {
+      const networkError = new Error('Network Error');
+      mockGetErrorMessage.mockReturnValue('Network Error');
+
+      const photo = new File(['data'], 'avatar.jpg', { type: 'image/jpeg' });
+      const gen = handleUploadUserPhoto({
+        payload: { photo, onComplete: jest.fn() },
+      });
+
+      gen.next();
+      gen.throw(networkError);
+
+      expect(mockGetErrorMessage).toHaveBeenCalledWith(networkError);
+      expect(mockNotifyApiError).toHaveBeenCalledWith(
+        networkError,
+        { message: 'Network Error' },
+      );
+    });
+
+    it('handleDeleteUserPhoto shows notification on error', () => {
+      const error = new Error('Delete failed');
+      mockGetErrorMessage.mockReturnValue('Delete failed');
+
+      const gen = handleDeleteUserPhoto();
+
+      // put(setGeneralLoaderVisibility(true))
+      gen.next();
+      // yield call(changePhotoProfile, { photo: '' }) — throw
+      gen.throw(error);
+
+      expect(mockGetErrorMessage).toHaveBeenCalledWith(error);
+      expect(mockNotifyApiError).toHaveBeenCalledWith(
+        error,
+        { message: 'Delete failed' },
+      );
+    });
+
+    it('handleDeleteUserPhoto shows FS error notification', () => {
+      const fsError = Object.assign(new Error('Permission denied'), {
+        code: 'PERM_001',
+        status: 403,
+      });
+      mockGetErrorMessage.mockReturnValue('file-service.permission-denied');
+
+      const gen = handleDeleteUserPhoto();
+
+      gen.next();
+      gen.throw(fsError);
+
+      expect(mockGetErrorMessage).toHaveBeenCalledWith(fsError);
+      expect(mockNotifyApiError).toHaveBeenCalledWith(
+        fsError,
+        { message: 'file-service.permission-denied' },
+      );
+    });
+  });
 });

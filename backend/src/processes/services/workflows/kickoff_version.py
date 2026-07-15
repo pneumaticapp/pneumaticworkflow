@@ -137,7 +137,6 @@ class KickoffUpdateVersionService(BaseUpdateVersionService):
 
         fs_api_names = set()
         for fs_data in data or []:
-            order = fs_data['kickoff_links'][0]['order']
             fieldset, _ = FieldSet.objects.update_or_create(
                 workflow=self.instance.workflow,
                 kickoff=self.instance,
@@ -146,7 +145,7 @@ class KickoffUpdateVersionService(BaseUpdateVersionService):
                     'account_id': self.instance.account_id,
                     'name': fs_data['name'],
                     'description': fs_data['description'],
-                    'order': order,
+                    'order': fs_data['order'],
                     'label_position': fs_data['label_position'],
                     'layout': fs_data['layout'],
                 },

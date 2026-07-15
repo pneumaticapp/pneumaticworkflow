@@ -292,6 +292,7 @@ export interface IExtraField {
   selections?: IExtraFieldSelection[] | string[];
   dataset?: number | null;
   attachments?: TUploadedFile[];
+  markdownValue?: string;
   order: number;
   userId: number | null;
   groupId: number | null;
