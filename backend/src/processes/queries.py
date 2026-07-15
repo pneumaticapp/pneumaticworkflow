@@ -5,6 +5,7 @@ from typing import List, Optional, Tuple
 
 from django.contrib.auth import get_user_model
 
+from src.accounts.enums import UserStatus
 from src.accounts.models import User, UserGroup
 from src.generics.mixins.managers import SearchSqlQueryMixin
 from src.generics.mixins.queries import (
@@ -15,6 +16,7 @@ from src.processes.enums import (
     DirectlyStatus,
     OwnerRole,
     OwnerType,
+    PerformerType,
     TaskOrdering,
     TaskStatus,
     TemplateOrdering,
@@ -2481,4 +2483,72 @@ class UpdateWorkflowMemberQuery(
               ON pwm.workflow_id = au.workflow_id
               AND pwm.user_id = au.user_id
             WHERE pwm.workflow_id IS NULL;
+        """, self.params
+
+
+class GetIncompletedTaskPerformersQuery(SqlQueryObject):
+
+    """ Find and return performers who have not yet completed the task.
+
+    1. Direct USER-type performers whose ``is_completed`` flag is
+       ``False`` (non-deleted, active users only).
+    2. Members of GROUP-type performers who do not yet have a
+       completed USER or GROUP_USER record on the same task
+       (non-deleted, active users from non-deleted groups only).
+
+    Args:
+        task_id: Primary key of the task to inspect.
+
+    Returns (via ``get_sql``):
+        A tuple of ``(sql, params)`` whose result set contains
+        a single column ``id`` — the distinct IDs of performers
+        who have not completed the task.
+    """
+
+    def __init__(self, task_id: int):
+        self.params = {
+            'task_id': task_id,
+        }
+
+    def get_sql(self):
+        return f"""
+            SELECT DISTINCT ptp.user_id AS id
+            FROM processes_taskperformer ptp
+            JOIN accounts_user au ON au.id = ptp.user_id
+            WHERE ptp.task_id = %(task_id)s
+              AND ptp.type = '{PerformerType.USER}'
+              AND ptp.is_completed = FALSE
+              AND ptp.is_deleted IS FALSE
+              AND ptp.directly_status != '{DirectlyStatus.DELETED}'
+              AND au.is_deleted IS FALSE
+              AND au.status = '{UserStatus.ACTIVE}'
+
+            UNION
+
+            SELECT DISTINCT au.id
+            FROM processes_taskperformer ptp_group
+            JOIN accounts_usergroup aug
+              ON aug.id = ptp_group.group_id
+            JOIN accounts_usergroup_users ugu
+              ON ugu.usergroup_id = ptp_group.group_id
+            JOIN accounts_user au
+              ON au.id = ugu.user_id
+            LEFT JOIN processes_taskperformer ptp_user
+              ON ptp_user.task_id = ptp_group.task_id
+              AND ptp_user.type IN (
+                '{PerformerType.USER}',
+                '{PerformerType.GROUP_USER}'
+              )
+              AND ptp_user.user_id = au.id
+              AND ptp_user.is_completed = TRUE
+              AND ptp_user.is_deleted IS FALSE
+              AND ptp_user.directly_status != '{DirectlyStatus.DELETED}'
+            WHERE ptp_group.task_id = %(task_id)s
+              AND ptp_group.type = '{PerformerType.GROUP}'
+              AND ptp_group.is_deleted IS FALSE
+              AND ptp_group.directly_status != '{DirectlyStatus.DELETED}'
+              AND ptp_user.id IS NULL
+              AND aug.is_deleted IS FALSE
+              AND au.is_deleted IS FALSE
+              AND au.status = '{UserStatus.ACTIVE}'
         """, self.params

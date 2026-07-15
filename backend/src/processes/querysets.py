@@ -661,6 +661,10 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
                             queryset=(
                                 TaskPerformer.objects
                                 .exclude_directly_deleted()
+                                .filter(type__in=(
+                                    PerformerType.USER,
+                                    PerformerType.GROUP,
+                                ))
                                 .select_related('group')
                             ),
                         ),
@@ -713,7 +717,7 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
         return raw_qst
 
 
-class TasksQuerySet(TasksBaseQuerySet):
+class TaskQuerySet(TasksBaseQuerySet):
 
     def by_number(self, number):
         return self.filter(number=number)
@@ -779,15 +783,9 @@ class TasksQuerySet(TasksBaseQuerySet):
                     taskperformer__is_completed=False,
                 ),
             ) & Q(
-                (
-                    Q(taskperformer__group_id=group_id) |
-                    Q(taskperformer__type=PerformerType.GROUP)
-                ) &
-                Q(
-                    workflow__current_task=F('number'),
-                    status=TaskStatus.ACTIVE,
-                    workflow__status=WorkflowStatus.RUNNING,
-                ),
+                taskperformer__group_id=group_id,
+                status=TaskStatus.ACTIVE,
+                workflow__status=WorkflowStatus.RUNNING,
             ) & ~Q(
                 taskperformer__directly_status__in=(
                     DirectlyStatus.DELETED,
@@ -806,9 +804,7 @@ class TasksQuerySet(TasksBaseQuerySet):
     def exclude_directly_deleted(self):
         """Exclude tasks where performer has DELETED directly_status."""
         return self.exclude(
-            taskperformer__directly_status__in=(
-                DirectlyStatus.DELETED,
-            ),
+            taskperformer__directly_status=DirectlyStatus.DELETED,
         )
 
     def apd_status(self):
@@ -1050,7 +1046,7 @@ class TemplateDraftQuerySet(BaseQuerySet):
         )
 
 
-class TaskPerformerQuerySet(BaseHardQuerySet):
+class TaskPerformerQuerySet(BaseQuerySet, BaseHardQuerySet):
 
     def with_tasks_after(self, task):
         return self.filter(task__number__gte=task.number)
