@@ -20,6 +20,10 @@
   }
 }
 
+.sub-menu__trigger {
+  width: 100%;
+}
+
 .sub-menu__inner {
   padding: 0;
 
