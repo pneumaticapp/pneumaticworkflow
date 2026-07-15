@@ -54,10 +54,6 @@ def test_update__any_premium_plan__ok(
         'src.payment.stripe.service.StripeService.'
         'update_subscription_description',
     )
-    settings_mock = mocker.patch(
-        'src.accounts.views.tenants.settings',
-    )
-    settings_mock.PROJECT_CONF = {'BILLING': True}
     api_client.token_authenticate(master_account_owner)
 
     # act
@@ -119,10 +115,6 @@ def test_update__same_tenant_name__ok(
         'src.payment.stripe.service.StripeService.'
         'update_subscription_description',
     )
-    settings_mock = mocker.patch(
-        'src.accounts.views.tenants.settings',
-    )
-    settings_mock.PROJECT_CONF = {'BILLING': True}
     api_client.token_authenticate(master_account_owner)
 
     # act
@@ -159,10 +151,6 @@ def test_update__free_plan__permission_denied(
         'src.payment.stripe.service.StripeService.'
         'update_subscription_description',
     )
-    settings_mock = mocker.patch(
-        'src.accounts.views.tenants.settings',
-    )
-    settings_mock.PROJECT_CONF = {'BILLING': True}
     api_client.token_authenticate(master_account_owner)
 
     # act
@@ -189,10 +177,6 @@ def test_update_not_exists__permission_denied(
         'src.payment.stripe.service.StripeService.'
         'update_subscription_description',
     )
-    settings_mock = mocker.patch(
-        'src.accounts.views.tenants.settings',
-    )
-    settings_mock.PROJECT_CONF = {'BILLING': True}
     api_client.token_authenticate(master_account_owner)
 
     # act
@@ -230,10 +214,6 @@ def test_update__another_account_tenant__permission_denied(
         'src.payment.stripe.service.StripeService.'
         'update_subscription_description',
     )
-    settings_mock = mocker.patch(
-        'src.accounts.views.tenants.settings',
-    )
-    settings_mock.PROJECT_CONF = {'BILLING': True}
     api_client.token_authenticate(master_account_owner)
 
     # act
@@ -271,10 +251,6 @@ def test_update__another_account_not_tenant__permission_denied(
         'src.payment.stripe.service.StripeService.'
         'update_subscription_description',
     )
-    settings_mock = mocker.patch(
-        'src.accounts.views.tenants.settings',
-    )
-    settings_mock.PROJECT_CONF = {'BILLING': True}
     api_client.token_authenticate(master_account_owner)
 
     # act
@@ -320,10 +296,6 @@ def test_update__stripe_exception__validation_error(
         'src.payment.stripe.service.StripeService.'
         'update_subscription_description',
     )
-    settings_mock = mocker.patch(
-        'src.accounts.views.tenants.settings',
-    )
-    settings_mock.PROJECT_CONF = {'BILLING': True}
     api_client.token_authenticate(master_account_owner)
 
     # act
@@ -370,10 +342,6 @@ def test_update__blank_tenant_name__validation_error(
         'src.payment.stripe.service.StripeService.'
         'update_subscription_description',
     )
-    settings_mock = mocker.patch(
-        'src.accounts.views.tenants.settings',
-    )
-    settings_mock.PROJECT_CONF = {'BILLING': True}
     api_client.token_authenticate(master_account_owner)
 
     # act
@@ -419,10 +387,6 @@ def test_update__null_tenant_name__validation_error(
         'src.payment.stripe.service.StripeService.'
         'update_subscription_description',
     )
-    settings_mock = mocker.patch(
-        'src.accounts.views.tenants.settings',
-    )
-    settings_mock.PROJECT_CONF = {'BILLING': True}
     api_client.token_authenticate(master_account_owner)
 
     # act
@@ -474,10 +438,7 @@ def test_update__skip_tenant_name__not_change(
         'src.payment.stripe.service.StripeService.'
         'update_subscription_description',
     )
-    settings_mock = mocker.patch(
-        'src.accounts.views.tenants.settings',
-    )
-    settings_mock.PROJECT_CONF = {'BILLING': True}
+
     api_client.token_authenticate(master_account_owner)
 
     # act
@@ -511,10 +472,6 @@ def test_update__tenant__permission_denied(
         'src.payment.stripe.service.StripeService.'
         'update_subscription_description',
     )
-    settings_mock = mocker.patch(
-        'src.accounts.views.tenants.settings',
-    )
-    settings_mock.PROJECT_CONF = {'BILLING': True}
     api_client.token_authenticate(master_account_owner)
 
     # act
@@ -545,10 +502,6 @@ def test_update__expired_subscription__permission_denied(
         'src.payment.stripe.service.StripeService.'
         'update_subscription_description',
     )
-    settings_mock = mocker.patch(
-        'src.accounts.views.tenants.settings',
-    )
-    settings_mock.PROJECT_CONF = {'BILLING': True}
     api_client.token_authenticate(master_account_owner)
 
     # act
@@ -583,10 +536,6 @@ def test_update__not_admin__permission_denied(
         'src.payment.stripe.service.StripeService.'
         'update_subscription_description',
     )
-    settings_mock = mocker.patch(
-        'src.accounts.views.tenants.settings',
-    )
-    settings_mock.PROJECT_CONF = {'BILLING': True}
     api_client.token_authenticate(master_account_not_admin)
 
     # act
@@ -618,10 +567,6 @@ def test_update__not_authenticated__auth_error(
         'src.payment.stripe.service.StripeService.'
         'update_subscription_description',
     )
-    settings_mock = mocker.patch(
-        'src.accounts.views.tenants.settings',
-    )
-    settings_mock.PROJECT_CONF = {'BILLING': True}
 
     # act
     response = api_client.patch(
@@ -633,61 +578,4 @@ def test_update__not_authenticated__auth_error(
 
     # assert
     assert response.status_code == 401
-    update_subscription_description_mock.assert_not_called()
-
-
-@pytest.mark.parametrize('plan', BillingPlanType.PAYMENT_PLANS)
-def test_update__disable_billing__ok(
-    plan,
-    mocker,
-    api_client,
-):
-    # arrange
-    master_account = create_test_account(
-        plan=plan,
-        plan_expiration=timezone.now() + timedelta(days=1),
-    )
-    master_account_owner = create_test_user(account=master_account)
-    tenant_name = 'some name'
-    tenant_account = create_test_account(
-        name='tenant',
-        tenant_name='old name',
-        plan=plan,
-        plan_expiration=timezone.now() + timedelta(days=1),
-        lease_level=LeaseLevel.TENANT,
-        master_account=master_account,
-    )
-    create_test_user(
-        account=tenant_account,
-        email='tenant_owner@test.test',
-    )
-    stripe_service_init_mock = mocker.patch.object(
-        StripeService,
-        attribute='__init__',
-        return_value=None,
-    )
-    update_subscription_description_mock = mocker.patch(
-        'src.payment.stripe.service.StripeService.'
-        'update_subscription_description',
-    )
-    settings_mock = mocker.patch(
-        'src.accounts.views.tenants.settings',
-    )
-    settings_mock.PROJECT_CONF = {'BILLING': False}
-    api_client.token_authenticate(master_account_owner)
-
-    # act
-    response = api_client.patch(
-        f'/tenants/{tenant_account.id}',
-        data={
-            'tenant_name': tenant_name,
-        },
-    )
-
-    # assert
-    assert response.status_code == 200
-    assert response.data['id'] == tenant_account.id
-    assert response.data['tenant_name'] == tenant_name
-    assert response.data['date_joined']
-    stripe_service_init_mock.assert_not_called()
     update_subscription_description_mock.assert_not_called()

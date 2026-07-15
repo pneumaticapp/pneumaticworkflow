@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from rest_framework_simplejwt.exceptions import TokenError
@@ -80,8 +79,7 @@ class UserTransferService(
     def _after_transfer_actions(self):
 
         if (
-            settings.PROJECT_CONF['BILLING']
-            and self.user.account.billing_sync
+            self.user.account.billing_sync
             and self.user.account.billing_plan == BillingPlanType.PREMIUM
         ):
             increase_plan_users.delay(
@@ -134,8 +132,7 @@ class UserTransferService(
         )
         self._delete_prev_user_pending_invites()
         if (
-            settings.PROJECT_CONF['BILLING']
-            and self.prev_user.account.billing_sync
+            self.prev_user.account.billing_sync
             and self.prev_user.is_account_owner
             and self.prev_user.account.billing_plan in
                 BillingPlanType.PAYMENT_PLANS

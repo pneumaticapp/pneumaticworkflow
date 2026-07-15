@@ -315,13 +315,9 @@ def test_after_transfer_actions__premium__ok(mocker):
     increase_plan_users_mock = mocker.patch(
         'src.payment.tasks.increase_plan_users.delay',
     )
-    settings_mock = mocker.patch(
-        'src.accounts.services.user_transfer.settings',
-    )
     send_user_updated_mock = mocker.patch(
         'src.notifications.tasks.send_user_updated_notification.delay',
     )
-    settings_mock.PROJECT_CONF = {'BILLING': True}
     service = UserTransferService()
     service.user = user
     service.prev_user = prev_user
@@ -384,82 +380,9 @@ def test_after_transfer_actions__unlimited__ok(mocker):
     increase_plan_users_mock = mocker.patch(
         'src.payment.tasks.increase_plan_users.delay',
     )
-    settings_mock = mocker.patch(
-        'src.accounts.services.user_transfer.settings',
-    )
     send_user_updated_mock = mocker.patch(
         'src.notifications.tasks.send_user_updated_notification.delay',
     )
-    settings_mock.PROJECT_CONF = {'BILLING': True}
-    service = UserTransferService()
-    service.user = user
-    service.prev_user = prev_user
-
-    # act
-    service._after_transfer_actions()
-
-    # assert
-    identify_mock.assert_called_once_with(service.user)
-    assert group_mock.call_count == 2
-    group_mock.assert_has_calls(
-        [
-            mocker.call(service.prev_user),
-            mocker.call(service.user),
-        ],
-    )
-    users_transferred_mock.assert_called_once_with(
-        user=service.prev_user,
-    )
-    increase_plan_users_mock.assert_not_called()
-    send_user_updated_mock.assert_called_once_with(
-        logging=user.account.log_api_requests,
-        account_id=user.account_id,
-        user_data={
-            'id': user.id,
-            'first_name': user.first_name,
-            'last_name': user.last_name,
-            'email': user.email,
-            'photo': user.photo,
-            'phone': user.phone,
-            'status': user.status,
-            'is_admin': user.is_admin,
-            'is_account_owner': user.is_account_owner,
-            'manager_id': None,
-            'subordinates_ids': [],
-            'invite_id': None,
-            'vacation': None,
-        },
-    )
-
-
-@pytest.mark.parametrize('plan', BillingPlanType.PAYMENT_PLANS)
-def test_after_transfer_actions__disable_billing__ok(mocker, plan):
-    # arrange
-    account = create_test_account(
-        plan=plan,
-        billing_sync=True,
-    )
-    user = create_test_user(account=account, is_account_owner=True)
-    prev_user = create_test_user(email='prev@test.test')
-    users_transferred_mock = mocker.patch(
-        'src.analysis.services.AnalyticService.users_transferred',
-    )
-    identify_mock = mocker.patch(
-        'src.accounts.services.user_transfer.UserTransferService.identify',
-    )
-    group_mock = mocker.patch(
-        'src.accounts.services.user_transfer.UserTransferService.group',
-    )
-    increase_plan_users_mock = mocker.patch(
-        'src.payment.tasks.increase_plan_users.delay',
-    )
-    settings_mock = mocker.patch(
-        'src.accounts.services.user_transfer.settings',
-    )
-    send_user_updated_mock = mocker.patch(
-        'src.notifications.tasks.send_user_updated_notification.delay',
-    )
-    settings_mock.PROJECT_CONF = {'BILLING': False}
     service = UserTransferService()
     service.user = user
     service.prev_user = prev_user
@@ -539,10 +462,6 @@ def test_deactivate_prev_user__ok(mocker):
     deactivate_mock = mocker.patch(
         'src.accounts.services.user.UserService.deactivate',
     )
-    settings_mock = mocker.patch(
-        'src.accounts.services.user_transfer.settings',
-    )
-    settings_mock.PROJECT_CONF = {'BILLING': True}
 
     # act
     service._deactivate_prev_user()
@@ -605,10 +524,6 @@ def test_deactivate_prev_user__cancel_subscription__ok(mocker):
     deactivate_mock = mocker.patch(
         'src.accounts.services.user.UserService.deactivate',
     )
-    settings_mock = mocker.patch(
-        'src.accounts.services.user_transfer.settings',
-    )
-    settings_mock.PROJECT_CONF = {'BILLING': True}
 
     # act
     service._deactivate_prev_user()
@@ -675,10 +590,6 @@ def test_deactivate_prev_user__disable_billing__ok(plan, mocker):
     deactivate_mock = mocker.patch(
         'src.accounts.services.user.UserService.deactivate',
     )
-    settings_mock = mocker.patch(
-        'src.accounts.services.user_transfer.settings',
-    )
-    settings_mock.PROJECT_CONF = {'BILLING': False}
 
     # act
     service._deactivate_prev_user()

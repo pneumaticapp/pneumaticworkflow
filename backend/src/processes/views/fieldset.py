@@ -1,3 +1,4 @@
+from rest_framework.decorators import action
 from rest_framework.viewsets import GenericViewSet
 
 from src.accounts.permissions import (
@@ -130,3 +131,20 @@ class SharedFieldsetTemplateViewSet(
         except BaseServiceException as ex:
             raise_validation_error(message=ex.message)
         return self.response_ok()
+
+    @action(methods=['POST'], detail=True)
+    def clone(self, request, *args, **kwargs):
+        fieldset = self.get_object()
+        service = FieldSetTemplateService(
+            user=request.user,
+            instance=fieldset,
+            is_superuser=request.is_superuser,
+            auth_type=request.token_type,
+        )
+        try:
+            fieldset = service.get_clone()
+        except BaseServiceException as ex:
+            raise_validation_error(message=ex.message)
+        else:
+            response_serializer = SharedFieldsetTemplateSerializer(fieldset)
+            return self.response_created(response_serializer.data)
