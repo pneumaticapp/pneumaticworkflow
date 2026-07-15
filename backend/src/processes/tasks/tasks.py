@@ -63,7 +63,12 @@ def check_and_complete_tasks(
 ):
 
     user = UserModel.objects.get(account_id=account_id, is_account_owner=True)
-    tasks = Task.objects.filter(id__in=task_ids).select_related('workflow')
+    tasks = (
+        Task.objects
+        .filter(id__in=task_ids)
+        .select_related('workflow')
+        .order_by('id')
+    )
     for task in tasks:
         if task.can_be_completed():
             service = WorkflowActionService(
