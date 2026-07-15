@@ -35,10 +35,6 @@ def test_create__premium_plan__increase_master_acc_subscription(
 ):
 
     # arrange
-    settings_mock = mocker.patch(
-        'src.accounts.views.tenants.settings',
-    )
-    settings_mock.PROJECT_CONF = {'BILLING': True}
     master_account = create_test_account(
         plan=BillingPlanType.PREMIUM,
         billing_sync=True,
@@ -172,10 +168,6 @@ def test_create__premium_plan__billing_disabled__not_increase_master_acc_subs(
 ):
 
     # arrange
-    settings_mock = mocker.patch(
-        'src.accounts.views.tenants.settings',
-    )
-    settings_mock.PROJECT_CONF = {'BILLING': True}
     master_account = create_test_account(
         plan=BillingPlanType.PREMIUM,
         billing_sync=False,
