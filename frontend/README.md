@@ -14,7 +14,7 @@ WSS_URL=ws://localhost:8001
 ### Installation
 Open a terminal in the "frontend" directory and run the following commands:
 1. Start backend containers ``docker compose up -d``
-2. Install node.js v16 directly or use [nvm](https://github.com/nvm-sh/nvm).
+2. Install Node.js directly or use [nvm](https://github.com/nvm-sh/nvm).
 3. Install packages with ``npm clean-install``. If an errors occurs, use ``npm i --legacy-peer-deps``
 4. Run the development version with the command ``npm run local``
 5. Run the production version with the command:

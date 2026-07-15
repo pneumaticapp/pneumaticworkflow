@@ -5,12 +5,13 @@ import { useIntl } from 'react-intl';
 import { RichText } from '../RichText';
 import { Attachments } from '../Attachments';
 import { EWorkflowLogEvent } from '../../types/workflow';
-import { EExtraFieldType, IExtraField } from '../../types/template';
+import { EExtraFieldType, ETemplateOwnerType, IExtraField } from '../../types/template';
 import { IHighlightsItem } from '../../types/highlights';
 import { isArrayWithItems } from '../../utils/helpers';
 import { EKickoffOutputsViewModes, KickoffOutputs } from '../KickoffOutputs';
 import { UserData } from '../UserData';
 import { getUserFullName } from '../../utils/users';
+import UserDataWithGroup from '../UserDataWithGroup';
 import { getSnoozedUntilDate } from '../../utils/dateTime';
 
 import { Ellipsis } from './Ellipsis';
@@ -28,6 +29,7 @@ export function FeedItemHeader({
   task,
   delay,
   targetUserId,
+  targetGroupId,
 }: IFeedItemHeaderProps) {
   const { messages, formatMessage } = useIntl();
   const commentTextRef = useRef<HTMLSpanElement>(null);
@@ -188,6 +190,36 @@ export function FeedItemHeader({
     );
   };
 
+  const renderAddedPerformerGroup = () => {
+    if (!targetGroupId) {
+      return null;
+    }
+
+    return (
+      <div className={styles['changed-performer']}>
+        {formatMessage({ id: 'task.log-added-performer-group' })}
+        <UserDataWithGroup type={ETemplateOwnerType.UserGroup} idItem={targetGroupId}>
+          {(group) => <span className={styles['username']}>{group.firstName}</span>}
+        </UserDataWithGroup>
+      </div>
+    );
+  };
+
+  const renderRemovedPerformerGroup = () => {
+    if (!targetGroupId) {
+      return null;
+    }
+
+    return (
+      <div className={styles['changed-performer']}>
+        {formatMessage({ id: 'task.log-removed-performer-group' })}
+        <UserDataWithGroup type={ETemplateOwnerType.UserGroup} idItem={targetGroupId}>
+          {(group) => <span className={styles['username']}>{group.firstName}</span>}
+        </UserDataWithGroup>
+      </div>
+    );
+  };
+
   const EVENT_CONTENT_MAP: { [key in EWorkflowLogEvent]?: JSX.Element | null } = {
     [EWorkflowLogEvent.TaskComplete]: renderOutputsContents(),
     [EWorkflowLogEvent.TaskComment]: renderTaskCommentContent(),
@@ -198,6 +230,8 @@ export function FeedItemHeader({
     [EWorkflowLogEvent.TaskRevert]: renderTaskCommentContent(),
     [EWorkflowLogEvent.AddedPerformer]: renderAddedPerformer(),
     [EWorkflowLogEvent.RemovedPerformer]: renderRemovedPerformer(),
+    [EWorkflowLogEvent.AddedPerformerGroup]: renderAddedPerformerGroup(),
+    [EWorkflowLogEvent.RemovedPerformerGroup]: renderRemovedPerformerGroup(),
     [EWorkflowLogEvent.WorkflowSnoozedManually]: (
       <>{formatMessage({ id: 'workflows.event-snoozed-until' }, { date: getSnoozedUntilDate(delay || null) })}</>
     ),

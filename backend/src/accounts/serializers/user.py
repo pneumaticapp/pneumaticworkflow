@@ -295,10 +295,14 @@ class UserWebsocketSerializer(serializers.ModelSerializer):
             'last_name',
             'email',
             'photo',
+            'phone',
+            'status',
             'is_admin',
             'is_account_owner',
             'manager_id',
             'subordinates_ids',
+            'invite_id',
+            'vacation',
         )
 
     subordinates_ids = serializers.PrimaryKeyRelatedField(
@@ -306,6 +310,13 @@ class UserWebsocketSerializer(serializers.ModelSerializer):
         read_only=True,
         source='subordinates',
     )
+    invite_id = serializers.SerializerMethodField()
+    vacation = VacationSerializer(read_only=True)
+
+    def get_invite_id(self, instance: UserModel):
+        if instance.status_invited and instance.invite:
+            return str(instance.invite.id)
+        return None
 
 
 class VacationActivateSerializer(

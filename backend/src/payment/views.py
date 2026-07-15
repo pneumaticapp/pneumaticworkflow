@@ -16,9 +16,6 @@ from src.payment.models import (
     Price,
     Product,
 )
-from src.payment.permissions import (
-    ProjectBillingPermission,
-)
 from src.payment.serializers import (
     CardSetupSerializer,
     ConfirmSerializer,
@@ -55,7 +52,7 @@ class PaymentViewSet(
 
     def get_permissions(self):
         if self.action == 'confirm':
-            return (ProjectBillingPermission(),)
+            return ()
         if self.action in {
             'purchase',
             'card_setup',
@@ -63,13 +60,11 @@ class PaymentViewSet(
             'customer_portal',
         }:
             return (
-                ProjectBillingPermission(),
                 UserIsAuthenticated(),
                 AccountOwnerPermission(),
                 DisallowForTenantPermission(),
             )
         return (
-            ProjectBillingPermission(),
             UserIsAuthenticated(),
             UserIsAdminOrAccountOwner(),
             DisallowForTenantPermission(),
@@ -188,7 +183,6 @@ class SubscriptionViewSet(
 ):
 
     permission_classes = (
-        ProjectBillingPermission,
         UserIsAuthenticated,
         AccountOwnerPermission,
         DisallowForTenantPermission,
@@ -218,7 +212,6 @@ class StripeViewSet(
 
     action_permission_classes = {
         'webhooks': (
-            ProjectBillingPermission(),
             StripeWebhookPermission(),
         ),
     }

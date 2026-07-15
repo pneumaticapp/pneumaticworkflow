@@ -1865,6 +1865,8 @@ class HighlightsQuery(SqlQueryObject):
         WorkflowEventType.NOT_URGENT,
         WorkflowEventType.TASK_PERFORMER_CREATED,
         WorkflowEventType.TASK_PERFORMER_DELETED,
+        WorkflowEventType.TASK_PERFORMER_GROUP_CREATED,
+        WorkflowEventType.TASK_PERFORMER_GROUP_DELETED,
         WorkflowEventType.FORCE_DELAY,
         WorkflowEventType.FORCE_RESUME,
         WorkflowEventType.DUE_DATE_CHANGED,
@@ -1938,6 +1940,7 @@ class HighlightsQuery(SqlQueryObject):
           we.created,
           we.user_id,
           we.target_user_id,
+          we.target_group_id,
           we.workflow_id
         FROM processes_workflowevent we
         LEFT JOIN processes_workflow workflow ON

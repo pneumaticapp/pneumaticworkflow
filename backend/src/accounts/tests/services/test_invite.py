@@ -421,10 +421,14 @@ def test_user_create_actions__premium__ok(mocker, plan):
             'last_name': invited_user.last_name,
             'email': invited_user.email,
             'photo': invited_user.photo,
+            'phone': invited_user.phone,
+            'status': invited_user.status,
             'is_admin': invited_user.is_admin,
             'is_account_owner': invited_user.is_account_owner,
             'manager_id': None,
             'subordinates_ids': [],
+            'invite_id': str(invited_user.invite.id),
+            'vacation': None,
         },
     )
 
@@ -476,10 +480,14 @@ def test_user_create_actions__freemium__ok(mocker):
             'last_name': invited_user.last_name,
             'email': invited_user.email,
             'photo': invited_user.photo,
+            'phone': invited_user.phone,
+            'status': invited_user.status,
             'is_admin': invited_user.is_admin,
             'is_account_owner': invited_user.is_account_owner,
             'manager_id': None,
             'subordinates_ids': [],
+            'invite_id': str(invited_user.invite.id),
+            'vacation': None,
         },
     )
 
@@ -1866,13 +1874,9 @@ def test__accept__all_fields__ok(identify_mock, group_mock, mocker):
     users_joined_mock = mocker.patch(
         'src.accounts.services.user_invite.AnalyticService.users_joined',
     )
-    settings_mock = mocker.patch(
-        'src.accounts.services.user_invite.settings',
-    )
     send_user_updated_mock = mocker.patch(
         'src.notifications.tasks.send_user_updated_notification.delay',
     )
-    settings_mock.PROJECT_CONF = {'BILLING': True}
     first_name = 'John'
     last_name = 'Wick'
     language = Language.fr
@@ -1923,10 +1927,14 @@ def test__accept__all_fields__ok(identify_mock, group_mock, mocker):
             'last_name': invited_user.last_name,
             'email': invited_user.email,
             'photo': invited_user.photo,
+            'phone': invited_user.phone,
+            'status': invited_user.status,
             'is_admin': invited_user.is_admin,
             'is_account_owner': invited_user.is_account_owner,
             'manager_id': None,
             'subordinates_ids': [],
+            'invite_id': None,
+            'vacation': None,
         },
     )
 
@@ -1978,13 +1986,9 @@ def test__accept__only_required_fields__ok(identify_mock, group_mock, mocker):
     users_joined_mock = mocker.patch(
         'src.accounts.services.user_invite.AnalyticService.users_joined',
     )
-    settings_mock = mocker.patch(
-        'src.accounts.services.user_invite.settings',
-    )
     send_user_updated_mock = mocker.patch(
         'src.notifications.tasks.send_user_updated_notification.delay',
     )
-    settings_mock.PROJECT_CONF = {'BILLING': True}
     first_name = 'John'
     last_name = 'Wick'
 
@@ -2030,9 +2034,13 @@ def test__accept__only_required_fields__ok(identify_mock, group_mock, mocker):
             'last_name': invited_user.last_name,
             'email': invited_user.email,
             'photo': invited_user.photo,
+            'phone': invited_user.phone,
+            'status': invited_user.status,
             'is_admin': invited_user.is_admin,
             'is_account_owner': invited_user.is_account_owner,
             'manager_id': None,
             'subordinates_ids': [],
+            'invite_id': None,
+            'vacation': None,
         },
     )

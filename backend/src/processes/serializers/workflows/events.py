@@ -111,6 +111,7 @@ class WorkflowEventSerializer(serializers.ModelSerializer):
             'delay',
             'task',
             'workflow_id',
+            'is_urgent',
             'watched',
             'reactions',
         )
@@ -118,3 +119,7 @@ class WorkflowEventSerializer(serializers.ModelSerializer):
     delay = serializers.JSONField(source='delay_json')
     created_tsp = TimeStampField(source='created')
     updated_tsp = TimeStampField(source='updated')
+    is_urgent = serializers.BooleanField(
+        source='workflow.is_urgent',
+        read_only=True,
+    )

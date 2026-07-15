@@ -7,7 +7,7 @@ import { SelectTemplateModalContainer } from '../../components/SelectTemplateMod
 import { NotificationsListContainer } from '../../components/NotificationsList/container';
 import { WorkflowEditPopupContainer } from '../../components/WorkflowEditPopup';
 import { GeneralLoader } from '../../components/GeneralLoader';
-import { SidebarContainer } from '../../components/Sidebar';
+import { Sidebar } from '../../components/Sidebar';
 import { ILoadNotificationsPayload } from '../../redux/notifications/actions';
 import { useDelayUnmount } from '../../hooks/useDelayUnmount';
 import { TeamInvitesPopupContainer } from '../../components/TeamInvitesPopup';
@@ -161,7 +161,7 @@ export function MainLayout({
     <>
       <div id="app-container" className={classnames(classNames, styles['main-layout'])}>
         {children}
-        <SidebarContainer />
+        <Sidebar />
       </div>
       {((!isSubscribed && !(billingPlan === ESubscriptionPlan.Free)) || isPlanExpired) && (
         <Paywall currentUser={user} owner={accountOwner} />

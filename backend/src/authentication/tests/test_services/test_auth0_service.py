@@ -925,7 +925,6 @@ def test_authenticate_user__invited_user_activated__ok(mocker):
     settings_mock.PROJECT_CONF = {
         'SSO_AUTH': True,
         'SSO_PROVIDER': 'auth0',
-        'BILLING': False,
     }
     settings_mock.AUTH0_CLIENT_SECRET = 'test_secret'
     service = Auth0Service()
@@ -1041,7 +1040,6 @@ def test_authenticate_user__inactive_user_creates_new__ok(mocker):
     settings_mock.PROJECT_CONF = {
         'SSO_AUTH': True,
         'SSO_PROVIDER': 'auth0',
-        'BILLING': False,
     }
     settings_mock.AUTH0_CLIENT_SECRET = 'test_secret'
     service = Auth0Service()

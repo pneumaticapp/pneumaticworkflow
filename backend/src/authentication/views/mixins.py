@@ -109,7 +109,7 @@ class SignUpMixin:
         utm_term: Optional[str] = None,
         utm_content: Optional[str] = None,
         gclid: Optional[str] = None,
-        billing_sync: bool = True,
+        billing_sync: bool = settings.PROJECT_CONF['BILLING'],
         request: Optional[HttpRequest] = None,
         ms_graph_user_id: Optional[str] = None,
     ) -> Tuple[UserModel, PneumaticToken]:
@@ -151,7 +151,7 @@ class SignUpMixin:
             except (AccountServiceException, UserServiceException) as ex:
                 raise_validation_error(message=ex.message)
             else:
-                if settings.PROJECT_CONF['BILLING'] and billing_sync:
+                if billing_sync:
                     try:
                         stripe_service = StripeService(user=account_owner)
                         stripe_service.update_customer()

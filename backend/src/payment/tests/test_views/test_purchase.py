@@ -45,11 +45,6 @@ def test_purchase__payment_link__ok(
         'service.StripeService.create_purchase',
         return_value=payment_link,
     )
-    mocker.patch(
-        'src.payment.views.ProjectBillingPermission'
-        '.has_permission',
-        return_value=True,
-    )
 
     api_client.token_authenticate(user)
 
@@ -109,11 +104,6 @@ def test_purchase__off_session__ok(
         'src.payment.stripe.service.'
         'StripeService.create_purchase',
         return_value=None,
-    )
-    mocker.patch(
-        'src.payment.views.ProjectBillingPermission'
-        '.has_permission',
-        return_value=True,
     )
 
     api_client.token_authenticate(user)
@@ -176,11 +166,6 @@ def test_purchase__archived_price__ok(
         'service.StripeService.create_purchase',
         return_value=payment_link,
     )
-    mocker.patch(
-        'src.payment.views.ProjectBillingPermission'
-        '.has_permission',
-        return_value=True,
-    )
 
     api_client.token_authenticate(user)
 
@@ -224,11 +209,6 @@ def test_purchase__service_exception__validation_error(
         'src.payment.stripe.'
         'service.StripeService.create_purchase',
         side_effect=StripeServiceException(message),
-    )
-    mocker.patch(
-        'src.payment.views.ProjectBillingPermission'
-        '.has_permission',
-        return_value=True,
     )
 
     api_client.token_authenticate(user)
@@ -285,11 +265,6 @@ def test_purchase__empty_products__validation_error(
         'src.payment.stripe.'
         'service.StripeService.create_purchase',
     )
-    mocker.patch(
-        'src.payment.views.ProjectBillingPermission'
-        '.has_permission',
-        return_value=True,
-    )
 
     api_client.token_authenticate(user)
 
@@ -327,11 +302,6 @@ def test_purchase__null_products__validation_error(
     create_purchase_mock = mocker.patch(
         'src.payment.stripe.'
         'service.StripeService.create_purchase',
-    )
-    mocker.patch(
-        'src.payment.views.ProjectBillingPermission'
-        '.has_permission',
-        return_value=True,
     )
 
     api_client.token_authenticate(user)
@@ -371,11 +341,6 @@ def test_purchase__quantity_less_then_1__validation_error(
     create_purchase_mock = mocker.patch(
         'src.payment.stripe.'
         'service.StripeService.create_purchase',
-    )
-    mocker.patch(
-        'src.payment.views.ProjectBillingPermission'
-        '.has_permission',
-        return_value=True,
     )
 
     api_client.token_authenticate(user)
@@ -420,11 +385,6 @@ def test_purchase__success_url_is_skipped__validation_error(
         'src.payment.stripe.'
         'service.StripeService.create_purchase',
     )
-    mocker.patch(
-        'src.payment.views.ProjectBillingPermission'
-        '.has_permission',
-        return_value=True,
-    )
 
     api_client.token_authenticate(user)
 
@@ -466,11 +426,6 @@ def test_purchase__success_url_invalid__validation_error(
     create_purchase_mock = mocker.patch(
         'src.payment.stripe.'
         'service.StripeService.create_purchase',
-    )
-    mocker.patch(
-        'src.payment.views.ProjectBillingPermission'
-        '.has_permission',
-        return_value=True,
     )
 
     api_client.token_authenticate(user)
@@ -514,11 +469,6 @@ def test_purchase__cancel_url_invalid__validation_error(
     create_purchase_mock = mocker.patch(
         'src.payment.stripe.'
         'service.StripeService.create_purchase',
-    )
-    mocker.patch(
-        'src.payment.views.ProjectBillingPermission'
-        '.has_permission',
-        return_value=True,
     )
     api_client.token_authenticate(user)
 
@@ -580,11 +530,6 @@ def test_purchase__not_existent_product__validation_error(
         'src.payment.stripe.'
         'service.StripeService.create_purchase',
     )
-    mocker.patch(
-        'src.payment.views.ProjectBillingPermission'
-        '.has_permission',
-        return_value=True,
-    )
 
     api_client.token_authenticate(user)
 
@@ -640,11 +585,6 @@ def test_purchase__not_existent_products__validation_error(
         code=price_code_3,
         status=PriceStatus.ACTIVE,
     )
-    mocker.patch(
-        'src.payment.views.ProjectBillingPermission'
-        '.has_permission',
-        return_value=True,
-    )
 
     api_client.token_authenticate(user)
 
@@ -680,55 +620,3 @@ def test_purchase__not_existent_products__validation_error(
     assert (response.data['message'] == message) or (
         response.data['message'] == message_reversed
     )
-
-
-def test_purchase__disable_billing__permission_denied(
-    mocker,
-    api_client,
-):
-    # arrange
-    user = create_test_user()
-    success_url = 'http://localhost/success/'
-    cancel_url = 'http://localhost/cancel/'
-    price = create_test_recurring_price()
-    quantity = 1
-    payment_link = 'checkout.stripe.com'
-
-    service_init_mock = mocker.patch.object(
-        StripeService,
-        attribute='__init__',
-        return_value=None,
-    )
-    create_purchase_mock = mocker.patch(
-        'src.payment.stripe.'
-        'service.StripeService.create_purchase',
-        return_value=payment_link,
-    )
-    mocker.patch(
-        'src.payment.views.ProjectBillingPermission'
-        '.has_permission',
-        return_value=False,
-    )
-
-    api_client.token_authenticate(user)
-
-    # act
-    response = api_client.post(
-        '/payment/purchase',
-        data={
-            'success_url': success_url,
-            'cancel_url': cancel_url,
-            'products': [
-                {
-                    'code': price.code,
-                    'quantity': quantity,
-                },
-            ],
-        },
-    )
-
-    # assert
-    assert response.status_code == 403
-    assert response.data['detail'] == messages.MSG_BL_0021
-    service_init_mock.assert_not_called()
-    create_purchase_mock.assert_not_called()

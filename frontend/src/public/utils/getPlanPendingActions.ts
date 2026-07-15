@@ -13,7 +13,7 @@ export function getPlanPendingActions(
   const actionsMap = [
     {
       action: EPlanActions.Upgrade,
-      isActive: billingPlan === ESubscriptionPlan.Free || isBlocked,
+      isActive: isBlocked,
     },
     {
       action: EPlanActions.ChoosePlan,

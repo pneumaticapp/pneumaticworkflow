@@ -2,7 +2,6 @@ import pytest
 from django.contrib.auth import get_user_model
 
 from src.authentication.enums import AuthTokenType
-from src.payment import messages
 from src.payment.stripe.exceptions import (
     StripeServiceException,
 )
@@ -35,11 +34,6 @@ def test_card_setup__payment_link__ok(
         'src.payment.stripe.service.StripeService.'
         'get_payment_method_checkout_link',
         return_value=setup_link,
-    )
-    mocker.patch(
-        'src.payment.views.ProjectBillingPermission'
-        '.has_permission',
-        return_value=True,
     )
 
     api_client.token_authenticate(user)
@@ -87,11 +81,6 @@ def test_card_setup__service_exception__validation_error(
         'get_payment_method_checkout_link',
         side_effect=StripeServiceException(message),
     )
-    mocker.patch(
-        'src.payment.views.ProjectBillingPermission'
-        '.has_permission',
-        return_value=True,
-    )
 
     api_client.token_authenticate(user)
 
@@ -136,11 +125,6 @@ def test_card_setup__success_url_is_skipped__validation_error(
         'src.payment.stripe.service.StripeService.'
         'get_payment_method_checkout_link',
     )
-    mocker.patch(
-        'src.payment.views.ProjectBillingPermission'
-        '.has_permission',
-        return_value=True,
-    )
 
     api_client.token_authenticate(user)
 
@@ -179,11 +163,6 @@ def test_card_setup__success_url_invalid__validation_error(
     card_setup_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
         'get_payment_method_checkout_link',
-    )
-    mocker.patch(
-        'src.payment.views.ProjectBillingPermission'
-        '.has_permission',
-        return_value=True,
     )
 
     api_client.token_authenticate(user)
@@ -225,11 +204,6 @@ def test_card_setup__cancel_url_invalid__validation_error(
         'src.payment.stripe.service.StripeService.'
         'get_payment_method_checkout_link',
     )
-    mocker.patch(
-        'src.payment.views.ProjectBillingPermission'
-        '.has_permission',
-        return_value=True,
-    )
     api_client.token_authenticate(user)
 
     # act
@@ -248,49 +222,5 @@ def test_card_setup__cancel_url_invalid__validation_error(
     assert response.data['message'] == message
     assert response.data['details']['reason'] == message
     assert response.data['details']['name'] == 'cancel_url'
-    service_init_mock.assert_not_called()
-    card_setup_mock.assert_not_called()
-
-
-def test_card_setup__disable_billing__permission_denied(
-    mocker,
-    api_client,
-):
-    # arrange
-    user = create_test_user()
-    success_url = 'http://localhost/success/'
-    cancel_url = 'http://localhost/cancel/'
-    setup_link = 'checkout.stripe.com'
-
-    service_init_mock = mocker.patch.object(
-        StripeService,
-        attribute='__init__',
-        return_value=None,
-    )
-    card_setup_mock = mocker.patch(
-        'src.payment.stripe.service.StripeService.'
-        'get_payment_method_checkout_link',
-        return_value=setup_link,
-    )
-    mocker.patch(
-        'src.payment.views.ProjectBillingPermission'
-        '.has_permission',
-        return_value=False,
-    )
-
-    api_client.token_authenticate(user)
-
-    # act
-    response = api_client.get(
-        '/payment/card-setup',
-        data={
-            'success_url': success_url,
-            'cancel_url': cancel_url,
-        },
-    )
-
-    # assert
-    assert response.status_code == 403
-    assert response.data['detail'] == messages.MSG_BL_0021
     service_init_mock.assert_not_called()
     card_setup_mock.assert_not_called()

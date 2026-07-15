@@ -158,10 +158,6 @@ class TestAccountLLConverter:
             master_account=master_account,
         )
         tenant_user = create_test_user(account=tenant_account)
-        settings_mock = mocker.patch(
-            'src.accounts.services.convert_account.settings',
-        )
-        settings_mock.PROJECT_CONF = {'BILLING': True}
         update_master_account_user_counts_mock = mocker.patch(
             'src.accounts.services.convert_account'
             '.AccountLLConverter._update_master_account_user_counts',
@@ -257,10 +253,6 @@ class TestAccountLLConverter:
             master_account=master_account,
         )
         tenant_user = create_test_user(account=tenant_account)
-        settings_mock = mocker.patch(
-            'src.accounts.services.convert_account.settings',
-        )
-        settings_mock.PROJECT_CONF = {'BILLING': True}
         update_master_account_user_counts_mock = mocker.patch(
             'src.accounts.services.convert_account'
             '.AccountLLConverter._update_master_account_user_counts',
@@ -358,10 +350,6 @@ class TestAccountLLConverter:
             master_account=master_account,
         )
         tenant_user = create_test_user(account=tenant_account)
-        settings_mock = mocker.patch(
-            'src.accounts.services.convert_account.settings',
-        )
-        settings_mock.PROJECT_CONF = {'BILLING': True}
         update_master_account_user_counts_mock = mocker.patch(
             'src.accounts.services.convert_account'
             '.AccountLLConverter._update_master_account_user_counts',
@@ -466,10 +454,6 @@ class TestAccountLLConverter:
             master_account=master_account,
         )
         tenant_user = create_test_user(account=tenant_account)
-        settings_mock = mocker.patch(
-            'src.accounts.services.convert_account.settings',
-        )
-        settings_mock.PROJECT_CONF = {'BILLING': True}
         update_master_account_user_counts_mock = mocker.patch(
             'src.accounts.services.convert_account'
             '.AccountLLConverter._update_master_account_user_counts',
@@ -567,10 +551,6 @@ class TestAccountLLConverter:
             master_account=master_account,
         )
         tenant_user = create_test_user(account=tenant_account)
-        settings_mock = mocker.patch(
-            'src.accounts.services.convert_account.settings',
-        )
-        settings_mock.PROJECT_CONF = {'BILLING': True}
         update_master_account_user_counts_mock = mocker.patch(
             'src.accounts.services.convert_account'
             '.AccountLLConverter._update_master_account_user_counts',
@@ -652,10 +632,6 @@ class TestAccountLLConverter:
             master_account=master_account,
         )
         tenant_user = create_test_user(account=tenant_account)
-        settings_mock = mocker.patch(
-            'src.accounts.services.convert_account.settings',
-        )
-        settings_mock.PROJECT_CONF = {'BILLING': True}
         update_master_account_user_counts_mock = mocker.patch(
             'src.accounts.services.convert_account'
             '.AccountLLConverter._update_master_account_user_counts',

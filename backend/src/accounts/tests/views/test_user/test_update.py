@@ -176,10 +176,14 @@ def test_put__all_fields__ok(api_client, mocker):
             'last_name': user.last_name,
             'email': user.email,
             'photo': user.photo,
+            'phone': user.phone,
+            'status': user.status,
             'is_admin': user.is_admin,
             'is_account_owner': user.is_account_owner,
             'manager_id': user.manager_id,
             'subordinates_ids': [],
+            'invite_id': None,
+            'vacation': None,
         },
     )
 
