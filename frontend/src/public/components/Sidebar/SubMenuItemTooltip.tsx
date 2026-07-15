@@ -1,101 +1,53 @@
-import React, { useState } from 'react';
+import React from 'react';
 import classnames from 'classnames';
-import { Tooltip, TooltipProps } from 'reactstrap';
-import { IntlMessages } from '../IntlMessages';
 
-import { IMenuItemSub } from '../../types/menu';
 import { ESubscriptionPlan } from '../../types/account';
+import { IntlMessages } from '../IntlMessages';
+import { Tooltip } from '../UI';
 
-import { NavLink } from '../NavLink/NavLink';
+import styles from './SubMenuItemTooltip.css';
+import type { ISubMenuTooltipProps } from './types';
 
-import s from './SubMenuItemTooltip.css';
-
-export interface ISubMenuTooltipProps extends Omit<TooltipProps, 'target' | 'isOpen'> {
-  menuItems: IMenuItemSub[];
-  containerClassName: string;
-  classNameBase?: string;
-  plan?: ESubscriptionPlan;
-  onCloseSubmenu(): void;
-}
+const planClassNameMap = {
+  [ESubscriptionPlan.Unknown]: styles['plan-premium'],
+  [ESubscriptionPlan.Free]: styles['plan-premium'],
+  [ESubscriptionPlan.Trial]: styles['plan-trial'],
+  [ESubscriptionPlan.Premium]: styles['plan-premium'],
+  [ESubscriptionPlan.Unlimited]: styles['plan-premium'],
+  [ESubscriptionPlan.FractionalCOO]: styles['plan-premium'],
+};
 
 export const SubMenuTooltip = ({
-  isOpen,
-  target,
-  menuItems,
-  onCloseSubmenu,
+  children,
   containerClassName,
+  menuItems,
   plan = ESubscriptionPlan.Free,
 }: ISubMenuTooltipProps) => {
-  if (!target) {
-    return null;
-  }
-
-  const [activeSubmenu, setActiveSubmenu] = useState(false);
-
-  const timeDelayHideShowSubMenu = containerClassName.includes('main-hidden') ? 200 : 0;
-  let styleHideSubMenu = '';
-  const targetCurrent = document.querySelector(`#${target}`)!;
-  const planClassNameMap = {
-    [ESubscriptionPlan.Unknown]: s['plan-premium'],
-    [ESubscriptionPlan.Free]: s['plan-premium'],
-    [ESubscriptionPlan.Trial]: s['plan-trial'],
-    [ESubscriptionPlan.Premium]: s['plan-premium'],
-    [ESubscriptionPlan.Unlimited]: s['plan-premium'],
-    [ESubscriptionPlan.FractionalCOO]: s['plan-premium'],
-  };
-
-  const renderSubMenuItems = () => {
-    return (
-      <ul>
-        {menuItems.map((item) => (
-          <li key={item.to}>
-            {item.to ? (
-              <a
-                onClick={() => {
-                  onCloseSubmenu();
-                  handleMouseOver();
-                }}
-                href={item.to}
-                rel="noopener noreferrer"
-                target="_blank"
-                aria-label={item.label}
-              >
-                <IntlMessages id={item.label} />
-              </a>
-            ) : (
-              <NavLink to={item.to} data-flag={item.label}>
-                <IntlMessages id={item.label} />
-              </NavLink>
-            )}
-          </li>
-        ))}
-      </ul>
-    );
-  };
-
-  const handleMouseLeave = () => targetCurrent.classList.add('active');
-  const handleMouseOver = () => targetCurrent.classList.remove('active');
-
-  if (isOpen) {
-    styleHideSubMenu = '';
-    window.setTimeout(() => setActiveSubmenu(true), timeDelayHideShowSubMenu);
-  } else {
-    styleHideSubMenu = s['hide'];
-    window.setTimeout(() => setActiveSubmenu(false), timeDelayHideShowSubMenu);
-  }
+  const delay = containerClassName.includes('main-hidden') ? 200 : 0;
+  const content = (
+    <ul>
+      {menuItems.map((item) => (
+        <li key={item.to}>
+          <a href={item.to} rel="noopener noreferrer" target="_blank" aria-label={item.label}>
+            <IntlMessages id={item.label} />
+          </a>
+        </li>
+      ))}
+    </ul>
+  );
 
   return (
-    <div onMouseOver={handleMouseLeave} onFocus={handleMouseLeave} onMouseLeave={handleMouseOver}>
-      <Tooltip
-        arrowClassName={s['sub-menu__arrow']}
-        className={classnames(s['sub-menu'], planClassNameMap[plan], styleHideSubMenu)}
-        innerClassName={s['sub-menu__inner']}
-        isOpen={activeSubmenu}
-        placement="right"
-        target={target}
-      >
-        {renderSubMenuItems()}
-      </Tooltip>
-    </div>
+    <Tooltip
+      className={classnames(styles['sub-menu'], planClassNameMap[plan])}
+      content={content}
+      contentClassName={styles['sub-menu__inner']}
+      appendTo={() => document.body}
+      delay={[delay, delay]}
+      duration={300}
+      placement="right"
+      size="auto"
+    >
+      {children}
+    </Tooltip>
   );
 };

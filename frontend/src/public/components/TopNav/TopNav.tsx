@@ -1,54 +1,46 @@
-import * as React from 'react';
+import React from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
+import { useDispatch, useSelector } from 'react-redux';
 
-import { ERoutes } from '../../constants/routes';
 import { PaywallReminder } from './PaywallReminder';
-import { BellIcon, PersonIcon, TuneViewIcon, SuitcaseIcon, CreditCardIcon, UsersIcon, IntegrationSmIcon, TurnOffIcon } from '../icons';
+import { BellIcon } from '../icons';
 import { EPlanActions } from '../../utils/getPlanPendingActions';
-import { CurrentUserAvatar, Dropdown, TDropdownOption } from '../UI';
-import { history } from '../../utils/history';
-import { IAccount, TAccountLeaseLevel } from '../../types/user';
+import { TAccountLeaseLevel } from '../../types/user';
 import { truncateString } from '../../utils/truncateString';
 import { ESubscriptionPlan } from '../../types/account';
-
-import { EPaywallReminderType } from './utils/getPaywallType';
-import { isEnvBilling } from '../../constants/enviroment';
+import { EWorkflowsView } from '../../types/workflow';
+import {
+  logoutUser as logoutUserAction,
+  redirectToCustomerPortal as redirectToCustomerPortalAction,
+  returnFromSupermode as returnFromSupermodeAction,
+  setNotificationsListIsOpen as setNotificationsListIsOpenAction,
+} from '../../redux/actions';
+import { getTopNavState } from '../../redux/selectors/topNav';
+import { ProfileDropdown } from './ProfileDropdown';
+import { ITopNavProps, TTopNavContentProps } from './types';
 
 import styles from './TopNav.css';
-import { EWorkflowsView } from '../../types/workflow';
 
-export interface ITopNavProps {
-  pendingActions: EPlanActions[];
-  paywallType: EPaywallReminderType | null;
-  plan: ESubscriptionPlan;
-  unreadNotificationsCount: number;
-  isSupermode: boolean;
-  tenantName: string;
-  leaseLevel: TAccountLeaseLevel;
-  isAccountOwner: boolean;
-  accountOwnerPlan: IAccount;
-  isAdmin: boolean;
-  firstName: string;
-  lastName: string;
-  isFromWorkflowsLayout?: boolean;
-  workflowsView?: EWorkflowsView;
+export type { ITopNavProps as ITopNavOwnProps } from './types';
+
+export function TopNav(props: ITopNavProps) {
+  const dispatch = useDispatch();
+  const stateProps = useSelector(getTopNavState);
+
+  return (
+    <TopNavContent
+      {...props}
+      {...stateProps}
+      logoutUser={() => dispatch(logoutUserAction())}
+      setNotificationsListIsOpen={(isOpen) => dispatch(setNotificationsListIsOpenAction(isOpen))}
+      returnFromSupermode={() => dispatch(returnFromSupermodeAction())}
+      redirectToCustomerPortal={() => dispatch(redirectToCustomerPortalAction())}
+    />
+  );
 }
 
-export interface ITopNavDispatchProps {
-  logoutUser(): void;
-  setNotificationsListIsOpen(isOpen: boolean): void;
-  returnFromSupermode(): void;
-  redirectToCustomerPortal(): void;
-}
-
-export interface ITopNavOwnProps {
-  leftContent?: React.ReactNode;
-}
-
-export type TTopNavProps = ITopNavProps & ITopNavDispatchProps & ITopNavOwnProps;
-
-export function TopNav({
+export function TopNavContent({
   pendingActions,
   paywallType,
   plan,
@@ -68,18 +60,11 @@ export function TopNav({
   isAdmin,
   firstName,
   lastName,
-}: TTopNavProps) {
+}: TTopNavContentProps) {
   const { formatMessage } = useIntl();
-  const userFullName = `${firstName} ${lastName}`.trim();
 
   const isPaywallVisible = Boolean(paywallType);
   const rightNavbarClassname = classnames('navbar-right', styles['navbar-right']);
-
-  const showCustomerPortalLink =
-    plan !== ESubscriptionPlan.Free &&
-    plan !== ESubscriptionPlan.Unknown &&
-    isAccountOwner &&
-    leaseLevel !== 'tenant';
 
   const getColorSuperMode = (billingPlan: ESubscriptionPlan, isTrial: boolean, status: TAccountLeaseLevel) => {
     const statusClassesMap = {
@@ -137,62 +122,6 @@ export function TopNav({
     setNotificationsListIsOpen(true);
   };
 
-  const handleOptionClick = (handler: () => void) => (closeDropdown: () => void) => {
-    closeDropdown();
-    handler();
-  };
-
-  const profileDropdownOptions = [
-    userFullName && {
-      label: userFullName,
-      className: styles['user-name-item'],
-    },
-    {
-      label: formatMessage({ id: 'nav.profile' }),
-      onClick: handleOptionClick(() => history.push(ERoutes.Profile)),
-      withUpperline: !!userFullName,
-      Icon: PersonIcon,
-    },
-    {
-      label: formatMessage({ id: 'nav.settings' }),
-      onClick: handleOptionClick(() => history.push(ERoutes.AccountSettings)),
-      Icon: TuneViewIcon,
-    },
-    isEnvBilling && {
-      label: formatMessage({ id: 'nav.pricing' }),
-      onClick: handleOptionClick(() => window.open('https://www.pneumatic.app/pricing/')),
-      color: 'orange',
-      isHidden: leaseLevel === 'tenant',
-      Icon: SuitcaseIcon,
-    },
-    {
-      label: formatMessage({ id: 'nav.customer-portal' }),
-      onClick: redirectToCustomerPortal,
-      isHidden: !showCustomerPortalLink,
-      Icon: CreditCardIcon,
-    },
-    {
-      label: formatMessage({ id: 'nav.team' }),
-      onClick: handleOptionClick(() => history.push(ERoutes.Team)),
-      isHidden: !isAdmin,
-      Icon: UsersIcon,
-      withUpperline: true,
-    },
-    {
-      label: formatMessage({ id: 'nav.integration' }),
-      onClick: handleOptionClick(() => history.push(ERoutes.Integrations)),
-      isHidden: !isAdmin,
-      Icon: IntegrationSmIcon,
-    },
-    {
-      label: formatMessage({ id: 'user.sign-out' }),
-      onClick: handleOptionClick(logoutUser),
-      color: 'red',
-      withUpperline: true,
-      Icon: TurnOffIcon,
-    },
-  ].filter((item) => typeof item === 'object') as TDropdownOption[];
-
   const getWorkflowNavbarClassname = () => {
     if (!isFromWorkflowsLayout) return '';
 
@@ -234,15 +163,15 @@ export function TopNav({
             </button>
           </div>
           <div className={styles['user-avatar']}>
-            <Dropdown
-              renderToggle={() => <CurrentUserAvatar size="md" />}
-              toggleProps={{
-                'data-test-id': 'open-user-menu-button',
-                'aria-label': 'Profile',
-                className: styles['profile-button'],
-              }}
-              className={styles['profile-dropdown']}
-              options={profileDropdownOptions}
+            <ProfileDropdown
+              firstName={firstName}
+              lastName={lastName}
+              leaseLevel={leaseLevel}
+              plan={plan}
+              isAccountOwner={isAccountOwner}
+              isAdmin={isAdmin}
+              logoutUser={logoutUser}
+              redirectToCustomerPortal={redirectToCustomerPortal}
             />
           </div>
         </div>
