@@ -38,8 +38,15 @@ import { LIMIT_LOAD_SYSTEMS_TEMPLATES, LIMIT_LOAD_TEMPLATES, varibleIdRegex } fr
 import { SYSTEM_FIELDS } from '../../components/Workflows/WorkflowsTablePage/WorkflowsTable/constants';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { isRequestCanceled } from '../../utils/isRequestCanceled';
+import { getIsAdmin } from '../selectors/user';
 
-function* fetchTemplatesSystem() {
+export function* fetchTemplatesSystem() {
+  const isAdmin: ReturnType<typeof getIsAdmin> = yield select(getIsAdmin);
+
+  if (!isAdmin) {
+    return;
+  }
+
   try {
     const {
       items,
@@ -69,7 +76,13 @@ function* fetchTemplatesSystem() {
   }
 }
 
-function* fetchTemplatesSystemCategories() {
+export function* fetchTemplatesSystemCategories() {
+  const isAdmin: ReturnType<typeof getIsAdmin> = yield select(getIsAdmin);
+
+  if (!isAdmin) {
+    return;
+  }
+
   try {
     const systemTemplatesCategories: ITemplatesSystemCategories[] | undefined = yield getTemplatesSystemCategories();
 
