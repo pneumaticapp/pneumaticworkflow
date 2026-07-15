@@ -27,7 +27,6 @@ from src.processes.models.templates.fields import (
 )
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.templates.template import Template
-from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.workflows.checklist import (
     Checklist,
     ChecklistSelection,
@@ -46,6 +45,7 @@ from src.processes.tasks.update_workflow import update_workflows
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
+    create_test_attachment,
     create_test_dataset,
     create_test_group,
     create_test_guest,
@@ -792,7 +792,6 @@ def test_retrieve__field_user__ok(api_client):
     # TODO Replace in https://my.pneumatic.app/workflows/18137/
     assert field_data['value'] == user.get_full_name()  # user.get_full_name()
     assert field_data['selections'] == []
-    assert field_data['attachments'] == []
     assert field_data['order'] == field.order
     assert field_data['user_id'] == user.id
 
@@ -845,7 +844,6 @@ def test_retrieve__field_date__ok(api_client):
     assert field_data['api_name'] == field.api_name
     assert field_data['value'] == str(321321321)
     assert field_data['selections'] == []
-    assert field_data['attachments'] == []
     assert field_data['order'] == field.order
 
 
@@ -897,7 +895,6 @@ def test_retrieve__field_url__ok(api_client):
     assert field_data['api_name'] == field.api_name
     assert field_data['value'] == str(321321321)
     assert field_data['selections'] == []
-    assert field_data['attachments'] == []
     assert field_data['order'] == field.order
 
 
@@ -941,7 +938,6 @@ def test_retrieve__field_with_selections__ok(field_type, api_client):
     assert field_data['name'] == field.name
     assert field_data['description'] == field.description
     assert field_data['api_name'] == field.api_name
-    assert field_data['attachments'] == []
     assert field_data['order'] == field.order
     assert field_data['user_id'] is None
     assert field_data['value'] == 'some value'
@@ -1054,14 +1050,14 @@ def test_retrieve__field_with_attachments__ok(api_client):
     workflow = Workflow.objects.get(id=response.data['id'])
     task = workflow.tasks.get(number=1)
     field = task.output.first()
-    attachment = FileAttachment.objects.create(
-        name='john.cena',
-        url='https://john.cena/john.cena',
-        size=1488,
-        account_id=user.account_id,
+    create_test_attachment(
+        account=user.account,
+        file_id='task_file_1',
+        task=task,
+        workflow=workflow,
         output=field,
     )
-    field.value = attachment.url
+    field.value = 'https://example.com/files/task_file_1'
     field.save(update_fields=['value'])
 
     # act
@@ -1081,11 +1077,7 @@ def test_retrieve__field_with_attachments__ok(api_client):
     assert field_data['user_id'] is None
 
     # TODO Replace in https://my.pneumatic.app/workflows/18137/
-    assert field_data['value'] == attachment.url
-    attachment_data = field_data['attachments'][0]
-    assert attachment_data['id'] == attachment.id
-    assert attachment_data['name'] == attachment.name
-    assert attachment_data['url'] == attachment.url
+    assert field_data['value'] == field.value
 
 
 def test_retrieve__fields_ordering__ok(api_client):

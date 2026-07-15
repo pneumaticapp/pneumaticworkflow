@@ -428,7 +428,7 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps> {
     if (workflowDescription) {
       return (
         <div className={styles['popup-description']}>
-          <RichText text={workflowDescription} embedVideos={false} />
+          <RichText text={workflowDescription} maxLines={5} embedVideos={false} />
         </div>
       );
     }

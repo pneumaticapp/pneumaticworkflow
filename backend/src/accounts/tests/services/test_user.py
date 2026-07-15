@@ -697,6 +697,9 @@ def test_create_actions__account_owner__ok(
     account_verified_mock = mocker.patch(
         'src.accounts.services.user.AnalyticService.account_verified',
     )
+    sync_account_file_fields_mock = mocker.patch(
+        'src.accounts.services.user.sync_account_file_fields',
+    )
 
     service = UserService(
         instance=user,
@@ -711,6 +714,12 @@ def test_create_actions__account_owner__ok(
     assert user.incoming_invites.count() == 0
     identify_mock.assert_called_once_with(user)
     group_mock.assert_called_once_with(user=user, account=account)
+    sync_account_file_fields_mock.assert_called_once_with(
+        account=account,
+        user=None,
+        old_values=[None],
+        new_values=[user.photo],
+    )
     account_created_mock.assert_called_once_with(
         user=user,
         is_superuser=is_superuser,
@@ -741,6 +750,9 @@ def test_create_actions__account_owner__not_verified__ok(
     account_verified_mock = mocker.patch(
         'src.accounts.services.user.AnalyticService.account_verified',
     )
+    sync_account_file_fields_mock = mocker.patch(
+        'src.accounts.services.user.sync_account_file_fields',
+    )
 
     service = UserService(
         instance=user,
@@ -758,6 +770,12 @@ def test_create_actions__account_owner__not_verified__ok(
         auth_type=auth_type,
     )
     account_verified_mock.assert_not_called()
+    sync_account_file_fields_mock.assert_called_once_with(
+        account=account,
+        user=None,
+        old_values=[None],
+        new_values=[user.photo],
+    )
 
 
 def test_get_free_email__free__ok():

@@ -1,5 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
+
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
 import { InView } from 'react-intersection-observer';
@@ -13,6 +14,7 @@ import { EWorkflowStatus, IWorkflowLogItem } from '../../../../../types/workflow
 import { getUserFullName } from '../../../../../utils/users';
 import { RichText } from '../../../../RichText';
 import { Attachments } from '../../../../Attachments';
+import { parseMarkdownToFiles } from '../../../../../utils/parseMarkdownFiles';
 import { UserData } from '../../../../UserData';
 import { getUserById } from '../../../../UserData/utils/getUserById';
 import { getUsers } from '../../../../../redux/selectors/user';
@@ -28,7 +30,6 @@ import { RichEditor } from '../../../../RichEditor';
 import { type TMentionData } from '../../../../RichEditor/types';
 import { TUserListItem } from '../../../../../types/user';
 import { useStatePromise } from '../../../../../hooks/useStatePromise';
-import { TUploadedFile } from '../../../../../utils/uploadFiles';
 import { IEditComment } from '../../../../../api/workflows/editComment';
 import { IWatchedComment } from '../../../../../api/workflows/watchedComment';
 import { Tooltip } from '../../../../UI';
@@ -50,7 +51,6 @@ export function WorkflowLogTaskComment({
   reactions,
   userId,
   created,
-  attachments,
   task,
   isOnlyAttachmentsShown = false,
   workflowModal,
@@ -64,6 +64,8 @@ export function WorkflowLogTaskComment({
   const { formatMessage } = useIntl();
   const users = useSelector(getUsers);
 
+  const parsedAttachments = useMemo(() => parseMarkdownToFiles(text), [text]);
+
   const clickRef = useRef<HTMLButtonElement>(null);
   const [isShowTooltipEmoji, setIsShowTooltipEmoji] = useState(false);
   const [isShowEmoji, setIsShowEmoji] = useState(false);
@@ -71,7 +73,6 @@ export function WorkflowLogTaskComment({
   const [isDelete, setIsDelete] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const [commentText, setCommentText] = useStatePromise('');
-  const [filesToUpload, setFilesToUpload] = useStatePromise<TUploadedFile[]>([]);
 
   useClickOutside(clickRef, () => {
     setIsShowTooltipEmoji(false);
@@ -116,10 +117,9 @@ export function WorkflowLogTaskComment({
     setIsEdit(false);
 
     if (commentText && commentText !== text) {
-      editComment({ id, text: commentText, attachments: filesToUpload });
+      editComment({ id, text: commentText });
     }
 
-    setFilesToUpload([]);
     setCommentText('');
   };
 
@@ -244,7 +244,7 @@ export function WorkflowLogTaskComment({
             />
           ))}
 
-        {isOnlyAttachmentsShown && <Attachments attachments={attachments} isEdit={false} />}
+        {isOnlyAttachmentsShown && <Attachments attachments={parsedAttachments} isEdit={false} />}
       </>
     );
   };
@@ -386,7 +386,7 @@ export enum ECommentStatus {
 
 export type TWorkflowLogTaskCommentProps = Pick<
   IWorkflowLogItem,
-  'id' | 'text' | 'userId' | 'status' | 'created' | 'attachments' | 'watched' | 'reactions' | 'task'
+  'id' | 'text' | 'userId' | 'status' | 'created' | 'watched' | 'reactions' | 'task'
 > & {
   currentUserId: number;
   workflowModal: boolean;

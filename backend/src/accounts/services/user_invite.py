@@ -51,6 +51,7 @@ from src.processes.services.system_workflows import (
     SystemWorkflowService,
 )
 from src.notifications.tasks import send_user_transfer_notification
+from src.storage.utils import sync_account_file_fields
 
 UserModel = get_user_model()
 
@@ -117,6 +118,12 @@ class UserInviteService(
         if password:
             user.password = password
         user.save()
+        sync_account_file_fields(
+            account=user.account,
+            user=self.request_user,
+            old_values=[None],
+            new_values=[user.photo],
+        )
         return user
 
     def _get_another_account_user(self, email: str) -> Optional[UserModel]:
@@ -439,8 +446,7 @@ class UserInviteService(
             )
             account_service.update_users_counts()
         if (
-            settings.PROJECT_CONF['BILLING']
-            and user.account.billing_sync
+            user.account.billing_sync
             and user.account.billing_plan == BillingPlanType.PREMIUM
         ):
             increase_plan_users.delay(

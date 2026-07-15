@@ -25,7 +25,6 @@ describe('mapWsEnvelopeToWorkflowLogItem', () => {
         delay: null,
       },
       delay: null,
-      attachments: [],
       watched: [],
       reactions: {},
     };
@@ -56,7 +55,6 @@ describe('mapWsEnvelopeToWorkflowLogItem', () => {
       text: null,
       task: null,
       delay: null,
-      attachments: [],
       watched: [],
       reactions: {},
     };
@@ -86,7 +84,6 @@ describe('mapWsEnvelopeToWorkflowLogItem', () => {
       text: 'Updated',
       task: null,
       delay: null,
-      attachments: [],
       watched: [{ date: '2024-01-01T01:00:00Z', userId: 3 }],
       reactions: { '👍': [3] },
     };

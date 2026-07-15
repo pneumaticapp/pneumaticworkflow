@@ -5,8 +5,7 @@ const commonConfig = require('../../../config/common.json');
 
 import { IUnsavedUser } from '../types/user';
 import { IInvitedUser } from '../types/redux';
-// @ts-ignore
-import * as merge from 'lodash.merge';
+import merge from 'lodash.merge';
 import { get, set } from '../../server/utils/helpers';
 import { IPages } from '../redux/pages/types';
 
@@ -17,6 +16,7 @@ export interface IBrowserConfig {
   api: {
     publicUrl: string;
     wsPublicUrl: string;
+    fileServiceUrl: string;
     urls: typeof commonConfig.api.urls;
   };
   analyticsId: string;
@@ -83,6 +83,7 @@ export function getConfig(): TConfig {
     BACKEND_PRIVATE_URL,
     BACKEND_URL,
     WSS_URL,
+    FILE_SERVICE_URL,
     FIREBASE_VAPID_KEY,
     FIREBASE_API_KEY,
     FIREBASE_AUTH_DOMAIN,
@@ -95,41 +96,46 @@ export function getConfig(): TConfig {
     ANALYTICS_WRITE_KEY,
   } = process.env;
 
-  return merge(commonConfig, { env }, {
-    "host": FRONTEND_URL,
-    "formSubdomain": FORM_DOMAIN,
-    "mainPage": SITE_URL,
-    "api": {
-      "privateUrl": BACKEND_PRIVATE_URL,
-      "publicUrl": BACKEND_URL,
-      "wsPublicUrl": WSS_URL
+  return merge(
+    commonConfig,
+    { env },
+    {
+      host: FRONTEND_URL,
+      formSubdomain: FORM_DOMAIN,
+      mainPage: SITE_URL,
+      api: {
+        privateUrl: BACKEND_PRIVATE_URL,
+        publicUrl: BACKEND_URL,
+        wsPublicUrl: WSS_URL,
+        fileServiceUrl: FILE_SERVICE_URL || 'http://localhost:8002',
+      },
+      analyticsId: ANALYTICS_WRITE_KEY,
+      recaptchaSecret: RECAPTCHA_SITE_KEY,
+      firebase: {
+        vapidKey: FIREBASE_VAPID_KEY,
+        config: {
+          apiKey: FIREBASE_API_KEY,
+          authDomain: FIREBASE_AUTH_DOMAIN,
+          projectId: FIREBASE_PROJECT_ID,
+          storageBucket: FIREBASE_STORAGE_BUCKET,
+          messagingSenderId: FIREBASE_SENDER_ID,
+          appId: FIREBASE_APP_ID,
+          measurementId: FIREBASE_MEASUREMENT_ID,
+        },
+      },
+      featureFlags: Object.fromEntries(
+        [
+          'CAPTCHA', 'GOOGLE_AUTH', 'MS_AUTH', 'SSO_AUTH', 'SIGNUP', 'BILLING',
+          'AI', 'PUSH', 'ANALYTICS', 'SSO_PROVIDER', 'LANGUAGE_CODE',
+          'BACKEND_URL', 'SENTRY_DSN', 'WSS_URL', 'HOST', 'ANALYTICS_ID',
+          'RECAPTCHA_SITE_KEY', 'GOOGLE_CLIENT_ID', 'FIREBASE_VAPID_KEY',
+          'FIREBASE_API_KEY', 'FIREBASE_AUTH_DOMAIN', 'FIREBASE_PROJECT_ID',
+          'FIREBASE_STORAGE_BUCKET', 'FIREBASE_SENDER_ID', 'FIREBASE_APP_ID',
+          'FIREBASE_MEASUREMENT_ID', 'SENTRY_RELEASE',
+        ].map(key => [key, process.env[key]])
+      ),
     },
-    "analyticsId": ANALYTICS_WRITE_KEY,
-    "recaptchaSecret": RECAPTCHA_SITE_KEY,
-    "firebase": {
-      "vapidKey": FIREBASE_VAPID_KEY,
-      "config": {
-        "apiKey": FIREBASE_API_KEY,
-        "authDomain": FIREBASE_AUTH_DOMAIN,
-        "projectId": FIREBASE_PROJECT_ID,
-        "storageBucket": FIREBASE_STORAGE_BUCKET,
-        "messagingSenderId": FIREBASE_SENDER_ID,
-        "appId": FIREBASE_APP_ID,
-        "measurementId": FIREBASE_MEASUREMENT_ID
-      }
-    },
-    "featureFlags": Object.fromEntries(
-      [
-        'CAPTCHA', 'GOOGLE_AUTH', 'MS_AUTH', 'SSO_AUTH', 'SIGNUP', 'BILLING',
-        'AI', 'PUSH', 'STORAGE', 'ANALYTICS', 'SSO_PROVIDER', 'LANGUAGE_CODE',
-        'BACKEND_URL', 'SENTRY_DSN', 'WSS_URL', 'HOST', 'ANALYTICS_ID',
-        'RECAPTCHA_SITE_KEY', 'GOOGLE_CLIENT_ID', 'FIREBASE_VAPID_KEY',
-        'FIREBASE_API_KEY', 'FIREBASE_AUTH_DOMAIN', 'FIREBASE_PROJECT_ID',
-        'FIREBASE_STORAGE_BUCKET', 'FIREBASE_SENDER_ID', 'FIREBASE_APP_ID',
-        'FIREBASE_MEASUREMENT_ID', 'SENTRY_RELEASE',
-      ].map(key => [key, process.env[key]])
-    )
-  });
+  );
 }
 
 export function serverConfigToBrowser() {

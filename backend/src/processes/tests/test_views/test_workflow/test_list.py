@@ -29,7 +29,6 @@ from src.processes.models.templates.conditions import (
     RuleTemplate,
 )
 from src.processes.models.templates.owner import TemplateOwner
-from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.task import (
     Delay,
@@ -46,6 +45,8 @@ from src.processes.tests.fixtures import (
     create_invited_user,
     create_test_account,
     create_test_admin,
+    create_test_attachment,
+    create_test_attachment_for_event,
     create_test_group,
     create_test_guest,
     create_test_not_admin,
@@ -755,13 +756,10 @@ def test_list__search__comment_attachment__not_found(api_client):
         task=task,
         text='comment',
     )
-    FileAttachment.objects.create(
-        name='fred.cena',
-        url='https://jo.com/image.jpg',
-        size=1488,
-        account_id=user.account_id,
-        workflow=workflow,
+    create_test_attachment_for_event(
+        account=user.account,
         event=event,
+        file_id='fred_cena_file.jpg',
     )
     search_text = 'fred'
     api_client.token_authenticate(user)
@@ -780,20 +778,18 @@ def test_list__search__task_field_attachment__not_found(api_client):
     user = create_test_user()
     workflow = create_test_workflow(user, tasks_count=1)
     task = workflow.tasks.get(number=1)
-    field = TaskField.objects.create(
+    TaskField.objects.create(
         task=task,
         api_name='api-name-1',
         type=FieldType.FILE,
         workflow=workflow,
         account=user.account,
     )
-    FileAttachment.objects.create(
-        name='fred.cena',
-        url='https://jo.com/image.jpg',
-        size=1488,
-        account_id=user.account_id,
+    create_test_attachment(
+        account=user.account,
+        file_id='fred_cena_task_file.jpg',
+        task=task,
         workflow=workflow,
-        output=field,
     )
     search_text = 'fred.ce'
     api_client.token_authenticate(user)
@@ -811,20 +807,17 @@ def test_list__search__kickoff_field_attachment__not_found(api_client):
     # arrange
     user = create_test_user()
     workflow = create_test_workflow(user, tasks_count=1)
-    field = TaskField.objects.create(
+    TaskField.objects.create(
         kickoff=workflow.kickoff_instance,
         api_name='api-name-1',
         type=FieldType.FILE,
         workflow=workflow,
         account=user.account,
     )
-    FileAttachment.objects.create(
-        name='fred.cena',
-        url='https://jo.com/image.jpg',
-        size=1488,
-        account_id=user.account_id,
+    create_test_attachment(
+        account=user.account,
+        file_id='fred_cena_kickoff_file.jpg',
         workflow=workflow,
-        output=field,
     )
     search_text = 'fred.ce'
     api_client.token_authenticate(user)

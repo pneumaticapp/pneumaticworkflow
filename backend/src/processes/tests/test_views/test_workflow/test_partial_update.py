@@ -6,6 +6,7 @@ from rest_framework import status
 import pytest
 import pytz
 from django.utils import timezone
+from django.test import override_settings
 
 from src.accounts.enums import (
     BillingPlanType,
@@ -38,7 +39,7 @@ from src.processes.models.templates.fields import (
     FieldTemplateSelection,
 )
 from src.processes.models.templates.raw_due_date import RawDueDateTemplate
-from src.processes.models.workflows.attachment import FileAttachment
+
 from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.task import (
     TaskPerformer,
@@ -51,6 +52,7 @@ from src.processes.models.templates.owner import TemplateOwner
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
+    create_test_attachment,
     create_test_not_admin,
     create_test_owner,
     create_test_template,
@@ -596,6 +598,7 @@ class TestPartialUpdateWorkflow:
         assert response.data['details']['reason'] == MSG_PW_0023
         assert response.data['details']['api_name'] == required_field.api_name
 
+    @override_settings(FILE_SERVICE_HOST_PATH='example.com/files')
     def test_partial_update__file_field__ok(self, api_client):
 
         # arrange
@@ -625,38 +628,40 @@ class TestPartialUpdateWorkflow:
         )
         template_task_2.save()
 
-        first_attach = FileAttachment.objects.create(
-            name='ce.na',
-            size=133734,
-            url='https://jo.hn/ce.na',
-            account_id=user.account_id,
+        first_attach = create_test_attachment(
+            account=user.account,
+            file_id='first_file_cena',
         )
 
-        second_attach = FileAttachment.objects.create(
-            name='nh.oj',
-            size=133734,
-            url='https://an.ec/nh.oj',
-            account_id=user.account_id,
+        create_test_attachment(
+            account=user.account,
+            file_id='second_file_nhoj',
         )
 
         api_client.token_authenticate(user)
+        first_link = (
+            '[first_file_cena](https://example.com/files/first_file_cena)'
+        )
+        second_link = (
+            '[second_file_nhoj](https://example.com/files/second_file_nhoj)'
+        )
         response = api_client.post(
             f'/templates/{template.id}/run',
             data={
                 'name': 'Test name',
                 'kickoff': {
-                    file_field.api_name: [first_attach.id],
+                    file_field.api_name: [first_link],
                 },
             },
         )
+        assert response.status_code == 200
         workflow_id = response.data['id']
         workflow = Workflow.objects.get(pk=workflow_id)
 
         task_1 = workflow.tasks.get(number=1)
         task_2 = workflow.tasks.get(number=2)
         assert task_1.description == (
-            f'His name is... [{first_attach.name}]'
-            f'({first_attach.url})!!!'
+            f'His name is... {first_link}!!!'
         )
         assert task_2.description == (
             '{{%s}} His name is...!!!' % file_field.api_name
@@ -668,7 +673,7 @@ class TestPartialUpdateWorkflow:
             f'/workflows/{workflow_id}',
             data={
                 'kickoff': {
-                    file_field.api_name: [second_attach.id],
+                    file_field.api_name: [second_link],
                 },
             },
         )
@@ -679,12 +684,13 @@ class TestPartialUpdateWorkflow:
         # assert
         assert response.status_code == 200
         assert task_1.description == (
-            f'His name is... [{second_attach.name}]({second_attach.url})!!!'
+            f'His name is... {second_link}!!!'
         )
         assert task_2.description == (
             '{{%s}} His name is...!!!' % file_field.api_name
         )
 
+    @override_settings(FILE_SERVICE_HOST_PATH='example.com/files')
     def test_partial_update__attach_one_more_with_all_in_list__ok(
         self,
         api_client,
@@ -717,36 +723,39 @@ class TestPartialUpdateWorkflow:
         )
         template_task_2.save()
 
-        first_attach = FileAttachment.objects.create(
-            name='ce.na',
-            size=133734,
-            url='https://jo.hn/first.txt',
-            account_id=user.account_id,
+        create_test_attachment(
+            account=user.account,
+            file_id='first_attach_cena_txt',
         )
-
-        second_attach = FileAttachment.objects.create(
-            name='nh.oj',
-            size=133734,
-            url='https://an.ec/second.txt',
-            account_id=user.account_id,
+        create_test_attachment(
+            account=user.account,
+            file_id='second_attach_nhoj_txt',
+        )
+        first_link = (
+            '[first_attach_cena_txt]'
+            '(https://example.com/files/first_attach_cena_txt)'
+        )
+        second_link = (
+            '[second_attach_nhoj_txt]'
+            '(https://example.com/files/second_attach_nhoj_txt)'
         )
 
         response = api_client.post(
             f'/templates/{template.id}/run',
             data={
                 'kickoff': {
-                    file_field.api_name: [first_attach.id],
+                    file_field.api_name: [first_link],
                 },
             },
         )
+        assert response.status_code == 200, response.data
         workflow_id = response.data['id']
         workflow = Workflow.objects.get(pk=workflow_id)
 
         task_1 = workflow.tasks.get(number=1)
         task_2 = workflow.tasks.get(number=2)
         assert task_1.description == (
-            f'His name is... [{first_attach.name}]'
-            f'({first_attach.url})!!!'
+            f'His name is... {first_link}!!!'
         )
         assert task_2.description == (
             '{{%s}} His name is...!!!' % file_field.api_name
@@ -757,7 +766,7 @@ class TestPartialUpdateWorkflow:
             f'/workflows/{workflow_id}',
             data={
                 'kickoff': {
-                    file_field.api_name: [first_attach.id, second_attach.id],
+                    file_field.api_name: [first_link, second_link],
                 },
             },
         )
@@ -767,11 +776,10 @@ class TestPartialUpdateWorkflow:
 
         # assert
         assert response.status_code == 200
-        assert task_1.description == (
-            'His name is... '
-            f'[{first_attach.name}]({first_attach.url}), '
-            f'[{second_attach.name}]({second_attach.url})!!!'
+        expected_desc = (
+            f'His name is... {first_link}, {second_link}!!!'
         )
+        assert task_1.description == expected_desc
         assert task_2.description == (
             '{{%s}} His name is...!!!' % file_field.api_name
         )

@@ -11,7 +11,7 @@ export const CUSTOM_EDITOR_ENTITES = Object.values(ECustomEditorEntities);
 
 export type TEditorAttachment = {
   url: string;
-  id?: number;
+  id?: string;
   name?: string;
 };
 

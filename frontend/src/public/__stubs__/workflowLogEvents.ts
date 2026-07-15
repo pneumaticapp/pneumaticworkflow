@@ -34,7 +34,6 @@ export const makeLogEvent = (
     delay: null,
     targetUserId: null,
     targetGroupId: null,
-    attachments: [],
     watched: [],
     reactions: {},
     ...overrides,

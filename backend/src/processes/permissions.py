@@ -1,6 +1,6 @@
 import re
 
-from django.conf import settings
+
 from django.db.models import Q
 from rest_framework.permissions import BasePermission
 
@@ -10,9 +10,6 @@ from src.processes.messages.template import (
     MSG_PT_0023,
     MSG_PT_0069,
     MSG_PT_0070,
-)
-from src.processes.messages.workflow import (
-    MSG_PW_0001,
 )
 from src.processes.models.templates.preset import TemplatePreset
 from src.processes.models.templates.template import Template
@@ -633,14 +630,6 @@ class CommentReactionPermission(BasePermission):
             .with_owner_viewer_or_started_by_starter(user.id)
             .exists()
         )
-
-
-class StoragePermission(BasePermission):
-
-    message = MSG_PW_0001
-
-    def has_permission(self, request, view):
-        return settings.PROJECT_CONF['STORAGE']
 
 
 class TemplatePresetPermission(BasePermission):

@@ -1,6 +1,6 @@
 /* eslint-disable */
 /* prettier-ignore */
-import * as moment from 'moment';
+import moment from 'moment';
 import { ITaskList } from '../../../types/redux';
 import { ETaskListCompleteSorting, ETaskListSorting, ITaskListItem } from '../../../types/tasks';
 

@@ -131,7 +131,6 @@ class WorkflowViewSet(
         ):
             extra_fields = [
                 'kickoff__output__selections',
-                'kickoff__output__attachments',
             ]
         else:
             extra_fields = None
@@ -446,8 +445,8 @@ class WorkflowViewSet(
     @action(methods=['get'], detail=True)
     def events(self, request, *args, **kwargs):
         workflow = self.get_object()
-        qst = WorkflowEvent.objects.prefetch_related(
-            'attachments',
+        qst = WorkflowEvent.objects.select_related(
+            'workflow',
         ).on_workflow(
             workflow.id,
         ).exclude_type(WorkflowEventType.RUN)

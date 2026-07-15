@@ -1,5 +1,5 @@
 import * as React from 'react';
-import * as PerfectScrollbar from 'react-perfect-scrollbar';
+import PerfectScrollbar from 'react-perfect-scrollbar';
 import { useIntl } from 'react-intl';
 
 import { Loader, SectionTitle } from '../UI';

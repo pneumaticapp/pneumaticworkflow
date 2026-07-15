@@ -37,6 +37,7 @@ from src.analysis.services import AnalyticService
 from src.authentication.tokens import PneumaticToken
 from src.generics.base.service import BaseModelService
 from src.notifications.tasks import (
+    send_user_created_notification,
     send_user_deleted_notification,
     send_user_updated_notification,
 )
@@ -46,6 +47,7 @@ from src.processes.enums import FieldType
 from src.processes.tasks.tasks import check_and_complete_tasks
 from src.processes.models.workflows.task import Task
 from src.processes.models.workflows.fields import TaskField
+from src.storage.utils import sync_account_file_fields
 from src.processes.services.remove_user_from_draft import (
     remove_user_from_draft,
 )
@@ -162,6 +164,24 @@ class UserService(
 
     def _create_actions(self, **kwargs):
         self.identify(self.instance)
+        sync_account_file_fields(
+            account=self.instance.account,
+            user=self.user,
+            old_values=[None],
+            new_values=[self.instance.photo],
+        )
+        user_data = UserWebsocketSerializer(self.instance).data
+        logging = self.instance.account.log_api_requests
+        account_id = self.instance.account.id
+
+        def send_created_notification():
+            send_user_created_notification.delay(
+                logging=logging,
+                account_id=account_id,
+                user_data=user_data,
+            )
+
+        transaction.on_commit(send_created_notification)
         if self.instance.is_account_owner:
             self.instance.incoming_invites.not_accepted().delete()
             account = self.instance.account
