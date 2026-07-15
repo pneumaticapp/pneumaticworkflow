@@ -83,6 +83,10 @@ export class ExtraFieldsHelper {
       return Array.isArray(field.value) && field.value.length > 0;
     }
 
+    if (field.type === EExtraFieldType.Number) {
+      return field.value !== null && field.value !== undefined && field.value !== '';
+    }
+
     return Boolean(field.value);
   }
 

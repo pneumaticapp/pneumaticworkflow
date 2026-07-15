@@ -34,4 +34,28 @@ describe('getTaskOutputFingerprint', () => {
       getTaskOutputFingerprint([{ ...base, value: 'https://b.example' }]),
     );
   });
+
+  it.each([
+    ['name', 'Updated URL'],
+    ['description', 'Updated description'],
+    ['isRequired', true],
+    ['isHidden', true],
+    ['selections', ['first', 'second']],
+    ['dataset', 42],
+  ])('returns a different fingerprint when %s changes', (property, value) => {
+    const field = {
+      apiName: 'url-field',
+      name: 'URL',
+      description: '',
+      type: EExtraFieldType.Url,
+      order: 1,
+      value: 'https://example.com',
+      userId: null,
+      groupId: null,
+    };
+
+    expect(getTaskOutputFingerprint([field])).not.toBe(
+      getTaskOutputFingerprint([{ ...field, [property]: value }]),
+    );
+  });
 });
