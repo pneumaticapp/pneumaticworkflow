@@ -3,10 +3,26 @@ from urllib.parse import urlsplit, urlunsplit
 
 from django.core.exceptions import ValidationError
 from django.core.validators import (
+    BaseValidator,
     URLValidator,
     _lazy_re_compile,
     validate_ipv6_address,
 )
+from django.utils.translation import gettext_lazy as _
+
+
+class RejectNullStringValidator(BaseValidator):
+
+    """Reject the literal string 'null' (common in query parameters)."""
+
+    message = _('This field may not be null.')
+    code = 'null'
+
+    def __init__(self, limit_value: str = 'null', message=None):
+        super().__init__(limit_value=limit_value, message=message)
+
+    def compare(self, a: str, b: str) -> bool:
+        return a == b
 
 
 class NoSchemaURLValidator(URLValidator):

@@ -7,6 +7,7 @@ from rest_framework.exceptions import ValidationError
 
 from src.generics.fields import TimeStampField
 from src.generics.serializers import CustomValidationErrorMixin
+from src.generics.validators import RejectNullStringValidator
 from src.processes.enums import OwnerRole, OwnerType, TaskOrdering
 from src.processes.messages.workflow import (
     MSG_PW_0057,
@@ -269,14 +270,17 @@ class TaskListFilterSerializer(
     assigned_to = serializers.IntegerField(required=False)
     search = serializers.CharField(required=False)
     template_id = serializers.IntegerField(required=False)
-    template_task_api_name = serializers.CharField(required=False)
+    template_task_api_name = serializers.CharField(
+        required=False,
+        validators=[RejectNullStringValidator()],
+    )
     limit = serializers.IntegerField(required=False)
     offset = serializers.IntegerField(required=False)
 
     def validate_search(self, value: str) -> Optional[str]:
         removed_chars_regex = r'\s\s+'
         clear_text = re.sub(removed_chars_regex, '', value).strip()
-        return clear_text if clear_text else None
+        return clear_text or None
 
     def validate_assigned_to(self, value):
         if not self.context['user'].is_admin:

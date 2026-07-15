@@ -1603,6 +1603,24 @@ def test_list__filter_assigned_to_not_number__validation_error(api_client):
     assert response.data['details']['name'] == 'assigned_to'
 
 
+def test_list__filter_assigned_to_null_string__validation_error(api_client):
+
+    # arrange
+    user = create_test_admin()
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get('/v3/tasks?assigned_to=null')
+
+    # assert
+    message = 'A valid integer is required.'
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == message
+    assert response.data['details']['reason'] == message
+    assert response.data['details']['name'] == 'assigned_to'
+
+
 def test_list__filter_assigned_to_not_admin__validation_error(api_client):
 
     # arrange
@@ -2067,6 +2085,66 @@ def test_list__filter_template_id_not_number__validation_error(api_client):
 
     # act
     response = api_client.get("/v3/tasks?template_id=' OR 1='1")
+
+    # assert
+    message = 'A valid integer is required.'
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == message
+    assert response.data['details']['reason'] == message
+    assert response.data['details']['name'] == 'template_id'
+
+
+def test_list__filter_template_id_null_string__validation_error(api_client):
+
+    # arrange
+    user = create_test_user()
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get('/v3/tasks?template_id=null')
+
+    # assert
+    message = 'A valid integer is required.'
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == message
+    assert response.data['details']['reason'] == message
+    assert response.data['details']['name'] == 'template_id'
+
+
+def test_list__filter_template_task_api_name_null_string__validation_error(
+    api_client,
+):
+
+    # arrange
+    user = create_test_user()
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get('/v3/tasks?template_task_api_name=null')
+
+    # assert
+    message = 'This field may not be null.'
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == message
+    assert response.data['details']['reason'] == message
+    assert response.data['details']['name'] == 'template_task_api_name'
+
+
+def test_list__filter_both_null_strings__validation_error(
+    api_client,
+):
+
+    # arrange
+    user = create_test_user()
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get(
+        '/v3/tasks?template_id=null&template_task_api_name=null',
+    )
 
     # assert
     message = 'A valid integer is required.'

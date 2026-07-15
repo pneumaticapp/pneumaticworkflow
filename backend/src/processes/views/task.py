@@ -461,7 +461,6 @@ class TaskViewSet(
         task = self.get_object()
         qst = (
             WorkflowEvent.objects
-            .select_related('workflow')
             .prefetch_related('storage_attachments')
             .on_task(task.id)
             .type_in(WorkflowEventType.TASK_EVENTS)
