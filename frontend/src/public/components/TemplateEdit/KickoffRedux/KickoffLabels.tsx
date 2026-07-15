@@ -13,8 +13,11 @@ export function KickoffLabels({ fields, onToggle }: IKickoffLabelsProps) {
     <div
       className={styles['description__short']}
       onClick={onToggle}
-      onKeyDown={({ key }) => {
-        if (key === 'Enter' || key === ' ') onToggle();
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onToggle();
+        }
       }}
       tabIndex={0}
       role="button"
