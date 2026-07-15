@@ -123,6 +123,7 @@
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^1.2.20",
+    "@commitlint/cli": "^21.2.0",
     "@csstools/postcss-global-data": "^2.1.1",
     "@playwright/test": "^1.58.2",
     "@redux-saga/types": "^1.2.1",
@@ -203,10 +204,10 @@
     "file-loader": "^4.2.0",
     "fork-ts-checker-webpack-plugin": "^9.0.2",
     "html-webpack-plugin": "^5.6.0",
-    "husky": "^4.3.8",
+    "husky": "^9.1.7",
     "jest": "^29.7.0",
     "kill-port": "^2.0.0",
-    "lint-staged": "^13.0.3",
+    "lint-staged": "^17.0.8",
     "mini-css-extract-plugin": "^2.7.6",
     "nodemon": "^3.1.0",
     "postcss-comment": "^2.0.0",
@@ -256,6 +257,9 @@
     "test:editor": "jest --testPathPattern=RichEditor",
     "test:editor:coverage": "jest --testPathPattern=RichEditor --coverage --collectCoverageFrom='src/public/components/RichEditor/**/*.{ts,tsx}' --collectCoverageFrom='!**/__tests__/**'",
     "test:updateSnapshot": "jest --updateSnapshot",
+    "test:related": "sh scripts/test-related.sh",
+    "commitlint": "commitlint --edit",
+    "prepare": "sh scripts/prepare-husky.sh",
     "e2e": "playwright test",
     "e2e:ui": "playwright test --ui",
     "e2e:headed": "playwright test --headed",
@@ -282,17 +286,8 @@
   "license": "ISC",
   "homepage": "https://bitbucket.org/antida-projects/pneumatic-frontend#readme",
   "lint-staged": {
-    "*.{ts,tsx}": [
-      "eslint --ext .ts,.tsx --fix --quiet"
-    ],
-    "*.{css,scss,sass}": [
-      "stylelint \"./**/*.{css,scss,sass}\""
-    ]
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
+    "*.{ts,tsx}": "eslint --fix --quiet",
+    "*.{css,scss,sass}": "stylelint --fix"
   },
   "eslintConfig": {
     "extends": [
