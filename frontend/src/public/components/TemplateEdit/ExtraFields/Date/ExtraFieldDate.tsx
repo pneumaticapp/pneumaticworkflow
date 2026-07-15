@@ -6,7 +6,7 @@ import classnames from 'classnames';
 import { getFieldValidator } from '../utils/getFieldValidator';
 import { getInputNameBackground } from '../utils/getInputNameBackground';
 import { EExtraFieldMode } from '../../../../types/template';
-import { DateIcon } from '../../../icons';
+import { DateIcon, RoundClearIconLg } from '../../../icons';
 import { FieldWithName } from '../utils/FieldWithName';
 import { IWorkflowExtraFieldProps } from '..';
 import { DatePickerCustom } from '../../../UI/form/DatePicker';
@@ -44,7 +44,7 @@ export function ExtraFieldDate({
   );
   const [selectedDate, setSelectedDate] = React.useState<Date | null>(toDate(value as number | string | null));
 
-  const handleChangeDate = (date: Date) => {
+  const handleChangeDate = (date: Date | null) => {
     if (!date) {
       editField({ value: '' });
       setSelectedDate(null);
@@ -69,13 +69,25 @@ export function ExtraFieldDate({
         </div>
         <div className={fieldStyles['date-input-wrapper']}>
           <DatePickerCustom
+            isClearable={false}
             onChange={handleChangeDate}
             placeholderText={descriptionPlaceholder}
             selected={selectedDate}
             showPopperArrow={false}
           />
           <div className={fieldStyles['icon']}>
-            <DateIcon />
+            {selectedDate && !isDisabled ? (
+              <button
+                type="button"
+                className={fieldStyles['clear-button']}
+                aria-label={intl.formatMessage({ id: 'ui-input.clear' })}
+                onClick={() => handleChangeDate(null)}
+              >
+                <RoundClearIconLg />
+              </button>
+            ) : (
+              <DateIcon />
+            )}
           </div>
         </div>
       </div>

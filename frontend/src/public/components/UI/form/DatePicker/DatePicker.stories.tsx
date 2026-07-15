@@ -54,14 +54,8 @@ const RangeDatePickerWithState = ({
       {...props}
       endDate={endDate}
       onChange={([start, end]: [Date | null, Date | null]) => {
-        if (start) {
-          setStartDate(start);
-        }
-
-        if (end) {
-          setEndDate(end);
-        }
-
+        setStartDate(start);
+        setEndDate(end);
         action('range-changed')([start, end]);
       }}
       selectsRange

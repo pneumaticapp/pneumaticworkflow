@@ -1,7 +1,8 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { IntlProvider } from 'react-intl';
+import { act } from 'react-dom/test-utils';
 
 import { DateFilter } from '../DateFilter';
 import { EHighlightsDateFilter } from '../../../types/highlights';
@@ -51,5 +52,43 @@ describe('DateFilter', () => {
     userEvent.click(screen.getByRole('textbox'));
 
     expect(screen.queryByRole('button', { name: /save/i })).not.toBeInTheDocument();
+  });
+
+  it('reports complete custom range as valid and incomplete draft as invalid', async () => {
+    const onCustomRangeValidityChange = jest.fn();
+
+    renderDateFilter({ onCustomRangeValidityChange });
+
+    await waitFor(() => {
+      expect(onCustomRangeValidityChange).toHaveBeenLastCalledWith(true);
+    });
+
+    userEvent.click(screen.getByRole('textbox'));
+
+    const dayButtons = document.querySelectorAll(
+      '.react-datepicker__day:not(.react-datepicker__day--outside-month)',
+    );
+    expect(dayButtons.length).toBeGreaterThan(1);
+
+    await act(async () => {
+      userEvent.click(dayButtons[2]);
+    });
+
+    await waitFor(() => {
+      expect(onCustomRangeValidityChange).toHaveBeenLastCalledWith(false);
+    });
+  });
+
+  it('reports non-Custom presets as valid', async () => {
+    const onCustomRangeValidityChange = jest.fn();
+
+    renderDateFilter({
+      selectedDateFilter: EHighlightsDateFilter.Today,
+      onCustomRangeValidityChange,
+    });
+
+    await waitFor(() => {
+      expect(onCustomRangeValidityChange).toHaveBeenLastCalledWith(true);
+    });
   });
 });
