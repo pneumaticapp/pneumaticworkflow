@@ -43,7 +43,6 @@ export function Sidebar() {
   const {
     activeItemId,
     closeMenu,
-    containerRef,
     handleCloseMenu,
     handleMobileMenuToggle,
     handleOpenMenu,
@@ -62,7 +61,6 @@ export function Sidebar() {
 
   return (
     <div
-      ref={containerRef}
       className={classnames(
         'no-print',
         'sidebar',

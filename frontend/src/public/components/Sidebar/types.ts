@@ -45,7 +45,6 @@ export interface IUseSidebarNavigationProps {
 export interface IUseSidebarNavigationResult {
   activeItemId: IMenuItem['id'] | null;
   closeMenu(): void;
-  containerRef: { current: HTMLDivElement | null };
   handleCloseMenu(): void;
   handleMobileMenuToggle(event: MouseEvent<HTMLElement>): void;
   handleOpenMenu(): void;

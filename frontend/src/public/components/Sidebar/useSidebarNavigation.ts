@@ -1,30 +1,26 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { MouseEvent } from 'react';
 import { useDispatch } from 'react-redux';
 
 import { setContainerClassnames } from '../../redux/actions';
-import type { IMenuItem, IMenuItemSub } from '../../types/menu';
+import type { IMenuItem } from '../../types/menu';
 import { history } from '../../utils/history';
 import { findAncestor } from '../../utils/helpers';
 
 import type { IUseSidebarNavigationProps, IUseSidebarNavigationResult } from './types';
 
-const getCurrentMenuItem = (menuItems: IMenuItem[], pathname: string): IMenuItemSub | null => {
-  return menuItems.reduce<IMenuItemSub | null>((selectedItem, item) => {
-    if (selectedItem) {
-      return selectedItem;
-    }
+export const getCurrentMenuItem = (menuItems: IMenuItem[], pathname: string): IMenuItem | null => {
+  const parentWithActiveSubItem = menuItems.find((item) =>
+    item.subs?.some((subItem) => subItem.to === pathname || pathname.startsWith(subItem.to)),
+  );
 
-    const selectedSubItem = item.subs?.find(
-      (subItem) => subItem.to === pathname || pathname.startsWith(subItem.to),
-    );
+  if (parentWithActiveSubItem) {
+    return parentWithActiveSubItem;
+  }
 
-    if (selectedSubItem) {
-      return selectedSubItem;
-    }
+  const matchingItems = menuItems.filter((item) => item.to === pathname || pathname.startsWith(item.to));
 
-    return item.to === pathname || pathname.startsWith(item.to) ? item : null;
-  }, null);
+  return matchingItems.sort((firstItem, secondItem) => secondItem.to.length - firstItem.to.length)[0] ?? null;
 };
 
 export const useSidebarNavigation = ({
@@ -33,8 +29,7 @@ export const useSidebarNavigation = ({
   menuItems,
 }: IUseSidebarNavigationProps): IUseSidebarNavigationResult => {
   const dispatch = useDispatch();
-  const [activeItemId, setActiveItemId] = useState<IMenuItemSub['id'] | null>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [activeItemId, setActiveItemId] = useState<IMenuItem['id'] | null>(null);
   const isMobile = menuHiddenBreakpoint > window.innerWidth;
   const isMenuVisible = containerClassnames.includes('main-show-temporary');
   const isMenuHidden = containerClassnames.includes('main-hidden');
@@ -105,7 +100,6 @@ export const useSidebarNavigation = ({
   return {
     activeItemId,
     closeMenu,
-    containerRef,
     handleCloseMenu,
     handleMobileMenuToggle,
     handleOpenMenu,
