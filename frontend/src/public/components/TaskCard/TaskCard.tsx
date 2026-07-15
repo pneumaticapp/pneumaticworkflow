@@ -182,9 +182,7 @@ export function TaskCard({
       return;
     }
 
-    if (isNewTask || isTaskRestarted) {
-      saveOutputsToStorageDebounced.cancel();
-    }
+    saveOutputsToStorageDebounced.cancel();
 
     const storageOutput = getOutputFromStorage(id);
     const outputFieldsWithValues = sortFieldsByOrder(

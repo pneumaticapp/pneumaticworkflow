@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 
 import { TaskCard, ETaskCardViewMode } from '../TaskCard';
 import { EExtraFieldType, ETemplateOwnerType, IExtraField } from '../../../types/template';
@@ -354,6 +354,44 @@ describe('TaskCard', () => {
       const renderedApiNames = ExtraFieldIntl.mock.calls.map((call: any[]) => call[0].field.apiName);
 
       expect(renderedApiNames).toEqual(['file-field', 'url-field']);
+    });
+  });
+
+  describe('Output synchronization', () => {
+    it('cancels a pending storage write when server output changes', () => {
+      jest.useFakeTimers();
+
+      try {
+        const { ExtraFieldIntl } = jest.requireMock('../../TemplateEdit/ExtraFields');
+        const { addOrUpdateStorageOutput } = jest.requireMock('../utils/storageOutputs');
+        const field = makeField({ apiName: 'url-field', value: 'https://server.example' });
+        const { rerender } = render(
+          <TaskCard {...baseProps} task={{ ...baseTask, output: [field] }} />,
+        );
+        const lastCall = ExtraFieldIntl.mock.calls[ExtraFieldIntl.mock.calls.length - 1];
+
+        act(() => {
+          lastCall[0].editField({ value: 'https://draft.example' });
+        });
+
+        rerender(
+          <TaskCard
+            {...baseProps}
+            task={{
+              ...baseTask,
+              output: [{ ...field, value: 'https://updated-server.example' }],
+            }}
+          />,
+        );
+
+        act(() => {
+          jest.advanceTimersByTime(300);
+        });
+
+        expect(addOrUpdateStorageOutput).not.toHaveBeenCalled();
+      } finally {
+        jest.useRealTimers();
+      }
     });
   });
 });
