@@ -8,6 +8,9 @@ from src.accounts.enums import (
     BillingPlanType,
     LeaseLevel,
 )
+from src.accounts.serializers.accounts import (
+    AccountPlanSerializer,
+)
 from src.accounts.services.account import AccountService
 from src.authentication.enums import AuthTokenType
 from src.payment.entities import (
@@ -313,6 +316,10 @@ def test_create__freemium_to_trial__ok(mocker, identify_mock):
         'src.analysis.services.AnalyticService.'
         'subscription_created',
     )
+    send_plan_changed_mock = mocker.patch(
+        'src.payment.services.account.'
+        'send_account_plan_changed_notification.delay',
+    )
     trial_start = timezone.now() - timedelta(minutes=1)
     plan_expiration = timezone.now() + timedelta(days=30)
     details = SubscriptionDetails(
@@ -358,6 +365,13 @@ def test_create__freemium_to_trial__ok(mocker, identify_mock):
     analysis_subscription_created_mock.assert_called_once_with(user)
     analysis_trial_subscription_created_mock.assert_called_once_with(user)
     identify_mock.assert_called_once_with(user)
+    account.refresh_from_db()
+    plan_data = AccountPlanSerializer(instance=account).data
+    send_plan_changed_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        plan_data=plan_data,
+    )
 
 
 def test_create__trial_ended__not_trial(mocker, identify_mock):
@@ -384,6 +398,10 @@ def test_create__trial_ended__not_trial(mocker, identify_mock):
     analysis_subscription_created_mock = mocker.patch(
         'src.analysis.services.AnalyticService.'
         'subscription_created',
+    )
+    send_plan_changed_mock = mocker.patch(
+        'src.payment.services.account.'
+        'send_account_plan_changed_notification.delay',
     )
     trial_start = timezone.now() - timedelta(minutes=1)
     plan_expiration = timezone.now() + timedelta(days=30)
@@ -428,6 +446,13 @@ def test_create__trial_ended__not_trial(mocker, identify_mock):
     analysis_subscription_created_mock.assert_called_once_with(user)
     analysis_trial_subscription_created_mock.assert_not_called()
     identify_mock.assert_called_once_with(user)
+    account.refresh_from_db()
+    plan_data = AccountPlanSerializer(instance=account).data
+    send_plan_changed_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        plan_data=plan_data,
+    )
 
 
 def test_create__freemium_to_premium__ok(mocker, identify_mock):
@@ -453,6 +478,10 @@ def test_create__freemium_to_premium__ok(mocker, identify_mock):
     analysis_trial_subscription_created_mock = mocker.patch(
         'src.analysis.services.AnalyticService.'
         'trial_subscription_created',
+    )
+    send_plan_changed_mock = mocker.patch(
+        'src.payment.services.account.'
+        'send_account_plan_changed_notification.delay',
     )
     plan_expiration = timezone.now() + timedelta(days=30)
     details = SubscriptionDetails(
@@ -498,6 +527,13 @@ def test_create__freemium_to_premium__ok(mocker, identify_mock):
     analysis_subscription_created_mock.assert_called_once_with(user)
     analysis_trial_subscription_created_mock.assert_not_called()
     identify_mock.assert_called_once_with(user)
+    account.refresh_from_db()
+    plan_data = AccountPlanSerializer(instance=account).data
+    send_plan_changed_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        plan_data=plan_data,
+    )
 
 
 def test_create__tmp_subscription_to_premium_trial__ok(mocker, identify_mock):
@@ -526,6 +562,10 @@ def test_create__tmp_subscription_to_premium_trial__ok(mocker, identify_mock):
     analysis_trial_subscription_created_mock = mocker.patch(
         'src.analysis.services.AnalyticService.'
         'trial_subscription_created',
+    )
+    send_plan_changed_mock = mocker.patch(
+        'src.payment.services.account.'
+        'send_account_plan_changed_notification.delay',
     )
     trial_start = timezone.now()
     plan_expiration = timezone.now() + timedelta(days=7)
@@ -572,6 +612,13 @@ def test_create__tmp_subscription_to_premium_trial__ok(mocker, identify_mock):
     analysis_subscription_created_mock.assert_called_once_with(user)
     analysis_trial_subscription_created_mock.assert_called_once_with(user)
     identify_mock.assert_called_once_with(user)
+    account.refresh_from_db()
+    plan_data = AccountPlanSerializer(instance=account).data
+    send_plan_changed_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        plan_data=plan_data,
+    )
 
 
 def test_public_create__plan_changed__ok(mocker, identify_mock):
@@ -674,6 +721,10 @@ def test_update__trial_to_premium__ok(mocker, identify_mock):
         'src.analysis.services.AnalyticService.'
         'subscription_converted',
     )
+    send_plan_changed_mock = mocker.patch(
+        'src.payment.services.account.'
+        'send_account_plan_changed_notification.delay',
+    )
     is_superuser = True
     auth_type = AuthTokenType.WEBHOOK
     service = AccountSubscriptionService(
@@ -713,6 +764,13 @@ def test_update__trial_to_premium__ok(mocker, identify_mock):
     )
     analysis_subscription_converted_mock.assert_called_once_with(user)
     identify_mock.assert_called_once_with(user)
+    account.refresh_from_db()
+    plan_data = AccountPlanSerializer(instance=account).data
+    send_plan_changed_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        plan_data=plan_data,
+    )
 
 
 def test_update__premium_to_premium__ok(mocker, identify_mock):
@@ -736,6 +794,10 @@ def test_update__premium_to_premium__ok(mocker, identify_mock):
     analysis_subscription_updated_mock = mocker.patch(
         'src.analysis.services.AnalyticService.'
         'subscription_updated',
+    )
+    send_plan_changed_mock = mocker.patch(
+        'src.payment.services.account.'
+        'send_account_plan_changed_notification.delay',
     )
     is_superuser = True
     auth_type = AuthTokenType.WEBHOOK
@@ -777,6 +839,13 @@ def test_update__premium_to_premium__ok(mocker, identify_mock):
     )
     analysis_subscription_updated_mock.assert_called_once_with(user)
     identify_mock.assert_called_once_with(user)
+    account.refresh_from_db()
+    plan_data = AccountPlanSerializer(instance=account).data
+    send_plan_changed_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        plan_data=plan_data,
+    )
 
 
 def test_public_update__plan_changed__ok(mocker):
@@ -867,6 +936,10 @@ def test_expired__ok(mocker):
         'src.accounts.services.account.'
         'AccountService.partial_update',
     )
+    send_plan_changed_mock = mocker.patch(
+        'src.payment.services.account.'
+        'send_account_plan_changed_notification.delay',
+    )
     is_superuser = True
     auth_type = AuthTokenType.WEBHOOK
     service = AccountSubscriptionService(
@@ -879,7 +952,7 @@ def test_expired__ok(mocker):
     # act
     service.expired(period_end_date)
 
-    # arrange
+    # assert
     account_service_init_mock.assert_called_once_with(
         instance=account,
         user=user,
@@ -890,6 +963,13 @@ def test_expired__ok(mocker):
         plan_expiration=period_end_date,
         trial_ended=True,
         force_save=True,
+    )
+    account.refresh_from_db()
+    plan_data = AccountPlanSerializer(instance=account).data
+    send_plan_changed_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        plan_data=plan_data,
     )
 
 
