@@ -2631,10 +2631,14 @@ def test_deactivate__ok(mocker):
             'last_name': deleted_user.last_name,
             'email': deleted_user.email,
             'photo': deleted_user.photo,
+            'phone': deleted_user.phone,
+            'status': deleted_user.status,
             'is_admin': deleted_user.is_admin,
             'is_account_owner': deleted_user.is_account_owner,
             'manager_id': None,
             'subordinates_ids': [],
+            'invite_id': None,
+            'vacation': None,
         },
     )
 
@@ -2675,10 +2679,14 @@ def test_deactivate__skip_validation__ok(mocker):
             'last_name': deleted_user.last_name,
             'email': deleted_user.email,
             'photo': deleted_user.photo,
+            'phone': deleted_user.phone,
+            'status': deleted_user.status,
             'is_admin': deleted_user.is_admin,
             'is_account_owner': deleted_user.is_account_owner,
             'manager_id': None,
             'subordinates_ids': [],
+            'invite_id': None,
+            'vacation': None,
         },
     )
 
@@ -2718,10 +2726,14 @@ def test_deactivate__not_call_actions_for_invited_user__ok(mocker):
             'last_name': invited_user.last_name,
             'email': invited_user.email,
             'photo': invited_user.photo,
+            'phone': invited_user.phone,
+            'status': invited_user.status,
             'is_admin': invited_user.is_admin,
             'is_account_owner': invited_user.is_account_owner,
             'manager_id': None,
             'subordinates_ids': [],
+            'invite_id': str(invited_user.invite.id),
+            'vacation': None,
         },
     )
 
