@@ -1,5 +1,4 @@
-import * as React from 'react';
-import { useMemo, useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { useSelector } from 'react-redux';
 
 import { ITaskFormProps } from './types';

@@ -1,4 +1,4 @@
-import * as React from 'react';
+import type { FormEvent } from 'react';
 
 export interface IKickoffShareFormProps {
   className?: string;
@@ -9,7 +9,7 @@ export interface ISharedFormTabProps {
   isSuccessUrlEnabled: boolean;
   successUrl: string;
   onToggleSuccessUrl(): void;
-  onChangeSuccessUrl(event: React.FormEvent<HTMLInputElement>): void;
+  onChangeSuccessUrl(event: FormEvent<HTMLInputElement>): void;
 }
 
 export interface IEmbeddedFormTabProps {

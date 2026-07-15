@@ -1,5 +1,4 @@
-import * as React from 'react';
-import { useLayoutEffect, useRef } from 'react';
+import React, { useLayoutEffect, useRef } from 'react';
 import { useIntl } from 'react-intl';
 
 import { ETaskFormParts } from '../types';

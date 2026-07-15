@@ -1,6 +1,4 @@
-/* eslint-disable */
-/* prettier-ignore */
-import * as React from 'react';
+import React, { Suspense } from 'react';
 import { Route, Switch, Redirect } from 'react-router-dom';
 import loadable from '@loadable/component';
 
@@ -10,20 +8,23 @@ import { Loader } from '../../components/UI';
 
 const Template = loadable(
   () => import(/* webpackChunkName: "template", webpackPrefetch: true */ '../../components/TemplateEdit'),
-  { fallback: <Loader isLoading /> },
+  {
+    fallback: <Loader isLoading />,
+    resolveComponent: ({ TemplateEdit }) => TemplateEdit,
+  },
 );
 
 export const TemplateView = () => {
   return (
     <TemplateLayout>
-      <React.Suspense fallback={<div className="loading" />}>
+      <Suspense fallback={<div className="loading" />}>
         <Switch>
-          <Route path={ERoutes.TemplateView} component={Template} exact={true} />
+          <Route path={ERoutes.TemplateView} component={Template} exact />
           <Route path={ERoutes.TemplatesCreate} component={Template} />
           <Route path={ERoutes.TemplatesEdit} component={Template} />
           <Redirect to={ERoutes.Error} />
         </Switch>
-      </React.Suspense>
+      </Suspense>
     </TemplateLayout>
   );
 };

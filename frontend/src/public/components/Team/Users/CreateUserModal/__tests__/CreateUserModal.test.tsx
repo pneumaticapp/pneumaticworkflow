@@ -1,5 +1,6 @@
 /// <reference types="jest" />
-import * as React from 'react';
+import React from 'react';
+import type { ReactNode } from 'react';
 import { act, render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useDispatch } from 'react-redux';
@@ -18,7 +19,7 @@ jest.mock('react-dom', () => {
     ...actualReactDOM,
     default: {
       ...actualReactDOM.default,
-      createPortal: (element: React.ReactNode) => element,
+      createPortal: (element: ReactNode) => element,
     },
   };
 });
@@ -46,7 +47,7 @@ jest.mock('../../../../../utils/createPassword', () => ({
 }));
 
 jest.mock('react-perfect-scrollbar', () => {
-  const MockScrollbar = ({ children }: { children: React.ReactNode }) => <div>{children}</div>;
+  const MockScrollbar = ({ children }: { children: ReactNode }) => <div>{children}</div>;
   return {
     __esModule: true,
     default: MockScrollbar,

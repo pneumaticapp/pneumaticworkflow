@@ -1,5 +1,6 @@
 /// <reference types="jest" />
-import * as React from 'react';
+import React from 'react';
+import type { ReactNode } from 'react';
 import { act, render } from '@testing-library/react';
 
 import { intlMock } from '../../../../__stubs__/intlMock';
@@ -100,7 +101,7 @@ describe('TaskPerformers', () => {
   }: {
     bag: IFormikBag;
     taskUuid: string;
-    children: React.ReactNode;
+    children: ReactNode;
   }) {
     return (
       <TemplateFieldContext.Provider

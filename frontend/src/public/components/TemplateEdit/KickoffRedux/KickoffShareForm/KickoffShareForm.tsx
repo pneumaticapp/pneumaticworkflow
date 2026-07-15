@@ -1,9 +1,9 @@
 import Switch from 'rc-switch';
-import * as React from 'react';
+import React, { useMemo, useState } from 'react';
+import type { FormEvent } from 'react';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
 import { useSelector } from 'react-redux';
-import { useMemo, useState } from 'react';
 
 import { getIsUserSubsribed, getSubscriptionPlan } from '../../../../redux/selectors/user';
 import { Tabs } from '../../../UI';
@@ -99,7 +99,7 @@ export function KickoffShareForm({ className }: IKickoffShareFormProps) {
     });
   };
 
-  const changeSuccessUrl = (event: React.FormEvent<HTMLInputElement>) => {
+  const changeSuccessUrl = (event: FormEvent<HTMLInputElement>) => {
     const newSuccessUrl = event.currentTarget.value;
     editTemplate({ publicSuccessUrl: newSuccessUrl });
     setSuccessUrlState(newSuccessUrl);

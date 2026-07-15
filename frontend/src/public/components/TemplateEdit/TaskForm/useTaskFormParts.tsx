@@ -1,5 +1,4 @@
-import * as React from 'react';
-import { useCallback, useEffect, useMemo } from 'react';
+import React, { ComponentType, useCallback, useEffect, useMemo } from 'react';
 import { useIntl } from 'react-intl';
 
 import { ETaskFormParts, TTaskVariable } from '../types';
@@ -61,13 +60,16 @@ export function useTaskFormParts({
   }, [startingOrder, task.conditions, onRemoveDeletedTasks]);
 
   const createWidget = useCallback(
-    (Component: React.ComponentType<IWidgetProps & { onClick: () => void }>, props: IWidgetProps) => {
+    (
+      Component: ComponentType<IWidgetProps & { onClick: () => void }>,
+      { task: widgetTask, isInTaskForm, isStartTask }: IWidgetProps,
+    ) => {
       return (toggle: () => void) => (
         <Component
-          task={props.task}
+          task={widgetTask}
           onClick={toggle}
-          isInTaskForm={props.isInTaskForm}
-          isStartTask={props.isStartTask}
+          isInTaskForm={isInTaskForm}
+          isStartTask={isStartTask}
         />
       );
     },
