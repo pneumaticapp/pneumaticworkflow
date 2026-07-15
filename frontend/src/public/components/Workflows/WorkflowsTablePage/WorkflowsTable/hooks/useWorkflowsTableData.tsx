@@ -64,7 +64,9 @@ export function useWorkflowsTableData({
   });
 
   useEffect(() => {
-    setIsTemplateChanging(String(lastLoadedTemplateId) !== String(currentTemplateId ?? null));
+    if (String(lastLoadedTemplateId) !== String(currentTemplateId ?? null)) {
+      setIsTemplateChanging(true);
+    }
   }, [currentTemplateId, lastLoadedTemplateId]);
 
   const fieldsColumns = useMemo<WorkflowColumn[]>(

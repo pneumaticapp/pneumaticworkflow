@@ -9,7 +9,7 @@ import { CustomHeaderGroup, TableColumns, WorkflowsTableGridProps } from './type
 
 import styles from './WorkflowsTable.css';
 
-const getSkeletonWidth = (width?: number) => `${width ? Math.max(width * 0.7, 80) : 80}px`;
+const getSkeletonWidth = (width?: number) => `${(width ? Math.max(width * 0.7, 80) : 80) / 10}rem`;
 
 export function WorkflowsTableGrid({
   table,
