@@ -230,14 +230,86 @@ describe('ExtraFieldFile', () => {
 
       expect(editFieldMock).toHaveBeenCalledWith({
         value: [
-          '[existing.pdf](https://files.example.com/att-1)',
+          '[server.pdf](https://files.example.com/att-2)',
           '[uploaded.pdf](https://files.example.com/new-1)',
         ],
         attachments: [
-          attachments[0],
+          updatedAttachments[0],
           { id: 'new-1', name: 'uploaded.pdf', url: 'https://files.example.com/new-1', size: 100 },
         ],
       });
+    });
+
+    it('ignores an upload that resolves after the field unmounts', async () => {
+      let resolveUpload: (files: TUploadedFile[]) => void = () => undefined;
+      const onUploadStateChange = jest.fn();
+      (uploadFiles as jest.Mock).mockImplementation(
+        () => new Promise<TUploadedFile[]>((resolve) => {
+          resolveUpload = resolve;
+        }),
+      );
+      const { container, unmount } = render(
+        React.createElement(ExtraFieldFile as React.FC<any>, {
+          ...baseProps,
+          onUploadStateChange,
+        }),
+      );
+      const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
+
+      fireEvent.change(fileInput, {
+        target: { files: [new File(['content'], 'uploaded.pdf', { type: 'application/pdf' })] },
+      });
+      unmount();
+
+      await act(async () => {
+        resolveUpload([
+          { id: 'new-1', name: 'uploaded.pdf', url: 'https://files.example.com/new-1', size: 100 },
+        ]);
+      });
+
+      expect(editFieldMock).not.toHaveBeenCalled();
+      expect(onUploadStateChange).toHaveBeenNthCalledWith(1, true);
+      expect(onUploadStateChange).toHaveBeenNthCalledWith(2, false);
+    });
+
+    it('keeps an upload active when the notification callback changes', async () => {
+      let resolveUpload: (files: TUploadedFile[]) => void = () => undefined;
+      const firstUploadStateChange = jest.fn();
+      const nextUploadStateChange = jest.fn();
+      (uploadFiles as jest.Mock).mockImplementation(
+        () => new Promise<TUploadedFile[]>((resolve) => {
+          resolveUpload = resolve;
+        }),
+      );
+      const { container, rerender } = render(
+        React.createElement(ExtraFieldFile as React.FC<any>, {
+          ...baseProps,
+          onUploadStateChange: firstUploadStateChange,
+        }),
+      );
+      const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
+
+      fireEvent.change(fileInput, {
+        target: { files: [new File(['content'], 'uploaded.pdf', { type: 'application/pdf' })] },
+      });
+      rerender(
+        React.createElement(ExtraFieldFile as React.FC<any>, {
+          ...baseProps,
+          onUploadStateChange: nextUploadStateChange,
+        }),
+      );
+
+      await act(async () => {
+        resolveUpload([
+          { id: 'new-1', name: 'uploaded.pdf', url: 'https://files.example.com/new-1', size: 100 },
+        ]);
+      });
+
+      expect(editFieldMock).toHaveBeenCalledWith(expect.objectContaining({
+        attachments: [expect.objectContaining({ id: 'new-1' })],
+      }));
+      expect(firstUploadStateChange).toHaveBeenCalledWith(true);
+      expect(nextUploadStateChange).toHaveBeenCalledWith(false);
     });
   });
 });

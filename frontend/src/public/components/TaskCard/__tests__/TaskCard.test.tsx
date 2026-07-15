@@ -13,6 +13,7 @@ jest.mock('../../TemplateEdit/ExtraFields', () => ({
 }));
 
 const mockExtraFieldIntl = ExtraFieldIntl as unknown as jest.Mock;
+const mockButton = jest.fn();
 
 jest.mock('../utils/storageOutputs', () => ({
   getOutputFromStorage: jest.fn(() => undefined),
@@ -134,7 +135,11 @@ jest.mock('../../UI/Typeography/Header', () => ({
 }));
 
 jest.mock('../../UI/Buttons/Button', () => ({
-  Button: () => <button />,
+  Button: (props: { disabled?: boolean }) => {
+    mockButton(props);
+
+    return <button type="button" disabled={props.disabled} />;
+  },
 }));
 
 jest.mock('../../IntlMessages', () => ({
@@ -342,6 +347,55 @@ describe('TaskCard', () => {
         expect(screen.getAllByTestId('extra-field')).toHaveLength(2);
       });
     });
+
+    it('updates visible fields when only server field metadata changes', async () => {
+      const field = makeField({ apiName: 'metadata-field', isHidden: false, value: '' });
+      const { rerender } = render(
+        <TaskCard {...baseProps} task={{ ...baseTask, output: [field] }} />,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('extra-field')).toBeInTheDocument();
+      });
+
+      rerender(
+        <TaskCard {...baseProps} task={{ ...baseTask, output: [{ ...field, isHidden: true }] }} />,
+      );
+
+      await waitFor(() => {
+        expect(screen.queryByTestId('extra-field')).not.toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Output uploads', () => {
+    it('blocks task completion while a file upload is pending', async () => {
+      const task = {
+        ...baseTask,
+        output: [makeField({ apiName: 'file-field', type: EExtraFieldType.File })],
+      };
+      render(<TaskCard {...baseProps} task={task} />);
+
+      await waitFor(() => {
+        expect(mockExtraFieldIntl).toHaveBeenCalled();
+      });
+      const fieldProps = mockExtraFieldIntl.mock.calls[0][0];
+
+      act(() => {
+        fieldProps.onUploadStateChange(true);
+      });
+
+      const completeButtonProps = [...mockButton.mock.calls]
+        .reverse()
+        .map(([props]) => props)
+        .find(({ buttonStyle }) => buttonStyle === 'yellow');
+
+      expect(completeButtonProps.disabled).toBe(true);
+      act(() => {
+        completeButtonProps.onClick();
+      });
+      expect(baseProps.setTaskCompleted).not.toHaveBeenCalled();
+    });
   });
 
   describe('Output draft persistence', () => {
@@ -415,7 +469,7 @@ describe('TaskCard', () => {
       ]);
     });
 
-    it('does not flush pending output edits after task revert clears drafts', async () => {
+    it('flushes pending output edits before requesting task revert', async () => {
       const outputField = makeField({ apiName: 'notes', type: EExtraFieldType.Text, value: '' });
       const task = {
         ...baseTask,
@@ -448,7 +502,10 @@ describe('TaskCard', () => {
 
       unmount();
 
-      expect(addOrUpdateStorageOutput).not.toHaveBeenCalled();
+      expect(addOrUpdateStorageOutput).toHaveBeenCalledTimes(1);
+      expect(addOrUpdateStorageOutput).toHaveBeenCalledWith(1, [
+        expect.objectContaining({ apiName: 'notes', value: 'draft text' }),
+      ]);
     });
   });
 });

@@ -52,4 +52,30 @@ describe('createFlushableDebounce', () => {
     expect(callback).toHaveBeenCalledTimes(1);
     expect(callback).toHaveBeenCalledWith('second');
   });
+
+  it('can schedule another call after flushing', () => {
+    const callback = jest.fn();
+    const debounced = createFlushableDebounce(300, callback);
+
+    debounced('first');
+    debounced.flush();
+    debounced('second');
+    jest.advanceTimersByTime(300);
+
+    expect(callback).toHaveBeenNthCalledWith(1, 'first');
+    expect(callback).toHaveBeenNthCalledWith(2, 'second');
+  });
+
+  it('can schedule another call after cancellation', () => {
+    const callback = jest.fn();
+    const debounced = createFlushableDebounce(300, callback);
+
+    debounced('cancelled');
+    debounced.cancel();
+    debounced('saved');
+    jest.advanceTimersByTime(300);
+
+    expect(callback).toHaveBeenCalledTimes(1);
+    expect(callback).toHaveBeenCalledWith('saved');
+  });
 });
