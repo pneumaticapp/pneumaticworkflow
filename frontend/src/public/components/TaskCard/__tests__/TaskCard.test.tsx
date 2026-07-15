@@ -361,7 +361,7 @@ describe('TaskCard', () => {
   });
 
   describe('Output synchronization', () => {
-    it('cancels a pending storage write when server output changes', () => {
+    it('discards a pending field edit when the same server output changes', () => {
       jest.useFakeTimers();
 
       try {
@@ -391,7 +391,8 @@ describe('TaskCard', () => {
           jest.advanceTimersByTime(300);
         });
 
-        expect(addOrUpdateStorageOutput).not.toHaveBeenCalled();
+        expect(addOrUpdateStorageOutput).toHaveBeenCalledTimes(1);
+        expect(addOrUpdateStorageOutput).toHaveBeenCalledWith(baseTask.id, []);
       } finally {
         jest.useRealTimers();
       }

@@ -15,8 +15,22 @@ import { getTaskOutputFingerprint } from '../utils/getTaskOutputFingerprint';
 
 export function useTaskOutput(task: ITask) {
   const [outputValues, setOutputValues] = useState<IExtraField[]>([]);
+  const pendingStorageOutputRef = useRef<{
+    taskId: number;
+    output: IExtraField[];
+  } | null>(null);
   const saveOutputsToStorageDebounced = useMemo(
-    () => debounce(300, addOrUpdateStorageOutput),
+    () =>
+      debounce(300, () => {
+        const pendingStorageOutput = pendingStorageOutputRef.current;
+
+        if (!pendingStorageOutput) {
+          return;
+        }
+
+        addOrUpdateStorageOutput(pendingStorageOutput.taskId, pendingStorageOutput.output);
+        pendingStorageOutputRef.current = null;
+      }),
     [],
   );
   const outputSyncStateRef = useRef({
@@ -41,19 +55,28 @@ export function useTaskOutput(task: ITask) {
       return;
     }
 
-    saveOutputsToStorageDebounced.cancel();
-
     const fieldFingerprints = Object.fromEntries(
       output.map((field) => [field.apiName, getTaskOutputFingerprint([field])]),
     );
     let storageOutput: IExtraField[] | undefined;
 
     if (isNewTask) {
+      const pendingStorageOutput = pendingStorageOutputRef.current;
+
+      if (pendingStorageOutput) {
+        addOrUpdateStorageOutput(pendingStorageOutput.taskId, pendingStorageOutput.output);
+        pendingStorageOutputRef.current = null;
+      }
+
       storageOutput = getOutputFromStorage(id);
     } else if (isTaskRestarted) {
+      pendingStorageOutputRef.current = null;
       removeOutputFromLocalStorage(id);
     } else if (isServerOutputChanged) {
-      const savedOutput = getOutputFromStorage(id);
+      const pendingStorageOutput = pendingStorageOutputRef.current;
+      const savedOutput = pendingStorageOutput?.taskId === id
+        ? pendingStorageOutput.output
+        : getOutputFromStorage(id);
 
       storageOutput = savedOutput?.filter(
         (field) => syncState.fieldFingerprints[field.apiName] === fieldFingerprints[field.apiName],
@@ -61,6 +84,7 @@ export function useTaskOutput(task: ITask) {
 
       if (savedOutput) {
         addOrUpdateStorageOutput(id, storageOutput ?? []);
+        pendingStorageOutputRef.current = null;
       }
     }
 
@@ -75,11 +99,20 @@ export function useTaskOutput(task: ITask) {
     syncState.fieldFingerprints = fieldFingerprints;
   }, [task.id, task.dateStarted, taskOutputFingerprint, saveOutputsToStorageDebounced]);
 
+  useEffect(
+    () => () => {
+      saveOutputsToStorageDebounced.cancel();
+      pendingStorageOutputRef.current = null;
+    },
+    [saveOutputsToStorageDebounced],
+  );
+
   const editField = (apiName: string) => (changedProps: Partial<IExtraField>) => {
     setOutputValues((previousOutputFields) => {
       const newFields = getEditedFields(previousOutputFields, apiName, changedProps);
 
-      saveOutputsToStorageDebounced(task.id, newFields);
+      pendingStorageOutputRef.current = { taskId: task.id, output: newFields };
+      saveOutputsToStorageDebounced();
 
       return newFields;
     });
