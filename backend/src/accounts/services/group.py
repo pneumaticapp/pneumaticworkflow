@@ -165,7 +165,9 @@ class UserGroupService(BaseModelService):
             Task.objects
             .active()
             .active_for_group(self.instance.id)
-            .values_list('id'),
+            .order_by('id')
+            .distinct('id')
+            .values_list('id', flat=True),
         )
         if group_performer_tasks_ids:
             check_and_complete_tasks.delay(

@@ -776,15 +776,9 @@ class TaskQuerySet(TasksBaseQuerySet):
                     taskperformer__is_completed=False,
                 ),
             ) & Q(
-                (
-                    Q(taskperformer__group_id=group_id) |
-                    Q(taskperformer__type=PerformerType.GROUP)
-                ) &
-                Q(
-                    workflow__current_task=F('number'),
-                    status=TaskStatus.ACTIVE,
-                    workflow__status=WorkflowStatus.RUNNING,
-                ),
+                taskperformer__group_id=group_id,
+                status=TaskStatus.ACTIVE,
+                workflow__status=WorkflowStatus.RUNNING,
             ) & ~Q(
                 taskperformer__directly_status__in=(
                     DirectlyStatus.DELETED,

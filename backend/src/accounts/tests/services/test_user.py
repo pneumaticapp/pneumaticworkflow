@@ -3254,7 +3254,7 @@ def test_validate_subordinates__proposed_mgr_fresh_map():
     )
 
 
-def test_check_and_complete_tasks__no_exist_tasks__skip(mocker):
+def test_check_and_complete_tasks__no_matching_tasks__skip(mocker):
 
     # arrange
     account = create_test_account()
@@ -3344,37 +3344,6 @@ def test_check_and_complete_tasks_multiple_matching_tasks_ok(mocker):
     )
 
 
-@pytest.mark.parametrize('status', TaskStatus.INACTIVE_STATUS)
-def test_check_and_complete_tasks_not_active_task__skip(status, mocker):
-
-    # arrange
-    account = create_test_account()
-    owner = create_test_owner(account=account)
-    user = create_test_admin(account=account)
-    workflow = create_test_workflow(user=owner, tasks_count=1)
-    task = workflow.tasks.get(number=1)
-    task.status = status
-    task.save(update_fields=['status'])
-    TaskPerformer.objects.create(
-        task=task,
-        user=user,
-        type=PerformerType.USER,
-    )
-    check_and_complete_tasks_delay_mock = mocker.patch(
-        'src.accounts.services.user.check_and_complete_tasks.delay',
-    )
-    service = UserService(
-        user=owner,
-        instance=user,
-    )
-
-    # act
-    service._check_and_complete_tasks()
-
-    # assert
-    check_and_complete_tasks_delay_mock.assert_not_called()
-
-
 def test_check_and_complete_tasks__rcba__ok(
     mocker,
 ):
@@ -3410,6 +3379,46 @@ def test_check_and_complete_tasks__rcba__ok(
         auth_type=AuthTokenType.USER,
         account_id=account.id,
     )
+
+
+def test_check_and_complete_tasks__rcba_and_completed_group_performer__skip(
+    mocker,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task.require_completion_by_all = True
+    task.save(update_fields=['require_completion_by_all'])
+    group = create_test_group(account=account, users=[user])
+    TaskPerformer.objects.create(
+        task=task,
+        user=user,
+        is_completed=True,
+        type=PerformerType.GROUP_USER,
+    )
+    TaskPerformer.objects.create(
+        task=task,
+        group=group,
+        is_completed=True,
+        type=PerformerType.GROUP,
+    )
+    check_and_complete_tasks_delay_mock = mocker.patch(
+        'src.accounts.services.user.check_and_complete_tasks.delay',
+    )
+    service = UserService(
+        user=owner,
+        instance=user,
+    )
+
+    # act
+    service._check_and_complete_tasks()
+
+    # assert
+    check_and_complete_tasks_delay_mock.assert_not_called()
 
 
 def test_check_and_complete_tasks__group_performer__ok(mocker):
@@ -3580,6 +3589,37 @@ def test_check_and_complete_tasks__group_and_user_performer__ok(mocker):
     )
 
 
+@pytest.mark.parametrize('status', TaskStatus.INACTIVE_STATUS)
+def test_check_and_complete_tasks_not_active_task__skip(status, mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task.status = status
+    task.save(update_fields=['status'])
+    TaskPerformer.objects.create(
+        task=task,
+        user=user,
+        type=PerformerType.USER,
+    )
+    check_and_complete_tasks_delay_mock = mocker.patch(
+        'src.accounts.services.user.check_and_complete_tasks.delay',
+    )
+    service = UserService(
+        user=owner,
+        instance=user,
+    )
+
+    # act
+    service._check_and_complete_tasks()
+
+    # assert
+    check_and_complete_tasks_delay_mock.assert_not_called()
+
+
 @pytest.mark.parametrize(
     'status',
     (WorkflowStatus.DONE, WorkflowStatus.DELAYED),
@@ -3667,46 +3707,7 @@ def test_check_and_complete_tasks__completed_performer__skip(
     check_and_complete_tasks_delay_mock.assert_not_called()
 
 
-def test_check_and_complete_tasks__rcba_and_completed_group_performer__skip(
-    mocker,
-):
-
-    # arrange
-    account = create_test_account()
-    owner = create_test_owner(account=account)
-    user = create_test_admin(account=account)
-    workflow = create_test_workflow(user=owner, tasks_count=1)
-    task = workflow.tasks.get(number=1)
-    task.require_completion_by_all = True
-    task.save(update_fields=['require_completion_by_all'])
-    group = create_test_group(account=account, users=[user])
-    TaskPerformer.objects.create(
-        task=task,
-        user=user,
-        is_completed=True,
-        type=PerformerType.GROUP_USER,
-    )
-    TaskPerformer.objects.create(
-        task=task,
-        group=group,
-        type=PerformerType.GROUP,
-    )
-    check_and_complete_tasks_delay_mock = mocker.patch(
-        'src.accounts.services.user.check_and_complete_tasks.delay',
-    )
-    service = UserService(
-        user=owner,
-        instance=user,
-    )
-
-    # act
-    service._check_and_complete_tasks()
-
-    # assert
-    check_and_complete_tasks_delay_mock.assert_not_called()
-
-
-def test_check_and_complete_tasks__directly_deleted_performer__skip(
+def test_check_and_complete_tasks__directly_deleted_user_performer__skip(
     mocker,
 ):
 
@@ -3780,7 +3781,7 @@ def test_check_and_complete_tasks__directly_deleted_group__performer__skip(
     check_and_complete_tasks_delay_mock.assert_not_called()
 
 
-def test_check_and_complete_tasks_excl_grp_perf_not_in_group_skip(mocker):
+def test_check_and_complete_tasks__group_performer_not_in_group__skip(mocker):
 
     """
     Excludes group performer when user not in group
@@ -3817,7 +3818,7 @@ def test_check_and_complete_tasks_excl_grp_perf_not_in_group_skip(mocker):
     check_and_complete_tasks_delay_mock.assert_not_called()
 
 
-def test_check_and_complete_tasks_excludes_other_account_task_skip(
+def test_check_and_complete_tasks__other_account_task__skip(
     mocker,
 ):
 
