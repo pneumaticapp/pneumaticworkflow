@@ -31,23 +31,13 @@ interface SerializedNode {
 }
 
 function collectTypes(nodes: SerializedNode[]): string[] {
-  const types: string[] = [];
-  for (const n of nodes) {
-    types.push(n.type);
-    if (n.children) types.push(...collectTypes(n.children));
-  }
-  return types;
+  return nodes.flatMap((node) => [node.type, ...collectTypes(node.children ?? [])]);
 }
 
 function findNodeDeep(nodes: SerializedNode[], type: string): SerializedNode | undefined {
-  for (const n of nodes) {
-    if (n.type === type) return n;
-    if (n.children) {
-      const found = findNodeDeep(n.children, type);
-      if (found) return found;
-    }
-  }
-  return undefined;
+  return nodes
+    .map((node) => (node.type === type ? node : findNodeDeep(node.children ?? [], type)))
+    .find((node): node is SerializedNode => node !== undefined);
 }
 
 beforeAll(() => {
@@ -254,8 +244,10 @@ describe('CopyAttachmentPlugin', () => {
     expect(allTypes).toContain('image-attachment');
 
     let textAfterCut = '';
-    editor.read(() => {
-      textAfterCut = $getRoot().getTextContent();
+    act(() => {
+      editor.read(() => {
+        textAfterCut = $getRoot().getTextContent();
+      });
     });
     expect(textAfterCut.trim()).toBe('');
   });
