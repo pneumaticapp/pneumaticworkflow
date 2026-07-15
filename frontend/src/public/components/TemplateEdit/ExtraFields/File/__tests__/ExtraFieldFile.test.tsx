@@ -1,5 +1,5 @@
 // <reference types="jest" />
-import * as React from 'react';
+import React from 'react';
 import { render, screen } from '@testing-library/react';
 
 import { ExtraFieldFile } from '../ExtraFieldFile';
@@ -58,25 +58,20 @@ describe('ExtraFieldFile', () => {
         { id: 'att-1', name: 'report.pdf', url: 'https://files.example.com/att-1', size: 1024 },
       ];
 
-      render(
-        React.createElement(ExtraFieldFile as React.FC<any>, {
-          ...baseProps,
-          field: createFileField({ attachments }),
-        }),
-      );
+      render(<ExtraFieldFile {...baseProps} field={createFileField({ attachments })} />);
 
       expect(screen.getByText('report.pdf')).toBeInTheDocument();
     });
 
     it('parses markdownValue when attachments is empty', () => {
       render(
-        React.createElement(ExtraFieldFile as React.FC<any>, {
-          ...baseProps,
-          field: createFileField({
+        <ExtraFieldFile
+          {...baseProps}
+          field={createFileField({
             attachments: [],
             markdownValue: '[contract.pdf](https://files.example.com/abc)',
-          }),
-        }),
+          })}
+        />,
       );
 
       expect(screen.getByText('contract.pdf')).toBeInTheDocument();
@@ -84,12 +79,12 @@ describe('ExtraFieldFile', () => {
 
     it('parses markdownValue when attachments is undefined', () => {
       render(
-        React.createElement(ExtraFieldFile as React.FC<any>, {
-          ...baseProps,
-          field: createFileField({
+        <ExtraFieldFile
+          {...baseProps}
+          field={createFileField({
             markdownValue: '[invoice.pdf](https://files.example.com/inv)',
-          }),
-        }),
+          })}
+        />,
       );
 
       expect(screen.getByText('invoice.pdf')).toBeInTheDocument();
@@ -97,12 +92,12 @@ describe('ExtraFieldFile', () => {
 
     it('renders multiple files from markdownValue', () => {
       render(
-        React.createElement(ExtraFieldFile as React.FC<any>, {
-          ...baseProps,
-          field: createFileField({
+        <ExtraFieldFile
+          {...baseProps}
+          field={createFileField({
             markdownValue: '[a.pdf](https://files.example.com/1), [b.docx](https://files.example.com/2)',
-          }),
-        }),
+          })}
+        />,
       );
 
       expect(screen.getByText('a.pdf')).toBeInTheDocument();
@@ -115,13 +110,13 @@ describe('ExtraFieldFile', () => {
       ];
 
       render(
-        React.createElement(ExtraFieldFile as React.FC<any>, {
-          ...baseProps,
-          field: createFileField({
+        <ExtraFieldFile
+          {...baseProps}
+          field={createFileField({
             attachments,
             markdownValue: '[old.pdf](https://files.example.com/old)',
-          }),
-        }),
+          })}
+        />,
       );
 
       expect(screen.getByText('real.pdf')).toBeInTheDocument();
@@ -129,34 +124,24 @@ describe('ExtraFieldFile', () => {
     });
 
     it('renders nothing when no attachments and no markdownValue', () => {
-      const { container } = render(
-        React.createElement(ExtraFieldFile as React.FC<any>, {
-          ...baseProps,
-          field: createFileField(),
-        }),
-      );
+      const { container } = render(<ExtraFieldFile {...baseProps} field={createFileField()} />);
 
       // No files grid should appear
       expect(container.querySelector('[class*="files-grid"]')).toBeNull();
     });
 
     it('updates displayed files when field attachments change', () => {
-      const { rerender } = render(
-        React.createElement(ExtraFieldFile as React.FC<any>, {
-          ...baseProps,
-          field: createFileField({ attachments: [] }),
-        }),
-      );
+      const { rerender } = render(<ExtraFieldFile {...baseProps} field={createFileField({ attachments: [] })} />);
 
       rerender(
-        React.createElement(ExtraFieldFile as React.FC<any>, {
-          ...baseProps,
-          field: createFileField({
+        <ExtraFieldFile
+          {...baseProps}
+          field={createFileField({
             attachments: [
               { id: 'new', name: 'updated.pdf', url: 'https://files.example.com/updated', size: 100 },
             ],
-          }),
-        }),
+          })}
+        />,
       );
 
       expect(screen.getByText('updated.pdf')).toBeInTheDocument();
@@ -166,11 +151,11 @@ describe('ExtraFieldFile', () => {
   describe('kickoff mode rendering', () => {
     it('renders upload button placeholder in kickoff mode', () => {
       render(
-        React.createElement(ExtraFieldFile as React.FC<any>, {
-          ...baseProps,
-          mode: EExtraFieldMode.Kickoff,
-          field: createFileField(),
-        }),
+        <ExtraFieldFile
+          {...baseProps}
+          mode={EExtraFieldMode.Kickoff}
+          field={createFileField()}
+        />,
       );
 
       expect(screen.getByDisplayValue('Attachments')).toBeInTheDocument();

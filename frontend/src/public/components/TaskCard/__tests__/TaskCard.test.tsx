@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React, { forwardRef, ReactNode } from 'react';
 import { act, render, screen, waitFor } from '@testing-library/react';
 
 import { TaskCard, ETaskCardViewMode } from '../TaskCard';
@@ -55,7 +55,7 @@ jest.mock('../../Workflows/WorkflowLog/WorkflowLogSkeleton', () => ({
 }));
 
 jest.mock('../GuestsController', () => ({
-  GuestController: React.forwardRef(() => null),
+  GuestController: forwardRef(() => null),
 }));
 
 jest.mock('../SubWorkflows', () => ({
@@ -75,7 +75,7 @@ jest.mock('../ReturnModal', () => ({
 }));
 
 jest.mock('react-router-dom', () => ({
-  Link: ({ children }: { children: React.ReactNode }) => <a>{children}</a>,
+  Link: ({ children }: { children: ReactNode }) => <a>{children}</a>,
 }));
 
 jest.mock('../../RichText', () => ({
@@ -116,11 +116,11 @@ jest.mock('../checklist', () => ({
 }));
 
 jest.mock('../../UI', () => ({
-  Tooltip: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  Tooltip: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
 jest.mock('../../UI/Typeography/Header', () => ({
-  Header: ({ children }: { children: React.ReactNode }) => <h4>{children}</h4>,
+  Header: ({ children }: { children: ReactNode }) => <h4>{children}</h4>,
 }));
 
 jest.mock('../../UI/Buttons/Button', () => ({
