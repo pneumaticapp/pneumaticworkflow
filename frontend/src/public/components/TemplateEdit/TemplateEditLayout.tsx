@@ -7,19 +7,10 @@ import { TemplateIntegrations } from './Integrations';
 import { KickoffReduxContainer } from './KickoffRedux';
 import { ConditionsBanner } from './ConditionsBanner';
 import { TemplateSettings } from './TemplateSettings';
-import { ITemplateTask } from '../../types/template';
 import { useTemplateSaveRetry } from './useTemplateForm';
+import { ITemplateEditLayoutProps } from './templateEditPage.types';
 
 import styles from './TemplateEdit.css';
-
-type TTaskListItemProps = React.ComponentProps<typeof TemplateEntity> & { key: string };
-
-interface ITemplateEditLayoutProps {
-  accessConditions: boolean;
-  sortedTasks(): ITemplateTask[];
-  getTaskListItem(task: ITemplateTask, index: number, tasksLocal: ITemplateTask[]): TTaskListItemProps;
-  handleAddTask(): void;
-}
 
 export function TemplateEditLayout({
   accessConditions,

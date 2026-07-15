@@ -1,19 +1,13 @@
 import * as React from 'react';
 import { useIntl } from 'react-intl';
 
-import { TTaskVariable } from '../types';
+import { ITaskFormHeaderProps } from './types';
 import { InputWithVariables } from '../InputWithVariables';
 import { TaskDescriptionEditor } from './TaskDescriptionEditor';
 import { getSingleLineVariables } from './utils/getTaskVariables';
 import { useTaskForm } from './useTaskForm';
 
 import styles from '../TemplateEdit.css';
-
-interface ITaskFormHeaderProps {
-  accountId: number;
-  listSystemVariables: TTaskVariable[];
-  templateVariables: TTaskVariable[];
-}
 
 export function TaskFormHeader({
   accountId,

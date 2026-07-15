@@ -1,31 +1,23 @@
-/* eslint-disable */
-/* prettier-ignore */
 import Switch from 'rc-switch';
 import * as React from 'react';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
 import { useSelector } from 'react-redux';
-import { default as TextareaAutosize } from 'react-textarea-autosize';
 import { useMemo, useState } from 'react';
 
 import { getIsUserSubsribed, getSubscriptionPlan } from '../../../../redux/selectors/user';
-import { copyToClipboard } from '../../../../utils/helpers';
-import { NotificationManager } from '../../../UI/Notifications';
-import { Button, InputField, Loader, Tabs } from '../../../UI';
+import { Tabs } from '../../../UI';
 import { useDidUpdateEffect } from '../../../../hooks/useDidUpdateEffect';
 import { ITemplate } from '../../../../types/template';
-import { noop } from '../../../../utils/noop';
 import { trackShareKickoffForm } from '../../../../utils/analytics';
 import { TPublicFormType } from '../../../../types/publicForms';
 import { generateEmbedCode } from './utils/generateEmbedCode';
 import { ESubscriptionPlan } from '../../../../types/account';
 import { useTemplateField } from '../../useTemplateForm';
+import { IKickoffShareFormProps } from './types';
+import { EmbeddedFormTab, SharedFormTab } from './KickoffShareTabs';
 
 import styles from './KickoffShareForm.css';
-
-interface IKickoffShareFormProps {
-  className?: string;
-}
 
 export function KickoffShareForm({ className }: IKickoffShareFormProps) {
   const { formatMessage } = useIntl();
@@ -87,21 +79,21 @@ export function KickoffShareForm({ className }: IKickoffShareFormProps) {
     if (newIsShared) trackShareKickoffForm();
   };
 
-  const updateIsFormPublic = (isPublic: boolean) => {
+  const updateIsFormPublic = (isEnabled: boolean) => {
     editTemplate({
-      isPublic,
-      publicUrl: isPublic
+      isPublic: isEnabled,
+      publicUrl: isEnabled
         ? '' // clear publicUrl in case the form is just shared, new value will be set on the backend
         : publicUrl,
     });
   };
 
-  const updateIsFormEmbedded = (isEmbedded: boolean) => {
+  const updateIsFormEmbedded = (isEnabled: boolean) => {
     if (!accessSharedForm) return;
 
     editTemplate({
-      isEmbedded,
-      embedUrl: isEmbedded
+      isEmbedded: isEnabled,
+      embedUrl: isEnabled
         ? '' // clear embedUrl in case the form is just shared, new value will be set on the backend
         : embedUrl,
     });
@@ -132,124 +124,43 @@ export function KickoffShareForm({ className }: IKickoffShareFormProps) {
           onChange={onChangeTab}
         />
 
-        <div className={styles['tabs']}>{renderActiveTab()}</div>
+        <div className={styles['tabs']}>
+          {activeTab === 'shared' ? (
+            <SharedFormTab
+              publicUrl={publicUrl}
+              isSuccessUrlEnabled={isSuccessUrlEnabled}
+              successUrl={successUrlState}
+              onToggleSuccessUrl={toggleSuccessUrlEnabled}
+              onChangeSuccessUrl={changeSuccessUrl}
+            />
+          ) : (
+            <EmbeddedFormTab
+              hasAccess={accessSharedForm}
+              embedUrl={embedUrl}
+              embedCode={embedCode}
+            />
+          )}
+        </div>
       </>
     );
   };
 
-  const renderActiveTab = () => {
-    const renderSharedFormTab = () => {
-      const handleCopyShareLink = () => {
-        if (!publicUrl) return;
-        copyToClipboard(publicUrl);
-        NotificationManager.success({ message: 'kickoff.share-link-copied' });
-      };
-
-      return (
-        <>
-          <p className={styles['description']}>{formatMessage({ id: 'kickoff.share-description' })}</p>
-
-          {!publicUrl ? (
-            <Loader isLoading isCentered={false} containerClassName={styles['loader']} />
-          ) : (
-            <>
-              <p className={classnames(styles['field-title'], styles['field-title_indent'])}>
-                {formatMessage({ id: 'kickoff.shared-link-title' })}
-              </p>
-              <InputField value={publicUrl || ''} onChange={noop} className={styles['public-url']} fieldSize="md" />
-
-              <div className={styles['redirect-url-container']}>
-                <div className={styles['redirect-url-header']}>
-                  <p className={styles['field-title']}>{formatMessage({ id: 'kickoff.redirect-url-title' })}</p>
-
-                  <div className={styles['redirect-url__toggle']}>
-                    <p className={styles['redirect-url-toggle__label']}>
-                      {formatMessage({ id: 'kickoff.redirect-url-toggle' })}
-                    </p>
-                    <Switch
-                      className={classnames('custom-switch custom-switch-primary custom-switch-small ml-auto')}
-                      checked={isSuccessUrlEnabled}
-                      checkedChildren={null}
-                      unCheckedChildren={null}
-                      onChange={toggleSuccessUrlEnabled}
-                    />
-                  </div>
-                </div>
-                <InputField
-                  value={successUrlState}
-                  onChange={changeSuccessUrl}
-                  className={styles['redirect-url__field']}
-                  fieldSize="md"
-                  disabled={!isSuccessUrlEnabled}
-                  placeholder={formatMessage({ id: 'kickoff.url-placeholder' })}
-                />
-              </div>
-
-              <Button
-                type="button"
-                onClick={handleCopyShareLink}
-                className={styles['copy-button']}
-                label={formatMessage({ id: 'kickoff.copy-link' })}
-                buttonStyle="transparent-orange"
-                size="md"
-              />
-            </>
-          )}
-        </>
-      );
-    };
-
-    const renderEmbeddedFormTab = () => {
-      if (!accessSharedForm) {
-        return null;
-      }
-
-      const handleCopyEmbedCode = () => {
-        if (!embedCode) {
-          return;
-        }
-
-        copyToClipboard(embedCode);
-        NotificationManager.success({ message: 'kickoff.embed-code-copied' });
-      };
-
-      return (
-        <>
-          <p className={styles['description']}>{formatMessage({ id: 'kickoff.embed-description' })}</p>
-
-          {!embedUrl ? (
-            <Loader isLoading isCentered={false} containerClassName={styles['loader']} />
-          ) : (
-            <>
-              <TextareaAutosize value={embedCode!} onChange={noop} className={styles['embed-code-field']} />
-
-              <Button
-                type="button"
-                onClick={handleCopyEmbedCode}
-                className={styles['copy-button']}
-                label={formatMessage({ id: 'kickoff.copy-embed-code' })}
-                buttonStyle="transparent-orange"
-                size="md"
-              />
-            </>
-          )}
-        </>
-      );
-    };
-
-    const renderTabMethodsMap: { [key in TPublicFormType]: () => JSX.Element | null } = {
-      shared: renderSharedFormTab,
-      embedded: renderEmbeddedFormTab,
-    };
-
-    return renderTabMethodsMap[activeTab]();
-  };
-
   return (
     <div className={classnames(styles['share-wrapper'], className)}>
-      <div className={styles['share-control']} role="button" onClick={toogleFormIsShared}>
+      <div
+        className={styles['share-control']}
+        role="button"
+        tabIndex={0}
+        onClick={toogleFormIsShared}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            toogleFormIsShared();
+          }
+        }}
+      >
         <Switch
-          className={'custom-switch custom-switch-primary custom-switch-small'}
+          className="custom-switch custom-switch-primary custom-switch-small"
           checked={isShared}
           checkedChildren={null}
           unCheckedChildren={null}

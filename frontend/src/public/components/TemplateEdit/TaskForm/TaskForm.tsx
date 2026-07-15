@@ -1,36 +1,26 @@
 import * as React from 'react';
 import { useMemo, useRef } from 'react';
+import { useSelector } from 'react-redux';
 
-import { TUserListItem } from '../../../types/user';
-import { ITemplateTask } from '../../../types/template';
-import { TTaskFormPart } from '../types';
+import { ITaskFormProps } from './types';
 
 import { getSystemVariables, getTaskVariables, getVariables } from './utils/getTaskVariables';
 import { TaskFormHeader } from './TaskFormHeader';
 import { TaskFormSections } from './TaskFormSections';
 import { TaskFormScopeProvider, useTemplateField } from '../useTemplateForm';
+import { getAccountId, getIsUserSubsribed } from '../../../redux/selectors/user';
+import { getIsTeamInvitesModalOpen } from '../../../redux/selectors/team';
 
 import styles from '../TemplateEdit.css';
-
-export interface ITaskFormProps {
-  task: ITemplateTask;
-  users: TUserListItem[];
-  isSubscribed: boolean;
-  scrollTarget: TTaskFormPart;
-  accountId: number;
-  isTeamInvitesModalOpen: boolean;
-}
 
 export function TaskForm({
   task,
   users,
-  isSubscribed,
-  accountId,
   scrollTarget,
-  isTeamInvitesModalOpen,
 }: ITaskFormProps) {
-  if (!task) return null;
-
+  const isSubscribed = useSelector(getIsUserSubsribed);
+  const accountId = useSelector(getAccountId);
+  const isTeamInvitesModalOpen = useSelector(getIsTeamInvitesModalOpen);
   const wrapperRef = useRef<HTMLDivElement>(null);
   // `kickoff`, `tasks`, and the variable lists are read from the Formik form
   // state rather than Redux. Field edits land in Formik first and only get

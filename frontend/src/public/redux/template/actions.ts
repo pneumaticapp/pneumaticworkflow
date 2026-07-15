@@ -1,5 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
 import { ETemplateStatus, ITypedReduxAction } from '../../types/redux';
 import { actionGenerator } from '../../utils/redux';
 import { ITemplate, ITemplateTask, TAITemplateGenerationStatus } from '../../types/template';
