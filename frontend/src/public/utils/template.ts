@@ -61,10 +61,9 @@ export const getNormalizedTemplate = (
     .map((task) => getNormalizedTask(task, hasFullAccess));
 
   const performersCount = setPerformersCounts(normalizedTasks);
-  const normalizedTemplateOwners =
-    !hasFullAccess
-      ? getNormalizedTemplateOwners(template.owners, isSubscribed, users)
-      : template.owners;
+  const normalizedTemplateOwners = !hasFullAccess
+    ? getNormalizedTemplateOwners(template.owners, isSubscribed, users)
+    : template.owners;
 
   return {
     ...template,
@@ -121,7 +120,7 @@ export const getNormalizedTemplateOwners = (
       apiName: createOwnerApiName(),
       type: ETemplateOwnerType.User,
       role: ETemplateOwnerRole.Owner,
-    } as ITemplateOwner
+    } as ITemplateOwner;
   });
 
   return mapOwnersNotDeletedUsers;
@@ -165,13 +164,12 @@ export const cleanTemplateReferences = (template: ITemplate): ITemplate => {
     systemVars: Set<string>,
   ): string => {
     if (!text) return text || '';
-    return text
-      .replace(/\{\{\s*([\w-]+)\s*\}\}/g, (match, apiName) => {
-        if (validApis.has(apiName) || systemVars.has(apiName)) {
-          return match;
-        }
-        return '';
-      });
+    return text.replace(/\{\{\s*([\w-]+)\s*\}\}/g, (match, apiName) => {
+      if (validApis.has(apiName) || systemVars.has(apiName)) {
+        return match;
+      }
+      return '';
+    });
   };
 
   const tasks = [...(template.tasks || [])].sort((a, b) => a.number - b.number);
@@ -187,9 +185,8 @@ export const cleanTemplateReferences = (template: ITemplate): ITemplate => {
 
     const conditions = (task.conditions || []).map((condition) => {
       const rules = condition.rules.filter(
-        (rule) => !rule.field
-          || rule.fieldType === 'task' || rule.fieldType === 'kickoff'
-          || validApiNames.has(rule.field)
+        (rule) =>
+          !rule.field || rule.fieldType === 'task' || rule.fieldType === 'kickoff' || validApiNames.has(rule.field),
       );
       return { ...condition, rules };
     });
@@ -204,7 +201,7 @@ export const cleanTemplateReferences = (template: ITemplate): ITemplate => {
       return true;
     });
 
-    let {rawDueDate} = task;
+    let { rawDueDate } = task;
     if (rawDueDate && rawDueDate.ruleTarget === 'field') {
       if (rawDueDate.sourceId && !validApiNames.has(rawDueDate.sourceId)) {
         rawDueDate = {
