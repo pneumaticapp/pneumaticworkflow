@@ -313,13 +313,8 @@
   }
 }
 
-.menu__extra-space {
+:global(.sidebar) :global(.main-menu).menu__extra-space {
   top: 2.5rem;
-
-  @media (--mobile) {
-    top: 3rem;
-    height: calc(100vh - 4rem);
-  }
 }
 
 /*** Start workflow button ***/
@@ -418,7 +413,7 @@
   transform: rotate(180deg);
 }
 
-:global(.menu-default.sub-hidden) :global(li.active)::after {
+:global(.sub-hidden) :global(.main-menu) :global(li.active)::after {
   display: none;
 }
 
@@ -572,7 +567,7 @@
     height: unset;
   }
 
-  :global(.sidebar) .menu__extra-space {
+  :global(.sidebar) :global(.main-menu).menu__extra-space {
     top: 3rem;
     height: calc(100vh - 4rem);
   }

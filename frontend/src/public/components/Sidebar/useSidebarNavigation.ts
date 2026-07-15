@@ -9,6 +9,8 @@ import { findAncestor } from '../../utils/helpers';
 
 import type { IUseSidebarNavigationProps, IUseSidebarNavigationResult } from './types';
 
+const isViewportMobile = (menuHiddenBreakpoint: number) => menuHiddenBreakpoint > window.innerWidth;
+
 export const getCurrentMenuItem = (menuItems: IMenuItem[], pathname: string): IMenuItem | null => {
   const parentWithActiveSubItem = menuItems.find((item) =>
     item.subs?.some((subItem) => subItem.to === pathname || pathname.startsWith(subItem.to)),
@@ -30,7 +32,7 @@ export const useSidebarNavigation = ({
 }: IUseSidebarNavigationProps): IUseSidebarNavigationResult => {
   const dispatch = useDispatch();
   const [activeItemId, setActiveItemId] = useState<IMenuItem['id'] | null>(null);
-  const isMobile = menuHiddenBreakpoint > window.innerWidth;
+  const [isMobile, setIsMobile] = useState(() => isViewportMobile(menuHiddenBreakpoint));
   const isMenuVisible = containerClassnames.includes('main-show-temporary');
   const isMenuHidden = containerClassnames.includes('main-hidden');
 
@@ -45,7 +47,7 @@ export const useSidebarNavigation = ({
   }, [closeMenu, isMenuHidden, isMenuVisible]);
 
   const handleOpenMenu = () => {
-    if (isMenuHidden && !isMobile) {
+    if (isMenuHidden && !isViewportMobile(menuHiddenBreakpoint)) {
       dispatch(setContainerClassnames(3, containerClassnames, true));
     }
   };
@@ -79,6 +81,19 @@ export const useSidebarNavigation = ({
     },
     [handleCloseMenu],
   );
+
+  useEffect(() => {
+    const updateViewportMode = () => {
+      setIsMobile(isViewportMobile(menuHiddenBreakpoint));
+    };
+
+    updateViewportMode();
+    window.addEventListener('resize', updateViewportMode);
+
+    return () => {
+      window.removeEventListener('resize', updateViewportMode);
+    };
+  }, [menuHiddenBreakpoint]);
 
   useEffect(() => {
     const updateSelectedMenuItem = () => {
