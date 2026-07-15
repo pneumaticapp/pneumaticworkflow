@@ -8,12 +8,12 @@
     padding: 0;
   }
 
-  :global(.tippy-svg-arrow) {
+  &:global(.tippy-box)[data-placement^='right'] > :global(.tippy-svg-arrow) {
     left: -0.5rem;
     width: 0.5rem;
     height: 1.5rem;
 
-    svg {
+    > * {
       width: 1.5rem;
       height: 0.5rem;
     }
@@ -53,7 +53,7 @@
     background-color: var(--sidebar-bg-trial);
   }
 
-  a {
+  & :global(.tippy-content) .sub-menu__link {
     color: var(--sidebar-color-trial);
 
     &:hover {
@@ -73,7 +73,7 @@
     background-color: var(--sidebar-bg-premium);
   }
 
-  a {
+  & :global(.tippy-content) .sub-menu__link {
     color: var(--sidebar-color-premium);
 
     &:hover {

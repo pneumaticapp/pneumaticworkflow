@@ -1,14 +1,10 @@
 :root {
-  --sidebar-bg-free: var(--pneumatic-color-link);
   --sidebar-bg-trial: var(--pneumatic-color-black88);
   --sidebar-bg-premium: var(--pneumatic-color-black88);
-  --sidebar-color-free: var(--pneumatic-color-link-dark);
   --sidebar-color-trial: var(--pneumatic-color-black16);
   --sidebar-color-premium: var(--pneumatic-color-black16);
-  --sidebar-color-hover-free: var(--pneumatic-color-white);
   --sidebar-color-hover-trial: var(--pneumatic-color-link-hover);
   --sidebar-color-hover-premium: var(--pneumatic-color-link-hover);
-  --sidebar-color-active-free: var(--pneumatic-color-white);
   --sidebar-color-active-trial: var(--pneumatic-color-link-hover);
   --sidebar-color-active-premium: var(--pneumatic-color-link-hover);
 }

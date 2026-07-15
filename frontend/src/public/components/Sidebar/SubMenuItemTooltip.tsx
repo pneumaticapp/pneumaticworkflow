@@ -28,7 +28,13 @@ export const SubMenuTooltip = ({
     <ul>
       {menuItems.map((item) => (
         <li key={item.to}>
-          <a href={item.to} rel="noopener noreferrer" target="_blank" aria-label={item.label}>
+          <a
+            href={item.to}
+            rel="noopener noreferrer"
+            target="_blank"
+            aria-label={item.label}
+            className={styles['sub-menu__link']}
+          >
             <IntlMessages id={item.label} />
           </a>
         </li>
