@@ -1,5 +1,3 @@
-import { debounce } from 'throttle-debounce';
-
 export type TFlushableDebouncedFn<T extends unknown[]> = ((...args: T) => void) & {
   cancel: () => void;
   flush: () => void;
@@ -10,26 +8,40 @@ export function createFlushableDebounce<T extends unknown[]>(
   callback: (...args: T) => void,
 ): TFlushableDebouncedFn<T> {
   let pendingArgs: T | null = null;
-  const debounced = debounce(delay, (...args: T) => {
-    callback(...args);
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+  const clearPendingTimeout = () => {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      timeoutId = null;
+    }
+  };
+
+  const invokePending = () => {
+    const args = pendingArgs;
     pendingArgs = null;
-  });
+    timeoutId = null;
+
+    if (args) {
+      callback(...args);
+    }
+  };
 
   const fn = (...args: T) => {
     pendingArgs = args;
-    debounced(...args);
+    clearPendingTimeout();
+    timeoutId = setTimeout(invokePending, delay);
   };
 
   fn.cancel = () => {
+    clearPendingTimeout();
     pendingArgs = null;
-    debounced.cancel();
   };
 
   fn.flush = () => {
     if (pendingArgs) {
-      debounced.cancel();
-      callback(...pendingArgs);
-      pendingArgs = null;
+      clearPendingTimeout();
+      invokePending();
     }
   };
 

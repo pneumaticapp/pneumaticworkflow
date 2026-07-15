@@ -20,6 +20,7 @@ export interface IWorkflowExtraFieldProps {
   innerRef?: Ref<HTMLInputElement>;
   accountId: number;
   datasetName?: string;
+  onUploadStateChange?(isUploading: boolean): void;
 }
 
 export interface IExtraFieldProps extends IWorkflowExtraFieldProps {

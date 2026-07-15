@@ -19,6 +19,8 @@ export function TaskActions({
   viewMode,
   status,
   outputValues,
+  flushOutputs,
+  isOutputUploading,
   setTaskCompleted,
   setTaskReverted,
   openSelectTemplateModal,
@@ -27,74 +29,93 @@ export function TaskActions({
   const { isMobile } = useCheckDevice();
   const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
   const { id: taskId, dateStarted, dateCompleted } = task;
+  const isSubmitting = status === ETaskStatus.Completing || status === ETaskStatus.Returning;
+  const isActionBlocked = isOutputUploading || isSubmitting;
+
   const handleReturnTask = (comment: string) => {
-    setTaskReverted({ taskId, viewMode, comment });
+    if (isActionBlocked) return;
+
+    flushOutputs();
+    setTaskReverted({
+      taskId,
+      viewMode,
+      comment,
+      clearOutputTaskIds: [taskId, ...task.revertTasks.map(({ id }) => id)],
+    });
     setIsReturnModalOpen(false);
   };
 
-  const renderActions = () => {
-    if (task.isReadOnlyViewer) return null;
+  if (task.isReadOnlyViewer) return null;
 
-    if (status === ETaskStatus.Completed || task.workflow.status === EWorkflowStatus.Finished) {
-      const completedAt = dateCompleted || task.workflow.dateCompleted;
-      const label = completedAt ? (
-        <>
-          {formatMessage({ id: 'task.completed-with-date' })}
-          <span className={styles['completed__text-date']}>
-            <DateFormat date={completedAt} />
-          </span>
-        </>
-      ) : formatMessage({ id: 'task.completed' });
-
-      return (
-        <div className={styles.completed}>
-          <DoneInfoIcon />
-          <p className={styles['completed__text']}>{label}</p>
-        </div>
-      );
-    }
-
-    if (!dateStarted && !dateCompleted) {
-      return (
-        <div className={styles.returned}>
-          <ReturnTaskInfoIcon />
-          <p className={styles['returned__text']}>{formatMessage({ id: 'task.returned' })}</p>
-        </div>
-      );
-    }
-
-    const isEmbeddedWorkflowsComplete = !task.subWorkflows.some(
-      (subWorkflow) => subWorkflow.status !== EWorkflowStatus.Finished,
-    );
-    const completeButton = (
-      <Button
-        isLoading={status === ETaskStatus.Completing}
-        onClick={() => setTaskCompleted({ taskId, viewMode, output: outputValues })}
-        label={formatMessage({ id: 'processes.complete-task' })}
-        size="md"
-        disabled={!isEmbeddedWorkflowsComplete}
-        buttonStyle="yellow"
-      />
-    );
-
+  if (status === ETaskStatus.Completed || task.workflow.status === EWorkflowStatus.Finished) {
+    const completedAt = dateCompleted || task.workflow.dateCompleted;
     return (
+      <div className={styles.completed}>
+        <DoneInfoIcon />
+        <p className={styles['completed__text']}>
+          {completedAt ? (
+            <>
+              {formatMessage({ id: 'task.completed-with-date' })}
+              <span className={styles['completed__text-date']}><DateFormat date={completedAt} /></span>
+            </>
+          ) : formatMessage({ id: 'task.completed' })}
+        </p>
+      </div>
+    );
+  }
+
+  if (!dateStarted && !dateCompleted) {
+    return (
+      <div className={styles.returned}>
+        <ReturnTaskInfoIcon />
+        <p className={styles['returned__text']}>{formatMessage({ id: 'task.returned' })}</p>
+      </div>
+    );
+  }
+
+  const embeddedWorkflowsComplete = task.subWorkflows.every(
+    ({ status: workflowStatus }) => workflowStatus === EWorkflowStatus.Finished,
+  );
+  const actionsDisabled = !embeddedWorkflowsComplete || isActionBlocked;
+  const completeButton = (
+    <Button
+      isLoading={status === ETaskStatus.Completing}
+      onClick={() => {
+        if (actionsDisabled) return;
+        flushOutputs();
+        setTaskCompleted({ taskId, viewMode, output: outputValues });
+      }}
+      label={formatMessage({ id: 'processes.complete-task' })}
+      size="md"
+      disabled={actionsDisabled}
+      buttonStyle="yellow"
+    />
+  );
+
+  return (
+    <>
+      <ReturnModal
+        isOpen={isReturnModalOpen}
+        isConfirmDisabled={isActionBlocked}
+        onClose={() => setIsReturnModalOpen(false)}
+        onConfirm={handleReturnTask}
+      />
       <div className={classnames(styles.buttons, 'no-print')}>
         <div className={styles['buttons__complete']}>
-          {isEmbeddedWorkflowsComplete ? completeButton : (
+          {embeddedWorkflowsComplete ? completeButton : (
             <Tooltip content={formatMessage({ id: 'task.need-complete-embedded-processes' })}>
               <div>{completeButton}</div>
             </Tooltip>
           )}
         </div>
         {viewMode !== ETaskCardViewMode.Guest && task.revertTasks.length > 0 && (
-          <Tooltip
-            content={isEmbeddedWorkflowsComplete
-              ? formatMessage({ id: 'tasks.task-return-hint' })
-              : formatMessage({ id: 'task.need-return-embedded-processes' })}
+          <Tooltip content={embeddedWorkflowsComplete
+            ? formatMessage({ id: 'tasks.task-return-hint' })
+            : formatMessage({ id: 'task.need-return-embedded-processes' })}
           >
             <div>
               <Button
-                disabled={!isEmbeddedWorkflowsComplete}
+                disabled={actionsDisabled}
                 onClick={() => setIsReturnModalOpen(true)}
                 label={isMobile ? undefined : formatMessage({ id: 'processes.return-task' })}
                 icon={isMobile ? ReturnToIcon : undefined}
@@ -109,6 +130,7 @@ export function TaskActions({
         {viewMode !== ETaskCardViewMode.Guest && (
           <Tooltip content={formatMessage({ id: 'task.delegate' })}>
             <Button
+              disabled={isActionBlocked}
               onClick={() => openSelectTemplateModal({ ancestorTaskId: taskId })}
               icon={PlayLogoIcon}
               buttonStyle="transparent-black"
@@ -119,17 +141,6 @@ export function TaskActions({
           </Tooltip>
         )}
       </div>
-    );
-  };
-
-  return (
-    <>
-      <ReturnModal
-        isOpen={isReturnModalOpen}
-        onClose={() => setIsReturnModalOpen(false)}
-        onConfirm={handleReturnTask}
-      />
-      {renderActions()}
     </>
   );
 }

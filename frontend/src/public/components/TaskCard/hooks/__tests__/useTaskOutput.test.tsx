@@ -104,7 +104,7 @@ describe('useTaskOutput', () => {
     ]);
   });
 
-  it('cancels a pending storage write on unmount', () => {
+  it('flushes the current draft and cancels the delayed write on unmount', () => {
     const initialOutput = [makeField('field', 'server value')];
     const { unmount } = render(<HookHarness task={makeTask(initialOutput)} />);
 
@@ -117,7 +117,10 @@ describe('useTaskOutput', () => {
       jest.advanceTimersByTime(300);
     });
 
-    expect(addOrUpdateStorageOutput).not.toHaveBeenCalled();
+    expect(addOrUpdateStorageOutput).toHaveBeenCalledTimes(1);
+    expect(addOrUpdateStorageOutput).toHaveBeenCalledWith(1, [
+      makeField('field', 'local value'),
+    ]);
     expect(removeOutputFromLocalStorage).not.toHaveBeenCalled();
   });
 });

@@ -52,4 +52,64 @@ describe('createFlushableDebounce', () => {
     expect(callback).toHaveBeenCalledTimes(1);
     expect(callback).toHaveBeenCalledWith('second');
   });
+
+  it('can schedule another call after flushing', () => {
+    const callback = jest.fn();
+    const debounced = createFlushableDebounce(300, callback);
+
+    debounced('first');
+    debounced.flush();
+    debounced('second');
+    jest.advanceTimersByTime(300);
+
+    expect(callback).toHaveBeenNthCalledWith(1, 'first');
+    expect(callback).toHaveBeenNthCalledWith(2, 'second');
+  });
+
+  it('can schedule another call after cancellation', () => {
+    const callback = jest.fn();
+    const debounced = createFlushableDebounce(300, callback);
+
+    debounced('cancelled');
+    debounced.cancel();
+    debounced('saved');
+    jest.advanceTimersByTime(300);
+
+    expect(callback).toHaveBeenCalledTimes(1);
+    expect(callback).toHaveBeenCalledWith('saved');
+  });
+
+  it('preserves a call scheduled reentrantly by the delayed callback', () => {
+    let debounced: ReturnType<typeof createFlushableDebounce<[string]>>;
+    const callback = jest.fn((value: string) => {
+      if (value === 'first') {
+        debounced('second');
+      }
+    });
+    debounced = createFlushableDebounce(300, callback);
+
+    debounced('first');
+    jest.advanceTimersByTime(300);
+    jest.advanceTimersByTime(300);
+
+    expect(callback).toHaveBeenNthCalledWith(1, 'first');
+    expect(callback).toHaveBeenNthCalledWith(2, 'second');
+  });
+
+  it('preserves a call scheduled reentrantly by flush', () => {
+    let debounced: ReturnType<typeof createFlushableDebounce<[string]>>;
+    const callback = jest.fn((value: string) => {
+      if (value === 'first') {
+        debounced('second');
+      }
+    });
+    debounced = createFlushableDebounce(300, callback);
+
+    debounced('first');
+    debounced.flush();
+    jest.advanceTimersByTime(300);
+
+    expect(callback).toHaveBeenNthCalledWith(1, 'first');
+    expect(callback).toHaveBeenNthCalledWith(2, 'second');
+  });
 });

@@ -1,5 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
 import produce from 'immer';
 
 import { IExtraField } from '../../../types/template';
@@ -15,8 +13,8 @@ export function addOrUpdateStorageOutput(taskId: number, output: IExtraField[]) 
   const currentOutput: TLocalStorageOutput = { taskId, output };
   const savedOutputs = getOutputsFromStorage();
 
-  const newOutputs = produce(savedOutputs, draftOutputs => {
-    const savedOutputIndex = draftOutputs.findIndex(output => output.taskId === taskId);
+  const newOutputs = produce(savedOutputs, (draftOutputs) => {
+    const savedOutputIndex = draftOutputs.findIndex((savedOutput) => savedOutput.taskId === taskId);
 
     if (savedOutputIndex === -1) {
       draftOutputs.push(currentOutput);
@@ -33,7 +31,7 @@ export function addOrUpdateStorageOutput(taskId: number, output: IExtraField[]) 
 export function getOutputFromStorage(taskId: number) {
   const savedOutputs = getOutputsFromStorage();
 
-  return savedOutputs.find(output => output.taskId === taskId)?.output;
+  return savedOutputs.find((output) => output.taskId === taskId)?.output;
 }
 
 export function removeOutputFromLocalStorage(taskId: number) {
@@ -47,7 +45,7 @@ export function removeOutputsFromLocalStorage(taskIds: number[]) {
 
   const taskIdsSet = new Set(taskIds);
   const savedOutputs = getOutputsFromStorage();
-  const newOutputs = savedOutputs.filter(output => !taskIdsSet.has(output.taskId));
+  const newOutputs = savedOutputs.filter((output) => !taskIdsSet.has(output.taskId));
   saveOutputsToStorage(newOutputs);
 }
 

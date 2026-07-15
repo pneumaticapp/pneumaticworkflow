@@ -10,7 +10,15 @@ import { ITaskOutputFieldsProps } from './types';
 
 import styles from './TaskCard.css';
 
-export function TaskOutputFields({ accountId, outputValues, status, editField }: ITaskOutputFieldsProps) {
+export function TaskOutputFields({
+  accountId,
+  editField,
+  isDisabled,
+  onUploadStateChange,
+  outputValues,
+  status,
+  taskId,
+}: ITaskOutputFieldsProps) {
   const visibleOutputs = outputValues.filter((field) => !field.isHidden);
 
   if (!isArrayWithItems(visibleOutputs) || status === ETaskStatus.Completed) {
@@ -24,7 +32,7 @@ export function TaskOutputFields({ accountId, outputValues, status, editField }:
       </p>
       {visibleOutputs.map((field) => (
         <ExtraFieldIntl
-          key={field.apiName}
+          key={`${taskId}-${field.apiName}`}
           field={field}
           editField={editField(field.apiName)}
           showDropdown={false}
@@ -34,6 +42,8 @@ export function TaskOutputFields({ accountId, outputValues, status, editField }:
           descriptionPlaceholder={field.description}
           wrapperClassName={styles['task-output__field']}
           accountId={accountId}
+          isDisabled={isDisabled}
+          onUploadStateChange={(isUploading) => onUploadStateChange(field.apiName, isUploading)}
         />
       ))}
     </div>

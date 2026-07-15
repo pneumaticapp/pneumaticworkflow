@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
@@ -52,10 +52,21 @@ export function TaskCard({
   openSelectTemplateModal,
 }: ITaskCardProps) {
   const { formatMessage } = useIntl();
-  const wrapperRef = useRef(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
-  const { outputValues, editField } = useTaskOutput(task);
+  const [uploadingFieldNames, setUploadingFieldNames] = useState<Set<string>>(() => new Set());
+  const { outputValues, editField, flushOutputs } = useTaskOutput(task);
   const helpTextLocal = helpText ?? workflow?.description ?? null;
+  const isSubmitting = status === ETaskStatus.Completing || status === ETaskStatus.Returning;
+  const handleUploadStateChange = useCallback((apiName: string, isUploading: boolean) => {
+    setUploadingFieldNames((currentNames) => {
+      const nextNames = new Set(currentNames);
+      if (isUploading) nextNames.add(apiName);
+      else nextNames.delete(apiName);
+
+      return nextNames;
+    });
+  }, []);
 
   useEffect(() => {
     autoFocusFirstField(wrapperRef.current);
@@ -69,11 +80,7 @@ export function TaskCard({
   return (
     <>
       {helpTextLocal && (
-        <HelpModal
-          isOpen={isHelpModalOpen}
-          onClose={() => setIsHelpModalOpen(false)}
-          helpText={helpTextLocal}
-        />
+        <HelpModal isOpen={isHelpModalOpen} onClose={() => setIsHelpModalOpen(false)} helpText={helpTextLocal} />
       )}
       <div
         ref={wrapperRef}
@@ -150,13 +157,18 @@ export function TaskCard({
             accountId={accountId}
             outputValues={outputValues}
             status={status}
+            taskId={task.id}
             editField={editField}
+            isDisabled={isSubmitting}
+            onUploadStateChange={handleUploadStateChange}
           />
           <TaskActions
             task={task}
             viewMode={viewMode}
             status={status}
             outputValues={outputValues}
+            flushOutputs={flushOutputs}
+            isOutputUploading={uploadingFieldNames.size > 0}
             setTaskCompleted={setTaskCompleted}
             setTaskReverted={setTaskReverted}
             openSelectTemplateModal={openSelectTemplateModal}
