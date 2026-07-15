@@ -10,7 +10,7 @@ import { DateIcon } from '../../../icons';
 import { TForegroundColor } from '../common/types';
 import { getForegroundClass } from '../common/utils/getForegroundClass';
 import { DatePickerCustom } from '../../form/DatePicker';
-import { IDatePickerProps } from '../../form/DatePicker/types';
+import { ISingleDatePickerProps } from '../../form/DatePicker/types';
 import { IApplicationState } from '../../../../types/redux';
 
 import styles from './DateField.css';
@@ -18,7 +18,7 @@ import commonStyles from '../common/styles.css';
 
 type TInputFieldSize = 'sm' | 'md' | 'lg';
 
-export interface IDateFieldProps extends Omit<IDatePickerProps, 'value'> {
+export interface IDateFieldProps extends Omit<ISingleDatePickerProps, 'value'> {
   value: string | null;
   icon?: React.ReactNode;
   title?: string;
@@ -57,12 +57,15 @@ export function DateField({
   placeholder,
   value,
   onChange,
+  inputRef: _inputRef,
+  onClear: _onClear,
   // tslint:disable-next-line: trailing-comma
   ...props
 }: TDateFieldProps) {
   const { messages } = useIntl();
   const { timezone } = useSelector((state: IApplicationState) => state.authUser);
   const normalizedErrorMessage = errorMessage && (messages[errorMessage] || errorMessage);
+  const selectedDate = value ? moment.tz(value, 'YYYY-MM-DD', timezone).toDate() : null;
 
   const renderInput = () => {
     const inputClassName = classnames(
@@ -76,9 +79,10 @@ export function DateField({
       <div className={styles['input-with-rigt-content-wrapper']}>
         <div className={inputClassName}>
           <DatePickerCustom
+            disabled={disabled}
             onChange={(date) => onChange(date && new Date(moment(date).tz(timezone).format('YYYY/MM/DD')))}
             placeholderText={placeholder}
-            selected={value && moment.tz(value, 'YYYY-MM-DD', timezone).toDate()}
+            selected={selectedDate}
             value={value ? moment(value, 'YYYY-MM-DD').format('MMM DD, YYYY') : ''}
             {...props}
           />
