@@ -152,8 +152,9 @@ export function KickoffShareForm({ className }: IKickoffShareFormProps) {
         role="button"
         tabIndex={0}
         onClick={toogleFormIsShared}
-        onKeyDown={({ key }) => {
-          if (key === 'Enter' || key === ' ') {
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
             toogleFormIsShared();
           }
         }}
