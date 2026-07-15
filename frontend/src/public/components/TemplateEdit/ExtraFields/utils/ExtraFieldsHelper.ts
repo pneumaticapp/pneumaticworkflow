@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { EExtraFieldType, IExtraField, TExtraFieldValue } from '../../../../types/template';
 import { getEndOfDayTsp } from '../../../../utils/dateTime';
 import { parseMarkdownToFiles } from '../../../../utils/parseMarkdownFiles';
@@ -9,6 +8,7 @@ type TFieldDispatchRecord = {
 
 export class ExtraFieldsHelper {
   private fields: IExtraField[];
+
   private storageOutput?: IExtraField[];
 
   public constructor(fields: IExtraField[], storageOutput?: IExtraField[]) {
@@ -21,14 +21,18 @@ export class ExtraFieldsHelper {
       .filter(({ apiName }) => apiName)
       .map(({ apiName, value, type }) => {
         if (type === 'url') {
-          return { [apiName as string]: (value as string).replace(new RegExp(' ', 'gi'), '%20') };
-        } else if (type === 'date' && typeof value === 'string') {
-          return { [apiName as string]: getEndOfDayTsp(value) };
-        } else if (type === 'number') {
-          return { [apiName as string]: String(value).replace(',', '.') };
-        } else {
-          return { [apiName as string]: value };
+          return { [apiName as string]: (value as string).replace(/ /gi, '%20') };
         }
+
+        if (type === 'date' && typeof value === 'string') {
+          return { [apiName as string]: getEndOfDayTsp(value) };
+        }
+
+        if (type === 'number') {
+          return { [apiName as string]: String(value).replace(',', '.') };
+        }
+
+        return { [apiName as string]: value };
       });
   }
 
@@ -38,7 +42,7 @@ export class ExtraFieldsHelper {
       .reduce(
         (acc, { apiName, value, type }) =>
           Object.assign(acc, {
-            [apiName]: type === 'url' ? (value as string).replace(new RegExp(' ', 'gi'), '%20') : value,
+            [apiName]: type === 'url' ? (value as string).replace(/ /gi, '%20') : value,
           }),
         {},
       );
@@ -66,7 +70,7 @@ export class ExtraFieldsHelper {
     return this.storageOutput.find((field) => field.apiName === fieldApiName);
   };
 
-  private hasServerValue = (field: IExtraField): boolean => {
+  private static hasServerValue(field: IExtraField): boolean {
     if (field.type === EExtraFieldType.File) {
       return Boolean(field.markdownValue) || Boolean(field.attachments?.length);
     }
@@ -80,7 +84,7 @@ export class ExtraFieldsHelper {
     }
 
     return Boolean(field.value);
-  };
+  }
 
   private getFieldValue = (
     initialValue: TExtraFieldValue | undefined,
@@ -88,14 +92,19 @@ export class ExtraFieldsHelper {
     fieldApiName: string,
     field: IExtraField,
   ) => {
-    const normalizedInitialValue = Array.isArray(initialValue) && initialValue.length === 0 ? null : initialValue;
+    const normalizedInitialValue = initialValue === '' || (Array.isArray(initialValue) && initialValue.length === 0)
+      ? null
+      : initialValue;
     const storageValue = this.getStorageField(fieldApiName)?.value;
+    const normalizedStorageValue = storageValue === '' || (Array.isArray(storageValue) && storageValue.length === 0)
+      ? null
+      : storageValue;
 
-    if (this.hasServerValue(field)) {
+    if (ExtraFieldsHelper.hasServerValue(field)) {
       return normalizedInitialValue ?? defaultValue;
     }
 
-    return storageValue ?? normalizedInitialValue ?? defaultValue;
+    return normalizedStorageValue ?? normalizedInitialValue ?? defaultValue;
   };
 
   private fieldValuesDispatch: TFieldDispatchRecord = {
@@ -114,15 +123,17 @@ export class ExtraFieldsHelper {
     [EExtraFieldType.File]: (field: IExtraField) => {
       const serverAttachmentsFromMarkdown = parseMarkdownToFiles(field.markdownValue);
       const serverAttachmentsFromField = field.attachments?.filter(({ isRemoved }) => !isRemoved) ?? [];
-      const initialAttachments = serverAttachmentsFromMarkdown.length > 0
-        ? serverAttachmentsFromMarkdown
-        : serverAttachmentsFromField.length > 0
-          ? serverAttachmentsFromField
-          : null;
+      let initialAttachments: IExtraField['attachments'] | null = null;
+
+      if (serverAttachmentsFromMarkdown.length > 0) {
+        initialAttachments = serverAttachmentsFromMarkdown;
+      } else if (serverAttachmentsFromField.length > 0) {
+        initialAttachments = serverAttachmentsFromField;
+      }
       const storageAttachments = this.getStorageField(field.apiName)?.attachments?.filter(
         ({ isRemoved }) => !isRemoved,
       );
-      const attachments = this.hasServerValue(field)
+      const attachments = ExtraFieldsHelper.hasServerValue(field)
         ? initialAttachments || []
         : storageAttachments || initialAttachments || [];
       const value = attachments.map(({ name, url }) => `[${name}](${url})`);

@@ -264,6 +264,42 @@ describe('ExtraFieldsHelper', () => {
 
       expect(result).toHaveLength(0);
     });
+
+    it('normalizes an empty radio value to null', () => {
+      const field: IExtraField = {
+        apiName: 'field-radio',
+        name: 'Radio Field',
+        type: EExtraFieldType.Radio,
+        order: 1,
+        userId: null,
+        groupId: null,
+        selections: ['first', 'second'],
+        value: '',
+      };
+
+      const helper = new ExtraFieldsHelper([field]);
+      const result = helper.getFieldsWithValues();
+
+      expect(result[0].value).toBeNull();
+    });
+
+    it('normalizes an empty stored radio value to null', () => {
+      const field: IExtraField = {
+        apiName: 'field-radio',
+        name: 'Radio Field',
+        type: EExtraFieldType.Radio,
+        order: 1,
+        userId: null,
+        groupId: null,
+        selections: ['first', 'second'],
+        value: '',
+      };
+
+      const helper = new ExtraFieldsHelper([field], [{ ...field }]);
+      const result = helper.getFieldsWithValues();
+
+      expect(result[0].value).toBeNull();
+    });
   });
 
   describe('normalizeFieldsValues', () => {
