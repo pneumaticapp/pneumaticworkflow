@@ -24,6 +24,8 @@ export interface ISingleDatePickerProps extends TSharedSingleProps {
   selectsRange?: false;
   startDay?: true;
   selected?: Date | null;
+  /** When false, parent owns clear UI (e.g. trailing DateIcon slot). Default true. */
+  isClearable?: boolean;
   onChange(date: Date | null): void;
 }
 
@@ -31,6 +33,8 @@ export interface IRangeDatePickerProps extends TSharedRangeProps {
   selectsRange: true;
   startDate?: Date | null;
   endDate?: Date | null;
+  /** When false, parent owns clear UI. Default true. */
+  isClearable?: boolean;
   onChange(dates: [Date | null, Date | null]): void;
 }
 

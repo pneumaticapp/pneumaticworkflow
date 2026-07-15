@@ -106,6 +106,21 @@
   align-items: center;
 }
 
+.clear-button {
+  all: unset;
+  display: flex;
+  cursor: pointer;
+  pointer-events: all;
+  color: var(--pneumatic-color-black32);
+  transition: color 0.1s ease-in-out;
+  align-items: center;
+  justify-content: center;
+}
+
+.clear-button:hover {
+  color: var(--pneumatic-color-link-hover);
+}
+
 .error-text {
   margin: 4px 0 0;
   font-size: 13px;

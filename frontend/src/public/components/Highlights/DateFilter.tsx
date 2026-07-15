@@ -17,6 +17,11 @@ export interface IDateFilterProps {
   changeEndDate(date: Date): void;
   changeSelectedDateFilter(filter: EHighlightsDateFilter): () => void;
   changeStartDate(date: Date): void;
+  /**
+   * Reports whether Custom range draft is complete (both ends set),
+   * or true for non-Custom presets. Used to disable Apply while editing.
+   */
+  onCustomRangeValidityChange?(isComplete: boolean): void;
 }
 
 export function DateFilter({
@@ -26,6 +31,7 @@ export function DateFilter({
   changeSelectedDateFilter,
   changeEndDate,
   changeStartDate,
+  onCustomRangeValidityChange,
 }: IDateFilterProps) {
   const { formatMessage } = useIntl();
 
@@ -43,6 +49,17 @@ export function DateFilter({
     setDraftStartDate(startDate);
     setDraftEndDate(endDate);
   }, [startDate, endDate, selectedDateFilter]);
+
+  useEffect(() => {
+    if (!onCustomRangeValidityChange) {
+      return;
+    }
+
+    const isComplete =
+      selectedDateFilter !== EHighlightsDateFilter.Custom || Boolean(draftStartDate && draftEndDate);
+
+    onCustomRangeValidityChange(isComplete);
+  }, [draftStartDate, draftEndDate, selectedDateFilter, onCustomRangeValidityChange]);
 
   const DATE_FILTER_CHECKBOXES = [
     {
