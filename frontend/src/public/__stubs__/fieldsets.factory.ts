@@ -1,5 +1,5 @@
 import {
-  EFieldLabelPosition, IFieldsetBinding, IFieldsetBindingClient, IFieldsetCatalogItem,
+  EFieldLabelPosition, EFieldsetRuleType, IFieldsetBinding, IFieldsetBindingClient, IFieldsetCatalogItem,
   IFieldsetField, IFieldsetRuntime, IFieldsetTaskAPI, IFieldsetTemplateRule,
 } from '../types/fieldset';
 import { IExtraField } from '../types/template';
@@ -33,7 +33,7 @@ export const makeFieldsetRuntime = (overrides: Partial<IFieldsetRuntime> = {}): 
 
 export const makeFieldsetTemplateRule = (overrides: Partial<IFieldsetTemplateRule> = {}): IFieldsetTemplateRule => ({
   apiName: 'rule-1',
-  type: 'sum_equal',
+  type: EFieldsetRuleType.SumEqual,
   value: '100',
   fields: [],
   ...overrides,

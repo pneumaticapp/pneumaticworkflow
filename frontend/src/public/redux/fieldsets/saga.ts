@@ -122,7 +122,6 @@ export function* updateFieldsetSaga({ payload }: PayloadAction<IUpdateFieldsetPa
     if (isRequestCanceled(error)) return;
     NotificationManager.warning({ message: getErrorMessage(error) });
     logger.error('failed to update fieldset', error);
-    yield put(loadCurrentFieldset({ id: payload.id }));
   } finally {
     abortController.abort();
   }

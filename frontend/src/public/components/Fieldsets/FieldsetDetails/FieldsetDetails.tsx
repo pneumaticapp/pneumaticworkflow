@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, ChangeEvent } from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -16,16 +16,23 @@ import { ERoutes } from '../../../constants/routes';
 
 import { ModifyDropdown, Button, FilterSelect } from '../../UI';
 import { EModifyDropdownToggle } from '../../UI/ModifyDropdown/types';
+import { NotificationManager } from '../../UI/Notifications';
 import { FieldsetModal } from '../FieldsetModal/FieldsetModal';
 import { EFieldsetModalType } from '../FieldsetModal/types';
 import { FieldsetDetailsSkeleton } from './FieldsetDetailsSkeleton';
+import { FieldsetUnsavedChangesModal } from './FieldsetUnsavedChangesModal';
 
 import { getCurrentFieldset, isCurrentFieldsetLoading } from '../../../redux/selectors/fieldsets';
 import { getAccountId } from '../../../redux/selectors/user';
 
 import { EExtraFieldMode, EExtraFieldType, IExtraField } from '../../../types/template';
 import { EInputNameBackgroundColor, EMoveDirections } from '../../../types/workflow';
-import { IFieldsetTemplateRule, EFieldLabelPosition } from '../../../types/fieldset';
+import {
+  IFieldsetTemplateRule,
+  EFieldLabelPosition,
+  EFieldsetRuleType,
+  IUpdateFieldsetParams,
+} from '../../../types/fieldset';
 import { ExtraFieldsMap } from '../../TemplateEdit/ExtraFields/utils/ExtraFieldsMap';
 import { ExtraFieldIcon } from '../../TemplateEdit/ExtraFields/utils/ExtraFieldIcon';
 import { ExtraFieldIntl } from '../../TemplateEdit/ExtraFields';
@@ -35,22 +42,30 @@ import { getNormalizeFieldsOrders, moveWorkflowField } from '../../../utils/work
 import { useDatasetOptions } from '../../TemplateEdit/ExtraFields/utils/useDatasetOptions';
 
 import { normalizeFieldsForUI } from './fieldsetFieldMappers';
+import { validateFieldsetRules } from '../validators';
+import {
+  FIELDSET_LABEL_POSITION_OPTIONS,
+  FIELDSET_RULE_TYPES,
+  FIELDSET_RULE_VALUE_PLACEHOLDER_BY_TYPE,
+} from '../constants';
 
 import { useCheckDevice } from '../../../hooks/useCheckDevice';
 
-import { TFieldsetDetailsProps } from './types';
+import { TFieldsetDetailsProps, TDetailFieldsetState, TDetailFieldsetChanges } from './types';
 import styles from './FieldsetDetails.css';
 
-const RULE_TYPES = [
-  { value: 'sum_equal', labelKey: 'fieldsets.rule-type-sum_equal' },
-] as const;
+const EMPTY_DETAIL_FIELDSET: TDetailFieldsetState = {
+  description: '',
+  labelPosition: EFieldLabelPosition.Top,
+  fields: [],
+  rules: [],
+};
 
-const LABEL_POSITION_OPTIONS: { value: EFieldLabelPosition; labelKey: string }[] = [
-  { value: EFieldLabelPosition.Top, labelKey: 'fieldsets.settings.label-position.top' },
-  { value: EFieldLabelPosition.Left, labelKey: 'fieldsets.settings.label-position.left' },
-];
-
-const FieldsetDetails = ({ match: { params: { id: matchParamId } } }: TFieldsetDetailsProps) => {
+const FieldsetDetails = ({
+  match: {
+    params: { id: matchParamId },
+  },
+}: TFieldsetDetailsProps) => {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
   const fieldset = useSelector(getCurrentFieldset);
@@ -58,23 +73,12 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId } } }: TFieldsetD
   const accountId = useSelector(getAccountId);
   const { isDesktop } = useCheckDevice();
 
-  const [localFields, setLocalFields] = useState<IExtraField[]>([]);
-  const datasetOptions = useDatasetOptions(localFields);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-
-  const [localRules, setLocalRules] = useState<IFieldsetTemplateRule[]>([]);
-  const [hasUnsavedRuleChanges, setHasUnsavedRuleChanges] = useState(false);
-
-  // Settings local state
-  const [localDescription, setLocalDescription] = useState('');
-  const [localLabelPosition, setLocalLabelPosition] = useState<EFieldLabelPosition>(EFieldLabelPosition.Top);
-
-  const [hasUnsavedSettingsChanges, setHasUnsavedSettingsChanges] = useState(false);
+  const [detailFieldset, setDetailFieldset] = useState<TDetailFieldsetState>(EMPTY_DETAIL_FIELDSET);
+  const [detailFieldsetChanges, setDetailFieldsetChanges] = useState<TDetailFieldsetChanges>({});
+  const datasetOptions = useDatasetOptions(detailFieldset.fields);
 
   const fieldsetListRoute = ERoutes.Fieldsets;
-
-
-
+  const isChanged = Object.keys(detailFieldsetChanges).length > 0;
 
   useEffect(() => {
     const id = Number(matchParamId);
@@ -94,147 +98,141 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId } } }: TFieldsetD
     };
   }, []);
 
-  // Sync local fields when fieldset loads/updates from server
   useEffect(() => {
-    if (fieldset?.fields) {
-      setLocalFields(normalizeFieldsForUI(fieldset.fields as unknown as IExtraField[]));
-      setHasUnsavedChanges(false);
-    }
-  }, [fieldset?.fields]);
-
-  // Sync local rules when fieldset loads/updates from server
-  useEffect(() => {
-    if (fieldset?.rules) {
-      setLocalRules(fieldset.rules);
-      setHasUnsavedRuleChanges(false);
-    }
-  }, [fieldset?.rules]);
-
-  // Sync settings when fieldset loads/updates from server
-  useEffect(() => {
-    if (fieldset) {
-      setLocalDescription(fieldset.description || '');
-      setLocalLabelPosition(fieldset.labelPosition);
-      setHasUnsavedSettingsChanges(false);
-    }
-  }, [
-    fieldset?.id,
-    fieldset?.description,
-    fieldset?.labelPosition,
-  ]);
-
-  const handleSettingsDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setLocalDescription(e.target.value);
-    setHasUnsavedSettingsChanges(true);
-  };
-
-  const handleSettingsLabelPositionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setLocalLabelPosition(e.target.value as EFieldLabelPosition);
-    setHasUnsavedSettingsChanges(true);
-  };
-
-  const handleSaveSettings = () => {
     if (!fieldset) return;
-    dispatch(updateFieldsetAction({
-      id: fieldset.id,
-      description: localDescription,
-      labelPosition: localLabelPosition,
-    }));
+
+    setDetailFieldset({
+      description: fieldset.description || '',
+      labelPosition: fieldset.labelPosition,
+      fields: normalizeFieldsForUI(fieldset.fields as unknown as IExtraField[]),
+      rules: fieldset.rules || [],
+    });
+    setDetailFieldsetChanges({});
+  }, [fieldset?.id, fieldset?.description, fieldset?.labelPosition, fieldset?.fields, fieldset?.rules]);
+  const handleSettingsDescriptionChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
+    const description = event.target.value;
+    setDetailFieldset((prev) => ({ ...prev, description }));
+    setDetailFieldsetChanges((prev) => ({ ...prev, description }));
+  };
+
+  const handleSettingsLabelPositionChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    const labelPosition = event.target.value as EFieldLabelPosition;
+    setDetailFieldset((prev) => ({ ...prev, labelPosition }));
+    setDetailFieldsetChanges((prev) => ({ ...prev, labelPosition }));
   };
 
   const getSortedFields = useCallback(() => {
-    return [...localFields].sort((a, b) => b.order - a.order);
-  }, [localFields]);
+    return [...detailFieldset.fields].sort((a, b) => b.order - a.order);
+  }, [detailFieldset.fields]);
 
   const sortedFields = useMemo(() => getSortedFields(), [getSortedFields]);
 
   const handleCreateField = (type: EExtraFieldType) => {
-    const newFields = getNormalizeFieldsOrders([...localFields, getEmptyField(type, formatMessage)]);
-    setLocalFields(newFields);
-    setHasUnsavedChanges(true);
+    const newFields = getNormalizeFieldsOrders([...detailFieldset.fields, getEmptyField(type, formatMessage)]);
+    setDetailFieldset((prev) => ({ ...prev, fields: newFields }));
+    setDetailFieldsetChanges((prev) => ({ ...prev, fields: newFields }));
   };
 
   const handleEditField = (apiName: string) => (changedProps: Partial<IExtraField>) => {
     const newFields = getEditedFields(getSortedFields(), apiName, changedProps);
-    setLocalFields(newFields);
-    setHasUnsavedChanges(true);
+    setDetailFieldset((prev) => ({ ...prev, fields: newFields }));
+    setDetailFieldsetChanges((prev) => ({ ...prev, fields: newFields }));
   };
 
   const handleDeleteField = (idx: number) => {
-    const newFields = getSortedFields().filter((_, index) => index !== idx);
-    setLocalFields(getNormalizeFieldsOrders(newFields));
-    setHasUnsavedChanges(true);
+    const newFields = getNormalizeFieldsOrders(getSortedFields().filter((_, index) => index !== idx));
+    setDetailFieldset((prev) => ({ ...prev, fields: newFields }));
+    setDetailFieldsetChanges((prev) => ({ ...prev, fields: newFields }));
   };
 
   const handleMoveField = (from: number, direction: EMoveDirections) => {
     const to = direction === EMoveDirections.Up ? from - 1 : from + 1;
     const newFields = moveWorkflowField(from, to, getSortedFields());
-    setLocalFields(newFields);
-    setHasUnsavedChanges(true);
+    setDetailFieldset((prev) => ({ ...prev, fields: newFields }));
+    setDetailFieldsetChanges((prev) => ({ ...prev, fields: newFields }));
   };
 
-  const handleSaveFields = () => {
-    if (!fieldset) return;
-    const fieldsPayload = localFields.map(({ id: _id, ...rest }) => rest);
-    dispatch(updateFieldsetAction({
-      id: fieldset.id,
-      fields: fieldsPayload as any,
-    }));
-  };
-
-  // Rules handlers
   const handleAddRule = () => {
     const newRule: IFieldsetTemplateRule = {
       apiName: `temporary-${Date.now()}`,
-      type: RULE_TYPES[0].value,
+      type: FIELDSET_RULE_TYPES[0].value,
       value: '',
       fields: [],
     };
-    setLocalRules([...localRules, newRule]);
-    setHasUnsavedRuleChanges(true);
+    const rules = [...detailFieldset.rules, newRule];
+    setDetailFieldset((prev) => ({ ...prev, rules }));
+    setDetailFieldsetChanges((prev) => ({ ...prev, rules }));
   };
 
   const handleEditRuleValue = (index: number, value: string) => {
-    const updated = localRules.map((rule, i) =>
-      i === index ? { ...rule, value } : rule,
-    );
-    setLocalRules(updated);
-    setHasUnsavedRuleChanges(true);
+    const rules = detailFieldset.rules.map((rule, i) => (i === index ? { ...rule, value } : rule));
+    setDetailFieldset((prev) => ({ ...prev, rules }));
+    setDetailFieldsetChanges((prev) => ({ ...prev, rules }));
   };
 
-  const handleEditRuleType = (index: number, type: string) => {
-    const updated = localRules.map((rule, i) =>
-      i === index ? { ...rule, type } : rule,
-    );
-    setLocalRules(updated);
-    setHasUnsavedRuleChanges(true);
+  const handleEditRuleType = (index: number, type: EFieldsetRuleType) => {
+    const rules = detailFieldset.rules.map((rule, i) => (i === index ? { ...rule, type } : rule));
+    setDetailFieldset((prev) => ({ ...prev, rules }));
+    setDetailFieldsetChanges((prev) => ({ ...prev, rules }));
   };
 
   const handleEditRuleFields = (index: number, fieldApiNames: (string | number | null)[]) => {
-    const updated = localRules.map((rule, i) =>
-      i === index ? { ...rule, fields: fieldApiNames.filter((n): n is string => typeof n === 'string') } : rule,
+    const rules = detailFieldset.rules.map((rule, i) =>
+      i === index
+        ? { ...rule, fields: fieldApiNames.filter((name): name is string => typeof name === 'string') }
+        : rule,
     );
-    setLocalRules(updated);
-    setHasUnsavedRuleChanges(true);
+    setDetailFieldset((prev) => ({ ...prev, rules }));
+    setDetailFieldsetChanges((prev) => ({ ...prev, rules }));
   };
 
   const handleDeleteRule = (index: number) => {
-    setLocalRules(localRules.filter((_, i) => i !== index));
-    setHasUnsavedRuleChanges(true);
+    const rules = detailFieldset.rules.filter((_, i) => i !== index);
+    setDetailFieldset((prev) => ({ ...prev, rules }));
+    setDetailFieldsetChanges((prev) => ({ ...prev, rules }));
   };
 
-  const handleSaveRules = () => {
-    if (!fieldset) return;
-    // Strip temporary api_names for new rules so the backend creates them
-    const rulesPayload = localRules.map(({ apiName, ...rule }) => ({
-      ...rule,
-      ...(apiName.startsWith('temporary-') ? {} : { apiName }),
-    }));
-    dispatch(updateFieldsetAction({
+  const handleSave = () => {
+    if (!fieldset || !isChanged) return;
+
+    if (detailFieldsetChanges.rules) {
+      const ruleErrorMessageKey = validateFieldsetRules(detailFieldsetChanges.rules, detailFieldset.fields);
+
+      if (ruleErrorMessageKey) {
+        NotificationManager.warning({
+          message: formatMessage({ id: ruleErrorMessageKey }),
+        });
+        return;
+      }
+    }
+
+    const payload: IUpdateFieldsetParams = {
       id: fieldset.id,
-      rules: rulesPayload as IFieldsetTemplateRule[],
-    }));
+    };
+
+    if (detailFieldsetChanges.description) {
+      payload.description = detailFieldsetChanges.description;
+    }
+    if (detailFieldsetChanges.labelPosition) {
+      payload.labelPosition = detailFieldsetChanges.labelPosition;
+    }
+    if (detailFieldsetChanges.fields) {
+      payload.fields = detailFieldsetChanges.fields.map(
+        ({ id: _id, ...rest }) => rest,
+      ) as IUpdateFieldsetParams['fields'];
+    }
+    if (detailFieldsetChanges.rules) {
+      payload.rules = detailFieldsetChanges.rules.map(({ apiName, ...rule }) => ({
+        ...rule,
+        ...(apiName.startsWith('temporary-') ? {} : { apiName }),
+      })) as IFieldsetTemplateRule[];
+    }
+
+    dispatch(updateFieldsetAction(payload));
   };
+
+  const getRuleValuePlaceholder = (ruleType: EFieldsetRuleType) =>
+    formatMessage({ id: FIELDSET_RULE_VALUE_PLACEHOLDER_BY_TYPE[ruleType] });
 
   if (isLoading) {
     return <FieldsetDetailsSkeleton />;
@@ -246,6 +244,8 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId } } }: TFieldsetD
 
   return (
     <div className={styles['container']}>
+      <FieldsetUnsavedChangesModal isChanged={isChanged} />
+
       <header className={styles['header']}>
         <h1 title={fieldset.name}>{fieldset.name}</h1>
         <div className={styles['header__config']}>
@@ -263,9 +263,7 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId } } }: TFieldsetD
       </header>
 
       <div className={styles['list']}>
-        <h2 className={styles['section-title']}>
-          {formatMessage({ id: 'fieldsets.settings-section' })}
-        </h2>
+        <h2 className={styles['section-title']}>{formatMessage({ id: 'fieldsets.settings-section' })}</h2>
 
         <div className={styles['settings-form']}>
           <div className={styles['settings-field']}>
@@ -275,7 +273,7 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId } } }: TFieldsetD
             <textarea
               id="fieldset-description"
               className={styles['settings-textarea']}
-              value={localDescription}
+              value={detailFieldset.description}
               placeholder={formatMessage({ id: 'fieldsets.settings.description-placeholder' })}
               onChange={handleSettingsDescriptionChange}
             />
@@ -288,39 +286,21 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId } } }: TFieldsetD
             <select
               id="fieldset-label-position"
               className={styles['settings-select']}
-              value={localLabelPosition}
+              value={detailFieldset.labelPosition}
               onChange={handleSettingsLabelPositionChange}
             >
-              {LABEL_POSITION_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {formatMessage({ id: opt.labelKey })}
+              {FIELDSET_LABEL_POSITION_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {formatMessage({ id: option.labelKey })}
                 </option>
               ))}
             </select>
           </div>
-
-
         </div>
-
-        {hasUnsavedSettingsChanges && (
-          <div className={styles['save-bar']}>
-            <Button
-              label={formatMessage({ id: 'fieldsets.save-settings' })}
-              buttonStyle="yellow"
-              size="md"
-              onClick={handleSaveSettings}
-            />
-            <span className={styles['save-bar__hint']}>
-              {formatMessage({ id: 'fieldsets.unsaved-settings-changes' })}
-            </span>
-          </div>
-        )}
       </div>
 
       <div className={styles['list']}>
-        <h2 className={styles['section-title']}>
-          {formatMessage({ id: 'fieldsets.fields-section' })}
-        </h2>
+        <h2 className={styles['section-title']}>{formatMessage({ id: 'fieldsets.fields-section' })}</h2>
 
         <div className={styles['components']}>
           {ExtraFieldsMap.map((x) => (
@@ -345,55 +325,35 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId } } }: TFieldsetD
                 mode={EExtraFieldMode.Kickoff}
                 showDropdown
                 datasetOptions={datasetOptions}
-                labelPosition={isDesktop ? localLabelPosition : EFieldLabelPosition.Top}
+                labelPosition={isDesktop ? detailFieldset.labelPosition : EFieldLabelPosition.Top}
               />
             ))}
           </div>
         )}
 
         {sortedFields.length === 0 && (
-          <p className={styles['empty-text']}>
-            {formatMessage({ id: 'fieldsets.no-fields' })}
-          </p>
-        )}
-
-        {hasUnsavedChanges && (
-          <div className={styles['save-bar']}>
-            <Button
-              label={formatMessage({ id: 'fieldsets.save-fields' })}
-              buttonStyle="yellow"
-              size="md"
-              onClick={handleSaveFields}
-            />
-            <span className={styles['save-bar__hint']}>
-              {formatMessage({ id: 'fieldsets.unsaved-changes' })}
-            </span>
-          </div>
+          <p className={styles['empty-text']}>{formatMessage({ id: 'fieldsets.no-fields' })}</p>
         )}
       </div>
 
       <div className={styles['list']}>
-        <h2 className={styles['section-title']}>
-          {formatMessage({ id: 'fieldsets.rules-section' })}
-        </h2>
+        <h2 className={styles['section-title']}>{formatMessage({ id: 'fieldsets.rules-section' })}</h2>
 
-        {localRules.length === 0 && !hasUnsavedRuleChanges && (
-          <p className={styles['empty-text']}>
-            {formatMessage({ id: 'fieldsets.no-rules' })}
-          </p>
+        {detailFieldset.rules.length === 0 && (
+          <p className={styles['empty-text']}>{formatMessage({ id: 'fieldsets.no-rules' })}</p>
         )}
 
-        {localRules.map((rule, index) => (
+        {detailFieldset.rules.map((rule, index) => (
           <div key={rule.apiName} className={styles['rule-row']}>
             <select
               value={rule.type}
-              onChange={(e) => handleEditRuleType(index, e.target.value)}
+              onChange={(e) => handleEditRuleType(index, e.target.value as EFieldsetRuleType)}
               className={styles['rule-value-input']}
               style={{ flex: 'none', minWidth: '10rem' }}
             >
-              {RULE_TYPES.map((rt) => (
-                <option key={rt.value} value={rt.value}>
-                  {formatMessage({ id: rt.labelKey })}
+              {FIELDSET_RULE_TYPES.map((ruleType) => (
+                <option key={ruleType.value} value={ruleType.value}>
+                  {formatMessage({ id: ruleType.labelKey })}
                 </option>
               ))}
             </select>
@@ -402,39 +362,32 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId } } }: TFieldsetD
               type="text"
               className={styles['rule-value-input']}
               value={rule.value ?? ''}
-              placeholder={formatMessage({ id: 'fieldsets.rule-value-placeholder' })}
+              placeholder={getRuleValuePlaceholder(rule.type)}
               onChange={(e) => handleEditRuleValue(index, e.target.value)}
             />
 
-            <button
-              type="button"
-              className={styles['rule-delete-btn']}
-              onClick={() => handleDeleteRule(index)}
-            >
+            <button type="button" className={styles['rule-delete-btn']} onClick={() => handleDeleteRule(index)}>
               {formatMessage({ id: 'fieldsets.rule-delete' })}
             </button>
 
             <div className={styles['rule-fields-selector']}>
-              <span className={styles['rule-fields-label']}>
-                {formatMessage({ id: 'fieldsets.rule-fields' })}
-              </span>
+              <span className={styles['rule-fields-label']}>{formatMessage({ id: 'fieldsets.rule-fields' })}</span>
               <div className={styles['rule-fields-select']}>
                 <FilterSelect<'apiName', 'name', { apiName: string; name: string }>
                   isMultiple
                   optionIdKey="apiName"
                   optionLabelKey="name"
-                  options={localFields.map((f) => ({ apiName: f.apiName, name: f.name }))}
+                  options={detailFieldset.fields.map((field) => ({ apiName: field.apiName, name: field.name }))}
                   selectedOptions={rule.fields || []}
                   placeholderText={formatMessage({ id: 'fieldsets.rule-fields-placeholder' })}
-                  selectAllLabel={formatMessage({ id: 'fieldsets.rule-fields-all' })}
                   onChange={(fieldApiNames) => handleEditRuleFields(index, fieldApiNames)}
                   resetFilter={() => handleEditRuleFields(index, [])}
                   renderPlaceholder={(opts) => {
                     const selected = (rule.fields || []).length;
                     if (selected === 0) return formatMessage({ id: 'fieldsets.rule-fields-placeholder' });
                     const selectedNames = opts
-                      .filter((o) => (rule.fields || []).includes(o.apiName))
-                      .map((o) => o.name);
+                      .filter((option) => (rule.fields || []).includes(option.apiName))
+                      .map((option) => option.name);
                     return selectedNames.join(', ');
                   }}
                 />
@@ -443,26 +396,21 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId } } }: TFieldsetD
           </div>
         ))}
 
-        <button
-          type="button"
-          className={styles['add-rule-btn']}
-          onClick={handleAddRule}
-        >
+        <button type="button" className={styles['add-rule-btn']} onClick={handleAddRule}>
           + {formatMessage({ id: 'fieldsets.add-rule' })}
         </button>
+      </div>
 
-        {hasUnsavedRuleChanges && (
-          <div className={styles['save-bar']}>
-            <Button
-              label={formatMessage({ id: 'fieldsets.save-rules' })}
-              buttonStyle="yellow"
-              size="md"
-              onClick={handleSaveRules}
-            />
-            <span className={styles['save-bar__hint']}>
-              {formatMessage({ id: 'fieldsets.unsaved-rule-changes' })}
-            </span>
-          </div>
+      <div className={styles['save-bar']}>
+        <Button
+          label={formatMessage({ id: 'fieldsets.save' })}
+          buttonStyle="yellow"
+          size="md"
+          onClick={handleSave}
+          disabled={!isChanged}
+        />
+        {isChanged && (
+          <span className={styles['save-bar__hint']}>{formatMessage({ id: 'fieldsets.unsaved-changes' })}</span>
         )}
       </div>
 
@@ -472,4 +420,3 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId } } }: TFieldsetD
 };
 
 export default FieldsetDetails;
-

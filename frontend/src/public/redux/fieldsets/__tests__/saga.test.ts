@@ -20,6 +20,7 @@ import { ERoutes } from '../../../constants/routes';
 import { EFieldsetsSorting } from '../../../types/fieldset';
 import { makeFieldsetCatalogItem } from '../../../__stubs__/fieldsets.factory';
 import { isRequestCanceled } from '../../../utils/isRequestCanceled';
+import { NotificationManager } from '../../../components/UI/Notifications';
 
 jest.mock('../../../utils/getConfig', () => ({
   getBrowserConfigEnv: jest.fn().mockReturnValue({
@@ -198,16 +199,12 @@ describe('loadFieldsetsSaga — additional cases', () => {
   beforeEach(() => { jest.clearAllMocks(); });
 
   const runSagaHelper = async (
-    saga: (...args: unknown[]) => Generator,
-    action: { type: string; payload?: unknown },
-    stateOverrides: Record<string, unknown> = {},
+    saga: typeof loadFieldsetsSaga,
+    action: ReturnType<typeof loadFieldsets>,
+    stateOverrides: Partial<typeof initialState> = {},
   ) => {
     const dispatched: { type: string; payload?: unknown }[] = [];
-    const fieldsets = { ...initialState };
-    Object.keys(stateOverrides).forEach((key) => {
-      (fieldsets as Record<string, unknown>)[key] = stateOverrides[key];
-    });
-    const state = { fieldsets };
+    const state = { fieldsets: { ...initialState, ...stateOverrides } };
 
     function* wrapper() {
       yield call(saga, action);
@@ -371,17 +368,18 @@ describe('updateFieldsetSaga', () => {
     );
   });
 
-  it('dispatches loadCurrentFieldset on API error to rollback UI state', async () => {
+  it('shows warning and does not reload fieldset on API error', async () => {
     (updateFieldset as jest.Mock).mockRejectedValue(new Error('Cannot modify bound fieldset'));
 
     const dispatched = await runUpdateFieldset({ id: FIELDSET_ID, description: 'new desc' });
 
-    expect(dispatched).toEqual(
+    expect(NotificationManager.warning).toHaveBeenCalledTimes(1);
+    expect(NotificationManager.warning).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'Cannot modify bound fieldset' }),
+    );
+    expect(dispatched).not.toEqual(
       expect.arrayContaining([
-        expect.objectContaining({
-          type: loadCurrentFieldset.type,
-          payload: { id: FIELDSET_ID },
-        }),
+        expect.objectContaining({ type: loadCurrentFieldset.type }),
       ]),
     );
     expect(dispatched).not.toEqual(
