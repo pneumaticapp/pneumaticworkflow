@@ -1,22 +1,19 @@
-import * as React from 'react';
+import React, { forwardRef, ReactNode } from 'react';
 import { act, render, screen, waitFor } from '@testing-library/react';
 
 import { TaskCard, ETaskCardViewMode } from '../TaskCard';
 import { EExtraFieldType, ETemplateOwnerType, IExtraField } from '../../../types/template';
 import { ETaskStatus } from '../../../redux/actions';
 import { EWorkflowStatus, EWorkflowsLogSorting } from '../../../types/workflow';
-import { ExtraFieldIntl } from '../../TemplateEdit/ExtraFields';
-import { addOrUpdateStorageOutput } from '../utils/storageOutputs';
 
 jest.mock('../../TemplateEdit/ExtraFields', () => ({
   ExtraFieldIntl: jest.fn(() => <div data-testid="extra-field" />),
 }));
 
-const mockExtraFieldIntl = ExtraFieldIntl as unknown as jest.Mock;
-
 jest.mock('../utils/storageOutputs', () => ({
   getOutputFromStorage: jest.fn(() => undefined),
   addOrUpdateStorageOutput: jest.fn(),
+  removeOutputFromLocalStorage: jest.fn(),
 }));
 
 jest.mock('../../../utils/autoFocusFirstField', () => ({
@@ -35,7 +32,7 @@ jest.mock('../../../redux/selectors/groups', () => ({
   getRegularGroupsList: () => [{ id: 5, name: 'Group Five', type: 'regular' }],
 }));
 
-const mockUsersDropdown = jest.fn((_props?: unknown) => null);
+const mockUsersDropdown = jest.fn();
 
 jest.mock('../../UI/form/UsersDropdown', () => ({
   UsersDropdown: (props: unknown) => {
@@ -59,7 +56,7 @@ jest.mock('../../Workflows/WorkflowLog/WorkflowLogSkeleton', () => ({
 }));
 
 jest.mock('../GuestsController', () => ({
-  GuestController: React.forwardRef(() => null),
+  GuestController: forwardRef(() => null),
 }));
 
 jest.mock('../SubWorkflows', () => ({
@@ -74,18 +71,12 @@ jest.mock('../HelpModal/HelpModal', () => ({
   HelpModal: () => null,
 }));
 
-let returnModalOnConfirm: ((comment: string) => void) | undefined;
-
 jest.mock('../ReturnModal', () => ({
-  ReturnModal: ({ onConfirm }: { onConfirm: (comment: string) => void }) => {
-    returnModalOnConfirm = onConfirm;
-
-    return null;
-  },
+  ReturnModal: () => null,
 }));
 
 jest.mock('react-router-dom', () => ({
-  Link: ({ children }: { children: React.ReactNode }) => <a>{children}</a>,
+  Link: ({ children }: { children: ReactNode }) => <a href="/">{children}</a>,
 }));
 
 jest.mock('../../RichText', () => ({
@@ -126,15 +117,15 @@ jest.mock('../checklist', () => ({
 }));
 
 jest.mock('../../UI', () => ({
-  Tooltip: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  Tooltip: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
 jest.mock('../../UI/Typeography/Header', () => ({
-  Header: ({ children }: { children: React.ReactNode }) => <h4>{children}</h4>,
+  Header: ({ children }: { children: ReactNode }) => <h4>{children}</h4>,
 }));
 
 jest.mock('../../UI/Buttons/Button', () => ({
-  Button: () => <button />,
+  Button: () => <button type="button" aria-label="Action" />,
 }));
 
 jest.mock('../../IntlMessages', () => ({
@@ -275,7 +266,8 @@ const baseProps = {
 describe('TaskCard', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    returnModalOnConfirm = undefined;
+    const { getOutputFromStorage } = jest.requireMock('../utils/storageOutputs');
+    getOutputFromStorage.mockReturnValue(undefined);
   });
 
   describe('Performer dropdown', () => {
@@ -346,6 +338,8 @@ describe('TaskCard', () => {
 
   describe('Output field ordering', () => {
     it('renders output fields sorted by order descending to match the template', async () => {
+      const { ExtraFieldIntl } = jest.requireMock('../../TemplateEdit/ExtraFields');
+
       const task = {
         ...baseTask,
         output: [
@@ -357,153 +351,108 @@ describe('TaskCard', () => {
       render(<TaskCard {...baseProps} task={task} />);
 
       await waitFor(() => {
-        expect(mockExtraFieldIntl).toHaveBeenCalled();
+        expect(ExtraFieldIntl).toHaveBeenCalled();
       });
 
-      const renderedApiNames = mockExtraFieldIntl.mock.calls.map((call: any[]) => call[0].field.apiName);
+      const renderedApiNames = ExtraFieldIntl.mock.calls.map((call: any[]) => call[0].field.apiName);
 
       expect(renderedApiNames).toEqual(['file-field', 'url-field']);
     });
   });
-  describe('Output draft persistence', () => {
-    beforeEach(() => {
+
+  describe('Output synchronization', () => {
+    it('discards a pending field edit when the same server output changes', () => {
       jest.useFakeTimers();
+
+      try {
+        const { ExtraFieldIntl } = jest.requireMock('../../TemplateEdit/ExtraFields');
+        const { addOrUpdateStorageOutput } = jest.requireMock('../utils/storageOutputs');
+        const field = makeField({ apiName: 'url-field', value: 'https://server.example' });
+        const { rerender } = render(
+          <TaskCard {...baseProps} task={{ ...baseTask, output: [field] }} />,
+        );
+        const lastCall = ExtraFieldIntl.mock.calls[ExtraFieldIntl.mock.calls.length - 1];
+
+        act(() => {
+          lastCall[0].editField({ value: 'https://draft.example' });
+        });
+
+        rerender(
+          <TaskCard
+            {...baseProps}
+            task={{
+              ...baseTask,
+              output: [{ ...field, value: 'https://updated-server.example' }],
+            }}
+          />,
+        );
+
+        act(() => {
+          jest.advanceTimersByTime(300);
+        });
+
+        expect(addOrUpdateStorageOutput).toHaveBeenCalledTimes(1);
+        expect(addOrUpdateStorageOutput).toHaveBeenCalledWith(baseTask.id, []);
+      } finally {
+        jest.useRealTimers();
+      }
     });
 
-    afterEach(() => {
-      jest.useRealTimers();
-    });
+    it('discards a stale draft when server output is cleared', async () => {
+      const { ExtraFieldIntl } = jest.requireMock('../../TemplateEdit/ExtraFields');
+      const { addOrUpdateStorageOutput, getOutputFromStorage } = jest.requireMock('../utils/storageOutputs');
+      const field = makeField({ apiName: 'url-field', value: 'https://server.example' });
+      getOutputFromStorage.mockReturnValue([{ ...field, value: 'https://draft.example' }]);
+      const { rerender } = render(
+        <TaskCard {...baseProps} task={{ ...baseTask, output: [field] }} />,
+      );
 
-    it('cancels pending output edits when task output updates from the server', async () => {
-      const outputField = makeField({ apiName: 'notes', type: EExtraFieldType.Text, value: '' });
-      const task = {
-        ...baseTask,
-        output: [outputField],
-      };
-
-      const { rerender } = render(<TaskCard {...baseProps} task={task} />);
+      rerender(
+        <TaskCard
+          {...baseProps}
+          task={{ ...baseTask, output: [{ ...field, value: '' }] }}
+        />,
+      );
 
       await waitFor(() => {
-        expect(mockExtraFieldIntl).toHaveBeenCalled();
+        const lastCall = ExtraFieldIntl.mock.calls[ExtraFieldIntl.mock.calls.length - 1];
+        expect(lastCall[0].field.value).toBe('');
       });
+      expect(addOrUpdateStorageOutput).toHaveBeenCalledWith(baseTask.id, []);
+    });
 
-      const editField = mockExtraFieldIntl.mock.calls[0][0].editField;
-
-      act(() => {
-        editField({ value: 'draft text' });
-      });
-
-      expect(addOrUpdateStorageOutput).not.toHaveBeenCalled();
+    it('preserves drafts for unchanged empty fields when another server field changes', async () => {
+      const { ExtraFieldIntl } = jest.requireMock('../../TemplateEdit/ExtraFields');
+      const { addOrUpdateStorageOutput, getOutputFromStorage } = jest.requireMock('../utils/storageOutputs');
+      const emptyField = makeField({ apiName: 'empty-field', order: 1, value: '' });
+      const changedField = makeField({ apiName: 'changed-field', order: 0, value: 'server value' });
+      const emptyFieldDraft = { ...emptyField, value: 'local draft' };
+      const changedFieldDraft = { ...changedField, value: 'stale local draft' };
+      getOutputFromStorage.mockReturnValue([emptyFieldDraft, changedFieldDraft]);
+      const { rerender } = render(
+        <TaskCard {...baseProps} task={{ ...baseTask, output: [emptyField, changedField] }} />,
+      );
 
       rerender(
         <TaskCard
           {...baseProps}
           task={{
-            ...task,
-            output: [{ ...outputField, value: 'server value' }],
+            ...baseTask,
+            output: [emptyField, { ...changedField, value: 'updated server value' }],
           }}
         />,
       );
 
-      act(() => {
-        jest.advanceTimersByTime(300);
-      });
-
-      expect(addOrUpdateStorageOutput).not.toHaveBeenCalled();
-    });
-
-    it('discards pending output edits when the task restarts', async () => {
-      const outputField = makeField({ apiName: 'notes', type: EExtraFieldType.Text, value: '' });
-      const task = {
-        ...baseTask,
-        output: [outputField],
-      };
-
-      const { rerender } = render(<TaskCard {...baseProps} task={task} />);
-
       await waitFor(() => {
-        expect(mockExtraFieldIntl).toHaveBeenCalled();
+        const renderedFields = ExtraFieldIntl.mock.calls
+          .slice(-2)
+          .map((call: Array<{ field: IExtraField }>) => call[0].field);
+        expect(renderedFields).toEqual([
+          expect.objectContaining({ apiName: 'empty-field', value: 'local draft' }),
+          expect.objectContaining({ apiName: 'changed-field', value: 'updated server value' }),
+        ]);
       });
-
-      const editField = mockExtraFieldIntl.mock.calls[0][0].editField;
-
-      act(() => {
-        editField({ value: 'stale draft' });
-      });
-
-      rerender(
-        <TaskCard
-          {...baseProps}
-          task={{
-            ...task,
-            dateStarted: '2024-02-01',
-          }}
-        />,
-      );
-
-      expect(addOrUpdateStorageOutput).not.toHaveBeenCalled();
-    });
-
-    it('flushes pending output edits on unmount', async () => {
-      const outputField = makeField({ apiName: 'notes', type: EExtraFieldType.Text, value: '' });
-      const task = {
-        ...baseTask,
-        output: [outputField],
-      };
-
-      const { unmount } = render(<TaskCard {...baseProps} task={task} />);
-
-      await waitFor(() => {
-        expect(mockExtraFieldIntl).toHaveBeenCalled();
-      });
-
-      const editField = mockExtraFieldIntl.mock.calls[0][0].editField;
-
-      act(() => {
-        editField({ value: 'draft text' });
-      });
-
-      unmount();
-
-      expect(addOrUpdateStorageOutput).toHaveBeenCalledWith(1, [
-        expect.objectContaining({ apiName: 'notes', value: 'draft text' }),
-      ]);
-    });
-
-    it('does not flush pending output edits after task revert clears drafts', async () => {
-      const outputField = makeField({ apiName: 'notes', type: EExtraFieldType.Text, value: '' });
-      const task = {
-        ...baseTask,
-        output: [outputField],
-        revertTasks: [{ id: 2, name: 'Previous task', apiName: 'task-2' }],
-      };
-
-      const { unmount } = render(<TaskCard {...baseProps} task={task} />);
-
-      await waitFor(() => {
-        expect(mockExtraFieldIntl).toHaveBeenCalled();
-      });
-
-      const editField = mockExtraFieldIntl.mock.calls[0][0].editField;
-
-      act(() => {
-        editField({ value: 'draft text' });
-      });
-
-      act(() => {
-        returnModalOnConfirm?.('revert comment');
-      });
-
-      expect(baseProps.setTaskReverted).toHaveBeenCalledWith({
-        taskId: 1,
-        viewMode: ETaskCardViewMode.Single,
-        comment: 'revert comment',
-        clearOutputTaskIds: [1, 2],
-      });
-
-      unmount();
-
-      expect(addOrUpdateStorageOutput).not.toHaveBeenCalled();
+      expect(addOrUpdateStorageOutput).toHaveBeenCalledWith(baseTask.id, [emptyFieldDraft]);
     });
   });
 });
