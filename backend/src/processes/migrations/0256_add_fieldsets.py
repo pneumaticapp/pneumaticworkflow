@@ -7,7 +7,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('accounts', '0144_auto_20260609_1910'),
-        ('processes', '0254_add_fileattachment_fields'),
+        ('processes', '0255_update_task_performer_constraint'),
     ]
 
     operations = [
