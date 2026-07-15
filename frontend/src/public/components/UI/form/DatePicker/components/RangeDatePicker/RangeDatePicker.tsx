@@ -30,7 +30,9 @@ export const RangeDatePicker = ({
   const clearLabel = formatMessage({ id: 'ui-input.clear' });
   const hasSelectedRange = Boolean(startDate || endDate);
 
-  const handleChangeRange = ([nextStartDate, nextEndDate]: [Date | null, Date | null]) => {
+  const handleChangeRange = (dates: [Date | null, Date | null] | null) => {
+    const [nextStartDate, nextEndDate] = dates ?? [null, null];
+
     const adjustedStartDate = normalizeDatePickerDate({
       date: nextStartDate,
       timezone,

@@ -76,7 +76,7 @@ export function ExtraFieldDate({
             showPopperArrow={false}
           />
           <div className={fieldStyles['icon']}>
-            {selectedDate ? (
+            {selectedDate && !isDisabled ? (
               <button
                 type="button"
                 className={fieldStyles['clear-button']}
