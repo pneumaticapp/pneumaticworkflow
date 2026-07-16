@@ -144,6 +144,7 @@ class KickoffUpdateVersionService(BaseUpdateVersionService):
                 defaults={
                     'account_id': self.instance.account_id,
                     'name': fs_data['name'],
+                    'title': fs_data['title'],
                     'description': fs_data['description'],
                     'order': fs_data['order'],
                     'label_position': fs_data['label_position'],
