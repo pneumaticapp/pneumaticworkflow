@@ -1,32 +1,16 @@
-name: Build and push a new stable version
+name: Build and push a new file-service latest version
 
 on:
   push:
-    tags:
-      - 'v*'
+    paths:
+      - 'storage/**'
+    branches:
+      - 'master'
 
 jobs:
   push_to_registry:
     name: Push Docker image to Docker Hub
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - image: pneumaticworkflow/pneumatic-frontend
-            dockerfile: frontend/Dockerfile
-            build_context: frontend
-          - image: pneumaticworkflow/pneumatic-backend
-            dockerfile: backend/Dockerfile
-            build_context: backend
-          - image: pneumaticworkflow/pneumatic-celery
-            dockerfile: backend/Dockerfile
-            build_context: backend
-          - image: pneumaticworkflow/pneumatic-celery-beat
-            dockerfile: backend/Dockerfile
-            build_context: backend
-          - image: pneumaticworkflow/file-service
-            dockerfile: storage/Dockerfile
-            build_context: storage
     permissions:
       packages: write
       contents: read
@@ -46,7 +30,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ matrix.image }}
+          images: "pneumaticworkflow/file-service"
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -57,12 +41,12 @@ jobs:
           driver: cloud
           endpoint: "pneumaticworkflow/pneumatic-release-builder"
 
-      - name: Build and push ${{ matrix.image }}
+      - name: Build and push pneumaticworkflow/file-service
         uses: docker/build-push-action@v6
         with:
           platforms: linux/amd64,linux/arm64
-          context: ${{ matrix.build_context }}
-          file: ${{ matrix.dockerfile }}
+          context: storage
+          file: "storage/Dockerfile"
           push: true
-          tags: "${{ steps.meta.outputs.tags }},${{ matrix.image }}:stable"
+          tags: "pneumaticworkflow/file-service:latest"
           labels: ${{ steps.meta.outputs.labels }}
