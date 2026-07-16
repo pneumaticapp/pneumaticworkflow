@@ -84,6 +84,7 @@ class TemplateService(BaseModelService):
             'kickoff': {
                 'description': initial_kickoff_data.get('description', ''),
                 'fields': initial_kickoff_data.get('fields', []),
+                'fieldsets': initial_kickoff_data.get('fieldsets', []),
             },
             'tasks': deepcopy(initial_tasks_data),
         }
@@ -118,7 +119,7 @@ class TemplateService(BaseModelService):
                     fields_values[api_name] = '{{%s}}' % api_name
                 else:
                     field_data['api_name'] = create_api_name(
-                        prefix=TaskTemplate.api_name_prefix,
+                        prefix=FieldTemplate.api_name_prefix,
                     )
             if task_data.get('description'):
                 task_data['description'] = insert_fields_values_to_text(

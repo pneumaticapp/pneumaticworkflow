@@ -5,7 +5,7 @@ import classnames from 'classnames';
 import { DropdownList, Duration } from '../../../UI';
 import { TrashIcon } from '../../../icons';
 
-import { IDueDate, IKickoff, ITemplateTask } from '../../../../types/template';
+import { IDueDate, IKickoffClient, ITemplateTaskClient } from '../../../../types/template';
 import { START_DURATION } from '../../constants';
 import { getRuleTargetOptions, TRuleTargetOption } from './utils/getRuleTargetOptions';
 import { getRulePrepositionOptions, TRulePrepositionOption } from './utils/getRulePrepositionOptions';
@@ -15,14 +15,14 @@ import styles from './DueDate.css';
 import stylesTaskForm from '../TaskForm.css';
 
 interface IDueInProps {
-  currentTask: ITemplateTask;
-  tasks: ITemplateTask[];
-  kickoff: IKickoff;
+  currentTask: ITemplateTaskClient;
+  tasks: ITemplateTaskClient[];
+  kickoff: IKickoffClient;
   onChange(value: IDueDate): void;
-  dueDate: ITemplateTask['rawDueDate'];
+  dueDate: ITemplateTaskClient['rawDueDate'];
 }
 
-type TDueDateKeys = keyof ITemplateTask['rawDueDate'];
+type TDueDateKeys = keyof ITemplateTaskClient['rawDueDate'];
 
 export function DueDate({ dueDate, currentTask, tasks, kickoff, onChange }: IDueInProps) {
   const { formatMessage } = useIntl();
@@ -35,7 +35,7 @@ export function DueDate({ dueDate, currentTask, tasks, kickoff, onChange }: IDue
 
   const [systemRules, dateFieldsRules, tasksRules] = useMemo(() => {
     return getRuleTargetOptions(currentTask, tasks, kickoff);
-  }, [tasks, kickoff]);
+  }, [currentTask, kickoff, tasks]);
 
   const currentPrepositionOption = useMemo(() => {
     return prepositionOptions.find((rule) => rule.rulePreposition === rulePreposition) || null;
@@ -47,7 +47,7 @@ export function DueDate({ dueDate, currentTask, tasks, kickoff, onChange }: IDue
         (rule) => rule.sourceId === sourceId && rule.ruleTarget === ruleTarget,
       ) || null
     );
-  }, [sourceId, ruleTarget]);
+  }, [dateFieldsRules, ruleTarget, sourceId, systemRules, tasksRules]);
 
   useUpdatePreposition(prepositionOptions, currentPrepositionOption, currentTargetOption, (option) =>
     onChange({
@@ -58,7 +58,7 @@ export function DueDate({ dueDate, currentTask, tasks, kickoff, onChange }: IDue
 
   const handleChange =
     <T extends TDueDateKeys>(field: T) =>
-      (value: ITemplateTask['rawDueDate'][T]) => {
+      (value: ITemplateTaskClient['rawDueDate'][T]) => {
         onChange({ ...dueDate, [field]: value });
       };
 
