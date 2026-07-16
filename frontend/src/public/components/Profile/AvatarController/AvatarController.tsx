@@ -204,13 +204,13 @@ export function AvatarController({ user, containerClassname }: IAvatarController
   const renderAvatarControl = () => {
     return (
       <div className={styles['control-buttons']}>
-        <button type='button' className={styles['control-button']} onClick={() => setIsUploadModalOpen(true)}>
+        <button type="button" className={styles['control-button']} onClick={() => setIsUploadModalOpen(true)}>
           {formatMessage({ id: 'user.avatar.add' })}
         </button>
         {user.photo && (
           <>
             <div className={styles['control-button-separator']} />
-            <button type='button' className={styles['control-button']} onClick={() => setIsDeleteModalOpen(true)}>
+            <button type="button" className={styles['control-button']} onClick={() => setIsDeleteModalOpen(true)}>
               {formatMessage({ id: 'user.avatar.delete' })}
             </button>
           </>

@@ -1,5 +1,5 @@
 import produce from 'immer';
-import * as moment from 'moment-timezone';
+import moment from 'moment-timezone';
 import { mapToCamelCase } from '../../utils/mappers';
 
 import { getBrowserConfig } from '../../utils/getConfig';

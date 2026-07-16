@@ -15,7 +15,7 @@ import styles from './PopupCommentField.css';
 export interface IPopupCommentFieldProps {
   user: IAuthUser;
   mentions: TMentionData[];
-  sendComment({ text, attachments, taskId }: ISendWorkflowLogComment): void;
+  sendComment({ text, taskId }: ISendWorkflowLogComment): void;
   taskId?: number;
 }
 
@@ -35,7 +35,7 @@ export function PopupCommentField({ user, mentions, sendComment, taskId }: TPopu
       return;
     }
 
-    sendComment({ text: commentText, attachments: filesToUpload, taskId });
+    sendComment({ text: commentText, taskId });
     setFilesToUpload([]);
     setCommentText('');
     editorRef.current?.clearContent?.();

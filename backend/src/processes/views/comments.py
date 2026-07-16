@@ -72,7 +72,11 @@ class CommentViewSet(
 
     def get_queryset(self):
         user = self.request.user
-        qst = WorkflowEvent.objects.type_comment()
+        qst = (
+            WorkflowEvent.objects
+            .select_related('workflow')
+            .type_comment()
+        )
         if self.action in {'partial_update', 'destroy'}:
             qst = qst.by_user(user.id)
         return self.prefetch_queryset(qst)

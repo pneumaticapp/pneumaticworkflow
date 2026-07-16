@@ -9,13 +9,12 @@ import { getErrorMessage } from '../../utils/getErrorMessage';
 import { history } from '../../utils/history';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { logger } from '../../utils/logger';
-import { deleteRemovedFilesFromFields } from '../../api/deleteRemovedFilesFromFields';
+
 import { EWorkflowTaskStatus } from '../../types/workflow';
 import { RawPerformer } from '../../types/template';
 import { TUserListItem } from '../../types/user';
 
 function* runWorkflow({ payload: workflow }: TRunWorkflow) {
-  yield deleteRemovedFilesFromFields(workflow.kickoff.fields);
 
   try {
     const usersList: TUserListItem[] = yield select(getUsers);

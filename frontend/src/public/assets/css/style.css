@@ -93,6 +93,12 @@ svg {
   display: block;
 }
 
+img, video {
+  display: block;
+  width: auto;
+  max-width: 100%;
+}
+
 /* ===================
 // 04. Fix
 // =================== */

@@ -18,7 +18,6 @@ import { defaultLocale } from './constants/defaultValues';
 
 /* polyfills */
 import 'promise-polyfill/src/polyfill';
-import 'whatwg-fetch';
 import './assets/css/style.css';
 
 initSentry(getPublicFormConfig, 'forms');

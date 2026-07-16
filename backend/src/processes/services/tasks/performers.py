@@ -27,6 +27,7 @@ from src.processes.services.workflow_action import (
     WorkflowActionService,
     WorkflowEventService,
 )
+from src.storage.utils import reassign_restricted_permissions_for_task
 
 UserModel = get_user_model()
 
@@ -139,6 +140,11 @@ class TaskPerformersService(BasePerformersService):
                     account_id=task.account_id,
                 )
 
+        reassign_restricted_permissions_for_task(
+            task=task,
+            user=request_user,
+        )
+
     @classmethod
     def _create_actions(
         cls,
@@ -213,3 +219,8 @@ class TaskPerformersService(BasePerformersService):
                         logo_lg=task.account.logo_lg,
                         is_returned=False,
                     )
+
+        reassign_restricted_permissions_for_task(
+            task=task,
+            user=request_user,
+        )

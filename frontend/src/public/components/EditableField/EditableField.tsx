@@ -1,7 +1,7 @@
 /* eslint-disable */
 /* prettier-ignore */
 import * as React from 'react';
-import * as classnames from 'classnames';
+import classnames from 'classnames';
 import styles from './EditableField.css';
 import { onEnterPressed } from '../../utils/handlers';
 import { Tooltip } from 'reactstrap';

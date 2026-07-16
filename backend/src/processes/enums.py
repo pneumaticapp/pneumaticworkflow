@@ -720,6 +720,16 @@ class SearchContentType:
     )
 
 
+class FileAttachmentAccessType:
+    ACCOUNT = 'account'
+    RESTRICTED = 'restricted'
+
+    CHOICES = (
+        (ACCOUNT, 'account'),
+        (RESTRICTED, 'restricted'),
+    )
+
+
 class SystemVariable:
 
     DATE = 'date'

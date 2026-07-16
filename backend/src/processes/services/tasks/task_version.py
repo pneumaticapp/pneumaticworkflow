@@ -47,6 +47,7 @@ from src.processes.services.tasks.task import (
 from src.processes.utils.common import (
     insert_fields_values_to_text,
 )
+from src.storage.utils import reassign_restricted_permissions_for_task
 
 UserModel = get_user_model()
 
@@ -92,7 +93,9 @@ class TaskUpdateVersionService(
                 field, _ = self._update_field(field_data, fieldset=None)
                 field_ids.append(field.id)
                 self._update_field_selections(field, field_data)
-        self.instance.output.exclude(id__in=field_ids).delete()
+        self.instance.output.filter(
+            fieldset__isnull=True,
+        ).exclude(id__in=field_ids).delete()
 
     def _update_delay(self, new_duration: Optional[str] = None):
 
@@ -415,6 +418,10 @@ class TaskUpdateVersionService(
                     default_performer.is_new_tasks_subscriber,
                 ),
             )
+        reassign_restricted_permissions_for_task(
+            task=self.instance,
+            user=self.user,
+        )
         if deleted_group_ids:
             for user in (
                 account.users.
@@ -526,7 +533,8 @@ class TaskUpdateVersionService(
             fields_values=tasks_fields_values,
         )
         self._update_fields(data=data.get('fields'))
-        self._update_fieldsets(data=data.get('fieldsets'))
+        if data.get('fieldsets') is not None:
+            self._update_fieldsets(data=data['fieldsets'])
         self._update_conditions(data=data.get('conditions'))
         self._update_checklists(
             data=data.get('checklists'),

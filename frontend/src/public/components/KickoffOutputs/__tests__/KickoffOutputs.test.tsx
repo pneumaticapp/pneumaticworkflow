@@ -13,6 +13,12 @@ jest.mock('../../Attachments', () => ({
   Attachments: jest.fn(() => null),
 }));
 
+jest.mock('../../../utils/getConfig', () => ({
+  getBrowserConfigEnv: () => ({
+    api: { fileServiceUrl: 'https://files.example.com' },
+  }),
+}));
+
 jest.mock('../CheckboxOutput', () => ({ CheckboxOutput: () => null }));
 jest.mock('../RadioOutput', () => ({ RadioOutput: () => null }));
 jest.mock('../TextOutput', () => ({
@@ -118,7 +124,7 @@ describe('KickoffOutputs', () => {
       name: 'Document',
       type: EExtraFieldType.File,
       value: null,
-      attachments: [{ id: 1, url: 'doc.pdf', name: 'doc.pdf', size: 10 }],
+      attachments: [{ id: '1', url: 'doc.pdf', name: 'doc.pdf', size: 10 }],
     });
 
     const fieldset = makeFieldsetRuntime({
@@ -180,9 +186,9 @@ describe('KickoffOutputs', () => {
 
   describe('isOnlyAttachmentsShown — collecting attachments from fieldsets', () => {
     it('collects file attachments from both outputs and fieldsets respecting order', () => {
-      const attachment1 = { id: 1, url: 'file1.pdf', name: 'file1.pdf', size: 100 };
-      const attachment2 = { id: 2, url: 'file2.png', name: 'file2.png', size: 200 };
-      const attachment3 = { id: 3, url: 'file3.doc', name: 'file3.doc', size: 300 };
+      const attachment1 = { id: '1', url: 'file1.pdf', name: 'file1.pdf', size: 100 };
+      const attachment2 = { id: '2', url: 'file2.png', name: 'file2.png', size: 200 };
+      const attachment3 = { id: '3', url: 'file3.doc', name: 'file3.doc', size: 300 };
 
       const fileOutput = makeExtraField({
         type: EExtraFieldType.File,
@@ -213,6 +219,125 @@ describe('KickoffOutputs', () => {
 
       const attachments = getAttachmentsProps();
       expect(attachments).toEqual([attachment1, attachment2, attachment3]);
+    });
+
+    it('falls back to markdownValue for a plain File field when attachments is empty', () => {
+      const fileOutput = makeExtraField({
+        type: EExtraFieldType.File,
+        order: 1,
+        attachments: [],
+        markdownValue: '[report.pdf](https://files.example.com/rpt-1)',
+      });
+
+      render(React.createElement(KickoffOutputs, {
+        ...baseProps,
+        outputs: [fileOutput],
+        fieldsets: [],
+      }));
+
+      expect(Attachments as jest.Mock).toHaveBeenCalledTimes(1);
+      expect(getAttachmentsProps()).toEqual([
+        expect.objectContaining({
+          id: 'rpt-1',
+          name: 'report.pdf',
+          url: 'https://files.example.com/rpt-1',
+        }),
+      ]);
+    });
+
+    it('falls back to markdownValue for a File field inside a fieldset when attachments is empty', () => {
+      const fieldset = makeFieldsetRuntime({
+        order: 1,
+        fields: [
+          makeExtraField({
+            type: EExtraFieldType.File,
+            attachments: [],
+            markdownValue: '[invoice.pdf](https://files.example.com/inv-1)',
+          }),
+        ],
+      });
+
+      render(React.createElement(KickoffOutputs, {
+        ...baseProps,
+        outputs: [],
+        fieldsets: [fieldset],
+      }));
+
+      expect(Attachments as jest.Mock).toHaveBeenCalledTimes(1);
+      expect(getAttachmentsProps()).toEqual([
+        expect.objectContaining({
+          id: 'inv-1',
+          name: 'invoice.pdf',
+          url: 'https://files.example.com/inv-1',
+        }),
+      ]);
+    });
+
+    it('prefers attachments over markdownValue for a plain File field', () => {
+      const attachment = {
+        id: 'att-1',
+        url: 'https://files.example.com/att-1',
+        name: 'actual.pdf',
+        size: 50,
+      };
+
+      const fileOutput = makeExtraField({
+        type: EExtraFieldType.File,
+        order: 1,
+        attachments: [attachment],
+        markdownValue: '[stale.pdf](https://files.example.com/stale)',
+      });
+
+      render(React.createElement(KickoffOutputs, {
+        ...baseProps,
+        outputs: [fileOutput],
+        fieldsets: [],
+      }));
+
+      expect(Attachments as jest.Mock).toHaveBeenCalledTimes(1);
+      expect(getAttachmentsProps()).toEqual([attachment]);
+    });
+
+    it('collects attachments from plain fields and markdown from fieldset File fields together', () => {
+      const attachment = {
+        id: 'plain-1',
+        url: 'https://files.example.com/plain-1',
+        name: 'plain.pdf',
+        size: 10,
+      };
+
+      const fileOutput = makeExtraField({
+        type: EExtraFieldType.File,
+        order: 2,
+        attachments: [attachment],
+      });
+
+      const fieldset = makeFieldsetRuntime({
+        order: 1,
+        fields: [
+          makeExtraField({
+            type: EExtraFieldType.File,
+            attachments: [],
+            markdownValue: '[from-fs.pdf](https://files.example.com/from-fs)',
+          }),
+        ],
+      });
+
+      render(React.createElement(KickoffOutputs, {
+        ...baseProps,
+        outputs: [fileOutput],
+        fieldsets: [fieldset],
+      }));
+
+      expect(Attachments as jest.Mock).toHaveBeenCalledTimes(1);
+      expect(getAttachmentsProps()).toEqual([
+        attachment,
+        expect.objectContaining({
+          id: 'from-fs',
+          name: 'from-fs.pdf',
+          url: 'https://files.example.com/from-fs',
+        }),
+      ]);
     });
   });
 });

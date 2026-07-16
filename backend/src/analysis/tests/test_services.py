@@ -1089,16 +1089,14 @@ class TestAnalyticService:
             event=AttachmentAnalyticsEvent.uploaded,
             is_superuser=is_superuser,
             properties={
-                'text': f'{attachment.name} {attachment.url}',
+                'text': f'{attachment.file_id}',
                 'email': user.email,
                 'first_name': user.first_name,
                 'last_name': user.last_name,
                 'account_id': user.account_id,
                 'auth_type': token_type,
                 'id': attachment.id,
-                'size': attachment.humanize_size,
                 'category': EventCategory.attachments,
-                'type': attachment.extension,
             },
         )
 
@@ -1132,16 +1130,14 @@ class TestAnalyticService:
             event=AttachmentAnalyticsEvent.uploaded,
             is_superuser=is_superuser,
             properties={
-                'text': f'{attachment.name} {attachment.url}',
+                'text': f'{attachment.file_id}',
                 'email': None,
                 'first_name': None,
                 'last_name': None,
                 'auth_type': token_type,
                 'id': attachment.id,
-                'size': attachment.humanize_size,
                 'account_id': account.id,
                 'category': EventCategory.attachments,
-                'type': attachment.extension,
             },
         )
 

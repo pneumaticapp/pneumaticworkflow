@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { MouseEventHandler, useRef, useState } from 'react';
 import OutsideClickHandler from 'react-outside-click-handler';
-import * as PerfectScrollbar from 'react-perfect-scrollbar';
+import PerfectScrollbar from 'react-perfect-scrollbar';
 import { Tooltip as ReactstrapTooltip } from 'reactstrap';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';

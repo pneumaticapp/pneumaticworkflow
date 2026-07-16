@@ -65,7 +65,7 @@ class FieldsetTemplateSerializer(
         )
 
     shared_fieldset_id = AccountPrimaryKeyRelatedField(
-        queryset=FieldsetTemplate.objects.all(),
+        queryset=FieldsetTemplate.objects.shared(),
         required=True,
     )
     api_name = CharField(required=False, max_length=200)

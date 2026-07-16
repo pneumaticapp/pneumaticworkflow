@@ -56,7 +56,18 @@ export function AppRoutes({ containerClassnames, user }: IAppRoutesProps) {
   if (shouldRedirectToUrl) {
     sessionStorage.setItem(REDIRECT_URL_STORAGE_KEY, '');
 
-    return <Redirect to={redirectUrl!} />;
+    // Full URLs (e.g. from file service redirect) need real browser navigation;
+    // React Router's <Redirect> only handles internal SPA routes.
+    // The redirectUrl always comes from our own backend (Express authMiddleware
+    // or file service browser_utils), so no domain validation is needed.
+    if (redirectUrl!.startsWith('http://') || redirectUrl!.startsWith('https://')) {
+      // For file downloads (Content-Disposition: attachment) the browser stays
+      // on the current page, so we fall through to render normal routes —
+      // the user sees the dashboard while the file downloads.
+      window.location.replace(redirectUrl!);
+    } else {
+      return <Redirect to={redirectUrl!} />;
+    }
   }
 
   const canAccessTemplates = user.isAdmin || isTemplateOwner;

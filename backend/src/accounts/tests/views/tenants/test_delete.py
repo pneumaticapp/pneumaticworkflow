@@ -56,10 +56,6 @@ def test_delete__premium_plan__ok(
         'src.accounts.views.'
         'tenants.increase_plan_users.delay',
     )
-    settings_mock = mocker.patch(
-        'src.accounts.views.tenants.settings',
-    )
-    settings_mock.PROJECT_CONF = {'BILLING': True}
     api_client.token_authenticate(master_account_owner)
 
     # act
@@ -119,10 +115,6 @@ def test_delete__premium_plan__billing_disabled__ok(
         'src.accounts.views.'
         'tenants.increase_plan_users.delay',
     )
-    settings_mock = mocker.patch(
-        'src.accounts.views.tenants.settings',
-    )
-    settings_mock.PROJECT_CONF = {'BILLING': True}
     api_client.token_authenticate(master_account_owner)
 
     # act
@@ -183,10 +175,6 @@ def test_delete__unlimited_plan__ok(
         'src.accounts.views.'
         'tenants.increase_plan_users.delay',
     )
-    settings_mock = mocker.patch(
-        'src.accounts.views.tenants.settings',
-    )
-    settings_mock.PROJECT_CONF = {'BILLING': True}
     api_client.token_authenticate(master_account_owner)
 
     # act
@@ -253,10 +241,6 @@ def test_delete__unlimited_plan__billing_disabled__ok(
         'src.accounts.views.'
         'tenants.increase_plan_users.delay',
     )
-    settings_mock = mocker.patch(
-        'src.accounts.views.tenants.settings',
-    )
-    settings_mock.PROJECT_CONF = {'BILLING': True}
     api_client.token_authenticate(master_account_owner)
 
     # act
@@ -320,10 +304,6 @@ def test_delete__fractionalcoo_plan__ok(
         'src.accounts.views.'
         'tenants.increase_plan_users.delay',
     )
-    settings_mock = mocker.patch(
-        'src.accounts.views.tenants.settings',
-    )
-    settings_mock.PROJECT_CONF = {'BILLING': True}
     api_client.token_authenticate(master_account_owner)
 
     # act
@@ -387,10 +367,6 @@ def test_delete__free_plan__ok(
         'src.accounts.views.'
         'tenants.increase_plan_users.delay',
     )
-    settings_mock = mocker.patch(
-        'src.accounts.views.tenants.settings',
-    )
-    settings_mock.PROJECT_CONF = {'BILLING': True}
     api_client.token_authenticate(master_account_owner)
 
     # act
@@ -444,10 +420,6 @@ def test_delete__another_account_tenant__permission_denied(mocker, api_client):
         account=another_tenant_account,
         email='tenant_owner@test.test',
     )
-    settings_mock = mocker.patch(
-        'src.accounts.views.tenants.settings',
-    )
-    settings_mock.PROJECT_CONF = {'BILLING': True}
     api_client.token_authenticate(master_account_owner)
 
     # act
@@ -474,10 +446,6 @@ def test_delete__another_account_not_tenant__permission_denied(
         account=another_account,
         email='another_owner@test.test',
     )
-    settings_mock = mocker.patch(
-        'src.accounts.views.tenants.settings',
-    )
-    settings_mock.PROJECT_CONF = {'BILLING': True}
     api_client.token_authenticate(master_account_owner)
 
     # act
@@ -497,10 +465,6 @@ def test_delete__tenant__permission_denied(
         lease_level=LeaseLevel.TENANT,
     )
     master_account_owner = create_test_user(account=master_account)
-    settings_mock = mocker.patch(
-        'src.accounts.views.tenants.settings',
-    )
-    settings_mock.PROJECT_CONF = {'BILLING': True}
     api_client.token_authenticate(master_account_owner)
 
     # act
@@ -520,10 +484,6 @@ def test_delete__expired_subscription__permission_denied(
         plan_expiration=timezone.now() - datetime.timedelta(hours=1),
     )
     master_account_owner = create_test_user(account=master_account)
-    settings_mock = mocker.patch(
-        'src.accounts.views.tenants.settings',
-    )
-    settings_mock.PROJECT_CONF = {'BILLING': True}
     api_client.token_authenticate(master_account_owner)
 
     # act
@@ -546,10 +506,6 @@ def test_delete__not_admin__permission_denied(
         is_admin=False,
         is_account_owner=False,
     )
-    settings_mock = mocker.patch(
-        'src.accounts.views.tenants.settings',
-    )
-    settings_mock.PROJECT_CONF = {'BILLING': True}
     api_client.token_authenticate(master_account_not_admin)
 
     # act
@@ -569,10 +525,6 @@ def test_delete__not_authenticated__auth_error(
         lease_level=LeaseLevel.TENANT,
     )
     create_test_user(account=master_account)
-    settings_mock = mocker.patch(
-        'src.accounts.views.tenants.settings',
-    )
-    settings_mock.PROJECT_CONF = {'BILLING': True}
 
     # act
     response = api_client.delete('/tenants/123')
@@ -623,10 +575,6 @@ def test_delete__stripe_exception__validation_error(
         'src.accounts.views.'
         'tenants.increase_plan_users.delay',
     )
-    settings_mock = mocker.patch(
-        'src.accounts.views.tenants.settings',
-    )
-    settings_mock.PROJECT_CONF = {'BILLING': True}
     api_client.token_authenticate(master_account_owner)
 
     # act
@@ -645,68 +593,3 @@ def test_delete__stripe_exception__validation_error(
     account_service_init_mock.assert_not_called()
     update_users_counts_mock.assert_not_called()
     increase_plan_users_mock.assert_not_called()
-
-
-@pytest.mark.parametrize('plan', BillingPlanType.PAYMENT_PLANS)
-def test_delete__disable_billing__permission_denied(
-    plan,
-    mocker,
-    api_client,
-):
-    # arrange
-    master_account = create_test_account(plan=plan)
-    master_account_owner = create_test_user(account=master_account)
-    tenant_account = create_test_account(
-        name='tenant',
-        tenant_name='old name',
-        plan=plan,
-        lease_level=LeaseLevel.TENANT,
-        master_account=master_account,
-    )
-    create_test_user(
-        account=tenant_account,
-        email='tenant_owner@test.test',
-    )
-    account_service_init_mock = mocker.patch.object(
-        AccountService,
-        attribute='__init__',
-        return_value=None,
-    )
-    update_users_counts_mock = mocker.patch(
-        'src.accounts.services.account.AccountService'
-        '.update_users_counts',
-    )
-    stripe_service_init_mock = mocker.patch.object(
-        StripeService,
-        attribute='__init__',
-        return_value=None,
-    )
-    cancel_subscription_mock = mocker.patch(
-        'src.payment.stripe.service.StripeService.'
-        'cancel_subscription',
-    )
-    increase_plan_users_mock = mocker.patch(
-        'src.accounts.views.'
-        'tenants.increase_plan_users.delay',
-    )
-    settings_mock = mocker.patch(
-        'src.accounts.views.tenants.settings',
-    )
-    settings_mock.PROJECT_CONF = {'BILLING': False}
-    api_client.token_authenticate(master_account_owner)
-
-    # act
-    response = api_client.delete(f'/tenants/{tenant_account.id}')
-
-    # assert
-    assert response.status_code == 204
-    account_service_init_mock.assert_called_once_with(
-        is_superuser=False,
-        auth_type=AuthTokenType.USER,
-        instance=master_account,
-        user=master_account_owner,
-    )
-    update_users_counts_mock.assert_called_once()
-    increase_plan_users_mock.assert_not_called()
-    stripe_service_init_mock.assert_not_called()
-    cancel_subscription_mock.assert_not_called()

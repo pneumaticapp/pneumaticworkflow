@@ -118,12 +118,12 @@ fi
 # =============================================================================
 
 ENV_FILE_CREATED=false
+ENV_FILE="./.env"
 
 if [ ! -f ".env" ]; then
 
     # 2.1 Create new .env file from default
     DEFAULT_ENV="./default.env"
-    ENV_FILE="./.env"
     NGINX_CONF_TEMPLATE=./nginx/templates/
 
     cp "$DEFAULT_ENV" "$ENV_FILE"
@@ -204,12 +204,19 @@ if [ ! -f ".env" ]; then
         POSTGRES_PASSWORD=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-25)
         REDIS_PASSWORD=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-25)
         RABBITMQ_PASSWORD=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-25)
+        SEAWEEDFS_ACCESS_KEY=$(openssl rand -base64 24 | tr -d "=+/" | cut -c1-20)
+        SEAWEEDFS_SECRET_KEY=$(openssl rand -base64 48 | tr -d "=+/" | cut -c1-40)
+        FILE_POSTGRES_PASSWORD=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-25)
 
         # 2.5.2 Write passwords to .env
         sed -i "s|^#\?\s*POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$POSTGRES_PASSWORD|"                  "$ENV_FILE"
         sed -i "s|^#\?\s*POSTGRES_REPLICA_PASSWORD=.*|POSTGRES_REPLICA_PASSWORD=$POSTGRES_PASSWORD|"  "$ENV_FILE"
         sed -i "s|^#\?\s*REDIS_PASSWORD=.*|REDIS_PASSWORD=$REDIS_PASSWORD|"                           "$ENV_FILE"
         sed -i "s|^#\?\s*RABBITMQ_PASSWORD=.*|RABBITMQ_PASSWORD=$RABBITMQ_PASSWORD|"                  "$ENV_FILE"
+        sed -i "s|^#\?\s*FILE_SEAWEEDFS_S3_ACCESS_KEY=.*|FILE_SEAWEEDFS_S3_ACCESS_KEY=$SEAWEEDFS_ACCESS_KEY|" "$ENV_FILE"
+        sed -i "s|^#\?\s*FILE_SEAWEEDFS_S3_SECRET_KEY=.*|FILE_SEAWEEDFS_S3_SECRET_KEY=$SEAWEEDFS_SECRET_KEY|" "$ENV_FILE"
+        sed -i "s|^#\?\s*FILE_POSTGRES_PASSWORD=.*|FILE_POSTGRES_PASSWORD=$FILE_POSTGRES_PASSWORD|"   "$ENV_FILE"
+
     fi
 
     # 2.6 SSL
@@ -294,6 +301,10 @@ if [ ! -f ".env" ]; then
     fi
     sed -i "s|^#\?\s*FORMS_URL=.*|FORMS_URL=$FORMS_URL|"  "$ENV_FILE"
 
+    # 2.11.1 Write file service URLs to .env
+    sed -i "s|^#\?\s*FILE_SERVICE_URL=.*|FILE_SERVICE_URL=$HTTP_PROTOCOL://$SERVER_ADDRESS/files|"     "$ENV_FILE"
+    sed -i "s|^#\?\s*FILE_FASTAPI_BASE_URL=.*|FILE_FASTAPI_BASE_URL=$HTTP_PROTOCOL://$SERVER_ADDRESS/files|" "$ENV_FILE"
+
     # 2.12 Mark setup as complete
     sed -i "/^SETUP_INCOMPLETE=/d" "$ENV_FILE"
 
@@ -335,6 +346,36 @@ esac
 
 print_info "Selected configuration: $COMPOSE_LABEL"
 echo ""
+
+# 2.9 Write SeaweedFS S3 config (only on first setup, same guard as passwords)
+# We generate this file directly because seaweedfs-filer does not natively support env variables for S3 credentials
+if [ "$ENV_FILE_CREATED" = true ]; then
+    S3_AK=$(grep '^FILE_SEAWEEDFS_S3_ACCESS_KEY=' "$ENV_FILE" | cut -d '=' -f2)
+    S3_SK=$(grep '^FILE_SEAWEEDFS_S3_SECRET_KEY=' "$ENV_FILE" | cut -d '=' -f2)
+
+    cat <<EOF > ./storage/seaweedfs/s3.json
+{
+  "identities": [
+    {
+      "name": "file-service",
+      "credentials": [
+        {
+          "accessKey": "${S3_AK:-any-secret-key-will-work}",
+          "secretKey": "${S3_SK:-any-secret-key-will-work}"
+        }
+      ],
+      "actions": [
+        "Read",
+        "Write",
+        "List",
+        "Tagging",
+        "Admin"
+      ]
+    }
+  ]
+}
+EOF
+fi
 
 # 3.2 Start containers
 

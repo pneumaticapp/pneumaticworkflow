@@ -2102,3 +2102,70 @@ def test__to_json__not_shared__ok(mocker):
     # assert
     assert result == serializer_data
     fieldset_template_serializer_mock.assert_called_once_with(fieldset)
+
+
+def test__get_clone__ok(mocker):
+
+    """
+    Clone shared fieldset via to_json + get_new_fieldset_data +
+    create_shared_fieldset
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    fieldset = create_test_shared_fieldset(
+        account=account,
+        name='Original Fieldset',
+        title='Original Title',
+        description='Original description',
+        label_position=LabelPosition.LEFT,
+        layout=FieldSetLayout.HORIZONTAL,
+    )
+    service = FieldSetTemplateService(
+        user=user,
+        instance=fieldset,
+    )
+    instance_data = {
+        'id': fieldset.id,
+        'name': fieldset.name,
+        'title': fieldset.title,
+        'description': fieldset.description,
+        'api_name': fieldset.api_name,
+        'label_position': fieldset.label_position,
+        'layout': fieldset.layout,
+        'fields': [],
+        'rules': [],
+    }
+    clone_data = dict(instance_data)
+    clone_data['api_name'] = 'new-fs-api'
+    result_data = dict(clone_data)
+    result_data['name'] = f'{clone_data["name"]} - clone'
+
+    clone = mocker.Mock()
+    to_json_mock = mocker.patch(
+        'src.processes.services.fieldsets.fieldset.'
+        'FieldSetTemplateService.to_json',
+        return_value=instance_data,
+    )
+    get_new_fieldset_data_mock = mocker.patch(
+        'src.processes.services.fieldsets.fieldset.'
+        'FieldSetTemplateService.get_new_fieldset_data',
+        return_value=result_data,
+    )
+    create_shared_fieldset_mock = mocker.patch(
+        'src.processes.services.fieldsets.fieldset.'
+        'FieldSetTemplateService.create_shared_fieldset',
+        return_value=clone,
+    )
+
+    # act
+    result = service.get_clone()
+
+    # assert
+    assert result is clone
+    to_json_mock.assert_called_once_with(fieldset)
+    get_new_fieldset_data_mock.assert_called_once_with(
+        shared_fieldset_data=instance_data,
+    )
+    create_shared_fieldset_mock.assert_called_once_with(**result_data)

@@ -115,7 +115,11 @@ class StripeService(StripeMixin):
             customer=self.customer,
             subscription_account=self.subscription_account,
         )
-        if self.account.billing_sync:
+        if (
+            self.account.billing_sync
+            and self.subscription_account.billing_plan
+            in BillingPlanType.PAYMENT_PLANS
+        ):
             if subscription and not self.subscription_account.is_subscribed:
                 self.subscription_service.create(
                     details=self.get_subscription_details(subscription),

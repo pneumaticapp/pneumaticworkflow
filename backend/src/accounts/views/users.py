@@ -25,6 +25,7 @@ from src.accounts.serializers.api_key import UserAPIKeySerializer
 from src.accounts.serializers.user import (
     UserPrivilegesSerializer,
     UserSerializer,
+    UserWebsocketSerializer,
     VacationActivateSerializer,
 )
 from src.accounts.serializers.users import (
@@ -58,6 +59,7 @@ from src.generics.permissions import (
     IsAuthenticated,
     UserIsAuthenticated,
 )
+from src.notifications.tasks import send_user_updated_notification
 from src.utils.validation import raise_validation_error
 
 UserModel = get_user_model()
@@ -234,11 +236,16 @@ class UsersViewSet(
         methods=('post',),
         url_path='toggle-admin',
     )
-    def toggle_admin(self, *args, **kwargs):
+    def toggle_admin(self, request, *args, **kwargs):
         user = self.get_object()
         user.is_admin = not user.is_admin
         user.save(update_fields=['is_admin'])
         self.identify(user)
+        send_user_updated_notification.delay(
+            logging=request.user.account.log_api_requests,
+            account_id=request.user.account_id,
+            user_data=UserWebsocketSerializer(user).data,
+        )
         return self.response_ok()
 
     @action(detail=False, methods=('post',))

@@ -488,6 +488,16 @@ export const enMessages = {
   'Unknown Error': 'Oops, looks like something went wrong... Our engineering team has already been notified',
   'Something Went Wrong': 'Oops, looks like something went wrong... Our engineering team has already been notified',
 
+  'file-service.file-not-found': 'File not found',
+  'file-service.access-denied': 'File access denied',
+  'file-service.size-exceeded': 'File size exceeds the limit',
+  'file-service.auth-failed': 'Authentication failed',
+  'file-service.permission-denied': 'You do not have permission to perform this action',
+  'file-service.invalid-file-size': 'Invalid file size',
+  'file-service.missing-required-field': 'Required field is missing',
+  'file-service.upload-failed': 'File upload failed. Please try again',
+  'file-service.download-failed': 'File download failed. Please try again',
+
   'top-notifications.none': "You're up to date",
 
   'wizard.next': 'Next',
@@ -959,7 +969,7 @@ export const enMessages = {
   'workflows.comment-reaction-button': 'Toggle reaction',
   'workflow.tune-view-button': 'Tune View',
   'workflow.tune-view-tooltip': 'To fine-tune the table view — select a Template',
-  'workflows.export-menu': 'export',
+  'workflows.export-menu': 'Export',
   'workflows.export-menu-aria': 'Export workflows',
   'workflows.export-as-excel': 'Excel (.xlsx)',
   'workflows.export-as-csv': 'CSV (.csv)',
@@ -1344,7 +1354,6 @@ export const enMessages = {
 
   'legacy-template': '(Legacy Template)',
   'file-upload.label-upload-button': 'Upload file',
-  'file-upload.error-storage': 'Saving files is not available, configure file storage',
   'file-upload.error': 'Failed to upload file',
   'file-upload.max-file-size-error': 'Maximum file size is 100 MB',
   'file-upload.wrong-dimension':

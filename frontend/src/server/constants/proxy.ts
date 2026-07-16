@@ -15,5 +15,4 @@ export const PROXY_ALLOWED_ROUTES = [
   '/accounts/api-key',
   '/auth/resend-verification',
   '/auth/verification.*',
-  '/workflows/attachments.*',
 ];

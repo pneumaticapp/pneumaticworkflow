@@ -1,0 +1,13 @@
+[filer.options]
+# configurations for the filer
+recursive_delete = false
+disable_dir_listing = true
+
+# S3 bucket configuration
+[s3]
+enabled = true
+
+# Local storage configuration
+[leveldb2]
+enabled = true
+dir = "/data/filerleveldb2"

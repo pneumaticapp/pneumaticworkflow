@@ -1,6 +1,7 @@
 from typing import Optional, Tuple
 
 from django.contrib.auth.models import AnonymousUser
+from django.core.cache import caches
 from rest_framework.authentication import BaseAuthentication
 
 from src.authentication.tokens import (
@@ -18,6 +19,22 @@ class PublicAuthService(BaseAuthentication):
         Use with the PublicTemplatePermission """
 
     header_prefix = 'Token'
+    cache = caches['auth']
+    CACHE_TIMEOUT = 86400  # day
+
+    @classmethod
+    def invalidate_template_public_tokens(cls, template: Template) -> None:
+        """Remove cached token data when public/embed access is revoked or
+        template is deactivated. Storage service relies on this cache for
+        public token auth; without invalidation tokens remain valid.
+        """
+        revoked = (
+            getattr(template, 'is_deleted', False) or not template.is_active
+        )
+        if template.public_id and (revoked or not template.is_public):
+            cls.cache.delete(template.public_id)
+        if template.embed_id and (revoked or not template.is_embedded):
+            cls.cache.delete(template.embed_id)
 
     @classmethod
     def _get_header(cls, request) -> Optional[str]:
@@ -67,6 +84,15 @@ class PublicAuthService(BaseAuthentication):
             .first()
         )
 
+    @classmethod
+    def cache_template_data(cls, token: PublicBaseToken, template: Template):
+        """Cache template data in Redis for public token access"""
+
+        cache_key = str(token)
+        cache_data = {'account_id': template.account_id}
+
+        cls.cache.set(cache_key, cache_data, timeout=cls.CACHE_TIMEOUT)
+
     def authenticate_header(self, request):
         return f'{self.header_prefix} realm="api"'
 
@@ -80,6 +106,10 @@ class PublicAuthService(BaseAuthentication):
         template = PublicAuthService.get_template(token)
         if not template:
             return None
+
+        # Cache template data for future access
+        PublicAuthService.cache_template_data(token, template)
+
         request.token_type = token.token_type
         request.public_template = template
         request.is_superuser = False

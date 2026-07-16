@@ -37,6 +37,7 @@ from src.generics.permissions import (
     UserIsAuthenticated,
 )
 from src.processes.models.workflows.task import Task
+from src.storage.utils import sync_account_file_fields
 from src.utils.validation import raise_validation_error
 
 UserModel = get_user_model()
@@ -124,6 +125,7 @@ class UserViewSet(
 
     def put(self, request, *args, **kwargs):
         user = request.user
+        old_photo = user.photo
         slz = self.get_serializer(instance=user, data=request.data)
         slz.is_valid(raise_exception=True)
         service = UserService(
@@ -139,6 +141,13 @@ class UserViewSet(
             )
         except UserServiceException as ex:
             raise_validation_error(message=ex.message)
+        if old_photo != user.photo:
+            sync_account_file_fields(
+                account=user.account,
+                user=user,
+                old_values=[old_photo],
+                new_values=[user.photo],
+            )
         return self.response_ok(
             UserSerializer(instance=user).data,
         )

@@ -34,6 +34,7 @@ export interface IHighlightsItem {
   };
   userId: number | null;
   targetUserId: number | null;
+  targetGroupId: number | null;
   delay: IHighlightsDelay | null;
 }
 

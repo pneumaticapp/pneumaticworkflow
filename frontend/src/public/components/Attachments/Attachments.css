@@ -74,13 +74,15 @@
 .comment-attachments__documents-list {
   display: flex;
   flex-flow: column;
+  gap: 0.8rem;
+  width: 100%;
+  min-width: 0;
 }
 
 .documents-list__document-container {
-  margin-bottom: 0.8rem;
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  flex-flow: row nowrap;
+  min-width: 0;
   max-width: 100%;
 }
 
@@ -96,13 +98,14 @@
 .document {
   margin-right: 1rem;
   display: flex;
-  max-width: calc(100% - 3rem);
-  white-space: pre-wrap;
-  word-break: break-word;
+  flex: 1;
+  overflow: hidden;
+  min-width: 0;
   cursor: pointer;
   color: var(--pneumatic-color-link-dark);
   transition: color 0.1s ease-in-out;
 }
+
 .document_not-clickable {
   cursor: default;
   pointer-events: none;
@@ -114,12 +117,20 @@
 
 .document__filename {
   overflow: hidden;
+  min-width: 0;
+  flex: 1;
+  text-align: left;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  direction: rtl;
+}
+
+.document__filename-text {
+  direction: ltr;
+  unicode-bidi: embed;
   font-family: Nunito, sans-serif;
   font-size: 1.5rem;
   line-height: 2rem;
-  text-align: left;
-  text-overflow: ellipsis;
-  direction: ltr;
 }
 
 .document .document__icon {
@@ -130,6 +141,7 @@
 .document__delete-button {
   all: unset;
   display: flex;
+  flex-shrink: 0;
   cursor: pointer;
   color: var(--pneumatic-color-black88);
   transition: 0.1s ease-in-out fill;

@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { render, screen } from '@testing-library/react';
+import { useSelector } from 'react-redux';
 import userEvent from '@testing-library/user-event';
 
 import { FeedItemHeader } from '../FeedItemHeader';
@@ -9,8 +10,14 @@ import { EExtraFieldType, IExtraField } from '../../../types/template';
 import { IFieldsetRuntime } from '../../../types/fieldset';
 import { makeExtraField } from '../../../__stubs__/fields.factory';
 import { makeFieldsetRuntime } from '../../../__stubs__/fieldsets.factory';
+import { makeHighlightsItem } from '../../../__stubs__/highlights.factory';
 import { IHighlightsItem } from '../../../types/highlights';
 import { Ellipsis } from '../Ellipsis';
+import { intlMock } from '../../../__stubs__/intlMock';
+
+jest.mock('react-redux', () => ({
+  useSelector: jest.fn(),
+}));
 
 jest.mock('../../KickoffOutputs', () => ({
   KickoffOutputs: jest.fn(() => null),
@@ -20,6 +27,14 @@ jest.mock('../../KickoffOutputs', () => ({
 jest.mock('../../RichText', () => ({ RichText: () => null }));
 jest.mock('../../Attachments', () => ({ Attachments: () => null }));
 jest.mock('../../UserData', () => ({ UserData: () => null }));
+jest.mock('../../UserDataWithGroup', () => ({
+  __esModule: true,
+  default: ({
+    children,
+  }: {
+    children: (group: { firstName: string }) => React.ReactNode;
+  }) => children({ firstName: 'Engineering Team' }),
+}));
 jest.mock('../Ellipsis', () => ({
   Ellipsis: jest.fn(({ expand }: { expand: () => void }) => (
     <button type="button" data-testid="ellipsis" onClick={expand}>
@@ -44,15 +59,31 @@ jest.mock('../../../utils/dateTime', () => ({
   getSnoozedUntilDate: jest.fn(() => ''),
 }));
 
+const GROUP_NAME = 'Engineering Team';
+
+const mockState = {
+  authUser: { isSuperuser: false, account: {} },
+  groups: {
+    list: [{ id: 5, name: GROUP_NAME }],
+  },
+  accounts: { isCreateUserModalOpen: false },
+};
+
 describe('FeedItemHeader', () => {
+  const formatMsg = (id: string) => intlMock.formatMessage({ id });
+  const ADDED_GROUP_LABEL = formatMsg('task.log-added-performer-group');
+  const REMOVED_GROUP_LABEL = formatMsg('task.log-removed-performer-group');
+
   beforeEach(() => {
     jest.clearAllMocks();
+    (useSelector as jest.Mock).mockImplementation((selector) => selector(mockState));
   });
 
-  const makeField = (overrides: Partial<IExtraField> = {}) => makeExtraField({
-    apiName: `field-${Math.random()}`,
-    ...overrides,
-  });
+  const makeField = (overrides: Partial<IExtraField> = {}) =>
+    makeExtraField({
+      apiName: `field-${Math.random()}`,
+      ...overrides,
+    });
 
   const makeBaseProps = (overrides: Partial<IHighlightsItem> = {}): IHighlightsItem => ({
     id: 1,
@@ -76,6 +107,7 @@ describe('FeedItemHeader', () => {
     },
     userId: null,
     targetUserId: null,
+    targetGroupId: null,
     delay: null,
     ...overrides,
   });
@@ -89,9 +121,7 @@ describe('FeedItemHeader', () => {
 
       const kickoffFieldsets: IFieldsetRuntime[] = [
         makeFieldsetRuntime({
-          fields: [
-            makeField({ apiName: 'fs1-f1', order: 1, value: 'fieldset value' }),
-          ],
+          fields: [makeField({ apiName: 'fs1-f1', order: 1, value: 'fieldset value' })],
         }),
       ];
 
@@ -127,10 +157,11 @@ describe('FeedItemHeader', () => {
   });
 
   describe('Fieldsets handling in highlights', () => {
-    const makeFieldset = (overrides: Partial<IFieldsetRuntime> & { fields: IExtraField[] }) => makeFieldsetRuntime({
-      name: 'Test Fieldset',
-      ...overrides,
-    });
+    const makeFieldset = (overrides: Partial<IFieldsetRuntime> & { fields: IExtraField[] }) =>
+      makeFieldsetRuntime({
+        name: 'Test Fieldset',
+        ...overrides,
+      });
 
     const makeWorkflow = (kickoff: IHighlightsItem['workflow']['kickoff']) => ({
       id: 1,
@@ -151,9 +182,7 @@ describe('FeedItemHeader', () => {
     };
 
     it('passes fieldsets when outputs is empty', () => {
-      const fieldsets = [
-        makeFieldset({ fields: [makeField({ value: 'val1', order: 1 })] }),
-      ];
+      const fieldsets = [makeFieldset({ fields: [makeField({ value: 'val1', order: 1 })] })];
 
       const props = makeBaseProps({
         type: EWorkflowLogEvent.WorkflowRun,
@@ -172,51 +201,62 @@ describe('FeedItemHeader', () => {
       expect(getLastKickoffOutputsProps().fieldsets).toEqual(fieldsets);
     });
 
-    it.each([
-      EWorkflowLogEvent.TaskComplete,
-      EWorkflowLogEvent.WorkflowComplete,
-      EWorkflowLogEvent.WorkflowsReturned,
-    ])('uses task.fieldsets instead of kickoff.fieldsets for %s', (eventType) => {
-      const kickoffFieldsets = [
-        makeFieldset({ apiNameBinding: 'fs-kickoff', name: 'Kickoff FS', fields: [makeField({ value: 'kickoff-val', order: 1 })] }),
-      ];
-      const taskFieldsets = [
-        makeFieldset({ apiNameBinding: 'fs-task', name: 'Task FS', fields: [makeField({ value: 'task-val', order: 1 })] }),
-      ];
+    it.each([EWorkflowLogEvent.TaskComplete, EWorkflowLogEvent.WorkflowComplete, EWorkflowLogEvent.WorkflowsReturned])(
+      'uses task.fieldsets instead of kickoff.fieldsets for %s',
+      (eventType) => {
+        const kickoffFieldsets = [
+          makeFieldset({
+            apiNameBinding: 'fs-kickoff',
+            name: 'Kickoff FS',
+            fields: [makeField({ value: 'kickoff-val', order: 1 })],
+          }),
+        ];
+        const taskFieldsets = [
+          makeFieldset({
+            apiNameBinding: 'fs-task',
+            name: 'Task FS',
+            fields: [makeField({ value: 'task-val', order: 1 })],
+          }),
+        ];
 
-      const props = makeBaseProps({
-        type: eventType,
-        task: {
-          id: 1,
-          name: 'Task 1',
-          number: 1,
-          process: 1,
-          delay: null,
-          output: [makeField({ value: 'task-output', order: 1 })],
-          fieldsets: taskFieldsets,
-          dueDate: null,
-        },
-        workflow: makeWorkflow({
-          id: 1,
-          description: null,
-          output: [],
-          fieldsets: kickoffFieldsets,
-        }),
-      });
+        const props = makeBaseProps({
+          type: eventType,
+          task: {
+            id: 1,
+            name: 'Task 1',
+            number: 1,
+            process: 1,
+            delay: null,
+            output: [makeField({ value: 'task-output', order: 1 })],
+            fieldsets: taskFieldsets,
+            dueDate: null,
+          },
+          workflow: makeWorkflow({
+            id: 1,
+            description: null,
+            output: [],
+            fieldsets: kickoffFieldsets,
+          }),
+        });
 
-      render(React.createElement(FeedItemHeader, props));
+        render(React.createElement(FeedItemHeader, props));
 
-      const mock = KickoffOutputs as jest.Mock;
-      expect(mock).toHaveBeenCalled();
+        const mock = KickoffOutputs as jest.Mock;
+        expect(mock).toHaveBeenCalled();
 
-      const passedFieldsets = getLastKickoffOutputsProps().fieldsets;
-      expect(passedFieldsets).toEqual(taskFieldsets);
-      expect(passedFieldsets).not.toEqual(kickoffFieldsets);
-    });
+        const passedFieldsets = getLastKickoffOutputsProps().fieldsets;
+        expect(passedFieldsets).toEqual(taskFieldsets);
+        expect(passedFieldsets).not.toEqual(kickoffFieldsets);
+      },
+    );
 
     it('does not render KickoffOutputs for TaskRevert', () => {
       const taskFieldsets = [
-        makeFieldset({ apiNameBinding: 'fs-task-2', name: 'Task FS', fields: [makeField({ value: 'task-val', order: 1 })] }),
+        makeFieldset({
+          apiNameBinding: 'fs-task-2',
+          name: 'Task FS',
+          fields: [makeField({ value: 'task-val', order: 1 })],
+        }),
       ];
 
       const props = makeBaseProps({
@@ -289,9 +329,7 @@ describe('FeedItemHeader', () => {
         makeFieldset({
           apiNameBinding: 'fs-has-val',
           name: 'Has Value',
-          fields: [
-            makeField({ apiName: 'f1', value: 'data', order: 1 }),
-          ],
+          fields: [makeField({ apiName: 'f1', value: 'data', order: 1 })],
         }),
       ];
 
@@ -382,7 +420,7 @@ describe('FeedItemHeader', () => {
               apiName: 'doc',
               type: EExtraFieldType.File,
               value: null,
-              attachments: [{ id: 1, url: 'doc.pdf', name: 'doc.pdf', size: 10 }],
+              attachments: [{ id: '1', url: 'doc.pdf', name: 'doc.pdf', size: 10 }],
               order: 1,
             }),
             makeField({
@@ -434,7 +472,7 @@ describe('FeedItemHeader', () => {
       render(React.createElement(FeedItemHeader, props));
 
       expect(Ellipsis).toHaveBeenCalled();
-      expect(screen.getByTestId('ellipsis')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'ellipsis' })).toBeInTheDocument();
     });
 
     it('after Ellipsis click passes isTruncated=false to KickoffOutputs and hides the ellipsis', () => {
@@ -461,10 +499,48 @@ describe('FeedItemHeader', () => {
 
       expect(getLastKickoffOutputsProps().isTruncated).toBe(true);
 
-      userEvent.click(screen.getByTestId('ellipsis'));
+      userEvent.click(screen.getByRole('button', { name: 'ellipsis' }));
 
       expect(getLastKickoffOutputsProps().isTruncated).toBe(false);
-      expect(screen.queryByTestId('ellipsis')).toBeNull();
+      expect(screen.queryByRole('button', { name: 'ellipsis' })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('AddedPerformerGroup', () => {
+    it('renders group name with added label', () => {
+      const item = makeHighlightsItem(EWorkflowLogEvent.AddedPerformerGroup, { targetGroupId: 5 });
+
+      render(React.createElement(FeedItemHeader, item));
+
+      expect(screen.getByText(ADDED_GROUP_LABEL.trim())).toBeInTheDocument();
+      expect(screen.getByText(GROUP_NAME)).toBeInTheDocument();
+    });
+
+    it('returns null when targetGroupId is missing', () => {
+      const item = makeHighlightsItem(EWorkflowLogEvent.AddedPerformerGroup, { targetGroupId: null });
+
+      const { container } = render(React.createElement(FeedItemHeader, item));
+
+      expect(container).toBeEmptyDOMElement();
+    });
+  });
+
+  describe('RemovedPerformerGroup', () => {
+    it('renders group name with removed label', () => {
+      const item = makeHighlightsItem(EWorkflowLogEvent.RemovedPerformerGroup, { targetGroupId: 5 });
+
+      render(React.createElement(FeedItemHeader, item));
+
+      expect(screen.getByText(REMOVED_GROUP_LABEL.trim())).toBeInTheDocument();
+      expect(screen.getByText(GROUP_NAME)).toBeInTheDocument();
+    });
+
+    it('returns null when targetGroupId is missing', () => {
+      const item = makeHighlightsItem(EWorkflowLogEvent.RemovedPerformerGroup, { targetGroupId: null });
+
+      const { container } = render(React.createElement(FeedItemHeader, item));
+
+      expect(container).toBeEmptyDOMElement();
     });
   });
 });

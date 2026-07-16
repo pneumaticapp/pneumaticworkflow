@@ -15,7 +15,6 @@ import { PersistGate } from 'redux-persist/integration/react';
 
 /* polyfills */
 import 'promise-polyfill/src/polyfill';
-import 'whatwg-fetch';
 import * as smoothscroll from 'smoothscroll-polyfill';
 import { resetSuperuserToken } from './redux/auth/utils/superuserToken';
 

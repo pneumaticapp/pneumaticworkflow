@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { ChangeEvent, ReactNode, SVGAttributes, useState } from 'react';
 import classnames from 'classnames';
-import * as PerfectScrollbar from 'react-perfect-scrollbar';
+import PerfectScrollbar from 'react-perfect-scrollbar';
 import { DropdownItem, DropdownMenu, DropdownToggle, Dropdown } from 'reactstrap';
 
 import OutsideClickHandler from 'react-outside-click-handler';

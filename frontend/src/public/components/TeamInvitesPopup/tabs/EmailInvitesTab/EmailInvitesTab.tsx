@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch } from 'react-redux';
-import * as PerfectScrollbar from 'react-perfect-scrollbar';
+import PerfectScrollbar from 'react-perfect-scrollbar';
 
 import { inviteUsers } from '../../../../redux/team/slice';
 import { createUniqueId } from '../../../../utils/createId';

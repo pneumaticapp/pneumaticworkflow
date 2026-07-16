@@ -6,12 +6,15 @@ from django.db import models
 from src.accounts.models import AccountBaseMixin
 from src.generics.managers import BaseSoftDeleteManager
 from src.generics.models import SoftDeleteModel
+from src.processes.enums import FileAttachmentAccessType
 from src.processes.models.workflows.event import WorkflowEvent
 from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.querysets import FileAttachmentQuerySet
 
 
+# TODO remove legacy model after migration to file service.
+# Legacy storage is kept to avoid breaking old uploads.
 class FileAttachment(
     SoftDeleteModel,
     AccountBaseMixin,
@@ -24,6 +27,12 @@ class FileAttachment(
     url = models.URLField(max_length=1024)
     thumbnail_url = models.URLField(max_length=1024, null=True, blank=True)
     size = models.PositiveIntegerField(default=0)
+    file_id = models.CharField(
+        max_length=512,
+        db_index=True,
+        null=True,
+        blank=True,
+    )
     event = models.ForeignKey(
         WorkflowEvent,
         on_delete=models.CASCADE,
@@ -41,6 +50,11 @@ class FileAttachment(
         on_delete=models.CASCADE,
         related_name='attachments',
         null=True,
+    )
+    access_type = models.CharField(
+        max_length=20,
+        choices=FileAttachmentAccessType.CHOICES,
+        default=FileAttachmentAccessType.ACCOUNT,
     )
 
     objects = BaseSoftDeleteManager.from_queryset(FileAttachmentQuerySet)()

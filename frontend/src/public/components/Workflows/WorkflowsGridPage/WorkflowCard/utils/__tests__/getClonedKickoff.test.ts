@@ -310,15 +310,15 @@ const expectedKickoff = {
   fieldsets: [],
 };
 
-describe('getClonedKickoff.', () => {
-  it('should work', async () => {
-    const clonedKickoff = await getClonedKickoff(mockWorkflowDetailKickoff, templateKickoffMock);
+describe('getClonedKickoff', () => {
+  it('should clone kickoff with field selections normalized', () => {
+    const clonedKickoff = getClonedKickoff(mockWorkflowDetailKickoff, templateKickoffMock);
 
     expect(clonedKickoff).toStrictEqual(expectedKickoff);
   });
 
   describe('Fieldsets', () => {
-    it('does not carry over fieldsets from workflowKickoff into the result (fieldsets=[])', async () => {
+    it('does not carry over fieldsets from workflowKickoff into the result (fieldsets=[])', () => {
       const workflowWithFieldsets: IWorkflowDetailsKickoff = {
         id: 2,
         description: '',
@@ -338,13 +338,13 @@ describe('getClonedKickoff.', () => {
         fieldsets: [],
       };
 
-      const result = await getClonedKickoff(workflowWithFieldsets, emptyTemplateKickoff);
+      const result = getClonedKickoff(workflowWithFieldsets, emptyTemplateKickoff);
 
       expect(result.fieldsets).toEqual([]);
       expect(result.fields).toEqual([]);
     });
 
-    it('drops workflow fields that are absent in the template', async () => {
+    it('drops workflow fields that are absent in the template', () => {
       const workflowKickoff: IWorkflowDetailsKickoff = {
         id: 3,
         description: '',
@@ -385,14 +385,14 @@ describe('getClonedKickoff.', () => {
         fieldsets: [],
       };
 
-      const result = await getClonedKickoff(workflowKickoff, templateKickoff);
+      const result = getClonedKickoff(workflowKickoff, templateKickoff);
 
       expect(result.fields).toHaveLength(1);
       expect(result.fields[0].apiName).toBe('exists-in-both');
       expect(result.fields[0].value).toBe('keep');
     });
 
-    it('filters checkbox value by template selections', async () => {
+    it('filters checkbox value by template selections', () => {
       const workflowKickoff: IWorkflowDetailsKickoff = {
         id: 4,
         description: '',
@@ -426,7 +426,7 @@ describe('getClonedKickoff.', () => {
         fieldsets: [],
       };
 
-      const result = await getClonedKickoff(workflowKickoff, templateKickoff);
+      const result = getClonedKickoff(workflowKickoff, templateKickoff);
 
       expect(result.fields).toHaveLength(1);
       expect(result.fields[0].value).toEqual(['a', 'c']);

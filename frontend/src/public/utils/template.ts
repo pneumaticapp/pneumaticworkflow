@@ -1,5 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
 import {
   ITemplate,
   ITemplateClient,
@@ -37,7 +35,7 @@ export function getTemplateIdFromUrl(url: string) {
     return null;
   }
 
-  const { template } = getUrlParams(location.search);
+  const { template } = getUrlParams(window.location.search);
 
   if (!template) {
     return null;
@@ -60,22 +58,21 @@ export const getNormalizedTemplate = (
   users: TUserListItem[],
   billingPlan: ESubscriptionPlan,
 ): ITemplateClient => {
+  const hasFullAccess = isSubscribed || billingPlan === ESubscriptionPlan.Free;
   const normalizedKickoff = {
     ...getEmptyKickoff(),
     ...(template.kickoff || {}),
-    fieldsets: template.kickoff
-      ? mapFieldsetBindingsToClient(template.kickoff.fieldsets)
-      : [],
+    fieldsets: template.kickoff ? mapFieldsetBindingsToClient(template.kickoff.fieldsets) : [],
   };
+
   const normalizedTasks = [...template.tasks]
     .sort((a, b) => a.number - b.number)
-    .map((task, index, tasks) => getNormalizedTask(task, isSubscribed, tasks[index - 1]));
+    .map((task) => getNormalizedTask(task, hasFullAccess));
 
   const performersCount = setPerformersCounts(normalizedTasks);
-  const normalizedTemplateOwners =
-    !isSubscribed && billingPlan !== ESubscriptionPlan.Free
-      ? getNormalizedTemplateOwners(template.owners, isSubscribed, users)
-      : template.owners;
+  const normalizedTemplateOwners = !hasFullAccess
+    ? getNormalizedTemplateOwners(template.owners, isSubscribed, users)
+    : template.owners;
 
   return {
     ...template,
@@ -114,17 +111,13 @@ export const getNormalizedTemplateOwners = (
       apiName: createOwnerApiName(),
       type: ETemplateOwnerType.User,
       role: ETemplateOwnerRole.Owner,
-    } as ITemplateOwner
+    } as ITemplateOwner;
   });
 
   return mapOwnersNotDeletedUsers;
 };
 
-export const getNormalizedTask = (
-  task: ITemplateTaskResponse,
-  isSubscribed: boolean,
-  prevTask?: ITemplateTaskResponse,
-): ITemplateTaskClient => {
+export const getNormalizedTask = (task: ITemplateTaskResponse, isSubscribed: boolean): ITemplateTaskClient => {
   const conditions = isArrayWithItems(task.conditions)
     ? normalizeConditiosForFrontend(task.conditions)
     : getEmptyConditions(isSubscribed);
@@ -156,9 +149,7 @@ export const collectFieldApiNames = (
   });
 };
 
-export const cleanTemplateReferences = (
-  template: ITemplateClient,
-): ITemplateClient => {
+export const cleanTemplateReferences = (template: ITemplateClient): ITemplateClient => {
   // System variables that the backend recognizes and skips during validation.
   // Must stay in sync with backend/src/processes/enums.py :: SystemVariable
   const TASK_SYSTEM_VARS = new Set(['workflow-starter']);
@@ -173,13 +164,12 @@ export const cleanTemplateReferences = (
     systemVars: Set<string>,
   ): string => {
     if (!text) return text || '';
-    return text
-      .replace(/\{\{\s*([\w-]+)\s*\}\}/g, (match, apiName) => {
-        if (validApis.has(apiName) || systemVars.has(apiName)) {
-          return match;
-        }
-        return '';
-      });
+    return text.replace(/\{\{\s*([\w-]+)\s*\}\}/g, (match, apiName) => {
+      if (validApis.has(apiName) || systemVars.has(apiName)) {
+        return match;
+      }
+      return '';
+    });
   };
 
   const tasks = [...(template.tasks || [])].sort((a, b) => a.number - b.number);
@@ -195,9 +185,8 @@ export const cleanTemplateReferences = (
 
     const conditions = (task.conditions || []).map((condition) => {
       const rules = condition.rules.filter(
-        (rule) => !rule.field
-          || rule.fieldType === 'task' || rule.fieldType === 'kickoff'
-          || validApiNames.has(rule.field)
+        (rule) =>
+          !rule.field || rule.fieldType === 'task' || rule.fieldType === 'kickoff' || validApiNames.has(rule.field),
       );
       return { ...condition, rules };
     });
@@ -212,7 +201,7 @@ export const cleanTemplateReferences = (
       return true;
     });
 
-    let rawDueDate = task.rawDueDate;
+    let { rawDueDate } = task;
     if (rawDueDate && rawDueDate.ruleTarget === 'field') {
       if (rawDueDate.sourceId && !validApiNames.has(rawDueDate.sourceId)) {
         rawDueDate = {
@@ -242,11 +231,7 @@ export const cleanTemplateReferences = (
 
   return {
     ...template,
-    wfNameTemplate: removeInvalidReferences(
-      template.wfNameTemplate,
-      validKickoffApiNames,
-      WF_NAME_SYSTEM_VARS
-    ),
+    wfNameTemplate: removeInvalidReferences(template.wfNameTemplate, validKickoffApiNames, WF_NAME_SYSTEM_VARS),
     tasks: cleanedTasks,
   };
 };
@@ -267,9 +252,7 @@ function mapFieldsetForApi({
   };
 }
 
-export const mapTemplateRequest = (
-  template: ITemplateClient,
-): ITemplateRequest => {
+export const mapTemplateRequest = (template: ITemplateClient): ITemplateRequest => {
   const cleanedTemplate = cleanTemplateReferences(template);
   const { tasks } = cleanedTemplate;
 

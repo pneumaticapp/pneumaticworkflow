@@ -1,0 +1,23 @@
+set -e
+
+REPO_ROOT=$(git rev-parse --show-toplevel)
+COMMIT_MSG_FILE=$1
+
+case "$COMMIT_MSG_FILE" in
+  /*) ;;
+  *) COMMIT_MSG_FILE="$REPO_ROOT/$COMMIT_MSG_FILE" ;;
+esac
+
+sh "$REPO_ROOT/frontend/scripts/validate-commit-task-id.sh" "$COMMIT_MSG_FILE"
+
+cd "$REPO_ROOT/frontend"
+
+. "$REPO_ROOT/frontend/scripts/git-branch-utils.sh"
+
+if requires_commit_task_id; then
+  export COMMITLINT_MODE=feature
+else
+  export COMMITLINT_MODE=default
+fi
+
+npx --no -- commitlint --edit "$COMMIT_MSG_FILE"

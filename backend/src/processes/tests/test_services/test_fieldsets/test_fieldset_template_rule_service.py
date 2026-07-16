@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 import pytest
 from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
@@ -146,7 +148,7 @@ def test__validate_sum_equal__valid__ok():
     result = service._validate_sum_equal()
 
     # assert
-    assert result == 100.5
+    assert result == Decimal('100.5')
 
 
 def test__validate_sum_equal__empty_value__raise_exception():

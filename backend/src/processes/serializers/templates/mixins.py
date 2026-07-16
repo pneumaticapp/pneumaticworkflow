@@ -318,6 +318,7 @@ class FieldsetMixin:
                         'shared_fieldset_id',
                     ))
                     shared_fieldset = FieldsetTemplate.objects.get(
+                        account_id=self.context['user'].account_id,
                         id=shared_fieldset_id,
                         is_shared=True,
                     )

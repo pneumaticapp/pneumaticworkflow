@@ -275,7 +275,7 @@ class TaskViewSet(
                     queryset=TaskField.objects.filter(
                         fieldset__isnull=True,
                     ).prefetch_related(
-                        'attachments',
+                        'storage_attachments',
                         Prefetch(
                             'selections',
                             queryset=FieldSelection.objects.order_by('id'),
@@ -480,7 +480,8 @@ class TaskViewSet(
         task = self.get_object()
         qst = (
             WorkflowEvent.objects
-            .prefetch_related('attachments')
+            .select_related('workflow')
+            .prefetch_related('storage_attachments')
             .on_task(task.id)
             .type_in(WorkflowEventType.TASK_EVENTS)
         )
@@ -551,7 +552,6 @@ class TaskViewSet(
                             queryset=DatasetItem.objects.order_by('order'),
                             to_attr='dataset_values',
                         ),
-                        'attachments',
                     ),
                 ),
                 'fieldsets__fields__attachments',

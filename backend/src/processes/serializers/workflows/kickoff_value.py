@@ -1,4 +1,5 @@
 from typing import Any, Dict
+from django.db import transaction
 from django.db.models import Q
 from rest_framework import serializers
 
@@ -130,40 +131,41 @@ class KickoffValueSerializer(
         fields_values: dict = validated_data.pop('fields_data', {})
         instance = super().update(instance, validated_data)
         if fields_values:
-            fields = (
-                TaskField.objects
-                .filter(
-                    Q(fieldset__kickoff=instance) | Q(kickoff=instance),
-                    api_name__in=fields_values,
-                )
-            )
-            fieldsets_ids = set()
-            for field in fields:
-                if field.fieldset_id:
-                    fieldsets_ids.add(field.fieldset_id)
-                service = TaskFieldService(
-                    user=self.context['user'],
-                    instance=field,
-                )
-                try:
-                    service.partial_update(
-                        value=fields_values[field.api_name],
-                        force_save=True,
+            with transaction.atomic():
+                fields = (
+                    TaskField.objects
+                    .filter(
+                        Q(fieldset__kickoff=instance) | Q(kickoff=instance),
+                        api_name__in=fields_values,
                     )
-                except TaskFieldException as ex:
-                    self.raise_validation_error(
-                        message=ex.message,
-                        api_name=field.api_name,
+                )
+                fieldsets_ids = set()
+                for field in fields:
+                    if field.fieldset_id:
+                        fieldsets_ids.add(field.fieldset_id)
+                    service = TaskFieldService(
+                        user=self.context['user'],
+                        instance=field,
                     )
-            if fieldsets_ids:
-                fieldsets = FieldSet.objects.filter(id__in=fieldsets_ids)
-                try:
-                    for fieldset in fieldsets:
-                        service = FieldSetService(
-                            user=self.context['user'],
-                            instance=fieldset,
+                    try:
+                        service.partial_update(
+                            value=fields_values[field.api_name],
+                            force_save=True,
                         )
-                        service.validate_rules()
-                except FieldsetServiceException as ex:
-                    self.raise_validation_error(message=ex.message)
+                    except TaskFieldException as ex:
+                        self.raise_validation_error(
+                            message=ex.message,
+                            api_name=field.api_name,
+                        )
+                if fieldsets_ids:
+                    fieldsets = FieldSet.objects.filter(id__in=fieldsets_ids)
+                    try:
+                        for fieldset in fieldsets:
+                            service = FieldSetService(
+                                user=self.context['user'],
+                                instance=fieldset,
+                            )
+                            service.validate_rules()
+                    except FieldsetServiceException as ex:
+                        self.raise_validation_error(message=ex.message)
         return instance

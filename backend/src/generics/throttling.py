@@ -115,7 +115,7 @@ class BaseAuthThrottle(CustomSimpleRateThrottle):
         user = request.user
         if not user.is_authenticated:
             return True
-        return bool(self.skip_for_paid_accounts and user.account.is_paid)
+        return self.skip_for_paid_accounts
 
 
 class TokenThrottle(BaseAuthThrottle):

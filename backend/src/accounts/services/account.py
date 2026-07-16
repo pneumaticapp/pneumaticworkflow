@@ -28,6 +28,7 @@ from src.utils.logging import (
     SentryLogLevel,
     capture_sentry_message,
 )
+from src.storage.utils import sync_account_file_fields
 
 UserModel = get_user_model()
 configuration = settings.CONFIGURATION_CURRENT
@@ -49,9 +50,6 @@ class AccountService(
         tenant_name: str,
     ) -> Account:
 
-        billing_enabled = (
-            settings.PROJECT_CONF['BILLING'] and master_account.billing_sync
-        )
         account = Account(
             is_verified=True,
             name='Company name',
@@ -76,7 +74,7 @@ class AccountService(
         ):
             account.billing_plan = BillingPlanType.FREEMIUM
         elif master_account.billing_plan == BillingPlanType.UNLIMITED:
-            if billing_enabled:
+            if master_account.billing_sync:
                 # Need buy
                 account.billing_plan = None
             else:
@@ -96,7 +94,7 @@ class AccountService(
         name: Optional[str] = None,
         tenant_name: Optional[str] = None,
         master_account: Optional[Account] = None,
-        billing_sync: bool = True,
+        billing_sync: bool = settings.PROJECT_CONF['BILLING'],
         **kwargs,
     ) -> Account:
 
@@ -106,13 +104,12 @@ class AccountService(
                 tenant_name=tenant_name,
             )
         else:
-            billing_enabled = settings.PROJECT_CONF['BILLING'] and billing_sync
             self.instance = Account(
                 is_verified=is_verified,
                 name=name or 'Company name',
                 billing_sync=billing_sync,
             )
-            if not billing_enabled:
+            if not billing_sync:
                 self.instance.billing_plan = BillingPlanType.FREEMIUM
                 self.instance.billing_sync = False
             self.instance.save()
@@ -143,12 +140,6 @@ class AccountService(
             ai_templates_generations=(
                 self.instance.ai_templates_generations + 1
             ),
-            force_save=True,
-        )
-
-    def update_bucket_name(self, bucket_name):
-        self.partial_update(
-            bucket_name=bucket_name,
             force_save=True,
         )
 
@@ -269,14 +260,29 @@ class AccountService(
         force_save=False,
         **update_kwargs,
     ) -> Account:
+        old_logo_lg = self.instance.logo_lg
+        old_logo_sm = self.instance.logo_sm
 
         with transaction.atomic():
             super().partial_update(
                 **update_kwargs,
                 force_save=force_save,
             )
+            if (old_logo_lg, old_logo_sm) != (
+                self.instance.logo_lg,
+                self.instance.logo_sm,
+            ):
+                sync_account_file_fields(
+                    account=self.instance,
+                    user=self.user,
+                    old_values=[old_logo_lg, old_logo_sm],
+                    new_values=[
+                        self.instance.logo_lg,
+                        self.instance.logo_sm,
+                    ],
+                )
             self._update_tenants()
-            if settings.PROJECT_CONF['BILLING'] and self.instance.billing_sync:
+            if self.instance.billing_sync:
                 self._update_stripe_account(**update_kwargs)
             self._identify_users()
             self.group(user=self.user, account=self.instance)

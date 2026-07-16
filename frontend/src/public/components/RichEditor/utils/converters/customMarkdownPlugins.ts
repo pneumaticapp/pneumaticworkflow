@@ -6,7 +6,7 @@ import { mentionsRegex, variableRegex } from '../../../../constants/defaultValue
 import { TTaskVariable } from '../../../TemplateEdit/types';
 import { TMentionData } from '../../types';
 import { ECustomEditorEntities } from '../types';
-import { getAttachmentEntityType } from '../getAttachmentEntityType';
+import { getAttachmentEntityType, getAttachmentEntityTypeByFilename } from '../getAttachmentEntityType';
 import { ContentToken } from 'remarkable/lib';
 import {
   parseAttachmentMarkdownFromStart,
@@ -163,7 +163,7 @@ export const linksRemarkablePlugin = (remarkable: Remarkable) => {
         return true;
       }
 
-      const entityType = getLinkEntityType(url, type);
+      const entityType = getLinkEntityType(url, type, name);
 
       const linkOpenToken: TCustomLinkToken = {
         type: 'link_open',
@@ -195,7 +195,7 @@ export const linksRemarkablePlugin = (remarkable: Remarkable) => {
   );
 };
 
-const getLinkEntityType = (url: string, entityType: string) => {
+const getLinkEntityType = (url: string, entityType: string, name?: string) => {
   const googleBucket = 'https://storage.googleapis.com/';
 
   const attachmentEntityTypes = [ECustomEditorEntities.Image, ECustomEditorEntities.File, ECustomEditorEntities.Video];
@@ -209,6 +209,15 @@ const getLinkEntityType = (url: string, entityType: string) => {
   // for legacy attachments with no entityType
   if (url.includes(googleBucket)) {
     return getAttachmentEntityType(url);
+  }
+
+  // for file-service URLs where the URL has no extension (UUID-based paths)
+  // but the link text (filename) contains a recognizable extension
+  if (name) {
+    const entityTypeByName = getAttachmentEntityTypeByFilename(name);
+    if (entityTypeByName !== ECustomEditorEntities.Link) {
+      return entityTypeByName;
+    }
   }
 
   return ECustomEditorEntities.Link;

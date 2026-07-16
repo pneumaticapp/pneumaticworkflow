@@ -98,6 +98,7 @@ class MSAuthViewSet(
                     )
                 else:
                     raise AuthenticationFailed(MSG_AU_0003) from ex
+            service.apply_photo_to_user(user, user_data)
             service.save_tokens_for_user(user)
             update_microsoft_contacts.delay(user.id)
             return self.response_ok({'token': token})

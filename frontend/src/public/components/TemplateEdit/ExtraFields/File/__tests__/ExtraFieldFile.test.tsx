@@ -6,8 +6,9 @@ import { FieldLabel } from '../../utils/FieldLabel';
 import { IWorkflowExtraFieldProps } from '../../types';
 import { intlMock } from '../../../../../__stubs__/intlMock';
 import { makeExtraField } from '../../../../../__stubs__/fields.factory';
-import { EExtraFieldMode, EExtraFieldType } from '../../../../../types/template';
+import { EExtraFieldMode, EExtraFieldType, IExtraField } from '../../../../../types/template';
 import { EFieldLabelPosition } from '../../../../../types/fieldset';
+import { TUploadedFile } from '../../../../../utils/uploadFiles';
 
 jest.mock('../../utils/FieldLabel', () => ({
   FieldLabel: jest.fn(() => null),
@@ -24,6 +25,13 @@ jest.mock('../../../../../utils/validators', () => ({
 
 jest.mock('../../../../../utils/uploadFiles', () => ({
   uploadFiles: jest.fn(),
+  MAX_FILE_SIZE: 100 * 1024 * 1024,
+}));
+
+jest.mock('../../../../../utils/getConfig', () => ({
+  getBrowserConfigEnv: () => ({
+    api: { fileServiceUrl: 'https://files.example.com' },
+  }),
 }));
 
 jest.mock('../../../../IntlMessages', () => ({
@@ -31,11 +39,25 @@ jest.mock('../../../../IntlMessages', () => ({
 }));
 
 jest.mock('../../../../UI/Notifications', () => ({
-  NotificationManager: { warning: jest.fn(), success: jest.fn() },
+  NotificationManager: { warning: jest.fn(), success: jest.fn(), notifyApiError: jest.fn() },
 }));
 
 jest.mock('../ExtraFieldFilesGrid', () => ({
-  ExtraFieldFilesGrid: jest.fn(() => null),
+  ExtraFieldFilesGrid: jest.fn(({ attachments }: { attachments: TUploadedFile[] }) => {
+    if (!attachments?.length) {
+      return null;
+    }
+
+    return (
+      <>
+        {attachments
+          .filter((file) => !file.isRemoved)
+          .map((file) => (
+            <span key={file.id}>{file.name}</span>
+          ))}
+      </>
+    );
+  }),
 }));
 
 jest.mock('../../../../UI/Buttons/Button', () => ({
@@ -43,7 +65,7 @@ jest.mock('../../../../UI/Buttons/Button', () => ({
 }));
 
 jest.mock('../../../../../utils/logger', () => ({
-  logger: { error: jest.fn(), info: jest.fn() },
+  logger: { error: jest.fn(), info: jest.fn(), warn: jest.fn() },
 }));
 
 describe('ExtraFieldFile', () => {
@@ -109,6 +131,115 @@ describe('ExtraFieldFile', () => {
       const fieldLabelMock = FieldLabel as jest.Mock;
       expect(fieldLabelMock).not.toHaveBeenCalled();
       expect(screen.getByText('Attachment')).toBeInTheDocument();
+    });
+  });
+
+  describe('initial file loading', () => {
+    const createFileField = (overrides: Partial<IExtraField> = {}): IExtraField => ({
+      apiName: 'file-abc',
+      name: 'Attachments',
+      type: EExtraFieldType.File,
+      order: 1,
+      isRequired: false,
+      userId: null,
+      groupId: null,
+      ...overrides,
+    });
+
+    const processRunProps = {
+      ...baseProps,
+      mode: EExtraFieldMode.ProcessRun,
+    };
+
+    it('renders with attachments from field.attachments', () => {
+      const attachments: TUploadedFile[] = [
+        { id: 'att-1', name: 'report.pdf', url: 'https://files.example.com/att-1', size: 1024 },
+      ];
+
+      render(<ExtraFieldFile {...processRunProps} field={createFileField({ attachments })} />);
+
+      expect(screen.getByText('report.pdf')).toBeInTheDocument();
+    });
+
+    it('parses markdownValue when attachments is empty', () => {
+      render(
+        <ExtraFieldFile
+          {...processRunProps}
+          field={createFileField({
+            attachments: [],
+            markdownValue: '[contract.pdf](https://files.example.com/abc)',
+          })}
+        />,
+      );
+
+      expect(screen.getByText('contract.pdf')).toBeInTheDocument();
+    });
+
+    it('parses markdownValue when attachments is undefined', () => {
+      render(
+        <ExtraFieldFile
+          {...processRunProps}
+          field={createFileField({
+            attachments: undefined,
+            markdownValue: '[invoice.pdf](https://files.example.com/inv)',
+          })}
+        />,
+      );
+
+      expect(screen.getByText('invoice.pdf')).toBeInTheDocument();
+    });
+
+    it('renders multiple files from markdownValue', () => {
+      render(
+        <ExtraFieldFile
+          {...processRunProps}
+          field={createFileField({
+            markdownValue: '[a.pdf](https://files.example.com/1), [b.docx](https://files.example.com/2)',
+          })}
+        />,
+      );
+
+      expect(screen.getByText('a.pdf')).toBeInTheDocument();
+      expect(screen.getByText('b.docx')).toBeInTheDocument();
+    });
+
+    it('prefers attachments over markdownValue', () => {
+      const attachments: TUploadedFile[] = [
+        { id: 'real', name: 'real.pdf', url: 'https://files.example.com/real', size: 500 },
+      ];
+
+      render(
+        <ExtraFieldFile
+          {...processRunProps}
+          field={createFileField({
+            attachments,
+            markdownValue: '[old.pdf](https://files.example.com/old)',
+          })}
+        />,
+      );
+
+      expect(screen.getByText('real.pdf')).toBeInTheDocument();
+      expect(screen.queryByText('old.pdf')).not.toBeInTheDocument();
+    });
+
+    it('renders nothing when no attachments and no markdownValue', () => {
+      const { container } = render(<ExtraFieldFile {...processRunProps} field={createFileField()} />);
+
+      expect(container.querySelector('[class*="files-grid"]')).toBeNull();
+    });
+  });
+
+  describe('kickoff mode rendering', () => {
+    it('renders upload button placeholder in kickoff mode', () => {
+      render(
+        <ExtraFieldFile
+          {...baseProps}
+          mode={EExtraFieldMode.Kickoff}
+          field={makeExtraField({ name: 'Attachments', type: EExtraFieldType.File })}
+        />,
+      );
+
+      expect(screen.getByDisplayValue('Attachments')).toBeInTheDocument();
     });
   });
 });

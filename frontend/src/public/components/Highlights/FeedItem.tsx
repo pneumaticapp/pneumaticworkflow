@@ -157,6 +157,8 @@ export const ALLOWED_EVENT_TYPES = [
   EWorkflowLogEvent.WorkflowIsNotUrgent,
   EWorkflowLogEvent.AddedPerformer,
   EWorkflowLogEvent.RemovedPerformer,
+  EWorkflowLogEvent.AddedPerformerGroup,
+  EWorkflowLogEvent.RemovedPerformerGroup,
   EWorkflowLogEvent.WorkflowSnoozedManually,
   EWorkflowLogEvent.WorkflowResumed,
   EWorkflowLogEvent.DueDateChanged,

@@ -1,16 +1,8 @@
 /* stylelint-disable selector-max-compound-selectors */
-.container {
+.markdown-content {
   overflow-wrap: anywhere;
-
-  * + * {
-    /* stylelint-disable-next-line declaration-no-important */
-    margin-top: 2rem !important;
-  }
-
-  li + li {
-    /* stylelint-disable-next-line declaration-no-important */
-    margin-top: 0.8rem !important;
-  }
+  min-width: 0;
+  max-width: 100%;
 
   p,
   li,
@@ -19,7 +11,6 @@
   code {
     margin: 0;
     max-width: 100%;
-    white-space: pre-wrap;
   }
 
   h1,
@@ -35,7 +26,7 @@
   }
 
   h1 {
-    font-size: 2.4rem;
+    @mixin h5;
   }
 
   h2 {
@@ -120,17 +111,113 @@
     max-height: 50rem;
     cursor: pointer;
   }
+
+  p,
+  img,
+  ul,
+  ol {
+    margin: 2rem 0;
+  }
+
+  li + li {
+    margin-top: 0.8rem;
+  }
+
+  .video {
+    /* stylelint-disable-next-line property-no-unknown */
+    aspect-ratio: 16 / 9;
+    width: 100%;
+
+    &__container {
+      margin: 2rem 0;
+      width: 100%;
+    }
+  }
+}
+
+.collapsed-content {
+  position: relative;
+
+  @mixin text-overflow var(--rich-text-line-clamp);
+}
+
+.more-link {
+  position: absolute;
+  z-index: 1;
+  right: 0;
+  bottom: 0;
+  padding-left: 0.8rem;
+  white-space: nowrap;
+  cursor: pointer;
+  color: var(--pneumatic-color-link);
+  background-color: var(--pneumatic-color-white);
+
+  &__delimiter {
+    color: var(--pneumatic-warning-color);
+  }
+}
+
+.progressbar {
+  display: flex;
+  align-items: center;
+
+  &__container {
+    margin-bottom: 0.8rem;
+  }
+
+  &__hint {
+    margin-left: 0.8rem;
+  }
+
+  &__hint-icon {
+    display: flex;
+  }
+}
+
+.checklist {
+  margin: 1.6rem 3.2rem;
+  min-width: 0;
+  max-width: 100%;
+
+  @media (--mobile) {
+    margin: 1.6rem 0;
+  }
+
+  &.is-interactive {
+    color: var(--pneumatic-color-black100);
+  }
+
+  &__item {
+    display: flex;
+    flex-wrap: nowrap;
+    min-width: 0;
+    max-width: 100%;
+    min-height: 2rem;
+  }
+
+  &__item + &__item {
+    margin-top: 0.8rem;
+  }
+
+  &__content {
+    max-width: 100%;
+    flex: 1;
+  }
+
+  &__inactive-placeholder {
+    margin-right: 0.8rem;
+    width: 2rem;
+    height: 2rem;
+    background-color: transparent;
+    border: 1px solid var(--pneumatic-color-black16);
+    border-radius: 0.4rem;
+    flex-shrink: 0;
+  }
 }
 
 .mention {
   font-weight: bold;
   color: var(--pneumatic-color-black72);
-}
-
-.video {
-  /* stylelint-disable-next-line property-no-unknown */
-  aspect-ratio: 16 / 9;
-  width: 100%;
 }
 
 .loading-image {
@@ -158,101 +245,4 @@
   100% {
     background-position: calc(20rem + 100%) 0;
   }
-}
-
-.checklist {
-  margin: 1.6rem 3.2rem;
-
-  @media (--mobile) {
-    margin: 1.6rem 0;
-  }
-}
-
-.checklist_interactive {
-  color: var(--pneumatic-color-black100);
-}
-
-.checkbox-wrapper {
-  display: flex;
-  min-height: 2rem;
-
-  &:not(:last-child) {
-    margin-bottom: 0.8rem;
-  }
-}
-
-.checkbox {
-  display: flex;
-}
-
-.checkbox-label {
-  padding: 0;
-}
-
-.checkbox-content {
-  margin-left: 2.8rem;
-}
-
-.progressbar-container {
-  margin-bottom: 0.6rem;
-}
-
-.progressbar {
-  display: flex;
-  align-items: center;
-}
-
-.progressbar-hint {
-  margin-left: 0.8rem;
-}
-
-.progressbar-hint-icon {
-  display: flex;
-}
-
-.container_collapsed {
-  /* stylelint-disable-next-line value-no-vendor-prefix */
-  display: -webkit-box;
-  overflow: hidden;
-  /* stylelint-disable-next-line property-no-vendor-prefix */
-  -webkit-box-orient: vertical;
-}
-
-.wrapper {
-  width: 100%;
-}
-
-.wrapper_collapsed {
-  position: relative;
-}
-
-.more-link {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  padding-left: 1rem;
-  line-height: inherit;
-  white-space: nowrap;
-  cursor: pointer;
-  /* stylelint-disable-next-line declaration-no-important */
-  color: var(--pneumatic-color-link) !important;
-  background:
-    linear-gradient(
-      90deg,
-      transparent 0%,
-      var(--rich-text-more-fade-color, var(--pneumatic-color-white)) 0.75rem
-    );
-}
-
-.more-link__delimiter {
-  color: var(--pneumatic-warning-color);
-}
-
-.checkbox-fake-placeholder {
-  position: absolute;
-  width: 2rem;
-  height: 2rem;
-  background-color: transparent;
-  border: 1px solid var(--pneumatic-color-black16);
-  border-radius: 0.4rem;
 }

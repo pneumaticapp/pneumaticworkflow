@@ -6,7 +6,9 @@ from django.db import transaction
 
 from src.accounts.enums import AbsenceStatus, UserGroupType
 from src.accounts.models import UserGroup, UserVacation
+from src.accounts.serializers.user import UserWebsocketSerializer
 from src.notifications.tasks import (
+    send_user_updated_notification,
     send_vacation_delegation_notification,
 )
 from src.processes.enums import (
@@ -115,6 +117,11 @@ class VacationDelegationService:
         self._notify_substitutes(
             substitute_user_ids=substitute_user_ids,
             task_ids=task_ids,
+        )
+        send_user_updated_notification.delay(
+            logging=self.user.account.log_api_requests,
+            account_id=self.user.account_id,
+            user_data=UserWebsocketSerializer(self.user).data,
         )
 
         return self.user
@@ -370,6 +377,11 @@ class VacationDelegationService:
 
             vacation.delete()
 
+        send_user_updated_notification.delay(
+            logging=self.user.account.log_api_requests,
+            account_id=self.user.account_id,
+            user_data=UserWebsocketSerializer(self.user).data,
+        )
         return self.user
 
     @staticmethod

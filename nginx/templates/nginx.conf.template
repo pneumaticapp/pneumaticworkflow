@@ -8,6 +8,14 @@ http {
 
     include /etc/nginx/includes/http_base.conf;
 
+    # Reject requests whose Host does not match any server_name below.
+    server {
+        listen 80 default_server;
+        listen 8001 default_server;
+        server_name _;
+        return 444;
+    }
+
     ##
     # Backend
     ##
@@ -18,6 +26,8 @@ http {
         index index.html index.nginx-debian.html;
 
         server_name ${SERVER_ADDRESS};
+
+        include /etc/nginx/includes/location_bot_block.conf;
 
         location / {
             include /etc/nginx/includes/proxy_to_backend.conf;
@@ -34,9 +44,19 @@ http {
 
         server_name pneumatic-nginx;
 
+        include /etc/nginx/includes/location_bot_block.conf;
+
         location / {
             include /etc/nginx/includes/proxy_to_private_backend.conf;
         }
+    }
+
+    ##
+    # File service upstream (used by location /files/ in frontend server)
+    ##
+
+    upstream file-service {
+      server pneumatic-file-service:8000;
     }
 
     ##
@@ -50,6 +70,7 @@ http {
 
         server_name ${SERVER_ADDRESS};
 
+        include /etc/nginx/includes/location_bot_block.conf;
         include /etc/nginx/includes/location_frontend_common.conf;
     }
 }

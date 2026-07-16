@@ -50,7 +50,7 @@ function FileAttachmentComponent({
 export class FileAttachmentNode extends DecoratorNode<React.ReactElement> {
   attachmentUrl: string;
 
-  attachmentId?: number;
+  attachmentId?: number | string;
 
   attachmentName?: string;
 
@@ -79,7 +79,7 @@ export class FileAttachmentNode extends DecoratorNode<React.ReactElement> {
           conversion: (element: HTMLDivElement): DOMConversionOutput => {
             const url = element.getAttribute('data-lexical-attachment-url') ?? '';
             const rawId = element.getAttribute('data-lexical-attachment-id');
-            const id = rawId != null ? parseInt(rawId, 10) : undefined;
+            const id = rawId != null ? rawId : undefined;
             const name = element.getAttribute('data-lexical-attachment-name') ?? undefined;
             return { node: $createFileAttachmentNode({ url, id, name }) };
           },
@@ -89,7 +89,7 @@ export class FileAttachmentNode extends DecoratorNode<React.ReactElement> {
     };
   }
 
-  constructor(url: string, id?: number, name?: string, key?: NodeKey) {
+  constructor(url: string, id?: number | string, name?: string, key?: NodeKey) {
     super(key);
     this.attachmentUrl = url;
     this.attachmentId = id;
@@ -130,8 +130,9 @@ export class FileAttachmentNode extends DecoratorNode<React.ReactElement> {
     return div;
   }
 
+  // eslint-disable-next-line class-methods-use-this
   updateDOM(): false {
-    return (this.getType(), false);
+    return false;
   }
 
   getTextContent(): string {

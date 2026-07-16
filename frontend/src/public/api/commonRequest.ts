@@ -11,10 +11,32 @@ import { envBackendURL } from '../constants/enviroment';
 import { isRequestCanceled } from '../utils/isRequestCanceled';
 import { isExpectedClientError } from '../utils/expectedClientErrors';
 
-export class InterceptorError extends Error {}
+import { InterceptorError } from './InterceptorError';
+import { createApiError } from './utils/createApiError';
 
-export type TRequestType = 'public' | 'local';
+export { InterceptorError };
+
+export type TRequestType = 'public' | 'local' | 'fileService';
 export type TResponseType = 'json' | 'text' | 'empty';
+
+export class ApiError extends InterceptorError {
+  status?: number;
+
+  data?: unknown;
+
+  [key: string]: unknown;
+
+  constructor(message: string, payload: unknown, status?: number) {
+    super(message);
+    this.name = 'ApiError';
+    this.data = payload;
+    this.status = status;
+    if (payload && typeof payload === 'object') {
+      Object.assign(this, payload);
+    }
+    Object.setPrototypeOf(this, ApiError.prototype);
+  }
+}
 
 interface ICommonRequestOptions {
   type: TRequestType;
@@ -34,7 +56,6 @@ const DEFAULT_OPTIONS: ICommonRequestOptions = {
 
 const axiosInstance: AxiosInstance = axios.create({
   timeout: ETimeouts.Default,
-  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -59,6 +80,10 @@ axiosInstance.interceptors.request.use(
           headers.set(key, value);
         }
       });
+    }
+
+    if (config.data instanceof FormData) {
+      headers.delete('Content-Type');
     }
 
     config.headers = headers;
@@ -105,13 +130,11 @@ axiosInstance.interceptors.response.use(
       logger.error('Error:', error.message);
     }
 
-    const data = error.response?.data;
-    const payload = typeof data === 'string' ? { error: data } : data ?? {};
-    const rejectedError = Object.assign(new InterceptorError(), payload, { status: error.response?.status });
-
-    return Promise.reject(rejectedError);
+    return Promise.reject(createApiError(error.response?.data, error.response?.status));
   },
 );
+
+let cachedRequestBaseUrlsMap: { [key in TRequestType]: string } | null = null;
 
 export async function commonRequest(
   rawUrl: string,
@@ -130,22 +153,29 @@ export async function commonRequest<T>(
   params: Partial<AxiosRequestConfig> = {},
   options: Partial<ICommonRequestOptions> = {},
 ): Promise<T | void> {
-  const {
-    api: { publicUrl, urls },
-  } = getBrowserConfigEnv();
+  if (!cachedRequestBaseUrlsMap) {
+    const {
+      api: { publicUrl, fileServiceUrl },
+    } = getBrowserConfigEnv();
+    cachedRequestBaseUrlsMap = {
+      public: envBackendURL || publicUrl,
+      local: '',
+      fileService: fileServiceUrl,
+    };
+  }
+
   const { type, shouldThrow, successStatusCodes, timeOut } = { ...DEFAULT_OPTIONS, ...options };
-  const requestBaseUrlsMap: { [key in TRequestType]: string } = {
-    public: envBackendURL || publicUrl,
-    local: '',
-  };
+  const requestBaseUrlsMap = cachedRequestBaseUrlsMap;
 
   try {
+    const { api: { urls } } = getBrowserConfigEnv();
     const url = (urls as { [key in string]: string })[rawUrl] || rawUrl;
     const fullUrl = mergePaths(requestBaseUrlsMap[type], url);
 
     const config: AxiosRequestConfig = {
       ...params,
       timeout: timeOut,
+      withCredentials: type !== 'fileService',
       responseType: options.responseType === 'text' || options.responseType === 'empty' ? 'text' : 'json',
       validateStatus: (status) => successStatusCodes.includes(status),
     };

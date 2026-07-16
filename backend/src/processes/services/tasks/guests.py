@@ -19,6 +19,7 @@ from src.processes.services.workflow_action import (
     WorkflowActionService,
     WorkflowEventService,
 )
+from src.storage.utils import reassign_restricted_permissions_for_task
 
 UserModel = get_user_model()
 
@@ -98,6 +99,11 @@ class GuestPerformersService(BasePerformersService):
             )
             service.complete_task(task=task)
 
+        reassign_restricted_permissions_for_task(
+            task=task,
+            user=request_user,
+        )
+
     @classmethod
     def _validate_create(
         cls,
@@ -156,4 +162,9 @@ class GuestPerformersService(BasePerformersService):
             invite_from=request_user,
             invite_to=user,
             is_superuser=is_superuser,
+        )
+
+        reassign_restricted_permissions_for_task(
+            task=task,
+            user=request_user,
         )

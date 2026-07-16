@@ -55,7 +55,7 @@ async function uploadFilesAndInsert(
   if (!editor || accountId == null) return;
 
   try {
-    const uploaded = await uploadFiles(files, accountId);
+    const uploaded = await uploadFiles(files);
 
     uploaded.filter(hasUrl).forEach((att) => {
       const type =

@@ -7,14 +7,6 @@
   border: none;
   border-radius: 1.6rem;
   transition: background 0.1s ease-in-out;
-
-  &:hover {
-    background: var(--pneumatic-color-white);
-
-    .card__title {
-      color: currentColor;
-    }
-  }
 }
 
 .card__title {

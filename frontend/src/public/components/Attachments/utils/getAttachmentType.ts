@@ -49,6 +49,8 @@ const IMAGE_FILE_EXTENSIONS = [
   'JPEG',
   'PNG',
   'GIF',
+  'SVG',
+  'WEBP',
 ];
 
 const getAttachemntTypeMap: { check(fileExtension: string): boolean; type: TAttachmentType }[] = [

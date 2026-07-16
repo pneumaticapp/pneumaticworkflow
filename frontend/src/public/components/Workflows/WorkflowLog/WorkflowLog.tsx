@@ -346,7 +346,7 @@ export interface IWorkflowLogProps {
   areRightTogglesHidden?: boolean;
   changeWorkflowLogViewSettings(payload: IChangeWorkflowLogViewSettingsPayload): void;
   toggleSkippedTasksVisibility(): void;
-  sendComment({ text, attachments, taskId }: ISendWorkflowLogComment): void;
+  sendComment({ text, taskId }: ISendWorkflowLogComment): void;
   onClickTask?(): void;
   onUnmount?(): void;
   isInTaskCard?: boolean;

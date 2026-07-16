@@ -8,7 +8,6 @@ from src.processes.enums import (
     PredicateType,
     TaskStatus,
 )
-from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.workflows.conditions import (
     Condition,
     Predicate,
@@ -26,6 +25,8 @@ from src.processes.tests.fixtures import (
     create_test_not_admin,
     create_test_workflow,
 )
+from src.storage.models import Attachment
+from src.storage.enums import SourceType, AccessType
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db
@@ -65,6 +66,37 @@ def test_check__number__equal__matching_integers__ok():
         field=field.api_name,
         value='100',
     )
+
+    def test_check__file(
+        self,
+        operator,
+        predicate_value,
+        field_value,
+        result,
+    ):
+        # arrange
+        owner = create_test_owner()
+        workflow = create_test_workflow(owner, tasks_count=2)
+        first_task = workflow.tasks.first()
+        first_field = TaskField.objects.create(
+            name='Hero',
+            api_name='hero-1',
+            task=first_task,
+            type=FieldType.FILE,
+            value=field_value,
+            workflow=workflow,
+            account=owner.account,
+        )
+        if field_value:
+            Attachment.objects.create(
+                file_id='john_cena_condition_file.jpg',
+                account=owner.account,
+                source_type=SourceType.TASK,
+                access_type=AccessType.RESTRICTED,
+                task=first_task,
+                workflow=workflow,
+                output=first_field,
+            )
 
     # act
     result = ConditionCheckService.check(
@@ -1544,11 +1576,11 @@ def test_check__file__exist__has_attachment__ok():
         workflow=workflow,
         account=owner.account,
     )
-    FileAttachment.objects.create(
-        name='john.cena',
-        url='https://john.cena/john.cena',
-        size=1488,
-        account_id=owner.account_id,
+    Attachment.objects.create(
+        file_id='12345678-1234-5678-1234-567812345678',
+        source_type=SourceType.TASK,
+        access_type=AccessType.ACCOUNT,
+        account=owner.account,
         output=field,
     )
     condition = Condition.objects.create(
@@ -1593,11 +1625,11 @@ def test_check__file__exist__no_attachment__fail():
         workflow=workflow,
         account=owner.account,
     )
-    FileAttachment.objects.create(
-        name='john.cena',
-        url='https://john.cena/john.cena',
-        size=1488,
-        account_id=owner.account_id,
+    Attachment.objects.create(
+        file_id='12345678-1234-5678-1234-567812345678',
+        source_type=SourceType.TASK,
+        access_type=AccessType.ACCOUNT,
+        account=owner.account,
         output=None,
     )
     condition = Condition.objects.create(
@@ -1642,11 +1674,11 @@ def test_check__file__not_exist__no_attachment__ok():
         workflow=workflow,
         account=owner.account,
     )
-    FileAttachment.objects.create(
-        name='john.cena',
-        url='https://john.cena/john.cena',
-        size=1488,
-        account_id=owner.account_id,
+    Attachment.objects.create(
+        file_id='12345678-1234-5678-1234-567812345678',
+        source_type=SourceType.TASK,
+        access_type=AccessType.ACCOUNT,
+        account=owner.account,
         output=None,
     )
     condition = Condition.objects.create(
@@ -1691,11 +1723,11 @@ def test_check__file__not_exist__has_attachment__fail():
         workflow=workflow,
         account=owner.account,
     )
-    FileAttachment.objects.create(
-        name='john.cena',
-        url='https://john.cena/john.cena',
-        size=1488,
-        account_id=owner.account_id,
+    Attachment.objects.create(
+        file_id='12345678-1234-5678-1234-567812345678',
+        source_type=SourceType.TASK,
+        access_type=AccessType.ACCOUNT,
+        account=owner.account,
         output=field,
     )
     condition = Condition.objects.create(

@@ -112,7 +112,6 @@ describe('getConfig', () => {
       process.env.SSO_AUTH = 'no';
       process.env.SIGNUP = 'yes';
       process.env.PUSH = 'no';
-      process.env.STORAGE = 'yes';
       process.env.ANALYTICS = 'no';
       process.env.SSO_PROVIDER = 'okta';
 
@@ -124,7 +123,6 @@ describe('getConfig', () => {
       expect(config.featureFlags.SSO_AUTH).toBe('no');
       expect(config.featureFlags.SIGNUP).toBe('yes');
       expect(config.featureFlags.PUSH).toBe('no');
-      expect(config.featureFlags.STORAGE).toBe('yes');
       expect(config.featureFlags.ANALYTICS).toBe('no');
       expect(config.featureFlags.SSO_PROVIDER).toBe('okta');
     });

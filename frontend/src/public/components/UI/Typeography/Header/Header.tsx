@@ -1,6 +1,6 @@
 /* eslint-disable */
 /* prettier-ignore */
-import * as classnames from 'classnames';
+import classnames from 'classnames';
 import * as React from 'react';
 
 import styles from './Header.css';

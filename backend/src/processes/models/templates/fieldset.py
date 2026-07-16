@@ -88,7 +88,7 @@ class FieldsetTemplateRule(
             UniqueConstraint(
                 fields=['api_name', 'fieldset'],
                 condition=Q(is_deleted=False),
-                name='fieldsettemplate_api_name_template_unique',
+                name='fieldsettemplate_rule_api_name_template_unique',
             ),
         ]
 

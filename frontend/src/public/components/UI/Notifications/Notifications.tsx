@@ -2,7 +2,7 @@
 import * as React from 'react';
 import { TransitionGroup, CSSTransition } from 'react-transition-group';
 import { injectIntl, IntlShape } from 'react-intl';
-import * as classNames from 'classnames';
+import classNames from 'classnames';
 
 import { Notification } from './Notification';
 import { INotification } from '../../../types';

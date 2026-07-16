@@ -1,6 +1,6 @@
 from typing import NamedTuple, Optional
 
-from typing_extensions import TypedDict
+from typing_extensions import NotRequired, TypedDict
 
 
 class UserData(TypedDict):
@@ -11,6 +11,7 @@ class UserData(TypedDict):
     company_name: Optional[str]
     photo: Optional[str]
     job_title: Optional[str]
+    ms_graph_user_id: NotRequired[str]
 
 
 class SSOConfigData(NamedTuple):

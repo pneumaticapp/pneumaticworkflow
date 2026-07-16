@@ -1,4 +1,3 @@
-# ruff: noqa: PLC0415
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework.serializers import (
@@ -120,10 +119,7 @@ class GroupWebsocketSerializer(serializers.ModelSerializer):
             'type',
         )
 
-    users = serializers.SerializerMethodField()
-
-    def get_users(self, obj):
-        from src.accounts.serializers.user import (
-            UserWebsocketSerializer,
-        )
-        return UserWebsocketSerializer(obj.users.all(), many=True).data
+    users = serializers.PrimaryKeyRelatedField(
+        many=True,
+        read_only=True,
+    )

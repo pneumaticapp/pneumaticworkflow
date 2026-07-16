@@ -1,12 +1,19 @@
 import * as React from 'react';
 import { render } from '@testing-library/react';
 
-import { TopNav, TTopNavProps } from '../TopNav';
-import { Dropdown } from '../../UI';
+import { TopNavContent } from '../TopNav';
+import { TTopNavContentProps } from '../types';
+import { Dropdown, TDropdownOption } from '../../UI';
 import { intlMock } from '../../../__stubs__/intlMock';
+import { ESubscriptionPlan } from '../../../types/account';
+import { IAccount } from '../../../types/user';
 
 jest.mock('../../../utils/history', () => ({
   history: { push: jest.fn(), location: { pathname: '/' }, listen: jest.fn() },
+}));
+
+jest.mock('../../../constants/enviroment', () => ({
+  isEnvBilling: false,
 }));
 
 jest.mock('../PaywallReminder', () => ({
@@ -38,30 +45,33 @@ describe('TopNav', () => {
   const TEAM_LABEL = t('nav.team');
   const INTEGRATION_LABEL = t('nav.integration');
   const PROFILE_LABEL = t('nav.profile');
+  const CUSTOMER_PORTAL_LABEL = t('nav.customer-portal');
 
-  const baseProps: TTopNavProps = {
+  const accountOwnerPlan: IAccount = {
+    billingPlan: ESubscriptionPlan.Free,
+    plan: ESubscriptionPlan.Free,
+    isSubscribed: false,
+    billingSync: false,
+    name: '',
+    tenantName: '',
+    planExpiration: null,
+    leaseLevel: 'standard',
+    logoSm: null,
+    logoLg: null,
+    trialEnded: false,
+    trialIsActive: false,
+  };
+
+  const baseProps: TTopNavContentProps = {
     pendingActions: [],
     paywallType: null,
-    isSubscribed: false,
+    plan: ESubscriptionPlan.Free,
     unreadNotificationsCount: 0,
     isSupermode: false,
     tenantName: '',
     leaseLevel: 'standard',
     isAccountOwner: false,
-    accountOwnerPlan: {
-      billingPlan: 'free',
-      plan: 'free',
-      isSubscribed: false,
-      billingSync: false,
-      name: '',
-      tenantName: '',
-      planExpiration: null,
-      leaseLevel: 'standard',
-      logoSm: null,
-      logoLg: null,
-      trialEnded: false,
-      trialIsActive: false,
-    } as any,
+    accountOwnerPlan,
     isAdmin: false,
     firstName: '',
     lastName: '',
@@ -72,18 +82,26 @@ describe('TopNav', () => {
   };
 
   const getDropdownOptions = () => {
-    const dropdownMock = Dropdown as jest.Mock;
+    const dropdownMock = Dropdown as jest.MockedFunction<typeof Dropdown>;
     const lastCall = dropdownMock.mock.calls[dropdownMock.mock.calls.length - 1];
-    return lastCall[0].options;
+    const { options } = lastCall[0];
+
+    return (Array.isArray(options) ? options : [options]) as TDropdownOption[];
   };
 
   const findOption = (label: string) => {
     const options = getDropdownOptions();
-    return options.find((opt: any) => opt.label === label);
+    const option = options.find((dropdownOption) => dropdownOption.label === label);
+
+    if (!option) {
+      throw new Error(`Dropdown option not found: ${label}`);
+    }
+
+    return option;
   };
 
-  const renderTopNav = (props: Partial<TTopNavProps> = {}) => {
-    return render(React.createElement(TopNav, { ...baseProps, ...props }));
+  const renderTopNav = (props: Partial<TTopNavContentProps> = {}) => {
+    return render(React.createElement(TopNavContent, { ...baseProps, ...props }));
   };
 
   beforeEach(() => {
@@ -116,6 +134,48 @@ describe('TopNav', () => {
     });
   });
 
+  describe('My subscription visibility', () => {
+    it('shows My subscription when billing is disabled and plan is paid', () => {
+      renderTopNav({ plan: ESubscriptionPlan.Premium, isAccountOwner: true });
+
+      const option = findOption(CUSTOMER_PORTAL_LABEL);
+      expect(option).toBeDefined();
+      expect(option.isHidden).toBe(false);
+    });
+
+    it('hides My subscription when plan is free', () => {
+      renderTopNav({ plan: ESubscriptionPlan.Free, isAccountOwner: true });
+
+      const option = findOption(CUSTOMER_PORTAL_LABEL);
+      expect(option).toBeDefined();
+      expect(option.isHidden).toBe(true);
+    });
+
+    it('shows My subscription for a paid partner account owner', () => {
+      renderTopNav({ plan: ESubscriptionPlan.Premium, isAccountOwner: true, leaseLevel: 'partner' });
+
+      const option = findOption(CUSTOMER_PORTAL_LABEL);
+      expect(option).toBeDefined();
+      expect(option.isHidden).toBe(false);
+    });
+
+    it('hides My subscription when plan is unknown', () => {
+      renderTopNav({ plan: ESubscriptionPlan.Unknown, isAccountOwner: true });
+
+      const option = findOption(CUSTOMER_PORTAL_LABEL);
+      expect(option).toBeDefined();
+      expect(option.isHidden).toBe(true);
+    });
+
+    it('hides My subscription for tenant lease level', () => {
+      renderTopNav({ plan: ESubscriptionPlan.Premium, isAccountOwner: true, leaseLevel: 'tenant' });
+
+      const option = findOption(CUSTOMER_PORTAL_LABEL);
+      expect(option).toBeDefined();
+      expect(option.isHidden).toBe(true);
+    });
+  });
+
   describe('User full name display', () => {
     it('passes full user name as the first option', () => {
       renderTopNav({ firstName: 'John', lastName: 'Doe' });
@@ -131,9 +191,7 @@ describe('TopNav', () => {
       renderTopNav({ firstName: '', lastName: '' });
 
       const options = getDropdownOptions();
-      const hasNameOption = options.some(
-        (opt: any) => opt.label === '' || opt.label === ' ',
-      );
+      const hasNameOption = options.some((option) => option.label === '' || option.label === ' ');
       expect(hasNameOption).toBe(false);
 
       const profileOption = findOption(PROFILE_LABEL);
