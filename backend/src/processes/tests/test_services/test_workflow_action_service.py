@@ -1712,6 +1712,275 @@ def test_continue_task__first_start_task__create_started_event(mocker):
     task_started_event_mock.assert_called_once_with(task)
 
 
+def test_continue_task__is_returned_completed__send_removed_notification(
+    mocker,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner)
+    task = workflow.tasks.get(number=1)
+    task.status = TaskStatus.COMPLETED
+    task.date_completed = timezone.now()
+    task.save()
+    TaskPerformer.objects.filter(task=task).update(
+        is_completed=True,
+        date_completed=timezone.now(),
+    )
+    task_service_init_mock = mocker.patch.object(
+        TaskService,
+        attribute='__init__',
+        return_value=None,
+    )
+    partial_update_mock = mocker.patch(
+        'src.processes.services.tasks.task.TaskService.partial_update',
+    )
+    set_due_date_mock = mocker.patch(
+        'src.processes.services.tasks.task.TaskService'
+        '.set_due_date_from_template',
+    )
+    task_started_event_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowEventService'
+        '.task_started_event',
+    )
+    send_new_task_notification_mock = mocker.patch(
+        'src.notifications.tasks.send_new_task_notification.delay',
+    )
+    send_new_task_websocket_mock = mocker.patch(
+        'src.notifications.tasks.send_new_task_websocket.delay',
+    )
+    delete_task_guest_cache_mock = mocker.patch(
+        'src.processes.services.workflow_action.GuestJWTAuthService'
+        '.delete_task_guest_cache',
+    )
+    start_next_tasks_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '._start_next_tasks',
+    )
+    send_removed_mock = mocker.patch(
+        'src.processes.services.workflow_action.send_task_deleted_'
+        'notification.delay',
+    )
+    service = WorkflowActionService(user=owner, workflow=workflow)
+
+    # act
+    service.continue_task(task=task, is_returned=True)
+
+    # assert
+    task_service_init_mock.assert_called_once()
+    partial_update_mock.assert_called_once()
+    set_due_date_mock.assert_called_once()
+    task_started_event_mock.assert_called_once_with(task)
+    assert send_new_task_notification_mock.call_count == 1
+    assert send_new_task_websocket_mock.call_count == 1
+    delete_task_guest_cache_mock.assert_called_once()
+    start_next_tasks_mock.assert_called_once()
+    send_removed_mock.assert_called_once_with(
+        task_id=task.id,
+        recipients=[(owner.id, owner.email)],
+        account_id=task.account_id,
+    )
+
+
+def test_continue_task__completed_not_returned__no_removed_notification(
+    mocker,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner)
+    task = workflow.tasks.get(number=1)
+    task.status = TaskStatus.COMPLETED
+    task.date_completed = timezone.now()
+    task.save()
+    task_service_init_mock = mocker.patch.object(
+        TaskService,
+        attribute='__init__',
+        return_value=None,
+    )
+    partial_update_mock = mocker.patch(
+        'src.processes.services.tasks.task.TaskService.partial_update',
+    )
+    set_due_date_mock = mocker.patch(
+        'src.processes.services.tasks.task.TaskService'
+        '.set_due_date_from_template',
+    )
+    task_started_event_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowEventService'
+        '.task_started_event',
+    )
+    send_new_task_notification_mock = mocker.patch(
+        'src.notifications.tasks.send_new_task_notification.delay',
+    )
+    send_new_task_websocket_mock = mocker.patch(
+        'src.notifications.tasks.send_new_task_websocket.delay',
+    )
+    delete_task_guest_cache_mock = mocker.patch(
+        'src.processes.services.workflow_action.GuestJWTAuthService'
+        '.delete_task_guest_cache',
+    )
+    start_next_tasks_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '._start_next_tasks',
+    )
+    send_removed_mock = mocker.patch(
+        'src.processes.services.workflow_action.send_task_deleted_'
+        'notification.delay',
+    )
+    service = WorkflowActionService(user=owner, workflow=workflow)
+
+    # act
+    service.continue_task(task=task, is_returned=False)
+
+    # assert
+    task_service_init_mock.assert_called_once()
+    partial_update_mock.assert_called_once()
+    set_due_date_mock.assert_called_once()
+    task_started_event_mock.assert_not_called()
+    assert send_new_task_notification_mock.call_count == 0
+    assert send_new_task_websocket_mock.call_count == 1
+    delete_task_guest_cache_mock.assert_called_once()
+    start_next_tasks_mock.assert_called_once()
+    send_removed_mock.assert_not_called()
+
+
+def test_continue_task__is_returned_delayed__no_removed_notification(
+    mocker,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner)
+    task = workflow.tasks.get(number=1)
+    task.status = TaskStatus.DELAYED
+    task.save()
+    Delay.objects.create(
+        task=task,
+        duration=timedelta(hours=1),
+        start_date=timezone.now(),
+        directly_status=DirectlyStatus.CREATED,
+        workflow=workflow,
+    )
+    task_service_init_mock = mocker.patch.object(
+        TaskService,
+        attribute='__init__',
+        return_value=None,
+    )
+    partial_update_mock = mocker.patch(
+        'src.processes.services.tasks.task.TaskService.partial_update',
+    )
+    set_due_date_mock = mocker.patch(
+        'src.processes.services.tasks.task.TaskService'
+        '.set_due_date_from_template',
+    )
+    task_started_event_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowEventService'
+        '.task_started_event',
+    )
+    send_new_task_notification_mock = mocker.patch(
+        'src.notifications.tasks.send_new_task_notification.delay',
+    )
+    send_new_task_websocket_mock = mocker.patch(
+        'src.notifications.tasks.send_new_task_websocket.delay',
+    )
+    delete_task_guest_cache_mock = mocker.patch(
+        'src.processes.services.workflow_action.GuestJWTAuthService'
+        '.delete_task_guest_cache',
+    )
+    start_next_tasks_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '._start_next_tasks',
+    )
+    send_removed_mock = mocker.patch(
+        'src.processes.services.workflow_action.send_task_deleted_'
+        'notification.delay',
+    )
+    service = WorkflowActionService(user=owner, workflow=workflow)
+
+    # act
+    service.continue_task(task=task, is_returned=True)
+
+    # assert
+    task_service_init_mock.assert_called_once()
+    partial_update_mock.assert_called_once()
+    set_due_date_mock.assert_called_once()
+    task_started_event_mock.assert_called_once_with(task)
+    assert send_new_task_notification_mock.call_count == 1
+    assert send_new_task_websocket_mock.call_count == 1
+    delete_task_guest_cache_mock.assert_called_once()
+    start_next_tasks_mock.assert_called_once()
+    send_removed_mock.assert_not_called()
+
+
+def test__notify_task_removed_from_lists__completed__all_performers(
+    mocker,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    performer = create_test_not_admin(account=account)
+    workflow = create_test_workflow(user=owner)
+    task = workflow.tasks.get(number=1)
+    task.status = TaskStatus.COMPLETED
+    task.date_completed = timezone.now()
+    task.save()
+    TaskPerformer.objects.create(task_id=task.id, user_id=performer.id)
+    TaskPerformer.objects.filter(task=task).update(
+        is_completed=True,
+        date_completed=timezone.now(),
+    )
+    send_removed_mock = mocker.patch(
+        'src.processes.services.workflow_action.send_task_deleted_'
+        'notification.delay',
+    )
+    service = WorkflowActionService(user=owner, workflow=workflow)
+
+    # act
+    service._notify_task_removed_from_lists(task)
+
+    # assert
+    send_removed_mock.assert_called_once()
+    _, call_kwargs = send_removed_mock.call_args
+    assert call_kwargs['task_id'] == task.id
+    assert call_kwargs['account_id'] == task.account_id
+    assert set(call_kwargs['recipients']) == {
+        (owner.id, owner.email),
+        (performer.id, performer.email),
+    }
+
+
+def test__notify_task_removed_from_lists__active_all_completed__no_call(
+    mocker,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner)
+    task = workflow.tasks.get(number=2)
+    task.status = TaskStatus.ACTIVE
+    task.save()
+    TaskPerformer.objects.filter(task=task).update(
+        is_completed=True,
+        date_completed=timezone.now(),
+    )
+    send_removed_mock = mocker.patch(
+        'src.processes.services.workflow_action.send_task_deleted_'
+        'notification.delay',
+    )
+    service = WorkflowActionService(user=owner, workflow=workflow)
+
+    # act
+    service._notify_task_removed_from_lists(task)
+
+    # assert
+    send_removed_mock.assert_not_called()
+
+
 def test_continue_task__root_task_wf_starter_and_user_performers__ok(mocker):
 
     """ Workflow starter can't receive email and push for a root tasks """
@@ -4148,6 +4417,10 @@ def test__deactivate_task__no_action_delayed_direct_status__end_delay(mocker):
         '.execute_conditions',
         return_value=(None, False),
     )
+    send_removed_mock = mocker.patch(
+        'src.processes.services.workflow_action.send_task_deleted_'
+        'notification.delay',
+    )
     service = WorkflowActionService(user=owner, workflow=workflow)
 
     # act
@@ -4160,6 +4433,11 @@ def test__deactivate_task__no_action_delayed_direct_status__end_delay(mocker):
     assert task.status == TaskStatus.PENDING
     assert task.date_started is None
     assert task.date_completed is None
+    send_removed_mock.assert_called_once_with(
+        task_id=task.id,
+        recipients=[(owner.id, owner.email)],
+        account_id=task.account_id,
+    )
 
 
 def test__deactivate_task__no_action_active__send_removed_notification(
@@ -4191,7 +4469,86 @@ def test__deactivate_task__no_action_active__send_removed_notification(
     # assert
     send_removed_mock.assert_called_once_with(
         task_id=task.id,
-        recipients=mocker.ANY,
+        recipients=[(owner.id, owner.email)],
+        account_id=task.account_id,
+    )
+    task.refresh_from_db()
+    assert task.status == TaskStatus.PENDING
+    assert task.date_started is None
+    assert task.date_completed is None
+
+
+def test__deactivate_task__no_action_completed_performer__no_notification(
+    mocker,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner)
+    parent_task = workflow.tasks.get(number=1)
+    task = workflow.tasks.get(number=2)
+    task.status = TaskStatus.ACTIVE
+    task.save()
+    TaskPerformer.objects.filter(task=task).update(
+        is_completed=True,
+        date_completed=timezone.now(),
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '.execute_conditions',
+        return_value=(None, False),
+    )
+    send_removed_mock = mocker.patch(
+        'src.processes.services.workflow_action.send_task_deleted_'
+        'notification.delay',
+    )
+    service = WorkflowActionService(user=owner, workflow=workflow)
+
+    # act
+    service._deactivate_task(parent_task=parent_task)
+
+    # assert
+    send_removed_mock.assert_not_called()
+    task.refresh_from_db()
+    assert task.status == TaskStatus.PENDING
+
+
+def test__deactivate_task__no_action_completed__send_removed_notification(
+    mocker,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner)
+    parent_task = workflow.tasks.get(number=1)
+    task = workflow.tasks.get(number=2)
+    task.status = TaskStatus.COMPLETED
+    task.date_completed = timezone.now()
+    task.save()
+    TaskPerformer.objects.filter(task=task).update(
+        is_completed=True,
+        date_completed=timezone.now(),
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '.execute_conditions',
+        return_value=(None, False),
+    )
+    send_removed_mock = mocker.patch(
+        'src.processes.services.workflow_action.send_task_deleted_'
+        'notification.delay',
+    )
+    service = WorkflowActionService(user=owner, workflow=workflow)
+
+    # act
+    service._deactivate_task(parent_task=parent_task)
+
+    # assert
+    send_removed_mock.assert_called_once_with(
+        task_id=task.id,
+        recipients=[(owner.id, owner.email)],
         account_id=task.account_id,
     )
     task.refresh_from_db()

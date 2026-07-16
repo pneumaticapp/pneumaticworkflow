@@ -268,8 +268,8 @@ def test_return_to__ok(mocker, api_client):
     workflow.refresh_from_db()
 
     send_task_deleted_notification_mock = mocker.patch(
-        'src.notifications.tasks'
-        '.send_task_deleted_notification.delay',
+        'src.processes.services.workflow_action.'
+        'send_task_deleted_notification.delay',
     )
     delete_task_guest_cache_mock = mocker.patch(
         'src.authentication.services.guest_auth.'
@@ -324,7 +324,26 @@ def test_return_to__ok(mocker, api_client):
     assert task_1.is_active
     task_2.refresh_from_db()
     assert task_2.is_pending
-    send_task_deleted_notification_mock.assert_called_once()
+    task_3 = workflow.tasks.get(number=3)
+    expected_recipient = (user.id, user.email)
+    assert send_task_deleted_notification_mock.call_count == 3
+    send_task_deleted_notification_mock.assert_has_calls([
+        mocker.call(
+            task_id=task_1.id,
+            recipients=[expected_recipient],
+            account_id=task_1.account_id,
+        ),
+        mocker.call(
+            task_id=task_2.id,
+            recipients=[expected_recipient],
+            account_id=task_2.account_id,
+        ),
+        mocker.call(
+            task_id=task_3.id,
+            recipients=[expected_recipient],
+            account_id=task_3.account_id,
+        ),
+    ], any_order=True)
     send_new_task_notification_mock.assert_called_once()
     analysis_return_workflow_mock.assert_called_once_with(
         user=user,
@@ -341,7 +360,6 @@ def test_return_to__ok(mocker, api_client):
         account_id=user.account_id,
         payload=webhook_payload,
     )
-    task_3 = workflow.tasks.get(number=3)
     assert task_3.is_pending
     revert_workflow_event_mock.assert_called_once_with(
         task=task_1,
@@ -785,8 +803,8 @@ def test_return_to__completed_workflow__ok(
         'send_task_returned_webhook.delay',
     )
     send_task_deleted_notification_mock = mocker.patch(
-        'src.notifications.tasks'
-        '.send_task_deleted_notification.delay',
+        'src.processes.services.workflow_action.'
+        'send_task_deleted_notification.delay',
     )
 
     # act
@@ -802,7 +820,11 @@ def test_return_to__completed_workflow__ok(
     assert workflow.is_running
     task_1.refresh_from_db()
     assert task_1.is_active
-    send_task_deleted_notification_mock.assert_not_called()
+    send_task_deleted_notification_mock.assert_called_once_with(
+        task_id=task_1.id,
+        recipients=[(user.id, user.email)],
+        account_id=task_1.account_id,
+    )
     send_new_task_notification_mock.assert_called_once()
     delete_task_guest_cache_mock.assert_not_called()
     revert_task_webhook_mock.assert_not_called()

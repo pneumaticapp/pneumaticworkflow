@@ -442,6 +442,8 @@ class WorkflowActionService:
 
         """ Continue start task after run or workflow delay """
 
+        if is_returned and task.is_completed:
+            self._notify_task_removed_from_lists(task)
         task_start_event_already_exist = (
             not is_returned and bool(task.date_started)
         )
@@ -965,6 +967,22 @@ class WorkflowActionService:
             messages.MSG_PW_0079(revert_to_tasks[0].name),
         )
 
+    def _notify_task_removed_from_lists(self, task: Task):
+        performers = (
+            TaskPerformer.objects
+            .by_task(task.id)
+            .exclude_directly_deleted()
+        )
+        if not task.is_completed:
+            performers = performers.not_completed()
+        recipients = list(performers.get_user_emails_and_ids_set())
+        if recipients:
+            send_task_deleted_notification.delay(
+                task_id=task.id,
+                recipients=recipients,
+                account_id=task.account_id,
+            )
+
     def _deactivate_task(self, parent_task: Task):
 
         dependent_tasks = Task.objects.filter(
@@ -993,19 +1011,12 @@ class WorkflowActionService:
                         end_date=None,
                         estimated_end_date=None,
                     )
-                if task.is_active:
-                    recipients = list(
-                        TaskPerformer.objects
-                        .filter(task_id=task.id)
-                        .exclude_directly_deleted()
-                        .not_completed()
-                        .get_user_emails_and_ids_set(),
-                    )
-                    send_task_deleted_notification.delay(
-                        task_id=task.id,
-                        recipients=recipients,
-                        account_id=task.account_id,
-                    )
+                if (
+                    task.is_active
+                    or task.is_completed
+                    or task.is_delayed
+                ):
+                    self._notify_task_removed_from_lists(task)
                 task.date_started = None
                 task.date_completed = None
                 task.status = TaskStatus.PENDING
