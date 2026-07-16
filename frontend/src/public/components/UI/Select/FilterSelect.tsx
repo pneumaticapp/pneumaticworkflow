@@ -173,6 +173,8 @@ export function FilterSelect<
             onClear={handleClearSearchText}
             fieldSize="md"
             autoFocus
+            autoComplete="one-time-code"
+            name="filter-select-search"
             placeholder={searchPlaceholder}
           />
         </div>
