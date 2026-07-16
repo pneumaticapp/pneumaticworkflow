@@ -11,6 +11,7 @@ import {
 import { EConditionAction, EConditionOperators, EConditionLogicOperations, TConditionRule } from '../TaskForm/Conditions/types';
 import { TemplateForm, useTemplateField, useTemplateForm, useTemplatePersist, useTemplateSaveRetry } from '../useTemplateForm';
 import { TEMPLATE_FORM_PERSIST_DEBOUNCE_MS } from '../useTemplateForm/TemplateFormPersistProvider';
+import { shouldRunReferenceCleanup } from '../useTemplateForm/templateFormReferenceCleanup';
 import { getTemplateVariablesFingerprint } from '../useTemplateForm/templateFormUtils';
 import { patchTemplate, saveTemplate, setTemplateStatus } from '../../../redux/actions';
 import { ETemplateStatus } from '../../../types/redux';
@@ -58,6 +59,7 @@ const makeTask = (overrides: Partial<ITemplateTaskClient> = {}): ITemplateTaskCl
     skipForStarter: false,
     rawPerformers: [],
     fields: [],
+    fieldsets: [],
     uuid: 'uuid-1',
     conditions: [],
     checklists: [],
@@ -78,7 +80,7 @@ const makeTemplate = (overrides: Partial<ITemplateClient> = {}): ITemplateClient
     dateUpdated: null,
     updatedBy: null,
     owners: [],
-    kickoff: { description: '', fields: [] } as any,
+    kickoff: { description: '', fields: [], fieldsets: [] } as any,
     tasks: [makeTask()],
     isPublic: false,
     publicUrl: null,
@@ -126,6 +128,52 @@ describe('getTemplateVariablesFingerprint', () => {
         },
       }),
     );
+  });
+
+  it('changes when task fieldset variables change', () => {
+    const fieldset = {
+      apiNameBinding: 'fieldset-1',
+      sharedFieldsetId: 1,
+      name: 'Fieldset',
+      fields: [{ apiName: 'fs-field', name: 'Fieldset field', type: 'string' }],
+    } as any;
+    const template = makeTemplate({
+      tasks: [makeTask({ fieldsets: [fieldset] })],
+    });
+
+    expect(getTemplateVariablesFingerprint(template)).not.toBe(
+      getTemplateVariablesFingerprint({
+        ...template,
+        tasks: [makeTask({ fieldsets: [{ ...fieldset, fields: [{ ...fieldset.fields[0], name: 'Renamed' }] }] })],
+      }),
+    );
+  });
+});
+
+describe('shouldRunReferenceCleanup', () => {
+  it('detects task fieldset output changes', () => {
+    const fieldset = {
+      apiNameBinding: 'fieldset-1',
+      sharedFieldsetId: 1,
+      fields: [{ apiName: 'fs-field', name: 'Fieldset field', type: 'string' }],
+    } as any;
+    const previous = makeTemplate({ tasks: [makeTask({ fieldsets: [fieldset] })] });
+    const next = makeTemplate({ tasks: [makeTask({ fieldsets: [] })] });
+
+    expect(shouldRunReferenceCleanup('tasks.0', previous, next)).toBe(true);
+  });
+
+  it('detects kickoff fieldset output changes', () => {
+    const previous = makeTemplate({
+      kickoff: {
+        description: '',
+        fields: [],
+        fieldsets: [{ fields: [{ apiName: 'fs-field' }] }],
+      } as any,
+    });
+    const next = makeTemplate({ kickoff: { description: '', fields: [], fieldsets: [] } as any });
+
+    expect(shouldRunReferenceCleanup('kickoff', previous, next)).toBe(true);
   });
 });
 
@@ -218,6 +266,22 @@ describe('TemplateFormPersistProvider deactivation', () => {
     expect(handle!.values.isActive).toBe(false);
 
     await flushPersist();
+    expect(patchTemplate).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not re-dispatch the same edit after a successful autosave without Redux reinitialize', async () => {
+    const template = makeTemplate({ isActive: true, description: 'old' });
+    let handle: ISpyHandle | null = null;
+
+    render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
+
+    act(() => {
+      handle!.setFieldValue('description', 'new description', false);
+    });
+
+    await flushPersist();
+    await flushPersist();
+
     expect(patchTemplate).toHaveBeenCalledTimes(1);
   });
 

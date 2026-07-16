@@ -143,12 +143,16 @@ export function useTemplatePersistContextValue({
 
     consumedPendingRef.current = null;
     retryExplicitPatchRef.current = {};
-    // Prefer the latest Redux snapshot from `persistBaselineSyncRef` (server-
-    // stamped fields). Until Redux reinitializes Formik after save, fall back
-    // to the in-flight Formik snapshot so post-save edits diff correctly.
-    previousValuesRef.current = latestReduxBaselineRef.current
-      ? { ...latestReduxBaselineRef.current }
-      : (consumed?.dispatchedValues ?? valuesRef.current);
+    const latestBaseline = latestReduxBaselineRef.current;
+    const savedValues = consumed?.dispatchedValues ?? valuesRef.current;
+    const hasNewerReduxBaseline = latestBaseline && latestBaseline !== consumed?.previousBaseline;
+
+    // Prefer a fresh Redux snapshot with server-stamped fields. If baseline sync
+    // was skipped while this save was in flight, the ref still points at the
+    // pre-edit snapshot, so fall back to the form snapshot that was dispatched.
+    previousValuesRef.current = hasNewerReduxBaseline
+      ? { ...latestBaseline }
+      : savedValues;
 
     if (Object.keys(pendingUserEditsRefRef.current.current).length === 0) {
       dirtyRefRef.current.current = false;

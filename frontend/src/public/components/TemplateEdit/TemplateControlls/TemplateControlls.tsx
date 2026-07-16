@@ -50,7 +50,6 @@ export function TemplateControlls({
   const fieldContext = useContext(TemplateFieldContext);
   const persistContext = useContext(TemplatePersistContext);
   const template = propsTemplate ?? fieldContext?.values;
-  const setFieldValue = fieldContext?.setFieldValue ?? (() => undefined);
   const {
     consumePendingChanges,
     confirmConsumedChanges,
@@ -117,6 +116,15 @@ export function TemplateControlls({
 
   const runOpenWorkflowModal = (payload: Parameters<typeof openRunWorkflowModal>[0]) => {
     propsOpenRunWorkflowModal ? propsOpenRunWorkflowModal(payload) : dispatch(openRunWorkflowModal(payload));
+  };
+
+  const setSettingsFieldValue = (field: string, value: unknown, shouldValidate?: boolean) => {
+    if (fieldContext) {
+      fieldContext.setFieldValue(field, value, shouldValidate);
+      return;
+    }
+
+    runPatchTemplate({ changedFields: { [field]: value } });
   };
 
   const handleRunProcess = async () => {
@@ -203,7 +211,7 @@ export function TemplateControlls({
         }}
       />
 
-      <TemplateOwnersSettings owners={owners} setFieldValue={setFieldValue} />
+      <TemplateOwnersSettings owners={owners} setFieldValue={setSettingsFieldValue} />
       <TemplateMoreSettings
         templateId={templateId}
         onClone={() => templateId && runCloneTemplate({ templateId })}
@@ -213,7 +221,7 @@ export function TemplateControlls({
         finalizable={isTemplateFinalizable}
         completionNotification={isCompletionNotification}
         reminderNotification={isReminderNotification}
-        setFieldValue={setFieldValue}
+        setFieldValue={setSettingsFieldValue}
       />
 
       {showDraftWarning && (

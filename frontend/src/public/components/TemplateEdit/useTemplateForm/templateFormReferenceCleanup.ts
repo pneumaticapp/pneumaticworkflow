@@ -1,34 +1,41 @@
-import { IKickoffClient, ITemplateClient, ITemplateTaskClient } from '../../../types/template';
+import { IFieldsetBindingClient } from '../../../types/fieldset';
+import { IExtraField, IKickoffClient, ITemplateClient, ITemplateTaskClient } from '../../../types/template';
 import { cleanTemplateReferences } from '../../../utils/template';
 
-function getKickoffFieldApiNames(kickoff: IKickoffClient): string[] {
-  return (kickoff.fields || [])
+type TOutputField = Pick<IExtraField, 'apiName'>;
+
+function getOutputFieldApiNames(
+  fields: TOutputField[] | undefined,
+  fieldsets: Pick<IFieldsetBindingClient, 'fields'>[] | undefined,
+): string[] {
+  return [
+    ...(fields || []),
+    ...(fieldsets || []).flatMap((fieldset) => fieldset.fields || []),
+  ]
     .map((field) => field.apiName)
     .filter(Boolean)
     .sort();
+}
+
+function getKickoffFieldApiNames(kickoff: IKickoffClient): string[] {
+  return getOutputFieldApiNames(kickoff.fields, kickoff.fieldsets);
 }
 
 function getTaskOutputFieldApiNames(task: ITemplateTaskClient | undefined): string[] {
-  return (task?.fields || [])
-    .map((field) => field.apiName)
-    .filter(Boolean)
-    .sort();
+  return getOutputFieldApiNames(task?.fields, task?.fieldsets);
+}
+
+function haveApiNamesChanged(previousNames: string[], nextNames: string[]): boolean {
+  return previousNames.length !== nextNames.length
+    || previousNames.some((name, index) => name !== nextNames[index]);
 }
 
 function didKickoffFieldsChange(previous: IKickoffClient, next: IKickoffClient): boolean {
-  const previousNames = getKickoffFieldApiNames(previous);
-  const nextNames = getKickoffFieldApiNames(next);
-
-  return previousNames.length !== nextNames.length
-    || previousNames.some((name, index) => name !== nextNames[index]);
+  return haveApiNamesChanged(getKickoffFieldApiNames(previous), getKickoffFieldApiNames(next));
 }
 
 function didTaskOutputFieldsChange(previousTask: ITemplateTaskClient | undefined, nextTask: ITemplateTaskClient | undefined): boolean {
-  const previousNames = getTaskOutputFieldApiNames(previousTask);
-  const nextNames = getTaskOutputFieldApiNames(nextTask);
-
-  return previousNames.length !== nextNames.length
-    || previousNames.some((name, index) => name !== nextNames[index]);
+  return haveApiNamesChanged(getTaskOutputFieldApiNames(previousTask), getTaskOutputFieldApiNames(nextTask));
 }
 
 export function shouldRunReferenceCleanup(field: string, previous: ITemplateClient, next: ITemplateClient): boolean {
@@ -43,6 +50,12 @@ export function shouldRunReferenceCleanup(field: string, previous: ITemplateClie
   const taskFieldsMatch = /^tasks\.(\d+)\.fields$/.exec(field);
   if (taskFieldsMatch) {
     return true;
+  }
+
+  const taskFieldsetsMatch = /^tasks\.(\d+)\.fieldsets$/.exec(field);
+  if (taskFieldsetsMatch) {
+    const taskIndex = Number(taskFieldsetsMatch[1]);
+    return didTaskOutputFieldsChange(previous.tasks[taskIndex], next.tasks[taskIndex]);
   }
 
   const wholeTaskMatch = /^tasks\.(\d+)$/.exec(field);
