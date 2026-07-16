@@ -1,7 +1,7 @@
 import { ComponentProps, ReactNode } from 'react';
 import { RouteComponentProps } from 'react-router-dom';
 
-import { EExtraFieldType, ITemplate } from '../../types/template';
+import { EExtraFieldType, ITemplateClient } from '../../types/template';
 import { TDropdownOptionBase } from '../UI/DropdownList';
 import { EStartingType } from './TaskForm/Conditions/utils/getDropdownOperators';
 import { TemplateEntity } from './TemplateEntity';
@@ -16,8 +16,8 @@ export type TTaskListItemProps = ComponentProps<typeof TemplateEntity> & { key: 
 
 export interface ITemplateEditLayoutProps {
   accessConditions: boolean;
-  sortedTasks(): ITemplate['tasks'];
-  getTaskListItem(task: ITemplate['tasks'][number], index: number, tasks: ITemplate['tasks']): TTaskListItemProps;
+  sortedTasks(): ITemplateClient['tasks'];
+  getTaskListItem(task: ITemplateClient['tasks'][number], index: number, tasks: ITemplateClient['tasks']): TTaskListItemProps;
   handleAddTask(): void;
 }
 
@@ -44,6 +44,7 @@ export enum ETaskFormParts {
   CheckIf = 'checkIf',
   DueIn = 'dueIn',
   Fields = 'fields',
+  Fieldsets = 'fieldsets',
   AssignPerformers = 'assignPerformers',
   ReturnTo = 'returnTo',
   StartsAfter = 'startsAfter',

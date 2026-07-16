@@ -58,6 +58,12 @@
   }
   /* stylelint-enable */
 }
+
+.dropdown-select-wrapper_label-left {
+  flex: 1;
+  min-width: 0;
+}
+
 .kickoff-create-field-container {
   flex-grow: 1;
   max-width: calc(100% - 40px);
@@ -71,6 +77,12 @@
     line-height: 16px;
     white-space: pre;
   }
+}
+
+.kickoff-create-field-options-wrapper_label-left {
+  margin-left: calc(45% + 3.2rem);
+  min-width: 0;
+  max-width: calc(55% - 3.2rem);
 }
 
 .kickoff-create-field-name {
@@ -123,6 +135,8 @@
 .kickoff-create-field-option__input {
   max-width: 100%;
   border: none;
+
+  @mixin text-truncate;
 
   &:focus {
     outline: none;

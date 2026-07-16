@@ -1,11 +1,27 @@
-// <reference types="jest" />
 import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 
 import { ExtraFieldFile } from '../ExtraFieldFile';
-import { EExtraFieldMode, EExtraFieldType, IExtraField } from '../../../../../types/template';
-import { TUploadedFile } from '../../../../../utils/uploadFiles';
+import { FieldLabel } from '../../utils/FieldLabel';
+import { IWorkflowExtraFieldProps } from '../../types';
 import { intlMock } from '../../../../../__stubs__/intlMock';
+import { makeExtraField } from '../../../../../__stubs__/fields.factory';
+import { EExtraFieldMode, EExtraFieldType, IExtraField } from '../../../../../types/template';
+import { EFieldLabelPosition } from '../../../../../types/fieldset';
+import { TUploadedFile } from '../../../../../utils/uploadFiles';
+
+jest.mock('../../utils/FieldLabel', () => ({
+  FieldLabel: jest.fn(() => null),
+}));
+
+jest.mock('../../../../icons', () => ({
+  PencilSmallIcon: () => null,
+  RemoveIcon: () => null,
+}));
+
+jest.mock('../../../../../utils/validators', () => ({
+  validateKickoffFieldName: jest.fn(() => ''),
+}));
 
 jest.mock('../../../../../utils/uploadFiles', () => ({
   uploadFiles: jest.fn(),
@@ -18,65 +34,142 @@ jest.mock('../../../../../utils/getConfig', () => ({
   }),
 }));
 
+jest.mock('../../../../IntlMessages', () => ({
+  IntlMessages: jest.fn(() => null),
+}));
+
+jest.mock('../../../../UI/Notifications', () => ({
+  NotificationManager: { warning: jest.fn(), success: jest.fn(), notifyApiError: jest.fn() },
+}));
+
+jest.mock('../ExtraFieldFilesGrid', () => ({
+  ExtraFieldFilesGrid: jest.fn(({ attachments }: { attachments: TUploadedFile[] }) => {
+    if (!attachments?.length) {
+      return null;
+    }
+
+    return (
+      <>
+        {attachments
+          .filter((file) => !file.isRemoved)
+          .map((file) => (
+            <span key={file.id}>{file.name}</span>
+          ))}
+      </>
+    );
+  }),
+}));
+
+jest.mock('../../../../UI/Buttons/Button', () => ({
+  Button: jest.fn(() => null),
+}));
+
 jest.mock('../../../../../utils/logger', () => ({
   logger: { error: jest.fn(), info: jest.fn(), warn: jest.fn() },
 }));
 
-jest.mock('../../../../UI/Notifications', () => ({
-  NotificationManager: { warning: jest.fn(), notifyApiError: jest.fn() },
-}));
-
 describe('ExtraFieldFile', () => {
-  const createFileField = (overrides: Partial<IExtraField> = {}): IExtraField => ({
-    apiName: 'file-abc',
-    name: 'Attachments',
-    type: EExtraFieldType.File,
-    order: 1,
-    isRequired: false,
-    userId: null,
-    groupId: null,
-    ...overrides,
-  });
+  const mockEditField = jest.fn();
 
-  const editFieldMock = jest.fn();
-
-  const baseProps = {
-    field: createFileField(),
+  const baseProps: IWorkflowExtraFieldProps = {
+    field: makeExtraField({ name: 'Attachment', type: EExtraFieldType.File }),
     intl: intlMock,
-    mode: EExtraFieldMode.ProcessRun,
-    editField: editFieldMock,
+    editField: mockEditField,
+    mode: EExtraFieldMode.Kickoff,
+    isDisabled: false,
     accountId: 1,
+    labelPosition: EFieldLabelPosition.Top,
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
+  describe('label-left support', () => {
+    it('Kickoff + labelPosition=Left: renders FieldLabel', () => {
+      render(<ExtraFieldFile {...baseProps} labelPosition={EFieldLabelPosition.Left} />);
+
+      const fieldLabelMock = FieldLabel as jest.Mock;
+      expect(fieldLabelMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('Kickoff + labelPosition=Top: no FieldLabel', () => {
+      render(<ExtraFieldFile {...baseProps} labelPosition={EFieldLabelPosition.Top} />);
+
+      const fieldLabelMock = FieldLabel as jest.Mock;
+      expect(fieldLabelMock).not.toHaveBeenCalled();
+    });
+
+    it('ProcessRun + labelPosition=Left: renders FieldLabel with aligned-start class', () => {
+      render(
+        <ExtraFieldFile
+          {...baseProps}
+          mode={EExtraFieldMode.ProcessRun}
+          labelPosition={EFieldLabelPosition.Left}
+        />,
+      );
+
+      const fieldLabelMock = FieldLabel as jest.Mock;
+      expect(fieldLabelMock).toHaveBeenCalledTimes(1);
+      expect(fieldLabelMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          className: expect.stringContaining('aligned-start'),
+        }),
+        {},
+      );
+    });
+
+    it('ProcessRun + labelPosition=Top: renders static name div, no FieldLabel', () => {
+      render(
+        <ExtraFieldFile
+          {...baseProps}
+          mode={EExtraFieldMode.ProcessRun}
+          labelPosition={EFieldLabelPosition.Top}
+        />,
+      );
+
+      const fieldLabelMock = FieldLabel as jest.Mock;
+      expect(fieldLabelMock).not.toHaveBeenCalled();
+      expect(screen.getByText('Attachment')).toBeInTheDocument();
+    });
+  });
+
   describe('initial file loading', () => {
+    const createFileField = (overrides: Partial<IExtraField> = {}): IExtraField => ({
+      apiName: 'file-abc',
+      name: 'Attachments',
+      type: EExtraFieldType.File,
+      order: 1,
+      isRequired: false,
+      userId: null,
+      groupId: null,
+      ...overrides,
+    });
+
+    const processRunProps = {
+      ...baseProps,
+      mode: EExtraFieldMode.ProcessRun,
+    };
+
     it('renders with attachments from field.attachments', () => {
       const attachments: TUploadedFile[] = [
         { id: 'att-1', name: 'report.pdf', url: 'https://files.example.com/att-1', size: 1024 },
       ];
 
-      render(
-        React.createElement(ExtraFieldFile as React.FC<any>, {
-          ...baseProps,
-          field: createFileField({ attachments }),
-        }),
-      );
+      render(<ExtraFieldFile {...processRunProps} field={createFileField({ attachments })} />);
 
       expect(screen.getByText('report.pdf')).toBeInTheDocument();
     });
 
     it('parses markdownValue when attachments is empty', () => {
       render(
-        React.createElement(ExtraFieldFile as React.FC<any>, {
-          ...baseProps,
-          field: createFileField({
+        <ExtraFieldFile
+          {...processRunProps}
+          field={createFileField({
             attachments: [],
             markdownValue: '[contract.pdf](https://files.example.com/abc)',
-          }),
-        }),
+          })}
+        />,
       );
 
       expect(screen.getByText('contract.pdf')).toBeInTheDocument();
@@ -84,12 +177,13 @@ describe('ExtraFieldFile', () => {
 
     it('parses markdownValue when attachments is undefined', () => {
       render(
-        React.createElement(ExtraFieldFile as React.FC<any>, {
-          ...baseProps,
-          field: createFileField({
+        <ExtraFieldFile
+          {...processRunProps}
+          field={createFileField({
+            attachments: undefined,
             markdownValue: '[invoice.pdf](https://files.example.com/inv)',
-          }),
-        }),
+          })}
+        />,
       );
 
       expect(screen.getByText('invoice.pdf')).toBeInTheDocument();
@@ -97,12 +191,12 @@ describe('ExtraFieldFile', () => {
 
     it('renders multiple files from markdownValue', () => {
       render(
-        React.createElement(ExtraFieldFile as React.FC<any>, {
-          ...baseProps,
-          field: createFileField({
+        <ExtraFieldFile
+          {...processRunProps}
+          field={createFileField({
             markdownValue: '[a.pdf](https://files.example.com/1), [b.docx](https://files.example.com/2)',
-          }),
-        }),
+          })}
+        />,
       );
 
       expect(screen.getByText('a.pdf')).toBeInTheDocument();
@@ -115,13 +209,13 @@ describe('ExtraFieldFile', () => {
       ];
 
       render(
-        React.createElement(ExtraFieldFile as React.FC<any>, {
-          ...baseProps,
-          field: createFileField({
+        <ExtraFieldFile
+          {...processRunProps}
+          field={createFileField({
             attachments,
             markdownValue: '[old.pdf](https://files.example.com/old)',
-          }),
-        }),
+          })}
+        />,
       );
 
       expect(screen.getByText('real.pdf')).toBeInTheDocument();
@@ -129,14 +223,8 @@ describe('ExtraFieldFile', () => {
     });
 
     it('renders nothing when no attachments and no markdownValue', () => {
-      const { container } = render(
-        React.createElement(ExtraFieldFile as React.FC<any>, {
-          ...baseProps,
-          field: createFileField(),
-        }),
-      );
+      const { container } = render(<ExtraFieldFile {...processRunProps} field={createFileField()} />);
 
-      // No files grid should appear
       expect(container.querySelector('[class*="files-grid"]')).toBeNull();
     });
   });
@@ -144,11 +232,11 @@ describe('ExtraFieldFile', () => {
   describe('kickoff mode rendering', () => {
     it('renders upload button placeholder in kickoff mode', () => {
       render(
-        React.createElement(ExtraFieldFile as React.FC<any>, {
-          ...baseProps,
-          mode: EExtraFieldMode.Kickoff,
-          field: createFileField(),
-        }),
+        <ExtraFieldFile
+          {...baseProps}
+          mode={EExtraFieldMode.Kickoff}
+          field={makeExtraField({ name: 'Attachments', type: EExtraFieldType.File })}
+        />,
       );
 
       expect(screen.getByDisplayValue('Attachments')).toBeInTheDocument();

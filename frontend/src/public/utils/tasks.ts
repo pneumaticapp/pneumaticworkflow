@@ -6,10 +6,16 @@ import {
   TTaskChecklistsItem,
   TTaskChecklist,
 } from '../types/tasks';
+import { IFieldsetRuntime } from '../types/fieldset';
+import { mapFieldsetTaskAPIToRuntime } from './mapFieldsetsAPIToClient';
 
 export const getNormalizedTask = (
   task: ITaskAPI,
-): Omit<ITaskAPI, 'checklists'> & { checklists: TTaskChecklists; areChecklistsHandling: boolean } => {
+): Omit<ITaskAPI, 'checklists' | 'fieldsets'> & {
+  checklists: TTaskChecklists;
+  fieldsets: IFieldsetRuntime[];
+  areChecklistsHandling: boolean;
+} => {
   const normalizedChecklists: TTaskChecklists = {};
 
   task.checklists.forEach((checklist) => {
@@ -30,7 +36,9 @@ export const getNormalizedTask = (
     };
   });
 
-  return { ...task, checklists: normalizedChecklists, areChecklistsHandling: false };
+  const fieldsets = mapFieldsetTaskAPIToRuntime(task.fieldsets);
+
+  return { ...task, checklists: normalizedChecklists, fieldsets, areChecklistsHandling: false };
 };
 export const getTaskChecklist = (task: ITask, listApiName: string): TTaskChecklist | null => {
   return task.checklists[listApiName] || null;

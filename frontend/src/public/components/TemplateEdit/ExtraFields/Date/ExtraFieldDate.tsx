@@ -6,8 +6,10 @@ import classnames from 'classnames';
 import { getFieldValidator } from '../utils/getFieldValidator';
 import { getInputNameBackground } from '../utils/getInputNameBackground';
 import { EExtraFieldMode } from '../../../../types/template';
+import { EFieldLabelPosition } from '../../../../types/fieldset';
 import { DateIcon } from '../../../icons';
 import { FieldWithName } from '../utils/FieldWithName';
+import { FieldLabel } from '../utils/FieldLabel';
 import { IWorkflowExtraFieldProps } from '..';
 import { DatePickerCustom } from '../../../UI/form/DatePicker';
 import { toDate, toTspDate } from '../../../../utils/dateTime';
@@ -27,8 +29,9 @@ export function ExtraFieldDate({
   editField,
   isDisabled = false,
   labelBackgroundColor,
+  labelPosition,
   innerRef,
-}: IWorkflowExtraFieldProps) {
+}: IWorkflowExtraFieldProps): JSX.Element {
   const handleChangeName = React.useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       editField({ name: e.target.value });
@@ -56,18 +59,35 @@ export function ExtraFieldDate({
   };
 
   const renderProcessRunField = () => {
+    const isLabelLeft = labelPosition === EFieldLabelPosition.Left;
     const fieldNameClassName = classnames(getInputNameBackground(labelBackgroundColor), styles['kick-off-input__name']);
 
     return (
       <div
-        className={classnames(fieldStyles['run-container'], styles['kick-off-input__field'])}
+        className={classnames(
+          fieldStyles['run-container'],
+          styles['kick-off-input__field'],
+          isLabelLeft && styles['kick-off-input__field_label-left'],
+        )}
         data-autofocus-first-field
       >
-        <div className={fieldNameClassName}>
-          <div className={classnames(styles['kick-off-input__name-text'], 'extra-field-name')}>{name}</div>
-          {isRequired && <span className={styles['kick-off-required-sign']} />}
-        </div>
-        <div className={fieldStyles['date-input-wrapper']}>
+        {isLabelLeft ? (
+          <FieldLabel
+            name={name}
+            isRequired={isRequired || false}
+            isDisabled={isDisabled}
+            mode={mode}
+            labelBackgroundColor={labelBackgroundColor}
+            handleChangeName={handleChangeName}
+            className={styles['kick-off-input__name_label-left_centered']}
+          />
+        ) : (
+          <div className={fieldNameClassName}>
+            <div className={classnames(styles['kick-off-input__name-text'], 'extra-field-name')}>{name}</div>
+            {isRequired && <span className={styles['kick-off-required-sign']} />}
+          </div>
+        )}
+        <div className={classnames(fieldStyles['date-input-wrapper'], isLabelLeft && fieldStyles['date-input-wrapper_label-left'])}>
           <DatePickerCustom
             onChange={handleChangeDate}
             placeholderText={descriptionPlaceholder}
@@ -92,6 +112,7 @@ export function ExtraFieldDate({
           mode={mode}
           handleChangeName={handleChangeName}
           labelBackgroundColor={labelBackgroundColor}
+          labelPosition={labelPosition}
           handleChangeDescription={handleChangeDescription}
           validate={getFieldValidator(field, mode)}
           icon={<DateIcon />}
@@ -105,5 +126,5 @@ export function ExtraFieldDate({
     return fieldsMap[mode];
   };
 
-  return renderField();
+  return <>{renderField()}</>;
 }

@@ -1,11 +1,11 @@
 import { ReactNode } from 'react';
 
-import { ITemplateTask } from '../../../../types/template';
+import { ITemplateTaskClient } from '../../../../types/template';
 import { TTaskVariable } from '../../types';
 
 export interface IReturnToProps {
   variables: TTaskVariable[];
-  tasks: ITemplateTask[];
+  tasks: ITemplateTaskClient[];
   taskAncestors: Set<string>;
 }
 

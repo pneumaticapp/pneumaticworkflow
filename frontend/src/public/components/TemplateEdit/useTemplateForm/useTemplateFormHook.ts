@@ -1,7 +1,7 @@
 import { useCallback, useRef } from 'react';
 import { useFormik } from 'formik';
 
-import { ITemplate } from '../../../types/template';
+import { ITemplateClient } from '../../../types/template';
 import { applyImmediateDeactivation } from './templateFormDeactivation';
 import { applyReferenceCleanup, shouldRunReferenceCleanup } from './templateFormReferenceCleanup';
 import {
@@ -17,7 +17,7 @@ import { TSetFieldValue, TSetValues } from './types';
 /**
  * Root Formik context for the whole Edit Template page.
  *
- * The entire `ITemplate` (name, description, kickoff, tasks, owners, share
+ * The entire template (name, description, kickoff, tasks, owners, share
  * settings, toggles, ...) lives in a single Formik state. Every field binds to
  * it via `useTemplateField`; nothing dispatches Redux field updates from
  * individual inputs anymore. Saving happens from one place only —
@@ -27,17 +27,17 @@ import { TSetFieldValue, TSetValues } from './types';
  * callbacks, so both onChange and submit share one save path.
  */
 export function useTemplateForm(
-  initialValues: ITemplate,
+  initialValues: ITemplateClient,
   templateIdentityKey?: string | number,
 ) {
   const dirtyRef = useRef(false);
-  const pendingUserEditsRef = useRef<Partial<ITemplate>>({});
+  const pendingUserEditsRef = useRef<Partial<ITemplateClient>>({});
   const lastSyncedInitialValuesRef = useRef(initialValues);
-  const persistBaselineSyncRef = useRef<((reduxTemplate: ITemplate) => void) | null>(null);
+  const persistBaselineSyncRef = useRef<((reduxTemplate: ITemplateClient) => void) | null>(null);
   const resolvedIdentity = resolveTemplateIdentity(initialValues, templateIdentityKey);
   const lastTemplateIdentityRef = useRef(resolvedIdentity);
 
-  const formik = useFormik<ITemplate>({
+  const formik = useFormik<ITemplateClient>({
     initialValues,
     enableReinitialize: false,
     onSubmit: () => undefined,

@@ -4,8 +4,8 @@ import type { FC, MutableRefObject } from 'react';
 import { act, render } from '@testing-library/react';
 
 import {
-  ITemplate,
-  ITemplateTask,
+  ITemplateClient,
+  ITemplateTaskClient,
   ETaskPerformerType,
 } from '../../../types/template';
 import { EConditionAction, EConditionOperators, EConditionLogicOperations, TConditionRule } from '../TaskForm/Conditions/types';
@@ -46,7 +46,7 @@ afterAll(() => {
   jest.useRealTimers();
 });
 
-const makeTask = (overrides: Partial<ITemplateTask> = {}): ITemplateTask =>
+const makeTask = (overrides: Partial<ITemplateTaskClient> = {}): ITemplateTaskClient =>
   ({
     apiName: 'task-1',
     number: 1,
@@ -64,9 +64,9 @@ const makeTask = (overrides: Partial<ITemplateTask> = {}): ITemplateTask =>
     revertTask: null,
     ancestors: [],
     ...overrides,
-  }) as ITemplateTask;
+  }) as ITemplateTaskClient;
 
-const makeTemplate = (overrides: Partial<ITemplate> = {}): ITemplate =>
+const makeTemplate = (overrides: Partial<ITemplateClient> = {}): ITemplateClient =>
   ({
     id: 1,
     name: 'Template',
@@ -89,7 +89,7 @@ const makeTemplate = (overrides: Partial<ITemplate> = {}): ITemplate =>
     tasksCount: 1,
     performersCount: 0,
     ...overrides,
-  }) as ITemplate;
+  }) as ITemplateClient;
 
 describe('autosave persist request scope', () => {
   it('does not invalidate another editor session', () => {
@@ -130,10 +130,10 @@ describe('getTemplateVariablesFingerprint', () => {
 });
 
 interface ISpyHandle {
-  values: ITemplate;
+  values: ITemplateClient;
   dirtyRef: MutableRefObject<boolean>;
   setFieldValue: (field: string, value: unknown, shouldValidate?: boolean) => void;
-  consumePendingChanges: (explicitFields?: Partial<ITemplate>) => Partial<ITemplate>;
+  consumePendingChanges: (explicitFields?: Partial<ITemplateClient>) => Partial<ITemplateClient>;
   confirmConsumedChanges: () => void;
   revertConsumedChanges: () => void;
   abandonPendingChanges: () => void;
@@ -164,7 +164,7 @@ function TemplateFormHarness({
   initialTemplate,
   spy,
 }: {
-  initialTemplate: ITemplate;
+  initialTemplate: ITemplateClient;
   spy: (handle: ISpyHandle) => void;
 }) {
   const { formik, setFieldValue, setValues, dirtyRef, pendingUserEditsRef, persistBaselineSyncRef } = useTemplateForm(initialTemplate);
@@ -194,7 +194,7 @@ function StatefulTemplateFormHarness({
   initialTemplate,
   spy,
 }: {
-  initialTemplate: ITemplate;
+  initialTemplate: ITemplateClient;
   spy: (handle: ISpyHandle) => void;
 }) {
   return <TemplateFormHarness initialTemplate={initialTemplate} spy={spy} />;
@@ -320,7 +320,7 @@ describe('TemplateFormPersistProvider deactivation', () => {
       handle!.setFieldValue('owners', owners, false);
     });
 
-    let pendingChanges: Partial<ITemplate> = {};
+    let pendingChanges: Partial<ITemplateClient> = {};
     act(() => {
       pendingChanges = handle!.consumePendingChanges();
     });
@@ -799,7 +799,7 @@ describe('useTemplateForm reinitialize', () => {
     templateIdentityKey,
     onReady,
   }: {
-    currentTemplate: ITemplate;
+    currentTemplate: ITemplateClient;
     templateIdentityKey?: string | number;
     onReady(result: ReturnType<typeof useTemplateForm>): void;
   }) {
@@ -1625,7 +1625,7 @@ describe('useTemplateSaveRetry', () => {
     initialTemplate,
     onReady,
   }: {
-    initialTemplate: ITemplate;
+    initialTemplate: ITemplateClient;
     onReady(retry: () => void, setFieldValue: (field: string, value: unknown, shouldValidate?: boolean) => void): void;
   }) {
     const { formik, setFieldValue, setValues, dirtyRef, pendingUserEditsRef, persistBaselineSyncRef } = useTemplateForm(initialTemplate);

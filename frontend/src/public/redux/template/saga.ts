@@ -49,7 +49,9 @@ import { getTemplateData } from '../selectors/template';
 import { getTemplate } from '../../api/getTemplate';
 import { getSystemTemplate } from '../../api/getSystemTemplate';
 import { checkSomeRouteIsActive, history } from '../../utils/history';
-import { ITemplate, ITemplateRequest, ITemplateResponse } from '../../types/template';
+import { ITemplateClient, ITemplateRequest, ITemplateResponse } from '../../types/template';
+import { loadFieldsetsCatalog, loadFieldsetsCatalogFailed, loadFieldsetsCatalogSuccess } from '../fieldsets/slice';
+import { getFieldsetsCatalogIsLoading, getIsCatalogLoaded } from '../selectors/fieldsets';
 import { logger } from '../../utils/logger';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { updateTemplate } from '../../api/updateTemplate';
@@ -65,7 +67,7 @@ import { setGeneralLoaderVisibility } from '../general/actions';
 import { generateAITemplate } from '../../api/generateAITemplate';
 import { discardTemplateChanges } from '../../api/discardTemplateChanges';
 
-function applySavedTemplateIds(lastTemplateState: ITemplate, savedTemplate: ITemplate): ITemplate {
+function applySavedTemplateIds(lastTemplateState: ITemplateClient, savedTemplate: ITemplateClient): ITemplateClient {
   const savedTasksMap = new Map(savedTemplate.tasks.map((task) => [task.apiName, task]));
 
   return {
@@ -79,7 +81,7 @@ function applySavedTemplateIds(lastTemplateState: ITemplate, savedTemplate: ITem
   };
 }
 
-function* mergeSupersededCreateResponse(savedTemplate: ITemplate, wasCreate: boolean) {
+function* mergeSupersededCreateResponse(savedTemplate: ITemplateClient, wasCreate: boolean) {
   if (!wasCreate || !savedTemplate.id) {
     return;
   }
@@ -114,8 +116,19 @@ function* fetchTemplate({ payload: id }: TLoadTemplate) {
   try {
     const template: ITemplateResponse = yield getTemplate(id);
     yield setTemplateByTemplateResponse(template);
-    yield put(setTemplateStatus(ETemplateStatus.Saved));
 
+    const isCatalogLoaded: ReturnType<typeof getIsCatalogLoaded> = yield select(getIsCatalogLoaded);
+    const isCatalogLoading: ReturnType<typeof getFieldsetsCatalogIsLoading> = yield select(getFieldsetsCatalogIsLoading);
+
+    if (!isCatalogLoaded && !isCatalogLoading) {
+      yield put(loadFieldsetsCatalog());
+    }
+
+    if (!isCatalogLoaded) {
+      yield take([loadFieldsetsCatalogSuccess.type, loadFieldsetsCatalogFailed.type]);
+    }
+
+    yield put(setTemplateStatus(ETemplateStatus.Saved));
     yield put(loadTemplateIntegrationsStats({ templates: [template.id] }));
   } catch (error) {
     logger.info('failed lo load template: ', error);
@@ -143,10 +156,10 @@ function* patchTemplateSaga({
 
   yield put(setTemplateStatus(ETemplateStatus.Saving));
 
-  const nonDeactivativeFields: (keyof ITemplate)[] = ['isActive', 'isPublic', 'publicUrl'];
+  const nonDeactivativeFields: (keyof ITemplateClient)[] = ['isActive', 'isPublic', 'publicUrl'];
   let shouldDeactivateTemplate = changedFields.isActive === true
     ? false
-    : Object.keys(changedFields).some((key) => !nonDeactivativeFields.includes(key as keyof ITemplate));
+    : Object.keys(changedFields).some((key) => !nonDeactivativeFields.includes(key as keyof ITemplateClient));
 
   if (
     Object.keys(changedFields).length === 1
@@ -161,7 +174,7 @@ function* patchTemplateSaga({
     }
   }
 
-  const mergedTemplate: ITemplate = {
+  const mergedTemplate: ITemplateClient = {
     ...template,
     ...changedFields,
     ...(shouldDeactivateTemplate && { isActive: false }),
@@ -264,7 +277,7 @@ function* fetchSaveTemplate(
   onSuccess?: () => void,
   onFailed?: () => void,
   requestId?: TAutosavePersistRequest,
-  templateSnapshot?: ITemplate,
+  templateSnapshot?: ITemplateClient,
 ) {
   const isTemplatePage = checkSomeRouteIsActive(
     ERoutes.TemplateView,
@@ -290,7 +303,7 @@ function* fetchSaveTemplate(
   const templateRequest = mapTemplateRequest(editingTemplate);
 
   const isTemplateCreated = !templateRequest.id;
-  const savedTemplate: ITemplate | null = yield createOrUpdateTemplate(
+  const savedTemplate: ITemplateClient | null = yield createOrUpdateTemplate(
     templateRequest,
     isSubscribed,
     users,
@@ -342,7 +355,7 @@ function* fetchSaveTemplate(
     return;
   }
 
-  const newTemplateState: ITemplate = {
+  const newTemplateState: ITemplateClient = {
     ...applySavedTemplateIds(lastTemplateState, savedTemplate),
     updatedBy: savedTemplate.updatedBy,
     dateUpdated: savedTemplate.dateUpdated,

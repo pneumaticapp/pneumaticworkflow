@@ -3,11 +3,11 @@ import { createElement } from 'react';
 import { act, render } from '@testing-library/react';
 import { FormikProps } from 'formik';
 
-import { ITemplate, ITemplateTask } from '../../../types/template';
+import { ITemplateClient, ITemplateTaskClient } from '../../../types/template';
 import { useTemplateEditTasks } from '../useTemplateEditTasks';
 import { intlMock } from '../../../__stubs__/intlMock';
 
-const makeTask = (overrides: Partial<ITemplateTask> = {}): ITemplateTask => ({
+const makeTask = (overrides: Partial<ITemplateTaskClient> = {}): ITemplateTaskClient => ({
   apiName: 'task-1',
   number: 1,
   name: 'Step 1',
@@ -24,9 +24,10 @@ const makeTask = (overrides: Partial<ITemplateTask> = {}): ITemplateTask => ({
   revertTask: null,
   ancestors: [],
   ...overrides,
+  fieldsets: overrides.fieldsets ?? [],
 });
 
-const makeTemplate = (tasks: ITemplateTask[]): ITemplate =>
+const makeTemplate = (tasks: ITemplateTaskClient[]): ITemplateClient =>
   ({
     id: 1,
     name: 'Template',
@@ -48,7 +49,7 @@ const makeTemplate = (tasks: ITemplateTask[]): ITemplate =>
     wfNameTemplate: null,
     tasksCount: tasks.length,
     performersCount: 0,
-  }) as ITemplate;
+  }) as ITemplateClient;
 
 describe('useTemplateEditTasks', () => {
   it('merges delay edits onto the current Formik task snapshot', () => {
@@ -60,7 +61,7 @@ describe('useTemplateEditTasks', () => {
     function Harness() {
       const { getTaskListItem } = useTemplateEditTasks({
         authUser: { account: { id: 1 } } as any,
-        formik: { values: makeTemplate([liveTask]) } as FormikProps<ITemplate>,
+        formik: { values: makeTemplate([liveTask]) } as FormikProps<ITemplateClient>,
         setFieldValue,
         users: [],
         accessConditions: true,
@@ -93,7 +94,7 @@ describe('useTemplateEditTasks', () => {
     function Harness() {
       const { openTask } = useTemplateEditTasks({
         authUser: { account: { id: 1 } } as any,
-        formik: { values: makeTemplate([task]) } as FormikProps<ITemplate>,
+        formik: { values: makeTemplate([task]) } as FormikProps<ITemplateClient>,
         setFieldValue,
         users: [],
         accessConditions: true,

@@ -5,7 +5,7 @@ import { act, render } from '@testing-library/react';
 
 import { intlMock } from '../../../../__stubs__/intlMock';
 import { Checkbox } from '../../../UI/Fields/Checkbox';
-import { ITemplate, ITemplateTask } from '../../../../types/template';
+import { ITemplateClient, ITemplateTaskClient } from '../../../../types/template';
 import { TaskPerformers } from '../TaskPerformers';
 import { TaskFormScopeProvider, TemplateFieldContext } from '../../useTemplateForm/contexts';
 
@@ -46,7 +46,7 @@ describe('TaskPerformers', () => {
   const t = (id: string) => intlMock.formatMessage({ id });
   const SKIP_LABEL = t('templates.task-skip-for-starter');
 
-  const makeTask = (overrides: Partial<ITemplateTask> = {}): ITemplateTask => ({
+  const makeTask = (overrides: Partial<ITemplateTaskClient> = {}): ITemplateTaskClient => ({
     apiName: 'task-1',
     number: 1,
     name: 'Test Task',
@@ -63,9 +63,10 @@ describe('TaskPerformers', () => {
     revertTask: null,
     ancestors: [],
     ...overrides,
+    fieldsets: overrides.fieldsets ?? [],
   });
 
-  const makeTemplate = (tasks: ITemplateTask[]): ITemplate =>
+  const makeTemplate = (tasks: ITemplateTaskClient[]): ITemplateClient =>
     ({
       id: 1,
       name: 'Template',
@@ -87,10 +88,10 @@ describe('TaskPerformers', () => {
       wfNameTemplate: null,
       tasksCount: tasks.length,
       performersCount: 0,
-    }) as ITemplate;
+    }) as ITemplateClient;
 
   interface IFormikBag {
-    values: ITemplate;
+    values: ITemplateClient;
     setFieldValue: jest.Mock;
   }
 
@@ -112,7 +113,7 @@ describe('TaskPerformers', () => {
     );
   }
 
-  const renderTaskPerformers = (task: ITemplateTask, setFieldValue = jest.fn()) => {
+  const renderTaskPerformers = (task: ITemplateTaskClient, setFieldValue = jest.fn()) => {
     const bag: IFormikBag = { values: makeTemplate([task]), setFieldValue };
 
     return render(

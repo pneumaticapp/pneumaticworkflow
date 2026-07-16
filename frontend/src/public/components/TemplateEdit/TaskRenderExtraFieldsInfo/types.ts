@@ -1,6 +1,6 @@
-import { ITemplateTask } from '../../../types/template';
+import { ITemplateTaskClient } from '../../../types/template';
 
 export interface ITaskRenderExtraFieldsInfoProps {
-  task: ITemplateTask;
+  task: ITemplateTaskClient;
   onClick(): void;
 }

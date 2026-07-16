@@ -23,6 +23,7 @@ export function TaskFormHeader({
         placeholder={formatMessage({ id: 'tasks.task-task-name-placeholder' })}
         listVariables={getSingleLineVariables(listSystemVariables)}
         templateVariables={templateVariables}
+        showInsertButton
         value={task.name || ''}
         onChange={(value: string) => {
           updateField('name')(value);

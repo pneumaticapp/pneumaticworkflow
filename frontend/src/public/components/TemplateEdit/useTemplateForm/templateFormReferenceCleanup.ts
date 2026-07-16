@@ -1,21 +1,21 @@
-import { IKickoff, ITemplate, ITemplateTask } from '../../../types/template';
+import { IKickoffClient, ITemplateClient, ITemplateTaskClient } from '../../../types/template';
 import { cleanTemplateReferences } from '../../../utils/template';
 
-function getKickoffFieldApiNames(kickoff: IKickoff): string[] {
+function getKickoffFieldApiNames(kickoff: IKickoffClient): string[] {
   return (kickoff.fields || [])
     .map((field) => field.apiName)
     .filter(Boolean)
     .sort();
 }
 
-function getTaskOutputFieldApiNames(task: ITemplateTask | undefined): string[] {
+function getTaskOutputFieldApiNames(task: ITemplateTaskClient | undefined): string[] {
   return (task?.fields || [])
     .map((field) => field.apiName)
     .filter(Boolean)
     .sort();
 }
 
-function didKickoffFieldsChange(previous: IKickoff, next: IKickoff): boolean {
+function didKickoffFieldsChange(previous: IKickoffClient, next: IKickoffClient): boolean {
   const previousNames = getKickoffFieldApiNames(previous);
   const nextNames = getKickoffFieldApiNames(next);
 
@@ -23,7 +23,7 @@ function didKickoffFieldsChange(previous: IKickoff, next: IKickoff): boolean {
     || previousNames.some((name, index) => name !== nextNames[index]);
 }
 
-function didTaskOutputFieldsChange(previousTask: ITemplateTask | undefined, nextTask: ITemplateTask | undefined): boolean {
+function didTaskOutputFieldsChange(previousTask: ITemplateTaskClient | undefined, nextTask: ITemplateTaskClient | undefined): boolean {
   const previousNames = getTaskOutputFieldApiNames(previousTask);
   const nextNames = getTaskOutputFieldApiNames(nextTask);
 
@@ -31,7 +31,7 @@ function didTaskOutputFieldsChange(previousTask: ITemplateTask | undefined, next
     || previousNames.some((name, index) => name !== nextNames[index]);
 }
 
-export function shouldRunReferenceCleanup(field: string, previous: ITemplate, next: ITemplate): boolean {
+export function shouldRunReferenceCleanup(field: string, previous: ITemplateClient, next: ITemplateClient): boolean {
   if (field === 'tasks') {
     return true;
   }
@@ -54,7 +54,7 @@ export function shouldRunReferenceCleanup(field: string, previous: ITemplate, ne
   return false;
 }
 
-export function applyReferenceCleanup(template: ITemplate): ITemplate {
+export function applyReferenceCleanup(template: ITemplateClient): ITemplateClient {
   const cleaned = cleanTemplateReferences(template);
   const wfNameTemplate = template.wfNameTemplate == null && cleaned.wfNameTemplate === ''
     ? template.wfNameTemplate

@@ -22,8 +22,9 @@ export function WorkflowLogTaskComplete({
 
   const renderOutputValues = () => {
     const outputs = currentTask?.output?.filter(Boolean) || [];
+    const fieldsets = currentTask?.fieldsets || [];
 
-    if (!isArrayWithItems(outputs)) {
+    if (!isArrayWithItems(outputs) && !isArrayWithItems(fieldsets)) {
       return null;
     }
 
@@ -32,6 +33,7 @@ export function WorkflowLogTaskComplete({
         containerClassName={styles['outputs-container']}
         viewMode={EKickoffOutputsViewModes.Short}
         outputs={outputs}
+        fieldsets={fieldsets}
         isOnlyAttachmentsShown={isOnlyAttachmentsShown}
       />
     );

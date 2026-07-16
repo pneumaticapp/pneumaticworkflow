@@ -8,7 +8,7 @@ import { TrashIcon } from '../../../icons';
 import { getFormattedDropdownOption } from '../Conditions/utils/getFormattedDropdownOption';
 import { useCheckDevice } from '../../../../hooks/useCheckDevice';
 
-import { ITemplateTask } from '../../../../types/template';
+import { ITemplateTaskClient } from '../../../../types/template';
 import { useTaskForm } from '../useTaskForm';
 import { IDropdownTask, IReturnToProps } from './types';
 
@@ -44,7 +44,7 @@ export function ReturnTo({ variables, tasks, taskAncestors }: IReturnToProps) {
   const dropdownTaskList = useMemo(
     () => [
       ...tasks
-        .filter((ancestorTask: ITemplateTask) => taskAncestors.has(ancestorTask.apiName))
+        .filter((ancestorTask: ITemplateTaskClient) => taskAncestors.has(ancestorTask.apiName))
         .map(({ name, apiName }) => {
           return {
             label: name,

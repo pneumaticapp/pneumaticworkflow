@@ -1,5 +1,5 @@
-import React, { useRef } from 'react';
-import { useSelector } from 'react-redux';
+import React, { useEffect, useRef } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
 
 import { TemplateEditLayout } from './TemplateEditLayout';
@@ -9,6 +9,8 @@ import { getCurrentUser } from '../../redux/selectors/authUser';
 import { getNotDeletedAccountsUsers } from '../../redux/selectors/accounts';
 import { getIsUserSubsribed, getSubscriptionPlan } from '../../redux/selectors/user';
 import { getAITemplate, getTemplateData, getTemplateStatus } from '../../redux/selectors/template';
+import { getIsCatalogLoaded } from '../../redux/selectors/fieldsets';
+import { loadFieldsetsCatalog } from '../../redux/fieldsets/slice';
 import { ESubscriptionPlan } from '../../types/account';
 import { ETemplateStatus } from '../../types/redux';
 import { TemplateForm, useTemplateForm } from './useTemplateForm';
@@ -21,12 +23,14 @@ export function TemplateEdit({
   location,
 }: TTemplateEditProps) {
   const { formatMessage } = useIntl();
+  const dispatch = useDispatch();
   const authUser = useSelector(getCurrentUser);
   const users = useSelector(getNotDeletedAccountsUsers);
   const template = useSelector(getTemplateData);
   const aiTemplate = useSelector(getAITemplate);
   const templateStatus = useSelector(getTemplateStatus);
   const isSubscribed = useSelector(getIsUserSubsribed);
+  const isCatalogLoaded = useSelector(getIsCatalogLoaded);
   const templateIdentity = resolveTemplateFormIdentity(template, location);
   const createSessionKeyRef = useRef<string | undefined>(undefined);
 
@@ -42,6 +46,12 @@ export function TemplateEdit({
   const billingPlan = useSelector(getSubscriptionPlan);
   const isFreePlan = billingPlan === ESubscriptionPlan.Free;
   const accessConditions = isSubscribed || isFreePlan;
+
+  useEffect(() => {
+    if (!isCatalogLoaded) {
+      dispatch(loadFieldsetsCatalog());
+    }
+  }, [dispatch, isCatalogLoaded]);
 
   const { sortedTasks, handleAddTask, getTaskListItem, openTask } = useTemplateEditTasks({
     authUser,
