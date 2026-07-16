@@ -9,7 +9,10 @@ from src.processes.enums import (
     OwnerType,
     PerformerType,
 )
-from src.processes.models.templates.fields import FieldTemplate
+from src.processes.models.templates.fields import (
+    FieldTemplate,
+    FieldTemplateSelection,
+)
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.templates.template import Template
 from src.processes.models.workflows.task import TaskPerformer
@@ -21,6 +24,7 @@ from src.processes.tests.fixtures import (
     create_test_owner,
     create_test_template,
     create_test_workflow,
+    create_test_fieldset_template, create_test_dataset,
 )
 from src.permissions.enums import PermissionSource
 from src.processes.services.workflow_permissions import (
@@ -67,6 +71,7 @@ def test_fields__active_template__ok(api_client):
     data = response.data
     assert data['id'] == template.id
     assert len(data['kickoff']['fields']) == 1
+    assert data['kickoff']['fieldsets'] == []
 
     field_1_data = data['kickoff']['fields'][0]
     assert field_1_data['name'] == kickoff_field.name
@@ -77,11 +82,11 @@ def test_fields__active_template__ok(api_client):
 
     assert len(data['tasks']) == 1
     task_data = data['tasks'][0]
-    assert task_data['id'] == task.id
     assert task_data['name'] == task.name
     assert task_data['number'] == task.number
     assert task_data['api_name'] == task.api_name
     assert len(task_data['fields']) == 1
+    assert task_data['fieldsets'] == []
 
     field_2_data = task_data['fields'][0]
     assert field_2_data['name'] == task_field.name
@@ -160,7 +165,7 @@ def test_fields__draft_template__return_from_db(api_client):
 
     # assert
     assert response.status_code == 200
-    assert response.data['kickoff'] == {'fields': []}
+    assert response.data['kickoff'] == {'fields': [], 'fieldsets': []}
     assert response.data['tasks'] == []
 
 
@@ -540,3 +545,125 @@ def test_fields__ordering__ok(api_client):
     assert data['tasks'][1]['fields'][0]['order'] == 2
     assert data['tasks'][1]['fields'][1]['api_name'] == task_2_field_1.api_name
     assert data['tasks'][1]['fields'][1]['order'] == 1
+
+
+def test_fields__kickoff_fieldset__ok(api_client):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user, tasks_count=1, is_active=True)
+    kickoff = template.kickoff_instance
+    fieldset_order = 999
+    fieldset = create_test_fieldset_template(
+        account=account,
+        template=template,
+        kickoff=kickoff,
+        order=fieldset_order,
+    )
+    fieldset.fields.delete()
+    dataset = create_test_dataset(account=account)
+    field = FieldTemplate.objects.create(
+        name='First task performer',
+        description='Some description',
+        type=FieldType.DROPDOWN,
+        fieldset=fieldset,
+        template=template,
+        order=1,
+        api_name='field-1',
+        account=account,
+        dataset=dataset,
+    )
+    FieldTemplateSelection.objects.create(
+        field_template=field,
+        value='Value 1',
+        template=template,
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get(f'/templates/{template.id}/fields')
+
+    # assert
+    assert response.status_code == 200
+    data = response.data
+    assert data['id'] == template.id
+    assert len(data['kickoff']['fieldsets']) == 1
+    fieldset_data = data['kickoff']['fieldsets'][0]
+    assert fieldset_data['name'] == fieldset.name
+    assert fieldset_data['description'] == fieldset.description
+    assert fieldset_data['label_position'] == fieldset.label_position
+    assert fieldset_data['layout'] == fieldset.layout
+    assert fieldset_data['api_name'] == fieldset.api_name
+    assert fieldset_data['order'] == fieldset_order
+    assert len(fieldset_data['fields']) == 1
+
+    field_data = fieldset_data['fields'][0]
+    assert field_data['name'] == field.name
+    assert field_data['type'] == field.type
+    assert field_data['order'] == field.order
+    assert field_data['description'] == field.description
+    assert field_data['is_hidden'] == field.is_hidden
+    assert field_data['api_name'] == field.api_name
+    assert 'selections' not in field_data
+    assert 'dataset' not in field_data
+
+
+def test_fields__task_fieldset__ok(api_client):
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user, tasks_count=1, is_active=True)
+    task = template.tasks.get(number=1)
+    fieldset_order = 888
+    fieldset = create_test_fieldset_template(
+        account=account,
+        template=template,
+        task=task,
+        order=fieldset_order,
+    )
+    fieldset.fields.delete()
+    dataset = create_test_dataset(account=account)
+    field = FieldTemplate.objects.create(
+        name='First task performer',
+        description='Some description',
+        type=FieldType.DROPDOWN,
+        fieldset=fieldset,
+        template=template,
+        order=1,
+        api_name='field-1',
+        account=account,
+        dataset=dataset,
+    )
+    FieldTemplateSelection.objects.create(
+        field_template=field,
+        value='Value 1',
+        template=template,
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get(f'/templates/{template.id}/fields')
+
+    # assert
+    assert response.status_code == 200
+    data = response.data
+    assert data['id'] == template.id
+    assert len(data['tasks'][0]['fieldsets']) == 1
+    fieldset_data = data['tasks'][0]['fieldsets'][0]
+    assert fieldset_data['name'] == fieldset.name
+    assert fieldset_data['description'] == fieldset.description
+    assert fieldset_data['label_position'] == fieldset.label_position
+    assert fieldset_data['layout'] == fieldset.layout
+    assert fieldset_data['order'] == fieldset_order
+    assert fieldset_data['api_name'] == fieldset.api_name
+    assert len(fieldset_data['fields']) == 1
+    field_data = fieldset_data['fields'][0]
+    assert field_data['name'] == field.name
+    assert field_data['type'] == field.type
+    assert field_data['order'] == field.order
+    assert field_data['description'] == field.description
+    assert field_data['is_hidden'] == field.is_hidden
+    assert field_data['api_name'] == field.api_name
+    assert 'selections' not in field_data
+    assert 'dataset' not in field_data

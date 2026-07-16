@@ -37,7 +37,8 @@ from src.processes.enums import (
     SystemVariable,
     TemplateOrdering,
     TemplateType,
-    WorkflowApiStatus, TaskStatus,
+    WorkflowApiStatus,
+    TaskStatus,
 )
 from src.processes.messages import template as messages
 from src.processes.models.templates.kickoff import Kickoff
@@ -48,12 +49,11 @@ from src.processes.models.templates.template import (
 )
 from src.processes.serializers.templates.kickoff import (
     KickoffListSerializer,
-    KickoffOnlyFieldsSerializer,
     KickoffSerializer,
 )
 from src.processes.serializers.templates.mixins import (
     CreateOrUpdateInstanceMixin,
-    CreateOrUpdateRelatedMixin,
+    CreateOrUpdateRelatedMixin, FieldsetMixin,
 )
 from src.processes.serializers.templates.owner import (
     TemplateOwnerSerializer,
@@ -62,7 +62,6 @@ from src.processes.serializers.templates.task import (
     ShortTaskSerializer,
     TaskTemplatePrivilegesSerializer,
     TaskTemplateSerializer,
-    TemplateTaskOnlyFieldsSerializer,
 )
 from src.processes.services.templates.integrations import (
     TemplateIntegrationsService,
@@ -90,6 +89,7 @@ class TemplateSerializer(
     AdditionalValidationMixin,
     CreateOrUpdateInstanceMixin,
     CreateOrUpdateRelatedMixin,
+    FieldsetMixin,
     ModelSerializer,
 ):
     """
@@ -157,6 +157,23 @@ class TemplateSerializer(
     public_success_url = CharField(allow_null=True, required=False)
     date_updated_tsp = TimeStampField(read_only=True, source='date_updated')
 
+    def _get_formatted_fields_data(self, fields_data: list):
+        result = []
+        for field in fields_data:
+            try:
+                api_name = field.get('api_name')
+                name = field.get('name')
+                is_required = field.get('is_required', False)
+                if api_name and name:
+                    result.append({
+                        'name': name,
+                        'api_name': api_name,
+                        'is_required': is_required,
+                    })
+            except (TypeError, AttributeError):
+                continue
+        return result
+
     def _get_raw_fields_from_kickoff(self, data: Dict[str, Any]) -> List[dict]:
 
         """ Return format:
@@ -170,26 +187,16 @@ class TemplateSerializer(
         """
         result = []
         try:
-            fields = data['kickoff']['fields']
+            kickoff_data = data['kickoff']
         except KeyError:
-            pass
-        else:
-            try:
-                for field in fields:
-                    try:
-                        api_name = field.get('api_name')
-                        name = field.get('name')
-                        is_required = field.get('is_required', False)
-                        if api_name and name:
-                            result.append({
-                                'name': name,
-                                'api_name': api_name,
-                                'is_required': is_required,
-                            })
-                    except TypeError:
-                        continue
-            except TypeError:
-                pass
+            return result
+
+        fields_data = kickoff_data.get('fields') or []
+        result = self._get_formatted_fields_data(fields_data)
+        fieldsets_data = kickoff_data.get('fieldsets') or []
+        for fieldset in fieldsets_data:
+            fields_data = fieldset.get('fields') or []
+            result.extend(self._get_formatted_fields_data(fields_data))
         return result
 
     def _get_template_performers_ids(self, data: Dict[str, Any]) -> Set[int]:
@@ -454,8 +461,14 @@ class TemplateSerializer(
     ) -> dict:
         if isinstance(data, dict):
             data['fields'] = data.get('fields', [])
+            data['fieldsets'] = self.get_draft_fieldsets(
+                data.get('fieldsets'),
+            )
         else:
-            data = {'fields': []}
+            data = {
+                'fields': [],
+                'fieldsets': [],
+            }
         return data
 
     def save_as_draft(self) -> Template:
@@ -482,6 +495,10 @@ class TemplateSerializer(
                 else:
                     task['parents'] = []
                     task['ancestors'] = []
+                task['fieldsets'] = self.get_draft_fieldsets(
+                    task.get('fieldsets'),
+                )
+
             if not self.instance:
                 self.instance = Template.objects.create(
                     account=user.account,
@@ -623,6 +640,7 @@ class TemplateSerializer(
         parents_by_tasks = get_tasks_parents(validated_data['tasks'])
         tasks_api_names = set(parents_by_tasks.keys())
         ancestors_by_tasks = get_tasks_ancestors(parents_by_tasks)
+
         self.create_or_update_related(
             data=validated_data['tasks'],
             ancestors_data={
@@ -847,43 +865,6 @@ class TemplateListSerializer(ModelSerializer):
         ).exists()
 
 
-class TemplateOnlyFieldsSerializer(ModelSerializer):
-    class Meta:
-        model = Template
-        fields = (
-            'id',
-            'kickoff',
-            'tasks',
-        )
-
-    kickoff = KickoffOnlyFieldsSerializer(required=False, read_only=True)
-    tasks = TemplateTaskOnlyFieldsSerializer(
-        many=True,
-        required=False,
-        read_only=True,
-    )
-
-    def to_representation(self, data: Dict[str, Any]):
-
-        data = super().to_representation(data)
-        if data.get('tasks') is None:
-            data['tasks'] = []
-
-        # TemplateSerializer cannot return a single Kickoff object
-        # because the Template related with Kickoff by foreign key
-        # instead of one to one relation. Getting the object manually:
-        kickoff_slz = KickoffOnlyFieldsSerializer(
-            instance=self.instance.kickoff_instance,
-        )
-        data['kickoff'] = kickoff_slz.data
-        return data
-
-    def get_response_data(self) -> Dict[str, Any]:
-        if self.instance.is_active:
-            return self.data
-        return self.instance.get_draft()
-
-
 class TemplateTitlesByWorkflowsSerializer(
     CustomValidationErrorMixin,
     Serializer,
@@ -1040,3 +1021,22 @@ class TemplateTitlesSerializer(Serializer):
     id = IntegerField(read_only=True)
     name = CharField(read_only=True)
     count = IntegerField(read_only=True)
+
+
+class FieldsetTemplateFilterSerializer(
+    CustomValidationErrorMixin,
+    AdditionalValidationMixin,
+    Serializer,
+):
+
+    ordering = ChoiceField(
+        required=False,
+        choices=(
+            ('name', 'name'),
+            ('-name', '-name'),
+            ('date', 'date'),
+            ('-date', '-date'),
+        ),
+    )
+    limit = IntegerField(min_value=0, required=False)
+    offset = IntegerField(min_value=0, required=False)

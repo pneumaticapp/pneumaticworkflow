@@ -43,6 +43,7 @@ def test_webhook_example__body__ok(api_client):
         'contains_comments': False,
         'require_completion_by_all': False,
         'output': [],
+        'fieldsets': [],
         'delay': None,
         'date_started_tsp': task.date_started.timestamp(),
         'date_completed_tsp': None,
@@ -90,6 +91,7 @@ def test_webhook_example__body__ok(api_client):
             'kickoff': {
                 'id': workflow.kickoff_instance.id,
                 'output': [],
+                'fieldsets': [],
             },
             'tasks': [
                 OrderedDict([

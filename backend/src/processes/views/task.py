@@ -77,6 +77,7 @@ from src.processes.services.events import (
 from src.processes.services.exceptions import (
     CommentServiceException,
     WorkflowActionServiceException,
+    FieldsetServiceException,
 )
 from src.processes.services.tasks.exceptions import (
     GroupPerformerServiceException,
@@ -275,14 +276,32 @@ class TaskViewSet(
         if self.action == 'retrieve':
             queryset = queryset.prefetch_related(
                 'checklists__selections',
-                'output__storage_attachments',
                 Prefetch(
-                    'output__selections',
+                    'output',
+                    queryset=TaskField.objects.filter(
+                        fieldset__isnull=True,
+                    ).prefetch_related(
+                        'storage_attachments',
+                        Prefetch(
+                            'selections',
+                            queryset=FieldSelection.objects.order_by('id'),
+                            to_attr='selections_values',
+                        ),
+                        Prefetch(
+                            'dataset__items',
+                            queryset=DatasetItem.objects.order_by('order'),
+                            to_attr='dataset_values',
+                        ),
+                    ),
+                ),
+                'fieldsets__fields__attachments',
+                Prefetch(
+                    'fieldsets__fields__selections',
                     queryset=FieldSelection.objects.order_by('id'),
                     to_attr='selections_values',
                 ),
                 Prefetch(
-                    'output__dataset__items',
+                    'fieldsets__fields__dataset__items',
                     queryset=DatasetItem.objects.order_by('order'),
                     to_attr='dataset_values',
                 ),
@@ -512,7 +531,10 @@ class TaskViewSet(
                 fields_values=serializer.validated_data.get('output'),
             )
             service.check_delay_workflow()
-        except WorkflowActionServiceException as ex:
+        except (
+            WorkflowActionServiceException,
+            FieldsetServiceException,
+        ) as ex:
             raise_validation_error(message=ex.message)
         except TaskFieldException as ex:
             raise_validation_error(
@@ -523,7 +545,9 @@ class TaskViewSet(
             instance=Task.objects.prefetch_related(
                 Prefetch(
                     lookup='output',
-                    queryset=TaskField.objects.all().prefetch_related(
+                    queryset=TaskField.objects.filter(
+                        fieldset__isnull=True,
+                    ).prefetch_related(
                         Prefetch(
                             lookup='selections',
                             queryset=FieldSelection.objects.order_by('id'),
@@ -536,6 +560,17 @@ class TaskViewSet(
                         ),
                         'storage_attachments',
                     ),
+                ),
+                'fieldsets__fields__attachments',
+                Prefetch(
+                    'fieldsets__fields__selections',
+                    queryset=FieldSelection.objects.order_by('id'),
+                    to_attr='selections_values',
+                ),
+                Prefetch(
+                    'fieldsets__fields__dataset__items',
+                    queryset=DatasetItem.objects.order_by('order'),
+                    to_attr='dataset_values',
                 ),
             ).get(pk=task.pk),
             context={'user': request.user},
