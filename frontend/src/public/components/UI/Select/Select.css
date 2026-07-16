@@ -45,6 +45,14 @@
   }
 }
 
+.dropdown-menu_wide {
+  width: 52.8rem;
+
+  @media (--mobile) {
+    width: 100%;
+  }
+}
+
 .dropdown-menu__scrollbar {
   margin-right: 0 !important;
   padding-right: 0 !important;
