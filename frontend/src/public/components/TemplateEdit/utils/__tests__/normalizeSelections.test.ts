@@ -1,4 +1,3 @@
-// <reference types="jest" />
 import { normalizeSelections } from '../normalizeSelections';
 import { IExtraFieldSelection } from '../../../../types/template';
 

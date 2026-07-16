@@ -1,10 +1,10 @@
 import React from 'react';
 import { useIntl } from 'react-intl';
-import { ITemplateTask } from '../../../types/template';
+import { ITemplateTaskClient } from '../../../types/template';
 import styles from '../TemplateEdit.css';
 
 interface ITaskRenderReturnInfoProps {
-  task: ITemplateTask;
+  task: ITemplateTaskClient;
   onClick: () => void;
 }
 

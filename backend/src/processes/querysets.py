@@ -293,6 +293,7 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
                     lookup='kickoff',
                     queryset=(
                         Kickoff.objects.all().prefetch_related(
+                            'fieldsets',
                             Prefetch(
                                 lookup='fields',
                                 queryset=(
@@ -364,6 +365,7 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
                     lookup='kickoff',
                     queryset=(
                         Kickoff.objects.all().prefetch_related(
+                            'fieldsets',
                             Prefetch(
                                 lookup='fields',
                                 queryset=(
@@ -443,9 +445,11 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
                 'tasks__conditions__rules',
                 'tasks__conditions__rules__predicates',
                 'tasks__raw_performers',
+                'tasks__fieldsets',
                 'kickoff',
                 'kickoff__fields',
                 'kickoff__fields__selections',
+                'kickoff__fieldsets',
             )
         )
 
@@ -688,7 +692,12 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
                     queryset=(
                         TaskField.objects
                         .filter(api_name__in=fields)
-                        .order_by('kickoff_id', 'task__number', '-order')
+                        .order_by(
+                            'kickoff_id',
+                            'task__number',
+                            'fieldset_id',
+                            '-order',
+                        )
                     ),
                 ),
             )
@@ -1335,5 +1344,26 @@ class TemplatePresetQuerySet(AccountBaseQuerySet):
 
 
 class SearchContentQuerySet(AccountBaseQuerySet):
+
+    pass
+
+
+class FieldsetTemplateQuerySet(AccountBaseQuerySet):
+
+    def shared(self):
+        return self.filter(is_shared=True)
+
+
+class FieldsetTemplateRuleQuerySet(AccountBaseQuerySet):
+
+    pass
+
+
+class FieldSetQuerySet(AccountBaseQuerySet):
+
+    pass
+
+
+class FieldSetRuleQuerySet(AccountBaseQuerySet):
 
     pass

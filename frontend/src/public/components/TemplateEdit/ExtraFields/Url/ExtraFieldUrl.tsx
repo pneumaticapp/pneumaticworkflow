@@ -18,6 +18,7 @@ export function ExtraFieldUrl({
   editField,
   isDisabled = false,
   labelBackgroundColor,
+  labelPosition,
   innerRef,
 }: IWorkflowExtraFieldProps) {
   const handleChangeName = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -40,6 +41,7 @@ export function ExtraFieldUrl({
       namePlaceholder={namePlaceholder}
       mode={mode}
       labelBackgroundColor={labelBackgroundColor}
+      labelPosition={labelPosition}
       handleChangeName={handleChangeName}
       handleChangeDescription={handleChangeDescription}
       validate={getFieldValidator(field, mode)}

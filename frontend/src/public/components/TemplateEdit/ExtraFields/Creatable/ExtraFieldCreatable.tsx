@@ -11,9 +11,11 @@ import { getInputNameBackground } from '../utils/getInputNameBackground';
 import { RemoveIcon, ArrowDropdownIcon } from '../../../icons';
 import { IntlMessages } from '../../../IntlMessages';
 import { FieldWithName } from '../utils/FieldWithName';
+import { FieldLabel } from '../utils/FieldLabel';
 import { OutputFieldContent } from '../utils/OutputFieldContent';
 import { getFieldValidator } from '../utils/getFieldValidator';
 import { EExtraFieldMode, IExtraFieldSelection } from '../../../../types/template';
+import { EFieldLabelPosition } from '../../../../types/fieldset';
 import { validateCheckboxAndRadioField } from '../../../../utils/validators';
 import { handleSelectionBlur, recalculateDuplicateErrors } from '../utils/handleSelectionBlur';
 
@@ -44,9 +46,10 @@ export function ExtraFieldCreatable({
   deleteField,
   isDisabled = false,
   labelBackgroundColor,
+  labelPosition,
   innerRef,
   datasetName,
-}: IWorkflowExtraFieldProps) {
+}: IWorkflowExtraFieldProps): JSX.Element {
   const { isRequired } = field;
   const optionInputsRefs = React.useRef<HTMLInputElement[]>([]);
 
@@ -180,6 +183,8 @@ export function ExtraFieldCreatable({
       validate={getFieldValidator(field, mode)}
       isDisabled={isDisabled}
       icon={<ArrowDropdownIcon />}
+      labelPosition={labelPosition}
+      {...(labelPosition === EFieldLabelPosition.Left && { labelClassName: styles['kick-off-input__name_label-left_centered'] })}
       innerRef={innerRef}
     />
   );
@@ -195,35 +200,87 @@ export function ExtraFieldCreatable({
       </button>
     );
 
+    const optionsContent = (
+      <OutputFieldContent field={field} editField={editField} isDisabled={isDisabled} datasetName={datasetName}>
+        {customOptionsList}
+        {!isDisabled && addOptionButton}
+      </OutputFieldContent>
+    );
+
+    const isLabelLeft = labelPosition === EFieldLabelPosition.Left;
+
+    if (isLabelLeft) {
+      return (
+        <div className={inputStyles['kickoff-create-field-container']}>
+          <FieldWithName
+            inputClassName={inputStyles['kickoff-dropdown-field']}
+            labelBackgroundColor={labelBackgroundColor}
+            field={field}
+            descriptionPlaceholder={descriptionPlaceholder}
+            namePlaceholder={namePlaceholder}
+            mode={mode}
+            handleChangeName={handleChangeName}
+            handleChangeDescription={handleChangeDescription}
+            validate={getFieldValidator(field, mode)}
+            isDisabled={isDisabled}
+            icon={<ArrowDropdownIcon />}
+            labelPosition={labelPosition}
+            labelClassName={styles['kick-off-input__name_label-left_centered']}
+            innerRef={innerRef}
+          />
+          <div className={inputStyles['kickoff-create-field-options-wrapper_label-left']}>
+            {optionsContent}
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className={inputStyles['kickoff-create-field-container']}>
         {renderKickoffField()}
-
-        <OutputFieldContent field={field} editField={editField} isDisabled={isDisabled} datasetName={datasetName}>
-          {customOptionsList}
-          {!isDisabled && addOptionButton}
-        </OutputFieldContent>
+        {optionsContent}
       </div>
     );
   };
 
   const renderSelectableView = () => {
     const displayValue = dropdownSelections.find((selection) => selection.value === field.value) || null;
+    const isLabelLeft = labelPosition === EFieldLabelPosition.Left;
 
     return (
-      <div className={inputStyles['dropdown-container']} data-autofocus-first-field={true}>
-        <div className={fieldNameClassName}>
-          <div className={styles['kick-off-input__name-readonly']}>{field.name}</div>
-          {isRequired && <span className={styles['kick-off-required-sign']} />}
+      <div
+        className={classnames(
+          inputStyles['dropdown-container'],
+          isLabelLeft && styles['kick-off-input__field_label-left'],
+        )}
+        data-autofocus-first-field={true}
+      >
+        {isLabelLeft ? (
+          <FieldLabel
+            name={field.name}
+            isRequired={isRequired || false}
+            isDisabled={isDisabled}
+            mode={mode}
+            labelBackgroundColor={labelBackgroundColor}
+            handleChangeName={handleChangeName}
+            className={styles['kick-off-input__name_label-left_centered']}
+          />
+        ) : (
+          <div className={fieldNameClassName}>
+            <div className={styles['kick-off-input__name-readonly']}>{field.name}</div>
+            {isRequired && <span className={styles['kick-off-required-sign']} />}
+          </div>
+        )}
+        <div {...(isLabelLeft && { className: inputStyles['dropdown-select-wrapper_label-left'] })}>
+          <DropdownList
+            options={dropdownSelections}
+            onChange={handleSelectableChange}
+            placeholder={description}
+            isDisabled={isDisabled}
+            isSearchable={false}
+            value={displayValue}
+          />
         </div>
-        <DropdownList
-          options={dropdownSelections}
-          onChange={handleSelectableChange}
-          placeholder={description}
-          isDisabled={isDisabled}
-          isSearchable={false}
-          value={displayValue}
-        />
       </div>
     );
   };
@@ -237,5 +294,5 @@ export function ExtraFieldCreatable({
     return fieldsMap[mode];
   };
 
-  return renderDropdownField();
+  return <>{renderDropdownField()}</>;
 }

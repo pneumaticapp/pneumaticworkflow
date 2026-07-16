@@ -5,6 +5,7 @@ from typing import Callable, Iterable, Optional, Tuple
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
+from django.db.models import Q
 
 from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
@@ -26,11 +27,13 @@ from src.processes.enums import (
     WorkflowStatus, PerformerType,
 )
 from src.processes.messages import workflow as messages
+from src.processes.models.workflows.fieldset import FieldSet
 from src.processes.models.workflows.task import (
     Delay,
     Task,
     TaskPerformer,
 )
+from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.workflow import Workflow
 from src.storage.utils import reassign_restricted_permissions_for_task
 from src.processes.services import exceptions
@@ -44,6 +47,7 @@ from src.processes.services.tasks.field import (
     TaskFieldService,
 )
 from src.processes.services.tasks.task import TaskService
+from src.processes.services.workflows.fieldsets.fieldset import FieldSetService
 from src.processes.tasks.webhooks import (
     send_task_completed_webhook,
     send_task_returned_webhook,
@@ -827,17 +831,37 @@ class WorkflowActionService:
 
         fields_values = fields_values or {}
         with transaction.atomic():
-            for task_field in task.output.all():
+            fields = (
+                TaskField.objects
+                .filter(
+                    Q(fieldset__task=task) | Q(task=task),
+                    api_name__in=fields_values,
+                )
+            )
+            fieldsets_ids = set()
+            for field in fields:
+                if field.fieldset_id:
+                    fieldsets_ids.add(field.fieldset_id)
                 service = TaskFieldService(
                     user=self.user,
-                    instance=task_field,
+                    instance=field,
                     is_superuser=self.is_superuser,
                     auth_type=self.auth_type,
                 )
                 service.partial_update(
-                    value=fields_values.get(task_field.api_name),
+                    value=fields_values.get(field.api_name),
                     force_save=True,
                 )
+            if fieldsets_ids:
+                fieldsets = FieldSet.objects.filter(id__in=fieldsets_ids)
+                for fieldset in fieldsets:
+                    service = FieldSetService(
+                        user=self.user,
+                        instance=fieldset,
+                        is_superuser=self.is_superuser,
+                        auth_type=self.auth_type,
+                    )
+                    service.validate_rules()
             AnalyticService.task_completed(
                 user=self.user,
                 is_superuser=self.is_superuser,

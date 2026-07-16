@@ -1,4 +1,5 @@
 import { TSystemField } from './types';
+import { TRuntimeMergedOutputPart } from '../../../../types/template';
 
 export const SYSTEM_FIELD_NAMES = [
   'system-column-workflow',
@@ -23,5 +24,7 @@ export const SYSTEM_FIELDS: TSystemField[] = [
   { apiName: 'system-column-step', name: 'step', isDisabled: false, hasNotTooltip: true },
   { apiName: 'system-column-performer', name: 'performer', isDisabled: false, hasNotTooltip: true },
 ];
+
+export const SYSTEM_MERGED_OUTPUTS: TRuntimeMergedOutputPart[] = SYSTEM_FIELDS.map((field) => ({ kind: 'system', field }));
 
 export const SKELETON_ROWS = Array.from({ length: 5 }, (_, index) => `skeleton-row-${index}`);
