@@ -28,4 +28,5 @@ export const TITLES = {
   'WorkflowHighlights': `Workflow Highlights ${PNEUMATIC_SUFFIX}`,
   'Integrations': `Integrations ${PNEUMATIC_SUFFIX}`,
   'Datasets': `Datasets ${PNEUMATIC_SUFFIX}`, 
+  'Fieldsets': `Fieldsets ${PNEUMATIC_SUFFIX}`,
 };

@@ -9,7 +9,7 @@ import { ERoutes } from '../../constants/routes';
 import { getNormalizedTemplateOwners, getTemplateIdFromUrl } from '../../utils/template';
 import { checkSomeRouteIsActive, isCreateTemplate } from '../../utils/history';
 import { usePrevious } from '../../hooks/usePrevious';
-import { ITemplate } from '../../types/template';
+import { ITemplateClient } from '../../types/template';
 import { TUserListItem } from '../../types/user';
 import {
   loadTemplate,
@@ -27,12 +27,12 @@ const TEMPLATE_VARIABLES_SYNC_DEBOUNCE_MS = 350;
 type TUseTemplateEditInitParams = {
   match: { params: ITemplateEditParams };
   location: { pathname: string; search: string };
-  template: ITemplate;
-  aiTemplate: ITemplate | null;
+  template: ITemplateClient;
+  aiTemplate: ITemplateClient | null;
   users: TUserListItem[];
   accessConditions: boolean;
   authUser: IAuthUser;
-  formik: FormikProps<ITemplate>;
+  formik: FormikProps<ITemplateClient>;
   openTask(taskUUID?: string): void;
 };
 

@@ -1,6 +1,6 @@
-import { ITemplateTask } from "../../../../types/template";
+import { ITemplateTaskClient } from "../../../../types/template";
 
-export function getPreviousTask(currentTask: ITemplateTask, tasks: ITemplateTask[]): ITemplateTask | null {
+export function getPreviousTask(currentTask: ITemplateTaskClient, tasks: ITemplateTaskClient[]): ITemplateTaskClient | null {
   if (currentTask.number === 1) {
     return null;
   }

@@ -1,4 +1,4 @@
-import { IExtraField, IKickoff } from '../types/template';
+import { IExtraField, IKickoffClient } from '../types/template';
 import { isArrayWithItems } from './helpers';
 import { IRunWorkflow } from '../components/WorkflowEditPopup/types';
 import { ExtraFieldsHelper } from '../components/TemplateEdit/ExtraFields/utils/ExtraFieldsHelper';
@@ -170,7 +170,7 @@ export const mapEndOfDayTsp = (fields: IExtraField[]): IExtraField[] => {
   }));
 };
 
-export const getNormalizedKickoff = (kickoff: IKickoff): { [key: string]: string } => {
+export const getNormalizedKickoff = (kickoff: Pick<IKickoffClient, 'fields'>): { [key: string]: string } => {
   const mappedKickoffFields = new ExtraFieldsHelper(kickoff.fields).normalizeFieldsValues();
   const mappedKickoff = isArrayWithItems(mappedKickoffFields) ? Object.assign({}, ...mappedKickoffFields) : null;
   return mappedKickoff;
@@ -217,12 +217,24 @@ export const mapBackendWorkflowToRedux = <Workflow extends { kickoff: IWorkflowD
   workflow: Workflow,
   timezone: string,
 ): Workflow => {
-  if (!workflow.kickoff?.output?.length) return workflow;
+  if (!workflow.kickoff) return workflow;
+
+  const hasOutput = workflow.kickoff.output?.length;
+  const hasFieldsets = workflow.kickoff.fieldsets?.length;
+
+  if (!hasOutput && !hasFieldsets) return workflow;
+
   return {
     ...workflow,
     kickoff: {
       ...workflow.kickoff,
-      output: mapTspToString(workflow.kickoff.output, timezone),
+      ...(hasOutput && { output: mapTspToString(workflow.kickoff.output, timezone) }),
+      ...(hasFieldsets && {
+        fieldsets: workflow.kickoff.fieldsets!.map((fieldset) => ({
+          ...fieldset,
+          fields: mapTspToString(fieldset.fields, timezone),
+        })),
+      }),
     },
   };
 };
@@ -253,6 +265,12 @@ export const formatTaskDatesForRedux = <T extends TFormatTaskDates>(
     ...(task.dateStartedTsp && { dateStarted: toISOStringFromTsp(task.dateStartedTsp) }),
     ...(task.dateCompletedTsp && { dateCompleted: toISOStringFromTsp(task.dateCompletedTsp) }),
     ...(task.output && { output: mapTspToString(task.output, timezone) }),
+    ...(task.fieldsets?.length && {
+      fieldsets: task.fieldsets.map((fieldset) => ({
+        ...fieldset,
+        fields: mapTspToString(fieldset.fields, timezone),
+      })),
+    }),
     ...(task.subWorkflows && {
       subWorkflows: mapWorkflowsAddComputedPropsToRedux(mapWorkflowsToISOStringToRedux(task.subWorkflows)),
     }),

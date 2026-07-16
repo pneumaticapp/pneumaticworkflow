@@ -1,5 +1,6 @@
 import classnames from 'classnames';
-import React, {
+import * as React from 'react';
+import {
   ChangeEvent,
   forwardRef,
   KeyboardEvent,
@@ -8,17 +9,14 @@ import React, {
   Ref,
   useCallback,
   useMemo,
-  useRef,
-  useState,
 } from 'react';
-import TextareaAutosize from 'react-textarea-autosize';
 
 import { Field, EFieldTagName } from '../../../Field';
 import { validateKickoffFieldName } from '../../../../utils/validators';
 import { EInputNameBackgroundColor } from '../../../../types/workflow';
-import { getInputNameBackground } from './getInputNameBackground';
 import { EExtraFieldMode, IExtraField } from '../../../../types/template';
-import { PencilSmallIcon } from '../../../icons';
+import { EFieldLabelPosition } from '../../../../types/fieldset';
+import { FieldLabel } from './FieldLabel';
 
 import styles from '../../KickoffRedux/KickoffRedux.css';
 
@@ -38,7 +36,10 @@ interface IKickoffFormFieldWithNameProps {
   handleChangeName(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void;
   handleChangeDescription(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void;
   validate(value: string): string;
+  labelPosition: EFieldLabelPosition;
+  labelClassName?: string;
   onClick?(): void;
+  editorClassName?: string;
   onNumericKeyDown?(event: KeyboardEvent<HTMLInputElement>): void;
   isNumericField?: boolean;
 }
@@ -76,14 +77,14 @@ export const FieldWithName = forwardRef<HTMLInputElement, IKickoffFormFieldWithN
       labelBackgroundColor,
       innerRef,
       accountId,
+      labelPosition,
+      labelClassName,
       onNumericKeyDown,
       isNumericField,
+      editorClassName,
     },
     ref,
   ) => {
-    const editInputRef = useRef<HTMLTextAreaElement | null>(null);
-    const [isFocused, setIsFocused] = useState(false);
-
     const descriptionInputRef = useCallback(
       (node: HTMLInputElement | null) => {
         assignInputRef(innerRef, node);
@@ -91,6 +92,8 @@ export const FieldWithName = forwardRef<HTMLInputElement, IKickoffFormFieldWithN
       },
       [innerRef, ref],
     );
+
+    const fieldNameError = useMemo(() => validateKickoffFieldName(name), [name]);
 
     const handleDescriptionWrapperKeyDown = useCallback(
       (event: KeyboardEvent<HTMLDivElement>) => {
@@ -103,37 +106,6 @@ export const FieldWithName = forwardRef<HTMLInputElement, IKickoffFormFieldWithN
         }
       },
       [onClick],
-    );
-
-    const handleEditNameClick = useCallback(() => {
-      editInputRef.current?.focus();
-    }, []);
-
-    const handleNameTextareaRef = useCallback((element: HTMLTextAreaElement | null) => {
-      editInputRef.current = element;
-    }, []);
-
-    const handleNameFocus = useCallback(() => {
-      setIsFocused(true);
-    }, []);
-
-    const handleNameBlur = useCallback(() => {
-      setIsFocused(false);
-    }, []);
-
-    const fieldNameError = useMemo(() => validateKickoffFieldName(name), [name]);
-
-    const isKickoffEditorMode = mode === EExtraFieldMode.Kickoff;
-
-    const fieldNameClassName = useMemo(
-      () =>
-        classnames(
-          getInputNameBackground(labelBackgroundColor),
-          styles['kick-off-input__name'],
-          isKickoffEditorMode && styles['kick-off-input__name_kickoff-edit'],
-          fieldNameError && styles['kick-off-input__name_error'],
-        ),
-      [labelBackgroundColor, fieldNameError, isKickoffEditorMode],
     );
 
     const labelReplacementClassName = useMemo(
@@ -160,41 +132,23 @@ export const FieldWithName = forwardRef<HTMLInputElement, IKickoffFormFieldWithN
       [onClick, handleDescriptionWrapperKeyDown],
     );
 
+    const fieldContainerClassName = classnames(
+      styles['kick-off-input__field'],
+      labelPosition === EFieldLabelPosition.Left && styles['kick-off-input__field_label-left'],
+    );
+
     return (
-      <div className={styles['kick-off-input__field']} data-autofocus-first-field>
-        <div className={fieldNameClassName}>
-          {isKickoffEditorMode ? (
-            <>
-              <TextareaAutosize
-                disabled={isDisabled}
-                onChange={handleChangeName}
-                placeholder={namePlaceholder}
-                value={name}
-                ref={handleNameTextareaRef}
-                onFocus={handleNameFocus}
-                onBlur={handleNameBlur}
-                minRows={1}
-                className={styles['kick-off-input__name-textarea']}
-              />
-              {isRequired && <span className={styles['kick-off-required-sign']} />}
-              {!isFocused && (
-                <button
-                  type="button"
-                  aria-label="Edit field name"
-                  onClick={handleEditNameClick}
-                  className={styles['kick-off-edit-name']}
-                >
-                  <PencilSmallIcon />
-                </button>
-              )}
-            </>
-          ) : (
-            <>
-              <div className={styles['kick-off-input__name-readonly']}>{name}</div>
-              {isRequired && <span className={styles['kick-off-required-sign']} />}
-            </>
-          )}
-        </div>
+      <div className={fieldContainerClassName} data-autofocus-first-field aria-label="field-container">
+        <FieldLabel
+          name={name}
+          isRequired={isRequired}
+          isDisabled={isDisabled}
+          mode={mode}
+          labelBackgroundColor={labelBackgroundColor}
+          namePlaceholder={namePlaceholder}
+          handleChangeName={handleChangeName}
+          {...(labelClassName && { className: labelClassName })}
+        />
         <div className={styles['kick-off-input__description']} {...descriptionInteractiveProps}>
           <Field
             labelClassName="w-100"
@@ -212,6 +166,7 @@ export const FieldWithName = forwardRef<HTMLInputElement, IKickoffFormFieldWithN
             errorMessage={fieldNameError}
             innerRef={descriptionInputRef}
             accountId={accountId}
+            editorClassName={editorClassName}
             onKeyDown={onNumericKeyDown}
             isNumericField={isNumericField}
           />

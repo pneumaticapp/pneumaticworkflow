@@ -8,7 +8,7 @@ import { useSelector } from 'react-redux';
 import { getIsUserSubsribed, getSubscriptionPlan } from '../../../../redux/selectors/user';
 import { Tabs } from '../../../UI';
 import { useDidUpdateEffect } from '../../../../hooks/useDidUpdateEffect';
-import { ITemplate } from '../../../../types/template';
+import { ITemplateClient } from '../../../../types/template';
 import { trackShareKickoffForm } from '../../../../utils/analytics';
 import { TPublicFormType } from '../../../../types/publicForms';
 import { generateEmbedCode } from './utils/generateEmbedCode';
@@ -52,8 +52,8 @@ export function KickoffShareForm({ className }: IKickoffShareFormProps) {
     return generateEmbedCode(embedUrl);
   }, [embedUrl]);
 
-  const editTemplate = (templateFields: Partial<ITemplate>) => {
-    (Object.keys(templateFields) as (keyof ITemplate)[]).forEach((key) => {
+  const editTemplate = (templateFields: Partial<ITemplateClient>) => {
+    (Object.keys(templateFields) as (keyof ITemplateClient)[]).forEach((key) => {
       setFieldValue(key as string, templateFields[key], false);
     });
   };

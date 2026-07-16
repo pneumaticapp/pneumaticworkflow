@@ -1,6 +1,6 @@
 import { useCallback, useRef } from 'react';
 
-import { ITemplateTask } from '../../../types/template';
+import { ITemplateTaskClient } from '../../../types/template';
 import { useTaskFormScope, useTemplateField } from '../useTemplateForm';
 
 /**
@@ -22,7 +22,7 @@ export function useTaskForm() {
   taskRef.current = task;
 
   const updateTask = useCallback(
-    (changedFields: Partial<ITemplateTask>) => {
+    (changedFields: Partial<ITemplateTaskClient>) => {
       const nextTask = { ...taskRef.current, ...changedFields };
       taskRef.current = nextTask;
       setFieldValue(`tasks.${index}`, nextTask, false);
@@ -31,7 +31,7 @@ export function useTaskForm() {
   );
 
   const updateField = useCallback(
-    <K extends keyof ITemplateTask>(field: K) => (value: ITemplateTask[K]) => {
+    <K extends keyof ITemplateTaskClient>(field: K) => (value: ITemplateTaskClient[K]) => {
       const nextTask = { ...taskRef.current, [field]: value };
       taskRef.current = nextTask;
       setFieldValue(`tasks.${index}.${String(field)}`, value, false);

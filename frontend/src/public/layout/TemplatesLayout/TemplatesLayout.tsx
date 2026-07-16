@@ -6,10 +6,13 @@ import { TemplatesSortingContainer } from './TemplatesSortingContainer';
 import { TopNavContainer } from '../../components/TopNav';
 import { SelectMenu, Tabs } from '../../components/UI';
 import { ERoutes } from '../../constants/routes';
-import { datasetsSortingValues } from '../../constants/sortings';
+import { datasetsSortingValues, fieldsetsSortingValues } from '../../constants/sortings';
 import { setDatasetsListSorting } from '../../redux/datasets/slice';
+import { setFieldsetsListSorting } from '../../redux/fieldsets/slice';
 import { getDatasetsSorting } from '../../redux/selectors/datasets';
+import { getFieldsetsSorting } from '../../redux/selectors/fieldsets';
 import { EDatasetsSorting } from '../../types/dataset';
+import { EFieldsetsSorting } from '../../types/fieldset';
 import { ETemplatesTab, ITemplatesLayoutProps } from '../../types/template';
 import { history } from '../../utils/history';
 
@@ -21,25 +24,28 @@ export function TemplatesLayout({ children }: ITemplatesLayoutProps) {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
 
-  const [pathname, setPathname] = React.useState(history.location.pathname);
-
-  React.useEffect(() => {
-    return history.listen((location) => {
-      setPathname(location.pathname);
-    });
-  }, []);
-
-  const datasetsSorting = useSelector(getDatasetsSorting);
+  const datasetsSortingType = useSelector(getDatasetsSorting);
+  const fieldsetsSortingType = useSelector(getFieldsetsSorting);
 
   const handleDatasetsSortingChange = (value: EDatasetsSorting) => {
     dispatch(setDatasetsListSorting(value));
   };
 
-  const isDatasetDetail = /^\/datasets\/\d+\/?$/.test(pathname);
+  const handleFieldsetsSortingChange = (value: EFieldsetsSorting) => {
+    dispatch(setFieldsetsListSorting(value));
+  };
 
-  const activeTab = pathname.startsWith(ERoutes.Datasets)
-    ? ETemplatesTab.Datasets
-    : ETemplatesTab.Templates;
+  const isDatasetDetail = /^\/datasets\/\d+\/?$/.test(history.location.pathname);
+  const isFieldsetDetail = /^\/fieldsets\/\d+\/?$/.test(history.location.pathname);
+
+  const getActiveTab = () => {
+    const path = history.location.pathname;
+    if (path.startsWith(ERoutes.Datasets)) return ETemplatesTab.Datasets;
+    if (path.startsWith(ERoutes.Fieldsets)) return ETemplatesTab.Fieldsets;
+    return ETemplatesTab.Templates;
+  };
+
+  const activeTab = getActiveTab();
 
   const tabValues = [
     {
@@ -50,11 +56,17 @@ export function TemplatesLayout({ children }: ITemplatesLayoutProps) {
       id: ETemplatesTab.Datasets,
       label: formatMessage({ id: 'templates.tab-datasets' }),
     },
+    {
+      id: ETemplatesTab.Fieldsets,
+      label: formatMessage({ id: 'templates.tab-fieldsets' }),
+    },
   ];
 
   const handleTabChange = (tabId: ETemplatesTab) => {
     if (tabId === ETemplatesTab.Datasets) {
       history.push(ERoutes.Datasets);
+    } else if (tabId === ETemplatesTab.Fieldsets) {
+      history.push(ERoutes.Fieldsets);
     } else {
       history.push(ERoutes.Templates);
     }
@@ -73,6 +85,18 @@ export function TemplatesLayout({ children }: ITemplatesLayoutProps) {
       );
     }
 
+    if (isFieldsetDetail) {
+      return (
+        <div className={styles['navbar-left__content']}>
+          <ReturnLink
+            className={styles['return-link']}
+            label={formatMessage({ id: 'fieldsets.all-fieldsets' })}
+            route={ERoutes.Fieldsets}
+          />
+        </div>
+      );
+    }
+
     return (
       <div className={styles['navbar-left__content']}>
           <Tabs
@@ -84,10 +108,19 @@ export function TemplatesLayout({ children }: ITemplatesLayoutProps) {
           {activeTab === ETemplatesTab.Datasets && (
             <SelectMenu
               closeOnSelect
-              activeValue={datasetsSorting}
+              activeValue={datasetsSortingType}
               values={datasetsSortingValues}
-              toggleTextClassName={styles['dataset__sorting-toggle-text']}
+              toggleTextClassName={styles['sorting-toggle-text']}
               onChange={handleDatasetsSortingChange}
+            />
+          )}
+          {activeTab === ETemplatesTab.Fieldsets && (
+            <SelectMenu
+              closeOnSelect
+              activeValue={fieldsetsSortingType}
+              values={fieldsetsSortingValues}
+              toggleTextClassName={styles['sorting-toggle-text']}
+              onChange={handleFieldsetsSortingChange}
             />
           )}
       </div>

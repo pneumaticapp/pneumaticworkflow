@@ -130,6 +130,11 @@
   height: 100%;
 }
 
+.file-content-wrapper_label-left {
+  flex: 1;
+  min-width: 0;
+}
+
 .extra-field-file__ref {
   position: absolute;
   z-index: -1;
@@ -157,16 +162,21 @@
 .extra-field-file__input--template {
   position: relative;
   display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  align-items: flex-end;
+  gap: 2px;
   max-width: 100%;
 }
 
 .extra-field-file__input-name--template {
   padding: 0 0.4rem 0 0;
-  max-width: calc(100% - 0.5rem);
-  line-height: 2rem;
+  min-width: 0;
+  resize: none;
   border: none;
+  field-sizing: content;
+  overflow-wrap: break-word;
+
+  @mixin text-base;
+
   &:focus {
     outline: none;
   }

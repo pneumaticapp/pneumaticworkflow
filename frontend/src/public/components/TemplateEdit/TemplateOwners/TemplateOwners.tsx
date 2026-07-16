@@ -9,14 +9,14 @@ import { trackInviteTeamInPage } from '../../../utils/analytics';
 import { getNotDeletedUsers, getUserFullName } from '../../../utils/users';
 import { EOptionTypes, TUsersDropdownOption, UsersDropdown, getUsersDropdownOptionValue } from '../../UI/form/UsersDropdown';
 import { getIsUserSubsribed, getSubscriptionPlan, getUsers } from '../../../redux/selectors/user';
-import { ETaskPerformerType, ETemplateOwnerRole, ETemplateOwnerType, ITemplate, ITemplateOwner } from '../../../types/template';
+import { ETaskPerformerType, ETemplateOwnerRole, ETemplateOwnerType, ITemplateClient, ITemplateOwner } from '../../../types/template';
 import OwnerItem from './components';
 
 import styles from './TemplateOwners.css';
 import UserDataWithGroup from '../../UserDataWithGroup';
 
 interface ITemplateOwnersProps {
-  templateOwners: ITemplate['owners'];
+  templateOwners: ITemplateClient['owners'];
   onChangeTemplateOwners(templateOwners: ITemplateOwner[]): void;
 }
 

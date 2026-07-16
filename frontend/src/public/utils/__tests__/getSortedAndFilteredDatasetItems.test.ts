@@ -1,4 +1,3 @@
-// <reference types="jest" />
 import { getSortedAndFilteredDatasetItems } from '../dataset';
 import { EDatasetsSorting, IDatasetItem } from '../../types/dataset';
 

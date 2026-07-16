@@ -1,9 +1,25 @@
 import { ETemplateStatus } from '../../../types/redux';
-import { ITemplateOwner } from '../../../types/template';
+import { IRunWorkflow } from '../../WorkflowEditPopup/types';
+import {
+  ITemplateClient,
+  ITemplateOwner,
+} from '../../../types/template';
+import {
+  TCloneTemplatePayload,
+  TDeleteTemplatePayload,
+  TPatchTemplatePayload,
+} from '../../../redux/actions';
 import { IInfoWarningProps } from '../InfoWarningsModal';
 import { TSetFieldValue } from '../useTemplateForm/types';
 
 export interface ITemplateControllsProps {
+  template?: ITemplateClient;
+  templateStatus?: ETemplateStatus;
+  isSubscribed?: boolean;
+  cloneTemplate?(payload: TCloneTemplatePayload): void;
+  patchTemplate?(payload: TPatchTemplatePayload): void;
+  deleteTemplate?(payload: TDeleteTemplatePayload): void;
+  openRunWorkflowModal?(payload: IRunWorkflow): void;
   setInfoWarnings(infoWarnings: ((props: IInfoWarningProps) => JSX.Element)[]): void;
 }
 

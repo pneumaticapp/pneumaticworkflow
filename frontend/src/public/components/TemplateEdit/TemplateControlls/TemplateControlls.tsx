@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { WarningIcon } from '../../icons';
-import { ITemplate } from '../../../types/template';
+import { ITemplateClient } from '../../../types/template';
 import {
   cloneTemplate,
   deleteTemplate,
@@ -12,7 +12,8 @@ import {
   patchTemplate,
 } from '../../../redux/actions';
 import { getRunnableWorkflow, loadDatasetsMap } from '../utils/getRunnableWorkflow';
-import { getTemplateStatus } from '../../../redux/selectors/template';
+import { mapFieldsetBindingClientToRuntime } from '../../../utils/mapFieldsetBindingClientToRuntime';
+import { ETemplateStatus, IApplicationState } from '../../../types/redux';
 import { validateTemplate } from '../utils/validateTemplate';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { NotificationManager } from '../../UI/Notifications';
@@ -21,9 +22,8 @@ import { useTemplateIntegrationsList } from '../../TemplateIntegrationsStats';
 import { checkShowDraftTemplateWarning } from '../../Templates';
 
 import styles from './TemplateControlls.css';
-import { getSubscriptionPlan, getIsUserSubsribed } from '../../../redux/selectors/user';
 import { ESubscriptionPlan } from '../../../types/account';
-import { useTemplateField, useTemplatePersist } from '../useTemplateForm';
+import { TemplateFieldContext, TemplatePersistContext } from '../useTemplateForm/contexts';
 import { ITemplateControllsProps } from './types';
 import {
   TemplateControlButtons,
@@ -32,22 +32,46 @@ import {
   TemplateOwnersSettings,
 } from './TemplateControlsSections';
 import { TemplateNavigation } from './TemplateNavigation';
+export type { ITemplateControllsProps } from './types';
 
-export function TemplateControlls({ setInfoWarnings }: ITemplateControllsProps) {
+export function TemplateControlls({
+  template: propsTemplate,
+  templateStatus: propsTemplateStatus,
+  isSubscribed: propsIsSubscribed,
+  cloneTemplate: propsCloneTemplate,
+  patchTemplate: propsPatchTemplate,
+  deleteTemplate: propsDeleteTemplate,
+  openRunWorkflowModal: propsOpenRunWorkflowModal,
+  setInfoWarnings,
+}: ITemplateControllsProps) {
   const intl = useIntl();
   const { formatMessage } = intl;
   const dispatch = useDispatch();
-  const { values: template, setFieldValue } = useTemplateField();
+  const fieldContext = useContext(TemplateFieldContext);
+  const persistContext = useContext(TemplatePersistContext);
+  const template = propsTemplate ?? fieldContext?.values;
+  const setFieldValue = fieldContext?.setFieldValue ?? (() => undefined);
   const {
     consumePendingChanges,
     confirmConsumedChanges,
     revertConsumedChanges,
     abandonPendingChanges,
-  } = useTemplatePersist();
-  const templateStatus = useSelector(getTemplateStatus);
-  const isSubscribed = useSelector(getIsUserSubsribed);
-  const billingPlan = useSelector(getSubscriptionPlan);
-  const isFreePlan = billingPlan === ESubscriptionPlan.Free;
+  } = persistContext ?? {
+    consumePendingChanges: (explicitFields = {}) => explicitFields,
+    confirmConsumedChanges: () => undefined,
+    revertConsumedChanges: () => undefined,
+    abandonPendingChanges: () => undefined,
+  };
+  const templateStatusFromState = useSelector((state: IApplicationState) => state.template?.status ?? ETemplateStatus.Saved);
+  const isSubscribedFromState = useSelector((state: IApplicationState) => state.authUser?.account?.isSubscribed ?? false);
+  const billingPlanFromState = useSelector((state: IApplicationState) => state.authUser?.account?.billingPlan);
+  const templateStatus = propsTemplateStatus ?? templateStatusFromState;
+  const isSubscribed = propsIsSubscribed ?? isSubscribedFromState;
+
+  if (!template) {
+    throw new Error('TemplateControlls must receive a template prop or be used inside the Edit Template form provider');
+  }
+  const isFreePlan = billingPlanFromState === ESubscriptionPlan.Free;
   const accessConditions = isSubscribed || isFreePlan;
 
   const templateIntegrations = useTemplateIntegrationsList(template.id);
@@ -79,23 +103,40 @@ export function TemplateControlls({ setInfoWarnings }: ITemplateControllsProps) 
     reminderNotification: isReminderNotification,
   } = template;
 
+  const runCloneTemplate = (payload: Parameters<typeof cloneTemplate>[0]) => {
+    propsCloneTemplate ? propsCloneTemplate(payload) : dispatch(cloneTemplate(payload));
+  };
+
+  const runPatchTemplate = (payload: Parameters<typeof patchTemplate>[0]) => {
+    propsPatchTemplate ? propsPatchTemplate(payload) : dispatch(patchTemplate(payload));
+  };
+
+  const runDeleteTemplate = (payload: Parameters<typeof deleteTemplate>[0]) => {
+    propsDeleteTemplate ? propsDeleteTemplate(payload) : dispatch(deleteTemplate(payload));
+  };
+
+  const runOpenWorkflowModal = (payload: Parameters<typeof openRunWorkflowModal>[0]) => {
+    propsOpenRunWorkflowModal ? propsOpenRunWorkflowModal(payload) : dispatch(openRunWorkflowModal(payload));
+  };
+
   const handleRunProcess = async () => {
-    const datasetsMap = await loadDatasetsMap(template.kickoff);
-    const runnableWorkflow = getRunnableWorkflow(template, datasetsMap);
+    const loadedFieldsets = template.kickoff.fieldsets.map(mapFieldsetBindingClientToRuntime);
+    const datasetsMap = await loadDatasetsMap(template.kickoff, loadedFieldsets);
+    const runnableWorkflow = getRunnableWorkflow(template, datasetsMap, loadedFieldsets);
     if (runnableWorkflow) {
-      dispatch(openRunWorkflowModal(runnableWorkflow));
+      runOpenWorkflowModal(runnableWorkflow);
     }
   };
 
-  const handleChangeIsActive = (value: ITemplate['isActive'], redirectUrl?: string) => {
+  const handleChangeIsActive = (value: ITemplateClient['isActive'], redirectUrl?: string) => {
     if (!value) {
       const pendingChanges = consumePendingChanges({ isActive: false });
 
-      dispatch(patchTemplate({
+      runPatchTemplate({
         changedFields: { ...pendingChanges, isActive: false },
         onSuccess: confirmConsumedChanges,
         onFailed: revertConsumedChanges,
-      }));
+      });
       return;
     }
 
@@ -113,7 +154,7 @@ export function TemplateControlls({ setInfoWarnings }: ITemplateControllsProps) 
 
     const pendingChanges = consumePendingChanges({ isActive: true });
 
-    dispatch(patchTemplate({
+    runPatchTemplate({
       changedFields: {
         ...pendingChanges,
         isActive: true,
@@ -130,7 +171,7 @@ export function TemplateControlls({ setInfoWarnings }: ITemplateControllsProps) 
         revertConsumedChanges();
         setIsTemplateActivating(false);
       },
-    }));
+    });
   };
 
   return (
@@ -145,7 +186,7 @@ export function TemplateControlls({ setInfoWarnings }: ITemplateControllsProps) 
         onDelete={() => {
           if (templateId) {
             setIsTemplateDeleted(true);
-            dispatch(deleteTemplate({ templateId }));
+            runDeleteTemplate({ templateId });
           }
         }}
         onActivate={(path) => handleChangeIsActive(true, path)}
@@ -165,7 +206,7 @@ export function TemplateControlls({ setInfoWarnings }: ITemplateControllsProps) 
       <TemplateOwnersSettings owners={owners} setFieldValue={setFieldValue} />
       <TemplateMoreSettings
         templateId={templateId}
-        onClone={() => templateId && dispatch(cloneTemplate({ templateId }))}
+        onClone={() => templateId && runCloneTemplate({ templateId })}
         onDelete={() => setIsDeleteModalOpen(true)}
       />
       <TemplateNotificationSettings

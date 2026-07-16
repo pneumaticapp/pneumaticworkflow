@@ -1,41 +1,72 @@
-import React, { useRef, useState } from 'react';
-import { useIntl } from 'react-intl';
+import React, { useContext, useMemo, useRef, useState } from 'react';
+import { IntlShape, useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
 
 import { getEmptyField } from './utils/getEmptyField';
 import { KickoffShareForm } from './KickoffShareForm';
 import { isKickoffCleared } from './utils/isKickoffCleared';
-
 import { KickoffMenu } from './KickoffMenu';
 import { IntlMessages } from '../../IntlMessages';
-import { EMoveDirections, EInputNameBackgroundColor } from '../../../types/workflow';
-import { EExtraFieldMode, EExtraFieldType, IKickoff, IExtraField, ETemplateParts } from '../../../types/template';
+import { EExtraFieldType, IKickoffClient, IExtraField, ETemplateParts, ITemplateClient } from '../../../types/template';
+import { IFieldsetCatalogItem } from '../../../types/fieldset';
 import { isArrayWithItems } from '../../../utils/helpers';
-import { getNormalizeFieldsOrders, moveWorkflowField } from '../../../utils/workflows';
 import { ExtraFieldsMap } from '../ExtraFields/utils/ExtraFieldsMap';
 import { ExtraFieldIcon } from '../ExtraFields/utils/ExtraFieldIcon';
-import { ExtraFieldIntl } from '../ExtraFields';
 import { getEditedFields } from '../ExtraFields/utils/getEditedFields';
+import { ExtraFieldsLabels } from '../ExtraFields/utils/ExtraFieldsLabels';
 import { getEmptyKickoff } from '../../../utils/template';
 import { useHashLink } from '../../../hooks/useHashLink';
 import { useWorkflowNameVariables } from '../TaskForm/utils/getTaskVariables';
-
-import styles from './KickoffRedux.css';
+import { getFieldsetsCatalogIsLoading } from '../../../redux/selectors/fieldsets';
+import { IApplicationState, ETemplateStatus } from '../../../types/redux';
+import { FieldsetOutputsPreview } from '../FieldsetOutputsPreview/FieldsetOutputsPreview';
+import { FieldsetIconPicker } from '../TaskOutputFlow/FieldsetIconPicker';
+import { MergedOutputRows } from '../TaskOutputFlow/MergedOutputRows';
+import {
+  buildMergedTaskOutputRows,
+  buildRowsWithAddedFieldset,
+  buildRowsWithRemovedFieldset,
+  createFieldsetBinding,
+  moveMergedRow,
+  normalizeMergedTaskOutputOrders,
+  TMergedTaskOutputRow,
+} from '../TaskOutputFlow/mergeTaskOutputFlow';
 import { InputWithVariables } from '../InputWithVariables';
 import { useDatasetOptions } from '../ExtraFields/utils/useDatasetOptions';
-import { useTemplateField } from '../useTemplateForm';
-import { getAccountId } from '../../../redux/selectors/user';
-import { KickoffLabels } from './KickoffLabels';
+import { TemplateFieldContext } from '../useTemplateForm/contexts';
 
-export function KickoffRedux() {
-  const { formatMessage } = useIntl();
-  const accountId = useSelector(getAccountId);
-  const { values, setFieldValue } = useTemplateField();
-  const { kickoff, wfNameTemplate } = values;
+import styles from './KickoffRedux.css';
+
+interface IKickoffReduxProps {
+  template?: ITemplateClient;
+  intl?: IntlShape;
+  accountId?: number;
+  templateStatus?: ETemplateStatus;
+  setKickoff?(value: IKickoffClient): void;
+}
+
+export function KickoffRedux({ template: propsTemplate, intl, accountId: propsAccountId, setKickoff }: IKickoffReduxProps): React.ReactElement {
+  const intlContext = useIntl();
+  const { formatMessage } = intl ?? intlContext;
+  const fieldContext = useContext(TemplateFieldContext);
+  const accountIdFromState = useSelector((state: IApplicationState) => state.authUser?.account?.id ?? -1);
+  const accountId = propsAccountId ?? accountIdFromState;
+  const fieldsetsCatalogLoading = useSelector(getFieldsetsCatalogIsLoading);
+  const template = propsTemplate ?? fieldContext?.values;
+
+  if (!template) {
+    throw new Error('KickoffRedux must receive a template prop or be used inside the Edit Template form provider');
+  }
+
+  const { kickoff, wfNameTemplate } = template;
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const variables = useWorkflowNameVariables(kickoff);
   const datasetOptions = useDatasetOptions(kickoff.fields);
+  const mergedRows = useMemo(
+    () => buildMergedTaskOutputRows(kickoff.fields || [], kickoff.fieldsets || []),
+    [kickoff.fields, kickoff.fieldsets],
+  );
 
   useHashLink([
     {
@@ -47,59 +78,64 @@ export function KickoffRedux() {
     },
   ]);
 
-  const getSortedFields = () => {
-    return [...kickoff.fields].sort((a, b) => b.order - a.order);
-  };
-
   const toggleExpanded = () => {
     setIsOpen(!isOpen);
   };
 
-  const handleChangeKickoff = (newKickoff: IKickoff) => {
-    setFieldValue('kickoff', newKickoff, false);
+  const handleChangeKickoff = (newKickoff: IKickoffClient) => {
+    if (setKickoff) {
+      setKickoff(newKickoff);
+      return;
+    }
+
+    fieldContext?.setFieldValue('kickoff', newKickoff, false);
   };
 
   const handleClearKickoff = () => {
-    const newKickoff = { ...getEmptyKickoff() };
-    handleChangeKickoff(newKickoff);
+    handleChangeKickoff({ ...getEmptyKickoff() });
+  };
+
+  const saveOutputOrders = (rows: TMergedTaskOutputRow[], allFields?: IExtraField[]) => {
+    const { nextFields, nextFieldsets } = normalizeMergedTaskOutputOrders(rows, allFields ?? kickoff.fields);
+    handleChangeKickoff({ ...kickoff, fields: nextFields, fieldsets: nextFieldsets });
   };
 
   const handleCreateField = (type: EExtraFieldType) => {
-    const newKickoff = {
-      ...kickoff,
-      fields: getNormalizeFieldsOrders([...kickoff.fields, getEmptyField(type, formatMessage)]),
-    };
-
-    handleChangeKickoff(newKickoff!);
+    const newField = getEmptyField(type, formatMessage, -1);
+    const nextFields = [...kickoff.fields, newField];
+    const rows = buildMergedTaskOutputRows(nextFields, kickoff.fieldsets || []);
+    saveOutputOrders(rows, nextFields);
   };
 
   const handleEditField = (apiName: string) => (changedProps: Partial<IExtraField>) => {
-    const newFields = getEditedFields(getSortedFields(), apiName, changedProps);
+    const newFields = getEditedFields(kickoff.fields, apiName, changedProps);
     handleChangeKickoff({ ...kickoff, fields: newFields });
   };
 
-  const handleDeleteField = (idx: number) => {
-    const newKickoffFields = getSortedFields().filter((_, index) => index !== idx);
-    const newOrderedKickoff = {
-      ...kickoff,
-      fields: getNormalizeFieldsOrders(newKickoffFields),
-    };
-
-    handleChangeKickoff(newOrderedKickoff);
+  const handleAddKickoffFieldset = (fieldsetCatalogItem: IFieldsetCatalogItem) => {
+    const newFieldsetBinding = createFieldsetBinding(fieldsetCatalogItem);
+    const rows = buildRowsWithAddedFieldset(kickoff.fields, kickoff.fieldsets || [], newFieldsetBinding);
+    if (rows) saveOutputOrders(rows);
   };
 
-  const handleMoveField = (from: number, direction: EMoveDirections) => {
-    const to = direction === EMoveDirections.Up ? from - 1 : from + 1;
-    const newKickoffFields = moveWorkflowField(from, to, getSortedFields());
+  const handleRemoveFieldset = (sharedFieldsetId: number) => {
+    const rows = buildRowsWithRemovedFieldset(kickoff.fields, kickoff.fieldsets || [], sharedFieldsetId);
+    saveOutputOrders(rows);
+  };
 
-    handleChangeKickoff({
-      ...kickoff,
-      fields: newKickoffFields,
-    });
+  const handleDeleteField = (apiName: string) => {
+    const nextFields = (kickoff.fields || []).filter((field) => field.apiName !== apiName);
+    const rows = buildMergedTaskOutputRows(nextFields, kickoff.fieldsets || []);
+    saveOutputOrders(rows, nextFields);
+  };
+
+  const handleMoveMergedIndex = (index: number, direction: 'up' | 'down') => {
+    const moved = moveMergedRow(mergedRows, index, direction);
+    saveOutputOrders(moved);
   };
 
   const renderKickoffForm = () => {
-    const isFormEmpty = !isArrayWithItems(kickoff.fields) && !kickoff.description;
+    const isFormEmpty = !isArrayWithItems(kickoff.fields) && !(kickoff.fieldsets || []).length && !kickoff.description;
 
     return (
       <>
@@ -109,9 +145,10 @@ export function KickoffRedux() {
           <InputWithVariables
             listVariables={variables}
             templateVariables={variables}
+            showInsertButton
             value={wfNameTemplate || ''}
             onChange={(value: string) => {
-              setFieldValue('wfNameTemplate', value, false);
+              fieldContext?.setFieldValue('wfNameTemplate', value, false);
 
               return Promise.resolve(value);
             }}
@@ -125,34 +162,61 @@ export function KickoffRedux() {
         </p>
 
         <div className={styles['components']}>
-          {ExtraFieldsMap.map((x) => (
-            <ExtraFieldIcon {...x} key={x.id} onClick={() => handleCreateField(x.id)} />
+          {ExtraFieldsMap.map((field) => (
+            <ExtraFieldIcon {...field} key={field.id} onClick={() => handleCreateField(field.id)} />
           ))}
+          <FieldsetIconPicker
+            fieldsetsCatalogLoading={fieldsetsCatalogLoading}
+            selectedFieldsetIds={(kickoff.fieldsets || []).map((fieldset) => fieldset.sharedFieldsetId)}
+            onSelectFieldset={handleAddKickoffFieldset}
+            onRemoveFieldset={handleRemoveFieldset}
+          />
         </div>
 
         {!isFormEmpty && (
           <div className={styles['fields']}>
-            {getSortedFields().map((field, index) => (
-              <ExtraFieldIntl
-                key={field.apiName}
-                id={index}
-                field={field}
-                fieldsCount={kickoff.fields.length}
-                labelBackgroundColor={EInputNameBackgroundColor.White}
-                deleteField={() => handleDeleteField(index)}
-                moveFieldUp={() => handleMoveField(index, EMoveDirections.Up)}
-                moveFieldDown={() => handleMoveField(index, EMoveDirections.Down)}
-                editField={handleEditField(field.apiName)}
-                mode={EExtraFieldMode.Kickoff}
-                datasetOptions={datasetOptions}
-                accountId={accountId}
-              />
-            ))}
+            <MergedOutputRows
+              mergedRows={mergedRows}
+              onDeleteField={handleDeleteField}
+              onMoveRow={handleMoveMergedIndex}
+              onEditField={handleEditField}
+              onRemoveFieldset={handleRemoveFieldset}
+              datasetOptions={datasetOptions}
+              accountId={accountId}
+              formatMessage={formatMessage}
+            />
           </div>
         )}
 
         <KickoffShareForm className={styles['share-form']} />
       </>
+    );
+  };
+
+  const renderKickoffLabels = () => {
+    const { fields, fieldsets } = kickoff;
+    const hasFieldsetChips = (fieldsets || []).some((fieldset) => isArrayWithItems(fieldset.fields));
+
+    if (!isArrayWithItems(fields) && !hasFieldsetChips) {
+      return null;
+    }
+
+    return (
+      <div
+        className={styles['description__short']}
+        onClick={toggleExpanded}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            toggleExpanded();
+          }
+        }}
+        tabIndex={0}
+        role="button"
+        aria-label="Toggle expand"
+      >
+        {isArrayWithItems(fields) && <ExtraFieldsLabels extraFields={fields} />}
+        <FieldsetOutputsPreview fieldsets={fieldsets || []} />
+      </div>
     );
   };
 
@@ -167,8 +231,8 @@ export function KickoffRedux() {
       <div
         className={styles['header']}
         onClick={toggleExpanded}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
             toggleExpanded();
           }
         }}
@@ -181,7 +245,7 @@ export function KickoffRedux() {
         </span>
       </div>
 
-      {isOpen ? renderKickoffForm() : <KickoffLabels fields={kickoff.fields} onToggle={toggleExpanded} />}
+      {isOpen ? renderKickoffForm() : renderKickoffLabels()}
     </div>
   );
 }

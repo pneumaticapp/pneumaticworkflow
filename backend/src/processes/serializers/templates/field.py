@@ -73,16 +73,16 @@ class FieldTemplateSerializer(
         model = FieldTemplate
         api_primary_field = 'api_name'
         fields = (
-            'type',
             'name',
             'description',
+            'type',
             'is_required',
             'is_hidden',
-            'selections',
-            'order',
             'api_name',
+            'selections',
             'default',
             'dataset',
+            'order',
         )
         create_or_update_fields = {
             'type',
@@ -215,31 +215,19 @@ class FieldTemplateSerializer(
         return instance
 
 
-class FieldTemplateShortViewSerializer(ModelSerializer):
-    class Meta:
-        model = FieldTemplate
-        fields = (
-            'name',
-            'type',
-            'order',
-            'description',
-            'is_hidden',
-            'api_name',
-        )
-
-
 class FieldTemplateListSerializer(ModelSerializer):
 
     class Meta:
         model = FieldTemplate
         fields = (
             'name',
+            'description',
             'type',
             'is_required',
             'is_hidden',
-            'description',
             'api_name',
             'selections',
+            'default',
             'dataset',
             'order',
         )

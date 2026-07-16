@@ -1,4 +1,4 @@
-import { ITemplate } from '../../../types/template';
+import { ITemplateClient } from '../../../types/template';
 import { haveSameKickoffFields } from '../../../utils/template';
 import { getChangedFields } from './templateFormUtils';
 
@@ -8,18 +8,18 @@ import { getChangedFields } from './templateFormUtils';
 // `applyImmediateDeactivation` mirrors that decision in the wrapped setters so
 // Formik (and controls like `RouteLeavingGuard` that read from it) deactivate
 // on the same tick as the edit instead of waiting for the deferred persist flush.
-const NON_DEACTIVATIVE_FIELDS: (keyof ITemplate)[] = ['isActive', 'isPublic', 'publicUrl'];
+const NON_DEACTIVATIVE_FIELDS: (keyof ITemplateClient)[] = ['isActive', 'isPublic', 'publicUrl'];
 
 function shouldDeactivateTemplate(
-  changedFields: Partial<ITemplate>,
-  previousTemplate: ITemplate,
+  changedFields: Partial<ITemplateClient>,
+  previousTemplate: ITemplateClient,
 ): boolean {
   if (changedFields.isActive === true) {
     return false;
   }
 
   let shouldDeactivate = Object.keys(changedFields).some(
-    (key) => !NON_DEACTIVATIVE_FIELDS.includes(key as keyof ITemplate),
+    (key) => !NON_DEACTIVATIVE_FIELDS.includes(key as keyof ITemplateClient),
   );
 
   if (Object.keys(changedFields).length === 1 && Object.prototype.hasOwnProperty.call(changedFields, 'kickoff')) {
@@ -35,7 +35,7 @@ function shouldDeactivateTemplate(
   return shouldDeactivate;
 }
 
-export function applyImmediateDeactivation(previous: ITemplate, next: ITemplate): ITemplate {
+export function applyImmediateDeactivation(previous: ITemplateClient, next: ITemplateClient): ITemplateClient {
   if (!previous.isActive) {
     return next;
   }

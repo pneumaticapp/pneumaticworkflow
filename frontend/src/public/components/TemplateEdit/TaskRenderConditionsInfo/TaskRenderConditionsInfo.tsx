@@ -6,14 +6,14 @@ import classNames from 'classnames';
 import { getSubscriptionPlan, getIsUserSubsribed } from '../../../redux/selectors/user';
 import { getConditionsCount } from '../TaskItem/utlils/getConditionsCount';
 import { ESubscriptionPlan } from '../../../types/account';
-import { ITemplateTask } from '../../../types/template';
+import { ITemplateTaskClient } from '../../../types/template';
 import { EConditionAction } from '../TaskForm/Conditions/types';
 
 import styles from '../TemplateEdit.css';
 import { getTriplePlural } from '../../../utils/helpers';
 
 interface ITaskRenderConditionsInfoProps {
-  task: ITemplateTask;
+  task: ITemplateTaskClient;
   onClick: () => void;
   isInTaskForm?: boolean;
   isStartTask?: boolean;

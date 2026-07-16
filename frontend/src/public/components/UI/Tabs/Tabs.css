@@ -18,6 +18,7 @@
   padding: 8px 16px;
   flex-grow: 1;
   text-align: center;
+  border-radius: 1.6rem;
   transition: color 0.1s ease-in-out;
 
   &:not(.tab_active):hover {
@@ -28,5 +29,12 @@
 .tab_active {
   color: white;
   background: var(--pneumatic-color-link-hover);
-  border-radius: 16px;
+}
+
+.separator-right {
+  border-right: 0.1rem dashed var(--pneumatic-color-link-hover);
+}
+
+.separator-left {
+  border-left: 0.1rem dashed var(--pneumatic-color-link-hover);
 }

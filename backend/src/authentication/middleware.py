@@ -4,6 +4,7 @@ from urllib.parse import parse_qs
 from django.contrib.auth.middleware import AuthenticationMiddleware
 from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import ObjectDoesNotExist
+from django.utils import translation
 from django.utils.deprecation import MiddlewareMixin
 from rest_framework.authentication import get_authorization_header
 
@@ -97,4 +98,15 @@ class AuthMiddleware(
                         http_status=response.status_code,
                         response_data=response_data,
                     )
+        return response
+
+
+class UserLocaleMiddleware(MiddlewareMixin):
+    """Set Accept-Language at request start; reset locale at request end."""
+
+    def process_request(self, request):
+        translation.activate(translation.get_language_from_request(request))
+
+    def process_response(self, request, response):
+        translation.deactivate()
         return response

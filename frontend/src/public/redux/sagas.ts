@@ -25,6 +25,7 @@ import { rootSaga as tenantsSagas } from './tenants/saga';
 import { rootSaga as pagesSagas } from './pages/saga';
 import { rootSaga as groupsSagas } from './groups/saga';
 import { rootSaga as datasetsSagas } from './datasets/saga';
+import { rootSaga as fieldsetsSagas } from './fieldsets/saga';
 
 export function* rootSaga() {
   while (true) {
@@ -51,6 +52,7 @@ export function* rootSaga() {
       fork(tenantsSagas),
       fork(pagesSagas),
       fork(datasetsSagas),
+      fork(fieldsetsSagas),
     ]);
 
     yield take(EAuthActions.RedirectToLogin);

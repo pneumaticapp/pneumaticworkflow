@@ -1,0 +1,47 @@
+import type { ITask, ITaskAPI, TTaskChecklists } from '../types/tasks';
+import { EWorkflowStatus } from '../types/workflow';
+
+export const makeTask = (overrides: Partial<ITask> = {}): ITask => ({
+  id: 1,
+  name: 'Task',
+  output: [],
+  description: null,
+  workflow: { id: 1, name: 'Workflow', status: EWorkflowStatus.Running, dateCompleted: null, templateName: 'T' },
+  performers: [],
+  containsComments: false,
+  isCompleted: false,
+  dateStarted: '2024-01-01T00:00:00Z',
+  dateCompleted: null,
+  dueDate: null,
+  isUrgent: false,
+  subWorkflows: [],
+  areChecklistsHandling: false,
+  checklistsTotal: 0,
+  checklistsMarked: 0,
+  checklists: {} as TTaskChecklists,
+  revertTasks: [],
+  ...overrides,
+});
+
+export const makeTaskAPI = (overrides: Partial<ITaskAPI> = {}): ITaskAPI => ({
+  id: 1,
+  name: 'Task 1',
+  output: [],
+  description: null,
+  workflow: { id: 1, name: 'Workflow', status: EWorkflowStatus.Running, dateCompleted: null, templateName: 'T' },
+  performers: [],
+  containsComments: false,
+  isCompleted: false,
+  dueDate: null,
+  isUrgent: false,
+  checklists: [],
+  checklistsTotal: 0,
+  checklistsMarked: 0,
+  revertTasks: [],
+  fieldsets: [],
+  dueDateTsp: null,
+  dateStartedTsp: 1719700800,
+  dateCompletedTsp: null,
+  subWorkflows: [],
+  ...overrides,
+});

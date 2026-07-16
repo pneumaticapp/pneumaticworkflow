@@ -1,0 +1,57 @@
+.card {
+  @mixin page-card;
+}
+
+.card__content {
+  @mixin page-card-content;
+}
+
+.card__header {
+  @mixin page-card-header;
+}
+
+.card__title {
+  text-decoration: none;
+  cursor: pointer;
+  color: inherit;
+
+  &:hover {
+    color: var(--pneumatic-color-link-hover);
+  }
+
+  @mixin page-card-title;
+}
+
+.card__more {
+  @mixin page-card-more;
+}
+
+.card__footer {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+
+  .card-stats {
+    font-style: normal;
+    color: var(--pneumatic-color-black48);
+
+    @mixin text-small;
+
+    > *:not(:last-child) {
+      margin-right: 0.8rem;
+    }
+  }
+
+  .card-stats--items {
+    color: var(--pneumatic-color-black72);
+
+    @mixin text-base 700;
+  }
+
+  .card-stats--rules {
+    color: var(--pneumatic-color-black48);
+
+    @mixin text-small;
+  }
+}

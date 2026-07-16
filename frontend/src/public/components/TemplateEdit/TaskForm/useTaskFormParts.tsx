@@ -1,5 +1,6 @@
 import React, { ComponentType, useCallback, useEffect, useMemo } from 'react';
 import { useIntl } from 'react-intl';
+import { useSelector } from 'react-redux';
 
 import { ETaskFormParts, TTaskVariable } from '../types';
 import { OutputFormIntl } from '../OutputForm';
@@ -15,6 +16,8 @@ import { TaskPerformers } from './TaskPerformers';
 import { CheckIfConditions, ICondition, removeDeletedTasks, StartAfterCondition } from './Conditions';
 import { EStartingType } from './Conditions/utils/getDropdownOperators';
 import { useTaskForm } from './useTaskForm';
+import { getFieldsetsCatalogIsLoading } from '../../../redux/selectors/fieldsets';
+import { ITemplateTaskClient } from '../../../types/template';
 import { ITaskFormPart, IUseTaskFormPartsProps, IWidgetProps } from './types';
 
 import styles from '../TemplateEdit.css';
@@ -31,6 +34,7 @@ export function useTaskFormParts({
   users,
 }: IUseTaskFormPartsProps): ITaskFormPart[] {
   const { formatMessage } = useIntl();
+  const fieldsetsCatalogLoading = useSelector(getFieldsetsCatalogIsLoading);
   const { task, updateTask, updateField } = useTaskForm();
   const startingOrder: TTaskVariable[] = useMemo(() => [
     {
@@ -76,6 +80,11 @@ export function useTaskFormParts({
     [],
   );
 
+  const patchTask = useCallback(
+    ({ changedFields }: { changedFields: Partial<ITemplateTaskClient> }) => updateTask(changedFields),
+    [updateTask],
+  );
+
   return [
     {
       formPartId: ETaskFormParts.AssignPerformers,
@@ -111,11 +120,12 @@ export function useTaskFormParts({
       title: 'tasks.task-outputs-create-help',
       component: (
         <OutputFormIntl
-          fields={task.fields}
-          onOutputChange={updateField('fields')}
-          isDisabled={false}
-          show={isFieldsSectionShown}
+          mode="taskMerged"
+          task={task}
+          fieldsetsCatalogLoading={fieldsetsCatalogLoading}
           accountId={accountId}
+          show={isFieldsSectionShown}
+          patchTask={patchTask}
         />
       ),
       widget: createWidget(TaskRenderExtraFieldsInfo, { task }),

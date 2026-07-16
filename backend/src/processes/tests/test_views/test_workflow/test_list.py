@@ -47,6 +47,7 @@ from src.processes.tests.fixtures import (
     create_test_admin,
     create_test_attachment,
     create_test_attachment_for_event,
+    create_test_fieldset,
     create_test_group,
     create_test_guest,
     create_test_not_admin,
@@ -2174,6 +2175,7 @@ def test_list__filter_fields_kickoff_field__ok(api_client):
     assert field_data['is_required'] == field.is_required
     assert field_data['task_id'] is None
     assert field_data['kickoff_id'] == workflow.kickoff_instance.id
+    assert field_data['fieldset_id'] is None
     assert field_data['type'] == field.type
     assert field_data['api_name'] == field.api_name
     assert field_data['name'] == field.name
@@ -2533,6 +2535,427 @@ def test_list__filter_fields_and_another_template_id__empty_list(api_client):
     # act
     response = api_client.get(
         f'/workflows?fields={field_api_name};'
+        f'template_id={another_template.id}',
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data['results']) == 0
+
+
+def test_list__filter_fields_kickoff_fieldset__ok(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(owner, tasks_count=1)
+
+    create_test_fieldset(
+        workflow=workflow,
+        kickoff=workflow.kickoff_instance,
+        api_name='fieldset-1',
+    )
+
+    fieldset = create_test_fieldset(
+        workflow=workflow,
+        kickoff=workflow.kickoff_instance,
+        api_name='fieldset-2',
+    )
+    field = fieldset.fields.first()
+    field.value = 'raw value'
+    field.clear_value = 'clear value'
+    field.markdown_value = '**bold** value'
+    field.order = 2
+    field.description = 'desc'
+    field.is_required = True
+    field.save()
+
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.get(f'/workflows?fields={field.api_name}')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data['results']) == 1
+    assert response.data['results'][0]['id'] == workflow.id
+    assert len(response.data['results'][0]['fields']) == 1
+    field_data = response.data['results'][0]['fields'][0]
+    assert field_data['id'] == field.id
+    assert field_data['order'] == field.order
+    assert field_data['is_required'] == field.is_required
+    assert field_data['fieldset_id'] == fieldset.id
+    assert field_data['task_id'] is None
+    assert field_data['kickoff_id'] is None
+    assert field_data['type'] == field.type
+    assert field_data['api_name'] == field.api_name
+    assert field_data['name'] == field.name
+    assert field_data['description'] == field.description
+    assert field_data['value'] == field.value
+    assert field_data['markdown_value'] == field.markdown_value
+    assert field_data['clear_value'] == field.clear_value
+    assert field_data['user_id'] is None
+    assert field_data['group_id'] is None
+
+
+def test_list__filter_fields_task_fieldset__ok(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(owner, tasks_count=1)
+    task = workflow.tasks.first()
+
+    create_test_fieldset(
+        workflow=workflow,
+        task=task,
+        api_name='fieldset-1',
+    )
+
+    fieldset = create_test_fieldset(
+        workflow=workflow,
+        task=task,
+        api_name='fieldset-2',
+    )
+    field = fieldset.fields.first()
+    field.value = 'raw value'
+    field.clear_value = 'clear value'
+    field.markdown_value = '**bold** value'
+    field.order = 2
+    field.description = 'desc'
+    field.is_required = True
+    field.save()
+
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.get(f'/workflows?fields={field.api_name}')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data['results']) == 1
+    assert response.data['results'][0]['id'] == workflow.id
+    assert len(response.data['results'][0]['fields']) == 1
+    field_data = response.data['results'][0]['fields'][0]
+    assert field_data['id'] == field.id
+    assert field_data['order'] == field.order
+    assert field_data['is_required'] == field.is_required
+    assert field_data['task_id'] == task.id
+    assert field_data['kickoff_id'] is None
+    assert field_data['fieldset_id'] == fieldset.id
+    assert field_data['type'] == field.type
+    assert field_data['api_name'] == field.api_name
+    assert field_data['name'] == field.name
+    assert field_data['description'] == field.description
+    assert field_data['value'] == field.value
+    assert field_data['markdown_value'] == field.markdown_value
+    assert field_data['clear_value'] == field.clear_value
+    assert field_data['user_id'] is None
+    assert field_data['group_id'] is None
+
+
+def test_list__filter_fields__fieldset_ordering__ok(api_client):
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user, tasks_count=2)
+    task_1 = workflow.tasks.get(number=1)
+
+    fieldset_4 = create_test_fieldset(
+        workflow=workflow,
+        task=task_1,
+        api_name='fs-4',
+    )
+    field_4 = fieldset_4.fields.first()
+    field_4.order = 3
+    field_4.save()
+
+    task_2 = workflow.tasks.get(number=2)
+
+    fieldset_3 = create_test_fieldset(
+        workflow=workflow,
+        task=task_2,
+        api_name='fs-3',
+    )
+    field_3 = fieldset_3.fields.first()
+    field_3.order = 2
+    field_3.save()
+
+    fieldset_2 = create_test_fieldset(
+        workflow=workflow,
+        task=task_2,
+        api_name='fs-2',
+    )
+    field_2 = fieldset_2.fields.first()
+    field_2.order = 1
+    field_2.save()
+
+    kickoff = workflow.kickoff_instance
+    fieldset_1 = create_test_fieldset(
+        workflow=workflow,
+        kickoff=kickoff,
+        api_name='fs-1',
+    )
+    field_1 = fieldset_1.fields.first()
+    field_1.order = 5
+    field_1.save()
+
+    task_1.number = 3
+    task_1.save()
+    task_2.number = 1
+    task_2.save()
+
+    api_client.token_authenticate(user)
+    fields_filter = (
+        f'{field_4.api_name},'
+        f'{field_3.api_name},'
+        f'{field_2.api_name},'
+        f'{field_1.api_name}'
+    )
+
+    # act
+    response = api_client.get(f'/workflows?fields={fields_filter}')
+
+    # assert
+    assert response.status_code == 200
+    fields_data = response.data['results'][0]['fields']
+    assert len(fields_data) == 4
+    assert fields_data[0]['id'] == field_3.id
+    assert fields_data[1]['id'] == field_2.id
+    assert fields_data[2]['id'] == field_4.id
+    assert fields_data[3]['id'] == field_1.id
+
+
+def test_list__filter_fields_multiple_values_fieldset__ok(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(owner, tasks_count=1)
+    task = workflow.tasks.first()
+
+    fieldset_1 = create_test_fieldset(
+        workflow=workflow,
+        task=task,
+        api_name='fieldset-1',
+    )
+    field_1 = fieldset_1.fields.first()
+    field_1.order = 3
+    field_1.save()
+
+    fieldset_2 = create_test_fieldset(
+        workflow=workflow,
+        task=task,
+        api_name='fieldset-2',
+    )
+    field_2 = fieldset_2.fields.first()
+    field_2.type = FieldType.NUMBER
+    field_2.value = '2.13'
+    field_2.order = 2
+    field_2.save()
+
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.get(
+        f'/workflows?fields={field_1.api_name},{field_2.api_name}',
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data['results']) == 1
+    assert response.data['results'][0]['id'] == workflow.id
+    assert len(response.data['results'][0]['fields']) == 2
+    field_1_data = response.data['results'][0]['fields'][0]
+    assert field_1_data['id'] == field_1.id
+    field_2_data = response.data['results'][0]['fields'][1]
+    assert field_2_data['id'] == field_2.id
+
+
+def test_list__filter_fields_blank_fieldset__empty_list(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(owner, tasks_count=1)
+    task = workflow.tasks.first()
+
+    create_test_fieldset(
+        workflow=workflow,
+        task=task,
+        api_name='fieldset-1',
+    )
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.get('/workflows?fields=')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data['results']) == 1
+    assert response.data['results'][0]['id'] == workflow.id
+    assert len(response.data['results'][0]['fields']) == 0
+
+
+def test_list__filter_fields_not_existent_fieldset__empty_list(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(owner, tasks_count=1)
+    task = workflow.tasks.first()
+
+    create_test_fieldset(
+        workflow=workflow,
+        task=task,
+        api_name='fieldset-1',
+    )
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.get('/workflows?fields=not-existent')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data['results']) == 1
+    assert response.data['results'][0]['id'] == workflow.id
+    assert len(response.data['results'][0]['fields']) == 0
+
+
+def test_list__filter_fields__another_account_fieldset__empty_list(
+    api_client,
+):
+
+    # arrange
+    another_account = create_test_account()
+    another_owner = create_test_owner(account=another_account)
+    workflow = create_test_workflow(another_owner, tasks_count=1)
+    task = workflow.tasks.first()
+
+    fieldset = create_test_fieldset(
+        workflow=workflow,
+        task=task,
+        api_name='fieldset-1',
+    )
+    field = fieldset.fields.first()
+
+    account = create_test_account()
+    owner = create_test_owner(
+        account=account,
+        email='owner2@pneumatic.app',
+    )
+    workflow_2 = create_test_workflow(user=owner, tasks_count=1)
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.get(f'/workflows?fields={field.api_name}')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data['results']) == 1
+    assert response.data['results'][0]['id'] == workflow_2.id
+    assert len(response.data['results'][0]['fields']) == 0
+
+
+def test_list__filter_fields__another_workflow_fieldset__empty_list(
+    api_client,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(owner, tasks_count=1)
+    task = workflow.tasks.first()
+
+    fieldset = create_test_fieldset(
+        workflow=workflow,
+        task=task,
+        api_name='fieldset-1',
+    )
+    field = fieldset.fields.first()
+
+    user = create_test_admin(account=account)
+    workflow_2 = create_test_workflow(user, tasks_count=1)
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get(f'/workflows?fields={field.api_name}')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data['results']) == 1
+    assert response.data['results'][0]['id'] == workflow_2.id
+    assert len(response.data['results'][0]['fields']) == 0
+
+
+def test_list__filter_fields_and_template_fieldset__ok(api_client):
+
+    # arrange
+    user = create_test_owner()
+    template_1 = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    workflow = create_test_workflow(
+        user=user,
+        template=template_1,
+    )
+    task = workflow.tasks.first()
+
+    fieldset = create_test_fieldset(
+        workflow=workflow,
+        task=task,
+        api_name='fieldset-1',
+    )
+    field = fieldset.fields.first()
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get(
+        f'/workflows?fields={field.api_name};template_id={template_1.id}',
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data['results']) == 1
+    assert response.data['results'][0]['id'] == workflow.id
+    assert len(response.data['results'][0]['fields']) == 1
+    field_data = response.data['results'][0]['fields'][0]
+    assert field_data['id'] == field.id
+    assert field_data['fieldset_id'] == fieldset.id
+
+
+def test_list__filter_fields_and_another_template_id_fieldset__empty_list(
+    api_client,
+):
+
+    # arrange
+    user = create_test_owner()
+    template_1 = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    workflow = create_test_workflow(
+        user=user,
+        template=template_1,
+    )
+    task = workflow.tasks.first()
+
+    fieldset = create_test_fieldset(
+        workflow=workflow,
+        task=task,
+        api_name='fieldset-1',
+    )
+    field = fieldset.fields.first()
+
+    another_template = create_test_template(user=user, tasks_count=1)
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get(
+        f'/workflows?fields={field.api_name};'
         f'template_id={another_template.id}',
     )
 

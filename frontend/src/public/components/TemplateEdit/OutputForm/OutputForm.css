@@ -9,3 +9,72 @@
 .components::-webkit-scrollbar {
   display: none;
 }
+
+.fields {
+  display: flex;
+  flex-direction: column;
+}
+
+.flow__components {
+  display: flex;
+  flex-flow: row nowrap;
+  overflow-x: scroll;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.flow__components::-webkit-scrollbar {
+  display: none;
+}
+
+.flow__fieldset-icon-slot {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.flow__fieldset-dropdown {
+  max-width: min(28rem, 90vw);
+}
+
+.flow__fieldset-icon-dropdown {
+  display: flex;
+  flex-shrink: 0;
+}
+
+.flow__fieldset-icon-dropdown-menu {
+  padding: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  width: max-content;
+  min-width: 18rem;
+  max-height: 24rem;
+}
+
+.flow__fieldset-dropdown-panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.flow__fieldset-icon-trigger_open {
+  opacity: 0.92;
+}
+
+.flow__fieldset-readonly-description {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  font-family: Nunito, sans-serif;
+  font-size: 1.3rem;
+  line-height: 2rem;
+  word-break: break-word;
+  color: var(--pneumatic-color-black48);
+}
+
+.flow__fieldset-nested-fields {
+  margin-top: 0.5rem;
+}
+
+.flow__fieldset-name {
+  @mixin text-small;
+}

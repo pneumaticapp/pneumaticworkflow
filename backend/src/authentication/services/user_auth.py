@@ -2,7 +2,7 @@ from typing import Optional, Tuple
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
-from django.utils import timezone
+from django.utils import timezone, translation
 from rest_framework.authentication import TokenAuthentication
 
 from src.accounts.enums import UserStatus
@@ -52,14 +52,14 @@ class PneumaticTokenAuthentication(TokenAuthentication):
         request.is_superuser = False
         request.session['is_authenticated'] = bool(result)
         if result:
-            # if authenticated
-            _, token = result
+            user, token = result
             cached_data = PneumaticToken.data(token.key)
             request.token_type = (
                 AuthTokenType.API if cached_data['for_api_key']
                 else AuthTokenType.USER
             )
             request.is_superuser = cached_data['is_superuser']
+            translation.activate(user.language)
         return result
 
     def authenticate_credentials(

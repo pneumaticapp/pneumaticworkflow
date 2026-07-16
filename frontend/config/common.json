@@ -154,6 +154,8 @@
       "tenantToken": "/tenants/:id/token",
       "datasets": "/datasets",
       "dataset": "/datasets/:id",
+      "fieldsets": "/fieldsets",
+      "fieldset": "/fieldsets/:id",
       "getFaq": "/faq",
       "vacationActivate": "/accounts/user/activate-vacation",
       "vacationDeactivate": "/accounts/user/deactivate-vacation",

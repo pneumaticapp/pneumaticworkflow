@@ -26,6 +26,7 @@ export function TaskFormSections({
     [ETaskFormParts.AssignPerformers]: useRef<HTMLDivElement>(null),
     [ETaskFormParts.DueIn]: useRef<HTMLDivElement>(null),
     [ETaskFormParts.Fields]: useRef<HTMLDivElement>(null),
+    [ETaskFormParts.Fieldsets]: useRef<HTMLDivElement>(null),
     [ETaskFormParts.StartsAfter]: useRef<HTMLDivElement>(null),
     [ETaskFormParts.CheckIf]: useRef<HTMLDivElement>(null),
     [ETaskFormParts.ReturnTo]: useRef<HTMLDivElement>(null),
@@ -36,14 +37,15 @@ export function TaskFormSections({
     isTeamInvitesModalOpen,
     kickoff,
     listVariables,
-    isFieldsSectionShown: ETaskFormParts.Fields === scrollTarget,
+    isFieldsSectionShown: ETaskFormParts.Fields === scrollTarget || ETaskFormParts.Fieldsets === scrollTarget,
     tasks,
     templateId,
     users,
   });
 
   useLayoutEffect(() => {
-    const scrollTo = (scrollTarget && taskFormPartsRefs[scrollTarget]?.current) || wrapperRef.current;
+    const scrollKey = scrollTarget === ETaskFormParts.Fieldsets ? ETaskFormParts.Fields : scrollTarget;
+    const scrollTo = (scrollKey && taskFormPartsRefs[scrollKey]?.current) || wrapperRef.current;
 
     if (scrollTo) scrollToElement(scrollTo);
   }, []);

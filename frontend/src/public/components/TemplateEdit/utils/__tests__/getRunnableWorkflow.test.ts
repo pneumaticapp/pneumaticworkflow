@@ -1,24 +1,20 @@
-// <reference types="jest" />
-import { ETaskPerformerType, EExtraFieldType, ITemplateResponse, ETemplateOwnerType, ETemplateOwnerRole } from '../../../../types/template';
-import { getRunnableWorkflow } from '../getRunnableWorkflow';
+import { ETaskPerformerType, EExtraFieldType, IKickoffClient } from '../../../../types/template';
+import { IFieldsetRuntime } from '../../../../types/fieldset';
+import { makeExtraField } from '../../../../__stubs__/fields.factory';
+import { makeFieldsetRuntime } from '../../../../__stubs__/fieldsets.factory';
+import { getRunnableWorkflow, loadDatasetsMap, TTemplateToRunWorkflow } from '../getRunnableWorkflow';
+import { getDataset } from '../../../../api/datasets/getDataset';
 
-const templateResponseMock: ITemplateResponse = {
+jest.mock('../../../../api/datasets/getDataset', () => ({
+  getDataset: jest.fn(),
+}));
+
+const templateResponseMock: TTemplateToRunWorkflow = {
   id: 4654,
   name: 'End Template',
   description: '12346789',
   tasks: [
     {
-      id: 14702,
-      name: 'First Step',
-      number: 1,
-      description: '12',
-      requireCompletionByAll: false,
-      skipForStarter: false,
-      delay: null,
-      rawDueDate: null,
-      fields: [],
-      conditions: [],
-      apiName: 'task-059819',
       rawPerformers: [
         {
           sourceId: '306',
@@ -33,34 +29,8 @@ const templateResponseMock: ITemplateResponse = {
           apiName: 'raw-performer-024t43',
         },
       ],
-      checklists: [],
-      revertTask: null,
-      ancestors: [],
     },
     {
-      id: 14703,
-      name: 'New Step 2',
-      number: 2,
-      description: '1233',
-      requireCompletionByAll: false,
-      skipForStarter: false,
-      delay: null,
-      rawDueDate: null,
-      fields: [
-        {
-          id: 21478,
-          type: EExtraFieldType.String,
-          name: '12 21 12 12 12222222222',
-          description: '',
-          isRequired: false,
-          order: 0,
-          apiName: 'field-27fb3d',
-          userId: null,
-          groupId: null,
-        },
-      ],
-      conditions: [],
-      apiName: 'task-4e99a7',
       rawPerformers: [
         {
           sourceId: '306',
@@ -69,22 +39,8 @@ const templateResponseMock: ITemplateResponse = {
           apiName: 'raw-performer-024t43',
         },
       ],
-      checklists: [],
-      revertTask: null,
-      ancestors: ['task-059819'],
     },
     {
-      id: 14707,
-      name: 'New Step 3',
-      number: 3,
-      description: '',
-      requireCompletionByAll: false,
-      skipForStarter: false,
-      delay: null,
-      rawDueDate: null,
-      fields: [],
-      conditions: [],
-      apiName: 'task-a889d4',
       rawPerformers: [
         {
           sourceId: '306',
@@ -93,22 +49,8 @@ const templateResponseMock: ITemplateResponse = {
           apiName: 'raw-performer-024t43',
         },
       ],
-      checklists: [],
-      revertTask: null,
-      ancestors: ['task-059819', 'task-4e99a7'],
     },
     {
-      id: 14708,
-      name: 'New Step 4',
-      number: 4,
-      description: '',
-      requireCompletionByAll: false,
-      skipForStarter: false,
-      delay: null,
-      rawDueDate: null,
-      fields: [],
-      conditions: [],
-      apiName: 'task-1e9ba6',
       rawPerformers: [
         {
           sourceId: '306',
@@ -117,23 +59,8 @@ const templateResponseMock: ITemplateResponse = {
           apiName: 'raw-performer-024t43',
         },
       ],
-      checklists: [],
-      revertTask: null,
-      ancestors: ['task-059819', 'task-4e99a7', 'task-a889d4'],
     },
     {
-      id: 14709,
-      name: 'New Step 5',
-      number: 5,
-      description: '',
-      requireCompletionByAll: false,
-      skipForStarter: false,
-      delay: null,
-      dueIn: null,
-      rawDueDate: null,
-      fields: [],
-      conditions: [],
-      apiName: 'task-05a887',
       rawPerformers: [
         {
           sourceId: '306',
@@ -142,40 +69,14 @@ const templateResponseMock: ITemplateResponse = {
           apiName: 'raw-performer-024t43',
         },
       ],
-      checklists: [],
-      revertTask: null,
-      ancestors: ['task-059819', 'task-4e99a7', 'task-a889d4', 'task-1e9ba6'],
     },
   ],
   kickoff: {
     description: '',
     fields: [],
+    fieldsets: [],
   },
-  owners: [
-    {
-      sourceId: '306',
-      type: ETemplateOwnerType.User,
-      apiName: 'owner-024t43',
-      role: ETemplateOwnerRole.Owner,
-    },
-    {
-      sourceId: '1896',
-      type: ETemplateOwnerType.User,
-      apiName: 'owner-024t12',
-      role: ETemplateOwnerRole.Owner,
-    },
-  ],
   isActive: true,
-  isPublic: false,
-  publicUrl: null,
-  publicSuccessUrl: null,
-  embedUrl: null,
-  isEmbedded: false,
-  finalizable: true,
-  completionNotification: false,
-  reminderNotification: false,
-  updatedBy: 306,
-  dateUpdated: '2021-10-13T14:24:43.980066Z',
   wfNameTemplate: null,
 };
 
@@ -185,14 +86,27 @@ const stringifyReturn = {
   kickoff: {
     description: '',
     fields: [],
+    fieldsets: [],
   },
   description: '12346789',
   performersCount: 1,
   tasksCount: 5,
   wfNameTemplate: null,
+  loadedFieldsets: [],
+};
+
+const assertNonNull = <T>(value: T | null, message: string): T => {
+  if (value === null) {
+    throw new Error(message);
+  }
+  return value;
 };
 
 describe('getRunnableWorkflow.', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('return correct workflow data', () => {
     const runnableWorkflow = getRunnableWorkflow(templateResponseMock);
 
@@ -205,24 +119,16 @@ describe('getRunnableWorkflow.', () => {
       kickoff: {
         description: '',
         fields: [
-          {
-            apiName: 'field-ds',
-            name: 'DS Field',
-            type: EExtraFieldType.Checkbox,
-            order: 0,
-            userId: null,
-            groupId: null,
-            dataset: 5,
-            selections: [],
-          },
+          makeExtraField({ apiName: 'field-ds', name: 'DS Field', type: EExtraFieldType.Checkbox, dataset: 5 }),
         ],
+        fieldsets: [],
       },
     };
 
     const datasetsMap = { 5: ['A', 'B'] };
-    const result = getRunnableWorkflow(template, datasetsMap);
+    const result = assertNonNull(getRunnableWorkflow(template, datasetsMap), 'expected non-null result');
 
-    expect(result!.kickoff.fields[0].selections).toEqual(['A', 'B']);
+    expect(result.kickoff.fields[0].selections).toEqual(['A', 'B']);
   });
 
   it('normalizes object selections into string[] when field has no dataset', () => {
@@ -231,22 +137,20 @@ describe('getRunnableWorkflow.', () => {
       kickoff: {
         description: '',
         fields: [
-          {
+          makeExtraField({
             apiName: 'field-obj',
             name: 'Obj Field',
             type: EExtraFieldType.Checkbox,
-            order: 0,
-            userId: null,
-            groupId: null,
             selections: [{ value: 'A', apiName: 'sel-1' }, { value: 'B', apiName: 'sel-2' }],
-          },
+          }),
         ],
+        fieldsets: [],
       },
     };
 
-    const result = getRunnableWorkflow(template);
+    const result = assertNonNull(getRunnableWorkflow(template), 'expected non-null result');
 
-    expect(result!.kickoff.fields[0].selections).toEqual(['A', 'B']);
+    expect(result.kickoff.fields[0].selections).toEqual(['A', 'B']);
   });
 
   it('passes string selections as-is when field has no dataset', () => {
@@ -255,22 +159,15 @@ describe('getRunnableWorkflow.', () => {
       kickoff: {
         description: '',
         fields: [
-          {
-            apiName: 'field-str',
-            name: 'Str Field',
-            type: EExtraFieldType.Checkbox,
-            order: 0,
-            userId: null,
-            groupId: null,
-            selections: ['A', 'B'],
-          },
+          makeExtraField({ apiName: 'field-str', name: 'Str Field', type: EExtraFieldType.Checkbox, selections: ['A', 'B'] }),
         ],
+        fieldsets: [],
       },
     };
 
-    const result = getRunnableWorkflow(template);
+    const result = assertNonNull(getRunnableWorkflow(template), 'expected non-null result');
 
-    expect(result!.kickoff.fields[0].selections).toEqual(['A', 'B']);
+    expect(result.kickoff.fields[0].selections).toEqual(['A', 'B']);
   });
 
   it('falls back to empty array when datasetsMap does not contain the dataset id', () => {
@@ -279,34 +176,91 @@ describe('getRunnableWorkflow.', () => {
       kickoff: {
         description: '',
         fields: [
-          {
-            apiName: 'field-miss',
-            name: 'Missing DS',
-            type: EExtraFieldType.Checkbox,
-            order: 0,
-            userId: null,
-            groupId: null,
-            dataset: 99,
-            selections: [],
-          },
+          makeExtraField({ apiName: 'field-miss', name: 'Missing DS', type: EExtraFieldType.Checkbox, dataset: 99 }),
         ],
+        fieldsets: [],
       },
     };
 
     const datasetsMap = { 5: ['X'] };
-    const result = getRunnableWorkflow(template, datasetsMap);
+    const result = assertNonNull(getRunnableWorkflow(template, datasetsMap), 'expected non-null result');
 
-    expect(result!.kickoff.fields[0].selections).toEqual([]);
+    expect(result.kickoff.fields[0].selections).toEqual([]);
   });
 
-  it('returns null when isActive is false', () => {
-    const template = {
-      ...templateResponseMock,
-      isActive: false,
+  it('returns null when isActive is false or template id is missing', () => {
+    expect(getRunnableWorkflow({ ...templateResponseMock, isActive: false })).toBeNull();
+
+    type TRunnableInput = Parameters<typeof getRunnableWorkflow>[0];
+    const { id, ...templateWithoutId } = templateResponseMock;
+    expect(
+      getRunnableWorkflow(templateWithoutId as unknown as TRunnableInput),
+    ).toBeNull();
+  });
+
+
+  it('loadDatasetsMap returns {} and does not call getDataset when there are no dataset ids', async () => {
+    const kickoff: IKickoffClient = { description: '', fields: [], fieldsets: [] };
+
+    const result = await loadDatasetsMap(kickoff, []);
+
+    expect(result).toEqual({});
+    expect(getDataset).not.toHaveBeenCalled();
+  });
+
+  it('loadDatasetsMap dedups dataset id shared by a kickoff field and a fieldset field', async () => {
+    const kickoff: IKickoffClient = {
+      description: '',
+      fields: [makeExtraField({ apiName: 'k-f', name: 'K', type: EExtraFieldType.Checkbox, dataset: 7 })],
+      fieldsets: [],
     };
+    const fieldsets: IFieldsetRuntime[] = [
+      makeFieldsetRuntime({
+        name: 'FS',
+        fields: [makeExtraField({ apiName: 'fs-f', name: 'F', type: EExtraFieldType.Checkbox, dataset: 7 })],
+      }),
+    ];
+    (getDataset as jest.Mock).mockResolvedValue({ items: [{ value: 'A' }, { value: 'B' }] });
 
-    const result = getRunnableWorkflow(template);
+    const result = await loadDatasetsMap(kickoff, fieldsets);
 
-    expect(result).toBeNull();
+    expect(getDataset).toHaveBeenCalledTimes(1);
+    expect(getDataset).toHaveBeenCalledWith({ id: 7 });
+    expect(result).toEqual({ 7: ['A', 'B'] });
+  });
+
+  it('getRunnableWorkflow applies datasetsMap and normalizes selections for fieldset fields', () => {
+    const datasetsMap = { 5: ['X', 'Y'] };
+    const fieldWithDataset = makeExtraField({
+      apiName: 'fs-f-ds',
+      name: 'DS',
+      type: EExtraFieldType.Checkbox,
+      dataset: 5,
+    });
+    const fieldWithObjectSelections = makeExtraField({
+      apiName: 'fs-f-obj',
+      name: 'Obj',
+      type: EExtraFieldType.Checkbox,
+      order: 1,
+      selections: [
+        { value: 'P', apiName: 's-1' },
+        { value: 'Q', apiName: 's-2' },
+      ],
+    });
+    const loadedFieldsets: IFieldsetRuntime[] = [
+      makeFieldsetRuntime({ name: 'FS', fields: [fieldWithDataset, fieldWithObjectSelections] }),
+    ];
+
+    const result = assertNonNull(
+      getRunnableWorkflow(templateResponseMock, datasetsMap, loadedFieldsets),
+      'expected non-null result',
+    );
+    const { loadedFieldsets: loaded } = result;
+    if (loaded === undefined) {
+      throw new Error('expected loadedFieldsets to be defined');
+    }
+    expect(loaded).toHaveLength(1);
+    expect(loaded[0].fields[0].selections).toEqual(['X', 'Y']);
+    expect(loaded[0].fields[1].selections).toEqual(['P', 'Q']);
   });
 });

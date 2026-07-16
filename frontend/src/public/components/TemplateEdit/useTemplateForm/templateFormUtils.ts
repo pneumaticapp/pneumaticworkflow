@@ -1,8 +1,8 @@
-import { ITemplate, ITemplateTask } from '../../../types/template';
+import { ITemplateClient, ITemplateTaskClient } from '../../../types/template';
 import { getTemplateIdFromUrl } from '../../../utils/template';
 
 export function resolveTemplateFormIdentity(
-  template: ITemplate,
+  template: ITemplateClient,
   location: { pathname: string; search: string },
 ): string | number | undefined {
   if (template.id) {
@@ -17,7 +17,7 @@ export function resolveTemplateFormIdentity(
   return `create:${location.pathname}`;
 }
 
-export function setNestedFieldValue(obj: ITemplate, path: string, value: unknown): ITemplate {
+export function setNestedFieldValue(obj: ITemplateClient, path: string, value: unknown): ITemplateClient {
   const taskPathMatch = path.match(/^tasks\.(\d+)(?:\.(.+))?$/);
 
   if (taskPathMatch) {
@@ -26,7 +26,7 @@ export function setNestedFieldValue(obj: ITemplate, path: string, value: unknown
     const tasks = [...obj.tasks];
 
     if (!taskField) {
-      tasks[index] = value as ITemplateTask;
+      tasks[index] = value as ITemplateTaskClient;
     } else {
       tasks[index] = {
         ...tasks[index],
@@ -41,10 +41,10 @@ export function setNestedFieldValue(obj: ITemplate, path: string, value: unknown
 }
 
 export function mergePreservedTasks(
-  incomingTasks: ITemplateTask[],
-  preservedTasks: ITemplateTask[],
-  baselineTasks: ITemplateTask[],
-): ITemplateTask[] {
+  incomingTasks: ITemplateTaskClient[],
+  preservedTasks: ITemplateTaskClient[],
+  baselineTasks: ITemplateTaskClient[],
+): ITemplateTaskClient[] {
   const incomingByUuid = new Map(incomingTasks.map((task) => [task.uuid, task]));
   const baselineUuids = new Set(baselineTasks.map((task) => task.uuid));
 
@@ -55,7 +55,7 @@ export function mergePreservedTasks(
       return preserved;
     }
 
-    const onlyAncestorsDiffer = (Object.keys(preserved) as (keyof ITemplateTask)[]).every(
+    const onlyAncestorsDiffer = (Object.keys(preserved) as (keyof ITemplateTaskClient)[]).every(
       (key) => key === 'ancestors' || preserved[key] === incoming[key],
     );
 
@@ -72,12 +72,12 @@ export function mergePreservedTasks(
   }
 
   const sortedServerAdded = [...serverAddedTasks].sort((a, b) => a.number - b.number);
-  const preservedOrderNumber = (task: ITemplateTask) =>
+  const preservedOrderNumber = (task: ITemplateTaskClient) =>
     incomingByUuid.get(task.uuid)?.number ?? task.number;
 
   const insertState = { serverIndex: 0 };
 
-  const interleaved = mergedFromPreserved.reduce<ITemplateTask[]>((result, preserved) => {
+  const interleaved = mergedFromPreserved.reduce<ITemplateTaskClient[]>((result, preserved) => {
     while (
       insertState.serverIndex < sortedServerAdded.length
       && sortedServerAdded[insertState.serverIndex].number < preservedOrderNumber(preserved)
@@ -93,15 +93,15 @@ export function mergePreservedTasks(
 }
 
 export function applyPendingEdits(
-  initialValues: ITemplate,
-  pendingEdits: Partial<ITemplate>,
-  baselineValues: ITemplate,
-): ITemplate {
+  initialValues: ITemplateClient,
+  pendingEdits: Partial<ITemplateClient>,
+  baselineValues: ITemplateClient,
+): ITemplateClient {
   if (Object.keys(pendingEdits).length === 0) {
     return initialValues;
   }
 
-  let mergedValues: ITemplate = { ...initialValues, ...pendingEdits };
+  let mergedValues: ITemplateClient = { ...initialValues, ...pendingEdits };
 
   if (pendingEdits.tasks && initialValues.tasks) {
     mergedValues = {
@@ -114,10 +114,10 @@ export function applyPendingEdits(
 }
 
 export function overlayPendingEdits(
-  formikValues: ITemplate,
-  pendingEdits: Partial<ITemplate>,
-  baselineValues: ITemplate,
-): ITemplate {
+  formikValues: ITemplateClient,
+  pendingEdits: Partial<ITemplateClient>,
+  baselineValues: ITemplateClient,
+): ITemplateClient {
   if (Object.keys(pendingEdits).length === 0) {
     return formikValues;
   }
@@ -125,12 +125,12 @@ export function overlayPendingEdits(
   return applyPendingEdits(formikValues, pendingEdits, baselineValues);
 }
 
-export function getChangedFields(previous: ITemplate, next: ITemplate): Partial<ITemplate> {
-  const changedFields: Partial<ITemplate> = {};
+export function getChangedFields(previous: ITemplateClient, next: ITemplateClient): Partial<ITemplateClient> {
+  const changedFields: Partial<ITemplateClient> = {};
 
-  (Object.keys(next) as (keyof ITemplate)[]).forEach((key) => {
+  (Object.keys(next) as (keyof ITemplateClient)[]).forEach((key) => {
     if (previous[key] !== next[key]) {
-      (changedFields[key] as ITemplate[keyof ITemplate]) = next[key];
+      (changedFields[key] as ITemplateClient[keyof ITemplateClient]) = next[key];
     }
   });
 
@@ -138,16 +138,16 @@ export function getChangedFields(previous: ITemplate, next: ITemplate): Partial<
 }
 
 export function getUnconsumedPendingEdits(
-  consumed: Partial<ITemplate>,
-  current: Partial<ITemplate>,
-): Partial<ITemplate> {
-  const remainder: Partial<ITemplate> = {};
+  consumed: Partial<ITemplateClient>,
+  current: Partial<ITemplateClient>,
+): Partial<ITemplateClient> {
+  const remainder: Partial<ITemplateClient> = {};
 
-  (Object.keys(current) as (keyof ITemplate)[]).forEach((key) => {
+  (Object.keys(current) as (keyof ITemplateClient)[]).forEach((key) => {
     // Redux normalization recreates nested arrays/objects after every save.
     // Only keep edits whose value actually changed while the request was in flight.
     if (JSON.stringify(current[key]) !== JSON.stringify(consumed[key])) {
-      (remainder[key] as ITemplate[keyof ITemplate]) = current[key];
+      (remainder[key] as ITemplateClient[keyof ITemplateClient]) = current[key];
     }
   });
 
@@ -155,7 +155,7 @@ export function getUnconsumedPendingEdits(
 }
 
 export function resolveTemplateIdentity(
-  initialValues: ITemplate,
+  initialValues: ITemplateClient,
   templateIdentityKey?: string | number,
 ): string | number | undefined {
   if (templateIdentityKey !== undefined) {
@@ -166,8 +166,8 @@ export function resolveTemplateIdentity(
 }
 
 /** Stable key for every source property represented in `getVariables()`. */
-export function getTemplateVariablesFingerprint(values: ITemplate): string {
-  const getFieldSignature = (field: ITemplate['kickoff']['fields'][number]) => ({
+export function getTemplateVariablesFingerprint(values: ITemplateClient): string {
+  const getFieldSignature = (field: ITemplateClient['kickoff']['fields'][number]) => ({
     apiName: field.apiName,
     name: field.name,
     type: field.type,

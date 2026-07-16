@@ -99,6 +99,20 @@
   }
 }
 
+.tune-view-modal__fieldset-group {
+  margin-top: 1.6rem;
+  margin-bottom: 1.6rem;
+  padding-left: 1.2rem;
+  border-left: 3px solid var(--pneumatic-color-black72);
+}
+
+.tune-view-modal__fieldset-title {
+  margin-top: 0.8rem;
+  margin-bottom: 0.8rem;
+  font-weight: bold;
+  color: var(--pneumatic-color-black48);
+}
+
 .tune-view-modal__tooltip {
   padding: 0.4rem 0.8rem;
 }

@@ -39,6 +39,7 @@ export const createRichTextMarkdownIt = ({
   const md = MarkdownIt({
     html: true,
     linkify: false,
+    breaks: true,
   });
 
   md.disable(['link', 'image']);

@@ -3,11 +3,11 @@ import React from 'react';
 import type { FC, ReactNode } from 'react';
 import { act, render } from '@testing-library/react';
 
-import { ETaskPerformerType, ITemplate, ITemplateTask } from '../../../../types/template';
+import { ETaskPerformerType, ITemplateClient, ITemplateTaskClient } from '../../../../types/template';
 import { TaskFormScopeProvider, TemplateFieldContext } from '../../useTemplateForm';
 import { useTaskForm } from '../useTaskForm';
 
-const makeTask = (overrides: Partial<ITemplateTask> = {}): ITemplateTask => ({
+const makeTask = (overrides: Partial<ITemplateTaskClient> = {}): ITemplateTaskClient => ({
   apiName: 'task-1',
   number: 1,
   name: 'Test Task',
@@ -24,9 +24,10 @@ const makeTask = (overrides: Partial<ITemplateTask> = {}): ITemplateTask => ({
   revertTask: null,
   ancestors: [],
   ...overrides,
+  fieldsets: overrides.fieldsets ?? [],
 });
 
-const makeTemplate = (tasks: ITemplateTask[]): ITemplate =>
+const makeTemplate = (tasks: ITemplateTaskClient[]): ITemplateClient =>
   ({
     id: 1,
     name: 'Template',
@@ -48,10 +49,10 @@ const makeTemplate = (tasks: ITemplateTask[]): ITemplate =>
     wfNameTemplate: null,
     tasksCount: tasks.length,
     performersCount: 0,
-  }) as ITemplate;
+  }) as ITemplateClient;
 
 interface IFormikBag {
-  values: ITemplate;
+  values: ITemplateClient;
   setFieldValue: jest.Mock;
 }
 

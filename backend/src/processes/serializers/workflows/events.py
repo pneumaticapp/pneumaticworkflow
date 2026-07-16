@@ -8,6 +8,7 @@ from src.processes.models.workflows.workflow import Workflow
 from src.processes.serializers.workflows.field import (
     TaskFieldEventSerializer,
 )
+from src.processes.serializers.workflows.fieldset import FieldSetSerializer
 from src.processes.serializers.workflows.task_performer import (
     TaskUserGroupPerformerSerializer,
 )
@@ -65,6 +66,7 @@ class TaskEventJsonSerializer(serializers.ModelSerializer):
             'performers',
             'due_date_tsp',
             'output',
+            'fieldsets',
             'sub_workflow',
         )
 
@@ -73,6 +75,7 @@ class TaskEventJsonSerializer(serializers.ModelSerializer):
         source='exclude_directly_deleted_taskperformer_set',
     )
     output = serializers.SerializerMethodField()
+    fieldsets = serializers.SerializerMethodField()
     due_date_tsp = TimeStampField(source='due_date')
     sub_workflow = serializers.SerializerMethodField()
 
@@ -80,6 +83,17 @@ class TaskEventJsonSerializer(serializers.ModelSerializer):
         if self.context['event_type'] == WorkflowEventType.TASK_COMPLETE:
             return TaskFieldEventSerializer(
                 instance=instance.output.all(),
+                many=True,
+            ).data
+        return None
+
+    def get_fieldsets(self, instance):
+        if (
+            self.context['event_type'] == WorkflowEventType.TASK_COMPLETE
+            and instance.fieldsets.exists()
+        ):
+            return FieldSetSerializer(
+                instance=instance.fieldsets.all(),
                 many=True,
             ).data
         return None

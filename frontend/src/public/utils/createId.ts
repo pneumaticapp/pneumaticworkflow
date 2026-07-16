@@ -27,3 +27,4 @@ export const createDueDateApiName = () => createUniqueId('due-date-xxxyxx');
 export const createOwnerApiName = () => createUniqueId('owner-xxxyxx');
 export const createViewerApiName = () => createUniqueId('viewer-xxxyxx');
 export const createStarterApiName = () => createUniqueId('starter-xxxyxx');
+export const createFieldsetBindingApiName = () => createUniqueId('fieldset-bind-xxxyxx');

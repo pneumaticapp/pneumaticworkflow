@@ -1,4 +1,3 @@
-// <reference types="jest" />
 import { generateCloneName, getCloneBaseName } from '../utils';
 
 describe('generateCloneName', () => {

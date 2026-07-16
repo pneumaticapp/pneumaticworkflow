@@ -1,15 +1,18 @@
-// <reference types="jest" />
 import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 
 import { ExtraFieldCreatable } from '../ExtraFieldCreatable';
 import { OutputFieldContent } from '../../utils/OutputFieldContent';
+import { FieldLabel } from '../../utils/FieldLabel';
 import { DropdownList } from '../../../../UI/DropdownList';
+import { IWorkflowExtraFieldProps } from '../../types';
 import { intlMock } from '../../../../../__stubs__/intlMock';
-import { EExtraFieldMode } from '../../../../../types/template';
+import { makeExtraField } from '../../../../../__stubs__/fields.factory';
+import { EExtraFieldMode, EExtraFieldType, IExtraFieldSelection } from '../../../../../types/template';
+import { EFieldLabelPosition } from '../../../../../types/fieldset';
 
 jest.mock('../../utils/OutputFieldContent', () => ({
-  OutputFieldContent: jest.fn(({ children }: any) =>
+  OutputFieldContent: jest.fn(({ children }: { children: React.ReactNode }) =>
     React.createElement('div', { 'data-testid': 'output-field-content' }, children),
   ),
 }));
@@ -48,8 +51,15 @@ jest.mock('../../../../IntlMessages', () => ({
   IntlMessages: jest.fn(() => null),
 }));
 
-jest.mock('../../utils/FieldWithName', () => ({
-  FieldWithName: jest.fn(() => React.createElement('div', { 'data-testid': 'field-with-name' })),
+jest.mock('../../utils/FieldWithName', () => {
+  const React = require('react');
+  return {
+    FieldWithName: jest.fn(() => React.createElement('div', { 'data-testid': 'field-with-name' })),
+  };
+});
+
+jest.mock('../../utils/FieldLabel', () => ({
+  FieldLabel: jest.fn(() => null),
 }));
 
 jest.mock('../../../KickoffRedux/utils/getEmptySelection', () => ({
@@ -58,37 +68,38 @@ jest.mock('../../../KickoffRedux/utils/getEmptySelection', () => ({
 
 describe('ExtraFieldCreatable', () => {
   const mockEditField = jest.fn();
+  const getFieldWithNameMock = (): jest.Mock =>
+    require('../../utils/FieldWithName').FieldWithName;
 
-  const kickoffField = {
+  const kickoffSelections: IExtraFieldSelection[] = [
+    { key: 1, value: 'High', isSelected: false, apiName: 'opt-1' },
+    { key: 2, value: 'Low', isSelected: false, apiName: 'opt-2' },
+  ];
+
+  const processRunSelections = ['High', 'Medium', 'Low'];
+
+  const kickoffField = makeExtraField({
     name: 'Priority',
-    value: '',
-    type: 'creatable' as any,
-    apiName: 'priority',
-    order: 0,
-    isRequired: false,
-    userId: 1,
-    groupId: 1,
-    dataset: null,
+    type: EExtraFieldType.Creatable,
     description: 'Select priority',
-    selections: [
-      { id: 1, value: 'High', isSelected: false, apiName: 'opt-1' },
-      { id: 2, value: 'Low', isSelected: false, apiName: 'opt-2' },
-    ],
-  };
+    selections: kickoffSelections,
+  });
 
-  const processRunField = {
-    ...kickoffField,
-    selections: ['High', 'Medium', 'Low'],
+  const processRunField = makeExtraField({
+    name: 'Priority',
+    type: EExtraFieldType.Creatable,
+    selections: processRunSelections,
     value: 'High',
-  };
+  });
 
-  const baseKickoffProps = {
-    field: kickoffField as any,
-    intl: intlMock as any,
+  const baseKickoffProps: IWorkflowExtraFieldProps = {
+    field: kickoffField,
+    intl: intlMock,
     editField: mockEditField,
     mode: EExtraFieldMode.Kickoff,
     isDisabled: false,
     accountId: 1,
+    labelPosition: EFieldLabelPosition.Top,
   };
 
   beforeEach(() => {
@@ -96,13 +107,13 @@ describe('ExtraFieldCreatable', () => {
   });
 
   it('Kickoff: renders OutputFieldContent as wrapper for options', () => {
-    render(React.createElement(ExtraFieldCreatable as any, baseKickoffProps));
+    render(<ExtraFieldCreatable {...baseKickoffProps} />);
 
     expect(screen.getByTestId('output-field-content')).toBeInTheDocument();
   });
 
   it('Kickoff: passes field, editField, isDisabled to OutputFieldContent', () => {
-    render(React.createElement(ExtraFieldCreatable as any, baseKickoffProps));
+    render(<ExtraFieldCreatable {...baseKickoffProps} />);
 
     const mock = OutputFieldContent as jest.Mock;
     expect(mock).toHaveBeenCalledTimes(1);
@@ -117,11 +128,13 @@ describe('ExtraFieldCreatable', () => {
   });
 
   it('ProcessRun: renders DropdownList with string selections as options', () => {
-    render(React.createElement(ExtraFieldCreatable as any, {
-      ...baseKickoffProps,
-      field: processRunField as any,
-      mode: EExtraFieldMode.ProcessRun,
-    }));
+    render(
+      <ExtraFieldCreatable
+        {...baseKickoffProps}
+        field={processRunField}
+        mode={EExtraFieldMode.ProcessRun}
+      />,
+    );
 
     const mock = DropdownList as jest.Mock;
     expect(mock).toHaveBeenCalledTimes(1);
@@ -135,5 +148,66 @@ describe('ExtraFieldCreatable', () => {
       }),
       {},
     );
+  });
+
+  describe('label-left support', () => {
+    it('Kickoff + labelPosition=Left: passes labelClassName with centered class to FieldWithName', () => {
+      render(<ExtraFieldCreatable {...baseKickoffProps} labelPosition={EFieldLabelPosition.Left} />);
+
+      const mock = getFieldWithNameMock();
+      expect(mock).toHaveBeenCalledTimes(1);
+      expect(mock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          labelClassName: expect.stringContaining('centered'),
+        }),
+        {},
+      );
+    });
+
+    it('Kickoff + labelPosition=Top: does NOT pass labelClassName to FieldWithName', () => {
+      render(<ExtraFieldCreatable {...baseKickoffProps} labelPosition={EFieldLabelPosition.Top} />);
+
+      const mock = getFieldWithNameMock();
+      expect(mock).toHaveBeenCalledTimes(1);
+      expect(mock).toHaveBeenCalledWith(
+        expect.not.objectContaining({ labelClassName: expect.anything() }),
+        {},
+      );
+    });
+
+    it('ProcessRun + labelPosition=Left: renders FieldLabel with centered class', () => {
+      render(
+        <ExtraFieldCreatable
+          {...baseKickoffProps}
+          field={processRunField}
+          mode={EExtraFieldMode.ProcessRun}
+          labelPosition={EFieldLabelPosition.Left}
+        />,
+      );
+
+      const fieldLabelMock = FieldLabel as jest.Mock;
+      expect(fieldLabelMock).toHaveBeenCalledTimes(1);
+      expect(fieldLabelMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          className: expect.stringContaining('centered'),
+        }),
+        {},
+      );
+    });
+
+    it('ProcessRun + labelPosition=Top: renders readonly name div, no FieldLabel', () => {
+      render(
+        <ExtraFieldCreatable
+          {...baseKickoffProps}
+          field={processRunField}
+          mode={EExtraFieldMode.ProcessRun}
+          labelPosition={EFieldLabelPosition.Top}
+        />,
+      );
+
+      const fieldLabelMock = FieldLabel as jest.Mock;
+      expect(fieldLabelMock).not.toHaveBeenCalled();
+      expect(screen.getByText('Priority')).toBeInTheDocument();
+    });
   });
 });

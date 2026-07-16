@@ -1,4 +1,3 @@
-// <reference types="jest" />
 import { shouldLoadDatasetForVariable } from '../shouldLoadDatasetForVariable';
 import { EExtraFieldType } from '../../../../../../types/template';
 import { TTaskVariable } from '../../../../types';

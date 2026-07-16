@@ -1,6 +1,5 @@
 import pytest
 
-from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
     OwnerRole,
     ConditionAction,
@@ -99,15 +98,10 @@ class TestCopyTemplateTask:
 
     def test_clone__due_date__ok(
         self,
-        mocker,
         api_client,
     ):
 
         # arrange
-        analysis_mock = mocker.patch(
-            'src.processes.serializers.templates.task.'
-            'AnalyticService.templates_task_due_date_created',
-        )
         user = create_test_user()
         api_client.token_authenticate(user)
         duration = '10:00:00'
@@ -156,13 +150,6 @@ class TestCopyTemplateTask:
         assert response.status_code == 200
         task_data = response.data['tasks'][0]
         assert task_data['raw_due_date']['duration'] == duration
-        analysis_mock.assert_called_once_with(
-            user=user,
-            template=template,
-            task=template.tasks.get(number=1),
-            auth_type=AuthTokenType.USER,
-            is_superuser=False,
-        )
 
     def test_clone__return_task__ok(
         self,

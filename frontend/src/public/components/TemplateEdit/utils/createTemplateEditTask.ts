@@ -9,8 +9,8 @@ import {
   ETaskPerformerType,
   ETemplateOwnerRole,
   ETemplateOwnerType,
-  ITemplate,
-  ITemplateTask,
+  ITemplateClient,
+  ITemplateTaskClient,
 } from '../../../types/template';
 import { TUserListItem } from '../../../types/user';
 import { IAuthUser } from '../../../types/redux';
@@ -18,8 +18,8 @@ import { IAuthUser } from '../../../types/redux';
 export function createNewTemplateTask(
   authUser: IAuthUser,
   accessConditions: boolean,
-  templateTask?: Partial<ITemplateTask>,
-): ITemplateTask {
+  templateTask?: Partial<ITemplateTaskClient>,
+): ITemplateTaskClient {
   const taskApiName = createTaskApiName();
 
   const task = {
@@ -29,6 +29,7 @@ export function createNewTemplateTask(
     name: 'New Step',
     number: 1,
     fields: [],
+    fieldsets: [],
     rawPerformers: [
       {
         apiName: createPerformerApiName(),
@@ -57,7 +58,7 @@ export function createEmptyTemplate(
   authUser: IAuthUser,
   users: TUserListItem[],
   accessConditions: boolean,
-): ITemplate {
+): ITemplateClient {
   return {
     description: '',
     kickoff: getEmptyKickoff(),
@@ -93,5 +94,5 @@ export function createEmptyTemplate(
       users,
     ),
     wfNameTemplate: '{{date}} — {{template-name}}',
-  } as ITemplate;
+  } as ITemplateClient;
 }

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useFormikContext } from 'formik';
 import { useDispatch } from 'react-redux';
 
-import { ITemplate } from '../../../types/template';
+import { ITemplateClient } from '../../../types/template';
 import { patchTemplate, setTemplateStatus } from '../../../redux/actions';
 import { ETemplateStatus } from '../../../types/redux';
 import {
@@ -20,12 +20,12 @@ import { ITemplateFormPersistProviderProps, ITemplatePersistContextValue } from 
 export const TEMPLATE_FORM_PERSIST_DEBOUNCE_MS = 350;
 
 type TConsumedPending = {
-  previousBaseline: ITemplate;
+  previousBaseline: ITemplateClient;
   isUserEdit: boolean;
-  pendingUserEdits: Partial<ITemplate>;
-  explicitFields?: Partial<ITemplate>;
+  pendingUserEdits: Partial<ITemplateClient>;
+  explicitFields?: Partial<ITemplateClient>;
   /** Formik snapshot covered by the in-flight autosave patch. */
-  dispatchedValues?: ITemplate;
+  dispatchedValues?: ITemplateClient;
 };
 
 /**
@@ -55,22 +55,22 @@ export function useTemplatePersistContextValue({
   pendingUserEditsRef,
   persistBaselineSyncRef,
 }: Omit<ITemplateFormPersistProviderProps, 'children'>) {
-  const { values } = useFormikContext<ITemplate>();
+  const { values } = useFormikContext<ITemplateClient>();
   const { setValues } = useTemplateField();
   const dispatch = useDispatch();
-  const latestReduxBaselineRef = useRef<ITemplate | null>(null);
-  const previousValuesRef = useRef<ITemplate>(values);
+  const latestReduxBaselineRef = useRef<ITemplateClient | null>(null);
+  const previousValuesRef = useRef<ITemplateClient>(values);
   const valuesRef = useRef(values);
   const dispatchRef = useRef(dispatch);
   const dirtyRefRef = useRef(dirtyRef);
   const pendingUserEditsRefRef = useRef(pendingUserEditsRef);
   const persistBaselineSyncRefRef = useRef(persistBaselineSyncRef);
   const consumedPendingRef = useRef<TConsumedPending | null>(null);
-  const retryExplicitPatchRef = useRef<Partial<ITemplate>>({});
+  const retryExplicitPatchRef = useRef<Partial<ITemplateClient>>({});
   const persistScopeRef = useRef(createAutosavePersistScope());
   const pendingDispatchRef = useRef<{
     requestId: TAutosavePersistRequest;
-    dispatchedValues: ITemplate;
+    dispatchedValues: ITemplateClient;
   } | null>(null);
   const flushPersistRef = useRef<() => void>(() => undefined);
   const setValuesRef = useRef(setValues);
@@ -179,9 +179,9 @@ export function useTemplatePersistContextValue({
     let valuesChangedByExplicitRevert = false;
 
     if (consumed.explicitFields) {
-      let revertedValues: ITemplate = { ...valuesRef.current };
+      let revertedValues: ITemplateClient = { ...valuesRef.current };
 
-      (Object.keys(consumed.explicitFields) as (keyof ITemplate)[]).forEach((key) => {
+      (Object.keys(consumed.explicitFields) as (keyof ITemplateClient)[]).forEach((key) => {
         if (valuesRef.current[key] !== consumed.previousBaseline[key]) {
           valuesChangedByExplicitRevert = true;
         }
@@ -210,7 +210,7 @@ export function useTemplatePersistContextValue({
     }
   }, []);
 
-  const consumePendingChanges = useCallback((explicitFields?: Partial<ITemplate>) => {
+  const consumePendingChanges = useCallback((explicitFields?: Partial<ITemplateClient>) => {
     const changedFields = takePendingChanges('consume');
 
     if (explicitFields && Object.keys(explicitFields).length > 0) {

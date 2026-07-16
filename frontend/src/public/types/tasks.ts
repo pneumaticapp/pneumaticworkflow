@@ -1,5 +1,6 @@
 import { IWorkflow, IWorkflowClient, WorkflowWithTsp } from './workflow';
 import { IExtraField, ITemplateTitleBaseWithCount, RawPerformer } from './template';
+import { IFieldsetRuntime, IFieldsetTaskAPI } from './fieldset';
 
 export type TTaskWorkflow = Pick<IWorkflow, 'id' | 'name' | 'status' | 'dateCompleted'> & {
   templateName: string;
@@ -21,6 +22,7 @@ export type TaskWithTsp<T> = Omit<T, keyof TaskWithDateFields> & TaskWithTspFiel
 
 export type TFormatTaskDates = {
   output?: IExtraField[];
+  fieldsets?: IFieldsetRuntime[];
   subWorkflows?: WorkflowWithTsp<IWorkflow>[] | null;
   dueDateTsp?: number | null;
   dateStartedTsp?: number;
@@ -45,6 +47,7 @@ export interface ITask {
   id: number;
   name: string;
   output: IExtraField[];
+  fieldsets?: IFieldsetRuntime[];
   description: string | null;
   workflow: TTaskWorkflow;
   performers: RawPerformer[];
@@ -89,7 +92,7 @@ export type TTaskChecklistsItem = {
 };
 
 export interface ITaskAPI
-  extends Omit<ITask, 'checklists' | 'areChecklistsHandling' | 'dateStarted' | 'dateCompleted' | 'subWorkflows'> {
+  extends Omit<ITask, 'checklists' | 'areChecklistsHandling' | 'dateStarted' | 'dateCompleted' | 'subWorkflows' | 'fieldsets'> {
   checklists: {
     id: number;
     apiName: string;
@@ -99,6 +102,7 @@ export interface ITaskAPI
       isSelected: boolean;
     }[];
   }[];
+  fieldsets: IFieldsetTaskAPI[];
   dueDateTsp: number | null;
   dateStartedTsp: number;
   dateCompletedTsp: number | null;

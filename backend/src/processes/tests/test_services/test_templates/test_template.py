@@ -799,3 +799,89 @@ def test_partial_update__without_description__refresh_attachments_not_called(
 
     # assert
     refresh_mock.assert_not_called()
+
+
+def test_fill_template_data__fieldset_fields__register_placeholders():
+
+    # arrange
+    user = create_test_user()
+    service = TemplateService(user=user)
+    initial_data = {
+        'name': 'Template with fieldsets',
+        'kickoff': {
+            'fields': [
+                {
+                    'name': 'Direct field',
+                    'type': 'text',
+                    'api_name': 'direct-field',
+                },
+            ],
+            'fieldsets': [
+                {
+                    'title': 'Kickoff fieldset',
+                    'api_name': 'kickoff-fieldset',
+                    'fields': [
+                        {
+                            'name': 'Nested kickoff field',
+                            'type': 'text',
+                            'api_name': 'nested-kickoff-field',
+                        },
+                        {
+                            'name': 'Kickoff field without api name',
+                            'type': 'text',
+                        },
+                    ],
+                },
+            ],
+        },
+        'tasks': [
+            {
+                'name': 'Task 1',
+                'number': 1,
+                'description': (
+                    'Direct {{ direct-field }} and '
+                    'nested {{ nested-kickoff-field }}'
+                ),
+                'fields': [],
+                'fieldsets': [
+                    {
+                        'title': 'Task fieldset',
+                        'api_name': 'task-fieldset',
+                        'fields': [
+                            {
+                                'name': 'Nested task field',
+                                'type': 'text',
+                                'api_name': 'nested-task-field',
+                            },
+                            {
+                                'name': 'Task field without api name',
+                                'type': 'text',
+                            },
+                        ],
+                    },
+                ],
+            },
+            {
+                'name': 'Task 2',
+                'number': 2,
+                'description': 'Use {{ nested-task-field }}',
+            },
+        ],
+    }
+
+    # act
+    data = service.fill_template_data(initial_data)
+
+    # assert
+    kickoff_fieldset_fields = data['kickoff']['fieldsets'][0]['fields']
+    assert kickoff_fieldset_fields[0]['api_name'] == 'nested-kickoff-field'
+    assert kickoff_fieldset_fields[1]['api_name'].startswith('field-')
+
+    task_fieldset_fields = data['tasks'][0]['fieldsets'][0]['fields']
+    assert task_fieldset_fields[0]['api_name'] == 'nested-task-field'
+    assert task_fieldset_fields[1]['api_name'].startswith('field-')
+
+    assert data['tasks'][0]['description'] == (
+        'Direct {{direct-field}} and nested {{nested-kickoff-field}}'
+    )
+    assert data['tasks'][1]['description'] == 'Use {{nested-task-field}}'

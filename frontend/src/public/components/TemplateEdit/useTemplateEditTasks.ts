@@ -11,14 +11,14 @@ import { moveTask } from '../../utils/workflows';
 import { NotificationManager } from '../UI/Notifications';
 import { isArrayWithItems } from '../../utils/helpers';
 import { EMoveDirections } from '../../types/workflow';
-import { ITemplate, ITemplateTask } from '../../types/template';
+import { ITemplateClient, ITemplateTaskClient } from '../../types/template';
 import { TUserListItem } from '../../types/user';
 import { IAuthUser } from '../../types/redux';
 import { TSetFieldValue } from './useTemplateForm/types';
 
 type TUseTemplateEditTasksParams = {
   authUser: IAuthUser;
-  formik: FormikProps<ITemplate>;
+  formik: FormikProps<ITemplateClient>;
   setFieldValue: TSetFieldValue;
   users: TUserListItem[];
   accessConditions: boolean;
@@ -39,7 +39,7 @@ export function useTemplateEditTasks({
   const [openedTasks, setOpenedTasks] = useState<Record<string, boolean>>({});
   const [openedDelays, setOpenedDelays] = useState<Record<string, boolean>>({});
 
-  const changeTasks = (newTasks: ITemplateTask[]) => {
+  const changeTasks = (newTasks: ITemplateTaskClient[]) => {
     setFieldValue('tasks', newTasks, false);
   };
 
@@ -64,10 +64,10 @@ export function useTemplateEditTasks({
 
   const sortedTasks = () => [...tasks].sort((a, b) => a.number - b.number);
 
-  const getNewTask = (templateTask?: Partial<ITemplateTask>) =>
+  const getNewTask = (templateTask?: Partial<ITemplateTaskClient>) =>
     createNewTemplateTask(authUser, accessConditions, templateTask);
 
-  const handleRemoveTask = (targetTask: ITemplateTask) => () => {
+  const handleRemoveTask = (targetTask: ITemplateTaskClient) => () => {
     const newTasks = tasks
       .filter((task) => task.uuid !== targetTask.uuid)
       .map((task, index) => ({ ...task, number: index + 1 }));
@@ -101,19 +101,19 @@ export function useTemplateEditTasks({
     changeTasks([...tasks, newTask]);
   };
 
-  const getTasksWithNewTask = (newTask: ITemplateTask, newTaskIndex: number) =>
+  const getTasksWithNewTask = (newTask: ITemplateTaskClient, newTaskIndex: number) =>
     [...tasks.slice(0, newTaskIndex), newTask, ...tasks.slice(newTaskIndex)].map((task, index) => ({
       ...task,
       number: index + 1,
     }));
 
-  const handleCloneTask = (targetTask: ITemplateTask) => () => {
+  const handleCloneTask = (targetTask: ITemplateTaskClient) => () => {
     const newTask = getClonedTask(targetTask);
     changeTasks(getTasksWithNewTask(newTask, targetTask.number));
     toggleIsOpenTask(newTask.uuid);
   };
 
-  const handleAddTaskBefore = (targetTask: ITemplateTask) => (previousTaskApiName?: string) => {
+  const handleAddTaskBefore = (targetTask: ITemplateTaskClient) => (previousTaskApiName?: string) => {
     const newTask = getNewTask({
       name: `New Step ${tasks.length + 1}`,
       conditions: previousTaskApiName ? getStartTaskConditions(previousTaskApiName) : getKickoffConditions(),
@@ -130,13 +130,13 @@ export function useTemplateEditTasks({
   };
 
   const handleEditTaskField =
-    (targetTask: ITemplateTask) => (field: keyof ITemplateTask) => (value: ITemplateTask[keyof ITemplateTask]) => {
+    (targetTask: ITemplateTaskClient) => (field: keyof ITemplateTaskClient) => (value: ITemplateTaskClient[keyof ITemplateTaskClient]) => {
       changeTasks(
         tasks.map((task) => (targetTask.uuid === task.uuid ? { ...task, [field]: value } : task)),
       );
     };
 
-  const addDelay = (targetTask: ITemplateTask) => () => {
+  const addDelay = (targetTask: ITemplateTaskClient) => () => {
     if (targetTask.delay) {
       NotificationManager.warning({
         message: formatMessage({ id: 'template.delay-task-has-delay-error' }),
@@ -157,16 +157,16 @@ export function useTemplateEditTasks({
     );
   };
 
-  const editDelay = (targetTask: ITemplateTask) => (delay: string) => {
+  const editDelay = (targetTask: ITemplateTaskClient) => (delay: string) => {
     changeTasks(tasks.map((task) => (task.uuid === targetTask.uuid ? { ...task, delay } : task)));
   };
 
-  const deleteDelay = (targetTask: ITemplateTask) => () => {
+  const deleteDelay = (targetTask: ITemplateTaskClient) => () => {
     if (!targetTask.delay) return;
     handleEditTaskField(targetTask)('delay')('');
   };
 
-  const getTaskListItem = (task: ITemplateTask, index: number, tasksLocal: ITemplateTask[]) => {
+  const getTaskListItem = (task: ITemplateTaskClient, index: number, tasksLocal: ITemplateTaskClient[]) => {
     const previousTask = index > 0 ? tasksLocal[index - 1] : null;
 
     return {

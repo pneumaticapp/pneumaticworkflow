@@ -19,6 +19,7 @@ export interface IFieldProps extends NativeInputProps {
   accountId?: number;
   onKeyDown?(event: KeyboardEvent<HTMLInputElement>): void;
   isNumericField?: boolean;
+  editorClassName?: string;
   isFromConditionValueField?: boolean;
   value?: string | number | string[];
   innerRef?: React.Ref<HTMLInputElement>;

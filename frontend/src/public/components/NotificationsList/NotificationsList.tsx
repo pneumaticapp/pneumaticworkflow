@@ -5,7 +5,7 @@ import OutsideClickHandler from 'react-outside-click-handler';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { useIntl } from 'react-intl';
 
-import { getTaskDetailRoute } from '../../utils/routes';
+import { getTaskDetailRoute, getWorkflowDetailedRoute } from '../../utils/routes';
 import { Avatar } from '../UI/Avatar';
 import { getUserFullName } from '../../utils/users';
 import { TNotificationsListItem } from '../../types';
@@ -261,6 +261,17 @@ export const NotificationsList = ({
             subtitle: notification.workflow.name,
             text: formatMessage({ id: 'notifications.resumed' }),
             link: getTaskDetailRoute(notification.task.id),
+          };
+        }
+        case 'complete_workflow': {
+          return {
+            ...commonProps,
+            avatar: <PneumaticAvatarIcon className={styles['avatar__container']} />,
+            icon: <TaskCompleteIcon size="sm" />,
+            title: formatMessage({ id: 'general.pneumatic' }),
+            subtitle: notification.workflow.name,
+            text: formatMessage({ id: 'notifications.workflow-completed' }),
+            link: getWorkflowDetailedRoute(notification.workflow.id),
           };
         }
         default:

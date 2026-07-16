@@ -27,6 +27,7 @@ from src.processes.services.templates.integrations import (
 from src.processes.tests.fixtures import (
     create_invited_user,
     create_test_account,
+    create_test_fieldset_template,
     create_test_group,
     create_test_not_admin,
     create_test_owner,
@@ -763,3 +764,52 @@ def test_retrieve__not_found__not_found(api_client):
 
     # assert
     assert response.status_code == 404
+
+
+def test_retrieve__fieldsets__ok(api_client):
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    api_client.token_authenticate(account_owner)
+    template = create_test_template(
+        user=account_owner,
+        is_active=True,
+        tasks_count=1,
+    )
+    kickoff = template.kickoff_instance
+    task = template.tasks.first()
+
+    kickoff_fieldset = create_test_fieldset_template(
+        account=account,
+        template=template,
+        kickoff=kickoff,
+        description='Kickoff fieldset desc',
+        api_name='fieldset-kickoff-1',
+        order=0,
+    )
+
+    task_fieldset = create_test_fieldset_template(
+        account=account,
+        template=template,
+        task=task,
+        description='Task fieldset desc',
+        api_name='fieldset-task-1',
+        order=1,
+    )
+
+    # act
+    response = api_client.get(f'/templates/{template.id}')
+
+    # assert
+    assert response.status_code == 200
+    response_data = response.data
+
+    kickoff_fieldsets = response_data['kickoff']['fieldsets']
+    assert len(kickoff_fieldsets) == 1
+    assert kickoff_fieldsets[0]['api_name'] == kickoff_fieldset.api_name
+    assert kickoff_fieldsets[0]['order'] == 0
+
+    task_fieldsets = response_data['tasks'][0]['fieldsets']
+    assert len(task_fieldsets) == 1
+    assert task_fieldsets[0]['api_name'] == task_fieldset.api_name
+    assert task_fieldsets[0]['order'] == 1

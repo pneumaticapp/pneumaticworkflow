@@ -51,7 +51,7 @@ import { patchTaskInList, shiftTaskList, ETaskListActions } from '../tasks/slice
 
 import { getErrorMessage } from '../../utils/getErrorMessage';
 import { getAuthUser, getUsers, getUserTimezone } from '../selectors/user';
-import { removeOutputFromLocalStorage } from '../../components/TaskCard/utils/storageOutputs';
+import { outputStorage, fieldsetsStorage } from '../../components/TaskCard/utils/storageOutputs';
 import { ETaskCardViewMode } from '../../components/TaskCard';
 
 import { TChannelAction } from '../tasks/saga';
@@ -307,7 +307,8 @@ export function* setTaskCompleted({ payload: { taskId, output, viewMode } }: TSe
     yield completeTask(taskId, normalizedOutputs);
     NotificationManager.success({ title: 'tasks.task-success-complete' });
 
-    removeOutputFromLocalStorage(taskId);
+    outputStorage.remove(taskId);
+    fieldsetsStorage.remove(taskId);
     yield put(setCurrentTaskStatus(ETaskStatus.Completed));
 
     if (viewMode === ETaskCardViewMode.List) {

@@ -1,4 +1,4 @@
-import { ITemplate } from '../types/template';
+import { ITemplateResponse } from '../types/template';
 import { getBrowserConfigEnv } from '../utils/getConfig';
 import { mapRequestBody } from '../utils/mappers';
 
@@ -17,4 +17,4 @@ export function createTemplateByName(template: TCreateTemplateByNameRequest) {
   );
 }
 
-export type TCreateTemplateByNameRequest = Pick<ITemplate, 'name'>
+export type TCreateTemplateByNameRequest = Pick<ITemplateResponse, 'name'>

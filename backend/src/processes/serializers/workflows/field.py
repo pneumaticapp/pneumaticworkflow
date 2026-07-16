@@ -78,6 +78,7 @@ class TaskFieldListSerializer(serializers.ModelSerializer):
             'clear_value',
             'user_id',
             'group_id',
+            'fieldset_id',
         )
 
 

@@ -1,10 +1,7 @@
-import {
-  EDashboardActivityAction,
-  EWorkflowLogEvent,
-  ECommentType,
-  IWorkflowDetailsKickoff,
-} from '../types/workflow';
-import { ITemplateTask, IKickoff, IExtraField } from '../types/template';
+import { EDashboardActivityAction, EWorkflowLogEvent, ECommentType, IWorkflowDetailsKickoff } from '../types/workflow';
+
+import { ITemplateTaskClient, IKickoffClient, IExtraField } from '../types/template';
+
 import { isArrayWithItems, deepCopy } from './helpers';
 import { ExtraFieldsHelper } from '../components/TemplateEdit/ExtraFields/utils/ExtraFieldsHelper';
 
@@ -19,7 +16,7 @@ export const COMMENT_FIELD_PLACEHOLDER: { [key in ECommentType]: string } = {
   [ECommentType.Finish]: 'State the reason for workflow completion',
 };
 
-export const moveTask = (a: number, b: number, arr: ITemplateTask[]): ITemplateTask[] => {
+export const moveTask = (a: number, b: number, arr: ITemplateTaskClient[]): ITemplateTaskClient[] => {
   if (!isArrayWithItems(arr)) {
     return [];
   }
@@ -57,11 +54,11 @@ export const moveWorkflowField = (a: number, b: number, arr: IExtraField[]) => {
   return copy;
 };
 
-export const getEditKickoff = (kickoff: IWorkflowDetailsKickoff): IKickoff => {
+export const getEditKickoff = (kickoff: IWorkflowDetailsKickoff): IKickoffClient => {
   const kickoffFields = new ExtraFieldsHelper(kickoff.output).getFieldsWithValues();
   const kickoffDescritpiton = kickoff.description || '';
 
-  return { description: kickoffDescritpiton, fields: kickoffFields };
+  return { description: kickoffDescritpiton, fields: kickoffFields, fieldsets: [] };
 };
 
 export const getNormalizeFieldsOrders = (fields?: IExtraField[]): IExtraField[] => {
