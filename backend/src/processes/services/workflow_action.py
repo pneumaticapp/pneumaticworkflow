@@ -4,8 +4,8 @@ from typing import Callable, Iterable, Optional, Tuple
 
 from django.contrib.auth import get_user_model
 from django.db import transaction
-from django.utils import timezone
 from django.db.models import Q
+from django.utils import timezone
 
 from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
@@ -24,7 +24,7 @@ from src.processes.enums import (
     ConditionAction,
     DirectlyStatus,
     TaskStatus,
-    WorkflowStatus, PerformerType,
+    WorkflowStatus,
 )
 from src.processes.messages import workflow as messages
 from src.processes.models.workflows.fieldset import FieldSet
@@ -717,7 +717,7 @@ class WorkflowActionService:
             else:
                 self.continue_workflow(task=task, is_returned=is_returned)
 
-    def complete_task(self, task: Task):
+    def complete_task(self, task: Task, by_user: bool = False):
 
         """ Complete workflow task if it <= current task
             Only for current task run complete actions """
@@ -781,6 +781,20 @@ class WorkflowActionService:
                 is_completed=True,
             )
         )
+        if by_user:
+            AnalyticService.task_completed(
+                user=self.user,
+                is_superuser=self.is_superuser,
+                auth_type=self.auth_type,
+                workflow=self.workflow,
+                task=task,
+            )
+            # Need run after save completed task (and performers)
+            # and before start next tasks
+            WorkflowEventService.task_complete_event(
+                task=task,
+                user=self.user,
+            )
         self._start_next_tasks(parent_task=task)
         if (
             WebHook.objects
@@ -792,6 +806,30 @@ class WorkflowActionService:
                 account_id=self.account.id,
                 payload=task.webhook_payload(),
             )
+
+    def _task_can_be_completed(self, task: Task) -> bool:
+
+        """ Implies that the specified user has completed the task """
+
+        if task.is_completed is True:
+            return False
+        task_performers = (
+            task.taskperformer_set.exclude_directly_deleted()
+        )
+        completed_performers = task_performers.filter(
+            Q(is_completed=True)
+            | Q(is_completed=False, user_id=self.user.id)
+            | Q(is_completed=False, group__users=self.user.id),
+        ).exists()
+        incompleted_performers = task_performers.not_completed().exclude(
+            Q(user_id=self.user.id)
+            | Q(is_completed=False, group__users=self.user.id),
+        ).exists()
+        by_all = task.require_completion_by_all
+        return (
+            (not by_all and completed_performers) or
+            (by_all and not incompleted_performers)
+        )
 
     def complete_task_for_user(
         self,
@@ -813,12 +851,6 @@ class WorkflowActionService:
             .first()
         )
         if task_performer:
-            if task_performer.type_group:
-                task_performer, _ = TaskPerformer.objects.get_or_create(
-                    user_id=self.user.id,
-                    task_id=task.id,
-                    type=PerformerType.GROUP_USER,
-                )
             if task_performer.is_completed:
                 raise exceptions.UserAlreadyCompleteTask
         elif not self.user.is_account_owner:
@@ -863,22 +895,9 @@ class WorkflowActionService:
                     )
                     service.validate_rules()
 
-            AnalyticService.task_completed(
-                user=self.user,
-                is_superuser=self.is_superuser,
-                auth_type=self.auth_type,
-                workflow=self.workflow,
-                task=task,
-            )
-            # Need run after save completed task (and performers)
-            # and before start next tasks
-            WorkflowEventService.task_complete_event(
-                task=task,
-                user=self.user,
-            )
             if task_performer:
-                if task.can_be_completed(by_user=self.user):
-                    self.complete_task(task=task)
+                if self._task_can_be_completed(task):
+                    self.complete_task(task=task, by_user=True)
                 else:
                     # completed only for user and send ws remove task
                     # if "requires completion by all", sending message
@@ -898,7 +917,7 @@ class WorkflowActionService:
             elif self.user.is_account_owner:
                 # account owner force completion
                 # not complete performers, but send ws remove task
-                self.complete_task(task=task)
+                self.complete_task(task=task, by_user=True)
         return task
 
     def _get_not_skipped_revert_task(self, task: Task) -> Optional[Task]:

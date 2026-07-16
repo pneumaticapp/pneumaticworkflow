@@ -857,6 +857,7 @@ def test__update_fieldsets__provided__ok(mocker):
         {
             'api_name': 'fs-1',
             'name': 'Fieldset 1',
+            'title': 'Fieldset Title',
             'description': 'Desc',
             'order': 11,
             'label_position': LabelPosition.TOP,
@@ -884,6 +885,7 @@ def test__update_fieldsets__provided__ok(mocker):
         api_name='fs-1',
     )
     assert fieldset.name == 'Fieldset 1'
+    assert fieldset.title == 'Fieldset Title'
     assert fieldset.description == 'Desc'
     assert fieldset.order == 11
     assert fieldset.label_position == LabelPosition.TOP
