@@ -288,7 +288,6 @@ class TaskViewSet(
                         ),
                     ),
                 ),
-                'fieldsets__fields__attachments',
                 Prefetch(
                     'fieldsets__fields__selections',
                     queryset=FieldSelection.objects.order_by('id'),
@@ -554,7 +553,6 @@ class TaskViewSet(
                         ),
                     ),
                 ),
-                'fieldsets__fields__attachments',
                 Prefetch(
                     'fieldsets__fields__selections',
                     queryset=FieldSelection.objects.order_by('id'),
