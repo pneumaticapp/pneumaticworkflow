@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('processes', '0254_add_fileattachment_fields'),
+        ('processes', '0255_add_fieldsets'),
     ]
 
     operations = [
