@@ -167,21 +167,37 @@ export function resolveTemplateIdentity(
 
 /** Stable key for every source property represented in `getVariables()`. */
 export function getTemplateVariablesFingerprint(values: ITemplateClient): string {
-  const getFieldSignature = (field: ITemplateClient['kickoff']['fields'][number]) => ({
+  const getFieldSignature = (field: {
+    apiName?: string;
+    name?: string;
+    type?: unknown;
+    selections?: unknown;
+    dataset?: unknown;
+  }) => ({
     apiName: field.apiName,
     name: field.name,
     type: field.type,
     selections: field.selections,
     dataset: field.dataset,
   });
+  const getFieldsetSignature = (fieldset: ITemplateClient['kickoff']['fieldsets'][number]) => ({
+    apiNameBinding: fieldset.apiNameBinding,
+    sharedFieldsetId: fieldset.sharedFieldsetId,
+    name: fieldset.name,
+    fields: (fieldset.fields ?? []).map(getFieldSignature),
+  });
 
   return JSON.stringify({
     id: values.id ?? 'new',
-    kickoff: (values.kickoff?.fields ?? []).map(getFieldSignature),
+    kickoff: {
+      fields: (values.kickoff?.fields ?? []).map(getFieldSignature),
+      fieldsets: (values.kickoff?.fieldsets ?? []).map(getFieldsetSignature),
+    },
     tasks: values.tasks.map((task) => ({
       uuid: task.uuid,
       name: task.name,
       fields: (task.fields ?? []).map(getFieldSignature),
+      fieldsets: (task.fieldsets ?? []).map(getFieldsetSignature),
     })),
   });
 }
