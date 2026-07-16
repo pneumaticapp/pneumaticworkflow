@@ -2589,6 +2589,7 @@ def test__update_fieldsets__data_provided__ok(mocker):
         task=task_1,
     )
     assert new_fieldset.name == 'New Fieldset'
+    assert new_fieldset.title == 'Test title'
     assert new_fieldset.description == 'Test description'
     assert new_fieldset.order == 2
     _update_fieldset_rules_mock.assert_called_once_with(

@@ -258,6 +258,7 @@ class TaskUpdateVersionService(
                 defaults={
                     'account_id': self.instance.account_id,
                     'name': fieldset_data['name'],
+                    'title': fieldset_data['title'],
                     'description': fieldset_data['description'],
                     'order': fieldset_data['order'],
                     'label_position': fieldset_data['label_position'],
