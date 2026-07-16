@@ -289,9 +289,9 @@ class FieldSetTemplateService(BaseModelService):
         fieldset_data = self._replace_api_names(shared_fieldset_data)
         if api_name:
             fieldset_data['api_name'] = api_name
-        if title:
+        if title is not None:
             fieldset_data['title'] = title
-        if description:
+        if description is not None:
             fieldset_data['description'] = description
         fieldset_data.pop('order', None)
         return fieldset_data

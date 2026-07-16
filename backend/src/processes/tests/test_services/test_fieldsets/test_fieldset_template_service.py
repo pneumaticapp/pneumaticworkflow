@@ -1734,6 +1734,38 @@ def test__get_new_fieldset_data__title_omitted__ok(mocker):
     replace_api_names_mock.assert_called_once_with(shared_fieldset_data)
 
 
+def test__get_new_fieldset_data__title_empty_string__ok(mocker):
+
+    """
+    empty title clears shared value
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    shared_fieldset_data = {'api_name': 'old-fs'}
+    replace_api_names_mock = mocker.patch(
+        'src.processes.services.fieldsets.fieldset.'
+        'FieldSetTemplateService._replace_api_names',
+        return_value={'api_name': 'api', 'title': 'Original'},
+    )
+
+    # act
+    result = service.get_new_fieldset_data(
+        shared_fieldset_data=shared_fieldset_data,
+        title='',
+    )
+
+    # assert
+    assert result['title'] == ''
+    replace_api_names_mock.assert_called_once_with(shared_fieldset_data)
+
+
 def test__get_new_fieldset_data__description_provided__ok(mocker):
 
     """
@@ -1796,6 +1828,38 @@ def test__get_new_fieldset_data__description_omitted__ok(mocker):
 
     # assert
     assert result['description'] == original_description
+    replace_api_names_mock.assert_called_once_with(shared_fieldset_data)
+
+
+def test__get_new_fieldset_data__description_empty_string__ok(mocker):
+
+    """
+    empty description clears shared value
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    shared_fieldset_data = {'api_name': 'old-fs'}
+    replace_api_names_mock = mocker.patch(
+        'src.processes.services.fieldsets.fieldset.'
+        'FieldSetTemplateService._replace_api_names',
+        return_value={'api_name': 'api', 'description': 'Old desc'},
+    )
+
+    # act
+    result = service.get_new_fieldset_data(
+        shared_fieldset_data=shared_fieldset_data,
+        description='',
+    )
+
+    # assert
+    assert result['description'] == ''
     replace_api_names_mock.assert_called_once_with(shared_fieldset_data)
 
 
