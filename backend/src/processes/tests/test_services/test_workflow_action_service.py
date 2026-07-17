@@ -2422,9 +2422,13 @@ def test_force_resume_workflow__workflow_done__resume_ok(mocker):
         'src.processes.services.workflow_action.WorkflowEventService'
         '.force_resume_workflow_event',
     )
-    mocker.patch(
+    send_resumed_notification_mock = mocker.patch(
         'src.processes.services.workflow_action'
         '.send_resumed_workflow_notification.delay',
+    )
+    continue_task_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '.continue_task',
     )
     service = WorkflowActionService(user=owner, workflow=workflow)
 
@@ -2439,6 +2443,8 @@ def test_force_resume_workflow__workflow_done__resume_ok(mocker):
         workflow=workflow,
         user=owner,
     )
+    send_resumed_notification_mock.assert_not_called()
+    continue_task_mock.assert_not_called()
 
 
 def test_force_resume_workflow__workflow_done__active_task_unchanged(mocker):
@@ -2452,11 +2458,14 @@ def test_force_resume_workflow__workflow_done__active_task_unchanged(mocker):
         tasks_count=3,
     )
     task = workflow.tasks.get(number=1)
-    mocker.patch(
+    date_started = task.date_started
+    date_completed = task.date_completed
+    due_date = task.due_date
+    force_resume_event_mock = mocker.patch(
         'src.processes.services.workflow_action.WorkflowEventService'
         '.force_resume_workflow_event',
     )
-    mocker.patch(
+    send_resumed_notification_mock = mocker.patch(
         'src.processes.services.workflow_action'
         '.send_resumed_workflow_notification.delay',
     )
@@ -2471,6 +2480,59 @@ def test_force_resume_workflow__workflow_done__active_task_unchanged(mocker):
     assert workflow.status == WorkflowStatus.RUNNING
     assert workflow.date_completed is None
     assert task.status == TaskStatus.ACTIVE
+    assert task.date_started == date_started
+    assert task.date_completed == date_completed
+    assert task.due_date == due_date
+    force_resume_event_mock.assert_called_once_with(
+        workflow=workflow,
+        user=owner,
+    )
+    send_resumed_notification_mock.assert_not_called()
+
+
+def test_force_resume_workflow__workflow_done__completed_tasks_unchanged(
+    mocker,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(
+        user=owner,
+        status=WorkflowStatus.DONE,
+        tasks_count=3,
+    )
+    workflow.tasks.update(status=TaskStatus.COMPLETED)
+    force_resume_event_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowEventService'
+        '.force_resume_workflow_event',
+    )
+    send_resumed_notification_mock = mocker.patch(
+        'src.processes.services.workflow_action'
+        '.send_resumed_workflow_notification.delay',
+    )
+    continue_task_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '.continue_task',
+    )
+    service = WorkflowActionService(user=owner, workflow=workflow)
+
+    # act
+    service.force_resume_workflow()
+
+    # assert
+    workflow.refresh_from_db()
+    assert workflow.status == WorkflowStatus.RUNNING
+    assert workflow.date_completed is None
+    assert workflow.tasks.active().exists() is False
+    assert workflow.tasks.delayed().exists() is False
+    assert workflow.tasks.completed().count() == 3
+    force_resume_event_mock.assert_called_once_with(
+        workflow=workflow,
+        user=owner,
+    )
+    send_resumed_notification_mock.assert_not_called()
+    continue_task_mock.assert_not_called()
 
 
 def test_force_resume_workflow__workflow_delayed__resume_and_notify(mocker):

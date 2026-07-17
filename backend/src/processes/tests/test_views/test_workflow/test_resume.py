@@ -233,6 +233,7 @@ def test_resume__workflow_done__ok(api_client):
 
     # assert
     assert response.status_code == 200
+    assert response.data['id'] == workflow.id
     assert response.data['status'] == WorkflowStatus.RUNNING
     assert response.data['date_completed_tsp'] is None
     workflow.refresh_from_db()

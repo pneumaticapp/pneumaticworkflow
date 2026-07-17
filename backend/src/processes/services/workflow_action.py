@@ -172,7 +172,13 @@ class WorkflowActionService:
 
     def force_resume_workflow(self):
 
-        """ Resume delayed workflow before the timeout """
+        """Resume delayed or completed workflow.
+
+        AnalyticService is intentionally not called here:
+        DELAYED resume is a reversal, not a new user action;
+        DONE resume re-opens a workflow without creating
+        a new analytics event (no dedicated metric exists).
+        """
 
         if self.workflow.is_running:
             return
