@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 import classnames from 'classnames';
 import { TTaskVariable } from '../types';
@@ -14,6 +14,7 @@ export interface IEditorWithVariablesProps {
   placeholder?: string;
   listVariables: TTaskVariable[];
   templateVariables: TTaskVariable[];
+  showInsertButton: boolean;
   value?: string;
   title?: string;
   className?: string;
@@ -26,6 +27,7 @@ export const InputWithVariables: React.FC<IEditorWithVariablesProps> = ({
   placeholder,
   listVariables,
   templateVariables,
+  showInsertButton,
   value,
   className,
   title,
@@ -77,17 +79,19 @@ export const InputWithVariables: React.FC<IEditorWithVariablesProps> = ({
       withMentions={false}
       multiline={false}
       plainText
-      className={classnames(className, styles['input-with-variables'])}
+      className={classnames(className, showInsertButton && styles['input-with-variables'])}
       foregroundColor={foregroundColor}
       templateVariables={templateVariables}
     >
-      <VariableList
-        variables={listVariables}
-        onVariableClick={handleInsertVariable}
-        className={styles['variables']}
-        tooltipText={toolipText}
-        focusEditor={() => editorRef.current?.focus()}
-      />
+      {showInsertButton && (
+        <VariableList
+          variables={listVariables}
+          onVariableClick={handleInsertVariable}
+          className={styles['variables']}
+          tooltipText={toolipText}
+          focusEditor={() => editorRef.current?.focus()}
+        />
+      )}
     </RichEditor>
   );
 };

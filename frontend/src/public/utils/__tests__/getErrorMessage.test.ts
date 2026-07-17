@@ -25,10 +25,14 @@ function createApiError(
 describe('normalizeToCustomError', () => {
   // --- Shape 1: ApiError (payload in .data) ---
   it('unwraps ApiError with code in .data', () => {
-    const apiError = createApiError('File not found', {
-      code: 'FILE_001',
-      message: 'File not found',
-    }, 404);
+    const apiError = createApiError(
+      'File not found',
+      {
+        code: 'FILE_001',
+        message: 'File not found',
+      },
+      404,
+    );
 
     const result = normalizeToCustomError(apiError);
 
@@ -36,16 +40,19 @@ describe('normalizeToCustomError', () => {
       code: 'FILE_001',
       message: 'File not found',
       details: undefined,
-      detail: undefined,
     });
   });
 
   it('unwraps ApiError with details in .data', () => {
-    const apiError = createApiError('File size exceeds limit', {
-      code: 'FILE_003',
-      message: 'File size exceeds limit',
-      details: { reason: 'Maximum allowed size is 100MB' },
-    }, 413);
+    const apiError = createApiError(
+      'File size exceeds limit',
+      {
+        code: 'FILE_003',
+        message: 'File size exceeds limit',
+        details: { reason: 'Maximum allowed size is 100MB' },
+      },
+      413,
+    );
 
     const result = normalizeToCustomError(apiError);
 
@@ -53,14 +60,17 @@ describe('normalizeToCustomError', () => {
       code: 'FILE_003',
       message: 'File size exceeds limit',
       details: { reason: 'Maximum allowed size is 100MB' },
-      detail: undefined,
     });
   });
 
   it('uses Error.message when .data has no message', () => {
-    const apiError = createApiError('Axios level error', {
-      code: 'INFRA_005',
-    }, 500);
+    const apiError = createApiError(
+      'Axios level error',
+      {
+        code: 'INFRA_005',
+      },
+      500,
+    );
 
     const result = normalizeToCustomError(apiError);
 
@@ -69,27 +79,44 @@ describe('normalizeToCustomError', () => {
   });
 
   it('unwraps ApiError with detail field in .data', () => {
-    const apiError = createApiError('Not found', {
-      code: 'not_found',
-      message: 'Not found',
-      detail: 'Not found.',
-    }, 404);
+    const apiError = createApiError(
+      'Not found',
+      {
+        code: 'not_found',
+        message: 'Not found',
+        detail: 'Not found.',
+      },
+      404,
+    );
 
     const result = normalizeToCustomError(apiError);
 
     expect(result?.detail).toBe('Not found.');
   });
 
-  it('skips .data when it has no code field', () => {
-    const apiError = createApiError('Server Error', {
-      error: 'Internal Server Error',
-    }, 500);
+  it('skips .data when payload has no code, message, or detail keys (e.g. { error: "..." })', () => {
+    const apiError = createApiError(
+      'Server Error',
+      {
+        error: 'Internal Server Error',
+      },
+      500,
+    );
 
-    // Falls through to Shape 3 (Error with message)
     const result = normalizeToCustomError(apiError);
 
     expect(result?.code).toBe('');
     expect(result?.message).toBe('Server Error');
+  });
+
+  it('uses err.detail when data has message key but detail only on error', () => {
+    const apiError = createApiError('', { message: 'Validation failed' }, 400);
+    Object.assign(apiError, { detail: 'Field is required' });
+
+    const result = normalizeToCustomError(apiError);
+
+    expect(result?.message).toBe('Validation failed');
+    expect(result?.detail).toBe('Field is required');
   });
 
   // --- Shape 2: ICustomError (code + message at top level) ---
@@ -104,6 +131,18 @@ describe('normalizeToCustomError', () => {
     expect(result).toBe(error); // same reference, not a copy
   });
 
+  it('returns object as-is when code and detail are present without message', () => {
+    const error = {
+      code: 'token_not_valid',
+      detail: 'Given token not valid',
+    };
+
+    const result = normalizeToCustomError(error);
+
+    expect(result).toBe(error);
+    expect(result?.detail).toBe('Given token not valid');
+  });
+
   // --- Shape 3: Error ---
   it('extracts message from plain Error', () => {
     const error = new Error('Network Error');
@@ -111,6 +150,20 @@ describe('normalizeToCustomError', () => {
     const result = normalizeToCustomError(error);
 
     expect(result).toEqual({ code: '', message: 'Network Error' });
+  });
+
+  it('includes err.detail on Error when .data gate does not match', () => {
+    const error = Object.assign(new Error(''), {
+      detail: 'You do not have permission to perform this action.',
+    });
+
+    const result = normalizeToCustomError(error);
+
+    expect(result).toEqual({
+      code: '',
+      message: '',
+      detail: 'You do not have permission to perform this action.',
+    });
   });
 
   // --- Edge cases ---
@@ -172,6 +225,18 @@ describe('getErrorMessage', () => {
     expect(getErrorMessage(error)).toBe('The actual detail string');
   });
 
+  it('returns detail from ApiError.data when Error.message is empty (DRF without code)', () => {
+    const apiError = createApiError(
+      '',
+      {
+        detail: 'You do not have permission to perform this action.',
+      },
+      403,
+    );
+
+    expect(getErrorMessage(apiError)).toBe('You do not have permission to perform this action.');
+  });
+
   it('returns UNKNOWN_ERROR when message is empty and code not in mapper', () => {
     const error: ICustomError = {
       code: 'unmapped_code',
@@ -228,46 +293,66 @@ describe('getErrorMessage', () => {
 
   // --- File Service error codes through ApiError (REAL production shape) ---
   it('maps FILE_003 from ApiError.data to file-service.size-exceeded', () => {
-    const apiError = createApiError('File size exceeds limit', {
-      code: 'FILE_003',
-      message: 'File size exceeds limit',
-    }, 413);
+    const apiError = createApiError(
+      'File size exceeds limit',
+      {
+        code: 'FILE_003',
+        message: 'File size exceeds limit',
+      },
+      413,
+    );
 
     expect(getErrorMessage(apiError)).toBe('file-service.size-exceeded');
   });
 
   it('maps AUTH_001 from ApiError.data to file-service.auth-failed', () => {
-    const apiError = createApiError('Authentication failed', {
-      code: 'AUTH_001',
-      message: 'Authentication failed',
-    }, 401);
+    const apiError = createApiError(
+      'Authentication failed',
+      {
+        code: 'AUTH_001',
+        message: 'Authentication failed',
+      },
+      401,
+    );
 
     expect(getErrorMessage(apiError)).toBe('file-service.auth-failed');
   });
 
   it('maps PERM_001 from ApiError.data to file-service.permission-denied', () => {
-    const apiError = createApiError('Permission denied', {
-      code: 'PERM_001',
-      message: 'Permission denied',
-    }, 403);
+    const apiError = createApiError(
+      'Permission denied',
+      {
+        code: 'PERM_001',
+        message: 'Permission denied',
+      },
+      403,
+    );
 
     expect(getErrorMessage(apiError)).toBe('file-service.permission-denied');
   });
 
   it('maps backend code from ApiError.data', () => {
-    const apiError = createApiError('wrong task message', {
-      code: 'error__processes__wrong_task',
-      message: 'wrong task message',
-    }, 400);
+    const apiError = createApiError(
+      'wrong task message',
+      {
+        code: 'error__processes__wrong_task',
+        message: 'wrong task message',
+      },
+      400,
+    );
 
     expect(getErrorMessage(apiError)).toBe('task.not-found');
   });
 
   it('falls back to ApiError.data.message for unmapped codes', () => {
-    const apiError = createApiError('DB error', {
-      code: 'DB_001',
-      message: 'Database connection error',
-    }, 503);
+    const apiError = createApiError(
+      'DB error',
+      {
+        code: 'DB_001',
+        message: 'Database connection error',
+      },
+      503,
+    );
 
     expect(getErrorMessage(apiError)).toBe('Database connection error');
   });
@@ -336,11 +421,15 @@ describe('getErrorMessage', () => {
   });
 
   it('handles ApiError.data with details (File Service full payload)', () => {
-    const apiError = createApiError('File size exceeds limit', {
-      code: 'unmapped_storage_code',
-      message: 'Upload failed',
-      details: { reason: 'Maximum allowed size is 100MB' },
-    }, 503);
+    const apiError = createApiError(
+      'File size exceeds limit',
+      {
+        code: 'unmapped_storage_code',
+        message: 'Upload failed',
+        details: { reason: 'Maximum allowed size is 100MB' },
+      },
+      503,
+    );
 
     expect(getErrorMessage(apiError)).toBe('Upload failed\nMaximum allowed size is 100MB');
   });
@@ -420,10 +509,14 @@ describe('isPaidFeatureError', () => {
   });
 
   it('returns true for paid feature error via ApiError.data', () => {
-    const apiError = createApiError('Paid feature', {
-      code: 'error__conditions__paid_feature',
-      message: 'Paid feature',
-    }, 403);
+    const apiError = createApiError(
+      'Paid feature',
+      {
+        code: 'error__conditions__paid_feature',
+        message: 'Paid feature',
+      },
+      403,
+    );
 
     expect(isPaidFeatureError(apiError)).toBe(true);
   });
@@ -437,10 +530,14 @@ describe('isPaidFeatureError', () => {
   });
 
   it('returns false for non-paid feature ApiError', () => {
-    const apiError = createApiError('File not found', {
-      code: 'FILE_001',
-      message: 'File not found',
-    }, 404);
+    const apiError = createApiError(
+      'File not found',
+      {
+        code: 'FILE_001',
+        message: 'File not found',
+      },
+      404,
+    );
 
     expect(isPaidFeatureError(apiError)).toBe(false);
   });

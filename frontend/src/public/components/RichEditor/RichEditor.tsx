@@ -45,6 +45,7 @@ export const RichEditor = forwardRef<
 >(function RichEditor(
   {
     className,
+    editorClassName,
     withChecklists = false,
     withToolbar = true,
     withMentions = true,
@@ -270,6 +271,7 @@ export const RichEditor = forwardRef<
             onCancel={onCancel}
             submitIcon={submitIcon}
             cancelIcon={cancelIcon}
+            editorClassName={editorClassName}
             withControls={Boolean(onSubmit)}
             plainText={plainText}
             templateVariables={templateVariables}

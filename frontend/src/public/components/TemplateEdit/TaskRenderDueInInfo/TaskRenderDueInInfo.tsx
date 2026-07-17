@@ -4,12 +4,12 @@ import classNames from 'classnames';
 
 import { formatDuration, formatDurationMonths, getZeroDuration } from '../../../utils/dateTime';
 import { ClockIcon } from '../../icons';
-import { ITemplateTask } from '../../../types/template';
+import { ITemplateTaskClient } from '../../../types/template';
 
 import styles from '../TemplateEdit.css';
 
 interface ITaskRenderDueInProps {
-  task: ITemplateTask;
+  task: ITemplateTaskClient;
   onClick: () => void;
   isInTaskForm?: boolean;
 }

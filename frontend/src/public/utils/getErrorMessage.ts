@@ -64,13 +64,14 @@ const mapValidationMessage = (normalized: ICustomError): string | undefined => {
  * Handles three error shapes that exist in the codebase:
  *
  * 1. ApiError (from axios interceptor) — payload sits in `.data`:
- *    { message: "...", data: { code: "FILE_003", message: "..." }, status: 413 }
+ *    File Service: { data: { code: "FILE_003", message: "..." }, status: 413 }
+ *    Django/DRF:   { data: { detail: "..." }, status: 4xx } — often no code
  *
  * 2. Plain ICustomError (from auth saga resolved promises):
  *    { code: "error__processes__wrong_task", message: "Wrong task" }
  *
  * 3. Native Error (from throws, network errors):
- *    { message: "Network Error" }
+ *    { message: "Network Error" } — detail may sit on error from Object.assign
  *
  * Uses duck typing — no coupling to ApiError class.
  */
@@ -81,32 +82,39 @@ export function normalizeToCustomError(error: unknown): ICustomError | undefined
 
   const err = error as Record<string, unknown>;
 
-  // Shape 1: ApiError — response payload stored in .data
-  // Check .data first because ApiError extends Error (has .message) but NOT .code
+  const isErrorMessage = typeof err.message === 'string';
+  const isErrorDetail = typeof err.detail === 'string';
+  const isErrorCode = typeof err.code === 'string';
+
+  const errorMessage = isErrorMessage ? (err.message as string) : '';
+  const errorDetail = isErrorDetail ? (err.detail as string) : '';
+
   if (err.data && typeof err.data === 'object') {
     const data = err.data as Record<string, unknown>;
-    if (typeof data.code === 'string') {
+
+    if ('code' in data || 'message' in data || 'detail' in data) {
+      const code = typeof data.code === 'string' ? (data.code as string) : '';
+      const message = (typeof data.message === 'string' && data.message) || errorMessage;
+      const detail = (typeof data.detail === 'string' && data.detail) || errorDetail;
+
       return {
-        code: data.code,
-        message: (typeof data.message === 'string' ? data.message : undefined)
-          || (typeof err.message === 'string' ? err.message : '')
-          || '',
+        code,
+        message,
         details: data.details as ICustomError['details'],
-        detail: typeof data.detail === 'string' ? data.detail : undefined,
+        ...(detail ? { detail } : {}),
       };
     }
   }
 
-  // Shape 2: ICustomError — code and message at top level
-  if (typeof err.code === 'string' && typeof err.message === 'string') {
+  if (isErrorCode && (isErrorMessage || isErrorDetail)) {
     return error as ICustomError;
   }
 
-  // Shape 3: Error — only message available
-  if (typeof err.message === 'string') {
+  if (isErrorMessage || isErrorDetail) {
     return {
       code: '',
-      message: err.message,
+      message: errorMessage,
+      ...(errorDetail ? { detail: errorDetail } : {}),
     };
   }
 
@@ -140,8 +148,8 @@ export const getErrorMessage = (error?: unknown) => {
   const messageLower = message?.trim()?.toLowerCase() || '';
   const shouldAppendDetails = Boolean(reasonLower && reasonLower !== messageLower);
 
-  const errorDetails = details?.reason && shouldAppendDetails
-    && (details.name ? `${details.name}: ${details.reason}` : details.reason);
+  const errorDetails =
+    details?.reason && shouldAppendDetails && (details.name ? `${details.name}: ${details.reason}` : details.reason);
   const errorMessage = [message, errorDetails].filter(Boolean).join('\n');
 
   return errorMessage || UNKNOWN_ERROR;

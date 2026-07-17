@@ -15,6 +15,7 @@ import { ExtraFieldUser } from './User';
 import { ExtraFieldNumber } from './Number';
 
 import { EExtraFieldType } from '../../../types/template';
+import { EFieldLabelPosition } from '../../../types/fieldset';
 import { ExtraFieldDropdown } from './utils/ExtraFieldDropdown';
 import { getInputNameBackground } from './utils/getInputNameBackground';
 import { IExtraFieldProps } from './types';
@@ -28,7 +29,7 @@ function ExtraField(props: IExtraFieldProps) {
     field,
     field: { apiName, isRequired = false, isHidden = false },
     fieldsCount,
-    showDropdown = true,
+    showDropdown,
     deleteField,
     moveFieldUp,
     moveFieldDown,
@@ -38,13 +39,16 @@ function ExtraField(props: IExtraFieldProps) {
     wrapperClassName,
     labelBackgroundColor,
     innerRef,
-    datasetOptions,
+    labelPosition,
   } = props;
+
+  // eslint-disable-next-line react/destructuring-assignment
+  const datasetOptions = showDropdown ? (props.datasetOptions ?? []) : [];
 
   const isDatasetField = DATASET_FIELD_TYPES.includes(field.type);
 
   const datasetName = useMemo(
-    () => datasetOptions?.find((option) => option.value === String(field.dataset))?.label,
+    () => datasetOptions.find((option) => option.value === String(field.dataset))?.label,
     [datasetOptions, field.dataset],
   );
 
@@ -147,7 +151,8 @@ function ExtraField(props: IExtraFieldProps) {
     return classnames(
       styles['kick-off-input__dropdown'],
       (field.type === EExtraFieldType.Checkbox || field.type === EExtraFieldType.Radio) && styles['kick-off-input__dropdown_choices'],
-      field.type === EExtraFieldType.Creatable && styles['kick-off-input__dropdown_creatable']
+      field.type === EExtraFieldType.Creatable && styles['kick-off-input__dropdown_creatable'],
+      labelPosition === EFieldLabelPosition.Left && styles['kick-off-input__dropdown_label-left'],
     );
   };
 

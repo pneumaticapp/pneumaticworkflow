@@ -17,12 +17,13 @@ from src.accounts.permissions import (
 from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
 from src.executor import RawSqlExecutor
-from src.generics.filters import PneumaticFilterBackend
 from src.generics.mixins.views import (
     CustomViewSetMixin,
 )
 from src.generics.permissions import UserIsAuthenticated
-from src.processes.filters import TemplateFilter
+from src.processes.filters import (
+    FieldSetFilter,
+)
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.models.templates.kickoff import Kickoff
 from src.processes.models.templates.preset import TemplatePreset
@@ -30,6 +31,7 @@ from src.processes.models.templates.system_template import SystemTemplate
 from src.processes.models.templates.task import TaskTemplate
 from src.processes.models.templates.template import Template
 from src.processes.models.templates.owner import TemplateOwner
+from src.processes.models.templates.fields import FieldTemplateSelection
 from src.processes.permissions import (
     TemplateAccessPermission,
     TemplateAdminOwnerPermission,
@@ -51,6 +53,9 @@ from src.processes.serializers.templates.task import (
     TemplateStepFilterSerializer,
     TemplateStepNameSerializer,
 )
+from src.processes.serializers.templates.template_fields import (
+    TemplateOnlyFieldsSerializer,
+)
 from src.processes.serializers.templates.template import (
     TemplateAiSerializer,
     TemplateByNameSerializer,
@@ -58,7 +63,6 @@ from src.processes.serializers.templates.template import (
     TemplateExportFilterSerializer,
     TemplateListFilterSerializer,
     TemplateListSerializer,
-    TemplateOnlyFieldsSerializer,
     TemplateSerializer,
     TemplateTitlesByEventsSerializer,
     TemplateTitlesByTasksSerializer,
@@ -110,8 +114,6 @@ class TemplateViewSet(
     GenericViewSet,
 ):
     pagination_class = LimitOffsetPagination
-    filter_backends = (PneumaticFilterBackend,)
-    filterset_class = TemplateFilter
     serializer_class = TemplateSerializer
     action_serializer_classes = {
         'list': TemplateListSerializer,
@@ -127,6 +129,9 @@ class TemplateViewSet(
         'fields': TemplateOnlyFieldsSerializer,
         'presets': TemplatePresetSerializer,
         'preset': TemplatePresetSerializer,
+    }
+    action_filterset_classes = {
+        'list_fieldsets': FieldSetFilter,
     }
 
     def get_permissions(self):
@@ -242,6 +247,7 @@ class TemplateViewSet(
                 'kickoff',
                 'kickoff__fields',
                 'kickoff__fields__selections',
+                'kickoff__fieldsets',
                 Prefetch('owners', queryset=owners_qs),
                 Prefetch(
                     lookup='tasks',
@@ -251,6 +257,7 @@ class TemplateViewSet(
                         .prefetch_related(
                             'fields',
                             'fields__selections',
+                            'fieldsets',
                             'checklists',
                             'checklists__selections',
                             'conditions',
@@ -271,10 +278,21 @@ class TemplateViewSet(
                             Prefetch(
                                 lookup='fields',
                                 queryset=(
-                                    FieldTemplate.objects.all()
+                                    FieldTemplate.objects.prefetch_related(
+                                        Prefetch(
+                                            'selections',
+                                            queryset=(
+                                                FieldTemplateSelection.objects
+                                                .order_by('id')
+                                            ),
+                                            to_attr='selections_values',
+                                        ),
+                                    )
+                                    .all()
                                     .order_by('-order')
                                 ),
                             ),
+                            'fieldsets',
                         )
                     ),
                 ),
@@ -291,6 +309,7 @@ class TemplateViewSet(
                                     .order_by('-order')
                                 ),
                             ),
+                            'fieldsets',
                         )
                     ),
                 ),
@@ -421,6 +440,7 @@ class TemplateViewSet(
 
             SQL pagination (by LIMIT, OFFSET) is not possible because
             it is impossible to calculate response 'count' value """
+
         filter_slz = TemplateListFilterSerializer(data=request.GET)
         filter_slz.is_valid(raise_exception=True)
 
