@@ -4,7 +4,7 @@ exports[`Team rendered correctly 1`] = `
 <div
   className="container"
 >
-  <[object Object] />
+  <DeleteTeamUserPopupContainer />
   <AddGuestsBanner />
   <CreateUserModal
     isOpen={false}
@@ -324,7 +324,7 @@ exports[`Team rendered correctly with descending sorting 1`] = `
 <div
   className="container"
 >
-  <[object Object] />
+  <DeleteTeamUserPopupContainer />
   <AddGuestsBanner />
   <CreateUserModal
     isOpen={false}

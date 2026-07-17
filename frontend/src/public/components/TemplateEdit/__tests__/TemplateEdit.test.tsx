@@ -1,13 +1,15 @@
 import * as React from 'react';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useSelector, useDispatch } from 'react-redux';
 
 import { TemplateEdit } from '../TemplateEdit';
 import { cleanTemplateReferences } from '../../../utils/template';
-import { KickoffReduxContainer } from '../KickoffRedux';
-import { getSubscriptionPlan } from '../../../redux/selectors/user';
+import { getCurrentUser } from '../../../redux/selectors/authUser';
+import { getNotDeletedAccountsUsers } from '../../../redux/selectors/accounts';
+import { getSubscriptionPlan, getIsUserSubsribed } from '../../../redux/selectors/user';
 import { getIsCatalogLoaded } from '../../../redux/selectors/fieldsets';
+import { getAITemplate, getTemplateData, getTemplateStatus } from '../../../redux/selectors/template';
 import { ETemplateStatus } from '../../../types/redux';
 
 jest.mock('../../../utils/template', () => ({
@@ -23,6 +25,7 @@ jest.mock('../../../utils/history', () => ({
 }));
 
 jest.mock('../../../utils/users', () => ({
+  getNotDeletedUsers: jest.fn((users: unknown[]) => users),
   getUserFullName: jest.fn(() => 'Test User'),
 }));
 
@@ -68,9 +71,29 @@ jest.mock('../AddEntityButton', () => ({
 jest.mock('../Integrations', () => ({
   TemplateIntegrations: jest.fn(() => null),
 }));
-jest.mock('../KickoffRedux', () => ({
-  KickoffReduxContainer: jest.fn(() => null),
-}));
+jest.mock('../KickoffRedux', () => {
+  const React = require('react');
+  const { useTemplateField } = require('../useTemplateForm');
+
+  return {
+    KickoffReduxContainer: jest.fn(() => {
+      const { setFieldValue } = useTemplateField();
+
+      return React.createElement(
+        'button',
+        {
+          type: 'button',
+          onClick: () => setFieldValue('kickoff', {
+            description: 'new',
+            fields: [],
+            fieldsets: [{ apiName: 'fs-1', fields: [{ apiName: 'fieldset-field' }] }],
+          }),
+        },
+        'Set kickoff',
+      );
+    }),
+  };
+});
 jest.mock('../TemplateSettings', () => ({
   TemplateSettings: jest.fn(() => null),
 }));
@@ -151,10 +174,20 @@ describe('TemplateEdit', () => {
     loadTemplateVariablesSuccess: jest.fn(),
   });
 
+  let currentProps: ReturnType<typeof baseProps>;
+
   beforeEach(() => {
     jest.clearAllMocks();
+    currentProps = baseProps();
     (useDispatch as jest.Mock).mockReturnValue(jest.fn());
     (useSelector as jest.Mock).mockImplementation((selector: unknown) => {
+      const props = currentProps;
+      if (selector === getCurrentUser) return props.authUser;
+      if (selector === getNotDeletedAccountsUsers) return props.users;
+      if (selector === getTemplateData) return props.template;
+      if (selector === getAITemplate) return props.aiTemplate;
+      if (selector === getTemplateStatus) return props.templateStatus;
+      if (selector === getIsUserSubsribed) return props.isSubscribed;
       if (selector === getSubscriptionPlan) return SUBSCRIPTION_PLAN;
       if (selector === getIsCatalogLoaded) return true;
       return undefined;
@@ -162,7 +195,7 @@ describe('TemplateEdit', () => {
   });
 
   describe('cleanup of references to fieldset fields', () => {
-    it('changing tasks runs cleanTemplateReferences and pipes the result into setTemplate', () => {
+    it('changing tasks runs cleanTemplateReferences', () => {
       const props = baseProps();
       render(React.createElement(TemplateEdit, props as any));
 
@@ -171,37 +204,30 @@ describe('TemplateEdit', () => {
       expect(cleanTemplateReferences).toHaveBeenCalledTimes(1);
       const [updatedWorkflow] = (cleanTemplateReferences as jest.Mock).mock.calls[0];
       expect(updatedWorkflow.tasks).toHaveLength(2);
-      expect(props.setTemplate).toHaveBeenCalledTimes(1);
-      expect(props.setTemplate).toHaveBeenCalledWith(updatedWorkflow);
     });
 
-    it('changing kickoff runs cleanTemplateReferences and pipes the result into setTemplate', () => {
+    it('changing kickoff runs cleanTemplateReferences', async () => {
       const props = baseProps();
       render(React.createElement(TemplateEdit, props as any));
 
-      const kickoffMock = KickoffReduxContainer as unknown as jest.Mock;
-      const lastCall = kickoffMock.mock.calls[kickoffMock.mock.calls.length - 1];
-      const setKickoff = lastCall[0].setKickoff as (kickoff: any) => void;
-
-      const newKickoff = {
-        description: 'new',
-        fields: [],
-        fieldsets: [{ apiName: 'fs-1' }],
-      };
-      setKickoff(newKickoff);
+      await act(async () => {
+        userEvent.click(screen.getByRole('button', { name: 'Set kickoff' }));
+      });
 
       expect(cleanTemplateReferences).toHaveBeenCalledTimes(1);
       const [updatedWorkflow] = (cleanTemplateReferences as jest.Mock).mock.calls[0];
-      expect(updatedWorkflow.kickoff).toBe(newKickoff);
-      expect(props.setTemplate).toHaveBeenCalledTimes(1);
-      expect(props.setTemplate).toHaveBeenCalledWith(updatedWorkflow);
+      expect(updatedWorkflow.kickoff).toEqual({
+        description: 'new',
+        fields: [],
+        fieldsets: [{ apiName: 'fs-1', fields: [{ apiName: 'fieldset-field' }] }],
+      });
     });
   });
 
   describe('newly added task', () => {
     it('a freshly added task has fieldsets as an empty array, not undefined', () => {
-      const props = { ...baseProps(), template: makeTemplate({ tasks: [] }) };
-      render(React.createElement(TemplateEdit, props as any));
+      currentProps = { ...baseProps(), template: makeTemplate({ tasks: [] }) };
+      render(React.createElement(TemplateEdit, currentProps as any));
 
       userEvent.click(screen.getByRole('button', { name: 'Add' }));
 

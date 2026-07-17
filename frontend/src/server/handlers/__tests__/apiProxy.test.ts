@@ -65,7 +65,7 @@ describe('handlers', () => {
       const postMock = request.post as jest.Mock;
       const authHeader = { Authorization: 'Bearer SomeToken' };
       (getAuthHeader as jest.Mock).mockReturnValue(authHeader);
-      const errorSpy = jest.spyOn(logger, 'error');
+      const errorSpy = jest.spyOn(logger, 'error').mockImplementation(() => undefined);
       postMock.mockReturnValue({ on } as unknown as request.Request);
       const error = 'Some Bad Error';
       const post = apiProxy('post');

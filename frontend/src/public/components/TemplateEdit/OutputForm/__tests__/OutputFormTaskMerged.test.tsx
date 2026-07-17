@@ -79,7 +79,7 @@ jest.mock('../../TaskOutputFlow/MergedOutputRows', () => ({
   MergedOutputRows: (props: {
     mergedRows: Array<
       | { kind: 'field'; field: IExtraField }
-      | { kind: 'fieldset'; apiName: string; order: number }
+      | { kind: 'fieldset'; apiName?: string; order: number; sharedFieldsetId?: number }
     >;
     onDeleteField: (apiName: string) => void;
     onMoveRow: (index: number, direction: 'up' | 'down') => void;
@@ -122,7 +122,7 @@ jest.mock('../../TaskOutputFlow/MergedOutputRows', () => ({
         }
         return React.createElement(
           'div',
-          { key: `fieldset-${row.apiName}` },
+          { key: `fieldset-${row.apiName ?? row.sharedFieldsetId ?? index}` },
           React.createElement(
             'button',
             { type: 'button', onClick: () => props.onMoveRow(index, 'up') },

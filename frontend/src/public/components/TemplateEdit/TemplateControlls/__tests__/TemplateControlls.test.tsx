@@ -66,6 +66,14 @@ jest.mock('../../../UI/Notifications', () => ({
 }));
 
 jest.mock('../../../UI', () => ({
+  Button: jest.fn(
+    (props: { label: string; onClick?: () => void; disabled?: boolean }) =>
+      React.createElement(
+        'button',
+        { type: 'button', onClick: props.onClick, disabled: props.disabled },
+        props.label,
+      ),
+  ),
   RouteLeavingGuard: jest.fn(
     (props: {
       onConfirm: (path: string) => void;
