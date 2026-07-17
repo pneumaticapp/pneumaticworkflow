@@ -1,8 +1,10 @@
 import produce from 'immer';
 
+import { IFieldsetRuntime } from '../../../types/fieldset';
 import { IExtraField } from '../../../types/template';
 
 const OUTPUT_LOCALSTORAGE_KEY = 'tasks_outputs';
+const FIELDSETS_LOCALSTORAGE_KEY = 'tasks_fieldsets_outputs';
 
 type TLocalStorageOutput = {
   taskId: number;
@@ -76,7 +78,35 @@ function saveOutputsToStorage(outputs: TLocalStorageOutput[]) {
     return;
   }
 
-  const ouputsJSON = JSON.stringify(outputs);
-
-  localStorage.setItem(OUTPUT_LOCALSTORAGE_KEY, ouputsJSON);
+  localStorage.setItem(OUTPUT_LOCALSTORAGE_KEY, JSON.stringify(outputs));
 }
+
+function getStoredFieldsets(): { taskId: number; data: IFieldsetRuntime[] }[] {
+  try {
+    const stored = JSON.parse(localStorage.getItem(FIELDSETS_LOCALSTORAGE_KEY) || '[]');
+    return Array.isArray(stored) ? stored : [];
+  } catch {
+    return [];
+  }
+}
+
+export const outputStorage = {
+  save: addOrUpdateStorageOutput,
+  get: getOutputFromStorage,
+  remove: removeOutputFromLocalStorage,
+};
+
+export const fieldsetsStorage = {
+  save(taskId: number, data: IFieldsetRuntime[]) {
+    const entries = getStoredFieldsets().filter((entry) => entry.taskId !== taskId);
+    localStorage.setItem(FIELDSETS_LOCALSTORAGE_KEY, JSON.stringify([...entries, { taskId, data }]));
+  },
+  get(taskId: number) {
+    return getStoredFieldsets().find((entry) => entry.taskId === taskId)?.data;
+  },
+  remove(taskId: number) {
+    const entries = getStoredFieldsets().filter((entry) => entry.taskId !== taskId);
+    if (entries.length) localStorage.setItem(FIELDSETS_LOCALSTORAGE_KEY, JSON.stringify(entries));
+    else localStorage.removeItem(FIELDSETS_LOCALSTORAGE_KEY);
+  },
+};

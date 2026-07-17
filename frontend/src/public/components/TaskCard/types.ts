@@ -12,6 +12,7 @@ import {
   TOpenWorkflowLogPopupPayload,
   TSetWorkflowFinishedPayload,
 } from '../../redux/workflows/types';
+import { IFieldsetRuntime } from '../../types/fieldset';
 import { IAuthUser, IWorkflowLog } from '../../types/redux';
 import { IExtraField } from '../../types/template';
 import { ITask } from '../../types/tasks';
@@ -77,9 +78,11 @@ export interface ITaskOutputFieldsProps {
   accountId: number;
   isDisabled: boolean;
   outputValues: IExtraField[];
+  fieldsetOutputValues: IFieldsetRuntime[];
   status: ETaskStatus;
   taskId: number;
   editField(apiName: string): (changedProps: Partial<IExtraField>) => void;
+  editFieldsetField(apiName: string): (changedProps: Partial<IExtraField>) => void;
   onUploadStateChange(apiName: string, isUploading: boolean): void;
 }
 
@@ -90,6 +93,7 @@ export type TTaskActionsProps = Pick<
   flushOutputs(): void;
   isOutputUploading: boolean;
   outputValues: IExtraField[];
+  fieldsetOutputValues: IFieldsetRuntime[];
 };
 
 export type TTaskWorkflowLogProps = Pick<

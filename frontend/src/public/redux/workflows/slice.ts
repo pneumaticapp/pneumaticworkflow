@@ -13,7 +13,7 @@ import { IDeleteComment } from '../../api/workflows/deleteComment';
 import { IEditComment } from '../../api/workflows/editComment';
 
 import { IStoreWorkflows, IWorkflowLog, IWorkflowsList } from '../../types/redux';
-import { IKickoff, ITemplateTitleBaseWithCount, TTemplatePreset } from '../../types/template';
+import { IKickoffClient, ITemplateTitleBaseWithCount, TTemplatePreset } from '../../types/template';
 import { ITemplateStep } from '../../types/tasks';
 import {
   EWorkflowsLoadingStatus,
@@ -64,7 +64,7 @@ export const initialWorkflowsFilters: IWorkflowsSettings['values'] = {
 const initialWorkflowEdit = {
   workflow: {
     name: '',
-    kickoff: { description: '', fields: [] } as IKickoff,
+    kickoff: { description: '', fields: [], fieldsets: [] } as IKickoffClient,
   },
   isWorkflowNameEditing: false,
   isKickoffEditing: false,

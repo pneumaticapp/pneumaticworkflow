@@ -1,11 +1,10 @@
 import React from 'react';
 
 import { ETaskStatus } from '../../redux/actions';
-import { EExtraFieldMode } from '../../types/template';
 import { EInputNameBackgroundColor } from '../../types/workflow';
 import { isArrayWithItems } from '../../utils/helpers';
 import { IntlMessages } from '../IntlMessages';
-import { ExtraFieldIntl } from '../TemplateEdit/ExtraFields';
+import { MergedOutputList } from '../MergedOutputList';
 import { ITaskOutputFieldsProps } from './types';
 
 import styles from './TaskCard.css';
@@ -13,6 +12,8 @@ import styles from './TaskCard.css';
 export function TaskOutputFields({
   accountId,
   editField,
+  editFieldsetField,
+  fieldsetOutputValues,
   isDisabled,
   onUploadStateChange,
   outputValues,
@@ -21,7 +22,7 @@ export function TaskOutputFields({
 }: ITaskOutputFieldsProps) {
   const visibleOutputs = outputValues.filter((field) => !field.isHidden);
 
-  if (!isArrayWithItems(visibleOutputs) || status === ETaskStatus.Completed) {
+  if ((!isArrayWithItems(visibleOutputs) && !isArrayWithItems(fieldsetOutputValues)) || status === ETaskStatus.Completed) {
     return null;
   }
 
@@ -30,22 +31,18 @@ export function TaskOutputFields({
       <p className={styles['task-output__title']}>
         <IntlMessages id="tasks.task-outputs-fill-help" />
       </p>
-      {visibleOutputs.map((field) => (
-        <ExtraFieldIntl
-          key={`${taskId}-${field.apiName}`}
-          field={field}
-          editField={editField(field.apiName)}
-          showDropdown={false}
-          mode={EExtraFieldMode.ProcessRun}
-          labelBackgroundColor={EInputNameBackgroundColor.OrchidWhite}
-          namePlaceholder={field.name}
-          descriptionPlaceholder={field.description}
-          wrapperClassName={styles['task-output__field']}
-          accountId={accountId}
-          isDisabled={isDisabled}
-          onUploadStateChange={(isUploading) => onUploadStateChange(field.apiName, isUploading)}
-        />
-      ))}
+      <MergedOutputList
+        key={taskId}
+        fields={visibleOutputs}
+        fieldsets={fieldsetOutputValues}
+        onEditField={editField}
+        onEditFieldsetField={editFieldsetField}
+        labelBackgroundColor={EInputNameBackgroundColor.OrchidWhite}
+        fieldClassName={styles['task-output__field']}
+        accountId={accountId}
+        isDisabled={isDisabled}
+        onUploadStateChange={onUploadStateChange}
+      />
     </div>
   );
 }

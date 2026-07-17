@@ -1,33 +1,22 @@
-/// <reference types="jest" />
 import { intlMock } from '../../../../../__stubs__/intlMock';
-import { ETaskPerformerType, ITemplateTask } from '../../../../../types/template';
+import { makeTemplateTaskClient } from '../../../../../__stubs__/templates.factory';
+import { ETaskPerformerType, ITemplateTaskClient } from '../../../../../types/template';
+import { TUserListItem } from '../../../../../types/user';
+import { IGroup } from '../../../../../redux/team/types';
+import { makeUser } from '../../../../../__stubs__/users.factory';
+import { makeGroup } from '../../../../../__stubs__/team.factory';
 import { getPerformersForDropdown } from '../getPerformersForDropdown';
 import { EOptionTypes } from '../../../../UI/form/UsersDropdown';
 
 jest.mock('../../../../../utils/users', () => ({
-  getUserFullName: jest.fn((u: any) => `${u.firstName} ${u.lastName}`),
+  getUserFullName: jest.fn((u: { firstName?: string; lastName?: string }) => `${u.firstName} ${u.lastName}`),
 }));
-
 describe('getPerformersForDropdown', () => {
-  const t = (id: string, values?: Record<string, string>) => intlMock.formatMessage({ id }, values);
-  const MANAGER_LABEL = (step: string) => t('tasks.task-manager-of-step', { step });
+  const formatMsg = (id: string, values?: Record<string, string>) => intlMock.formatMessage({ id }, values);
+  const MANAGER_LABEL = (step: string) => formatMsg('tasks.task-manager-of-step', { step });
 
-  const makeTask = (overrides: Partial<ITemplateTask> = {}): ITemplateTask => ({
-    apiName: 'task-1',
-    number: 1,
+  const makeTask = (overrides: Partial<ITemplateTaskClient> = {}) => makeTemplateTaskClient({
     name: 'First Step',
-    description: '',
-    delay: null,
-    rawDueDate: null as any,
-    requireCompletionByAll: false,
-    skipForStarter: false,
-    rawPerformers: [],
-    fields: [],
-    uuid: 'uuid-1',
-    conditions: [],
-    checklists: [],
-    revertTask: null,
-    ancestors: [],
     ...overrides,
   });
 
@@ -96,8 +85,8 @@ describe('getPerformersForDropdown', () => {
     });
 
     it('generates unique values for user and group with the same id', () => {
-      const users = [{ id: 5, firstName: 'John', lastName: 'Doe' } as any];
-      const groups = [{ id: 5, name: 'Team A', type: 'regular' } as any];
+      const users: TUserListItem[] = [makeUser({ id: 5, firstName: 'John', lastName: 'Doe' })];
+      const groups: IGroup[] = [makeGroup({ id: 5, name: 'Team A' })];
 
       const result = getPerformersForDropdown(users, groups, [], intlMock.formatMessage);
 

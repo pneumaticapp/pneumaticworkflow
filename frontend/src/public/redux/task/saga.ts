@@ -52,6 +52,7 @@ import { patchTaskInList, shiftTaskList, ETaskListActions } from '../tasks/slice
 import { getErrorMessage } from '../../utils/getErrorMessage';
 import { getAuthUser, getUsers, getUserTimezone } from '../selectors/user';
 import {
+  fieldsetsStorage,
   removeOutputFromLocalStorage,
   removeOutputsFromLocalStorage,
 } from '../../components/TaskCard/utils/storageOutputs';
@@ -311,6 +312,7 @@ export function* setTaskCompleted({ payload: { taskId, output, viewMode } }: TSe
     NotificationManager.success({ title: 'tasks.task-success-complete' });
 
     removeOutputFromLocalStorage(taskId);
+    fieldsetsStorage.remove(taskId);
     yield put(setCurrentTaskStatus(ETaskStatus.Completed));
 
     if (viewMode === ETaskCardViewMode.List) {
@@ -345,7 +347,9 @@ export function* setTaskReverted({ payload: { viewMode, taskId, comment, clearOu
 
     yield revertTask({ id: taskId, comment });
 
-    removeOutputsFromLocalStorage(clearOutputTaskIds ?? [taskId]);
+    const outputTaskIds = clearOutputTaskIds ?? [taskId];
+    removeOutputsFromLocalStorage(outputTaskIds);
+    outputTaskIds.forEach(fieldsetsStorage.remove);
 
     NotificationManager.success({ message: 'tasks.task-success-revert' });
 

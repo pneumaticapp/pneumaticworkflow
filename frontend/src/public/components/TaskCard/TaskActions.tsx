@@ -19,6 +19,7 @@ export function TaskActions({
   viewMode,
   status,
   outputValues,
+  fieldsetOutputValues,
   flushOutputs,
   isOutputUploading,
   setTaskCompleted,
@@ -83,7 +84,11 @@ export function TaskActions({
       onClick={() => {
         if (actionsDisabled) return;
         flushOutputs();
-        setTaskCompleted({ taskId, viewMode, output: outputValues });
+        setTaskCompleted({
+          taskId,
+          viewMode,
+          output: [...outputValues, ...fieldsetOutputValues.flatMap((fieldset) => fieldset.fields)],
+        });
       }}
       label={formatMessage({ id: 'processes.complete-task' })}
       size="md"

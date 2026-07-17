@@ -1,11 +1,14 @@
 import React, { ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
+import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
+import { EFieldLabelPosition } from '../../../../types/fieldset';
 import { EExtraFieldMode } from '../../../../types/template';
 import { TUploadedFile, uploadFiles } from '../../../../utils/uploadFiles';
 import { parseMarkdownToFiles } from '../../../../utils/parseMarkdownFiles';
 import { logger } from '../../../../utils/logger';
 import { Button } from '../../../UI/Buttons/Button';
+import { FieldLabel } from '../utils/FieldLabel';
 import { NotificationManager } from '../../../UI/Notifications';
 import { IWorkflowExtraFieldProps } from '../types';
 import { ExtraFieldFilesGrid } from './ExtraFieldFilesGrid';
@@ -21,6 +24,8 @@ export function ExtraFieldFile({
   mode = EExtraFieldMode.Kickoff,
   editField,
   isDisabled = false,
+  labelBackgroundColor,
+  labelPosition,
   onUploadStateChange,
 }: IWorkflowExtraFieldProps) {
   const { formatMessage } = useIntl();
@@ -122,42 +127,65 @@ export function ExtraFieldFile({
         field={field}
         isDisabled={isDisabled}
         namePlaceholder={namePlaceholder}
+        labelPosition={labelPosition}
         editField={editField}
       />
     );
   }
 
+  const isLabelLeft = labelPosition === EFieldLabelPosition.Left;
+
   return (
-    <div className={styles['extra-field-file__container']} data-autofocus-first-field>
-      <div>
-        <div className={styles['extra-field-file__field-name']}>{field.name}</div>
-        {field.isRequired && <span className={kickoffStyles['kick-off-required-sign']} />}
-      </div>
-      <ExtraFieldFilesGrid
-        attachments={filesToUpload}
-        deleteFile={handleDeleteFile}
-        isUploading={isUploading}
-        isEdit={!isDisabled}
-      />
-      <input
-        className={styles['extra-field-file__ref']}
-        disabled={isDisabled || isUploading}
-        multiple
-        onChange={handleUploadFile}
-        ref={uploadFieldRef}
-        type="file"
-      />
-      <div className={styles['extra-field-file__upload-button-conteiner']}>
-        <Button
-          label={formatMessage({ id: 'file-upload.label-upload-button' })}
-          size="sm"
-          buttonStyle="transparent-black"
-          disabled={isDisabled || isUploading}
-          onClick={(event) => {
-            event.preventDefault();
-            uploadFieldRef.current?.click();
-          }}
+    <div
+      className={classnames(
+        styles['extra-field-file__container'],
+        isLabelLeft && kickoffStyles['kick-off-input__field_label-left'],
+      )}
+      data-autofocus-first-field
+    >
+      {isLabelLeft ? (
+        <FieldLabel
+          name={field.name}
+          isRequired={field.isRequired || false}
+          isDisabled={isDisabled}
+          mode={mode}
+          labelBackgroundColor={labelBackgroundColor}
+          handleChangeName={(event) => editField({ name: event.target.value })}
+          className={kickoffStyles['kick-off-input__name_label-left_aligned-start']}
         />
+      ) : (
+        <div>
+          <div className={styles['extra-field-file__field-name']}>{field.name}</div>
+          {field.isRequired && <span className={kickoffStyles['kick-off-required-sign']} />}
+        </div>
+      )}
+      <div {...(isLabelLeft && { className: styles['file-content-wrapper_label-left'] })}>
+        <ExtraFieldFilesGrid
+          attachments={filesToUpload}
+          deleteFile={handleDeleteFile}
+          isUploading={isUploading}
+          isEdit={!isDisabled}
+        />
+        <input
+          className={styles['extra-field-file__ref']}
+          disabled={isDisabled || isUploading}
+          multiple
+          onChange={handleUploadFile}
+          ref={uploadFieldRef}
+          type="file"
+        />
+        <div className={styles['extra-field-file__upload-button-conteiner']}>
+          <Button
+            label={formatMessage({ id: 'file-upload.label-upload-button' })}
+            size="sm"
+            buttonStyle="transparent-black"
+            disabled={isDisabled || isUploading}
+            onClick={(event) => {
+              event.preventDefault();
+              uploadFieldRef.current?.click();
+            }}
+          />
+        </div>
       </div>
     </div>
   );

@@ -55,7 +55,13 @@ export function TaskCard({
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
   const [uploadingFieldNames, setUploadingFieldNames] = useState<Set<string>>(() => new Set());
-  const { outputValues, editField, flushOutputs } = useTaskOutput(task);
+  const {
+    outputValues,
+    fieldsetOutputValues,
+    editField,
+    editFieldsetField,
+    flushOutputs,
+  } = useTaskOutput(task);
   const helpTextLocal = helpText ?? workflow?.description ?? null;
   const isSubmitting = status === ETaskStatus.Completing || status === ETaskStatus.Returning;
   const handleUploadStateChange = useCallback((apiName: string, isUploading: boolean) => {
@@ -156,9 +162,11 @@ export function TaskCard({
           <TaskOutputFields
             accountId={accountId}
             outputValues={outputValues}
+            fieldsetOutputValues={fieldsetOutputValues}
             status={status}
             taskId={task.id}
             editField={editField}
+            editFieldsetField={editFieldsetField}
             isDisabled={isSubmitting}
             onUploadStateChange={handleUploadStateChange}
           />
@@ -167,6 +175,7 @@ export function TaskCard({
             viewMode={viewMode}
             status={status}
             outputValues={outputValues}
+            fieldsetOutputValues={fieldsetOutputValues}
             flushOutputs={flushOutputs}
             isOutputUploading={uploadingFieldNames.size > 0}
             setTaskCompleted={setTaskCompleted}

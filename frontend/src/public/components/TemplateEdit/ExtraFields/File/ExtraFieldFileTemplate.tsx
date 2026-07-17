@@ -3,11 +3,14 @@ import AutosizeInput from 'react-input-autosize';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
+import { EFieldLabelPosition } from '../../../../types/fieldset';
 import { validateKickoffFieldName } from '../../../../utils/validators';
 import { IntlMessages } from '../../../IntlMessages';
 import { PencilSmallIcon } from '../../../icons';
 import { Button } from '../../../UI/Buttons/Button';
+import { FieldLabel } from '../utils/FieldLabel';
 import kickoffStyles from '../../KickoffRedux/KickoffRedux.css';
+import { EExtraFieldMode } from '../../../../types/template';
 import { IExtraFieldFileTemplateProps } from './types';
 
 import styles from './ExtraFieldFile.css';
@@ -16,6 +19,7 @@ export function ExtraFieldFileTemplate({
   field,
   isDisabled,
   namePlaceholder,
+  labelPosition,
   editField,
 }: IExtraFieldFileTemplateProps) {
   const { formatMessage } = useIntl();
@@ -24,7 +28,22 @@ export function ExtraFieldFileTemplate({
   const fieldNameErrorMessage = validateKickoffFieldName(field.name) || '';
 
   return (
-    <div className={styles['extra-field-file__conteiner--template']}>
+    <div
+      className={classnames(
+        styles['extra-field-file__conteiner--template'],
+        labelPosition === EFieldLabelPosition.Left && kickoffStyles['kick-off-input__field_label-left'],
+      )}
+    >
+      {labelPosition === EFieldLabelPosition.Left ? (
+        <FieldLabel
+          name={field.name}
+          isRequired={field.isRequired || false}
+          isDisabled={isDisabled}
+          mode={EExtraFieldMode.Kickoff}
+          namePlaceholder={namePlaceholder}
+          handleChangeName={(event) => editField({ name: event.target.value })}
+        />
+      ) : (
       <div className={styles['extra-field-file__input--template']}>
         <AutosizeInput
           inputRef={(ref) => {
@@ -63,6 +82,7 @@ export function ExtraFieldFileTemplate({
           </button>
         )}
       </div>
+      )}
       {fieldNameErrorMessage && (
         <p className={styles['extra-field-file__error-message--template']}>
           <IntlMessages id={fieldNameErrorMessage} />
