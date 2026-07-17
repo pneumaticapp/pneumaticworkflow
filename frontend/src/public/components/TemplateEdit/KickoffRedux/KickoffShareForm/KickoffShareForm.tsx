@@ -1,5 +1,5 @@
 import Switch from 'rc-switch';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
@@ -7,7 +7,6 @@ import { useSelector } from 'react-redux';
 
 import { getIsUserSubsribed, getSubscriptionPlan } from '../../../../redux/selectors/user';
 import { Tabs } from '../../../UI';
-import { useDidUpdateEffect } from '../../../../hooks/useDidUpdateEffect';
 import { ITemplateClient } from '../../../../types/template';
 import { trackShareKickoffForm } from '../../../../utils/analytics';
 import { TPublicFormType } from '../../../../types/publicForms';
@@ -41,10 +40,10 @@ export function KickoffShareForm({ className }: IKickoffShareFormProps) {
     [formatMessage],
   );
 
-  const [isSuccessUrlEnabled, setIsSuccessUrlEnabled] = useState(Boolean(publicSuccessUrl));
-  const [successUrlState, setSuccessUrlState] = useState(publicSuccessUrl || '');
-  const [isShared, setIsShared] = useState(isPublic || isEmbedded);
-  const [activeTab, setActiveTab] = useState<TPublicFormType>('shared');
+  const isSuccessUrlEnabled = publicSuccessUrl != null;
+  const successUrlState = publicSuccessUrl || '';
+  const isShared = isPublic || isEmbedded;
+  const [activeTab, setActiveTab] = useState<TPublicFormType>(() => (!isPublic && isEmbedded ? 'embedded' : 'shared'));
 
   const embedCode = useMemo(() => {
     if (!embedUrl) return null;
@@ -58,22 +57,23 @@ export function KickoffShareForm({ className }: IKickoffShareFormProps) {
     });
   };
 
-  useDidUpdateEffect(() => {
-    if (!isSuccessUrlEnabled) {
-      editTemplate({ publicSuccessUrl: null });
-    } else {
-      editTemplate({ publicSuccessUrl: successUrlState });
-    }
-  }, [isSuccessUrlEnabled]);
+  useEffect(() => {
+    setActiveTab((currentTab) => {
+      if (!isShared) return 'shared';
+      if (!isPublic && isEmbedded) return 'embedded';
+      if (isPublic && !isEmbedded) return 'shared';
+
+      return currentTab;
+    });
+  }, [isEmbedded, isPublic, isShared]);
 
   const toggleSuccessUrlEnabled = () => {
-    setIsSuccessUrlEnabled(!isSuccessUrlEnabled);
+    editTemplate({ publicSuccessUrl: isSuccessUrlEnabled ? null : successUrlState });
   };
 
   const toogleFormIsShared = () => {
     const newIsShared = !isShared;
 
-    setIsShared(newIsShared);
     updateIsFormPublic(newIsShared);
     updateIsFormEmbedded(newIsShared);
     if (newIsShared) trackShareKickoffForm();
@@ -102,7 +102,6 @@ export function KickoffShareForm({ className }: IKickoffShareFormProps) {
   const changeSuccessUrl = (event: FormEvent<HTMLInputElement>) => {
     const newSuccessUrl = event.currentTarget.value;
     editTemplate({ publicSuccessUrl: newSuccessUrl });
-    setSuccessUrlState(newSuccessUrl);
   };
 
   const renderTabs = () => {
