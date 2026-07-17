@@ -50,7 +50,7 @@ import { getTemplateData } from '../selectors/template';
 import { getTemplate } from '../../api/getTemplate';
 import { getSystemTemplate } from '../../api/getSystemTemplate';
 import { checkSomeRouteIsActive, history } from '../../utils/history';
-import { ITemplate, ITemplateRequest, ITemplateResponse } from '../../types/template';
+import { ITemplateClient, ITemplateRequest, ITemplateResponse } from '../../types/template';
 import { logger } from '../../utils/logger';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { updateTemplate } from '../../api/updateTemplate';
@@ -60,6 +60,9 @@ import { insertId } from '../../utils/templates/insertId';
 import { ETemplateStatus } from '../../types/redux';
 import { TUserListItem } from '../../types/user';
 import { loadTemplateIntegrationsStats, loadTemplates } from '../actions';
+import { loadFieldsetsCatalog } from '../fieldsets/slice';
+import { loadFieldsetsCatalogSuccess, loadFieldsetsCatalogFailed } from '../fieldsets/slice';
+import { getIsCatalogLoaded, getFieldsetsCatalogIsLoading } from '../selectors/fieldsets';
 import { copyTemplate } from '../../api/copyTemplate';
 import { deleteTemplate } from '../../api/deleteTemplate';
 import { setGeneralLoaderVisibility } from '../general/actions';
@@ -75,7 +78,7 @@ function* setTemplateByTemplateResponse(template: ITemplateResponse) {
   yield put(setTemplate(normalizedTemplate));
 }
 
-function* fetchTemplate({ payload: id }: TLoadTemplate) {
+export function* fetchTemplate({ payload: id }: TLoadTemplate) {
   if (!Number.isInteger(id)) {
     history.replace(ERoutes.Templates);
     NotificationManager.warning({ message: 'template.not-found' });
@@ -86,8 +89,19 @@ function* fetchTemplate({ payload: id }: TLoadTemplate) {
   try {
     const template: ITemplateResponse = yield getTemplate(id);
     yield setTemplateByTemplateResponse(template);
-    yield put(setTemplateStatus(ETemplateStatus.Saved));
 
+    const isCatalogLoaded: ReturnType<typeof getIsCatalogLoaded> = yield select(getIsCatalogLoaded);
+    const isCatalogLoading: ReturnType<typeof getFieldsetsCatalogIsLoading> = yield select(getFieldsetsCatalogIsLoading);
+
+    if (!isCatalogLoaded && !isCatalogLoading) {
+      yield put(loadFieldsetsCatalog());
+    }
+
+    if (!isCatalogLoaded) {
+      yield take([loadFieldsetsCatalogSuccess.type, loadFieldsetsCatalogFailed.type]);
+    }
+
+    yield put(setTemplateStatus(ETemplateStatus.Saved));
     yield put(loadTemplateIntegrationsStats({ templates: [template.id] }));
   } catch (error) {
     logger.info('failed lo load template: ', error);
@@ -102,9 +116,9 @@ function* patchTemplateSaga({ payload: { changedFields, onSuccess, onFailed } }:
 
   yield put(setTemplateStatus(ETemplateStatus.Saving));
 
-  const nonDeactivativeFields: (keyof ITemplate)[] = ['isActive', 'isPublic', 'publicUrl'];
+  const nonDeactivativeFields: (keyof ITemplateClient)[] = ['isActive', 'isPublic', 'publicUrl'];
   let shouldDeactivateTemplate = Object.keys(changedFields).some(
-    (key) => !nonDeactivativeFields.includes(key as keyof ITemplate),
+    (key) => !nonDeactivativeFields.includes(key as keyof ITemplateClient),
   );
 
   if (Object.keys(changedFields).length === 1 && changedFields.hasOwnProperty('kickoff')) {
@@ -112,7 +126,7 @@ function* patchTemplateSaga({ payload: { changedFields, onSuccess, onFailed } }:
       changedFields.kickoff?.description === template.kickoff.description ? shouldDeactivateTemplate : false;
   }
 
-  const mergedTemplate: ITemplate = {
+  const mergedTemplate: ITemplateClient = {
     ...template,
     ...changedFields,
     ...(shouldDeactivateTemplate && { isActive: false }),
@@ -203,7 +217,7 @@ function* fetchSaveTemplate(onSuccess?: () => void, onFailed?: () => void) {
   const editingTemplate: ReturnType<typeof getTemplateData> = yield select(getTemplateData);
   const templateRequest = mapTemplateRequest(editingTemplate);
 
-  const savedTemplate: ITemplate | null = yield createOrUpdateTemplate(templateRequest, isSubscribed, users);
+  const savedTemplate: ITemplateClient | null = yield createOrUpdateTemplate(templateRequest, isSubscribed, users);
   const lastTemplateState: ReturnType<typeof getTemplateData> = yield select(getTemplateData);
 
   if (!savedTemplate) {
@@ -216,7 +230,7 @@ function* fetchSaveTemplate(onSuccess?: () => void, onFailed?: () => void) {
 
   const isTemplateCreated = !templateRequest.id;
 
-  const newTemplateState: ITemplate = {
+  const newTemplateState: ITemplateClient = {
     ...insertId(lastTemplateState, savedTemplate),
     updatedBy: savedTemplate.updatedBy,
     dateUpdated: savedTemplate.dateUpdated,

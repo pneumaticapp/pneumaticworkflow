@@ -115,7 +115,7 @@ import { sendWorkflowComment } from '../../api/sendWorkflowComment';
 import { finishWorkflow } from '../../api/finishWorkflow';
 import { editWorkflow, IEditWorkflowResponse } from '../../api/editWorkflow';
 import { getTemplatesTitles, TGetTemplatesTitlesResponse } from '../../api/getTemplatesTitles';
-import { IKickoff, ITemplateResponse, TTemplatePreset } from '../../types/template';
+import { IKickoffClient, ITemplateResponse, TTemplatePreset } from '../../types/template';
 import { getWorkflowLogStore } from '../selectors/workflowLog';
 
 import { TChannelAction } from '../tasks/saga';
@@ -127,6 +127,7 @@ import { handleLoadTemplateVariables } from '../templates/saga';
 import { deleteWorkflow } from '../../api/deleteWorkflow';
 import { getTemplate } from '../../api/getTemplate';
 import { getRunnableWorkflow, loadDatasetsMap } from '../../components/TemplateEdit/utils/getRunnableWorkflow';
+import { mapTemplateFieldsetsToRuntime } from '../../utils/mapTemplateFieldsetsToRuntime';
 import { getClonedKickoff } from '../../components/Workflows/WorkflowsGridPage/WorkflowCard/utils/getClonedKickoff';
 import { getWorkflowsCurrentPerformerCounters } from '../../api/getWorkflowsCurrentPerformerCounters';
 import { getWorkflowsStartersCounters } from '../../api/getWorkflowsStartersCounters';
@@ -625,14 +626,19 @@ export function* cloneWorkflowSaga({
       throw new Error('failed to prepare runnable workflow object');
     }
 
-    const datasetsMap: Record<number, string[]> = yield call(loadDatasetsMap, template.kickoff);
+    const { normalizedTemplate, loadedFieldsets } = mapTemplateFieldsetsToRuntime(template);
+    const datasetsMap: Record<number, string[]> = yield call(
+      loadDatasetsMap, normalizedTemplate.kickoff, loadedFieldsets,
+    );
 
-    const runnableWorkflow = getRunnableWorkflow(template, datasetsMap);
+    const runnableWorkflow = getRunnableWorkflow(normalizedTemplate, datasetsMap, loadedFieldsets);
     if (!runnableWorkflow) {
       return;
     }
 
-    const kickoff: IKickoff = yield getClonedKickoff(formattedworkflowDetails.kickoff, template.kickoff);
+    const kickoff: IKickoffClient = yield getClonedKickoff(
+      formattedworkflowDetails.kickoff, normalizedTemplate.kickoff,
+    );
 
     yield put(
       openRunWorkflowModal({

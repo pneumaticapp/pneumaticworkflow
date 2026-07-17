@@ -51,6 +51,8 @@ export enum ERoutes {
   Tenants = '/tenants/',
   Datasets = '/datasets/',
   DatasetDetail = '/datasets/:id/',
+  Fieldsets = '/fieldsets/',
+  FieldsetDetail = '/fieldsets/:id/',
 }
 
 export enum EPublicFormRoutes {
