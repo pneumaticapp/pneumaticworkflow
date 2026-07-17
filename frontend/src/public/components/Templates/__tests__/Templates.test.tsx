@@ -1,69 +1,81 @@
-// import React from 'react';
-// import { shallow } from 'enzyme';
+import * as React from 'react';
+import { render, screen } from '@testing-library/react';
+import { useDispatch, useSelector } from 'react-redux';
+import { IntlProvider } from 'react-intl';
+import { MemoryRouter } from 'react-router-dom';
 
-// import { Templates, ITemplatesProps } from '../Templates';
-// import { ETemplatesSorting } from '../../../types/workflow';
+import { Templates } from '../Templates';
+import { ETemplatesSorting } from '../../../types/workflow';
+import { ETemplatesSystemStatus } from '../../../redux/actions';
+import { enMessages } from '../../../lang/locales/en_US';
+import {
+  loadTemplates,
+  loadTemplatesSystem,
+  loadTemplatesSystemCategories,
+} from '../../../redux/actions';
+import { INIT_STATE as INIT_TEMPLATES_STATE } from '../../../redux/templates/reducer';
 
-// const mockProps: ITemplatesProps = {
-//   templatesList: {
-//     count: 5,
-//     offset: 0,
-//     items: [{
-//       id: 1,
-//       isActive: true,
-//       name: 'Test Workflow',
-//       tasksCount: 5,
-//       performersCount: 1,
-//       kickoff: null,
-//       templateOwners: [1, 2],
-//       isPublic: false,
-//     }],
-//   },
-//   systemTemplates: {
-//     isLoading: true,
-//     items: [],
-//     categories: [],
-//     filter: {
-//       searchText: '',
-//       category: null,
-//     },
-//   },
-//   canEdit: true,
-//   templatesListSorting: ETemplatesSorting.DateDesc,
-//   loadTemplates: jest.fn(),
-//   loadTemplatesSystem: jest.fn(),
-//   loadTemplatesSystemCategories: jest.fn(),
-//   resetTemplates: jest.fn(),
-//   openRunWorkflowModal: jest.fn(),
-//   cloneTemplate: jest.fn(),
-//   deleteTemplate: jest.fn(),
-//   setIsAITemplateModalOpened: jest.fn(),
-//   changeTemplatesSystemFilter:  jest.fn(),
-// };
+jest.mock('../../../constants/enviroment', () => ({
+  isEnvAi: false,
+}));
+
+const createMockState = ({ isAdmin }: { isAdmin: boolean }) => ({
+  authUser: {
+    isAdmin,
+  },
+  templates: {
+    ...INIT_TEMPLATES_STATE,
+    templatesList: {
+      count: 0,
+      offset: 0,
+      items: [],
+    },
+    templatesListSorting: ETemplatesSorting.DateDesc,
+    systemTemplates: {
+      ...INIT_TEMPLATES_STATE.systemTemplates,
+      status: ETemplatesSystemStatus.WaitingForAction,
+    },
+  },
+});
+
+const renderTemplates = () =>
+  render(
+    <MemoryRouter>
+      <IntlProvider locale="en" messages={enMessages}>
+        <Templates />
+      </IntlProvider>
+    </MemoryRouter>,
+  );
 
 describe('Templates', () => {
+  const mockDispatch = jest.fn();
+
   beforeEach(() => {
-    jest.resetAllMocks();
+    jest.clearAllMocks();
+    (useDispatch as jest.Mock).mockReturnValue(mockDispatch);
   });
-  it('if the loading prop is passed, a loading indicator will render in the component', () => {
-    // const wrapper = shallow(<Templates {...mockProps} loading/>);
 
-    // expect(wrapper.exists('.loading')).toEqual(true);
+  it('loads system templates for admin', () => {
+    (useSelector as jest.Mock).mockImplementation((selector) => selector(createMockState({ isAdmin: true })));
+
+    renderTemplates();
+
+    expect(mockDispatch).toHaveBeenCalledWith(loadTemplates(0));
+    expect(mockDispatch).toHaveBeenCalledWith(loadTemplatesSystem());
+    expect(mockDispatch).toHaveBeenCalledWith(loadTemplatesSystemCategories());
+    expect(screen.getByText('Explore Workflow Template Examples')).toBeInTheDocument();
+    expect(screen.getByText('New Template')).toBeInTheDocument();
   });
-  it('clicking the “Load More” button triggers the loading of new templates', () => {
-    // const wrapper = shallow(<Templates {...mockProps}/>);
 
-    // wrapper.find({ 'data-test-id': 'show-more-button' }).simulate('click');
+  it('does not load or show system templates for non-admin', () => {
+    (useSelector as jest.Mock).mockImplementation((selector) => selector(createMockState({ isAdmin: false })));
 
-    // expect(mockProps.loadTemplates).toHaveBeenCalledWith(1);
-    // expect(mockProps.loadTemplates).toHaveBeenCalledTimes(2);
-  });
-  it('clicking the “Load More” button does not trigger the loading of new templates if the count is less than the limit', () => {
-    // const workflowList = {...mockProps.templatesList, count: 0};
-    // const wrapper = shallow(<Templates {...mockProps} templatesList={workflowList}/>);
+    renderTemplates();
 
-    // wrapper.find({ 'data-test-id': 'show-more-button' }).simulate('click');
-
-    // expect(mockProps.loadTemplates).toHaveBeenCalledTimes(1);
+    expect(mockDispatch).toHaveBeenCalledWith(loadTemplates(0));
+    expect(mockDispatch).not.toHaveBeenCalledWith(loadTemplatesSystem());
+    expect(mockDispatch).not.toHaveBeenCalledWith(loadTemplatesSystemCategories());
+    expect(screen.queryByText('Explore Workflow Template Examples')).not.toBeInTheDocument();
+    expect(screen.queryByText('New Template')).not.toBeInTheDocument();
   });
 });

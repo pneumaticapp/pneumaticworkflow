@@ -177,6 +177,7 @@ export function TasksLayoutComponent({
             <FilterSelect
               isLoading={areFilterTemplatesLoading}
               isSearchShown
+              isWideMenu
               noValueLabel={formatMessage({ id: 'sorting.all-templates' })}
               placeholderText={formatMessage({ id: 'sorting.no-template-found' })}
               selectedOption={templateIdFilter}

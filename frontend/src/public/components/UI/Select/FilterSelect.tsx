@@ -49,6 +49,7 @@ interface IFilterSelectCommonProps<
   toggleClassName?: string;
   arrowClassName?: string;
   menuClassName?: string;
+  isWideMenu?: boolean;
   optionIdKey: IdKey;
   optionLabelKey: LabelKey;
   containerClassname?: string;
@@ -99,6 +100,7 @@ export function FilterSelect<
     toggleClassName,
     arrowClassName,
     menuClassName,
+    isWideMenu,
     options,
     groupedOptions,
     flatGroupedOptions,
@@ -171,6 +173,8 @@ export function FilterSelect<
             onClear={handleClearSearchText}
             fieldSize="md"
             autoFocus
+            autoComplete="one-time-code"
+            name="filter-select-search"
             placeholder={searchPlaceholder}
           />
         </div>
@@ -438,6 +442,7 @@ export function FilterSelect<
           className={classnames(
             styles['dropdown-menu'],
             styles['dropdown-menu_search'],
+            isWideMenu && styles['dropdown-menu_wide'],
             menuClassName,
             positionFixed && styles['dropdown-menu__position-fixed'],
           )}

@@ -1,10 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import PerfectScrollbar from 'react-perfect-scrollbar';
 import { useIntl } from 'react-intl';
+import { useDispatch, useSelector } from 'react-redux';
 import { debounce } from 'throttle-debounce';
 import InfiniteScroll from 'react-infinite-scroll-component';
 
-import { ITemplatesSystem, ITemplatesSystemCategories } from '../../../types/redux';
+import { ITemplatesSystemCategories } from '../../../types/redux';
 import { TemplateSystemCard } from '../TemplateSystemCard/TemplateSystemCard';
 import { TemplateSystemCategoryItem } from '../TemplateSystemCategoryItem';
 import { InputField, Placeholder } from '../../UI';
@@ -14,19 +15,22 @@ import { EPageTitle } from '../../../constants/defaultValues';
 import { ISystemTemplate } from '../../../types/template';
 import { TasksPlaceholderIcon } from '../../Tasks/TasksPlaceholderIcon';
 import { TemplateSystemSkeleton } from '../TemplateSystemSkeleton';
+import {
+  changeTemplatesSystemPaginationNext,
+  changeTemplatesSystemSelectionCategory,
+  changeTemplatesSystemSelectionSearch,
+  ETemplatesSystemStatus,
+} from '../../../redux/actions';
+import { getTemplatesSystem } from '../../../redux/selectors/templates';
 
 import styles from '../Templates.css';
-import { ETemplatesSystemStatus } from '../../../redux/actions';
 
 const LOADERS_QUANTITY = 4;
 
-export function TemplatesSystem({
-  systemTemplates,
-  changeTemplatesSystemSelectionSearch,
-  changeTemplatesSystemSelectionCategory,
-  changeTemplatesSystemPaginationNext,
-}: ITemplatesSystemProps) {
+export function TemplatesSystem() {
+  const dispatch = useDispatch();
   const { formatMessage } = useIntl();
+  const systemTemplates = useSelector(getTemplatesSystem);
 
   const {
     status,
@@ -42,16 +46,20 @@ export function TemplatesSystem({
   const [searchQuery, setSearchQuery] = useState(searchText);
   const [activeCategory, setActiveCategory] = useState(selectCategory);
 
-  useEffect(() => changeTemplatesSystemSelectionCategory(activeCategory), [activeCategory]);
+  const debounceChangeTemplatesSystemSelectionSearch = useCallback(
+    debounce(500, (value: string) => {
+      dispatch(changeTemplatesSystemSelectionSearch(value));
+    }),
+    [dispatch],
+  );
+
+  useEffect(() => {
+    dispatch(changeTemplatesSystemSelectionCategory(activeCategory));
+  }, [activeCategory, dispatch]);
 
   useEffect(() => {
     debounceChangeTemplatesSystemSelectionSearch(searchQuery);
-  }, [searchQuery]);
-
-  const debounceChangeTemplatesSystemSelectionSearch = useCallback(
-    debounce(500, changeTemplatesSystemSelectionSearch),
-    [],
-  );
+  }, [searchQuery, debounceChangeTemplatesSystemSelectionSearch]);
 
   const skeleton = Array.from(Array(LOADERS_QUANTITY), (_, index) => <TemplateSystemSkeleton key={index} />);
 
@@ -108,7 +116,7 @@ export function TemplatesSystem({
     return (
       <InfiniteScroll
         dataLength={items.length}
-        next={() => changeTemplatesSystemPaginationNext()}
+        next={() => dispatch(changeTemplatesSystemPaginationNext())}
         loader={skeleton}
         hasMore={!isListFullLoaded || isLoading}
         className={styles['cards-wrapper']}
@@ -155,11 +163,4 @@ export function TemplatesSystem({
       {renderTemplates()}
     </>
   );
-}
-
-export interface ITemplatesSystemProps {
-  systemTemplates: ITemplatesSystem;
-  changeTemplatesSystemSelectionSearch(payload: string): void;
-  changeTemplatesSystemSelectionCategory(payload: number | null): void;
-  changeTemplatesSystemPaginationNext(payload: void): void;
 }

@@ -126,6 +126,11 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  /* Expand clip box for emoji without changing visual line-height */
+  padding-top: 0.2em;
+  padding-bottom: 0.2em;
+  margin-top: -0.2em;
+  margin-bottom: -0.2em;
 }
 
 @define-mixin text-overflow $line: 1 {
@@ -137,6 +142,11 @@
   line-clamp: $line;
   text-wrap: wrap;
   word-break: break-word;
+  /* Expand clip box for emoji without changing visual line-height */
+  padding-top: 0.2em;
+  padding-bottom: 0.2em;
+  margin-top: -0.2em;
+  margin-bottom: -0.2em;
 }
 
 @define-mixin text-wrap {

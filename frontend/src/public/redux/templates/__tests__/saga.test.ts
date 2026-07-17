@@ -1,14 +1,19 @@
 import { runSaga, stdChannel } from 'redux-saga';
 import { call } from 'redux-saga/effects';
+import { expectSaga } from 'redux-saga-test-plan';
+import * as matchers from 'redux-saga-test-plan/matchers';
 
 import * as getTemplatesApi from '../../../api/getTemplates';
 import { IGetTemplatesResponsePaginated } from '../../../api/getTemplates';
+import * as getSystemTemplatesApi from '../../../api/getSystemTemplates';
+import * as getSystemTemplatesCategoriesApi from '../../../api/getSystemTemplatesCategories';
 import { ETemplatesSorting } from '../../../types/workflow';
-import { LIMIT_LOAD_TEMPLATES } from '../../../constants/defaultValues';
-import { handleLoadTemplateVariables } from '../saga';
+import { LIMIT_LOAD_TEMPLATES, LIMIT_LOAD_SYSTEMS_TEMPLATES } from '../../../constants/defaultValues';
+import { getIsAdmin } from '../../selectors/user';
+import { getTemplatesSystemList } from '../../selectors/templates';
+import { fetchTemplatesSystem, fetchTemplatesSystemCategories, handleLoadTemplateVariables } from '../saga';
 import { getTemplateFields } from '../../../api/getTemplateFields';
 import { buildRuntimeMergedOutputParts } from '../../../components/TemplateEdit/TaskOutputFlow/mergeTaskOutputFlow';
-
 
 jest.mock('../../../utils/getConfig', () => ({
   getBrowserConfigEnv: jest.fn().mockReturnValue({
@@ -16,6 +21,8 @@ jest.mock('../../../utils/getConfig', () => ({
       urls: {
         templates: '/templates',
         templatesTitlesByOwners: '/templates/titles-by-owners',
+        systemTemplates: '/templates/system',
+        systemTemplatesCategories: '/templates/system/categories',
       },
     },
   }),
@@ -56,6 +63,62 @@ jest.mock('../../../utils/getErrorMessage', () => ({
 describe('templates saga', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  describe('fetchTemplatesSystem', () => {
+    it('does not call system templates API for non-admin', () => {
+      const getTemplatesSystemMock = jest.spyOn(getSystemTemplatesApi, 'getTemplatesSystem');
+
+      return expectSaga(fetchTemplatesSystem as any)
+        .provide([[matchers.select.selector(getIsAdmin), false]])
+        .run()
+        .then(() => {
+          expect(getTemplatesSystemMock).not.toHaveBeenCalled();
+        });
+    });
+
+    it('calls system templates API for admin', () => {
+      const getTemplatesSystemMock = jest
+        .spyOn(getSystemTemplatesApi, 'getTemplatesSystem')
+        .mockResolvedValue({ count: 0, results: [] });
+
+      return expectSaga(fetchTemplatesSystem as any)
+        .provide([
+          [matchers.select.selector(getIsAdmin), true],
+          [
+            matchers.select.selector(getTemplatesSystemList),
+            {
+              items: [],
+              selection: { offset: 0, searchText: '', category: null, count: 0 },
+            },
+          ],
+        ])
+        .run()
+        .then(() => {
+          expect(getTemplatesSystemMock).toHaveBeenCalledWith({
+            category: null,
+            searchText: '',
+            limit: LIMIT_LOAD_SYSTEMS_TEMPLATES,
+            offset: 0,
+          });
+        });
+    });
+  });
+
+  describe('fetchTemplatesSystemCategories', () => {
+    it('does not call system templates categories API for non-admin', () => {
+      const getCategoriesMock = jest.spyOn(
+        getSystemTemplatesCategoriesApi,
+        'getTemplatesSystemCategories',
+      );
+
+      return expectSaga(fetchTemplatesSystemCategories as any)
+        .provide([[matchers.select.selector(getIsAdmin), false]])
+        .run()
+        .then(() => {
+          expect(getCategoriesMock).not.toHaveBeenCalled();
+        });
+    });
   });
 
   describe('fetchTemplates', () => {

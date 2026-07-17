@@ -70,12 +70,12 @@ describe('getUserMenuItems', () => {
       expect(templatesItem?.isHidden).toBe(true);
     });
 
-    it('should show templates for non-admin template owner', () => {
+    it('should hide templates for non-admin template owner', () => {
       const user = createMockUser({ isAdmin: false });
       const items = getUserMenuItems(user, undefined, { isTemplateOwner: true });
       const templatesItem = items.find((item) => item.id === 'templates');
 
-      expect(templatesItem?.isHidden).toBe(false);
+      expect(templatesItem?.isHidden).toBe(true);
     });
 
     it('should show templates for admin who is also template owner', () => {
