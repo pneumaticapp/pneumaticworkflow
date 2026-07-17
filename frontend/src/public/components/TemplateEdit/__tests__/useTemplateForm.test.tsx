@@ -1252,6 +1252,42 @@ describe('TemplateFormPersistProvider reinitialize', () => {
     });
   });
 
+  it('does not preserve pending deactivation over a successful activation reinitialize', () => {
+    const template = makeTemplate({ isActive: true, name: 'Original', dateUpdated: null });
+    let handle: ISpyHandle | null = null;
+
+    const { rerender } = render(
+      <StatefulTemplateFormHarness
+        initialTemplate={template}
+        spy={(h) => { handle = h; }}
+      />,
+    );
+
+    act(() => {
+      handle!.setFieldValue('name', 'Edited', false);
+    });
+
+    expect(handle!.values.isActive).toBe(false);
+
+    act(() => {
+      handle!.consumePendingChanges({ isActive: true });
+      rerender(
+        <StatefulTemplateFormHarness
+          initialTemplate={{
+            ...template,
+            name: 'Edited',
+            isActive: true,
+            dateUpdated: '2026-07-01T00:00:00Z',
+          }}
+          spy={(h) => { handle = h; }}
+        />,
+      );
+    });
+
+    expect(handle!.values.name).toBe('Edited');
+    expect(handle!.values.isActive).toBe(true);
+  });
+
   it('does not treat a Redux reinitialize as a user edit when Formik has no pending changes', async () => {
     const template = makeTemplate({ isActive: true, description: 'old', dateUpdated: null });
     let handle: ISpyHandle | null = null;

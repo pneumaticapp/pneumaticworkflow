@@ -229,6 +229,12 @@ export function useTemplatePersistContextValue({
         };
         previousValuesRef.current = valuesRef.current;
       }
+
+      if (explicitFields.isActive === true && pendingUserEditsRefRef.current.current.isActive === false) {
+        const pendingWithoutInactiveFlag = { ...pendingUserEditsRefRef.current.current };
+        delete pendingWithoutInactiveFlag.isActive;
+        pendingUserEditsRefRef.current.current = pendingWithoutInactiveFlag;
+      }
     }
 
     return changedFields;
