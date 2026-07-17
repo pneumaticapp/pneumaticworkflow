@@ -1,19 +1,25 @@
 import React from 'react';
 
 import { ETaskStatus } from '../../redux/actions';
-import { EExtraFieldMode } from '../../types/template';
 import { EInputNameBackgroundColor } from '../../types/workflow';
 import { isArrayWithItems } from '../../utils/helpers';
 import { IntlMessages } from '../IntlMessages';
-import { ExtraFieldIntl } from '../TemplateEdit/ExtraFields';
+import { MergedOutputList } from '../MergedOutputList';
 import { ITaskOutputFieldsProps } from './types';
 
 import styles from './TaskCard.css';
 
-export function TaskOutputFields({ accountId, outputValues, status, editField }: ITaskOutputFieldsProps) {
+export function TaskOutputFields({
+  accountId,
+  outputValues,
+  fieldsetOutputValues,
+  status,
+  editField,
+  editFieldsetField,
+}: ITaskOutputFieldsProps) {
   const visibleOutputs = outputValues.filter((field) => !field.isHidden);
 
-  if (!isArrayWithItems(visibleOutputs) || status === ETaskStatus.Completed) {
+  if ((!isArrayWithItems(visibleOutputs) && !isArrayWithItems(fieldsetOutputValues)) || status === ETaskStatus.Completed) {
     return null;
   }
 
@@ -22,20 +28,15 @@ export function TaskOutputFields({ accountId, outputValues, status, editField }:
       <p className={styles['task-output__title']}>
         <IntlMessages id="tasks.task-outputs-fill-help" />
       </p>
-      {visibleOutputs.map((field) => (
-        <ExtraFieldIntl
-          key={field.apiName}
-          field={field}
-          editField={editField(field.apiName)}
-          showDropdown={false}
-          mode={EExtraFieldMode.ProcessRun}
-          labelBackgroundColor={EInputNameBackgroundColor.OrchidWhite}
-          namePlaceholder={field.name}
-          descriptionPlaceholder={field.description}
-          wrapperClassName={styles['task-output__field']}
-          accountId={accountId}
-        />
-      ))}
+      <MergedOutputList
+        fields={visibleOutputs}
+        fieldsets={fieldsetOutputValues}
+        onEditField={editField}
+        onEditFieldsetField={editFieldsetField}
+        labelBackgroundColor={EInputNameBackgroundColor.OrchidWhite}
+        fieldClassName={styles['task-output__field']}
+        accountId={accountId}
+      />
     </div>
   );
 }

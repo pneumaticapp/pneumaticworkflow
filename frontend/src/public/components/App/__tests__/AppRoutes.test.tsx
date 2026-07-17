@@ -1,12 +1,13 @@
-// <reference types="jest" />
 import * as React from 'react';
 import { render } from '@testing-library/react';
 import { AppRoutes } from '../AppRoutes';
 import { REDIRECT_URL_STORAGE_KEY } from '../../../constants/storageKeys';
 import { ELoggedState } from '../../../types/redux';
 
-// Mock react-redux
 jest.mock('react-redux', () => ({
+  connect: () => (ReactComponent: unknown) => ReactComponent,
+  Provider: ({ children }: { children: React.ReactNode }) => children,
+  useDispatch: jest.fn(),
   useSelector: jest.fn(() => true),
 }));
 
@@ -14,14 +15,12 @@ jest.mock('../../../utils/history', () => ({
   checkSomeRouteIsActive: jest.fn(() => false),
 }));
 
-// Mock routing components to just render a simple element and return props
 jest.mock('react-router-dom', () => ({
   Route: () => <div data-testid="route" />,
   Switch: ({ children }: any) => <div data-testid="switch">{children}</div>,
   Redirect: (props: any) => <div data-testid="redirect" data-to={props.to} />,
 }));
 
-// Mock layout/view components that might cause issues during render
 jest.mock('../../ProtectedRoute', () => ({
   ProtectedRoute: () => <div data-testid="protected-route" />,
 }));
@@ -50,19 +49,23 @@ describe('AppRoutes Redirect Logic', () => {
   const originalLocation = window.location;
 
   beforeEach(() => {
-    // @ts-ignore
-    delete window.location;
-    window.location = {
-      ...originalLocation,
-      replace: jest.fn(),
-    } as any;
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: {
+        ...originalLocation,
+        replace: jest.fn(),
+      },
+    });
 
     sessionStorage.clear();
     jest.clearAllMocks();
   });
 
   afterAll(() => {
-    window.location = originalLocation;
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: originalLocation,
+    });
   });
 
   const defaultUser = {
@@ -74,15 +77,10 @@ describe('AppRoutes Redirect Logic', () => {
   } as any;
 
   it('redirects to internal path via React Router Redirect', () => {
-    // arrange
     sessionStorage.setItem(REDIRECT_URL_STORAGE_KEY, '/tasks/123');
 
-    // act
-    const { getByTestId } = render(
-      <AppRoutes containerClassnames="test-class" user={defaultUser} />
-    );
+    const { getByTestId } = render(<AppRoutes containerClassnames="test-class" user={defaultUser} />);
 
-    // assert
     expect(window.location.replace).not.toHaveBeenCalled();
     const redirect = getByTestId('redirect');
     expect(redirect.getAttribute('data-to')).toBe('/tasks/123');
@@ -90,41 +88,21 @@ describe('AppRoutes Redirect Logic', () => {
   });
 
   it('calls window.location.replace for external URL and renders routes', () => {
-    // arrange
-    sessionStorage.setItem(
-      REDIRECT_URL_STORAGE_KEY,
-      'https://pneumatic.app/files/abc-123',
-    );
+    sessionStorage.setItem(REDIRECT_URL_STORAGE_KEY, 'https://pneumatic.app/files/abc-123');
 
-    // act
-    const { getByTestId } = render(
-      <AppRoutes containerClassnames="test-class" user={defaultUser} />,
-    );
+    const { getByTestId } = render(<AppRoutes containerClassnames="test-class" user={defaultUser} />);
 
-    // assert
-    expect(window.location.replace).toHaveBeenCalledWith(
-      'https://pneumatic.app/files/abc-123',
-    );
+    expect(window.location.replace).toHaveBeenCalledWith('https://pneumatic.app/files/abc-123');
     expect(sessionStorage.getItem(REDIRECT_URL_STORAGE_KEY)).toBe('');
-    // Must render normal routes (not blank page) for file downloads
-    // where the browser stays on the current page
     expect(getByTestId('switch')).toBeTruthy();
   });
 
   it('redirects to localhost URL via window.location.replace', () => {
-    // arrange
-    sessionStorage.setItem(
-      REDIRECT_URL_STORAGE_KEY,
-      'http://localhost/files/abc-123',
-    );
+    sessionStorage.setItem(REDIRECT_URL_STORAGE_KEY, 'http://localhost/files/abc-123');
 
-    // act
     render(<AppRoutes containerClassnames="test-class" user={defaultUser} />);
 
-    // assert
-    expect(window.location.replace).toHaveBeenCalledWith(
-      'http://localhost/files/abc-123',
-    );
+    expect(window.location.replace).toHaveBeenCalledWith('http://localhost/files/abc-123');
     expect(sessionStorage.getItem(REDIRECT_URL_STORAGE_KEY)).toBe('');
   });
 });

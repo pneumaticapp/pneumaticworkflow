@@ -12,6 +12,7 @@ import {
   TSetTaskCompletedPayload,
   TSetTaskRevertedPayload,
 } from '../../redux/actions';
+import { IFieldsetRuntime } from '../../types/fieldset';
 import { IAuthUser, IWorkflowLog } from '../../types/redux';
 import { IExtraField } from '../../types/template';
 import { ITask } from '../../types/tasks';
@@ -76,8 +77,10 @@ export type TTaskPerformersProps = Pick<
 export interface ITaskOutputFieldsProps {
   accountId: number;
   outputValues: IExtraField[];
+  fieldsetOutputValues: IFieldsetRuntime[];
   status: ETaskStatus;
   editField(apiName: string): (changedProps: Partial<IExtraField>) => void;
+  editFieldsetField(apiName: string): (changedProps: Partial<IExtraField>) => void;
 }
 
 export type TTaskActionsProps = Pick<
@@ -85,6 +88,7 @@ export type TTaskActionsProps = Pick<
   'task' | 'viewMode' | 'status' | 'setTaskCompleted' | 'setTaskReverted' | 'openSelectTemplateModal'
 > & {
   outputValues: IExtraField[];
+  fieldsetOutputValues: IFieldsetRuntime[];
 };
 
 export type TTaskWorkflowLogProps = Pick<

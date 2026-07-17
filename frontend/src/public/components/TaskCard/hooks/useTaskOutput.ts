@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { debounce } from 'throttle-debounce';
 
+import { IFieldsetRuntime } from '../../../types/fieldset';
 import { IExtraField } from '../../../types/template';
 import { sortFieldsByOrder } from '../../../utils/workflows';
 import { ExtraFieldsHelper } from '../../TemplateEdit/ExtraFields/utils/ExtraFieldsHelper';
@@ -10,11 +11,13 @@ import {
   addOrUpdateStorageOutput,
   getOutputFromStorage,
   removeOutputFromLocalStorage,
+  fieldsetsStorage,
 } from '../utils/storageOutputs';
 import { getTaskOutputFingerprint } from '../utils/getTaskOutputFingerprint';
 
 export function useTaskOutput(task: ITask) {
   const [outputValues, setOutputValues] = useState<IExtraField[]>([]);
+  const [fieldsetOutputValues, setFieldsetOutputValues] = useState<IFieldsetRuntime[]>([]);
   const pendingStorageOutputRef = useRef<{
     taskId: number;
     output: IExtraField[];
@@ -31,6 +34,12 @@ export function useTaskOutput(task: ITask) {
         addOrUpdateStorageOutput(pendingStorageOutput.taskId, pendingStorageOutput.output);
         pendingStorageOutputRef.current = null;
       }),
+    [],
+  );
+  const saveFieldsetsToStorageDebounced = useMemo(
+    () => debounce(300, (taskId: number, fieldsets: IFieldsetRuntime[]) => {
+      fieldsetsStorage.save(taskId, fieldsets);
+    }),
     [],
   );
   const outputSyncStateRef = useRef({
@@ -99,12 +108,26 @@ export function useTaskOutput(task: ITask) {
     syncState.fieldFingerprints = fieldFingerprints;
   }, [task.id, task.dateStarted, taskOutputFingerprint, saveOutputsToStorageDebounced]);
 
+  useEffect(() => {
+    const savedFieldsets = fieldsetsStorage.get(task.id);
+    const savedFieldsetsByApiName = new Map(
+      savedFieldsets?.map((fieldset) => [fieldset.apiNameBinding, fieldset]) ?? [],
+    );
+
+    setFieldsetOutputValues(
+      (task.fieldsets ?? []).map(
+        (fieldset) => savedFieldsetsByApiName.get(fieldset.apiNameBinding) ?? fieldset,
+      ),
+    );
+  }, [task.id]);
+
   useEffect(
     () => () => {
       saveOutputsToStorageDebounced.cancel();
+      saveFieldsetsToStorageDebounced.cancel();
       pendingStorageOutputRef.current = null;
     },
-    [saveOutputsToStorageDebounced],
+    [saveFieldsetsToStorageDebounced, saveOutputsToStorageDebounced],
   );
 
   const editField = (apiName: string) => (changedProps: Partial<IExtraField>) => {
@@ -118,5 +141,17 @@ export function useTaskOutput(task: ITask) {
     });
   };
 
-  return { outputValues, editField };
+  const editFieldsetField = (apiName: string) => (changedProps: Partial<IExtraField>) => {
+    setFieldsetOutputValues((previousFieldsets) => {
+      const nextFieldsets = previousFieldsets.map((fieldset) => ({
+        ...fieldset,
+        fields: getEditedFields(fieldset.fields, apiName, changedProps),
+      }));
+
+      saveFieldsetsToStorageDebounced(task.id, nextFieldsets);
+      return nextFieldsets;
+    });
+  };
+
+  return { outputValues, fieldsetOutputValues, editField, editFieldsetField };
 }

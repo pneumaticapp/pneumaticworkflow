@@ -14,6 +14,7 @@ jest.mock('../../utils/storageOutputs', () => ({
   addOrUpdateStorageOutput: jest.fn(),
   getOutputFromStorage: jest.fn(),
   removeOutputFromLocalStorage: jest.fn(),
+  fieldsetsStorage: { get: jest.fn(), save: jest.fn() },
 }));
 
 const makeField = (apiName: string, value: string): IExtraField => ({

@@ -14,6 +14,7 @@ jest.mock('../utils/storageOutputs', () => ({
   getOutputFromStorage: jest.fn(() => undefined),
   addOrUpdateStorageOutput: jest.fn(),
   removeOutputFromLocalStorage: jest.fn(),
+  fieldsetsStorage: { get: jest.fn(), save: jest.fn() },
 }));
 
 jest.mock('../../../utils/autoFocusFirstField', () => ({

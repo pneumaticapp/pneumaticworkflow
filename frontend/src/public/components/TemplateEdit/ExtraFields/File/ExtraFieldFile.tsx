@@ -1,21 +1,22 @@
-import React, { ChangeEvent, MouseEvent, useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import classnames from 'classnames';
-import AutosizeInput from 'react-input-autosize';
-import { useIntl } from 'react-intl';
-
 import { EExtraFieldMode } from '../../../../types/template';
-import { logger } from '../../../../utils/logger';
-import { parseMarkdownToFiles } from '../../../../utils/parseMarkdownFiles';
-import { TUploadedFile, uploadFiles } from '../../../../utils/uploadFiles';
-import { validateKickoffFieldName } from '../../../../utils/validators';
+import { EFieldLabelPosition } from '../../../../types/fieldset';
+import { FieldLabel } from '../utils/FieldLabel';
 import { PencilSmallIcon } from '../../../icons';
-import { IntlMessages } from '../../../IntlMessages';
-import { Button } from '../../../UI/Buttons/Button';
+import { TUploadedFile, uploadFiles } from '../../../../utils/uploadFiles';
+import { parseMarkdownToFiles } from '../../../../utils/parseMarkdownFiles';
 import { NotificationManager } from '../../../UI/Notifications';
-import kickoffStyles from '../../KickoffRedux/KickoffRedux.css';
-import { IWorkflowExtraFieldProps } from '..';
 import { ExtraFieldFilesGrid } from './ExtraFieldFilesGrid';
+import { logger } from '../../../../utils/logger';
+
+import { IWorkflowExtraFieldProps } from '..';
+import { validateKickoffFieldName } from '../../../../utils/validators';
+import { IntlMessages } from '../../../IntlMessages';
+import kickoffStyles from '../../KickoffRedux/KickoffRedux.css';
 import styles from './ExtraFieldFile.css';
+import { Button } from '../../../UI/Buttons/Button';
+import { useIntl } from 'react-intl';
 
 export function ExtraFieldFile({
   field,
@@ -25,13 +26,13 @@ export function ExtraFieldFile({
   mode = EExtraFieldMode.Kickoff,
   editField,
   isDisabled = false,
-}: IWorkflowExtraFieldProps) {
+  labelBackgroundColor,
+  labelPosition,
+}: IWorkflowExtraFieldProps): JSX.Element {
   const [isUploading, setUploadingState] = useState(false);
-  const initialFiles = field.attachments?.length
-    ? field.attachments
-    : parseMarkdownToFiles(field.markdownValue);
+  const initialFiles = field.attachments?.length ? field.attachments : parseMarkdownToFiles(field.markdownValue);
   const [filesToUpload, setFilesToUploadState] = useState<TUploadedFile[]>(initialFiles);
-  const fieldNameInputRef = useRef<HTMLInputElement | null>(null);
+  const fieldNameInputRef = useRef<HTMLTextAreaElement | null>(null);
   const uploadFieldRef = useRef<HTMLInputElement>(null);
   const [isFocused, setIsFocused] = useState(false);
   const { formatMessage } = useIntl();
@@ -53,13 +54,13 @@ export function ExtraFieldFile({
   }, [filesToUpload]);
 
   const handleChangeName = useCallback(
-    (event: ChangeEvent<HTMLInputElement>) => {
-      editField({ name: event.target.value });
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      editField({ name: e.target.value });
     },
     [editField],
   );
-  const handleUploadFile = async (event: ChangeEvent<HTMLInputElement>) => {
-    const { files } = event.target;
+  const handleUploadFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { files } = e.target;
 
     if (!files) {
       return;
@@ -94,30 +95,37 @@ export function ExtraFieldFile({
     editField({ value: newUploadedFilesIds, attachments: newUploadedFiles });
   };
   const fieldNameErrorMessage = validateKickoffFieldName(name) || '';
-  const isKickoffFieldNameValid = !fieldNameErrorMessage;
+  const isKickoffFieldNameValid = !Boolean(fieldNameErrorMessage);
 
-  const handleOpenUploadWindow = (event: MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    uploadFieldRef.current?.click();
-  };
-
-  if (mode === EExtraFieldMode.Kickoff) {
-    return (
-      <div className={styles['extra-field-file__conteiner--template']}>
+  const renderKickoffView = () => (
+    <div
+      className={classnames(
+        styles['extra-field-file__conteiner--template'],
+        labelPosition === EFieldLabelPosition.Left && kickoffStyles['kick-off-input__field_label-left'],
+      )}
+    >
+      {labelPosition === EFieldLabelPosition.Left ? (
+        <FieldLabel
+          name={name}
+          isRequired={isRequired || false}
+          isDisabled={isDisabled}
+          mode={mode}
+          namePlaceholder={namePlaceholder}
+          handleChangeName={handleChangeName}
+        />
+      ) : (
         <div className={styles['extra-field-file__input--template']}>
-          <AutosizeInput
-            inputRef={(ref) => {
-              fieldNameInputRef.current = ref;
-            }}
-            inputClassName={classnames(
+          <textarea
+            ref={(ref) => (fieldNameInputRef.current = ref)}
+            className={classnames(
               styles['extra-field-file__input-name--template'],
               !isKickoffFieldNameValid && styles['extra-field-file__input-name-error--template'],
             )}
             onChange={handleChangeName}
             placeholder={namePlaceholder}
-            type="text"
             value={name}
             disabled={isDisabled}
+            rows={1}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
             onKeyDown={(event) => {
@@ -128,10 +136,9 @@ export function ExtraFieldFile({
             }}
           />
           {isRequired && <span className={kickoffStyles['kick-off-required-sign']} />}
-          {!isFocused && (
+          {!isFocused && mode === EExtraFieldMode.Kickoff && (
             <button
               type="button"
-              aria-label={namePlaceholder}
               onClick={() => fieldNameInputRef.current?.focus()}
               className={classnames(
                 kickoffStyles['kick-off-edit-name'],
@@ -142,54 +149,88 @@ export function ExtraFieldFile({
             </button>
           )}
         </div>
+      )}
 
-        {!isKickoffFieldNameValid && (
-          <p className={styles['extra-field-file__error-message--template']}>
-            <IntlMessages id={fieldNameErrorMessage} />
-          </p>
-        )}
-        <div className={styles['extra-field-file__upload-button-conteiner']}>
-          <Button
-            label={formatMessage({ id: 'file-upload.label-upload-button' })}
-            size="sm"
-            buttonStyle="transparent-black"
-            disabled
-            className={styles['extra-field-file__upload-button--template']}
-          />
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className={styles['extra-field-file__container']} data-autofocus-first-field>
-      <div>
-        <div className={styles['extra-field-file__field-name']}>{name}</div>
-        {isRequired && <span className={kickoffStyles['kick-off-required-sign']} />}
-      </div>
-
-      <ExtraFieldFilesGrid
-        attachments={filesToUpload}
-        deleteFile={handleDeleteFile}
-        isUploading={isUploading}
-        isEdit
-      />
-
-      <input
-        className={styles['extra-field-file__ref']}
-        multiple
-        onChange={handleUploadFile}
-        ref={uploadFieldRef}
-        type="file"
-      />
+      {!isKickoffFieldNameValid && (
+        <p className={styles['extra-field-file__error-message--template']}>
+          <IntlMessages id={fieldNameErrorMessage} />
+        </p>
+      )}
       <div className={styles['extra-field-file__upload-button-conteiner']}>
         <Button
           label={formatMessage({ id: 'file-upload.label-upload-button' })}
           size="sm"
           buttonStyle="transparent-black"
-          onClick={handleOpenUploadWindow}
+          disabled
+          className={styles['extra-field-file__upload-button--template']}
         />
       </div>
     </div>
   );
+
+  const handleOpenUploadWindow = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    if (!uploadFieldRef.current) {
+      return;
+    }
+
+    uploadFieldRef.current.click();
+  };
+
+  const renderProcessView = () => {
+    const isLabelLeft = labelPosition === EFieldLabelPosition.Left;
+
+    return (
+      <div
+        className={classnames(
+          styles['extra-field-file__container'],
+          isLabelLeft && kickoffStyles['kick-off-input__field_label-left'],
+        )}
+        data-autofocus-first-field={true}
+      >
+        {isLabelLeft ? (
+          <FieldLabel
+            name={name}
+            isRequired={isRequired || false}
+            isDisabled={isDisabled}
+            mode={mode}
+            labelBackgroundColor={labelBackgroundColor}
+            handleChangeName={handleChangeName}
+            className={kickoffStyles['kick-off-input__name_label-left_aligned-start']}
+          />
+        ) : (
+          <div>
+            <div className={styles['extra-field-file__field-name']}>{name}</div>
+            {isRequired && <span className={kickoffStyles['kick-off-required-sign']} />}
+          </div>
+        )}
+        <div {...(isLabelLeft && { className: styles['file-content-wrapper_label-left'] })}>
+          <ExtraFieldFilesGrid
+            attachments={filesToUpload}
+            deleteFile={handleDeleteFile}
+            isUploading={isUploading}
+            isEdit
+          />
+
+          <input
+            className={styles['extra-field-file__ref']}
+            multiple
+            onChange={handleUploadFile}
+            ref={uploadFieldRef}
+            type="file"
+          />
+          <div className={styles['extra-field-file__upload-button-conteiner']}>
+            <Button
+              label={formatMessage({ id: 'file-upload.label-upload-button' })}
+              size="sm"
+              buttonStyle="transparent-black"
+              onClick={handleOpenUploadWindow}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  return <>{mode === EExtraFieldMode.Kickoff ? renderKickoffView() : renderProcessView()}</>;
 }

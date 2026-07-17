@@ -60,6 +60,20 @@ class TemplateService(BaseModelService):
             refresh_attachments(self.instance, self.user)
         return result
 
+    def _register_field_placeholders(
+        self,
+        fields_data: list,
+        fields_values: dict,
+    ) -> None:
+        for field_data in fields_data:
+            api_name = field_data.get('api_name')
+            if api_name:
+                fields_values[api_name] = '{{%s}}' % api_name
+            else:
+                field_data['api_name'] = create_api_name(
+                    prefix=FieldTemplate.api_name_prefix,
+                )
+
     def fill_template_data(self, initial_data: dict) -> dict:
 
         """ initial_data - known template data,
@@ -84,19 +98,21 @@ class TemplateService(BaseModelService):
             'kickoff': {
                 'description': initial_kickoff_data.get('description', ''),
                 'fields': initial_kickoff_data.get('fields', []),
+                'fieldsets': initial_kickoff_data.get('fieldsets', []),
             },
             'tasks': deepcopy(initial_tasks_data),
         }
 
         fields_values = {}
-        for field_data in data['kickoff']['fields']:
-            api_name = field_data.get('api_name')
-            if api_name:
-                fields_values[api_name] = '{{%s}}' % api_name
-            else:
-                field_data['api_name'] = create_api_name(
-                    prefix=FieldTemplate.api_name_prefix,
-                )
+        self._register_field_placeholders(
+            fields_data=data['kickoff']['fields'],
+            fields_values=fields_values,
+        )
+        for fieldset_data in data['kickoff']['fieldsets']:
+            self._register_field_placeholders(
+                fields_data=fieldset_data.get('fields', []),
+                fields_values=fields_values,
+            )
         for task_data in data['tasks']:
             task_data['api_name'] = task_data.get(
                 'api_name',
@@ -111,15 +127,15 @@ class TemplateService(BaseModelService):
                         'label': self.user.name,
                     },
                 ]
-            task_fields = task_data.get('fields', [])
-            for field_data in task_fields:
-                api_name = field_data.get('api_name')
-                if api_name:
-                    fields_values[api_name] = '{{%s}}' % api_name
-                else:
-                    field_data['api_name'] = create_api_name(
-                        prefix=TaskTemplate.api_name_prefix,
-                    )
+            self._register_field_placeholders(
+                fields_data=task_data.get('fields', []),
+                fields_values=fields_values,
+            )
+            for fieldset_data in task_data.get('fieldsets', []):
+                self._register_field_placeholders(
+                    fields_data=fieldset_data.get('fields', []),
+                    fields_values=fields_values,
+                )
             if task_data.get('description'):
                 task_data['description'] = insert_fields_values_to_text(
                     text=task_data['description'],

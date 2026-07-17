@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from rest_framework.decorators import action
@@ -90,9 +89,7 @@ class TenantsViewSet(
 
     def perform_destroy(self, instance: Account):
         master_account = self.request.user.account
-        billing_enabled = (
-            instance.billing_sync and settings.PROJECT_CONF['BILLING']
-        )
+        billing_enabled = instance.billing_sync
         with transaction.atomic():
             if (
                 instance.billing_plan == BillingPlanType.UNLIMITED
@@ -142,7 +139,6 @@ class TenantsViewSet(
                 new_tenant_name is not None
                 and new_tenant_name != old_tenant_name
                 and instance.billing_sync
-                and settings.PROJECT_CONF['BILLING']
             ):
                 try:
                     stripe_service = StripeService(
@@ -186,10 +182,7 @@ class TenantsViewSet(
                 service = SystemWorkflowService(user=tenant_user)
                 service.create_onboarding_templates()
                 service.create_activated_templates()
-                billing_enabled = (
-                    settings.PROJECT_CONF['BILLING']
-                    and master_account.billing_sync
-                )
+                billing_enabled = master_account.billing_sync
                 if (
                     tenant_account.billing_plan == BillingPlanType.PREMIUM
                     and billing_enabled
