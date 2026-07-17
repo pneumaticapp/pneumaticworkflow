@@ -3,6 +3,7 @@ import { call, put, select } from 'redux-saga/effects';
 import type { IRealtimeWsEnvelope } from '../types';
 import type { IStoreTask, IStoreWorkflows } from '../../../types/redux';
 import { ERealtimeEnvelopeType } from '../types';
+import { ETaskStatus } from '../../../types/tasks';
 
 import { handleAddTask, handleRemoveTask } from '../../tasks/saga';
 import { upsertUserFromWs, removeUserFromWs } from '../../accounts/slice';
@@ -28,9 +29,13 @@ export function* routeRealtimeEvent(envelope: IRealtimeWsEnvelope) {
       yield call(handleAddTask, task);
       break;
     }
-    case ERealtimeEnvelopeType.TASK_COMPLETED:
+    case ERealtimeEnvelopeType.TASK_COMPLETED: {
+      yield call(handleRemoveTask, envelope.data.id, true);
+      break;
+    }
     case ERealtimeEnvelopeType.TASK_DELETED: {
-      yield call(handleRemoveTask, envelope.data.id);
+      const isActiveTask = envelope.data.status === ETaskStatus.Active;
+      yield call(handleRemoveTask, envelope.data.id, isActiveTask);
       break;
     }
     case ERealtimeEnvelopeType.USER_CREATED:

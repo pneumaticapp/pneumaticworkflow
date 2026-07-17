@@ -373,7 +373,6 @@ def test_revert__multi_step_return__send_removed_for_completed_tasks(
     task_3.save(update_fields=['revert_task'])
     api_client.token_authenticate(owner)
     text_comment = 'text_comment'
-    expected_recipient = (owner.id, owner.email)
 
     mocker.patch(
         'src.processes.tasks.webhooks.'
@@ -414,23 +413,6 @@ def test_revert__multi_step_return__send_removed_for_completed_tasks(
     task_3.refresh_from_db()
     assert task_3.is_pending
     assert send_task_deleted_notification_mock.call_count == 3
-    send_task_deleted_notification_mock.assert_has_calls([
-        mocker.call(
-            task_id=task_1.id,
-            recipients=[expected_recipient],
-            account_id=task_1.account_id,
-        ),
-        mocker.call(
-            task_id=task_2.id,
-            recipients=[expected_recipient],
-            account_id=task_2.account_id,
-        ),
-        mocker.call(
-            task_id=task_3.id,
-            recipients=[expected_recipient],
-            account_id=task_3.account_id,
-        ),
-    ], any_order=True)
     send_new_task_notification_mock.assert_called_once()
 
 

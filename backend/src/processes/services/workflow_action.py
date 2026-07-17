@@ -446,7 +446,7 @@ class WorkflowActionService:
         """ Continue start task after run or workflow delay """
 
         if is_returned and task.is_completed:
-            self._notify_task_removed_from_lists(task)
+            self._send_task_deleted(task)
         task_start_event_already_exist = (
             not is_returned and bool(task.date_started)
         )
@@ -993,7 +993,8 @@ class WorkflowActionService:
             messages.MSG_PW_0079(revert_to_tasks[0].name),
         )
 
-    def _notify_task_removed_from_lists(self, task: Task):
+    def _send_task_deleted(self, task: Task):
+        task_data = task.get_data_for_list()
         performers = (
             TaskPerformer.objects
             .by_task(task.id)
@@ -1007,6 +1008,7 @@ class WorkflowActionService:
                 task_id=task.id,
                 recipients=recipients,
                 account_id=task.account_id,
+                task_data=task_data,
             )
 
     def _deactivate_task(self, parent_task: Task):
@@ -1042,7 +1044,7 @@ class WorkflowActionService:
                     or task.is_completed
                     or task.is_delayed
                 ):
-                    self._notify_task_removed_from_lists(task)
+                    self._send_task_deleted(task)
                 task.date_started = None
                 task.date_completed = None
                 task.status = TaskStatus.PENDING

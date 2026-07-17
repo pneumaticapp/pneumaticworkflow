@@ -295,10 +295,15 @@ export function* handleAddTask(newTask: ITaskListItem) {
   }
 }
 
-export function* handleRemoveTask(taskId: number) {
-  const totalTasksCount: ReturnType<typeof getTotalTasksCount> = yield select(getTotalTasksCount);
-  if (totalTasksCount !== null) {
-    yield put(changeTasksCount(totalTasksCount - 1));
+export function* handleRemoveTask(
+  taskId: number,
+  shouldDecrementCounter: boolean = true,
+) {
+  if (shouldDecrementCounter) {
+    const totalTasksCount: ReturnType<typeof getTotalTasksCount> = yield select(getTotalTasksCount);
+    if (totalTasksCount !== null) {
+      yield put(changeTasksCount(totalTasksCount - 1));
+    }
   }
 
   if (!checkSomeRouteIsActive(ERoutes.Tasks)) {
