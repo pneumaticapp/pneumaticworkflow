@@ -392,6 +392,15 @@ class ResetPasswordSerializer(
     email = serializers.EmailField(required=True)
 
 
+class SecuredResetPasswordSerializer(ResetPasswordSerializer):
+    captcha = ReCaptchaV2Field()
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        attrs.pop('captcha', None)
+        return attrs
+
+
 class ConfirmPasswordSerializer(
     CustomValidationErrorMixin,
     serializers.Serializer,
