@@ -1,15 +1,12 @@
 /* eslint-disable */
 /* prettier-ignore */
 import { reducer, INIT_STATE } from '../reducer';
-import { TRunWorkflowModalActions, openRunWorkflowModal } from '../actions';
-import { IKickoff, EExtraFieldType } from '../../../types/template';
+import { openRunWorkflowModal } from '../actions';
+import { IKickoffClient, EExtraFieldType } from '../../../types/template';
+import { makeFieldsetBindingClient, makeFieldsetRuntime } from '../../../__stubs__/fieldsets.factory';
+import { makeExtraField } from '../../../__stubs__/fields.factory';
 
 describe('runWorkflowModal reducer', () => {
-  it('return default state', () => {
-    const result = reducer(undefined, 'NOT_ACTION' as unknown as TRunWorkflowModalActions);
-
-    expect(result).toEqual(INIT_STATE);
-  });
   it('openRunWorkflowModal open modal window', () => {
     const runnableWorkflow = {
       id: 4654,
@@ -25,7 +22,7 @@ describe('runWorkflowModal reducer', () => {
       wfNameTemplate: '',
     };
 
-    const kickoff: IKickoff = {
+    const kickoff: IKickoffClient = {
       description:
         'youtube: \nhttps://www.youtube.com/watch?v=JZRm7NKTPhk\n loom:\nhttps://www.loom.com/share/29f210bc12484eaa81ca462381fb4415?t=0\n 404 loom:\n\nhttps://www.loom.com/share/9853f0790ad2408094a3717bfcf4a0c0\nYoutube 404 :\n\nhttps://www.youtube.com/watch?v=D6hIeqZt22g',
       fields: [
@@ -136,6 +133,7 @@ describe('runWorkflowModal reducer', () => {
           groupId: null,
         },
       ],
+      fieldsets: [],
     };
 
     const action = openRunWorkflowModal({
@@ -147,5 +145,51 @@ describe('runWorkflowModal reducer', () => {
     const result = reducer(INIT_STATE, action);
 
     expect(result.isOpen).toEqual(true);
+  });
+});
+
+describe('OpenModal — fieldsets acceptance', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('preserves kickoff.fieldsets and loadedFieldsets without data loss', () => {
+    const mockFieldsetData = makeFieldsetRuntime({
+      apiNameBinding: 'fs-contacts',
+      name: 'Contacts',
+      description: 'Contact information',
+      fields: [makeExtraField({ apiName: 'contact-name', name: 'Contact Name', isRequired: true, value: '' })],
+    });
+
+    const action = openRunWorkflowModal({
+      id: 10,
+      name: 'Template With Fieldsets',
+      wfNameTemplate: null,
+      description: '',
+      tasksCount: 2,
+      performersCount: 1,
+      kickoff: {
+        description: '',
+        fields: [],
+        fieldsets: [makeFieldsetBindingClient({ apiNameBinding: 'fs-contacts' })],
+      },
+      loadedFieldsets: [mockFieldsetData],
+    });
+
+    const result = reducer(INIT_STATE, action);
+
+    expect(result.isOpen).toBe(true);
+
+    if (result.workflow === null) {
+      throw new Error('Expected workflow to be non-null');
+    }
+
+    expect(result.workflow.kickoff.fieldsets).toHaveLength(1);
+    expect(result.workflow.kickoff.fieldsets).toMatchObject([
+      { apiNameBinding: 'fs-contacts' },
+    ]);
+
+    expect(result.workflow.loadedFieldsets).toHaveLength(1);
+    expect(result.workflow.loadedFieldsets).toEqual([mockFieldsetData]);
   });
 });

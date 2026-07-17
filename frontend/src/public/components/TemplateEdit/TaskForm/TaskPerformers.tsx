@@ -5,7 +5,7 @@ import classNames from 'classnames';
 
 import { Checkbox } from '../../UI/Fields/Checkbox';
 import { TUserListItem } from '../../../types/user';
-import { ETaskPerformerType, ITemplateTask, ITemplateTaskPerformer } from '../../../types/template';
+import { ETaskPerformerType, ITemplateTaskClient, ITemplateTaskPerformer } from '../../../types/template';
 import { TTaskVariable } from '../types';
 import { trackInviteTeamInPage } from '../../../utils/analytics';
 import { EOptionTypes, TUsersDropdownOption, UsersDropdown, getUsersDropdownOptionValue } from '../../UI/form/UsersDropdown';
@@ -19,12 +19,12 @@ import stylesTaskForm from './TaskForm.css';
 import { createPerformerApiName } from '../../../utils/createId';
 
 export interface ITaskPerformersProps {
-  task: ITemplateTask;
-  tasks: ITemplateTask[];
+  task: ITemplateTaskClient;
+  tasks: ITemplateTaskClient[];
   users: TUserListItem[];
   variables: TTaskVariable[];
   isTeamInvitesModalOpen: boolean;
-  setCurrentTask(changedFields: Partial<ITemplateTask>): void;
+  setCurrentTask(changedFields: Partial<ITemplateTaskClient>): void;
 }
 
 export function TaskPerformers({ task, tasks, users, variables, setCurrentTask }: ITaskPerformersProps) {

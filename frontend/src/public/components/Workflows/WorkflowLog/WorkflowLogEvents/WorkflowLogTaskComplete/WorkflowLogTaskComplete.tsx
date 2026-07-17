@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { useIntl } from 'react-intl';
 
 import { Avatar } from '../../../../UI/Avatar';
@@ -28,7 +28,7 @@ export function WorkflowLogTaskComplete({
   const { formatMessage } = useIntl();
 
   const renderOutputValues = () => {
-    const hasOutputValue = isArrayWithItems(currentTask?.output.filter(Boolean));
+    const hasOutputValue = isArrayWithItems(currentTask?.output.filter(Boolean)) || isArrayWithItems(currentTask?.fieldsets);
 
     if (!hasOutputValue) {
       return null;
@@ -39,6 +39,7 @@ export function WorkflowLogTaskComplete({
         containerClassName={styles['outputs-container']}
         viewMode={EKickoffOutputsViewModes.Short}
         outputs={currentTask?.output.filter(Boolean)}
+        fieldsets={currentTask?.fieldsets || []}
         isOnlyAttachmentsShown={isOnlyAttachmentsShown}
       />
     );

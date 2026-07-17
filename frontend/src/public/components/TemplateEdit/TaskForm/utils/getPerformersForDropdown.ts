@@ -1,5 +1,5 @@
 import { IntlShape } from 'react-intl';
-import { EExtraFieldType, ETaskPerformerType, ITemplateTask, ITemplateTaskPerformer } from '../../../../types/template';
+import { EExtraFieldType, ETaskPerformerType, ITemplateTaskClient, ITemplateTaskPerformer } from '../../../../types/template';
 import { TUserListItem } from '../../../../types/user';
 import { getUserFullName } from '../../../../utils/users';
 import { TTaskVariable } from '../../types';
@@ -11,8 +11,8 @@ export function getPerformersForDropdown(
   groups: IGroup[],
   variables: TTaskVariable[],
   formatMessage: IntlShape['formatMessage'],
-  currentTask?: ITemplateTask,
-  tasks?: ITemplateTask[],
+  currentTask?: ITemplateTaskClient,
+  tasks?: ITemplateTaskClient[],
 ): TUsersDropdownOption[] {
   const userPeformers: (Omit<ITemplateTaskPerformer, 'apiName'> & TUsersDropdownOption)[] = users.map((user) => ({
     id: user.id,

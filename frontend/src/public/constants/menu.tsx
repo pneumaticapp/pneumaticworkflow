@@ -28,10 +28,8 @@ export interface IGetUserMenuItemsOptions {
 export const getUserMenuItems = (
   user: IAuthUser,
   counters?: TMenuCounter[],
-  options?: IGetUserMenuItemsOptions,
+  _options?: IGetUserMenuItemsOptions,
 ): IMenuItem[] => {
-  const { isTemplateOwner } = options || {};
-  const canAccessTemplates = user.isAdmin || isTemplateOwner;
   const canAccessWorkflows = getCanAccessWorkflows({ authUser: user } as any);
 
   const items: IMenuItem[] = [
@@ -59,7 +57,7 @@ export const getUserMenuItems = (
       iconComponent: TemplatesIcon,
       label: 'menu.templates',
       to: ERoutes.Templates,
-      isHidden: !canAccessTemplates,
+      isHidden: !user.isAdmin,
     },
     {
       id: 'highlights',

@@ -446,8 +446,7 @@ class UserInviteService(
             )
             account_service.update_users_counts()
         if (
-            settings.PROJECT_CONF['BILLING']
-            and user.account.billing_sync
+            user.account.billing_sync
             and user.account.billing_plan == BillingPlanType.PREMIUM
         ):
             increase_plan_users.delay(
