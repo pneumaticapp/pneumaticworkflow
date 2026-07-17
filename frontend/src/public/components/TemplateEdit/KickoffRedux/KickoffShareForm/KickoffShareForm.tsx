@@ -1,5 +1,5 @@
 import Switch from 'rc-switch';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
@@ -40,10 +40,11 @@ export function KickoffShareForm({ className }: IKickoffShareFormProps) {
     [formatMessage],
   );
 
-  const isSuccessUrlEnabled = publicSuccessUrl != null;
-  const successUrlState = publicSuccessUrl || '';
+  const [isSuccessUrlEnabled, setIsSuccessUrlEnabled] = useState(Boolean(publicSuccessUrl));
+  const [successUrlState, setSuccessUrlState] = useState(publicSuccessUrl || '');
   const isShared = isPublic || isEmbedded;
   const [activeTab, setActiveTab] = useState<TPublicFormType>(() => (!isPublic && isEmbedded ? 'embedded' : 'shared'));
+  const pendingSuccessUrlWriteRef = useRef<{ value: ITemplateClient['publicSuccessUrl'] } | null>(null);
 
   const embedCode = useMemo(() => {
     if (!embedUrl) return null;
@@ -57,6 +58,22 @@ export function KickoffShareForm({ className }: IKickoffShareFormProps) {
     });
   };
 
+  const editSuccessUrl = (value: ITemplateClient['publicSuccessUrl']) => {
+    pendingSuccessUrlWriteRef.current = { value };
+    editTemplate({ publicSuccessUrl: value });
+  };
+
+  useEffect(() => {
+    const pendingSuccessUrlWrite = pendingSuccessUrlWriteRef.current;
+    if (pendingSuccessUrlWrite && pendingSuccessUrlWrite.value === publicSuccessUrl) {
+      pendingSuccessUrlWriteRef.current = null;
+      return;
+    }
+
+    setIsSuccessUrlEnabled(Boolean(publicSuccessUrl));
+    setSuccessUrlState(publicSuccessUrl || '');
+  }, [publicSuccessUrl]);
+
   useEffect(() => {
     setActiveTab((currentTab) => {
       if (!isShared) return 'shared';
@@ -68,7 +85,9 @@ export function KickoffShareForm({ className }: IKickoffShareFormProps) {
   }, [isEmbedded, isPublic, isShared]);
 
   const toggleSuccessUrlEnabled = () => {
-    editTemplate({ publicSuccessUrl: isSuccessUrlEnabled ? null : successUrlState });
+    const nextIsSuccessUrlEnabled = !isSuccessUrlEnabled;
+    setIsSuccessUrlEnabled(nextIsSuccessUrlEnabled);
+    editSuccessUrl(nextIsSuccessUrlEnabled ? successUrlState : null);
   };
 
   const toogleFormIsShared = () => {
@@ -101,7 +120,8 @@ export function KickoffShareForm({ className }: IKickoffShareFormProps) {
 
   const changeSuccessUrl = (event: FormEvent<HTMLInputElement>) => {
     const newSuccessUrl = event.currentTarget.value;
-    editTemplate({ publicSuccessUrl: newSuccessUrl });
+    setSuccessUrlState(newSuccessUrl);
+    editSuccessUrl(newSuccessUrl);
   };
 
   const renderTabs = () => {
