@@ -36,6 +36,7 @@ export function Field({
   disabled,
   accountId,
   isNumericField,
+  editorClassName,
   isFromConditionValueField,
   onKeyDown,
   autoFocus: _autoFocus,
@@ -106,6 +107,7 @@ export function Field({
               return Promise.resolve(val);
             }}
             className={styles['rich-editor']}
+            editorClassName={editorClassName}
             accountId={accountId as number}
             withMentions={false}
           />

@@ -27,3 +27,4 @@ export const TemplateView = () => {
     </TemplateLayout>
   );
 };
+

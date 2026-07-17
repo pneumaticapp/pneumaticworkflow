@@ -7,7 +7,8 @@ import { debounce } from 'throttle-debounce';
 import { useSelector } from 'react-redux';
 
 import { autoFocusFirstField } from '../../utils/autoFocusFirstField';
-import { EExtraFieldMode, ETaskPerformerType, ETemplateOwnerType, IExtraField } from '../../types/template';
+import { ETaskPerformerType, ETemplateOwnerType, IExtraField } from '../../types/template';
+import { IFieldsetRuntime } from '../../types/fieldset';
 import { sanitizeText } from '../../utils/strings';
 import { ITask } from '../../types/tasks';
 import {
@@ -29,7 +30,7 @@ import { getTaskDetailRoute, getWorkflowDetailedRoute, isTaskDetailRoute } from 
 import { Header } from '../UI/Typeography/Header';
 import { RichText } from '../RichText';
 import { getUserFullName } from '../../utils/users';
-import { ExtraFieldIntl } from '../TemplateEdit/ExtraFields';
+import { MergedOutputList } from '../MergedOutputList';
 import { isArrayWithItems, isEmptyArray } from '../../utils/helpers';
 import { useCheckDevice } from '../../hooks/useCheckDevice';
 import { history } from '../../utils/history';
@@ -50,7 +51,7 @@ import { EOptionTypes, TUsersDropdownOption, UsersDropdown, getUsersDropdownOpti
 import { TUserListItem } from '../../types/user';
 import { trackInviteTeamInPage } from '../../utils/analytics';
 import { Tooltip } from '../UI';
-import { addOrUpdateStorageOutput, getOutputFromStorage } from './utils/storageOutputs';
+import { outputStorage, fieldsetsStorage } from './utils/storageOutputs';
 import { TaskCarkSkeleton } from './TaskCarkSkeleton';
 import { GuestController } from './GuestsController';
 import { createChecklistExtension, createProgressbarExtension } from './checklist';
@@ -131,12 +132,14 @@ export function TaskCard({
   const { isMobile } = useCheckDevice();
 
   const groups = useSelector(getRegularGroupsList);
-  const saveOutputsToStorageDebounced = debounce(300, addOrUpdateStorageOutput);
+  const saveOutputsToStorageDebounced = debounce(300, outputStorage.save);
+  const saveFieldsetsToStorageDebounced = debounce(300, fieldsetsStorage.save);
 
   const guestsControllerRef = useRef<React.ElementRef<typeof GuestController> | null>(null);
   const wrapperRef = useRef(null);
   const workflowLinkRef = useRef(null);
   const [outputValues, setOutputValues] = useState([] as IExtraField[]);
+  const [fieldsetOutputValues, setFieldsetOutputValues] = useState<IFieldsetRuntime[]>(task.fieldsets || []);
   const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
 
@@ -156,11 +159,17 @@ export function TaskCard({
   }, [task.performers.length]);
 
   useEffect(() => {
-    const { output, id } = task;
-    const storageOutput = getOutputFromStorage(id);
+    const { output, fieldsets, id } = task;
+    const storageOutput = outputStorage.get(id);
     const outputFieldsWithValues = new ExtraFieldsHelper(output, storageOutput).getFieldsWithValues();
-
     setOutputValues(outputFieldsWithValues);
+
+    const storageFieldsets = fieldsetsStorage.get(id);
+    const storageFieldsetsMap = new Map(storageFieldsets?.map((fieldset) => [fieldset.apiNameBinding, fieldset]) || []);
+    const mergedFieldsets = (fieldsets || []).map((fieldset) => {
+      return storageFieldsetsMap.get(fieldset.apiNameBinding) || fieldset;
+    });
+    setFieldsetOutputValues(mergedFieldsets);
   }, [task.id]);
 
   const handleOpenWorkflowPopup = (workflowId: number | null) => (e: MouseEvent) => {
@@ -401,33 +410,41 @@ export function TaskCard({
     });
   };
 
+  const handleEditFieldsetField = (apiName: string) => (changedProps: Partial<IExtraField>) => {
+    setFieldsetOutputValues((prevFieldsets) => {
+      const newFieldsets = prevFieldsets.map((fs) => ({
+        ...fs,
+        fields: getEditedFields(fs.fields, apiName, changedProps),
+      }));
+
+      saveFieldsetsToStorageDebounced(task.id, newFieldsets);
+
+      return newFieldsets;
+    });
+  };
+
   const renderOutputFields = () => {
     const visibleOutputs = outputValues?.filter((field) => !field.isHidden);
 
-    if (!isArrayWithItems(visibleOutputs) || status === ETaskStatus.Completed) {
+    if ((!isArrayWithItems(visibleOutputs) && !isArrayWithItems(fieldsetOutputValues)) || status === ETaskStatus.Completed) {
       return null;
     }
+
 
     return (
       <div className={styles['task-output']}>
         <p className={styles['task-output__title']}>
           <IntlMessages id="tasks.task-outputs-fill-help" />
         </p>
-        {visibleOutputs
-          .map((field) => (
-            <ExtraFieldIntl
-              key={field.apiName}
-              field={field}
-              editField={handleEditField(field.apiName)}
-              showDropdown={false}
-              mode={EExtraFieldMode.ProcessRun}
-              labelBackgroundColor={EInputNameBackgroundColor.OrchidWhite}
-              namePlaceholder={field.name}
-              descriptionPlaceholder={field.description}
-              wrapperClassName={styles['task-output__field']}
-              accountId={accountId}
-            />
-          ))}
+        <MergedOutputList
+          fields={visibleOutputs || []}
+          fieldsets={fieldsetOutputValues}
+          onEditField={handleEditField}
+          onEditFieldsetField={handleEditFieldsetField}
+          labelBackgroundColor={EInputNameBackgroundColor.OrchidWhite}
+          fieldClassName={styles['task-output__field']}
+          accountId={accountId}
+        />
       </div>
     );
   };
@@ -467,6 +484,9 @@ export function TaskCard({
     }
 
     const renderCompleteButton = (isDisabled: boolean) => {
+      const allFieldsetFields = fieldsetOutputValues.flatMap((fs) => fs.fields);
+      const mergedOutput = [...outputValues, ...allFieldsetFields];
+
       return (
         <Button
           isLoading={status === ETaskStatus.Completing}
@@ -474,7 +494,7 @@ export function TaskCard({
             setTaskCompleted({
               taskId,
               viewMode,
-              output: outputValues,
+              output: mergedOutput,
             })
           }
           label={formatMessage({ id: 'processes.complete-task' })}

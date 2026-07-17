@@ -24,6 +24,9 @@ jobs:
           - image: pneumaticworkflow/pneumatic-celery-beat
             dockerfile: backend/Dockerfile
             build_context: backend
+          - image: pneumaticworkflow/file-service
+            dockerfile: storage/Dockerfile
+            build_context: storage
     permissions:
       packages: write
       contents: read

@@ -1,6 +1,7 @@
-/* eslint-disable jsx-a11y/control-has-associated-label */
 import * as React from 'react';
 import classnames from 'classnames';
+import { useDispatch, useSelector } from 'react-redux';
+import { useIntl } from 'react-intl';
 
 import { IntlMessages } from '../../IntlMessages';
 import { TemplateCard } from './TemplateCard';
@@ -11,30 +12,41 @@ import { PageTitle } from '../../PageTitle/PageTitle';
 import { EPageTitle } from '../../../constants/defaultValues';
 import { ERoutes } from '../../../constants/routes';
 import { analytics, EAnalyticsCategory, EAnalyticsAction } from '../../../utils/analytics';
-import { ITemplatesUserProps } from './types';
-
-import styles from '../Templates.css';
 import { isEnvAi } from '../../../constants/enviroment';
-
-export function TemplatesUser({
-  templatesList,
-  loading,
+import {
   cloneTemplate,
   deleteTemplate,
   loadTemplates,
-  openRunWorkflowModal,
+  openRunWorkflowModalByTemplateId,
   setIsAITemplateModalOpened,
-}: ITemplatesUserProps) {
+} from '../../../redux/actions';
+import { getIsAdmin } from '../../../redux/selectors/user';
+import { getTemplatesIsListLoading, getTemplatesList } from '../../../redux/selectors/templates';
+
+import styles from '../Templates.css';
+
+export function TemplatesUser() {
+  const dispatch = useDispatch();
+  const { formatMessage } = useIntl();
+  const canCreateTemplates = useSelector(getIsAdmin);
+  const templatesList = useSelector(getTemplatesList);
+  const loading = useSelector(getTemplatesIsListLoading);
+
   const { count, items } = templatesList;
   const isListFullLoaded = count === items.length;
+  const showMoreLabel = formatMessage({ id: 'general.show-more.template' });
 
   const handleClickMore = () => {
     if (count > items.length) {
-      loadTemplates(items.length);
+      dispatch(loadTemplates(items.length));
     }
   };
 
   const renderAddTemplateButton = () => {
+    if (!canCreateTemplates) {
+      return null;
+    }
+
     const onClickAddTemplate = () => {
       analytics.send('Add template', {
         category: EAnalyticsCategory.Templates,
@@ -62,10 +74,10 @@ export function TemplatesUser({
       <div className={classnames(styles['cards-wrapper'], { [styles['container-loading']]: loading })}>
         {loading && <div className="loading" />}
 
-        {isEnvAi && (
+        {canCreateTemplates && isEnvAi && (
           <AddCardButton
             className={styles['card']}
-            onClick={() => setIsAITemplateModalOpened(true)}
+            onClick={() => dispatch(setIsAITemplateModalOpened(true))}
             title={<IntlMessages id="template.generate-with-ai.title" />}
             caption={<IntlMessages id="template.generate-with-ai.description" />}
             icon={<AIPlusIcon />}
@@ -77,10 +89,10 @@ export function TemplatesUser({
           <TemplateCard
             {...template}
             key={template.id}
-            onRunWorkflow={() => openRunWorkflowModal({ templateId: template.id })}
+            onRunWorkflow={() => dispatch(openRunWorkflowModalByTemplateId({ templateId: template.id }))}
             canEdit={template.isEditable}
-            cloneTemplate={cloneTemplate}
-            deleteTemplate={deleteTemplate}
+            cloneTemplate={(payload) => dispatch(cloneTemplate(payload))}
+            deleteTemplate={(payload) => dispatch(deleteTemplate(payload))}
           />
         ))}
       </div>
@@ -92,8 +104,9 @@ export function TemplatesUser({
           disabled={loading}
           data-test-id="show-more-button"
           type="button"
+          aria-label={showMoreLabel}
         >
-          <IntlMessages id="general.show-more.template" />
+          {showMoreLabel}
         </button>
       )}
     </>

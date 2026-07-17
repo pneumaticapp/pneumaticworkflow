@@ -1,6 +1,5 @@
-import { ITemplatesList } from '../../../types/redux';
-import { ITemplateListItem } from '../../../types/template';
 import { TCloneTemplatePayload, TDeleteTemplatePayload } from '../../../redux/actions';
+import { ITemplateListItem } from '../../../types/template';
 
 export interface ITemplateCardProps extends ITemplateListItem {
   canEdit: boolean | undefined;
@@ -14,14 +13,4 @@ export interface ITemplateCardFooterProps {
   tasksCount: number;
   isActive: boolean;
   onRunWorkflow(): void;
-}
-
-export interface ITemplatesUserProps {
-  templatesList: ITemplatesList;
-  loading?: boolean;
-  cloneTemplate(payload: TCloneTemplatePayload): void;
-  deleteTemplate(payload: TDeleteTemplatePayload): void;
-  loadTemplates(offset: number): void;
-  openRunWorkflowModal({ templateId }: { templateId: number }): void;
-  setIsAITemplateModalOpened(value: boolean): void;
 }

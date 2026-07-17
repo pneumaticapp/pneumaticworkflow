@@ -95,7 +95,7 @@ def test_steps__admin__ok(api_client):
     # assert
     assert len(response.data) == 1
     assert response.data[0]['number'] == 1
-    assert response.data[0]['id'] == template_task.id
+    assert response.data[0]['name'] == template_task.name
     assert response.data[0]['api_name'] == template_task.api_name
 
 
@@ -126,7 +126,7 @@ def test_steps__not_admin__ok(api_client):
     # assert
     assert len(response.data) == 1
     assert response.data[0]['number'] == 1
-    assert response.data[0]['id'] == template_task.id
+    assert response.data[0]['name'] == template_task.name
     assert response.data[0]['api_name'] == template_task.api_name
 
 
@@ -161,7 +161,7 @@ def test_steps__group_is_template_owner__ok(api_client):
     assert response.status_code == 200
     assert len(response.data) == 1
     assert response.data[0]['number'] == template_task.number
-    assert response.data[0]['id'] == template_task.id
+    assert response.data[0]['name'] == template_task.name
     assert response.data[0]['api_name'] == template_task.api_name
 
 
@@ -498,7 +498,7 @@ def test_steps__with_tasks_in_progress_true__another_task_completed__ok(
     assert response.status_code == 200
     assert len(response.data) == 1
     assert response.data[0]['number'] == template_task_2.number
-    assert response.data[0]['id'] == template_task_2.id
+    assert response.data[0]['name'] == template_task_2.name
     assert response.data[0]['api_name'] == template_task_2.api_name
 
 
@@ -535,7 +535,7 @@ def test_steps__with_tasks_in_progress_true__not_template_owner__ok(
     # assert
     assert response.status_code == 200
     assert len(response.data) == 1
-    assert response.data[0]['id'] == template_task.id
+    assert response.data[0]['name'] == template_task.name
     assert response.data[0]['number'] == template_task.number
     assert response.data[0]['api_name'] == template_task.api_name
 
@@ -576,7 +576,7 @@ def test_steps__with_tasks_in_progress_true__performer_group__ok(
     assert response.status_code == 200
     assert len(response.data) == 1
     assert response.data[0]['number'] == 1
-    assert response.data[0]['id'] == template_task_1.id
+    assert response.data[0]['name'] == template_task_1.name
     assert response.data[0]['api_name'] == template_task_1.api_name
 
 
@@ -694,7 +694,7 @@ def test_steps__with_tasks_in_progress_false__completed_task__ok(
     assert response.status_code == 200
     assert len(response.data) == 1
     assert response.data[0]['number'] == template_task.number
-    assert response.data[0]['id'] == template_task.id
+    assert response.data[0]['name'] == template_task.name
     assert response.data[0]['api_name'] == template_task.api_name
 
 
@@ -771,7 +771,7 @@ def test_steps__with_tasks_in_progress_false__performer_group__ok(
     assert response.status_code == 200
     assert len(response.data) == 1
     assert response.data[0]['number'] == 1
-    assert response.data[0]['id'] == template_task_1.id
+    assert response.data[0]['name'] == template_task_1.name
     assert response.data[0]['api_name'] == template_task_1.api_name
 
 
