@@ -26,6 +26,7 @@ export interface IRichEditorBaseProps {
   accountId?: number;
   placeholder?: string;
   className?: string;
+  editorClassName?: string;
   defaultValue?: string;
   withToolbar?: boolean;
   withChecklists?: boolean;
@@ -66,6 +67,7 @@ export interface ILexicalEditorContentProps {
   withMentions: boolean;
   mentions: TMentionData[] | undefined;
   isModal: boolean | undefined;
+  editorClassName?: string;
   isUploading?: boolean;
   onUploadAttachments?: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
   onPasteFiles?: (files: File[]) => Promise<void>;
