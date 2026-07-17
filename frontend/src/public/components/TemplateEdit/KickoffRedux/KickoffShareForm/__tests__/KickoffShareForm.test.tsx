@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { useSelector } from 'react-redux';
 
 import { TemplateFieldContext } from '../../../useTemplateForm/contexts';
@@ -44,12 +45,18 @@ jest.mock('../../../../UI', () => ({
 }));
 
 jest.mock('../KickoffShareTabs', () => ({
-  SharedFormTab: (props: { isSuccessUrlEnabled: boolean; successUrl: string }) => (
+  SharedFormTab: (props: {
+    isSuccessUrlEnabled: boolean;
+    successUrl: string;
+    onToggleSuccessUrl: () => void;
+  }) => (
     <div
       data-testid="shared-tab"
       data-success-enabled={String(props.isSuccessUrlEnabled)}
       data-success-url={props.successUrl}
-    />
+    >
+      <button type="button" onClick={props.onToggleSuccessUrl}>Toggle redirect</button>
+    </div>
   ),
   EmbeddedFormTab: () => <div data-testid="embedded-tab" />,
 }));
@@ -83,6 +90,19 @@ function renderShareForm(values: ITemplateClient) {
   };
 }
 
+function StatefulShareForm({ initialValues }: { initialValues: ITemplateClient }) {
+  const [values, setValues] = React.useState(initialValues);
+  const setFieldValue = (field: string, value: unknown) => {
+    setValues((currentValues) => ({ ...currentValues, [field]: value }));
+  };
+
+  return (
+    <TemplateFieldContext.Provider value={{ values, setFieldValue, setValues: jest.fn() }}>
+      <KickoffShareForm />
+    </TemplateFieldContext.Provider>
+  );
+}
+
 describe('KickoffShareForm', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -99,6 +119,39 @@ describe('KickoffShareForm', () => {
       publicUrl: 'https://forms.test/form',
       publicSuccessUrl: 'https://forms.test/success',
     }));
+
+    expect(screen.getByTestId('shared-tab')).toHaveAttribute('data-success-enabled', 'true');
+    expect(screen.getByTestId('shared-tab')).toHaveAttribute('data-success-url', 'https://forms.test/success');
+  });
+
+  it('treats externally loaded empty redirect URL as disabled', () => {
+    renderShareForm(makeTemplate({
+      isPublic: true,
+      publicUrl: 'https://forms.test/form',
+      publicSuccessUrl: '',
+    }));
+
+    expect(screen.getByTestId('shared-tab')).toHaveAttribute('data-success-enabled', 'false');
+    expect(screen.getByTestId('shared-tab')).toHaveAttribute('data-success-url', '');
+  });
+
+  it('keeps entered redirect URL while the toggle is temporarily disabled', () => {
+    render(
+      <StatefulShareForm
+        initialValues={makeTemplate({
+          isPublic: true,
+          publicUrl: 'https://forms.test/form',
+          publicSuccessUrl: 'https://forms.test/success',
+        })}
+      />,
+    );
+
+    userEvent.click(screen.getByRole('button', { name: 'Toggle redirect' }));
+
+    expect(screen.getByTestId('shared-tab')).toHaveAttribute('data-success-enabled', 'false');
+    expect(screen.getByTestId('shared-tab')).toHaveAttribute('data-success-url', 'https://forms.test/success');
+
+    userEvent.click(screen.getByRole('button', { name: 'Toggle redirect' }));
 
     expect(screen.getByTestId('shared-tab')).toHaveAttribute('data-success-enabled', 'true');
     expect(screen.getByTestId('shared-tab')).toHaveAttribute('data-success-url', 'https://forms.test/success');
