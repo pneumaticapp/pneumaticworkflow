@@ -104,6 +104,10 @@ jest.mock('../ConditionsBanner', () => ({
   ConditionsBanner: jest.fn(() => null),
 }));
 
+jest.mock('../../StepName', () => ({
+  StepName: jest.fn((props: { initialStepName: string }) => React.createElement('span', null, props.initialStepName)),
+}));
+
 jest.mock('../TaskForm/Conditions/utils/getKickoffConditions', () => ({
   getKickoffConditions: jest.fn(() => ({ predicates: [] })),
 }));
@@ -130,6 +134,7 @@ jest.mock('../../UI/Notifications', () => ({
 }));
 
 const SUBSCRIPTION_PLAN = 'unlimited_month';
+let mockDispatch = jest.fn();
 
 describe('TemplateEdit', () => {
   const makeTemplate = (overrides: any = {}) => ({
@@ -179,7 +184,8 @@ describe('TemplateEdit', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     currentProps = baseProps();
-    (useDispatch as jest.Mock).mockReturnValue(jest.fn());
+    mockDispatch = jest.fn();
+    (useDispatch as jest.Mock).mockReturnValue(mockDispatch);
     (useSelector as jest.Mock).mockImplementation((selector: unknown) => {
       const props = currentProps;
       if (selector === getCurrentUser) return props.authUser;
@@ -221,6 +227,38 @@ describe('TemplateEdit', () => {
         fields: [],
         fieldsets: [{ apiName: 'fs-1', fields: [{ apiName: 'fieldset-field' }] }],
       });
+    });
+  });
+
+  describe('variables sync', () => {
+    it('passes saved template id into task variable metadata', () => {
+      currentProps = {
+        ...baseProps(),
+        template: makeTemplate({
+          id: 42,
+          tasks: [
+            {
+              uuid: 'u-task-1',
+              apiName: 'task-1',
+              number: 1,
+              name: 'Task with output',
+              fields: [{ apiName: 'field-1', name: 'Field 1', type: 'string', selections: [] }],
+              fieldsets: [],
+            } as any,
+          ],
+        }),
+      };
+
+      render(React.createElement(TemplateEdit, currentProps as any));
+
+      const variablesAction = mockDispatch.mock.calls
+        .map(([action]) => action)
+        .find((action) => action.type === 'LOAD_TEMPLATE_VARIABLES_SUCCESS');
+      const taskVariable = variablesAction.payload.variables.find((variable: any) => variable.apiName === 'field-1');
+
+      expect(variablesAction.payload.templateId).toBe(42);
+      expect(React.isValidElement(taskVariable.richSubtitle)).toBe(true);
+      expect(taskVariable.richSubtitle.props.templateId).toBe(42);
     });
   });
 

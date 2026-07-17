@@ -146,7 +146,11 @@ export function useTemplateEditInit({
       if (currentValues.id) {
         dispatch(loadTemplateVariablesSuccess({
           templateId: currentValues.id,
-          variables: getVariables(currentValues),
+          variables: getVariables({
+            kickoff: currentValues.kickoff,
+            tasks: currentValues.tasks,
+            templateId: currentValues.id,
+          }),
         }));
       }
     };
