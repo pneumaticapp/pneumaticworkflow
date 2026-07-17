@@ -2,7 +2,7 @@ import { TUserId } from './user';
 import { TUploadedFile } from '../utils/uploadFiles';
 import { ITask, ITemplateStep, TaskWithTsp } from './tasks';
 import {
-  IKickoff,
+  IKickoffClient,
   IExtraField,
   ITemplateTitle,
   ETemplateOwnerType,
@@ -10,6 +10,7 @@ import {
   ITableViewFields,
   TTemplatePreset,
 } from './template';
+import { IFieldsetRuntime } from './fieldset';
 import { EProgressbarColor } from '../components/Workflows/utils/getWorfkflowClientProperties';
 
 export type WorkflowWithDateFields = {
@@ -72,7 +73,7 @@ export interface IWorkflowDetails {
 
 export interface IWorkflowEditData {
   name?: string;
-  kickoff?: IKickoff | null;
+  kickoff?: IKickoffClient | null;
 }
 
 export interface IWorkflowEdit {
@@ -87,6 +88,7 @@ export interface IWorkflowDetailsKickoff {
   id: number;
   description: string | null;
   output: IExtraField[];
+  fieldsets?: IFieldsetRuntime[];
 }
 
 export interface IWorkflowLogItem {
@@ -114,7 +116,7 @@ export interface IWorkflowDelay {
 }
 
 export interface IWorkflowLogTask
-  extends Pick<ITask, 'id' | 'name' | 'description' | 'output' | 'performers' | 'dueDate'> {
+  extends Pick<ITask, 'id' | 'name' | 'description' | 'output' | 'fieldsets' | 'performers' | 'dueDate'> {
   number: number;
   delay: IWorkflowDelay | null;
 }

@@ -135,6 +135,13 @@ export type TNotificationsListItemOptional =
       };
     }
   | {
+      type: 'complete_workflow';
+      workflow: {
+        id: number;
+        name: string;
+      };
+    }
+  | {
       type: 'due_date_changed';
       author: number;
       text: null;

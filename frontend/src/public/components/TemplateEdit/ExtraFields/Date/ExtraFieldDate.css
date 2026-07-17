@@ -8,6 +8,16 @@
   position: relative;
 }
 
+.date-input-wrapper_label-left {
+  flex: 1;
+  min-width: 0;
+
+  .icon {
+    bottom: auto;
+    height: 50px;
+  }
+}
+
 .icon {
   position: absolute;
   top: 0;

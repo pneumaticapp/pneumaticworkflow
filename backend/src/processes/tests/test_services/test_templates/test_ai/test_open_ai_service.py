@@ -502,6 +502,7 @@ def test_get_template_data__ok(mocker):
     assert template_data['kickoff'] == {
         'description': '',
         'fields': [],
+        'fieldsets': [],
     }
     task_1_data = template_data['tasks'][0]
     assert task_1_data['number'] == 1
