@@ -231,6 +231,32 @@ describe('TemplateEdit', () => {
   });
 
   describe('variables sync', () => {
+    it('syncs immediately when a create session receives its template id', () => {
+      currentProps = { ...baseProps(), template: makeTemplate({ id: undefined }) };
+      const view = render(React.createElement(TemplateEdit, currentProps as any));
+      mockDispatch.mockClear();
+
+      currentProps = { ...currentProps, template: makeTemplate({ id: 42 }) };
+      view.rerender(React.createElement(TemplateEdit, currentProps as any));
+
+      expect(mockDispatch.mock.calls.some(
+        ([action]) => action.type === 'LOAD_TEMPLATE_VARIABLES_SUCCESS' && action.payload.templateId === 42,
+      )).toBe(true);
+    });
+
+    it('syncs immediately when navigating to another persisted template', () => {
+      currentProps = { ...baseProps(), template: makeTemplate({ id: 42 }) };
+      const view = render(React.createElement(TemplateEdit, currentProps as any));
+      mockDispatch.mockClear();
+
+      currentProps = { ...currentProps, template: makeTemplate({ id: 43, name: 'Other template' }) };
+      view.rerender(React.createElement(TemplateEdit, currentProps as any));
+
+      expect(mockDispatch.mock.calls.some(
+        ([action]) => action.type === 'LOAD_TEMPLATE_VARIABLES_SUCCESS' && action.payload.templateId === 43,
+      )).toBe(true);
+    });
+
     it('passes saved template id into task variable metadata', () => {
       currentProps = {
         ...baseProps(),
