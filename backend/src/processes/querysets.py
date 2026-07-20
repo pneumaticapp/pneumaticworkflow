@@ -828,6 +828,7 @@ class TaskQuerySet(TasksBaseQuerySet):
     def on_performer(self, user_id: int):
         return self.filter(
             taskperformer__user_id=user_id,
+            taskperformer__type=PerformerType.USER,
         )
 
     def exclude_directly_deleted(self):

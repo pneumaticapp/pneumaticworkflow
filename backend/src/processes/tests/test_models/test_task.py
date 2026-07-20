@@ -1183,6 +1183,67 @@ def test_delete_orphaned_performers__keeps_group_user__ok():
     ).exists()
 
 
+def test_get_user_performers__user_and_group_user__no_duplicates():
+
+    """
+    USER + completed GROUP_USER for same user
+    → get_user_performers returns the user once
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        user_id=owner.id,
+        type=PerformerType.GROUP_USER,
+        is_completed=True,
+        date_completed=timezone.now(),
+    )
+
+    # act
+    user_performers = list(task.get_user_performers())
+
+    # assert
+    assert len(user_performers) == 1
+    assert user_performers[0].id == owner.id
+
+
+def test_get_user_performers__group_user_only__empty():
+
+    """
+    Only GROUP + GROUP_USER, no USER assignment
+    → get_user_performers does not include the group member
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user_1 = create_test_not_admin(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    TaskPerformer.objects.filter(task_id=task.id).update(
+        type=PerformerType.GROUP_USER,
+        is_completed=True,
+        date_completed=timezone.now(),
+        user_id=user_1.id,
+    )
+    group_1 = create_test_group(account=account, users=[user_1])
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP,
+        group_id=group_1.id,
+    )
+
+    # act
+    user_performers = list(task.get_user_performers())
+
+    # assert
+    assert len(user_performers) == 0
+
+
 def test_delete_raw_performer__deleted__calls_delete_orphaned(mocker):
     """
     Raw performer deleted (count > 0) — calls _delete_orphaned_performers

@@ -1,18 +1,19 @@
 import pytest
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 
 from src.accounts.validators import (
     user_is_last_performer,
 )
 from src.processes.enums import PerformerType, TaskStatus
-from src.processes.models.workflows.task import TaskPerformer
+from src.processes.models.workflows.task import Task, TaskPerformer
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
     create_test_owner,
     create_test_template,
     create_test_user,
-    create_test_workflow,
+    create_test_workflow, create_test_group,
 )
 
 pytestmark = pytest.mark.django_db
@@ -224,3 +225,44 @@ class TestWorkflowTask:
 
         # assert
         assert result is False
+
+    def test_user_is_last_performer__group_user__false(self):
+
+        """
+        Only completed GROUP_USER (no USER assignment)
+        → user_is_last_performer is False; on_performer is empty
+        """
+
+        # arrange
+        account = create_test_account()
+        owner = create_test_owner(account=account)
+        user_1 = create_test_admin(account=account)
+        group = create_test_group(account=account, users=[user_1])
+        workflow = create_test_workflow(user=owner, tasks_count=1)
+        task = workflow.tasks.get(number=1)
+        task.taskperformer_set.all().delete()
+        TaskPerformer.objects.create(
+            task_id=task.id,
+            group=group,
+            type=PerformerType.GROUP,
+        )
+
+        TaskPerformer.objects.create(
+            task_id=task.id,
+            user_id=user_1.id,
+            type=PerformerType.GROUP_USER,
+            is_completed=True,
+            date_completed=timezone.now(),
+        )
+
+        # act
+        result = user_is_last_performer(user_1)
+
+        # assert
+        assert result is False
+        assert not (
+            Task.objects
+            .on_performer(user_1.id)
+            .filter(id=task.id)
+            .exists()
+        )

@@ -161,7 +161,10 @@ class WorkflowListQuery(
             prefix='current_performer',
         )
         self.params.update(params)
-        return f"ptp.user_id in {result}"
+        return (
+            f"ptp.user_id in {result} "
+            f"AND ptp.type = '{PerformerType.USER}'"
+        )
 
     def _get_current_performer_group_ids(self):
         result, params = self._to_sql_list(
@@ -169,7 +172,10 @@ class WorkflowListQuery(
             prefix='current_performer_group_ids',
         )
         self.params.update(params)
-        return f"ptp.group_id in {result}"
+        return (
+            f"ptp.group_id in {result} "
+            f"AND ptp.type = '{PerformerType.GROUP}'"
+        )
 
     def _get_workflow_starter(self):
         result, params = self._to_sql_list(
@@ -423,7 +429,10 @@ class WorkflowCountsByWfStarterQuery(
             prefix='current_performer_id',
         )
         self.params.update(params)
-        return f"ptp.user_id in {result}"
+        return (
+            f"ptp.user_id in {result} "
+            f"AND ptp.type = '{PerformerType.USER}'"
+        )
 
     def _get_current_performer_group_ids(self):
         result, params = self._to_sql_list(
@@ -431,7 +440,10 @@ class WorkflowCountsByWfStarterQuery(
             prefix='current_performer_group_ids',
         )
         self.params.update(params)
-        return f"ptp.group_id in {result}"
+        return (
+            f"ptp.group_id in {result} "
+            f"AND ptp.type = '{PerformerType.GROUP}'"
+        )
 
     def _get_inner_where(self):
         where = f"""
@@ -605,7 +617,8 @@ class WorkflowCountsByCPerformerQuery(
                     }
                 )
             )
-            AND ptp.directly_status != '{DirectlyStatus.DELETED}' """
+            AND ptp.directly_status != '{DirectlyStatus.DELETED}'
+            AND ptp.type = '{PerformerType.USER}' """
 
         if self.template_ids:
             where = f'{where} AND {self._get_template_ids()}'
@@ -696,7 +709,7 @@ class WorkflowCountsByCPerformerQuery(
                 )
                 AND ptp.directly_status != '{DirectlyStatus.DELETED}'
                 AND ag.is_deleted IS FALSE
-                AND ptp.group_id IS NOT NULL
+                AND ptp.type = '{PerformerType.GROUP}'
                 {self._build_conditional_wheres()}
         ),
         -- For groups, we take into account cases when the group is explicitly
@@ -738,7 +751,7 @@ class WorkflowCountsByCPerformerQuery(
                 )
                 AND ptp.directly_status != '{DirectlyStatus.DELETED}'
                 AND ag.is_deleted IS FALSE
-                AND ptp.group_id IS NOT NULL
+                AND ptp.type = '{PerformerType.GROUP}'
                 {self._build_conditional_wheres()}
         )
 
@@ -851,7 +864,10 @@ class WorkflowCountsByTemplateTaskQuery(
             prefix='current_performer_id',
         )
         self.params.update(params)
-        return f"ptp.user_id in {result}"
+        return (
+            f"ptp.user_id in {result} "
+            f"AND ptp.type = '{PerformerType.USER}'"
+        )
 
     def _get_current_performer_group_ids(self):
         result, params = self._to_sql_list(
@@ -859,7 +875,10 @@ class WorkflowCountsByTemplateTaskQuery(
             prefix='current_performer_group_ids',
         )
         self.params.update(params)
-        return f"ptp.group_id in {result}"
+        return (
+            f"ptp.group_id in {result} "
+            f"AND ptp.type = '{PerformerType.GROUP}'"
+        )
 
     def _get_workflow_starter_ids(self):
         result, params = self._to_sql_list(

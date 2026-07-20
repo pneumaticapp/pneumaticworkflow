@@ -3,6 +3,7 @@ from typing import List
 from celery import shared_task
 from django.contrib.auth import get_user_model
 from django.db import transaction
+from django.db.models import Q
 
 from src.accounts.enums import AbsenceStatus
 from src.accounts.services.vacation import VacationDelegationService
@@ -37,14 +38,25 @@ def complete_tasks(
         Task.objects.filter(
             status=TaskStatus.ACTIVE,
             require_completion_by_all=True,
-            taskperformer__user_id=user_id,
             workflow__status=WorkflowStatus.RUNNING,
         )
+        .filter(
+            Q(
+                taskperformer__user_id=user_id,
+                taskperformer__type=PerformerType.USER,
+            )
+            | Q(
+                taskperformer__type=PerformerType.GROUP,
+                taskperformer__group__users__id=user_id,
+            ),
+        )
         .select_related('workflow')
-        .exclude(taskperformer__is_completed=False)
-        .exclude_directly_deleted().prefetch_related('performers')
+        .exclude_directly_deleted()
+        .distinct()
     )
     for task in tasks:
+        if not task.can_be_completed():
+            continue
         service = WorkflowActionService(
             workflow=task.workflow,
             user=user,

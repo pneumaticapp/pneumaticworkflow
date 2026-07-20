@@ -590,6 +590,15 @@ class Task(
         super().delete_raw_performers()
         self._delete_orphaned_performers()
 
+    def get_user_performers(self):
+
+        """ Assigned USER performers only (excludes GROUP_USER markers). """
+
+        return self.performers.filter(
+            taskperformer__type=PerformerType.USER,
+            taskperformer__is_deleted=False,
+        ).distinct()
+
     def can_be_completed(self, by_user: Optional[UserModel] = None) -> bool:
 
         if self.is_completed is True:
@@ -610,12 +619,24 @@ class Task(
         else:
             if by_user:
                 completed_performers = task_performers.filter(
-                    Q(is_completed=True) |
-                    Q(is_completed=False, user_id=by_user.id) |
-                    Q(is_completed=False, group__users=by_user.id),
+                    Q(is_completed=True)
+                    | Q(
+                        is_completed=False,
+                        user_id=by_user.id,
+                        type=PerformerType.USER,
+                    )
+                    | Q(
+                        is_completed=False,
+                        type=PerformerType.GROUP,
+                        group__users=by_user.id,
+                    ),
                 )
             else:
-                completed_performers = task_performers.completed()
+                completed_performers = (
+                    task_performers
+                    .type_user_or_group()
+                    .completed()
+                )
             result = completed_performers.exists()
         return result
 
