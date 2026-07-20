@@ -24,7 +24,7 @@ from src.processes.enums import (
     ConditionAction,
     DirectlyStatus,
     TaskStatus,
-    WorkflowStatus, PerformerType,
+    WorkflowStatus,
 )
 from src.processes.messages import workflow as messages
 from src.processes.models.workflows.fieldset import FieldSet
@@ -814,12 +814,9 @@ class WorkflowActionService:
         )
         if task_performer:
             if task_performer.type_group:
-                task_performer, _ = TaskPerformer.objects.get_or_create(
-                    user_id=self.user.id,
-                    task_id=task.id,
-                    type=PerformerType.GROUP_USER,
-                )
-            if task_performer.is_completed:
+                if self.user.id in task_performer.completed_users:
+                    raise exceptions.UserAlreadyCompleteTask
+            elif task_performer.is_completed:
                 raise exceptions.UserAlreadyCompleteTask
         elif not self.user.is_account_owner:
             raise exceptions.UserNotPerformer
@@ -882,11 +879,20 @@ class WorkflowActionService:
                     # completed only for user and send ws remove task
                     # if "requires completion by all", sending message
                     # about the completion of the task by each performer
-                    task_performer.date_completed = timezone.now()
-                    task_performer.is_completed = True
-                    task_performer.save(
-                        update_fields=('date_completed', 'is_completed'),
-                    )
+                    if (
+                        task_performer.type_group
+                        and task.require_completion_by_all
+                    ):
+                        task_performer.completed_users.append(self.user.id)
+                        task_performer.save(
+                            update_fields=('completed_users',),
+                        )
+                    else:
+                        task_performer.date_completed = timezone.now()
+                        task_performer.is_completed = True
+                        task_performer.save(
+                            update_fields=('date_completed', 'is_completed'),
+                        )
                     if not self.user.is_guest:
                         # Websocket notification
                         send_task_completed_websocket.delay(

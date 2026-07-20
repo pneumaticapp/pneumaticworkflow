@@ -1862,38 +1862,3 @@ def test_events__non_complete_task_fieldsets_null__ok(api_client):
     assert item_1['type'] == WorkflowEventType.COMMENT
     task_payload = item_1['task']
     assert task_payload['fieldsets'] is None
-
-
-def test_events__performer_type_group_user__skip(api_client):
-
-    # arrange
-    account = create_test_account()
-    owner = create_test_owner(account=account)
-    user = create_test_not_admin(account=account)
-    group = create_test_group(account=account, users=[user])
-    workflow = create_test_workflow(user=owner, tasks_count=1)
-    task = workflow.tasks.get(number=1)
-    task.taskperformer_set.all().delete()
-    TaskPerformer.objects.create(
-        task_id=task.id,
-        group_id=group.id,
-        type=PerformerType.GROUP,
-    )
-    TaskPerformer.objects.create(
-        task_id=task.id,
-        user_id=user.id,
-        type=PerformerType.GROUP_USER,
-    )
-    WorkflowEventService.task_started_event(task)
-    api_client.token_authenticate(owner)
-
-    # act
-    response = api_client.get(f'/workflows/{workflow.id}/events')
-
-    # assert
-    assert response.status_code == 200
-    assert len(response.data) == 1
-    performers = response.data[0]['task']['performers']
-    assert len(performers) == 1
-    assert performers[0]['type'] == PerformerType.GROUP
-    assert performers[0]['source_id'] == group.id

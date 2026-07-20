@@ -3426,14 +3426,9 @@ def test_check_and_complete_tasks__rcba_and_completed_group_performer__skip(
     group = create_test_group(account=account, users=[user])
     TaskPerformer.objects.create(
         task=task,
-        user=user,
-        is_completed=True,
-        type=PerformerType.GROUP_USER,
-    )
-    TaskPerformer.objects.create(
-        task=task,
         group=group,
         is_completed=True,
+        completed_users=[user.id],
         type=PerformerType.GROUP,
     )
     check_and_complete_tasks_delay_mock = mocker.patch(

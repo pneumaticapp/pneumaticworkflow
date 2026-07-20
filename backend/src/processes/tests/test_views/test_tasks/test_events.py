@@ -2,7 +2,7 @@ import pytest
 from django.contrib.auth import get_user_model
 
 from src.authentication.services.guest_auth import GuestJWTAuthService
-from src.processes.enums import PerformerType, WorkflowEventType, FieldType
+from src.processes.enums import WorkflowEventType, FieldType
 from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.fieldset import FieldSet
 from src.processes.models.workflows.task import TaskPerformer
@@ -14,7 +14,6 @@ from src.processes.tests.fixtures import (
     create_test_admin,
     create_test_attachment_for_event,
     create_test_event,
-    create_test_group,
     create_test_guest,
     create_test_owner,
     create_test_user,
@@ -759,42 +758,3 @@ def test_events__non_complete_task_fieldsets_null__ok(api_client):
     assert item_1['type'] == WorkflowEventType.COMMENT
     task_payload = item_1['task']
     assert task_payload['fieldsets'] is None
-
-
-def test_events__performer_type_group_user__skip(api_client):
-
-    # arrange
-    account = create_test_account()
-    owner = create_test_owner(account=account)
-    user = create_test_admin(account=account)
-    group = create_test_group(account=account, users=[user])
-    workflow = create_test_workflow(user=owner, tasks_count=1)
-    task = workflow.tasks.get(number=1)
-    task.taskperformer_set.all().delete()
-    TaskPerformer.objects.create(
-        task_id=task.id,
-        group_id=group.id,
-        type=PerformerType.GROUP,
-    )
-    TaskPerformer.objects.create(
-        task_id=task.id,
-        user_id=user.id,
-        type=PerformerType.GROUP_USER,
-    )
-    create_test_event(
-        workflow=workflow,
-        user=owner,
-        type_event=WorkflowEventType.TASK_COMPLETE,
-    )
-    api_client.token_authenticate(owner)
-
-    # act
-    response = api_client.get(f'/v2/tasks/{task.id}/events')
-
-    # assert
-    assert response.status_code == 200
-    assert len(response.data) == 1
-    performers = response.data[0]['task']['performers']
-    assert len(performers) == 1
-    assert performers[0]['type'] == PerformerType.GROUP
-    assert performers[0]['source_id'] == group.id

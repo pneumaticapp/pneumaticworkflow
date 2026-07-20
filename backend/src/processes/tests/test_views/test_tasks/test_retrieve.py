@@ -667,58 +667,6 @@ def test_retrieve__performers_type_field__ok(api_client):
     ]
 
 
-def test_retrieve__performer_type_group_user__skip(api_client, mocker):
-
-    # arrange
-    account = create_test_account()
-    owner = create_test_owner(account=account)
-    user = create_test_admin(account=account)
-    group = create_test_group(account=account, users=[user])
-    workflow = create_test_workflow(user=user, tasks_count=1)
-    task = workflow.tasks.get(number=1)
-    task.taskperformer_set.all().delete()
-    TaskPerformer.objects.create(
-        task_id=task.id,
-        group_id=group.id,
-        type=PerformerType.GROUP,
-    )
-    TaskPerformer.objects.create(
-        task_id=task.id,
-        user_id=user.id,
-        type=PerformerType.GROUP_USER,
-    )
-    task.due_date = task.date_first_started + timedelta(hours=24)
-    task.save(update_fields=['due_date'])
-
-    identify_mock = mocker.patch(
-        'src.processes.views.task.TaskViewSet.'
-        'identify',
-    )
-    group_mock = mocker.patch(
-        'src.processes.views.task.TaskViewSet.'
-        'group',
-    )
-    api_client.token_authenticate(owner)
-
-    # act
-    response = api_client.get(f'/v2/tasks/{task.id}')
-
-    # assert
-    assert response.status_code == 200
-    performers = response.data['performers']
-    assert len(performers) == 1
-    assert performers == [
-        {
-            'source_id': group.id,
-            'type': PerformerType.GROUP,
-            'is_completed': False,
-            'date_completed_tsp': None,
-        },
-    ]
-    identify_mock.assert_not_called()
-    group_mock.assert_not_called()
-
-
 def test_retrieve__is_urgent__ok(api_client):
 
     # arrange

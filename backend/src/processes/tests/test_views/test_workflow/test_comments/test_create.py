@@ -10,7 +10,6 @@ from src.authentication.enums import AuthTokenType
 from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.processes.enums import (
     CommentStatus,
-    PerformerType,
     TaskStatus,
     WorkflowStatus,
 )
@@ -26,8 +25,6 @@ from src.processes.enums import OwnerRole, OwnerType
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.tests.fixtures import (
     create_test_account,
-    create_test_admin,
-    create_test_group,
     create_test_attachment_for_event,
     create_test_guest,
     create_test_not_admin,
@@ -673,60 +670,3 @@ def test_create_comment__template_starter_other_workflow__forbidden(
 
     # assert
     assert response.status_code == status.HTTP_403_FORBIDDEN
-
-
-def test_create_comment__performer_type_group_user__skip(
-    api_client,
-    mocker,
-):
-
-    # arrange
-    account = create_test_account()
-    owner = create_test_owner(account=account)
-    user = create_test_admin(account=account)
-    group = create_test_group(account=account, users=[user])
-    workflow = create_test_workflow(user=owner, tasks_count=1)
-    task = workflow.tasks.get(number=1)
-    task.taskperformer_set.all().delete()
-    TaskPerformer.objects.create(
-        task_id=task.id,
-        group_id=group.id,
-        type=PerformerType.GROUP,
-    )
-    TaskPerformer.objects.create(
-        task_id=task.id,
-        user_id=user.id,
-        type=PerformerType.GROUP_USER,
-    )
-    event = WorkflowEventService.comment_created_event(
-        text='Test comment',
-        task=task,
-        user=owner,
-        after_create_actions=False,
-    )
-    service_init_mock = mocker.patch.object(
-        CommentService,
-        attribute='__init__',
-        return_value=None,
-    )
-    comment_create_mock = mocker.patch(
-        'src.processes.services.events.'
-        'CommentService.create',
-        return_value=event,
-    )
-    api_client.token_authenticate(owner)
-
-    # act
-    response = api_client.post(
-        f'/workflows/{workflow.id}/comment',
-        data={'text': event.text},
-    )
-
-    # assert
-    assert response.status_code == 200
-    performers = response.data['task']['performers']
-    assert len(performers) == 1
-    assert performers[0]['type'] == PerformerType.GROUP
-    assert performers[0]['source_id'] == group.id
-    service_init_mock.assert_called_once()
-    comment_create_mock.assert_called_once()

@@ -2492,9 +2492,10 @@ class GetIncompletedTaskPerformersQuery(SqlQueryObject):
 
     1. Direct USER-type performers whose ``is_completed`` flag is
        ``False`` (non-deleted, active users only).
-    2. Members of GROUP-type performers who do not yet have a
-       completed USER or GROUP_USER record on the same task
-       (non-deleted, active users from non-deleted groups only).
+    2. Members of GROUP-type performers whose user id is not yet in
+       ``completed_users`` and who do not have a completed USER
+       record on the same task (non-deleted, active users from
+       non-deleted groups only).
 
     Args:
         task_id: Primary key of the task to inspect.
@@ -2535,10 +2536,7 @@ class GetIncompletedTaskPerformersQuery(SqlQueryObject):
               ON au.id = ugu.user_id
             LEFT JOIN processes_taskperformer ptp_user
               ON ptp_user.task_id = ptp_group.task_id
-              AND ptp_user.type IN (
-                '{PerformerType.USER}',
-                '{PerformerType.GROUP_USER}'
-              )
+              AND ptp_user.type = '{PerformerType.USER}'
               AND ptp_user.user_id = au.id
               AND ptp_user.is_completed = TRUE
               AND ptp_user.is_deleted IS FALSE
@@ -2548,6 +2546,7 @@ class GetIncompletedTaskPerformersQuery(SqlQueryObject):
               AND ptp_group.is_deleted IS FALSE
               AND ptp_group.directly_status != '{DirectlyStatus.DELETED}'
               AND ptp_user.id IS NULL
+              AND NOT (au.id = ANY(ptp_group.completed_users))
               AND aug.is_deleted IS FALSE
               AND au.is_deleted IS FALSE
               AND au.status = '{UserStatus.ACTIVE}'

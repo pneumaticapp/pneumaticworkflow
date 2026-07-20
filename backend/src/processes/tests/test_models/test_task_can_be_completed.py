@@ -148,25 +148,12 @@ class TestCanBeCompleted:
         task = workflow.tasks.get(number=1)
         task.taskperformer_set.all().delete()
 
-        # add GROUP performer
+        # add GROUP performer with all members completed
         TaskPerformer.objects.create(
             task=task,
             group=group,
             type=PerformerType.GROUP,
-        )
-
-        # mark each group member as completed via GROUP_USER records
-        TaskPerformer.objects.create(
-            task=task,
-            user=user_1,
-            type=PerformerType.GROUP_USER,
-            is_completed=True,
-        )
-        TaskPerformer.objects.create(
-            task=task,
-            user=user_2,
-            type=PerformerType.GROUP_USER,
-            is_completed=True,
+            completed_users=[user_1.id, user_2.id],
         )
 
         # act
@@ -194,14 +181,7 @@ class TestCanBeCompleted:
             task=task,
             group=group,
             type=PerformerType.GROUP,
-        )
-
-        # only user_1 completed
-        TaskPerformer.objects.create(
-            task=task,
-            user=user_1,
-            type=PerformerType.GROUP_USER,
-            is_completed=True,
+            completed_users=[user_1.id],
         )
 
         # act
@@ -251,24 +231,13 @@ class TestCanBeCompleted:
             task=task,
             group=group_1,
             type=PerformerType.GROUP,
+            completed_users=[user_1.id],
         )
         TaskPerformer.objects.create(
             task=task,
             group=group_2,
             type=PerformerType.GROUP,
-        )
-
-        TaskPerformer.objects.create(
-            task=task,
-            user=user_1,
-            type=PerformerType.GROUP_USER,
-            is_completed=True,
-        )
-        TaskPerformer.objects.create(
-            task=task,
-            user=user_2,
-            type=PerformerType.GROUP_USER,
-            is_completed=True,
+            completed_users=[user_2.id],
         )
 
         # act
@@ -303,19 +272,12 @@ class TestCanBeCompleted:
             task=task,
             group=group_1,
             type=PerformerType.GROUP,
+            completed_users=[user_1.id],
         )
         TaskPerformer.objects.create(
             task=task,
             group=group_2,
             type=PerformerType.GROUP,
-        )
-
-        # only user_1 completed, user_2 has no completed record
-        TaskPerformer.objects.create(
-            task=task,
-            user=user_1,
-            type=PerformerType.GROUP_USER,
-            is_completed=True,
         )
 
         # act
@@ -349,26 +311,13 @@ class TestCanBeCompleted:
             task=task,
             group=group_1,
             type=PerformerType.GROUP,
-        )
-        # group_1 member completed
-        TaskPerformer.objects.create(
-            task=task,
-            user=user_1,
-            type=PerformerType.GROUP_USER,
-            is_completed=True,
+            completed_users=[user_1.id],
         )
         TaskPerformer.objects.create(
             task=task,
             group=group_2,
             type=PerformerType.GROUP,
             directly_status=DirectlyStatus.DELETED,
-        )
-        # group_2 member incompleted completed
-        TaskPerformer.objects.create(
-            task=task,
-            user=user_2,
-            type=PerformerType.GROUP_USER,
-            is_completed=False,
         )
 
         # act
@@ -395,24 +344,12 @@ class TestCanBeCompleted:
         workflow.tasks.update(require_completion_by_all=True)
         task = workflow.tasks.get(number=1)
         task.taskperformer_set.all().delete()
+        # only active user_1 completed; inactive user_2 is ignored by SQL
         TaskPerformer.objects.create(
             task=task,
             group=group,
             type=PerformerType.GROUP,
-        )
-
-        # only active user_1 completed; inactive user_2 is ignored by SQL
-        TaskPerformer.objects.create(
-            task=task,
-            user=user_1,
-            type=PerformerType.GROUP_USER,
-            is_completed=True,
-        )
-        TaskPerformer.objects.create(
-            task=task,
-            user=user_2,
-            type=PerformerType.GROUP_USER,
-            is_completed=False,
+            completed_users=[user_1.id],
         )
 
         # act
@@ -439,13 +376,7 @@ class TestCanBeCompleted:
             task=task,
             group=group,
             type=PerformerType.GROUP,
-        )
-        # mark group member as completed
-        TaskPerformer.objects.create(
-            task=task,
-            user=user_1,
-            type=PerformerType.GROUP_USER,
-            is_completed=True,
+            completed_users=[user_1.id],
         )
         TaskPerformer.objects.create(
             task=task,
@@ -458,53 +389,6 @@ class TestCanBeCompleted:
 
         # assert
         assert result is True
-
-    def test__rcba_and_deleted_group_user_performer__false(self):
-
-        """ A stale, soft-deleted, completed GROUP_USER record left
-            behind by _delete_orphaned_performers must be ignored by
-            the LEFT JOIN so the user still appears as incomplete. """
-
-        # arrange
-        account = create_test_account()
-        owner = create_test_owner(account=account)
-        user_1 = create_test_admin(account=account)
-        user_2 = create_test_not_admin(account=account)
-        group = create_test_group(
-            account=account,
-            users=[user_1, user_2],
-        )
-        workflow = create_test_workflow(user=owner, tasks_count=1)
-        workflow.tasks.update(require_completion_by_all=True)
-        task = workflow.tasks.get(number=1)
-        task.taskperformer_set.all().delete()
-
-        TaskPerformer.objects.create(
-            task=task,
-            group=group,
-            type=PerformerType.GROUP,
-        )
-
-        # user_1 has a stale soft-deleted completed record
-        TaskPerformer.objects.create(
-            task=task,
-            user=user_1,
-            type=PerformerType.GROUP_USER,
-            is_completed=True,
-        )
-        TaskPerformer.objects.create(
-            task=task,
-            user=user_2,
-            type=PerformerType.GROUP_USER,
-            is_completed=True,
-            is_deleted=True,
-        )
-
-        # act
-        result = task.can_be_completed()
-
-        # assert — both users are still incomplete
-        assert result is False
 
     def test__rcba_and_soft_deleted_group__true(self):
 
@@ -536,19 +420,12 @@ class TestCanBeCompleted:
             task=task,
             group=active_group,
             type=PerformerType.GROUP,
+            completed_users=[user_1.id],
         )
         TaskPerformer.objects.create(
             task=task,
             group=deleted_group,
             type=PerformerType.GROUP,
-        )
-
-        # user_1 (active group) completed
-        TaskPerformer.objects.create(
-            task=task,
-            user=user_1,
-            type=PerformerType.GROUP_USER,
-            is_completed=True,
         )
 
         # soft-delete the second group
@@ -682,14 +559,7 @@ class TestCanBeCompletedByUser:
             task=task,
             group=group,
             type=PerformerType.GROUP,
-        )
-
-        # user_1 completed, user_2 not
-        TaskPerformer.objects.create(
-            task=task,
-            user=user_1,
-            type=PerformerType.GROUP_USER,
-            is_completed=True,
+            completed_users=[user_1.id],
         )
 
         # act
@@ -716,14 +586,7 @@ class TestCanBeCompletedByUser:
             task=task,
             group=group,
             type=PerformerType.GROUP,
-        )
-
-        # only user_1 completed; user_2 not
-        TaskPerformer.objects.create(
-            task=task,
-            user=user_1,
-            type=PerformerType.GROUP_USER,
-            is_completed=True,
+            completed_users=[user_1.id],
         )
 
         # act
@@ -752,20 +615,7 @@ class TestCanBeCompletedByUser:
             task=task,
             group=group,
             type=PerformerType.GROUP,
-        )
-
-        # both members completed
-        TaskPerformer.objects.create(
-            task=task,
-            user=user_1,
-            type=PerformerType.GROUP_USER,
-            is_completed=True,
-        )
-        TaskPerformer.objects.create(
-            task=task,
-            user=user_2,
-            type=PerformerType.GROUP_USER,
-            is_completed=True,
+            completed_users=[user_1.id, user_2.id],
         )
 
         # act
@@ -793,91 +643,10 @@ class TestCanBeCompletedByUser:
             task=task,
             group=group,
             type=PerformerType.GROUP,
-        )
-
-        # group member completed
-        TaskPerformer.objects.create(
-            task=task,
-            user=user_1,
-            type=PerformerType.GROUP_USER,
-            is_completed=True,
+            completed_users=[user_1.id],
         )
 
         # act
-        result = task.can_be_completed(by_user=user_2)
-
-        # assert
-        assert result is False
-
-    def test__rcba_and_deleted_group_user_performer__false(self):
-
-        # arrange
-        account = create_test_account()
-        owner = create_test_owner(account=account)
-        user_1 = create_test_admin(account=account)
-        user_2 = create_test_not_admin(account=account)
-        group = create_test_group(
-            account=account,
-            users=[user_1, user_2],
-        )
-        workflow = create_test_workflow(user=owner, tasks_count=1)
-        workflow.tasks.update(require_completion_by_all=True)
-        task = workflow.tasks.get(number=1)
-        task.taskperformer_set.all().delete()
-
-        TaskPerformer.objects.create(
-            task=task,
-            group=group,
-            type=PerformerType.GROUP,
-        )
-
-        # user_1 has a stale soft-deleted completed record
-        TaskPerformer.objects.create(
-            task=task,
-            user=user_1,
-            type=PerformerType.GROUP_USER,
-            is_completed=True,
-            is_deleted=True,
-        )
-
-        # act — user_2 tries to complete; user_1 is still incomplete
-        result = task.can_be_completed(by_user=user_2)
-
-        # assert
-        assert result is False
-
-    def test__rcba_and_directly_deleted_group_user_performer__false(self):
-
-        # arrange
-        account = create_test_account()
-        owner = create_test_owner(account=account)
-        user_1 = create_test_admin(account=account)
-        user_2 = create_test_not_admin(account=account)
-        group = create_test_group(
-            account=account,
-            users=[user_1, user_2],
-        )
-        workflow = create_test_workflow(user=owner, tasks_count=1)
-        workflow.tasks.update(require_completion_by_all=True)
-        task = workflow.tasks.get(number=1)
-        task.taskperformer_set.all().delete()
-
-        TaskPerformer.objects.create(
-            task=task,
-            group=group,
-            type=PerformerType.GROUP,
-        )
-
-        # user_1 has a stale directly-deleted completed record
-        TaskPerformer.objects.create(
-            task=task,
-            user=user_1,
-            type=PerformerType.GROUP_USER,
-            is_completed=True,
-            directly_status=DirectlyStatus.DELETED,
-        )
-
-        # act — user_2 tries to complete; user_1 is still incomplete
         result = task.can_be_completed(by_user=user_2)
 
         # assert

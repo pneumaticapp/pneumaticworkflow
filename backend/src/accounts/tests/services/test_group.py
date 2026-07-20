@@ -2393,11 +2393,6 @@ def test_check_and_complete_tasks__group_performer__ok(mocker):
         group=group,
         type=PerformerType.GROUP,
     )
-    TaskPerformer.objects.create(
-        task=task,
-        user=user,
-        type=PerformerType.GROUP_USER,
-    )
     check_and_complete_tasks_delay_mock = mocker.patch(
         target='src.accounts.services.group.check_and_complete_tasks.delay',
     )
@@ -2440,21 +2435,11 @@ def test_check_and_complete_tasks_multiple_matching_tasks_ok(mocker):
         group=group,
         type=PerformerType.GROUP,
     )
-    TaskPerformer.objects.create(
-        task=task_1,
-        user=user,
-        type=PerformerType.GROUP_USER,
-    )
     task_2.taskperformer_set.all().delete()
     TaskPerformer.objects.create(
         task=task_2,
         group=group,
         type=PerformerType.GROUP,
-    )
-    TaskPerformer.objects.create(
-        task=task_2,
-        user=user,
-        type=PerformerType.GROUP_USER,
     )
     check_and_complete_tasks_delay_mock = mocker.patch(
         target='src.accounts.services.group.check_and_complete_tasks.delay',
@@ -2498,21 +2483,11 @@ def test_check_and_complete_tasks_mixed_matching_tasks_ok(mocker):
         group=group,
         type=PerformerType.GROUP,
     )
-    TaskPerformer.objects.create(
-        task=task_1,
-        group=group,
-        type=PerformerType.GROUP_USER,
-    )
     task_2.taskperformer_set.all().delete()
     TaskPerformer.objects.create(
         task=task_2,
         group=group,
         type=PerformerType.GROUP,
-    )
-    TaskPerformer.objects.create(
-        task=task_2,
-        group=group,
-        type=PerformerType.GROUP_USER,
     )
     task_2.status = TaskStatus.COMPLETED
     task_2.save(update_fields=['status'])
@@ -2563,21 +2538,11 @@ def test_check_and_complete_tasks__multiple_groups__ok(mocker):
         group=group_1,
         type=PerformerType.GROUP,
     )
-    TaskPerformer.objects.create(
-        task=task_1,
-        group=group_1,
-        type=PerformerType.GROUP_USER,
-    )
     task_2.taskperformer_set.all().delete()
     TaskPerformer.objects.create(
         task=task_2,
         group=group_2,
         type=PerformerType.GROUP,
-    )
-    TaskPerformer.objects.create(
-        task=task_2,
-        group=group_2,
-        type=PerformerType.GROUP_USER,
     )
     check_and_complete_tasks_delay_mock = mocker.patch(
         target='src.accounts.services.group.check_and_complete_tasks.delay',
@@ -2621,21 +2586,11 @@ def test_check_and_complete_tasks__two_workflows_two_tasks__ok(mocker):
         group=group,
         type=PerformerType.GROUP,
     )
-    TaskPerformer.objects.create(
-        task=task_1,
-        user=user,
-        type=PerformerType.GROUP_USER,
-    )
     task_2.taskperformer_set.all().delete()
     TaskPerformer.objects.create(
         task=task_2,
         group=group,
         type=PerformerType.GROUP,
-    )
-    TaskPerformer.objects.create(
-        task=task_2,
-        user=user,
-        type=PerformerType.GROUP_USER,
     )
     check_and_complete_tasks_delay_mock = mocker.patch(
         target='src.accounts.services.group.check_and_complete_tasks.delay',
@@ -2719,11 +2674,6 @@ def test_check_and_complete_tasks_not_active_task__skip(
         task=task,
         group=group,
         type=PerformerType.GROUP,
-    )
-    TaskPerformer.objects.create(
-        task=task,
-        user=user,
-        type=PerformerType.GROUP_USER,
     )
     check_and_complete_tasks_delay_mock = mocker.patch(
         target='src.accounts.services.group.check_and_complete_tasks.delay',
@@ -2828,12 +2778,7 @@ def test_check_and_complete_tasks__completed_performer__skip(mocker):
         group=group,
         type=PerformerType.GROUP,
         is_completed=True,
-    )
-    TaskPerformer.objects.create(
-        task=task,
-        user_id=user.id,
-        type=PerformerType.GROUP_USER,
-        is_completed=True,
+        completed_users=[user.id],
     )
     check_and_complete_tasks_delay_mock = mocker.patch(
         target='src.accounts.services.group.check_and_complete_tasks.delay',
@@ -2872,12 +2817,7 @@ def test_check_and_complete_tasks__rcba_and_completed_performer__skip(mocker):
         group=group,
         type=PerformerType.GROUP,
         is_completed=True,
-    )
-    TaskPerformer.objects.create(
-        task=task,
-        user=user,
-        type=PerformerType.GROUP_USER,
-        is_completed=True,
+        completed_users=[user.id],
     )
     check_and_complete_tasks_delay_mock = mocker.patch(
         target='src.accounts.services.group.check_and_complete_tasks.delay',
@@ -2915,11 +2855,6 @@ def test_check_and_complete_tasks__rcba__ok(mocker):
         task=task,
         group=group,
         type=PerformerType.GROUP,
-    )
-    TaskPerformer.objects.create(
-        task=task,
-        user=user,
-        type=PerformerType.GROUP_USER,
     )
     check_and_complete_tasks_delay_mock = mocker.patch(
         target='src.accounts.services.group.check_and_complete_tasks.delay',
@@ -2961,11 +2896,6 @@ def test_check_and_complete_tasks__directly_deleted_performer__skip(mocker):
         group=group,
         type=PerformerType.GROUP,
         directly_status=DirectlyStatus.DELETED,
-    )
-    TaskPerformer.objects.create(
-        task=task,
-        user=user,
-        type=PerformerType.GROUP_USER,
     )
     check_and_complete_tasks_delay_mock = mocker.patch(
         target='src.accounts.services.group.check_and_complete_tasks.delay',

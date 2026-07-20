@@ -3,6 +3,7 @@ from collections import defaultdict
 from typing import TYPE_CHECKING, List, Optional, Set, Tuple
 
 from django.contrib.auth import get_user_model
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.db.models.constraints import UniqueConstraint
 from django.utils import timezone
@@ -808,6 +809,11 @@ class TaskPerformer(SoftDeleteModel):
     )
     is_completed = models.BooleanField(default=False)
     date_completed = models.DateTimeField(null=True)
+    completed_users = ArrayField(
+        base_field=models.IntegerField(),
+        default=list,
+        help_text='Ids of group users who completed the task',
+    )
 
     @property
     def type_group(self):
