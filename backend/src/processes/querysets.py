@@ -7,8 +7,10 @@ from django.db import transaction
 from django.db.models import (
     Avg,
     Count,
+    Exists,
     F,
     Max,
+    OuterRef,
     Prefetch,
     Q,
 )
@@ -757,6 +759,17 @@ class TaskQuerySet(TasksBaseQuerySet):
         When require_completion_by_all is True, only tasks where
         the user has not yet completed their part are included.
         """
+        from src.processes.models.workflows.task import TaskPerformer
+
+        user_already_completed = (
+            TaskPerformer.objects
+            .filter(task_id=OuterRef('pk'))
+            .exclude(directly_status=DirectlyStatus.DELETED)
+            .filter(
+                Q(user_id=user_id, is_completed=True)
+                | Q(completed_users__contains=[user_id]),
+            )
+        )
         return self.filter(
             Q(
                 Q(
@@ -782,6 +795,10 @@ class TaskQuerySet(TasksBaseQuerySet):
                     DirectlyStatus.DELETED,
                 ),
             ),
+        ).annotate(
+            _user_already_completed=Exists(user_already_completed),
+        ).filter(
+            _user_already_completed=False,
         )
 
     def active_for_group(self, group_id):

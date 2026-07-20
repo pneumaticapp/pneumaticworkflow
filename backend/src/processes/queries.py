@@ -1063,6 +1063,7 @@ class TaskListQuery(
                 AND ptp.is_completed IS FALSE
                 AND pw.status = '{WorkflowStatus.RUNNING}'
                 AND NOT (%(assigned_to)s = ANY(ptp.completed_users))
+                AND ptp_completed.id IS NULL
             """
 
     def _get_template_task_api_name(self):
@@ -1108,6 +1109,20 @@ class TaskListQuery(
               ag.is_deleted IS FALSE
             )
         """
+        if not self.is_completed:
+            result += f"""
+              LEFT JOIN processes_taskperformer ptp_completed ON (
+                ptp_completed.task_id = pt.id
+                AND ptp_completed.directly_status != '{DirectlyStatus.DELETED}'
+                AND (
+                  (
+                    ptp_completed.user_id = %(assigned_to)s
+                    AND ptp_completed.is_completed IS TRUE
+                  )
+                  OR (%(assigned_to)s = ANY(ptp_completed.completed_users))
+                )
+              )
+            """
         if self.search_tsquery:
             # Join task and workflow name search content only
             # ! Does not change
@@ -2497,7 +2512,9 @@ class GetIncompletedTaskPerformersQuery(SqlQueryObject):
     """ Find and return performers who have not yet completed the task.
 
     1. Direct USER-type performers whose ``is_completed`` flag is
-       ``False`` (non-deleted, active users only).
+       ``False`` and whose user id is not already in
+       ``completed_users`` of any GROUP performer on the same task
+       (non-deleted, active users only).
     2. Members of GROUP-type performers whose user id is not yet in
        ``completed_users`` and who do not have a completed USER
        record on the same task (non-deleted, active users from
@@ -2522,11 +2539,18 @@ class GetIncompletedTaskPerformersQuery(SqlQueryObject):
             SELECT DISTINCT ptp.user_id AS id
             FROM processes_taskperformer ptp
             JOIN accounts_user au ON au.id = ptp.user_id
+            LEFT JOIN processes_taskperformer ptp_group
+              ON ptp_group.task_id = ptp.task_id
+              AND ptp_group.type = '{PerformerType.GROUP}'
+              AND ptp_group.is_deleted IS FALSE
+              AND ptp_group.directly_status != '{DirectlyStatus.DELETED}'
+              AND (ptp.user_id = ANY(ptp_group.completed_users))
             WHERE ptp.task_id = %(task_id)s
               AND ptp.type = '{PerformerType.USER}'
               AND ptp.is_completed = FALSE
               AND ptp.is_deleted IS FALSE
               AND ptp.directly_status != '{DirectlyStatus.DELETED}'
+              AND ptp_group.id IS NULL
               AND au.is_deleted IS FALSE
               AND au.status = '{UserStatus.ACTIVE}'
 

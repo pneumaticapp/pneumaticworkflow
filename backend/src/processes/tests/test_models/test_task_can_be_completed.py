@@ -390,6 +390,39 @@ class TestCanBeCompleted:
         # assert
         assert result is True
 
+    def test__rcba_group_partially_completed_and_user_performer__true(self):
+
+        # arrange
+        account = create_test_account()
+        owner = create_test_owner(account=account)
+        user_1 = create_test_admin(account=account)
+        group = create_test_group(
+            account=account,
+            users=[user_1],
+        )
+        workflow = create_test_workflow(user=owner, tasks_count=1)
+        workflow.tasks.update(require_completion_by_all=True)
+        task = workflow.tasks.get(number=1)
+        task.taskperformer_set.all().delete()
+        TaskPerformer.objects.create(
+            task=task,
+            group=group,
+            type=PerformerType.GROUP,
+            completed_users=[user_1.id],
+        )
+        TaskPerformer.objects.create(
+            task=task,
+            user=user_1,
+            type=PerformerType.USER,
+            is_completed=False,
+        )
+
+        # act
+        result = task.can_be_completed()
+
+        # assert
+        assert result is True
+
     def test__rcba_and_soft_deleted_group__true(self):
 
         """ When a group performer's UserGroup is soft-deleted,

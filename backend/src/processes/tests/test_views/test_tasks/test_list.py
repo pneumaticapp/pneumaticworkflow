@@ -296,6 +296,8 @@ def test_list__group_performer_partitional_completed_and_user_performer__skip(
     workflow = create_test_workflow(user, template=template)
     task = workflow.tasks.get(number=1)
     task.taskperformer_set.all().delete()
+    task.require_completion_by_all = True
+    task.save()
     group = create_test_group(account, users=[user])
     TaskPerformer.objects.create(
         task_id=task.id,
@@ -315,7 +317,7 @@ def test_list__group_performer_partitional_completed_and_user_performer__skip(
 
     # assert
     assert response.status_code == 200
-    assert len(response.data) == 1
+    assert len(response.data) == 0
 
 
 def test_list__filter_is_completed_and_group_performer_part_completed__skip(

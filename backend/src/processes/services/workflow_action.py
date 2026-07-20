@@ -1,6 +1,6 @@
 from datetime import datetime
 from copy import copy
-from typing import Callable, Iterable, Optional, Tuple
+from typing import Callable, Iterable, List, Optional, Tuple
 
 from django.contrib.auth import get_user_model
 from django.db import transaction
@@ -793,6 +793,52 @@ class WorkflowActionService:
                 payload=task.webhook_payload(),
             )
 
+    def _get_performers_for_user(
+        self,
+        task: Task,
+    ) -> Optional[List[TaskPerformer]]:
+
+        task_performers = list(
+            TaskPerformer.objects
+            .by_task(task.id)
+            .by_user_or_group(self.user.id)
+            .exclude_directly_deleted(),
+        )
+        if not task_performers:
+            return None
+        for performer in task_performers:
+            if performer.is_completed or (
+                performer.type_group and
+                self.user.id in performer.completed_users
+            ):
+                raise exceptions.UserAlreadyCompleteTask
+        return task_performers
+
+    def _complete_performers_for_user(
+        self,
+        task: Task,
+        task_performers: Iterable[TaskPerformer],
+    ):
+        now = timezone.now()
+        for performer in task_performers:
+            if performer.type_group:
+                if task.require_completion_by_all:
+                    if self.user.id not in performer.completed_users:
+                        performer.completed_users.append(self.user.id)
+                        performer.save(update_fields=('completed_users',))
+                else:
+                    performer.date_completed = now
+                    performer.is_completed = True
+                    performer.save(
+                        update_fields=('date_completed', 'is_completed'),
+                    )
+            elif not performer.is_completed:
+                performer.date_completed = now
+                performer.is_completed = True
+                performer.save(
+                    update_fields=('date_completed', 'is_completed'),
+                )
+
     def complete_task_for_user(
         self,
         task: Task,
@@ -805,20 +851,8 @@ class WorkflowActionService:
         if not task.is_active:
             raise exceptions.CompleteInactiveTask
 
-        task_performer = (
-            TaskPerformer.objects
-            .by_task(task.id)
-            .by_user_or_group(self.user.id)
-            .exclude_directly_deleted()
-            .first()
-        )
-        if task_performer:
-            if task_performer.type_group:
-                if self.user.id in task_performer.completed_users:
-                    raise exceptions.UserAlreadyCompleteTask
-            elif task_performer.is_completed:
-                raise exceptions.UserAlreadyCompleteTask
-        elif not self.user.is_account_owner:
+        task_performers = self._get_performers_for_user(task)
+        if task_performers is None and not self.user.is_account_owner:
             raise exceptions.UserNotPerformer
 
         if not task.checklists_completed:
@@ -872,27 +906,14 @@ class WorkflowActionService:
                 task=task,
                 user=self.user,
             )
-            if task_performer:
+            if task_performers:
                 if task.can_be_completed(by_user=self.user):
                     self.complete_task(task=task)
                 else:
-                    # completed only for user and send ws remove task
-                    # if "requires completion by all", sending message
-                    # about the completion of the task by each performer
-                    if (
-                        task_performer.type_group
-                        and task.require_completion_by_all
-                    ):
-                        task_performer.completed_users.append(self.user.id)
-                        task_performer.save(
-                            update_fields=('completed_users',),
-                        )
-                    else:
-                        task_performer.date_completed = timezone.now()
-                        task_performer.is_completed = True
-                        task_performer.save(
-                            update_fields=('date_completed', 'is_completed'),
-                        )
+                    self._complete_performers_for_user(
+                        task=task,
+                        task_performers=task_performers,
+                    )
                     if not self.user.is_guest:
                         # Websocket notification
                         send_task_completed_websocket.delay(

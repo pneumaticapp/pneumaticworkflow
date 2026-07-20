@@ -110,6 +110,41 @@ def test_counters__group_performer_completed_for_user__ok(api_client):
     assert response.data['tasks_count'] == 0
 
 
+def test_counters__group_partitional_completed_and_user_performer__skip(
+    api_client,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    workflow = create_test_workflow(owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task.taskperformer_set.all().delete()
+    task.require_completion_by_all = True
+    task.save(update_fields=['require_completion_by_all'])
+    group = create_test_group(account, users=[user])
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP,
+        group_id=group.id,
+        completed_users=[user.id],
+    )
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.USER,
+        user=user,
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get('/accounts/user/counters')
+
+    # assert
+    assert response.status_code == 200
+    assert response.data['tasks_count'] == 0
+
+
 def test_counters__different_user__ok(api_client):
 
     # arrange
