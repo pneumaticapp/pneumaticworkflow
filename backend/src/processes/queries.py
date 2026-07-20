@@ -2584,7 +2584,8 @@ class GetIncompletedTaskPerformersQuery(SqlQueryObject):
               ptp.user_id AS id,
               au.email,
               au.is_new_tasks_subscriber,
-              au.is_complete_tasks_subscriber
+              au.is_complete_tasks_subscriber,
+              au.type
             FROM processes_taskperformer ptp
             JOIN accounts_user au ON au.id = ptp.user_id
             LEFT JOIN processes_taskperformer ptp_group_user
@@ -2609,7 +2610,8 @@ class GetIncompletedTaskPerformersQuery(SqlQueryObject):
               au.id,
               au.email,
               au.is_new_tasks_subscriber,
-              au.is_complete_tasks_subscriber
+              au.is_complete_tasks_subscriber,
+              au.type
             FROM processes_taskperformer ptp_group
             JOIN accounts_usergroup aug
               ON aug.id = ptp_group.group_id

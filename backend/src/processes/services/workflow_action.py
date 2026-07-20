@@ -7,6 +7,7 @@ from django.db import transaction
 from django.utils import timezone
 from django.db.models import Q
 
+from src.accounts.enums import UserType
 from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
 from src.authentication.services.guest_auth import GuestJWTAuthService
@@ -84,6 +85,31 @@ class WorkflowActionService:
         self.auth_type = auth_type
         self.sync = sync
 
+    @staticmethod
+    def _get_incompleted_users(task: Task) -> list:
+        query = GetIncompletedTaskPerformersQuery(task_id=task.id)
+        return list(RawSqlExecutor.fetch(*query.get_sql()))
+
+    @classmethod
+    def _get_incompleted_recipients(
+        cls,
+        task: Task,
+        include_guests: bool = False,
+    ) -> List[Tuple[int, str]]:
+
+        if include_guests:
+            result = [
+                (user['id'], user['email'])
+                for user in cls._get_incompleted_users(task)
+            ]
+        else:
+            result = [
+                (user['id'], user['email'])
+                for user in cls._get_incompleted_users(task)
+                if user['type'] == UserType.USER
+            ]
+        return sorted(result, key=lambda user: user[0])
+
     def check_delay_workflow(self):
 
         if (
@@ -128,13 +154,7 @@ class WorkflowActionService:
                         directly_status=DirectlyStatus.CREATED,
                         workflow=self.workflow,
                     )
-                recipients = list(
-                    TaskPerformer.objects
-                    .filter(task_id=task.id)
-                    .exclude_directly_deleted()
-                    .not_completed()
-                    .get_user_emails_and_ids_set(),
-                )
+                recipients = self._get_incompleted_recipients(task)
                 # notifications about event
                 for (user_id, user_email) in recipients:
                     send_delayed_workflow_notification.delay(
@@ -205,12 +225,7 @@ class WorkflowActionService:
     def terminate_workflow(self):
 
         for task in self.workflow.tasks.active():
-            recipients = list(
-                TaskPerformer.objects.filter(task_id=task.id)
-                .exclude_directly_deleted()
-                .not_completed()
-                .get_user_emails_and_ids_set(),
-            )
+            recipients = self._get_incompleted_recipients(task)
             send_task_deleted_notification.delay(
                 task_id=task.id,
                 task_data=task.get_data_for_list(),
@@ -273,12 +288,7 @@ class WorkflowActionService:
             user=self.user,
         )
         for task in self.workflow.tasks.active():
-            recipients = list(
-                TaskPerformer.objects.filter(task=task)
-                .exclude_directly_deleted()
-                .not_completed()
-                .get_user_emails_and_ids_set(),
-            )
+            recipients = self._get_incompleted_recipients(task)
             send_task_deleted_notification.delay(
                 task_id=task.id,
                 recipients=recipients,
@@ -492,8 +502,7 @@ class WorkflowActionService:
             and self.workflow.template.is_onboarding
         )
         if not skip_sending_notification:
-            query = GetIncompletedTaskPerformersQuery(task_id=task.id)
-            incompleted_users = list(RawSqlExecutor.fetch(*query.get_sql()))
+            incompleted_users = self._get_incompleted_users(task)
             notification_recipients = sorted(
                 [
                     (
@@ -759,8 +768,7 @@ class WorkflowActionService:
         )
         task_service.partial_update(**update_fields, force_save=True)
         # Not include guests
-        query = GetIncompletedTaskPerformersQuery(task_id=task.id)
-        incompleted_users = list(RawSqlExecutor.fetch(*query.get_sql()))
+        incompleted_users = self._get_incompleted_users(task)
         ws_recipients = sorted(
             [(user['id'], user['email']) for user in incompleted_users],
             key=lambda user: user[0],
@@ -1054,13 +1062,7 @@ class WorkflowActionService:
                         estimated_end_date=None,
                     )
                 if task.is_active:
-                    recipients = list(
-                        TaskPerformer.objects
-                        .filter(task_id=task.id)
-                        .exclude_directly_deleted()
-                        .not_completed()
-                        .get_user_emails_and_ids_set(),
-                    )
+                    recipients = self._get_incompleted_recipients(task)
                     send_task_deleted_notification.delay(
                         task_id=task.id,
                         recipients=recipients,
