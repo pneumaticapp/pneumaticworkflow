@@ -89,12 +89,14 @@ class DereferencedPerformersMixin:
               ptp.is_deleted IS FALSE
               AND ptp.directly_status != '{DirectlyStatus.DELETED}'
               AND (
-                ptp.type = '{PerformerType.GROUP}'
-                AND g.user_id = %(user_id)s
-              )
-              OR (
-                ptp.type = '{PerformerType.USER}'
-                AND ptp.user_id = %(user_id)s
+                (
+                  ptp.type = '{PerformerType.GROUP}'
+                  AND g.user_id = %(user_id)s
+                )
+                OR (
+                  ptp.type = '{PerformerType.USER}'
+                  AND ptp.user_id = %(user_id)s
+                )
               )
         """
 
