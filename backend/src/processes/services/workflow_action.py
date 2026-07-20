@@ -492,39 +492,41 @@ class WorkflowActionService:
             and self.workflow.template.is_onboarding
         )
         if not skip_sending_notification:
-            recipients_set = (
-                TaskPerformer.objects
-                .by_task(task.id)
-                .exclude_directly_deleted()
-                .not_completed()
-                .get_user_is_new_tasks_subscribers()
+            query = GetIncompletedTaskPerformersQuery(task_id=task.id)
+            incompleted_users = list(RawSqlExecutor.fetch(*query.get_sql()))
+            notification_recipients = sorted(
+                [
+                    (
+                        user['id'],
+                        user['email'],
+                        user['is_new_tasks_subscriber'],
+                    )
+                    for user in incompleted_users
+                ],
+                key=lambda user: user[0],
             )
-
             wf_starter = self.workflow.workflow_starter
-            recipients = [
-                (user_id, email, is_subscribed)
-                for user_id, email, is_subscribed in recipients_set
-            ]
-            # For tests to work stably, ordering by "user_id" is necessary
-            recipients.sort(key=lambda e: e[0])
-            ws_recipients = copy(recipients)
+            ws_recipients = copy(notification_recipients)
             if (
                 len(task.parents) == 0
                 and not is_returned
                 and not self.workflow.is_external
-                and (wf_starter.id, wf_starter.email, True) in recipients
+                and (wf_starter.id, wf_starter.email, True)
+                    in notification_recipients
             ):
                 # Don't sent email and push for a workflow starter
                 # on first tasks
-                recipients.remove((wf_starter.id, wf_starter.email, True))
+                notification_recipients.remove(
+                    (wf_starter.id, wf_starter.email, True),
+                )
 
             task_data = None
-            if recipients:
+            if notification_recipients:
                 task_data = task.get_data_for_list()
                 send_new_task_notification.delay(
                     logging=self.account.log_api_requests,
                     account_id=self.account.id,
-                    recipients=recipients,
+                    recipients=notification_recipients,
                     task_id=task.id,
                     task_name=task.name,
                     task_data=task_data,

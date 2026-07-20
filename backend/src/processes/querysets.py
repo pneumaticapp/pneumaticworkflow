@@ -1178,19 +1178,6 @@ class TaskPerformerQuerySet(BaseQuerySet, BaseHardQuerySet):
         )
         return set(direct_users).union(set(group_users))
 
-    def get_user_is_new_tasks_subscribers(self):
-        direct_users = self.filter(user__isnull=False).values_list(
-            'user_id',
-            'user__email',
-            'user__is_new_tasks_subscriber',
-        )
-        group_users = self.filter(group__isnull=False).values_list(
-            'group__users__id',
-            'group__users__email',
-            'group__users__is_new_tasks_subscriber',
-        )
-        return set(direct_users).union(set(group_users))
-
     def group_ids(self):
         qst = self.filter(
             type=PerformerType.GROUP,
