@@ -128,6 +128,8 @@ export function TemplateControlls({
   };
 
   const handleRunProcess = async () => {
+    if (!templateId) return;
+
     const loadedFieldsets = template.kickoff.fieldsets.map(mapFieldsetBindingClientToRuntime);
     const datasetsMap = await loadDatasetsMap(template.kickoff, loadedFieldsets);
     const runnableWorkflow = getRunnableWorkflow(template, datasetsMap, loadedFieldsets);

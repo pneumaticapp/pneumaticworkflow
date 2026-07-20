@@ -49,9 +49,9 @@ export function useTemplateForm(
     dirtyRef.current = false;
     pendingUserEditsRef.current = {};
     lastSyncedInitialValuesRef.current = initialValues;
-    lastTemplateIdentityRef.current = resolvedIdentity;
     formik.resetForm({ values: initialValues });
   }
+  lastTemplateIdentityRef.current = resolvedIdentity;
 
   // Redux `template` updates must be merged into Formik without discarding edits
   // that still live only in the form (e.g. typed while a save is in flight).

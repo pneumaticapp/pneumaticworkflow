@@ -961,6 +961,45 @@ describe('useTemplateForm reinitialize', () => {
     expect(hookResult!.dirtyRef.current).toBe(true);
   });
 
+  it('resets after a created template transitions to another numeric template id', () => {
+    const createTemplate = makeTemplate({ id: undefined, name: 'New template', dateUpdated: null });
+    const savedTemplate = { ...createTemplate, id: 42 };
+    const otherTemplate = makeTemplate({ id: 43, name: 'Other template', dateUpdated: null });
+    let hookResult: ReturnType<typeof useTemplateForm> | null = null;
+
+    const { rerender } = render(
+      <HookHarness
+        currentTemplate={createTemplate}
+        templateIdentityKey="create:/templates/create/"
+        onReady={(result) => { hookResult = result; }}
+      />,
+    );
+
+    act(() => {
+      hookResult!.setFieldValue('name', 'Edited while creating', false);
+    });
+
+    rerender(
+      <HookHarness
+        currentTemplate={savedTemplate}
+        templateIdentityKey={42}
+        onReady={(result) => { hookResult = result; }}
+      />,
+    );
+
+    rerender(
+      <HookHarness
+        currentTemplate={otherTemplate}
+        templateIdentityKey={43}
+        onReady={(result) => { hookResult = result; }}
+      />,
+    );
+
+    expect(hookResult!.formik.values.name).toBe('Other template');
+    expect(hookResult!.pendingUserEditsRef.current).toEqual({});
+    expect(hookResult!.dirtyRef.current).toBe(false);
+  });
+
   it('drops pending edits when switching between create flows', () => {
     const newTemplate = makeTemplate({ id: undefined, name: 'Draft', dateUpdated: null });
     let hookResult: ReturnType<typeof useTemplateForm> | null = null;
