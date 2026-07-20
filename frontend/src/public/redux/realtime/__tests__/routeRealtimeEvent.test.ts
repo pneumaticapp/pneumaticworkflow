@@ -1,9 +1,10 @@
-import { call } from 'redux-saga/effects';
+import { call, select } from 'redux-saga/effects';
 
 import { routeRealtimeEvent } from '../utils/routeRealtimeEvent';
 import { handleRemoveTask } from '../../tasks/saga';
 import { ERealtimeEnvelopeType, IRealtimeWsEnvelope } from '../types';
-import { ETaskStatus } from '../../../types/tasks';
+import { ETaskListCompletionStatus, ETaskStatus } from '../../../types/tasks';
+import { getTasksSettings } from '../../selectors/tasks';
 
 jest.mock('../../../utils/logger', () => ({
   logger: { info: jest.fn(), error: jest.fn() },
@@ -22,75 +23,76 @@ jest.mock('../../../components/UI/Notifications', () => ({
   },
 }));
 
-describe('routeRealtimeEvent — task_deleted counter logic', () => {
+const createDeletedEnvelope = (
+  id: number,
+  status: ETaskStatus,
+): IRealtimeWsEnvelope =>
+  ({
+    id: String(id),
+    dateCreatedTsp: 0,
+    type: ERealtimeEnvelopeType.TASK_DELETED,
+    data: {
+      id,
+      name: 'Task',
+      workflowName: 'WF',
+      status,
+    },
+  }) as IRealtimeWsEnvelope;
+
+describe('routeRealtimeEvent — task_deleted list updates', () => {
   afterEach(() => {
     jest.clearAllMocks();
   });
 
-  it('TASK_DELETED with active status passes true', () => {
-    const envelope = {
-      id: '1',
-      dateCreatedTsp: 0,
-      type: ERealtimeEnvelopeType.TASK_DELETED,
-      data: {
-        id: 42,
-        name: 'Task',
-        workflowName: 'WF',
-        status: ETaskStatus.Active,
-      },
-    } as IRealtimeWsEnvelope;
+  it('TASK_DELETED with active status removes and decrements', () => {
+    const gen = routeRealtimeEvent(createDeletedEnvelope(42, ETaskStatus.Active));
 
-    const gen = routeRealtimeEvent(envelope);
-    const step = gen.next();
-
-    expect(step.value).toEqual(
+    expect(gen.next().value).toEqual(select(getTasksSettings));
+    expect(gen.next({ completionStatus: ETaskListCompletionStatus.Active } as never).value).toEqual(
       call(handleRemoveTask, 42, true),
     );
+    expect(gen.next().done).toBe(true);
   });
 
-  it('TASK_DELETED with completed status passes false', () => {
-    const envelope = {
-      id: '2',
-      dateCreatedTsp: 0,
-      type: ERealtimeEnvelopeType.TASK_DELETED,
-      data: {
-        id: 43,
-        name: 'Task',
-        workflowName: 'WF',
-        status: ETaskStatus.Completed,
-      },
-    } as IRealtimeWsEnvelope;
+  it('TASK_DELETED with completed status removes on Completed tab without decrement', () => {
+    const gen = routeRealtimeEvent(createDeletedEnvelope(43, ETaskStatus.Completed));
 
-    const gen = routeRealtimeEvent(envelope);
-    const step = gen.next();
-
-    expect(step.value).toEqual(
-      call(handleRemoveTask, 43, false),
-    );
+    expect(gen.next().value).toEqual(select(getTasksSettings));
+    expect(
+      gen.next({ completionStatus: ETaskListCompletionStatus.Completed } as never).value,
+    ).toEqual(call(handleRemoveTask, 43, false));
+    expect(gen.next().done).toBe(true);
   });
 
-  it('TASK_DELETED with snoozed status passes false', () => {
-    const envelope = {
-      id: '3',
-      dateCreatedTsp: 0,
-      type: ERealtimeEnvelopeType.TASK_DELETED,
-      data: {
-        id: 44,
-        name: 'Task',
-        workflowName: 'WF',
-        status: ETaskStatus.Snoozed,
-      },
-    } as IRealtimeWsEnvelope;
+  it('TASK_DELETED with completed status skips Active tab (return/revert race)', () => {
+    const gen = routeRealtimeEvent(createDeletedEnvelope(43, ETaskStatus.Completed));
 
-    const gen = routeRealtimeEvent(envelope);
-    const step = gen.next();
-
-    expect(step.value).toEqual(
-      call(handleRemoveTask, 44, false),
-    );
+    expect(gen.next().value).toEqual(select(getTasksSettings));
+    expect(
+      gen.next({ completionStatus: ETaskListCompletionStatus.Active } as never).done,
+    ).toBe(true);
   });
 
-  it('TASK_COMPLETED always passes true', () => {
+  it('TASK_DELETED with snoozed status removes on Completed tab without decrement', () => {
+    const gen = routeRealtimeEvent(createDeletedEnvelope(44, ETaskStatus.Snoozed));
+
+    expect(gen.next().value).toEqual(select(getTasksSettings));
+    expect(
+      gen.next({ completionStatus: ETaskListCompletionStatus.Completed } as never).value,
+    ).toEqual(call(handleRemoveTask, 44, false));
+    expect(gen.next().done).toBe(true);
+  });
+
+  it('TASK_DELETED with snoozed status skips Active tab', () => {
+    const gen = routeRealtimeEvent(createDeletedEnvelope(44, ETaskStatus.Snoozed));
+
+    expect(gen.next().value).toEqual(select(getTasksSettings));
+    expect(
+      gen.next({ completionStatus: ETaskListCompletionStatus.Active } as never).done,
+    ).toBe(true);
+  });
+
+  it('TASK_COMPLETED always removes and decrements', () => {
     const envelope = {
       id: '4',
       dateCreatedTsp: 0,
@@ -107,8 +109,6 @@ describe('routeRealtimeEvent — task_deleted counter logic', () => {
     const gen = routeRealtimeEvent(envelope);
     const step = gen.next();
 
-    expect(step.value).toEqual(
-      call(handleRemoveTask, 45, true),
-    );
+    expect(step.value).toEqual(call(handleRemoveTask, 45, true));
   });
 });

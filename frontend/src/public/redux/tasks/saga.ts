@@ -281,9 +281,15 @@ export function* handleAddTask(newTask: ITaskListItem) {
     completionStatus,
     filterValues: { templateIdFilter },
   } = settings;
+
+  // Reactivated task (return/revert) must leave Completed, not stay as a ghost card.
   if (completionStatus === ETaskListCompletionStatus.Completed) {
+    if (checkSomeRouteIsActive(ERoutes.Tasks)) {
+      yield call(removeTaskFromList, newTask.id);
+    }
     return;
   }
+
   if (!checkSomeRouteIsActive(ERoutes.Tasks)) {
     return;
   }

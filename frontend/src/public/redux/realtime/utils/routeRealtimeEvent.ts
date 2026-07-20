@@ -3,7 +3,6 @@ import { call, put, select } from 'redux-saga/effects';
 import type { IRealtimeWsEnvelope } from '../types';
 import type { IStoreTask, IStoreWorkflows } from '../../../types/redux';
 import { ERealtimeEnvelopeType } from '../types';
-import { ETaskStatus } from '../../../types/tasks';
 
 import { handleAddTask, handleRemoveTask } from '../../tasks/saga';
 import { upsertUserFromWs, removeUserFromWs } from '../../accounts/slice';
@@ -21,6 +20,11 @@ import { isWorkflowEndedEventType } from './isWorkflowEndedEventType';
 import { mapBackendNewEventToRedux } from '../../../utils/mappers';
 import { getWorkflowsStore } from '../../selectors/workflows';
 import { getTaskStore } from '../../selectors/task';
+import { getTasksSettings } from '../../selectors/tasks';
+import {
+  shouldDecrementCounterOnDeleted,
+  shouldRemoveTaskOnDeleted,
+} from './shouldRemoveTaskOnDeleted';
 
 export function* routeRealtimeEvent(envelope: IRealtimeWsEnvelope) {
   switch (envelope.type) {
@@ -34,8 +38,23 @@ export function* routeRealtimeEvent(envelope: IRealtimeWsEnvelope) {
       break;
     }
     case ERealtimeEnvelopeType.TASK_DELETED: {
-      const isActiveTask = envelope.data.status === ETaskStatus.Active;
-      yield call(handleRemoveTask, envelope.data.id, isActiveTask);
+      const settings: ReturnType<typeof getTasksSettings> = yield select(getTasksSettings);
+      const { status } = envelope.data;
+
+      if (
+        !shouldRemoveTaskOnDeleted({
+          status,
+          completionStatus: settings.completionStatus,
+        })
+      ) {
+        break;
+      }
+
+      yield call(
+        handleRemoveTask,
+        envelope.data.id,
+        shouldDecrementCounterOnDeleted(status),
+      );
       break;
     }
     case ERealtimeEnvelopeType.USER_CREATED:
