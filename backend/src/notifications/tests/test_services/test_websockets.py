@@ -1428,3 +1428,48 @@ def test_send_dataset_deleted__ok(mocker):
         data=dataset_data,
         sync=True,
     )
+
+
+def test_send_account_plan_changed__ok(mocker):
+
+    """send_account_plan_changed routes to EventsConsumer correct payload"""
+
+    # arrange
+    user_id = 42
+    plan_data = {
+        'billing_plan': 'premium',
+        'billing_period': 'monthly',
+        'plan_expiration': '2026-08-15',
+        'plan_expiration_tsp': 1721036800.0,
+        'trial_is_active': False,
+        'trial_ended': False,
+        'is_subscribed': True,
+        'active_users': 5,
+        'tenants_active_users': 0,
+        'max_users': 10,
+        'billing_sync': True,
+    }
+    send_mock = mocker.patch(
+        'src.notifications.services.websockets.'
+        'WebSocketService._send',
+    )
+    service = WebSocketService(
+        logging=True,
+        logo_lg='https://logo.com',
+        account_id=123,
+    )
+
+    # act
+    service.send_account_plan_changed(
+        user_id=user_id,
+        plan_data=plan_data,
+        sync=True,
+    )
+
+    # assert
+    send_mock.assert_called_once_with(
+        method_name=NotificationMethod.account_plan_changed,
+        group_name=f'events_{user_id}',
+        data=plan_data,
+        sync=True,
+    )

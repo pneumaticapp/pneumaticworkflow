@@ -7,10 +7,16 @@ from src.accounts.enums import (
     BillingPlanType,
 )
 from src.accounts.models import Account
+from src.accounts.serializers.accounts import (
+    AccountPlanSerializer,
+)
 from src.accounts.services.account import AccountService
 from src.analysis.mixins import BaseIdentifyMixin
 from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
+from src.notifications.tasks import (
+    send_account_plan_changed_notification,
+)
 from src.payment.entities import (
     SubscriptionDetails,
 )
@@ -75,6 +81,12 @@ class AccountSubscriptionService(BaseIdentifyMixin):
             data['trial_end'] = details.trial_end
         account_service.partial_update(**data)
 
+        send_account_plan_changed_notification.delay(
+            logging=self.instance.log_api_requests,
+            account_id=self.instance.id,
+            plan_data=AccountPlanSerializer(instance=self.instance).data,
+        )
+
         AnalyticService.subscription_created(self.user)
         if not prev_trial_end and data.get('trial_end'):
             AnalyticService.trial_subscription_created(self.user)
@@ -121,6 +133,12 @@ class AccountSubscriptionService(BaseIdentifyMixin):
             force_save=True,
         )
 
+        send_account_plan_changed_notification.delay(
+            logging=self.instance.log_api_requests,
+            account_id=self.instance.id,
+            plan_data=AccountPlanSerializer(instance=self.instance).data,
+        )
+
         if convert_trial:
             AnalyticService.subscription_converted(self.user)
         else:
@@ -152,6 +170,12 @@ class AccountSubscriptionService(BaseIdentifyMixin):
             plan_expiration=plan_expiration,
             trial_ended=True,
             force_save=True,
+        )
+
+        send_account_plan_changed_notification.delay(
+            logging=self.instance.log_api_requests,
+            account_id=self.instance.id,
+            plan_data=AccountPlanSerializer(instance=self.instance).data,
         )
 
     def cancel(self, plan_expiration: datetime):
