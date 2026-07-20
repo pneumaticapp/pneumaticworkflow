@@ -1052,7 +1052,12 @@ class TaskListQuery(
 
     def get_is_completed_where(self):
         if self.is_completed:
-            return 'ptp.is_completed IS TRUE'
+            return """
+            (
+              ptp.is_completed IS TRUE
+              OR (%(assigned_to)s = ANY(ptp.completed_users))
+            )
+            """
         return f"""
                 pt.status = '{TaskStatus.ACTIVE}'
                 AND ptp.is_completed IS FALSE

@@ -345,7 +345,7 @@ def test_list__filter_is_completed_and_group_performer_part_completed__skip(
 
     # assert
     assert response.status_code == 200
-    assert len(response.data) == 0
+    assert len(response.data) == 1
 
 
 def test_list__urgent_tasks_first__ok(api_client):
