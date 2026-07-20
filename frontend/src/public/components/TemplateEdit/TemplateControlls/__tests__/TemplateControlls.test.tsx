@@ -186,5 +186,23 @@ describe('TemplateControlls — fieldset logic', () => {
     expect(openRunWorkflowModal).toHaveBeenCalledWith(runnableWorkflow);
   });
 
+  it('does not run an active template before it has been persisted', () => {
+    const openRunWorkflowModal = jest.fn();
+    const template = getTemplate('5');
+    template.id = undefined;
+    template.isActive = true;
 
+    render(
+      React.createElement(
+        TemplateControlls,
+        makeProps({ template, openRunWorkflowModal, templateStatus: ETemplateStatus.Saved }),
+      ),
+    );
+
+    userEvent.click(screen.getByRole('button', { name: formatMsg('templates.run-workflow') }));
+
+    expect(loadDatasetsMap).not.toHaveBeenCalled();
+    expect(getRunnableWorkflow).not.toHaveBeenCalled();
+    expect(openRunWorkflowModal).not.toHaveBeenCalled();
+  });
 });
