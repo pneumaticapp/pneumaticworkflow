@@ -2,6 +2,7 @@ import pytest
 
 from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.processes.enums import (
+    DirectlyStatus,
     OwnerRole,
     OwnerType,
     PerformerType,
@@ -825,3 +826,114 @@ def test_steps__over_limited_template_id__not_found(api_client):
 
     # assert
     assert response.status_code == 404
+
+
+def test_steps__with_tasks_in_progress_true__same_api_name_other_tl__empty(
+    api_client,
+):
+
+    # arrange
+    shared_api_name = 'task-699a25'
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    template_a = create_test_template(
+        user=account_owner,
+        is_active=True,
+        tasks_count=1,
+    )
+    template_b = create_test_template(
+        user=account_owner,
+        is_active=True,
+        tasks_count=1,
+    )
+    template_a.tasks.update(api_name=shared_api_name)
+    template_b.tasks.update(api_name=shared_api_name)
+    create_test_workflow(
+        user=account_owner,
+        template=template_b,
+    )
+    api_client.token_authenticate(account_owner)
+
+    # act
+    response = api_client.get(
+        f'/templates/{template_a.id}/steps'
+        f'?with_tasks_in_progress=true',
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 0
+
+
+def test_steps__with_tasks_in_progress_true__same_api_name_own_template__ok(
+    api_client,
+):
+
+    # arrange
+    shared_api_name = 'task-699a25'
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    template_a = create_test_template(
+        user=account_owner,
+        is_active=True,
+        tasks_count=1,
+    )
+    template_b = create_test_template(
+        user=account_owner,
+        is_active=True,
+        tasks_count=1,
+    )
+    template_a.tasks.update(api_name=shared_api_name)
+    template_b.tasks.update(api_name=shared_api_name)
+    template_task_b = template_b.tasks.get()
+    create_test_workflow(
+        user=account_owner,
+        template=template_b,
+    )
+    api_client.token_authenticate(account_owner)
+
+    # act
+    response = api_client.get(
+        f'/templates/{template_b.id}/steps'
+        f'?with_tasks_in_progress=true',
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 1
+    assert response.data[0]['api_name'] == shared_api_name
+    assert response.data[0]['name'] == template_task_b.name
+    assert response.data[0]['number'] == template_task_b.number
+
+
+def test_steps__with_tasks_in_progress_true__deleted_user_performer__empty(
+    api_client,
+):
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    template = create_test_template(
+        user=account_owner,
+        is_active=True,
+        tasks_count=1,
+    )
+    workflow = create_test_workflow(
+        user=account_owner,
+        template=template,
+    )
+    task = workflow.tasks.get(number=1)
+    TaskPerformer.objects.filter(
+        task=task,
+        user=account_owner,
+    ).update(directly_status=DirectlyStatus.DELETED)
+    api_client.token_authenticate(account_owner)
+
+    # act
+    response = api_client.get(
+        f'/templates/{template.id}/steps?with_tasks_in_progress=true',
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 0

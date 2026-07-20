@@ -1804,10 +1804,11 @@ class TemplateStepsQuery(
                   ON dereferenced_owners.template_id = t.id"""
         else:
             result += f"""
-                JOIN processes_task pt
-                  ON ptt.api_name = pt.api_name
                 JOIN processes_workflow pw
+                  ON pw.template_id = t.id
+                JOIN processes_task pt
                   ON pt.workflow_id = pw.id
+                  AND pt.api_name = ptt.api_name
                 JOIN ({self.dereferenced_performers()}) dereferenced_performers
                   ON pt.id = dereferenced_performers.task_id """
         return result
@@ -1829,12 +1830,14 @@ class TemplateStepsQuery(
             AND {self._get_filter_by_type()}"""
         if self.with_tasks_in_progress is True:
             result += f"""
+                AND pw.is_deleted IS FALSE
                 AND pt.is_deleted IS FALSE
                 AND dereferenced_performers.is_completed IS FALSE
                 AND pt.status = '{TaskStatus.ACTIVE}'
                 AND pw.status = {WorkflowStatus.RUNNING}"""
         elif self.with_tasks_in_progress is False:
             result += """
+                AND pw.is_deleted IS FALSE
                 AND pt.is_deleted IS FALSE
                 AND dereferenced_performers.is_completed IS TRUE"""
         return result
