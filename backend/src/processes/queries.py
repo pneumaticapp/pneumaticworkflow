@@ -2580,7 +2580,11 @@ class GetIncompletedTaskPerformersQuery(SqlQueryObject):
 
     def get_sql(self):
         return f"""
-            SELECT DISTINCT ptp.user_id AS id
+            SELECT DISTINCT
+              ptp.user_id AS id,
+              au.email,
+              au.is_new_tasks_subscriber,
+              au.is_complete_tasks_subscriber
             FROM processes_taskperformer ptp
             JOIN accounts_user au ON au.id = ptp.user_id
             LEFT JOIN processes_taskperformer ptp_group_user
@@ -2601,7 +2605,11 @@ class GetIncompletedTaskPerformersQuery(SqlQueryObject):
 
             UNION
 
-            SELECT DISTINCT au.id
+            SELECT DISTINCT
+              au.id,
+              au.email,
+              au.is_new_tasks_subscriber,
+              au.is_complete_tasks_subscriber
             FROM processes_taskperformer ptp_group
             JOIN accounts_usergroup aug
               ON aug.id = ptp_group.group_id

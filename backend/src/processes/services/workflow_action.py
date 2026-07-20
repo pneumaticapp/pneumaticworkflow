@@ -10,6 +10,7 @@ from django.db.models import Q
 from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
 from src.authentication.services.guest_auth import GuestJWTAuthService
+from src.executor import RawSqlExecutor
 from src.notifications.tasks import (
     send_task_completed_notification,
     send_task_completed_websocket,
@@ -36,6 +37,7 @@ from src.processes.models.workflows.task import (
 )
 from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.workflow import Workflow
+from src.processes.queries import GetIncompletedTaskPerformersQuery
 from src.storage.utils import reassign_restricted_permissions_for_task
 from src.processes.services import exceptions
 from src.processes.services.condition_check.service import (
@@ -495,7 +497,7 @@ class WorkflowActionService:
                 .by_task(task.id)
                 .exclude_directly_deleted()
                 .not_completed()
-                .get_user_ids_emails_subscriber_set()
+                .get_user_is_new_tasks_subscribers()
             )
 
             wf_starter = self.workflow.workflow_starter
@@ -755,31 +757,26 @@ class WorkflowActionService:
         )
         task_service.partial_update(**update_fields, force_save=True)
         # Not include guests
-        performers_ids = (
-            TaskPerformer.objects.by_task(task.id)
-            .exclude_directly_deleted()
-            .not_completed()
-            .users()
-            .values_list('id', flat=True)
+        query = GetIncompletedTaskPerformersQuery(task_id=task.id)
+        incompleted_users = list(RawSqlExecutor.fetch(*query.get_sql()))
+        ws_recipients = sorted(
+            [(user['id'], user['email']) for user in incompleted_users],
+            key=lambda user: user[0],
         )
-        recipients = (
-            UserModel.objects
-            .get_users_in_performer(performers_ids=performers_ids)
-            .order_by('id')
-            .user_ids_emails_list()
+        notification_recipients = sorted(
+            [
+                (user['id'], user['email']) for user in incompleted_users
+                if (
+                    user['id'] != self.user.id and
+                    user['is_complete_tasks_subscriber'] is True
+                )
+            ],
+            key=lambda user: user[0],
         )
         send_task_completed_websocket.delay(
             task_id=task.id,
-            recipients=recipients,
+            recipients=ws_recipients,
             account_id=task.account_id,
-        )
-        notification_recipients = (
-            UserModel.objects
-            .get_users_in_performer(performers_ids=performers_ids)
-            .filter(is_complete_tasks_subscriber=True)
-            .exclude(id=self.user.id)
-            .order_by('id')
-            .user_ids_emails_list()
         )
         if notification_recipients:
             send_task_completed_notification.delay(

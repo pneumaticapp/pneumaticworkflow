@@ -1178,7 +1178,7 @@ class TaskPerformerQuerySet(BaseQuerySet, BaseHardQuerySet):
         )
         return set(direct_users).union(set(group_users))
 
-    def get_user_ids_emails_subscriber_set(self):
+    def get_user_is_new_tasks_subscribers(self):
         direct_users = self.filter(user__isnull=False).values_list(
             'user_id',
             'user__email',
@@ -1187,21 +1187,6 @@ class TaskPerformerQuerySet(BaseQuerySet, BaseHardQuerySet):
         group_users = self.filter(group__isnull=False).values_list(
             'group__users__id',
             'group__users__email',
-            'group__users__is_new_tasks_subscriber',
-        )
-        return set(direct_users).union(set(group_users))
-
-    def get_user_ids_name_emails_subscriber_set(self):
-        direct_users = self.filter(user__isnull=False).values_list(
-            'user_id',
-            'user__email',
-            'user__first_name',
-            'user__is_new_tasks_subscriber',
-        )
-        group_users = self.filter(group__isnull=False).values_list(
-            'group__users__id',
-            'group__users__email',
-            'group__users__first_name',
             'group__users__is_new_tasks_subscriber',
         )
         return set(direct_users).union(set(group_users))
@@ -1226,13 +1211,9 @@ class TaskPerformerQuerySet(BaseQuerySet, BaseHardQuerySet):
         return self.filter(user__type=UserType.GUEST)
 
     def users(self):
-        direct_users = self.filter(
-            user__isnull=False,
-            user__type=UserType.USER,
-        )
+        direct_users = self.filter(user__type=UserType.USER)
         group_users = (
-            self.filter(group__isnull=False)
-            .filter(
+            self.filter(
                 group__users__isnull=False,
                 group__users__type=UserType.USER,
             )

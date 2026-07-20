@@ -2020,6 +2020,90 @@ def test_complete_task__user_performer__ok(mocker):
     send_task_completed_webhook_mock.assert_not_called()
 
 
+def test_complete_task__user_performer_unsubscribed__ok(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    user.is_complete_tasks_subscriber = False
+    user.save()
+    workflow = create_test_workflow(user=owner)
+    task = workflow.tasks.get(number=1)
+    task.taskperformer_set.all().delete()
+    task_performer = TaskPerformer.objects.create(
+        task_id=task.id,
+        user_id=user.id,
+        type=PerformerType.USER,
+    )
+    current_date = timezone.now()
+    mocker.patch(
+        'src.processes.services.workflow_action.timezone.now',
+        return_value=current_date,
+    )
+    task_service_init_mock = mocker.patch.object(
+        TaskService,
+        attribute='__init__',
+        return_value=None,
+    )
+    partial_update_mock = mocker.patch(
+        'src.processes.services.tasks.task.TaskService.partial_update',
+    )
+    send_task_completed_websocket_mock = mocker.patch(
+        'src.processes.services.workflow_action'
+        '.send_task_completed_websocket.delay',
+    )
+    send_task_completed_notification_mock = mocker.patch(
+        'src.processes.services.workflow_action'
+        '.send_task_completed_notification.delay',
+    )
+    start_next_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '._start_next_tasks',
+    )
+    send_task_completed_webhook_mock = mocker.patch(
+        'src.processes.services.workflow_action'
+        '.send_task_completed_webhook.delay',
+    )
+    is_superuser = True
+    auth_type = AuthTokenType.API
+    service = WorkflowActionService(
+        user=user,
+        workflow=workflow,
+        is_superuser=is_superuser,
+        auth_type=auth_type,
+    )
+
+    # act
+    service.complete_task(task=task)
+
+    # assert
+    task_service_init_mock.assert_called_once_with(
+        instance=task,
+        is_superuser=is_superuser,
+        auth_type=auth_type,
+        user=user,
+    )
+    partial_update_mock.assert_called_once_with(
+        status=TaskStatus.COMPLETED,
+        date_completed=current_date,
+        date_started=task.date_started,
+        force_save=True,
+    )
+    send_task_completed_websocket_mock.assert_called_once_with(
+        task_id=task.id,
+        recipients=[(user.id, user.email)],
+        account_id=account.id,
+    )
+    send_task_completed_notification_mock.assert_not_called()
+    task_performer.refresh_from_db()
+    assert task_performer.date_completed == current_date
+    assert task_performer.is_completed is True
+
+    start_next_mock.assert_called_once_with(parent_task=task)
+    send_task_completed_webhook_mock.assert_not_called()
+
+
 def test_complete_task__exist_webhook_subscription__send_webhook(mocker):
 
     # arrange
@@ -2079,6 +2163,199 @@ def test_complete_task__exist_webhook_subscription__send_webhook(mocker):
         account_id=account.id,
         payload=task.webhook_payload(),
     )
+
+
+@pytest.mark.parametrize('rcba', (True, False))
+def test_complete_task__user_performer_directly_and_from_group__ok(
+    rcba,
+    mocker,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_not_admin(account=account)
+    workflow = create_test_workflow(user=owner)
+    task = workflow.tasks.get(number=1)
+    task.require_completion_by_all = rcba
+    task.save()
+    task.taskperformer_set.all().delete()
+    task_performer = TaskPerformer.objects.create(
+        task_id=task.id,
+        user=user,
+        type=PerformerType.USER,
+    )
+    group = create_test_group(account=account, users=[user])
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        group=group,
+        type=PerformerType.GROUP,
+    )
+    current_date = timezone.now()
+    mocker.patch(
+        'src.processes.services.workflow_action.timezone.now',
+        return_value=current_date,
+    )
+    task_service_init_mock = mocker.patch.object(
+        TaskService,
+        attribute='__init__',
+        return_value=None,
+    )
+    partial_update_mock = mocker.patch(
+        'src.processes.services.tasks.task.TaskService.partial_update',
+    )
+    send_task_completed_websocket_mock = mocker.patch(
+        'src.processes.services.workflow_action'
+        '.send_task_completed_websocket.delay',
+    )
+    send_task_completed_notification_mock = mocker.patch(
+        'src.processes.services.workflow_action'
+        '.send_task_completed_notification.delay',
+    )
+    start_next_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '._start_next_tasks',
+    )
+    send_task_completed_webhook_mock = mocker.patch(
+        'src.processes.services.workflow_action'
+        '.send_task_completed_webhook.delay',
+    )
+    is_superuser = True
+    auth_type = AuthTokenType.API
+    service = WorkflowActionService(
+        user=user,
+        workflow=workflow,
+        is_superuser=is_superuser,
+        auth_type=auth_type,
+    )
+
+    # act
+    service.complete_task(task=task)
+
+    # assert
+    task_service_init_mock.assert_called_once_with(
+        instance=task,
+        is_superuser=is_superuser,
+        auth_type=auth_type,
+        user=user,
+    )
+    partial_update_mock.assert_called_once_with(
+        status=TaskStatus.COMPLETED,
+        date_completed=current_date,
+        date_started=task.date_started,
+        force_save=True,
+    )
+    send_task_completed_websocket_mock.assert_called_once_with(
+        task_id=task.id,
+        recipients=[(user.id, user.email)],
+        account_id=task.account_id,
+    )
+    send_task_completed_notification_mock.assert_not_called()
+    task_performer.refresh_from_db()
+    assert task_performer.date_completed == current_date
+    assert task_performer.is_completed is True
+
+    start_next_mock.assert_called_once_with(parent_task=task)
+    send_task_completed_webhook_mock.assert_not_called()
+
+
+def test_complete_task__rcba_and_last_completion__ok(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    user_2 = create_test_not_admin(account=account)
+    workflow = create_test_workflow(user=owner)
+    task = workflow.tasks.get(number=1)
+    task.require_completion_by_all = True
+    task.save()
+    task.taskperformer_set.all().delete()
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        user=user,
+        type=PerformerType.USER,
+        is_completed=True,
+    )
+    group = create_test_group(account=account, users=[user, user_2])
+    group_performer = TaskPerformer.objects.create(
+        task_id=task.id,
+        group=group,
+        type=PerformerType.GROUP,
+    )
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        user=user,
+        type=PerformerType.GROUP_USER,
+        is_completed=True,
+    )
+
+    current_date = timezone.now()
+    mocker.patch(
+        'src.processes.services.workflow_action.timezone.now',
+        return_value=current_date,
+    )
+    task_service_init_mock = mocker.patch.object(
+        TaskService,
+        attribute='__init__',
+        return_value=None,
+    )
+    partial_update_mock = mocker.patch(
+        'src.processes.services.tasks.task.TaskService.partial_update',
+    )
+    send_task_completed_websocket_mock = mocker.patch(
+        'src.processes.services.workflow_action'
+        '.send_task_completed_websocket.delay',
+    )
+    send_task_completed_notification_mock = mocker.patch(
+        'src.processes.services.workflow_action'
+        '.send_task_completed_notification.delay',
+    )
+    start_next_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '._start_next_tasks',
+    )
+    send_task_completed_webhook_mock = mocker.patch(
+        'src.processes.services.workflow_action'
+        '.send_task_completed_webhook.delay',
+    )
+    is_superuser = True
+    auth_type = AuthTokenType.API
+    service = WorkflowActionService(
+        user=user_2,
+        workflow=workflow,
+        is_superuser=is_superuser,
+        auth_type=auth_type,
+    )
+
+    # act
+    service.complete_task(task=task)
+
+    # assert
+    task_service_init_mock.assert_called_once_with(
+        instance=task,
+        is_superuser=is_superuser,
+        auth_type=auth_type,
+        user=user_2,
+    )
+    partial_update_mock.assert_called_once_with(
+        status=TaskStatus.COMPLETED,
+        date_completed=current_date,
+        date_started=task.date_started,
+        force_save=True,
+    )
+    send_task_completed_websocket_mock.assert_called_once_with(
+        task_id=task.id,
+        recipients=[(user_2.id, user_2.email)],
+        account_id=task.account_id,
+    )
+    send_task_completed_notification_mock.assert_not_called()
+    group_performer.refresh_from_db()
+    assert group_performer.date_completed == current_date
+    assert group_performer.is_completed is True
+
+    start_next_mock.assert_called_once_with(parent_task=task)
+    send_task_completed_webhook_mock.assert_not_called()
 
 
 def test_continue_workflow__not_running__set_running_and_members(mocker):
@@ -6810,7 +7087,7 @@ def test_start_task__skip_rcba_returned_group_user_completed__continue(
     )
 
 
-def test__get_performers_for_user__explicit_user__ok():
+def test_get_performers_for_user__explicit_user__ok():
 
     """Explicit user parameter"""
 
@@ -6842,7 +7119,7 @@ def test__get_performers_for_user__explicit_user__ok():
     assert len(result) == 1
 
 
-def test__get_performers_for_user__user_completed__raise_exception():
+def test_get_performers_for_user__user_completed__raise_exception():
 
     """Completed user performer"""
 
@@ -6873,7 +7150,7 @@ def test__get_performers_for_user__user_completed__raise_exception():
     assert ex.value.message == str(messages.MSG_PW_0007)
 
 
-def test__get_performers_for_user__group_completed__raise_exception():
+def test_get_performers_for_user__group_completed__raise_exception():
 
     """Completed group performer"""
 
@@ -6905,7 +7182,7 @@ def test__get_performers_for_user__group_completed__raise_exception():
     assert ex.value.message == str(messages.MSG_PW_0007)
 
 
-def test__get_performers_for_user__group_user_completed__raise_exception():
+def test_get_performers_for_user__group_user_completed__raise_exception():
 
     """Completed group_user performer"""
 
@@ -6944,7 +7221,7 @@ def test__get_performers_for_user__group_user_completed__raise_exception():
     assert ex.value.message == str(messages.MSG_PW_0007)
 
 
-def test__get_performers_for_user__directly_deleted__none():
+def test_get_performers_for_user__directly_deleted__none():
 
     """Directly deleted performer"""
 
@@ -6973,7 +7250,7 @@ def test__get_performers_for_user__directly_deleted__none():
     assert result is None
 
 
-def test__complete_performers_for_user__user_incomplete__ok(mocker):
+def test_complete_performers_for_user__user_incomplete__ok(mocker):
 
     """Incomplete user performer"""
 
@@ -7013,7 +7290,7 @@ def test__complete_performers_for_user__user_incomplete__ok(mocker):
     timezone_now_mock.assert_called_once_with()
 
 
-def test__complete_performers_for_user__user_already_completed__skip(mocker):
+def test_complete_performers_for_user__user_already_completed__skip(mocker):
 
     """Already completed user"""
 
@@ -7056,7 +7333,7 @@ def test__complete_performers_for_user__user_already_completed__skip(mocker):
     timezone_now_mock.assert_called_once_with()
 
 
-def test__complete_performers_for_user__group_incomplete__ok(mocker):
+def test_complete_performers_for_user__group_incomplete__ok(mocker):
 
     """Incomplete group without RCBA"""
 
@@ -7104,7 +7381,7 @@ def test__complete_performers_for_user__group_incomplete__ok(mocker):
     timezone_now_mock.assert_called_once_with()
 
 
-def test__complete_performers_for_user__group_already_completed__skip(mocker):
+def test_complete_performers_for_user__group_already_completed__skip(mocker):
 
     """Already completed group without RCBA"""
 
@@ -7155,7 +7432,7 @@ def test__complete_performers_for_user__group_already_completed__skip(mocker):
     timezone_now_mock.assert_called_once_with()
 
 
-def test__complete_performers_for_user__group_rcba__create_group_user(mocker):
+def test_complete_performers_for_user__group_rcba__create_group_user(mocker):
 
     """Group with RCBA creates group_user"""
 
@@ -7205,7 +7482,7 @@ def test__complete_performers_for_user__group_rcba__create_group_user(mocker):
     timezone_now_mock.assert_called_once_with()
 
 
-def test__complete_performers_for_user__group_rcba__explicit_user__ok(mocker):
+def test_complete_performers_for_user__group_rcba__explicit_user__ok(mocker):
 
     """Group with RCBA creates group_user for explicit user"""
 
@@ -7261,7 +7538,7 @@ def test__complete_performers_for_user__group_rcba__explicit_user__ok(mocker):
     timezone_now_mock.assert_called_once_with()
 
 
-def test__complete_performers_for_user__group_rcba_exists__ok(mocker):
+def test_complete_performers_for_user__group_rcba_exists__ok(mocker):
 
     """Group with RCBA existing group_user"""
 
@@ -7320,7 +7597,7 @@ def test__complete_performers_for_user__group_rcba_exists__ok(mocker):
     timezone_now_mock.assert_called_once_with()
 
 
-def test__complete_performers_for_user__user_and_group_rcba__ok(mocker):
+def test_complete_performers_for_user__user_and_group_rcba__ok(mocker):
 
     """User and group with RCBA"""
 
@@ -7378,7 +7655,7 @@ def test__complete_performers_for_user__user_and_group_rcba__ok(mocker):
     timezone_now_mock.assert_called_once_with()
 
 
-def test__complete_task_for_starter__rcba__ok(mocker):
+def test_complete_task_for_starter__rcba__ok(mocker):
 
     """Skip starter with RCBA"""
 
@@ -7431,7 +7708,7 @@ def test__complete_task_for_starter__rcba__ok(mocker):
     )
 
 
-def test__complete_task_for_starter__rcba_group__different_service_user__ok(
+def test_complete_task_for_starter__rcba_group__different_service_user__ok(
     mocker,
 ):
 
@@ -7485,7 +7762,7 @@ def test__complete_task_for_starter__rcba_group__different_service_user__ok(
     ).exists()
 
 
-def test__complete_task_for_starter__already_completed__ok(mocker):
+def test_complete_task_for_starter__already_completed__ok(mocker):
 
     """Starter already completed"""
 
@@ -7529,7 +7806,7 @@ def test__complete_task_for_starter__already_completed__ok(mocker):
     complete_performers_for_user_mock.assert_not_called()
 
 
-def test__complete_task_for_starter__not_skip__noop(mocker):
+def test_complete_task_for_starter__not_skip__noop(mocker):
 
     """Skip flag disabled"""
 
@@ -7569,7 +7846,7 @@ def test__complete_task_for_starter__not_skip__noop(mocker):
     complete_performers_for_user_mock.assert_not_called()
 
 
-def test__complete_task_for_starter__not_rcba__noop(mocker):
+def test_complete_task_for_starter__not_rcba__noop(mocker):
 
     """RCBA disabled"""
 
@@ -7609,7 +7886,7 @@ def test__complete_task_for_starter__not_rcba__noop(mocker):
     complete_performers_for_user_mock.assert_not_called()
 
 
-def test__complete_task_for_starter__external__noop(mocker):
+def test_complete_task_for_starter__external__noop(mocker):
 
     """External workflow"""
 
