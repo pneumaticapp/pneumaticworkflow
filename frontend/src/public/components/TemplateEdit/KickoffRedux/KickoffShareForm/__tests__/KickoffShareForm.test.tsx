@@ -73,17 +73,19 @@ const makeTemplate = (overrides: Partial<ITemplateClient> = {}) => ({
 
 function renderShareForm(values: ITemplateClient) {
   const setFieldValue = jest.fn();
+  const setValues = jest.fn();
 
   const view = render(
-    <TemplateFieldContext.Provider value={{ values, setFieldValue, setValues: jest.fn() }}>
+    <TemplateFieldContext.Provider value={{ values, setFieldValue, setValues }}>
       <KickoffShareForm />
     </TemplateFieldContext.Provider>,
   );
 
   return {
     ...view,
+    setValues,
     rerenderWithValues: (nextValues: ITemplateClient) => view.rerender(
-      <TemplateFieldContext.Provider value={{ values: nextValues, setFieldValue, setValues: jest.fn() }}>
+      <TemplateFieldContext.Provider value={{ values: nextValues, setFieldValue, setValues }}>
         <KickoffShareForm />
       </TemplateFieldContext.Provider>,
     ),
@@ -98,7 +100,9 @@ function StatefulShareForm({ initialValues }: { initialValues: ITemplateClient }
       value={{
         values,
         setFieldValue: jest.fn(),
-        setValues: (nextValues) => setValues(nextValues),
+        setValues: (nextValues) => setValues((currentValues) => (
+          typeof nextValues === 'function' ? nextValues(currentValues) : nextValues
+        )),
       }}
     >
       <KickoffShareForm />
@@ -174,6 +178,24 @@ describe('KickoffShareForm', () => {
         embedUrl: '',
       }),
     );
+  });
+
+  it('preserves synchronous edits that are newer than context values', () => {
+    const initialValues = makeTemplate({ name: 'Before edit' });
+    const { setValues } = renderShareForm(initialValues);
+
+    userEvent.click(screen.getByRole('button', { name: /kickoff\.share-control/ }));
+
+    const updateValues = setValues.mock.calls[0][0] as (currentValues: ITemplateClient) => ITemplateClient;
+    const nextValues = updateValues({ ...initialValues, name: 'In-flight edit' });
+
+    expect(nextValues).toEqual(expect.objectContaining({
+      name: 'In-flight edit',
+      isPublic: true,
+      publicUrl: '',
+      isEmbedded: true,
+      embedUrl: '',
+    }));
   });
 
   it('syncs active tab when form values switch to embedded-only sharing', () => {

@@ -181,6 +181,7 @@ interface ISpyHandle {
   values: ITemplateClient;
   dirtyRef: MutableRefObject<boolean>;
   setFieldValue: (field: string, value: unknown, shouldValidate?: boolean) => void;
+  setValues: ReturnType<typeof useTemplateForm>['setValues'];
   consumePendingChanges: (explicitFields?: Partial<ITemplateClient>) => Partial<ITemplateClient>;
   confirmConsumedChanges: () => void;
   revertConsumedChanges: () => void;
@@ -218,9 +219,22 @@ function TemplateFormHarness({
   const { formik, setFieldValue, setValues, dirtyRef, pendingUserEditsRef, persistBaselineSyncRef } = useTemplateForm(initialTemplate);
 
   const Spy: FC = () => {
-    const { values, setFieldValue: contextSetFieldValue } = useTemplateField();
+    const {
+      values,
+      setFieldValue: contextSetFieldValue,
+      setValues: contextSetValues,
+    } = useTemplateField();
     const { consumePendingChanges, confirmConsumedChanges, revertConsumedChanges, abandonPendingChanges } = useTemplatePersist();
-    spy({ values, dirtyRef, setFieldValue: contextSetFieldValue, consumePendingChanges, confirmConsumedChanges, revertConsumedChanges, abandonPendingChanges });
+    spy({
+      values,
+      dirtyRef,
+      setFieldValue: contextSetFieldValue,
+      setValues: contextSetValues,
+      consumePendingChanges,
+      confirmConsumedChanges,
+      revertConsumedChanges,
+      abandonPendingChanges,
+    });
     return null;
   };
 
@@ -251,6 +265,21 @@ function StatefulTemplateFormHarness({
 describe('TemplateFormPersistProvider deactivation', () => {
   beforeEach(() => {
     (patchTemplate as unknown as jest.Mock).mockClear();
+  });
+
+  it('applies functional full-form updates over synchronous pending edits', () => {
+    const template = makeTemplate({ isActive: false, name: 'Original', isPublic: false });
+    let handle: ISpyHandle | null = null;
+
+    render(<TemplateFormHarness initialTemplate={template} spy={(h) => { handle = h; }} />);
+
+    act(() => {
+      handle!.setFieldValue('name', 'In-flight edit', false);
+      handle!.setValues((currentValues) => ({ ...currentValues, isPublic: true }), false);
+    });
+
+    expect(handle!.values.name).toBe('In-flight edit');
+    expect(handle!.values.isPublic).toBe(true);
   });
 
   it('flips isActive to false in Formik immediately when a non-activation field changes', async () => {
