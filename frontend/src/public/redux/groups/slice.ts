@@ -136,8 +136,13 @@ const groupsSlice = createSlice({
       .addCase(updateGroup, (state) => {
         state.isLoading = true;
       })
-      .addCase(updateUsersGroup, (state) => {
-        state.isLoading = true;
+      .addCase(updateUsersGroup, (state, action: PayloadAction<IGroup>) => {
+        const group = action.payload;
+        state.list = state.list.map((item) => (item.id === group.id ? group : item));
+
+        if (state.currentGroup.data?.id === group.id) {
+          state.currentGroup.data = group;
+        }
       })
       .addCase(deleteGroup, (state) => {
         state.isLoading = true;

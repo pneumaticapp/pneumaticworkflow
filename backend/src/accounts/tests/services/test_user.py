@@ -3700,7 +3700,7 @@ def test_check_and_complete_task__user_non_performer__skip(mocker):
     check_and_complete_tasks_delay_mock.assert_not_called()
 
 
-def test_check_and_complete_tasks__completed_performer__skip(
+def test_check_and_complete_tasks__completed_user_performer__skip(
     mocker,
 ):
 

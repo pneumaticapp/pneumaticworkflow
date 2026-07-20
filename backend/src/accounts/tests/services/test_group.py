@@ -2761,7 +2761,7 @@ def test_check_and_complete_tasks__group_non_performer__skip(mocker):
     check_and_complete_tasks_delay_mock.assert_not_called()
 
 
-def test_check_and_complete_tasks__completed_performer__skip(mocker):
+def test_check_and_complete_tasks__completed_group_performer__skip(mocker):
 
     # arrange
     account = create_test_account()

@@ -749,6 +749,14 @@ class TaskQuerySet(TasksBaseQuerySet):
         return self.filter(date_first_started__isnull=False)
 
     def active_for_user(self, user_id):
+        """
+        Active tasks in running workflows assigned to the user
+        (directly or via group), excluding deleted performers
+        and tasks already completed by the user (completed_users).
+
+        When require_completion_by_all is True, only tasks where
+        the user has not yet completed their part are included.
+        """
         return self.filter(
             Q(
                 Q(
@@ -759,8 +767,11 @@ class TaskQuerySet(TasksBaseQuerySet):
                 ),
             ) & Q(
                 (
-                    Q(taskperformer__group__users__id=user_id) |
-                    Q(taskperformer__user_id=user_id)
+                    Q(taskperformer__user_id=user_id) |
+                    Q(
+                        Q(taskperformer__group__users__id=user_id) &
+                        ~Q(taskperformer__completed_users__contains=[user_id]),
+                    )
                 ) &
                 Q(
                     status=TaskStatus.ACTIVE,
