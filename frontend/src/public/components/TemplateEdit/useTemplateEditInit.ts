@@ -51,7 +51,7 @@ export function useTemplateEditInit({
   const prevUsers = usePrevious(users);
   const prevLocation = usePrevious(location);
   const prevTemplate = usePrevious(template);
-  const hasSyncedVariablesRef = useRef(false);
+  const lastVariablesTemplateIdRef = useRef<number | null>(null);
   const formikValuesRef = useRef(formik.values);
   formikValuesRef.current = formik.values;
 
@@ -155,11 +155,11 @@ export function useTemplateEditInit({
       }
     };
 
-    // Populate the map immediately when the template first loads. Subsequent
-    // metadata edits are debounced so typing a task/field name does not rebuild
-    // every variable and dispatch Redux work for each keystroke.
-    if (!hasSyncedVariablesRef.current) {
-      hasSyncedVariablesRef.current = true;
+    // Populate immediately whenever the persisted template identity changes.
+    // Subsequent metadata edits within that template remain debounced.
+    const currentTemplateId = formikValuesRef.current.id ?? null;
+    if (lastVariablesTemplateIdRef.current !== currentTemplateId) {
+      lastVariablesTemplateIdRef.current = currentTemplateId;
       syncVariables();
       return undefined;
     }
