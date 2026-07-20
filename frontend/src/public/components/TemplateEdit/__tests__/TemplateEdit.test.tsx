@@ -5,6 +5,7 @@ import { useSelector, useDispatch } from 'react-redux';
 
 import { TemplateEdit } from '../TemplateEdit';
 import { cleanTemplateReferences } from '../../../utils/template';
+import { isCreateTemplate } from '../../../utils/history';
 import { getCurrentUser } from '../../../redux/selectors/authUser';
 import { getNotDeletedAccountsUsers } from '../../../redux/selectors/accounts';
 import { getSubscriptionPlan, getIsUserSubsribed } from '../../../redux/selectors/user';
@@ -197,6 +198,27 @@ describe('TemplateEdit', () => {
       if (selector === getSubscriptionPlan) return SUBSCRIPTION_PLAN;
       if (selector === getIsCatalogLoaded) return true;
       return undefined;
+    });
+  });
+
+  describe('initialization', () => {
+    it('does not overwrite a fresh create template with the pre-initialization Formik snapshot', () => {
+      (isCreateTemplate as jest.Mock).mockReturnValue(true);
+      currentProps = {
+        ...baseProps(),
+        match: { params: { id: undefined } },
+        location: { pathname: '/templates/create', search: '' },
+        template: makeTemplate({ id: undefined, tasks: [] }),
+      } as any;
+
+      render(React.createElement(TemplateEdit, currentProps as any));
+
+      const setTemplateActions = mockDispatch.mock.calls
+        .map(([action]) => action)
+        .filter((action) => action.type === 'SET_TEMPLATE');
+
+      expect(setTemplateActions).toHaveLength(1);
+      expect(setTemplateActions[0].payload.tasks).toHaveLength(1);
     });
   });
 

@@ -186,6 +186,19 @@ describe('TemplateControlls — fieldset logic', () => {
     expect(openRunWorkflowModal).toHaveBeenCalledWith(runnableWorkflow);
   });
 
+  it('keeps hook order stable when the template becomes unavailable', () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const view = render(React.createElement(TemplateControlls, makeProps()));
+
+    expect(() => view.rerender(
+      <TemplateControlls setInfoWarnings={jest.fn()} />,
+    )).toThrow(
+      'TemplateControlls must receive a template prop or be used inside the Edit Template form provider',
+    );
+    expect(consoleError.mock.calls.flat().join(' ')).not.toContain('Rendered fewer hooks');
+    consoleError.mockRestore();
+  });
+
   it('does not run an active template before it has been persisted', () => {
     const openRunWorkflowModal = jest.fn();
     const template = getTemplate('5');

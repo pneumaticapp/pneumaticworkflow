@@ -34,7 +34,18 @@ import {
 import { TemplateNavigation } from './TemplateNavigation';
 export type { ITemplateControllsProps } from './types';
 
-export function TemplateControlls({
+export function TemplateControlls(props: ITemplateControllsProps) {
+  const fieldContext = useContext(TemplateFieldContext);
+  const template = props.template ?? fieldContext?.values;
+
+  if (!template) {
+    throw new Error('TemplateControlls must receive a template prop or be used inside the Edit Template form provider');
+  }
+
+  return <TemplateControllsContent {...props} template={template} />;
+}
+
+function TemplateControllsContent({
   template: propsTemplate,
   templateStatus: propsTemplateStatus,
   isSubscribed: propsIsSubscribed,
@@ -49,7 +60,7 @@ export function TemplateControlls({
   const dispatch = useDispatch();
   const fieldContext = useContext(TemplateFieldContext);
   const persistContext = useContext(TemplatePersistContext);
-  const template = propsTemplate ?? fieldContext?.values;
+  const template = (propsTemplate ?? fieldContext?.values)!;
   const {
     consumePendingChanges,
     confirmConsumedChanges,
@@ -66,10 +77,6 @@ export function TemplateControlls({
   const billingPlanFromState = useSelector((state: IApplicationState) => state.authUser?.account?.billingPlan);
   const templateStatus = propsTemplateStatus ?? templateStatusFromState;
   const isSubscribed = propsIsSubscribed ?? isSubscribedFromState;
-
-  if (!template) {
-    throw new Error('TemplateControlls must receive a template prop or be used inside the Edit Template form provider');
-  }
   const isFreePlan = billingPlanFromState === ESubscriptionPlan.Free;
   const accessConditions = isSubscribed || isFreePlan;
 
