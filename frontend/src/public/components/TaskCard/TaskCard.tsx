@@ -54,7 +54,7 @@ export function TaskCard({
   const { formatMessage } = useIntl();
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
-  const [uploadingFieldNames, setUploadingFieldNames] = useState<Set<string>>(() => new Set());
+  const [uploadCounts, setUploadCounts] = useState<Map<string, number>>(() => new Map());
   const {
     outputValues,
     fieldsetOutputValues,
@@ -65,12 +65,15 @@ export function TaskCard({
   const helpTextLocal = helpText ?? workflow?.description ?? null;
   const isSubmitting = status === ETaskStatus.Completing || status === ETaskStatus.Returning;
   const handleUploadStateChange = useCallback((apiName: string, isUploading: boolean) => {
-    setUploadingFieldNames((currentNames) => {
-      const nextNames = new Set(currentNames);
-      if (isUploading) nextNames.add(apiName);
-      else nextNames.delete(apiName);
+    setUploadCounts((currentCounts) => {
+      const nextCounts = new Map(currentCounts);
+      const count = nextCounts.get(apiName) ?? 0;
 
-      return nextNames;
+      if (isUploading) nextCounts.set(apiName, count + 1);
+      else if (count <= 1) nextCounts.delete(apiName);
+      else nextCounts.set(apiName, count - 1);
+
+      return nextCounts;
     });
   }, []);
 
@@ -177,7 +180,7 @@ export function TaskCard({
             outputValues={outputValues}
             fieldsetOutputValues={fieldsetOutputValues}
             flushOutputs={flushOutputs}
-            isOutputUploading={uploadingFieldNames.size > 0}
+            isOutputUploading={uploadCounts.size > 0}
             setTaskCompleted={setTaskCompleted}
             setTaskReverted={setTaskReverted}
             openSelectTemplateModal={openSelectTemplateModal}

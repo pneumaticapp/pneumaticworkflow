@@ -6,6 +6,7 @@ import { EExtraFieldType, ETemplateOwnerType, IExtraField } from '../../../types
 import { ETaskStatus } from '../../../redux/actions';
 import { EWorkflowStatus, EWorkflowsLogSorting } from '../../../types/workflow';
 import { ExtraFieldIntl } from '../../TemplateEdit/ExtraFields';
+import { makeFieldsetRuntime } from '../../../__stubs__/fieldsets.factory';
 import { addOrUpdateStorageOutput } from '../utils/storageOutputs';
 
 jest.mock('../../TemplateEdit/ExtraFields', () => ({
@@ -396,6 +397,44 @@ describe('TaskCard', () => {
         completeButtonProps.onClick();
       });
       expect(baseProps.setTaskCompleted).not.toHaveBeenCalled();
+    });
+
+    it('stays blocked until all uploads sharing an api name finish', async () => {
+      const duplicateFileField = makeField({
+        apiName: 'shared-file-field',
+        type: EExtraFieldType.File,
+      });
+      const task = {
+        ...baseTask,
+        fieldsets: [
+          makeFieldsetRuntime({ apiNameBinding: 'fieldset-1', fields: [duplicateFileField] }),
+          makeFieldsetRuntime({ apiNameBinding: 'fieldset-2', fields: [duplicateFileField] }),
+        ],
+      };
+      render(<TaskCard {...baseProps} task={task} />);
+
+      await waitFor(() => {
+        expect(mockExtraFieldIntl).toHaveBeenCalledTimes(2);
+      });
+      const [firstFieldProps, secondFieldProps] = mockExtraFieldIntl.mock.calls.map(([props]) => props);
+      const getCompleteButtonProps = () => [...mockButton.mock.calls]
+        .reverse()
+        .map(([props]) => props)
+        .find(({ buttonStyle }) => buttonStyle === 'yellow');
+
+      act(() => {
+        firstFieldProps.onUploadStateChange(true);
+        secondFieldProps.onUploadStateChange(true);
+        firstFieldProps.onUploadStateChange(false);
+      });
+
+      expect(getCompleteButtonProps().disabled).toBe(true);
+
+      act(() => {
+        secondFieldProps.onUploadStateChange(false);
+      });
+
+      expect(getCompleteButtonProps().disabled).toBe(false);
     });
   });
 
