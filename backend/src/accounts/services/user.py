@@ -417,7 +417,7 @@ class UserService(
                 user=user,
             )
             service.update_users_counts()
-            self._check_and_complete_tasks()
+            transaction.on_commit(self._check_and_complete_tasks)
             self.identify(user)
 
         if old_manager is not None:

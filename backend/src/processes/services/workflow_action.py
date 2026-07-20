@@ -656,13 +656,15 @@ class WorkflowActionService:
             and task.require_completion_by_all
         ):
             try:
+                starter = self.workflow.workflow_starter
                 task_performers = self._get_performers_for_user(
                     task=task,
-                    user=self.workflow.workflow_starter,
+                    user=starter,
                 )
                 self._complete_performers_for_user(
                     task=task,
                     task_performers=task_performers,
+                    user=starter,
                 )
             except exceptions.UserAlreadyCompleteTask:
                 pass
@@ -700,10 +702,13 @@ class WorkflowActionService:
                 self._start_next_tasks(parent_task=task)
             return
         if task.skip_for_starter and not self.workflow.is_external:
-            starter_performers = self._get_performers_for_user(
-                task=task,
-                user=self.workflow.workflow_starter,
-            )
+            try:
+                starter_performers = self._get_performers_for_user(
+                    task=task,
+                    user=self.workflow.workflow_starter,
+                )
+            except exceptions.UserAlreadyCompleteTask:
+                starter_performers = None
             if starter_performers:
                 if not task.require_completion_by_all:
                     self._skip_task_for_starter(task, is_returned=is_returned)
@@ -833,13 +838,15 @@ class WorkflowActionService:
         self,
         task: Task,
         task_performers: Iterable[TaskPerformer],
+        user: Optional[UserModel] = None,
     ):
+        user = user or self.user
         now = timezone.now()
         for performer in task_performers:
             if performer.type_group:
                 if task.require_completion_by_all:
                     TaskPerformer.objects.get_or_create(
-                        user_id=self.user.id,
+                        user_id=user.id,
                         task_id=task.id,
                         type=PerformerType.GROUP_USER,
                         defaults={

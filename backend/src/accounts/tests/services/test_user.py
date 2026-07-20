@@ -1163,6 +1163,10 @@ def test_private_deactivate__ok(mocker):
     identify_mock = mocker.patch(
         'src.accounts.services.user.UserService.identify',
     )
+    mocker.patch(
+        'src.accounts.services.user.transaction.on_commit',
+        side_effect=lambda func: func(),
+    )
     service = UserService(instance=deleted_user, user=owner)
 
     # act
@@ -1202,6 +1206,10 @@ def test_private_deactivate__activate_contacts__ok(mocker):
     )
     mocker.patch(
         'src.accounts.services.user.UserService.identify',
+    )
+    mocker.patch(
+        'src.accounts.services.user.transaction.on_commit',
+        side_effect=lambda func: func(),
     )
     google_contact = Contact.objects.create(
         account=account,

@@ -266,3 +266,39 @@ class TestWorkflowTask:
             .filter(id=task.id)
             .exists()
         )
+
+    def test_user_is_last_performer__soft_deleted_performer__not_found(self):
+
+        """
+        Soft-deleted TaskPerformer for the user must not match via another
+        performer's non-deleted row (separate JOIN bug).
+        """
+
+        # arrange
+        account = create_test_account()
+        owner = create_test_owner(account=account)
+        user = create_test_admin(account=account)
+        user_2 = create_test_admin(
+            email='performer2@test.test',
+            account=account,
+        )
+        workflow = create_test_workflow(owner, tasks_count=1)
+        task = workflow.tasks.get(number=1)
+        task.taskperformer_set.all().delete()
+        task.raw_performers.all().delete()
+        task.add_raw_performer(user)
+        TaskPerformer.objects.create(
+            task_id=task.id,
+            user_id=user.id,
+            is_deleted=True,
+        )
+        TaskPerformer.objects.create(
+            task_id=task.id,
+            user_id=user_2.id,
+        )
+
+        # act
+        result = user_is_last_performer(user)
+
+        # assert
+        assert result is False

@@ -82,7 +82,7 @@ def check_and_complete_tasks(
         .order_by('id')
     )
     for task in tasks:
-        if task.can_be_completed():
+        if task.is_active and task.can_be_completed():
             service = WorkflowActionService(
                 is_superuser=is_superuser,
                 auth_type=auth_type,

@@ -2,6 +2,7 @@ from collections import defaultdict
 from typing import List, Optional
 
 from django.contrib.auth import get_user_model
+from django.db import transaction
 
 from src.accounts.models import UserGroup
 from src.accounts.queries import (
@@ -163,12 +164,8 @@ class UserGroupService(BaseModelService):
             send_notification_task=send_task_deleted_notification,
         )
 
-    def _check_and_complete_tasks(self):
-
-        """ Check if it is possible to complete tasks
-            where the performer group is """
-
-        group_performer_tasks_ids = list(
+    def _get_group_performer_task_ids(self) -> List[int]:
+        return list(
             Task.objects
             .active()
             .active_for_group(self.instance.id)
@@ -176,9 +173,20 @@ class UserGroupService(BaseModelService):
             .distinct('id')
             .values_list('id', flat=True),
         )
-        if group_performer_tasks_ids:
+
+    def _check_and_complete_tasks(
+        self,
+        task_ids: Optional[List[int]] = None,
+    ):
+
+        """ Check if it is possible to complete tasks
+            where the performer group is """
+
+        if task_ids is None:
+            task_ids = self._get_group_performer_task_ids()
+        if task_ids:
             check_and_complete_tasks.delay(
-                task_ids=group_performer_tasks_ids,
+                task_ids=task_ids,
                 is_superuser=self.is_superuser,
                 auth_type=self.auth_type,
                 account_id=self.instance.account_id,
@@ -272,7 +280,10 @@ class UserGroupService(BaseModelService):
         users = list(self.instance.users.values_list('id', flat=True))
         if users:
             self._send_removed_users_notifications(users)
-        self._check_and_complete_tasks()
+        # Collect before soft-delete cascades TaskPerformers away from
+        # active_for_group(); enqueue after commit so can_be_completed()
+        # sees the group as deleted.
+        group_performer_task_ids = self._get_group_performer_task_ids()
         send_group_deleted_notification.delay(
             logging=self.account.log_api_requests,
             account_id=self.user.account_id,
@@ -294,5 +305,11 @@ class UserGroupService(BaseModelService):
             is_superuser=self.is_superuser,
         )
         self.instance.delete()
+        if group_performer_task_ids:
+            transaction.on_commit(
+                lambda: self._check_and_complete_tasks(
+                    task_ids=group_performer_task_ids,
+                ),
+            )
         if template_ids:
             update_workflow_owners.delay(template_ids)
