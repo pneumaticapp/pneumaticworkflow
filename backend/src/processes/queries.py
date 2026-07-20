@@ -1057,6 +1057,7 @@ class TaskListQuery(
                 pt.status = '{TaskStatus.ACTIVE}'
                 AND ptp.is_completed IS FALSE
                 AND pw.status = '{WorkflowStatus.RUNNING}'
+                AND NOT (%(assigned_to)s = ANY(ptp.completed_users))
             """
 
     def _get_template_task_api_name(self):

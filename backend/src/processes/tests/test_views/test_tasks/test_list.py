@@ -27,6 +27,7 @@ from src.processes.tests.fixtures import (
     create_test_template,
     create_test_user,
     create_test_workflow, create_test_account, create_test_admin,
+    create_test_not_admin,
 )
 from src.services.markdown import MarkdownService
 from src.utils.validation import ErrorCode
@@ -165,6 +166,217 @@ def test_list__task_performer_group_empty__ok(api_client):
     assert len(response.data) == 2
     assert response.data[0]['id'] == task_21.id
     assert response.data[1]['id'] == task_11.id
+
+
+def test_list__user_performer_completed__skip(
+    mocker,
+    api_client,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    template = create_test_template(user=owner, tasks_count=2, is_active=True)
+    workflow = create_test_workflow(user, template=template)
+    task = workflow.tasks.get(number=1)
+    task.taskperformer_set.all().delete()
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.USER,
+        user=user,
+        is_completed=True,
+    )
+    mocker.patch(
+        'src.processes.tasks.webhooks.send_task_completed_webhook.delay',
+    )
+
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get('/v3/tasks')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 0
+
+
+def test_list__group_performer_completed__skip(
+    mocker,
+    api_client,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    template = create_test_template(user=owner, tasks_count=2, is_active=True)
+    workflow = create_test_workflow(user, template=template)
+    task = workflow.tasks.get(number=1)
+    task.taskperformer_set.all().delete()
+    group = create_test_group(account, users=[user])
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP,
+        group=group,
+        is_completed=True,
+    )
+    mocker.patch(
+        'src.processes.tasks.webhooks.send_task_completed_webhook.delay',
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get('/v3/tasks')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 0
+
+
+def test_list__group_performer_partitional_completed__skip(
+    mocker,
+    api_client,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    user_2 = create_test_not_admin(account=account)
+    template = create_test_template(user=owner, tasks_count=2, is_active=True)
+    workflow = create_test_workflow(user, template=template)
+    task = workflow.tasks.get(number=1)
+    task.taskperformer_set.all().delete()
+    group = create_test_group(account, users=[user, user_2])
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP,
+        group=group,
+        completed_users=[user.id],
+    )
+    mocker.patch(
+        'src.processes.tasks.webhooks.send_task_completed_webhook.delay',
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get('/v3/tasks')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 0
+
+
+def test_list__group_performer_and_user_performer__skip(
+    mocker,
+    api_client,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    template = create_test_template(user=owner, tasks_count=2, is_active=True)
+    workflow = create_test_workflow(user, template=template)
+    task = workflow.tasks.get(number=1)
+    task.taskperformer_set.all().delete()
+    group = create_test_group(account, users=[user])
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP,
+        group=group,
+    )
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.USER,
+        user=user,
+    )
+
+    mocker.patch(
+        'src.processes.tasks.webhooks.send_task_completed_webhook.delay',
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get('/v3/tasks')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 1
+
+
+def test_list__group_performer_partitional_completed_and_user_performer__skip(
+    mocker,
+    api_client,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    template = create_test_template(user=owner, tasks_count=2, is_active=True)
+    workflow = create_test_workflow(user, template=template)
+    task = workflow.tasks.get(number=1)
+    task.taskperformer_set.all().delete()
+    group = create_test_group(account, users=[user])
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP,
+        group=group,
+        completed_users=[user.id],
+    )
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.USER,
+        user=user,
+    )
+
+    mocker.patch(
+        'src.processes.tasks.webhooks.send_task_completed_webhook.delay',
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get('/v3/tasks')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 1
+
+
+def test_list__filter_is_completed_and_group_performer_part_completed__skip(
+    mocker,
+    api_client,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    user_2 = create_test_not_admin(account=account)
+    template = create_test_template(user=owner, tasks_count=2, is_active=True)
+    workflow = create_test_workflow(user, template=template)
+    task = workflow.tasks.get(number=1)
+    task.taskperformer_set.all().delete()
+    group = create_test_group(account, users=[user, user_2])
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP,
+        group=group,
+        completed_users=[user.id],
+    )
+    mocker.patch(
+        'src.processes.tasks.webhooks.send_task_completed_webhook.delay',
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get('/v3/tasks?is_completed=true')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 0
 
 
 def test_list__urgent_tasks_first__ok(api_client):
