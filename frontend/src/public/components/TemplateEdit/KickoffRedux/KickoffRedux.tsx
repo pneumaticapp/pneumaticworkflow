@@ -45,19 +45,25 @@ interface IKickoffReduxProps {
   setKickoff?(value: IKickoffClient): void;
 }
 
-export function KickoffRedux({ template: propsTemplate, intl, accountId: propsAccountId, setKickoff }: IKickoffReduxProps): React.ReactElement {
+export function KickoffRedux(props: IKickoffReduxProps): React.ReactElement {
+  const fieldContext = useContext(TemplateFieldContext);
+  const template = props.template ?? fieldContext?.values;
+
+  if (!template) {
+    throw new Error('KickoffRedux must receive a template prop or be used inside the Edit Template form provider');
+  }
+
+  return <KickoffReduxContent {...props} template={template} />;
+}
+
+function KickoffReduxContent({ template: propsTemplate, intl, accountId: propsAccountId, setKickoff }: IKickoffReduxProps) {
   const intlContext = useIntl();
   const { formatMessage } = intl ?? intlContext;
   const fieldContext = useContext(TemplateFieldContext);
   const accountIdFromState = useSelector((state: IApplicationState) => state.authUser?.account?.id ?? -1);
   const accountId = propsAccountId ?? accountIdFromState;
   const fieldsetsCatalogLoading = useSelector(getFieldsetsCatalogIsLoading);
-  const template = propsTemplate ?? fieldContext?.values;
-
-  if (!template) {
-    throw new Error('KickoffRedux must receive a template prop or be used inside the Edit Template form provider');
-  }
-
+  const template = propsTemplate!;
   const { kickoff, wfNameTemplate } = template;
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);

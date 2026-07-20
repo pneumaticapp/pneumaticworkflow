@@ -123,7 +123,7 @@ export function useTemplateEditInit({
   }, [location, template]);
 
   useEffect(() => {
-    if (users.length === prevUsers?.length) {
+    if (prevUsers === undefined || users.length === prevUsers.length) {
       return;
     }
 
