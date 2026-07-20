@@ -1105,6 +1105,9 @@ class TaskPerformerQuerySet(BaseQuerySet, BaseHardQuerySet):
     def type_group(self):
         return self.filter(type=PerformerType.GROUP)
 
+    def type_group_user(self):
+        return self.filter(type=PerformerType.GROUP_USER)
+
     def type_user_or_group(self):
         return self.filter(
             type__in=(

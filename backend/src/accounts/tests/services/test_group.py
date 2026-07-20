@@ -2778,7 +2778,6 @@ def test_check_and_complete_tasks__completed_group_performer__skip(mocker):
         group=group,
         type=PerformerType.GROUP,
         is_completed=True,
-        completed_users=[user.id],
     )
     check_and_complete_tasks_delay_mock = mocker.patch(
         target='src.accounts.services.group.check_and_complete_tasks.delay',
@@ -2817,7 +2816,6 @@ def test_check_and_complete_tasks__rcba_and_completed_performer__skip(mocker):
         group=group,
         type=PerformerType.GROUP,
         is_completed=True,
-        completed_users=[user.id],
     )
     check_and_complete_tasks_delay_mock = mocker.patch(
         target='src.accounts.services.group.check_and_complete_tasks.delay',

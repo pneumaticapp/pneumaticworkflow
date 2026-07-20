@@ -1,3 +1,5 @@
+from unittest.mock import call
+
 import pytest
 
 from src.accounts.queries import DeleteUserFromTaskPerformerQuery
@@ -857,6 +859,7 @@ class TestReassignService:
             'TaskPerformer.objects.filter',
         )
         exclude_mock = filter_mock.return_value.exclude
+        delete_mock = exclude_mock.return_value.delete
         update_mock = exclude_mock.return_value.update
 
         service = ReassignService(old_user=old_user, new_group=new_group)
@@ -873,13 +876,23 @@ class TestReassignService:
         sql_execute_mock.assert_called_once_with(
             'SQL_QUERY', {'params': 'values'},
         )
-        filter_mock.assert_called_once_with(
-            user_id=old_user.id,
-            task__account=account,
-        )
-        exclude_mock.assert_called_once_with(
-            task__status='completed',
-        )
+        assert filter_mock.call_args_list == [
+            call(
+                user_id=old_user.id,
+                type=PerformerType.GROUP_USER,
+                task__account=account,
+            ),
+            call(
+                user_id=old_user.id,
+                type=PerformerType.USER,
+                task__account=account,
+            ),
+        ]
+        assert exclude_mock.call_args_list == [
+            call(task__status='completed'),
+            call(task__status='completed'),
+        ]
+        delete_mock.assert_called_once_with()
         update_mock.assert_called_once_with(
             type=PerformerType.GROUP,
             group_id=new_group.id,
@@ -908,6 +921,7 @@ class TestReassignService:
             'TaskPerformer.objects.filter',
         )
         exclude_mock = filter_mock.return_value.exclude
+        delete_mock = exclude_mock.return_value.delete
         update_mock = exclude_mock.return_value.update
 
         service = ReassignService(old_user=old_user, new_user=new_user)
@@ -924,13 +938,23 @@ class TestReassignService:
         sql_execute_mock.assert_called_once_with(
             'SQL_QUERY', {'params': 'values'},
         )
-        filter_mock.assert_called_once_with(
-            user_id=old_user.id,
-            task__account=account,
-        )
-        exclude_mock.assert_called_once_with(
-            task__status='completed',
-        )
+        assert filter_mock.call_args_list == [
+            call(
+                user_id=old_user.id,
+                type=PerformerType.GROUP_USER,
+                task__account=account,
+            ),
+            call(
+                user_id=old_user.id,
+                type=PerformerType.USER,
+                task__account=account,
+            ),
+        ]
+        assert exclude_mock.call_args_list == [
+            call(task__status='completed'),
+            call(task__status='completed'),
+        ]
+        delete_mock.assert_called_once_with()
         update_mock.assert_called_once_with(
             user_id=new_user.id,
         )

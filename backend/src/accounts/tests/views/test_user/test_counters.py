@@ -98,7 +98,12 @@ def test_counters__group_performer_completed_for_user__ok(api_client):
         task_id=task.id,
         type=PerformerType.GROUP,
         group_id=group.id,
-        completed_users=[user.id],
+    )
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP_USER,
+        user=user,
+        is_completed=True,
     )
     api_client.token_authenticate(user)
 
@@ -128,7 +133,12 @@ def test_counters__group_partitional_completed_and_user_performer__skip(
         task_id=task.id,
         type=PerformerType.GROUP,
         group_id=group.id,
-        completed_users=[user.id],
+    )
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP_USER,
+        user=user,
+        is_completed=True,
     )
     TaskPerformer.objects.create(
         task_id=task.id,

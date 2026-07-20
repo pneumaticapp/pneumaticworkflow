@@ -465,11 +465,17 @@ class WorkflowActionService:
             force_save=True,
         )
         task_service.set_due_date_from_template()
-        (
+        performers_qst = (
             TaskPerformer.objects
-            .by_workflow(self.workflow.id).with_tasks_after(task)
+            .by_workflow(self.workflow.id)
+            .with_tasks_after(task)
+        )
+        (
+            performers_qst
+            .type_user_or_group()
             .update(is_completed=False, date_completed=None)
         )
+        performers_qst.type_group_user().delete()
         if task.skip_for_starter:
             self._complete_task_for_starter(task=task)
 
