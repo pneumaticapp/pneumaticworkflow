@@ -20,6 +20,11 @@ import { isWorkflowEndedEventType } from './isWorkflowEndedEventType';
 import { mapBackendNewEventToRedux } from '../../../utils/mappers';
 import { getWorkflowsStore } from '../../selectors/workflows';
 import { getTaskStore } from '../../selectors/task';
+import { getTasksSettings } from '../../selectors/tasks';
+import {
+  shouldDecrementCounterOnDeleted,
+  shouldRemoveTaskOnDeleted,
+} from './shouldRemoveTaskOnDeleted';
 
 export function* routeRealtimeEvent(envelope: IRealtimeWsEnvelope) {
   switch (envelope.type) {
@@ -28,9 +33,28 @@ export function* routeRealtimeEvent(envelope: IRealtimeWsEnvelope) {
       yield call(handleAddTask, task);
       break;
     }
-    case ERealtimeEnvelopeType.TASK_COMPLETED:
+    case ERealtimeEnvelopeType.TASK_COMPLETED: {
+      yield call(handleRemoveTask, envelope.data.id, true);
+      break;
+    }
     case ERealtimeEnvelopeType.TASK_DELETED: {
-      yield call(handleRemoveTask, envelope.data.id);
+      const settings: ReturnType<typeof getTasksSettings> = yield select(getTasksSettings);
+      const { status } = envelope.data;
+
+      if (
+        !shouldRemoveTaskOnDeleted({
+          status,
+          completionStatus: settings.completionStatus,
+        })
+      ) {
+        break;
+      }
+
+      yield call(
+        handleRemoveTask,
+        envelope.data.id,
+        shouldDecrementCounterOnDeleted(status),
+      );
       break;
     }
     case ERealtimeEnvelopeType.USER_CREATED:
