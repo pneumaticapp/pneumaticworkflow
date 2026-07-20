@@ -754,7 +754,7 @@ class TaskQuerySet(TasksBaseQuerySet):
         """
         Active tasks in running workflows assigned to the user
         (directly or via group), excluding deleted performers
-        and tasks already completed by the user (completed_users).
+        and tasks already completed by the user (USER or GROUP_USER).
 
         When require_completion_by_all is True, only tasks where
         the user has not yet completed their part are included.
@@ -766,8 +766,12 @@ class TaskQuerySet(TasksBaseQuerySet):
             .filter(task_id=OuterRef('pk'))
             .exclude(directly_status=DirectlyStatus.DELETED)
             .filter(
-                Q(user_id=user_id, is_completed=True)
-                | Q(completed_users__contains=[user_id]),
+                user_id=user_id,
+                is_completed=True,
+                type__in=(
+                    PerformerType.USER,
+                    PerformerType.GROUP_USER,
+                ),
             )
         )
         return self.filter(
@@ -780,11 +784,11 @@ class TaskQuerySet(TasksBaseQuerySet):
                 ),
             ) & Q(
                 (
-                    Q(taskperformer__user_id=user_id) |
                     Q(
-                        Q(taskperformer__group__users__id=user_id) &
-                        ~Q(taskperformer__completed_users__contains=[user_id]),
-                    )
+                        taskperformer__user_id=user_id,
+                        taskperformer__type=PerformerType.USER,
+                    ) |
+                    Q(taskperformer__group__users__id=user_id)
                 ) &
                 Q(
                     status=TaskStatus.ACTIVE,

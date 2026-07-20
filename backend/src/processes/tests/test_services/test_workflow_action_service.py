@@ -3767,8 +3767,8 @@ def test_complete_task_for_user__group_performer_one_user__ok(mocker):
 
     """Group performer with a single user member completes the task.
 
-    The task is completed successfully without writing to
-    completed_users (can_be_completed returns True).
+    The task is completed successfully without creating a GROUP_USER
+    marker (can_be_completed returns True).
     """
 
     # arrange
@@ -3829,7 +3829,11 @@ def test_complete_task_for_user__group_performer_one_user__ok(mocker):
     # assert
     assert result.id == task.id
     group_performer.refresh_from_db()
-    assert group_performer.completed_users == []
+    assert not TaskPerformer.objects.filter(
+        task_id=task.id,
+        user_id=user.id,
+        type=PerformerType.GROUP_USER,
+    ).exists()
     task_field_service_init_mock.assert_not_called()
     partial_update_field_mock.assert_not_called()
     send_task_completed_websocket_mock.assert_not_called()
@@ -3852,7 +3856,7 @@ def test_complete_task_for_user__group_user_already_completed__raise_exc(
     mocker,
 ):
 
-    """Group performer where the user id is already in completed_users.
+    """Group performer where the user already has a completed GROUP_USER.
 
     Raises UserAlreadyCompleteTask since the user has already completed
     their part of the group task.
@@ -3871,7 +3875,12 @@ def test_complete_task_for_user__group_user_already_completed__raise_exc(
         group=group,
         type=PerformerType.GROUP,
         is_completed=False,
-        completed_users=[user.id],
+    )
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        user_id=user.id,
+        type=PerformerType.GROUP_USER,
+        is_completed=True,
     )
     is_superuser = False
     auth_type = AuthTokenType.USER
@@ -3943,7 +3952,7 @@ def test_complete_task_for_user__group_user__checklist_incomplete__raise(
     """Group performer attempting to complete a task with incomplete
     checklists.
 
-    ChecklistIncompleted is raised before completed_users is updated.
+    ChecklistIncompleted is raised before a GROUP_USER marker is created.
     """
 
     # arrange
@@ -4013,7 +4022,11 @@ def test_complete_task_for_user__group_user__checklist_incomplete__raise(
     assert ex.value.message == str(messages.MSG_PW_0006)
     checklists_completed_mock.assert_called_once_with()
     group_performer.refresh_from_db()
-    assert user.id not in group_performer.completed_users
+    assert not TaskPerformer.objects.filter(
+        task_id=task.id,
+        user_id=user.id,
+        type=PerformerType.GROUP_USER,
+    ).exists()
     task_field_service_init_mock.assert_not_called()
     partial_update_field_mock.assert_not_called()
     can_be_completed_mock.assert_not_called()
@@ -4133,7 +4146,7 @@ def test_complete_task_for_user__group_can_complete__ok(mocker):
     """Group performer completes the task and can_be_completed
     returns True, triggering full task completion.
 
-    completed_users is not updated here — complete_task handles
+    GROUP_USER is not created here — complete_task handles
     full task completion.
     """
 
@@ -4195,7 +4208,11 @@ def test_complete_task_for_user__group_can_complete__ok(mocker):
     # assert
     assert result.id == task.id
     group_performer.refresh_from_db()
-    assert group_performer.completed_users == []
+    assert not TaskPerformer.objects.filter(
+        task_id=task.id,
+        user_id=user.id,
+        type=PerformerType.GROUP_USER,
+    ).exists()
     task_field_service_init_mock.assert_not_called()
     partial_update_field_mock.assert_not_called()
     send_task_completed_websocket_mock.assert_not_called()
@@ -4222,7 +4239,7 @@ def test_complete_task_for_user__rcba_and_group_user_first_completion__ok(
     enabled and can_be_completed returns False (first completion in a
     multi-user group).
 
-    The user id is appended to completed_users and a websocket
+    A completed GROUP_USER marker is created and a websocket
     notification is sent, but the task remains active since other group
     members still need to complete.
     """
@@ -4288,7 +4305,12 @@ def test_complete_task_for_user__rcba_and_group_user_first_completion__ok(
     # assert
     assert result.id == task.id
     group_performer.refresh_from_db()
-    assert user_1.id in group_performer.completed_users
+    group_user = TaskPerformer.objects.get(
+        task_id=task.id,
+        user_id=user_1.id,
+        type=PerformerType.GROUP_USER,
+    )
+    assert group_user.is_completed is True
     assert group_performer.is_completed is False
     task_field_service_init_mock.assert_not_called()
     partial_update_field_mock.assert_not_called()
@@ -4583,7 +4605,11 @@ def test_complete_task_for_user__one_user_and_multiple_groups__ok(mocker):
     # assert
     assert result.id == task.id
     group_performer_1.refresh_from_db()
-    assert group_performer_1.completed_users == []
+    assert not TaskPerformer.objects.filter(
+        task_id=task.id,
+        user_id=user_1.id,
+        type=PerformerType.GROUP_USER,
+    ).exists()
     task_field_service_init_mock.assert_not_called()
     partial_update_field_mock.assert_not_called()
     send_task_completed_websocket_mock.assert_not_called()
@@ -4775,7 +4801,11 @@ def test_complete_task_for_user__user_and_group_performer__ok(mocker):
     # assert
     assert result.id == task.id
     group_performer.refresh_from_db()
-    assert group_performer.completed_users == []
+    assert not TaskPerformer.objects.filter(
+        task_id=task.id,
+        user_id=user.id,
+        type=PerformerType.GROUP_USER,
+    ).exists()
     task_field_service_init_mock.assert_not_called()
     partial_update_field_mock.assert_not_called()
     send_task_completed_websocket_mock.assert_not_called()
@@ -4863,12 +4893,12 @@ def test_complete_task_for_user__rcba_user_and_group_performer__ok(mocker):
         is_superuser=is_superuser,
     )
     get_performers_mock = mocker.patch(
-        'src.processes.services.workflow_action.WorkflowActionService.',
+        'src.processes.services.workflow_action.WorkflowActionService.'
         '_get_performers_for_user',
         return_value=performers,
     )
     complete_performers_mock = mocker.patch(
-        'src.processes.services.workflow_action.WorkflowActionService.',
+        'src.processes.services.workflow_action.WorkflowActionService.'
         '_complete_performers_for_user',
     )
 
@@ -4916,7 +4946,12 @@ def test_complete_task_for_user__rcba_user_and_group_already_completed__raise(
         task_id=task.id,
         group=group,
         type=PerformerType.GROUP,
-        completed_users=[user.id],
+    )
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        user_id=user.id,
+        type=PerformerType.GROUP_USER,
+        is_completed=True,
     )
     TaskPerformer.objects.create(
         task_id=task.id,
@@ -4963,12 +4998,12 @@ def test_complete_task_for_user__rcba_user_and_group_already_completed__raise(
         is_superuser=is_superuser,
     )
     get_performers_mock = mocker.patch(
-        'src.processes.services.workflow_action.WorkflowActionService.',
+        'src.processes.services.workflow_action.WorkflowActionService.'
         '_get_performers_for_user',
         side_effect=exceptions.UserAlreadyCompleteTask(),
     )
     complete_performers_mock = mocker.patch(
-        'src.processes.services.workflow_action.WorkflowActionService.',
+        'src.processes.services.workflow_action.WorkflowActionService.'
         '_complete_performers_for_user',
     )
 
@@ -4994,8 +5029,8 @@ def test_complete_task_for_user__account_owner_in_group__ok(mocker):
     """Account owner is a member of the group performer and completes
     the task as a regular group participant (not force-completing).
 
-    The task is completed successfully without writing to
-    completed_users.
+    The task is completed successfully without creating a GROUP_USER
+    marker.
     """
 
     # arrange
@@ -5055,7 +5090,11 @@ def test_complete_task_for_user__account_owner_in_group__ok(mocker):
     # assert
     assert result.id == task.id
     group_performer.refresh_from_db()
-    assert group_performer.completed_users == []
+    assert not TaskPerformer.objects.filter(
+        task_id=task.id,
+        user_id=owner.id,
+        type=PerformerType.GROUP_USER,
+    ).exists()
     task_field_service_init_mock.assert_not_called()
     partial_update_field_mock.assert_not_called()
     send_task_completed_websocket_mock.assert_not_called()

@@ -42,14 +42,4 @@ class Migration(migrations.Migration):
                 fields=('task', 'user', 'type'),
                 name='processes_taskperformer_user_id_task_id_type_unique'),
         ),
-        migrations.AddField(
-            model_name='taskperformer',
-            name='completed_users',
-            field=django.contrib.postgres.fields.ArrayField(
-                base_field=models.IntegerField(),
-                default=list,
-                help_text='Ids of group users who completed the task',
-                size=None,
-            ),
-        ),
     ]

@@ -153,7 +153,18 @@ class TestCanBeCompleted:
             task=task,
             group=group,
             type=PerformerType.GROUP,
-            completed_users=[user_1.id, user_2.id],
+        )
+        TaskPerformer.objects.create(
+            task=task,
+            user=user_1,
+            type=PerformerType.GROUP_USER,
+            is_completed=True,
+        )
+        TaskPerformer.objects.create(
+            task=task,
+            user=user_2,
+            type=PerformerType.GROUP_USER,
+            is_completed=True,
         )
 
         # act
@@ -181,7 +192,12 @@ class TestCanBeCompleted:
             task=task,
             group=group,
             type=PerformerType.GROUP,
-            completed_users=[user_1.id],
+        )
+        TaskPerformer.objects.create(
+            task=task,
+            user=user_1,
+            type=PerformerType.GROUP_USER,
+            is_completed=True,
         )
 
         # act
@@ -231,13 +247,23 @@ class TestCanBeCompleted:
             task=task,
             group=group_1,
             type=PerformerType.GROUP,
-            completed_users=[user_1.id],
+        )
+        TaskPerformer.objects.create(
+            task=task,
+            user=user_1,
+            type=PerformerType.GROUP_USER,
+            is_completed=True,
         )
         TaskPerformer.objects.create(
             task=task,
             group=group_2,
             type=PerformerType.GROUP,
-            completed_users=[user_2.id],
+        )
+        TaskPerformer.objects.create(
+            task=task,
+            user=user_2,
+            type=PerformerType.GROUP_USER,
+            is_completed=True,
         )
 
         # act
@@ -272,7 +298,12 @@ class TestCanBeCompleted:
             task=task,
             group=group_1,
             type=PerformerType.GROUP,
-            completed_users=[user_1.id],
+        )
+        TaskPerformer.objects.create(
+            task=task,
+            user=user_1,
+            type=PerformerType.GROUP_USER,
+            is_completed=True,
         )
         TaskPerformer.objects.create(
             task=task,
@@ -311,7 +342,12 @@ class TestCanBeCompleted:
             task=task,
             group=group_1,
             type=PerformerType.GROUP,
-            completed_users=[user_1.id],
+        )
+        TaskPerformer.objects.create(
+            task=task,
+            user=user_1,
+            type=PerformerType.GROUP_USER,
+            is_completed=True,
         )
         TaskPerformer.objects.create(
             task=task,
@@ -349,7 +385,12 @@ class TestCanBeCompleted:
             task=task,
             group=group,
             type=PerformerType.GROUP,
-            completed_users=[user_1.id],
+        )
+        TaskPerformer.objects.create(
+            task=task,
+            user=user_1,
+            type=PerformerType.GROUP_USER,
+            is_completed=True,
         )
 
         # act
@@ -376,7 +417,12 @@ class TestCanBeCompleted:
             task=task,
             group=group,
             type=PerformerType.GROUP,
-            completed_users=[user_1.id],
+        )
+        TaskPerformer.objects.create(
+            task=task,
+            user=user_1,
+            type=PerformerType.GROUP_USER,
+            is_completed=True,
         )
         TaskPerformer.objects.create(
             task=task,
@@ -384,6 +430,7 @@ class TestCanBeCompleted:
             type=PerformerType.USER,
             is_completed=True,
         )
+
         # act
         result = task.can_be_completed()
 
@@ -408,7 +455,12 @@ class TestCanBeCompleted:
             task=task,
             group=group,
             type=PerformerType.GROUP,
-            completed_users=[user_1.id],
+        )
+        TaskPerformer.objects.create(
+            task=task,
+            user=user_1,
+            type=PerformerType.GROUP_USER,
+            is_completed=True,
         )
         TaskPerformer.objects.create(
             task=task,
@@ -453,7 +505,12 @@ class TestCanBeCompleted:
             task=task,
             group=active_group,
             type=PerformerType.GROUP,
-            completed_users=[user_1.id],
+        )
+        TaskPerformer.objects.create(
+            task=task,
+            user=user_1,
+            type=PerformerType.GROUP_USER,
+            is_completed=True,
         )
         TaskPerformer.objects.create(
             task=task,
@@ -592,7 +649,12 @@ class TestCanBeCompletedByUser:
             task=task,
             group=group,
             type=PerformerType.GROUP,
-            completed_users=[user_1.id],
+        )
+        TaskPerformer.objects.create(
+            task=task,
+            user=user_1,
+            type=PerformerType.GROUP_USER,
+            is_completed=True,
         )
 
         # act
@@ -619,7 +681,12 @@ class TestCanBeCompletedByUser:
             task=task,
             group=group,
             type=PerformerType.GROUP,
-            completed_users=[user_1.id],
+        )
+        TaskPerformer.objects.create(
+            task=task,
+            user=user_1,
+            type=PerformerType.GROUP_USER,
+            is_completed=True,
         )
 
         # act
@@ -648,7 +715,18 @@ class TestCanBeCompletedByUser:
             task=task,
             group=group,
             type=PerformerType.GROUP,
-            completed_users=[user_1.id, user_2.id],
+        )
+        TaskPerformer.objects.create(
+            task=task,
+            user=user_1,
+            type=PerformerType.GROUP_USER,
+            is_completed=True,
+        )
+        TaskPerformer.objects.create(
+            task=task,
+            user=user_2,
+            type=PerformerType.GROUP_USER,
+            is_completed=True,
         )
 
         # act
@@ -676,7 +754,12 @@ class TestCanBeCompletedByUser:
             task=task,
             group=group,
             type=PerformerType.GROUP,
-            completed_users=[user_1.id],
+        )
+        TaskPerformer.objects.create(
+            task=task,
+            user=user_1,
+            type=PerformerType.GROUP_USER,
+            is_completed=True,
         )
 
         # act

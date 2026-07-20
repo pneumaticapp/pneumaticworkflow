@@ -241,7 +241,12 @@ def test_list__group_performer_partitional_completed__skip(api_client):
         task_id=task.id,
         type=PerformerType.GROUP,
         group=group,
-        completed_users=[user.id],
+    )
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP_USER,
+        user=user,
+        is_completed=True,
     )
     api_client.token_authenticate(user=user)
 
@@ -303,7 +308,12 @@ def test_list__group_performer_partitional_completed_and_user_performer__skip(
         task_id=task.id,
         type=PerformerType.GROUP,
         group=group,
-        completed_users=[user.id],
+    )
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP_USER,
+        user=user,
+        is_completed=True,
     )
     TaskPerformer.objects.create(
         task_id=task.id,
@@ -338,7 +348,12 @@ def test_list__filter_is_completed_and_group_performer_part_completed__skip(
         task_id=task.id,
         type=PerformerType.GROUP,
         group=group,
-        completed_users=[user.id],
+    )
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP_USER,
+        user=user,
+        is_completed=True,
     )
     api_client.token_authenticate(user=user)
 

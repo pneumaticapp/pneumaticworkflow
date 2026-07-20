@@ -23,6 +23,7 @@ from src.notifications.tasks import (
 from src.processes.enums import (
     ConditionAction,
     DirectlyStatus,
+    PerformerType,
     TaskStatus,
     WorkflowStatus,
 )
@@ -798,20 +799,24 @@ class WorkflowActionService:
         task: Task,
     ) -> Optional[List[TaskPerformer]]:
 
-        task_performers = list(
+        performers = list(
             TaskPerformer.objects
             .by_task(task.id)
             .by_user_or_group(self.user.id)
-            .exclude_directly_deleted(),
+            .exclude_directly_deleted()
+            .filter(type__in=(
+                PerformerType.USER,
+                PerformerType.GROUP,
+                PerformerType.GROUP_USER,
+            )),
         )
+        task_performers = []
+        for performer in performers:
+            if performer.is_completed:
+                raise exceptions.UserAlreadyCompleteTask
+            task_performers.append(performer)
         if not task_performers:
             return None
-        for performer in task_performers:
-            if performer.is_completed or (
-                performer.type_group and
-                self.user.id in performer.completed_users
-            ):
-                raise exceptions.UserAlreadyCompleteTask
         return task_performers
 
     def _complete_performers_for_user(
@@ -823,10 +828,16 @@ class WorkflowActionService:
         for performer in task_performers:
             if performer.type_group:
                 if task.require_completion_by_all:
-                    if self.user.id not in performer.completed_users:
-                        performer.completed_users.append(self.user.id)
-                        performer.save(update_fields=('completed_users',))
-                else:
+                    TaskPerformer.objects.get_or_create(
+                        user_id=self.user.id,
+                        task_id=task.id,
+                        type=PerformerType.GROUP_USER,
+                        defaults={
+                            'date_completed': now,
+                            'is_completed': True,
+                        },
+                    )
+                elif not performer.is_completed:
                     performer.date_completed = now
                     performer.is_completed = True
                     performer.save(
