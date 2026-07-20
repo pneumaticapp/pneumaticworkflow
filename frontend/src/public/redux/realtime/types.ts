@@ -1,4 +1,5 @@
 import { IWorkflowLogItem } from "../../types/workflow";
+import { ETaskStatus } from "../../types/tasks";
 import { EUserGroupType } from "../team/types";
 
 export interface IWsEnvelopeBase {
@@ -67,6 +68,7 @@ export interface IWsTaskDeletedData {
   id: number;
   name: string;
   workflowName: string;
+  status: ETaskStatus;
 }
 
 export interface IWsDelayWorkflowData {

@@ -1,7 +1,7 @@
 /// <reference types="jest" />
 import React from 'react';
 import type { ReactNode } from 'react';
-import { act, render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { act, render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useDispatch } from 'react-redux';
 
@@ -65,6 +65,10 @@ describe('CreateUserModal', () => {
       renderResult = render(<CreateUserModal isOpen={isOpen} onClose={mockOnClose} />);
     });
 
+    if (isOpen) {
+      await screen.findByTestId('create-user-modal-header');
+    }
+
     return renderResult!;
   };
 
@@ -104,8 +108,14 @@ describe('CreateUserModal', () => {
   };
 
   beforeEach(() => {
+    jest.useRealTimers();
     jest.clearAllMocks();
     (useDispatch as jest.Mock).mockReturnValue(mockDispatch);
+  });
+
+  afterEach(() => {
+    cleanup();
+    document.body.style.overflow = '';
   });
 
   describe('Rendering', () => {
