@@ -54,7 +54,7 @@ describe('setTaskReverted — output draft cleanup', () => {
     jest.clearAllMocks();
   });
 
-  it('clears field and fieldset drafts when reverting a task fails', () => {
+  it('keeps field and fieldset drafts when reverting a task fails', () => {
     const taskId = 42;
     const generator = setTaskReverted(createSetTaskRevertedAction({
       taskId,
@@ -68,6 +68,23 @@ describe('setTaskReverted — output draft cleanup', () => {
     generator.throw(new Error('Revert failed'));
 
     expect(revertTask).toHaveBeenCalledWith({ id: taskId, comment: '' });
+    expect(outputStorage.remove).not.toHaveBeenCalled();
+    expect(fieldsetsStorage.remove).not.toHaveBeenCalled();
+  });
+
+  it('clears field and fieldset drafts after reverting succeeds', () => {
+    const taskId = 42;
+    const generator = setTaskReverted(createSetTaskRevertedAction({
+      taskId,
+      viewMode: ETaskCardViewMode.Single,
+      comment: '',
+    }));
+
+    generator.next();
+    generator.next({ authUser: { id: 1 } } as any);
+    generator.next();
+    generator.next();
+
     expect(outputStorage.remove).toHaveBeenCalledWith(taskId);
     expect(fieldsetsStorage.remove).toHaveBeenCalledWith(taskId);
   });

@@ -88,7 +88,7 @@ describe('ExtraFieldsHelper', () => {
       expect(result[0].value).toEqual([]);
     });
 
-    it('prefers server markdownValue over stale storageOutput attachments', () => {
+    it('restores storage attachments over a prefilled server value', () => {
       const serverField = createFileField({
         markdownValue: '[old.pdf](https://files.example.com/old)',
       });
@@ -109,14 +109,7 @@ describe('ExtraFieldsHelper', () => {
       const helper = new ExtraFieldsHelper([serverField], [storageField]);
       const result = helper.getFieldsWithValues();
 
-      expect(result[0].attachments).toEqual([
-        {
-          id: 'old',
-          name: 'old.pdf',
-          url: 'https://files.example.com/old',
-          size: 0,
-        },
-      ]);
+      expect(result[0].attachments).toEqual(storageAttachments);
     });
 
     it('uses storageOutput attachments when server field has no value', () => {
@@ -248,7 +241,7 @@ describe('ExtraFieldsHelper', () => {
       expect(result[0].value).toBe('hello');
     });
 
-    it('prefers a zero server number over a stale stored value', () => {
+    it('restores a stored number over a prefilled server value', () => {
       const serverField: IExtraField = {
         apiName: 'field-number',
         name: 'Number Field',
@@ -263,7 +256,7 @@ describe('ExtraFieldsHelper', () => {
       const helper = new ExtraFieldsHelper([serverField], [storageField]);
       const result = helper.getFieldsWithValues();
 
-      expect(result[0].value).toBe(0);
+      expect(result[0].value).toBe(10);
     });
 
     it('returns null for radio field with no selections', () => {

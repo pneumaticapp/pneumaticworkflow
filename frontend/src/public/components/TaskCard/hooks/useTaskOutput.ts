@@ -22,6 +22,10 @@ export function useTaskOutput(task: ITask) {
     taskId: number;
     output: IExtraField[];
   } | null>(null);
+  const pendingStorageFieldsetsRef = useRef<{
+    taskId: number;
+    fieldsets: IFieldsetRuntime[];
+  } | null>(null);
   const saveOutputsToStorageDebounced = useMemo(
     () =>
       debounce(300, () => {
@@ -37,8 +41,13 @@ export function useTaskOutput(task: ITask) {
     [],
   );
   const saveFieldsetsToStorageDebounced = useMemo(
-    () => debounce(300, (taskId: number, fieldsets: IFieldsetRuntime[]) => {
-      fieldsetsStorage.save(taskId, fieldsets);
+    () => debounce(300, () => {
+      const pendingStorageFieldsets = pendingStorageFieldsetsRef.current;
+
+      if (!pendingStorageFieldsets) return;
+
+      fieldsetsStorage.save(pendingStorageFieldsets.taskId, pendingStorageFieldsets.fieldsets);
+      pendingStorageFieldsetsRef.current = null;
     }),
     [],
   );
@@ -133,18 +142,31 @@ export function useTaskOutput(task: ITask) {
     );
     let savedFieldsets: IFieldsetRuntime[] | undefined;
 
-    if (isTaskRestarted) {
+    if (isNewTask) {
+      const pendingStorageFieldsets = pendingStorageFieldsetsRef.current;
+      if (pendingStorageFieldsets) {
+        fieldsetsStorage.save(pendingStorageFieldsets.taskId, pendingStorageFieldsets.fieldsets);
+        pendingStorageFieldsetsRef.current = null;
+      }
+      savedFieldsets = fieldsetsStorage.get(id);
+    } else if (isTaskRestarted) {
       saveFieldsetsToStorageDebounced.cancel();
+      pendingStorageFieldsetsRef.current = null;
       fieldsetsStorage.remove(id);
     } else {
-      savedFieldsets = fieldsetsStorage.get(id);
+      const pendingStorageFieldsets = pendingStorageFieldsetsRef.current;
+      savedFieldsets = pendingStorageFieldsets?.taskId === id
+        ? pendingStorageFieldsets.fieldsets
+        : fieldsetsStorage.get(id);
 
-      if (isServerFieldsetsChanged && savedFieldsets) {
+      if (savedFieldsets) {
         savedFieldsets = savedFieldsets.filter(
           (fieldset) => syncState.fieldsetFingerprints[fieldset.apiNameBinding]
             === fieldsetFingerprints[fieldset.apiNameBinding],
         );
+        saveFieldsetsToStorageDebounced.cancel();
         fieldsetsStorage.save(id, savedFieldsets);
+        pendingStorageFieldsetsRef.current = null;
       }
     }
 
@@ -168,9 +190,15 @@ export function useTaskOutput(task: ITask) {
 
   useEffect(
     () => () => {
+      const pendingStorageFieldsets = pendingStorageFieldsetsRef.current;
+      if (pendingStorageFieldsets) {
+        fieldsetsStorage.save(pendingStorageFieldsets.taskId, pendingStorageFieldsets.fieldsets);
+      }
+
       saveOutputsToStorageDebounced.cancel();
       saveFieldsetsToStorageDebounced.cancel();
       pendingStorageOutputRef.current = null;
+      pendingStorageFieldsetsRef.current = null;
     },
     [saveFieldsetsToStorageDebounced, saveOutputsToStorageDebounced],
   );
@@ -193,7 +221,8 @@ export function useTaskOutput(task: ITask) {
         fields: getEditedFields(fieldset.fields, apiName, changedProps),
       }));
 
-      saveFieldsetsToStorageDebounced(task.id, nextFieldsets);
+      pendingStorageFieldsetsRef.current = { taskId: task.id, fieldsets: nextFieldsets };
+      saveFieldsetsToStorageDebounced();
       return nextFieldsets;
     });
   };

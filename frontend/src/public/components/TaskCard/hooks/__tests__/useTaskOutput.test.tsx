@@ -49,6 +49,7 @@ describe('useTaskOutput', () => {
     jest.useFakeTimers();
     jest.clearAllMocks();
     (getOutputFromStorage as jest.Mock).mockReturnValue(undefined);
+    (fieldsetsStorage.get as jest.Mock).mockReturnValue(undefined);
   });
 
   afterEach(() => {
@@ -58,7 +59,7 @@ describe('useTaskOutput', () => {
 
   it('preserves pending edits to unchanged fields when server output changes', () => {
     const initialOutput = [
-      makeField('unchanged-field', ''),
+      makeField('unchanged-field', 'prefilled server value'),
       makeField('changed-field', 'old server value'),
     ];
     const { rerender } = render(<HookHarness task={makeTask(initialOutput)} />);
@@ -70,7 +71,7 @@ describe('useTaskOutput', () => {
     rerender(
       <HookHarness
         task={makeTask([
-          makeField('unchanged-field', ''),
+          makeField('unchanged-field', 'prefilled server value'),
           makeField('changed-field', 'new server value'),
         ])}
       />,
@@ -126,6 +127,79 @@ describe('useTaskOutput', () => {
       jest.advanceTimersByTime(300);
     });
     expect(fieldsetsStorage.save).not.toHaveBeenCalled();
+  });
+
+  it('preserves in-memory fieldset edits when another server fieldset changes', () => {
+    const unchangedFieldset = {
+      apiNameBinding: 'unchanged-fieldset',
+      fields: [makeField('unchanged-field', 'prefilled server value')],
+    } as any;
+    const changedFieldset = {
+      apiNameBinding: 'changed-fieldset',
+      fields: [makeField('changed-field', 'old server value')],
+    } as any;
+    const { rerender } = render(
+      <HookHarness task={makeTask([], { fieldsets: [unchangedFieldset, changedFieldset] })} />,
+    );
+
+    act(() => {
+      hookResult.editFieldsetField('unchanged-field')({ value: 'live draft' });
+    });
+    rerender(
+      <HookHarness
+        task={makeTask([], {
+          fieldsets: [
+            unchangedFieldset,
+            {
+              ...changedFieldset,
+              fields: [makeField('changed-field', 'new server value')],
+            },
+          ],
+        })}
+      />,
+    );
+
+    expect(hookResult.fieldsetOutputValues).toEqual([
+      {
+        ...unchangedFieldset,
+        fields: [makeField('unchanged-field', 'live draft')],
+      },
+      {
+        ...changedFieldset,
+        fields: [makeField('changed-field', 'new server value')],
+      },
+    ]);
+    expect(fieldsetsStorage.save).toHaveBeenCalledWith(1, [
+      {
+        ...unchangedFieldset,
+        fields: [makeField('unchanged-field', 'live draft')],
+      },
+    ]);
+
+    act(() => {
+      jest.advanceTimersByTime(300);
+    });
+    expect(fieldsetsStorage.save).toHaveBeenCalledTimes(1);
+  });
+
+  it('flushes a pending fieldset edit on unmount', () => {
+    const fieldset = {
+      apiNameBinding: 'fieldset-1',
+      fields: [makeField('fieldset-field', 'server value')],
+    } as any;
+    const { unmount } = render(
+      <HookHarness task={makeTask([], { fieldsets: [fieldset] })} />,
+    );
+
+    act(() => {
+      hookResult.editFieldsetField('fieldset-field')({ value: 'last edit' });
+    });
+    unmount();
+
+    expect(fieldsetsStorage.save).toHaveBeenCalledWith(1, [{
+      ...fieldset,
+      fields: [makeField('fieldset-field', 'last edit')],
+    }]);
   });
 
   it('persists an edit after the debounce delay', () => {

@@ -343,6 +343,8 @@ export function* setTaskReverted({ payload: { viewMode, taskId, comment } }: TSe
 
     yield revertTask({ id: taskId, comment });
 
+    outputStorage.remove(taskId);
+    fieldsetsStorage.remove(taskId);
     NotificationManager.success({ message: 'tasks.task-success-revert' });
 
     if (viewMode === ETaskCardViewMode.List) {
@@ -358,8 +360,6 @@ export function* setTaskReverted({ payload: { viewMode, taskId, comment } }: TSe
       message: getErrorMessage(err),
     });
   } finally {
-    outputStorage.remove(taskId);
-    fieldsetsStorage.remove(taskId);
     yield put(setCurrentTaskStatus(ETaskStatus.WaitingForAction));
   }
 }
