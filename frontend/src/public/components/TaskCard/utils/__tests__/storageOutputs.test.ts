@@ -23,6 +23,13 @@ describe('storageOutputs', () => {
     localStorage.clear();
   });
 
+  it('reads drafts saved with the legacy data property', () => {
+    const legacyDraft = [createOutputField('legacy-field')];
+    localStorage.setItem(OUTPUT_LOCALSTORAGE_KEY, JSON.stringify([{ taskId: 1, data: legacyDraft }]));
+
+    expect(getOutputFromStorage(1)).toEqual(legacyDraft);
+  });
+
   it('removes a single task output draft', () => {
     addOrUpdateStorageOutput(1, [createOutputField('field-a')]);
     addOrUpdateStorageOutput(2, [createOutputField('field-b')]);

@@ -8,7 +8,8 @@ const FIELDSETS_LOCALSTORAGE_KEY = 'tasks_fieldsets_outputs';
 
 type TLocalStorageOutput = {
   taskId: number;
-  output: IExtraField[];
+  output?: IExtraField[];
+  data?: IExtraField[];
 };
 
 export function addOrUpdateStorageOutput(taskId: number, output: IExtraField[]) {
@@ -33,7 +34,9 @@ export function addOrUpdateStorageOutput(taskId: number, output: IExtraField[]) 
 export function getOutputFromStorage(taskId: number) {
   const savedOutputs = getOutputsFromStorage();
 
-  return savedOutputs.find((output) => output.taskId === taskId)?.output;
+  const savedOutput = savedOutputs.find((output) => output.taskId === taskId);
+
+  return savedOutput?.output ?? savedOutput?.data;
 }
 
 export function removeOutputFromLocalStorage(taskId: number) {

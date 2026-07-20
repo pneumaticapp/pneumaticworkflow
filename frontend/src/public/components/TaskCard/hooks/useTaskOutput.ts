@@ -30,9 +30,13 @@ export function useTaskOutput(task: ITask) {
       fieldsetsStorage.get(task.id)?.map((fieldset) => [fieldset.apiNameBinding, fieldset]) ?? [],
     );
     setFieldsetOutputValues(
-      (task.fieldsets ?? []).map(
-        (fieldset) => storedFieldsetsByApiName.get(fieldset.apiNameBinding) ?? fieldset,
-      ),
+      (task.fieldsets ?? []).map((fieldset) => ({
+        ...fieldset,
+        fields: new ExtraFieldsHelper(
+          fieldset.fields,
+          storedFieldsetsByApiName.get(fieldset.apiNameBinding)?.fields,
+        ).getFieldsWithValues(),
+      })),
     );
 
     return () => {
