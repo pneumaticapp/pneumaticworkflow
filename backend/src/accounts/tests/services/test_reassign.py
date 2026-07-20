@@ -1,7 +1,9 @@
 import pytest
 
+from src.accounts.queries import DeleteUserFromTaskPerformerQuery
 from src.accounts.services import exceptions
 from src.accounts.services.reassign import ReassignService
+from src.executor import RawSqlExecutor
 from src.processes.enums import (
     ConditionAction,
     OwnerType,
@@ -19,11 +21,13 @@ from src.processes.models.workflows.conditions import (
     Predicate,
     Rule,
 )
+from src.processes.models.workflows.task import TaskPerformer
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
     create_test_group,
+    create_test_owner,
     create_test_template,
     create_test_user,
     create_test_workflow,
@@ -1712,4 +1716,100 @@ class TestReassignService:
             field_type=PredicateType.USER,
             field='user_field',
             user=old_user,
+        ).exists()
+
+    def test_reassign_performers__user_group_user_to_user__ok(self):
+
+        """
+        old_user has USER + GROUP_USER → reassign to new_user
+        → one USER on new_user, GROUP_USER of old_user is removed
+        """
+
+        # arrange
+        account = create_test_account()
+        old_user = create_test_owner(account=account)
+        new_user = create_test_admin(account=account)
+        workflow = create_test_workflow(user=old_user, tasks_count=1)
+        task = workflow.tasks.get(number=1)
+        TaskPerformer.objects.create(
+            task_id=task.id,
+            user_id=old_user.id,
+            type=PerformerType.GROUP_USER,
+            is_completed=True,
+        )
+        service = ReassignService(old_user=old_user, new_user=new_user)
+
+        # act
+        service._reassign_in_performers()
+
+        # assert
+        assert not TaskPerformer.objects.filter(
+            task_id=task.id,
+            user_id=old_user.id,
+            type=PerformerType.GROUP_USER,
+        ).exists()
+        assert not TaskPerformer.objects.filter(
+            task_id=task.id,
+            user_id=old_user.id,
+            type=PerformerType.USER,
+        ).exists()
+        assert (
+            TaskPerformer.objects.filter(
+                task_id=task.id,
+                type=PerformerType.USER,
+            ).count() == 1
+        )
+        user_performer = TaskPerformer.objects.get(
+            task_id=task.id,
+            type=PerformerType.USER,
+        )
+        assert user_performer.user_id == new_user.id
+
+    def test_delete_user_task_perf_query__keeps_group_user__ok(self):
+
+        """
+        Conflicting USER on substitution + GROUP_USER on delete_id
+        → DeleteUserFromTaskPerformerQuery deletes only USER conflict,
+        GROUP_USER remains
+        """
+
+        # arrange
+        account = create_test_account()
+        old_user = create_test_owner(account=account)
+        new_user = create_test_admin(account=account)
+        workflow = create_test_workflow(user=old_user, tasks_count=1)
+        task = workflow.tasks.get(number=1)
+        TaskPerformer.objects.create(
+            task_id=task.id,
+            user_id=new_user.id,
+            type=PerformerType.USER,
+        )
+        group_user_performer = TaskPerformer.objects.create(
+            task_id=task.id,
+            user_id=old_user.id,
+            type=PerformerType.GROUP_USER,
+            is_completed=True,
+        )
+        delete_query = DeleteUserFromTaskPerformerQuery(
+            delete_id=old_user.id,
+            substitution_id=new_user.id,
+        )
+
+        # act
+        RawSqlExecutor.execute(*delete_query.get_sql())
+
+        # assert
+        assert not TaskPerformer.objects.filter(
+            task_id=task.id,
+            user_id=new_user.id,
+            type=PerformerType.USER,
+        ).exists()
+        assert TaskPerformer.objects.filter(
+            task_id=task.id,
+            user_id=old_user.id,
+            type=PerformerType.USER,
+        ).exists()
+        assert TaskPerformer.objects.filter(
+            id=group_user_performer.id,
+            type=PerformerType.GROUP_USER,
         ).exists()

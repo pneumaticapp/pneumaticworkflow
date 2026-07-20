@@ -663,10 +663,7 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
                             queryset=(
                                 TaskPerformer.objects
                                 .exclude_directly_deleted()
-                                .filter(type__in=(
-                                    PerformerType.USER,
-                                    PerformerType.GROUP,
-                                ))
+                                .type_user_or_group()
                                 .select_related('group')
                             ),
                         ),
@@ -1100,6 +1097,28 @@ class TaskPerformerQuerySet(BaseQuerySet, BaseHardQuerySet):
 
     def completed(self):
         return self.filter(is_completed=True)
+
+    def type_user(self):
+        return self.filter(type=PerformerType.USER)
+
+    def type_group(self):
+        return self.filter(type=PerformerType.GROUP)
+
+    def type_user_or_group(self):
+        return self.filter(
+            type__in=(
+                PerformerType.USER,
+                PerformerType.GROUP,
+            ),
+        )
+
+    def type_user_or_group_user(self):
+        return self.filter(
+            type__in=(
+                PerformerType.USER,
+                PerformerType.GROUP_USER,
+            ),
+        )
 
     def completed_task(self):
         return self.filter(task__status=TaskStatus.COMPLETED)

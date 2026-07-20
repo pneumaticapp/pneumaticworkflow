@@ -63,10 +63,7 @@ def get_performers_for_task(task) -> list:
         performers = (
             task.taskperformer_set
             .exclude_directly_deleted()
-            .filter(type__in=(
-                PerformerType.USER,
-                PerformerType.GROUP,
-            ))
+            .type_user_or_group()
         )
     return TaskUserGroupPerformerSerializer(performers, many=True).data
 

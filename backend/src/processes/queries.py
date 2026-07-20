@@ -1768,22 +1768,8 @@ class TemplateExportQuery(
 
 class RunningTaskTemplateQuery(SqlQueryObject):
 
-    """ Return template tasks that still have running work for the user.
-
-    Selects distinct ``TaskTemplate`` rows (id, name, number) for the given
-    template where there is a non-completed workflow task assigned to the
-    user as a USER or GROUP performer, and the user has not already
-    completed their part via a completed USER or GROUP_USER performer.
-
-    Args:
-        template_id: Primary key of the template.
-        user_id: User whose incomplete assignments are inspected.
-
-    Returns (via ``get_sql``):
-        A tuple of ``(sql, params)`` whose result set contains
-        ``id``, ``name``, and ``number`` of matching template tasks,
-        ordered by ``number``.
-    """
+    """ Return template tasks that still have
+        running workflow for the user. """
 
     def __init__(self, template_id: int, user_id: int):
         self._template_id = template_id

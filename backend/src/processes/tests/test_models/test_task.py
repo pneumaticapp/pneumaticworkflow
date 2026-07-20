@@ -1137,6 +1137,52 @@ def test_delete_orphaned_performers__mixed_types__ok():
     assert group.id in deleted_group_ids
 
 
+def test_delete_orphaned_performers__keeps_group_user__ok():
+
+    """
+    Orphan USER + completed GROUP_USER → orphan-delete removes USER,
+    GROUP_USER remains
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(
+        user=user,
+        tasks_count=1,
+    )
+    task = workflow.tasks.get(number=1)
+    task.update_performers()
+    task.raw_performers.all().delete()
+    current_date = timezone.now()
+    group_user_performer = TaskPerformer.objects.create(
+        task_id=task.id,
+        user_id=user.id,
+        type=PerformerType.GROUP_USER,
+        is_completed=True,
+        date_completed=current_date,
+    )
+
+    # act
+    deleted_user_ids, deleted_group_ids = (
+        task._delete_orphaned_performers()
+    )
+
+    # assert
+    assert user.id in deleted_user_ids
+    assert deleted_group_ids == []
+    assert TaskPerformer.objects.filter(
+        id=group_user_performer.id,
+        type=PerformerType.GROUP_USER,
+        is_completed=True,
+    ).exists()
+    assert not TaskPerformer.objects.filter(
+        task_id=task.id,
+        user_id=user.id,
+        type=PerformerType.USER,
+    ).exists()
+
+
 def test_delete_raw_performer__deleted__calls_delete_orphaned(mocker):
     """
     Raw performer deleted (count > 0) — calls _delete_orphaned_performers

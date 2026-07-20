@@ -543,6 +543,7 @@ class Task(
         performers_to_delete = (
             TaskPerformer.objects
             .by_task(self.id)
+            .type_user_or_group()
             .exclude_ids(task_performer_ids)
             .exclude_directly_changed()
         )

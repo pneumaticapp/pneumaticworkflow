@@ -470,19 +470,8 @@ class WorkflowActionService:
             .by_workflow(self.workflow.id).with_tasks_after(task)
             .update(is_completed=False, date_completed=None)
         )
-        if task.skip_for_starter and task.require_completion_by_all:
-            starter = self.workflow.workflow_starter
-            if starter:
-                (
-                    TaskPerformer.objects
-                    .by_task(task.id)
-                    .exclude_directly_deleted()
-                    .by_user_or_group(starter.id)
-                    .update(
-                        is_completed=True,
-                        date_completed=timezone.now(),
-                    )
-                )
+        if task.skip_for_starter:
+            self._complete_task_for_starter(task=task)
 
         # if task force snoozed then start task event already exists
         # but if task returned then
@@ -651,6 +640,27 @@ class WorkflowActionService:
             task.save(update_fields=['status'])
             self._start_next_tasks(parent_task=task)
 
+    def _complete_task_for_starter(
+        self,
+        task: Task,
+    ):
+        if (
+            task.skip_for_starter
+            and not self.workflow.is_external
+            and task.require_completion_by_all
+        ):
+            try:
+                task_performers = self._get_performers_for_user(
+                    task=task,
+                    user=self.workflow.workflow_starter,
+                )
+                self._complete_performers_for_user(
+                    task=task,
+                    task_performers=task_performers,
+                )
+            except exceptions.UserAlreadyCompleteTask:
+                pass
+
     def start_task(
         self,
         task: Task,
@@ -684,24 +694,21 @@ class WorkflowActionService:
                 self._start_next_tasks(parent_task=task)
             return
         if task.skip_for_starter and not self.workflow.is_external:
-            starter = self.workflow.workflow_starter
-            starter_perf = (
-                TaskPerformer.objects
-                .by_task(task.id)
-                .exclude_directly_deleted()
-                .by_user_or_group(starter.id)
-                .first()
+            starter_performers = self._get_performers_for_user(
+                task=task,
+                user=self.workflow.workflow_starter,
             )
-            if starter_perf:
+            if starter_performers:
                 if not task.require_completion_by_all:
-                    self._skip_task_for_starter(task, is_returned)
+                    self._skip_task_for_starter(task, is_returned=is_returned)
                     return
 
                 has_other_performers = (
                     TaskPerformer.objects
                     .by_task(task.id)
                     .exclude_directly_deleted()
-                    .exclude(pk=starter_perf.pk)
+                    .type_user_or_group()
+                    .exclude(id__in=[e.id for e in starter_performers])
                     .exists()
                 )
                 if not has_other_performers:
@@ -797,18 +804,15 @@ class WorkflowActionService:
     def _get_performers_for_user(
         self,
         task: Task,
+        user: Optional[UserModel] = None,
     ) -> Optional[List[TaskPerformer]]:
 
+        user = user or self.user
         performers = list(
             TaskPerformer.objects
             .by_task(task.id)
-            .by_user_or_group(self.user.id)
-            .exclude_directly_deleted()
-            .filter(type__in=(
-                PerformerType.USER,
-                PerformerType.GROUP,
-                PerformerType.GROUP_USER,
-            )),
+            .by_user_or_group(user.id)
+            .exclude_directly_deleted(),
         )
         task_performers = []
         for performer in performers:
@@ -1135,17 +1139,13 @@ class WorkflowActionService:
         elif self.workflow.is_completed:
             raise exceptions.CompletedWorkflowCannotBeChanged
 
-        task_performer = (
-            TaskPerformer.objects
-            .by_task(revert_from_task.id)
-            .by_user_or_group(self.user.id)
-            .exclude_directly_deleted()
-            .first()
-        )
-        if task_performer:
-            if task_performer.is_completed:
-                raise exceptions.CompletedTaskCannotBeReturned
-        elif not self.user.is_account_owner:
+        try:
+            task_performers = self._get_performers_for_user(
+                task=revert_from_task,
+            )
+        except exceptions.UserAlreadyCompleteTask as ex:
+            raise exceptions.CompletedTaskCannotBeReturned from ex
+        if not task_performers and not self.user.is_account_owner:
             raise exceptions.UserNotPerformer
 
         revert_to_tasks = list(revert_from_task.get_revert_tasks())
