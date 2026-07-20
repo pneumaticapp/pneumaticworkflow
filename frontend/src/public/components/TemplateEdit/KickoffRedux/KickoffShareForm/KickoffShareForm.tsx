@@ -53,7 +53,7 @@ export function KickoffShareForm({ className }: IKickoffShareFormProps) {
   }, [embedUrl]);
 
   const editTemplate = (templateFields: Partial<ITemplateClient>) => {
-    setValues({ ...values, ...templateFields }, false);
+    setValues((currentValues) => ({ ...currentValues, ...templateFields }), false);
   };
 
   const editSuccessUrl = (value: ITemplateClient['publicSuccessUrl']) => {

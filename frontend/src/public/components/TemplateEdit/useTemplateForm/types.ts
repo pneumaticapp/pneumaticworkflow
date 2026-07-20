@@ -4,7 +4,10 @@ import { useFormik } from 'formik';
 import { ITemplateClient } from '../../../types/template';
 
 export type TSetFieldValue = (field: string, value: unknown, shouldValidate?: boolean) => void;
-export type TSetValues = (values: ITemplateClient, shouldValidate?: boolean) => void;
+export type TSetValues = (
+  values: ITemplateClient | ((currentValues: ITemplateClient) => ITemplateClient),
+  shouldValidate?: boolean,
+) => void;
 
 export interface ITemplateFormProps {
   formik: ReturnType<typeof useFormik<ITemplateClient>>;

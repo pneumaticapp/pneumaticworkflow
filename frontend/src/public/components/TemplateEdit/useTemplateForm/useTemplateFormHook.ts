@@ -122,7 +122,8 @@ export function useTemplateForm(
         pendingUserEditsRef.current,
         lastSyncedInitialValuesRef.current,
       );
-      const nextValues = applyImmediateDeactivation(currentValues, values);
+      const updatedValues = typeof values === 'function' ? values(currentValues) : values;
+      const nextValues = applyImmediateDeactivation(currentValues, updatedValues);
       pendingUserEditsRef.current = getChangedFields(lastSyncedInitialValuesRef.current, nextValues);
       currentFormik.setValues(nextValues, shouldValidate);
     },
