@@ -48,9 +48,19 @@ export function useTaskOutput(task: ITask) {
     outputFingerprint: '',
     fieldFingerprints: {} as Record<string, string>,
   });
+  const fieldsetSyncStateRef = useRef({
+    taskId: null as number | null,
+    dateStarted: null as string | null,
+    fieldsetsFingerprint: '',
+    fieldsetFingerprints: {} as Record<string, string>,
+  });
   const taskOutputFingerprint = useMemo(
     () => getTaskOutputFingerprint(task.output),
     [task.output],
+  );
+  const taskFieldsetsFingerprint = useMemo(
+    () => JSON.stringify(task.fieldsets ?? []),
+    [task.fieldsets],
   );
 
   useEffect(() => {
@@ -109,17 +119,52 @@ export function useTaskOutput(task: ITask) {
   }, [task.id, task.dateStarted, taskOutputFingerprint, saveOutputsToStorageDebounced]);
 
   useEffect(() => {
-    const savedFieldsets = fieldsetsStorage.get(task.id);
+    const { id, dateStarted, fieldsets = [] } = task;
+    const syncState = fieldsetSyncStateRef.current;
+    const isNewTask = syncState.taskId !== id;
+    const isTaskRestarted = syncState.taskId === id && syncState.dateStarted !== dateStarted;
+    const isServerFieldsetsChanged = syncState.taskId === id
+      && syncState.fieldsetsFingerprint !== taskFieldsetsFingerprint;
+
+    if (!isNewTask && !isTaskRestarted && !isServerFieldsetsChanged) return;
+
+    const fieldsetFingerprints = Object.fromEntries(
+      fieldsets.map((fieldset) => [fieldset.apiNameBinding, JSON.stringify(fieldset)]),
+    );
+    let savedFieldsets: IFieldsetRuntime[] | undefined;
+
+    if (isTaskRestarted) {
+      saveFieldsetsToStorageDebounced.cancel();
+      fieldsetsStorage.remove(id);
+    } else {
+      savedFieldsets = fieldsetsStorage.get(id);
+
+      if (isServerFieldsetsChanged && savedFieldsets) {
+        savedFieldsets = savedFieldsets.filter(
+          (fieldset) => syncState.fieldsetFingerprints[fieldset.apiNameBinding]
+            === fieldsetFingerprints[fieldset.apiNameBinding],
+        );
+        fieldsetsStorage.save(id, savedFieldsets);
+      }
+    }
+
     const savedFieldsetsByApiName = new Map(
       savedFieldsets?.map((fieldset) => [fieldset.apiNameBinding, fieldset]) ?? [],
     );
-
     setFieldsetOutputValues(
-      (task.fieldsets ?? []).map(
-        (fieldset) => savedFieldsetsByApiName.get(fieldset.apiNameBinding) ?? fieldset,
-      ),
+      fieldsets.map((fieldset) => savedFieldsetsByApiName.get(fieldset.apiNameBinding) ?? fieldset),
     );
-  }, [task.id]);
+
+    syncState.taskId = id;
+    syncState.dateStarted = dateStarted;
+    syncState.fieldsetsFingerprint = taskFieldsetsFingerprint;
+    syncState.fieldsetFingerprints = fieldsetFingerprints;
+  }, [
+    task.id,
+    task.dateStarted,
+    taskFieldsetsFingerprint,
+    saveFieldsetsToStorageDebounced,
+  ]);
 
   useEffect(
     () => () => {

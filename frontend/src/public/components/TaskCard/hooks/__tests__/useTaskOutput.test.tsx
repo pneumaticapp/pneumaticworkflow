@@ -5,6 +5,7 @@ import { EExtraFieldType, IExtraField } from '../../../../types/template';
 import { ITask } from '../../../../types/tasks';
 import {
   addOrUpdateStorageOutput,
+  fieldsetsStorage,
   getOutputFromStorage,
   removeOutputFromLocalStorage,
 } from '../../utils/storageOutputs';
@@ -14,7 +15,7 @@ jest.mock('../../utils/storageOutputs', () => ({
   addOrUpdateStorageOutput: jest.fn(),
   getOutputFromStorage: jest.fn(),
   removeOutputFromLocalStorage: jest.fn(),
-  fieldsetsStorage: { get: jest.fn(), save: jest.fn() },
+  fieldsetsStorage: { get: jest.fn(), save: jest.fn(), remove: jest.fn() },
 }));
 
 const makeField = (apiName: string, value: string): IExtraField => ({
@@ -27,10 +28,12 @@ const makeField = (apiName: string, value: string): IExtraField => ({
   groupId: null,
 });
 
-const makeTask = (output: IExtraField[]): ITask => ({
+const makeTask = (output: IExtraField[], overrides: Partial<ITask> = {}): ITask => ({
   id: 1,
   dateStarted: '2024-01-01',
   output,
+  fieldsets: [],
+  ...overrides,
 } as ITask);
 
 let hookResult: ReturnType<typeof useTaskOutput>;
@@ -86,6 +89,43 @@ describe('useTaskOutput', () => {
     });
 
     expect(addOrUpdateStorageOutput).toHaveBeenCalledTimes(1);
+  });
+
+  it('clears fieldset drafts and state when the same task restarts', () => {
+    const serverFieldset = {
+      apiNameBinding: 'fieldset-1',
+      fields: [makeField('fieldset-field', 'new run value')],
+    } as any;
+    const staleFieldset = {
+      ...serverFieldset,
+      fields: [makeField('fieldset-field', 'previous run draft')],
+    };
+    (fieldsetsStorage.get as jest.Mock).mockReturnValue([staleFieldset]);
+
+    const { rerender } = render(
+      <HookHarness task={makeTask([], { fieldsets: [serverFieldset] })} />,
+    );
+    expect(hookResult.fieldsetOutputValues).toEqual([staleFieldset]);
+
+    act(() => {
+      hookResult.editFieldsetField('fieldset-field')({ value: 'pending previous run edit' });
+    });
+    rerender(
+      <HookHarness
+        task={makeTask([], {
+          dateStarted: '2024-02-01',
+          fieldsets: [serverFieldset],
+        })}
+      />,
+    );
+
+    expect(fieldsetsStorage.remove).toHaveBeenCalledWith(1);
+    expect(hookResult.fieldsetOutputValues).toEqual([serverFieldset]);
+
+    act(() => {
+      jest.advanceTimersByTime(300);
+    });
+    expect(fieldsetsStorage.save).not.toHaveBeenCalled();
   });
 
   it('persists an edit after the debounce delay', () => {
