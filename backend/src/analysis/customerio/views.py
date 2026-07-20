@@ -1,3 +1,4 @@
+from drf_spectacular.utils import extend_schema
 from rest_framework.serializers import ValidationError
 from rest_framework.views import APIView
 
@@ -17,6 +18,7 @@ from src.generics.mixins.views import BaseResponseMixin
 from src.utils import logging
 
 
+@extend_schema(exclude=True)
 class WebhooksView(
     APIView,
     BaseResponseMixin,

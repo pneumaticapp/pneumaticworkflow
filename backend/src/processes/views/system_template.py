@@ -1,3 +1,4 @@
+from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
 from rest_framework.mixins import (
     ListModelMixin,
@@ -21,6 +22,15 @@ from src.generics.mixins.views import (
 from src.generics.permissions import (
     UserIsAuthenticated,
 )
+from src.openapi import (
+    ACCESS_STAFF_IMPORT,
+    ACCESS_SYSTEM_TEMPLATE,
+    EMPTY,
+    FORBIDDEN,
+    NOT_FOUND,
+    UNAUTHORIZED,
+    VALIDATION_ERROR,
+)
 from src.processes.filters import (
     SystemTemplateFilter,
 )
@@ -33,6 +43,9 @@ from src.processes.serializers.templates.system_template import (
     LibraryTemplateImportSerializer,
     SystemTemplateCategorySerializer,
     SystemTemplateSerializer,
+)
+from src.processes.serializers.templates.template import (
+    TemplateSerializer,
 )
 from src.processes.services.system_template import (
     SystemTemplateService,
@@ -72,11 +85,33 @@ class SystemTemplateViewSet(
             return SystemTemplateCategorySerializer
         return SystemTemplateSerializer
 
+    @extend_schema(
+        tags=['Templates'],
+        summary='List system templates',
+        description=ACCESS_SYSTEM_TEMPLATE,
+        responses={
+            # Item serializer; spectacular wraps with pagination.
+            200: SystemTemplateSerializer,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+        },
+    )
     def list(self, request, *args, **kwargs):
         qst = self.get_queryset()
         qst = self.filter_queryset(qst).order_by('name')
         return self.paginated_response(qst)
 
+    @extend_schema(
+        tags=['Templates'],
+        summary='Fill template from system template',
+        description=ACCESS_SYSTEM_TEMPLATE,
+        responses={
+            200: TemplateSerializer,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     @action(methods=['POST'], detail=True, url_path='fill')
     def fill(self, request, *args, **kwargs):
         system_template = self.get_object()
@@ -88,6 +123,16 @@ class SystemTemplateViewSet(
         data = service.get_from_sys_template(system_template)
         return self.response_ok(data)
 
+    @extend_schema(
+        tags=['Templates'],
+        summary='System template categories',
+        description=ACCESS_SYSTEM_TEMPLATE,
+        responses={
+            200: SystemTemplateCategorySerializer(many=True),
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+        },
+    )
     @action(methods=['GET'], detail=False)
     def categories(self, request, *args, **kwargs):
         slz = self.get_serializer(instance=self.get_queryset(), many=True)
@@ -107,6 +152,18 @@ class SystemTemplatesImportViewSet(
     )
     serializer_class = LibraryTemplateImportSerializer
 
+    @extend_schema(
+        tags=['Templates'],
+        summary='Import library templates',
+        description=ACCESS_STAFF_IMPORT,
+        request=LibraryTemplateImportSerializer(many=True),
+        responses={
+            204: EMPTY,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+        },
+    )
     def create(self, request, *args, **kwargs):
         slz = self.get_serializer(
             data=request.data.get('templates'),

@@ -167,6 +167,7 @@ class Common(Configuration):
 
         'rest_framework',
         'rest_framework_simplejwt',
+        'drf_spectacular',
 
         'corsheaders',
 
@@ -255,6 +256,7 @@ class Common(Configuration):
         'DEFAULT_RENDERER_CLASSES': [
             'rest_framework.renderers.JSONRenderer',
         ],
+        'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
         'DEFAULT_PERMISSION_CLASSES': (
             'rest_framework.permissions.IsAuthenticated',
         ),
@@ -296,6 +298,50 @@ class Common(Configuration):
             'rest_framework_simplejwt.tokens.AccessToken',
             'src.authentication.tokens.GuestToken',
         ),
+    }
+
+    SPECTACULAR_SETTINGS = {
+        'TITLE': 'Pneumatic Workflow API',
+        'DESCRIPTION': 'Public & internal API',
+        'VERSION': '1.0.0',
+        'SERVE_INCLUDE_SCHEMA': False,
+        'SERVE_PERMISSIONS': [
+            'rest_framework.permissions.AllowAny',
+        ],
+        'SCHEMA_PATH_PREFIX': r'/',
+        # Schema is at /api/schema/; without SERVERS Swagger uses
+        # /api as base and breaks real paths (/auth, /templates, …).
+        'SERVERS': [{'url': BACKEND_URL}],
+        'SECURITY': [
+            {'tokenAuth': []},
+            {'jwtAuth': []},
+            {'guestJwtAuth': []},
+        ],
+        'SWAGGER_UI_SETTINGS': {
+            'persistAuthorization': True,
+        },
+        'TAGS': [
+            {'name': 'Auth', 'description': 'Authentication'},
+            {'name': 'Templates', 'description': 'Process templates'},
+            {
+                'name': 'Templates Public',
+                'description': 'Public and embedded templates',
+            },
+            {'name': 'Workflows', 'description': 'Workflows'},
+            {'name': 'Tasks', 'description': 'Tasks'},
+            {'name': 'Accounts', 'description': 'Accounts'},
+            {'name': 'Attachments', 'description': 'Attachments'},
+            {'name': 'Webhooks', 'description': 'Webhooks'},
+            {'name': 'Datasets', 'description': 'Datasets'},
+            {'name': 'Fieldsets', 'description': 'Shared fieldsets'},
+            {'name': 'Tenants', 'description': 'Tenants'},
+            {'name': 'Payment', 'description': 'Payment'},
+            {'name': 'Notifications', 'description': 'Notifications'},
+            {'name': 'Reports', 'description': 'Reports'},
+            {'name': 'Services', 'description': 'Services'},
+            {'name': 'Pages', 'description': 'Pages'},
+            {'name': 'FAQ', 'description': 'FAQ'},
+        ],
     }
 
     # Email

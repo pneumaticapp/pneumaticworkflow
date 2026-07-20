@@ -1,4 +1,5 @@
 from django.db.models import Prefetch
+from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
 from rest_framework.viewsets import GenericViewSet
 
@@ -216,6 +217,7 @@ class StripeViewSet(
         ),
     }
 
+    @extend_schema(exclude=True)
     @action(methods=('POST',), detail=False)
     def webhooks(self, request):
         handle_webhook.delay(data=request.data)

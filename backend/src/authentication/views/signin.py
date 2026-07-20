@@ -1,4 +1,5 @@
 from django.contrib.auth import authenticate, get_user_model
+from drf_spectacular.utils import extend_schema
 from rest_framework.exceptions import (
     AuthenticationFailed,
 )
@@ -80,6 +81,7 @@ class TokenObtainPairCustomView(
         return self.response_ok({'token': token})
 
 
+@extend_schema(exclude=True)
 class SuperuserEmailTokenView(
     CreateAPIView,
     BaseResponseMixin,
