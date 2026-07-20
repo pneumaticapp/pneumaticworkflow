@@ -149,8 +149,8 @@ export const enMessages = {
   'user-info.change-your-password.cancel': 'Cancel',
 
   'user-info.change-submit': 'Save changes',
-  'user-info.change-password': 'Change password:',
-  'user-info.subscriptions': 'Communication Management:',
+  'user-info.change-password': 'Change password',
+  'user-info.subscriptions': 'Communication Management',
 
   'user-info.locale': 'Language & region',
   'user-info.locale.language': 'Language',
