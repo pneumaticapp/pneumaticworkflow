@@ -20,7 +20,7 @@ import styles from './KickoffShareForm.css';
 
 export function KickoffShareForm({ className }: IKickoffShareFormProps) {
   const { formatMessage } = useIntl();
-  const { values, setFieldValue } = useTemplateField();
+  const { values, setValues } = useTemplateField();
   const isSubscribed = useSelector(getIsUserSubsribed);
   const subcriptionPlan = useSelector(getSubscriptionPlan);
   const accessSharedForm = isSubscribed || subcriptionPlan === ESubscriptionPlan.Free;
@@ -53,9 +53,7 @@ export function KickoffShareForm({ className }: IKickoffShareFormProps) {
   }, [embedUrl]);
 
   const editTemplate = (templateFields: Partial<ITemplateClient>) => {
-    (Object.keys(templateFields) as (keyof ITemplateClient)[]).forEach((key) => {
-      setFieldValue(key as string, templateFields[key], false);
-    });
+    setValues({ ...values, ...templateFields }, false);
   };
 
   const editSuccessUrl = (value: ITemplateClient['publicSuccessUrl']) => {
@@ -93,29 +91,15 @@ export function KickoffShareForm({ className }: IKickoffShareFormProps) {
   const toogleFormIsShared = () => {
     const newIsShared = !isShared;
 
-    updateIsFormPublic(newIsShared);
-    updateIsFormEmbedded(newIsShared);
+    editTemplate({
+      isPublic: newIsShared,
+      publicUrl: newIsShared ? '' : publicUrl,
+      ...(accessSharedForm && {
+        isEmbedded: newIsShared,
+        embedUrl: newIsShared ? '' : embedUrl,
+      }),
+    });
     if (newIsShared) trackShareKickoffForm();
-  };
-
-  const updateIsFormPublic = (isEnabled: boolean) => {
-    editTemplate({
-      isPublic: isEnabled,
-      publicUrl: isEnabled
-        ? '' // clear publicUrl in case the form is just shared, new value will be set on the backend
-        : publicUrl,
-    });
-  };
-
-  const updateIsFormEmbedded = (isEnabled: boolean) => {
-    if (!accessSharedForm) return;
-
-    editTemplate({
-      isEmbedded: isEnabled,
-      embedUrl: isEnabled
-        ? '' // clear embedUrl in case the form is just shared, new value will be set on the backend
-        : embedUrl,
-    });
   };
 
   const changeSuccessUrl = (event: FormEvent<HTMLInputElement>) => {
@@ -128,8 +112,16 @@ export function KickoffShareForm({ className }: IKickoffShareFormProps) {
     if (!isShared) return null;
 
     const onChangeTab = (tabType: TPublicFormType) => {
-      if (!publicUrl) updateIsFormPublic(true);
-      if (!embedUrl) updateIsFormEmbedded(true);
+      const changedFields: Partial<ITemplateClient> = {};
+      if (!publicUrl) {
+        changedFields.isPublic = true;
+        changedFields.publicUrl = '';
+      }
+      if (!embedUrl && accessSharedForm) {
+        changedFields.isEmbedded = true;
+        changedFields.embedUrl = '';
+      }
+      if (Object.keys(changedFields).length) editTemplate(changedFields);
 
       setActiveTab(tabType);
     };

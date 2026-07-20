@@ -92,13 +92,17 @@ function renderShareForm(values: ITemplateClient) {
 
 function StatefulShareForm({ initialValues }: { initialValues: ITemplateClient }) {
   const [values, setValues] = React.useState(initialValues);
-  const setFieldValue = (field: string, value: unknown) => {
-    setValues((currentValues) => ({ ...currentValues, [field]: value }));
-  };
 
   return (
-    <TemplateFieldContext.Provider value={{ values, setFieldValue, setValues: jest.fn() }}>
+    <TemplateFieldContext.Provider
+      value={{
+        values,
+        setFieldValue: jest.fn(),
+        setValues: (nextValues) => setValues(nextValues),
+      }}
+    >
       <KickoffShareForm />
+      <output data-testid="form-values">{JSON.stringify(values)}</output>
     </TemplateFieldContext.Provider>
   );
 }
@@ -155,6 +159,21 @@ describe('KickoffShareForm', () => {
 
     expect(screen.getByTestId('shared-tab')).toHaveAttribute('data-success-enabled', 'true');
     expect(screen.getByTestId('shared-tab')).toHaveAttribute('data-success-url', 'https://forms.test/success');
+  });
+
+  it('updates public and embedded sharing fields in one form transaction', () => {
+    render(<StatefulShareForm initialValues={makeTemplate()} />);
+
+    userEvent.click(screen.getByRole('button', { name: /kickoff\.share-control/ }));
+
+    expect(JSON.parse(screen.getByTestId('form-values').textContent || '')).toEqual(
+      expect.objectContaining({
+        isPublic: true,
+        publicUrl: '',
+        isEmbedded: true,
+        embedUrl: '',
+      }),
+    );
   });
 
   it('syncs active tab when form values switch to embedded-only sharing', () => {
