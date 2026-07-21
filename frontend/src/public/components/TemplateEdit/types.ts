@@ -1,7 +1,25 @@
-import React from 'react';
-import { EExtraFieldType } from '../../types/template';
+import { ComponentProps, ReactNode } from 'react';
+import { RouteComponentProps } from 'react-router-dom';
+
+import { EExtraFieldType, ITemplateClient } from '../../types/template';
 import { TDropdownOptionBase } from '../UI/DropdownList';
 import { EStartingType } from './TaskForm/Conditions/utils/getDropdownOperators';
+import { TemplateEntity } from './TemplateEntity';
+
+export interface ITemplateEditParams {
+  id: string;
+}
+
+export type TTemplateEditProps = RouteComponentProps<ITemplateEditParams>;
+
+export type TTaskListItemProps = ComponentProps<typeof TemplateEntity> & { key: string };
+
+export interface ITemplateEditLayoutProps {
+  accessConditions: boolean;
+  sortedTasks(): ITemplateClient['tasks'];
+  getTaskListItem(task: ITemplateClient['tasks'][number], index: number, tasks: ITemplateClient['tasks']): TTaskListItemProps;
+  handleAddTask(): void;
+}
 
 export const enum ECustomResponsibleUsers {
   ProcessStarter = 'process-starter',
@@ -17,7 +35,7 @@ export type TTaskVariable = {
   apiName: string;
   type: EExtraFieldType | EStartingType;
   subtitle?: string;
-  richSubtitle?: React.ReactNode;
+  richSubtitle?: ReactNode;
   selections?: string[];
   datasetId?: number | null;
 };

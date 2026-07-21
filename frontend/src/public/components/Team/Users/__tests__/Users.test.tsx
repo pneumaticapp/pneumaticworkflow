@@ -7,6 +7,10 @@ import { mockLastNameUsers } from '../../../../__stubs__/users';
 import { EUserListSorting } from '../../../../types/user';
 import { TeamUser } from '../TeamUser';
 
+jest.mock('../DeleteTeamUserPopup', () => ({
+  DeleteTeamUserPopupContainer: () => null,
+}));
+
 const mockProps: IUsersProps = {
   currentUserId: 0,
   fetchUsers: jest.fn(),
