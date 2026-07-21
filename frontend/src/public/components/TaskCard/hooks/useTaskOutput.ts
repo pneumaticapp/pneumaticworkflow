@@ -61,7 +61,7 @@ export function useTaskOutput(task: ITask) {
     taskId: null as number | null,
     dateStarted: null as string | null,
     fieldsetsFingerprint: '',
-    fieldsetFingerprints: {} as Record<string, string>,
+    fieldFingerprints: {} as Record<string, Record<string, string>>,
   });
   const taskOutputFingerprint = useMemo(
     () => getTaskOutputFingerprint(task.output),
@@ -137,10 +137,12 @@ export function useTaskOutput(task: ITask) {
 
     if (!isNewTask && !isTaskRestarted && !isServerFieldsetsChanged) return;
 
-    const fieldsetFingerprints = Object.fromEntries(
+    const fieldFingerprints = Object.fromEntries(
       fieldsets.map((fieldset) => [
         fieldset.apiNameBinding,
-        getTaskOutputFingerprint(fieldset.fields),
+        Object.fromEntries(
+          fieldset.fields.map((field) => [field.apiName, getTaskOutputFingerprint([field])]),
+        ),
       ]),
     );
     let savedFieldsets: IFieldsetRuntime[] | undefined;
@@ -163,10 +165,14 @@ export function useTaskOutput(task: ITask) {
         : fieldsetsStorage.get(id);
 
       if (savedFieldsets) {
-        savedFieldsets = savedFieldsets.filter(
-          (fieldset) => syncState.fieldsetFingerprints[fieldset.apiNameBinding]
-            === fieldsetFingerprints[fieldset.apiNameBinding],
-        );
+        savedFieldsets = savedFieldsets
+          .map((fieldset) => ({
+            ...fieldset,
+            fields: fieldset.fields.filter((field) =>
+              syncState.fieldFingerprints[fieldset.apiNameBinding]?.[field.apiName]
+                === fieldFingerprints[fieldset.apiNameBinding]?.[field.apiName]),
+          }))
+          .filter((fieldset) => fieldset.fields.length > 0);
         saveFieldsetsToStorageDebounced.cancel();
         fieldsetsStorage.save(id, savedFieldsets);
         pendingStorageFieldsetsRef.current = null;
@@ -189,7 +195,7 @@ export function useTaskOutput(task: ITask) {
     syncState.taskId = id;
     syncState.dateStarted = dateStarted;
     syncState.fieldsetsFingerprint = taskFieldsetsFingerprint;
-    syncState.fieldsetFingerprints = fieldsetFingerprints;
+    syncState.fieldFingerprints = fieldFingerprints;
   }, [
     task.id,
     task.dateStarted,

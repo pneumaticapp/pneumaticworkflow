@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 
 import { ExtraFieldFile } from '../ExtraFieldFile';
 import { FieldLabel } from '../../utils/FieldLabel';
@@ -8,7 +8,7 @@ import { intlMock } from '../../../../../__stubs__/intlMock';
 import { makeExtraField } from '../../../../../__stubs__/fields.factory';
 import { EExtraFieldMode, EExtraFieldType, IExtraField } from '../../../../../types/template';
 import { EFieldLabelPosition } from '../../../../../types/fieldset';
-import { TUploadedFile } from '../../../../../utils/uploadFiles';
+import { TUploadedFile, uploadFiles } from '../../../../../utils/uploadFiles';
 
 jest.mock('../../utils/FieldLabel', () => ({
   FieldLabel: jest.fn(() => null),
@@ -245,6 +245,55 @@ describe('ExtraFieldFile', () => {
       );
 
       expect(screen.getByText('updated.pdf')).toBeInTheDocument();
+    });
+
+    it('appends an in-flight upload to attachments received from a parent sync', async () => {
+      let resolveUpload: (files: TUploadedFile[]) => void = () => undefined;
+      (uploadFiles as jest.Mock).mockReturnValue(new Promise<TUploadedFile[]>((resolve) => {
+        resolveUpload = resolve;
+      }));
+      const oldAttachment = {
+        id: 'old',
+        name: 'old.pdf',
+        url: 'https://files.example.com/old',
+        size: 100,
+      };
+      const syncedAttachment = {
+        id: 'synced',
+        name: 'synced.pdf',
+        url: 'https://files.example.com/synced',
+        size: 100,
+      };
+      const uploadedAttachment = {
+        id: 'uploaded',
+        name: 'uploaded.pdf',
+        url: 'https://files.example.com/uploaded',
+        size: 100,
+      };
+      const { container, rerender } = render(
+        <ExtraFieldFile
+          {...processRunProps}
+          field={createFileField({ attachments: [oldAttachment] })}
+        />,
+      );
+
+      fireEvent.change(container.querySelector('input[type="file"]')!, {
+        target: { files: [new File(['content'], 'uploaded.pdf')] },
+      });
+      rerender(
+        <ExtraFieldFile
+          {...processRunProps}
+          field={createFileField({ attachments: [syncedAttachment] })}
+        />,
+      );
+      await act(async () => {
+        resolveUpload([uploadedAttachment]);
+        await Promise.resolve();
+      });
+
+      expect(mockEditField).toHaveBeenLastCalledWith(expect.objectContaining({
+        attachments: [syncedAttachment, uploadedAttachment],
+      }));
     });
   });
 

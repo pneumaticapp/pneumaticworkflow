@@ -197,6 +197,48 @@ describe('useTaskOutput', () => {
     }]);
   });
 
+  it('preserves sibling field drafts when another field in the same fieldset changes', () => {
+    const serverFieldset = {
+      apiNameBinding: 'fieldset-1',
+      fields: [
+        makeField('unchanged-field', 'unchanged server value'),
+        makeField('changed-field', 'old server value'),
+      ],
+    } as any;
+    const { rerender } = render(
+      <HookHarness task={makeTask([], { fieldsets: [serverFieldset] })} />,
+    );
+
+    act(() => {
+      hookResult.editFieldsetField('unchanged-field')({ value: 'local draft' });
+    });
+    rerender(
+      <HookHarness
+        task={makeTask([], {
+          fieldsets: [{
+            ...serverFieldset,
+            fields: [
+              makeField('unchanged-field', 'unchanged server value'),
+              makeField('changed-field', 'new server value'),
+            ],
+          }],
+        })}
+      />,
+    );
+
+    expect(hookResult.fieldsetOutputValues).toEqual([{
+      ...serverFieldset,
+      fields: [
+        makeField('unchanged-field', 'local draft'),
+        makeField('changed-field', 'new server value'),
+      ],
+    }]);
+    expect(fieldsetsStorage.save).toHaveBeenCalledWith(1, [{
+      ...serverFieldset,
+      fields: [makeField('unchanged-field', 'local draft')],
+    }]);
+  });
+
   it('preserves in-memory fieldset edits when another server fieldset changes', () => {
     const unchangedFieldset = {
       apiNameBinding: 'unchanged-fieldset',

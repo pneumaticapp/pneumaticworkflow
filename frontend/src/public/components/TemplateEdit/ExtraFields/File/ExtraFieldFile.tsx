@@ -32,6 +32,7 @@ export function ExtraFieldFile({
   const [isUploading, setUploadingState] = useState(false);
   const initialFiles = field.attachments?.length ? field.attachments : parseMarkdownToFiles(field.markdownValue);
   const [filesToUpload, setFilesToUploadState] = useState<TUploadedFile[]>(initialFiles);
+  const filesToUploadRef = useRef<TUploadedFile[]>(initialFiles);
   const fieldNameInputRef = useRef<HTMLTextAreaElement | null>(null);
   const uploadFieldRef = useRef<HTMLInputElement>(null);
   const [isFocused, setIsFocused] = useState(false);
@@ -42,6 +43,7 @@ export function ExtraFieldFile({
       ? field.attachments
       : parseMarkdownToFiles(field.markdownValue);
 
+    filesToUploadRef.current = nextFiles;
     setFilesToUploadState(nextFiles);
   }, [field.apiName, field.attachments, field.markdownValue]);
 
@@ -70,11 +72,12 @@ export function ExtraFieldFile({
       setUploadingState(true);
       const uploadedFiles = await uploadFiles(files);
       const successFiles = uploadedFiles.filter((file) => !file.error);
-      const newUploadedFiles = [...filesToUpload, ...(successFiles as TUploadedFile[])];
+      const newUploadedFiles = [...filesToUploadRef.current, ...(successFiles as TUploadedFile[])];
       const newUploadedFilesIds = newUploadedFiles
         .filter((file) => !file.isRemoved)
         .map((file) => `[${file.name}](${file.url})`);
 
+      filesToUploadRef.current = newUploadedFiles;
       setFilesToUploadState(newUploadedFiles);
       editField({ value: newUploadedFilesIds, attachments: newUploadedFiles });
     } catch (error) {
@@ -86,11 +89,14 @@ export function ExtraFieldFile({
   };
 
   const handleDeleteFile = (id: string) => async () => {
-    const newUploadedFiles = filesToUpload.map((file) => (file.id === id ? { ...file, isRemoved: true } : file));
+    const newUploadedFiles = filesToUploadRef.current.map(
+      (file) => (file.id === id ? { ...file, isRemoved: true } : file),
+    );
     const newUploadedFilesIds = newUploadedFiles
       .filter((file) => !file.isRemoved)
       .map((file) => `[${file.name}](${file.url})`);
 
+    filesToUploadRef.current = newUploadedFiles;
     setFilesToUploadState(newUploadedFiles);
     editField({ value: newUploadedFilesIds, attachments: newUploadedFiles });
   };
