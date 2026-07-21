@@ -29,8 +29,15 @@ from src.accounts.services.user import UserService
 from src.authentication.enums import AuthTokenType
 from src.payment.stripe.exceptions import StripeServiceException
 from src.payment.stripe.service import StripeService
-from src.processes.enums import FieldType
+from src.processes.enums import (
+    DirectlyStatus,
+    FieldType,
+    PerformerType,
+    TaskStatus,
+    WorkflowStatus,
+)
 from src.processes.models.workflows.fields import TaskField
+from src.processes.models.workflows.task import TaskPerformer
 from src.processes.tests.fixtures import (
     create_invited_user,
     create_test_account,
@@ -1309,8 +1316,15 @@ def test_private_deactivate__ok(mocker):
     update_users_counts_mock = mocker.patch(
         'src.accounts.services.account.AccountService.update_users_counts',
     )
+    check_and_complete_tasks_mock = mocker.patch(
+        'src.accounts.services.user.UserService._check_and_complete_tasks',
+    )
     identify_mock = mocker.patch(
         'src.accounts.services.user.UserService.identify',
+    )
+    mocker.patch(
+        'src.accounts.services.user.transaction.on_commit',
+        side_effect=lambda func: func(),
     )
     service = UserService(instance=deleted_user, user=owner)
 
@@ -1327,6 +1341,7 @@ def test_private_deactivate__ok(mocker):
         account_id=account.id,
     )
     update_users_counts_mock.assert_called_once()
+    check_and_complete_tasks_mock.assert_called_once()
     identify_mock.assert_called_once_with(deleted_user)
 
 
@@ -1348,9 +1363,16 @@ def test_private_deactivate__activate_contacts__ok(mocker):
     identify_mock = mocker.patch(
         'src.accounts.services.user.UserService.identify',
     )
+    mocker.patch(
+        'src.accounts.services.user.UserService._check_and_complete_tasks',
+    )
     clear_substitute_groups_mock = mocker.patch(
         'src.accounts.services.vacation.VacationDelegationService'
         '.clear_substitute_groups',
+    )
+    mocker.patch(
+        'src.accounts.services.user.transaction.on_commit',
+        side_effect=lambda func: func(),
     )
     google_contact = Contact.objects.create(
         account=account,
@@ -2860,7 +2882,7 @@ def test_update_subordinates__same_mgr_report__skip_old_mgr_notify(mocker):
     assert on_commit_mock.call_count == 1
 
 
-def test_deactivate_subs__clears_manager__ok(mocker):
+def test_deactivate_subordinates__clears_manager__ok(mocker):
 
     # arrange
     account = create_test_account()
@@ -2920,7 +2942,7 @@ def test_deactivate_subs__clears_manager__ok(mocker):
     assert on_commit_mock.call_count == 2
 
 
-def test_deactivate_subs__no_subs__no_ws(mocker):
+def test_deactivate_subordinates__no_subs__no_ws(mocker):
 
     # arrange
     account = create_test_account()
@@ -3714,3 +3736,600 @@ def test_validate_subordinates__proposed_mgr_fresh_map():
     service._validate_subordinates(
         [sub], new_mgr,
     )
+
+
+def test_check_and_complete_tasks__no_matching_tasks__skip(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    check_and_complete_tasks_delay_mock = mocker.patch(
+        'src.accounts.services.user.check_and_complete_tasks.delay',
+    )
+    service = UserService(
+        user=owner,
+        instance=user,
+    )
+
+    # act
+    service._check_and_complete_tasks()
+
+    # assert
+    check_and_complete_tasks_delay_mock.assert_not_called()
+
+
+def test_check_and_complete_tasks__user_performer__ok(
+    mocker,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    TaskPerformer.objects.create(
+        task=task,
+        user=user,
+        type=PerformerType.USER,
+    )
+    check_and_complete_tasks_delay_mock = mocker.patch(
+        'src.accounts.services.user.check_and_complete_tasks.delay',
+    )
+    service = UserService(
+        user=owner,
+        instance=user,
+    )
+
+    # act
+    service._check_and_complete_tasks()
+
+    # assert
+    check_and_complete_tasks_delay_mock.assert_called_once_with(
+        task_ids=[task.id],
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+        account_id=account.id,
+    )
+
+
+def test_check_and_complete_tasks_multiple_matching_tasks_ok(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    workflow_1 = create_test_workflow(user=user)
+    workflow_2 = create_test_workflow(user=user)
+    task_11 = workflow_1.tasks.get(number=1)
+    task_21 = workflow_2.tasks.get(number=1)
+    check_and_complete_tasks_delay_mock = mocker.patch(
+        'src.accounts.services.user.check_and_complete_tasks.delay',
+    )
+    auth_type = AuthTokenType.API
+    is_superuser = True
+    service = UserService(
+        user=owner,
+        instance=user,
+        auth_type=auth_type,
+        is_superuser=is_superuser,
+    )
+
+    # act
+    service._check_and_complete_tasks()
+
+    # assert
+    check_and_complete_tasks_delay_mock.assert_called_once_with(
+        task_ids=[task_11.id, task_21.id],
+        account_id=account.id,
+        is_superuser=is_superuser,
+        auth_type=auth_type,
+    )
+
+
+def test_check_and_complete_tasks__rcba__ok(
+    mocker,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task.require_completion_by_all = True
+    task.save(update_fields=['require_completion_by_all'])
+    TaskPerformer.objects.create(
+        task=task,
+        user=user,
+        type=PerformerType.USER,
+    )
+    check_and_complete_tasks_delay_mock = mocker.patch(
+        'src.accounts.services.user.check_and_complete_tasks.delay',
+    )
+    service = UserService(
+        user=owner,
+        instance=user,
+    )
+
+    # act
+    service._check_and_complete_tasks()
+
+    # assert
+    check_and_complete_tasks_delay_mock.assert_called_once_with(
+        task_ids=[task.id],
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+        account_id=account.id,
+    )
+
+
+def test_check_and_complete_tasks__rcba_and_completed_group_performer__skip(
+    mocker,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task.require_completion_by_all = True
+    task.save(update_fields=['require_completion_by_all'])
+    group = create_test_group(account=account, users=[user])
+    TaskPerformer.objects.create(
+        task=task,
+        group=group,
+        type=PerformerType.GROUP,
+    )
+    TaskPerformer.objects.create(
+        task=task,
+        user=user,
+        type=PerformerType.GROUP_USER,
+        is_completed=True,
+    )
+    check_and_complete_tasks_delay_mock = mocker.patch(
+        'src.accounts.services.user.check_and_complete_tasks.delay',
+    )
+    service = UserService(
+        user=owner,
+        instance=user,
+    )
+
+    # act
+    service._check_and_complete_tasks()
+
+    # assert
+    check_and_complete_tasks_delay_mock.assert_not_called()
+
+
+def test_check_and_complete_tasks__group_performer__ok(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    group = create_test_group(
+        account=account,
+        users=[user],
+    )
+    task.taskperformer_set.all().delete()
+    TaskPerformer.objects.create(
+        task=task,
+        group=group,
+        type=PerformerType.GROUP,
+    )
+    check_and_complete_tasks_delay_mock = mocker.patch(
+        'src.accounts.services.user.check_and_complete_tasks.delay',
+    )
+    service = UserService(
+        user=owner,
+        instance=user,
+    )
+
+    # act
+    service._check_and_complete_tasks()
+
+    # assert
+    check_and_complete_tasks_delay_mock.assert_called_once_with(
+        task_ids=[task.id],
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+        account_id=account.id,
+    )
+
+
+def test_check_and_complete_tasks__multiple_users_in_group__ok(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    user_2 = create_test_not_admin(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    group = create_test_group(
+        account=account,
+        users=[user, user_2],
+    )
+    task.taskperformer_set.all().delete()
+    TaskPerformer.objects.create(
+        task=task,
+        group=group,
+        type=PerformerType.GROUP,
+    )
+    check_and_complete_tasks_delay_mock = mocker.patch(
+        'src.accounts.services.user.check_and_complete_tasks.delay',
+    )
+    service = UserService(
+        user=owner,
+        instance=user,
+    )
+
+    # act
+    service._check_and_complete_tasks()
+
+    # assert
+    check_and_complete_tasks_delay_mock.assert_called_once_with(
+        task_ids=[task.id],
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+        account_id=account.id,
+    )
+
+
+def test_check_and_complete_tasks__multiple__groups__ok(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    group = create_test_group(
+        account=account,
+        users=[user],
+    )
+    group_2 = create_test_group(
+        name='Another group',
+        account=account,
+        users=[user],
+    )
+    task.taskperformer_set.all().delete()
+    TaskPerformer.objects.create(
+        task=task,
+        group=group,
+        type=PerformerType.GROUP,
+    )
+    TaskPerformer.objects.create(
+        task=task,
+        group=group_2,
+        type=PerformerType.GROUP,
+    )
+    check_and_complete_tasks_delay_mock = mocker.patch(
+        'src.accounts.services.user.check_and_complete_tasks.delay',
+    )
+    service = UserService(
+        user=owner,
+        instance=user,
+    )
+
+    # act
+    service._check_and_complete_tasks()
+
+    # assert
+    check_and_complete_tasks_delay_mock.assert_called_once_with(
+        task_ids=[task.id],
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+        account_id=account.id,
+    )
+
+
+def test_check_and_complete_tasks__group_and_user_performer__ok(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    group = create_test_group(
+        account=account,
+        users=[user],
+    )
+    task.taskperformer_set.all().delete()
+    TaskPerformer.objects.create(
+        task=task,
+        group=group,
+        type=PerformerType.GROUP,
+    )
+    TaskPerformer.objects.create(
+        task=task,
+        user=user,
+        type=PerformerType.USER,
+    )
+    check_and_complete_tasks_delay_mock = mocker.patch(
+        'src.accounts.services.user.check_and_complete_tasks.delay',
+    )
+    service = UserService(
+        user=owner,
+        instance=user,
+    )
+
+    # act
+    service._check_and_complete_tasks()
+
+    # assert
+    check_and_complete_tasks_delay_mock.assert_called_once_with(
+        task_ids=[task.id],
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+        account_id=account.id,
+    )
+
+
+@pytest.mark.parametrize('status', TaskStatus.INACTIVE_STATUS)
+def test_check_and_complete_tasks_not_active_task__skip(status, mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task.status = status
+    task.save(update_fields=['status'])
+    TaskPerformer.objects.create(
+        task=task,
+        user=user,
+        type=PerformerType.USER,
+    )
+    check_and_complete_tasks_delay_mock = mocker.patch(
+        'src.accounts.services.user.check_and_complete_tasks.delay',
+    )
+    service = UserService(
+        user=owner,
+        instance=user,
+    )
+
+    # act
+    service._check_and_complete_tasks()
+
+    # assert
+    check_and_complete_tasks_delay_mock.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    'status',
+    (WorkflowStatus.DONE, WorkflowStatus.DELAYED),
+)
+def test_check_and_complete_tasks__non_running_workflow__skip(status, mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1, status=status)
+
+    task = workflow.tasks.get(number=1)
+    TaskPerformer.objects.create(
+        task=task,
+        user=user,
+        type=PerformerType.USER,
+    )
+    check_and_complete_tasks_delay_mock = mocker.patch(
+        'src.accounts.services.user.check_and_complete_tasks.delay',
+    )
+    service = UserService(
+        user=owner,
+        instance=user,
+    )
+
+    # act
+    service._check_and_complete_tasks()
+
+    # assert
+    check_and_complete_tasks_delay_mock.assert_not_called()
+
+
+def test_check_and_complete_task__user_non_performer__skip(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    create_test_workflow(user=owner)
+    check_and_complete_tasks_delay_mock = mocker.patch(
+        'src.accounts.services.user.check_and_complete_tasks.delay',
+    )
+    service = UserService(
+        user=owner,
+        instance=user,
+    )
+
+    # act
+    service._check_and_complete_tasks()
+
+    # assert
+    check_and_complete_tasks_delay_mock.assert_not_called()
+
+
+def test_check_and_complete_tasks__completed_user_performer__skip(
+    mocker,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task.require_completion_by_all = True
+    task.save(update_fields=['require_completion_by_all'])
+    TaskPerformer.objects.create(
+        task=task,
+        user_id=user.id,
+        is_completed=True,
+    )
+    check_and_complete_tasks_delay_mock = mocker.patch(
+        'src.accounts.services.user.check_and_complete_tasks.delay',
+    )
+    service = UserService(
+        user=owner,
+        instance=user,
+    )
+
+    # act
+    service._check_and_complete_tasks()
+
+    # assert
+    check_and_complete_tasks_delay_mock.assert_not_called()
+
+
+def test_check_and_complete_tasks__directly_deleted_user_performer__skip(
+    mocker,
+):
+
+    """
+    Excludes deleted direct performer
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    TaskPerformer.objects.create(
+        task=task,
+        user_id=user.id,
+        type=PerformerType.USER,
+        directly_status=DirectlyStatus.DELETED,
+    )
+    check_and_complete_tasks_delay_mock = mocker.patch(
+        'src.accounts.services.user.check_and_complete_tasks.delay',
+    )
+    service = UserService(
+        user=owner,
+        instance=user,
+    )
+
+    # act
+    service._check_and_complete_tasks()
+
+    # assert
+    check_and_complete_tasks_delay_mock.assert_not_called()
+
+
+def test_check_and_complete_tasks__directly_deleted_group__performer__skip(
+    mocker,
+):
+
+    """
+    Excludes deleted direct performer
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    group = create_test_group(
+        account=account,
+        users=[user],
+    )
+    TaskPerformer.objects.create(
+        task=task,
+        group=group,
+        type=PerformerType.GROUP,
+        directly_status=DirectlyStatus.DELETED,
+    )
+    check_and_complete_tasks_delay_mock = mocker.patch(
+        'src.accounts.services.user.check_and_complete_tasks.delay',
+    )
+    service = UserService(
+        user=owner,
+        instance=user,
+    )
+
+    # act
+    service._check_and_complete_tasks()
+
+    # assert
+    check_and_complete_tasks_delay_mock.assert_not_called()
+
+
+def test_check_and_complete_tasks__group_performer_not_in_group__skip(mocker):
+
+    """
+    Excludes group performer when user not in group
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner)
+    task = workflow.tasks.get(number=1)
+    user = create_test_admin(account=account)
+    other_user = create_test_not_admin(account=account)
+    group = create_test_group(
+        account=account,
+        users=[other_user],
+    )
+    TaskPerformer.objects.create(
+        task=task,
+        group=group,
+        type=PerformerType.GROUP,
+    )
+    check_and_complete_tasks_delay_mock = mocker.patch(
+        'src.accounts.services.user.check_and_complete_tasks.delay',
+    )
+    service = UserService(
+        user=owner,
+        instance=user,
+    )
+
+    # act
+    service._check_and_complete_tasks()
+
+    # assert
+    check_and_complete_tasks_delay_mock.assert_not_called()
+
+
+def test_check_and_complete_tasks__other_account_task__skip(
+    mocker,
+):
+
+    """
+    Excludes task from another account
+    """
+
+    # arrange
+    account_1 = create_test_account()
+    owner_1 = create_test_owner(account=account_1)
+    user = create_test_admin(account=account_1)
+
+    account_2 = create_test_account(name='Another account')
+    owner_2 = create_test_owner(
+        account=account_2,
+        email='owner2@pneumatic.app',
+    )
+    create_test_workflow(user=owner_2, tasks_count=1)
+    check_and_complete_tasks_delay_mock = mocker.patch(
+        'src.accounts.services.user.check_and_complete_tasks.delay',
+    )
+    service = UserService(
+        user=owner_1,
+        instance=user,
+    )
+
+    # act
+    service._check_and_complete_tasks()
+
+    # assert
+    check_and_complete_tasks_delay_mock.assert_not_called()

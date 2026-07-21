@@ -24,6 +24,7 @@ from src.processes.models.templates.task import TaskTemplate
 from src.processes.models.workflows.fields import (
     TaskField,
 )
+from src.processes.models.workflows.task import TaskPerformer
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.services.versioning.schemas import (
     TemplateSchemaV1,
@@ -873,10 +874,15 @@ class TestUpdateTemplateTask:
             f'{user.get_full_name()} {user.get_full_name()}'
         )
 
-        performers = task2.performers.order_by('id')
-        assert performers.count() == 2
-        assert performers.first().id == user.id
-        assert performers.last().id == user2.id
+        assert task2.taskperformer_set.count() == 2
+        assert TaskPerformer.objects.get(
+            task=task2,
+            user=user,
+        )
+        assert TaskPerformer.objects.get(
+            task=task2,
+            user=user2,
+        )
 
     def test_update__change_performer_for_active_task__ok(
         self,
@@ -1023,10 +1029,15 @@ class TestUpdateTemplateTask:
         assert raw_performers.get(user_id=user1_new.id)
         assert raw_performers.get(field__api_name=task_field2.api_name)
 
-        performers = task.performers.all()
-        assert performers.count() == 2
-        assert performers.get(id=user1_new.id)
-        assert performers.get(id=user2_new.id)
+        assert task.taskperformer_set.count() == 2
+        assert TaskPerformer.objects.get(
+            task=task,
+            user=user1_new,
+        )
+        assert TaskPerformer.objects.get(
+            task=task,
+            user=user2_new,
+        )
 
     def test_update__change_performer_for_completed_task__do_nothing(
         self,
@@ -1181,10 +1192,15 @@ class TestUpdateTemplateTask:
         raw_performer_2 = raw_performers.get(type=PerformerType.FIELD)
         assert raw_performer_2.field.api_name == field_template_1.api_name
 
-        performers = completed_task.performers.all()
-        assert performers.count() == 2
-        assert performers.get(id=user1.id)
-        assert performers.get(id=user2.id)
+        assert completed_task.taskperformer_set.count() == 2
+        assert TaskPerformer.objects.get(
+            task=completed_task,
+            user=user1,
+        )
+        assert TaskPerformer.objects.get(
+            task=completed_task,
+            user=user2,
+        )
 
     def test_update__remove_performer_type_field_from_active_task__ok(
         self,
@@ -1443,16 +1459,28 @@ class TestUpdateTemplateTask:
         workflow_1.refresh_from_db()
         workflow_1_task = workflow_1.tasks.first()
         assert workflow_1_task.raw_performers.count() == 2
-        assert workflow_1_task.performers.count() == 2
-        assert workflow_1_task.performers.first().id == user1.id
-        assert workflow_1_task.performers.last().id == user2.id
+        assert workflow_1_task.taskperformer_set.count() == 2
+        assert TaskPerformer.objects.get(
+            task=workflow_1_task,
+            user=user1.id,
+        )
+        assert TaskPerformer.objects.get(
+            task=workflow_1_task,
+            user=user2.id,
+        )
 
         workflow_2.refresh_from_db()
         workflow_2_task = workflow_2.tasks.first()
         assert workflow_2_task.raw_performers.count() == 2
-        assert workflow_2_task.performers.count() == 2
-        assert workflow_2_task.performers.first().id == user1.id
-        assert workflow_2_task.performers.last().id == user3.id
+        assert workflow_2_task.taskperformer_set.count() == 2
+        assert TaskPerformer.objects.get(
+            task=workflow_2_task,
+            user=user1,
+        )
+        assert TaskPerformer.objects.get(
+            task=workflow_2_task,
+            user=user3,
+        )
 
     def test_update__get_default_performer_type_field__ok(
         self,
@@ -1563,8 +1591,11 @@ class TestUpdateTemplateTask:
         # assert
         assert response_complete.status_code == 200
         assert task_2.status == TaskStatus.ACTIVE
-        assert task_2.performers.count() == 1
-        assert task_2.performers.first().id == user.id
+        assert task_2.taskperformer_set.count() == 1
+        assert TaskPerformer.objects.get(
+            task=task_2,
+            user=user,
+        )
         send_new_task_notification_mock.assert_called_once()
 
     def test_update__active_task_due_date_updated__ok(
@@ -2900,8 +2931,11 @@ class TestUpdateTemplateRawPerformer:
         assert response.status_code == 200
         task = workflow.tasks.first()
         assert task.raw_performers.count() == 1
-        assert task.performers.count() == 1
-        assert task.performers.first().id == user.id
+        assert task.taskperformer_set.count() == 1
+        assert TaskPerformer.objects.get(
+            task=task,
+            user=user,
+        )
 
     def test_update__type_workflow_starter_public_template__validation_error(
         self,

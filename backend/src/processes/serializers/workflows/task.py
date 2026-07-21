@@ -7,8 +7,13 @@ from rest_framework.exceptions import ValidationError
 
 from src.generics.fields import TimeStampField
 from src.generics.serializers import CustomValidationErrorMixin
+from src.processes.enums import (
+    OwnerRole,
+    OwnerType,
+    PerformerType,
+    TaskOrdering,
+)
 from src.generics.validators import RejectNullStringValidator
-from src.processes.enums import OwnerRole, OwnerType, TaskOrdering
 from src.processes.messages.workflow import (
     MSG_PW_0057,
     MSG_PW_0083,
@@ -16,6 +21,7 @@ from src.processes.messages.workflow import (
 from src.processes.models.workflows.task import (
     Task,
     TaskForList,
+    TaskPerformer,
 )
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.serializers.workflows.checklist import (
@@ -33,7 +39,6 @@ from src.processes.serializers.workflows.fieldset import (
 from src.processes.serializers.workflows.task_performer import (
     get_performers_for_task,
 )
-from src.processes.models.workflows.task import TaskPerformer
 
 
 class TaskShortSerializer(serializers.ModelSerializer):
@@ -212,9 +217,12 @@ class TaskSerializer(serializers.ModelSerializer):
         is_performer = TaskPerformer.objects.filter(
             task__workflow=workflow,
             task__account_id=user.account_id,
-        ).filter(
-            Q(user_id=user.id) |
-            Q(group__users__id=user.id),
+        ).type_user_or_group().filter(
+            Q(user_id=user.id, type=PerformerType.USER)
+            | Q(
+                type=PerformerType.GROUP,
+                group__users__id=user.id,
+            ),
         ).exists()
         if is_performer:
             return False

@@ -264,7 +264,7 @@ def backward(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('processes', '0255_add_fieldsets'),
+        ('processes', '0256_update_task_performer'),
         ('contenttypes', '0002_remove_content_type_name'),
         ('auth', '0011_update_proxy_permissions'),
         ('permissions', '0002_user_object_permission'),

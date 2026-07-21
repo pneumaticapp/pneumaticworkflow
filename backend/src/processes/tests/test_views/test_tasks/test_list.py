@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 import pytest
+from django.utils import timezone
 
 from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
@@ -27,6 +28,7 @@ from src.processes.tests.fixtures import (
     create_test_template,
     create_test_user,
     create_test_workflow, create_test_account, create_test_admin,
+    create_test_not_admin,
 )
 from src.services.markdown import MarkdownService
 from src.utils.validation import ErrorCode
@@ -35,11 +37,10 @@ pytestmark = pytest.mark.django_db
 datetime_format = '%Y-%m-%dT%H:%M:%S.%fZ'
 
 
-def test_list__default_ordering__ok(mocker, api_client):
+def test_list__default_ordering__ok(api_client):
 
     # arrange
     user = create_test_user()
-    api_client.token_authenticate(user=user)
     workflow_1 = create_test_workflow(user, tasks_count=1)
     task_11 = workflow_1.tasks.get(number=1)
     workflow_2 = create_test_workflow(
@@ -53,11 +54,14 @@ def test_list__default_ordering__ok(mocker, api_client):
 
     completed_workflow = create_test_workflow(user, tasks_count=1)
     task = completed_workflow.tasks.get(number=1)
-    mocker.patch(
-        'src.processes.tasks.webhooks.'
-        'send_task_completed_webhook.delay',
+    task.status = TaskStatus.COMPLETED
+    task.date_completed = timezone.now()
+    task.save(update_fields=['status', 'date_completed'])
+    TaskPerformer.objects.filter(task_id=task.id, user_id=user.id).update(
+        is_completed=True,
+        date_completed=task.date_completed,
     )
-    api_client.post(f'/v2/tasks/{task.id}/complete')
+    api_client.token_authenticate(user=user)
 
     # act
     response = api_client.get('/v3/tasks')
@@ -70,12 +74,13 @@ def test_list__default_ordering__ok(mocker, api_client):
     assert task_21_data['id'] == task_21.id
     assert task_21_data['name'] == task_21.name
     assert task_21_data['api_name'] == task_21.api_name
+    assert task_21_data['workflow_name'] == workflow_2.name
     assert task_21_data['due_date_tsp'] is None
     assert task_21_data['date_started_tsp'] == task_21.date_started.timestamp()
     assert task_21_data['date_completed_tsp'] is None
-    assert task_21_data['workflow_name'] == workflow_2.name
     assert task_21_data['template_id'] == workflow_2.template_id
     assert task_21_data['template_task_api_name'] == task_21.api_name
+    assert task_21_data['is_urgent'] is False
     assert task_21_data['status'] == TaskStatus.ACTIVE
 
     task_11_data = response.data[1]
@@ -93,7 +98,6 @@ def test_list__user_in_group__ok(api_client):
         email='another@pneumatic.app',
     )
     group = create_test_group(user.account, users=[another_user])
-    api_client.token_authenticate(user=another_user)
     workflow_1 = create_test_workflow(user, tasks_count=1)
     task_11 = workflow_1.tasks.get(number=1)
     TaskPerformer.objects.filter(
@@ -114,6 +118,7 @@ def test_list__user_in_group__ok(api_client):
         directly_status=DirectlyStatus.CREATED,
     )
     create_test_workflow(user, tasks_count=1)
+    api_client.token_authenticate(user=another_user)
 
     # act
     response = api_client.get('/v3/tasks')
@@ -135,7 +140,6 @@ def test_list__task_performer_group_empty__ok(api_client):
     )
     group = create_test_group(user.account, users=[another_user])
     create_test_group(user.account, name='group 2')
-    api_client.token_authenticate(user=another_user)
     workflow_1 = create_test_workflow(user, tasks_count=1)
     task_11 = workflow_1.tasks.get(number=1)
     TaskPerformer.objects.filter(
@@ -156,6 +160,7 @@ def test_list__task_performer_group_empty__ok(api_client):
         directly_status=DirectlyStatus.CREATED,
     )
     create_test_workflow(user, tasks_count=1)
+    api_client.token_authenticate(user=another_user)
 
     # act
     response = api_client.get('/v3/tasks')
@@ -167,17 +172,210 @@ def test_list__task_performer_group_empty__ok(api_client):
     assert response.data[1]['id'] == task_11.id
 
 
+def test_list__user_performer_completed__skip(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    template = create_test_template(user=owner, tasks_count=2, is_active=True)
+    workflow = create_test_workflow(user, template=template)
+    task = workflow.tasks.get(number=1)
+    task.taskperformer_set.all().delete()
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.USER,
+        user=user,
+        is_completed=True,
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get('/v3/tasks')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 0
+
+
+def test_list__group_performer_completed__skip(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    template = create_test_template(user=owner, tasks_count=2, is_active=True)
+    workflow = create_test_workflow(user, template=template)
+    task = workflow.tasks.get(number=1)
+    task.taskperformer_set.all().delete()
+    group = create_test_group(account, users=[user])
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP,
+        group=group,
+        is_completed=True,
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get('/v3/tasks')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 0
+
+
+def test_list__group_performer_partitional_completed__skip(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    user_2 = create_test_not_admin(account=account)
+    template = create_test_template(user=owner, tasks_count=2, is_active=True)
+    workflow = create_test_workflow(user, template=template)
+    task = workflow.tasks.get(number=1)
+    task.taskperformer_set.all().delete()
+    group = create_test_group(account, users=[user, user_2])
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP,
+        group=group,
+    )
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP_USER,
+        user=user,
+        is_completed=True,
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get('/v3/tasks')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 0
+
+
+def test_list__group_performer_and_user_performer__skip(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    template = create_test_template(user=owner, tasks_count=2, is_active=True)
+    workflow = create_test_workflow(user, template=template)
+    task = workflow.tasks.get(number=1)
+    task.taskperformer_set.all().delete()
+    group = create_test_group(account, users=[user])
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP,
+        group=group,
+    )
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.USER,
+        user=user,
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get('/v3/tasks')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 1
+
+
+def test_list__group_performer_partitional_completed_and_user_performer__skip(
+    api_client,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    template = create_test_template(user=owner, tasks_count=2, is_active=True)
+    workflow = create_test_workflow(user, template=template)
+    task = workflow.tasks.get(number=1)
+    task.taskperformer_set.all().delete()
+    task.require_completion_by_all = True
+    task.save()
+    group = create_test_group(account, users=[user])
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP,
+        group=group,
+    )
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP_USER,
+        user=user,
+        is_completed=True,
+    )
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.USER,
+        user=user,
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get('/v3/tasks')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 0
+
+
+def test_list__filter_is_completed_and_group_performer_part_completed__skip(
+    api_client,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    user_2 = create_test_not_admin(account=account)
+    template = create_test_template(user=owner, tasks_count=2, is_active=True)
+    workflow = create_test_workflow(user, template=template)
+    task = workflow.tasks.get(number=1)
+    task.taskperformer_set.all().delete()
+    group = create_test_group(account, users=[user, user_2])
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP,
+        group=group,
+    )
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP_USER,
+        user=user,
+        is_completed=True,
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get('/v3/tasks?is_completed=true')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 1
+
+
 def test_list__urgent_tasks_first__ok(api_client):
 
     # arrange
     user = create_test_user()
-    api_client.token_authenticate(user=user)
     workflow_1 = create_test_workflow(user, tasks_count=1)
     task_11 = workflow_1.tasks.get(number=1)
     workflow_2 = create_test_workflow(user, tasks_count=1, is_urgent=True)
     task_21 = workflow_2.tasks.get(number=1)
     workflow_3 = create_test_workflow(user, tasks_count=1)
     task_31 = workflow_3.tasks.get(number=1)
+    api_client.token_authenticate(user=user)
 
     # act
     response = api_client.get('/v3/tasks')
@@ -205,11 +403,11 @@ def test_list__search__ok(api_client, mocker):
     task.name = clear_search_text
     task.save(update_fields=['name'])
 
-    api_client.token_authenticate(user)
     analysis_mock = mocker.patch(
         'src.analysis.services.AnalyticService.'
         'search_search',
     )
+    api_client.token_authenticate(user)
 
     # act
     response = api_client.get(f'/v3/tasks?search={raw_search_text}')
@@ -255,8 +453,8 @@ def test_list__search__user_performer_twice__remove_duplicate(
     task.name = search_text
     task.save(update_fields=['name'])
 
-    api_client.token_authenticate(user)
     mocker.patch('src.analysis.services.AnalyticService.search_search')
+    api_client.token_authenticate(user)
 
     # act
     response = api_client.get(f'/v3/tasks?search={search_text}')
@@ -274,12 +472,12 @@ def test_list__search__not_found__ok(api_client, mocker):
     # arrange
     user = create_test_user()
     create_test_workflow(user)
-    api_client.token_authenticate(user)
     analysis_mock = mocker.patch(
         'src.analysis.services.AnalyticService.'
         'search_search',
     )
     search_text = 'DROP TABLE accounts_account'
+    api_client.token_authenticate(user)
 
     # act
     response = api_client.get(f'/v3/tasks?search={search_text}')
@@ -317,11 +515,11 @@ def test_list__search__comment__ok(api_client, mocker):
         text='some camera retext',
     )
 
-    api_client.token_authenticate(user)
     analysis_mock = mocker.patch(
         'src.analysis.services.AnalyticService.'
         'search_search',
     )
+    api_client.token_authenticate(user)
 
     # act
     response = api_client.get(f'/v3/tasks?search={search_text}')
@@ -354,11 +552,11 @@ def test_list__search__comment__url_as_text__ok(api_client, mocker):
         clear_text=MarkdownService.clear(text),
     )
     search_text = 'pneumo.app'
-    api_client.token_authenticate(user)
     analysis_mock = mocker.patch(
         'src.analysis.services.AnalyticService.'
         'search_search',
     )
+    api_client.token_authenticate(user)
 
     # act
     response = api_client.get(f'/v3/tasks?search={search_text}')
@@ -391,11 +589,11 @@ def test_list__search__comment__markdown__ok(api_client, mocker):
         clear_text=MarkdownService.clear(text),
     )
     search_text = 'file.here'
-    api_client.token_authenticate(user)
     analysis_mock = mocker.patch(
         'src.analysis.services.AnalyticService.'
         'search_search',
     )
+    api_client.token_authenticate(user)
 
     # act
     response = api_client.get(f'/v3/tasks?search={search_text}')
@@ -428,11 +626,11 @@ def test_list__search__not_comment_event__not_found(api_client, mocker):
     event.text = search_text
     event.save()
 
-    api_client.token_authenticate(user)
     analysis_mock = mocker.patch(
         'src.analysis.services.AnalyticService.'
         'search_search',
     )
+    api_client.token_authenticate(user)
 
     # act
     response = api_client.get(f'/v3/tasks?search={search_text}')
@@ -467,11 +665,11 @@ def test_list__search__another_task_comment__not_found(api_client, mocker):
         clear_text=MarkdownService.clear(text),
     )
     search_text = 'com tex'
-    api_client.token_authenticate(user)
     analysis_mock = mocker.patch(
         'src.analysis.services.AnalyticService.'
         'search_search',
     )
+    api_client.token_authenticate(user)
 
     # act
     response = api_client.get(f'/v3/tasks?search={search_text}')
@@ -505,12 +703,12 @@ def test_list__search__comment_attachment__not_found(api_client, mocker):
         file_id='fred_cena_task_list.png',
     )
 
-    api_client.token_authenticate(user)
     mocker.patch(
         'src.analysis.services.AnalyticService.'
         'search_search',
     )
     search_text = 'cena'
+    api_client.token_authenticate(user)
 
     # act
     response = api_client.get(f'/v3/tasks?search={search_text}')
@@ -544,12 +742,12 @@ def test_list__search__another_task_comment_attachment__not_found(
         file_id='fred_cena_another_task.png',
     )
 
-    api_client.token_authenticate(user)
     mocker.patch(
         'src.analysis.services.AnalyticService.'
         'search_search',
     )
     search_text = 'cen'
+    api_client.token_authenticate(user)
 
     # act
     response = api_client.get(f'/v3/tasks?search={search_text}')
@@ -586,12 +784,12 @@ def test_list__search__completed_prev_task_output_attachment__not_found(
         workflow=workflow,
     )
 
-    api_client.token_authenticate(user)
     mocker.patch(
         'src.analysis.services.AnalyticService.'
         'search_search',
     )
     search_text = 'cena'
+    api_client.token_authenticate(user)
 
     # act
     response = api_client.get(f'/v3/tasks?search={search_text}')
@@ -624,12 +822,12 @@ def test_list__search__active_task_field_attachment__not_found(
         workflow=workflow,
     )
 
-    api_client.token_authenticate(user)
     mocker.patch(
         'src.analysis.services.AnalyticService.'
         'search_search',
     )
     search_text = 'https://test.com/test.txt'
+    api_client.token_authenticate(user)
 
     # act
     response = api_client.get(f'/v3/tasks?search={search_text}')
@@ -652,11 +850,11 @@ def test_list__search__active_task_description__ok(
     task_1.description = description
     task_1.clear_description = MarkdownService.clear(description)
     task_1.save()
-    api_client.token_authenticate(user)
     mocker.patch(
         'src.analysis.services.AnalyticService.search_search',
     )
     search_text = 'file.here'
+    api_client.token_authenticate(user)
 
     # act
     response = api_client.get(f'/v3/tasks?search={search_text}')
@@ -715,10 +913,11 @@ def test_list__search__kickoff_description__not_found(api_client, mocker):
     kickoff.save()
     create_test_workflow(user)
     search_text = 'file'
-    api_client.token_authenticate(user)
     mocker.patch(
         'src.analysis.services.AnalyticService.search_search',
     )
+    api_client.token_authenticate(user)
+
     # act
     response = api_client.get(f'/v3/tasks?search={search_text}')
 
@@ -765,8 +964,8 @@ def test_list__search_priority_1__ok(api_client, mocker):
     )
     create_test_workflow(owner, tasks_count=1)
 
-    api_client.token_authenticate(owner)
     mocker.patch('src.analysis.services.AnalyticService.search_search')
+    api_client.token_authenticate(owner)
 
     # act
     response = api_client.get(f'/v3/tasks?search={search_text}')
@@ -812,8 +1011,8 @@ def test_list__search_priority_2__ok(api_client, mocker):
     task_3.name = search_text
     task_3.save()
 
-    api_client.token_authenticate(owner)
     mocker.patch('src.analysis.services.AnalyticService.search_search')
+    api_client.token_authenticate(owner)
 
     # act
     response = api_client.get(f'/v3/tasks?search={search_text}')
@@ -859,12 +1058,12 @@ def test_list__search__in_active_task_field_value__ok(
         clear_value=MarkdownService.clear(value),
         account=user.account,
     )
-    api_client.token_authenticate(user)
     mocker.patch(
         'src.analysis.services.AnalyticService.'
         'search_search',
     )
     search_text = 'fred'
+    api_client.token_authenticate(user)
 
     # act
     response = api_client.get(f'/v3/tasks?search={search_text}')
@@ -908,12 +1107,12 @@ def test_list__search__in_kickoff_field_value__not_found(
         clear_value=MarkdownService.clear(value),
         account=user.account,
     )
-    api_client.token_authenticate(user)
     mocker.patch(
         'src.analysis.services.AnalyticService.'
         'search_search',
     )
     search_text = 'fred@boy.com'
+    api_client.token_authenticate(user)
 
     # act
     response = api_client.get(f'/v3/tasks?search={search_text}')
@@ -949,12 +1148,12 @@ def test_list__search__in_excluded_field_value__not_found(
         clear_value=MarkdownService.clear(value),
         account=user.account,
     )
-    api_client.token_authenticate(user)
     mocker.patch(
         'src.analysis.services.AnalyticService.'
         'search_search',
     )
     search_text = 'fred'
+    api_client.token_authenticate(user)
 
     # act
     response = api_client.get(f'/v3/tasks?search={search_text}')
@@ -983,11 +1182,11 @@ def test_list__search__full_uri_in_field__ok(
         clear_value=MarkdownService.clear(value),
         account=user.account,
     )
-    api_client.token_authenticate(user)
     mocker.patch(
         'src.analysis.services.AnalyticService.'
         'search_search',
     )
+    api_client.token_authenticate(user)
 
     # act
     response = api_client.get(
@@ -1020,12 +1219,12 @@ def test_list__search__domain__ok(
         clear_value=MarkdownService.clear(value),
         account=user.account,
     )
-    api_client.token_authenticate(user)
     mocker.patch(
         'src.analysis.services.AnalyticService.'
         'search_search',
     )
     search_text = 'translate.com'
+    api_client.token_authenticate(user)
 
     # act
     response = api_client.get(f'/v3/tasks?search={search_text}')
@@ -1060,12 +1259,12 @@ def test_list__search__markdown_filename_in_text_field__ok(
         account=user.account,
     )
 
-    api_client.token_authenticate(user)
     mocker.patch(
         'src.analysis.services.AnalyticService.'
         'search_search',
     )
     search_text = 'somefile.txt'
+    api_client.token_authenticate(user)
 
     # act
     response = api_client.get(f'/v3/tasks?search={search_text}')
@@ -1097,12 +1296,12 @@ def test_list__search__url_in_text_field__ok(
         clear_value=MarkdownService.clear(value),
         account=user.account,
     )
-    api_client.token_authenticate(user)
     mocker.patch(
         'src.analysis.services.AnalyticService.'
         'search_search',
     )
     search_text = 'search.com/file.txt'
+    api_client.token_authenticate(user)
 
     # act
     response = api_client.get(f'/v3/tasks?search={search_text}')
@@ -1135,12 +1334,12 @@ def test_list__search__email_in_text_field__ok(
         account=user.account,
     )
 
-    api_client.token_authenticate(user)
     mocker.patch(
         'src.analysis.services.AnalyticService.'
         'search_search',
     )
     search_text = 'master@test.com'
+    api_client.token_authenticate(user)
 
     # act
     response = api_client.get(f'/v3/tasks?search={search_text}')
@@ -1179,12 +1378,12 @@ def test_list__search__prev_task_markdown_filename_in_text__not_found(
         account=user.account,
     )
 
-    api_client.token_authenticate(user)
     mocker.patch(
         'src.analysis.services.AnalyticService.'
         'search_search',
     )
     search_text = 'somefile.txt'
+    api_client.token_authenticate(user)
 
     # act
     response = api_client.get(f'/v3/tasks?search={search_text}')
@@ -1212,12 +1411,12 @@ def test_list__search__kickoff_field__not_found(
         clear_value=MarkdownService.clear(value),
         account=user.account,
     )
-    api_client.token_authenticate(user)
     mocker.patch(
         'src.analysis.services.AnalyticService.'
         'search_search',
     )
     search_text = 'translate.com'
+    api_client.token_authenticate(user)
 
     # act
     response = api_client.get(f'/v3/tasks?search={search_text}')
@@ -1231,11 +1430,11 @@ def test_list__ordering_by_date__ok(api_client):
 
     # arrange
     user = create_test_user()
-    api_client.token_authenticate(user=user)
     workflow_1 = create_test_workflow(user, tasks_count=2)
     task_11 = workflow_1.tasks.get(number=1)
     workflow_2 = create_test_workflow(user, tasks_count=2)
     task_21 = workflow_2.tasks.get(number=1)
+    api_client.token_authenticate(user=user)
 
     # act
     response = api_client.get('/v3/tasks?ordering=date')
@@ -1251,11 +1450,11 @@ def test_list__ordering_by_reversed_date__ok(api_client):
 
     # arrange
     user = create_test_user()
-    api_client.token_authenticate(user=user)
     workflow_1 = create_test_workflow(user, tasks_count=1)
     task_11 = workflow_1.tasks.get(number=1)
     workflow_2 = create_test_workflow(user, tasks_count=1)
     task_21 = workflow_2.tasks.get(number=1)
+    api_client.token_authenticate(user=user)
 
     # act
     response = api_client.get('/v3/tasks?ordering=-date')
@@ -1267,26 +1466,32 @@ def test_list__ordering_by_reversed_date__ok(api_client):
     assert response.data[1]['id'] == task_11.id
 
 
-def test_list__ordering_by_completed__ok(mocker, api_client):
+def test_list__ordering_by_completed__ok(api_client):
 
     # arrange
     user = create_test_user()
-    api_client.token_authenticate(user=user)
+    date_completed_1 = timezone.now()
+    date_completed_2 = date_completed_1 + timedelta(hours=1)
     workflow_1 = create_test_workflow(user, tasks_count=1)
     task_11 = workflow_1.tasks.get(number=1)
-    mocker.patch(
-        'src.processes.tasks.webhooks.'
-        'send_task_completed_webhook.delay',
-    )
-    response_complete_1 = api_client.post(
-        f'/v2/tasks/{task_11.id}/complete',
+    task_11.status = TaskStatus.COMPLETED
+    task_11.date_completed = date_completed_1
+    task_11.save(update_fields=['status', 'date_completed'])
+    TaskPerformer.objects.filter(task_id=task_11.id, user_id=user.id).update(
+        is_completed=True,
+        date_completed=date_completed_1,
     )
     workflow_2 = create_test_workflow(user, tasks_count=1)
     task_21 = workflow_2.tasks.get(number=1)
-    response_complete_2 = api_client.post(
-        f'/v2/tasks/{task_21.id}/complete',
+    task_21.status = TaskStatus.COMPLETED
+    task_21.date_completed = date_completed_2
+    task_21.save(update_fields=['status', 'date_completed'])
+    TaskPerformer.objects.filter(task_id=task_21.id, user_id=user.id).update(
+        is_completed=True,
+        date_completed=date_completed_2,
     )
     create_test_workflow(user, tasks_count=1)
+    api_client.token_authenticate(user=user)
 
     # act
     response = api_client.get(
@@ -1294,8 +1499,6 @@ def test_list__ordering_by_completed__ok(mocker, api_client):
     )
 
     # assert
-    assert response_complete_1.status_code == 200
-    assert response_complete_2.status_code == 200
     assert response.status_code == 200
     assert len(response.data) == 2
     task_11.refresh_from_db()
@@ -1313,24 +1516,32 @@ def test_list__ordering_by_completed__ok(mocker, api_client):
     assert response.data[1]['status'] == TaskStatus.COMPLETED
 
 
-def test_list__ordering_by_reversed_completed__ok(mocker, api_client):
+def test_list__ordering_by_reversed_completed__ok(api_client):
 
     # arrange
     user = create_test_user()
-    api_client.token_authenticate(user=user)
+    date_completed_1 = timezone.now()
+    date_completed_2 = date_completed_1 + timedelta(hours=1)
     workflow_1 = create_test_workflow(user, tasks_count=1)
     task_11 = workflow_1.tasks.get(number=1)
-    mocker.patch(
-        'src.processes.tasks.webhooks.'
-        'send_task_completed_webhook.delay',
+    task_11.status = TaskStatus.COMPLETED
+    task_11.date_completed = date_completed_1
+    task_11.save(update_fields=['status', 'date_completed'])
+    TaskPerformer.objects.filter(task_id=task_11.id, user_id=user.id).update(
+        is_completed=True,
+        date_completed=date_completed_1,
     )
-    api_client.post(f'/v2/tasks/{task_11.id}/complete')
-
     workflow_2 = create_test_workflow(user, tasks_count=1)
     task_21 = workflow_2.tasks.get(number=1)
-    api_client.post(f'/v2/tasks/{task_21.id}/complete')
-
+    task_21.status = TaskStatus.COMPLETED
+    task_21.date_completed = date_completed_2
+    task_21.save(update_fields=['status', 'date_completed'])
+    TaskPerformer.objects.filter(task_id=task_21.id, user_id=user.id).update(
+        is_completed=True,
+        date_completed=date_completed_2,
+    )
     create_test_workflow(user, tasks_count=1)
+    api_client.token_authenticate(user=user)
 
     # act
     response = api_client.get(
@@ -1345,7 +1556,6 @@ def test_list__ordering_by_reversed_completed__ok(mocker, api_client):
 
 
 def test_list__ordering_by_completed_required_completion_by_all__ok(
-    mocker,
     api_client,
 ):
 
@@ -1361,20 +1571,25 @@ def test_list__ordering_by_completed_required_completion_by_all__ok(
     template_task.save()
     template_task.add_raw_performer(user_2)
 
+    date_completed_1 = timezone.now()
+    date_completed_2 = date_completed_1 + timedelta(hours=1)
     workflow_1 = create_test_workflow(user, template=template)
     task_11 = workflow_1.tasks.get(number=1)
-    mocker.patch(
-        'src.processes.tasks.webhooks.'
-        'send_task_completed_webhook.delay',
+    TaskPerformer.objects.filter(task_id=task_11.id, user_id=user.id).update(
+        is_completed=True,
+        date_completed=date_completed_1,
     )
-    api_client.token_authenticate(user=user)
-    api_client.post(f'/v2/tasks/{task_11.id}/complete')
-
     workflow_2 = create_test_workflow(user, tasks_count=1)
     task_21 = workflow_2.tasks.get(number=1)
-    api_client.post(f'/v2/tasks/{task_21.id}/complete')
-
+    task_21.status = TaskStatus.COMPLETED
+    task_21.date_completed = date_completed_2
+    task_21.save(update_fields=['status', 'date_completed'])
+    TaskPerformer.objects.filter(task_id=task_21.id, user_id=user.id).update(
+        is_completed=True,
+        date_completed=date_completed_2,
+    )
     create_test_workflow(user, tasks_count=1)
+    api_client.token_authenticate(user=user)
 
     # act
     response = api_client.get(
@@ -1408,7 +1623,6 @@ def test_list__ordering_by_completed_required_completion_by_all__ok(
 
 
 def test_list__ordering_by_completed_reversed_required_completion_by_all__ok(
-    mocker,
     api_client,
 ):
 
@@ -1421,21 +1635,28 @@ def test_list__ordering_by_completed_reversed_required_completion_by_all__ok(
     )
     template_task = template.tasks.get(number=1)
     template_task.require_completion_by_all = True
+    template_task.save()
     template_task.add_raw_performer(user_2)
 
+    date_completed_1 = timezone.now()
+    date_completed_2 = date_completed_1 + timedelta(hours=1)
     workflow_1 = create_test_workflow(user, template=template)
     task_11 = workflow_1.tasks.get(number=1)
-    mocker.patch(
-        'src.processes.tasks.webhooks.'
-        'send_task_completed_webhook.delay',
+    TaskPerformer.objects.filter(task_id=task_11.id, user_id=user.id).update(
+        is_completed=True,
+        date_completed=date_completed_1,
     )
-    api_client.token_authenticate(user=user)
-    api_client.post(f'/v2/tasks/{task_11.id}/complete')
     workflow_2 = create_test_workflow(user, tasks_count=1)
     task_21 = workflow_2.tasks.get(number=1)
-    api_client.post(f'/v2/tasks/{task_21.id}/complete')
-
+    task_21.status = TaskStatus.COMPLETED
+    task_21.date_completed = date_completed_2
+    task_21.save(update_fields=['status', 'date_completed'])
+    TaskPerformer.objects.filter(task_id=task_21.id, user_id=user.id).update(
+        is_completed=True,
+        date_completed=date_completed_2,
+    )
     create_test_workflow(user, tasks_count=1)
+    api_client.token_authenticate(user=user)
 
     # act
     response = api_client.get(
@@ -1450,15 +1671,10 @@ def test_list__ordering_by_completed_reversed_required_completion_by_all__ok(
 
 
 def test_list__completed__non_completed_performers__not_view_in_list(
-    mocker,
     api_client,
 ):
 
     # arrange
-    mocker.patch(
-        'src.processes.tasks.webhooks.'
-        'send_task_completed_webhook.delay',
-    )
     user = create_test_user(is_account_owner=True)
     user_2 = create_test_user(
         email='test@test.test',
@@ -1470,9 +1686,14 @@ def test_list__completed__non_completed_performers__not_view_in_list(
     template_task_1.add_raw_performer(user_2)
     workflow = create_test_workflow(user, template=template)
     task = workflow.tasks.get(number=1)
-
-    api_client.token_authenticate(user=user)
-    api_client.post(f'/v2/tasks/{task.id}/complete')
+    date_completed = timezone.now()
+    task.status = TaskStatus.COMPLETED
+    task.date_completed = date_completed
+    task.save(update_fields=['status', 'date_completed'])
+    task.taskperformer_set.update(
+        is_completed=True,
+        date_completed=date_completed,
+    )
     api_client.token_authenticate(user=user_2)
 
     # act
@@ -1487,7 +1708,6 @@ def test_list__ordering_by_overdue__ok(api_client):
 
     # arrange
     user = create_test_user()
-    api_client.token_authenticate(user=user)
     workflow_1 = create_test_workflow(user, tasks_count=1)
     task_11 = workflow_1.tasks.get(number=1)
     task_11.due_date = task_11.date_first_started + timedelta(hours=1)
@@ -1500,6 +1720,7 @@ def test_list__ordering_by_overdue__ok(api_client):
 
     workflow_3 = create_test_workflow(user, tasks_count=1)
     task_31 = workflow_3.tasks.get(number=1)
+    api_client.token_authenticate(user=user)
 
     # act
     response = api_client.get('/v3/tasks?ordering=overdue')
@@ -1519,7 +1740,6 @@ def test_list__ordering_by_reversed_overdue__ok(api_client):
 
     # arrange
     user = create_test_user()
-    api_client.token_authenticate(user=user)
     workflow_1 = create_test_workflow(user, tasks_count=1)
     task_11 = workflow_1.tasks.get(number=1)
     task_11.due_date = task_11.date_first_started + timedelta(hours=1)
@@ -1532,6 +1752,7 @@ def test_list__ordering_by_reversed_overdue__ok(api_client):
 
     workflow_3 = create_test_workflow(user, tasks_count=1)
     task_31 = workflow_3.tasks.get(number=1)
+    api_client.token_authenticate(user=user)
 
     # act
     response = api_client.get('/v3/tasks?ordering=-overdue')
@@ -1544,37 +1765,15 @@ def test_list__ordering_by_reversed_overdue__ok(api_client):
     assert response.data[2]['id'] == task_11.id
 
 
-def test_list__invalid_ordering__validation_error(api_client):
-
-    # arrange
-    user = create_test_user()
-    api_client.token_authenticate(user=user)
-    create_test_workflow(user, tasks_count=1)
-    invalid_ordering = '<script href="load.some.xss"></script>'
-
-    # act
-    response = api_client.get(
-        f'/v3/tasks?ordering={invalid_ordering}',
-    )
-
-    # assert
-    assert response.status_code == 400
-    message = f'"{invalid_ordering}" is not a valid choice.'
-    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['message'] == message
-    assert response.data['details']['reason'] == message
-    assert response.data['details']['name'] == 'ordering'
-
-
 def test_list__filter_assigned_to__ok(api_client):
 
     # arrange
     user = create_test_user(is_admin=True)
     user2 = create_test_user(account=user.account, email='test@test.test')
-    api_client.token_authenticate(user=user)
     create_test_workflow(user, tasks_count=1)
     workflow = create_test_workflow(user2, tasks_count=1)
     task = workflow.tasks.get(number=1)
+    api_client.token_authenticate(user=user)
 
     # act
     response = api_client.get(f'/v3/tasks?assigned_to={user2.id}')
@@ -1583,24 +1782,6 @@ def test_list__filter_assigned_to__ok(api_client):
     assert response.status_code == 200
     assert len(response.data) == 1
     assert response.data[0]['id'] == task.id
-
-
-def test_list__filter_assigned_to_not_number__validation_error(api_client):
-
-    # arrange
-    user = create_test_user(is_admin=True)
-    api_client.token_authenticate(user=user)
-
-    # act
-    response = api_client.get('/v3/tasks?assigned_to=DROP DATABASE')
-
-    # assert
-    message = 'A valid integer is required.'
-    assert response.status_code == 400
-    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['message'] == message
-    assert response.data['details']['reason'] == message
-    assert response.data['details']['name'] == 'assigned_to'
 
 
 def test_list__filter_assigned_to_null_string__validation_error(api_client):
@@ -1618,25 +1799,6 @@ def test_list__filter_assigned_to_null_string__validation_error(api_client):
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['message'] == message
     assert response.data['details']['reason'] == message
-    assert response.data['details']['name'] == 'assigned_to'
-
-
-def test_list__filter_assigned_to_not_admin__validation_error(api_client):
-
-    # arrange
-    user = create_test_user(is_admin=False)
-    user2 = create_test_user(account=user.account, email='test@test.test')
-    api_client.token_authenticate(user=user)
-    create_test_workflow(user, tasks_count=1)
-
-    # act
-    response = api_client.get(f'/v3/tasks?assigned_to={user2.id}')
-
-    # assert
-    assert response.status_code == 400
-    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['message'] == messages.MSG_PW_0057
-    assert response.data['details']['reason'] == messages.MSG_PW_0057
     assert response.data['details']['name'] == 'assigned_to'
 
 
@@ -1662,24 +1824,17 @@ def test_list__filter_is_completed_false__running_wf__ok(api_client):
 
 
 def test_list__filter_is_completed_false__running_wf_completed_task__ok(
-    mocker,
     api_client,
 ):
 
     # arrange
-    mocker.patch(
-        'src.processes.tasks.webhooks.'
-        'send_task_completed_webhook.delay',
-    )
     user = create_test_user()
     workflow = create_test_workflow(
         name='Workflow with completed task',
         user=user,
         tasks_count=2,
+        active_task_number=2,
     )
-    task = workflow.tasks.get(number=1)
-    api_client.token_authenticate(user)
-    api_client.post(f'/v2/tasks/{task.id}/complete')
     task = workflow.tasks.get(number=2)
     api_client.token_authenticate(user)
 
@@ -1714,10 +1869,7 @@ def test_list__filter_is_completed_false__another_user_task__not_found(
     assert len(response.data) == 0
 
 
-def test_list__filter_is_completed_false__done_wf__not_found(
-    mocker,
-    api_client,
-):
+def test_list__filter_is_completed_false__done_wf__not_found(api_client):
 
     # arrange
     user = create_test_user()
@@ -1727,8 +1879,15 @@ def test_list__filter_is_completed_false__done_wf__not_found(
         tasks_count=1,
     )
     task = workflow.tasks.get(number=1)
+    date_completed = timezone.now()
+    task.status = TaskStatus.COMPLETED
+    task.date_completed = date_completed
+    task.save(update_fields=['status', 'date_completed'])
+    TaskPerformer.objects.filter(task_id=task.id, user_id=user.id).update(
+        is_completed=True,
+        date_completed=date_completed,
+    )
     api_client.token_authenticate(user)
-    api_client.post(f'/v2/tasks/{task.id}/complete')
 
     # act
     response = api_client.get('/v3/tasks?is_completed=false')
@@ -1738,27 +1897,19 @@ def test_list__filter_is_completed_false__done_wf__not_found(
     assert len(response.data) == 0
 
 
-def test_list__filter_is_completed_false_delayed_wf__not_found(
-    mocker,
-    api_client,
-):
+def test_list__filter_is_completed_false_delayed_wf__not_found(api_client):
 
     # arrange
-    mocker.patch(
-        'src.processes.tasks.webhooks.'
-        'send_task_completed_webhook.delay',
-    )
     user = create_test_user()
     workflow = create_test_workflow(
         name='Delayed workflow',
         user=user,
         tasks_count=2,
+        active_task_number=2,
     )
-    task = workflow.tasks.get(number=1)
-    api_client.token_authenticate(user)
-    api_client.post(f'/v2/tasks/{task.id}/complete')
     workflow.status = WorkflowStatus.DELAYED
     workflow.save(update_fields=['status'])
+    api_client.token_authenticate(user)
 
     # act
     response = api_client.get('/v3/tasks?is_completed=false')
@@ -1768,25 +1919,16 @@ def test_list__filter_is_completed_false_delayed_wf__not_found(
     assert len(response.data) == 0
 
 
-def test_list__filter_is_completed_false_terminated_wf__not_found(
-    mocker,
-    api_client,
-):
+def test_list__filter_is_completed_false_terminated_wf__not_found(api_client):
 
     # arrange
-    mocker.patch(
-        'src.processes.tasks.webhooks.'
-        'send_task_completed_webhook.delay',
-    )
     user = create_test_user()
     workflow = create_test_workflow(
         name='Terminated workflow',
         user=user,
         tasks_count=2,
+        active_task_number=2,
     )
-    task = workflow.tasks.get(number=1)
-    api_client.post(f'/v2/tasks/{task.id}/complete')
-    workflow.refresh_from_db()
     service = WorkflowActionService(workflow=workflow, user=user)
     service.terminate_workflow()
     api_client.token_authenticate(user)
@@ -1799,27 +1941,19 @@ def test_list__filter_is_completed_false_terminated_wf__not_found(
     assert len(response.data) == 0
 
 
-def test_list__filter_is_completed_false_ended_wf__not_found(
-    mocker,
-    api_client,
-):
+def test_list__filter_is_completed_false_ended_wf__not_found(api_client):
 
     # arrange
-    mocker.patch(
-        'src.processes.tasks.webhooks.'
-        'send_task_completed_webhook.delay',
-    )
     user = create_test_user()
     workflow = create_test_workflow(
         name='Ended workflow',
         user=user,
         tasks_count=2,
+        active_task_number=2,
     )
-    task = workflow.tasks.get(number=1)
-    api_client.token_authenticate(user)
-    api_client.post(f'/v2/tasks/{task.id}/complete')
     workflow.status = WorkflowStatus.DONE
     workflow.save()
+    api_client.token_authenticate(user)
 
     # act
     response = api_client.get('/v3/tasks?is_completed=false')
@@ -1827,26 +1961,6 @@ def test_list__filter_is_completed_false_ended_wf__not_found(
     # assert
     assert response.status_code == 200
     assert len(response.data) == 0
-
-
-def test_list__filter_is_completed_not_bool__validation_error(api_client):
-
-    # arrange
-    user = create_test_user()
-    api_client.token_authenticate(user=user)
-
-    # act
-    response = api_client.get(
-        '/v3/tasks?is_completed=<script src="some.xss"></script>',
-    )
-
-    # assert
-    message = 'Must be a valid boolean.'
-    assert response.status_code == 400
-    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['message'] == message
-    assert response.data['details']['reason'] == message
-    assert response.data['details']['name'] == 'is_completed'
 
 
 def test_list__filter_is_completed_true__running_wf__not_found(api_client):
@@ -1869,24 +1983,19 @@ def test_list__filter_is_completed_true__running_wf__not_found(api_client):
 
 
 def test_list__filter_is_completed_true__running_wf_completed_task__ok(
-    mocker,
     api_client,
 ):
 
     # arrange
-    mocker.patch(
-        'src.processes.tasks.webhooks.'
-        'send_task_completed_webhook.delay',
-    )
     user = create_test_user()
     workflow = create_test_workflow(
         name='Workflow with completed task',
         user=user,
         tasks_count=2,
+        active_task_number=2,
     )
     task = workflow.tasks.get(number=1)
     api_client.token_authenticate(user)
-    api_client.post(f'/v2/tasks/{task.id}/complete')
 
     # act
     response = api_client.get('/v3/tasks?is_completed=true')
@@ -1898,15 +2007,10 @@ def test_list__filter_is_completed_true__running_wf_completed_task__ok(
 
 
 def test_list__filter_is_completed_true__another_user_task__not_found(
-    mocker,
     api_client,
 ):
 
     # arrange
-    mocker.patch(
-        'src.processes.tasks.webhooks.'
-        'send_task_completed_webhook.delay',
-    )
     user = create_test_user()
     user_2 = create_test_user(email='test@test.test')
     workflow = create_test_workflow(
@@ -1915,8 +2019,14 @@ def test_list__filter_is_completed_true__another_user_task__not_found(
         tasks_count=1,
     )
     task = workflow.tasks.get(number=1)
-    api_client.token_authenticate(user_2)
-    api_client.post(f'/v2/tasks/{task.id}/complete')
+    date_completed = timezone.now()
+    task.status = TaskStatus.COMPLETED
+    task.date_completed = date_completed
+    task.save(update_fields=['status', 'date_completed'])
+    TaskPerformer.objects.filter(task_id=task.id, user_id=user_2.id).update(
+        is_completed=True,
+        date_completed=date_completed,
+    )
     api_client.token_authenticate(user)
 
     # act
@@ -1927,16 +2037,9 @@ def test_list__filter_is_completed_true__another_user_task__not_found(
     assert len(response.data) == 0
 
 
-def test_list__filter_is_completed_true__done_wf__ok(
-    mocker,
-    api_client,
-):
+def test_list__filter_is_completed_true__done_wf__ok(api_client):
 
     # arrange
-    mocker.patch(
-        'src.processes.tasks.webhooks.'
-        'send_task_completed_webhook.delay',
-    )
     user = create_test_user()
     workflow = create_test_workflow(
         name='Completed workflow',
@@ -1944,9 +2047,15 @@ def test_list__filter_is_completed_true__done_wf__ok(
         tasks_count=1,
     )
     task = workflow.tasks.get(number=1)
+    date_completed = timezone.now()
+    task.status = TaskStatus.COMPLETED
+    task.date_completed = date_completed
+    task.save(update_fields=['status', 'date_completed'])
+    TaskPerformer.objects.filter(task_id=task.id, user_id=user.id).update(
+        is_completed=True,
+        date_completed=date_completed,
+    )
     api_client.token_authenticate(user)
-    api_client.post(f'/v2/tasks/{task.id}/complete')
-    task = workflow.tasks.get(number=1)
 
     # act
     response = api_client.get('/v3/tasks?is_completed=true')
@@ -1957,29 +2066,20 @@ def test_list__filter_is_completed_true__done_wf__ok(
     assert response.data[0]['id'] == task.id
 
 
-def test_list__filter_is_completed_true__delayed_wf__ok(
-    mocker,
-    api_client,
-):
+def test_list__filter_is_completed_true__delayed_wf__ok(api_client):
 
     # arrange
-    mocker.patch(
-        'src.processes.tasks.webhooks.'
-        'send_task_completed_webhook.delay',
-    )
     user = create_test_user()
     workflow = create_test_workflow(
         name='Delayed workflow',
         user=user,
         tasks_count=2,
+        active_task_number=2,
     )
-    task = workflow.tasks.get(number=1)
-    api_client.token_authenticate(user)
-    api_client.post(f'/v2/tasks/{task.id}/complete')
     workflow.status = WorkflowStatus.DELAYED
     workflow.save(update_fields=['status'])
-    workflow.refresh_from_db()
     task = workflow.tasks.get(number=1)
+    api_client.token_authenticate(user)
 
     # act
     response = api_client.get('/v3/tasks?is_completed=true')
@@ -1990,28 +2090,19 @@ def test_list__filter_is_completed_true__delayed_wf__ok(
     assert response.data[0]['id'] == task.id
 
 
-def test_list__filter_is_completed_true_terminated_wf__not_found(
-    mocker,
-    api_client,
-):
+def test_list__filter_is_completed_true_terminated_wf__not_found(api_client):
 
     # arrange
-    mocker.patch(
-        'src.processes.tasks.webhooks.'
-        'send_task_completed_webhook.delay',
-    )
     user = create_test_user()
     workflow = create_test_workflow(
         name='Terminated workflow',
         user=user,
         tasks_count=2,
+        active_task_number=2,
     )
-    task = workflow.tasks.get(number=1)
-    api_client.token_authenticate(user)
-    api_client.post(f'/v2/tasks/{task.id}/complete')
-    workflow.refresh_from_db()
     service = WorkflowActionService(workflow=workflow, user=user)
     service.terminate_workflow()
+    api_client.token_authenticate(user)
 
     # act
     response = api_client.get('/v3/tasks?is_completed=true')
@@ -2021,28 +2112,20 @@ def test_list__filter_is_completed_true_terminated_wf__not_found(
     assert len(response.data) == 0
 
 
-def test_list__filter_is_completed_true_ended_wf__ok(
-    mocker,
-    api_client,
-):
+def test_list__filter_is_completed_true_ended_wf__ok(api_client):
 
     # arrange
-    mocker.patch(
-        'src.processes.tasks.webhooks.'
-        'send_task_completed_webhook.delay',
-    )
     user = create_test_user()
     workflow = create_test_workflow(
         name='Ended workflow',
         user=user,
         tasks_count=2,
+        active_task_number=2,
     )
-    task = workflow.tasks.get(number=1)
-    api_client.token_authenticate(user)
-    api_client.post(f'/v2/tasks/{task.id}/complete')
     workflow.status = WorkflowStatus.DONE
     workflow.save()
     task = workflow.tasks.get(number=1)
+    api_client.token_authenticate(user)
 
     # act
     response = api_client.get('/v3/tasks?is_completed=true')
@@ -2057,7 +2140,6 @@ def test_list__filter_template_id__ok(api_client):
 
     # arrange
     user = create_test_user()
-    api_client.token_authenticate(user=user)
     template_1 = create_test_template(user, is_active=True)
     template_2 = create_test_template(user, is_active=True)
 
@@ -2066,6 +2148,7 @@ def test_list__filter_template_id__ok(api_client):
     workflow_2 = create_test_workflow(user, template=template_1, tasks_count=1)
     task_21 = workflow_2.tasks.get(number=1)
     create_test_workflow(user, template=template_2, tasks_count=1)
+    api_client.token_authenticate(user=user)
 
     # act
     response = api_client.get(f'/v3/tasks?template_id={template_1.id}')
@@ -2075,24 +2158,6 @@ def test_list__filter_template_id__ok(api_client):
     assert len(response.data) == 2
     assert response.data[0]['id'] == task_21.id
     assert response.data[1]['id'] == task_11.id
-
-
-def test_list__filter_template_id_not_number__validation_error(api_client):
-
-    # arrange
-    user = create_test_user()
-    api_client.token_authenticate(user=user)
-
-    # act
-    response = api_client.get("/v3/tasks?template_id=' OR 1='1")
-
-    # assert
-    message = 'A valid integer is required.'
-    assert response.status_code == 400
-    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['message'] == message
-    assert response.data['details']['reason'] == message
-    assert response.data['details']['name'] == 'template_id'
 
 
 def test_list__filter_template_id_null_string__validation_error(api_client):
@@ -2159,7 +2224,6 @@ def test_list__filter_template_task_api_name__ok(api_client):
 
     # arrange
     user = create_test_user()
-    api_client.token_authenticate(user=user)
     template_1 = create_test_template(user, is_active=True)
     template_2 = create_test_template(user, is_active=True)
 
@@ -2168,6 +2232,7 @@ def test_list__filter_template_task_api_name__ok(api_client):
     workflow_2 = create_test_workflow(user, template=template_1, tasks_count=1)
     task_21 = workflow_2.tasks.get(number=1)
     create_test_workflow(user, template=template_2, tasks_count=1)
+    api_client.token_authenticate(user=user)
 
     # act
     response = api_client.get(
@@ -2188,9 +2253,9 @@ def test_list__filter_template_task_api_name__not_found(api_client):
 
     # arrange
     user = create_test_user()
-    api_client.token_authenticate(user=user)
     template_1 = create_test_template(user, is_active=True)
     create_test_workflow(user, template=template_1, tasks_count=1)
+    api_client.token_authenticate(user=user)
 
     # act
     response = api_client.get(
@@ -2209,33 +2274,38 @@ def test_list__pagination__ok(api_client):
 
     # arrange
     user = create_test_user()
-    api_client.token_authenticate(user=user)
-    create_test_workflow(user, tasks_count=1)
+    workflow_1 = create_test_workflow(user, tasks_count=1)
+    task_11 = workflow_1.tasks.get(number=1)
     workflow_2 = create_test_workflow(user, tasks_count=1)
     task_21 = workflow_2.tasks.get(number=1)
     create_test_workflow(user, tasks_count=1)
+    api_client.token_authenticate(user=user)
 
     # act
-    response = api_client.get('/v3/tasks?limit=1&offset=1')
+    response = api_client.get('/v3/tasks?limit=2&offset=1')
 
     # assert
     assert response.status_code == 200
-    assert len(response.data['results']) == 1
+    assert response.data['count'] == 3
+    assert len(response.data['results']) == 2
     assert response.data['results'][0]['id'] == task_21.id
+    assert response.data['results'][1]['id'] == task_11.id
 
 
 def test_list__exclude_delayed_tasks__ok(api_client):
 
     # arrange
     user = create_test_user()
-    api_client.token_authenticate(user=user)
     delayed_workflow = create_test_workflow(
         user=user,
         tasks_count=2,
         with_delay=True,
+        active_task_number=2,
     )
-    task = delayed_workflow.tasks.get(number=1)
-    api_client.post(f'/v2/tasks/{task.id}/complete')
+    task = delayed_workflow.tasks.get(number=2)
+    task.status = TaskStatus.DELAYED
+    task.save(update_fields=['status'])
+    api_client.token_authenticate(user=user)
 
     # act
     response = api_client.get('/v3/tasks')
@@ -2246,6 +2316,7 @@ def test_list__exclude_delayed_tasks__ok(api_client):
 
 
 def test_list__uml_backslash_search__ok(api_client):
+
     # arrange
     user = create_test_owner()
     workflow = create_test_workflow(
@@ -2256,14 +2327,12 @@ def test_list__uml_backslash_search__ok(api_client):
     task = workflow.tasks.first()
     task.name = 'Create UML diagrams'
     task.save()
-
     WorkflowEventService.comment_created_event(
         user=user,
         task=task,
         text='create UML class',
         after_create_actions=False,
     )
-
     other_workflow = create_test_workflow(
         user=user,
         tasks_count=1,
@@ -2275,27 +2344,22 @@ def test_list__uml_backslash_search__ok(api_client):
         text='task',
         after_create_actions=False,
     )
-
+    search_query = "'uml\\':"
     api_client.token_authenticate(user)
 
     # act
-    search_query = "'uml\\':"
-
     response = api_client.get(
         '/v3/tasks',
         data={
             'search': search_query,
-            'limit': 20,
-            'offset': 0,
             'ordering': 'date',
         },
     )
 
     # assert
     assert response.status_code == 200
-    results = response.data['results']
-    assert len(results) == 1
-    assert results[0]['id'] == task.id
+    assert len(response.data) == 1
+    assert response.data[0]['id'] == task.id
 
 
 @pytest.mark.parametrize(
@@ -2309,6 +2373,7 @@ def test_list__uml_backslash_search__ok(api_client):
     ],
 )
 def test_list__sql_injection_in_search__ok(api_client, injection):
+
     # arrange
     user = create_test_owner()
     workflow = create_test_workflow(user=user, tasks_count=1)
@@ -2322,12 +2387,107 @@ def test_list__sql_injection_in_search__ok(api_client, injection):
         '/v3/tasks',
         data={
             'search': injection,
-            'limit': 10,
-            'offset': 0,
             'ordering': 'date',
         },
     )
 
     # assert
     assert response.status_code == 200
-    assert len(response.data['results']) == 1
+    assert len(response.data) == 1
+
+
+def test_list__invalid_ordering__validation_error(api_client):
+
+    # arrange
+    user = create_test_user()
+    create_test_workflow(user, tasks_count=1)
+    invalid_ordering = '<script href="load.some.xss"></script>'
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get(
+        f'/v3/tasks?ordering={invalid_ordering}',
+    )
+
+    # assert
+    assert response.status_code == 400
+    message = f'"{invalid_ordering}" is not a valid choice.'
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == message
+    assert response.data['details']['reason'] == message
+    assert response.data['details']['name'] == 'ordering'
+
+
+def test_list__filter_assigned_to_not_number__validation_error(api_client):
+
+    # arrange
+    user = create_test_user(is_admin=True)
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get('/v3/tasks?assigned_to=DROP DATABASE')
+
+    # assert
+    message = 'A valid integer is required.'
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == message
+    assert response.data['details']['reason'] == message
+    assert response.data['details']['name'] == 'assigned_to'
+
+
+def test_list__filter_assigned_to_not_admin__validation_error(api_client):
+
+    # arrange
+    user = create_test_user(is_admin=False)
+    user2 = create_test_user(account=user.account, email='test@test.test')
+    create_test_workflow(user, tasks_count=1)
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get(f'/v3/tasks?assigned_to={user2.id}')
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == messages.MSG_PW_0057
+    assert response.data['details']['reason'] == messages.MSG_PW_0057
+    assert response.data['details']['name'] == 'assigned_to'
+
+
+def test_list__filter_is_completed_not_bool__validation_error(api_client):
+
+    # arrange
+    user = create_test_user()
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get(
+        '/v3/tasks?is_completed=<script src="some.xss"></script>',
+    )
+
+    # assert
+    message = 'Must be a valid boolean.'
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == message
+    assert response.data['details']['reason'] == message
+    assert response.data['details']['name'] == 'is_completed'
+
+
+def test_list__filter_template_id_not_number__validation_error(api_client):
+
+    # arrange
+    user = create_test_user()
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get("/v3/tasks?template_id=' OR 1='1")
+
+    # assert
+    message = 'A valid integer is required.'
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == message
+    assert response.data['details']['reason'] == message
+    assert response.data['details']['name'] == 'template_id'

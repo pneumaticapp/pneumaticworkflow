@@ -24,6 +24,7 @@ from src.generics.paginations import DefaultPagination
 from src.processes.enums import (
     OwnerRole,
     OwnerType,
+    PerformerType,
     TaskStatus,
     WorkflowApiStatus,
     WorkflowOrdering,
@@ -31,9 +32,8 @@ from src.processes.enums import (
 )
 from src.processes.models.workflows.kickoff import KickoffValue
 from src.processes.models.workflows.fields import FieldSelection, TaskField
-from src.processes.models.workflows.task import TaskPerformer
+from src.processes.models.workflows.task import Task, TaskPerformer
 from src.processes.messages import workflow as messages
-from src.processes.models.workflows.task import Task
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.paginations import WorkflowListPagination
 from src.processes.serializers.templates.template import (
@@ -197,7 +197,7 @@ class WorkflowCreateSerializer(
             user.is_account_owner or
             value.taskperformer_set.by_user_or_group(
                 user.id,
-            ).exclude_directly_deleted().exists()
+            ).type_user_or_group().exclude_directly_deleted().exists()
         )
         if not allowed_performer:
             raise ValidationError(messages.MSG_PW_0075)
@@ -487,9 +487,12 @@ class WorkflowDetailsSerializer(
         is_performer = TaskPerformer.objects.filter(
             task__workflow=instance,
             task__account_id=user.account_id,
-        ).exclude_directly_deleted().filter(
-            Q(user_id=user.id) |
-            Q(group__users__id=user.id),
+        ).type_user_or_group().filter(
+            Q(user_id=user.id, type=PerformerType.USER)
+            | Q(
+                type=PerformerType.GROUP,
+                group__users__id=user.id,
+            ),
         ).exists()
         if is_performer:
             return False

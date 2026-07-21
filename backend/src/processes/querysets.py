@@ -7,8 +7,10 @@ from django.db import transaction
 from django.db.models import (
     Avg,
     Count,
+    Exists,
     F,
     Max,
+    OuterRef,
     Prefetch,
     Q,
 )
@@ -671,6 +673,7 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
                             queryset=(
                                 TaskPerformer.objects
                                 .exclude_directly_deleted()
+                                .type_user_or_group()
                                 .select_related('group')
                             ),
                         ),
@@ -723,7 +726,7 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
         return raw_qst
 
 
-class TasksQuerySet(TasksBaseQuerySet):
+class TaskQuerySet(TasksBaseQuerySet):
 
     def by_number(self, number):
         return self.filter(number=number)
@@ -755,6 +758,29 @@ class TasksQuerySet(TasksBaseQuerySet):
         return self.filter(date_first_started__isnull=False)
 
     def active_for_user(self, user_id):
+        """
+        Active tasks in running workflows assigned to the user
+        (directly or via group), excluding deleted performers
+        and tasks already completed by the user (USER or GROUP_USER).
+
+        When require_completion_by_all is True, only tasks where
+        the user has not yet completed their part are included.
+        """
+        from src.processes.models.workflows.task import TaskPerformer
+
+        user_already_completed = (
+            TaskPerformer.objects
+            .filter(task_id=OuterRef('pk'))
+            .exclude(directly_status=DirectlyStatus.DELETED)
+            .filter(
+                user_id=user_id,
+                is_completed=True,
+                type__in=(
+                    PerformerType.USER,
+                    PerformerType.GROUP_USER,
+                ),
+            )
+        )
         return self.filter(
             Q(
                 Q(
@@ -766,10 +792,10 @@ class TasksQuerySet(TasksBaseQuerySet):
             ) & Q(
                 (
                     Q(
-                        taskperformer__group__users__id=user_id,
-                        taskperformer__group__is_deleted=False,
+                        taskperformer__user_id=user_id,
+                        taskperformer__type=PerformerType.USER,
                     ) |
-                    Q(taskperformer__user_id=user_id)
+                    Q(taskperformer__group__users__id=user_id)
                 ) &
                 Q(
                     status=TaskStatus.ACTIVE,
@@ -780,6 +806,10 @@ class TasksQuerySet(TasksBaseQuerySet):
                     DirectlyStatus.DELETED,
                 ),
             ),
+        ).annotate(
+            _user_already_completed=Exists(user_already_completed),
+        ).filter(
+            _user_already_completed=False,
         )
 
     def active_for_group(self, group_id):
@@ -792,15 +822,9 @@ class TasksQuerySet(TasksBaseQuerySet):
                     taskperformer__is_completed=False,
                 ),
             ) & Q(
-                (
-                    Q(taskperformer__group_id=group_id) |
-                    Q(taskperformer__type=PerformerType.GROUP)
-                ) &
-                Q(
-                    workflow__current_task=F('number'),
-                    status=TaskStatus.ACTIVE,
-                    workflow__status=WorkflowStatus.RUNNING,
-                ),
+                taskperformer__group_id=group_id,
+                status=TaskStatus.ACTIVE,
+                workflow__status=WorkflowStatus.RUNNING,
             ) & ~Q(
                 taskperformer__directly_status__in=(
                     DirectlyStatus.DELETED,
@@ -814,14 +838,13 @@ class TasksQuerySet(TasksBaseQuerySet):
     def on_performer(self, user_id: int):
         return self.filter(
             taskperformer__user_id=user_id,
+            taskperformer__type=PerformerType.USER,
         )
 
     def exclude_directly_deleted(self):
         """Exclude tasks where performer has DELETED directly_status."""
         return self.exclude(
-            taskperformer__directly_status__in=(
-                DirectlyStatus.DELETED,
-            ),
+            taskperformer__directly_status=DirectlyStatus.DELETED,
         )
 
     def apd_status(self):
@@ -1063,7 +1086,7 @@ class TemplateDraftQuerySet(BaseQuerySet):
         )
 
 
-class TaskPerformerQuerySet(BaseHardQuerySet):
+class TaskPerformerQuerySet(BaseQuerySet, BaseHardQuerySet):
 
     def with_tasks_after(self, task):
         return self.filter(task__number__gte=task.number)
@@ -1085,6 +1108,31 @@ class TaskPerformerQuerySet(BaseHardQuerySet):
 
     def completed(self):
         return self.filter(is_completed=True)
+
+    def type_user(self):
+        return self.filter(type=PerformerType.USER)
+
+    def type_group(self):
+        return self.filter(type=PerformerType.GROUP)
+
+    def type_group_user(self):
+        return self.filter(type=PerformerType.GROUP_USER)
+
+    def type_user_or_group(self):
+        return self.filter(
+            type__in=(
+                PerformerType.USER,
+                PerformerType.GROUP,
+            ),
+        )
+
+    def type_user_or_group_user(self):
+        return self.filter(
+            type__in=(
+                PerformerType.USER,
+                PerformerType.GROUP_USER,
+            ),
+        )
 
     def completed_task(self):
         return self.filter(task__status=TaskStatus.COMPLETED)
@@ -1140,34 +1188,6 @@ class TaskPerformerQuerySet(BaseHardQuerySet):
         )
         return set(direct_users).union(set(group_users))
 
-    def get_user_ids_emails_subscriber_set(self):
-        direct_users = self.filter(user__isnull=False).values_list(
-            'user_id',
-            'user__email',
-            'user__is_new_tasks_subscriber',
-        )
-        group_users = self.filter(group__isnull=False).values_list(
-            'group__users__id',
-            'group__users__email',
-            'group__users__is_new_tasks_subscriber',
-        )
-        return set(direct_users).union(set(group_users))
-
-    def get_user_ids_name_emails_subscriber_set(self):
-        direct_users = self.filter(user__isnull=False).values_list(
-            'user_id',
-            'user__email',
-            'user__first_name',
-            'user__is_new_tasks_subscriber',
-        )
-        group_users = self.filter(group__isnull=False).values_list(
-            'group__users__id',
-            'group__users__email',
-            'group__users__first_name',
-            'group__users__is_new_tasks_subscriber',
-        )
-        return set(direct_users).union(set(group_users))
-
     def group_ids(self):
         qst = self.filter(
             type=PerformerType.GROUP,
@@ -1188,13 +1208,9 @@ class TaskPerformerQuerySet(BaseHardQuerySet):
         return self.filter(user__type=UserType.GUEST)
 
     def users(self):
-        direct_users = self.filter(
-            user__isnull=False,
-            user__type=UserType.USER,
-        )
+        direct_users = self.filter(user__type=UserType.USER)
         group_users = (
-            self.filter(group__isnull=False)
-            .filter(
+            self.filter(
                 group__users__isnull=False,
                 group__users__type=UserType.USER,
             )

@@ -1,5 +1,7 @@
+from django.db.models import Count, Q
+
 from src.accounts.models import User
-from src.processes.enums import TaskStatus
+from src.processes.enums import PerformerType, TaskStatus
 from src.processes.models.templates.task import TaskTemplate
 from src.processes.models.workflows.task import Task
 
@@ -10,9 +12,24 @@ def user_is_last_performer(user: User):
         where user is the last performer """
 
     if (
-        Task.objects.on_performer(user.id)
+        Task.objects.filter(
+            taskperformer__user_id=user.id,
+            taskperformer__type=PerformerType.USER,
+            taskperformer__is_deleted=False,
+        )
         .exclude_directly_deleted()
-        .raw_performers_count(1)
+        .annotate(
+            raw_performers_count=Count(
+                'raw_performers',
+                filter=Q(raw_performers__is_deleted=False),
+                distinct=True,
+            ),
+        )
+        .filter(raw_performers_count=1)
+        .filter(
+            raw_performers__user_id=user.id,
+            raw_performers__is_deleted=False,
+        )
         .filter(
             status__in=(
                 TaskStatus.PENDING,

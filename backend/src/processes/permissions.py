@@ -8,6 +8,7 @@ from src.accounts.enums import UserType
 from src.processes.enums import (
     OwnerRole,
     OwnerType,
+    PerformerType,
     PresetType,
 )
 from src.processes.messages.template import (
@@ -27,6 +28,22 @@ from src.processes.models.workflows.workflow import Workflow
 from src.processes.queries import (
     WorkflowPermissionQuery,
 )
+
+
+def _assignment_performer_q(user_id: int, prefix: str) -> Q:
+
+    """ Match assignment performers only (USER / GROUP), not GROUP_USER. """
+
+    return (
+        Q(**{
+            f'{prefix}__user_id': user_id,
+            f'{prefix}__type': PerformerType.USER,
+        })
+        | Q(**{
+            f'{prefix}__type': PerformerType.GROUP,
+            f'{prefix}__group__users__id': user_id,
+        })
+    )
 
 
 class TemplateAdminOwnerPermission(BasePermission):
@@ -243,7 +260,11 @@ class WorkflowMemberPermission(BasePermission):
             pk=workflow_id,
             account_id=user.account_id,
         ).filter(
-            WorkflowPermissionQuery.viewer_q(user_id),
+            _assignment_performer_q(
+                user_id=user.id,
+                prefix='tasks__taskperformer',
+            )
+            | Q(WorkflowPermissionQuery.viewer_q(user_id)),
         ).exists()
 
 
@@ -261,6 +282,7 @@ class TaskRevertPermission(BasePermission):
                 TaskPerformer.objects
                 .by_task(task_id)
                 .by_user_or_group(request.user.id)
+                .type_user_or_group()
                 .exclude_directly_deleted()
             )
             return (
@@ -283,6 +305,7 @@ class TaskCompletePermission(BasePermission):
                 TaskPerformer.objects
                 .by_task(task_id)
                 .by_user_or_group(request.user.id)
+                .type_user_or_group()
                 .exclude_directly_deleted()
             )
             return (
@@ -346,8 +369,14 @@ class TaskWorkflowMemberPermission(BasePermission):
             id=task_id,
             account_id=user.account_id,
         ).filter(
-            WorkflowPermissionQuery.viewer_q(
-                user_id, prefix='workflow__',
+            _assignment_performer_q(
+                user_id=user.id,
+                prefix='workflow__tasks__taskperformer',
+            )
+            | Q(
+                WorkflowPermissionQuery.viewer_q(
+                    user_id, prefix='workflow__',
+                ),
             ),
         ).exists()
 
@@ -414,7 +443,11 @@ class TaskCommentPermission(BasePermission):
         )
 
         is_workflow_member = base_qst.filter(
-            WorkflowPermissionQuery.viewer_q(user_id),
+            WorkflowPermissionQuery.viewer_q(user_id)
+            | _assignment_performer_q(
+                user_id=user_id,
+                prefix='tasks__taskperformer',
+            ),
         ).exists()
         if is_workflow_member:
             return True
@@ -454,7 +487,11 @@ class WorkflowCommentPermission(BasePermission):
         base_qst = Workflow.objects.by_id(workflow_id).on_account(account_id)
 
         is_workflow_member = base_qst.filter(
-            WorkflowPermissionQuery.viewer_q(user_id),
+            WorkflowPermissionQuery.viewer_q(user_id)
+            | _assignment_performer_q(
+                user_id=user_id,
+                prefix='tasks__taskperformer',
+            ),
         ).exists()
         if is_workflow_member:
             return True
@@ -628,6 +665,10 @@ class CommentReactionPermission(BasePermission):
         is_member = qst.filter(
             WorkflowPermissionQuery.viewer_q(
                 user_id, prefix='workflow__',
+            )
+            | _assignment_performer_q(
+                user_id=user.id,
+                prefix='workflow__tasks__taskperformer',
             ),
         ).exists()
         if is_member:
