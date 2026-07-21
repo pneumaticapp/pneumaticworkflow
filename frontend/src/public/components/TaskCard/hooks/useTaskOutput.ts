@@ -12,6 +12,9 @@ import {
   getOutputFromStorage,
   removeOutputFromLocalStorage,
   fieldsetsStorage,
+  outputStorage,
+  TFieldsetDraftMetadata,
+  TOutputDraftMetadata,
 } from '../utils/storageOutputs';
 import { getTaskOutputFingerprint } from '../utils/getTaskOutputFingerprint';
 
@@ -21,10 +24,12 @@ export function useTaskOutput(task: ITask) {
   const pendingStorageOutputRef = useRef<{
     taskId: number;
     output: IExtraField[];
+    metadata: TOutputDraftMetadata;
   } | null>(null);
   const pendingStorageFieldsetsRef = useRef<{
     taskId: number;
     fieldsets: IFieldsetRuntime[];
+    metadata: TFieldsetDraftMetadata;
   } | null>(null);
   const saveOutputsToStorageDebounced = useMemo(
     () =>
@@ -35,7 +40,11 @@ export function useTaskOutput(task: ITask) {
           return;
         }
 
-        addOrUpdateStorageOutput(pendingStorageOutput.taskId, pendingStorageOutput.output);
+        addOrUpdateStorageOutput(
+          pendingStorageOutput.taskId,
+          pendingStorageOutput.output,
+          pendingStorageOutput.metadata,
+        );
         pendingStorageOutputRef.current = null;
       }),
     [],
@@ -46,7 +55,11 @@ export function useTaskOutput(task: ITask) {
 
       if (!pendingStorageFieldsets) return;
 
-      fieldsetsStorage.save(pendingStorageFieldsets.taskId, pendingStorageFieldsets.fieldsets);
+      fieldsetsStorage.save(
+        pendingStorageFieldsets.taskId,
+        pendingStorageFieldsets.fieldsets,
+        pendingStorageFieldsets.metadata,
+      );
       pendingStorageFieldsetsRef.current = null;
     }),
     [],
@@ -92,11 +105,31 @@ export function useTaskOutput(task: ITask) {
       const pendingStorageOutput = pendingStorageOutputRef.current;
 
       if (pendingStorageOutput) {
-        addOrUpdateStorageOutput(pendingStorageOutput.taskId, pendingStorageOutput.output);
+        addOrUpdateStorageOutput(
+          pendingStorageOutput.taskId,
+          pendingStorageOutput.output,
+          pendingStorageOutput.metadata,
+        );
         pendingStorageOutputRef.current = null;
       }
 
-      storageOutput = getOutputFromStorage(id);
+      const storedEntry = outputStorage.getEntry(id);
+      if (storedEntry?.metadata) {
+        if (storedEntry.metadata.dateStarted !== dateStarted) {
+          removeOutputFromLocalStorage(id);
+        } else {
+          storageOutput = storedEntry.data.filter(
+            (field) => storedEntry.metadata?.fieldFingerprints[field.apiName]
+              === fieldFingerprints[field.apiName],
+          );
+          addOrUpdateStorageOutput(id, storageOutput, { dateStarted, fieldFingerprints });
+        }
+      } else {
+        storageOutput = storedEntry?.data;
+        if (storageOutput) {
+          addOrUpdateStorageOutput(id, storageOutput, { dateStarted, fieldFingerprints });
+        }
+      }
     } else if (isTaskRestarted) {
       pendingStorageOutputRef.current = null;
       removeOutputFromLocalStorage(id);
@@ -111,7 +144,11 @@ export function useTaskOutput(task: ITask) {
       );
 
       if (savedOutput) {
-        addOrUpdateStorageOutput(id, storageOutput ?? []);
+        addOrUpdateStorageOutput(
+          id,
+          storageOutput ?? [],
+          { dateStarted, fieldFingerprints },
+        );
         pendingStorageOutputRef.current = null;
       }
     }
@@ -150,10 +187,35 @@ export function useTaskOutput(task: ITask) {
     if (isNewTask) {
       const pendingStorageFieldsets = pendingStorageFieldsetsRef.current;
       if (pendingStorageFieldsets) {
-        fieldsetsStorage.save(pendingStorageFieldsets.taskId, pendingStorageFieldsets.fieldsets);
+        fieldsetsStorage.save(
+          pendingStorageFieldsets.taskId,
+          pendingStorageFieldsets.fieldsets,
+          pendingStorageFieldsets.metadata,
+        );
         pendingStorageFieldsetsRef.current = null;
       }
-      savedFieldsets = fieldsetsStorage.get(id);
+
+      const storedEntry = fieldsetsStorage.getEntry(id);
+      if (storedEntry?.metadata) {
+        if (storedEntry.metadata.dateStarted !== dateStarted) {
+          fieldsetsStorage.remove(id);
+        } else {
+          savedFieldsets = storedEntry.data
+            .map((fieldset) => ({
+              ...fieldset,
+              fields: fieldset.fields.filter((field) =>
+                storedEntry.metadata?.fieldFingerprints[fieldset.apiNameBinding]?.[field.apiName]
+                  === fieldFingerprints[fieldset.apiNameBinding]?.[field.apiName]),
+            }))
+            .filter((fieldset) => fieldset.fields.length > 0);
+          fieldsetsStorage.save(id, savedFieldsets, { dateStarted, fieldFingerprints });
+        }
+      } else {
+        savedFieldsets = storedEntry?.data;
+        if (savedFieldsets) {
+          fieldsetsStorage.save(id, savedFieldsets, { dateStarted, fieldFingerprints });
+        }
+      }
     } else if (isTaskRestarted) {
       saveFieldsetsToStorageDebounced.cancel();
       pendingStorageFieldsetsRef.current = null;
@@ -174,7 +236,7 @@ export function useTaskOutput(task: ITask) {
           }))
           .filter((fieldset) => fieldset.fields.length > 0);
         saveFieldsetsToStorageDebounced.cancel();
-        fieldsetsStorage.save(id, savedFieldsets);
+        fieldsetsStorage.save(id, savedFieldsets, { dateStarted, fieldFingerprints });
         pendingStorageFieldsetsRef.current = null;
       }
     }
@@ -209,12 +271,20 @@ export function useTaskOutput(task: ITask) {
 
     const pendingStorageOutput = pendingStorageOutputRef.current;
     if (pendingStorageOutput) {
-      addOrUpdateStorageOutput(pendingStorageOutput.taskId, pendingStorageOutput.output);
+      addOrUpdateStorageOutput(
+        pendingStorageOutput.taskId,
+        pendingStorageOutput.output,
+        pendingStorageOutput.metadata,
+      );
     }
 
     const pendingStorageFieldsets = pendingStorageFieldsetsRef.current;
     if (pendingStorageFieldsets) {
-      fieldsetsStorage.save(pendingStorageFieldsets.taskId, pendingStorageFieldsets.fieldsets);
+      fieldsetsStorage.save(
+        pendingStorageFieldsets.taskId,
+        pendingStorageFieldsets.fieldsets,
+        pendingStorageFieldsets.metadata,
+      );
     }
 
     pendingStorageOutputRef.current = null;
@@ -230,7 +300,14 @@ export function useTaskOutput(task: ITask) {
     setOutputValues((previousOutputFields) => {
       const newFields = getEditedFields(previousOutputFields, apiName, changedProps);
 
-      pendingStorageOutputRef.current = { taskId: task.id, output: newFields };
+      pendingStorageOutputRef.current = {
+        taskId: task.id,
+        output: newFields,
+        metadata: {
+          dateStarted: task.dateStarted,
+          fieldFingerprints: { ...outputSyncStateRef.current.fieldFingerprints },
+        },
+      };
       saveOutputsToStorageDebounced();
 
       return newFields;
@@ -244,7 +321,14 @@ export function useTaskOutput(task: ITask) {
         fields: getEditedFields(fieldset.fields, apiName, changedProps),
       }));
 
-      pendingStorageFieldsetsRef.current = { taskId: task.id, fieldsets: nextFieldsets };
+      pendingStorageFieldsetsRef.current = {
+        taskId: task.id,
+        fieldsets: nextFieldsets,
+        metadata: {
+          dateStarted: task.dateStarted,
+          fieldFingerprints: { ...fieldsetSyncStateRef.current.fieldFingerprints },
+        },
+      };
       saveFieldsetsToStorageDebounced();
       return nextFieldsets;
     });

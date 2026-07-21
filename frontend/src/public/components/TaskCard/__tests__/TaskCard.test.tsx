@@ -16,7 +16,8 @@ jest.mock('../utils/storageOutputs', () => ({
   getOutputFromStorage: jest.fn(() => undefined),
   addOrUpdateStorageOutput: jest.fn(),
   removeOutputFromLocalStorage: jest.fn(),
-  fieldsetsStorage: { get: jest.fn(), save: jest.fn() },
+  outputStorage: { getEntry: jest.fn() },
+  fieldsetsStorage: { get: jest.fn(), getEntry: jest.fn(), save: jest.fn() },
 }));
 
 jest.mock('../../../utils/autoFocusFirstField', () => ({
@@ -447,7 +448,11 @@ describe('TaskCard', () => {
         });
 
         expect(addOrUpdateStorageOutput).toHaveBeenCalledTimes(1);
-        expect(addOrUpdateStorageOutput).toHaveBeenCalledWith(baseTask.id, []);
+        expect(addOrUpdateStorageOutput).toHaveBeenCalledWith(
+          baseTask.id,
+          [],
+          expect.any(Object),
+        );
       } finally {
         jest.useRealTimers();
       }
@@ -473,7 +478,11 @@ describe('TaskCard', () => {
         const lastCall = ExtraFieldIntl.mock.calls[ExtraFieldIntl.mock.calls.length - 1];
         expect(lastCall[0].field.value).toBe('');
       });
-      expect(addOrUpdateStorageOutput).toHaveBeenCalledWith(baseTask.id, []);
+      expect(addOrUpdateStorageOutput).toHaveBeenCalledWith(
+        baseTask.id,
+        [],
+        expect.any(Object),
+      );
     });
 
     it('preserves drafts for unchanged empty fields when another server field changes', async () => {
@@ -507,7 +516,11 @@ describe('TaskCard', () => {
           expect.objectContaining({ apiName: 'changed-field', value: 'updated server value' }),
         ]);
       });
-      expect(addOrUpdateStorageOutput).toHaveBeenCalledWith(baseTask.id, [emptyFieldDraft]);
+      expect(addOrUpdateStorageOutput).toHaveBeenCalledWith(
+        baseTask.id,
+        [emptyFieldDraft],
+        expect.any(Object),
+      );
     });
   });
 });

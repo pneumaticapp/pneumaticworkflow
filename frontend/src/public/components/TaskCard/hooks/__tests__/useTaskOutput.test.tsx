@@ -7,15 +7,23 @@ import {
   addOrUpdateStorageOutput,
   fieldsetsStorage,
   getOutputFromStorage,
+  outputStorage,
   removeOutputFromLocalStorage,
 } from '../../utils/storageOutputs';
+import { getTaskOutputFingerprint } from '../../utils/getTaskOutputFingerprint';
 import { useTaskOutput } from '../useTaskOutput';
 
 jest.mock('../../utils/storageOutputs', () => ({
   addOrUpdateStorageOutput: jest.fn(),
   getOutputFromStorage: jest.fn(),
   removeOutputFromLocalStorage: jest.fn(),
-  fieldsetsStorage: { get: jest.fn(), save: jest.fn(), remove: jest.fn() },
+  outputStorage: { getEntry: jest.fn() },
+  fieldsetsStorage: {
+    get: jest.fn(),
+    getEntry: jest.fn(),
+    save: jest.fn(),
+    remove: jest.fn(),
+  },
 }));
 
 const makeField = (apiName: string, value: string): IExtraField => ({
@@ -49,12 +57,76 @@ describe('useTaskOutput', () => {
     jest.useFakeTimers();
     jest.clearAllMocks();
     (getOutputFromStorage as jest.Mock).mockReturnValue(undefined);
-    (fieldsetsStorage.get as jest.Mock).mockReturnValue(undefined);
+    (outputStorage.getEntry as jest.Mock).mockReturnValue(undefined);
+    (fieldsetsStorage.getEntry as jest.Mock).mockReturnValue(undefined);
   });
 
   afterEach(() => {
     jest.runOnlyPendingTimers();
     jest.useRealTimers();
+  });
+
+  it('filters stale output and fieldset drafts on initial mount', () => {
+    const unchangedOutput = makeField('unchanged-output', 'server value');
+    const changedOutput = makeField('changed-output', 'new server value');
+    const oldChangedOutput = makeField('changed-output', 'old server value');
+    const unchangedField = makeField('unchanged-field', 'server value');
+    const changedField = makeField('changed-field', 'new server value');
+    const oldChangedField = makeField('changed-field', 'old server value');
+    const storedFieldset = {
+      apiNameBinding: 'fieldset-1',
+      fields: [
+        { ...unchangedField, value: 'valid local draft' },
+        { ...oldChangedField, value: 'stale local draft' },
+      ],
+    } as any;
+    (outputStorage.getEntry as jest.Mock).mockReturnValue({
+      taskId: 1,
+      data: [
+        { ...unchangedOutput, value: 'valid local draft' },
+        { ...oldChangedOutput, value: 'stale local draft' },
+      ],
+      metadata: {
+        dateStarted: '2024-01-01',
+        fieldFingerprints: {
+          'unchanged-output': getTaskOutputFingerprint([unchangedOutput]),
+          'changed-output': getTaskOutputFingerprint([oldChangedOutput]),
+        },
+      },
+    });
+    (fieldsetsStorage.getEntry as jest.Mock).mockReturnValue({
+      taskId: 1,
+      data: [storedFieldset],
+      metadata: {
+        dateStarted: '2024-01-01',
+        fieldFingerprints: {
+          'fieldset-1': {
+            'unchanged-field': getTaskOutputFingerprint([unchangedField]),
+            'changed-field': getTaskOutputFingerprint([oldChangedField]),
+          },
+        },
+      },
+    });
+
+    render(
+      <HookHarness
+        task={makeTask([unchangedOutput, changedOutput], {
+          fieldsets: [{
+            ...storedFieldset,
+            fields: [unchangedField, changedField],
+          }],
+        })}
+      />,
+    );
+
+    expect(hookResult.outputValues).toEqual([
+      { ...unchangedOutput, value: 'valid local draft' },
+      changedOutput,
+    ]);
+    expect(hookResult.fieldsetOutputValues[0].fields).toEqual([
+      { ...unchangedField, value: 'valid local draft' },
+      changedField,
+    ]);
   });
 
   it('preserves pending edits to unchanged fields when server output changes', () => {
@@ -81,9 +153,11 @@ describe('useTaskOutput', () => {
       makeField('unchanged-field', 'local value'),
       makeField('changed-field', 'new server value'),
     ]);
-    expect(addOrUpdateStorageOutput).toHaveBeenCalledWith(1, [
-      makeField('unchanged-field', 'local value'),
-    ]);
+    expect(addOrUpdateStorageOutput).toHaveBeenCalledWith(
+      1,
+      [makeField('unchanged-field', 'local value')],
+      expect.any(Object),
+    );
 
     act(() => {
       jest.advanceTimersByTime(300);
@@ -110,7 +184,7 @@ describe('useTaskOutput', () => {
         newRequiredField,
       ],
     };
-    (fieldsetsStorage.get as jest.Mock).mockReturnValue([storedFieldset]);
+    (fieldsetsStorage.getEntry as jest.Mock).mockReturnValue({ taskId: 1, data: [storedFieldset] });
 
     render(<HookHarness task={makeTask([], { fieldsets: [serverFieldset] })} />);
 
@@ -132,12 +206,13 @@ describe('useTaskOutput', () => {
       ...serverFieldset,
       fields: [makeField('fieldset-field', 'previous run draft')],
     };
-    (fieldsetsStorage.get as jest.Mock).mockReturnValue([staleFieldset]);
+    (fieldsetsStorage.getEntry as jest.Mock).mockReturnValue({ taskId: 1, data: [staleFieldset] });
 
     const { rerender } = render(
       <HookHarness task={makeTask([], { fieldsets: [serverFieldset] })} />,
     );
     expect(hookResult.fieldsetOutputValues).toEqual([staleFieldset]);
+    jest.clearAllMocks();
 
     act(() => {
       hookResult.editFieldsetField('fieldset-field')({ value: 'pending previous run edit' });
@@ -233,10 +308,14 @@ describe('useTaskOutput', () => {
         makeField('changed-field', 'new server value'),
       ],
     }]);
-    expect(fieldsetsStorage.save).toHaveBeenCalledWith(1, [{
-      ...serverFieldset,
-      fields: [makeField('unchanged-field', 'local draft')],
-    }]);
+    expect(fieldsetsStorage.save).toHaveBeenCalledWith(
+      1,
+      [{
+        ...serverFieldset,
+        fields: [makeField('unchanged-field', 'local draft')],
+      }],
+      expect.any(Object),
+    );
   });
 
   it('preserves in-memory fieldset edits when another server fieldset changes', () => {
@@ -279,12 +358,14 @@ describe('useTaskOutput', () => {
         fields: [makeField('changed-field', 'new server value')],
       },
     ]);
-    expect(fieldsetsStorage.save).toHaveBeenCalledWith(1, [
-      {
+    expect(fieldsetsStorage.save).toHaveBeenCalledWith(
+      1,
+      [{
         ...unchangedFieldset,
         fields: [makeField('unchanged-field', 'live draft')],
-      },
-    ]);
+      }],
+      expect.any(Object),
+    );
 
     act(() => {
       jest.advanceTimersByTime(300);
@@ -306,10 +387,14 @@ describe('useTaskOutput', () => {
     });
     unmount();
 
-    expect(fieldsetsStorage.save).toHaveBeenCalledWith(1, [{
-      ...fieldset,
-      fields: [makeField('fieldset-field', 'last edit')],
-    }]);
+    expect(fieldsetsStorage.save).toHaveBeenCalledWith(
+      1,
+      [{
+        ...fieldset,
+        fields: [makeField('fieldset-field', 'last edit')],
+      }],
+      expect.any(Object),
+    );
   });
 
   it('persists an edit after the debounce delay', () => {
@@ -324,9 +409,11 @@ describe('useTaskOutput', () => {
       jest.advanceTimersByTime(300);
     });
 
-    expect(addOrUpdateStorageOutput).toHaveBeenCalledWith(1, [
-      makeField('field', 'local value'),
-    ]);
+    expect(addOrUpdateStorageOutput).toHaveBeenCalledWith(
+      1,
+      [makeField('field', 'local value')],
+      expect.any(Object),
+    );
   });
 
   it('does not restore flushed drafts again during unmount', () => {
@@ -371,9 +458,11 @@ describe('useTaskOutput', () => {
     });
 
     expect(addOrUpdateStorageOutput).toHaveBeenCalledTimes(1);
-    expect(addOrUpdateStorageOutput).toHaveBeenCalledWith(1, [
-      makeField('field', 'local value'),
-    ]);
+    expect(addOrUpdateStorageOutput).toHaveBeenCalledWith(
+      1,
+      [makeField('field', 'local value')],
+      expect.any(Object),
+    );
     expect(removeOutputFromLocalStorage).not.toHaveBeenCalled();
   });
 });
