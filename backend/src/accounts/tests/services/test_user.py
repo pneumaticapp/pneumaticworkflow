@@ -2315,7 +2315,8 @@ def test_deactivate__manager__subordinates_notified_and_cleared(mocker):
         account_id=account.id,
         user_data=UserWebsocketSerializer(report).data,
     )
-    assert on_commit_mock.call_count == 1
+    # 1x subordinate WS + 1x _check_and_complete_tasks
+    assert on_commit_mock.call_count == 2
 
 
 def test_partial_update__manager_changed__managers_notified(mocker):
@@ -2480,7 +2481,9 @@ def test_deactivate__has_manager__clears_mgr_and_notifies(mocker):
         account_id=account.id,
         user_data=UserWebsocketSerializer(mgr).data,
     )
-    on_commit_mock.assert_not_called()
+    on_commit_mock.assert_called_once_with(
+        service._check_and_complete_tasks,
+    )
 
 
 def test_deactivate__no_manager__skip_mgr_notification(mocker):
@@ -2528,7 +2531,9 @@ def test_deactivate__no_manager__skip_mgr_notification(mocker):
     identify_mock.assert_called_once_with(user)
     clear_substitute_groups_mock.assert_called_once_with(user)
     send_updated_mock.assert_not_called()
-    on_commit_mock.assert_not_called()
+    on_commit_mock.assert_called_once_with(
+        service._check_and_complete_tasks,
+    )
 
 
 def test_deactivate__has_subs_and_manager__both_notified(mocker):
@@ -2605,7 +2610,8 @@ def test_deactivate__has_subs_and_manager__both_notified(mocker):
         ],
         any_order=True,
     )
-    assert on_commit_mock.call_count == 1
+    # 1x subordinate WS + 1x _check_and_complete_tasks
+    assert on_commit_mock.call_count == 2
 
 
 def test_update_subordinates__old_mgr_notified__ok(mocker):
@@ -3355,7 +3361,9 @@ def test_deactivate__clears_own_manager__ok(mocker):
         account_id=account.id,
         user_data=UserWebsocketSerializer(manager).data,
     )
-    on_commit_mock.assert_not_called()
+    on_commit_mock.assert_called_once_with(
+        service._check_and_complete_tasks,
+    )
 
 
 def test_deactivate__clears_subordinates__ok(mocker):
@@ -3411,7 +3419,8 @@ def test_deactivate__clears_subordinates__ok(mocker):
         account_id=account.id,
         user_data=UserWebsocketSerializer(sub).data,
     )
-    assert on_commit_mock.call_count == 1
+    # 1x subordinate WS + 1x _check_and_complete_tasks
+    assert on_commit_mock.call_count == 2
 
 
 def test_partial_update__mgr_and_subs__mgr_ws_after_subs(

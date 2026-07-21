@@ -6,6 +6,7 @@ from rest_framework.permissions import BasePermission
 
 from src.accounts.enums import UserType
 from src.processes.enums import (
+    DirectlyStatus,
     OwnerRole,
     OwnerType,
     PerformerType,
@@ -32,16 +33,25 @@ from src.processes.queries import (
 
 def _assignment_performer_q(user_id: int, prefix: str) -> Q:
 
-    """ Match assignment performers only (USER / GROUP), not GROUP_USER. """
+    """ Match assignment performers only (USER / GROUP), not GROUP_USER.
+
+    Soft-deleted performers (directly_status=DELETED) are excluded so
+    removal + sync_performer_sources fully revokes access.
+    """
 
     return (
-        Q(**{
-            f'{prefix}__user_id': user_id,
-            f'{prefix}__type': PerformerType.USER,
-        })
-        | Q(**{
-            f'{prefix}__type': PerformerType.GROUP,
-            f'{prefix}__group__users__id': user_id,
+        (
+            Q(**{
+                f'{prefix}__user_id': user_id,
+                f'{prefix}__type': PerformerType.USER,
+            })
+            | Q(**{
+                f'{prefix}__type': PerformerType.GROUP,
+                f'{prefix}__group__users__id': user_id,
+            })
+        )
+        & ~Q(**{
+            f'{prefix}__directly_status': DirectlyStatus.DELETED,
         })
     )
 

@@ -87,6 +87,8 @@ def test__add_template_owner_is_deleted__ok():
     )
     task = workflow.tasks.get(number=1)
     task.taskperformer_set.all().delete()
+    # Clear stale PERFORMER UOP left after deleting TaskPerformer rows.
+    WorkflowPermissionService(workflow).sync_performer_sources()
     TemplateOwner.objects.create(
         template=template,
         account=account,

@@ -1086,17 +1086,10 @@ class WorkflowActionService:
                         end_date=None,
                         estimated_end_date=None,
                     )
-                if task.is_active:
-                    recipients = self._get_incompleted_recipients(task)
-                    send_task_deleted_notification.delay(
-                        task_id=task.id,
-                        recipients=recipients,
-                        account_id=task.account_id,
-                    )
                 if (
-                        task.is_active
-                        or task.is_completed
-                        or task.is_delayed
+                    task.is_active
+                    or task.is_completed
+                    or task.is_delayed
                 ):
                     self._send_task_deleted(task)
                 task.date_started = None
