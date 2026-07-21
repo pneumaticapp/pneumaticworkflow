@@ -1,0 +1,161 @@
+import React from 'react';
+import { Formik, useField } from 'formik';
+import { useIntl } from 'react-intl';
+
+import { Button } from '../../../UI/Buttons/Button';
+import { FormikDropdownList } from '../../../UI/DropdownList';
+import { FormikInputField } from '../../../UI/Fields/InputField';
+import { ModalBody, ModalFooter } from '../../../UI/BaseModal';
+import { isEmpty, validateName, validateUrl } from '../../../../utils/validators';
+import { ICreateAIAgentFormProps, ICreateAIAgentFormValues } from './types';
+
+import styles from './CreateUserModal.css';
+
+const MODEL_OPTIONS = [
+  { label: 'OpenAI', value: 'openai' },
+  { label: 'Anthropic', value: 'anthropic' },
+  { label: 'Google Gemini', value: 'gemini' },
+];
+
+const REQUIRED_ERROR = 'team.create-ai-agent-modal.validation-required';
+const validateRequired = (value: string) => (isEmpty(value) ? REQUIRED_ERROR : '');
+const validateEndpoint = (value: string) => validateRequired(value) || validateUrl(value);
+
+function SystemPromptField() {
+  const { formatMessage } = useIntl();
+  const [field, meta] = useField<string>('systemPrompt');
+
+  return (
+    <label className={styles['modal__textarea-field']} htmlFor="ai-agent-system-prompt">
+      <span>{formatMessage({ id: 'team.create-ai-agent-modal.system-prompt' })}</span>
+      <textarea {...field} id="ai-agent-system-prompt" rows={5} />
+      {meta.touched && meta.error && (
+        <span className={styles['modal__error']}>{formatMessage({ id: meta.error })}</span>
+      )}
+    </label>
+  );
+}
+
+export function CreateAIAgentForm({ onSubmit }: ICreateAIAgentFormProps) {
+  const { formatMessage } = useIntl();
+  const initialValues: ICreateAIAgentFormValues = {
+    firstName: '',
+    lastName: '',
+    position: '',
+    model: '',
+    endpoint: '',
+    apiKey: '',
+    systemPrompt: '',
+    avatar: '',
+  };
+
+  return (
+    <Formik
+      initialValues={initialValues}
+      validateOnMount
+      validate={(values) => ({
+        ...(validateName(values.firstName) && { firstName: validateName(values.firstName) }),
+        ...(validateName(values.lastName) && { lastName: validateName(values.lastName) }),
+        ...(validateRequired(values.position) && { position: validateRequired(values.position) }),
+        ...(validateRequired(values.model) && { model: validateRequired(values.model) }),
+        ...(validateEndpoint(values.endpoint) && { endpoint: validateEndpoint(values.endpoint) }),
+        ...(validateRequired(values.apiKey) && { apiKey: validateRequired(values.apiKey) }),
+      })}
+      onSubmit={onSubmit}
+    >
+      {({ dirty, handleSubmit, isValid, setFieldValue, values }) => {
+        const initials = `${values.firstName.charAt(0)}${values.lastName.charAt(0)}`.toUpperCase();
+        const handleAvatarUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+          const file = event.target.files?.[0];
+          if (!file) return;
+
+          const reader = new FileReader();
+          reader.onload = () => setFieldValue('avatar', String(reader.result));
+          reader.readAsDataURL(file);
+        };
+
+        return (
+          <form onSubmit={handleSubmit}>
+            <ModalBody>
+              <div className={styles['modal__agent-avatar']}>
+                <div className={styles['modal__avatar-preview']}>
+                  {values.avatar.startsWith('data:')
+                    ? <img src={values.avatar} alt="" />
+                    : values.avatar === 'generated' && initials}
+                </div>
+                <div className={styles['modal__avatar-actions']}>
+                  <label htmlFor="ai-agent-avatar-upload">
+                    {formatMessage({ id: 'team.create-ai-agent-modal.upload' })}
+                    <input
+                      id="ai-agent-avatar-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAvatarUpload}
+                    />
+                  </label>
+                  <span aria-hidden>•</span>
+                  <button type="button" onClick={() => setFieldValue('avatar', 'generated')}>
+                    {formatMessage({ id: 'team.create-ai-agent-modal.generate' })}
+                  </button>
+                </div>
+              </div>
+
+              <div className={styles['modal__form']}>
+                <FormikInputField
+                  name="firstName"
+                  title={formatMessage({ id: 'team.create-user-modal.first-name' })}
+                  isRequired
+                  fieldSize="lg"
+                />
+                <FormikInputField
+                  name="lastName"
+                  title={formatMessage({ id: 'team.create-user-modal.last-name' })}
+                  isRequired
+                  fieldSize="lg"
+                />
+                <FormikInputField
+                  name="position"
+                  title={formatMessage({ id: 'team.create-ai-agent-modal.position' })}
+                  isRequired
+                  fieldSize="lg"
+                />
+                <h3 className={styles['modal__section-title']}>
+                  {formatMessage({ id: 'team.create-ai-agent-modal.parameters' })}
+                </h3>
+                <FormikDropdownList
+                  name="model"
+                  label={formatMessage({ id: 'team.create-ai-agent-modal.model' })}
+                  options={MODEL_OPTIONS}
+                  className={styles['modal__dropdown--required']}
+                />
+                <FormikInputField
+                  name="endpoint"
+                  title={formatMessage({ id: 'team.create-ai-agent-modal.endpoint' })}
+                  isRequired
+                  fieldSize="lg"
+                />
+                <FormikInputField
+                  name="apiKey"
+                  title={formatMessage({ id: 'team.create-ai-agent-modal.api-key' })}
+                  isRequired
+                  fieldSize="lg"
+                  type="password"
+                  showPasswordVisibilityToggle
+                />
+                <SystemPromptField />
+              </div>
+            </ModalBody>
+            <ModalFooter>
+              <Button
+                type="submit"
+                label={formatMessage({ id: 'team.create-ai-agent-modal.submit' })}
+                buttonStyle="yellow"
+                disabled={!dirty || !isValid}
+              />
+            </ModalFooter>
+          </form>
+        );
+      }}
+    </Formik>
+  );
+}

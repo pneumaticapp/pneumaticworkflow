@@ -79,6 +79,12 @@ describe('CreateUserModal', () => {
     return dropdownContainer.querySelector('.react-select__control') as HTMLElement;
   };
 
+  const openAIAgentTab = async () => {
+    await userEvent.click(screen.getByRole('button', {
+      name: getTranslatedText('team.create-user-modal.tab-ai-agent'),
+    }));
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
     (useDispatch as jest.Mock).mockReturnValue(mockDispatch);
@@ -117,6 +123,79 @@ describe('CreateUserModal', () => {
       render(<CreateUserModal isOpen={true} onClose={mockOnClose} />);
 
       expect(screen.getByRole('button', { name: getTranslatedText('team.create-user-modal.copy') })).toBeInTheDocument();
+    });
+  });
+
+  describe('AI agent form', () => {
+    it('renders AI agent fields from the modal tab', async () => {
+      render(<CreateUserModal isOpen={true} onClose={mockOnClose} />);
+
+      await openAIAgentTab();
+
+      expect(screen.getByLabelText(getTranslatedText('team.create-user-modal.first-name'))).toBeInTheDocument();
+      expect(screen.getByLabelText(getTranslatedText('team.create-user-modal.last-name'))).toBeInTheDocument();
+      expect(screen.getByLabelText(getTranslatedText('team.create-ai-agent-modal.position'))).toBeInTheDocument();
+      expect(screen.getByText(getTranslatedText('team.create-ai-agent-modal.model'))).toBeInTheDocument();
+      expect(screen.getByLabelText(getTranslatedText('team.create-ai-agent-modal.endpoint'))).toBeInTheDocument();
+      expect(screen.getByLabelText(getTranslatedText('team.create-ai-agent-modal.api-key'))).toBeInTheDocument();
+      expect(screen.getByText(getTranslatedText('team.create-ai-agent-modal.system-prompt'))).toBeInTheDocument();
+    });
+
+    it('validates required fields with Formik and submits valid values', async () => {
+      const onCreateAIAgent = jest.fn();
+      render(
+        <CreateUserModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onCreateAIAgent={onCreateAIAgent}
+        />,
+      );
+      await openAIAgentTab();
+      const submitButton = screen.getByRole('button', {
+        name: getTranslatedText('team.create-ai-agent-modal.submit'),
+      });
+      expect(submitButton).toBeDisabled();
+
+      await userEvent.type(
+        screen.getByLabelText(getTranslatedText('team.create-user-modal.first-name')),
+        'Ada',
+      );
+      await userEvent.type(
+        screen.getByLabelText(getTranslatedText('team.create-user-modal.last-name')),
+        'Agent',
+      );
+      await userEvent.type(
+        screen.getByLabelText(getTranslatedText('team.create-ai-agent-modal.position')),
+        'Support specialist',
+      );
+      await userEvent.type(
+        screen.getByLabelText(getTranslatedText('team.create-ai-agent-modal.endpoint')),
+        'https://api.example.com/v1',
+      );
+      await userEvent.type(
+        screen.getByLabelText(getTranslatedText('team.create-ai-agent-modal.api-key')),
+        'secret-key',
+      );
+      const modelLabel = screen.getByText(getTranslatedText('team.create-ai-agent-modal.model'));
+      const modelDropdown = modelLabel.closest('.react-select')!
+        .querySelector('.react-select__control') as HTMLElement;
+      await userEvent.click(modelDropdown);
+      await userEvent.click(screen.getByText('OpenAI'));
+
+      await waitFor(() => expect(submitButton).not.toBeDisabled());
+      await userEvent.click(submitButton);
+
+      await waitFor(() => {
+        expect(onCreateAIAgent).toHaveBeenCalledWith(expect.objectContaining({
+          firstName: 'Ada',
+          lastName: 'Agent',
+          position: 'Support specialist',
+          model: 'openai',
+          endpoint: 'https://api.example.com/v1',
+          apiKey: 'secret-key',
+        }));
+      });
+      expect(mockDispatch).not.toHaveBeenCalled();
     });
   });
 

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Formik } from 'formik';
 import { useIntl } from 'react-intl';
 import { useDispatch } from 'react-redux';
@@ -8,6 +8,7 @@ import { BaseModal, ModalHeader, ModalBody, ModalFooter } from '../../../UI/Base
 import { FormikInputField } from '../../../UI/Fields/InputField';
 import { FormikDropdownList } from '../../../UI/DropdownList';
 import { Button } from '../../../UI/Buttons/Button';
+import { Tabs } from '../../../UI/Tabs';
 import { validateEmail, validateRegistrationPassword } from '../../../../utils/validators';
 import { getErrorsObject } from '../../../../utils/formik/getErrorsObject';
 import { copyToClipboard } from '../../../../utils/helpers';
@@ -15,7 +16,14 @@ import { createPassword } from '../../../../utils/createPassword';
 import { NotificationManager } from '../../../UI/Notifications';
 import { createUser } from '../../../../redux/accounts/slice';
 
-import { ICreateUserModalProps, IStatusOption, EUserRole, ICreateUserFormValues } from './types';
+import { CreateAIAgentForm } from './CreateAIAgentForm';
+import {
+  ECreateUserModalTab,
+  EUserRole,
+  ICreateUserFormValues,
+  ICreateUserModalProps,
+  IStatusOption,
+} from './types';
 
 import styles from './CreateUserModal.css';
 
@@ -30,9 +38,14 @@ const formatStatusOption = (
   return label;
 };
 
-export function CreateUserModal({ isOpen, onClose }: ICreateUserModalProps) {
+export function CreateUserModal({ isOpen, onClose, onCreateAIAgent }: ICreateUserModalProps) {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
+  const [activeTab, setActiveTab] = useState(ECreateUserModalTab.User);
+
+  useEffect(() => {
+    if (!isOpen) setActiveTab(ECreateUserModalTab.User);
+  }, [isOpen]);
 
   const statusOptions: IStatusOption[] = [
     { label: formatMessage({ id: 'team.create-user-modal.status-admin' }), value: EUserRole.Admin },
@@ -58,11 +71,21 @@ export function CreateUserModal({ isOpen, onClose }: ICreateUserModalProps) {
   return (
     <BaseModal isOpen={isOpen} toggle={onClose}>
       <ModalHeader toggle={onClose}>
-        <span data-testid="create-user-modal-header">
-          {formatMessage({ id: 'team.create-user-modal.title' })}
-        </span>
+        <div data-testid="create-user-modal-header" className={styles['modal__tabs']}>
+          <Tabs
+            values={[
+              { id: ECreateUserModalTab.User, label: formatMessage({ id: 'team.create-user-modal.tab-user' }) },
+              { id: ECreateUserModalTab.AIAgent, label: formatMessage({ id: 'team.create-user-modal.tab-ai-agent' }) },
+            ]}
+            activeValueId={activeTab}
+            onChange={setActiveTab}
+          />
+        </div>
       </ModalHeader>
 
+      {activeTab === ECreateUserModalTab.AIAgent ? (
+        <CreateAIAgentForm onSubmit={(values) => onCreateAIAgent?.(values)} />
+      ) : (
       <Formik
         initialValues={initialValues}
         enableReinitialize
@@ -149,6 +172,7 @@ export function CreateUserModal({ isOpen, onClose }: ICreateUserModalProps) {
           );
         }}
       </Formik>
+      )}
     </BaseModal>
   );
 }
