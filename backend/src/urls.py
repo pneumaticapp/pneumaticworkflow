@@ -1,14 +1,14 @@
 from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
-from drf_spectacular.views import (
-    SpectacularAPIView,
-    SpectacularRedocView,
-    SpectacularSwaggerView,
-)
+from drf_spectacular.views import SpectacularAPIView
 from rest_framework.routers import DefaultRouter
 
 from src import views
+from src.authentication.services.user_auth import (
+    CookieTokenAuthentication,
+)
+from src.openapi.views import DocsRedocView, DocsSwaggerView
 from src.accounts.views.accounts import AccountPlanView
 from src.accounts.views.tenants import TenantsViewSet
 from src.faq.views import FaqViewSet
@@ -97,19 +97,29 @@ urlpatterns = [
 urlpatterns += router.urls
 
 urlpatterns += [
+    # Schema stays on SpectacularAPIView (JSON 403 if anonymous).
+    # Docs UI views redirect browsers to frontend login.
     path(
         'api/schema/',
-        SpectacularAPIView.as_view(),
+        SpectacularAPIView.as_view(
+            authentication_classes=(CookieTokenAuthentication,),
+        ),
         name='schema',
     ),
     path(
         'api/docs/',
-        SpectacularSwaggerView.as_view(url_name='schema'),
+        DocsSwaggerView.as_view(
+            url_name='schema',
+            authentication_classes=(CookieTokenAuthentication,),
+        ),
         name='swagger-ui',
     ),
     path(
         'api/redoc/',
-        SpectacularRedocView.as_view(url_name='schema'),
+        DocsRedocView.as_view(
+            url_name='schema',
+            authentication_classes=(CookieTokenAuthentication,),
+        ),
         name='redoc',
     ),
 ]

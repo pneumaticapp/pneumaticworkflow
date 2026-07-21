@@ -40,7 +40,7 @@ from src.processes.models.templates.system_template import (
 )
 from src.processes.parsers import ImportSystemTemplateParser
 from src.processes.serializers.templates.system_template import (
-    LibraryTemplateImportSerializer,
+    LibraryTemplatesImportRequestSerializer,
     SystemTemplateCategorySerializer,
     SystemTemplateSerializer,
 )
@@ -90,7 +90,6 @@ class SystemTemplateViewSet(
         summary='List system templates',
         description=ACCESS_SYSTEM_TEMPLATE,
         responses={
-            # Item serializer; spectacular wraps with pagination.
             200: SystemTemplateSerializer,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
@@ -150,13 +149,13 @@ class SystemTemplatesImportViewSet(
         ExpiredSubscriptionPermission,
         StaffPermission,
     )
-    serializer_class = LibraryTemplateImportSerializer
+    serializer_class = LibraryTemplatesImportRequestSerializer
 
     @extend_schema(
         tags=['Templates'],
         summary='Import library templates',
         description=ACCESS_STAFF_IMPORT,
-        request=LibraryTemplateImportSerializer(many=True),
+        request=LibraryTemplatesImportRequestSerializer,
         responses={
             204: EMPTY,
             400: VALIDATION_ERROR,
@@ -165,15 +164,12 @@ class SystemTemplatesImportViewSet(
         },
     )
     def create(self, request, *args, **kwargs):
-        slz = self.get_serializer(
-            data=request.data.get('templates'),
-            many=True,
-        )
+        slz = self.get_serializer(data=request.data)
         slz.is_valid(raise_exception=True)
         service = SystemTemplateService(
             user=request.user,
             auth_type=request.token_type,
             is_superuser=request.is_superuser,
         )
-        service.import_library_templates(data=slz.validated_data)
+        service.import_library_templates(data=slz.validated_data['templates'])
         return self.response_ok()
