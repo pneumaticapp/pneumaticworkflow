@@ -54,7 +54,13 @@ export function TaskCard({
   const { formatMessage } = useIntl();
   const wrapperRef = useRef(null);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
-  const { outputValues, fieldsetOutputValues, editField, editFieldsetField } = useTaskOutput(task);
+  const {
+    outputValues,
+    fieldsetOutputValues,
+    editField,
+    editFieldsetField,
+    flushOutputs,
+  } = useTaskOutput(task);
   const helpTextLocal = helpText ?? workflow?.description ?? null;
 
   useEffect(() => {
@@ -160,6 +166,7 @@ export function TaskCard({
             status={status}
             outputValues={outputValues}
             fieldsetOutputValues={fieldsetOutputValues}
+            flushOutputs={flushOutputs}
             setTaskCompleted={setTaskCompleted}
             setTaskReverted={setTaskReverted}
             openSelectTemplateModal={openSelectTemplateModal}

@@ -6,6 +6,8 @@ import { EExtraFieldType, ETemplateOwnerType, IExtraField } from '../../../types
 import { ETaskStatus } from '../../../redux/actions';
 import { EWorkflowStatus, EWorkflowsLogSorting } from '../../../types/workflow';
 
+const mockButton = jest.fn();
+
 jest.mock('../../TemplateEdit/ExtraFields', () => ({
   ExtraFieldIntl: jest.fn(() => <div data-testid="extra-field" />),
 }));
@@ -126,7 +128,10 @@ jest.mock('../../UI/Typeography/Header', () => ({
 }));
 
 jest.mock('../../UI/Buttons/Button', () => ({
-  Button: () => <button type="button" aria-label="Action" />,
+  Button: (props: { onClick?(): void }) => {
+    mockButton(props);
+    return <button type="button" aria-label="Action" onClick={props.onClick} />;
+  },
 }));
 
 jest.mock('../../IntlMessages', () => ({
@@ -362,6 +367,55 @@ describe('TaskCard', () => {
   });
 
   describe('Output synchronization', () => {
+    it('flushes pending output and fieldset drafts before completion', () => {
+      jest.useFakeTimers();
+
+      try {
+        const { ExtraFieldIntl } = jest.requireMock('../../TemplateEdit/ExtraFields');
+        const { addOrUpdateStorageOutput, fieldsetsStorage } = jest.requireMock('../utils/storageOutputs');
+        const outputField = makeField({ apiName: 'output-field', value: 'server output' });
+        const fieldsetField = makeField({ apiName: 'fieldset-field', value: 'server fieldset' });
+        const fieldset = {
+          apiNameBinding: 'fieldset-1',
+          fields: [fieldsetField],
+        } as any;
+        const { unmount } = render(
+          <TaskCard
+            {...baseProps}
+            task={{ ...baseTask, output: [outputField], fieldsets: [fieldset] }}
+          />,
+        );
+        const outputProps = ExtraFieldIntl.mock.calls.find(
+          ([props]: any[]) => props.field.apiName === 'output-field',
+        )[0];
+        const fieldsetProps = ExtraFieldIntl.mock.calls.find(
+          ([props]: any[]) => props.field.apiName === 'fieldset-field',
+        )[0];
+
+        act(() => {
+          outputProps.editField({ value: 'output draft' });
+          fieldsetProps.editField({ value: 'fieldset draft' });
+        });
+        const completeButtonProps = [...mockButton.mock.calls]
+          .reverse()
+          .map(([props]) => props)
+          .find(({ buttonStyle }) => buttonStyle === 'yellow');
+        act(() => {
+          completeButtonProps.onClick();
+        });
+
+        expect(addOrUpdateStorageOutput).toHaveBeenCalledTimes(1);
+        expect(fieldsetsStorage.save).toHaveBeenCalledTimes(1);
+        expect(baseProps.setTaskCompleted).toHaveBeenCalledTimes(1);
+
+        unmount();
+        expect(addOrUpdateStorageOutput).toHaveBeenCalledTimes(1);
+        expect(fieldsetsStorage.save).toHaveBeenCalledTimes(1);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
     it('discards a pending field edit when the same server output changes', () => {
       jest.useFakeTimers();
 

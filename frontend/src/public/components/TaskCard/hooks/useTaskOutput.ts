@@ -138,7 +138,10 @@ export function useTaskOutput(task: ITask) {
     if (!isNewTask && !isTaskRestarted && !isServerFieldsetsChanged) return;
 
     const fieldsetFingerprints = Object.fromEntries(
-      fieldsets.map((fieldset) => [fieldset.apiNameBinding, JSON.stringify(fieldset)]),
+      fieldsets.map((fieldset) => [
+        fieldset.apiNameBinding,
+        getTaskOutputFingerprint(fieldset.fields),
+      ]),
     );
     let savedFieldsets: IFieldsetRuntime[] | undefined;
 
@@ -194,23 +197,26 @@ export function useTaskOutput(task: ITask) {
     saveFieldsetsToStorageDebounced,
   ]);
 
+  const flushOutputs = () => {
+    saveOutputsToStorageDebounced.cancel();
+    saveFieldsetsToStorageDebounced.cancel();
+
+    const pendingStorageOutput = pendingStorageOutputRef.current;
+    if (pendingStorageOutput) {
+      addOrUpdateStorageOutput(pendingStorageOutput.taskId, pendingStorageOutput.output);
+    }
+
+    const pendingStorageFieldsets = pendingStorageFieldsetsRef.current;
+    if (pendingStorageFieldsets) {
+      fieldsetsStorage.save(pendingStorageFieldsets.taskId, pendingStorageFieldsets.fieldsets);
+    }
+
+    pendingStorageOutputRef.current = null;
+    pendingStorageFieldsetsRef.current = null;
+  };
+
   useEffect(
-    () => () => {
-      const pendingStorageOutput = pendingStorageOutputRef.current;
-      if (pendingStorageOutput) {
-        addOrUpdateStorageOutput(pendingStorageOutput.taskId, pendingStorageOutput.output);
-      }
-
-      const pendingStorageFieldsets = pendingStorageFieldsetsRef.current;
-      if (pendingStorageFieldsets) {
-        fieldsetsStorage.save(pendingStorageFieldsets.taskId, pendingStorageFieldsets.fieldsets);
-      }
-
-      saveOutputsToStorageDebounced.cancel();
-      saveFieldsetsToStorageDebounced.cancel();
-      pendingStorageOutputRef.current = null;
-      pendingStorageFieldsetsRef.current = null;
-    },
+    () => () => flushOutputs(),
     [saveFieldsetsToStorageDebounced, saveOutputsToStorageDebounced],
   );
 
@@ -238,5 +244,5 @@ export function useTaskOutput(task: ITask) {
     });
   };
 
-  return { outputValues, fieldsetOutputValues, editField, editFieldsetField };
+  return { outputValues, fieldsetOutputValues, editField, editFieldsetField, flushOutputs };
 }

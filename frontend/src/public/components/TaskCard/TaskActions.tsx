@@ -20,6 +20,7 @@ export function TaskActions({
   status,
   outputValues,
   fieldsetOutputValues,
+  flushOutputs,
   setTaskCompleted,
   setTaskReverted,
   openSelectTemplateModal,
@@ -29,6 +30,7 @@ export function TaskActions({
   const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
   const { id: taskId, dateStarted, dateCompleted } = task;
   const handleReturnTask = (comment: string) => {
+    flushOutputs();
     setTaskReverted({ taskId, viewMode, comment });
     setIsReturnModalOpen(false);
   };
@@ -70,11 +72,14 @@ export function TaskActions({
     const completeButton = (
       <Button
         isLoading={status === ETaskStatus.Completing}
-        onClick={() => setTaskCompleted({
-          taskId,
-          viewMode,
-          output: [...outputValues, ...fieldsetOutputValues.flatMap((fieldset) => fieldset.fields)],
-        })}
+        onClick={() => {
+          flushOutputs();
+          setTaskCompleted({
+            taskId,
+            viewMode,
+            output: [...outputValues, ...fieldsetOutputValues.flatMap((fieldset) => fieldset.fields)],
+          });
+        }}
         label={formatMessage({ id: 'processes.complete-task' })}
         size="md"
         disabled={!isEmbeddedWorkflowsComplete}

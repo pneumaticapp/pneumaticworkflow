@@ -89,6 +89,7 @@ export type TTaskActionsProps = Pick<
 > & {
   outputValues: IExtraField[];
   fieldsetOutputValues: IFieldsetRuntime[];
+  flushOutputs(): void;
 };
 
 export type TTaskWorkflowLogProps = Pick<

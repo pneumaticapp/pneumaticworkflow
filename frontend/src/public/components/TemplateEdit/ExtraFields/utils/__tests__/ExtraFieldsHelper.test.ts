@@ -169,6 +169,27 @@ describe('ExtraFieldsHelper', () => {
       expect(result[0].attachments![0].name).toBe('kept.pdf');
     });
 
+    it('clears server markdown when every stored attachment was removed', () => {
+      const markdownValue = '[old.pdf](https://files.example.com/old)';
+      const serverField = createFileField({ markdownValue });
+      const storageField = createFileField({
+        markdownValue,
+        attachments: [{
+          id: 'old',
+          name: 'old.pdf',
+          url: 'https://files.example.com/old',
+          size: 100,
+          isRemoved: true,
+        }],
+      });
+
+      const result = new ExtraFieldsHelper([serverField], [storageField]).getFieldsWithValues();
+
+      expect(result[0].attachments).toEqual([]);
+      expect(result[0].value).toEqual([]);
+      expect(result[0].markdownValue).toBe('');
+    });
+
     it('uses server attachments when markdownValue is absent', () => {
       const serverField = createFileField({
         markdownValue: undefined,

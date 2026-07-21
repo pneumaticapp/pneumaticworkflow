@@ -160,6 +160,43 @@ describe('useTaskOutput', () => {
     expect(fieldsetsStorage.save).not.toHaveBeenCalled();
   });
 
+  it('preserves a fieldset draft when only server presentation metadata changes', () => {
+    const serverFieldset = {
+      apiNameBinding: 'fieldset-1',
+      title: 'Old title',
+      description: 'Old description',
+      order: 0,
+      fields: [makeField('fieldset-field', 'server value')],
+    } as any;
+    const { rerender } = render(
+      <HookHarness task={makeTask([], { fieldsets: [serverFieldset] })} />,
+    );
+
+    act(() => {
+      hookResult.editFieldsetField('fieldset-field')({ value: 'local draft' });
+    });
+    rerender(
+      <HookHarness
+        task={makeTask([], {
+          fieldsets: [{
+            ...serverFieldset,
+            title: 'New title',
+            description: 'New description',
+            order: 2,
+          }],
+        })}
+      />,
+    );
+
+    expect(hookResult.fieldsetOutputValues).toEqual([{
+      ...serverFieldset,
+      title: 'New title',
+      description: 'New description',
+      order: 2,
+      fields: [makeField('fieldset-field', 'local draft')],
+    }]);
+  });
+
   it('preserves in-memory fieldset edits when another server fieldset changes', () => {
     const unchangedFieldset = {
       apiNameBinding: 'unchanged-fieldset',
@@ -248,6 +285,34 @@ describe('useTaskOutput', () => {
     expect(addOrUpdateStorageOutput).toHaveBeenCalledWith(1, [
       makeField('field', 'local value'),
     ]);
+  });
+
+  it('does not restore flushed drafts again during unmount', () => {
+    const fieldset = {
+      apiNameBinding: 'fieldset-1',
+      fields: [makeField('fieldset-field', 'server value')],
+    } as any;
+    const { unmount } = render(
+      <HookHarness
+        task={makeTask([makeField('field', 'server value')], { fieldsets: [fieldset] })}
+      />,
+    );
+
+    act(() => {
+      hookResult.editField('field')({ value: 'output draft' });
+      hookResult.editFieldsetField('fieldset-field')({ value: 'fieldset draft' });
+    });
+    act(() => {
+      hookResult.flushOutputs();
+    });
+
+    expect(addOrUpdateStorageOutput).toHaveBeenCalledTimes(1);
+    expect(fieldsetsStorage.save).toHaveBeenCalledTimes(1);
+
+    unmount();
+
+    expect(addOrUpdateStorageOutput).toHaveBeenCalledTimes(1);
+    expect(fieldsetsStorage.save).toHaveBeenCalledTimes(1);
   });
 
   it('flushes a pending output edit on unmount', () => {

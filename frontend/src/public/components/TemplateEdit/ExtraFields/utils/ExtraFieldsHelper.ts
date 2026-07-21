@@ -124,6 +124,7 @@ export class ExtraFieldsHelper {
         ...field,
         attachments,
         value,
+        ...(storageField && { markdownValue: value.join('\n') }),
       };
     },
     [EExtraFieldType.Date]: (field: IExtraField) => {
