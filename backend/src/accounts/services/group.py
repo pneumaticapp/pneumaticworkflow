@@ -272,7 +272,9 @@ class UserGroupService(BaseModelService):
             self._send_added_users_notifications(added_users_ids)
         if removed_users_ids:
             self._send_removed_users_notifications(removed_users_ids)
-            self._check_and_complete_tasks()
+            # Enqueue after commit so the worker sees updated membership
+            # when re-evaluating RCBA completability.
+            transaction.on_commit(self._check_and_complete_tasks)
         return result
 
     def delete(self):

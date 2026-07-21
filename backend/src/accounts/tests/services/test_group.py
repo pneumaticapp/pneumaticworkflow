@@ -1393,6 +1393,78 @@ class TestUserGroupService:
             account_id=account.id,
         )
 
+    def test_partial_update__removed_users_rcba__enqueue_after_commit(
+        self,
+        mocker,
+    ):
+
+        """
+        Enqueues check_and_complete_tasks after commit so the worker
+        sees updated membership and can complete RCBA tasks.
+        """
+
+        # arrange
+        account = create_test_account()
+        owner = create_test_owner(account=account)
+        user = create_test_admin(account=account)
+        group = create_test_group(account, users=[user])
+        workflow = create_test_workflow(user=owner, tasks_count=1)
+        task = workflow.tasks.get(number=1)
+        task.require_completion_by_all = True
+        task.save(update_fields=['require_completion_by_all'])
+        task.taskperformer_set.all().delete()
+        TaskPerformer.objects.create(
+            task=task,
+            group=group,
+            type=PerformerType.GROUP,
+        )
+        is_superuser = False
+        service = UserGroupService(
+            user=user,
+            is_superuser=is_superuser,
+            instance=group,
+            auth_type=AuthTokenType.USER,
+        )
+        mocker.patch(
+            'src.accounts.services.group.'
+            'UserGroupService._get_template_ids',
+            return_value=[],
+        )
+        mocker.patch(
+            'src.accounts.services.group.'
+            'UserGroupService._send_removed_users_notifications',
+        )
+        mocker.patch(
+            'src.analysis.tasks.track_group_analytics.delay',
+        )
+        mocker.patch(
+            'src.notifications.tasks.'
+            'send_group_updated_notification.delay',
+        )
+        mocker.patch(
+            'src.accounts.services.group.transaction.on_commit',
+            side_effect=lambda func: func(),
+        )
+        check_and_complete_tasks_delay_mock = mocker.patch(
+            'src.accounts.services.group.check_and_complete_tasks.delay',
+        )
+
+        # act
+        service.partial_update(
+            users=[],
+            force_save=True,
+        )
+
+        # assert
+        group.refresh_from_db()
+        assert group.users.all().count() == 0
+        check_and_complete_tasks_delay_mock.assert_called_once_with(
+            task_ids=[task.id],
+            is_superuser=is_superuser,
+            auth_type=AuthTokenType.USER,
+            account_id=account.id,
+        )
+
     def test_send_added_users_notifications__user_not_in_group__send(
         self,
         mocker,
@@ -2501,11 +2573,21 @@ def test_check_and_complete_tasks_multiple_matching_tasks_ok(mocker):
         group=group,
         type=PerformerType.GROUP,
     )
+    TaskPerformer.objects.create(
+        task=task_1,
+        user=user,
+        type=PerformerType.GROUP_USER,
+    )
     task_2.taskperformer_set.all().delete()
     TaskPerformer.objects.create(
         task=task_2,
         group=group,
         type=PerformerType.GROUP,
+    )
+    TaskPerformer.objects.create(
+        task=task_2,
+        user=user,
+        type=PerformerType.GROUP_USER,
     )
     check_and_complete_tasks_delay_mock = mocker.patch(
         target='src.accounts.services.group.check_and_complete_tasks.delay',
@@ -2549,11 +2631,61 @@ def test_check_and_complete_tasks_mixed_matching_tasks_ok(mocker):
         group=group,
         type=PerformerType.GROUP,
     )
+    TaskPerformer.objects.create(
+        task=task_1,
+        group=group,
+        type=PerformerType.GROUP_USER,
+    )
+    TaskPerformer.objects.create(
+        task=task_1,
+        group=group,
+        type=PerformerType.GROUP_USER,
+    )
+    TaskPerformer.objects.create(
+        task=task_1,
+        group=group,
+        type=PerformerType.GROUP_USER,
+    )
+    TaskPerformer.objects.create(
+        task=task_1,
+        group=group,
+        type=PerformerType.GROUP_USER,
+    )
+    TaskPerformer.objects.create(
+        task=task_1,
+        group=group,
+        type=PerformerType.GROUP_USER,
+    )
+    TaskPerformer.objects.create(
+        task=task_1,
+        group=group,
+        type=PerformerType.GROUP_USER,
+    )
+    TaskPerformer.objects.create(
+        task=task_1,
+        group=group,
+        type=PerformerType.GROUP_USER,
+    )
+    TaskPerformer.objects.create(
+        task=task_1,
+        group=group,
+        type=PerformerType.GROUP_USER,
+    )
     task_2.taskperformer_set.all().delete()
     TaskPerformer.objects.create(
         task=task_2,
         group=group,
         type=PerformerType.GROUP,
+    )
+    TaskPerformer.objects.create(
+        task=task_2,
+        group=group,
+        type=PerformerType.GROUP_USER,
+    )
+    TaskPerformer.objects.create(
+        task=task_2,
+        group=group,
+        type=PerformerType.GROUP_USER,
     )
     task_2.status = TaskStatus.COMPLETED
     task_2.save(update_fields=['status'])
@@ -2604,11 +2736,21 @@ def test_check_and_complete_tasks__multiple_groups__ok(mocker):
         group=group_1,
         type=PerformerType.GROUP,
     )
+    TaskPerformer.objects.create(
+        task=task_1,
+        group=group_1,
+        type=PerformerType.GROUP_USER,
+    )
     task_2.taskperformer_set.all().delete()
     TaskPerformer.objects.create(
         task=task_2,
         group=group_2,
         type=PerformerType.GROUP,
+    )
+    TaskPerformer.objects.create(
+        task=task_2,
+        group=group_2,
+        type=PerformerType.GROUP_USER,
     )
     check_and_complete_tasks_delay_mock = mocker.patch(
         target='src.accounts.services.group.check_and_complete_tasks.delay',
@@ -2652,11 +2794,21 @@ def test_check_and_complete_tasks__two_workflows_two_tasks__ok(mocker):
         group=group,
         type=PerformerType.GROUP,
     )
+    TaskPerformer.objects.create(
+        task=task_1,
+        user=user,
+        type=PerformerType.GROUP_USER,
+    )
     task_2.taskperformer_set.all().delete()
     TaskPerformer.objects.create(
         task=task_2,
         group=group,
         type=PerformerType.GROUP,
+    )
+    TaskPerformer.objects.create(
+        task=task_2,
+        user=user,
+        type=PerformerType.GROUP_USER,
     )
     check_and_complete_tasks_delay_mock = mocker.patch(
         target='src.accounts.services.group.check_and_complete_tasks.delay',
@@ -2740,6 +2892,11 @@ def test_check_and_complete_tasks_not_active_task__skip(
         task=task,
         group=group,
         type=PerformerType.GROUP,
+    )
+    TaskPerformer.objects.create(
+        task=task,
+        user=user,
+        type=PerformerType.GROUP_USER,
     )
     check_and_complete_tasks_delay_mock = mocker.patch(
         target='src.accounts.services.group.check_and_complete_tasks.delay',
@@ -2827,7 +2984,7 @@ def test_check_and_complete_tasks__group_non_performer__skip(mocker):
     check_and_complete_tasks_delay_mock.assert_not_called()
 
 
-def test_check_and_complete_tasks__completed_group_performer__skip(mocker):
+def test_check_and_complete_tasks__completed_performer__skip(mocker):
 
     # arrange
     account = create_test_account()
@@ -2843,6 +3000,12 @@ def test_check_and_complete_tasks__completed_group_performer__skip(mocker):
         task=task,
         group=group,
         type=PerformerType.GROUP,
+        is_completed=True,
+    )
+    TaskPerformer.objects.create(
+        task=task,
+        user_id=user.id,
+        type=PerformerType.GROUP_USER,
         is_completed=True,
     )
     check_and_complete_tasks_delay_mock = mocker.patch(
@@ -2883,6 +3046,12 @@ def test_check_and_complete_tasks__rcba_and_completed_performer__skip(mocker):
         type=PerformerType.GROUP,
         is_completed=True,
     )
+    TaskPerformer.objects.create(
+        task=task,
+        user=user,
+        type=PerformerType.GROUP_USER,
+        is_completed=True,
+    )
     check_and_complete_tasks_delay_mock = mocker.patch(
         target='src.accounts.services.group.check_and_complete_tasks.delay',
     )
@@ -2919,6 +3088,11 @@ def test_check_and_complete_tasks__rcba__ok(mocker):
         task=task,
         group=group,
         type=PerformerType.GROUP,
+    )
+    TaskPerformer.objects.create(
+        task=task,
+        user=user,
+        type=PerformerType.GROUP_USER,
     )
     check_and_complete_tasks_delay_mock = mocker.patch(
         target='src.accounts.services.group.check_and_complete_tasks.delay',
@@ -2960,6 +3134,11 @@ def test_check_and_complete_tasks__directly_deleted_performer__skip(mocker):
         group=group,
         type=PerformerType.GROUP,
         directly_status=DirectlyStatus.DELETED,
+    )
+    TaskPerformer.objects.create(
+        task=task,
+        user=user,
+        type=PerformerType.GROUP_USER,
     )
     check_and_complete_tasks_delay_mock = mocker.patch(
         target='src.accounts.services.group.check_and_complete_tasks.delay',

@@ -116,6 +116,7 @@ class BasePerformersService:
             TaskPerformer.objects
             .by_task(task.id)
             .exclude_directly_deleted()
+            .type_user_or_group()
         )
         user_performer = performers.filter(
             user_id=user.id,
@@ -264,6 +265,7 @@ class BasePerformerService2:
             TaskPerformer.objects
             .by_task(self.task.id)
             .exclude_directly_deleted()
+            .type_user_or_group()
         )
         if (
             performers.count() == 1
