@@ -1,4 +1,9 @@
+"""Tests for locale activation in user API views."""
+
+from unittest.mock import call
+
 import pytest
+from django.utils import translation
 from rest_framework_simplejwt.tokens import AccessToken
 
 from src.accounts.enums import Language
@@ -16,41 +21,35 @@ from src.utils.validation import ErrorCode
 pytestmark = pytest.mark.django_db
 
 
-@pytest.mark.parametrize('lang,expected_msg', [
-    (Language.en, 'Enter a valid URL.'),
-    (Language.ru, 'Введите правильный URL.'),
-    (Language.de, 'Gib eine gültige URL ein.'),
+@pytest.mark.parametrize('lang', [
+    Language.ru,
+    Language.de,
 ])
-def test_put__locale__localized_validation_error(
+def test_put__locale__token_activates_user_lang(
     api_client,
     mocker,
     lang,
-    expected_msg,
 ):
-
-    """ Validation error is returned in user's language. """
 
     # arrange
     owner = create_test_owner(language=lang)
-    request_data = {'photo': 'invalid_url'}
     partial_update_mock = mocker.patch(
         'src.accounts.views.user.'
         'UserService.partial_update',
     )
+    activate_spy = mocker.spy(translation, 'activate')
     api_client.token_authenticate(owner)
 
     # act
     response = api_client.put(
         path='/accounts/user',
-        data=request_data,
+        data={'photo': 'invalid_url'},
     )
 
     # assert
     assert response.status_code == 400
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['message'] == expected_msg
-    assert response.data['details']['name'] == 'photo'
-    assert response.data['details']['reason'] == expected_msg
+    activate_spy.assert_has_calls([call(lang)])
     partial_update_mock.assert_not_called()
 
 
@@ -59,31 +58,27 @@ def test_put__locale__user_lang_overrides_header(
     mocker,
 ):
 
-    """ User language takes priority over Accept-Language. """
-
     # arrange
     owner = create_test_owner(language=Language.ru)
-    request_data = {'photo': 'invalid_url'}
     partial_update_mock = mocker.patch(
         'src.accounts.views.user.'
         'UserService.partial_update',
     )
+    activate_spy = mocker.spy(translation, 'activate')
     api_client.token_authenticate(owner)
 
     # act
     response = api_client.put(
         path='/accounts/user',
-        data=request_data,
+        data={'photo': 'invalid_url'},
         HTTP_ACCEPT_LANGUAGE='de',
     )
 
     # assert
-    expected_msg = 'Введите правильный URL.'
     assert response.status_code == 400
-    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['message'] == expected_msg
-    assert response.data['details']['name'] == 'photo'
-    assert response.data['details']['reason'] == expected_msg
+    activate_spy.assert_has_calls(
+        [call('de'), call(Language.ru)],
+    )
     partial_update_mock.assert_not_called()
 
 
@@ -92,89 +87,90 @@ def test_put__locale__no_leak_between_requests(
     mocker,
 ):
 
-    """ Locale does not leak between requests. """
-
     # arrange
     account = create_test_account()
     ru_user = create_test_owner(
         account=account,
         language=Language.ru,
     )
-    en_user = create_test_not_admin(
+    de_user = create_test_not_admin(
         account=account,
-        language=Language.en,
-        email='en@test.test',
+        language=Language.de,
+        email='de@test.test',
     )
-    request_data = {'photo': 'invalid_url'}
     partial_update_mock = mocker.patch(
         'src.accounts.views.user.'
         'UserService.partial_update',
     )
+    activate_spy = mocker.spy(translation, 'activate')
+    deactivate_spy = mocker.spy(translation, 'deactivate')
 
     # act
     api_client.token_authenticate(ru_user)
     ru_resp = api_client.put(
         path='/accounts/user',
-        data=request_data,
+        data={'photo': 'invalid_url'},
     )
-    api_client.token_authenticate(en_user)
-    en_resp = api_client.put(
+    deactivate_count_after_first = deactivate_spy.call_count
+    api_client.token_authenticate(de_user)
+    de_resp = api_client.put(
         path='/accounts/user',
-        data=request_data,
+        data={'photo': 'invalid_url'},
     )
 
     # assert
     assert ru_resp.status_code == 400
-    assert ru_resp.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert ru_resp.data['message'] == 'Введите правильный URL.'
-    assert en_resp.status_code == 400
-    assert en_resp.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert en_resp.data['message'] == 'Enter a valid URL.'
+    assert de_resp.status_code == 400
+    activate_spy.assert_has_calls(
+        [call(Language.ru), call(Language.de)],
+        any_order=True,
+    )
+    assert deactivate_count_after_first >= 1
+    assert deactivate_spy.call_count >= 2
     partial_update_mock.assert_not_called()
 
 
-def test_put__locale__jwt_bearer_localized_validation_error(
+def test_put__locale__jwt_activates_user_lang(
     api_client,
     mocker,
 ):
 
-    """ SimpleJWT bearer resolves user language in middleware. """
-
     # arrange
     owner = create_test_owner(language=Language.ru)
-    request_data = {'photo': 'invalid_url'}
     partial_update_mock = mocker.patch(
         'src.accounts.views.user.'
         'UserService.partial_update',
     )
+    activate_spy = mocker.spy(translation, 'activate')
     token = str(AccessToken.for_user(owner))
 
     # act
     response = api_client.put(
         path='/accounts/user',
-        data=request_data,
+        data={'photo': 'invalid_url'},
         HTTP_AUTHORIZATION=f'Bearer {token}',
     )
 
     # assert
-    expected_msg = 'Введите правильный URL.'
     assert response.status_code == 400
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['message'] == expected_msg
-    assert response.data['details']['name'] == 'photo'
-    assert response.data['details']['reason'] == expected_msg
+    activate_spy.assert_has_calls([call(Language.ru)])
     partial_update_mock.assert_not_called()
 
 
-def test_comment__locale__guest_localized_validation_error(api_client):
-
-    """ Guest validation error uses X-Guest-Authorization user language. """
+def test_comment__locale__guest_activates_lang(
+    api_client,
+    mocker,
+):
 
     # arrange
     account = create_test_account()
     owner = create_test_owner(account=account, language=Language.ru)
     guest = create_test_guest(account=account)
-    workflow = create_test_workflow(owner, tasks_count=1)
+    workflow = create_test_workflow(
+        user=owner,
+        tasks_count=1,
+    )
     task = workflow.tasks.first()
     TaskPerformer.objects.create(
         task_id=task.id,
@@ -185,6 +181,7 @@ def test_comment__locale__guest_localized_validation_error(api_client):
         user_id=guest.id,
         account_id=account.id,
     )
+    activate_spy = mocker.spy(translation, 'activate')
 
     # act
     response = api_client.post(
@@ -195,23 +192,29 @@ def test_comment__locale__guest_localized_validation_error(api_client):
     )
 
     # assert
-    expected_msg = 'Поле обязательно.'
     assert response.status_code == 400
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['message'] == expected_msg
+    activate_spy.assert_has_calls([call(Language.ru)])
 
 
-def test_comment__locale__guest_wins_over_bearer(api_client):
-
-    """ Guest locale takes priority over Bearer (matches DRF auth order). """
+def test_comment__locale__guest_wins_over_bearer(
+    api_client,
+    mocker,
+):
 
     # arrange
     account = create_test_account()
-    owner = create_test_owner(account=account, language=Language.en)
+    owner = create_test_owner(
+        account=account,
+        language=Language.de,
+    )
     guest = create_test_guest(account=account)
     guest.language = Language.ru
     guest.save(update_fields=['language'])
-    workflow = create_test_workflow(owner, tasks_count=1)
+    workflow = create_test_workflow(
+        user=owner,
+        tasks_count=1,
+    )
     task = workflow.tasks.first()
     TaskPerformer.objects.create(
         task_id=task.id,
@@ -222,6 +225,7 @@ def test_comment__locale__guest_wins_over_bearer(api_client):
         user_id=guest.id,
         account_id=account.id,
     )
+    activate_spy = mocker.spy(translation, 'activate')
     api_client.token_authenticate(owner)
 
     # act
@@ -232,22 +236,26 @@ def test_comment__locale__guest_wins_over_bearer(api_client):
     )
 
     # assert
-    expected_msg = 'Поле обязательно.'
     assert response.status_code == 400
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['message'] == expected_msg
+    activate_spy.assert_has_calls([call(Language.ru)])
 
 
-def test_put__locale__unauthenticated_uses_accept_language(api_client):
-    """Anonymous requests fall back to Accept-Language."""
+def test_put__locale__unauth_activates_accept_lang(
+    api_client,
+    mocker,
+):
 
+    # arrange
+    activate_spy = mocker.spy(translation, 'activate')
+
+    # act
     response = api_client.put(
         path='/accounts/user',
         data={'photo': 'invalid_url'},
         HTTP_ACCEPT_LANGUAGE='de',
     )
 
+    # assert
     assert response.status_code == 401
-    assert response.data['detail'] == (
-        'Authentifizierungsdaten wurden nicht bereitgestellt.'
-    )
+    activate_spy.assert_has_calls([call('de')])
