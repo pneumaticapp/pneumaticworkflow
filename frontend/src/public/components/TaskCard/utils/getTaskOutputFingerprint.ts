@@ -8,8 +8,8 @@ export function getTaskOutputFingerprint(output: IExtraField[]): string {
         value,
         userId,
         groupId,
-        markdownValue,
-        attachments: attachments?.map(({ name, url, isRemoved }) => ({
+        markdownValue: markdownValue || '',
+        attachments: (attachments ?? []).map(({ name, url, isRemoved }) => ({
           name,
           url,
           isRemoved,

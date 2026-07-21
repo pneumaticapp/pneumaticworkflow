@@ -129,6 +129,65 @@ describe('useTaskOutput', () => {
     ]);
   });
 
+  it('updates output metadata without discarding valid drafts', () => {
+    const firstField = { ...makeField('first-field', 'server value'), order: 0 };
+    const secondField = { ...makeField('second-field', 'second value'), order: 1 };
+    const { rerender } = render(
+      <HookHarness task={makeTask([firstField, secondField])} />,
+    );
+
+    act(() => {
+      hookResult.editField('first-field')({ value: 'local draft' });
+    });
+    rerender(
+      <HookHarness
+        task={makeTask([
+          {
+            ...firstField,
+            name: 'Updated name',
+            order: 2,
+            isHidden: true,
+            isRequired: true,
+          },
+          secondField,
+        ])}
+      />,
+    );
+
+    expect(hookResult.outputValues).toEqual([
+      {
+        ...firstField,
+        name: 'Updated name',
+        order: 2,
+        isHidden: true,
+        isRequired: true,
+        value: 'local draft',
+      },
+      secondField,
+    ]);
+  });
+
+  it('cancels pending output persistence when the task restarts', () => {
+    const field = makeField('field', 'server value');
+    const { rerender } = render(<HookHarness task={makeTask([field])} />);
+
+    act(() => {
+      hookResult.editField('field')({ value: 'old run draft' });
+    });
+    rerender(
+      <HookHarness
+        task={makeTask([field], { dateStarted: '2024-02-01' })}
+      />,
+    );
+    act(() => {
+      jest.advanceTimersByTime(300);
+    });
+
+    expect(removeOutputFromLocalStorage).toHaveBeenCalledWith(1);
+    expect(addOrUpdateStorageOutput).not.toHaveBeenCalled();
+    expect(hookResult.outputValues).toEqual([field]);
+  });
+
   it('preserves pending edits to unchanged fields when server output changes', () => {
     const initialOutput = [
       makeField('unchanged-field', 'prefilled server value'),

@@ -68,6 +68,7 @@ export function useTaskOutput(task: ITask) {
     taskId: null as number | null,
     dateStarted: null as string | null,
     outputFingerprint: '',
+    outputDefinitionSignature: '',
     fieldFingerprints: {} as Record<string, string>,
   });
   const fieldsetSyncStateRef = useRef({
@@ -78,6 +79,10 @@ export function useTaskOutput(task: ITask) {
   });
   const taskOutputFingerprint = useMemo(
     () => getTaskOutputFingerprint(task.output),
+    [task.output],
+  );
+  const taskOutputDefinitionSignature = useMemo(
+    () => JSON.stringify(task.output),
     [task.output],
   );
   const taskFieldsetsFingerprint = useMemo(
@@ -91,8 +96,10 @@ export function useTaskOutput(task: ITask) {
     const isNewTask = syncState.taskId !== id;
     const isTaskRestarted = syncState.taskId === id && syncState.dateStarted !== dateStarted;
     const isServerOutputChanged = syncState.taskId === id && syncState.outputFingerprint !== taskOutputFingerprint;
+    const isServerOutputDefinitionChanged = syncState.taskId === id
+      && syncState.outputDefinitionSignature !== taskOutputDefinitionSignature;
 
-    if (!isNewTask && !isTaskRestarted && !isServerOutputChanged) {
+    if (!isNewTask && !isTaskRestarted && !isServerOutputDefinitionChanged) {
       return;
     }
 
@@ -131,9 +138,11 @@ export function useTaskOutput(task: ITask) {
         }
       }
     } else if (isTaskRestarted) {
+      saveOutputsToStorageDebounced.cancel();
       pendingStorageOutputRef.current = null;
       removeOutputFromLocalStorage(id);
     } else if (isServerOutputChanged) {
+      saveOutputsToStorageDebounced.cancel();
       const pendingStorageOutput = pendingStorageOutputRef.current;
       const savedOutput = pendingStorageOutput?.taskId === id
         ? pendingStorageOutput.output
@@ -151,6 +160,11 @@ export function useTaskOutput(task: ITask) {
         );
         pendingStorageOutputRef.current = null;
       }
+    } else if (isServerOutputDefinitionChanged) {
+      const pendingStorageOutput = pendingStorageOutputRef.current;
+      storageOutput = pendingStorageOutput?.taskId === id
+        ? pendingStorageOutput.output
+        : getOutputFromStorage(id);
     }
 
     const outputFieldsWithValues = sortFieldsByOrder(
@@ -161,8 +175,15 @@ export function useTaskOutput(task: ITask) {
     syncState.taskId = id;
     syncState.dateStarted = dateStarted;
     syncState.outputFingerprint = taskOutputFingerprint;
+    syncState.outputDefinitionSignature = taskOutputDefinitionSignature;
     syncState.fieldFingerprints = fieldFingerprints;
-  }, [task.id, task.dateStarted, taskOutputFingerprint, saveOutputsToStorageDebounced]);
+  }, [
+    task.id,
+    task.dateStarted,
+    taskOutputDefinitionSignature,
+    taskOutputFingerprint,
+    saveOutputsToStorageDebounced,
+  ]);
 
   useEffect(() => {
     const { id, dateStarted, fieldsets = [] } = task;

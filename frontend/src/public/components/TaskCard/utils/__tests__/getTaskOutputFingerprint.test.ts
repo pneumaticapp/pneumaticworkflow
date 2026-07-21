@@ -44,6 +44,26 @@ describe('getTaskOutputFingerprint', () => {
     );
   });
 
+  it('normalizes equivalent empty file representations', () => {
+    const fileField = {
+      apiName: 'file-field',
+      name: 'File',
+      type: EExtraFieldType.File,
+      order: 1,
+      value: [],
+      userId: null,
+      groupId: null,
+    };
+
+    expect(getTaskOutputFingerprint([fileField])).toBe(
+      getTaskOutputFingerprint([{
+        ...fileField,
+        attachments: [],
+        markdownValue: '',
+      }]),
+    );
+  });
+
   it('returns a different fingerprint when server field values change', () => {
     const base = {
       apiName: 'url-field',
