@@ -132,10 +132,9 @@ export function useTaskOutput(task: ITask) {
           addOrUpdateStorageOutput(id, storageOutput, { dateStarted, fieldFingerprints });
         }
       } else {
+        // Restore unvalidated legacy drafts for this session only; do not stamp
+        // current server fingerprints onto them.
         storageOutput = storedEntry?.data;
-        if (storageOutput) {
-          addOrUpdateStorageOutput(id, storageOutput, { dateStarted, fieldFingerprints });
-        }
       }
     } else if (isTaskRestarted) {
       saveOutputsToStorageDebounced.cancel();
@@ -232,10 +231,9 @@ export function useTaskOutput(task: ITask) {
           fieldsetsStorage.save(id, savedFieldsets, { dateStarted, fieldFingerprints });
         }
       } else {
+        // Restore unvalidated legacy drafts for this session only; do not stamp
+        // current server fingerprints onto them.
         savedFieldsets = storedEntry?.data;
-        if (savedFieldsets) {
-          fieldsetsStorage.save(id, savedFieldsets, { dateStarted, fieldFingerprints });
-        }
       }
     } else if (isTaskRestarted) {
       saveFieldsetsToStorageDebounced.cancel();

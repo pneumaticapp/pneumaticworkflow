@@ -81,6 +81,35 @@ describe('getTaskOutputFingerprint', () => {
     );
   });
 
+  it('normalizes undefined and false attachment isRemoved flags', () => {
+    const baseAttachment = {
+      id: 'file-id',
+      name: 'file.pdf',
+      url: 'https://files.example/file.pdf',
+      size: 100,
+    };
+    const fileField = {
+      apiName: 'file-field',
+      name: 'File',
+      type: EExtraFieldType.File,
+      order: 1,
+      value: [],
+      userId: null,
+      groupId: null,
+      markdownValue: '[file.pdf](https://files.example/file.pdf)',
+    };
+
+    expect(getTaskOutputFingerprint([{
+      ...fileField,
+      attachments: [{ ...baseAttachment }],
+    }])).toBe(
+      getTaskOutputFingerprint([{
+        ...fileField,
+        attachments: [{ ...baseAttachment, isRemoved: false }],
+      }]),
+    );
+  });
+
   it('returns a different fingerprint when server field values change', () => {
     const base = {
       apiName: 'url-field',

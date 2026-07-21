@@ -20,7 +20,7 @@ export function getTaskOutputFingerprint(output: IExtraField[]): string {
         attachments: (attachments ?? []).map(({ name, url, isRemoved }) => ({
           name,
           url,
-          isRemoved,
+          isRemoved: Boolean(isRemoved),
         })),
       }))
       .sort((firstField, secondField) => firstField.apiName.localeCompare(secondField.apiName)),

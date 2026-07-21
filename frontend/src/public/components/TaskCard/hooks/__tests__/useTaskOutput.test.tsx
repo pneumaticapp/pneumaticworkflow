@@ -143,6 +143,41 @@ describe('useTaskOutput', () => {
     ]);
   });
 
+  it('restores legacy drafts without rewriting them with current fingerprints', () => {
+    const outputField = makeField('output-field', 'server value');
+    const fieldsetField = makeField('fieldset-field', 'server value');
+    const serverFieldset = {
+      apiNameBinding: 'fieldset-1',
+      fields: [fieldsetField],
+    } as any;
+    (outputStorage.getEntry as jest.Mock).mockReturnValue({
+      taskId: 1,
+      data: [{ ...outputField, value: 'legacy output draft' }],
+    });
+    (fieldsetsStorage.getEntry as jest.Mock).mockReturnValue({
+      taskId: 1,
+      data: [{
+        ...serverFieldset,
+        fields: [{ ...fieldsetField, value: 'legacy fieldset draft' }],
+      }],
+    });
+
+    render(
+      <HookHarness
+        task={makeTask([outputField], { fieldsets: [serverFieldset] })}
+      />,
+    );
+
+    expect(hookResult.outputValues).toEqual([
+      { ...outputField, value: 'legacy output draft' },
+    ]);
+    expect(hookResult.fieldsetOutputValues[0].fields).toEqual([
+      { ...fieldsetField, value: 'legacy fieldset draft' },
+    ]);
+    expect(addOrUpdateStorageOutput).not.toHaveBeenCalled();
+    expect(fieldsetsStorage.save).not.toHaveBeenCalled();
+  });
+
   it('updates output metadata without discarding valid drafts', () => {
     const firstField = { ...makeField('first-field', 'server value'), order: 0 };
     const secondField = { ...makeField('second-field', 'second value'), order: 1 };
