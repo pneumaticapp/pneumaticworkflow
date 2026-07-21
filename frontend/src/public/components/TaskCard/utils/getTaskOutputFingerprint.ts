@@ -1,11 +1,19 @@
-import { IExtraField } from '../../../types/template';
+import { IExtraField, TExtraFieldValue } from '../../../types/template';
+
+function normalizeEmptyValue(value: TExtraFieldValue | undefined): TExtraFieldValue {
+  if (value == null || value === '' || (Array.isArray(value) && value.length === 0)) {
+    return null;
+  }
+
+  return value;
+}
 
 export function getTaskOutputFingerprint(output: IExtraField[]): string {
   return JSON.stringify(
     output
       .map(({ apiName, value, userId, groupId, markdownValue, attachments }) => ({
         apiName,
-        value,
+        value: normalizeEmptyValue(value),
         userId,
         groupId,
         markdownValue: markdownValue || '',

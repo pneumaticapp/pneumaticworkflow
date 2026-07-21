@@ -45,9 +45,11 @@ const makeTask = (output: IExtraField[], overrides: Partial<ITask> = {}): ITask 
 } as ITask);
 
 let hookResult: ReturnType<typeof useTaskOutput>;
+let renderedFieldsetValues: ReturnType<typeof useTaskOutput>['fieldsetOutputValues'][] = [];
 
 const HookHarness = ({ task }: { task: ITask }) => {
   hookResult = useTaskOutput(task);
+  renderedFieldsetValues.push(hookResult.fieldsetOutputValues);
 
   return null;
 };
@@ -56,6 +58,7 @@ describe('useTaskOutput', () => {
   beforeEach(() => {
     jest.useFakeTimers();
     jest.clearAllMocks();
+    renderedFieldsetValues = [];
     (getOutputFromStorage as jest.Mock).mockReturnValue(undefined);
     (outputStorage.getEntry as jest.Mock).mockReturnValue(undefined);
     (fieldsetsStorage.getEntry as jest.Mock).mockReturnValue(undefined);
@@ -64,6 +67,17 @@ describe('useTaskOutput', () => {
   afterEach(() => {
     jest.runOnlyPendingTimers();
     jest.useRealTimers();
+  });
+
+  it('exposes server fieldsets on the first render', () => {
+    const fieldset = {
+      apiNameBinding: 'fieldset-1',
+      fields: [makeField('fieldset-field', 'server value')],
+    } as any;
+
+    render(<HookHarness task={makeTask([], { fieldsets: [fieldset] })} />);
+
+    expect(renderedFieldsetValues[0]).toEqual([fieldset]);
   });
 
   it('filters stale output and fieldset drafts on initial mount', () => {

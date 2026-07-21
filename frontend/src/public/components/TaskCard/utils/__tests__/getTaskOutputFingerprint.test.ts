@@ -44,6 +44,23 @@ describe('getTaskOutputFingerprint', () => {
     );
   });
 
+  it('normalizes equivalent empty values', () => {
+    const field = {
+      apiName: 'field',
+      name: 'Field',
+      type: EExtraFieldType.String,
+      order: 1,
+      userId: null,
+      groupId: null,
+    };
+    const emptyValues = [undefined, null, '', []];
+    const fingerprints = emptyValues.map((value) =>
+      getTaskOutputFingerprint([{ ...field, value }]),
+    );
+
+    expect(new Set(fingerprints).size).toBe(1);
+  });
+
   it('normalizes equivalent empty file representations', () => {
     const fileField = {
       apiName: 'file-field',

@@ -20,7 +20,7 @@ import { getTaskOutputFingerprint } from '../utils/getTaskOutputFingerprint';
 
 export function useTaskOutput(task: ITask) {
   const [outputValues, setOutputValues] = useState<IExtraField[]>([]);
-  const [fieldsetOutputValues, setFieldsetOutputValues] = useState<IFieldsetRuntime[]>([]);
+  const [fieldsetOutputValues, setFieldsetOutputValues] = useState<IFieldsetRuntime[]>(task.fieldsets ?? []);
   const pendingStorageOutputRef = useRef<{
     taskId: number;
     output: IExtraField[];
