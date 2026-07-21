@@ -10,10 +10,58 @@ from src.processes.models.templates.system_template import (
     SystemTemplateCategory,
 )
 from src.processes.tests.fixtures import (
+    create_test_owner,
     create_test_user,
 )
+from src.utils.validation import ErrorCode
 
 pytestmark = pytest.mark.django_db
+
+
+def test_import_templates__empty_templates__validation_error(
+    api_client,
+):
+    # arrange
+    user = create_test_owner(is_staff=True)
+    api_client.token_authenticate(user)
+    data = {'templates': []}
+    message = 'This list may not be empty.'
+
+    # act
+    response = api_client.post(
+        '/templates/system/import',
+        data=data,
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == message
+    assert response.data['details']['name'] == 'templates'
+    assert response.data['details']['reason'] == message
+
+
+def test_import_templates__missing_templates__validation_error(
+    api_client,
+):
+    # arrange
+    user = create_test_owner(is_staff=True)
+    api_client.token_authenticate(user)
+    data = {'info': 'no templates key'}
+    message = 'This field is required.'
+
+    # act
+    response = api_client.post(
+        '/templates/system/import',
+        data=data,
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == message
+    assert response.data['details']['name'] == 'templates'
+    assert response.data['details']['reason'] == message
 
 
 def test_import_templates__category_not_exists__create(api_client):

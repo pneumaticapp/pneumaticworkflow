@@ -5,6 +5,20 @@ from drf_spectacular.plumbing import build_bearer_security_scheme_object
 from rest_framework_simplejwt.settings import api_settings
 
 
+class PneumaticTokenScheme(OpenApiAuthenticationExtension):
+    target_class = (
+        'src.authentication.services.user_auth.'
+        'PneumaticTokenAuthentication'
+    )
+    name = 'tokenAuth'
+
+    def get_security_definition(self, auto_schema):
+        return build_bearer_security_scheme_object(
+            header_name='HTTP_AUTHORIZATION',
+            token_prefix='Bearer',
+        )
+
+
 class PneumaticJWTScheme(OpenApiAuthenticationExtension):
     target_class = (
         'src.authentication.services.jwt_auth.'

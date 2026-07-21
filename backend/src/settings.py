@@ -302,11 +302,14 @@ class Common(Configuration):
 
     SPECTACULAR_SETTINGS = {
         'TITLE': 'Pneumatic Workflow API',
-        'DESCRIPTION': 'Public & internal API',
+        'DESCRIPTION': 'Public API (private/staging ops excluded)',
         'VERSION': '1.0.0',
         'SERVE_INCLUDE_SCHEMA': False,
         'SERVE_PERMISSIONS': [
-            'rest_framework.permissions.AllowAny',
+            'rest_framework.permissions.IsAuthenticated',
+        ],
+        'PREPROCESSING_HOOKS': [
+            'src.openapi.preprocessing.exclude_private_endpoints',
         ],
         'SCHEMA_PATH_PREFIX': r'/',
         # Schema is at /api/schema/; without SERVERS Swagger uses
