@@ -169,8 +169,7 @@ def test_exclude_private_endpoints__invites_token__filtered():
     result = exclude_private_endpoints(endpoints)
 
     # assert
-    assert len(result) == 1
-    assert result[0][0] == '/accounts/invites/{id}'
+    assert result == []
 
 
 def test_exclude_private_endpoints__get_permissions__filtered():

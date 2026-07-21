@@ -26,12 +26,14 @@ from src.generics.permissions import UserIsAuthenticated
 from src.openapi import (
     ACCESS_ADMIN,
     ACCESS_AUTH_OVERLIMIT,
+    DATASETS_LIST_PARAMS,
     EMPTY,
     FORBIDDEN,
     NOT_FOUND,
     UNAUTHORIZED,
     VALIDATION_ERROR,
 )
+from src.openapi.examples import DATASET_CREATE_EXAMPLE
 from src.utils.validation import raise_validation_error
 
 
@@ -81,6 +83,8 @@ class DatasetViewSet(
         )
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Dataset.objects.none()
         user = self.request.user
         queryset = Dataset.objects.on_account(user.account_id)
         if self.action == 'list':
@@ -96,6 +100,7 @@ class DatasetViewSet(
         tags=['Datasets'],
         summary='List datasets',
         description=ACCESS_AUTH_OVERLIMIT,
+        parameters=DATASETS_LIST_PARAMS,
         responses={
             # Item serializer; spectacular wraps with pagination.
             200: DatasetListSerializer,
@@ -113,6 +118,7 @@ class DatasetViewSet(
         summary='Create dataset',
         description=ACCESS_ADMIN,
         request=DatasetSerializer,
+        examples=[DATASET_CREATE_EXAMPLE],
         responses={
             201: DatasetSerializer,
             400: VALIDATION_ERROR,
@@ -328,6 +334,8 @@ class DatasetItemViewSet(
         )
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return DatasetItem.objects.none()
         user = self.request.user
         return DatasetItem.objects.filter(
             account_id=user.account_id,

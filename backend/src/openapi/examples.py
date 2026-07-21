@@ -54,3 +54,76 @@ TOO_MANY_REQUESTS_EXAMPLE = detail_example(
     detail='Request was throttled.',
     status_code='429',
 )
+
+
+# -- Request examples (request_only) --------------------------------
+
+TEMPLATE_CREATE_EXAMPLE = OpenApiExample(
+    'Create template (minimal)',
+    value={
+        'name': 'Employee onboarding',
+        'tasks': [
+            {
+                'name': 'Fill out paperwork',
+                'number': 1,
+                'performers': [{'type': 'user', 'source_id': 1}],
+            },
+        ],
+        'is_active': True,
+    },
+    request_only=True,
+)
+
+WORKFLOW_RUN_EXAMPLE = OpenApiExample(
+    'Run workflow',
+    value={
+        'name': 'Onboard: Jane Doe',
+        'is_urgent': False,
+        'kickoff': {
+            'employee-name': 'Jane Doe',
+        },
+    },
+    request_only=True,
+)
+
+WORKFLOW_COMPLETE_EXAMPLE = OpenApiExample(
+    'Complete current task',
+    value={
+        'task_id': 42,
+        'output': {
+            'result': 'Approved',
+        },
+    },
+    request_only=True,
+)
+
+TASK_COMPLETE_EXAMPLE = OpenApiExample(
+    'Complete task',
+    value={
+        'output': {
+            'result': 'Done',
+        },
+    },
+    request_only=True,
+)
+
+DATASET_CREATE_EXAMPLE = OpenApiExample(
+    'Create dataset',
+    value={
+        'name': 'Departments',
+        'description': 'Company departments list',
+        'items': [
+            {'value': 'Engineering', 'order': 0},
+            {'value': 'Marketing', 'order': 1},
+        ],
+    },
+    request_only=True,
+)
+
+WEBHOOK_SUBSCRIBE_EXAMPLE = OpenApiExample(
+    'Subscribe to webhooks',
+    value={
+        'url': 'https://example.com/hooks/pneumatic',
+    },
+    request_only=True,
+)

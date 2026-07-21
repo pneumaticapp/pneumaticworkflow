@@ -96,6 +96,23 @@ class TemplatePresetViewSet(
 
     @extend_schema(
         tags=['Templates'],
+        summary='Partial update template preset',
+        description=ACCESS_PRESET,
+        request=TemplatePresetSerializer,
+        responses={
+            200: TemplatePresetSerializer,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
+    def partial_update(self, request, *args, **kwargs):
+        kwargs['partial'] = True
+        return self.update(request, *args, **kwargs)
+
+    @extend_schema(
+        tags=['Templates'],
         summary='Delete template preset',
         description=ACCESS_PRESET,
         responses={

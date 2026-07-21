@@ -1,4 +1,4 @@
-from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiResponse
 from rest_framework import serializers
 
 from src.openapi.examples import (
@@ -10,8 +10,8 @@ from src.openapi.examples import (
 )
 from src.openapi.helpers import error_response
 
-# Empty body (204 No Content, etc.)
-EMPTY = OpenApiTypes.NONE
+# Empty body (200 OK / 204 No Content without response schema)
+EMPTY = OpenApiResponse(description='Success')
 
 
 class ValidationErrorDetailsSerializer(serializers.Serializer):
