@@ -259,6 +259,32 @@ describe('ExtraFieldsHelper', () => {
       expect(result[0].value).toBe(10);
     });
 
+    it('restores stored user selection ids instead of server ids', () => {
+      const serverField: IExtraField = {
+        apiName: 'field-user',
+        name: 'User Field',
+        type: EExtraFieldType.User,
+        order: 1,
+        userId: 1,
+        groupId: null,
+        value: 'server user',
+      };
+      const storageField: IExtraField = {
+        ...serverField,
+        userId: null,
+        groupId: 7,
+        value: 'draft group',
+      };
+
+      const result = new ExtraFieldsHelper([serverField], [storageField]).getFieldsWithValues();
+
+      expect(result[0]).toEqual(expect.objectContaining({
+        value: 'draft group',
+        userId: null,
+        groupId: 7,
+      }));
+    });
+
     it('returns null for radio field with no selections', () => {
       const field: IExtraField = {
         apiName: 'field-radio',

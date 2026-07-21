@@ -148,7 +148,16 @@ export class ExtraFieldsHelper {
     },
 
     [EExtraFieldType.User]: (field: IExtraField) => {
-      return { ...field, value: this.getFieldValue(field.value, '', field.apiName) };
+      const storageField = this.getStorageField(field.apiName);
+
+      return {
+        ...field,
+        value: this.getFieldValue(field.value, '', field.apiName),
+        ...(storageField && {
+          userId: storageField.userId,
+          groupId: storageField.groupId,
+        }),
+      };
     },
   };
 }

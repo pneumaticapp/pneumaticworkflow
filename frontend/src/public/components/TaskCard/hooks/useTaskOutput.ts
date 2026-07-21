@@ -196,6 +196,11 @@ export function useTaskOutput(task: ITask) {
 
   useEffect(
     () => () => {
+      const pendingStorageOutput = pendingStorageOutputRef.current;
+      if (pendingStorageOutput) {
+        addOrUpdateStorageOutput(pendingStorageOutput.taskId, pendingStorageOutput.output);
+      }
+
       const pendingStorageFieldsets = pendingStorageFieldsetsRef.current;
       if (pendingStorageFieldsets) {
         fieldsetsStorage.save(pendingStorageFieldsets.taskId, pendingStorageFieldsets.fieldsets);
