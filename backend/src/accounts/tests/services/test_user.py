@@ -1163,6 +1163,10 @@ def test_private_deactivate__ok(mocker):
     identify_mock = mocker.patch(
         'src.accounts.services.user.UserService.identify',
     )
+    mocker.patch(
+        'src.accounts.services.user.transaction.on_commit',
+        side_effect=lambda func: func(),
+    )
     service = UserService(instance=deleted_user, user=owner)
 
     # act
@@ -1202,6 +1206,10 @@ def test_private_deactivate__activate_contacts__ok(mocker):
     )
     mocker.patch(
         'src.accounts.services.user.UserService.identify',
+    )
+    mocker.patch(
+        'src.accounts.services.user.transaction.on_commit',
+        side_effect=lambda func: func(),
     )
     google_contact = Contact.objects.create(
         account=account,
@@ -3426,15 +3434,14 @@ def test_check_and_complete_tasks__rcba_and_completed_group_performer__skip(
     group = create_test_group(account=account, users=[user])
     TaskPerformer.objects.create(
         task=task,
-        user=user,
-        is_completed=True,
-        type=PerformerType.GROUP_USER,
+        group=group,
+        type=PerformerType.GROUP,
     )
     TaskPerformer.objects.create(
         task=task,
-        group=group,
+        user=user,
+        type=PerformerType.GROUP_USER,
         is_completed=True,
-        type=PerformerType.GROUP,
     )
     check_and_complete_tasks_delay_mock = mocker.patch(
         'src.accounts.services.user.check_and_complete_tasks.delay',
@@ -3705,7 +3712,7 @@ def test_check_and_complete_task__user_non_performer__skip(mocker):
     check_and_complete_tasks_delay_mock.assert_not_called()
 
 
-def test_check_and_complete_tasks__completed_performer__skip(
+def test_check_and_complete_tasks__completed_user_performer__skip(
     mocker,
 ):
 

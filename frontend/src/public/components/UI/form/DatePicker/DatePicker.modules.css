@@ -1,3 +1,13 @@
 .date-picker {
   position: relative;
 }
+
+.date-picker :global(.react-datepicker__close-icon) {
+  right: 0.75rem;
+  padding: 0;
+}
+
+.date-picker :global(.react-datepicker__close-icon::after) {
+  font-size: 1rem;
+  background-color: var(--pneumatic-color-black32);
+}

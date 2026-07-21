@@ -259,10 +259,53 @@ class DeleteUserGroupFromTaskPerformerQuery(BaseDeleteTaskPerformerQuery):
     delete_field = "user_id"
     substitution_field = "group_id"
 
+    def get_sql(self):
+        """Delete conflicting GROUP performers before reassigning USER.
+
+        Only matches assignment USER rows for the deleted user — not
+        GROUP_USER completion markers.
+        """
+        return f"""
+        DELETE FROM processes_taskperformer
+        WHERE
+          {self.substitution_field} = %(substitution_id)s AND
+          type = '{PerformerType.GROUP}' AND
+          task_id IN (
+            SELECT task_id FROM processes_taskperformer
+            WHERE {self.delete_field} = %(delete_id)s
+            AND type = '{PerformerType.USER}'
+            AND task_id IN (
+                SELECT id FROM processes_task
+                WHERE status != 'completed'
+            )
+          )
+        """, self.params
+
 
 class DeleteUserFromTaskPerformerQuery(BaseDeleteTaskPerformerQuery):
     delete_field = "user_id"
     substitution_field = "user_id"
+
+    def get_sql(self):
+        """Delete conflicting USER performers before reassigning USER.
+
+        Only matches assignment USER rows — not GROUP_USER markers.
+        """
+        return f"""
+        DELETE FROM processes_taskperformer
+        WHERE
+          {self.substitution_field} = %(substitution_id)s AND
+          type = '{PerformerType.USER}' AND
+          task_id IN (
+            SELECT task_id FROM processes_taskperformer
+            WHERE {self.delete_field} = %(delete_id)s
+            AND type = '{PerformerType.USER}'
+            AND task_id IN (
+                SELECT id FROM processes_task
+                WHERE status != 'completed'
+            )
+          )
+        """, self.params
 
 
 class BaseDeleteTemplateOwnerQuery(SqlQueryObject):
