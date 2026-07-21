@@ -92,6 +92,37 @@ describe('useTaskOutput', () => {
     expect(addOrUpdateStorageOutput).toHaveBeenCalledTimes(1);
   });
 
+  it('merges stored values into the latest fieldset definition', () => {
+    const storedFieldset = {
+      apiNameBinding: 'fieldset-1',
+      title: 'Old title',
+      fields: [makeField('existing-field', 'draft value')],
+    } as any;
+    const newRequiredField = {
+      ...makeField('new-required-field', ''),
+      isRequired: true,
+    };
+    const serverFieldset = {
+      ...storedFieldset,
+      title: 'Updated title',
+      fields: [
+        makeField('existing-field', 'server value'),
+        newRequiredField,
+      ],
+    };
+    (fieldsetsStorage.get as jest.Mock).mockReturnValue([storedFieldset]);
+
+    render(<HookHarness task={makeTask([], { fieldsets: [serverFieldset] })} />);
+
+    expect(hookResult.fieldsetOutputValues).toEqual([{
+      ...serverFieldset,
+      fields: [
+        makeField('existing-field', 'draft value'),
+        newRequiredField,
+      ],
+    }]);
+  });
+
   it('clears fieldset drafts and state when the same task restarts', () => {
     const serverFieldset = {
       apiNameBinding: 'fieldset-1',

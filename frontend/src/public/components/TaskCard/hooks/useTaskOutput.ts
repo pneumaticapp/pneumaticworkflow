@@ -174,7 +174,13 @@ export function useTaskOutput(task: ITask) {
       savedFieldsets?.map((fieldset) => [fieldset.apiNameBinding, fieldset]) ?? [],
     );
     setFieldsetOutputValues(
-      fieldsets.map((fieldset) => savedFieldsetsByApiName.get(fieldset.apiNameBinding) ?? fieldset),
+      fieldsets.map((fieldset) => ({
+        ...fieldset,
+        fields: new ExtraFieldsHelper(
+          fieldset.fields,
+          savedFieldsetsByApiName.get(fieldset.apiNameBinding)?.fields,
+        ).getFieldsWithValues(),
+      })),
     );
 
     syncState.taskId = id;
