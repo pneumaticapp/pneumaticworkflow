@@ -14,7 +14,10 @@ import { loadFieldsetsCatalog } from '../../redux/fieldsets/slice';
 import { ESubscriptionPlan } from '../../types/account';
 import { ETemplateStatus } from '../../types/redux';
 import { TemplateForm, useTemplateForm } from './useTemplateForm';
-import { resolveTemplateFormIdentity } from './useTemplateForm/templateFormUtils';
+import {
+  resolveTemplateFormIdentity,
+  resolveTemplateFormMountKey,
+} from './useTemplateForm/templateFormUtils';
 
 import { TTemplateEditProps } from './types';
 
@@ -33,12 +36,17 @@ export function TemplateEdit({
   const isCatalogLoaded = useSelector(getIsCatalogLoaded);
   const templateIdentity = resolveTemplateFormIdentity(template, location);
   const createSessionKeyRef = useRef<string | undefined>(undefined);
+  const lastTemplateIdentityRef = useRef(templateIdentity);
 
-  if (!template.id && typeof templateIdentity === 'string') {
-    createSessionKeyRef.current = templateIdentity;
-  }
+  const { mountKey: templateFormKey, createSessionKey } = resolveTemplateFormMountKey({
+    previousIdentity: lastTemplateIdentityRef.current,
+    nextIdentity: templateIdentity,
+    previousCreateSessionKey: createSessionKeyRef.current,
+    templateId: template.id,
+  });
+  createSessionKeyRef.current = createSessionKey;
+  lastTemplateIdentityRef.current = templateIdentity;
 
-  const templateFormKey = template.id ?? createSessionKeyRef.current ?? 'create';
   const { formik, setFieldValue, setValues, dirtyRef, pendingUserEditsRef, persistBaselineSyncRef } = useTemplateForm(
     template,
     templateIdentity,
