@@ -149,7 +149,7 @@ def test_create__first_request__ok_without_captcha(
     assert response.status_code == 204
     anonymous_user_reset_exists_mock.assert_called_once_with(ANY)
     inc_anonymous_user_reset_counter_mock.assert_called_once_with(
-        ANY
+        ANY,
     )
     send_reset_pwd_notification_mock.assert_called_once_with(
         user_id=user.id,
@@ -209,7 +209,7 @@ def test_create__second_request_with_captcha__ok(
     assert response.status_code == 204
     anonymous_user_reset_exists_mock.assert_called_once_with(ANY)
     inc_anonymous_user_reset_counter_mock.assert_called_once_with(
-        ANY
+        ANY,
     )
     send_reset_pwd_notification_mock.assert_called_once_with(
         user_id=user.id,
@@ -263,7 +263,7 @@ def test_create__captcha_disabled__ok_without_captcha(
     assert response.status_code == 204
     anonymous_user_reset_exists_mock.assert_called_once_with(ANY)
     inc_anonymous_user_reset_counter_mock.assert_called_once_with(
-        ANY
+        ANY,
     )
     send_reset_pwd_notification_mock.assert_called_once_with(
         user_id=user.id,
@@ -315,7 +315,7 @@ def test_create__user_not_found__ok_no_notification(
     assert response.status_code == 204
     anonymous_user_reset_exists_mock.assert_called_once_with(ANY)
     inc_anonymous_user_reset_counter_mock.assert_called_once_with(
-        ANY
+        ANY,
     )
     send_reset_pwd_notification_mock.assert_not_called()
     check_sso_restrictions_mock.assert_not_called()
@@ -368,7 +368,7 @@ def test_create__second_request_no_captcha__validation_err(
     assert response.data['details']['reason'] == message
     anonymous_user_reset_exists_mock.assert_called_once_with(ANY)
     inc_anonymous_user_reset_counter_mock.assert_called_once_with(
-        ANY
+        ANY,
     )
     send_reset_pwd_notification_mock.assert_not_called()
     check_sso_restrictions_mock.assert_not_called()
@@ -421,7 +421,7 @@ def test_create__ip_not_found_no_captcha__validation_err(
     assert response.data['details']['reason'] == message
     anonymous_user_reset_exists_mock.assert_called_once_with(ANY)
     inc_anonymous_user_reset_counter_mock.assert_called_once_with(
-        ANY
+        ANY,
     )
     send_reset_pwd_notification_mock.assert_not_called()
     check_sso_restrictions_mock.assert_not_called()
