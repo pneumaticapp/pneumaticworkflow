@@ -222,3 +222,36 @@ export function hasTemplateIdentityChanged(
 
   return previousIdentity !== undefined || nextIdentity !== undefined;
 }
+
+/**
+ * Stable React key for `<TemplateForm />` across create → first-id autosave.
+ * Prefers the create-session key so the tree does not remount when Redux assigns
+ * an id (matching `hasTemplateIdentityChanged`). Clears that key only when the
+ * template identity truly changes (another template / create flow).
+ */
+export function resolveTemplateFormMountKey({
+  previousIdentity,
+  nextIdentity,
+  previousCreateSessionKey,
+  templateId,
+}: {
+  previousIdentity: string | number | undefined;
+  nextIdentity: string | number | undefined;
+  previousCreateSessionKey: string | undefined;
+  templateId?: number | null;
+}): { mountKey: string | number; createSessionKey: string | undefined } {
+  let createSessionKey = previousCreateSessionKey;
+
+  if (hasTemplateIdentityChanged(previousIdentity, nextIdentity)) {
+    createSessionKey = undefined;
+  }
+
+  if (!templateId && typeof nextIdentity === 'string') {
+    createSessionKey = nextIdentity;
+  }
+
+  return {
+    mountKey: createSessionKey ?? templateId ?? 'create',
+    createSessionKey,
+  };
+}
