@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Formik, useField } from 'formik';
 import { useIntl } from 'react-intl';
 
@@ -41,6 +41,7 @@ function SystemPromptField() {
 
 export function CreateAIAgentForm({ isActive, onSubmit }: ICreateAIAgentFormProps) {
   const { formatMessage } = useIntl();
+  const latestAvatarActionRef = useRef(0);
   const initialValues: ICreateAIAgentFormValues = {
     firstName: '',
     lastName: '',
@@ -76,8 +77,14 @@ export function CreateAIAgentForm({ isActive, onSubmit }: ICreateAIAgentFormProp
           const file = event.target.files?.[0];
           if (!file) return;
 
+          latestAvatarActionRef.current += 1;
+          const actionId = latestAvatarActionRef.current;
           const reader = new FileReader();
-          reader.onload = () => setFieldValue('avatar', String(reader.result));
+          reader.onload = () => {
+            if (actionId === latestAvatarActionRef.current) {
+              setFieldValue('avatar', String(reader.result));
+            }
+          };
           reader.readAsDataURL(file);
           event.currentTarget.value = '';
         };
@@ -104,7 +111,13 @@ export function CreateAIAgentForm({ isActive, onSubmit }: ICreateAIAgentFormProp
                     />
                   </label>
                   <span className={styles['modal__avatar-separator']} aria-hidden>•</span>
-                  <button type="button" onClick={() => setFieldValue('avatar', 'generated')}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      latestAvatarActionRef.current += 1;
+                      setFieldValue('avatar', 'generated');
+                    }}
+                  >
                     {formatMessage({ id: 'team.create-ai-agent-modal.generate' })}
                   </button>
                 </div>

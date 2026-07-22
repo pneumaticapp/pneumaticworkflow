@@ -258,15 +258,21 @@ const Option = (props: any) => {
 };
 
 export function FormikDropdownList(props: IDropdownListProps<TDropdownOptionBase> & FieldHookConfig<string>) {
-  const { name, options, type } = props;
-  const [field, meta, { setValue }] = useField(name);
+  const { name, onBlur: handleBlur, options, type } = props;
+  const [field, meta, { setTouched, setValue }] = useField(name);
 
   const onChange = ({ value }: any) => setValue(value);
+  const onBlur = (event: React.FocusEvent<HTMLInputElement>) => {
+    handleBlur?.(event);
+    // Let react-select finish an option click before validation rerenders it.
+    window.setTimeout(() => setTouched(true), 0);
+  };
 
   return (
     <DropdownList
       {...props}
       onChange={onChange}
+      onBlur={onBlur}
       value={options.find((option) => option.value === field.value)}
       {...(meta.touched && meta.error && type !== 'hidden' && { errorMessage: meta.error })}
     />

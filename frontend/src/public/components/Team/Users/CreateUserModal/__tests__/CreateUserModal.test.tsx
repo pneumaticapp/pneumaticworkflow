@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { act, render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useDispatch } from 'react-redux';
 
@@ -153,6 +153,37 @@ describe('CreateUserModal', () => {
       expect(avatarInput.value).toBe('');
     });
 
+    it('ignores an old file read after generating a newer avatar', async () => {
+      const readers: FileReader[] = [];
+      const readSpy = jest.spyOn(FileReader.prototype, 'readAsDataURL')
+        .mockImplementation(function mockRead(this: FileReader) {
+          readers.push(this);
+        });
+      render(<CreateUserModal isOpen={true} onClose={mockOnClose} />);
+      await openAIAgentTab();
+
+      await userEvent.type(screen.getByLabelText(
+        getTranslatedText('team.create-user-modal.first-name'),
+      ), 'Ada');
+      await userEvent.type(screen.getByLabelText(
+        getTranslatedText('team.create-user-modal.last-name'),
+      ), 'Agent');
+      await userEvent.upload(
+        screen.getByLabelText(getTranslatedText('team.create-ai-agent-modal.upload')),
+        new File(['old-avatar'], 'old.png', { type: 'image/png' }),
+      );
+      await userEvent.click(screen.getByRole('button', {
+        name: getTranslatedText('team.create-ai-agent-modal.generate'),
+      }));
+
+      Object.defineProperty(readers[0], 'result', { value: 'data:image/png;base64,old' });
+      act(() => readers[0].onload?.call(readers[0], new ProgressEvent('load')));
+      readSpy.mockRestore();
+
+      expect(screen.getByText('AA')).toBeInTheDocument();
+      expect(document.querySelector('.modal__avatar-preview img')).not.toBeInTheDocument();
+    });
+
     it('preserves both forms while switching tabs', async () => {
       render(<CreateUserModal isOpen={true} onClose={mockOnClose} />);
 
@@ -186,14 +217,11 @@ describe('CreateUserModal', () => {
       render(<CreateUserModal isOpen={true} onClose={mockOnClose} />);
       await openAIAgentTab();
 
-      const submitButton = screen.getByRole('button', {
-        name: getTranslatedText('team.create-ai-agent-modal.submit'),
-      });
-      fireEvent.submit(submitButton.closest('form')!);
-
       const modelDropdown = screen.getByText(
         getTranslatedText('team.create-ai-agent-modal.model'),
       ).closest('.react-select') as HTMLElement;
+      await userEvent.click(modelDropdown.querySelector('.react-select__control') as HTMLElement);
+      await userEvent.tab();
       expect(await within(modelDropdown).findByText(
         getTranslatedText('team.create-ai-agent-modal.validation-required'),
       )).toBeInTheDocument();
