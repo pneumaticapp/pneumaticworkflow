@@ -4569,3 +4569,93 @@ def test_create__draft_fieldset_from_another_account__excluded(
     assert draft['tasks'][0]['fieldsets'] == []
     assert response.data['kickoff']['fieldsets'] == []
     assert response.data['tasks'][0]['fieldsets'] == []
+
+
+def test_create__two_kickoff_fieldsets_from_same_shared_with_selections__ok(
+    mocker,
+    api_client,
+):
+    """Two inherited fieldsets from one shared fieldset with checkbox
+    selections must get unique selection api_names within the template."""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_user(account=account)
+    api_client.token_authenticate(user)
+    mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.'
+        'create_integrations_for_template',
+    )
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_created',
+    )
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_kickoff_created',
+    )
+    shared_fieldset = create_test_shared_fieldset(account=account)
+    shared_fieldset.fields.all().delete()
+    shared_field = FieldTemplate.objects.create(
+        fieldset=shared_fieldset,
+        account=account,
+        name='Checkbox field',
+        type=FieldType.CHECKBOX,
+        order=1,
+        api_name='checkbox-field',
+    )
+    FieldTemplateSelection.objects.create(
+        field_template=shared_field,
+        value='Option A',
+        api_name='selection-6059b7',
+    )
+    request_data = {
+        'name': 'Template with duplicated shared fieldset',
+        'owners': [
+            {
+                'type': OwnerType.USER,
+                'source_id': user.id,
+                'role': OwnerRole.OWNER,
+            },
+        ],
+        'is_active': True,
+        'kickoff': {
+            'fieldsets': [
+                {
+                    'shared_fieldset_id': shared_fieldset.id,
+                },
+                {
+                    'shared_fieldset_id': shared_fieldset.id,
+                },
+            ],
+        },
+        'tasks': [
+            {
+                'number': 1,
+                'name': 'First step',
+                'raw_performers': [
+                    {
+                        'type': PerformerType.USER,
+                        'source_id': user.id,
+                    },
+                ],
+            },
+        ],
+    }
+
+    # act
+    response = api_client.post(
+        path='/templates',
+        data=request_data,
+    )
+
+    # assert
+    assert response.status_code == 200
+    fieldsets = response.data['kickoff']['fieldsets']
+    assert len(fieldsets) == 2
+    selection_1 = fieldsets[0]['fields'][0]['selections'][0]
+    selection_2 = fieldsets[1]['fields'][0]['selections'][0]
+    assert selection_1['value'] == 'Option A'
+    assert selection_2['value'] == 'Option A'
+    assert selection_1['api_name'] != selection_2['api_name']

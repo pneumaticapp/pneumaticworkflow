@@ -11,7 +11,10 @@ from src.processes.models.templates.fieldset import (
     FieldsetTemplate,
     FieldsetTemplateRule,
 )
-from src.processes.models.templates.fields import FieldTemplate
+from src.processes.models.templates.fields import (
+    FieldTemplate,
+    FieldTemplateSelection,
+)
 from src.processes.services.exceptions import (
     FieldsetTemplateInUseException,
     FieldsetTemplateSharedIdMissing,
@@ -1379,15 +1382,29 @@ def test__replace_api_names__fields_and_rules__ok(mocker):
     old_field_api = 'old-field-1'
     shared_fieldset_data = {
         'api_name': 'old-fs',
-        'fields': [{'api_name': old_field_api, 'name': 'F 1'}],
+        'fields': [
+            {
+                'api_name': old_field_api,
+                'name': 'F 1',
+                'selections': [
+                    {'api_name': 'old-selection-1', 'value': 'Option A'},
+                ],
+            },
+        ],
         'rules': [{'api_name': 'old-rule-1', 'fields': [old_field_api]}],
     }
     new_fs_api = 'new-fs-1'
     new_field_api = 'new-field-1'
+    new_selection_api = 'new-selection-1'
     new_rule_api = 'new-rule-1'
     create_api_name_mock = mocker.patch(
         'src.processes.services.fieldsets.fieldset.create_api_name',
-        side_effect=[new_fs_api, new_field_api, new_rule_api],
+        side_effect=[
+            new_fs_api,
+            new_field_api,
+            new_selection_api,
+            new_rule_api,
+        ],
     )
 
     # act
@@ -1398,13 +1415,18 @@ def test__replace_api_names__fields_and_rules__ok(mocker):
     # assert
     assert result['api_name'] == new_fs_api
     assert result['fields'][0]['api_name'] == new_field_api
+    assert result['fields'][0]['selections'][0]['api_name'] == (
+        new_selection_api
+    )
+    assert result['fields'][0]['selections'][0]['value'] == 'Option A'
     assert result['rules'][0]['api_name'] == new_rule_api
     assert result['rules'][0]['fields'][0] == new_field_api
-    assert create_api_name_mock.call_count == 3
+    assert create_api_name_mock.call_count == 4
     create_api_name_mock.assert_has_calls(
         [
             mocker.call(FieldsetTemplate.api_name_prefix),
             mocker.call(FieldTemplate.api_name_prefix),
+            mocker.call(FieldTemplateSelection.api_name_prefix),
             mocker.call(FieldsetTemplateRule.api_name_prefix),
         ],
         any_order=True,
