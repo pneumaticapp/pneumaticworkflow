@@ -385,6 +385,8 @@ export const ruMessages = {
   'validation.number-invalid-format': 'Неверный формат числа',
   'validation.company-name-empty': 'Пожалуйста, введите название вашей компании',
   'validation.field-empty': 'Это поле не может быть пустым',
+  'validation.checklist-item-empty': 'Пункт чеклиста не может быть пустым',
+  'validation.checklist-items-invalid': 'Чеклист должен содержать хотя бы один пункт',
   'validation.process-name-empty': 'Пожалуйста, введите название шаблона',
   'validation.process-name-to-long': 'Название шаблона превышает 120 символов',
   'validation.task-name-empty': 'Название шага не может быть пустым',
