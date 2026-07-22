@@ -147,6 +147,7 @@
 
   label,
   button {
+    text-transform: uppercase;
     cursor: pointer;
     color: inherit;
   }
