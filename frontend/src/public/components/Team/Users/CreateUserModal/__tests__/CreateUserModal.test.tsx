@@ -141,6 +141,18 @@ describe('CreateUserModal', () => {
       expect(screen.getByText(getTranslatedText('team.create-ai-agent-modal.system-prompt'))).toBeInTheDocument();
     });
 
+    it('clears the avatar input after upload so the same file can be selected again', async () => {
+      render(<CreateUserModal isOpen={true} onClose={mockOnClose} />);
+      await openAIAgentTab();
+
+      const avatarInput = screen.getByLabelText(
+        getTranslatedText('team.create-ai-agent-modal.upload'),
+      ) as HTMLInputElement;
+      await userEvent.upload(avatarInput, new File(['avatar'], 'avatar.png', { type: 'image/png' }));
+
+      expect(avatarInput.value).toBe('');
+    });
+
     it('preserves both forms while switching tabs', async () => {
       render(<CreateUserModal isOpen={true} onClose={mockOnClose} />);
 

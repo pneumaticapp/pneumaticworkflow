@@ -79,6 +79,7 @@ export function CreateAIAgentForm({ isActive, onSubmit }: ICreateAIAgentFormProp
           const reader = new FileReader();
           reader.onload = () => setFieldValue('avatar', String(reader.result));
           reader.readAsDataURL(file);
+          event.currentTarget.value = '';
         };
 
         if (!isActive) return null;
