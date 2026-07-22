@@ -95,6 +95,7 @@ class IosViewSet(
         tags=['Notifications'],
         summary='Reset iOS push counter',
         description=ACCESS_PUSH,
+        request=None,
         responses={
             200: EMPTY,
             401: UNAUTHORIZED,

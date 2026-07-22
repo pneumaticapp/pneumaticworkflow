@@ -66,7 +66,7 @@ TEMPLATE_CREATE_EXAMPLE = OpenApiExample(
             {
                 'name': 'Fill out paperwork',
                 'number': 1,
-                'performers': [{'type': 'user', 'source_id': 1}],
+                'raw_performers': [{'type': 'user', 'source_id': 1}],
             },
         ],
         'is_active': True,

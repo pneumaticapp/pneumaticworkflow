@@ -2,6 +2,8 @@
 
 from rest_framework import serializers
 
+from src.authentication.enums import ResetPasswordStatus
+
 from src.processes.serializers.workflows.task import (
     TaskSerializer,
 )
@@ -23,7 +25,7 @@ class UserCountersSerializer(serializers.Serializer):
 
 
 class ResetPasswordStatusSerializer(serializers.Serializer):
-    status = serializers.CharField()
+    status = serializers.ChoiceField(choices=ResetPasswordStatus.CHOICES)
 
 
 class WebHookEventSerializer(serializers.Serializer):

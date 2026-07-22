@@ -310,11 +310,6 @@ class Common(Configuration):
         # Schema is at /api/schema/; without SERVERS Swagger uses
         # /api as base and breaks real paths (/auth, /templates, …).
         'SERVERS': [{'url': BACKEND_URL}],
-        'SECURITY': [
-            {'tokenAuth': []},
-            {'jwtAuth': []},
-            {'guestJwtAuth': []},
-        ],
         'SWAGGER_UI_SETTINGS': {
             'persistAuthorization': True,
         },

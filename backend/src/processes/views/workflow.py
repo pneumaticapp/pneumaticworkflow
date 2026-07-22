@@ -106,6 +106,7 @@ class WorkflowViewSet(
         'complete': WorkflowTaskCompleteSerializer,
         'return_to': WorkflowReturnToTaskSerializer,
         'finish': WorkflowFinishSerializer,
+        'update': WorkflowUpdateSerializer,
         'partial_update': WorkflowUpdateSerializer,
         'list': WorkflowListSerializer,
         'fields': WorkflowFieldsSerializer,
