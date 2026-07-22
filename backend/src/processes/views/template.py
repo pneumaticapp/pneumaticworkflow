@@ -1025,7 +1025,7 @@ class TemplateViewSet(
         parameters=TEMPLATE_EXPORT_PARAMS,
         responses={
             # Item serializer; spectacular wraps with pagination.
-            200: TemplateListSerializer,
+            200: TemplateSerializer,
             400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
