@@ -991,6 +991,8 @@ export const ruMessages = {
   'task.log-returned': 'Процесс возвращён к {taskName}',
   'task.log-delay': '{taskName} отложена до {date}',
   'task.log-delay-workflow': 'Отложено до {date}',
+  'task.log-added-performer-group': 'Добавлена группа\u00A0',
+  'task.log-removed-performer-group': 'Удалена группа\u00A0',
   'task.log-added-performer': 'Добавлен пользователь\u00A0',
   'task.log-removed-performer': 'Удален пользователь\u00A0',
   'process-highlights.button-clear': 'Очистить',
