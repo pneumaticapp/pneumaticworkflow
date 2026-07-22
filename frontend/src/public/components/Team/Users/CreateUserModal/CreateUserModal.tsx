@@ -103,9 +103,10 @@ export function CreateUserModal({ isOpen, onClose, onCreateAIAgent }: ICreateUse
         </div>
       </ModalHeader>
 
-      {activeTab === ECreateUserModalTab.AIAgent ? (
-        <CreateAIAgentForm onSubmit={(values) => onCreateAIAgent?.(values)} />
-      ) : (
+      <CreateAIAgentForm
+        isActive={activeTab === ECreateUserModalTab.AIAgent}
+        onSubmit={(values) => onCreateAIAgent?.(values)}
+      />
       <Formik
         initialValues={initialValues}
         enableReinitialize
@@ -120,6 +121,8 @@ export function CreateUserModal({ isOpen, onClose, onCreateAIAgent }: ICreateUse
         }}
       >
         {({ values, handleSubmit: formikSubmit, isValid, dirty }) => {
+          if (activeTab !== ECreateUserModalTab.User) return null;
+
           const currentStatusValue = values.role;
           const renderStatusOption = (option: IStatusOption, { context }: { context: string }) =>
             formatStatusOption(option, { context }, currentStatusValue);
@@ -193,7 +196,6 @@ export function CreateUserModal({ isOpen, onClose, onCreateAIAgent }: ICreateUse
           );
         }}
       </Formik>
-      )}
     </BaseModal>
   );
 }

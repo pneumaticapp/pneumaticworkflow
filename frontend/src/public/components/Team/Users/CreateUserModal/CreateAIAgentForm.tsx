@@ -39,7 +39,7 @@ function SystemPromptField() {
   );
 }
 
-export function CreateAIAgentForm({ onSubmit }: ICreateAIAgentFormProps) {
+export function CreateAIAgentForm({ isActive, onSubmit }: ICreateAIAgentFormProps) {
   const { formatMessage } = useIntl();
   const initialValues: ICreateAIAgentFormValues = {
     firstName: '',
@@ -56,14 +56,18 @@ export function CreateAIAgentForm({ onSubmit }: ICreateAIAgentFormProps) {
     <Formik
       initialValues={initialValues}
       validateOnMount
-      validate={(values) => ({
-        ...(validateName(values.firstName) && { firstName: validateName(values.firstName) }),
-        ...(validateName(values.lastName) && { lastName: validateName(values.lastName) }),
-        ...(validateRequired(values.position) && { position: validateRequired(values.position) }),
-        ...(validateRequired(values.model) && { model: validateRequired(values.model) }),
-        ...(validateEndpoint(values.endpoint) && { endpoint: validateEndpoint(values.endpoint) }),
-        ...(validateRequired(values.apiKey) && { apiKey: validateRequired(values.apiKey) }),
-      })}
+      validate={(values) => {
+        const modelError = validateRequired(values.model);
+
+        return {
+          ...(validateName(values.firstName) && { firstName: validateName(values.firstName) }),
+          ...(validateName(values.lastName) && { lastName: validateName(values.lastName) }),
+          ...(validateRequired(values.position) && { position: validateRequired(values.position) }),
+          ...(modelError && { model: formatMessage({ id: modelError }) }),
+          ...(validateEndpoint(values.endpoint) && { endpoint: validateEndpoint(values.endpoint) }),
+          ...(validateRequired(values.apiKey) && { apiKey: validateRequired(values.apiKey) }),
+        };
+      }}
       onSubmit={onSubmit}
     >
       {({ dirty, handleSubmit, isValid, setFieldValue, values }) => {
@@ -76,6 +80,8 @@ export function CreateAIAgentForm({ onSubmit }: ICreateAIAgentFormProps) {
           reader.onload = () => setFieldValue('avatar', String(reader.result));
           reader.readAsDataURL(file);
         };
+
+        if (!isActive) return null;
 
         return (
           <form onSubmit={handleSubmit}>

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useDispatch } from 'react-redux';
 
@@ -139,6 +139,53 @@ describe('CreateUserModal', () => {
       expect(screen.getByLabelText(getTranslatedText('team.create-ai-agent-modal.endpoint'))).toBeInTheDocument();
       expect(screen.getByLabelText(getTranslatedText('team.create-ai-agent-modal.api-key'))).toBeInTheDocument();
       expect(screen.getByText(getTranslatedText('team.create-ai-agent-modal.system-prompt'))).toBeInTheDocument();
+    });
+
+    it('preserves both forms while switching tabs', async () => {
+      render(<CreateUserModal isOpen={true} onClose={mockOnClose} />);
+
+      const userFirstName = screen.getByLabelText(
+        getTranslatedText('team.create-user-modal.first-name'),
+      );
+      const generatedPassword = screen.getByLabelText(
+        getTranslatedText('team.create-user-modal.password'),
+      ).getAttribute('value');
+      await userEvent.type(userFirstName, 'User draft');
+
+      await openAIAgentTab();
+      const agentFirstName = screen.getByLabelText(
+        getTranslatedText('team.create-user-modal.first-name'),
+      );
+      await userEvent.type(agentFirstName, 'Agent draft');
+
+      await userEvent.click(screen.getByText(getTranslatedText('team.create-user-modal.tab-user')));
+      expect(screen.getByLabelText(
+        getTranslatedText('team.create-user-modal.first-name'),
+      )).toHaveValue('User draft');
+      expect(screen.getByLabelText(
+        getTranslatedText('team.create-user-modal.password'),
+      )).toHaveValue(generatedPassword);
+
+      await openAIAgentTab();
+      expect(screen.getByDisplayValue('Agent draft')).toBeInTheDocument();
+    });
+
+    it('localizes the required model error', async () => {
+      render(<CreateUserModal isOpen={true} onClose={mockOnClose} />);
+      await openAIAgentTab();
+
+      const submitButton = screen.getByRole('button', {
+        name: getTranslatedText('team.create-ai-agent-modal.submit'),
+      });
+      fireEvent.submit(submitButton.closest('form')!);
+
+      const modelDropdown = screen.getByText(
+        getTranslatedText('team.create-ai-agent-modal.model'),
+      ).closest('.react-select') as HTMLElement;
+      expect(await within(modelDropdown).findByText(
+        getTranslatedText('team.create-ai-agent-modal.validation-required'),
+      )).toBeInTheDocument();
+      expect(screen.queryByText('team.create-ai-agent-modal.validation-required')).not.toBeInTheDocument();
     });
 
     it('requires the endpoint protocol', async () => {
