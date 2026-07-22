@@ -20,6 +20,10 @@ class AuthTokenResponseSerializer(serializers.Serializer):
     token = serializers.CharField()
 
 
+class CaptchaResponseSerializer(serializers.Serializer):
+    show_captcha = serializers.BooleanField()
+
+
 class UserCountersSerializer(serializers.Serializer):
     tasks_count = serializers.IntegerField()
 

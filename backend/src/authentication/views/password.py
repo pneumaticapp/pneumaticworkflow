@@ -46,6 +46,7 @@ from src.notifications.tasks import (
 )
 from src.openapi import (
     AuthTokenResponseSerializer,
+    CaptchaResponseSerializer,
     EMPTY,
     RESET_PASSWORD_TOKEN_PARAMS,
     ResetPasswordStatusSerializer,
@@ -73,6 +74,13 @@ class ResetPasswordViewSet(
     def throttle_classes(self):
         return (AuthResetPasswordThrottle, )
 
+    @extend_schema(
+        tags=['Auth'],
+        summary='Check if captcha is required',
+        responses={
+            200: CaptchaResponseSerializer,
+        },
+    )
     @action(methods=['get'], detail=False, url_path='captcha')
     def captcha(self, request):
         if not settings.PROJECT_CONF['CAPTCHA']:

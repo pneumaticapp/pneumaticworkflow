@@ -88,6 +88,7 @@ from src.openapi.responses import (
 )
 from src.openapi.serializers import (
     AuthTokenResponseSerializer,
+    CaptchaResponseSerializer,
     CountResponseSerializer,
     ResetPasswordStatusSerializer,
     TaskWebhookExampleSerializer,
@@ -171,6 +172,7 @@ __all__ = (
     'WORKFLOW_FIELDS_PARAMS',
     'WORKFLOW_LIST_PARAMS',
     'AuthTokenResponseSerializer',
+    'CaptchaResponseSerializer',
     'CountResponseSerializer',
     'DetailErrorSerializer',
     'PermissionDoc',
