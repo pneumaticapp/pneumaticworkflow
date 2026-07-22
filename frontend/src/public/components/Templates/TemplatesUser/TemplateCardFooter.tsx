@@ -6,31 +6,27 @@ import { IntlMessages } from '../../IntlMessages';
 import { getPluralNoun } from '../../../utils/helpers';
 import { PlayLogoIcon, WarningIcon } from '../../icons';
 import { Button, Tooltip } from '../../UI';
-import { EIntegrations } from '../../../types/integrations';
 import { TemplateIntegrationsIndicator, useTemplateIntegrationsList } from '../../TemplateIntegrationsStats';
 
-import { checkShowDraftTemplateWarning } from '../utils/checkShowDraftTemplateWarning';
+import {
+  hasTemplateCardIntegrations,
+  TEMPLATE_CARD_INTEGRATIONS_EXCLUDE,
+} from '../utils/templateIntegrations';
 
 import styles from '../Templates.css';
-
-export interface ITemplateCardFooterProps {
-  templateId: number;
-  tasksCount: number;
-  isActive: boolean;
-  isPublic: boolean;
-  onRunWorkflow(): void;
-}
+import { ITemplateCardFooterProps } from './types';
 
 export function TemplateCardFooter({
   templateId,
   tasksCount,
   isActive,
-  isPublic,
   onRunWorkflow,
 }: ITemplateCardFooterProps) {
   const { formatMessage } = useIntl();
   const templateIntegrations = useTemplateIntegrationsList(templateId);
-  const showDraftWarning = checkShowDraftTemplateWarning(isActive, isPublic, templateIntegrations);
+  const hasIntegrations = hasTemplateCardIntegrations(templateIntegrations);
+  const showIntegrationsIndicator = isActive || hasIntegrations;
+  const showDraftWarning = !isActive && hasIntegrations;
 
   const renderRunWorkflowButton = () => {
     return (
@@ -95,20 +91,22 @@ export function TemplateCardFooter({
   return (
     <div className={styles['card__footer']}>
       <div className={styles['card-footer__left']}>
-        <TemplateIntegrationsIndicator
-          templateId={templateId}
-          exlcude={[EIntegrations.Webhooks]}
-          integratedIndicator={(
-            <div className={classnames(styles['card-integration'], styles['card-integration_integrated'])}>
-              {formatMessage({ id: 'templates.template-integrated' })}
-            </div>
-          )}
-          disconnectedIndicator={(
-            <div className={classnames(styles['card-integration'], styles['card-integration_not-integrated'])}>
-              {formatMessage({ id: 'templates.template-not-integrated' })}
-            </div>
-          )}
-        />
+        {showIntegrationsIndicator && (
+          <TemplateIntegrationsIndicator
+            templateId={templateId}
+            exlcude={TEMPLATE_CARD_INTEGRATIONS_EXCLUDE}
+            integratedIndicator={(
+              <div className={classnames(styles['card-integration'], styles['card-integration_integrated'])}>
+                {formatMessage({ id: 'templates.template-integrated' })}
+              </div>
+            )}
+            disconnectedIndicator={(
+              <div className={classnames(styles['card-integration'], styles['card-integration_not-integrated'])}>
+                {formatMessage({ id: 'templates.template-not-integrated' })}
+              </div>
+            )}
+          />
+        )}
 
         {renderCardStats()}
       </div>
