@@ -10,7 +10,7 @@ from src.processes.serializers.workflows.field import (
 )
 from src.processes.serializers.workflows.fieldset import FieldSetSerializer
 from src.processes.serializers.workflows.task_performer import (
-    TaskUserGroupPerformerSerializer,
+    get_performers_for_task,
 )
 
 
@@ -70,14 +70,14 @@ class TaskEventJsonSerializer(serializers.ModelSerializer):
             'sub_workflow',
         )
 
-    performers = TaskUserGroupPerformerSerializer(
-        many=True,
-        source='exclude_directly_deleted_taskperformer_set',
-    )
+    performers = serializers.SerializerMethodField()
     output = serializers.SerializerMethodField()
     fieldsets = serializers.SerializerMethodField()
     due_date_tsp = TimeStampField(source='due_date')
     sub_workflow = serializers.SerializerMethodField()
+
+    def get_performers(self, instance):
+        return get_performers_for_task(instance)
 
     def get_output(self, instance):
         if self.context['event_type'] == WorkflowEventType.TASK_COMPLETE:

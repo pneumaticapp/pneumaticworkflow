@@ -46,12 +46,13 @@ from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
     create_test_attachment,
+    create_test_dataset,
     create_test_group,
     create_test_guest,
+    create_test_not_admin,
     create_test_owner,
     create_test_template,
-    create_test_user,
-    create_test_workflow, create_test_dataset,
+    create_test_workflow,
 )
 from src.utils.dates import date_format
 
@@ -59,9 +60,9 @@ pytestmark = pytest.mark.django_db
 
 
 def test_retrieve__ok(api_client, mocker):
+
     # arrange
-    user = create_test_user()
-    api_client.token_authenticate(user)
+    user = create_test_owner()
     workflow = create_test_workflow(user=user, tasks_count=1)
     task = workflow.tasks.get(number=1)
     task.due_date = task.date_first_started + timedelta(hours=24)
@@ -75,6 +76,8 @@ def test_retrieve__ok(api_client, mocker):
         'src.processes.views.task.TaskViewSet.'
         'group',
     )
+
+    api_client.token_authenticate(user)
 
     # act
     response = api_client.get(f'/v2/tasks/{task.id}')
@@ -110,16 +113,16 @@ def test_retrieve__ok(api_client, mocker):
 
 
 def test_retrieve__delayed__ok(api_client, mocker):
+
     # arrange
-    mocker.patch(
+    identify_mock = mocker.patch(
         'src.processes.views.task.TaskViewSet.'
         'identify',
     )
-    mocker.patch(
+    group_mock = mocker.patch(
         'src.processes.views.task.TaskViewSet.group',
     )
-    user = create_test_user()
-    api_client.token_authenticate(user)
+    user = create_test_owner()
     workflow = create_test_workflow(user=user, tasks_count=1)
     task = workflow.tasks.get(number=1)
     task.status = TaskStatus.DELAYED
@@ -130,6 +133,8 @@ def test_retrieve__delayed__ok(api_client, mocker):
         start_date=timezone.now(),
         workflow=workflow,
     )
+
+    api_client.token_authenticate(user)
 
     # act
     response = api_client.get(f'/v2/tasks/{task.id}')
@@ -163,21 +168,19 @@ def test_retrieve__delayed__ok(api_client, mocker):
     assert workflow_data['status'] == workflow.status
     assert workflow_data['template_name'] == workflow.get_template_name()
     assert workflow_data['date_completed_tsp'] is None
+    identify_mock.assert_not_called()
+    group_mock.assert_not_called()
 
 
 def test_retrieve__workflow_member__ok(api_client):
-    # arrange
-    user = create_test_user()
-    another_user = create_test_user(
-        account=user.account,
-        email='admin@test.test',
-        is_account_owner=False,
-    )
-    workflow = create_test_workflow(user)
-    workflow.members.add(another_user)
-    tasks = workflow.tasks.order_by('number')
-    task = tasks[0]
 
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    another_user = create_test_admin(account=account)
+    workflow = create_test_workflow(user=user)
+    workflow.members.add(another_user)
+    task = workflow.tasks.order_by('number').first()
     api_client.token_authenticate(another_user)
 
     # act
@@ -193,9 +196,9 @@ def test_retrieve__account_owner_not_wf_member__ok(api_client):
 
     # arrange
     account = create_test_account(plan=BillingPlanType.PREMIUM)
-    account_owner = create_test_user(account=account)
-    user = create_test_user(account=account, email='t@t.t')
-    workflow = create_test_workflow(user, tasks_count=1)
+    account_owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    workflow = create_test_workflow(user=user, tasks_count=1)
     task = workflow.tasks.get(number=1)
     api_client.token_authenticate(account_owner)
 
@@ -208,20 +211,14 @@ def test_retrieve__account_owner_not_wf_member__ok(api_client):
 
 
 def test_retrieve__admin_not_workflow_member__permission_denied(api_client):
-    # arrange
-    user = create_test_user()
-    user.account.billing_plan = BillingPlanType.PREMIUM
-    user.account.save()
-    another_user = create_test_user(
-        account=user.account,
-        email='admin@test.test',
-        is_account_owner=False,
-    )
-    workflow = create_test_workflow(user)
-    workflow.members.remove(another_user)
-    tasks = workflow.tasks.order_by('number')
-    task = tasks[0]
 
+    # arrange
+    account = create_test_account(plan=BillingPlanType.PREMIUM)
+    user = create_test_owner(account=account)
+    another_user = create_test_admin(account=account)
+    workflow = create_test_workflow(user=user)
+    workflow.members.remove(another_user)
+    task = workflow.tasks.order_by('number').first()
     api_client.token_authenticate(another_user)
 
     # act
@@ -232,18 +229,14 @@ def test_retrieve__admin_not_workflow_member__permission_denied(api_client):
 
 
 def test_retrieve__template_viewer__ok(api_client):
+
     # arrange
     account = create_test_account()
-    template_owner = create_test_user(account=account)
-    template = create_test_template(template_owner)
+    template_owner = create_test_owner(account=account)
+    template = create_test_template(user=template_owner)
     workflow = create_test_workflow(template=template, user=template_owner)
     task = workflow.tasks.order_by('number').first()
-    viewer_user = create_test_user(
-        account=account,
-        email='viewer@test.com',
-        is_account_owner=False,
-        is_admin=False,
-    )
+    viewer_user = create_test_not_admin(account=account)
     TemplateOwner.objects.create(
         role=OwnerRole.VIEWER,
         template=template,
@@ -264,12 +257,12 @@ def test_retrieve__template_viewer__ok(api_client):
 def test_retrieve__delayed_task__not_found(api_client, mocker):
 
     # arrange
-    mocker.patch(
+    send_task_completed_webhook_mock = mocker.patch(
         'src.processes.tasks.webhooks.'
         'send_task_completed_webhook.delay',
     )
-    user = create_test_user()
-    workflow = create_test_workflow(user)
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user)
     task_1 = workflow.tasks.get(number=1)
     task_2 = workflow.tasks.get(number=2)
     Delay.objects.create(
@@ -286,6 +279,7 @@ def test_retrieve__delayed_task__not_found(api_client, mocker):
 
     # assert
     assert response.status_code == 404
+    send_task_completed_webhook_mock.assert_not_called()
 
 
 def test_retrieve__delete_delay_before_active_task__found(
@@ -296,16 +290,15 @@ def test_retrieve__delete_delay_before_active_task__found(
     """ Caused by bug: https://my.pneumatic.app/workflows/11741"""
 
     # arrange
-    mocker.patch(
+    send_workflow_started_webhook_mock = mocker.patch(
         'src.processes.tasks.webhooks.'
         'send_workflow_started_webhook.delay',
     )
-    mocker.patch(
+    send_task_completed_webhook_mock = mocker.patch(
         'src.processes.tasks.webhooks.'
         'send_task_completed_webhook.delay',
     )
-    user = create_test_user()
-    api_client.token_authenticate(user)
+    user = create_test_owner()
     request_data = {
         'name': 'Template',
         'owners': [
@@ -341,6 +334,8 @@ def test_retrieve__delete_delay_before_active_task__found(
             },
         ],
     }
+
+    api_client.token_authenticate(user)
     response = api_client.post(
         path='/templates',
         data=request_data,
@@ -356,7 +351,7 @@ def test_retrieve__delete_delay_before_active_task__found(
         f'/templates/{workflow.template_id}',
     ).data
     template_data['tasks'][1].pop('delay')
-    mocker.patch(
+    template_updated_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.template_updated',
     )
@@ -379,21 +374,23 @@ def test_retrieve__delete_delay_before_active_task__found(
 
     # assert
     assert response.status_code == 200
+    send_workflow_started_webhook_mock.assert_not_called()
+    send_task_completed_webhook_mock.assert_not_called()
+    template_updated_mock.assert_called_once_with(template=template)
 
 
 def test_retrieve__completed_task__ok(api_client, mocker):
 
     # arrange
-    mocker.patch(
+    send_task_completed_webhook_mock = mocker.patch(
         'src.processes.tasks.webhooks.'
         'send_task_completed_webhook.delay',
     )
-    user = create_test_user()
-    workflow = create_test_workflow(user)
-    tasks = workflow.tasks.order_by('number')
-    task = tasks[0]
-    api_client.token_authenticate(user)
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user)
+    task = workflow.tasks.order_by('number').first()
 
+    api_client.token_authenticate(user)
     api_client.post(f'/v2/tasks/{task.id}/complete')
     workflow.refresh_from_db()
 
@@ -419,29 +416,31 @@ def test_retrieve__completed_task__ok(api_client, mocker):
             'date_completed_tsp': performer.date_completed.timestamp(),
         },
     ]
+    send_task_completed_webhook_mock.assert_not_called()
 
 
 def test_retrieve__user_completed_task__return_as_completed(
     mocker,
     api_client,
 ):
+
     """ https://trello.com/c/75aESAb0 """
+
     # arrange
-    mocker.patch(
+    send_task_completed_webhook_mock = mocker.patch(
         'src.processes.tasks.webhooks.'
         'send_task_completed_webhook.delay',
     )
-    user = create_test_user()
-    another_user = create_test_user(
-        email='another_user@test.com',
-        account=user.account,
-    )
-    workflow = create_test_workflow(user)
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    another_user = create_test_admin(account=account)
+    workflow = create_test_workflow(user=user)
     task = workflow.tasks.get(number=1)
     task.require_completion_by_all = True
     task.save()
     raw_performer = task.add_raw_performer(another_user)
     task.update_performers(raw_performer)
+
     api_client.token_authenticate(user)
     api_client.post(f'/v2/tasks/{task.id}/complete')
 
@@ -453,6 +452,7 @@ def test_retrieve__user_completed_task__return_as_completed(
     assert response.status_code == 200
     assert response.data['is_completed'] is True
     assert task.is_completed is False
+    send_task_completed_webhook_mock.assert_not_called()
 
 
 def test_retrieve__revert_delayed_task__not_found(
@@ -461,16 +461,15 @@ def test_retrieve__revert_delayed_task__not_found(
 ):
 
     # arrange
-    mocker.patch(
+    send_task_completed_webhook_mock = mocker.patch(
         'src.processes.tasks.webhooks.'
         'send_task_completed_webhook.delay',
     )
-    mocker.patch(
+    send_task_returned_webhook_mock = mocker.patch(
         'src.processes.tasks.webhooks.'
         'send_task_returned_webhook.delay',
     )
-    user = create_test_user()
-    api_client.token_authenticate(user)
+    user = create_test_owner()
     workflow = create_test_workflow(
         user=user,
         tasks_count=2,
@@ -483,6 +482,7 @@ def test_retrieve__revert_delayed_task__not_found(
         workflow=workflow,
     )
 
+    api_client.token_authenticate(user)
     response_complete_1 = api_client.post(f'/v2/tasks/{task_1.id}/complete')
     response_complete_2 = api_client.post(f'/v2/tasks/{task_2.id}/complete')
     response_revert = api_client.post(
@@ -491,37 +491,40 @@ def test_retrieve__revert_delayed_task__not_found(
     workflow.refresh_from_db()
 
     # act
-    response4 = api_client.get(f'/v2/tasks/{task_2.id}')
+    response = api_client.get(f'/v2/tasks/{task_2.id}')
 
     # assert
     assert response_complete_1.status_code == 200
     assert response_complete_2.status_code == 400
     assert response_revert.status_code == 400
-    assert response4.status_code == 404
+    assert response.status_code == 404
     task_1.refresh_from_db()
     assert task_1.status == TaskStatus.COMPLETED
     task_2.refresh_from_db()
     assert task_2.status == TaskStatus.DELAYED
+    send_task_completed_webhook_mock.assert_not_called()
+    send_task_returned_webhook_mock.assert_not_called()
 
 
 def test_retrieve__reverted_task__ok(mocker, api_client):
 
     # arrange
-    mocker.patch(
+    send_task_completed_webhook_mock = mocker.patch(
         'src.processes.tasks.webhooks.'
         'send_task_completed_webhook.delay',
     )
-    mocker.patch(
+    send_task_returned_webhook_mock = mocker.patch(
         'src.processes.tasks.webhooks.'
         'send_task_returned_webhook.delay',
     )
-    user = create_test_user()
-    api_client.token_authenticate(user)
+    user = create_test_owner()
     workflow = create_test_workflow(
         user=user,
         tasks_count=2,
     )
     task_1 = workflow.tasks.get(number=1)
+
+    api_client.token_authenticate(user)
     api_client.post(f'/v2/tasks/{task_1.id}/complete')
 
     workflow.refresh_from_db()
@@ -550,24 +553,26 @@ def test_retrieve__reverted_task__ok(mocker, api_client):
     assert workflow_data['status'] == workflow.status
     assert workflow_data['template_name'] == workflow.get_template_name()
     assert workflow_data['date_completed_tsp'] is None
+    send_task_completed_webhook_mock.assert_not_called()
+    send_task_returned_webhook_mock.assert_not_called()
 
 
 def test_retrieve__deleted_performer__ok(api_client):
 
     # arrange
-    user = create_test_user()
-    user2 = create_test_user(email='t@t.t', account=user.account)
-    api_client.token_authenticate(user)
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    user_2 = create_test_admin(account=account)
     template = create_test_template(
         user=user,
         is_active=True,
         tasks_count=1,
     )
-    workflow = create_test_workflow(user, template)
+    workflow = create_test_workflow(user=user, template=template)
     task = workflow.tasks.get(number=1)
     TaskPerformersService.create_performer(
         request_user=user,
-        user_key=user2.id,
+        user_key=user_2.id,
         task=task,
         run_actions=False,
         current_url='/page',
@@ -576,12 +581,14 @@ def test_retrieve__deleted_performer__ok(api_client):
     )
     TaskPerformersService.delete_performer(
         request_user=user,
-        user_key=user2.id,
+        user_key=user_2.id,
         task=task,
         run_actions=False,
         is_superuser=False,
         auth_type=AuthTokenType.USER,
     )
+
+    api_client.token_authenticate(user)
 
     # act
     response = api_client.get(f'/v2/tasks/{task.id}')
@@ -600,15 +607,12 @@ def test_retrieve__deleted_performer__ok(api_client):
     ]
 
 
-def test_retrieve__get_performers_type_field__ok(api_client):
-    # arrange
-    user = create_test_user()
-    user2 = create_test_user(
-        email='test2@pneumatic.app',
-        account=user.account,
-    )
-    api_client.token_authenticate(user)
+def test_retrieve__performers_type_field__ok(api_client):
 
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    user_2 = create_test_admin(account=account)
     template = create_test_template(
         user=user,
         tasks_count=2,
@@ -632,12 +636,14 @@ def test_retrieve__get_performers_type_field__ok(api_client):
         performer_type=PerformerType.FIELD,
         field=field_template,
     )
+
+    api_client.token_authenticate(user)
     response = api_client.post(
         f'/templates/{template.id}/run',
         data={
             'name': 'Test template',
             'kickoff': {
-                field_template.api_name: user2.email,
+                field_template.api_name: user_2.email,
             },
         },
     )
@@ -647,13 +653,13 @@ def test_retrieve__get_performers_type_field__ok(api_client):
 
     # act
     response = api_client.get(f'/v2/tasks/{task.id}')
-    performers = response.data['performers']
 
     # assert
+    performers = response.data['performers']
     assert len(performers) == 1
     assert performers == [
         {
-            'source_id': user2.id,
+            'source_id': user_2.id,
             'type': 'user',
             'is_completed': False,
             'date_completed_tsp': None,
@@ -664,14 +670,15 @@ def test_retrieve__get_performers_type_field__ok(api_client):
 def test_retrieve__is_urgent__ok(api_client):
 
     # arrange
-    user = create_test_user()
-    api_client.token_authenticate(user)
+    user = create_test_owner()
     workflow = create_test_workflow(
         user=user,
         is_urgent=True,
         tasks_count=1,
     )
     task = workflow.tasks.get(number=1)
+
+    api_client.token_authenticate(user)
 
     # act
     response = api_client.get(f'/v2/tasks/{task.id}')
@@ -685,8 +692,7 @@ def test_retrieve__is_urgent__ok(api_client):
 def test_retrieve__field_user__ok(api_client):
 
     # arrange
-    user = create_test_user()
-    api_client.token_authenticate(user)
+    user = create_test_owner()
     template = create_test_template(
         user=user,
         is_active=True,
@@ -702,6 +708,8 @@ def test_retrieve__field_user__ok(api_client):
         template=template,
         account=user.account,
     )
+
+    api_client.token_authenticate(user)
     response = api_client.post(
         path=f'/templates/{template.id}/run',
         data={
@@ -728,6 +736,7 @@ def test_retrieve__field_user__ok(api_client):
     assert field_data['name'] == field.name
     assert field_data['description'] == field.description
     assert field_data['api_name'] == field.api_name
+
     # TODO Replace in https://my.pneumatic.app/workflows/18137/
     assert field_data['value'] == user.get_full_name()  # user.get_full_name()
     assert field_data['selections'] == []
@@ -738,8 +747,7 @@ def test_retrieve__field_user__ok(api_client):
 def test_retrieve__field_date__ok(api_client):
 
     # arrange
-    user = create_test_user()
-    api_client.token_authenticate(user)
+    user = create_test_owner()
     template = create_test_template(
         user=user,
         is_active=True,
@@ -755,6 +763,8 @@ def test_retrieve__field_date__ok(api_client):
         template=template,
         account=user.account,
     )
+
+    api_client.token_authenticate(user)
     response = api_client.post(
         path=f'/templates/{template.id}/run',
         data={
@@ -788,8 +798,7 @@ def test_retrieve__field_date__ok(api_client):
 def test_retrieve__field_url__ok(api_client):
 
     # arrange
-    user = create_test_user()
-    api_client.token_authenticate(user)
+    user = create_test_owner()
     template = create_test_template(
         user=user,
         is_active=True,
@@ -805,6 +814,8 @@ def test_retrieve__field_url__ok(api_client):
         template=template,
         account=user.account,
     )
+
+    api_client.token_authenticate(user)
     response = api_client.post(
         path=f'/templates/{template.id}/run',
         data={
@@ -959,8 +970,7 @@ def test_retrieve__field_with_dataset_and_selections__ok(api_client):
 def test_retrieve__field_with_attachments__ok(api_client):
 
     # arrange
-    user = create_test_user()
-    api_client.token_authenticate(user)
+    user = create_test_owner()
     template = create_test_template(
         user=user,
         is_active=True,
@@ -977,6 +987,7 @@ def test_retrieve__field_with_attachments__ok(api_client):
         account=user.account,
     )
 
+    api_client.token_authenticate(user)
     response = api_client.post(
         path=f'/templates/{template.id}/run',
         data={
@@ -1012,6 +1023,7 @@ def test_retrieve__field_with_attachments__ok(api_client):
     assert field_data['selections'] == []
     assert field_data['order'] == field.order
     assert field_data['user_id'] is None
+
     # TODO Replace in https://my.pneumatic.app/workflows/18137/
     assert field_data['value'] == field.value
 
@@ -1019,8 +1031,7 @@ def test_retrieve__field_with_attachments__ok(api_client):
 def test_retrieve__fields_ordering__ok(api_client):
 
     # arrange
-    user = create_test_user()
-    api_client.token_authenticate(user)
+    user = create_test_owner()
     template = create_test_template(
         user=user,
         is_active=True,
@@ -1059,6 +1070,8 @@ def test_retrieve__fields_ordering__ok(api_client):
         template=template,
         value='value 3',
     )
+
+    api_client.token_authenticate(user)
     response = api_client.post(
         path=f'/templates/{template.id}/run',
         data={
@@ -1088,14 +1101,11 @@ def test_retrieve__guest__ok(api_client, mocker):
 
     # arrange
     account = create_test_account()
-    account_owner = create_test_user(
-        account=account,
-        email='owner@test.test',
-        is_account_owner=True,
-    )
+    account_owner = create_test_owner(account=account)
     guest = create_test_guest(account=account)
-    workflow = create_test_workflow(account_owner, tasks_count=1)
+    workflow = create_test_workflow(user=account_owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
+    task.taskperformer_set.all().delete()
     TaskPerformer.objects.create(
         task_id=task.id,
         user_id=guest.id,
@@ -1123,8 +1133,8 @@ def test_retrieve__guest__ok(api_client, mocker):
 
     # assert
     assert response.status_code == 200
-    performer = [item['source_id'] for item in response.data['performers']]
-    assert guest.id in performer
+    performers = response.data['performers']
+    assert performers[0]['source_id'] == guest.id
     identify_mock.assert_called_once_with(guest)
     group_mock.assert_called_once_with(guest)
 
@@ -1133,16 +1143,13 @@ def test_retrieve__guest_from_another_task__permission_denied(
     mocker,
     api_client,
 ):
+
     # TODO Deprecated, case checked in GuestPermission test
 
     # arrange
     account = create_test_account()
-    account_owner = create_test_user(
-        account=account,
-        email='owner@test.test',
-        is_account_owner=True,
-    )
-    workflow = create_test_workflow(account_owner, tasks_count=2)
+    account_owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=account_owner, tasks_count=2)
     task_1 = workflow.tasks.get(number=1)
     guest_1 = create_test_guest(account=account)
     TaskPerformer.objects.create(
@@ -1155,7 +1162,7 @@ def test_retrieve__guest_from_another_task__permission_denied(
         account_id=account.id,
     )
 
-    workflow_2 = create_test_workflow(account_owner, tasks_count=1)
+    workflow_2 = create_test_workflow(user=account_owner, tasks_count=1)
     task_2 = workflow_2.tasks.get(number=1)
     guest_2 = create_test_guest(
         account=account,
@@ -1170,11 +1177,11 @@ def test_retrieve__guest_from_another_task__permission_denied(
         user_id=guest_2.id,
         account_id=account.id,
     )
-    mocker.patch(
+    identify_mock = mocker.patch(
         'src.processes.views.task.TaskViewSet.'
         'identify',
     )
-    mocker.patch(
+    group_mock = mocker.patch(
         'src.processes.views.task.TaskViewSet.'
         'group',
     )
@@ -1187,14 +1194,14 @@ def test_retrieve__guest_from_another_task__permission_denied(
 
     # assert
     assert response.status_code == 403
+    identify_mock.assert_not_called()
+    group_mock.assert_not_called()
 
 
-# TODO tmp
 def test_retrieve__checklists__ok(api_client, mocker):
 
     # arrange
-    user = create_test_user()
-    api_client.token_authenticate(user)
+    user = create_test_owner()
     template = create_test_template(
         user=user,
         is_active=True,
@@ -1215,17 +1222,18 @@ def test_retrieve__checklists__ok(api_client, mocker):
         )
     )
 
+    api_client.token_authenticate(user)
     response = api_client.post(
         path=f'/templates/{template.id}/run',
         data={'name': 'Test name'},
     )
     workflow = Workflow.objects.get(id=response.data['id'])
     task = workflow.tasks.get(number=1)
-    mocker.patch(
+    identify_mock = mocker.patch(
         'src.processes.views.task.TaskViewSet.'
         'identify',
     )
-    mocker.patch(
+    group_mock = mocker.patch(
         'src.processes.views.task.TaskViewSet.'
         'group',
     )
@@ -1252,21 +1260,21 @@ def test_retrieve__checklists__ok(api_client, mocker):
     assert selection_data['api_name'] == selection.api_name
     assert selection_data['is_selected'] == selection.is_selected
     assert selection_data['value'] == selection.value
+    identify_mock.assert_not_called()
+    group_mock.assert_not_called()
 
 
 def test_retrieve__with_comment__ok(api_client, mocker):
 
     # arrange
-    user = create_test_user()
-    api_client.token_authenticate(user)
+    user = create_test_owner()
     workflow = create_test_workflow(user=user, tasks_count=1)
     task = workflow.tasks.get(number=1)
-
-    mocker.patch(
+    identify_mock = mocker.patch(
         'src.processes.views.task.TaskViewSet.'
         'identify',
     )
-    mocker.patch(
+    group_mock = mocker.patch(
         'src.processes.views.task.TaskViewSet.'
         'group',
     )
@@ -1278,27 +1286,30 @@ def test_retrieve__with_comment__ok(api_client, mocker):
         after_create_actions=False,
     )
 
+    api_client.token_authenticate(user)
+
     # act
     response = api_client.get(f'/v2/tasks/{task.id}')
 
     # assert
     assert response.status_code == 200
     assert response.data['id'] == task.id
+    identify_mock.assert_not_called()
+    group_mock.assert_not_called()
 
 
 def test_retrieve__sub_workflows_ordering__ok(api_client, mocker):
 
     # arrange
-    mocker.patch(
+    identify_mock = mocker.patch(
         'src.processes.views.task.TaskViewSet.'
         'identify',
     )
-    mocker.patch(
+    group_mock = mocker.patch(
         'src.processes.views.task.TaskViewSet.'
         'group',
     )
-    user = create_test_user()
-    api_client.token_authenticate(user)
+    user = create_test_owner()
     workflow = create_test_workflow(user=user, tasks_count=1)
     ancestor_task = workflow.tasks.get(number=1)
     sub_wf_1 = create_test_workflow(
@@ -1312,6 +1323,8 @@ def test_retrieve__sub_workflows_ordering__ok(api_client, mocker):
         ancestor_task=ancestor_task,
     )
 
+    api_client.token_authenticate(user)
+
     # act
     response = api_client.get(f'/v2/tasks/{ancestor_task.id}')
 
@@ -1321,20 +1334,22 @@ def test_retrieve__sub_workflows_ordering__ok(api_client, mocker):
     assert len(data) == 2
     assert data[0]['id'] == sub_wf_2.id
     assert data[1]['id'] == sub_wf_1.id
+    identify_mock.assert_not_called()
+    group_mock.assert_not_called()
 
 
 def test_retrieve__sub_workflows__ok(api_client, mocker):
+
     # arrange
-    mocker.patch(
+    identify_mock = mocker.patch(
         'src.processes.views.task.TaskViewSet.'
         'identify',
     )
-    mocker.patch(
+    group_mock = mocker.patch(
         'src.processes.views.task.TaskViewSet.'
         'group',
     )
-    user = create_test_user()
-    api_client.token_authenticate(user)
+    user = create_test_owner()
     workflow = create_test_workflow(user=user, tasks_count=1)
     ancestor_task = workflow.tasks.get(number=1)
     sub_wf = create_test_workflow(
@@ -1355,6 +1370,9 @@ def test_retrieve__sub_workflows__ok(api_client, mocker):
         start_date=timezone.now(),
         workflow=workflow,
     )
+
+    api_client.token_authenticate(user)
+
     # act
     response = api_client.get(f'/v2/tasks/{ancestor_task.id}')
 
@@ -1410,21 +1428,22 @@ def test_retrieve__sub_workflows__ok(api_client, mocker):
         delay.estimated_end_date.timestamp()
     )
     assert delay_data['end_date_tsp'] is None
+    identify_mock.assert_not_called()
+    group_mock.assert_not_called()
 
 
 def test_retrieve__sub_workflows_multiple_tasks__ok(api_client, mocker):
 
     # arrange
-    mocker.patch(
+    identify_mock = mocker.patch(
         'src.processes.views.task.TaskViewSet.'
         'identify',
     )
-    mocker.patch(
+    group_mock = mocker.patch(
         'src.processes.views.task.TaskViewSet.'
         'group',
     )
-    user = create_test_user()
-    api_client.token_authenticate(user)
+    user = create_test_owner()
     workflow = create_test_workflow(user=user, tasks_count=1)
     ancestor_task = workflow.tasks.get(number=1)
     workflow = create_test_workflow(
@@ -1439,6 +1458,8 @@ def test_retrieve__sub_workflows_multiple_tasks__ok(api_client, mocker):
     task_1 = workflow.tasks.get(number=1)
     task_2 = workflow.tasks.get(number=2)
 
+    api_client.token_authenticate(user)
+
     # act
     response = api_client.get(f'/v2/tasks/{ancestor_task.id}')
 
@@ -1452,6 +1473,8 @@ def test_retrieve__sub_workflows_multiple_tasks__ok(api_client, mocker):
     task_2_data = data['tasks'][1]
     assert task_2_data['id'] == task_2.id
     assert task_2_data['status'] == TaskStatus.PENDING
+    identify_mock.assert_not_called()
+    group_mock.assert_not_called()
 
 
 def test_retrieve__sub_workflows_not_return_skipped_tasks__ok(
@@ -1460,16 +1483,15 @@ def test_retrieve__sub_workflows_not_return_skipped_tasks__ok(
 ):
 
     # arrange
-    mocker.patch(
+    identify_mock = mocker.patch(
         'src.processes.views.task.TaskViewSet.'
         'identify',
     )
-    mocker.patch(
+    group_mock = mocker.patch(
         'src.processes.views.task.TaskViewSet.'
         'group',
     )
-    user = create_test_user()
-    api_client.token_authenticate(user)
+    user = create_test_owner()
     workflow = create_test_workflow(user=user, tasks_count=1)
     ancestor_task = workflow.tasks.get(number=1)
     workflow = create_test_workflow(
@@ -1487,6 +1509,8 @@ def test_retrieve__sub_workflows_not_return_skipped_tasks__ok(
     task_1.save()
     task_2 = workflow.tasks.get(number=2)
 
+    api_client.token_authenticate(user)
+
     # act
     response = api_client.get(f'/v2/tasks/{ancestor_task.id}')
 
@@ -1497,6 +1521,8 @@ def test_retrieve__sub_workflows_not_return_skipped_tasks__ok(
     task_1_data = data['tasks'][0]
     assert task_1_data['id'] == task_2.id
     assert task_1_data['status'] == TaskStatus.ACTIVE
+    identify_mock.assert_not_called()
+    group_mock.assert_not_called()
 
 
 def test_retrieve__non_existent_task__not_found(api_client):
@@ -1595,11 +1621,12 @@ def test_retrieve__user_is_member_in_deleted_task__not_found(api_client):
     # arrange
     user = create_test_owner()
     admin = create_test_admin(account=user.account)
-    api_client.token_authenticate(admin)
-    workflow = create_test_workflow(user, tasks_count=1)
+    workflow = create_test_workflow(user=user, tasks_count=1)
     workflow.members.add(admin)
     task = workflow.tasks.get(number=1)
     task.delete()
+
+    api_client.token_authenticate(admin)
 
     # act
     response = api_client.get(f'/v2/tasks/{task.id}')
@@ -1613,7 +1640,7 @@ def test_retrieve__user_is_not_member_in_deleted_task__not_found(api_client):
     # arrange
     user = create_test_owner()
     admin = create_test_admin(account=user.account)
-    workflow = create_test_workflow(user, tasks_count=1)
+    workflow = create_test_workflow(user=user, tasks_count=1)
     task = workflow.tasks.get(number=1)
     task.delete()
     api_client.token_authenticate(admin)
@@ -1628,8 +1655,7 @@ def test_retrieve__user_is_not_member_in_deleted_task__not_found(api_client):
 def test_retrieve__default_revert_tasks__ok(api_client, mocker):
 
     # arrange
-    user = create_test_user()
-    api_client.token_authenticate(user)
+    user = create_test_owner()
     workflow = create_test_workflow(
         user=user,
         tasks_count=3,
@@ -1637,14 +1663,16 @@ def test_retrieve__default_revert_tasks__ok(api_client, mocker):
     )
     task_1 = workflow.tasks.get(number=1)
     task_2 = workflow.tasks.get(number=2)
-    mocker.patch(
+    identify_mock = mocker.patch(
         'src.processes.views.task.TaskViewSet.'
         'identify',
     )
-    mocker.patch(
+    group_mock = mocker.patch(
         'src.processes.views.task.TaskViewSet.'
         'group',
     )
+
+    api_client.token_authenticate(user)
 
     # act
     response = api_client.get(f'/v2/tasks/{task_2.id}')
@@ -1659,13 +1687,14 @@ def test_retrieve__default_revert_tasks__ok(api_client, mocker):
             'api_name': task_1.api_name,
         },
     ]
+    identify_mock.assert_not_called()
+    group_mock.assert_not_called()
 
 
 def test_retrieve__custom_revert_tasks__ok(api_client, mocker):
 
     # arrange
-    user = create_test_user()
-    api_client.token_authenticate(user)
+    user = create_test_owner()
     workflow = create_test_workflow(
         user=user,
         tasks_count=3,
@@ -1675,15 +1704,16 @@ def test_retrieve__custom_revert_tasks__ok(api_client, mocker):
     task_2 = workflow.tasks.get(number=2)
     task_2.revert_task = task_3.api_name
     task_2.save()
-
-    mocker.patch(
+    identify_mock = mocker.patch(
         'src.processes.views.task.TaskViewSet.'
         'identify',
     )
-    mocker.patch(
+    group_mock = mocker.patch(
         'src.processes.views.task.TaskViewSet.'
         'group',
     )
+
+    api_client.token_authenticate(user)
 
     # act
     response = api_client.get(f'/v2/tasks/{task_2.id}')
@@ -1698,6 +1728,8 @@ def test_retrieve__custom_revert_tasks__ok(api_client, mocker):
             'api_name': task_3.api_name,
         },
     ]
+    identify_mock.assert_not_called()
+    group_mock.assert_not_called()
 
 
 def test_retrieve__template_viewer_not_performer__is_read_only_viewer_true(
@@ -1707,17 +1739,11 @@ def test_retrieve__template_viewer_not_performer__is_read_only_viewer_true(
 
     # arrange
     account = create_test_account()
-    template_owner = create_test_user(account=account)
+    template_owner = create_test_owner(account=account)
     template = create_test_template(user=template_owner)
     workflow = create_test_workflow(template=template, user=template_owner)
     task = workflow.tasks.get(number=1)
-
-    viewer_user = create_test_user(
-        account=account,
-        email='viewer@test.com',
-        is_account_owner=False,
-        is_admin=False,
-    )
+    viewer_user = create_test_not_admin(account=account)
 
     # Create template viewer
     TemplateOwner.objects.create(
@@ -1730,17 +1756,16 @@ def test_retrieve__template_viewer_not_performer__is_read_only_viewer_true(
 
     # Remove template_owner as task performer to test pure template viewer
     TaskPerformer.objects.filter(task_id=task.id).delete()
-
-    api_client.token_authenticate(viewer_user)
-
-    mocker.patch(
+    identify_mock = mocker.patch(
         'src.processes.views.task.TaskViewSet.'
         'identify',
     )
-    mocker.patch(
+    group_mock = mocker.patch(
         'src.processes.views.task.TaskViewSet.'
         'group',
     )
+
+    api_client.token_authenticate(viewer_user)
 
     # act
     response = api_client.get(f'/v2/tasks/{task.id}')
@@ -1749,6 +1774,8 @@ def test_retrieve__template_viewer_not_performer__is_read_only_viewer_true(
     assert response.status_code == 200
     assert response.data['id'] == task.id
     assert response.data['is_read_only_viewer'] is True
+    identify_mock.assert_not_called()
+    group_mock.assert_not_called()
 
 
 def test_retrieve__admin_template_viewer_not_performer__is_read_only_viewer_ok(
@@ -1759,17 +1786,11 @@ def test_retrieve__admin_template_viewer_not_performer__is_read_only_viewer_ok(
 
     # arrange
     account = create_test_account()
-    template_owner = create_test_user(account=account)
+    template_owner = create_test_owner(account=account)
     template = create_test_template(user=template_owner)
     workflow = create_test_workflow(template=template, user=template_owner)
     task = workflow.tasks.get(number=1)
-
-    admin_viewer = create_test_user(
-        account=account,
-        email='admin_viewer@test.com',
-        is_account_owner=False,
-        is_admin=True,
-    )
+    admin_viewer = create_test_admin(account=account)
 
     # Create template viewer for admin
     TemplateOwner.objects.create(
@@ -1782,17 +1803,16 @@ def test_retrieve__admin_template_viewer_not_performer__is_read_only_viewer_ok(
 
     # Remove template_owner as task performer
     TaskPerformer.objects.filter(task_id=task.id).delete()
-
-    api_client.token_authenticate(admin_viewer)
-
-    mocker.patch(
+    identify_mock = mocker.patch(
         'src.processes.views.task.TaskViewSet.'
         'identify',
     )
-    mocker.patch(
+    group_mock = mocker.patch(
         'src.processes.views.task.TaskViewSet.'
         'group',
     )
+
+    api_client.token_authenticate(admin_viewer)
 
     # act
     response = api_client.get(f'/v2/tasks/{task.id}')
@@ -1801,6 +1821,8 @@ def test_retrieve__admin_template_viewer_not_performer__is_read_only_viewer_ok(
     assert response.status_code == 200
     assert response.data['id'] == task.id
     assert response.data['is_read_only_viewer'] is True
+    identify_mock.assert_not_called()
+    group_mock.assert_not_called()
 
 
 def test_retrieve__template_viewer_and_performer__is_read_only_viewer_false(
@@ -1810,17 +1832,11 @@ def test_retrieve__template_viewer_and_performer__is_read_only_viewer_false(
 
     # arrange
     account = create_test_account()
-    template_owner = create_test_user(account=account)
+    template_owner = create_test_owner(account=account)
     template = create_test_template(user=template_owner)
     workflow = create_test_workflow(template=template, user=template_owner)
     task = workflow.tasks.get(number=1)
-
-    viewer_user = create_test_user(
-        account=account,
-        email='viewer@test.com',
-        is_account_owner=False,
-        is_admin=False,
-    )
+    viewer_user = create_test_not_admin(account=account)
 
     # Create template viewer
     TemplateOwner.objects.create(
@@ -1836,17 +1852,16 @@ def test_retrieve__template_viewer_and_performer__is_read_only_viewer_false(
         task_id=task.id,
         user_id=viewer_user.id,
     )
-
-    api_client.token_authenticate(viewer_user)
-
-    mocker.patch(
+    identify_mock = mocker.patch(
         'src.processes.views.task.TaskViewSet.'
         'identify',
     )
-    mocker.patch(
+    group_mock = mocker.patch(
         'src.processes.views.task.TaskViewSet.'
         'group',
     )
+
+    api_client.token_authenticate(viewer_user)
 
     # act
     response = api_client.get(f'/v2/tasks/{task.id}')
@@ -1855,6 +1870,8 @@ def test_retrieve__template_viewer_and_performer__is_read_only_viewer_false(
     assert response.status_code == 200
     assert response.data['id'] == task.id
     assert response.data['is_read_only_viewer'] is False
+    identify_mock.assert_not_called()
+    group_mock.assert_not_called()
 
 
 def test_retrieve__admin_template_owner__is_read_only_viewer_false(
@@ -1865,18 +1882,11 @@ def test_retrieve__admin_template_owner__is_read_only_viewer_false(
 
     # arrange
     account = create_test_account()
-    template_owner = create_test_user(account=account)
+    template_owner = create_test_owner(account=account)
     template = create_test_template(user=template_owner)
     workflow = create_test_workflow(template=template, user=template_owner)
     task = workflow.tasks.get(number=1)
-
-    admin_owner_user = create_test_user(
-        account=account,
-        email='admin_owner@test.com',
-        is_account_owner=False,
-        is_admin=True,
-    )
-
+    admin_owner_user = create_test_admin(account=account)
     TemplateOwner.objects.create(
         role=OwnerRole.OWNER,
         template=template,
@@ -1884,17 +1894,16 @@ def test_retrieve__admin_template_owner__is_read_only_viewer_false(
         user=admin_owner_user,
         account=account,
     )
-
-    api_client.token_authenticate(admin_owner_user)
-
-    mocker.patch(
+    identify_mock = mocker.patch(
         'src.processes.views.task.TaskViewSet.'
         'identify',
     )
-    mocker.patch(
+    group_mock = mocker.patch(
         'src.processes.views.task.TaskViewSet.'
         'group',
     )
+
+    api_client.token_authenticate(admin_owner_user)
 
     # act
     response = api_client.get(f'/v2/tasks/{task.id}')
@@ -1903,12 +1912,15 @@ def test_retrieve__admin_template_owner__is_read_only_viewer_false(
     assert response.status_code == 200
     assert response.data['id'] == task.id
     assert response.data['is_read_only_viewer'] is False
+    identify_mock.assert_not_called()
+    group_mock.assert_not_called()
 
 
 def test_retrieve__non_admin_template_owner__is_read_only_viewer_true(
     api_client,
     mocker,
 ):
+
     """
     Non-admin template owner has read-only
     access (is_read_only_viewer=True).
@@ -1916,18 +1928,11 @@ def test_retrieve__non_admin_template_owner__is_read_only_viewer_true(
 
     # arrange
     account = create_test_account()
-    template_owner = create_test_user(account=account)
+    template_owner = create_test_owner(account=account)
     template = create_test_template(user=template_owner)
     workflow = create_test_workflow(template=template, user=template_owner)
     task = workflow.tasks.get(number=1)
-
-    non_admin_owner_user = create_test_user(
-        account=account,
-        email='non_admin_owner@test.com',
-        is_account_owner=False,
-        is_admin=False,
-    )
-
+    non_admin_owner_user = create_test_not_admin(account=account)
     TemplateOwner.objects.create(
         role=OwnerRole.OWNER,
         template=template,
@@ -1935,17 +1940,16 @@ def test_retrieve__non_admin_template_owner__is_read_only_viewer_true(
         user=non_admin_owner_user,
         account=account,
     )
-
-    api_client.token_authenticate(non_admin_owner_user)
-
-    mocker.patch(
+    identify_mock = mocker.patch(
         'src.processes.views.task.TaskViewSet.'
         'identify',
     )
-    mocker.patch(
+    group_mock = mocker.patch(
         'src.processes.views.task.TaskViewSet.'
         'group',
     )
+
+    api_client.token_authenticate(non_admin_owner_user)
 
     # act
     response = api_client.get(f'/v2/tasks/{task.id}')
@@ -1954,46 +1958,39 @@ def test_retrieve__non_admin_template_owner__is_read_only_viewer_true(
     assert response.status_code == 200
     assert response.data['id'] == task.id
     assert response.data['is_read_only_viewer'] is True
+    identify_mock.assert_not_called()
+    group_mock.assert_not_called()
 
 
 def test_retrieve__task_performer__is_read_only_viewer_false(
     api_client,
     mocker,
 ):
-    """
-    Task performer has full access (is_read_only_viewer=False).
-    Note: Simply being in workflow.members is not enough.
-    """
+
+    """ Task performer has full access (is_read_only_viewer=False). """
 
     # arrange
     account = create_test_account()
-    template_owner = create_test_user(account=account)
+    template_owner = create_test_owner(account=account)
     template = create_test_template(user=template_owner)
     workflow = create_test_workflow(template=template, user=template_owner)
     task = workflow.tasks.get(number=1)
-
-    performer_user = create_test_user(
-        account=account,
-        email='performer@test.com',
-        is_account_owner=False,
-        is_admin=False,
-    )
+    performer_user = create_test_not_admin(account=account)
     TaskPerformer.objects.create(
         task=task,
         user=performer_user,
     )
     workflow.members.add(performer_user)
-
-    api_client.token_authenticate(performer_user)
-
-    mocker.patch(
+    identify_mock = mocker.patch(
         'src.processes.views.task.TaskViewSet.'
         'identify',
     )
-    mocker.patch(
+    group_mock = mocker.patch(
         'src.processes.views.task.TaskViewSet.'
         'group',
     )
+
+    api_client.token_authenticate(performer_user)
 
     # act
     response = api_client.get(f'/v2/tasks/{task.id}')
@@ -2002,42 +1999,35 @@ def test_retrieve__task_performer__is_read_only_viewer_false(
     assert response.status_code == 200
     assert response.data['id'] == task.id
     assert response.data['is_read_only_viewer'] is False
+    identify_mock.assert_not_called()
+    group_mock.assert_not_called()
 
 
 def test_retrieve__workflow_member__ok_read_only(
     api_client,
     mocker,
 ):
-    """
-    Users in workflow.members (e.g., mentioned in comments, performers)
-    have read-only access to tasks.
-    """
+
+    """ Workflow members have read-only access to tasks. """
 
     # arrange
     account = create_test_account()
-    template_owner = create_test_user(account=account)
+    template_owner = create_test_owner(account=account)
     template = create_test_template(user=template_owner)
     workflow = create_test_workflow(template=template, user=template_owner)
     task = workflow.tasks.get(number=1)
-
-    member_user = create_test_user(
-        account=account,
-        email='member@test.com',
-        is_account_owner=False,
-        is_admin=False,
-    )
+    member_user = create_test_not_admin(account=account)
     workflow.members.add(member_user)
-
-    api_client.token_authenticate(member_user)
-
-    mocker.patch(
+    identify_mock = mocker.patch(
         'src.processes.views.task.TaskViewSet.'
         'identify',
     )
-    mocker.patch(
+    group_mock = mocker.patch(
         'src.processes.views.task.TaskViewSet.'
         'group',
     )
+
+    api_client.token_authenticate(member_user)
 
     # act
     response = api_client.get(f'/v2/tasks/{task.id}')
@@ -2045,20 +2035,17 @@ def test_retrieve__workflow_member__ok_read_only(
     # assert
     assert response.status_code == 200
     assert response.data['is_read_only_viewer'] is True
+    identify_mock.assert_not_called()
+    group_mock.assert_not_called()
 
 
 def test_task_retrieve__template_starter_own_workflow__ok(api_client):
+
     # arrange
     account = create_test_account()
-    template_owner = create_test_user(account=account)
-    template = create_test_template(template_owner)
-
-    starter_user = create_test_user(
-        account=account,
-        email='starter@test.com',
-        is_admin=False,
-        is_account_owner=False,
-    )
+    template_owner = create_test_owner(account=account)
+    template = create_test_template(user=template_owner)
+    starter_user = create_test_not_admin(account=account)
 
     TemplateOwner.objects.create(
         role=OwnerRole.STARTER,
@@ -2082,17 +2069,12 @@ def test_task_retrieve__template_starter_own_workflow__ok(api_client):
 
 
 def test_task_retrieve__template_starter_other_workflow__forbidden(api_client):
+
     # arrange
     account = create_test_account()
-    template_owner = create_test_user(account=account)
-    template = create_test_template(template_owner)
-
-    starter_user = create_test_user(
-        account=account,
-        email='starter@test.com',
-        is_admin=False,
-        is_account_owner=False,
-    )
+    template_owner = create_test_owner(account=account)
+    template = create_test_template(user=template_owner)
+    starter_user = create_test_not_admin(account=account)
 
     TemplateOwner.objects.create(
         role=OwnerRole.STARTER,

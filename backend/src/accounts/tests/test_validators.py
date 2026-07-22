@@ -1,18 +1,19 @@
 import pytest
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 
 from src.accounts.validators import (
     user_is_last_performer,
 )
 from src.processes.enums import PerformerType, TaskStatus
-from src.processes.models.workflows.task import TaskPerformer
+from src.processes.models.workflows.task import Task, TaskPerformer
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
     create_test_owner,
     create_test_template,
     create_test_user,
-    create_test_workflow,
+    create_test_workflow, create_test_group,
 )
 
 pytestmark = pytest.mark.django_db
@@ -101,7 +102,7 @@ class TestWorkflowTask:
             account=user.account,
         )
         task = workflow.tasks.get(number=1)
-        task.performers.all().delete()
+        task.taskperformer_set.all().delete()
         task.raw_performers.all().delete()
         task.add_raw_performer(user_performer)
         TaskPerformer.objects.create(
@@ -121,7 +122,7 @@ class TestWorkflowTask:
         user = create_test_user()
         workflow = create_test_workflow(user, tasks_count=1)
         task = workflow.tasks.get(number=1)
-        task.performers.all().delete()
+        task.taskperformer_set.all().delete()
         task.raw_performers.all().delete()
 
         user_2 = create_test_user(
@@ -155,7 +156,7 @@ class TestWorkflowTask:
         workflow = create_test_workflow(owner, tasks_count=1)
         performer = create_test_admin(account=account)
         task = workflow.tasks.get(number=1)
-        task.performers.all().delete()
+        task.taskperformer_set.all().delete()
         task.raw_performers.all().delete()
         TaskPerformer.objects.create(
             task_id=task.id,
@@ -176,14 +177,12 @@ class TestWorkflowTask:
     def test_user_is_last_performer__active_task__ok(self, status):
 
         # arrange
-        user = create_test_user()
-        workflow = create_test_workflow(user, tasks_count=1)
-        user_performer = create_test_user(
-            email='performer@test.test',
-            account=user.account,
-        )
+        account = create_test_account()
+        owner = create_test_user(account=account)
+        workflow = create_test_workflow(owner, tasks_count=1)
+        user_performer = create_test_admin(account=account)
         task = workflow.tasks.get(number=1)
-        task.performers.all().delete()
+        task.taskperformer_set.all().delete()
         task.raw_performers.all().delete()
         task.status = status
         task.save()
@@ -206,14 +205,12 @@ class TestWorkflowTask:
     def test_user_is_last_performer__not_active_task__not_found(self, status):
 
         # arrange
-        user = create_test_user()
-        workflow = create_test_workflow(user, tasks_count=1)
-        user_performer = create_test_user(
-            email='performer@test.test',
-            account=user.account,
-        )
+        account = create_test_account()
+        owner = create_test_user(account=account)
+        workflow = create_test_workflow(owner, tasks_count=1)
+        user_performer = create_test_admin(account=account)
         task = workflow.tasks.get(number=1)
-        task.performers.all().delete()
+        task.taskperformer_set.all().delete()
         task.raw_performers.all().delete()
         task.status = status
         task.save()
@@ -225,6 +222,83 @@ class TestWorkflowTask:
 
         # act
         result = user_is_last_performer(user_performer)
+
+        # assert
+        assert result is False
+
+    def test_user_is_last_performer__group_user__false(self):
+
+        """
+        Only completed GROUP_USER (no USER assignment)
+        → user_is_last_performer is False; on_performer is empty
+        """
+
+        # arrange
+        account = create_test_account()
+        owner = create_test_owner(account=account)
+        user_1 = create_test_admin(account=account)
+        group = create_test_group(account=account, users=[user_1])
+        workflow = create_test_workflow(user=owner, tasks_count=1)
+        task = workflow.tasks.get(number=1)
+        task.taskperformer_set.all().delete()
+        TaskPerformer.objects.create(
+            task_id=task.id,
+            group=group,
+            type=PerformerType.GROUP,
+        )
+
+        TaskPerformer.objects.create(
+            task_id=task.id,
+            user_id=user_1.id,
+            type=PerformerType.GROUP_USER,
+            is_completed=True,
+            date_completed=timezone.now(),
+        )
+
+        # act
+        result = user_is_last_performer(user_1)
+
+        # assert
+        assert result is False
+        assert not (
+            Task.objects
+            .on_performer(user_1.id)
+            .filter(id=task.id)
+            .exists()
+        )
+
+    def test_user_is_last_performer__soft_deleted_performer__not_found(self):
+
+        """
+        Soft-deleted TaskPerformer for the user must not match via another
+        performer's non-deleted row (separate JOIN bug).
+        """
+
+        # arrange
+        account = create_test_account()
+        owner = create_test_owner(account=account)
+        user = create_test_admin(account=account)
+        user_2 = create_test_admin(
+            email='performer2@test.test',
+            account=account,
+        )
+        workflow = create_test_workflow(owner, tasks_count=1)
+        task = workflow.tasks.get(number=1)
+        task.taskperformer_set.all().delete()
+        task.raw_performers.all().delete()
+        task.add_raw_performer(user)
+        TaskPerformer.objects.create(
+            task_id=task.id,
+            user_id=user.id,
+            is_deleted=True,
+        )
+        TaskPerformer.objects.create(
+            task_id=task.id,
+            user_id=user_2.id,
+        )
+
+        # act
+        result = user_is_last_performer(user)
 
         # assert
         assert result is False

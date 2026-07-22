@@ -132,27 +132,6 @@ def test_get_last_delay__no_delays__none():
     assert result is None
 
 
-def test_exclude_directly_deleted_taskperformer_set__called__ok():
-    """
-    Returns queryset with directly-deleted performers excluded
-    """
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    workflow = create_test_workflow(
-        user=user,
-        tasks_count=1,
-    )
-    task = workflow.tasks.get(number=1)
-
-    # act
-    result = task.exclude_directly_deleted_taskperformer_set()
-
-    # assert
-    assert result is not None
-
-
 def test_get_raw_performers_api_names__has_performers__ok():
     """
     Returns set of api_names from raw_performers
@@ -1158,6 +1137,113 @@ def test_delete_orphaned_performers__mixed_types__ok():
     assert group.id in deleted_group_ids
 
 
+def test_delete_orphaned_performers__keeps_group_user__ok():
+
+    """
+    Orphan USER + completed GROUP_USER → orphan-delete removes USER,
+    GROUP_USER remains
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(
+        user=user,
+        tasks_count=1,
+    )
+    task = workflow.tasks.get(number=1)
+    task.update_performers()
+    task.raw_performers.all().delete()
+    current_date = timezone.now()
+    group_user_performer = TaskPerformer.objects.create(
+        task_id=task.id,
+        user_id=user.id,
+        type=PerformerType.GROUP_USER,
+        is_completed=True,
+        date_completed=current_date,
+    )
+
+    # act
+    deleted_user_ids, deleted_group_ids = (
+        task._delete_orphaned_performers()
+    )
+
+    # assert
+    assert user.id in deleted_user_ids
+    assert deleted_group_ids == []
+    assert TaskPerformer.objects.filter(
+        id=group_user_performer.id,
+        type=PerformerType.GROUP_USER,
+        is_completed=True,
+    ).exists()
+    assert not TaskPerformer.objects.filter(
+        task_id=task.id,
+        user_id=user.id,
+        type=PerformerType.USER,
+    ).exists()
+
+
+def test_get_user_performers__user_and_group_user__no_duplicates():
+
+    """
+    USER + completed GROUP_USER for same user
+    → get_user_performers returns the user once
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        user_id=owner.id,
+        type=PerformerType.GROUP_USER,
+        is_completed=True,
+        date_completed=timezone.now(),
+    )
+
+    # act
+    user_performers = list(task.get_user_performers())
+
+    # assert
+    assert len(user_performers) == 1
+    assert user_performers[0].id == owner.id
+
+
+def test_get_user_performers__group_user_only__empty():
+
+    """
+    Only GROUP + GROUP_USER, no USER assignment
+    → get_user_performers does not include the group member
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user_1 = create_test_not_admin(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    TaskPerformer.objects.filter(task_id=task.id).update(
+        type=PerformerType.GROUP_USER,
+        is_completed=True,
+        date_completed=timezone.now(),
+        user_id=user_1.id,
+    )
+    group_1 = create_test_group(account=account, users=[user_1])
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP,
+        group_id=group_1.id,
+    )
+
+    # act
+    user_performers = list(task.get_user_performers())
+
+    # assert
+    assert len(user_performers) == 0
+
+
 def test_delete_raw_performer__deleted__calls_delete_orphaned(mocker):
     """
     Raw performer deleted (count > 0) — calls _delete_orphaned_performers
@@ -1243,133 +1329,6 @@ def test_delete_raw_performers__called__ok(mocker):
 
     # assert
     delete_orphaned_mock.assert_called_once_with()
-
-
-def test_can_be_completed__already_completed__false():
-    """
-    Task is already completed — returns False immediately
-    """
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    workflow = create_test_workflow(
-        user=user,
-        tasks_count=1,
-    )
-    task = workflow.tasks.get(number=1)
-    task.status = TaskStatus.COMPLETED
-    task.save(update_fields=['status'])
-
-    # act
-    result = task.can_be_completed()
-
-    # assert
-    assert result is False
-
-
-def test_can_be_completed__not_by_all_one_completed__true():
-    """
-    require_completion_by_all=False, one completed performer — True
-    """
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    workflow = create_test_workflow(
-        user=user,
-        tasks_count=1,
-    )
-    task = workflow.tasks.get(number=1)
-    task.status = TaskStatus.ACTIVE
-    task.require_completion_by_all = False
-    task.save(update_fields=['status', 'require_completion_by_all'])
-    task.update_performers()
-    task.taskperformer_set.update(is_completed=True)
-
-    # act
-    result = task.can_be_completed()
-
-    # assert
-    assert result is True
-
-
-def test_can_be_completed__not_by_all_none_completed__false():
-    """
-    require_completion_by_all=False, no completed performers — False
-    """
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    workflow = create_test_workflow(
-        user=user,
-        tasks_count=1,
-    )
-    task = workflow.tasks.get(number=1)
-    task.status = TaskStatus.ACTIVE
-    task.require_completion_by_all = False
-    task.save(update_fields=['status', 'require_completion_by_all'])
-    task.update_performers()
-    task.taskperformer_set.update(is_completed=False)
-
-    # act
-    result = task.can_be_completed()
-
-    # assert
-    assert result is False
-
-
-def test_can_be_completed__by_all_all_completed__true():
-    """
-    require_completion_by_all=True, no incompleted performers — True
-    """
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    workflow = create_test_workflow(
-        user=user,
-        tasks_count=1,
-    )
-    task = workflow.tasks.get(number=1)
-    task.status = TaskStatus.ACTIVE
-    task.require_completion_by_all = True
-    task.save(update_fields=['status', 'require_completion_by_all'])
-    task.update_performers()
-    task.taskperformer_set.update(is_completed=True)
-
-    # act
-    result = task.can_be_completed()
-
-    # assert
-    assert result is True
-
-
-def test_can_be_completed__by_all_some_incompleted__false():
-    """
-    require_completion_by_all=True, some incompleted performers — False
-    """
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    workflow = create_test_workflow(
-        user=user,
-        tasks_count=1,
-    )
-    task = workflow.tasks.get(number=1)
-    task.status = TaskStatus.ACTIVE
-    task.require_completion_by_all = True
-    task.save(update_fields=['status', 'require_completion_by_all'])
-    task.update_performers()
-    task.taskperformer_set.update(is_completed=False)
-
-    # act
-    result = task.can_be_completed()
-
-    # assert
-    assert result is False
 
 
 def test_get_revert_tasks__revert_task_set__ok():

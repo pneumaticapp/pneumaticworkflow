@@ -1,4 +1,5 @@
 import pytest
+from django.utils import timezone
 from rest_framework import status
 
 from src.accounts.enums import BillingPlanType
@@ -14,7 +15,10 @@ from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.workflows.task import TaskPerformer
 from src.processes.tests.fixtures import (
     create_test_account,
+    create_test_admin,
     create_test_group,
+    create_test_not_admin,
+    create_test_owner,
     create_test_template,
     create_test_user,
     create_test_workflow,
@@ -1800,3 +1804,136 @@ def test_workflow_counts__template_starter__includes_own_workflows(api_client):
     data = response.json()
     starter_counts = next(x for x in data if x['source_id'] == starter_user.id)
     assert starter_counts['workflows_count'] == 1
+
+
+class TestWorkflowCountsByCPerformerGroupUser:
+
+    def test__group_user_ghost__not_in_user_count(self, api_client):
+
+        """
+        GROUP with user_2 only + ghost GROUP_USER(user_1)
+        → user_1 absent from by-current-performer user breakdown
+        """
+
+        # arrange
+        account = create_test_account()
+        owner = create_test_owner(account=account)
+        user_1 = create_test_not_admin(account=account)
+        user_2 = create_test_admin(account=account)
+        workflow = create_test_workflow(user=owner, tasks_count=1)
+        task = workflow.tasks.get(number=1)
+        group_1 = create_test_group(account=account, users=[user_2])
+        TaskPerformer.objects.filter(task_id=task.id).update(
+            type=PerformerType.GROUP,
+            group_id=group_1.id,
+            user_id=None,
+        )
+        TaskPerformer.objects.create(
+            task_id=task.id,
+            user_id=user_1.id,
+            type=PerformerType.GROUP_USER,
+            is_completed=True,
+            date_completed=timezone.now(),
+        )
+        api_client.token_authenticate(owner)
+
+        # act
+        response = api_client.get('/workflows/count/by-current-performer')
+
+        # assert
+        assert response.status_code == 200
+        assert len(response.data) == 2
+        assert response.data[0]['type'] == 'group'
+        assert response.data[0]['source_id'] == group_1.id
+        assert response.data[0]['workflows_count'] == 1
+        assert response.data[1]['type'] == 'user'
+        assert response.data[1]['source_id'] == user_2.id
+        assert response.data[1]['workflows_count'] == 1
+
+    def test__user_with_group_user__in_user_count(self, api_client):
+
+        """
+        USER + GROUP_USER for same user → user appears in user breakdown
+        """
+
+        # arrange
+        account = create_test_account()
+        owner = create_test_owner(account=account)
+        user_1 = create_test_not_admin(account=account)
+        workflow = create_test_workflow(user=owner, tasks_count=1)
+        task = workflow.tasks.get(number=1)
+        TaskPerformer.objects.filter(task_id=task.id).update(
+            user_id=user_1.id,
+        )
+        TaskPerformer.objects.create(
+            task_id=task.id,
+            user_id=user_1.id,
+            type=PerformerType.GROUP_USER,
+            is_completed=True,
+            date_completed=timezone.now(),
+        )
+        api_client.token_authenticate(owner)
+
+        # act
+        response = api_client.get('/workflows/count/by-current-performer')
+
+        # assert
+        assert response.status_code == 200
+        assert len(response.data) == 1
+        assert response.data[0]['type'] == 'user'
+        assert response.data[0]['source_id'] == user_1.id
+        assert response.data[0]['workflows_count'] == 1
+
+
+class TestWorkflowCountsByWorkflowStarterGroupUser:
+
+    def test__filter_current_performer_ids__group_user_only__empty(
+        self,
+        api_client,
+    ):
+
+        """
+        Ghost GROUP_USER without USER → filter by current_performer_ids
+        does not count the workflow for that user
+        """
+
+        # arrange
+        account = create_test_account()
+        owner = create_test_owner(account=account)
+        user_1 = create_test_not_admin(account=account)
+        user_2 = create_test_admin(account=account)
+        request_user = create_test_admin(
+            account=account,
+            email='request@test.test',
+        )
+        workflow = create_test_workflow(user=owner, tasks_count=1)
+        workflow.owners.add(request_user)
+        task = workflow.tasks.get(number=1)
+        group_1 = create_test_group(account=account, users=[user_2])
+        TaskPerformer.objects.filter(task_id=task.id).update(
+            type=PerformerType.GROUP,
+            group_id=group_1.id,
+            user_id=None,
+        )
+        TaskPerformer.objects.create(
+            task_id=task.id,
+            user_id=user_1.id,
+            type=PerformerType.GROUP_USER,
+            is_completed=True,
+            date_completed=timezone.now(),
+        )
+        api_client.token_authenticate(request_user)
+
+        # act
+        response = api_client.get(
+            '/workflows/count/by-workflow-starter',
+            data={
+                'current_performer_ids': f'{user_1.id}',
+            },
+        )
+
+        # assert
+        assert response.status_code == 200
+        assert len(response.data) == 1
+        assert response.data[0]['source_id'] == -1
+        assert response.data[0]['workflows_count'] == 0

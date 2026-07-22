@@ -237,6 +237,13 @@ class ReassignService:
                     group_id=None,
                 )
         elif self.old_user:
+            TaskPerformer.objects.filter(
+                user_id=self.old_user.id,
+                type=PerformerType.GROUP_USER,
+                task__account=self.account,
+            ).exclude(
+                task__status=TaskStatus.COMPLETED,
+            ).delete()
             if self.new_group:
                 delete_query = DeleteUserGroupFromTaskPerformerQuery(
                     delete_id=self.old_user.id,
@@ -245,6 +252,7 @@ class ReassignService:
                 RawSqlExecutor.execute(*delete_query.get_sql())
                 TaskPerformer.objects.filter(
                     user_id=self.old_user.id,
+                    type=PerformerType.USER,
                     task__account=self.account,
                 ).exclude(
                     task__status=TaskStatus.COMPLETED,
@@ -261,6 +269,7 @@ class ReassignService:
                 RawSqlExecutor.execute(*delete_query.get_sql())
                 TaskPerformer.objects.filter(
                     user_id=self.old_user.id,
+                    type=PerformerType.USER,
                     task__account=self.account,
                 ).exclude(
                     task__status=TaskStatus.COMPLETED,
