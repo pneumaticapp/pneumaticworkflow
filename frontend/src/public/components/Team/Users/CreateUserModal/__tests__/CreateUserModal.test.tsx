@@ -253,6 +253,26 @@ describe('CreateUserModal', () => {
       )).toBeInTheDocument();
     });
 
+    it('clears sensitive AI agent values on a quick reopen', async () => {
+      const { rerender } = render(<CreateUserModal isOpen={true} onClose={mockOnClose} />);
+      await openAIAgentTab();
+      await userEvent.type(
+        screen.getByLabelText(getTranslatedText('team.create-ai-agent-modal.api-key')),
+        'secret-key',
+      );
+
+      rerender(<CreateUserModal isOpen={false} onClose={mockOnClose} />);
+      rerender(<CreateUserModal isOpen={true} onClose={mockOnClose} />);
+      await waitFor(() => expect(screen.getByLabelText(
+        getTranslatedText('team.create-user-modal.email'),
+      )).toBeInTheDocument());
+      await openAIAgentTab();
+
+      expect(screen.getByLabelText(
+        getTranslatedText('team.create-ai-agent-modal.api-key'),
+      )).toHaveValue('');
+    });
+
     it('validates required fields with Formik and submits valid values', async () => {
       const onCreateAIAgent = jest.fn();
       render(

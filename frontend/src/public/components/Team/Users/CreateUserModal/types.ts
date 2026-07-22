@@ -38,5 +38,6 @@ export interface ICreateAIAgentFormValues {
 
 export interface ICreateAIAgentFormProps {
   isActive: boolean;
+  isOpen: boolean;
   onSubmit(values: ICreateAIAgentFormValues): void;
 }

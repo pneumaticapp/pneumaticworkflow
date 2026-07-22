@@ -1,5 +1,5 @@
-import React, { useRef } from 'react';
-import { Formik, useField } from 'formik';
+import React, { useEffect, useRef } from 'react';
+import { Formik, useField, useFormikContext } from 'formik';
 import { useIntl } from 'react-intl';
 
 import { Button } from '../../../UI/Buttons/Button';
@@ -24,6 +24,18 @@ const validateEndpoint = (value: string) => (
   || (isInvalidUrlWithProtocol(value) ? 'validation.url-invalid' : '')
 );
 
+function ResetFormOnReopen({ isOpen }: { isOpen: boolean }) {
+  const { resetForm } = useFormikContext<ICreateAIAgentFormValues>();
+  const wasOpenRef = useRef(isOpen);
+
+  useEffect(() => {
+    if (isOpen && !wasOpenRef.current) resetForm();
+    wasOpenRef.current = isOpen;
+  }, [isOpen, resetForm]);
+
+  return null;
+}
+
 function SystemPromptField() {
   const { formatMessage } = useIntl();
   const [field, meta] = useField<string>('systemPrompt');
@@ -39,7 +51,7 @@ function SystemPromptField() {
   );
 }
 
-export function CreateAIAgentForm({ isActive, onSubmit }: ICreateAIAgentFormProps) {
+export function CreateAIAgentForm({ isActive, isOpen, onSubmit }: ICreateAIAgentFormProps) {
   const { formatMessage } = useIntl();
   const latestAvatarActionRef = useRef(0);
   const initialValues: ICreateAIAgentFormValues = {
@@ -89,10 +101,11 @@ export function CreateAIAgentForm({ isActive, onSubmit }: ICreateAIAgentFormProp
           event.currentTarget.value = '';
         };
 
-        if (!isActive) return null;
+        if (!isActive) return <ResetFormOnReopen isOpen={isOpen} />;
 
         return (
           <form onSubmit={handleSubmit}>
+            <ResetFormOnReopen isOpen={isOpen} />
             <ModalBody className={styles['modal__body']}>
               <div className={styles['modal__agent-avatar']}>
                 <div className={styles['modal__avatar-preview']}>

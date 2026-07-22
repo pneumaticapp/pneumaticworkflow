@@ -105,6 +105,7 @@ export function CreateUserModal({ isOpen, onClose, onCreateAIAgent }: ICreateUse
 
       <CreateAIAgentForm
         isActive={activeTab === ECreateUserModalTab.AIAgent}
+        isOpen={isOpen}
         onSubmit={(values) => onCreateAIAgent?.(values)}
       />
       <Formik
