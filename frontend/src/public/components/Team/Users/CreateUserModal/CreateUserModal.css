@@ -76,9 +76,9 @@
 
 .modal__tabs-switcher {
   width: 100%;
-  height: 4.8rem;
+  height: 3.2rem;
   background-color: var(--pneumatic-color-beige);
-  border-radius: 2.4rem;
+  border-radius: 1.6rem;
 }
 
 .modal__tab {
@@ -86,7 +86,9 @@
   height: 100%;
   min-height: 0;
   color: var(--pneumatic-color-black100);
-  border-radius: 2.4rem;
+  border-radius: 1.6rem;
+
+  @mixin text-small bold;
 }
 
 .modal__tab_active {
@@ -126,18 +128,24 @@
   display: flex;
   align-items: center;
   gap: 0.8rem;
+  height: 4rem;
   color: var(--pneumatic-color-link);
 
   @mixin text-small bold;
 
   label,
-  button {
+  button,
+  span {
+    padding: 0;
     display: flex;
     align-items: center;
-    justify-content: center;
-    min-height: 4rem;
+    height: 100%;
     font: inherit;
     line-height: 1.6rem;
+  }
+
+  label,
+  button {
     cursor: pointer;
     color: inherit;
   }
@@ -149,6 +157,10 @@
     height: 0.1rem;
     opacity: 0;
   }
+}
+
+.modal__avatar-separator {
+  color: var(--pneumatic-color-black48);
 }
 
 .modal__section-title {

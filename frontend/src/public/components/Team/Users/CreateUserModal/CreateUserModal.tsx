@@ -172,8 +172,9 @@ export function CreateUserModal({ isOpen, onClose, onCreateAIAgent }: ICreateUse
                 </div>
               </ModalBody>
 
-              <ModalFooter>
+              <ModalFooter className={styles['modal__footer']}>
                 <Button
+                  className={styles['modal__submit']}
                   type="submit"
                   label={formatMessage({ id: 'team.create-user-modal.submit' })}
                   buttonStyle="yellow"

@@ -93,7 +93,7 @@ export function CreateAIAgentForm({ onSubmit }: ICreateAIAgentFormProps) {
                       onChange={handleAvatarUpload}
                     />
                   </label>
-                  <span aria-hidden>•</span>
+                  <span className={styles['modal__avatar-separator']} aria-hidden>•</span>
                   <button type="button" onClick={() => setFieldValue('avatar', 'generated')}>
                     {formatMessage({ id: 'team.create-ai-agent-modal.generate' })}
                   </button>
