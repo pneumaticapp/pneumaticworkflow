@@ -156,7 +156,7 @@ export function CreateUserModal({ isOpen, onClose, onCreateAIAgent }: ICreateUse
                     name="role"
                     label={formatMessage({ id: 'team.create-user-modal.status' })}
                     options={statusOptions}
-                    className={styles['modal__dropdown--required']}
+                    isRequired
                     formatOptionLabel={renderStatusOption}
                   />
 

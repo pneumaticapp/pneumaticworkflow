@@ -185,6 +185,7 @@ describe('CreateUserModal', () => {
       expect(await within(modelDropdown).findByText(
         getTranslatedText('team.create-ai-agent-modal.validation-required'),
       )).toBeInTheDocument();
+      expect(within(modelDropdown).getAllByText('*')).toHaveLength(1);
       expect(screen.queryByText('team.create-ai-agent-modal.validation-required')).not.toBeInTheDocument();
     });
 

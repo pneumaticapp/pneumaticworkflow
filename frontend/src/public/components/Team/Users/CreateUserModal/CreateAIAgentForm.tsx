@@ -135,7 +135,7 @@ export function CreateAIAgentForm({ isActive, onSubmit }: ICreateAIAgentFormProp
                   name="model"
                   label={formatMessage({ id: 'team.create-ai-agent-modal.model' })}
                   options={MODEL_OPTIONS}
-                  className={styles['modal__dropdown--required']}
+                  isRequired
                 />
                 <FormikInputField
                   name="endpoint"

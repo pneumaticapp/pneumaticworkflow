@@ -34,11 +34,6 @@
   gap: 0.8rem;
 }
 
-.modal__dropdown--required p::after {
-  content: '*';
-  color: var(--pneumatic-color-warning);
-}
-
 .modal__option--selected {
   color: var(--pneumatic-color-black32);
 }
