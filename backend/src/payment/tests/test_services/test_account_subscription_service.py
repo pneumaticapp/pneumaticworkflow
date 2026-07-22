@@ -1,7 +1,6 @@
 from datetime import timedelta
 
 import pytest
-from django.contrib.auth import get_user_model
 from django.utils import timezone
 
 from src.accounts.enums import (
@@ -22,10 +21,9 @@ from src.payment.services.account import (
 )
 from src.processes.tests.fixtures import (
     create_test_account,
-    create_test_user,
+    create_test_owner,
 )
 
-UserModel = get_user_model()
 pytestmark = pytest.mark.django_db
 
 
@@ -41,7 +39,7 @@ def test_plan_changed__not_changes__ok():
         trial_end=plan_expiration,
         period=period,
     )
-    user = create_test_user(account=account)
+    user = create_test_owner(account=account)
     is_superuser = True
     auth_type = AuthTokenType.WEBHOOK
     service = AccountSubscriptionService(
@@ -78,7 +76,7 @@ def test_plan_changed__max_users_changed__ok():
         plan_expiration=plan_expiration,
         period=period,
     )
-    user = create_test_user(account=account)
+    user = create_test_owner(account=account)
     is_superuser = True
     auth_type = AuthTokenType.WEBHOOK
     service = AccountSubscriptionService(
@@ -115,7 +113,7 @@ def test_plan_changed__plan_expiration_changed__ok():
         plan_expiration=plan_expiration,
         period=period,
     )
-    user = create_test_user(account=account)
+    user = create_test_owner(account=account)
     is_superuser = True
     auth_type = AuthTokenType.WEBHOOK
     service = AccountSubscriptionService(
@@ -150,7 +148,7 @@ def test_plan_changed__plan_changed__ok():
         plan=BillingPlanType.FREEMIUM,
         period=period,
     )
-    user = create_test_user(account=account)
+    user = create_test_owner(account=account)
     is_superuser = True
     auth_type = AuthTokenType.WEBHOOK
     service = AccountSubscriptionService(
@@ -189,7 +187,7 @@ def test_plan_changed__first_trial__ok():
         plan=BillingPlanType.FREEMIUM,
         period=period,
     )
-    user = create_test_user(account=account)
+    user = create_test_owner(account=account)
     is_superuser = True
     auth_type = AuthTokenType.WEBHOOK
     service = AccountSubscriptionService(
@@ -226,7 +224,7 @@ def test_plan_changed__billing_period__ok():
         trial_end=plan_expiration,
         period=BillingPeriod.MONTHLY,
     )
-    user = create_test_user(account=account)
+    user = create_test_owner(account=account)
     is_superuser = True
     auth_type = AuthTokenType.WEBHOOK
     service = AccountSubscriptionService(
@@ -265,7 +263,7 @@ def test_plan_changed__quantity__ok():
     )
     create_test_account(master_account=account, lease_level=LeaseLevel.TENANT)
     create_test_account(master_account=account, lease_level=LeaseLevel.TENANT)
-    user = create_test_user(account=account)
+    user = create_test_owner(account=account)
     is_superuser = True
     auth_type = AuthTokenType.WEBHOOK
     service = AccountSubscriptionService(
@@ -298,7 +296,7 @@ def test_create__freemium_to_trial__ok(mocker, identify_mock):
         plan=BillingPlanType.FREEMIUM,
         trial_ended=False,
     )
-    user = create_test_user(account=account)
+    user = create_test_owner(account=account)
     account_service_init_mock = mocker.patch.object(
         AccountService,
         attribute='__init__',
@@ -319,6 +317,10 @@ def test_create__freemium_to_trial__ok(mocker, identify_mock):
     send_plan_changed_mock = mocker.patch(
         'src.payment.services.account.'
         'send_account_plan_changed_notification.delay',
+    )
+    transaction_on_commit_mock = mocker.patch(
+        'src.payment.services.account.transaction.on_commit',
+        side_effect=lambda f, *args, **kwargs: f(),
     )
     trial_start = timezone.now() - timedelta(minutes=1)
     plan_expiration = timezone.now() + timedelta(days=30)
@@ -346,6 +348,7 @@ def test_create__freemium_to_trial__ok(mocker, identify_mock):
     )
 
     # assert
+    transaction_on_commit_mock.assert_called_once_with(mocker.ANY)
     account_service_init_mock.assert_called_once_with(
         instance=account,
         user=user,
@@ -381,7 +384,7 @@ def test_create__trial_ended__not_trial(mocker, identify_mock):
         plan=BillingPlanType.FREEMIUM,
         trial_ended=True,
     )
-    user = create_test_user(account=account)
+    user = create_test_owner(account=account)
     account_service_init_mock = mocker.patch.object(
         AccountService,
         attribute='__init__',
@@ -402,6 +405,10 @@ def test_create__trial_ended__not_trial(mocker, identify_mock):
     send_plan_changed_mock = mocker.patch(
         'src.payment.services.account.'
         'send_account_plan_changed_notification.delay',
+    )
+    transaction_on_commit_mock = mocker.patch(
+        'src.payment.services.account.transaction.on_commit',
+        side_effect=lambda f, *args, **kwargs: f(),
     )
     trial_start = timezone.now() - timedelta(minutes=1)
     plan_expiration = timezone.now() + timedelta(days=30)
@@ -429,6 +436,7 @@ def test_create__trial_ended__not_trial(mocker, identify_mock):
     )
 
     # assert
+    transaction_on_commit_mock.assert_called_once_with(mocker.ANY)
     account_service_init_mock.assert_called_once_with(
         instance=account,
         user=user,
@@ -461,7 +469,7 @@ def test_create__freemium_to_premium__ok(mocker, identify_mock):
     account = create_test_account(
         plan=BillingPlanType.FREEMIUM,
     )
-    user = create_test_user(account=account)
+    user = create_test_owner(account=account)
     account_service_init_mock = mocker.patch.object(
         AccountService,
         attribute='__init__',
@@ -482,6 +490,10 @@ def test_create__freemium_to_premium__ok(mocker, identify_mock):
     send_plan_changed_mock = mocker.patch(
         'src.payment.services.account.'
         'send_account_plan_changed_notification.delay',
+    )
+    transaction_on_commit_mock = mocker.patch(
+        'src.payment.services.account.transaction.on_commit',
+        side_effect=lambda f, *args, **kwargs: f(),
     )
     plan_expiration = timezone.now() + timedelta(days=30)
     details = SubscriptionDetails(
@@ -508,6 +520,7 @@ def test_create__freemium_to_premium__ok(mocker, identify_mock):
     )
 
     # assert
+    transaction_on_commit_mock.assert_called_once_with(mocker.ANY)
     account_service_init_mock.assert_called_once_with(
         instance=account,
         user=user,
@@ -545,7 +558,7 @@ def test_create__tmp_subscription_to_premium_trial__ok(mocker, identify_mock):
         plan_expiration=timezone.now() + timedelta(hours=1),
         tmp_subscription=True,
     )
-    user = create_test_user(account=account)
+    user = create_test_owner(account=account)
     account_service_init_mock = mocker.patch.object(
         AccountService,
         attribute='__init__',
@@ -566,6 +579,10 @@ def test_create__tmp_subscription_to_premium_trial__ok(mocker, identify_mock):
     send_plan_changed_mock = mocker.patch(
         'src.payment.services.account.'
         'send_account_plan_changed_notification.delay',
+    )
+    transaction_on_commit_mock = mocker.patch(
+        'src.payment.services.account.transaction.on_commit',
+        side_effect=lambda f, *args, **kwargs: f(),
     )
     trial_start = timezone.now()
     plan_expiration = timezone.now() + timedelta(days=7)
@@ -593,6 +610,7 @@ def test_create__tmp_subscription_to_premium_trial__ok(mocker, identify_mock):
     )
 
     # assert
+    transaction_on_commit_mock.assert_called_once_with(mocker.ANY)
     account_service_init_mock.assert_called_once_with(
         instance=account,
         user=user,
@@ -625,7 +643,7 @@ def test_public_create__plan_changed__ok(mocker, identify_mock):
 
     # arrange
     account = create_test_account()
-    user = create_test_user(account=account)
+    user = create_test_owner(account=account)
 
     plan_changed = True
     plan_changed_mock = mocker.patch(
@@ -663,7 +681,7 @@ def test_public_create__plan_not_changed__skip(mocker, identify_mock):
 
     # arrange
     account = create_test_account()
-    user = create_test_user(account=account)
+    user = create_test_owner(account=account)
 
     plan_changed = False
     plan_changed_mock = mocker.patch(
@@ -707,7 +725,7 @@ def test_update__trial_to_premium__ok(mocker, identify_mock):
         trial_end=plan_expiration,
         trial_ended=False,
     )
-    user = create_test_user(account=account)
+    user = create_test_owner(account=account)
     account_service_init_mock = mocker.patch.object(
         AccountService,
         attribute='__init__',
@@ -724,6 +742,10 @@ def test_update__trial_to_premium__ok(mocker, identify_mock):
     send_plan_changed_mock = mocker.patch(
         'src.payment.services.account.'
         'send_account_plan_changed_notification.delay',
+    )
+    transaction_on_commit_mock = mocker.patch(
+        'src.payment.services.account.transaction.on_commit',
+        side_effect=lambda f, *args, **kwargs: f(),
     )
     is_superuser = True
     auth_type = AuthTokenType.WEBHOOK
@@ -747,6 +769,7 @@ def test_update__trial_to_premium__ok(mocker, identify_mock):
     service._update(details)
 
     # assert
+    transaction_on_commit_mock.assert_called_once_with(mocker.ANY)
     account_service_init_mock.assert_called_once_with(
         instance=account,
         user=user,
@@ -781,7 +804,7 @@ def test_update__premium_to_premium__ok(mocker, identify_mock):
         plan_expiration=timezone.now() + timedelta(days=1),
         trial_end=timezone.now() - timedelta(days=1),
     )
-    user = create_test_user(account=account)
+    user = create_test_owner(account=account)
     account_service_init_mock = mocker.patch.object(
         AccountService,
         attribute='__init__',
@@ -798,6 +821,10 @@ def test_update__premium_to_premium__ok(mocker, identify_mock):
     send_plan_changed_mock = mocker.patch(
         'src.payment.services.account.'
         'send_account_plan_changed_notification.delay',
+    )
+    transaction_on_commit_mock = mocker.patch(
+        'src.payment.services.account.transaction.on_commit',
+        side_effect=lambda f, *args, **kwargs: f(),
     )
     is_superuser = True
     auth_type = AuthTokenType.WEBHOOK
@@ -822,6 +849,7 @@ def test_update__premium_to_premium__ok(mocker, identify_mock):
     service._update(details)
 
     # assert
+    transaction_on_commit_mock.assert_called_once_with(mocker.ANY)
     account_service_init_mock.assert_called_once_with(
         instance=account,
         user=user,
@@ -852,7 +880,7 @@ def test_public_update__plan_changed__ok(mocker):
 
     # arrange
     account = create_test_account()
-    user = create_test_user(account=account)
+    user = create_test_owner(account=account)
 
     plan_changed = True
     plan_changed_mock = mocker.patch(
@@ -888,7 +916,7 @@ def test_public_update__plan_not_changed__skip(mocker):
 
     # arrange
     account = create_test_account()
-    user = create_test_user(account=account)
+    user = create_test_owner(account=account)
 
     plan_changed = False
     plan_changed_mock = mocker.patch(
@@ -924,7 +952,7 @@ def test_expired__ok(mocker):
 
     # arrange
     account = create_test_account(plan=BillingPlanType.PREMIUM)
-    user = create_test_user(account=account)
+    user = create_test_owner(account=account)
     period_end_date = timezone.now() + timedelta(days=30)
 
     account_service_init_mock = mocker.patch.object(
@@ -940,6 +968,10 @@ def test_expired__ok(mocker):
         'src.payment.services.account.'
         'send_account_plan_changed_notification.delay',
     )
+    transaction_on_commit_mock = mocker.patch(
+        'src.payment.services.account.transaction.on_commit',
+        side_effect=lambda f, *args, **kwargs: f(),
+    )
     is_superuser = True
     auth_type = AuthTokenType.WEBHOOK
     service = AccountSubscriptionService(
@@ -953,6 +985,7 @@ def test_expired__ok(mocker):
     service.expired(period_end_date)
 
     # assert
+    transaction_on_commit_mock.assert_called_once_with(mocker.ANY)
     account_service_init_mock.assert_called_once_with(
         instance=account,
         user=user,
@@ -977,7 +1010,7 @@ def test_cancel__ok(mocker):
 
     # arrange
     account = create_test_account(plan=BillingPlanType.PREMIUM)
-    user = create_test_user(account=account)
+    user = create_test_owner(account=account)
     analysis_subscription_canceled_created_mock = mocker.patch(
         'src.analysis.services.AnalyticService.'
         'subscription_canceled',
@@ -1002,3 +1035,50 @@ def test_cancel__ok(mocker):
     # arrange
     expired_mock.assert_called_once_with(plan_expiration)
     analysis_subscription_canceled_created_mock.assert_called_once_with(user)
+
+
+def test_send_plan_changed_notifications__with_tenants__ok(mocker):
+
+    # arrange
+    account = create_test_account(plan=BillingPlanType.PREMIUM)
+    user = mocker.Mock()
+    tenant = create_test_account(
+        master_account=account,
+        lease_level=LeaseLevel.TENANT,
+        tenant_name='Tenant',
+    )
+    send_plan_changed_mock = mocker.patch(
+        'src.payment.services.account.'
+        'send_account_plan_changed_notification.delay',
+    )
+    is_superuser = True
+    auth_type = AuthTokenType.WEBHOOK
+    service = AccountSubscriptionService(
+        instance=account,
+        user=user,
+        is_superuser=is_superuser,
+        auth_type=auth_type,
+    )
+
+    # act
+    service._send_plan_changed_notifications()
+
+    # assert
+    assert send_plan_changed_mock.call_count == 2
+    master_plan_data = AccountPlanSerializer(instance=account).data
+    tenant_plan_data = AccountPlanSerializer(instance=tenant).data
+    send_plan_changed_mock.assert_has_calls(
+        [
+            mocker.call(
+                logging=account.log_api_requests,
+                account_id=account.id,
+                plan_data=master_plan_data,
+            ),
+            mocker.call(
+                logging=tenant.log_api_requests,
+                account_id=tenant.id,
+                plan_data=tenant_plan_data,
+            ),
+        ],
+        any_order=True,
+    )
