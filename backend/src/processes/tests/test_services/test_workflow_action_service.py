@@ -7708,6 +7708,51 @@ def test_complete_task_for_starter__rcba__ok(mocker):
     )
 
 
+def test_complete_task_for_starter__starter_not_performer__noop(mocker):
+
+    """Starter is not a task performer — do not complete anyone"""
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    starter = create_test_admin(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    workflow.workflow_starter = starter
+    workflow.is_external = False
+    workflow.save(update_fields=['workflow_starter', 'is_external'])
+    task = workflow.tasks.get(number=1)
+    task.skip_for_starter = True
+    task.require_completion_by_all = True
+    task.save(update_fields=['skip_for_starter', 'require_completion_by_all'])
+    get_performers_for_user_mock = mocker.patch(
+        target=(
+            'src.processes.services.workflow_action.WorkflowActionService.'
+            '_get_performers_for_user'
+        ),
+        return_value=None,
+    )
+    complete_performers_for_user_mock = mocker.patch(
+        target=(
+            'src.processes.services.workflow_action.WorkflowActionService.'
+            '_complete_performers_for_user'
+        ),
+    )
+    service = WorkflowActionService(
+        user=owner,
+        workflow=workflow,
+    )
+
+    # act
+    service._complete_task_for_starter(task=task)
+
+    # assert
+    get_performers_for_user_mock.assert_called_once_with(
+        task=task,
+        user=workflow.workflow_starter,
+    )
+    complete_performers_for_user_mock.assert_not_called()
+
+
 def test_complete_task_for_starter__rcba_group__different_service_user__ok(
     mocker,
 ):

@@ -2459,6 +2459,53 @@ def test_run__not_admin__ok(
     assert workflow.workflow_starter.id == not_admin.id
 
 
+def test_run__first_task_require_all_and_skip_for_starter__ok(
+    mocker,
+    api_client,
+):
+
+    # arrange
+    mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    mocker.patch(
+        'src.notifications.tasks.send_new_task_notification.delay',
+    )
+    mocker.patch(
+        'src.analysis.services.AnalyticService.workflows_started',
+    )
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    performer = create_test_admin(account=account)
+    template = create_test_template(
+        user=owner,
+        is_active=True,
+        tasks_count=1,
+    )
+    template_task = template.tasks.get(number=1)
+    template_task.raw_performers.all().delete()
+    template_task.add_raw_performer(performer)
+    template_task.skip_for_starter = True
+    template_task.require_completion_by_all = True
+    template_task.save(
+        update_fields=['skip_for_starter', 'require_completion_by_all'],
+    )
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.post(f'/templates/{template.id}/run')
+
+    # assert
+    assert response.status_code == 200
+    workflow = Workflow.objects.get(id=response.data['id'])
+    task = workflow.tasks.get(number=1)
+    assert workflow.workflow_starter_id == owner.id
+    assert task.status == TaskStatus.ACTIVE
+    assert task.require_completion_by_all is True
+    assert task.skip_for_starter is True
+
+
 def test_run__api_request__ok(mocker, api_client):
 
     # arrange
