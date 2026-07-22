@@ -761,6 +761,16 @@ class TaskPerformer(
     class Meta:
         unique_together = ('user', 'task')
         ordering = ('user_id',)
+        constraints = [
+            models.UniqueConstraint(
+                fields=('ai_agent', 'task'),
+                condition=models.Q(
+                    is_deleted=False,
+                    ai_agent__isnull=False,
+                ),
+                name='taskperformer_ai_agent_task_unique',
+            ),
+        ]
 
     user = models.ForeignKey(
         UserModel,
@@ -769,6 +779,11 @@ class TaskPerformer(
     )
     group = models.ForeignKey(
         UserGroup,
+        on_delete=models.CASCADE,
+        null=True,
+    )
+    ai_agent = models.ForeignKey(
+        'ai.AIAgent',
         on_delete=models.CASCADE,
         null=True,
     )

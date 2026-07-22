@@ -19,3 +19,21 @@ class OpenAiPromptMessageQueryset(QuerySet):
 
     def active(self):
         return self.filter(is_active=True)
+
+
+class AIProviderConnectionQuerySet(QuerySet):
+
+    def active(self):
+        return self.filter(is_active=True)
+
+    def on_account(self, account_id: int):
+        return self.filter(account_id=account_id)
+
+
+class AIAgentQuerySet(QuerySet):
+
+    def active(self):
+        return self.filter(is_active=True)
+
+    def on_account(self, account_id: int):
+        return self.filter(account_id=account_id)

@@ -39,3 +39,20 @@ class OpenAIPromptTarget:
     CHOICES = (
         (GET_STEPS, 'Get template steps'),
     )
+
+
+class AITaskRunStatus:
+
+    QUEUED = 'queued'
+    RUNNING = 'running'
+    COMPLETED = 'completed'
+    LEFT_FOR_HUMAN = 'left_for_human'
+    FAILED = 'failed'
+
+    CHOICES = (
+        (QUEUED, QUEUED),
+        (RUNNING, RUNNING),
+        (COMPLETED, COMPLETED),
+        (LEFT_FOR_HUMAN, LEFT_FOR_HUMAN),
+        (FAILED, FAILED),
+    )

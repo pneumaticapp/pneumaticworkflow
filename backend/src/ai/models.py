@@ -5,14 +5,19 @@ from django.core.validators import (
 from django.db import models
 
 from src.ai.enums import (
+    AITaskRunStatus,
     OpenAiModel,
     OpenAIPromptTarget,
     OpenAIRole,
 )
 from src.ai.querysets import (
+    AIAgentQuerySet,
+    AIProviderConnectionQuerySet,
     OpenAiPromptMessageQueryset,
     OpenAiPromptQueryset,
 )
+from src.generics.managers import BaseSoftDeleteManager
+from src.generics.models import SoftDeleteModel
 
 
 class OpenAiPrompt(models.Model):
@@ -158,3 +163,139 @@ class OpenAiMessage(models.Model):
 
     def __str__(self):
         return 'Prompt message'
+
+
+class AIProviderConnection(SoftDeleteModel):
+
+    """ Account-scoped credentials for an OpenAI-compatible endpoint.
+
+        Phase 1 ships the table only: every agent uses the implicit
+        platform connection whose key comes from settings. Customer
+        (BYO) rows arrive in Phase 2 together with key encryption. """
+
+    class Meta:
+        ordering = ('id',)
+
+    account = models.ForeignKey(
+        'accounts.Account',
+        on_delete=models.CASCADE,
+        related_name='ai_provider_connections',
+    )
+    name = models.CharField(max_length=255)
+    base_url = models.URLField(
+        max_length=1024,
+        default='https://openrouter.ai/api/v1',
+    )
+    api_key = models.CharField(max_length=1024)
+    is_active = models.BooleanField(default=True)
+
+    objects = BaseSoftDeleteManager.from_queryset(
+        AIProviderConnectionQuerySet,
+    )()
+
+    def __str__(self):
+        return self.name
+
+
+class AIAgent(SoftDeleteModel):
+
+    """ A named, reusable AI performer: which model it talks to and
+        the role it plays. Holds no credentials — connections are
+        account-scoped. """
+
+    class Meta:
+        ordering = ('name',)
+        constraints = [
+            models.UniqueConstraint(
+                fields=('account', 'name'),
+                condition=models.Q(is_deleted=False),
+                name='aiagent_name_account_unique',
+            ),
+        ]
+
+    account = models.ForeignKey(
+        'accounts.Account',
+        on_delete=models.CASCADE,
+        related_name='ai_agents',
+    )
+    name = models.CharField(max_length=255)
+    model_slug = models.CharField(
+        max_length=200,
+        help_text='OpenRouter-style model slug, e.g. anthropic/claude-3',
+    )
+    system_prompt = models.TextField(blank=True, default='')
+    temperature = models.FloatField(
+        null=True,
+        blank=True,
+        validators=(
+            MinValueValidator(0),
+            MaxValueValidator(2),
+        ),
+        help_text='NULL means the provider default',
+    )
+    max_tokens = models.IntegerField(
+        null=True,
+        blank=True,
+        validators=(
+            MinValueValidator(1),
+        ),
+        help_text='NULL means the provider default',
+    )
+    connection = models.ForeignKey(
+        AIProviderConnection,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='ai_agents',
+        help_text='NULL means the platform default connection',
+    )
+    photo = models.URLField(max_length=1024, null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+
+    objects = BaseSoftDeleteManager.from_queryset(AIAgentQuerySet)()
+
+    def __str__(self):
+        return self.name
+
+
+class AITaskRun(models.Model):
+
+    """ One row per (task, agent) execution attempt-set: the
+        idempotency claim (get_or_create), audit record and metering
+        source. A task return resets the row so the agent re-runs on
+        reactivation. """
+
+    class Meta:
+        ordering = ('-date_created',)
+        unique_together = ('task', 'agent')
+
+    task = models.ForeignKey(
+        'processes.Task',
+        on_delete=models.CASCADE,
+        related_name='ai_task_runs',
+    )
+    agent = models.ForeignKey(
+        AIAgent,
+        on_delete=models.CASCADE,
+        related_name='task_runs',
+    )
+    status = models.CharField(
+        max_length=32,
+        choices=AITaskRunStatus.CHOICES,
+        default=AITaskRunStatus.QUEUED,
+    )
+    reason = models.TextField(
+        null=True,
+        blank=True,
+        help_text='Why the task was left for a human or failed',
+    )
+    model_used = models.CharField(max_length=200, null=True, blank=True)
+    prompt_tokens = models.IntegerField(null=True, blank=True)
+    completion_tokens = models.IntegerField(null=True, blank=True)
+    attempts = models.IntegerField(default=0)
+    date_created = models.DateTimeField(auto_now_add=True)
+    date_updated = models.DateTimeField(auto_now=True)
+    date_completed = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f'AITaskRun {self.id}'

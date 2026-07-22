@@ -72,6 +72,7 @@ class PerformerType:
     WORKFLOW_STARTER = 'workflow_starter'
     FIELD = 'field'
     MANAGER = 'manager'
+    AI = 'ai_agent'
 
     choices = (
         (USER, USER),
@@ -79,6 +80,7 @@ class PerformerType:
         (WORKFLOW_STARTER, WORKFLOW_STARTER),
         (FIELD, FIELD),
         (MANAGER, MANAGER),
+        (AI, AI),
     )
 
     filter_choices = (

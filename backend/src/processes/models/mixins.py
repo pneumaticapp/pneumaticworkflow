@@ -43,6 +43,11 @@ class RawPerformerMixin(models.Model):
         on_delete=models.CASCADE,
         null=True,
     )
+    ai_agent = models.ForeignKey(
+        'ai.AIAgent',
+        on_delete=models.CASCADE,
+        null=True,
+    )
     source_task_api_name = models.CharField(
         max_length=200,
         null=True,
