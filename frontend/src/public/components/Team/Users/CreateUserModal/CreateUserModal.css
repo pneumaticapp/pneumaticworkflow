@@ -1,10 +1,13 @@
 .modal__dialog {
   position: relative;
   bottom: auto;
-  align-items: flex-start;
   margin: 1.6rem auto;
   height: auto;
   min-height: calc(100% - 3.2rem);
+}
+
+.modal__dialog--ai-agent {
+  align-items: flex-start;
 }
 
 .modal__content {
