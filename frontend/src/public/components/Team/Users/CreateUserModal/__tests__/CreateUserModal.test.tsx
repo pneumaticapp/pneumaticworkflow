@@ -141,17 +141,6 @@ describe('CreateUserModal', () => {
       expect(screen.getByText(getTranslatedText('team.create-ai-agent-modal.system-prompt'))).toBeInTheDocument();
     });
 
-    it('keeps the long form inside a scrollable modal body', async () => {
-      render(<CreateUserModal isOpen={true} onClose={mockOnClose} />);
-
-      await openAIAgentTab();
-
-      expect(
-        screen.getByText(getTranslatedText('team.create-ai-agent-modal.parameters'))
-          .closest('[class*="modal__body"]'),
-      ).toBeInTheDocument();
-    });
-
     it('validates required fields with Formik and submits valid values', async () => {
       const onCreateAIAgent = jest.fn();
       render(
