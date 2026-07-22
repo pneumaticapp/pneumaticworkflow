@@ -807,41 +807,109 @@ class WorkflowActionService:
                 payload=task.webhook_payload(),
             )
 
-    def _task_can_be_completed(self, task: Task) -> bool:
+    def _task_can_be_completed(
+        self,
+        task: Task,
+        performer_q: Optional[Q] = None,
+    ) -> bool:
 
-        """ Implies that the specified user has completed the task """
+        """ Implies that the performer matched by performer_q has
+            completed the task (defaults to the acting user) """
 
         if task.is_completed is True:
             return False
+        if performer_q is None:
+            performer_q = (
+                Q(user_id=self.user.id)
+                | Q(group__users=self.user.id)
+            )
         task_performers = (
             task.taskperformer_set.exclude_directly_deleted()
         )
         completed_performers = task_performers.filter(
             Q(is_completed=True)
-            | Q(is_completed=False, user_id=self.user.id)
-            | Q(is_completed=False, group__users=self.user.id),
+            | (Q(is_completed=False) & performer_q),
         ).exists()
-        incompleted_performers = task_performers.not_completed().exclude(
-            Q(user_id=self.user.id)
-            | Q(is_completed=False, group__users=self.user.id),
-        ).exists()
+        incompleted_performers = (
+            task_performers.not_completed().exclude(performer_q).exists()
+        )
         by_all = task.require_completion_by_all
         return (
             (not by_all and completed_performers) or
             (by_all and not incompleted_performers)
         )
 
-    def complete_task_for_user(
-        self,
-        task: Task,
-        fields_values: Optional[dict] = None,
-    ):
+    def _validate_task_active(self, task: Task):
+
+        """ Actor-independent guards: a task can only be completed
+            while it is active in a running workflow """
+
         if self.workflow.is_delayed:
             raise exceptions.CompleteDelayedWorkflow
         if self.workflow.is_completed:
             raise exceptions.CompleteCompletedWorkflow
         if not task.is_active:
             raise exceptions.CompleteInactiveTask
+
+    def _validate_task_ready_to_complete(self, task: Task):
+
+        """ Actor-independent guards: task content that must be
+            finished before the task can be completed """
+
+        if not task.checklists_completed:
+            raise exceptions.ChecklistIncompleted
+        if task.sub_workflows.running().exists():
+            raise exceptions.SubWorkflowsIncompleted
+
+    def _apply_fields_values(
+        self,
+        task: Task,
+        fields_values: Optional[dict] = None,
+    ):
+
+        """ Writes the given task output values (keyed by field
+            api_name) and validates affected fieldset rules.
+            Must be called inside a transaction """
+
+        fields_values = fields_values or {}
+        fields = (
+            TaskField.objects
+            .filter(
+                Q(fieldset__task=task) | Q(task=task),
+                api_name__in=fields_values,
+            )
+        )
+        fieldsets_ids = set()
+        for field in fields:
+            if field.fieldset_id:
+                fieldsets_ids.add(field.fieldset_id)
+            service = TaskFieldService(
+                user=self.user,
+                instance=field,
+                is_superuser=self.is_superuser,
+                auth_type=self.auth_type,
+            )
+            service.partial_update(
+                value=fields_values[field.api_name],
+                force_save=True,
+            )
+        if fieldsets_ids:
+            fieldsets = FieldSet.objects.filter(id__in=fieldsets_ids)
+            for fieldset in fieldsets:
+                service = FieldSetService(
+                    user=self.user,
+                    instance=fieldset,
+                    is_superuser=self.is_superuser,
+                    auth_type=self.auth_type,
+                )
+                service.validate_rules()
+
+    def complete_task_for_user(
+        self,
+        task: Task,
+        fields_values: Optional[dict] = None,
+    ):
+        self._validate_task_active(task)
 
         task_performer = (
             TaskPerformer.objects
@@ -856,44 +924,10 @@ class WorkflowActionService:
         elif not self.user.is_account_owner:
             raise exceptions.UserNotPerformer
 
-        if not task.checklists_completed:
-            raise exceptions.ChecklistIncompleted
-        if task.sub_workflows.running().exists():
-            raise exceptions.SubWorkflowsIncompleted
+        self._validate_task_ready_to_complete(task)
 
-        fields_values = fields_values or {}
         with transaction.atomic():
-            fields = (
-                TaskField.objects
-                .filter(
-                    Q(fieldset__task=task) | Q(task=task),
-                    api_name__in=fields_values,
-                )
-            )
-            fieldsets_ids = set()
-            for field in fields:
-                if field.fieldset_id:
-                    fieldsets_ids.add(field.fieldset_id)
-                service = TaskFieldService(
-                    user=self.user,
-                    instance=field,
-                    is_superuser=self.is_superuser,
-                    auth_type=self.auth_type,
-                )
-                service.partial_update(
-                    value=fields_values[field.api_name],
-                    force_save=True,
-                )
-            if fieldsets_ids:
-                fieldsets = FieldSet.objects.filter(id__in=fieldsets_ids)
-                for fieldset in fieldsets:
-                    service = FieldSetService(
-                        user=self.user,
-                        instance=fieldset,
-                        is_superuser=self.is_superuser,
-                        auth_type=self.auth_type,
-                    )
-                    service.validate_rules()
+            self._apply_fields_values(task, fields_values)
 
             if task_performer:
                 if self._task_can_be_completed(task):
