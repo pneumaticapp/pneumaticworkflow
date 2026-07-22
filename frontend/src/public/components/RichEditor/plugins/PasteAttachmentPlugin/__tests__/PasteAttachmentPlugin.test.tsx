@@ -19,6 +19,7 @@ const initialConfig = {
 function createPasteEventWithFiles(files: File[]): ClipboardEvent {
   const fileList = Object.assign([...files], { length: files.length }) as unknown as FileList;
   return {
+    preventDefault: jest.fn(),
     clipboardData: {
       files: fileList,
       items: [],
@@ -97,5 +98,28 @@ describe('PasteAttachmentPlugin', () => {
     editorRef.current!.dispatchCommand(PASTE_COMMAND, event);
 
     expect(onPasteFiles).toHaveBeenCalledWith([file1, file2]);
+  });
+
+  it('calls preventDefault when files are pasted', async () => {
+    const onPasteFiles = jest.fn().mockResolvedValue(undefined);
+    const editorRef = React.createRef<LexicalEditor | null>() as MutableRefObject<LexicalEditor | null>;
+
+    render(
+      <LexicalComposer initialConfig={initialConfig}>
+        <SetEditorRefPlugin editorRef={editorRef} />
+        <PasteAttachmentPlugin onPasteFiles={onPasteFiles} />
+      </LexicalComposer>,
+    );
+
+    await waitFor(() => {
+      expect(editorRef.current).not.toBeNull();
+    });
+
+    const file = new File(['content'], 'pasted.png', { type: 'image/png' });
+    const event = createPasteEventWithFiles([file]);
+
+    editorRef.current!.dispatchCommand(PASTE_COMMAND, event);
+
+    expect(event.preventDefault).toHaveBeenCalled();
   });
 });
