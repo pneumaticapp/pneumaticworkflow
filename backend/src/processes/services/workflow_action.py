@@ -2,6 +2,7 @@ from datetime import datetime
 from copy import copy
 from typing import Callable, Iterable, Optional, Tuple
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.db.models import Q
@@ -23,6 +24,7 @@ from src.notifications.tasks import (
 from src.processes.enums import (
     ConditionAction,
     DirectlyStatus,
+    PerformerType,
     TaskStatus,
     WorkflowStatus,
 )
@@ -554,6 +556,8 @@ class WorkflowActionService:
                     task_data=task_data or task.get_data_for_list(),
                 )
 
+        self._start_ai_performers(task, is_returned=is_returned)
+
         for task_id in self.workflow.tasks.filter(
             parents__contains=[task.api_name],
         ).only_ids():
@@ -717,10 +721,19 @@ class WorkflowActionService:
             else:
                 self.continue_workflow(task=task, is_returned=is_returned)
 
-    def complete_task(self, task: Task, by_user: bool = False):
+    def complete_task(
+        self,
+        task: Task,
+        by_user: bool = False,
+        ai_agent=None,
+    ):
 
         """ Complete workflow task if it <= current task
-            Only for current task run complete actions """
+            Only for current task run complete actions.
+
+            Pass ai_agent when an AI performer completes the task:
+            the completion is not credited to the acting user in
+            analytics """
 
         current_date = timezone.now()
         update_fields = {
@@ -782,15 +795,18 @@ class WorkflowActionService:
             )
         )
         if by_user:
-            AnalyticService.task_completed(
-                user=self.user,
-                is_superuser=self.is_superuser,
-                auth_type=self.auth_type,
-                workflow=self.workflow,
-                task=task,
-            )
+            if ai_agent is None:
+                AnalyticService.task_completed(
+                    user=self.user,
+                    is_superuser=self.is_superuser,
+                    auth_type=self.auth_type,
+                    workflow=self.workflow,
+                    task=task,
+                )
             # Need run after save completed task (and performers)
             # and before start next tasks
+            # TODO AI performers: dedicated AI task-complete event type;
+            #   until then the event is recorded under the acting user
             WorkflowEventService.task_complete_event(
                 task=task,
                 user=self.user,
@@ -953,6 +969,90 @@ class WorkflowActionService:
                 # not complete performers, but send ws remove task
                 self.complete_task(task=task, by_user=True)
         return task
+
+    def complete_task_for_ai_agent(
+        self,
+        task: Task,
+        ai_agent,
+        fields_values: Optional[dict] = None,
+    ):
+
+        """ AI counterpart of complete_task_for_user: the completing
+            performer is the agent's TaskPerformer row; self.user only
+            provides account/permission context (the account owner) """
+
+        self._validate_task_active(task)
+
+        task_performer = (
+            TaskPerformer.objects
+            .by_task(task.id)
+            .filter(ai_agent_id=ai_agent.id, type=PerformerType.AI)
+            .exclude_directly_deleted()
+            .first()
+        )
+        if task_performer is None:
+            raise exceptions.AIAgentNotPerformer
+        if task_performer.is_completed:
+            raise exceptions.AIAgentAlreadyCompleteTask
+
+        self._validate_task_ready_to_complete(task)
+
+        with transaction.atomic():
+            self._apply_fields_values(task, fields_values)
+            if self._task_can_be_completed(
+                task,
+                performer_q=Q(ai_agent_id=ai_agent.id),
+            ):
+                self.complete_task(
+                    task=task,
+                    by_user=True,
+                    ai_agent=ai_agent,
+                )
+            else:
+                # "requires completion by all": completed only for the
+                # agent, the task stays active for the other performers
+                task_performer.date_completed = timezone.now()
+                task_performer.is_completed = True
+                task_performer.save(
+                    update_fields=('date_completed', 'is_completed'),
+                )
+        return task
+
+    def _start_ai_performers(self, task: Task, is_returned: bool = False):
+
+        """ Dispatch a background run for every AI performer on the
+            task. A returned task resets existing runs so agents retry
+            with the corrected inputs """
+
+        if not settings.PROJECT_CONF['AI_PERFORMERS']:
+            return
+        if not self.account.ai_performers_enabled:
+            return
+        agent_ids = list(
+            TaskPerformer.objects
+            .by_task(task.id)
+            .exclude_directly_deleted()
+            .not_completed()
+            .filter(
+                type=PerformerType.AI,
+                ai_agent__isnull=False,
+                ai_agent__is_deleted=False,
+                ai_agent__is_active=True,
+            )
+            .values_list('ai_agent_id', flat=True),
+        )
+        if not agent_ids:
+            return
+        # local import: src.ai.tasks -> services -> this module
+        from src.ai.tasks import run_ai_performer  # noqa: PLC0415
+        from src.ai.models import AITaskRun  # noqa: PLC0415
+        if is_returned:
+            AITaskRun.objects.filter(
+                task=task,
+                agent_id__in=agent_ids,
+            ).delete()
+        for agent_id in agent_ids:
+            run_ai_performer.delay(task_id=task.id, agent_id=agent_id)
 
     def _get_not_skipped_revert_task(self, task: Task) -> Optional[Task]:
 

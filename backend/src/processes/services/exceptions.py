@@ -266,3 +266,13 @@ class FieldsetServiceException(BaseServiceException):
 class SharedFieldsetNotFoundException(FieldsetServiceException):
 
     default_message = fs_messages.MSG_FS_0008
+
+
+class AIAgentNotPerformer(WorkflowActionServiceException):
+
+    default_message = pw_messages.MSG_PW_0092
+
+
+class AIAgentAlreadyCompleteTask(WorkflowActionServiceException):
+
+    default_message = pw_messages.MSG_PW_0093

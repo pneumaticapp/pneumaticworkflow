@@ -383,6 +383,7 @@ class Common(Configuration):
         'src.processes.tasks.webhooks',
         'src.reports.tasks',
         'src.analysis.tasks',
+        'src.ai.tasks',
     ]
 
     # reCaptcha
@@ -398,6 +399,13 @@ class Common(Configuration):
     # OpenAI
     OPENAI_API_KEY = env.get('OPENAI_API_KEY')
     OPENAI_API_ORG = env.get('OPENAI_API_ORG')
+
+    # AI performers (OpenAI-compatible chat-completions endpoint)
+    OPENROUTER_API_KEY = env.get('OPENROUTER_API_KEY')
+    OPENROUTER_BASE_URL = env.get(
+        'OPENROUTER_BASE_URL',
+        'https://openrouter.ai/api/v1',
+    )
 
     # Microsoft auth
     MS_CLIENT_ID = env.get('MS_CLIENT_ID')
@@ -446,6 +454,7 @@ class Common(Configuration):
         'EMAIL': env.get('EMAIL') == 'yes',
         'AI': env.get('AI') == 'yes',
         'AI_PROVIDER': env.get('AI_PROVIDER'),
+        'AI_PERFORMERS': env.get('AI_PERFORMERS') == 'yes',
         'PUSH': env.get('PUSH') == 'yes',
         'PUSH_PROVIDER': env.get('PUSH_PROVIDER'),
         'SENTRY_DSN': env.get('SENTRY_DSN'),
