@@ -141,6 +141,30 @@ describe('CreateUserModal', () => {
       expect(screen.getByText(getTranslatedText('team.create-ai-agent-modal.system-prompt'))).toBeInTheDocument();
     });
 
+    it('requires the endpoint protocol', async () => {
+      render(<CreateUserModal isOpen={true} onClose={mockOnClose} />);
+      await openAIAgentTab();
+
+      const endpointInput = screen.getByLabelText(
+        getTranslatedText('team.create-ai-agent-modal.endpoint'),
+      );
+      await userEvent.type(endpointInput, 'api.example.com');
+      await userEvent.tab();
+
+      expect(await screen.findByText(getTranslatedText('validation.url-invalid'))).toBeInTheDocument();
+    });
+
+    it('keeps the AI agent form visible during the close animation', async () => {
+      const { rerender } = render(<CreateUserModal isOpen={true} onClose={mockOnClose} />);
+      await openAIAgentTab();
+
+      rerender(<CreateUserModal isOpen={false} onClose={mockOnClose} />);
+
+      expect(screen.getByLabelText(
+        getTranslatedText('team.create-ai-agent-modal.endpoint'),
+      )).toBeInTheDocument();
+    });
+
     it('validates required fields with Formik and submits valid values', async () => {
       const onCreateAIAgent = jest.fn();
       render(

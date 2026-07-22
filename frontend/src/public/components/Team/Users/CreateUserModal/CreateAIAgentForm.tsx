@@ -6,7 +6,7 @@ import { Button } from '../../../UI/Buttons/Button';
 import { FormikDropdownList } from '../../../UI/DropdownList';
 import { FormikInputField } from '../../../UI/Fields/InputField';
 import { ModalBody, ModalFooter } from '../../../UI/BaseModal';
-import { isEmpty, validateName, validateUrl } from '../../../../utils/validators';
+import { isEmpty, isInvalidUrlWithProtocol, validateName } from '../../../../utils/validators';
 import { ICreateAIAgentFormProps, ICreateAIAgentFormValues } from './types';
 
 import styles from './CreateUserModal.css';
@@ -19,7 +19,10 @@ const MODEL_OPTIONS = [
 
 const REQUIRED_ERROR = 'team.create-ai-agent-modal.validation-required';
 const validateRequired = (value: string) => (isEmpty(value) ? REQUIRED_ERROR : '');
-const validateEndpoint = (value: string) => validateRequired(value) || validateUrl(value);
+const validateEndpoint = (value: string) => (
+  validateRequired(value)
+  || (isInvalidUrlWithProtocol(value) ? 'validation.url-invalid' : '')
+);
 
 function SystemPromptField() {
   const { formatMessage } = useIntl();

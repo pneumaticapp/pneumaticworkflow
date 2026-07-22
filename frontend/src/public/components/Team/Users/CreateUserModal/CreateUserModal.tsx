@@ -44,7 +44,7 @@ export function CreateUserModal({ isOpen, onClose, onCreateAIAgent }: ICreateUse
   const [activeTab, setActiveTab] = useState(ECreateUserModalTab.User);
 
   useEffect(() => {
-    if (!isOpen) setActiveTab(ECreateUserModalTab.User);
+    if (isOpen) setActiveTab(ECreateUserModalTab.User);
   }, [isOpen]);
 
   const statusOptions: IStatusOption[] = [

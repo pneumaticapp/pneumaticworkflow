@@ -337,6 +337,7 @@ export const ruMessages = {
   'team.create-ai-agent-modal.generate': 'Сгенерировать',
   'team.create-ai-agent-modal.submit': 'Создать ИИ-агента',
   'team.create-ai-agent-modal.validation-required': 'Обязательное поле',
+  'team.create-ai-agent-modal.backend-unavailable': 'Создание ИИ-агентов станет доступно после реализации на бэкенде.',
   'users.error-already-accepted': 'Эти пользователи уже приняли приглашения на этот аккаунт',
   'users.faied-fetch': 'Не удалось загрузить пользователей',
   'user-account.edit-profile-success': 'Информация вашего профиля была успешно обновлена',

@@ -370,6 +370,7 @@ export const enMessages = {
   'team.create-ai-agent-modal.generate': 'Generate',
   'team.create-ai-agent-modal.submit': 'Create AI agent',
   'team.create-ai-agent-modal.validation-required': 'This field is required',
+  'team.create-ai-agent-modal.backend-unavailable': 'AI agent creation will be available when backend support is ready.',
 
   'team.users': 'Users',
 
