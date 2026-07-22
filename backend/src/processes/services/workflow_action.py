@@ -674,11 +674,12 @@ class WorkflowActionService:
                     task=task,
                     user=starter,
                 )
-                self._complete_performers_for_user(
-                    task=task,
-                    task_performers=task_performers,
-                    user=starter,
-                )
+                if task_performers:
+                    self._complete_performers_for_user(
+                        task=task,
+                        task_performers=task_performers,
+                        user=starter,
+                    )
             except exceptions.UserAlreadyCompleteTask:
                 pass
 
