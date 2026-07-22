@@ -36,6 +36,10 @@ export type TNotificationsListItemOptional =
       };
     }
   | {
+      type: 'complete_workflow';
+      workflow: Pick<IWorkflow, 'id' | 'name'>;
+    }
+  | {
       type: 'reaction';
       author: number;
       text: string;
@@ -130,13 +134,6 @@ export type TNotificationsListItemOptional =
         name: string;
       };
       task: {
-        id: number;
-        name: string;
-      };
-    }
-  | {
-      type: 'complete_workflow';
-      workflow: {
         id: number;
         name: string;
       };

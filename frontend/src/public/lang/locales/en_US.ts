@@ -60,7 +60,7 @@ export const enMessages = {
   'notifications.overdue': 'The task {task} is past the deadline, please look into it and take appropriate action.',
   'notifications.snoozed': 'Workflow snoozed until {date}',
   'notifications.resumed': 'Workflow resumed',
-  'notifications.workflow-completed': 'Workflow completed',
+  'notifications.workflow-completed': 'Workflow was completed',
 
   'duration-month': 'months',
   'duration-month-placeholder': '0',
