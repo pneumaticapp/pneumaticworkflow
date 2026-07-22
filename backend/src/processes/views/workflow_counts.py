@@ -1,3 +1,4 @@
+from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
 from rest_framework.viewsets import GenericViewSet
 
@@ -8,6 +9,15 @@ from src.accounts.permissions import (
 from src.executor import RawSqlExecutor
 from src.generics.mixins.views import CustomViewSetMixin
 from src.generics.permissions import UserIsAuthenticated
+from src.openapi import (
+    ACCESS_AUTH,
+    COUNTS_BY_PERFORMER_PARAMS,
+    COUNTS_BY_STARTER_PARAMS,
+    COUNTS_BY_TEMPLATE_TASK_PARAMS,
+    FORBIDDEN,
+    UNAUTHORIZED,
+    VALIDATION_ERROR,
+)
 from src.processes.queries import (
     WorkflowCountsByCPerformerQuery,
     WorkflowCountsByTemplateTaskQuery,
@@ -37,6 +47,18 @@ class WorkflowCountsViewSet(
             return WorkflowCountsByTemplateTaskResponseSerializer
         return WorkflowCountsResponseSerializer
 
+    @extend_schema(
+        tags=['Workflows'],
+        summary='Workflow counts by starter',
+        description=ACCESS_AUTH,
+        parameters=COUNTS_BY_STARTER_PARAMS,
+        responses={
+            200: WorkflowCountsResponseSerializer(many=True),
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+        },
+    )
     @action(methods=['get'], detail=False, url_path='by-workflow-starter')
     def by_workflow_starter(self, request, *args, **kwargs):
         request_slz = WorkflowCountsByWorkflowStarterSerializer(
@@ -52,6 +74,18 @@ class WorkflowCountsViewSet(
         response_slz = self.get_serializer(instance=sql_rows, many=True)
         return self.response_ok(response_slz.data)
 
+    @extend_schema(
+        tags=['Workflows'],
+        summary='Workflow counts by current performer',
+        description=ACCESS_AUTH,
+        parameters=COUNTS_BY_PERFORMER_PARAMS,
+        responses={
+            200: WorkflowCountsResponseSerializer(many=True),
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+        },
+    )
     @action(methods=['get'], detail=False, url_path='by-current-performer')
     def by_current_performer(self, request, *args, **kwargs):
         request_slz = WorkflowCountsByCurrentPerformerSerializer(
@@ -67,6 +101,18 @@ class WorkflowCountsViewSet(
         response_slz = self.get_serializer(instance=sql_rows, many=True)
         return self.response_ok(response_slz.data)
 
+    @extend_schema(
+        tags=['Workflows'],
+        summary='Workflow counts by template task',
+        description=ACCESS_AUTH,
+        parameters=COUNTS_BY_TEMPLATE_TASK_PARAMS,
+        responses={
+            200: WorkflowCountsByTemplateTaskResponseSerializer(many=True),
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+        },
+    )
     @action(methods=['get'], detail=False, url_path='by-template-task')
     def by_template_task(self, request, *args, **kwargs):
         request_slz = WorkflowCountsByTemplateTaskSerializer(

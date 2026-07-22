@@ -315,35 +315,100 @@ class Common(Configuration):
         # Schema is at /api/schema/; without SERVERS Swagger uses
         # /api as base and breaks real paths (/auth, /templates, …).
         'SERVERS': [{'url': BACKEND_URL}],
-        'SECURITY': [
-            {'tokenAuth': []},
-            {'jwtAuth': []},
-            {'guestJwtAuth': []},
-        ],
         'SWAGGER_UI_SETTINGS': {
             'persistAuthorization': True,
         },
         'TAGS': [
-            {'name': 'Auth', 'description': 'Authentication'},
-            {'name': 'Templates', 'description': 'Process templates'},
+            {
+                'name': 'Auth',
+                'description': (
+                    'Sign in, token obtain/refresh, password '
+                    'management, and user context'
+                ),
+            },
+            {
+                'name': 'Templates',
+                'description': (
+                    'Create, configure, and manage workflow templates'
+                ),
+            },
             {
                 'name': 'Templates Public',
-                'description': 'Public and embedded templates',
+                'description': (
+                    'Public and embedded templates for external forms'
+                ),
             },
-            {'name': 'Workflows', 'description': 'Workflows'},
-            {'name': 'Tasks', 'description': 'Tasks'},
-            {'name': 'Accounts', 'description': 'Accounts'},
-            {'name': 'Attachments', 'description': 'Attachments'},
-            {'name': 'Webhooks', 'description': 'Webhooks'},
-            {'name': 'Datasets', 'description': 'Datasets'},
-            {'name': 'Fieldsets', 'description': 'Shared fieldsets'},
-            {'name': 'Tenants', 'description': 'Tenants'},
-            {'name': 'Payment', 'description': 'Payment'},
-            {'name': 'Notifications', 'description': 'Notifications'},
-            {'name': 'Reports', 'description': 'Reports'},
-            {'name': 'Services', 'description': 'Services'},
-            {'name': 'Pages', 'description': 'Pages'},
-            {'name': 'FAQ', 'description': 'FAQ'},
+            {
+                'name': 'Workflows',
+                'description': (
+                    'Running workflow instances — complete, return, '
+                    'snooze, comment, and track progress'
+                ),
+            },
+            {
+                'name': 'Tasks',
+                'description': (
+                    'Task operations — complete, revert, manage '
+                    'performers, due dates, and events'
+                ),
+            },
+            {
+                'name': 'Accounts',
+                'description': (
+                    'Account settings, users, invites, groups, '
+                    'and billing plan'
+                ),
+            },
+            {
+                'name': 'Attachments',
+                'description': 'File attachments linked to workflows',
+            },
+            {
+                'name': 'Webhooks',
+                'description': (
+                    'Subscribe to workflow events and manage '
+                    'webhook endpoints'
+                ),
+            },
+            {
+                'name': 'Datasets',
+                'description': (
+                    'Reusable data collections for dropdown '
+                    'and selection fields'
+                ),
+            },
+            {
+                'name': 'Fieldsets',
+                'description': (
+                    'Shared field groups reusable across templates'
+                ),
+            },
+            {
+                'name': 'Tenants',
+                'description': 'Multi-tenant workspace management',
+            },
+            {
+                'name': 'Notifications',
+                'description': 'In-app notification feed and settings',
+            },
+            {
+                'name': 'Reports',
+                'description': (
+                    'Dashboard highlights and workflow analytics'
+                ),
+            },
+            {
+                'name': 'Services',
+                'description': 'AI-powered services and integrations',
+            },
+            {
+                'name': 'Pages',
+                'description': 'CMS-managed content pages',
+            },
+            {
+                'name': 'FAQ',
+                'description': 'Frequently asked questions',
+            },
         ],
     }
 

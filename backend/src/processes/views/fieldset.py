@@ -55,6 +55,8 @@ class SharedFieldsetTemplateViewSet(
 
     def get_serializer_context(self, **kwargs):
         context = super().get_serializer_context(**kwargs)
+        if getattr(self, 'swagger_fake_view', False):
+            return context
         context['user'] = self.request.user
         context['account'] = self.request.user.account
         context['is_superuser'] = self.request.is_superuser
@@ -71,6 +73,8 @@ class SharedFieldsetTemplateViewSet(
         )
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return FieldsetTemplate.objects.none()
         user = self.request.user
         return (
             FieldsetTemplate.objects

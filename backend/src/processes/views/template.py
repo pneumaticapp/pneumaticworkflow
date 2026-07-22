@@ -38,10 +38,21 @@ from src.openapi import (
     FORBIDDEN,
     LIMIT_OFFSET_LEGACY_NOTE,
     NOT_FOUND,
+    TEMPLATE_EXPORT_PARAMS,
+    TEMPLATE_INTEGRATIONS_PARAMS,
+    TEMPLATE_STEPS_PARAMS,
+    TEMPLATE_TITLES_BY_EVENTS_PARAMS,
+    TEMPLATE_TITLES_BY_OWNERS_PARAMS,
+    TEMPLATE_TITLES_BY_TASKS_PARAMS,
+    TEMPLATE_TITLES_BY_WORKFLOWS_PARAMS,
     TOO_MANY_REQUESTS,
     UNAUTHORIZED,
     VALIDATION_ERROR,
     with_access_text,
+)
+from src.openapi.examples import (
+    TEMPLATE_CREATE_EXAMPLE,
+    WORKFLOW_RUN_EXAMPLE,
 )
 from src.processes.filters import (
     FieldSetFilter,
@@ -250,6 +261,8 @@ class TemplateViewSet(
         return ()
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Template.objects.none()
         user = self.request.user
         qst = Template.objects.on_account(user.account_id).exclude_onboarding()
         return self.prefetch_queryset(qst)
@@ -342,6 +355,8 @@ class TemplateViewSet(
 
     def get_serializer_context(self, **kwargs):
         context = super().get_serializer_context(**kwargs)
+        if getattr(self, 'swagger_fake_view', False):
+            return context
         context['user'] = self.request.user
         context['account'] = self.request.user.account
         context['is_superuser'] = self.request.is_superuser
@@ -379,6 +394,7 @@ class TemplateViewSet(
         summary='Create template',
         description=ACCESS_ADMIN,
         request=TemplateSerializer,
+        examples=[TEMPLATE_CREATE_EXAMPLE],
         responses={
             200: TemplateSerializer,
             400: VALIDATION_ERROR,
@@ -424,6 +440,7 @@ class TemplateViewSet(
         summary='Update template',
         description=ACCESS_TEMPLATE_OWNER,
         request=TemplateSerializer,
+        examples=[TEMPLATE_CREATE_EXAMPLE],
         responses={
             200: TemplateSerializer,
             400: VALIDATION_ERROR,
@@ -596,20 +613,7 @@ class TemplateViewSet(
             LIMIT_OFFSET_LEGACY_NOTE,
             ACCESS_AUTH,
         ),
-        parameters=[
-            OpenApiParameter(
-                name='limit',
-                type=OpenApiTypes.INT,
-                location=OpenApiParameter.QUERY,
-                required=False,
-            ),
-            OpenApiParameter(
-                name='offset',
-                type=OpenApiTypes.INT,
-                location=OpenApiParameter.QUERY,
-                required=False,
-            ),
-        ],
+        parameters=TEMPLATE_TITLES_BY_OWNERS_PARAMS,
         responses={
             # Item serializer; spectacular wraps with pagination.
             200: TemplateListSerializer,
@@ -653,6 +657,7 @@ class TemplateViewSet(
         summary='Run workflow from template',
         description=ACCESS_TEMPLATE_ACCESS,
         request=WorkflowCreateSerializer,
+        examples=[WORKFLOW_RUN_EXAMPLE],
         responses={
             200: WorkflowDetailsSerializer,
             400: VALIDATION_ERROR,
@@ -733,6 +738,7 @@ class TemplateViewSet(
         tags=['Templates'],
         summary='Template titles by workflows',
         description=ACCESS_AUTH,
+        parameters=TEMPLATE_TITLES_BY_WORKFLOWS_PARAMS,
         responses={
             200: TemplateTitlesSerializer(many=True),
             400: VALIDATION_ERROR,
@@ -756,6 +762,7 @@ class TemplateViewSet(
         tags=['Templates'],
         summary='Template titles by events',
         description=ACCESS_AUTH,
+        parameters=TEMPLATE_TITLES_BY_EVENTS_PARAMS,
         responses={
             200: TemplateTitlesSerializer(many=True),
             400: VALIDATION_ERROR,
@@ -779,6 +786,7 @@ class TemplateViewSet(
         tags=['Templates'],
         summary='Template titles by tasks',
         description=ACCESS_AUTH,
+        parameters=TEMPLATE_TITLES_BY_TASKS_PARAMS,
         responses={
             200: TemplateTitlesSerializer(many=True),
             400: VALIDATION_ERROR,
@@ -802,6 +810,7 @@ class TemplateViewSet(
         tags=['Templates'],
         summary='Template steps',
         description=ACCESS_AUTH,
+        parameters=TEMPLATE_STEPS_PARAMS,
         responses={
             200: TemplateStepNameSerializer(many=True),
             400: VALIDATION_ERROR,
@@ -1013,23 +1022,10 @@ class TemplateViewSet(
             LIMIT_OFFSET_LEGACY_NOTE,
             ACCESS_ACCOUNT_OWNER,
         ),
-        parameters=[
-            OpenApiParameter(
-                name='limit',
-                type=OpenApiTypes.INT,
-                location=OpenApiParameter.QUERY,
-                required=False,
-            ),
-            OpenApiParameter(
-                name='offset',
-                type=OpenApiTypes.INT,
-                location=OpenApiParameter.QUERY,
-                required=False,
-            ),
-        ],
+        parameters=TEMPLATE_EXPORT_PARAMS,
         responses={
             # Item serializer; spectacular wraps with pagination.
-            200: TemplateListSerializer,
+            200: TemplateSerializer,
             400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
@@ -1130,6 +1126,7 @@ class TemplateIntegrationsViewSet(
         tags=['Templates'],
         summary='List template integrations',
         description=ACCESS_ADMIN,
+        parameters=TEMPLATE_INTEGRATIONS_PARAMS,
         responses={
             200: TemplateIntegrationsSerializer(many=True),
             400: VALIDATION_ERROR,

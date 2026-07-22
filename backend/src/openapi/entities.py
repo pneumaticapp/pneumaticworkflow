@@ -47,25 +47,74 @@ class PermissionDoc:
 
     # Features
     AIPermission = 'AI feature enabled for the project'
+    PushPermission = 'Push notifications feature enabled'
 
-    # Tasks / workflows (for future blocks)
-    TaskWorkflowMemberOrViewerPermission = (
-        'Account owner; workflow member; '
-        'template owner or viewer; guest for this task'
+    # Reports
+    UserCanAccessDashboardPermission = (
+        'Admin/account owner, or any template '
+        'owner/viewer/starter on the account'
     )
-    TaskCompletePermission = (
-        'Account owner or task performer '
-        '(user or group); guest only for own task'
+    UserCanAccessHighlightsPermission = (
+        'Admin/account owner, or any template '
+        'owner/viewer/starter on the account'
+    )
+
+    # Workflows
+    WorkflowMemberOrViewerPermission = (
+        'Account owner; workflow member; '
+        'template owner or viewer'
+    )
+    WorkflowOwnerPermission = (
+        'Admin/account owner who started the workflow'
+    )
+    GuestWorkflowPermission = (
+        'Guest user with access to this workflow'
+    )
+    GuestWorkflowEventsPermission = (
+        'Guest user with access to workflow events'
+    )
+    WorkflowCommentPermission = (
+        'Workflow member or guest with comment access'
+    )
+
+    # Tasks
+    TaskWorkflowMemberOrViewerPermission = (
+        'Workflow member, template owner/viewer, or guest '
+        'assigned to this task'
     )
     TaskWorkflowMemberPermission = (
         'Account owner or workflow member; '
         'guest for this task where allowed'
     )
-    TaskCommentPermission = (
-        'Account owner, workflow member, or guest '
-        'with access to comment on this task'
+    TaskWorkflowOwnerPermission = (
+        'Admin/account owner who owns the workflow'
     )
-    WorkflowMemberOrViewerPermission = (
-        'Account owner; workflow member; '
-        'template owner or viewer'
+    TaskCompletePermission = (
+        'Task performer (user/group) or guest '
+        'assigned to this task'
+    )
+    TaskRevertPermission = (
+        'Task performer who can revert a completed task'
+    )
+    TaskCommentPermission = (
+        'Task member or guest with comment access'
+    )
+    GuestTaskPermission = (
+        'Guest user assigned to this task'
+    )
+
+    # Comments
+    CommentEditPermission = (
+        'Comment author (can edit/delete own comments)'
+    )
+    CommentReactionPermission = (
+        'Workflow member with access to react to comments'
+    )
+
+    # Tenants
+    MasterAccountPermission = (
+        'Master account with tenants feature enabled'
+    )
+    MasterAccountAccessPermission = (
+        'Master account with access to manage tenants'
     )

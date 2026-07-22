@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
 from rest_framework.generics import (
     CreateAPIView,
@@ -43,6 +44,14 @@ from src.generics.permissions import (
 from src.notifications.tasks import (
     send_reset_password_notification,
 )
+from src.openapi import (
+    AuthTokenResponseSerializer,
+    EMPTY,
+    RESET_PASSWORD_TOKEN_PARAMS,
+    ResetPasswordStatusSerializer,
+    TOO_MANY_REQUESTS,
+    VALIDATION_ERROR,
+)
 
 UserModel = get_user_model()
 
@@ -73,6 +82,16 @@ class ResetPasswordViewSet(
             show_captcha = reset_exists in {True, None}
         return self.response_ok({'show_captcha': show_captcha})
 
+    @extend_schema(
+        tags=['Auth'],
+        summary='Request password reset email',
+        request=ResetPasswordSerializer,
+        responses={
+            200: EMPTY,
+            400: VALIDATION_ERROR,
+            429: TOO_MANY_REQUESTS,
+        },
+    )
     def create(self, request):
         reset_exists = self.anonymous_user_reset_exists(request)
         self.inc_anonymous_user_reset_counter(request)
@@ -112,6 +131,15 @@ class ResetPasswordViewSet(
             )
         return self.response_ok()
 
+    @extend_schema(
+        tags=['Auth'],
+        summary='Validate reset password token',
+        parameters=RESET_PASSWORD_TOKEN_PARAMS,
+        responses={
+            200: ResetPasswordStatusSerializer,
+            429: TOO_MANY_REQUESTS,
+        },
+    )
     def list(self, request, *args, **kwargs):
         slz = self.get_serializer(data=request.GET)
         slz.is_valid(raise_exception=True)
@@ -122,6 +150,16 @@ class ResetPasswordViewSet(
 
         return self.response_ok({'status': ResetPasswordStatus.VALID})
 
+    @extend_schema(
+        tags=['Auth'],
+        summary='Confirm password reset',
+        request=ConfirmPasswordSerializer,
+        responses={
+            200: AuthTokenResponseSerializer,
+            400: VALIDATION_ERROR,
+            429: TOO_MANY_REQUESTS,
+        },
+    )
     @action(methods=['post'], detail=False)
     def confirm(self, request):
         slz = self.get_serializer(data=request.data)
