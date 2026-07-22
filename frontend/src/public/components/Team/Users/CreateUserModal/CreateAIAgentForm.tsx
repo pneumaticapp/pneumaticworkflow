@@ -24,14 +24,23 @@ const validateEndpoint = (value: string) => (
   || (isInvalidUrlWithProtocol(value) ? 'validation.url-invalid' : '')
 );
 
-function ResetFormOnReopen({ isOpen }: { isOpen: boolean }) {
+function ResetFormOnReopen({
+  isOpen,
+  latestAvatarActionRef,
+}: {
+  isOpen: boolean;
+  latestAvatarActionRef: React.MutableRefObject<number>;
+}) {
   const { resetForm } = useFormikContext<ICreateAIAgentFormValues>();
   const wasOpenRef = useRef(isOpen);
 
   useEffect(() => {
-    if (isOpen && !wasOpenRef.current) resetForm();
+    if (isOpen && !wasOpenRef.current) {
+      latestAvatarActionRef.current += 1;
+      resetForm();
+    }
     wasOpenRef.current = isOpen;
-  }, [isOpen, resetForm]);
+  }, [isOpen, latestAvatarActionRef, resetForm]);
 
   return null;
 }
@@ -101,11 +110,18 @@ export function CreateAIAgentForm({ isActive, isOpen, onSubmit }: ICreateAIAgent
           event.currentTarget.value = '';
         };
 
-        if (!isActive) return <ResetFormOnReopen isOpen={isOpen} />;
+        const resetFormOnReopen = (
+          <ResetFormOnReopen
+            isOpen={isOpen}
+            latestAvatarActionRef={latestAvatarActionRef}
+          />
+        );
+
+        if (!isActive) return resetFormOnReopen;
 
         return (
           <form onSubmit={handleSubmit}>
-            <ResetFormOnReopen isOpen={isOpen} />
+            {resetFormOnReopen}
             <ModalBody className={styles['modal__body']}>
               <div className={styles['modal__agent-avatar']}>
                 <div className={styles['modal__avatar-preview']}>

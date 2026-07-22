@@ -253,12 +253,21 @@ describe('CreateUserModal', () => {
       )).toBeInTheDocument();
     });
 
-    it('clears sensitive AI agent values on a quick reopen', async () => {
+    it('clears sensitive values and pending avatar reads on a quick reopen', async () => {
+      const readers: FileReader[] = [];
+      const readSpy = jest.spyOn(FileReader.prototype, 'readAsDataURL')
+        .mockImplementation(function mockRead(this: FileReader) {
+          readers.push(this);
+        });
       const { rerender } = render(<CreateUserModal isOpen={true} onClose={mockOnClose} />);
       await openAIAgentTab();
       await userEvent.type(
         screen.getByLabelText(getTranslatedText('team.create-ai-agent-modal.api-key')),
         'secret-key',
+      );
+      await userEvent.upload(
+        screen.getByLabelText(getTranslatedText('team.create-ai-agent-modal.upload')),
+        new File(['old-avatar'], 'old.png', { type: 'image/png' }),
       );
 
       rerender(<CreateUserModal isOpen={false} onClose={mockOnClose} />);
@@ -266,11 +275,15 @@ describe('CreateUserModal', () => {
       await waitFor(() => expect(screen.getByLabelText(
         getTranslatedText('team.create-user-modal.email'),
       )).toBeInTheDocument());
+      Object.defineProperty(readers[0], 'result', { value: 'data:image/png;base64,old' });
+      act(() => readers[0].onload?.call(readers[0], new ProgressEvent('load')));
+      readSpy.mockRestore();
       await openAIAgentTab();
 
       expect(screen.getByLabelText(
         getTranslatedText('team.create-ai-agent-modal.api-key'),
       )).toHaveValue('');
+      expect(document.querySelector('.modal__avatar-preview img')).not.toBeInTheDocument();
     });
 
     it('validates required fields with Formik and submits valid values', async () => {
