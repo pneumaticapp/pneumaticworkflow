@@ -145,8 +145,9 @@ export function CreateAIAgentForm({ onSubmit }: ICreateAIAgentFormProps) {
                 <SystemPromptField />
               </div>
             </ModalBody>
-            <ModalFooter>
+            <ModalFooter className={styles['modal__footer']}>
               <Button
+                className={styles['modal__submit']}
                 type="submit"
                 label={formatMessage({ id: 'team.create-ai-agent-modal.submit' })}
                 buttonStyle="yellow"

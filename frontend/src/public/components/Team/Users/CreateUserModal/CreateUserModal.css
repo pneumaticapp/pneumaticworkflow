@@ -2,11 +2,12 @@
   position: relative;
   bottom: auto;
   margin: 1.6rem auto;
-  min-height: calc(100% - 3.2rem);
+  height: calc(100% - 3.2rem);
+  min-height: 0;
 }
 
 .modal__content {
-  height: auto;
+  height: 100%;
   max-height: calc(100vh - 3.2rem);
 }
 
@@ -17,6 +18,7 @@
 }
 
 .modal__body {
+  padding-top: 2.4rem;
   overflow-y: auto;
   min-height: 0;
   overscroll-behavior: contain;
@@ -62,9 +64,35 @@
   }
 }
 
+.modal__header {
+  flex-shrink: 0;
+
+  > :first-child {
+    width: 100%;
+  }
+}
+
 .modal__tabs {
-  margin: 3.2rem 4.8rem 0;
+  margin: 0;
   width: 100%;
+}
+
+.modal__tabs-switcher {
+  width: 100%;
+  height: 4.8rem;
+  background-color: var(--pneumatic-color-beige);
+  border-radius: 2.4rem;
+}
+
+.modal__tab {
+  min-height: 4.8rem;
+  color: var(--pneumatic-color-black100);
+  border-radius: 2.4rem;
+}
+
+.modal__tab_active {
+  color: var(--pneumatic-color-white);
+  background-color: var(--pneumatic-color-link-hover);
 }
 
 .modal__agent-avatar {
@@ -105,14 +133,13 @@
 
   label,
   button {
-    min-height: 4rem;
-    cursor: pointer;
-    color: inherit;
-  }
-
-  label {
     display: flex;
     align-items: center;
+    justify-content: center;
+    min-height: 4rem;
+    line-height: 1;
+    cursor: pointer;
+    color: inherit;
   }
 
   input {
@@ -160,6 +187,14 @@
       border-color: var(--pneumatic-color-black48);
     }
   }
+}
+
+.modal__footer {
+  flex-shrink: 0;
+}
+
+.modal__submit {
+  width: 100%;
 }
 
 .modal__error {

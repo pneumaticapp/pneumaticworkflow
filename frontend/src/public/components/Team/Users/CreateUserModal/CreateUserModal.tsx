@@ -75,7 +75,11 @@ export function CreateUserModal({ isOpen, onClose, onCreateAIAgent }: ICreateUse
       className={styles['modal__dialog']}
       contentClassName={styles['modal__content']}
     >
-      <ModalHeader toggle={onClose}>
+      <ModalHeader
+        toggle={onClose}
+        className={styles['modal__header']}
+        titleTag="div"
+      >
         <div data-testid="create-user-modal-header" className={styles['modal__tabs']}>
           <Tabs
             values={[
@@ -83,6 +87,9 @@ export function CreateUserModal({ isOpen, onClose, onCreateAIAgent }: ICreateUse
               { id: ECreateUserModalTab.AIAgent, label: formatMessage({ id: 'team.create-user-modal.tab-ai-agent' }) },
             ]}
             activeValueId={activeTab}
+            containerClassName={styles['modal__tabs-switcher']}
+            tabClassName={styles['modal__tab']}
+            activeTabClassName={styles['modal__tab_active']}
             onChange={setActiveTab}
           />
         </div>
