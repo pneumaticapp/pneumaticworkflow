@@ -74,6 +74,43 @@ describe('useWorkflowsTableData', () => {
     });
   });
 
+  it('clears template skeleton columns when selection returns to the loaded template', () => {
+    const loadedWorkflows = makeWorkflowsList('loaded-field');
+    const { rerender } = render(
+      <IntlProvider locale="en">
+        <HookHarness
+          templateId={1}
+          workflowsList={loadedWorkflows}
+          workflowsLoadingStatus={EWorkflowsLoadingStatus.Loaded}
+        />
+      </IntlProvider>,
+    );
+
+    rerender(
+      <IntlProvider locale="en">
+        <HookHarness
+          templateId={2}
+          workflowsList={loadedWorkflows}
+          workflowsLoadingStatus={EWorkflowsLoadingStatus.LoadingList}
+        />
+      </IntlProvider>,
+    );
+    expect(hookResult.shouldSkeletonOptionalTable).toBe(true);
+
+    rerender(
+      <IntlProvider locale="en">
+        <HookHarness
+          templateId={1}
+          workflowsList={loadedWorkflows}
+          workflowsLoadingStatus={EWorkflowsLoadingStatus.LoadingList}
+        />
+      </IntlProvider>,
+    );
+
+    expect(hookResult.shouldSkeletonOptionalTable).toBe(false);
+    expect(hookResult.columns.some((column) => column.accessor === 'loaded-field')).toBe(true);
+  });
+
   it('keeps template skeleton columns until the new workflow request completes', () => {
     const oldWorkflows = makeWorkflowsList('old-field');
     const { rerender } = render(

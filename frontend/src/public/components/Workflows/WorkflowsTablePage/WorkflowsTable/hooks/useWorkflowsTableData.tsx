@@ -44,6 +44,7 @@ export function useWorkflowsTableData({
   const cachedColumnsRef = useRef<WorkflowColumn[]>([]);
   const [isTemplateChanging, setIsTemplateChanging] = useState(false);
   const currentTemplateId = templatesIdsFilter.length === 1 ? templatesIdsFilter[0] : undefined;
+  const previousTemplateIdRef = useRef(currentTemplateId);
   const selectedFieldsSet = useMemo(() => new Set(selectedFields), [selectedFields]);
   const maxPerformersCount = useMemo(
     () => workflowsList.items.reduce(
@@ -64,9 +65,13 @@ export function useWorkflowsTableData({
   });
 
   useEffect(() => {
-    if (String(lastLoadedTemplateId) !== String(currentTemplateId ?? null)) {
-      setIsTemplateChanging(true);
-    }
+    const isDifferentTemplate = String(lastLoadedTemplateId) !== String(currentTemplateId ?? null);
+    const hasTemplateSelectionChanged = previousTemplateIdRef.current !== currentTemplateId;
+
+    if (isDifferentTemplate) setIsTemplateChanging(true);
+    else if (hasTemplateSelectionChanged) setIsTemplateChanging(false);
+
+    previousTemplateIdRef.current = currentTemplateId;
   }, [currentTemplateId, lastLoadedTemplateId]);
 
   const fieldsColumns = useMemo<WorkflowColumn[]>(
