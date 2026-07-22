@@ -1,6 +1,7 @@
 .modal__dialog {
   position: relative;
   bottom: auto;
+  align-items: flex-start;
   margin: 1.6rem auto;
   height: auto;
   min-height: calc(100% - 3.2rem);
@@ -8,6 +9,9 @@
 
 .modal__content {
   height: auto;
+}
+
+.modal__content--ai-agent {
   min-height: calc(100vh - 3.2rem);
 }
 
