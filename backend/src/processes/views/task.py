@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from django.contrib.auth import get_user_model
 from django.db.models import Prefetch
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework.decorators import action
 from rest_framework.generics import ListAPIView, get_object_or_404
 from rest_framework.pagination import LimitOffsetPagination
@@ -124,16 +124,8 @@ from src.webhooks.enums import HookEvent
 UserModel = get_user_model()
 
 
-class TasksListView(ListAPIView):
-
-    serializer_class = TaskListSerializer
-    permission_classes = (
-        UserIsAuthenticated,
-        ExpiredSubscriptionPermission,
-        BillingPlanPermission,
-    )
-
-    @extend_schema(
+@extend_schema_view(
+    get=extend_schema(
         tags=['Tasks'],
         summary='List tasks (v3, Zapier)',
         description=ACCESS_AUTH,
@@ -143,7 +135,17 @@ class TasksListView(ListAPIView):
             401: UNAUTHORIZED,
             403: FORBIDDEN,
         },
+    ),
+)
+class TasksListView(ListAPIView):
+
+    serializer_class = TaskListSerializer
+    permission_classes = (
+        UserIsAuthenticated,
+        ExpiredSubscriptionPermission,
+        BillingPlanPermission,
     )
+
     def list(self, request, *args, **kwargs):
         user = request.user
         filter_slz = TaskListFilterSerializer(
