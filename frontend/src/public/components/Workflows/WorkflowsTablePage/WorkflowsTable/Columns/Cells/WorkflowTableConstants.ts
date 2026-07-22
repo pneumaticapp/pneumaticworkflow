@@ -1,10 +1,14 @@
+import { getPerformersAvatarsWidth } from '../../../../../WorkflowCardUsers/utils/getPerformersAvatarsWidth';
+
+const PERFORMER_COLUMN_DEFAULT_AVATARS = 5;
+
 export const ETableViewFieldsWidth = {
   'system-column-workflow': 376,
   'system-column-templateName': 304,
   'system-column-starter': 82,
   'system-column-progress': 80,
   'system-column-step': 304,
-  'system-column-performer': 80,
+  'system-column-performer': getPerformersAvatarsWidth(PERFORMER_COLUMN_DEFAULT_AVATARS),
   number: 80,
   text: 528,
   string: 192,
@@ -23,7 +27,7 @@ export const EColumnWidthMinWidth = {
   'system-column-starter': 82,
   'system-column-progress': 80,
   'system-column-step': 80,
-  'system-column-performer': 80,
+  'system-column-performer': getPerformersAvatarsWidth(PERFORMER_COLUMN_DEFAULT_AVATARS),
   number: 80,
   text: 80,
   string: 80,

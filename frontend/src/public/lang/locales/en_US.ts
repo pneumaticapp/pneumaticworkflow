@@ -60,7 +60,7 @@ export const enMessages = {
   'notifications.overdue': 'The task {task} is past the deadline, please look into it and take appropriate action.',
   'notifications.snoozed': 'Workflow snoozed until {date}',
   'notifications.resumed': 'Workflow resumed',
-  'notifications.workflow-completed': 'Workflow completed',
+  'notifications.workflow-completed': 'Workflow was completed',
 
   'duration-month': 'months',
   'duration-month-placeholder': '0',
@@ -453,6 +453,8 @@ export const enMessages = {
   'validation.number-invalid-format': 'Invalid number format',
   'validation.company-name-empty': 'Please enter your company name',
   'validation.field-empty': 'This field cannot be empty',
+  'validation.checklist-item-empty': 'Checklist item cannot be empty',
+  'validation.checklist-items-invalid': 'Checklist must contain at least one item',
   'validation.process-name-empty': 'Please enter a template name',
   'validation.process-name-to-long': 'The template name is longer than 120 characters',
   'validation.task-name-empty': 'A step name cannot be empty',
