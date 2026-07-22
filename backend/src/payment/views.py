@@ -1,4 +1,5 @@
 from django.db.models import Prefetch
+from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework.decorators import action
 from rest_framework.viewsets import GenericViewSet
 
@@ -38,6 +39,14 @@ from src.payment.throttling import (
 from src.utils.validation import raise_validation_error
 
 
+@extend_schema_view(
+    purchase=extend_schema(exclude=True),
+    confirm=extend_schema(exclude=True),
+    card_setup=extend_schema(exclude=True),
+    products=extend_schema(exclude=True),
+    default_payment_method=extend_schema(exclude=True),
+    customer_portal=extend_schema(exclude=True),
+)
 class PaymentViewSet(
     CustomViewSetMixin,
     GenericViewSet,
@@ -177,6 +186,9 @@ class PaymentViewSet(
             return self.response_ok({'link': link})
 
 
+@extend_schema_view(
+    cancel=extend_schema(exclude=True),
+)
 class SubscriptionViewSet(
     CustomViewSetMixin,
     GenericViewSet,
@@ -216,6 +228,7 @@ class StripeViewSet(
         ),
     }
 
+    @extend_schema(exclude=True)
     @action(methods=('POST',), detail=False)
     def webhooks(self, request):
         handle_webhook.delay(data=request.data)

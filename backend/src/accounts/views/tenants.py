@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db import transaction
+from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework.decorators import action
 from rest_framework.mixins import (
     DestroyModelMixin,
@@ -43,11 +44,46 @@ from src.payment.tasks import (
 from src.processes.services.system_workflows import (
     SystemWorkflowService,
 )
+from src.openapi import (
+    ACCESS_TENANT_ACCESS,
+    ACCESS_TENANT_READ,
+    ACCESS_TENANT_WRITE,
+    AuthTokenResponseSerializer,
+    CountResponseSerializer,
+    EMPTY,
+    FORBIDDEN,
+    NOT_FOUND,
+    UNAUTHORIZED,
+    VALIDATION_ERROR,
+)
 from src.utils.validation import raise_validation_error
 
 UserModel = get_user_model()
 
 
+@extend_schema_view(
+    list=extend_schema(
+        tags=['Tenants'],
+        summary='List tenants',
+        description=ACCESS_TENANT_READ,
+        responses={
+            200: TenantSerializer,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+        },
+    ),
+    destroy=extend_schema(
+        tags=['Tenants'],
+        summary='Delete tenant',
+        description=ACCESS_TENANT_ACCESS,
+        responses={
+            204: EMPTY,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    ),
+)
 class TenantsViewSet(
     CustomViewSetMixin,
     DestroyModelMixin,
@@ -85,6 +121,8 @@ class TenantsViewSet(
         )
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Account.objects.none()
         return self.request.user.account.tenants.only_tenants()
 
     def perform_destroy(self, instance: Account):
@@ -123,6 +161,19 @@ class TenantsViewSet(
                     auth_type=self.request.token_type,
                 )
 
+    @extend_schema(
+        tags=['Tenants'],
+        summary='Update tenant',
+        description=ACCESS_TENANT_ACCESS,
+        request=TenantSerializer,
+        responses={
+            200: TenantSerializer,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     def patch(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(
@@ -152,6 +203,18 @@ class TenantsViewSet(
                     raise_validation_error(message=ex.message)
             return self.response_ok(serializer.data)
 
+    @extend_schema(
+        tags=['Tenants'],
+        summary='Create tenant',
+        description=ACCESS_TENANT_WRITE,
+        request=TenantSerializer,
+        responses={
+            200: TenantSerializer,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+        },
+    )
     def create(self, request, **kwargs):
         slz = self.get_serializer(data=request.data)
         slz.is_valid(raise_exception=True)
@@ -220,6 +283,17 @@ class TenantsViewSet(
         response_slz = self.serializer_class(instance=tenant_account)
         return self.response_ok(response_slz.data)
 
+    @extend_schema(
+        tags=['Tenants'],
+        summary='Get tenant access token',
+        description=ACCESS_TENANT_READ,
+        responses={
+            200: AuthTokenResponseSerializer,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     @action(methods=('GET',), detail=True)
     def token(self, request, **kwargs):
         tenant_account = self.get_object()
@@ -241,6 +315,16 @@ class TenantsViewSet(
         )
         return self.response_ok({'token': token})
 
+    @extend_schema(
+        tags=['Tenants'],
+        summary='Count tenants',
+        description=ACCESS_TENANT_READ,
+        responses={
+            200: CountResponseSerializer,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+        },
+    )
     @action(methods=('GET',), detail=False)
     def count(self, request, **kwargs):
         return self.response_ok({

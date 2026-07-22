@@ -1,4 +1,5 @@
 from django.conf import settings
+from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
 from rest_framework.viewsets import GenericViewSet
 
@@ -7,9 +8,18 @@ from src.generics.mixins.views import (
     AnonymousWorkflowMixin,
     CustomViewSetMixin,
 )
+from src.openapi import (
+    ACCESS_PUBLIC_TEMPLATE,
+    EMPTY,
+    FORBIDDEN,
+    NOT_FOUND,
+    VALIDATION_ERROR,
+)
 from src.processes.models.templates.template import Template
 from src.processes.permissions import PublicTemplatePermission
 from src.processes.serializers.templates.public.template import (
+    PublicTemplateResponseSerializer,
+    PublicTemplateRunResponseSerializer,
     PublicTemplateSerializer,
 )
 from src.processes.serializers.workflows.external.workflow import (
@@ -45,6 +55,17 @@ class PublicTemplateViewSet(
         self.check_object_permissions(self.request, obj)
         return obj
 
+    @extend_schema(
+        tags=['Templates Public'],
+        summary='Get public template',
+        description=ACCESS_PUBLIC_TEMPLATE,
+        auth=[{'publicTemplateAuth': []}],
+        responses={
+            200: PublicTemplateResponseSerializer,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     def retrieve(self, request, *args, **kwargs):
         template = self.get_object()
         if not settings.PROJECT_CONF['CAPTCHA']:
@@ -60,6 +81,20 @@ class PublicTemplateViewSet(
         response_data['show_captcha'] = show_captcha
         return self.response_ok(response_data)
 
+    @extend_schema(
+        tags=['Templates Public'],
+        summary='Run public template',
+        description=ACCESS_PUBLIC_TEMPLATE,
+        auth=[{'publicTemplateAuth': []}],
+        request=ExternalWorkflowCreateSerializer,
+        responses={
+            200: PublicTemplateRunResponseSerializer,
+            204: EMPTY,
+            400: VALIDATION_ERROR,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     @action(methods=['post'], detail=False)
     def run(self, request, *args, **kwargs):
         template = self.get_object()

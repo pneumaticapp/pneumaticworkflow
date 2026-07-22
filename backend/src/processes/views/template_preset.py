@@ -1,3 +1,4 @@
+from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
 from rest_framework.mixins import (
     DestroyModelMixin,
@@ -14,6 +15,14 @@ from src.accounts.permissions import (
 from src.generics.mixins.views import CustomViewSetMixin
 from src.generics.permissions import (
     UserIsAuthenticated,
+)
+from src.openapi import (
+    ACCESS_PRESET,
+    EMPTY,
+    FORBIDDEN,
+    NOT_FOUND,
+    UNAUTHORIZED,
+    VALIDATION_ERROR,
 )
 from src.processes.models.templates.preset import TemplatePreset
 from src.processes.permissions import TemplatePresetPermission
@@ -51,6 +60,19 @@ class TemplatePresetViewSet(
             .prefetch_related('fields')
         )
 
+    @extend_schema(
+        tags=['Templates'],
+        summary='Update template preset',
+        description=ACCESS_PRESET,
+        request=TemplatePresetSerializer,
+        responses={
+            200: TemplatePresetSerializer,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     def update(self, request, *args, **kwargs):
         preset = self.get_object()
         serializer = self.get_serializer(preset, data=request.data)
@@ -72,6 +94,35 @@ class TemplatePresetViewSet(
 
         return self.response_ok(self.get_serializer(preset).data)
 
+    @extend_schema(
+        tags=['Templates'],
+        summary='Partial update template preset',
+        description=ACCESS_PRESET,
+        request=TemplatePresetSerializer,
+        responses={
+            200: TemplatePresetSerializer,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
+    def partial_update(self, request, *args, **kwargs):
+        kwargs['partial'] = True
+        return self.update(request, *args, **kwargs)
+
+    @extend_schema(
+        tags=['Templates'],
+        summary='Delete template preset',
+        description=ACCESS_PRESET,
+        responses={
+            204: EMPTY,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     def destroy(self, request, *args, **kwargs):
         preset = self.get_object()
         service = TemplatePresetService(
@@ -86,6 +137,18 @@ class TemplatePresetViewSet(
             raise_validation_error(message=ex.message)
         return self.response_ok()
 
+    @extend_schema(
+        tags=['Templates'],
+        summary='Set template preset as default',
+        description=ACCESS_PRESET,
+        responses={
+            204: EMPTY,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     @action(methods=['POST'], detail=True, url_path='default')
     def set_default(self, request, *args, **kwargs):
         preset = self.get_object()

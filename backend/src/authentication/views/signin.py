@@ -1,4 +1,6 @@
 from django.contrib.auth import authenticate, get_user_model
+from drf_spectacular.utils import extend_schema, extend_schema_view
+from rest_framework_simplejwt.views import TokenRefreshView
 from rest_framework.exceptions import (
     AuthenticationFailed,
 )
@@ -80,6 +82,18 @@ class TokenObtainPairCustomView(
         return self.response_ok({'token': token})
 
 
+@extend_schema_view(
+    post=extend_schema(
+        tags=['Auth'],
+        summary='Refresh JWT token',
+        description='Exchange a valid refresh token for a new access token.',
+    ),
+)
+class AuthTokenRefreshView(TokenRefreshView):
+    pass
+
+
+@extend_schema(exclude=True)
 class SuperuserEmailTokenView(
     CreateAPIView,
     BaseResponseMixin,

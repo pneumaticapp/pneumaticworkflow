@@ -2,6 +2,7 @@ from typing import List, Optional
 
 from django.contrib.auth import get_user_model
 from django.db.models import Prefetch
+from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework.decorators import action
 from rest_framework.generics import ListAPIView, get_object_or_404
 from rest_framework.pagination import LimitOffsetPagination
@@ -25,6 +26,25 @@ from src.generics.permissions import (
     IsAuthenticated,
     UserIsAuthenticated,
 )
+from src.openapi import (
+    ACCESS_AUTH,
+    ACCESS_TASK_COMMENT,
+    ACCESS_TASK_COMPLETE,
+    ACCESS_TASK_PERFORMER,
+    ACCESS_TASK_RETRIEVE,
+    ACCESS_TASK_REVERT,
+    EMPTY,
+    FORBIDDEN,
+    NOT_FOUND,
+    TASK_LIST_PARAMS,
+    TaskWebhookExampleSerializer,
+    TOO_MANY_REQUESTS,
+    UNAUTHORIZED,
+    VALIDATION_ERROR,
+    WEBHOOK_EXAMPLE_PARAMS,
+    WORKFLOW_EVENTS_PARAMS,
+)
+from src.openapi.examples import TASK_COMPLETE_EXAMPLE
 from src.processes.enums import WorkflowEventType
 from src.processes.filters import (
     TaskWebhookFilterSet,
@@ -104,6 +124,19 @@ from src.webhooks.enums import HookEvent
 UserModel = get_user_model()
 
 
+@extend_schema_view(
+    get=extend_schema(
+        tags=['Tasks'],
+        summary='List tasks (v3, Zapier)',
+        description=ACCESS_AUTH,
+        parameters=TASK_LIST_PARAMS,
+        responses={
+            200: TaskListSerializer,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+        },
+    ),
+)
 class TasksListView(ListAPIView):
 
     serializer_class = TaskListSerializer
@@ -311,6 +344,17 @@ class TaskViewSet(
             return (TaskPerformerGuestThrottle,)
         return ()
 
+    @extend_schema(
+        tags=['Tasks'],
+        summary='Get task',
+        description=ACCESS_TASK_RETRIEVE,
+        responses={
+            200: TaskSerializer,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     def retrieve(self, request, *args, **kwargs):
         task = self.get_object()
         slz = self.get_serializer(task)
@@ -319,6 +363,19 @@ class TaskViewSet(
             self.group(request.user)
         return self.response_ok(slz.data)
 
+    @extend_schema(
+        tags=['Tasks'],
+        summary='Add performer to task',
+        description=ACCESS_TASK_PERFORMER,
+        request=TaskPerformerSerializer,
+        responses={
+            200: EMPTY,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     @action(methods=('POST',), detail=True, url_path='create-performer')
     def create_performer(self, request, *args, **kwargs):
         task = self.get_object()
@@ -342,6 +399,19 @@ class TaskViewSet(
         else:
             return self.response_ok()
 
+    @extend_schema(
+        tags=['Tasks'],
+        summary='Add group performer to task',
+        description=ACCESS_TASK_PERFORMER,
+        request=TaskGroupPerformerSerializer,
+        responses={
+            200: EMPTY,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     @action(methods=('POST',), detail=True, url_path='create-group-performer')
     def create_group_performer(self, request, *args, **kwargs):
         task = self.get_object()
@@ -364,6 +434,19 @@ class TaskViewSet(
         else:
             return self.response_ok()
 
+    @extend_schema(
+        tags=['Tasks'],
+        summary='Remove performer from task',
+        description=ACCESS_TASK_PERFORMER,
+        request=TaskPerformerSerializer,
+        responses={
+            200: EMPTY,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     @action(methods=('POST',), detail=True, url_path='delete-performer')
     def delete_performer(self, request, *args, **kwargs):
         task = self.get_object()
@@ -386,6 +469,19 @@ class TaskViewSet(
         else:
             return self.response_ok()
 
+    @extend_schema(
+        tags=['Tasks'],
+        summary='Remove group performer from task',
+        description=ACCESS_TASK_PERFORMER,
+        request=TaskGroupPerformerSerializer,
+        responses={
+            200: EMPTY,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     @action(methods=('POST',), detail=True, url_path='delete-group-performer')
     def delete_group_performer(self, request, *args, **kwargs):
         task = self.get_object()
@@ -409,6 +505,20 @@ class TaskViewSet(
         else:
             return self.response_ok()
 
+    @extend_schema(
+        tags=['Tasks'],
+        summary='Add guest performer to task',
+        description=ACCESS_TASK_PERFORMER,
+        request=TaskGuestPerformerSerializer,
+        responses={
+            200: UserSerializer,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+            429: TOO_MANY_REQUESTS,
+        },
+    )
     @action(methods=('POST',), detail=True, url_path='create-guest-performer')
     def create_guest_performer(self, request, *args, **kwargs):
         task = self.get_object()
@@ -433,6 +543,19 @@ class TaskViewSet(
             response_slz = UserSerializer(instance=user)
             return self.response_ok(response_slz.data)
 
+    @extend_schema(
+        tags=['Tasks'],
+        summary='Remove guest performer from task',
+        description=ACCESS_TASK_PERFORMER,
+        request=TaskGuestPerformerSerializer,
+        responses={
+            200: EMPTY,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     @action(methods=('POST',), detail=True, url_path='delete-guest-performer')
     def delete_guest_performer(self, request, *args, **kwargs):
         task = self.get_object()
@@ -455,6 +578,19 @@ class TaskViewSet(
         else:
             return self.response_ok()
 
+    @extend_schema(
+        tags=['Tasks'],
+        summary='Set or clear task due date',
+        description=ACCESS_TASK_PERFORMER,
+        request=DueDateSerializer,
+        responses={
+            200: EMPTY,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     @action(methods=('POST', 'DELETE'), detail=True, url_path='due-date')
     def due_date(self, request, *args, **kwargs):
         task = self.get_object()
@@ -474,6 +610,18 @@ class TaskViewSet(
         else:
             return self.response_ok()
 
+    @extend_schema(
+        tags=['Tasks'],
+        summary='List task events',
+        description=ACCESS_TASK_RETRIEVE,
+        parameters=WORKFLOW_EVENTS_PARAMS,
+        responses={
+            200: WorkflowEventSerializer,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     @action(methods=('GET',), detail=True, url_path='events')
     def events(self, request, *args, **kwargs):
         task = self.get_object()
@@ -487,6 +635,19 @@ class TaskViewSet(
         qst = self.filter_queryset(qst)
         return self.paginated_response(qst)
 
+    @extend_schema(
+        tags=['Tasks'],
+        summary='Revert completed task',
+        description=ACCESS_TASK_REVERT,
+        request=TaskRevertSerializer,
+        responses={
+            200: EMPTY,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     @action(methods=['post'], detail=True)
     def revert(self, request, *args, **kwargs):
         task = self.get_object()
@@ -507,6 +668,20 @@ class TaskViewSet(
             raise_validation_error(message=ex.message)
         return self.response_ok()
 
+    @extend_schema(
+        tags=['Tasks'],
+        summary='Complete task',
+        description=ACCESS_TASK_COMPLETE,
+        request=TaskCompleteSerializer,
+        examples=[TASK_COMPLETE_EXAMPLE],
+        responses={
+            200: TaskSerializer,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     @action(methods=['post'], detail=True)
     def complete(self, request, *args, **kwargs):
         task = self.get_object()
@@ -568,6 +743,19 @@ class TaskViewSet(
         )
         return self.response_ok(response_slz.data)
 
+    @extend_schema(
+        tags=['Tasks'],
+        summary='Add comment to task',
+        description=ACCESS_TASK_COMMENT,
+        request=CommentCreateSerializer,
+        responses={
+            200: WorkflowEventSerializer,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     @action(methods=['post'], detail=True)
     def comment(self, request, *args, **kwargs):
         task = self.get_object()
@@ -592,6 +780,18 @@ class TaskViewSet(
             WorkflowEventSerializer(instance=event).data,
         )
 
+    @extend_schema(
+        tags=['Tasks'],
+        summary='Webhook payload example',
+        description=ACCESS_AUTH,
+        parameters=WEBHOOK_EXAMPLE_PARAMS,
+        responses={
+            200: TaskWebhookExampleSerializer,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     @action(methods=['get'], url_path='webhook-example', detail=False)
     def webhook_example(self, request, *args, **kwargs):
         task = self.filter_queryset(self.get_queryset()).first()

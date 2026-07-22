@@ -1,5 +1,6 @@
 from typing import List, Optional
 
+from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
 from rest_framework.viewsets import GenericViewSet
 
@@ -11,6 +12,15 @@ from src.accounts.permissions import (
 from src.generics.mixins.views import CustomViewSetMixin
 from src.generics.permissions import (
     IsAuthenticated,
+)
+from src.openapi import (
+    ACCESS_COMMENT_EDIT,
+    ACCESS_COMMENT_REACTION,
+    EMPTY,
+    FORBIDDEN,
+    NOT_FOUND,
+    UNAUTHORIZED,
+    VALIDATION_ERROR,
 )
 from src.processes.models.workflows.event import WorkflowEvent
 from src.processes.permissions import (
@@ -38,6 +48,7 @@ class CommentViewSet(
     GenericViewSet,
 ):
 
+    serializer_class = WorkflowEventSerializer
     action_serializer_classes = {
         'partial_update': CommentCreateSerializer,
         'create_reaction': CommentReactionSerializer,
@@ -93,6 +104,19 @@ class CommentViewSet(
             extra_fields=extra_fields,
         )
 
+    @extend_schema(
+        tags=['Workflows'],
+        summary='Update comment',
+        description=ACCESS_COMMENT_EDIT,
+        request=CommentCreateSerializer,
+        responses={
+            200: WorkflowEventSerializer,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     def partial_update(self, request, *args, **kwargs):
         comment_event = self.get_object()
         slz = self.get_serializer(data=request.data)
@@ -114,6 +138,17 @@ class CommentViewSet(
             WorkflowEventSerializer(instance=event).data,
         )
 
+    @extend_schema(
+        tags=['Workflows'],
+        summary='Delete comment',
+        description=ACCESS_COMMENT_EDIT,
+        responses={
+            200: WorkflowEventSerializer,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     def destroy(self, request, *args, **kwargs):
         comment_event = self.get_object()
         service = CommentService(
@@ -130,6 +165,17 @@ class CommentViewSet(
             WorkflowEventSerializer(instance=event).data,
         )
 
+    @extend_schema(
+        tags=['Workflows'],
+        summary='Mark comment as watched',
+        description=ACCESS_COMMENT_REACTION,
+        responses={
+            200: EMPTY,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     @action(methods=('post',), detail=True)
     def watched(self, request, *args, **kwargs):
         comment_event = self.get_object()
@@ -145,6 +191,19 @@ class CommentViewSet(
             raise_validation_error(message=ex.message)
         return self.response_ok()
 
+    @extend_schema(
+        tags=['Workflows'],
+        summary='Add reaction to comment',
+        description=ACCESS_COMMENT_REACTION,
+        request=CommentReactionSerializer,
+        responses={
+            200: EMPTY,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     @action(methods=('post',), detail=True, url_path='create-reaction')
     def create_reaction(self, request, *args, **kwargs):
         comment_event = self.get_object()
@@ -162,6 +221,19 @@ class CommentViewSet(
             raise_validation_error(message=ex.message)
         return self.response_ok()
 
+    @extend_schema(
+        tags=['Workflows'],
+        summary='Remove reaction from comment',
+        description=ACCESS_COMMENT_REACTION,
+        request=CommentReactionSerializer,
+        responses={
+            200: EMPTY,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     @action(methods=('post',), detail=True, url_path='delete-reaction')
     def delete_reaction(self, request, *args, **kwargs):
         comment_event = self.get_object()

@@ -163,6 +163,7 @@ class Common(Configuration):
 
         'rest_framework',
         'rest_framework_simplejwt',
+        'drf_spectacular',
 
         'corsheaders',
 
@@ -250,6 +251,7 @@ class Common(Configuration):
         'DEFAULT_RENDERER_CLASSES': [
             'rest_framework.renderers.JSONRenderer',
         ],
+        'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
         'DEFAULT_PERMISSION_CLASSES': (
             'rest_framework.permissions.IsAuthenticated',
         ),
@@ -291,6 +293,118 @@ class Common(Configuration):
             'rest_framework_simplejwt.tokens.AccessToken',
             'src.authentication.tokens.GuestToken',
         ),
+    }
+
+    SPECTACULAR_SETTINGS = {
+        'TITLE': 'Pneumatic Workflow API',
+        'DESCRIPTION': 'Public API (private/staging ops excluded)',
+        'VERSION': '1.0.0',
+        'SERVE_INCLUDE_SCHEMA': False,
+        'SERVE_PERMISSIONS': [
+            'rest_framework.permissions.IsAuthenticated',
+        ],
+        'PREPROCESSING_HOOKS': [
+            'src.openapi.preprocessing.exclude_private_endpoints',
+        ],
+        'SCHEMA_PATH_PREFIX': r'/',
+        # Schema is at /api/schema/; without SERVERS Swagger uses
+        # /api as base and breaks real paths (/auth, /templates, …).
+        'SERVERS': [{'url': BACKEND_URL}],
+        'SWAGGER_UI_SETTINGS': {
+            'persistAuthorization': True,
+        },
+        'TAGS': [
+            {
+                'name': 'Auth',
+                'description': (
+                    'Sign in, token obtain/refresh, password '
+                    'management, and user context'
+                ),
+            },
+            {
+                'name': 'Templates',
+                'description': (
+                    'Create, configure, and manage workflow templates'
+                ),
+            },
+            {
+                'name': 'Templates Public',
+                'description': (
+                    'Public and embedded templates for external forms'
+                ),
+            },
+            {
+                'name': 'Workflows',
+                'description': (
+                    'Running workflow instances — complete, return, '
+                    'snooze, comment, and track progress'
+                ),
+            },
+            {
+                'name': 'Tasks',
+                'description': (
+                    'Task operations — complete, revert, manage '
+                    'performers, due dates, and events'
+                ),
+            },
+            {
+                'name': 'Accounts',
+                'description': (
+                    'Account settings, users, invites, groups, '
+                    'and billing plan'
+                ),
+            },
+            {
+                'name': 'Attachments',
+                'description': 'File attachments linked to workflows',
+            },
+            {
+                'name': 'Webhooks',
+                'description': (
+                    'Subscribe to workflow events and manage '
+                    'webhook endpoints'
+                ),
+            },
+            {
+                'name': 'Datasets',
+                'description': (
+                    'Reusable data collections for dropdown '
+                    'and selection fields'
+                ),
+            },
+            {
+                'name': 'Fieldsets',
+                'description': (
+                    'Shared field groups reusable across templates'
+                ),
+            },
+            {
+                'name': 'Tenants',
+                'description': 'Multi-tenant workspace management',
+            },
+            {
+                'name': 'Notifications',
+                'description': 'In-app notification feed and settings',
+            },
+            {
+                'name': 'Reports',
+                'description': (
+                    'Dashboard highlights and workflow analytics'
+                ),
+            },
+            {
+                'name': 'Services',
+                'description': 'AI-powered services and integrations',
+            },
+            {
+                'name': 'Pages',
+                'description': 'CMS-managed content pages',
+            },
+            {
+                'name': 'FAQ',
+                'description': 'Frequently asked questions',
+            },
+        ],
     }
 
     # Email
