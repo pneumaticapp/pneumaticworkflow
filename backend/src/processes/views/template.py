@@ -164,7 +164,6 @@ class TemplateViewSet(
         'fields': TemplateOnlyFieldsSerializer,
         'presets': TemplatePresetSerializer,
         'preset': TemplatePresetSerializer,
-        'export': TemplateListSerializer,
     }
     action_filterset_classes = {
         'list_fieldsets': FieldSetFilter,
