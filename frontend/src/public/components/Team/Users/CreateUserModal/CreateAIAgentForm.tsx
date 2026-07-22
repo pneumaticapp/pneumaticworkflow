@@ -76,7 +76,7 @@ export function CreateAIAgentForm({ onSubmit }: ICreateAIAgentFormProps) {
 
         return (
           <form onSubmit={handleSubmit}>
-            <ModalBody>
+            <ModalBody className={styles['modal__body']}>
               <div className={styles['modal__agent-avatar']}>
                 <div className={styles['modal__avatar-preview']}>
                   {values.avatar.startsWith('data:')

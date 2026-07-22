@@ -69,7 +69,12 @@ export function CreateUserModal({ isOpen, onClose, onCreateAIAgent }: ICreateUse
   };
 
   return (
-    <BaseModal isOpen={isOpen} toggle={onClose}>
+    <BaseModal
+      isOpen={isOpen}
+      toggle={onClose}
+      className={styles['modal__dialog']}
+      contentClassName={styles['modal__content']}
+    >
       <ModalHeader toggle={onClose}>
         <div data-testid="create-user-modal-header" className={styles['modal__tabs']}>
           <Tabs
@@ -106,7 +111,7 @@ export function CreateUserModal({ isOpen, onClose, onCreateAIAgent }: ICreateUse
 
           return (
             <form onSubmit={formikSubmit}>
-              <ModalBody>
+              <ModalBody className={styles['modal__body']}>
                 <div className={styles['modal__form']}>
                   <FormikInputField
                     name="firstName"

@@ -1,3 +1,27 @@
+.modal__dialog {
+  position: relative;
+  bottom: auto;
+  margin: 1.6rem auto;
+  min-height: calc(100% - 3.2rem);
+}
+
+.modal__content {
+  height: auto;
+  max-height: calc(100vh - 3.2rem);
+}
+
+.modal__content > form {
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 0;
+}
+
+.modal__body {
+  overflow-y: auto;
+  min-height: 0;
+  overscroll-behavior: contain;
+}
+
 .modal__form {
   display: flex;
   flex-direction: column;
