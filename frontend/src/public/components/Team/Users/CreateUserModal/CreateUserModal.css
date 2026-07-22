@@ -129,9 +129,10 @@
   align-items: center;
   gap: 0.8rem;
   height: 4rem;
-  color: var(--pneumatic-color-link);
+  text-transform: uppercase;
+  color: var(--pneumatic-color-link-dark);
 
-  @mixin text-small bold;
+  @mixin text-small-extra bold;
 
   label,
   button,
@@ -148,6 +149,10 @@
   button {
     cursor: pointer;
     color: inherit;
+  }
+
+  label {
+    margin-bottom: 0;
   }
 
   input {
