@@ -297,21 +297,64 @@ class Common(Configuration):
 
     SPECTACULAR_SETTINGS = {
         'TITLE': 'Pneumatic Workflow API',
-        'DESCRIPTION': 'Public API (private/staging ops excluded)',
+        'DESCRIPTION': (
+            'The Pneumatic API gives you programmatic access to everything '
+            'you can do in the product — running workflows, managing tasks, '
+            'assigning performers, and integrating with internal systems.\n\n'
+
+            '### Authentication\n'
+            'Every request requires a `Bearer` token. You can find your '
+            'personal API key inside the app:\n'
+            '1. Go to **Integrations** in the left menu.\n'
+            '2. Copy your key from the **Your API Key** section.\n\n'
+            'Pass the key in the `Authorization` header:\n'
+            '```http\n'
+            'Authorization: Bearer <your_api_key>\n'
+            '```\n\n'
+            'Or click the **Authorize** button above and paste your key '
+            'to test endpoints directly.\n\n'
+
+            '### Why Use the API?\n'
+            '- **Custom Dashboards:** Pull live task counts and workflow '
+            'progress into your BI tools.\n'
+            '- **Automated Triggers:** Start new workflows automatically '
+            'when events happen in your CRM or ERP.\n'
+            '- **Task Sync:** Sync Pneumatic tasks to your internal task '
+            'trackers.\n'
+            '- **Webhook Integrations:** Subscribe to workflow events and '
+            'push data to Slack, email, or custom endpoints.'
+        ),
         'VERSION': '1.0.0',
         'SERVE_INCLUDE_SCHEMA': False,
         'SERVE_PERMISSIONS': [
-            'rest_framework.permissions.IsAuthenticated',
+            'rest_framework.permissions.AllowAny',
         ],
+        'SERVE_AUTHENTICATION': [],
         'PREPROCESSING_HOOKS': [
             'src.openapi.preprocessing.exclude_private_endpoints',
         ],
         'SCHEMA_PATH_PREFIX': r'/',
         # Schema is at /api/schema/; without SERVERS Swagger uses
         # /api as base and breaks real paths (/auth, /templates, …).
-        'SERVERS': [{'url': BACKEND_URL}],
+        'ENUM_NAME_OVERRIDES': {
+            'UserStatusEnum': 'src.accounts.enums.UserStatus.CHOICES',
+            'WorkflowStatusEnum': 'src.processes.enums.WorkflowStatus.CHOICES',
+            'FieldTypeEnum': 'src.processes.enums.FieldType.CHOICES',
+            'WorkflowEventTypeEnum': 'src.processes.enums.WorkflowEventType.CHOICES',
+            'PerformerTypeEnum': 'src.processes.enums.PerformerType.filter_choices',
+            'AccountUserTypeEnum': 'src.accounts.enums.UserType.CHOICES',
+            'LanguageEnum': 'src.accounts.enums.Language.CHOICES',
+            'ResetPasswordStatusEnum': 'src.authentication.enums.ResetPasswordStatus.CHOICES',
+        },
+        'SERVERS': [{'url': '/', 'description': 'Pneumatic Core API Server'}],
         'SWAGGER_UI_SETTINGS': {
             'persistAuthorization': True,
+            'layout': 'StandaloneLayout',
+            'urls': [
+                {'url': '/api/schema/', 'name': 'Pneumatic Core API'},
+                {'url': '/files/openapi.json', 'name': 'Pneumatic Files API'},
+            ],
+            'urls.primaryName': 'Pneumatic Core API',
         },
         'TAGS': [
             {
@@ -383,26 +426,10 @@ class Common(Configuration):
                 'description': 'Multi-tenant workspace management',
             },
             {
-                'name': 'Notifications',
-                'description': 'In-app notification feed and settings',
-            },
-            {
                 'name': 'Reports',
                 'description': (
                     'Dashboard highlights and workflow analytics'
                 ),
-            },
-            {
-                'name': 'Services',
-                'description': 'AI-powered services and integrations',
-            },
-            {
-                'name': 'Pages',
-                'description': 'CMS-managed content pages',
-            },
-            {
-                'name': 'FAQ',
-                'description': 'Frequently asked questions',
             },
         ],
     }

@@ -1,14 +1,14 @@
 from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
-from drf_spectacular.views import SpectacularAPIView
+from django.views.generic import TemplateView
+from drf_spectacular.views import (
+    SpectacularAPIView,
+    SpectacularSwaggerView,
+)
 from rest_framework.routers import DefaultRouter
 
 from src import views
-from src.authentication.services.user_auth import (
-    CookieTokenAuthentication,
-)
-from src.openapi.views import DocsRedocView, DocsSwaggerView
 from src.accounts.views.accounts import AccountPlanView
 from src.accounts.views.tenants import TenantsViewSet
 from src.faq.views import FaqViewSet
@@ -96,31 +96,22 @@ urlpatterns = [
 
 urlpatterns += router.urls
 
+# Public API documentation (access controlled via SPECTACULAR_SETTINGS).
 urlpatterns += [
-    # Schema stays on SpectacularAPIView (JSON 403 if anonymous).
-    # Docs UI views redirect browsers to frontend login.
     path(
         'api/schema/',
-        SpectacularAPIView.as_view(
-            authentication_classes=(CookieTokenAuthentication,),
-        ),
+        SpectacularAPIView.as_view(),
         name='schema',
     ),
     path(
         'api/docs/',
-        DocsSwaggerView.as_view(
-            url_name='schema',
-            authentication_classes=(CookieTokenAuthentication,),
-        ),
-        name='swagger-ui',
+        TemplateView.as_view(template_name='scalar_ui.html'),
+        name='scalar-ui',
     ),
     path(
-        'api/redoc/',
-        DocsRedocView.as_view(
-            url_name='schema',
-            authentication_classes=(CookieTokenAuthentication,),
-        ),
-        name='redoc',
+        'api/swagger/',
+        SpectacularSwaggerView.as_view(url_name='schema'),
+        name='swagger-ui',
     ),
 ]
 

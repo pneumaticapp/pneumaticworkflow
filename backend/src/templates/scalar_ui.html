@@ -1,0 +1,483 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Pneumatic API Documentation (Scalar)</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Abhaya+Libre:wght@800&display=swap" rel="stylesheet">
+    <style>
+      /* ═══════════════════════════════════════════════════════════
+         PNEUMATIC GENESIS DESIGN SYSTEM — Scalar UI Integration
+         Figma: Pneumatic-Genesis
+         
+         Color Tokens (from gogo.light.yellow.scss):
+           Primary text:    #262522
+           Secondary text:  #62625f
+           Muted text:      #888888
+           Background:      #f6f6f6
+           Foreground:      #ffffff
+           Separator:       #dcdcdb
+           Separator light: #f3f3f3
+           Brand Yellow:    #fec336
+           Brand Hover:     #e79a26
+           Info/GET:        #3496c9
+           Success/POST:    #24d5a1
+           Warning/PUT:     #e79a26
+           Error/DELETE:    #fc5b67
+           Dark btn bg:     #262522
+         ═══════════════════════════════════════════════════════════ */
+
+      /* --- RESET & BASE --- */
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: 'Nunito', sans-serif;
+        background-color: #f6f6f6;
+      }
+
+      /* --- SCALAR CSS VARIABLE OVERRIDES (Light Mode) --- */
+      body, .light-mode, :root {
+        /* Text */
+        --scalar-color-1: #262522 !important;
+        --scalar-color-2: #62625f !important;
+        --scalar-color-3: #888888 !important;
+        
+        /* Accent */
+        --scalar-color-accent: #fec336 !important;
+        
+        /* Backgrounds */
+        --scalar-background-1: #ffffff !important;
+        --scalar-background-2: #f6f6f6 !important;
+        --scalar-background-3: #f3f3f3 !important;
+        --scalar-background-accent: rgba(254, 195, 54, 0.08) !important;
+        
+        /* Borders */
+        --scalar-border-color: #dcdcdb !important;
+        
+        /* Font */
+        --scalar-font: 'Nunito', sans-serif !important;
+        --scalar-font-code: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace !important;
+        
+        /* HTTP Method Colors (Genesis palette) */
+        --scalar-color-blue: #3496c9 !important;
+        --scalar-color-green: #24d5a1 !important;
+        --scalar-color-orange: #e79a26 !important;
+        --scalar-color-red: #fc5b67 !important;
+        --scalar-color-purple: #922c88 !important;
+        
+        /* Sidebar */
+        --scalar-sidebar-background-1: #f6f6f6 !important;
+        --scalar-sidebar-color-1: #262522 !important;
+        --scalar-sidebar-color-2: #62625f !important;
+        --scalar-sidebar-color-active: #fec336 !important;
+        --scalar-sidebar-border-color: #dcdcdb !important;
+        
+        /* Buttons */
+        --scalar-button-1: #fec336 !important;
+        --scalar-button-1-color: #262522 !important;
+        --scalar-button-1-hover: #e79a26 !important;
+        
+        /* Shadows */
+        --scalar-shadow-1: 0 2px 6px rgba(0,0,0,0.04) !important;
+        --scalar-shadow-2: 0 4px 12px rgba(0,0,0,0.06) !important;
+      }
+
+      /* --- DARK MODE (Genesis dark tokens) --- */
+      .dark-mode {
+        --scalar-color-1: #f6f6f6 !important;
+        --scalar-color-2: #dcdcdb !important;
+        --scalar-color-3: #888888 !important;
+        --scalar-color-accent: #fec336 !important;
+        --scalar-background-1: #1a1917 !important;
+        --scalar-background-2: #222120 !important;
+        --scalar-background-3: #2e2d2b !important;
+        --scalar-background-accent: rgba(254, 195, 54, 0.12) !important;
+        --scalar-border-color: #3a3936 !important;
+        --scalar-sidebar-background-1: #1a1917 !important;
+        --scalar-button-1: #fec336 !important;
+        --scalar-button-1-color: #262522 !important;
+        --scalar-button-1-hover: #e79a26 !important;
+      }
+
+      /* ═══════════════════════════════════════════════════════════
+         TYPOGRAPHY
+         ═══════════════════════════════════════════════════════════ */
+
+      /* Force Nunito on the entire Scalar app */
+      .scalar-app,
+      .scalar-app * {
+        font-family: 'Nunito', sans-serif !important;
+      }
+
+      /* Headings → Abhaya Libre (Genesis brand serif) */
+      .scalar-app h1, .scalar-app h2, .scalar-app h3,
+      .scalar-app h4, .scalar-app h5, .scalar-app h6 {
+        font-family: 'Abhaya Libre', serif !important;
+        font-weight: 800 !important;
+        letter-spacing: -0.01em;
+      }
+
+      /* Code elements keep monospace */
+      .scalar-app code, .scalar-app pre,
+      .scalar-app .cm-editor, .scalar-app .cm-content,
+      .scalar-app [class*="code"], .scalar-app [class*="Code"] {
+        font-family: var(--scalar-font-code) !important;
+      }
+
+      /* ═══════════════════════════════════════════════════════════
+         BUTTONS
+         ═══════════════════════════════════════════════════════════ */
+
+      /* Primary action buttons → Genesis Yellow */
+      .scalar-app button[class*="action"],
+      .scalar-app button[class*="primary"],
+      .scalar-app button[class*="send"],
+      .scalar-app .send-request-button,
+      .scalar-app .scalar-button {
+        background-color: #fec336 !important;
+        color: #262522 !important;
+        border: 1px solid #fec336 !important;
+        border-radius: 6px !important;
+        font-weight: 700 !important;
+        font-family: 'Nunito', sans-serif !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        transition: all 0.2s ease;
+      }
+      .scalar-app button[class*="action"]:hover,
+      .scalar-app button[class*="primary"]:hover,
+      .scalar-app button[class*="send"]:hover,
+      .scalar-app .send-request-button:hover,
+      .scalar-app .scalar-button:hover {
+        background-color: #e79a26 !important;
+        border-color: #e79a26 !important;
+      }
+
+      /* Secondary / outline buttons */
+      .scalar-app button[class*="secondary"],
+      .scalar-app button[class*="outline"] {
+        background-color: transparent !important;
+        color: #262522 !important;
+        border: 1px solid #dcdcdb !important;
+        border-radius: 6px !important;
+        font-weight: 600 !important;
+        transition: all 0.2s ease;
+      }
+      .scalar-app button[class*="secondary"]:hover,
+      .scalar-app button[class*="outline"]:hover {
+        background-color: #f6f6f6 !important;
+        border-color: #fec336 !important;
+      }
+
+      /* ═══════════════════════════════════════════════════════════
+         CARDS & SECTIONS
+         ═══════════════════════════════════════════════════════════ */
+
+      /* Endpoint cards / operation blocks */
+      .scalar-app [class*="section-container"],
+      .scalar-app [class*="endpoint"],
+      .scalar-app section {
+        border-radius: 8px;
+      }
+
+      /* ═══════════════════════════════════════════════════════════
+         INPUTS & FORMS
+         ═══════════════════════════════════════════════════════════ */
+
+      .scalar-app input[type="text"],
+      .scalar-app input[type="password"],
+      .scalar-app input[type="search"],
+      .scalar-app input[type="email"],
+      .scalar-app textarea,
+      .scalar-app select {
+        border: 1px solid #dcdcdb !important;
+        border-radius: 4px !important;
+        font-family: 'Nunito', sans-serif !important;
+        color: #262522 !important;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      }
+      .scalar-app input:focus,
+      .scalar-app textarea:focus,
+      .scalar-app select:focus {
+        border-color: #fec336 !important;
+        box-shadow: 0 0 0 3px rgba(254, 195, 54, 0.15) !important;
+        outline: none !important;
+      }
+
+      /* ═══════════════════════════════════════════════════════════
+         HTTP METHOD BADGES — Genesis colors
+         ═══════════════════════════════════════════════════════════ */
+
+      .scalar-app [class*="get"]:not(section):not(div),
+      .scalar-app .badge--get { color: #3496c9 !important; }
+      .scalar-app [class*="post"]:not(section):not(div),
+      .scalar-app .badge--post { color: #24d5a1 !important; }
+      .scalar-app [class*="put"]:not(section):not(div),
+      .scalar-app .badge--put { color: #e79a26 !important; }
+      .scalar-app [class*="patch"]:not(section):not(div),
+      .scalar-app .badge--patch { color: #e79a26 !important; }
+      .scalar-app [class*="delete"]:not(section):not(div),
+      .scalar-app .badge--delete { color: #fc5b67 !important; }
+
+      /* ═══════════════════════════════════════════════════════════
+         SCROLLBAR (Genesis-brand thin scrollbar)
+         ═══════════════════════════════════════════════════════════ */
+
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background-color: #dcdcdb;
+        border-radius: 3px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background-color: #b9b9b8;
+      }
+
+      /* ═══════════════════════════════════════════════════════════
+         LINKS
+         ═══════════════════════════════════════════════════════════ */
+
+      .scalar-app a {
+        color: #3496c9 !important;
+        text-decoration: none;
+        transition: color 0.15s ease;
+      }
+      .scalar-app a:hover {
+        color: #2a7aa3 !important;
+        text-decoration: underline;
+      }
+
+      /* ═══════════════════════════════════════════════════════════
+         TEST REQUEST & ACTION BUTTONS — deep targeting
+         ═══════════════════════════════════════════════════════════ */
+
+      /* The "Test Request" button inside the code panel */
+      .scalar-app button[class*="test"],
+      .scalar-app button[class*="Test"],
+      .scalar-app [class*="test-request"],
+      .scalar-app [class*="TestRequest"] {
+        background-color: #fec336 !important;
+        color: #262522 !important;
+        border-color: #fec336 !important;
+        border-radius: 6px !important;
+        font-weight: 700 !important;
+      }
+      .scalar-app button[class*="test"]:hover,
+      .scalar-app button[class*="Test"]:hover {
+        background-color: #e79a26 !important;
+        border-color: #e79a26 !important;
+      }
+
+      /* "Show More" / "Show Less" buttons */
+      .scalar-app button[class*="show-more"],
+      .scalar-app button[class*="ShowMore"],
+      .scalar-app button[class*="showMore"] {
+        color: #262522 !important;
+        border: 1px solid #dcdcdb !important;
+        border-radius: 6px !important;
+        background-color: #ffffff !important;
+        font-weight: 600 !important;
+        transition: all 0.2s ease;
+      }
+      .scalar-app button[class*="show-more"]:hover,
+      .scalar-app button[class*="ShowMore"]:hover {
+        border-color: #fec336 !important;
+        background-color: #f6f6f6 !important;
+      }
+
+      /* Badge labels like "required" */
+      .scalar-app [class*="required"] {
+        color: #fc5b67 !important;
+      }
+
+      /* ═══════════════════════════════════════════════════════════
+         SECTION ALTERNATING BACKGROUNDS — Genesis Warm Gray Override
+         Post-render JS handles the actual alternation (see script below).
+         CSS here only provides a fallback base background.
+         ═══════════════════════════════════════════════════════════ */
+
+      /* Base fallback: Scalar app background = white.
+         JS will set alternating colors per-section after render. */
+      .scalar-app,
+      .scalar-api-reference,
+      .references-layout,
+      .references-rendered,
+      .narrow-references-container,
+      .references-classic,
+      .references-classic-content {
+        background-color: #ffffff !important;
+      }
+
+      /* ═══════════════════════════════════════════════════════════
+         API SWITCHER (top-right dropdown)
+         ═══════════════════════════════════════════════════════════ */
+
+      .api-switcher {
+        position: fixed;
+        top: 12px;
+        right: 24px;
+        z-index: 10000;
+        font-family: 'Nunito', sans-serif;
+      }
+      .api-switcher select {
+        padding: 8px 32px 8px 14px;
+        border-radius: 6px;
+        border: 1px solid #dcdcdb;
+        background-color: #ffffff;
+        color: #262522;
+        font-family: 'Nunito', sans-serif;
+        font-weight: 700;
+        font-size: 13px;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        outline: none;
+        appearance: none;
+        -webkit-appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23262522' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        background-size: 12px;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      }
+      .api-switcher select:hover {
+        border-color: #fec336;
+        box-shadow: 0 2px 8px rgba(254, 195, 54, 0.15);
+      }
+      .api-switcher select:focus {
+        border-color: #fec336;
+        box-shadow: 0 0 0 3px rgba(254, 195, 54, 0.15);
+      }
+
+      /* ═══════════════════════════════════════════════════════════
+         MICRO-ANIMATIONS
+         ═══════════════════════════════════════════════════════════ */
+
+      .scalar-app details[open] > summary ~ * {
+        animation: genesis-fade-in 0.2s ease-out;
+      }
+      @keyframes genesis-fade-in {
+        from { opacity: 0; transform: translateY(-4px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+    </style>
+  </head>
+  <body>
+    <!-- API Switcher (Genesis-styled dropdown) -->
+    <div class="api-switcher">
+      <select id="api-selector" onchange="window.location.search = '?api=' + this.value;">
+        <option value="core">Pneumatic Core API</option>
+        <option value="files">Pneumatic Files API</option>
+      </select>
+    </div>
+
+    <!-- Scalar container -->
+    <script id="api-reference"></script>
+
+    <script>
+      // Determine which API to load based on query param
+      const urlParams = new URLSearchParams(window.location.search);
+      const selectedApi = urlParams.get('api') || 'core';
+
+      // Sync dropdown state
+      document.getElementById('api-selector').value = selectedApi;
+
+      // Set schema URL dynamically
+      const schemaUrl = selectedApi === 'files' ? '/files/openapi.json' : '/api/schema/';
+      document.getElementById('api-reference').dataset.url = schemaUrl;
+
+      // Scalar configuration
+      var configuration = {
+        theme: 'default',
+        metaData: {
+          title: selectedApi === 'files' ? 'Pneumatic Files API' : 'Pneumatic Workflow API',
+        },
+        hideModels: false,
+        hideDownloadButton: false,
+        showSidebar: false,
+        defaultOpenFirstTag: false,
+        darkMode: false,
+        hideDarkModeToggle: true,
+        layout: 'modern',
+        showDeveloperTools: 'never',
+        hideClientButton: true,
+      }
+      document.getElementById('api-reference').dataset.configuration = JSON.stringify(configuration)
+    </script>
+
+    <!-- Load Scalar script from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+
+    <script>
+      (function applyGenesisBackgrounds() {
+        const WHITE = '#ffffff';
+        const WARM_GRAY = '#f6f6f6';
+
+        function fixBackgrounds() {
+          const container = document.querySelector('.narrow-references-container');
+          if (!container) return false;
+
+          const children = container.children;
+          if (children.length === 0) return false;
+
+          let visibleIndex = 0;
+          for (let i = 0; i < children.length; i++) {
+            const child = children[i];
+            const rect = child.getBoundingClientRect();
+            const isVisible = rect.height > 0 && getComputedStyle(child).display !== 'none';
+
+            if (isVisible) {
+              const bg = (visibleIndex % 2 === 0) ? WHITE : WARM_GRAY;
+              child.style.setProperty('background-color', bg, 'important');
+              visibleIndex++;
+            } else {
+              child.style.setProperty('background-color', 'transparent', 'important');
+            }
+
+            // Force inner .section-container to transparent so parent bg shows
+            child.querySelectorAll('.section-container').forEach(function(s) {
+              s.style.setProperty('background-color', 'transparent', 'important');
+            });
+          }
+
+          // Parent container = white (fallback, no bleed-through between sections)
+          container.style.setProperty('background-color', WHITE, 'important');
+          return true;
+        }
+
+        // Debounced MutationObserver: Scalar renders sections progressively.
+        // Don't disconnect on first match — keep watching for 10 seconds
+        // and re-apply whenever DOM changes.
+        var debounceTimer = null;
+        var observer = new MutationObserver(function() {
+          clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(fixBackgrounds, 300);
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+
+        // Auto-disconnect observer after 10 seconds (Scalar should be done by then)
+        setTimeout(function() {
+          observer.disconnect();
+          fixBackgrounds(); // One final application
+        }, 10000);
+
+        // Also apply at 1s, 2s, 4s as safety nets during initial render
+        setTimeout(fixBackgrounds, 1000);
+        setTimeout(fixBackgrounds, 2000);
+        setTimeout(fixBackgrounds, 4000);
+
+        // Re-apply on API schema switch (dropdown changes)
+        window.addEventListener('popstate', function() {
+          setTimeout(fixBackgrounds, 2000);
+          setTimeout(fixBackgrounds, 4000);
+        });
+      })();
+    </script>
+  </body>
+</html>

@@ -646,8 +646,8 @@ class WorkflowEventType:
         (TASK_PERFORMER_DELETED, 'Performer deleted from task'),
         (FORCE_RESUME, 'Workflow resumed'),
         (DUE_DATE_CHANGED, 'Due date changed'),
-        (TASK_PERFORMER_CREATED, 'Performer group added to task'),
-        (TASK_PERFORMER_DELETED, 'Performer group deleted from task'),
+        (TASK_PERFORMER_GROUP_CREATED, 'Performer group added to task'),
+        (TASK_PERFORMER_GROUP_DELETED, 'Performer group deleted from task'),
         (TASK_DELAY, 'Task snoozed from template'),
         (TASK_DELEGATION, 'Task delegated'),
     )
