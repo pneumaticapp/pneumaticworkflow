@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
@@ -6,18 +6,9 @@ import { Checkbox } from '../UI/Fields/Checkbox';
 import { IntlMessages } from '../IntlMessages';
 import { isArrayWithItems } from '../../utils/helpers';
 import { ShowMore } from '../UI/ShowMore';
-import { ITemplateTitleBaseWithCount } from '../../types/template';
+import { ITemplatesFilterProps } from './types';
 
 import styles from './Filters.css';
-
-export interface ITemplatesFilterProps {
-  searchText: string;
-  selectedTemplates: number[];
-  templatesTitles: ITemplateTitleBaseWithCount[];
-  isFiltersLoading: boolean;
-  changeTemplatesSearchText(e: React.ChangeEvent<HTMLInputElement>): void;
-  changeTemplatesFilter(templateId: number): (e: React.ChangeEvent<HTMLInputElement>) => void;
-}
 
 const MAX_SHOW_TEMPLATES = 10;
 
@@ -29,8 +20,8 @@ export function TemplatesFilter({
   changeTemplatesSearchText,
   changeTemplatesFilter,
 }: ITemplatesFilterProps) {
-  const { useCallback, useEffect, useMemo, useState } = React;
   const { formatMessage } = useIntl();
+  const hasFocusedSearchRef = useRef(false);
 
   const isEmpty = !isArrayWithItems(templatesTitles);
 
@@ -40,7 +31,7 @@ export function TemplatesFilter({
     }
 
     return (
-      <p className={styles['workflows-filter__placeholder']}>
+      <p className={styles['filter__placeholder']}>
         <IntlMessages id="workflow-highlights.no-processes-started" />
       </p>
     );
@@ -52,12 +43,22 @@ export function TemplatesFilter({
 
   const [isShowAllVisibleState, setShowAllVisibleState] = useState(isTemplatesNumberExceeded);
 
-  useEffect(
-    () => setShowAllVisibleState(isSearchFilled ? false : isTemplatesNumberExceeded),
-    [isTemplatesNumberExceeded, isSearchFilled],
-  );
+  const setSearchInputRef = useCallback((node: HTMLInputElement | null) => {
+    if (!node || hasFocusedSearchRef.current || isFiltersLoading) {
+      return;
+    }
 
-  const handleShowAll = useCallback(() => setShowAllVisibleState(!isShowAllVisibleState), [isShowAllVisibleState]);
+    node.focus();
+    hasFocusedSearchRef.current = true;
+  }, [isFiltersLoading]);
+
+  useEffect(() => {
+    setShowAllVisibleState(isSearchFilled ? false : isTemplatesNumberExceeded);
+  }, [isTemplatesNumberExceeded, isSearchFilled]);
+
+  const handleShowAll = useCallback(() => {
+    setShowAllVisibleState((isVisible) => !isVisible);
+  }, []);
 
   const truncatedTemplates = useMemo(() => {
     if (!isShowAllVisibleState && !isSearchFilled) {
@@ -78,39 +79,41 @@ export function TemplatesFilter({
     }
 
     return templatesToShow;
-  }, [isShowAllVisibleState, searchText, selectedTemplates, templatesTitles]);
+  }, [handleShowAll, isSearchFilled, isShowAllVisibleState, searchText, selectedTemplates, templatesTitles]);
 
   const isPanelExpanded = isArrayWithItems(selectedTemplates) ? true : undefined;
-  const lastCheckboxClassname = isShowAllVisibleState ? styles['mb-1'] : styles['mb-4'];
 
   return (
     <ShowMore
-      containerClassName={styles['filter-container']}
+      containerClassName={styles['filter']}
       label="process-highlights.date-picker-by-template-label"
       isInitiallyVisible={isPanelExpanded}
     >
       {renderWorkflowsPlaceholder()}
       {isTemplatesNumberExceeded && (
         <input
+          ref={setSearchInputRef}
           className={styles['filter__input']}
           disabled={isFiltersLoading}
           placeholder={formatMessage({ id: 'process-highlights.search-workflows-placeholder' })}
           value={searchText}
           onChange={changeTemplatesSearchText}
-          // eslint-disable-next-line jsx-a11y/no-autofocus
-          autoFocus
         />
       )}
       {isFiltersLoading && <div className={classnames('loading', styles['filter__spinner'])} />}
       <div
-        className={classnames(styles['filter__checkboxes'], isFiltersLoading && styles['filter__checkboxes_disabled'])}
+        className={classnames(
+          styles['filter__options'],
+          isFiltersLoading && styles['filter__options--disabled'],
+        )}
       >
-        {truncatedTemplates.map((template, idx) => (
+        {truncatedTemplates.map((template) => (
           <Checkbox
             key={template.id}
-            containerClassName={idx === templatesTitles.length - 1 ? lastCheckboxClassname : styles['mb-1']}
             id={`workflows-filter__checkbox_${template.name}`}
             title={template.name}
+            titleClassName={styles['filter__option-label']}
+            labelClassName={styles['filter__option-row']}
             onChange={changeTemplatesFilter(template.id)}
             checked={selectedTemplates.includes(template.id)}
           />
@@ -119,7 +122,7 @@ export function TemplatesFilter({
       {isShowAllVisibleState && (
         <button
           type="button"
-          className={classnames('mb-4', styles['filter__button-show-all'])}
+          className={styles['filter__show-all']}
           onClick={handleShowAll}
           disabled={isFiltersLoading}
           aria-label={formatMessage({ id: 'process-highlights.show-all-workflows' })}
