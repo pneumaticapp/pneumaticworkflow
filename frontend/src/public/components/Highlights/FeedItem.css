@@ -70,6 +70,7 @@
 .feed-item__icon {
   margin-right: 8px;
   display: flex;
+  flex-shrink: 0;
   width: 20px;
   height: 20px;
   line-height: 18px;
@@ -108,17 +109,19 @@
 }
 
 .performer__name {
+  @mixin text-truncate;
+
   margin-right: 8px;
-  overflow: hidden;
-  max-width: 100%;
+  min-width: 0;
+  flex: 0 1 auto;
   font-family: Nunito, sans-serif;
   font-size: 15px;
-  text-overflow: ellipsis;
   color: #262522;
 }
 
 .performer__datetime {
   align-self: center;
+  flex-shrink: 0;
   font-family: Nunito, sans-serif;
   font-size: 13px;
   font-weight: bold;
@@ -135,24 +138,23 @@
 }
 
 .task__name {
-  overflow: hidden;
+  @mixin text-truncate;
+
   max-width: 100%;
   font-family: Nunito, sans-serif;
   font-size: 15px;
   line-height: 20px;
-  text-overflow: ellipsis;
-  word-break: break-word;
   color: #62625f;
 }
 
 .body__workflow-name {
+  @mixin text-truncate;
+
   display: block;
-  overflow: hidden;
   max-width: 100%;
   font-family: Nunito, sans-serif;
   font-size: 13px;
   line-height: 16px;
-  text-overflow: ellipsis;
   color: #979795;
 }
 
@@ -166,14 +168,13 @@
 }
 
 .body__process-name {
+  @mixin text-truncate;
+
   display: block;
-  overflow: hidden;
   font-family: Nunito, sans-serif;
   font-size: 15px;
   font-weight: 800;
   line-height: 20px;
-  text-overflow: ellipsis;
-  word-break: break-word;
   color: #262522;
 }
 
