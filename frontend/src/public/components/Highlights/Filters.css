@@ -35,21 +35,20 @@
   }
 
   &__input {
+    @mixin text-base;
+
     margin-bottom: 1.6rem;
     padding: 0.9rem 1.6rem;
     box-sizing: border-box;
     width: 100%;
-    font-family: Nunito, sans-serif;
-    font-size: 1.5rem;
-    line-height: 2rem;
-    background: #f6f6f6;
-    border: 1px solid #dcdcdb;
+    background: var(--pneumatic-color-black4);
+    border: 0.1rem solid var(--pneumatic-color-black16);
     border-radius: 0.6rem;
     outline: none;
     transition: 0.1s ease-in-out all;
 
     &:focus {
-      border-color: #979795;
+      border-color: var(--pneumatic-color-black48);
     }
 
     &:disabled {
@@ -74,14 +73,13 @@
     }
 
     span {
-      font-family: Nunito, sans-serif;
-      font-size: 1.3rem;
-      line-height: 1.6rem;
-      color: #fec336;
+      @mixin text-small;
+
+      color: var(--pneumatic-color-link);
     }
 
     &:hover span {
-      color: #e79a26;
+      color: var(--pneumatic-color-link-hover);
     }
   }
 
@@ -92,10 +90,9 @@
   }
 
   &__placeholder {
-    font-family: Nunito, sans-serif;
-    font-size: 1.5rem;
-    line-height: 2rem;
-    color: #62625f;
+    @mixin text-base;
+
+    color: var(--pneumatic-color-black72);
   }
 
   &__datepicker {
@@ -157,14 +154,11 @@
 
     &-start,
     &-end {
+      @mixin text-base;
       @mixin text-overflow;
 
       flex: 1;
       min-width: 0;
-      font-family: Nunito, sans-serif;
-      font-size: 1.5rem;
-      font-weight: normal;
-      line-height: 2rem;
       color: var(--pneumatic-color-black100);
     }
 
@@ -173,11 +167,10 @@
     }
 
     &-separator {
+      @mixin text-base;
+
       flex-shrink: 0;
       margin: 0 0.8rem;
-      font-family: Nunito, sans-serif;
-      font-size: 1.5rem;
-      line-height: 2rem;
       color: var(--pneumatic-color-black48);
     }
 

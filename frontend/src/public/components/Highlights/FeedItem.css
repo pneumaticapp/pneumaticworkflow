@@ -1,9 +1,9 @@
 .feed-item__container {
   position: relative;
-  margin-bottom: 16px;
-  padding: 34px 32px 16px;
-  background: white;
-  border-radius: 24px;
+  margin-bottom: 1.6rem;
+  padding: 3.4rem 3.2rem 1.6rem;
+  background: var(--pneumatic-color-white);
+  border-radius: 2.4rem;
 
   .loading {
     position: absolute;
@@ -11,20 +11,20 @@
 }
 
 .feed-item__body {
-  margin: 0 -16px;
-  padding: 16px 24px 16px 16px;
+  margin: 0 -1.6rem;
+  padding: 1.6rem 2.4rem 1.6rem 1.6rem;
   display: flex;
   cursor: pointer;
-  background: #fdf7ee;
-  border-radius: 16px;
+  background: var(--pneumatic-color-beige);
+  border-radius: 1.6rem;
 }
 
 .feed-item__header-container {
-  margin-bottom: 16px;
+  margin-bottom: 1.6rem;
 }
 
 .comment__outputs-container {
-  margin-bottom: 16px;
+  margin-bottom: 1.6rem;
 }
 
 .header__comment {
@@ -34,46 +34,42 @@
 }
 
 .comment__title {
+  @mixin text-base;
+
   display: block;
-  font-family: Nunito, sans-serif;
-  font-size: 15px;
-  line-height: 20px;
-  color: #262522;
+  color: var(--pneumatic-color-black100);
 }
 
 .comment__text {
-  overflow: hidden;
-  font-family: Nunito, sans-serif;
-  font-size: 15px;
-  line-height: 20px;
-  text-overflow: ellipsis;
-  color: #62625f;
+  @mixin text-base;
+  @mixin text-truncate;
+
+  color: var(--pneumatic-color-black72);
 }
 
 .comment__text_expanded {
-  word-break: break-word;
+  @mixin text-wrap;
 }
 
 .show-more span {
-  font-family: Nunito, sans-serif;
-  font-size: 15px;
-  line-height: 20px;
+  @mixin text-base;
+
   cursor: pointer;
-  color: #fec336;
+  color: var(--pneumatic-color-link);
   transition: color 0.1s ease-in-out;
 }
 
 .show-more:hover span {
-  color: #e79a26;
+  color: var(--pneumatic-color-link-hover);
 }
 
 .feed-item__icon {
-  margin-right: 8px;
+  margin-right: 0.8rem;
   display: flex;
   flex-shrink: 0;
-  width: 20px;
-  height: 20px;
-  line-height: 18px;
+  width: 2rem;
+  height: 2rem;
+  line-height: 1.8rem;
 }
 
 .feed-item__content {
@@ -84,9 +80,9 @@
 }
 
 .feed-item__header {
-  margin-bottom: 16px;
+  margin-bottom: 1.6rem;
   display: flex;
-  height: 20px;
+  height: 2rem;
   align-items: center;
 
   @media (--mobile) {
@@ -95,11 +91,11 @@
 }
 
 .header__avatar {
-  margin-right: 8px;
+  margin-right: 0.8rem;
 }
 
 .header__info {
-  margin-right: 20px;
+  margin-right: 2rem;
   flex-grow: 1;
 }
 
@@ -109,24 +105,22 @@
 }
 
 .performer__name {
+  @mixin text-base;
   @mixin text-truncate;
 
-  margin-right: 8px;
+  margin-right: 0.8rem;
   min-width: 0;
   flex: 0 1 auto;
-  font-family: Nunito, sans-serif;
-  font-size: 15px;
-  color: #262522;
+  color: var(--pneumatic-color-black100);
 }
 
 .performer__datetime {
+  @mixin text-small bold;
+
   align-self: center;
   flex-shrink: 0;
-  font-family: Nunito, sans-serif;
-  font-size: 13px;
-  font-weight: bold;
   cursor: pointer;
-  color: #979795;
+  color: var(--pneumatic-color-black48);
 }
 
 .info__task {
@@ -138,24 +132,20 @@
 }
 
 .task__name {
+  @mixin text-base;
   @mixin text-truncate;
 
   max-width: 100%;
-  font-family: Nunito, sans-serif;
-  font-size: 15px;
-  line-height: 20px;
-  color: #62625f;
+  color: var(--pneumatic-color-black72);
 }
 
 .body__workflow-name {
+  @mixin text-small;
   @mixin text-truncate;
 
   display: block;
   max-width: 100%;
-  font-family: Nunito, sans-serif;
-  font-size: 13px;
-  line-height: 16px;
-  color: #979795;
+  color: var(--pneumatic-color-black48);
 }
 
 .body__workflow-name_active {
@@ -163,24 +153,21 @@
   transition: color 0.1s ease-in-out;
 
   &:hover {
-    color: #fec336;
+    color: var(--pneumatic-color-link);
   }
 }
 
 .body__process-name {
+  @mixin text-base 800;
   @mixin text-truncate;
 
   display: block;
-  font-family: Nunito, sans-serif;
-  font-size: 15px;
-  font-weight: 800;
-  line-height: 20px;
-  color: #262522;
+  color: var(--pneumatic-color-black100);
 }
 
 .performer__icon {
-  margin-right: 8px;
-  height: 20px;
+  margin-right: 0.8rem;
+  height: 2rem;
   align-self: start;
 
   & svg {
@@ -197,8 +184,8 @@
 }
 
 .changed-performer {
-  font-size: 15px;
-  line-height: 20px;
+  @mixin text-base;
+
   color: var(--pneumatic-color-black72);
 }
 
@@ -208,8 +195,8 @@
 
 .card-more-container {
   position: absolute;
-  top: 32px;
-  right: 32px;
+  top: 3.2rem;
+  right: 3.2rem;
 }
 
 .card-more {
