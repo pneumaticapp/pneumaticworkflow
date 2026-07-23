@@ -20,6 +20,7 @@ from src.processes.messages.template import (
     MSG_PT_0030,
     MSG_PT_0031,
     MSG_PT_0052,
+    MSG_PT_0075,
 )
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.models.templates.raw_due_date import (
@@ -70,26 +71,31 @@ class RawDueDateTemplateSerializer(
         super().additional_validate(data)
 
         task_template = self.context['task']
+        task_name = task_template.name
         rule = data['rule']
         api_name = data.get('api_name')
         if rule in DueDateRule.FIELD_RULES:
             field_api_name = data.get('source_id')
             if not field_api_name:
                 self.raise_validation_error(
-                    message=MSG_PT_0027,
+                    message=MSG_PT_0027(name=task_name),
                     api_name=api_name,
                 )
             available_fields_api_names = set(
                 task_template.template.get_fields(
-                    fields_filter_kwargs={'type': FieldType.DATE},
+                    fields_filter_kwargs={
+                        'type': FieldType.DATE,
+                    },
                     tasks_exclude_kwargs={
-                        'task__api_name': task_template.api_name,
+                        'task__api_name': (
+                            task_template.api_name
+                        ),
                     },
                 ).api_names(),
             )
             if field_api_name not in available_fields_api_names:
                 self.raise_validation_error(
-                    message=MSG_PT_0028,
+                    message=MSG_PT_0028(name=task_name),
                     api_name=api_name,
                 )
         elif rule in DueDateRule.TASK_RULES:
@@ -97,29 +103,52 @@ class RawDueDateTemplateSerializer(
             task_api_name = data.get('source_id')
             if not task_api_name:
                 self.raise_validation_error(
-                    message=MSG_PT_0029,
+                    message=MSG_PT_0029(name=task_name),
                     api_name=api_name,
                 )
             if rule == DueDateRule.AFTER_TASK_COMPLETED:
                 available_tasks_api_names = set(
                     template.tasks.exclude(
                         api_name=task_template.api_name,
-                    ).values_list('api_name', flat=True),
+                    ).values_list(
+                        'api_name', flat=True,
+                    ),
                 )
-                if task_api_name not in available_tasks_api_names:
+                if (
+                    task_api_name
+                    not in available_tasks_api_names
+                ):
                     self.raise_validation_error(
-                        message=MSG_PT_0030,
+                        message=MSG_PT_0030(
+                            name=task_name,
+                        ),
                         api_name=api_name,
                     )
             elif rule == DueDateRule.AFTER_TASK_STARTED:
                 tasks_api_names = set(
-                    template.tasks.all().values_list('api_name', flat=True),
+                    template.tasks.all().values_list(
+                        'api_name', flat=True,
+                    ),
                 )
-                if task_api_name not in tasks_api_names:
+                if (
+                    task_api_name
+                    not in tasks_api_names
+                ):
                     self.raise_validation_error(
-                        message=MSG_PT_0031,
+                        message=MSG_PT_0031(
+                            name=task_name,
+                        ),
                         api_name=api_name,
                     )
+        elif rule in DueDateRule.PREVIOUS_TASK_RULES:
+            data['source_id'] = None
+            if task_template.number <= 1:
+                self.raise_validation_error(
+                    message=MSG_PT_0075(
+                        name=task_name,
+                    ),
+                    api_name=api_name,
+                )
 
     def create(self, validated_data: Dict[str, Any]):
         self.additional_validate(validated_data)
