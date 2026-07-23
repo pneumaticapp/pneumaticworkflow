@@ -730,6 +730,11 @@ class FileAttachmentAccessType:
     )
 
 
+class WorkflowPermission:
+    CHANGE = 'change_workflow'
+    VIEW = 'view_workflow'
+
+
 class SystemVariable:
 
     DATE = 'date'

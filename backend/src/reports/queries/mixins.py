@@ -5,7 +5,8 @@ class TemplateViewerMixin:
     """Mixin: template owners and viewers in dashboard queries."""
 
     def _get_user_workflow_access_clause(self):
-        """Access: legacy starter, workflow owner, template owner, viewer."""
+        """Access: legacy starter, workflow owner (Guardian), template owner,
+        viewer."""
         return """
         (
             (

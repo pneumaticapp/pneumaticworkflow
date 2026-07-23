@@ -281,7 +281,7 @@ class TaskListFilterSerializer(
     def validate_search(self, value: str) -> Optional[str]:
         removed_chars_regex = r'\s\s+'
         clear_text = re.sub(removed_chars_regex, '', value).strip()
-        return clear_text if clear_text else None
+        return clear_text or None
 
     def validate_assigned_to(self, value):
         if not self.context['user'].is_admin:

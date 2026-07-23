@@ -54,7 +54,13 @@ from src.processes.tasks.webhooks import (
     send_workflow_completed_webhook,
     send_workflow_started_webhook,
 )
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 from src.services.markdown import MarkdownService
+from src.storage.tasks import (
+    schedule_sync_workflow_attachment_permissions,
+)
 from src.webhooks.models import WebHook
 
 UserModel = get_user_model()
@@ -432,13 +438,12 @@ class WorkflowActionService:
         if not self.workflow.is_running:
             self.workflow.status = WorkflowStatus.RUNNING
             self.workflow.save(update_fields=['status'])
-        users_performers_set = (
-            TaskPerformer.objects
-            .exclude_directly_deleted()
-            .by_task(task.id)
-            .get_user_ids_set()
-        )
-        self.workflow.members.add(*users_performers_set)
+        # Align all PERFORMER / PERFORMER_GROUP sources with TaskPerformer
+        # (do not stamp group members as PERFORMER:task.id).
+        WorkflowPermissionService(
+            self.workflow,
+        ).sync_performer_sources()
+        schedule_sync_workflow_attachment_permissions(self.workflow.id)
         self.continue_task(task=task, is_returned=is_returned)
 
     def continue_task(self, task: Task, is_returned: bool = False):

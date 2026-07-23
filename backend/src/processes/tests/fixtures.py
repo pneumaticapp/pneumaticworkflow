@@ -84,6 +84,9 @@ from src.storage.models import Attachment
 from src.storage.enums import SourceType, AccessType
 from src.webhooks.enums import HookEvent
 from src.webhooks.models import WebHook
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 
 UserModel = get_user_model()
 
@@ -463,15 +466,14 @@ def create_test_workflow(
         template_owners_ids = Template.objects.filter(
             id=template.id,
         ).get_owners_as_users()
-        workflow.owners.set(template_owners_ids)
-        workflow.members.add(*template_owners_ids)
     else:
-        workflow.members.add(*set(
+        template_owners_ids = list(
             template.owners.values_list('user_id', flat=True),
-        ))
-        workflow.owners.add(*set(
-            template.owners.values_list('user_id', flat=True),
-        ))
+        )
+
+    # Guardian: set owners for test fixture workflow
+    perm_svc = WorkflowPermissionService(workflow)
+    perm_svc.set_view_and_change(user_ids=template_owners_ids)
 
     KickoffValue.objects.create(
         workflow=workflow,

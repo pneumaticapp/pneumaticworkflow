@@ -26,6 +26,10 @@ from src.processes.tests.fixtures import (
     create_test_workflow, create_test_dataset,
 )
 from src.utils.validation import ErrorCode
+from src.permissions.enums import PermissionSource
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -332,7 +336,11 @@ def test_complete__user_not_performer__permission_denied(
     workflow = create_test_workflow(owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
     user = create_test_admin(account=account)
-    workflow.members.add(user)
+    WorkflowPermissionService(workflow).grant_view(
+        user=user,
+        source_type=PermissionSource.PERFORMER,
+        source_id=0,
+    )
     service_init_mock = mocker.patch.object(
         WorkflowActionService,
         attribute='__init__',

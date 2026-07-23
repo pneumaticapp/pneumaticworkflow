@@ -7,12 +7,14 @@ Non-admin users who are workflow owners should have viewer-level access:
 - Cannot change due dates
 """
 import pytest
+from guardian.shortcuts import remove_perm
 from django.utils import timezone
 
 from src.processes.enums import (
     OwnerRole,
     OwnerType,
     PerformerType,
+    WorkflowPermission,
 )
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.tests.fixtures import (
@@ -20,6 +22,10 @@ from src.processes.tests.fixtures import (
     create_test_template,
     create_test_user,
     create_test_workflow,
+)
+from src.permissions.enums import PermissionSource
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
 )
 
 pytestmark = pytest.mark.django_db
@@ -69,7 +75,11 @@ class TestNonAdminWorkflowOwnerTaskRetrieve:
             user=admin_owner,
             template=template,
         )
-        workflow.owners.add(non_admin_owner)
+        WorkflowPermissionService(workflow).grant_change(
+            user=non_admin_owner,
+            source_type=PermissionSource.TEMPLATE_OWNER,
+            source_id=0,
+        )
         task = workflow.tasks.get(number=1)
         api_client.token_authenticate(non_admin_owner)
 
@@ -157,7 +167,11 @@ class TestNonAdminWorkflowOwnerTaskPerformer:
             user=admin_owner,
             template=template,
         )
-        workflow.owners.add(non_admin_owner)
+        WorkflowPermissionService(workflow).grant_change(
+            user=non_admin_owner,
+            source_type=PermissionSource.TEMPLATE_OWNER,
+            source_id=0,
+        )
         task = workflow.tasks.get(number=1)
         api_client.token_authenticate(non_admin_owner)
 
@@ -236,7 +250,11 @@ class TestNonAdminWorkflowOwnerTaskPerformer:
             user=admin_owner,
             template=template,
         )
-        workflow.owners.add(non_admin_owner)
+        WorkflowPermissionService(workflow).grant_change(
+            user=non_admin_owner,
+            source_type=PermissionSource.TEMPLATE_OWNER,
+            source_id=0,
+        )
         task = workflow.tasks.get(number=1)
         performer = task.taskperformer_set.first()
         api_client.token_authenticate(non_admin_owner)
@@ -283,7 +301,11 @@ class TestNonAdminWorkflowOwnerTaskDueDate:
             user=admin_owner,
             template=template,
         )
-        workflow.owners.add(non_admin_owner)
+        WorkflowPermissionService(workflow).grant_change(
+            user=non_admin_owner,
+            source_type=PermissionSource.TEMPLATE_OWNER,
+            source_id=0,
+        )
         task = workflow.tasks.get(number=1)
         api_client.token_authenticate(non_admin_owner)
         new_due_date = timezone.now() + timezone.timedelta(days=7)
@@ -507,7 +529,11 @@ class TestRoleChangeFromOwnerToViewerTask:
             user=account_owner,
             template=template,
         )
-        workflow.owners.add(admin_user)
+        WorkflowPermissionService(workflow).grant_change(
+            user=admin_user,
+            source_type=PermissionSource.TEMPLATE_OWNER,
+            source_id=0,
+        )
         task = workflow.tasks.get(number=1)
 
         template_owner.is_deleted = True
@@ -562,13 +588,17 @@ class TestRoleChangeFromOwnerToViewerTask:
             user=account_owner,
             template=template,
         )
-        workflow.owners.add(admin_user)
+        WorkflowPermissionService(workflow).grant_change(
+            user=admin_user,
+            source_type=PermissionSource.TEMPLATE_OWNER,
+            source_id=0,
+        )
         task = workflow.tasks.get(number=1)
 
         template_owner.is_deleted = True
         template_owner.save()
-        workflow.owners.remove(admin_user)
-        workflow.members.remove(admin_user)
+        remove_perm(WorkflowPermission.CHANGE, admin_user, workflow)
+        remove_perm(WorkflowPermission.VIEW, admin_user, workflow)
         TemplateOwner.objects.create(
             role=OwnerRole.STARTER,
             template=template,
@@ -626,7 +656,11 @@ class TestNonAdminRoleChangeTaskReadOnly:
             user=account_owner,
             template=template,
         )
-        workflow.owners.add(non_admin_user)
+        WorkflowPermissionService(workflow).grant_change(
+            user=non_admin_user,
+            source_type=PermissionSource.TEMPLATE_OWNER,
+            source_id=0,
+        )
         task = workflow.tasks.get(number=1)
 
         template_owner.is_deleted = True
@@ -681,13 +715,17 @@ class TestNonAdminRoleChangeTaskReadOnly:
             user=account_owner,
             template=template,
         )
-        workflow.owners.add(non_admin_user)
+        WorkflowPermissionService(workflow).grant_change(
+            user=non_admin_user,
+            source_type=PermissionSource.TEMPLATE_OWNER,
+            source_id=0,
+        )
         task = workflow.tasks.get(number=1)
 
         template_owner.is_deleted = True
         template_owner.save()
-        workflow.owners.remove(non_admin_user)
-        workflow.members.remove(non_admin_user)
+        remove_perm(WorkflowPermission.CHANGE, non_admin_user, workflow)
+        remove_perm(WorkflowPermission.VIEW, non_admin_user, workflow)
         TemplateOwner.objects.create(
             role=OwnerRole.STARTER,
             template=template,

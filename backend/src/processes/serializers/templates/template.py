@@ -802,7 +802,7 @@ class TemplateListFilterSerializer(
     def validate_search(self, value: str) -> str:
         removed_chars_regex = r'\s\s+'
         clear_text = re.sub(removed_chars_regex, '', value).strip()
-        return clear_text if clear_text else None
+        return clear_text or None
 
 
 class TemplateListSerializer(ModelSerializer):

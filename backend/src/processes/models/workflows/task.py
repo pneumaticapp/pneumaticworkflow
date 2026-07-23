@@ -14,6 +14,7 @@ from src.accounts.models import (
 )
 from src.generics.managers import BaseSoftDeleteManager
 from src.generics.models import SoftDeleteModel
+from src.permissions.enums import PermissionSource
 from src.processes.enums import (
     DirectlyStatus,
     FieldType,
@@ -521,7 +522,27 @@ class Task(
         Notification.objects.exclude_users(
             union_user_ids,
         ).by_task(self.id).delete()
-        self.workflow.members.add(*created_performers_user_ids)
+        # Guardian: sync view for newly created USER / GROUP performers.
+        # Lazy imports: model → service / celery would cycle at import time.
+        if created_performers_user_ids or created_performers_group_ids:
+            from src.processes.services.workflow_permissions import (
+                WorkflowPermissionService,
+            )
+            from src.storage.tasks import (
+                schedule_sync_workflow_attachment_permissions,
+            )
+            perm_svc = WorkflowPermissionService(self.workflow)
+            if created_performers_user_ids:
+                perm_svc.grant_view_bulk(
+                    user_ids=created_performers_user_ids,
+                    source_type=PermissionSource.PERFORMER,
+                    source_id=self.id,
+                )
+            for group_id in created_performers_group_ids:
+                perm_svc.sync_performer_group(group_id=group_id)
+            schedule_sync_workflow_attachment_permissions(
+                self.workflow_id,
+            )
         return (
             created_performers_user_ids,
             created_performers_group_ids,
@@ -554,6 +575,31 @@ class Task(
                 deleted_user_ids.append(performer_to_delete.user_id)
         if deleted_user_ids or deleted_group_ids:
             performers_to_delete.delete()
+            from src.processes.services.workflow_permissions import (
+                WorkflowPermissionService,
+            )
+            from src.storage.tasks import (
+                schedule_sync_workflow_attachment_permissions,
+            )
+            perm_service = WorkflowPermissionService(self.workflow)
+            if deleted_user_ids:
+                remaining_user_ids = (
+                    TaskPerformer.objects
+                    .by_task(self.id)
+                    .exclude_directly_deleted()
+                    .filter(type=PerformerType.USER)
+                    .values_list('user_id', flat=True)
+                )
+                perm_service.sync_view(
+                    user_ids=remaining_user_ids,
+                    source_type=PermissionSource.PERFORMER,
+                    source_id=self.id,
+                )
+            for group_id in deleted_group_ids:
+                perm_service.sync_performer_group(group_id=group_id)
+            schedule_sync_workflow_attachment_permissions(
+                self.workflow_id,
+            )
         return deleted_user_ids, deleted_group_ids
 
     def delete_raw_performer(
