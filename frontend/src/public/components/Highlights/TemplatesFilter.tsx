@@ -21,7 +21,7 @@ export function TemplatesFilter({
   changeTemplatesFilter,
 }: ITemplatesFilterProps) {
   const { formatMessage } = useIntl();
-  const searchInputRef = useRef<HTMLInputElement>(null);
+  const hasFocusedSearchRef = useRef(false);
 
   const isEmpty = !isArrayWithItems(templatesTitles);
 
@@ -42,20 +42,19 @@ export function TemplatesFilter({
   const isSearchFilled = useMemo(() => searchText.length > 1, [searchText]);
 
   const [isShowAllVisibleState, setShowAllVisibleState] = useState(isTemplatesNumberExceeded);
-  const hasFocusedSearchRef = useRef(false);
+
+  const setSearchInputRef = useCallback((node: HTMLInputElement | null) => {
+    if (!node || hasFocusedSearchRef.current || isFiltersLoading) {
+      return;
+    }
+
+    node.focus();
+    hasFocusedSearchRef.current = true;
+  }, [isFiltersLoading]);
 
   useEffect(() => {
     setShowAllVisibleState(isSearchFilled ? false : isTemplatesNumberExceeded);
   }, [isTemplatesNumberExceeded, isSearchFilled]);
-
-  useEffect(() => {
-    if (!isTemplatesNumberExceeded || isFiltersLoading || hasFocusedSearchRef.current) {
-      return;
-    }
-
-    searchInputRef.current?.focus();
-    hasFocusedSearchRef.current = true;
-  }, [isFiltersLoading, isTemplatesNumberExceeded]);
 
   const handleShowAll = useCallback(() => {
     setShowAllVisibleState((isVisible) => !isVisible);
@@ -93,7 +92,7 @@ export function TemplatesFilter({
       {renderWorkflowsPlaceholder()}
       {isTemplatesNumberExceeded && (
         <input
-          ref={searchInputRef}
+          ref={setSearchInputRef}
           className={styles['filter__input']}
           disabled={isFiltersLoading}
           placeholder={formatMessage({ id: 'process-highlights.search-workflows-placeholder' })}

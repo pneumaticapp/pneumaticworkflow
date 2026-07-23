@@ -21,7 +21,7 @@ export function UsersFilter({
   changeUsersSearchText,
 }: IUsersFilterProps) {
   const { formatMessage } = useIntl();
-  const searchInputRef = useRef<HTMLInputElement>(null);
+  const hasFocusedSearchRef = useRef(false);
 
   const isUsersNumberExceeded = useMemo(() => users.length > MAX_SHOW_USERS, [users]);
 
@@ -30,19 +30,18 @@ export function UsersFilter({
   const [isShowAllVisibleState, setShowAllVisibleState] = useState(
     isSearchFilled ? false : isUsersNumberExceeded,
   );
-  const hasFocusedSearchRef = useRef(false);
 
-  useEffect(() => {
-    setShowAllVisibleState(isUsersNumberExceeded);
-  }, [isUsersNumberExceeded]);
-
-  useEffect(() => {
-    if (!isUsersNumberExceeded || hasFocusedSearchRef.current) {
+  const setSearchInputRef = useCallback((node: HTMLInputElement | null) => {
+    if (!node || hasFocusedSearchRef.current) {
       return;
     }
 
-    searchInputRef.current?.focus();
+    node.focus();
     hasFocusedSearchRef.current = true;
+  }, []);
+
+  useEffect(() => {
+    setShowAllVisibleState(isUsersNumberExceeded);
   }, [isUsersNumberExceeded]);
 
   const handleShowAll = useCallback(() => {
@@ -82,7 +81,7 @@ export function UsersFilter({
     >
       {isUsersNumberExceeded && (
         <input
-          ref={searchInputRef}
+          ref={setSearchInputRef}
           className={styles['filter__input']}
           placeholder={formatMessage({ id: 'process-highlights.search-users-placeholder' })}
           value={searchText}
