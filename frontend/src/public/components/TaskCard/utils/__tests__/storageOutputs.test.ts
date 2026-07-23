@@ -13,6 +13,18 @@ describe('storageOutputs', () => {
     localStorage.clear();
   });
 
+  it('persists draft metadata with the stored output', () => {
+    const outputs = [makeExtraField({ apiName: 'plain', value: 'draft' })];
+    const metadata = {
+      dateStarted: '2024-01-01',
+      fieldFingerprints: { plain: 'server-fingerprint' },
+    };
+
+    outputStorage.save(1, outputs, metadata);
+
+    expect(outputStorage.getEntry(1)).toEqual({ taskId: 1, data: outputs, metadata });
+  });
+
   it('keeps outputStorage and fieldsetsStorage isolated from each other', () => {
     const outputs: IExtraField[] = [makeExtraField({ apiName: 'plain', name: 'Field plain', value: 'plain-value' })];
     const fieldsets: IFieldsetRuntime[] = [

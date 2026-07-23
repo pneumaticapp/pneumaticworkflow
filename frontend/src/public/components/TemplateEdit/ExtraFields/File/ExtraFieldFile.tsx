@@ -1,6 +1,4 @@
-/* eslint-disable */
-/* prettier-ignore */
-import * as React from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import classnames from 'classnames';
 import { EExtraFieldMode } from '../../../../types/template';
 import { EFieldLabelPosition } from '../../../../types/fieldset';
@@ -28,19 +26,27 @@ export function ExtraFieldFile({
   mode = EExtraFieldMode.Kickoff,
   editField,
   isDisabled = false,
-  accountId,
   labelBackgroundColor,
   labelPosition,
 }: IWorkflowExtraFieldProps): JSX.Element {
-  const { useCallback, useState, useEffect, createRef } = React;
   const [isUploading, setUploadingState] = useState(false);
-
   const initialFiles = field.attachments?.length ? field.attachments : parseMarkdownToFiles(field.markdownValue);
   const [filesToUpload, setFilesToUploadState] = useState<TUploadedFile[]>(initialFiles);
-  const fieldNameInputRef = React.useRef<HTMLTextAreaElement | null>(null);
-
-  const [isFocused, setIsFocused] = React.useState(false);
+  const filesToUploadRef = useRef<TUploadedFile[]>(initialFiles);
+  const fieldNameInputRef = useRef<HTMLTextAreaElement | null>(null);
+  const uploadFieldRef = useRef<HTMLInputElement>(null);
+  const [isFocused, setIsFocused] = useState(false);
   const { formatMessage } = useIntl();
+
+  useEffect(() => {
+    const nextFiles = field.attachments?.length
+      ? field.attachments
+      : parseMarkdownToFiles(field.markdownValue);
+
+    filesToUploadRef.current = nextFiles;
+    setFilesToUploadState(nextFiles);
+  }, [field.apiName, field.attachments, field.markdownValue]);
+
   useEffect(() => {
     const { current } = uploadFieldRef;
 
@@ -48,8 +54,6 @@ export function ExtraFieldFile({
       current.value = '';
     }
   }, [filesToUpload]);
-
-  const uploadFieldRef = createRef<HTMLInputElement>();
 
   const handleChangeName = useCallback(
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -68,11 +72,12 @@ export function ExtraFieldFile({
       setUploadingState(true);
       const uploadedFiles = await uploadFiles(files);
       const successFiles = uploadedFiles.filter((file) => !file.error);
-      const newUploadedFiles = [...filesToUpload, ...(successFiles as TUploadedFile[])];
+      const newUploadedFiles = [...filesToUploadRef.current, ...(successFiles as TUploadedFile[])];
       const newUploadedFilesIds = newUploadedFiles
         .filter((file) => !file.isRemoved)
         .map((file) => `[${file.name}](${file.url})`);
 
+      filesToUploadRef.current = newUploadedFiles;
       setFilesToUploadState(newUploadedFiles);
       editField({ value: newUploadedFilesIds, attachments: newUploadedFiles });
     } catch (error) {
@@ -84,11 +89,14 @@ export function ExtraFieldFile({
   };
 
   const handleDeleteFile = (id: string) => async () => {
-    const newUploadedFiles = filesToUpload.map((file) => (file.id === id ? { ...file, isRemoved: true } : file));
+    const newUploadedFiles = filesToUploadRef.current.map(
+      (file) => (file.id === id ? { ...file, isRemoved: true } : file),
+    );
     const newUploadedFilesIds = newUploadedFiles
       .filter((file) => !file.isRemoved)
       .map((file) => `[${file.name}](${file.url})`);
 
+    filesToUploadRef.current = newUploadedFiles;
     setFilesToUploadState(newUploadedFiles);
     editField({ value: newUploadedFilesIds, attachments: newUploadedFiles });
   };
@@ -136,6 +144,7 @@ export function ExtraFieldFile({
           {isRequired && <span className={kickoffStyles['kick-off-required-sign']} />}
           {!isFocused && mode === EExtraFieldMode.Kickoff && (
             <button
+              type="button"
               onClick={() => fieldNameInputRef.current?.focus()}
               className={classnames(
                 kickoffStyles['kick-off-edit-name'],
@@ -229,14 +238,5 @@ export function ExtraFieldFile({
     );
   };
 
-  const renderFileField = () => {
-    const fieldsMap: { [key in EExtraFieldMode]: React.ReactNode } = {
-      [EExtraFieldMode.Kickoff]: renderKickoffView(),
-      [EExtraFieldMode.ProcessRun]: renderProcessView(),
-    };
-
-    return fieldsMap[mode];
-  };
-
-  return <>{renderFileField()}</>;
+  return <>{mode === EExtraFieldMode.Kickoff ? renderKickoffView() : renderProcessView()}</>;
 }

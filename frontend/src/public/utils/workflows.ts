@@ -68,3 +68,7 @@ export const getNormalizeFieldsOrders = (fields?: IExtraField[]): IExtraField[] 
 
   return fields.map((field, index) => ({ ...field, order: fields.length - index - 1 }));
 };
+
+export const sortFieldsByOrder = (fields: IExtraField[]): IExtraField[] => {
+  return [...fields].sort((a, b) => b.order - a.order);
+};

@@ -88,9 +88,33 @@ describe('ExtraFieldsHelper', () => {
       expect(result[0].value).toEqual([]);
     });
 
-    it('prefers storageOutput attachments over markdownValue', () => {
+    it('restores storage attachments over a prefilled server value', () => {
       const serverField = createFileField({
         markdownValue: '[old.pdf](https://files.example.com/old)',
+      });
+
+      const storageAttachments: TUploadedFile[] = [
+        {
+          id: 'new-id',
+          name: 'new.pdf',
+          url: 'https://files.example.com/new',
+          size: 500,
+        },
+      ];
+
+      const storageField = createFileField({
+        attachments: storageAttachments,
+      });
+
+      const helper = new ExtraFieldsHelper([serverField], [storageField]);
+      const result = helper.getFieldsWithValues();
+
+      expect(result[0].attachments).toEqual(storageAttachments);
+    });
+
+    it('uses storageOutput attachments when server field has no value', () => {
+      const serverField = createFileField({
+        markdownValue: '',
       });
 
       const storageAttachments: TUploadedFile[] = [
@@ -117,7 +141,7 @@ describe('ExtraFieldsHelper', () => {
 
     it('filters out isRemoved files from storageOutput', () => {
       const serverField = createFileField({
-        markdownValue: '[doc.pdf](https://files.example.com/1)',
+        markdownValue: '',
       });
 
       const storageField = createFileField({
@@ -143,6 +167,56 @@ describe('ExtraFieldsHelper', () => {
 
       expect(result[0].attachments).toHaveLength(1);
       expect(result[0].attachments![0].name).toBe('kept.pdf');
+    });
+
+    it('clears server markdown when every stored attachment was removed', () => {
+      const markdownValue = '[old.pdf](https://files.example.com/old)';
+      const serverField = createFileField({ markdownValue });
+      const storageField = createFileField({
+        markdownValue,
+        attachments: [{
+          id: 'old',
+          name: 'old.pdf',
+          url: 'https://files.example.com/old',
+          size: 100,
+          isRemoved: true,
+        }],
+      });
+
+      const result = new ExtraFieldsHelper([serverField], [storageField]).getFieldsWithValues();
+
+      expect(result[0].attachments).toEqual([]);
+      expect(result[0].value).toEqual([]);
+      expect(result[0].markdownValue).toBe('');
+    });
+
+    it('uses server attachments when markdownValue is absent', () => {
+      const serverField = createFileField({
+        markdownValue: undefined,
+        attachments: [
+          {
+            id: 'server-att',
+            name: 'server.pdf',
+            url: 'https://files.example.com/server',
+            size: 100,
+          },
+        ],
+      });
+
+      const helper = new ExtraFieldsHelper([serverField]);
+      const result = helper.getFieldsWithValues();
+
+      expect(result[0].attachments).toEqual([
+        {
+          id: 'server-att',
+          name: 'server.pdf',
+          url: 'https://files.example.com/server',
+          size: 100,
+        },
+      ]);
+      expect(result[0].value).toEqual([
+        '[server.pdf](https://files.example.com/server)',
+      ]);
     });
 
     it('falls back to markdownValue when storageOutput has no matching field', () => {
@@ -188,6 +262,50 @@ describe('ExtraFieldsHelper', () => {
       expect(result[0].value).toBe('hello');
     });
 
+    it('restores a stored number over a prefilled server value', () => {
+      const serverField: IExtraField = {
+        apiName: 'field-number',
+        name: 'Number Field',
+        type: EExtraFieldType.Number,
+        order: 1,
+        userId: null,
+        groupId: null,
+        value: 0,
+      };
+      const storageField = { ...serverField, value: 10 };
+
+      const helper = new ExtraFieldsHelper([serverField], [storageField]);
+      const result = helper.getFieldsWithValues();
+
+      expect(result[0].value).toBe(10);
+    });
+
+    it('restores stored user selection ids instead of server ids', () => {
+      const serverField: IExtraField = {
+        apiName: 'field-user',
+        name: 'User Field',
+        type: EExtraFieldType.User,
+        order: 1,
+        userId: 1,
+        groupId: null,
+        value: 'server user',
+      };
+      const storageField: IExtraField = {
+        ...serverField,
+        userId: null,
+        groupId: 7,
+        value: 'draft group',
+      };
+
+      const result = new ExtraFieldsHelper([serverField], [storageField]).getFieldsWithValues();
+
+      expect(result[0]).toEqual(expect.objectContaining({
+        value: 'draft group',
+        userId: null,
+        groupId: 7,
+      }));
+    });
+
     it('returns null for radio field with no selections', () => {
       const field: IExtraField = {
         apiName: 'field-radio',
@@ -203,6 +321,42 @@ describe('ExtraFieldsHelper', () => {
       const result = helper.getFieldsWithValues();
 
       expect(result).toHaveLength(0);
+    });
+
+    it('normalizes an empty radio value to null', () => {
+      const field: IExtraField = {
+        apiName: 'field-radio',
+        name: 'Radio Field',
+        type: EExtraFieldType.Radio,
+        order: 1,
+        userId: null,
+        groupId: null,
+        selections: ['first', 'second'],
+        value: '',
+      };
+
+      const helper = new ExtraFieldsHelper([field]);
+      const result = helper.getFieldsWithValues();
+
+      expect(result[0].value).toBeNull();
+    });
+
+    it('normalizes an empty stored radio value to null', () => {
+      const field: IExtraField = {
+        apiName: 'field-radio',
+        name: 'Radio Field',
+        type: EExtraFieldType.Radio,
+        order: 1,
+        userId: null,
+        groupId: null,
+        selections: ['first', 'second'],
+        value: '',
+      };
+
+      const helper = new ExtraFieldsHelper([field], [{ ...field }]);
+      const result = helper.getFieldsWithValues();
+
+      expect(result[0].value).toBeNull();
     });
   });
 

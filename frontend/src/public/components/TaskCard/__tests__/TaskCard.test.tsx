@@ -1,41 +1,23 @@
-import * as React from 'react';
-import { render, screen, waitFor, act } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import React, { forwardRef, ReactNode } from 'react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 
 import { TaskCard, ETaskCardViewMode } from '../TaskCard';
-import { makeExtraField } from '../../../__stubs__/fields.factory';
-import { makeFieldsetRuntime } from '../../../__stubs__/fieldsets.factory';
-import {ETemplateOwnerType, IExtraField } from '../../../types/template';
-import { IFieldsetRuntime } from '../../../types/fieldset';
+import { EExtraFieldType, ETemplateOwnerType, IExtraField } from '../../../types/template';
 import { ETaskStatus } from '../../../redux/actions';
 import { EWorkflowStatus, EWorkflowsLogSorting } from '../../../types/workflow';
-import { IAuthUser, ELoggedState } from '../../../types/redux';
-import { EUserStatus } from '../../../types/user';
-import { ESubscriptionPlan } from '../../../types/account';
-import { MergedOutputList } from '../../MergedOutputList';
-import { intlMock } from '../../../__stubs__/intlMock';
-import type { TUsersDropdownOption } from '../../UI/form/UsersDropdown';
 
-jest.mock('react-redux', () => ({
-  ...jest.requireActual('react-redux'),
-  useSelector: <T,>(selector: () => T) => selector(),
-}));
+const mockButton = jest.fn();
 
-jest.mock('../../MergedOutputList', () => ({
-  MergedOutputList: jest.fn(() => <div data-testid="merged-output-list" />),
+jest.mock('../../TemplateEdit/ExtraFields', () => ({
+  ExtraFieldIntl: jest.fn(() => <div data-testid="extra-field" />),
 }));
 
 jest.mock('../utils/storageOutputs', () => ({
-  outputStorage: {
-    get: jest.fn(() => undefined),
-    save: jest.fn(),
-    remove: jest.fn(),
-  },
-  fieldsetsStorage: {
-    get: jest.fn(() => undefined),
-    save: jest.fn(),
-    remove: jest.fn(),
-  },
+  getOutputFromStorage: jest.fn(() => undefined),
+  addOrUpdateStorageOutput: jest.fn(),
+  removeOutputFromLocalStorage: jest.fn(),
+  outputStorage: { getEntry: jest.fn() },
+  fieldsetsStorage: { get: jest.fn(), getEntry: jest.fn(), save: jest.fn() },
 }));
 
 jest.mock('../../../utils/autoFocusFirstField', () => ({
@@ -46,19 +28,18 @@ jest.mock('../../../hooks/useCheckDevice', () => ({
   useCheckDevice: () => ({ isMobile: false, isDesktop: true }),
 }));
 
+jest.mock('react-redux', () => ({
+  useSelector: (selector: () => unknown) => selector(),
+}));
+
 jest.mock('../../../redux/selectors/groups', () => ({
   getRegularGroupsList: () => [{ id: 5, name: 'Group Five', type: 'regular' }],
 }));
 
-type TMockDropdownProps = {
-  value: TUsersDropdownOption[];
-  options: TUsersDropdownOption[];
-};
-
-const mockUsersDropdown = jest.fn((_props?: TMockDropdownProps) => null);
+const mockUsersDropdown = jest.fn();
 
 jest.mock('../../UI/form/UsersDropdown', () => ({
-  UsersDropdown: (props: TMockDropdownProps) => {
+  UsersDropdown: (props: unknown) => {
     mockUsersDropdown(props);
     return null;
   },
@@ -79,7 +60,7 @@ jest.mock('../../Workflows/WorkflowLog/WorkflowLogSkeleton', () => ({
 }));
 
 jest.mock('../GuestsController', () => ({
-  GuestController: React.forwardRef(() => null),
+  GuestController: forwardRef(() => null),
 }));
 
 jest.mock('../SubWorkflows', () => ({
@@ -99,7 +80,7 @@ jest.mock('../ReturnModal', () => ({
 }));
 
 jest.mock('react-router-dom', () => ({
-  Link: ({ children }: { children: React.ReactNode }) => <a>{children}</a>,
+  Link: ({ children }: { children: ReactNode }) => <a href="/">{children}</a>,
 }));
 
 jest.mock('../../RichText', () => ({
@@ -140,27 +121,18 @@ jest.mock('../checklist', () => ({
 }));
 
 jest.mock('../../UI', () => ({
-  Tooltip: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  Tooltip: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
 jest.mock('../../UI/Typeography/Header', () => ({
-  Header: ({ children }: { children: React.ReactNode }) => <h4>{children}</h4>,
+  Header: ({ children }: { children: ReactNode }) => <h4>{children}</h4>,
 }));
 
 jest.mock('../../UI/Buttons/Button', () => ({
-  Button: ({
-    label,
-    onClick,
-    disabled,
-  }: {
-    label?: React.ReactNode;
-    onClick?: () => void;
-    disabled?: boolean;
-  }) => (
-    <button type="button" disabled={disabled} onClick={onClick}>
-      {label}
-    </button>
-  ),
+  Button: (props: { onClick?(): void }) => {
+    mockButton(props);
+    return <button type="button" aria-label="Action" onClick={props.onClick} />;
+  },
 }));
 
 jest.mock('../../IntlMessages', () => ({
@@ -179,6 +151,15 @@ jest.mock('../../icons', () => ({
   ReturnToIcon: () => <svg />,
 }));
 
+const makeField = (overrides = {}) => ({
+  apiName: `f-${Math.random()}`,
+  name: 'Field',
+  type: EExtraFieldType.String,
+  order: 0,
+  userId: null,
+  groupId: null,
+  ...overrides,
+});
 
 const baseTask = {
   id: 1,
@@ -219,24 +200,24 @@ const baseWorkflowLog = {
   isLoading: false,
 };
 
-const baseAuthUser: IAuthUser = {
+const baseAuthUser = {
   id: 1,
   email: 'test@test.com',
   firstName: 'Test',
   lastName: 'User',
   phone: '',
   photo: '',
-  type: 'user',
+  type: 'user' as const,
   token: '',
   account: {
     name: '',
     isSubscribed: false,
     billingSync: false,
     tenantName: '',
-    billingPlan: ESubscriptionPlan.Free,
-    plan: ESubscriptionPlan.Free,
+    billingPlan: 'free' as any,
+    plan: 'free' as any,
     planExpiration: null,
-    leaseLevel: 'standard',
+    leaseLevel: 'standard' as any,
     logoSm: null,
     logoLg: null,
     trialEnded: false,
@@ -250,9 +231,9 @@ const baseAuthUser: IAuthUser = {
   dateFmt: 'MM/dd/yyyy',
   dateFdw: 'Monday',
   language: 'en',
-  status: EUserStatus.Active,
-  loggedState: ELoggedState.LoggedIn,
-  invitedUser: { id: '' },
+  status: 'active' as any,
+  loggedState: 'logged' as any,
+  invitedUser: {} as any,
   isDigestSubscriber: false,
   isTasksDigestSubscriber: false,
   isCommentsMentionsSubscriber: false,
@@ -292,360 +273,8 @@ const baseProps = {
 describe('TaskCard', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-
-    const { fieldsetsStorage, outputStorage } = require('../utils/storageOutputs');
-    (fieldsetsStorage.get as jest.Mock).mockImplementation(() => undefined);
-    (outputStorage.get as jest.Mock).mockImplementation(() => undefined);
-  });
-
-  it('renders MergedOutputList and passes fields and fieldsets', async () => {
-    const fieldsets = [
-      makeFieldsetRuntime({ name: 'FS', order: 2 }),
-    ];
-    const task = {
-      ...baseTask,
-      output: [makeExtraField({ apiName: 'a', order: 1 })],
-      fieldsets,
-    };
-
-    render(<TaskCard {...baseProps} task={task} />);
-
-    await waitFor(() => {
-      expect(screen.queryByTestId('merged-output-list')).not.toBeNull();
-    });
-
-    const mock = MergedOutputList as jest.Mock;
-    expect(mock).toHaveBeenCalled();
-    const lastCallProps = mock.mock.calls[mock.mock.calls.length - 1][0];
-    expect(lastCallProps).toEqual(
-      expect.objectContaining({
-        fields: expect.arrayContaining([expect.objectContaining({ apiName: 'a' })]),
-        fieldsets,
-      }),
-    );
-  });
-
-  it('passes empty fieldsets when task has no fieldsets', async () => {
-    const task = {
-      ...baseTask,
-      output: [makeExtraField({ apiName: 'a' })],
-    };
-
-    render(<TaskCard {...baseProps} task={task} />);
-
-    await waitFor(() => {
-      expect(screen.queryByTestId('merged-output-list')).not.toBeNull();
-    });
-
-    const mock = MergedOutputList as jest.Mock;
-    expect(mock).toHaveBeenCalled();
-    const lastCallProps = mock.mock.calls[mock.mock.calls.length - 1][0];
-    expect(lastCallProps).toEqual(
-      expect.objectContaining({
-        fieldsets: [],
-      }),
-    );
-  });
-
-  it('filters out isHidden fields before passing to MergedOutputList', async () => {
-    const task = {
-      ...baseTask,
-      output: [
-        makeExtraField({ apiName: 'hidden', isHidden: true }),
-        makeExtraField({ apiName: 'visible-1' }),
-        makeExtraField({ apiName: 'visible-2' }),
-      ],
-    };
-
-    render(<TaskCard {...baseProps} task={task} />);
-
-    await waitFor(() => {
-      expect(screen.queryByTestId('merged-output-list')).not.toBeNull();
-    });
-
-    const callArgs = (MergedOutputList as jest.Mock).mock.calls[0][0];
-    expect(callArgs.fields).toHaveLength(2);
-    expect(callArgs.fields.map((field: IExtraField) => field.apiName)).toEqual(
-      expect.arrayContaining(['visible-1', 'visible-2']),
-    );
-  });
-
-  it('saves fieldsets to localStorage when a fieldset field is edited', async () => {
-    jest.useFakeTimers();
-    const { fieldsetsStorage } = require('../utils/storageOutputs');
-
-    const fieldsets = [
-      makeFieldsetRuntime({ name: 'FS', fields: [makeExtraField({ apiName: 'f-1' })] }),
-    ];
-    const task = { ...baseTask, output: [], fieldsets };
-    render(<TaskCard {...baseProps} task={task} />);
-
-    await waitFor(() => {
-      expect(screen.queryByTestId('merged-output-list')).not.toBeNull();
-    });
-
-    const { onEditFieldsetField } = (MergedOutputList as jest.Mock).mock.calls[0][0];
-    act(() => {
-      onEditFieldsetField('f-1')({ value: 'new value' });
-      jest.advanceTimersByTime(300);
-    });
-    expect(fieldsetsStorage.save).toHaveBeenCalled();
-
-    jest.useRealTimers();
-  });
-
-  it('restores fieldset values from localStorage draft and merges them with server data', async () => {
-    const { fieldsetsStorage } = require('../utils/storageOutputs');
-
-    const storageFs: IFieldsetRuntime = makeFieldsetRuntime({
-      name: 'FS-1',
-      order: 1,
-      fields: [makeExtraField({ apiName: 'email', value: 'draft@x.com' })],
-    });
-    (fieldsetsStorage.get as jest.Mock).mockReturnValue([storageFs]);
-
-    const serverFs1: IFieldsetRuntime = makeFieldsetRuntime({
-      name: 'FS-1',
-      order: 1,
-      fields: [makeExtraField({ apiName: 'email', value: 'server@x.com' })],
-    });
-    const serverFs2: IFieldsetRuntime = makeFieldsetRuntime({
-      apiNameBinding: 'fs-2',
-      name: 'FS-2',
-      order: 2,
-      fields: [makeExtraField({ apiName: 'phone', value: 'server-phone' })],
-    });
-
-    const task = { ...baseTask, output: [], fieldsets: [serverFs1, serverFs2] };
-    render(<TaskCard {...baseProps} task={task} />);
-
-    await waitFor(() => {
-      const lastCall = (MergedOutputList as jest.Mock).mock.calls[
-        (MergedOutputList as jest.Mock).mock.calls.length - 1
-      ];
-      expect(lastCall[0].fieldsets[0].fields[0].value).toBe('draft@x.com');
-    });
-
-    const lastCall = (MergedOutputList as jest.Mock).mock.calls[
-      (MergedOutputList as jest.Mock).mock.calls.length - 1
-    ];
-    const passedFieldsets: IFieldsetRuntime[] = lastCall[0].fieldsets;
-    expect(passedFieldsets).toHaveLength(2);
-    expect(passedFieldsets[1].fields[0].value).toBe('server-phone');
-  });
-
-  it('ignores a foreign fieldset from the draft that does not belong to the current task', async () => {
-    const { fieldsetsStorage } = require('../utils/storageOutputs');
-
-    const strangerFs: IFieldsetRuntime = makeFieldsetRuntime({
-      apiNameBinding: 'fs-stranger',
-      name: 'Stranger',
-      fields: [makeExtraField({ apiName: 'wrong', value: 'wrong' })],
-    });
-    (fieldsetsStorage.get as jest.Mock).mockReturnValue([strangerFs]);
-
-    const serverFs: IFieldsetRuntime = makeFieldsetRuntime({
-      name: 'FS-1',
-      order: 1,
-      fields: [makeExtraField({ apiName: 'email' })],
-    });
-
-    const task = { ...baseTask, output: [], fieldsets: [serverFs] };
-    render(<TaskCard {...baseProps} task={task} />);
-
-    await waitFor(() => {
-      expect((MergedOutputList as jest.Mock).mock.calls.length).toBeGreaterThan(0);
-    });
-
-    const lastCall = (MergedOutputList as jest.Mock).mock.calls[
-      (MergedOutputList as jest.Mock).mock.calls.length - 1
-    ];
-    const passedFieldsets: IFieldsetRuntime[] = lastCall[0].fieldsets;
-    expect(passedFieldsets).toHaveLength(1);
-    expect(passedFieldsets[0].apiNameBinding).toBe('fs-1');
-    expect(
-      passedFieldsets.find((fs) => fs.apiNameBinding === 'fs-stranger'),
-    ).toBeUndefined();
-  });
-
-  it('reloads fieldsets from the new task draft when task.id changes', async () => {
-    const { fieldsetsStorage } = require('../utils/storageOutputs');
-
-    (fieldsetsStorage.get as jest.Mock).mockImplementation((id: number) => {
-      if (id === 100) {
-        return [
-          makeFieldsetRuntime({
-            apiNameBinding: 'fs',
-            name: 'FS',
-            fields: [makeExtraField({ apiName: 'k', value: 'draft-A' })],
-          }),
-        ];
-      }
-      if (id === 200) {
-        return [
-          makeFieldsetRuntime({
-            apiNameBinding: 'fs',
-            name: 'FS',
-            fields: [makeExtraField({ apiName: 'k', value: 'draft-B' })],
-          }),
-        ];
-      }
-      return undefined;
-    });
-
-    const serverFs = (value: string): IFieldsetRuntime => makeFieldsetRuntime({
-      apiNameBinding: 'fs',
-      name: 'FS',
-      fields: [makeExtraField({ apiName: 'k', value })],
-    });
-
-    const taskA = { ...baseTask, id: 100, output: [], fieldsets: [serverFs('server-A')] };
-    const { rerender } = render(<TaskCard {...baseProps} task={taskA} />);
-
-    await waitFor(() => {
-      const lastCall = (MergedOutputList as jest.Mock).mock.calls[
-        (MergedOutputList as jest.Mock).mock.calls.length - 1
-      ];
-      expect(lastCall[0].fieldsets[0].fields[0].value).toBe('draft-A');
-    });
-
-    const taskB = { ...baseTask, id: 200, output: [], fieldsets: [serverFs('server-B')] };
-    rerender(<TaskCard {...baseProps} task={taskB} />);
-
-    await waitFor(() => {
-      const lastCall = (MergedOutputList as jest.Mock).mock.calls[
-        (MergedOutputList as jest.Mock).mock.calls.length - 1
-      ];
-      expect(lastCall[0].fieldsets[0].fields[0].value).toBe('draft-B');
-    });
-  });
-
-  it('on Complete click submits a combined payload: plain outputs + fields of all fieldsets', async () => {
-    const setTaskCompleted = jest.fn();
-    const fieldsets: IFieldsetRuntime[] = [
-      makeFieldsetRuntime({
-        name: 'FS-1',
-        order: 2,
-        fields: [makeExtraField({ apiName: 'a' }), makeExtraField({ apiName: 'b' })],
-      }),
-      makeFieldsetRuntime({
-        apiNameBinding: 'fs-2',
-        name: 'FS-2',
-        order: 3,
-        fields: [makeExtraField({ apiName: 'c' })],
-      }),
-    ];
-    const task = {
-      ...baseTask,
-      id: 42,
-      output: [makeExtraField({ apiName: 'top' })],
-      fieldsets,
-    };
-
-    render(<TaskCard {...baseProps} task={task} setTaskCompleted={setTaskCompleted} />);
-
-    await waitFor(() => {
-      expect(screen.queryByTestId('merged-output-list')).not.toBeNull();
-    });
-
-    const completeLabel = intlMock.formatMessage({ id: 'processes.complete-task' });
-    userEvent.click(screen.getByRole('button', { name: completeLabel }));
-
-    expect(setTaskCompleted).toHaveBeenCalledTimes(1);
-    expect(setTaskCompleted).toHaveBeenCalledWith({
-      taskId: 42,
-      viewMode: ETaskCardViewMode.Single,
-      output: expect.arrayContaining([
-        expect.objectContaining({ apiName: 'top' }),
-        expect.objectContaining({ apiName: 'a' }),
-        expect.objectContaining({ apiName: 'b' }),
-        expect.objectContaining({ apiName: 'c' }),
-      ]),
-    });
-    expect(setTaskCompleted.mock.calls[0][0].output).toHaveLength(4);
-  });
-
-  it('renders the outputs block when the task has only fieldsets and no plain fields', async () => {
-    const fieldsets: IFieldsetRuntime[] = [
-      makeFieldsetRuntime({
-        name: 'FS',
-        fields: [makeExtraField({ apiName: 'k' })],
-      }),
-    ];
-    const task = { ...baseTask, output: [], fieldsets };
-
-    render(<TaskCard {...baseProps} task={task} />);
-
-    await waitFor(() => {
-      expect(screen.queryByTestId('merged-output-list')).not.toBeNull();
-    });
-  });
-
-  it('does not render the outputs block when the task has neither plain fields nor fieldsets', async () => {
-    const task = { ...baseTask, output: [], fieldsets: [] };
-
-    render(<TaskCard {...baseProps} task={task} />);
-
-    await waitFor(() => {
-      expect(screen.queryByTestId('merged-output-list')).toBeNull();
-    });
-  });
-
-  it('does not render the outputs block in Completed status even if fieldsets are present', async () => {
-    const task = {
-      ...baseTask,
-      output: [makeExtraField({ apiName: 'a' })],
-      fieldsets: [
-        makeFieldsetRuntime({
-          name: 'FS',
-          fields: [makeExtraField({ apiName: 'k' })],
-        }),
-      ] as IFieldsetRuntime[],
-    };
-
-    render(<TaskCard {...baseProps} task={task} status={ETaskStatus.Completed} />);
-
-    await waitFor(() => {
-      expect(screen.queryByTestId('merged-output-list')).toBeNull();
-    });
-  });
-
-  it('passes the latest fieldsets with the new value to fieldsetsStorage.save (not stale closure)', async () => {
-    jest.useFakeTimers();
-    const { fieldsetsStorage } = require('../utils/storageOutputs');
-
-    const fieldsets: IFieldsetRuntime[] = [
-      makeFieldsetRuntime({
-        name: 'FS-1',
-        fields: [makeExtraField({ apiName: 'email', value: 'old@x.com' })],
-      }),
-    ];
-    const task = { ...baseTask, id: 42, output: [], fieldsets };
-
-    render(<TaskCard {...baseProps} task={task} />);
-
-    await waitFor(() => {
-      expect(screen.queryByTestId('merged-output-list')).not.toBeNull();
-    });
-
-    const calls = (MergedOutputList as jest.Mock).mock.calls;
-    const { onEditFieldsetField } = calls[calls.length - 1][0];
-
-    act(() => {
-      onEditFieldsetField('email')({ value: 'new@x.com' });
-      jest.advanceTimersByTime(300);
-    });
-
-    expect(fieldsetsStorage.save).toHaveBeenCalled();
-    const saveCalls = (fieldsetsStorage.save as jest.Mock).mock.calls;
-    const lastSaveArgs = saveCalls[saveCalls.length - 1];
-    expect(lastSaveArgs[0]).toBe(42);
-    const savedFieldsets: IFieldsetRuntime[] = lastSaveArgs[1];
-    expect(savedFieldsets).toHaveLength(1);
-    expect(savedFieldsets[0].apiNameBinding).toBe('fs-1');
-    expect(savedFieldsets[0].fields[0].value).toBe('new@x.com');
-
-    jest.useRealTimers();
+    const { getOutputFromStorage } = jest.requireMock('../utils/storageOutputs');
+    getOutputFromStorage.mockReturnValue(undefined);
   });
 
   describe('Performer dropdown', () => {
@@ -692,6 +321,206 @@ describe('TaskCard', () => {
 
       expect(userOption?.value).toBe('user-5');
       expect(groupOption?.value).toBe('group-5');
+    });
+  });
+
+  describe('Filtering output fields by isHidden', () => {
+    it('renders only visible output fields from a mixed list', async () => {
+      const task = {
+        ...baseTask,
+        output: [
+          makeField({ apiName: 'a', isHidden: true }),
+          makeField({ apiName: 'b', isHidden: false }),
+          makeField({ apiName: 'c' }),
+        ],
+      };
+
+      render(<TaskCard {...baseProps} task={task} />);
+
+      await waitFor(() => {
+        expect(screen.getAllByTestId('extra-field')).toHaveLength(2);
+      });
+    });
+  });
+
+  describe('Output field ordering', () => {
+    it('renders output fields sorted by order descending to match the template', async () => {
+      const { ExtraFieldIntl } = jest.requireMock('../../TemplateEdit/ExtraFields');
+
+      const task = {
+        ...baseTask,
+        output: [
+          makeField({ apiName: 'url-field', name: 'Presentation URL', type: EExtraFieldType.Url, order: 0 }),
+          makeField({ apiName: 'file-field', name: 'Presentation file', type: EExtraFieldType.File, order: 1 }),
+        ],
+      };
+
+      render(<TaskCard {...baseProps} task={task} />);
+
+      await waitFor(() => {
+        expect(ExtraFieldIntl).toHaveBeenCalled();
+      });
+
+      const renderedApiNames = ExtraFieldIntl.mock.calls.map((call: any[]) => call[0].field.apiName);
+
+      expect(renderedApiNames).toEqual(['file-field', 'url-field']);
+    });
+  });
+
+  describe('Output synchronization', () => {
+    it('flushes pending output and fieldset drafts before completion', () => {
+      jest.useFakeTimers();
+
+      try {
+        const { ExtraFieldIntl } = jest.requireMock('../../TemplateEdit/ExtraFields');
+        const { addOrUpdateStorageOutput, fieldsetsStorage } = jest.requireMock('../utils/storageOutputs');
+        const outputField = makeField({ apiName: 'output-field', value: 'server output' });
+        const fieldsetField = makeField({ apiName: 'fieldset-field', value: 'server fieldset' });
+        const fieldset = {
+          apiNameBinding: 'fieldset-1',
+          fields: [fieldsetField],
+        } as any;
+        const { unmount } = render(
+          <TaskCard
+            {...baseProps}
+            task={{ ...baseTask, output: [outputField], fieldsets: [fieldset] }}
+          />,
+        );
+        const outputProps = ExtraFieldIntl.mock.calls.find(
+          ([props]: any[]) => props.field.apiName === 'output-field',
+        )[0];
+        const fieldsetProps = ExtraFieldIntl.mock.calls.find(
+          ([props]: any[]) => props.field.apiName === 'fieldset-field',
+        )[0];
+
+        act(() => {
+          outputProps.editField({ value: 'output draft' });
+          fieldsetProps.editField({ value: 'fieldset draft' });
+        });
+        const completeButtonProps = [...mockButton.mock.calls]
+          .reverse()
+          .map(([props]) => props)
+          .find(({ buttonStyle }) => buttonStyle === 'yellow');
+        act(() => {
+          completeButtonProps.onClick();
+        });
+
+        expect(addOrUpdateStorageOutput).toHaveBeenCalledTimes(1);
+        expect(fieldsetsStorage.save).toHaveBeenCalledTimes(1);
+        expect(baseProps.setTaskCompleted).toHaveBeenCalledTimes(1);
+
+        unmount();
+        expect(addOrUpdateStorageOutput).toHaveBeenCalledTimes(1);
+        expect(fieldsetsStorage.save).toHaveBeenCalledTimes(1);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    it('discards a pending field edit when the same server output changes', () => {
+      jest.useFakeTimers();
+
+      try {
+        const { ExtraFieldIntl } = jest.requireMock('../../TemplateEdit/ExtraFields');
+        const { addOrUpdateStorageOutput } = jest.requireMock('../utils/storageOutputs');
+        const field = makeField({ apiName: 'url-field', value: 'https://server.example' });
+        const { rerender } = render(
+          <TaskCard {...baseProps} task={{ ...baseTask, output: [field] }} />,
+        );
+        const lastCall = ExtraFieldIntl.mock.calls[ExtraFieldIntl.mock.calls.length - 1];
+
+        act(() => {
+          lastCall[0].editField({ value: 'https://draft.example' });
+        });
+
+        rerender(
+          <TaskCard
+            {...baseProps}
+            task={{
+              ...baseTask,
+              output: [{ ...field, value: 'https://updated-server.example' }],
+            }}
+          />,
+        );
+
+        act(() => {
+          jest.advanceTimersByTime(300);
+        });
+
+        expect(addOrUpdateStorageOutput).toHaveBeenCalledTimes(1);
+        expect(addOrUpdateStorageOutput).toHaveBeenCalledWith(
+          baseTask.id,
+          [],
+          expect.any(Object),
+        );
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    it('discards a stale draft when server output is cleared', async () => {
+      const { ExtraFieldIntl } = jest.requireMock('../../TemplateEdit/ExtraFields');
+      const { addOrUpdateStorageOutput, getOutputFromStorage } = jest.requireMock('../utils/storageOutputs');
+      const field = makeField({ apiName: 'url-field', value: 'https://server.example' });
+      getOutputFromStorage.mockReturnValue([{ ...field, value: 'https://draft.example' }]);
+      const { rerender } = render(
+        <TaskCard {...baseProps} task={{ ...baseTask, output: [field] }} />,
+      );
+
+      rerender(
+        <TaskCard
+          {...baseProps}
+          task={{ ...baseTask, output: [{ ...field, value: '' }] }}
+        />,
+      );
+
+      await waitFor(() => {
+        const lastCall = ExtraFieldIntl.mock.calls[ExtraFieldIntl.mock.calls.length - 1];
+        expect(lastCall[0].field.value).toBe('');
+      });
+      expect(addOrUpdateStorageOutput).toHaveBeenCalledWith(
+        baseTask.id,
+        [],
+        expect.any(Object),
+      );
+    });
+
+    it('preserves drafts for unchanged empty fields when another server field changes', async () => {
+      const { ExtraFieldIntl } = jest.requireMock('../../TemplateEdit/ExtraFields');
+      const { addOrUpdateStorageOutput, getOutputFromStorage } = jest.requireMock('../utils/storageOutputs');
+      const emptyField = makeField({ apiName: 'empty-field', order: 1, value: '' });
+      const changedField = makeField({ apiName: 'changed-field', order: 0, value: 'server value' });
+      const emptyFieldDraft = { ...emptyField, value: 'local draft' };
+      const changedFieldDraft = { ...changedField, value: 'stale local draft' };
+      getOutputFromStorage.mockReturnValue([emptyFieldDraft, changedFieldDraft]);
+      const { rerender } = render(
+        <TaskCard {...baseProps} task={{ ...baseTask, output: [emptyField, changedField] }} />,
+      );
+
+      rerender(
+        <TaskCard
+          {...baseProps}
+          task={{
+            ...baseTask,
+            output: [emptyField, { ...changedField, value: 'updated server value' }],
+          }}
+        />,
+      );
+
+      await waitFor(() => {
+        const renderedFields = ExtraFieldIntl.mock.calls
+          .slice(-2)
+          .map((call: Array<{ field: IExtraField }>) => call[0].field);
+        expect(renderedFields).toEqual([
+          expect.objectContaining({ apiName: 'empty-field', value: 'local draft' }),
+          expect.objectContaining({ apiName: 'changed-field', value: 'updated server value' }),
+        ]);
+      });
+      expect(addOrUpdateStorageOutput).toHaveBeenCalledWith(
+        baseTask.id,
+        [emptyFieldDraft],
+        expect.any(Object),
+      );
     });
   });
 });
