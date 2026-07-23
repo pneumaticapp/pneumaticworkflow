@@ -35,6 +35,7 @@
 }
 
 .filters__buttons {
+  margin-top: 3.2rem;
   display: flex;
   flex-flow: row wrap;
   align-items: center;

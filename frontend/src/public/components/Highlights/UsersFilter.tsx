@@ -1,7 +1,6 @@
 /* eslint-disable */
 /* prettier-ignore */
 import * as React from 'react';
-import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
 import { Checkbox } from '../UI/Fields/Checkbox';
@@ -77,11 +76,10 @@ export function UsersFilter({
   }, [isShowAllVisibleState, searchText, selectedUsers, users]);
 
   const isPanelExpanded = isArrayWithItems(selectedUsers) ? true : undefined;
-  const lastCheckboxClassname = isShowAllVisibleState ? styles['mb-1'] : styles['mb-4'];
 
   return (
     <ShowMore
-      containerClassName={styles['filter-container']}
+      containerClassName={styles['filter']}
       label="process-highlights.date-picker-by-users-label"
       isInitiallyVisible={isPanelExpanded}
     >
@@ -94,12 +92,13 @@ export function UsersFilter({
           onChange={changeUsersSearchText}
         />
       }
-      <div className={styles['filter__checkboxes']}>
-        {truncatedUsers.map((user, idx) => (
+      <div className={styles['filter__options']}>
+        {truncatedUsers.map((user) => (
           <Checkbox
-            containerClassName={idx === truncatedUsers.length - 1 ? lastCheckboxClassname : styles['mb-1']}
             id={`users-filter__checkbox_${user.id}`}
             title={getUserFullName(user)}
+            titleClassName={styles['filter__option-label']}
+            labelClassName={styles['filter__option-row']}
             onChange={changeUsersFilter(user.id)}
             checked={selectedUsers.includes(user.id)}
             key={`users-filter-checkbox-${user.id}`}
@@ -107,7 +106,7 @@ export function UsersFilter({
         ))}
       </div>
       {isShowAllVisibleState &&
-        <button className={classnames('mb-4', styles['filter__button-show-all'])} onClick={handleShowAll}>
+        <button type="button" className={styles['filter__show-all']} onClick={handleShowAll}>
           <IntlMessages id ="process-highlights.show-all-users" />
         </button>
       }

@@ -40,7 +40,7 @@ export function TemplatesFilter({
     }
 
     return (
-      <p className={styles['workflows-filter__placeholder']}>
+      <p className={styles['filter__placeholder']}>
         <IntlMessages id="workflow-highlights.no-processes-started" />
       </p>
     );
@@ -81,11 +81,10 @@ export function TemplatesFilter({
   }, [isShowAllVisibleState, searchText, selectedTemplates, templatesTitles]);
 
   const isPanelExpanded = isArrayWithItems(selectedTemplates) ? true : undefined;
-  const lastCheckboxClassname = isShowAllVisibleState ? styles['mb-1'] : styles['mb-4'];
 
   return (
     <ShowMore
-      containerClassName={styles['filter-container']}
+      containerClassName={styles['filter']}
       label="process-highlights.date-picker-by-template-label"
       isInitiallyVisible={isPanelExpanded}
     >
@@ -103,14 +102,18 @@ export function TemplatesFilter({
       )}
       {isFiltersLoading && <div className={classnames('loading', styles['filter__spinner'])} />}
       <div
-        className={classnames(styles['filter__checkboxes'], isFiltersLoading && styles['filter__checkboxes_disabled'])}
+        className={classnames(
+          styles['filter__options'],
+          isFiltersLoading && styles['filter__options--disabled'],
+        )}
       >
-        {truncatedTemplates.map((template, idx) => (
+        {truncatedTemplates.map((template) => (
           <Checkbox
             key={template.id}
-            containerClassName={idx === templatesTitles.length - 1 ? lastCheckboxClassname : styles['mb-1']}
             id={`workflows-filter__checkbox_${template.name}`}
             title={template.name}
+            titleClassName={styles['filter__option-label']}
+            labelClassName={styles['filter__option-row']}
             onChange={changeTemplatesFilter(template.id)}
             checked={selectedTemplates.includes(template.id)}
           />
@@ -119,7 +122,7 @@ export function TemplatesFilter({
       {isShowAllVisibleState && (
         <button
           type="button"
-          className={classnames('mb-4', styles['filter__button-show-all'])}
+          className={styles['filter__show-all']}
           onClick={handleShowAll}
           disabled={isFiltersLoading}
           aria-label={formatMessage({ id: 'process-highlights.show-all-workflows' })}
