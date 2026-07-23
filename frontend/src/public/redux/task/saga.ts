@@ -51,7 +51,11 @@ import { patchTaskInList, shiftTaskList, ETaskListActions } from '../tasks/slice
 
 import { getErrorMessage } from '../../utils/getErrorMessage';
 import { getAuthUser, getUsers, getUserTimezone } from '../selectors/user';
-import { outputStorage, fieldsetsStorage } from '../../components/TaskCard/utils/storageOutputs';
+import {
+  fieldsetsStorage,
+  removeOutputFromLocalStorage,
+  removeOutputsFromLocalStorage,
+} from '../../components/TaskCard/utils/storageOutputs';
 import { ETaskCardViewMode } from '../../components/TaskCard';
 
 import { TChannelAction } from '../tasks/saga';
@@ -307,7 +311,7 @@ export function* setTaskCompleted({ payload: { taskId, output, viewMode } }: TSe
     yield completeTask(taskId, normalizedOutputs);
     NotificationManager.success({ title: 'tasks.task-success-complete' });
 
-    outputStorage.remove(taskId);
+    removeOutputFromLocalStorage(taskId);
     fieldsetsStorage.remove(taskId);
     yield put(setCurrentTaskStatus(ETaskStatus.Completed));
 
@@ -329,7 +333,7 @@ export function* setTaskCompleted({ payload: { taskId, output, viewMode } }: TSe
   }
 }
 
-export function* setTaskReverted({ payload: { viewMode, taskId, comment } }: TSetTaskReverted) {
+export function* setTaskReverted({ payload: { viewMode, taskId, comment, clearOutputTaskIds } }: TSetTaskReverted) {
   const {
     authUser: { id: currentUserId },
   }: ReturnType<typeof getAuthUser> = yield select(getAuthUser);
@@ -342,6 +346,10 @@ export function* setTaskReverted({ payload: { viewMode, taskId, comment } }: TSe
     yield put(setCurrentTaskStatus(ETaskStatus.Returning));
 
     yield revertTask({ id: taskId, comment });
+
+    const outputTaskIds = clearOutputTaskIds ?? [taskId];
+    removeOutputsFromLocalStorage(outputTaskIds);
+    outputTaskIds.forEach(fieldsetsStorage.remove);
 
     NotificationManager.success({ message: 'tasks.task-success-revert' });
 
