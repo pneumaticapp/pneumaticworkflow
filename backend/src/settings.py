@@ -345,11 +345,17 @@ class Common(Configuration):
             'UserStatusEnum': 'src.accounts.enums.UserStatus.CHOICES',
             'WorkflowStatusEnum': 'src.processes.enums.WorkflowStatus.CHOICES',
             'FieldTypeEnum': 'src.processes.enums.FieldType.CHOICES',
-            'WorkflowEventTypeEnum': 'src.processes.enums.WorkflowEventType.CHOICES',
-            'PerformerTypeEnum': 'src.processes.enums.PerformerType.filter_choices',
+            'WorkflowEventTypeEnum': (
+                'src.processes.enums.WorkflowEventType.CHOICES'
+            ),
+            'PerformerTypeEnum': (
+                'src.processes.enums.PerformerType.filter_choices'
+            ),
             'AccountUserTypeEnum': 'src.accounts.enums.UserType.CHOICES',
             'LanguageEnum': 'src.accounts.enums.Language.CHOICES',
-            'ResetPasswordStatusEnum': 'src.authentication.enums.ResetPasswordStatus.CHOICES',
+            'ResetPasswordStatusEnum': (
+                'src.authentication.enums.ResetPasswordStatus.CHOICES'
+            ),
         },
         'SERVERS': [{'url': '/', 'description': 'Pneumatic Core API Server'}],
         'SWAGGER_UI_SETTINGS': {
