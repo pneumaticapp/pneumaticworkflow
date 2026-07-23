@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
@@ -6,18 +6,9 @@ import { Checkbox } from '../UI/Fields/Checkbox';
 import { IntlMessages } from '../IntlMessages';
 import { isArrayWithItems } from '../../utils/helpers';
 import { ShowMore } from '../UI/ShowMore';
-import { ITemplateTitleBaseWithCount } from '../../types/template';
+import { ITemplatesFilterProps } from './types';
 
 import styles from './Filters.css';
-
-export interface ITemplatesFilterProps {
-  searchText: string;
-  selectedTemplates: number[];
-  templatesTitles: ITemplateTitleBaseWithCount[];
-  isFiltersLoading: boolean;
-  changeTemplatesSearchText(e: React.ChangeEvent<HTMLInputElement>): void;
-  changeTemplatesFilter(templateId: number): (e: React.ChangeEvent<HTMLInputElement>) => void;
-}
 
 const MAX_SHOW_TEMPLATES = 10;
 
@@ -29,8 +20,8 @@ export function TemplatesFilter({
   changeTemplatesSearchText,
   changeTemplatesFilter,
 }: ITemplatesFilterProps) {
-  const { useCallback, useEffect, useMemo, useState } = React;
   const { formatMessage } = useIntl();
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const isEmpty = !isArrayWithItems(templatesTitles);
 
@@ -52,12 +43,19 @@ export function TemplatesFilter({
 
   const [isShowAllVisibleState, setShowAllVisibleState] = useState(isTemplatesNumberExceeded);
 
-  useEffect(
-    () => setShowAllVisibleState(isSearchFilled ? false : isTemplatesNumberExceeded),
-    [isTemplatesNumberExceeded, isSearchFilled],
-  );
+  useEffect(() => {
+    setShowAllVisibleState(isSearchFilled ? false : isTemplatesNumberExceeded);
+  }, [isTemplatesNumberExceeded, isSearchFilled]);
 
-  const handleShowAll = useCallback(() => setShowAllVisibleState(!isShowAllVisibleState), [isShowAllVisibleState]);
+  useEffect(() => {
+    if (isTemplatesNumberExceeded && !isFiltersLoading) {
+      searchInputRef.current?.focus();
+    }
+  }, [isFiltersLoading, isTemplatesNumberExceeded]);
+
+  const handleShowAll = useCallback(() => {
+    setShowAllVisibleState((isVisible) => !isVisible);
+  }, []);
 
   const truncatedTemplates = useMemo(() => {
     if (!isShowAllVisibleState && !isSearchFilled) {
@@ -78,7 +76,7 @@ export function TemplatesFilter({
     }
 
     return templatesToShow;
-  }, [isShowAllVisibleState, searchText, selectedTemplates, templatesTitles]);
+  }, [handleShowAll, isSearchFilled, isShowAllVisibleState, searchText, selectedTemplates, templatesTitles]);
 
   const isPanelExpanded = isArrayWithItems(selectedTemplates) ? true : undefined;
 
@@ -91,13 +89,12 @@ export function TemplatesFilter({
       {renderWorkflowsPlaceholder()}
       {isTemplatesNumberExceeded && (
         <input
+          ref={searchInputRef}
           className={styles['filter__input']}
           disabled={isFiltersLoading}
           placeholder={formatMessage({ id: 'process-highlights.search-workflows-placeholder' })}
           value={searchText}
           onChange={changeTemplatesSearchText}
-          // eslint-disable-next-line jsx-a11y/no-autofocus
-          autoFocus
         />
       )}
       {isFiltersLoading && <div className={classnames('loading', styles['filter__spinner'])} />}

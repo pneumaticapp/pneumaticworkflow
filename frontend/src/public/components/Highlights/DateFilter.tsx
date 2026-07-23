@@ -4,27 +4,14 @@ import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
 import { RadioButton } from '../UI/Fields/RadioButton';
-import { EHighlightsDateFilter, THighlightsDateFilter } from '../../types/highlights';
+import { EHighlightsDateFilter } from '../../types/highlights';
 import { ShowMore } from '../UI/ShowMore';
 import { DatePickerCustom } from '../UI/form/DatePicker';
 import { formatDatePickerDisplayValue } from '../UI/form/DatePicker/utils/normalizeDatePickerDate';
 import { useDatePickerSettings } from '../../hooks/useDatePickerSettings';
+import { IDateFilterProps } from './types';
 
 import styles from './Filters.css';
-
-export interface IDateFilterProps {
-  endDate: Date | null;
-  selectedDateFilter: THighlightsDateFilter;
-  startDate: Date | null;
-  changeEndDate(date: Date): void;
-  changeSelectedDateFilter(filter: EHighlightsDateFilter): () => void;
-  changeStartDate(date: Date): void;
-  /**
-   * Reports whether Custom range draft is complete (both ends set),
-   * or true for non-Custom presets. Used to disable Apply while editing.
-   */
-  onCustomRangeValidityChange?(isComplete: boolean): void;
-}
 
 export function DateFilter({
   startDate,
