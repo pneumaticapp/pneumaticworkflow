@@ -1,7 +1,7 @@
 """Authentication middleware."""
 
 import logging
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Sequence
 
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
@@ -75,26 +75,29 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
     - request.user: AuthUser
     """
 
-    def __init__(self, app: FastAPI, *, require_auth: bool = True) -> None:
+    def __init__(
+        self,
+        app: FastAPI,
+        *,
+        require_auth: bool = True,
+        public_paths: Sequence[str] = (),
+    ) -> None:
         """Initialize authentication middleware.
 
         Args:
             app: FastAPI application instance.
             require_auth: Whether authentication is required.
+            public_paths: Path prefixes that bypass authentication
+                (e.g. docs, openapi schema).
 
         """
         super().__init__(app)
         self.security = HTTPBearer(auto_error=False)
         self.require_auth = require_auth
+        self._public_paths = tuple(public_paths)
 
-        # Cookie strategies: 'file_service_auth' is set by Django middleware
-        # for browser-native requests (img src, video src, direct links).
-        # 'token' kept for backward compatibility.
+        # Prioritize explicit Authorization headers over session cookies
         self.auth_strategies = [
-            ('file_service_auth', 'cookie', self.authenticate_token),
-            ('token', 'cookie', self.authenticate_token),
-            ('guest-token', 'cookie', self.authenticate_guest_token),
-            ('public-token', 'cookie', self.authenticate_public_token),
             ('Authorization', 'bearer', self.authenticate_token),
             ('X-Guest-Authorization', 'header', self.authenticate_guest_token),
             (
@@ -102,7 +105,15 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
                 'header',
                 self.authenticate_public_token,
             ),
+            ('file_service_auth', 'cookie', self.authenticate_token),
+            ('token', 'cookie', self.authenticate_token),
+            ('guest-token', 'cookie', self.authenticate_guest_token),
+            ('public-token', 'cookie', self.authenticate_public_token),
         ]
+
+    def _is_public(self, path: str) -> bool:
+        """Check if path bypasses authentication."""
+        return path.startswith(self._public_paths)
 
     async def authenticate_token(self, token: str) -> AuthUser | None:
         """Authenticate using token."""
@@ -197,7 +208,11 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
                 request.state.user = user
 
             # If authentication is required and user is anonymous
-            if self.require_auth and request.state.user.is_anonymous:
+            if (
+                self.require_auth
+                and request.state.user.is_anonymous
+                and not self._is_public(request.url.path)
+            ):
                 # Browser navigation gets redirect to login page
                 if is_browser_navigation(request):
                     return redirect_to_login(request)

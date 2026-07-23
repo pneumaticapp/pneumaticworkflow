@@ -37,6 +37,13 @@ class ExcludedPath:
     PAYMENT = '/payment'
     APPLICATIONS = '/applications'
 
+    # Internal / CMS — no value for API integrators.
+    FAQ = '/faq'
+    PAGES = '/pages'
+    NAVIGATION = '/navigation'
+    SERVICES = '/services'
+    NOTIFICATIONS = '/notifications'
+
     ALL = (
         WEBHOOKS_BUFFER,
         ACCOUNTS_API_KEY,
@@ -60,4 +67,9 @@ class ExcludedPath:
         AUTH_MICROSOFT,
         PAYMENT,
         APPLICATIONS,
+        FAQ,
+        PAGES,
+        NAVIGATION,
+        SERVICES,
+        NOTIFICATIONS,
     )

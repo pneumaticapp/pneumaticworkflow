@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    {% block head %}
+    <title>{{ title|default:"Swagger" }}</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="stylesheet" href="{{ swagger_ui_css }}">
+    
+    <!-- Custom Google Fonts matching Figma -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Abhaya+Libre:wght@800&display=swap" rel="stylesheet">
+    <meta name="color-scheme" content="light only">
+    <meta name="theme-color" content="#ffffff">
+    <style>
+      :root {
+          color-scheme: light only !important;
+      }
+      html { box-sizing: border-box; overflow-y: scroll; }
+      *, *:after, *:before { box-sizing: inherit; }
+      
+      /* Defeating Yandex Browser Dark Mode using the gradient hack */
+      body { 
+          background-image: linear-gradient(#f6f6f6, #f6f6f6) !important; 
+          margin: 0; font-family: 'Nunito', sans-serif; 
+      }
+      
+      /* Pneumatic Genesis Theme Overrides */
+      .swagger-ui {
+          font-family: 'Nunito', sans-serif !important;
+          color: #262522 !important;
+          background-image: linear-gradient(#f6f6f6, #f6f6f6) !important;
+      }
+      
+      /* API description block (title + auth + use-cases) — full-bleed white */
+      .swagger-ui .information-container {
+          position: relative;
+          z-index: 1;
+          background-image: linear-gradient(#ffffff, #ffffff) !important;
+          padding-top: 20px !important;
+          padding-bottom: 20px !important;
+          box-shadow: none !important;
+      }
+      .swagger-ui .information-container::before {
+          content: "";
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          left: 50%;
+          width: 100vw;
+          margin-left: -50vw;
+          background-image: linear-gradient(#ffffff, #ffffff) !important;
+          z-index: -1;
+      }
+      /* Absorb .info top/bottom margins into the white container */
+      .swagger-ui .information-container .info {
+          margin-top: 0 !important;
+          margin-bottom: 0 !important;
+      }
+      
+      /* Force all text to be dark, EXCEPT inside native dark code blocks, version badges, and dropdown options */
+      .swagger-ui *:not(.highlight-code):not(.highlight-code *):not(.microlight):not(.microlight *):not(.version):not(.version *):not(.version-stamp):not(.version-stamp *):not(option) {
+          color: #262522 !important;
+      }
+      
+      /* Make sure input placeholders are also dark */
+      .swagger-ui input::placeholder, .swagger-ui textarea::placeholder {
+          color: #888888 !important;
+      }
+      
+      /* Hide dark mode toggle if injected by Swagger UI v5 */
+      .swagger-ui button.theme-toggle,
+      .swagger-ui .theme-toggle,
+      .swagger-ui button[aria-label="Toggle Light/Dark Mode"],
+      .swagger-ui [class*="dark-mode-toggle"],
+      svg[aria-label="Light/Dark Mode"] {
+          display: none !important;
+      }
+      
+      .swagger-ui .topbar {
+          background-image: linear-gradient(#ffffff, #ffffff) !important;
+          border-bottom: 1px solid #dcdcdb;
+      }
+      .swagger-ui .topbar .download-url-wrapper .select-label span {
+          color: #262522 !important;
+      }
+      .swagger-ui .topbar .download-url-wrapper input[type=text] {
+          border: 1px solid #dcdcdb;
+          border-radius: 4px;
+      }
+      
+      /* Buttons (matching Figma "button medium/big" #fec336) */
+      .swagger-ui .btn.execute, 
+      .swagger-ui .btn.authorize,
+      .swagger-ui .btn {
+          background-color: #fec336 !important;
+          color: #262522 !important;
+          border-color: #fec336 !important;
+          font-weight: 700;
+          font-family: 'Nunito', sans-serif;
+          border-radius: 6px; /* modern rounded look */
+          box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+          transition: background-color 0.2s ease, border-color 0.2s ease;
+      }
+      .swagger-ui .btn:hover {
+          background-color: #e79a26 !important;
+          border-color: #e79a26 !important;
+      }
+      .swagger-ui .btn.cancel {
+          background-color: #ffffff !important;
+          color: #fc5b67 !important;
+          border-color: #fc5b67 !important;
+      }
+      .swagger-ui .btn.cancel:hover {
+          background-color: #feedeb !important;
+      }
+      
+      /* Typography */
+      .swagger-ui h1, .swagger-ui h2, .swagger-ui h3, .swagger-ui h4, .swagger-ui h5 {
+          font-family: 'Abhaya Libre', serif !important;
+          color: #262522 !important;
+      }
+      
+      /* Fix invisible close button in modal */
+      .swagger-ui .dialog-ux .modal-ux-header .close-modal svg {
+          display: none !important;
+      }
+      .swagger-ui .dialog-ux .modal-ux-header .close-modal::before {
+          content: "✕" !important;
+          font-size: 20px !important;
+          color: #262522 !important;
+          font-weight: bold !important;
+          line-height: 1 !important;
+      }
+      
+      /* Auth Modal Layout - Buttons on the same line as input */
+      .swagger-ui .dialog-ux .modal-ux-content {
+          display: flex !important;
+          align-items: flex-end !important;
+          padding-bottom: 30px !important;
+          padding-right: 20px !important;
+      }
+      .swagger-ui .auth-container {
+          flex-grow: 1 !important;
+          margin-bottom: 0 !important;
+          padding-bottom: 0 !important;
+          border-bottom: none !important;
+      }
+      .swagger-ui .auth-container .wrapper {
+          margin: 0 !important;
+      }
+      .swagger-ui .auth-btn-wrapper {
+          display: flex !important;
+          justify-content: flex-end !important;
+          width: auto !important;
+          padding: 0 !important;
+          margin: 0 0 0 15px !important;
+          gap: 10px !important;
+      }
+      .swagger-ui .auth-btn-wrapper .btn {
+          margin: 0 !important;
+          flex: 0 0 auto !important;
+      }
+      
+      /* Links */
+      .swagger-ui a {
+          color: #3496c9 !important;
+          text-decoration: none;
+      }
+      .swagger-ui a:hover {
+          color: #e79a26 !important;
+      }
+      
+      /* Endpoint blocks */
+      .swagger-ui .opblock {
+          border-radius: 8px;
+          border: 1px solid #dcdcdb;
+          background-image: linear-gradient(#ffffff, #ffffff) !important;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+      }
+      
+      .swagger-ui .opblock .opblock-summary-operation-id, 
+      .swagger-ui .opblock .opblock-summary-path, 
+      .swagger-ui .opblock .opblock-summary-path__deprecated, 
+      .swagger-ui .opblock-summary-description {
+          color: #262522 !important;
+      }
+      
+      /* Schemas section */
+      .swagger-ui section.models {
+          border: 1px solid #dcdcdb !important;
+          border-radius: 8px !important;
+      }
+      .swagger-ui section.models .model-container,
+      .swagger-ui section.models .model-box,
+      .swagger-ui section.models .model,
+      .swagger-ui section.models .prop,
+      .swagger-ui section.models table.model {
+          background-image: linear-gradient(#ffffff, #ffffff) !important;
+          background-color: transparent !important;
+      }
+      .swagger-ui section.models .model-container {
+          border: 1px solid #dcdcdb !important;
+          border-radius: 4px !important;
+          margin: 0 10px 10px 10px !important;
+      }
+      .swagger-ui section.models .model-container:hover {
+          background-image: linear-gradient(#f9f9f9, #f9f9f9) !important;
+      }
+      .swagger-ui section.models .model-box {
+          border: none !important;
+      }
+      
+      /* HTTP Methods badges */
+      .swagger-ui .opblock-summary-method {
+          border-radius: 4px !important;
+      }
+      .swagger-ui .opblock.opblock-get .opblock-summary-method { background-color: #3496c9 !important; }
+      .swagger-ui .opblock.opblock-post .opblock-summary-method { background-color: #24d5a1 !important; }
+      .swagger-ui .opblock.opblock-put .opblock-summary-method { background-color: #e79a26 !important; }
+      .swagger-ui .opblock.opblock-delete .opblock-summary-method { background-color: #fc5b67 !important; }
+      
+      /* Schema and models background */
+      .swagger-ui section.models {
+          border-radius: 8px;
+          border: 1px solid #dcdcdb;
+          background-image: linear-gradient(#ffffff, #ffffff) !important;
+      }
+      
+      /* Protect scheme container (Servers dropdown block) from forced dark mode */
+      .swagger-ui .scheme-container {
+          position: relative;
+          z-index: 1;
+          background-image: linear-gradient(#ffffff, #ffffff) !important;
+          box-shadow: none !important;
+      }
+      .swagger-ui .scheme-container::before {
+          content: "";
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          left: 50%;
+          width: 100vw;
+          margin-left: -50vw;
+          background-image: linear-gradient(#ffffff, #ffffff) !important;
+          z-index: -1;
+      }
+      
+      /* Style Dropdowns (Select elements) to match Genesis design */
+      .swagger-ui select,
+      .swagger-ui .topbar select {
+          appearance: none !important;
+          -webkit-appearance: none !important;
+          background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBkPSJNNyAxMGw1IDUgNS01eiIgZmlsbD0iIzI2MjUyMiIvPjwvc3ZnPg=='), linear-gradient(#ffffff, #ffffff) !important;
+          background-position: right 8px center, 0 0 !important;
+          background-repeat: no-repeat, repeat !important;
+          background-size: 24px 24px, 100% 100% !important;
+          background-color: transparent !important;
+          color: #262522 !important;
+          border: 1px solid #dcdcdb !important;
+          border-radius: 4px !important;
+          padding: 8px 32px 8px 12px !important;
+          outline: none !important;
+          box-shadow: none !important;
+          font-family: 'Nunito', sans-serif !important;
+          font-size: 14px !important;
+      }
+      .swagger-ui select:focus,
+      .swagger-ui .topbar select:focus {
+          border-color: #01a4ef !important; /* Genesis primary blue */
+      }
+      
+      /* Protect all code blocks from forced dark mode (except native dark JSON blocks and version badges) */
+      .swagger-ui pre:not(.microlight):not(.highlight-code *):not(.version) {
+          background-image: linear-gradient(#f6f6f6, #f6f6f6) !important;
+          color: #262522 !important;
+      }
+      .swagger-ui code:not(.microlight):not(.highlight-code *):not(.version) {
+          display: inline-block !important; /* Fix overlapping backgrounds in lists */
+          line-height: 1.2 !important;
+          vertical-align: middle !important;
+          background-image: linear-gradient(#f6f6f6, #f6f6f6) !important;
+          color: #262522 !important;
+      }
+      
+      /* Fix Version Badges (1.0.0 and OAS 3.0) - Plain Text Style */
+      .swagger-ui .info .title small,
+      .swagger-ui .info .title small pre.version,
+      .swagger-ui .info .title small pre.version *,
+      .swagger-ui .info .title small.version-stamp,
+      .swagger-ui .info .title small.version-stamp * {
+          display: inline !important; 
+          background: transparent !important;
+          background-color: transparent !important;
+          background-image: none !important;
+          border-radius: 0 !important;
+          color: #262522 !important;
+          border: none !important;
+          padding: 0 !important;
+          box-shadow: none !important;
+          margin-left: 8px !important;
+      }
+      
+      /* Let JSON response blocks (microlight) remain native dark as Swagger UI intends */
+      .swagger-ui .highlight-code,
+      .swagger-ui .microlight {
+          /* No forced light background so syntax highlighting isn't broken */
+      }
+      
+      /* Protect Opblock Section Headers (Parameters, Responses) */
+      .swagger-ui .opblock .opblock-section-header {
+          background-image: linear-gradient(#ffffff, #ffffff) !important;
+          box-shadow: 0 1px 2px rgba(0,0,0,.1);
+      }
+      
+      /* Protect Table Headers */
+      .swagger-ui table thead tr td, 
+      .swagger-ui table thead tr th {
+          background-image: linear-gradient(#ffffff, #ffffff) !important;
+      }
+      
+      /* Inputs and text areas */
+      .swagger-ui input[type=text], .swagger-ui input[type=password], .swagger-ui input[type=search], .swagger-ui input[type=email], .swagger-ui input[type=file], .swagger-ui textarea, .swagger-ui select {
+          border: 1px solid #dcdcdb;
+          background-image: linear-gradient(#ffffff, #ffffff) !important;
+          border-radius: 4px;
+          color: #262522 !important;
+      }
+      
+      /* Fix Modal dialog background */
+      .swagger-ui .dialog-ux .modal-ux {
+          background-image: linear-gradient(#ffffff, #ffffff) !important;
+      }
+      .swagger-ui .dialog-ux .modal-ux-header {
+          background-image: linear-gradient(#f6f6f6, #f6f6f6) !important;
+      }
+      .swagger-ui input[type=text]:focus, .swagger-ui textarea:focus {
+          border-color: #fec336 !important;
+          background-color: #fdf7ee !important; /* beige focus */
+          outline: none;
+      }
+      
+      /* Info text */
+      .swagger-ui .info p {
+          color: #62625f;
+      }
+      /* End of standard overrides */
+      
+      /* --- Perfecting the Brand Match --- */
+      
+      /* 1. Fix Logo Contrast in Topbar */
+      .swagger-ui .topbar .link .logo__img,
+      .swagger-ui .topbar .link .logo_small_svg__cls-2 {
+          fill: #262522 !important; /* Make white text dark gray */
+      }
+      .swagger-ui .topbar .link .logo__img path:first-child,
+      .swagger-ui .topbar .link .logo_small_svg__cls-3 {
+          fill: #fec336 !important; /* Make green icon yellow */
+      }
+      
+      /* 2. Fix Authorize Padlock Icon Color */
+      .swagger-ui .btn.authorize svg {
+          fill: #262522 !important;
+      }
+      
+      /* 3. Consistency for Selects, Inputs, and Schema Titles */
+      .swagger-ui select,
+      .swagger-ui input,
+      .swagger-ui textarea,
+      .swagger-ui .models .model-box .model-title {
+          font-family: 'Nunito', sans-serif !important;
+          color: #262522 !important;
+      }
+      
+      /* 4. Try it out button (Brand style) */
+      .swagger-ui .btn.try-out__btn {
+          color: #e79a26 !important;
+          border-color: #e79a26 !important;
+          background-color: transparent !important;
+          border-radius: 8px !important;
+          font-weight: 700 !important;
+          transition: all 0.2s ease;
+      }
+      .swagger-ui .btn.try-out__btn:hover {
+          background: rgba(231, 154, 38, 0.1) !important;
+      }
+
+      /* 5. Execute button (Brand Primary) */
+      .swagger-ui .btn.execute {
+          background-color: #fec336 !important;
+          color: #262522 !important;
+          border-color: #fec336 !important;
+          border-radius: 8px !important;
+          font-weight: 800 !important;
+          box-shadow: 0 2px 4px rgba(254, 195, 54, 0.3) !important;
+          transition: all 0.2s ease;
+      }
+      .swagger-ui .btn.execute:hover {
+          background-color: #e79a26 !important;
+          border-color: #e79a26 !important;
+          box-shadow: 0 4px 8px rgba(231, 154, 38, 0.4) !important;
+      }
+
+      /* 6. Clean up general buttons and borders */
+      .swagger-ui .btn {
+          font-family: 'Nunito', sans-serif !important;
+          border-radius: 6px !important;
+      }
+      
+      /* 7. Focus states for inputs to match brand */
+      .swagger-ui input:focus, .swagger-ui textarea:focus, .swagger-ui select:focus {
+          border-color: #fec336 !important;
+          outline: none !important;
+          box-shadow: 0 0 0 2px rgba(254, 195, 54, 0.2) !important;
+      }
+      
+      /* 8. Make the topbar look sleek */
+      .swagger-ui .topbar {
+          background-color: #ffffff !important;
+          border-bottom: 1px solid #eaeaea !important;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.02) !important;
+      }
+
+      /* 9. Model/Schema boxes */
+      .swagger-ui .models {
+          border: 1px solid #eaeaea !important;
+          border-radius: 8px !important;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.02) !important;
+      }
+    </style>
+    {% endblock head %}
+  </head>
+  <body>
+    {% block body %}
+    <div id="swagger-ui"></div>
+    <script src="{{ swagger_ui_bundle }}"></script>
+    <script src="{{ swagger_ui_standalone }}"></script>
+    {% if script_url %}
+    <script src="{{ script_url }}"></script>
+    {% else %}
+    <script>
+    {% include template_name_js %}
+    </script>
+    {% endif %}
+    {% endblock %}
+  </body>
+</html>

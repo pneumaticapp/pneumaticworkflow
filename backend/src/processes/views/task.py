@@ -131,8 +131,12 @@ UserModel = get_user_model()
 @extend_schema_view(
     get=extend_schema(
         tags=['Tasks'],
-        summary='List tasks (v3, Zapier)',
-        description=ACCESS_AUTH,
+        summary='List your tasks',
+        description=(
+            'Returns a list of tasks assigned to you or your team. '
+            'Use filters to find specific tasks.\n\n'
+            f'{ACCESS_AUTH}'
+        ),
         parameters=TASK_LIST_PARAMS,
         responses={
             200: TaskListSerializer,

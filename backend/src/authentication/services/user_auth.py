@@ -118,7 +118,7 @@ class CookieTokenAuthentication(PneumaticTokenAuthentication):
     """Bearer header with cookie fallback for OpenAPI docs only.
 
     Not registered in OpenAPI security schemes — used only to
-    serve /api/schema/, /api/docs/, /api/redoc/ so a logged-in
+    serve /api/schema/, /api/docs/, /api/swagger/ so a logged-in
     browser can open Swagger/ReDoc without manual token entry.
     Cookie fallback is allowed for GET/HEAD/OPTIONS only.
     """
