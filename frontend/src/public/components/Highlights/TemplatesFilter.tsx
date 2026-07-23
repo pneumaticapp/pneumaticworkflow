@@ -42,15 +42,19 @@ export function TemplatesFilter({
   const isSearchFilled = useMemo(() => searchText.length > 1, [searchText]);
 
   const [isShowAllVisibleState, setShowAllVisibleState] = useState(isTemplatesNumberExceeded);
+  const hasFocusedSearchRef = useRef(false);
 
   useEffect(() => {
     setShowAllVisibleState(isSearchFilled ? false : isTemplatesNumberExceeded);
   }, [isTemplatesNumberExceeded, isSearchFilled]);
 
   useEffect(() => {
-    if (isTemplatesNumberExceeded && !isFiltersLoading) {
-      searchInputRef.current?.focus();
+    if (!isTemplatesNumberExceeded || isFiltersLoading || hasFocusedSearchRef.current) {
+      return;
     }
+
+    searchInputRef.current?.focus();
+    hasFocusedSearchRef.current = true;
   }, [isFiltersLoading, isTemplatesNumberExceeded]);
 
   const handleShowAll = useCallback(() => {

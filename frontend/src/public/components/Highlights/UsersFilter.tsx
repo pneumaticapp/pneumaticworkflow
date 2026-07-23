@@ -30,15 +30,19 @@ export function UsersFilter({
   const [isShowAllVisibleState, setShowAllVisibleState] = useState(
     isSearchFilled ? false : isUsersNumberExceeded,
   );
+  const hasFocusedSearchRef = useRef(false);
 
   useEffect(() => {
     setShowAllVisibleState(isUsersNumberExceeded);
   }, [isUsersNumberExceeded]);
 
   useEffect(() => {
-    if (isUsersNumberExceeded) {
-      searchInputRef.current?.focus();
+    if (!isUsersNumberExceeded || hasFocusedSearchRef.current) {
+      return;
     }
+
+    searchInputRef.current?.focus();
+    hasFocusedSearchRef.current = true;
   }, [isUsersNumberExceeded]);
 
   const handleShowAll = useCallback(() => {
