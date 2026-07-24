@@ -78,7 +78,9 @@ export function WorkflowControllsComponents({
   const canCloneWorkflow = Boolean(workflow.template?.isActive);
   const canEndWorkflow = workflow.finalizable && workflow.status !== EWorkflowStatus.Finished;
   const canSnoozeWorkflow = workflow.status === EWorkflowStatus.Running;
-  const canResumeWorkflow = workflow.status === EWorkflowStatus.Snoozed;
+  const canResumeWorkflow =
+    workflow.status === EWorkflowStatus.Snoozed ||
+    workflow.status === EWorkflowStatus.Finished;
 
   const handleOnClone = () => {
     if (!workflow.template) {
