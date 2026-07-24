@@ -119,7 +119,7 @@ class CookieTokenAuthentication(PneumaticTokenAuthentication):
 
     Not registered in OpenAPI security schemes — used only to
     serve /api/schema/, /api/docs/, /api/swagger/ so a logged-in
-    browser can open Swagger/ReDoc without manual token entry.
+    browser can open Swagger/Scalar without manual token entry.
     Cookie fallback is allowed for GET/HEAD/OPTIONS only.
     """
 
