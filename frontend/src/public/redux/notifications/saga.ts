@@ -1,5 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
 import { all, call, fork, put, select, takeEvery } from 'redux-saga/effects';
 import uniqBy from 'lodash.uniqby';
 
@@ -11,6 +9,7 @@ import { isArrayWithItems } from '../../utils/helpers';
 import { TRemoveNotificationItem } from '../actions';
 import { getNotificationsStore } from '../selectors/notifications';
 import { TNotificationsListItem } from '../../types';
+import { IStoreNotification } from '../../types/redux';
 
 import {
   ENotificationsActions,
@@ -25,7 +24,7 @@ import { getUnreadNotificationsCount } from '../../api/getUnreadNotificationsCou
 import { NotificationManager } from '../../components/UI/Notifications';
 
 function* fetchNotificationsAsRead() {
-  const { items: notificationsList, unreadItemsCount }: ReturnType<typeof getNotificationsStore> = yield select(
+  const { items: notificationsList, unreadItemsCount }: IStoreNotification = yield select(
     getNotificationsStore,
   );
   const newNotificationsIds = notificationsList.filter(({ status }) => status === 'new').map(({ id }) => id);
@@ -39,7 +38,7 @@ function* fetchNotificationsAsRead() {
 }
 
 function* markAllNotificationsAsRead() {
-  const { items: notificationsList }: ReturnType<typeof getNotificationsStore> = yield select(getNotificationsStore);
+  const { items: notificationsList }: IStoreNotification = yield select(getNotificationsStore);
 
   const normalizedNotfications: TNotificationsListItem[] = notificationsList.map((notification) => {
     return { ...notification, status: 'read' };
@@ -49,7 +48,7 @@ function* markAllNotificationsAsRead() {
 }
 
 function* fetchNotifications({ payload: { offset } = { offset: 0 } }: TLoadNotifications) {
-  const { items: currentItems }: ReturnType<typeof getNotificationsStore> = yield select(getNotificationsStore);
+  const { items: currentItems }: IStoreNotification = yield select(getNotificationsStore);
   const isEmptyList = offset === 0;
 
   try {
@@ -72,22 +71,25 @@ function* fetchNotifications({ payload: { offset } = { offset: 0 } }: TLoadNotif
   }
 }
 
-function* handleRemoveNotification({ payload: { notificationId } }: TRemoveNotificationItem) {
-  const { items, totalItemsCount, unreadItemsCount }: ReturnType<typeof getNotificationsStore> = yield select(
+export function* handleRemoveNotification({ payload: { notificationId } }: TRemoveNotificationItem) {
+  const { items, totalItemsCount, unreadItemsCount }: IStoreNotification = yield select(
     getNotificationsStore,
   );
-  const newItems = items.filter(({ id }) => id !== notificationId);
   const deletingItem = items.find(({ id }) => id === notificationId);
-  if (!deletingItem || items.length === newItems.length) {
+
+  if (!deletingItem) {
     return;
   }
 
-  const newNotificationsList = {
-    items: newItems,
-    count: totalItemsCount - 1,
-  };
+  const targetItemsCount = items.length;
+  const remainingTotalItemsCount = Math.max(0, totalItemsCount - 1);
+  const newItems = items.filter(({ id }) => id !== notificationId);
 
-  yield put(changeNotificationsList(newNotificationsList));
+  yield put(changeNotificationsList({
+    items: newItems,
+    count: remainingTotalItemsCount,
+  }));
+
   if (deletingItem.status === 'new') {
     yield put(changeUnreadNotificationsCount(Math.max(0, unreadItemsCount - 1)));
   }
@@ -97,6 +99,38 @@ function* handleRemoveNotification({ payload: { notificationId } }: TRemoveNotif
   } catch (error) {
     NotificationManager.notifyApiError(error, {
       title: 'notifications.failed-to-remove-notification',
+      message: getErrorMessage(error),
+    });
+    return;
+  }
+
+  const { items: currentItems }: IStoreNotification = yield select(getNotificationsStore);
+  const refillItemsCount = Math.min(
+    targetItemsCount - currentItems.length,
+    remainingTotalItemsCount - currentItems.length,
+  );
+
+  if (refillItemsCount <= 0) {
+    return;
+  }
+
+  try {
+    const {
+      results: olderItems,
+      count: updatedTotalItemsCount,
+    }: TGetNotificationsResponse = yield call(getNotifications, {
+      offset: currentItems.length,
+      limit: refillItemsCount,
+    });
+    const { items: latestItems }: IStoreNotification = yield select(getNotificationsStore);
+
+    yield put(changeNotificationsList({
+      items: uniqBy([...latestItems, ...olderItems], 'id'),
+      count: updatedTotalItemsCount,
+    }));
+  } catch (error) {
+    NotificationManager.notifyApiError(error, {
+      title: 'notifications.fetch-error',
       message: getErrorMessage(error),
     });
   }
