@@ -80,7 +80,6 @@ def _build_public_docs_paths(application: FastAPI) -> tuple[str, ...]:
         p
         for p in (
             application.docs_url,
-            application.redoc_url,
             application.openapi_url,
         )
         if p
@@ -148,7 +147,7 @@ app = FastAPI(
     root_path=settings.root_path,
     openapi_url='/openapi.json',
     docs_url='/docs',
-    redoc_url='/redoc',
+    redoc_url=None,
     lifespan=lifespan,
 )
 
