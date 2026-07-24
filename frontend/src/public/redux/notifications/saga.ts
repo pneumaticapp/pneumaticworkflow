@@ -1,4 +1,15 @@
-import { all, call, fork, put, select, takeEvery } from 'redux-saga/effects';
+import {
+  ActionChannelEffect,
+  ActionPattern,
+  actionChannel,
+  all,
+  call,
+  fork,
+  put,
+  select,
+  take,
+  takeEvery,
+} from 'redux-saga/effects';
 import uniqBy from 'lodash.uniqby';
 
 import { getNotifications, TGetNotificationsResponse } from '../../api/getNotifications';
@@ -122,11 +133,17 @@ export function* handleRemoveNotification({ payload: { notificationId } }: TRemo
       offset: currentItems.length,
       limit: refillItemsCount,
     });
-    const { items: latestItems }: IStoreNotification = yield select(getNotificationsStore);
+    const {
+      items: latestItems,
+      totalItemsCount: latestTotalItemsCount,
+    }: IStoreNotification = yield select(getNotificationsStore);
+    const safeTotalItemsCount = latestTotalItemsCount === remainingTotalItemsCount
+      ? updatedTotalItemsCount
+      : latestTotalItemsCount;
 
     yield put(changeNotificationsList({
       items: uniqBy([...latestItems, ...olderItems], 'id'),
-      count: updatedTotalItemsCount,
+      count: safeTotalItemsCount,
     }));
   } catch (error) {
     NotificationManager.notifyApiError(error, {
@@ -154,8 +171,15 @@ export function* watchMarkNotificationsAsRead() {
   yield takeEvery(ENotificationsActions.MarkNotificationsAsRead, markAllNotificationsAsRead);
 }
 
-function* watchRemoveNotification() {
-  yield takeEvery(ENotificationsActions.RemoveNotificationItem, handleRemoveNotification);
+export function* watchRemoveNotification() {
+  const removeNotificationChannel: ActionPattern<ActionChannelEffect> = yield actionChannel(
+    ENotificationsActions.RemoveNotificationItem,
+  );
+
+  while (true) {
+    const action: TRemoveNotificationItem = yield take(removeNotificationChannel);
+    yield call(handleRemoveNotification, action);
+  }
 }
 
 function* watchChangeList() {
