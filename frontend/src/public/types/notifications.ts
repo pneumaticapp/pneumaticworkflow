@@ -10,7 +10,6 @@ export interface INotification {
   message: React.ReactNode | null;
   timeOut: number;
   customClassName: string;
-  priority?: boolean;
   onCancelClick?: Function;
   onClick?: Function;
   onSubmitClick?: Function;

@@ -38,7 +38,7 @@ jest.mock('../../../utils/history', () => ({
 }));
 
 jest.mock('../../../components/UI/Notifications', () => ({
-  NotificationManager: { warning: jest.fn() },
+  NotificationManager: { notifyApiError: jest.fn(), warning: jest.fn() },
 }));
 
 jest.mock('../../../utils/logger', () => ({
