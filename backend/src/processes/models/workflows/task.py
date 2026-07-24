@@ -30,7 +30,7 @@ from src.processes.models.mixins import (
     TaskRawPerformersMixin,
 )
 from src.processes.models.workflows.workflow import Workflow
-from src.processes.queries import GetIncompletedTaskPerformersQuery
+from src.processes.queries import GetTaskPerformersQuery
 from src.processes.querysets import (
     DelayBaseQuerySet,
     TaskPerformerQuerySet,
@@ -608,7 +608,10 @@ class Task(
         if not task_performers.exists():
             return True
         if self.require_completion_by_all:
-            query = GetIncompletedTaskPerformersQuery(task_id=self.id)
+            query = GetTaskPerformersQuery(
+                task_id=self.id,
+                is_completed=False,
+            )
             data = RawSqlExecutor.fetch(*query.get_sql())
             incompleted_user_ids = {e['id'] for e in data}
             if by_user:

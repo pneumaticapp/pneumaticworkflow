@@ -6868,6 +6868,83 @@ def test_start_task__skip_require_all_others__continue(mocker):
     )
 
 
+def test_start_task__skip_rcba_group_with_other_user__complete_starter(
+    mocker,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    other_user = create_test_not_admin(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    workflow.workflow_starter = owner
+    workflow.save(update_fields=['workflow_starter'])
+    task = workflow.tasks.get(number=1)
+    task.skip_for_starter = True
+    task.require_completion_by_all = True
+    task.save(
+        update_fields=[
+            'skip_for_starter',
+            'require_completion_by_all',
+        ],
+    )
+    task.taskperformer_set.all().delete()
+    group = create_test_group(
+        account=account,
+        users=[owner, other_user],
+    )
+    group_performer = TaskPerformer.objects.create(
+        task=task,
+        group=group,
+        type=PerformerType.GROUP,
+    )
+    mocker.patch(
+        'src.processes.services.tasks.task.'
+        'TaskService.insert_fields_values',
+    )
+    mocker.patch(
+        'src.processes.models.workflows.task.'
+        'Task.update_performers',
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.'
+        'reassign_restricted_permissions_for_task',
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowActionService._start_next_tasks',
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.'
+        'send_new_task_notification.delay',
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.'
+        'send_new_task_websocket.delay',
+    )
+    service = WorkflowActionService(user=owner, workflow=workflow)
+
+    # act
+    service.start_task(task=task)
+
+    # assert
+    task.refresh_from_db()
+    group_performer.refresh_from_db()
+    assert task.status == TaskStatus.ACTIVE
+    assert group_performer.is_completed is False
+    assert TaskPerformer.objects.filter(
+        task=task,
+        user=owner,
+        type=PerformerType.GROUP_USER,
+        is_completed=True,
+    ).exists()
+    assert not TaskPerformer.objects.filter(
+        task=task,
+        user=other_user,
+        type=PerformerType.GROUP_USER,
+    ).exists()
+
+
 def test_start_task__skip_require_all_only_starter__skip(
     mocker,
 ):
