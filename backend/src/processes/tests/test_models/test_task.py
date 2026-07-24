@@ -838,6 +838,7 @@ def test_add_raw_performer__with_user__ok(mocker):
 
     # assert
     get_raw_performer_mock.assert_called_once_with(
+        ai_agent_id=None,
         api_name=api_name,
         performer_type=PerformerType.USER,
         user=user,
@@ -879,6 +880,7 @@ def test_add_raw_performer__with_user_id__ok(mocker):
 
     # assert
     get_raw_performer_mock.assert_called_once_with(
+        ai_agent_id=None,
         api_name=api_name,
         performer_type=PerformerType.USER,
         user=None,
@@ -922,6 +924,7 @@ def test_add_raw_performer__with_group_id__ok(mocker):
 
     # assert
     get_raw_performer_mock.assert_called_once_with(
+        ai_agent_id=None,
         api_name=api_name,
         performer_type=PerformerType.GROUP,
         user=None,
@@ -965,6 +968,7 @@ def test_add_raw_performer__with_field__ok(mocker):
 
     # assert
     get_raw_performer_mock.assert_called_once_with(
+        ai_agent_id=None,
         api_name=api_name,
         performer_type=PerformerType.FIELD,
         user=None,
@@ -1006,6 +1010,7 @@ def test_add_raw_performer__workflow_starter_no_user__ok(mocker):
 
     # assert
     get_raw_performer_mock.assert_called_once_with(
+        ai_agent_id=None,
         api_name=api_name,
         performer_type=PerformerType.WORKFLOW_STARTER,
         user=None,
@@ -1736,6 +1741,7 @@ def test_update_raw_performers_from_tmpl__new_performers__bulk_created(
 
     # assert
     get_raw_performer_mock.assert_called_once_with(
+        ai_agent_id=None,
         performer_type=PerformerType.USER,
         user_id=user.id,
         group_id=None,

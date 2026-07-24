@@ -295,6 +295,7 @@ class TaskRawPerformersMixin:
         user: Optional[UserModel] = None,
         group: Optional[UserGroup] = None,
         field=None,
+        ai_agent=None,
         performer_type: PerformerType = PerformerType.USER,
         source_task_api_name: Optional[str] = None,
     ) -> int:
@@ -308,6 +309,7 @@ class TaskRawPerformersMixin:
                 PerformerType.MANAGER,
             )
             and user is None and group is None and field is None
+            and ai_agent is None
         ):
             raise Exception(
                 'Raw performer should be linked with field or user',
@@ -318,6 +320,7 @@ class TaskRawPerformersMixin:
             user=user,
             group=group,
             field=field,
+            ai_agent=ai_agent,
             source_task_api_name=source_task_api_name,
         ).delete()[0]
 

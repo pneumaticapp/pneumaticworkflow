@@ -69,6 +69,7 @@ class TaskTemplate(
         user: Optional[UserModel] = None,
         group: Optional[UserGroup] = None,
         user_id: Optional[int] = None,
+        ai_agent_id: Optional[int] = None,
         field=None,  # Optional[TaskField]
         performer_type: PerformerType = PerformerType.USER,
         **kwargs,
@@ -93,6 +94,8 @@ class TaskTemplate(
             result.user = user
         elif user_id:
             result.user_id = user_id
+        elif ai_agent_id:
+            result.ai_agent_id = ai_agent_id
         return result
 
     def add_raw_performer(
@@ -100,6 +103,7 @@ class TaskTemplate(
         user: Optional[UserModel] = None,
         group: Optional[UserGroup] = None,
         user_id: Optional[int] = None,
+        ai_agent_id: Optional[int] = None,
         field=None,
         api_name: Optional[str] = None,
         performer_type: PerformerType = PerformerType.USER,
@@ -110,7 +114,8 @@ class TaskTemplate(
 
         if (
             performer_type != PerformerType.WORKFLOW_STARTER
-            and not user and not user_id and not group and not field
+            and not user and not user_id and not group
+            and not ai_agent_id and not field
         ):
             raise Exception(
                 'Raw performer should be linked with field or user',
@@ -122,6 +127,7 @@ class TaskTemplate(
             user=user,
             group=group,
             user_id=user_id,
+            ai_agent_id=ai_agent_id,
             field=field,
         )
         raw_performer.save()

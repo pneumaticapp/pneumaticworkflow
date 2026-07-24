@@ -126,6 +126,7 @@ class Task(
         user: Optional[UserModel] = None,
         group_id: Optional[int] = None,
         user_id: Optional[int] = None,
+        ai_agent_id: Optional[int] = None,
         field=None,  # Optional[TaskField]
         source_task_api_name: Optional[str] = None,
     ):  # -> RawPerformer
@@ -148,6 +149,8 @@ class Task(
             result.user_id = user_id
         elif group_id:
             result.group_id = group_id
+        elif ai_agent_id:
+            result.ai_agent_id = ai_agent_id
         return result
 
     def add_raw_performer(
@@ -155,6 +158,7 @@ class Task(
         user: Optional[UserModel] = None,
         user_id: Optional[int] = None,
         group_id: Optional[int] = None,
+        ai_agent_id: Optional[int] = None,
         field=None,
         api_name: Optional[str] = None,
         performer_type: PerformerType = PerformerType.USER,
@@ -174,6 +178,7 @@ class Task(
             and not group_id
             and not user
             and not user_id
+            and not ai_agent_id
             and not field
         ):
             raise Exception(
@@ -186,6 +191,7 @@ class Task(
             user=user,
             group_id=group_id,
             user_id=user_id,
+            ai_agent_id=ai_agent_id,
             field=field,
             source_task_api_name=source_task_api_name,
         )
@@ -274,6 +280,7 @@ class Task(
                 'type': e.type,
                 'user_id': e.user_id,
                 'group_id': e.group_id,
+                'ai_agent_id': e.ai_agent_id,
                 'api_name': e.api_name,
                 'source_task_api_name': e.source_task_api_name,
                 'field': {
@@ -322,6 +329,9 @@ class Task(
                         performer_type=raw_performer_template['type'],
                         user_id=raw_performer_template.get('user_id'),
                         group_id=raw_performer_template.get('group_id'),
+                        ai_agent_id=raw_performer_template.get(
+                            'ai_agent_id',
+                        ),
                         field=field,
                         api_name=raw_performer_template['api_name'],
                         source_task_api_name=(
@@ -401,7 +411,8 @@ class Task(
                 'group',
             ).all()
 
-        api_names, user_ids, group_ids = (
+        api_names, user_ids, group_ids, ai_agent_ids = (
+            defaultdict(list),
             defaultdict(list),
             defaultdict(list),
             defaultdict(list),
@@ -412,6 +423,10 @@ class Task(
                 user_ids[raw_performer_.user_id].append(raw_performer_)
             elif raw_performer_.type == PerformerType.GROUP:
                 group_ids[raw_performer_.group_id].append(raw_performer_)
+            elif raw_performer_.type == PerformerType.AI:
+                ai_agent_ids[raw_performer_.ai_agent_id].append(
+                    raw_performer_,
+                )
             elif raw_performer_.type == PerformerType.FIELD:
                 api_names[raw_performer_.field.api_name].append(raw_performer_)
             elif raw_performer_.type == PerformerType.WORKFLOW_STARTER:
@@ -500,6 +515,17 @@ class Task(
                             DirectlyStatus.NO_STATUS
                         )
                         task_performer.save(update_fields=('directly_status',))
+        if ai_agent_ids:
+            for ai_agent_id, raw_performers_ in ai_agent_ids.items():
+                task_performer, _ = TaskPerformer.objects.get_or_create(
+                    type=PerformerType.AI,
+                    task_id=self.id,
+                    ai_agent_id=ai_agent_id,
+                )
+                if task_performer.directly_status == DirectlyStatus.NO_STATUS:
+                    for raw_performer_ in raw_performers_:
+                        raw_performer_.task_performer_id = task_performer.id
+                        raw_performers_for_update.append(raw_performer_)
         if raw_performers_for_update:
             from src.processes.models.workflows.raw_performer import (
                 RawPerformer,
@@ -547,12 +573,17 @@ class Task(
         )
         deleted_user_ids = []
         deleted_group_ids = []
+        deleted_ai_agent_ids = []
         for performer_to_delete in performers_to_delete:
             if performer_to_delete.type == PerformerType.GROUP:
                 deleted_group_ids.append(performer_to_delete.group_id)
             elif performer_to_delete.type == PerformerType.USER:
                 deleted_user_ids.append(performer_to_delete.user_id)
-        if deleted_user_ids or deleted_group_ids:
+            elif performer_to_delete.type == PerformerType.AI:
+                deleted_ai_agent_ids.append(
+                    performer_to_delete.ai_agent_id,
+                )
+        if deleted_user_ids or deleted_group_ids or deleted_ai_agent_ids:
             performers_to_delete.delete()
         return deleted_user_ids, deleted_group_ids
 
@@ -561,6 +592,7 @@ class Task(
         user: Optional[UserModel] = None,
         group: Optional[UserGroup] = None,
         field=None,
+        ai_agent=None,
         performer_type: PerformerType = PerformerType.USER,
         source_task_api_name: Optional[str] = None,
     ):
@@ -574,6 +606,7 @@ class Task(
             user=user,
             group=group,
             field=field,
+            ai_agent=ai_agent,
             source_task_api_name=source_task_api_name,
         )
         if deleted_count:

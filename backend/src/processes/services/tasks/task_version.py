@@ -25,6 +25,7 @@ from src.processes.models.workflows.fields import (
     FieldSelection,
     TaskField,
 )
+from src.processes.enums import PerformerType
 from src.processes.models.workflows.raw_due_date import RawDueDate
 from src.processes.models.workflows.task import (
     Delay,
@@ -405,7 +406,14 @@ class TaskUpdateVersionService(
             .get_user_ids_set()
         )
 
-        if not performer_after:
+        ai_performer_exists = (
+            TaskPerformer.objects
+            .exclude_directly_deleted()
+            .by_task(self.instance.id)
+            .filter(type=PerformerType.AI)
+            .exists()
+        )
+        if not performer_after and not ai_performer_exists:
             default_performer = (
                 account.get_owner() if workflow.is_external
                 else workflow.workflow_starter
