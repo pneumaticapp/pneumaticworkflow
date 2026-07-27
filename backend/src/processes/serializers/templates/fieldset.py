@@ -1,10 +1,11 @@
 from django.core.validators import MinValueValidator
-from rest_framework.fields import CharField, IntegerField
+from rest_framework.fields import CharField, ChoiceField, IntegerField
 from rest_framework.serializers import ModelSerializer
 from src.generics.fields import (
     RelatedApiNameListField, AccountPrimaryKeyRelatedField,
 )
 from src.generics.mixins.serializers import CustomValidationErrorMixin
+from src.processes.enums import FieldSetLayout, LabelPosition
 from src.processes.models.templates.fieldset import (
     FieldsetTemplate,
     FieldsetTemplateRule,
@@ -56,19 +57,20 @@ class FieldsetTemplateSerializer(
             'fields',
         )
 
-        read_only_fields = (
-            'name',
-            'label_position',
-            'layout',
-            'rules',
-            'fields',
-        )
-
     shared_fieldset_id = AccountPrimaryKeyRelatedField(
         queryset=FieldsetTemplate.objects.shared(),
         required=True,
     )
     api_name = CharField(required=False, max_length=200)
+    name = CharField(required=False, max_length=1000)
+    label_position = ChoiceField(
+        choices=LabelPosition.CHOICES,
+        required=False,
+    )
+    layout = ChoiceField(
+        choices=FieldSetLayout.CHOICES,
+        required=False,
+    )
     rules = FieldsetTemplateRuleSerializer(
         many=True,
         required=False,
