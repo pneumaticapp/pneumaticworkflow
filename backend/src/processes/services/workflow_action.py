@@ -38,7 +38,7 @@ from src.processes.models.workflows.task import (
 )
 from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.workflow import Workflow
-from src.processes.queries import GetIncompletedTaskPerformersQuery
+from src.processes.queries import GetTaskPerformersQuery
 from src.storage.utils import reassign_restricted_permissions_for_task
 from src.processes.services import exceptions
 from src.processes.services.condition_check.service import (
@@ -86,8 +86,24 @@ class WorkflowActionService:
         self.sync = sync
 
     @staticmethod
-    def _get_incompleted_users(task: Task) -> list:
-        query = GetIncompletedTaskPerformersQuery(task_id=task.id)
+    def _get_incompleted_performers_users(task: Task) -> list:
+
+        """ Return all incompleted users performers for the task """
+
+        query = GetTaskPerformersQuery(
+            task_id=task.id,
+            is_completed=False,
+        )
+        return list(RawSqlExecutor.fetch(*query.get_sql()))
+
+    @staticmethod
+    def _get_all_performers_users(task: Task) -> list:
+
+        """ Return all users performers for the task """
+
+        query = GetTaskPerformersQuery(
+            task_id=task.id,
+        )
         return list(RawSqlExecutor.fetch(*query.get_sql()))
 
     @classmethod
@@ -100,12 +116,12 @@ class WorkflowActionService:
         if include_guests:
             result = [
                 (user['id'], user['email'])
-                for user in cls._get_incompleted_users(task)
+                for user in cls._get_incompleted_performers_users(task)
             ]
         else:
             result = [
                 (user['id'], user['email'])
-                for user in cls._get_incompleted_users(task)
+                for user in cls._get_incompleted_performers_users(task)
                 if user['type'] == UserType.USER
             ]
         return sorted(result, key=lambda user: user[0])
@@ -502,7 +518,7 @@ class WorkflowActionService:
             and self.workflow.template.is_onboarding
         )
         if not skip_sending_notification:
-            incompleted_users = self._get_incompleted_users(task)
+            incompleted_users = self._get_incompleted_performers_users(task)
             notification_recipients = sorted(
                 [
                     (
@@ -644,7 +660,7 @@ class WorkflowActionService:
             delay=delay,
         )
 
-    def _skip_task_for_starter(
+    def _task_skip_for_starter(
         self,
         task: Task,
         is_returned: bool,
@@ -657,6 +673,19 @@ class WorkflowActionService:
         else:
             task.status = TaskStatus.SKIPPED
             task.save(update_fields=['status'])
+            self._start_next_tasks(parent_task=task)
+
+    def _task_skip_no_performers(
+        self,
+        task: Task,
+        is_returned: bool,
+    ):
+        WorkflowEventService.task_skip_no_performers_event(task)
+        task.status = TaskStatus.SKIPPED
+        task.save(update_fields=('status',))
+        if is_returned:
+            self._start_prev_tasks(task)
+        else:
             self._start_next_tasks(parent_task=task)
 
     def _complete_task_for_starter(
@@ -701,43 +730,31 @@ class WorkflowActionService:
             task=task,
             user=self.user or task.account.get_owner(),
         )
-        task_performers_exists = (
-            TaskPerformer.objects.exclude_directly_deleted().by_task(
-                task.id,
-            ).exists()
-        )
-        if not task_performers_exists:
-            WorkflowEventService.task_skip_no_performers_event(task)
-            task.status = TaskStatus.SKIPPED
-            task.save(update_fields=('status',))
-            if is_returned:
-                self._start_prev_tasks(task)
-            else:
-                self._start_next_tasks(parent_task=task)
-            return
-        if task.skip_for_starter and not self.workflow.is_external:
-            try:
-                starter_performers = self._get_performers_for_user(
-                    task=task,
-                    user=self.workflow.workflow_starter,
-                )
-            except exceptions.UserAlreadyCompleteTask:
-                starter_performers = None
-            if starter_performers:
-                if not task.require_completion_by_all:
-                    self._skip_task_for_starter(task, is_returned=is_returned)
-                    return
+        performers_users = self._get_all_performers_users(task)
 
-                has_other_performers = (
-                    TaskPerformer.objects
-                    .by_task(task.id)
-                    .exclude_directly_deleted()
-                    .type_user_or_group()
-                    .exclude(id__in=[e.id for e in starter_performers])
-                    .exists()
-                )
-                if not has_other_performers:
-                    self._skip_task_for_starter(task, is_returned)
+        if not performers_users:
+            self._task_skip_no_performers(task, is_returned=is_returned)
+            return
+
+        if task.skip_for_starter and not self.workflow.is_external:
+            starter = self.workflow.workflow_starter
+            performers_user_ids = {user['id'] for user in performers_users}
+
+            if starter.id in performers_user_ids:
+                performers_user_ids.remove(starter.id)
+                task_rcba = task.require_completion_by_all
+                if task_rcba:
+                    # if performers_user_ids exists then complete task
+                    # only for starter in the "continue_task" method
+                    # using "_complete_task_for_starter" method
+                    if not performers_user_ids:
+                        self._task_skip_for_starter(
+                            task=task,
+                            is_returned=is_returned,
+                        )
+                        return
+                else:
+                    self._task_skip_for_starter(task, is_returned=is_returned)
                     return
 
         if is_returned:
@@ -769,7 +786,7 @@ class WorkflowActionService:
         )
         task_service.partial_update(**update_fields, force_save=True)
         # Not include guests
-        incompleted_users = self._get_incompleted_users(task)
+        incompleted_users = self._get_incompleted_performers_users(task)
         ws_recipients = sorted(
             [(user['id'], user['email']) for user in incompleted_users],
             key=lambda user: user[0],
