@@ -289,19 +289,55 @@ class FieldsetMixin:
             else:
                 shared_fieldset = fieldset_data['shared_fieldset_id']
                 service = FieldSetTemplateService(user=user)
-                fieldset = service.create_from_shared(
-                    shared_fieldset_data=FieldSetTemplateService.to_json(
-                        shared_fieldset,
-                    ),
-                    shared_fieldset_id=shared_fieldset.id,
-                    template_id=template.id,
-                    task_id=task.id if task else None,
-                    kickoff_id=kickoff.id if kickoff else None,
-                    order=fieldset_data['order'],
-                    api_name=fieldset_data.get('api_name'),
-                    title=fieldset_data.get('title'),
-                    description=fieldset_data.get('description'),
-                )
+                # Draft already expanded via get_new_fieldset_data
+                # — create as-is to preserve field/rule api_names.
+                # Otherwise clone from shared.
+                if fieldset_data.get('fields'):
+                    fieldset = service.create(
+                        name=(
+                            fieldset_data.get('name')
+                            or shared_fieldset.name
+                        ),
+                        title=fieldset_data.get(
+                            'title',
+                            shared_fieldset.title,
+                        ),
+                        description=fieldset_data.get(
+                            'description',
+                            shared_fieldset.description,
+                        ),
+                        api_name=fieldset_data.get('api_name'),
+                        label_position=(
+                            fieldset_data.get('label_position')
+                            or shared_fieldset.label_position
+                        ),
+                        layout=(
+                            fieldset_data.get('layout')
+                            or shared_fieldset.layout
+                        ),
+                        fields=fieldset_data['fields'],
+                        rules=fieldset_data.get('rules') or [],
+                        order=fieldset_data['order'],
+                        is_shared=False,
+                        shared_fieldset_id=shared_fieldset.id,
+                        template_id=template.id,
+                        task_id=task.id if task else None,
+                        kickoff_id=kickoff.id if kickoff else None,
+                    )
+                else:
+                    fieldset = service.create_from_shared(
+                        shared_fieldset_data=FieldSetTemplateService.to_json(
+                            shared_fieldset,
+                        ),
+                        shared_fieldset_id=shared_fieldset.id,
+                        template_id=template.id,
+                        task_id=task.id if task else None,
+                        kickoff_id=kickoff.id if kickoff else None,
+                        order=fieldset_data['order'],
+                        api_name=fieldset_data.get('api_name'),
+                        title=fieldset_data.get('title'),
+                        description=fieldset_data.get('description'),
+                    )
                 fieldsets_api_names.add(fieldset.api_name)
         instance.fieldsets.exclude(api_name__in=fieldsets_api_names).delete()
 

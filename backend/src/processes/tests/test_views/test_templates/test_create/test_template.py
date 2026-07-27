@@ -31,6 +31,7 @@ from src.processes.models.templates.conditions import (
     PredicateTemplate,
     RuleTemplate,
 )
+from src.processes.models.templates.fieldset import FieldsetTemplate
 from src.processes.models.templates.fields import (
     FieldTemplate,
     FieldTemplateSelection,
@@ -41,7 +42,6 @@ from src.processes.models.templates.template import Template
 from src.processes.services.templates.integrations import (
     TemplateIntegrationsService,
 )
-from src.processes.models.templates.fieldset import FieldsetTemplate
 from src.processes.tests.fixtures import (
     create_invited_user,
     create_test_account,
