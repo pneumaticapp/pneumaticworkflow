@@ -1,5 +1,4 @@
-/* eslint-disable indent */
-import React, { ReactNode, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
 
@@ -9,28 +8,16 @@ import { TrashIcon } from '../../../icons';
 import { getFormattedDropdownOption } from '../Conditions/utils/getFormattedDropdownOption';
 import { useCheckDevice } from '../../../../hooks/useCheckDevice';
 
-import { TTaskVariable } from '../../types';
 import { ITemplateTaskClient } from '../../../../types/template';
+import { useTaskForm } from '../useTaskForm';
+import { IDropdownTask, IReturnToProps } from './types';
 
 import styles from './ReturnTo.css';
 import stylesTaskForm from '../TaskForm.css';
 
-interface IReturnToProps {
-  variables: TTaskVariable[];
-  tasks: ITemplateTaskClient[];
-  currentTaskRevertTask: string | null;
-  setCurrentTask(changedFields: Partial<ITemplateTaskClient>): void;
-  taskAncestors: Set<string>;
-}
-
-interface IDropdownTask {
-  label: string;
-  apiName: string | null;
-  richLabel: ReactNode;
-}
-
-export function ReturnTo({ variables, tasks, currentTaskRevertTask, setCurrentTask, taskAncestors }: IReturnToProps) {
-  const [isReturnTo, setIsReturnTo] = useState(Boolean(currentTaskRevertTask));
+export function ReturnTo({ variables, tasks, taskAncestors }: IReturnToProps) {
+  const { task, updateTask } = useTaskForm();
+  const [isReturnTo, setIsReturnTo] = useState(Boolean(task.revertTask));
   const { formatMessage } = useIntl();
   const { isMobile } = useCheckDevice();
   const STYLES = {
@@ -57,7 +44,7 @@ export function ReturnTo({ variables, tasks, currentTaskRevertTask, setCurrentTa
   const dropdownTaskList = useMemo(
     () => [
       ...tasks
-        .filter((task: ITemplateTaskClient) => taskAncestors.has(task.apiName))
+        .filter((ancestorTask: ITemplateTaskClient) => taskAncestors.has(ancestorTask.apiName))
         .map(({ name, apiName }) => {
           return {
             label: name,
@@ -74,25 +61,25 @@ export function ReturnTo({ variables, tasks, currentTaskRevertTask, setCurrentTa
   );
 
   const selectedTask =
-    currentTaskRevertTask && dropdownTaskList.find((task: IDropdownTask) => currentTaskRevertTask === task.apiName);
+    task.revertTask && dropdownTaskList.find((dropdownTask: IDropdownTask) => task.revertTask === dropdownTask.apiName);
 
   const formatOptionLabel = (option: IDropdownTask, { context }: { context: string }) => {
     return context === 'menu'
       ? getFormattedDropdownOption({
-          label: option.richLabel,
-          isSelected: option.apiName === currentTaskRevertTask,
-        })
+        label: option.richLabel,
+        isSelected: option.apiName === task.revertTask,
+      })
       : option.richLabel;
   };
 
   const removeReturn = () => {
     setIsReturnTo(false);
-    setCurrentTask({ revertTask: null });
+    updateTask({ revertTask: null });
   };
 
   const handleOptionChange = (option: IDropdownTask) => {
     if (selectedTask && option.apiName === selectedTask.apiName) return;
-    setCurrentTask({ revertTask: option.apiName });
+    updateTask({ revertTask: option.apiName });
   };
 
   return (

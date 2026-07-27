@@ -1,13 +1,16 @@
 import * as React from 'react';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useSelector, useDispatch } from 'react-redux';
 
 import { TemplateEdit } from '../TemplateEdit';
 import { cleanTemplateReferences } from '../../../utils/template';
-import { KickoffReduxContainer } from '../KickoffRedux';
-import { getSubscriptionPlan } from '../../../redux/selectors/user';
+import { isCreateTemplate } from '../../../utils/history';
+import { getCurrentUser } from '../../../redux/selectors/authUser';
+import { getNotDeletedAccountsUsers } from '../../../redux/selectors/accounts';
+import { getSubscriptionPlan, getIsUserSubsribed } from '../../../redux/selectors/user';
 import { getIsCatalogLoaded } from '../../../redux/selectors/fieldsets';
+import { getAITemplate, getTemplateData, getTemplateStatus } from '../../../redux/selectors/template';
 import { ETemplateStatus } from '../../../types/redux';
 
 jest.mock('../../../utils/template', () => ({
@@ -23,6 +26,7 @@ jest.mock('../../../utils/history', () => ({
 }));
 
 jest.mock('../../../utils/users', () => ({
+  getNotDeletedUsers: jest.fn((users: unknown[]) => users),
   getUserFullName: jest.fn(() => 'Test User'),
 }));
 
@@ -68,9 +72,29 @@ jest.mock('../AddEntityButton', () => ({
 jest.mock('../Integrations', () => ({
   TemplateIntegrations: jest.fn(() => null),
 }));
-jest.mock('../KickoffRedux', () => ({
-  KickoffReduxContainer: jest.fn(() => null),
-}));
+jest.mock('../KickoffRedux', () => {
+  const React = require('react');
+  const { useTemplateField } = require('../useTemplateForm');
+
+  return {
+    KickoffReduxContainer: jest.fn(() => {
+      const { setFieldValue } = useTemplateField();
+
+      return React.createElement(
+        'button',
+        {
+          type: 'button',
+          onClick: () => setFieldValue('kickoff', {
+            description: 'new',
+            fields: [],
+            fieldsets: [{ apiName: 'fs-1', fields: [{ apiName: 'fieldset-field' }] }],
+          }),
+        },
+        'Set kickoff',
+      );
+    }),
+  };
+});
 jest.mock('../TemplateSettings', () => ({
   TemplateSettings: jest.fn(() => null),
 }));
@@ -79,6 +103,10 @@ jest.mock('../TemplateEditVariablesSync', () => ({
 }));
 jest.mock('../ConditionsBanner', () => ({
   ConditionsBanner: jest.fn(() => null),
+}));
+
+jest.mock('../../StepName', () => ({
+  StepName: jest.fn((props: { initialStepName: string }) => React.createElement('span', null, props.initialStepName)),
 }));
 
 jest.mock('../TaskForm/Conditions/utils/getKickoffConditions', () => ({
@@ -107,6 +135,7 @@ jest.mock('../../UI/Notifications', () => ({
 }));
 
 const SUBSCRIPTION_PLAN = 'unlimited_month';
+let mockDispatch = jest.fn();
 
 describe('TemplateEdit', () => {
   const makeTemplate = (overrides: any = {}) => ({
@@ -151,18 +180,50 @@ describe('TemplateEdit', () => {
     loadTemplateVariablesSuccess: jest.fn(),
   });
 
+  let currentProps: ReturnType<typeof baseProps>;
+
   beforeEach(() => {
     jest.clearAllMocks();
-    (useDispatch as jest.Mock).mockReturnValue(jest.fn());
+    currentProps = baseProps();
+    mockDispatch = jest.fn();
+    (useDispatch as jest.Mock).mockReturnValue(mockDispatch);
     (useSelector as jest.Mock).mockImplementation((selector: unknown) => {
+      const props = currentProps;
+      if (selector === getCurrentUser) return props.authUser;
+      if (selector === getNotDeletedAccountsUsers) return props.users;
+      if (selector === getTemplateData) return props.template;
+      if (selector === getAITemplate) return props.aiTemplate;
+      if (selector === getTemplateStatus) return props.templateStatus;
+      if (selector === getIsUserSubsribed) return props.isSubscribed;
       if (selector === getSubscriptionPlan) return SUBSCRIPTION_PLAN;
       if (selector === getIsCatalogLoaded) return true;
       return undefined;
     });
   });
 
+  describe('initialization', () => {
+    it('does not overwrite a fresh create template with the pre-initialization Formik snapshot', () => {
+      (isCreateTemplate as jest.Mock).mockReturnValue(true);
+      currentProps = {
+        ...baseProps(),
+        match: { params: { id: undefined } },
+        location: { pathname: '/templates/create', search: '' },
+        template: makeTemplate({ id: undefined, tasks: [] }),
+      } as any;
+
+      render(React.createElement(TemplateEdit, currentProps as any));
+
+      const setTemplateActions = mockDispatch.mock.calls
+        .map(([action]) => action)
+        .filter((action) => action.type === 'SET_TEMPLATE');
+
+      expect(setTemplateActions).toHaveLength(1);
+      expect(setTemplateActions[0].payload.tasks).toHaveLength(1);
+    });
+  });
+
   describe('cleanup of references to fieldset fields', () => {
-    it('changing tasks runs cleanTemplateReferences and pipes the result into setTemplate', () => {
+    it('changing tasks runs cleanTemplateReferences', () => {
       const props = baseProps();
       render(React.createElement(TemplateEdit, props as any));
 
@@ -171,37 +232,88 @@ describe('TemplateEdit', () => {
       expect(cleanTemplateReferences).toHaveBeenCalledTimes(1);
       const [updatedWorkflow] = (cleanTemplateReferences as jest.Mock).mock.calls[0];
       expect(updatedWorkflow.tasks).toHaveLength(2);
-      expect(props.setTemplate).toHaveBeenCalledTimes(1);
-      expect(props.setTemplate).toHaveBeenCalledWith(updatedWorkflow);
     });
 
-    it('changing kickoff runs cleanTemplateReferences and pipes the result into setTemplate', () => {
+    it('changing kickoff runs cleanTemplateReferences', async () => {
       const props = baseProps();
       render(React.createElement(TemplateEdit, props as any));
 
-      const kickoffMock = KickoffReduxContainer as unknown as jest.Mock;
-      const lastCall = kickoffMock.mock.calls[kickoffMock.mock.calls.length - 1];
-      const setKickoff = lastCall[0].setKickoff as (kickoff: any) => void;
-
-      const newKickoff = {
-        description: 'new',
-        fields: [],
-        fieldsets: [{ apiName: 'fs-1' }],
-      };
-      setKickoff(newKickoff);
+      await act(async () => {
+        userEvent.click(screen.getByRole('button', { name: 'Set kickoff' }));
+      });
 
       expect(cleanTemplateReferences).toHaveBeenCalledTimes(1);
       const [updatedWorkflow] = (cleanTemplateReferences as jest.Mock).mock.calls[0];
-      expect(updatedWorkflow.kickoff).toBe(newKickoff);
-      expect(props.setTemplate).toHaveBeenCalledTimes(1);
-      expect(props.setTemplate).toHaveBeenCalledWith(updatedWorkflow);
+      expect(updatedWorkflow.kickoff).toEqual({
+        description: 'new',
+        fields: [],
+        fieldsets: [{ apiName: 'fs-1', fields: [{ apiName: 'fieldset-field' }] }],
+      });
+    });
+  });
+
+  describe('variables sync', () => {
+    it('syncs immediately when a create session receives its template id', () => {
+      currentProps = { ...baseProps(), template: makeTemplate({ id: undefined }) };
+      const view = render(React.createElement(TemplateEdit, currentProps as any));
+      mockDispatch.mockClear();
+
+      currentProps = { ...currentProps, template: makeTemplate({ id: 42 }) };
+      view.rerender(React.createElement(TemplateEdit, currentProps as any));
+
+      expect(mockDispatch.mock.calls.some(
+        ([action]) => action.type === 'LOAD_TEMPLATE_VARIABLES_SUCCESS' && action.payload.templateId === 42,
+      )).toBe(true);
+    });
+
+    it('syncs immediately when navigating to another persisted template', () => {
+      currentProps = { ...baseProps(), template: makeTemplate({ id: 42 }) };
+      const view = render(React.createElement(TemplateEdit, currentProps as any));
+      mockDispatch.mockClear();
+
+      currentProps = { ...currentProps, template: makeTemplate({ id: 43, name: 'Other template' }) };
+      view.rerender(React.createElement(TemplateEdit, currentProps as any));
+
+      expect(mockDispatch.mock.calls.some(
+        ([action]) => action.type === 'LOAD_TEMPLATE_VARIABLES_SUCCESS' && action.payload.templateId === 43,
+      )).toBe(true);
+    });
+
+    it('passes saved template id into task variable metadata', () => {
+      currentProps = {
+        ...baseProps(),
+        template: makeTemplate({
+          id: 42,
+          tasks: [
+            {
+              uuid: 'u-task-1',
+              apiName: 'task-1',
+              number: 1,
+              name: 'Task with output',
+              fields: [{ apiName: 'field-1', name: 'Field 1', type: 'string', selections: [] }],
+              fieldsets: [],
+            } as any,
+          ],
+        }),
+      };
+
+      render(React.createElement(TemplateEdit, currentProps as any));
+
+      const variablesAction = mockDispatch.mock.calls
+        .map(([action]) => action)
+        .find((action) => action.type === 'LOAD_TEMPLATE_VARIABLES_SUCCESS');
+      const taskVariable = variablesAction.payload.variables.find((variable: any) => variable.apiName === 'field-1');
+
+      expect(variablesAction.payload.templateId).toBe(42);
+      expect(React.isValidElement(taskVariable.richSubtitle)).toBe(true);
+      expect(taskVariable.richSubtitle.props.templateId).toBe(42);
     });
   });
 
   describe('newly added task', () => {
     it('a freshly added task has fieldsets as an empty array, not undefined', () => {
-      const props = { ...baseProps(), template: makeTemplate({ tasks: [] }) };
-      render(React.createElement(TemplateEdit, props as any));
+      currentProps = { ...baseProps(), template: makeTemplate({ tasks: [] }) };
+      render(React.createElement(TemplateEdit, currentProps as any));
 
       userEvent.click(screen.getByRole('button', { name: 'Add' }));
 

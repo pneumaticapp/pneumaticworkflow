@@ -1,5 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
 import * as React from 'react';
 import { useIntl } from 'react-intl';
 
@@ -34,12 +32,12 @@ export function FileOutput({
   };
 
   return (
-    <p className={styles['output']}>
+    <div className={styles['output']}>
       <span className={styles['output__name']}>
         {name}
       </span>
 
       {renderValue()}
-    </p>
+    </div>
   );
 }

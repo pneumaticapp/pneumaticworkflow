@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React, { createElement, createRef } from 'react';
 import { render, waitFor, act } from '@testing-library/react';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
@@ -13,7 +13,7 @@ import {
   $createRangeSelection,
   $setSelection,
 } from 'lexical';
-import type { MutableRefObject } from 'react';
+import type { MutableRefObject, ReactElement } from 'react';
 import type { LexicalEditor } from 'lexical';
 import { CopyAttachmentPlugin } from '../CopyAttachmentPlugin';
 import { SetEditorRefPlugin } from '../../SetEditorRefPlugin';
@@ -31,29 +31,19 @@ interface SerializedNode {
 }
 
 function collectTypes(nodes: SerializedNode[]): string[] {
-  const types: string[] = [];
-  for (const n of nodes) {
-    types.push(n.type);
-    if (n.children) types.push(...collectTypes(n.children));
-  }
-  return types;
+  return nodes.flatMap((node) => [node.type, ...collectTypes(node.children ?? [])]);
 }
 
 function findNodeDeep(nodes: SerializedNode[], type: string): SerializedNode | undefined {
-  for (const n of nodes) {
-    if (n.type === type) return n;
-    if (n.children) {
-      const found = findNodeDeep(n.children, type);
-      if (found) return found;
-    }
-  }
-  return undefined;
+  return nodes
+    .map((node) => (node.type === type ? node : findNodeDeep(node.children ?? [], type)))
+    .find((node): node is SerializedNode => node !== undefined);
 }
 
 beforeAll(() => {
   jest
     .spyOn(ImageAttachmentNode.prototype, 'decorate')
-    .mockReturnValue(React.createElement('div', { 'data-testid': 'mock-img' }));
+    .mockReturnValue(createElement('div', { 'data-testid': 'mock-img' }));
 });
 
 afterAll(() => {
@@ -102,7 +92,7 @@ function TestHarness({
   editorRef,
 }: {
   editorRef: MutableRefObject<LexicalEditor | null>;
-}): React.ReactElement {
+}): ReactElement {
   return (
     <LexicalComposer initialConfig={initialConfig}>
       <RichTextPlugin
@@ -116,7 +106,7 @@ function TestHarness({
 }
 
 async function setupEditor(): Promise<LexicalEditor> {
-  const editorRef = React.createRef<LexicalEditor | null>() as MutableRefObject<LexicalEditor | null>;
+  const editorRef = createRef<LexicalEditor | null>() as MutableRefObject<LexicalEditor | null>;
   render(<TestHarness editorRef={editorRef} />);
   await waitFor(() => expect(editorRef.current).not.toBeNull());
   return editorRef.current!;
@@ -254,8 +244,10 @@ describe('CopyAttachmentPlugin', () => {
     expect(allTypes).toContain('image-attachment');
 
     let textAfterCut = '';
-    editor.read(() => {
-      textAfterCut = $getRoot().getTextContent();
+    act(() => {
+      editor.read(() => {
+        textAfterCut = $getRoot().getTextContent();
+      });
     });
     expect(textAfterCut.trim()).toBe('');
   });

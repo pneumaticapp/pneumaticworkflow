@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { useIntl } from 'react-intl';
 
 import { Avatar } from '../../../../UI/Avatar';
@@ -8,16 +8,9 @@ import { getUserFullName } from '../../../../../utils/users';
 import { EKickoffOutputsViewModes, KickoffOutputs } from '../../../../KickoffOutputs';
 import { isArrayWithItems } from '../../../../../utils/helpers';
 import { UserData } from '../../../../UserData';
-import { IWorkflowLogItem, IWorkflowLogTask } from '../../../../../types/workflow';
+import { IWorkflowLogTaskCompleteProps } from './types';
 
 import styles from './WorkflowLogTaskComplete.css';
-
-export type TWorkflowLogTaskCompleteProps = Pick<IWorkflowLogItem, 'userId' | 'created'>;
-
-export interface IWorkflowLogTaskCompleteProps extends TWorkflowLogTaskCompleteProps {
-  currentTask: IWorkflowLogTask | null;
-  isOnlyAttachmentsShown?: boolean;
-}
 
 export function WorkflowLogTaskComplete({
   userId,
@@ -28,9 +21,10 @@ export function WorkflowLogTaskComplete({
   const { formatMessage } = useIntl();
 
   const renderOutputValues = () => {
-    const hasOutputValue = isArrayWithItems(currentTask?.output.filter(Boolean)) || isArrayWithItems(currentTask?.fieldsets);
+    const outputs = currentTask?.output?.filter(Boolean) || [];
+    const fieldsets = currentTask?.fieldsets || [];
 
-    if (!hasOutputValue) {
+    if (!isArrayWithItems(outputs) && !isArrayWithItems(fieldsets)) {
       return null;
     }
 
@@ -38,8 +32,8 @@ export function WorkflowLogTaskComplete({
       <KickoffOutputs
         containerClassName={styles['outputs-container']}
         viewMode={EKickoffOutputsViewModes.Short}
-        outputs={currentTask?.output.filter(Boolean)}
-        fieldsets={currentTask?.fieldsets || []}
+        outputs={outputs}
+        fieldsets={fieldsets}
         isOnlyAttachmentsShown={isOnlyAttachmentsShown}
       />
     );

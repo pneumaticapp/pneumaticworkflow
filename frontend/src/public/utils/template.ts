@@ -96,6 +96,24 @@ export const setPerformersCounts = <T extends { rawPerformers: ITemplateTaskPerf
   return uniqueSourceIdSet.size;
 };
 
+export function haveSameKickoffFields(
+  nextFields: IKickoffClient['fields'] | undefined,
+  previousFields: IKickoffClient['fields'] | undefined,
+): boolean {
+  const next = nextFields ?? [];
+  const previous = previousFields ?? [];
+
+  if (next === previous) {
+    return true;
+  }
+
+  if (next.length !== previous.length) {
+    return false;
+  }
+
+  return next.every((field, index) => field === previous[index]);
+}
+
 export const getNormalizedTemplateOwners = (
   initialTemplateOwners: ITemplate['owners'],
   isSubscribed: boolean,
@@ -135,8 +153,8 @@ export const getNormalizedTask = (task: ITemplateTaskResponse, isSubscribed: boo
 };
 
 export const collectFieldApiNames = (
-  fields: IExtraField[],
-  fieldsets: IFieldsetBindingClient[],
+  fields: IExtraField[] = [],
+  fieldsets: IFieldsetBindingClient[] = [],
   validApiNames: Set<string>,
 ) => {
   fields.forEach((field) => {

@@ -312,6 +312,24 @@ describe('KickoffRedux', () => {
     });
   });
 
+  it('keeps hook order stable when the template becomes unavailable', () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const view = render(
+      <KickoffRedux
+        template={makeTemplate(makeKickoff())}
+        intl={intlMock}
+        accountId={1}
+        setKickoff={jest.fn()}
+      />,
+    );
+
+    expect(() => view.rerender(<KickoffRedux />)).toThrow(
+      'KickoffRedux must receive a template prop or be used inside the Edit Template form provider',
+    );
+    expect(consoleError.mock.calls.flat().join(' ')).not.toContain('Rendered fewer hooks');
+    consoleError.mockRestore();
+  });
+
   describe('clear kickoff', () => {
     it('calls setKickoff with empty fields AND empty fieldsets', () => {
       const { setKickoff } = renderKickoff({

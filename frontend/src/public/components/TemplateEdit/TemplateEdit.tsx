@@ -1,514 +1,108 @@
-import * as React from 'react';
-import { useState, useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
-import { RouteComponentProps } from 'react-router-dom';
-import { debounce } from 'throttle-debounce';
 
-import { IInfoWarningProps } from './InfoWarningsModal';
-import { getClonedTask } from './utils/getClonedTask';
-import { AutoSaveStatusContainer } from './AutoSaveStatus';
-import { TemplateEntity } from './TemplateEntity';
-import { AddEntityButton, EEntityTitle } from './AddEntityButton';
-import { START_DURATION, DEFAULT_TEMPLATE_NAME } from './constants';
-import { TemplateIntegrations } from './Integrations';
-import { ERoutes } from '../../constants/routes';
-import { TUserListItem } from '../../types/user';
-import { cleanTemplateReferences, getEmptyKickoff, getNormalizedTemplateOwners, getTemplateIdFromUrl } from '../../utils/template';
-import { checkSomeRouteIsActive, isCreateTemplate } from '../../utils/history';
-import { KickoffReduxContainer } from './KickoffRedux';
-import { moveTask } from '../../utils/workflows';
-import { NotificationManager } from '../UI/Notifications';
-import { isArrayWithItems } from '../../utils/helpers';
-import { createOwnerApiName, createPerformerApiName, createTaskApiName, createUUID } from '../../utils/createId';
-import { EMoveDirections } from '../../types/workflow';
-import { ETaskPerformerType, ETemplateOwnerRole, ETemplateOwnerType, ITemplateClient, ITemplateTaskClient } from '../../types/template';
-import { TLoadTemplateVariablesSuccessPayload } from '../../redux/actions';
-import { ETemplateStatus, IAuthUser } from '../../types/redux';
-import { getKickoffConditions } from './TaskForm/Conditions/utils/getKickoffConditions';
-import { getStartTaskConditions } from './TaskForm/Conditions/utils/getStartTaskConditions';
-import { createEmptyTaskDueDate } from '../../utils/dueDate/createEmptyTaskDueDate';
-import { usePrevious } from '../../hooks/usePrevious';
-import { ConditionsBanner } from './ConditionsBanner';
-import { getUserFullName } from '../../utils/users';
-import { getSubscriptionPlan } from '../../redux/selectors/user';
+import { TemplateEditLayout } from './TemplateEditLayout';
+import { useTemplateEditInit } from './useTemplateEditInit';
+import { useTemplateEditTasks } from './useTemplateEditTasks';
+import { getCurrentUser } from '../../redux/selectors/authUser';
+import { getNotDeletedAccountsUsers } from '../../redux/selectors/accounts';
+import { getIsUserSubsribed, getSubscriptionPlan } from '../../redux/selectors/user';
+import { getAITemplate, getTemplateData, getTemplateStatus } from '../../redux/selectors/template';
 import { getIsCatalogLoaded } from '../../redux/selectors/fieldsets';
 import { loadFieldsetsCatalog } from '../../redux/fieldsets/slice';
 import { ESubscriptionPlan } from '../../types/account';
-import { TemplateSettings } from './TemplateSettings';
+import { ETemplateStatus } from '../../types/redux';
+import { TemplateForm, useTemplateForm } from './useTemplateForm';
+import {
+  resolveTemplateFormIdentity,
+  resolveTemplateFormMountKey,
+} from './useTemplateForm/templateFormUtils';
 
-import { TemplateEditVariablesSync } from './TemplateEditVariablesSync';
-
-import styles from './TemplateEdit.css';
-import { getEmptyConditions } from './TaskForm/Conditions/utils/getEmptyConditions';
-
-export interface ITemplateEditProps {
-  match: any;
-  location: any;
-  authUser: IAuthUser;
-  template: ITemplateClient;
-  aiTemplate: ITemplateClient | null;
-  templateStatus: ETemplateStatus;
-  users: TUserListItem[];
-  isSubscribed: boolean;
-  loadTemplate(id: number): void;
-  loadTemplateFromSystem(id: string): void;
-  resetTemplateStore(): void;
-  saveTemplate(): void;
-  setTemplate(payload: ITemplateClient): void;
-  setTemplateStatus(status: ETemplateStatus): void;
-  loadTemplateVariablesSuccess(payload: TLoadTemplateVariablesSuccessPayload): void;
-}
-
-export type TTemplateEditProps = ITemplateEditProps & RouteComponentProps;
-
-export interface ITemplateEditParams {
-  id: string;
-}
-
-export interface ITemplateEditState {
-  isInfoWarningsModaOpen: boolean;
-  infoWarnings: ((props: IInfoWarningProps) => JSX.Element)[];
-  openedTasks: { [key: string]: boolean };
-  openedDelays: { [key: string]: boolean };
-}
+import { TTemplateEditProps } from './types';
 
 export function TemplateEdit({
   match,
   location,
-  authUser,
-  template,
-  aiTemplate,
-  templateStatus,
-  users,
-  isSubscribed,
-  loadTemplate,
-  loadTemplateFromSystem,
-  resetTemplateStore,
-  saveTemplate,
-  setTemplate,
-  setTemplateStatus,
-  loadTemplateVariablesSuccess,
 }: TTemplateEditProps) {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
-  const { tasks, owners } = template;
-  const billingPlan = useSelector(getSubscriptionPlan);
+  const authUser = useSelector(getCurrentUser);
+  const users = useSelector(getNotDeletedAccountsUsers);
+  const template = useSelector(getTemplateData);
+  const aiTemplate = useSelector(getAITemplate);
+  const templateStatus = useSelector(getTemplateStatus);
+  const isSubscribed = useSelector(getIsUserSubsribed);
   const isCatalogLoaded = useSelector(getIsCatalogLoaded);
+  const templateIdentity = resolveTemplateFormIdentity(template, location);
+  const createSessionKeyRef = useRef<string | undefined>(undefined);
+  const lastTemplateIdentityRef = useRef(templateIdentity);
 
+  const { mountKey: templateFormKey, createSessionKey } = resolveTemplateFormMountKey({
+    previousIdentity: lastTemplateIdentityRef.current,
+    nextIdentity: templateIdentity,
+    previousCreateSessionKey: createSessionKeyRef.current,
+    templateId: template.id,
+  });
+  createSessionKeyRef.current = createSessionKey;
+  lastTemplateIdentityRef.current = templateIdentity;
+
+  const { formik, setFieldValue, setValues, dirtyRef, pendingUserEditsRef, persistBaselineSyncRef } = useTemplateForm(
+    template,
+    templateIdentity,
+  );
+  const billingPlan = useSelector(getSubscriptionPlan);
   const isFreePlan = billingPlan === ESubscriptionPlan.Free;
   const accessConditions = isSubscribed || isFreePlan;
 
-  const prevUsers = usePrevious(users);
-  const prevLocation = usePrevious(location);
-  const prevTemplate = usePrevious(template);
-
-  const [openedTasks, setOpenedTasks] = useState<any>({});
-  const [openedDelays, setOpenedDelays] = useState<any>({});
-
   useEffect(() => {
-    initPage();
-
     if (!isCatalogLoaded) {
       dispatch(loadFieldsetsCatalog());
     }
+  }, [dispatch, isCatalogLoaded]);
 
-    return () => {
-      resetTemplateStore();
-    };
-  }, []);
+  const { sortedTasks, handleAddTask, getTaskListItem, openTask } = useTemplateEditTasks({
+    authUser,
+    formik,
+    setFieldValue,
+    users,
+    accessConditions,
+    formatMessage,
+    isSubscribed,
+  });
 
-  useEffect(() => {
-    if (checkSomeRouteIsActive(ERoutes.TemplatesCreate) || checkSomeRouteIsActive(ERoutes.TemplatesCreateAI)) {
-      openTask(template.tasks[0]?.uuid);
-    }
-  }, [template.tasks, prevLocation?.pathname]);
+  useTemplateEditInit({
+    match,
+    location,
+    template,
+    aiTemplate,
+    users,
+    accessConditions,
+    authUser,
+    formik,
+    openTask,
+  });
 
-  useEffect(() => {
-    const [pathName, prevPathName] = [location.pathname, prevLocation?.pathname];
-    const isPreviousPathIsCreate = prevPathName === ERoutes.TemplatesCreate;
-    const isCurrentPathIsEdit = checkSomeRouteIsActive(ERoutes.TemplatesEdit);
-    const isCreateScenario = isPreviousPathIsCreate && isCurrentPathIsEdit;
-    const isLocationChanged = pathName !== prevPathName;
+  if (templateStatus === ETemplateStatus.Loading) {
+    return <div className="loading" />;
+  }
 
-    const isFirstRender = !prevLocation && !prevTemplate && !prevUsers;
-    if (!isCreateScenario && isLocationChanged) {
-      if (!isFirstRender) {
-        initPage();
-      }
-      return;
-    }
-
-    if (users.length !== prevUsers?.length) {
-      const newTemplateOwners = getNormalizedTemplateOwners(owners, accessConditions, users);
-      setTemplate({ ...template, owners: newTemplateOwners });
-    }
-  }, [prevTemplate, prevLocation, prevUsers]);
-
-  const initPage = () => {
-    const { id } = match.params as ITemplateEditParams;
-    const workflowTemplateId = getTemplateIdFromUrl(location.search);
-    const isCreateWorflowPage = isCreateTemplate();
-    const isEditWorkflow = Boolean(id);
-    const initMap = [
-      {
-        check: isCreateWorflowPage && workflowTemplateId,
-        init: () => loadTemplateFromSystem(workflowTemplateId!),
-      },
-      {
-        check: checkSomeRouteIsActive(ERoutes.TemplatesCreateAI),
-        init: () => {
-          const templateLocal = aiTemplate || getEmptyTemplate();
-          setTemplate(templateLocal);
-          saveTemplate();
-        },
-        name: '2',
-      },
-      {
-        check: isCreateWorflowPage && !workflowTemplateId,
-        init: () => setTemplate(getEmptyTemplate()),
-      },
-      {
-        check: isEditWorkflow,
-        init: () => loadTemplate(Number(id)),
-      },
-    ];
-    const currentPageInit = initMap.find(({ check }) => check);
-
-    if (currentPageInit) {
-      currentPageInit.init();
-    }
-  };
-
-  const openTask = (taskUUID?: string) => {
-    if (!taskUUID) return;
-    setOpenedTasks({ ...openedTasks, [taskUUID]: true });
-  };
-
-  const sortedTasks = () => [...tasks].sort((a, b) => a.number - b.number);
-
-  const getNewTask = (templateTask?: Partial<ITemplateTaskClient>): ITemplateTaskClient => {
-    const taskApiName = createTaskApiName();
-
-    return {
-      apiName: taskApiName,
-      delay: null,
-      description: '',
-      name: 'New Step',
-      number: 1,
-      fields: [],
-      fieldsets: [],
-      rawPerformers: [
-        {
-          apiName: createPerformerApiName(),
-          label: getUserFullName(authUser),
-          type: ETaskPerformerType.User,
-          sourceId: String(authUser.id),
-        },
-      ],
-      uuid: createUUID(),
-      requireCompletionByAll: false,
-      skipForStarter: false,
-      conditions: getEmptyConditions(accessConditions),
-      rawDueDate: createEmptyTaskDueDate(taskApiName),
-      checklists: [],
-      ...templateTask,
-      revertTask: null,
-      ancestors: [],
-    };
-  };
-
-  const getEmptyTemplate = (): ITemplateClient => {
-    return {
-      description: '',
-      kickoff: getEmptyKickoff(),
-      name: DEFAULT_TEMPLATE_NAME,
-      tasks: [
-        getNewTask({
-          name: 'First Step',
-          number: 1,
-          conditions: getKickoffConditions(),
-        }),
-      ],
-      isActive: false,
-      finalizable: false,
-      dateUpdated: null,
-      updatedBy: null,
-      isPublic: false,
-      publicUrl: null,
-      publicSuccessUrl: null,
-      isEmbedded: false,
-      embedUrl: null,
-      tasksCount: 1,
-      performersCount: 0,
-      owners: getNormalizedTemplateOwners(
-        [
-          {
-            sourceId: String(authUser.id),
-            type: ETemplateOwnerType.User,
-            apiName: createOwnerApiName(),
-            role: ETemplateOwnerRole.Owner,
-          },
-        ],
-        accessConditions,
-        users,
-      ),
-      wfNameTemplate: '{{date}} — {{template-name}}',
-      completionNotification: false,
-      reminderNotification: false,
-    };
-  };
-
-  const handleChangeTemplateField = (field: keyof ITemplateClient) => (value: ITemplateClient[keyof ITemplateClient]) => {
-    const workflow = template;
-    setTemplateStatus(ETemplateStatus.Saving);
-
-    if (field === 'isActive') {
-      const newWorkflow: ITemplateClient = {
-        ...workflow,
-        isActive: value as boolean,
-      };
-
-      setTemplate(newWorkflow);
-      submitDebounced();
-
-      return;
-    }
-
-    const updatedWorkflow: ITemplateClient = {
-      ...workflow,
-      [field]: value,
-      isActive: false,
-    };
-
-    const newWorkflow = (field === 'kickoff' || field === 'tasks')
-      ? cleanTemplateReferences(updatedWorkflow)
-      : updatedWorkflow;
-
-    setTemplate(newWorkflow);
-    submitDebounced();
-  };
-
-  const changeTasks = (newTasks: ITemplateTaskClient[]) => {
-    handleChangeTemplateField('tasks')(newTasks);
-  };
-
-  const handleRemoveTask = (targetTask: ITemplateTaskClient) => () => {
-    const newTasks = tasks
-      .filter((task) => task.uuid !== targetTask.uuid)
-      .map((task, index) => ({ ...task, number: index + 1 }));
-
-    if (!isArrayWithItems(newTasks)) {
-      changeTasks([getNewTask()]);
-
-      return;
-    }
-
-    changeTasks(newTasks);
-  };
-
-  const handleAddTask = () => {
-    if (!isArrayWithItems(tasks)) {
-      const newTasks = [
-        getNewTask({
-          conditions: getKickoffConditions(),
-        }),
-      ];
-
-      changeTasks(newTasks);
-
-      return;
-    }
-
-    const newTaskNumber = tasks.length + 1;
-    const newTask = getNewTask({
-      number: newTaskNumber,
-      name: `New Step ${newTaskNumber}`,
-      conditions: getStartTaskConditions(tasks[tasks.length - 1].apiName),
-    });
-    const newTasks = [...tasks, newTask];
-
-    toggleIsOpenTask(newTask.uuid);
-    changeTasks(newTasks);
-  };
-
-  const getTasksWithNewTask = (newTask: ITemplateTaskClient, newTaskIndex: number) => {
-    const newTasks = [...tasks.slice(0, newTaskIndex), newTask, ...tasks.slice(newTaskIndex)].map((task, index) => ({
-      ...task,
-      number: index + 1,
-    }));
-
-    return newTasks;
-  };
-
-  const handleCloneTask = (targetTask: ITemplateTaskClient) => () => {
-    const newTask = getClonedTask(targetTask);
-    const newTasks = getTasksWithNewTask(newTask, targetTask.number);
-    changeTasks(newTasks);
-    toggleIsOpenTask(newTask.uuid);
-  };
-
-  const handleAddTaskBefore = (targetTask: ITemplateTaskClient) => (previousTaskApiName?: string) => {
-    const newTaskName = `New Step ${tasks.length + 1}`;
-    const newTask = getNewTask({
-      name: newTaskName,
-      conditions: previousTaskApiName ? getStartTaskConditions(previousTaskApiName) : getKickoffConditions(),
-    });
-    const newTasks = getTasksWithNewTask(newTask, targetTask.number - 1);
-
-    changeTasks(newTasks);
-    toggleIsOpenTask(newTask.uuid);
-  };
-
-  const toggleIsOpenTask = (taskUUID: string) => {
-    const isTaskOpen = Boolean(openedTasks[taskUUID]);
-
-    setOpenedTasks({ ...openedTasks, [taskUUID]: !isTaskOpen });
-  };
-
-  const handleMoveTask = (from: number, direction: EMoveDirections) => () => {
-    const to = direction === EMoveDirections.Up ? from - 1 : from + 1;
-    const movedTasks = moveTask(from, to, tasks);
-    const sortedTasksLocal = [...movedTasks].sort((a, b) => a.number - b.number);
-
-    changeTasks(sortedTasksLocal);
-  };
-
-  const handleEditTaskField =
-    (targetTask: ITemplateTaskClient) => (field: keyof ITemplateTaskClient) => (value: ITemplateTaskClient[keyof ITemplateTaskClient]) => {
-      const newTasks = tasks.map((task) => {
-        if (targetTask.uuid === task.uuid) {
-          return {
-            ...targetTask,
-            [field]: value,
-          };
-        }
-
-        return task;
-      });
-
-      handleChangeTemplateField('tasks')(newTasks);
-    };
-
-  const addDelay = (targetTask: ITemplateTaskClient) => () => {
-    if (targetTask.delay) {
-      const message = formatMessage({ id: 'template.delay-task-has-delay-error' });
-      NotificationManager.warning({ message });
-
-      return;
-    }
-
-    if (targetTask.number === 1) {
-      const message = formatMessage({ id: 'template.delay-first-task-delay-error' });
-      NotificationManager.warning({ message });
-
-      return;
-    }
-
-    const newTasks = tasks.map((task) => {
-      if (task.uuid === targetTask.uuid) {
-        return {
-          ...task,
-          delay: START_DURATION,
-        };
-      }
-
-      return task;
-    });
-
-    toggleDelay(targetTask.uuid);
-    changeTasks(newTasks);
-  };
-
-  const editDelay = (targetTask: ITemplateTaskClient) => (delay: string) => {
-    const newTasks = tasks.map((task) => {
-      if (task.uuid === targetTask.uuid) return { ...targetTask, delay };
-
-      return task;
-    });
-
-    changeTasks(newTasks);
-  };
-
-  const deleteDelay = (targetTask: ITemplateTaskClient) => () => {
-    if (!targetTask.delay) return;
-
-    handleEditTaskField(targetTask)('delay')('');
-  };
-
-  const toggleDelay = (taskUUID: string) => {
-    const isDelayOpen = Boolean(openedDelays[taskUUID]);
-
-    setOpenedDelays({ ...openedDelays, [taskUUID]: !isDelayOpen });
-  };
-
-  const submitDebounced = debounce(350, saveTemplate);
-
-  const getTaskListItem = (task: ITemplateTaskClient, index: number, tasksLocal: ITemplateTaskClient[]) => {
-    const isTaskOpen = Boolean(openedTasks[task.uuid]);
-    const isDelayOpen = Boolean(openedDelays[task.uuid]);
-    const previousTask = index > 0 ? tasksLocal[index - 1] : null;
-    const actualPreviousTaskApiName = previousTask?.apiName;
-    return (
-      <TemplateEntity
-        key={`template-entity-${task.uuid}`}
-        index={index}
-        task={task}
-        users={users}
-        tasksCount={tasksLocal.length}
-        isSubscribed={isSubscribed}
-        removeTask={handleRemoveTask(task)}
-        cloneTask={handleCloneTask(task)}
-        addDelay={addDelay(task)}
-        addTaskBefore={handleAddTaskBefore(task)}
-        deleteDelay={deleteDelay}
-        editDelay={editDelay(task)}
-        isTaskOpen={isTaskOpen}
-        isDelayOpen={isDelayOpen}
-        toggleDelay={() => toggleDelay(task.uuid)}
-        handleMoveTask={handleMoveTask}
-        toggleIsOpenTask={() => toggleIsOpenTask(task.uuid)}
-        actualPreviousTaskApiName={actualPreviousTaskApiName}
+  return (
+    <TemplateForm
+      key={templateFormKey}
+      formik={formik}
+      setFieldValue={setFieldValue}
+      setValues={setValues}
+      dirtyRef={dirtyRef}
+      pendingUserEditsRef={pendingUserEditsRef}
+      persistBaselineSyncRef={persistBaselineSyncRef}
+    >
+      <TemplateEditLayout
+        accessConditions={accessConditions}
+        sortedTasks={sortedTasks}
+        getTaskListItem={getTaskListItem}
+        handleAddTask={handleAddTask}
       />
-    );
-  };
-
-  return templateStatus === ETemplateStatus.Loading ? (
-    <div className="loading" />
-  ) : (
-    <>
-      <TemplateEditVariablesSync
-        template={template}
-        prevTemplate={prevTemplate}
-        loadTemplateVariablesSuccess={loadTemplateVariablesSuccess}
-      />
-      <div className={styles['container']}>
-        <AutoSaveStatusContainer onRetry={saveTemplate} />
-
-        <div className={styles['template-wrapper']}>
-          <div className={styles['template-wrapper__info']}>
-            <TemplateSettings />
-          </div>
-          <div className={styles['template-wrapper__tasks']}>
-            {!accessConditions && <ConditionsBanner />}
-            <div className={styles['tasks']}>
-              <div className={styles['kickoff-wrapper']}>
-                <KickoffReduxContainer setKickoff={handleChangeTemplateField('kickoff')} />
-              </div>
-              {sortedTasks().map(getTaskListItem)}
-              <AddEntityButton
-                entities={[
-                  {
-                    title: EEntityTitle.Task,
-                    onAddEntity: handleAddTask,
-                  },
-                ]}
-              />
-              <TemplateIntegrations />
-            </div>
-          </div>
-        </div>
-      </div>
-    </>
+    </TemplateForm>
   );
 }
