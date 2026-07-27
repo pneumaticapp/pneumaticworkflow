@@ -6,6 +6,7 @@ from django.db import IntegrityError, transaction
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.serializers import Serializer
 
+from src.processes.messages.fieldset import MSG_FS_0013
 from src.processes.messages.template import MSG_PT_0041
 from src.processes.models.templates.kickoff import Kickoff
 from src.processes.models.templates.task import TaskTemplate
@@ -260,6 +261,9 @@ class FieldsetMixin:
         task: Optional[TaskTemplate] = None,
         kickoff: Optional[Kickoff] = None,
     ):
+
+        """ Call when template enabled """
+
         instance = task or kickoff
         existing_fieldsets = {f.api_name: f for f in instance.fieldsets.all()}
         fieldsets_api_names = set()
@@ -292,51 +296,69 @@ class FieldsetMixin:
                 # Draft already expanded via get_new_fieldset_data
                 # — create as-is to preserve field/rule api_names.
                 # Otherwise clone from shared.
-                if fieldset_data.get('fields'):
-                    fieldset = service.create(
-                        name=(
-                            fieldset_data.get('name')
-                            or shared_fieldset.name
+                try:
+                    # validated_data always has fields/rules defaults ([]).
+                    # Non-empty means payload is expanded — create as-is.
+                    # Otherwise clone from shared (compact reference).
+                    if (
+                        fieldset_data.get('fields')
+                        or fieldset_data.get('rules')
+                    ):
+                        fieldset = service.create(
+                            name=(
+                                fieldset_data.get('name')
+                                or shared_fieldset.name
+                            ),
+                            title=fieldset_data.get(
+                                'title',
+                                shared_fieldset.title,
+                            ),
+                            description=fieldset_data.get(
+                                'description',
+                                shared_fieldset.description,
+                            ),
+                            api_name=fieldset_data.get('api_name'),
+                            label_position=(
+                                fieldset_data.get('label_position')
+                                or shared_fieldset.label_position
+                            ),
+                            layout=(
+                                fieldset_data.get('layout')
+                                or shared_fieldset.layout
+                            ),
+                            fields=fieldset_data.get('fields') or [],
+                            rules=fieldset_data.get('rules') or [],
+                            order=fieldset_data['order'],
+                            is_shared=False,
+                            shared_fieldset_id=shared_fieldset.id,
+                            template_id=template.id,
+                            task_id=task.id if task else None,
+                            kickoff_id=kickoff.id if kickoff else None,
+                        )
+                    else:
+                        fieldset = service.create_from_shared(
+                            shared_fieldset_data=(
+                                FieldSetTemplateService.to_json(
+                                    shared_fieldset,
+                                )
+                            ),
+                            shared_fieldset_id=shared_fieldset.id,
+                            template_id=template.id,
+                            task_id=task.id if task else None,
+                            kickoff_id=kickoff.id if kickoff else None,
+                            order=fieldset_data['order'],
+                            api_name=fieldset_data.get('api_name'),
+                            title=fieldset_data.get('title'),
+                            description=fieldset_data.get('description'),
+                        )
+                except IntegrityError:
+                    step_name = 'Kickoff' if kickoff else task.name
+                    raise_validation_error(
+                        api_name=fieldset_api_name,
+                        message=MSG_FS_0013(
+                            name=step_name,
+                            api_name=fieldset_api_name,
                         ),
-                        title=fieldset_data.get(
-                            'title',
-                            shared_fieldset.title,
-                        ),
-                        description=fieldset_data.get(
-                            'description',
-                            shared_fieldset.description,
-                        ),
-                        api_name=fieldset_data.get('api_name'),
-                        label_position=(
-                            fieldset_data.get('label_position')
-                            or shared_fieldset.label_position
-                        ),
-                        layout=(
-                            fieldset_data.get('layout')
-                            or shared_fieldset.layout
-                        ),
-                        fields=fieldset_data['fields'],
-                        rules=fieldset_data.get('rules') or [],
-                        order=fieldset_data['order'],
-                        is_shared=False,
-                        shared_fieldset_id=shared_fieldset.id,
-                        template_id=template.id,
-                        task_id=task.id if task else None,
-                        kickoff_id=kickoff.id if kickoff else None,
-                    )
-                else:
-                    fieldset = service.create_from_shared(
-                        shared_fieldset_data=FieldSetTemplateService.to_json(
-                            shared_fieldset,
-                        ),
-                        shared_fieldset_id=shared_fieldset.id,
-                        template_id=template.id,
-                        task_id=task.id if task else None,
-                        kickoff_id=kickoff.id if kickoff else None,
-                        order=fieldset_data['order'],
-                        api_name=fieldset_data.get('api_name'),
-                        title=fieldset_data.get('title'),
-                        description=fieldset_data.get('description'),
                     )
                 fieldsets_api_names.add(fieldset.api_name)
         instance.fieldsets.exclude(api_name__in=fieldsets_api_names).delete()

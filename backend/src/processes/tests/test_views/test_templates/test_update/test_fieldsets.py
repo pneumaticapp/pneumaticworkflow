@@ -9,6 +9,12 @@ from src.processes.enums import (
     OwnerType,
     PerformerType,
 )
+from src.processes.messages.fieldset import (
+    MSG_FS_0013,
+    MSG_FS_0014,
+    MSG_FS_0015,
+    MSG_FS_0016,
+)
 from src.processes.models.templates.fields import (
     FieldTemplate,
     FieldTemplateSelection,
@@ -21,6 +27,7 @@ from src.processes.tests.fixtures import (
     create_test_shared_fieldset,
     create_test_template,
 )
+from src.utils.validation import ErrorCode
 
 pytestmark = pytest.mark.django_db
 
@@ -1548,6 +1555,452 @@ def test_update__activate_draft_preserves_kickoff_fieldset_rule_api_names__ok(
     assert selection_data['api_name'] == draft_selection_api_name
     assert rule_data['api_name'] == draft_rule_api_name
     assert rule_data['fields'] == [draft_number_api_name]
+
+
+def test_update__duplicate_fieldset_api_name__validation_error(
+    mocker,
+    api_client,
+):
+
+    """ Kickoff and task fieldsets must not share api_name. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user, is_active=True, tasks_count=1)
+    kickoff = template.kickoff_instance
+    task = template.tasks.first()
+    shared_fieldset = create_test_shared_fieldset(account=account)
+    fs_api_name = 'fs-duplicate'
+
+    mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.'
+        'create_integrations_for_template',
+    )
+    mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.template_updated',
+    )
+    mocker.patch(
+        'src.processes.views.template.AnalyticService.templates_updated',
+    )
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_kickoff_updated',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.put(
+        path=f'/templates/{template.id}',
+        data={
+            'id': template.id,
+            'name': template.name,
+            'is_active': True,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {
+                'id': kickoff.id,
+                'fieldsets': [
+                    {
+                        'shared_fieldset_id': shared_fieldset.id,
+                        'api_name': fs_api_name,
+                    },
+                ],
+            },
+            'tasks': [
+                {
+                    'id': task.id,
+                    'api_name': task.api_name,
+                    'number': task.number,
+                    'name': task.name,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                    'fieldsets': [
+                        {
+                            'shared_fieldset_id': shared_fieldset.id,
+                            'api_name': fs_api_name,
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 400
+    message = MSG_FS_0013(
+        name=task.name,
+        api_name=fs_api_name,
+    )
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == message
+    assert response.data['details']['reason'] == message
+    assert response.data['details']['api_name'] == fs_api_name
+
+
+def test_update__duplicate_fieldset_rule_api_name__validation_error(
+    mocker,
+    api_client,
+):
+
+    """ Duplicate rule api_name across kickoff and task fieldsets
+        must fail validation. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user, is_active=True, tasks_count=1)
+    kickoff = template.kickoff_instance
+    task = template.tasks.first()
+    shared_fieldset = create_test_shared_fieldset(
+        account=account,
+        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_value='100',
+    )
+    fs_rule_api_name = 'fs-rule'
+    mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.'
+        'create_integrations_for_template',
+    )
+    mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.template_updated',
+    )
+    mocker.patch(
+        'src.processes.views.template.AnalyticService.templates_updated',
+    )
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_kickoff_updated',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.put(
+        path=f'/templates/{template.id}',
+        data={
+            'id': template.id,
+            'name': template.name,
+            'is_active': True,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {
+                'id': kickoff.id,
+                'fieldsets': [
+                    {
+                        'shared_fieldset_id': shared_fieldset.id,
+                        'rules': [
+                            {
+                                'type': FieldSetRuleType.SUM_EQUAL,
+                                'value': '100',
+                                'api_name': fs_rule_api_name,
+                            },
+                        ],
+                    },
+                ],
+            },
+            'tasks': [
+                {
+                    'id': task.id,
+                    'api_name': task.api_name,
+                    'number': task.number,
+                    'name': task.name,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                    'fieldsets': [
+                        {
+                            'shared_fieldset_id': shared_fieldset.id,
+                            'rules': [
+                                {
+                                    'type': FieldSetRuleType.SUM_EQUAL,
+                                    'value': '100',
+                                    'api_name': fs_rule_api_name,
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 400
+    message = MSG_FS_0014(
+        name=task.name,
+        api_name=fs_rule_api_name,
+    )
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == message
+    assert response.data['details']['reason'] == message
+    assert response.data['details']['api_name'] == fs_rule_api_name
+
+
+def test_update__duplicate_fieldset_field_api_name__validation_error(
+    mocker,
+    api_client,
+):
+
+    """ Duplicate field api_name across kickoff and task fieldsets
+        must fail validation. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user, is_active=True, tasks_count=1)
+    kickoff = template.kickoff_instance
+    task = template.tasks.first()
+    shared_fieldset = create_test_shared_fieldset(account=account)
+    kickoff_fieldset = create_test_fieldset_template(
+        account=account,
+        template=template,
+        kickoff=kickoff,
+        shared_fieldset=shared_fieldset,
+        api_name='fs-kickoff',
+    )
+    kickoff_field = kickoff_fieldset.fields.first()
+    field_api_name = 'field-api-name'
+    mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.'
+        'create_integrations_for_template',
+    )
+    mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.template_updated',
+    )
+    mocker.patch(
+        'src.processes.views.template.AnalyticService.templates_updated',
+    )
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_kickoff_updated',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.put(
+        path=f'/templates/{template.id}',
+        data={
+            'id': template.id,
+            'name': template.name,
+            'is_active': True,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {
+                'id': kickoff.id,
+                'fieldsets': [
+                    {
+                        'shared_fieldset_id': shared_fieldset.id,
+                        'fields': [
+                            {
+                                'name': kickoff_field.name,
+                                'type': kickoff_field.type,
+                                'order': kickoff_field.order,
+                                'api_name': field_api_name,
+                            },
+                        ],
+                    },
+                ],
+            },
+            'tasks': [
+                {
+                    'id': task.id,
+                    'api_name': task.api_name,
+                    'number': task.number,
+                    'name': task.name,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                    'fieldsets': [
+                        {
+                            'shared_fieldset_id': shared_fieldset.id,
+                            'fields': [
+                                {
+                                    'name': kickoff_field.name,
+                                    'type': kickoff_field.type,
+                                    'order': kickoff_field.order,
+                                    'api_name': field_api_name,
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 400
+    message = MSG_FS_0015(
+        name=task.name,
+        field_name=kickoff_field.name,
+        api_name=field_api_name,
+    )
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == message
+    assert response.data['details']['reason'] == message
+    assert response.data['details']['api_name'] == field_api_name
+
+
+def test_update__duplicate_fieldset_selection_api_name__validation_error(
+    mocker,
+    api_client,
+):
+
+    """ Duplicate selection api_name across kickoff and task fieldsets
+        must fail validation. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user, is_active=True, tasks_count=1)
+    kickoff = template.kickoff_instance
+    task = template.tasks.first()
+    shared_fieldset = create_test_shared_fieldset(account=account)
+    shared_fieldset.fields.all().delete()
+    shared_dropdown_field = FieldTemplate.objects.create(
+        fieldset=shared_fieldset,
+        account=account,
+        name='Dropdown field',
+        type=FieldType.DROPDOWN,
+        order=1,
+        api_name=f'{shared_fieldset.api_name}-field-dropdown',
+    )
+    FieldTemplateSelection.objects.create(
+        field_template=shared_dropdown_field,
+        value='Option A',
+        api_name=f'{shared_fieldset.api_name}-selection-1',
+    )
+    selection_api_name = 'selection-1'
+
+    mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.'
+        'create_integrations_for_template',
+    )
+    mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.template_updated',
+    )
+    mocker.patch(
+        'src.processes.views.template.AnalyticService.templates_updated',
+    )
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_kickoff_updated',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.put(
+        path=f'/templates/{template.id}',
+        data={
+            'id': template.id,
+            'name': template.name,
+            'is_active': True,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {
+                'id': kickoff.id,
+                'fieldsets': [
+                    {
+                        'shared_fieldset_id': shared_fieldset.id,
+                        'fields': [
+                            {
+                                'name': shared_dropdown_field.name,
+                                'type': shared_dropdown_field.type,
+                                'order': 1,
+                                'selections': [
+                                    {
+                                        'value': 'Option B',
+                                        'api_name': selection_api_name,
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+            'tasks': [
+                {
+                    'id': task.id,
+                    'api_name': task.api_name,
+                    'number': task.number,
+                    'name': task.name,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                    'fieldsets': [
+                        {
+                            'shared_fieldset_id': shared_fieldset.id,
+                            'fields': [
+                                {
+                                    'name': shared_dropdown_field.name,
+                                    'order': 1,
+                                    'type': shared_dropdown_field.type,
+                                    'selections': [
+                                        {
+                                            'value': 'Option B',
+                                            'api_name': selection_api_name,
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 400
+    message = MSG_FS_0016(
+        name=task.name,
+        api_name=selection_api_name,
+    )
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == message
+    assert response.data['details']['reason'] == message
+    assert response.data['details']['api_name'] == selection_api_name
 
 
 def test_update__add_fieldset_with_expanded_fields__preserves_api_names(
