@@ -262,7 +262,13 @@ class FieldsetMixin:
         kickoff: Optional[Kickoff] = None,
     ):
 
-        """ Call when template enabled """
+        """ Sync fieldsets for kickoff/task when activating a template.
+
+            Existing fieldsets are matched by api_name and partially updated.
+            New ones with non-empty fields/rules are created as-is (preserves
+            draft api_names); compact shared_fieldset_id references are cloned
+            via create_from_shared. Fieldsets missing from the payload are
+            deleted. """
 
         instance = task or kickoff
         existing_fieldsets = {f.api_name: f for f in instance.fieldsets.all()}
@@ -363,13 +369,47 @@ class FieldsetMixin:
                 fieldsets_api_names.add(fieldset.api_name)
         instance.fieldsets.exclude(api_name__in=fieldsets_api_names).delete()
 
+    def _get_draft_fieldset_api_names(self) -> Set[str]:
+
+        """ Return api_names of fieldsets already stored in TemplateDraft
+            (kickoff and tasks). Empty set if template/draft is missing. """
+
+        instance = getattr(self, 'instance', None)
+        if not instance:
+            return set()
+        draft = instance.get_draft()
+        if not isinstance(draft, dict):
+            return set()
+        api_names = set()
+        kickoff = draft.get('kickoff') or {}
+        for fieldset in kickoff.get('fieldsets') or []:
+            if isinstance(fieldset, dict) and fieldset.get('api_name'):
+                api_names.add(fieldset['api_name'])
+        for task in draft.get('tasks') or []:
+            if not isinstance(task, dict):
+                continue
+            for fieldset in task.get('fieldsets') or []:
+                if isinstance(fieldset, dict) and fieldset.get('api_name'):
+                    api_names.add(fieldset['api_name'])
+        return api_names
+
     def get_draft_fieldsets(self, fieldsets_data: Any):
+
+        """ Normalize fieldsets for TemplateDraft on save_as_draft.
+
+            Fieldsets already present in TemplateDraft (by api_name) are kept
+            as-is to avoid regenerating nested api_names. Compact
+            shared_fieldset_id references are expanded via
+            get_new_fieldset_data. Invalid or cross-account shared fieldsets
+            are dropped. """
+
         result = []
         if isinstance(fieldsets_data, list):
+            draft_api_names = self._get_draft_fieldset_api_names()
             for fieldset_data in fieldsets_data:
-                if fieldset_data.get('fields'):
+                api_name = fieldset_data.get('api_name')
+                if api_name and api_name in draft_api_names:
                     result.append(fieldset_data)
-                    # Fieldset already done
                     continue
                 try:
                     shared_fieldset_id = int(fieldset_data.get(

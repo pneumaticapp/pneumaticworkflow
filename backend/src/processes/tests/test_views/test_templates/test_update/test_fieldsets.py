@@ -2239,3 +2239,152 @@ def test_update__existing_fieldset_ignores_fields_in_payload__ok(
     assert field.api_name == original_field_api_name
     assert field_data['api_name'] == original_field_api_name
     assert field.api_name != 'tampered-field-api-name'
+
+
+def test_update__create_fieldset_with_shared_api_names__preserved_in_response(
+    mocker,
+    api_client,
+):
+
+    """ PUT with expanded fieldset using the same api_names as shared
+        must return those api_names in the response. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    shared_fieldset = create_test_shared_fieldset(
+        account=account,
+        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_value='100',
+    )
+    shared_number_field = shared_fieldset.fields.first()
+    shared_rule = shared_fieldset.rules.first()
+    shared_dropdown_field = FieldTemplate.objects.create(
+        fieldset=shared_fieldset,
+        account=account,
+        name='Dropdown field',
+        type=FieldType.DROPDOWN,
+        order=2,
+        api_name=f'{shared_fieldset.api_name}-field-dropdown',
+    )
+    shared_selection = FieldTemplateSelection.objects.create(
+        field_template=shared_dropdown_field,
+        value='Option A',
+        api_name=f'{shared_fieldset.api_name}-selection-1',
+    )
+    shared_rule.fields.add(shared_dropdown_field)
+
+    template = create_test_template(user, is_active=False, tasks_count=1)
+    kickoff = template.kickoff_instance
+    task = template.tasks.first()
+    mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.'
+        'create_integrations_for_template',
+    )
+    mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.template_updated',
+    )
+    mocker.patch(
+        'src.processes.views.template.AnalyticService.templates_updated',
+    )
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_kickoff_updated',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.put(
+        path=f'/templates/{template.id}',
+        data={
+            'id': template.id,
+            'is_active': False,
+            'name': template.name,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {
+                'id': kickoff.id,
+                'fieldsets': [
+                    {
+                        'shared_fieldset_id': shared_fieldset.id,
+                        'api_name': shared_fieldset.api_name,
+                        'order': 1,
+                        'title': shared_fieldset.title,
+                        'description': shared_fieldset.description,
+                        'name': shared_fieldset.name,
+                        'label_position': shared_fieldset.label_position,
+                        'layout': shared_fieldset.layout,
+                        'fields': [
+                            {
+                                'name': shared_number_field.name,
+                                'type': shared_number_field.type,
+                                'order': shared_number_field.order,
+                                'api_name': shared_number_field.api_name,
+                                'is_required': False,
+                                'is_hidden': False,
+                                'description': '',
+                                'default': '',
+                            },
+                            {
+                                'name': shared_dropdown_field.name,
+                                'type': shared_dropdown_field.type,
+                                'order': shared_dropdown_field.order,
+                                'api_name': shared_dropdown_field.api_name,
+                                'selections': [
+                                    {
+                                        'value': shared_selection.value,
+                                        'api_name': shared_selection.api_name,
+                                    },
+                                ],
+                            },
+                        ],
+                        'rules': [
+                            {
+                                'type': shared_rule.type,
+                                'value': shared_rule.value,
+                                'api_name': shared_rule.api_name,
+                                'fields': [shared_number_field.api_name],
+                            },
+                        ],
+                    },
+                ],
+            },
+            'tasks': [
+                {
+                    'id': task.id,
+                    'api_name': task.api_name,
+                    'number': task.number,
+                    'name': task.name,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    fieldset_data = response.data['kickoff']['fieldsets'][0]
+    # FieldTemplate ordering is -order: dropdown (2), number (1)
+    dropdown_data = fieldset_data['fields'][0]
+    number_data = fieldset_data['fields'][1]
+    selection_data = dropdown_data['selections'][0]
+    rule_data = fieldset_data['rules'][0]
+
+    assert fieldset_data['api_name'] == shared_fieldset.api_name
+    assert number_data['api_name'] != shared_number_field.api_name
+    assert dropdown_data['api_name'] != shared_dropdown_field.api_name
+    assert selection_data['api_name'] != shared_selection.api_name
+    assert rule_data['api_name'] != shared_rule.api_name
+    assert rule_data['fields'] != [shared_number_field.api_name]
