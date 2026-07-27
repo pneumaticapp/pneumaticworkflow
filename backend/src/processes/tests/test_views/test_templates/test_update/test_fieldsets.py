@@ -20,6 +20,7 @@ from src.processes.models.templates.fields import (
     FieldTemplateSelection,
 )
 from src.processes.models.templates.fieldset import FieldsetTemplate
+from src.processes.serializers.templates.template import TemplateSerializer
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_fieldset_template,
@@ -525,6 +526,417 @@ def test_update__kickoff_remove_fieldset__ok(
     assert response.status_code == 200
     assert response.data['kickoff']['fieldsets'] == []
     assert not kickoff.fieldsets.filter(id=fieldset.id).exists()
+
+
+@pytest.mark.parametrize('is_active', (True, False))
+def test_update__update_kickoff__fieldset_all_fields__ok(
+    mocker,
+    is_active,
+    api_client,
+):
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user, is_active=is_active, tasks_count=1)
+    kickoff = template.kickoff_instance
+    task = template.tasks.first()
+    shared_fieldset = create_test_shared_fieldset(account=account)
+    fieldset = create_test_fieldset_template(
+        account=account,
+        template=template,
+        kickoff=kickoff,
+        shared_fieldset=shared_fieldset,
+        order=0,
+        title='Old title',
+        description='Old desc',
+        api_name='fs-kickoff-update',
+    )
+    fieldset_id = fieldset.id
+    new_order = 2
+    new_title = 'New title'
+    new_description = 'New desc'
+    mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.'
+        'create_integrations_for_template',
+    )
+    mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.template_updated',
+    )
+    mocker.patch(
+        'src.processes.views.template.AnalyticService.templates_updated',
+    )
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_kickoff_updated',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.put(
+        path=f'/templates/{template.id}',
+        data={
+            'id': template.id,
+            'is_active': is_active,
+            'name': 'Updated template',
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {
+                'id': kickoff.id,
+                'fieldsets': [
+                    {
+                        'shared_fieldset_id': shared_fieldset.id,
+                        'api_name': fieldset.api_name,
+                        'order': new_order,
+                        'title': new_title,
+                        'description': new_description,
+                    },
+                ],
+            },
+            'tasks': [
+                {
+                    'id': task.id,
+                    'api_name': task.api_name,
+                    'number': task.number,
+                    'name': task.name,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    fieldsets = response.data['kickoff']['fieldsets']
+    assert len(fieldsets) == 1
+    kickoff_fieldset_1 = fieldsets[0]
+    assert kickoff_fieldset_1['api_name'] == fieldset.api_name
+    assert kickoff_fieldset_1['order'] == new_order
+    assert kickoff_fieldset_1['title'] == new_title
+    assert kickoff_fieldset_1['description'] == new_description
+    assert kickoff_fieldset_1['name'] == fieldset.name
+    assert kickoff_fieldset_1['layout'] == fieldset.layout
+    assert kickoff_fieldset_1['label_position'] == fieldset.label_position
+    if is_active:
+        fieldset.refresh_from_db()
+        assert fieldset.id == fieldset_id
+        assert fieldset.api_name == 'fs-kickoff-update'
+        assert fieldset.order == new_order
+        assert fieldset.title == new_title
+        assert fieldset.description == new_description
+        assert fieldset.name == shared_fieldset.name
+        assert fieldset.layout == shared_fieldset.layout
+        assert fieldset.label_position == shared_fieldset.label_position
+
+
+def test_update_kickoff_update_active_template__not_change_fieldset(
+    mocker,
+    api_client,
+):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user, is_active=True, tasks_count=1)
+    kickoff = template.kickoff_instance
+    task = template.tasks.first()
+    shared_fieldset = create_test_shared_fieldset(
+        account=account,
+        rule_type=FieldSetRuleType.SUM_EQUAL,
+    )
+    shared_field = shared_fieldset.fields.first()
+    shared_field.type = FieldType.RADIO
+    shared_field.save(update_fields=['type'])
+    FieldTemplateSelection.objects.create(
+        value='Option 1',
+        field_template=shared_field,
+        template=template,
+        api_name=f'{shared_field.api_name}-shared-selection-1',
+    )
+    fieldset = create_test_fieldset_template(
+        account=account,
+        template=template,
+        kickoff=kickoff,
+        shared_fieldset=shared_fieldset,
+        order=0,
+        title='Old title',
+        api_name='fs-kickoff-fields',
+    )
+    rule = fieldset.rules.first()
+    field = fieldset.fields.first()
+    selection = field.selections.all().first()
+
+    new_title = 'New title'
+    mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.'
+        'create_integrations_for_template',
+    )
+    mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.template_updated',
+    )
+    mocker.patch(
+        'src.processes.views.template.AnalyticService.templates_updated',
+    )
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_kickoff_updated',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.put(
+        path=f'/templates/{template.id}',
+        data={
+            'id': template.id,
+            'is_active': True,
+            'name': 'Updated template',
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {
+                'id': kickoff.id,
+                'fieldsets': [
+                    {
+                        'shared_fieldset_id': shared_fieldset.id,
+                        'api_name': fieldset.api_name,
+                        'order': fieldset.order,
+                        'title': new_title,
+                        'description': fieldset.description,
+                        'fields': [
+                            {
+                                'name': field.name,
+                                'api_name': field.api_name,
+                                'type': field.type,
+                                'order': field.order,
+                                'selections': [
+                                    {
+                                        'value': selection.value,
+                                        'api_name': selection.api_name,
+                                    },
+                                ],
+                            },
+                        ],
+                        'rules': [
+                            {
+                                'type': rule.type,
+                                'value': rule.value,
+                                'api_name': rule.api_name,
+                                'fields': [field.api_name],
+                            },
+                        ],
+                    },
+                ],
+            },
+            'tasks': [
+                {
+                    'id': task.id,
+                    'api_name': task.api_name,
+                    'number': task.number,
+                    'name': task.name,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    fieldsets = response.data['kickoff']['fieldsets']
+    assert len(fieldsets) == 1
+
+    kickoff_fieldset = fieldsets[0]
+    assert kickoff_fieldset['api_name'] == fieldset.api_name
+    assert kickoff_fieldset['title'] == new_title
+
+    rule_data = kickoff_fieldset['rules'][0]
+    assert rule_data['api_name'] == rule.api_name
+
+    fields = kickoff_fieldset['fields']
+    assert len(fields) == 1
+    field_1 = fields[0]
+    assert field_1['api_name'] == field.api_name
+
+    selections = field_1['selections']
+    assert len(selections) == 1
+    selection_1 = selections[0]
+    assert selection_1['api_name'] == selection.api_name
+
+
+def test_update_kickoff_update_inactive_template__not_change_fieldset(
+    mocker,
+    api_client,
+):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user, is_active=False, tasks_count=1)
+    kickoff = template.kickoff_instance
+    task = template.tasks.first()
+    shared_fieldset = create_test_shared_fieldset(
+        account=account,
+        rule_type=FieldSetRuleType.SUM_EQUAL,
+    )
+    shared_field = shared_fieldset.fields.first()
+    shared_field.type = FieldType.RADIO
+    shared_field.save(update_fields=['type'])
+    FieldTemplateSelection.objects.create(
+        value='Option 1',
+        field_template=shared_field,
+        template=template,
+        api_name=f'{shared_field.api_name}-shared-selection-1',
+    )
+    fieldset = create_test_fieldset_template(
+        account=account,
+        template=template,
+        kickoff=kickoff,
+        shared_fieldset=shared_fieldset,
+        order=0,
+        title='Old title',
+        api_name='fs-kickoff-fields',
+    )
+    rule = fieldset.rules.first()
+    field = fieldset.fields.first()
+    selection = field.selections.all().first()
+
+    # Add fieldset data to the template draft
+    slz = TemplateSerializer(
+        instance=template,
+        context={
+            'user': user,
+            'account': user.account,
+        },
+    )
+    slz.initial_data = slz.data
+    slz.save_as_draft()
+
+    new_title = 'New title'
+    mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.'
+        'create_integrations_for_template',
+    )
+    mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.template_updated',
+    )
+    mocker.patch(
+        'src.processes.views.template.AnalyticService.templates_updated',
+    )
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_kickoff_updated',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.put(
+        path=f'/templates/{template.id}',
+        data={
+            'id': template.id,
+            'is_active': False,
+            'name': 'Updated template',
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {
+                'id': kickoff.id,
+                'fieldsets': [
+                    {
+                        'shared_fieldset_id': shared_fieldset.id,
+                        'api_name': fieldset.api_name,
+                        'order': fieldset.order,
+                        'title': new_title,
+                        'description': fieldset.description,
+                        'fields': [
+                            {
+                                'name': field.name,
+                                'api_name': field.api_name,
+                                'type': field.type,
+                                'order': field.order,
+                                'selections': [
+                                    {
+                                        'value': selection.value,
+                                        'api_name': selection.api_name,
+                                    },
+                                ],
+                            },
+                        ],
+                        'rules': [
+                            {
+                                'type': rule.type,
+                                'value': rule.value,
+                                'api_name': rule.api_name,
+                                'fields': [field.api_name],
+                            },
+                        ],
+                    },
+                ],
+            },
+            'tasks': [
+                {
+                    'id': task.id,
+                    'api_name': task.api_name,
+                    'number': task.number,
+                    'name': task.name,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    fieldsets = response.data['kickoff']['fieldsets']
+    assert len(fieldsets) == 1
+
+    kickoff_fieldset = fieldsets[0]
+    assert kickoff_fieldset['api_name'] == fieldset.api_name
+    assert kickoff_fieldset['title'] == new_title
+
+    rule_data = kickoff_fieldset['rules'][0]
+    assert rule_data['api_name'] == rule.api_name
+
+    fields = kickoff_fieldset['fields']
+    assert len(fields) == 1
+    field_1 = fields[0]
+    assert field_1['api_name'] == field.api_name
+
+    selections = field_1['selections']
+    assert len(selections) == 1
+    selection_1 = selections[0]
+    assert selection_1['api_name'] == selection.api_name
 
 
 # Task fieldsets

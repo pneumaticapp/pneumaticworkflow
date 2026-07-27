@@ -51,7 +51,8 @@ from src.processes.models.templates.fieldset import (
     FieldsetTemplate,
     FieldsetTemplateRule,
 )
-from src.processes.models.templates.fields import FieldTemplate
+from src.processes.models.templates.fields import FieldTemplate, \
+    FieldTemplateSelection
 from src.processes.models.templates.kickoff import Kickoff
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.templates.preset import (
@@ -980,7 +981,7 @@ def create_test_fieldset_template(
         )
 
     for shared_field in shared_fieldset.fields.all():
-        FieldTemplate.objects.create(
+        field_template = FieldTemplate.objects.create(
             name=shared_field.name,
             type=shared_field.type,
             fieldset=fieldset,
@@ -989,6 +990,13 @@ def create_test_fieldset_template(
             api_name=f'{fieldset.api_name}-field-1',
             account=account,
         )
+        for shared_selection in shared_field.selections.all():
+            FieldTemplateSelection.objects.create(
+                field_template=field_template,
+                template=template,
+                value=shared_selection.value,
+                api_name=f'{field_template.api_name}-selection-1',
+            )
     return fieldset
 
 
