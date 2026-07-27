@@ -73,7 +73,7 @@ export function* loadFieldsetsSaga({ payload }: ReturnType<typeof loadFieldsets>
   } catch (error) {
     if (isRequestCanceled(error)) return;
     yield put(loadFieldsetsFailed());
-    NotificationManager.warning({ message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
     logger.error('failed to load fieldsets', error);
 
     if (error?.status === 404) {
@@ -94,7 +94,7 @@ export function* loadCurrentFieldsetSaga({ payload: { id } }: PayloadAction<{ id
     if (isRequestCanceled(error)) return;
     yield put(loadCurrentFieldsetFailed());
     history.push(getFieldsetsRoute());
-    NotificationManager.warning({ message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
     logger.error('failed to load current fieldset', error);
   } finally {
     abortController.abort();
@@ -107,7 +107,7 @@ function* createFieldsetSaga({ payload }: PayloadAction<ICreateFieldsetParams>) 
     yield put(loadCurrentFieldsetSuccess(createdFieldset));
     history.push(getFieldsetDetailRoute(createdFieldset.id));
   } catch (error) {
-    NotificationManager.warning({ message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
     logger.error('failed to create fieldset', error);
   }
 }
@@ -120,7 +120,7 @@ export function* updateFieldsetSaga({ payload }: PayloadAction<IUpdateFieldsetPa
     yield put(setCurrentFieldset(updatedFieldset));
   } catch (error) {
     if (isRequestCanceled(error)) return;
-    NotificationManager.warning({ message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
     logger.error('failed to update fieldset', error);
     yield put(loadCurrentFieldset({ id: payload.id }));
   } finally {
@@ -135,7 +135,7 @@ export function* deleteFieldsetSaga({ payload: { id, onSuccess } }: PayloadActio
     onSuccess?.();
   } catch (error) {
     yield put(loadFieldsetsFailed());
-    NotificationManager.warning({ message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
     logger.error('failed to delete fieldset', error);
   }
 }
@@ -170,7 +170,7 @@ function* loadFieldsetsCatalogSaga() {
   } catch (error) {
     if (isRequestCanceled(error)) return;
     yield put(loadFieldsetsCatalogFailed());
-    NotificationManager.warning({ message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
     logger.error('failed to load fieldsets catalog', error);
   } finally {
     abortController.abort();
