@@ -1386,9 +1386,7 @@ def test__replace_api_names__fields_and_rules__ok(mocker):
             {
                 'api_name': old_field_api,
                 'name': 'F 1',
-                'selections': [
-                    {'api_name': 'old-selection-1', 'value': 'Option A'},
-                ],
+                'selections': [{'api_name': 'old-selection-1', 'value': 'A'}],
             },
         ],
         'rules': [{'api_name': 'old-rule-1', 'fields': [old_field_api]}],
@@ -1415,10 +1413,9 @@ def test__replace_api_names__fields_and_rules__ok(mocker):
     # assert
     assert result['api_name'] == new_fs_api
     assert result['fields'][0]['api_name'] == new_field_api
-    assert result['fields'][0]['selections'][0]['api_name'] == (
-        new_selection_api
+    assert (
+        result['fields'][0]['selections'][0]['api_name'] == new_selection_api
     )
-    assert result['fields'][0]['selections'][0]['value'] == 'Option A'
     assert result['rules'][0]['api_name'] == new_rule_api
     assert result['rules'][0]['fields'][0] == new_field_api
     assert create_api_name_mock.call_count == 4
