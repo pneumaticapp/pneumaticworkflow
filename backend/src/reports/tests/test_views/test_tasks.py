@@ -161,9 +161,11 @@ class TestDashboardMyTasksOverview:
         group = create_test_group(account, users=[user])
         group2 = create_test_group(account, name='group 2', users=[user])
         workflow = create_test_workflow(user=user, tasks_count=1)
+        now_date = timezone.now()
+        date_from = datetime.combine(now_date, time.min)
         task_1 = workflow.tasks.get(number=1)
-        task_1.date_started = timezone.now() - timedelta(hours=2)
-        task_1.date_completed = timezone.now() - timedelta(hours=1)
+        task_1.date_started = now_date - timedelta(minutes=2)
+        task_1.date_completed = date_from + timedelta(minutes=1)
         task_1.status = TaskStatus.COMPLETED
         TaskPerformer.objects.create(
             task_id=task_1.id,

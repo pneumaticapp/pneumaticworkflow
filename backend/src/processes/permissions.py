@@ -5,7 +5,12 @@ from django.db.models import Q
 from rest_framework.permissions import BasePermission
 
 from src.accounts.enums import UserType
-from src.processes.enums import OwnerRole, OwnerType, PresetType
+from src.processes.enums import (
+    OwnerRole,
+    OwnerType,
+    PerformerType,
+    PresetType,
+)
 from src.processes.messages.template import (
     MSG_PT_0023,
     MSG_PT_0069,
@@ -20,6 +25,22 @@ from src.processes.models.workflows.task import (
     TaskPerformer,
 )
 from src.processes.models.workflows.workflow import Workflow
+
+
+def _assignment_performer_q(user_id: int, prefix: str) -> Q:
+
+    """ Match assignment performers only (USER / GROUP), not GROUP_USER. """
+
+    return (
+        Q(**{
+            f'{prefix}__user_id': user_id,
+            f'{prefix}__type': PerformerType.USER,
+        })
+        | Q(**{
+            f'{prefix}__type': PerformerType.GROUP,
+            f'{prefix}__group__users__id': user_id,
+        })
+    )
 
 
 class TemplateAdminOwnerPermission(BasePermission):
@@ -226,8 +247,10 @@ class WorkflowMemberPermission(BasePermission):
             pk=workflow_id,
             account_id=user.account_id,
         ).filter(
-            Q(tasks__taskperformer__user_id=user.id)
-            | Q(tasks__taskperformer__group__users__id=user.id)
+            _assignment_performer_q(
+                user_id=user.id,
+                prefix='tasks__taskperformer',
+            )
             | Q(members=user.id),
         ).exists()
 
@@ -246,6 +269,7 @@ class TaskRevertPermission(BasePermission):
                 TaskPerformer.objects
                 .by_task(task_id)
                 .by_user_or_group(request.user.id)
+                .type_user_or_group()
                 .exclude_directly_deleted()
             )
             return (
@@ -268,6 +292,7 @@ class TaskCompletePermission(BasePermission):
                 TaskPerformer.objects
                 .by_task(task_id)
                 .by_user_or_group(request.user.id)
+                .type_user_or_group()
                 .exclude_directly_deleted()
             )
             return (
@@ -326,8 +351,10 @@ class TaskWorkflowMemberPermission(BasePermission):
             id=task_id,
             account_id=user.account_id,
         ).filter(
-            Q(workflow__tasks__taskperformer__user_id=user.id)
-            | Q(workflow__tasks__taskperformer__group__users__id=user.id)
+            _assignment_performer_q(
+                user_id=user.id,
+                prefix='workflow__tasks__taskperformer',
+            )
             | Q(workflow__members=user.id),
         ).exists()
 
@@ -396,8 +423,10 @@ class TaskCommentPermission(BasePermission):
         is_workflow_member = base_qst.filter(
             Q(members=user_id)
             | Q(owners=user_id)
-            | Q(tasks__taskperformer__user_id=user_id)
-            | Q(tasks__taskperformer__group__users__id=user_id),
+            | _assignment_performer_q(
+                user_id=user_id,
+                prefix='tasks__taskperformer',
+            ),
         ).exists()
         if is_workflow_member:
             return True
@@ -439,8 +468,10 @@ class WorkflowCommentPermission(BasePermission):
         is_workflow_member = base_qst.filter(
             Q(members=user_id)
             | Q(owners=user_id)
-            | Q(tasks__taskperformer__user_id=user.id)
-            | Q(tasks__taskperformer__group__users__id=user_id),
+            | _assignment_performer_q(
+                user_id=user_id,
+                prefix='tasks__taskperformer',
+            ),
         ).exists()
         if is_workflow_member:
             return True
@@ -611,9 +642,11 @@ class CommentReactionPermission(BasePermission):
 
         # Check workflow members
         is_member = qst.filter(
-            Q(workflow__members=user.id) |
-            Q(workflow__tasks__taskperformer__user_id=user.id) |
-            Q(workflow__tasks__taskperformer__group__users=user.id),
+            Q(workflow__members=user.id)
+            | _assignment_performer_q(
+                user_id=user.id,
+                prefix='workflow__tasks__taskperformer',
+            ),
         ).exists()
         if is_member:
             return True
