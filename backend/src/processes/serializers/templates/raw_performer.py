@@ -273,7 +273,7 @@ class RawPerformerSerializer(
                 data['label'] = instance.group.name
             elif instance.type == PerformerType.AI:
                 data['source_id'] = str(instance.ai_agent_id)
-                data['label'] = instance.ai_agent.name
+                data['label'] = f'AI agent: {instance.ai_agent.name}'
             elif instance.type == PerformerType.MANAGER:
                 source_api_name = instance.source_task_api_name
                 data['source_id'] = source_api_name

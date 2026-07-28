@@ -99,7 +99,7 @@ def test_create__ai_performer__ok(api_client):
     raw_performer_data = data['tasks'][0]['raw_performers'][0]
     assert raw_performer_data['type'] == PerformerType.AI
     assert raw_performer_data['source_id'] == str(agent.id)
-    assert raw_performer_data['label'] == agent.name
+    assert raw_performer_data['label'] == f'AI agent: {agent.name}'
     task = TaskTemplate.objects.get(api_name='task-1')
     raw_performer = task.raw_performers.get()
     assert raw_performer.type == PerformerType.AI
