@@ -602,6 +602,8 @@ class WorkflowEventType:
     TASK_PERFORMER_GROUP_DELETED = 21
     TASK_DELAY = 22
     TASK_DELEGATION = 23
+    AI_AGENT_COMPLETED = 24
+    AI_AGENT_LEFT = 25
 
     URGENT_TYPES = (
         URGENT,
@@ -623,6 +625,8 @@ class WorkflowEventType:
         SUB_WORKFLOW_RUN,
         TASK_DELAY,
         TASK_DELEGATION,
+        AI_AGENT_COMPLETED,
+        AI_AGENT_LEFT,
     )
 
     CHOICES = (
@@ -652,6 +656,8 @@ class WorkflowEventType:
         (TASK_PERFORMER_DELETED, 'Performer group deleted from task'),
         (TASK_DELAY, 'Task snoozed from template'),
         (TASK_DELEGATION, 'Task delegated'),
+        (AI_AGENT_COMPLETED, 'Task completed by AI agent'),
+        (AI_AGENT_LEFT, 'Task left for a human by AI agent'),
     )
 
     LITERALS = Literal[
@@ -678,6 +684,8 @@ class WorkflowEventType:
         TASK_PERFORMER_GROUP_CREATED,
         TASK_PERFORMER_GROUP_DELETED,
         TASK_DELAY,
+        AI_AGENT_COMPLETED,
+        AI_AGENT_LEFT,
     ]
 
 

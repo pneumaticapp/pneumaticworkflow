@@ -79,8 +79,13 @@ class TaskEventJsonSerializer(serializers.ModelSerializer):
     due_date_tsp = TimeStampField(source='due_date')
     sub_workflow = serializers.SerializerMethodField()
 
+    COMPLETION_EVENT_TYPES = (
+        WorkflowEventType.TASK_COMPLETE,
+        WorkflowEventType.AI_AGENT_COMPLETED,
+    )
+
     def get_output(self, instance):
-        if self.context['event_type'] == WorkflowEventType.TASK_COMPLETE:
+        if self.context['event_type'] in self.COMPLETION_EVENT_TYPES:
             return TaskFieldEventSerializer(
                 instance=instance.output.all(),
                 many=True,
@@ -89,7 +94,7 @@ class TaskEventJsonSerializer(serializers.ModelSerializer):
 
     def get_fieldsets(self, instance):
         if (
-            self.context['event_type'] == WorkflowEventType.TASK_COMPLETE
+            self.context['event_type'] in self.COMPLETION_EVENT_TYPES
             and instance.fieldsets.exists()
         ):
             return FieldSetSerializer(

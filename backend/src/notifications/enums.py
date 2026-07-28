@@ -48,6 +48,7 @@ class NotificationMethod:
     user_transfer = 'user_transfer'
     verification = 'verification'
     invite = 'invite'
+    ai_left_task = 'ai_left_task'
 
     LITERALS = Literal[
         new_task,
@@ -93,6 +94,7 @@ class NotificationMethod:
         user_transfer,
         verification,
         invite,
+        ai_left_task,
     ]
 
 

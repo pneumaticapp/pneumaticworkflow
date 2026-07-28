@@ -573,6 +573,66 @@ class WorkflowEventService:
         return event
 
     @classmethod
+    def ai_agent_completed_event(
+        cls,
+        task: Task,
+        ai_agent,
+        after_create_actions: bool = True,
+    ) -> WorkflowEvent:
+
+        """ Task completed by an AI agent. No user attribution —
+            the agent name is stored in the event text """
+
+        with_attachments = task.output.with_attachments().exists()
+        event = WorkflowEvent.objects.create(
+            type=WorkflowEventType.AI_AGENT_COMPLETED,
+            account=task.account,
+            task=task,
+            task_json=TaskEventJsonSerializer(
+                instance=task,
+                context={
+                    'event_type': WorkflowEventType.AI_AGENT_COMPLETED,
+                },
+            ).data,
+            with_attachments=with_attachments,
+            workflow=task.workflow,
+            text=ai_agent.name,
+        )
+        if after_create_actions:
+            cls._after_create_actions(event)
+        return event
+
+    @classmethod
+    def ai_agent_left_event(
+        cls,
+        task: Task,
+        ai_agent,
+        reason: str,
+        after_create_actions: bool = True,
+    ) -> WorkflowEvent:
+
+        """ An AI agent could not complete the task and left it for
+            a human. The agent name and the reason are stored in the
+            event text """
+
+        event = WorkflowEvent.objects.create(
+            type=WorkflowEventType.AI_AGENT_LEFT,
+            account=task.account,
+            task=task,
+            task_json=TaskEventJsonSerializer(
+                instance=task,
+                context={
+                    'event_type': WorkflowEventType.AI_AGENT_LEFT,
+                },
+            ).data,
+            workflow=task.workflow,
+            text=f'{ai_agent.name}: {reason}',
+        )
+        if after_create_actions:
+            cls._after_create_actions(event)
+        return event
+
+    @classmethod
     def task_delegation_event(
         cls,
         task: Task,

@@ -15,11 +15,16 @@ from src.processes.services.workflow_action import (
     WorkflowActionService,
 )
 from src.ai.tasks import run_ai_performer
+from src.accounts.enums import NotificationType
+from src.accounts.models import Notification
+from src.notifications.tasks import _send_ai_left_task_notification
 from src.processes.enums import (
     FieldType,
     PerformerType,
     TaskStatus,
+    WorkflowEventType,
 )
+from src.processes.models.workflows.event import WorkflowEvent
 from src.processes.models.workflows.fields import (
     FieldSelection,
     TaskField,
@@ -318,3 +323,114 @@ def test_continue_task__returned_task__resets_run(mocker):
 
     assert not AITaskRun.objects.filter(task=task).exists()
     delay_mock.assert_called_once()
+
+
+def test_run__usage__recorded_on_run(mocker):
+
+    """ Token counts and the served model name from the provider
+        response land on the AITaskRun row """
+
+    _user, _workflow, task, agent = _setup()
+    response = mocker.Mock()
+    response.ok = True
+    response.status_code = 200
+    response.json.return_value = {
+        'model': 'served/model-x',
+        'usage': {'prompt_tokens': 100, 'completion_tokens': 20},
+        'choices': [
+            {
+                'finish_reason': 'stop',
+                'message': {'content': '{"field-1": "All good"}'},
+            },
+        ],
+    }
+    mocker.patch(
+        'src.ai.clients.chat_completions.requests.post',
+        return_value=response,
+    )
+
+    run_ai_performer(task_id=task.id, agent_id=agent.id)
+
+    run = AITaskRun.objects.get(task=task, agent=agent)
+    assert run.status == AITaskRunStatus.COMPLETED
+    assert run.model_used == 'served/model-x'
+    assert run.prompt_tokens == 100
+    assert run.completion_tokens == 20
+
+
+def test_run__happy_path__creates_ai_completed_event(mocker):
+
+    """ The workflow log records the completion under the agent,
+        not under the acting account owner """
+
+    _user, _workflow, task, agent = _setup()
+    _mock_model(mocker, {'field-1': 'All good'})
+
+    run_ai_performer(task_id=task.id, agent_id=agent.id)
+
+    event = WorkflowEvent.objects.get(
+        task=task,
+        type=WorkflowEventType.AI_AGENT_COMPLETED,
+    )
+    assert event.text == agent.name
+    assert event.user is None
+    assert not WorkflowEvent.objects.filter(
+        task=task,
+        type=WorkflowEventType.TASK_COMPLETE,
+    ).exists()
+
+
+def test_run__left_for_human__event_and_notification(mocker):
+    user, workflow, task, agent = _setup()
+    TaskField.objects.create(
+        task=task,
+        api_name='field-user',
+        name='Owner',
+        type=FieldType.USER,
+        is_required=True,
+        workflow=workflow,
+        account=user.account,
+    )
+    notification_mock = mocker.patch(
+        'src.ai.services.performers.send_ai_left_task_notification.delay',
+    )
+
+    run_ai_performer(task_id=task.id, agent_id=agent.id)
+
+    event = WorkflowEvent.objects.get(
+        task=task,
+        type=WorkflowEventType.AI_AGENT_LEFT,
+    )
+    assert agent.name in event.text
+    assert 'Owner' in event.text
+    assert event.user is None
+    notification_mock.assert_called_once()
+    kwargs = notification_mock.call_args[1]
+    assert kwargs['task_id'] == task.id
+    assert kwargs['agent_name'] == agent.name
+    # AI-only task: falls back to the workflow starter
+    assert kwargs['recipients'] == [(user.id, user.email)]
+
+
+def test_send_ai_left_task_notification__creates_notification_row(mocker):
+    user, _workflow, task, _agent = _setup()
+    send_mock = mocker.patch('src.notifications.tasks._send_notification')
+
+    _send_ai_left_task_notification(
+        logging=False,
+        account_id=user.account_id,
+        recipients=[(user.id, user.email)],
+        task_id=task.id,
+        agent_name='Analyst',
+        reason='Required fields an AI agent cannot fill: "Owner"',
+    )
+
+    notification = Notification.objects.get(
+        user_id=user.id,
+        type=NotificationType.AI_LEFT_TASK,
+    )
+    assert notification.task_id == task.id
+    assert notification.text == (
+        'Analyst: Required fields an AI agent cannot fill: "Owner"'
+    )
+    send_mock.assert_called_once()

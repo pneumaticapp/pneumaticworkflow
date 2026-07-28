@@ -18,6 +18,7 @@ class NotificationType:
     REACTION = 'reaction'
     COMPLETE_TASK = 'complete_task'
     COMPLETE_WORKFLOW = 'complete_workflow'
+    AI_LEFT_TASK = 'ai_left_task'
 
     URGENT_TYPES = (
         URGENT,
@@ -38,6 +39,7 @@ class NotificationType:
         (REACTION, 'reaction'),
         (COMPLETE_TASK, 'complete task'),
         (COMPLETE_WORKFLOW, 'complete workflow'),
+        (AI_LEFT_TASK, 'AI agent left task'),
     )
 
 

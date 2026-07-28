@@ -111,6 +111,10 @@ class ChatCompletionsClient:
         self.referer = referer
         self.title = title
         self.max_attempts = max_attempts
+        # Usage of the last completed HTTP call: the served model name
+        # and token counts. Survives truncated/empty-output errors —
+        # those tokens were still consumed.
+        self.last_usage: Optional[Dict] = None
 
     def call_model(
         self,
@@ -226,6 +230,13 @@ class ChatCompletionsClient:
                 status=error.get('code'),
                 detail=detail,
             )
+
+        usage = payload.get('usage') or {}
+        self.last_usage = {
+            'model': payload.get('model'),
+            'prompt_tokens': usage.get('prompt_tokens'),
+            'completion_tokens': usage.get('completion_tokens'),
+        }
 
         choices = payload.get('choices') or [{}]
         choice = choices[0]

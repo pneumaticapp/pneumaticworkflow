@@ -33,7 +33,10 @@ from src.ai.performers.output_translation import (
     IncompleteOutputError,
     to_pneumatic_output,
 )
+from django.contrib.auth import get_user_model
+
 from src.authentication.enums import AuthTokenType
+from src.notifications.tasks import send_ai_left_task_notification
 from src.processes.enums import (
     PerformerType,
     TaskStatus,
@@ -43,7 +46,10 @@ from src.processes.models.workflows.task import (
     TaskPerformer,
 )
 from src.processes.services import exceptions
+from src.processes.services.events import WorkflowEventService
 from src.processes.services.workflow_action import WorkflowActionService
+
+UserModel = get_user_model()
 
 logger = logging.getLogger(__name__)
 
@@ -75,6 +81,7 @@ class AIPerformerService:
         self.task = task
         self.agent = agent
         self.account = agent.account
+        self.last_usage: Optional[dict] = None
 
     @classmethod
     def load(
@@ -247,14 +254,18 @@ class AIPerformerService:
             base_url=settings.OPENROUTER_BASE_URL,
             api_key=settings.OPENROUTER_API_KEY,
         )
-        return client.call_model(
-            model=self.agent.model_slug,
-            user_content=self._user_content(fields),
-            system_prompt=self._system_prompt(),
-            temperature=self.agent.temperature,
-            max_tokens=self.agent.max_tokens,
-            schema=build_output_schema(fields),
-        )
+        try:
+            return client.call_model(
+                model=self.agent.model_slug,
+                user_content=self._user_content(fields),
+                system_prompt=self._system_prompt(),
+                temperature=self.agent.temperature,
+                max_tokens=self.agent.max_tokens,
+                schema=build_output_schema(fields),
+            )
+        finally:
+            # tokens are consumed even when the output is unusable
+            self.last_usage = client.last_usage
 
     def _complete_task(self, fields_values: dict):
         owner = self.account.get_owner()
@@ -279,12 +290,56 @@ class AIPerformerService:
         logger.warning(
             'AI run %s left for human: %s', run.id, reason,
         )
-        # TODO AI performers: notify human co-assignees / account owner
         self._finish(
             run,
             status=AITaskRunStatus.LEFT_FOR_HUMAN,
             reason=reason,
         )
+        WorkflowEventService.ai_agent_left_event(
+            task=self.task,
+            ai_agent=self.agent,
+            reason=reason,
+        )
+        recipients = self._left_for_human_recipients()
+        if recipients:
+            send_ai_left_task_notification.delay(
+                logging=self.account.log_api_requests,
+                logo_lg=self.account.logo_lg,
+                account_id=self.account.id,
+                recipients=recipients,
+                task_id=self.task.id,
+                agent_name=self.agent.name,
+                reason=reason,
+            )
+
+    def _left_for_human_recipients(self) -> List[tuple]:
+
+        """ Human co-performers of the task; the workflow starter or
+            the account owner when the task has none """
+
+        performers_ids = (
+            TaskPerformer.objects
+            .by_task(self.task.id)
+            .exclude_directly_deleted()
+            .not_completed()
+            .users()
+            .values_list('id', flat=True)
+        )
+        recipients = (
+            UserModel.objects
+            .get_users_in_performer(performers_ids=performers_ids)
+            .order_by('id')
+            .user_ids_emails_list()
+        )
+        if recipients:
+            return recipients
+        fallback = (
+            self.task.workflow.workflow_starter
+            or self.account.get_owner()
+        )
+        if fallback is None:
+            return []
+        return [(fallback.id, fallback.email)]
 
     def _finish(
         self,
@@ -292,10 +347,13 @@ class AIPerformerService:
         status: str,
         reason: Optional[str] = None,
     ):
+        usage = self.last_usage or {}
         AITaskRun.objects.filter(id=run.id).update(
             status=status,
             reason=reason,
-            model_used=self.agent.model_slug,
+            model_used=usage.get('model') or self.agent.model_slug,
+            prompt_tokens=usage.get('prompt_tokens'),
+            completion_tokens=usage.get('completion_tokens'),
             attempts=run.attempts + 1,
             date_completed=timezone.now(),
         )

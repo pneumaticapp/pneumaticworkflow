@@ -259,3 +259,57 @@ def test_extract_json__valid_json_with_unbalanced_prose__parsed():
     assert extract_json(content) == {
         'text': 'closing brace } inside a string',
     }
+
+
+def test_call_model__usage_in_payload__captured_on_client(mocker):
+    mocker.patch(
+        'src.ai.clients.chat_completions.requests.post',
+        return_value=_response(
+            mocker,
+            payload={
+                'model': 'anthropic/claude-3.5-haiku',
+                'usage': {'prompt_tokens': 120, 'completion_tokens': 30},
+                'choices': [
+                    {
+                        'finish_reason': 'stop',
+                        'message': {'content': 'ok'},
+                    },
+                ],
+            },
+        ),
+    )
+    client = _client()
+
+    client.call_model(model='m', user_content='hi')
+
+    assert client.last_usage == {
+        'model': 'anthropic/claude-3.5-haiku',
+        'prompt_tokens': 120,
+        'completion_tokens': 30,
+    }
+
+
+def test_call_model__truncated_output__usage_still_captured(mocker):
+    mocker.patch(
+        'src.ai.clients.chat_completions.requests.post',
+        return_value=_response(
+            mocker,
+            payload={
+                'model': 'm',
+                'usage': {'prompt_tokens': 10, 'completion_tokens': 5},
+                'choices': [
+                    {
+                        'finish_reason': 'length',
+                        'message': {'content': 'x'},
+                    },
+                ],
+            },
+        ),
+    )
+    client = _client()
+
+    with pytest.raises(AITruncatedOutputError):
+        client.call_model(model='m', user_content='hi')
+
+    assert client.last_usage['prompt_tokens'] == 10
+    assert client.last_usage['completion_tokens'] == 5

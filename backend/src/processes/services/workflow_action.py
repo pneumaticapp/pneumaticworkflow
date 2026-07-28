@@ -801,12 +801,16 @@ class WorkflowActionService:
                 )
             # Need run after save completed task (and performers)
             # and before start next tasks
-            # TODO AI performers: dedicated AI task-complete event type;
-            #   until then the event is recorded under the acting user
-            WorkflowEventService.task_complete_event(
-                task=task,
-                user=self.user,
-            )
+            if ai_agent is not None:
+                WorkflowEventService.ai_agent_completed_event(
+                    task=task,
+                    ai_agent=ai_agent,
+                )
+            else:
+                WorkflowEventService.task_complete_event(
+                    task=task,
+                    user=self.user,
+                )
         self._start_next_tasks(parent_task=task)
         if (
             WebHook.objects
