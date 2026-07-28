@@ -82,7 +82,7 @@ class TaskEventJsonSerializer(serializers.ModelSerializer):
     def get_output(self, instance):
         if self.context['event_type'] == WorkflowEventType.TASK_COMPLETE:
             return TaskFieldEventSerializer(
-                instance=instance.output.all(),
+                instance=instance.output.filter(fieldset__isnull=True),
                 many=True,
             ).data
         return None
