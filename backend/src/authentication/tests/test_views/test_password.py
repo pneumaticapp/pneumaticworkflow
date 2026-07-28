@@ -22,6 +22,16 @@ class TestResetPasswordViewSet:
 
         # arrange
         user = create_test_user()
+        mocker.patch(
+            'src.authentication.views.password.'
+            'ResetPasswordViewSet.anonymous_user_reset_exists',
+            return_value=False,
+        )
+        mocker.patch(
+            'src.authentication.views.password.'
+            'ResetPasswordViewSet'
+            '.inc_anonymous_user_reset_counter',
+        )
         send_reset_password_notification_mock = mocker.patch(
             'src.authentication.views.password.'
             'send_reset_password_notification.delay',
@@ -49,6 +59,16 @@ class TestResetPasswordViewSet:
 
         # arrange
         email = 'test@pneumatic.app'
+        mocker.patch(
+            'src.authentication.views.password.'
+            'ResetPasswordViewSet.anonymous_user_reset_exists',
+            return_value=False,
+        )
+        mocker.patch(
+            'src.authentication.views.password.'
+            'ResetPasswordViewSet'
+            '.inc_anonymous_user_reset_counter',
+        )
         send_reset_password_notification_mock = mocker.patch(
             'src.authentication.views.password.'
             'send_reset_password_notification.delay',
@@ -76,6 +96,16 @@ class TestResetPasswordViewSet:
         user = create_test_user(email=email)
         another_owner = create_test_user(email='another@test.test')
         create_invited_user(user=another_owner, email=email)
+        mocker.patch(
+            'src.authentication.views.password.'
+            'ResetPasswordViewSet.anonymous_user_reset_exists',
+            return_value=False,
+        )
+        mocker.patch(
+            'src.authentication.views.password.'
+            'ResetPasswordViewSet'
+            '.inc_anonymous_user_reset_counter',
+        )
         send_reset_password_notification_mock = mocker.patch(
             'src.authentication.views.password.'
             'send_reset_password_notification.delay',
