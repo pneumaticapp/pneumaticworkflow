@@ -55,3 +55,12 @@ class FileSizeExceededException(FileServiceException):
 class InvalidFileTypeException(FileServiceException):
 
     default_message = fs_messages.MSG_FS_0006
+
+
+class FileDownloadException(FileServiceException):
+
+    default_message = fs_messages.MSG_FS_0012
+
+    def __init__(self, *args, status_code=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.status_code = status_code

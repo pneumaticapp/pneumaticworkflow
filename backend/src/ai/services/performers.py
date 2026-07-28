@@ -19,6 +19,10 @@ from src.ai.models import (
     AIAgent,
     AITaskRun,
 )
+from src.ai.performers.attachments import (
+    extract_content,
+    render_attachment,
+)
 from src.ai.performers.output_fields import (
     OutputField,
     find_blocking_fields,
@@ -48,6 +52,12 @@ from src.processes.models.workflows.task import (
 from src.processes.services import exceptions
 from src.processes.services.events import WorkflowEventService
 from src.processes.services.workflow_action import WorkflowActionService
+from src.storage.services.exceptions import (
+    FileDownloadException,
+    FileServiceConnectionFailedException,
+)
+from src.storage.services.file_service import FileServiceClient
+from src.storage.utils import extract_file_links_from_text
 
 UserModel = get_user_model()
 
@@ -57,6 +67,17 @@ logger = logging.getLogger(__name__)
 class AITransientError(Exception):
 
     """ Provider/network failure worth a Celery retry """
+
+
+class AttachmentDownloadError(Exception):
+
+    """ An input document exists but could not be downloaded —
+        completing the task while silently missing an input is worse
+        than leaving it for a human """
+
+    def __init__(self, name: str, status_code):
+        super().__init__(f'"{name}" (HTTP {status_code})')
+        self.name = name
 
 
 SYSTEM_SCAFFOLD = (
@@ -169,7 +190,19 @@ class AIPerformerService:
             return
 
         try:
-            data = self._call_model(fillable)
+            attachments = self._load_attachments()
+        except FileServiceConnectionFailedException as ex:
+            self._requeue(run)
+            raise AITransientError(str(ex)) from ex
+        except AttachmentDownloadError as ex:
+            self._leave_for_human(
+                run,
+                reason=f'Input document could not be downloaded: {ex}',
+            )
+            return
+
+        try:
+            data = self._call_model(fillable, attachments)
         except (requests.Timeout, requests.ConnectionError) as ex:
             self._requeue(run)
             raise AITransientError(str(ex)) from ex
@@ -239,17 +272,78 @@ class AIPerformerService:
             return f'{SYSTEM_SCAFFOLD}\n\n{self.agent.system_prompt}'
         return SYSTEM_SCAFFOLD
 
-    def _user_content(self, fields: List[OutputField]) -> str:
+    def _load_attachments(self) -> List[dict]:
+
+        """ Downloads and extracts the input documents referenced in
+            the task description as file service markdown links.
+            Links to other domains never reach the file service
+            client — descriptions can contain arbitrary URLs and
+            credentials must not follow them """
+
+        if not settings.FILE_SERVICE_URL:
+            return []
+        links = extract_file_links_from_text(self.task.description or '')
+        if not links:
+            return []
+        client = FileServiceClient(user=self.account.get_owner())
+        attachments = []
+        for name, file_id in links:
+            try:
+                data, content_type = client.download_file(file_id)
+            except FileDownloadException as ex:
+                raise AttachmentDownloadError(
+                    name=name,
+                    status_code=ex.status_code,
+                ) from ex
+            attachments.append({
+                'name': name,
+                **extract_content(
+                    name=name,
+                    content_type=content_type,
+                    data=data,
+                ),
+            })
+        return attachments
+
+    def _user_content(
+        self,
+        fields: List[OutputField],
+        attachments: List[dict],
+    ):
         parts = [f'# Task: {self.task.name}']
         if self.task.description:
             parts.append(self.task.description)
+        for attachment in attachments:
+            parts.append(render_attachment(attachment))
         parts.append(f'## Output fields\n{describe_fields(fields)}')
         parts.append(
             'Respond with a single JSON object keyed by field api_name.',
         )
-        return '\n\n'.join(parts)
+        text = '\n\n'.join(parts)
+        images = [
+            attachment for attachment in attachments
+            if attachment['kind'] == 'image'
+        ]
+        if not images:
+            # Text-only prompts stay plain strings so models without
+            # multimodal input keep working
+            return text
+        return [
+            {'type': 'text', 'text': text},
+            *(
+                {
+                    'type': 'image_url',
+                    'image_url': {'url': image['data_url']},
+                }
+                for image in images
+            ),
+        ]
 
-    def _call_model(self, fields: List[OutputField]) -> dict:
+    def _call_model(
+        self,
+        fields: List[OutputField],
+        attachments: List[dict],
+    ) -> dict:
         client = ChatCompletionsClient(
             base_url=settings.OPENROUTER_BASE_URL,
             api_key=settings.OPENROUTER_API_KEY,
@@ -257,7 +351,7 @@ class AIPerformerService:
         try:
             return client.call_model(
                 model=self.agent.model_slug,
-                user_content=self._user_content(fields),
+                user_content=self._user_content(fields, attachments),
                 system_prompt=self._system_prompt(),
                 temperature=self.agent.temperature,
                 max_tokens=self.agent.max_tokens,

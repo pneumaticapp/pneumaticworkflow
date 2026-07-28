@@ -1,5 +1,5 @@
 import io
-from typing import Optional
+from typing import Optional, Tuple
 
 import requests
 from django.conf import settings
@@ -11,6 +11,7 @@ from src.authentication.tokens import PneumaticToken
 from src.storage.enums import AccessType, SourceType
 from src.storage.services.attachments import AttachmentService
 from src.storage.services.exceptions import (
+    FileDownloadException,
     FileServiceAuthException,
     FileServiceAuthFailedException,
     FileServiceConnectionException,
@@ -136,6 +137,31 @@ class FileServiceClient:
             raise FileUploadException
 
         return response
+
+    def download_file(self, file_id: str) -> Tuple[bytes, str]:
+
+        """ Download a file's bytes and content type by its id.
+
+            Network failures raise FileServiceConnectionFailedException
+            (worth a retry); HTTP errors raise FileDownloadException
+            with the status code (the file is gone or inaccessible) """
+
+        url = f'{self.base_url.rstrip("/")}/{file_id}'
+        headers = self._get_auth_headers() if self.user else {}
+        try:
+            response = requests.get(
+                url=url,
+                headers=headers,
+                timeout=60,
+            )
+        except requests.exceptions.RequestException as ex:
+            raise FileServiceConnectionFailedException from ex
+        if not response.ok:
+            raise FileDownloadException(
+                status_code=response.status_code,
+            )
+        content_type = response.headers.get('Content-Type', '')
+        return response.content, content_type
 
     def upload_file_with_attachment(
         self,

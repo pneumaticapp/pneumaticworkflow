@@ -16,6 +16,7 @@ from src.storage.utils import (
     extract_all_file_ids_from_source,
     extract_file_ids_from_text,
     extract_file_ids_from_values,
+    extract_file_links_from_text,
     get_attachment_description_fields,
     refresh_attachments,
     sync_account_file_fields,
@@ -1276,3 +1277,52 @@ class TestGetFileServiceFileUrl:
 
         # assert
         assert result is None
+
+
+class TestExtractFileLinksFromText:
+
+    def test_extract_file_links__markdown_links__labels_and_ids(self):
+        # arrange
+        text = (
+            'Report: [Q3 report.pdf](https://example.com/abc123def456) '
+            'and image ![chart](https://example.com/img987654321) '
+            'external: [doc](https://other.com/xyz123456789)'
+        )
+
+        # act
+        with override_settings(
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
+        ):
+            result = extract_file_links_from_text(text)
+
+        # assert
+        assert result == [
+            ('Q3 report.pdf', 'abc123def456'),
+            ('chart', 'img987654321'),
+        ]
+
+    def test_extract_file_links__duplicate_file_id__first_wins(self):
+        # arrange
+        text = (
+            '[first](https://example.com/abc123def456) '
+            '[second](https://example.com/abc123def456)'
+        )
+
+        # act
+        with override_settings(
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
+        ):
+            result = extract_file_links_from_text(text)
+
+        # assert
+        assert result == [('first', 'abc123def456')]
+
+    def test_extract_file_links__no_host_path__empty(self):
+        # act
+        with override_settings(FILE_SERVICE_HOST_PATH=None):
+            result = extract_file_links_from_text(
+                '[doc](https://example.com/abc123def456)',
+            )
+
+        # assert
+        assert result == []

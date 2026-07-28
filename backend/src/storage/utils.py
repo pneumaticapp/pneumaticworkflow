@@ -112,6 +112,26 @@ def extract_file_ids_from_text(text: str) -> List[str]:
     return list(dict.fromkeys(file_ids))
 
 
+def extract_file_links_from_text(text: str) -> List[Tuple[str, str]]:
+
+    """ Extracts (label, file_id) pairs for file service markdown
+        links found in text, in order of appearance, de-duplicated
+        by file_id. Links to other domains are ignored """
+
+    pattern = _get_file_service_link_pattern(anchored=False)
+    if not text or pattern is None:
+        return []
+    result = []
+    seen = set()
+    for label, _url, raw_file_id in pattern.findall(text):
+        file_id = unquote(raw_file_id)
+        if file_id in seen:
+            continue
+        seen.add(file_id)
+        result.append((label or 'attachment', file_id))
+    return result
+
+
 def extract_file_ids_from_values(
     values: List[Optional[str]],
 ) -> List[str]:

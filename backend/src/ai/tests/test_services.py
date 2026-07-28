@@ -1,5 +1,6 @@
 import pytest
 from django.conf import settings
+from django.test import override_settings
 
 from src.ai.enums import AITaskRunStatus
 from src.ai.models import (
@@ -25,6 +26,11 @@ from src.processes.enums import (
     WorkflowEventType,
 )
 from src.processes.models.workflows.event import WorkflowEvent
+from src.storage.services.exceptions import (
+    FileDownloadException,
+    FileServiceConnectionFailedException,
+)
+from src.storage.services.file_service import FileServiceClient
 from src.processes.models.workflows.fields import (
     FieldSelection,
     TaskField,
@@ -434,3 +440,134 @@ def test_send_ai_left_task_notification__creates_notification_row(mocker):
         'Analyst: Required fields an AI agent cannot fill: "Owner"'
     )
     send_mock.assert_called_once()
+
+
+_FILES_URL = 'https://files.test'
+
+
+def _attachment_setup(mocker, download_result):
+    user, workflow, task, agent = _setup()
+    task.description = (
+        'Review [report.txt](https://files.test/abc12345xyz)'
+    )
+    task.save(update_fields=['description'])
+    download_mock = mocker.patch.object(
+        FileServiceClient,
+        'download_file',
+        return_value=download_result,
+    )
+    return user, workflow, task, agent, download_mock
+
+
+def test_run__text_attachment__included_in_prompt(mocker):
+    _user, _workflow, task, agent, download_mock = _attachment_setup(
+        mocker,
+        download_result=(b'quarterly numbers', 'text/plain'),
+    )
+    call_model_mock = _mock_model(mocker, {'field-1': 'ok'})
+
+    with override_settings(
+        FILE_SERVICE_URL=_FILES_URL,
+        FILE_SERVICE_HOST_PATH='files.test',
+    ):
+        run_ai_performer(task_id=task.id, agent_id=agent.id)
+
+    task.refresh_from_db()
+    assert task.status == TaskStatus.COMPLETED
+    download_mock.assert_called_once_with('abc12345xyz')
+    user_content = call_model_mock.call_args[1]['user_content']
+    assert isinstance(user_content, str)
+    assert '--- Attached document: report.txt ---' in user_content
+    assert 'quarterly numbers' in user_content
+
+
+def test_run__image_attachment__vision_blocks(mocker):
+    _user, _workflow, task, agent, _download_mock = _attachment_setup(
+        mocker,
+        download_result=(b'\x89PNG bytes', 'image/png'),
+    )
+    call_model_mock = _mock_model(mocker, {'field-1': 'ok'})
+
+    with override_settings(
+        FILE_SERVICE_URL=_FILES_URL,
+        FILE_SERVICE_HOST_PATH='files.test',
+    ):
+        run_ai_performer(task_id=task.id, agent_id=agent.id)
+
+    user_content = call_model_mock.call_args[1]['user_content']
+    assert isinstance(user_content, list)
+    assert user_content[0]['type'] == 'text'
+    assert 'The image "report.txt"' in user_content[0]['text']
+    assert user_content[1]['type'] == 'image_url'
+    assert user_content[1]['image_url']['url'].startswith(
+        'data:image/png;base64,',
+    )
+
+
+def test_run__attachment_download_404__left_for_human(mocker):
+    user, _workflow, task, agent, download_mock = _attachment_setup(
+        mocker,
+        download_result=None,
+    )
+    download_mock.side_effect = FileDownloadException(status_code=404)
+    call_model_mock = _mock_model(mocker, {'field-1': 'ok'})
+    mocker.patch(
+        'src.ai.services.performers.send_ai_left_task_notification.delay',
+    )
+
+    with override_settings(
+        FILE_SERVICE_URL=_FILES_URL,
+        FILE_SERVICE_HOST_PATH='files.test',
+    ):
+        run_ai_performer(task_id=task.id, agent_id=agent.id)
+
+    task.refresh_from_db()
+    assert task.status == TaskStatus.ACTIVE
+    run = AITaskRun.objects.get(task=task, agent=agent)
+    assert run.status == AITaskRunStatus.LEFT_FOR_HUMAN
+    assert 'could not be downloaded' in run.reason
+    assert 'report.txt' in run.reason
+    call_model_mock.assert_not_called()
+
+
+def test_service_run__file_service_down__requeued(mocker):
+    _user, _workflow, task, agent, download_mock = _attachment_setup(
+        mocker,
+        download_result=None,
+    )
+    download_mock.side_effect = FileServiceConnectionFailedException()
+    _mock_model(mocker, {'field-1': 'ok'})
+
+    with override_settings(
+        FILE_SERVICE_URL=_FILES_URL,
+        FILE_SERVICE_HOST_PATH='files.test',
+    ):
+        service = AIPerformerService.load(
+            task_id=task.id,
+            agent_id=agent.id,
+        )
+        run = service.claim()
+
+        with pytest.raises(AITransientError):
+            service.run(run)
+
+    run.refresh_from_db()
+    assert run.status == AITaskRunStatus.QUEUED
+
+
+def test_run__no_file_service_configured__no_download(mocker):
+    _user, _workflow, task, agent, download_mock = _attachment_setup(
+        mocker,
+        download_result=(b'x', 'text/plain'),
+    )
+    _mock_model(mocker, {'field-1': 'ok'})
+
+    with override_settings(
+        FILE_SERVICE_URL=None,
+        FILE_SERVICE_HOST_PATH=None,
+    ):
+        run_ai_performer(task_id=task.id, agent_id=agent.id)
+
+    task.refresh_from_db()
+    assert task.status == TaskStatus.COMPLETED
+    download_mock.assert_not_called()
