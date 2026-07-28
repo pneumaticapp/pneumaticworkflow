@@ -1,15 +1,16 @@
 from datetime import datetime
-from copy import copy
-from typing import Callable, Iterable, Optional, Tuple
+from typing import Callable, Iterable, List, Optional, Tuple
 
 from django.contrib.auth import get_user_model
 from django.db import transaction
-from django.db.models import Q
 from django.utils import timezone
+from django.db.models import Q
 
+from src.accounts.enums import UserType
 from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
 from src.authentication.services.guest_auth import GuestJWTAuthService
+from src.executor import RawSqlExecutor
 from src.notifications.tasks import (
     send_task_completed_notification,
     send_task_completed_websocket,
@@ -23,6 +24,7 @@ from src.notifications.tasks import (
 from src.processes.enums import (
     ConditionAction,
     DirectlyStatus,
+    PerformerType,
     TaskStatus,
     WorkflowStatus,
 )
@@ -35,6 +37,7 @@ from src.processes.models.workflows.task import (
 )
 from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.workflow import Workflow
+from src.processes.queries import GetTaskPerformersQuery
 from src.storage.utils import reassign_restricted_permissions_for_task
 from src.processes.services import exceptions
 from src.processes.services.condition_check.service import (
@@ -81,6 +84,43 @@ class WorkflowActionService:
         self.auth_type = auth_type
         self.sync = sync
 
+    @staticmethod
+    def _get_incompleted_performers_users(
+        task: Task,
+        user_type: UserType.LITERALS = None,
+    ) -> list:
+
+        """ Return all incompleted users performers for the task """
+
+        query = GetTaskPerformersQuery(
+            task_id=task.id,
+            is_completed=False,
+            user_type=user_type,
+        )
+        return list(RawSqlExecutor.fetch(*query.get_sql()))
+
+    @staticmethod
+    def _get_all_performers_users(task: Task) -> list:
+
+        """ Return all users performers for the task """
+
+        query = GetTaskPerformersQuery(
+            task_id=task.id,
+        )
+        return list(RawSqlExecutor.fetch(*query.get_sql()))
+
+    def _get_incompleted_recipients(
+        self,
+        task: Task,
+        user_type: UserType.LITERALS = None,
+    ) -> List[Tuple[int, str]]:
+
+        users = self._get_incompleted_performers_users(
+            task=task,
+            user_type=user_type,
+        )
+        return [(user['id'], user['email']) for user in users]
+
     def check_delay_workflow(self):
 
         if (
@@ -125,12 +165,9 @@ class WorkflowActionService:
                         directly_status=DirectlyStatus.CREATED,
                         workflow=self.workflow,
                     )
-                recipients = list(
-                    TaskPerformer.objects
-                    .filter(task_id=task.id)
-                    .exclude_directly_deleted()
-                    .not_completed()
-                    .get_user_emails_and_ids_set(),
+                recipients = self._get_incompleted_recipients(
+                    task=task,
+                    user_type=UserType.USER,
                 )
                 # notifications about event
                 for (user_id, user_email) in recipients:
@@ -175,16 +212,24 @@ class WorkflowActionService:
 
     def force_resume_workflow(self):
 
-        """ Resume delayed workflow before the timeout """
+        """Resume delayed or completed workflow.
+
+        AnalyticService is intentionally not called here:
+        DELAYED resume is a reversal, not a new user action;
+        DONE resume re-opens a workflow without creating
+        a new analytics event (no dedicated metric exists).
+        """
 
         if self.workflow.is_running:
             return
-        if self.workflow.is_completed:
-            raise exceptions.ResumeCompletedWorkflow
 
         with transaction.atomic():
+            update_fields = ['status']
+            if self.workflow.is_completed:
+                self.workflow.date_completed = None
+                update_fields.append('date_completed')
             self.workflow.status = WorkflowStatus.RUNNING
-            self.workflow.save(update_fields=['status'])
+            self.workflow.save(update_fields=update_fields)
             WorkflowEventService.force_resume_workflow_event(
                 workflow=self.workflow,
                 user=self.user,
@@ -202,11 +247,9 @@ class WorkflowActionService:
     def terminate_workflow(self):
 
         for task in self.workflow.tasks.active():
-            recipients = list(
-                TaskPerformer.objects.filter(task_id=task.id)
-                .exclude_directly_deleted()
-                .not_completed()
-                .get_user_emails_and_ids_set(),
+            recipients = self._get_incompleted_recipients(
+                task=task,
+                user_type=UserType.USER,
             )
             send_task_deleted_notification.delay(
                 task_id=task.id,
@@ -270,11 +313,9 @@ class WorkflowActionService:
             user=self.user,
         )
         for task in self.workflow.tasks.active():
-            recipients = list(
-                TaskPerformer.objects.filter(task=task)
-                .exclude_directly_deleted()
-                .not_completed()
-                .get_user_emails_and_ids_set(),
+            recipients = self._get_incompleted_recipients(
+                task=task,
+                user_type=UserType.USER,
             )
             send_task_deleted_notification.delay(
                 task_id=task.id,
@@ -464,24 +505,19 @@ class WorkflowActionService:
             force_save=True,
         )
         task_service.set_due_date_from_template()
-        (
+        performers_qst = (
             TaskPerformer.objects
-            .by_workflow(self.workflow.id).with_tasks_after(task)
+            .by_workflow(self.workflow.id)
+            .with_tasks_after(task)
+        )
+        (
+            performers_qst
+            .type_user_or_group()
             .update(is_completed=False, date_completed=None)
         )
-        if task.skip_for_starter and task.require_completion_by_all:
-            starter = self.workflow.workflow_starter
-            if starter:
-                (
-                    TaskPerformer.objects
-                    .by_task(task.id)
-                    .exclude_directly_deleted()
-                    .by_user_or_group(starter.id)
-                    .update(
-                        is_completed=True,
-                        date_completed=timezone.now(),
-                    )
-                )
+        performers_qst.type_group_user().delete()
+        if task.skip_for_starter:
+            self._complete_task_for_starter(task=task)
 
         # if task force snoozed then start task event already exists
         # but if task returned then
@@ -494,39 +530,46 @@ class WorkflowActionService:
             and self.workflow.template.is_onboarding
         )
         if not skip_sending_notification:
-            recipients_set = (
-                TaskPerformer.objects
-                .by_task(task.id)
-                .exclude_directly_deleted()
-                .not_completed()
-                .get_user_ids_emails_subscriber_set()
-            )
-
-            wf_starter = self.workflow.workflow_starter
-            recipients = [
-                (user_id, email, is_subscribed)
-                for user_id, email, is_subscribed in recipients_set
+            incompleted_users = self._get_incompleted_performers_users(task)
+            notification_recipients = [
+                (
+                    user['id'],
+                    user['email'],
+                    user['is_new_tasks_subscriber'],
+                )
+                for user in incompleted_users
+                if user['is_new_tasks_subscriber']
             ]
-            # For tests to work stably, ordering by "user_id" is necessary
-            recipients.sort(key=lambda e: e[0])
-            ws_recipients = copy(recipients)
+            ws_recipients = [
+                (
+                    user['id'],
+                    user['email'],
+                    user['is_new_tasks_subscriber'],
+                )
+                for user in incompleted_users
+                if user['type'] == UserType.USER
+            ]
+            wf_starter = self.workflow.workflow_starter
             if (
                 len(task.parents) == 0
                 and not is_returned
                 and not self.workflow.is_external
-                and (wf_starter.id, wf_starter.email, True) in recipients
+                and (wf_starter.id, wf_starter.email, True)
+                    in notification_recipients
             ):
                 # Don't sent email and push for a workflow starter
                 # on first tasks
-                recipients.remove((wf_starter.id, wf_starter.email, True))
+                notification_recipients.remove(
+                    (wf_starter.id, wf_starter.email, True),
+                )
 
             task_data = None
-            if recipients:
+            if notification_recipients:
                 task_data = task.get_data_for_list()
                 send_new_task_notification.delay(
                     logging=self.account.log_api_requests,
                     account_id=self.account.id,
-                    recipients=recipients,
+                    recipients=notification_recipients,
                     task_id=task.id,
                     task_name=task.name,
                     task_data=task_data,
@@ -635,7 +678,7 @@ class WorkflowActionService:
             delay=delay,
         )
 
-    def _skip_task_for_starter(
+    def _task_skip_for_starter(
         self,
         task: Task,
         is_returned: bool,
@@ -649,6 +692,43 @@ class WorkflowActionService:
             task.status = TaskStatus.SKIPPED
             task.save(update_fields=['status'])
             self._start_next_tasks(parent_task=task)
+
+    def _task_skip_no_performers(
+        self,
+        task: Task,
+        is_returned: bool,
+    ):
+        WorkflowEventService.task_skip_no_performers_event(task)
+        task.status = TaskStatus.SKIPPED
+        task.save(update_fields=('status',))
+        if is_returned:
+            self._start_prev_tasks(task)
+        else:
+            self._start_next_tasks(parent_task=task)
+
+    def _complete_task_for_starter(
+        self,
+        task: Task,
+    ):
+        if (
+            task.skip_for_starter
+            and not self.workflow.is_external
+            and task.require_completion_by_all
+        ):
+            try:
+                starter = self.workflow.workflow_starter
+                task_performers = self._get_performers_for_user(
+                    task=task,
+                    user=starter,
+                )
+                if task_performers:
+                    self._complete_performers_for_user(
+                        task=task,
+                        task_performers=task_performers,
+                        user=starter,
+                    )
+            except exceptions.UserAlreadyCompleteTask:
+                pass
 
     def start_task(
         self,
@@ -668,43 +748,31 @@ class WorkflowActionService:
             task=task,
             user=self.user or task.account.get_owner(),
         )
-        task_performers_exists = (
-            TaskPerformer.objects.exclude_directly_deleted().by_task(
-                task.id,
-            ).exists()
-        )
-        if not task_performers_exists:
-            WorkflowEventService.task_skip_no_performers_event(task)
-            task.status = TaskStatus.SKIPPED
-            task.save(update_fields=('status',))
-            if is_returned:
-                self._start_prev_tasks(task)
-            else:
-                self._start_next_tasks(parent_task=task)
+        performers_users = self._get_all_performers_users(task)
+
+        if not performers_users:
+            self._task_skip_no_performers(task, is_returned=is_returned)
             return
+
         if task.skip_for_starter and not self.workflow.is_external:
             starter = self.workflow.workflow_starter
-            starter_perf = (
-                TaskPerformer.objects
-                .by_task(task.id)
-                .exclude_directly_deleted()
-                .by_user_or_group(starter.id)
-                .first()
-            )
-            if starter_perf:
-                if not task.require_completion_by_all:
-                    self._skip_task_for_starter(task, is_returned)
-                    return
+            performers_user_ids = {user['id'] for user in performers_users}
 
-                has_other_performers = (
-                    TaskPerformer.objects
-                    .by_task(task.id)
-                    .exclude_directly_deleted()
-                    .exclude(pk=starter_perf.pk)
-                    .exists()
-                )
-                if not has_other_performers:
-                    self._skip_task_for_starter(task, is_returned)
+            if starter.id in performers_user_ids:
+                performers_user_ids.remove(starter.id)
+                task_rcba = task.require_completion_by_all
+                if task_rcba:
+                    # if performers_user_ids exists then complete task
+                    # only for starter in the "continue_task" method
+                    # using "_complete_task_for_starter" method
+                    if not performers_user_ids:
+                        self._task_skip_for_starter(
+                            task=task,
+                            is_returned=is_returned,
+                        )
+                        return
+                else:
+                    self._task_skip_for_starter(task, is_returned=is_returned)
                     return
 
         if is_returned:
@@ -717,7 +785,7 @@ class WorkflowActionService:
             else:
                 self.continue_workflow(task=task, is_returned=is_returned)
 
-    def complete_task(self, task: Task, by_user: bool = False):
+    def complete_task(self, task: Task):
 
         """ Complete workflow task if it <= current task
             Only for current task run complete actions """
@@ -736,31 +804,22 @@ class WorkflowActionService:
         )
         task_service.partial_update(**update_fields, force_save=True)
         # Not include guests
-        performers_ids = (
-            TaskPerformer.objects.by_task(task.id)
-            .exclude_directly_deleted()
-            .not_completed()
-            .users()
-            .values_list('id', flat=True)
-        )
-        recipients = (
-            UserModel.objects
-            .get_users_in_performer(performers_ids=performers_ids)
-            .order_by('id')
-            .user_ids_emails_list()
-        )
+        incompleted_users = self._get_incompleted_performers_users(task=task)
+        ws_recipients = [
+            (user['id'], user['email']) for user in incompleted_users
+            if user['type'] == UserType.USER
+        ]
+        notification_recipients = [
+            (user['id'], user['email']) for user in incompleted_users
+            if (
+                user['id'] != self.user.id and
+                user['is_complete_tasks_subscriber'] is True
+            )
+        ]
         send_task_completed_websocket.delay(
             task_id=task.id,
-            recipients=recipients,
+            recipients=ws_recipients,
             account_id=task.account_id,
-        )
-        notification_recipients = (
-            UserModel.objects
-            .get_users_in_performer(performers_ids=performers_ids)
-            .filter(is_complete_tasks_subscriber=True)
-            .exclude(id=self.user.id)
-            .order_by('id')
-            .user_ids_emails_list()
         )
         if notification_recipients:
             send_task_completed_notification.delay(
@@ -781,20 +840,6 @@ class WorkflowActionService:
                 is_completed=True,
             )
         )
-        if by_user:
-            AnalyticService.task_completed(
-                user=self.user,
-                is_superuser=self.is_superuser,
-                auth_type=self.auth_type,
-                workflow=self.workflow,
-                task=task,
-            )
-            # Need run after save completed task (and performers)
-            # and before start next tasks
-            WorkflowEventService.task_complete_event(
-                task=task,
-                user=self.user,
-            )
         self._start_next_tasks(parent_task=task)
         if (
             WebHook.objects
@@ -807,29 +852,60 @@ class WorkflowActionService:
                 payload=task.webhook_payload(),
             )
 
-    def _task_can_be_completed(self, task: Task) -> bool:
+    def _get_performers_for_user(
+        self,
+        task: Task,
+        user: Optional[UserModel] = None,
+    ) -> Optional[List[TaskPerformer]]:
 
-        """ Implies that the specified user has completed the task """
+        user = user or self.user
+        performers = list(
+            TaskPerformer.objects
+            .by_task(task.id)
+            .by_user_or_group(user.id)
+            .exclude_directly_deleted(),
+        )
+        task_performers = []
+        for performer in performers:
+            if performer.is_completed:
+                raise exceptions.UserAlreadyCompleteTask
+            task_performers.append(performer)
+        if not task_performers:
+            return None
+        return task_performers
 
-        if task.is_completed is True:
-            return False
-        task_performers = (
-            task.taskperformer_set.exclude_directly_deleted()
-        )
-        completed_performers = task_performers.filter(
-            Q(is_completed=True)
-            | Q(is_completed=False, user_id=self.user.id)
-            | Q(is_completed=False, group__users=self.user.id),
-        ).exists()
-        incompleted_performers = task_performers.not_completed().exclude(
-            Q(user_id=self.user.id)
-            | Q(is_completed=False, group__users=self.user.id),
-        ).exists()
-        by_all = task.require_completion_by_all
-        return (
-            (not by_all and completed_performers) or
-            (by_all and not incompleted_performers)
-        )
+    def _complete_performers_for_user(
+        self,
+        task: Task,
+        task_performers: Iterable[TaskPerformer],
+        user: Optional[UserModel] = None,
+    ):
+        user = user or self.user
+        now = timezone.now()
+        for performer in task_performers:
+            if performer.type_group:
+                if task.require_completion_by_all:
+                    TaskPerformer.objects.get_or_create(
+                        user_id=user.id,
+                        task_id=task.id,
+                        type=PerformerType.GROUP_USER,
+                        defaults={
+                            'date_completed': now,
+                            'is_completed': True,
+                        },
+                    )
+                elif not performer.is_completed:
+                    performer.date_completed = now
+                    performer.is_completed = True
+                    performer.save(
+                        update_fields=('date_completed', 'is_completed'),
+                    )
+            elif not performer.is_completed:
+                performer.date_completed = now
+                performer.is_completed = True
+                performer.save(
+                    update_fields=('date_completed', 'is_completed'),
+                )
 
     def complete_task_for_user(
         self,
@@ -843,17 +919,8 @@ class WorkflowActionService:
         if not task.is_active:
             raise exceptions.CompleteInactiveTask
 
-        task_performer = (
-            TaskPerformer.objects
-            .by_task(task.id)
-            .by_user_or_group(self.user.id)
-            .exclude_directly_deleted()
-            .first()
-        )
-        if task_performer:
-            if task_performer.is_completed:
-                raise exceptions.UserAlreadyCompleteTask
-        elif not self.user.is_account_owner:
+        task_performers = self._get_performers_for_user(task)
+        if task_performers is None and not self.user.is_account_owner:
             raise exceptions.UserNotPerformer
 
         if not task.checklists_completed:
@@ -881,7 +948,7 @@ class WorkflowActionService:
                     auth_type=self.auth_type,
                 )
                 service.partial_update(
-                    value=fields_values[field.api_name],
+                    value=fields_values.get(field.api_name),
                     force_save=True,
                 )
             if fieldsets_ids:
@@ -894,18 +961,26 @@ class WorkflowActionService:
                         auth_type=self.auth_type,
                     )
                     service.validate_rules()
-
-            if task_performer:
-                if self._task_can_be_completed(task):
-                    self.complete_task(task=task, by_user=True)
+            AnalyticService.task_completed(
+                user=self.user,
+                is_superuser=self.is_superuser,
+                auth_type=self.auth_type,
+                workflow=self.workflow,
+                task=task,
+            )
+            # Need run after save completed task (and performers)
+            # and before start next tasks
+            WorkflowEventService.task_complete_event(
+                task=task,
+                user=self.user,
+            )
+            if task_performers:
+                if task.can_be_completed(by_user=self.user):
+                    self.complete_task(task=task)
                 else:
-                    # completed only for user and send ws remove task
-                    # if "requires completion by all", sending message
-                    # about the completion of the task by each performer
-                    task_performer.date_completed = timezone.now()
-                    task_performer.is_completed = True
-                    task_performer.save(
-                        update_fields=('date_completed', 'is_completed'),
+                    self._complete_performers_for_user(
+                        task=task,
+                        task_performers=task_performers,
                     )
                     if not self.user.is_guest:
                         # Websocket notification
@@ -917,7 +992,7 @@ class WorkflowActionService:
             elif self.user.is_account_owner:
                 # account owner force completion
                 # not complete performers, but send ws remove task
-                self.complete_task(task=task, by_user=True)
+                self.complete_task(task=task)
         return task
 
     def _get_not_skipped_revert_task(self, task: Task) -> Optional[Task]:
@@ -1020,12 +1095,9 @@ class WorkflowActionService:
                         estimated_end_date=None,
                     )
                 if task.is_active:
-                    recipients = list(
-                        TaskPerformer.objects
-                        .filter(task_id=task.id)
-                        .exclude_directly_deleted()
-                        .not_completed()
-                        .get_user_emails_and_ids_set(),
+                    recipients = self._get_incompleted_recipients(
+                        task=task,
+                        user_type=UserType.USER,
                     )
                     send_task_deleted_notification.delay(
                         task_id=task.id,
@@ -1117,17 +1189,13 @@ class WorkflowActionService:
         elif self.workflow.is_completed:
             raise exceptions.CompletedWorkflowCannotBeChanged
 
-        task_performer = (
-            TaskPerformer.objects
-            .by_task(revert_from_task.id)
-            .by_user_or_group(self.user.id)
-            .exclude_directly_deleted()
-            .first()
-        )
-        if task_performer:
-            if task_performer.is_completed:
-                raise exceptions.CompletedTaskCannotBeReturned
-        elif not self.user.is_account_owner:
+        try:
+            task_performers = self._get_performers_for_user(
+                task=revert_from_task,
+            )
+        except exceptions.UserAlreadyCompleteTask as ex:
+            raise exceptions.CompletedTaskCannotBeReturned from ex
+        if not task_performers and not self.user.is_account_owner:
             raise exceptions.UserNotPerformer
 
         revert_to_tasks = list(revert_from_task.get_revert_tasks())

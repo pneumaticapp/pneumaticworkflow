@@ -38,3 +38,38 @@ MSG_FS_0012 = lambda values: format_lazy(
     ),
     values=values,
 )
+MSG_FS_0013 = lambda name, api_name: format_lazy(
+    _(
+        'Task "{name}": The fieldset contains a duplicate api_name '
+        '"{api_name}". Recreate the fieldset or change its api_name.',
+    ),
+    name=name,
+    api_name=api_name,
+)
+MSG_FS_0014 = lambda name, api_name: format_lazy(
+    _(
+        'Task "{name}": The fieldset rule contains a duplicate api_name '
+        '"{api_name}". Recreate the rule or change its api_name.',
+    ),
+    name=name,
+    api_name=api_name,
+)
+MSG_FS_0015 = lambda name, field_name, api_name: format_lazy(
+    _(
+        'Task "{name}": Fieldset field "{field_name}" contains a duplicate '
+        'api_name "{api_name}". '
+        'Change the api_name or recreate the field.',
+    ),
+    name=name,
+    field_name=field_name,
+    api_name=api_name,
+)
+MSG_FS_0016 = lambda name, api_name: format_lazy(
+    _(
+        'Task "{name}": The fieldset field option contains a duplicate '
+        'api_name "{api_name}". '
+        'Recreate the option or change its api_name.',
+    ),
+    name=name,
+    api_name=api_name,
+)

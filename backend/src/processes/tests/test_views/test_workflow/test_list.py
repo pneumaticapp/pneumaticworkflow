@@ -3558,3 +3558,128 @@ def test_workflow_list__group_template_starter__includes_only_own_workflows(
     workflow_ids = [item['id'] for item in data['results']]
     assert workflow_own.id in workflow_ids
     assert workflow_other.id not in workflow_ids
+
+
+def test_list__filter_current_performer__group_user_only__empty(
+    api_client,
+):
+
+    """
+    Ghost GROUP_USER without USER/GROUP membership for user
+    → current_performer filter does not return the workflow
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user_1 = create_test_not_admin(account=account)
+    user_2 = create_test_admin(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    TaskPerformer.objects.filter(task_id=task.id).delete()
+    group_1 = create_test_group(account=account, users=[user_2])
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP,
+        group_id=group_1.id,
+    )
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        user_id=user_1.id,
+        type=PerformerType.GROUP_USER,
+        is_completed=True,
+        date_completed=timezone.now(),
+    )
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.get(
+        f'/workflows?current_performer={user_1.id}',
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data['results']) == 0
+
+
+def test_list__filter_current_performer__user_with_group_user__ok(
+    api_client,
+):
+
+    """
+    USER assignment + GROUP_USER for same user
+    → current_performer filter returns the workflow
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user_1 = create_test_not_admin(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    TaskPerformer.objects.filter(task_id=task.id).delete()
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        user_id=user_1.id,
+        type=PerformerType.USER,
+    )
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        user_id=user_1.id,
+        type=PerformerType.GROUP_USER,
+        is_completed=True,
+        date_completed=timezone.now(),
+    )
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.get(
+        f'/workflows?current_performer={user_1.id}',
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data['results']) == 1
+    assert response.data['results'][0]['id'] == workflow.id
+
+
+def test_list__filter_current_performer_group_ids__with_group_user__ok(
+    api_client,
+):
+
+    """
+    GROUP assignment + GROUP_USER marker
+    → current_performer_group_ids still returns the workflow
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user_1 = create_test_not_admin(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    TaskPerformer.objects.filter(task_id=task.id).delete()
+    group_1 = create_test_group(account=account, users=[user_1])
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP,
+        group_id=group_1.id,
+    )
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        user_id=user_1.id,
+        type=PerformerType.GROUP_USER,
+        is_completed=True,
+        date_completed=timezone.now(),
+    )
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.get(
+        f'/workflows?current_performer_group_ids={group_1.id}',
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data['results']) == 1
+    assert response.data['results'][0]['id'] == workflow.id
