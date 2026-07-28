@@ -620,8 +620,7 @@ class TestDashboardMyTasksOverview:
         task = workflow_1.tasks.get(number=1)
         api_client.token_authenticate(user)
         api_client.post(
-            f'/workflows/{workflow_1.id}/task-complete',
-            data={'task_id': task.id},
+            f'/v2/tasks/{task.id}/complete',
         )
 
         overdue_workflow = create_test_workflow(template_owner, template_1)
@@ -639,8 +638,7 @@ class TestDashboardMyTasksOverview:
         overdue_workflow.save(update_fields=['date_created'])
         task = overdue_workflow.tasks.get(number=1)
         api_client.post(
-            f'/workflows/{overdue_workflow.id}/task-complete',
-            data={'task_id': task.id},
+            f'/v2/tasks/{task.id}/complete',
         )
 
         api_client.delete(f'/templates/{template_1.id}')
@@ -714,8 +712,7 @@ class TestDashboardMyTasksOverview:
         task = workflow_1.tasks.get(number=1)
         api_client.token_authenticate(user)
         api_client.post(
-            f'/workflows/{workflow_1.id}/task-complete',
-            data={'task_id': task.id},
+            f'/v2/tasks/{task.id}/complete',
         )
 
         overdue_workflow = create_test_workflow(template_owner, template_1)
@@ -733,8 +730,7 @@ class TestDashboardMyTasksOverview:
         overdue_workflow.save(update_fields=['date_created'])
         api_client.token_authenticate(template_owner)
         api_client.post(
-            f'/workflows/{overdue_workflow.id}/task-complete',
-            data={'task_id': task.id},
+            f'/v2/tasks/{task.id}/complete',
         )
 
         # act
@@ -786,8 +782,7 @@ class TestDashboardMyTasksOverview:
         task = workflow_1.tasks.get(number=1)
         api_client.token_authenticate(user)
         api_client.post(
-            f'/workflows/{workflow_1.id}/task-complete',
-            data={'task_id': task.id},
+            f'/v2/tasks/{task.id}/complete',
         )
 
         overdue_workflow = create_test_workflow(template_owner, template_1)
@@ -1018,8 +1013,7 @@ class TestDashboardMyTasksBreakdown:
         task = workflow_1.tasks.get(number=1)
         api_client.token_authenticate(user)
         api_client.post(
-            f'/workflows/{workflow_1.id}/task-complete',
-            data={'task_id': task.id},
+            f'/v2/tasks/{task.id}/complete',
         )
 
         overdue_workflow = create_test_workflow(template_owner, template_1)
@@ -1036,20 +1030,17 @@ class TestDashboardMyTasksBreakdown:
         overdue_workflow.date_created = date_created
         overdue_workflow.save(update_fields=['date_created'])
         api_client.post(
-            f'/workflows/{overdue_workflow.id}/task-complete',
-            data={'task_id': task.id},
+            f'/v2/tasks/{task.id}/complete',
         )
         workflow_3 = create_test_workflow(template_owner, template_1)
         task = workflow_3.tasks.get(number=1)
         api_client.post(
-            f'/workflows/{workflow_3.id}/task-complete',
-            data={'task_id': task.id},
+            f'/v2/tasks/{task.id}/complete',
         )
 
         api_client.token_authenticate(template_owner)
         api_client.post(
-            f'/workflows/{overdue_workflow.id}/task-complete',
-            data={'task_id': overdue_workflow.tasks.get(number=2).id},
+            f'/v2/tasks/{overdue_workflow.tasks.get(number=2).id}/complete',
         )
 
         workflow_2 = create_test_workflow(template_owner, template_1)
@@ -1134,8 +1125,7 @@ class TestDashboardMyTasksBreakdown:
         task = workflow_1.tasks.get(number=1)
         api_client.token_authenticate(user)
         api_client.post(
-            f'/workflows/{workflow_1.id}/task-complete',
-            data={'task_id': task.id},
+            f'/v2/tasks/{task.id}/complete',
         )
 
         overdue_workflow = create_test_workflow(template_owner, template_1)
@@ -1153,8 +1143,7 @@ class TestDashboardMyTasksBreakdown:
         overdue_workflow.save(update_fields=['date_created'])
         api_client.token_authenticate(template_owner)
         api_client.post(
-            f'/workflows/{overdue_workflow.id}/task-complete',
-            data={'task_id': task.id},
+            f'/v2/tasks/{task.id}/complete',
         )
 
         # act
@@ -1236,8 +1225,7 @@ class TestDashboardMyTasksBreakdown:
         overdue_workflow.date_created = date_created
         overdue_workflow.save(update_fields=['date_created'])
         api_client.post(
-            f'/workflows/{overdue_workflow.id}/task-complete',
-            data={'task_id': task.id},
+            f'/v2/tasks/{task.id}/complete',
         )
 
         not_overdue_workflow = create_test_workflow(
@@ -1309,8 +1297,7 @@ class TestDashboardMyTasksBreakdown:
         task = workflow_1.tasks.get(number=1)
         api_client.token_authenticate(user)
         api_client.post(
-            f'/workflows/{workflow_1.id}/task-complete',
-            data={'task_id': task.id},
+            f'/v2/tasks/{task.id}/complete',
         )
 
         overdue_workflow = create_test_workflow(template_owner, template_1)
@@ -1329,8 +1316,7 @@ class TestDashboardMyTasksBreakdown:
         workflow_3 = create_test_workflow(template_owner, template_1)
         task = workflow_3.tasks.get(number=1)
         api_client.post(
-            f'/workflows/{workflow_3.id}/task-complete',
-            data={'task_id': task.id},
+            f'/v2/tasks/{task.id}/complete',
         )
 
         workflow_2 = create_test_workflow(template_owner, template_1)
@@ -1488,8 +1474,7 @@ class TestDashboardMyTasksBreakdown:
         task = workflow_1.tasks.get(number=1)
         api_client.token_authenticate(user)
         api_client.post(
-            f'/workflows/{workflow_1.id}/task-complete',
-            data={'task_id': task.id},
+            f'/v2/tasks/{task.id}/complete',
         )
 
         overdue_workflow = create_test_workflow(template_owner, template_1)
@@ -1506,20 +1491,17 @@ class TestDashboardMyTasksBreakdown:
         overdue_workflow.date_created = date_created
         overdue_workflow.save(update_fields=['date_created'])
         api_client.post(
-            f'/workflows/{overdue_workflow.id}/task-complete',
-            data={'task_id': task.id},
+            f'/v2/tasks/{task.id}/complete',
         )
         workflow_3 = create_test_workflow(template_owner, template_1)
         task = workflow_3.tasks.get(number=1)
         api_client.post(
-            f'/workflows/{workflow_3.id}/task-complete',
-            data={'task_id': task.id},
+            f'/v2/tasks/{task.id}/complete',
         )
 
         api_client.token_authenticate(template_owner)
         api_client.post(
-            f'/workflows/{overdue_workflow.id}/task-complete',
-            data={'task_id': overdue_workflow.tasks.get(number=2).id},
+            f'/v2/tasks/{overdue_workflow.tasks.get(number=2).id}/complete',
         )
 
         workflow_2 = create_test_workflow(template_owner, template_1)
@@ -1587,8 +1569,7 @@ class TestDashboardMyTasksBreakdownBySteps:
         task = workflow_1.tasks.get(number=1)
         api_client.token_authenticate(user)
         api_client.post(
-            f'/workflows/{workflow_1.id}/task-complete',
-            data={'task_id': task.id},
+            f'/v2/tasks/{task.id}/complete',
         )
 
         overdue_workflow = create_test_workflow(template_owner, template_1)
@@ -1605,20 +1586,17 @@ class TestDashboardMyTasksBreakdownBySteps:
         overdue_workflow.date_created = date_created
         overdue_workflow.save(update_fields=['date_created'])
         api_client.post(
-            f'/workflows/{overdue_workflow.id}/task-complete',
-            data={'task_id': task.id},
+            f'/v2/tasks/{task.id}/complete',
         )
         workflow_3 = create_test_workflow(template_owner, template_1)
         task = workflow_3.tasks.get(number=1)
         api_client.post(
-            f'/workflows/{workflow_3.id}/task-complete',
-            data={'task_id': task.id},
+            f'/v2/tasks/{task.id}/complete',
         )
 
         api_client.token_authenticate(template_owner)
         api_client.post(
-            f'/workflows/{overdue_workflow.id}/task-complete',
-            data={'task_id': overdue_workflow.tasks.get(number=2).id},
+            f'/v2/tasks/{overdue_workflow.tasks.get(number=2).id}/complete',
         )
 
         workflow_2 = create_test_workflow(template_owner, template_1)
@@ -1714,8 +1692,7 @@ class TestDashboardMyTasksBreakdownBySteps:
         task = workflow_1.tasks.get(number=1)
         api_client.token_authenticate(user)
         api_client.post(
-            f'/workflows/{workflow_1.id}/task-complete',
-            data={'task_id': task.id},
+            f'/v2/tasks/{task.id}/complete',
         )
 
         overdue_workflow = create_test_workflow(template_owner, template_1)
@@ -1733,8 +1710,7 @@ class TestDashboardMyTasksBreakdownBySteps:
         overdue_workflow.save(update_fields=['date_created'])
         api_client.token_authenticate(template_owner)
         api_client.post(
-            f'/workflows/{overdue_workflow.id}/task-complete',
-            data={'task_id': task.id},
+            f'/v2/tasks/{task.id}/complete',
         )
 
         # act
@@ -1881,8 +1857,7 @@ class TestDashboardMyTasksBreakdownBySteps:
         task = workflow_1.tasks.get(number=1)
         api_client.token_authenticate(user)
         api_client.post(
-            f'/workflows/{workflow_1.id}/task-complete',
-            data={'task_id': task.id},
+            f'/v2/tasks/{task.id}/complete',
         )
 
         overdue_workflow = create_test_workflow(template_owner, template_1)
@@ -1901,8 +1876,7 @@ class TestDashboardMyTasksBreakdownBySteps:
         workflow_3 = create_test_workflow(template_owner, template_1)
         task = workflow_3.tasks.get(number=1)
         api_client.post(
-            f'/workflows/{workflow_3.id}/task-complete',
-            data={'task_id': task.id},
+            f'/v2/tasks/{task.id}/complete',
         )
 
         workflow_2 = create_test_workflow(template_owner, template_1)
@@ -1911,8 +1885,7 @@ class TestDashboardMyTasksBreakdownBySteps:
         task = workflow_2.tasks.get(number=1)
 
         api_client.post(
-            f'/workflows/{workflow_2.id}/task-complete',
-            data={'task_id': task.id},
+            f'/v2/tasks/{task.id}/complete',
         )
 
         workflow_4 = create_test_workflow(template_owner, template_2)

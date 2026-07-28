@@ -1,4 +1,5 @@
 import { NotificationManager } from '../NotificationManager';
+import { INotification } from '../../../../types';
 
 describe('NotificationManager', () => {
   describe('notifyApiError', () => {
@@ -108,6 +109,61 @@ describe('NotificationManager', () => {
 
       expect(warningSpy).toHaveBeenCalledWith({ message: 'file-service.file-not-found' });
       warningSpy.mockRestore();
+    });
+  });
+
+  describe('create() preserves notification type without override', () => {
+    let changeHandler: jest.Mock;
+    let createdId: string;
+
+    beforeEach(() => {
+      changeHandler = jest.fn();
+      NotificationManager.addChangeListener(changeHandler);
+    });
+
+    afterEach(() => {
+      NotificationManager.removeChangeListener(changeHandler);
+      NotificationManager.remove({ id: createdId } as INotification);
+    });
+
+    it('preserves type=warning for "Something Went Wrong" message (alertErrorMessages regression)', () => {
+      createdId = 'test-1';
+      NotificationManager.create({
+        id: createdId,
+        type: 'warning',
+        title: null,
+        message: 'Something Went Wrong',
+        timeOut: 5000,
+        customClassName: '',
+      });
+
+      expect(changeHandler).toHaveBeenCalledTimes(1);
+      const notifications = changeHandler.mock.calls[0][0];
+      expect(notifications).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ id: 'test-1', type: 'warning', message: 'Something Went Wrong' }),
+        ]),
+      );
+    });
+
+    it('preserves type=warning for payment declined message (alertErrorMessages regression)', () => {
+      createdId = 'test-2';
+      NotificationManager.create({
+        id: createdId,
+        type: 'warning',
+        title: null,
+        message: 'The transaction was declined. Please use a different card or contact your bank.',
+        timeOut: 5000,
+        customClassName: '',
+      });
+
+      expect(changeHandler).toHaveBeenCalledTimes(1);
+      const notifications = changeHandler.mock.calls[0][0];
+      expect(notifications).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ id: 'test-2', type: 'warning' }),
+        ]),
+      );
     });
   });
 });

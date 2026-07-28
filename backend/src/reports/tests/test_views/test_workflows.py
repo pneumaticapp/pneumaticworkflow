@@ -483,8 +483,7 @@ class TestDashboardOverview:
         workflow = create_test_workflow(user)
         task = workflow.tasks.get(number=1)
         r1 = api_client.post(
-            f'/workflows/{workflow.id}/task-complete',
-            data={'task_id': task.id},
+            f'/v2/tasks/{task.id}/complete',
         )
         task_2 = workflow.tasks.get(number=2)
         date_started = timezone.now() - timedelta(days=7)
@@ -1539,8 +1538,7 @@ class TestWorkflowBreakdownByTasks:
         task = workflow_1.tasks.get(number=1)
         api_client.token_authenticate(user)
         api_client.post(
-            f'/workflows/{workflow_1.id}/task-complete',
-            data={'task_id': task.id},
+            f'/v2/tasks/{task.id}/complete',
         )
 
         overdue_workflow = create_test_workflow(user, template=template_1)
@@ -1557,12 +1555,10 @@ class TestWorkflowBreakdownByTasks:
         overdue_workflow.date_created = date_started
         overdue_workflow.save(update_fields=['date_created'])
         api_client.post(
-            f'/workflows/{overdue_workflow.id}/task-complete',
-            data={'task_id': task.id},
+            f'/v2/tasks/{task.id}/complete',
         )
         api_client.post(
-            f'/workflows/{overdue_workflow.id}/task-complete',
-            data={'task_id': overdue_workflow.tasks.get(number=2).id},
+            f'/v2/tasks/{overdue_workflow.tasks.get(number=2).id}/complete',
         )
 
         workflow_2 = create_test_workflow(user, template=template_1)

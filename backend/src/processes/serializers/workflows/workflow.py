@@ -286,34 +286,6 @@ class WorkflowUpdateSerializer(
         return self.instance
 
 
-class WorkflowTaskCompleteSerializer(
-    CustomValidationErrorMixin,
-    serializers.Serializer,
-):
-
-    task_id = serializers.IntegerField(required=False)
-    task_api_name = serializers.CharField(required=False)
-    output = serializers.DictField(required=False)
-
-    def validate(self, attrs):
-        workflow = self.context['workflow']
-        task_id = attrs.get('task_id')
-        task_api_name = attrs.get('task_api_name')
-
-        if not (task_id or task_api_name):
-            raise ValidationError(messages.MSG_PW_0076)
-        task = workflow.tasks.filter(
-            Q(id=task_id) | Q(api_name=task_api_name),
-        ).first()
-        if task is None:
-            raise ValidationError(messages.MSG_PW_0077)
-        if not task.is_active:
-            raise ValidationError(messages.MSG_PW_0086)
-
-        attrs['task'] = task
-        return attrs
-
-
 class WorkflowReturnToTaskSerializer(
     CustomValidationErrorMixin,
     serializers.Serializer,

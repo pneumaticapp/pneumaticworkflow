@@ -6,7 +6,10 @@ from django.db import transaction
 
 from src.generics.base.service import BaseModelService
 from src.processes.enums import LabelPosition, FieldSetLayout
-from src.processes.models.templates.fields import FieldTemplate
+from src.processes.models.templates.fields import (
+    FieldTemplate,
+    FieldTemplateSelection,
+)
 from src.processes.models.templates.fieldset import (
     FieldsetTemplate,
     FieldsetTemplateRule,
@@ -262,6 +265,10 @@ class FieldSetTemplateService(BaseModelService):
             )
             fields_map[field_data['api_name']] = new_api_name
             field_data['api_name'] = new_api_name
+            for selection_data in field_data.get('selections', []):
+                selection_data['api_name'] = create_api_name(
+                    FieldTemplateSelection.api_name_prefix,
+                )
             updated_fields_data.append(field_data)
         fieldset_data['fields'] = updated_fields_data
 
