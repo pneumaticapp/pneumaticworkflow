@@ -60,7 +60,6 @@ from src.processes.services.exceptions import (
     CommentServiceException,
     WorkflowActionServiceException,
 )
-from src.processes.services.tasks.exceptions import TaskFieldException
 from src.processes.services.workflow_action import WorkflowActionService
 from src.utils.validation import raise_validation_error
 from src.webhooks.enums import HookEvent
