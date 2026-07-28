@@ -1315,8 +1315,8 @@ def test_continue_task__ok(mocker):
         logging=account.log_api_requests,
         task_id=task.id,
         recipients=[
-            (owner.id, owner.email),
-            (user.id, user.email),
+            (owner.id, owner.email, True),
+            (user.id, user.email, True),
         ],
         account_id=account.id,
         task_data=task.get_data_for_list(),
@@ -1386,8 +1386,8 @@ def test_continue_task__skip_require_all__autocomplete(mocker):
     )
     service = WorkflowActionService(user=owner, workflow=workflow)
     is_returned = False
-    ws_recipient_owner = (owner.id, owner.email)
-    ws_recipient_user = (user.id, user.email)
+    ws_recipient_owner = (owner.id, owner.email, True)
+    ws_recipient_user = (user.id, user.email, True)
     if owner.id < user.id:
         ws_recipients = [ws_recipient_owner, ws_recipient_user]
     else:
@@ -1686,8 +1686,8 @@ def test_continue_task__root_task_wf_starter_and_user_performers__ok(mocker):
         logging=account.log_api_requests,
         task_id=task.id,
         recipients=[
-            (owner.id, owner.email),
-            (user.id, user.email),
+            (owner.id, owner.email, True),
+            (user.id, user.email, True),
         ],
         account_id=account.id,
         task_data=task.get_data_for_list(),
@@ -1779,8 +1779,8 @@ def test_continue_task__not_root_task_wf_starter_and_user_performers__ok(
         logging=account.log_api_requests,
         task_id=task.id,
         recipients=[
-            (owner.id, owner.email),
-            (user.id, user.email),
+            (owner.id, owner.email, True),
+            (user.id, user.email, True),
         ],
         account_id=account.id,
         task_data=task.get_data_for_list(),
@@ -1926,7 +1926,7 @@ def test_continue_task__external_workflow__skip_wf_starter_notification(
         logging=account.log_api_requests,
         task_id=task.id,
         recipients=[
-            (user.id, user.email),
+            (user.id, user.email, True),
         ],
         account_id=account.id,
         task_data=task.get_data_for_list(),
@@ -2028,7 +2028,7 @@ def test_continue_task__notifications_filters__ok(mocker):
         logging=account.log_api_requests,
         task_id=task.id,
         recipients=[
-            (user.id, user.email),
+            (user.id, user.email, False),
         ],
         account_id=account.id,
         task_data=task.get_data_for_list(),
@@ -2149,9 +2149,9 @@ def test_continue_task__completed_performers__reset_completion(mocker):
         logging=account.log_api_requests,
         task_id=task.id,
         recipients=[
-            (owner.id, owner.email),
-            (admin.id, admin.email),
-            (user.id, user.email),
+            (owner.id, owner.email, True),
+            (admin.id, admin.email, True),
+            (user.id, user.email, True),
         ],
         account_id=account.id,
         task_data=task.get_data_for_list(),

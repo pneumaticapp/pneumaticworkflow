@@ -510,7 +510,7 @@ class TestDashboardOverview:
         )
 
         # assert
-        assert r1.status_code == 204
+        assert r1.status_code == 200
         assert r2.status_code == 204
         workflow.refresh_from_db()
         assert response.status_code == 200

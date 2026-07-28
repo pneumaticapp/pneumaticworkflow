@@ -165,7 +165,10 @@ class WorkflowActionService:
                         directly_status=DirectlyStatus.CREATED,
                         workflow=self.workflow,
                     )
-                recipients = self._get_incompleted_recipients(task=task)
+                recipients = self._get_incompleted_recipients(
+                    task=task,
+                    user_type=UserType.USER,
+                )
                 # notifications about event
                 for (user_id, user_email) in recipients:
                     send_delayed_workflow_notification.delay(
@@ -236,7 +239,10 @@ class WorkflowActionService:
     def terminate_workflow(self):
 
         for task in self.workflow.tasks.active():
-            recipients = self._get_incompleted_recipients(task=task)
+            recipients = self._get_incompleted_recipients(
+                task=task,
+                user_type=UserType.USER,
+            )
             send_task_deleted_notification.delay(
                 task_id=task.id,
                 task_data=task.get_data_for_list(),
@@ -299,7 +305,10 @@ class WorkflowActionService:
             user=self.user,
         )
         for task in self.workflow.tasks.active():
-            recipients = self._get_incompleted_recipients(task=task)
+            recipients = self._get_incompleted_recipients(
+                task=task,
+                user_type=UserType.USER,
+            )
             send_task_deleted_notification.delay(
                 task_id=task.id,
                 recipients=recipients,
@@ -527,6 +536,7 @@ class WorkflowActionService:
                 (
                     user['id'],
                     user['email'],
+                    user['is_new_tasks_subscriber'],
                 )
                 for user in incompleted_users
                 if user['type'] == UserType.USER
@@ -1077,7 +1087,10 @@ class WorkflowActionService:
                         estimated_end_date=None,
                     )
                 if task.is_active:
-                    recipients = self._get_incompleted_recipients(task=task)
+                    recipients = self._get_incompleted_recipients(
+                        task=task,
+                        user_type=UserType.USER,
+                    )
                     send_task_deleted_notification.delay(
                         task_id=task.id,
                         recipients=recipients,
