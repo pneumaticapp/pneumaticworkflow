@@ -277,13 +277,16 @@ def test_create__agent_id_not_set__validation_error(api_client):
 def test_update__ai_performer__syncs_active_workflow(api_client, mocker):
 
     """ End to end: replacing the performer of an active template
-        with an AI agent reaches the running workflow task
-        through the version sync """
+        with an AI agent reaches the running workflow task through
+        the version sync AND dispatches an agent run right away """
 
     # arrange
     mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.template_updated',
+    )
+    run_ai_performer_mock = mocker.patch(
+        'src.ai.tasks.run_ai_performer.delay',
     )
     user = _setup_user()
     agent = _create_agent(user.account)
@@ -318,6 +321,10 @@ def test_update__ai_performer__syncs_active_workflow(api_client, mocker):
         task=task,
         user=user,
     ).exists()
+    run_ai_performer_mock.assert_called_once_with(
+        task_id=task.id,
+        agent_id=agent.id,
+    )
 
 
 def test_version_schema__ai_performer__includes_ai_agent_id():

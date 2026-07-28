@@ -507,6 +507,13 @@ class TaskUpdateVersionService(
                 account_id=account.id,
                 task_data=task_data,
             )
+        # An AI performer added to an already active task by a template
+        # edit must start working right away, not on the next task
+        # return. Re-dispatch is safe: finished runs are never
+        # re-claimed.
+        # local import: src.ai.dispatch -> processes models
+        from src.ai.dispatch import dispatch_ai_performers
+        dispatch_ai_performers(task=self.instance)
 
     def update_from_version(
         self,

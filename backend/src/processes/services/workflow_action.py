@@ -2,7 +2,6 @@ from datetime import datetime
 from copy import copy
 from typing import Callable, Iterable, Optional, Tuple
 
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.db.models import Q
@@ -505,10 +504,7 @@ class WorkflowActionService:
             )
 
             wf_starter = self.workflow.workflow_starter
-            recipients = [
-                (user_id, email, is_subscribed)
-                for user_id, email, is_subscribed in recipients_set
-            ]
+            recipients = list(recipients_set)
             # For tests to work stably, ordering by "user_id" is necessary
             recipients.sort(key=lambda e: e[0])
             ws_recipients = copy(recipients)
@@ -1024,35 +1020,9 @@ class WorkflowActionService:
             task. A returned task resets existing runs so agents retry
             with the corrected inputs """
 
-        if not settings.PROJECT_CONF['AI_PERFORMERS']:
-            return
-        if not self.account.ai_performers_enabled:
-            return
-        agent_ids = list(
-            TaskPerformer.objects
-            .by_task(task.id)
-            .exclude_directly_deleted()
-            .not_completed()
-            .filter(
-                type=PerformerType.AI,
-                ai_agent__isnull=False,
-                ai_agent__is_deleted=False,
-                ai_agent__is_active=True,
-            )
-            .values_list('ai_agent_id', flat=True),
-        )
-        if not agent_ids:
-            return
-        # local import: src.ai.tasks -> services -> this module
-        from src.ai.tasks import run_ai_performer  # noqa: PLC0415
-        from src.ai.models import AITaskRun  # noqa: PLC0415
-        if is_returned:
-            AITaskRun.objects.filter(
-                task=task,
-                agent_id__in=agent_ids,
-            ).delete()
-        for agent_id in agent_ids:
-            run_ai_performer.delay(task_id=task.id, agent_id=agent_id)
+        # local import: src.ai.dispatch -> processes models
+        from src.ai.dispatch import dispatch_ai_performers
+        dispatch_ai_performers(task=task, is_returned=is_returned)
 
     def _get_not_skipped_revert_task(self, task: Task) -> Optional[Task]:
 
