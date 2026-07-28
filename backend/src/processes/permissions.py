@@ -460,7 +460,7 @@ class GuestWorkflowPermission(BasePermission):
 
     workflow_urls_pattern = (
         r'^\/workflows\/(?P<workflow_id>\d+)\/'
-        r'(comment|task-complete)\/{0,1}$'
+        r'comment\/{0,1}$'
     )
 
     def has_permission(self, request, view):

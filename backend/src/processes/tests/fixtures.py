@@ -913,7 +913,7 @@ def create_test_shared_fieldset(
         FieldsetTemplateRule.objects.create(
             fieldset=fieldset,
             account=account,
-            api_name=f'{fieldset.api_name}-rule-1',
+            api_name=f'{fieldset.api_name}-shared-rule-1',
             type=rule_type,
             value=rule_value,
         )
@@ -927,7 +927,7 @@ def create_test_shared_fieldset(
         type=field_type,
         fieldset=fieldset,
         order=1,
-        api_name=f'{fieldset.api_name}-field-1',
+        api_name=f'{fieldset.api_name}-shared-field-1',
         account=account,
     )
     return fieldset

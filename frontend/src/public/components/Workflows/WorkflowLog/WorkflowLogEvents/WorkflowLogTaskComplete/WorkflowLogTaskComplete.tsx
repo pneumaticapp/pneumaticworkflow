@@ -28,7 +28,8 @@ export function WorkflowLogTaskComplete({
   const { formatMessage } = useIntl();
 
   const renderOutputValues = () => {
-    const hasOutputValue = isArrayWithItems(currentTask?.output.filter(Boolean)) || isArrayWithItems(currentTask?.fieldsets);
+    const outputs = currentTask?.output?.filter(Boolean) ?? [];
+    const hasOutputValue = isArrayWithItems(outputs) || isArrayWithItems(currentTask?.fieldsets);
 
     if (!hasOutputValue) {
       return null;
@@ -38,7 +39,7 @@ export function WorkflowLogTaskComplete({
       <KickoffOutputs
         containerClassName={styles['outputs-container']}
         viewMode={EKickoffOutputsViewModes.Short}
-        outputs={currentTask?.output.filter(Boolean)}
+        outputs={outputs}
         fieldsets={currentTask?.fieldsets || []}
         isOnlyAttachmentsShown={isOnlyAttachmentsShown}
       />
