@@ -2685,4 +2685,5 @@ class GetTaskPerformersQuery(SqlQueryObject):
               AND aug.is_deleted IS FALSE
               AND au.is_deleted IS FALSE
               AND au.status = '{UserStatus.ACTIVE}'
+            ORDER BY id
         """, self.params
