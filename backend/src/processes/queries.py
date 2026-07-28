@@ -2562,26 +2562,7 @@ class GetTaskPerformersQuery(SqlQueryObject):
     2. Members of GROUP-type performers (non-deleted, active users
        from non-deleted groups only).
 
-    Args:
-        task_id: Primary key of the task to inspect.
-        is_completed:
-            ``None`` — all performers (default).
-            ``False`` — performers who have not completed the task
-            (USER with ``is_completed=False`` and no completed
-            GROUP_USER; group members without a completed USER or
-            GROUP_USER record).
-            ``True`` — performers who have completed the task
-            (USER with ``is_completed=True`` or a completed
-            GROUP_USER; group members with a completed USER or
-            GROUP_USER record).
-        user_type:
-            ``None`` — no filter by ``user.type`` (default).
-            Otherwise — only performers with the given ``user.type``.
-
-    Returns (via ``get_sql``):
-        A tuple of ``(sql, params)`` whose result set contains
-        distinct performer user rows (``id``, ``email``,
-        subscription flags, ``type``).
+    Returns user id
     """
 
     def __init__(
@@ -2601,10 +2582,27 @@ class GetTaskPerformersQuery(SqlQueryObject):
             return ''
         return f"AND au.type = '{self.user_type}'"
 
-    def _user_completion_join(self) -> str:
+    def _get_where(self):
         if self.is_completed is None:
-            return ''
+            return ""
+        if self.is_completed:
+            return "WHERE is_completed IS TRUE"
+        return "WHERE is_completed IS FALSE"
+
+    def _get_inner_sql(self):
         return f"""
+        SELECT DISTINCT
+              ptp.user_id AS id,
+              au.email,
+              au.is_new_tasks_subscriber,
+              au.is_complete_tasks_subscriber,
+              au.type,
+              (
+                ptp.is_completed = TRUE
+                OR ptp_group_user.id IS NOT NULL
+              ) AS is_completed
+            FROM processes_taskperformer ptp
+            JOIN accounts_user au ON au.id = ptp.user_id
             LEFT JOIN processes_taskperformer ptp_group_user
               ON ptp_group_user.task_id = ptp.task_id
               AND ptp_group_user.type = '{PerformerType.GROUP_USER}'
@@ -2612,62 +2610,10 @@ class GetTaskPerformersQuery(SqlQueryObject):
               AND ptp_group_user.is_completed = TRUE
               AND ptp_group_user.is_deleted IS FALSE
               AND ptp_group_user.directly_status != '{DirectlyStatus.DELETED}'
-        """
-
-    def _user_completion_where(self) -> str:
-        if self.is_completed is None:
-            return ''
-        if self.is_completed:
-            return """
-              AND (
-                ptp.is_completed = TRUE
-                OR ptp_group_user.id IS NOT NULL
-              )
-            """
-        return """
-              AND ptp.is_completed = FALSE
-              AND ptp_group_user.id IS NULL
-        """
-
-    def _group_completion_join(self) -> str:
-        if self.is_completed is None:
-            return ''
-        return f"""
-            LEFT JOIN processes_taskperformer ptp_user
-              ON ptp_user.task_id = ptp_group.task_id
-              AND ptp_user.type IN (
-                '{PerformerType.USER}',
-                '{PerformerType.GROUP_USER}'
-              )
-              AND ptp_user.user_id = au.id
-              AND ptp_user.is_completed = TRUE
-              AND ptp_user.is_deleted IS FALSE
-              AND ptp_user.directly_status != '{DirectlyStatus.DELETED}'
-        """
-
-    def _group_completion_where(self) -> str:
-        if self.is_completed is None:
-            return ''
-        if self.is_completed:
-            return 'AND ptp_user.id IS NOT NULL'
-        return 'AND ptp_user.id IS NULL'
-
-    def get_sql(self):
-        return f"""
-            SELECT DISTINCT
-              ptp.user_id AS id,
-              au.email,
-              au.is_new_tasks_subscriber,
-              au.is_complete_tasks_subscriber,
-              au.type
-            FROM processes_taskperformer ptp
-            JOIN accounts_user au ON au.id = ptp.user_id
-            {self._user_completion_join()}
             WHERE ptp.task_id = %(task_id)s
               AND ptp.type = '{PerformerType.USER}'
               AND ptp.is_deleted IS FALSE
               AND ptp.directly_status != '{DirectlyStatus.DELETED}'
-              {self._user_completion_where()}
               AND au.is_deleted IS FALSE
               AND au.status = '{UserStatus.ACTIVE}'
               {self._user_type_where()}
@@ -2679,7 +2625,8 @@ class GetTaskPerformersQuery(SqlQueryObject):
               au.email,
               au.is_new_tasks_subscriber,
               au.is_complete_tasks_subscriber,
-              au.type
+              au.type,
+              ptp_user.id IS NOT NULL AS is_completed
             FROM processes_taskperformer ptp_group
             JOIN accounts_usergroup aug
               ON aug.id = ptp_group.group_id
@@ -2687,15 +2634,38 @@ class GetTaskPerformersQuery(SqlQueryObject):
               ON ugu.usergroup_id = ptp_group.group_id
             JOIN accounts_user au
               ON au.id = ugu.user_id
-            {self._group_completion_join()}
+            LEFT JOIN processes_taskperformer ptp_user
+              ON ptp_user.task_id = ptp_group.task_id
+              AND ptp_user.type IN (
+                '{PerformerType.USER}',
+                '{PerformerType.GROUP_USER}'
+              )
+              AND ptp_user.user_id = au.id
+              AND ptp_user.is_completed = TRUE
+              AND ptp_user.is_deleted IS FALSE
+              AND ptp_user.directly_status != '{DirectlyStatus.DELETED}'
             WHERE ptp_group.task_id = %(task_id)s
               AND ptp_group.type = '{PerformerType.GROUP}'
               AND ptp_group.is_deleted IS FALSE
               AND ptp_group.directly_status != '{DirectlyStatus.DELETED}'
-              {self._group_completion_where()}
               AND aug.is_deleted IS FALSE
               AND au.is_deleted IS FALSE
               AND au.status = '{UserStatus.ACTIVE}'
               {self._user_type_where()}
-            ORDER BY id, type
+        """
+
+    def get_sql(self):
+        return f"""
+        SELECT
+            id,
+            email,
+            is_new_tasks_subscriber,
+            is_complete_tasks_subscriber,
+            type,
+            is_completed
+        FROM (
+            {self._get_inner_sql()}
+        ) as users_performers
+        {self._get_where()}
+        ORDER BY id
         """, self.params
