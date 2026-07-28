@@ -289,6 +289,8 @@ export enum EWorkflowLogEvent {
   AddedPerformerGroup = 20,
   RemovedPerformerGroup = 21,
   TaskSnoozed = 22,
+  AiAgentCompleted = 24,
+  AiAgentLeft = 25,
 }
 
 export enum EIconTitles {

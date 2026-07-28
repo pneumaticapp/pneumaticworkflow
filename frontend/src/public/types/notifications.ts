@@ -148,6 +148,15 @@ export type TNotificationsListItemOptional =
         name: string;
         dueDate: string | null;
       };
+    }
+  | {
+      type: 'ai_left_task';
+      text: string;
+      workflow: Pick<IWorkflow, 'id' | 'name'>;
+      task: {
+        id: number;
+        name: string;
+      };
     };
 
 export type TNotificationsListItem = TNotificationsListItemCommon & TNotificationsListItemOptional;

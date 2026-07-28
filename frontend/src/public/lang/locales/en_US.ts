@@ -60,6 +60,7 @@ export const enMessages = {
   'notifications.overdue': 'The task {task} is past the deadline, please look into it and take appropriate action.',
   'notifications.snoozed': 'Workflow snoozed until {date}',
   'notifications.resumed': 'Workflow resumed',
+  'notifications.ai-left-task': 'AI agent left the task',
   'notifications.workflow-completed': 'Workflow was completed',
 
   'duration-month': 'months',
@@ -930,6 +931,7 @@ export const enMessages = {
   'workflows.log-comments': 'Comments',
   'workflows.log-no-events': 'Nothing to show',
   'workflows.log-complete': '{taskName} completed',
+  'workflows.log-ai-left-title': 'AI agent left the task for a human',
   'workflows.log-workflow-ended-on-condition': 'Workflow ended by condition',
   'workflows.log-workflow-ended': 'Workflow ended',
   'workflows.log-comment-field-placeholder': 'Your comment...',

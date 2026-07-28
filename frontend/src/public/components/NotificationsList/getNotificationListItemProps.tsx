@@ -170,6 +170,16 @@ export function getNotificationListItemProps({
         title: formatMessage({ id: 'general.pneumatic' }),
         text: <RichText text={notification.text} />,
       };
+    case 'ai_left_task':
+      return {
+        ...commonProps,
+        avatar: <PneumaticAvatarIcon className={styles['avatar__container']} />,
+        icon: <CommentInfoIcon />,
+        title: formatMessage({ id: 'notifications.ai-left-task' }),
+        subtitle: notification.workflow.name,
+        text: <RichText text={notification.text} />,
+        link: getTaskDetailRoute(notification.task.id),
+      };
     case 'snooze_workflow': {
       const author = getUserById(users, notification.author);
       const snoozedUntilDate = <DateFormat date={notification.task.delay?.estimatedEndDate} />;

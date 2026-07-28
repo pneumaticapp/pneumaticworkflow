@@ -51,6 +51,9 @@ jest.mock('../WorkflowLogEvents/WorkflowLogAddedPerformerGroup', () => ({
 jest.mock('../WorkflowLogEvents/WorkflowLogRemovedPerformerGroup', () => ({
   WorkflowLogRemovedPerformerGroup: () => <div data-testid="log-event" />,
 }));
+jest.mock('../WorkflowLogEvents/WorkflowLogAiAgent', () => ({
+  WorkflowLogAiAgent: () => <div data-testid="log-event" />,
+}));
 
 jest.mock('../PopupCommentField', () => ({
   PopupCommentFieldContainer: () => null,

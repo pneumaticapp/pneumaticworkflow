@@ -113,6 +113,11 @@ export function FeedItemIcon({ className, type, task }: IFeedItemIconProps) {
       icon: <AddUserIcon className={className} color="#4CAF50" />,
       tooltipMessage: formatMessage({ id: 'workflows.user-added' }),
     },
+    [EWorkflowLogEvent.AiAgentCompleted]: {
+      icon: <TaskCompleteIcon className={className} size="sm" />,
+      tooltipMessage: formatMessage({ id: 'workflow-highlights.icon-task-completed' }),
+    },
+    [EWorkflowLogEvent.AiAgentLeft]: NULL_FEED_ICON,
     [EWorkflowLogEvent.RemovedPerformerGroup]: {
       icon: <RemoveUserIcon className={className} color="#F44336" />,
       tooltipMessage: formatMessage({ id: 'workflows.user-removed' }),

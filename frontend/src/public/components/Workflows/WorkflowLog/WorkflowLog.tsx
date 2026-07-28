@@ -37,6 +37,7 @@ import { WorkflowLogSkeleton } from './WorkflowLogSkeleton';
 import { WorkflowLogWorkflowSnoozedManually } from './WorkflowLogEvents/WorkflowLogWorkflowSnoozedManually';
 import { WorkflowLogWorkflowResumed } from './WorkflowLogEvents/WorkflowLogWorkflowResumed';
 import { WorkflowLogDueDateChanged } from './WorkflowLogEvents/WorkflowLogDueDateChanged';
+import { WorkflowLogAiAgent } from './WorkflowLogEvents/WorkflowLogAiAgent';
 import { WorkflowLogAddedPerformerGroup } from './WorkflowLogEvents/WorkflowLogAddedPerformerGroup';
 import { WorkflowLogRemovedPerformerGroup } from './WorkflowLogEvents/WorkflowLogRemovedPerformerGroup';
 
@@ -305,6 +306,10 @@ export const WorkflowLog = ({
         [EWorkflowLogEvent.TaskSnoozed]: (
           <WorkflowLogDelay delay={delay} task={eventTask} theme={theme} type={eventType} />
         ),
+        [EWorkflowLogEvent.AiAgentCompleted]: (
+          <WorkflowLogAiAgent currentTask={eventTask} isOnlyAttachmentsShown={isOnlyAttachmentsShown} {...event} />
+        ),
+        [EWorkflowLogEvent.AiAgentLeft]: <WorkflowLogAiAgent currentTask={eventTask} {...event} />,
       };
 
       return (
