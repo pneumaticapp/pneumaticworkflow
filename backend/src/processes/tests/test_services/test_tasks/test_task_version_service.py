@@ -602,7 +602,7 @@ class TestTaskUpdateVersionService:
         )
         task = workflow.tasks.get(number=1)
         task.raw_performers.all().delete()
-        task.performers.all().delete()
+        task.taskperformer_set.all().delete()
         service = TaskUpdateVersionService(
             user=user,
             instance=task,
@@ -1349,7 +1349,7 @@ class TestTaskUpdateVersionService:
         user = create_test_admin(account=account)
         workflow = create_test_workflow(user, tasks_count=1, is_external=True)
         task = workflow.tasks.get(number=1)
-        task.performers.all().delete()
+        task.taskperformer_set.all().delete()
         update_raw_performers_from_task_template_mock = mocker.patch(
             'src.processes.models.workflows.task.Task.'
             'update_raw_performers_from_task_template',
@@ -1408,8 +1408,8 @@ class TestTaskUpdateVersionService:
         update_performers_mock.assert_called_once()
         add_raw_performer_mock.assert_called_once_with(owner)
         task.refresh_from_db()
-        assert task.performers.count() == 1
-        assert task.performers.get(id=owner.id)
+        assert TaskPerformer.objects.filter(task=task).count() == 1
+        assert TaskPerformer.objects.get(task=task, user=owner)
         get_data_for_list_mock.assert_called_once()
         send_new_task_notification_mock.assert_called_once_with(
             logging=account.log_api_requests,
@@ -1456,7 +1456,7 @@ class TestTaskUpdateVersionService:
         user = create_test_admin(account=account)
         workflow = create_test_workflow(workflow_starter, tasks_count=1)
         task = workflow.tasks.get(number=1)
-        task.performers.all().delete()
+        task.taskperformer_set.all().delete()
         update_raw_performers_from_task_template_mock = mocker.patch(
             'src.processes.models.workflows.task.Task.'
             'update_raw_performers_from_task_template',
@@ -1515,8 +1515,8 @@ class TestTaskUpdateVersionService:
         update_performers_mock.assert_called_once()
         add_raw_performer_mock.assert_called_once_with(workflow_starter)
         task.refresh_from_db()
-        assert task.performers.count() == 1
-        assert task.performers.get(id=workflow_starter.id)
+        assert TaskPerformer.objects.filter(task=task).count() == 1
+        assert TaskPerformer.objects.get(task=task, user=workflow_starter)
         get_data_for_list_mock.assert_called_once()
         send_new_task_notification_mock.assert_called_once_with(
             logging=account.log_api_requests,
@@ -1562,7 +1562,7 @@ class TestTaskUpdateVersionService:
         workflow = create_test_workflow(owner, tasks_count=1)
         performer = create_test_not_admin(account=account)
         task = workflow.tasks.get(number=1)
-        task.performers.all().delete()
+        task.taskperformer_set.all().delete()
         task.performers.add(performer)
         group = create_test_group(account=account, users=[performer])
         update_raw_performers_from_task_template_mock = mocker.patch(
@@ -1633,7 +1633,7 @@ class TestTaskUpdateVersionService:
         workflow = create_test_workflow(owner, tasks_count=1)
         performer = create_test_not_admin(account=account)
         task = workflow.tasks.get(number=1)
-        task.performers.all().delete()
+        task.taskperformer_set.all().delete()
         group = create_test_group(account=account, users=[performer])
         TaskPerformer.objects.create(
             task_id=task.id,
@@ -1709,7 +1709,7 @@ class TestTaskUpdateVersionService:
         workflow = create_test_workflow(owner, tasks_count=1)
         performer = create_test_not_admin(account=account)
         task = workflow.tasks.get(number=1)
-        task.performers.all().delete()
+        task.taskperformer_set.all().delete()
         group = create_test_group(account=account, users=[performer])
         TaskPerformer.objects.create(
             task_id=task.id,
@@ -1784,7 +1784,7 @@ class TestTaskUpdateVersionService:
         workflow = create_test_workflow(owner, tasks_count=1)
         performer = create_test_not_admin(account=account)
         task = workflow.tasks.get(number=1)
-        task.performers.all().delete()
+        task.taskperformer_set.all().delete()
         task.performers.add(performer)
         group = create_test_group(account=account, users=[performer])
         update_raw_performers_from_task_template_mock = mocker.patch(
