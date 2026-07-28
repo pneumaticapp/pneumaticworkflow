@@ -70,55 +70,86 @@ class DereferencedPerformersMixin:
     @staticmethod
     def dereferenced_performers():
 
-        """ Convert group performers to users and return it """
+        """ Convert group performers to users and return per-user completion.
+
+        ``is_completed`` is TRUE if the user completed via USER, GROUP,
+        or GROUP_USER on the task.
+        """
 
         return f"""
-            SELECT DISTINCT ON (user_id, ptp.task_id)
-              (
+            SELECT
+              resolved.user_id,
+              resolved.task_id,
+              BOOL_OR(resolved.is_completed) AS is_completed
+            FROM (
+              SELECT
                 CASE
                   WHEN ptp.type = '{PerformerType.GROUP}' THEN g.user_id
                   ELSE ptp.user_id
-                END
-              ) AS user_id,
-              ptp.task_id,
-              ptp.is_completed
-            FROM processes_taskperformer ptp
-            LEFT JOIN accounts_usergroup_users g
-              ON g.usergroup_id = ptp.group_id
-            WHERE
-              ptp.is_deleted IS FALSE
-              AND ptp.directly_status != '{DirectlyStatus.DELETED}'
-              AND (
-                (
-                  ptp.type = '{PerformerType.GROUP}'
-                  AND g.user_id = %(user_id)s
+                END AS user_id,
+                ptp.task_id,
+                (ptp.is_completed IS TRUE) AS is_completed
+              FROM processes_taskperformer ptp
+              LEFT JOIN accounts_usergroup_users g
+                ON g.usergroup_id = ptp.group_id
+              WHERE ptp.is_deleted IS FALSE
+                AND ptp.directly_status != '{DirectlyStatus.DELETED}'
+                AND ptp.type IN (
+                  '{PerformerType.USER}',
+                  '{PerformerType.GROUP}',
+                  '{PerformerType.GROUP_USER}'
                 )
-                OR (
-                  ptp.type = '{PerformerType.USER}'
-                  AND ptp.user_id = %(user_id)s
+                AND (
+                  (
+                    ptp.type = '{PerformerType.GROUP}'
+                    AND g.user_id = %(user_id)s
+                  )
+                  OR (
+                    ptp.type IN (
+                      '{PerformerType.USER}',
+                      '{PerformerType.GROUP_USER}'
+                    )
+                    AND ptp.user_id = %(user_id)s
+                  )
                 )
-              )
+            ) resolved
+            WHERE resolved.user_id IS NOT NULL
+            GROUP BY resolved.user_id, resolved.task_id
         """
 
     @staticmethod
     def all_dereferenced_performers():
 
-        """ Convert group performers to users and return it (for any user) """
+        """ Convert group performers to users (for any user).
+
+        ``is_completed`` is TRUE if the user completed via USER, GROUP,
+        or GROUP_USER on the task.
+        """
 
         return f"""
-            SELECT DISTINCT ON (user_id, ptp.task_id)
-              (
+            SELECT
+              resolved.user_id,
+              resolved.task_id,
+              BOOL_OR(resolved.is_completed) AS is_completed
+            FROM (
+              SELECT
                 CASE
                   WHEN ptp.type = '{PerformerType.GROUP}' THEN g.user_id
                   ELSE ptp.user_id
-                END
-              ) AS user_id,
-              ptp.task_id,
-              ptp.is_completed
-            FROM processes_taskperformer ptp
-            LEFT JOIN accounts_usergroup_users g
-              ON g.usergroup_id = ptp.group_id
-            WHERE
-              ptp.is_deleted IS FALSE
-              AND ptp.directly_status != '{DirectlyStatus.DELETED}'
+                END AS user_id,
+                ptp.task_id,
+                (ptp.is_completed IS TRUE) AS is_completed
+              FROM processes_taskperformer ptp
+              LEFT JOIN accounts_usergroup_users g
+                ON g.usergroup_id = ptp.group_id
+              WHERE ptp.is_deleted IS FALSE
+                AND ptp.directly_status != '{DirectlyStatus.DELETED}'
+                AND ptp.type IN (
+                  '{PerformerType.USER}',
+                  '{PerformerType.GROUP}',
+                  '{PerformerType.GROUP_USER}'
+                )
+            ) resolved
+            WHERE resolved.user_id IS NOT NULL
+            GROUP BY resolved.user_id, resolved.task_id
         """
