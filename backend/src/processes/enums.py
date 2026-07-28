@@ -69,6 +69,7 @@ class PerformerType:
 
     USER = 'user'
     GROUP = 'group'
+    GROUP_USER = 'group_user'  # hidden users
     WORKFLOW_STARTER = 'workflow_starter'
     FIELD = 'field'
     MANAGER = 'manager'

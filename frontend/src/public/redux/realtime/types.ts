@@ -221,7 +221,7 @@ export interface IWsGroupData {
   name: string;
   photo: string | null;
   type: EUserGroupType;
-  users: IWsGroupUser[];
+  users: number[];
 }
 
 // ======================= utils
@@ -247,9 +247,6 @@ export interface IWsTaskPerformer {
   isCompleted: boolean;
   dateCompletedTsp: number | null;
 }
-
-export interface IWsGroupUser extends IWsUserData {}
-
 
 // ======================= notification data types
 

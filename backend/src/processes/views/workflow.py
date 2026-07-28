@@ -30,7 +30,6 @@ from src.openapi import (
     ACCESS_ACCOUNT_OWNER,
     ACCESS_AUTH,
     ACCESS_WORKFLOW_COMMENT,
-    ACCESS_WORKFLOW_COMPLETE,
     ACCESS_WORKFLOW_EVENTS,
     ACCESS_WORKFLOW_MEMBER,
     ACCESS_WORKFLOW_OWNER,
@@ -45,9 +44,6 @@ from src.openapi import (
     WORKFLOW_LIST_PARAMS,
     WorkflowWebhookExampleSerializer,
     access_description,
-)
-from src.openapi.examples import (
-    WORKFLOW_COMPLETE_EXAMPLE,
 )
 from src.processes.enums import (
     WorkflowEventType,
@@ -77,7 +73,6 @@ from src.processes.serializers.workflows.workflow import (
     WorkflowListSerializer,
     WorkflowReturnToTaskSerializer,
     WorkflowSnoozeSerializer,
-    WorkflowTaskCompleteSerializer,
     WorkflowUpdateSerializer,
 )
 from src.processes.services.events import CommentService
@@ -85,7 +80,6 @@ from src.processes.services.exceptions import (
     CommentServiceException,
     WorkflowActionServiceException,
 )
-from src.processes.services.tasks.exceptions import TaskFieldException
 from src.processes.services.workflow_action import WorkflowActionService
 from src.utils.validation import raise_validation_error
 from src.webhooks.enums import HookEvent
@@ -103,7 +97,6 @@ class WorkflowViewSet(
     action_serializer_classes = {
         'retrieve': WorkflowDetailsSerializer,
         'comment': CommentCreateSerializer,
-        'complete': WorkflowTaskCompleteSerializer,
         'return_to': WorkflowReturnToTaskSerializer,
         'finish': WorkflowFinishSerializer,
         'update': WorkflowUpdateSerializer,
@@ -397,48 +390,6 @@ class WorkflowViewSet(
         return self.response_ok(
             WorkflowEventSerializer(instance=event).data,
         )
-
-    @extend_schema(
-        tags=['Workflows'],
-        summary='Complete current task',
-        description=ACCESS_WORKFLOW_COMPLETE,
-        request=WorkflowTaskCompleteSerializer,
-        examples=[WORKFLOW_COMPLETE_EXAMPLE],
-        responses={
-            200: EMPTY,
-            400: VALIDATION_ERROR,
-            401: UNAUTHORIZED,
-            403: FORBIDDEN,
-            404: NOT_FOUND,
-        },
-    )
-    @action(methods=['post'], detail=True, url_path='task-complete')
-    def complete(self, request, *args, **kwargs):
-        workflow = self.get_object()
-        serializer = self.get_serializer(
-            data=request.data,
-            extra_fields={'workflow': workflow},
-        )
-        serializer.is_valid(raise_exception=True)
-        service = WorkflowActionService(
-            workflow=workflow,
-            user=request.user,
-            auth_type=request.token_type,
-            is_superuser=request.is_superuser,
-        )
-        try:
-            service.complete_task_for_user(
-                task=serializer.validated_data['task'],
-                fields_values=serializer.validated_data.get('output'),
-            )
-        except WorkflowActionServiceException as ex:
-            raise_validation_error(message=ex.message)
-        except TaskFieldException as ex:
-            raise_validation_error(
-                message=ex.message,
-                api_name=ex.api_name,
-            )
-        return self.response_ok()
 
     @extend_schema(
         tags=['Workflows'],

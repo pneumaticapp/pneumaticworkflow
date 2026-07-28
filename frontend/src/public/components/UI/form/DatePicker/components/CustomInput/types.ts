@@ -1,5 +1,3 @@
-export interface CustomInputProps {
-  value?: string;
-  placeholder?: string;
-  onClick?: () => void;
-}
+import { InputHTMLAttributes } from 'react';
+
+export type CustomInputProps = InputHTMLAttributes<HTMLInputElement>;
