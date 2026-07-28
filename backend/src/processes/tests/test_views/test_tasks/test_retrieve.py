@@ -41,16 +41,25 @@ from src.processes.services.events import WorkflowEventService
 from src.processes.services.tasks.performers import (
     TaskPerformersService,
 )
+from src.processes.services.versioning.schemas import TemplateSchemaV1
+from src.processes.services.versioning.versioning import (
+    TemplateVersioningService,
+)
+from src.processes.services.workflows.workflow_version import (
+    WorkflowUpdateVersionService,
+)
 from src.processes.tasks.update_workflow import update_workflows
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
     create_test_attachment,
+    create_test_fieldset_template,
     create_test_dataset,
     create_test_group,
     create_test_guest,
     create_test_not_admin,
     create_test_owner,
+    create_test_shared_fieldset,
     create_test_template,
     create_test_workflow,
 )
@@ -2095,3 +2104,85 @@ def test_task_retrieve__template_starter_other_workflow__forbidden(api_client):
 
     # assert
     assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+def test_retrieve__update_from_version__fieldset_field_variable__not_changed(
+    api_client,
+    mocker,
+):
+    """
+    After updating an active workflow from a new template version,
+    task name/description keep substituted kickoff fieldset field values.
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    api_client.token_authenticate(user)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    shared_fieldset = create_test_shared_fieldset(account=account)
+    fieldset_template = create_test_fieldset_template(
+        account=account,
+        template=template,
+        kickoff=template.kickoff_instance,
+        shared_fieldset=shared_fieldset,
+    )
+    field_template = fieldset_template.fields.first()
+    field_value = 'Fieldset value'
+    template_task = template.tasks.get(number=1)
+    template_task.name = f'Task {{{{ {field_template.api_name} }}}}'
+    template_task.description = (
+        f'Description {{{{ {field_template.api_name} }}}}'
+    )
+    template_task.save(update_fields=['name', 'description'])
+
+    response_run = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={
+            'kickoff': {
+                field_template.api_name: field_value,
+            },
+        },
+    )
+    assert response_run.status_code == 200
+    workflow = Workflow.objects.get(id=response_run.data['id'])
+    task = workflow.tasks.get(number=1)
+
+    updated_name_template = (
+        f'Updated task {{{{ {field_template.api_name} }}}}'
+    )
+    template_task.name = updated_name_template
+    template_task.save(update_fields=['name'])
+    template.version += 1
+    template.save(update_fields=['version'])
+    template_version = TemplateVersioningService(TemplateSchemaV1).save(
+        template,
+    )
+    version_service = WorkflowUpdateVersionService(
+        instance=workflow,
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    version_service.update_from_version(
+        data=template_version.data,
+        version=template_version.version,
+    )
+    mocker.patch(
+        'src.processes.views.task.TaskViewSet.identify',
+    )
+    mocker.patch(
+        'src.processes.views.task.TaskViewSet.group',
+    )
+
+    # act
+    response = api_client.get(f'/v2/tasks/{task.id}')
+
+    # assert
+    assert response.status_code == 200
+    assert response.data['name'] == f'Updated task {field_value}'
+    assert response.data['description'] == f'Description {field_value}'
