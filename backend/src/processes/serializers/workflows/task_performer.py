@@ -11,6 +11,7 @@ from src.generics.fields import TimeStampField
 from src.generics.mixins.serializers import (
     CustomValidationErrorMixin,
 )
+from src.processes.enums import PerformerType
 from src.processes.models.workflows.task import TaskPerformer
 
 UserModel = get_user_model()
@@ -41,9 +42,11 @@ class TaskUserGroupPerformerSerializer(
     date_completed_tsp = TimeStampField(source='date_completed')
 
     def get_source_id(self, instance):
-        return (
-            instance.group_id if instance.type == 'group' else instance.user_id
-        )
+        if instance.type == PerformerType.GROUP:
+            return instance.group_id
+        if instance.type == PerformerType.AI:
+            return instance.ai_agent_id
+        return instance.user_id
 
 
 def get_performers_for_task(task) -> list:

@@ -3,10 +3,13 @@ from django.conf import settings
 
 from src.ai.messages import MSG_AI_0001, MSG_AI_0002
 from src.ai.models import AIAgent
+from src.processes.enums import PerformerType
+from src.processes.models.workflows.task import TaskPerformer
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_not_admin,
     create_test_user,
+    create_test_workflow,
 )
 from src.utils.validation import ErrorCode
 
@@ -196,6 +199,37 @@ def test_partial_update__ok(api_client):
     agent.refresh_from_db()
     assert agent.name == 'Reviewer'
     assert agent.is_active is False
+
+
+def test_task_performers__ai_performer__source_id_is_agent_id(api_client):
+
+    """ The runtime task API exposes an AI performer as
+        type='ai_agent' with the agent id as source_id """
+
+    # arrange
+    user = _setup_user()
+    agent = _create_agent(user.account)
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    TaskPerformer.objects.create(
+        task=task,
+        ai_agent=agent,
+        type=PerformerType.AI,
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get(f'/v2/tasks/{task.id}')
+
+    # assert
+    assert response.status_code == 200
+    performers = response.data['performers']
+    ai_performers = [
+        performer for performer in performers
+        if performer['type'] == PerformerType.AI
+    ]
+    assert len(ai_performers) == 1
+    assert ai_performers[0]['source_id'] == agent.id
 
 
 def test_destroy__ok(api_client):
