@@ -190,6 +190,7 @@ class RawPerformerTemplateSchemaV1(serializers.ModelSerializer):
             'type',
             'user_id',
             'group_id',
+            'ai_agent_id',
             'api_name',
             'field',
             'source_task_api_name',

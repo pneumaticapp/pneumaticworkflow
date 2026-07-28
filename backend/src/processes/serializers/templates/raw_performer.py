@@ -1,5 +1,6 @@
 from typing import Any, Dict
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.serializers import (
@@ -8,6 +9,7 @@ from rest_framework.serializers import (
     Serializer,
 )
 
+from src.ai.models import AIAgent
 from src.generics.mixins.serializers import (
     AdditionalValidationMixin,
     CustomValidationErrorMixin,
@@ -24,6 +26,8 @@ from src.processes.messages.template import (
     MSG_PT_0072,
     MSG_PT_0073,
     MSG_PT_0074,
+    MSG_PT_0075,
+    MSG_PT_0076,
 )
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.models.templates.raw_performer import RawPerformerTemplate
@@ -61,6 +65,7 @@ class RawPerformerSerializer(
             'api_name',
             'user_id',
             'group_id',
+            'ai_agent_id',
             'source_task_api_name',
         }
 
@@ -198,6 +203,46 @@ class RawPerformerSerializer(
                 api_name=task.api_name,
             )
 
+    def additional_validate_raw_performers_type_ai_agent(
+        self,
+        data: Dict[str, Any],
+    ):
+        account = self.context['account']
+        task = self.context['task']
+        if not (
+            settings.PROJECT_CONF['AI_PERFORMERS']
+            and account.ai_performers_enabled
+        ):
+            self.raise_validation_error(
+                message=MSG_PT_0076,
+                api_name=task.api_name,
+            )
+        ai_agent_id = data.get('source_id')
+        if not ai_agent_id:
+            self.raise_validation_error(
+                message=MSG_PT_0075,
+                api_name=task.api_name,
+            )
+        try:
+            ai_agent_id = int(ai_agent_id)
+        except (ValueError, TypeError):
+            self.raise_validation_error(
+                message=MSG_PT_0033,
+                api_name=task.api_name,
+            )
+        agent_exists = (
+            AIAgent.objects
+            .on_account(account.id)
+            .active()
+            .filter(id=ai_agent_id)
+            .exists()
+        )
+        if not agent_exists:
+            self.raise_validation_error(
+                message=MSG_PT_0034,
+                api_name=task.api_name,
+            )
+
     def additional_validate(
         self,
         data: Dict[str, Any],
@@ -226,6 +271,9 @@ class RawPerformerSerializer(
             elif instance.type == PerformerType.GROUP:
                 data['source_id'] = str(instance.group_id)
                 data['label'] = instance.group.name
+            elif instance.type == PerformerType.AI:
+                data['source_id'] = str(instance.ai_agent_id)
+                data['label'] = instance.ai_agent.name
             elif instance.type == PerformerType.MANAGER:
                 source_api_name = instance.source_task_api_name
                 data['source_id'] = source_api_name
@@ -280,6 +328,8 @@ class RawPerformerSerializer(
             raw_performer_data['source_task_api_name'] = (
                 validated_data['source_id']
             )
+        elif validated_data['type'] == PerformerType.AI:
+            raw_performer_data['ai_agent_id'] = validated_data['source_id']
         return self.create_or_update_instance(
             validated_data=raw_performer_data,
             not_unique_exception_msg=MSG_PT_0056(
@@ -295,6 +345,13 @@ class RawPerformerSerializer(
             'template': self.context['template'],
             'task': self.context['task'],
             'type': validated_data['type'],
+            # reset source links so a type change
+            # doesn't keep the previous one
+            'user_id': None,
+            'group_id': None,
+            'ai_agent_id': None,
+            'field': None,
+            'source_task_api_name': None,
         }
         if validated_data.get('api_name'):
             raw_performer_data['api_name'] = validated_data['api_name']
@@ -313,6 +370,8 @@ class RawPerformerSerializer(
             raw_performer_data['source_task_api_name'] = (
                 validated_data['source_id']
             )
+        elif validated_data['type'] == PerformerType.AI:
+            raw_performer_data['ai_agent_id'] = validated_data['source_id']
         return self.create_or_update_instance(
             instance=instance,
             validated_data=raw_performer_data,

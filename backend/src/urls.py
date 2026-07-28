@@ -6,6 +6,7 @@ from rest_framework.routers import DefaultRouter
 from src import views
 from src.accounts.views.accounts import AccountPlanView
 from src.accounts.views.tenants import TenantsViewSet
+from src.ai.views import AIAgentViewSet
 from src.faq.views import FaqViewSet
 from src.notifications.consumers import (
     EventsConsumer,
@@ -37,6 +38,7 @@ from src.webhooks.views.events import WebHookEventViewSet
 from src.webhooks.views.webhooks import WebHookViewSet
 
 router = DefaultRouter(trailing_slash=False)
+router.register('ai/agents', AIAgentViewSet, basename='ai-agents')
 router.register('templates', TemplateViewSet, basename='templates')
 router.register('workflows', WorkflowViewSet, basename='workflows')
 router.register('webhooks', WebHookViewSet, basename='webhooks')

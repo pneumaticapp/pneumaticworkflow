@@ -312,3 +312,15 @@ MSG_PT_0074 = lambda name, step_name: format_lazy(
     name=name,
     step_name=step_name,
 )
+MSG_PT_0075 = _(
+    'You should set the AI agent id for performer '
+    'with the type "ai_agent".',
+)
+MSG_PT_0076 = _('AI performers are not available on your account.')
+MSG_PT_0077 = lambda name: format_lazy(
+    _(
+        'Task "{name}": an AI agent must be '
+        'the only performer of the task.',
+    ),
+    name=name,
+)
