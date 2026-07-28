@@ -69,7 +69,7 @@ export const getWorkflowAddComputedPropsToRedux = (workflow: IWorkflow): IWorkfl
       multipleTasksCount += 1;
       multipleTasksNamesByApiNames[newTask.apiName] = newTask.name;
       newTask.performers.forEach((performer) => {
-        currentPerformersMap.set(performer.sourceId, performer);
+        currentPerformersMap.set(`${performer.type}-${performer.sourceId}`, performer);
       });
     }
 

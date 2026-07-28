@@ -2,6 +2,7 @@ import { IWorkflowClient } from '../../../types/workflow';
 import { ITableViewFields } from '../../../types/template';
 import { TUserListItem } from '../../../types/user';
 import { IGroup } from '../../../redux/team/types';
+import { IAiAgent } from '../../../redux/aiAgents/types';
 
 export type TWorkflowExportFormat = 'xlsx' | 'csv';
 
@@ -9,6 +10,7 @@ export interface IExportWorkflowsToExcelConfig {
   workflows: IWorkflowClient[];
   users: TUserListItem[];
   groups: IGroup[];
+  aiAgents?: IAiAgent[];
   selectedFields: string[];
   optionalFieldsFromWorkflow?: ITableViewFields[];
   timezone?: string;

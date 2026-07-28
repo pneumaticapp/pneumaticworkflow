@@ -36,6 +36,7 @@ export const UserPerformerComponent = ({
 
   const isTypeUser = user.type === ETaskPerformerType.User;
   const isTypeGroup = user.type === ETaskPerformerType.UserGroup;
+  const isTypeAiAgent = user.type === ETaskPerformerType.AiAgent;
   let currentUser: any = user;
   if (isTypeUser && user.sourceId) {
     currentUser = users ? getUserById(users, +user.sourceId) : user;
@@ -45,7 +46,7 @@ export const UserPerformerComponent = ({
     <div className={classnames(styles['user-performer'], bgColorClassNameMap[bgColor])}>
       {currentUser && (
         <Avatar
-          isEmpty={!isTypeUser && !isTypeGroup}
+          isEmpty={!isTypeUser && !isTypeGroup && !isTypeAiAgent}
           size="sm"
           user={currentUser}
           containerClassName={styles['user-performer__avatar']}

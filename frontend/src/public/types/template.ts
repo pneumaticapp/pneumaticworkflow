@@ -375,7 +375,7 @@ export type TTemplateWithTasksOnly = Pick<ITemplate, 'name'> & {
 };
 
 export interface RawPerformer {
-  type: ETemplateOwnerType;
+  type: ETemplateOwnerType | ETaskPerformerType.AiAgent;
   sourceId: number;
   label?: string;
 }

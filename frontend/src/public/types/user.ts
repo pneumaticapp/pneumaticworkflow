@@ -1,6 +1,6 @@
 import { ESubscriptionPlan } from './account';
 
-export type TUserType = 'user' | 'guest' | 'group';
+export type TUserType = 'user' | 'guest' | 'group' | 'ai_agent';
 export interface IUnsavedUser {
   id?: number;
   isAccountOwner?: boolean;

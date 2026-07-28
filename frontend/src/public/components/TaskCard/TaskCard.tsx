@@ -269,8 +269,10 @@ export function TaskCard({
         );
       }
 
+      const isRemovablePerformer = isPossibleToRemovePerformer && performer.type !== ETaskPerformerType.AiAgent;
+
       return (
-        <UserDataWithGroup key={performer.sourceId} idItem={performer.sourceId} type={performer.type}>
+        <UserDataWithGroup key={`${performer.type}-${performer.sourceId}`} idItem={performer.sourceId} type={performer.type}>
           {(user) => {
             return (
               <UserPerformer
@@ -281,7 +283,7 @@ export function TaskCard({
                   label: getUserFullName(user),
                 }}
                 bgColor={EBgColorTypes.Light}
-                {...(isPossibleToRemovePerformer && {
+                {...(isRemovablePerformer && {
                   onClick: () => removeTaskPerformer({ taskId: task.id, userId: performer }),
                 })}
               />

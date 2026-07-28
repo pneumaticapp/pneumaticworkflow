@@ -4,7 +4,7 @@ import classnames from 'classnames';
 import { EUserStatus, IUnsavedUser, TUserType } from '../../../types/user';
 import { getUserFullName } from '../../../utils/users';
 import { CustomTooltip } from '../CustomTooltip';
-import { ExternalUserAvatarIcon, GroupIcon, GuestUserAvatarIcon, PneumaticAvatarIcon } from '../../icons';
+import { AIPlusIcon, ExternalUserAvatarIcon, GroupIcon, GuestUserAvatarIcon, PneumaticAvatarIcon } from '../../icons';
 
 import styles from './Avatar.css';
 
@@ -97,6 +97,14 @@ export function Avatar({
       return (
         <div className={containerClassName}>
           <GroupIcon className={classnames(styles['avatar'], styles['is-group'], ...sizeClasses, className)} />
+        </div>
+      );
+    }
+
+    if (user?.type === 'ai_agent' && !photo) {
+      return (
+        <div className={containerClassName}>
+          <AIPlusIcon className={classnames(styles['avatar'], styles['is-group'], ...sizeClasses, className)} />
         </div>
       );
     }

@@ -1,7 +1,8 @@
 import { Workbook } from 'exceljs';
-import { ITableViewFields, EExtraFieldType, ETemplateOwnerType } from '../../../types/template';
+import { ITableViewFields, EExtraFieldType, ETaskPerformerType, ETemplateOwnerType, RawPerformer } from '../../../types/template';
 import { TUserListItem } from '../../../types/user';
 import { IGroup } from '../../../redux/team/types';
+import { IAiAgent } from '../../../redux/aiAgents/types';
 import { getUserFullName, EXTERNAL_USER } from '../../users';
 import { getUserById } from '../../../components/UserData/utils/getUserById';
 import { toDateString } from '../../dateTime';
@@ -28,9 +29,10 @@ function getStarterDisplayName(
 }
 
 function getPerformersDisplayName(
-  selectedUsers: { type: ETemplateOwnerType; sourceId: number }[],
+  selectedUsers: RawPerformer[],
   users: TUserListItem[],
   groups: IGroup[],
+  aiAgents: IAiAgent[],
   deletedGroupFallbackTemplate: string,
 ): string {
   if (!selectedUsers?.length) return '';
@@ -39,6 +41,10 @@ function getPerformersDisplayName(
       if (p.type === ETemplateOwnerType.UserGroup) {
         const group = groups.find((g) => g.id === p.sourceId);
         return group?.name ?? deletedGroupFallbackTemplate.replace(/\{id\}/g, String(p.sourceId));
+      }
+      if (p.type === ETaskPerformerType.AiAgent) {
+        const agent = aiAgents.find((a) => a.id === p.sourceId);
+        return agent?.name ?? '';
       }
       const user = getUserById(users, p.sourceId);
       return user ? getUserFullName(user) : '';
@@ -86,6 +92,7 @@ export function buildWorkflowsExportRows({
   workflows,
   users,
   groups,
+  aiAgents = [],
   selectedFields,
   optionalFieldsFromWorkflow,
   timezone,
@@ -126,6 +133,7 @@ export function buildWorkflowsExportRows({
         workflow.selectedUsers,
         users,
         groups,
+        aiAgents,
         deletedGroupFallbackTemplate,
       ),
     };

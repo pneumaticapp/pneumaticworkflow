@@ -16,6 +16,7 @@ import {
 } from '../redux/selectors/workflows';
 import { getAccountsUsers } from '../redux/selectors/accounts';
 import { getRegularGroupsList } from '../redux/selectors/groups';
+import { getAiAgentsList } from '../redux/selectors/aiAgents';
 import { getTimezone } from '../redux/selectors/authUser';
 import {
   buildWorkflowsExportRows,
@@ -62,6 +63,7 @@ export function useWorkflowsExport() {
   const searchText = useSelector(getWorkflowsSearchText);
   const users = useSelector(getAccountsUsers);
   const groups = useSelector(getRegularGroupsList);
+  const aiAgents = useSelector(getAiAgentsList);
   const timezone = useSelector(getTimezone);
 
   const handleExportClick = useCallback(
@@ -95,6 +97,7 @@ export function useWorkflowsExport() {
           workflows: items,
           users,
           groups,
+          aiAgents,
           selectedFields: fields,
           optionalFieldsFromWorkflow,
           timezone: timezone ?? undefined,

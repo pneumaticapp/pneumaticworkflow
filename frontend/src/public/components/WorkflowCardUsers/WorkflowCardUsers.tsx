@@ -44,7 +44,10 @@ export function WorkflowCardUsers({
                 />
               );
 
-              return applyFilterPerformer ? (
+              const isFilterablePerformer =
+                type === ETemplateOwnerType.User || type === ETemplateOwnerType.UserGroup;
+
+              return applyFilterPerformer && isFilterablePerformer ? (
                 <button
                   type="button"
                   aria-label="apply filter performer"
