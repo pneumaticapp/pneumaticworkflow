@@ -8,3 +8,5 @@ export interface IAiAgent {
   photo: string | null;
   isActive: boolean;
 }
+
+export type TAiAgentDraft = Omit<IAiAgent, 'id'>;

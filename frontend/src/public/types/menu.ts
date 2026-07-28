@@ -12,7 +12,8 @@ export type TMenuItemId = 'dashboards'
 | 'team'
 | 'integrations'
 | 'help-center'
-| 'tenants';
+| 'tenants'
+| 'ai-agents';
 
 export interface IMenuItem extends IMenuItemSub {
   counter?: number;

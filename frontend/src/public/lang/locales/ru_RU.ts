@@ -344,6 +344,7 @@ export const ruMessages = {
   'menu.templates': 'Шаблоны',
   'menu.highlights': 'Активность',
   'menu.team': 'Команда',
+  'menu.ai-agents': 'ИИ-агенты',
   'menu.integrations': 'Интеграции',
   'menu.tenants': 'Подразделения',
   'menu.reports': 'Отчеты',

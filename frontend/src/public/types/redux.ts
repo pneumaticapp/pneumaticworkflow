@@ -347,7 +347,12 @@ export type ITeamStore = {
 
 export type IAiAgentsStore = {
   isLoading: boolean;
+  isEnabled: boolean;
   list: IAiAgent[];
+  editModal: {
+    isOpen: boolean;
+    editAgent: IAiAgent | null;
+  };
 };
 
 export type IGroupsStore = {

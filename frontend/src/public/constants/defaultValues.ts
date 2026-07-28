@@ -119,6 +119,7 @@ export const enum EPageTitle {
   Team = 'team.title',
   Datasets = 'datasets.title',
   Fieldsets = 'fieldsets.title',
+  AiAgents = 'ai-agents.title',
 }
 
 export const enum ELearnMoreLinks {
@@ -136,6 +137,7 @@ export const enum ELearnMoreLinks {
   Tenants = 'https://www.pneumatic.app/partners/',
   TenantsModal = 'https://www.pneumatic.app/partners/',
   Team = '',
+  AiAgents = '',
 }
 
 export const GUEST_TOKEN_STORAGE_KEY = 'guestToken';

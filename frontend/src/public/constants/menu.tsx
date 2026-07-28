@@ -8,6 +8,7 @@ import {
   TemplatesIcon,
   IntegrationsIcon,
   TenantsIcon,
+  AIPlusIcon,
 } from '../components/icons';
 
 import { ERoutes } from './routes';
@@ -23,6 +24,7 @@ export type TMenuCounter = {
 
 export interface IGetUserMenuItemsOptions {
   isTemplateOwner?: boolean;
+  aiAgentsEnabled?: boolean;
 }
 
 export const getUserMenuItems = (
@@ -72,6 +74,13 @@ export const getUserMenuItems = (
       label: 'menu.team',
       to: ERoutes.Team,
       isHidden: !user.isAdmin,
+    },
+    {
+      id: 'ai-agents',
+      to: ERoutes.AiAgents,
+      label: 'menu.ai-agents',
+      iconComponent: AIPlusIcon,
+      isHidden: !user.isAdmin || !_options?.aiAgentsEnabled,
     },
     {
       id: 'integrations',

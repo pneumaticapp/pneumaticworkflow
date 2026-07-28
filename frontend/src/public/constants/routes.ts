@@ -52,6 +52,7 @@ export enum ERoutes {
   Datasets = '/datasets/',
   DatasetDetail = '/datasets/:id/',
   Fieldsets = '/fieldsets/',
+  AiAgents = '/ai-agents/',
   FieldsetDetail = '/fieldsets/:id/',
 }
 

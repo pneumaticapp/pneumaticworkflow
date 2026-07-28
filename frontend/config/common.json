@@ -61,6 +61,7 @@
       "groups": "/accounts/groups",
       "group": "/accounts/groups/:id",
       "aiAgents": "/ai/agents",
+      "aiAgent": "/ai/agents/:id",
       "editAccount": "/accounts/account",
       "editProfile": "/accounts/user",
       "template": "/templates/:id",

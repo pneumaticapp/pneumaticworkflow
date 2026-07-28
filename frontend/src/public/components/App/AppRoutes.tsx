@@ -23,6 +23,7 @@ import { GuestTask } from '../GuestTask';
 import { TenantsView } from '../../views/Tenants';
 import { DatasetsView } from '../../views/Datasets';
 import { FieldsetsView } from '../../views/Fieldsets';
+import { AiAgentsView } from '../../views/AiAgents';
 import { ELoggedState, IAuthUser } from '../../types/redux';
 import { CollectPaymentDetails } from '../CollectPaymentDetails';
 import { AfterPaymentDetailsProvided } from '../AfterPaymentDetailsProvided';
@@ -144,6 +145,13 @@ export function AppRoutes({ containerClassnames, user }: IAppRoutesProps) {
               hasAccess={user.isAdmin || user.isAccountOwner}
             >
               <FieldsetsView />
+            </ProtectedRoute>
+            <ProtectedRoute
+              exact
+              path={ERoutes.AiAgents}
+              hasAccess={user.isAdmin || user.isAccountOwner}
+            >
+              <AiAgentsView />
             </ProtectedRoute>
 
             <Redirect exact from="/" to={ERoutes.Main} />

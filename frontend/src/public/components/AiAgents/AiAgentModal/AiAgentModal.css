@@ -1,0 +1,54 @@
+.agent-modal {
+  &__title {
+    margin-bottom: 16px;
+  }
+
+  &__description {
+    margin-bottom: 16px;
+    font-size: 15px;
+    line-height: 20px;
+    color: var(--pneumatic-color-black72);
+
+    a {
+      color: var(--pneumatic-color-link-dark);
+    }
+  }
+
+  &__field {
+    margin-bottom: 16px;
+  }
+
+  &__label {
+    margin-bottom: 8px;
+    font-size: 15px;
+    line-height: 20px;
+    color: var(--pneumatic-color-black72);
+  }
+
+  &__textarea {
+    padding: 12px 16px;
+    width: 100%;
+    font-family: inherit;
+    font-size: 15px;
+    line-height: 20px;
+    resize: vertical;
+    color: var(--pneumatic-color-black100);
+    background-color: white;
+    border: 1px solid var(--pneumatic-color-black16);
+    border-radius: 8px;
+
+    &:focus {
+      border-color: var(--pneumatic-color-yellow);
+      outline: none;
+    }
+  }
+
+  &__footer {
+    margin-top: 32px;
+    display: flex;
+
+    > * + * {
+      margin-left: 16px;
+    }
+  }
+}

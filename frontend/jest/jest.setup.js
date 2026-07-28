@@ -70,6 +70,11 @@ jest.mock('react-redux', () => {
     },
     aiAgents: {
       list: [],
+      isEnabled: false,
+      editModal: {
+        isOpen: false,
+        editAgent: null,
+      },
     },
     accounts: {
       isCreateUserModalOpen: false,
