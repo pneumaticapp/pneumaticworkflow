@@ -9,6 +9,8 @@ from src.processes.enums import (
     OwnerType,
     PerformerType,
 )
+from src.processes.models.templates.fieldset import FieldsetTemplate
+from src.processes.serializers.templates.template import TemplateSerializer
 from src.processes.messages.fieldset import (
     MSG_FS_0013,
     MSG_FS_0014,
@@ -19,8 +21,6 @@ from src.processes.models.templates.fields import (
     FieldTemplate,
     FieldTemplateSelection,
 )
-from src.processes.models.templates.fieldset import FieldsetTemplate
-from src.processes.serializers.templates.template import TemplateSerializer
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_fieldset_template,

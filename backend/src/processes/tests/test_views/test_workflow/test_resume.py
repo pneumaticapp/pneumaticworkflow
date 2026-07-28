@@ -217,6 +217,30 @@ def test_resume__service_exception__validation_error(
     resume_mock.assert_called_once()
 
 
+def test_resume__workflow_done__ok(api_client):
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(
+        user,
+        tasks_count=1,
+        status=WorkflowStatus.DONE,
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(f'/workflows/{workflow.id}/resume')
+
+    # assert
+    assert response.status_code == 200
+    assert response.data['id'] == workflow.id
+    assert response.data['status'] == WorkflowStatus.RUNNING
+    assert response.data['date_completed_tsp'] is None
+    workflow.refresh_from_db()
+    assert workflow.status == WorkflowStatus.RUNNING
+    assert workflow.date_completed is None
+
+
 def test_resume__not_authenticated__permission_denied(api_client):
 
     # arrange

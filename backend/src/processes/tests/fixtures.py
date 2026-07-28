@@ -981,7 +981,7 @@ def create_test_fieldset_template(
         )
 
     for shared_field in shared_fieldset.fields.all():
-        field = FieldTemplate.objects.create(
+        field_template = FieldTemplate.objects.create(
             name=shared_field.name,
             type=shared_field.type,
             fieldset=fieldset,
@@ -992,10 +992,10 @@ def create_test_fieldset_template(
         )
         for shared_selection in shared_field.selections.all():
             FieldTemplateSelection.objects.create(
-                value=shared_selection.value,
-                field_template=field,
+                field_template=field_template,
                 template=template,
-                api_name=f'{field.api_name}-selection-1',
+                value=shared_selection.value,
+                api_name=f'{field_template.api_name}-selection-1',
             )
     return fieldset
 
