@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from rest_framework.decorators import action
 from rest_framework.generics import (
@@ -22,6 +23,7 @@ from src.authentication.serializers import (
     ChangePasswordSerializer,
     ConfirmPasswordSerializer,
     ResetPasswordSerializer,
+    SecuredResetPasswordSerializer,
     TokenSerializer,
 )
 from src.authentication.views.mixins import SSORestrictionMixin
@@ -31,6 +33,7 @@ from src.authentication.throttling import (
 )
 from src.authentication.tokens import PneumaticToken
 from src.generics.mixins.views import (
+    AnonymousResetPasswordMixin,
     BaseResponseMixin,
     CustomViewSetMixin,
 )
@@ -46,6 +49,7 @@ UserModel = get_user_model()
 
 class ResetPasswordViewSet(
     SSORestrictionMixin,
+    AnonymousResetPasswordMixin,
     CustomViewSetMixin,
     GenericViewSet,
 ):
@@ -60,8 +64,27 @@ class ResetPasswordViewSet(
     def throttle_classes(self):
         return (AuthResetPasswordThrottle, )
 
+    @action(methods=['get'], detail=False, url_path='captcha')
+    def captcha(self, request):
+        if not settings.PROJECT_CONF['CAPTCHA']:
+            show_captcha = False
+        else:
+            reset_exists = self.anonymous_user_reset_exists(request)
+            show_captcha = reset_exists in {True, None}
+        return self.response_ok({'show_captcha': show_captcha})
+
     def create(self, request):
-        slz = self.get_serializer(data=request.data)
+        reset_exists = self.anonymous_user_reset_exists(request)
+        self.inc_anonymous_user_reset_counter(request)
+        captcha_required = reset_exists in {True, None}
+        if settings.PROJECT_CONF['CAPTCHA'] and captcha_required:
+            slz_cls = SecuredResetPasswordSerializer
+        else:
+            slz_cls = ResetPasswordSerializer
+        slz = slz_cls(
+            data=request.data,
+            context={'request': request},
+        )
         slz.is_valid(raise_exception=True)
         user = (
             UserModel.objects
