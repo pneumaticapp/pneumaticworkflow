@@ -5,7 +5,7 @@ from typing import List, Optional, Tuple
 
 from django.contrib.auth import get_user_model
 
-from src.accounts.enums import UserStatus
+from src.accounts.enums import UserStatus, UserType
 from src.accounts.models import User, UserGroup
 from src.generics.mixins.managers import SearchSqlQueryMixin
 from src.generics.mixins.queries import (
@@ -2574,6 +2574,9 @@ class GetTaskPerformersQuery(SqlQueryObject):
             (USER with ``is_completed=True`` or a completed
             GROUP_USER; group members with a completed USER or
             GROUP_USER record).
+        user_type:
+            ``None`` — no filter by ``user.type`` (default).
+            Otherwise — only performers with the given ``user.type``.
 
     Returns (via ``get_sql``):
         A tuple of ``(sql, params)`` whose result set contains
@@ -2585,11 +2588,18 @@ class GetTaskPerformersQuery(SqlQueryObject):
         self,
         task_id: int,
         is_completed: Optional[bool] = None,
+        user_type: UserType.LITERALS = None,
     ):
         self.params = {
             'task_id': task_id,
         }
         self.is_completed = is_completed
+        self.user_type = user_type
+
+    def _user_type_where(self) -> str:
+        if self.user_type is None:
+            return ''
+        return f"AND au.type = '{self.user_type}'"
 
     def _user_completion_join(self) -> str:
         if self.is_completed is None:
@@ -2660,6 +2670,7 @@ class GetTaskPerformersQuery(SqlQueryObject):
               {self._user_completion_where()}
               AND au.is_deleted IS FALSE
               AND au.status = '{UserStatus.ACTIVE}'
+              {self._user_type_where()}
 
             UNION
 
@@ -2685,5 +2696,6 @@ class GetTaskPerformersQuery(SqlQueryObject):
               AND aug.is_deleted IS FALSE
               AND au.is_deleted IS FALSE
               AND au.status = '{UserStatus.ACTIVE}'
-            ORDER BY id
+              {self._user_type_where()}
+            ORDER BY id, type
         """, self.params

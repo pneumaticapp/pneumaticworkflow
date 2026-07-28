@@ -1315,8 +1315,8 @@ def test_continue_task__ok(mocker):
         logging=account.log_api_requests,
         task_id=task.id,
         recipients=[
-            (owner.id, owner.email, True),
-            (user.id, user.email, True),
+            (owner.id, owner.email),
+            (user.id, user.email),
         ],
         account_id=account.id,
         task_data=task.get_data_for_list(),
@@ -1386,8 +1386,8 @@ def test_continue_task__skip_require_all__autocomplete(mocker):
     )
     service = WorkflowActionService(user=owner, workflow=workflow)
     is_returned = False
-    ws_recipient_owner = (owner.id, owner.email, True)
-    ws_recipient_user = (user.id, user.email, True)
+    ws_recipient_owner = (owner.id, owner.email)
+    ws_recipient_user = (user.id, user.email)
     if owner.id < user.id:
         ws_recipients = [ws_recipient_owner, ws_recipient_user]
     else:
@@ -1686,8 +1686,8 @@ def test_continue_task__root_task_wf_starter_and_user_performers__ok(mocker):
         logging=account.log_api_requests,
         task_id=task.id,
         recipients=[
-            (owner.id, owner.email, True),
-            (user.id, user.email, True),
+            (owner.id, owner.email),
+            (user.id, user.email),
         ],
         account_id=account.id,
         task_data=task.get_data_for_list(),
@@ -1779,8 +1779,8 @@ def test_continue_task__not_root_task_wf_starter_and_user_performers__ok(
         logging=account.log_api_requests,
         task_id=task.id,
         recipients=[
-            (owner.id, owner.email, True),
-            (user.id, user.email, True),
+            (owner.id, owner.email),
+            (user.id, user.email),
         ],
         account_id=account.id,
         task_data=task.get_data_for_list(),
@@ -1926,11 +1926,240 @@ def test_continue_task__external_workflow__skip_wf_starter_notification(
         logging=account.log_api_requests,
         task_id=task.id,
         recipients=[
-            (user.id, user.email, True),
+            (user.id, user.email),
         ],
         account_id=account.id,
         task_data=task.get_data_for_list(),
     )
+
+
+def test_continue_task__notifications_filters__ok(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_not_admin(
+        account=account,
+        is_new_tasks_subscriber=False,
+    )
+    guest = create_test_guest(account=account)
+    workflow = create_test_workflow(user=owner)
+    task = workflow.tasks.get(number=1)
+    task.taskperformer_set.all().delete()
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        user_id=user.id,
+    )
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        user_id=guest.id,
+    )
+    current_date = timezone.now()
+    mocker.patch(
+        'src.processes.services.workflow_action.timezone.now',
+        return_value=current_date,
+    )
+    task_service_init_mock = mocker.patch.object(
+        TaskService,
+        attribute='__init__',
+        return_value=None,
+    )
+    partial_update_mock = mocker.patch(
+        'src.processes.services.tasks.task.TaskService.partial_update',
+    )
+    set_due_date_from_template_mock = mocker.patch(
+        'src.processes.services.tasks.task.TaskService'
+        '.set_due_date_from_template',
+    )
+    task_started_event_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowEventService'
+        '.task_started_event',
+    )
+    send_new_task_notification_mock = mocker.patch(
+        'src.notifications.tasks.send_new_task_notification.delay',
+    )
+    send_new_task_websocket_mock = mocker.patch(
+        'src.notifications.tasks.send_new_task_websocket.delay',
+    )
+    delete_task_guest_cache_mock = mocker.patch(
+        'src.processes.services.workflow_action.GuestJWTAuthService'
+        '.delete_task_guest_cache',
+    )
+    start_next_tasks_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '._start_next_tasks',
+    )
+    service = WorkflowActionService(user=owner, workflow=workflow)
+    is_returned = False
+
+    # act
+    service.continue_task(task=task)
+
+    # assert
+    task_service_init_mock.assert_called_once_with(instance=task, user=owner)
+    partial_update_mock.assert_called_once_with(
+        is_urgent=False,
+        date_completed=None,
+        status=TaskStatus.ACTIVE,
+        date_started=current_date,
+        force_save=True,
+    )
+    set_due_date_from_template_mock.assert_called_once_with()
+    task_started_event_mock.assert_not_called()
+    send_new_task_notification_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        recipients=[
+            (guest.id, guest.email, True),
+        ],
+        task_id=task.id,
+        task_name=task.name,
+        task_data=task.get_data_for_list(),
+        task_description=task.description,
+        workflow_name=workflow.name,
+        template_name=workflow.get_template_name(),
+        workflow_starter_name=owner.name,
+        workflow_starter_photo=owner.photo,
+        due_date_timestamp=None,
+        logo_lg=account.logo_lg,
+        is_returned=is_returned,
+    )
+    send_new_task_websocket_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        task_id=task.id,
+        recipients=[
+            (user.id, user.email),
+        ],
+        account_id=account.id,
+        task_data=task.get_data_for_list(),
+    )
+    delete_task_guest_cache_mock.assert_called_once_with(
+        task_id=workflow.tasks.get(number=2).id,
+    )
+    start_next_tasks_mock.assert_called_once_with()
+
+
+def test_continue_task__completed_performers__reset_completion(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    admin = create_test_admin(account=account)
+    user = create_test_not_admin(account=account)
+    guest = create_test_guest(account=account)
+    workflow = create_test_workflow(user=owner)
+    task = workflow.tasks.get(number=1)
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        user=user,
+        is_completed=True,
+    )
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        user=guest,
+        is_completed=True,
+    )
+    group = create_test_group(account=account, users=[admin])
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        group=group,
+        type=PerformerType.GROUP,
+        is_completed=False,
+    )
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        user=user,
+        type=PerformerType.GROUP_USER,
+        is_completed=True,
+    )
+    current_date = timezone.now()
+    mocker.patch(
+        'src.processes.services.workflow_action.timezone.now',
+        return_value=current_date,
+    )
+    task_service_init_mock = mocker.patch.object(
+        TaskService,
+        attribute='__init__',
+        return_value=None,
+    )
+    partial_update_mock = mocker.patch(
+        'src.processes.services.tasks.task.TaskService.partial_update',
+    )
+    set_due_date_from_template_mock = mocker.patch(
+        'src.processes.services.tasks.task.TaskService'
+        '.set_due_date_from_template',
+    )
+    task_started_event_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowEventService'
+        '.task_started_event',
+    )
+    send_new_task_notification_mock = mocker.patch(
+        'src.notifications.tasks.send_new_task_notification.delay',
+    )
+    send_new_task_websocket_mock = mocker.patch(
+        'src.notifications.tasks.send_new_task_websocket.delay',
+    )
+    delete_task_guest_cache_mock = mocker.patch(
+        'src.processes.services.workflow_action.GuestJWTAuthService'
+        '.delete_task_guest_cache',
+    )
+    start_next_tasks_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '._start_next_tasks',
+    )
+    is_returned = False
+    service = WorkflowActionService(user=owner, workflow=workflow)
+
+    # act
+    service.continue_task(task=task, is_returned=is_returned)
+
+    # assert
+    task_service_init_mock.assert_called_once_with(instance=task, user=owner)
+    partial_update_mock.assert_called_once_with(
+        is_urgent=False,
+        date_completed=None,
+        status=TaskStatus.ACTIVE,
+        date_started=current_date,
+        force_save=True,
+    )
+    set_due_date_from_template_mock.assert_called_once_with()
+    task_started_event_mock.assert_not_called()
+    send_new_task_notification_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        recipients=[
+            # workflow starter for a first task can't receive email and push
+            (admin.id, admin.email, True),
+            (user.id, user.email, True),
+            (guest.id, guest.email, True),
+        ],
+        task_id=task.id,
+        task_name=task.name,
+        task_data=task.get_data_for_list(),
+        task_description=task.description,
+        workflow_name=workflow.name,
+        template_name=workflow.get_template_name(),
+        workflow_starter_name=owner.name,
+        workflow_starter_photo=owner.photo,
+        due_date_timestamp=None,
+        logo_lg=account.logo_lg,
+        is_returned=is_returned,
+    )
+    send_new_task_websocket_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        task_id=task.id,
+        recipients=[
+            (owner.id, owner.email),
+            (admin.id, admin.email),
+            (user.id, user.email),
+        ],
+        account_id=account.id,
+        task_data=task.get_data_for_list(),
+    )
+    delete_task_guest_cache_mock.assert_called_once_with(
+        task_id=workflow.tasks.get(number=2).id,
+    )
+    start_next_tasks_mock.assert_called_once_with()
 
 
 def test_complete_task__user_performer__ok(mocker):
@@ -8370,6 +8599,124 @@ def test__get_incompleted_performers_users__completed_group__empty():
     assert result == []
 
 
+def test__get_incompleted_performers_users__user_and_guest__all():
+
+    """User and guest without user_type filter"""
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    guest = create_test_guest(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task.taskperformer_set.all().delete()
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        user_id=user.id,
+        type=PerformerType.USER,
+    )
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        user_id=guest.id,
+        type=PerformerType.USER,
+    )
+
+    # act
+    result = WorkflowActionService._get_incompleted_performers_users(
+        task=task,
+    )
+
+    # assert
+    assert len(result) == 2
+
+    user_data = result[0]
+    assert user_data['id'] == user.id
+    assert user_data['email'] == user.email
+    assert user_data['is_new_tasks_subscriber'] is True
+    assert user_data['is_complete_tasks_subscriber'] is True
+    assert user_data['type'] == UserType.USER
+
+    guest_data = result[1]
+    assert guest_data['id'] == guest.id
+    assert guest_data['email'] == guest.email
+    assert guest_data['is_new_tasks_subscriber'] is True
+    assert guest_data['is_complete_tasks_subscriber'] is True
+    assert guest_data['type'] == UserType.GUEST
+
+
+def test__get_incompleted_performers_users__filter_user_type__users_only():
+
+    """Filter by user_type USER"""
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    guest = create_test_guest(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task.taskperformer_set.all().delete()
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        user_id=user.id,
+        type=PerformerType.USER,
+    )
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        user_id=guest.id,
+        type=PerformerType.USER,
+    )
+
+    # act
+    result = WorkflowActionService._get_incompleted_performers_users(
+        task=task,
+        user_type=UserType.USER,
+    )
+
+    # assert
+    assert len(result) == 1
+    assert result[0]['id'] == user.id
+    assert result[0]['email'] == user.email
+    assert result[0]['type'] == UserType.USER
+
+
+def test__get_incompleted_performers_users__filter_guest_type__guests_only():
+
+    """Filter by user_type GUEST"""
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    guest = create_test_guest(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task.taskperformer_set.all().delete()
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        user_id=user.id,
+        type=PerformerType.USER,
+    )
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        user_id=guest.id,
+        type=PerformerType.USER,
+    )
+
+    # act
+    result = WorkflowActionService._get_incompleted_performers_users(
+        task=task,
+        user_type=UserType.GUEST,
+    )
+
+    # assert
+    assert len(result) == 1
+    assert result[0]['id'] == guest.id
+    assert result[0]['email'] == guest.email
+    assert result[0]['type'] == UserType.GUEST
+
+
 def test__get_all_performers_users__no_performers__empty():
 
     """No performers"""
@@ -8484,11 +8831,9 @@ def test__get_all_performers_users__user_and_group_mix__ok():
     assert result[1]['id'] == user_2.id
 
 
-def test__get_incompleted_recipients__default_exclude_guests__users_only(
-    mocker,
-):
+def test__get_incompleted_recipients__ok(mocker):
 
-    """Default exclude guests"""
+    """Map performers to recipients"""
 
     # arrange
     account = create_test_account()
@@ -8497,16 +8842,21 @@ def test__get_incompleted_recipients__default_exclude_guests__users_only(
     guest_1 = create_test_guest(account=account)
     workflow = create_test_workflow(user=owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
+    service = WorkflowActionService(user=owner, workflow=workflow)
     performers_users = [
-        {
-            'id': guest_1.id,
-            'email': guest_1.email,
-            'type': UserType.GUEST,
-        },
         {
             'id': user_1.id,
             'email': user_1.email,
             'type': UserType.USER,
+            'is_new_tasks_subscriber': True,
+            'is_complete_tasks_subscriber': True,
+        },
+        {
+            'id': guest_1.id,
+            'email': guest_1.email,
+            'type': UserType.GUEST,
+            'is_new_tasks_subscriber': False,
+            'is_complete_tasks_subscriber': False,
         },
     ]
     get_incompleted_performers_users_mock = mocker.patch(
@@ -8518,35 +8868,34 @@ def test__get_incompleted_recipients__default_exclude_guests__users_only(
     )
 
     # act
-    result = WorkflowActionService._get_incompleted_recipients(task=task)
+    result = service._get_incompleted_recipients(task=task)
 
     # assert
-    assert result == [(user_1.id, user_1.email)]
-    get_incompleted_performers_users_mock.assert_called_once_with(task)
+    assert result == [
+        (user_1.id, user_1.email),
+        (guest_1.id, guest_1.email),
+    ]
+    get_incompleted_performers_users_mock.assert_called_once_with(
+        task=task,
+        user_type=None,
+    )
 
 
-def test__get_incompleted_recipients__include_guests__ok(mocker):
+def test__get_incompleted_recipients__filter_user_type__users_only(mocker):
 
-    """Include guests true"""
+    """Pass user_type to performers query"""
 
     # arrange
     account = create_test_account()
     owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
     workflow = create_test_workflow(user=owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
-    user_id = 10
-    guest_id = 20
-    user_email = 'user_1@pneumatic.app'
-    guest_email = 'guest_1@pneumatic.app'
+    service = WorkflowActionService(user=owner, workflow=workflow)
     performers_users = [
         {
-            'id': guest_id,
-            'email': guest_email,
-            'type': UserType.GUEST,
-        },
-        {
-            'id': user_id,
-            'email': user_email,
+            'id': user.id,
+            'email': user.email,
             'type': UserType.USER,
         },
     ]
@@ -8557,21 +8906,20 @@ def test__get_incompleted_recipients__include_guests__ok(mocker):
         ),
         return_value=performers_users,
     )
-    include_guests = True
-    expected_result = [
-        (user_id, user_email),
-        (guest_id, guest_email),
-    ]
+    user_type = UserType.USER
 
     # act
-    result = WorkflowActionService._get_incompleted_recipients(
+    result = service._get_incompleted_recipients(
         task=task,
-        include_guests=include_guests,
+        user_type=user_type,
     )
 
     # assert
-    assert result == expected_result
-    get_incompleted_performers_users_mock.assert_called_once_with(task)
+    assert result == [(user.id, user.email)]
+    get_incompleted_performers_users_mock.assert_called_once_with(
+        task=task,
+        user_type=user_type,
+    )
 
 
 def test__get_incompleted_recipients__empty_performers__empty(mocker):
@@ -8583,6 +8931,7 @@ def test__get_incompleted_recipients__empty_performers__empty(mocker):
     owner = create_test_owner(account=account)
     workflow = create_test_workflow(user=owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
+    service = WorkflowActionService(user=owner, workflow=workflow)
     get_incompleted_performers_users_mock = mocker.patch(
         target=(
             'src.processes.services.workflow_action.WorkflowActionService.'
@@ -8592,128 +8941,14 @@ def test__get_incompleted_recipients__empty_performers__empty(mocker):
     )
 
     # act
-    result = WorkflowActionService._get_incompleted_recipients(task=task)
+    result = service._get_incompleted_recipients(task=task)
 
     # assert
     assert result == []
-    get_incompleted_performers_users_mock.assert_called_once_with(task)
-
-
-def test__get_incompleted_recipients__only_guests_default__empty(mocker):
-
-    """Only guests with default"""
-
-    # arrange
-    account = create_test_account()
-    owner = create_test_owner(account=account)
-    guest_1 = create_test_guest(account=account)
-    workflow = create_test_workflow(user=owner, tasks_count=1)
-    task = workflow.tasks.get(number=1)
-    performers_users = [
-        {
-            'id': guest_1.id,
-            'email': guest_1.email,
-            'type': UserType.GUEST,
-        },
-    ]
-    get_incompleted_performers_users_mock = mocker.patch(
-        target=(
-            'src.processes.services.workflow_action.WorkflowActionService.'
-            '_get_incompleted_performers_users'
-        ),
-        return_value=performers_users,
-    )
-
-    # act
-    result = WorkflowActionService._get_incompleted_recipients(task=task)
-
-    # assert
-    assert result == []
-    get_incompleted_performers_users_mock.assert_called_once_with(task)
-
-
-def test__get_incompleted_recipients__only_guests_included__ok(mocker):
-
-    """Only guests included"""
-
-    # arrange
-    account = create_test_account()
-    owner = create_test_owner(account=account)
-    guest_1 = create_test_guest(account=account)
-    workflow = create_test_workflow(user=owner, tasks_count=1)
-    task = workflow.tasks.get(number=1)
-    performers_users = [
-        {
-            'id': guest_1.id,
-            'email': guest_1.email,
-            'type': UserType.GUEST,
-        },
-    ]
-    get_incompleted_performers_users_mock = mocker.patch(
-        target=(
-            'src.processes.services.workflow_action.WorkflowActionService.'
-            '_get_incompleted_performers_users'
-        ),
-        return_value=performers_users,
-    )
-    include_guests = True
-
-    # act
-    result = WorkflowActionService._get_incompleted_recipients(
+    get_incompleted_performers_users_mock.assert_called_once_with(
         task=task,
-        include_guests=include_guests,
+        user_type=None,
     )
-
-    # assert
-    assert result == [(guest_1.id, guest_1.email)]
-    get_incompleted_performers_users_mock.assert_called_once_with(task)
-
-
-def test__get_incompleted_recipients__unsorted_ids__sorted_by_id(mocker):
-
-    """Sorted by user id"""
-
-    # arrange
-    account = create_test_account()
-    owner = create_test_owner(account=account)
-    workflow = create_test_workflow(user=owner, tasks_count=1)
-    task = workflow.tasks.get(number=1)
-    user_id_1 = 10
-    user_id_2 = 20
-    user_email_1 = 'user_1@pneumatic.app'
-    user_email_2 = 'user_2@pneumatic.app'
-    performers_users = [
-        {
-            'id': user_id_2,
-            'email': user_email_2,
-            'type': UserType.USER,
-        },
-        {
-            'id': user_id_1,
-            'email': user_email_1,
-            'type': UserType.USER,
-        },
-    ]
-    get_incompleted_performers_users_mock = mocker.patch(
-        target=(
-            'src.processes.services.workflow_action.WorkflowActionService.'
-            '_get_incompleted_performers_users'
-        ),
-        return_value=performers_users,
-    )
-    expected_result = [
-        (user_id_1, user_email_1),
-        (user_id_2, user_email_2),
-    ]
-
-    # act
-    result = WorkflowActionService._get_incompleted_recipients(task=task)
-
-    # assert
-    assert len(result) == 2
-    assert result[0] == expected_result[0]
-    assert result[1] == expected_result[1]
-    get_incompleted_performers_users_mock.assert_called_once_with(task)
 
 
 def test__task_skip_for_starter__returned_with_parents__pending(mocker):
