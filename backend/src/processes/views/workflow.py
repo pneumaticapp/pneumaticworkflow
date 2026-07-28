@@ -53,7 +53,6 @@ from src.processes.serializers.workflows.workflow import (
     WorkflowListSerializer,
     WorkflowReturnToTaskSerializer,
     WorkflowSnoozeSerializer,
-    WorkflowTaskCompleteSerializer,
     WorkflowUpdateSerializer,
 )
 from src.processes.services.events import CommentService
@@ -78,7 +77,6 @@ class WorkflowViewSet(
     action_serializer_classes = {
         'retrieve': WorkflowDetailsSerializer,
         'comment': CommentCreateSerializer,
-        'complete': WorkflowTaskCompleteSerializer,
         'return_to': WorkflowReturnToTaskSerializer,
         'finish': WorkflowFinishSerializer,
         'partial_update': WorkflowUpdateSerializer,
@@ -309,34 +307,6 @@ class WorkflowViewSet(
         return self.response_ok(
             WorkflowEventSerializer(instance=event).data,
         )
-
-    @action(methods=['post'], detail=True, url_path='task-complete')
-    def complete(self, request, *args, **kwargs):
-        workflow = self.get_object()
-        serializer = self.get_serializer(
-            data=request.data,
-            extra_fields={'workflow': workflow},
-        )
-        serializer.is_valid(raise_exception=True)
-        service = WorkflowActionService(
-            workflow=workflow,
-            user=request.user,
-            auth_type=request.token_type,
-            is_superuser=request.is_superuser,
-        )
-        try:
-            service.complete_task_for_user(
-                task=serializer.validated_data['task'],
-                fields_values=serializer.validated_data.get('output'),
-            )
-        except WorkflowActionServiceException as ex:
-            raise_validation_error(message=ex.message)
-        except TaskFieldException as ex:
-            raise_validation_error(
-                message=ex.message,
-                api_name=ex.api_name,
-            )
-        return self.response_ok()
 
     @action(methods=['post'], detail=True, url_path='return-to')
     def return_to(self, request, **kwargs):
