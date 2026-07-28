@@ -86,7 +86,7 @@ class PublicTemplateViewSet(
         summary='Run public template',
         description=ACCESS_PUBLIC_TEMPLATE,
         auth=[{'publicTemplateAuth': []}],
-        request=ExternalWorkflowCreateSerializer,
+        request=SecuredExternalWorkflowCreateSerializer,
         responses={
             200: PublicTemplateRunResponseSerializer,
             204: EMPTY,

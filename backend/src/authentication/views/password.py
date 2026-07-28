@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, inline_serializer
+from rest_framework import serializers
 from rest_framework.decorators import action
 from rest_framework.generics import (
     CreateAPIView,
@@ -73,6 +74,18 @@ class ResetPasswordViewSet(
     def throttle_classes(self):
         return (AuthResetPasswordThrottle, )
 
+    @extend_schema(
+        tags=['Auth'],
+        summary='Check if captcha is required',
+        responses={
+            200: inline_serializer(
+                name='CaptchaResponse',
+                fields={
+                    'show_captcha': serializers.BooleanField(),
+                },
+            ),
+        },
+    )
     @action(methods=['get'], detail=False, url_path='captcha')
     def captcha(self, request):
         if not settings.PROJECT_CONF['CAPTCHA']:
@@ -85,7 +98,7 @@ class ResetPasswordViewSet(
     @extend_schema(
         tags=['Auth'],
         summary='Request password reset email',
-        request=ResetPasswordSerializer,
+        request=SecuredResetPasswordSerializer,
         responses={
             200: EMPTY,
             400: VALIDATION_ERROR,
