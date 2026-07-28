@@ -3,6 +3,7 @@ import { makeTemplateTaskClient } from '../../../../../__stubs__/templates.facto
 import { ETaskPerformerType, ITemplateTaskClient } from '../../../../../types/template';
 import { TUserListItem } from '../../../../../types/user';
 import { IGroup } from '../../../../../redux/team/types';
+import { IAiAgent } from '../../../../../redux/aiAgents/types';
 import { makeUser } from '../../../../../__stubs__/users.factory';
 import { makeGroup } from '../../../../../__stubs__/team.factory';
 import { getPerformersForDropdown } from '../getPerformersForDropdown';
@@ -33,6 +34,7 @@ describe('getPerformersForDropdown', () => {
         [],
         [],
         [],
+        [],
         intlMock.formatMessage,
         currentTask,
         tasks,
@@ -59,6 +61,7 @@ describe('getPerformersForDropdown', () => {
         [],
         [],
         [],
+        [],
         intlMock.formatMessage,
       );
 
@@ -71,6 +74,7 @@ describe('getPerformersForDropdown', () => {
       const task = makeTask();
 
       const result = getPerformersForDropdown(
+        [],
         [],
         [],
         [],
@@ -88,7 +92,7 @@ describe('getPerformersForDropdown', () => {
       const users: TUserListItem[] = [makeUser({ id: 5, firstName: 'John', lastName: 'Doe' })];
       const groups: IGroup[] = [makeGroup({ id: 5, name: 'Team A' })];
 
-      const result = getPerformersForDropdown(users, groups, [], intlMock.formatMessage);
+      const result = getPerformersForDropdown(users, groups, [], [], intlMock.formatMessage);
 
       const userOption = result.find((option) => option.optionType === EOptionTypes.User);
       const groupOption = result.find((option) => option.optionType === EOptionTypes.Group);
@@ -97,11 +101,45 @@ describe('getPerformersForDropdown', () => {
       expect(groupOption?.value).toBe('group-5');
     });
 
+    it('generates an AiAgent option for each agent', () => {
+      const aiAgents: IAiAgent[] = [
+        {
+          id: 7,
+          name: 'Analyst',
+          modelSlug: 'test/model',
+          systemPrompt: '',
+          temperature: null,
+          maxTokens: null,
+          photo: null,
+          isActive: true,
+        },
+      ];
+
+      const result = getPerformersForDropdown(
+        [],
+        [],
+        aiAgents,
+        [],
+        intlMock.formatMessage,
+      );
+
+      const aiAgentOptions = result.filter((o) => o.optionType === EOptionTypes.AiAgent);
+
+      expect(aiAgentOptions).toHaveLength(1);
+      expect(aiAgentOptions[0]).toMatchObject({
+        type: ETaskPerformerType.AiAgent,
+        sourceId: '7',
+        label: formatMsg('tasks.task-ai-agent', { name: 'Analyst' }),
+        value: 'ai_agent-7',
+      });
+    });
+
     it('Manager option has a unique value with manager- prefix', () => {
       const currentTask = makeTask({ apiName: 'task-2', number: 2 });
       const tasks = [makeTask(), currentTask];
 
       const result = getPerformersForDropdown(
+        [],
         [],
         [],
         [],

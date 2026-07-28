@@ -60,6 +60,7 @@
       "resendInvite": "/api/accounts/invites/:id/resend",
       "groups": "/accounts/groups",
       "group": "/accounts/groups/:id",
+      "aiAgents": "/ai/agents",
       "editAccount": "/accounts/account",
       "editProfile": "/accounts/user",
       "template": "/templates/:id",

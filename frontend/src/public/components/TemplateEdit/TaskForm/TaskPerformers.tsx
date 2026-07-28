@@ -13,6 +13,7 @@ import { getUserFullName } from '../../../utils/users';
 import { getPerformersForDropdown } from './utils/getPerformersForDropdown';
 import { EBgColorTypes, UserPerformer } from '../../UI/UserPerformer';
 import { getRegularGroupsList } from '../../../redux/selectors/groups';
+import { getActiveAiAgentsList } from '../../../redux/selectors/aiAgents';
 
 import styles from '../TemplateEdit.css';
 import stylesTaskForm from './TaskForm.css';
@@ -30,12 +31,14 @@ export interface ITaskPerformersProps {
 export function TaskPerformers({ task, tasks, users, variables, setCurrentTask }: ITaskPerformersProps) {
   const { formatMessage } = useIntl();
   const groups = useSelector(getRegularGroupsList);
+  const aiAgents = useSelector(getActiveAiAgentsList);
 
   const { rawPerformers = [] } = task;
 
   const dropdownPerformersOption: TUsersDropdownOption[] = getPerformersForDropdown(
     users,
     groups,
+    aiAgents,
     variables,
     formatMessage,
     task,
@@ -51,6 +54,9 @@ export function TaskPerformers({ task, tasks, users, variables, setCurrentTask }
       }
       if (performer.type === ETaskPerformerType.User) {
         return getUsersDropdownOptionValue(EOptionTypes.User, performer.sourceId ?? '');
+      }
+      if (performer.type === ETaskPerformerType.AiAgent) {
+        return getUsersDropdownOptionValue(EOptionTypes.AiAgent, performer.sourceId ?? '');
       }
       return String(performer.sourceId);
     };

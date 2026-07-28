@@ -5,10 +5,12 @@ import { getUserFullName } from '../../../../utils/users';
 import { TTaskVariable } from '../../types';
 import { EOptionTypes, TUsersDropdownOption, getUsersDropdownOptionValue } from '../../../UI/form/UsersDropdown';
 import { IGroup } from '../../../../redux/team/types';
+import { IAiAgent } from '../../../../redux/aiAgents/types';
 
 export function getPerformersForDropdown(
   users: TUserListItem[],
   groups: IGroup[],
+  aiAgents: IAiAgent[],
   variables: TTaskVariable[],
   formatMessage: IntlShape['formatMessage'],
   currentTask?: ITemplateTaskClient,
@@ -60,6 +62,17 @@ export function getPerformersForDropdown(
     value: String(null),
   };
 
+  const aiAgentPerformers: TUsersDropdownOption[] = aiAgents.map((agent) => ({
+    id: agent.id,
+    optionType: EOptionTypes.AiAgent,
+    firstName: '',
+    lastName: '',
+    type: ETaskPerformerType.AiAgent,
+    sourceId: String(agent.id),
+    label: formatMessage({ id: 'tasks.task-ai-agent' }, { name: agent.name }) as string,
+    value: getUsersDropdownOptionValue(EOptionTypes.AiAgent, agent.id),
+  }));
+
   const managerPerformers: TUsersDropdownOption[] = (tasks || [])
     .filter((step) => !currentTask || step.apiName !== currentTask.apiName)
     .map((step) => ({
@@ -76,6 +89,7 @@ export function getPerformersForDropdown(
   return [
     workflowStarterPerformers,
     ...managerPerformers,
+    ...aiAgentPerformers,
     ...groupsPerformers,
     ...outputUsersPerformers,
     ...userPeformers,

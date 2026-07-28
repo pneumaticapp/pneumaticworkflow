@@ -10,6 +10,7 @@ export * from './notifications/actions';
 export * from './selectTemplateModal/actions';
 export * from './runWorkflowModal/actions';
 export * from './groups/slice';
+export * from './aiAgents/slice';
 export * from './dashboard/actions';
 export * from './highlights/actions';
 export * from './webhooks/actions';

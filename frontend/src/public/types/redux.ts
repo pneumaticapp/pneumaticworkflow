@@ -38,6 +38,7 @@ import { IDataset, IDatasetListItem, EDatasetsSorting, TDatasetItemsSortOrder } 
 import { IFieldsetCatalogItem, EFieldsetsSorting } from './fieldset';
 import { IPagesStore } from '../redux/pages/types';
 import { TeamPages, IGroup, UserInvite } from '../redux/team/types';
+import { IAiAgent } from '../redux/aiAgents/types';
 
 export interface IApplicationState {
   general: IGeneralStore;
@@ -63,6 +64,7 @@ export interface IApplicationState {
   task: IStoreTask;
   team: ITeamStore;
   groups: IGroupsStore;
+  aiAgents: IAiAgentsStore;
   tenants: ITenantsStore;
   datasets: IDatasetsStore;
   fieldsets: IFieldsetsStore;
@@ -341,6 +343,11 @@ export type ITeamStore = {
   isInvitesPopupOpen: boolean;
   recentInvitedUsers: TUserListItem[];
   invitesUsersList: UserInvite[];
+};
+
+export type IAiAgentsStore = {
+  isLoading: boolean;
+  list: IAiAgent[];
 };
 
 export type IGroupsStore = {

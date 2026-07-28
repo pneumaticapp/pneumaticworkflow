@@ -449,6 +449,7 @@ export const ruMessages = {
   'tasks.task-dropdown-finish-description': 'Продолжать не требуется',
   'tasks.task-workflow-starter': 'Запускатель процесса',
   'tasks.task-manager-of-step': 'Менеджер: {step}',
+  'tasks.task-ai-agent': 'ИИ-агент: {name}',
   'task.complete-process-success': 'Процесс успешно завершен',
   'task.complete-process-fail': 'Не удалось завершить Процесс',
   'task.resume-process-success': 'Процесс успешно возобновлен',

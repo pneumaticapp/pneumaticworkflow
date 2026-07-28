@@ -24,6 +24,7 @@ import { rootSaga as webhooksSagas } from './webhooks/saga';
 import { rootSaga as tenantsSagas } from './tenants/saga';
 import { rootSaga as pagesSagas } from './pages/saga';
 import { rootSaga as groupsSagas } from './groups/saga';
+import { rootSaga as aiAgentsSagas } from './aiAgents/saga';
 import { rootSaga as datasetsSagas } from './datasets/saga';
 import { rootSaga as fieldsetsSagas } from './fieldsets/saga';
 
@@ -47,6 +48,7 @@ export function* rootSaga() {
       fork(tasksSagas),
       fork(teamSagas),
       fork(groupsSagas),
+      fork(aiAgentsSagas),
       fork(menuSagas),
       fork(webhooksSagas),
       fork(tenantsSagas),
