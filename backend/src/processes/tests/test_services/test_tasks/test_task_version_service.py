@@ -582,9 +582,11 @@ class TestTaskUpdateVersionService:
         )
 
         # assert
-        update_raw_performers_mock.assert_not_called()
+        update_raw_performers_mock.assert_called_once_with(data)
         update_performers_mock.assert_not_called()
-        update_raw_due_date_mock.assert_not_called()
+        update_raw_due_date_mock.assert_called_once_with(
+            data=data['raw_due_date'],
+        )
         set_due_date_from_template.assert_not_called()
         add_raw_performer_mock.assert_not_called()
 
@@ -681,8 +683,10 @@ class TestTaskUpdateVersionService:
         )
 
         # assert
-        update_raw_performers_mock.assert_not_called()
-        update_raw_due_date_mock.assert_not_called()
+        update_raw_performers_mock.assert_called_once_with(data)
+        update_raw_due_date_mock.assert_called_once_with(
+            data=data['raw_due_date'],
+        )
         set_due_date_from_template.assert_not_called()
         add_raw_performer_mock.assert_not_called()
 
@@ -3294,3 +3298,159 @@ def test_update_from_version__no_fieldsets__skip(mocker):
 
     # assert
     update_fieldsets_mock.assert_not_called()
+
+
+def test_update_from_version__completed_task__adds_performer__ok():
+    """
+
+    Integration: update_from_version on a completed task
+    adds new raw_performers and syncs raw_due_date from template
+    data, so they are current when the task is restarted.
+
+    """
+
+    # arrange
+    user = create_test_owner()
+    user_2 = create_test_not_admin(account=user.account)
+    workflow = create_test_workflow(
+        user=user,
+        tasks_count=2,
+        active_task_number=2,
+    )
+    task = workflow.tasks.get(number=1)
+    assert task.is_completed
+    existing_api_name = task.raw_performers.order_by(
+        'id',
+    ).values_list(
+        'api_name', flat=True,
+    ).first()
+    assert existing_api_name is not None
+    new_performer_api_name = 'raw-performer-new'
+    new_due_date_api_name = 'raw-due-date-new'
+
+    service = TaskUpdateVersionService(
+        user=user,
+        instance=task,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+    data = {
+        'api_name': task.api_name,
+        'name': task.name,
+        'description': task.description or '',
+        'clear_description': task.description or '',
+        'number': task.number,
+        'require_completion_by_all': False,
+        'skip_for_starter': False,
+        'revert_task': None,
+        'parents': [],
+        'raw_performers': [
+            {
+                'type': PerformerType.USER,
+                'user_id': user.id,
+                'api_name': existing_api_name,
+            },
+            {
+                'type': PerformerType.USER,
+                'user_id': user_2.id,
+                'api_name': new_performer_api_name,
+            },
+        ],
+        'raw_due_date': {
+            'api_name': new_due_date_api_name,
+            'rule': DueDateRule.AFTER_WORKFLOW_STARTED,
+            'duration': '2 00:00:00',
+            'duration_months': 0,
+            'source_id': None,
+        },
+    }
+
+    # act
+    service.update_from_version(
+        data=data,
+        version=1,
+        workflow=workflow,
+    )
+
+    # assert
+    assert task.raw_performers.count() == 2
+    assert task.raw_performers.filter(
+        api_name=new_performer_api_name,
+        user_id=user_2.id,
+    ).exists()
+
+    raw_due_date = RawDueDate.objects.get(task=task)
+    assert raw_due_date.api_name == new_due_date_api_name
+    assert raw_due_date.rule == DueDateRule.AFTER_WORKFLOW_STARTED
+    assert raw_due_date.duration == timedelta(days=2)
+
+    assert task.is_completed
+
+
+def test_update_from_version__completed_task__removes_performer__ok():
+    """
+
+    Integration: update_from_version on a completed task
+    removes orphaned raw_performers when template no longer
+    includes them.
+
+    """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(
+        user=user,
+        tasks_count=2,
+        active_task_number=2,
+    )
+    task = workflow.tasks.get(number=1)
+    assert task.is_completed
+    assert task.raw_performers.count() == 1
+    removed_api_name = task.raw_performers.first().api_name
+
+    service = TaskUpdateVersionService(
+        user=user,
+        instance=task,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+    new_api_name = 'raw-performer-replaced'
+    data = {
+        'api_name': task.api_name,
+        'name': task.name,
+        'description': task.description or '',
+        'clear_description': task.description or '',
+        'number': task.number,
+        'require_completion_by_all': False,
+        'skip_for_starter': False,
+        'revert_task': None,
+        'parents': [],
+        'raw_performers': [
+            {
+                'type': PerformerType.USER,
+                'user_id': user.id,
+                'api_name': new_api_name,
+            },
+        ],
+        'raw_due_date': None,
+    }
+
+    # act
+    service.update_from_version(
+        data=data,
+        version=1,
+        workflow=workflow,
+    )
+
+    # assert
+    assert task.raw_performers.count() == 1
+    assert not task.raw_performers.filter(
+        api_name=removed_api_name,
+    ).exists()
+    assert task.raw_performers.filter(
+        api_name=new_api_name,
+    ).exists()
+
+    assert not RawDueDate.objects.filter(task=task).exists()
+
+    assert task.is_completed
