@@ -491,6 +491,8 @@ class WorkflowActionService:
 
         """ Continue start task after run or workflow delay """
 
+        if is_returned and task.is_completed:
+            self._send_task_deleted(task)
         task_start_event_already_exist = (
             not is_returned and bool(task.date_started)
         )
@@ -1071,6 +1073,23 @@ class WorkflowActionService:
             messages.MSG_PW_0079(revert_to_tasks[0].name),
         )
 
+    def _send_task_deleted(self, task: Task):
+        task_data = task.get_data_for_list()
+        query = GetTaskPerformersQuery(
+            task_id=task.id,
+            is_completed=False if not task.is_completed else None,
+            user_type=UserType.USER,
+        )
+        users = list(RawSqlExecutor.fetch(*query.get_sql()))
+        recipients = [(user['id'], user['email']) for user in users]
+        if recipients:
+            send_task_deleted_notification.delay(
+                task_id=task.id,
+                recipients=recipients,
+                account_id=task.account_id,
+                task_data=task_data,
+            )
+
     def _deactivate_task(self, parent_task: Task):
 
         dependent_tasks = Task.objects.filter(
@@ -1099,16 +1118,12 @@ class WorkflowActionService:
                         end_date=None,
                         estimated_end_date=None,
                     )
-                if task.is_active:
-                    recipients = self._get_incompleted_recipients(
-                        task=task,
-                        user_type=UserType.USER,
-                    )
-                    send_task_deleted_notification.delay(
-                        task_id=task.id,
-                        recipients=recipients,
-                        account_id=task.account_id,
-                    )
+                if (
+                    task.is_active
+                    or task.is_completed
+                    or task.is_delayed
+                ):
+                    self._send_task_deleted(task)
                 task.date_started = None
                 task.date_completed = None
                 task.status = TaskStatus.PENDING
