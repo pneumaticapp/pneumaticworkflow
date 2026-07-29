@@ -237,11 +237,16 @@ function* fetchSaveTemplate(onSuccess?: () => void, onFailed?: () => void) {
     publicUrl: savedTemplate.publicUrl,
     embedUrl: savedTemplate.embedUrl,
     owners: savedTemplate.owners ?? lastTemplateState.owners,
+    kickoff: {
+      ...lastTemplateState.kickoff,
+      fieldsets: savedTemplate.kickoff.fieldsets,
+    },
     tasks: (() => {
       const savedTasksMap = new Map(savedTemplate.tasks.map((task) => [task.apiName, task]));
       return lastTemplateState.tasks.map((task) => ({
         ...task,
         ancestors: savedTasksMap.get(task.apiName)?.ancestors || [],
+        fieldsets: savedTasksMap.get(task.apiName)?.fieldsets || task.fieldsets,
       }));
     })(),
   };

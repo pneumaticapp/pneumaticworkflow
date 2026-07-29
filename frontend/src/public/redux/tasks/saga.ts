@@ -301,6 +301,24 @@ export function* watchShiftTaskList() {
 }
 
 export function* handleAddTask(newTask: ITaskListItem) {
+  const settings: ReturnType<typeof getTasksSettings> = yield select(getTasksSettings);
+  const { completionStatus } = settings;
+
+  // Reactivated task (return/revert) must leave Completed, not stay as a ghost card.
+  if (completionStatus === ETaskListCompletionStatus.Completed) {
+    const totalTasksCount: ReturnType<typeof getTotalTasksCount> = yield select(getTotalTasksCount);
+    if (totalTasksCount !== null) {
+      yield put(changeTasksCount(totalTasksCount + 1));
+    }
+
+    yield put(showNewTasksNotification(true));
+
+    if (checkSomeRouteIsActive(ERoutes.Tasks)) {
+      yield call(removeTaskFromList, newTask.id);
+    }
+    return;
+  }
+
   const taskList: ReturnType<typeof getTaskList> = yield select(getTaskList);
 
   if (taskList.items.some((task) => task.id === newTask.id)) {
@@ -314,11 +332,6 @@ export function* handleAddTask(newTask: ITaskListItem) {
 
   yield put(showNewTasksNotification(true));
 
-  const settings: ReturnType<typeof getTasksSettings> = yield select(getTasksSettings);
-  const { completionStatus } = settings;
-  if (completionStatus === ETaskListCompletionStatus.Completed) {
-    return;
-  }
   if (!checkSomeRouteIsActive(ERoutes.Tasks)) {
     return;
   }
@@ -327,10 +340,15 @@ export function* handleAddTask(newTask: ITaskListItem) {
   yield refreshTasksFilters();
 }
 
-export function* handleRemoveTask(taskId: number) {
-  const totalTasksCount: ReturnType<typeof getTotalTasksCount> = yield select(getTotalTasksCount);
-  if (totalTasksCount !== null) {
-    yield put(changeTasksCount(totalTasksCount - 1));
+export function* handleRemoveTask(
+  taskId: number,
+  shouldDecrementCounter: boolean = true,
+) {
+  if (shouldDecrementCounter) {
+    const totalTasksCount: ReturnType<typeof getTotalTasksCount> = yield select(getTotalTasksCount);
+    if (totalTasksCount !== null) {
+      yield put(changeTasksCount(totalTasksCount - 1));
+    }
   }
 
   if (!checkSomeRouteIsActive(ERoutes.Tasks)) {

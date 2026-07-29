@@ -504,6 +504,7 @@ services:
   file-service:
     build:
       context: ./storage
+    image: pneumaticworkflow/file-service:${TAG:-stable}
     container_name: pneumatic-file-service
     environment:
       DEBUG: ${FILE_DEBUG:-false}
@@ -536,6 +537,9 @@ services:
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-django_secret_django_secret_django_secret}
       AUTH_TOKEN_ITERATIONS: ${FILE_AUTH_TOKEN_ITERATIONS:-1}
       BACKEND_PRIVATE_URL: ${BACKEND_PRIVATE_URL:-http://pneumatic-nginx/}
+    command: >
+      sh -c "poetry run alembic -c src/shared_kernel/database/alembic.ini upgrade head &&
+             poetry run python -m src.main"
     depends_on:
       file-postgres:
         condition: service_healthy

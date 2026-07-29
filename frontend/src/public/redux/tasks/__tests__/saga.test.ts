@@ -32,7 +32,7 @@ jest.mock('../../templates/saga', () => ({
 
 jest.mock('../../../utils/history', () => ({
   checkSomeRouteIsActive: jest.fn(),
-  history: { replace: jest.fn(), location: { pathname: '/tasks' } },
+  history: { replace: jest.fn(), location: { pathname: '/tasks' }, push: jest.fn() },
 }));
 
 jest.mock('../../../utils/logger', () => ({
@@ -45,6 +45,8 @@ jest.mock('../../../utils/getErrorMessage', () => ({
 
 jest.mock('../../../components/UI/Notifications', () => ({
   NotificationManager: {
+    success: jest.fn(),
+    warning: jest.fn(),
     notifyApiError: jest.fn(),
   },
 }));
@@ -59,6 +61,13 @@ const createTasksState = ({
   taskApiNameFilter = null as string | null,
   completionStatus = ETaskListCompletionStatus.Active,
   taskItems = [] as Partial<ITaskListItem>[],
+  tasksCount,
+}: {
+  templateIdFilter?: number | null;
+  taskApiNameFilter?: string | null;
+  completionStatus?: ETaskListCompletionStatus;
+  taskItems?: Partial<ITaskListItem>[];
+  tasksCount?: number | null;
 } = {}) => ({
   tasks: {
     ...initState,
@@ -68,7 +77,7 @@ const createTasksState = ({
       offset: taskItems.length,
       items: taskItems,
     },
-    tasksCount: taskItems.length,
+    tasksCount: tasksCount === undefined ? taskItems.length : tasksCount,
     tasksSettings: {
       ...initState.tasksSettings,
       completionStatus,
@@ -209,6 +218,69 @@ describe('handleAddTask', () => {
     expect(dispatched).toContainEqual(loadFilterTemplates());
     expect(dispatched).toContainEqual(loadFilterSteps({ templateId: 15 }));
   });
+
+  it('removes reactivated task from Completed list', async () => {
+    (checkSomeRouteIsActive as jest.Mock).mockReturnValue(true);
+
+    const reactivatedTask = createTaskListItem({ id: 42 });
+    const dispatched: IDispatchedAction[] = [];
+
+    function* wrapper() {
+      yield call(handleAddTask, reactivatedTask);
+    }
+
+    await runSaga(
+      {
+        dispatch: (action: IDispatchedAction) => {
+          dispatched.push(action);
+        },
+        getState: () =>
+          createTasksState({
+            completionStatus: ETaskListCompletionStatus.Completed,
+            taskItems: [reactivatedTask],
+            tasksCount: 3,
+          }),
+      },
+      wrapper,
+    ).toPromise();
+
+    expect(dispatched).toContainEqual(changeTasksCount(4));
+    expect(dispatched).toContainEqual(showNewTasksNotification(true));
+    expect(dispatched).toContainEqual(
+      expect.objectContaining({
+        type: 'tasks/changeTaskList',
+      }),
+    );
+    expect(dispatched).not.toContainEqual(loadFilterTemplates());
+  });
+
+  it('does not touch Completed list when Tasks route is inactive', async () => {
+    (checkSomeRouteIsActive as jest.Mock).mockReturnValue(false);
+
+    const reactivatedTask = createTaskListItem({ id: 42 });
+    const dispatched: IDispatchedAction[] = [];
+
+    function* wrapper() {
+      yield call(handleAddTask, reactivatedTask);
+    }
+
+    await runSaga(
+      {
+        dispatch: (action: IDispatchedAction) => {
+          dispatched.push(action);
+        },
+        getState: () =>
+          createTasksState({
+            completionStatus: ETaskListCompletionStatus.Completed,
+            taskItems: [reactivatedTask],
+            tasksCount: null,
+          }),
+      },
+      wrapper,
+    ).toPromise();
+
+    expect(dispatched).toEqual([showNewTasksNotification(true)]);
+  });
 });
 
 describe('handleRemoveTask', () => {
@@ -268,6 +340,94 @@ describe('handleRemoveTask', () => {
 
     expect(dispatched).not.toContainEqual(loadFilterTemplates());
     expect(dispatched).not.toContainEqual(loadFilterSteps({ templateId: 15 }));
+  });
+
+  it('decrements counter when shouldDecrementCounter=true', async () => {
+    (checkSomeRouteIsActive as jest.Mock).mockReturnValue(false);
+
+    const dispatched: IDispatchedAction[] = [];
+
+    function* wrapper() {
+      yield call(handleRemoveTask, 42, true);
+    }
+
+    await runSaga(
+      {
+        dispatch: (action: IDispatchedAction) => {
+          dispatched.push(action);
+        },
+        getState: () => createTasksState({ tasksCount: 5, taskItems: [] }),
+      },
+      wrapper,
+    ).toPromise();
+
+    expect(dispatched).toEqual([changeTasksCount(4)]);
+  });
+
+  it('does not decrement when totalTasksCount is null', async () => {
+    (checkSomeRouteIsActive as jest.Mock).mockReturnValue(false);
+
+    const dispatched: IDispatchedAction[] = [];
+
+    function* wrapper() {
+      yield call(handleRemoveTask, 42, true);
+    }
+
+    await runSaga(
+      {
+        dispatch: (action: IDispatchedAction) => {
+          dispatched.push(action);
+        },
+        getState: () => createTasksState({ tasksCount: null, taskItems: [] }),
+      },
+      wrapper,
+    ).toPromise();
+
+    expect(dispatched).toEqual([]);
+  });
+
+  it('skips counter when shouldDecrementCounter=false', async () => {
+    (checkSomeRouteIsActive as jest.Mock).mockReturnValue(false);
+
+    const dispatched: IDispatchedAction[] = [];
+
+    function* wrapper() {
+      yield call(handleRemoveTask, 42, false);
+    }
+
+    await runSaga(
+      {
+        dispatch: (action: IDispatchedAction) => {
+          dispatched.push(action);
+        },
+        getState: () => createTasksState({ tasksCount: 5, taskItems: [] }),
+      },
+      wrapper,
+    ).toPromise();
+
+    expect(dispatched).toEqual([]);
+  });
+
+  it('defaults shouldDecrementCounter to true', async () => {
+    (checkSomeRouteIsActive as jest.Mock).mockReturnValue(false);
+
+    const dispatched: IDispatchedAction[] = [];
+
+    function* wrapper() {
+      yield call(handleRemoveTask, 42);
+    }
+
+    await runSaga(
+      {
+        dispatch: (action: IDispatchedAction) => {
+          dispatched.push(action);
+        },
+        getState: () => createTasksState({ tasksCount: 10, taskItems: [] }),
+      },
+      wrapper,
+    ).toPromise();
+
+    expect(dispatched).toEqual([changeTasksCount(9)]);
   });
 });
 

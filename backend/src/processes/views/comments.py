@@ -10,6 +10,7 @@ from src.accounts.permissions import (
 )
 from src.generics.mixins.views import CustomViewSetMixin
 from src.generics.permissions import (
+    DenyAll,
     IsAuthenticated,
 )
 from src.processes.models.workflows.event import WorkflowEvent
@@ -68,7 +69,7 @@ class CommentViewSet(
                 UsersOverlimitedPermission(),
                 CommentReactionPermission(),
             )
-        return super().get_permissions()
+        return (DenyAll(),)
 
     def get_queryset(self):
         user = self.request.user
