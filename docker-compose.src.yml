@@ -166,7 +166,10 @@ services:
       CORS_ALLOW_CREDENTIALS: yes
       CORS_ORIGIN_WHITELIST: "http://localhost:8000"
       ENABLE_LOGGING: ${ENABLE_LOGGING:-no}
-      FILE_SERVICE_URL: ${FILE_SERVICE_URL:-http://localhost/files}
+      # Server-side calls must reach the file service inside the compose network
+      FILE_SERVICE_URL: ${FILE_SERVICE_INTERNAL_URL:-http://file-service:8000}
+      # Public link host for markdown file links (domain guard + browser)
+      FILE_SERVICE_PUBLIC_URL: ${FILE_SERVICE_URL:-http://localhost/files}
       # Migration only: direct DB access for sync_files_to_file_service / run_file_migration.
       # Can be removed after all accounts are migrated to file-service.
       FILE_POSTGRES_USER: ${FILE_POSTGRES_USER:-pneumatic}
@@ -295,7 +298,10 @@ services:
       CORS_ALLOW_CREDENTIALS: yes
       CORS_ORIGIN_WHITELIST: "http://localhost:8000"
       ENABLE_LOGGING: ${ENABLE_LOGGING:-no}
-      FILE_SERVICE_URL: ${FILE_SERVICE_URL:-http://localhost/files}
+      # Server-side calls must reach the file service inside the compose network
+      FILE_SERVICE_URL: ${FILE_SERVICE_INTERNAL_URL:-http://file-service:8000}
+      # Public link host for markdown file links (domain guard + browser)
+      FILE_SERVICE_PUBLIC_URL: ${FILE_SERVICE_URL:-http://localhost/files}
       # Migration only: direct DB access for sync_files_to_file_service / run_file_migration.
       # Can be removed after all accounts are migrated to file-service.
       FILE_POSTGRES_USER: ${FILE_POSTGRES_USER:-pneumatic}
@@ -417,7 +423,10 @@ services:
       CORS_ALLOW_CREDENTIALS: yes
       CORS_ORIGIN_WHITELIST: "http://localhost:8000"
       ENABLE_LOGGING: ${ENABLE_LOGGING:-no}
-      FILE_SERVICE_URL: ${FILE_SERVICE_URL:-http://localhost/files}
+      # Server-side calls must reach the file service inside the compose network
+      FILE_SERVICE_URL: ${FILE_SERVICE_INTERNAL_URL:-http://file-service:8000}
+      # Public link host for markdown file links (domain guard + browser)
+      FILE_SERVICE_PUBLIC_URL: ${FILE_SERVICE_URL:-http://localhost/files}
       # Migration only: direct DB access for sync_files_to_file_service / run_file_migration.
       # Can be removed after all accounts are migrated to file-service.
       FILE_POSTGRES_USER: ${FILE_POSTGRES_USER:-pneumatic}

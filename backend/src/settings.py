@@ -77,9 +77,15 @@ class Common(Configuration):
 
     # File Service
     FILE_SERVICE_URL = env.get('FILE_SERVICE_URL')
+    # Public file links can live on a different host than the API base
+    # (e.g. the backend reaches the file service inside the docker
+    # network while links point at the nginx-proxied public host)
+    FILE_SERVICE_PUBLIC_URL = (
+        env.get('FILE_SERVICE_PUBLIC_URL') or FILE_SERVICE_URL
+    )
     FILE_SERVICE_HOST_PATH = None
-    if FILE_SERVICE_URL:
-        parsed = urlparse(FILE_SERVICE_URL)
+    if FILE_SERVICE_PUBLIC_URL:
+        parsed = urlparse(FILE_SERVICE_PUBLIC_URL)
         FILE_SERVICE_HOST_PATH = parsed.netloc + parsed.path.rstrip('/')
 
     FILE_POSTGRES_DB = env.get('FILE_POSTGRES_DB')
