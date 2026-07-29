@@ -162,8 +162,8 @@ services:
       VERIFICATION_CHECK: no
       CORS_ORIGIN_ALLOW_ALL: no
       CORS_ALLOW_CREDENTIALS: yes
-      FILE_SERVICE_URL: ${FILE_SERVICE_URL:-http://file-service:8000}
-      CORS_ORIGIN_WHITELIST: "http://localhost:8000 http://localhost:8002"
+      FILE_SERVICE_URL: ${FILE_SERVICE_URL:-http://localhost:8002}
+      CORS_ORIGIN_WHITELIST: "http://localhost:8000 http://localhost:8002 http://localhost:3000"
       ENABLE_LOGGING: ${ENABLE_LOGGING:-no}
     volumes:
       - ../backend:/pneumatic_backend
@@ -277,8 +277,8 @@ services:
       VERIFICATION_CHECK: no
       CORS_ORIGIN_ALLOW_ALL: no
       CORS_ALLOW_CREDENTIALS: yes
-      FILE_SERVICE_URL: ${FILE_SERVICE_URL:-http://file-service:8000}
-      CORS_ORIGIN_WHITELIST: "http://localhost:8000 http://localhost:8002"
+      FILE_SERVICE_URL: ${FILE_SERVICE_URL:-http://localhost:8002}
+      CORS_ORIGIN_WHITELIST: "http://localhost:8000 http://localhost:8002 http://localhost:3000"
       ENABLE_LOGGING: ${ENABLE_LOGGING:-no}
     volumes:
       - ../backend:/pneumatic_backend
@@ -389,8 +389,8 @@ services:
       VERIFICATION_CHECK: no
       CORS_ORIGIN_ALLOW_ALL: no
       CORS_ALLOW_CREDENTIALS: yes
-      FILE_SERVICE_URL: ${FILE_SERVICE_URL:-http://file-service:8000}
-      CORS_ORIGIN_WHITELIST: "http://localhost:8000 http://localhost:8002"
+      FILE_SERVICE_URL: ${FILE_SERVICE_URL:-http://localhost:8002}
+      CORS_ORIGIN_WHITELIST: "http://localhost:8000 http://localhost:8002 http://localhost:3000"
       ENABLE_LOGGING: ${ENABLE_LOGGING:-no}
     volumes:
       - ../backend:/pneumatic_backend
@@ -434,6 +434,9 @@ services:
       KEY_PREFIX_REDIS: ${FILE_KEY_PREFIX_REDIS:-:1:}
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-django_secret_django_secret_django_secret}
       AUTH_TOKEN_ITERATIONS: ${FILE_AUTH_TOKEN_ITERATIONS:-1}
+    command: >
+      sh -c "poetry run alembic -c src/shared_kernel/database/alembic.ini upgrade head &&
+             poetry run python -m src.main"
     ports:
       - "8002:8000"
     depends_on:
@@ -493,7 +496,7 @@ services:
   seaweedfs-filer:
     image: chrislusf/seaweedfs:3.95
     container_name: pneumatic-seaweedfs-filer
-    command: filer -master="seaweedfs-master:9333" -s3 -s3.port=8333
+    command: filer -master="seaweedfs-master:9333" -s3 -s3.port=8333 -s3.config=/etc/seaweedfs/s3.json
     ports:
       # TODO(production): REMOVE — exposes unauthenticated Filer UI to the internet
       - "8888:8888"  # DEV ONLY
@@ -504,6 +507,7 @@ services:
       - seaweedfs-volume
     volumes:
       - ../storage/seaweedfs/filer.toml:/etc/seaweedfs/filer.toml
+      - ../storage/seaweedfs/s3.json:/etc/seaweedfs/s3.json:ro
       - ../seaweedfs/filer/data:/data:rw
     networks:
       - pneumatic
