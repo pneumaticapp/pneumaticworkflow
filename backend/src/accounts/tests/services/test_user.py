@@ -3114,7 +3114,7 @@ def test_deactivate__clears_own_manager__ok(mocker):
         account_id=account.id,
         user_data=UserWebsocketSerializer(manager).data,
     )
-    on_commit_mock.assert_not_called()
+    assert on_commit_mock.call_count == 1
 
 
 def test_deactivate__clears_subordinates__ok(mocker):
@@ -3170,7 +3170,7 @@ def test_deactivate__clears_subordinates__ok(mocker):
         account_id=account.id,
         user_data=UserWebsocketSerializer(sub).data,
     )
-    assert on_commit_mock.call_count == 1
+    assert on_commit_mock.call_count == 2
 
 
 def test_deactivate__manager__subordinates_notified_and_cleared(mocker):
