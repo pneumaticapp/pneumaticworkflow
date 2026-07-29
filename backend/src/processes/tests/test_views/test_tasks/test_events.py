@@ -613,7 +613,6 @@ def test_events__task_complete_fieldsets_present__ok(api_client):
     """
 
     # arrange
-
     account = create_test_account()
     user = create_test_owner(account=account)
     workflow = create_test_workflow(user=user, tasks_count=1)
@@ -659,6 +658,7 @@ def test_events__task_complete_fieldsets_present__ok(api_client):
     assert response.status_code == 200
     event_data = response.data[0]
     assert event_data['type'] == WorkflowEventType.TASK_COMPLETE
+    assert event_data['task']['output'] == []
     fieldsets_data = event_data['task']['fieldsets']
     assert fieldsets_data is not None
     assert len(fieldsets_data) == 1

@@ -1,15 +1,14 @@
 import pytest
 
 from src.processes.enums import (
-    DirectlyStatus,
     PerformerType,
 )
 from src.processes.models.workflows.task import TaskPerformer
 from src.processes.tests.fixtures import (
-    create_invited_user,
     create_test_account,
+    create_test_admin,
     create_test_group,
-    create_test_user,
+    create_test_owner,
     create_test_workflow,
 )
 
@@ -19,9 +18,11 @@ pytestmark = pytest.mark.django_db
 def test_counters__ok(api_client):
 
     # arrange
-    user = create_test_user()
-    create_test_workflow(user)
-    create_test_workflow(user)
+    account = create_test_account()
+    create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    create_test_workflow(user, tasks_count=1)
+    create_test_workflow(user, tasks_count=1)
     api_client.token_authenticate(user)
 
     # act
@@ -32,20 +33,22 @@ def test_counters__ok(api_client):
     assert response.data['tasks_count'] == 2
 
 
-def test_counters__with_group__ok(api_client):
+def test_counters__user_and_group_performer__ok(api_client):
 
     # arrange
-    user = create_test_user()
-    group = create_test_group(user.account, users=[user])
-    workflow = create_test_workflow(user)
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    group = create_test_group(account, users=[user])
+    workflow = create_test_workflow(owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
+    task.taskperformer_set.all().delete()
     TaskPerformer.objects.create(
         task_id=task.id,
         type=PerformerType.GROUP,
         group_id=group.id,
-        directly_status=DirectlyStatus.CREATED,
     )
-    create_test_workflow(user)
+    create_test_workflow(user, tasks_count=1)
     api_client.token_authenticate(user)
 
     # act
@@ -54,18 +57,119 @@ def test_counters__with_group__ok(api_client):
     # assert
     assert response.status_code == 200
     assert response.data['tasks_count'] == 2
+
+
+def test_counters__group_performer__ok(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    group = create_test_group(account, users=[user])
+    workflow = create_test_workflow(owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task.taskperformer_set.all().delete()
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP,
+        group_id=group.id,
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get('/accounts/user/counters')
+
+    # assert
+    assert response.status_code == 200
+    assert response.data['tasks_count'] == 1
+
+
+def test_counters__group_performer_completed_for_user__ok(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    workflow = create_test_workflow(owner, tasks_count=1)
+    group = create_test_group(account, users=[user])
+    task = workflow.tasks.get(number=1)
+    task.taskperformer_set.all().delete()
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP,
+        group_id=group.id,
+    )
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP_USER,
+        user=user,
+        is_completed=True,
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get('/accounts/user/counters')
+
+    # assert
+    assert response.status_code == 200
+    assert response.data['tasks_count'] == 0
+
+
+def test_counters__group_partitional_completed_and_user_performer__skip(
+    api_client,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    workflow = create_test_workflow(owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task.taskperformer_set.all().delete()
+    task.require_completion_by_all = True
+    task.save(update_fields=['require_completion_by_all'])
+    group = create_test_group(account, users=[user])
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP,
+        group_id=group.id,
+    )
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP_USER,
+        user=user,
+        is_completed=True,
+    )
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.USER,
+        user=user,
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get('/accounts/user/counters')
+
+    # assert
+    assert response.status_code == 200
+    assert response.data['tasks_count'] == 0
 
 
 def test_counters__different_user__ok(api_client):
 
     # arrange
-    user = create_test_user()
-    other_user = create_invited_user(user)
-    create_test_workflow(user)
-    create_test_workflow(user)
-    create_test_workflow(user)
-    create_test_workflow(other_user)
-    create_test_workflow(other_user)
+    account = create_test_account()
+    create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    other_user = create_test_admin(
+        account=account,
+        email='other@pneumatic.app',
+    )
+    create_test_workflow(user, tasks_count=1)
+    create_test_workflow(user, tasks_count=1)
+    create_test_workflow(user, tasks_count=1)
+    create_test_workflow(other_user, tasks_count=1)
+    create_test_workflow(other_user, tasks_count=1)
     api_client.token_authenticate(user)
 
     # act
@@ -79,9 +183,14 @@ def test_counters__different_user__ok(api_client):
 def test_counters__complete_by_all__ok(api_client):
 
     # arrange
-    user = create_test_user()
-    other_user = create_invited_user(user)
-    workflow = create_test_workflow(user)
+    account = create_test_account()
+    create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    other_user = create_test_admin(
+        account=account,
+        email='other@pneumatic.app',
+    )
+    workflow = create_test_workflow(user, tasks_count=1)
     task = workflow.tasks.get(number=1)
     task.require_completion_by_all = True
     raw_performer = task.add_raw_performer(other_user)
@@ -104,18 +213,10 @@ def test_counters__task_performer_changed__ok(mocker, api_client):
 
     # arrange
     account = create_test_account()
-    account_owner = create_test_user(
-        is_account_owner=True,
-        account=account,
-        email='owner@test.test',
-    )
-    user_performer = create_test_user(
-        is_account_owner=False,
-        account=account,
-        email='performer@test.test',
-    )
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
     workflow = create_test_workflow(
-        user=account_owner,
+        user=owner,
         tasks_count=2,
     )
     task = workflow.tasks.get(number=1)
@@ -123,17 +224,17 @@ def test_counters__task_performer_changed__ok(mocker, api_client):
         'src.processes.services.tasks.performers.'
         'send_new_task_notification.delay',
     )
-    api_client.token_authenticate(account_owner)
+    api_client.token_authenticate(owner)
     response_create = api_client.post(
         f'/v2/tasks/{task.id}/create-performer',
-        data={'user_id': user_performer.id},
+        data={'user_id': user.id},
     )
     response_delete = api_client.post(
         f'/v2/tasks/{task.id}/delete-performer',
-        data={'user_id': account_owner.id},
+        data={'user_id': owner.id},
     )
 
-    api_client.token_authenticate(user_performer)
+    api_client.token_authenticate(user)
 
     # act
     response = api_client.get('/accounts/user/counters')
