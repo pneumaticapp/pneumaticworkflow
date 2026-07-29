@@ -1,11 +1,21 @@
 import base64
+from io import BytesIO
 from typing import Dict
+
+import mammoth
+from pdfminer.high_level import extract_text as pdf_extract_text
 
 # Downloads larger than this are not even offered to the model
 MAX_ATTACHMENT_BYTES = 20 * 1024 * 1024
 # Extracted text is cut here so one huge document can't blow
 # the context window
 MAX_EXTRACTED_CHARS = 80_000
+
+PDF_TYPE = 'application/pdf'
+DOCX_TYPE = (
+    'application/vnd.openxmlformats-officedocument.'
+    'wordprocessingml.document'
+)
 
 IMAGE_TYPES = frozenset({
     'image/png',
@@ -33,7 +43,8 @@ EXTENSION_TYPES = {
     'jpeg': 'image/jpeg',
     'webp': 'image/webp',
     'gif': 'image/gif',
-    'pdf': 'application/pdf',
+    'pdf': PDF_TYPE,
+    'docx': DOCX_TYPE,
 }
 
 
@@ -58,15 +69,50 @@ def _truncate(text: str) -> str:
     )
 
 
+def _extract_pdf(data: bytes) -> Dict:
+    try:
+        text = pdf_extract_text(BytesIO(data))
+    except Exception:  # noqa: BLE001 — extraction must never crash a run
+        return {
+            'kind': 'unsupported',
+            'reason': 'the PDF could not be parsed',
+        }
+    text = text.strip()
+    if not text:
+        # A PDF of page images has no text layer to extract
+        return {
+            'kind': 'unsupported',
+            'reason': (
+                'the PDF contains no extractable text '
+                '(a scanned document?)'
+            ),
+        }
+    return {'kind': 'text', 'text': _truncate(text)}
+
+
+def _extract_docx(data: bytes) -> Dict:
+    try:
+        result = mammoth.convert_to_markdown(BytesIO(data))
+        text = result.value.strip()
+    except Exception:  # noqa: BLE001 — extraction must never crash a run
+        return {
+            'kind': 'unsupported',
+            'reason': 'the Word document could not be parsed',
+        }
+    if not text:
+        return {
+            'kind': 'unsupported',
+            'reason': 'the Word document contains no text',
+        }
+    return {'kind': 'text', 'text': _truncate(text)}
+
+
 def extract_content(name: str, content_type: str, data: bytes) -> Dict:
 
     """ Turns a downloaded attachment into something a model can
-        consume: text, an image data URL for vision input, or an
-        "unsupported" entry the model is told about.
-
-        PDF and docx extraction needs libraries the backend does not
-        carry yet — those formats are disclosed as unreadable for now.
-    """
+        consume: text (verbatim, or extracted from PDF/docx), an image
+        data URL for vision input, or an "unsupported" entry the model
+        is told about. """
 
     if len(data) > MAX_ATTACHMENT_BYTES:
         megabytes = round(len(data) / 1024 / 1024)
@@ -83,6 +129,10 @@ def extract_content(name: str, content_type: str, data: bytes) -> Dict:
             'kind': 'image',
             'data_url': f'data:{file_type};base64,{encoded}',
         }
+    if file_type == PDF_TYPE:
+        return _extract_pdf(data)
+    if file_type == DOCX_TYPE:
+        return _extract_docx(data)
     if file_type.startswith('text/') or file_type in TEXT_TYPES:
         return {
             'kind': 'text',
