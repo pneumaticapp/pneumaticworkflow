@@ -2,7 +2,7 @@
 /* prettier-ignore */
 import { ETemplateStatus, ITypedReduxAction } from '../../types/redux';
 import { actionGenerator } from '../../utils/redux';
-import { ITemplate, ITemplateTask, TAITemplateGenerationStatus } from '../../types/template';
+import { ITemplateClient, ITemplateTaskClient, TAITemplateGenerationStatus } from '../../types/template';
 
 export const enum ETemplateActions {
   Load = 'LOAD_TEMPLATE',
@@ -33,10 +33,10 @@ export const loadTemplate: (payload: number) => TLoadTemplate = actionGenerator<
   ETemplateActions.Load,
 );
 
-export type TSetTemplate = ITypedReduxAction<ETemplateActions.SetTemplate, ITemplate>;
-export const setTemplate: (payload: ITemplate) => TSetTemplate = actionGenerator<
+export type TSetTemplate = ITypedReduxAction<ETemplateActions.SetTemplate, ITemplateClient>;
+export const setTemplate: (payload: ITemplateClient) => TSetTemplate = actionGenerator<
   ETemplateActions.SetTemplate,
-  ITemplate
+  ITemplateClient
 >(ETemplateActions.SetTemplate);
 
 export type TLoadTemplateFromSystem = ITypedReduxAction<ETemplateActions.LoadFromSystem, string>;
@@ -94,7 +94,7 @@ export const setTemplateStatus: (payload: ETemplateStatus) => TSetTemplateStatus
 >(ETemplateActions.SetTemplateStatus);
 
 export type TPatchTemplatePayload = {
-  changedFields: Partial<ITemplate>;
+  changedFields: Partial<ITemplateClient>;
   onSuccess?(): void;
   onFailed?(): void;
 };
@@ -106,7 +106,7 @@ export const patchTemplate: (payload: TPatchTemplatePayload) => TPatchTemplate =
 
 export type TPatchTaskPayload = {
   taskUUID: string;
-  changedFields: Partial<ITemplateTask>;
+  changedFields: Partial<ITemplateTaskClient>;
 };
 export type TPatchTask = ITypedReduxAction<ETemplateActions.PatchTask, TPatchTaskPayload>;
 export const patchTask: (payload: TPatchTaskPayload) => TPatchTask = actionGenerator<
@@ -140,7 +140,7 @@ export const setAITemplateGenerationStatus: (payload: TAITemplateGenerationStatu
   TAITemplateGenerationStatus
 >(ETemplateActions.SetAITemplateGenerationStatus);
 
-export type TSetAITemplateDataPayload = { template: ITemplate | null };
+export type TSetAITemplateDataPayload = { template: ITemplateClient | null };
 export type TSetAITemplateData = ITypedReduxAction<
   ETemplateActions.SetAITemplateData,
   TSetAITemplateDataPayload

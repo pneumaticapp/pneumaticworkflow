@@ -35,6 +35,10 @@ export interface IDropdownProps {
   className?: string;
   toggleProps?: { [key in string]: string };
   menuClassName?: string;
+  /** Passes reactstrap DropdownMenu `positionFixed` so Popper uses fixed positioning (escapes overflow scroll). */
+  menuPositionFixed?: boolean;
+  /** Passes reactstrap DropdownMenu `container` (portal target), e.g. `document.body`. */
+  menuContainer?: string | HTMLElement;
   renderToggle(isOpen: boolean): React.ReactNode;
   renderMenuContent?(renderedOptions: React.ReactNode): React.ReactNode;
   CustomDropdownMenu?(props: IDropdownMenuProps): JSX.Element;
@@ -59,6 +63,8 @@ export function Dropdown({
   className,
   toggleProps,
   menuClassName,
+  menuPositionFixed = false,
+  menuContainer,
   renderToggle,
   renderMenuContent,
   CustomDropdownMenu,
@@ -77,6 +83,10 @@ export function Dropdown({
   };
 
   const renderOptions = (items: TDropdownOption[] | TDropdownOption, level = 0): React.ReactNode => {
+    const overlayAtRoot = level === 0;
+    const positionFixed = Boolean(menuPositionFixed && overlayAtRoot);
+    const container = overlayAtRoot ? menuContainer : undefined;
+
     if (!Array.isArray(items)) {
       const Menu = CustomDropdownMenu || DefaultDropdownMenu;
 
@@ -88,6 +98,8 @@ export function Dropdown({
           direction={direction}
           className={menuClassName}
           renderMenuContent={renderMenuContent}
+          positionFixed={positionFixed}
+          container={container}
         />
       );
     }
@@ -141,6 +153,7 @@ export function Dropdown({
                 renderedOptions={customSubOption}
                 isWide
                 level={level + 1}
+                positionFixed={false}
               />
             )}
           </UncontrolledDropdown>
@@ -184,6 +197,8 @@ export function Dropdown({
         level={level}
         direction={direction}
         className={menuClassName}
+        positionFixed={positionFixed}
+        container={container}
         {...(level === 0 && { renderMenuContent })}
       />
     );
@@ -226,6 +241,8 @@ export interface IDropdownMenuProps {
   direction?: 'right' | 'left';
   className?: string;
   renderMenuContent?(renderedOptions: React.ReactNode): React.ReactNode;
+  positionFixed?: boolean;
+  container?: string | HTMLElement;
 }
 
 export function DefaultDropdownMenu({
@@ -235,18 +252,26 @@ export function DefaultDropdownMenu({
   direction = 'right',
   className,
   renderMenuContent,
+  positionFixed = false,
+  container,
 }: IDropdownMenuProps) {
   const content = renderMenuContent?.(renderedOptions) || renderedOptions;
 
   return (
     <DropdownMenu
       cssModule={{
-        'dropdown-menu': classnames(styles['dropdown-menu'], isWide && styles['dropdown-menu_wide']),
+        'dropdown-menu': classnames(
+          styles['dropdown-menu'],
+          isWide && styles['dropdown-menu_wide'],
+          !positionFixed && styles['dropdown-menu_bootstrap-placement'],
+        ),
         show: styles['dropdown-menu_show'],
       }}
       right={level === 0 && direction === 'right'}
       className={className}
       modifiers={{ preventOverflow: { boundariesElement: 'window' } }}
+      positionFixed={positionFixed}
+      container={container}
     >
       {content}
     </DropdownMenu>

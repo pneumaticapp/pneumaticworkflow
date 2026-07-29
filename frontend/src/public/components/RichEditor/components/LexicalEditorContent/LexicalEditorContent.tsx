@@ -53,6 +53,7 @@ export function LexicalEditorContent({
   onCancel,
   submitIcon,
   cancelIcon,
+  editorClassName,
   withControls = false,
   plainText = false,
   templateVariables,
@@ -67,6 +68,7 @@ export function LexicalEditorContent({
         styles['editor'],
         multiline && styles['editor-multiline'],
         isUploading && styles['editor-uploading'],
+        editorClassName,
       )}
     >
       <Loader isLoading={isUploading} />

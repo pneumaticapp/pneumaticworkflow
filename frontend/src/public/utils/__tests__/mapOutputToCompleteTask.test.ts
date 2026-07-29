@@ -1,5 +1,5 @@
-/// <reference types="jest" />
 import { mapOutputToCompleteTask } from '../mappers';
+import { makeExtraField } from '../../__stubs__/fields.factory';
 import { EExtraFieldType, IExtraField } from '../../types/template';
 
 jest.mock('../dateTime', () => ({
@@ -11,13 +11,8 @@ jest.mock('../dateTime', () => ({
   formatDateToISOInTask: jest.fn(),
 }));
 
-const makeField = (overrides: Partial<IExtraField>): IExtraField => ({
-  apiName: 'field-1',
+const makeField = (overrides: Partial<IExtraField>) => makeExtraField({
   name: 'Test',
-  type: EExtraFieldType.String,
-  order: 0,
-  userId: null,
-  groupId: null,
   ...overrides,
 });
 

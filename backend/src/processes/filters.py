@@ -14,8 +14,8 @@ from src.generics.filters import (
     TsQuerySearchFilter,
 )
 from src.processes.enums import TaskStatus, WorkflowStatus
+from src.processes.models.templates.fieldset import FieldsetTemplate
 from src.processes.models.templates.system_template import SystemTemplate
-from src.processes.models.templates.template import Template
 from src.processes.models.workflows.event import WorkflowEvent
 
 
@@ -26,22 +26,6 @@ class TemplateOrderingFilter(OrderingFilter):
             ordering.extend(value)
 
         return super().filter(qs, ordering)
-
-
-class TemplateFilter(FilterSet):
-    ordering = TemplateOrderingFilter(
-        fields=(
-            ('name', 'name'),
-            ('date_created', 'date'),
-        ),
-    )
-
-    class Meta:
-        model = Template
-        fields = (
-            'ordering',
-            'is_active',
-        )
 
 
 class WorkflowDurationFilter(FilterSet):
@@ -150,3 +134,20 @@ class SystemTemplateFilter(FilterSet):
     search = TsQuerySearchFilter(
         field_name='search_content',
     )
+
+
+class FieldSetFilter(FilterSet):
+
+    ordering = DefaultOrderingFilter(
+        fields=(
+            ('name', 'name'),
+            ('date_created', 'date'),
+        ),
+        default=('-date_created',),
+    )
+
+    class Meta:
+        model = FieldsetTemplate
+        fields = (
+            'ordering',
+        )

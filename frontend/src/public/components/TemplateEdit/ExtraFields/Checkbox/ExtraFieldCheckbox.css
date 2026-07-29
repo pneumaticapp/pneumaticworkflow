@@ -16,13 +16,20 @@
 .kickoff-create-field-name {
   position: relative;
   display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
   max-width: 100%;
 }
 
 .kickoff-create-field-name-input {
-  padding: 0;
-  line-height: 20px;
+  padding: 0 4px 0 0;
+  min-width: 0;
+  resize: none;
   border: none;
+  field-sizing: content;
+  overflow-wrap: break-word;
+
+  @mixin text-base;
 
   &:focus {
     outline: none;
@@ -98,6 +105,7 @@
 
 .kickoff-set-field-container {
   display: block;
+  flex-grow: 1;
 }
 
 .kickoff-set-field-name {
@@ -133,4 +141,9 @@
 .edit-name-button {
   position: relative;
   top: -2px;
+}
+
+.checkbox-options-wrapper_label-left {
+  flex: 1;
+  min-width: 0;
 }

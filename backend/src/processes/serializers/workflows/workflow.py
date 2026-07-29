@@ -24,6 +24,7 @@ from src.generics.paginations import DefaultPagination
 from src.processes.enums import (
     OwnerRole,
     OwnerType,
+    PerformerType,
     TaskStatus,
     WorkflowApiStatus,
     WorkflowOrdering,
@@ -31,9 +32,8 @@ from src.processes.enums import (
 )
 from src.processes.models.workflows.kickoff import KickoffValue
 from src.processes.models.workflows.fields import FieldSelection, TaskField
-from src.processes.models.workflows.task import TaskPerformer
+from src.processes.models.workflows.task import Task, TaskPerformer
 from src.processes.messages import workflow as messages
-from src.processes.models.workflows.task import Task
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.paginations import WorkflowListPagination
 from src.processes.serializers.templates.template import (
@@ -179,7 +179,7 @@ class WorkflowCreateSerializer(
             user.is_account_owner or
             value.taskperformer_set.by_user_or_group(
                 user.id,
-            ).exclude_directly_deleted().exists()
+            ).type_user_or_group().exclude_directly_deleted().exists()
         )
         if not allowed_performer:
             raise ValidationError(messages.MSG_PW_0075)
@@ -286,34 +286,6 @@ class WorkflowUpdateSerializer(
         return self.instance
 
 
-class WorkflowTaskCompleteSerializer(
-    CustomValidationErrorMixin,
-    serializers.Serializer,
-):
-
-    task_id = serializers.IntegerField(required=False)
-    task_api_name = serializers.CharField(required=False)
-    output = serializers.DictField(required=False)
-
-    def validate(self, attrs):
-        workflow = self.context['workflow']
-        task_id = attrs.get('task_id')
-        task_api_name = attrs.get('task_api_name')
-
-        if not (task_id or task_api_name):
-            raise ValidationError(messages.MSG_PW_0076)
-        task = workflow.tasks.filter(
-            Q(id=task_id) | Q(api_name=task_api_name),
-        ).first()
-        if task is None:
-            raise ValidationError(messages.MSG_PW_0077)
-        if not task.is_active:
-            raise ValidationError(messages.MSG_PW_0086)
-
-        attrs['task'] = task
-        return attrs
-
-
 class WorkflowReturnToTaskSerializer(
     CustomValidationErrorMixin,
     serializers.Serializer,
@@ -399,23 +371,32 @@ class WorkflowDetailsSerializer(serializers.ModelSerializer):
     is_read_only_viewer = serializers.SerializerMethodField()
 
     def get_kickoff(self, instance: Workflow):
+        field_prefetches = [
+            Prefetch(
+                lookup='selections',
+                queryset=FieldSelection.objects.order_by('id'),
+                to_attr='selections_values',
+            ),
+            Prefetch(
+                'dataset__items',
+                queryset=DatasetItem.objects.order_by('order'),
+                to_attr='dataset_values',
+            ),
+        ]
         kickoff = (
             KickoffValue.objects
             .filter(workflow=self.instance)
             .prefetch_related(
                 Prefetch(
                     lookup='output',
-                    queryset=TaskField.objects.all().prefetch_related(
-                        Prefetch(
-                            lookup='selections',
-                            queryset=FieldSelection.objects.order_by('id'),
-                            to_attr='selections_values',
-                        ),
-                        Prefetch(
-                            'dataset__items',
-                            queryset=DatasetItem.objects.order_by('order'),
-                            to_attr='dataset_values',
-                        ),
+                    queryset=TaskField.objects.filter(
+                        fieldset__isnull=True,
+                    ).prefetch_related(*field_prefetches),
+                ),
+                Prefetch(
+                    lookup='fieldsets__fields',
+                    queryset=TaskField.objects.prefetch_related(
+                        *field_prefetches,
                     ),
                 ),
             ).first()
@@ -457,9 +438,12 @@ class WorkflowDetailsSerializer(serializers.ModelSerializer):
         is_performer = TaskPerformer.objects.filter(
             task__workflow=instance,
             task__account_id=user.account_id,
-        ).filter(
-            Q(user_id=user.id) |
-            Q(group__users__id=user.id),
+        ).type_user_or_group().filter(
+            Q(user_id=user.id, type=PerformerType.USER)
+            | Q(
+                type=PerformerType.GROUP,
+                group__users__id=user.id,
+            ),
         ).exists()
         if is_performer:
             return False

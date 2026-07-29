@@ -1,10 +1,10 @@
-import { ITemplateTask } from '../../../types/template';
+import { ITemplateTaskClient } from '../../../types/template';
 import { TUserListItem } from '../../../types/user';
 import { EMoveDirections } from '../../../types/workflow';
 
 export interface ITemplateEntityProps {
   index: number;
-  task: ITemplateTask;
+  task: ITemplateTaskClient;
   users: TUserListItem[];
   tasksCount: number;
   isSubscribed: boolean;
@@ -13,7 +13,7 @@ export interface ITemplateEntityProps {
   actualPreviousTaskApiName?: string;
   addDelay(): void;
   addTaskBefore(): void;
-  deleteDelay(targetTask: ITemplateTask): () => void;
+  deleteDelay(targetTask: ITemplateTaskClient): () => void;
   editDelay(delay: string): void;
   toggleDelay(): void;
   handleMoveTask(from: number, direction: EMoveDirections): () => void;

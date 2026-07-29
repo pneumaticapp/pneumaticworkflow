@@ -59,6 +59,12 @@
   }
   /* stylelint-enable */
 }
+
+.user-dropdown-wrapper_label-left {
+  flex: 1;
+  min-width: 0;
+}
+
 .kickoff-create-field-container {
   flex-grow: 1;
   max-width: calc(100% - 40px);

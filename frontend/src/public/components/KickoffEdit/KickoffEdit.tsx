@@ -1,37 +1,43 @@
-import React, { useEffect } from 'react';
+import * as React from 'react';
+import { useEffect } from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
-import { IExtraField, EExtraFieldMode, IKickoff } from '../../types/template';
+import { IExtraField, IKickoffClient } from '../../types/template';
+import { IFieldsetRuntime } from '../../types/fieldset';
 import { EInputNameBackgroundColor } from '../../types/workflow';
 import { isArrayWithItems } from '../../utils/helpers';
 import { IntlMessages } from '../IntlMessages';
-import { ExtraFieldIntl } from '../TemplateEdit/ExtraFields';
 import { checkExtraFieldsAreValid } from '../WorkflowEditPopup/utils/areKickoffFieldsValid';
 import { Loader } from '../UI/Loader';
 import { autoFocusFirstField } from '../../utils/autoFocusFirstField';
+import { MergedOutputList } from '../MergedOutputList';
 
 import { Button } from '../UI/Buttons/Button';
 
 import styles from './KickoffEdit.css';
 
 export interface IEditKickoffProps {
-  kickoff: IKickoff | null;
+  kickoff: IKickoffClient | null;
+  fieldsets?: IFieldsetRuntime[];
   isLoading?: boolean;
   accountId: number;
   onEditField(apiName: string): (changedProps: Partial<IExtraField>) => void;
+  onEditFieldsetField?(apiName: string): (changedProps: Partial<IExtraField>) => void;
   onSave?(): void;
   onCancel?(): void;
 }
 
 export function EditKickoff({
   kickoff,
+  fieldsets = [],
   isLoading = false,
   accountId,
   onEditField,
+  onEditFieldsetField,
   onSave,
   onCancel,
 }: IEditKickoffProps) {
-  if (!kickoff || !isArrayWithItems(kickoff.fields)) return null;
+  if (!kickoff || (!isArrayWithItems(kickoff.fields) && !isArrayWithItems(fieldsets))) return null;
 
   const { formatMessage } = useIntl();
   const wrapperRef = React.useRef<HTMLFormElement>(null);
@@ -48,7 +54,10 @@ export function EditKickoff({
         {Boolean(onSave) && (
           <Button
             type="submit"
-            disabled={!checkExtraFieldsAreValid(kickoff.fields)}
+            disabled={
+              !checkExtraFieldsAreValid(kickoff.fields) ||
+              fieldsets.some(fieldset => !checkExtraFieldsAreValid(fieldset.fields))
+            }
             label={formatMessage({ id: 'kickoff-edit.buttons.save' })}
             buttonStyle="yellow"
           />
@@ -66,6 +75,7 @@ export function EditKickoff({
     );
   };
 
+
   const renderKickoffFields = () => {
     return (
       <>
@@ -74,20 +84,15 @@ export function EditKickoff({
         </p>
         {kickoff.description && <p className={styles['kickoff__description']}>{kickoff.description}</p>}
         <div className={styles['kickoff__inputs']}>
-          {kickoff.fields.map((field) => (
-            <ExtraFieldIntl
-              key={field.apiName}
-              field={{ ...field }}
-              editField={onEditField(field.apiName)}
-              showDropdown={false}
-              mode={EExtraFieldMode.ProcessRun}
-              labelBackgroundColor={EInputNameBackgroundColor.White}
-              namePlaceholder={field.name}
-              descriptionPlaceholder={field.description}
-              wrapperClassName={styles['kickoff__field']}
-              accountId={accountId}
-            />
-          ))}
+          <MergedOutputList
+            fields={kickoff.fields}
+            fieldsets={fieldsets}
+            onEditField={onEditField}
+            onEditFieldsetField={onEditFieldsetField || onEditField}
+            labelBackgroundColor={EInputNameBackgroundColor.White}
+            fieldClassName={styles['kickoff__field']}
+            accountId={accountId}
+          />
         </div>
 
         {renderButtons()}

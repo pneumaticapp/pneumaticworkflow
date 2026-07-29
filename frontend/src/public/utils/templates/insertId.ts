@@ -10,7 +10,7 @@ const isObject = (value: any) => {
 };
 
 // tslint:disable-next-line: no-any
-export const insertId = <T extends { [key: string]: any }>(initialObj: T, savedObj: T): T => {
+export const insertId = <T extends { [key: string]: any }>(initialObj: T, savedObj: { [key: string]: any }): T => {
   const EQUALTY_KEYS = ['apiName', 'predicateApiName'];
   const ID_KEYS = ['id', 'predicateId'];
 

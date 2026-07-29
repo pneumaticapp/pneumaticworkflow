@@ -7,6 +7,7 @@ export interface IOutputFieldContentProps {
   editField: (changedProps: Partial<IExtraField>) => void;
   isDisabled?: boolean;
   datasetName?: string;
+  className?: string;
   children?: React.ReactNode;
 }
 

@@ -1,6 +1,6 @@
 import produce from 'immer';
 
-import { ITemplate, ITemplateTask } from '../../types/template';
+import { ITemplateClient, ITemplateTaskClient } from '../../types/template';
 import { ETemplateStatus, ITemplateStore } from '../../types/redux';
 import { getEmptyKickoff } from '../../utils/template';
 
@@ -14,7 +14,7 @@ export const initialTemplate: ITemplateStore = {
     finalizable: false,
     dateUpdated: null,
     updatedBy: null,
-    tasks: [] as ITemplateTask[],
+    tasks: [] as ITemplateTaskClient[],
     kickoff: getEmptyKickoff(),
     isPublic: false,
     publicUrl: null,
@@ -29,7 +29,7 @@ export const initialTemplate: ITemplateStore = {
     starters: [],
     completionNotification: false,
     reminderNotification: false,
-  } as ITemplate,
+  } as ITemplateClient,
   status: ETemplateStatus.Saved,
   AITemplate: {
     isModalOpened: false,

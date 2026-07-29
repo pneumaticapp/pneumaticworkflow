@@ -47,6 +47,7 @@ class TestCreateKickoff:
                 'is_active': True,
                 'kickoff': {
                     'fields': [],
+                    'fieldsets': [],
                 },
                 'tasks': [
                     {
@@ -86,6 +87,7 @@ class TestCreateKickoff:
         api_client.token_authenticate(user)
         request_data = {
             'fields': [],
+            'fieldsets': [],
         }
 
         # act
@@ -217,6 +219,7 @@ class TestCreateKickoff:
         assert response.status_code == 200
         assert response.data['kickoff'] == {
             'fields': [],
+            'fieldsets': [],
         }
         assert response.data['is_active'] is False
         kickoff_create_mock.assert_called_once()
@@ -262,6 +265,7 @@ class TestCreateKickoff:
         assert response.status_code == 200
         assert response.data['kickoff'] == {
             'fields': [],
+            'fieldsets': [],
         }
         assert response.data['is_active'] is False
         kickoff_create_mock.assert_called_once()

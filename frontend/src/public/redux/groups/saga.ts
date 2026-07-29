@@ -69,7 +69,16 @@ function* createGroupSaga({ payload }: PayloadAction<IGroup>) {
   }
 }
 
-function* updateGroupSaga({ payload }: PayloadAction<IGroup>) {
+function* restoreGroupFromServer(groupId: number) {
+  try {
+    const group: IGroup = yield getGroup(groupId as unknown as Pick<IGroup, 'id'>);
+    yield put(updateGroupSuccess(group));
+  } catch (error) {
+    logger.error('failed to restore group after update error', error);
+  }
+}
+
+function* updateGroupSaga({ payload, type }: PayloadAction<IGroup>) {
   try {
     const group: IGroup = yield updateGroupApi(payload);
 
@@ -78,6 +87,10 @@ function* updateGroupSaga({ payload }: PayloadAction<IGroup>) {
     NotificationManager.warning({ message: getErrorMessage(error) });
     logger.error('failed to update group', error);
     yield put(updateGroupFailed());
+
+    if (type === updateUsersGroup.type) {
+      yield restoreGroupFromServer(payload.id);
+    }
   }
 }
 

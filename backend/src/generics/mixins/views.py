@@ -176,6 +176,39 @@ class AnonymousMixin:
             request.META.get('HTTP_USER_AGENT'),
         )
 
+    def _action_exists(
+        self,
+        request: Request,
+        scope: str,
+    ) -> Optional[bool]:
+
+        """ Returns True if action was already performed from this IP.
+            Returns None if user ip not found in request headers """
+
+        user_ip = self.get_user_ip(request)
+        if user_ip is None:
+            return None
+        cache_key = self.get_cache_key(key_parts=(scope, user_ip))
+        return self.cache.get(cache_key, 0) > 0
+
+    def _inc_action_counter(
+        self,
+        request: Request,
+        scope: str,
+    ):
+
+        """ Increments the IP-based action counter """
+
+        user_ip = self.get_user_ip(request)
+        if user_ip is None:
+            return
+        cache_key = self.get_cache_key(key_parts=(scope, user_ip))
+        added = self.cache.add(
+            cache_key, 1, timeout=self.cache_timeout,
+        )
+        if not added:
+            self.cache.incr(cache_key)
+
 
 class AnonymousWorkflowMixin(AnonymousMixin):
 
@@ -184,62 +217,41 @@ class AnonymousWorkflowMixin(AnonymousMixin):
         request: Request,
         template: Template,
     ) -> Optional[bool]:
-
-        """ Returns True if the anonymous user has already
-            created a workflow using specific template
-            Returns None if user ip not found in request headers """
-
-        user_ip = self.get_user_ip(request)
-        if user_ip is None:
-            return None
-        cache_key = self.get_cache_key(key_parts=(str(template.id), user_ip))
-        count_created_workflows = self.cache.get(cache_key, 0)
-        return count_created_workflows > 0
+        return self._action_exists(request, str(template.id))
 
     def inc_anonymous_user_workflow_counter(
         self,
-        request,
+        request: Request,
         template: Template,
     ):
-
-        """ Increases the counter of the number of workflow created by
-            the anonymous user """
-
-        user_ip = self.get_user_ip(request)
-        cache_key = self.get_cache_key(key_parts=(str(template.id), user_ip))
-        added = self.cache.add(cache_key, 1, timeout=self.cache_timeout)
-        if not added:
-            self.cache.incr(cache_key)
+        self._inc_action_counter(request, str(template.id))
 
 
 class AnonymousAccountMixin(AnonymousMixin):
 
     def anonymous_user_account_exists(
         self,
-        request,
+        request: Request,
     ) -> Optional[bool]:
-
-        """ Returns True if the anonymous user has already
-            created a account
-            Returns None if user ip not found in request headers """
-
-        user_ip = self.get_user_ip(request)
-        if user_ip is None:
-            return None
-        cache_key = self.get_cache_key(key_parts=('accounts', user_ip))
-        count_created_accounts = self.cache.get(cache_key, 0)
-        return count_created_accounts > 0
+        return self._action_exists(request, 'accounts')
 
     def inc_anonymous_user_account_counter(
         self,
-        request,
+        request: Request,
     ):
+        self._inc_action_counter(request, 'accounts')
 
-        """ Increases the counter of the number of accounts created by
-            the anonymous user """
 
-        user_ip = self.get_user_ip(request)
-        cache_key = self.get_cache_key(key_parts=('accounts', user_ip))
-        added = self.cache.add(cache_key, 1, timeout=self.cache_timeout)
-        if not added:
-            self.cache.incr(cache_key)
+class AnonymousResetPasswordMixin(AnonymousMixin):
+
+    def anonymous_user_reset_exists(
+        self,
+        request: Request,
+    ) -> Optional[bool]:
+        return self._action_exists(request, 'reset_password')
+
+    def inc_anonymous_user_reset_counter(
+        self,
+        request: Request,
+    ):
+        self._inc_action_counter(request, 'reset_password')

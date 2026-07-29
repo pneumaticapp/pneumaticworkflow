@@ -56,9 +56,6 @@ class AccountLogService(BaseModelService):
             contractor=contractor,
         )
 
-    def _create_related(self, **kwargs):
-        pass
-
     def api_request(
         self,
         user: UserModel,

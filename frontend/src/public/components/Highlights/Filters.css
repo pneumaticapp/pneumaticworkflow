@@ -124,13 +124,20 @@
   border: 0.1rem solid var(--pneumatic-color-black16);
   border-radius: 0.8rem;
 
+  > * {
+    width: 100%;
+  }
+
+  /* stylelint-disable-next-line selector-pseudo-class-no-unknown */
+  :global(.react-datepicker-wrapper) {
+    width: 100%;
+  }
+
   input {
     @mixin text-overflow;
+
+    width: 100%;
     /* stylelint-disable-next-line declaration-no-important */
     border: none !important;
   }
-}
-
-.date-filter-custom__separator {
-  color: var(--pneumatic-color-black16);
 }
