@@ -1379,6 +1379,14 @@ class TestUserGroupService:
         check_and_complete_tasks_delay_mock = mocker.patch(
             'src.accounts.services.group.check_and_complete_tasks.delay',
         )
+        sync_performer_group_mock = mocker.patch(
+            'src.accounts.services.group.'
+            'WorkflowPermissionService.sync_performer_group',
+        )
+        sync_attachments_mock = mocker.patch(
+            'src.accounts.services.group.'
+            'schedule_sync_workflow_attachment_permissions',
+        )
 
         # act
         service.delete()
@@ -1391,6 +1399,12 @@ class TestUserGroupService:
             is_superuser=is_superuser,
             auth_type=AuthTokenType.USER,
             account_id=account.id,
+        )
+        sync_performer_group_mock.assert_called_once_with(
+            group_id=group.id,
+        )
+        sync_attachments_mock.assert_called_once_with(
+            workflow.id,
         )
 
     def test_partial_update__removed_users_rcba__enqueue_after_commit(
