@@ -4,7 +4,6 @@
   &__avatar {
     flex-shrink: 0;
     margin-right: 1.6rem;
-    flex-shrink: 0;
 
     @media (--mobile) {
       margin-right: 1rem;
