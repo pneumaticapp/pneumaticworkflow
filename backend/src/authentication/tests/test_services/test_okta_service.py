@@ -1208,7 +1208,6 @@ def test_authenticate_user__invited_user_activated__ok(mocker):
     settings_mock.PROJECT_CONF = {
         'SSO_AUTH': True,
         'SSO_PROVIDER': 'okta',
-        'BILLING': False,
     }
     settings_mock.OKTA_CLIENT_SECRET = 'test_secret'
     service = OktaService()
@@ -1323,7 +1322,6 @@ def test_authenticate_user__inactive_user_creates_new__ok(mocker):
     settings_mock.PROJECT_CONF = {
         'SSO_AUTH': True,
         'SSO_PROVIDER': 'okta',
-        'BILLING': False,
     }
     settings_mock.OKTA_CLIENT_SECRET = 'test_secret'
     service = OktaService()

@@ -45,6 +45,7 @@ export function TemplateFilterSelect() {
         isLoading={areFilterTemplatesLoading}
         isMultiple
         isSearchShown
+        isWideMenu
         placeholderText={formatMessage({ id: 'sorting.no-template-found' })}
         searchPlaceholder={formatMessage({ id: 'sorting.search-placeholder' })}
         selectedOptions={templatesIdsFilter}

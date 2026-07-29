@@ -26,6 +26,7 @@ export enum ETaskFormParts {
   CheckIf = 'checkIf',
   DueIn = 'dueIn',
   Fields = 'fields',
+  Fieldsets = 'fieldsets',
   AssignPerformers = 'assignPerformers',
   ReturnTo = 'returnTo',
   StartsAfter = 'startsAfter',

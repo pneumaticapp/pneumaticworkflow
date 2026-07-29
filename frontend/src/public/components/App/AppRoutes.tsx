@@ -22,6 +22,7 @@ import { MainLayout } from '../../layout';
 import { GuestTask } from '../GuestTask';
 import { TenantsView } from '../../views/Tenants';
 import { DatasetsView } from '../../views/Datasets';
+import { FieldsetsView } from '../../views/Fieldsets';
 import { ELoggedState, IAuthUser } from '../../types/redux';
 import { CollectPaymentDetails } from '../CollectPaymentDetails';
 import { AfterPaymentDetailsProvided } from '../AfterPaymentDetailsProvided';
@@ -106,7 +107,7 @@ export function AppRoutes({ containerClassnames, user }: IAppRoutesProps) {
             <ProtectedRoute path={ERoutes.TemplatesEdit} hasAccess={user.isAdmin}>
               <TemplateView />
             </ProtectedRoute>
-            <ProtectedRoute path={ERoutes.Templates} hasAccess={canAccessTemplates}>
+            <ProtectedRoute path={ERoutes.Templates} hasAccess={user.isAdmin}>
               <TemplatesView />
             </ProtectedRoute>
             <Route path={ERoutes.Tasks} component={TasksView} />
@@ -137,6 +138,12 @@ export function AppRoutes({ containerClassnames, user }: IAppRoutesProps) {
               hasAccess={user.isAdmin || user.isAccountOwner}
             >
               <DatasetsView />
+            </ProtectedRoute>
+            <ProtectedRoute
+              path={ERoutes.Fieldsets}
+              hasAccess={user.isAdmin || user.isAccountOwner}
+            >
+              <FieldsetsView />
             </ProtectedRoute>
 
             <Redirect exact from="/" to={ERoutes.Main} />

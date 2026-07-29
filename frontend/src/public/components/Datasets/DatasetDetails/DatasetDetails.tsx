@@ -69,8 +69,12 @@ const DatasetDetails = ({ match: { params: { id: matchParamId } } }: TDatasetDet
     };
   }, []);
 
-  if (isLoading || !dataset) {
+  if (isLoading) {
     return <DatasetDetailsSkeleton />;
+  }
+
+  if (!dataset) {
+    return null;
   }
 
   const handleAddRow = () => {

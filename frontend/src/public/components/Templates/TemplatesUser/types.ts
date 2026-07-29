@@ -1,12 +1,16 @@
-import { ITemplatesList } from '../../../types/redux';
 import { TCloneTemplatePayload, TDeleteTemplatePayload } from '../../../redux/actions';
+import { ITemplateListItem } from '../../../types/template';
 
-export interface ITemplatesUserProps {
-  templatesList: ITemplatesList;
-  loading?: boolean;
+export interface ITemplateCardProps extends ITemplateListItem {
+  canEdit: boolean | undefined;
+  onRunWorkflow(): void;
   cloneTemplate(payload: TCloneTemplatePayload): void;
   deleteTemplate(payload: TDeleteTemplatePayload): void;
-  loadTemplates(offset: number): void;
-  openRunWorkflowModal({ templateId }: { templateId: number }): void;
-  setIsAITemplateModalOpened(value: boolean): void;
+}
+
+export interface ITemplateCardFooterProps {
+  templateId: number;
+  tasksCount: number;
+  isActive: boolean;
+  onRunWorkflow(): void;
 }

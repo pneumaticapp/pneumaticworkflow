@@ -1,6 +1,7 @@
 import { EWorkflowLogEvent, EWorkflowStatus, IWorkflowDelay, IWorkflowDetailsKickoff } from './workflow';
 import { TUserId } from './user';
 import { IExtraField, ITemplateTitle } from './template';
+import { IFieldsetRuntime } from './fieldset';
 
 export interface IHighlightsItem {
   id: number;
@@ -12,6 +13,7 @@ export interface IHighlightsItem {
     process: number;
     delay: IWorkflowDelay | null;
     output: IExtraField[];
+    fieldsets: IFieldsetRuntime[];
     dueDate: string | null;
   } | null;
   text: string;

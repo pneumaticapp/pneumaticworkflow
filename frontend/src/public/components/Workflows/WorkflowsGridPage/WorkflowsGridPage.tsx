@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import * as React from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
@@ -10,6 +11,7 @@ import { EPageTitle } from '../../../constants/defaultValues';
 import { SearchLargeIcon, StartRoundIcon } from '../../icons';
 import { getTemplate } from '../../../api/getTemplate';
 import { getRunnableWorkflow, loadDatasetsMap } from '../../TemplateEdit/utils/getRunnableWorkflow';
+import { mapTemplateFieldsetsToRuntime } from '../../../utils/mapTemplateFieldsetsToRuntime';
 import { logger } from '../../../utils/logger';
 import { NotificationManager } from '../../UI/Notifications';
 import { getErrorMessage } from '../../../utils/getErrorMessage';
@@ -91,9 +93,10 @@ export const WorkflowsGridPage = function Workflows({
 
         return;
       }
-      const datasetsMap = await loadDatasetsMap(template.kickoff);
+      const { normalizedTemplate, loadedFieldsets } = mapTemplateFieldsetsToRuntime(template);
+      const datasetsMap = await loadDatasetsMap(normalizedTemplate.kickoff, loadedFieldsets);
 
-      const runnableWorkflow = getRunnableWorkflow(template, datasetsMap);
+      const runnableWorkflow = getRunnableWorkflow(normalizedTemplate, datasetsMap, loadedFieldsets);
       if (!runnableWorkflow) {
         openSelectTemplateModal();
 

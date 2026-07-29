@@ -65,9 +65,6 @@ class TemplatePresetService(BaseModelService):
         self.partial_update(is_default=True, force_save=True)
         return self.instance
 
-    def delete(self) -> None:
-        self.instance.delete()
-
     def _reset_default_presets(self) -> None:
         queryset = (
             TemplatePreset.objects

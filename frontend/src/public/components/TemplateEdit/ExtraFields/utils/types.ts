@@ -16,8 +16,8 @@ export interface IKickoffDropdownProps {
   onDeleteField(): void;
   onMoveFieldUp(): void;
   onMoveFieldDown(): void;
-  showDatasetOption?: boolean;
-  datasetOptions?: IDatasetOption[];
+  showDatasetOption: boolean;
+  datasetOptions: IDatasetOption[];
   selectedDatasetId?: number;
-  onDatasetSelect?: (datasetId: number) => void;
+  onDatasetSelect: (datasetId: number) => void;
 }

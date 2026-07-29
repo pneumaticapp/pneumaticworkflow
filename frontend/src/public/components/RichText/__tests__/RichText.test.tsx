@@ -87,6 +87,19 @@ describe('RichText', () => {
     expect(container.firstChild).toMatchSnapshot();
   });
 
+  it('renders single line breaks in markdown mode', () => {
+    const props: IRichTextProps = {
+      text: 'Line 1\nLine 2',
+      isMarkdownMode: true,
+    };
+
+    const { container } = render(<RichText {...props} />);
+
+    expect(container.querySelector('br')).not.toBeNull();
+    expect(container.textContent).toContain('Line 1');
+    expect(container.textContent).toContain('Line 2');
+  });
+
   it('does not append trailing space to paragraphs separated by blank lines', () => {
     const props: IRichTextProps = {
       text: 'Paragraph one\n\nParagraph two\n\n',

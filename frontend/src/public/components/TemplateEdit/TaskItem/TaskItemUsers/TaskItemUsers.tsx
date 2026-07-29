@@ -4,13 +4,13 @@ import * as React from 'react';
 
 import { Avatar, TAvatarUser } from '../../../UI/Avatar';
 import { isArrayWithItems } from '../../../../utils/helpers';
-import { ETaskPerformerType, ITemplateTask, ITemplateTaskPerformer } from '../../../../types/template';
+import { ETaskPerformerType, ITemplateTaskClient, ITemplateTaskPerformer } from '../../../../types/template';
 import { UserData } from '../../../UserData';
 
 import styles from './TaskItemUsers.css';
 
 export interface ITaskItemUsersProps {
-  task: ITemplateTask;
+  task: ITemplateTaskClient;
   maxUsers?: number;
   onClick(): void;
 }

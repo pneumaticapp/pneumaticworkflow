@@ -880,6 +880,76 @@ class TestBasePerformersService:
         assert ex.value.message == messages.MSG_PW_0016
         delete_actions_mock.assert_not_called()
 
+    def test_get_valid_deleted_perf__user_with_group_user__ok(self):
+
+        """
+        USER + GROUP + completed GROUP_USER for the same user
+        → delete USER is allowed and returns the USER performer
+        """
+
+        # arrange
+        account = create_test_account()
+        owner = create_test_owner(account=account)
+        user_1 = create_test_admin(account=account)
+        group_1 = create_test_group(account=account, users=[user_1])
+        workflow = create_test_workflow(user=owner, tasks_count=1)
+        task = workflow.tasks.get(number=1)
+        TaskPerformer.objects.create(
+            task_id=task.id,
+            group_id=group_1.id,
+            type=PerformerType.GROUP,
+        )
+        TaskPerformer.objects.create(
+            task_id=task.id,
+            user_id=owner.id,
+            type=PerformerType.GROUP_USER,
+            is_completed=True,
+            date_completed=timezone.now(),
+        )
+
+        # act
+        task_performer = (
+            BasePerformersService._get_valid_deleted_task_performer(
+                task=task,
+                user=owner,
+            )
+        )
+
+        # assert
+        assert task_performer.user_id == owner.id
+        assert task_performer.type == PerformerType.USER
+
+    def test_get_valid_deleted_perf__user_with_only_group_user__raise(self):
+
+        """
+        Sole actionable USER + GROUP_USER ghost
+        → delete USER is blocked (ghost must not inflate the count)
+        """
+
+        # arrange
+        account = create_test_account()
+        owner = create_test_owner(account=account)
+        other_user = create_test_admin(account=account)
+        workflow = create_test_workflow(user=owner, tasks_count=1)
+        task = workflow.tasks.get(number=1)
+        TaskPerformer.objects.create(
+            task_id=task.id,
+            user_id=other_user.id,
+            type=PerformerType.GROUP_USER,
+            is_completed=True,
+            date_completed=timezone.now(),
+        )
+
+        # act
+        with pytest.raises(PerformersServiceException) as ex:
+            BasePerformersService._get_valid_deleted_task_performer(
+                task=task,
+                user=owner,
+            )
+
+        # assert
+        assert ex.value.message == messages.MSG_PW_0016
+
 
 class TestTaskPerformersService:
 
@@ -2639,6 +2709,52 @@ class TestBasePerformerService2:
             service._get_valid_deleted_task_performer(
                     group=group,
                 )
+
+        # assert
+        assert ex.value.message == messages.MSG_PW_0016
+
+    def test_get_valid_deleted_task_performer__group_with_group_user__raise(
+        self,
+    ):
+
+        """
+        Sole actionable GROUP + GROUP_USER ghost
+        → delete GROUP is blocked (ghost must not inflate the count)
+        """
+
+        # arrange
+        account = create_test_account(plan=BillingPlanType.PREMIUM)
+        user = create_test_user(account=account)
+        other_user = create_test_admin(account=account)
+        template = create_test_template(user=user, is_active=True)
+        group = create_test_group(account, users=[user])
+        task_template = template.tasks.get(number=1)
+        task_template.delete_raw_performers()
+        task_template.add_raw_performer(
+            group=group,
+            performer_type=PerformerType.GROUP,
+        )
+        workflow = create_test_workflow(user, template=template)
+        task = workflow.tasks.get(number=1)
+        TaskPerformer.objects.create(
+            task_id=task.id,
+            user_id=other_user.id,
+            type=PerformerType.GROUP_USER,
+            is_completed=True,
+            date_completed=timezone.now(),
+        )
+        service = BasePerformerService2(
+            user=user,
+            task=task,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER,
+        )
+
+        # act
+        with pytest.raises(GroupPerformerServiceException) as ex:
+            service._get_valid_deleted_task_performer(
+                group=group,
+            )
 
         # assert
         assert ex.value.message == messages.MSG_PW_0016

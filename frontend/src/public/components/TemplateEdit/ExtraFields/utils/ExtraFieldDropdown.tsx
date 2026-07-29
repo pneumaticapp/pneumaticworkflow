@@ -34,7 +34,7 @@ export function ExtraFieldDropdown({
   };
 
   const getDatasetSubOptions = (): TDropdownOption[] | undefined => {
-    if (!showDatasetOption || !datasetOptions?.length) {
+    if (!showDatasetOption || !datasetOptions.length) {
       return undefined;
     }
 

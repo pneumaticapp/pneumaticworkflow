@@ -10,7 +10,6 @@ export interface INotification {
   message: React.ReactNode | null;
   timeOut: number;
   customClassName: string;
-  priority?: boolean;
   onCancelClick?: Function;
   onClick?: Function;
   onSubmitClick?: Function;
@@ -34,6 +33,10 @@ export type TNotificationsListItemOptional =
         id: number;
         name: string;
       };
+    }
+  | {
+      type: 'complete_workflow';
+      workflow: Pick<IWorkflow, 'id' | 'name'>;
     }
   | {
       type: 'reaction';

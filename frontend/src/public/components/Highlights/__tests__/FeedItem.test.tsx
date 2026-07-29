@@ -3,8 +3,8 @@ import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 
 import { FeedItem, ALLOWED_EVENT_TYPES } from '../FeedItem';
-import { EWorkflowLogEvent, EWorkflowStatus } from '../../../types/workflow';
-import { IHighlightsItem } from '../../../types/highlights';
+import { EWorkflowLogEvent } from '../../../types/workflow';
+import { makeHighlightsItem } from '../../../__stubs__/highlights.factory';
 
 jest.mock('../FeedItemHeader', () => ({
   FeedItemHeader: () => <div data-testid="feed-header" />,
@@ -15,7 +15,7 @@ jest.mock('../FeedItemIcon', () => ({
 }));
 
 jest.mock('../../UserData', () => ({
-  UserData: ({ children }: { children: (user: any) => React.ReactNode }) =>
+  UserData: ({ children }: { children: (user: { id: number; firstName: string; lastName: string }) => React.ReactNode }) =>
     children({ id: 1, firstName: 'John', lastName: 'Doe' }),
 }));
 
@@ -30,55 +30,17 @@ jest.mock('../../icons', () => ({
 }));
 
 jest.mock('../../../utils/users', () => ({
-  getUserFullName: (u: any) => `${u.firstName} ${u.lastName}`,
+  getUserFullName: (user: { firstName: string; lastName: string }) => `${user.firstName} ${user.lastName}`,
   EXTERNAL_USER: { firstName: 'External', lastName: 'User' },
 }));
 
 jest.mock('react-router-dom', () => ({
-  Link: ({ children, to }: any) => <a href={to}>{children}</a>,
+  Link: ({ children, to }: { children: React.ReactNode; to: string }) => <a href={to}>{children}</a>,
 }));
 
 jest.mock('../../UI/DateFormat', () => ({
   DateFormat: ({ date }: { date: string }) => <span>{date}</span>,
 }));
-
-const makeHighlightsItem = (
-  type: EWorkflowLogEvent,
-  overrides: Partial<IHighlightsItem> = {},
-): IHighlightsItem => ({
-  id: 1,
-  type,
-  task: {
-    id: 10,
-    name: 'Test Task',
-    number: 1,
-    process: 100,
-    delay: null,
-    output: [],
-    dueDate: null,
-  },
-  text: '',
-  attachments: [],
-  created: '2024-01-01T00:00:00Z',
-  user: { id: 1 },
-  workflow: {
-    id: 100,
-    name: 'Test Workflow',
-    currentTask: 1,
-    tasksCount: 3,
-    template: { id: 1, name: 'Template', count: 0 },
-    isLegacyTemplate: false,
-    legacyTemplateName: '',
-    status: EWorkflowStatus.Running,
-    kickoff: null,
-    isExternal: false,
-  },
-  userId: 1,
-  targetUserId: null,
-  targetGroupId: null,
-  delay: null,
-  ...overrides,
-});
 
 describe('FeedItem', () => {
   const baseProps = {

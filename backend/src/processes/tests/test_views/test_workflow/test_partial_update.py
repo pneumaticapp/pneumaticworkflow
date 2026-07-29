@@ -2,6 +2,7 @@
 from datetime import timedelta
 from django.urls import reverse
 from rest_framework import status
+from rest_framework.exceptions import ValidationError
 
 import pytest
 import pytz
@@ -22,6 +23,7 @@ from src.authentication.enums import AuthTokenType
 from src.generics.messages import MSG_GE_0007
 from src.processes.enums import (
     DueDateRule,
+    FieldSetRuleType,
     FieldType,
     OwnerRole,
     OwnerType,
@@ -29,6 +31,7 @@ from src.processes.enums import (
     TaskStatus,
     WorkflowEventType,
 )
+from src.processes.messages.fieldset import MSG_FS_0002
 from src.processes.messages.workflow import (
     MSG_PW_0023,
     MSG_PW_0032,
@@ -49,10 +52,14 @@ from src.processes.services.events import (
     WorkflowEventService,
 )
 from src.processes.models.templates.owner import TemplateOwner
+from src.processes.serializers.workflows.kickoff_value import (
+    KickoffValueSerializer,
+)
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
     create_test_attachment,
+    create_test_fieldset,
     create_test_not_admin,
     create_test_owner,
     create_test_template,
@@ -540,6 +547,64 @@ class TestPartialUpdateWorkflow:
         assert response.data['message'] == MSG_PW_0032
         assert response.data['details']['reason'] == MSG_PW_0032
         assert response.data['details']['api_name'] == kickoff_field.api_name
+
+    def test_partial_update__kickoff_fieldset_rule_fail__fields_rolled_back(
+        self,
+    ):
+        """
+        Field updates and fieldset rule validation run in one transaction.
+        If validate_rules fails, earlier TaskField values are not persisted.
+        """
+        # arrange
+        account = create_test_account()
+        user = create_test_owner(account=account)
+        workflow = create_test_workflow(user=user)
+        kickoff = workflow.kickoff_instance
+        fieldset = create_test_fieldset(
+            workflow=workflow,
+            kickoff=kickoff,
+            rule_type=FieldSetRuleType.SUM_EQUAL,
+            rule_value='100',
+            api_name='kickoff-fieldset',
+        )
+        field_1 = fieldset.fields.first()
+        field_1.value = '60'
+        field_1.save(update_fields=['value'])
+        field_2 = TaskField.objects.create(
+            account=account,
+            workflow=workflow,
+            fieldset=fieldset,
+            name='Second number',
+            type=FieldType.NUMBER,
+            order=2,
+            api_name='kickoff-fieldset-field-2',
+            value='40',
+        )
+        rule = fieldset.rules.first()
+        rule.fields.add(field_1, field_2)
+        serializer = KickoffValueSerializer(
+            instance=kickoff,
+            data={
+                'fields_data': {
+                    field_1.api_name: 70,
+                    field_2.api_name: 40,
+                },
+            },
+            partial=True,
+            context={'user': user},
+        )
+        serializer.is_valid(raise_exception=True)
+
+        # act
+        with pytest.raises(ValidationError) as ex:
+            serializer.save()
+
+        # assert
+        assert ex.value.detail['message'] == MSG_FS_0002('100')
+        field_1.refresh_from_db()
+        field_2.refresh_from_db()
+        assert field_1.value == '60'
+        assert field_2.value == '40'
 
     def test_partial_update__required_field__validation_error(
         self,
@@ -1797,8 +1862,10 @@ class TestUpdatePerformer:
             field__api_name=field_api_name,
             type=PerformerType.FIELD,
         )
-        assert task_1.performers.count() == 1
-        assert task_1.performers.first().id == user.id
+        assert TaskPerformer.objects.get(
+            task=task_1,
+            user=user,
+        )
 
         task_2 = workflow.tasks.get(number=2)
         assert task_2.is_active
@@ -1807,8 +1874,10 @@ class TestUpdatePerformer:
             field__api_name=field_api_name,
             type=PerformerType.FIELD,
         )
-        assert task_2.performers.count() == 1
-        assert task_2.performers.first().id == user2.id
+        assert TaskPerformer.objects.get(
+            task=task_2,
+            user=user2,
+        )
 
         task_3 = workflow.tasks.get(number=3)
         assert task_3.is_pending
@@ -1817,7 +1886,9 @@ class TestUpdatePerformer:
             field__api_name=field_api_name,
             type=PerformerType.FIELD,
         )
-        assert task_3.performers.count() == 0
+        assert not TaskPerformer.objects.filter(
+            task=task_3,
+        ).exists()
 
     def test_update__user_field__next_task_performer_updated(
         self,
@@ -1905,8 +1976,10 @@ class TestUpdatePerformer:
             field__api_name=field_api_name,
             type=PerformerType.FIELD,
         )
-        assert task_2.performers.count() == 1
-        assert task_2.performers.first().id == user2.id
+        assert TaskPerformer.objects.get(
+            task=task_2,
+            user=user2,
+        )
 
     def test_update__user_field_in_reverted_task__performer_updated(
         self,
@@ -2002,8 +2075,10 @@ class TestUpdatePerformer:
             field__api_name=field_api_name,
             type=PerformerType.FIELD,
         )
-        assert task_1.performers.count() == 1
-        assert task_1.performers.first().id == user2.id
+        assert TaskPerformer.objects.get(
+            task=task_1,
+            user=user2,
+        )
 
     def test_update__user_field_invited_transfer__ok(
         self,

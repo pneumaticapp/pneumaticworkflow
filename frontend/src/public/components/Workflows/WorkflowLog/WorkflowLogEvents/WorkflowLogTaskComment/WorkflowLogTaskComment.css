@@ -3,6 +3,7 @@
 
   &__avatar {
     margin-right: 1.6rem;
+    flex-shrink: 0;
 
     @media (--mobile) {
       margin-right: 1rem;
@@ -65,7 +66,7 @@
       display: block;
       background-color: transparent;
       border: none;
-      transition: all 0.2s;
+      transition: color 0.2s;
 
       &:hover {
         color: var(--pneumatic-color-link);
@@ -92,7 +93,7 @@
       font-size: 1.3rem;
       line-height: 1.6rem;
       color: var(--pneumatic-notification-1);
-      transition: all 0.2s;
+      transition: color 0.2s;
 
       &:hover {
         color: var(--pneumatic-color-link);

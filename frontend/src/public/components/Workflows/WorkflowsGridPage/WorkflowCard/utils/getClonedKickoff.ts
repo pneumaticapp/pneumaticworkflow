@@ -1,14 +1,19 @@
 /* eslint-disable */
 /* prettier-ignore */
-import { EExtraFieldType, IExtraField, IKickoff, TExtraFieldValue } from '../../../../../types/template';
+import {
+  EExtraFieldType,
+  IExtraField,
+  IKickoffClient,
+  TExtraFieldValue,
+} from '../../../../../types/template';
 import { IWorkflowDetailsKickoff } from '../../../../../types/workflow';
 import { getEditKickoff } from '../../../../../utils/workflows';
 import { normalizeSelections } from '../../../../TemplateEdit/utils/normalizeSelections';
 
 export function getClonedKickoff(
   workflowKickoff: IWorkflowDetailsKickoff,
-  templateKickoff: IKickoff,
-): IKickoff {
+  templateKickoff: IKickoffClient,
+): IKickoffClient {
   const kickoff = getEditKickoff(workflowKickoff);
   const normalizedKickoffFields = kickoff.fields
     .map((field) => {
@@ -30,9 +35,7 @@ export function getClonedKickoff(
       return field;
     }
 
-    const arrayValue = typeof field.value === 'string' && field.value !== ''
-      ? field.value.split(', ')
-      : [];
+    const arrayValue = typeof field.value === 'string' && field.value !== '' ? field.value.split(', ') : [];
 
     return { ...field, value: arrayValue as TExtraFieldValue };
   });
@@ -48,9 +51,7 @@ function cloneFieldSelections(field: IExtraField, templateField: IExtraField): I
   let normalizedValue = field.value;
 
   if (normalizedValue) {
-    const parts = Array.isArray(normalizedValue)
-      ? normalizedValue
-      : (normalizedValue as string).split(', ');
+    const parts = Array.isArray(normalizedValue) ? normalizedValue : (normalizedValue as string).split(', ');
     const filtered = parts.filter((value) => templateValues.includes(value));
 
     if (field.type === EExtraFieldType.Checkbox) {

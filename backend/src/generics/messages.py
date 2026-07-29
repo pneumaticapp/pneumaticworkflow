@@ -7,7 +7,7 @@ MSG_GE_0001 = lambda choice: format_lazy(
     choice=choice,
 )
 # Translators: AccountPrimaryKeyRelatedField incorrect init
-MSG_GE_0002 = _('Account or queryset not provided')
+MSG_GE_0002 = _('Queryset not provided')
 MSG_GE_0003 = _('Value should be a list of integers.')
 MSG_GE_0004 = _(
     'The "raise_validation_error" method should be used only '

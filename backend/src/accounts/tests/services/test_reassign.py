@@ -1,11 +1,15 @@
+from unittest.mock import call
+
 import pytest
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 
+from src.accounts.queries import DeleteUserFromTaskPerformerQuery
 from src.accounts.services import exceptions
 from src.accounts.services.reassign import ReassignService
 from src.permissions.enums import PermissionSource
 from src.permissions.models import UserObjectPermission
+from src.executor import RawSqlExecutor
 from src.processes.enums import (
     ConditionAction,
     OwnerType,
@@ -872,6 +876,7 @@ class TestReassignService:
             'TaskPerformer.objects.filter',
         )
         exclude_mock = filter_mock.return_value.exclude
+        delete_mock = exclude_mock.return_value.delete
         update_mock = exclude_mock.return_value.update
 
         service = ReassignService(old_user=old_user, new_group=new_group)
@@ -888,13 +893,23 @@ class TestReassignService:
         sql_execute_mock.assert_called_once_with(
             'SQL_QUERY', {'params': 'values'},
         )
-        filter_mock.assert_called_once_with(
-            user_id=old_user.id,
-            task__account=account,
-        )
-        exclude_mock.assert_called_once_with(
-            task__status='completed',
-        )
+        assert filter_mock.call_args_list == [
+            call(
+                user_id=old_user.id,
+                type=PerformerType.GROUP_USER,
+                task__account=account,
+            ),
+            call(
+                user_id=old_user.id,
+                type=PerformerType.USER,
+                task__account=account,
+            ),
+        ]
+        assert exclude_mock.call_args_list == [
+            call(task__status='completed'),
+            call(task__status='completed'),
+        ]
+        delete_mock.assert_called_once_with()
         update_mock.assert_called_once_with(
             type=PerformerType.GROUP,
             group_id=new_group.id,
@@ -923,6 +938,7 @@ class TestReassignService:
             'TaskPerformer.objects.filter',
         )
         exclude_mock = filter_mock.return_value.exclude
+        delete_mock = exclude_mock.return_value.delete
         update_mock = exclude_mock.return_value.update
 
         service = ReassignService(old_user=old_user, new_user=new_user)
@@ -939,13 +955,23 @@ class TestReassignService:
         sql_execute_mock.assert_called_once_with(
             'SQL_QUERY', {'params': 'values'},
         )
-        filter_mock.assert_called_once_with(
-            user_id=old_user.id,
-            task__account=account,
-        )
-        exclude_mock.assert_called_once_with(
-            task__status='completed',
-        )
+        assert filter_mock.call_args_list == [
+            call(
+                user_id=old_user.id,
+                type=PerformerType.GROUP_USER,
+                task__account=account,
+            ),
+            call(
+                user_id=old_user.id,
+                type=PerformerType.USER,
+                task__account=account,
+            ),
+        ]
+        assert exclude_mock.call_args_list == [
+            call(task__status='completed'),
+            call(task__status='completed'),
+        ]
+        delete_mock.assert_called_once_with()
         update_mock.assert_called_once_with(
             user_id=new_user.id,
         )
@@ -2712,3 +2738,101 @@ def test_reassign_workflow_members__empty_group_to_group__syncs__ok(
     # assert
     assert WorkflowPermissionService(workflow).has_view(user=member)
     attach_mock.assert_called_once_with(workflow.id)
+
+
+def test_reassign_performers__user_group_user_to_user__ok():
+
+    """
+    old_user has USER + GROUP_USER → reassign to new_user
+    → one USER on new_user, GROUP_USER of old_user is removed
+    """
+
+    # arrange
+    account = create_test_account()
+    old_user = create_test_owner(account=account)
+    new_user = create_test_admin(account=account)
+    workflow = create_test_workflow(user=old_user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        user_id=old_user.id,
+        type=PerformerType.GROUP_USER,
+        is_completed=True,
+    )
+    service = ReassignService(old_user=old_user, new_user=new_user)
+
+    # act
+    service._reassign_in_performers()
+
+    # assert
+    assert not TaskPerformer.objects.filter(
+        task_id=task.id,
+        user_id=old_user.id,
+        type=PerformerType.GROUP_USER,
+    ).exists()
+    assert not TaskPerformer.objects.filter(
+        task_id=task.id,
+        user_id=old_user.id,
+        type=PerformerType.USER,
+    ).exists()
+    assert (
+        TaskPerformer.objects.filter(
+            task_id=task.id,
+            type=PerformerType.USER,
+        ).count() == 1
+    )
+    user_performer = TaskPerformer.objects.get(
+        task_id=task.id,
+        type=PerformerType.USER,
+    )
+    assert user_performer.user_id == new_user.id
+
+
+def test_delete_user_task_perf_query__keeps_group_user__ok():
+
+    """
+    Conflicting USER on substitution + GROUP_USER on delete_id
+    → DeleteUserFromTaskPerformerQuery deletes only USER conflict,
+    GROUP_USER remains
+    """
+
+    # arrange
+    account = create_test_account()
+    old_user = create_test_owner(account=account)
+    new_user = create_test_admin(account=account)
+    workflow = create_test_workflow(user=old_user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        user_id=new_user.id,
+        type=PerformerType.USER,
+    )
+    group_user_performer = TaskPerformer.objects.create(
+        task_id=task.id,
+        user_id=old_user.id,
+        type=PerformerType.GROUP_USER,
+        is_completed=True,
+    )
+    delete_query = DeleteUserFromTaskPerformerQuery(
+        delete_id=old_user.id,
+        substitution_id=new_user.id,
+    )
+
+    # act
+    RawSqlExecutor.execute(*delete_query.get_sql())
+
+    # assert
+    assert not TaskPerformer.objects.filter(
+        task_id=task.id,
+        user_id=new_user.id,
+        type=PerformerType.USER,
+    ).exists()
+    assert TaskPerformer.objects.filter(
+        task_id=task.id,
+        user_id=old_user.id,
+        type=PerformerType.USER,
+    ).exists()
+    assert TaskPerformer.objects.filter(
+        id=group_user_performer.id,
+        type=PerformerType.GROUP_USER,
+    ).exists()

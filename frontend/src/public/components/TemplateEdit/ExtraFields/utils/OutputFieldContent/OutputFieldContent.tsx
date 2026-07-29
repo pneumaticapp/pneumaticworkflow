@@ -16,6 +16,7 @@ export function OutputFieldContent({
   editField,
   isDisabled = false,
   datasetName,
+  className,
   children,
 }: IOutputFieldContentProps) {
   const { dataset, selections } = field;
@@ -71,7 +72,7 @@ export function OutputFieldContent({
   );
 
   return (
-    <div className={styles['output-field-content']}>
+    <div className={classnames(styles['output-field-content'], className)}>
       {content}
     </div>
   );

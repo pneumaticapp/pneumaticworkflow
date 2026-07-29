@@ -3,6 +3,7 @@ from typing import Optional, Tuple
 
 from django.contrib.auth import get_user_model
 from django.core.cache import cache as default_cache
+from django.utils import translation
 from rest_framework import HTTP_HEADER_ENCODING
 from rest_framework_simplejwt.authentication import (
     JWTAuthentication,
@@ -275,4 +276,5 @@ class GuestJWTAuthService(JWTAuthentication):
         request.token_type = AuthTokenType.GUEST
         request.is_superuser = False
         request.session['is_authenticated'] = True
+        translation.activate(user.language)
         return user, validated_token

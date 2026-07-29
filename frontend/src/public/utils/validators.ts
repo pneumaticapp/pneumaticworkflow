@@ -285,6 +285,18 @@ export const getSelectionDuplicateError = (value: string, allValues: string[]): 
 export const validateTenantName = validateFieldCreator(TENANT_NAME_RULES);
 export const validateGroupName = validateFieldCreator(GROUP_NAME_RULES);
 export const validateDatasetName = validateFieldCreator(DATASET_NAME_RULES);
+
+export const FIELDSET_NAME_RULES: IRule[] = [
+  {
+    message: 'validation.fieldset-name-empty',
+    isInvalid: isEmpty,
+  },
+  {
+    message: 'validation.fieldset-name-to-long',
+    isInvalid: (value) => value.length > 200,
+  },
+];
+export const validateFieldsetName = validateFieldCreator(FIELDSET_NAME_RULES);
 export const validateDatasetRow = (value: string, existingItems: string[], excludeValue?: string) => {
   const filtered = excludeValue
     ? existingItems.filter((item) => item.trim().toLowerCase() !== excludeValue.trim().toLowerCase())

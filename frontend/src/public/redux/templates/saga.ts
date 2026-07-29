@@ -22,7 +22,8 @@ import {
 } from '../actions';
 import { getTemplatesSystem } from '../../api/getSystemTemplates';
 import { getTemplatesIntegrationsStats } from '../../api/getTemplatesIntegrationsStats';
-import { TTemplateIntegrationStatsApi, TTransformedTask } from '../../types/template';
+import { IExtraField, TTemplateFieldFieldset, TTemplateIntegrationStatsApi, TTransformedTask } from '../../types/template';
+import { buildRuntimeMergedOutputParts } from '../../components/TemplateEdit/TaskOutputFlow/mergeTaskOutputFlow';
 import { logger } from '../../utils/logger';
 import { getErrorMessage } from '../../utils/getErrorMessage';
 import { getTemplatesStore, getTemplatesSystemList } from '../selectors/templates';
@@ -35,11 +36,18 @@ import { isArrayWithItems } from '../../utils/helpers';
 import { getTemplatesSystemCategories } from '../../api/getSystemTemplatesCategories';
 import { ITemplatesSystemCategories } from '../../types/redux';
 import { LIMIT_LOAD_SYSTEMS_TEMPLATES, LIMIT_LOAD_TEMPLATES, varibleIdRegex } from '../../constants/defaultValues';
-import { SYSTEM_FIELDS } from '../../components/Workflows/WorkflowsTablePage/WorkflowsTable/constants';
+import { SYSTEM_MERGED_OUTPUTS } from '../../components/Workflows/WorkflowsTablePage/WorkflowsTable/constants';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { isRequestCanceled } from '../../utils/isRequestCanceled';
+import { getIsAdmin } from '../selectors/user';
 
-function* fetchTemplatesSystem() {
+export function* fetchTemplatesSystem() {
+  const isAdmin: ReturnType<typeof getIsAdmin> = yield select(getIsAdmin);
+
+  if (!isAdmin) {
+    return;
+  }
+
   try {
     const {
       items,
@@ -69,7 +77,13 @@ function* fetchTemplatesSystem() {
   }
 }
 
-function* fetchTemplatesSystemCategories() {
+export function* fetchTemplatesSystemCategories() {
+  const isAdmin: ReturnType<typeof getIsAdmin> = yield select(getIsAdmin);
+
+  if (!isAdmin) {
+    return;
+  }
+
   try {
     const systemTemplatesCategories: ITemplatesSystemCategories[] | undefined = yield getTemplatesSystemCategories();
 
@@ -140,20 +154,27 @@ export function* handleLoadTemplateVariables(templateId: number) {
     const variables = getVariables({ kickoff, tasks });
 
     yield put(loadTemplateVariablesSuccess({ templateId, variables }));
+
+    const hasContent = (item: { fields: IExtraField[]; fieldsets: TTemplateFieldFieldset[] }) =>
+      item.fields.length > 0 || item.fieldsets.length > 0;
+
     const transformedTasks: TTransformedTask[] = [
-      ...[{ apiName: '-2', name: 'System', needSteName: null, fields: SYSTEM_FIELDS }],
-      ...(kickoff.fields.length > 0 ? [{ apiName: '-1', name: 'Kick-off', fields: kickoff.fields }] : []),
+      ...[{ apiName: '-2', name: 'System', needSteName: null, mergedOutputs: SYSTEM_MERGED_OUTPUTS }],
+      ...(hasContent(kickoff)
+        ? [{
+          apiName: '-1',
+          name: 'Kick-off',
+          mergedOutputs: buildRuntimeMergedOutputParts(kickoff.fields, kickoff.fieldsets.filter((fieldset) => fieldset.fields.length > 0)),
+        }]
+        : []),
       ...tasks
-        .filter((task) => task.fields.length > 0)
-        .map((task) => {
-          if (varibleIdRegex.test(task.name)) {
-            return {
-              ...task,
-              needSteName: true,
-            };
-          }
-          return task;
-        }),
+        .filter(hasContent)
+        .map((task) => ({
+          apiName: task.apiName,
+          name: task.name,
+          ...(varibleIdRegex.test(task.name) && { needSteName: true }),
+          mergedOutputs: buildRuntimeMergedOutputParts(task.fields, task.fieldsets.filter((fieldset) => fieldset.fields.length > 0)),
+        })),
     ];
     yield put(saveTemplateTasks({ templateId, transformedTasks }));
   } catch (error) {

@@ -1,13 +1,13 @@
 import { commonRequest } from './commonRequest';
 import { getBrowserConfigEnv } from '../utils/getConfig';
-import { ITask, ETaskListSorting, ETaskListCompletionStatus, ETaskListCompleteSorting } from '../types/tasks';
+import { TTaskListItemResponse, ETaskListSorting, ETaskListCompletionStatus, ETaskListCompleteSorting } from '../types/tasks';
 import { ETimeouts } from '../constants/defaultValues';
 
 export interface IGetTasksResponse {
   count: number;
   next: string;
   previous: string;
-  results: ITask[];
+  results: TTaskListItemResponse[];
 }
 
 export interface IGetTasksConfig {

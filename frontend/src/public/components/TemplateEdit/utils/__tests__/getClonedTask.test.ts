@@ -1,4 +1,5 @@
-import { EExtraFieldType, ITemplateTask } from '../../../../types/template';
+import { EExtraFieldType, ITemplateTaskClient } from '../../../../types/template';
+import { makeFieldsetBindingClient } from '../../../../__stubs__/fieldsets.factory';
 import { createEmptyTaskDueDate } from '../../../../utils/dueDate/createEmptyTaskDueDate';
 import { omit } from '../../../../utils/helpers';
 import { EConditionAction, EConditionLogicOperations, EConditionOperators } from '../../TaskForm/Conditions';
@@ -6,7 +7,7 @@ import { getClonedTask } from '../getClonedTask';
 
 describe('getClonedTask', () => {
   it("returns initial task's copy", () => {
-    const mockTask: ITemplateTask = {
+    const mockTask: ITemplateTaskClient = {
       id: 3048,
       apiName: 'task-1',
       name: 'Task 1',
@@ -83,11 +84,12 @@ describe('getClonedTask', () => {
       checklists: [],
       revertTask: null,
       ancestors: [],
+      fieldsets: [],
     };
 
     const clonedTask = getClonedTask(mockTask);
 
-    const diffFields: (keyof ITemplateTask)[] = [
+    const diffFields: (keyof ITemplateTaskClient)[] = [
       'id',
       'apiName',
       'uuid',
@@ -107,5 +109,40 @@ describe('getClonedTask', () => {
     expect(clonedTask.conditions[0].apiName).not.toBe(mockTask.conditions[0].apiName);
     expect(clonedTask.conditions[0].rules[0].ruleId).toBe(undefined);
     expect(clonedTask.conditions[0].rules[0].ruleApiName).toBe(clonedTask.conditions[0].rules[1].ruleApiName);
+  });
+
+  it('regenerates apiNameBinding for each fieldset on clone', () => {
+    const mockTask: ITemplateTaskClient = {
+      id: 1,
+      apiName: 'task-source',
+      name: 'Task',
+      description: '',
+      number: 1,
+      requireCompletionByAll: false,
+      skipForStarter: false,
+      fields: [],
+      rawPerformers: [],
+      delay: null,
+      rawDueDate: createEmptyTaskDueDate(),
+      conditions: [],
+      uuid: 'uuid-source',
+      checklists: [],
+      revertTask: null,
+      ancestors: [],
+      fieldsets: [
+        makeFieldsetBindingClient({ apiNameBinding: 'fs-a', order: 0 }),
+        makeFieldsetBindingClient({ apiNameBinding: 'fs-b', order: 5 }),
+      ],
+    };
+
+    const clonedTask = getClonedTask(mockTask);
+
+    expect(clonedTask.fieldsets).toHaveLength(2);
+    expect(clonedTask.fieldsets[0].order).toBe(0);
+    expect(clonedTask.fieldsets[1].order).toBe(5);
+    expect(clonedTask.fieldsets[0].apiNameBinding).not.toBe('fs-a');
+    expect(clonedTask.fieldsets[1].apiNameBinding).not.toBe('fs-b');
+    expect(clonedTask.fieldsets[0].apiNameBinding).toMatch(/^fieldset-bind-/);
+    expect(clonedTask.fieldsets[1].apiNameBinding).toMatch(/^fieldset-bind-/);
   });
 });

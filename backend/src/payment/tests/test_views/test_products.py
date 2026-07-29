@@ -1,7 +1,6 @@
 import pytest
 from django.contrib.auth import get_user_model
 
-from src.payment import messages
 from src.payment.enums import PriceStatus
 from src.payment.tests.fixtures import (
     create_test_invoice_price,
@@ -61,11 +60,6 @@ def test_products__ok(
     )
     create_test_product(is_active=False)
     api_client.token_authenticate(user)
-    mocker.patch(
-        'src.payment.views.ProjectBillingPermission'
-        '.has_permission',
-        return_value=True,
-    )
 
     # act
     response = api_client.get('/payment/products')
@@ -124,11 +118,6 @@ def test_products__archived_price__ok(
         max_quantity=20,
     )
     api_client.token_authenticate(user)
-    mocker.patch(
-        'src.payment.views.ProjectBillingPermission'
-        '.has_permission',
-        return_value=True,
-    )
 
     # act
     response = api_client.get('/payment/products')
@@ -151,41 +140,3 @@ def test_products__archived_price__ok(
     assert price_1_data['price'] == price_1.price
     assert price_1_data['trial_days'] == price_1.trial_days
     assert price_1_data['billing_period'] == price_1.billing_period
-
-
-def test_products__disable_billing__permission_denied(
-    mocker,
-    api_client,
-):
-    # arrange
-    account = create_test_account()
-    user = create_test_user(account=account)
-    product = create_test_product(
-        stripe_id='prod_1',
-        code='some code',
-        name='Prem',
-        is_active=True,
-        is_subscription=True,
-    )
-    create_test_recurring_price(
-        product=product,
-        status=PriceStatus.ACTIVE,
-        trial_days=1,
-        code='prem_month',
-        stripe_id='price_1',
-        min_quantity=5,
-        max_quantity=1000,
-    )
-    api_client.token_authenticate(user)
-    mocker.patch(
-        'src.payment.views.ProjectBillingPermission'
-        '.has_permission',
-        return_value=False,
-    )
-
-    # act
-    response = api_client.get('/payment/products')
-
-    # assert
-    assert response.status_code == 403
-    assert response.data['detail'] == messages.MSG_BL_0021

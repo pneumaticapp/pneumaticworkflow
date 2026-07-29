@@ -13,6 +13,7 @@ from src.processes.views.template import (
 )
 from src.processes.views.template_preset import TemplatePresetViewSet
 
+
 router = DefaultRouter(trailing_slash=False)
 router.register(
     prefix='system',

@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import * as React from 'react';
+import { useEffect, useState } from 'react';
 import Switch from 'rc-switch';
 import { Link } from 'react-router-dom';
 import classnames from 'classnames';
@@ -14,7 +15,7 @@ import { ShowMore } from '../../UI/ShowMore';
 import { getLinkToWorkflows } from '../../../utils/routes/getLinkToWorkflows';
 import { getLinkToHighlightsByTemplate } from '../../../utils/routes/getLinkToHighlightsByTemplate';
 import { Button } from '../../UI/Buttons/Button';
-import { ETemplateOwnerRole, ITemplateOwner, ITemplate } from '../../../types/template';
+import { ETemplateOwnerRole, ITemplateOwner, ITemplateClient } from '../../../types/template';
 import {
   TCloneTemplatePayload,
   TDeleteTemplatePayload,
@@ -22,6 +23,7 @@ import {
   discardTemplateChanges,
 } from '../../../redux/actions';
 import { getRunnableWorkflow, loadDatasetsMap } from '../utils/getRunnableWorkflow';
+import { mapFieldsetBindingClientToRuntime } from '../../../utils/mapFieldsetBindingClientToRuntime';
 import { ETemplateStatus } from '../../../types/redux';
 import { IRunWorkflow } from '../../WorkflowEditPopup/types';
 import { WarningPopup } from '../../UI/WarningPopup';
@@ -40,7 +42,7 @@ import { getSubscriptionPlan } from '../../../redux/selectors/user';
 import { ESubscriptionPlan } from '../../../types/account';
 
 export interface ITemplateControllsProps {
-  template: ITemplate;
+  template: ITemplateClient;
   templateStatus: ETemplateStatus;
   isSubscribed: boolean;
   cloneTemplate(payload: TCloneTemplatePayload): void;
@@ -102,15 +104,18 @@ export function TemplateControlls({
 
   const isSavedTemplate = React.useMemo(() => Boolean(templateId), [templateId]);
 
+
   const handleRunProcess = async () => {
-    const datasetsMap = await loadDatasetsMap(template.kickoff);
-    const runnableWorkflow = getRunnableWorkflow(template, datasetsMap);
+    if (!template.id) return;
+    const loadedFieldsets = template.kickoff.fieldsets.map(mapFieldsetBindingClientToRuntime);
+    const datasetsMap = await loadDatasetsMap(template.kickoff, loadedFieldsets);
+    const runnableWorkflow = getRunnableWorkflow(template, datasetsMap, loadedFieldsets);
     if (runnableWorkflow) {
       openRunWorkflowModal(runnableWorkflow);
     }
   };
 
-  const handleChangeIsActive = (value: ITemplate['isActive'], redirectUrl?: string) => {
+  const handleChangeIsActive = (value: ITemplateClient['isActive'], redirectUrl?: string) => {
     if (!value) {
       patchTemplate({ changedFields: { isActive: false } });
       return;
@@ -212,7 +217,9 @@ export function TemplateControlls({
                 <button
                   type="button"
                   className={classnames('cancel-button', styles['keep-draf-button'])}
-                  onClick={() => dispatch(discardTemplateChanges({ templateId, onSuccess: reject }))}
+                  onClick={() => {
+                    dispatch(discardTemplateChanges({ templateId, onSuccess: reject }));
+                  }}
                 >
                   {formatMessage({ id: 'templates.discard-changes' })}
                 </button>
@@ -323,6 +330,7 @@ export function TemplateControlls({
                 <ActivityIcon className={styles['more-setting__icon']} />
                 <p className={styles['more-setting__text']}>{formatMessage({ id: 'template.more-show-activity' })}</p>
               </Link>
+
               <button type="button" onClick={() => cloneTemplate({ templateId })} className={styles['more-setting']}>
                 <UnionIcon className={styles['more-setting__icon']} />
                 <p className={styles['more-setting__text']}>{formatMessage({ id: 'template.more-clone-template' })}</p>
@@ -387,6 +395,7 @@ export function TemplateControlls({
           />
         </div>
       </div>
+
 
       {showDraftWarning && (
         <div className={styles['external-links-warning']}>

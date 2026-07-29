@@ -2,7 +2,7 @@
 /* prettier-ignore */
 import { IntlShape } from 'react-intl';
 
-import { ITemplate } from '../../../types/template';
+import { ITemplateClient } from '../../../types/template';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { validateWorkflowName } from '../../../utils/validators';
 import { UnassignedTasksWarning, PremiumFeaturesWarning, IInfoWarningProps } from '../InfoWarningsModal/warnings';
@@ -15,7 +15,7 @@ type TWarningRule<T> = {
   getMessage(): T;
 };
 
-export function validateTemplate(template: ITemplate, isSubscribed: boolean, intl: IntlShape) {
+export function validateTemplate(template: ITemplateClient, isSubscribed: boolean, intl: IntlShape) {
   const { owners, name, tasks, kickoff } = template;
   const { formatMessage } = intl;
 

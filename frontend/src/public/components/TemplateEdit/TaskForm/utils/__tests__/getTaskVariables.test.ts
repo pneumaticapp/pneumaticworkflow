@@ -1,35 +1,39 @@
-import { EExtraFieldType, IKickoff, ITemplateTask } from '../../../../../types/template';
+import { createElement } from 'react';
+import { render, screen } from '@testing-library/react';
+
+import { EExtraFieldType, IKickoffClient, ITemplateTaskClient } from '../../../../../types/template';
+import { IFieldsetRuntime } from '../../../../../types/fieldset';
+import { makeExtraField } from '../../../../../__stubs__/fields.factory';
+import { makeFieldsetRuntime, makeFieldsetBindingClient, makeFieldsetField } from '../../../../../__stubs__/fieldsets.factory';
 import { createEmptyTaskDueDate } from '../../../../../utils/dueDate/createEmptyTaskDueDate';
 import { TTaskVariable } from '../../../types';
 import {
+  getKickoffVariables,
   getTaskVariables,
   getSystemVariables,
   getVariables,
   getSingleLineVariables,
   isSystemVariable,
+  useWorkflowNameVariables,
   WORKFLOW_STARTER_VARIABLE_API_NAME,
   WORKFLOW_STARTER_VARIABLE_TITLE,
   SYSTEM_VARIABLE_SUBTITLE,
 } from '../getTaskVariables';
 
-const mockKikoff: IKickoff = {
+const mockKikoff: IKickoffClient = {
   description: 'Kickoff description',
   fields: [
-    {
+    makeExtraField({
       name: 'Client name',
-      type: EExtraFieldType.String,
-      isRequired: false,
       description: 'Enter client name',
       apiName: 'client-name-3967',
-      selections: [],
       order: 1,
-      userId: null,
-      groupId: null,
-    },
+    }),
   ],
+  fieldsets: [],
 };
 
-const mockTask1: ITemplateTask = {
+const mockTask1: ITemplateTaskClient = {
   id: 3048,
   apiName: 'task-1',
   name: 'Task 1',
@@ -39,17 +43,11 @@ const mockTask1: ITemplateTask = {
   requireCompletionByAll: true,
   skipForStarter: false,
   fields: [
-    {
+    makeExtraField({
       name: 'Large Text Field',
       type: EExtraFieldType.Text,
-      isRequired: false,
-      description: '',
       apiName: 'large-text-field-8622',
-      selections: [],
-      order: 0,
-      userId: null,
-      groupId: null,
-    },
+    }),
   ],
   delay: null,
   rawDueDate: createEmptyTaskDueDate(),
@@ -58,9 +56,10 @@ const mockTask1: ITemplateTask = {
   checklists: [],
   revertTask: null,
   ancestors: [],
+  fieldsets: [],
 };
 
-const mockTask2: ITemplateTask = {
+const mockTask2: ITemplateTaskClient = {
   id: 3049,
   apiName: 'task-2',
   name: 'Task2',
@@ -70,17 +69,13 @@ const mockTask2: ITemplateTask = {
   requireCompletionByAll: false,
   skipForStarter: false,
   fields: [
-    {
+    makeExtraField({
       name: 'Reasons',
       type: EExtraFieldType.Text,
       isRequired: true,
       description: 'Enter reasons of client requesting',
       apiName: 'reasons-3969',
-      selections: [],
-      order: 0,
-      userId: null,
-      groupId: null,
-    },
+    }),
   ],
   delay: null,
   rawDueDate: createEmptyTaskDueDate(),
@@ -89,11 +84,45 @@ const mockTask2: ITemplateTask = {
   checklists: [],
   revertTask: null,
   ancestors: ['task-1'],
+  fieldsets: [],
 };
+
+const mockFieldsetData: IFieldsetRuntime = makeFieldsetRuntime({
+  apiNameBinding: 'fs-99',
+  name: 'Extra Set',
+  fields: [
+    makeExtraField({
+      name: 'Assignee',
+      type: EExtraFieldType.User,
+      apiName: 'assignee-fs',
+    }),
+    makeExtraField({
+      name: 'Kickoff date',
+      type: EExtraFieldType.Date,
+      apiName: 'kickoff-date-fs',
+      order: 1,
+    }),
+  ],
+});
+
+const mockBindingFields = [
+  makeFieldsetField({
+    name: 'Assignee',
+    type: EExtraFieldType.User,
+    apiName: 'assignee-fs',
+  }),
+  makeFieldsetField({
+    name: 'Kickoff date',
+    type: EExtraFieldType.Date,
+    apiName: 'kickoff-date-fs',
+    order: 1,
+  }),
+];
+
 
 describe('getTaskVariables', () => {
   it("correctly gets 1st task's variables", () => {
-    const tasks: ITemplateTask[] = [mockTask1, mockTask2];
+    const tasks: ITemplateTaskClient[] = [mockTask1, mockTask2];
     const expectedFirstTaskVariables: TTaskVariable[] = [
       {
         apiName: 'client-name-3967',
@@ -112,7 +141,7 @@ describe('getTaskVariables', () => {
   });
 
   it("correctly gets 2nd task's variables", () => {
-    const tasks: ITemplateTask[] = [mockTask1, mockTask2];
+    const tasks: ITemplateTaskClient[] = [mockTask1, mockTask2];
     const expectedSecondTaskVariables: TTaskVariable[] = [
       {
         apiName: 'client-name-3967',
@@ -136,6 +165,99 @@ describe('getTaskVariables', () => {
     const expectedResult = expectedSecondTaskVariables;
 
     expect(actualResult).toStrictEqual(expectedResult);
+  });
+
+  it('appends variables from selected task fieldsets with combined subtitles', () => {
+    const taskWithFieldset: ITemplateTaskClient = {
+      ...mockTask1,
+      fieldsets: [makeFieldsetBindingClient({
+        apiNameBinding: mockFieldsetData.apiNameBinding,
+        name: mockFieldsetData.name,
+        fields: mockBindingFields,
+      })],
+    };
+    const tasks: ITemplateTaskClient[] = [taskWithFieldset, mockTask2];
+    const actualResult = getTaskVariables(mockKikoff, tasks, mockTask2);
+
+    expect(actualResult.map((v) => v.apiName)).toEqual([
+      'client-name-3967',
+      'large-text-field-8622',
+      'assignee-fs',
+      'kickoff-date-fs',
+    ]);
+    expect(actualResult.find((v) => v.apiName === 'assignee-fs')).toMatchObject({
+      title: 'Assignee',
+      subtitle: 'Task 1 · Extra Set',
+      type: EExtraFieldType.User,
+    });
+  });
+
+  it('expands task-fieldset with inline `fields` without using the catalog', () => {
+    const inlineFieldset = makeFieldsetBindingClient({
+      apiNameBinding: 'fs-inline',
+      name: 'Inline Set',
+      fields: [
+        makeFieldsetField({
+          apiName: 'inline-field-1',
+          name: 'Inline Field',
+        }),
+      ],
+    });
+    const taskWithInline: ITemplateTaskClient = {
+      ...mockTask1,
+      fieldsets: [inlineFieldset],
+    };
+    const tasks: ITemplateTaskClient[] = [taskWithInline, mockTask2];
+
+    const actualResult = getTaskVariables(mockKikoff, tasks, mockTask2);
+
+    const inlineVar = actualResult.find((v) => v.apiName === 'inline-field-1');
+    expect(inlineVar).toBeDefined();
+    expect(inlineVar).toMatchObject({
+      title: 'Inline Field',
+      subtitle: 'Task 1 · Inline Set',
+      type: EExtraFieldType.String,
+    });
+  });
+});
+
+describe('getKickoffVariables with fieldsets', () => {
+  it('adds kickoff fieldset fields after regular kickoff fields', () => {
+    const kickoff: IKickoffClient = {
+      ...mockKikoff,
+      fieldsets: [makeFieldsetBindingClient({
+        apiNameBinding: mockFieldsetData.apiNameBinding,
+        name: mockFieldsetData.name,
+        fields: mockBindingFields,
+      })],
+    };
+    const vars = getKickoffVariables(kickoff);
+
+    expect(vars.map((v) => v.apiName)).toEqual(['client-name-3967', 'assignee-fs', 'kickoff-date-fs']);
+    expect(vars[1]).toMatchObject({
+      subtitle: 'Kick-off form · Extra Set',
+      title: 'Assignee',
+      type: EExtraFieldType.User,
+    });
+  });
+
+  it('skips fieldset missing from catalog without crashing or producing phantom options', () => {
+    const kickoff: IKickoffClient = {
+      ...mockKikoff,
+      fieldsets: [
+        makeFieldsetBindingClient({ apiNameBinding: 'missing-fs' }),
+        makeFieldsetBindingClient({
+          apiNameBinding: mockFieldsetData.apiNameBinding,
+          name: mockFieldsetData.name,
+          fields: mockBindingFields,
+          order: 1,
+        }),
+      ],
+    };
+
+    const vars = getKickoffVariables(kickoff);
+
+    expect(vars.map((v) => v.apiName)).toEqual(['client-name-3967', 'assignee-fs', 'kickoff-date-fs']);
   });
 });
 
@@ -182,8 +304,8 @@ describe('getVariables', () => {
     expect(result).toHaveLength(2);
   });
 
-  it('returns only system variables when no kickoff or tasks provided', () => {
-    const result = getVariables({});
+  it('returns only system variables when kickoff and tasks are empty', () => {
+    const result = getVariables({ kickoff: { fields: [], fieldsets: [] }, tasks: [] });
 
     expect(result).toHaveLength(1);
     expect(result[0].apiName).toBe(WORKFLOW_STARTER_VARIABLE_API_NAME);
@@ -232,5 +354,82 @@ describe('getSingleLineVariables', () => {
     ];
 
     expect(getSingleLineVariables(variables)).toHaveLength(6);
+  });
+});
+
+describe('useWorkflowNameVariables', () => {
+  function TestWrapper({
+    kickoff,
+  }: {
+    kickoff?: Parameters<typeof useWorkflowNameVariables>[0];
+  }) {
+    const vars = useWorkflowNameVariables(kickoff);
+    return createElement(
+      'div',
+      null,
+      vars.map((v) =>
+        createElement(
+          'span',
+          { key: v.apiName, 'data-testid': `var-${v.apiName}`, 'data-type': v.type },
+          v.title,
+        ),
+      ),
+    );
+  }
+
+  it('includes 4 system variables plus single-line kickoff and fieldset fields, filters out multi-line types', () => {
+
+    const kickoff: IKickoffClient = {
+      description: '',
+      fields: [
+        makeExtraField({
+          apiName: 'kickoff-string',
+          name: 'Kickoff String',
+        }),
+        makeExtraField({
+          apiName: 'kickoff-text',
+          name: 'Kickoff Text',
+          type: EExtraFieldType.Text,
+          order: 1,
+        }),
+      ],
+      fieldsets: [makeFieldsetBindingClient({
+        apiNameBinding: 'fs-name',
+        fields: [
+          makeFieldsetField({
+            apiName: 'fs-date',
+            name: 'FS Date',
+            type: EExtraFieldType.Date,
+          }),
+          makeFieldsetField({
+            apiName: 'fs-number',
+            name: 'FS Number',
+            type: EExtraFieldType.Number,
+            order: 1,
+          }),
+          makeFieldsetField({
+            apiName: 'fs-text',
+            name: 'FS Text',
+            type: EExtraFieldType.Text,
+            order: 2,
+          }),
+        ],
+      })],
+    };
+
+    render(createElement(TestWrapper, { kickoff }));
+
+    expect(screen.getByTestId('var-date')).toBeInTheDocument();
+    expect(screen.getByTestId('var-template-name')).toBeInTheDocument();
+    expect(screen.getByTestId('var-workflow-id')).toBeInTheDocument();
+    expect(screen.getByTestId('var-workflow-starter')).toBeInTheDocument();
+
+    expect(screen.getByTestId('var-kickoff-string')).toBeInTheDocument();
+
+    expect(screen.getByTestId('var-fs-date')).toBeInTheDocument();
+    expect(screen.getByTestId('var-fs-number')).toBeInTheDocument();
+
+    expect(screen.queryByTestId('var-kickoff-text')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('var-fs-text')).not.toBeInTheDocument();
   });
 });

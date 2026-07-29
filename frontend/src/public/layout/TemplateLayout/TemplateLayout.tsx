@@ -8,6 +8,7 @@ import { ERoutes } from '../../constants/routes';
 interface ITemplateLayoutProps {
   children: React.ReactNode;
 }
+
 export function TemplateLayout({ children }: ITemplateLayoutProps) {
   const { formatMessage } = useIntl();
 
@@ -31,3 +32,4 @@ export function TemplateLayout({ children }: ITemplateLayoutProps) {
     </>
   );
 }
+

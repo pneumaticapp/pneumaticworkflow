@@ -1,4 +1,9 @@
-from src.processes.enums import TaskStatus, WorkflowStatus
+from src.processes.enums import (
+    DirectlyStatus,
+    PerformerType,
+    TaskStatus,
+    WorkflowStatus,
+)
 
 
 class TemplateViewerMixin:
@@ -195,6 +200,15 @@ class WorkflowsNowMixin:
 
 class TasksMixin:
 
+    @staticmethod
+    def _assignment_performer_type_clause():
+        return f"""
+          ptp.type IN (
+            '{PerformerType.USER}',
+            '{PerformerType.GROUP}'
+          )
+        """
+
     def _tasks_in_progress_clause(self):
         return f"""
         WHERE pt.status IN (
@@ -287,6 +301,32 @@ class TasksNowMixin:
           pw.date_completed IS NULL AND
           pw.status = '{WorkflowStatus.RUNNING}' AND
           pt.due_date < %(now)s
+        """
+
+    @staticmethod
+    def _user_completed_performer_join():
+        """Anti-join source: user already completed via USER or GROUP_USER."""
+        return f"""
+        LEFT JOIN processes_taskperformer ptp_completed ON (
+          ptp_completed.task_id = pt.id
+          AND ptp_completed.directly_status != '{DirectlyStatus.DELETED}'
+          AND ptp_completed.is_deleted IS FALSE
+          AND ptp_completed.user_id = %(user_id)s
+          AND ptp_completed.is_completed IS TRUE
+          AND ptp_completed.type IN (
+            '{PerformerType.USER}',
+            '{PerformerType.GROUP_USER}'
+          )
+        )
+        """
+
+    @staticmethod
+    def _assignment_performer_type_clause():
+        return f"""
+          ptp.type IN (
+            '{PerformerType.USER}',
+            '{PerformerType.GROUP}'
+          )
         """
 
 

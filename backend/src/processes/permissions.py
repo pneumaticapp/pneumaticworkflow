@@ -8,6 +8,7 @@ from src.accounts.enums import UserType
 from src.processes.enums import (
     OwnerRole,
     OwnerType,
+    PerformerType,
     PresetType,
 )
 from src.processes.messages.template import (
@@ -27,6 +28,22 @@ from src.processes.models.workflows.workflow import Workflow
 from src.processes.queries import (
     WorkflowPermissionQuery,
 )
+
+
+def _assignment_performer_q(user_id: int, prefix: str) -> Q:
+
+    """ Match assignment performers only (USER / GROUP), not GROUP_USER. """
+
+    return (
+        Q(**{
+            f'{prefix}__user_id': user_id,
+            f'{prefix}__type': PerformerType.USER,
+        })
+        | Q(**{
+            f'{prefix}__type': PerformerType.GROUP,
+            f'{prefix}__group__users__id': user_id,
+        })
+    )
 
 
 class TemplateAdminOwnerPermission(BasePermission):
@@ -261,6 +278,7 @@ class TaskRevertPermission(BasePermission):
                 TaskPerformer.objects
                 .by_task(task_id)
                 .by_user_or_group(request.user.id)
+                .type_user_or_group()
                 .exclude_directly_deleted()
             )
             return (
@@ -283,6 +301,7 @@ class TaskCompletePermission(BasePermission):
                 TaskPerformer.objects
                 .by_task(task_id)
                 .by_user_or_group(request.user.id)
+                .type_user_or_group()
                 .exclude_directly_deleted()
             )
             return (
@@ -474,7 +493,7 @@ class GuestWorkflowPermission(BasePermission):
 
     workflow_urls_pattern = (
         r'^\/workflows\/(?P<workflow_id>\d+)\/'
-        r'(comment|task-complete)\/{0,1}$'
+        r'comment\/{0,1}$'
     )
 
     def has_permission(self, request, view):

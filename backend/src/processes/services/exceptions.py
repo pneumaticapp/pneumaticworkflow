@@ -1,4 +1,5 @@
 from src.generics.exceptions import BaseServiceException
+from src.processes.messages import fieldset as fs_messages
 from src.processes.messages import template as pt_messages
 from src.processes.messages import workflow as pw_messages
 
@@ -196,3 +197,72 @@ class TemplatePresetServiceException(BaseServiceException):
 class CommentedNotTask(CommentServiceException):
 
     default_message = pw_messages.MSG_PW_0077
+
+
+class FieldsetTemplateRuleServiceException(BaseServiceException):
+
+    pass
+
+
+class FieldsetTemplateRuleSumMaxFieldsNotNumber(
+    FieldsetTemplateRuleServiceException,
+):
+
+    default_message = fs_messages.MSG_FS_0003
+
+
+class FieldsetTemplateRuleSumMaxInvalidValue(
+    FieldsetTemplateRuleServiceException,
+):
+
+    default_message = fs_messages.MSG_FS_0004
+
+
+class FieldsetTemplateServiceException(BaseServiceException):
+
+    pass
+
+
+class FieldsetTemplateSharedIdMissing(FieldsetTemplateServiceException):
+
+    default_message = fs_messages.MSG_FS_0010
+
+
+class FieldsetTemplateTemplateIdMissing(FieldsetTemplateServiceException):
+
+    default_message = fs_messages.MSG_FS_0011
+
+
+class FieldsetTemplateInUseException(FieldsetTemplateServiceException):
+
+    default_message = fs_messages.MSG_FS_0001
+
+
+class FieldsetTemplateInUseException2(FieldsetTemplateServiceException):
+
+    default_message = fs_messages.MSG_FS_0009
+
+
+class FieldTemplateServiceException(BaseServiceException):
+
+    pass
+
+
+class FieldTemplateSelectionsRequired(FieldTemplateServiceException):
+
+    default_message = pt_messages.MSG_PT_0005
+
+
+class FieldTemplateUserMustBeRequired(FieldTemplateServiceException):
+
+    default_message = pt_messages.MSG_PT_0006
+
+
+class FieldsetServiceException(BaseServiceException):
+
+    pass
+
+
+class SharedFieldsetNotFoundException(FieldsetServiceException):
+
+    default_message = fs_messages.MSG_FS_0008

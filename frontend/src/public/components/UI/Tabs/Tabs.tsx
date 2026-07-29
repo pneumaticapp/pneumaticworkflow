@@ -1,4 +1,5 @@
-import React, { ReactNode } from 'react';
+import * as React from 'react';
+import { ReactNode } from 'react';
 import classnames from 'classnames';
 
 import styles from './Tabs.css';
@@ -32,23 +33,34 @@ export function Tabs<TOption extends TOptionBase>({
     }
   };
 
+  const activeTabIndex = values.findIndex(checkIsActiveValue);
+
   return (
     <div className={classnames(styles['container'], containerClassName)}>
-      {values.map((value) => (
-        <button
-          key={value.id}
-          type="button"
-          onClick={handleClickItem(value)}
-          className={classnames(
-            styles['tab'],
-            tabClassName,
-            checkIsActiveValue(value) && styles['tab_active'],
-            checkIsActiveValue(value) && activeTabClassName
-          )}
-        >
-          {value.label}
-        </button>
-      ))}
+      {values.map((value, index) => {
+        let middleTabBorderClass = '';
+        if (values.length === 3 && activeTabIndex !== 1 && index === 1) {
+          if (activeTabIndex === 0) middleTabBorderClass = styles['separator-right'];
+          if (activeTabIndex === 2) middleTabBorderClass = styles['separator-left'];
+        }
+
+        return (
+          <button
+            key={value.id}
+            type="button"
+            onClick={handleClickItem(value)}
+            className={classnames(
+              styles['tab'],
+              tabClassName,
+              middleTabBorderClass,
+              index === activeTabIndex && styles['tab_active'],
+              index === activeTabIndex && activeTabClassName
+            )}
+          >
+            {value.label}
+          </button>
+        );
+      })}
     </div>
   );
 }

@@ -212,6 +212,7 @@ class Common(Configuration):
         'django.middleware.csrf.CsrfViewMiddleware',
         'src.authentication.middleware.UserAgentMiddleware',
         'src.authentication.middleware.AuthMiddleware',
+        'src.authentication.middleware.UserLocaleMiddleware',
         'src.storage.middleware.FileServiceAuthMiddleware',
         'django.contrib.messages.middleware.MessageMiddleware',
         'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -262,7 +263,7 @@ class Common(Configuration):
             'src.authentication.services.guest_auth.GuestJWTAuthService',
             'src.authentication.services.user_auth.'
             'PneumaticTokenAuthentication',
-            'rest_framework_simplejwt.authentication.JWTAuthentication',
+            'src.authentication.services.jwt_auth.PneumaticJWTAuthentication',
         ),
         'NON_FIELD_ERRORS_KEY': 'errors',
         'TEST_REQUEST_DEFAULT_FORMAT': 'json',
@@ -340,7 +341,7 @@ class Common(Configuration):
     else:
         STRIPE_WEBHOOK_IP_WHITELIST = []
 
-    DEFAULT_MAX_USERS = 5
+    DEFAULT_MAX_USERS = 1000
 
     # Account verification
     VERIFICATION_CHECK = env.get('VERIFICATION_CHECK') == 'yes'
@@ -429,10 +430,10 @@ class Common(Configuration):
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql_psycopg2',
-            'NAME': env.get('POSTGRES_DB', 'pneumatic'),
-            'USER': env.get('POSTGRES_USER', 'pneumatic'),
-            'PASSWORD': env.get('POSTGRES_PASSWORD', 'pneumatic'),
-            'HOST': env.get('POSTGRES_HOST', 'localhost'),
+            'NAME': env.get('POSTGRES_DB'),
+            'USER': env.get('POSTGRES_USER'),
+            'PASSWORD': env.get('POSTGRES_PASSWORD'),
+            'HOST': env.get('POSTGRES_HOST'),
             'PORT': env.get('POSTGRES_PORT', '5432'),
         },
     }
@@ -477,6 +478,11 @@ class Common(Configuration):
                 },
             },
         }
+
+    # Django Guardian - using built-in models
+    # Disable anonymous user creation (not needed for this project)
+    ANONYMOUS_USER_NAME = None
+    ANONYMOUS_USER_ID = -1
 
 
 class Testing(Common):
@@ -578,18 +584,18 @@ class Staging(Development):
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql_psycopg2',
-            'NAME': env.get('POSTGRES_DB', 'pneumatic'),
-            'USER': env.get('POSTGRES_USER', 'pneumatic'),
-            'PASSWORD': env.get('POSTGRES_PASSWORD', 'pneumatic'),
-            'HOST': env.get('POSTGRES_HOST', 'localhost'),
+            'NAME': env.get('POSTGRES_DB'),
+            'USER': env.get('POSTGRES_USER'),
+            'PASSWORD': env.get('POSTGRES_PASSWORD'),
+            'HOST': env.get('POSTGRES_HOST'),
             'PORT': env.get('POSTGRES_PORT', '5432'),
         },
         'replica': {
             'ENGINE': 'django.db.backends.postgresql_psycopg2',
-            'NAME': env.get('POSTGRES_REPLICA_DB', 'pneumatic'),
-            'USER': env.get('POSTGRES_REPLICA_USER', 'pneumatic'),
-            'PASSWORD': env.get('POSTGRES_REPLICA_PASSWORD', 'pneumatic'),
-            'HOST': env.get('POSTGRES_REPLICA_HOST', 'localhost'),
+            'NAME': env.get('POSTGRES_REPLICA_DB'),
+            'USER': env.get('POSTGRES_REPLICA_USER'),
+            'PASSWORD': env.get('POSTGRES_REPLICA_PASSWORD'),
+            'HOST': env.get('POSTGRES_REPLICA_HOST'),
             'PORT': env.get('POSTGRES_REPLICA_PORT', '5432'),
         },
     }
@@ -599,4 +605,4 @@ class Staging(Development):
 
 class Production(Staging):
 
-    MAX_INVITES = 100
+    MAX_INVITES = 1000
