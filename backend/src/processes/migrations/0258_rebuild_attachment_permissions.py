@@ -160,6 +160,70 @@ def _rebuild_workflow_attachment(
     return obj_pk, user_rows, group_ids
 
 
+def _rebuild_template_attachment(
+    att,
+    Workflow, Task, TaskPerformer, TemplateOwner,
+    UserObjectPermission, wf_ct, view_perm,
+):
+    """Rebuild access_attachment for a TEMPLATE-sourced attachment.
+
+    Template attachments are shared across all workflows of the
+    template, so we aggregate viewers and performers from every
+    live workflow instead of a single one.
+    """
+    user_rows = []
+    group_ids = set()
+
+    owner_users, owner_groups = _get_template_owners(
+        TemplateOwner, att.template_id,
+    )
+    for uid, owner_pk in owner_users:
+        user_rows.append((
+            uid, SOURCE_TEMPLATE_OWNER, owner_pk,
+        ))
+    group_ids |= owner_groups
+
+    wf_ids = list(
+        Workflow.objects.filter(
+            template_id=att.template_id,
+            is_deleted=False,
+        ).values_list('id', flat=True),
+    )
+    if wf_ids:
+        viewer_ids = set(
+            UserObjectPermission.objects.filter(
+                permission=view_perm,
+                content_type=wf_ct,
+                object_pk__in=[str(wid) for wid in wf_ids],
+            ).values_list('user_id', flat=True),
+        )
+        owner_user_ids = {uid for uid, _ in owner_users}
+        for uid in viewer_ids - owner_user_ids:
+            user_rows.append((
+                uid, SOURCE_WORKFLOW_VIEWER, att.template_id,
+            ))
+
+        task_ids = list(
+            Task.objects.filter(
+                workflow_id__in=wf_ids,
+                is_deleted=False,
+            ).values_list('id', flat=True),
+        )
+        if task_ids:
+            performers = (
+                TaskPerformer.objects
+                .filter(task_id__in=task_ids)
+                .exclude(directly_status=DIRECTLY_DELETED)
+            )
+            for perf in performers:
+                if (
+                    perf.group_id
+                    and perf.type == PERFORMER_TYPE_GROUP
+                ):
+                    group_ids.add(perf.group_id)
+
+    return user_rows, group_ids
+
 def forward(apps, schema_editor):
     Attachment = apps.get_model('storage', 'Attachment')
     Workflow = apps.get_model('processes', 'Workflow')
@@ -195,7 +259,7 @@ def forward(apps, schema_editor):
     restricted_atts = (
         Attachment.objects
         .filter(access_type=ACCESS_RESTRICTED, is_deleted=False)
-        .select_related('task', 'workflow', 'event')
+        .select_related('task', 'workflow', 'event', 'template')
     )
 
     processed = 0
@@ -203,6 +267,54 @@ def forward(apps, schema_editor):
     group_batch = []
 
     for att in restricted_atts.iterator(chunk_size=BATCH_SIZE):
+        # Template attachments have no workflow/task/event FK;
+        # resolve via template_id instead.
+        if att.source_type == SOURCE_TYPE_TEMPLATE and att.template_id:
+            obj_pk = str(att.pk)
+            UserObjectPermission.objects.filter(
+                content_type=att_ct,
+                permission=att_perm,
+                object_pk=obj_pk,
+            ).delete()
+            GroupObjectPermission.objects.filter(
+                content_type=att_ct,
+                permission=att_perm,
+                object_pk=obj_pk,
+            ).delete()
+            user_rows, group_ids = _rebuild_template_attachment(
+                att,
+                Workflow, Task, TaskPerformer, TemplateOwner,
+                UserObjectPermission, wf_ct, view_perm,
+            )
+            for uid, source_type, source_id in user_rows:
+                user_batch.append(UserObjectPermission(
+                    user_id=uid,
+                    permission=att_perm,
+                    content_type=att_ct,
+                    object_pk=obj_pk,
+                    source_type=source_type,
+                    source_id=int(source_id),
+                ))
+            for gid in group_ids:
+                group_batch.append(GroupObjectPermission(
+                    group_id=gid,
+                    permission=att_perm,
+                    content_type=att_ct,
+                    object_pk=obj_pk,
+                ))
+            processed += 1
+            if len(user_batch) >= BATCH_SIZE:
+                UserObjectPermission.objects.bulk_create(
+                    user_batch, ignore_conflicts=True,
+                )
+                user_batch = []
+            if len(group_batch) >= BATCH_SIZE:
+                GroupObjectPermission.objects.bulk_create(
+                    group_batch, ignore_conflicts=True,
+                )
+                group_batch = []
+            continue
+
         workflow = att.workflow
         if not workflow and att.task_id:
             task = att.task
@@ -255,9 +367,7 @@ def forward(apps, schema_editor):
                 att_ct, att_perm, wf_ct, view_perm,
                 TaskPerformer, TemplateOwner,
             )
-        elif att.source_type in (
-            SOURCE_TYPE_WORKFLOW, SOURCE_TYPE_TEMPLATE,
-        ):
+        elif att.source_type == SOURCE_TYPE_WORKFLOW:
             _, user_rows, group_ids = _rebuild_workflow_attachment(
                 att, workflow,
                 UserObjectPermission, GroupObjectPermission,

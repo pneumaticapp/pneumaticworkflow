@@ -2013,7 +2013,7 @@ def test_update_performers__restore_field_performer__ok():
     )
 
     # act
-    task.update_performers(
+    result = task.update_performers(
         raw_performer=raw_performer,
         restore_performers=True,
     )
@@ -2024,6 +2024,59 @@ def test_update_performers__restore_field_performer__ok():
         user=user,
     )
     assert task_performer.directly_status == DirectlyStatus.NO_STATUS
+    assert result[0] == [user.id]
+
+
+def test_update_performers__restore_group_field_performer__ok():
+    """
+    restore_performers=True, DELETED status, FIELD type (Group) — restores
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    group = create_test_group(account=account)
+    workflow = create_test_workflow(
+        user=owner,
+        tasks_count=1,
+    )
+    task = workflow.tasks.get(number=1)
+
+    # We need a group performer directly_status=DELETED
+    TaskPerformer.objects.create(
+        task=task,
+        group=group,
+        type=PerformerType.GROUP,
+        directly_status=DirectlyStatus.DELETED,
+    )
+
+    field = TaskField.objects.create(
+        task=task,
+        workflow=workflow,
+        account=account,
+        name='Group field',
+        api_name='group-field-restore',
+        type=FieldType.USER,
+        group_id=group.id,
+    )
+    raw_performer = task.add_raw_performer(
+        field=field,
+        performer_type=PerformerType.FIELD,
+    )
+
+    # act
+    result = task.update_performers(
+        raw_performer=raw_performer,
+        restore_performers=True,
+    )
+
+    # assert
+    task_performer = TaskPerformer.objects.get(
+        task=task,
+        group=group,
+    )
+    assert task_performer.directly_status == DirectlyStatus.NO_STATUS
+    assert result[1] == [group.id]
 
 
 def test_update_performers__orphaned_deleted__ok():

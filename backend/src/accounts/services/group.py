@@ -330,6 +330,18 @@ class UserGroupService(BaseModelService):
         # active_for_group(); enqueue after commit so can_be_completed()
         # sees the group as deleted.
         group_performer_task_ids = self._get_group_performer_task_ids()
+        # Collect workflow IDs before soft-delete so we can revoke
+        # PERFORMER_GROUP UOP rows after the group is gone.
+        performer_group_workflow_ids = list(
+            TaskPerformer.objects
+            .filter(
+                type=PerformerType.GROUP,
+                group_id=self.instance.id,
+            )
+            .exclude_directly_deleted()
+            .values_list('task__workflow_id', flat=True)
+            .distinct(),
+        )
         send_group_deleted_notification.delay(
             logging=self.account.log_api_requests,
             account_id=self.user.account_id,
@@ -351,6 +363,17 @@ class UserGroupService(BaseModelService):
             is_superuser=self.is_superuser,
         )
         self.instance.delete()
+        # Revoke PERFORMER_GROUP view permissions.  After soft-delete
+        # the group is no longer active, so sync_performer_group calls
+        # revoke_view for each workflow.
+        if performer_group_workflow_ids:
+            for workflow in Workflow.objects.filter(
+                id__in=performer_group_workflow_ids,
+            ):
+                WorkflowPermissionService(workflow).sync_performer_group(
+                    group_id=self.instance.id,
+                )
+                schedule_sync_workflow_attachment_permissions(workflow.id)
         if group_performer_task_ids:
             transaction.on_commit(
                 lambda: self._check_and_complete_tasks(

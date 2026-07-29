@@ -472,6 +472,7 @@ class Task(
                             DirectlyStatus.NO_STATUS
                         )
                         task_performer.save(update_fields=('directly_status',))
+                        created_performers_user_ids.append(user_id)
         if group_ids:
             for group_id, raw_performers_ in group_ids.items():
                 task_performer, created = TaskPerformer.objects.get_or_create(
@@ -502,6 +503,7 @@ class Task(
                             DirectlyStatus.NO_STATUS
                         )
                         task_performer.save(update_fields=('directly_status',))
+                        created_performers_group_ids.append(group_id)
         if raw_performers_for_update:
             from src.processes.models.workflows.raw_performer import (
                 RawPerformer,
