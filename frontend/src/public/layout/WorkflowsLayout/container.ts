@@ -16,6 +16,7 @@ import {
   setFilterTemplateTasks as setWorkflowsFilterTasks,
   setFilterPerformers as setWorkflowsFilterPerfomers,
   setFilterPerformersGroup as setWorkflowsFilterPerfomersGroup,
+  setFilterPerformersAiAgents as setWorkflowsFilterPerfomersAiAgents,
   setFilterWorkflowStarters as setWorkflowsFilterWorkflowStarters,
   clearFilters as clearWorkflowsFilters,
   removeWorkflowFromList,
@@ -115,6 +116,20 @@ const SyncedWorkflowsFilters = withSyncedQueryString<TWorkflowsFiltersStoreProps
         }
 
         return setWorkflowsFilterPerfomersGroup([]);
+      },
+      getQueryParamByProp: (value: number[]) => value.join(','),
+    },
+    {
+      propName: 'performersAiAgentIdsFilter',
+      queryParamName: 'ai_agents',
+      defaultAction: setWorkflowsFilterPerfomersAiAgents([]),
+      createAction: (queryParam) => {
+        const performers = queryParam.split(',').map(Number);
+        if (performers.every(Number.isInteger)) {
+          return setWorkflowsFilterPerfomersAiAgents(performers);
+        }
+
+        return setWorkflowsFilterPerfomersAiAgents([]);
       },
       getQueryParamByProp: (value: number[]) => value.join(','),
     },

@@ -32,6 +32,7 @@ export type TWorkflowsFiltersStoreProps = Pick<
   | 'tasksApiNamesFilter'
   | 'performersIdsFilter'
   | 'performersGroupIdsFilter'
+  | 'performersAiAgentIdsFilter'
   | 'filterTemplates'
   | 'areFilterTemplatesLoading'
   | 'workflowStartersIdsFilter'
@@ -78,6 +79,7 @@ export function mapStateToProps(state: IApplicationState): TWorkflowsFiltersStor
           tasksApiNamesFilter,
           performersIdsFilter,
           performersGroupIdsFilter,
+          performersAiAgentIdsFilter,
           workflowStartersIdsFilter,
         },
         counters: { performersCounters, workflowStartersCounters },
@@ -96,6 +98,7 @@ export function mapStateToProps(state: IApplicationState): TWorkflowsFiltersStor
     filterTemplates: templateList.items,
     performersIdsFilter,
     performersGroupIdsFilter,
+    performersAiAgentIdsFilter,
     workflowStartersIdsFilter,
     groups: getRegularGroupsList(state),
     users: getActiveUsers(users),

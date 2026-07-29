@@ -59,3 +59,6 @@ export const getWorkflowPerformersGroupsIdsFilter = (state: IApplicationState): 
 
 export const getWorkflowPerformersIdsFilter = (state: IApplicationState): number[] =>
   state.workflows.workflowsSettings.values.performersIdsFilter;
+
+export const getWorkflowPerformersAiAgentIdsFilter = (state: IApplicationState): number[] =>
+  state.workflows.workflowsSettings.values.performersAiAgentIdsFilter;

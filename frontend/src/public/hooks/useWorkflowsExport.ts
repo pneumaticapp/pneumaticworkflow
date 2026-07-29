@@ -12,6 +12,7 @@ import {
   getWorkflowTasksApiNamesFilter,
   getWorkflowPerformersIdsFilter,
   getWorkflowPerformersGroupsIdsFilter,
+  getWorkflowPerformersAiAgentIdsFilter,
   getWorkflowsSearchText,
 } from '../redux/selectors/workflows';
 import { getAccountsUsers } from '../redux/selectors/accounts';
@@ -60,6 +61,7 @@ export function useWorkflowsExport() {
   const tasksApiNamesFilter = useSelector(getWorkflowTasksApiNamesFilter);
   const performersIdsFilter = useSelector(getWorkflowPerformersIdsFilter);
   const performersGroupIdsFilter = useSelector(getWorkflowPerformersGroupsIdsFilter);
+  const performersAiAgentIdsFilter = useSelector(getWorkflowPerformersAiAgentIdsFilter);
   const searchText = useSelector(getWorkflowsSearchText);
   const users = useSelector(getAccountsUsers);
   const groups = useSelector(getRegularGroupsList);
@@ -78,6 +80,7 @@ export function useWorkflowsExport() {
           tasksApiNamesFilter,
           performersIdsFilter,
           performersGroupIdsFilter,
+          performersAiAgentIdsFilter,
           workflowStartersIdsFilter,
           searchText,
           fields,
@@ -129,6 +132,7 @@ export function useWorkflowsExport() {
       tasksApiNamesFilter,
       performersIdsFilter,
       performersGroupIdsFilter,
+      performersAiAgentIdsFilter,
       workflowStartersIdsFilter,
       searchText,
       users,

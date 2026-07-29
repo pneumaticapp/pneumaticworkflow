@@ -6,20 +6,23 @@ import {
   cancelTemplateTasksCounters,
   setFilterPerformers as setWorkflowsFilterPerfomers,
   setFilterPerformersGroup as setWorkflowsFilterPerfomersGroup,
+  setFilterPerformersAiAgents as setWorkflowsFilterPerfomersAiAgents,
 } from '../../redux/workflows/slice';
 
 import { IGroup } from '../../redux/team/types';
 import { TUserListItem } from '../../types/user';
-import { ETemplateOwnerType } from '../../types/template';
+import { ETaskPerformerType, ETemplateOwnerType } from '../../types/template';
 import { EWorkflowsStatus } from '../../types/workflow';
 
 import {
   getWorkflowPerformersCounters,
   getWorkflowPerformersGroupsIdsFilter,
   getWorkflowPerformersIdsFilter,
+  getWorkflowPerformersAiAgentIdsFilter,
   getWorkflowsStatus,
 } from '../../redux/selectors/workflows';
 import { getRegularGroupsList } from '../../redux/selectors/groups';
+import { getActiveAiAgentsList } from '../../redux/selectors/aiAgents';
 import { getAccountsUsers } from '../../redux/selectors/accounts';
 
 import { getActiveUsers, getUserFullName } from '../../utils/users';
@@ -38,10 +41,12 @@ export function PerformerFilterSelect() {
 
   const performersGroupIdsFilter = useSelector(getWorkflowPerformersGroupsIdsFilter);
   const performersIdsFilter = useSelector(getWorkflowPerformersIdsFilter);
+  const performersAiAgentIdsFilter = useSelector(getWorkflowPerformersAiAgentIdsFilter);
   const performersCounters = useSelector(getWorkflowPerformersCounters);
   const statusFilter = useSelector(getWorkflowsStatus);
   const groups: IGroup[] = useSelector(getRegularGroupsList);
   const users: TUserListItem[] = useSelector(getAccountsUsers);
+  const aiAgents = useSelector(getActiveAiAgentsList);
 
   const mustDisableFilter = statusFilter === EWorkflowsStatus.Snoozed || statusFilter === EWorkflowsStatus.Completed;
 
@@ -70,6 +75,26 @@ export function PerformerFilterSelect() {
     [groups, performersCounters],
   );
 
+  const aiAgentOptions = React.useMemo(
+    () =>
+      aiAgents.map((agent) => {
+        const agentLabel = formatMessage({ id: 'tasks.task-ai-agent' }, { name: agent.name }) as string;
+        return {
+          ...agent,
+          name: agentLabel,
+          type: ETaskPerformerType.AiAgent,
+          displayName: (
+            <div className={styles['user']}>
+              <Avatar user={{ type: ETaskPerformerType.AiAgent } as any} size="sm" />
+              <span className={styles['user-name']}>{agentLabel}</span>
+            </div>
+          ),
+          searchByText: agentLabel,
+        };
+      }),
+    [aiAgents],
+  );
+
   const activeUsers = useMemo(() => getActiveUsers(users), [users]);
 
   const performersOptions = React.useMemo(
@@ -91,7 +116,7 @@ export function PerformerFilterSelect() {
       }),
     [activeUsers, performersCounters],
   );
-  const filterIds = [...performersGroupIdsFilter, ...performersIdsFilter];
+  const filterIds = [...performersGroupIdsFilter, ...performersAiAgentIdsFilter, ...performersIdsFilter];
   const isOneFilterId = filterIds.length === 1;
   const filterType = isOneFilterId && performersIdsFilter.length === 1 ? 'userType' : 'groupType';
 
@@ -105,12 +130,13 @@ export function PerformerFilterSelect() {
         searchPlaceholder={formatMessage({ id: 'sorting.search-placeholder' })}
         selectedOptions={[
           ...performersGroupIdsFilter.map((id) => `${ETemplateOwnerType.UserGroup}-${id}`),
+          ...performersAiAgentIdsFilter.map((id) => `${ETaskPerformerType.AiAgent}-${id}`),
           ...performersIdsFilter.map((id) => `${ETemplateOwnerType.User}-${id}`),
         ]}
         optionIdKey="id"
         optionLabelKey="displayName"
         getOptionSelectionKey={(opt) => `${opt.type}-${opt.id}`}
-        options={[...performersGroupOptions, ...performersOptions]}
+        options={[...performersGroupOptions, ...aiAgentOptions, ...performersOptions]}
         onChange={(_, options: any) => {
           const performers = options
             .filter((item: any) => item.type === ETemplateOwnerType.User)
@@ -118,13 +144,18 @@ export function PerformerFilterSelect() {
           const selectedGroups = options
             .filter((item: any) => item.type === ETemplateOwnerType.UserGroup)
             .map((lItem: any) => lItem.id);
+          const selectedAiAgents = options
+            .filter((item: any) => item.type === ETaskPerformerType.AiAgent)
+            .map((lItem: any) => lItem.id);
 
           dispatch(setWorkflowsFilterPerfomers(performers));
           dispatch(setWorkflowsFilterPerfomersGroup(selectedGroups));
+          dispatch(setWorkflowsFilterPerfomersAiAgents(selectedAiAgents));
         }}
         resetFilter={() => {
           dispatch(setWorkflowsFilterPerfomers([]));
           dispatch(setWorkflowsFilterPerfomersGroup([]));
+          dispatch(setWorkflowsFilterPerfomersAiAgents([]));
           if (!canFilterByTemplateStep(statusFilter)) {
             dispatch(cancelTemplateTasksCounters());
           }
@@ -135,7 +166,7 @@ export function PerformerFilterSelect() {
             isDisabled: mustDisableFilter,
             filterType,
             filterIds,
-            options: filterType === 'userType' ? performersOptions : performersGroupOptions,
+            options: filterType === 'userType' ? performersOptions : [...performersGroupOptions, ...aiAgentOptions],
             formatMessage,
             type: ERenderPlaceholderType.Performer,
             severalOptionPlaceholder: 'sorting.several-performers',

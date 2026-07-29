@@ -58,6 +58,7 @@ export const initialWorkflowsFilters: IWorkflowsSettings['values'] = {
   tasksApiNamesFilter: [],
   performersIdsFilter: [],
   performersGroupIdsFilter: [],
+  performersAiAgentIdsFilter: [],
   workflowStartersIdsFilter: [],
 };
 
@@ -253,6 +254,9 @@ const workflowsSlice = createSlice({
     setFilterPerformersGroup: (state, action: PayloadAction<number[]>) => {
       updateWorkflowsFilterValue(state, 'performersGroupIdsFilter', action.payload);
     },
+    setFilterPerformersAiAgents: (state, action: PayloadAction<number[]>) => {
+      updateWorkflowsFilterValue(state, 'performersAiAgentIdsFilter', action.payload);
+    },
     setFilterWorkflowStarters: (state, action: PayloadAction<number[]>) => {
       updateWorkflowsFilterValue(state, 'workflowStartersIdsFilter', action.payload);
     },
@@ -421,6 +425,7 @@ export const {
   setFilterTemplateTasks,
   setFilterPerformers,
   setFilterPerformersGroup,
+  setFilterPerformersAiAgents,
   setFilterWorkflowStarters,
   setIsEditWorkflowName,
   setIsEditKickoff,

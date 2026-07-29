@@ -45,6 +45,7 @@ export interface IWorkflowsFiltersProps {
   tasksApiNamesFilter: string[];
   performersIdsFilter: number[];
   performersGroupIdsFilter: number[];
+  performersAiAgentIdsFilter: number[];
   workflowStartersIdsFilter: number[];
   filterTemplates: ITemplateFilterItem[];
   areFilterTemplatesLoading?: boolean;

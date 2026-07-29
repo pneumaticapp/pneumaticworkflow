@@ -24,6 +24,10 @@ jest.mock('../../UI', () => ({
   Loader: () => null,
 }));
 
+jest.mock('../../UI/Avatar', () => ({
+  Avatar: ({ user }: { user: { firstName: string } }) => <div data-testid="avatar">{user.firstName}</div>,
+}));
+
 jest.mock('../../icons', () => ({
   EditIcon: () => null,
   MoreIcon: () => null,
@@ -63,6 +67,14 @@ describe('FeedItem', () => {
     it('includes RemovedPerformerGroup', () => {
       expect(ALLOWED_EVENT_TYPES).toContain(EWorkflowLogEvent.RemovedPerformerGroup);
     });
+
+    it('includes AiAgentCompleted', () => {
+      expect(ALLOWED_EVENT_TYPES).toContain(EWorkflowLogEvent.AiAgentCompleted);
+    });
+
+    it('includes AiAgentLeft', () => {
+      expect(ALLOWED_EVENT_TYPES).toContain(EWorkflowLogEvent.AiAgentLeft);
+    });
   });
 
   describe('render', () => {
@@ -82,6 +94,29 @@ describe('FeedItem', () => {
 
       expect(screen.getByTestId('feed-header')).toBeInTheDocument();
       expect(screen.getByTestId('feed-icon')).toBeInTheDocument();
+    });
+
+    it('renders AiAgentCompleted event with the agent name from text', () => {
+      const item = makeHighlightsItem(EWorkflowLogEvent.AiAgentCompleted, {
+        text: 'Feedback Analyst',
+        userId: null,
+      });
+
+      render(React.createElement(FeedItem, { ...baseProps, ...item, item }));
+
+      expect(screen.getByTestId('feed-header')).toBeInTheDocument();
+      expect(screen.getByTestId('avatar')).toHaveTextContent('Feedback Analyst');
+    });
+
+    it('renders AiAgentLeft event with the name parsed from "agent: reason"', () => {
+      const item = makeHighlightsItem(EWorkflowLogEvent.AiAgentLeft, {
+        text: 'Candidate Screener: required field left empty',
+        userId: null,
+      });
+
+      render(React.createElement(FeedItem, { ...baseProps, ...item, item }));
+
+      expect(screen.getByTestId('avatar')).toHaveTextContent('Candidate Screener');
     });
   });
 });

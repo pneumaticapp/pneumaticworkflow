@@ -341,6 +341,7 @@ export interface IWorkflowsSettings {
     tasksApiNamesFilter: string[];
     performersIdsFilter: number[];
     performersGroupIdsFilter: number[];
+    performersAiAgentIdsFilter: number[];
     workflowStartersIdsFilter: number[];
   };
   presets: TTemplatePreset[];

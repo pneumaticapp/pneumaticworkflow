@@ -33,7 +33,11 @@ import { TaskFilterSelect } from './TaskFilterSelect';
 import { checkFilterDependenciesChanged } from '../../utils/helpers';
 
 import styles from './WorkflowsLayout.css';
-import { getWorkflowPerformersGroupsIdsFilter, getWorkflowsLoadingStatus } from '../../redux/selectors/workflows';
+import {
+  getWorkflowPerformersGroupsIdsFilter,
+  getWorkflowPerformersAiAgentIdsFilter,
+  getWorkflowsLoadingStatus,
+} from '../../redux/selectors/workflows';
 
 export interface IWorkflowsLayoutComponentProps extends IWorkflowsFiltersProps {
   workflowId: number | null;
@@ -70,6 +74,7 @@ export function WorkflowsLayoutComponent({
   updateWorkflowStartersCounters,
 }: IWorkflowsLayoutComponentProps) {
   const performersGroupsIdsFilter = useSelector(getWorkflowPerformersGroupsIdsFilter);
+  const performersAiAgentsIdsFilter = useSelector(getWorkflowPerformersAiAgentIdsFilter);
   const dispatch = useDispatch();
   const { formatMessage } = useIntl();
   const { isMobile } = useCheckDevice();
@@ -89,6 +94,7 @@ export function WorkflowsLayoutComponent({
   const prevWorkflowStartersIdsFilterRef = useRef<string>('[]');
   const prevPerformersIdsFilterRef = useRef<string>('[]');
   const prevPerformersGroupsIdsFilterRef = useRef<string>('[]');
+  const prevPerformersAiAgentsIdsFilterRef = useRef<string>('[]');
 
   const currentFiltersValuesRef = useRef({
     statusFilter,
@@ -97,6 +103,7 @@ export function WorkflowsLayoutComponent({
     workflowStartersIdsFilter,
     performersIdsFilter,
     performersGroupsIdsFilter,
+    performersAiAgentsIdsFilter,
     sorting,
   });
 
@@ -112,6 +119,7 @@ export function WorkflowsLayoutComponent({
         ['workflowStartersIdsFilter', prevWorkflowStartersIdsFilterRef],
         ['performersIdsFilter', prevPerformersIdsFilterRef],
         ['performersGroupsIdsFilter', prevPerformersGroupsIdsFilterRef],
+        ['performersAiAgentsIdsFilter', prevPerformersAiAgentsIdsFilterRef],
       ]),
     [],
   );
@@ -251,6 +259,7 @@ export function WorkflowsLayoutComponent({
       tasksApiNamesFilter,
       performersIdsFilter,
       performersGroupsIdsFilter,
+      performersAiAgentsIdsFilter,
       workflowStartersIdsFilter,
       sorting,
     });
@@ -265,6 +274,7 @@ export function WorkflowsLayoutComponent({
     tasksApiNamesFilter,
     performersIdsFilter,
     performersGroupsIdsFilter,
+    performersAiAgentsIdsFilter,
     workflowStartersIdsFilter,
     sorting,
   ]);
@@ -283,6 +293,7 @@ export function WorkflowsLayoutComponent({
       workflowStartersIdsFilter,
       performersIdsFilter,
       performersGroupsIdsFilter,
+      performersAiAgentsIdsFilter,
       sorting,
     };
   }, [
@@ -292,6 +303,7 @@ export function WorkflowsLayoutComponent({
     workflowStartersIdsFilter,
     performersIdsFilter,
     performersGroupsIdsFilter,
+    performersAiAgentsIdsFilter,
     sorting,
   ]);
 

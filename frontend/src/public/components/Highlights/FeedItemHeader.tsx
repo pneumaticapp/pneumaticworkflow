@@ -72,6 +72,7 @@ export function FeedItemHeader({
       [EWorkflowLogEvent.TaskComplete]: taskOutput,
       [EWorkflowLogEvent.WorkflowsReturned]: taskOutput,
       [EWorkflowLogEvent.TaskRevert]: taskOutput,
+      [EWorkflowLogEvent.AiAgentCompleted]: taskOutput,
     };
 
     const FIELDSETS_MAP: { [key in EWorkflowLogEvent]?: IFieldsetRuntime[] } = {
@@ -80,6 +81,7 @@ export function FeedItemHeader({
       [EWorkflowLogEvent.TaskComplete]: taskFieldsets,
       [EWorkflowLogEvent.WorkflowsReturned]: taskFieldsets,
       [EWorkflowLogEvent.TaskRevert]: taskFieldsets,
+      [EWorkflowLogEvent.AiAgentCompleted]: taskFieldsets,
     };
 
     const outputs = OUTPUTS_MAP[type];
@@ -267,6 +269,13 @@ export function FeedItemHeader({
       <>{formatMessage({ id: 'workflows.event-snoozed-until' }, { date: getSnoozedUntilDate(delay || null) })}</>
     ),
     [EWorkflowLogEvent.WorkflowResumed]: <>{formatMessage({ id: 'workflows.event-resumed' })}</>,
+    [EWorkflowLogEvent.AiAgentCompleted]: renderOutputsContents(),
+    [EWorkflowLogEvent.AiAgentLeft]: (
+      <div className={styles['changed-performer']}>
+        {formatMessage({ id: 'workflows.log-ai-left-title' })}
+        {text ? `: ${text.split(':').slice(1).join(':').trim() || text}` : ''}
+      </div>
+    ),
   };
 
   const FeedItemHeaderComponent = EVENT_CONTENT_MAP[type] ?? null;

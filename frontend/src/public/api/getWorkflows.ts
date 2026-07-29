@@ -21,6 +21,7 @@ export interface IGetWorkflowsConfig {
   tasksApiNamesFilter: string[];
   performersIdsFilter: number[];
   performersGroupIdsFilter: number[];
+  performersAiAgentIdsFilter?: number[];
   workflowStartersIdsFilter: number[];
   searchText: string;
   fields?: string[];
@@ -35,6 +36,7 @@ export function getWorkflows({
   tasksApiNamesFilter,
   performersIdsFilter,
   performersGroupIdsFilter,
+  performersAiAgentIdsFilter = [],
   workflowStartersIdsFilter,
   searchText = '',
   fields,
@@ -53,6 +55,7 @@ export function getWorkflows({
       tasksApiNamesFilter,
       performersIdsFilter,
       performersGroupIdsFilter,
+      performersAiAgentIdsFilter,
       workflowStartersIdsFilter,
       searchText,
       fields,
@@ -73,6 +76,7 @@ export function getWorkflowsQueryString({
   tasksApiNamesFilter,
   performersIdsFilter,
   performersGroupIdsFilter,
+  performersAiAgentIdsFilter = [],
   workflowStartersIdsFilter,
   searchText,
   fields,
@@ -98,6 +102,7 @@ export function getWorkflowsQueryString({
     canFilterByTemplateStep(statusFilter) && `template_task_api_name=${tasksApiNamesFilter.join(',')}`,
     canFilterByCurrentPerformer(statusFilter) && `current_performer=${performersIdsFilter.join(',')}`,
     canFilterByCurrentPerformer(statusFilter) && `current_performer_group_ids=${performersGroupIdsFilter.join(',')}`,
+    canFilterByCurrentPerformer(statusFilter) && `current_performer_ai_agent_ids=${performersAiAgentIdsFilter.join(',')}`,
     `workflow_starter=${workflowStarters.join(',')}`,
     statusFilter !== EWorkflowsStatus.All && `status=${statusFilter}`,
     !isCleanSearchText && `search=${searchText}`,

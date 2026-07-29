@@ -8,6 +8,7 @@ import { EWorkflowLogEvent } from '../../types/workflow';
 import { FeedItemIcon } from './FeedItemIcon';
 import { getUserFullName, EXTERNAL_USER } from '../../utils/users';
 import { IHighlightsItem } from '../../types/highlights';
+import { TUserListItem } from '../../types/user';
 import { EditIcon, MoreIcon } from '../icons';
 import { UserData } from '../UserData';
 import { ERoutes } from '../../constants/routes';
@@ -40,53 +41,53 @@ export function FeedItem({
   const {
     created,
     task,
+    text,
     type,
     userId,
     workflow: { template, name: workflowName, isExternal, id: workflowId },
   } = item;
 
   const isEventAllowed = ALLOWED_EVENT_TYPES.includes(type);
+  const isAiAgentEvent = type === EWorkflowLogEvent.AiAgentCompleted || type === EWorkflowLogEvent.AiAgentLeft;
 
   if (!isEventAllowed) {
     return null;
   }
 
-  return (
-    <UserData userId={userId}>
-      {(user) => {
-        if (!user) {
-          return null;
-        }
-
-        const userName = getUserFullName(isExternal ? EXTERNAL_USER : user);
-        const dropdownOptions: TDropdownOption[] = [
-          ...(template
-            ? [
+  const renderItem = (user: TUserListItem) => {
+    const userName = getUserFullName(isExternal ? EXTERNAL_USER : user);
+    const dropdownOptions: TDropdownOption[] = [
+      ...(template
+        ? [
                 {
                   label: formatMessage({ id: 'process-highlights.dropdown-edit-template' }),
                   onClick: redirectToTemplate(template.id),
                   Icon: EditIcon,
                   size: 'lg',
                 } as TDropdownOption,
-            ]
-            : []),
-          ...(template
-            ? [
+        ]
+        : []),
+      ...(template
+        ? [
                 {
                   label: formatMessage({ id: 'process-highlights.review-workflow' }, { workflow: template.name }),
                   onClick: applyTemplatesFilter(template.id),
                   size: 'lg',
                 } as TDropdownOption,
-            ]
-            : []),
-          {
-            label: formatMessage({ id: 'process-highlights.review-workflows-of' }, { user: userName }),
-            onClick: applyUserFilter(user.id),
-            size: 'lg',
-          },
-        ];
+        ]
+        : []),
+      ...(!isAiAgentEvent
+        ? [
+                {
+                  label: formatMessage({ id: 'process-highlights.review-workflows-of' }, { user: userName }),
+                  onClick: applyUserFilter(user.id),
+                  size: 'lg',
+                } as TDropdownOption,
+        ]
+        : []),
+    ];
 
-        return (
+    return (
           <div className={styles['feed-item__container']}>
             {isProcessLogPopupLoading && <Loader />}
             <div className={styles['feed-item__header']}>
@@ -139,10 +140,24 @@ export function FeedItem({
               </div>
             </div>
           </div>
-        );
-      }}
-    </UserData>
-  );
+    );
+  };
+
+  if (isAiAgentEvent) {
+    // AI events carry no user id; the agent name travels in the event
+    // text ("Agent" for completions, "Agent: reason" for left events)
+    const agentName = (type === EWorkflowLogEvent.AiAgentLeft ? text.split(':')[0] : text) || 'AI agent';
+    const aiAgentUser = {
+      id: 0,
+      type: 'ai_agent',
+      firstName: agentName,
+      lastName: '',
+      photo: '',
+    } as unknown as TUserListItem;
+    return renderItem(aiAgentUser);
+  }
+
+  return <UserData userId={userId}>{(user) => (user ? renderItem(user) : null)}</UserData>;
 }
 
 export const ALLOWED_EVENT_TYPES = [
@@ -162,4 +177,6 @@ export const ALLOWED_EVENT_TYPES = [
   EWorkflowLogEvent.WorkflowSnoozedManually,
   EWorkflowLogEvent.WorkflowResumed,
   EWorkflowLogEvent.DueDateChanged,
+  EWorkflowLogEvent.AiAgentCompleted,
+  EWorkflowLogEvent.AiAgentLeft,
 ];
