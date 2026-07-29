@@ -53,6 +53,7 @@ class WebSocketService(NotificationService):
         NotificationMethod.dataset_created,
         NotificationMethod.dataset_updated,
         NotificationMethod.dataset_deleted,
+        NotificationMethod.account_plan_changed,
     }
 
     def _get_serialized_notification(
@@ -487,5 +488,19 @@ class WebSocketService(NotificationService):
             method_name=NotificationMethod.dataset_deleted,
             group_name=f'{EventsConsumer.classname}_{user_id}',
             data=dataset_data,
+            sync=sync,
+        )
+
+    def send_account_plan_changed(
+        self,
+        user_id: int,
+        plan_data: dict,
+        sync: bool,
+        **kwargs,
+    ):
+        self._send(
+            method_name=NotificationMethod.account_plan_changed,
+            group_name=f'{EventsConsumer.classname}_{user_id}',
+            data=plan_data,
             sync=sync,
         )

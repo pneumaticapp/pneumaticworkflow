@@ -24,10 +24,31 @@ class KickoffUpdateVersionService(BaseUpdateVersionService):
 
         # TODO Move to TaskFieldService
 
+        # Runtime fieldset fields are linked via fieldset only (kickoff=None).
+        # Look up by fieldset+api_name so values are preserved on version
+        # update.
+        if fieldset is not None:
+            return TaskField.objects.update_or_create(
+                fieldset=fieldset,
+                api_name=template['api_name'],
+                defaults={
+                    'name': template['name'],
+                    'description': template['description'],
+                    'type': template['type'],
+                    'is_required': template['is_required'],
+                    'is_hidden': template['is_hidden'],
+                    'order': template['order'],
+                    'workflow': self.instance.workflow,
+                    'account': self.instance.account,
+                    'dataset_id': template['dataset_id'],
+                    'kickoff': self.instance,
+                },
+            )
+
         return TaskField.objects.update_or_create(
             kickoff=self.instance,
             api_name=template['api_name'],
-            fieldset=fieldset,
+            fieldset=None,
             defaults={
                 'name': template['name'],
                 'description': template['description'],
@@ -129,7 +150,6 @@ class KickoffUpdateVersionService(BaseUpdateVersionService):
             self._update_field_selections(field, field_data)
             self._update_field_rules(field, field_data, fieldset)
         TaskField.objects.filter(
-            kickoff=self.instance,
             fieldset=fieldset,
         ).exclude(id__in=field_ids).delete()
 

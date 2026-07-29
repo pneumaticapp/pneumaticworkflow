@@ -117,6 +117,21 @@ describe('WorkflowLogTaskComplete', () => {
       expect(screen.queryByTestId('kickoff-outputs')).not.toBeInTheDocument();
     });
 
+    it('does not crash when a legacy task has no output', () => {
+      const task = makeTask();
+      delete (task as Partial<IWorkflowLogTask>).output;
+
+      renderWithIntl(
+        React.createElement(WorkflowLogTaskComplete, {
+          userId: 1,
+          created: '2024-01-01',
+          currentTask: task,
+        }),
+      );
+
+      expect(screen.queryByTestId('kickoff-outputs')).not.toBeInTheDocument();
+    });
+
     it('passes both outputs and fieldsets from currentTask to KickoffOutputs', () => {
       const outputField = makeField({ apiName: 'out-1', value: 'output-val' });
       const task = makeTask({

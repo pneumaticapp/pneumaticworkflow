@@ -331,7 +331,7 @@ class MicrosoftAuthService(
             format for external users. """
 
         try:
-            email = value.split('#EXT#')[0]
+            email = value.split('#EXT#', maxsplit=1)[0]
             if email.find('@') < 1:
                 login, domain = email.rsplit('_', 1)
                 email = f'{login}@{domain}'

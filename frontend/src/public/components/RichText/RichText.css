@@ -108,6 +108,7 @@
   img {
     display: block;
     width: auto;
+    max-width: 100%;
     max-height: 50rem;
     cursor: pointer;
   }
@@ -117,6 +118,14 @@
   ul,
   ol {
     margin: 2rem 0;
+  }
+
+  > *:first-child {
+    margin-top: 0;
+  }
+
+  > *:last-child {
+    margin-bottom: 0;
   }
 
   li + li {

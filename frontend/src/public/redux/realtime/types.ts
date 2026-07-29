@@ -1,4 +1,5 @@
 import { IWorkflowLogItem } from "../../types/workflow";
+import { ETaskStatus } from "../../types/tasks";
 import { EUserGroupType } from "../team/types";
 
 export interface IWsEnvelopeBase {
@@ -67,6 +68,7 @@ export interface IWsTaskDeletedData {
   id: number;
   name: string;
   workflowName: string;
+  status: ETaskStatus;
 }
 
 export interface IWsDelayWorkflowData {
@@ -221,7 +223,7 @@ export interface IWsGroupData {
   name: string;
   photo: string | null;
   type: EUserGroupType;
-  users: IWsGroupUser[];
+  users: number[];
 }
 
 // ======================= utils
@@ -247,9 +249,6 @@ export interface IWsTaskPerformer {
   isCompleted: boolean;
   dateCompletedTsp: number | null;
 }
-
-export interface IWsGroupUser extends IWsUserData {}
-
 
 // ======================= notification data types
 

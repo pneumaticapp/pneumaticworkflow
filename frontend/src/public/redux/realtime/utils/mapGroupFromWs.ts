@@ -3,7 +3,10 @@ import type { IWsGroupData } from '../types';
 
 export function mapWsGroupToGroup(group: IWsGroupData): IGroup {
   return {
-    ...group,
-    users: group.users.map((user) => user.id)
+    id: group.id,
+    name: group.name,
+    photo: group.photo,
+    type: group.type,
+    users: group.users,
   };
 }

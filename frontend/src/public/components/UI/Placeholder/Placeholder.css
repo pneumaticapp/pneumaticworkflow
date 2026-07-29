@@ -7,29 +7,29 @@
 }
 
 .icon {
-  width: 120px;
-  height: 120px;
+  width: 12rem;
+  height: 12rem;
 
   @media (--mobile) {
-    width: 80px;
-    height: 80px;
+    width: 8rem;
+    height: 8rem;
   }
 }
 
 .title {
-  margin: 16px 0 0;
-  max-width: 416px;
+  margin: 1.6rem 0 0;
+  max-width: 41.6rem;
   text-align: center;
 }
 
 .description {
-  margin: 8px 0 0;
-  max-width: 416px;
-  font-size: 15px;
-  line-height: 20px;
+  @mixin text-base;
+
+  margin: 0.8rem 0 0;
+  max-width: 41.6rem;
   text-align: center;
 }
 
 .footer {
-  margin-top: 16px;
+  margin-top: 1.6rem;
 }
