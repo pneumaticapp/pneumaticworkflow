@@ -1016,6 +1016,14 @@ class WorkflowActionService:
                 task_performer.save(
                     update_fields=('date_completed', 'is_completed'),
                 )
+                # The task itself is not done, but the agent's share
+                # is — record it so the timeline shows the agent's
+                # contribution instead of attributing it to whoever
+                # completes the task last
+                WorkflowEventService.ai_agent_completed_event(
+                    task=task,
+                    ai_agent=ai_agent,
+                )
         return task
 
     def _start_ai_performers(self, task: Task, is_returned: bool = False):

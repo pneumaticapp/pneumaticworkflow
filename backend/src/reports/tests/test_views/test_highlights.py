@@ -1891,3 +1891,65 @@ def test_highlights__start_workflow_fieldset_absent__ok(api_client):
     assert event_data['type'] == WorkflowEventType.RUN
     assert event_data['workflow']['kickoff']['fieldsets'] == []
     assert event_data['workflow']['kickoff']['output'] == []
+
+
+def test_highlights__ai_agent_completed_event__ok(api_client):
+
+    # arrange
+    from src.ai.models import AIAgent
+    user = create_test_user(is_account_owner=True)
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    agent = AIAgent.objects.create(
+        account=user.account,
+        name='Analyst',
+        model_slug='test/model',
+    )
+    WorkflowEventService.ai_agent_completed_event(
+        task=task,
+        ai_agent=agent,
+        after_create_actions=False,
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get('/reports/highlights')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 1
+    event_data = response.data[0]
+    assert event_data['type'] == WorkflowEventType.AI_AGENT_COMPLETED
+    assert event_data['text'] == 'Analyst'
+    assert event_data['user_id'] is None
+
+
+def test_highlights__ai_agent_left_event__ok(api_client):
+
+    # arrange
+    from src.ai.models import AIAgent
+    user = create_test_user(is_account_owner=True)
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    agent = AIAgent.objects.create(
+        account=user.account,
+        name='Screener',
+        model_slug='test/model',
+    )
+    WorkflowEventService.ai_agent_left_event(
+        task=task,
+        ai_agent=agent,
+        reason='Required field left empty',
+        after_create_actions=False,
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get('/reports/highlights')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 1
+    event_data = response.data[0]
+    assert event_data['type'] == WorkflowEventType.AI_AGENT_LEFT
+    assert event_data['text'] == 'Screener: Required field left empty'

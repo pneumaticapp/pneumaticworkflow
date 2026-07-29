@@ -3558,3 +3558,85 @@ def test_workflow_list__group_template_starter__includes_only_own_workflows(
     workflow_ids = [item['id'] for item in data['results']]
     assert workflow_own.id in workflow_ids
     assert workflow_other.id not in workflow_ids
+
+
+def test_list__filter_current_performer_ai_agent_ids__ok(api_client):
+    # arrange
+    from src.ai.models import AIAgent
+    account = create_test_account()
+    user = create_test_user(account=account)
+    api_client.token_authenticate(user)
+    workflow = create_test_workflow(user=user)
+    create_test_workflow(user=user)
+    agent = AIAgent.objects.create(
+        account=account,
+        name='Analyst',
+        model_slug='test/model',
+    )
+    task = workflow.tasks.get(number=1)
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.AI,
+        ai_agent_id=agent.id,
+        directly_status=DirectlyStatus.CREATED,
+    )
+
+    # act
+    response = api_client.get(
+        f'/workflows?current_performer_ai_agent_ids={agent.id}',
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data['results']) == 1
+    assert response.data['results'][0]['id'] == workflow.id
+
+
+def test_list__filter_ai_agent_with_current_performer__union__ok(api_client):
+    # arrange
+    from src.ai.models import AIAgent
+    account = create_test_account()
+    user = create_test_user(account=account)
+    another_user = create_test_user(
+        account=account,
+        email='another-performer@pneumatic.app',
+    )
+    api_client.token_authenticate(user)
+    ai_workflow = create_test_workflow(user=user)
+    user_workflow = create_test_workflow(user=user)
+    agent = AIAgent.objects.create(
+        account=account,
+        name='Analyst',
+        model_slug='test/model',
+    )
+    ai_task = ai_workflow.tasks.get(number=1)
+    TaskPerformer.objects.filter(task=ai_task).update(
+        directly_status=DirectlyStatus.DELETED,
+    )
+    TaskPerformer.objects.create(
+        task_id=ai_task.id,
+        type=PerformerType.AI,
+        ai_agent_id=agent.id,
+        directly_status=DirectlyStatus.CREATED,
+    )
+    user_task = user_workflow.tasks.get(number=1)
+    TaskPerformer.objects.filter(task=user_task).update(
+        directly_status=DirectlyStatus.DELETED,
+    )
+    TaskPerformer.objects.create(
+        task_id=user_task.id,
+        type=PerformerType.USER,
+        user_id=another_user.id,
+        directly_status=DirectlyStatus.CREATED,
+    )
+
+    # act
+    response = api_client.get(
+        f'/workflows?current_performer={another_user.id}'
+        f'&current_performer_ai_agent_ids={agent.id}',
+    )
+
+    # assert
+    assert response.status_code == 200
+    ids = {item['id'] for item in response.data['results']}
+    assert ids == {ai_workflow.id, user_workflow.id}

@@ -218,6 +218,13 @@ def test_run__require_completion_by_all__completes_for_agent_only(
     assert ai_performer.is_completed is True
     run = AITaskRun.objects.get(task=task, agent=agent)
     assert run.status == AITaskRunStatus.COMPLETED
+    # The agent's share is recorded on the timeline even though the
+    # task is still waiting for the human co-performers
+    event = WorkflowEvent.objects.get(
+        task=task,
+        type=WorkflowEventType.AI_AGENT_COMPLETED,
+    )
+    assert event.text == agent.name
 
 
 def test_run__no_fillable_fields__completes_without_model_call(mocker):

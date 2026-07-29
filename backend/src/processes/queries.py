@@ -86,6 +86,7 @@ class WorkflowListQuery(
         task_api_name: Optional[List[str]] = None,
         current_performer: Optional[List[int]] = None,
         current_performer_group_ids: Optional[List[int]] = None,
+        current_performer_ai_agent_ids: Optional[List[int]] = None,
         workflow_starter: Optional[List[int]] = None,
         is_external: Optional[bool] = None,
         search: Optional[str] = None,
@@ -120,6 +121,7 @@ class WorkflowListQuery(
         self.task_api_name = task_api_name
         self.current_performer = current_performer
         self.current_performer_group_ids = current_performer_group_ids
+        self.current_performer_ai_agent_ids = current_performer_ai_agent_ids
         self.workflow_starter = workflow_starter
         self.is_external = is_external
         self.ancestor_task_id = ancestor_task_id
@@ -168,6 +170,14 @@ class WorkflowListQuery(
         )
         self.params.update(params)
         return f"ptp.group_id in {result}"
+
+    def _get_current_performer_ai_agent_ids(self):
+        result, params = self._to_sql_list(
+            values=self.current_performer_ai_agent_ids,
+            prefix='current_performer_ai_agent_ids',
+        )
+        self.params.update(params)
+        return f"ptp.ai_agent_id in {result}"
 
     def _get_workflow_starter(self):
         result, params = self._to_sql_list(
@@ -220,25 +230,22 @@ class WorkflowListQuery(
         if self.task_api_name:
             where = f'{where} AND {self._get_template_task()}'
 
-        if self.current_performer and self.current_performer_group_ids:
+        performer_conditions = []
+        if self.current_performer:
+            performer_conditions.append(self._get_current_performer())
+        if self.current_performer_group_ids:
+            performer_conditions.append(
+                self._get_current_performer_group_ids(),
+            )
+        if self.current_performer_ai_agent_ids:
+            performer_conditions.append(
+                self._get_current_performer_ai_agent_ids(),
+            )
+        if performer_conditions:
+            joined_conditions = ' OR '.join(performer_conditions)
             where = f"""
                 {where}
-                AND (
-                    {self._get_current_performer()}
-                    OR {self._get_current_performer_group_ids()}
-                )
-                AND ptp.directly_status != '{DirectlyStatus.DELETED}'
-            """
-        elif self.current_performer:
-            where = f"""
-                {where}
-                 AND {self._get_current_performer()}
-                 AND ptp.directly_status != '{DirectlyStatus.DELETED}'
-            """
-        elif self.current_performer_group_ids:
-            where = f"""
-                {where}
-                AND {self._get_current_performer_group_ids()}
+                AND ({joined_conditions})
                 AND ptp.directly_status != '{DirectlyStatus.DELETED}'
             """
 
@@ -277,7 +284,11 @@ class WorkflowListQuery(
             )
         """
 
-        if self.current_performer or self.current_performer_group_ids:
+        if (
+            self.current_performer
+            or self.current_performer_group_ids
+            or self.current_performer_ai_agent_ids
+        ):
             result += f"""
                 LEFT JOIN processes_taskperformer ptp ON (
                     pt.id = ptp.task_id
@@ -1871,6 +1882,8 @@ class HighlightsQuery(SqlQueryObject):
         WorkflowEventType.FORCE_RESUME,
         WorkflowEventType.DUE_DATE_CHANGED,
         WorkflowEventType.SUB_WORKFLOW_RUN,
+        WorkflowEventType.AI_AGENT_COMPLETED,
+        WorkflowEventType.AI_AGENT_LEFT,
     )
 
     def __init__(
@@ -2115,6 +2128,8 @@ class TemplateTitlesByEventsQuery(SqlQueryObject):
         WorkflowEventType.FORCE_RESUME,
         WorkflowEventType.DUE_DATE_CHANGED,
         WorkflowEventType.SUB_WORKFLOW_RUN,
+        WorkflowEventType.AI_AGENT_COMPLETED,
+        WorkflowEventType.AI_AGENT_LEFT,
     ]
 
     def __init__(

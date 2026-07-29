@@ -521,6 +521,7 @@ class WorkflowListFilterSerializer(
     fields = serializers.CharField(required=False)
     current_performer = serializers.CharField(required=False)
     current_performer_group_ids = serializers.CharField(required=False)
+    current_performer_ai_agent_ids = serializers.CharField(required=False)
     workflow_starter = serializers.CharField(required=False)
     ordering = serializers.ChoiceField(
         required=False,
@@ -558,6 +559,9 @@ class WorkflowListFilterSerializer(
     def validate_current_performer_group_ids(self, value):
         return self.get_valid_list_integers(value)
 
+    def validate_current_performer_ai_agent_ids(self, value):
+        return self.get_valid_list_integers(value)
+
     def validate_workflow_starter(self, value):
         return self.get_valid_list_integers(value)
 
@@ -570,8 +574,15 @@ class WorkflowListFilterSerializer(
         status = data.get('status')
         current_performer = data.get('current_performer')
         current_performer_group_ids = data.get('current_performer_group_ids')
+        current_performer_ai_agent_ids = data.get(
+            'current_performer_ai_agent_ids',
+        )
         if (
-            (current_performer or current_performer_group_ids)
+            (
+                current_performer
+                or current_performer_group_ids
+                or current_performer_ai_agent_ids
+            )
             and status in WorkflowApiStatus.NOT_RUNNING
         ):
             raise ValidationError(messages.MSG_PW_0067)
