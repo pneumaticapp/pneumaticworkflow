@@ -76,18 +76,27 @@ def resolve_output_fields(task_output: List[Dict]) -> List[OutputField]:
     return fields
 
 
-def is_fillable(field: OutputField) -> bool:
+def is_fillable(
+    field: OutputField,
+    file_uploads_enabled: bool = True,
+) -> bool:
 
     """A choice field with no selections offers the model nothing
-    to pick from."""
+    to pick from. A file field is filled by uploading a generated
+    document, so it needs the file service to be available."""
 
+    if field.type == FieldType.FILE and not file_uploads_enabled:
+        return False
     return (
         field.type in FILLABLE_TYPES
         and not (is_choice_type(field.type) and not field.selections)
     )
 
 
-def find_blocking_fields(fields: List[OutputField]) -> List[OutputField]:
+def find_blocking_fields(
+    fields: List[OutputField],
+    file_uploads_enabled: bool = True,
+) -> List[OutputField]:
 
     """Required fields we cannot fill block the whole task: completion
     rejects a submission that omits them, so there is no point calling
@@ -95,5 +104,6 @@ def find_blocking_fields(fields: List[OutputField]) -> List[OutputField]:
 
     return [
         field for field in fields
-        if field.is_required and not is_fillable(field)
+        if field.is_required
+        and not is_fillable(field, file_uploads_enabled)
     ]

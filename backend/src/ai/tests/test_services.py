@@ -29,6 +29,7 @@ from src.processes.models.workflows.event import WorkflowEvent
 from src.storage.services.exceptions import (
     FileDownloadException,
     FileServiceConnectionFailedException,
+    FileUploadException,
 )
 from src.storage.services.file_service import FileServiceClient
 from src.processes.models.workflows.fields import (
@@ -571,3 +572,151 @@ def test_run__no_file_service_configured__no_download(mocker):
     task.refresh_from_db()
     assert task.status == TaskStatus.COMPLETED
     download_mock.assert_not_called()
+
+
+def _file_field_setup(mocker, is_required=True):
+    user, workflow, task, agent = _setup(required_string=False)
+    TaskField.objects.create(
+        task=task,
+        api_name='field-report',
+        name='Report',
+        type=FieldType.FILE,
+        is_required=is_required,
+        workflow=workflow,
+        account=user.account,
+    )
+    upload_mock = mocker.patch.object(
+        FileServiceClient,
+        'upload_file_with_attachment',
+        return_value='https://files.test/gen12345xyz',
+    )
+    return user, workflow, task, agent, upload_mock
+
+
+def test_run__file_field__document_uploaded_and_linked(mocker):
+    _user, _workflow, task, agent, upload_mock = _file_field_setup(mocker)
+    _mock_model(
+        mocker,
+        {
+            'field-report': {
+                'filename': 'screening.md',
+                'content': '# Screening summary',
+            },
+        },
+    )
+
+    with override_settings(
+        FILE_SERVICE_URL=_FILES_URL,
+        FILE_SERVICE_HOST_PATH='files.test',
+    ):
+        run_ai_performer(task_id=task.id, agent_id=agent.id)
+
+    task.refresh_from_db()
+    assert task.status == TaskStatus.COMPLETED
+    upload_mock.assert_called_once_with(
+        file_content=b'# Screening summary',
+        filename='screening.md',
+        content_type='text/markdown',
+        account=agent.account,
+    )
+    field = TaskField.objects.get(task=task, api_name='field-report')
+    assert field.markdown_value == (
+        '[screening.md](https://files.test/gen12345xyz)'
+    )
+    run = AITaskRun.objects.get(task=task, agent=agent)
+    assert run.status == AITaskRunStatus.COMPLETED
+
+
+def test_run__file_field__upload_connection_error__requeued(mocker):
+    _user, _workflow, task, agent, upload_mock = _file_field_setup(mocker)
+    upload_mock.side_effect = FileServiceConnectionFailedException()
+    _mock_model(
+        mocker,
+        {'field-report': {'filename': 'a.md', 'content': 'text'}},
+    )
+
+    with override_settings(
+        FILE_SERVICE_URL=_FILES_URL,
+        FILE_SERVICE_HOST_PATH='files.test',
+    ):
+        service = AIPerformerService.load(
+            task_id=task.id,
+            agent_id=agent.id,
+        )
+        run = service.claim()
+
+        with pytest.raises(AITransientError):
+            service.run(run)
+
+    run.refresh_from_db()
+    assert run.status == AITaskRunStatus.QUEUED
+    task.refresh_from_db()
+    assert task.status == TaskStatus.ACTIVE
+
+
+def test_run__file_field__upload_rejected__left_for_human(mocker):
+    _user, _workflow, task, agent, upload_mock = _file_field_setup(mocker)
+    upload_mock.side_effect = FileUploadException()
+    _mock_model(
+        mocker,
+        {'field-report': {'filename': 'a.md', 'content': 'text'}},
+    )
+    mocker.patch(
+        'src.ai.services.performers.send_ai_left_task_notification.delay',
+    )
+
+    with override_settings(
+        FILE_SERVICE_URL=_FILES_URL,
+        FILE_SERVICE_HOST_PATH='files.test',
+    ):
+        run_ai_performer(task_id=task.id, agent_id=agent.id)
+
+    task.refresh_from_db()
+    assert task.status == TaskStatus.ACTIVE
+    run = AITaskRun.objects.get(task=task, agent=agent)
+    assert run.status == AITaskRunStatus.LEFT_FOR_HUMAN
+    assert 'could not be uploaded' in run.reason
+
+
+def test_run__file_field__bad_shape__left_for_human(mocker):
+    _user, _workflow, task, agent, upload_mock = _file_field_setup(mocker)
+    _mock_model(mocker, {'field-report': 'just text, not a document'})
+    mocker.patch(
+        'src.ai.services.performers.send_ai_left_task_notification.delay',
+    )
+
+    with override_settings(
+        FILE_SERVICE_URL=_FILES_URL,
+        FILE_SERVICE_HOST_PATH='files.test',
+    ):
+        run_ai_performer(task_id=task.id, agent_id=agent.id)
+
+    task.refresh_from_db()
+    assert task.status == TaskStatus.ACTIVE
+    run = AITaskRun.objects.get(task=task, agent=agent)
+    assert run.status == AITaskRunStatus.LEFT_FOR_HUMAN
+    assert '{filename, content}' in run.reason
+    upload_mock.assert_not_called()
+
+
+def test_run__required_file_field__no_file_service__left_for_human(mocker):
+    _user, _workflow, task, agent, upload_mock = _file_field_setup(mocker)
+    call_model_mock = _mock_model(mocker, {'field-report': None})
+    mocker.patch(
+        'src.ai.services.performers.send_ai_left_task_notification.delay',
+    )
+
+    with override_settings(
+        FILE_SERVICE_URL=None,
+        FILE_SERVICE_HOST_PATH=None,
+    ):
+        run_ai_performer(task_id=task.id, agent_id=agent.id)
+
+    task.refresh_from_db()
+    assert task.status == TaskStatus.ACTIVE
+    run = AITaskRun.objects.get(task=task, agent=agent)
+    assert run.status == AITaskRunStatus.LEFT_FOR_HUMAN
+    assert 'Required fields an AI agent cannot fill' in run.reason
+    assert '"Report"' in run.reason
+    call_model_mock.assert_not_called()
+    upload_mock.assert_not_called()

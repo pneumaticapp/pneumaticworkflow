@@ -23,6 +23,10 @@ from src.ai.performers.attachments import (
     extract_content,
     render_attachment,
 )
+from src.ai.performers.generated_files import (
+    GENERATED_CONTENT_TYPE,
+    resolve_generated_files,
+)
 from src.ai.performers.output_fields import (
     OutputField,
     find_blocking_fields,
@@ -55,6 +59,7 @@ from src.processes.services.workflow_action import WorkflowActionService
 from src.storage.services.exceptions import (
     FileDownloadException,
     FileServiceConnectionFailedException,
+    FileServiceException,
 )
 from src.storage.services.file_service import FileServiceClient
 from src.storage.utils import extract_file_links_from_text
@@ -170,7 +175,14 @@ class AIPerformerService:
 
     def run(self, run: AITaskRun):
         fields = self._resolve_fields()
-        blocking = find_blocking_fields(fields)
+        # A generated document is worthless without somewhere to
+        # upload it, so file fields count as unfillable when the file
+        # service is not configured
+        uploads_enabled = bool(settings.FILE_SERVICE_URL)
+        blocking = find_blocking_fields(
+            fields,
+            file_uploads_enabled=uploads_enabled,
+        )
         if blocking:
             names = ', '.join(f'"{field.name}"' for field in blocking)
             self._leave_for_human(
@@ -181,7 +193,10 @@ class AIPerformerService:
             )
             return
 
-        fillable = [field for field in fields if is_fillable(field)]
+        fillable = [
+            field for field in fields
+            if is_fillable(field, file_uploads_enabled=uploads_enabled)
+        ]
         if not fillable:
             # Nothing to produce: complete the task so the workflow
             # moves on
@@ -220,6 +235,32 @@ class AIPerformerService:
             # Truncated/empty/unparseable output: re-running buys the
             # same verdict — don't burn tokens
             self._leave_for_human(run, reason=str(ex))
+            return
+
+        try:
+            data = resolve_generated_files(
+                fields=fillable,
+                data=data,
+                upload=self._upload_generated_file,
+            )
+        except FileServiceConnectionFailedException as ex:
+            self._requeue(run)
+            raise AITransientError(str(ex)) from ex
+        except FileServiceException as ex:
+            # The upload was rejected (auth, size, type): retrying
+            # buys the same verdict
+            self._leave_for_human(
+                run,
+                reason=(
+                    f'Generated document could not be uploaded: {ex}'
+                ),
+            )
+            return
+        except IncompleteOutputError as ex:
+            self._leave_for_human(
+                run,
+                reason='; '.join(ex.problems),
+            )
             return
 
         try:
@@ -304,6 +345,21 @@ class AIPerformerService:
                 ),
             })
         return attachments
+
+    def _upload_generated_file(self, filename: str, content: str) -> str:
+
+        """ Stores a document the model wrote and returns its public
+            URL. The account-scoped attachment created here mirrors a
+            human upload; applying the field value binds the file to
+            the task output with its own restricted attachment """
+
+        client = FileServiceClient(user=self.account.get_owner())
+        return client.upload_file_with_attachment(
+            file_content=content.encode('utf-8'),
+            filename=filename,
+            content_type=GENERATED_CONTENT_TYPE,
+            account=self.account,
+        )
 
     def _user_content(
         self,
