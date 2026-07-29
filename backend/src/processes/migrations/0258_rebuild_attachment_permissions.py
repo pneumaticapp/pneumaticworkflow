@@ -315,7 +315,7 @@ def backward(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('processes', '0255_migrate_workflow_acl_to_guardian'),
+        ('processes', '0257_migrate_workflow_acl_to_guardian'),
         ('storage', '0001_initial'),
         ('permissions', '0002_user_object_permission'),
         ('contenttypes', '0002_remove_content_type_name'),

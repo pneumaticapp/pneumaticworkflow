@@ -1979,7 +1979,11 @@ class TestWorkflowCountsByWorkflowStarterGroupUser:
             email='request@test.test',
         )
         workflow = create_test_workflow(user=owner, tasks_count=1)
-        workflow.owners.add(request_user)
+        WorkflowPermissionService(workflow).grant_view(
+            user=request_user,
+            source_type=PermissionSource.TEMPLATE_OWNER,
+            source_id=workflow.template_id,
+        )
         task = workflow.tasks.get(number=1)
         group_1 = create_test_group(account=account, users=[user_2])
         TaskPerformer.objects.filter(task_id=task.id).update(
