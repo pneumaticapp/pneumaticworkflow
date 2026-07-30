@@ -9,6 +9,7 @@ import { WarningPopup } from '../../../UI/WarningPopup';
 import {
   openEditModal,
   deleteFieldsetAction,
+  cloneFieldsetAction,
   setCurrentFieldset,
 } from '../../../../redux/fieldsets/slice';
 import { history } from '../../../../utils/history';
@@ -27,6 +28,7 @@ jest.mock('../../../../utils/strings', () => ({
 jest.mock('../../../../redux/fieldsets/slice', () => ({
   openEditModal: jest.fn(() => ({ type: 'fieldsets/openEditModal' })),
   deleteFieldsetAction: jest.fn((p) => ({ type: 'fieldsets/deleteFieldsetAction', payload: p })),
+  cloneFieldsetAction: jest.fn((p) => ({ type: 'fieldsets/cloneFieldsetAction', payload: p })),
   setCurrentFieldset: jest.fn((p) => ({ type: 'fieldsets/setCurrentFieldset', payload: p })),
 }));
 
@@ -42,6 +44,7 @@ jest.mock('../../../icons', () => ({
   MoreIcon: () => null,
   PencilIcon: () => null,
   TrashIcon: () => null,
+  UnionIcon: () => null,
 }));
 
 describe('FieldsetCard', () => {
@@ -49,6 +52,7 @@ describe('FieldsetCard', () => {
 
   const formatMsg = (id: string) => intlMock.formatMessage({ id });
   const EDIT_LABEL = formatMsg('fieldsets.edit');
+  const CLONE_LABEL = formatMsg('fieldsets.clone');
   const DELETE_LABEL = formatMsg('fieldsets.delete');
   const FIELDS_STATS = (count: number) => intlMock.formatMessage({ id: 'fieldsets.stats.fields' }, { count });
   const RULES_STATS = (count: number) => intlMock.formatMessage({ id: 'fieldsets.stats.rules' }, { count });
@@ -171,6 +175,20 @@ describe('FieldsetCard', () => {
 
       expect(getWarningPopupProps().isOpen).toBe(false);
       expect(deleteFieldsetAction).not.toHaveBeenCalled();
+    });
+  });
+
+
+  describe('Dropdown — Clone', () => {
+    it('dispatches cloneFieldsetAction on Clone click', () => {
+      const props = makeProps({ id: 10 });
+      render(React.createElement(FieldsetCard, props));
+
+      const cloneOption = findDropdownOption(CLONE_LABEL);
+      cloneOption.onClick();
+
+      expect(mockDispatch).toHaveBeenCalledTimes(1);
+      expect(mockDispatch).toHaveBeenCalledWith(cloneFieldsetAction({ id: 10 }));
     });
   });
 

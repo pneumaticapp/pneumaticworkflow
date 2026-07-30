@@ -2,11 +2,12 @@
 import { runSaga } from 'redux-saga';
 import { call } from 'redux-saga/effects';
 
-import { loadFieldsetsSaga, loadCurrentFieldsetSaga, deleteFieldsetSaga, updateFieldsetSaga } from '../saga';
+import { loadFieldsetsSaga, loadCurrentFieldsetSaga, deleteFieldsetSaga, updateFieldsetSaga, cloneFieldsetSaga } from '../saga';
 import { getFieldsets } from '../../../api/fieldsets/getFieldsets';
 import { getFieldset } from '../../../api/fieldsets/getFieldset';
 import { deleteFieldset } from '../../../api/fieldsets/deleteFieldset';
 import { updateFieldset } from '../../../api/fieldsets/updateFieldset';
+import { cloneFieldset } from '../../../api/fieldsets/cloneFieldset';
 import {
   loadFieldsets, loadFieldsetsSuccess, loadFieldsetsFailed,
   loadCurrentFieldset, loadCurrentFieldsetSuccess,
@@ -22,24 +23,28 @@ import { makeFieldsetCatalogItem } from '../../../__stubs__/fieldsets.factory';
 import { isRequestCanceled } from '../../../utils/isRequestCanceled';
 import { NotificationManager } from '../../../components/UI/Notifications';
 
-jest.mock('../../../utils/getConfig', () => ({
-  getBrowserConfigEnv: jest.fn().mockReturnValue({
-    api: { urls: { fieldsets: '/fieldsets', fieldset: '/fieldsets/:id' } },
-  }),
-}));
+jest.mock('../../../utils/getConfig', () => {
+  const config = require('../../../../../config/common.json');
+  return {
+    getBrowserConfigEnv: jest.fn().mockReturnValue({
+      api: { urls: config.api.urls },
+    }),
+  };
+});
 
 jest.mock('../../../api/fieldsets/getFieldsets', () => ({ getFieldsets: jest.fn() }));
 jest.mock('../../../api/fieldsets/getFieldset', () => ({ getFieldset: jest.fn() }));
 jest.mock('../../../api/fieldsets/createFieldset', () => ({ createFieldset: jest.fn() }));
 jest.mock('../../../api/fieldsets/updateFieldset', () => ({ updateFieldset: jest.fn() }));
 jest.mock('../../../api/fieldsets/deleteFieldset', () => ({ deleteFieldset: jest.fn() }));
+jest.mock('../../../api/fieldsets/cloneFieldset', () => ({ cloneFieldset: jest.fn() }));
 
 jest.mock('../../../utils/history', () => ({
   history: { replace: jest.fn(), push: jest.fn() },
 }));
 
 jest.mock('../../../components/UI/Notifications', () => ({
-  NotificationManager: { warning: jest.fn() },
+  NotificationManager: { warning: jest.fn(), notifyApiError: jest.fn() },
 }));
 
 jest.mock('../../../utils/logger', () => ({
@@ -396,5 +401,77 @@ describe('updateFieldsetSaga', () => {
     const dispatched = await runUpdateFieldset({ id: FIELDSET_ID, name: 'x' });
 
     expect(dispatched).toEqual([]);
+  });
+});
+
+
+describe('cloneFieldsetSaga', () => {
+  beforeEach(() => { jest.clearAllMocks(); });
+
+  const FIELDSET_ID = 5;
+  const CLONED_ID = 42;
+
+  const runCloneFieldset = async (id: number) => {
+    const dispatched: IDispatchedAction[] = [];
+
+    await runSaga(
+      {
+        dispatch: (a: IDispatchedAction) => dispatched.push(a),
+        getState: () => ({ fieldsets: { ...initialState } }),
+      },
+      function* wrapper() {
+        yield call(cloneFieldsetSaga, {
+          type: 'fieldsets/cloneFieldsetAction',
+          payload: { id },
+        });
+      },
+    ).toPromise();
+
+    return dispatched;
+  };
+
+  it('dispatches loadCurrentFieldsetSuccess and redirects to cloned fieldset', async () => {
+    const clonedFieldset = makeFieldsetCatalogItem({ id: CLONED_ID, name: 'Clone of Test' });
+    (cloneFieldset as jest.Mock).mockResolvedValue(clonedFieldset);
+
+    const dispatched = await runCloneFieldset(FIELDSET_ID);
+
+    expect(cloneFieldset).toHaveBeenCalledTimes(1);
+    expect(cloneFieldset).toHaveBeenCalledWith(FIELDSET_ID);
+
+    expect(dispatched).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: loadCurrentFieldsetSuccess.type,
+          payload: clonedFieldset,
+        }),
+      ]),
+    );
+
+    expect(history.push).toHaveBeenCalledTimes(1);
+    expect(history.push).toHaveBeenCalledWith(
+      ERoutes.FieldsetDetail.replace(':id', String(CLONED_ID)),
+    );
+  });
+
+  it('shows notifyApiError and does not redirect on API error', async () => {
+    const error = { status: 500, message: 'Server error' };
+    (cloneFieldset as jest.Mock).mockRejectedValue(error);
+
+    const dispatched = await runCloneFieldset(FIELDSET_ID);
+
+    expect(dispatched).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ type: loadCurrentFieldsetSuccess.type }),
+      ]),
+    );
+
+    expect(history.push).not.toHaveBeenCalled();
+
+    expect(NotificationManager.notifyApiError).toHaveBeenCalledTimes(1);
+    expect(NotificationManager.notifyApiError).toHaveBeenCalledWith(
+      error,
+      expect.objectContaining({ message: 'Server error' }),
+    );
   });
 });

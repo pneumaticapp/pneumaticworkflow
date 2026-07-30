@@ -22,6 +22,7 @@ import { getAllFieldsetsCatalog } from '../../api/fieldsets/getAllFieldsetsCatal
 import { createFieldset } from '../../api/fieldsets/createFieldset';
 import { updateFieldset } from '../../api/fieldsets/updateFieldset';
 import { deleteFieldset } from '../../api/fieldsets/deleteFieldset';
+import { cloneFieldset } from '../../api/fieldsets/cloneFieldset';
 
 import {
   loadFieldsets,
@@ -34,6 +35,7 @@ import {
   createFieldsetAction,
   updateFieldsetAction,
   deleteFieldsetAction,
+  cloneFieldsetAction,
   removeFieldsetFromList,
   loadFieldsetsCatalog,
   loadFieldsetsCatalogSuccess,
@@ -139,6 +141,17 @@ export function* deleteFieldsetSaga({ payload: { id, onSuccess } }: PayloadActio
   }
 }
 
+export function* cloneFieldsetSaga({ payload: { id } }: PayloadAction<{ id: number }>) {
+  try {
+    const clonedFieldset: IFieldsetCatalogItem = yield call(cloneFieldset, id);
+    yield put(loadCurrentFieldsetSuccess(clonedFieldset));
+    history.push(getFieldsetDetailRoute(clonedFieldset.id));
+  } catch (error) {
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
+    logger.error('failed to clone fieldset', error);
+  }
+}
+
 function* watchLoadFieldsets() {
   yield takeLatest(loadFieldsets.type, loadFieldsetsSaga);
 }
@@ -157,6 +170,10 @@ function* watchUpdateFieldset() {
 
 function* watchDeleteFieldset() {
   yield takeEvery(deleteFieldsetAction.type, deleteFieldsetSaga);
+}
+
+function* watchCloneFieldset() {
+  yield takeEvery(cloneFieldsetAction.type, cloneFieldsetSaga);
 }
 
 function* loadFieldsetsCatalogSaga() {
@@ -187,6 +204,7 @@ export function* rootSaga() {
     fork(watchCreateFieldset),
     fork(watchUpdateFieldset),
     fork(watchDeleteFieldset),
+    fork(watchCloneFieldset),
     fork(watchLoadFieldsetsCatalog),
   ]);
 }

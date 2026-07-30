@@ -11,6 +11,7 @@ import { TFieldsetDetailsProps } from '../types';
 import {
   openEditModal,
   deleteFieldsetAction,
+  cloneFieldsetAction,
   loadCurrentFieldset,
   resetCurrentFieldset,
   updateFieldsetAction,
@@ -41,6 +42,7 @@ jest.mock('../../../../utils/history', () => ({
 jest.mock('../../../../redux/fieldsets/slice', () => ({
   openEditModal: jest.fn(() => ({ type: 'fieldsets/openEditModal' })),
   deleteFieldsetAction: jest.fn((p) => ({ type: 'fieldsets/deleteFieldsetAction', payload: p })),
+  cloneFieldsetAction: jest.fn((p) => ({ type: 'fieldsets/cloneFieldsetAction', payload: p })),
   loadCurrentFieldset: jest.fn((p) => ({ type: 'fieldsets/loadCurrentFieldset', payload: p })),
   resetCurrentFieldset: jest.fn(() => ({ type: 'fieldsets/resetCurrentFieldset' })),
   updateFieldsetAction: jest.fn((p) => ({ type: 'fieldsets/updateFieldsetAction', payload: p })),
@@ -304,6 +306,17 @@ describe('FieldsetDetails', () => {
       const expectedRoute = ERoutes.Fieldsets;
       expect(history.push).toHaveBeenCalledTimes(1);
       expect(history.push).toHaveBeenCalledWith(expectedRoute);
+    });
+
+    it('onClone in ModifyDropdown dispatches cloneFieldsetAction and passes cloneLabel', () => {
+      renderWithState(makeLoadedState({ id: 10 }), makeProps('10'));
+      const props = getModifyDropdownProps();
+
+      expect(props.cloneLabel).toBe(formatMsg('fieldsets.clone'));
+
+      props.onClone();
+      expect(cloneFieldsetAction).toHaveBeenCalledTimes(1);
+      expect(mockDispatch).toHaveBeenCalledWith(cloneFieldsetAction({ id: 10 }));
     });
 
     it('skips loadCurrentFieldset when fieldset is already loaded with same id', () => {

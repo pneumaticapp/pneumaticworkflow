@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import {
   openEditModal,
   deleteFieldsetAction,
+  cloneFieldsetAction,
   loadCurrentFieldset,
   resetCurrentFieldset,
   updateFieldsetAction,
@@ -242,6 +243,10 @@ const FieldsetDetails = ({
     return null;
   }
 
+  const handleCloneFieldset = () => {
+    dispatch(cloneFieldsetAction({ id: fieldset.id }));
+  };
+
   return (
     <div className={styles['container']}>
       <FieldsetUnsavedChangesModal isChanged={isChanged} />
@@ -255,8 +260,10 @@ const FieldsetDetails = ({
               dispatch(deleteFieldsetAction({ id: fieldset.id }));
               history.push(fieldsetListRoute);
             }}
+            onClone={handleCloneFieldset}
             editLabel={formatMessage({ id: 'fieldsets.edit' })}
             deleteLabel={formatMessage({ id: 'fieldsets.delete' })}
+            cloneLabel={formatMessage({ id: 'fieldsets.clone' })}
             toggleType={EModifyDropdownToggle.Modify}
           />
         </div>

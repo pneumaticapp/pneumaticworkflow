@@ -1374,6 +1374,7 @@ export const ruMessages = {
   'fieldsets.modal-button-confirm': 'Подтвердить',
   'fieldsets.modal-button-cancel': 'ОТМЕНА',
   'fieldsets.edit': 'Редактировать',
+  'fieldsets.clone': 'Клонировать',
   'fieldsets.delete': 'Удалить',
   'fieldsets.all-fieldsets': 'ВСЕ НАБОРЫ ПОЛЕЙ',
   'fieldsets.stats.fields': '{count} полей',

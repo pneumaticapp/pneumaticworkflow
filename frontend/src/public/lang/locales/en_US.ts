@@ -1489,6 +1489,7 @@ export const enMessages = {
   'fieldsets.modal-button-confirm': 'Confirm',
   'fieldsets.modal-button-cancel': 'CANCEL',
   'fieldsets.edit': 'Edit',
+  'fieldsets.clone': 'Clone',
   'fieldsets.delete': 'Delete',
   'fieldsets.all-fieldsets': 'ALL FIELDSETS',
   'fieldsets.stats.fields': '{count} fields',
