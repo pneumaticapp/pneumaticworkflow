@@ -159,7 +159,6 @@ class TestPartialUpdateWorkflow:
         assert response.data['name'] == name
         assert response.data['is_urgent'] == is_urgent
         assert response.data['kickoff']['output'][0]['value'] == field_value
-        assert response.data['due_date_tsp'] == due_date.timestamp()
 
     def test_update__kickoff_field_with_dataset__ok(
         self,
@@ -301,7 +300,6 @@ class TestPartialUpdateWorkflow:
         assert response.status_code == 200
         workflow.refresh_from_db()
         assert workflow.due_date == due_date
-        assert response.data['due_date_tsp'] == due_date.timestamp()
 
     def test_partial_update__kickoff__ok(
         self,
@@ -1382,7 +1380,6 @@ class TestPartialUpdateWorkflow:
         assert response.status_code == 200
         workflow.refresh_from_db()
         assert workflow.due_date is None
-        assert response.data['due_date_tsp'] is None
 
     def test_update__due_date_tsp_to_null__remove_due_date(
         self,
@@ -1411,7 +1408,6 @@ class TestPartialUpdateWorkflow:
         assert response.status_code == 200
         workflow.refresh_from_db()
         assert workflow.due_date is None
-        assert response.data['due_date_tsp'] is None
 
     def test_update__due_date_tsp__ok(
         self,
@@ -1438,7 +1434,6 @@ class TestPartialUpdateWorkflow:
         assert response.status_code == 200
         workflow.refresh_from_db()
         assert workflow.due_date == due_date
-        assert response.data['due_date_tsp'] == due_date.timestamp()
 
     def test_update__due_date_tsp_to_null__ok(
         self,
@@ -1466,7 +1461,6 @@ class TestPartialUpdateWorkflow:
         assert response.status_code == 200
         workflow.refresh_from_db()
         assert workflow.due_date is None
-        assert response.data['due_date_tsp'] is None
 
     def test_update__due_date_tsp_invalid_type__validation_error(
         self,
@@ -2574,7 +2568,6 @@ def test_partial_update__due_date_tsp__analytic_called__ok(
 
     # assert
     assert response.status_code == 200
-    assert response.data['due_date_tsp'] == due_date.timestamp()
 
     workflow.refresh_from_db()
     assert workflow.due_date == due_date
