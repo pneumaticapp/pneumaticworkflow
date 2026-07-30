@@ -1,6 +1,5 @@
 import logging
 from django.core.management.base import BaseCommand
-from django.db import transaction
 
 from src.processes.models.workflows.attachment import FileAttachment
 from src.storage.enums import AccessType, SourceType
@@ -111,26 +110,33 @@ class Command(BaseCommand):
                         template_id = attr.output.workflow.template_id
 
                 if not dry_run:
-                    with transaction.atomic():
-                        attachment = Attachment.objects.create(
-                            file_id=attr.file_id,
-                            access_type=access_type,
-                            source_type=source_type,
-                            account_id=attr.account_id,
-                            template_id=template_id,
-                            task_id=task_id,
-                            workflow_id=workflow_id,
-                            event_id=attr.event_id,
-                            output_id=attr.output_id,
-                        )
-                        if access_type == AccessType.RESTRICTED:
+                    attachment = Attachment.objects.create(
+                        file_id=attr.file_id,
+                        access_type=access_type,
+                        source_type=source_type,
+                        account_id=attr.account_id,
+                        template_id=template_id,
+                        task_id=task_id,
+                        workflow_id=workflow_id,
+                        event_id=attr.event_id,
+                        output_id=attr.output_id,
+                    )
+                    if access_type == AccessType.RESTRICTED:
+                        try:
                             service = AttachmentService(
                                 user=None,
                             )
                             service.assign_permissions(
                                 attachment,
                             )
-                created += 1
+                        except Exception:
+                            logger.exception(
+                                "Error assigning permissions for "
+                                "file_id %s (Attachment %s created OK)",
+                                attr.file_id,
+                                attachment.pk,
+                            )
+                    created += 1
 
                 if (created + skipped) % 100 == 0:
                     self.stdout.write(
@@ -138,10 +144,10 @@ class Command(BaseCommand):
                         f'attachments...',
                     )
 
-            except Exception as e:  # noqa: BLE001
-                logger.error(
-                    "Error creating Attachment for file_id %s: %s",
-                    attr.file_id, e,
+            except Exception:
+                logger.exception(
+                    "Error creating Attachment for file_id %s",
+                    attr.file_id,
                 )
                 errors += 1
 

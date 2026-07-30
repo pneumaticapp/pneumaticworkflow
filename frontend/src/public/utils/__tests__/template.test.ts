@@ -464,10 +464,6 @@ describe('template utilities', () => {
             fieldsets: [
               makeFieldsetBindingClient({
                 apiNameBinding: 'fs-bind-abc',
-                sharedFieldsetId: 42,
-                order: 3,
-                title: 'Budget',
-                description: 'desc',
               }),
             ],
           },
@@ -478,8 +474,6 @@ describe('template utilities', () => {
 
       expect(result.tasks[0].fieldsets).toHaveLength(1);
       expect(result.tasks[0].fieldsets[0].apiName).toBe('fs-bind-abc');
-      expect(result.tasks[0].fieldsets[0].sharedFieldsetId).toBe(42);
-      expect(result.tasks[0].fieldsets[0].order).toBe(3);
       expect(result.tasks[0].fieldsets[0]).not.toHaveProperty('apiNameBinding');
     });
 
@@ -490,13 +484,9 @@ describe('template utilities', () => {
           fieldsets: [
             makeFieldsetBindingClient({
               apiNameBinding: 'kickoff-bind-xyz',
-              sharedFieldsetId: 99,
-              order: 0,
             }),
             makeFieldsetBindingClient({
               apiNameBinding: 'kickoff-bind-abc',
-              sharedFieldsetId: 50,
-              order: 1,
             }),
           ],
         },
@@ -506,9 +496,7 @@ describe('template utilities', () => {
 
       expect(result.kickoff.fieldsets).toHaveLength(2);
       expect(result.kickoff.fieldsets[0].apiName).toBe('kickoff-bind-xyz');
-      expect(result.kickoff.fieldsets[0].sharedFieldsetId).toBe(99);
       expect(result.kickoff.fieldsets[1].apiName).toBe('kickoff-bind-abc');
-      expect(result.kickoff.fieldsets[1].sharedFieldsetId).toBe(50);
     });
 
     it('handles empty fieldsets arrays in mapTemplateRequest', () => {

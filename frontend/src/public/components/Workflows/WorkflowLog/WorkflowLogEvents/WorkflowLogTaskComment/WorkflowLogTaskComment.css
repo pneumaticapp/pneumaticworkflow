@@ -2,8 +2,8 @@
   display: flex;
 
   &__avatar {
-    margin-right: 1.6rem;
     flex-shrink: 0;
+    margin-right: 1.6rem;
 
     @media (--mobile) {
       margin-right: 1rem;
@@ -12,6 +12,7 @@
 
   &__body {
     flex-grow: 1;
+    min-width: 0;
   }
 
   &__info {

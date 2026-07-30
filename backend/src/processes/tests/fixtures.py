@@ -51,7 +51,8 @@ from src.processes.models.templates.fieldset import (
     FieldsetTemplate,
     FieldsetTemplateRule,
 )
-from src.processes.models.templates.fields import FieldTemplate
+from src.processes.models.templates.fields import FieldTemplate, \
+    FieldTemplateSelection
 from src.processes.models.templates.kickoff import Kickoff
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.templates.preset import (
@@ -84,6 +85,9 @@ from src.storage.models import Attachment
 from src.storage.enums import SourceType, AccessType
 from src.webhooks.enums import HookEvent
 from src.webhooks.models import WebHook
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 
 UserModel = get_user_model()
 
@@ -463,15 +467,14 @@ def create_test_workflow(
         template_owners_ids = Template.objects.filter(
             id=template.id,
         ).get_owners_as_users()
-        workflow.owners.set(template_owners_ids)
-        workflow.members.add(*template_owners_ids)
     else:
-        workflow.members.add(*set(
+        template_owners_ids = list(
             template.owners.values_list('user_id', flat=True),
-        ))
-        workflow.owners.add(*set(
-            template.owners.values_list('user_id', flat=True),
-        ))
+        )
+
+    # Guardian: set owners for test fixture workflow
+    perm_svc = WorkflowPermissionService(workflow)
+    perm_svc.set_view_and_change(user_ids=template_owners_ids)
 
     KickoffValue.objects.create(
         workflow=workflow,
@@ -912,7 +915,7 @@ def create_test_shared_fieldset(
         FieldsetTemplateRule.objects.create(
             fieldset=fieldset,
             account=account,
-            api_name=f'{fieldset.api_name}-rule-1',
+            api_name=f'{fieldset.api_name}-shared-rule-1',
             type=rule_type,
             value=rule_value,
         )
@@ -926,7 +929,7 @@ def create_test_shared_fieldset(
         type=field_type,
         fieldset=fieldset,
         order=1,
-        api_name=f'{fieldset.api_name}-field-1',
+        api_name=f'{fieldset.api_name}-shared-field-1',
         account=account,
     )
     return fieldset
@@ -980,7 +983,7 @@ def create_test_fieldset_template(
         )
 
     for shared_field in shared_fieldset.fields.all():
-        FieldTemplate.objects.create(
+        field_template = FieldTemplate.objects.create(
             name=shared_field.name,
             type=shared_field.type,
             fieldset=fieldset,
@@ -989,6 +992,13 @@ def create_test_fieldset_template(
             api_name=f'{fieldset.api_name}-field-1',
             account=account,
         )
+        for shared_selection in shared_field.selections.all():
+            FieldTemplateSelection.objects.create(
+                field_template=field_template,
+                template=template,
+                value=shared_selection.value,
+                api_name=f'{field_template.api_name}-selection-1',
+            )
     return fieldset
 
 
