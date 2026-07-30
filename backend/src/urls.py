@@ -6,7 +6,7 @@ from rest_framework.routers import DefaultRouter
 from src import views
 from src.accounts.views.accounts import AccountPlanView
 from src.accounts.views.tenants import TenantsViewSet
-from src.ai.views import AIAgentViewSet
+from src.ai.views import AIAgentViewSet, AIConnectionView
 from src.faq.views import FaqViewSet
 from src.notifications.consumers import (
     EventsConsumer,
@@ -77,6 +77,7 @@ urlpatterns = [
         'analytics/',
         include('src.analysis.urls'),
     ),
+    path('ai/connection', AIConnectionView.as_view()),
     path('v2/accounts/plan', AccountPlanView.as_view()),
     path('applications/', include('src.applications.urls')),
     path('reports/', include('src.reports.urls')),

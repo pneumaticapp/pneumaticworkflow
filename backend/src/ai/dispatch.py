@@ -1,5 +1,4 @@
-from django.conf import settings
-
+from src.ai.providers import ai_performers_active
 from src.processes.enums import PerformerType
 from src.processes.models.workflows.task import TaskPerformer
 
@@ -12,9 +11,7 @@ def dispatch_ai_performers(task, is_returned: bool = False):
         runs are never re-executed. A returned task resets existing
         runs so agents retry with the corrected inputs """
 
-    if not settings.PROJECT_CONF['AI_PERFORMERS']:
-        return
-    if not task.account.ai_performers_enabled:
+    if not ai_performers_active(task.account):
         return
     agent_ids = list(
         TaskPerformer.objects

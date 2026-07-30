@@ -727,3 +727,41 @@ def test_run__required_file_field__no_file_service__left_for_human(mocker):
     assert '"Report"' in run.reason
     call_model_mock.assert_not_called()
     upload_mock.assert_not_called()
+
+
+def test_run__byo_connection__enables_and_supplies_credentials(mocker):
+
+    """ An account with no operator flag but a saved provider
+        connection runs agents with the connection's credentials """
+
+    from src.ai.clients.chat_completions import ChatCompletionsClient
+    from src.ai.models import AIProviderConnection
+
+    user, _workflow, task, agent = _setup()
+    account = user.account
+    account.ai_performers_enabled = False
+    account.save(update_fields=['ai_performers_enabled'])
+    AIProviderConnection.objects.create(
+        account=account,
+        name='OpenRouter',
+        base_url='https://byo.example.com/v1',
+        api_key='byo-key',
+    )
+    captured = {}
+    real_init = ChatCompletionsClient.__init__
+
+    def capturing_init(self, **kwargs):
+        captured.update(kwargs)
+        real_init(self, **kwargs)
+
+    mocker.patch.object(ChatCompletionsClient, '__init__', capturing_init)
+    _mock_model(mocker, {'field-1': 'All good'})
+
+    run_ai_performer(task_id=task.id, agent_id=agent.id)
+
+    task.refresh_from_db()
+    assert task.status == TaskStatus.COMPLETED
+    assert captured == {
+        'base_url': 'https://byo.example.com/v1',
+        'api_key': 'byo-key',
+    }

@@ -41,6 +41,10 @@ from src.ai.performers.output_translation import (
     IncompleteOutputError,
     to_pneumatic_output,
 )
+from src.ai.providers import (
+    ai_performers_active,
+    resolve_provider,
+)
 from django.contrib.auth import get_user_model
 
 from src.authentication.enums import AuthTokenType
@@ -136,7 +140,7 @@ class AIPerformerService:
             )
         except (Task.DoesNotExist, AIAgent.DoesNotExist):
             return None
-        if not agent.account.ai_performers_enabled:
+        if not ai_performers_active(agent.account):
             return None
         if task.status != TaskStatus.ACTIVE:
             return None
@@ -400,9 +404,10 @@ class AIPerformerService:
         fields: List[OutputField],
         attachments: List[dict],
     ) -> dict:
+        base_url, api_key = resolve_provider(self.account)
         client = ChatCompletionsClient(
-            base_url=settings.OPENROUTER_BASE_URL,
-            api_key=settings.OPENROUTER_API_KEY,
+            base_url=base_url,
+            api_key=api_key,
         )
         try:
             return client.call_model(

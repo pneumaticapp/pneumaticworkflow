@@ -1,6 +1,5 @@
 from typing import Any, Dict
 
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.serializers import (
@@ -10,6 +9,7 @@ from rest_framework.serializers import (
 )
 
 from src.ai.models import AIAgent
+from src.ai.providers import ai_performers_active
 from src.generics.mixins.serializers import (
     AdditionalValidationMixin,
     CustomValidationErrorMixin,
@@ -209,10 +209,7 @@ class RawPerformerSerializer(
     ):
         account = self.context['account']
         task = self.context['task']
-        if not (
-            settings.PROJECT_CONF['AI_PERFORMERS']
-            and account.ai_performers_enabled
-        ):
+        if not ai_performers_active(account):
             self.raise_validation_error(
                 message=MSG_PT_0076,
                 api_name=task.api_name,
