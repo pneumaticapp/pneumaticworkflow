@@ -1,7 +1,7 @@
 import { createAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { IAiAgentsStore } from '../../types/redux';
-import { IAiAgent, TAiAgentDraft } from './types';
+import { IAiAgent, IAiConnection, TAiAgentDraft, TAiConnectionDraft } from './types';
 
 const initialState: IAiAgentsStore = {
   isLoading: false,
@@ -11,12 +11,20 @@ const initialState: IAiAgentsStore = {
     isOpen: false,
     editAgent: null,
   },
+  connection: {
+    isAvailable: false,
+    isSaving: false,
+    value: null,
+  },
 };
 
 export const loadAiAgents = createAction<void>('aiAgents/loadAiAgents');
 export const createAiAgent = createAction<TAiAgentDraft>('aiAgents/createAiAgent');
 export const updateAiAgent = createAction<IAiAgent>('aiAgents/updateAiAgent');
 export const deleteAiAgent = createAction<Pick<IAiAgent, 'id'>>('aiAgents/deleteAiAgent');
+export const loadAiConnection = createAction<void>('aiAgents/loadAiConnection');
+export const saveAiConnection = createAction<TAiConnectionDraft>('aiAgents/saveAiConnection');
+export const removeAiConnection = createAction<void>('aiAgents/removeAiConnection');
 
 const aiAgentsSlice = createSlice({
   name: 'aiAgents',
@@ -63,6 +71,30 @@ const aiAgentsSlice = createSlice({
     closeAiAgentModal: (state) => {
       state.editModal = { isOpen: false, editAgent: null };
     },
+
+    loadAiConnectionSuccess: (state, action: PayloadAction<IAiConnection | null>) => {
+      state.connection.isAvailable = true;
+      state.connection.value = action.payload;
+    },
+
+    loadAiConnectionFailed: (state) => {
+      state.connection.isAvailable = false;
+      state.connection.value = null;
+    },
+
+    saveAiConnectionSuccess: (state, action: PayloadAction<IAiConnection>) => {
+      state.connection.isSaving = false;
+      state.connection.value = action.payload;
+    },
+
+    removeAiConnectionSuccess: (state) => {
+      state.connection.isSaving = false;
+      state.connection.value = null;
+    },
+
+    aiConnectionRequestFailed: (state) => {
+      state.connection.isSaving = false;
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(loadAiAgents, (state) => {
@@ -77,6 +109,12 @@ const aiAgentsSlice = createSlice({
     builder.addCase(deleteAiAgent, (state) => {
       state.isLoading = true;
     });
+    builder.addCase(saveAiConnection, (state) => {
+      state.connection.isSaving = true;
+    });
+    builder.addCase(removeAiConnection, (state) => {
+      state.connection.isSaving = true;
+    });
   },
 });
 
@@ -89,6 +127,11 @@ export const {
   aiAgentRequestFailed,
   openAiAgentModal,
   closeAiAgentModal,
+  loadAiConnectionSuccess,
+  loadAiConnectionFailed,
+  saveAiConnectionSuccess,
+  removeAiConnectionSuccess,
+  aiConnectionRequestFailed,
 } = aiAgentsSlice.actions;
 
 export default aiAgentsSlice.reducer;

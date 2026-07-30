@@ -62,6 +62,7 @@
       "group": "/accounts/groups/:id",
       "aiAgents": "/ai/agents",
       "aiAgent": "/ai/agents/:id",
+      "aiConnection": "/ai/connection",
       "editAccount": "/accounts/account",
       "editProfile": "/accounts/user",
       "template": "/templates/:id",

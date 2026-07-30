@@ -9,7 +9,10 @@ import { getAiAgents } from '../../api/aiAgents/getAiAgents';
 import { createAiAgent as createAiAgentApi } from '../../api/aiAgents/createAiAgent';
 import { updateAiAgent as updateAiAgentApi } from '../../api/aiAgents/updateAiAgent';
 import { deleteAiAgent as deleteAiAgentApi } from '../../api/aiAgents/deleteAiAgent';
-import { IAiAgent, TAiAgentDraft } from './types';
+import { getAiConnection, IGetAiConnectionResponse } from '../../api/aiAgents/getAiConnection';
+import { setAiConnection, ISetAiConnectionResponse } from '../../api/aiAgents/setAiConnection';
+import { deleteAiConnection } from '../../api/aiAgents/deleteAiConnection';
+import { IAiAgent, TAiAgentDraft, TAiConnectionDraft } from './types';
 
 import {
   loadAiAgents,
@@ -22,6 +25,14 @@ import {
   updateAiAgentSuccess,
   deleteAiAgentSuccess,
   aiAgentRequestFailed,
+  loadAiConnection,
+  saveAiConnection,
+  removeAiConnection,
+  loadAiConnectionSuccess,
+  loadAiConnectionFailed,
+  saveAiConnectionSuccess,
+  removeAiConnectionSuccess,
+  aiConnectionRequestFailed,
 } from './slice';
 
 function* loadAiAgentsSaga() {
@@ -78,6 +89,53 @@ function* deleteAiAgentSaga(action: PayloadAction<Pick<IAiAgent, 'id'>>) {
   }
 }
 
+function* loadAiConnectionSaga() {
+  try {
+    const response: IGetAiConnectionResponse = yield getAiConnection();
+
+    yield put(loadAiConnectionSuccess(response.connection));
+  } catch (error) {
+    // 403 means the deployment has no AI performers or the user
+    // cannot manage the connection
+    yield put(loadAiConnectionFailed());
+    if (error?.status !== 403) {
+      logger.error('failed to load AI provider connection', error);
+    }
+  } finally {
+    // the AI Agents menu item is also shown to admins who can
+    // connect a provider but have not done it yet
+    yield put(generateMenu());
+  }
+}
+
+function* saveAiConnectionSaga(action: PayloadAction<TAiConnectionDraft>) {
+  try {
+    const response: ISetAiConnectionResponse = yield setAiConnection(action.payload);
+
+    yield put(saveAiConnectionSuccess(response.connection));
+    // a saved key switches the feature on for the account
+    yield put(loadAiAgents());
+  } catch (error) {
+    yield put(aiConnectionRequestFailed());
+    NotificationManager.warning({ message: getErrorMessage(error) });
+    logger.error('failed to save AI provider connection', error);
+  }
+}
+
+function* removeAiConnectionSaga() {
+  try {
+    yield deleteAiConnection();
+
+    yield put(removeAiConnectionSuccess());
+    // without a key the feature may switch off for the account
+    yield put(loadAiAgents());
+  } catch (error) {
+    yield put(aiConnectionRequestFailed());
+    NotificationManager.warning({ message: getErrorMessage(error) });
+    logger.error('failed to remove AI provider connection', error);
+  }
+}
+
 export function* watchLoadAiAgents() {
   yield takeEvery(loadAiAgents.type, loadAiAgentsSaga);
 }
@@ -94,11 +152,26 @@ export function* watchDeleteAiAgent() {
   yield takeEvery(deleteAiAgent.type, deleteAiAgentSaga);
 }
 
+export function* watchLoadAiConnection() {
+  yield takeEvery(loadAiConnection.type, loadAiConnectionSaga);
+}
+
+export function* watchSaveAiConnection() {
+  yield takeEvery(saveAiConnection.type, saveAiConnectionSaga);
+}
+
+export function* watchRemoveAiConnection() {
+  yield takeEvery(removeAiConnection.type, removeAiConnectionSaga);
+}
+
 export function* rootSaga() {
   yield all([
     fork(watchLoadAiAgents),
     fork(watchCreateAiAgent),
     fork(watchUpdateAiAgent),
     fork(watchDeleteAiAgent),
+    fork(watchLoadAiConnection),
+    fork(watchSaveAiConnection),
+    fork(watchRemoveAiConnection),
   ]);
 }

@@ -1,0 +1,62 @@
+.connection {
+  margin-bottom: 32px;
+  padding: 3.2rem;
+  background-color: white;
+  border-radius: 3.2rem;
+
+  @media (--desktop) {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  &__info {
+    flex: 1;
+  }
+
+  &__title {
+    margin-bottom: 0.4rem;
+    font-weight: 800;
+  }
+
+  &__description {
+    @mixin text-small;
+
+    margin: 0 0 1.6rem;
+    color: #979795;
+  }
+
+  &__key {
+    @mixin text-small;
+
+    margin: 0;
+    color: #62625f;
+    font-family: monospace;
+  }
+
+  &__form {
+    @media (--desktop) {
+      display: flex;
+      align-items: center;
+    }
+  }
+
+  &__field {
+    flex: 1;
+
+    @media (--desktop) {
+      margin-right: 1.6rem;
+    }
+
+    @media (--mobile) {
+      margin-bottom: 1.6rem;
+    }
+  }
+
+  &__buttons {
+    display: flex;
+    align-items: center;
+    gap: 1.6rem;
+  }
+}

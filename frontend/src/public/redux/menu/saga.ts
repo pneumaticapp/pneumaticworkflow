@@ -15,13 +15,13 @@ import { changeTasksCount } from '../tasks/slice';
 
 import { getTenantsCountStore } from '../selectors/tenants';
 import { getTemplatesStore } from '../selectors/templates';
-import { getAiAgentsEnabled } from '../selectors/aiAgents';
+import { getAiAgentsSectionVisible } from '../selectors/aiAgents';
 
 export function* generateMenuSaga() {
   try {
     const { authUser }: ReturnType<typeof getAuthUser> = yield select(getAuthUser);
     const { isTemplateOwner }: ReturnType<typeof getTemplatesStore> = yield select(getTemplatesStore);
-    const aiAgentsEnabled: ReturnType<typeof getAiAgentsEnabled> = yield select(getAiAgentsEnabled);
+    const aiAgentsEnabled: ReturnType<typeof getAiAgentsSectionVisible> = yield select(getAiAgentsSectionVisible);
 
     // set the menu items sequentially: first the top-level items, and then the sub-items
     for (const menuItemsPromise of generateMenuItems(authUser, undefined, { isTemplateOwner, aiAgentsEnabled })) {

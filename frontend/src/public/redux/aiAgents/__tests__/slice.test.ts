@@ -7,6 +7,12 @@ import reducer, {
   deleteAiAgentSuccess,
   openAiAgentModal,
   closeAiAgentModal,
+  loadAiConnectionSuccess,
+  loadAiConnectionFailed,
+  saveAiConnection,
+  saveAiConnectionSuccess,
+  removeAiConnectionSuccess,
+  aiConnectionRequestFailed,
 } from '../slice';
 import { IAiAgent } from '../types';
 
@@ -89,5 +95,58 @@ describe('aiAgents slice', () => {
     const state = reducer(opened, closeAiAgentModal());
 
     expect(state.editModal).toEqual({ isOpen: false, editAgent: null });
+  });
+});
+
+describe('aiAgents connection slice', () => {
+  const connection = { id: 1, baseUrl: 'https://openrouter.ai/api/v1', apiKeyMask: 'sk-or-v1••••cdef' };
+
+  it('loadAiConnectionSuccess marks the endpoint available and stores the value', () => {
+    const state = reducer(undefined, loadAiConnectionSuccess(connection));
+
+    expect(state.connection.isAvailable).toBe(true);
+    expect(state.connection.value).toEqual(connection);
+  });
+
+  it('loadAiConnectionSuccess with null keeps availability without a value', () => {
+    const state = reducer(undefined, loadAiConnectionSuccess(null));
+
+    expect(state.connection.isAvailable).toBe(true);
+    expect(state.connection.value).toBeNull();
+  });
+
+  it('loadAiConnectionFailed hides the connection management', () => {
+    const withConnection = reducer(undefined, loadAiConnectionSuccess(connection));
+
+    const state = reducer(withConnection, loadAiConnectionFailed());
+
+    expect(state.connection.isAvailable).toBe(false);
+    expect(state.connection.value).toBeNull();
+  });
+
+  it('saveAiConnection sets saving, success stores the value', () => {
+    const saving = reducer(undefined, saveAiConnection({ apiKey: 'sk-or-v1-secret' }));
+    expect(saving.connection.isSaving).toBe(true);
+
+    const state = reducer(saving, saveAiConnectionSuccess(connection));
+
+    expect(state.connection.isSaving).toBe(false);
+    expect(state.connection.value).toEqual(connection);
+  });
+
+  it('removeAiConnectionSuccess clears the value', () => {
+    const withConnection = reducer(undefined, saveAiConnectionSuccess(connection));
+
+    const state = reducer(withConnection, removeAiConnectionSuccess());
+
+    expect(state.connection.value).toBeNull();
+  });
+
+  it('aiConnectionRequestFailed resets saving', () => {
+    const saving = reducer(undefined, saveAiConnection({ apiKey: 'sk-or-v1-secret' }));
+
+    const state = reducer(saving, aiConnectionRequestFailed());
+
+    expect(state.connection.isSaving).toBe(false);
   });
 });

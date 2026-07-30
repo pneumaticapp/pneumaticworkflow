@@ -10,3 +10,14 @@ export interface IAiAgent {
 }
 
 export type TAiAgentDraft = Omit<IAiAgent, 'id'>;
+
+export interface IAiConnection {
+  id: number;
+  baseUrl: string;
+  apiKeyMask: string;
+}
+
+export type TAiConnectionDraft = {
+  apiKey: string;
+  baseUrl?: string;
+};

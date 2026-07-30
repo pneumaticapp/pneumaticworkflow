@@ -15,10 +15,12 @@ import {
   getAiAgentsEnabled,
   getAiAgentsIsLoading,
   getAiAgentsList,
+  getAiConnectionState,
 } from '../../redux/selectors/aiAgents';
 import { TasksPlaceholderIcon } from '../Tasks/TasksPlaceholderIcon';
 import { AiAgent } from './AiAgent';
 import { AiAgentModal } from './AiAgentModal';
+import { AiConnection } from './AiConnection';
 
 import styles from './AiAgents.css';
 
@@ -28,6 +30,7 @@ export function AiAgents() {
   const agents = useSelector(getAiAgentsList);
   const isLoading = useSelector(getAiAgentsIsLoading);
   const isEnabled = useSelector(getAiAgentsEnabled);
+  const { isAvailable: isConnectionAvailable } = useSelector(getAiConnectionState);
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
@@ -97,13 +100,19 @@ export function AiAgents() {
     return (
       <div className={styles['container']}>
         <PageTitle titleId={EPageTitle.AiAgents} withUnderline={false} />
-        <Placeholder
-          title={formatMessage({ id: 'ai-agents.disabled-title' })}
-          description={formatMessage({ id: 'ai-agents.disabled-description' })}
-          Icon={TasksPlaceholderIcon}
-          mood="neutral"
-          containerClassName={styles['placeholder']}
-        />
+        {isConnectionAvailable ? (
+          // an admin can switch the feature on right here by
+          // connecting a provider key
+          <AiConnection />
+        ) : (
+          <Placeholder
+            title={formatMessage({ id: 'ai-agents.disabled-title' })}
+            description={formatMessage({ id: 'ai-agents.disabled-description' })}
+            Icon={TasksPlaceholderIcon}
+            mood="neutral"
+            containerClassName={styles['placeholder']}
+          />
+        )}
       </div>
     );
   }
@@ -111,6 +120,7 @@ export function AiAgents() {
   return (
     <div className={styles['container']}>
       <PageTitle titleId={EPageTitle.AiAgents} withUnderline={false} />
+      <AiConnection />
       <section className={styles['search']}>{renderSearch()}</section>
       <AddButton
         title={formatMessage({ id: 'ai-agents.add-agent.title' })}

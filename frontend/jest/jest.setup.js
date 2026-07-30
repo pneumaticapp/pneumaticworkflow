@@ -75,6 +75,11 @@ jest.mock('react-redux', () => {
         isOpen: false,
         editAgent: null,
       },
+      connection: {
+        isAvailable: false,
+        isSaving: false,
+        value: null,
+      },
     },
     accounts: {
       isCreateUserModalOpen: false,

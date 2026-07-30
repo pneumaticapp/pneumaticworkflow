@@ -38,7 +38,7 @@ import { IDataset, IDatasetListItem, EDatasetsSorting, TDatasetItemsSortOrder } 
 import { IFieldsetCatalogItem, EFieldsetsSorting } from './fieldset';
 import { IPagesStore } from '../redux/pages/types';
 import { TeamPages, IGroup, UserInvite } from '../redux/team/types';
-import { IAiAgent } from '../redux/aiAgents/types';
+import { IAiAgent, IAiConnection } from '../redux/aiAgents/types';
 
 export interface IApplicationState {
   general: IGeneralStore;
@@ -352,6 +352,13 @@ export type IAiAgentsStore = {
   editModal: {
     isOpen: boolean;
     editAgent: IAiAgent | null;
+  };
+  connection: {
+    // the /ai/connection endpoint answered, i.e. the deployment has
+    // the feature and the user may manage the key
+    isAvailable: boolean;
+    isSaving: boolean;
+    value: IAiConnection | null;
   };
 };
 

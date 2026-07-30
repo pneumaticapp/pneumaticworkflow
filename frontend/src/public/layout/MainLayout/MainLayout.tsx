@@ -25,7 +25,7 @@ import { EPlanActions } from '../../utils/getPlanPendingActions';
 import { Paywall } from '../../components/UI/Paywall';
 import { isEnvAnalytics, isEnvPush } from '../../constants/enviroment';
 import { IUnsavedUser, TUserListItem } from '../../types/user';
-import { checkIsTemplateOwner, loadGroups, loadAiAgents } from '../../redux/actions';
+import { checkIsTemplateOwner, loadGroups, loadAiAgents, loadAiConnection } from '../../redux/actions';
 import { getIsAdmin } from '../../redux/selectors/user';
 import styles from './MainLayout.css';
 
@@ -108,6 +108,7 @@ export function MainLayout({
       loadPlan();
       dispatch(loadGroups());
       dispatch(loadAiAgents());
+      dispatch(loadAiConnection());
 
       if (isEnvPush) initFirebaseMessaging();
 
