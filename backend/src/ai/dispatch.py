@@ -1,3 +1,5 @@
+from django.db import transaction
+
 from src.ai.providers import ai_performers_active
 from src.processes.enums import PerformerType
 from src.processes.models.workflows.task import TaskPerformer
@@ -37,4 +39,11 @@ def dispatch_ai_performers(task, is_returned: bool = False):
             agent_id__in=agent_ids,
         ).delete()
     for agent_id in agent_ids:
-        run_ai_performer.delay(task_id=task.id, agent_id=agent_id)
+        # Task completion runs inside transaction.atomic(): publishing
+        # immediately lets the worker read pre-commit state and drop
+        # the run as irrelevant. Outside a transaction this fires now.
+        transaction.on_commit(
+            lambda task_id=task.id, agent_id=agent_id: (
+                run_ai_performer.delay(task_id=task_id, agent_id=agent_id)
+            ),
+        )
