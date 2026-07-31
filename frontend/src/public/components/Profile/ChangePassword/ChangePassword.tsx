@@ -42,6 +42,7 @@ export function ChangePassword({ isOpen, handleCloseModal, sendChangePassword, l
           const passwordErrors = getErrorsObject(values, {
             oldPassword: validateOldPassword,
             newPassword: validateNewPassword,
+            confirmNewPassword: validateNewPassword,
           });
 
           if (oldPassword === newPassword) {

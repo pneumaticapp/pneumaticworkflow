@@ -16,7 +16,7 @@ import { Button } from '../UI/Buttons/Button';
 import { ESettingsTabs, TPasswordFields } from '../../types/profile';
 import { TITLES } from '../../constants/titles';
 import { IUpdateUserRequest } from '../../api/editProfile';
-import { validateName, validatePhone } from '../../utils/validators';
+import { validateName } from '../../utils/validators';
 import { getErrorsObject } from '../../utils/formik/getErrorsObject';
 import { Header } from '../UI/Typeography/Header';
 import { SectionTitle } from '../UI/Typeography/SectionTitle';
@@ -31,6 +31,7 @@ import { ProfileManager } from './ProfileManager';
 import { ProfileReports } from './ProfileReports';
 import { teamFetchStarted, usersFetchStarted } from '../../redux/accounts/slice';
 import { ProfileVacationFields } from './ProfileVacationFields';
+import { validateProfilePhone } from './validators';
 
 import styles from './Profile.css';
 
@@ -218,7 +219,7 @@ export function Profile({
           const errors = getErrorsObject(values, {
             firstName: validateName,
             lastName: validateName,
-            phone: validatePhone,
+            phone: validateProfilePhone,
           });
 
           if (values.absenceStatus !== 'active' && (!values.substituteUserIds || values.substituteUserIds.length === 0)) {
