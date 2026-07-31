@@ -49,7 +49,6 @@ import {
   getTasksSettings,
   getTasksSorting,
   getTasksStore,
-  getTotalTasksCount,
 } from '../selectors/tasks';
 import { loadCurrentTask } from '../task/actions';
 import { ETaskListCompletionStatus, ITaskListItem, ITemplateStep, TTaskListItemResponse } from '../../types/tasks';
@@ -277,7 +276,7 @@ export function* watchFetchTaskList() {
 }
 
 export function* watchFetchTasksCount() {
-  yield takeEvery(loadTasksCount.type, fetchTasksCount);
+  yield takeLatest(loadTasksCount.type, fetchTasksCount);
 }
 
 export function* watchSearchTasks() {
@@ -306,11 +305,7 @@ export function* handleAddTask(newTask: ITaskListItem) {
 
   // Reactivated task (return/revert) must leave Completed, not stay as a ghost card.
   if (completionStatus === ETaskListCompletionStatus.Completed) {
-    const totalTasksCount: ReturnType<typeof getTotalTasksCount> = yield select(getTotalTasksCount);
-    if (totalTasksCount !== null) {
-      yield put(changeTasksCount(totalTasksCount + 1));
-    }
-
+    yield put(loadTasksCount());
     yield put(showNewTasksNotification(true));
 
     if (checkSomeRouteIsActive(ERoutes.Tasks)) {
@@ -325,11 +320,7 @@ export function* handleAddTask(newTask: ITaskListItem) {
     return;
   }
 
-  const totalTasksCount: ReturnType<typeof getTotalTasksCount> = yield select(getTotalTasksCount);
-  if (totalTasksCount !== null) {
-    yield put(changeTasksCount(totalTasksCount + 1));
-  }
-
+  yield put(loadTasksCount());
   yield put(showNewTasksNotification(true));
 
   if (!checkSomeRouteIsActive(ERoutes.Tasks)) {
@@ -345,10 +336,7 @@ export function* handleRemoveTask(
   shouldDecrementCounter: boolean = true,
 ) {
   if (shouldDecrementCounter) {
-    const totalTasksCount: ReturnType<typeof getTotalTasksCount> = yield select(getTotalTasksCount);
-    if (totalTasksCount !== null) {
-      yield put(changeTasksCount(totalTasksCount - 1));
-    }
+    yield put(loadTasksCount());
   }
 
   if (!checkSomeRouteIsActive(ERoutes.Tasks)) {
