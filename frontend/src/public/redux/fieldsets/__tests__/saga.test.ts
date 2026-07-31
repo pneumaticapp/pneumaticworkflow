@@ -13,6 +13,7 @@ import {
   loadCurrentFieldset, loadCurrentFieldsetSuccess,
   removeFieldsetFromList,
   setCurrentFieldset,
+  resetCurrentFieldset,
   updateFieldsetAction,
 } from '../slice';
 import { initialState } from '../slice';
@@ -296,6 +297,7 @@ describe('deleteFieldsetSaga', () => {
     expect(dispatched).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ type: removeFieldsetFromList.type, payload: 5 }),
+        expect.objectContaining({ type: resetCurrentFieldset.type }),
       ]),
     );
     expect(onSuccess).toHaveBeenCalledTimes(1);

@@ -1522,6 +1522,7 @@ export const enMessages = {
   'fieldsets.leave-unsaved-message': 'Your changes are not saved.',
   'fieldsets.leave-unsaved-stay': 'Keep editing',
   'fieldsets.leave-unsaved-leave': 'Discard',
+  'fieldsets.clone-unsaved-warning': 'Please save or discard unsaved changes before cloning',
   'fieldsets.settings-section': 'Settings',
   'fieldsets.settings.description': 'Description',
   'fieldsets.settings.description-placeholder': 'Enter fieldset description...',

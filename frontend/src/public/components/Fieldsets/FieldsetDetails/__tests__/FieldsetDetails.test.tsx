@@ -49,7 +49,14 @@ jest.mock('../../../../redux/fieldsets/slice', () => ({
 }));
 
 jest.mock('../../../UI', () => ({
-  ModifyDropdown: jest.fn(() => null),
+  ModifyDropdown: jest.fn(
+    (props: { onEdit?: () => void; onDelete?: () => void; onClone?: () => void }) =>
+      React.createElement(
+        'div',
+        { 'data-testid': 'modify-dropdown' },
+        React.createElement('button', { 'data-testid': 'modify-clone', onClick: props.onClone }),
+      ),
+  ),
   Button: jest.fn((props: { label: string; onClick?: () => void; disabled?: boolean }) =>
     React.createElement(
       'button',
@@ -297,15 +304,19 @@ describe('FieldsetDetails', () => {
       expect(mockDispatch).toHaveBeenCalledWith(openEditModal());
     });
 
-    it('onDelete in ModifyDropdown dispatches deleteFieldsetAction and redirects', () => {
+    it('onDelete in ModifyDropdown dispatches deleteFieldsetAction with onSuccess callback', () => {
       renderWithState(makeLoadedState({ id: 10 }), makeProps('10'));
       const props = getModifyDropdownProps();
       props.onDelete();
       expect(deleteFieldsetAction).toHaveBeenCalledTimes(1);
-      expect(mockDispatch).toHaveBeenCalledWith(deleteFieldsetAction({ id: 10 }));
-      const expectedRoute = ERoutes.Fieldsets;
-      expect(history.push).toHaveBeenCalledTimes(1);
-      expect(history.push).toHaveBeenCalledWith(expectedRoute);
+      expect(mockDispatch).toHaveBeenCalledWith(
+        deleteFieldsetAction(
+          expect.objectContaining({
+            id: 10,
+            onSuccess: expect.any(Function),
+          }),
+        ),
+      );
     });
 
     it('onClone in ModifyDropdown dispatches cloneFieldsetAction and passes cloneLabel', () => {
@@ -381,6 +392,24 @@ describe('FieldsetDetails', () => {
       expect(getUpdateActionMock().mock.calls[0][0]).not.toHaveProperty('labelPosition');
       expect(getUpdateActionMock().mock.calls[0][0]).not.toHaveProperty('fields');
       expect(getUpdateActionMock().mock.calls[0][0]).not.toHaveProperty('rules');
+    });
+
+    it('Save dispatches updateFieldsetAction with empty string when description is cleared', () => {
+      renderWithState(makeLoadedState({ id: 10, description: 'Initial desc' }));
+      const textarea = screen.getByLabelText(formatMsg('fieldsets.settings.description'));
+      userEvent.clear(textarea);
+
+      userEvent.click(screen.getByRole('button', { name: SAVE_LABEL }));
+
+      expect(getUpdateActionMock()).toHaveBeenCalledTimes(1);
+      expect(mockDispatch).toHaveBeenCalledWith(
+        updateFieldsetAction(
+          expect.objectContaining({
+            id: 10,
+            description: '',
+          }),
+        ),
+      );
     });
   });
 
@@ -699,6 +728,35 @@ describe('FieldsetDetails', () => {
       const lastProps = filterMock.mock.calls[filterMock.mock.calls.length - 1][0] as Record<string, unknown>;
 
       expect(lastProps).not.toHaveProperty('selectAllLabel');
+    });
+  });
+
+  describe('Clone protection guard', () => {
+    it('dispatches cloneFieldsetAction when there are no unsaved changes', () => {
+      renderWithState(makeLoadedState({ id: 10 }));
+
+      userEvent.click(screen.getByTestId('modify-clone'));
+
+      expect(mockDispatch).toHaveBeenCalledWith(
+        cloneFieldsetAction({ id: 10 }),
+      );
+      expect(NotificationManager.warning).not.toHaveBeenCalled();
+    });
+
+    it('blocks clone and shows warning notification when there are unsaved changes', () => {
+      renderWithState(makeLoadedState({ id: 10, description: 'Initial' }));
+
+      const textarea = screen.getByLabelText(formatMsg('fieldsets.settings.description'));
+      userEvent.type(textarea, 'dirty change');
+
+      userEvent.click(screen.getByTestId('modify-clone'));
+
+      expect(NotificationManager.warning).toHaveBeenCalledWith({
+        message: expect.any(String),
+      });
+      expect(mockDispatch).not.toHaveBeenCalledWith(
+        cloneFieldsetAction({ id: 10 }),
+      );
     });
   });
 });
