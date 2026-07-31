@@ -4,7 +4,7 @@ import loadable from '@loadable/component';
 
 import { ERoutes } from '../../constants/routes';
 import { Loader } from '../../components/UI';
-import { TemplatesLayout } from '../../layout';
+import { TopNavContainer } from '../../components/TopNav';
 
 const AiAgents = loadable(
   () => import(/* webpackChunkName: "aiAgents", webpackPrefetch: true */ '../../components/AiAgents'),
@@ -13,17 +13,22 @@ const AiAgents = loadable(
 
 export const AiAgentsView = () => {
   return (
-    <TemplatesLayout>
-      <React.Suspense fallback={<div className="loading" />}>
-        <Switch>
-          <Route
-            exact
-            path={ERoutes.AiAgents}
-            component={AiAgents}
-          />
-          <Redirect to={ERoutes.Error} />
-        </Switch>
-      </React.Suspense>
-    </TemplatesLayout>
+    <>
+      <TopNavContainer />
+      <main>
+        <div className="container-fluid">
+          <React.Suspense fallback={<div className="loading" />}>
+            <Switch>
+              <Route
+                exact
+                path={ERoutes.AiAgents}
+                component={AiAgents}
+              />
+              <Redirect to={ERoutes.Error} />
+            </Switch>
+          </React.Suspense>
+        </div>
+      </main>
+    </>
   );
 };
