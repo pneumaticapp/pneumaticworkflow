@@ -1,3 +1,4 @@
+from django.core.cache import cache
 from django.db import IntegrityError
 from rest_framework.generics import GenericAPIView
 from rest_framework.viewsets import GenericViewSet
@@ -9,13 +10,14 @@ from src.accounts.permissions import (
     UsersOverlimitedPermission,
 )
 from src.ai.clients.key_verification import verify_api_key
+from src.ai.clients.model_list import list_structured_output_models
 from src.ai.messages import MSG_AI_0001, MSG_AI_0003
 from src.ai.models import AIAgent, AIProviderConnection
 from src.ai.permissions import (
     AiPerformersDeployedPermission,
     AiPerformersEnabledPermission,
 )
-from src.ai.providers import get_provider_connection
+from src.ai.providers import get_provider_connection, resolve_provider
 from src.ai.serializers import (
     AIAgentSerializer,
     AIProviderConnectionSerializer,
@@ -86,6 +88,41 @@ class AIAgentViewSet(
         agent = self.get_object()
         agent.delete()
         return self.response_ok()
+
+
+MODELS_CACHE_SEC = 3600
+
+
+class AIModelListView(
+    GenericAPIView,
+    BaseResponseMixin,
+):
+
+    """ Live model catalog for the agent editor, fetched from the
+        account's provider and cached per base URL. An unreachable
+        provider yields an empty list — the editor falls back to
+        manual slug entry """
+
+    permission_classes = (
+        UserIsAuthenticated,
+        ExpiredSubscriptionPermission,
+        BillingPlanPermission,
+        UsersOverlimitedPermission,
+        AiPerformersEnabledPermission,
+    )
+
+    def get(self, request, *args, **kwargs):
+        base_url, api_key = resolve_provider(request.user.account)
+        cache_key = f'ai_models:{base_url}'
+        models = cache.get(cache_key)
+        if models is None:
+            models = list_structured_output_models(
+                base_url=base_url,
+                api_key=api_key,
+            )
+            if models is not None:
+                cache.set(cache_key, models, MODELS_CACHE_SEC)
+        return self.response_ok(models or [])
 
 
 class AIConnectionView(
