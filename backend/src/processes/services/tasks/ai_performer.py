@@ -6,7 +6,11 @@ from src.ai.providers import ai_performers_active
 from src.authentication.enums import AuthTokenType
 from src.processes.enums import DirectlyStatus, PerformerType
 from src.processes.messages.template import MSG_PT_0076
-from src.processes.messages.workflow import MSG_PW_0016, MSG_PW_0094
+from src.processes.messages.workflow import (
+    MSG_PW_0016,
+    MSG_PW_0094,
+    MSG_PW_0095,
+)
 from src.processes.models.workflows.task import TaskPerformer
 from src.processes.services.tasks.base import (
     BasePerformerService2,
@@ -41,6 +45,10 @@ class AiPerformerService(BasePerformerService2):
     def _validate_create(self):
         if not ai_performers_active(self.task.account):
             raise AiPerformerServiceException(MSG_PT_0076)
+        # an agent on a task with nothing to fill would immediately
+        # complete it with an empty output
+        if not self.task.output.exists():
+            raise AiPerformerServiceException(MSG_PW_0095)
 
     def create_performer(self, ai_agent_id: int) -> None:
         self._validate()

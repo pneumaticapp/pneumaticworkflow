@@ -361,7 +361,9 @@ export function TaskCard({
       value: getUsersDropdownOptionValue(EOptionTypes.AiAgent, agent.id),
     });
 
-    const performerAiAgentDropdownOption = aiAgents.map(mapAiAgentOption);
+    // an agent needs output fields to fill; the backend rejects the
+    // assignment otherwise, so don't offer it
+    const performerAiAgentDropdownOption = task.output.length ? aiAgents.map(mapAiAgentOption) : [];
 
     const performerAiAgentDropdownValue = aiAgents
       .filter((agent) =>

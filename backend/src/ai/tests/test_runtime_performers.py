@@ -2,13 +2,15 @@ import pytest
 from django.conf import settings
 
 from src.ai.models import AIAgent
-from src.processes.enums import DirectlyStatus, PerformerType
+from src.processes.enums import DirectlyStatus, FieldType, PerformerType
 from src.processes.messages.template import MSG_PT_0076
 from src.processes.messages.workflow import (
     MSG_PW_0016,
     MSG_PW_0018,
     MSG_PW_0094,
+    MSG_PW_0095,
 )
+from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.task import TaskPerformer
 from src.processes.tests.fixtures import (
     create_test_not_admin,
@@ -35,6 +37,15 @@ def _setup(tasks_count=1):
     account.save(update_fields=['ai_performers_enabled'])
     workflow = create_test_workflow(user=user, tasks_count=tasks_count)
     task = workflow.tasks.get(number=1)
+    TaskField.objects.create(
+        account=account,
+        workflow=workflow,
+        task=task,
+        name='Result',
+        type=FieldType.STRING,
+        order=1,
+        api_name='field-result',
+    )
     agent = AIAgent.objects.create(
         account=account,
         name='Analyst',
@@ -94,6 +105,27 @@ def test_create__feature_off__validation_error(api_client, mocker):
     assert response.status_code == 400
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['message'] == MSG_PT_0076
+    assert _ai_performer(task, agent) is None
+    delay_mock.assert_not_called()
+
+
+def test_create__no_output_fields__validation_error(api_client, mocker):
+
+    # arrange
+    user, task, agent = _setup()
+    task.output.all().delete()
+    delay_mock = mocker.patch('src.ai.tasks.run_ai_performer.delay')
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        f'/v2/tasks/{task.id}/create-ai-performer',
+        data={'ai_agent_id': agent.id},
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['message'] == MSG_PW_0095
     assert _ai_performer(task, agent) is None
     delay_mock.assert_not_called()
 
