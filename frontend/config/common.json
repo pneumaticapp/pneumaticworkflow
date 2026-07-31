@@ -116,6 +116,8 @@
       "removeTaskPerformer": "/v2/tasks/:id/delete-performer",
       "addTaskPerformerGroup": "/v2/tasks/:id/create-group-performer",
       "removeTaskPerformerGroup": "/v2/tasks/:id/delete-group-performer",
+      "addTaskAiPerformer": "/v2/tasks/:id/create-ai-performer",
+      "removeTaskAiPerformer": "/v2/tasks/:id/delete-ai-performer",
       "addTaskGuest": "/v2/tasks/:id/create-guest-performer",
       "removeTaskGuest": "/v2/tasks/:id/delete-guest-performer",
       "makePayment": "/payment/purchase",

@@ -60,6 +60,8 @@ import { addTaskPerformer } from '../../api/addTaskPerformer';
 import { removeTaskPerformer } from '../../api/removeTaskPerformer';
 import { addTaskPerformerGroup } from '../../api/addTaskPerformerGroup';
 import { removeTaskPerformerGroup } from '../../api/removeTaskPerformerGroup';
+import { addTaskAiPerformer } from '../../api/addTaskAiPerformer';
+import { removeTaskAiPerformer } from '../../api/removeTaskAiPerformer';
 import { addTaskGuest } from '../../api/addTaskGuest';
 import { removeTaskGuest } from '../../api/removeTaskGuest';
 import { TUserListItem } from '../../types/user';
@@ -89,7 +91,7 @@ import {
   TWorkflowDetailsResponse,
 } from '../../types/workflow';
 
-import { ETemplateOwnerType, RawPerformer } from '../../types/template';
+import { ETaskPerformerType, ETemplateOwnerType, RawPerformer } from '../../types/template';
 import { getTaskWorkflowLog } from '../../api/getTaskWorkflowLog';
 import { sendTaskComment } from '../../api/sendTaskComment';
 import { getWorkflowAddComputedPropsToRedux } from '../../components/Workflows/utils/getWorfkflowClientProperties';
@@ -451,6 +453,22 @@ export function* updatePerformersSaga({ type, payload: { taskId, userId } }: TUp
       check: () => type === ETaskActions.RemoveTaskPerformer && userId.type === ETemplateOwnerType.User && user?.type === 'guest',
       *fetch() {
         yield call(removeTaskGuest, taskId, user?.email || '');
+      },
+    },
+    {
+      check: () =>
+        type === ETaskActions.AddTaskPerformer &&
+        String(userId.type) === ETaskPerformerType.AiAgent,
+      *fetch() {
+        yield call(addTaskAiPerformer, taskId, Number(userId.sourceId));
+      },
+    },
+    {
+      check: () =>
+        type === ETaskActions.RemoveTaskPerformer &&
+        String(userId.type) === ETaskPerformerType.AiAgent,
+      *fetch() {
+        yield call(removeTaskAiPerformer, taskId, Number(userId.sourceId));
       },
     },
   ];

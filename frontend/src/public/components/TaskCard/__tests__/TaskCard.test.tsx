@@ -50,6 +50,12 @@ jest.mock('../../../redux/selectors/groups', () => ({
   getRegularGroupsList: () => [{ id: 5, name: 'Group Five', type: 'regular' }],
 }));
 
+jest.mock('../../../redux/selectors/aiAgents', () => ({
+  getActiveAiAgentsList: () => [
+    { id: 9, name: 'Screener', modelSlug: 'test/model', isActive: true },
+  ],
+}));
+
 type TMockDropdownProps = {
   value: TUsersDropdownOption[];
   options: TUsersDropdownOption[];

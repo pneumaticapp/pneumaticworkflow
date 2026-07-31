@@ -1,5 +1,8 @@
-import { setTaskCompleted } from '../saga';
+import { setTaskCompleted, updatePerformersSaga } from '../saga';
 import { ETaskActions, TSetTaskCompleted } from '../actions';
+import { ETaskPerformerType, ETemplateOwnerType } from '../../../types/template';
+import { addTaskAiPerformer } from '../../../api/addTaskAiPerformer';
+import { removeTaskAiPerformer } from '../../../api/removeTaskAiPerformer';
 import { ETaskCardViewMode } from '../../../components/TaskCard';
 import { completeTask } from '../../../api/completeTask';
 import { fieldsetsStorage } from '../../../components/TaskCard/utils/storageOutputs';
@@ -93,5 +96,47 @@ describe('setTaskCompleted — fieldsets draft cleanup', () => {
     stepThrow(saga, new Error('API error'));
 
     expect(fieldsetsStorage.remove).not.toHaveBeenCalled();
+  });
+});
+
+describe('updatePerformersSaga — AI performers', () => {
+  const TASK_ID = 7;
+  const AGENT_ID = 3;
+
+  const makeAction = (type: ETaskActions.AddTaskPerformer | ETaskActions.RemoveTaskPerformer) =>
+    ({
+      type,
+      payload: {
+        taskId: TASK_ID,
+        userId: {
+          sourceId: AGENT_ID,
+          type: ETaskPerformerType.AiAgent as unknown as ETemplateOwnerType,
+        },
+      },
+    } as Parameters<typeof updatePerformersSaga>[0]);
+
+  const getFetchCallEffect = (saga: Generator) => {
+    saga.next(); // select(getUsers)
+    saga.next([] as unknown as undefined); // optimistic list update
+    const fetchGen = saga.next().value as Generator;
+    return fetchGen.next().value as { payload: { fn: unknown; args: unknown[] } };
+  };
+
+  it('adding an AI agent calls the AI performer API', () => {
+    const saga = updatePerformersSaga(makeAction(ETaskActions.AddTaskPerformer));
+
+    const effect = getFetchCallEffect(saga);
+
+    expect(effect.payload.fn).toBe(addTaskAiPerformer);
+    expect(effect.payload.args).toEqual([TASK_ID, AGENT_ID]);
+  });
+
+  it('removing an AI agent calls the AI performer API', () => {
+    const saga = updatePerformersSaga(makeAction(ETaskActions.RemoveTaskPerformer));
+
+    const effect = getFetchCallEffect(saga);
+
+    expect(effect.payload.fn).toBe(removeTaskAiPerformer);
+    expect(effect.payload.args).toEqual([TASK_ID, AGENT_ID]);
   });
 });

@@ -63,6 +63,7 @@ import UserDataWithGroup from '../UserDataWithGroup';
 import { HelpModal } from './HelpModal/HelpModal';
 import { ReturnModal } from './ReturnModal';
 import { getRegularGroupsList } from '../../redux/selectors/groups';
+import { getActiveAiAgentsList } from '../../redux/selectors/aiAgents';
 
 import styles from './TaskCard.css';
 
@@ -132,6 +133,7 @@ export function TaskCard({
   const { isMobile } = useCheckDevice();
 
   const groups = useSelector(getRegularGroupsList);
+  const aiAgents = useSelector(getActiveAiAgentsList);
   const saveOutputsToStorageDebounced = debounce(300, outputStorage.save);
   const saveFieldsetsToStorageDebounced = debounce(300, fieldsetsStorage.save);
 
@@ -269,7 +271,7 @@ export function TaskCard({
         );
       }
 
-      const isRemovablePerformer = isPossibleToRemovePerformer && performer.type !== ETaskPerformerType.AiAgent;
+      const isRemovablePerformer = isPossibleToRemovePerformer;
 
       return (
         <UserDataWithGroup key={`${performer.type}-${performer.sourceId}`} idItem={performer.sourceId} type={performer.type}>
@@ -348,6 +350,27 @@ export function TaskCard({
       };
     });
 
+    const mapAiAgentOption = (agent: (typeof aiAgents)[number]) => ({
+      id: agent.id,
+      optionType: EOptionTypes.AiAgent,
+      firstName: '',
+      lastName: '',
+      type: ETaskPerformerType.AiAgent,
+      sourceId: String(agent.id),
+      label: formatMessage({ id: 'tasks.task-ai-agent' }, { name: agent.name }) as string,
+      value: getUsersDropdownOptionValue(EOptionTypes.AiAgent, agent.id),
+    });
+
+    const performerAiAgentDropdownOption = aiAgents.map(mapAiAgentOption);
+
+    const performerAiAgentDropdownValue = aiAgents
+      .filter((agent) =>
+        task.performers.find(
+          ({ sourceId, type }) => Number(sourceId) === agent.id && type === ETaskPerformerType.AiAgent,
+        ),
+      )
+      .map(mapAiAgentOption);
+
     const onUsersInvited = (invitedUsers: TUserListItem[]) => {
       invitedUsers.forEach((user) =>
         addTaskPerformer({
@@ -384,8 +407,8 @@ export function TaskCard({
               controlSize="sm"
               className={classnames(styles['responsible'], 'no-print')} 
               placeholder={formatMessage({ id: 'user.search-field-placeholder' })}
-              options={[...performerGroupDropdownOption, ...performerDropdownOption]}
-              value={[...performerDropdownValue, ...performerGroupDropdownValue]}
+              options={[...performerGroupDropdownOption, ...performerAiAgentDropdownOption, ...performerDropdownOption]}
+              value={[...performerDropdownValue, ...performerGroupDropdownValue, ...performerAiAgentDropdownValue]}
               onChange={onAddTaskPerformer}
               onChangeSelected={onRemoveTaskPerformer}
               onUsersInvited={onUsersInvited}
