@@ -40,23 +40,138 @@ from src.utils.dates import date_format
 pytestmark = pytest.mark.django_db
 
 
-class TestAPIKeyGenerationView:
+class TestAPIKeyViewSet:
 
-    def test_api_token_created(self, api_client, identify_mock):
+    def test_list__ok(self, api_client, identify_mock):
 
         user = create_test_user()
+        raw_key = PneumaticToken.create(user, for_api_key=True)
         api_key = APIKey.objects.create(
             user=user,
             name=user.get_full_name(),
             account_id=user.account_id,
-            key=PneumaticToken.create(user, for_api_key=True),
+            prefix=raw_key[:16],
+            key_hash=APIKey.hash_key(raw_key),
+            cache_token=PneumaticToken.encrypt(raw_key),
         )
 
         api_client.token_authenticate(user)
-        response = api_client.get('/accounts/api-key')
+        response = api_client.get('/accounts/api-keys')
 
-        token = response.data.get('token')
-        assert api_key.key == token
+        assert response.status_code == 200
+        assert len(response.data) == 1
+        data = response.data[0]
+        assert data['id'] == api_key.id
+        assert data['name'] == api_key.name
+        assert data['prefix'] == api_key.prefix
+        assert 'key' not in data
+        assert 'key_hash' not in data
+
+    def test_create__ok(self, api_client, identify_mock):
+
+        user = create_test_user()
+        api_client.token_authenticate(user)
+
+        response = api_client.post(
+            '/accounts/api-keys',
+            data={'name': 'My CI Key'},
+            format='json',
+        )
+
+        assert response.status_code == 201
+        assert response.data['name'] == 'My CI Key'
+        assert response.data['key'].startswith('pn_live_')
+        assert response.data['prefix'] == response.data['key'][:16]
+
+        # Verify key is not returned on list
+        list_response = api_client.get('/accounts/api-keys')
+        assert list_response.status_code == 200
+        assert 'key' not in list_response.data[0]
+
+    def test_create__auto_name__ok(self, api_client, identify_mock):
+
+        user = create_test_user()
+        api_client.token_authenticate(user)
+
+        response = api_client.post(
+            '/accounts/api-keys',
+            data={},
+            format='json',
+        )
+
+        assert response.status_code == 201
+        assert response.data['name'] == 'API Key #1'
+
+    def test_destroy__ok(self, mocker, api_client, identify_mock):
+
+        user = create_test_user()
+        raw_key = PneumaticToken.create(user, for_api_key=True)
+        cache_delete_mock = mocker.patch(
+            'src.authentication.tokens.PneumaticToken.cache.delete',
+        )
+        api_key = APIKey.objects.create(
+            user=user,
+            name='To revoke',
+            account_id=user.account_id,
+            prefix=raw_key[:16],
+            key_hash=APIKey.hash_key(raw_key),
+            cache_token=PneumaticToken.encrypt(raw_key),
+        )
+
+        api_client.token_authenticate(user)
+        response = api_client.delete(f'/accounts/api-keys/{api_key.id}')
+
+        assert response.status_code == 204
+        api_key.refresh_from_db()
+        assert api_key.is_active is False
+        cache_delete_mock.assert_called_once_with(api_key.cache_token)
+
+    def test_create__name_too_long__validation_error(
+        self, api_client, identify_mock,
+    ):
+        user = create_test_user()
+        api_client.token_authenticate(user)
+        response = api_client.post(
+            '/accounts/api-keys',
+            data={'name': 'A' * 201},
+            format='json',
+        )
+        assert response.status_code == 400
+        assert 'name' in response.data
+
+    def test_destroy__other_user__not_found(self, api_client, identify_mock):
+        user1 = create_test_user(email='u1@test.com')
+        user2 = create_test_user(email='u2@test.com')
+        api_key = APIKey.objects.create(
+            user=user2,
+            name='Other key',
+            account_id=user2.account_id,
+            prefix='pn_live_',
+            key_hash='hash',
+        )
+
+        api_client.token_authenticate(user1)
+        response = api_client.delete(f'/accounts/api-keys/{api_key.id}')
+
+        assert response.status_code == 404
+
+    def test_destroy__already_revoked__not_found(
+        self, api_client, identify_mock,
+    ):
+        user = create_test_user()
+        api_key = APIKey.objects.create(
+            user=user,
+            name='Revoked',
+            account_id=user.account_id,
+            prefix='pn_live_',
+            key_hash='hash',
+            is_active=False,
+        )
+
+        api_client.token_authenticate(user)
+        response = api_client.delete(f'/accounts/api-keys/{api_key.id}')
+
+        assert response.status_code == 404
 
 
 class TestUnsubscribeDigestView:

@@ -21,7 +21,7 @@ class PneumaticApiClient(APIClient):
         user_agent: str = 'Firefox',
         user_ip: str = '192.168.0.1',
         token: Optional[str] = None,
-    ):
+    ) -> str:
 
         if not token:
             if token_type == AuthTokenType.API:
@@ -33,7 +33,9 @@ class PneumaticApiClient(APIClient):
                     user=user,
                     account=user.account,
                     name='Token for API',
-                    key=token,
+                    prefix=token[:16],
+                    key_hash=APIKey.hash_key(token),
+                    cache_token=PneumaticToken.encrypt(token),
                 )
             elif token_type == AuthTokenType.USER:
                 token = PneumaticToken.create(

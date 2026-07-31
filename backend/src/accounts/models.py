@@ -1,3 +1,5 @@
+import hashlib
+import secrets
 import uuid
 from datetime import timedelta
 from typing import Dict, Optional, Set
@@ -551,18 +553,60 @@ class APIKey(
     SoftDeleteModel,
     AccountBaseMixin,
 ):
-    user = models.OneToOneField(
+    KEY_PREFIX = 'pn_live_'
+
+    user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='apikey',
+        related_name='api_keys',
     )
-    key = models.CharField(max_length=32)
     name = models.CharField(max_length=200, blank=True)
+    prefix = models.CharField(max_length=16, db_index=True, default='')
+    key_hash = models.CharField(max_length=128, unique=True, default='')
+    cache_token = models.CharField(
+        max_length=128,
+        blank=True,
+        default='',
+        help_text='Encrypted token for cache invalidation on revoke',
+    )
+    date_created = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
+    last_used_at = models.DateTimeField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
 
-    objects = BaseSoftDeleteManager.from_queryset(APIKeyQuerySet)()
+    objects = BaseSoftDeleteManager.from_queryset(
+        APIKeyQuerySet,
+    )()
+
+    class Meta:
+        ordering = ['-date_created']
+
+    @staticmethod
+    def hash_key(raw_key: str) -> str:
+        """SHA-256 hash of the raw API key."""
+        return hashlib.sha256(raw_key.encode()).hexdigest()
+
+    @classmethod
+    def generate_key(cls) -> str:
+        """Generate a prefixed API key: pn_live_<32 random chars>."""
+        return f'{cls.KEY_PREFIX}{secrets.token_urlsafe(24)}'
+
+    @property
+    def is_expired(self) -> bool:
+        if self.expires_at is None:
+            return False
+        return timezone.now() > self.expires_at
+
+    def revoke(self):
+        """Deactivate the key and invalidate its cache entry."""
+        self.is_active = False
+        self.save(update_fields=['is_active'])
+        if self.cache_token:
+            from src.authentication.tokens import PneumaticToken  # noqa: PLC0415
+            PneumaticToken.cache.delete(self.cache_token)
 
     def __str__(self):
-        return self.key
+        return f'{self.name} ({self.prefix}...)'
 
 
 class SystemMessage(models.Model):

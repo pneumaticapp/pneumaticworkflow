@@ -119,7 +119,7 @@
       "confirmPaymentDetails": "/payment/confirm?token=:token",
       "startFreeSubscription": "/payment/subscription/downgrade-to-free",
       "getCustomerPortalLink": "/payment/customer-portal?cancel_url=:cancel_url",
-      "apiKey": "/api/accounts/api-key",
+      "apiKeys": "/api/accounts/api-keys/:id?",
       "getTasksCount": "/accounts/user/counters",
       "createKickoffForm": "/kickoffs",
       "editKickoffForm": "/kickoffs/:id/edit",

@@ -1,4 +1,5 @@
-from typing import Optional, Tuple
+from datetime import timedelta
+from typing import Optional, Tuple, Union
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
@@ -64,9 +65,12 @@ class PneumaticTokenAuthentication(TokenAuthentication):
 
     def authenticate_credentials(
         self,
-        token: str,
+        token: Union[bytes, str],
     ) -> Optional[Tuple[UserModel, PneumaticToken]]:
-        # Get active user or api key
+        if isinstance(token, bytes):
+            token = token.decode('utf-8')
+
+        # Check cache first, fallback to DB hash lookup
         cached_data = PneumaticToken.data(token)
         if cached_data:
             try:
@@ -74,14 +78,42 @@ class PneumaticTokenAuthentication(TokenAuthentication):
             except ObjectDoesNotExist:
                 return None
         else:
+            # Lookup by hash instead of raw key
+            key_hash = APIKey.hash_key(token)
             try:
-                apikey = APIKey.objects.select_related('user').get(key=token)
-                user = apikey.user
+                apikey = APIKey.objects.select_related('user').get(
+                    key_hash=key_hash,
+                    is_active=True,
+                )
             except ObjectDoesNotExist:
                 return None
 
-            # Create lost api key data in the cache
-            PneumaticToken.create(user=user, for_api_key=True, token=token)
+            # Check expiration
+            if apikey.is_expired:
+                return None
+
+            user = apikey.user
+
+            # Update last_used_at (non-blocking, batched to once per hour)
+            now = timezone.now()
+            if (
+                apikey.last_used_at is None
+                or now - apikey.last_used_at > timedelta(hours=1)
+            ):
+                APIKey.objects.filter(pk=apikey.pk).update(
+                    last_used_at=now,
+                )
+
+            # Recreate cache entry
+            PneumaticToken.create(
+                user=user, for_api_key=True, token=token,
+            )
+
+            # Self-healing: populate cache_token if missing
+            if not apikey.cache_token:
+                apikey.cache_token = PneumaticToken.encrypt(token)
+                apikey.save(update_fields=['cache_token'])
+
         if user.status != UserStatus.ACTIVE:
             return None
         return user, PneumaticToken(token, user)

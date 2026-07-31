@@ -1,13 +1,22 @@
-from django.contrib.auth import get_user_model
-from rest_framework.generics import (
-    ListAPIView,
+from rest_framework.mixins import (
+    CreateModelMixin,
+    DestroyModelMixin,
+    ListModelMixin,
 )
+from rest_framework.viewsets import GenericViewSet
 
+from src.accounts.models import APIKey
 from src.accounts.permissions import (
     BillingPlanPermission,
     ExpiredSubscriptionPermission,
     UserIsAdminOrAccountOwner,
 )
+from src.accounts.serializers.api_key import (
+    APIKeyCreateSerializer,
+    APIKeyListSerializer,
+    APIKeyResponseSerializer,
+)
+from src.accounts.services.api_key import APIKeyService
 from src.authentication.permissions import PrivateApiPermission
 from src.generics.mixins.views import (
     BaseResponseMixin,
@@ -16,11 +25,12 @@ from src.generics.permissions import (
     UserIsAuthenticated,
 )
 
-UserModel = get_user_model()
 
-
-class APIKeyView(
-    ListAPIView,
+class APIKeyViewSet(
+    CreateModelMixin,
+    ListModelMixin,
+    DestroyModelMixin,
+    GenericViewSet,
     BaseResponseMixin,
 ):
 
@@ -31,6 +41,35 @@ class APIKeyView(
         UserIsAdminOrAccountOwner,
         ExpiredSubscriptionPermission,
     )
+    serializer_class = APIKeyListSerializer
 
-    def list(self, request, *args, **kwargs):
-        return self.response_ok({'token': request.user.apikey.key})
+    def get_queryset(self):
+        return (
+            APIKey.objects
+            .by_user(self.request.user.id)
+            .active()
+            .order_by('-date_created')
+        )
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return APIKeyCreateSerializer
+        return APIKeyListSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        api_key, raw_key = APIKeyService.create(
+            user=request.user,
+            name=serializer.validated_data.get('name'),
+        )
+
+        api_key.key = raw_key
+        response_serializer = APIKeyResponseSerializer(api_key)
+        return self.response_created(response_serializer.data)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.revoke()
+        return self.response_ok()

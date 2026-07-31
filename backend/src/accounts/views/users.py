@@ -142,7 +142,7 @@ class UsersViewSet(
                 'vacations__substitute_group__users',
             )
         elif self.action == 'api_key':
-            queryset = queryset.select_related('apikey')
+            queryset = queryset.prefetch_related('api_keys')
         return super().prefetch_queryset(
             queryset=queryset,
             extra_fields=extra_fields,

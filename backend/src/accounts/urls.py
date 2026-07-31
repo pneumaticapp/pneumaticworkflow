@@ -3,7 +3,7 @@ from django.urls import path
 from rest_framework.routers import DefaultRouter
 
 from src.accounts.views.accounts import AccountView
-from src.accounts.views.api_key import APIKeyView
+from src.accounts.views.api_key import APIKeyViewSet
 from src.accounts.views.groups import GroupViewSet
 from src.accounts.views.notifications import (
     NotificationsReadView,
@@ -37,10 +37,11 @@ router.register(
     NotificationsViewSet,
     basename='notifications',
 )
+router.register('api-keys', APIKeyViewSet, basename='api-keys')
 
 urlpatterns = [
     path('account', AccountView.as_view()),
-    path('api-key', APIKeyView.as_view()),
+
     # TODO: Deprecated api. Remove in https://my.pneumatic.app/workflows/13920
     path('digest/unsubscribe', UnsubscribeDigestView.as_view()),
     path('emails/unsubscribe', UnsubscribeEmailView.as_view()),

@@ -34,11 +34,14 @@ def test_api_key__ok(api_client):
     # arrange
     account = create_test_account()
     owner = create_test_owner(account=account)
+    raw_key = PneumaticToken.create(owner, for_api_key=True)
     api_key = APIKey.objects.create(
         user=owner,
         name=owner.get_full_name(),
         account_id=owner.account_id,
-        key=PneumaticToken.create(owner, for_api_key=True),
+        prefix=raw_key[:16],
+        key_hash=APIKey.hash_key(raw_key),
+        cache_token=PneumaticToken.encrypt(raw_key),
     )
     api_client.token_authenticate(owner)
 
@@ -54,7 +57,7 @@ def test_api_key__ok(api_client):
     assert data['email'] == owner.email
     assert data['is_admin'] == owner.is_admin
     assert data['is_account_owner'] == owner.is_account_owner
-    assert data['api_key'] == api_key.key
+    assert data['api_key'] == api_key.prefix
     assert data['type'] == owner.type
     assert data['status'] == owner.status
 
