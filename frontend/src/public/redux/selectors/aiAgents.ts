@@ -14,6 +14,8 @@ export const getAiAgentsEditModal = (state: IApplicationState) => state.aiAgents
 
 export const getAiConnectionState = (state: IApplicationState) => state.aiAgents.connection;
 
+export const getAiModelsState = (state: IApplicationState) => state.aiAgents.models;
+
 // admins who can connect a provider see the AI Agents section even
 // before the feature is switched on for the account
 export const getAiAgentsSectionVisible = (state: IApplicationState): boolean =>

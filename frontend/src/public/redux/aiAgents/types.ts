@@ -21,3 +21,8 @@ export type TAiConnectionDraft = {
   apiKey: string;
   baseUrl?: string;
 };
+
+export interface IAiModel {
+  slug: string;
+  name: string;
+}

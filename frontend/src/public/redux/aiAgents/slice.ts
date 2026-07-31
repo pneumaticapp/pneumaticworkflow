@@ -1,7 +1,7 @@
 import { createAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { IAiAgentsStore } from '../../types/redux';
-import { IAiAgent, IAiConnection, TAiAgentDraft, TAiConnectionDraft } from './types';
+import { IAiAgent, IAiConnection, IAiModel, TAiAgentDraft, TAiConnectionDraft } from './types';
 
 const initialState: IAiAgentsStore = {
   isLoading: false,
@@ -16,6 +16,10 @@ const initialState: IAiAgentsStore = {
     isSaving: false,
     value: null,
   },
+  models: {
+    isLoading: false,
+    list: [],
+  },
 };
 
 export const loadAiAgents = createAction<void>('aiAgents/loadAiAgents');
@@ -25,6 +29,7 @@ export const deleteAiAgent = createAction<Pick<IAiAgent, 'id'>>('aiAgents/delete
 export const loadAiConnection = createAction<void>('aiAgents/loadAiConnection');
 export const saveAiConnection = createAction<TAiConnectionDraft>('aiAgents/saveAiConnection');
 export const removeAiConnection = createAction<void>('aiAgents/removeAiConnection');
+export const loadAiModels = createAction<void>('aiAgents/loadAiModels');
 
 const aiAgentsSlice = createSlice({
   name: 'aiAgents',
@@ -95,6 +100,16 @@ const aiAgentsSlice = createSlice({
     aiConnectionRequestFailed: (state) => {
       state.connection.isSaving = false;
     },
+
+    loadAiModelsSuccess: (state, action: PayloadAction<IAiModel[]>) => {
+      state.models.isLoading = false;
+      state.models.list = action.payload;
+    },
+
+    loadAiModelsFailed: (state) => {
+      state.models.isLoading = false;
+      state.models.list = [];
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(loadAiAgents, (state) => {
@@ -115,6 +130,9 @@ const aiAgentsSlice = createSlice({
     builder.addCase(removeAiConnection, (state) => {
       state.connection.isSaving = true;
     });
+    builder.addCase(loadAiModels, (state) => {
+      state.models.isLoading = true;
+    });
   },
 });
 
@@ -132,6 +150,8 @@ export const {
   saveAiConnectionSuccess,
   removeAiConnectionSuccess,
   aiConnectionRequestFailed,
+  loadAiModelsSuccess,
+  loadAiModelsFailed,
 } = aiAgentsSlice.actions;
 
 export default aiAgentsSlice.reducer;

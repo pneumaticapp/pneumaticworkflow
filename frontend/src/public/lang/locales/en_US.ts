@@ -312,6 +312,7 @@ export const enMessages = {
   'ai-agents.modal.name-placeholder': 'e.g. Contract Analyst',
   'ai-agents.modal.model-label': 'Model',
   'ai-agents.modal.model-placeholder': 'e.g. anthropic/claude-sonnet-4.5',
+  'ai-agents.modal.model-select-placeholder': 'Select a model',
   'ai-agents.modal.temperature-label': 'Temperature (optional)',
   'ai-agents.modal.temperature-placeholder': '0 – 2, leave empty for the provider default',
   'ai-agents.modal.temperature-error': 'Temperature must be a number between 0 and 2.',

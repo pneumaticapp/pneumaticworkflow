@@ -13,6 +13,9 @@ import reducer, {
   saveAiConnectionSuccess,
   removeAiConnectionSuccess,
   aiConnectionRequestFailed,
+  loadAiModels,
+  loadAiModelsSuccess,
+  loadAiModelsFailed,
 } from '../slice';
 import { IAiAgent } from '../types';
 
@@ -148,5 +151,36 @@ describe('aiAgents connection slice', () => {
     const state = reducer(saving, aiConnectionRequestFailed());
 
     expect(state.connection.isSaving).toBe(false);
+  });
+});
+
+describe('aiAgents models slice', () => {
+  const models = [
+    { slug: 'vendor/model-a', name: 'Alpha Model' },
+    { slug: 'vendor/model-b', name: 'Beta Model' },
+  ];
+
+  it('loadAiModels sets loading', () => {
+    const state = reducer(undefined, loadAiModels());
+
+    expect(state.models.isLoading).toBe(true);
+  });
+
+  it('loadAiModelsSuccess stores the list', () => {
+    const loading = reducer(undefined, loadAiModels());
+
+    const state = reducer(loading, loadAiModelsSuccess(models));
+
+    expect(state.models.list).toEqual(models);
+    expect(state.models.isLoading).toBe(false);
+  });
+
+  it('loadAiModelsFailed clears the list', () => {
+    const withModels = reducer(undefined, loadAiModelsSuccess(models));
+
+    const state = reducer(withModels, loadAiModelsFailed());
+
+    expect(state.models.list).toEqual([]);
+    expect(state.models.isLoading).toBe(false);
   });
 });

@@ -80,6 +80,10 @@ jest.mock('react-redux', () => {
         isSaving: false,
         value: null,
       },
+      models: {
+        isLoading: false,
+        list: [],
+      },
     },
     accounts: {
       isCreateUserModalOpen: false,

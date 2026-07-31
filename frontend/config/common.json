@@ -63,6 +63,7 @@
       "aiAgents": "/ai/agents",
       "aiAgent": "/ai/agents/:id",
       "aiConnection": "/ai/connection",
+      "aiModels": "/ai/models",
       "editAccount": "/accounts/account",
       "editProfile": "/accounts/user",
       "template": "/templates/:id",

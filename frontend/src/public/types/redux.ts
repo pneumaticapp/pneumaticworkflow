@@ -38,7 +38,7 @@ import { IDataset, IDatasetListItem, EDatasetsSorting, TDatasetItemsSortOrder } 
 import { IFieldsetCatalogItem, EFieldsetsSorting } from './fieldset';
 import { IPagesStore } from '../redux/pages/types';
 import { TeamPages, IGroup, UserInvite } from '../redux/team/types';
-import { IAiAgent, IAiConnection } from '../redux/aiAgents/types';
+import { IAiAgent, IAiConnection, IAiModel } from '../redux/aiAgents/types';
 
 export interface IApplicationState {
   general: IGeneralStore;
@@ -359,6 +359,10 @@ export type IAiAgentsStore = {
     isAvailable: boolean;
     isSaving: boolean;
     value: IAiConnection | null;
+  };
+  models: {
+    isLoading: boolean;
+    list: IAiModel[];
   };
 };
 

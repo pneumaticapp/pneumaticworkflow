@@ -12,7 +12,8 @@ import { deleteAiAgent as deleteAiAgentApi } from '../../api/aiAgents/deleteAiAg
 import { getAiConnection, IGetAiConnectionResponse } from '../../api/aiAgents/getAiConnection';
 import { setAiConnection, ISetAiConnectionResponse } from '../../api/aiAgents/setAiConnection';
 import { deleteAiConnection } from '../../api/aiAgents/deleteAiConnection';
-import { IAiAgent, TAiAgentDraft, TAiConnectionDraft } from './types';
+import { getAiModels } from '../../api/aiAgents/getAiModels';
+import { IAiAgent, IAiModel, TAiAgentDraft, TAiConnectionDraft } from './types';
 
 import {
   loadAiAgents,
@@ -33,6 +34,9 @@ import {
   saveAiConnectionSuccess,
   removeAiConnectionSuccess,
   aiConnectionRequestFailed,
+  loadAiModels,
+  loadAiModelsSuccess,
+  loadAiModelsFailed,
 } from './slice';
 
 function* loadAiAgentsSaga() {
@@ -136,6 +140,20 @@ function* removeAiConnectionSaga() {
   }
 }
 
+function* loadAiModelsSaga() {
+  try {
+    const models: IAiModel[] = yield getAiModels();
+
+    yield put(loadAiModelsSuccess(models));
+  } catch (error) {
+    // the agent editor falls back to manual slug entry
+    yield put(loadAiModelsFailed());
+    if (error?.status !== 403) {
+      logger.error('failed to load AI models', error);
+    }
+  }
+}
+
 export function* watchLoadAiAgents() {
   yield takeEvery(loadAiAgents.type, loadAiAgentsSaga);
 }
@@ -164,6 +182,10 @@ export function* watchRemoveAiConnection() {
   yield takeEvery(removeAiConnection.type, removeAiConnectionSaga);
 }
 
+export function* watchLoadAiModels() {
+  yield takeEvery(loadAiModels.type, loadAiModelsSaga);
+}
+
 export function* rootSaga() {
   yield all([
     fork(watchLoadAiAgents),
@@ -173,5 +195,6 @@ export function* rootSaga() {
     fork(watchLoadAiConnection),
     fork(watchSaveAiConnection),
     fork(watchRemoveAiConnection),
+    fork(watchLoadAiModels),
   ]);
 }
