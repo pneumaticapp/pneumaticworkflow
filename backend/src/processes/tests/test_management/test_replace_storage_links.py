@@ -265,7 +265,7 @@ def test_replace__contact_photo__replaced(
         account=user.account,
         user=user,
         source='google',
-        source_id='123',
+        source_id=123,
         email='contact@test.com',
     )
     create_fa_with_file_id(

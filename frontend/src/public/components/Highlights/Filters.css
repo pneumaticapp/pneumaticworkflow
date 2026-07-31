@@ -1,143 +1,191 @@
-.filter-container:not(:last-child) {
-  margin-bottom: 16px;
-}
-
-.datepicker__input {
-  transition: 0.1s ease-in-out all;
-}
-
-.datepicker__calendar_end-date {
-  @media screen and (max-width: 585px) {
-    right: 130px;
-  }
-}
-
-.checkbox__label {
-  display: block;
-  overflow: hidden;
-  max-width: 100%;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.filter__button-show-all {
-  padding: 0;
-  background: none;
-  border: none;
-  transition: 0.1s ease-in-out all;
-
-  &:active {
-    scale: 0.98;
+.filter {
+  & + & {
+    margin-top: 1.6rem;
   }
 
-  &:hover {
+  &__options + &__datepicker {
+    margin-top: 1.2rem;
+  }
+
+  &__options + &__show-all {
+    margin-top: 0.8rem;
+  }
+
+  &__options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+
+    &--disabled {
+      pointer-events: none;
+      opacity: 0.5;
+    }
+  }
+
+  &__option-label {
+    @mixin text-truncate;
+
+    min-width: 0;
+  }
+
+  &__option-row {
+    overflow: hidden;
+    width: 100%;
+    min-width: 0;
+  }
+
+  &__input {
+    @mixin text-base;
+
+    margin-bottom: 1.6rem;
+    padding: 0.9rem 1.6rem;
+    box-sizing: border-box;
+    width: 100%;
+    background: var(--pneumatic-color-black4);
+    border: 0.1rem solid var(--pneumatic-color-black16);
+    border-radius: 0.6rem;
+    outline: none;
+    transition: 0.1s ease-in-out all;
+
+    &:focus {
+      border-color: var(--pneumatic-color-black48);
+    }
+
+    &:disabled {
+      pointer-events: none;
+      opacity: 0.5;
+    }
+  }
+
+  &__show-all {
+    padding: 0;
+    background: none;
+    border: none;
+    transition: 0.1s ease-in-out all;
+
+    &:active {
+      scale: 0.98;
+    }
+
+    &:disabled {
+      pointer-events: none;
+      opacity: 0.5;
+    }
+
     span {
-      color: #e79a26;
+      @mixin text-small;
+
+      color: var(--pneumatic-color-link);
+    }
+
+    &:hover span {
+      color: var(--pneumatic-color-link-hover);
     }
   }
 
-  &:disabled {
-    pointer-events: none;
-    opacity: 0.5;
-  }
-
-  span {
-    font-family: Nunito, sans-serif;
-    font-size: 13px;
-    line-height: 16px;
-    color: #fec336;
-  }
-}
-
-/* stylelint-disable-next-line selector-pseudo-class-no-unknown */
-:global {
-  .react-datepicker-wrapper {
-    /* stylelint-disable-next-line selector-max-compound-selectors */
-    .react-datepicker__input-container input:focus {
-      /* stylelint-disable-next-line declaration-no-important */
-      border-color: #979795 !important;
-    }
-  }
-}
-
-.filter__input {
-  margin-bottom: 16px;
-  padding: 9px 16px;
-  box-sizing: border-box;
-  width: 100%;
-  font-family: Nunito, sans-serif;
-  font-size: 15px;
-  line-height: 20px;
-  background: #f6f6f6;
-  border: 1px solid #dcdcdb;
-  border-radius: 6px;
-  outline: none;
-  transition: 0.1s ease-in-out all;
-
-  &:focus {
-    border-color: #979795;
-  }
-
-  &:disabled {
-    pointer-events: none;
-    opacity: 0.5;
-  }
-}
-
-.workflows-filter__placeholder {
-  font-family: Nunito, sans-serif;
-  font-size: 15px;
-  line-height: 20px;
-  color: #62625f;
-}
-
-.filter__checkboxes_disabled {
-  pointer-events: none;
-  opacity: 0.5;
-}
-
-.filter__spinner {
-  /* stylelint-disable-next-line declaration-no-important */
-  position: absolute !important;
-  left: 50%;
-}
-
-.mr-1 {
-  margin-right: 10px;
-}
-
-.mb-1 {
-  margin-bottom: 7px;
-}
-
-.mb-2 {
-  margin-bottom: 12px;
-}
-
-.mb-4 {
-  margin-bottom: 24px;
-}
-
-.date-filter-custom {
-  display: flex;
-  align-items: center;
-  border: 0.1rem solid var(--pneumatic-color-black16);
-  border-radius: 0.8rem;
-
-  > * {
-    width: 100%;
-  }
-
-  /* stylelint-disable-next-line selector-pseudo-class-no-unknown */
-  :global(.react-datepicker-wrapper) {
-    width: 100%;
-  }
-
-  input {
-    @mixin text-overflow;
-
-    width: 100%;
+  &__spinner {
     /* stylelint-disable-next-line declaration-no-important */
-    border: none !important;
+    position: absolute !important;
+    left: 50%;
+  }
+
+  &__placeholder {
+    @mixin text-base;
+
+    color: var(--pneumatic-color-black72);
+  }
+
+  &__datepicker {
+    position: relative;
+    box-sizing: border-box;
+    height: 4rem;
+    background-color: transparent;
+    border: 0.1rem solid var(--pneumatic-color-black16);
+    border-radius: 0.8rem;
+    transition: border-color 0.1s ease-in-out;
+
+    &:focus-within {
+      border-color: var(--pneumatic-color-black48);
+    }
+
+    > * {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* stylelint-disable-next-line selector-pseudo-class-no-unknown */
+    :global(.react-datepicker-wrapper),
+    :global(.react-datepicker__input-container) {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* stylelint-disable-next-line selector-pseudo-class-no-unknown */
+    :global(.react-datepicker__input-container) input {
+      /* stylelint-disable-next-line declaration-no-important */
+      padding: 0 !important;
+      box-sizing: border-box;
+      width: 100%;
+      height: 100%;
+      /* stylelint-disable-next-line declaration-no-important */
+      color: transparent !important;
+      /* stylelint-disable-next-line declaration-no-important */
+      background-color: transparent !important;
+      /* stylelint-disable-next-line declaration-no-important */
+      border: none !important;
+      /* stylelint-disable-next-line declaration-no-important */
+      border-radius: 0 !important;
+      /* stylelint-disable-next-line declaration-no-important */
+      caret-color: transparent !important;
+    }
+
+    &-display {
+      position: absolute;
+      z-index: 1;
+      top: 0;
+      right: 0;
+      left: 0;
+      bottom: 0;
+      padding: 0 1.6rem;
+      display: flex;
+      pointer-events: none;
+      align-items: center;
+    }
+
+    &-start,
+    &-end {
+      @mixin text-base;
+      @mixin text-overflow;
+
+      flex: 1;
+      min-width: 0;
+      color: var(--pneumatic-color-black100);
+    }
+
+    &-end {
+      text-align: right;
+    }
+
+    &-separator {
+      @mixin text-base;
+
+      flex-shrink: 0;
+      margin: 0 0.8rem;
+      color: var(--pneumatic-color-black48);
+    }
+
+    &-placeholder {
+      color: var(--pneumatic-color-black48);
+    }
+
+    &-input {
+      position: relative;
+      z-index: 2;
+    }
+
+    &-wrapper {
+      width: 100%;
+      height: 100%;
+    }
   }
 }

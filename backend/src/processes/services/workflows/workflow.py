@@ -29,6 +29,12 @@ from src.processes.utils.common import (
     insert_fields_values_to_text,
     string_abbreviation,
 )
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
+from src.storage.tasks import (
+    schedule_sync_workflow_attachment_permissions,
+)
 from src.storage.utils import refresh_attachments
 from src.utils.dates import date_to_user_fmt
 
@@ -244,5 +250,9 @@ class WorkflowService(
         user_ids = Template.objects.filter(
             id=self.instance.template_id,
         ).get_owners_as_users()
-        self.instance.owners.set(user_ids)
-        self.instance.members.add(*user_ids)
+        WorkflowPermissionService(self.instance).set_view_and_change(
+            user_ids=user_ids,
+        )
+        schedule_sync_workflow_attachment_permissions(
+            self.instance.id,
+        )

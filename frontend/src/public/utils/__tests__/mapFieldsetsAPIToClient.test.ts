@@ -1,6 +1,6 @@
 import { mapFieldsetBindingsToClient, mapFieldsetTaskAPIToRuntime } from '../mapFieldsetsAPIToClient';
 import { EFieldLabelPosition } from '../../types/fieldset';
-import { makeFieldsetField, makeFieldsetBinding, makeFieldsetTaskAPI } from '../../__stubs__/fieldsets.factory';
+import { makeFieldsetField, makeFieldsetBinding, makeFieldsetTaskAPI, makeFieldsetTemplateRule } from '../../__stubs__/fieldsets.factory';
 import { makeExtraField } from '../../__stubs__/fields.factory';
 
 describe('mapFieldsetBindingsToClient', () => {
@@ -27,7 +27,7 @@ describe('mapFieldsetBindingsToClient', () => {
       layout: 'horizontal',
       order: 5,
       title: 'Title',
-      rules: [{ apiName: 'r-1', type: 'sum_equal', value: '100', fields: [] }],
+      rules: [makeFieldsetTemplateRule({ apiName: 'r-1', value: '100', fields: [] })],
       fields,
     });
 
