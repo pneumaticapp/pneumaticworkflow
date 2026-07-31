@@ -1,8 +1,12 @@
 import type { IExtraField } from './template';
 
+export enum EFieldsetRuleType {
+  SumEqual = 'sum_equal',
+}
+
 export interface IFieldsetTemplateRule {
   apiName: string;
-  type: string;
+  type: EFieldsetRuleType;
   value: string | null;
   fields: string[];
 }
