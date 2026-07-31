@@ -118,6 +118,10 @@ const fieldsetsSlice = createSlice({
       state.isCatalogLoaded = false;
     },
 
+    cloneFieldsetAction: (state, _action: PayloadAction<{ id: number }>) => {
+      state.isCatalogLoaded = false;
+    },
+
     removeFieldsetFromList: (state, action: PayloadAction<number>) => {
       state.fieldsetsList.items = state.fieldsetsList.items.filter((item) => item.id !== action.payload);
       state.fieldsetsList.count -= 1;
@@ -160,6 +164,7 @@ export const {
   createFieldsetAction,
   updateFieldsetAction,
   deleteFieldsetAction,
+  cloneFieldsetAction,
   removeFieldsetFromList,
 
   loadFieldsetsCatalog,
