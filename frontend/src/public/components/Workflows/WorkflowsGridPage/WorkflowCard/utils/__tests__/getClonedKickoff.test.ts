@@ -1,5 +1,6 @@
 import { IWorkflowDetailsKickoff } from '../../../../../../types/workflow';
-import { EExtraFieldType, IKickoffClient } from '../../../../../../types/template';
+import { EExtraFieldType, IKickoffClient, IFieldsetBindingClient } from '../../../../../../types/template';
+import { IFieldsetRuntime } from '../../../../../../types/fieldset';
 import { makeFieldsetRuntime } from '../../../../../../__stubs__/fieldsets.factory';
 import { makeExtraField } from '../../../../../../__stubs__/fields.factory';
 import { getClonedKickoff } from '../getClonedKickoff';
@@ -431,6 +432,131 @@ describe('getClonedKickoff', () => {
       expect(result.fields).toHaveLength(1);
       expect(result.fields[0].value).toEqual(['a', 'c']);
       expect(result.fields[0].selections).toEqual(['a', 'c', 'd']);
+    });
+
+    it('preserves fieldsets and maps their fields when present in template', () => {
+      const workflowWithFieldsets: IWorkflowDetailsKickoff = {
+        id: 5,
+        description: '',
+        output: [],
+        fieldsets: [
+          makeFieldsetRuntime({
+            apiNameBinding: 'fs-1',
+            name: 'Fieldset 1',
+            fields: [
+              makeExtraField({
+                apiName: 'fs-field-1',
+                name: 'FS Checkbox',
+                type: EExtraFieldType.Checkbox,
+                value: 'Opt1, Opt2',
+              }),
+            ],
+          }),
+        ],
+      };
+
+      const templateKickoff: IKickoffClient = {
+        description: '',
+        fields: [],
+        fieldsets: [
+          makeFieldsetRuntime({
+            apiNameBinding: 'fs-1',
+            name: 'Fieldset 1',
+            fields: [
+              makeExtraField({
+                apiName: 'fs-field-1',
+                name: 'FS Checkbox',
+                type: EExtraFieldType.Checkbox,
+                selections: ['Opt1', 'Opt2', 'Opt3'],
+              }),
+            ],
+          }) as unknown as IFieldsetBindingClient,
+        ],
+      };
+
+      const result = getClonedKickoff(workflowWithFieldsets, templateKickoff);
+
+      expect(result.fieldsets).toHaveLength(1);
+      const clonedFieldset = result.fieldsets[0] as unknown as IFieldsetRuntime;
+      expect(clonedFieldset.fields[0].value).toEqual(['Opt1', 'Opt2']);
+    });
+
+    it('handles fieldsets with missing or mismatched apiNameBinding gracefully', () => {
+      const workflowWithFieldsets: IWorkflowDetailsKickoff = {
+        id: 6,
+        description: '',
+        output: [],
+        fieldsets: [
+          makeFieldsetRuntime({
+            apiNameBinding: undefined as unknown as string,
+            name: 'Corrupted Fieldset',
+            fields: [makeExtraField({ apiName: 'f-1', value: 'val' })],
+          }),
+        ],
+      };
+
+      const templateKickoff: IKickoffClient = {
+        description: '',
+        fields: [],
+        fieldsets: [
+          makeFieldsetRuntime({
+            apiNameBinding: 'fs-valid',
+            name: 'Valid Fieldset',
+            fields: [],
+          }) as unknown as IFieldsetBindingClient,
+        ],
+      };
+
+      const result = getClonedKickoff(workflowWithFieldsets, templateKickoff);
+
+      expect(result.fieldsets).toEqual([]);
+    });
+
+    it('correctly maps raw backend fieldsets containing apiName and id', () => {
+      const workflowWithRawBackendFieldset: IWorkflowDetailsKickoff = {
+        id: 7,
+        description: '',
+        output: [],
+        fieldsets: [
+          {
+            id: 100,
+            apiName: 'raw-backend-fs',
+            name: 'Raw Backend Fieldset',
+            fields: [
+              makeExtraField({
+                apiName: 'raw-field-1',
+                name: 'Field 1',
+                type: EExtraFieldType.String,
+                value: 'backend value',
+              }),
+            ],
+          } as unknown as IFieldsetRuntime,
+        ],
+      };
+
+      const templateKickoff: IKickoffClient = {
+        description: '',
+        fields: [],
+        fieldsets: [
+          makeFieldsetRuntime({
+            apiNameBinding: 'raw-backend-fs',
+            name: 'Template Fieldset',
+            fields: [
+              makeExtraField({
+                apiName: 'raw-field-1',
+                name: 'Field 1',
+                type: EExtraFieldType.String,
+              }),
+            ],
+          }) as unknown as IFieldsetBindingClient,
+        ],
+      };
+
+      const result = getClonedKickoff(workflowWithRawBackendFieldset, templateKickoff);
+
+      expect(result.fieldsets).toHaveLength(1);
+      const clonedFieldset = result.fieldsets[0] as unknown as IFieldsetRuntime;
+      expect(clonedFieldset.fields[0].value).toBe('backend value');
     });
   });
 });
