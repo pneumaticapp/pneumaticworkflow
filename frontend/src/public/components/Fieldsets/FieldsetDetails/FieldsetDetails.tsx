@@ -211,7 +211,7 @@ const FieldsetDetails = ({
       id: fieldset.id,
     };
 
-    if (detailFieldsetChanges.description) {
+    if (detailFieldsetChanges.description !== undefined) {
       payload.description = detailFieldsetChanges.description;
     }
     if (detailFieldsetChanges.labelPosition) {
@@ -244,6 +244,12 @@ const FieldsetDetails = ({
   }
 
   const handleCloneFieldset = () => {
+    if (isChanged) {
+      NotificationManager.warning({
+        message: formatMessage({ id: 'fieldsets.clone-unsaved-warning' }),
+      });
+      return;
+    }
     dispatch(cloneFieldsetAction({ id: fieldset.id }));
   };
 
@@ -257,8 +263,14 @@ const FieldsetDetails = ({
           <ModifyDropdown
             onEdit={() => dispatch(openEditModal())}
             onDelete={() => {
-              dispatch(deleteFieldsetAction({ id: fieldset.id }));
-              history.push(fieldsetListRoute);
+              dispatch(
+                deleteFieldsetAction({
+                  id: fieldset.id,
+                  onSuccess: () => {
+                    history.push(fieldsetListRoute);
+                  },
+                })
+              );
             }}
             onClone={handleCloneFieldset}
             editLabel={formatMessage({ id: 'fieldsets.edit' })}

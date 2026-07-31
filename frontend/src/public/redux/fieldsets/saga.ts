@@ -32,6 +32,7 @@ import {
   loadCurrentFieldsetSuccess,
   loadCurrentFieldsetFailed,
   setCurrentFieldset,
+  resetCurrentFieldset,
   createFieldsetAction,
   updateFieldsetAction,
   deleteFieldsetAction,
@@ -133,6 +134,7 @@ export function* deleteFieldsetSaga({ payload: { id, onSuccess } }: PayloadActio
   try {
     yield call(deleteFieldset, { id });
     yield put(removeFieldsetFromList(id));
+    yield put(resetCurrentFieldset());
     onSuccess?.();
   } catch (error) {
     yield put(loadFieldsetsFailed());
@@ -144,8 +146,8 @@ export function* deleteFieldsetSaga({ payload: { id, onSuccess } }: PayloadActio
 export function* cloneFieldsetSaga({ payload: { id } }: PayloadAction<{ id: number }>) {
   try {
     const clonedFieldset: IFieldsetCatalogItem = yield call(cloneFieldset, id);
-    yield put(loadCurrentFieldsetSuccess(clonedFieldset));
     history.push(getFieldsetDetailRoute(clonedFieldset.id));
+    yield put(loadCurrentFieldsetSuccess(clonedFieldset));
   } catch (error) {
     NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
     logger.error('failed to clone fieldset', error);
