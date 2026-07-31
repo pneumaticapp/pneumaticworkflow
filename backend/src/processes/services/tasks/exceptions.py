@@ -35,3 +35,8 @@ class TaskServiceException(BaseServiceException):
 class GroupPerformerServiceException(BaseServiceException):
 
     pass
+
+
+class AiPerformerServiceException(BaseServiceException):
+
+    pass

@@ -184,3 +184,4 @@ MSG_PW_0092 = _(
     'The AI agent is not assigned to this task as a performer.',
 )
 MSG_PW_0093 = _('The AI agent has already completed this task.')
+MSG_PW_0094 = _('There is no AI agent with the specified ID.')

@@ -25,6 +25,14 @@ class TaskPerformerSerializer(
     user_id = IntegerField(required=True)
 
 
+class TaskAiPerformerSerializer(
+    CustomValidationErrorMixin,
+    Serializer,
+):
+
+    ai_agent_id = IntegerField(required=True)
+
+
 class TaskUserGroupPerformerSerializer(
     CustomValidationErrorMixin,
     ModelSerializer,

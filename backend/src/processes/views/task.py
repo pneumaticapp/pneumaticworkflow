@@ -66,6 +66,7 @@ from src.processes.serializers.workflows.task import (
     TaskSerializer,
 )
 from src.processes.serializers.workflows.task_performer import (
+    TaskAiPerformerSerializer,
     TaskGroupPerformerSerializer,
     TaskGuestPerformerSerializer,
     TaskPerformerSerializer,
@@ -78,7 +79,11 @@ from src.processes.services.exceptions import (
     WorkflowActionServiceException,
     FieldsetServiceException,
 )
+from src.processes.services.tasks.ai_performer import (
+    AiPerformerService,
+)
 from src.processes.services.tasks.exceptions import (
+    AiPerformerServiceException,
     GroupPerformerServiceException,
     PerformersServiceException,
     TaskFieldException,
@@ -169,6 +174,8 @@ class TaskViewSet(
             'delete_group_performer',
             'create_guest_performer',
             'delete_guest_performer',
+            'create_ai_performer',
+            'delete_ai_performer',
             'due_date',
         ):
             return (
@@ -212,6 +219,8 @@ class TaskViewSet(
         'due_date': DueDateSerializer,
         'create_group_performer': TaskGroupPerformerSerializer,
         'delete_group_performer': TaskGroupPerformerSerializer,
+        'create_ai_performer': TaskAiPerformerSerializer,
+        'delete_ai_performer': TaskAiPerformerSerializer,
         'events': WorkflowEventSerializer,
         'revert': TaskRevertSerializer,
         'complete': TaskCompleteSerializer,
@@ -405,6 +414,56 @@ class TaskViewSet(
             )
             group_performer_service.delete_performer(group_id=group_id)
         except GroupPerformerServiceException as ex:
+            raise_validation_error(message=ex.message)
+        else:
+            return self.response_ok()
+
+    @action(methods=('POST',), detail=True, url_path='create-ai-performer')
+    def create_ai_performer(self, request, *args, **kwargs):
+        task = self.get_object()
+        request_slz = self.get_serializer(
+            data=request.data,
+            extra_fields={'task': task},
+        )
+        request_slz.is_valid(raise_exception=True)
+        ai_agent_id = request_slz.validated_data['ai_agent_id']
+        try:
+            service = AiPerformerService(
+                is_superuser=request.is_superuser,
+                auth_type=request.token_type,
+                task=task,
+                user=request.user,
+            )
+            service.create_performer(ai_agent_id=ai_agent_id)
+        except (
+            AiPerformerServiceException,
+            GroupPerformerServiceException,
+        ) as ex:
+            raise_validation_error(message=ex.message)
+        else:
+            return self.response_ok()
+
+    @action(methods=('POST',), detail=True, url_path='delete-ai-performer')
+    def delete_ai_performer(self, request, *args, **kwargs):
+        task = self.get_object()
+        request_slz = self.get_serializer(
+            data=request.data,
+            extra_fields={'task': task},
+        )
+        request_slz.is_valid(raise_exception=True)
+        ai_agent_id = request_slz.validated_data['ai_agent_id']
+        try:
+            service = AiPerformerService(
+                is_superuser=request.is_superuser,
+                auth_type=request.token_type,
+                task=task,
+                user=request.user,
+            )
+            service.delete_performer(ai_agent_id=ai_agent_id)
+        except (
+            AiPerformerServiceException,
+            GroupPerformerServiceException,
+        ) as ex:
             raise_validation_error(message=ex.message)
         else:
             return self.response_ok()
