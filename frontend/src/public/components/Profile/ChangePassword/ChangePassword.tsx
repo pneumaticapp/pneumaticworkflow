@@ -68,6 +68,7 @@ export function ChangePassword({ isOpen, handleCloseModal, sendChangePassword, l
               fieldSize="lg"
               title={formatMessage({ id: 'user.old-password' })}
               containerClassName={styles['field']}
+              isRequired
             />
             <FormikInputField
               autoComplete="new-password"
@@ -76,6 +77,7 @@ export function ChangePassword({ isOpen, handleCloseModal, sendChangePassword, l
               fieldSize="lg"
               title={formatMessage({ id: 'user.new-password' })}
               containerClassName={styles['field']}
+              isRequired
             />
             <FormikInputField
               autoComplete="new-password"
@@ -84,6 +86,7 @@ export function ChangePassword({ isOpen, handleCloseModal, sendChangePassword, l
               fieldSize="lg"
               title={formatMessage({ id: 'user.new-password-again' })}
               containerClassName={styles['field']}
+              isRequired
             />
           </fieldset>
           <footer className={styles['change-pass__footer']}>

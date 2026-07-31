@@ -277,6 +277,7 @@ export function Profile({
               fieldSize="lg"
               title={formatMessage({ id: 'user.phone' })}
               containerClassName={styles['field']}
+              isRequired
             />
           </fieldset>
 

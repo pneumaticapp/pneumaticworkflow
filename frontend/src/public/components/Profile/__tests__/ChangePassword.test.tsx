@@ -21,6 +21,10 @@ describe('ChangePassword', () => {
       </IntlProvider>,
     );
 
+    expect(screen.getByText('Old password')).toHaveClass('title_required');
+    expect(screen.getByText('New password')).toHaveClass('title_required');
+    expect(screen.getByText('New password (confirm)')).toHaveClass('title_required');
+
     userEvent.click(screen.getByRole('button', { name: 'Confirm' }));
 
     await waitFor(() => {
