@@ -1,21 +1,22 @@
 from typing import Optional
 
-from src.accounts.models import APIKey, User
+from src.accounts.models import APIKey
 from src.authentication.tokens import PneumaticToken
+from src.generics.base.service import BaseModelService
 
 
-class APIKeyService:
+class APIKeyService(BaseModelService):
 
-    @staticmethod
-    def create(
-        user: User,
+    def _create_instance(
+        self,
         name: Optional[str] = None,
-    ) -> tuple:
-        """Create a new API key. Returns (api_key, raw_key)."""
+        **kwargs,
+    ):
+        """Create a new API key. Sets self.instance and returns raw_key."""
 
-        if name is None:
+        if not name:
             count = APIKey.objects.filter(
-                user=user,
+                user=self.user,
                 is_active=True,
             ).count()
             name = f'API Key #{count + 1}'
@@ -24,18 +25,29 @@ class APIKeyService:
         cache_token = PneumaticToken.encrypt(raw_key)
 
         PneumaticToken.create(
-            user=user,
+            user=self.user,
             for_api_key=True,
             token=raw_key,
         )
 
-        api_key = APIKey.objects.create(
-            user=user,
-            account=user.account,
+        self.instance = APIKey.objects.create(
+            user=self.user,
+            account=self.account,
             name=name,
             prefix=raw_key[:16],
             key_hash=APIKey.hash_key(raw_key),
             cache_token=cache_token,
         )
 
-        return api_key, raw_key
+        self._raw_key = raw_key
+
+    def create(self, **kwargs):
+        super().create(**kwargs)
+        return self.instance, self._raw_key
+
+    def revoke(self):
+        """Deactivate the key and invalidate its cache entry."""
+        self.instance.is_active = False
+        self.instance.save(update_fields=['is_active'])
+        if self.instance.cache_token:
+            PneumaticToken.cache.delete(self.instance.cache_token)

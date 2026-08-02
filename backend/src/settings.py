@@ -88,6 +88,9 @@ class Common(Configuration):
     FILE_POSTGRES_HOST = env.get('FILE_POSTGRES_HOST')
     FILE_POSTGRES_PORT = env.get('FILE_POSTGRES_PORT')
 
+    # API Keys
+    API_KEY_PREFIX = env.get('API_KEY_PREFIX')
+
     # Auth
     AUTH_USER_MODEL = 'accounts.User'
     AUTH_TOKEN_ITERATIONS = int(env.get('AUTH_TOKEN_ITERATIONS', '1'))

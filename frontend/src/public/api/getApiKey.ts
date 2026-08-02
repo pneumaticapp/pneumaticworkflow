@@ -1,9 +1,13 @@
 import { IApiKeyCreateResponse, IApiKeyItem } from '../types/integrations';
 import { commonRequest } from './commonRequest';
+import { getBrowserConfigEnv } from '../utils/getConfig';
 
 export function getApiKeys() {
+  const { api: { urls } } = getBrowserConfigEnv();
+  const url = urls.apiKeys.replace('/:id?', '');
+
   return commonRequest<IApiKeyItem[]>(
-    'apiKeys',
+    url,
     {},
     {
       type: 'local',
@@ -12,25 +16,34 @@ export function getApiKeys() {
   );
 }
 
-export function createApiKey(name?: string) {
+export function createApiKey(name: string) {
+  const { api: { urls } } = getBrowserConfigEnv();
+  const url = urls.apiKeys.replace('/:id?', '');
+
   return commonRequest<IApiKeyCreateResponse>(
-    'apiKeys',
-    { body: { name: name || '' } },
+    url,
+    {
+      method: 'POST',
+      data: { name },
+    },
     {
       type: 'local',
-      method: 'POST',
       shouldThrow: true,
     },
   );
 }
 
 export function deleteApiKey(id: number) {
+  const { api: { urls } } = getBrowserConfigEnv();
+  const url = urls.apiKeys.replace(':id?', String(id));
+
   return commonRequest<void>(
-    'apiKeys',
-    { urlParams: { id } },
+    url,
+    {
+      method: 'DELETE',
+    },
     {
       type: 'local',
-      method: 'DELETE',
       shouldThrow: true,
     },
   );
