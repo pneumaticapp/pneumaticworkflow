@@ -80,7 +80,7 @@ class TestAPIKeyViewSet:
 
         assert response.status_code == 201
         assert response.data['name'] == 'My CI Key'
-        assert response.data['key'].startswith('pn_live_')
+        assert response.data['key'].startswith(settings.API_KEY_PREFIX)
         assert response.data['prefix'] == response.data['key'][:16]
 
         # Verify key is not returned on list

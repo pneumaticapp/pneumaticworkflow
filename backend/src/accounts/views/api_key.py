@@ -60,8 +60,12 @@ class APIKeyViewSet(
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        api_key, raw_key = APIKeyService.create(
+        service = APIKeyService(
             user=request.user,
+            is_superuser=request.is_superuser,
+            auth_type=request.token_type,
+        )
+        api_key, raw_key = service.create(
             name=serializer.validated_data.get('name'),
         )
 
@@ -71,5 +75,11 @@ class APIKeyViewSet(
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        instance.revoke()
+        service = APIKeyService(
+            user=request.user,
+            instance=instance,
+            is_superuser=request.is_superuser,
+            auth_type=request.token_type,
+        )
+        service.revoke()
         return self.response_ok()

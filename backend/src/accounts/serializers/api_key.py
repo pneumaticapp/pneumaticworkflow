@@ -1,5 +1,3 @@
-from typing import Optional
-
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
@@ -32,28 +30,6 @@ class APIKeyCreateSerializer(
         required=False,
         allow_blank=True,
     )
-
-
-class UserAPIKeySerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = UserModel
-        fields = (
-            'first_name',
-            'last_name',
-            'email',
-            'is_admin',
-            'is_account_owner',
-            'api_key',
-            'type',
-            'status',
-        )
-
-    api_key = serializers.SerializerMethodField()
-
-    def get_api_key(self, obj) -> Optional[str]:
-        first_key = obj.api_keys.filter(is_active=True).first()
-        return first_key.prefix if first_key else None
 
 
 class APIKeyResponseSerializer(APIKeyListSerializer):

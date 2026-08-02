@@ -553,7 +553,6 @@ class APIKey(
     SoftDeleteModel,
     AccountBaseMixin,
 ):
-    KEY_PREFIX = 'pn_live_'
 
     user = models.ForeignKey(
         User,
@@ -586,24 +585,16 @@ class APIKey(
         """SHA-256 hash of the raw API key."""
         return hashlib.sha256(raw_key.encode()).hexdigest()
 
-    @classmethod
-    def generate_key(cls) -> str:
-        """Generate a prefixed API key: pn_live_<32 random chars>."""
-        return f'{cls.KEY_PREFIX}{secrets.token_urlsafe(24)}'
+    @staticmethod
+    def generate_key() -> str:
+        """Generate a prefixed API key: <prefix><32 random chars>."""
+        return f'{settings.API_KEY_PREFIX}{secrets.token_urlsafe(24)}'
 
     @property
     def is_expired(self) -> bool:
         if self.expires_at is None:
             return False
         return timezone.now() > self.expires_at
-
-    def revoke(self):
-        """Deactivate the key and invalidate its cache entry."""
-        self.is_active = False
-        self.save(update_fields=['is_active'])
-        if self.cache_token:
-            from src.authentication.tokens import PneumaticToken  # noqa: PLC0415
-            PneumaticToken.cache.delete(self.cache_token)
 
     def __str__(self):
         return f'{self.name} ({self.prefix}...)'

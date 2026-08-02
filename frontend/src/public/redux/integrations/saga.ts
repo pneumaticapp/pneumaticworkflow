@@ -4,7 +4,7 @@ import { getIntegrationDetails } from '../../api/getIntegrationDetails';
 import { getIntegrations } from '../../api/getIntegrations';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { ERoutes } from '../../constants/routes';
-import { IApiKeyItem, IIntegrationDetailed, IIntegrationListItem } from '../../types/integrations';
+import { IApiKeyItem, IIntegrationDetailed, IIntegrationListItem, IApiKeyCreateResponse } from '../../types/integrations';
 import { history } from '../../utils/history';
 import { logger } from '../../utils/logger';
 import {
@@ -71,7 +71,7 @@ export function* fetchApiKeys() {
 
 export function* handleCreateApiKey({ payload }: TCreateApiKey) {
   try {
-    const response = yield call(createApiKeyApi, payload.name);
+    const response: IApiKeyCreateResponse = yield call(createApiKeyApi, payload.name || '');
     const { key: rawKey, ...apiKeyData } = response;
     yield put(createApiKeySuccess({ apiKey: apiKeyData as IApiKeyItem, rawKey }));
   } catch (error) {

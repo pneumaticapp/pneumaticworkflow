@@ -2,9 +2,11 @@ import hashlib
 from datetime import timedelta
 
 import pytest
+from django.conf import settings
 from django.utils import timezone
 
 from src.accounts.models import APIKey
+from src.accounts.services.api_key import APIKeyService
 from src.processes.tests.fixtures import create_test_user
 
 
@@ -28,8 +30,8 @@ def test_generate_key__starts_with_prefix__ok():
     key = APIKey.generate_key()
 
     # assert
-    assert key.startswith('pn_live_')
-    assert len(key) > len('pn_live_')
+    assert key.startswith(settings.API_KEY_PREFIX)
+    assert len(key) > len(settings.API_KEY_PREFIX)
 
 
 def test_generate_key__unique__ok():
@@ -69,7 +71,7 @@ def test_revoke__deactivates_key__ok(mocker):
     # arrange
     user = create_test_user()
     cache_delete_mock = mocker.patch(
-        'src.authentication.tokens.PneumaticToken.cache.delete',
+        'src.accounts.services.api_key.PneumaticToken.cache.delete',
     )
     api_key = APIKey.objects.create(
         user=user,
@@ -82,7 +84,8 @@ def test_revoke__deactivates_key__ok(mocker):
     assert api_key.is_active
 
     # act
-    api_key.revoke()
+    service = APIKeyService(user=user, instance=api_key)
+    service.revoke()
 
     # assert
     api_key.refresh_from_db()
@@ -94,7 +97,7 @@ def test_revoke__no_cache_token__skip(mocker):
     # arrange
     user = create_test_user()
     cache_delete_mock = mocker.patch(
-        'src.authentication.tokens.PneumaticToken.cache.delete',
+        'src.accounts.services.api_key.PneumaticToken.cache.delete',
     )
     api_key = APIKey.objects.create(
         user=user,
@@ -106,7 +109,8 @@ def test_revoke__no_cache_token__skip(mocker):
     )
 
     # act
-    api_key.revoke()
+    service = APIKeyService(user=user, instance=api_key)
+    service.revoke()
 
     # assert
     api_key.refresh_from_db()

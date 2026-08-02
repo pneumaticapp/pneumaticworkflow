@@ -22,28 +22,18 @@ const KEY_MASK = '••••••••';
 
 interface IApiKeyListItemProps {
   apiKey: IApiKeyItem;
-  confirmDeleteId: number | null;
-  onDelete: (id: number) => void;
-  onConfirmDeleteStart: (id: number) => void;
-  onConfirmDeleteCancel: () => void;
+  onRevoke: (id: number) => void;
 }
 
 const ApiKeyListItem = React.memo(({
   apiKey,
-  confirmDeleteId,
-  onDelete,
-  onConfirmDeleteStart,
-  onConfirmDeleteCancel,
+  onRevoke,
 }: IApiKeyListItemProps) => {
   const { formatMessage } = useIntl();
-  
-  const handleDelete = React.useCallback(() => {
-    onDelete(apiKey.id);
-  }, [apiKey.id, onDelete]);
 
-  const handleConfirmStart = React.useCallback(() => {
-    onConfirmDeleteStart(apiKey.id);
-  }, [apiKey.id, onConfirmDeleteStart]);
+  const handleRevoke = React.useCallback(() => {
+    onRevoke(apiKey.id);
+  }, [apiKey.id, onRevoke]);
 
   return (
     <div className={styles['api-keys__item']} data-testid={`api-key-${apiKey.id}`}>
@@ -63,38 +53,14 @@ const ApiKeyListItem = React.memo(({
         </span>
       </div>
       <div className={styles['api-keys__item-actions']}>
-        {confirmDeleteId === apiKey.id ? (
-          <div className={styles['api-keys__confirm-delete']}>
-            <span className={styles['api-keys__confirm-text']}>
-              {formatMessage({ id: 'integrations.delete-api-key-confirm' })}
-            </span>
-            <Button
-              type="button"
-              onClick={handleDelete}
-              size="sm"
-              buttonStyle="transparent-black"
-              label={formatMessage({ id: 'integrations.api-key-revoke' })}
-              data-testid={`confirm-revoke-${apiKey.id}`}
-            />
-            <Button
-              type="button"
-              onClick={onConfirmDeleteCancel}
-              size="sm"
-              buttonStyle="transparent-black"
-              label={formatMessage({ id: 'integrations.cancel' })}
-              data-testid={`cancel-revoke-${apiKey.id}`}
-            />
-          </div>
-        ) : (
-          <Button
-            type="button"
-            onClick={handleConfirmStart}
-            size="sm"
-            buttonStyle="transparent-black"
-            label={formatMessage({ id: 'integrations.api-key-revoke' })}
-            data-testid={`revoke-${apiKey.id}`}
-          />
-        )}
+        <Button
+          type="button"
+          onClick={handleRevoke}
+          size="sm"
+          buttonStyle="transparent-black"
+          label={formatMessage({ id: 'integrations.api-key-revoke' })}
+          data-testid={`revoke-${apiKey.id}`}
+        />
       </div>
     </div>
   );
@@ -142,10 +108,12 @@ export function IntegrationsCommon() {
     setShowCreateForm(false);
   }, [newKeyName, dispatch]);
 
-  const handleDelete = React.useCallback((id: number) => {
-    dispatch(deleteApiKey({ id }));
-    setConfirmDeleteId(null);
-  }, [dispatch]);
+  const handleDelete = React.useCallback(() => {
+    if (confirmDeleteId !== null) {
+      dispatch(deleteApiKey({ id: confirmDeleteId }));
+      setConfirmDeleteId(null);
+    }
+  }, [confirmDeleteId, dispatch]);
 
   const handleConfirmDeleteStart = React.useCallback((id: number) => {
     setConfirmDeleteId(id);
@@ -201,6 +169,7 @@ export function IntegrationsCommon() {
               type="button"
               onClick={handleShowCreateForm}
               size="sm"
+              buttonStyle="yellow"
               label={formatMessage({ id: 'integrations.create-api-key' })}
               data-testid="create-api-key-btn"
             />
@@ -222,6 +191,7 @@ export function IntegrationsCommon() {
                 type="button"
                 onClick={handleCreate}
                 size="sm"
+                buttonStyle="yellow"
                 label={formatMessage({ id: 'integrations.create-api-key' })}
                 data-testid="submit-create-key"
               />
@@ -255,10 +225,7 @@ export function IntegrationsCommon() {
               <ApiKeyListItem
                 key={key.id}
                 apiKey={key}
-                confirmDeleteId={confirmDeleteId}
-                onDelete={handleDelete}
-                onConfirmDeleteStart={handleConfirmDeleteStart}
-                onConfirmDeleteCancel={handleConfirmDeleteCancel}
+                onRevoke={handleConfirmDeleteStart}
               />
             ))}
           </div>
@@ -300,6 +267,36 @@ export function IntegrationsCommon() {
               buttonStyle="transparent-black"
               label={formatMessage({ id: 'integrations.api-key-done' })}
               data-testid="done-key-btn"
+            />
+          </div>
+        </div>
+      </Modal>
+
+      {/* Revoke confirmation modal */}
+      <Modal isOpen={confirmDeleteId !== null} onClose={handleConfirmDeleteCancel} width="sm">
+        <div data-testid="revoke-key-modal" className={styles['api-keys__modal-content']}>
+          <p className={styles['api-keys__modal-title']}>
+            {formatMessage({ id: 'integrations.revoke-modal-title' })}
+          </p>
+          <p className={styles['api-keys__modal-warning']}>
+            {formatMessage({ id: 'integrations.delete-api-key-confirm' })}
+          </p>
+          <div className={styles['api-keys__modal-actions']}>
+            <Button
+              type="button"
+              onClick={handleDelete}
+              size="sm"
+              buttonStyle="yellow"
+              label={formatMessage({ id: 'integrations.api-key-revoke' })}
+              data-testid="confirm-revoke-btn"
+            />
+            <Button
+              type="button"
+              onClick={handleConfirmDeleteCancel}
+              size="sm"
+              buttonStyle="transparent-black"
+              label={formatMessage({ id: 'integrations.cancel' })}
+              data-testid="cancel-revoke-btn"
             />
           </div>
         </div>
