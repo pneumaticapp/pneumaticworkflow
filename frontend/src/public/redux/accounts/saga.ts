@@ -61,7 +61,7 @@ import { setGeneralLoaderVisibility } from '../general/actions';
 import { auth } from '../../api/auth';
 import { startFreeSubscription } from '../../api/startFreeSubscription';
 import { getActiveUsersCount, IGetActiveUsersCountResponse } from '../../api/getActiveUsersCount';
-import { sortUsersByStatus, sortUsersByNameAsc, sortUsersByNameDesc } from '../../utils/users';
+import { getActiveUsers, sortUsersByStatus, sortUsersByNameAsc, sortUsersByNameDesc } from '../../utils/users';
 import { getAccountPlan } from '../selectors/accounts';
 import { getAbsolutePath } from '../../utils/getAbsolutePath';
 import { createUser as createUserApi } from '../../api/createUser';
@@ -120,8 +120,13 @@ export function* fetchUsers(
 export function* fetchActiveUsersCount() {
   try {
     const { activeUsers, tenantsActiveUsers }: IGetActiveUsersCountResponse = yield call(getActiveUsersCount);
+    const accounts: ReturnType<typeof getAccountsStore> = yield select(getAccountsStore);
+    const localUsers = accounts.team.list.length ? accounts.team.list : accounts.users;
 
-    yield put(activeUsersCountFetchFinished({ activeUsers, tenantsActiveUsers }));
+    yield put(activeUsersCountFetchFinished({
+      activeUsers: localUsers.length ? getActiveUsers(localUsers).length : activeUsers,
+      tenantsActiveUsers,
+    }));
   } catch (error) {
     console.info('fetch active users count error : ', error);
   }
@@ -247,6 +252,7 @@ function* fetchDeleteUser({ payload: { userId, reassignedUserId } }: PayloadActi
     NotificationManager.success({ message: 'team.delete-success-msg' });
     yield put(teamFetchStarted({}));
     yield put(usersFetchStarted());
+    yield put(loadActiveUsersCount());
   } catch (err) {
     NotificationManager.warning({ message: getErrorMessage(err) });
   } finally {
@@ -262,6 +268,7 @@ function* fetchDeclineInvite({ payload: { userId, inviteId, reassignedUserId } }
     NotificationManager.success({ message: 'team.decline-invite-success-msg' });
     yield put(teamFetchStarted({}));
     yield put(usersFetchStarted());
+    yield put(loadActiveUsersCount());
   } catch (err) {
     NotificationManager.warning({ message: getErrorMessage(err) });
   } finally {
@@ -346,6 +353,7 @@ function* createUserSaga({ payload }: PayloadAction<ICreateUserRequest>) {
 
     yield put(teamFetchStarted({}));
     yield put(usersFetchStarted());
+    yield put(loadActiveUsersCount());
   } catch (error) {
     NotificationManager.notifyApiError( error, { message: getErrorMessage(error) });
     logger.error('failed to create user', error);
