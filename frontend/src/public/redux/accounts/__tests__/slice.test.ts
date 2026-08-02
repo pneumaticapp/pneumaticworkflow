@@ -67,4 +67,20 @@ describe('accounts reducer realtime users', () => {
 
     expect(state.planInfo.activeUsers).toBe(2);
   });
+
+  it('does not overwrite active users count when websocket arrives before users fetch', () => {
+    let state = accountsReducer(undefined, activeUsersCountFetchFinished({ activeUsers: 5, tenantsActiveUsers: 0 }));
+
+    state = accountsReducer(state, upsertUserFromWs(makeUser(1, 'Artyom')));
+
+    expect(state.planInfo.activeUsers).toBe(5);
+  });
+
+  it('keeps active users count when websocket deletion arrives before users fetch', () => {
+    let state = accountsReducer(undefined, activeUsersCountFetchFinished({ activeUsers: 5, tenantsActiveUsers: 0 }));
+
+    state = accountsReducer(state, removeUserFromWs(1));
+
+    expect(state.planInfo.activeUsers).toBe(5);
+  });
 });

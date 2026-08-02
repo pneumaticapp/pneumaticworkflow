@@ -227,6 +227,7 @@ const accountsSlice = createSlice({
 
     upsertUserFromWs: (state, action: PayloadAction<TUserListItem>) => {
       const user = action.payload;
+      const hasLocalUsers = Boolean(state.users.length || state.team.list.length);
       const upsertList = (list: TUserListItem[]) => {
         const hasUser = list.some((item) => item.id === user.id);
         const nextList = hasUser
@@ -238,14 +239,19 @@ const accountsSlice = createSlice({
 
       state.users = upsertList(state.users);
       state.team.list = upsertList(state.team.list);
-      state.planInfo.activeUsers = getActiveUsersCount(state.users);
+      if (hasLocalUsers) {
+        state.planInfo.activeUsers = getActiveUsersCount(state.team.list.length ? state.team.list : state.users);
+      }
     },
 
     removeUserFromWs: (state, action: PayloadAction<number>) => {
+      const hasLocalUsers = Boolean(state.users.length || state.team.list.length);
       const removeFromList = (list: TUserListItem[]) => list.filter((item) => item.id !== action.payload);
       state.users = removeFromList(state.users);
       state.team.list = removeFromList(state.team.list);
-      state.planInfo.activeUsers = getActiveUsersCount(state.users);
+      if (hasLocalUsers) {
+        state.planInfo.activeUsers = getActiveUsersCount(state.team.list.length ? state.team.list : state.users);
+      }
     },
   },
 });
