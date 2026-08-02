@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction, createAction } from '@reduxjs/toolkit';
 
 import { EDeleteUserModalState, IAccounts, IAccountPlan } from '../../types/redux';
-import { EUserListSorting, TUserListItem, ICreateUserRequest } from '../../types/user';
+import { EUserListSorting, EUserStatus, TUserListItem, ICreateUserRequest } from '../../types/user';
 import { ESubscriptionPlan } from '../../types/account';
 
 import {
@@ -59,6 +59,35 @@ function setUserProperties(users: TUserListItem[], userId: number, changedProps:
   });
 }
 
+const getUserNameForSorting = (user: TUserListItem) => (user.firstName || user.email).toLowerCase();
+
+function sortUsers(users: TUserListItem[], sorting: EUserListSorting) {
+  const sorted = users.slice().sort((user1, user2) => {
+    if (getUserNameForSorting(user1) === getUserNameForSorting(user2)) return 0;
+
+    return getUserNameForSorting(user1) > getUserNameForSorting(user2) ? 1 : -1;
+  });
+
+  if (sorting === EUserListSorting.NameDesc) {
+    return sorted.reverse();
+  }
+
+  if (sorting === EUserListSorting.Status) {
+    return sorted.sort((user1, user2) => {
+      const user1Status = user1.status === EUserStatus.Invited ? 1 : 0;
+      const user2Status = user2.status === EUserStatus.Invited ? 1 : 0;
+
+      return user1Status - user2Status;
+    });
+  }
+
+  return sorted;
+}
+
+const getActiveUsersCount = (users: TUserListItem[]) => users.filter(
+  (user) => user.status === EUserStatus.Active && user.type === 'user',
+).length;
+
 const accountsSlice = createSlice({
   name: 'accounts',
   initialState,
@@ -79,6 +108,7 @@ const accountsSlice = createSlice({
     teamFetchFinished: (state, action: PayloadAction<TUserListItem[]>) => {
       state.team.isLoading = false;
       state.team.list = action.payload;
+      state.planInfo.activeUsers = getActiveUsersCount(action.payload);
     },
 
     usersFetchFailed: (state) => {
@@ -89,10 +119,12 @@ const accountsSlice = createSlice({
     usersFetchFinished: (state, action: PayloadAction<TUserListItem[]>) => {
       state.isLoading = false;
       state.users = action.payload;
+      state.planInfo.activeUsers = getActiveUsersCount(action.payload);
     },
 
     activeUsersCountFetchFinished: (state, action: PayloadAction<TActiveUsersCountFetchFinishedPayload>) => {
       state.planInfo.activeUsers = action.payload.activeUsers;
+      state.planInfo.tenantsActiveUsers = action.payload.tenantsActiveUsers;
     },
 
     setCurrentPlan: (state, action: PayloadAction<IAccountPlan>) => {
@@ -197,20 +229,23 @@ const accountsSlice = createSlice({
       const user = action.payload;
       const upsertList = (list: TUserListItem[]) => {
         const hasUser = list.some((item) => item.id === user.id);
-        if (!hasUser) {
-          return [...list, user];
-        }
-        return list.map((item) => (item.id === user.id ? { ...item, ...user } : item));
+        const nextList = hasUser
+          ? list.map((item) => (item.id === user.id ? { ...item, ...user } : item))
+          : [...list, user];
+
+        return sortUsers(nextList, state.userListSorting);
       };
 
       state.users = upsertList(state.users);
       state.team.list = upsertList(state.team.list);
+      state.planInfo.activeUsers = getActiveUsersCount(state.users);
     },
 
     removeUserFromWs: (state, action: PayloadAction<number>) => {
       const removeFromList = (list: TUserListItem[]) => list.filter((item) => item.id !== action.payload);
       state.users = removeFromList(state.users);
       state.team.list = removeFromList(state.team.list);
+      state.planInfo.activeUsers = getActiveUsersCount(state.users);
     },
   },
 });
