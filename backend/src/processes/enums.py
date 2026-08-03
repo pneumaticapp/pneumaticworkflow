@@ -69,6 +69,7 @@ class PerformerType:
 
     USER = 'user'
     GROUP = 'group'
+    GROUP_USER = 'group_user'  # hidden users
     WORKFLOW_STARTER = 'workflow_starter'
     FIELD = 'field'
     MANAGER = 'manager'
@@ -728,6 +729,11 @@ class FileAttachmentAccessType:
         (ACCOUNT, 'account'),
         (RESTRICTED, 'restricted'),
     )
+
+
+class WorkflowPermission:
+    CHANGE = 'change_workflow'
+    VIEW = 'view_workflow'
 
 
 class SystemVariable:

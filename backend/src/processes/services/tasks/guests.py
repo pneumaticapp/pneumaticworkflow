@@ -27,7 +27,13 @@ UserModel = get_user_model()
 class GuestPerformersService(BasePerformersService):
 
     """ Service describes methods for change
-        task performers with type 'GUEST' """
+        task performers with type 'GUEST'.
+
+        Guests do NOT receive Guardian view_workflow UOP.
+        Access is via Guest JWT + GuestTaskPermission /
+        GuestWorkflowPermission scoped to request.task_id.
+        Do not call WorkflowPermissionService here.
+    """
 
     MAX_GUEST_PERFORMERS = int(environ.get('MAX_GUEST_PERFORMERS', '30'))
 
@@ -76,28 +82,34 @@ class GuestPerformersService(BasePerformersService):
             user_id=user.id,
         )
         if task.can_be_completed():
-            first_completed_user = (
+            first_completed = (
                 task.taskperformer_set.completed()
                 .exclude_directly_deleted()
                 .exclude(type=PerformerType.GROUP)
-                .first().user
+                .first()
+            )
+            first_completed_user = (
+                first_completed.user if first_completed else None
             )
             if first_completed_user is None:
-                group = (
+                group_performer = (
                     task.taskperformer_set.completed()
                     .exclude_directly_deleted()
                     .filter(type=PerformerType.GROUP)
                     .first()
-                    .group
                 )
-                first_completed_user = group.users.first().user
-            service = WorkflowActionService(
-                workflow=task.workflow,
-                user=first_completed_user,
-                is_superuser=False,
-                auth_type=AuthTokenType.USER,
-            )
-            service.complete_task(task=task)
+                if group_performer and group_performer.group_id:
+                    first_completed_user = (
+                        group_performer.group.users.first()
+                    )
+            if first_completed_user is not None:
+                service = WorkflowActionService(
+                    workflow=task.workflow,
+                    user=first_completed_user,
+                    is_superuser=False,
+                    auth_type=AuthTokenType.USER,
+                )
+                service.complete_task(task=task)
 
         reassign_restricted_permissions_for_task(
             task=task,

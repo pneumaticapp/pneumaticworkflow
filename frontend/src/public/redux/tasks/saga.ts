@@ -9,7 +9,6 @@ import {
   takeLatest,
   call,
   take,
-  throttle,
   actionChannel,
   ActionChannelEffect,
   ActionPattern,
@@ -28,6 +27,7 @@ import { ETaskListActions ,
   loadFilterSteps,
   loadFilterStepsSuccess,
   loadFilterStepsFailed,
+  setFilterStep,
   showNewTasksNotification,
   loadTasksCount,
   loadTaskList,
@@ -49,7 +49,6 @@ import {
   getTasksSettings,
   getTasksSorting,
   getTasksStore,
-  getTotalTasksCount,
 } from '../selectors/tasks';
 import { loadCurrentTask } from '../task/actions';
 import { ETaskListCompletionStatus, ITaskListItem, ITemplateStep, TTaskListItemResponse } from '../../types/tasks';
@@ -189,6 +188,11 @@ export function* handleInsertNewTask({ payload: newTask }: PayloadAction<ITaskLi
   }
 
   const initialTaskList: ReturnType<typeof getTaskList> = yield select(getTaskList);
+
+  if (initialTaskList.items.some((task) => task.id === newTask.id)) {
+    return;
+  }
+
   const tasksSorting: ReturnType<typeof getTasksSorting> = yield select(getTasksSorting);
 
   const newTaskList = getTaskListWithNewTask(initialTaskList, newTask, tasksSorting);
@@ -213,7 +217,19 @@ export function* fetchTasksFilterTemplates() {
   }
 }
 
-function* fetchTasksFilterSteps({ payload: { templateId } }: PayloadAction<TLoadFilterStepsPayload>) {
+export function* refreshTasksFilters() {
+  const {
+    filterValues: { templateIdFilter },
+  }: ReturnType<typeof getTasksSettings> = yield select(getTasksSettings);
+
+  yield put(loadFilterTemplates());
+
+  if (templateIdFilter) {
+    yield put(loadFilterSteps({ templateId: templateIdFilter }));
+  }
+}
+
+export function* fetchTasksFilterSteps({ payload: { templateId } }: PayloadAction<TLoadFilterStepsPayload>) {
   try {
     const {
       tasksSettings: { completionStatus },
@@ -225,9 +241,23 @@ function* fetchTasksFilterSteps({ payload: { templateId } }: PayloadAction<TLoad
       }),
       handleLoadTemplateVariables(templateId),
     ]);
+
+    const {
+      filterValues: { templateIdFilter, taskApiNameFilter },
+    }: ReturnType<typeof getTasksSettings> = yield select(getTasksSettings);
+
+    if (templateIdFilter !== templateId) {
+      yield put(loadFilterStepsFailed());
+      return;
+    }
+
     yield put(loadFilterStepsSuccess(steps));
+
+    if (taskApiNameFilter && !steps.some((step) => step.apiName === taskApiNameFilter)) {
+      yield put(setFilterStep(null));
+    }
   } catch (error) {
-    put(loadFilterStepsFailed());
+    yield put(loadFilterStepsFailed());
     logger.info('fetch tasks filter steps error : ', error);
     NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   }
@@ -236,6 +266,7 @@ function* fetchTasksFilterSteps({ payload: { templateId } }: PayloadAction<TLoad
 function* handleShiftTaskList({ payload: { currentTaskId } }: PayloadAction<TShiftTaskListPayload>) {
   yield openNextTask(currentTaskId);
   yield removeTaskFromList(currentTaskId);
+  yield refreshTasksFilters();
 }
 
 export function* watchFetchTaskList() {
@@ -245,7 +276,7 @@ export function* watchFetchTaskList() {
 }
 
 export function* watchFetchTasksCount() {
-  yield takeEvery(loadTasksCount.type, fetchTasksCount);
+  yield takeLatest(loadTasksCount.type, fetchTasksCount);
 }
 
 export function* watchSearchTasks() {
@@ -257,7 +288,7 @@ export function* watchLoadTasksFilterTemplates() {
 }
 
 export function* watchLoadTasksFilterSteps() {
-  yield throttle(500, loadFilterSteps.type, fetchTasksFilterSteps);
+  yield takeLatest(loadFilterSteps.type, fetchTasksFilterSteps);
 }
 
 export function* watchInsertNewTask() {
@@ -269,36 +300,43 @@ export function* watchShiftTaskList() {
 }
 
 export function* handleAddTask(newTask: ITaskListItem) {
-  const totalTasksCount: ReturnType<typeof getTotalTasksCount> = yield select(getTotalTasksCount);
-  if (totalTasksCount !== null) {
-    yield put(changeTasksCount(totalTasksCount + 1));
-  }
-
-  yield put(showNewTasksNotification(true));
-
   const settings: ReturnType<typeof getTasksSettings> = yield select(getTasksSettings);
-  const {
-    completionStatus,
-    filterValues: { templateIdFilter },
-  } = settings;
+  const { completionStatus } = settings;
+
+  // Reactivated task (return/revert) must leave Completed, not stay as a ghost card.
   if (completionStatus === ETaskListCompletionStatus.Completed) {
+    yield put(loadTasksCount());
+    yield put(showNewTasksNotification(true));
+
+    if (checkSomeRouteIsActive(ERoutes.Tasks)) {
+      yield call(removeTaskFromList, newTask.id);
+    }
     return;
   }
+
+  const taskList: ReturnType<typeof getTaskList> = yield select(getTaskList);
+
+  if (taskList.items.some((task) => task.id === newTask.id)) {
+    return;
+  }
+
+  yield put(loadTasksCount());
+  yield put(showNewTasksNotification(true));
+
   if (!checkSomeRouteIsActive(ERoutes.Tasks)) {
     return;
   }
 
-  yield put(insertNewTask(newTask));
-  yield put(loadFilterTemplates());
-  if (templateIdFilter) {
-    yield put(loadFilterSteps({ templateId: templateIdFilter }));
-  }
+  yield call(handleInsertNewTask, insertNewTask(newTask));
+  yield refreshTasksFilters();
 }
 
-export function* handleRemoveTask(taskId: number) {
-  const totalTasksCount: ReturnType<typeof getTotalTasksCount> = yield select(getTotalTasksCount);
-  if (totalTasksCount !== null) {
-    yield put(changeTasksCount(totalTasksCount - 1));
+export function* handleRemoveTask(
+  taskId: number,
+  shouldDecrementCounter: boolean = true,
+) {
+  if (shouldDecrementCounter) {
+    yield put(loadTasksCount());
   }
 
   if (!checkSomeRouteIsActive(ERoutes.Tasks)) {
@@ -311,6 +349,7 @@ export function* handleRemoveTask(taskId: number) {
   }
 
   yield removeTaskFromList(taskId);
+  yield refreshTasksFilters();
 }
 
 export type TChannelAction = { type: string; handler(): void };

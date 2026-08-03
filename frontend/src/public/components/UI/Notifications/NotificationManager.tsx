@@ -19,31 +19,11 @@ const DEFAULT_NOTIFY: INotification = {
   customClassName: '',
 };
 
-/*
-  TODO: Refactor this to mapper outside NotificationManager
-  https://trello.com/c/E6sXxjT1/1262-handle-notification-colors-properly
-*/
-
-const alertErrorMessages = [
-  'Something Went Wrong',
-  'The transaction was declined. Please use a different card or contact your bank.',
-];
-
 class NotificationManagerCreator extends EventEmitter {
   private listNotify: INotification[] = [];
 
   public create = (notify: INotification) => {
-    if (notify.priority) {
-      if (notify.message && alertErrorMessages.includes(notify.message.toString())) {
-        this.listNotify.unshift({ ...notify, type: 'error' });
-      } else {
-        this.listNotify.unshift(notify);
-      }
-    } else if (notify.message && alertErrorMessages.includes(notify.message.toString())) {
-      this.listNotify.push({ ...notify, type: 'error' });
-    } else {
-      this.listNotify.push(notify);
-    }
+    this.listNotify.push(notify);
     this.emitChange();
   };
 

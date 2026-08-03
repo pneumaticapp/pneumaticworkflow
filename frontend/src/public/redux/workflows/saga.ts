@@ -128,6 +128,7 @@ import { deleteWorkflow } from '../../api/deleteWorkflow';
 import { getTemplate } from '../../api/getTemplate';
 import { getRunnableWorkflow, loadDatasetsMap } from '../../components/TemplateEdit/utils/getRunnableWorkflow';
 import { mapTemplateFieldsetsToRuntime } from '../../utils/mapTemplateFieldsetsToRuntime';
+import { IFieldsetRuntime } from '../../types/fieldset';
 import { getClonedKickoff } from '../../components/Workflows/WorkflowsGridPage/WorkflowCard/utils/getClonedKickoff';
 import { getWorkflowsCurrentPerformerCounters } from '../../api/getWorkflowsCurrentPerformerCounters';
 import { getWorkflowsStartersCounters } from '../../api/getWorkflowsStartersCounters';
@@ -617,6 +618,9 @@ export function* cloneWorkflowSaga({
       throw new Error('no template id');
     }
 
+    // TODO (Technical Debt): Backend fieldsets in TWorkflowDetailsResponse contain raw backend properties (id, apiName),
+    // which do not match the declared client runtime model IFieldsetRuntime (which expects apiNameBinding
+    // instead of apiName, and lacks id).
     const [workflowDetails, template]: [TWorkflowDetailsResponse, ITemplateResponse] = yield all([
       getWorkflow(workflowId),
       getTemplate(templateId),
@@ -645,6 +649,9 @@ export function* cloneWorkflowSaga({
         ...runnableWorkflow,
         name: `${workflowName} (Clone)`,
         kickoff,
+        // TODO (Technical Debt): Sync cloned fieldsets into loadedFieldsets for WorkflowEditPopup modal.
+        // Cast is required due to shared IKickoffClient type usage across editor & runtime contexts.
+        loadedFieldsets: (kickoff.fieldsets || []) as unknown as IFieldsetRuntime[],
       }),
     );
   } catch (error) {

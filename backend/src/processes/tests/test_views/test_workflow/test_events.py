@@ -59,6 +59,10 @@ from src.processes.tests.fixtures import (
     create_test_workflow,
     create_test_event,
 )
+from src.permissions.enums import PermissionSource
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 
 pytestmark = pytest.mark.django_db
 datetime_format = '%Y-%m-%dT%H:%M:%S.%fZ'
@@ -229,7 +233,11 @@ def test_events__not_admin_user__ok(api_client):
         email='no@admin.com',
     )
     workflow = create_test_workflow(owner)
-    workflow.members.add(user)
+    WorkflowPermissionService(workflow).grant_view(
+        user=user,
+        source_type=PermissionSource.PERFORMER,
+        source_id=0,
+    )
 
     task_1 = workflow.tasks.get(number=1)
     WorkflowEventService.task_started_event(task_1)
@@ -1758,6 +1766,7 @@ def test_events__task_complete_fieldsets_present__ok(api_client):
     assert response.status_code == 200
     event_data = response.data[0]
     assert event_data['type'] == WorkflowEventType.TASK_COMPLETE
+    assert event_data['task']['output'] == []
     fieldsets_data = event_data['task']['fieldsets']
     assert fieldsets_data is not None
     assert len(fieldsets_data) == 1
