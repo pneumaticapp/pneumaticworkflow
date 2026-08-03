@@ -117,10 +117,7 @@ export function buildRowsWithAddedFieldset(
   fields: IExtraField[],
   fieldsets: IFieldsetBindingClient[],
   newFieldsetBinding: IFieldsetBindingClient,
-): TMergedTaskOutputRow[] | null {
-  if (fieldsets.some((fieldset) => fieldset.sharedFieldsetId === newFieldsetBinding.sharedFieldsetId)) {
-    return null;
-  }
+): TMergedTaskOutputRow[] {
   const nextFieldsets = [...fieldsets, newFieldsetBinding];
   return buildMergedTaskOutputRows(fields, nextFieldsets);
 }

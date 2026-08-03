@@ -142,9 +142,7 @@ export function OutputFormTaskMerged({
         ))}
         <FieldsetIconPicker
           fieldsetsCatalogLoading={fieldsetsCatalogLoading}
-          selectedFieldsetIds={(task.fieldsets || []).map((fieldset) => fieldset.sharedFieldsetId)}
           onSelectFieldset={handleAddFieldset}
-          onRemoveFieldset={handleRemoveFieldset}
         />
       </div>
 

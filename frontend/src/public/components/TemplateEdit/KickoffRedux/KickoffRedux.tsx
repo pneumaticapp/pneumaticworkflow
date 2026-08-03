@@ -166,9 +166,7 @@ export function KickoffRedux({
           ))}
           <FieldsetIconPicker
             fieldsetsCatalogLoading={fieldsetsCatalogLoading}
-            selectedFieldsetIds={(kickoff.fieldsets || []).map((fieldset) => fieldset.sharedFieldsetId)}
             onSelectFieldset={handleAddKickoffFieldset}
-            onRemoveFieldset={handleRemoveFieldset}
           />
         </div>
         {!isFormEmpty && (

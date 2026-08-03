@@ -72,6 +72,7 @@ export function MergedOutputRows({
             className={classNames(
               kickoffStyles['with-label'],
               kickoffStyles['kick-off-input'],
+              styles['flow__fieldset-row'],
             )}
           >
             <div className={kickoffStyles['kick-off-input__field']}>

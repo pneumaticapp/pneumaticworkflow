@@ -1,18 +1,24 @@
 import * as React from 'react';
-import { useCallback, useMemo, useRef } from 'react';
+import { ReactNode, useCallback, useMemo, useRef } from 'react';
 import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
-import classNames from 'classnames';
 
 import { IFieldsetCatalogItem } from '../../../types/fieldset';
 import { getFieldsetsCatalogItems } from '../../../redux/selectors/fieldsets';
 import { CustomTooltip } from '../../UI/CustomTooltip';
-import { Dropdown, type TDropdownOption } from '../../UI';
+import { FilterSelect } from '../../UI';
 import { FieldsetIcon } from '../../icons/FieldsetIcon';
 
 import pickerStyles from './FieldsetIconPicker.css';
 import kickoffStyles from '../KickoffRedux/KickoffRedux.css';
 import flowStyles from '../OutputForm/OutputForm.css';
+
+interface IFieldsetCatalogOption {
+  id: number;
+  name: string;
+  label: ReactNode;
+  searchByText: string;
+}
 
 interface IFieldsetCatalogPickerRow {
   id: number;
@@ -25,9 +31,7 @@ interface IFieldsetCatalogPickerRow {
 
 export interface IFieldsetIconPickerProps {
   fieldsetsCatalogLoading: boolean;
-  selectedFieldsetIds: number[];
   onSelectFieldset: (fieldsetCatalogItem: IFieldsetCatalogItem) => void;
-  onRemoveFieldset: (sharedFieldsetId: number) => void;
 }
 
 const buildCatalogPickerRows = (catalogFieldsetItems: IFieldsetCatalogItem[]): IFieldsetCatalogPickerRow[] => {
@@ -50,112 +54,76 @@ const buildCatalogPickerRows = (catalogFieldsetItems: IFieldsetCatalogItem[]): I
 
 export const FieldsetIconPicker = ({
   fieldsetsCatalogLoading,
-  selectedFieldsetIds,
   onSelectFieldset,
-  onRemoveFieldset,
 }: IFieldsetIconPickerProps) => {
   const { formatMessage } = useIntl();
   const triggerRef = useRef<HTMLSpanElement>(null);
   const fieldsetsCatalogItems = useSelector(getFieldsetsCatalogItems);
 
-  const catalogRows = useMemo(() => buildCatalogPickerRows(fieldsetsCatalogItems), [fieldsetsCatalogItems]);
-  const showListLoading = fieldsetsCatalogLoading && catalogRows.length === 0;
+  const options = useMemo((): IFieldsetCatalogOption[] => {
+    const rows = buildCatalogPickerRows(fieldsetsCatalogItems);
+    return rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      searchByText: row.name,
+      label: (
+        <div className={pickerStyles['fieldset-picker__option-info']}>
+          <span className={pickerStyles['fieldset-picker__option-name']}>{row.name}</span>
+          <span className={pickerStyles['fieldset-picker__option-meta']}>
+            {row.fieldsCount} fields · {row.rulesCount} rules
+          </span>
+        </div>
+      ),
+    }));
+  }, [fieldsetsCatalogItems]);
 
-  const handleToggleFieldset = useCallback(
-    (sharedFieldsetId: number) => {
-      if (selectedFieldsetIds.includes(sharedFieldsetId)) {
-        onRemoveFieldset(sharedFieldsetId);
-        return;
-      }
+  const handleSelectFieldset = useCallback(
+    (sharedFieldsetId: number | null) => {
+      if (sharedFieldsetId === null) return;
       const fieldsetCatalogItem = fieldsetsCatalogItems.find((item) => item.id === sharedFieldsetId);
       if (fieldsetCatalogItem) {
         onSelectFieldset(fieldsetCatalogItem);
       }
     },
-    [fieldsetsCatalogItems, onRemoveFieldset, onSelectFieldset, selectedFieldsetIds],
+    [fieldsetsCatalogItems, onSelectFieldset],
   );
-
-  const catalogDropdownOption = useMemo((): TDropdownOption => {
-    return {
-      mapKey: 'template.fieldset-icon-picker.catalog',
-      label: '\u00a0',
-      customSubOption: (
-        <div className={flowStyles['flow__fieldset-dropdown-panel']}>
-          {showListLoading ? (
-            <div className={pickerStyles['fieldset-picker__loading']}>
-              {formatMessage({ id: 'template.fieldset-picker.loading', defaultMessage: 'Loading…' })}
-            </div>
-          ) : null}
-
-          {!showListLoading && catalogRows.length === 0 ? (
-            <div className={pickerStyles['fieldset-picker__empty']}>
-              {formatMessage({ id: 'template.fieldset-picker.empty' })}
-            </div>
-          ) : null}
-
-          {!showListLoading
-            && catalogRows.map((row) => {
-              const isSelected = selectedFieldsetIds.includes(row.id);
-              return (
-                <button
-                  key={row.id}
-                  type="button"
-                  className={pickerStyles['fieldset-picker__option']}
-                  onClick={() => handleToggleFieldset(row.id)}
-                  id={`task-output-fieldset-option-${row.id}`}
-                >
-                  <input
-                    type="checkbox"
-                    className={pickerStyles['fieldset-picker__checkbox']}
-                    checked={isSelected}
-                    readOnly
-                    tabIndex={-1}
-                    aria-hidden
-                  />
-                  <div className={pickerStyles['fieldset-picker__option-info']}>
-                    <span className={pickerStyles['fieldset-picker__option-name']}>{row.name}</span>
-                    <span className={pickerStyles['fieldset-picker__option-meta']}>
-                      {row.fieldsCount} fields · {row.rulesCount} rules
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
-        </div>
-      ),
-    };
-  }, [
-    catalogRows,
-    formatMessage,
-    handleToggleFieldset,
-    selectedFieldsetIds,
-    showListLoading,
-  ]);
 
   return (
     <div className={flowStyles['flow__fieldset-icon-slot']}>
-      <Dropdown
-        direction="left"
-        menuPositionFixed
-        toggleProps={{id: 'task-output-fieldset-icon'}}
-        renderToggle={(isOpen) => (
+      <FilterSelect<'id', 'label', IFieldsetCatalogOption>
+        optionIdKey="id"
+        optionLabelKey="label"
+        options={options}
+        isLoading={fieldsetsCatalogLoading}
+        isSearchShown
+        positionFixed
+        selectedOption={null}
+        onChange={handleSelectFieldset}
+        resetFilter={() => {}}
+        searchPlaceholder={formatMessage({ id: 'search.placeholder', defaultMessage: 'Search...' })}
+        placeholderText={formatMessage({ id: 'template.fieldset-picker.empty' })}
+        containerClassname={pickerStyles['fieldset-picker__container']}
+        toggleClassName={pickerStyles['fieldset-picker__toggle']}
+        menuClassName={pickerStyles['fieldset-picker__menu']}
+        arrowClassName={pickerStyles['fieldset-picker__arrow_hidden']}
+        renderPlaceholder={() => (
           <span
             ref={triggerRef}
-            className={classNames(kickoffStyles['component-icon-container'], isOpen && flowStyles['flow__fieldset-icon-trigger_open'])}
+            className={kickoffStyles['component-icon-container']}
           >
             <FieldsetIcon className={kickoffStyles['component-icon']} aria-hidden />
           </span>
         )}
-        options={catalogDropdownOption}
       />
-      <CustomTooltip 
-        target={triggerRef} 
+      <CustomTooltip
+        target={triggerRef}
         tooltipText={formatMessage({
           id: 'template.task-output-fieldset-icon-help',
           defaultMessage: 'Click to choose a fieldset for this step',
-        })} 
-        tooltipTitle={formatMessage({ id: 'fieldsets.title' })} 
-        />
+        })}
+        tooltipTitle={formatMessage({ id: 'fieldsets.title' })}
+      />
     </div>
   );
 };
+
