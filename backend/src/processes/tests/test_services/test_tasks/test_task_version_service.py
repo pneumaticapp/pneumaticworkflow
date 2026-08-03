@@ -1936,6 +1936,80 @@ def test__update_field__fieldset_provided__ok():
     assert field.account == user.account
 
 
+def test__update_field__fieldset_existing_runtime_field__preserves_values():
+
+    """
+    Runtime fieldset fields have task=None. Lookup by fieldset+api_name
+    updates metadata, sets task, and preserves field values.
+    """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    fieldset = create_test_fieldset(
+        workflow=workflow,
+        task=task,
+        api_name='fs-1',
+    )
+    fieldset.fields.all().delete()
+    existing_value = 'Preserved value'
+    existing_markdown = 'Preserved markdown'
+    existing_clear = 'Preserved clear'
+    existing_field = TaskField.objects.create(
+        account=user.account,
+        workflow=workflow,
+        fieldset=fieldset,
+        task=None,
+        name='Old name',
+        type=FieldType.STRING,
+        order=1,
+        api_name='fs-1-field-1',
+        value=existing_value,
+        markdown_value=existing_markdown,
+        clear_value=existing_clear,
+    )
+    service = TaskUpdateVersionService(
+        user=user,
+        instance=task,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+    field_data = {
+        'api_name': 'fs-1-field-1',
+        'name': 'Updated name',
+        'description': 'Updated description',
+        'type': FieldType.STRING,
+        'is_required': True,
+        'is_hidden': False,
+        'order': 2,
+        'dataset_id': None,
+    }
+
+    # act
+    field, created = service._update_field(
+        field_data=field_data,
+        fieldset=fieldset,
+    )
+
+    # assert
+    assert created is False
+    assert field.id == existing_field.id
+    assert field.fieldset == fieldset
+    assert field.task == task
+    assert field.name == 'Updated name'
+    assert field.description == 'Updated description'
+    assert field.is_required is True
+    assert field.order == 2
+    assert field.value == existing_value
+    assert field.markdown_value == existing_markdown
+    assert field.clear_value == existing_clear
+    assert TaskField.objects.filter(
+        fieldset=fieldset,
+        api_name='fs-1-field-1',
+    ).count() == 1
+
+
 def test__update_field_selections__no_selections_key__skip():
 
     """
@@ -2837,6 +2911,126 @@ def test__update_field_rules__nonexistent_api_name__skip():
 
     # assert
     assert field.rules.count() == 0
+
+
+def test_update_from_version__tasks_fields_values_include_fieldset_fields__ok(
+    mocker,
+):
+
+    """
+    tasks_fields_values from get_fields_markdown_values includes
+    kickoff and task fieldset fields
+    """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    kickoff = workflow.kickoff_instance
+    kickoff_fieldset = create_test_fieldset(
+        workflow=workflow,
+        kickoff=kickoff,
+        api_name='kickoff-fs',
+    )
+    kickoff_field_markdown_value = 'Kickoff fieldset value'
+    kickoff_fieldset_field = kickoff_fieldset.fields.get()
+    kickoff_fieldset_field.markdown_value = kickoff_field_markdown_value
+    kickoff_fieldset_field.save(update_fields=['markdown_value'])
+    task_fieldset = create_test_fieldset(
+        workflow=workflow,
+        task=task,
+        api_name='task-fs',
+    )
+    task_field_markdown_value = 'Task fieldset value'
+
+    task_fieldset_field = task_fieldset.fields.get()
+    task_fieldset_field.markdown_value = task_field_markdown_value
+    task_fieldset_field.save(update_fields=['markdown_value'])
+    service = TaskUpdateVersionService(
+        user=user,
+        instance=task,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+    data = {
+        'id': 27,
+        'api_name': 'task-r5btf7',
+        'name': 'Task #1',
+        'description': None,
+        'number': 1,
+        'require_completion_by_all': False,
+        'raw_performers': [
+            {
+                'id': 55,
+                'type': 'user',
+                'user_id': 27,
+                'api_name': 'raw-performer-1',
+            },
+        ],
+    }
+    create_or_update_instance_mock = mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._create_or_update_instance',
+    )
+    mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._update_fields',
+    )
+    mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._update_fieldsets',
+    )
+    mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._update_conditions',
+    )
+    update_checklists_mock = mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._update_checklists',
+    )
+    mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._update_raw_due_date',
+    )
+    mocker.patch(
+        'src.processes.services.tasks.task.'
+        'TaskService.set_due_date_from_template',
+    )
+    mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._update_performers',
+    )
+    mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._update_delay',
+    )
+
+    # act
+    service.update_from_version(
+        data=data,
+        version=1,
+        workflow=workflow,
+    )
+
+    # assert
+    create_or_update_instance_mock.assert_called_once_with(
+        data=data,
+        workflow=workflow,
+        fields_values={
+            'workflow-starter': user.name,
+            kickoff_fieldset_field.api_name: kickoff_field_markdown_value,
+            task_fieldset_field.api_name: task_field_markdown_value,
+        },
+    )
+    update_checklists_mock.assert_called_once_with(
+        data=None,
+        version=1,
+        fields_values={
+            'workflow-starter': user.name,
+            kickoff_fieldset_field.api_name: kickoff_field_markdown_value,
+            task_fieldset_field.api_name: task_field_markdown_value,
+        },
+    )
 
 
 def test_update_from_version__fieldsets__ok(mocker):

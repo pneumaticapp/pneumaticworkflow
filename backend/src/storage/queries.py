@@ -40,7 +40,7 @@ class AttachmentListQuery(SqlQueryObject):
             AND (
                 EXISTS (
                     SELECT 1
-                    FROM guardian_userobjectpermission uop
+                    FROM permissions_userobjectpermission uop
                     JOIN auth_permission p ON uop.permission_id = p.id
                     JOIN django_content_type ct ON p.content_type_id = ct.id
                     WHERE uop.user_id = %(user_id)s

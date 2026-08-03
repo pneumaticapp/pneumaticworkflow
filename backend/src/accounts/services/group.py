@@ -30,10 +30,17 @@ from src.processes.enums import (
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.task import TaskPerformer, Task
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 from src.processes.tasks.update_workflow import (
     update_workflow_owners,
 )
 from src.processes.tasks.tasks import check_and_complete_tasks
+from src.storage.tasks import (
+    schedule_sync_workflow_attachment_permissions,
+)
 from src.storage.utils import sync_account_file_fields
 
 
@@ -164,6 +171,38 @@ class UserGroupService(BaseModelService):
             send_notification_task=send_task_deleted_notification,
         )
 
+    def _sync_performer_group_permissions(
+        self,
+        member_ids: Optional[List[int]] = None,
+    ):
+        """Realign PERFORMER_GROUP view on workflows where group acts.
+
+        Called after membership changes so added users gain view and
+        removed users lose it without a full viewer rebuild.
+        """
+        workflow_ids = (
+            TaskPerformer.objects
+            .filter(
+                type=PerformerType.GROUP,
+                group_id=self.instance.id,
+            )
+            .exclude_directly_deleted()
+            .values_list('task__workflow_id', flat=True)
+            .distinct()
+        )
+        if not workflow_ids:
+            return
+        if member_ids is None:
+            member_ids = list(
+                self.instance.users.values_list('id', flat=True),
+            )
+        for workflow in Workflow.objects.filter(id__in=workflow_ids):
+            WorkflowPermissionService(workflow).sync_performer_group(
+                group_id=self.instance.id,
+                member_ids=member_ids,
+            )
+            schedule_sync_workflow_attachment_permissions(workflow.id)
+
     def _get_group_performer_task_ids(self) -> List[int]:
         return list(
             Task.objects
@@ -220,6 +259,11 @@ class UserGroupService(BaseModelService):
                 template_ids = self._get_template_ids()
                 if template_ids:
                     update_workflow_owners.delay(template_ids)
+                self._sync_performer_group_permissions(
+                    member_ids=(
+                        list(new_users_ids) if users else []
+                    ),
+                )
 
         if new_name is not None and new_name != self.instance.name:
             TaskField.objects.filter(
@@ -286,6 +330,18 @@ class UserGroupService(BaseModelService):
         # active_for_group(); enqueue after commit so can_be_completed()
         # sees the group as deleted.
         group_performer_task_ids = self._get_group_performer_task_ids()
+        # Collect workflow IDs before soft-delete so we can revoke
+        # PERFORMER_GROUP UOP rows after the group is gone.
+        performer_group_workflow_ids = list(
+            TaskPerformer.objects
+            .filter(
+                type=PerformerType.GROUP,
+                group_id=self.instance.id,
+            )
+            .exclude_directly_deleted()
+            .values_list('task__workflow_id', flat=True)
+            .distinct(),
+        )
         send_group_deleted_notification.delay(
             logging=self.account.log_api_requests,
             account_id=self.user.account_id,
@@ -307,6 +363,17 @@ class UserGroupService(BaseModelService):
             is_superuser=self.is_superuser,
         )
         self.instance.delete()
+        # Revoke PERFORMER_GROUP view permissions.  After soft-delete
+        # the group is no longer active, so sync_performer_group calls
+        # revoke_view for each workflow.
+        if performer_group_workflow_ids:
+            for workflow in Workflow.objects.filter(
+                id__in=performer_group_workflow_ids,
+            ):
+                WorkflowPermissionService(workflow).sync_performer_group(
+                    group_id=self.instance.id,
+                )
+                schedule_sync_workflow_attachment_permissions(workflow.id)
         if group_performer_task_ids:
             transaction.on_commit(
                 lambda: self._check_and_complete_tasks(

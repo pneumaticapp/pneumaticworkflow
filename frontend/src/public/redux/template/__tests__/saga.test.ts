@@ -10,6 +10,7 @@ import { ESubscriptionPlan } from '../../../types/account';
 import { cleanTemplateReferences, mapTemplateRequest } from '../../../utils/template';
 import { checkSomeRouteIsActive } from '../../../utils/history';
 import { ITemplate } from '../../../types/template';
+import { makeFieldsetBindingClient } from '../../../__stubs__/fieldsets.factory';
 
 jest.mock('../../../utils/getConfig', () => ({
   getBrowserConfigEnv: jest.fn().mockReturnValue({
@@ -464,6 +465,77 @@ describe('fetchSaveTemplate — fieldsets in mapTemplateRequest', () => {
     expect(mapTemplateRequest).toHaveBeenCalledTimes(1);
     expect(mapTemplateRequest).toHaveBeenCalledWith(
       mockState.template.data,
+    );
+  });
+
+  it('uses kickoff and task fieldsets from backend response after save', async () => {
+    const localKickoffFieldsets = [makeFieldsetBindingClient({ apiNameBinding: 'local-kickoff-fs' })];
+    const localTaskFieldsets = [makeFieldsetBindingClient({ apiNameBinding: 'local-task-fs' })];
+
+    const backendKickoffFieldsets = [makeFieldsetBindingClient({ apiNameBinding: 'backend-kickoff-fs' })];
+    const backendTaskFieldsets = [makeFieldsetBindingClient({ apiNameBinding: 'backend-task-fs' })];
+
+    const localTemplate = makeTemplate({
+      id: 99,
+      kickoff: { fields: [], fieldsets: localKickoffFieldsets, description: '' },
+      tasks: [{ apiName: 'task-1', name: 'Task 1', fieldsets: localTaskFieldsets, ancestors: [] }],
+    });
+
+    const backendResponse = makeTemplate({
+      id: 99,
+      kickoff: { fields: [], fieldsets: backendKickoffFieldsets, description: '' },
+      tasks: [{ apiName: 'task-1', name: 'Task 1', fieldsets: backendTaskFieldsets, ancestors: [] }],
+    });
+
+    const mockState = {
+      ...makeSaveMockState(),
+      template: { data: localTemplate },
+    };
+
+    (checkSomeRouteIsActive as jest.Mock).mockReturnValue(true);
+    (mapTemplateRequest as jest.Mock).mockReturnValue({ id: 99 });
+    (updateTemplate as jest.Mock).mockResolvedValue(backendResponse);
+
+    const channel = stdChannel();
+    const dispatched: IDispatchedAction[] = [];
+
+    const saga = runSaga(
+      {
+        channel,
+        dispatch: (action: IDispatchedAction) => {
+          dispatched.push(action);
+        },
+        getState: () => mockState,
+      },
+      function* wrapper() {
+        yield call(watchSaveTemplate);
+      },
+    );
+
+    channel.put({
+      type: ETemplateActions.Save,
+      payload: {},
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    saga.cancel();
+
+    expect(dispatched).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: ETemplateActions.SetTemplate,
+          payload: expect.objectContaining({
+            kickoff: expect.objectContaining({
+              fieldsets: backendKickoffFieldsets,
+            }),
+            tasks: expect.arrayContaining([
+              expect.objectContaining({
+                fieldsets: backendTaskFieldsets,
+              }),
+            ]),
+          }),
+        }),
+      ]),
     );
   });
 });

@@ -4,6 +4,10 @@ from datetime import datetime
 from typing import List, Optional, Tuple
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.models import ContentType
+from django.db.models import IntegerField, Q, Subquery
+from django.db.models.functions import Cast
 
 from src.accounts.enums import UserStatus, UserType
 from src.accounts.models import User, UserGroup
@@ -12,6 +16,7 @@ from src.generics.mixins.queries import (
     DereferencedOwnersMixin,
     DereferencedPerformersMixin,
 )
+from src.permissions.models import UserObjectPermission
 from src.processes.enums import (
     DirectlyStatus,
     OwnerRole,
@@ -24,6 +29,7 @@ from src.processes.enums import (
     WorkflowApiStatus,
     WorkflowEventType,
     WorkflowOrdering,
+    WorkflowPermission,
     WorkflowStatus, SearchContentType,
 )
 from src.processes.messages.workflow import (
@@ -35,7 +41,45 @@ from src.queries import (
     SqlQueryObject,
 )
 
+
 UserModel = get_user_model()
+
+
+class GuardianOwnerJoinMixin:
+    """Generates Guardian-based workflow owner JOIN SQL.
+
+    Replaces the old: LEFT JOIN processes_workflow_owners
+    The permissions_userobjectpermission table has a `user_id` column
+    just like the old M2M table, so WHERE clauses like
+    `{alias}.user_id` work as before.
+
+    Uses parameterized content_type_id and permission_id
+    instead of subqueries for better performance.
+    """
+
+    @staticmethod
+    def _guardian_owner_join(
+        alias: str,
+        workflow_col: str,
+        params: dict,
+    ) -> str:
+        ct = ContentType.objects.get(
+            app_label='processes', model='workflow',
+        )
+        perm = Permission.objects.get(
+            codename=WorkflowPermission.CHANGE,
+            content_type=ct,
+        )
+        params['_guardian_ct_id'] = ct.id
+        params['_guardian_perm_id'] = perm.id
+        table = UserObjectPermission._meta.db_table
+        return f"""
+            LEFT JOIN {table} {alias} ON (
+                {alias}.object_pk = CAST({workflow_col} AS VARCHAR)
+                AND {alias}.content_type_id = %(_guardian_ct_id)s
+                AND {alias}.permission_id = %(_guardian_perm_id)s
+            )
+        """
 
 
 class TemplateOwnerRoleMixin:
@@ -69,6 +113,7 @@ class TemplateOwnerRoleMixin:
 
 
 class WorkflowListQuery(
+    GuardianOwnerJoinMixin,
     TemplateOwnerRoleMixin,
     SqlQueryObject,
     SearchSqlQueryMixin,
@@ -274,11 +319,9 @@ class WorkflowListQuery(
         return where
 
     def _get_from(self):
-        result = """
+        result = f"""
             FROM processes_workflow pw
-            LEFT JOIN processes_workflow_owners pwo ON (
-                pw.id = pwo.workflow_id
-            )
+            {self._guardian_owner_join('pwo', 'pw.id', self.params)}
             INNER JOIN processes_task pt ON (
                 pw.id = pt.workflow_id
                 AND pt.is_deleted IS FALSE
@@ -379,6 +422,7 @@ class WorkflowListQuery(
 
 
 class WorkflowCountsByWfStarterQuery(
+    GuardianOwnerJoinMixin,
     TemplateOwnerRoleMixin,
     SqlQueryObject,
 ):
@@ -497,11 +541,10 @@ class WorkflowCountsByWfStarterQuery(
         return where
 
     def _get_from(self):
-        result = """
+        result = f"""
         FROM processes_workflow pw
             LEFT JOIN processes_template t ON t.id = pw.template_id
-            LEFT JOIN processes_workflow_owners ptra
-              ON pw.id = ptra.workflow_id
+            {self._guardian_owner_join('ptra', 'pw.id', self.params)}
             LEFT JOIN accounts_user au ON au.id = ptra.user_id
         """
         if self.current_performer_ids or self.current_performer_group_ids:
@@ -547,6 +590,7 @@ class WorkflowCountsByWfStarterQuery(
 
 
 class WorkflowCountsByCPerformerQuery(
+    GuardianOwnerJoinMixin,
     TemplateOwnerRoleMixin,
     SqlQueryObject,
 ):
@@ -648,8 +692,7 @@ class WorkflowCountsByCPerformerQuery(
     def _get_from(self):
         return f"""
         FROM processes_workflow pw
-            LEFT JOIN processes_workflow_owners ptra
-              ON pw.id = ptra.workflow_id
+            {self._guardian_owner_join('ptra', 'pw.id', self.params)}
             LEFT JOIN accounts_user au ON au.id = ptra.user_id
             INNER JOIN processes_task pt
               ON pw.id = pt.workflow_id
@@ -676,8 +719,7 @@ class WorkflowCountsByCPerformerQuery(
                 aug.user_id AS user_id,
                 pw.id AS workflow_id
             FROM processes_workflow pw
-                LEFT JOIN processes_workflow_owners ptra
-                  ON pw.id = ptra.workflow_id
+                {self._guardian_owner_join('ptra', 'pw.id', self.params)}
                 LEFT JOIN accounts_user au ON au.id = ptra.user_id
                 INNER JOIN processes_task pt
                   ON pw.id = pt.workflow_id
@@ -720,8 +762,7 @@ class WorkflowCountsByCPerformerQuery(
                 ptp.group_id AS group_id,
                 pw.id AS workflow_id
             FROM processes_workflow pw
-                LEFT JOIN processes_workflow_owners ptra
-                  ON pw.id = ptra.workflow_id
+                {self._guardian_owner_join('ptra', 'pw.id', self.params)}
                 LEFT JOIN accounts_user au ON au.id = ptra.user_id
                 INNER JOIN processes_task pt
                   ON pw.id = pt.workflow_id
@@ -1873,10 +1914,11 @@ class TemplateStepsQuery(
                   ON dereferenced_owners.template_id = t.id"""
         else:
             result += f"""
-                JOIN processes_task pt
-                  ON ptt.api_name = pt.api_name
                 JOIN processes_workflow pw
+                  ON pw.template_id = t.id
+                JOIN processes_task pt
                   ON pt.workflow_id = pw.id
+                  AND pt.api_name = ptt.api_name
                 JOIN ({self.dereferenced_performers()}) dereferenced_performers
                   ON pt.id = dereferenced_performers.task_id """
         return result
@@ -1898,12 +1940,14 @@ class TemplateStepsQuery(
             AND {self._get_filter_by_type()}"""
         if self.with_tasks_in_progress is True:
             result += f"""
+                AND pw.is_deleted IS FALSE
                 AND pt.is_deleted IS FALSE
                 AND dereferenced_performers.is_completed IS FALSE
                 AND pt.status = '{TaskStatus.ACTIVE}'
                 AND pw.status = {WorkflowStatus.RUNNING}"""
         elif self.with_tasks_in_progress is False:
             result += """
+                AND pw.is_deleted IS FALSE
                 AND pt.is_deleted IS FALSE
                 AND dereferenced_performers.is_completed IS TRUE"""
         return result
@@ -1921,7 +1965,7 @@ class TemplateStepsQuery(
         """, self.params
 
 
-class HighlightsQuery(SqlQueryObject):
+class HighlightsQuery(GuardianOwnerJoinMixin, SqlQueryObject):
     event_types = (
         WorkflowEventType.COMMENT,
         WorkflowEventType.TASK_COMPLETE,
@@ -1999,7 +2043,7 @@ class HighlightsQuery(SqlQueryObject):
         self.sql_params['starter_type_user'] = OwnerType.USER
         self.sql_params['starter_type_group'] = OwnerType.GROUP
         self.sql_params['role_starter'] = OwnerRole.STARTER
-        subquery = """
+        subquery = f"""
         SELECT DISTINCT ON (we.workflow_id)
           we.id,
           we.type,
@@ -2016,8 +2060,7 @@ class HighlightsQuery(SqlQueryObject):
           we.workflow_id = workflow.id
         LEFT JOIN processes_template template ON
           workflow.template_id = template.id
-        LEFT JOIN processes_workflow_owners workflow_owners ON
-          workflow.id = workflow_owners.workflow_id
+        {self._guardian_owner_join('wfo', 'workflow.id', self.sql_params)}
         LEFT JOIN processes_templateowner ptv_user ON
           template.id = ptv_user.template_id
           AND ptv_user.is_deleted IS FALSE
@@ -2052,7 +2095,7 @@ class HighlightsQuery(SqlQueryObject):
           NOT workflow.is_deleted AND
           NOT template.is_deleted AND
           (
-            workflow_owners.user_id = %(user_id)s
+            wfo.user_id = %(user_id)s
             OR ptv_user.id IS NOT NULL
             OR grp_u.user_id IS NOT NULL
             OR (
@@ -2478,79 +2521,71 @@ class TemplateTitlesByTasksQuery(
         """, self.params
 
 
-class UpdateWorkflowOwnersQuery(
-    SqlQueryObject,
-    SearchSqlQueryMixin,
-    OrderByMixin,
-    DereferencedOwnersMixin,
-):
+class WorkflowPermissionQuery:
+    """Stateless Q-object builder for Guardian-based workflow permissions.
 
-    def __init__(
-        self,
-        template_id: int,
-    ):
-        self.params = {
-            'template_id': template_id,
-        }
+    Provides classmethod helpers that return django.db.models.Q objects
+    for filtering Workflow querysets by the user's object-level permissions
+    stored in permissions_userobjectpermission.
 
-    def get_sql(self) -> Tuple[str, dict]:
-        pass
+    Separated from WorkflowPermissionService to avoid circular imports
+    when used in Permission classes and QuerySets.
+    """
 
-    def insert_sql(self):
-        return f"""
-            WITH
-              all_owners AS ({self.dereferenced_owners_by_template_id()})
-            INSERT INTO processes_workflow_owners (workflow_id, user_id)
-            SELECT
-                pw.id AS workflow_id,
-                ao.user_id AS user_id
-            FROM processes_workflow pw
-            JOIN all_owners ao
-              ON pw.template_id = ao.template_id
-            WHERE pw.is_deleted = false;
-        """, self.params
+    @classmethod
+    def _get_perm_subquery(cls, user_id: int, codename: str):
+        """Return a Subquery of workflow PKs that user has permission for.
 
+        Casts ``object_pk`` to integer for comparison with workflow PKs.
+        Guardian stores ``object_pk`` as varchar; casting inside the
+        subquery keeps the outer ``__in`` lookup type-safe.
 
-class UpdateWorkflowMemberQuery(
-    SqlQueryObject,
-    SearchSqlQueryMixin,
-    OrderByMixin,
-    DereferencedOwnersMixin,
-):
+        ContentType is resolved by app_label/model (not
+        get_for_model(Workflow)) to avoid circular import:
+        Workflow -> querysets -> queries.
+        """
+        ct = ContentType.objects.get(
+            app_label='processes',
+            model='workflow',
+        )
+        return Subquery(
+            UserObjectPermission.objects.filter(
+                user_id=user_id,
+                permission__codename=codename,
+                content_type=ct,
+            ).annotate(
+                object_pk_int=Cast('object_pk', IntegerField()),
+            ).values('object_pk_int'),
+        )
 
-    def __init__(
-        self,
-        template_id: int,
-    ):
+    @classmethod
+    def viewer_q(cls, user_id: int, pk_field: str = 'pk', prefix: str = ''):
+        """Return Q() filter for workflows user can view.
 
-        self.params = {
-            'template_id': template_id,
-        }
+        Args:
+            user_id: The user to check permissions for.
+            pk_field: The field name for the workflow PK lookup.
+            prefix: Optional prefix for related model traversal
+                    (e.g. 'workflow__' when filtering from Task).
 
-    def get_sql(self) -> Tuple[str, dict]:
-        pass
+        Usage:
+            Workflow.objects.filter(viewer_q(user.id))
+            Task.objects.filter(viewer_q(user.id, prefix='workflow__'))
+        """
+        return Q(**{
+            f'{prefix}{pk_field}__in': cls._get_perm_subquery(
+                user_id, WorkflowPermission.VIEW,
+            ),
+        })
 
-    def insert_sql(self):
-        return f"""
-            WITH all_users AS (
-              SELECT pw.id AS workflow_id, ao.user_id AS user_id
-              FROM processes_workflow pw
-              JOIN ({self.dereferenced_owners_by_template_id()}) ao
-                ON pw.template_id = ao.template_id
-              WHERE pw.is_deleted = false
-              UNION
-              {self.task_performers_by_template_id()}
-            )
-            INSERT INTO processes_workflow_members (workflow_id, user_id)
-            SELECT
-              au.workflow_id,
-              au.user_id
-            FROM all_users au
-            LEFT JOIN processes_workflow_members pwm
-              ON pwm.workflow_id = au.workflow_id
-              AND pwm.user_id = au.user_id
-            WHERE pwm.workflow_id IS NULL;
-        """, self.params
+    @classmethod
+    def change_q(cls, user_id: int, pk_field: str = 'pk', prefix: str = ''):
+        """Return Q() filter for workflows user can change."""
+        return Q(**{
+            f'{prefix}{pk_field}__in': cls._get_perm_subquery(
+                user_id, WorkflowPermission.CHANGE,
+            ),
+        })
 
 
 class GetTaskPerformersQuery(SqlQueryObject):

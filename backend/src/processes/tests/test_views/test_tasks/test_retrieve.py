@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 import pytest
+
 from rest_framework import status
 from django.utils import timezone
 
@@ -41,20 +42,34 @@ from src.processes.services.events import WorkflowEventService
 from src.processes.services.tasks.performers import (
     TaskPerformersService,
 )
+from src.processes.services.versioning.schemas import TemplateSchemaV1
+from src.processes.services.versioning.versioning import (
+    TemplateVersioningService,
+)
+from src.processes.services.workflows.workflow_version import (
+    WorkflowUpdateVersionService,
+)
 from src.processes.tasks.update_workflow import update_workflows
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
     create_test_attachment,
+    create_test_fieldset_template,
     create_test_dataset,
     create_test_group,
     create_test_guest,
     create_test_not_admin,
     create_test_owner,
+    create_test_shared_fieldset,
     create_test_template,
+    create_test_user,
     create_test_workflow,
 )
 from src.utils.dates import date_format
+from src.permissions.enums import PermissionSource
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -175,12 +190,20 @@ def test_retrieve__delayed__ok(api_client, mocker):
 def test_retrieve__workflow_member__ok(api_client):
 
     # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    another_user = create_test_admin(account=account)
-    workflow = create_test_workflow(user=user)
-    workflow.members.add(another_user)
-    task = workflow.tasks.order_by('number').first()
+    user = create_test_user()
+    another_user = create_test_user(
+        account=user.account,
+        email='admin@test.test',
+        is_account_owner=False,
+    )
+    workflow = create_test_workflow(user)
+    WorkflowPermissionService(workflow).grant_view(
+        user=another_user,
+        source_type=PermissionSource.PERFORMER,
+        source_id=0,
+    )
+    tasks = workflow.tasks.order_by('number')
+    task = tasks[0]
     api_client.token_authenticate(another_user)
 
     # act
@@ -217,7 +240,6 @@ def test_retrieve__admin_not_workflow_member__permission_denied(api_client):
     user = create_test_owner(account=account)
     another_user = create_test_admin(account=account)
     workflow = create_test_workflow(user=user)
-    workflow.members.remove(another_user)
     task = workflow.tasks.order_by('number').first()
     api_client.token_authenticate(another_user)
 
@@ -1555,7 +1577,11 @@ def test_retrieve__user_in_group_task_performer__ok(api_client, mocker):
     group_user = create_test_admin(account=account)
     group = create_test_group(account, users=[group_user])
     workflow = create_test_workflow(user=owner, tasks_count=1)
-    workflow.members.add(group_user)
+    WorkflowPermissionService(workflow).grant_view(
+        user=group_user,
+        source_type=PermissionSource.PERFORMER,
+        source_id=0,
+    )
     task = workflow.tasks.get(number=1)
     TaskPerformer.objects.create(
         task_id=task.id,
@@ -1580,9 +1606,6 @@ def test_retrieve__user_in_group_task_performer_but_not_member__ok(
     mocker,
 ):
 
-    # TODO Temporary fix for users who are newly assigned to a groups
-    #  Remove when the workflow members are removed
-
     # arrange
     identify_mock = mocker.patch(
         'src.processes.views.task.TaskViewSet.'
@@ -1603,6 +1626,12 @@ def test_retrieve__user_in_group_task_performer_but_not_member__ok(
         type=PerformerType.GROUP,
         group_id=group.id,
     )
+    # UOP is SSOT: group performer access is mirrored via PERFORMER_GROUP
+    WorkflowPermissionService(workflow).sync_view(
+        user_ids=[group_user.id],
+        source_type=PermissionSource.PERFORMER_GROUP,
+        source_id=group.id,
+    )
     api_client.token_authenticate(group_user)
 
     # act
@@ -1621,8 +1650,13 @@ def test_retrieve__user_is_member_in_deleted_task__not_found(api_client):
     # arrange
     user = create_test_owner()
     admin = create_test_admin(account=user.account)
-    workflow = create_test_workflow(user=user, tasks_count=1)
-    workflow.members.add(admin)
+    api_client.token_authenticate(admin)
+    workflow = create_test_workflow(user, tasks_count=1)
+    WorkflowPermissionService(workflow).grant_view(
+        user=admin,
+        source_type=PermissionSource.PERFORMER,
+        source_id=0,
+    )
     task = workflow.tasks.get(number=1)
     task.delete()
 
@@ -1980,7 +2014,14 @@ def test_retrieve__task_performer__is_read_only_viewer_false(
         task=task,
         user=performer_user,
     )
-    workflow.members.add(performer_user)
+    WorkflowPermissionService(workflow).grant_view(
+        user=performer_user,
+        source_type=PermissionSource.PERFORMER,
+        source_id=0,
+    )
+
+    api_client.token_authenticate(performer_user)
+
     identify_mock = mocker.patch(
         'src.processes.views.task.TaskViewSet.'
         'identify',
@@ -1989,8 +2030,6 @@ def test_retrieve__task_performer__is_read_only_viewer_false(
         'src.processes.views.task.TaskViewSet.'
         'group',
     )
-
-    api_client.token_authenticate(performer_user)
 
     # act
     response = api_client.get(f'/v2/tasks/{task.id}')
@@ -2016,8 +2055,21 @@ def test_retrieve__workflow_member__ok_read_only(
     template = create_test_template(user=template_owner)
     workflow = create_test_workflow(template=template, user=template_owner)
     task = workflow.tasks.get(number=1)
-    member_user = create_test_not_admin(account=account)
-    workflow.members.add(member_user)
+
+    member_user = create_test_user(
+        account=account,
+        email='member@test.com',
+        is_account_owner=False,
+        is_admin=False,
+    )
+    WorkflowPermissionService(workflow).grant_view(
+        user=member_user,
+        source_type=PermissionSource.PERFORMER,
+        source_id=0,
+    )
+
+    api_client.token_authenticate(member_user)
+
     identify_mock = mocker.patch(
         'src.processes.views.task.TaskViewSet.'
         'identify',
@@ -2026,8 +2078,6 @@ def test_retrieve__workflow_member__ok_read_only(
         'src.processes.views.task.TaskViewSet.'
         'group',
     )
-
-    api_client.token_authenticate(member_user)
 
     # act
     response = api_client.get(f'/v2/tasks/{task.id}')
@@ -2095,3 +2145,85 @@ def test_task_retrieve__template_starter_other_workflow__forbidden(api_client):
 
     # assert
     assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+def test_retrieve__update_from_version__fieldset_field_variable__not_changed(
+    api_client,
+    mocker,
+):
+    """
+    After updating an active workflow from a new template version,
+    task name/description keep substituted kickoff fieldset field values.
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    api_client.token_authenticate(user)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    shared_fieldset = create_test_shared_fieldset(account=account)
+    fieldset_template = create_test_fieldset_template(
+        account=account,
+        template=template,
+        kickoff=template.kickoff_instance,
+        shared_fieldset=shared_fieldset,
+    )
+    field_template = fieldset_template.fields.first()
+    field_value = 'Fieldset value'
+    template_task = template.tasks.get(number=1)
+    template_task.name = f'Task {{{{ {field_template.api_name} }}}}'
+    template_task.description = (
+        f'Description {{{{ {field_template.api_name} }}}}'
+    )
+    template_task.save(update_fields=['name', 'description'])
+
+    response_run = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={
+            'kickoff': {
+                field_template.api_name: field_value,
+            },
+        },
+    )
+    assert response_run.status_code == 200
+    workflow = Workflow.objects.get(id=response_run.data['id'])
+    task = workflow.tasks.get(number=1)
+
+    updated_name_template = (
+        f'Updated task {{{{ {field_template.api_name} }}}}'
+    )
+    template_task.name = updated_name_template
+    template_task.save(update_fields=['name'])
+    template.version += 1
+    template.save(update_fields=['version'])
+    template_version = TemplateVersioningService(TemplateSchemaV1).save(
+        template,
+    )
+    version_service = WorkflowUpdateVersionService(
+        instance=workflow,
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    version_service.update_from_version(
+        data=template_version.data,
+        version=template_version.version,
+    )
+    mocker.patch(
+        'src.processes.views.task.TaskViewSet.identify',
+    )
+    mocker.patch(
+        'src.processes.views.task.TaskViewSet.group',
+    )
+
+    # act
+    response = api_client.get(f'/v2/tasks/{task.id}')
+
+    # assert
+    assert response.status_code == 200
+    assert response.data['name'] == f'Updated task {field_value}'
+    assert response.data['description'] == f'Description {field_value}'

@@ -57,7 +57,13 @@ from src.processes.tasks.webhooks import (
     send_workflow_completed_webhook,
     send_workflow_started_webhook,
 )
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 from src.services.markdown import MarkdownService
+from src.storage.tasks import (
+    schedule_sync_workflow_attachment_permissions,
+)
 from src.webhooks.models import WebHook
 
 UserModel = get_user_model()
@@ -473,19 +479,20 @@ class WorkflowActionService:
         if not self.workflow.is_running:
             self.workflow.status = WorkflowStatus.RUNNING
             self.workflow.save(update_fields=['status'])
-        users_performers_set = (
-            TaskPerformer.objects
-            .exclude_directly_deleted()
-            .by_task(task.id)
-            .get_user_ids_set()
-        )
-        self.workflow.members.add(*users_performers_set)
+        # Align all PERFORMER / PERFORMER_GROUP sources with TaskPerformer
+        # (do not stamp group members as PERFORMER:task.id).
+        WorkflowPermissionService(
+            self.workflow,
+        ).sync_performer_sources()
+        schedule_sync_workflow_attachment_permissions(self.workflow.id)
         self.continue_task(task=task, is_returned=is_returned)
 
     def continue_task(self, task: Task, is_returned: bool = False):
 
         """ Continue start task after run or workflow delay """
 
+        if is_returned and task.is_completed:
+            self._send_task_deleted(task)
         task_start_event_already_exist = (
             not is_returned and bool(task.date_started)
         )
@@ -1066,6 +1073,23 @@ class WorkflowActionService:
             messages.MSG_PW_0079(revert_to_tasks[0].name),
         )
 
+    def _send_task_deleted(self, task: Task):
+        task_data = task.get_data_for_list()
+        query = GetTaskPerformersQuery(
+            task_id=task.id,
+            is_completed=False if not task.is_completed else None,
+            user_type=UserType.USER,
+        )
+        users = list(RawSqlExecutor.fetch(*query.get_sql()))
+        recipients = [(user['id'], user['email']) for user in users]
+        if recipients:
+            send_task_deleted_notification.delay(
+                task_id=task.id,
+                recipients=recipients,
+                account_id=task.account_id,
+                task_data=task_data,
+            )
+
     def _deactivate_task(self, parent_task: Task):
 
         dependent_tasks = Task.objects.filter(
@@ -1094,16 +1118,12 @@ class WorkflowActionService:
                         end_date=None,
                         estimated_end_date=None,
                     )
-                if task.is_active:
-                    recipients = self._get_incompleted_recipients(
-                        task=task,
-                        user_type=UserType.USER,
-                    )
-                    send_task_deleted_notification.delay(
-                        task_id=task.id,
-                        recipients=recipients,
-                        account_id=task.account_id,
-                    )
+                if (
+                    task.is_active
+                    or task.is_completed
+                    or task.is_delayed
+                ):
+                    self._send_task_deleted(task)
                 task.date_started = None
                 task.date_completed = None
                 task.status = TaskStatus.PENDING

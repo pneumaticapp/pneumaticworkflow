@@ -63,13 +63,9 @@ export interface IFieldsetTaskAPI {
   fields: IExtraField[];
 }
 
-export interface IFieldsetBindingMeta {
-  sharedFieldsetId: number;
-  order: number;
+export type IFieldsetBindingMeta = Omit<IFieldsetBindingClient, 'apiNameBinding'> & {
   apiName?: string;
-  title?: string;
-  description?: string;
-}
+};
 
 export interface IGetFieldsetsResponse {
   count: number;

@@ -15,6 +15,10 @@ export function getTaskListWithNewTask(
     offset: tasksOffset,
   } = initialTaskList;
 
+  if (tasksItems.some((task) => task.id === newTask.id)) {
+    return initialTaskList;
+  }
+
   const firstNotUrgentIndex = tasksItems.findIndex(task => {
     return !task.isUrgent;
   });
