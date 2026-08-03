@@ -22,6 +22,7 @@ export interface IWorkflowExtraFieldProps {
   innerRef?: Ref<HTMLInputElement>;
   accountId: number;
   datasetName?: string;
+  onUploadStateChange?(isUploading: boolean): void;
 }
 
 type IExtraFieldPropsBase = Omit<IWorkflowExtraFieldProps, 'showDropdown'> & {
