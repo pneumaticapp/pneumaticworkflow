@@ -436,7 +436,7 @@ services:
       AUTH_TOKEN_ITERATIONS: ${FILE_AUTH_TOKEN_ITERATIONS:-1}
     command: >
       sh -c "poetry run alembic -c src/shared_kernel/database/alembic.ini upgrade head &&
-             poetry run python -m src.main"
+             poetry run uvicorn src.main:app --host 0.0.0.0 --port ${FILE_PORT:-8000} --workers ${FILE_WORKERS:-1}"
     ports:
       - "8002:8000"
     depends_on:
