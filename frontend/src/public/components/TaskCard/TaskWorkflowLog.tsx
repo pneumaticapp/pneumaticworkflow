@@ -20,7 +20,9 @@ export function TaskWorkflowLog({
   changeTaskWorkflowLogViewSettings,
   toggleTaskSkippedTasksVisibility,
 }: TTaskWorkflowLogProps) {
-  if (isWorkflowLoading) return <WorkflowLogSkeleton />;
+  if (isWorkflowLoading) {
+    return <WorkflowLogSkeleton />;
+  }
 
   return (
     <WorkflowLog
