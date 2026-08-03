@@ -96,6 +96,10 @@ class Common(Configuration):
         'guardian.backends.ObjectPermissionBackend',
     )
 
+    # Django Guardian — disable anonymous user (not needed)
+    ANONYMOUS_USER_NAME = None
+    ANONYMOUS_USER_ID = -1
+
     # Tokens lifetime
     DIGEST_UNSUB_TOKEN_IN_DAYS = 7
     UNSUBSCRIBE_TOKEN_IN_DAYS = 7
@@ -196,6 +200,7 @@ class Common(Configuration):
         'src.storage',
     ]
 
+    GUARDIAN_USER_OBJ_PERMS_MODEL = 'permissions.UserObjectPermission'
     GUARDIAN_GROUP_OBJ_PERMS_MODEL = 'permissions.GroupObjectPermission'
 
     MIDDLEWARE = [

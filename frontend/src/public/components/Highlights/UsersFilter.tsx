@@ -1,25 +1,15 @@
-/* eslint-disable */
-/* prettier-ignore */
 import * as React from 'react';
-import classnames from 'classnames';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useIntl } from 'react-intl';
 
 import { Checkbox } from '../UI/Fields/Checkbox';
 import { getUserFullName } from '../../utils/users';
 import { IntlMessages } from '../IntlMessages';
-import { TUserListItem } from '../../types/user';
 import { isArrayWithItems } from '../../utils/helpers';
 import { ShowMore } from '../UI/ShowMore';
+import { IUsersFilterProps } from './types';
 
 import styles from './Filters.css';
-
-export interface IUsersFilterProps {
-  searchText: string;
-  selectedUsers: number[];
-  users: TUserListItem[];
-  changeUsersFilter(userId: number): (e: React.ChangeEvent<HTMLInputElement>) => void;
-  changeUsersSearchText(e: React.ChangeEvent<HTMLInputElement>): void;
-}
 
 const MAX_SHOW_USERS = 10;
 
@@ -30,30 +20,33 @@ export function UsersFilter({
   changeUsersFilter,
   changeUsersSearchText,
 }: IUsersFilterProps) {
-  const { useCallback, useEffect, useMemo, useState } = React;
   const { formatMessage } = useIntl();
+  const hasFocusedSearchRef = useRef(false);
 
-  const isUsersNumberExceeded = useMemo(
-    () => users.length > MAX_SHOW_USERS,
-    [users],
+  const isUsersNumberExceeded = useMemo(() => users.length > MAX_SHOW_USERS, [users]);
+
+  const isSearchFilled = useMemo(() => searchText.length > 1, [searchText]);
+
+  const [isShowAllVisibleState, setShowAllVisibleState] = useState(
+    isSearchFilled ? false : isUsersNumberExceeded,
   );
 
-  const isSearchFilled = useMemo(
-    () => searchText.length > 1,
-    [searchText],
-  );
+  const setSearchInputRef = useCallback((node: HTMLInputElement | null) => {
+    if (!node || hasFocusedSearchRef.current) {
+      return;
+    }
 
-  const [isShowAllVisibleState, setShowAllVisibleState] = useState(isSearchFilled ? false : isUsersNumberExceeded);
+    node.focus();
+    hasFocusedSearchRef.current = true;
+  }, []);
 
-  useEffect(
-    () => setShowAllVisibleState(isUsersNumberExceeded),
-    [isUsersNumberExceeded],
-  );
+  useEffect(() => {
+    setShowAllVisibleState(isUsersNumberExceeded);
+  }, [isUsersNumberExceeded]);
 
-  const handleShowAll = useCallback(
-    () => setShowAllVisibleState(!isShowAllVisibleState),
-    [isShowAllVisibleState, isUsersNumberExceeded],
-  );
+  const handleShowAll = useCallback(() => {
+    setShowAllVisibleState((isVisible) => !isVisible);
+  }, []);
 
   const truncatedUsers = useMemo(() => {
     if (!isShowAllVisibleState && !isSearchFilled) {
@@ -61,56 +54,63 @@ export function UsersFilter({
     }
 
     if (isSearchFilled) {
-      return users.filter(({ firstName, lastName }) => (
-        [firstName, lastName].join(' ').toLowerCase().includes(searchText.toLowerCase())
-      ));
+      return users.filter(({ firstName, lastName }) =>
+        [firstName, lastName].join(' ').toLowerCase().includes(searchText.toLowerCase()),
+      );
     }
 
     const usersToShow = users.slice(0, MAX_SHOW_USERS);
-    const isSelectedWorkflowsHidden = selectedUsers.some(id => !usersToShow.map(({ id }) => id).includes(id));
+    const isSelectedUsersHidden = selectedUsers.some(
+      (id) => !usersToShow.map(({ id: userId }) => userId).includes(id),
+    );
 
-    if (isSelectedWorkflowsHidden) {
+    if (isSelectedUsersHidden) {
       handleShowAll();
     }
 
     return usersToShow;
-  }, [isShowAllVisibleState, searchText, selectedUsers, users]);
+  }, [handleShowAll, isSearchFilled, isShowAllVisibleState, searchText, selectedUsers, users]);
 
   const isPanelExpanded = isArrayWithItems(selectedUsers) ? true : undefined;
-  const lastCheckboxClassname = isShowAllVisibleState ? styles['mb-1'] : styles['mb-4'];
 
   return (
     <ShowMore
-      containerClassName={styles['filter-container']}
+      containerClassName={styles['filter']}
       label="process-highlights.date-picker-by-users-label"
       isInitiallyVisible={isPanelExpanded}
     >
-      {isUsersNumberExceeded &&
+      {isUsersNumberExceeded && (
         <input
-          autoFocus
+          ref={setSearchInputRef}
           className={styles['filter__input']}
-          placeholder={formatMessage({ id: 'process-highlights.search-users-placeholder'})}
+          placeholder={formatMessage({ id: 'process-highlights.search-users-placeholder' })}
           value={searchText}
           onChange={changeUsersSearchText}
         />
-      }
-      <div className={styles['filter__checkboxes']}>
-        {truncatedUsers.map((user, idx) => (
+      )}
+      <div className={styles['filter__options']}>
+        {truncatedUsers.map((user) => (
           <Checkbox
-            containerClassName={idx === truncatedUsers.length - 1 ? lastCheckboxClassname : styles['mb-1']}
             id={`users-filter__checkbox_${user.id}`}
             title={getUserFullName(user)}
+            titleClassName={styles['filter__option-label']}
+            labelClassName={styles['filter__option-row']}
             onChange={changeUsersFilter(user.id)}
             checked={selectedUsers.includes(user.id)}
             key={`users-filter-checkbox-${user.id}`}
           />
         ))}
       </div>
-      {isShowAllVisibleState &&
-        <button className={classnames('mb-4', styles['filter__button-show-all'])} onClick={handleShowAll}>
-          <IntlMessages id ="process-highlights.show-all-users" />
+      {isShowAllVisibleState && (
+        <button
+          type="button"
+          className={styles['filter__show-all']}
+          onClick={handleShowAll}
+          aria-label={formatMessage({ id: 'process-highlights.show-all-users' })}
+        >
+          <IntlMessages id="process-highlights.show-all-users" />
         </button>
-      }
+      )}
     </ShowMore>
   );
 }

@@ -237,6 +237,12 @@ export interface IKickoff {
   fieldsets: IFieldsetBinding[];
 }
 
+/** 
+ * TODO (Technical Debt): IKickoffClient is currently shared between Template Editor
+ * (where fieldsets use IFieldsetBindingClient[] with template field definitions) and Workflow
+ * Runtime / Cloning (where fieldsets hold filled values using IFieldsetRuntime[]).
+ * Future refactoring should separate or narrow editor vs runtime kickoff types to avoid type casts.
+ */
 export interface IKickoffClient extends Omit<IKickoff, 'fieldsets'> {
   fieldsets: IFieldsetBindingClient[];
 }

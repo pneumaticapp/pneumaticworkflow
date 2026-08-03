@@ -22,6 +22,7 @@ from src.generics.filters import PneumaticFilterBackend
 from src.generics.mixins.views import CustomViewSetMixin
 from src.generics.paginations import DefaultPagination
 from src.generics.permissions import (
+    DenyAll,
     IsAuthenticated,
     UserIsAuthenticated,
 )
@@ -53,7 +54,6 @@ from src.processes.serializers.workflows.workflow import (
     WorkflowListSerializer,
     WorkflowReturnToTaskSerializer,
     WorkflowSnoozeSerializer,
-    WorkflowTaskCompleteSerializer,
     WorkflowUpdateSerializer,
 )
 from src.processes.services.events import CommentService
@@ -61,8 +61,14 @@ from src.processes.services.exceptions import (
     CommentServiceException,
     WorkflowActionServiceException,
 )
-from src.processes.services.tasks.exceptions import TaskFieldException
+
 from src.processes.services.workflow_action import WorkflowActionService
+from src.processes.queries import (
+    WorkflowPermissionQuery,
+)
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 from src.utils.validation import raise_validation_error
 from src.webhooks.enums import HookEvent
 
@@ -78,7 +84,6 @@ class WorkflowViewSet(
     action_serializer_classes = {
         'retrieve': WorkflowDetailsSerializer,
         'comment': CommentCreateSerializer,
-        'complete': WorkflowTaskCompleteSerializer,
         'return_to': WorkflowReturnToTaskSerializer,
         'finish': WorkflowFinishSerializer,
         'partial_update': WorkflowUpdateSerializer,
@@ -114,7 +119,7 @@ class WorkflowViewSet(
         queryset = Workflow.objects.on_account(user.account_id)
         if self.action == 'webhook_example':
             queryset = queryset.filter(
-                owners=user.id,
+                WorkflowPermissionQuery.change_q(user.id),
             ).order_by('-date_created')
         return self.prefetch_queryset(queryset)
 
@@ -232,7 +237,9 @@ class WorkflowViewSet(
                 ExpiredSubscriptionPermission(),
                 BillingPlanPermission(),
             )
-        return super().get_permissions()
+        # Safety fallthrough: any unmatched action is denied by default
+        # to prevent accidental exposure of new endpoints.
+        return (DenyAll(),)
 
     def list(self, request, *args, **kwargs):
         filter_slz = WorkflowListFilterSerializer(data=request.GET)
@@ -242,7 +249,21 @@ class WorkflowViewSet(
             account_id=request.user.account_id,
             user_id=request.user.id,
         )
-        return self.paginated_response(qst)
+        page = self.paginate_queryset(qst)
+        instances = page if page is not None else qst
+        wf_ids = [w.id for w in instances]
+        owners_map = (
+            WorkflowPermissionService.get_users_with_change_map(wf_ids)
+            if wf_ids else {}
+        )
+        serializer = self.get_serializer(
+            instances,
+            many=True,
+            extra_fields={'owners_map': owners_map},
+        )
+        if page is not None:
+            return self.get_paginated_response(serializer.data)
+        return self.response_ok(serializer.data)
 
     def retrieve(self, request, pk=None):
         queryset = self.get_queryset()
@@ -309,34 +330,6 @@ class WorkflowViewSet(
         return self.response_ok(
             WorkflowEventSerializer(instance=event).data,
         )
-
-    @action(methods=['post'], detail=True, url_path='task-complete')
-    def complete(self, request, *args, **kwargs):
-        workflow = self.get_object()
-        serializer = self.get_serializer(
-            data=request.data,
-            extra_fields={'workflow': workflow},
-        )
-        serializer.is_valid(raise_exception=True)
-        service = WorkflowActionService(
-            workflow=workflow,
-            user=request.user,
-            auth_type=request.token_type,
-            is_superuser=request.is_superuser,
-        )
-        try:
-            service.complete_task_for_user(
-                task=serializer.validated_data['task'],
-                fields_values=serializer.validated_data.get('output'),
-            )
-        except WorkflowActionServiceException as ex:
-            raise_validation_error(message=ex.message)
-        except TaskFieldException as ex:
-            raise_validation_error(
-                message=ex.message,
-                api_name=ex.api_name,
-            )
-        return self.response_ok()
 
     @action(methods=['post'], detail=True, url_path='return-to')
     def return_to(self, request, **kwargs):

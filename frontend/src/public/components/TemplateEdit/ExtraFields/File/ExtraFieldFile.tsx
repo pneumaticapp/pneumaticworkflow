@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import classnames from 'classnames';
+import { useIntl } from 'react-intl';
+
 import { EExtraFieldMode } from '../../../../types/template';
 import { EFieldLabelPosition } from '../../../../types/fieldset';
 import { FieldLabel } from '../utils/FieldLabel';
@@ -16,7 +18,6 @@ import { IntlMessages } from '../../../IntlMessages';
 import kickoffStyles from '../../KickoffRedux/KickoffRedux.css';
 import styles from './ExtraFieldFile.css';
 import { Button } from '../../../UI/Buttons/Button';
-import { useIntl } from 'react-intl';
 
 export function ExtraFieldFile({
   field,
@@ -101,7 +102,7 @@ export function ExtraFieldFile({
     editField({ value: newUploadedFilesIds, attachments: newUploadedFiles });
   };
   const fieldNameErrorMessage = validateKickoffFieldName(name) || '';
-  const isKickoffFieldNameValid = !Boolean(fieldNameErrorMessage);
+  const isKickoffFieldNameValid = !fieldNameErrorMessage;
 
   const renderKickoffView = () => (
     <div
@@ -122,7 +123,9 @@ export function ExtraFieldFile({
       ) : (
         <div className={styles['extra-field-file__input--template']}>
           <textarea
-            ref={(ref) => (fieldNameInputRef.current = ref)}
+            ref={(ref) => {
+              fieldNameInputRef.current = ref;
+            }}
             className={classnames(
               styles['extra-field-file__input-name--template'],
               !isKickoffFieldNameValid && styles['extra-field-file__input-name-error--template'],
@@ -145,6 +148,7 @@ export function ExtraFieldFile({
           {!isFocused && mode === EExtraFieldMode.Kickoff && (
             <button
               type="button"
+              aria-label="Edit field name"
               onClick={() => fieldNameInputRef.current?.focus()}
               className={classnames(
                 kickoffStyles['kick-off-edit-name'],
@@ -192,7 +196,7 @@ export function ExtraFieldFile({
           styles['extra-field-file__container'],
           isLabelLeft && kickoffStyles['kick-off-input__field_label-left'],
         )}
-        data-autofocus-first-field={true}
+        data-autofocus-first-field
       >
         {isLabelLeft ? (
           <FieldLabel
@@ -219,6 +223,7 @@ export function ExtraFieldFile({
           />
 
           <input
+            aria-label={formatMessage({ id: 'file-upload.label-upload-button' })}
             className={styles['extra-field-file__ref']}
             multiple
             onChange={handleUploadFile}
@@ -238,5 +243,5 @@ export function ExtraFieldFile({
     );
   };
 
-  return <>{mode === EExtraFieldMode.Kickoff ? renderKickoffView() : renderProcessView()}</>;
+  return mode === EExtraFieldMode.Kickoff ? renderKickoffView() : renderProcessView();
 }

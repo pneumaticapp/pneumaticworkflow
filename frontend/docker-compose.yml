@@ -510,7 +510,3 @@ services:
 
 networks:
   pneumatic:
-
-volumes:
-
-

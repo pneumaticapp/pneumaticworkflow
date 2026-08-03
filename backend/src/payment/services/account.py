@@ -1,16 +1,23 @@
 from datetime import datetime
 
 from django.contrib.auth import get_user_model
+from django.db import transaction
 from django.utils import timezone
 
 from src.accounts.enums import (
     BillingPlanType,
 )
 from src.accounts.models import Account
+from src.accounts.serializers.accounts import (
+    AccountPlanSerializer,
+)
 from src.accounts.services.account import AccountService
 from src.analysis.mixins import BaseIdentifyMixin
 from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
+from src.notifications.tasks import (
+    send_account_plan_changed_notification,
+)
 from src.payment.entities import (
     SubscriptionDetails,
 )
@@ -31,6 +38,19 @@ class AccountSubscriptionService(BaseIdentifyMixin):
         self.user = user
         self.is_superuser = is_superuser
         self.auth_type = auth_type
+
+    def _send_plan_changed_notifications(self):
+        send_account_plan_changed_notification.delay(
+            logging=self.instance.log_api_requests,
+            account_id=self.instance.id,
+            plan_data=AccountPlanSerializer(instance=self.instance).data,
+        )
+        for tenant in self.instance.tenants.only_tenants():
+            send_account_plan_changed_notification.delay(
+                logging=tenant.log_api_requests,
+                account_id=tenant.id,
+                plan_data=AccountPlanSerializer(instance=tenant).data,
+            )
 
     def _plan_changed(self, details: SubscriptionDetails) -> bool:
 
@@ -74,6 +94,8 @@ class AccountSubscriptionService(BaseIdentifyMixin):
             data['trial_start'] = details.trial_start
             data['trial_end'] = details.trial_end
         account_service.partial_update(**data)
+
+        transaction.on_commit(self._send_plan_changed_notifications)
 
         AnalyticService.subscription_created(self.user)
         if not prev_trial_end and data.get('trial_end'):
@@ -121,6 +143,8 @@ class AccountSubscriptionService(BaseIdentifyMixin):
             force_save=True,
         )
 
+        transaction.on_commit(self._send_plan_changed_notifications)
+
         if convert_trial:
             AnalyticService.subscription_converted(self.user)
         else:
@@ -153,6 +177,8 @@ class AccountSubscriptionService(BaseIdentifyMixin):
             trial_ended=True,
             force_save=True,
         )
+
+        transaction.on_commit(self._send_plan_changed_notifications)
 
     def cancel(self, plan_expiration: datetime):
 

@@ -27,6 +27,7 @@ VAR_PATTERN_FIELD = re.compile(
     r'workflow-id|workflow-starter).)+(\s*?)\}\}',
 )
 VAR_PATTERN_WORKFLOW_ID = re.compile(r'\{\{\s*workflow-id\s*\}\}')
+MENTION_RE = re.compile(r'\[.*?\|\s*([0-9]+)\]')
 
 
 def is_tasks_ordering_correct(tasks: List[int]) -> bool:

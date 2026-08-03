@@ -2,6 +2,7 @@
   display: flex;
 
   &__avatar {
+    flex-shrink: 0;
     margin-right: 1.6rem;
 
     @media (--mobile) {
@@ -11,6 +12,7 @@
 
   &__body {
     flex-grow: 1;
+    min-width: 0;
   }
 
   &__info {
@@ -65,7 +67,7 @@
       display: block;
       background-color: transparent;
       border: none;
-      transition: all 0.2s;
+      transition: color 0.2s;
 
       &:hover {
         color: var(--pneumatic-color-link);
@@ -92,7 +94,7 @@
       font-size: 1.3rem;
       line-height: 1.6rem;
       color: var(--pneumatic-notification-1);
-      transition: all 0.2s;
+      transition: color 0.2s;
 
       &:hover {
         color: var(--pneumatic-color-link);
