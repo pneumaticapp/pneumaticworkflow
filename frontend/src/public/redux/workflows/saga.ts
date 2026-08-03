@@ -619,7 +619,8 @@ export function* cloneWorkflowSaga({
     }
 
     // TODO (Technical Debt): Backend fieldsets in TWorkflowDetailsResponse contain raw backend properties (id, apiName),
-    // which do not match the declared client runtime model IFieldsetRuntime (which expects apiNameBinding instead of apiName, and lacks id).
+    // which do not match the declared client runtime model IFieldsetRuntime (which expects apiNameBinding
+    // instead of apiName, and lacks id).
     const [workflowDetails, template]: [TWorkflowDetailsResponse, ITemplateResponse] = yield all([
       getWorkflow(workflowId),
       getTemplate(templateId),
