@@ -9,7 +9,6 @@ pytestmark = pytest.mark.django_db
 _DOCS_PREFIXES = (
     '/api/schema',
     '/api/docs',
-    '/api/swagger',
 )
 
 _THIRD_PARTY_VIEWS = (

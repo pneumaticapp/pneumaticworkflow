@@ -4,7 +4,6 @@ from django.urls import include, path
 from django.views.generic import TemplateView
 from drf_spectacular.views import (
     SpectacularAPIView,
-    SpectacularSwaggerView,
 )
 from rest_framework.routers import DefaultRouter
 
@@ -107,11 +106,6 @@ urlpatterns += [
         'api/docs/',
         TemplateView.as_view(template_name='scalar_ui.html'),
         name='scalar-ui',
-    ),
-    path(
-        'api/swagger/',
-        SpectacularSwaggerView.as_view(url_name='schema'),
-        name='swagger-ui',
     ),
 ]
 

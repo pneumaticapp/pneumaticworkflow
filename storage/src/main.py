@@ -104,7 +104,7 @@ def _custom_openapi_schema(application: FastAPI) -> dict[str, Any]:
     )
 
     # Nginx strips /files/ on proxy; restore the public prefix so
-    # Swagger UI "Try it out" sends requests to the correct path.
+    # Scalar UI and interactive API clients send requests to the correct path.
     schema['paths'] = {
         path if path.startswith('/files') else f'/files{path}': item
         for path, item in schema.get('paths', {}).items()
@@ -146,7 +146,7 @@ app = FastAPI(
     ],
     root_path=settings.root_path,
     openapi_url='/openapi.json',
-    docs_url='/docs',
+    docs_url=None,
     redoc_url=None,
     lifespan=lifespan,
 )

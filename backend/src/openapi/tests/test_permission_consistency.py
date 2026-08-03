@@ -39,7 +39,6 @@ _KNOWN_MISMATCHES = frozenset({
 _DOCS_PREFIXES = (
     '/api/schema',
     '/api/docs',
-    '/api/swagger',
 )
 
 _ACCESS_LINE_RE = re.compile(r'^-\s+(.+)$')

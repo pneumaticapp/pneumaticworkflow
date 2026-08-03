@@ -339,7 +339,7 @@ class Common(Configuration):
             'src.openapi.preprocessing.exclude_private_endpoints',
         ],
         'SCHEMA_PATH_PREFIX': r'/',
-        # Schema is at /api/schema/; without SERVERS Swagger uses
+        # Schema is at /api/schema/; without SERVERS OpenAPI clients use
         # /api as base and breaks real paths (/auth, /templates, …).
         'ENUM_NAME_OVERRIDES': {
             'UserStatusEnum': 'src.accounts.enums.UserStatus.CHOICES',
@@ -358,15 +358,6 @@ class Common(Configuration):
             ),
         },
         'SERVERS': [{'url': '/', 'description': 'Pneumatic Core API Server'}],
-        'SWAGGER_UI_SETTINGS': {
-            'persistAuthorization': True,
-            'layout': 'StandaloneLayout',
-            'urls': [
-                {'url': '/api/schema/', 'name': 'Pneumatic Core API'},
-                {'url': '/files/openapi.json', 'name': 'Pneumatic Files API'},
-            ],
-            'urls.primaryName': 'Pneumatic Core API',
-        },
         'TAGS': [
             {
                 'name': 'Auth',

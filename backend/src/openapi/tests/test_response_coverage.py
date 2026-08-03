@@ -76,7 +76,6 @@ _EMPTY_BODY_OPERATIONS = frozenset({
 _DOCS_PREFIXES = (
     '/api/schema',
     '/api/docs',
-    '/api/swagger',
 )
 
 
