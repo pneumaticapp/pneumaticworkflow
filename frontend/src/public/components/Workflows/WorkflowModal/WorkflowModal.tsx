@@ -11,12 +11,13 @@ import {
   IWorkflowEditData,
   IWorkflowLogItem,
 } from '../../../types/workflow';
-import { IExtraField } from '../../../types/template';
+import { EExtraFieldType, IExtraField } from '../../../types/template';
 import { IFieldsetRuntime } from '../../../types/fieldset';
 import { Avatar } from '../../UI/Avatar';
 import { EditIcon, ModalCloseIcon } from '../../icons';
 import { EditKickoffContainer } from '../../KickoffEdit';
 import { getEditKickoff } from '../../../utils/workflows';
+import { normalizeCheckboxValue } from '../../../utils/fields';
 import { getPercent } from '../../../utils/helpers';
 import { getUserFullName } from '../../../utils/users';
 import { IntlMessages } from '../../IntlMessages';
@@ -136,7 +137,14 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps, IWorkflo
   }
 
   private static getFieldsetsFromProps(props: IWorkflowModalProps): IFieldsetRuntime[] {
-    return (props.workflow?.kickoff?.fieldsets || []).map((fs) => ({ ...fs, fields: [...fs.fields] }));
+    return (props.workflow?.kickoff?.fieldsets || []).map((fs) => ({
+      ...fs,
+      fields: fs.fields.map((field) =>
+        field.type === EExtraFieldType.Checkbox
+          ? { ...field, value: normalizeCheckboxValue(field.value) }
+          : field,
+      ),
+    }));
   }
 
   public componentWillUnmount() {
