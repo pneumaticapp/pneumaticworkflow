@@ -19,7 +19,7 @@ export interface IMergedOutputRowsProps {
   onDeleteField: (apiName: string) => void;
   onMoveRow: (index: number, direction: 'up' | 'down') => void;
   onEditField: (apiName: string) => (changedProps: Partial<IExtraField>) => void;
-  onRemoveFieldset: (sharedFieldsetId: number) => void;
+  onRemoveFieldset: (apiNameBinding: string) => void;
   datasetOptions: { value: string; label: string }[];
   accountId: number;
   formatMessage: (descriptor: { id: string }) => string;
@@ -89,14 +89,13 @@ export function MergedOutputRows({
               }
             </div>
             <div className={kickoffStyles['kick-off-input__dropdown']}>
-              {/* sharedFieldsetId is synced with FieldsetIconPicker — do not replace with apiNameBinding */}
               <FieldsetFlowRowDropdown
                 headerTitle={fieldsetTitle}
                 isFirstItem={isFirst}
                 isLastItem={isLast}
                 onMoveUp={() => onMoveRow(index, 'up')}
                 onMoveDown={() => onMoveRow(index, 'down')}
-                onRemove={() => onRemoveFieldset(row.sharedFieldsetId)}
+                onRemove={() => onRemoveFieldset(row.apiNameBinding)}
               />
             </div>
           </div>

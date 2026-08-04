@@ -107,14 +107,14 @@ describe('mergeTaskOutputFlow', () => {
   });
 
   describe('buildRowsWithRemovedFieldset', () => {
-    it('removes fieldset by sharedFieldsetId, other rows are preserved', () => {
+    it('removes fieldset by apiNameBinding, other rows are preserved', () => {
       const rows = buildRowsWithRemovedFieldset(
         [field('a', 0)],
         [
-          makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 1 }),
+          makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 1, sharedFieldsetId: 1 }),
           makeFieldsetBindingClient({ apiNameBinding: 'fs-2', order: 2, sharedFieldsetId: 2 }),
         ],
-        1,
+        'fs-1',
       );
       const apiNames = rows.map((row) => (row.kind === 'field' ? row.field.apiName : row.apiNameBinding));
       expect(apiNames).not.toContain('fs-1');
@@ -122,11 +122,25 @@ describe('mergeTaskOutputFlow', () => {
       expect(apiNames).toContain('a');
     });
 
+    it('removes only the targeted duplicate instance by apiNameBinding leaving other instances intact', () => {
+      const rows = buildRowsWithRemovedFieldset(
+        [field('a', 0)],
+        [
+          makeFieldsetBindingClient({ apiNameBinding: 'fs-1-instance-1', order: 1, sharedFieldsetId: 10 }),
+          makeFieldsetBindingClient({ apiNameBinding: 'fs-1-instance-2', order: 2, sharedFieldsetId: 10 }),
+        ],
+        'fs-1-instance-1',
+      );
+      const apiNames = rows.map((row) => (row.kind === 'field' ? row.field.apiName : row.apiNameBinding));
+      expect(apiNames).not.toContain('fs-1-instance-1');
+      expect(apiNames).toContain('fs-1-instance-2');
+    });
+
     it('does not throw when fieldset is absent — returns rows unchanged', () => {
       const rows = buildRowsWithRemovedFieldset(
         [field('a', 0)],
         [makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 1 })],
-        999,
+        'non-existent-binding',
       );
       const apiNames = rows.map((row) => (row.kind === 'field' ? row.field.apiName : row.apiNameBinding));
       expect(apiNames).toContain('fs-1');

@@ -66,12 +66,12 @@ jest.mock('../../TaskOutputFlow/MergedOutputRows', () => ({
   MergedOutputRows: (props: {
     mergedRows: Array<
       | { kind: 'field'; field: IExtraField }
-      | { kind: 'fieldset'; apiName?: string; order: number; sharedFieldsetId?: number }
+      | { kind: 'fieldset'; apiNameBinding: string; sharedFieldsetId?: number }
     >;
     onDeleteField: (apiName: string) => void;
     onMoveRow: (index: number, direction: 'up' | 'down') => void;
     onEditField: (apiName: string) => (changed: Partial<IExtraField>) => void;
-    onRemoveFieldset: (sharedFieldsetId: number) => void;
+    onRemoveFieldset: (apiNameBinding: string) => void;
   }) =>
     React.createElement(
       'div',
@@ -107,20 +107,17 @@ jest.mock('../../TaskOutputFlow/MergedOutputRows', () => ({
             ),
           );
         }
+        const apiNameBinding = row.apiNameBinding;
         return React.createElement(
           'div',
-          { key: `fieldset-${row.sharedFieldsetId ?? index}` },
+          { key: `fieldset-${apiNameBinding}` },
           React.createElement(
             'button',
             {
               type: 'button',
-              onClick: () => {
-                if (row.sharedFieldsetId != null) {
-                  props.onRemoveFieldset(row.sharedFieldsetId);
-                }
-              },
+              onClick: () => props.onRemoveFieldset(apiNameBinding),
             },
-            `Remove fieldset ${row.sharedFieldsetId}`,
+            `Remove fieldset ${apiNameBinding}`,
           ),
           React.createElement(
             'button',
@@ -301,7 +298,7 @@ describe('OutputFormTaskMerged', () => {
         }),
       });
 
-      userEvent.click(screen.getByRole('button', { name: 'Remove fieldset 10' }));
+      userEvent.click(screen.getByRole('button', { name: 'Remove fieldset fs-a' }));
 
       expect(patchTask).toHaveBeenCalledTimes(1);
       const arg = patchTask.mock.calls[0][0];
