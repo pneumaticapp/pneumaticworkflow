@@ -11,6 +11,8 @@ jest.mock('../../../api/completeTask', () => ({
 jest.mock('../../../components/TaskCard/utils/storageOutputs', () => ({
   outputStorage: { remove: jest.fn() },
   fieldsetsStorage: { remove: jest.fn() },
+  removeOutputFromLocalStorage: jest.fn(),
+  removeOutputsFromLocalStorage: jest.fn(),
 }));
 
 jest.mock('../../../utils/mappers', () => ({
