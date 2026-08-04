@@ -37,7 +37,7 @@
 
 .counter__count {
   display: flex;
-  font-family: 'Abhaya Libre', serif;
+  font-family: Roboto, sans-serif;
   font-size: 56px;
   font-weight: 800;
   line-height: 60px;

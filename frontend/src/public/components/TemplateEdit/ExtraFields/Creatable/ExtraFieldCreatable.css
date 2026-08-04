@@ -8,7 +8,7 @@
   :global .react-select__control {
     padding-top: 1.1rem !important;
     padding-bottom: 1.1rem !important;
-    font-family: Nunito, sans-serif;
+    font-family: Roboto, sans-serif;
     font-size: 15px;
     line-height: 20px;
     color: #262522;
@@ -72,7 +72,7 @@
     position: absolute;
     top: -99999px;
     left: -99999px;
-    font-family: Nunito, sans-serif;
+    font-family: Roboto, sans-serif;
     font-size: 15.04px;
     line-height: 16px;
     white-space: pre;
@@ -184,7 +184,7 @@
 .kickoff-create-field__error-text {
   margin-top: 4px;
   margin-bottom: 0;
-  font-family: Nunito, sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: 13px;
   line-height: 16px;
   color: #fc5b67;

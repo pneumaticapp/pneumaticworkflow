@@ -9,7 +9,7 @@
 .header-title {
   display: flex;
   align-items: center;
-  font-family: Nunito, sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: 11px;
   font-weight: 800;
   line-height: 16px;
@@ -32,7 +32,7 @@
 .header__description {
   margin-top: 16px;
   display: block;
-  font-family: Nunito, sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: 15px;
   line-height: 20px;
   color: #262522;
@@ -52,7 +52,7 @@
 
 .output__name {
   display: block;
-  font-family: Nunito, sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: 15px;
   line-height: 20px;
   color: #262522;
@@ -60,7 +60,7 @@
 
 .output__text {
   display: block;
-  font-family: Nunito, sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: 15px;
   line-height: 20px;
   overflow-wrap: break-word;
@@ -69,7 +69,7 @@
 
 .output__url {
   width: 100%;
-  font-family: Nunito, sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: 15px;
   line-height: 20px;
   white-space: nowrap;
@@ -91,7 +91,7 @@
 
 .fieldset-output-group__title {
   margin: 0 0 4px;
-  font-family: Nunito, sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: 14px;
   font-weight: bold;
   line-height: 20px;
@@ -100,7 +100,7 @@
 
 .fieldset-output-group__description {
   margin: 0 0 8px;
-  font-family: Nunito, sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: 13px;
   line-height: 18px;
   color: #79756d;

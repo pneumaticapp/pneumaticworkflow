@@ -1,7 +1,7 @@
 .sub-menu {
   width: 21.2rem;
   max-width: 21.2rem;
-  font-family: Nunito, sans-serif;
+  font-family: Roboto, sans-serif;
   border-radius: 2.4rem;
 
   :global(.tippy-content) {

@@ -56,8 +56,7 @@ Table of Contents
 }
 
 /* 00.Variables and Imports */
-@import url("https://fonts.googleapis.com/css?family=Nunito:300,400,400i,600,700&display=swap");
-@import url('https://fonts.googleapis.com/css?family=Abhaya+Libre:600,800&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,600;0,700;0,800;1,400&display=swap");
 
 $main-menu-item-height: 80px;
 $main-menu-width: 200px;
@@ -196,7 +195,7 @@ input {
 }
 
 h1, h2, h3 {
-  font-family: "Abhaya Libre", serif;
+  font-family: Roboto, sans-serif;
 }
 
 hr {
@@ -373,7 +372,7 @@ a {
 }
 
 p {
-  font-family: "Nunito", sans-serif;
+  font-family: "Roboto", sans-serif;
 }
 
 .text-large {
@@ -5023,7 +5022,7 @@ input:-webkit-autofill {
   }
 
   &__title {
-    font-family: "Abhaya Libre", serif;
+    font-family: Roboto, sans-serif;
     font-style: normal;
     font-weight: 800;
     font-size: 40px;
@@ -5180,7 +5179,7 @@ input:-webkit-autofill {
 .RichEditor-root {
   background: $foreground-color;
   border: 1px solid $separator-color;
-  font-family: "Nunito", sans-serif;
+  font-family: "Roboto", sans-serif;
   font-size: 14px;
   padding: 15px;
 }
@@ -5223,7 +5222,7 @@ input:-webkit-autofill {
 }
 
 .RichEditor-controls {
-  font-family: "Nunito", sans-serif;
+  font-family: "Roboto", sans-serif;
   font-size: 12px;
   margin-bottom: 5px;
   user-select: none;
@@ -5697,7 +5696,7 @@ input:-webkit-autofill {
   cursor: pointer;
 
   span {
-    font-family: "Nunito", sans-serif;
+    font-family: "Roboto", sans-serif;
     font-size: 0.94rem;
     font-weight: 400;
     margin-left: 0.5rem;
@@ -7706,7 +7705,7 @@ i.large-icon {
   padding: 0 8px;
   display: inline;
   align-self: center;
-  font-family: Nunito;
+  font-family: Roboto;
   font-size: 13px;
   font-weight: normal;
   line-height: 18px;

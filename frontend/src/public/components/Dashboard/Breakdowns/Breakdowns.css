@@ -139,7 +139,7 @@
 }
 
 .breakdown__dashboard_task_label {
-  font-family: Nunito;
+  font-family: Roboto;
   font-size: 15px;
   font-weight: bold;
   line-height: 20px;
@@ -250,7 +250,7 @@
 }
 
 .breakdown__dashboard_cards_label {
-  font-family: 'Abhaya Libre', serif;
+  font-family: Roboto, sans-serif;
   font-size: 20px;
   font-weight: 800;
   line-height: 40px;

@@ -7,7 +7,7 @@
 
 .fieldset-group__title {
   margin: 0 0 4px;
-  font-family: Nunito, sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: 14px;
   font-weight: bold;
   line-height: 20px;
@@ -16,7 +16,7 @@
 
 .fieldset-group__description {
   margin: 0 0 8px;
-  font-family: Nunito, sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: 13px;
   line-height: 18px;
   color: #79756d;

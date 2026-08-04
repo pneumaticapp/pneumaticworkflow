@@ -149,7 +149,7 @@
   margin-bottom: 1.6rem;
   padding-right: 0.5rem;
   height: 4.8rem;
-  font-family: 'Abhaya Libre', 'Times New Roman', Arial;
+  font-family: Roboto, sans-serif;
   font-size: 2rem;
   font-weight: 800;
   line-height: 2.4rem;
@@ -193,7 +193,7 @@
   span {
     padding: 0 1.7rem;
     display: block;
-    font-family: 'Abhaya Libre', serif;
+    font-family: Roboto, sans-serif;
     font-size: 2.8rem;
     font-weight: 800;
     line-height: 3.2rem;
@@ -226,7 +226,7 @@
 }
 .card-task {
   margin-bottom: 0.8rem;
-  font-family: Nunito, sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: 1.5rem;
   line-height: 2rem;
   color: var(--pneumatic-color-black100);
@@ -282,7 +282,7 @@
 
 .placeholder__title {
   margin: 0 0 1.6rem;
-  font-family: 'Abhaya Libre', 'Times New Roman', Arial;
+  font-family: Roboto, sans-serif;
   font-size: 2rem;
   font-weight: 800;
   line-height: 2.4rem;
@@ -291,7 +291,7 @@
 
 .placeholder__text {
   margin: 0;
-  font-family: Nunito, sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: 1.3rem;
   line-height: 1.6rem;
   color: var(--pneumatic-color-black48);

@@ -2,7 +2,7 @@
   padding: 0.8rem 1.6rem;
   display: flex;
   width: 100%;
-  font-family: Nunito, sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: 1.4rem;
   line-height: 2rem;
   text-align: left;
@@ -47,7 +47,7 @@
 
 .fieldset-picker__empty {
   padding: 1.6rem;
-  font-family: Nunito, sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: 1.3rem;
   line-height: 2rem;
   text-align: center;
@@ -56,7 +56,7 @@
 
 .fieldset-picker__loading {
   padding: 1.6rem;
-  font-family: Nunito, sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: 1.3rem;
   text-align: center;
   color: var(--pneumatic-color-black48);

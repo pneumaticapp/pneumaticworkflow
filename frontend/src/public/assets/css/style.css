@@ -68,7 +68,7 @@ html {
 
 body {
   @mixin text-base;
-  font-family: 'Nunito', sans-serif;
+  font-family: 'Roboto', sans-serif;
   color: var(--pneumatic-color-black100);
   background: var(--background-color);
   min-width: 320px;

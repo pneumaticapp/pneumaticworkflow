@@ -23,7 +23,7 @@
 
   .title {
     display: block;
-    font-family: 'Abhaya Libre', serif;
+    font-family: Roboto, sans-serif;
     font-size: 2rem;
     font-weight: 800;
     line-height: 2.4rem;
@@ -61,7 +61,7 @@
   .kickoff__hint {
     margin-top: 6.4rem;
     margin-bottom: 3.2rem;
-    font-family: Nunito, sans-serif;
+    font-family: Roboto, sans-serif;
     font-size: 1.3rem;
     line-height: 1.6rem;
     text-align: center;
@@ -205,7 +205,7 @@
     .kick-off-input__name-textarea {
       overflow: hidden;
       box-sizing: border-box;
-      font-family: Nunito, sans-serif;
+      font-family: Roboto, sans-serif;
       font-size: 1.3rem;
       line-height: 1.6rem;
       text-overflow: ellipsis;
@@ -245,7 +245,7 @@
       overflow: hidden;
       box-sizing: border-box;
       max-width: 100%;
-      font-family: Nunito, sans-serif;
+      font-family: Roboto, sans-serif;
       font-size: 1.3rem;
       line-height: 1.6rem;
       text-align: left;
@@ -263,7 +263,7 @@
       width: 100%;
       min-width: 0;
       max-width: 100%;
-      font-family: Nunito, sans-serif;
+      font-family: Roboto, sans-serif;
       font-size: 1.3rem;
       line-height: 1.6rem;
       text-align: left;
@@ -337,7 +337,7 @@
     input {
       padding: 1.4rem 1.6rem;
       width: 100%;
-      font-family: Nunito, sans-serif;
+      font-family: Roboto, sans-serif;
       font-size: 1.5rem;
       line-height: 2rem;
       color: var(--pneumatic-color-black100);
@@ -369,7 +369,7 @@
       padding: 1.4rem 1.6rem;
       width: 100%;
       min-height: 12.8rem;
-      font-family: Nunito, sans-serif;
+      font-family: Roboto, sans-serif;
       font-size: 1.5rem;
       line-height: 2rem;
       resize: none;
@@ -566,7 +566,7 @@
     p {
       margin-bottom: 0;
       display: block;
-      font-family: Nunito, sans-serif;
+      font-family: Roboto, sans-serif;
       font-size: 1.3rem;
       line-height: 1.6rem;
       text-align: center;
@@ -594,7 +594,7 @@
 .label-replacement-class-name {
   padding: 1.4rem 1.6rem;
   width: 100%;
-  font-family: Nunito, sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: 1.5rem;
   line-height: 2rem;
   color: var(--default-placeholder-color);

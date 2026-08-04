@@ -35,7 +35,7 @@
 
 .comment__title {
   display: block;
-  font-family: Nunito, sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: 15px;
   line-height: 20px;
   color: #262522;
@@ -43,7 +43,7 @@
 
 .comment__text {
   overflow: hidden;
-  font-family: Nunito, sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: 15px;
   line-height: 20px;
   text-overflow: ellipsis;
@@ -55,7 +55,7 @@
 }
 
 .show-more span {
-  font-family: Nunito, sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: 15px;
   line-height: 20px;
   cursor: pointer;
@@ -111,7 +111,7 @@
   margin-right: 8px;
   overflow: hidden;
   max-width: 100%;
-  font-family: Nunito, sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: 15px;
   text-overflow: ellipsis;
   color: #262522;
@@ -119,7 +119,7 @@
 
 .performer__datetime {
   align-self: center;
-  font-family: Nunito, sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: 13px;
   font-weight: bold;
   cursor: pointer;
@@ -137,7 +137,7 @@
 .task__name {
   overflow: hidden;
   max-width: 100%;
-  font-family: Nunito, sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: 15px;
   line-height: 20px;
   text-overflow: ellipsis;
@@ -149,7 +149,7 @@
   display: block;
   overflow: hidden;
   max-width: 100%;
-  font-family: Nunito, sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: 13px;
   line-height: 16px;
   text-overflow: ellipsis;
@@ -168,7 +168,7 @@
 .body__process-name {
   display: block;
   overflow: hidden;
-  font-family: Nunito, sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: 15px;
   font-weight: 800;
   line-height: 20px;

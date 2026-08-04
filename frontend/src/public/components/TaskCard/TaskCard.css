@@ -225,7 +225,7 @@
   :global .react-datepicker-wrapper input {
     padding: 1.4rem 5rem 1.4rem 1.6rem !important;
     width: 100% !important;
-    font-family: Nunito, sans-serif !important;
+    font-family: Roboto, sans-serif !important;
     font-size: 1.5rem !important;
     line-height: 2rem !important;
     color: var(--pneumatic-color-black100) !important;

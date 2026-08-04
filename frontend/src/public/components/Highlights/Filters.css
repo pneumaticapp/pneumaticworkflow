@@ -42,7 +42,7 @@
   }
 
   span {
-    font-family: Nunito, sans-serif;
+    font-family: Roboto, sans-serif;
     font-size: 13px;
     line-height: 16px;
     color: #fec336;
@@ -65,7 +65,7 @@
   padding: 9px 16px;
   box-sizing: border-box;
   width: 100%;
-  font-family: Nunito, sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: 15px;
   line-height: 20px;
   background: #f6f6f6;
@@ -85,7 +85,7 @@
 }
 
 .workflows-filter__placeholder {
-  font-family: Nunito, sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: 15px;
   line-height: 20px;
   color: #62625f;

@@ -70,7 +70,7 @@
   .popup-title {
     position: relative;
     margin-bottom: 0;
-    font-family: 'Abhaya Libre', 'Times New Roman', Arial;
+    font-family: Roboto, sans-serif;
     font-size: 28px;
     font-weight: 800;
     line-height: 32px;
@@ -105,7 +105,7 @@
     padding: 0;
     overflow: hidden;
     width: 100%;
-    font-family: 'Abhaya Libre', 'Times New Roman', Arial;
+    font-family: Roboto, sans-serif;
     font-size: 28px;
     font-weight: 800;
     line-height: 32px;
@@ -180,7 +180,7 @@
 
 .progress-bar-text {
   margin-bottom: 16px;
-  font-family: Nunito, sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: 11px;
   font-weight: 800;
   line-height: 16px;
@@ -239,7 +239,7 @@
   margin-right: 8px;
   padding: 1px 8px;
   display: inline-flex;
-  font-family: Nunito;
+  font-family: Roboto;
   font-size: 13px;
   font-weight: normal;
   line-height: 16px;

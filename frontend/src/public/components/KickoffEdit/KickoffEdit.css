@@ -4,7 +4,7 @@
 }
 
 .kickoff__title {
-  font-family: Nunito, sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: 11px;
   font-weight: 800;
   line-height: 16px;
@@ -15,7 +15,7 @@
 
 .kickoff__description {
   margin: 0 0 16px;
-  font-family: Nunito, sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: 15px;
   line-height: 20px;
   word-break: break-word;
@@ -29,7 +29,7 @@
   :global .react-datepicker-wrapper input {
     padding: 14px 50px 14px 16px !important;
     width: 100% !important;
-    font-family: Nunito, sans-serif !important;
+    font-family: Roboto, sans-serif !important;
     font-size: 15px !important;
     line-height: 20px !important;
     color: #262522 !important;
