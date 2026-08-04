@@ -1,3 +1,4 @@
+from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
 from rest_framework.viewsets import GenericViewSet
 
@@ -5,8 +6,14 @@ from src.generics.mixins.views import (
     AnonymousMixin,
     CustomViewSetMixin,
 )
+from src.openapi import (
+    AI_DESCRIPTION_PARAMS,
+    TOO_MANY_REQUESTS,
+    VALIDATION_ERROR,
+)
 from src.processes.serializers.templates.template import (
     TemplateAiSerializer,
+    TemplateByStepsSerializer,
 )
 from src.processes.services.exceptions import (
     OpenAiServiceException,
@@ -38,6 +45,16 @@ class ServicesViewSet(
             return (StepsByDescriptionThrottle,)
         return ()
 
+    @extend_schema(
+        tags=['Services'],
+        summary='Generate steps from description (AI)',
+        parameters=AI_DESCRIPTION_PARAMS,
+        responses={
+            200: TemplateByStepsSerializer,
+            400: VALIDATION_ERROR,
+            429: TOO_MANY_REQUESTS,
+        },
+    )
     @action(methods=['GET'], detail=False, url_path='steps-by-description')
     def steps_by_description(self, request, *args, **kwargs):
 
