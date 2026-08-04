@@ -1,6 +1,7 @@
 import pytest
 from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
+    FieldSetRuleOperator,
     FieldSetRuleType,
     FieldType,
 )
@@ -11,7 +12,9 @@ from src.processes.messages.fieldset import (
 )
 from src.processes.models.templates.fieldset import (
     FieldsetTemplate,
-    FieldsetTemplateRule,
+    FieldSetTemplateRuleSet,
+    FieldSetTemplateRuleGroupOr,
+    FieldSetTemplateRuleGroupAnd,
 )
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.models.workflows.fieldset import (
@@ -368,10 +371,22 @@ def test__create_rules__with_template__ok(mocker):
         account=account,
         name='Fieldset',
     )
-    rule_template = FieldsetTemplateRule.objects.create(
+    ruleset = FieldSetTemplateRuleSet.objects.create(
         account=account,
         fieldset=fieldset_template,
-        type=FieldSetRuleType.SUM_EQUAL,
+        type=FieldSetRuleType.VALIDATOR,
+        api_name='ruleset-1',
+    )
+    group_or = FieldSetTemplateRuleGroupOr.objects.create(
+        fieldset_rule=ruleset,
+        account=account,
+        api_name='group-or-1',
+    )
+    FieldSetTemplateRuleGroupAnd.objects.create(
+        group_or=group_or,
+        account=account,
+        api_name='group-and-1',
+        operator=FieldSetRuleOperator.SUM_EQUAL,
         value='100',
     )
     fieldset = create_test_fieldset(
@@ -400,11 +415,14 @@ def test__create_rules__with_template__ok(mocker):
     field_set_rule_service_init_mock.assert_called_once_with(
         user=user,
     )
-    field_set_rule_service_create_mock.assert_called_once_with(
-        instance_template=rule_template,
-        fieldset=fieldset,
-        skip_validation=None,
-    )
+    field_set_rule_service_create_mock.assert_called_once()
+    _, create_kwargs = field_set_rule_service_create_mock.call_args
+    assert create_kwargs['fieldset'] == fieldset
+    assert create_kwargs['skip_validation'] is None
+    runtime_rule = create_kwargs['instance_template']
+    assert runtime_rule.api_name == ruleset.api_name
+    assert runtime_rule.type == FieldSetRuleType.SUM_EQUAL
+    assert runtime_rule.value == '100'
 
 
 def test__create_related__with_template__ok(mocker):

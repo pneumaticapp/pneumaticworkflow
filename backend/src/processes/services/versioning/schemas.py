@@ -38,6 +38,7 @@ class SelectionSchemaV1(serializers.ModelSerializer):
 
 class FieldsetTemplateRuleSchemaV1(serializers.ModelSerializer):
 
+    # TODO Fix rule
     class Meta:
         model = FieldsetTemplateRule
         fields = (

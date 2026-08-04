@@ -2,6 +2,7 @@ import pytest
 
 from src.processes.enums import (
     FieldSetLayout,
+    FieldSetRuleOperator,
     FieldSetRuleType,
     FieldType,
     LabelPosition,
@@ -66,8 +67,8 @@ def test_update__create_kickoff_fieldset_only_required_data__ok(
         rule_value=rule_value,
     )
     shared_field = shared_fieldset.fields.first()
-    shared_rule = shared_fieldset.rules.first()
-    shared_field.rules.add(shared_rule)
+    shared_ruleset = shared_fieldset.rulesets.first()
+    shared_ruleset.fields.add(shared_field)
     mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
@@ -133,7 +134,7 @@ def test_update__create_kickoff_fieldset_only_required_data__ok(
         is_shared=False,
     )
     field = fieldset.fields.first()
-    rule = fieldset.rules.first()
+    ruleset = fieldset.rulesets.first()
 
     fieldsets = response.data['kickoff']['fieldsets']
     assert len(fieldsets) == 1
@@ -159,9 +160,12 @@ def test_update__create_kickoff_fieldset_only_required_data__ok(
     assert len(fieldset_data['rules']) == 1
     rule_data = fieldset_data['rules'][0]
     assert rule_data['type'] == rule_type
-    assert rule_data['value'] == rule_value
-    assert rule_data['api_name'] == rule.api_name
+    assert rule_data['api_name'] == ruleset.api_name
     assert rule_data['fields'] == [field.api_name]
+    assert rule_data['group_or'][0]['group_and'][0]['operator'] == (
+        FieldSetRuleOperator.SUM_EQUAL
+    )
+    assert rule_data['group_or'][0]['group_and'][0]['value'] == rule_value
 
 
 def test_update__create_kickoff_fieldset_all_fieldset_data__ok(
@@ -1067,8 +1071,8 @@ def test_update__create_task_fieldset_only_required_data__ok(
         rule_value=rule_value,
     )
     shared_field = shared_fieldset.fields.first()
-    shared_rule = shared_fieldset.rules.first()
-    shared_field.rules.add(shared_rule)
+    shared_ruleset = shared_fieldset.rulesets.first()
+    shared_ruleset.fields.add(shared_field)
     mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
@@ -1134,7 +1138,7 @@ def test_update__create_task_fieldset_only_required_data__ok(
         is_shared=False,
     )
     field = fieldset.fields.first()
-    rule = fieldset.rules.first()
+    ruleset = fieldset.rulesets.first()
 
     fieldsets = response.data['tasks'][0]['fieldsets']
     assert len(fieldsets) == 1
@@ -1160,9 +1164,12 @@ def test_update__create_task_fieldset_only_required_data__ok(
     assert len(fieldset_data['rules']) == 1
     rule_data = fieldset_data['rules'][0]
     assert rule_data['type'] == rule_type
-    assert rule_data['value'] == rule_value
-    assert rule_data['api_name'] == rule.api_name
+    assert rule_data['api_name'] == ruleset.api_name
     assert rule_data['fields'] == [field.api_name]
+    assert rule_data['group_or'][0]['group_and'][0]['operator'] == (
+        FieldSetRuleOperator.SUM_EQUAL
+    )
+    assert rule_data['group_or'][0]['group_and'][0]['value'] == rule_value
 
 
 def test_update__create_task_fieldset_all_fieldset_data__ok(

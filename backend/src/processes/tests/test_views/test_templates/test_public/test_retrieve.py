@@ -860,8 +860,8 @@ class TestRetrieveEmbedTemplate:
             order=5,
         )
         fieldset_field = fieldset.fields.first()
-        rule = fieldset.rules.first()
-        rule.fields.add(fieldset_field)
+        ruleset = fieldset.rulesets.first()
+        ruleset.fields.add(fieldset_field)
         auth_header_value = (
             f'Token {template.embed_id}'
         )

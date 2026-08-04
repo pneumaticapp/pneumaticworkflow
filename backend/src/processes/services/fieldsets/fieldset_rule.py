@@ -58,6 +58,7 @@ class FieldsetTemplateRuleService(BaseModelService):
         }
         if api_name:
             create_kwargs['api_name'] = api_name
+        # TODO Fix rule
         self.instance = FieldsetTemplateRule.objects.create(**create_kwargs)
         return self.instance
 

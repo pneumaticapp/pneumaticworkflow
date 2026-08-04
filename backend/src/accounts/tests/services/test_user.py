@@ -1216,6 +1216,9 @@ def test_private_deactivate__activate_contacts__ok(mocker):
     mocker.patch(
         'src.accounts.services.user.UserService._check_and_complete_tasks',
     )
+    mocker.patch(
+        'src.accounts.services.user.UserService._check_and_complete_tasks',
+    )
     identify_mock = mocker.patch(
         'src.accounts.services.user.UserService.identify',
     )

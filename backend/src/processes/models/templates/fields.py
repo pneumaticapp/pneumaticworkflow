@@ -3,8 +3,11 @@ from django.db.models import Q, UniqueConstraint
 
 from src.accounts.models import AccountBaseMixin
 from src.generics.managers import BaseSoftDeleteManager
+from src.processes.enums import FieldRuleType, FieldRuleOperator
 from src.processes.models.base import BaseApiNameModel
-from src.processes.models.mixins import FieldMixin
+from src.processes.models.mixins import (
+    FieldMixin,
+)
 from src.processes.models.templates.kickoff import Kickoff
 from src.processes.models.templates.task import TaskTemplate
 from src.processes.models.templates.template import Template
@@ -24,7 +27,7 @@ class FieldTemplate(
         ordering = ['-order']
         constraints = [
             UniqueConstraint(
-                fields=['template', 'api_name'],
+                fields=['template', 'api_name', 'account'],
                 condition=Q(is_deleted=False),
                 name='processes_fieldtemplate_template_api_name_unique',
             ),
@@ -58,6 +61,7 @@ class FieldTemplate(
         blank=True,
         related_name='fields',
     )
+    # TODO Deprecated
     rules = models.ManyToManyField(
         'processes.FieldsetTemplateRule',
         blank=True,
@@ -77,7 +81,7 @@ class FieldTemplateSelection(
         ordering = ['pk']
         constraints = [
             UniqueConstraint(
-                fields=['template', 'api_name'],
+                fields=['template', 'api_name', 'account'],
                 condition=Q(is_deleted=False),
                 name=(
                     'processes_fieldtemplateselection'
@@ -113,3 +117,126 @@ class FieldTemplateSelection(
     objects = BaseSoftDeleteManager.from_queryset(
         FieldTemplateValuesQuerySet,
     )()
+
+
+class FieldTemplateRuleSet(
+    BaseApiNameModel,
+    AccountBaseMixin,
+):
+
+    class Meta:
+        ordering = ['order', 'id']
+        constraints = [
+            UniqueConstraint(
+                fields=['template', 'api_name', 'account'],
+                condition=Q(is_deleted=False),
+                name='fieldtemplateruleset_field_api_name_unique',
+            ),
+        ]
+
+    api_name_prefix = 'field-ruleset'
+    template = models.ForeignKey(
+        Template,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='field_rulesets',
+    )
+    field = models.ForeignKey(
+        FieldTemplate,
+        on_delete=models.CASCADE,
+        related_name='rulesets',
+    )
+    type = models.CharField(
+        max_length=50,
+        choices=FieldRuleType.CHOICES,
+    )
+    message = models.TextField(
+        null=True,
+        blank=True,
+        help_text='custom error message for a type="validator"',
+    )
+    order = models.PositiveIntegerField(default=0)
+
+    def __str__(self):
+        return self.api_name
+
+
+class FieldTemplateRuleGroupOr(
+    BaseApiNameModel,
+    AccountBaseMixin,
+):
+
+    class Meta:
+        ordering = ['id']
+        constraints = [
+            UniqueConstraint(
+                fields=['api_name', 'template', 'account'],
+                condition=Q(is_deleted=False),
+                name='rulegroupor_field_rule_api_name_unique',
+            ),
+        ]
+
+    api_name_prefix = 'field-rule-group-or'
+    template = models.ForeignKey(
+        Template,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='field_ruleset_groups_or',
+    )
+    field_rule = models.ForeignKey(
+        FieldTemplateRuleSet,
+        on_delete=models.CASCADE,
+        related_name='groups_or',
+        null=True,
+        blank=True,
+    )
+
+    def __str__(self):
+        return self.api_name
+
+
+class FieldTemplateRuleGroupAnd(
+    BaseApiNameModel,
+    AccountBaseMixin,
+):
+
+    class Meta:
+        ordering = ['id']
+        constraints = [
+            UniqueConstraint(
+                fields=['template', 'api_name', 'account'],
+                condition=Q(is_deleted=False),
+                name='rulegroupand_group_or_api_name_unique',
+            ),
+        ]
+
+    api_name_prefix = 'field-rule-group-and'
+    group_or = models.ForeignKey(
+        FieldTemplateRuleGroupOr,
+        on_delete=models.CASCADE,
+        related_name='groups_and',
+    )
+    template = models.ForeignKey(
+        Template,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='field_rules_group_and',
+    )
+    operator = models.CharField(
+        max_length=50,
+        choices=FieldRuleOperator.CHOICES,
+    )
+    value = models.CharField(max_length=200, null=True, blank=True)
+    field = models.ForeignKey(
+        FieldTemplate,
+        on_delete=models.CASCADE,
+        related_name='groups_and',
+        null=True,
+        blank=True,
+    )
+
+    def __str__(self):
+        return self.api_name

@@ -1,10 +1,15 @@
 from itertools import groupby
+from types import SimpleNamespace
 from typing import List, Optional, Dict
 from django.contrib.auth import get_user_model
 
 from src.generics.base.service import BaseModelService
+from src.processes.enums import FieldSetRuleOperator, FieldSetRuleType
 from src.processes.messages.fieldset import MSG_FS_0007, MSG_FS_0012
-from src.processes.models.templates.fieldset import FieldsetTemplate
+from src.processes.models.templates.fieldset import (
+    FieldsetTemplate,
+    FieldSetTemplateRuleSet,
+)
 from src.processes.models.workflows.fieldset import FieldSet
 from src.processes.services.exceptions import FieldsetServiceException
 from src.processes.services.tasks.field import TaskFieldService
@@ -65,11 +70,27 @@ class FieldSetService(BaseModelService):
                 value=fields_data.get(field_template.api_name, ''),
             )
 
+    @staticmethod
+    def _ruleset_as_rule_template(ruleset: FieldSetTemplateRuleSet):
+        group_or = ruleset.groups_or.first()
+        group_and = group_or.groups_and.first() if group_or else None
+        rule_type = ruleset.type
+        value = None
+        if group_and is not None:
+            value = group_and.value
+            if group_and.operator == FieldSetRuleOperator.SUM_EQUAL:
+                rule_type = FieldSetRuleType.SUM_EQUAL
+        return SimpleNamespace(
+            api_name=ruleset.api_name,
+            type=rule_type,
+            value=value,
+        )
+
     def _create_rules(self, instance_template, **kwargs):
-        for rule_template in instance_template.rules.filter(is_deleted=False):
+        for ruleset in instance_template.rulesets.filter(is_deleted=False):
             service = FieldSetRuleService(user=self.user)
             service.create(
-                instance_template=rule_template,
+                instance_template=self._ruleset_as_rule_template(ruleset),
                 fieldset=self.instance,
                 skip_validation=kwargs.get('skip_value'),
             )

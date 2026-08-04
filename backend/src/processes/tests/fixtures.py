@@ -25,7 +25,11 @@ from src.authentication.enums import AuthTokenType
 from src.payment.enums import BillingPeriod
 from src.processes.enums import (
     ConditionAction,
+    FieldRuleOperator,
+    FieldRuleType,
     FieldSetLayout,
+    FieldSetRuleOperator,
+    FieldSetRuleType,
     FieldType,
     LabelPosition,
     OwnerRole,
@@ -36,7 +40,7 @@ from src.processes.enums import (
     TaskStatus,
     TemplateType,
     WorkflowEventType,
-    WorkflowStatus, FieldSetRuleType,
+    WorkflowStatus,
 )
 from src.processes.models.templates.checklist import (
     ChecklistTemplate,
@@ -49,10 +53,17 @@ from src.processes.models.templates.conditions import (
 )
 from src.processes.models.templates.fieldset import (
     FieldsetTemplate,
-    FieldsetTemplateRule,
+    FieldSetTemplateRuleSet,
+    FieldSetTemplateRuleGroupOr,
+    FieldSetTemplateRuleGroupAnd,
 )
-from src.processes.models.templates.fields import FieldTemplate, \
-    FieldTemplateSelection
+from src.processes.models.templates.fields import (
+    FieldTemplate,
+    FieldTemplateRuleSet,
+    FieldTemplateRuleGroupOr,
+    FieldTemplateRuleGroupAnd,
+    FieldTemplateSelection,
+)
 from src.processes.models.templates.kickoff import Kickoff
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.templates.preset import (
@@ -895,7 +906,12 @@ def create_test_shared_fieldset(
     layout: FieldSetLayout.LITERALS = FieldSetLayout.VERTICAL,
     rule_type: Optional[FieldSetRuleType.LITERALS] = None,
     rule_value: Optional[str] = None,
+    rule_message: Optional[str] = None,
     api_name: Optional[str] = None,
+    field_rule_type: Optional[FieldRuleType.LITERALS] = None,
+    field_rule_operator: Optional[FieldRuleOperator.LITERALS] = None,
+    field_rule_value: Optional[str] = None,
+    field_rule_message: Optional[str] = None,
 ) -> FieldsetTemplate:
 
     """Creating fieldset templates."""
@@ -912,11 +928,23 @@ def create_test_shared_fieldset(
         is_shared=True,
     )
     if rule_type:
-        FieldsetTemplateRule.objects.create(
+        ruleset = FieldSetTemplateRuleSet.objects.create(
             fieldset=fieldset,
             account=account,
             api_name=f'{fieldset.api_name}-shared-rule-1',
             type=rule_type,
+            message=rule_message,
+        )
+        group_or = FieldSetTemplateRuleGroupOr.objects.create(
+            fieldset_rule=ruleset,
+            account=account,
+            api_name=f'{fieldset.api_name}-group-or-1',
+        )
+        FieldSetTemplateRuleGroupAnd.objects.create(
+            group_or=group_or,
+            account=account,
+            api_name=f'{fieldset.api_name}-group-and-1',
+            operator=FieldSetRuleOperator.SUM_EQUAL,
             value=rule_value,
         )
     if rule_type == FieldSetRuleType.SUM_EQUAL:
@@ -924,7 +952,7 @@ def create_test_shared_fieldset(
     else:
         field_type = FieldType.STRING
 
-    FieldTemplate.objects.create(
+    field = FieldTemplate.objects.create(
         name='Fieldset field',
         type=field_type,
         fieldset=fieldset,
@@ -932,6 +960,28 @@ def create_test_shared_fieldset(
         api_name=f'{fieldset.api_name}-shared-field-1',
         account=account,
     )
+    if field_rule_type:
+        field_ruleset = FieldTemplateRuleSet.objects.create(
+            account=account,
+            field=field,
+            api_name=f'{fieldset.api_name}-field-ruleset-1',
+            type=field_rule_type,
+            message=field_rule_message,
+            order=1,
+        )
+        field_group_or = FieldTemplateRuleGroupOr.objects.create(
+            account=account,
+            field_rule=field_ruleset,
+            api_name=f'{fieldset.api_name}-field-group-or-1',
+        )
+        FieldTemplateRuleGroupAnd.objects.create(
+            account=account,
+            group_or=field_group_or,
+            api_name=f'{fieldset.api_name}-field-group-and-1',
+            field=field,
+            operator=field_rule_operator or FieldRuleOperator.EQUAL,
+            value=field_rule_value,
+        )
     return fieldset
 
 
@@ -973,14 +1023,27 @@ def create_test_fieldset_template(
         is_shared=False,
         shared_fieldset=shared_fieldset,
     )
-    for shared_rule in shared_fieldset.rules.all():
-        FieldsetTemplateRule.objects.create(
+    for shared_ruleset in shared_fieldset.rulesets.all():
+        ruleset = FieldSetTemplateRuleSet.objects.create(
             fieldset=fieldset,
             account=account,
-            api_name=f'{fieldset.api_name}-rule-1',
-            type=shared_rule.type,
-            value=shared_rule.value,
+            api_name=f'{fieldset.api_name}-ruleset-1',
+            type=shared_ruleset.type,
         )
+        for shared_group_or in shared_ruleset.groups_or.all():
+            group_or = FieldSetTemplateRuleGroupOr.objects.create(
+                fieldset_rule=ruleset,
+                account=account,
+                api_name=f'{fieldset.api_name}-group-or-1',
+            )
+            for shared_group_and in shared_group_or.groups_and.all():
+                FieldSetTemplateRuleGroupAnd.objects.create(
+                    group_or=group_or,
+                    account=account,
+                    api_name=f'{fieldset.api_name}-group-and-1',
+                    operator=shared_group_and.operator,
+                    value=shared_group_and.value,
+                )
 
     for shared_field in shared_fieldset.fields.all():
         field_template = FieldTemplate.objects.create(

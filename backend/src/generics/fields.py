@@ -95,6 +95,35 @@ class RelatedApiNameField(
         return super().to_internal_value(data)
 
 
+class AccountOnlyRelatedApiNameField(
+    AccountQstMixin,
+    serializers.SlugRelatedField,
+):
+
+    """Resolves api_name to a model instance filtered by account only.
+
+    Use this instead of RelatedApiNameField when the related object
+    is not tied to a Template (e.g. FieldTemplate inside a shared
+    FieldsetTemplate).
+    """
+
+    def __init__(self, **kwargs):
+        super().__init__(slug_field='api_name', **kwargs)
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        account = self._get_account()
+        if queryset is None:
+            raise Exception(MSG_GE_0002)
+        return queryset.filter(account=account)
+
+    def to_internal_value(self, data):
+
+        """Convert api_name -> to object before saving """
+
+        return super().to_internal_value(data)
+
+
 class AnyField(serializers.Field):
 
     def to_internal_value(self, data):

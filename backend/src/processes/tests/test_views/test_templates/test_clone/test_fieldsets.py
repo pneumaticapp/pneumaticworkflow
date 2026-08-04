@@ -2,6 +2,7 @@ import pytest
 
 from src.processes.enums import (
     FieldSetLayout,
+    FieldSetRuleOperator,
     FieldSetRuleType,
     FieldType,
     LabelPosition,
@@ -277,8 +278,8 @@ def test_clone__fieldset_with_rules__ok(api_client):
         rule_value='100',
     )
     field = shared.fields.first()
-    rule = shared.rules.first()
-    field.rules.add(rule)
+    ruleset = shared.rulesets.first()
+    ruleset.fields.add(field)
     api_client.token_authenticate(user)
 
     create_response = api_client.post(
@@ -328,7 +329,10 @@ def test_clone__fieldset_with_rules__ok(api_client):
     assert len(rules) == 1
     rule_data = rules[0]
     assert rule_data['type'] == FieldSetRuleType.SUM_EQUAL
-    assert rule_data['value'] == '100'
+    assert rule_data['group_or'][0]['group_and'][0]['operator'] == (
+        FieldSetRuleOperator.SUM_EQUAL
+    )
+    assert rule_data['group_or'][0]['group_and'][0]['value'] == '100'
     clone_field_api_names = [f['api_name'] for f in fieldset['fields']]
     assert len(clone_field_api_names) == 1
     assert rule_data['fields'] == clone_field_api_names
@@ -485,9 +489,8 @@ def test_clone__fieldset_rule_multi_fields__ok(api_client):
         type=FieldType.NUMBER,
         order=2,
     )
-    rule = shared.rules.first()
-    field_1.rules.add(rule)
-    field_2.rules.add(rule)
+    ruleset = shared.rulesets.first()
+    ruleset.fields.add(field_1, field_2)
 
     api_client.token_authenticate(user)
     create_response = api_client.post(
@@ -538,7 +541,10 @@ def test_clone__fieldset_rule_multi_fields__ok(api_client):
     clone_fieldsets = response.data['kickoff']['fieldsets'][0]
     rule_data = clone_fieldsets['rules'][0]
     assert rule_data['type'] == FieldSetRuleType.SUM_EQUAL
-    assert rule_data['value'] == '200'
+    assert rule_data['group_or'][0]['group_and'][0]['operator'] == (
+        FieldSetRuleOperator.SUM_EQUAL
+    )
+    assert rule_data['group_or'][0]['group_and'][0]['value'] == '200'
     clone_fields = clone_fieldsets['fields']
     clone_field_api_names = [f['api_name'] for f in clone_fields]
     assert set(rule_data['fields']) == set(clone_field_api_names)
