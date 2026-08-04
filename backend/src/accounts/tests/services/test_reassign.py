@@ -7,9 +7,9 @@ from django.contrib.contenttypes.models import ContentType
 from src.accounts.queries import DeleteUserFromTaskPerformerQuery
 from src.accounts.services import exceptions
 from src.accounts.services.reassign import ReassignService
-from src.executor import RawSqlExecutor
 from src.permissions.enums import PermissionSource
 from src.permissions.models import UserObjectPermission
+from src.executor import RawSqlExecutor
 from src.processes.enums import (
     ConditionAction,
     OwnerType,

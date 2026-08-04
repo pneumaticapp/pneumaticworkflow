@@ -231,34 +231,6 @@ class UserGroupService(BaseModelService):
                 account_id=self.instance.account_id,
             )
 
-    def _get_group_performer_task_ids(self) -> List[int]:
-        return list(
-            Task.objects
-            .active()
-            .active_for_group(self.instance.id)
-            .order_by('id')
-            .distinct('id')
-            .values_list('id', flat=True),
-        )
-
-    def _check_and_complete_tasks(
-        self,
-        task_ids: Optional[List[int]] = None,
-    ):
-
-        """ Check if it is possible to complete tasks
-            where the performer group is """
-
-        if task_ids is None:
-            task_ids = self._get_group_performer_task_ids()
-        if task_ids:
-            check_and_complete_tasks.delay(
-                task_ids=task_ids,
-                is_superuser=self.is_superuser,
-                auth_type=self.auth_type,
-                account_id=self.instance.account_id,
-            )
-
     def partial_update(
         self,
         force_save: bool = False,
