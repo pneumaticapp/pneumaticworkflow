@@ -5,9 +5,9 @@ import { useIntl } from 'react-intl';
 import classnames from 'classnames';
 
 import { Dropdown, TDropdownOption } from '../../UI';
-import { MoreIcon, PencilIcon, TrashIcon } from '../../icons';
+import { MoreIcon, PencilIcon, TrashIcon, UnionIcon } from '../../icons';
 import { WarningPopup } from '../../UI/WarningPopup';
-import { openEditModal, deleteFieldsetAction, setCurrentFieldset } from '../../../redux/fieldsets/slice';
+import { openEditModal, deleteFieldsetAction, cloneFieldsetAction, setCurrentFieldset } from '../../../redux/fieldsets/slice';
 import { history } from '../../../utils/history';
 import { ERoutes } from '../../../constants/routes';
 import { sanitizeText } from '../../../utils/strings';
@@ -62,11 +62,21 @@ export function FieldsetCard({
     );
   };
 
+  const handleCloneFieldset = () => {
+    dispatch(cloneFieldsetAction({ id }));
+  };
+
   const dropdownOptions: TDropdownOption[] = [
     {
       label: formatMessage({ id: 'fieldsets.edit' }),
       onClick: handleEditName,
       Icon: PencilIcon,
+      size: 'sm',
+    },
+    {
+      label: formatMessage({ id: 'fieldsets.clone' }),
+      onClick: handleCloneFieldset,
+      Icon: UnionIcon,
       size: 'sm',
     },
     {
