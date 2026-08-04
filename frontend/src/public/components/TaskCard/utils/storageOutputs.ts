@@ -7,6 +7,11 @@ type TStorageEntry<T, TMetadata> = {
   metadata?: TMetadata;
 };
 
+type TRawStorageEntry<T, TMetadata> = Omit<TStorageEntry<T, TMetadata>, 'data'> & {
+  data?: T;
+  output?: T;
+};
+
 export type TOutputDraftMetadata = {
   dateStarted: string | null;
   fieldFingerprints: Record<string, string>;
@@ -23,25 +28,31 @@ function createTaskStorage<T, TMetadata>(storageKey: string) {
       const savedDataString = localStorage.getItem(storageKey);
 
       if (!savedDataString) {
-        throw new Error('no saved data');
+        return [];
       }
 
-      const savedData = JSON.parse(savedDataString) as TStorageEntry<T, TMetadata>[];
+      const savedData = JSON.parse(savedDataString) as TRawStorageEntry<T, TMetadata>[];
 
       if (!Array.isArray(savedData)) {
-        throw new Error('saved data is invalid');
+        return [];
       }
 
-      return savedData;
-    } catch (error) {
+      return savedData.flatMap(({ taskId, data, output, metadata }) => {
+        const entryData = data ?? output;
+        return entryData === undefined ? [] : [{ taskId, data: entryData, metadata }];
+      });
+    } catch {
       return [];
     }
   }
 
   function saveAll(entries: TStorageEntry<T, TMetadata>[]) {
-    const dataJSON = JSON.stringify(entries);
+    if (entries.length === 0) {
+      localStorage.removeItem(storageKey);
+      return;
+    }
 
-    localStorage.setItem(storageKey, dataJSON);
+    localStorage.setItem(storageKey, JSON.stringify(entries));
   }
 
   return {
@@ -52,7 +63,6 @@ function createTaskStorage<T, TMetadata>(storageKey: string) {
 
       if (savedEntryIndex === -1) {
         saveAll([...savedEntries, currentEntry]);
-
         return;
       }
 
@@ -70,8 +80,14 @@ function createTaskStorage<T, TMetadata>(storageKey: string) {
     },
 
     remove(taskId: number) {
-      const newEntries = getAll().filter(entry => entry.taskId !== taskId);
-      saveAll(newEntries);
+      saveAll(getAll().filter((entry) => entry.taskId !== taskId));
+    },
+
+    removeMany(taskIds: number[]) {
+      if (taskIds.length === 0) return;
+
+      const taskIdsSet = new Set(taskIds);
+      saveAll(getAll().filter((entry) => !taskIdsSet.has(entry.taskId)));
     },
   };
 }
@@ -85,3 +101,4 @@ export const fieldsetsStorage = createTaskStorage<IFieldsetRuntime[], TFieldsetD
 export const addOrUpdateStorageOutput = outputStorage.save;
 export const getOutputFromStorage = outputStorage.get;
 export const removeOutputFromLocalStorage = outputStorage.remove;
+export const removeOutputsFromLocalStorage = outputStorage.removeMany;

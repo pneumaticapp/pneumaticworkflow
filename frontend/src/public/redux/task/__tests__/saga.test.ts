@@ -7,7 +7,11 @@ import {
 import { ETaskCardViewMode } from '../../../components/TaskCard';
 import { completeTask } from '../../../api/completeTask';
 import { revertTask } from '../../../api/revertTask';
-import { fieldsetsStorage, outputStorage } from '../../../components/TaskCard/utils/storageOutputs';
+import {
+  fieldsetsStorage,
+  removeOutputFromLocalStorage,
+  removeOutputsFromLocalStorage,
+} from '../../../components/TaskCard/utils/storageOutputs';
 
 jest.mock('../../../api/completeTask', () => ({
   completeTask: jest.fn(),
@@ -18,6 +22,8 @@ jest.mock('../../../api/revertTask');
 jest.mock('../../../components/TaskCard/utils/storageOutputs', () => ({
   outputStorage: { remove: jest.fn() },
   fieldsetsStorage: { remove: jest.fn() },
+  removeOutputFromLocalStorage: jest.fn(),
+  removeOutputsFromLocalStorage: jest.fn(),
 }));
 
 jest.mock('../../../utils/mappers', () => ({
@@ -68,7 +74,7 @@ describe('setTaskReverted — output draft cleanup', () => {
     generator.throw(new Error('Revert failed'));
 
     expect(revertTask).toHaveBeenCalledWith({ id: taskId, comment: '' });
-    expect(outputStorage.remove).not.toHaveBeenCalled();
+    expect(removeOutputsFromLocalStorage).not.toHaveBeenCalled();
     expect(fieldsetsStorage.remove).not.toHaveBeenCalled();
   });
 
@@ -78,6 +84,7 @@ describe('setTaskReverted — output draft cleanup', () => {
       taskId,
       viewMode: ETaskCardViewMode.Single,
       comment: '',
+      clearOutputTaskIds: [taskId, 41],
     }));
 
     generator.next();
@@ -85,8 +92,10 @@ describe('setTaskReverted — output draft cleanup', () => {
     generator.next();
     generator.next();
 
-    expect(outputStorage.remove).toHaveBeenCalledWith(taskId);
+    expect(removeOutputsFromLocalStorage).toHaveBeenCalledWith([taskId, 41]);
+    expect(fieldsetsStorage.remove).toHaveBeenCalledTimes(2);
     expect(fieldsetsStorage.remove).toHaveBeenCalledWith(taskId);
+    expect(fieldsetsStorage.remove).toHaveBeenCalledWith(41);
   });
 });
 
@@ -131,6 +140,7 @@ describe('setTaskCompleted — fieldsets draft cleanup', () => {
 
     step(saga);
 
+    expect(removeOutputFromLocalStorage).toHaveBeenCalledWith(TASK_ID);
     expect(fieldsetsStorage.remove).toHaveBeenCalledTimes(1);
     expect(fieldsetsStorage.remove).toHaveBeenCalledWith(TASK_ID);
   });
@@ -140,6 +150,7 @@ describe('setTaskCompleted — fieldsets draft cleanup', () => {
 
     stepThrow(saga, new Error('API error'));
 
+    expect(removeOutputFromLocalStorage).not.toHaveBeenCalled();
     expect(fieldsetsStorage.remove).not.toHaveBeenCalled();
   });
 });

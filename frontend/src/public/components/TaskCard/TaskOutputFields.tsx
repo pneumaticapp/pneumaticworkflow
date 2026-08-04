@@ -11,11 +11,14 @@ import styles from './TaskCard.css';
 
 export function TaskOutputFields({
   accountId,
-  outputValues,
-  fieldsetOutputValues,
-  status,
   editField,
   editFieldsetField,
+  fieldsetOutputValues,
+  isDisabled,
+  onUploadStateChange,
+  outputValues,
+  status,
+  taskId,
 }: ITaskOutputFieldsProps) {
   const visibleOutputs = outputValues.filter((field) => !field.isHidden);
 
@@ -29,6 +32,7 @@ export function TaskOutputFields({
         <IntlMessages id="tasks.task-outputs-fill-help" />
       </p>
       <MergedOutputList
+        key={taskId}
         fields={visibleOutputs}
         fieldsets={fieldsetOutputValues}
         onEditField={editField}
@@ -36,6 +40,8 @@ export function TaskOutputFields({
         labelBackgroundColor={EInputNameBackgroundColor.OrchidWhite}
         fieldClassName={styles['task-output__field']}
         accountId={accountId}
+        isDisabled={isDisabled}
+        onUploadStateChange={onUploadStateChange}
       />
     </div>
   );

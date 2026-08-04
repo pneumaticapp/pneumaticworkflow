@@ -1,10 +1,4 @@
 import {
-  IChangeWorkflowLogViewSettingsPayload,
-  ISendWorkflowLogComment,
-  TOpenWorkflowLogPopupPayload,
-  TSetWorkflowFinishedPayload,
-} from '../../redux/workflows/types';
-import {
   ETaskStatus,
   TAddTaskPerformerPayload,
   TOpenModalPayload,
@@ -12,6 +6,12 @@ import {
   TSetTaskCompletedPayload,
   TSetTaskRevertedPayload,
 } from '../../redux/actions';
+import {
+  IChangeWorkflowLogViewSettingsPayload,
+  ISendWorkflowLogComment,
+  TOpenWorkflowLogPopupPayload,
+  TSetWorkflowFinishedPayload,
+} from '../../redux/workflows/types';
 import { IFieldsetRuntime } from '../../types/fieldset';
 import { IAuthUser, IWorkflowLog } from '../../types/redux';
 import { IExtraField } from '../../types/template';
@@ -76,20 +76,24 @@ export type TTaskPerformersProps = Pick<
 
 export interface ITaskOutputFieldsProps {
   accountId: number;
+  isDisabled: boolean;
   outputValues: IExtraField[];
   fieldsetOutputValues: IFieldsetRuntime[];
   status: ETaskStatus;
+  taskId: number;
   editField(apiName: string): (changedProps: Partial<IExtraField>) => void;
   editFieldsetField(apiName: string): (changedProps: Partial<IExtraField>) => void;
+  onUploadStateChange(apiName: string, isUploading: boolean): void;
 }
 
 export type TTaskActionsProps = Pick<
   ITaskCardProps,
   'task' | 'viewMode' | 'status' | 'setTaskCompleted' | 'setTaskReverted' | 'openSelectTemplateModal'
 > & {
+  flushOutputs(): void;
+  isOutputUploading: boolean;
   outputValues: IExtraField[];
   fieldsetOutputValues: IFieldsetRuntime[];
-  flushOutputs(): void;
 };
 
 export type TTaskWorkflowLogProps = Pick<

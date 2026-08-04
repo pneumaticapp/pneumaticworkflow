@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { debounce } from 'throttle-debounce';
 
 import { IFieldsetRuntime } from '../../../types/fieldset';
 import { IExtraField } from '../../../types/template';
@@ -16,6 +15,7 @@ import {
   TFieldsetDraftMetadata,
   TOutputDraftMetadata,
 } from '../utils/storageOutputs';
+import { createFlushableDebounce } from '../utils/createFlushableDebounce';
 import { getTaskOutputFingerprint } from '../utils/getTaskOutputFingerprint';
 
 export function useTaskOutput(task: ITask) {
@@ -32,35 +32,32 @@ export function useTaskOutput(task: ITask) {
     metadata: TFieldsetDraftMetadata;
   } | null>(null);
   const saveOutputsToStorageDebounced = useMemo(
-    () =>
-      debounce(300, () => {
-        const pendingStorageOutput = pendingStorageOutputRef.current;
+    () => createFlushableDebounce(300, () => {
+      const pendingStorageOutput = pendingStorageOutputRef.current;
 
-        if (!pendingStorageOutput) {
-          return;
-        }
+      if (!pendingStorageOutput) return;
 
-        addOrUpdateStorageOutput(
-          pendingStorageOutput.taskId,
-          pendingStorageOutput.output,
-          pendingStorageOutput.metadata,
-        );
-        pendingStorageOutputRef.current = null;
-      }),
+      pendingStorageOutputRef.current = null;
+      addOrUpdateStorageOutput(
+        pendingStorageOutput.taskId,
+        pendingStorageOutput.output,
+        pendingStorageOutput.metadata,
+      );
+    }),
     [],
   );
   const saveFieldsetsToStorageDebounced = useMemo(
-    () => debounce(300, () => {
+    () => createFlushableDebounce(300, () => {
       const pendingStorageFieldsets = pendingStorageFieldsetsRef.current;
 
       if (!pendingStorageFieldsets) return;
 
+      pendingStorageFieldsetsRef.current = null;
       fieldsetsStorage.save(
         pendingStorageFieldsets.taskId,
         pendingStorageFieldsets.fieldsets,
         pendingStorageFieldsets.metadata,
       );
-      pendingStorageFieldsetsRef.current = null;
     }),
     [],
   );
@@ -112,12 +109,13 @@ export function useTaskOutput(task: ITask) {
       const pendingStorageOutput = pendingStorageOutputRef.current;
 
       if (pendingStorageOutput) {
+        saveOutputsToStorageDebounced.cancel();
+        pendingStorageOutputRef.current = null;
         addOrUpdateStorageOutput(
           pendingStorageOutput.taskId,
           pendingStorageOutput.output,
           pendingStorageOutput.metadata,
         );
-        pendingStorageOutputRef.current = null;
       }
 
       const storedEntry = outputStorage.getEntry(id);
@@ -152,12 +150,12 @@ export function useTaskOutput(task: ITask) {
       );
 
       if (savedOutput) {
+        pendingStorageOutputRef.current = null;
         addOrUpdateStorageOutput(
           id,
           storageOutput ?? [],
           { dateStarted, fieldFingerprints },
         );
-        pendingStorageOutputRef.current = null;
       }
     } else if (isServerOutputDefinitionChanged) {
       const pendingStorageOutput = pendingStorageOutputRef.current;
@@ -207,12 +205,13 @@ export function useTaskOutput(task: ITask) {
     if (isNewTask) {
       const pendingStorageFieldsets = pendingStorageFieldsetsRef.current;
       if (pendingStorageFieldsets) {
+        saveFieldsetsToStorageDebounced.cancel();
+        pendingStorageFieldsetsRef.current = null;
         fieldsetsStorage.save(
           pendingStorageFieldsets.taskId,
           pendingStorageFieldsets.fieldsets,
           pendingStorageFieldsets.metadata,
         );
-        pendingStorageFieldsetsRef.current = null;
       }
 
       const storedEntry = fieldsetsStorage.getEntry(id);
@@ -285,29 +284,8 @@ export function useTaskOutput(task: ITask) {
   ]);
 
   const flushOutputs = () => {
-    saveOutputsToStorageDebounced.cancel();
-    saveFieldsetsToStorageDebounced.cancel();
-
-    const pendingStorageOutput = pendingStorageOutputRef.current;
-    if (pendingStorageOutput) {
-      addOrUpdateStorageOutput(
-        pendingStorageOutput.taskId,
-        pendingStorageOutput.output,
-        pendingStorageOutput.metadata,
-      );
-    }
-
-    const pendingStorageFieldsets = pendingStorageFieldsetsRef.current;
-    if (pendingStorageFieldsets) {
-      fieldsetsStorage.save(
-        pendingStorageFieldsets.taskId,
-        pendingStorageFieldsets.fieldsets,
-        pendingStorageFieldsets.metadata,
-      );
-    }
-
-    pendingStorageOutputRef.current = null;
-    pendingStorageFieldsetsRef.current = null;
+    saveOutputsToStorageDebounced.flush();
+    saveFieldsetsToStorageDebounced.flush();
   };
 
   useEffect(

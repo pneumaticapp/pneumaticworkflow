@@ -17,6 +17,8 @@ export interface IFieldsetFieldGroupProps {
   fieldClassName?: string;
   validationError?: string | null;
   labelPosition: EFieldLabelPosition;
+  isDisabled?: boolean;
+  onUploadStateChange?(apiName: string, isUploading: boolean): void;
 }
 
 export function FieldsetFieldGroup({
@@ -30,6 +32,8 @@ export function FieldsetFieldGroup({
   fieldClassName,
   validationError,
   labelPosition,
+  isDisabled,
+  onUploadStateChange,
 }: IFieldsetFieldGroupProps) {
   return (
     <div className={styles['fieldset-group']}>
@@ -48,6 +52,8 @@ export function FieldsetFieldGroup({
           wrapperClassName={fieldClassName}
           accountId={accountId}
           labelPosition={labelPosition}
+          isDisabled={isDisabled}
+          onUploadStateChange={(isUploading) => onUploadStateChange?.(field.apiName, isUploading)}
         />
       ))}
       {validationError && (

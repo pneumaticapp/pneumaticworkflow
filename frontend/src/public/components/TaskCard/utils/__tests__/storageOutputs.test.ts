@@ -7,7 +7,6 @@ import { IFieldsetRuntime } from '../../../../types/fieldset';
 const OUTPUT_STORAGE_KEY = 'tasks_outputs';
 const FIELDSETS_STORAGE_KEY = 'tasks_fieldsets_outputs';
 
-
 describe('storageOutputs', () => {
   beforeEach(() => {
     localStorage.clear();
@@ -100,6 +99,24 @@ describe('storageOutputs', () => {
 
     expect(fieldsetsStorage.get(1)).toBeUndefined();
     expect(fieldsetsStorage.get(2)).toEqual(fs2);
+  });
+
+  it('reads drafts saved with the legacy output property', () => {
+    const outputs = [makeExtraField({ apiName: 'legacy', value: 'draft' })];
+    localStorage.setItem(OUTPUT_STORAGE_KEY, JSON.stringify([{ taskId: 1, output: outputs }]));
+
+    expect(outputStorage.get(1)).toEqual(outputs);
+  });
+
+  it('removes multiple output drafts and clears empty storage', () => {
+    outputStorage.save(1, [makeExtraField({ apiName: 'first' })]);
+    outputStorage.save(2, [makeExtraField({ apiName: 'second' })]);
+
+    outputStorage.removeMany([1, 2]);
+
+    expect(outputStorage.get(1)).toBeUndefined();
+    expect(outputStorage.get(2)).toBeUndefined();
+    expect(localStorage.getItem(OUTPUT_STORAGE_KEY)).toBeNull();
   });
 
   describe('corrupted localStorage data', () => {

@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
 from rest_framework.viewsets import GenericViewSet
 
@@ -10,6 +11,13 @@ from src.accounts.permissions import (
 from src.analysis.mixins import BaseIdentifyMixin
 from src.generics.mixins.views import CustomViewSetMixin
 from src.generics.permissions import IsAuthenticated
+from src.openapi import (
+    ACCESS_CHECKLIST,
+    FORBIDDEN,
+    NOT_FOUND,
+    UNAUTHORIZED,
+    VALIDATION_ERROR,
+)
 from src.processes.models.workflows.checklist import Checklist
 from src.processes.permissions import GuestTaskPermission
 from src.processes.serializers.workflows.checklist import (
@@ -56,11 +64,35 @@ class CheckListViewSet(
             qst = qst.with_workflow_member(user.id)
         return qst
 
+    @extend_schema(
+        tags=['Tasks'],
+        summary='Get checklist',
+        description=ACCESS_CHECKLIST,
+        responses={
+            200: CheckListSerializer,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     def retrieve(self, *args, **kwargs):
         checklist = self.get_object()
         slz = self.get_serializer(instance=checklist)
         return self.response_ok(slz.data)
 
+    @extend_schema(
+        tags=['Tasks'],
+        summary='Mark checklist item',
+        description=ACCESS_CHECKLIST,
+        request=CheckListRequestSerializer,
+        responses={
+            200: CheckListSerializer,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     @action(methods=('POST',), detail=True)
     def mark(self, request, *args, **kwargs):
         checklist = self.get_object()
@@ -82,6 +114,19 @@ class CheckListViewSet(
             slz = self.get_serializer(instance=checklist_service.instance)
             return self.response_ok(slz.data)
 
+    @extend_schema(
+        tags=['Tasks'],
+        summary='Unmark checklist item',
+        description=ACCESS_CHECKLIST,
+        request=CheckListRequestSerializer,
+        responses={
+            200: CheckListSerializer,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     @action(methods=('POST',), detail=True)
     def unmark(self, request, *args, **kwargs):
         checklist = self.get_object()

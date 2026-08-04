@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
@@ -52,8 +52,9 @@ export function TaskCard({
   openSelectTemplateModal,
 }: ITaskCardProps) {
   const { formatMessage } = useIntl();
-  const wrapperRef = useRef(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
+  const [uploadCounts, setUploadCounts] = useState<Map<string, number>>(() => new Map());
   const {
     outputValues,
     fieldsetOutputValues,
@@ -62,6 +63,19 @@ export function TaskCard({
     flushOutputs,
   } = useTaskOutput(task);
   const helpTextLocal = helpText ?? workflow?.description ?? null;
+  const isSubmitting = status === ETaskStatus.Completing || status === ETaskStatus.Returning;
+  const handleUploadStateChange = useCallback((apiName: string, isUploading: boolean) => {
+    setUploadCounts((currentCounts) => {
+      const nextCounts = new Map(currentCounts);
+      const count = nextCounts.get(apiName) ?? 0;
+
+      if (isUploading) nextCounts.set(apiName, count + 1);
+      else if (count <= 1) nextCounts.delete(apiName);
+      else nextCounts.set(apiName, count - 1);
+
+      return nextCounts;
+    });
+  }, []);
 
   useEffect(() => {
     autoFocusFirstField(wrapperRef.current);
@@ -75,11 +89,7 @@ export function TaskCard({
   return (
     <>
       {helpTextLocal && (
-        <HelpModal
-          isOpen={isHelpModalOpen}
-          onClose={() => setIsHelpModalOpen(false)}
-          helpText={helpTextLocal}
-        />
+        <HelpModal isOpen={isHelpModalOpen} onClose={() => setIsHelpModalOpen(false)} helpText={helpTextLocal} />
       )}
       <div
         ref={wrapperRef}
@@ -157,8 +167,11 @@ export function TaskCard({
             outputValues={outputValues}
             fieldsetOutputValues={fieldsetOutputValues}
             status={status}
+            taskId={task.id}
             editField={editField}
             editFieldsetField={editFieldsetField}
+            isDisabled={isSubmitting}
+            onUploadStateChange={handleUploadStateChange}
           />
           <TaskActions
             task={task}
@@ -167,6 +180,7 @@ export function TaskCard({
             outputValues={outputValues}
             fieldsetOutputValues={fieldsetOutputValues}
             flushOutputs={flushOutputs}
+            isOutputUploading={uploadCounts.size > 0}
             setTaskCompleted={setTaskCompleted}
             setTaskReverted={setTaskReverted}
             openSelectTemplateModal={openSelectTemplateModal}
