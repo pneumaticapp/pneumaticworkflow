@@ -81,7 +81,7 @@ class FieldTemplateSelection(
         ordering = ['pk']
         constraints = [
             UniqueConstraint(
-                fields=['template', 'api_name', 'account'],
+                fields=['template', 'api_name'],
                 condition=Q(is_deleted=False),
                 name=(
                     'processes_fieldtemplateselection'
@@ -230,12 +230,9 @@ class FieldTemplateRuleGroupAnd(
         choices=FieldRuleOperator.CHOICES,
     )
     value = models.CharField(max_length=200, null=True, blank=True)
-    field = models.ForeignKey(
-        FieldTemplate,
-        on_delete=models.CASCADE,
-        related_name='groups_and',
+    field = models.CharField(
+        max_length=200,
         null=True,
-        blank=True,
     )
 
     def __str__(self):

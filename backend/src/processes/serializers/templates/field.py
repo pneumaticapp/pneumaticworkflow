@@ -86,7 +86,7 @@ class FieldTemplateSerializer(
             'default',
             'dataset',
             'order',
-            'rules',
+            'rulesets',
         )
         create_or_update_fields = {
             'type',
@@ -115,11 +115,10 @@ class FieldTemplateSerializer(
         many=True,
         required=False,
     )
-    rules = FieldTemplateRuleSetSerializer(
+    rulesets = FieldTemplateRuleSetSerializer(
         many=True,
         required=False,
         default=list,
-        source='rulesets',
     )
 
     def additional_validate(self, data: Dict[str, Any]):
@@ -235,7 +234,7 @@ class FieldTemplateSerializer(
             },
         )
         self.create_or_update_related(
-            data=validated_data.get('rule_sets'),
+            data=validated_data.get('rulesets'),
             ancestors_data={
                 'field': instance,
                 'template': self.context['template'],
