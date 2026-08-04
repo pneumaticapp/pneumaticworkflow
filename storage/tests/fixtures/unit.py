@@ -58,9 +58,11 @@ def auth_middleware_no_auth(auth_mw_app):
 @pytest.fixture
 def auth_mw_request():
     """Mock request for auth middleware tests."""
-    request = Mock(spec=Request)
+    request = MagicMock(spec=Request)
     request.state = type('State', (), {})()
     request.cookies = {}
+    request.url.path = '/'
+    request.url.query = ''
     return request
 
 
