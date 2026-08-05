@@ -7,17 +7,7 @@ import {
   buildRowsWithRemovedFieldset,
   moveMergedRow,
   normalizeMergedTaskOutputOrders,
-  TMergedTaskOutputRow,
 } from '../mergeTaskOutputFlow';
-
-const assertRowsDefined = (
-  rows: TMergedTaskOutputRow[] | null,
-): TMergedTaskOutputRow[] => {
-  if (rows === null) {
-    throw new Error('expected rows to be non-null');
-  }
-  return rows;
-};
 
 const field = (apiName: string, order: number) =>
   makeExtraField({ apiName, name: apiName, order });
@@ -84,24 +74,24 @@ describe('mergeTaskOutputFlow', () => {
   });
 
   describe('buildRowsWithAddedFieldset', () => {
-    it('adds fieldset to rows when it is not already present', () => {
+    it('adds fieldset to rows', () => {
       const result = buildRowsWithAddedFieldset(
         [field('a', 0)],
         [makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 1 })],
         makeFieldsetBindingClient({ apiNameBinding: 'fs-new', order: 0, sharedFieldsetId: 99 }),
       );
-      const rows = assertRowsDefined(result);
-      const apiNames = rows.map((row) => (row.kind === 'field' ? row.field.apiName : row.apiNameBinding));
+      const apiNames = result.map((row) => (row.kind === 'field' ? row.field.apiName : row.apiNameBinding));
       expect(apiNames).toContain('fs-new');
     });
 
-    it('returns null when fieldset with that apiName is already present', () => {
+    it('allows adding a second instance of the same sharedFieldsetId with a new apiNameBinding', () => {
       const result = buildRowsWithAddedFieldset(
         [field('a', 0)],
-        [makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 1 })],
-        makeFieldsetBindingClient({ apiNameBinding: 'fs-1-dup', order: 0, sharedFieldsetId: 1 }),
+        [makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 1, sharedFieldsetId: 1 })],
+        makeFieldsetBindingClient({ apiNameBinding: 'fs-2', order: 0, sharedFieldsetId: 1 }),
       );
-      expect(result).toBeNull();
+      const apiNames = result.map((row) => (row.kind === 'field' ? row.field.apiName : row.apiNameBinding));
+      expect(apiNames).toEqual(expect.arrayContaining(['fs-1', 'fs-2']));
     });
 
     it('places the newly added fieldset as the last row in the merged list', () => {
@@ -110,22 +100,21 @@ describe('mergeTaskOutputFlow', () => {
         [makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 1 })],
         makeFieldsetBindingClient({ apiNameBinding: 'fs-new', order: 0, sharedFieldsetId: 99 }),
       );
-      const rows = assertRowsDefined(result);
-      const lastRow = rows[rows.length - 1];
+      const lastRow = result[result.length - 1];
       expect(lastRow.kind).toBe('fieldset');
       expect(lastRow.kind === 'fieldset' && lastRow.apiNameBinding).toBe('fs-new');
     });
   });
 
   describe('buildRowsWithRemovedFieldset', () => {
-    it('removes fieldset by sharedFieldsetId, other rows are preserved', () => {
+    it('removes fieldset by apiNameBinding, other rows are preserved', () => {
       const rows = buildRowsWithRemovedFieldset(
         [field('a', 0)],
         [
-          makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 1 }),
+          makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 1, sharedFieldsetId: 1 }),
           makeFieldsetBindingClient({ apiNameBinding: 'fs-2', order: 2, sharedFieldsetId: 2 }),
         ],
-        1,
+        'fs-1',
       );
       const apiNames = rows.map((row) => (row.kind === 'field' ? row.field.apiName : row.apiNameBinding));
       expect(apiNames).not.toContain('fs-1');
@@ -133,11 +122,25 @@ describe('mergeTaskOutputFlow', () => {
       expect(apiNames).toContain('a');
     });
 
+    it('removes only the targeted duplicate instance by apiNameBinding leaving other instances intact', () => {
+      const rows = buildRowsWithRemovedFieldset(
+        [field('a', 0)],
+        [
+          makeFieldsetBindingClient({ apiNameBinding: 'fs-1-instance-1', order: 1, sharedFieldsetId: 10 }),
+          makeFieldsetBindingClient({ apiNameBinding: 'fs-1-instance-2', order: 2, sharedFieldsetId: 10 }),
+        ],
+        'fs-1-instance-1',
+      );
+      const apiNames = rows.map((row) => (row.kind === 'field' ? row.field.apiName : row.apiNameBinding));
+      expect(apiNames).not.toContain('fs-1-instance-1');
+      expect(apiNames).toContain('fs-1-instance-2');
+    });
+
     it('does not throw when fieldset is absent — returns rows unchanged', () => {
       const rows = buildRowsWithRemovedFieldset(
         [field('a', 0)],
         [makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 1 })],
-        999,
+        'non-existent-binding',
       );
       const apiNames = rows.map((row) => (row.kind === 'field' ? row.field.apiName : row.apiNameBinding));
       expect(apiNames).toContain('fs-1');

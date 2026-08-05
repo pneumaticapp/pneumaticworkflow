@@ -78,3 +78,8 @@
 .flow__fieldset-name {
   @mixin text-small;
 }
+
+.flow__fieldset-row {
+  min-height: 2rem;
+}
+
