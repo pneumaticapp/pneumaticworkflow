@@ -1272,6 +1272,8 @@ export const ruMessages = {
   'integrations.fetch-api-key-error': 'Не удалось получить ключи API',
   'integrations.api-keys-title': 'Ваши API-ключи',
   'integrations.create-api-key': 'Создать',
+  'integrations.create-api-key-modal-title': 'Новый API-ключ',
+  'integrations.create-api-key-modal-description': 'Задайте ключу понятное имя, чтобы легко находить его в будущем.',
   'integrations.api-key-created-title': 'Ключ успешно создан',
   'integrations.api-key-created-warning': 'Скопируйте этот ключ сейчас. Вы не сможете увидеть его снова.',
   'integrations.api-key-copied': '✓ Скопировано!',

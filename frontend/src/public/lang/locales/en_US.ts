@@ -1378,6 +1378,8 @@ export const enMessages = {
   'integrations.fetch-api-key-error': 'Failed to fetch API keys',
   'integrations.api-keys-title': 'Your API Keys',
   'integrations.create-api-key': 'Create',
+  'integrations.create-api-key-modal-title': 'New API Key',
+  'integrations.create-api-key-modal-description': 'Give your API key a descriptive name so you can identify it later.',
   'integrations.api-key-created-title': 'Key Created Successfully',
   'integrations.api-key-created-warning': 'Copy this key now. You won\'t be able to see it again.',
   'integrations.api-key-copied': '✓ Copied!',

@@ -7,32 +7,6 @@ from src.generics.mixins.serializers import AdditionalValidationMixin
 UserModel = get_user_model()
 
 
-class UserAPIKeySerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = UserModel
-        fields = (
-            'first_name',
-            'last_name',
-            'email',
-            'is_admin',
-            'is_account_owner',
-            'has_api_key',
-            'api_key_count',
-            'type',
-            'status',
-        )
-
-    has_api_key = serializers.SerializerMethodField()
-    api_key_count = serializers.SerializerMethodField()
-
-    def get_has_api_key(self, obj) -> bool:
-        return obj.api_keys.filter(is_active=True).exists()
-
-    def get_api_key_count(self, obj) -> int:
-        return obj.api_keys.filter(is_active=True).count()
-
-
 class APIKeyListSerializer(serializers.ModelSerializer):
     class Meta:
         model = APIKey

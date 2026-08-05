@@ -20,10 +20,28 @@ jest.mock('../../utils/helpers', () => ({
 }));
 
 jest.mock('../UI/Buttons/Button', () => ({
-  Button: ({ label, onClick, 'data-testid': testId, className }: any) => (
-    <button onClick={onClick} data-testid={testId} className={className}>
+  Button: ({ label, onClick, 'data-testid': testId, className, type }: any) => (
+    <button onClick={onClick} data-testid={testId} className={className} type={type}>
       {label}
     </button>
+  ),
+}));
+
+jest.mock('../UI/Fields/InputField', () => ({
+  InputField: ({ value, onChange, placeholder, 'data-testid': testId, autoFocus }: any) => (
+    <input
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      data-testid={testId}
+      autoFocus={autoFocus}
+    />
+  ),
+}));
+
+jest.mock('../UI/Typeography/Header', () => ({
+  Header: ({ children, className }: any) => (
+    <p className={className}>{children}</p>
   ),
 }));
 
@@ -118,14 +136,14 @@ describe('IntegrationsCommon', () => {
     render(<IntegrationsCommon />);
     
     userEvent.click(screen.getByRole('button', { name: TEXT.createBtn }));
-    expect(screen.getByTestId('create-key-form')).toBeInTheDocument();
+    expect(screen.getByTestId('create-key-modal')).toBeInTheDocument();
 
     const input = screen.getByTestId('api-key-name-input');
     userEvent.type(input, 'New Test Key');
 
     userEvent.click(screen.getByRole('button', { name: TEXT.createBtn }));
     expect(mockDispatch).toHaveBeenCalledWith(createApiKey({ name: 'New Test Key' }));
-    expect(screen.queryByTestId('create-key-form')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('create-key-modal')).not.toBeInTheDocument();
   });
 
   it('handles revoke key flow', () => {

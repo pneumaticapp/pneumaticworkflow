@@ -59,46 +59,6 @@
   font-size: 1.3rem;
   line-height: 1.6rem;
 }
-
-/* Create Form */
-.api-keys__create-form {
-  margin-bottom: 1.6rem;
-  padding: 1.2rem 1.6rem;
-  display: flex;
-  background-color: var(--background-color);
-  border: 0.1rem solid var(--pneumatic-color-black16);
-  border-radius: 0.6rem;
-  align-items: center;
-  gap: 1.2rem;
-}
-
-.api-keys__name-input {
-  padding: 0 1.2rem;
-  height: 3.6rem;
-  font-size: 1.4rem;
-  line-height: 2rem;
-  color: var(--pneumatic-color-black100);
-  background-color: var(--pneumatic-color-white);
-  border: 0.1rem solid var(--pneumatic-color-black16);
-  border-radius: 0.4rem;
-  outline: none;
-  flex: 1;
-
-  &:focus {
-    border-color: var(--pneumatic-color-black48);
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.5;
-  }
-}
-
-.api-keys__create-actions {
-  display: flex;
-  gap: 0.8rem;
-}
-
 /* Loading / Empty */
 .api-keys__loading,
 .api-keys__empty {
@@ -132,25 +92,34 @@
 
 .api-keys__item-info {
   display: flex;
+  overflow: hidden;
   flex-direction: column;
   gap: 0.4rem;
+  min-width: 0;
 }
 
 .api-keys__item-name {
+  overflow: hidden;
   font-size: 1.4rem;
   font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
   color: var(--pneumatic-color-black100);
 }
 
 .api-keys__item-prefix {
+  overflow: hidden;
   font-family: monospace;
   font-size: 1.3rem;
+  white-space: nowrap;
   letter-spacing: 0.02em;
+  text-overflow: ellipsis;
   color: var(--pneumatic-color-black48);
 }
 
 .api-keys__item-meta {
   font-size: 1.2rem;
+  white-space: nowrap;
   color: var(--pneumatic-color-black32);
 }
 
@@ -172,16 +141,25 @@
   color: var(--pneumatic-color-warning);
 }
 
-/* New Key Modal */
-.api-keys__modal-content {
-  padding: 3.2rem;
+/* Create API Key Modal (mirrors CreateGroupModal / tenant-modal) */
+.create-modal__title {
+  margin-bottom: 1.6rem;
 }
 
-.api-keys__modal-title {
-  margin: 0 0 0.8rem;
-  font-size: 1.8rem;
-  font-weight: 600;
-  color: var(--pneumatic-color-black100);
+.create-modal__description {
+  margin-bottom: 1.6rem;
+  font-size: 1.5rem;
+  line-height: 2rem;
+  color: var(--pneumatic-color-black72);
+}
+
+.create-modal__footer {
+  margin-top: 3.2rem;
+  display: flex;
+
+  > * + * {
+    margin-left: 1.6rem;
+  }
 }
 
 .api-keys__modal-warning {
@@ -208,11 +186,4 @@
   font-size: 1.4rem;
   word-break: break-all;
   color: var(--pneumatic-color-black100);
-}
-
-.api-keys__modal-actions {
-  margin-top: 1.6rem;
-  display: flex;
-  align-items: center;
-  gap: 1.2rem;
 }

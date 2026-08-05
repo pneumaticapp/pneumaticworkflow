@@ -6,6 +6,8 @@ import { IApiKeyItem } from '../../types/integrations';
 import { IApplicationState } from '../../types/redux';
 import { copyToClipboard } from '../../utils/helpers';
 import { Button } from '../UI/Buttons/Button';
+import { InputField } from '../UI/Fields/InputField';
+import { Header } from '../UI/Typeography/Header';
 import { Modal } from '../UI/Modal/Modal';
 import { EPageTitle } from '../../constants/defaultValues';
 import { PageTitle } from '../PageTitle/PageTitle';
@@ -65,6 +67,7 @@ const ApiKeyListItem = React.memo(({
     </div>
   );
 });
+ApiKeyListItem.displayName = 'ApiKeyListItem';
 
 export function IntegrationsCommon() {
   const { formatMessage } = useIntl();
@@ -107,6 +110,14 @@ export function IntegrationsCommon() {
     setNewKeyName('');
     setShowCreateForm(false);
   }, [newKeyName, dispatch]);
+
+  const handleCreateSubmit = React.useCallback(
+    (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      handleCreate();
+    },
+    [handleCreate],
+  );
 
   const handleDelete = React.useCallback(() => {
     if (confirmDeleteId !== null) {
@@ -163,49 +174,16 @@ export function IntegrationsCommon() {
           <p className={styles['api-keys__title']}>
             {formatMessage({ id: 'integrations.api-keys-title' })}
           </p>
-          {!showCreateForm && (
-            <Button
-              className={styles['api-keys__create-btn']}
-              type="button"
-              onClick={handleShowCreateForm}
-              size="sm"
-              buttonStyle="yellow"
-              label={formatMessage({ id: 'integrations.create-api-key' })}
-              data-testid="create-api-key-btn"
-            />
-          )}
+          <Button
+            className={styles['api-keys__create-btn']}
+            type="button"
+            onClick={handleShowCreateForm}
+            size="sm"
+            buttonStyle="yellow"
+            label={formatMessage({ id: 'integrations.create-api-key' })}
+            data-testid="create-api-key-btn"
+          />
         </div>
-
-        {showCreateForm && (
-          <div className={styles['api-keys__create-form']} data-testid="create-key-form">
-            <input
-              className={styles['api-keys__name-input']}
-              type="text"
-              value={newKeyName}
-              onChange={handleNameChange}
-              placeholder={formatMessage({ id: 'integrations.api-key-name-placeholder' })}
-              data-testid="api-key-name-input"
-            />
-            <div className={styles['api-keys__create-actions']}>
-              <Button
-                type="button"
-                onClick={handleCreate}
-                size="sm"
-                buttonStyle="yellow"
-                label={formatMessage({ id: 'integrations.create-api-key' })}
-                data-testid="submit-create-key"
-              />
-              <Button
-                type="button"
-                onClick={handleHideCreateForm}
-                size="sm"
-                buttonStyle="transparent-black"
-                label={formatMessage({ id: 'integrations.cancel' })}
-                data-testid="cancel-create-key"
-              />
-            </div>
-          </div>
-        )}
 
         {isLoading && (
           <p className={styles['api-keys__loading']}>
@@ -234,10 +212,10 @@ export function IntegrationsCommon() {
 
       {/* Newly created key modal */}
       <Modal isOpen={!!newlyCreatedKey} onClose={handleCloseNewKeyModal} width="sm">
-        <div data-testid="new-key-modal" className={styles['api-keys__modal-content']}>
-          <p className={styles['api-keys__modal-title']}>
+        <div data-testid="new-key-modal">
+          <Header tag="p" size="6" className={styles['create-modal__title']}>
             {formatMessage({ id: 'integrations.api-key-created-title' })}
-          </p>
+          </Header>
           <p className={styles['api-keys__modal-warning']}>
             {formatMessage({ id: 'integrations.api-key-created-warning' })}
           </p>
@@ -249,56 +227,80 @@ export function IntegrationsCommon() {
               {newlyCreatedKey}
             </code>
           </div>
-          <div className={styles['api-keys__modal-actions']}>
+          <div className={styles['create-modal__footer']}>
             <Button
               type="button"
               onClick={handleCopyNewlyCreatedKey}
-              size="sm"
+              size="md"
               label={copied
                 ? formatMessage({ id: 'integrations.api-key-copied' })
                 : formatMessage({ id: 'integrations.api-key-copy' })
               }
               data-testid="copy-key-btn"
             />
-            <Button
-              type="button"
-              onClick={handleCloseNewKeyModal}
-              size="sm"
-              buttonStyle="transparent-black"
-              label={formatMessage({ id: 'integrations.api-key-done' })}
-              data-testid="done-key-btn"
-            />
+            <button type="button" className="cancel-button" onClick={handleCloseNewKeyModal} data-testid="done-key-btn">
+              {formatMessage({ id: 'integrations.api-key-done' })}
+            </button>
           </div>
         </div>
       </Modal>
 
       {/* Revoke confirmation modal */}
       <Modal isOpen={confirmDeleteId !== null} onClose={handleConfirmDeleteCancel} width="sm">
-        <div data-testid="revoke-key-modal" className={styles['api-keys__modal-content']}>
-          <p className={styles['api-keys__modal-title']}>
+        <div data-testid="revoke-key-modal">
+          <Header tag="p" size="6" className={styles['create-modal__title']}>
             {formatMessage({ id: 'integrations.revoke-modal-title' })}
-          </p>
+          </Header>
           <p className={styles['api-keys__modal-warning']}>
             {formatMessage({ id: 'integrations.delete-api-key-confirm' })}
           </p>
-          <div className={styles['api-keys__modal-actions']}>
+          <div className={styles['create-modal__footer']}>
             <Button
               type="button"
               onClick={handleDelete}
-              size="sm"
+              size="md"
               buttonStyle="yellow"
               label={formatMessage({ id: 'integrations.api-key-revoke' })}
               data-testid="confirm-revoke-btn"
             />
-            <Button
-              type="button"
-              onClick={handleConfirmDeleteCancel}
-              size="sm"
-              buttonStyle="transparent-black"
-              label={formatMessage({ id: 'integrations.cancel' })}
-              data-testid="cancel-revoke-btn"
-            />
+            <button type="button" className="cancel-button" onClick={handleConfirmDeleteCancel} data-testid="cancel-revoke-btn">
+              {formatMessage({ id: 'integrations.cancel' })}
+            </button>
           </div>
+        </div>
+      </Modal>
+
+      {/* Create API Key modal */}
+      <Modal isOpen={showCreateForm} onClose={handleHideCreateForm} width="sm">
+        <div data-testid="create-key-modal">
+          <Header tag="p" size="6" className={styles['create-modal__title']}>
+            {formatMessage({ id: 'integrations.create-api-key-modal-title' })}
+          </Header>
+          <p className={styles['create-modal__description']}>
+            {formatMessage({ id: 'integrations.create-api-key-modal-description' })}
+          </p>
+          <form onSubmit={handleCreateSubmit} data-autofocus-first-field>
+            <InputField
+              autoFocus
+              value={newKeyName}
+              onChange={handleNameChange}
+              placeholder={formatMessage({ id: 'integrations.api-key-name-placeholder' })}
+              fieldSize="md"
+              data-testid="api-key-name-input"
+            />
+            <div className={styles['create-modal__footer']}>
+              <Button
+                type="submit"
+                size="md"
+                buttonStyle="yellow"
+                label={formatMessage({ id: 'integrations.create-api-key' })}
+                data-testid="submit-create-key"
+              />
+              <button type="button" className="cancel-button" onClick={handleHideCreateForm} data-testid="cancel-create-key">
+                {formatMessage({ id: 'integrations.cancel' })}
+              </button>
+            </div>
+          </form>
         </div>
       </Modal>
 
