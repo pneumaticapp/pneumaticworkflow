@@ -163,7 +163,7 @@ services:
       CORS_ORIGIN_ALLOW_ALL: no
       CORS_ALLOW_CREDENTIALS: yes
       FILE_SERVICE_URL: ${FILE_SERVICE_URL:-http://localhost:8002}
-      CORS_ORIGIN_WHITELIST: "http://localhost:8000 http://localhost:8002 http://localhost:3000"
+      CORS_ORIGIN_WHITELIST: "http://localhost:8000 http://localhost:8002"
       ENABLE_LOGGING: ${ENABLE_LOGGING:-no}
     volumes:
       - ../backend:/pneumatic_backend
@@ -278,7 +278,7 @@ services:
       CORS_ORIGIN_ALLOW_ALL: no
       CORS_ALLOW_CREDENTIALS: yes
       FILE_SERVICE_URL: ${FILE_SERVICE_URL:-http://localhost:8002}
-      CORS_ORIGIN_WHITELIST: "http://localhost:8000 http://localhost:8002 http://localhost:3000"
+      CORS_ORIGIN_WHITELIST: "http://localhost:8000 http://localhost:8002"
       ENABLE_LOGGING: ${ENABLE_LOGGING:-no}
     volumes:
       - ../backend:/pneumatic_backend
@@ -390,7 +390,7 @@ services:
       CORS_ORIGIN_ALLOW_ALL: no
       CORS_ALLOW_CREDENTIALS: yes
       FILE_SERVICE_URL: ${FILE_SERVICE_URL:-http://localhost:8002}
-      CORS_ORIGIN_WHITELIST: "http://localhost:8000 http://localhost:8002 http://localhost:3000"
+      CORS_ORIGIN_WHITELIST: "http://localhost:8000 http://localhost:8002"
       ENABLE_LOGGING: ${ENABLE_LOGGING:-no}
     volumes:
       - ../backend:/pneumatic_backend
