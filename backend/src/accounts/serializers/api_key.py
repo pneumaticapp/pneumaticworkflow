@@ -37,3 +37,10 @@ class APIKeyResponseSerializer(APIKeyListSerializer):
 
     class Meta(APIKeyListSerializer.Meta):
         fields = (*APIKeyListSerializer.Meta.fields, 'key')
+
+
+class APIKeyRevokeSerializer(
+    AdditionalValidationMixin,
+    serializers.Serializer,
+):
+    api_key_id = serializers.IntegerField()

@@ -21,6 +21,14 @@ from src.accounts.permissions import (
 )
 from src.accounts.queries import CountTemplatesByUserQuery
 from src.accounts.messages import MSG_A_0052
+from src.accounts.models import APIKey
+from src.accounts.serializers.api_key import (
+    APIKeyCreateSerializer,
+    APIKeyListSerializer,
+    APIKeyResponseSerializer,
+    APIKeyRevokeSerializer,
+)
+from src.accounts.services.api_key import APIKeyService
 from src.accounts.serializers.user import (
     UserPrivilegesSerializer,
     UserSerializer,
@@ -92,7 +100,7 @@ class UsersViewSet(
                 IsAuthenticated(),
                 BillingPlanPermission(),
             )
-        if self.action in {'privileges', 'api_key'}:
+        if self.action in {'privileges', 'api_key', 'revoke_api_key'}:
             return (
                 AccountOwnerPermission(),
                 ExpiredSubscriptionPermission(),
@@ -426,4 +434,63 @@ class UsersViewSet(
             service.deactivate()
         except UserServiceException as ex:
             raise_validation_error(message=ex.message)
+        return self.response_ok()
+
+    @action(detail=True, methods=('get', 'post'), url_path='api-key')
+    def api_key(self, request, pk=None):
+        user = self.get_object()
+        if request.method == 'GET':
+            keys = (
+                APIKey.objects
+                .by_user(user.id)
+                .active()
+                .order_by('-date_created')
+            )
+            slz = APIKeyListSerializer(keys, many=True)
+            return self.response_ok(slz.data)
+
+        slz = APIKeyCreateSerializer(data=request.data)
+        slz.is_valid(raise_exception=True)
+        service = APIKeyService(
+            user=request.user,
+            is_superuser=request.is_superuser,
+            auth_type=request.token_type,
+        )
+        api_key, raw_key = service.create_for_user(
+            target_user=user,
+            name=slz.validated_data.get('name'),
+        )
+        api_key.key = raw_key
+        return self.response_created(
+            APIKeyResponseSerializer(api_key).data,
+        )
+
+    @action(
+        detail=True,
+        methods=('post',),
+        url_path='revoke-api-key',
+    )
+    def revoke_api_key(self, request, pk=None):
+        user = self.get_object()
+        slz = APIKeyRevokeSerializer(data=request.data)
+        slz.is_valid(raise_exception=True)
+        try:
+            instance = (
+                APIKey.objects
+                .by_user(user.id)
+                .active()
+                .get(
+                    id=slz.validated_data['api_key_id'],
+                    account_id=request.user.account_id,
+                )
+            )
+        except APIKey.DoesNotExist:
+            return self.response_not_found()
+        service = APIKeyService(
+            user=request.user,
+            instance=instance,
+            is_superuser=request.is_superuser,
+            auth_type=request.token_type,
+        )
+        service.revoke()
         return self.response_ok()
