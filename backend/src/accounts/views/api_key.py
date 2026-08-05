@@ -1,3 +1,4 @@
+from drf_spectacular.utils import extend_schema
 from rest_framework.mixins import (
     CreateModelMixin,
     DestroyModelMixin,
@@ -17,12 +18,19 @@ from src.accounts.serializers.api_key import (
     APIKeyResponseSerializer,
 )
 from src.accounts.services.api_key import APIKeyService
-from src.authentication.permissions import PrivateApiPermission
 from src.generics.mixins.views import (
     BaseResponseMixin,
 )
 from src.generics.permissions import (
     UserIsAuthenticated,
+)
+from src.openapi import (
+    ACCESS_ADMIN_BASE,
+    EMPTY,
+    FORBIDDEN,
+    NOT_FOUND,
+    UNAUTHORIZED,
+    VALIDATION_ERROR,
 )
 
 
@@ -35,7 +43,6 @@ class APIKeyViewSet(
 ):
 
     permission_classes = (
-        PrivateApiPermission,
         UserIsAuthenticated,
         BillingPlanPermission,
         UserIsAdminOrAccountOwner,
@@ -56,6 +63,31 @@ class APIKeyViewSet(
             return APIKeyCreateSerializer
         return APIKeyListSerializer
 
+    @extend_schema(
+        tags=['Accounts'],
+        summary='List API keys',
+        description=ACCESS_ADMIN_BASE,
+        responses={
+            200: APIKeyListSerializer(many=True),
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+        },
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    @extend_schema(
+        tags=['Accounts'],
+        summary='Create API key',
+        description=ACCESS_ADMIN_BASE,
+        request=APIKeyCreateSerializer,
+        responses={
+            201: APIKeyResponseSerializer,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+        },
+    )
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -73,6 +105,17 @@ class APIKeyViewSet(
         response_serializer = APIKeyResponseSerializer(api_key)
         return self.response_created(response_serializer.data)
 
+    @extend_schema(
+        tags=['Accounts'],
+        summary='Revoke API key',
+        description=ACCESS_ADMIN_BASE,
+        responses={
+            200: EMPTY,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         service = APIKeyService(

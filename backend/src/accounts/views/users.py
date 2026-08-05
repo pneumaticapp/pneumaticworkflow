@@ -651,6 +651,32 @@ class UsersViewSet(
             raise_validation_error(message=ex.message)
         return self.response_ok()
 
+    @extend_schema(
+        methods=['GET'],
+        tags=['Accounts'],
+        summary='List API keys for user',
+        description=ACCESS_ACCOUNT_OWNER,
+        responses={
+            200: APIKeyListSerializer(many=True),
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
+    @extend_schema(
+        methods=['POST'],
+        tags=['Accounts'],
+        summary='Create API key for user',
+        description=ACCESS_ACCOUNT_OWNER,
+        request=APIKeyCreateSerializer,
+        responses={
+            201: APIKeyResponseSerializer,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     @action(detail=True, methods=('get', 'post'), url_path='api-key')
     def api_key(self, request, pk=None):
         user = self.get_object()
@@ -680,6 +706,19 @@ class UsersViewSet(
             APIKeyResponseSerializer(api_key).data,
         )
 
+    @extend_schema(
+        tags=['Accounts'],
+        summary='Revoke user API key',
+        description=ACCESS_ACCOUNT_OWNER,
+        request=APIKeyRevokeSerializer,
+        responses={
+            200: EMPTY,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     @action(
         detail=True,
         methods=('post',),

@@ -211,24 +211,6 @@ def test_exclude_private_endpoints__get_permissions__filtered():
     assert result[0][2] == 'POST'
 
 
-def test_exclude_private_endpoints__api_key__filtered():
-    # arrange
-    endpoints = [
-        (
-            '/accounts/api-key',
-            '^/accounts/api-key$',
-            'GET',
-            SimpleNamespace(cls=object),
-        ),
-    ]
-
-    # act
-    result = exclude_private_endpoints(endpoints)
-
-    # assert
-    assert result == []
-
-
 def test_exclude_private_endpoints__callback_no_cls__kept():
     # arrange
     endpoints = [
