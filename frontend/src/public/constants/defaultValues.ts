@@ -37,7 +37,7 @@ export const hostNameRegex = /(^https?:\/\/)(www[0-9]?\.)?([^/:]+)/i;
 export const mentionsRegex = /\[((?:[^\]\\]|\\.)+)\|([0-9]+)\]/;
 export const variableRegex = /\{\{\s?([а-яa-z0-9\-_]+)\s?\}\}/i;
 export const youtubeVideoRegexp =
-  /(?:http(?:s?):\/\/(?:www\.)?youtu(?:be\.com\/watch\?v=|\.be\/)([\w\-\_]*)(?:&(?:amp;)?‌​[\w\?‌​=]*)?)/gi;
+  /(?:https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?(?:[^#\s&]+&)*v=|youtu\.be\/))([\w-]+)/gi;
 export const loomVideoRegexp =
   /(?:https?:\/\/(?:www\.|stage\.)?(?:use)?(?:loom|loomlocal)\.com(?::4444)?\/share\/([a-f0-9]+))(?:\?t=[0-9]*)?/gi;
 export const wistiaVideoRegexp = /(?:https?:\/\/)?[a-z0-9]+\.wistia\.com\/medias\/([a-z0-9]+)/gi;
