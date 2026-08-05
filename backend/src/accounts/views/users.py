@@ -22,16 +22,10 @@ from src.accounts.permissions import (
 )
 from src.accounts.queries import CountTemplatesByUserQuery
 from src.accounts.messages import MSG_A_0052
-from src.accounts.models import APIKey
 from src.accounts.serializers.accounts import AccountCacheSerializer
 from src.accounts.serializers.api_key import (
-    APIKeyCreateSerializer,
-    APIKeyListSerializer,
-    APIKeyResponseSerializer,
-    APIKeyRevokeSerializer,
     UserAPIKeySerializer,
 )
-from src.accounts.services.api_key import APIKeyService
 from src.accounts.serializers.user import (
     UserPrivilegesSerializer,
     UserSerializer,
@@ -142,7 +136,7 @@ class UsersViewSet(
                 BillingPlanPermission(),
             )
         if self.action in {
-            'privileges', 'api_key', 'revoke_api_key',
+            'privileges',
             'users_api_key_list',
         }:
             return (
@@ -192,7 +186,7 @@ class UsersViewSet(
                 'vacations',
                 'vacations__substitute_group__users',
             )
-        elif self.action in {'api_key', 'users_api_key_list'}:
+        elif self.action == 'users_api_key_list':
             queryset = queryset.prefetch_related('api_keys')
         return super().prefetch_queryset(
             queryset=queryset,
@@ -207,7 +201,7 @@ class UsersViewSet(
         if self.action == 'transfer':
             queryset = UserModel.objects.all()
         elif self.action in {
-            'list', 'privileges', 'api_key', 'users_api_key_list',
+            'list', 'privileges', 'users_api_key_list',
         }:
             queryset = (
                 UserModel.include_inactive
@@ -649,102 +643,4 @@ class UsersViewSet(
             service.deactivate()
         except UserServiceException as ex:
             raise_validation_error(message=ex.message)
-        return self.response_ok()
-
-    @extend_schema(
-        methods=['GET'],
-        tags=['Accounts'],
-        summary='List API keys for user',
-        description=ACCESS_ACCOUNT_OWNER,
-        responses={
-            200: APIKeyListSerializer(many=True),
-            401: UNAUTHORIZED,
-            403: FORBIDDEN,
-            404: NOT_FOUND,
-        },
-    )
-    @extend_schema(
-        methods=['POST'],
-        tags=['Accounts'],
-        summary='Create API key for user',
-        description=ACCESS_ACCOUNT_OWNER,
-        request=APIKeyCreateSerializer,
-        responses={
-            201: APIKeyResponseSerializer,
-            400: VALIDATION_ERROR,
-            401: UNAUTHORIZED,
-            403: FORBIDDEN,
-            404: NOT_FOUND,
-        },
-    )
-    @action(detail=True, methods=('get', 'post'), url_path='api-key')
-    def api_key(self, request, pk=None):
-        user = self.get_object()
-        if request.method == 'GET':
-            keys = (
-                APIKey.objects
-                .by_user(user.id)
-                .active()
-                .order_by('-date_created')
-            )
-            slz = APIKeyListSerializer(keys, many=True)
-            return self.response_ok(slz.data)
-
-        slz = APIKeyCreateSerializer(data=request.data)
-        slz.is_valid(raise_exception=True)
-        service = APIKeyService(
-            user=request.user,
-            is_superuser=request.is_superuser,
-            auth_type=request.token_type,
-        )
-        api_key, raw_key = service.create_for_user(
-            target_user=user,
-            name=slz.validated_data.get('name'),
-        )
-        api_key.key = raw_key
-        return self.response_created(
-            APIKeyResponseSerializer(api_key).data,
-        )
-
-    @extend_schema(
-        tags=['Accounts'],
-        summary='Revoke user API key',
-        description=ACCESS_ACCOUNT_OWNER,
-        request=APIKeyRevokeSerializer,
-        responses={
-            200: EMPTY,
-            400: VALIDATION_ERROR,
-            401: UNAUTHORIZED,
-            403: FORBIDDEN,
-            404: NOT_FOUND,
-        },
-    )
-    @action(
-        detail=True,
-        methods=('post',),
-        url_path='revoke-api-key',
-    )
-    def revoke_api_key(self, request, pk=None):
-        user = self.get_object()
-        slz = APIKeyRevokeSerializer(data=request.data)
-        slz.is_valid(raise_exception=True)
-        try:
-            instance = (
-                APIKey.objects
-                .by_user(user.id)
-                .active()
-                .get(
-                    id=slz.validated_data['api_key_id'],
-                    account_id=request.user.account_id,
-                )
-            )
-        except APIKey.DoesNotExist:
-            return self.response_not_found()
-        service = APIKeyService(
-            user=request.user,
-            instance=instance,
-            is_superuser=request.is_superuser,
-            auth_type=request.token_type,
-        )
-        service.revoke()
         return self.response_ok()

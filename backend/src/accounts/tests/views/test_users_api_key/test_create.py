@@ -25,7 +25,7 @@ def test_api_key__create_for_user__ok(
 
     # act
     response = api_client.post(
-        f'/accounts/users/{member.id}/api-key',
+        f'/accounts/users/{member.id}/api-keys',
         data={'name': 'Test Key for Member'},
         format='json',
     )
@@ -60,7 +60,7 @@ def test_api_key__create_auto_name__ok(
 
     # act
     response = api_client.post(
-        f'/accounts/users/{member.id}/api-key',
+        f'/accounts/users/{member.id}/api-keys',
         data={},
         format='json',
     )
@@ -85,7 +85,7 @@ def test_api_key__create_for_admin__ok(
 
     # act
     response = api_client.post(
-        f'/accounts/users/{admin.id}/api-key',
+        f'/accounts/users/{admin.id}/api-keys',
         data={'name': 'Admin Key'},
         format='json',
     )
@@ -112,7 +112,7 @@ def test_api_key__create_other_account__not_found(
 
     # act
     response = api_client.post(
-        f'/accounts/users/{other_user.id}/api-key',
+        f'/accounts/users/{other_user.id}/api-keys',
         data={'name': 'Should fail'},
         format='json',
     )
@@ -132,7 +132,7 @@ def test_api_key__create_nonexistent__not_found(
 
     # act
     response = api_client.post(
-        '/accounts/users/999999/api-key',
+        '/accounts/users/999999/api-keys',
         data={'name': 'Should fail'},
         format='json',
     )
@@ -160,7 +160,7 @@ def test_api_key__create_not_owner__forbidden(
 
     # act
     response = api_client.post(
-        f'/accounts/users/{member.id}/api-key',
+        f'/accounts/users/{member.id}/api-keys',
         data={'name': 'Admin try'},
         format='json',
     )
@@ -180,7 +180,7 @@ def test_api_key__create_for_self__ok(
 
     # act
     response = api_client.post(
-        f'/accounts/users/{owner.id}/api-key',
+        f'/accounts/users/{owner.id}/api-keys',
         data={'name': 'Self Key'},
         format='json',
     )

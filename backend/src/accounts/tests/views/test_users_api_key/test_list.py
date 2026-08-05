@@ -37,7 +37,7 @@ def test_api_key__list__ok(
 
     # act
     response = api_client.get(
-        f'/accounts/users/{member.id}/api-key',
+        f'/accounts/users/{member.id}/api-keys',
     )
 
     # assert
@@ -65,7 +65,7 @@ def test_api_key__list_empty__ok(
 
     # act
     response = api_client.get(
-        f'/accounts/users/{member.id}/api-key',
+        f'/accounts/users/{member.id}/api-keys',
     )
 
     # assert
@@ -104,7 +104,7 @@ def test_api_key__list_excludes_revoked__ok(
 
     # act
     response = api_client.get(
-        f'/accounts/users/{member.id}/api-key',
+        f'/accounts/users/{member.id}/api-keys',
     )
 
     # assert

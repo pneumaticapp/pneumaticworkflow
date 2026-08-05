@@ -11,7 +11,7 @@ from src.processes.tests.fixtures import (
 pytestmark = pytest.mark.django_db
 
 
-def test_revoke_api_key__ok(
+def test_destroy_api_key__ok(
     mocker,
     api_client,
     identify_mock,
@@ -42,10 +42,8 @@ def test_revoke_api_key__ok(
     api_client.token_authenticate(owner)
 
     # act
-    response = api_client.post(
-        f'/accounts/users/{member.id}/revoke-api-key',
-        data={'api_key_id': api_key.id},
-        format='json',
+    response = api_client.delete(
+        f'/accounts/users/{member.id}/api-keys/{api_key.id}',
     )
 
     # assert
@@ -57,7 +55,7 @@ def test_revoke_api_key__ok(
     )
 
 
-def test_revoke_api_key__other_account__not_found(
+def test_destroy_api_key__other_account__not_found(
     api_client,
     identify_mock,
 ):
@@ -77,17 +75,15 @@ def test_revoke_api_key__other_account__not_found(
     api_client.token_authenticate(owner)
 
     # act
-    response = api_client.post(
-        f'/accounts/users/{other_user.id}/revoke-api-key',
-        data={'api_key_id': api_key.id},
-        format='json',
+    response = api_client.delete(
+        f'/accounts/users/{other_user.id}/api-keys/{api_key.id}',
     )
 
     # assert
     assert response.status_code == 404
 
 
-def test_revoke_api_key__already_revoked__not_found(
+def test_destroy_api_key__already_revoked__not_found(
     api_client,
     identify_mock,
 ):
@@ -109,17 +105,15 @@ def test_revoke_api_key__already_revoked__not_found(
     api_client.token_authenticate(owner)
 
     # act
-    response = api_client.post(
-        f'/accounts/users/{member.id}/revoke-api-key',
-        data={'api_key_id': api_key.id},
-        format='json',
+    response = api_client.delete(
+        f'/accounts/users/{member.id}/api-keys/{api_key.id}',
     )
 
     # assert
     assert response.status_code == 404
 
 
-def test_revoke_api_key__not_owner__forbidden(
+def test_destroy_api_key__not_owner__forbidden(
     api_client,
     identify_mock,
 ):
@@ -149,11 +143,27 @@ def test_revoke_api_key__not_owner__forbidden(
     api_client.token_authenticate(admin)
 
     # act
-    response = api_client.post(
-        f'/accounts/users/{member.id}/revoke-api-key',
-        data={'api_key_id': api_key.id},
-        format='json',
+    response = api_client.delete(
+        f'/accounts/users/{member.id}/api-keys/{api_key.id}',
     )
 
     # assert
     assert response.status_code == 403
+
+
+def test_destroy_api_key__nonexistent_user__not_found(
+    api_client,
+    identify_mock,
+):
+
+    # arrange
+    owner = create_test_owner()
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.delete(
+        '/accounts/users/999999/api-keys/1',
+    )
+
+    # assert
+    assert response.status_code == 404

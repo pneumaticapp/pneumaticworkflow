@@ -55,9 +55,9 @@ def test_exclude_private_endpoints__trailing_slash__filtered():
     # arrange
     endpoints = [
         (
-            '/accounts/api-key/',
-            '^/accounts/api-key/$',
-            'GET',
+            '/auth/signup/',
+            '^/auth/signup/$',
+            'POST',
             SimpleNamespace(cls=object),
         ),
     ]

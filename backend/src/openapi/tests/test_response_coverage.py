@@ -17,7 +17,6 @@ _EMPTY_BODY_OPERATIONS = frozenset({
     'accounts_users_delete_create',
     'accounts_users_toggle_admin_create',
     'accounts_users_reassign_create',
-    'accounts_users_revoke_api_key_create',
 
     # Auth
     'auth_reset_password_create',
