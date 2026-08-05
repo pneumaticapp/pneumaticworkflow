@@ -21,14 +21,9 @@ import { IWorkflowExtraFieldProps } from '..';
 import styles from '../../KickoffRedux/KickoffRedux.css';
 import fieldStyles from './ExtraFieldCheckbox.css';
 import { useState } from 'react';
+import { normalizeCheckboxValue } from '../../../../utils/fields';
 
 const DEFAULT_OPTION_INPUT_WIDTH = 120;
-
-function normalizeCheckboxValue(value: unknown): string[] {
-  if (Array.isArray(value)) return value;
-  if (typeof value === 'string' && value !== '') return value.split(', ');
-  return [];
-}
 
 export function ExtraFieldCheckbox({
   field,

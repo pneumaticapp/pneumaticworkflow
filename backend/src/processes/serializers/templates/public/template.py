@@ -2,8 +2,10 @@ from typing import Any, Dict
 
 from django.contrib.auth import get_user_model
 from rest_framework.serializers import (
+    BooleanField,
     CharField,
     ModelSerializer,
+    Serializer,
     SerializerMethodField,
 )
 
@@ -44,3 +46,20 @@ class PublicTemplateSerializer(ModelSerializer):
         if data.get('description') is None:
             data['description'] = ''
         return data
+
+
+class PublicTemplateResponseSerializer(PublicTemplateSerializer):
+    show_captcha = BooleanField()
+
+    class Meta(PublicTemplateSerializer.Meta):
+        fields = (
+            *PublicTemplateSerializer.Meta.fields,
+            'show_captcha',
+        )
+
+
+class PublicTemplateRunResponseSerializer(Serializer):
+    redirect_url = CharField(
+        allow_null=True,
+        required=False,
+    )

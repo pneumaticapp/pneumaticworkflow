@@ -8,26 +8,28 @@ import {
   refreshTasksFilters,
 } from '../saga';
 import {
-  changeTasksCount,
+  initState,
   insertNewTask,
   loadFilterSteps,
   loadFilterStepsFailed,
   loadFilterStepsSuccess,
   loadFilterTemplates,
+  loadTasksCount,
   setFilterStep,
   showNewTasksNotification,
 } from '../slice';
 import { getTemplateSteps } from '../../../api/getTemplateSteps';
 import { ETaskListCompletionStatus, ITaskListItem } from '../../../types/tasks';
 import { checkSomeRouteIsActive } from '../../../utils/history';
-import { initState } from '../slice';
 
 jest.mock('../../../api/getTemplateSteps', () => ({
   getTemplateSteps: jest.fn(),
 }));
 
 jest.mock('../../templates/saga', () => ({
-  handleLoadTemplateVariables: jest.fn(function* () {}),
+  handleLoadTemplateVariables: jest.fn(function* handleLoadTemplateVariables() {
+    yield undefined;
+  }),
 }));
 
 jest.mock('../../../utils/history', () => ({
@@ -180,7 +182,7 @@ describe('handleAddTask', () => {
 
     expect(dispatched).toEqual([]);
     expect(dispatched).not.toContainEqual(insertNewTask(existingTask));
-    expect(dispatched).not.toContainEqual(changeTasksCount(2));
+    expect(dispatched).not.toContainEqual(loadTasksCount());
     expect(dispatched).not.toContainEqual(showNewTasksNotification(true));
   });
 
@@ -208,7 +210,7 @@ describe('handleAddTask', () => {
       wrapper,
     ).toPromise();
 
-    expect(dispatched).toContainEqual(changeTasksCount(2));
+    expect(dispatched).toContainEqual(loadTasksCount());
     expect(dispatched).toContainEqual(showNewTasksNotification(true));
     expect(dispatched).toContainEqual(
       expect.objectContaining({
@@ -244,7 +246,7 @@ describe('handleAddTask', () => {
       wrapper,
     ).toPromise();
 
-    expect(dispatched).toContainEqual(changeTasksCount(4));
+    expect(dispatched).toContainEqual(loadTasksCount());
     expect(dispatched).toContainEqual(showNewTasksNotification(true));
     expect(dispatched).toContainEqual(
       expect.objectContaining({
@@ -279,7 +281,7 @@ describe('handleAddTask', () => {
       wrapper,
     ).toPromise();
 
-    expect(dispatched).toEqual([showNewTasksNotification(true)]);
+    expect(dispatched).toEqual([loadTasksCount(), showNewTasksNotification(true)]);
   });
 });
 
@@ -342,7 +344,7 @@ describe('handleRemoveTask', () => {
     expect(dispatched).not.toContainEqual(loadFilterSteps({ templateId: 15 }));
   });
 
-  it('decrements counter when shouldDecrementCounter=true', async () => {
+  it('reloads counter when shouldDecrementCounter=true', async () => {
     (checkSomeRouteIsActive as jest.Mock).mockReturnValue(false);
 
     const dispatched: IDispatchedAction[] = [];
@@ -361,10 +363,10 @@ describe('handleRemoveTask', () => {
       wrapper,
     ).toPromise();
 
-    expect(dispatched).toEqual([changeTasksCount(4)]);
+    expect(dispatched).toEqual([loadTasksCount()]);
   });
 
-  it('does not decrement when totalTasksCount is null', async () => {
+  it('reloads counter when the current count is null', async () => {
     (checkSomeRouteIsActive as jest.Mock).mockReturnValue(false);
 
     const dispatched: IDispatchedAction[] = [];
@@ -383,7 +385,7 @@ describe('handleRemoveTask', () => {
       wrapper,
     ).toPromise();
 
-    expect(dispatched).toEqual([]);
+    expect(dispatched).toEqual([loadTasksCount()]);
   });
 
   it('skips counter when shouldDecrementCounter=false', async () => {
@@ -408,7 +410,7 @@ describe('handleRemoveTask', () => {
     expect(dispatched).toEqual([]);
   });
 
-  it('defaults shouldDecrementCounter to true', async () => {
+  it('reloads counter by default', async () => {
     (checkSomeRouteIsActive as jest.Mock).mockReturnValue(false);
 
     const dispatched: IDispatchedAction[] = [];
@@ -427,7 +429,7 @@ describe('handleRemoveTask', () => {
       wrapper,
     ).toPromise();
 
-    expect(dispatched).toEqual([changeTasksCount(9)]);
+    expect(dispatched).toEqual([loadTasksCount()]);
   });
 });
 

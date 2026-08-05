@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.http import Http404
+from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework.decorators import action
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
 from rest_framework.pagination import LimitOffsetPagination
@@ -22,11 +23,13 @@ from src.accounts.permissions import (
 from src.accounts.queries import CountTemplatesByUserQuery
 from src.accounts.messages import MSG_A_0052
 from src.accounts.models import APIKey
+from src.accounts.serializers.accounts import AccountCacheSerializer
 from src.accounts.serializers.api_key import (
     APIKeyCreateSerializer,
     APIKeyListSerializer,
     APIKeyResponseSerializer,
     APIKeyRevokeSerializer,
+    UserAPIKeySerializer,
 )
 from src.accounts.services.api_key import APIKeyService
 from src.accounts.serializers.user import (
@@ -67,11 +70,47 @@ from src.generics.permissions import (
     UserIsAuthenticated,
 )
 from src.notifications.tasks import send_user_updated_notification
+from src.openapi import (
+    ACCESS_ACCOUNT_OWNER,
+    ACCESS_ADMIN_BASE,
+    ACCESS_AUTH_LITE,
+    CountResponseSerializer,
+    EMPTY,
+    FORBIDDEN,
+    NOT_FOUND,
+    UNAUTHORIZED,
+    USERS_LIST_PARAMS,
+    VALIDATION_ERROR,
+)
 from src.utils.validation import raise_validation_error
 
 UserModel = get_user_model()
 
 
+@extend_schema_view(
+    list=extend_schema(
+        tags=['Accounts'],
+        summary='List users',
+        description=ACCESS_AUTH_LITE,
+        parameters=USERS_LIST_PARAMS,
+        responses={
+            200: UserSerializer,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+        },
+    ),
+    retrieve=extend_schema(
+        tags=['Accounts'],
+        summary='Get user',
+        description=ACCESS_ADMIN_BASE,
+        responses={
+            200: UserSerializer,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    ),
+)
 class UsersViewSet(
     CustomViewSetMixin,
     RetrieveModelMixin,
@@ -86,10 +125,12 @@ class UsersViewSet(
         'reassign': ReassignSerializer,
         'privileges': UserPrivilegesSerializer,
         'activate_vacation': VacationActivateSerializer,
+        'users_api_key_list': UserAPIKeySerializer,
     }
     action_filterset_classes = {
         'list': UsersListFilterSet,
         'privileges': UsersListFilterSet,
+        'users_api_key_list': UsersListFilterSet,
     }
 
     def get_permissions(self):
@@ -100,7 +141,10 @@ class UsersViewSet(
                 IsAuthenticated(),
                 BillingPlanPermission(),
             )
-        if self.action in {'privileges', 'api_key', 'revoke_api_key'}:
+        if self.action in {
+            'privileges', 'api_key', 'revoke_api_key',
+            'users_api_key_list',
+        }:
             return (
                 AccountOwnerPermission(),
                 ExpiredSubscriptionPermission(),
@@ -125,6 +169,8 @@ class UsersViewSet(
 
     def get_serializer_context(self, **kwargs):
         context = super().get_serializer_context(**kwargs)
+        if getattr(self, 'swagger_fake_view', False):
+            return context
         context['account'] = self.request.user.account
         context['user'] = self.request.user
         return context
@@ -146,7 +192,7 @@ class UsersViewSet(
                 'vacations',
                 'vacations__substitute_group__users',
             )
-        elif self.action == 'api_key':
+        elif self.action in {'api_key', 'users_api_key_list'}:
             queryset = queryset.prefetch_related('api_keys')
         return super().prefetch_queryset(
             queryset=queryset,
@@ -154,11 +200,15 @@ class UsersViewSet(
         )
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return UserModel.objects.none()
         account_id = self.request.user.account_id
         user = self.request.user
         if self.action == 'transfer':
             queryset = UserModel.objects.all()
-        elif self.action in {'list', 'privileges', 'api_key'}:
+        elif self.action in {
+            'list', 'privileges', 'api_key', 'users_api_key_list',
+        }:
             queryset = (
                 UserModel.include_inactive
                 .all_account_users(account_id)
@@ -174,6 +224,18 @@ class UsersViewSet(
             queryset = UserModel.objects.on_account(account_id)
         return self.prefetch_queryset(queryset)
 
+    @extend_schema(
+        tags=['Accounts'],
+        summary='Create user (invite)',
+        description=ACCESS_ADMIN_BASE,
+        request=UserSerializer,
+        responses={
+            200: UserSerializer,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+        },
+    )
     def create(self, request, *args, **kwargs):
         slz = self.get_serializer(data=request.data)
         slz.is_valid(raise_exception=True)
@@ -191,6 +253,19 @@ class UsersViewSet(
             raise_validation_error(message=ex.message)
         return self.response_ok(UserSerializer(instance=user).data)
 
+    @extend_schema(
+        tags=['Accounts'],
+        summary='Update user',
+        description=ACCESS_ADMIN_BASE,
+        request=UserSerializer,
+        responses={
+            200: UserSerializer,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     def update(self, request, *args, **kwargs):
         user = self.get_object()
         slz = self.get_serializer(
@@ -213,9 +288,34 @@ class UsersViewSet(
             raise_validation_error(message=ex.message)
         return self.response_ok(UserSerializer(instance=user).data)
 
+    @extend_schema(
+        tags=['Accounts'],
+        summary='Partial update user',
+        description=ACCESS_ADMIN_BASE,
+        request=UserSerializer,
+        responses={
+            200: UserSerializer,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     def partial_update(self, *args, **kwargs):
         return self.update(*args, **kwargs)
 
+    @extend_schema(
+        tags=['Accounts'],
+        summary='Deactivate user',
+        description=ACCESS_ADMIN_BASE,
+        responses={
+            200: EMPTY,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     def destroy(self, request, *args, **kwargs):
         request_user = request.user
         user = self.get_object()
@@ -231,11 +331,33 @@ class UsersViewSet(
             raise_validation_error(message=ex.message)
         return self.response_ok()
 
+    @extend_schema(
+        tags=['Accounts'],
+        summary='List users with privileges',
+        description=ACCESS_ACCOUNT_OWNER,
+        parameters=USERS_LIST_PARAMS,
+        responses={
+            200: UserPrivilegesSerializer,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+        },
+    )
     @action(detail=False, methods=('get',))
     def privileges(self, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
         return self.paginated_response(queryset)
 
+    @extend_schema(
+        tags=['Accounts'],
+        summary='Toggle user admin status',
+        description=ACCESS_ADMIN_BASE,
+        responses={
+            200: EMPTY,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     @action(
         detail=True,
         methods=('post',),
@@ -253,6 +375,18 @@ class UsersViewSet(
         )
         return self.response_ok()
 
+    @extend_schema(
+        tags=['Accounts'],
+        summary='Reassign user workflows',
+        description=ACCESS_ADMIN_BASE,
+        request=ReassignSerializer,
+        responses={
+            200: EMPTY,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+        },
+    )
     @action(detail=False, methods=('post',))
     def reassign(self, request):
         serializer = self.get_serializer(data=request.data)
@@ -305,6 +439,7 @@ class UsersViewSet(
     #         return self.response_ok({'token': token})
 
     # TODO remove in https://my.pneumatic.app/workflows/15691/
+    @extend_schema(exclude=True)
     @action(detail=True, methods=('get',))
     def transfer(self, request, pk=None):
         slz = AcceptTransferSerializer(
@@ -338,6 +473,19 @@ class UsersViewSet(
               You was successfully transferred to account {account.name}
           """)
 
+    @extend_schema(
+        tags=['Accounts'],
+        summary='Activate vacation for user',
+        description=ACCESS_ADMIN_BASE,
+        request=VacationActivateSerializer,
+        responses={
+            200: UserSerializer,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     @action(
         detail=True,
         methods=('post',),
@@ -362,6 +510,18 @@ class UsersViewSet(
         )
         return self.response_ok(UserSerializer(instance=user).data)
 
+    @extend_schema(
+        tags=['Accounts'],
+        summary='Deactivate vacation for user',
+        description=ACCESS_ADMIN_BASE,
+        responses={
+            200: UserSerializer,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     @action(
         detail=True,
         methods=('post',),
@@ -375,6 +535,17 @@ class UsersViewSet(
         user = service.deactivate()
         return self.response_ok(UserSerializer(instance=user).data)
 
+    @extend_schema(
+        tags=['Accounts'],
+        summary='Count workflows for user',
+        description=ACCESS_ADMIN_BASE,
+        responses={
+            200: CountResponseSerializer,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     @action(
         detail=True,
         methods=('get',),
@@ -406,6 +577,37 @@ class UsersViewSet(
             data={'count': count},
         )
 
+    @extend_schema(
+        tags=['Accounts'],
+        summary='List users API keys',
+        description=ACCESS_ACCOUNT_OWNER,
+        parameters=USERS_LIST_PARAMS,
+        responses={
+            200: UserAPIKeySerializer(many=True),
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+        },
+    )
+    @action(
+        detail=False,
+        methods=('get',),
+        url_path='api-key',
+    )
+    def users_api_key_list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return self.response_ok(data=serializer.data)
+
+    @extend_schema(
+        tags=['Accounts'],
+        summary='Active users count',
+        description=ACCESS_AUTH_LITE,
+        responses={
+            200: AccountCacheSerializer,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+        },
+    )
     @action(
         detail=False,
         methods=('get',),
@@ -417,6 +619,19 @@ class UsersViewSet(
         )
         return self.response_ok(data=account_data)
 
+    @extend_schema(
+        tags=['Accounts'],
+        summary='Deactivate user (deprecated)',
+        description=ACCESS_ADMIN_BASE,
+        deprecated=True,
+        responses={
+            200: EMPTY,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     @action(detail=True, methods=('post',))
     def delete(self, request, *args, **kwargs):
 
