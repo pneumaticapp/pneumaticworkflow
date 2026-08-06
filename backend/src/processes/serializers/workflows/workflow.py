@@ -106,7 +106,6 @@ class WorkflowListSerializer(WorkflowOwnersMixin, serializers.ModelSerializer):
             'owners',
             'tasks',
             'fields',
-            'due_date_tsp',  # TODO Remove in  41258
         )
 
     template = WorkflowTemplateSerializer()
@@ -116,7 +115,6 @@ class WorkflowListSerializer(WorkflowOwnersMixin, serializers.ModelSerializer):
     )
     owners = serializers.SerializerMethodField()
     date_created_tsp = TimeStampField(source='date_created', read_only=True)
-    due_date_tsp = TimeStampField(source='due_date', read_only=True)
     date_completed_tsp = TimeStampField(
         source='date_completed',
         read_only=True,
@@ -371,7 +369,6 @@ class WorkflowDetailsSerializer(
             'owners',
             'tasks',
             'kickoff',
-            'due_date_tsp',
             'is_read_only_viewer',
         )
 
@@ -382,7 +379,6 @@ class WorkflowDetailsSerializer(
     )
     kickoff = serializers.SerializerMethodField()
     tasks = serializers.SerializerMethodField()
-    due_date_tsp = TimeStampField(source='due_date', read_only=True)
     date_created_tsp = TimeStampField(source='date_created', read_only=True)
     date_completed_tsp = TimeStampField(
         source='date_completed',
