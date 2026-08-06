@@ -5,23 +5,46 @@
   color: var(--pneumatic-color-black100);
 
   &__icon {
-    margin-right: 8px;
+    margin-right: 0.8rem;
   }
 }
 
 .user-option {
+  overflow: hidden;
+  width: 100%;
+  min-width: 0;
+
   &__content {
     display: flex;
+    overflow: hidden;
     align-items: center;
+    width: 100%;
+    min-width: 0;
+  }
 
-    p {
-      @mixin text-overflow;
+  &__label {
+    margin: 0;
+    overflow: hidden;
+    min-width: 0;
+    max-width: 24rem;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 
-      margin: 0;
+    &_invited {
+      color: var(--pneumatic-color-link-hover);
     }
   }
 
   &__avatar {
     margin-right: 0.8rem;
+    flex-shrink: 0;
+  }
+
+  &__checkbox,
+  &__checkbox-label,
+  &__checkbox-title {
+    overflow: hidden;
+    width: 100%;
+    min-width: 0;
   }
 }
