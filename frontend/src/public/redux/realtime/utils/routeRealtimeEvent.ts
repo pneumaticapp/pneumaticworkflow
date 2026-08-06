@@ -5,7 +5,7 @@ import type { IStoreTask, IStoreWorkflows } from '../../../types/redux';
 import { ERealtimeEnvelopeType } from '../types';
 
 import { handleAddTask, handleRemoveTask } from '../../tasks/saga';
-import { upsertUserFromWs, removeUserFromWs } from '../../accounts/slice';
+import { activeUsersCountFetchFinished, upsertUserFromWs, removeUserFromWs } from '../../accounts/slice';
 import { mapWsUserToListItem } from './mapUserFromWs';
 import { mapTaskCreatedDataToListItem } from './mapTaskCreatedToListItem';
 import { upsertGroupFromWs, removeGroupFromWs, updateTaskWorkflowLogItem } from '../../actions';
@@ -73,6 +73,10 @@ export function* routeRealtimeEvent(envelope: IRealtimeWsEnvelope) {
     }
     case ERealtimeEnvelopeType.GROUP_DELETED: {
       yield put(removeGroupFromWs(envelope.data.id));
+      break;
+    }
+    case ERealtimeEnvelopeType.ACCOUNT_PLAN_CHANGED: {
+      yield put(activeUsersCountFetchFinished(envelope.data));
       break;
     }
     case ERealtimeEnvelopeType.EVENT_CREATED:
