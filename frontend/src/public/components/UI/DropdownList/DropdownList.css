@@ -8,6 +8,12 @@
   &__control {
     all: unset;
     cursor: pointer;
+
+    &:focus-visible {
+      border-radius: 1.6rem;
+      outline: 0.2rem solid var(--pneumatic-color-black48);
+      outline-offset: 0.2rem;
+    }
   }
 
   &__search {

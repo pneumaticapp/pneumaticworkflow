@@ -1,26 +1,12 @@
 import * as React from 'react';
-import { HTMLProps, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import classnames from 'classnames';
 import { FieldHookConfig, useField } from 'formik';
 
+import { TCheckboxProps, TCheckboxTriState } from './types';
+
 import styles from './Checkbox.css';
 import commonStyles from '../common/styles.css';
-
-export type TCheckboxTriState = 'checked' | 'empty' | 'indeterminate';
-
-export interface ICheckboxProps {
-  title?: string | React.ReactNode;
-  titlePosition?: 'external';
-  isRequired?: boolean;
-  containerClassName?: string;
-  labelClassName?: string;
-  titleClassName?: string;
-  triState?: TCheckboxTriState;
-  checkboxId?: string;
-}
-
-type TCheckboxProps = ICheckboxProps &
-  Pick<HTMLProps<HTMLInputElement>, 'checked' | 'disabled' | 'onChange' | 'id' | 'onClick'>;
 
 // A checkbox can be controlled either with "checked" or "triState" prop.
 // The difference is that the triState prop provides an indeterminate checkbox state.
@@ -34,6 +20,8 @@ export function Checkbox({
   titleClassName,
   checked,
   disabled,
+  readOnly,
+  onClick,
   triState,
   checkboxId,
   ...props
@@ -74,11 +62,16 @@ export function Checkbox({
     <div className={classnames(styles['checkbox__container'], containerClassName)}>
       <label htmlFor={checkboxId} className={classnames(styles['checkbox'], labelClassName)}>
         <input
-          onClick={(e) => e.stopPropagation()}
+          onClick={(event) => {
+            if (readOnly) event.preventDefault();
+            event.stopPropagation();
+            onClick?.(event);
+          }}
           type="checkbox"
           className={styles['checkbox__input']}
           checked={checked}
           disabled={disabled}
+          readOnly={readOnly}
           {...props}
           ref={checkboxRef}
           id={checkboxId}

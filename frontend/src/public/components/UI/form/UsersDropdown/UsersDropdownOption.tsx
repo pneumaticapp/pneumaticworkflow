@@ -40,6 +40,7 @@ export function UsersDropdownOption({
         className={styles['invite-user-option']}
         label={(
           <Checkbox
+            readOnly
             onChange={(event) => {
               event.preventDefault();
               event.stopPropagation();

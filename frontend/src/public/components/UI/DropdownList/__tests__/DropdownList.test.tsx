@@ -42,6 +42,25 @@ describe('DropdownList options', () => {
     expect(screen.getByText('Add performer')).toHaveClass(controlStyles['dropdown-control__value']);
   });
 
+  it('uses descendant text as the compact control accessible name', () => {
+    const optionWithMarkup = {
+      label: <span>Selected performer</span>,
+      value: 'selected-performer',
+    };
+
+    render(
+      <DropdownList
+        controlSize="sm"
+        isSearchable={false}
+        options={[optionWithMarkup]}
+        value={optionWithMarkup}
+      />,
+    );
+
+    const control = screen.getByRole('button', { name: 'Selected performer' });
+    expect(control).not.toHaveAttribute('aria-label');
+  });
+
   it('renders condition options with the same universal styles', () => {
     render(<ConditionDropdownOption label="Condition option" isSelected />);
 

@@ -127,7 +127,7 @@ function ControlSM(title: string, isOpen: boolean, onClick: (isOpen: boolean) =>
     return (
       <button
         type="button"
-        aria-label={title || String(props?.selectProps.value.label || '')}
+        aria-label={title || undefined}
         aria-expanded={isOpen}
         className={classnames('react-select_controlllll', styles['dropdownlist-sm__control'])}
         onClick={() => onClick(!isOpen)}
