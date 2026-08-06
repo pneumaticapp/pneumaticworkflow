@@ -1,9 +1,6 @@
 .invite-user-option {
   display: flex;
   align-items: center;
-  font-weight: normal;
-  color: inherit;
-
   &__icon {
     margin-right: 0.8rem;
   }

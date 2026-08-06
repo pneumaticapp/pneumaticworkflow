@@ -1,5 +1,13 @@
+import { ReactNode } from 'react';
+
 import { EExtraFieldType } from '../../../../types/template';
 import { EStartingType } from './utils/getDropdownOperators';
+
+export interface IConditionDropdownOptionProps {
+  label: ReactNode;
+  isSelected?: boolean;
+  withTooltip?: boolean;
+}
 
 export interface IChecklists {
   id?: number;

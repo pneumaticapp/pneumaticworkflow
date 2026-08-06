@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import classnames from 'classnames';
 import Select, { components } from 'react-select';
 import { FieldHookConfig, useField } from 'formik';
@@ -7,33 +7,11 @@ import PerfectScrollbar from 'react-perfect-scrollbar';
 import OutsideClickHandler from 'react-outside-click-handler';
 
 import { ArrowDropdownIcon, ExpandIcon, RoundClearIconMd } from '../../icons';
+import { DropdownOption } from './DropdownOption';
+import { IDropdownListProps, TControlSize, TDropdownOptionBase } from './types';
 
 import '../../../assets/css/library/react-select.css';
 import styles from './DropdownList.css';
-
-type TControlSize = 'lg' | 'sm';
-type TPlacement = 'left' | 'right';
-
-export type TDropdownOptionBase = {
-  label: string | React.ReactNode;
-  sourceId?: string | null;
-  value?: string;
-  onClick?: () => void;
-};
-
-export interface IDropdownListProps<TOption extends TDropdownOptionBase>
-  extends Omit<React.ComponentProps<typeof Select>, 'options' | 'onChange'> {
-  label?: string;
-  options: TOption[];
-  title?: string;
-  controlSize?: TControlSize;
-  className?: string;
-  staticMenu?: boolean;
-  placement?: TPlacement;
-  onChange?: (value: any, action: any) => void;
-  errorMessage?: string;
-  isRequired?: boolean;
-}
 
 export function DropdownList<TOption extends TDropdownOptionBase>({
   controlSize = 'lg',
@@ -195,7 +173,14 @@ const MenuListLG = ({ selectProps, ...props }: any) => {
 
 const MenuListSM = ({ selectProps, ...props }: any) => {
   const ScrollBar = PerfectScrollbar as unknown as Function;
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const { onInputChange, inputValue, onMenuInputFocus, placeholder, isSearchable } = selectProps;
+
+  useEffect(() => {
+    if (isSearchable) {
+      searchInputRef.current?.focus();
+    }
+  }, [isSearchable]);
 
   const ariaAttributes = {
     'aria-label': selectProps['aria-label'],
@@ -207,6 +192,7 @@ const MenuListSM = ({ selectProps, ...props }: any) => {
       {isSearchable && (
         <div className={styles['dropdownlist-sm__search']}>
           <input
+            ref={searchInputRef}
             type="text"
             value={inputValue}
             onChange={(e) =>
@@ -214,9 +200,6 @@ const MenuListSM = ({ selectProps, ...props }: any) => {
                 action: 'input-change',
               })
             }
-            // When opening sm dropdown, set the autofocus on the search field
-            // eslint-disable-next-line jsx-a11y/no-autofocus
-            autoFocus
             onMouseDown={(e) => e.stopPropagation()}
             onTouchEnd={(e) => e.stopPropagation()}
             onFocus={onMenuInputFocus}
@@ -251,10 +234,16 @@ const MenuListSM = ({ selectProps, ...props }: any) => {
 };
 
 const Option = (props: any) => {
-  const { innerProps, data } = props;
+  const { children, innerProps, data, isSelected, selectProps } = props;
   if (data.onClick) innerProps.onClick = data.onClick;
 
-  return <components.Option {...props} />;
+  return (
+    <components.Option {...props}>
+      {selectProps.formatOptionLabel
+        ? children
+        : <DropdownOption label={children} isSelected={isSelected} />}
+    </components.Option>
+  );
 };
 
 export function FormikDropdownList(props: IDropdownListProps<TDropdownOptionBase> & FieldHookConfig<string>) {

@@ -1,19 +1,20 @@
-import React, { ReactNode } from 'react';
+import React from 'react';
 import classnames from 'classnames';
 
 import { Tooltip } from '../Tooltip';
+import { IDropdownOptionProps } from './types';
 
 import styles from './DropdownOption.css';
 
-export interface IDropdownOptionProps {
-  label: ReactNode;
-  isSelected?: boolean;
-  withTooltip?: boolean;
-}
-
-export function DropdownOption({ label, isSelected, withTooltip }: IDropdownOptionProps) {
+export function DropdownOption({ label, isSelected, withTooltip, className }: IDropdownOptionProps) {
   const option = (
-    <div className={classnames(styles['dropdown-option'], isSelected && styles['dropdown-option_selected'])}>
+    <div
+      className={classnames(
+        styles['dropdown-option'],
+        isSelected && styles['dropdown-option_selected'],
+        className,
+      )}
+    >
       {label}
     </div>
   );
