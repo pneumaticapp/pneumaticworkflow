@@ -6,7 +6,8 @@ import { FieldHookConfig, useField } from 'formik';
 import PerfectScrollbar from 'react-perfect-scrollbar';
 import OutsideClickHandler from 'react-outside-click-handler';
 
-import { ArrowDropdownIcon, ExpandIcon, RoundClearIconMd } from '../../icons';
+import { ArrowDropdownIcon, RoundClearIconMd } from '../../icons';
+import { DropdownControl } from '../DropdownControl';
 import { DropdownOption } from './DropdownOption';
 import { IDropdownListProps, TControlSize, TDropdownOptionBase } from './types';
 
@@ -126,15 +127,12 @@ function ControlSM(title: string, isOpen: boolean, onClick: (isOpen: boolean) =>
     return (
       <button
         type="button"
-        className={classnames(
-          'react-select_controlllll',
-          styles['dropdownlist-sm__control'],
-          isOpen && styles['is-open'],
-        )}
+        aria-label={title || String(props?.selectProps.value.label || '')}
+        aria-expanded={isOpen}
+        className={classnames('react-select_controlllll', styles['dropdownlist-sm__control'])}
         onClick={() => onClick(!isOpen)}
       >
-        <p className={styles['dropdownlist-sm__value']}>{title || props?.selectProps.value.label}</p>
-        <ExpandIcon className={classnames(styles['dropdownlist-sm__arrow'], isOpen && styles['is-open'])} />
+        <DropdownControl title={title || props?.selectProps.value.label} isOpen={isOpen} />
       </button>
     );
   };

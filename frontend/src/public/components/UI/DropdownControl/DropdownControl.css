@@ -1,0 +1,29 @@
+.dropdown-control {
+  padding: 0.6rem 0.8rem;
+  display: flex;
+  color: inherit;
+  background-color: var(--pneumatic-color-black4);
+  border-radius: 1.6rem;
+  align-items: center;
+
+  &:hover .dropdown-control__value,
+  &.is-open .dropdown-control__value {
+    color: var(--pneumatic-color-link-hover);
+  }
+}
+
+.dropdown-control__value {
+  @mixin text-small;
+
+  color: inherit;
+  transition: color 0.1s ease-in-out;
+}
+
+.dropdown-control__arrow {
+  margin-left: 0.4rem;
+  color: var(--pneumatic-color-black16);
+
+  .is-open & {
+    transform: rotate(180deg);
+  }
+}

@@ -1,40 +1,13 @@
-/* stylelint-disable declaration-no-important */
-
 .dropdownlist__scrollbar {
-  margin-right: 0 !important;
-  padding-right: 0 !important;
+  margin-right: 0;
+  padding-right: 0;
   max-height: 35.2rem;
 }
 
 .dropdownlist-sm {
   &__control {
-    padding: 0.6rem 0.8rem;
-    display: flex;
-    background-color: var(--pneumatic-color-black4);
-    border-radius: 16px;
-    align-items: center;
-
-    &:hover .dropdownlist-sm__value,
-    &.is-open .dropdownlist-sm__value {
-      color: var(--pneumatic-color-link-hover);
-    }
-  }
-
-  &__value {
-    @mixin text-small bold;
-
-    margin: 0;
-    color: var(--pneumatic-color-black72);
-    transition: color 0.1s ease-in-out;
-  }
-
-  &__arrow {
-    margin-left: 4px;
-    color: var(--pneumatic-color-black16);
-
-    &.is-open {
-      transform: rotate(180deg);
-    }
+    all: unset;
+    cursor: pointer;
   }
 
   &__search {
@@ -68,8 +41,8 @@
     padding-top: 0.8rem;
 
     :global .react-select__control {
-      padding-top: 1.1rem !important;
-      padding-bottom: 1.1rem !important;
+      padding-top: 1.1rem;
+      padding-bottom: 1.1rem;
     }
   }
 
@@ -92,7 +65,7 @@
 }
 
 .has-error :global(.react-select__control) {
-  border-color: var(--pneumatic-color-warning) !important;
+  border-color: var(--pneumatic-color-warning);
 }
 
 .error-text {

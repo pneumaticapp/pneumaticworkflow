@@ -1,30 +1,13 @@
-/* eslint-disable */
-/* prettier-ignore */
 import * as React from 'react';
 import classnames from 'classnames';
 import { usePopper } from 'react-popper';
-import { Placement } from 'popper.js';
 import OutsideClickHandler from 'react-outside-click-handler';
 
 import { useDidUpdateEffect } from '../../../hooks/useDidUpdateEffect';
-import { ExpandIcon } from '../../icons';
+import { DropdownControl } from '../DropdownControl';
+import { DropdownAreaHandle, IDropdownAreaProps } from './types';
 
 import styles from './DropdownArea.css';
-
-export interface IDropdownAreaProps {
-  children: React.ReactNode;
-  title?: string;
-  containerClassName?: string;
-  toggle?: React.ReactNode;
-  placement?: Placement;
-  onOpen?(): void;
-  onClose?(): void;
-}
-
-export type DropdownAreaHandle = {
-  updateDropdownPosition(): void;
-  closeDropdown(): void;
-};
 
 export const DropdownArea = React.forwardRef<DropdownAreaHandle, IDropdownAreaProps>((
   {
@@ -38,10 +21,9 @@ export const DropdownArea = React.forwardRef<DropdownAreaHandle, IDropdownAreaPr
   },
   ref,
 ) => {
-  const { useState, useImperativeHandle } = React;
-  const [isOpen, setIsOpen] = useState(false);
-  const [referenceElement, setReferenceElement] = useState<HTMLButtonElement | null>(null);
-  const [popperElement, setPopperElement] = useState<HTMLDivElement | null>(null);
+  const [isOpen, setIsOpen] = React.useState(false);
+  const [referenceElement, setReferenceElement] = React.useState<HTMLButtonElement | null>(null);
+  const [popperElement, setPopperElement] = React.useState<HTMLDivElement | null>(null);
 
   const {
     styles: popperStyles,
@@ -49,8 +31,8 @@ export const DropdownArea = React.forwardRef<DropdownAreaHandle, IDropdownAreaPr
     update: updateDropdownPosition,
   } = usePopper(referenceElement, popperElement, { placement });
 
-  useImperativeHandle(ref, () => ({
-    updateDropdownPosition: updateDropdownPosition || (() => { }),
+  React.useImperativeHandle(ref, () => ({
+    updateDropdownPosition: updateDropdownPosition || (() => undefined),
     closeDropdown: () => setIsOpen(false),
   }));
 
@@ -64,35 +46,23 @@ export const DropdownArea = React.forwardRef<DropdownAreaHandle, IDropdownAreaPr
     handleUpdates();
   }, [isOpen]);
 
-  const onOutsideClick = React.useCallback(() => {
+  const handleOutsideClick = React.useCallback(() => {
     if (isOpen) {
       setIsOpen(false);
     }
-  }, [isOpen, setIsOpen]);
-
-
-  const renderToggle = () => {
-    if (toggle) {
-      return toggle;
-    }
-
-    return (
-      <p className={styles['control']}>
-        <span className={styles['control-value']}>{title}</span>
-        <ExpandIcon className={styles['control-arrow']} />
-      </p>
-    )
-  }
+  }, [isOpen]);
 
   return (
-    <OutsideClickHandler onOutsideClick={onOutsideClick}>
+    <OutsideClickHandler onOutsideClick={handleOutsideClick}>
       <div className={classnames(styles['container'], isOpen && styles['container_is-open'], containerClassName)}>
         <button
+          type="button"
+          aria-expanded={isOpen}
           className={styles['toggle']}
           onClick={() => setIsOpen(!isOpen)}
           ref={setReferenceElement}
         >
-          {renderToggle()}
+          {toggle || <DropdownControl title={title} isOpen={isOpen} />}
         </button>
         <div
           className={styles['content']}
