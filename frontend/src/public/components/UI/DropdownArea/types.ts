@@ -1,6 +1,8 @@
 import { ReactNode } from 'react';
 import { Placement } from '@popperjs/core';
 
+import { IDropdownHandle } from '../Dropdown';
+
 export interface IDropdownAreaProps {
   children: ReactNode;
   title?: string;
@@ -11,9 +13,4 @@ export interface IDropdownAreaProps {
   onClose?(): void;
 }
 
-export interface IDropdownAreaHandle {
-  updateDropdownPosition(): void;
-  closeDropdown(): void;
-}
-
-export type DropdownAreaHandle = IDropdownAreaHandle;
+export type DropdownAreaHandle = IDropdownHandle;

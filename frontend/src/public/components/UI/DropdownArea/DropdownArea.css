@@ -1,22 +1,3 @@
-.container {
-  position: relative;
-}
-
-.container_is-open .content {
-  display: block;
-}
-
-.toggle {
-  all: unset;
-  cursor: pointer;
-}
-
 .content {
-  z-index: 20;
   padding: 1.6rem;
-  display: none;
-  overflow: hidden;
-  background: var(--pneumatic-color-white);
-  border-radius: 0.8rem;
-  box-shadow: 0 0.8rem 1.6rem var(--pneumatic-color-black8);
 }

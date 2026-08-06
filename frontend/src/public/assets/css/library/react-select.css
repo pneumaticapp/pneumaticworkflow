@@ -60,7 +60,7 @@
     margin: 0 !important;
     padding: 0.4rem !important;
     border: none !important;
-    box-shadow: 0px 0.8rem 1.6rem rgba(98, 98, 95, 0.08) !important;
+    box-shadow: 0 0.8rem 1.6rem var(--pneumatic-color-black95) !important;
     border-radius: 0.8rem !important;
     overflow: hidden !important;
   }

@@ -1,15 +1,27 @@
 .container {
   position: relative;
-  line-height: 20px;
+  line-height: 2rem;
 }
 
 .dropdown-toggle {
   all: unset;
   display: flex;
+  cursor: pointer;
+
+  &:focus-visible {
+    border-radius: 0.4rem;
+    outline: 0.2rem solid var(--pneumatic-color-black48);
+    outline-offset: 0.2rem;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+  }
 }
+
 .dropdown-toggle-centered {
-  align-items: center;
   height: 100%;
+  align-items: center;
 }
 
 .dropdown-toggle-centered-container {
@@ -18,134 +30,75 @@
 
 .dropdown-menu {
   z-index: 1000;
-  padding: 5px 0;
-  display: none;
-  width: 192px;
-  font-size: 15px;
-  font-weight: initial;
-  background: white;
-  border: none;
-  border-radius: 8px;
-  box-shadow: 0 8px 16px rgb(98 98 95 / 8%);
-
-  &.is-user-selection {
-    /* stylelint-disable-next-line declaration-no-important */
-    top: -5px !important;
-    padding: 0;
-  }
-}
-
-/* Resets Bootstrap placement; omit when DropdownMenu uses positionFixed so Popper can set transform/top/left. */
-.dropdown-menu_bootstrap-placement {
-  /* stylelint-disable-next-line declaration-no-important */
-  top: initial !important;
-  /* stylelint-disable-next-line declaration-no-important */
-  left: initial !important;
-  /* stylelint-disable-next-line declaration-no-important */
-  transform: initial !important;
+  padding: 0.4rem;
+  overflow: hidden;
+  width: 19.2rem;
+  font-size: 1.5rem;
+  font-weight: normal;
+  background: var(--pneumatic-color-white);
+  border-radius: 0.8rem;
+  box-shadow: 0 0.8rem 1.6rem var(--pneumatic-color-black95);
 }
 
 .dropdown-menu_wide {
-  width: 304px;
-}
-
-.dropdown-menu_show {
-  z-index: 1100;
-  display: block;
+  width: 30.4rem;
 }
 
 .dropdown-item {
   position: relative;
-  z-index: 1;
-  padding: 5px 16px;
+  padding: 0.6rem 1.2rem;
   display: flex;
+  overflow: hidden;
   width: 100%;
+  min-height: 3.2rem;
   text-align: inherit;
   white-space: nowrap;
   cursor: pointer;
+  color: var(--pneumatic-color-black100);
   background-color: transparent;
   border: 0;
+  border-radius: 0.4rem;
   align-items: center;
 
-  &::before {
-    position: absolute;
-    z-index: -1;
-    top: -1px;
-    right: 4px;
-    left: 4px;
-    bottom: -1px;
-    content: '';
-    background: var(--pneumatic-color-beige);
-    border-radius: 4px;
-    opacity: 0;
-  }
-
-  &:hover {
+  &:hover,
+  &:focus-visible {
     color: var(--pneumatic-color-link-hover);
-
-    &::before {
-      opacity: 1;
-    }
+    background: var(--pneumatic-color-beige);
+    outline: none;
   }
 }
+
 .dropdown-item-mobile {
   justify-content: space-between;
 }
 
-.dropdown-menu .dropdown-item_black {
+.dropdown-item_black {
   color: var(--pneumatic-color-black100);
 }
 
 .dropdown-item_green {
-  /* stylelint-disable-next-line declaration-no-important */
-  color: #4caf50 !important;
-
-  &:hover {
-    color: currentColor;
-  }
-
-  .dropdown-item-icon {
-    color: currentColor;
-  }
+  color: var(--pneumatic-color-success);
 }
 
 .dropdown-item_red {
-  /* stylelint-disable-next-line declaration-no-important */
-  color: #f44336 !important;
-
-  &:hover {
-    color: currentColor;
-  }
-
-  .dropdown-item-icon {
-    color: currentColor;
-  }
+  color: var(--pneumatic-color-warning);
 }
 
 .dropdown-item_orange {
-  /* stylelint-disable-next-line declaration-no-important */
-  color: var(--pneumatic-color-link-dark) !important;
-
-  &:hover {
-    color: currentColor;
-  }
-
-  .dropdown-item-icon {
-    color: currentColor;
-  }
+  color: var(--pneumatic-color-link-dark);
 }
 
 .dropdown-item-icon {
   margin-left: auto;
-  color: var(--pneumatic-color-black72);
+  color: currentColor;
+  flex-shrink: 0;
 }
 
 .line {
   all: unset;
-  margin: 5px 12px;
+  margin: 0.5rem 0.8rem;
   display: block;
-  border: 0;
-  border-top: 1px solid var(--pneumatic-color-black16);
+  border-top: 0.1rem solid var(--pneumatic-color-black16);
 }
 
 .dropdown-confirm {
@@ -155,10 +108,12 @@
 
 .dropdown-confirm-option {
   all: unset;
-  color: #f44336;
-  transition: all 0.1s ease-in-out;
+  cursor: pointer;
+  color: var(--pneumatic-color-warning);
+  transition: color 0.1s ease-in-out;
 
-  &:hover {
+  &:hover,
+  &:focus-visible {
     color: var(--pneumatic-color-link-hover);
   }
 }
@@ -170,8 +125,6 @@
 }
 
 .dropdown__custom-sub-options {
-  /* stylelint-disable-next-line declaration-no-important */
-  top: -0.4rem !important;
   padding: 0;
 
   :global .scrollbar-container {

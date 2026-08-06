@@ -33,7 +33,7 @@
     top: 1rem;
     right: 1.6rem;
     color: var(--pneumatic-color-black16);
-    transition: all 0.3s ease;
+    transition: color 0.3s ease;
 
     &:hover {
       color: var(--pneumatic-color-link-hover);
