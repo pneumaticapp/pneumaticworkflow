@@ -4,7 +4,8 @@ import { useMemo } from 'react';
 import { useIntl } from 'react-intl';
 
 import {
-  IKickoffClient,
+  ITemplateKickoffClient,
+  IRuntimeKickoffClient,
   IExtraField,
   ITemplateTaskClient,
   IFieldsetBindingClient,
@@ -46,7 +47,7 @@ export function getLocalizedSystemVariable({
 }
 
 type TGetVariablesParam = {
-  kickoff: Pick<IKickoffClient, 'fields'> & { fieldsets?: (IFieldsetBindingClient | TTemplateFieldFieldset)[] };
+  kickoff: Pick<ITemplateKickoffClient, 'fields'> & { fieldsets?: (IFieldsetBindingClient | TTemplateFieldFieldset)[] };
   tasks: (Pick<ITemplateTaskClient, 'fields' | 'apiName'> & {
     name?: ITemplateTaskClient['name'];
     fieldsets?: (IFieldsetBindingClient | TTemplateFieldFieldset)[];
@@ -131,7 +132,7 @@ export function getVariables(params: TGetVariablesParam): TTaskVariable[] {
 }
 
 export function getKickoffVariables(
-  kickoff?: Pick<IKickoffClient, 'fields'> & { fieldsets?: (IFieldsetBindingClient | TTemplateFieldFieldset)[] },
+  kickoff?: Pick<ITemplateKickoffClient, 'fields'> & { fieldsets?: (IFieldsetBindingClient | TTemplateFieldFieldset)[] },
 ) {
   const fromFields = kickoff?.fields.map((field) => getVariableFromField(field, 'Kick-off form')) ?? [];
   const fromFieldsets = getVariablesFromSelectedFieldsets(
@@ -144,7 +145,7 @@ export function getKickoffVariables(
 }
 
 export function getTaskVariables(
-  kickoff: IKickoffClient,
+  kickoff: ITemplateKickoffClient,
   tasks: ITemplateTaskClient[],
   currentTask: ITemplateTaskClient,
   templateId?: number,
@@ -189,7 +190,7 @@ export const getSingleLineVariables = (variables: TTaskVariable[]) => {
 };
 
 export const useWorkflowNameVariables = (
-  kickoff?: Pick<IKickoffClient, 'fields' | 'fieldsets'>,
+  kickoff?: Pick<ITemplateKickoffClient | IRuntimeKickoffClient, 'fields' | 'fieldsets'>,
 ) => {
   const { formatMessage } = useIntl();
 

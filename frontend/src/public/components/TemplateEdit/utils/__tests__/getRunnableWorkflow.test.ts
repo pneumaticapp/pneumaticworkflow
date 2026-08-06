@@ -1,4 +1,4 @@
-import { ETaskPerformerType, EExtraFieldType, IKickoffClient } from '../../../../types/template';
+import { ETaskPerformerType, EExtraFieldType, ITemplateKickoffClient } from '../../../../types/template';
 import { IFieldsetRuntime } from '../../../../types/fieldset';
 import { makeExtraField } from '../../../../__stubs__/fields.factory';
 import { makeFieldsetRuntime } from '../../../../__stubs__/fieldsets.factory';
@@ -200,7 +200,7 @@ describe('getRunnableWorkflow.', () => {
 
 
   it('loadDatasetsMap returns {} and does not call getDataset when there are no dataset ids', async () => {
-    const kickoff: IKickoffClient = { description: '', fields: [], fieldsets: [] };
+    const kickoff: ITemplateKickoffClient = { description: '', fields: [], fieldsets: [] };
 
     const result = await loadDatasetsMap(kickoff, []);
 
@@ -209,7 +209,7 @@ describe('getRunnableWorkflow.', () => {
   });
 
   it('loadDatasetsMap dedups dataset id shared by a kickoff field and a fieldset field', async () => {
-    const kickoff: IKickoffClient = {
+    const kickoff: ITemplateKickoffClient = {
       description: '',
       fields: [makeExtraField({ apiName: 'k-f', name: 'K', type: EExtraFieldType.Checkbox, dataset: 7 })],
       fieldsets: [],
