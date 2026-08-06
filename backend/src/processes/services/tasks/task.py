@@ -306,7 +306,9 @@ class TaskService(
             rule = raw_due_date.rule
             duration = raw_due_date.duration
             if raw_due_date.duration_months > 0:
-                duration += timedelta(days=(30 * raw_due_date.duration_months))
+                duration += timedelta(
+                    days=(30 * raw_due_date.duration_months),
+                )
 
             if rule in DueDateRule.TASK_RULES:
                 if rule == DueDateRule.AFTER_TASK_STARTED:
@@ -349,6 +351,13 @@ class TaskService(
                         )
             elif rule == DueDateRule.AFTER_WORKFLOW_STARTED:
                 start_date = self.instance.workflow.date_created
+            elif rule in DueDateRule.PREVIOUS_TASK_RULES:
+                prev_task = Task.objects.filter(
+                    workflow_id=self.instance.workflow_id,
+                    number=self.instance.number - 1,
+                ).only('date_completed').first()
+                if prev_task and prev_task.date_completed:
+                    start_date = prev_task.date_completed
 
             if start_date:
                 due_date = start_date + duration

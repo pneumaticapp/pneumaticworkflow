@@ -40,13 +40,37 @@ MSG_PT_0024 = _(
 MSG_PT_0025 = _('The limit for creating a public id has been exceeded.')
 MSG_PT_0026 = _('The limit for creating a embed id has been exceeded.')
 # Translators: Template due date editor
-MSG_PT_0027 = _('Expected date field api_name.')
+MSG_PT_0027 = lambda name: format_lazy(
+    _('Step "{name}": expected date field api_name.'),
+    name=name,
+)
 # Translators: Template due date editor
-MSG_PT_0028 = _('Only existing date fields can be used as a due date.')
+MSG_PT_0028 = lambda name: format_lazy(
+    _(
+        'Step "{name}": only existing date fields '
+        'can be used as a due date.',
+    ),
+    name=name,
+)
 # Translators: Template due date editor
-MSG_PT_0029 = _('Expected task api_name.')
-MSG_PT_0030 = _('Only previous tasks are allowed in a rule.')
-MSG_PT_0031 = _('Only previous and current tasks are allowed in a rule.')
+MSG_PT_0029 = lambda name: format_lazy(
+    _('Step "{name}": expected task api_name.'),
+    name=name,
+)
+MSG_PT_0030 = lambda name: format_lazy(
+    _(
+        'Step "{name}": only previous tasks '
+        'are allowed in a due date rule.',
+    ),
+    name=name,
+)
+MSG_PT_0031 = lambda name: format_lazy(
+    _(
+        'Step "{name}": only previous and current tasks '
+        'are allowed in a due date rule.',
+    ),
+    name=name,
+)
 # Translators: Template performer editor
 MSG_PT_0032 = _(
     'You should set the user id for performer with the type "user".',
@@ -311,4 +335,11 @@ MSG_PT_0074 = lambda name, step_name: format_lazy(
     ),
     name=name,
     step_name=step_name,
+)
+MSG_PT_0075 = lambda name: format_lazy(
+    _(
+        'Step "{name}": the "previous step completed" rule '
+        'cannot be used on the first step.',
+    ),
+    name=name,
 )
