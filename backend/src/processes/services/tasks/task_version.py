@@ -578,3 +578,7 @@ class TaskUpdateVersionService(
                     is_completed=False,
                     date_completed=None,
                 )
+        elif self.instance.is_completed:
+            # Sync raw data so performers and due date are current on restart
+            self.instance.update_raw_performers_from_task_template(data)
+            self._update_raw_due_date(data=data.get('raw_due_date'))
