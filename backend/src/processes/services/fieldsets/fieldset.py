@@ -68,7 +68,7 @@ class FieldSetTemplateService(BaseModelService):
             'account': self.account,
             'order': order,
             'name': name,
-            'title': title,
+            'title': title or name,
             'description': description,
             'label_position': label_position,
             'layout': layout,

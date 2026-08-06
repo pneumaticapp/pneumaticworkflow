@@ -127,6 +127,7 @@ def test_create_fieldset__all_fields__ok(api_client, mocker):
     assert response.data['label_position'] == data['label_position']
     assert response.data['layout'] == data['layout']
     assert response.data['api_name'] == data['api_name']
+    assert response.data['usage'] == []
 
     assert len(response.data['fields']) == 1
     assert response.data['fields'][0]['name'] == 'Field 1'
