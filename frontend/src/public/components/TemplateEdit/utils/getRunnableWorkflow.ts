@@ -1,6 +1,6 @@
 /* eslint-disable */
 /* prettier-ignore */
-import { ITemplateClient, ITemplateTaskClient, IKickoffClient, IExtraField } from '../../../types/template';
+import { ITemplateClient, ITemplateTaskClient, ITemplateKickoffClient, IExtraField } from '../../../types/template';
 import { IFieldsetRuntime } from '../../../types/fieldset';
 import { setPerformersCounts } from '../../../utils/template';
 import { IRunWorkflow } from '../../WorkflowEditPopup/types';
@@ -15,7 +15,7 @@ export type TTemplateToRunWorkflow = Pick<
 
 import { getDataset } from '../../../api/datasets/getDataset';
 
-function getKickoffDatasetIds(kickoff: IKickoffClient, fieldsets: IFieldsetRuntime[] = []): number[] {
+function getKickoffDatasetIds(kickoff: ITemplateKickoffClient, fieldsets: IFieldsetRuntime[] = []): number[] {
   const ids = new Set<number>();
   for (const field of kickoff.fields) {
     if (field.dataset) ids.add(field.dataset);
@@ -28,7 +28,7 @@ function getKickoffDatasetIds(kickoff: IKickoffClient, fieldsets: IFieldsetRunti
   return [...ids];
 }
 
-export async function loadDatasetsMap(kickoff: IKickoffClient, fieldsets: IFieldsetRuntime[] = []): Promise<Record<number, string[]>> {
+export async function loadDatasetsMap(kickoff: ITemplateKickoffClient, fieldsets: IFieldsetRuntime[] = []): Promise<Record<number, string[]>> {
   const datasetIds = getKickoffDatasetIds(kickoff, fieldsets);
   if (datasetIds.length === 0) {
     return {};
@@ -56,7 +56,7 @@ function applyDatasetsToFields(fields: IExtraField[], datasetsMap: Record<number
   }));
 }
 
-function convertSelectionsToValues(kickoff: IKickoffClient, datasetsMap: Record<number, string[]>): IKickoffClient {
+function convertSelectionsToValues(kickoff: ITemplateKickoffClient, datasetsMap: Record<number, string[]>): ITemplateKickoffClient {
   return {
     ...kickoff,
     fields: applyDatasetsToFields(kickoff.fields, datasetsMap),

@@ -43,7 +43,7 @@ import { getTemplate } from '../../api/getTemplate';
 
 import { openRunWorkflowModal } from '../runWorkflowModal/actions';
 import { getRunnableWorkflow, loadDatasetsMap } from '../../components/TemplateEdit/utils/getRunnableWorkflow';
-import { ITemplateResponse, IExtraField, IKickoffClient } from '../../types/template';
+import { ITemplateResponse, IExtraField, ITemplateKickoffClient} from '../../types/template';
 import { IFieldsetRuntime } from '../../types/fieldset';
 import { mapTemplateFieldsetsToRuntime } from '../../utils/mapTemplateFieldsetsToRuntime';
 import { mapFieldsetBindingsToClient } from '../../utils/mapFieldsetsAPIToClient';
@@ -175,7 +175,7 @@ export function* openRunWorflowByTemplateDataSaga({
 
     const kickoffFields = mapFieldsToExtraFields(templateData.kickoff?.fields || []);
 
-    const kickoff: IKickoffClient = {
+    const kickoff: ITemplateKickoffClient = {
       description: '',
       fields: kickoffFields,
       fieldsets: [],
