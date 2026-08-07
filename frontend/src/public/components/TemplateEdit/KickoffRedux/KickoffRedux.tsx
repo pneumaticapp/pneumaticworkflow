@@ -20,7 +20,7 @@ import { MergedOutputRows } from '../TaskOutputFlow/MergedOutputRows';
 
 import { KickoffMenu } from './KickoffMenu';
 import { IntlMessages } from '../../IntlMessages';
-import {  EExtraFieldType, IExtraField, ETemplateParts, IKickoffClient, ITemplateClient } from '../../../types/template';
+import {  EExtraFieldType, IExtraField, ETemplateParts, ITemplateKickoffClient, ITemplateClient } from '../../../types/template';
 import { IFieldsetCatalogItem } from '../../../types/fieldset';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { ExtraFieldsMap } from '../ExtraFields/utils/ExtraFieldsMap';
@@ -44,7 +44,7 @@ export interface IKickoffReduxProps {
   intl: IntlShape;
   accountId: number;
   templateStatus: ETemplateStatus;
-  setKickoff(value: IKickoffClient): void;
+  setKickoff(value: ITemplateKickoffClient): void;
 }
 
 export function KickoffRedux({
@@ -84,7 +84,7 @@ export function KickoffRedux({
     setIsOpen(!isOpen);
   };
 
-  const handleChangeKickoff = (newKickoff: IKickoffClient) => {
+  const handleChangeKickoff = (newKickoff: ITemplateKickoffClient) => {
     setKickoff(newKickoff);
   };
 

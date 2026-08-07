@@ -115,7 +115,7 @@ import { sendWorkflowComment } from '../../api/sendWorkflowComment';
 import { finishWorkflow } from '../../api/finishWorkflow';
 import { editWorkflow, IEditWorkflowResponse } from '../../api/editWorkflow';
 import { getTemplatesTitles, TGetTemplatesTitlesResponse } from '../../api/getTemplatesTitles';
-import { IKickoffClient, ITemplateResponse, TTemplatePreset } from '../../types/template';
+import { IRuntimeKickoffClient, ITemplateResponse, TTemplatePreset } from '../../types/template';
 import { getWorkflowLogStore } from '../selectors/workflowLog';
 
 import { TChannelAction } from '../tasks/saga';
@@ -128,7 +128,6 @@ import { deleteWorkflow } from '../../api/deleteWorkflow';
 import { getTemplate } from '../../api/getTemplate';
 import { getRunnableWorkflow, loadDatasetsMap } from '../../components/TemplateEdit/utils/getRunnableWorkflow';
 import { mapTemplateFieldsetsToRuntime } from '../../utils/mapTemplateFieldsetsToRuntime';
-import { IFieldsetRuntime } from '../../types/fieldset';
 import { getClonedKickoff } from '../../components/Workflows/WorkflowsGridPage/WorkflowCard/utils/getClonedKickoff';
 import { getWorkflowsCurrentPerformerCounters } from '../../api/getWorkflowsCurrentPerformerCounters';
 import { getWorkflowsStartersCounters } from '../../api/getWorkflowsStartersCounters';
@@ -640,7 +639,7 @@ export function* cloneWorkflowSaga({
       return;
     }
 
-    const kickoff: IKickoffClient = yield getClonedKickoff(
+    const kickoff: IRuntimeKickoffClient = yield getClonedKickoff(
       formattedworkflowDetails.kickoff, normalizedTemplate.kickoff,
     );
 
@@ -649,9 +648,7 @@ export function* cloneWorkflowSaga({
         ...runnableWorkflow,
         name: `${workflowName} (Clone)`,
         kickoff,
-        // TODO (Technical Debt): Sync cloned fieldsets into loadedFieldsets for WorkflowEditPopup modal.
-        // Cast is required due to shared IKickoffClient type usage across editor & runtime contexts.
-        loadedFieldsets: (kickoff.fieldsets || []) as unknown as IFieldsetRuntime[],
+        loadedFieldsets: kickoff.fieldsets || [],
       }),
     );
   } catch (error) {

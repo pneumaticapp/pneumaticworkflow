@@ -2,7 +2,7 @@
 /* prettier-ignore */
 import { reducer, INIT_STATE } from '../reducer';
 import { openRunWorkflowModal } from '../actions';
-import { IKickoffClient, EExtraFieldType } from '../../../types/template';
+import { EExtraFieldType, ITemplateKickoffClient } from '../../../types/template';
 import { makeFieldsetBindingClient, makeFieldsetRuntime } from '../../../__stubs__/fieldsets.factory';
 import { makeExtraField } from '../../../__stubs__/fields.factory';
 
@@ -22,7 +22,7 @@ describe('runWorkflowModal reducer', () => {
       wfNameTemplate: '',
     };
 
-    const kickoff: IKickoffClient = {
+    const kickoff: ITemplateKickoffClient = {
       description:
         'youtube: \nhttps://www.youtube.com/watch?v=JZRm7NKTPhk\n loom:\nhttps://www.loom.com/share/29f210bc12484eaa81ca462381fb4415?t=0\n 404 loom:\n\nhttps://www.loom.com/share/9853f0790ad2408094a3717bfcf4a0c0\nYoutube 404 :\n\nhttps://www.youtube.com/watch?v=D6hIeqZt22g',
       fields: [

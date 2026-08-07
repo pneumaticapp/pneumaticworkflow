@@ -6,7 +6,7 @@ import { useSelector } from 'react-redux';
 import { TaskDescriptionEditor } from './TaskDescriptionEditor';
 import { scrollToElement } from '../../../utils/helpers';
 import { TUserListItem } from '../../../types/user';
-import { IKickoffClient, ITemplateTaskClient } from '../../../types/template';
+import { ITemplateKickoffClient, ITemplateTaskClient } from '../../../types/template';
 import { TTaskVariable, TTaskFormPart, ETaskFormParts } from '../types';
 import { OutputFormIntl } from '../OutputForm/OutputForm';
 import { ShowMore } from '../../UI/ShowMore';
@@ -38,7 +38,7 @@ export interface ITaskFormProps {
   accountId: number;
   isTeamInvitesModalOpen: boolean;
   tasks: ITemplateTaskClient[];
-  kickoff: IKickoffClient;
+  kickoff: ITemplateKickoffClient;
   patchTask(args: TPatchTaskPayload): void;
 }
 
