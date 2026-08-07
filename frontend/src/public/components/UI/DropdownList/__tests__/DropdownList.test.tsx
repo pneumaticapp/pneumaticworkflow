@@ -66,6 +66,16 @@ describe('DropdownList', () => {
     expect(screen.queryByRole('menu')).not.toBeInTheDocument();
   });
 
+  it('keeps a single select value selected when it is picked again', () => {
+    const onChange = jest.fn();
+    render(<DropdownList options={[option]} value={option} title="Pick a value" onChange={onChange} />);
+
+    openMenu('Pick a value');
+    fireEvent.click(screen.getByRole('option', { name: option.label }));
+
+    expect(onChange).toHaveBeenCalledWith(option, { action: 'select-option', option });
+  });
+
   it('toggles selection and keeps the menu open for multi select', () => {
     const onChange = jest.fn();
     render(

@@ -129,6 +129,25 @@ describe('FilterSelect', () => {
     expect(onChange).toHaveBeenCalledWith([1, 2], [{ id: 1, name: 'One' }, { id: 2, name: 'Two' }]);
   });
 
+  it('offers the reset entry in multi select, where selectedOption is undefined', () => {
+    const resetFilter = jest.fn();
+    render(
+      <FilterSelect
+        {...commonProps}
+        options={[{ id: 1, name: 'One' }]}
+        isMultiple
+        selectedOptions={[1]}
+        noValueLabel="Reset templates"
+        resetFilter={resetFilter}
+      />,
+    );
+    openDropdown();
+
+    userEvent.click(screen.getByRole('button', { name: 'Reset templates' }));
+
+    expect(resetFilter).toHaveBeenCalledTimes(1);
+  });
+
   it('shows only the empty state when search has no matches', () => {
     render(
       <FilterSelect

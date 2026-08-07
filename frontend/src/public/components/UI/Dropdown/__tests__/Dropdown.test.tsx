@@ -70,6 +70,29 @@ describe('Dropdown', () => {
     expect(screen.getByRole('button', { name: 'More' })).toHaveAttribute('aria-expanded', 'false');
   });
 
+  it('collapses the submenu again after a nested option is chosen', () => {
+    const onNested = jest.fn();
+    render(
+      <Dropdown
+        renderToggle={() => 'Actions'}
+        options={[{ label: 'More', subOptions: [{ label: 'Nested action', onClick: onNested }] }]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Actions' }));
+    fireEvent.click(screen.getByRole('button', { name: 'More' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Nested action' }));
+
+    expect(onNested).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Actions' }));
+
+    expect(screen.getAllByRole('menu')).toHaveLength(1);
+    expect(screen.getByRole('button', { name: 'More' })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByRole('button', { name: 'Nested action' })).not.toBeInTheDocument();
+  });
+
   it('uses the wide surface for root custom content', () => {
     render(
       <Dropdown

@@ -91,7 +91,8 @@ export function FilterSelectMenu<IdKey extends string, LabelKey extends string, 
           </div>
         ) : (
           <>
-            {selectedOptionId !== null && selectedOptionId !== undefined && noValueLabel && (
+            {/* Multi select leaves selectedOptionId undefined and still needs the reset entry. */}
+            {selectedOptionId !== null && noValueLabel && (
               <button type="button" className={styles['value-item']} onClick={onReset}>{noValueLabel}</button>
             )}
             {isMultiple && selectAllLabel && (

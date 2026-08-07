@@ -82,15 +82,16 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
       return;
     }
 
-    const wasSelected = isSelected(option);
+    // Only multi select can remove a value; re-picking the current single value keeps it selected.
+    const isRemoval = isMulti && isSelected(option);
     const getNextValue = () => {
       if (!isMulti) return option;
-      return wasSelected ? selectValue.filter((item) => !isSameOption(item, option)) : [...selectValue, option];
+      return isRemoval ? selectValue.filter((item) => !isSameOption(item, option)) : [...selectValue, option];
     };
     const nextValue = getNextValue();
 
     if (!isControlled) setUncontrolledValue(nextValue);
-    onChange?.(nextValue, { action: wasSelected ? 'deselect-option' : 'select-option', option });
+    onChange?.(nextValue, { action: isRemoval ? 'deselect-option' : 'select-option', option });
 
     if (searchText) handleSearchChange('');
     if (shouldCloseOnSelect) closeDropdown();
