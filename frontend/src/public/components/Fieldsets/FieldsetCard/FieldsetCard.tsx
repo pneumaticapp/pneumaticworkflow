@@ -26,6 +26,7 @@ export function FieldsetCard({
   title,
   rules,
   fields,
+  usage,
 }: IFieldsetCatalogItem) {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
@@ -51,6 +52,7 @@ export function FieldsetCard({
       title,
       rules,
       fields,
+      usage,
     }));
     dispatch(openEditModal());
   };

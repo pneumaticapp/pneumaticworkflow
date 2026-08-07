@@ -134,6 +134,7 @@ describe('FieldsetCard', () => {
           title: props.title,
           rules: props.rules,
           fields: props.fields,
+          usage: props.usage,
         }),
       );
       expect(mockDispatch).toHaveBeenCalledWith(openEditModal());

@@ -87,6 +87,7 @@ jest.mock('../../TaskOutputFlow/FieldsetIconPicker', () => ({
               labelPosition: 'top',
               layout: 'vertical',
               title: '',
+              usage: [],
             } as IFieldsetCatalogItem),
         },
         'Add fieldset New Set',

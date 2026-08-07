@@ -1545,4 +1545,8 @@ export const enMessages = {
   'template.fieldset-picker.empty': 'No fieldsets available. Create one first.',
   'fieldset.group-title': 'Fieldset: {name}',
   'fieldset.validation-error.sum-max': 'The sum of numeric fields in "{name}" must not exceed {value}.',
+  'fieldsets.usage.linked': 'Used in {count} {count, plural, one {template} other {templates}}. Editing is locked.',
+  'fieldsets.usage.not-linked': 'Not used in any template',
+  'fieldsets.usage.show': 'Show',
+  'fieldsets.usage.hide': 'Hide',
 };
