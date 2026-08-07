@@ -17,6 +17,7 @@ import { ERoutes } from '../../../constants/routes';
 
 import { ModifyDropdown, Button, FilterSelect } from '../../UI';
 import { EModifyDropdownToggle } from '../../UI/ModifyDropdown/types';
+import { DropdownList } from '../../UI/DropdownList';
 import { NotificationManager } from '../../UI/Notifications';
 import { FieldsetModal } from '../FieldsetModal/FieldsetModal';
 import { EFieldsetModalType } from '../FieldsetModal/types';
@@ -280,6 +281,31 @@ const FieldsetDetails = ({
           />
         </div>
       </header>
+
+      {fieldset.usage.length > 0 ? (
+        <div className={`${styles['usage-banner']} ${styles['usage-banner--linked']}`}>
+          <div className={styles['usage-banner__row']}>
+            <span>
+              {formatMessage({ id: 'fieldsets.usage.linked' }, { count: fieldset.usage.length })}
+            </span>
+            <DropdownList
+              controlSize="sm"
+              className={styles['usage-banner__dropdown']}
+              title={formatMessage({ id: 'fieldsets.usage.show' })}
+              options={fieldset.usage.map((template) => ({ label: template.name }))}
+              placement="left"
+              classNames={{
+                menuList: () => styles['usage-banner__menu-list'],
+                option: () => styles['usage-banner__option'],
+              }}
+            />
+          </div>
+        </div>
+      ) : (
+        <div className={`${styles['usage-banner']} ${styles['usage-banner--not-linked']}`}>
+          {formatMessage({ id: 'fieldsets.usage.not-linked' })}
+        </div>
+      )}
 
       <div className={styles['list']}>
         <h2 className={styles['section-title']}>{formatMessage({ id: 'fieldsets.settings-section' })}</h2>

@@ -284,3 +284,43 @@
   background-repeat: no-repeat;
   background-size: 200px 100%;
 }
+
+.usage-banner {
+  padding: 1.2rem 2rem;
+  border-radius: 0.8rem;
+  margin-bottom: 2rem;
+  @mixin text-base;
+}
+
+.usage-banner--linked {
+  background-color: var(--pneumatic-color-beige);
+}
+
+.usage-banner--not-linked {
+  background-color: var(--pneumatic-color-black8);
+  color: var(--pneumatic-color-black48);
+}
+
+.usage-banner__row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.usage-banner .usage-banner__row .usage-banner__dropdown .usage-banner__menu-list {
+  min-width: 24rem !important;
+  max-width: 24rem;
+}
+
+.usage-banner .usage-banner__row .usage-banner__dropdown .usage-banner__option {
+  display: block !important;
+  @mixin text-truncate;
+}
+
+.usage-banner__dropdown button {
+  background: none;
+
+  p {
+    color: var(--pneumatic-color-link-dark);
+    font-weight: normal;
+  }
+}

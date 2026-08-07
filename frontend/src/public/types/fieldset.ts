@@ -41,9 +41,10 @@ export interface IFieldsetCatalogItem {
   title: string;
   rules: IFieldsetTemplateRule[];
   fields: IFieldsetField[];
+  usage: { id: number; name: string }[];
 }
 
-export interface IFieldsetBinding extends Omit<IFieldsetCatalogItem, 'id'> {
+export interface IFieldsetBinding extends Omit<IFieldsetCatalogItem, 'id' | 'usage'> {
   sharedFieldsetId: number;
 }
 
