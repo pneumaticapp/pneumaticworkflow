@@ -30,18 +30,18 @@
 
 .dropdown-menu {
   z-index: 1000;
-  padding: 0.4rem;
   overflow: hidden;
   width: 19.2rem;
   font-size: 1.5rem;
   font-weight: normal;
-  background: var(--pneumatic-color-white);
-  border-radius: 0.8rem;
-  box-shadow: 0 0.8rem 1.6rem var(--pneumatic-color-black95);
 }
 
 .dropdown-menu_wide {
   width: 30.4rem;
+}
+
+.dropdown-menu_with-submenu {
+  overflow: visible;
 }
 
 .dropdown-item {
@@ -78,14 +78,29 @@
 
 .dropdown-item_green {
   color: var(--pneumatic-color-success);
+
+  &:hover,
+  &:focus-visible {
+    color: var(--pneumatic-color-success);
+  }
 }
 
 .dropdown-item_red {
   color: var(--pneumatic-color-warning);
+
+  &:hover,
+  &:focus-visible {
+    color: var(--pneumatic-color-warning);
+  }
 }
 
 .dropdown-item_orange {
   color: var(--pneumatic-color-link-dark);
+
+  &:hover,
+  &:focus-visible {
+    color: var(--pneumatic-color-link-dark);
+  }
 }
 
 .dropdown-item-icon {

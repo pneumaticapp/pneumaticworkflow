@@ -1,3 +1,5 @@
 .content {
   padding: 1.6rem;
+  width: max-content;
+  max-width: calc(100vw - 1.6rem);
 }

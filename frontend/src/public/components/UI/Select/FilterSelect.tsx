@@ -45,7 +45,11 @@ export function FilterSelect<
   const [isClearHovered, setClearHovered] = useState(false);
   const allOptions = flatGroupedOptions || options;
   const getSelectionKey = getOptionSelectionKey || ((option: TOption) => option[optionIdKey]);
-  const isSelectAll = Boolean(isMultiple && allOptions.length && selectedOptions.length === allOptions.length);
+  const isSelectAll = Boolean(
+    isMultiple
+    && allOptions.length
+    && allOptions.every((option) => selectedOptions.includes(getSelectionKey(option))),
+  );
 
   const filterOptions = (items: TOption[]) => {
     const query = searchText.toLowerCase();
@@ -98,7 +102,10 @@ export function FilterSelect<
     >
       <Dropdown
         direction="right"
-        className={styles['filter-select__dropdown']}
+        className={classnames(
+          styles['filter-select__dropdown'],
+          hasSelectedOptions && styles['filter-select__dropdown_clearable'],
+        )}
         toggleProps={{
           className: classnames(
             styles['active-value'],

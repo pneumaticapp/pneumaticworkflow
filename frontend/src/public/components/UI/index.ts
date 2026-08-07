@@ -4,6 +4,7 @@ export * from './Buttons/DropdownButton';
 export * from './Buttons/AddCardButton';
 export * from './CustomTooltip';
 export * from './DropdownList';
+export * from './DropdownSurface';
 export * from './DropdownControl';
 export * from './Duration';
 export * from './EditableText';

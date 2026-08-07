@@ -114,7 +114,6 @@ export function ConditionValueField({
         onChange={(option: IDropdownSelection) => {
           changeRuleValue(option.value);
         }}
-        isClearable={false}
         options={dropdownSelections}
         formatOptionLabel={(option: IDropdownSelection, { context }) =>
           context === 'menu'
@@ -125,7 +124,7 @@ export function ConditionValueField({
               })
             : option.label
         }
-        classNames={{ menu: () => styles['condition__value-field-select-menu'] }}
+        menuClassName={styles['condition__value-field-select-menu']}
       />
     );
   }
@@ -165,9 +164,8 @@ export function ConditionValueField({
           const kind = (option as any).entityType === 'user' ? 'user' : 'group';
           changeRuleValue(option.id, kind);
         }}
-        isClearable={false}
         options={dropdownEntities}
-        formatOptionLabel={(option: IDropdownUser, { context }) =>
+        formatOptionLabel={(option, { context }) =>
           context === 'menu'
             ? getFormattedDropdownOption({
                 label: option.label,
@@ -176,7 +174,7 @@ export function ConditionValueField({
               })
             : option.label
         }
-        classNames={{ menu: () => styles['condition__value-field-select-menu'] }}
+        menuClassName={styles['condition__value-field-select-menu']}
       />
     );
   }

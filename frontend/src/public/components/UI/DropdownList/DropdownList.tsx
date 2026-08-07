@@ -1,260 +1,215 @@
-import * as React from 'react';
-import { useEffect, useRef, useState } from 'react';
+import React, { ReactNode, useMemo, useState } from 'react';
 import classnames from 'classnames';
-import Select, { components } from 'react-select';
 import { FieldHookConfig, useField } from 'formik';
-import PerfectScrollbar from 'react-perfect-scrollbar';
-import OutsideClickHandler from 'react-outside-click-handler';
 
-import { ArrowDropdownIcon, RoundClearIconMd } from '../../icons';
+import { ArrowDropdownIcon } from '../../icons';
+import { Dropdown } from '../Dropdown';
 import { DropdownControl } from '../DropdownControl';
-import { DropdownOption } from './DropdownOption';
-import { IDropdownListProps, TControlSize, TDropdownOptionBase } from './types';
+import { DropdownSurface } from '../DropdownSurface';
+import { DropdownListMenu } from './DropdownListMenu';
+import { IDropdownListProps, TDropdownOptionBase } from './types';
+import { flattenOptions, getDefaultOptionValue, getOptionSearchText, isOptionGroup, toArray } from './utils';
 
-import '../../../assets/css/library/react-select.css';
 import styles from './DropdownList.css';
 
 export function DropdownList<TOption extends TDropdownOptionBase>({
-  controlSize = 'lg',
+  options,
+  value,
+  defaultValue,
+  onChange,
+  isMulti = false,
+  isSearchable = false,
+  isDisabled = false,
+  isRequired = false,
   label,
   title,
+  placeholder,
+  controlSize = 'lg',
   className,
-  isMulti,
-  ...restProps
+  controlClassName,
+  menuClassName,
+  placement,
+  staticMenu = false,
+  closeMenuOnSelect,
+  errorMessage,
+  noOptionsMessage,
+  getOptionLabel,
+  getOptionValue,
+  formatOptionLabel,
+  filterOption,
+  onInputChange,
 }: IDropdownListProps<TOption>) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [filterValue, setFilterValue] = useState('');
+  const [searchText, setSearchText] = useState('');
+  const [uncontrolledValue, setUncontrolledValue] = useState<TOption | TOption[] | null>(defaultValue ?? null);
+  const isControlled = value !== undefined;
+  const selectValue = toArray(isControlled ? value : uncontrolledValue);
+  const shouldCloseOnSelect = closeMenuOnSelect ?? !isMulti;
 
-  const handleInputChange = (inputValue: string, action: any) => {
-    if (action.action === 'set-value') {
-      setFilterValue('');
-    }
-    if (action.action === 'input-change') {
-      setFilterValue(inputValue);
-    }
-    if (restProps.onInputChange) {
-      restProps.onInputChange(inputValue, action);
-    }
+  const optionKey = (option: TOption) => (getOptionValue ? getOptionValue(option) : getDefaultOptionValue(option));
+  const isSameOption = (a: TOption, b: TOption) => {
+    const keyA = optionKey(a);
+    const keyB = optionKey(b);
+    if (keyA !== undefined && keyB !== undefined) return keyA === keyB;
+    return a === b;
+  };
+  const isSelected = (option: TOption) => selectValue.some((selected) => isSameOption(selected, option));
+
+  const filteredOptions = useMemo(() => {
+    const matches = (option: TOption) => {
+      if (!searchText) return true;
+      const optionLabel = getOptionSearchText(option, getOptionLabel);
+      if (filterOption) {
+        return filterOption({ label: optionLabel, value: optionKey(option) || '', data: option }, searchText);
+      }
+
+      return optionLabel.toLowerCase().includes(searchText.toLowerCase());
+    };
+
+    return options
+      .map((item) => (isOptionGroup(item) ? { ...item, options: item.options.filter(matches) } : item))
+      .filter((item) => (isOptionGroup(item) ? item.options.length > 0 : matches(item)));
+  }, [options, searchText, filterOption, getOptionLabel, getOptionValue]);
+
+  const handleSearchChange = (nextSearch: string) => {
+    setSearchText(nextSearch);
+    onInputChange?.(nextSearch);
   };
 
-  const componentsMap: { [key in TControlSize]: any } = {
-    lg: {
-      Option,
-      DropdownIndicator,
-      MenuList: MenuListLG,
-      IndicatorSeparator: () => null,
-    },
-    sm: {
-      Menu: MenuSM,
-      Option,
-      Control: !restProps.staticMenu ? ControlSM(title || '', isOpen, setIsOpen) : () => null,
-      ...(!restProps.staticMenu && { Input: () => null }),
-      ValueContainer: () => null,
-      MenuList: MenuListSM,
-    },
+  const handleSelect = (option: TOption, closeDropdown: () => void) => {
+    // Options may carry their own action (invite a teammate, select all) instead of being selectable.
+    if (option.onClick) {
+      option.onClick();
+      return;
+    }
+
+    const wasSelected = isSelected(option);
+    const getNextValue = () => {
+      if (!isMulti) return option;
+      return wasSelected ? selectValue.filter((item) => !isSameOption(item, option)) : [...selectValue, option];
+    };
+    const nextValue = getNextValue();
+
+    if (!isControlled) setUncontrolledValue(nextValue);
+    onChange?.(nextValue, { action: wasSelected ? 'deselect-option' : 'select-option', option });
+
+    if (searchText) handleSearchChange('');
+    if (shouldCloseOnSelect) closeDropdown();
   };
 
-  if (label && controlSize === 'lg') {
+  const renderMenu = (closeDropdown: () => void) => (
+    <DropdownListMenu<TOption>
+      options={filteredOptions}
+      isMulti={isMulti}
+      isSearchable={isSearchable}
+      placeholder={placeholder}
+      noOptionsMessage={noOptionsMessage}
+      selectValue={selectValue}
+      searchText={searchText}
+      getOptionLabel={getOptionLabel}
+      formatOptionLabel={formatOptionLabel}
+      onSearchChange={handleSearchChange}
+      onSelect={(option) => handleSelect(option, closeDropdown)}
+      isSelected={isSelected}
+    />
+  );
+
+  const labelNode = label ? (
+    <p className={styles['dropdown-list__label']}>
+      {label}
+      {isRequired && <span className={styles['dropdown-list__required']}>*</span>}
+    </p>
+  ) : null;
+  const errorNode = errorMessage ? <p className={styles['dropdown-list__error']}>{errorMessage}</p> : null;
+
+  if (staticMenu) {
     return (
-      <div className={classnames('react-select', restProps.isDisabled && 'is-disabled', className)}>
-        <div className={classnames(styles['dropdownlist-lg__control'], label && styles['is-label'])}>
-          {label && (
-            <p className={styles['dropdownlist-lg__label']}>
-              {label}
-              {restProps.isRequired && <span className={styles['is-required']}>*</span>}
-            </p>
-          )}
-
-          <Select
-            isMulti={isMulti}
-            closeMenuOnSelect={!isMulti}
-            hideSelectedOptions={false}
-            controlShouldRenderValue={!isMulti}
-            tabSelectsValue={false}
-            isClearable={false}
-            classNamePrefix="react-select"
-            components={componentsMap[controlSize]}
-            onInputChange={handleInputChange}
-            className={classnames(restProps.errorMessage && styles['has-error'])}
-            {...restProps}
-          />
-          
-          {restProps.errorMessage && <p className={styles['error-text']}>{restProps.errorMessage}</p>}
-        </div>
+      <div className={classnames(styles['dropdown-list'], isDisabled && styles['dropdown-list_disabled'], className)}>
+        {labelNode}
+        <DropdownSurface className={classnames(styles['dropdown-list__menu_static'], menuClassName)}>
+          {renderMenu(() => undefined)}
+        </DropdownSurface>
+        {errorNode}
       </div>
     );
   }
 
-  return (
-    <div
-      className={classnames(
-        'react-select',
-        restProps.isDisabled && 'is-disabled',
-        className,
-        restProps.staticMenu && 'is-static',
-      )}
-    >
-      {label && (
-        <p className={styles['dropdownlist-lg__label']}>
-          {label}
-          {restProps.isRequired && <span className={styles['is-required']}>*</span>}
-        </p>
-      )}
-      <OutsideClickHandler onOutsideClick={() => setIsOpen(false)}>
-        <Select
-          isMulti={isMulti}
-          closeMenuOnSelect={!isMulti}
-          hideSelectedOptions={false}
-          controlShouldRenderValue={!isMulti}
-          tabSelectsValue={false}
-          isClearable={false}
-          classNamePrefix="react-select"
-          components={componentsMap[controlSize]}
-          inputValue={filterValue}
-          onInputChange={handleInputChange}
-          {...restProps}
-          {...(controlSize === 'sm' && !restProps.staticMenu && { menuIsOpen: isOpen })}
-          {...(restProps.staticMenu && { menuIsOpen: true })}
-        />
-      </OutsideClickHandler>
-      {restProps.errorMessage && <p className={styles['error-text']}>{restProps.errorMessage}</p>}
-    </div>
-  );
-}
-
-function ControlSM(title: string, isOpen: boolean, onClick: (isOpen: boolean) => void) {
-  return (props: any) => {
-    return (
-      <button
-        type="button"
-        aria-label={title || undefined}
-        aria-expanded={isOpen}
-        className={classnames('react-select_controlllll', styles['dropdownlist-sm__control'])}
-        onClick={() => onClick(!isOpen)}
-      >
-        <DropdownControl title={title || props?.selectProps.value.label} isOpen={isOpen} />
-      </button>
-    );
-  };
-}
-
-const DropdownIndicator = ({ isDisabled }: any) => {
-  return !isDisabled ? <ArrowDropdownIcon /> : null;
-};
-
-const MenuSM = ({ children, ...props }: any) => {
-  return (
-    <div
-      className={classnames(
-        'react-select__menu-list',
-        props.selectProps.staticMenu ? 'is-static' : 'is-sm',
-        props.selectProps.placement === 'left' && 'is-left',
-      )}
-    >
-      <components.Menu {...props}>{children}</components.Menu>
-    </div>
-  );
-};
-
-const MenuListLG = ({ selectProps, ...props }: any) => {
-  const ScrollBar = PerfectScrollbar as unknown as Function;
-
-  return (
-    <ScrollBar
-      className={styles['dropdownlist__scrollbar']}
-      options={{ suppressScrollX: true, wheelPropagation: false }}
-    >
-      {props.children}
-    </ScrollBar>
-  );
-};
-
-const MenuListSM = ({ selectProps, ...props }: any) => {
-  const ScrollBar = PerfectScrollbar as unknown as Function;
-  const searchInputRef = useRef<HTMLInputElement>(null);
-  const { onInputChange, inputValue, onMenuInputFocus, placeholder, isSearchable } = selectProps;
-
-  useEffect(() => {
-    if (isSearchable) {
-      searchInputRef.current?.focus();
+  // The control never renders chips for multi select — selected items are shown by the consumer.
+  const selectedOption = isMulti ? undefined : selectValue[0];
+  const getSelectedLabel = (): ReactNode => {
+    if (!selectedOption) return null;
+    if (formatOptionLabel) {
+      return formatOptionLabel(selectedOption, { context: 'value', selectValue, inputValue: searchText });
     }
-  }, [isSearchable]);
 
-  const ariaAttributes = {
-    'aria-label': selectProps['aria-label'],
-    'aria-labelledby': selectProps['aria-labelledby'],
+    return getOptionLabel ? getOptionLabel(selectedOption) : selectedOption.label;
   };
+  const selectedLabel = getSelectedLabel();
 
   return (
-    <div>
-      {isSearchable && (
-        <div className={styles['dropdownlist-sm__search']}>
-          <input
-            ref={searchInputRef}
-            type="text"
-            value={inputValue}
-            onChange={(e) =>
-              onInputChange(e.currentTarget.value, {
-                action: 'input-change',
-              })
-            }
-            onMouseDown={(e) => e.stopPropagation()}
-            onTouchEnd={(e) => e.stopPropagation()}
-            onFocus={onMenuInputFocus}
-            placeholder={placeholder}
-            {...ariaAttributes}
-          />
-          {inputValue && (
-            <button
-              className={styles['dropdownlist-sm__clear']}
-              type="button"
-              aria-label="button"
-              onClick={() =>
-                onInputChange('', {
-                  action: 'input-change',
-                })
-              }
-            >
-              <RoundClearIconMd />
-            </button>
-          )}
-        </div>
+    <div
+      className={classnames(
+        styles['dropdown-list'],
+        label && styles['dropdown-list_labeled'],
+        isDisabled && styles['dropdown-list_disabled'],
+        className,
       )}
-
-      <ScrollBar
-        className={styles['dropdownlist__scrollbar']}
-        options={{ suppressScrollX: true, wheelPropagation: false }}
+    >
+      {labelNode}
+      <Dropdown
+        isDisabled={isDisabled}
+        direction={placement === 'left' ? 'right' : undefined}
+        className={styles['dropdown-list__dropdown']}
+        toggleProps={{
+          className: styles['dropdown-list__toggle'],
+          'aria-label': title || label,
+        }}
+        menuClassName={classnames(styles[`dropdown-list__menu_${controlSize}`], menuClassName)}
+        renderToggle={(isOpen) => (controlSize === 'sm' ? (
+          <DropdownControl
+            title={title || selectedLabel || placeholder}
+            isOpen={isOpen}
+            className={controlClassName}
+          />
+        ) : (
+          <span
+            className={classnames(
+              styles['dropdown-list__control'],
+              isOpen && styles['dropdown-list__control_open'],
+              controlClassName,
+            )}
+          >
+            <span
+              className={classnames(
+                styles['dropdown-list__value'],
+                !selectedLabel && styles['dropdown-list__value_placeholder'],
+              )}
+            >
+              {selectedLabel || placeholder}
+            </span>
+            <ArrowDropdownIcon
+              className={classnames(styles['dropdown-list__arrow'], isOpen && styles['dropdown-list__arrow_open'])}
+            />
+          </span>
+        ))}
       >
-        {props.children}
-      </ScrollBar>
+        {({ closeDropdown }) => renderMenu(closeDropdown)}
+      </Dropdown>
+      {errorNode}
     </div>
   );
-};
+}
 
-const Option = (props: any) => {
-  const { children, innerProps, data, isSelected, selectProps } = props;
-  if (data.onClick) innerProps.onClick = data.onClick;
-
-  return (
-    <components.Option {...props}>
-      {selectProps.formatOptionLabel
-        ? children
-        : <DropdownOption label={children} isSelected={isSelected} />}
-    </components.Option>
-  );
-};
-
-export function FormikDropdownList(props: IDropdownListProps<TDropdownOptionBase> & FieldHookConfig<string>) {
+export function FormikDropdownList(
+  props: IDropdownListProps<TDropdownOptionBase> & FieldHookConfig<string>,
+) {
   const { name, options, type } = props;
   const [field, meta, { setValue }] = useField(name);
-
-  const onChange = ({ value }: any) => setValue(value);
 
   return (
     <DropdownList
       {...props}
-      onChange={onChange}
-      value={options.find((option) => option.value === field.value)}
+      onChange={({ value }: TDropdownOptionBase) => setValue(String(value))}
+      value={flattenOptions(options).find((option) => option.value === field.value)}
       {...(meta.touched && meta.error && type !== 'hidden' && { errorMessage: meta.error })}
     />
   );

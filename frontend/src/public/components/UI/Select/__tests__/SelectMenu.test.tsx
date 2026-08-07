@@ -35,4 +35,12 @@ describe('SelectMenu', () => {
 
     expect(mockProps.onChange).not.toHaveBeenCalled();
   });
+
+  it('closes after selection when closeOnSelect is enabled', () => {
+    render(<SelectMenu {...mockProps} closeOnSelect />);
+    fireEvent.click(screen.getByRole('button', { name: 'sorting.date-desc' }));
+    fireEvent.click(screen.getByRole('menuitemradio', { name: 'sorting.date-asc' }));
+
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+  });
 });

@@ -1,12 +1,13 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 
-import { ConditionDropdownOption } from '../ConditionDropdownOption';
-import { IConditionDropdownOptionProps } from '../types';
+import { DropdownOption } from '../../../../UI/DropdownList';
 
-type TGetFormattedDropdownOptionParams = Omit<IConditionDropdownOptionProps, 'withTooltip'> & {
+interface IGetFormattedDropdownOptionParams {
+  label: ReactNode;
+  isSelected?: boolean;
   isTooltip?: boolean;
-};
+}
 
-export const getFormattedDropdownOption = ({ label, isSelected, isTooltip }: TGetFormattedDropdownOptionParams) => (
-  <ConditionDropdownOption label={label} isSelected={isSelected} withTooltip={isTooltip} />
+export const getFormattedDropdownOption = ({ label, isSelected, isTooltip }: IGetFormattedDropdownOptionParams) => (
+  <DropdownOption label={label} isSelected={isSelected} withTooltip={isTooltip} />
 );

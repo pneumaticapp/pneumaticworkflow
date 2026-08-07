@@ -5,6 +5,7 @@ import { usePopper } from 'react-popper';
 
 import { useCheckDevice } from '../../../hooks/useCheckDevice';
 import { useDidUpdateEffect } from '../../../hooks/useDidUpdateEffect';
+import { DropdownSurface } from '../DropdownSurface';
 import { DropdownOptions } from './DropdownOptions';
 import { IDropdownProps } from './types';
 
@@ -87,19 +88,28 @@ export function Dropdown({
       />
     ));
   const menuContent = renderMenuContent?.(renderedContent) || renderedContent;
-  const isWide = Array.isArray(options) && options.length > 0 && options.every((option) => option.size === 'lg');
-  const menu = menuContent ? (
-    <div
+  const isWide = options && !Array.isArray(options)
+    ? Boolean(options.customSubOption)
+    : Boolean(options?.length && options.every((option) => option.size === 'lg'));
+  const hasSubmenu = Boolean(Array.isArray(options) && options.some((option) => (
+    option.customSubOption || (Array.isArray(option.subOptions) && option.subOptions.length)
+  )));
+  const menu = isOpen && menuContent ? (
+    <DropdownSurface
       ref={setMenuElement}
       role="menu"
       tabIndex={-1}
-      hidden={!isOpen}
-      className={classnames(styles['dropdown-menu'], isWide && styles['dropdown-menu_wide'], menuClassName)}
+      className={classnames(
+        styles['dropdown-menu'],
+        isWide && styles['dropdown-menu_wide'],
+        hasSubmenu && styles['dropdown-menu_with-submenu'],
+        menuClassName,
+      )}
       style={popperStyles.popper}
       {...attributes.popper}
     >
       {menuContent}
-    </div>
+    </DropdownSurface>
   ) : null;
   let portalTarget: Element | null | undefined;
   if (typeof document !== 'undefined') {

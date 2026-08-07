@@ -1,4 +1,4 @@
-import { ReactNode, SVGAttributes } from 'react';
+import { ChangeEvent, ReactNode, SVGAttributes } from 'react';
 
 export type TOptionId = number | string | null;
 export type TOptionBase<IdKey extends string, LabelKey extends string> = {
@@ -65,6 +65,33 @@ export type TFilterSelectProps<
   TOption extends TOptionBase<IdKey, LabelKey>,
 > = IFilterSelectCommonProps<IdKey, LabelKey, TOption> &
   (IFilterSelectMultiOptionsProps | IFilterSelectSingleOptionsProps);
+
+export interface IFilterSelectMenuProps<
+  IdKey extends string,
+  LabelKey extends string,
+  TOption extends TOptionBase<IdKey, LabelKey>,
+> {
+  options: Array<TOption | string>;
+  optionIdKey: IdKey;
+  optionLabelKey: LabelKey;
+  selectedOptionId: number | string | null | undefined;
+  isMultiple: boolean;
+  isLoading?: boolean;
+  isSearchShown?: boolean;
+  searchText: string;
+  searchPlaceholder?: string;
+  placeholderText: string;
+  noValueLabel?: string;
+  selectAllLabel?: string;
+  isSelectAll: boolean;
+  isSelected(option: TOption): boolean;
+  onSearchChange(event: ChangeEvent<HTMLInputElement>): void;
+  onClearSearch(): void;
+  onReset(): void;
+  onSelectAll(): void;
+  onSelect(option: TOption): void;
+  closeDropdown(): void;
+}
 
 export interface ISelectMenuProps<T extends string> {
   withRadio?: boolean;

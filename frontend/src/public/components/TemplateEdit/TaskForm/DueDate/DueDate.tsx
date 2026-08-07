@@ -113,7 +113,6 @@ export function DueDate({ dueDate, currentTask, tasks, kickoff, onChange }: IDue
                     rulePreposition: option.rulePreposition,
                   });
                 }}
-                isClearable={false}
                 options={prepositionOptions}
               />
             </div>
@@ -129,7 +128,6 @@ export function DueDate({ dueDate, currentTask, tasks, kickoff, onChange }: IDue
                     ruleTarget: option.ruleTarget,
                   });
                 }}
-                isClearable={false}
                 options={[
                   {
                     label: 'System events',

@@ -105,7 +105,7 @@ export function ReturnTo({ variables, tasks, currentTaskRevertTask, setCurrentTa
         <div className={STYLES.dropdownContainer}>
           <DropdownList<IDropdownTask>
             placeholder={formatMessage({ id: TRANSLATIONS.placeholder })}
-            value={selectedTask}
+            value={selectedTask || null}
             getOptionLabel={(option: any) => option.richLabel}
             onChange={handleOptionChange}
             options={dropdownTaskList}

@@ -24,6 +24,12 @@ export interface IDropdownRenderProps {
   closeDropdown(): void;
 }
 
+export interface IDropdownOptionsProps {
+  options: TDropdownOption[] | TDropdownOption;
+  closeDropdown(): void;
+  isFromBreakdownItem?: boolean;
+}
+
 export interface IDropdownProps {
   options?: TDropdownOption[] | TDropdownOption;
   children?: ReactNode | ((props: IDropdownRenderProps) => ReactNode);

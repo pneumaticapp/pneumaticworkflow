@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useIntl } from 'react-intl';
-import { ActionMeta, FormatOptionLabelMeta } from 'react-select';
 
-import { DropdownList } from '../..';
+import { DropdownList, IDropdownActionMeta, IFormatOptionLabelMeta } from '../../DropdownList';
 import { UsersDropdownOption } from './UsersDropdownOption';
 import { EOptionTypes, IUsersDropdownProps, TUsersDropdownOption } from './types';
 
@@ -67,8 +66,7 @@ export function UsersDropdownComponent<TOption extends TUsersDropdownOption>({
     if (isInvitingUsers) onUsersInvited?.(recentInvitedUsers);
   }, [recentInvitedUsers]);
 
-  const handleOnChange = (newValue: TOption, { action, option }: ActionMeta<TOption>) => {
-    if (action === 'pop-value') return;
+  const handleOnChange = (newValue: TOption, { action, option }: IDropdownActionMeta<TOption>) => {
     if (isMulti && option) {
       if (onChangeSelected && action === 'deselect-option') {
         onChangeSelected(option);
@@ -83,7 +81,7 @@ export function UsersDropdownComponent<TOption extends TUsersDropdownOption>({
 
   const handleFormatOptionLabel = (
     option: TOption,
-    formatOptionLabelMeta: FormatOptionLabelMeta<TOption>,
+    formatOptionLabelMeta: IFormatOptionLabelMeta<TOption>,
   ) => {
     const isBuiltInOption = [EOptionTypes.InviteUsers, EOptionTypes.AllUsers].includes(option.optionType);
     const customLabel = !isBuiltInOption && formatOptionLabel

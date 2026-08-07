@@ -6,16 +6,10 @@ import { isArrayWithItems } from '../../../utils/helpers';
 import { ArrowRightIcon } from '../../icons';
 import { ConfirmableDropdownItem } from './ConfirmableDropdownItem';
 import { Dropdown } from './Dropdown';
-import { TDropdownOption } from './types';
+import { IDropdownOptionsProps } from './types';
 import { getDropdownItemColorClass } from './utils';
 
 import styles from './Dropdown.css';
-
-interface IDropdownOptionsProps {
-  options: TDropdownOption[] | TDropdownOption;
-  closeDropdown(): void;
-  isFromBreakdownItem?: boolean;
-}
 
 export function DropdownOptions({ options, closeDropdown, isFromBreakdownItem }: IDropdownOptionsProps) {
   const { isMobile } = useCheckDevice();
@@ -45,6 +39,7 @@ export function DropdownOptions({ options, closeDropdown, isFromBreakdownItem }:
           return (
             <Dropdown
               key={`submenu-${key}`}
+              options={option.subOptions || option}
               placement="right-start"
               className={option.className}
               toggleProps={{ className: itemClassName }}

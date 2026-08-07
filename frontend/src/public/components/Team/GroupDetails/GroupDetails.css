@@ -62,16 +62,19 @@
   }
 }
 
-.test button {
-  margin: 0;
-  padding: 0;
+.sorting-control {
   text-transform: uppercase;
   background-color: transparent;
 
-  p {
+  /* The value label; the arrow icon is an svg and stays visible on mobile. */
+  > span {
     @mixin text-small-extra bold;
 
-    color: #262522;
+    color: var(--pneumatic-color-black100);
+
+    @media (--mobile) {
+      display: none;
+    }
   }
 }
 
@@ -82,12 +85,4 @@
 
 .placeholder {
   margin-top: 3.2rem;
-}
-
-:global .react-select_controlllll {
-  @media (--mobile) {
-    span {
-      display: none !important;
-    }
-  }
 }

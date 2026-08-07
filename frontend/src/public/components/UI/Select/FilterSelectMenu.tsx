@@ -1,11 +1,11 @@
-import React, { ChangeEvent, KeyboardEvent, ReactNode } from 'react';
+import React, { KeyboardEvent, ReactNode } from 'react';
 import classnames from 'classnames';
 import PerfectScrollbar from 'react-perfect-scrollbar';
 
 import { Checkbox } from '../Fields/Checkbox';
 import { InputField } from '../Fields/InputField';
 import { Skeleton } from '../Skeleton';
-import { TOptionBase } from './types';
+import { IFilterSelectMenuProps, TOptionBase } from './types';
 
 import styles from './Select.css';
 
@@ -17,29 +17,6 @@ const SKELETON_ROWS = [
   { id: 'fourth', width: '60%' },
   { id: 'fifth', width: '70%' },
 ];
-
-interface IFilterSelectMenuProps<IdKey extends string, LabelKey extends string, TOption extends TOptionBase<IdKey, LabelKey>> {
-  options: Array<TOption | string>;
-  optionIdKey: IdKey;
-  optionLabelKey: LabelKey;
-  selectedOptionId: number | string | null | undefined;
-  isMultiple: boolean;
-  isLoading?: boolean;
-  isSearchShown?: boolean;
-  searchText: string;
-  searchPlaceholder?: string;
-  placeholderText: string;
-  noValueLabel?: string;
-  selectAllLabel?: string;
-  isSelectAll: boolean;
-  isSelected(option: TOption): boolean;
-  onSearchChange(event: ChangeEvent<HTMLInputElement>): void;
-  onClearSearch(): void;
-  onReset(): void;
-  onSelectAll(): void;
-  onSelect(option: TOption): void;
-  closeDropdown(): void;
-}
 
 const handleKeyboardAction = (event: KeyboardEvent, action: () => void) => {
   if (event.key !== 'Enter' && event.key !== ' ') return;
@@ -108,77 +85,78 @@ export function FilterSelectMenu<IdKey extends string, LabelKey extends string, 
         </>
       )}
       <ScrollBar className={styles['dropdown-menu__scrollbar']} options={{ suppressScrollX: true, wheelPropagation: false }}>
-        {!options.length && (
+        {!options.length ? (
           <div className={classnames(styles['value-item'], styles['value-item__disabled'])}>
             <span className={styles['dropdown-item__text_stub']}>{placeholderText}</span>
           </div>
-        )}
-        {selectedOptionId !== null && noValueLabel && (
-          <button type="button" className={styles['value-item']} onClick={onReset}>{noValueLabel}</button>
-        )}
-        {isMultiple && selectAllLabel && (
-          <div
-            role="menuitemcheckbox"
-            aria-checked={isSelectAll}
-            aria-label={selectAllLabel}
-            tabIndex={0}
-            className={classnames(styles['value-item'], styles['value-item__select-all'])}
-            onClick={onSelectAll}
-            onKeyDown={(event) => handleKeyboardAction(event, onSelectAll)}
-          >
-            <Checkbox
-              readOnly
-              checked={isSelectAll}
-              title={<span>{selectAllLabel}</span>}
-              onClick={onSelectAll}
-              containerClassName={styles['dropdown-item-check']}
-              labelClassName={styles['dropdown-item-check__label']}
-              titleClassName={styles['dropdown-item-check__title']}
-            />
-          </div>
-        )}
-        {options.map((option) => {
-          if (typeof option === 'string') {
-            return <div key={option} className={styles['dropdown-item-content__title']}>{option}</div>;
-          }
+        ) : (
+          <>
+            {selectedOptionId !== null && selectedOptionId !== undefined && noValueLabel && (
+              <button type="button" className={styles['value-item']} onClick={onReset}>{noValueLabel}</button>
+            )}
+            {isMultiple && selectAllLabel && (
+              <div
+                role="menuitemcheckbox"
+                aria-checked={isSelectAll}
+                aria-label={selectAllLabel}
+                tabIndex={0}
+                className={classnames(styles['value-item'], styles['value-item__select-all'])}
+                onClick={onSelectAll}
+                onKeyDown={(event) => handleKeyboardAction(event, onSelectAll)}
+              >
+                <Checkbox
+                  readOnly
+                  checked={isSelectAll}
+                  title={<span>{selectAllLabel}</span>}
+                  containerClassName={styles['dropdown-item-check']}
+                  labelClassName={styles['dropdown-item-check__label']}
+                  titleClassName={styles['dropdown-item-check__title']}
+                />
+              </div>
+            )}
+            {options.map((option) => {
+              if (typeof option === 'string') {
+                return <div key={option} className={styles['dropdown-item-content__title']}>{option}</div>;
+              }
 
-          const content: ReactNode = (
-            <div className={styles['dropdown-item-content']}>
-              <div className={styles['dropdown-item-content__text']}>{option[optionLabelKey]}</div>
-              {option.count !== undefined && <span className={styles['dropdown-item-content__count']}>{option.count}</span>}
-            </div>
-          );
-          const key = `${option.type || ''}-${option[optionIdKey]}`;
-          const select = () => {
-            onSelect(option);
-            if (!isMultiple) closeDropdown();
-          };
+              const content: ReactNode = (
+                <div className={styles['dropdown-item-content']}>
+                  <div className={styles['dropdown-item-content__text']}>{option[optionLabelKey]}</div>
+                  {option.count !== undefined && <span className={styles['dropdown-item-content__count']}>{option.count}</span>}
+                </div>
+              );
+              const key = `${option.type || ''}-${option[optionIdKey]}`;
+              const select = () => {
+                onSelect(option);
+                if (!isMultiple) closeDropdown();
+              };
 
-          return isMultiple ? (
-            <div
-              role="menuitemcheckbox"
-              aria-checked={isSelected(option)}
-              aria-label={typeof option[optionLabelKey] === 'string' ? option[optionLabelKey] as string : option.searchByText}
-              tabIndex={0}
-              key={key}
-              className={styles['value-item']}
-              onClick={select}
-              onKeyDown={(event) => handleKeyboardAction(event, select)}
-            >
-              <Checkbox
-                readOnly
-                checked={isSelected(option)}
-                title={content}
-                onClick={select}
-                containerClassName={styles['dropdown-item-check']}
-                labelClassName={styles['dropdown-item-check__label']}
-                titleClassName={styles['dropdown-item-check__title']}
-              />
-            </div>
-          ) : (
-            <button type="button" role="menuitem" key={key} className={styles['value-item']} onClick={select}>{content}</button>
-          );
-        })}
+              return isMultiple ? (
+                <div
+                  role="menuitemcheckbox"
+                  aria-checked={isSelected(option)}
+                  aria-label={typeof option[optionLabelKey] === 'string' ? option[optionLabelKey] as string : option.searchByText}
+                  tabIndex={0}
+                  key={key}
+                  className={styles['value-item']}
+                  onClick={select}
+                  onKeyDown={(event) => handleKeyboardAction(event, select)}
+                >
+                  <Checkbox
+                    readOnly
+                    checked={isSelected(option)}
+                    title={content}
+                    containerClassName={styles['dropdown-item-check']}
+                    labelClassName={styles['dropdown-item-check__label']}
+                    titleClassName={styles['dropdown-item-check__title']}
+                  />
+                </div>
+              ) : (
+                <button type="button" role="menuitem" key={key} className={styles['value-item']} onClick={select}>{content}</button>
+              );
+            })}
+          </>
+        )}
       </ScrollBar>
     </>
   );

@@ -1,7 +1,6 @@
 import { ReactNode } from 'react';
-import { FormatOptionLabelMeta } from 'react-select';
 
-import { IDropdownListProps, TDropdownOptionBase } from '../../DropdownList';
+import { IDropdownListProps, IFormatOptionLabelMeta, TDropdownOptionBase } from '../../DropdownList';
 import { ETaskPerformerType } from '../../../../types/template';
 import { TUserListItem } from '../../../../types/user';
 
@@ -41,7 +40,7 @@ export interface IUsersDropdownProps<TOption extends TUsersDropdownOption> exten
 
 export interface IUsersDropdownOptionProps {
   option: TUsersDropdownOption;
-  formatOptionLabelMeta: FormatOptionLabelMeta<TUsersDropdownOption>;
+  formatOptionLabelMeta: IFormatOptionLabelMeta<TUsersDropdownOption>;
   users: TUserListItem[];
   isMulti?: boolean;
   isSelectAll: boolean;

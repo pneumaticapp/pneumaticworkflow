@@ -20,6 +20,10 @@
   width: 100%;
 }
 
+.filter-select__dropdown_clearable {
+  padding-right: 2.4rem;
+}
+
 .dropdown-menu {
   margin-top: 0.6rem;
   margin-left: -1.6rem;
