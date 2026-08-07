@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-
 import { IFieldsetRuntime } from '../../../types/fieldset';
 import { IExtraField } from '../../../types/template';
 import { sortFieldsByOrder } from '../../../utils/workflows';
@@ -327,6 +326,7 @@ export function useTaskOutput(task: ITask) {
         },
       };
       saveFieldsetsToStorageDebounced();
+
       return nextFieldsets;
     });
   };

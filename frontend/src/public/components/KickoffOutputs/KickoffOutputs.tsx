@@ -102,7 +102,7 @@ export function KickoffOutputs({
 
   const renderFieldsetGroup = (fieldset: IFieldsetRuntime, children: React.ReactNode, key?: string) => (
     <div key={key} className={styles['fieldset-output-group']}>
-      {fieldset.name && <p className={styles['fieldset-output-group__title']}>{fieldset.name}</p>}
+      <p className={styles['fieldset-output-group__title']}>{fieldset.title}</p>
       {fieldset.description && <p className={styles['fieldset-output-group__description']}>{fieldset.description}</p>}
       {children}
     </div>

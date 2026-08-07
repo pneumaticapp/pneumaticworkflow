@@ -102,6 +102,7 @@ jest.mock('../../../UI', () => ({
         ),
       ),
   ),
+  Tooltip: jest.fn(({ children }) => children),
   RouteLeavingGuard: jest.fn(() => null),
 }));
 

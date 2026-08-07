@@ -102,3 +102,4 @@ export const addOrUpdateStorageOutput = outputStorage.save;
 export const getOutputFromStorage = outputStorage.get;
 export const removeOutputFromLocalStorage = outputStorage.remove;
 export const removeOutputsFromLocalStorage = outputStorage.removeMany;
+

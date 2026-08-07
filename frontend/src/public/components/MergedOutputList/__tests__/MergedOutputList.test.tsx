@@ -37,7 +37,14 @@ describe('MergedOutputList', () => {
       makeExtraField({ apiName: 'field-a', name: 'field-a', order: 1 }),
       makeExtraField({ apiName: 'field-b', name: 'field-b', order: 3 }),
     ];
-    const fieldsets = [makeFieldsetRuntime({ apiNameBinding: 'fs-10', name: 'Fieldset Middle', order: 2 })];
+    const fieldsets = [
+      makeFieldsetRuntime({
+        apiNameBinding: 'fs-10',
+        name: 'Fieldset Middle Catalog Name',
+        title: 'Fieldset Middle Title',
+        order: 2,
+      }),
+    ];
 
     const { container } = render(
       <MergedOutputList {...baseProps} fields={fields} fieldsets={fieldsets} />,
@@ -47,7 +54,7 @@ describe('MergedOutputList', () => {
     expect(items).toHaveLength(3);
 
     expect(items[0].textContent).toBe('field-b');
-    expect(items[1].textContent).toBe('Fieldset Middle');
+    expect(items[1].textContent).toBe('Fieldset Middle Title');
     expect(items[2].textContent).toBe('field-a');
   });
 
@@ -61,7 +68,12 @@ describe('MergedOutputList', () => {
   });
 
   it('renders only fieldsets when fields array is empty', () => {
-    const fieldsets = [makeFieldsetRuntime({ name: 'Only FS' })];
+    const fieldsets = [
+      makeFieldsetRuntime({
+        name: 'Only FS Catalog Name',
+        title: 'Only FS Title',
+      }),
+    ];
 
     render(<MergedOutputList {...baseProps} fields={[]} fieldsets={fieldsets} />);
 

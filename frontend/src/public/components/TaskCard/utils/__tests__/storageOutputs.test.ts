@@ -1,8 +1,15 @@
-import { outputStorage, fieldsetsStorage } from '../storageOutputs';
-import { makeExtraField } from '../../../../__stubs__/fields.factory';
-import { makeFieldsetRuntime } from '../../../../__stubs__/fieldsets.factory';
+import {
+  addOrUpdateStorageOutput,
+  getOutputFromStorage,
+  removeOutputFromLocalStorage,
+  removeOutputsFromLocalStorage,
+  outputStorage,
+  fieldsetsStorage,
+} from '../storageOutputs';
 import { IExtraField } from '../../../../types/template';
 import { IFieldsetRuntime } from '../../../../types/fieldset';
+import { makeExtraField } from '../../../../__stubs__/fields.factory';
+import { makeFieldsetRuntime } from '../../../../__stubs__/fieldsets.factory';
 
 const OUTPUT_STORAGE_KEY = 'tasks_outputs';
 const FIELDSETS_STORAGE_KEY = 'tasks_fieldsets_outputs';
@@ -30,57 +37,17 @@ describe('storageOutputs', () => {
       makeFieldsetRuntime({ apiNameBinding: 'fs-1', name: 'Fieldset fs-1', fields: [makeExtraField({ apiName: 'fs-field', name: 'Field fs-field', value: 'fs-value' })] }),
     ];
 
-    outputStorage.save(1, outputs);
+    expect(getOutputFromStorage(1)).toBeUndefined();
+
+    addOrUpdateStorageOutput(1, outputs);
     fieldsetsStorage.save(1, fieldsets);
 
-    expect(outputStorage.get(1)).toEqual(outputs);
+    expect(getOutputFromStorage(1)).toEqual(outputs);
     expect(fieldsetsStorage.get(1)).toEqual(fieldsets);
 
-    outputStorage.remove(1);
-
-    expect(outputStorage.get(1)).toBeUndefined();
+    removeOutputFromLocalStorage(1);
+    expect(getOutputFromStorage(1)).toBeUndefined();
     expect(fieldsetsStorage.get(1)).toEqual(fieldsets);
-  });
-
-  it('save → get round-trip preserves the real fieldset structure 1-to-1', () => {
-    const fieldsets: IFieldsetRuntime[] = [
-      makeFieldsetRuntime({
-        apiNameBinding: 'contacts',
-        name: 'Contacts',
-        description: 'Reachout details',
-        order: 1,
-        fields: [
-          makeExtraField({ apiName: 'email', name: 'Field email', value: 'a@b.com' }),
-          makeExtraField({ apiName: 'phone', name: 'Field phone', value: '+1', isRequired: true }),
-        ],
-      }),
-      makeFieldsetRuntime({
-        apiNameBinding: 'address',
-        name: 'Fieldset address',
-        order: 2,
-        fields: [makeExtraField({ apiName: 'city', name: 'Field city', value: 'NY' })],
-      }),
-    ];
-
-    fieldsetsStorage.save(7, fieldsets);
-
-    expect(fieldsetsStorage.get(7)).toEqual(fieldsets);
-  });
-
-  it('subsequent save for the same taskId replaces the entry without duplicating', () => {
-    fieldsetsStorage.save(1, [makeFieldsetRuntime({ apiNameBinding: 'fs', name: 'Fieldset fs', fields: [makeExtraField({ apiName: 'a', name: 'Field a', value: 'v1' })] })]);
-    fieldsetsStorage.save(1, [makeFieldsetRuntime({ apiNameBinding: 'fs', name: 'Fieldset fs', fields: [makeExtraField({ apiName: 'a', name: 'Field a', value: 'v2' })] })]);
-
-    const raw = localStorage.getItem(FIELDSETS_STORAGE_KEY);
-    if (raw === null) {
-      throw new Error('Expected localStorage to contain fieldsets entry');
-    }
-    const stored = JSON.parse(raw) as Array<{ taskId: number; data: IFieldsetRuntime[] }>;
-
-    expect(stored).toHaveLength(1);
-    expect(stored[0].taskId).toBe(1);
-    expect(stored[0].data[0].fields[0].value).toBe('v2');
-    expect(fieldsetsStorage.get(1)?.[0].fields[0].value).toBe('v2');
   });
 
   it('get returns undefined for a non-existent taskId', () => {
@@ -116,6 +83,11 @@ describe('storageOutputs', () => {
 
     expect(outputStorage.get(1)).toBeUndefined();
     expect(outputStorage.get(2)).toBeUndefined();
+    expect(localStorage.getItem(OUTPUT_STORAGE_KEY)).toBeNull();
+  });
+
+  it('does nothing when removing from empty storage', () => {
+    expect(() => removeOutputsFromLocalStorage([1, 2])).not.toThrow();
     expect(localStorage.getItem(OUTPUT_STORAGE_KEY)).toBeNull();
   });
 

@@ -131,6 +131,13 @@ export function KickoffRedux({
     saveOutputOrders(moved);
   };
 
+  const handleEditFieldsetTitle = (apiNameBinding: string, title: string) => {
+    const nextFieldsets = (kickoff.fieldsets || []).map((fieldset) =>
+      fieldset.apiNameBinding === apiNameBinding ? { ...fieldset, title } : fieldset,
+    );
+    handleChangeKickoff({ ...kickoff, fieldsets: nextFieldsets });
+  };
+
   const renderKickoffForm = () => {
     const isFormEmpty = !isArrayWithItems(kickoff.fields) && !(kickoff.fieldsets || []).length && !kickoff.description;
 
@@ -180,6 +187,7 @@ export function KickoffRedux({
               datasetOptions={datasetOptions}
               accountId={accountId}
               formatMessage={formatMessage}
+              onEditFieldsetTitle={handleEditFieldsetTitle}
             />
           </div>
         )}
