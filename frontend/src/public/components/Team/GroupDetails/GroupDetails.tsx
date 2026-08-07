@@ -220,7 +220,7 @@ export function GroupDetails({ match }: any) {
     return (
       <DropdownList
         placement="left"
-        className={styles['test']}
+        controlClassName={styles['sorting-control']}
         controlSize="sm"
         isSearchable={false}
         defaultValue={dropdownOptions.find((item) => item.value === sorting)}

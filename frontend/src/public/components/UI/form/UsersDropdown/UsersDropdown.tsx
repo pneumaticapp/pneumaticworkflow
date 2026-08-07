@@ -1,50 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useIntl } from 'react-intl';
-import { ActionMeta, FormatOptionLabelMeta } from 'react-select';
 
-import { TDropdownOptionBase, IDropdownListProps, DropdownList, Checkbox, Avatar, TAvatarUser } from '../..';
-import { TUserListItem, isUserAbsent } from '../../../../types/user';
-import { BoldPlusIcon } from '../../../icons';
-import { ETaskPerformerType } from '../../../../types/template';
-import { getUserById } from '../../../UserData/utils/getUserById';
+import { DropdownList, IDropdownActionMeta, IFormatOptionLabelMeta } from '../../DropdownList';
+import { UsersDropdownOption } from './UsersDropdownOption';
+import { EOptionTypes, IUsersDropdownProps, TUsersDropdownOption } from './types';
 
-import { isUsersDropdownOptionSelected } from './usersDropdownOptionValue';
-
-import styles from './UsersDropdown.css';
-
-export enum EOptionTypes {
-  Group = ETaskPerformerType.UserGroup,
-  User = ETaskPerformerType.User,
-  Starter = ETaskPerformerType.WorkflowStarter,
-  Field = ETaskPerformerType.OutputUser,
-  Manager = ETaskPerformerType.Manager,
-  InviteUsers = 'invite-users',
-  AllUsers = 'all-users',
-}
-
-export type TUsersDropdownOption = TDropdownOptionBase & {
-  firstName?: string;
-  lastName?: string;
-  id: number;
-  optionType: EOptionTypes;
-};
-
-export interface IUsersDropdownProps<TOption extends TUsersDropdownOption> extends IDropdownListProps<TOption> {
-  inviteLabel: string;
-  users: TUserListItem[];
-  isTeamInvitesModalOpen: boolean;
-  recentInvitedUsers: TUserListItem[];
-  isAdmin: boolean;
-  value?: any;
-  onChange: (value: any) => void;
-  onChangeSelected?: (value: any) => void;
-  openTeamInvitesPopup(): void;
-  onUsersInvited?(invitedUsers: any): void;
-  onClickInvite(): void;
-  onClickAllUsers?(value: boolean): void;
-  errorMessage?: string;
-  isRequired?: boolean;
-}
+export { EOptionTypes } from './types';
+export type { IUsersDropdownProps, TUsersDropdownOption } from './types';
 
 export function UsersDropdownComponent<TOption extends TUsersDropdownOption>({
   options,
@@ -104,8 +66,7 @@ export function UsersDropdownComponent<TOption extends TUsersDropdownOption>({
     if (isInvitingUsers) onUsersInvited?.(recentInvitedUsers);
   }, [recentInvitedUsers]);
 
-  const handleOnChange = (newValue: TOption, { action, option }: ActionMeta<TOption>) => {
-    if (action === 'pop-value') return;
+  const handleOnChange = (newValue: TOption, { action, option }: IDropdownActionMeta<TOption>) => {
     if (isMulti && option) {
       if (onChangeSelected && action === 'deselect-option') {
         onChangeSelected(option);
@@ -119,81 +80,26 @@ export function UsersDropdownComponent<TOption extends TUsersDropdownOption>({
   };
 
   const handleFormatOptionLabel = (
-    option: TUsersDropdownOption,
-    formatOptionLabelMeta: FormatOptionLabelMeta<TUsersDropdownOption>,
+    option: TOption,
+    formatOptionLabelMeta: IFormatOptionLabelMeta<TOption>,
   ) => {
-    if (option.optionType === EOptionTypes.InviteUsers) {
-      return (
-        <div className={styles['invite-user-option']}>
-          <BoldPlusIcon className={styles['invite-user-option__icon']} />
-          {option.label}
-        </div>
-      );
-    }
-
-    if (option.optionType === EOptionTypes.AllUsers && onClickAllUsers) {
-      return (
-        <div className={styles['invite-user-option']}>
-          <Checkbox
-            readOnly
-            onChange={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-            }}
-            title={option.label}
-            {...(isSelectAll && { triState: 'checked' })}
-            {...(isIndeterminate && { triState: 'indeterminate' })}
-            {...(!value?.length && { triState: 'empty' })}
-          />
-        </div>
-      );
-    }
-
-    if (formatOptionLabel) return formatOptionLabel(option, formatOptionLabelMeta);
-
-    const isSelected = isUsersDropdownOptionSelected(formatOptionLabelMeta.selectValue, option);
-
-    const renderLabel = () => {
-      const currentUser: TUserListItem | TUsersDropdownOption | null =
-        option.optionType !== EOptionTypes.Group ? getUserById(users, Number(option.id)) : option;
-
-      return (
-        <div className={styles['user-option__content']} title={option.label as string}>
-          {formatOptionLabelMeta.context === 'menu' && (
-            <Avatar
-              size="sm"
-              user={currentUser as unknown as TAvatarUser}
-              containerClassName={styles['user-option__avatar']}
-              isEmpty={option.optionType !== EOptionTypes.User && option.optionType !== EOptionTypes.Group}
-            />
-          )}
-          <p className={styles['user-option__label']}>
-            {option.label}
-            {isUserAbsent(currentUser as TUserListItem) && (
-              <span className={styles['user-option__badge']}>
-                {(currentUser as TUserListItem)?.vacation?.absenceStatus === 'sick_leave' ? ' 🏥' : ' ✈️'}
-              </span>
-            )}
-          </p>
-        </div>
-      );
-    };
+    const isBuiltInOption = [EOptionTypes.InviteUsers, EOptionTypes.AllUsers].includes(option.optionType);
+    const customLabel = !isBuiltInOption && formatOptionLabel
+      ? formatOptionLabel(option, formatOptionLabelMeta)
+      : undefined;
 
     return (
-      <div className={styles['user-option']}>
-        {isMulti ? (
-          <Checkbox
-            onChange={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-            }}
-            title={renderLabel()}
-            checked={isSelected}
-          />
-        ) : (
-          renderLabel()
-        )}
-      </div>
+      <UsersDropdownOption
+        option={option}
+        formatOptionLabelMeta={formatOptionLabelMeta}
+        users={users}
+        isMulti={isMulti}
+        isSelectAll={Boolean(isSelectAll)}
+        isIndeterminate={Boolean(isIndeterminate)}
+        hasValue={Boolean(value?.length)}
+        showAllUsers={Boolean(onClickAllUsers)}
+        customLabel={customLabel}
+      />
     );
   };
 

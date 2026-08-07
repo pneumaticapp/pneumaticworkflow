@@ -9,10 +9,6 @@
   color: var(--pneumatic-color-warning);
 }
 
-.modal__option--selected {
-  color: var(--pneumatic-color-black32);
-}
-
 .modal__password-field {
   position: relative;
 }
