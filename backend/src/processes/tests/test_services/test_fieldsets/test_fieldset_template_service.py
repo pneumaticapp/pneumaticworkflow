@@ -572,6 +572,7 @@ def test__update_fields__existing_field__ok(mocker):
     )
     field_template_service_partial_update_mock.assert_called_once_with(
         name='Updated Field 1',
+        api_name=field_1.api_name,
         force_save=True,
     )
     field_template_service_create_mock.assert_not_called()
@@ -600,7 +601,11 @@ def test__update_fields__new_field__ok(mocker):
         instance=fieldset,
     )
     fields_data = [
-        {'name': 'New Field', 'type': 'number', 'order': 1},
+        {
+            'name': 'New Field',
+            'type': 'number', 'order': 1,
+            'api_name': 'field-api-name',
+        },
     ]
 
     # mock
@@ -633,6 +638,7 @@ def test__update_fields__new_field__ok(mocker):
     field_template_service_create_mock.assert_called_once_with(
         fieldset_id=fieldset.id,
         template_id=template.id,
+        api_name='field-api-name',
         name='New Field',
         type='number',
         order=1,
@@ -811,6 +817,7 @@ def test_update_rules__existing_rule__ok(mocker):
     )
     fs_rule_update_mock.assert_called_once_with(
         value='200',
+        api_name=rule_1.api_name,
     )
     fieldset_template_rule_service_create_mock.assert_not_called()
 
@@ -837,7 +844,11 @@ def test_update_rules__new_rule__ok(mocker):
         instance=fieldset,
     )
     rules_data = [
-        {'type': FieldSetRuleType.SUM_EQUAL, 'value': '100'},
+        {
+            'type': FieldSetRuleType.SUM_EQUAL,
+            'value': '100',
+            'api_name': 'rule-api-name',
+        },
     ]
 
     # mock
@@ -870,6 +881,7 @@ def test_update_rules__new_rule__ok(mocker):
     fs_rule_create_mock.assert_called_once_with(
         fieldset_id=fieldset.id,
         type=FieldSetRuleType.SUM_EQUAL,
+        api_name='rule-api-name',
         value='100',
     )
     fs_rule_update_mock.assert_not_called()
