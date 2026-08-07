@@ -28,20 +28,25 @@
   height: 100%;
 }
 
+/*
+ * Width and overflow go through custom properties so a consumer can size its own
+ * menu (`menuClassName`) without depending on stylesheet order between modules.
+ */
 .dropdown-menu {
   z-index: 1000;
-  overflow: hidden;
-  width: 19.2rem;
+  overflow: var(--dropdown-menu-overflow, hidden);
+  width: var(--dropdown-menu-width, 19.2rem);
   font-size: 1.5rem;
   font-weight: normal;
 }
 
 .dropdown-menu_wide {
-  width: 30.4rem;
+  --dropdown-menu-width: 30.4rem;
 }
 
 .dropdown-menu_with-submenu {
-  overflow: visible;
+  /* Submenus fly out past the parent bounds and must not be clipped. */
+  --dropdown-menu-overflow: visible;
 }
 
 .dropdown-item {

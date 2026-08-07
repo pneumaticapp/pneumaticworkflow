@@ -25,12 +25,13 @@
 }
 
 .dropdown-menu {
+  --dropdown-menu-width: 19.2rem;
+
   margin-top: 0.6rem;
   margin-left: -1.6rem;
-  width: 19.2rem;
 
   @media (--mobile) {
-    width: 100%;
+    --dropdown-menu-width: 100%;
   }
 }
 
@@ -47,18 +48,18 @@
 }
 
 .dropdown-menu_search {
-  width: 30.4rem;
+  --dropdown-menu-width: 30.4rem;
 
   @media (--mobile) {
-    width: 100%;
+    --dropdown-menu-width: 100%;
   }
 }
 
 .dropdown-menu_wide {
-  width: 52.8rem;
+  --dropdown-menu-width: 52.8rem;
 
   @media (--mobile) {
-    width: 100%;
+    --dropdown-menu-width: 100%;
   }
 }
 

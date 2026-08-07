@@ -13,6 +13,7 @@ const ScrollBar = PerfectScrollbar as unknown as Function;
 export function DropdownListMenu<TOption extends TDropdownOptionBase>({
   options,
   isSearchable,
+  isDisabled,
   placeholder,
   noOptionsMessage,
   selectValue,
@@ -35,6 +36,7 @@ export function DropdownListMenu<TOption extends TDropdownOptionBase>({
         role="option"
         aria-selected={selected}
         key={key}
+        disabled={isDisabled}
         className={styles['dropdown-list__option']}
         onClick={() => onSelect(option)}
       >

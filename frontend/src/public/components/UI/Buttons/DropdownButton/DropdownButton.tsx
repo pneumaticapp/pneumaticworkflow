@@ -24,11 +24,11 @@ export function DropdownButton({ dropdownOptions, isLoading, isDisabled, classNa
           return isOpen ? <DropdownCloseIcon /> : <EllipsisIcon />;
         }}
       >
-        {({ closeDropdown }) => dropdownOptions.map((item) => (
+        {({ closeDropdown }) => dropdownOptions.map((item, index) => (
           <button
             type="button"
             className={styles['dropdown-item']}
-            key={`${item.itemHeaderIntlId}-${item.itemDescriptionIntlId}`}
+            key={item.id || `${item.itemHeaderIntlId}-${item.itemDescriptionIntlId}-${index}`}
             onClick={() => {
               item.onClick();
               closeDropdown();

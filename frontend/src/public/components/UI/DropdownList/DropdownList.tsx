@@ -32,7 +32,7 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
   staticMenu = false,
   closeMenuOnSelect,
   errorMessage,
-  noOptionsMessage,
+  noOptionsMessage = 'No options',
   getOptionLabel,
   getOptionValue,
   formatOptionLabel,
@@ -101,6 +101,7 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
       options={filteredOptions}
       isMulti={isMulti}
       isSearchable={isSearchable}
+      isDisabled={isDisabled}
       placeholder={placeholder}
       noOptionsMessage={noOptionsMessage}
       selectValue={selectValue}
@@ -175,6 +176,7 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
             className={classnames(
               styles['dropdown-list__control'],
               isOpen && styles['dropdown-list__control_open'],
+              errorMessage && styles['dropdown-list__control_error'],
               controlClassName,
             )}
           >

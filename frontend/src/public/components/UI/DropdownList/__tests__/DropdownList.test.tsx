@@ -5,6 +5,7 @@ import { getFormattedDropdownOption } from '../../../TemplateEdit/TaskForm/Condi
 import { DropdownList } from '../DropdownList';
 import surfaceStyles from '../../DropdownSurface/DropdownSurface.css';
 import controlStyles from '../../DropdownControl/DropdownControl.css';
+import listStyles from '../DropdownList.css';
 import optionStyles from '../DropdownOption.css';
 
 const option = { label: 'Default option', value: 'default' };
@@ -139,9 +140,32 @@ describe('DropdownList', () => {
     expect(screen.queryByRole('button', { name: /Pick/ })).not.toBeInTheDocument();
   });
 
-  it('shows the error message', () => {
-    render(<DropdownList options={[option]} label="Role" errorMessage="Role is required" />);
+  it('shows the error message and marks the control', () => {
+    const { container } = render(
+      <DropdownList options={[option]} label="Role" errorMessage="Role is required" />,
+    );
 
     expect(screen.getByText('Role is required')).toBeInTheDocument();
+    expect(container.querySelector(`.${listStyles['dropdown-list__control_error']}`)).toBeInTheDocument();
+  });
+
+  it('keeps static-menu options inert when disabled', () => {
+    const onChange = jest.fn();
+    render(<DropdownList staticMenu isDisabled options={[option]} onChange={onChange} />);
+
+    const menuOption = screen.getByRole('option', { name: option.label });
+    expect(menuOption).toBeDisabled();
+
+    fireEvent.click(menuOption);
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('falls back to a default empty-state message', () => {
+    render(<DropdownList isSearchable title="Pick a value" options={[option]} />);
+
+    openMenu('Pick a value');
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'nothing matches' } });
+
+    expect(screen.getByText('No options')).toBeInTheDocument();
   });
 });

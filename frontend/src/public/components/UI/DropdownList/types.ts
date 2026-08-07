@@ -76,7 +76,8 @@ export interface IDropdownListProps<TOption extends TDropdownOptionBase> {
 export interface IDropdownListMenuProps<TOption extends TDropdownOptionBase>
   extends Pick<
   IDropdownListProps<TOption>,
-  'options' | 'isMulti' | 'isSearchable' | 'placeholder' | 'noOptionsMessage' | 'getOptionLabel' | 'formatOptionLabel'
+  'options' | 'isMulti' | 'isSearchable' | 'isDisabled' | 'placeholder' | 'noOptionsMessage'
+  | 'getOptionLabel' | 'formatOptionLabel'
   > {
   selectValue: TOption[];
   searchText: string;

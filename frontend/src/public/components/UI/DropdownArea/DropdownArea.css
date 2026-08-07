@@ -1,5 +1,12 @@
+/*
+ * Arbitrary content sizes itself: the narrow option-menu width must not apply, and
+ * the form must not be clipped. Set through custom properties so this does not
+ * depend on stylesheet order against Dropdown.css.
+ */
 .content {
+  --dropdown-menu-width: max-content;
+  --dropdown-menu-overflow: visible;
+
   padding: 1.6rem;
-  width: max-content;
   max-width: calc(100vw - 1.6rem);
 }

@@ -10,7 +10,9 @@
   cursor: not-allowed;
   opacity: 0.32;
 
-  .dropdown-list__toggle {
+  /* Static menus render no toggle, so the options themselves must go inert too. */
+  .dropdown-list__toggle,
+  .dropdown-list__option {
     pointer-events: none;
   }
 }
@@ -75,6 +77,16 @@
   }
 }
 
+/*
+ * The error border has to survive hover and the open state, so these selectors
+ * deliberately match the hover rule above and win on source order.
+ */
+.dropdown-list__toggle:hover .dropdown-list__control_error,
+.dropdown-list__control_error,
+.dropdown-list__control_error.dropdown-list__control_open {
+  border-color: var(--pneumatic-color-warning);
+}
+
 .dropdown-list__value {
   @mixin text-truncate;
 
@@ -98,11 +110,11 @@
 
 /* menus */
 .dropdown-list__menu_lg {
-  width: 100%;
+  --dropdown-menu-width: 100%;
 }
 
 .dropdown-list__menu_sm {
-  min-width: 30.4rem;
+  --dropdown-menu-width: 30.4rem;
 }
 
 .dropdown-list__menu_static {
