@@ -15,7 +15,6 @@ from src.accounts.enums import (
 )
 from src.accounts.models import (
     Account,
-    APIKey,
     Contact,
 )
 from src.accounts.messages import (
@@ -34,7 +33,6 @@ from src.accounts.validators import user_is_last_performer
 from src.accounts.services.vacation import VacationDelegationService
 from src.analysis.mixins import BaseIdentifyMixin
 from src.analysis.services import AnalyticService
-from src.authentication.tokens import PneumaticToken
 from src.generics.base.service import BaseModelService
 from src.notifications.tasks import (
     send_user_created_notification,
@@ -152,13 +150,6 @@ class UserService(
         return self.instance
 
     def _create_related(self, user_groups: Optional[list] = None, **kwargs):
-        key = PneumaticToken.create(user=self.instance, for_api_key=True)
-        APIKey.objects.create(
-            user=self.instance,
-            name=self.instance.get_full_name(),
-            account=self.instance.account,
-            key=key,
-        )
         if user_groups is not None:
             self.instance.user_groups.set(user_groups)
 

@@ -9,19 +9,19 @@ from src.logs.enums import (
 from src.logs.models import AccountEvent
 from src.processes.tests.fixtures import (
     create_test_account,
-    create_test_user,
+    create_test_owner,
 )
 
 pytestmark = pytest.mark.django_db
 
 
-def test__user_token_auth__skip(api_client, mocker):
+def test_middleware__user_token_auth__skip(api_client, mocker):
 
     # arrange
     account = create_test_account(log_api_requests=True)
-    user = create_test_user(account=account)
-    api_client.token_authenticate(user)
-    mocker.patch(
+    user = create_test_owner(account=account)
+    token = api_client.token_authenticate(user)
+    token_data_mock = mocker.patch(
         'src.authentication.tokens.'
         'PneumaticToken.data',
         return_value={
@@ -38,15 +38,16 @@ def test__user_token_auth__skip(api_client, mocker):
     # assert
     assert response.status_code == 200
     assert not AccountEvent.objects.all().exists()
+    token_data_mock.assert_has_calls([mocker.call(token)] * 3)
 
 
-def test__api_token_auth__ok(api_client, mocker):
+def test_middleware__api_token_auth__ok(api_client, mocker):
 
     # arrange
     account = create_test_account(log_api_requests=True)
-    user = create_test_user(account=account)
-    api_client.token_authenticate(user, token_type=AuthTokenType.API)
-    mocker.patch(
+    user = create_test_owner(account=account)
+    token = api_client.token_authenticate(user, token_type=AuthTokenType.API)
+    token_data_mock = mocker.patch(
         'src.authentication.tokens.'
         'PneumaticToken.data',
         return_value={
@@ -67,7 +68,7 @@ def test__api_token_auth__ok(api_client, mocker):
         account=user.account,
         ip='192.168.0.1',
         user_agent='Firefox',
-        auth_token=user.apikey.key,
+        auth_token=token,
         scheme='http',
         method='GET',
         path=path,
@@ -76,15 +77,16 @@ def test__api_token_auth__ok(api_client, mocker):
         direction=RequestDirection.RECEIVED,
         http_status=200,
     )
+    token_data_mock.assert_has_calls([mocker.call(token)] * 3)
 
 
-def test__get_request_with_data__ok(api_client, mocker):
+def test_middleware__get_request_with_data__ok(api_client, mocker):
 
     # arrange
     account = create_test_account(log_api_requests=True)
-    user = create_test_user(account=account)
-    api_client.token_authenticate(user, token_type=AuthTokenType.API)
-    mocker.patch(
+    user = create_test_owner(account=account)
+    token = api_client.token_authenticate(user, token_type=AuthTokenType.API)
+    token_data_mock = mocker.patch(
         'src.authentication.tokens.'
         'PneumaticToken.data',
         return_value={
@@ -106,7 +108,7 @@ def test__get_request_with_data__ok(api_client, mocker):
         account=user.account,
         ip='192.168.0.1',
         user_agent='Firefox',
-        auth_token=user.apikey.key,
+        auth_token=token,
         scheme='http',
         method='GET',
         path=path,
@@ -116,15 +118,16 @@ def test__get_request_with_data__ok(api_client, mocker):
         direction=RequestDirection.RECEIVED,
         request_data=params,
     )
+    token_data_mock.assert_has_calls([mocker.call(token)] * 3)
 
 
-def test__get_request_with_query_string__ok(api_client, mocker):
+def test_middleware__get_request_with_query_string__ok(api_client, mocker):
 
     # arrange
     account = create_test_account(log_api_requests=True)
-    user = create_test_user(account=account)
-    api_client.token_authenticate(user, token_type=AuthTokenType.API)
-    mocker.patch(
+    user = create_test_owner(account=account)
+    token = api_client.token_authenticate(user, token_type=AuthTokenType.API)
+    token_data_mock = mocker.patch(
         'src.authentication.tokens.'
         'PneumaticToken.data',
         return_value={
@@ -145,7 +148,7 @@ def test__get_request_with_query_string__ok(api_client, mocker):
         account=user.account,
         ip='192.168.0.1',
         user_agent='Firefox',
-        auth_token=user.apikey.key,
+        auth_token=token,
         scheme='http',
         method='GET',
         path=path,
@@ -155,15 +158,16 @@ def test__get_request_with_query_string__ok(api_client, mocker):
         direction=RequestDirection.RECEIVED,
         request_data={'key_1': 'Value1,Value2', 'key_2': '123'},
     )
+    token_data_mock.assert_has_calls([mocker.call(token)] * 3)
 
 
-def test__post_request_with_data__ok(api_client, mocker):
+def test_middleware__post_request_with_data__ok(api_client, mocker):
 
     # arrange
     account = create_test_account(log_api_requests=True)
-    user = create_test_user(account=account)
-    api_client.token_authenticate(user, token_type=AuthTokenType.API)
-    mocker.patch(
+    user = create_test_owner(account=account)
+    token = api_client.token_authenticate(user, token_type=AuthTokenType.API)
+    token_data_mock = mocker.patch(
         'src.authentication.tokens.'
         'PneumaticToken.data',
         return_value={
@@ -185,7 +189,7 @@ def test__post_request_with_data__ok(api_client, mocker):
         account=user.account,
         ip='192.168.0.1',
         user_agent='Firefox',
-        auth_token=user.apikey.key,
+        auth_token=token,
         scheme='http',
         method='POST',
         path=path,
@@ -196,14 +200,15 @@ def test__post_request_with_data__ok(api_client, mocker):
     )
     assert event.request_data == data
     assert event.response_data is None
+    token_data_mock.assert_has_calls([mocker.call(token)] * 3)
 
 
-def test__head_request__skip(api_client, mocker):
+def test_middleware__head_request__skip(api_client, mocker):
 
     # arrange
     account = create_test_account(log_api_requests=True)
-    user = create_test_user(account=account)
-    mocker.patch(
+    user = create_test_owner(account=account)
+    token_data_mock = mocker.patch(
         'src.authentication.tokens.'
         'PneumaticToken.data',
         return_value={
@@ -212,7 +217,7 @@ def test__head_request__skip(api_client, mocker):
             'for_api_key': True,
         },
     )
-    api_client.token_authenticate(user, token_type=AuthTokenType.API)
+    token = api_client.token_authenticate(user, token_type=AuthTokenType.API)
 
     # act
     response = api_client.head(
@@ -225,15 +230,16 @@ def test__head_request__skip(api_client, mocker):
     # assert
     assert response.status_code == 405
     assert not AccountEvent.objects.all().exists()
+    token_data_mock.assert_has_calls([mocker.call(token)] * 2)
 
 
-def test__options_request__skip(api_client, mocker):
+def test_middleware__options_request__skip(api_client, mocker):
 
     # arrange
     account = create_test_account(log_api_requests=True)
-    user = create_test_user(account=account)
-    api_client.token_authenticate(user, token_type=AuthTokenType.API)
-    mocker.patch(
+    user = create_test_owner(account=account)
+    token = api_client.token_authenticate(user, token_type=AuthTokenType.API)
+    token_data_mock = mocker.patch(
         'src.authentication.tokens.'
         'PneumaticToken.data',
         return_value={
@@ -255,15 +261,16 @@ def test__options_request__skip(api_client, mocker):
     # assert
     assert response.status_code == 200
     assert not AccountEvent.objects.all().exists()
+    token_data_mock.assert_has_calls([mocker.call(token)] * 2)
 
 
-def test__disable_log_api_requests__skip(api_client, mocker):
+def test_middleware__disable_log_api_requests__skip(api_client, mocker):
 
     # arrange
     account = create_test_account(log_api_requests=False)
-    user = create_test_user(account=account)
-    api_client.token_authenticate(user, token_type=AuthTokenType.API)
-    mocker.patch(
+    user = create_test_owner(account=account)
+    token = api_client.token_authenticate(user, token_type=AuthTokenType.API)
+    token_data_mock = mocker.patch(
         'src.authentication.tokens.'
         'PneumaticToken.data',
         return_value={
@@ -279,15 +286,16 @@ def test__disable_log_api_requests__skip(api_client, mocker):
     # assert
     assert response.status_code == 200
     assert not AccountEvent.objects.all().exists()
+    token_data_mock.assert_has_calls([mocker.call(token)] * 2)
 
 
-def test__bad_request__save_error(api_client, mocker):
+def test_middleware__bad_request__save_error(api_client, mocker):
 
     # arrange
     account = create_test_account(log_api_requests=True)
-    user = create_test_user(account=account)
-    api_client.token_authenticate(user, token_type=AuthTokenType.API)
-    mocker.patch(
+    user = create_test_owner(account=account)
+    token = api_client.token_authenticate(user, token_type=AuthTokenType.API)
+    token_data_mock = mocker.patch(
         'src.authentication.tokens.'
         'PneumaticToken.data',
         return_value={
@@ -309,7 +317,7 @@ def test__bad_request__save_error(api_client, mocker):
         account=user.account,
         ip='192.168.0.1',
         user_agent='Firefox',
-        auth_token=user.apikey.key,
+        auth_token=token,
         scheme='http',
         method='POST',
         path=path,
@@ -325,3 +333,4 @@ def test__bad_request__save_error(api_client, mocker):
     assert event.response_data['details']['reason'] == (
         'This field is required.'
     )
+    token_data_mock.assert_has_calls([mocker.call(token)] * 3)

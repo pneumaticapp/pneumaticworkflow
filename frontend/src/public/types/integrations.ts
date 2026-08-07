@@ -14,6 +14,20 @@ export interface IIntegrationDetailed {
   url: string;
 }
 
+export interface IApiKeyItem {
+  id: number;
+  name: string;
+  prefix: string;
+  dateCreated: string;
+  lastUsedAt: string | null;
+  expiresAt: string | null;
+  isActive: boolean;
+}
+
+export interface IApiKeyCreateResponse extends IApiKeyItem {
+  key: string;
+}
+
 export enum EIntegrations {
   Shared = 'shared',
   Zapier = 'zapier',

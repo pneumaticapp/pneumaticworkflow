@@ -1,15 +1,12 @@
-/* eslint-disable */
-/* prettier-ignore */
-import { all, fork, takeEvery, call, put, takeLatest, select } from 'redux-saga/effects';
-import { getApiKey } from '../../api/getApiKey';
+import { all, fork, takeEvery, call, put, takeLatest } from 'redux-saga/effects';
+import { getApiKeys, createApiKey as createApiKeyApi, deleteApiKey as deleteApiKeyApi } from '../../api/getApiKey';
 import { getIntegrationDetails } from '../../api/getIntegrationDetails';
 import { getIntegrations } from '../../api/getIntegrations';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { ERoutes } from '../../constants/routes';
-import { IIntegrationDetailed, IIntegrationListItem } from '../../types/integrations';
+import { IApiKeyItem, IIntegrationDetailed, IIntegrationListItem, IApiKeyCreateResponse } from '../../types/integrations';
 import { history } from '../../utils/history';
 import { logger } from '../../utils/logger';
-import { getUserApiKey } from '../selectors/user';
 import {
   EIntegrationsActions,
   loadIntegrationsListSuccess,
@@ -17,8 +14,14 @@ import {
   loadIntegrationsListFailed,
   loadIntegrationDetailsSuccess,
   TLoadIntegrationDetails,
-  loadApiKeySuccess,
-  loadApiKeyFailed,
+  loadApiKeysSuccess,
+  loadApiKeysFailed,
+  TCreateApiKey,
+  createApiKeySuccess,
+  createApiKeyFailed,
+  TDeleteApiKey,
+  deleteApiKeySuccess,
+  deleteApiKeyFailed,
 } from './actions';
 
 function* fetchIntegrationsList() {
@@ -55,20 +58,37 @@ function* fetchIntegrationDetails({ payload: { id } }: TLoadIntegrationDetails) 
   }
 }
 
-export function* fetchApiKey() {
+export function* fetchApiKeys() {
   try {
-    const { data: currentApiKey }: ReturnType<typeof getUserApiKey> = yield select(getUserApiKey);
-    if (currentApiKey) {
-      yield put(loadApiKeySuccess(currentApiKey));
-
-      return;
-    }
-
-    const { token } = yield getApiKey();
-    yield put(loadApiKeySuccess(token));
+    const apiKeys: IApiKeyItem[] = yield call(getApiKeys);
+    yield put(loadApiKeysSuccess(apiKeys));
   } catch (error) {
-    yield put(loadApiKeyFailed());
+    yield put(loadApiKeysFailed());
     NotificationManager.notifyApiError(error, { message: 'integrations.fetch-api-key-error' });
+    logger.error(error);
+  }
+}
+
+export function* handleCreateApiKey({ payload }: TCreateApiKey) {
+  try {
+    const response: IApiKeyCreateResponse = yield call(createApiKeyApi, payload.name || '');
+    const { key: rawKey, ...apiKeyData } = response;
+    yield put(createApiKeySuccess({ apiKey: apiKeyData as IApiKeyItem, rawKey }));
+  } catch (error) {
+    yield put(createApiKeyFailed());
+    NotificationManager.notifyApiError(error, { message: 'integrations.create-api-key-error' });
+    logger.error(error);
+  }
+}
+
+export function* handleDeleteApiKey({ payload }: TDeleteApiKey) {
+  try {
+    yield call(deleteApiKeyApi, payload.id);
+    yield put(deleteApiKeySuccess({ id: payload.id }));
+    NotificationManager.success({ message: 'integrations.api-key-revoked' });
+  } catch (error) {
+    yield put(deleteApiKeyFailed());
+    NotificationManager.notifyApiError(error, { message: 'integrations.delete-api-key-error' });
     logger.error(error);
   }
 }
@@ -81,10 +101,24 @@ export function* watchLoadIntegrationDetails() {
   yield takeEvery(EIntegrationsActions.LoadIntegrationDetails, fetchIntegrationDetails);
 }
 
-export function* watchFetchApiKey() {
-  yield takeLatest(EIntegrationsActions.LoadApiKey, fetchApiKey);
+export function* watchFetchApiKeys() {
+  yield takeLatest(EIntegrationsActions.LoadApiKeys, fetchApiKeys);
+}
+
+export function* watchCreateApiKey() {
+  yield takeLatest(EIntegrationsActions.CreateApiKey, handleCreateApiKey);
+}
+
+export function* watchDeleteApiKey() {
+  yield takeLatest(EIntegrationsActions.DeleteApiKey, handleDeleteApiKey);
 }
 
 export function* rootSaga() {
-  yield all([fork(watchFetchApiKey), fork(watchLoadIntegrationsList), fork(watchLoadIntegrationDetails)]);
+  yield all([
+    fork(watchFetchApiKeys),
+    fork(watchCreateApiKey),
+    fork(watchDeleteApiKey),
+    fork(watchLoadIntegrationsList),
+    fork(watchLoadIntegrationDetails),
+  ]);
 }

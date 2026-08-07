@@ -22,7 +22,9 @@ def test_signout__user_token__ok(api_client, mocker):
         user=user,
         account=user.account,
         name='Token for API',
-        key=token,
+        prefix=token[:16],
+        key_hash=APIKey.hash_key(token),
+        cache_token=PneumaticToken.encrypt(token),
     )
     expire_token_mock = mocker.patch(
         'src.authentication.tokens.'

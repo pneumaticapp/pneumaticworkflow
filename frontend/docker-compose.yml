@@ -151,6 +151,7 @@ services:
       POSTGRES_REPLICA_DB: ${POSTGRES_REPLICA_DB:-postgres_db}
       DJANGO_DEBUG: ${DJANGO_DEBUG:-no}
       ADMIN_PATH: ${ADMIN_PATH:-admin}
+      API_KEY_PREFIX: ${API_KEY_PREFIX:-pn_live_}
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-django_secret_django_secret_django_secret}
       DJANGO_SETTINGS_MODULE: src.settings
       AUTH_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/1"
@@ -266,6 +267,7 @@ services:
       POSTGRES_REPLICA_DB: ${POSTGRES_REPLICA_DB:-postgres_db}
       DJANGO_DEBUG: ${DJANGO_DEBUG:-no}
       ADMIN_PATH: ${ADMIN_PATH:-admin}
+      API_KEY_PREFIX: ${API_KEY_PREFIX:-pn_live_}
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-django_secret_django_secret_django_secret}
       DJANGO_SETTINGS_MODULE: src.settings
       AUTH_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/1"
@@ -378,6 +380,7 @@ services:
       POSTGRES_REPLICA_DB: ${POSTGRES_REPLICA_DB:-postgres_db}
       DJANGO_DEBUG: ${DJANGO_DEBUG:-no}
       ADMIN_PATH: ${ADMIN_PATH:-admin}
+      API_KEY_PREFIX: ${API_KEY_PREFIX:-pn_live_}
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-django_secret_django_secret_django_secret}
       DJANGO_SETTINGS_MODULE: src.settings
       AUTH_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/1"

@@ -1,10 +1,8 @@
 from django.contrib.auth import get_user_model
-from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
 
-from src.accounts.models import (
-    APIKey,
-)
+from src.accounts.models import APIKey
+from src.generics.mixins.serializers import AdditionalValidationMixin
 
 UserModel = get_user_model()
 
@@ -15,29 +13,34 @@ class APIKeyListSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'name',
-            'key',
+            'prefix',
+            'date_created',
+            'last_used_at',
+            'expires_at',
+            'is_active',
         )
 
 
-class UserAPIKeySerializer(serializers.ModelSerializer):
+class APIKeyCreateSerializer(
+    AdditionalValidationMixin,
+    serializers.Serializer,
+):
+    name = serializers.CharField(
+        max_length=200,
+        required=False,
+        allow_blank=True,
+    )
 
-    class Meta:
-        model = UserModel
-        fields = (
-            'first_name',
-            'last_name',
-            'email',
-            'is_admin',
-            'is_account_owner',
-            'api_key',
-            'type',
-            'status',
-        )
 
-    api_key = serializers.SerializerMethodField()
+class APIKeyResponseSerializer(APIKeyListSerializer):
+    key = serializers.CharField()
 
-    def get_api_key(self, obj) -> str:
-        try:
-            return obj.apikey.key
-        except ObjectDoesNotExist:
-            return None
+    class Meta(APIKeyListSerializer.Meta):
+        fields = (*APIKeyListSerializer.Meta.fields, 'key')
+
+
+class APIKeyRevokeSerializer(
+    AdditionalValidationMixin,
+    serializers.Serializer,
+):
+    api_key_id = serializers.IntegerField()

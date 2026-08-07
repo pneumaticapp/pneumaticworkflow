@@ -26,6 +26,7 @@ from src.accounts.enums import (
 from src.accounts.forms import ContactAdminForm
 from src.accounts.models import (
     Account,
+    APIKey,
     Contact,
     SystemMessage,
     User,
@@ -235,6 +236,29 @@ class ContactInline(StackedInline):
         return False
 
 
+class APIKeyInline(StackedInline):
+    model = APIKey
+    extra = 0
+    readonly_fields = (
+        'prefix',
+        'key_hash',
+        'is_active',
+        'last_used_at',
+        'date_created',
+    )
+    fields = (
+        'name',
+        'prefix',
+        'is_active',
+        'last_used_at',
+        'date_created',
+    )
+    show_change_link = False
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
 class UsersAdmin(UserAdmin, SignUpMixin):
 
     add_fieldsets = (
@@ -252,7 +276,7 @@ class UsersAdmin(UserAdmin, SignUpMixin):
             ),
         }),
     )
-    inlines = [GroupInline, ContactInline]
+    inlines = [APIKeyInline, GroupInline, ContactInline]
     fieldsets = (
         (
             messages.MSG_A_0020,
@@ -338,8 +362,9 @@ class UsersAdmin(UserAdmin, SignUpMixin):
         return super().get_form(request, obj, **kwargs)
 
     def api_key(self, obj):
-        return obj.apikey.key
-    api_key.short_description = 'API key'
+        first_key = obj.api_keys.filter(is_active=True).first()
+        return f'{first_key.prefix}...' if first_key else '-'
+    api_key.short_description = 'API key (prefix)'
 
     def account_link(self, obj):
         url = resolve_url(
