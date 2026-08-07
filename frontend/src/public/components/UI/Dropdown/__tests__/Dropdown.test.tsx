@@ -93,6 +93,32 @@ describe('Dropdown', () => {
     expect(screen.queryByRole('button', { name: 'Nested action' })).not.toBeInTheDocument();
   });
 
+  it('closes every level when a deeply nested option is chosen', () => {
+    const onLeaf = jest.fn();
+    render(
+      <Dropdown
+        renderToggle={() => 'Actions'}
+        options={[{
+          label: 'Level one',
+          subOptions: [{ label: 'Level two', subOptions: [{ label: 'Leaf action', onClick: onLeaf }] }],
+        }]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Actions' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Level one' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Level two' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Leaf action' }));
+
+    expect(onLeaf).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Actions' }));
+
+    expect(screen.getByRole('button', { name: 'Level one' })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByRole('button', { name: 'Level two' })).not.toBeInTheDocument();
+  });
+
   it('uses the wide surface for root custom content', () => {
     render(
       <Dropdown

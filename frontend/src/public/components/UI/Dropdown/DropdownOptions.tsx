@@ -32,14 +32,16 @@ export function DropdownOptions({ options, closeDropdown, isFromBreakdownItem }:
           getDropdownItemColorClass(option.color),
           isMobile && isFromBreakdownItem && styles['dropdown-item-mobile'],
         );
-        const hasSubmenu = option.customSubOption
-          || (Array.isArray(option.subOptions) && isArrayWithItems(option.subOptions));
+        const subOptions = Array.isArray(option.subOptions) && isArrayWithItems(option.subOptions)
+          ? option.subOptions
+          : undefined;
+        const hasSubmenu = option.customSubOption || subOptions;
 
         if (hasSubmenu) {
           return (
             <Dropdown
               key={`submenu-${key}`}
-              options={option.subOptions || option}
+              options={subOptions || option}
               placement="right-start"
               className={option.className}
               toggleProps={{ className: itemClassName }}
@@ -51,8 +53,18 @@ export function DropdownOptions({ options, closeDropdown, isFromBreakdownItem }:
                 </>
               )}
             >
-              {option.subOptions
-                ? <DropdownOptions options={option.subOptions} closeDropdown={closeDropdown} />
+              {subOptions
+                ? ({ closeDropdown: closeSubmenu }) => (
+                  <DropdownOptions
+                    options={subOptions}
+                    // Close this submenu as well as its parent, so the submenu's own open
+                    // state can never outlive the chosen option.
+                    closeDropdown={() => {
+                      closeSubmenu();
+                      closeDropdown();
+                    }}
+                  />
+                )
                 : option.customSubOption}
             </Dropdown>
           );
