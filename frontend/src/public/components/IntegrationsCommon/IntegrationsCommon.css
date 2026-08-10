@@ -175,7 +175,10 @@
 .api-keys__modal-key {
   margin: 1.6rem 0;
   padding: 1.2rem 1.6rem;
-  overflow-x: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.6rem;
   background-color: var(--pneumatic-color-black4);
   border: 0.1rem solid var(--pneumatic-color-black16);
   border-radius: 0.6rem;
@@ -186,4 +189,19 @@
   font-size: 1.4rem;
   word-break: break-all;
   color: var(--pneumatic-color-black100);
+}
+
+.api-keys__modal-copy-btn {
+  padding: 0;
+  font-size: 1.4rem;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  color: var(--pneumatic-color-link);
+  background: none;
+  border: none;
+}
+
+.api-keys__modal-copy-btn:hover {
+  color: var(--pneumatic-color-link-hover);
 }

@@ -1,7 +1,6 @@
 import datetime
 from typing import List, Optional, Tuple
 
-from django.db import models
 from django.db.models import Count, Q
 from django.utils import timezone
 
@@ -266,12 +265,6 @@ class APIKeyQuerySet(AccountBaseQuerySet):
 
     def by_user(self, user_id):
         return self.filter(user_id=user_id)
-
-    def not_expired(self):
-        return self.filter(
-            models.Q(expires_at__isnull=True)
-            | models.Q(expires_at__gt=timezone.now()),
-        )
 
 
 class NotificationsQuerySet(AccountBaseQuerySet):

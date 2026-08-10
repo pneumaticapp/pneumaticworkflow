@@ -1,5 +1,3 @@
-import hashlib
-import secrets
 import uuid
 from datetime import timedelta
 from typing import Dict, Optional, Set
@@ -554,22 +552,20 @@ class APIKey(
     AccountBaseMixin,
 ):
 
+    API_KEY_PREFIX: str = 'pn-'
+    API_KEY_PREFIX_DISPLAY_LENGTH: int = 16
+
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name='api_keys',
     )
     name = models.CharField(max_length=200, blank=True)
-    prefix = models.CharField(max_length=16, db_index=True, default='')
-    key_hash = models.CharField(max_length=128, unique=True, default='')
-    cache_token = models.CharField(
-        max_length=128,
-        blank=True,
-        default='',
-        help_text='Encrypted token for cache invalidation on revoke',
-    )
+    token = models.CharField(max_length=64, db_index=True)
     date_created = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField(null=True, blank=True)
+    # TODO: Remove when request logging is implemented;
+    # retrieve last_used_at from logs instead.
     last_used_at = models.DateTimeField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
 
@@ -580,16 +576,6 @@ class APIKey(
     class Meta:
         ordering = ['-date_created']
 
-    @staticmethod
-    def hash_key(raw_key: str) -> str:
-        """SHA-256 hash of the raw API key."""
-        return hashlib.sha256(raw_key.encode()).hexdigest()
-
-    @staticmethod
-    def generate_key() -> str:
-        """Generate a prefixed API key: <prefix><32 random chars>."""
-        return f'{settings.API_KEY_PREFIX}{secrets.token_urlsafe(24)}'
-
     @property
     def is_expired(self) -> bool:
         if self.expires_at is None:
@@ -597,7 +583,9 @@ class APIKey(
         return timezone.now() > self.expires_at
 
     def __str__(self):
-        return f'{self.name} ({self.prefix}...)'
+        n = self.API_KEY_PREFIX_DISPLAY_LENGTH
+        prefix = self.token[:n] if self.token else self.name
+        return f'{self.name} ({prefix}...)'
 
 
 class SystemMessage(models.Model):

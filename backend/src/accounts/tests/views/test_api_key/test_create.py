@@ -5,7 +5,7 @@ from src.processes.tests.fixtures import create_test_owner
 pytestmark = pytest.mark.django_db
 
 
-def test_create__ok(api_client, identify_mock):
+def test_create__valid_data__created(api_client, identify_mock):
 
     # arrange
     user = create_test_owner()
@@ -15,20 +15,19 @@ def test_create__ok(api_client, identify_mock):
     response = api_client.post(
         '/accounts/api-keys',
         data={'name': 'My CI Key'},
-        format='json',
     )
 
     # assert
     assert response.status_code == 201
     assert response.data['name'] == 'My CI Key'
-    assert isinstance(response.data['key'], str)
-    assert len(response.data['key']) > 16
+    assert isinstance(response.data['token'], str)
+    assert len(response.data['token']) > 16
     assert response.data['prefix'] == (
-        response.data['key'][:16]
+        response.data['token'][:16]
     )
 
 
-def test_create__auto_name__ok(api_client, identify_mock):
+def test_create__auto_name__name_assigned(api_client, identify_mock):
 
     # arrange
     user = create_test_owner()
@@ -38,7 +37,6 @@ def test_create__auto_name__ok(api_client, identify_mock):
     response = api_client.post(
         '/accounts/api-keys',
         data={},
-        format='json',
     )
 
     # assert
@@ -59,7 +57,6 @@ def test_create__name_too_long__validation_error(
     response = api_client.post(
         '/accounts/api-keys',
         data={'name': 'A' * 201},
-        format='json',
     )
 
     # assert
@@ -78,7 +75,6 @@ def test_create__not_authenticated__unauthorized(
     response = api_client.post(
         '/accounts/api-keys',
         data={'name': 'Key'},
-        format='json',
     )
 
     # assert

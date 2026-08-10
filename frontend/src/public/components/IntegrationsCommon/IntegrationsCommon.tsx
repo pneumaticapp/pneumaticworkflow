@@ -9,6 +9,7 @@ import { Button } from '../UI/Buttons/Button';
 import { InputField } from '../UI/Fields/InputField';
 import { Header } from '../UI/Typeography/Header';
 import { Modal } from '../UI/Modal/Modal';
+import { NotificationManager } from '../UI/Notifications';
 import { EPageTitle } from '../../constants/defaultValues';
 import { PageTitle } from '../PageTitle/PageTitle';
 import {
@@ -83,27 +84,17 @@ export function IntegrationsCommon() {
     (state: IApplicationState) => state.integrations.apiKeys.newlyCreatedKey,
   );
 
-  const [copied, setCopied] = React.useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = React.useState<number | null>(null);
   const [newKeyName, setNewKeyName] = React.useState('');
   const [showCreateForm, setShowCreateForm] = React.useState(false);
-  const copyTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   React.useEffect(() => {
     dispatch(loadApiKeys());
 
     return () => {
-      if (copyTimerRef.current) {
-        clearTimeout(copyTimerRef.current);
-      }
+      dispatch(clearNewlyCreatedKey());
     };
   }, [dispatch]);
-
-  const handleCopyKey = React.useCallback((text: string) => {
-    copyToClipboard(text);
-    setCopied(true);
-    copyTimerRef.current = setTimeout(() => setCopied(false), 2000);
-  }, []);
 
   const handleCreate = React.useCallback(() => {
     dispatch(createApiKey({ name: newKeyName || undefined }));
@@ -136,7 +127,6 @@ export function IntegrationsCommon() {
 
   const handleCloseNewKeyModal = React.useCallback(() => {
     dispatch(clearNewlyCreatedKey());
-    setCopied(false);
   }, [dispatch]);
 
   const handleShowCreateForm = React.useCallback(() => {
@@ -149,8 +139,11 @@ export function IntegrationsCommon() {
   }, []);
 
   const handleCopyNewlyCreatedKey = React.useCallback(() => {
-    handleCopyKey(newlyCreatedKey || '');
-  }, [handleCopyKey, newlyCreatedKey]);
+    if (newlyCreatedKey) {
+      copyToClipboard(newlyCreatedKey);
+      NotificationManager.success({ message: 'integrations.api-key-copied' });
+    }
+  }, [newlyCreatedKey]);
 
   const handleNameChange = React.useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -226,21 +219,23 @@ export function IntegrationsCommon() {
             >
               {newlyCreatedKey}
             </code>
+            <button
+              type="button"
+              className={styles['api-keys__modal-copy-btn']}
+              onClick={handleCopyNewlyCreatedKey}
+              data-testid="copy-inline-btn"
+            >
+              {formatMessage({ id: 'team.create-user-modal.copy' })}
+            </button>
           </div>
           <div className={styles['create-modal__footer']}>
             <Button
               type="button"
-              onClick={handleCopyNewlyCreatedKey}
+              onClick={handleCloseNewKeyModal}
               size="md"
-              label={copied
-                ? formatMessage({ id: 'integrations.api-key-copied' })
-                : formatMessage({ id: 'integrations.api-key-copy' })
-              }
-              data-testid="copy-key-btn"
+              label={formatMessage({ id: 'integrations.api-key-done' })}
+              data-testid="done-key-btn"
             />
-            <button type="button" className="cancel-button" onClick={handleCloseNewKeyModal} data-testid="done-key-btn">
-              {formatMessage({ id: 'integrations.api-key-done' })}
-            </button>
           </div>
         </div>
       </Modal>

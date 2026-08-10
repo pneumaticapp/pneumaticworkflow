@@ -25,7 +25,7 @@ export interface IApiKeyItem {
 }
 
 export interface IApiKeyCreateResponse extends IApiKeyItem {
-  key: string;
+  token: string;
 }
 
 export enum EIntegrations {

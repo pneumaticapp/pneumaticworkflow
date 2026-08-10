@@ -3,7 +3,6 @@ from drf_spectacular.utils import extend_schema
 from rest_framework.generics import get_object_or_404
 from rest_framework.mixins import (
     CreateModelMixin,
-    DestroyModelMixin,
     ListModelMixin,
 )
 from rest_framework.viewsets import GenericViewSet
@@ -16,9 +15,7 @@ from src.accounts.permissions import (
     UserIsAdminOrAccountOwner,
 )
 from src.accounts.serializers.api_key import (
-    APIKeyCreateSerializer,
-    APIKeyListSerializer,
-    APIKeyResponseSerializer,
+    APIKeySerializer,
 )
 from src.accounts.services.api_key import APIKeyService
 from src.generics.mixins.views import (
@@ -43,7 +40,6 @@ UserModel = get_user_model()
 class APIKeyViewSet(
     CreateModelMixin,
     ListModelMixin,
-    DestroyModelMixin,
     GenericViewSet,
     BaseResponseMixin,
 ):
@@ -54,27 +50,21 @@ class APIKeyViewSet(
         UserIsAdminOrAccountOwner,
         ExpiredSubscriptionPermission,
     )
-    serializer_class = APIKeyListSerializer
+    serializer_class = APIKeySerializer
 
     def get_queryset(self):
         return (
             APIKey.objects
             .by_user(self.request.user.id)
             .active()
-            .order_by('-date_created')
         )
-
-    def get_serializer_class(self):
-        if self.action == 'create':
-            return APIKeyCreateSerializer
-        return APIKeyListSerializer
 
     @extend_schema(
         tags=['Accounts'],
         summary='List API keys',
         description=ACCESS_ADMIN_BASE,
         responses={
-            200: APIKeyListSerializer(many=True),
+            200: APIKeySerializer(many=True),
             401: UNAUTHORIZED,
             403: FORBIDDEN,
         },
@@ -86,9 +76,9 @@ class APIKeyViewSet(
         tags=['Accounts'],
         summary='Create API key',
         description=ACCESS_ADMIN_BASE,
-        request=APIKeyCreateSerializer,
+        request=APIKeySerializer,
         responses={
-            201: APIKeyResponseSerializer,
+            201: APIKeySerializer,
             400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
@@ -103,13 +93,12 @@ class APIKeyViewSet(
             is_superuser=request.is_superuser,
             auth_type=request.token_type,
         )
-        api_key, raw_key = service.create(
+        api_key = service.create(
             name=serializer.validated_data.get('name'),
         )
 
-        api_key.key = raw_key
-        response_serializer = APIKeyResponseSerializer(api_key)
-        return self.response_created(response_serializer.data)
+        data = APIKeySerializer(api_key).data
+        return self.response_created(data)
 
     @extend_schema(
         tags=['Accounts'],
@@ -137,7 +126,6 @@ class APIKeyViewSet(
 class UserAPIKeyViewSet(
     CreateModelMixin,
     ListModelMixin,
-    DestroyModelMixin,
     GenericViewSet,
     BaseResponseMixin,
 ):
@@ -147,7 +135,7 @@ class UserAPIKeyViewSet(
         ExpiredSubscriptionPermission,
         BillingPlanPermission,
     )
-    serializer_class = APIKeyListSerializer
+    serializer_class = APIKeySerializer
 
     def _get_target_user(self):
         return get_object_or_404(
@@ -162,20 +150,14 @@ class UserAPIKeyViewSet(
             .by_user(self.kwargs['user_id'])
             .filter(account_id=self.request.user.account_id)
             .active()
-            .order_by('-date_created')
         )
-
-    def get_serializer_class(self):
-        if self.action == 'create':
-            return APIKeyCreateSerializer
-        return APIKeyListSerializer
 
     @extend_schema(
         tags=['Accounts'],
         summary='List API keys for user',
         description=ACCESS_ACCOUNT_OWNER,
         responses={
-            200: APIKeyListSerializer(many=True),
+            200: APIKeySerializer(many=True),
             401: UNAUTHORIZED,
             403: FORBIDDEN,
             404: NOT_FOUND,
@@ -190,9 +172,9 @@ class UserAPIKeyViewSet(
         tags=['Accounts'],
         summary='Create API key for user',
         description=ACCESS_ACCOUNT_OWNER,
-        request=APIKeyCreateSerializer,
+        request=APIKeySerializer,
         responses={
-            201: APIKeyResponseSerializer,
+            201: APIKeySerializer,
             400: VALIDATION_ERROR,
             401: UNAUTHORIZED,
             403: FORBIDDEN,
@@ -209,15 +191,13 @@ class UserAPIKeyViewSet(
             is_superuser=request.is_superuser,
             auth_type=request.token_type,
         )
-        api_key, raw_key = service.create_for_user(
+        api_key = service.create(
             target_user=target_user,
             name=serializer.validated_data.get('name'),
         )
 
-        api_key.key = raw_key
-        return self.response_created(
-            APIKeyResponseSerializer(api_key).data,
-        )
+        data = APIKeySerializer(api_key).data
+        return self.response_created(data)
 
     @extend_schema(
         tags=['Accounts'],

@@ -1,4 +1,4 @@
-import { all, fork, takeEvery, call, put, takeLatest } from 'redux-saga/effects';
+import { all, fork, takeEvery, call, put, takeLatest, takeLeading } from 'redux-saga/effects';
 import { getApiKeys, createApiKey as createApiKeyApi, deleteApiKey as deleteApiKeyApi } from '../../api/getApiKey';
 import { getIntegrationDetails } from '../../api/getIntegrationDetails';
 import { getIntegrations } from '../../api/getIntegrations';
@@ -72,7 +72,7 @@ export function* fetchApiKeys() {
 export function* handleCreateApiKey({ payload }: TCreateApiKey) {
   try {
     const response: IApiKeyCreateResponse = yield call(createApiKeyApi, payload.name || '');
-    const { key: rawKey, ...apiKeyData } = response;
+    const { token: rawKey, ...apiKeyData } = response;
     yield put(createApiKeySuccess({ apiKey: apiKeyData as IApiKeyItem, rawKey }));
   } catch (error) {
     yield put(createApiKeyFailed());
@@ -106,11 +106,11 @@ export function* watchFetchApiKeys() {
 }
 
 export function* watchCreateApiKey() {
-  yield takeLatest(EIntegrationsActions.CreateApiKey, handleCreateApiKey);
+  yield takeLeading(EIntegrationsActions.CreateApiKey, handleCreateApiKey);
 }
 
 export function* watchDeleteApiKey() {
-  yield takeLatest(EIntegrationsActions.DeleteApiKey, handleDeleteApiKey);
+  yield takeEvery(EIntegrationsActions.DeleteApiKey, handleDeleteApiKey);
 }
 
 export function* rootSaga() {

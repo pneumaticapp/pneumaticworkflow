@@ -10,7 +10,7 @@ from src.processes.tests.fixtures import (
 pytestmark = pytest.mark.django_db
 
 
-def test_api_key__create_for_user__ok(
+def test_create__for_user__created(
     api_client,
     identify_mock,
 ):
@@ -27,16 +27,15 @@ def test_api_key__create_for_user__ok(
     response = api_client.post(
         f'/accounts/users/{member.id}/api-keys',
         data={'name': 'Test Key for Member'},
-        format='json',
     )
 
     # assert
     assert response.status_code == 201
     assert response.data['name'] == 'Test Key for Member'
-    assert isinstance(response.data['key'], str)
-    assert len(response.data['key']) > 16
+    assert isinstance(response.data['token'], str)
+    assert len(response.data['token']) > 16
     assert response.data['prefix'] == (
-        response.data['key'][:16]
+        response.data['token'][:16]
     )
     api_key = APIKey.objects.get(
         id=response.data['id'],
@@ -45,7 +44,7 @@ def test_api_key__create_for_user__ok(
     assert api_key.account_id == owner.account_id
 
 
-def test_api_key__create_auto_name__ok(
+def test_create__auto_name__created(
     api_client,
     identify_mock,
 ):
@@ -62,7 +61,6 @@ def test_api_key__create_auto_name__ok(
     response = api_client.post(
         f'/accounts/users/{member.id}/api-keys',
         data={},
-        format='json',
     )
 
     # assert
@@ -70,7 +68,7 @@ def test_api_key__create_auto_name__ok(
     assert response.data['name'] == 'API Key #1'
 
 
-def test_api_key__create_for_admin__ok(
+def test_create__for_admin__created(
     api_client,
     identify_mock,
 ):
@@ -87,7 +85,6 @@ def test_api_key__create_for_admin__ok(
     response = api_client.post(
         f'/accounts/users/{admin.id}/api-keys',
         data={'name': 'Admin Key'},
-        format='json',
     )
 
     # assert
@@ -98,7 +95,7 @@ def test_api_key__create_for_admin__ok(
     assert api_key.user_id == admin.id
 
 
-def test_api_key__create_other_account__not_found(
+def test_create__other_account__not_found(
     api_client,
     identify_mock,
 ):
@@ -114,14 +111,13 @@ def test_api_key__create_other_account__not_found(
     response = api_client.post(
         f'/accounts/users/{other_user.id}/api-keys',
         data={'name': 'Should fail'},
-        format='json',
     )
 
     # assert
     assert response.status_code == 404
 
 
-def test_api_key__create_nonexistent__not_found(
+def test_create__nonexistent__not_found(
     api_client,
     identify_mock,
 ):
@@ -134,14 +130,13 @@ def test_api_key__create_nonexistent__not_found(
     response = api_client.post(
         '/accounts/users/999999/api-keys',
         data={'name': 'Should fail'},
-        format='json',
     )
 
     # assert
     assert response.status_code == 404
 
 
-def test_api_key__create_not_owner__forbidden(
+def test_create__not_owner__forbidden(
     api_client,
     identify_mock,
 ):
@@ -162,14 +157,13 @@ def test_api_key__create_not_owner__forbidden(
     response = api_client.post(
         f'/accounts/users/{member.id}/api-keys',
         data={'name': 'Admin try'},
-        format='json',
     )
 
     # assert
     assert response.status_code == 403
 
 
-def test_api_key__create_for_self__ok(
+def test_create__for_self__created(
     api_client,
     identify_mock,
 ):
@@ -182,7 +176,6 @@ def test_api_key__create_for_self__ok(
     response = api_client.post(
         f'/accounts/users/{owner.id}/api-keys',
         data={'name': 'Self Key'},
-        format='json',
     )
 
     # assert

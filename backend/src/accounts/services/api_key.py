@@ -1,4 +1,5 @@
-from typing import Optional, Tuple
+import secrets
+from typing import Optional
 
 from src.accounts.models import APIKey, User
 from src.authentication.tokens import PneumaticToken
@@ -7,23 +8,30 @@ from src.generics.base.service import BaseModelService
 
 class APIKeyService(BaseModelService):
 
-    _raw_key: str = ''
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.raw_key: Optional[str] = None
 
-    def _create_key_for(
+    @staticmethod
+    def generate_key() -> str:
+        """Generate a prefixed API key: <prefix><32 random chars>."""
+        return f'{APIKey.API_KEY_PREFIX}{secrets.token_urlsafe(24)}'
+
+    def _create_instance(
         self,
-        target_user: 'User',
         name: Optional[str] = None,
+        target_user: Optional[User] = None,
+        **kwargs,
     ):
+        target_user = target_user or self.user
 
         if not name:
             count = APIKey.objects.filter(
-                user=target_user,
-                is_active=True,
+                user_id=target_user.id,
             ).count()
             name = f'API Key #{count + 1}'
 
-        raw_key = APIKey.generate_key()
-        cache_token = PneumaticToken.encrypt(raw_key)
+        raw_key = self.generate_key()
 
         PneumaticToken.create(
             user=target_user,
@@ -32,37 +40,16 @@ class APIKeyService(BaseModelService):
         )
 
         self.instance = APIKey.objects.create(
-            user=target_user,
-            account=target_user.account,
+            user_id=target_user.id,
+            account_id=target_user.account_id,
             name=name,
-            prefix=raw_key[:16],
-            key_hash=APIKey.hash_key(raw_key),
-            cache_token=cache_token,
+            token=raw_key,
         )
 
-        self._raw_key = raw_key
-
-    def _create_instance(
-        self,
-        name: Optional[str] = None,
-        **kwargs,
-    ):
-        self._create_key_for(target_user=self.user, name=name)
-
-    def create(self, **kwargs) -> Tuple[APIKey, str]:
-        super().create(**kwargs)
-        return self.instance, self._raw_key
-
-    def create_for_user(
-        self,
-        target_user: 'User',
-        name: Optional[str] = None,
-    ) -> Tuple[APIKey, str]:
-        self._create_key_for(target_user=target_user, name=name)
-        return self.instance, self._raw_key
+        self.raw_key = raw_key
 
     def revoke(self):
         self.instance.is_active = False
         self.instance.save(update_fields=['is_active'])
-        if self.instance.cache_token:
-            PneumaticToken.cache.delete(self.instance.cache_token)
+        cache_key = PneumaticToken.encrypt(self.instance.token)
+        PneumaticToken.cache.delete(cache_key)

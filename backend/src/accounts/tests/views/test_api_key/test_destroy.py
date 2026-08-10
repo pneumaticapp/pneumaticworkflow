@@ -7,7 +7,7 @@ from src.processes.tests.fixtures import create_test_owner
 pytestmark = pytest.mark.django_db
 
 
-def test_destroy__ok(mocker, api_client, identify_mock):
+def test_destroy__valid_key__destroyed(mocker, api_client, identify_mock):
 
     # arrange
     user = create_test_owner()
@@ -15,19 +15,18 @@ def test_destroy__ok(mocker, api_client, identify_mock):
         user=user,
         for_api_key=True,
     )
-    cache_delete_mock = mocker.patch(
-        'src.authentication.tokens'
-        '.PneumaticToken.cache.delete',
-    )
     api_key = APIKey.objects.create(
         user=user,
         name='To revoke',
         account_id=user.account_id,
-        prefix=raw_key[:16],
-        key_hash=APIKey.hash_key(raw_key),
-        cache_token=PneumaticToken.encrypt(raw_key),
+        token=raw_key,
     )
     api_client.token_authenticate(user)
+
+    cache_delete_mock = mocker.patch(
+        'src.accounts.services.api_key'
+        '.PneumaticToken.cache.delete',
+    )
 
     # act
     response = api_client.delete(
@@ -38,8 +37,9 @@ def test_destroy__ok(mocker, api_client, identify_mock):
     assert response.status_code == 204
     api_key.refresh_from_db()
     assert api_key.is_active is False
+    expected_cache_key = PneumaticToken.encrypt(raw_key)
     cache_delete_mock.assert_called_once_with(
-        api_key.cache_token,
+        expected_cache_key,
     )
 
 
@@ -57,8 +57,7 @@ def test_destroy__other_user__not_found(
         user=other_user,
         name='Other key',
         account_id=other_user.account_id,
-        prefix='pn_live_',
-        key_hash='hash',
+        token='pn-other_user_key',
     )
     api_client.token_authenticate(user)
 
@@ -82,8 +81,7 @@ def test_destroy__already_revoked__not_found(
         user=user,
         name='Revoked',
         account_id=user.account_id,
-        prefix='pn_live_',
-        key_hash='hash',
+        token='pn-revoked_key_x',
         is_active=False,
     )
     api_client.token_authenticate(user)
@@ -103,10 +101,17 @@ def test_destroy__not_authenticated__unauthorized(
 ):
 
     # arrange
+    user = create_test_owner()
+    api_key = APIKey.objects.create(
+        user=user,
+        name='Key',
+        account_id=user.account_id,
+        token='pn-unauth_key_xx',
+    )
 
     # act
     response = api_client.delete(
-        '/accounts/api-keys/1',
+        f'/accounts/api-keys/{api_key.id}',
     )
 
     # assert

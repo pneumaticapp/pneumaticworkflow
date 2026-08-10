@@ -10,7 +10,7 @@ from src.processes.tests.fixtures import (
 pytestmark = pytest.mark.django_db
 
 
-def test_api_key__list__ok(
+def test_list__valid_user__returned(
     api_client,
     identify_mock,
 ):
@@ -29,9 +29,7 @@ def test_api_key__list__ok(
         user=member,
         name='Member Key',
         account_id=member.account_id,
-        prefix=raw_key[:16],
-        key_hash=APIKey.hash_key(raw_key),
-        cache_token=PneumaticToken.encrypt(raw_key),
+        token=raw_key,
     )
     api_client.token_authenticate(owner)
 
@@ -47,10 +45,10 @@ def test_api_key__list__ok(
     assert data['id'] == api_key.id
     assert data['name'] == 'Member Key'
     assert 'key' not in data
-    assert 'key_hash' not in data
+    assert 'token' not in data
 
 
-def test_api_key__list_empty__ok(
+def test_list__empty__returned(
     api_client,
     identify_mock,
 ):
@@ -73,7 +71,7 @@ def test_api_key__list_empty__ok(
     assert len(response.data) == 0
 
 
-def test_api_key__list_excludes_revoked__ok(
+def test_list__excludes_revoked__returned(
     api_client,
     identify_mock,
 ):
@@ -88,17 +86,53 @@ def test_api_key__list_excludes_revoked__ok(
         user=member,
         name='Active',
         account_id=member.account_id,
-        prefix='pn_live_active',
-        key_hash='hash_active',
+        token='pn-active_key_xx',
         is_active=True,
     )
     APIKey.objects.create(
         user=member,
         name='Revoked',
         account_id=member.account_id,
-        prefix='pn_live_revokd',
-        key_hash='hash_revoked',
+        token='pn-revoked_key_y',
         is_active=False,
+    )
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.get(
+        f'/accounts/users/{member.id}/api-keys',
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 1
+    assert response.data[0]['name'] == 'Active'
+
+
+def test_list__deleted_key__excluded(
+    api_client,
+    identify_mock,
+):
+
+    # arrange
+    owner = create_test_owner()
+    member = create_test_not_admin(
+        account=owner.account,
+        email='member@test.com',
+    )
+    APIKey.objects.create(
+        user=member,
+        name='Deleted',
+        account_id=member.account_id,
+        token='pn-deleted_key_12',
+        is_deleted=True,
+    )
+    APIKey.objects.create(
+        user=member,
+        name='Active',
+        account_id=member.account_id,
+        token='pn-active_key_34',
+        is_deleted=False,
     )
     api_client.token_authenticate(owner)
 

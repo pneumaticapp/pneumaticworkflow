@@ -33,9 +33,7 @@ class PneumaticApiClient(APIClient):
                     user=user,
                     account=user.account,
                     name='Token for API',
-                    prefix=token[:16],
-                    key_hash=APIKey.hash_key(token),
-                    cache_token=PneumaticToken.encrypt(token),
+                    token=token,
                 )
             elif token_type == AuthTokenType.USER:
                 token = PneumaticToken.create(

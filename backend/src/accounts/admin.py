@@ -240,22 +240,24 @@ class APIKeyInline(StackedInline):
     model = APIKey
     extra = 0
     readonly_fields = (
-        'prefix',
-        'key_hash',
         'is_active',
         'last_used_at',
         'date_created',
+        'expires_at',
     )
     fields = (
         'name',
-        'prefix',
         'is_active',
         'last_used_at',
         'date_created',
+        'expires_at',
     )
     show_change_link = False
 
     def has_add_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
         return False
 
 
