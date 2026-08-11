@@ -25,5 +25,5 @@ export type TDetailFieldsetChanges = {
 
 export type TFieldsetUnsavedChangesModalProps = {
   isChanged: boolean;
-  onSave: () => void;
+  onSave: () => boolean;
 };

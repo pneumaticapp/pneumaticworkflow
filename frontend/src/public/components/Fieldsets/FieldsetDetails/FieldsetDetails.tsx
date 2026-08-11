@@ -196,8 +196,8 @@ const FieldsetDetails = ({
     setDetailFieldsetChanges((prev) => ({ ...prev, rules }));
   };
 
-  const handleSave = () => {
-    if (!fieldset || !isChanged) return;
+  const handleSave = (): boolean => {
+    if (!fieldset || !isChanged) return false;
 
     if (detailFieldsetChanges.rules) {
       const ruleErrorMessageKey = validateFieldsetRules(detailFieldsetChanges.rules, detailFieldset.fields);
@@ -206,7 +206,7 @@ const FieldsetDetails = ({
         NotificationManager.warning({
           message: formatMessage({ id: ruleErrorMessageKey }),
         });
-        return;
+        return false;
       }
     }
 
@@ -233,6 +233,7 @@ const FieldsetDetails = ({
     }
 
     dispatch(updateFieldsetAction(payload));
+    return true;
   };
 
   const getRuleValuePlaceholder = (ruleType: EFieldsetRuleType) =>

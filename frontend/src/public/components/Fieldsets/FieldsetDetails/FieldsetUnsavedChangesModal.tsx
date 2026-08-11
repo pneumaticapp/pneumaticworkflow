@@ -46,14 +46,18 @@ export function FieldsetUnsavedChangesModal({ isChanged, onSave }: TFieldsetUnsa
             size="md"
           />
           <Button
-              label={formatMessage({ id: 'fieldsets.leave-unsaved-save' })}
-              onClick={() => {
-                onSave();
+            label={formatMessage({ id: 'fieldsets.leave-unsaved-save' })}
+            onClick={() => {
+              const isSaved = onSave();
+              if (isSaved) {
                 confirmLeave();
-              }}
-              buttonStyle="yellow"
-              size="md"
-            />
+              } else {
+                stay();
+              }
+            }}
+            buttonStyle="yellow"
+            size="md"
+          />
         </>
       )}
     />

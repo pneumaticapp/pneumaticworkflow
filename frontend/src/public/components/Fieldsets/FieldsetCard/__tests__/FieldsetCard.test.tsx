@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { useDispatch } from 'react-redux';
 
 import { FieldsetCard } from '../FieldsetCard';
-import { Dropdown } from '../../../UI';
+import { ModifyDropdown } from '../../../UI';
 import { WarningPopup } from '../../../UI/WarningPopup';
 import {
   openEditModal,
@@ -33,7 +33,7 @@ jest.mock('../../../../redux/fieldsets/slice', () => ({
 }));
 
 jest.mock('../../../UI', () => ({
-  Dropdown: jest.fn(() => null),
+  ModifyDropdown: jest.fn(() => null),
 }));
 
 jest.mock('../../../UI/WarningPopup', () => ({
@@ -50,12 +50,10 @@ jest.mock('../../../icons', () => ({
 describe('FieldsetCard', () => {
   const mockDispatch = jest.fn();
 
-  const formatMsg = (id: string) => intlMock.formatMessage({ id });
-  const EDIT_LABEL = formatMsg('fieldsets.edit');
-  const CLONE_LABEL = formatMsg('fieldsets.clone');
-  const DELETE_LABEL = formatMsg('fieldsets.delete');
-  const FIELDS_STATS = (count: number) => intlMock.formatMessage({ id: 'fieldsets.stats.fields' }, { count });
-  const RULES_STATS = (count: number) => intlMock.formatMessage({ id: 'fieldsets.stats.rules' }, { count });
+  const formatMsg = (id: string, values?: Record<string, string | number>): string =>
+    intlMock.formatMessage({ id }, values) as string;
+  const FIELDS_STATS = (count: number) => formatMsg('fieldsets.stats.fields', { count });
+  const RULES_STATS = (count: number) => formatMsg('fieldsets.stats.rules', { count });
 
   let fieldCounter = 0;
 
@@ -69,14 +67,10 @@ describe('FieldsetCard', () => {
 
   const makeProps = makeFieldsetCatalogItem;
   
-  const getDropdownOptions = () => {
-    const mock = Dropdown as unknown as jest.Mock;
+  const getModifyDropdownProps = () => {
+    const mock = ModifyDropdown as jest.Mock;
     const lastCall = mock.mock.calls[mock.mock.calls.length - 1];
-    return lastCall[0].options;
-  };
-
-  const findDropdownOption = (label: string) => {
-    return getDropdownOptions().find((opt: { label: string }) => opt.label === label);
+    return lastCall[0];
   };
 
   const getWarningPopupProps = () => {
@@ -119,8 +113,7 @@ describe('FieldsetCard', () => {
       const props = makeProps();
       render(React.createElement(FieldsetCard, props));
 
-      const editOption = findDropdownOption(EDIT_LABEL);
-      editOption.onClick();
+      act(() => { getModifyDropdownProps().onEdit(); });
 
       expect(mockDispatch).toHaveBeenCalledWith(
         setCurrentFieldset({
@@ -148,8 +141,7 @@ describe('FieldsetCard', () => {
 
       expect(getWarningPopupProps().isOpen).toBe(false);
 
-      const deleteOption = findDropdownOption(DELETE_LABEL);
-      act(() => { deleteOption.onClick(); });
+      act(() => { getModifyDropdownProps().onDelete(); });
 
       expect(getWarningPopupProps().isOpen).toBe(true);
     });
@@ -157,7 +149,7 @@ describe('FieldsetCard', () => {
     it('dispatches deleteFieldsetAction on WarningPopup confirm', () => {
       render(React.createElement(FieldsetCard, makeProps({ id: 10 })));
 
-      act(() => { findDropdownOption(DELETE_LABEL).onClick(); });
+      act(() => { getModifyDropdownProps().onDelete(); });
       act(() => { getWarningPopupProps().onConfirm(); });
 
       expect(mockDispatch).toHaveBeenCalledTimes(1);
@@ -169,7 +161,7 @@ describe('FieldsetCard', () => {
     it('closes WarningPopup without dispatch on cancel', () => {
       render(React.createElement(FieldsetCard, makeProps()));
 
-      act(() => { findDropdownOption(DELETE_LABEL).onClick(); });
+      act(() => { getModifyDropdownProps().onDelete(); });
       expect(getWarningPopupProps().isOpen).toBe(true);
 
       act(() => { getWarningPopupProps().onReject(); });
@@ -179,17 +171,35 @@ describe('FieldsetCard', () => {
     });
   });
 
-
   describe('Dropdown — Clone', () => {
     it('dispatches cloneFieldsetAction on Clone click', () => {
       const props = makeProps({ id: 10 });
       render(React.createElement(FieldsetCard, props));
 
-      const cloneOption = findDropdownOption(CLONE_LABEL);
-      cloneOption.onClick();
+      act(() => { getModifyDropdownProps().onClone(); });
 
       expect(mockDispatch).toHaveBeenCalledTimes(1);
       expect(mockDispatch).toHaveBeenCalledWith(cloneFieldsetAction({ id: 10 }));
+    });
+  });
+
+  describe('ModifyDropdown — isReadOnly state (linked fieldsets)', () => {
+    it('passes isReadOnly=true to ModifyDropdown when usage contains linked templates', () => {
+      const props = makeProps({
+        usage: [
+          { id: 1, name: 'Template 1' },
+        ],
+      });
+      render(React.createElement(FieldsetCard, props));
+
+      expect(getModifyDropdownProps().isReadOnly).toBe(true);
+    });
+
+    it('passes isReadOnly=false to ModifyDropdown when usage is empty', () => {
+      const props = makeProps({ usage: [] });
+      render(React.createElement(FieldsetCard, props));
+
+      expect(getModifyDropdownProps().isReadOnly).toBe(false);
     });
   });
 

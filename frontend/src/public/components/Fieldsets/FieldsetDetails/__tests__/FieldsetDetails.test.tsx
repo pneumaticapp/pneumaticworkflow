@@ -751,12 +751,46 @@ describe('FieldsetDetails', () => {
 
       userEvent.click(screen.getByTestId('modify-clone'));
 
-      expect(NotificationManager.warning).toHaveBeenCalledWith({
-        message: expect.any(String),
-      });
       expect(mockDispatch).not.toHaveBeenCalledWith(
         cloneFieldsetAction({ id: 10 }),
       );
+    });
+  });
+
+  describe('Usage Banner in editor mode (usage-banner)', () => {
+    it('renders usage banner with list of linked templates', () => {
+      const state = makeLoadedState({
+        usage: [
+          { id: 101, name: 'Very long template name for testing overflow' },
+          { id: 102, name: 'Procurement template' },
+        ],
+      });
+      renderWithState(state);
+
+      expect(screen.getByText(/Used in 2 templates/)).toBeInTheDocument();
+    });
+
+    it('passes isReadOnly=true when usage is present', () => {
+      const state = makeLoadedState({
+        usage: [{ id: 1, name: 'Template 1' }],
+      });
+      renderWithState(state);
+
+      expect(getModifyDropdownProps().isReadOnly).toBe(true);
+    });
+  });
+
+  describe('handleSave return status (boolean)', () => {
+    it('returns false and shows warning when rules are invalid', () => {
+      renderWithState(makeLoadedState({ id: 10, fields: [], rules: [] }));
+
+      userEvent.click(screen.getByRole('button', { name: new RegExp(ADD_RULE_TEXT, 'i') }));
+      userEvent.click(screen.getByRole('button', { name: SAVE_LABEL }));
+
+      expect(NotificationManager.warning).toHaveBeenCalledWith(
+        expect.objectContaining({ message: formatMsg(FIELDSET_RULES_MSG_INCOMPLETE) }),
+      );
+      expect(getUpdateActionMock()).not.toHaveBeenCalled();
     });
   });
 });

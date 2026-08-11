@@ -235,8 +235,8 @@
     opacity: 0.32 !important;
   }
 
-  [class*="edit-name-button"],
-  [class*="kick-off-edit-name"] {
+  &.fieldset_readonly [class*="edit-name-button"],
+  &.fieldset_readonly [class*="kick-off-edit-name"] {
     display: none !important;
   }
 }
