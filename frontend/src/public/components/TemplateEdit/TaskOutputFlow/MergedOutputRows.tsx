@@ -78,13 +78,7 @@ export function MergedOutputRows({
           >
             <div className={kickoffStyles['kick-off-input__field']}>
               <div className={styles['flow__fieldset-header']}>
-                {formatMessage({ id: 'fieldsets.header-label' })}
-              </div>
-              <div className={styles['flow__fieldset-name-row']}>
-                <span className={styles['flow__fieldset-label']}>
-                  {formatMessage({ id: 'fieldsets.name-label' })}:
-                </span>{' '}
-                {name}
+                {formatMessage({ id: 'fieldsets.header-label' })}: {name}
               </div>
               <FieldsetEditorTitle
                 apiNameBinding={apiNameBinding}
