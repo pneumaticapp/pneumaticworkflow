@@ -188,7 +188,7 @@
     background: transparent !important;
   }
 
-  [class*="kick-off-required-sign"] {
+  &.fieldset_readonly [class*="kick-off-required-sign"] {
     background-color: transparent !important;
   }
 
@@ -203,14 +203,14 @@
     max-width: calc(100% - 3.2rem);
   }
 
-  [class*="checkbox__text"],
-  [class*="radio__text"],
-  [class*="checkbox__title"],
-  [class*="radio__title"] {
+  &.fieldset_readonly [class*="checkbox__text"],
+  &.fieldset_readonly [class*="radio__text"],
+  &.fieldset_readonly [class*="checkbox__title"],
+  &.fieldset_readonly [class*="radio__title"] {
     color: var(--pneumatic-color-black88) !important;
   }
 
-  [data-use-input]::placeholder {
+  [data-use-input]:disabled::placeholder {
     color: var(--pneumatic-color-black48) !important;
     -webkit-text-fill-color: var(--pneumatic-color-black48) !important;
     opacity: 1 !important;
@@ -221,7 +221,7 @@
     max-width: 100% !important;
   }
 
-  [class*="extra-field-file__upload-button--template"] {
+  &.fieldset_readonly [class*="extra-field-file__upload-button--template"] {
     color: var(--pneumatic-color-black48) !important;
     border-color: var(--pneumatic-color-black16) !important;
     opacity: 0.55 !important;
