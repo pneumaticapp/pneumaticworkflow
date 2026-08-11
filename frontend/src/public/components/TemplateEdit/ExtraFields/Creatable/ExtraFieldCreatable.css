@@ -56,6 +56,10 @@
     text-overflow: ellipsis;
     color: #262522 !important;
   }
+
+  [class*="react-select__option"] {
+    overflow-wrap: anywhere;
+  }
   /* stylelint-enable */
 }
 
@@ -80,9 +84,8 @@
 }
 
 .kickoff-create-field-options-wrapper_label-left {
-  margin-left: calc(45% + 3.2rem);
+  margin-left: calc(40% + 3.2rem);
   min-width: 0;
-  max-width: calc(55% - 3.2rem);
 }
 
 .kickoff-create-field-name {
@@ -133,9 +136,8 @@
 }
 
 .kickoff-create-field-option__input {
-  max-width: 100%;
+  max-width: calc(100% - 24px);
   border: none;
-
   @mixin text-truncate;
 
   &:focus {

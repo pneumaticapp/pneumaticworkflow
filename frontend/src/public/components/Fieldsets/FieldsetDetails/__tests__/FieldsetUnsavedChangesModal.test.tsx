@@ -63,7 +63,7 @@ describe('FieldsetUnsavedChangesModal', () => {
     );
 
     const { container } = render(
-      React.createElement(FieldsetUnsavedChangesModal, { isChanged: true }),
+      React.createElement(FieldsetUnsavedChangesModal, { isChanged: true, onSave: jest.fn() }),
     );
 
     expect(container).toBeEmptyDOMElement();
@@ -71,7 +71,7 @@ describe('FieldsetUnsavedChangesModal', () => {
   });
 
   it('passes when=false to RouteLeavingGuard when there are no changes', () => {
-    render(React.createElement(FieldsetUnsavedChangesModal, { isChanged: false }));
+    render(React.createElement(FieldsetUnsavedChangesModal, { isChanged: false, onSave: jest.fn() }));
 
     expect(RouteLeavingGuard).toHaveBeenCalledTimes(1);
     expect(RouteLeavingGuard).toHaveBeenCalledWith(
@@ -84,7 +84,7 @@ describe('FieldsetUnsavedChangesModal', () => {
   });
 
   it('passes when=true to RouteLeavingGuard when there are unsaved changes', () => {
-    render(React.createElement(FieldsetUnsavedChangesModal, { isChanged: true }));
+    render(React.createElement(FieldsetUnsavedChangesModal, { isChanged: true, onSave: jest.fn() }));
 
     expect(RouteLeavingGuard).toHaveBeenCalledTimes(1);
     expect(RouteLeavingGuard).toHaveBeenCalledWith(
@@ -94,7 +94,7 @@ describe('FieldsetUnsavedChangesModal', () => {
   });
 
   it('shouldBlockNavigation returns false for the same detail path', () => {
-    render(React.createElement(FieldsetUnsavedChangesModal, { isChanged: true }));
+    render(React.createElement(FieldsetUnsavedChangesModal, { isChanged: true, onSave: jest.fn() }));
 
     const { shouldBlockNavigation } = getGuardProps();
 
@@ -102,7 +102,7 @@ describe('FieldsetUnsavedChangesModal', () => {
   });
 
   it('shouldBlockNavigation returns true for another path', () => {
-    render(React.createElement(FieldsetUnsavedChangesModal, { isChanged: true }));
+    render(React.createElement(FieldsetUnsavedChangesModal, { isChanged: true, onSave: jest.fn() }));
 
     const { shouldBlockNavigation } = getGuardProps();
 
@@ -110,12 +110,19 @@ describe('FieldsetUnsavedChangesModal', () => {
   });
 
   it('onConfirm calls history.push with the given path', () => {
-    render(React.createElement(FieldsetUnsavedChangesModal, { isChanged: true }));
+    render(React.createElement(FieldsetUnsavedChangesModal, { isChanged: true, onSave: jest.fn() }));
 
     const { onConfirm } = getGuardProps();
     onConfirm('/fieldsets/');
 
     expect(history.push).toHaveBeenCalledTimes(1);
     expect(history.push).toHaveBeenCalledWith('/fieldsets/');
+  });
+
+  it('passes onSave handler when provided', () => {
+    const onSaveMock = jest.fn();
+    render(React.createElement(FieldsetUnsavedChangesModal, { isChanged: true, onSave: onSaveMock }));
+
+    expect(RouteLeavingGuard).toHaveBeenCalledTimes(1);
   });
 });

@@ -1,0 +1,19 @@
+@define-mixin fieldset-field-readonly {
+  cursor: default;
+  color: var(--pneumatic-color-black72);
+  background-color: var(--pneumatic-color-black4);
+  border: 0.1rem solid transparent;
+  opacity: 1;
+}
+
+@define-mixin fieldset-textarea-readonly {
+  @mixin fieldset-field-readonly;
+  resize: none;
+}
+
+@define-mixin fieldset-option-readonly {
+  field-sizing: content;
+  width: auto;
+  padding: 0.4rem 1.2rem;
+  border-radius: 0.6rem;
+}
