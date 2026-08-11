@@ -108,13 +108,19 @@
   transform: rotate(180deg);
 }
 
-/* menus */
+/*
+ * menus
+ * The surface owns its width: the react-select wrapper around it is shrink-to-fit, so a compact
+ * menu keeps its own size instead of collapsing onto a narrow toggle.
+ */
 .dropdown-list__menu_lg {
-  --dropdown-menu-width: 100%;
+  overflow: hidden;
+  width: 100%;
 }
 
 .dropdown-list__menu_sm {
-  --dropdown-menu-width: 30.4rem;
+  overflow: hidden;
+  width: 30.4rem;
 }
 
 .dropdown-list__menu_static {
@@ -154,6 +160,12 @@
     min-width: 0;
     flex: 1 1 0;
   }
+}
+
+/* Keyboard navigation moves react-select's focused option, which owns no browser focus. */
+.dropdown-list__option_focused {
+  color: var(--pneumatic-color-link-hover);
+  background: var(--pneumatic-color-beige);
 }
 
 .dropdown-list__group {

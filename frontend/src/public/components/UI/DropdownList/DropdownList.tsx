@@ -1,16 +1,52 @@
-import React, { ReactNode, useMemo, useState } from 'react';
+import React, { ReactNode, useRef, useState } from 'react';
 import classnames from 'classnames';
 import { FieldHookConfig, useField } from 'formik';
+import OutsideClickHandler from 'react-outside-click-handler';
+import Select, { ActionMeta, InputActionMeta, OnChangeValue } from 'react-select';
 
-import { ArrowDropdownIcon } from '../../icons';
-import { Dropdown } from '../Dropdown';
-import { DropdownControl } from '../DropdownControl';
-import { DropdownSurface } from '../DropdownSurface';
-import { DropdownListMenu } from './DropdownListMenu';
-import { IDropdownListProps, TDropdownOptionBase } from './types';
-import { flattenOptions, getDefaultOptionValue, getOptionSearchText, isOptionGroup, toArray } from './utils';
+import { createDropdownListComponents } from './DropdownListMenu';
+import {
+  IDropdownListProps,
+  IDropdownListSelectComponentsProps,
+  TControlSize,
+  TDropdownOptionBase,
+  TDropdownOptionGroup,
+} from './types';
+import { flattenOptions, getDefaultOptionValue, getOptionSearchText, toArray } from './utils';
 
 import styles from './DropdownList.css';
+
+/*
+ * react-select owns the menu wrapper through emotion, so the parts a stylesheet cannot reach —
+ * stacking order, positioning and the shrink-to-fit width the menu class relies on — are set here.
+ * Everything visual (surface, width, clipping) stays in DropdownList.css on the inner surface.
+ */
+const getReactSelectStyles = (staticMenu: boolean, controlSize: TControlSize) => ({
+  container: (base: any) => ({ ...base, width: '100%' }),
+  control: (base: any) => ({
+    ...base,
+    minHeight: 0,
+    border: 0,
+    boxShadow: 'none',
+    // The compact control is a chip that paints its own background; only the lg field needs white.
+    backgroundColor: controlSize === 'sm' ? 'transparent' : 'var(--pneumatic-color-white)',
+  }),
+  menu: (base: any) => ({
+    ...base,
+    ...(staticMenu ? { position: 'relative', top: 'auto' } : null),
+    margin: 0,
+    // The base Dropdown menu sits at 1000; react-select defaults to 1 and slides under page content.
+    zIndex: 1000,
+    width: 'auto',
+    minWidth: '100%',
+    backgroundColor: 'transparent',
+    boxShadow: 'none',
+  }),
+  menuList: (base: any) => ({ ...base, padding: 0, maxHeight: 'none' }),
+  group: (base: any) => ({ ...base, padding: 0 }),
+  groupHeading: (base: any) => ({ ...base, margin: 0, padding: 0 }),
+  option: (base: any) => ({ ...base, padding: 0, backgroundColor: 'transparent' }),
+});
 
 export function DropdownList<TOption extends TDropdownOptionBase>({
   options,
@@ -40,80 +76,84 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
   onInputChange,
 }: IDropdownListProps<TOption>) {
   const [searchText, setSearchText] = useState('');
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [uncontrolledValue, setUncontrolledValue] = useState<TOption | TOption[] | null>(defaultValue ?? null);
   const isControlled = value !== undefined;
-  const selectValue = toArray(isControlled ? value : uncontrolledValue);
-  const shouldCloseOnSelect = closeMenuOnSelect ?? !isMulti;
-
+  const currentValue = isControlled ? value : uncontrolledValue;
+  const selectValue = toArray(currentValue);
   const optionKey = (option: TOption) => (getOptionValue ? getOptionValue(option) : getDefaultOptionValue(option));
-  const isSameOption = (a: TOption, b: TOption) => {
-    const keyA = optionKey(a);
-    const keyB = optionKey(b);
-    if (keyA !== undefined && keyB !== undefined) return keyA === keyB;
-    return a === b;
-  };
-  const isSelected = (option: TOption) => selectValue.some((selected) => isSameOption(selected, option));
-
-  const filteredOptions = useMemo(() => {
-    const matches = (option: TOption) => {
-      if (!searchText) return true;
-      const optionLabel = getOptionSearchText(option, getOptionLabel);
-      if (filterOption) {
-        return filterOption({ label: optionLabel, value: optionKey(option) || '', data: option }, searchText);
-      }
-
-      return optionLabel.toLowerCase().includes(searchText.toLowerCase());
-    };
-
-    return options
-      .map((item) => (isOptionGroup(item) ? { ...item, options: item.options.filter(matches) } : item))
-      .filter((item) => (isOptionGroup(item) ? item.options.length > 0 : matches(item)));
-  }, [options, searchText, filterOption, getOptionLabel, getOptionValue]);
 
   const handleSearchChange = (nextSearch: string) => {
     setSearchText(nextSearch);
     onInputChange?.(nextSearch);
   };
 
-  const handleSelect = (option: TOption, closeDropdown: () => void) => {
-    // Options may carry their own action (invite a teammate, select all) instead of being selectable.
-    if (option.onClick) {
-      option.onClick();
+  const handleInputChange = (nextSearch: string, { action }: InputActionMeta) => {
+    if (action === 'input-change') handleSearchChange(nextSearch);
+    if (action === 'set-value' || action === 'menu-close') handleSearchChange('');
+
+    return nextSearch;
+  };
+
+  const getSelectedLabel = (): ReactNode => {
+    if (isMulti || !selectValue[0]) return null;
+    if (formatOptionLabel) {
+      return formatOptionLabel(selectValue[0], { context: 'value', selectValue, inputValue: searchText });
+    }
+
+    return getOptionLabel ? getOptionLabel(selectValue[0]) : selectValue[0].label;
+  };
+
+  const handleChange = (newValue: OnChangeValue<TOption, boolean>, actionMeta: ActionMeta<TOption>) => {
+    const changedOption = actionMeta.option || (Array.isArray(newValue) ? undefined : newValue as TOption | null) || undefined;
+    if (changedOption?.onClick) {
+      changedOption.onClick();
+      handleSearchChange('');
       return;
     }
 
-    // Only multi select can remove a value; re-picking the current single value keeps it selected.
-    const isRemoval = isMulti && isSelected(option);
-    const getNextValue = () => {
-      if (!isMulti) return option;
-      return isRemoval ? selectValue.filter((item) => !isSameOption(item, option)) : [...selectValue, option];
-    };
-    const nextValue = getNextValue();
-
+    const nextValue = isMulti ? toArray(newValue as TOption[]) : (newValue as TOption | null);
     if (!isControlled) setUncontrolledValue(nextValue);
-    onChange?.(nextValue, { action: isRemoval ? 'deselect-option' : 'select-option', option });
-
-    if (searchText) handleSearchChange('');
-    if (shouldCloseOnSelect) closeDropdown();
+    onChange?.(nextValue, { action: actionMeta.action as 'select-option' | 'deselect-option', option: changedOption });
+    if (closeMenuOnSelect ?? !isMulti) setIsMenuOpen(false);
+    handleSearchChange('');
   };
 
-  const renderMenu = (closeDropdown: () => void) => (
-    <DropdownListMenu<TOption>
-      options={filteredOptions}
-      isMulti={isMulti}
-      isSearchable={isSearchable}
-      isDisabled={isDisabled}
-      placeholder={placeholder}
-      noOptionsMessage={noOptionsMessage}
-      selectValue={selectValue}
-      searchText={searchText}
-      getOptionLabel={getOptionLabel}
-      formatOptionLabel={formatOptionLabel}
-      onSearchChange={handleSearchChange}
-      onSelect={(option) => handleSelect(option, closeDropdown)}
-      isSelected={isSelected}
-    />
-  );
+  const selectedLabel = getSelectedLabel();
+  const selectOptionValue = isMulti ? selectValue : selectValue[0] || null;
+  const componentsPropsRef = useRef<IDropdownListSelectComponentsProps<TOption>>();
+  componentsPropsRef.current = {
+    controlSize,
+    title,
+    label,
+    isMulti,
+    placeholder,
+    selectedLabel,
+    selectValue,
+    searchText,
+    isSearchable,
+    isDisabled,
+    staticMenu,
+    isMenuOpen: staticMenu || isMenuOpen,
+    onToggleMenu: () => setIsMenuOpen((current) => !current),
+    placement,
+    errorMessage,
+    controlClassName,
+    menuClassName,
+    noOptionsMessage,
+    getOptionLabel,
+    formatOptionLabel,
+    onSearchChange: handleSearchChange,
+  };
+
+  // Built once per instance: a fresh `components` object would remount the whole menu each render.
+  const selectComponentsRef = useRef<ReturnType<typeof createDropdownListComponents<TOption>>>();
+  if (!selectComponentsRef.current) {
+    selectComponentsRef.current = createDropdownListComponents<TOption>(
+      () => componentsPropsRef.current as IDropdownListSelectComponentsProps<TOption>,
+    );
+  }
+  const selectComponents = selectComponentsRef.current;
 
   const labelNode = label ? (
     <p className={styles['dropdown-list__label']}>
@@ -122,30 +162,6 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
     </p>
   ) : null;
   const errorNode = errorMessage ? <p className={styles['dropdown-list__error']}>{errorMessage}</p> : null;
-
-  if (staticMenu) {
-    return (
-      <div className={classnames(styles['dropdown-list'], isDisabled && styles['dropdown-list_disabled'], className)}>
-        {labelNode}
-        <DropdownSurface className={classnames(styles['dropdown-list__menu_static'], menuClassName)}>
-          {renderMenu(() => undefined)}
-        </DropdownSurface>
-        {errorNode}
-      </div>
-    );
-  }
-
-  // The control never renders chips for multi select — selected items are shown by the consumer.
-  const selectedOption = isMulti ? undefined : selectValue[0];
-  const getSelectedLabel = (): ReactNode => {
-    if (!selectedOption) return null;
-    if (formatOptionLabel) {
-      return formatOptionLabel(selectedOption, { context: 'value', selectValue, inputValue: searchText });
-    }
-
-    return getOptionLabel ? getOptionLabel(selectedOption) : selectedOption.label;
-  };
-  const selectedLabel = getSelectedLabel();
 
   return (
     <div
@@ -157,46 +173,50 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
       )}
     >
       {labelNode}
-      <Dropdown
-        isDisabled={isDisabled}
-        direction={placement === 'left' ? 'right' : undefined}
-        className={styles['dropdown-list__dropdown']}
-        toggleProps={{
-          className: styles['dropdown-list__toggle'],
-          'aria-label': title || label,
-        }}
-        menuClassName={classnames(styles[`dropdown-list__menu_${controlSize}`], menuClassName)}
-        renderToggle={(isOpen) => (controlSize === 'sm' ? (
-          <DropdownControl
-            title={title || selectedLabel || placeholder}
-            isOpen={isOpen}
-            className={controlClassName}
-          />
-        ) : (
-          <span
-            className={classnames(
-              styles['dropdown-list__control'],
-              isOpen && styles['dropdown-list__control_open'],
-              errorMessage && styles['dropdown-list__control_error'],
-              controlClassName,
-            )}
-          >
-            <span
-              className={classnames(
-                styles['dropdown-list__value'],
-                !selectedLabel && styles['dropdown-list__value_placeholder'],
-              )}
-            >
-              {selectedLabel || placeholder}
-            </span>
-            <ArrowDropdownIcon
-              className={classnames(styles['dropdown-list__arrow'], isOpen && styles['dropdown-list__arrow_open'])}
-            />
-          </span>
-        ))}
+      {/*
+        * react-select only dismisses its menu when its own `Input` blurs, and the custom `Control`
+        * renders a toggle button instead of that input, so outside clicks have to be caught here.
+        */}
+      <OutsideClickHandler
+        display="contents"
+        disabled={staticMenu || !isMenuOpen}
+        onOutsideClick={() => setIsMenuOpen(false)}
       >
-        {({ closeDropdown }) => renderMenu(closeDropdown)}
-      </Dropdown>
+        <Select<TOption, boolean, TDropdownOptionGroup<TOption>>
+          options={options}
+          value={selectOptionValue}
+          inputValue={searchText}
+          onInputChange={handleInputChange}
+          onChange={handleChange}
+          isMulti={isMulti}
+          isSearchable={false}
+          isDisabled={isDisabled && !staticMenu}
+          closeMenuOnSelect={closeMenuOnSelect ?? !isMulti}
+          hideSelectedOptions={false}
+          controlShouldRenderValue={false}
+          tabSelectsValue={false}
+          isClearable={false}
+          /* The in-menu search field is a plain input, so Backspace there must edit the query
+             instead of popping the last selected value. */
+          backspaceRemovesValue={false}
+          styles={getReactSelectStyles(staticMenu, controlSize)}
+          menuIsOpen={staticMenu || isMenuOpen}
+          onMenuOpen={() => setIsMenuOpen(true)}
+          onMenuClose={() => setIsMenuOpen(false)}
+          getOptionValue={(option) => optionKey(option) || ''}
+          getOptionLabel={(option) => getOptionSearchText(option, getOptionLabel)}
+          filterOption={(candidate, input) => {
+            const option = candidate.data as TOption;
+            const labelText = getOptionSearchText(option, getOptionLabel);
+            if (filterOption) {
+              return filterOption({ label: labelText, value: optionKey(option) || '', data: option }, input);
+            }
+
+            return labelText.toLowerCase().includes(input.toLowerCase());
+          }}
+          components={selectComponents}
+        />
+      </OutsideClickHandler>
       {errorNode}
     </div>
   );

@@ -6,6 +6,9 @@
 .dropdown-toggle {
   all: unset;
   display: flex;
+  /* `all: unset` resets box-sizing to content-box, so a submenu row styled as a full-width
+     dropdown item would overflow its menu by the item padding. */
+  box-sizing: border-box;
   cursor: pointer;
 
   &:focus-visible {
@@ -142,6 +145,14 @@
   overflow: hidden;
   min-width: 0;
   text-overflow: ellipsis;
+}
+
+/*
+ * A submenu anchors to its own row, which the parent surface insets by its padding. Pulling it
+ * back by that padding lines the submenu panel up with the parent menu, as on production.
+ */
+.dropdown__submenu {
+  margin-left: -0.4rem;
 }
 
 .dropdown__custom-sub-options {

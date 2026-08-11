@@ -31,7 +31,6 @@ export function SelectMenu<T extends string>({
 
   return (
     <Dropdown
-      direction="right"
       className={classnames(
         styles['container'],
         isFromCheckIfConditions && styles['container--select-menu'],

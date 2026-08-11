@@ -101,7 +101,6 @@ export function FilterSelect<
       )}
     >
       <Dropdown
-        direction="right"
         className={classnames(
           styles['filter-select__dropdown'],
           hasSelectedOptions && styles['filter-select__dropdown_clearable'],

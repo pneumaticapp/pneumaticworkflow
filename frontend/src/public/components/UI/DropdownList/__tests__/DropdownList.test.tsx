@@ -63,7 +63,7 @@ describe('DropdownList', () => {
     fireEvent.click(screen.getByRole('option', { name: option.label }));
 
     expect(onChange).toHaveBeenCalledWith(option, { action: 'select-option', option });
-    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
   });
 
   it('keeps a single select value selected when it is picked again', () => {
@@ -92,7 +92,67 @@ describe('DropdownList', () => {
     fireEvent.click(screen.getByRole('option', { name: option.label }));
 
     expect(onChange).toHaveBeenCalledWith([], { action: 'deselect-option', option });
-    expect(screen.getByRole('menu')).toBeInTheDocument();
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+  });
+
+  it('closes the menu on an outside click', () => {
+    render(<DropdownList options={[option]} title="Pick a value" />);
+
+    openMenu('Pick a value');
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+
+    fireEvent.mouseDown(document.body);
+    fireEvent.mouseUp(document.body);
+
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+  });
+
+  it('keeps the multi select value when Backspace is pressed with an empty search', () => {
+    const onChange = jest.fn();
+    const { container } = render(
+      <DropdownList
+        isMulti
+        isSearchable
+        options={[option, { label: 'Another option', value: 'another' }]}
+        value={[option]}
+        title="Pick values"
+        onChange={onChange}
+      />,
+    );
+
+    openMenu('Pick values');
+    fireEvent.keyDown(container.querySelector('input[name="dropdown-list-search"]')!, { key: 'Backspace' });
+
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('marks the keyboard-focused option so it is visible while navigating', () => {
+    const { container } = render(
+      <DropdownList
+        isSearchable
+        options={[option, { label: 'Another option', value: 'another' }]}
+        title="Pick a value"
+      />,
+    );
+
+    openMenu('Pick a value');
+    fireEvent.keyDown(container.querySelector('input[name="dropdown-list-search"]')!, { key: 'ArrowDown' });
+
+    expect(screen.getByRole('option', { name: 'Another option' }))
+      .toHaveClass(listStyles['dropdown-list__option_focused']);
+    expect(screen.getByRole('option', { name: option.label }))
+      .not.toHaveClass(listStyles['dropdown-list__option_focused']);
+  });
+
+  it('exposes the menu as a listbox and marks multi select', () => {
+    render(<DropdownList isMulti options={[option]} title="Pick values" />);
+
+    const toggle = screen.getByRole('button', { name: 'Pick values' });
+    expect(toggle).toHaveAttribute('aria-haspopup', 'listbox');
+
+    fireEvent.click(toggle);
+
+    expect(screen.getByRole('listbox')).toHaveAttribute('aria-multiselectable', 'true');
   });
 
   it('filters options by the in-menu search', () => {

@@ -27,7 +27,12 @@
 .dropdown-menu {
   --dropdown-menu-width: 19.2rem;
 
-  margin-top: 0.6rem;
+  /*
+   * The toggle is the popper reference and the container insets it by its padding, so both margins
+   * carry that padding plus the gap the design asks for: 0.6rem inset + 0.6rem gap below, and
+   * -1.6rem to line the menu up with the pill's left edge.
+   */
+  margin-top: 1.2rem;
   margin-left: -1.6rem;
 
   @media (--mobile) {

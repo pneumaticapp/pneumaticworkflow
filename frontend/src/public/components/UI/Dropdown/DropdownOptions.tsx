@@ -42,10 +42,15 @@ export function DropdownOptions({ options, closeDropdown, isFromBreakdownItem }:
             <Dropdown
               key={`submenu-${key}`}
               options={subOptions || option}
-              placement="right-start"
+              /* Submenus drop under their row inside the parent menu, as on production —
+                 a right-hand fly-out would land outside it. */
+              placement="bottom-start"
               className={option.className}
               toggleProps={{ className: itemClassName }}
-              menuClassName={option.customSubOption ? styles['dropdown__custom-sub-options'] : undefined}
+              menuClassName={classnames(
+                styles['dropdown__submenu'],
+                option.customSubOption && styles['dropdown__custom-sub-options'],
+              )}
               renderToggle={() => (
                 <>
                   <span className={styles['label']}>{option.label}</span>
