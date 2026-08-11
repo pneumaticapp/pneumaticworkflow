@@ -10,6 +10,7 @@ export interface IModifyDropdownProps {
   deleteLabel: string;
   onClone?: () => void;
   cloneLabel?: string;
+  isReadOnly?: boolean;
   className?: string;
   toggleType: EModifyDropdownToggle;
 }

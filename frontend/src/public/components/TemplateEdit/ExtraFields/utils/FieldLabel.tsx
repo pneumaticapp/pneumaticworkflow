@@ -80,6 +80,7 @@ export function FieldLabel({
             onBlur={handleNameBlur}
             minRows={1}
             className={styles['kick-off-input__name-textarea']}
+            data-use-input
           />
           {isRequired && <span aria-label="required" className={styles['kick-off-required-sign']} />}
           {!isFocused && (

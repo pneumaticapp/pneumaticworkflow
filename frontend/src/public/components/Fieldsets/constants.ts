@@ -1,5 +1,7 @@
 import { EFieldLabelPosition, EFieldsetRuleType } from '../../types/fieldset';
 
+export const FIELDSET_READONLY_TEXT = 'Read-only';
+
 export const FIELDSET_RULES_MSG_INCOMPLETE = 'fieldsets.rules-validation-incomplete';
 export const FIELDSET_RULES_MSG_VALUE_REQUIRED = 'fieldsets.rules-validation-value-required';
 export const FIELDSET_RULES_MSG_VALUE_NUMBER = 'fieldsets.rules-validation-value-number';

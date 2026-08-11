@@ -144,6 +144,7 @@ export function ExtraFieldCreatable({
           <input
             ref={(el) => (optionInputsRefs.current[optionIndex] = el as HTMLInputElement)}
             className={inputStyles['kickoff-create-field-option__input']}
+            data-use-input
             onChange={handleChangeOption(optionIndex)}
             onBlur={handleBlurOption(apiName)}
             placeholder={namePlaceholder}

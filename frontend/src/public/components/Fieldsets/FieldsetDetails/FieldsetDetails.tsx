@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useEffect, useState, useMemo, useCallback, ChangeEvent } from 'react';
+import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 import classNames from 'classnames';
@@ -20,6 +21,7 @@ import { ERoutes } from '../../../constants/routes';
 
 import { ModifyDropdown, Button, FilterSelect, Tooltip } from '../../UI';
 import { EModifyDropdownToggle } from '../../UI/ModifyDropdown/types';
+import { DropdownList } from '../../UI/DropdownList';
 import { NotificationManager } from '../../UI/Notifications';
 import { FieldsetModal } from '../FieldsetModal/FieldsetModal';
 import { EFieldsetModalType } from '../FieldsetModal/types';
@@ -49,6 +51,7 @@ import { useDatasetOptions } from '../../TemplateEdit/ExtraFields/utils/useDatas
 import { normalizeFieldsForUI } from './fieldsetFieldMappers';
 import { validateFieldsetRules } from '../validators';
 import {
+  FIELDSET_READONLY_TEXT,
   FIELDSET_LABEL_POSITION_OPTIONS,
   FIELDSET_RULE_TYPES,
   FIELDSET_RULE_VALUE_PLACEHOLDER_BY_TYPE,
@@ -207,8 +210,8 @@ const FieldsetDetails = ({
     setDetailFieldsetChanges((prev) => ({ ...prev, rules }));
   };
 
-  const handleSave = () => {
-    if (!fieldset || !isChanged) return;
+  const handleSave = (): boolean => {
+    if (!fieldset || !isChanged) return false;
 
     const titleErrorMessageKey = validateFieldsetTitle(detailFieldset.title);
 
@@ -226,7 +229,7 @@ const FieldsetDetails = ({
         NotificationManager.warning({
           message: formatMessage({ id: ruleErrorMessageKey }),
         });
-        return;
+        return false;
       }
     }
 
@@ -256,6 +259,7 @@ const FieldsetDetails = ({
     }
 
     dispatch(updateFieldsetAction(payload));
+    return true;
   };
 
   const getRuleValuePlaceholder = (ruleType: EFieldsetRuleType) =>
@@ -269,6 +273,9 @@ const FieldsetDetails = ({
     return null;
   }
 
+  const isLinked = fieldset.usage.length > 0;
+  const readOnlyBadge = isLinked ? <span className={styles['readonly-badge']}>{FIELDSET_READONLY_TEXT}</span> : null;
+
   const handleCloneFieldset = () => {
     if (isChanged) {
       NotificationManager.warning({
@@ -281,7 +288,7 @@ const FieldsetDetails = ({
 
   return (
     <div className={styles['container']}>
-      <FieldsetUnsavedChangesModal isChanged={isChanged} />
+      <FieldsetUnsavedChangesModal isChanged={isChanged} onSave={handleSave} />
 
       <header className={styles['header']}>
         <h1 title={fieldset.name}>{fieldset.name}</h1>
@@ -302,13 +309,42 @@ const FieldsetDetails = ({
             editLabel={formatMessage({ id: 'fieldsets.edit' })}
             deleteLabel={formatMessage({ id: 'fieldsets.delete' })}
             cloneLabel={formatMessage({ id: 'fieldsets.clone' })}
+            isReadOnly={isLinked}
             toggleType={EModifyDropdownToggle.Modify}
           />
         </div>
       </header>
 
+      {isLinked ? (
+        <div className={`${styles['usage-banner']} ${styles['usage-banner--linked']}`}>
+          <div className={styles['usage-banner__row']}>
+            <span>
+              {formatMessage({ id: 'fieldsets.usage.linked' }, { count: fieldset.usage.length })}
+            </span>
+            <DropdownList
+              controlSize="sm"
+              className={styles['usage-banner__dropdown']}
+              title={formatMessage({ id: 'fieldsets.usage.show' })}
+              options={fieldset.usage.map((template) => ({ label: template.name }))}
+              placement="left"
+              classNames={{
+                menuList: () => styles['usage-banner__menu-list'],
+                option: () => styles['usage-banner__option'],
+              }}
+            />
+          </div>
+        </div>
+      ) : (
+        <div className={`${styles['usage-banner']} ${styles['usage-banner--not-linked']}`}>
+          {formatMessage({ id: 'fieldsets.usage.not-linked' })}
+        </div>
+      )}
+
       <div className={styles['list']}>
-        <h2 className={styles['section-title']}>{formatMessage({ id: 'fieldsets.settings-section' })}</h2>
+        <h2 className={styles['section-title']}>
+          {formatMessage({ id: 'fieldsets.settings-section' })}
+          {readOnlyBadge}
+        </h2>
 
         <div className={styles['settings-form']}>
           <div className={styles['settings-field']}>
@@ -354,6 +390,7 @@ const FieldsetDetails = ({
               value={detailFieldset.description}
               placeholder={formatMessage({ id: 'fieldsets.settings.description-placeholder' })}
               onChange={handleSettingsDescriptionChange}
+              disabled={isLinked}
             />
           </div>
 
@@ -366,6 +403,7 @@ const FieldsetDetails = ({
               className={styles['settings-select']}
               value={detailFieldset.labelPosition}
               onChange={handleSettingsLabelPositionChange}
+              disabled={isLinked}
             >
               {FIELDSET_LABEL_POSITION_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -378,16 +416,23 @@ const FieldsetDetails = ({
       </div>
 
       <div className={styles['list']}>
-        <h2 className={styles['section-title']}>{formatMessage({ id: 'fieldsets.fields-section' })}</h2>
+        <h2 className={styles['section-title']}>
+          {formatMessage({ id: 'fieldsets.fields-section' })}
+          {readOnlyBadge}
+        </h2>
 
-        <div className={styles['components']}>
+        <div className={classnames(styles['components'], isLinked && styles['components_disabled'])}>
           {ExtraFieldsMap.map((x) => (
-            <ExtraFieldIcon {...x} key={x.id} onClick={() => handleCreateField(x.id)} />
+            <ExtraFieldIcon
+              {...x}
+              key={x.id}
+              onClick={() => handleCreateField(x.id)}
+            />
           ))}
         </div>
 
         {sortedFields.length > 0 && (
-          <div className={styles['fields']}>
+          <div className={classnames(styles['fields'], isLinked && styles['fieldset_readonly'])}>
             {sortedFields.map((field, index) => (
               <ExtraFieldIntl
                 key={field.apiName}
@@ -402,6 +447,7 @@ const FieldsetDetails = ({
                 accountId={accountId}
                 mode={EExtraFieldMode.Kickoff}
                 showDropdown
+                isDisabled={isLinked}
                 datasetOptions={datasetOptions}
                 labelPosition={isDesktop ? detailFieldset.labelPosition : EFieldLabelPosition.Top}
               />
@@ -415,7 +461,10 @@ const FieldsetDetails = ({
       </div>
 
       <div className={styles['list']}>
-        <h2 className={styles['section-title']}>{formatMessage({ id: 'fieldsets.rules-section' })}</h2>
+        <h2 className={styles['section-title']}>
+          {formatMessage({ id: 'fieldsets.rules-section' })}
+          {readOnlyBadge}
+        </h2>
 
         {detailFieldset.rules.length === 0 && (
           <p className={styles['empty-text']}>{formatMessage({ id: 'fieldsets.no-rules' })}</p>
@@ -428,6 +477,7 @@ const FieldsetDetails = ({
               onChange={(e) => handleEditRuleType(index, e.target.value as EFieldsetRuleType)}
               className={styles['rule-value-input']}
               style={{ flex: 'none', minWidth: '10rem' }}
+              disabled={isLinked}
             >
               {FIELDSET_RULE_TYPES.map((ruleType) => (
                 <option key={ruleType.value} value={ruleType.value}>
@@ -442,11 +492,18 @@ const FieldsetDetails = ({
               value={rule.value ?? ''}
               placeholder={getRuleValuePlaceholder(rule.type)}
               onChange={(e) => handleEditRuleValue(index, e.target.value)}
+              disabled={isLinked}
             />
 
-            <button type="button" className={styles['rule-delete-btn']} onClick={() => handleDeleteRule(index)}>
-              {formatMessage({ id: 'fieldsets.rule-delete' })}
-            </button>
+            {!isLinked && (
+              <button
+                type="button"
+                className={styles['rule-delete-btn']}
+                onClick={() => handleDeleteRule(index)}
+              >
+                {formatMessage({ id: 'fieldsets.rule-delete' })}
+              </button>
+            )}
 
             <div className={styles['rule-fields-selector']}>
               <span className={styles['rule-fields-label']}>{formatMessage({ id: 'fieldsets.rule-fields' })}</span>
@@ -460,6 +517,7 @@ const FieldsetDetails = ({
                   placeholderText={formatMessage({ id: 'fieldsets.rule-fields-placeholder' })}
                   onChange={(fieldApiNames) => handleEditRuleFields(index, fieldApiNames)}
                   resetFilter={() => handleEditRuleFields(index, [])}
+                  isDisabled={isLinked}
                   renderPlaceholder={(opts) => {
                     const selected = (rule.fields || []).length;
                     if (selected === 0) return formatMessage({ id: 'fieldsets.rule-fields-placeholder' });
@@ -474,23 +532,27 @@ const FieldsetDetails = ({
           </div>
         ))}
 
-        <button type="button" className={styles['add-rule-btn']} onClick={handleAddRule}>
-          + {formatMessage({ id: 'fieldsets.add-rule' })}
-        </button>
-      </div>
-
-      <div className={styles['save-bar']}>
-        <Button
-          label={formatMessage({ id: 'fieldsets.save' })}
-          buttonStyle="yellow"
-          size="md"
-          onClick={handleSave}
-          disabled={!isChanged}
-        />
-        {isChanged && (
-          <span className={styles['save-bar__hint']}>{formatMessage({ id: 'fieldsets.unsaved-changes' })}</span>
+        {!isLinked && (
+          <button type="button" className={styles['add-rule-btn']} onClick={handleAddRule}>
+            + {formatMessage({ id: 'fieldsets.add-rule' })}
+          </button>
         )}
       </div>
+
+      {!isLinked && (
+        <div className={styles['save-bar']}>
+          <Button
+            label={formatMessage({ id: 'fieldsets.save' })}
+            buttonStyle="yellow"
+            size="md"
+            onClick={handleSave}
+            disabled={!isChanged}
+          />
+          {isChanged && (
+            <span className={styles['save-bar__hint']}>{formatMessage({ id: 'fieldsets.unsaved-changes' })}</span>
+          )}
+        </div>
+      )}
 
       <FieldsetModal type={EFieldsetModalType.Edit} />
     </div>

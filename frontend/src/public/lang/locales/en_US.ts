@@ -1523,6 +1523,7 @@ export const enMessages = {
   'fieldsets.leave-unsaved-message': 'Your changes are not saved.',
   'fieldsets.leave-unsaved-stay': 'Keep editing',
   'fieldsets.leave-unsaved-leave': 'Discard',
+  'fieldsets.leave-unsaved-save': 'Save',
   'fieldsets.clone-unsaved-warning': 'Please save or discard unsaved changes before cloning',
   'fieldsets.settings-section': 'Settings',
   'fieldsets.header-label': 'Fieldset',
@@ -1555,4 +1556,9 @@ export const enMessages = {
   'template.fieldset-picker.empty': 'No fieldsets available. Create one first.',
   'fieldset.group-title': 'Fieldset: {name}',
   'fieldset.validation-error.sum-max': 'The sum of numeric fields in "{name}" must not exceed {value}.',
+  'fieldsets.usage.linked': 'Used in {count} {count, plural, one {template} other {templates}}. Editing is locked.',
+  'fieldsets.usage.not-linked': 'Not used in any template',
+  'fieldsets.usage.show': 'Show',
+  'fieldsets.usage.hide': 'Hide',
+  'fieldsets.usage.disabled-tooltip': 'Fieldset is used in templates. Editing and deletion are locked.',
 };

@@ -88,6 +88,16 @@
     }
   }
 }
+.dropdown-item_disabled {
+  pointer-events: none;
+  opacity: 0.32;
+}
+
+.dropdown-item-tooltip {
+  padding: 4px 8px;
+  text-align: center;
+}
+
 .dropdown-item-mobile {
   justify-content: space-between;
 }
