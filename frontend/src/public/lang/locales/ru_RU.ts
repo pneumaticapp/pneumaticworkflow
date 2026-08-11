@@ -1440,6 +1440,7 @@ export const ruMessages = {
   'fieldsets.usage.not-linked': 'Не используется ни в одном шаблоне',
   'fieldsets.usage.show': 'Показать',
   'fieldsets.usage.hide': 'Скрыть',
+  'fieldsets.usage.disabled-tooltip': 'Набор полей используется в шаблонах. Редактирование и удаление заблокированы.',
   'user-info.vacation.title': 'Статус',
   'user-info.vacation.status': 'Опции',
   'user-info.vacation.active': 'Вы в отпуске/отсутствуете',

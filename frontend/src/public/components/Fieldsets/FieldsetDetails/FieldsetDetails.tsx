@@ -282,6 +282,7 @@ const FieldsetDetails = ({
             editLabel={formatMessage({ id: 'fieldsets.edit' })}
             deleteLabel={formatMessage({ id: 'fieldsets.delete' })}
             cloneLabel={formatMessage({ id: 'fieldsets.clone' })}
+            isReadOnly={isLinked}
             toggleType={EModifyDropdownToggle.Modify}
           />
         </div>
