@@ -36,7 +36,7 @@ export function initServer() {
   const { host, port = 8000, formSubdomain, mainPage, firebase } = getConfig();
 
   if (devMode) {
-    app.use(devMiddleware(webpackCompiler));
+    app.use(devMiddleware(webpackCompiler, { writeToDisk: true }));
     app.use(
       hotMiddleware(webpackCompiler, {
         path: '/__webpack_hmr',

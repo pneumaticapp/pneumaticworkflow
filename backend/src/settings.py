@@ -263,6 +263,8 @@ class Common(Configuration):
         'DEFAULT_AUTHENTICATION_CLASSES': (
             'src.authentication.services.public_auth.PublicAuthService',
             'src.authentication.services.guest_auth.GuestJWTAuthService',
+            'src.authentication.services.api_key_auth.'
+            'APIKeyAuthentication',
             'src.authentication.services.user_auth.'
             'PneumaticTokenAuthentication',
             'src.authentication.services.jwt_auth.PneumaticJWTAuthentication',
