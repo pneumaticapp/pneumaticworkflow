@@ -219,7 +219,7 @@ const FieldsetDetails = ({
       NotificationManager.warning({
         message: formatMessage({ id: titleErrorMessageKey }),
       });
-      return;
+      return false;
     }
 
     if (detailFieldsetChanges.rules) {
