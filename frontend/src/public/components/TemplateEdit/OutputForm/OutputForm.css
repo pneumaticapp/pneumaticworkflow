@@ -75,17 +75,9 @@
   margin-top: 0.5rem;
 }
 
-.flow__fieldset-name-row {
-  margin-top: 0.2rem;
-  padding-left: 1.2rem;
-
-  @mixin text-small;
-}
-
 .flow__fieldset-row {
   min-height: 2rem;
 }
-
 .flow__fieldset-header {
   color: var(--pneumatic-color-black100);
 }

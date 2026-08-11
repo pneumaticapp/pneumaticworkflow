@@ -110,9 +110,8 @@ describe('MergedOutputRows', () => {
     expect(screen.getByText('Field f-1')).toBeInTheDocument();
   });
 
-  it('fieldset row → renders header label, catalog name, and FieldsetEditorTitle with title', () => {
+  it('fieldset row → renders header with catalog name inline and FieldsetEditorTitle with title', () => {
     const HEADER_LABEL = intlMock.formatMessage({ id: 'fieldsets.header-label' });
-    const NAME_LABEL = intlMock.formatMessage({ id: 'fieldsets.name-label' });
 
     render(
       React.createElement(
@@ -125,9 +124,7 @@ describe('MergedOutputRows', () => {
       ),
     );
 
-    expect(screen.getByText(HEADER_LABEL)).toBeInTheDocument();
-    expect(screen.getByText('Fieldset Alpha')).toBeInTheDocument();
-    expect(screen.getByText(`${NAME_LABEL}:`)).toBeInTheDocument();
+    expect(screen.getByText(`${HEADER_LABEL}: Fieldset Alpha`)).toBeInTheDocument();
     expect(screen.getByTestId('fieldset-editor-title')).toHaveTextContent('Custom Title Alpha');
   });
 
