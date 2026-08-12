@@ -324,3 +324,10 @@ MSG_PT_0077 = lambda name: format_lazy(
     ),
     name=name,
 )
+MSG_PT_0078 = lambda name: format_lazy(
+    _(
+        'Task "{name}": an AI agent cannot be assigned '
+        'to a task without output fields.',
+    ),
+    name=name,
+)

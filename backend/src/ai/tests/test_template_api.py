@@ -3,11 +3,13 @@ from django.conf import settings
 
 from src.ai.models import AIAgent
 from src.processes.enums import (
+    FieldType,
     OwnerRole,
     OwnerType,
     PerformerType,
 )
 from src.processes.messages import template as messages
+from src.processes.models.templates.fields import FieldTemplate
 from src.processes.models.templates.task import TaskTemplate
 from src.processes.models.workflows.task import TaskPerformer
 from src.processes.services.versioning.schemas import (
@@ -49,7 +51,30 @@ def _create_agent(account, name='Analyst', **kwargs):
     )
 
 
-def _template_data(user, raw_performers, task_api_name='task-1'):
+def _template_data(
+    user,
+    raw_performers,
+    task_api_name='task-1',
+    task_fields=...,
+):
+    if task_fields is ...:
+        task_fields = [
+            {
+                'order': 1,
+                'name': 'Result',
+                'type': FieldType.TEXT,
+                'api_name': 'field-result',
+                'is_required': True,
+            },
+        ]
+    task_data = {
+        'number': 1,
+        'name': 'First step',
+        'api_name': task_api_name,
+        'raw_performers': raw_performers,
+    }
+    if task_fields is not None:
+        task_data['fields'] = task_fields
     return {
         'name': 'Template',
         'is_active': True,
@@ -61,14 +86,7 @@ def _template_data(user, raw_performers, task_api_name='task-1'):
             },
         ],
         'kickoff': {},
-        'tasks': [
-            {
-                'number': 1,
-                'name': 'First step',
-                'api_name': task_api_name,
-                'raw_performers': raw_performers,
-            },
-        ],
+        'tasks': [task_data],
     }
 
 
@@ -138,6 +156,94 @@ def test_create__ai_and_human_performers__validation_error(api_client):
     )
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['details']['api_name'] == 'task-1'
+
+
+def test_create__ai_performer_no_output_fields__validation_error(api_client):
+
+    # arrange
+    user = _setup_user()
+    agent = _create_agent(user.account)
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path='/templates',
+        data=_template_data(
+            user=user,
+            raw_performers=[
+                {
+                    'type': PerformerType.AI,
+                    'source_id': agent.id,
+                },
+            ],
+            task_fields=None,
+        ),
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['message'] == (
+        messages.MSG_PT_0078(name='First step')
+    )
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['details']['api_name'] == 'task-1'
+
+
+def test_create__ai_performer_empty_output_fields__validation_error(
+    api_client,
+):
+
+    # arrange
+    user = _setup_user()
+    agent = _create_agent(user.account)
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path='/templates',
+        data=_template_data(
+            user=user,
+            raw_performers=[
+                {
+                    'type': PerformerType.AI,
+                    'source_id': agent.id,
+                },
+            ],
+            task_fields=[],
+        ),
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['message'] == (
+        messages.MSG_PT_0078(name='First step')
+    )
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+
+
+def test_create__human_performer_no_output_fields__ok(api_client):
+
+    # arrange
+    user = _setup_user()
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path='/templates',
+        data=_template_data(
+            user=user,
+            raw_performers=[
+                {
+                    'type': PerformerType.USER,
+                    'source_id': user.id,
+                },
+            ],
+            task_fields=None,
+        ),
+    )
+
+    # assert
+    assert response.status_code == 200
 
 
 def test_create__feature_disabled__validation_error(api_client):
@@ -294,6 +400,15 @@ def test_update__ai_performer__syncs_active_workflow(api_client, mocker):
         user=user,
         tasks_count=1,
         is_active=True,
+    )
+    FieldTemplate.objects.create(
+        account=user.account,
+        template=template,
+        task=template.tasks.get(number=1),
+        name='Result',
+        type=FieldType.TEXT,
+        api_name='field-result',
+        order=1,
     )
     workflow = create_test_workflow(user=user, template=template)
     task = workflow.tasks.get(number=1)

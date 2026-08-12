@@ -299,11 +299,19 @@ class TaskTemplateSerializer(
             )
 
         performers_types = {elem.get('type') for elem in value}
-        if PerformerType.AI in performers_types and len(value) > 1:
-            self.raise_validation_error(
-                message=messages.MSG_PT_0077(data.get('name')),
-                api_name=data.get('api_name'),
-            )
+        if PerformerType.AI in performers_types:
+            if len(value) > 1:
+                self.raise_validation_error(
+                    message=messages.MSG_PT_0077(data.get('name')),
+                    api_name=data.get('api_name'),
+                )
+            # an agent on a task with nothing to fill in would
+            # complete it instantly with an empty output
+            if not data.get('fields'):
+                self.raise_validation_error(
+                    message=messages.MSG_PT_0078(data.get('name')),
+                    api_name=data.get('api_name'),
+                )
 
     def additional_validate_conditions(
         self,
