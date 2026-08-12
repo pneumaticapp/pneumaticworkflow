@@ -3,15 +3,15 @@
 import {
   EExtraFieldType,
   IExtraField,
-  IKickoffClient,
+  ITemplateKickoffClient,
+  IRuntimeKickoffClient,
   TExtraFieldValue,
-  IFieldsetBindingClient,
 } from '../../../../../types/template';
 import { IWorkflowDetailsKickoff } from '../../../../../types/workflow';
 import { getEditKickoff } from '../../../../../utils/workflows';
 import { normalizeSelections } from '../../../../TemplateEdit/utils/normalizeSelections';
 import { normalizeCheckboxValue } from '../../../../../utils/fields';
-import { IFieldsetField } from '../../../../../types/fieldset';
+import { IFieldsetField, IFieldsetRuntime } from '../../../../../types/fieldset';
 
 function normalizeKickoffFields(
   fields: (IExtraField | IFieldsetField)[] = [],
@@ -31,12 +31,12 @@ function normalizeKickoffFields(
 
 export function getClonedKickoff(
   workflowKickoff: IWorkflowDetailsKickoff,
-  templateKickoff: IKickoffClient,
-): IKickoffClient {
+  templateKickoff: ITemplateKickoffClient,
+): IRuntimeKickoffClient {
   const kickoff = getEditKickoff(workflowKickoff);
   const finalFields = normalizeKickoffFields(kickoff.fields, templateKickoff.fields);
 
-  const finalFieldsets = (kickoff.fieldsets || [])
+  const finalFieldsets: IFieldsetRuntime[] = (kickoff.fieldsets || [])
     .map((fieldset) => {
       // TODO (Technical Debt): Backend workflow fieldsets contain raw properties (id, apiName),
       // while client-side template fieldsets expect apiNameBinding.
@@ -56,15 +56,12 @@ export function getClonedKickoff(
         fields: normalizeKickoffFields(fieldset.fields, templateFieldset.fields),
       };
     })
-    .filter(Boolean);
+    .filter((fieldset): fieldset is IFieldsetRuntime => Boolean(fieldset));
 
-  // TODO (Technical Debt): IKickoffClient.fieldsets is typed as IFieldsetBindingClient[] (template editor shape),
-  // but runtime workflow execution components expect IFieldsetRuntime[] (with IExtraField[]).
-  // Cast is required until IKickoffClient type is separated/narrowed between editor and runtime contexts.
   return {
     ...kickoff,
     fields: finalFields,
-    fieldsets: finalFieldsets as unknown as IFieldsetBindingClient[],
+    fieldsets: finalFieldsets,
   };
 }
 

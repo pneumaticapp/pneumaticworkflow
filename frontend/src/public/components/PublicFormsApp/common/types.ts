@@ -1,9 +1,6 @@
-import { IKickoffClient } from '../../../types/template';
-import { IFieldsetRuntime } from '../../../types/fieldset';
+import { IRuntimeKickoffClient } from '../../../types/template';
 
-export interface IPublicFormKickoff extends Omit<IKickoffClient, 'fieldsets'> {
-  fieldsets: IFieldsetRuntime[];
-}
+export type IPublicFormKickoff = IRuntimeKickoffClient;
 
 export interface IPublicForm {
   accountId: number;

@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useEffect } from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
-import { IExtraField, IKickoffClient } from '../../types/template';
+import { IExtraField, IRuntimeKickoffClient } from '../../types/template';
 import { IFieldsetRuntime } from '../../types/fieldset';
 import { EInputNameBackgroundColor } from '../../types/workflow';
 import { isArrayWithItems } from '../../utils/helpers';
@@ -17,7 +17,7 @@ import { Button } from '../UI/Buttons/Button';
 import styles from './KickoffEdit.css';
 
 export interface IEditKickoffProps {
-  kickoff: IKickoffClient | null;
+  kickoff: IRuntimeKickoffClient | null;
   fieldsets?: IFieldsetRuntime[];
   isLoading?: boolean;
   accountId: number;

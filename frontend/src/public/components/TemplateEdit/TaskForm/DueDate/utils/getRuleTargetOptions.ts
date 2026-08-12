@@ -1,6 +1,6 @@
 import {
   EExtraFieldType,
-  IKickoffClient,
+  ITemplateKickoffClient,
   ITemplateTaskClient,
   TDueDateRuleTarget,
 } from '../../../../../types/template';
@@ -16,7 +16,7 @@ export type TRuleTargetOption = TDropdownOptionBase & {
 export function getRuleTargetOptions(
   currentTask: ITemplateTaskClient,
   tasks: ITemplateTaskClient[],
-  kickoff: IKickoffClient,
+  kickoff: ITemplateKickoffClient,
 ): readonly [TRuleTargetOption[], TRuleTargetOption[], TRuleTargetOption[]] {
   const prevTasks = getPreviousTasks(currentTask, tasks);
   const prevDateVariables = getTaskVariables(kickoff, tasks, currentTask).filter(
