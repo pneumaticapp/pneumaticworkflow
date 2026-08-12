@@ -166,7 +166,7 @@ class TaskUpdateVersionService(
                 ))
             conditions_tree[condition_data['api_name']] = rules_tree
         conditions = Condition.objects.bulk_create(conditions)
-        self.create_rules(conditions, conditions_tree)
+        self.create_rulesets(conditions, conditions_tree)
 
     def _update_field(
         self,

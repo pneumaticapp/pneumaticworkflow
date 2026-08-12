@@ -365,7 +365,7 @@ def test_create_rules__with_data__ok():
     ]
 
     # act
-    service.create_rules(rulesets_data=rulesets_data)
+    service.create_rulesets(rulesets_data=rulesets_data)
 
     # assert
     assert fieldset.rulesets.count() == 1
@@ -394,7 +394,7 @@ def test__create_related__default_params__ok(mocker):
     # mock
     create_rules_mock = mocker.patch(
         'src.processes.services.fieldsets.fieldset.'
-        'FieldSetTemplateService.create_rules',
+        'FieldSetTemplateService.create_rulesets',
     )
     create_fields_mock = mocker.patch(
         'src.processes.services.fieldsets.fieldset.'
@@ -442,7 +442,7 @@ def test__create_related__rulesets_provided__ok(mocker):
     # mock
     create_rules_mock = mocker.patch(
         'src.processes.services.fieldsets.fieldset.'
-        'FieldSetTemplateService.create_rules',
+        'FieldSetTemplateService.create_rulesets',
     )
     create_fields_mock = mocker.patch(
         'src.processes.services.fieldsets.fieldset.'
@@ -476,7 +476,7 @@ def test__create_related__fields_provided__ok(mocker):
     # mock
     create_rules_mock = mocker.patch(
         'src.processes.services.fieldsets.fieldset.'
-        'FieldSetTemplateService.create_rules',
+        'FieldSetTemplateService.create_rulesets',
     )
     create_fields_mock = mocker.patch(
         'src.processes.services.fieldsets.fieldset.'
@@ -525,7 +525,7 @@ def test__create_related__both_provided__ok(mocker):
     # mock
     create_rules_mock = mocker.patch(
         'src.processes.services.fieldsets.fieldset.'
-        'FieldSetTemplateService.create_rules',
+        'FieldSetTemplateService.create_rulesets',
     )
     create_fields_mock = mocker.patch(
         'src.processes.services.fieldsets.fieldset.'
@@ -797,7 +797,7 @@ def test_update_rules__existing_rule__ok(mocker):
     }
 
     # act
-    service.update_rules(rulesets_data=[ruleset_data])
+    service.update_rulesets(rulesets_data=[ruleset_data])
 
     # assert
     update_ruleset_mock.assert_called_once_with(
@@ -862,7 +862,7 @@ def test_update_rules__new_rule__ok(mocker):
     }
 
     # act
-    service.update_rules(rulesets_data=[ruleset_data])
+    service.update_rulesets(rulesets_data=[ruleset_data])
 
     # assert
     update_ruleset_mock.assert_not_called()
@@ -946,7 +946,7 @@ def test_update_rules__orphan_rules__deleted():
     ]
 
     # act
-    service.update_rules(rulesets_data=rulesets_data)
+    service.update_rulesets(rulesets_data=rulesets_data)
 
     # assert
     assert not FieldSetTemplateRuleSet.objects.filter(
@@ -964,7 +964,7 @@ def test_update_rules__two_rules_same_type_no_api_name__create_new_rule():
     """
     Two rules with the same type in rulesets_data:
     one existing (with api_name) and one new (without api_name).
-    Both rules must be persisted after update_rules completes.
+    Both rules must be persisted after update_rulesets completes.
     """
 
     # arrange
@@ -1026,7 +1026,7 @@ def test_update_rules__two_rules_same_type_no_api_name__create_new_rule():
     ]
 
     # act
-    service.update_rules(rulesets_data=rulesets_data)
+    service.update_rulesets(rulesets_data=rulesets_data)
 
     # assert
     assert fieldset.rulesets.count() == 2
@@ -1072,7 +1072,7 @@ def test_partial_update_name__ok(mocker):
     )
     mock_update_rules = mocker.patch(
         'src.processes.services.fieldsets.fieldset.'
-        'FieldSetTemplateService.update_rules',
+        'FieldSetTemplateService.update_rulesets',
     )
     service = FieldSetTemplateService(instance=fieldset, user=owner)
     data = {"name": 'Updated Name'}
@@ -1106,7 +1106,7 @@ def test_partial_update_fields_ok(mocker):
     )
     mock_update_rules = mocker.patch(
         'src.processes.services.fieldsets.fieldset.'
-        'FieldSetTemplateService.update_rules',
+        'FieldSetTemplateService.update_rulesets',
     )
     mock_super_partial_update = mocker.patch(
         'src.generics.base.service.'
@@ -1150,7 +1150,7 @@ def test_partial_update__rulesets__ok(mocker):
     )
     mock_update_rules = mocker.patch(
         'src.processes.services.fieldsets.fieldset.'
-        'FieldSetTemplateService.update_rules',
+        'FieldSetTemplateService.update_rulesets',
     )
     service = FieldSetTemplateService(user=owner, instance=fieldset)
     data = {

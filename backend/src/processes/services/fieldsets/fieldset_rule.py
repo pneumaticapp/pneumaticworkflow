@@ -6,7 +6,7 @@ from src.generics.base.service import BaseModelService
 from src.processes.enums import FieldSetRuleType, FieldType
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.models.templates.fieldset import (
-    FieldsetTemplateRule,
+    FieldsetTemplateRule, FieldSetTemplateRuleSet,
 )
 from src.processes.services.exceptions import (
     FieldsetTemplateRuleSumMaxFieldsNotNumber,
@@ -105,7 +105,7 @@ class FieldsetTemplateRuleService(BaseModelService):
     def create(
         self,
         **kwargs,
-    ) -> FieldsetTemplateRule:
+    ) -> FieldSetTemplateRuleSet:
 
         with transaction.atomic():
             self._create_instance(**kwargs)
