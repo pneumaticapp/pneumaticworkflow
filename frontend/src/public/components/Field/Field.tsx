@@ -95,6 +95,7 @@ export function Field({
             onBlur={() => setTouched(true)}
             placeholder={placeholder}
             disabled={disabled}
+            data-use-input={inputRest['data-use-input']}
           />
         );
       case EFieldTagName.RichText:

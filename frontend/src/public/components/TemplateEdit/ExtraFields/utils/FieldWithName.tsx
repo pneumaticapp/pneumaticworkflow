@@ -169,6 +169,7 @@ export const FieldWithName = forwardRef<HTMLInputElement, IKickoffFormFieldWithN
             editorClassName={editorClassName}
             onKeyDown={onNumericKeyDown}
             isNumericField={isNumericField}
+            data-use-input
           />
         </div>
       </div>

@@ -24,16 +24,22 @@ export function ModifyDropdown({
   editLabel,
   cloneLabel,
   deleteLabel,
+  isReadOnly,
   className,
   toggleType,
 }: IModifyDropdownProps) {
   const { formatMessage } = useIntl();
+
   const options: TDropdownOption[] = [
     {
       label: editLabel,
       onClick: onEdit,
       Icon: PencilIcon,
       size: 'sm',
+      ...(isReadOnly && {
+        isDisabled: true,
+        disabledTooltip: formatMessage({ id: 'fieldsets.usage.disabled-tooltip' }),
+      }),
     },
     ...(cloneLabel ? [{
       label: cloneLabel,
@@ -49,6 +55,10 @@ export function ModifyDropdown({
       withUpperline: true,
       withConfirmation: true,
       size: 'sm' as const,
+      ...(isReadOnly && {
+        isDisabled: true,
+        disabledTooltip: formatMessage({ id: 'fieldsets.usage.disabled-tooltip' }),
+      }),
     },
   ];
 

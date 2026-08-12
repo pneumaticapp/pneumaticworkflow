@@ -90,6 +90,7 @@
 .labeled-checkbox__input {
   max-width: calc(100% - 50px);
   border: none;
+  @mixin text-truncate;
 
   &:focus {
     outline: none;

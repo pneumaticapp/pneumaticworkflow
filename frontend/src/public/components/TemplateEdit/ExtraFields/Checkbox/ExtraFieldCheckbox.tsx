@@ -94,6 +94,7 @@ export function ExtraFieldCheckbox({
                 fieldStyles['kickoff-create-field-name-input'],
                 !isKickoffFieldNameValid && fieldStyles['kickoff-create-field-name-input_error'],
               )}
+              data-use-input
               onChange={handleChangeName}
               placeholder={namePlaceholder}
               value={name}
@@ -166,6 +167,7 @@ export function ExtraFieldCheckbox({
           <input
             ref={(el) => (optionInputsRefs.current[optionIndex] = el as HTMLInputElement)}
             className={fieldStyles['labeled-checkbox__input']}
+            data-use-input
             onChange={handleChangeOption(optionIndex)}
             onBlur={handleBlurOption(field.apiName)}
             placeholder={namePlaceholder}
