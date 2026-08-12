@@ -110,7 +110,6 @@ describe('MergedOutputRows', () => {
     expect(screen.getByText('Field f-1')).toBeInTheDocument();
   });
 
-
   it('fieldset row → renders header with catalog name inline and FieldsetEditorTitle with title', () => {
     const HEADER_LABEL = intlMock.formatMessage({ id: 'fieldsets.header-label' });
     render(
