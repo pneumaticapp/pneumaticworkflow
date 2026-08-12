@@ -61,10 +61,10 @@
 }
 
 .settings-label {
-  font-weight: 600;
-  color: var(--pneumatic-color-black72);
   display: flex;
   gap: 0.4rem;
+  font-weight: 600;
+  color: var(--pneumatic-color-black72);
 
   @mixin text-base;
 }

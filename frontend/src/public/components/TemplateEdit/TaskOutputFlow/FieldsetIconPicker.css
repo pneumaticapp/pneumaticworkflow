@@ -8,7 +8,6 @@
 }
 
 .fieldset-picker__menu {
-
   max-width: 20rem;
 }
 
@@ -30,5 +29,3 @@
   line-height: 1.6rem;
   color: var(--pneumatic-color-black48);
 }
-
-
