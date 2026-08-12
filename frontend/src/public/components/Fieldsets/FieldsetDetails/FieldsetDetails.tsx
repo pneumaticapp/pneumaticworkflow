@@ -363,12 +363,13 @@ const FieldsetDetails = ({
               id="fieldset-title"
               type="text"
               className={classNames(
-                styles['settings-input'],
-                Boolean(validateFieldsetTitle(detailFieldset.title)) && styles['settings-input_error'],
+                styles['settings-title'],
+                Boolean(validateFieldsetTitle(detailFieldset.title)) && styles['settings-title_error'],
               )}
               value={detailFieldset.title}
               placeholder={formatMessage({ id: 'fieldsets.settings.title-placeholder' })}
               onChange={handleSettingsTitleChange}
+              disabled={isLinked}
             />
           </div>
 
@@ -386,7 +387,7 @@ const FieldsetDetails = ({
             </label>
             <textarea
               id="fieldset-description"
-              className={styles['settings-textarea']}
+              className={styles['settings-description']}
               value={detailFieldset.description}
               placeholder={formatMessage({ id: 'fieldsets.settings.description-placeholder' })}
               onChange={handleSettingsDescriptionChange}
@@ -400,7 +401,7 @@ const FieldsetDetails = ({
             </label>
             <select
               id="fieldset-label-position"
-              className={styles['settings-select']}
+              className={styles['settings-label-position']}
               value={detailFieldset.labelPosition}
               onChange={handleSettingsLabelPositionChange}
               disabled={isLinked}
