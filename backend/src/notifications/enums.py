@@ -49,6 +49,7 @@ class NotificationMethod:
     verification = 'verification'
     invite = 'invite'
     ai_left_task = 'ai_left_task'
+    ai_completed_task = 'ai_completed_task'
 
     LITERALS = Literal[
         new_task,
@@ -95,6 +96,7 @@ class NotificationMethod:
         verification,
         invite,
         ai_left_task,
+        ai_completed_task,
     ]
 
 

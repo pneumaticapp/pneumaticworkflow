@@ -39,6 +39,7 @@ class WebSocketService(NotificationService):
         NotificationMethod.urgent,
         NotificationMethod.not_urgent,
         NotificationMethod.ai_left_task,
+        NotificationMethod.ai_completed_task,
         NotificationMethod.comment,
         NotificationMethod.mention,
         NotificationMethod.reaction,
@@ -254,6 +255,20 @@ class WebSocketService(NotificationService):
         )
 
     def send_ai_left_task(
+        self,
+        user_id: int,
+        sync: bool,
+        notification: Notification,
+        **kwargs,
+    ):
+        self._send(
+            method_name=NotificationMethod.notification_created,
+            group_name=f'{EventsConsumer.classname}_{user_id}',
+            data=self._get_serialized_notification(notification),
+            sync=sync,
+        )
+
+    def send_ai_completed_task(
         self,
         user_id: int,
         sync: bool,

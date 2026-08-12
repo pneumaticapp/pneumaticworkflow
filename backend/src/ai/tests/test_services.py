@@ -19,7 +19,11 @@ from src.processes.services.workflow_action import (
 from src.ai.tasks import run_ai_performer
 from src.accounts.enums import NotificationType
 from src.accounts.models import Notification
-from src.notifications.tasks import _send_ai_left_task_notification
+from src.notifications.tasks import (
+    _send_ai_completed_task_notification,
+    _send_ai_left_task_notification,
+)
+from src.processes.services.exceptions import AIPerformersStillWorking
 from src.processes.enums import (
     FieldType,
     PerformerType,
@@ -286,6 +290,151 @@ def test_run__agent_last_pending_by_all__completes_task(mocker):
     _mock_model(mocker, {'field-1': 'done'})
 
     run_ai_performer(task_id=task.id, agent_id=agent.id)
+
+    task.refresh_from_db()
+    assert task.status == TaskStatus.COMPLETED
+
+
+def test_run__human_co_performer__draft_notification_sent(mocker):
+    user, _workflow, task, agent = _setup(human_performer=True)
+    _mock_model(mocker, {'field-1': 'Draft ready'})
+    notification_mock = mocker.patch(
+        'src.ai.services.performers.'
+        'send_ai_completed_task_notification.delay',
+    )
+
+    run_ai_performer(task_id=task.id, agent_id=agent.id)
+
+    notification_mock.assert_called_once()
+    kwargs = notification_mock.call_args[1]
+    assert kwargs['task_id'] == task.id
+    assert kwargs['agent_name'] == agent.name
+    assert kwargs['recipients'] == [(user.id, user.email)]
+
+
+def test_run__sole_performer__no_draft_notification(mocker):
+    _user, _workflow, task, agent = _setup()
+    _mock_model(mocker, {'field-1': 'All good'})
+    notification_mock = mocker.patch(
+        'src.ai.services.performers.'
+        'send_ai_completed_task_notification.delay',
+    )
+
+    run_ai_performer(task_id=task.id, agent_id=agent.id)
+
+    task.refresh_from_db()
+    assert task.status == TaskStatus.COMPLETED
+    notification_mock.assert_not_called()
+
+
+def test_send_ai_completed_task_notification__creates_row(mocker):
+    user, _workflow, task, _agent = _setup()
+    send_mock = mocker.patch('src.notifications.tasks._send_notification')
+
+    _send_ai_completed_task_notification(
+        logging=False,
+        account_id=user.account_id,
+        recipients=[(user.id, user.email)],
+        task_id=task.id,
+        agent_name='Analyst',
+    )
+
+    notification = Notification.objects.get(
+        user_id=user.id,
+        type=NotificationType.AI_COMPLETED_TASK,
+    )
+    assert notification.task_id == task.id
+    assert notification.text == 'Analyst is done'
+    send_mock.assert_called_once()
+
+
+def test_complete_for_user__agent_still_working__blocked():
+    user, workflow, task, agent = _setup(human_performer=True)
+    AITaskRun.objects.create(
+        task=task,
+        agent=agent,
+        status=AITaskRunStatus.RUNNING,
+    )
+    service = WorkflowActionService(user=user, workflow=workflow)
+
+    with pytest.raises(AIPerformersStillWorking):
+        service.complete_task_for_user(task=task)
+
+    task.refresh_from_db()
+    assert task.status == TaskStatus.ACTIVE
+
+
+def test_complete_for_user__agent_not_dispatched_yet__blocked():
+    user, workflow, task, _agent = _setup(human_performer=True)
+    service = WorkflowActionService(user=user, workflow=workflow)
+
+    with pytest.raises(AIPerformersStillWorking):
+        service.complete_task_for_user(task=task)
+
+
+def test_complete_for_user__agent_left_for_human__ok():
+    user, workflow, task, agent = _setup(human_performer=True)
+    AITaskRun.objects.create(
+        task=task,
+        agent=agent,
+        status=AITaskRunStatus.LEFT_FOR_HUMAN,
+        reason='cannot fill',
+    )
+    service = WorkflowActionService(user=user, workflow=workflow)
+
+    service.complete_task_for_user(
+        task=task,
+        fields_values={'field-1': 'human filled it'},
+    )
+
+    task.refresh_from_db()
+    assert task.status == TaskStatus.COMPLETED
+
+
+def test_complete_for_user__agent_run_failed__ok():
+    user, workflow, task, agent = _setup(human_performer=True)
+    AITaskRun.objects.create(
+        task=task,
+        agent=agent,
+        status=AITaskRunStatus.FAILED,
+        reason='missing api_key',
+    )
+    service = WorkflowActionService(user=user, workflow=workflow)
+
+    service.complete_task_for_user(
+        task=task,
+        fields_values={'field-1': 'human filled it'},
+    )
+
+    task.refresh_from_db()
+    assert task.status == TaskStatus.COMPLETED
+
+
+def test_complete_for_user__feature_disabled__inert_agent_not_blocking():
+    user, workflow, task, _agent = _setup(human_performer=True)
+    account = user.account
+    account.ai_performers_enabled = False
+    account.save(update_fields=['ai_performers_enabled'])
+    service = WorkflowActionService(user=user, workflow=workflow)
+
+    service.complete_task_for_user(
+        task=task,
+        fields_values={'field-1': 'human filled it'},
+    )
+
+    task.refresh_from_db()
+    assert task.status == TaskStatus.COMPLETED
+
+
+def test_complete_for_user__agent_removed__not_blocking():
+    user, workflow, task, agent = _setup(human_performer=True)
+    TaskPerformer.objects.filter(task=task, ai_agent=agent).delete()
+    service = WorkflowActionService(user=user, workflow=workflow)
+
+    service.complete_task_for_user(
+        task=task,
+        fields_values={'field-1': 'human filled it'},
+    )
 
     task.refresh_from_db()
     assert task.status == TaskStatus.COMPLETED

@@ -887,6 +887,51 @@ class WorkflowActionService:
         if task.sub_workflows.running().exists():
             raise exceptions.SubWorkflowsIncompleted
 
+    def _validate_ai_performers_done(self, task: Task):
+
+        """ Humans may not complete a task while an AI performer is
+            still working on it (no run yet, or a queued/running one).
+            An agent counts as done once its share is completed or its
+            run finished in a terminal state (left for human, failed).
+            Inert agents never block: feature switched off, or the
+            agent deactivated/deleted """
+
+        # local imports: src.ai -> processes models
+        from src.ai.enums import AITaskRunStatus
+        from src.ai.models import AITaskRun
+        from src.ai.providers import ai_performers_active
+
+        pending_agent_ids = set(
+            task.taskperformer_set
+            .exclude_directly_deleted()
+            .not_completed()
+            .filter(
+                type=PerformerType.AI,
+                ai_agent__is_active=True,
+                ai_agent__is_deleted=False,
+            )
+            .values_list('ai_agent_id', flat=True),
+        )
+        if not pending_agent_ids:
+            return
+        if not ai_performers_active(self.account):
+            return
+        finished_agent_ids = set(
+            AITaskRun.objects
+            .filter(
+                task=task,
+                agent_id__in=pending_agent_ids,
+                status__in=(
+                    AITaskRunStatus.COMPLETED,
+                    AITaskRunStatus.LEFT_FOR_HUMAN,
+                    AITaskRunStatus.FAILED,
+                ),
+            )
+            .values_list('agent_id', flat=True),
+        )
+        if pending_agent_ids - finished_agent_ids:
+            raise exceptions.AIPerformersStillWorking
+
     def _apply_fields_values(
         self,
         task: Task,
@@ -950,6 +995,7 @@ class WorkflowActionService:
         elif not self.user.is_account_owner:
             raise exceptions.UserNotPerformer
 
+        self._validate_ai_performers_done(task)
         self._validate_task_ready_to_complete(task)
 
         with transaction.atomic():

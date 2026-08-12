@@ -94,6 +94,11 @@ class SubWorkflowsIncompleted(WorkflowActionServiceException):
     default_message = pw_messages.MSG_PW_0070
 
 
+class AIPerformersStillWorking(WorkflowActionServiceException):
+
+    default_message = pw_messages.MSG_PW_0096
+
+
 class CompletedTaskCannotBeReturned(WorkflowActionServiceException):
 
     default_message = pw_messages.MSG_PW_0088

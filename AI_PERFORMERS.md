@@ -44,9 +44,10 @@ touches in `src/processes`, frontend ≈ one new page + performer plumbing).
   key (`/ai/connection`); doing so activates the feature for the account and
   routes all its AI calls through that key.
 - **Visibility** — timeline events for "agent completed" / "agent left the
-  task", token usage metering per run, agents in the workflow highlights feed
-  and the workflows performer filter, robot avatar in all performer renders,
-  agent names in the Excel export.
+  task", in-app notifications when an agent leaves a task or finishes its
+  share of a shared one, token usage metering per run, agents in the
+  workflow highlights feed and the workflows performer filter, robot avatar
+  in all performer renders, agent names in the Excel export.
 
 ## 2. Enablement / feature gates
 
@@ -206,9 +207,16 @@ by `output_translation.py` / relied on by the pipeline:
   performers**, regardless of `require_completion_by_all` — the agent fills
   its output fields, its `TaskPerformer` is marked completed, an
   `AI_AGENT_COMPLETED` timeline event records the draft, and the task stays
-  open for the humans. A human completing a non-requires-all task closes it
-  immediately (as always), including over a still-pending agent (whose run
-  then no-ops on the inactive task). An AI completion closes the task only
+  open for the humans, and each waiting human co-performer gets an in-app
+  notification ("{agent} is done", `NotificationType.AI_COMPLETED_TASK`,
+  ws-delivered like `AI_LEFT_TASK`). The reverse direction is gated: a human
+  may NOT complete a task while an AI performer is still working on it —
+  `complete_task_for_user` raises `AIPerformersStillWorking` (`MSG_PW_0096`,
+  HTTP 400) until every AI performer is done, where "done" means its share
+  is completed or its run ended in a terminal state (`left_for_human`,
+  `failed`). Inert agents never block: feature switched off, agent
+  deactivated/deleted, or performer removed (the escape hatch for a stuck
+  agent). An AI completion closes the task only
   when no active human performers remain: agent-only tasks, or requires-all
   tasks where every human already finished. The same rule lives in
   `Task.can_be_completed()` (used by the performer-removal paths), so
@@ -225,9 +233,7 @@ by `output_translation.py` / relied on by the pipeline:
    `task_started` webhook + public agent API, per-agent connection override
    (`AIAgent.connection` FK exists but `resolve_provider` is account-level
    only), migrating the legacy template-generation feature onto the new
-   provider layer. A ws/notification nudge to humans when an agent's draft
-   lands ("AI completed its share") is a candidate UX addition — today the
-   draft is visible via the timeline event and the filled fields.
+   provider layer.
 2. **Phase 2 remainder** — provider-key **encryption at rest** (plaintext
    today, prototype-grade), billing hooks / per-account usage caps.
 3. **`GET /navigation/menu` 404 on fresh DBs** (Railway) — no seeded menu

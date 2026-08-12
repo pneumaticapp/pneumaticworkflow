@@ -188,3 +188,7 @@ MSG_PW_0094 = _('There is no AI agent with the specified ID.')
 MSG_PW_0095 = _(
     'The task has no output fields for an AI agent to fill.',
 )
+MSG_PW_0096 = _(
+    'AI agents are still working on this task. Wait for them '
+    'to finish or remove them from the task performers.',
+)

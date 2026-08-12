@@ -48,7 +48,10 @@ from src.ai.providers import (
 from django.contrib.auth import get_user_model
 
 from src.authentication.enums import AuthTokenType
-from src.notifications.tasks import send_ai_left_task_notification
+from src.notifications.tasks import (
+    send_ai_completed_task_notification,
+    send_ai_left_task_notification,
+)
 from src.processes.enums import (
     PerformerType,
     TaskStatus,
@@ -434,6 +437,20 @@ class AIPerformerService:
             ai_agent=self.agent,
             fields_values=fields_values,
         )
+        self.task.refresh_from_db()
+        if self.task.status == TaskStatus.ACTIVE:
+            # shared task: the agent only completed its own share —
+            # tell the human co-performers the draft is ready
+            recipients = self._human_performer_recipients()
+            if recipients:
+                send_ai_completed_task_notification.delay(
+                    logging=self.account.log_api_requests,
+                    logo_lg=self.account.logo_lg,
+                    account_id=self.account.id,
+                    recipients=recipients,
+                    task_id=self.task.id,
+                    agent_name=self.agent.name,
+                )
 
     def _requeue(self, run: AITaskRun):
         AITaskRun.objects.filter(id=run.id).update(
@@ -467,10 +484,10 @@ class AIPerformerService:
                 reason=reason,
             )
 
-    def _left_for_human_recipients(self) -> List[tuple]:
+    def _human_performer_recipients(self) -> List[tuple]:
 
-        """ Human co-performers of the task; the workflow starter or
-            the account owner when the task has none """
+        """ Human co-performers of the task who have not completed
+            their share yet """
 
         performers_ids = (
             TaskPerformer.objects
@@ -480,12 +497,19 @@ class AIPerformerService:
             .users()
             .values_list('id', flat=True)
         )
-        recipients = (
+        return (
             UserModel.objects
             .get_users_in_performer(performers_ids=performers_ids)
             .order_by('id')
             .user_ids_emails_list()
         )
+
+    def _left_for_human_recipients(self) -> List[tuple]:
+
+        """ Human co-performers of the task; the workflow starter or
+            the account owner when the task has none """
+
+        recipients = self._human_performer_recipients()
         if recipients:
             return recipients
         fallback = (

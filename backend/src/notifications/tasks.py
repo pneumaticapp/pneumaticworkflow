@@ -397,6 +397,53 @@ def send_ai_left_task_notification(**kwargs):
     _send_ai_left_task_notification(**kwargs)
 
 
+def _send_ai_completed_task_notification(
+    logging: bool,
+    account_id: int,
+    recipients: List[Tuple[int, str]],
+    task_id: int,
+    agent_name: str,
+    logo_lg: Optional[str] = None,
+):
+
+    """ In-app notification: an AI agent finished its share of a
+        shared task and the draft is ready for the human
+        co-performers to review """
+
+    task = Task.objects.select_related('workflow').get(id=task_id)
+    task_json = NotificationTaskSerializer(
+        instance=task,
+        notification_type=NotificationType.AI_COMPLETED_TASK,
+    ).data
+    workflow_json = NotificationWorkflowSerializer(instance=task.workflow).data
+    text = f'{agent_name} is done'
+    for (user_id, user_email) in recipients:
+        notification = Notification.objects.create(
+            task=task,
+            task_json=task_json,
+            workflow_json=workflow_json,
+            user_id=user_id,
+            account_id=account_id,
+            type=NotificationType.AI_COMPLETED_TASK,
+            text=text,
+        )
+        _send_notification(
+            logging=logging,
+            logo_lg=logo_lg,
+            user_id=user_id,
+            user_email=user_email,
+            account_id=account_id,
+            notification=notification,
+            method_name=NotificationMethod.ai_completed_task,
+            sync=True,
+        )
+
+
+@shared_task(base=NotificationTask)
+def send_ai_completed_task_notification(**kwargs):
+    _send_ai_completed_task_notification(**kwargs)
+
+
 def _send_overdue_task_notification():
     query = UsersWithOverdueTaskQuery()
     overdue_task_users = RawSqlExecutor.fetch(
