@@ -73,11 +73,9 @@ describe('CreateUserModal', () => {
 
   const getCopyButton = () => screen.getByRole('button', { name: getTranslatedText('team.create-user-modal.copy') });
 
-  const getRoleDropdown = () => {
-    const label = screen.getByText(getTranslatedText('team.create-user-modal.status'));
-    const dropdownContainer = label.closest('.react-select')!;
-    return dropdownContainer.querySelector('.react-select__control') as HTMLElement;
-  };
+  const getRoleDropdown = () => screen.getByRole('button', {
+    name: getTranslatedText('team.create-user-modal.status'),
+  });
 
   const fillInput = (input: HTMLInputElement, value: string) => {
     fireEvent.change(input, { target: { value } });

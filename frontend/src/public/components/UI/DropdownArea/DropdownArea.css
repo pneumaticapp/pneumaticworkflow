@@ -1,53 +1,12 @@
-.container {
-  position: relative;
-}
-
-.container_is-open {
-  .control-arrow {
-    transform: rotate(180deg);
-  }
-
-  .content {
-    display: block;
-  }
-}
-
-.toggle {
-  all: unset;
-}
-
-.control {
-  margin: 0;
-  padding: 6px 8px;
-  display: flex;
-  background: var(--pneumatic-color-black4);
-  border-radius: 16px;
-  align-items: center;
-
-  &:hover .control-value {
-    color: var(--pneumatic-color-link-hover);
-  }
-}
-
-.control-value {
-  font-size: 13px;
-  font-weight: bold;
-  line-height: 16px;
-  color: var(--pneumatic-color-black72);
-  transition: color 0.1s ease-in-out;
-}
-
-.control-arrow {
-  margin-left: 4px;
-  color: var(--pneumatic-color-black16);
-}
-
+/*
+ * Arbitrary content sizes itself: the narrow option-menu width must not apply, and
+ * the form must not be clipped. Set through custom properties so this does not
+ * depend on stylesheet order against Dropdown.css.
+ */
 .content {
-  z-index: 20;
-  padding: 16px;
-  display: none;
-  overflow: hidden;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 8px 16px rgb(98 98 95 / 8%);
+  --dropdown-menu-width: max-content;
+  --dropdown-menu-overflow: visible;
+
+  padding: 1.6rem;
+  max-width: calc(100vw - 1.6rem);
 }

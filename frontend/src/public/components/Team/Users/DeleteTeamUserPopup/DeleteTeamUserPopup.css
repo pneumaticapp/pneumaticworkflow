@@ -18,12 +18,6 @@
 
 .dropdown {
   margin-top: 1.6rem;
-
-  :global {
-    .react-select .react-select__control {
-      min-height: 4rem !important;
-    }
-  }
 }
 
 .popup-buttons {

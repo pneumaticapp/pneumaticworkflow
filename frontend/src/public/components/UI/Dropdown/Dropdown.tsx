@@ -1,65 +1,23 @@
-import * as React from 'react';
-import { useState } from 'react';
+import React, { useCallback, useEffect, useImperativeHandle, useState } from 'react';
+import { createPortal } from 'react-dom';
 import classnames from 'classnames';
-import { UncontrolledDropdown, DropdownToggle, DropdownMenu } from 'reactstrap';
-import OutsideClickHandler from 'react-outside-click-handler';
+import { usePopper } from 'react-popper';
 
-import { ConfirmableDropdownItem, TDropdownItemState } from './ConfirmableDropdownItem';
-import { isArrayWithItems } from '../../../utils/helpers';
-import { ArrowRightIcon } from '../../icons';
+import { useCheckDevice } from '../../../hooks/useCheckDevice';
+import { useDidUpdateEffect } from '../../../hooks/useDidUpdateEffect';
+import { DropdownSurface } from '../DropdownSurface';
+import { DropdownOptions } from './DropdownOptions';
+import { IDropdownProps } from './types';
 
 import styles from './Dropdown.css';
-import { useCheckDevice } from '../../../hooks/useCheckDevice';
 
-type TDropdownItemColor = 'black' | 'green' | 'red' | 'orange';
-
-export type TDropdownOption = {
-  mapKey?: string;
-  label: React.ReactNode;
-  withConfirmation?: boolean;
-  initialConfirmationState?: TDropdownItemState;
-  withUpperline?: boolean;
-  subOptions?: TDropdownOption[] | TDropdownOption;
-  customSubOption?: React.ReactElement;
-  color?: TDropdownItemColor;
-  isHidden?: boolean;
-  size?: 'lg' | 'sm';
-  className?: string;
-  Icon?(props: React.SVGAttributes<SVGElement>): JSX.Element;
-  onClick?(closeDropdown: () => void): void;
-};
-
-export interface IDropdownProps {
-  options: TDropdownOption[] | TDropdownOption | [];
-  direction?: 'right' | 'left';
-  className?: string;
-  toggleProps?: { [key in string]: string };
-  menuClassName?: string;
-  /** Passes reactstrap DropdownMenu `positionFixed` so Popper uses fixed positioning (escapes overflow scroll). */
-  menuPositionFixed?: boolean;
-  /** Passes reactstrap DropdownMenu `container` (portal target), e.g. `document.body`. */
-  menuContainer?: string | HTMLElement;
-  renderToggle(isOpen: boolean): React.ReactNode;
-  renderMenuContent?(renderedOptions: React.ReactNode): React.ReactNode;
-  CustomDropdownMenu?(props: IDropdownMenuProps): JSX.Element;
-  isFromBreakdownItem?: boolean;
-  isDisabled?: boolean;
-}
-
-export const getDropdownItemColorClass = (color: TDropdownItemColor = 'black') => {
-  const colorClassMap = {
-    black: styles['dropdown-item_black'],
-    green: styles['dropdown-item_green'],
-    red: styles['dropdown-item_red'],
-    orange: styles['dropdown-item_orange'],
-  };
-
-  return colorClassMap[color];
-};
+export type { IDropdownHandle, IDropdownProps, TDropdownOption } from './types';
 
 export function Dropdown({
   options,
+  children,
   direction,
+  placement,
   className,
   toggleProps,
   menuClassName,
@@ -67,213 +25,127 @@ export function Dropdown({
   menuContainer,
   renderToggle,
   renderMenuContent,
-  CustomDropdownMenu,
   isFromBreakdownItem,
   isDisabled = false,
+  onOpen,
+  onClose,
+  dropdownRef,
 }: IDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const { isDesktop, isMobile } = useCheckDevice();
-  const onToggle = () => {
-    if (isDisabled) return;
-    setIsOpen((prev) => !prev);
+  const [referenceElement, setReferenceElement] = useState<HTMLButtonElement | null>(null);
+  const [menuElement, setMenuElement] = useState<HTMLDivElement | null>(null);
+  const { isDesktop } = useCheckDevice();
+  const resolvedPlacement = placement || (direction === 'right' ? 'bottom-end' : 'bottom-start');
+  const { styles: popperStyles, attributes, update } = usePopper(referenceElement, menuElement, {
+    placement: resolvedPlacement,
+    strategy: menuPositionFixed ? 'fixed' : 'absolute',
+    modifiers: [{ name: 'preventOverflow', options: { rootBoundary: 'viewport' } }],
+  });
+
+  const closeDropdown = useCallback(() => setIsOpen(false), []);
+  const toggleDropdown = () => {
+    if (!isDisabled) setIsOpen((current) => !current);
   };
 
-  const closeDropdown = () => {
-    setIsOpen(false);
-  };
+  useImperativeHandle(dropdownRef, () => ({
+    updateDropdownPosition: () => { update?.(); },
+    closeDropdown,
+  }));
 
-  const renderOptions = (items: TDropdownOption[] | TDropdownOption, level = 0): React.ReactNode => {
-    const overlayAtRoot = level === 0;
-    const positionFixed = Boolean(menuPositionFixed && overlayAtRoot);
-    const container = overlayAtRoot ? menuContainer : undefined;
+  useDidUpdateEffect(() => {
+    update?.();
+    (isOpen ? onOpen : onClose)?.();
+  }, [isOpen]);
 
-    if (!Array.isArray(items)) {
-      const Menu = CustomDropdownMenu || DefaultDropdownMenu;
+  useEffect(() => {
+    if (!isOpen) return undefined;
 
-      return (
-        <Menu
-          isWide
-          renderedOptions={items.customSubOption}
-          level={level}
-          direction={direction}
-          className={menuClassName}
-          renderMenuContent={renderMenuContent}
-          positionFixed={positionFixed}
-          container={container}
-        />
-      );
-    }
+    const handlePointerDown = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (!referenceElement?.contains(target) && !menuElement?.contains(target)) closeDropdown();
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      closeDropdown();
+      referenceElement?.focus();
+    };
 
-    const renderedOptions = items.map((option) => {
-      const {
-        label,
-        mapKey,
-        customSubOption,
-        color,
-        subOptions,
-        withUpperline,
-        withConfirmation,
-        initialConfirmationState,
-        isHidden,
-        className: optionClassName,
-        Icon,
-        onClick,
-      } = option;
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [closeDropdown, isOpen, menuElement, referenceElement]);
 
-      if (isHidden) return null;
-
-      const renderOptionContent = () => {
-        if (typeof label === 'string') {
-          return (
-            <>
-              <span className={styles['label']}>{label}</span>
-              {Icon && <Icon className={styles['dropdown-item-icon']} />}
-            </>
-          );
-        }
-        return label;
-      };
-
-      if (customSubOption || (subOptions && Array.isArray(subOptions) && isArrayWithItems(subOptions))) {
-        return (
-          <UncontrolledDropdown
-            key={`submenu-${typeof label === 'string' ? label : mapKey}`}
-            direction="right"
-            className={optionClassName}
-          >
-            <DropdownToggle tag="button" className={classnames(styles['dropdown-item'], getDropdownItemColorClass(color))}>
-              <span className={styles['label']}>{label}</span>
-              <ArrowRightIcon className={styles['dropdown-item-icon']} />
-            </DropdownToggle>
-            {subOptions ? (
-              renderOptions(subOptions, level + 1)
-            ) : (
-              <DefaultDropdownMenu
-                className={styles['dropdown__custom-sub-options']}
-                renderedOptions={customSubOption}
-                isWide
-                level={level + 1}
-                positionFixed={false}
-              />
-            )}
-          </UncontrolledDropdown>
-        );
-      }
-
-      return (
-        <div key={`option-${typeof label === 'string' ? label : mapKey}`}>
-          {withUpperline && <hr className={styles['line']} />}
-          <ConfirmableDropdownItem
-            {...(onClick && {
-              onClick: () => {
-                onClick?.(() => setIsOpen(false));
-                closeDropdown();
-              },
-            })}
-            cssModule={{
-              'dropdown-item': classnames(styles['dropdown-item'], getDropdownItemColorClass(color), {
-                [styles['dropdown-item-mobile']]: isMobile && isFromBreakdownItem,
-              }),
-            }}
-            withConfirmation={withConfirmation}
-            initialConfirmationState={initialConfirmationState}
-            closeDropdown={closeDropdown}
-            toggle={false}
-            className={optionClassName}
-          >
-            {renderOptionContent()}
-          </ConfirmableDropdownItem>
-        </div>
-      );
-    });
-    const isWide = items.every((item) => item.size === 'lg');
-    const Menu = CustomDropdownMenu || DefaultDropdownMenu;
-
-    // Only pass renderMenuContent to the top-level menu to prevent submenus from inheriting the parent's custom header
-    return (
-      <Menu
-        renderedOptions={renderedOptions}
-        isWide={isWide}
-        level={level}
-        direction={direction}
-        className={menuClassName}
-        positionFixed={positionFixed}
-        container={container}
-        {...(level === 0 && { renderMenuContent })}
+  const renderedContent = typeof children === 'function'
+    ? children({ closeDropdown })
+    : children || (options && (
+      <DropdownOptions
+        options={options}
+        closeDropdown={closeDropdown}
+        isFromBreakdownItem={isFromBreakdownItem}
       />
-    );
-  };
-
-  return (
-    <OutsideClickHandler disabled={!isOpen} onOutsideClick={onToggle}>
-      <UncontrolledDropdown
-        isOpen={isOpen}
-        direction="down"
-        onClick={(event) => event.stopPropagation()}
-        className={classnames(
-          styles['container'],
-          isFromBreakdownItem && isDesktop && styles['dropdown-toggle-centered-container'],
-          className,
-        )}
-        toggle={onToggle}
-      >
-        <DropdownToggle
-          tag="button"
-          className={classnames(
-            styles['dropdown-toggle'],
-            isFromBreakdownItem && isDesktop && styles['dropdown-toggle-centered'],
-          )}
-          {...(isDisabled && { disabled: true })}
-          {...toggleProps}
-        >
-          {renderToggle(isOpen)}
-        </DropdownToggle>
-        {renderOptions(options)}
-      </UncontrolledDropdown>
-    </OutsideClickHandler>
-  );
-}
-
-export interface IDropdownMenuProps {
-  renderedOptions: React.ReactNode;
-  isWide: boolean;
-  level: number;
-  direction?: 'right' | 'left';
-  className?: string;
-  renderMenuContent?(renderedOptions: React.ReactNode): React.ReactNode;
-  positionFixed?: boolean;
-  container?: string | HTMLElement;
-}
-
-export function DefaultDropdownMenu({
-  renderedOptions,
-  isWide,
-  level,
-  direction = 'right',
-  className,
-  renderMenuContent,
-  positionFixed = false,
-  container,
-}: IDropdownMenuProps) {
-  const content = renderMenuContent?.(renderedOptions) || renderedOptions;
-
-  return (
-    <DropdownMenu
-      cssModule={{
-        'dropdown-menu': classnames(
-          styles['dropdown-menu'],
-          isWide && styles['dropdown-menu_wide'],
-          !positionFixed && styles['dropdown-menu_bootstrap-placement'],
-        ),
-        show: styles['dropdown-menu_show'],
-      }}
-      right={level === 0 && direction === 'right'}
-      className={className}
-      modifiers={{ preventOverflow: { boundariesElement: 'window' } }}
-      positionFixed={positionFixed}
-      container={container}
+    ));
+  const menuContent = renderMenuContent?.(renderedContent) || renderedContent;
+  const isWide = options && !Array.isArray(options)
+    ? Boolean(options.customSubOption)
+    : Boolean(options?.length && options.every((option) => option.size === 'lg'));
+  const hasSubmenu = Boolean(Array.isArray(options) && options.some((option) => (
+    option.customSubOption || (Array.isArray(option.subOptions) && option.subOptions.length)
+  )));
+  const menu = isOpen && menuContent ? (
+    <DropdownSurface
+      ref={setMenuElement}
+      role="menu"
+      tabIndex={-1}
+      className={classnames(
+        styles['dropdown-menu'],
+        isWide && styles['dropdown-menu_wide'],
+        hasSubmenu && styles['dropdown-menu_with-submenu'],
+        menuClassName,
+      )}
+      style={popperStyles.popper}
+      {...attributes.popper}
     >
-      {content}
-    </DropdownMenu>
+      {menuContent}
+    </DropdownSurface>
+  ) : null;
+  let portalTarget: Element | null | undefined;
+  if (typeof document !== 'undefined') {
+    portalTarget = typeof menuContainer === 'string' ? document.querySelector(menuContainer) : menuContainer;
+  }
+
+  const { className: toggleClassName, ...buttonProps } = toggleProps || {};
+
+  return (
+    <div
+      className={classnames(
+        styles['container'],
+        isFromBreakdownItem && isDesktop && styles['dropdown-toggle-centered-container'],
+        className,
+      )}
+    >
+      <button
+        type="button"
+        aria-expanded={isOpen}
+        aria-haspopup="menu"
+        className={classnames(
+          styles['dropdown-toggle'],
+          isFromBreakdownItem && isDesktop && styles['dropdown-toggle-centered'],
+          toggleClassName,
+        )}
+        disabled={isDisabled}
+        onClick={(event) => {
+          event.stopPropagation();
+          toggleDropdown();
+        }}
+        ref={setReferenceElement}
+        {...buttonProps}
+      >
+        {renderToggle(isOpen)}
+      </button>
+      {portalTarget && menu ? createPortal(menu, portalTarget) : menu}
+    </div>
   );
 }

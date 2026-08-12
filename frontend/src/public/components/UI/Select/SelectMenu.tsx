@@ -1,33 +1,15 @@
-import * as React from 'react';
+import React from 'react';
 import classnames from 'classnames';
-import { DropdownItem, DropdownMenu, DropdownToggle, Dropdown } from 'reactstrap';
 
 import { ExpandIcon } from '../../icons';
 import { IntlMessages } from '../../IntlMessages';
+import { Dropdown } from '../Dropdown';
+import { ISelectMenuProps } from './types';
 
-import styles from './Select.css';
 import radioStyles from '../Fields/RadioButton/RadioButton.css';
+import styles from './Select.css';
 
-export interface ISelectMenuProps<T extends string> {
-  withRadio?: boolean;
-  activeValue: T;
-  values: T[];
-  toggleClassName?: string;
-  toggleTextClassName?: string;
-  arrowClassName?: string;
-  menuClassName?: string;
-  containerClassName?: string;
-  isDisabled?: boolean;
-  hideSelectedOption?: boolean;
-  closeOnSelect?: boolean;
-  onChange(value: T): void;
-  Icon?(props: React.SVGAttributes<SVGElement>): JSX.Element;
-  isFromCheckIfConditions?: boolean;
-  positionFixed?: boolean;
-  activeValueLabelId?: string;
-}
-
-export const SelectMenu = <T extends string>({
+export function SelectMenu<T extends string>({
   toggleClassName,
   isDisabled,
   values,
@@ -44,88 +26,61 @@ export const SelectMenu = <T extends string>({
   withRadio = false,
   positionFixed = false,
   activeValueLabelId,
-}: ISelectMenuProps<T>) => {
-  const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
+}: ISelectMenuProps<T>) {
   const getIntlId = (value: T) => `sorting.${value}`;
-
-  const handleClickItem = (value: T) => () => {
-    if (value !== activeValue) {
-      onChange(value);
-    }
-    if (closeOnSelect) {
-      setIsDropdownOpen(false);
-    }
-  };
-
-  const handleToggleDropdown = () => {
-    setIsDropdownOpen(!isDropdownOpen);
-  };
 
   return (
     <Dropdown
       className={classnames(
         styles['container'],
         isFromCheckIfConditions && styles['container--select-menu'],
-        'dropdown-menu-right dropdown',
         containerClassName,
       )}
-      isOpen={isDropdownOpen}
-      setActiveFromChild={isDropdownOpen}
-      toggle={handleToggleDropdown}
+      toggleProps={{
+        className: classnames(styles['active-value'], toggleClassName, isDisabled && styles['active-value_disabled']),
+      }}
+      menuClassName={classnames(
+        styles['dropdown-menu'],
+        menuClassName,
+        positionFixed && styles['dropdown-menu__position-fixed'],
+        positionFixed && styles['dropdown-menu__position-fixed--select-menu'],
+      )}
+      menuPositionFixed={positionFixed}
+      isDisabled={isDisabled}
+      renderToggle={() => (
+        <>
+          {Icon && <Icon className={styles['icon']} />}
+          <IntlMessages id={activeValueLabelId || getIntlId(activeValue)}>
+            {(text) => <span className={classnames(styles['active-value__text'], toggleTextClassName)}>{text}</span>}
+          </IntlMessages>
+          <ExpandIcon className={classnames(styles['expand-icon'], arrowClassName)} />
+        </>
+      )}
     >
-      <DropdownToggle
-        tag="button"
-        className={classnames(styles['active-value'], toggleClassName, isDisabled && styles['active-value_disabled'])}
-      >
-        {Icon && <Icon className={styles['icon']} />}
-        <IntlMessages id={activeValueLabelId || getIntlId(activeValue)}>
-          {(text) => <span className={classnames(styles['active-value__text'], toggleTextClassName)}>{text}</span>}
-        </IntlMessages>
+      {({ closeDropdown }) => values.map((value) => {
+        if (hideSelectedOption && value === activeValue) return null;
 
-        <ExpandIcon className={classnames(styles['expand-icon'], arrowClassName)} />
-      </DropdownToggle>
-      <DropdownMenu
-        className={classnames(
-          styles['dropdown-menu'],
-          menuClassName,
-          positionFixed && styles['dropdown-menu__position-fixed'],
-          positionFixed && styles['dropdown-menu__position-fixed--select-menu'],
-        )}
-        positionFixed={positionFixed}
-      >
-        {(values as T[]).map((value) => {
-          if (hideSelectedOption && value === activeValue) {
-            return null;
-          }
-
-          return (
-            <DropdownItem
-              toggle={false}
-              key={value}
-              className={classnames('dropdown-item-sm', styles['value-item'], {
-                [styles['value-item__disabled']]: value === activeValue,
-              })}
-              onClick={handleClickItem(value)}
-            >
-              {withRadio ? (
-                <span
-                  className={classnames(
-                    radioStyles['radio'],
-                    value === activeValue && radioStyles['select-menu__radio--checked'],
-                  )}
-                >
-                  <span className={radioStyles['radio__box']}></span>
-                  <span className={radioStyles['radio__title']}>
-                    <IntlMessages id={getIntlId(value)} />
-                  </span>
-                </span>
-              ) : (
-                <IntlMessages id={getIntlId(value)} />
-              )}
-            </DropdownItem>
-          );
-        })}
-      </DropdownMenu>
+        return (
+          <button
+            type="button"
+            role="menuitemradio"
+            aria-checked={value === activeValue}
+            key={value}
+            className={classnames(styles['value-item'], value === activeValue && styles['value-item__disabled'])}
+            onClick={() => {
+              if (value !== activeValue) onChange(value);
+              if (closeOnSelect) closeDropdown();
+            }}
+          >
+            {withRadio ? (
+              <span className={classnames(radioStyles['radio'], value === activeValue && radioStyles['select-menu__radio--checked'])}>
+                <span className={radioStyles['radio__box']} />
+                <span className={radioStyles['radio__title']}><IntlMessages id={getIntlId(value)} /></span>
+              </span>
+            ) : <IntlMessages id={getIntlId(value)} />}
+          </button>
+        );
+      })}
     </Dropdown>
   );
-};
+}

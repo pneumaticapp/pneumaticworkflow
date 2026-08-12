@@ -5,59 +5,8 @@
   width: 100%;
   min-width: 0;
 
-  /* stylelint-disable selector-pseudo-class-no-unknown, declaration-no-important  */
-  :global .react-select__control {
-    padding-top: 1.1rem !important;
-    padding-bottom: 1.1rem !important;
-    font-family: Nunito, sans-serif;
-    font-size: 15px;
-    line-height: 20px;
-    color: #262522;
-    border-color: #dcdcdb !important;
-    border-radius: 8px !important;
-    outline: none;
-    transition: 0.15s ease-in border-color;
-
-    &:focus {
-      border-color: #979795 !important;
-    }
-
-    &:focus-within {
-      border-color: #979795 !important;
-      border-bottom-color: #b9b9b8 !important;
-    }
-
-    &:disabled {
-      cursor: text;
-      color: #b9b9b8 !important;
-      background-color: white;
-    }
-
-    &::placeholder {
-      color: var(--default-placeholder-color) !important;
-    }
-  }
-
-  :global .react-select__multi-value__label {
-    color: #262522 !important;
-  }
-
-  :global .react-select__placeholder {
-    display: block;
-    overflow: hidden;
-    max-width: 100%;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-  }
-
-  :global .react-select__single-value {
-    overflow: hidden;
-    max-width: 100%;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    color: #262522 !important;
-  }
-  /* stylelint-enable */
+  /* Matches the taller control used by extra fields. */
+  --dropdown-list-control-padding: 1.1rem 1.6rem;
 }
 
 .user-dropdown-wrapper_label-left {
