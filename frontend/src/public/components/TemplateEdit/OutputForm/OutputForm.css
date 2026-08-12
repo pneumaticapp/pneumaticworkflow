@@ -75,9 +75,6 @@
   margin-top: 0.5rem;
 }
 
-.flow__fieldset-row {
-  min-height: 2rem;
-}
 .flow__fieldset-header {
   color: var(--pneumatic-color-black100);
 }
@@ -95,6 +92,10 @@
   gap: 0.4rem;
 
   @mixin text-small;
+}
+
+.flow__fieldset-row {
+  min-height: 2rem;
 }
 
 .flow__fieldset-title-input {

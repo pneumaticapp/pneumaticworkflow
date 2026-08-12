@@ -118,7 +118,6 @@ const FieldsetDetails = ({
       rules: fieldset.rules || [],
     });
     setDetailFieldsetChanges({});
-
   }, [fieldset?.id, fieldset?.title, fieldset?.description, fieldset?.labelPosition, fieldset?.fields, fieldset?.rules]);
 
   const handleSettingsTitleChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -221,6 +220,7 @@ const FieldsetDetails = ({
       });
       return false;
     }
+
 
     if (detailFieldsetChanges.rules) {
       const ruleErrorMessageKey = validateFieldsetRules(detailFieldsetChanges.rules, detailFieldset.fields);
