@@ -45,7 +45,7 @@ jest.mock('../../../utils/history', () => ({
 }));
 
 jest.mock('../../../components/UI/Notifications', () => ({
-  NotificationManager: { notifyApiError: jest.fn(), warning: jest.fn() },
+  NotificationManager: { notifyApiError: jest.fn(), warning: jest.fn(), success: jest.fn() },
 }));
 
 jest.mock('../../../utils/logger', () => ({
@@ -356,13 +356,17 @@ describe('updateFieldsetSaga', () => {
     return dispatched;
   };
 
-  it('dispatches setCurrentFieldset on API success', async () => {
+  it('dispatches setCurrentFieldset and displays success notification on API success', async () => {
     const updatedFieldset = makeFieldsetCatalogItem({ id: FIELDSET_ID, name: 'Updated' });
     (updateFieldset as jest.Mock).mockResolvedValue(updatedFieldset);
 
     const dispatched = await runUpdateFieldset({ id: FIELDSET_ID, name: 'Updated' });
 
     expect(updateFieldset).toHaveBeenCalledTimes(1);
+
+    expect(NotificationManager.success).toHaveBeenCalledTimes(1);
+    expect(NotificationManager.success).toHaveBeenCalledWith({ message: 'fieldsets.save-success' });
+
     expect(dispatched).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ type: setCurrentFieldset.type }),

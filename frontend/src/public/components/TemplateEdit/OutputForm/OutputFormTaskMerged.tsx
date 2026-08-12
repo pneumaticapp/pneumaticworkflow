@@ -131,6 +131,16 @@ export function OutputFormTaskMerged({
     [saveOutputOrders, task.fieldsets, task.fields],
   );
 
+  const handleEditFieldsetTitle = useCallback(
+    (apiNameBinding: string, title: string) => {
+      const nextFieldsets = (task.fieldsets || []).map((fieldset) =>
+        fieldset.apiNameBinding === apiNameBinding ? { ...fieldset, title } : fieldset,
+      );
+      patchTask({ taskUUID: task.uuid, changedFields: { fieldsets: nextFieldsets } });
+    },
+    [patchTask, task.fieldsets, task.uuid],
+  );
+
 
   const isEmpty = !isArrayWithItems(task.fields) && !(task.fieldsets || []).length;
 
@@ -160,6 +170,7 @@ export function OutputFormTaskMerged({
             accountId={accountId}
             formatMessage={formatMessage}
             innerRef={outputRef}
+            onEditFieldsetTitle={handleEditFieldsetTitle}
           />
         </div>
       )}

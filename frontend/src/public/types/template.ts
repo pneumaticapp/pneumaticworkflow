@@ -69,7 +69,7 @@ export type TTransformedTask = {
 
 
 export type TTemplateFieldFieldset = Pick<
-  IFieldsetRuntime, 'name' | 'description' | 'apiNameBinding' | 'fields' | 'order' | 'labelPosition'
+  IFieldsetRuntime, 'name' | 'title' | 'description' | 'apiNameBinding' | 'fields' | 'order' | 'labelPosition'
 >;
 
 export interface ITemplateTask {

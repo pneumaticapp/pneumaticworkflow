@@ -88,7 +88,7 @@ export function FieldsetModal({ type }: IFieldsetModalProps) {
     if (!validationForm()) return;
 
     if (type === EFieldsetModalType.Create) {
-      dispatch(createFieldsetAction({ name: inputName }));
+      dispatch(createFieldsetAction({ name: inputName, title: inputName }));
     } else if (currentFieldset) {
       dispatch(updateFieldsetAction({ id: currentFieldset.id, name: inputName }));
     }

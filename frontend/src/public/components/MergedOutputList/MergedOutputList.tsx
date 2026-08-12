@@ -49,7 +49,7 @@ export function MergedOutputList({
         if (mergedOutput.kind === 'fieldset') {
           const {
             apiNameBinding: fieldsetApiName,
-            name: fieldsetName,
+            title: fieldsetTitle,
             description: fieldsetDescription,
             fields: fieldsetFields,
             labelPosition: fieldsetLabelPosition,
@@ -58,7 +58,7 @@ export function MergedOutputList({
           return (
           <FieldsetFieldGroup
             key={fieldsetApiName}
-            title={fieldsetName}
+            title={fieldsetTitle}
             description={fieldsetDescription}
             fields={fieldsetFields}
             onEditField={onEditFieldsetField}

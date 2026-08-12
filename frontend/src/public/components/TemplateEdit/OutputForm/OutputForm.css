@@ -75,6 +75,39 @@
   margin-top: 0.5rem;
 }
 
-.flow__fieldset-name {
+.flow__fieldset-header {
+  color: var(--pneumatic-color-black100);
+}
+
+.flow__fieldset-label {
+  font-weight: 600;
+  color: var(--pneumatic-color-black48);
+}
+
+.flow__fieldset-title-edit {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 0.2rem;
+  padding-left: 1.2rem;
+  gap: 0.4rem;
+
   @mixin text-small;
 }
+
+.flow__fieldset-title-input {
+  border: none;
+  resize: none;
+  outline: none;
+  field-sizing: content;
+
+  &::placeholder {
+    color: var(--default-placeholder-color);
+  }
+}
+
+.flow__fieldset-title-edit_error {
+  & .flow__fieldset-title-input::placeholder {
+    color: var(--pneumatic-color-warning);
+  }
+}
+

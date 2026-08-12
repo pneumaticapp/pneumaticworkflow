@@ -96,6 +96,8 @@
   font-weight: bold;
   line-height: 20px;
   color: #262522;
+
+  @mixin text-wrap;
 }
 
 .fieldset-output-group__description {
@@ -104,4 +106,6 @@
   font-size: 13px;
   line-height: 18px;
   color: #79756d;
+
+  @mixin text-wrap;
 }
