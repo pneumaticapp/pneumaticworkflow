@@ -56,7 +56,7 @@ Command: ``docker exec -it pneumatic-postgres sh -c "psql -U postgres_user postg
 Open PowerShell in the backend directory and run the following commands:
 1. Start the backend containers: ``docker compose up -d``.
 2. Download and install Git Bash: ``https://git-scm.com/downloads``.
-3. Download and install Python 3.8.20  ``https://www.python.org/downloads/release/python-3820/``. During installation, make sure to check “Add Python to PATH.”
+3. Download and install Python 3.8.10  ``https://www.python.org/downloads/release/python-3810/`` (the last 3.8 release with a Windows installer). During installation, make sure to check “Add Python to PATH.”
 4. Verify that Python is installed: ``python --version``.
 5. Install Poetry 1.5.1 by running the following command in PowerShell: ``$env:POETRY_VERSION="1.5.1"; (Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | py -``
 6. To get started you need to add Poetry's bit directory –C:\Users\{username}\AppData\Roaming\Python\Scripts– to your PATH. Replace {username} with your actual Windows username.
