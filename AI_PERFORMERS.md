@@ -11,7 +11,7 @@ chains onward. Humans and AI interleave freely across the steps of a template.
 This document describes **what** is on this branch and **how** it works. It is
 written for both Pneumatic developers and AI coding agents: paths are exact,
 payload shapes are literal, and behavior contracts are stated as invariants.
-The branch is ~36 commits on top of master `f61c176f`
+The branch is ~39 commits on top of master `f61c176f`
 (~10 000 insertions, 240+ files; backend ≈ new `src/ai` app + surgical
 touches in `src/processes`, frontend ≈ one new page + performer plumbing).
 
@@ -149,6 +149,7 @@ task starts (continue_task)                     template version sync           
 | `/ai/models` | GET | live model catalog filtered to `structured_outputs` support, cached 1 h per base_url; works keyless (catalog is public); failure → `[]` uncached |
 | `/v2/tasks/{id}/create-ai-performer` | POST `{ai_agent_id}` | runtime add; validates feature active, agent account-owned+active, **task has output fields** (`MSG_PW_0095` — see §8), then dispatches immediately |
 | `/v2/tasks/{id}/delete-ai-performer` | POST `{ai_agent_id}` | runtime remove (soft delete; queued run no-ops via `load()` check); last-performer guard; if the task then satisfies requires-all it auto-completes |
+| `/v2/tasks/{id}/complete` | POST (pre-existing) | now 400s with `MSG_PW_0096` while any AI performer on the task is still working — see the completion-gate rules in §7 |
 | Templates API | — | `raw_performers` accept `{type: 'ai_agent', source_id: '<agent id>', api_name}`; validation in `serializers/templates/raw_performer.py` (`MSG_PT_0075/0076`): flag on, id numeric, agent exists/owned/active; task-level rule (`MSG_PT_0078`, `serializers/templates/task.py`): a task with an AI performer must have output fields. Human+AI mixes and multiple agents per task are allowed |
 
 Serialization notes: template API labels AI performers `AI agent: {name}`;
@@ -306,12 +307,16 @@ attachments in prompts · `11a21551` generated documents (file outputs) ·
 split · `4681ac32`+`e9d62bd7` highlights, filters, requires-all events.
 
 Phase 2 (partial): `7ac93c32`+`d326bbda` BYO OpenRouter keys ·
-`7976f461`+`c5b4a87e` live model catalog · `0833b131` AI-agents page layout.
+`7976f461`+`c5b4a87e` live model catalog · `0833b131` AI-agents page layout
+· `672162ab` provider-key encryption at rest (Fernet, `src/ai/crypto.py`,
+migration `ai/0005`).
 
 Phase 3: `3c3599be`+`df8f1175` runtime add/remove AI performers ·
 `7231ae2a` runtime no-output-fields guard · `7251c31b` template-side
 no-output-fields guard · `a7a88e4e` human+AI co-assignees ("AI drafts,
-human approves" completion semantics, sole-performer rule removed).
+human approves" completion semantics, sole-performer rule removed) ·
+`7f3e3c61`+`a67ab969` "AI agent is done" notification to waiting human
+co-performers + completion gate (humans blocked while agents work).
 
 Infra/fixes: `2b8ec694` `/ai` nginx routing · `c6331e3e` `/fieldsets` nginx
 routing (pre-existing master bug) · `07d778a4` dispatch-after-commit race fix
