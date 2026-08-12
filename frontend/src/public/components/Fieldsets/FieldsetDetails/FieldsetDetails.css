@@ -70,7 +70,7 @@
   @mixin text-base;
 }
 
-.settings-textarea {
+.settings-description {
   padding: 1.2rem 1.6rem;
   width: 100%;
   min-height: 8rem;
@@ -92,7 +92,7 @@
   }
 }
 
-.settings-select {
+.settings-label-position {
   padding: 0.8rem 1.2rem;
   width: fit-content;
   min-width: 20rem;
@@ -127,7 +127,7 @@
   opacity: 0.55;
 }
 
-.settings-input {
+.settings-title {
   padding: 0.8rem 1.2rem;
   width: fit-content;
   min-width: 20rem;
@@ -141,9 +141,13 @@
   &:focus {
     border-color: var(--pneumatic-color-blue);
   }
+
+  &:disabled {
+    @mixin fieldset-field-readonly;
+  }
 }
 
-.settings-input_error {
+.settings-title_error {
   border-color: var(--pneumatic-color-warning);
 }
 
