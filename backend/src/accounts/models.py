@@ -551,18 +551,41 @@ class APIKey(
     SoftDeleteModel,
     AccountBaseMixin,
 ):
-    user = models.OneToOneField(
+
+    API_KEY_PREFIX: str = 'pn-'
+    API_KEY_PREFIX_DISPLAY_LENGTH: int = 16
+
+    user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='apikey',
+        related_name='api_keys',
     )
-    key = models.CharField(max_length=32)
     name = models.CharField(max_length=200, blank=True)
+    token = models.CharField(max_length=64, db_index=True)
+    date_created = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
+    # TODO: Remove when request logging is implemented;
+    # retrieve last_used_at from logs instead.
+    last_used_at = models.DateTimeField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
 
-    objects = BaseSoftDeleteManager.from_queryset(APIKeyQuerySet)()
+    objects = BaseSoftDeleteManager.from_queryset(
+        APIKeyQuerySet,
+    )()
+
+    class Meta:
+        ordering = ['-date_created']
+
+    @property
+    def is_expired(self) -> bool:
+        if self.expires_at is None:
+            return False
+        return timezone.now() > self.expires_at
 
     def __str__(self):
-        return self.key
+        n = self.API_KEY_PREFIX_DISPLAY_LENGTH
+        prefix = self.token[:n] if self.token else self.name
+        return f'{self.name} ({prefix}...)'
 
 
 class SystemMessage(models.Model):

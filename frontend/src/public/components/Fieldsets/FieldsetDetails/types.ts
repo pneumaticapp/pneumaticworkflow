@@ -10,6 +10,7 @@ export interface IFieldsetDetailsRouteParams {
 export type TFieldsetDetailsProps = RouteComponentProps<IFieldsetDetailsRouteParams>;
 
 export type TDetailFieldsetState = {
+  title: string;
   description: string;
   labelPosition: EFieldLabelPosition;
   fields: IExtraField[];
@@ -17,6 +18,7 @@ export type TDetailFieldsetState = {
 };
 
 export type TDetailFieldsetChanges = {
+  title?: string;
   description?: string;
   labelPosition?: EFieldLabelPosition;
   fields?: IExtraField[];

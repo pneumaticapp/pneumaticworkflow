@@ -111,6 +111,8 @@
   margin-bottom: 0.8rem;
   font-weight: bold;
   color: var(--pneumatic-color-black48);
+
+  @mixin text-wrap;
 }
 
 .tune-view-modal__tooltip {

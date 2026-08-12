@@ -3,6 +3,9 @@ import { useEffect, useState, useMemo, useCallback, ChangeEvent } from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
+import classNames from 'classnames';
+
+import { validateFieldsetTitle } from '../../../utils/validators';
 
 import {
   openEditModal,
@@ -16,7 +19,7 @@ import {
 import { history } from '../../../utils/history';
 import { ERoutes } from '../../../constants/routes';
 
-import { ModifyDropdown, Button, FilterSelect } from '../../UI';
+import { ModifyDropdown, Button, FilterSelect, Tooltip } from '../../UI';
 import { EModifyDropdownToggle } from '../../UI/ModifyDropdown/types';
 import { DropdownList } from '../../UI/DropdownList';
 import { NotificationManager } from '../../UI/Notifications';
@@ -29,6 +32,7 @@ import { getCurrentFieldset, isCurrentFieldsetLoading } from '../../../redux/sel
 import { getAccountId } from '../../../redux/selectors/user';
 
 import { EExtraFieldMode, EExtraFieldType, IExtraField } from '../../../types/template';
+import { FilledInfoIcon } from '../../icons';
 import { EInputNameBackgroundColor, EMoveDirections } from '../../../types/workflow';
 import {
   IFieldsetTemplateRule,
@@ -59,6 +63,7 @@ import { TFieldsetDetailsProps, TDetailFieldsetState, TDetailFieldsetChanges } f
 import styles from './FieldsetDetails.css';
 
 const EMPTY_DETAIL_FIELDSET: TDetailFieldsetState = {
+  title: '',
   description: '',
   labelPosition: EFieldLabelPosition.Top,
   fields: [],
@@ -106,13 +111,21 @@ const FieldsetDetails = ({
     if (!fieldset) return;
 
     setDetailFieldset({
+      title: fieldset.title,
       description: fieldset.description || '',
       labelPosition: fieldset.labelPosition,
       fields: normalizeFieldsForUI(fieldset.fields as unknown as IExtraField[]),
       rules: fieldset.rules || [],
     });
     setDetailFieldsetChanges({});
-  }, [fieldset?.id, fieldset?.description, fieldset?.labelPosition, fieldset?.fields, fieldset?.rules]);
+  }, [fieldset?.id, fieldset?.title, fieldset?.description, fieldset?.labelPosition, fieldset?.fields, fieldset?.rules]);
+
+  const handleSettingsTitleChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const title = event.target.value;
+    setDetailFieldset((prev) => ({ ...prev, title }));
+    setDetailFieldsetChanges((prev) => ({ ...prev, title }));
+  };
+
   const handleSettingsDescriptionChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     const description = event.target.value;
     setDetailFieldset((prev) => ({ ...prev, description }));
@@ -199,6 +212,15 @@ const FieldsetDetails = ({
   const handleSave = (): boolean => {
     if (!fieldset || !isChanged) return false;
 
+    const titleErrorMessageKey = validateFieldsetTitle(detailFieldset.title);
+
+    if (titleErrorMessageKey) {
+      NotificationManager.warning({
+        message: formatMessage({ id: titleErrorMessageKey }),
+      });
+      return;
+    }
+
     if (detailFieldsetChanges.rules) {
       const ruleErrorMessageKey = validateFieldsetRules(detailFieldsetChanges.rules, detailFieldset.fields);
 
@@ -214,6 +236,9 @@ const FieldsetDetails = ({
       id: fieldset.id,
     };
 
+    if (detailFieldsetChanges.title !== undefined) {
+      payload.title = detailFieldsetChanges.title;
+    }
     if (detailFieldsetChanges.description !== undefined) {
       payload.description = detailFieldsetChanges.description;
     }
@@ -322,8 +347,41 @@ const FieldsetDetails = ({
 
         <div className={styles['settings-form']}>
           <div className={styles['settings-field']}>
+            <label htmlFor="fieldset-title" className={styles['settings-label']}>
+              {formatMessage({ id: 'fieldsets.settings.title' })}
+              <Tooltip
+                content={formatMessage({ id: 'fieldsets.settings.title-tooltip' })}
+                placement="top"
+              >
+                <span>
+                  <FilledInfoIcon />
+                </span>
+              </Tooltip>
+            </label>
+            <input
+              id="fieldset-title"
+              type="text"
+              className={classNames(
+                styles['settings-input'],
+                Boolean(validateFieldsetTitle(detailFieldset.title)) && styles['settings-input_error'],
+              )}
+              value={detailFieldset.title}
+              placeholder={formatMessage({ id: 'fieldsets.settings.title-placeholder' })}
+              onChange={handleSettingsTitleChange}
+            />
+          </div>
+
+          <div className={styles['settings-field']}>
             <label htmlFor="fieldset-description" className={styles['settings-label']}>
               {formatMessage({ id: 'fieldsets.settings.description' })}
+              <Tooltip
+                content={formatMessage({ id: 'fieldsets.settings.description-tooltip' })}
+                placement="top"
+              >
+                <span className={styles['settings-info-icon']}>
+                  <FilledInfoIcon />
+                </span>
+              </Tooltip>
             </label>
             <textarea
               id="fieldset-description"

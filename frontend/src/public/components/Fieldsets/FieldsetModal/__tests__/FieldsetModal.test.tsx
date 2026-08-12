@@ -125,7 +125,7 @@ describe('FieldsetModal', () => {
       userEvent.click(submitBtn);
 
       expect(mockDispatch).toHaveBeenCalledWith(
-        createFieldsetAction({ name: 'New FS' }),
+        createFieldsetAction({ name: 'New FS', title: 'New FS' }),
       );
       expect(mockDispatch).toHaveBeenCalledWith(closeCreateModal());
       expect(mockDispatch).toHaveBeenCalledTimes(2);
