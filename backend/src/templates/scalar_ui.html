@@ -1,0 +1,74 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Pneumatic API Documentation (Scalar)</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      .api-switcher {
+        position: fixed;
+        top: 12px;
+        right: 24px;
+        z-index: 10000;
+      }
+      .api-switcher select {
+        padding: 6px 12px;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+        font-family: sans-serif;
+        font-size: 13px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- API Switcher -->
+    <div class="api-switcher">
+      <select id="api-selector" onchange="window.location.search = '?api=' + this.value;">
+        <option value="core">Pneumatic Core API</option>
+        <option value="files">Pneumatic Files API</option>
+      </select>
+    </div>
+
+    <!-- Scalar container -->
+    <script id="api-reference"></script>
+
+    <script>
+      // Determine which API to load based on query param
+      const urlParams = new URLSearchParams(window.location.search);
+      const selectedApi = urlParams.get('api') || 'core';
+
+      // Sync dropdown state
+      document.getElementById('api-selector').value = selectedApi;
+
+      // Set schema URL dynamically
+      const schemaUrl = selectedApi === 'files' ? '/files/openapi.json' : '/api/schema/';
+      document.getElementById('api-reference').dataset.url = schemaUrl;
+
+      // Scalar configuration
+      var configuration = {
+        theme: 'default',
+        metaData: {
+          title: selectedApi === 'files' ? 'Pneumatic Files API' : 'Pneumatic Workflow API',
+        },
+        hideModels: false,
+        hideDownloadButton: false,
+        showSidebar: false,
+        defaultOpenFirstTag: false,
+        hideDarkModeToggle: false,
+        layout: 'modern',
+        showDeveloperTools: 'never',
+        hideClientButton: true,
+      }
+      document.getElementById('api-reference').dataset.configuration = JSON.stringify(configuration)
+    </script>
+
+    <!-- Load Scalar script from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.25.81"></script>
+  </body>
+</html>

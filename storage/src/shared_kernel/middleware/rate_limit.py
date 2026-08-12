@@ -73,7 +73,6 @@ def _classify_route(path: str, method: str) -> str | None:
             '/',
             '/upload',
             '/docs',
-            '/redoc',
             '/openapi.json',
             '/health',
         }

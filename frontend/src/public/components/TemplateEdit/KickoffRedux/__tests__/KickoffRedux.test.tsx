@@ -7,7 +7,7 @@ import { makeExtraField } from '../../../../__stubs__/fields.factory';
 import { makeFieldsetBindingClient, makeFieldsetField } from '../../../../__stubs__/fieldsets.factory';
 import {
   IExtraField,
-  IKickoffClient,
+  ITemplateKickoffClient,
   ITemplateClient,
 } from '../../../../types/template';
 import { IFieldsetCatalogItem } from '../../../../types/fieldset';
@@ -175,14 +175,14 @@ describe('KickoffRedux', () => {
     ...overrides,
   });
 
-  const makeKickoff = (overrides: Partial<IKickoffClient> = {}): IKickoffClient => ({
+  const makeKickoff = (overrides: Partial<ITemplateKickoffClient> = {}): ITemplateKickoffClient => ({
     description: '',
     fields: [],
     fieldsets: [],
     ...overrides,
   });
 
-  const makeTemplate = (kickoff: IKickoffClient): ITemplateClient => ({
+  const makeTemplate = (kickoff: ITemplateKickoffClient): ITemplateClient => ({
     id: 1,
     kickoff,
     wfNameTemplate: '',
@@ -195,7 +195,7 @@ describe('KickoffRedux', () => {
   });
 
   const renderKickoff = (params: {
-    kickoff: IKickoffClient;
+    kickoff: ITemplateKickoffClient;
     setKickoff?: jest.Mock;
   }) => {
     const setKickoff = params.setKickoff ?? jest.fn();

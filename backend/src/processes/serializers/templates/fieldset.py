@@ -1,6 +1,6 @@
 from django.core.validators import MinValueValidator
 from rest_framework.fields import CharField, ChoiceField, IntegerField
-from rest_framework.serializers import ModelSerializer
+from rest_framework.serializers import ModelSerializer, SerializerMethodField
 from src.generics.fields import (
     RelatedApiNameListField, AccountPrimaryKeyRelatedField,
 )
@@ -10,6 +10,7 @@ from src.processes.models.templates.fieldset import (
     FieldsetTemplate,
     FieldsetTemplateRule,
 )
+from src.processes.models.templates.template import Template
 from src.processes.serializers.templates.field import (
     FieldTemplateSerializer,
 )
@@ -106,6 +107,7 @@ class SharedFieldsetTemplateSerializer(
             'layout',
             'rules',
             'fields',
+            'usage',
         )
 
     rules = FieldsetTemplateRuleSerializer(
@@ -119,3 +121,23 @@ class SharedFieldsetTemplateSerializer(
         default=list,
     )
     api_name = CharField(required=False, max_length=200)
+    usage = SerializerMethodField()
+
+    def get_usage(self, instance: FieldsetTemplate) -> list:
+        prefetched = getattr(instance, '_prefetched_objects_cache', {})
+        if 'child_fieldsets' in prefetched:
+            usage = {}
+            for child in instance.child_fieldsets.all():
+                usage[child.template_id] = {
+                    'id': child.template_id,
+                    'name': child.template.name,
+                }
+            return sorted(usage.values(), key=lambda elem: elem['id'])
+        return list(
+            Template.objects.filter(
+                id__in=instance.child_fieldsets.values('template_id'),
+            )
+            .order_by('id')
+            .distinct()
+            .values('id', 'name'),
+        )

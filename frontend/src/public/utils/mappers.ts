@@ -1,4 +1,4 @@
-import { IExtraField, IKickoffClient } from '../types/template';
+import { IExtraField, IRuntimeKickoffClient } from '../types/template';
 import { isArrayWithItems } from './helpers';
 import { IRunWorkflow } from '../components/WorkflowEditPopup/types';
 import { ExtraFieldsHelper } from '../components/TemplateEdit/ExtraFields/utils/ExtraFieldsHelper';
@@ -162,7 +162,7 @@ export const mapEndOfDayTsp = (fields: IExtraField[]): IExtraField[] => {
   }));
 };
 
-export const getNormalizedKickoff = (kickoff: Pick<IKickoffClient, 'fields'>): { [key: string]: string } => {
+export const getNormalizedKickoff = (kickoff: Pick<IRuntimeKickoffClient, 'fields'>): { [key: string]: string } => {
   const mappedKickoffFields = new ExtraFieldsHelper(kickoff.fields).normalizeFieldsValues();
   const mappedKickoff = isArrayWithItems(mappedKickoffFields) ? Object.assign({}, ...mappedKickoffFields) : null;
   return mappedKickoff;

@@ -63,6 +63,8 @@
 .settings-label {
   font-weight: 600;
   color: var(--pneumatic-color-black72);
+  display: flex;
+  gap: 0.4rem;
 
   @mixin text-base;
 }
@@ -118,6 +120,10 @@
   &:focus {
     border-color: var(--pneumatic-color-blue);
   }
+}
+
+.settings-input_error {
+  border-color: var(--pneumatic-color-warning);
 }
 
 .empty-text {

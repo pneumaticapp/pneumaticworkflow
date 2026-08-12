@@ -67,7 +67,15 @@ export const getGroupsStore = ({ groups }: IApplicationState) => groups;
 
 export const getUsers = (state: IApplicationState): TUserListItem[] => state.accounts.users;
 
-export const getUserApiKey = (state: IApplicationState) => state.integrations.apiKey;
+export const getUserApiKeys = (state: IApplicationState) => state.integrations.apiKeys;
+
+export const getUserApiKey = createSelector(
+  getUserApiKeys,
+  (apiKeys) => ({
+    isLoading: apiKeys.isLoading,
+    data: apiKeys.data[0]?.prefix || '',
+  }),
+);
 
 export const getUserTimezone = (state: IApplicationState): string => state.authUser.timezone;
 

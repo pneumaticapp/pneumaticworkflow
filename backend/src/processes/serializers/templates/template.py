@@ -911,6 +911,10 @@ class TemplateAiSerializer(
     )
 
 
+class TemplateAiResponseSerializer(TemplateSerializer):
+    """Draft template payload from AI (fill_template_data output)."""
+
+
 class TemplateByStepsSerializer(
     CustomValidationErrorMixin,
     Serializer,

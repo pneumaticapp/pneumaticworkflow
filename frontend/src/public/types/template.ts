@@ -36,7 +36,7 @@ export interface ITemplate {
 
 export interface ITemplateClient extends Omit<ITemplate, 'kickoff' | 'tasks'> {
   tasks: ITemplateTaskClient[];
-  kickoff: IKickoffClient;
+  kickoff: ITemplateKickoffClient;
 }
 
 export enum ETemplateOwnerRole {
@@ -69,7 +69,7 @@ export type TTransformedTask = {
 
 
 export type TTemplateFieldFieldset = Pick<
-  IFieldsetRuntime, 'name' | 'description' | 'apiNameBinding' | 'fields' | 'order' | 'labelPosition'
+  IFieldsetRuntime, 'name' | 'title' | 'description' | 'apiNameBinding' | 'fields' | 'order' | 'labelPosition'
 >;
 
 export interface ITemplateTask {
@@ -237,14 +237,12 @@ export interface IKickoff {
   fieldsets: IFieldsetBinding[];
 }
 
-/** 
- * TODO (Technical Debt): IKickoffClient is currently shared between Template Editor
- * (where fieldsets use IFieldsetBindingClient[] with template field definitions) and Workflow
- * Runtime / Cloning (where fieldsets hold filled values using IFieldsetRuntime[]).
- * Future refactoring should separate or narrow editor vs runtime kickoff types to avoid type casts.
- */
-export interface IKickoffClient extends Omit<IKickoff, 'fieldsets'> {
+export interface ITemplateKickoffClient extends Omit<IKickoff, 'fieldsets'> {
   fieldsets: IFieldsetBindingClient[];
+}
+
+export interface IRuntimeKickoffClient extends Omit<IKickoff, 'fieldsets'> {
+  fieldsets: IFieldsetRuntime[];
 }
 
 /** Kickoff shape from template list APIs (GET /templates/, GET /templates/titles-by-owners) */
