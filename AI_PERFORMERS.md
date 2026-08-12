@@ -75,7 +75,7 @@ active = settings.PROJECT_CONF['AI_PERFORMERS']        # env AI_PERFORMERS=yes
 | Model | Purpose | Notes |
 |---|---|---|
 | `AIAgent` | account-scoped agent: `name`, `model_slug`, `system_prompt` | `SoftDeleteModel`; NOT a User row (deliberate — the repo removed an `is_robot` user type in its past) |
-| `AIProviderConnection` | account's BYO provider credentials (base URL + key) | singleton-per-account in practice; key stored **plaintext** (prototype; encryption at rest is a known TODO); masked in API responses (`sk-or-v1••••cdef`) |
+| `AIProviderConnection` | account's BYO provider credentials (base URL + key) | singleton-per-account in practice; key **encrypted at rest** (Fernet, `src/ai/crypto.py` — key from env `AI_ENCRYPTION_KEY` or derived from `SECRET_KEY`; read/write via the `api_key` property, raw column `api_key_encrypted` holds ciphertext; legacy plaintext rows stay readable, migration `ai/0005` re-encrypts them); masked in API responses (`sk-or-v1••••cdef`) |
 | `AITaskRun` | one execution attempt bundle per (agent, task) | statuses `queued → running → completed / left_for_human / failed` (`src/ai/enums.py::AITaskRunStatus`); records `prompt_tokens`, `completion_tokens`, served model, error detail |
 
 Performer plumbing in `src/processes`:
@@ -234,8 +234,9 @@ by `output_translation.py` / relied on by the pipeline:
    (`AIAgent.connection` FK exists but `resolve_provider` is account-level
    only), migrating the legacy template-generation feature onto the new
    provider layer.
-2. **Phase 2 remainder** — provider-key **encryption at rest** (plaintext
-   today, prototype-grade), billing hooks / per-account usage caps.
+2. **Phase 2 remainder** — billing hooks / per-account usage caps (the
+   execution pipeline has no metering limit; a runaway loop of AI tasks
+   can burn through a key unchecked).
 3. **`GET /navigation/menu` 404 on fresh DBs** (Railway) — no seeded menu
    rows; the UI falls back to its generated menu, cosmetic only.
 4. **ru locale** — English placeholder strings exist in `ru_RU`; nothing

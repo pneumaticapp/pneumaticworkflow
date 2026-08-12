@@ -412,6 +412,10 @@ class Common(Configuration):
         'OPENROUTER_BASE_URL',
         'https://openrouter.ai/api/v1',
     )
+    # Fernet key for provider keys at rest (urlsafe-base64, 32 bytes);
+    # unset - derived from SECRET_KEY (rotating SECRET_KEY then
+    # invalidates stored provider keys)
+    AI_ENCRYPTION_KEY = env.get('AI_ENCRYPTION_KEY')
 
     # Microsoft auth
     MS_CLIENT_ID = env.get('MS_CLIENT_ID')

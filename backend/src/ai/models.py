@@ -169,9 +169,9 @@ class AIProviderConnection(SoftDeleteModel):
 
     """ Account-scoped credentials for an OpenAI-compatible endpoint.
 
-        Phase 1 ships the table only: every agent uses the implicit
-        platform connection whose key comes from settings. Customer
-        (BYO) rows arrive in Phase 2 together with key encryption. """
+        The provider key is encrypted at rest (Fernet, src.ai.crypto);
+        read and write it through the api_key property — the raw
+        column holds the ciphertext """
 
     class Meta:
         ordering = ('id',)
@@ -186,12 +186,22 @@ class AIProviderConnection(SoftDeleteModel):
         max_length=1024,
         default='https://openrouter.ai/api/v1',
     )
-    api_key = models.CharField(max_length=1024)
+    api_key_encrypted = models.TextField()
     is_active = models.BooleanField(default=True)
 
     objects = BaseSoftDeleteManager.from_queryset(
         AIProviderConnectionQuerySet,
     )()
+
+    @property
+    def api_key(self) -> str:
+        from src.ai.crypto import decrypt_api_key
+        return decrypt_api_key(self.api_key_encrypted)
+
+    @api_key.setter
+    def api_key(self, value: str):
+        from src.ai.crypto import encrypt_api_key
+        self.api_key_encrypted = encrypt_api_key(value)
 
     def __str__(self):
         return self.name
