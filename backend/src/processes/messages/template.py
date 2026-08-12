@@ -312,3 +312,23 @@ MSG_PT_0074 = lambda name, step_name: format_lazy(
     name=name,
     step_name=step_name,
 )
+
+MSG_PT_0075 = lambda task_name, field_name, api_name: format_lazy(
+    _(
+        'Task "{task_name}": The output field "{field_name}" '
+        'rule contains a duplicate api_name "{api_name}".'
+        'Recreate the rule or change its api_name.',
+    ),
+    task_name=task_name,
+    field_name=field_name,
+    api_name=api_name,
+)
+MSG_PT_0076 = lambda task_name, field_name, api_name: format_lazy(
+    _(
+        'Task "{task_name}": The output field "{field_name}" '
+        'rule points to a non-existent field "{api_name}". ',
+    ),
+    task_name=task_name,
+    field_name=field_name,
+    api_name=api_name,
+)

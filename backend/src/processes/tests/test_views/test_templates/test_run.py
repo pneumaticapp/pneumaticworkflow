@@ -5602,9 +5602,8 @@ def test_run__kickoff_fieldset_sum_equal__ok(
         ),
         account=user.account,
     )
-    rule_template = fieldset_template.rules.first()
-    field_1.rules.add(rule_template)
-    field_2.rules.add(rule_template)
+    ruleset_template = fieldset_template.rulesets.first()
+    ruleset_template.fields.add(field_1, field_2)
     wf_run_mock = mocker.patch(
         'src.processes.services.workflow_action.'
         'WorkflowEventService.workflow_run_event',
@@ -5674,9 +5673,8 @@ def test_run__kickoff_fieldset_sum_equal__validation_error(
         ),
         account=user.account,
     )
-    rule_template = fieldset_template.rules.first()
-    field_1.rules.add(rule_template)
-    field_2.rules.add(rule_template)
+    ruleset_template = fieldset_template.rulesets.first()
+    ruleset_template.fields.add(field_1, field_2)
     wf_run_mock = mocker.patch(
         'src.processes.services.workflow_action.'
         'WorkflowEventService.workflow_run_event',

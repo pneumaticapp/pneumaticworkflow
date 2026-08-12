@@ -5,7 +5,7 @@ from django.utils import timezone
 
 from src.accounts.enums import BillingPlanType
 from src.accounts.messages import MSG_A_0035, MSG_A_0037, MSG_A_0041
-from src.processes.enums import FieldSetRuleType
+from src.processes.enums import FieldSetRuleOperator, FieldSetRuleType
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_shared_fieldset,
@@ -30,8 +30,10 @@ def test_retrieve__fieldset_all_data__ok(api_client):
         rule_value=rule_value,
     )
     field = fieldset.fields.get()
-    rule = fieldset.rules.get()
-    rule.fields.add(field)
+    ruleset = fieldset.rulesets.get()
+    ruleset.fields.add(field)
+    group_or = ruleset.groups_or.first()
+    group_and = group_or.groups_and.first()
     api_client.token_authenticate(user=user)
 
     # act
@@ -49,11 +51,18 @@ def test_retrieve__fieldset_all_data__ok(api_client):
     assert response.data['label_position'] == fieldset.label_position
     assert response.data['usage'] == []
 
-    assert len(response.data['rules']) == 1
-    assert response.data['rules'][0]['type'] == rule.type
-    assert response.data['rules'][0]['value'] == rule.value
-    assert response.data['rules'][0]['api_name'] == rule.api_name
-    assert response.data['rules'][0]['fields'] == [field.api_name]
+    assert len(response.data['rulesets']) == 1
+    rule_resp = response.data['rulesets'][0]
+    assert rule_resp['type'] == ruleset.type
+    assert rule_resp['api_name'] == ruleset.api_name
+    assert rule_resp['fields'] == [field.api_name]
+    assert len(rule_resp['groups_or']) == 1
+    assert rule_resp['groups_or'][0]['api_name'] == group_or.api_name
+    assert len(rule_resp['groups_or'][0]['groups_and']) == 1
+    group_and_resp = rule_resp['groups_or'][0]['groups_and'][0]
+    assert group_and_resp['api_name'] == group_and.api_name
+    assert group_and_resp['operator'] == FieldSetRuleOperator.SUM_EQUAL
+    assert group_and_resp['value'] == rule_value
 
     assert len(response.data['fields']) == 1
     assert response.data['fields'][0]['name'] == field.name
@@ -113,8 +122,9 @@ def test_retrieve__fieldset_rule_with_fields__ok(api_client):
         rule_value='10',
     )
     field = fieldset.fields.get()
-    rule = fieldset.rules.get()
-    rule.fields.add(field)
+    ruleset = fieldset.rulesets.get()
+    ruleset.fields.add(field)
+    group_and = ruleset.groups_or.first().groups_and.first()
 
     api_client.token_authenticate(user=user_1)
 
@@ -124,11 +134,15 @@ def test_retrieve__fieldset_rule_with_fields__ok(api_client):
     # assert
     assert response.status_code == 200
     assert response.data['id'] == fieldset.id
-    assert len(response.data['rules']) == 1
-    assert response.data['rules'][0]['type'] == rule.type
-    assert response.data['rules'][0]['value'] == rule.value
-    assert response.data['rules'][0]['api_name'] == rule.api_name
-    assert response.data['rules'][0]['fields'] == [field.api_name]
+    assert len(response.data['rulesets']) == 1
+    rule_resp = response.data['rulesets'][0]
+    assert rule_resp['type'] == ruleset.type
+    assert rule_resp['api_name'] == ruleset.api_name
+    assert rule_resp['fields'] == [field.api_name]
+    group_or_data = rule_resp['groups_or'][0]
+    group_and_data = group_or_data['groups_and'][0]
+    assert group_and_data['operator'] == group_and.operator
+    assert group_and_data['value'] == group_and.value
 
 
 def test_retrieve__unauthenticated__unauthorized(api_client):

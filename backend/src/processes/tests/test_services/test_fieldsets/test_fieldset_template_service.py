@@ -2,6 +2,7 @@ import pytest
 from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
     FieldSetLayout,
+    FieldSetRuleOperator,
     FieldSetRuleType,
     FieldType,
     LabelPosition,
@@ -9,7 +10,9 @@ from src.processes.enums import (
 from src.processes.messages import fieldset as fs_messages
 from src.processes.models.templates.fieldset import (
     FieldsetTemplate,
-    FieldsetTemplateRule,
+    FieldSetTemplateRuleSet,
+    FieldSetTemplateRuleGroupOr,
+    FieldSetTemplateRuleGroupAnd,
 )
 from src.processes.models.templates.fields import (
     FieldTemplate,
@@ -25,9 +28,6 @@ from src.processes.services.templates.field_template import (
 )
 from src.processes.services.fieldsets.fieldset import (
     FieldSetTemplateService,
-)
-from src.processes.services.fieldsets.fieldset_rule import (
-    FieldsetTemplateRuleService,
 )
 from src.processes.tests.fixtures import (
     create_test_account,
@@ -327,10 +327,10 @@ def test__create_fields__with_data__ok(mocker):
     )
 
 
-def test_create_rules__with_data__ok(mocker):
+def test_create_rules__with_data__ok():
 
     """
-    Call with rules data
+    Call with rulesets data
     """
 
     # arrange
@@ -348,35 +348,32 @@ def test_create_rules__with_data__ok(mocker):
         auth_type=AuthTokenType.USER,
         instance=fieldset,
     )
-    rules_data = [
-        {'type': FieldSetRuleType.SUM_EQUAL, 'value': '100'},
+    rulesets_data = [
+        {
+            'type': FieldSetRuleType.VALIDATOR,
+            'groups_or': [
+                {
+                    'groups_and': [
+                        {
+                            'operator': FieldSetRuleOperator.SUM_EQUAL,
+                            'value': '100',
+                        },
+                    ],
+                },
+            ],
+        },
     ]
 
-    # mock
-    fieldset_template_rule_service_init_mock = mocker.patch.object(
-        FieldsetTemplateRuleService,
-        attribute='__init__',
-        return_value=None,
-    )
-    fieldset_template_rule_service_create_mock = mocker.patch(
-        'src.processes.services.fieldsets.fieldset_rule.'
-        'FieldsetTemplateRuleService.create',
-    )
-
     # act
-    service.create_rules(rules_data=rules_data)
+    service.create_rules(rulesets_data=rulesets_data)
 
     # assert
-    fieldset_template_rule_service_init_mock.assert_called_once_with(
-        user=user,
-        is_superuser=False,
-        auth_type=AuthTokenType.USER,
-    )
-    fieldset_template_rule_service_create_mock.assert_called_once_with(
-        fieldset_id=fieldset.id,
-        type=FieldSetRuleType.SUM_EQUAL,
-        value='100',
-    )
+    assert fieldset.rulesets.count() == 1
+    ruleset = fieldset.rulesets.first()
+    assert ruleset.type == FieldSetRuleType.VALIDATOR
+    group_and = ruleset.groups_or.first().groups_and.first()
+    assert group_and.operator == FieldSetRuleOperator.SUM_EQUAL
+    assert group_and.value == '100'
 
 
 def test__create_related__default_params__ok(mocker):
@@ -412,10 +409,10 @@ def test__create_related__default_params__ok(mocker):
     create_fields_mock.assert_not_called()
 
 
-def test__create_related__rules_provided__ok(mocker):
+def test__create_related__rulesets_provided__ok(mocker):
 
     """
-    Rules provided
+    Rulesets provided
     """
 
     # arrange
@@ -426,7 +423,21 @@ def test__create_related__rules_provided__ok(mocker):
         is_superuser=False,
         auth_type=AuthTokenType.USER,
     )
-    rules = [{'type': FieldSetRuleType.SUM_EQUAL, 'value': '100'}]
+    rulesets = [
+        {
+            'type': FieldSetRuleType.VALIDATOR,
+            'groups_or': [
+                {
+                    'groups_and': [
+                        {
+                            'operator': FieldSetRuleOperator.SUM_EQUAL,
+                            'value': '100',
+                        },
+                    ],
+                },
+            ],
+        },
+    ]
 
     # mock
     create_rules_mock = mocker.patch(
@@ -439,10 +450,10 @@ def test__create_related__rules_provided__ok(mocker):
     )
 
     # act
-    service._create_related(rules=rules)
+    service._create_related(rulesets=rulesets)
 
     # assert
-    create_rules_mock.assert_called_once_with(rules_data=rules)
+    create_rules_mock.assert_called_once_with(rulesets_data=rulesets)
     create_fields_mock.assert_not_called()
 
 
@@ -483,7 +494,7 @@ def test__create_related__fields_provided__ok(mocker):
 def test__create_related__both_provided__ok(mocker):
 
     """
-    Both rules and fields provided
+    Both rulesets and fields provided
     """
 
     # arrange
@@ -494,7 +505,21 @@ def test__create_related__both_provided__ok(mocker):
         is_superuser=False,
         auth_type=AuthTokenType.USER,
     )
-    rules = [{'type': FieldSetRuleType.SUM_EQUAL, 'value': '100'}]
+    rulesets = [
+        {
+            'type': FieldSetRuleType.VALIDATOR,
+            'groups_or': [
+                {
+                    'groups_and': [
+                        {
+                            'operator': FieldSetRuleOperator.SUM_EQUAL,
+                            'value': '100',
+                        },
+                    ],
+                },
+            ],
+        },
+    ]
     fields = [{'name': 'Field 1', 'type': 'string', 'order': 1}]
 
     # mock
@@ -508,10 +533,10 @@ def test__create_related__both_provided__ok(mocker):
     )
 
     # act
-    service._create_related(rules=rules, fields=fields)
+    service._create_related(rulesets=rulesets, fields=fields)
 
     # assert
-    create_rules_mock.assert_called_once_with(rules_data=rules)
+    create_rules_mock.assert_called_once_with(rulesets_data=rulesets)
     create_fields_mock.assert_called_once_with(fields_data=fields)
 
 
@@ -706,62 +731,10 @@ def test__update_fields__orphan_fields__deleted(mocker):
     assert FieldTemplate.objects.filter(id=field_1.id).exists()
 
 
-def test__validate_rules__with_rules__ok(mocker):
-
-    """
-    Call with rules
-    """
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    template = create_test_template(user=user, tasks_count=1)
-    fieldset = FieldsetTemplate.objects.create(
-        template=template,
-        account=account,
-        name='Fieldset',
-    )
-    rule_1 = FieldsetTemplateRule.objects.create(
-        account=account,
-        fieldset=fieldset,
-        type=FieldSetRuleType.SUM_EQUAL,
-        value='100',
-    )
-    service = FieldSetTemplateService(
-        user=user,
-        is_superuser=False,
-        auth_type=AuthTokenType.USER,
-        instance=fieldset,
-    )
-
-    # mock
-    fieldset_template_rule_service_init_mock = mocker.patch.object(
-        FieldsetTemplateRuleService,
-        attribute='__init__',
-        return_value=None,
-    )
-    fieldset_template_rule_service_validate_mock = mocker.patch(
-        'src.processes.services.fieldsets.fieldset_rule.'
-        'FieldsetTemplateRuleService._validate',
-    )
-
-    # act
-    service._validate_rules()
-
-    # assert
-    fieldset_template_rule_service_init_mock.assert_called_once_with(
-        user=user,
-        is_superuser=False,
-        auth_type=AuthTokenType.USER,
-        instance=rule_1,
-    )
-    fieldset_template_rule_service_validate_mock.assert_called_once_with()
-
-
 def test_update_rules__existing_rule__ok(mocker):
 
     """
-    Update existing rule
+    Update existing ruleset
     """
 
     # arrange
@@ -773,10 +746,22 @@ def test_update_rules__existing_rule__ok(mocker):
         account=account,
         name='Fieldset',
     )
-    rule_1 = FieldsetTemplateRule.objects.create(
+    ruleset = FieldSetTemplateRuleSet.objects.create(
         account=account,
         fieldset=fieldset,
-        type=FieldSetRuleType.SUM_EQUAL,
+        type=FieldSetRuleType.VALIDATOR,
+        api_name='ruleset-1',
+    )
+    group_or = FieldSetTemplateRuleGroupOr.objects.create(
+        fieldset_rule=ruleset,
+        account=account,
+        api_name='group-or-1',
+    )
+    group_and = FieldSetTemplateRuleGroupAnd.objects.create(
+        group_or=group_or,
+        account=account,
+        api_name='group-and-1',
+        operator=FieldSetRuleOperator.SUM_EQUAL,
         value='100',
     )
     service = FieldSetTemplateService(
@@ -785,47 +770,47 @@ def test_update_rules__existing_rule__ok(mocker):
         auth_type=AuthTokenType.USER,
         instance=fieldset,
     )
-    rules_data = [{'api_name': rule_1.api_name, 'value': '200'}]
 
-    # mock
-    fieldset_template_rule_service_init_mock = mocker.patch.object(
-        FieldsetTemplateRuleService,
-        attribute='__init__',
-        return_value=None,
+    update_ruleset_mock = mocker.patch(
+        'src.processes.services.fieldsets.fieldset.'
+        'FieldSetTemplateService._update_ruleset',
     )
-    fieldset_template_rule_service_partial_update_mock = mocker.patch(
-        'src.processes.services.fieldsets.fieldset_rule.'
-        'FieldsetTemplateRuleService.partial_update',
+    create_ruleset_mock = mocker.patch(
+        'src.processes.services.fieldsets.fieldset.'
+        'FieldSetTemplateService._create_ruleset',
     )
-    fieldset_template_rule_service_create_mock = mocker.patch(
-        'src.processes.services.fieldsets.fieldset_rule.'
-        'FieldsetTemplateRuleService.create',
-    )
+    ruleset_data = {
+        'api_name': ruleset.api_name,
+        'type': FieldSetRuleType.VALIDATOR,
+        'groups_or': [
+            {
+                'api_name': group_or.api_name,
+                'groups_and': [
+                    {
+                        'api_name': group_and,
+                        'operator': FieldSetRuleOperator.SUM_EQUAL,
+                        'value': '200',
+                    },
+                ],
+            },
+        ],
+    }
 
     # act
-    service.update_rules(rules_data=rules_data)
+    service.update_rules(rulesets_data=[ruleset_data])
 
     # assert
-    fieldset_template_rule_service_init_mock.assert_called_once_with(
-        user=user,
-        is_superuser=False,
-        auth_type=AuthTokenType.USER,
-        instance=rule_1,
+    update_ruleset_mock.assert_called_once_with(
+        ruleset=ruleset,
+        ruleset_data=ruleset_data,
     )
-    fs_rule_update_mock = (
-        fieldset_template_rule_service_partial_update_mock
-    )
-    fs_rule_update_mock.assert_called_once_with(
-        value='200',
-        api_name=rule_1.api_name,
-    )
-    fieldset_template_rule_service_create_mock.assert_not_called()
+    create_ruleset_mock.assert_not_called()
 
 
 def test_update_rules__new_rule__ok(mocker):
 
     """
-    Create new rule
+    Create new ruleset
     """
 
     # arrange
@@ -836,6 +821,21 @@ def test_update_rules__new_rule__ok(mocker):
         template=template,
         account=account,
         name='Fieldset',
+    )
+    rule_api_name = 'r-1'
+    group_or_api_name = 'gp-1'
+    group_and_api_name = 'ga-1'
+
+    update_ruleset_mock = mocker.patch(
+        'src.processes.services.fieldsets.fieldset.'
+        'FieldSetTemplateService._update_ruleset',
+    )
+    ruleset_mock = mocker.Mock()
+    ruleset_mock.api_name = rule_api_name
+    create_ruleset_mock = mocker.patch(
+        'src.processes.services.fieldsets.fieldset.'
+        'FieldSetTemplateService._create_ruleset',
+        return_value=ruleset_mock,
     )
     service = FieldSetTemplateService(
         user=user,
@@ -843,54 +843,38 @@ def test_update_rules__new_rule__ok(mocker):
         auth_type=AuthTokenType.USER,
         instance=fieldset,
     )
-    rules_data = [
-        {
-            'type': FieldSetRuleType.SUM_EQUAL,
-            'value': '100',
-            'api_name': 'rule-api-name',
-        },
-    ]
 
-    # mock
-    create_return = mocker.Mock()
-    create_return.api_name = 'new-rule-api'
-    fs_rule_init_mock = mocker.patch.object(
-        FieldsetTemplateRuleService,
-        attribute='__init__',
-        return_value=None,
-    )
-    fs_rule_create_mock = mocker.patch(
-        'src.processes.services.fieldsets.fieldset_rule.'
-        'FieldsetTemplateRuleService.create',
-        return_value=create_return,
-    )
-    fs_rule_update_mock = mocker.patch(
-        'src.processes.services.fieldsets.fieldset_rule.'
-        'FieldsetTemplateRuleService.partial_update',
-    )
+    ruleset_data = {
+        'api_name': rule_api_name,
+        'type': FieldSetRuleType.VALIDATOR,
+        'groups_or': [
+            {
+                'api_name': group_or_api_name,
+                'groups_and': [
+                    {
+                        'api_name': group_and_api_name,
+                        'operator': FieldSetRuleOperator.SUM_EQUAL,
+                        'value': '100',
+                    },
+                ],
+            },
+        ],
+    }
 
     # act
-    service.update_rules(rules_data=rules_data)
+    service.update_rules(rulesets_data=[ruleset_data])
 
     # assert
-    fs_rule_init_mock.assert_called_once_with(
-        user=user,
-        is_superuser=False,
-        auth_type=AuthTokenType.USER,
+    update_ruleset_mock.assert_not_called()
+    create_ruleset_mock.assert_called_once_with(
+        ruleset_data=ruleset_data,
     )
-    fs_rule_create_mock.assert_called_once_with(
-        fieldset_id=fieldset.id,
-        type=FieldSetRuleType.SUM_EQUAL,
-        api_name='rule-api-name',
-        value='100',
-    )
-    fs_rule_update_mock.assert_not_called()
 
 
-def test_update_rules__orphan_rules__deleted(mocker):
+def test_update_rules__orphan_rules__deleted():
 
     """
-    Orphan rules deleted
+    Orphan rulesets deleted
     """
 
     # arrange
@@ -902,16 +886,40 @@ def test_update_rules__orphan_rules__deleted(mocker):
         account=account,
         name='Fieldset',
     )
-    rule_1 = FieldsetTemplateRule.objects.create(
+    ruleset_1 = FieldSetTemplateRuleSet.objects.create(
         account=account,
         fieldset=fieldset,
-        type=FieldSetRuleType.SUM_EQUAL,
+        type=FieldSetRuleType.VALIDATOR,
+        api_name='ruleset-1',
+    )
+    group_or_1 = FieldSetTemplateRuleGroupOr.objects.create(
+        fieldset_rule=ruleset_1,
+        account=account,
+        api_name='group-or-1',
+    )
+    FieldSetTemplateRuleGroupAnd.objects.create(
+        group_or=group_or_1,
+        account=account,
+        api_name='group-and-1',
+        operator=FieldSetRuleOperator.SUM_EQUAL,
         value='100',
     )
-    rule_2 = FieldsetTemplateRule.objects.create(
+    ruleset_2 = FieldSetTemplateRuleSet.objects.create(
         account=account,
         fieldset=fieldset,
-        type=FieldSetRuleType.SUM_EQUAL,
+        type=FieldSetRuleType.VALIDATOR,
+        api_name='ruleset-2',
+    )
+    group_or_2 = FieldSetTemplateRuleGroupOr.objects.create(
+        fieldset_rule=ruleset_2,
+        account=account,
+        api_name='group-or-2',
+    )
+    FieldSetTemplateRuleGroupAnd.objects.create(
+        group_or=group_or_2,
+        account=account,
+        api_name='group-and-2',
+        operator=FieldSetRuleOperator.SUM_EQUAL,
         value='200',
     )
     service = FieldSetTemplateService(
@@ -920,37 +928,41 @@ def test_update_rules__orphan_rules__deleted(mocker):
         auth_type=AuthTokenType.USER,
         instance=fieldset,
     )
-    rules_data = [{'api_name': rule_1.api_name, 'value': '150'}]
-
-    # mock
-    fs_rule_init_mock = mocker.patch.object(
-        FieldsetTemplateRuleService,
-        attribute='__init__',
-        return_value=None,
-    )
-    fs_rule_update_mock = mocker.patch(
-        'src.processes.services.fieldsets.fieldset_rule.'
-        'FieldsetTemplateRuleService.partial_update',
-    )
+    rulesets_data = [
+        {
+            'api_name': ruleset_1.api_name,
+            'type': FieldSetRuleType.VALIDATOR,
+            'groups_or': [
+                {
+                    'groups_and': [
+                        {
+                            'operator': FieldSetRuleOperator.SUM_EQUAL,
+                            'value': '150',
+                        },
+                    ],
+                },
+            ],
+        },
+    ]
 
     # act
-    service.update_rules(rules_data=rules_data)
+    service.update_rules(rulesets_data=rulesets_data)
 
     # assert
-    fs_rule_init_mock.assert_called_once()
-    fs_rule_update_mock.assert_called_once()
-    assert not FieldsetTemplateRule.objects.filter(
-        id=rule_2.id,
+    assert not FieldSetTemplateRuleSet.objects.filter(
+        id=ruleset_2.id,
     ).exists()
-    assert FieldsetTemplateRule.objects.filter(
-        id=rule_1.id,
+    assert FieldSetTemplateRuleSet.objects.filter(
+        id=ruleset_1.id,
     ).exists()
+    group_and = ruleset_1.groups_or.first().groups_and.first()
+    assert group_and.value == '150'
 
 
 def test_update_rules__two_rules_same_type_no_api_name__create_new_rule():
 
     """
-    Two rules with the same type in rules_data:
+    Two rules with the same type in rulesets_data:
     one existing (with api_name) and one new (without api_name).
     Both rules must be persisted after update_rules completes.
     """
@@ -960,7 +972,8 @@ def test_update_rules__two_rules_same_type_no_api_name__create_new_rule():
     user = create_test_owner(account=account)
     fieldset = create_test_shared_fieldset(
         account=account,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_type=FieldSetRuleType.VALIDATOR,
+        rule_value='1',
     )
     field_1 = fieldset.fields.first()
     field_2 = FieldTemplate.objects.create(
@@ -970,9 +983,9 @@ def test_update_rules__two_rules_same_type_no_api_name__create_new_rule():
         api_name='f2',
         fieldset=fieldset,
     )
-    existing_rule = fieldset.rules.first()
-    existing_rule.fields.add(field_1)
-    existing_rule.fields.add(field_2)
+    existing_ruleset = fieldset.rulesets.first()
+    existing_ruleset.fields.add(field_1)
+    existing_ruleset.fields.add(field_2)
 
     service = FieldSetTemplateService(
         user=user,
@@ -980,41 +993,64 @@ def test_update_rules__two_rules_same_type_no_api_name__create_new_rule():
         auth_type=AuthTokenType.USER,
         instance=fieldset,
     )
-    rules_data = [
+    rulesets_data = [
         {
-            'type': FieldSetRuleType.SUM_EQUAL,
-            'value': '1',
+            'api_name': existing_ruleset.api_name,
+            'type': FieldSetRuleType.VALIDATOR,
             'fields': [field_1.api_name, field_2.api_name],
-            'api_name': existing_rule.api_name,
+            'groups_or': [
+                {
+                    'groups_and': [
+                        {
+                            'operator': FieldSetRuleOperator.SUM_EQUAL,
+                            'value': '1',
+                        },
+                    ],
+                },
+            ],
         },
         {
-            'type': FieldSetRuleType.SUM_EQUAL,
-            'value': '100',
+            'type': FieldSetRuleType.VALIDATOR,
             'fields': [field_1.api_name, field_2.api_name],
+            'groups_or': [
+                {
+                    'groups_and': [
+                        {
+                            'operator': FieldSetRuleOperator.SUM_EQUAL,
+                            'value': '100',
+                        },
+                    ],
+                },
+            ],
         },
     ]
 
     # act
-    service.update_rules(rules_data=rules_data)
+    service.update_rules(rulesets_data=rulesets_data)
 
     # assert
-    assert fieldset.rules.count() == 2
-    existing_rule.refresh_from_db()
-    assert existing_rule.value == '1'
-    assert existing_rule.type == FieldSetRuleType.SUM_EQUAL
-    assert existing_rule.fields.count() == 2
-    assert existing_rule.fields.get(id=field_1.id)
-    assert existing_rule.fields.get(id=field_2.id)
+    assert fieldset.rulesets.count() == 2
+    existing_ruleset.refresh_from_db()
+    assert existing_ruleset.type == FieldSetRuleType.VALIDATOR
+    assert existing_ruleset.fields.count() == 2
+    assert existing_ruleset.fields.get(id=field_1.id)
+    assert existing_ruleset.fields.get(id=field_2.id)
+    existing_group_and = (
+        existing_ruleset.groups_or.first().groups_and.first()
+    )
+    assert existing_group_and.operator == FieldSetRuleOperator.SUM_EQUAL
+    assert existing_group_and.value == '1'
 
-    new_rule = fieldset.rules.exclude(
-        fieldset=fieldset,
-        api_name=existing_rule.api_name,
+    new_ruleset = fieldset.rulesets.exclude(
+        api_name=existing_ruleset.api_name,
     ).get()
-    assert new_rule.type == FieldSetRuleType.SUM_EQUAL
-    assert new_rule.value == '100'
-    assert new_rule.fields.count() == 2
-    assert new_rule.fields.get(id=field_1.id)
-    assert new_rule.fields.get(id=field_2.id)
+    assert new_ruleset.type == FieldSetRuleType.VALIDATOR
+    assert new_ruleset.fields.count() == 2
+    assert new_ruleset.fields.get(id=field_1.id)
+    assert new_ruleset.fields.get(id=field_2.id)
+    new_group_and = new_ruleset.groups_or.first().groups_and.first()
+    assert new_group_and.operator == FieldSetRuleOperator.SUM_EQUAL
+    assert new_group_and.value == '100'
 
 
 def test_partial_update_name__ok(mocker):
@@ -1038,10 +1074,6 @@ def test_partial_update_name__ok(mocker):
         'src.processes.services.fieldsets.fieldset.'
         'FieldSetTemplateService.update_rules',
     )
-    mock_validate_rules = mocker.patch(
-        'src.processes.services.fieldsets.fieldset.'
-        'FieldSetTemplateService._validate_rules',
-    )
     service = FieldSetTemplateService(instance=fieldset, user=owner)
     data = {"name": 'Updated Name'}
 
@@ -1052,7 +1084,6 @@ def test_partial_update_name__ok(mocker):
     assert result.name == data['name']
     mock_update_fields.assert_not_called()
     mock_update_rules.assert_not_called()
-    mock_validate_rules.assert_called_once_with()
 
 
 def test_partial_update_fields_ok(mocker):
@@ -1077,10 +1108,6 @@ def test_partial_update_fields_ok(mocker):
         'src.processes.services.fieldsets.fieldset.'
         'FieldSetTemplateService.update_rules',
     )
-    mock_validate_rules = mocker.patch(
-        'src.processes.services.fieldsets.fieldset.'
-        'FieldSetTemplateService._validate_rules',
-    )
     mock_super_partial_update = mocker.patch(
         'src.generics.base.service.'
         'BaseModelService.partial_update',
@@ -1098,11 +1125,10 @@ def test_partial_update_fields_ok(mocker):
     mock_super_partial_update.assert_not_called()
     mock_update_fields.assert_called_once_with(fields_data=data['fields'])
     mock_update_rules.assert_not_called()
-    mock_validate_rules.assert_called_once_with()
 
 
-def test_partial_update__rules__ok(mocker):
-    """Verify rules update logic for existing and new rules"""
+def test_partial_update__rulesets__ok(mocker):
+    """Verify rulesets update logic for existing and new rulesets"""
 
     # arrange
     account = create_test_account()
@@ -1126,14 +1152,23 @@ def test_partial_update__rules__ok(mocker):
         'src.processes.services.fieldsets.fieldset.'
         'FieldSetTemplateService.update_rules',
     )
-    mock_validate_rules = mocker.patch(
-        'src.processes.services.fieldsets.fieldset.'
-        'FieldSetTemplateService._validate_rules',
-    )
     service = FieldSetTemplateService(user=owner, instance=fieldset)
     data = {
-        'rules': [
-            {"api_name": "rule_1", "condition": "eq"},
+        'rulesets': [
+            {
+                'api_name': 'ruleset-1',
+                'type': FieldSetRuleType.VALIDATOR,
+                'groups_or': [
+                    {
+                        'groups_and': [
+                            {
+                                'operator': FieldSetRuleOperator.SUM_EQUAL,
+                                'value': '100',
+                            },
+                        ],
+                    },
+                ],
+            },
         ],
     }
 
@@ -1144,8 +1179,7 @@ def test_partial_update__rules__ok(mocker):
     assert result is fieldset
     mock_super_partial_update.assert_not_called()
     mock_update_fields.assert_not_called()
-    mock_update_rules.assert_called_once_with(rules_data=data['rules'])
-    mock_validate_rules.assert_called_once_with()
+    mock_update_rules.assert_called_once_with(rulesets_data=data['rulesets'])
 
 
 def test_delete__not_in_use__ok():
@@ -1406,19 +1440,41 @@ def test__replace_api_names__fields_and_rules__ok(mocker):
                 'selections': [{'api_name': 'old-selection-1', 'value': 'A'}],
             },
         ],
-        'rules': [{'api_name': 'old-rule-1', 'fields': [old_field_api]}],
+        'rulesets': [
+            {
+                'api_name': 'old-rule-1',
+                'fields': [old_field_api],
+                'groups_or': [
+                    {
+                        'api_name': 'old-group-or-1',
+                        'groups_and': [
+                            {
+                                'api_name': 'old-group-and-1',
+                                'operator': FieldSetRuleOperator.SUM_EQUAL,
+                                'value': '100',
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
     }
     new_fs_api = 'new-fs-1'
     new_field_api = 'new-field-1'
     new_selection_api = 'new-selection-1'
-    new_rule_api = 'new-rule-1'
+    new_ruleset_api = 'new-ruleset-1'
+    new_group_or_api = 'new-group-or-1'
+    new_group_and_api = 'new-group-and-1'
     create_api_name_mock = mocker.patch(
         'src.processes.services.fieldsets.fieldset.create_api_name',
+
         side_effect=[
             new_fs_api,
             new_field_api,
             new_selection_api,
-            new_rule_api,
+            new_ruleset_api,
+            new_group_or_api,
+            new_group_and_api,
         ],
     )
 
@@ -1429,19 +1485,30 @@ def test__replace_api_names__fields_and_rules__ok(mocker):
 
     # assert
     assert result['api_name'] == new_fs_api
-    assert result['fields'][0]['api_name'] == new_field_api
-    assert (
-        result['fields'][0]['selections'][0]['api_name'] == new_selection_api
-    )
-    assert result['rules'][0]['api_name'] == new_rule_api
-    assert result['rules'][0]['fields'][0] == new_field_api
-    assert create_api_name_mock.call_count == 4
+    field_data = result['fields'][0]
+    assert field_data['api_name'] == new_field_api
+
+    selection_data = field_data['selections'][0]
+    assert selection_data['api_name'] == new_selection_api
+
+    rule_data = result['rulesets'][0]
+    assert rule_data['api_name'] == new_ruleset_api
+    assert rule_data['fields'][0] == new_field_api
+
+    group_or_data = rule_data['groups_or'][0]
+    assert group_or_data['api_name'] == new_group_or_api
+
+    group_and_data = group_or_data['groups_and'][0]
+    assert group_and_data['api_name'] == new_group_and_api
+    assert create_api_name_mock.call_count == 6
     create_api_name_mock.assert_has_calls(
         [
             mocker.call(FieldsetTemplate.api_name_prefix),
             mocker.call(FieldTemplate.api_name_prefix),
             mocker.call(FieldTemplateSelection.api_name_prefix),
-            mocker.call(FieldsetTemplateRule.api_name_prefix),
+            mocker.call(FieldSetTemplateRuleSet.api_name_prefix),
+            mocker.call(FieldSetTemplateRuleGroupOr.api_name_prefix),
+            mocker.call(FieldSetTemplateRuleGroupAnd.api_name_prefix),
         ],
         any_order=True,
     )
@@ -1537,7 +1604,7 @@ def test__replace_api_names__no_rules_key__ok(mocker):
     )
 
     # assert
-    assert result['rules'] == []
+    assert result['rulesets'] == []
     create_api_name_mock.assert_called_once_with(
         FieldsetTemplate.api_name_prefix,
     )
@@ -1557,7 +1624,7 @@ def test__replace_api_names__empty_rules__ok(mocker):
         is_superuser=False,
         auth_type=AuthTokenType.USER,
     )
-    shared_fieldset_data = {'api_name': 'old-fs', 'rules': []}
+    shared_fieldset_data = {'api_name': 'old-fs', 'rulesets': []}
     create_api_name_mock = mocker.patch(
         'src.processes.services.fieldsets.fieldset.create_api_name',
         return_value='new-fs-1',
@@ -1569,7 +1636,7 @@ def test__replace_api_names__empty_rules__ok(mocker):
     )
 
     # assert
-    assert result['rules'] == []
+    assert result['rulesets'] == []
     create_api_name_mock.assert_called_once_with(
         FieldsetTemplate.api_name_prefix,
     )
@@ -1593,7 +1660,7 @@ def test__replace_api_names__original_not_mutated__ok(mocker):
     shared_fieldset_data = {
         'api_name': 'old-fs',
         'fields': [{'api_name': old_field_api, 'name': 'F 1'}],
-        'rules': [],
+        'rulesets': [],
     }
     create_api_name_mock = mocker.patch(
         'src.processes.services.fieldsets.fieldset.create_api_name',
@@ -2235,7 +2302,7 @@ def test__get_clone__ok(mocker):
         'label_position': fieldset.label_position,
         'layout': fieldset.layout,
         'fields': [],
-        'rules': [],
+        'rulesets': [],
     }
     clone_data = dict(instance_data)
     clone_data['api_name'] = 'new-fs-api'

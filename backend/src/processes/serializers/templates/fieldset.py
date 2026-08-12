@@ -2,40 +2,20 @@ from django.core.validators import MinValueValidator
 from rest_framework.fields import CharField, ChoiceField, IntegerField
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
 from src.generics.fields import (
-    RelatedApiNameListField, AccountPrimaryKeyRelatedField,
+    AccountPrimaryKeyRelatedField,
 )
 from src.generics.mixins.serializers import CustomValidationErrorMixin
 from src.processes.enums import FieldSetLayout, LabelPosition
 from src.processes.models.templates.fieldset import (
     FieldsetTemplate,
-    FieldsetTemplateRule,
 )
 from src.processes.models.templates.template import Template
 from src.processes.serializers.templates.field import (
     FieldTemplateSerializer,
 )
-
-
-class FieldsetTemplateRuleSerializer(
-    CustomValidationErrorMixin,
-    ModelSerializer,
-):
-
-    class Meta:
-        model = FieldsetTemplateRule
-        fields = (
-            'type',
-            'value',
-            'api_name',
-            'fields',
-        )
-
-    api_name = CharField(required=False, max_length=200)
-    fields = RelatedApiNameListField(
-        required=False,
-        allow_empty=True,
-        default=list,
-    )
+from src.processes.serializers.templates.fieldset_rule import (
+    FieldSetTemplateRuleSetSerializer,
+)
 
 
 class FieldsetTemplateSerializer(
@@ -54,7 +34,7 @@ class FieldsetTemplateSerializer(
             'name',
             'label_position',
             'layout',
-            'rules',
+            'rulesets',
             'fields',
         )
 
@@ -72,7 +52,7 @@ class FieldsetTemplateSerializer(
         choices=FieldSetLayout.CHOICES,
         required=False,
     )
-    rules = FieldsetTemplateRuleSerializer(
+    rulesets = FieldSetTemplateRuleSetSerializer(
         many=True,
         required=False,
         default=list,
@@ -105,12 +85,12 @@ class SharedFieldsetTemplateSerializer(
             'name',
             'label_position',
             'layout',
-            'rules',
+            'rulesets',
             'fields',
             'usage',
         )
 
-    rules = FieldsetTemplateRuleSerializer(
+    rulesets = FieldSetTemplateRuleSetSerializer(
         many=True,
         required=False,
         default=list,
