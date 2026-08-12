@@ -58,6 +58,7 @@ export const ruMessages = {
   'notifications.snoozed': 'Процесс отложен до {date}',
   'notifications.resumed': 'Процесс возобновлен',
   'notifications.ai-left-task': 'ИИ-агент оставил задачу',
+  'notifications.ai-completed-task': 'ИИ-агент завершил работу',
   'notifications.workflow-completed': 'Процесс завершен',
   'duration-month': 'месяцы',
   'duration-month-placeholder': '0',

@@ -61,6 +61,7 @@ export const enMessages = {
   'notifications.snoozed': 'Workflow snoozed until {date}',
   'notifications.resumed': 'Workflow resumed',
   'notifications.ai-left-task': 'AI agent left the task',
+  'notifications.ai-completed-task': 'AI agent is done',
   'notifications.workflow-completed': 'Workflow was completed',
 
   'duration-month': 'months',

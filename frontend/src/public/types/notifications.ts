@@ -157,6 +157,15 @@ export type TNotificationsListItemOptional =
         id: number;
         name: string;
       };
+    }
+  | {
+      type: 'ai_completed_task';
+      text: string;
+      workflow: Pick<IWorkflow, 'id' | 'name'>;
+      task: {
+        id: number;
+        name: string;
+      };
     };
 
 export type TNotificationsListItem = TNotificationsListItemCommon & TNotificationsListItemOptional;
