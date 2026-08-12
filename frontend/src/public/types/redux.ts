@@ -13,7 +13,7 @@ import {
   IWorkflowDetailsClient,
 } from './workflow';
 import { ITask, ITaskListItem, ITasksSettings } from './tasks';
-import { IIntegrationDetailed, IIntegrationListItem } from './integrations';
+import { IApiKeyItem, IIntegrationDetailed, IIntegrationListItem } from './integrations';
 import { ESettingsTabs } from './profile';
 import { IHighlightsItem, EHighlightsDateFilter } from './highlights';
 import { EDashboardTimeRange, IGettingStartedChecklist } from './dashboard';
@@ -202,9 +202,10 @@ export interface IStoreNotification {
 }
 
 export interface IIntegrationsStore {
-  apiKey: {
+  apiKeys: {
     isLoading: boolean;
-    data: string;
+    data: IApiKeyItem[];
+    newlyCreatedKey: string | null;
   };
   list: {
     isLoading: boolean;
