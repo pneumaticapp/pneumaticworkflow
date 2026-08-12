@@ -105,3 +105,74 @@ def test_task_performer__ai_agent_after_soft_delete__allowed():
     )
 
     assert new_performer.id != performer.id
+
+
+def _mixed_task(require_completion_by_all=False):
+    user = create_test_user()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task.require_completion_by_all = require_completion_by_all
+    task.save(update_fields=['require_completion_by_all'])
+    agent = _create_agent(user.account)
+    ai_performer = TaskPerformer.objects.create(
+        task=task,
+        ai_agent=agent,
+        type=PerformerType.AI,
+    )
+    human_performer = TaskPerformer.objects.get(task=task, user=user)
+    return user, task, ai_performer, human_performer
+
+
+def test_can_be_completed__ai_completed_human_pending__false():
+    _user, task, ai_performer, _human = _mixed_task()
+    ai_performer.is_completed = True
+    ai_performer.save(update_fields=['is_completed'])
+
+    assert task.can_be_completed() is False
+
+
+def test_can_be_completed__human_completed_ai_pending__true():
+    _user, task, _ai, human_performer = _mixed_task()
+    human_performer.is_completed = True
+    human_performer.save(update_fields=['is_completed'])
+
+    assert task.can_be_completed() is True
+
+
+def test_can_be_completed__ai_completed_human_removed__true():
+    _user, task, ai_performer, human_performer = _mixed_task()
+    ai_performer.is_completed = True
+    ai_performer.save(update_fields=['is_completed'])
+    human_performer.delete()
+
+    assert task.can_be_completed() is True
+
+
+def test_can_be_completed__by_all_everyone_done__true():
+    _user, task, ai_performer, human_performer = _mixed_task(
+        require_completion_by_all=True,
+    )
+    ai_performer.is_completed = True
+    ai_performer.save(update_fields=['is_completed'])
+    human_performer.is_completed = True
+    human_performer.save(update_fields=['is_completed'])
+
+    assert task.can_be_completed() is True
+
+
+def test_get_first_completed_human__human_completed__their_user():
+    user, task, ai_performer, human_performer = _mixed_task()
+    ai_performer.is_completed = True
+    ai_performer.save(update_fields=['is_completed'])
+    human_performer.is_completed = True
+    human_performer.save(update_fields=['is_completed'])
+
+    assert task.get_first_completed_human() == user
+
+
+def test_get_first_completed_human__only_ai_completed__none():
+    _user, task, ai_performer, _human = _mixed_task()
+    ai_performer.is_completed = True
+    ai_performer.save(update_fields=['is_completed'])
+
+    assert task.get_first_completed_human() is None

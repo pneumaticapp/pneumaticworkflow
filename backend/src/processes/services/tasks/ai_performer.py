@@ -101,21 +101,4 @@ class AiPerformerService(BasePerformerService2):
             recorded for the first human who completed it, falling
             back to the requesting admin """
 
-        completed = (
-            self.task.taskperformer_set
-            .completed()
-            .exclude_directly_deleted()
-        )
-        user_performer = completed.filter(
-            type=PerformerType.USER,
-        ).first()
-        if user_performer:
-            return user_performer.user
-        group_performer = completed.filter(
-            type=PerformerType.GROUP,
-        ).first()
-        if group_performer:
-            group_user = group_performer.group.users.first()
-            if group_user:
-                return group_user
-        return self.user
+        return self.task.get_first_completed_human() or self.user

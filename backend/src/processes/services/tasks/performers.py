@@ -8,7 +8,6 @@ from src.notifications.tasks import (
     send_new_task_websocket,
     send_task_deleted_notification,
 )
-from src.processes.enums import PerformerType
 from src.processes.messages.workflow import (
     MSG_PW_0014,
 )
@@ -106,20 +105,8 @@ class TaskPerformersService(BasePerformersService):
 
         if task.can_be_completed():
             first_completed_user = (
-                task.taskperformer_set.completed()
-                .exclude_directly_deleted()
-                .exclude(type=PerformerType.GROUP)
-                .first().user
+                task.get_first_completed_human() or request_user
             )
-            if first_completed_user is None:
-                group = (
-                    task.taskperformer_set.completed()
-                    .exclude_directly_deleted()
-                    .filter(type=PerformerType.GROUP)
-                    .first()
-                    .group
-                )
-                first_completed_user = group.users.first().user
             service = WorkflowActionService(
                 workflow=task.workflow,
                 user=first_completed_user,

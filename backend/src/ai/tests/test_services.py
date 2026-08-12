@@ -1,6 +1,7 @@
 import pytest
 from django.conf import settings
 from django.test import override_settings
+from django.utils import timezone
 
 from src.ai.enums import AITaskRunStatus
 from src.ai.models import (
@@ -58,13 +59,16 @@ def ai_performers_enabled(mocker):
     )
 
 
-def _setup(tasks_count=1, required_string=True):
+def _setup(tasks_count=1, required_string=True, human_performer=False):
     user = create_test_user(is_account_owner=True)
     account = user.account
     account.ai_performers_enabled = True
     account.save(update_fields=['ai_performers_enabled'])
     workflow = create_test_workflow(user=user, tasks_count=tasks_count)
     task = workflow.tasks.get(number=1)
+    if not human_performer:
+        # the default shape: the agent is the sole performer
+        TaskPerformer.objects.filter(task=task).delete()
     if required_string:
         TaskField.objects.create(
             task=task,
@@ -205,7 +209,7 @@ def test_run__feature_disabled_on_account__drops_silently(mocker):
 def test_run__require_completion_by_all__completes_for_agent_only(
     mocker,
 ):
-    _user, _workflow, task, agent = _setup()
+    _user, _workflow, task, agent = _setup(human_performer=True)
     task.require_completion_by_all = True
     task.save(update_fields=['require_completion_by_all'])
     _mock_model(mocker, {'field-1': 'done'})
@@ -225,6 +229,66 @@ def test_run__require_completion_by_all__completes_for_agent_only(
         type=WorkflowEventType.AI_AGENT_COMPLETED,
     )
     assert event.text == agent.name
+
+
+def test_run__human_co_performer__completes_for_agent_only(mocker):
+
+    """ AI drafts, human approves: on a shared task the agent fills
+        its output and waits — it never closes the task over an
+        active human performer, even without "completion by all" """
+
+    user, _workflow, task, agent = _setup(human_performer=True)
+    _mock_model(mocker, {'field-1': 'Draft ready'})
+
+    run_ai_performer(task_id=task.id, agent_id=agent.id)
+
+    task.refresh_from_db()
+    assert task.status == TaskStatus.ACTIVE
+    ai_performer = TaskPerformer.objects.get(task=task, ai_agent=agent)
+    assert ai_performer.is_completed is True
+    human_performer = TaskPerformer.objects.get(task=task, user=user)
+    assert human_performer.is_completed is False
+    field = TaskField.objects.get(task=task, api_name='field-1')
+    assert field.value == 'Draft ready'
+    run = AITaskRun.objects.get(task=task, agent=agent)
+    assert run.status == AITaskRunStatus.COMPLETED
+    assert WorkflowEvent.objects.filter(
+        task=task,
+        type=WorkflowEventType.AI_AGENT_COMPLETED,
+    ).exists()
+
+
+def test_run__human_completes_after_agent__task_completed(mocker):
+    user, workflow, task, agent = _setup(human_performer=True)
+    _mock_model(mocker, {'field-1': 'Draft ready'})
+    run_ai_performer(task_id=task.id, agent_id=agent.id)
+
+    service = WorkflowActionService(user=user, workflow=workflow)
+    service.complete_task_for_user(task=task)
+
+    task.refresh_from_db()
+    assert task.status == TaskStatus.COMPLETED
+
+
+def test_run__agent_last_pending_by_all__completes_task(mocker):
+
+    """ With "completion by all", the agent closing the task as the
+        last pending performer is still allowed — every human already
+        completed their share """
+
+    user, _workflow, task, agent = _setup(human_performer=True)
+    task.require_completion_by_all = True
+    task.save(update_fields=['require_completion_by_all'])
+    TaskPerformer.objects.filter(task=task, user=user).update(
+        is_completed=True,
+        date_completed=timezone.now(),
+    )
+    _mock_model(mocker, {'field-1': 'done'})
+
+    run_ai_performer(task_id=task.id, agent_id=agent.id)
+
+    task.refresh_from_db()
+    assert task.status == TaskStatus.COMPLETED
 
 
 def test_run__no_fillable_fields__completes_without_model_call(mocker):

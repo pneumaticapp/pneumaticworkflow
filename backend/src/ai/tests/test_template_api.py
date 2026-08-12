@@ -124,7 +124,7 @@ def test_create__ai_performer__ok(api_client):
     assert raw_performer.ai_agent_id == agent.id
 
 
-def test_create__ai_and_human_performers__validation_error(api_client):
+def test_create__ai_and_human_performers__ok(api_client):
 
     # arrange
     user = _setup_user()
@@ -150,12 +150,12 @@ def test_create__ai_and_human_performers__validation_error(api_client):
     )
 
     # assert
-    assert response.status_code == 400
-    assert response.data['message'] == (
-        messages.MSG_PT_0077(name='First step')
+    assert response.status_code == 200
+    task = TaskTemplate.objects.get(api_name='task-1')
+    performer_types = set(
+        task.raw_performers.values_list('type', flat=True),
     )
-    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['details']['api_name'] == 'task-1'
+    assert performer_types == {PerformerType.AI, PerformerType.USER}
 
 
 def test_create__ai_performer_no_output_fields__validation_error(api_client):

@@ -626,13 +626,55 @@ class Task(
         if self.is_completed is True:
             return False
         task_performers = self.taskperformer_set.exclude_directly_deleted()
-        completed_performers = task_performers.completed().exists()
         incompleted_performers = task_performers.not_completed().exists()
-        by_all = self.require_completion_by_all
-        return (
-            (not by_all and completed_performers) or
-            (by_all and not incompleted_performers)
+        if self.require_completion_by_all:
+            return not incompleted_performers
+        human_completed = (
+            task_performers
+            .completed()
+            .exclude(type=PerformerType.AI)
+            .exists()
         )
+        if human_completed:
+            return True
+        # an AI agent's completion never closes the task over
+        # human performers who are still working on it
+        ai_completed = (
+            task_performers
+            .completed()
+            .filter(type=PerformerType.AI)
+            .exists()
+        )
+        human_incompleted = (
+            task_performers
+            .not_completed()
+            .exclude(type=PerformerType.AI)
+            .exists()
+        )
+        return ai_completed and not human_incompleted
+
+    def get_first_completed_human(self):
+
+        """ The user a completion is credited to when the task closes
+            without an acting user (performer removal, AI performers).
+            None when only AI performers completed the task """
+
+        performers = (
+            self.taskperformer_set
+            .completed()
+            .exclude_directly_deleted()
+        )
+        user_performer = performers.filter(
+            type=PerformerType.USER,
+        ).first()
+        if user_performer:
+            return user_performer.user
+        group_performer = performers.filter(
+            type=PerformerType.GROUP,
+        ).first()
+        if group_performer:
+            return group_performer.group.users.first()
+        return None
 
     def get_revert_tasks(self):
 

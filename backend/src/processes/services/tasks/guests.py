@@ -7,7 +7,6 @@ from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
 from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.notifications.tasks import send_guest_new_task
-from src.processes.enums import PerformerType
 from src.processes.messages.workflow import (
     MSG_PW_0014,
     MSG_PW_0015,
@@ -77,20 +76,8 @@ class GuestPerformersService(BasePerformersService):
         )
         if task.can_be_completed():
             first_completed_user = (
-                task.taskperformer_set.completed()
-                .exclude_directly_deleted()
-                .exclude(type=PerformerType.GROUP)
-                .first().user
+                task.get_first_completed_human() or request_user
             )
-            if first_completed_user is None:
-                group = (
-                    task.taskperformer_set.completed()
-                    .exclude_directly_deleted()
-                    .filter(type=PerformerType.GROUP)
-                    .first()
-                    .group
-                )
-                first_completed_user = group.users.first().user
             service = WorkflowActionService(
                 workflow=task.workflow,
                 user=first_completed_user,

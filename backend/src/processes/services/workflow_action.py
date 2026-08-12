@@ -827,6 +827,7 @@ class WorkflowActionService:
         self,
         task: Task,
         performer_q: Optional[Q] = None,
+        actor_is_ai: bool = False,
     ) -> bool:
 
         """ Implies that the performer matched by performer_q has
@@ -842,18 +843,27 @@ class WorkflowActionService:
         task_performers = (
             task.taskperformer_set.exclude_directly_deleted()
         )
-        completed_performers = task_performers.filter(
+        by_all = task.require_completion_by_all
+        if by_all:
+            return not (
+                task_performers
+                .not_completed()
+                .exclude(performer_q)
+                .exists()
+            )
+        if actor_is_ai:
+            # an AI agent's completion never closes the task over
+            # human performers who are still working on it
+            return not (
+                task_performers
+                .not_completed()
+                .exclude(type=PerformerType.AI)
+                .exists()
+            )
+        return task_performers.filter(
             Q(is_completed=True)
             | (Q(is_completed=False) & performer_q),
         ).exists()
-        incompleted_performers = (
-            task_performers.not_completed().exclude(performer_q).exists()
-        )
-        by_all = task.require_completion_by_all
-        return (
-            (not by_all and completed_performers) or
-            (by_all and not incompleted_performers)
-        )
 
     def _validate_task_active(self, task: Task):
 
@@ -1002,6 +1012,7 @@ class WorkflowActionService:
             if self._task_can_be_completed(
                 task,
                 performer_q=Q(ai_agent_id=ai_agent.id),
+                actor_is_ai=True,
             ):
                 self.complete_task(
                     task=task,
@@ -1009,8 +1020,9 @@ class WorkflowActionService:
                     ai_agent=ai_agent,
                 )
             else:
-                # "requires completion by all": completed only for the
-                # agent, the task stays active for the other performers
+                # human co-performers still working (or "requires
+                # completion by all"): completed only for the agent,
+                # the task stays open for the humans to review
                 task_performer.date_completed = timezone.now()
                 task_performer.is_completed = True
                 task_performer.save(

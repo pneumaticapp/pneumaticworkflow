@@ -90,20 +90,8 @@ class GroupPerformerService(BasePerformerService2):
         self.task.refresh_from_db()
         if self.task.can_be_completed():
             first_completed_user = (
-                self.task.taskperformer_set.completed()
-                .exclude_directly_deleted()
-                .exclude(type=PerformerType.GROUP)
-                .first().user
+                self.task.get_first_completed_human() or self.user
             )
-            if first_completed_user is None:
-                group = (
-                    self.task.taskperformer_set.completed()
-                    .exclude_directly_deleted()
-                    .filter(type=PerformerType.GROUP)
-                    .first()
-                    .group
-                )
-                first_completed_user = group.users.first().user
             service = WorkflowActionService(
                 user=first_completed_user,
                 workflow=self.task.workflow,
