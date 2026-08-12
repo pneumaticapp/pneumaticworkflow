@@ -1,29 +1,15 @@
-.fieldset-picker__option {
-  padding: 0.8rem 1.6rem;
-  display: flex;
-  width: 100%;
-  font-family: Nunito, sans-serif;
-  font-size: 1.4rem;
-  line-height: 2rem;
-  text-align: left;
-  cursor: pointer;
-  color: var(--pneumatic-color-black100);
-  background: none;
-  border: none;
-  transition: background-color 0.1s ease;
-  align-items: center;
+.fieldset-picker__container,
+.fieldset-picker__toggle {
+  padding: 0;
 }
 
-.fieldset-picker__option:hover {
-  background-color: var(--pneumatic-color-beige);
+.fieldset-picker__arrow_hidden {
+  display: none;
 }
 
-.fieldset-picker__checkbox {
-  margin-right: 1.2rem;
-  width: 1.6rem;
-  height: 1.6rem;
-  flex-shrink: 0;
-  accent-color: var(--pneumatic-color-link);
+.fieldset-picker__menu {
+
+  max-width: 20rem;
 }
 
 .fieldset-picker__option-info {
@@ -45,19 +31,4 @@
   color: var(--pneumatic-color-black48);
 }
 
-.fieldset-picker__empty {
-  padding: 1.6rem;
-  font-family: Nunito, sans-serif;
-  font-size: 1.3rem;
-  line-height: 2rem;
-  text-align: center;
-  color: var(--pneumatic-color-black48);
-}
 
-.fieldset-picker__loading {
-  padding: 1.6rem;
-  font-family: Nunito, sans-serif;
-  font-size: 1.3rem;
-  text-align: center;
-  color: var(--pneumatic-color-black48);
-}

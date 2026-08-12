@@ -94,6 +94,10 @@
   @mixin text-small;
 }
 
+.flow__fieldset-row {
+  min-height: 2rem;
+}
+
 .flow__fieldset-title-input {
   border: none;
   resize: none;
