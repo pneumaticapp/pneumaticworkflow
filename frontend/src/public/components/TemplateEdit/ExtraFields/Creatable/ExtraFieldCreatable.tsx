@@ -45,6 +45,7 @@ export function ExtraFieldCreatable({
   editField,
   deleteField,
   isDisabled = false,
+  isFieldsetReadOnly = false,
   labelBackgroundColor,
   labelPosition,
   innerRef,
@@ -141,17 +142,27 @@ export function ExtraFieldCreatable({
         onMouseLeave={() => setActiveOptionIndex(null)}
       >
         <div className={inputStyles['kickoff-create-field__input-container']}>
-          <input
-            ref={(el) => (optionInputsRefs.current[optionIndex] = el as HTMLInputElement)}
-            className={inputStyles['kickoff-create-field-option__input']}
-            data-use-input
-            onChange={handleChangeOption(optionIndex)}
-            onBlur={handleBlurOption(apiName)}
-            placeholder={namePlaceholder}
-            type="text"
-            value={value}
-            disabled={isDisabled}
-          />
+          {isFieldsetReadOnly ? (
+            <textarea
+              className={inputStyles['kickoff-create-field-option__input']}
+              data-use-input
+              value={value}
+              disabled
+              rows={1}
+            />
+          ) : (
+            <input
+              ref={(el) => (optionInputsRefs.current[optionIndex] = el as HTMLInputElement)}
+              className={inputStyles['kickoff-create-field-option__input']}
+              data-use-input
+              onChange={handleChangeOption(optionIndex)}
+              onBlur={handleBlurOption(apiName)}
+              placeholder={namePlaceholder}
+              type="text"
+              value={value}
+              disabled={isDisabled}
+            />
+          )}
           <span className={inputStyles['measure']} />
           {isActive && !isDisabled && (selectionItems?.length || 0) > 1 && (
             <div

@@ -34,6 +34,7 @@ export function ExtraFieldCheckbox({
   deleteField,
   editField,
   isDisabled = false,
+  isFieldsetReadOnly = false,
   datasetName,
   labelPosition,
   labelBackgroundColor,
@@ -164,17 +165,27 @@ export function ExtraFieldCheckbox({
             id={`extra-field-checkbox-${optionIndex}`}
             containerClassName={fieldStyles['labeled-checkbox__checkbox']}
           />
-          <input
-            ref={(el) => (optionInputsRefs.current[optionIndex] = el as HTMLInputElement)}
-            className={fieldStyles['labeled-checkbox__input']}
-            data-use-input
-            onChange={handleChangeOption(optionIndex)}
-            onBlur={handleBlurOption(field.apiName)}
-            placeholder={namePlaceholder}
-            type="text"
-            value={value}
-            disabled={isDisabled}
-          />
+          {isFieldsetReadOnly ? (
+            <textarea
+              className={fieldStyles['labeled-checkbox__input']}
+              data-use-input
+              value={value}
+              disabled
+              rows={1}
+            />
+          ) : (
+            <input
+              ref={(el) => (optionInputsRefs.current[optionIndex] = el as HTMLInputElement)}
+              className={fieldStyles['labeled-checkbox__input']}
+              data-use-input
+              onChange={handleChangeOption(optionIndex)}
+              onBlur={handleBlurOption(field.apiName)}
+              placeholder={namePlaceholder}
+              type="text"
+              value={value}
+              disabled={isDisabled}
+            />
+          )}
           <span className={fieldStyles['measure']} />
           {isActive && !isDisabled && (selectionItems?.length || 0) > 1 && (
             <div

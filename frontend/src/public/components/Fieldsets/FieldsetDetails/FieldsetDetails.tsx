@@ -49,6 +49,7 @@ import { getNormalizeFieldsOrders, moveWorkflowField } from '../../../utils/work
 import { useDatasetOptions } from '../../TemplateEdit/ExtraFields/utils/useDatasetOptions';
 
 import { normalizeFieldsForUI } from './fieldsetFieldMappers';
+import { SINGLE_LINE_FIELD_TYPES } from './constants';
 import { validateFieldsetRules } from '../validators';
 import {
   FIELDSET_LABEL_POSITION_OPTIONS,
@@ -433,25 +434,33 @@ const FieldsetDetails = ({
 
         {sortedFields.length > 0 && (
           <div className={classnames(styles['fields'], isLinked && styles['fieldset_readonly'])}>
-            {sortedFields.map((field, index) => (
-              <ExtraFieldIntl
-                key={field.apiName}
-                id={index}
-                field={field}
-                fieldsCount={sortedFields.length}
-                labelBackgroundColor={EInputNameBackgroundColor.White}
-                deleteField={() => handleDeleteField(index)}
-                moveFieldUp={() => handleMoveField(index, EMoveDirections.Up)}
-                moveFieldDown={() => handleMoveField(index, EMoveDirections.Down)}
-                editField={handleEditField(field.apiName)}
-                accountId={accountId}
-                mode={EExtraFieldMode.Kickoff}
-                showDropdown
-                isDisabled={isLinked}
-                datasetOptions={datasetOptions}
-                labelPosition={isDesktop ? detailFieldset.labelPosition : EFieldLabelPosition.Top}
-              />
-            ))}
+            {sortedFields.map((field, index) => {
+              const readOnlyField =
+                isLinked && SINGLE_LINE_FIELD_TYPES.has(field.type)
+                  ? { ...field, type: EExtraFieldType.Text }
+                  : field;
+
+              return (
+                <ExtraFieldIntl
+                  key={field.apiName}
+                  id={index}
+                  field={readOnlyField}
+                  fieldsCount={sortedFields.length}
+                  labelBackgroundColor={EInputNameBackgroundColor.White}
+                  deleteField={() => handleDeleteField(index)}
+                  moveFieldUp={() => handleMoveField(index, EMoveDirections.Up)}
+                  moveFieldDown={() => handleMoveField(index, EMoveDirections.Down)}
+                  editField={handleEditField(field.apiName)}
+                  accountId={accountId}
+                  mode={EExtraFieldMode.Kickoff}
+                  showDropdown
+                  isDisabled={isLinked}
+                  isFieldsetReadOnly={isLinked}
+                  datasetOptions={datasetOptions}
+                  labelPosition={isDesktop ? detailFieldset.labelPosition : EFieldLabelPosition.Top}
+                />
+              );
+            })}
           </div>
         )}
 

@@ -200,6 +200,18 @@
     opacity: 1 !important;
   }
 
+  &.fieldset_readonly textarea[data-use-input]:disabled {
+    field-sizing: content;
+    min-height: unset;
+    max-width: 100%;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  &.fieldset_readonly [class*="kickoff-create-field-option__labeled-checkbox"] {
+    align-items: flex-start;
+  }
+
   [class*="kick-off-input__name-textarea"]:disabled,
   [class*="kickoff-create-field-name-input"]:disabled,
   [class*="extra-field-file__input-name--template"]:disabled {
