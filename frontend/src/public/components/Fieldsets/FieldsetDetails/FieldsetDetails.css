@@ -217,7 +217,7 @@
 
   [class*="kickoff-create-field-option__input"]:disabled {
     field-sizing: content;
-    width: auto;
+    width: auto !important;
     padding: 0.4rem 1.2rem;
     border-radius: 0.6rem;
     max-width: 100%;
@@ -226,7 +226,7 @@
   [class*="labeled-checkbox__input"]:disabled,
   [class*="labeled-radiobutton__input"]:disabled {
     field-sizing: content;
-    width: auto;
+    width: auto !important;
     padding: 0.4rem 1.2rem;
     border-radius: 0.6rem;
     max-width: calc(100% - 3.2rem);
