@@ -21,7 +21,6 @@ from src.processes.enums import (
     ConditionAction,
     DirectlyStatus,
     DueDateRule,
-    FieldSetRuleType,
     FieldType,
     OwnerRole,
     OwnerType,
@@ -31,7 +30,7 @@ from src.processes.enums import (
     WorkflowEventType,
     WorkflowStatus,
     LabelPosition,
-    FieldSetLayout,
+    FieldSetLayout, FieldSetRuleOperator,
 )
 from src.processes.messages import workflow as messages
 from src.processes.messages.fieldset import MSG_FS_0002
@@ -5339,7 +5338,7 @@ def test_run__kickoff_with_one_fieldset__ok(mocker, api_client):
     fs_order = 3
     label_position = LabelPosition.LEFT
     layout = FieldSetLayout.HORIZONTAL
-    rule_type = FieldSetRuleType.SUM_EQUAL
+    rule_operator = FieldSetRuleOperator.SUM_EQUAL
     rule_value = '100'
     shared_fieldset = create_test_shared_fieldset(
         account=account,
@@ -5348,7 +5347,7 @@ def test_run__kickoff_with_one_fieldset__ok(mocker, api_client):
         name=fs_name,
         label_position=label_position,
         layout=layout,
-        rule_type=rule_type,
+        rule_operator=rule_operator,
         rule_value=rule_value,
     )
     fieldset_template = create_test_fieldset_template(
@@ -5587,7 +5586,7 @@ def test_run__kickoff_fieldset_sum_equal__ok(
         template=template,
         kickoff=template.kickoff_instance,
         order=0,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='100',
     )
     field_1 = fieldset_template.fields.first()
@@ -5633,7 +5632,7 @@ def test_run__kickoff_fieldset_sum_equal__ok(
     )
     fieldset = kickoff_value.fieldsets.first()
     assert fieldset.fields.count() == 2
-    assert fieldset.rules.count() == 1
+    assert fieldset.rulesets.count() == 1
     wf_run_mock.assert_called_once()
     analytics_mock.assert_called_once()
 
@@ -5658,7 +5657,7 @@ def test_run__kickoff_fieldset_sum_equal__validation_error(
         template=template,
         kickoff=template.kickoff_instance,
         order=0,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='100',
     )
     field_1 = fieldset_template.fields.first()

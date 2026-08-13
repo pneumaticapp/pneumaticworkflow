@@ -777,15 +777,13 @@ class FieldSetLayout:
 
 class FieldSetRuleType:
 
-    SUM_EQUAL = 'sum_equal'
     VALIDATOR = 'validator'
 
     CHOICES = (
-        (SUM_EQUAL, 'The sum is equal'),
         (VALIDATOR, 'Validator'),
     )
 
-    LITERALS = Literal[SUM_EQUAL, VALIDATOR]
+    LITERALS = Literal[VALIDATOR]
 
 
 class FieldRuleType:
@@ -821,6 +819,12 @@ class FieldSetRuleOperator:
     SUM_EQUAL = 'sum_equal'
     SUM_GREATER_THAN = 'sum_greater_than'
     SUM_LESS_THAN = 'sum_less_than'
+
+    SUM_OPERATORS = (
+        SUM_EQUAL,
+        SUM_GREATER_THAN,
+        SUM_LESS_THAN,
+    )
 
     CHOICES = (
         (SUM_EQUAL, 'Sum equal'),

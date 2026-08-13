@@ -479,10 +479,10 @@ def test_validate_rules__one_rule__ok(mocker):
     workflow = create_test_workflow(user=user, template=template)
     fieldset = create_test_fieldset(
         workflow=workflow,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='100',
     )
-    rule = fieldset.rules.first()
+    rule = fieldset.rulesets.first()
     service = FieldSetService(
         user=user,
         is_superuser=False,
@@ -523,11 +523,11 @@ def test_validate_rules__one_rule_none_matches__raise_exception(mocker):
     workflow = create_test_workflow(user=user, template=template)
     fieldset = create_test_fieldset(
         workflow=workflow,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='100',
     )
     field = fieldset.fields.first()
-    rule_100 = fieldset.rules.first()
+    rule_100 = fieldset.rulesets.first()
     rule_100.fields.add(field)
     service = FieldSetService(
         user=user,
@@ -557,16 +557,16 @@ def test_validate_rules__two_same_type_rules__first_value_matches__ok():
     workflow = create_test_workflow(user=user)
     fieldset = create_test_fieldset(
         workflow=workflow,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='10',
     )
     field = fieldset.fields.first()
-    rule_10 = fieldset.rules.first()
+    rule_10 = fieldset.rulesets.first()
     rule_10.fields.add(field)
     rule_0 = FieldSetRule.objects.create(
         account=account,
         fieldset=fieldset,
-        type=FieldSetRuleType.SUM_EQUAL,
+        type=FieldSetRuleType.VALIDATOR,
         value='0',
     )
     rule_0.fields.add(field)
@@ -597,16 +597,16 @@ def test_validate_rules__two_same_type_rules__second_value_matches__ok():
     workflow = create_test_workflow(user=user)
     fieldset = create_test_fieldset(
         workflow=workflow,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='100',
     )
     field = fieldset.fields.first()
-    rule_100 = fieldset.rules.first()
+    rule_100 = fieldset.rulesets.first()
     rule_100.fields.add(field)
     rule_10 = FieldSetRule.objects.create(
         account=account,
         fieldset=fieldset,
-        type=FieldSetRuleType.SUM_EQUAL,
+        type=FieldSetRuleType.VALIDATOR,
         value='10',
     )
     rule_10.fields.add(field)
@@ -639,16 +639,16 @@ def test_validate_rules__two_same_type_rules__none_matches__raise():
     workflow = create_test_workflow(user=user)
     fieldset = create_test_fieldset(
         workflow=workflow,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='100',
     )
     field = fieldset.fields.first()
-    rule_100 = fieldset.rules.first()
+    rule_100 = fieldset.rulesets.first()
     rule_100.fields.add(field)
     rule_0 = FieldSetRule.objects.create(
         account=account,
         fieldset=fieldset,
-        type=FieldSetRuleType.SUM_EQUAL,
+        type=FieldSetRuleType.VALIDATOR,
         value='0',
     )
     rule_0.fields.add(field)

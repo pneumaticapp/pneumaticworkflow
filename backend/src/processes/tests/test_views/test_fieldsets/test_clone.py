@@ -10,7 +10,6 @@ from src.generics.exceptions import BaseServiceException
 from src.processes.enums import (
     FieldSetLayout,
     FieldSetRuleOperator,
-    FieldSetRuleType,
     LabelPosition,
 )
 from src.processes.services.fieldsets.fieldset import (
@@ -39,7 +38,7 @@ def test_clone__ok(api_client, mocker):
         description='Original description',
         label_position=LabelPosition.LEFT,
         layout=FieldSetLayout.HORIZONTAL,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='10',
     )
     field = fieldset.fields.get()
@@ -52,7 +51,7 @@ def test_clone__ok(api_client, mocker):
         description=fieldset.description,
         label_position=fieldset.label_position,
         layout=fieldset.layout,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='10',
         api_name='cloned-fs',
     )

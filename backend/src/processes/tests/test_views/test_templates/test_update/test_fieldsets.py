@@ -5,7 +5,7 @@ from src.processes.enums import (
     FieldType,
     OwnerRole,
     OwnerType,
-    PerformerType,
+    PerformerType, FieldSetRuleOperator,
 )
 from src.processes.models.templates.fieldset import FieldsetTemplate
 from src.processes.serializers.templates.template import TemplateSerializer
@@ -44,12 +44,8 @@ def test_update__create_kickoff_fieldset_only_required_data__ok(
     template = create_test_template(user, is_active=True, tasks_count=1)
     kickoff = template.kickoff_instance
     task = template.tasks.first()
-    rule_type = FieldSetRuleType.SUM_EQUAL
-    rule_value = '100'
     shared_fieldset = create_test_shared_fieldset(
         account=account,
-        rule_type=rule_type,
-        rule_value=rule_value,
     )
     shared_fieldset.fields.all().delete()
     shared_fieldset.rulesets.all().delete()
@@ -150,7 +146,7 @@ def test_update__create_kickoff_fieldset_all_fieldset_data__ok(
     fs_api_name = 'fs-some-api-name'
     shared_fieldset = create_test_shared_fieldset(
         account=account,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='100',
     )
     shared_field = shared_fieldset.fields.first()
@@ -750,7 +746,7 @@ def test_update__kickoff_update_active_template__not_change_fs_api_names(
     task = template.tasks.first()
     shared_fieldset = create_test_shared_fieldset(
         account=account,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
     )
     shared_field = shared_fieldset.fields.first()
     shared_field.type = FieldType.RADIO
@@ -915,7 +911,7 @@ def test_update__kickoff_update_inactive_template__not_change_fs_api_names(
     task = template.tasks.first()
     shared_fieldset = create_test_shared_fieldset(
         account=account,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
     )
     shared_field = shared_fieldset.fields.first()
     shared_field.type = FieldType.RADIO
@@ -1091,11 +1087,11 @@ def test_update__create_task_fieldset_only_required_data__ok(
     template = create_test_template(user, is_active=True, tasks_count=1)
     kickoff = template.kickoff_instance
     task = template.tasks.first()
-    rule_type = FieldSetRuleType.SUM_EQUAL
+    rule_operator = FieldSetRuleOperator.SUM_EQUAL
     rule_value = '200'
     shared_fieldset = create_test_shared_fieldset(
         account=account,
-        rule_type=rule_type,
+        rule_operator=rule_operator,
         rule_value=rule_value,
     )
     shared_fieldset.fields.all().delete()
@@ -1197,7 +1193,7 @@ def test_update__create_task_fieldset_all_fieldset_data__ok(
     fs_api_name = 'fs-some-api-name'
     shared_fieldset = create_test_shared_fieldset(
         account=account,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='100',
     )
     shared_field = shared_fieldset.fields.first()
@@ -1871,7 +1867,7 @@ def test_update_task_update_template_inactive__not_change_fs_api_names(
     task = template.tasks.get(number=1)
     shared_fieldset = create_test_shared_fieldset(
         account=account,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='10',
     )
     shared_field = shared_fieldset.fields.first()
@@ -2529,7 +2525,7 @@ def test_update__activate_draft_preserves_kickoff_fieldset_rule_api_names__ok(
     user = create_test_owner(account=account)
     shared_fieldset = create_test_shared_fieldset(
         account=account,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='100',
     )
     shared_number_field = shared_fieldset.fields.first()
@@ -2794,14 +2790,14 @@ def test_update__duplicate_fieldset_rule_api_name__validation_error(
     task = template.tasks.first()
     shared_fieldset = create_test_shared_fieldset(
         account=account,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='100',
     )
     shared_ruleset = shared_fieldset.rulesets.first()
     shared_group_and = shared_ruleset.groups_or.first().groups_and.first()
     fs_rule_api_name = 'fs-ruleset'
     kickoff_ruleset_payload = {
-        'type': FieldSetRuleType.SUM_EQUAL,
+        'type': FieldSetRuleType.VALIDATOR,
         'api_name': fs_rule_api_name,
         'fields': [],
         'groups_or': [
@@ -2818,7 +2814,7 @@ def test_update__duplicate_fieldset_rule_api_name__validation_error(
         ],
     }
     task_ruleset_payload = {
-        'type': FieldSetRuleType.SUM_EQUAL,
+        'type': FieldSetRuleType.VALIDATOR,
         'api_name': fs_rule_api_name,
         'fields': [],
         'groups_or': [
@@ -3409,7 +3405,7 @@ def test_update__create_fieldset_with_shared_api_names__preserved_in_response(
     user = create_test_owner(account=account)
     shared_fieldset = create_test_shared_fieldset(
         account=account,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='100',
     )
     shared_number_field = shared_fieldset.fields.first()

@@ -38,13 +38,13 @@ def test_list_fieldsets__all_data__ok(api_client):
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    rule_type = FieldSetRuleType.SUM_EQUAL
+    rule_operator = FieldSetRuleOperator.SUM_EQUAL
     rule_value = '10'
     fieldset = create_test_shared_fieldset(
         account=account,
         title='Fieldset Title',
         order=3,
-        rule_type=rule_type,
+        rule_operator=rule_operator,
         rule_value=rule_value,
     )
     field = fieldset.fields.get()
@@ -97,7 +97,7 @@ def test_list_fieldsets__all_data__ok(api_client):
     assert len(fieldset_data['rulesets']) == 1
     rule_data = fieldset_data['rulesets'][0]
     assert rule_data['api_name'] == rule.api_name
-    assert rule_data['type'] == rule_type
+    assert rule_data['type'] == FieldSetRuleType.VALIDATOR
     assert rule_data['message'] is None
     assert rule_data['order'] == 0
     assert rule_data['fields'] == []
@@ -109,7 +109,7 @@ def test_list_fieldsets__all_data__ok(api_client):
     assert len(group_or_data['groups_and']) == 1
     group_and_data = group_or_data['groups_and'][0]
     assert group_and_data['api_name'] == group_and.api_name
-    assert group_and_data['operator'] == FieldSetRuleOperator.SUM_EQUAL
+    assert group_and_data['operator'] == rule_operator
     assert group_and_data['value'] == rule_value
 
     assert len(fieldset_data['fields']) == 1
@@ -151,13 +151,13 @@ def test_list_fieldsets__used_in_tasks__return_usage(
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    rule_type = FieldSetRuleType.SUM_EQUAL
+    rule_operator = FieldSetRuleOperator.SUM_EQUAL
     rule_value = '10'
     shared_fieldset = create_test_shared_fieldset(
         account=account,
         title='Fieldset Title',
         order=3,
-        rule_type=rule_type,
+        rule_operator=rule_operator,
         rule_value=rule_value,
     )
     template_1 = create_test_template(
@@ -206,13 +206,13 @@ def test_list_fieldsets__used_in_kickoff_and_tasks__return_usage(
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    rule_type = FieldSetRuleType.SUM_EQUAL
+    rule_operator = FieldSetRuleOperator.SUM_EQUAL
     rule_value = '10'
     shared_fieldset = create_test_shared_fieldset(
         account=account,
         title='Fieldset Title',
         order=3,
-        rule_type=rule_type,
+        rule_operator=rule_operator,
         rule_value=rule_value,
     )
     template_1 = create_test_template(
@@ -261,13 +261,13 @@ def test_list_fieldsets__used_twice_in_one_template__return_usage(
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    rule_type = FieldSetRuleType.SUM_EQUAL
+    rule_operator = FieldSetRuleOperator.SUM_EQUAL
     rule_value = '10'
     shared_fieldset = create_test_shared_fieldset(
         account=account,
         title='Fieldset Title',
         order=3,
-        rule_type=rule_type,
+        rule_operator=rule_operator,
         rule_value=rule_value,
     )
     template = create_test_template(
@@ -312,11 +312,11 @@ def test_list_fieldsets__shared_fieldset_has_rules_and_fields__ok(
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    rule_type = FieldSetRuleType.SUM_EQUAL
+    rule_operator = FieldSetRuleOperator.SUM_EQUAL
     rule_value = '10'
     fieldset = create_test_shared_fieldset(
         account=account,
-        rule_type=rule_type,
+        rule_operator=rule_operator,
         rule_value=rule_value,
     )
     field = fieldset.fields.get()
@@ -409,11 +409,11 @@ def test_list_fieldsets__rule_with_fields__ok(api_client):
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    rule_type = FieldSetRuleType.SUM_EQUAL
+    rule_operator = FieldSetRuleOperator.SUM_EQUAL
     rule_value = '10'
     fieldset = create_test_shared_fieldset(
         account=account,
-        rule_type=rule_type,
+        rule_operator=rule_operator,
         rule_value=rule_value,
     )
     field = fieldset.fields.get()

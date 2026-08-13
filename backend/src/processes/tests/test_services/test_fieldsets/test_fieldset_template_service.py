@@ -771,13 +771,13 @@ def test_update_rules__existing_rule__ok(mocker):
         instance=fieldset,
     )
 
-    update_ruleset_mock = mocker.patch(
+    partial_update_mock = mocker.patch(
         'src.processes.services.fieldsets.fieldset.'
-        'FieldSetTemplateService._update_ruleset',
+        'FieldsetTemplateRuleSetService.partial_update',
     )
     create_ruleset_mock = mocker.patch(
         'src.processes.services.fieldsets.fieldset.'
-        'FieldSetTemplateService._create_ruleset',
+        'FieldSetTemplateService.create_ruleset',
     )
     ruleset_data = {
         'api_name': ruleset.api_name,
@@ -787,7 +787,7 @@ def test_update_rules__existing_rule__ok(mocker):
                 'api_name': group_or.api_name,
                 'groups_and': [
                     {
-                        'api_name': group_and,
+                        'api_name': group_and.api_name,
                         'operator': FieldSetRuleOperator.SUM_EQUAL,
                         'value': '200',
                     },
@@ -800,10 +800,7 @@ def test_update_rules__existing_rule__ok(mocker):
     service.update_rulesets(rulesets_data=[ruleset_data])
 
     # assert
-    update_ruleset_mock.assert_called_once_with(
-        ruleset=ruleset,
-        ruleset_data=ruleset_data,
-    )
+    partial_update_mock.assert_called_once_with(**ruleset_data)
     create_ruleset_mock.assert_not_called()
 
 
@@ -826,15 +823,15 @@ def test_update_rules__new_rule__ok(mocker):
     group_or_api_name = 'gp-1'
     group_and_api_name = 'ga-1'
 
-    update_ruleset_mock = mocker.patch(
+    partial_update_mock = mocker.patch(
         'src.processes.services.fieldsets.fieldset.'
-        'FieldSetTemplateService._update_ruleset',
+        'FieldsetTemplateRuleSetService.partial_update',
     )
     ruleset_mock = mocker.Mock()
     ruleset_mock.api_name = rule_api_name
     create_ruleset_mock = mocker.patch(
         'src.processes.services.fieldsets.fieldset.'
-        'FieldSetTemplateService._create_ruleset',
+        'FieldSetTemplateService.create_ruleset',
         return_value=ruleset_mock,
     )
     service = FieldSetTemplateService(
@@ -865,10 +862,8 @@ def test_update_rules__new_rule__ok(mocker):
     service.update_rulesets(rulesets_data=[ruleset_data])
 
     # assert
-    update_ruleset_mock.assert_not_called()
-    create_ruleset_mock.assert_called_once_with(
-        ruleset_data=ruleset_data,
-    )
+    partial_update_mock.assert_not_called()
+    create_ruleset_mock.assert_called_once_with(ruleset_data)
 
 
 def test_update_rules__orphan_rules__deleted():
@@ -972,7 +967,7 @@ def test_update_rules__two_rules_same_type_no_api_name__create_new_rule():
     user = create_test_owner(account=account)
     fieldset = create_test_shared_fieldset(
         account=account,
-        rule_type=FieldSetRuleType.VALIDATOR,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='1',
     )
     field_1 = fieldset.fields.first()

@@ -1,11 +1,10 @@
 import pytest
 
 from src.processes.enums import (
-    FieldSetRuleType,
     FieldType,
     OwnerRole,
     OwnerType,
-    PerformerType,
+    PerformerType, FieldSetRuleOperator,
 )
 from src.processes.models.templates.fieldset import FieldsetTemplate
 from src.processes.models.templates.template import Template
@@ -140,7 +139,7 @@ def test_create__kickoff_fieldset_all_fieldset_data__ok(
     shared_fieldset = create_test_shared_fieldset(
         account=account,
         rule_value='500',
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
     )
     shared_field = shared_fieldset.fields.first()
     shared_ruleset = shared_fieldset.rulesets.first()
@@ -424,7 +423,7 @@ def test_create__task_fieldset_all_fieldset_data__ok(
     shared_fieldset = create_test_shared_fieldset(
         account=account,
         rule_value='500',
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
     )
     shared_field = shared_fieldset.fields.first()
     shared_ruleset = shared_fieldset.rulesets.first()
@@ -701,7 +700,7 @@ def test_create__draft_fieldset_from_another_account__excluded(
         title='Private title',
         description='Private description',
         name='Private fieldset',
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='100',
     )
     request_data = {

@@ -82,7 +82,7 @@ def test_create__all_fields__ok(api_client, mocker):
         label_position=data['label_position'],
         layout=data['layout'],
         api_name=data['api_name'],
-        rule_type=FieldSetRuleType.VALIDATOR,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='10',
     )
     field = fieldset.fields.first()
@@ -790,7 +790,7 @@ def test_create__field_rule_invalid_type__validation_error(api_client, mocker):
                 'api_name': 'f-1',
                 'rulesets': [
                     {
-                        'type': FieldSetRuleType.SUM_EQUAL,
+                        'type': FieldSetRuleType.VALIDATOR,
                         'groups_or': [],
                     },
                 ],

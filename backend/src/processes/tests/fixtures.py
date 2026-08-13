@@ -83,7 +83,12 @@ from src.processes.models.workflows.event import WorkflowEvent
 from src.processes.models.workflows.fields import (
     TaskField,
 )
-from src.processes.models.workflows.fieldset import FieldSet, FieldSetRule
+from src.processes.models.workflows.fieldset import (
+    FieldSet,
+    FieldSetRuleSet,
+    FieldSetRuleGroupOr,
+    FieldSetRuleGroupAnd,
+)
 from src.processes.models.workflows.kickoff import KickoffValue
 from src.processes.models.workflows.task import Task
 from src.processes.models.workflows.workflow import Workflow
@@ -904,7 +909,7 @@ def create_test_shared_fieldset(
     order: int = 0,
     label_position: LabelPosition.LITERALS = LabelPosition.TOP,
     layout: FieldSetLayout.LITERALS = FieldSetLayout.VERTICAL,
-    rule_type: Optional[FieldSetRuleType.LITERALS] = None,
+    rule_operator: Optional[FieldSetRuleOperator.LITERALS] = None,
     rule_value: Optional[str] = None,
     rule_message: Optional[str] = None,
     api_name: Optional[str] = None,
@@ -927,12 +932,12 @@ def create_test_shared_fieldset(
         api_name=api_name,
         is_shared=True,
     )
-    if rule_type:
+    if rule_operator:
         ruleset = FieldSetTemplateRuleSet.objects.create(
             fieldset=fieldset,
             account=account,
             api_name=f'{fieldset.api_name}-shared-rule-1',
-            type=rule_type,
+            type=FieldSetRuleType.VALIDATOR,
             message=rule_message,
         )
         group_or = FieldSetTemplateRuleGroupOr.objects.create(
@@ -944,10 +949,10 @@ def create_test_shared_fieldset(
             group_or=group_or,
             account=account,
             api_name=f'{fieldset.api_name}-group-and-1',
-            operator=FieldSetRuleOperator.SUM_EQUAL,
+            operator=rule_operator,
             value=rule_value,
         )
-    if rule_type == FieldSetRuleType.SUM_EQUAL:
+    if rule_operator == FieldSetRuleOperator.SUM_EQUAL:
         field_type = FieldType.NUMBER
     else:
         field_type = FieldType.STRING
@@ -995,7 +1000,7 @@ def create_test_fieldset_template(
     order: int = 0,
     api_name: Optional[str] = None,
     shared_fieldset: Optional[FieldsetTemplate] = None,
-    rule_type: Optional[FieldSetRuleType.LITERALS] = None,
+    rule_operator: Optional[FieldSetRuleOperator.LITERALS] = None,
     rule_value: Optional[str] = None,
 ) -> FieldsetTemplate:
 
@@ -1004,7 +1009,7 @@ def create_test_fieldset_template(
     if shared_fieldset is None:
         shared_fieldset = create_test_shared_fieldset(
             account=account,
-            rule_type=rule_type,
+            rule_operator=rule_operator,
             rule_value=rule_value,
         )
 
@@ -1074,15 +1079,16 @@ def create_test_fieldset(
     order: int = 0,
     label_position: LabelPosition.LITERALS = LabelPosition.TOP,
     layout: FieldSetLayout.LITERALS = FieldSetLayout.VERTICAL,
-    rule_type: Optional[FieldSetRuleType.LITERALS] = None,
+    rule_operator: Optional[FieldSetRuleOperator.LITERALS] = None,
     rule_value: Optional[str] = None,
+    rule_message: Optional[str] = None,
     api_name: Optional[str] = None,
 ) -> FieldSet:
 
     """Creating a workflow FieldSet with one TaskField."""
-
+    account = workflow.account
     fieldset = FieldSet.objects.create(
-        account=workflow.account,
+        account=account,
         workflow=workflow,
         kickoff=kickoff,
         task=task,
@@ -1093,15 +1099,30 @@ def create_test_fieldset(
         layout=layout,
         api_name=api_name,
     )
-    if rule_type:
-        FieldSetRule.objects.create(
+    if rule_operator:
+        ruleset = FieldSetRuleSet.objects.create(
+            workflow=workflow,
             fieldset=fieldset,
-            account=workflow.account,
+            account=account,
             api_name=f'{fieldset.api_name}-rule-1',
-            type=rule_type,
+            type=FieldSetRuleType.VALIDATOR,
+            message=rule_message,
+        )
+        group_or = FieldSetRuleGroupOr.objects.create(
+            workflow=workflow,
+            fieldset_rule=ruleset,
+            account=account,
+            api_name=f'{fieldset.api_name}-group-or-1',
+        )
+        FieldSetRuleGroupAnd.objects.create(
+            workflow=workflow,
+            group_or=group_or,
+            account=account,
+            api_name=f'{fieldset.api_name}-group-and-1',
+            operator=rule_operator,
             value=rule_value,
         )
-    if rule_type == FieldSetRuleType.SUM_EQUAL:
+    if rule_operator == FieldSetRuleOperator.SUM_EQUAL:
         field_type = FieldType.NUMBER
         field_value = '10'
     else:

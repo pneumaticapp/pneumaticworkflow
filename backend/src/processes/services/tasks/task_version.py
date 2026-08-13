@@ -233,7 +233,7 @@ class TaskUpdateVersionService(
                 },
             )
             rule_ids.append(rule.id)
-        fieldset.rules.exclude(id__in=rule_ids).delete()
+        fieldset.rulesets.exclude(id__in=rule_ids).delete()
 
     def _update_field_rules(
         self,
@@ -249,9 +249,9 @@ class TaskUpdateVersionService(
                 fieldset=fieldset,
                 api_name__in=rules_api_names,
             )
-            field.rules.set(rules)
+            field.rulesets.set(rules)
         else:
-            field.rules.clear()
+            field.rulesets.clear()
 
     def _update_fieldset_fields(
         self,

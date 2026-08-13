@@ -189,8 +189,6 @@ class FieldTemplateRuleGroupOr(
         FieldTemplateRuleSet,
         on_delete=models.CASCADE,
         related_name='groups_or',
-        null=True,
-        blank=True,
     )
 
     def __str__(self):

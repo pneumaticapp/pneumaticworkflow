@@ -1061,7 +1061,7 @@ def test__create_related__with_rules__ok(mocker):
         account=account,
         template=template,
         task=task_template,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
     )
     field_template = fieldset_template.fields.first()
     ruleset_template = fieldset_template.rulesets.first()
@@ -2664,7 +2664,7 @@ def test__link_rules__one_rule__ok():
         template=template,
         task=task_template,
         api_name=fieldset_api_name,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
     )
     field_template = fieldset_template.fields.first()
     ruleset_template = fieldset_template.rulesets.first()
@@ -2679,10 +2679,10 @@ def test__link_rules__one_rule__ok():
         workflow=workflow,
         task=task,
         api_name=fieldset_api_name,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
     )
     # Keep runtime rule api_name in sync with template ruleset
-    rule = fieldset.rules.first()
+    rule = fieldset.rulesets.first()
     rule.api_name = ruleset_template.api_name
     rule.save(update_fields=['api_name'])
     task_field = fieldset.fields.first()
@@ -2699,8 +2699,8 @@ def test__link_rules__one_rule__ok():
     )
 
     # assert
-    assert task_field.rules.count() == 1
-    assert task_field.rules.first() == rule
+    assert task_field.rulesets.count() == 1
+    assert task_field.rulesets.first() == rule
 
 
 def test__link_rules__multiple_rules__ok():
@@ -2721,14 +2721,14 @@ def test__link_rules__multiple_rules__ok():
         template=template,
         task=task_template,
         api_name=fieldset_api_name,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
     )
     ruleset_tmpl_1 = fieldset_template.rulesets.first()
     ruleset_tmpl_2 = FieldSetTemplateRuleSet.objects.create(
         fieldset=fieldset_template,
         account=account,
         api_name=f'{fieldset_api_name}-ruleset-2',
-        type=FieldSetRuleType.SUM_EQUAL,
+        type=FieldSetRuleType.VALIDATOR,
     )
     group_or_2 = FieldSetTemplateRuleGroupOr.objects.create(
         fieldset_rule=ruleset_tmpl_2,
@@ -2755,16 +2755,16 @@ def test__link_rules__multiple_rules__ok():
         workflow=workflow,
         task=task,
         api_name=fieldset_api_name,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
     )
-    rule_1 = fieldset.rules.first()
+    rule_1 = fieldset.rulesets.first()
     rule_1.api_name = ruleset_tmpl_1.api_name
     rule_1.save(update_fields=['api_name'])
     rule_2 = FieldSetRule.objects.create(
         fieldset=fieldset,
         account=account,
         api_name=ruleset_tmpl_2.api_name,
-        type=FieldSetRuleType.SUM_EQUAL,
+        type=FieldSetRuleType.VALIDATOR,
         value='200',
     )
     task_field = fieldset.fields.first()
@@ -2781,9 +2781,9 @@ def test__link_rules__multiple_rules__ok():
     )
 
     # assert
-    assert task_field.rules.count() == 2
+    assert task_field.rulesets.count() == 2
     linked_ids = set(
-        task_field.rules.values_list('id', flat=True),
+        task_field.rulesets.values_list('id', flat=True),
     )
     assert linked_ids == {rule_1.id, rule_2.id}
 
@@ -2807,14 +2807,14 @@ def test__link_rules__partial_match__ok():
         template=template,
         task=task_template,
         api_name=fieldset_api_name,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
     )
     ruleset_tmpl_1 = fieldset_template.rulesets.first()
     ruleset_tmpl_2 = FieldSetTemplateRuleSet.objects.create(
         fieldset=fieldset_template,
         account=account,
         api_name=f'{fieldset_api_name}-ruleset-2',
-        type=FieldSetRuleType.SUM_EQUAL,
+        type=FieldSetRuleType.VALIDATOR,
     )
     group_or_2 = FieldSetTemplateRuleGroupOr.objects.create(
         fieldset_rule=ruleset_tmpl_2,
@@ -2841,9 +2841,9 @@ def test__link_rules__partial_match__ok():
         workflow=workflow,
         task=task,
         api_name=fieldset_api_name,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
     )
-    rule = fieldset.rules.first()
+    rule = fieldset.rulesets.first()
     rule.api_name = ruleset_tmpl_1.api_name
     rule.save(update_fields=['api_name'])
     task_field = fieldset.fields.first()
@@ -2860,8 +2860,8 @@ def test__link_rules__partial_match__ok():
     )
 
     # assert
-    assert task_field.rules.count() == 1
-    assert task_field.rules.first() == rule
+    assert task_field.rulesets.count() == 1
+    assert task_field.rulesets.first() == rule
 
 
 def test__link_rules__no_matching_rules__empty():
@@ -2883,7 +2883,7 @@ def test__link_rules__no_matching_rules__empty():
         template=template,
         task=task_template,
         api_name=fieldset_api_name,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
     )
     field_template = fieldset_template.fields.first()
     ruleset_template = fieldset_template.rulesets.first()
@@ -2903,7 +2903,7 @@ def test__link_rules__no_matching_rules__empty():
         fieldset=fieldset,
         account=account,
         api_name='different-rule',
-        type=FieldSetRuleType.SUM_EQUAL,
+        type=FieldSetRuleType.VALIDATOR,
         value='999',
     )
     task_field = fieldset.fields.first()
@@ -2920,7 +2920,7 @@ def test__link_rules__no_matching_rules__empty():
     )
 
     # assert
-    assert task_field.rules.count() == 0
+    assert task_field.rulesets.count() == 0
 
 
 def test__link_rules__another_fieldset_rule__not_linked():
@@ -2942,7 +2942,7 @@ def test__link_rules__another_fieldset_rule__not_linked():
         template=template,
         task=task_template,
         api_name=fieldset_api_name,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
     )
     field_template = fieldset_template.fields.first()
     ruleset_template = fieldset_template.rulesets.first()
@@ -2963,9 +2963,9 @@ def test__link_rules__another_fieldset_rule__not_linked():
         workflow=workflow,
         task=task,
         api_name='fs2',
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
     )
-    rule_2 = fieldset_2.rules.first()
+    rule_2 = fieldset_2.rulesets.first()
     rule_2.api_name = ruleset_template.api_name
     rule_2.save(update_fields=['api_name'])
 
@@ -2981,4 +2981,4 @@ def test__link_rules__another_fieldset_rule__not_linked():
     )
 
     # assert
-    assert task_field.rules.count() == 0
+    assert task_field.rulesets.count() == 0

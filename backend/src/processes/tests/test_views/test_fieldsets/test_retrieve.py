@@ -5,7 +5,7 @@ from django.utils import timezone
 
 from src.accounts.enums import BillingPlanType
 from src.accounts.messages import MSG_A_0035, MSG_A_0037, MSG_A_0041
-from src.processes.enums import FieldSetRuleOperator, FieldSetRuleType
+from src.processes.enums import FieldSetRuleOperator
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_shared_fieldset,
@@ -22,11 +22,11 @@ def test_retrieve__fieldset_all_data__ok(api_client):
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    rule_type = FieldSetRuleType.SUM_EQUAL
+    rule_operator = FieldSetRuleOperator.SUM_EQUAL
     rule_value = '10'
     fieldset = create_test_shared_fieldset(
         account=account,
-        rule_type=rule_type,
+        rule_operator=rule_operator,
         rule_value=rule_value,
     )
     field = fieldset.fields.get()
@@ -80,11 +80,11 @@ def test_retrieve__fieldset_is_used__return_usage(api_client):
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    rule_type = FieldSetRuleType.SUM_EQUAL
+    rule_operator = FieldSetRuleOperator.SUM_EQUAL
     rule_value = '10'
     shared_fieldset = create_test_shared_fieldset(
         account=account,
-        rule_type=rule_type,
+        rule_operator=rule_operator,
         rule_value=rule_value,
     )
     template = create_test_template(
@@ -118,7 +118,7 @@ def test_retrieve__fieldset_rule_with_fields__ok(api_client):
     user_1 = create_test_owner(account=account_1)
     fieldset = create_test_shared_fieldset(
         account=account_1,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='10',
     )
     field = fieldset.fields.get()
@@ -304,7 +304,7 @@ def test_retrieve__not_shared__not_found(api_client):
     user = create_test_owner(account=account)
     fieldset = create_test_shared_fieldset(
         account=account,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='10',
     )
     fieldset.is_shared = False

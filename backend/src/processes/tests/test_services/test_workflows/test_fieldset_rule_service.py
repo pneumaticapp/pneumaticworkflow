@@ -3,7 +3,7 @@ import pytest
 from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
     FieldSetRuleType,
-    FieldType,
+    FieldType, FieldSetRuleOperator,
 )
 from src.processes.messages import fieldset as fs_messages
 from src.processes.models.templates.fieldset import (
@@ -50,7 +50,7 @@ def test__create_instance__with_template__ok():
     rule_template = FieldsetTemplateRule.objects.create(
         account=account,
         fieldset=fieldset_template,
-        type=FieldSetRuleType.SUM_EQUAL,
+        type=FieldSetRuleType.VALIDATOR,
         value='100',
     )
     service = FieldSetRuleService(
@@ -89,10 +89,10 @@ def test__validate_sum_equal__within_threshold__ok():
         workflow=workflow,
         name='Fieldset',
         order=1,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='100',
     )
-    rule = fieldset.rules.first()
+    rule = fieldset.rulesets.first()
     field_1 = TaskField.objects.create(
         account=account,
         workflow=workflow,
@@ -102,7 +102,7 @@ def test__validate_sum_equal__within_threshold__ok():
         value='30',
         order=1,
     )
-    field_1.rules.add(rule)
+    field_1.rulesets.add(rule)
     field_2 = TaskField.objects.create(
         account=account,
         workflow=workflow,
@@ -112,7 +112,7 @@ def test__validate_sum_equal__within_threshold__ok():
         value='70',
         order=2,
     )
-    field_2.rules.add(rule)
+    field_2.rulesets.add(rule)
     service = FieldSetRuleService(
         user=user,
         is_superuser=False,
@@ -145,10 +145,10 @@ def test__validate_sum_equal__decimal_precision__ok():
         workflow=workflow,
         name='Fieldset',
         order=1,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='0.3',
     )
-    rule = fieldset.rules.first()
+    rule = fieldset.rulesets.first()
     field_1 = TaskField.objects.create(
         account=account,
         workflow=workflow,
@@ -158,7 +158,7 @@ def test__validate_sum_equal__decimal_precision__ok():
         value='0.1',
         order=1,
     )
-    field_1.rules.add(rule)
+    field_1.rulesets.add(rule)
     field_2 = TaskField.objects.create(
         account=account,
         workflow=workflow,
@@ -168,7 +168,7 @@ def test__validate_sum_equal__decimal_precision__ok():
         value='0.2',
         order=2,
     )
-    field_2.rules.add(rule)
+    field_2.rulesets.add(rule)
     service = FieldSetRuleService(
         user=user,
         is_superuser=False,
@@ -197,10 +197,10 @@ def test__validate_sum_equal__one_not_required_field_blank__not_count():
         workflow=workflow,
         name='Fieldset',
         order=1,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='100',
     )
-    rule = fieldset.rules.first()
+    rule = fieldset.rulesets.first()
     field_1 = TaskField.objects.create(
         account=account,
         workflow=workflow,
@@ -211,7 +211,7 @@ def test__validate_sum_equal__one_not_required_field_blank__not_count():
         order=1,
         is_required=False,
     )
-    field_1.rules.add(rule)
+    field_1.rulesets.add(rule)
     field_2 = TaskField.objects.create(
         account=account,
         workflow=workflow,
@@ -222,7 +222,7 @@ def test__validate_sum_equal__one_not_required_field_blank__not_count():
         order=2,
         is_required=True,
     )
-    field_2.rules.add(rule)
+    field_2.rulesets.add(rule)
     service = FieldSetRuleService(
         user=user,
         is_superuser=False,
@@ -251,10 +251,10 @@ def test__validate_sum_equal__all_not_required_fields_blank__not_count():
         workflow=workflow,
         name='Fieldset',
         order=1,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='100',
     )
-    rule = fieldset.rules.first()
+    rule = fieldset.rulesets.first()
     field_1 = TaskField.objects.create(
         account=account,
         workflow=workflow,
@@ -265,7 +265,7 @@ def test__validate_sum_equal__all_not_required_fields_blank__not_count():
         order=1,
         is_required=False,
     )
-    field_1.rules.add(rule)
+    field_1.rulesets.add(rule)
     field_2 = TaskField.objects.create(
         account=account,
         workflow=workflow,
@@ -276,7 +276,7 @@ def test__validate_sum_equal__all_not_required_fields_blank__not_count():
         order=2,
         is_required=False,
     )
-    field_2.rules.add(rule)
+    field_2.rulesets.add(rule)
     service = FieldSetRuleService(
         user=user,
         is_superuser=False,
@@ -305,10 +305,10 @@ def test__validate_sum_equal__required_field_blank__raise_exception():
         workflow=workflow,
         name='Fieldset',
         order=1,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='100',
     )
-    rule = fieldset.rules.first()
+    rule = fieldset.rulesets.first()
     field_1 = TaskField.objects.create(
         account=account,
         workflow=workflow,
@@ -319,7 +319,7 @@ def test__validate_sum_equal__required_field_blank__raise_exception():
         order=1,
         is_required=True,
     )
-    field_1.rules.add(rule)
+    field_1.rulesets.add(rule)
     service = FieldSetRuleService(
         user=user,
         is_superuser=False,
@@ -353,10 +353,10 @@ def test__validate_sum_equal__negative_value__ok():
         workflow=workflow,
         name='Fieldset',
         order=1,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='0',
     )
-    rule = fieldset.rules.first()
+    rule = fieldset.rulesets.first()
     field_1 = TaskField.objects.create(
         account=account,
         workflow=workflow,
@@ -366,7 +366,7 @@ def test__validate_sum_equal__negative_value__ok():
         value='30',
         order=1,
     )
-    field_1.rules.add(rule)
+    field_1.rulesets.add(rule)
     field_2 = TaskField.objects.create(
         account=account,
         workflow=workflow,
@@ -376,7 +376,7 @@ def test__validate_sum_equal__negative_value__ok():
         value='-30',
         order=2,
     )
-    field_2.rules.add(rule)
+    field_2.rulesets.add(rule)
     service = FieldSetRuleService(
         user=user,
         is_superuser=False,
@@ -409,10 +409,10 @@ def test__validate_sum_equal__exceeds__raise_exception():
         workflow=workflow,
         name='Fieldset',
         order=1,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='100',
     )
-    rule = fieldset.rules.first()
+    rule = fieldset.rulesets.first()
     field_1 = TaskField.objects.create(
         account=account,
         workflow=workflow,
@@ -422,7 +422,7 @@ def test__validate_sum_equal__exceeds__raise_exception():
         value='60',
         order=1,
     )
-    field_1.rules.add(rule)
+    field_1.rulesets.add(rule)
     field_2 = TaskField.objects.create(
         account=account,
         workflow=workflow,
@@ -432,7 +432,7 @@ def test__validate_sum_equal__exceeds__raise_exception():
         value='50',
         order=2,
     )
-    field_2.rules.add(rule)
+    field_2.rulesets.add(rule)
     service = FieldSetRuleService(
         user=user,
         is_superuser=False,
@@ -466,10 +466,10 @@ def test__validate_sum_equal__null_values__skip():
         workflow=workflow,
         name='Fieldset',
         order=1,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='100',
     )
-    rule = fieldset.rules.first()
+    rule = fieldset.rulesets.first()
     field_1 = TaskField.objects.create(
         account=account,
         workflow=workflow,
@@ -479,7 +479,7 @@ def test__validate_sum_equal__null_values__skip():
         value='100',
         order=1,
     )
-    field_1.rules.add(rule)
+    field_1.rulesets.add(rule)
     field_2 = TaskField.objects.create(
         account=account,
         workflow=workflow,
@@ -489,7 +489,7 @@ def test__validate_sum_equal__null_values__skip():
         value='',
         order=2,
     )
-    field_2.rules.add(rule)
+    field_2.rulesets.add(rule)
     service = FieldSetRuleService(
         user=user,
         is_superuser=False,
@@ -520,9 +520,9 @@ def test_validate__ok(mocker):
     fieldset = create_test_fieldset(
         workflow=workflow,
         kickoff=workflow.kickoff_instance,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
     )
-    rule = fieldset.rules.first()
+    rule = fieldset.rulesets.first()
     service = FieldSetRuleService(
         instance=rule,
         user=user,

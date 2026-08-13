@@ -27,7 +27,7 @@ from src.processes.services.exceptions import (
     FieldsetTemplateTemplateIdMissing,
 )
 from src.processes.services.fieldsets.fieldset_rule import \
-    FieldsetTemplateRuleService
+    FieldsetTemplateRuleSetService
 from src.processes.services.templates.field_template import (
     FieldTemplateService,
 )
@@ -362,7 +362,7 @@ class FieldSetTemplateService(BaseModelService):
         ruleset_data: dict,
     ) -> FieldSetTemplateRuleSet:
 
-        service = FieldsetTemplateRuleService(
+        service = FieldsetTemplateRuleSetService(
             user=self.user,
             is_superuser=self.is_superuser,
             auth_type=self.auth_type,
@@ -394,7 +394,7 @@ class FieldSetTemplateService(BaseModelService):
             ruleset_data_dict = dict(ruleset_data)
             ruleset_api_name = ruleset_data_dict.get('api_name')
             if ruleset_api_name and ruleset_api_name in existing_rulesets:
-                service = FieldsetTemplateRuleService(
+                service = FieldsetTemplateRuleSetService(
                     user=self.user,
                     is_superuser=self.is_superuser,
                     auth_type=self.auth_type,

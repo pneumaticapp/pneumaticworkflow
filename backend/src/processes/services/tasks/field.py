@@ -351,7 +351,7 @@ class TaskFieldService(BaseWorkflowService):
             self._link_new_attachments(raw_value)
         elif self.instance.type in FieldType.TYPES_WITH_SELECTIONS:
             self._create_selections(instance_template)
-        if instance_template.rules.all().exists():
+        if instance_template.rulesets.all().exists():
             self._link_rules(instance_template, **kwargs)
 
     def _link_new_attachments(
@@ -389,14 +389,14 @@ class TaskFieldService(BaseWorkflowService):
     ):
 
         rule_api_names = set(
-            instance_template.rules.values_list('api_name', flat=True),
+            instance_template.rulesets.values_list('api_name', flat=True),
         )
         rules = FieldSetRule.objects.filter(
             account=self.account,
             fieldset_id=kwargs['fieldset_id'],
             api_name__in=rule_api_names,
         )
-        self.instance.rules.set(rules)
+        self.instance.rulesets.set(rules)
 
     def _remove_unused_attachments(
         self,

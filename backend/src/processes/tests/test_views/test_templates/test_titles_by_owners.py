@@ -2,7 +2,7 @@ import pytest
 
 from src.accounts.enums import BillingPlanType
 from src.processes.enums import OwnerRole, OwnerType, FieldType, \
-    FieldSetRuleType
+    FieldSetRuleOperator
 from src.processes.models.templates.fields import (
     FieldTemplate,
     FieldTemplateSelection,
@@ -468,7 +468,7 @@ def test_titles_by_owners__kickoff_fieldset__ok(api_client):
         description='Enter your personal information',
         api_name='fieldset-personal',
         order=5,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='1',
     )
     fieldset_field = fieldset.fields.first()

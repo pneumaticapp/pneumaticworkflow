@@ -61,7 +61,7 @@ def test_partial_update__fieldset_data__ok(api_client, mocker):
         ],
         'rulesets': [
             {
-                'type': FieldSetRuleType.SUM_EQUAL,
+                'type': FieldSetRuleType.VALIDATOR,
                 'api_name': rule_api_name,
                 'fields': [field_api_name],
                 'groups_or': [
@@ -84,7 +84,7 @@ def test_partial_update__fieldset_data__ok(api_client, mocker):
         label_position=data['label_position'],
         layout=data['layout'],
         api_name=data['api_name'],
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='10',
     )
     field = fieldset.fields.first()
@@ -511,7 +511,6 @@ def test_partial_update__response_fields_data__ok(api_client, mocker):
     'rule_type',
     (
         FieldSetRuleType.VALIDATOR,
-        FieldSetRuleType.SUM_EQUAL,
     ),
 )
 def test_partial_update__rules_type__ok(
@@ -1223,7 +1222,7 @@ def test_partial_update__two_rules_same_type__ok(api_client, mocker):
     user = create_test_owner(account=account)
     fieldset = create_test_shared_fieldset(
         account=account,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
     )
     field_1 = fieldset.fields.first()
     field_2 = FieldTemplate.objects.create(

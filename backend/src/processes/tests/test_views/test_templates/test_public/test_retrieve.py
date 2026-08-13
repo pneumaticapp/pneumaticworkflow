@@ -5,7 +5,7 @@ from src.authentication.tokens import (
     PublicToken,
 )
 from src.processes.enums import (
-    FieldType, FieldSetRuleType,
+    FieldType, FieldSetRuleOperator,
 )
 from src.processes.models.templates.fields import FieldTemplate, \
     FieldTemplateSelection
@@ -849,7 +849,7 @@ class TestRetrieveEmbedTemplate:
         kickoff = template.kickoff_instance
         shared_fieldset = create_test_shared_fieldset(
             account=account,
-            rule_type=FieldSetRuleType.SUM_EQUAL,
+            rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         )
         fieldset = create_test_fieldset_template(
             shared_fieldset=shared_fieldset,
