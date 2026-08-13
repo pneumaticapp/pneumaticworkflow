@@ -124,8 +124,8 @@ export function OutputFormTaskMerged({
   );
 
   const handleRemoveFieldset = useCallback(
-    (sharedFieldsetId: number) => {
-      const rows = buildRowsWithRemovedFieldset(task.fields || [], task.fieldsets || [], sharedFieldsetId);
+    (apiNameBinding: string) => {
+      const rows = buildRowsWithRemovedFieldset(task.fields || [], task.fieldsets || [], apiNameBinding);
       saveOutputOrders(rows).catch(() => undefined);
     },
     [saveOutputOrders, task.fieldsets, task.fields],
@@ -152,9 +152,7 @@ export function OutputFormTaskMerged({
         ))}
         <FieldsetIconPicker
           fieldsetsCatalogLoading={fieldsetsCatalogLoading}
-          selectedFieldsetIds={(task.fieldsets || []).map((fieldset) => fieldset.sharedFieldsetId)}
           onSelectFieldset={handleAddFieldset}
-          onRemoveFieldset={handleRemoveFieldset}
         />
       </div>
 
