@@ -427,6 +427,7 @@ const FieldsetDetails = ({
               {...x}
               key={x.id}
               onClick={() => handleCreateField(x.id)}
+              disabled={isLinked}
             />
           ))}
         </div>
