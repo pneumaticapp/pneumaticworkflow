@@ -51,7 +51,6 @@ import { useDatasetOptions } from '../../TemplateEdit/ExtraFields/utils/useDatas
 import { normalizeFieldsForUI } from './fieldsetFieldMappers';
 import { validateFieldsetRules } from '../validators';
 import {
-  FIELDSET_READONLY_TEXT,
   FIELDSET_LABEL_POSITION_OPTIONS,
   FIELDSET_RULE_TYPES,
   FIELDSET_RULE_VALUE_PLACEHOLDER_BY_TYPE,
@@ -273,7 +272,7 @@ const FieldsetDetails = ({
   }
 
   const isLinked = fieldset.usage.length > 0;
-  const readOnlyBadge = isLinked ? <span className={styles['readonly-badge']}>{FIELDSET_READONLY_TEXT}</span> : null;
+  const readOnlyBadge = isLinked ? <span className={styles['readonly-badge']}>{formatMessage({ id: 'fieldsets.readonly-badge' })}</span> : null;
 
   const handleCloneFieldset = () => {
     if (isChanged) {
