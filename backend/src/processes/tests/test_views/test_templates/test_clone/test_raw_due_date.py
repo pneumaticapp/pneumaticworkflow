@@ -78,3 +78,88 @@ def test_clone__ok(is_active, api_client):
     assert origin_data['duration_months'] == data['duration_months']
     assert origin_data['rule'] == data['rule']
     assert origin_data['source_id'] == data['source_id']
+
+
+def test_clone__after_prev_task_completed__ok(api_client):
+
+    user = create_test_user()
+    api_client.token_authenticate(user)
+    response_1 = api_client.post(
+        path='/templates',
+        data={
+            'name': 'Template',
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'is_active': True,
+            'kickoff': {},
+            'tasks': [
+                {
+                    'number': 1,
+                    'api_name': 'task-1',
+                    'name': 'First step',
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+                {
+                    'number': 2,
+                    'name': 'Second step',
+                    'raw_due_date': {
+                        'api_name': 'raw-due-date-1',
+                        'duration': '01:00:00',
+                        'duration_months': 3,
+                        'rule': DueDateRule.AFTER_PREVIOUS_TASK_COMPLETED,
+                        'source_id': None,
+                    },
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                    'conditions': [
+                        {
+                            'order': 0,
+                            'action': 'start_task',
+                            'rules': [
+                                {
+                                    'predicates': [
+                                        {
+                                            'operator': 'completed_or_skipped',
+                                            'field_type': 'task',
+                                            'field': 'task-1',
+                                            'value': None,
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+    origin_data = response_1.data['tasks'][1]['raw_due_date']
+
+    # act
+    response = api_client.post(
+        f'/templates/{response_1.data["id"]}/clone',
+    )
+
+    # assert
+    assert response.status_code == 200
+    data = response.data['tasks'][1]['raw_due_date']
+    assert data.get('id') is None
+    assert origin_data['api_name'] == data['api_name']
+    assert origin_data['duration'] == data['duration']
+    assert origin_data['duration_months'] == data['duration_months']
+    assert data['rule'] == DueDateRule.AFTER_PREVIOUS_TASK_COMPLETED
+    assert data['source_id'] is None

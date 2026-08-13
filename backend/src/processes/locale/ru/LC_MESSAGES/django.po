@@ -545,3 +545,6 @@ msgstr "Указанный пользователь или группа для �
 
 msgid "Guest"
 msgstr "Гость"
+
+msgid "Task \"{name}\": the \"Previous task completed\" rule requires a previous task condition."
+msgstr "Задача «{name}»: правило «Предыдущая задача завершена» требует условия предыдущей задачи."

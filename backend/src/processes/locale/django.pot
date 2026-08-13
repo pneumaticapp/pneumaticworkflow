@@ -536,3 +536,6 @@ msgstr ""
 
 msgid "Guest"
 msgstr ""
+
+msgid "Task \"{name}\": the \"Previous task completed\" rule requires a previous task condition."
+msgstr ""
