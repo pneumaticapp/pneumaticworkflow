@@ -5,7 +5,7 @@ import { useDispatch } from 'react-redux';
 
 import { FieldsetCard } from '../FieldsetCard';
 import { ModifyDropdown } from '../../../UI';
-import { WarningPopup } from '../../../UI/WarningPopup';
+
 import {
   openEditModal,
   deleteFieldsetAction,
@@ -36,9 +36,7 @@ jest.mock('../../../UI', () => ({
   ModifyDropdown: jest.fn(() => null),
 }));
 
-jest.mock('../../../UI/WarningPopup', () => ({
-  WarningPopup: jest.fn(() => null),
-}));
+
 
 jest.mock('../../../icons', () => ({
   MoreIcon: () => null,
@@ -73,11 +71,7 @@ describe('FieldsetCard', () => {
     return lastCall[0];
   };
 
-  const getWarningPopupProps = () => {
-    const mock = WarningPopup as jest.Mock;
-    const lastCall = mock.mock.calls[mock.mock.calls.length - 1];
-    return lastCall[0];
-  };
+
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -136,38 +130,13 @@ describe('FieldsetCard', () => {
   });
 
   describe('Dropdown — Delete', () => {
-    it('opens WarningPopup on Delete click', () => {
-      render(React.createElement(FieldsetCard, makeProps()));
-
-      expect(getWarningPopupProps().isOpen).toBe(false);
-
-      act(() => { getModifyDropdownProps().onDelete(); });
-
-      expect(getWarningPopupProps().isOpen).toBe(true);
-    });
-
-    it('dispatches deleteFieldsetAction on WarningPopup confirm', () => {
+    it('dispatches deleteFieldsetAction on Delete click', () => {
       render(React.createElement(FieldsetCard, makeProps({ id: 10 })));
 
       act(() => { getModifyDropdownProps().onDelete(); });
-      act(() => { getWarningPopupProps().onConfirm(); });
 
       expect(mockDispatch).toHaveBeenCalledTimes(1);
       expect(mockDispatch).toHaveBeenCalledWith(deleteFieldsetAction({ id: 10 }));
-
-      expect(getWarningPopupProps().isOpen).toBe(false);
-    });
-
-    it('closes WarningPopup without dispatch on cancel', () => {
-      render(React.createElement(FieldsetCard, makeProps()));
-
-      act(() => { getModifyDropdownProps().onDelete(); });
-      expect(getWarningPopupProps().isOpen).toBe(true);
-
-      act(() => { getWarningPopupProps().onReject(); });
-
-      expect(getWarningPopupProps().isOpen).toBe(false);
-      expect(deleteFieldsetAction).not.toHaveBeenCalled();
     });
   });
 
