@@ -115,6 +115,7 @@ export interface IUpdateFieldsetParams {
   rules?: IFieldsetTemplateRule[];
   fields?: IFieldsetField[];
   signal?: AbortSignal;
+  onSuccess?: () => void;
 }
 
 export interface IDeleteFieldsetParams {

@@ -209,8 +209,8 @@ const FieldsetDetails = ({
     setDetailFieldsetChanges((prev) => ({ ...prev, rules }));
   };
 
-  const handleSave = (): boolean => {
-    if (!fieldset || !isChanged) return false;
+  const handleSave = (onSuccess?: () => void): void => {
+    if (!fieldset || !isChanged) return;
 
     const titleErrorMessageKey = validateFieldsetTitle(detailFieldset.title);
 
@@ -218,7 +218,7 @@ const FieldsetDetails = ({
       NotificationManager.warning({
         message: formatMessage({ id: titleErrorMessageKey }),
       });
-      return false;
+      return;
     }
 
     if (detailFieldsetChanges.rules) {
@@ -228,12 +228,13 @@ const FieldsetDetails = ({
         NotificationManager.warning({
           message: formatMessage({ id: ruleErrorMessageKey }),
         });
-        return false;
+        return;
       }
     }
 
     const payload: IUpdateFieldsetParams = {
       id: fieldset.id,
+      onSuccess,
     };
 
     if (detailFieldsetChanges.title !== undefined) {
@@ -258,7 +259,6 @@ const FieldsetDetails = ({
     }
 
     dispatch(updateFieldsetAction(payload));
-    return true;
   };
 
   const getRuleValuePlaceholder = (ruleType: EFieldsetRuleType) =>
@@ -546,7 +546,7 @@ const FieldsetDetails = ({
             label={formatMessage({ id: 'fieldsets.save' })}
             buttonStyle="yellow"
             size="md"
-            onClick={handleSave}
+            onClick={() => handleSave()}
             disabled={!isChanged}
           />
           {isChanged && (
