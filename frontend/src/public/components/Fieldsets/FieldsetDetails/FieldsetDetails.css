@@ -88,7 +88,12 @@
   }
 
   &:disabled {
-    @mixin fieldset-textarea-readonly;
+    cursor: default;
+    color: var(--pneumatic-color-black72);
+    background-color: var(--pneumatic-color-black4);
+    border: 0.1rem solid transparent;
+    opacity: 1;
+    resize: none;
   }
 }
 
@@ -111,7 +116,11 @@
   }
 
   &:disabled {
-    @mixin fieldset-field-readonly;
+    cursor: default;
+    color: var(--pneumatic-color-black72);
+    background-color: var(--pneumatic-color-black4);
+    border: 0.1rem solid transparent;
+    opacity: 1;
   }
 }
 
@@ -143,7 +152,11 @@
   }
 
   &:disabled {
-    @mixin fieldset-field-readonly;
+    cursor: default;
+    color: var(--pneumatic-color-black72);
+    background-color: var(--pneumatic-color-black4);
+    border: 0.1rem solid transparent;
+    opacity: 1;
   }
 }
 
@@ -203,13 +216,19 @@
   }
 
   [class*="kickoff-create-field-option__input"]:disabled {
-    @mixin fieldset-option-readonly;
+    field-sizing: content;
+    width: auto;
+    padding: 0.4rem 1.2rem;
+    border-radius: 0.6rem;
     max-width: 100%;
   }
 
   [class*="labeled-checkbox__input"]:disabled,
   [class*="labeled-radiobutton__input"]:disabled {
-    @mixin fieldset-option-readonly;
+    field-sizing: content;
+    width: auto;
+    padding: 0.4rem 1.2rem;
+    border-radius: 0.6rem;
     max-width: calc(100% - 3.2rem);
   }
 
@@ -359,7 +378,11 @@
   }
 
   &:disabled {
-    @mixin fieldset-field-readonly;
+    cursor: default;
+    color: var(--pneumatic-color-black72);
+    background-color: var(--pneumatic-color-black4);
+    border: 0.1rem solid transparent;
+    opacity: 1;
   }
 }
 
@@ -380,7 +403,11 @@
   }
 
   &:disabled {
-    @mixin fieldset-field-readonly;
+    cursor: default;
+    color: var(--pneumatic-color-black72);
+    background-color: var(--pneumatic-color-black4);
+    border: 0.1rem solid transparent;
+    opacity: 1;
     opacity: 0.55;
   }
 }
