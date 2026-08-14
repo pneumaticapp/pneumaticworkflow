@@ -183,7 +183,7 @@ describe('ExtraFieldFile', () => {
       expect(screen.getByDisplayValue('Attachments')).toBeInTheDocument();
     });
 
-    it('uses a textarea for a long field name', () => {
+    it('uses a textarea for a long field name without allowing line breaks', () => {
       const fieldName = `AttachmentField${'1'.repeat(100)}`;
 
       render(
@@ -202,6 +202,11 @@ describe('ExtraFieldFile', () => {
       fireEvent.change(fieldNameInput, { target: { value: 'Updated attachments' } });
 
       expect(editFieldMock).toHaveBeenCalledWith({ name: 'Updated attachments' });
+
+      fireEvent.change(fieldNameInput, { target: { value: 'Attachment\r\nfiles' } });
+
+      expect(editFieldMock).toHaveBeenLastCalledWith({ name: 'Attachment files' });
+      expect(fireEvent.keyDown(fieldNameInput, { key: 'Enter' })).toBe(false);
     });
   });
 

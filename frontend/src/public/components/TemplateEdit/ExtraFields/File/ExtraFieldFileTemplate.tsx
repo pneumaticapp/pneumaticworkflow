@@ -50,7 +50,7 @@ export function ExtraFieldFileTemplate({
             styles['extra-field-file__input-name--template'],
             fieldNameErrorMessage && styles['extra-field-file__input-name-error--template'],
           )}
-          onChange={(event) => editField({ name: event.target.value })}
+          onChange={(event) => editField({ name: event.target.value.replace(/[\r\n]+/g, ' ') })}
           placeholder={namePlaceholder}
           value={field.name}
           disabled={isDisabled}
@@ -59,6 +59,7 @@ export function ExtraFieldFileTemplate({
           onBlur={() => setIsFocused(false)}
           onKeyDown={(event) => {
             if (event.key === 'Enter') {
+              event.preventDefault();
               setIsFocused(false);
               event.currentTarget.blur();
             }
