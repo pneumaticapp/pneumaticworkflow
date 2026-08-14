@@ -182,6 +182,27 @@ describe('ExtraFieldFile', () => {
 
       expect(screen.getByDisplayValue('Attachments')).toBeInTheDocument();
     });
+
+    it('uses a textarea for a long field name', () => {
+      const fieldName = `AttachmentField${'1'.repeat(100)}`;
+
+      render(
+        React.createElement(ExtraFieldFile as React.FC<any>, {
+          ...baseProps,
+          mode: EExtraFieldMode.Kickoff,
+          field: createFileField({ name: fieldName }),
+        }),
+      );
+
+      const fieldNameInput = screen.getByDisplayValue(fieldName);
+
+      expect(fieldNameInput.tagName).toBe('TEXTAREA');
+      expect(fieldNameInput).toHaveAttribute('rows', '1');
+
+      fireEvent.change(fieldNameInput, { target: { value: 'Updated attachments' } });
+
+      expect(editFieldMock).toHaveBeenCalledWith({ name: 'Updated attachments' });
+    });
   });
 
   describe('upload handling', () => {

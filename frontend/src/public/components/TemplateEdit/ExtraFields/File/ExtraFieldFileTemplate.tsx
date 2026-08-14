@@ -1,5 +1,4 @@
 import React, { useRef, useState } from 'react';
-import AutosizeInput from 'react-input-autosize';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
@@ -23,7 +22,7 @@ export function ExtraFieldFileTemplate({
   editField,
 }: IExtraFieldFileTemplateProps) {
   const { formatMessage } = useIntl();
-  const fieldNameInputRef = useRef<HTMLInputElement | null>(null);
+  const fieldNameInputRef = useRef<HTMLTextAreaElement | null>(null);
   const [isFocused, setIsFocused] = useState(false);
   const fieldNameErrorMessage = validateKickoffFieldName(field.name) || '';
 
@@ -45,19 +44,17 @@ export function ExtraFieldFileTemplate({
         />
       ) : (
       <div className={styles['extra-field-file__input--template']}>
-        <AutosizeInput
-          inputRef={(ref) => {
-            fieldNameInputRef.current = ref;
-          }}
-          inputClassName={classnames(
+        <textarea
+          ref={fieldNameInputRef}
+          className={classnames(
             styles['extra-field-file__input-name--template'],
             fieldNameErrorMessage && styles['extra-field-file__input-name-error--template'],
           )}
           onChange={(event) => editField({ name: event.target.value })}
           placeholder={namePlaceholder}
-          type="text"
           value={field.name}
           disabled={isDisabled}
+          rows={1}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           onKeyDown={(event) => {
