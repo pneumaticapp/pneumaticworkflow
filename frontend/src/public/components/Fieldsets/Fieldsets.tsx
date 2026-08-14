@@ -41,9 +41,9 @@ export function Fieldsets() {
       <PageTitle titleId={EPageTitle.Fieldsets} withUnderline={false} />
       <InfiniteScroll
         dataLength={fieldsetsList.length}
-        next={() => dispatch(loadFieldsets({ offset: offset + 1 }))}
+        next={() => !isLoading && dispatch(loadFieldsets({ offset: offset + 1 }))}
         loader={null}
-        hasMore={count > fieldsetsList.length || isLoading}
+        hasMore={count > fieldsetsList.length && !isLoading}
         className={classnames(styles['cards-wrapper'], { [styles['container-loading']]: isLoading })}
         scrollableTarget="app-container"
       >
