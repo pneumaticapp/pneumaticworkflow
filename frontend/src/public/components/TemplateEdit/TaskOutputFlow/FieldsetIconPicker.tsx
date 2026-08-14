@@ -6,6 +6,7 @@ import { useSelector } from 'react-redux';
 import { IFieldsetCatalogItem } from '../../../types/fieldset';
 import { getFieldsetsCatalogItems } from '../../../redux/selectors/fieldsets';
 import { CustomTooltip } from '../../UI/CustomTooltip';
+import { Tooltip } from '../../UI/Tooltip';
 import { FilterSelect } from '../../UI';
 import { FieldsetIcon } from '../../icons/FieldsetIcon';
 
@@ -67,12 +68,20 @@ export const FieldsetIconPicker = ({
       name: row.name,
       searchByText: row.name,
       label: (
-        <div className={pickerStyles['fieldset-picker__option-info']}>
-          <span className={pickerStyles['fieldset-picker__option-name']}>{row.name}</span>
-          <span className={pickerStyles['fieldset-picker__option-meta']}>
-            {row.fieldsCount} fields · {row.rulesCount} rules
-          </span>
-        </div>
+        <Tooltip
+          content={row.name}
+          placement="top"
+          interactive={false}
+          appendTo={() => document.body}
+          contentClassName={pickerStyles['fieldset-picker__tooltip-content']}
+        >
+          <div className={pickerStyles['fieldset-picker__option-info']}>
+            <span className={pickerStyles['fieldset-picker__option-name']}>{row.name}</span>
+            <span className={pickerStyles['fieldset-picker__option-meta']}>
+              {row.fieldsCount} fields · {row.rulesCount} rules
+            </span>
+          </div>
+        </Tooltip>
       ),
     }));
   }, [fieldsetsCatalogItems]);
