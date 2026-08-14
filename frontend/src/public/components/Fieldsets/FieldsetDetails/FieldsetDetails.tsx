@@ -326,7 +326,20 @@ const FieldsetDetails = ({
               controlSize="sm"
               className={styles['usage-banner__dropdown']}
               title={formatMessage({ id: 'fieldsets.usage.show' })}
-              options={fieldset.usage.map((template) => ({ label: template.name }))}
+              options={fieldset.usage.map((template) => ({
+                label: (
+                  <Tooltip
+                    content={template.name}
+                    placement="top"
+                    interactive={false}
+                    appendTo={() => document.body}
+                    containerClassName={styles['usage-banner__option-tooltip']}
+                    contentClassName={styles['usage-banner__tooltip-content']}
+                  >
+                    <span>{template.name}</span>
+                  </Tooltip>
+                ),
+              }))}
               placement="left"
               classNames={{
                 menuList: () => styles['usage-banner__menu-list'],

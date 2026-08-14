@@ -539,6 +539,19 @@
   @mixin text-truncate;
 }
 
+.usage-banner__option-tooltip {
+  span {
+    display: block;
+    width: 100%;
+    @mixin text-truncate;
+  }
+}
+
+.usage-banner__tooltip-content {
+  padding: 0.4rem 0.8rem;
+  text-align: center;
+}
+
 .usage-banner__dropdown button {
   background: none;
 
