@@ -239,10 +239,9 @@ export function ExtraFieldCreatable({
             labelPosition={labelPosition}
             labelClassName={styles['kick-off-input__name_label-left_centered']}
             innerRef={innerRef}
-          />
-          <div className={inputStyles['kickoff-create-field-options-wrapper_label-left']}>
+          >
             {optionsContent}
-          </div>
+          </FieldWithName>
         </div>
       );
     }

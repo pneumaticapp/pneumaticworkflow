@@ -171,6 +171,7 @@
 }
 
 .components {
+  margin-bottom: 2.4rem;
   display: flex;
   flex-flow: row nowrap;
   overflow-x: scroll;
@@ -189,6 +190,14 @@
 
 .fields {
   margin-top: 1.6rem;
+
+  input {
+    text-overflow: ellipsis;
+  }
+
+  [class*="kick-off-input__name"] {
+    align-self: flex-start !important;
+  }
 
   [data-use-input]:disabled {
     cursor: default !important;
