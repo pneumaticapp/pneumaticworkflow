@@ -5,6 +5,8 @@ import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 import classNames from 'classnames';
 
+import TextareaAutosize from 'react-textarea-autosize';
+
 import { validateFieldsetTitle } from '../../../utils/validators';
 
 import {
@@ -120,7 +122,7 @@ const FieldsetDetails = ({
     setDetailFieldsetChanges({});
   }, [fieldset?.id, fieldset?.title, fieldset?.description, fieldset?.labelPosition, fieldset?.fields, fieldset?.rules]);
 
-  const handleSettingsTitleChange = (event: ChangeEvent<HTMLInputElement>) => {
+  const handleSettingsTitleChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const title = event.target.value;
     setDetailFieldset((prev) => ({ ...prev, title }));
     setDetailFieldsetChanges((prev) => ({ ...prev, title }));
@@ -358,18 +360,27 @@ const FieldsetDetails = ({
                 </span>
               </Tooltip>
             </label>
-            <input
-              id="fieldset-title"
-              type="text"
-              className={classNames(
-                styles['settings-title'],
-                Boolean(validateFieldsetTitle(detailFieldset.title)) && styles['settings-title_error'],
-              )}
-              value={detailFieldset.title}
-              placeholder={formatMessage({ id: 'fieldsets.settings.title-placeholder' })}
-              onChange={handleSettingsTitleChange}
-              disabled={isLinked}
-            />
+            {isLinked ? (
+              <TextareaAutosize
+                id="fieldset-title"
+                minRows={1}
+                className={styles['settings-title']}
+                value={detailFieldset.title}
+                disabled
+              />
+            ) : (
+              <input
+                id="fieldset-title"
+                type="text"
+                className={classNames(
+                  styles['settings-title'],
+                  Boolean(validateFieldsetTitle(detailFieldset.title)) && styles['settings-title_error'],
+                )}
+                value={detailFieldset.title}
+                placeholder={formatMessage({ id: 'fieldsets.settings.title-placeholder' })}
+                onChange={handleSettingsTitleChange}
+              />
+            )}
           </div>
 
           <div className={styles['settings-field']}>
@@ -384,14 +395,23 @@ const FieldsetDetails = ({
                 </span>
               </Tooltip>
             </label>
-            <textarea
-              id="fieldset-description"
-              className={styles['settings-description']}
-              value={detailFieldset.description}
-              placeholder={formatMessage({ id: 'fieldsets.settings.description-placeholder' })}
-              onChange={handleSettingsDescriptionChange}
-              disabled={isLinked}
-            />
+            {isLinked ? (
+              <TextareaAutosize
+                id="fieldset-description"
+                minRows={3}
+                className={styles['settings-description']}
+                value={detailFieldset.description}
+                disabled
+              />
+            ) : (
+              <textarea
+                id="fieldset-description"
+                className={styles['settings-description']}
+                value={detailFieldset.description}
+                placeholder={formatMessage({ id: 'fieldsets.settings.description-placeholder' })}
+                onChange={handleSettingsDescriptionChange}
+              />
+            )}
           </div>
 
           <div className={styles['settings-field']}>

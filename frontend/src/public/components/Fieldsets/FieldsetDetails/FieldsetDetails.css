@@ -71,8 +71,11 @@
 }
 
 .settings-description {
+  display: block;
+  box-sizing: border-box;
+  width: 100% !important;
+  max-width: 100%;
   padding: 1.2rem 1.6rem;
-  width: 100%;
   min-height: 8rem;
   font-family: inherit;
   resize: vertical;
@@ -93,7 +96,11 @@
     background-color: var(--pneumatic-color-black4);
     border: 0.1rem solid transparent;
     opacity: 1;
-    resize: none;
+    resize: none !important;
+    field-sizing: content;
+    min-height: unset;
+    white-space: pre-wrap;
+    word-break: break-word;
   }
 }
 
@@ -137,15 +144,20 @@
 }
 
 .settings-title {
+  display: block;
+  box-sizing: border-box;
+  width: 100% !important;
+  max-width: 100%;
   padding: 0.8rem 1.2rem;
-  width: fit-content;
-  min-width: 20rem;
+  font-family: inherit;
+  resize: none !important;
   border: 1px solid var(--pneumatic-color-black16);
   border-radius: 0.8rem;
   outline: none;
   transition: border-color 0.2s;
 
   @mixin text-base;
+  @mixin text-truncate;
 
   &:focus {
     border-color: var(--pneumatic-color-blue);
@@ -157,7 +169,21 @@
     background-color: var(--pneumatic-color-black4);
     border: 0.1rem solid transparent;
     opacity: 1;
+    resize: none !important;
+    field-sizing: content;
+    min-height: unset;
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow: visible;
   }
+
+  &::-webkit-resizer {
+    display: none !important;
+  }
+}
+
+.settings-description::-webkit-resizer {
+  display: none !important;
 }
 
 .settings-title_error {
