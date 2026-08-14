@@ -205,13 +205,13 @@ function* fetchWorkflow({ payload: id }: PayloadAction<number>) {
   }
 }
 
-function* handleOpenWorkflowLogPopup({
+export function* handleOpenWorkflowLogPopup({
   payload: { workflowId, shouldSetWorkflowDetailUrl, redirectTo404IfNotFound },
 }: PayloadAction<TOpenWorkflowLogPopupPayload>) {
   try {
     if (shouldSetWorkflowDetailUrl) {
       const newUrl = ERoutes.WorkflowDetail.replace(':id', String(workflowId)) + history.location.search;
-      window.history.replaceState(null, '', newUrl);
+      history.replace(newUrl);
     }
 
     yield handleLoadWorkflow({ workflowId });
