@@ -146,6 +146,7 @@ export const FieldWithName = forwardRef<HTMLInputElement, IKickoffFormFieldWithN
           isRequired={isRequired}
           isDisabled={isDisabled}
           mode={mode}
+          labelPosition={labelPosition}
           labelBackgroundColor={labelBackgroundColor}
           namePlaceholder={namePlaceholder}
           handleChangeName={handleChangeName}

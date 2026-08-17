@@ -79,9 +79,9 @@ export function ExtraFieldRadio({
             isRequired={isRequired}
             isDisabled={isDisabled}
             mode={mode}
+            labelPosition={labelPosition}
             namePlaceholder={namePlaceholder}
             handleChangeName={handleChangeName}
-            className={styles['kick-off-input__name_label-left']}
           />
         ) : (
           <div className={fieldNameClassName}>
@@ -269,9 +269,9 @@ export function ExtraFieldRadio({
             isRequired={isRequired}
             isDisabled={isDisabled}
             mode={mode}
+            labelPosition={labelPosition}
             labelBackgroundColor={labelBackgroundColor}
             handleChangeName={handleChangeName}
-            className={styles['kick-off-input__name_label-left_aligned-start']}
           />
         ) : (
           <div>

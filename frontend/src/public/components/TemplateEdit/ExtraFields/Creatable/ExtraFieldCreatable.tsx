@@ -196,7 +196,6 @@ export function ExtraFieldCreatable({
       isDisabled={isDisabled}
       icon={<ArrowDropdownIcon />}
       labelPosition={labelPosition}
-      {...(labelPosition === EFieldLabelPosition.Left && { labelClassName: styles['kick-off-input__name_label-left_centered'] })}
       innerRef={innerRef}
     />
   );
@@ -237,7 +236,6 @@ export function ExtraFieldCreatable({
             isDisabled={isDisabled}
             icon={<ArrowDropdownIcon />}
             labelPosition={labelPosition}
-            labelClassName={styles['kick-off-input__name_label-left_centered']}
             innerRef={innerRef}
           >
             {optionsContent}
@@ -272,9 +270,9 @@ export function ExtraFieldCreatable({
             isRequired={isRequired || false}
             isDisabled={isDisabled}
             mode={mode}
+            labelPosition={labelPosition}
             labelBackgroundColor={labelBackgroundColor}
             handleChangeName={handleChangeName}
-            className={styles['kick-off-input__name_label-left_centered']}
           />
         ) : (
           <div className={fieldNameClassName}>

@@ -239,10 +239,6 @@
     text-overflow: ellipsis;
   }
 
-  [class*="kick-off-input__name"] {
-    align-self: flex-start !important;
-  }
-
   [data-use-input]:disabled {
     cursor: default !important;
     resize: none !important;
