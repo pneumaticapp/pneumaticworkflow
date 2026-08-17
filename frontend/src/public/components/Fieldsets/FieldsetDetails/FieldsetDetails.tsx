@@ -34,7 +34,7 @@ import { getCurrentFieldset, isCurrentFieldsetLoading } from '../../../redux/sel
 import { getAccountId } from '../../../redux/selectors/user';
 
 import { EExtraFieldMode, EExtraFieldType, IExtraField } from '../../../types/template';
-import { FilledInfoIcon } from '../../icons';
+import { FilledInfoIcon, ArrowDropdownIcon, DateIcon, LinkIcon } from '../../icons';
 import { EInputNameBackgroundColor, EMoveDirections } from '../../../types/workflow';
 import {
   IFieldsetTemplateRule,
@@ -58,6 +58,12 @@ import {
   FIELDSET_RULE_TYPES,
   FIELDSET_RULE_VALUE_PLACEHOLDER_BY_TYPE,
 } from '../constants';
+
+const READONLY_FIELD_ICONS: Partial<Record<EExtraFieldType, React.FC<React.SVGAttributes<SVGElement>>>> = {
+  [EExtraFieldType.User]: ArrowDropdownIcon,
+  [EExtraFieldType.Date]: DateIcon,
+  [EExtraFieldType.Url]: LinkIcon,
+};
 
 import { useCheckDevice } from '../../../hooks/useCheckDevice';
 
@@ -491,6 +497,8 @@ const FieldsetDetails = ({
                   ? { ...field, type: EExtraFieldType.Text }
                   : field;
 
+              const IconComponent = isLinked && READONLY_FIELD_ICONS[field.type];
+
               return (
                 <ExtraFieldIntl
                   key={field.apiName}
@@ -509,6 +517,7 @@ const FieldsetDetails = ({
                   isFieldsetReadOnly={isLinked}
                   datasetOptions={datasetOptions}
                   labelPosition={isDesktop ? detailFieldset.labelPosition : EFieldLabelPosition.Top}
+                  {...(IconComponent && { icon: <IconComponent /> })}
                 />
               );
             })}

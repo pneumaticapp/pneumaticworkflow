@@ -333,6 +333,16 @@
   &.fieldset_readonly [class*="kick-off-edit-name"] {
     display: none !important;
   }
+
+  &.fieldset_readonly [class*="kick-off-input"] [class*="icon-container"] [class*="icon"] {
+    color: var(--pneumatic-color-black16);
+
+    svg,
+    svg path {
+      fill: var(--pneumatic-color-black16);
+      color: var(--pneumatic-color-black16);
+    }
+  }
 }
 
 .save-bar {

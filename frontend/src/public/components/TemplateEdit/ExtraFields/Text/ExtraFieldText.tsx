@@ -22,6 +22,7 @@ export const ExtraFieldText = ({
   labelPosition,
   innerRef,
   accountId,
+  icon,
 }: IWorkflowExtraFieldProps) => {
   const handleChangeName = React.useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -58,6 +59,7 @@ export const ExtraFieldText = ({
       validate={getFieldValidator(field, mode)}
       isDisabled={isDisabled}
       accountId={accountId}
+      icon={icon}
     />
   );
 };

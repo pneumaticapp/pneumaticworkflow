@@ -24,6 +24,7 @@ export interface IWorkflowExtraFieldProps {
   accountId: number;
   datasetName?: string;
   onUploadStateChange?(isUploading: boolean): void;
+  icon?: React.ReactNode;
 }
 
 type IExtraFieldPropsBase = Omit<IWorkflowExtraFieldProps, 'showDropdown'> & {
