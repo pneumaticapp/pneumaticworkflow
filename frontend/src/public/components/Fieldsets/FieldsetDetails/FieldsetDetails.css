@@ -142,11 +142,28 @@
 
   font-weight: normal !important;
   color: var(--pneumatic-color-black100);
+
+  &:hover {
+    color: var(--pneumatic-color-black100) !important;
+  }
+}
+
+.settings-select__toggle:focus,
+.settings-select__toggle:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .settings-select__menu {
   margin-left: 0 !important;
   width: 100%;
+
+  button:focus,
+  button:focus-visible,
+  button:active {
+    outline: none !important;
+    box-shadow: none !important;
+  }
 }
 
 .readonly-badge {

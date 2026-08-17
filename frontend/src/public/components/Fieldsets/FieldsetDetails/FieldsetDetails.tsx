@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useEffect, useState, useMemo, useCallback, ChangeEvent } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef, ChangeEvent } from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
@@ -93,6 +93,7 @@ const FieldsetDetails = ({
   const [detailFieldset, setDetailFieldset] = useState<TDetailFieldsetState>(EMPTY_DETAIL_FIELDSET);
   const [detailFieldsetChanges, setDetailFieldsetChanges] = useState<TDetailFieldsetChanges>({});
   const datasetOptions = useDatasetOptions(detailFieldset.fields);
+  const labelPositionRef = useRef<HTMLDivElement>(null);
 
   const fieldsetListRoute = ERoutes.Fieldsets;
   const isChanged = Object.keys(detailFieldsetChanges).length > 0;
@@ -450,9 +451,13 @@ const FieldsetDetails = ({
           </div>
 
           <div className={styles['settings-field']}>
-            <label htmlFor="fieldset-label-position" className={styles['settings-label']}>
+            <span
+              className={styles['settings-label']}
+              onClick={() => labelPositionRef.current?.querySelector<HTMLButtonElement>('button')?.focus()}
+            >
               {formatMessage({ id: 'fieldsets.settings.label-position' })}
-            </label>
+            </span>
+            <div ref={labelPositionRef}>
             <FilterSelect<'id', 'name', { id: EFieldLabelPosition; name: string }>
               optionIdKey="id"
               optionLabelKey="name"
@@ -472,6 +477,7 @@ const FieldsetDetails = ({
               menuClassName={styles['settings-select__menu']}
               renderPlaceholder={() => labelPositionOptions.find((option) => option.id === detailFieldset.labelPosition)?.name || ''}
             />
+            </div>
           </div>
         </div>
       </div>
