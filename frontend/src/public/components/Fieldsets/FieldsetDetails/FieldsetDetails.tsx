@@ -459,7 +459,7 @@ const FieldsetDetails = ({
               options={labelPositionOptions}
               selectedOption={detailFieldset.labelPosition}
               onChange={(key) => {
-                if (key) {
+                if (key && key !== detailFieldset.labelPosition) {
                   setDetailFieldset((prev) => ({ ...prev, labelPosition: key as EFieldLabelPosition }));
                   setDetailFieldsetChanges((prev) => ({ ...prev, labelPosition: key as EFieldLabelPosition }));
                 }
@@ -551,7 +551,7 @@ const FieldsetDetails = ({
               options={ruleTypeOptions}
               selectedOption={rule.type}
               onChange={(key) => {
-                if (key) {
+                if (key && key !== rule.type) {
                   handleEditRuleType(index, key as EFieldsetRuleType);
                 }
               }}
