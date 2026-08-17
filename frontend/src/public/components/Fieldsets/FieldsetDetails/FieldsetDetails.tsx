@@ -345,6 +345,7 @@ const FieldsetDetails = ({
               className={styles['usage-banner__dropdown']}
               title={formatMessage({ id: 'fieldsets.usage.show' })}
               options={fieldset.usage.map((template) => ({
+                value: template.name,
                 label: (
                   <Tooltip
                     content={template.name}
@@ -358,6 +359,9 @@ const FieldsetDetails = ({
                   </Tooltip>
                 ),
               }))}
+              filterOption={(option, inputValue) =>
+                (option.data as { value: string }).value?.toLowerCase().includes(inputValue.toLowerCase()) ?? true
+              }
               placement="left"
               classNames={{
                 menuList: () => styles['usage-banner__menu-list'],
