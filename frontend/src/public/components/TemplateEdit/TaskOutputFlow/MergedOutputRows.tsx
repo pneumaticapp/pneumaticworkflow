@@ -95,7 +95,7 @@ export function MergedOutputRows({
             </div>
             <div className={kickoffStyles['kick-off-input__dropdown']}>
               <FieldsetFlowRowDropdown
-                headerTitle={title}
+                headerTitle={apiNameBinding}
                 isFirstItem={isFirst}
                 isLastItem={isLast}
                 onMoveUp={() => onMoveRow(index, 'up')}
