@@ -43,7 +43,7 @@ export function Fieldsets() {
         dataLength={fieldsetsList.length}
         next={() => !isLoading && dispatch(loadFieldsets({ offset: offset + 1 }))}
         loader={null}
-        hasMore={count > fieldsetsList.length && !isLoading}
+        hasMore={count > fieldsetsList.length || isLoading}
         className={classnames(styles['cards-wrapper'], { [styles['container-loading']]: isLoading })}
         scrollableTarget="app-container"
       >
