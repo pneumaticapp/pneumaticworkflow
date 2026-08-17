@@ -122,6 +122,24 @@ const FieldsetDetails = ({
     setDetailFieldsetChanges({});
   }, [fieldset?.id, fieldset?.title, fieldset?.description, fieldset?.labelPosition, fieldset?.fields, fieldset?.rules]);
 
+  const labelPositionOptions = useMemo(
+    () =>
+      FIELDSET_LABEL_POSITION_OPTIONS.map((option) => ({
+        id: option.value,
+        name: formatMessage({ id: option.labelKey }),
+      })),
+    [formatMessage],
+  );
+
+  const ruleTypeOptions = useMemo(
+    () =>
+      FIELDSET_RULE_TYPES.map((option) => ({
+        id: option.value,
+        name: formatMessage({ id: option.labelKey }),
+      })),
+    [formatMessage],
+  );
+
   const handleSettingsTitleChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const title = event.target.value;
     setDetailFieldset((prev) => ({ ...prev, title }));
@@ -132,12 +150,6 @@ const FieldsetDetails = ({
     const description = event.target.value;
     setDetailFieldset((prev) => ({ ...prev, description }));
     setDetailFieldsetChanges((prev) => ({ ...prev, description }));
-  };
-
-  const handleSettingsLabelPositionChange = (event: ChangeEvent<HTMLSelectElement>) => {
-    const labelPosition = event.target.value as EFieldLabelPosition;
-    setDetailFieldset((prev) => ({ ...prev, labelPosition }));
-    setDetailFieldsetChanges((prev) => ({ ...prev, labelPosition }));
   };
 
   const getSortedFields = useCallback(() => {
@@ -431,19 +443,25 @@ const FieldsetDetails = ({
             <label htmlFor="fieldset-label-position" className={styles['settings-label']}>
               {formatMessage({ id: 'fieldsets.settings.label-position' })}
             </label>
-            <select
-              id="fieldset-label-position"
-              className={styles['settings-label-position']}
-              value={detailFieldset.labelPosition}
-              onChange={handleSettingsLabelPositionChange}
-              disabled={isLinked}
-            >
-              {FIELDSET_LABEL_POSITION_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {formatMessage({ id: option.labelKey })}
-                </option>
-              ))}
-            </select>
+            <FilterSelect<'id', 'name', { id: EFieldLabelPosition; name: string }>
+              optionIdKey="id"
+              optionLabelKey="name"
+              options={labelPositionOptions}
+              selectedOption={detailFieldset.labelPosition}
+              onChange={(key) => {
+                if (key) {
+                  setDetailFieldset((prev) => ({ ...prev, labelPosition: key as EFieldLabelPosition }));
+                  setDetailFieldsetChanges((prev) => ({ ...prev, labelPosition: key as EFieldLabelPosition }));
+                }
+              }}
+              resetFilter={() => {}}
+              placeholderText=""
+              isDisabled={isLinked}
+              containerClassname={styles['settings-select']}
+              toggleClassName={styles['settings-select__toggle']}
+              menuClassName={styles['settings-select__menu']}
+              renderPlaceholder={() => labelPositionOptions.find((option) => option.id === detailFieldset.labelPosition)?.name || ''}
+            />
           </div>
         </div>
       </div>
@@ -514,19 +532,24 @@ const FieldsetDetails = ({
 
         {detailFieldset.rules.map((rule, index) => (
           <div key={rule.apiName} className={styles['rule-row']}>
-            <select
-              value={rule.type}
-              onChange={(e) => handleEditRuleType(index, e.target.value as EFieldsetRuleType)}
-              className={styles['rule-value-input']}
-              style={{ flex: 'none', minWidth: '10rem' }}
-              disabled={isLinked}
-            >
-              {FIELDSET_RULE_TYPES.map((ruleType) => (
-                <option key={ruleType.value} value={ruleType.value}>
-                  {formatMessage({ id: ruleType.labelKey })}
-                </option>
-              ))}
-            </select>
+            <FilterSelect<'id', 'name', { id: EFieldsetRuleType; name: string }>
+              optionIdKey="id"
+              optionLabelKey="name"
+              options={ruleTypeOptions}
+              selectedOption={rule.type}
+              onChange={(key) => {
+                if (key) {
+                  handleEditRuleType(index, key as EFieldsetRuleType);
+                }
+              }}
+              resetFilter={() => {}}
+              placeholderText=""
+              isDisabled={isLinked}
+              containerClassname={styles['settings-select']}
+              toggleClassName={styles['settings-select__toggle']}
+              menuClassName={styles['settings-select__menu']}
+              renderPlaceholder={() => ruleTypeOptions.find((option) => option.id === rule.type)?.name || ''}
+            />
 
             <input
               type="text"

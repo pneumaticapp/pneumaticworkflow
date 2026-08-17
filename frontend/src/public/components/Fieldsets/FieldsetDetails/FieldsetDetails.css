@@ -104,31 +104,49 @@
   }
 }
 
-.settings-label-position {
+.settings-select {
   padding: 0.8rem 1.2rem;
   width: fit-content;
-  min-width: 20rem;
-  cursor: pointer;
+  min-width: 15rem;
   background-color: var(--pneumatic-color-white);
   border: 1px solid var(--pneumatic-color-black16);
   border-radius: 0.8rem;
-  outline: none;
   transition: border-color 0.2s;
-  appearance: auto;
 
-  @mixin text-base;
-
-  &:focus {
+  &:focus-within,
+  &:hover:not(:has(:disabled)) {
     border-color: var(--pneumatic-color-blue);
   }
 
-  &:disabled {
+  &:has(:disabled),
+  &:has(button:disabled),
+  &[class*="filter-select_disabled"] {
     cursor: default;
-    color: var(--pneumatic-color-black72);
     background-color: var(--pneumatic-color-black4);
     border: 0.1rem solid transparent;
     opacity: 1;
+
+    button,
+    span {
+      color: var(--pneumatic-color-black72);
+    }
+
+    svg {
+      color: var(--pneumatic-color-black32);
+    }
   }
+}
+
+.settings-select__toggle {
+  @mixin text-base;
+
+  font-weight: normal !important;
+  color: var(--pneumatic-color-black100);
+}
+
+.settings-select__menu {
+  margin-left: 0 !important;
+  width: 100%;
 }
 
 .readonly-badge {
