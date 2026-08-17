@@ -3,7 +3,6 @@ from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
     FieldSetLayout,
     FieldSetRuleOperator,
-    FieldSetRuleType,
     FieldType,
     LabelPosition,
 )
@@ -350,7 +349,6 @@ def test_create_rules__with_data__ok():
     )
     rulesets_data = [
         {
-            'type': FieldSetRuleType.VALIDATOR,
             'groups_or': [
                 {
                     'groups_and': [
@@ -370,7 +368,6 @@ def test_create_rules__with_data__ok():
     # assert
     assert fieldset.rulesets.count() == 1
     ruleset = fieldset.rulesets.first()
-    assert ruleset.type == FieldSetRuleType.VALIDATOR
     group_and = ruleset.groups_or.first().groups_and.first()
     assert group_and.operator == FieldSetRuleOperator.SUM_EQUAL
     assert group_and.value == '100'
@@ -425,7 +422,6 @@ def test__create_related__rulesets_provided__ok(mocker):
     )
     rulesets = [
         {
-            'type': FieldSetRuleType.VALIDATOR,
             'groups_or': [
                 {
                     'groups_and': [
@@ -507,7 +503,6 @@ def test__create_related__both_provided__ok(mocker):
     )
     rulesets = [
         {
-            'type': FieldSetRuleType.VALIDATOR,
             'groups_or': [
                 {
                     'groups_and': [
@@ -749,7 +744,6 @@ def test_update_rules__existing_rule__ok(mocker):
     ruleset = FieldSetTemplateRuleSet.objects.create(
         account=account,
         fieldset=fieldset,
-        type=FieldSetRuleType.VALIDATOR,
         api_name='ruleset-1',
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
@@ -781,7 +775,6 @@ def test_update_rules__existing_rule__ok(mocker):
     )
     ruleset_data = {
         'api_name': ruleset.api_name,
-        'type': FieldSetRuleType.VALIDATOR,
         'groups_or': [
             {
                 'api_name': group_or.api_name,
@@ -843,7 +836,6 @@ def test_update_rules__new_rule__ok(mocker):
 
     ruleset_data = {
         'api_name': rule_api_name,
-        'type': FieldSetRuleType.VALIDATOR,
         'groups_or': [
             {
                 'api_name': group_or_api_name,
@@ -884,7 +876,6 @@ def test_update_rules__orphan_rules__deleted():
     ruleset_1 = FieldSetTemplateRuleSet.objects.create(
         account=account,
         fieldset=fieldset,
-        type=FieldSetRuleType.VALIDATOR,
         api_name='ruleset-1',
     )
     group_or_1 = FieldSetTemplateRuleGroupOr.objects.create(
@@ -902,7 +893,6 @@ def test_update_rules__orphan_rules__deleted():
     ruleset_2 = FieldSetTemplateRuleSet.objects.create(
         account=account,
         fieldset=fieldset,
-        type=FieldSetRuleType.VALIDATOR,
         api_name='ruleset-2',
     )
     group_or_2 = FieldSetTemplateRuleGroupOr.objects.create(
@@ -926,7 +916,6 @@ def test_update_rules__orphan_rules__deleted():
     rulesets_data = [
         {
             'api_name': ruleset_1.api_name,
-            'type': FieldSetRuleType.VALIDATOR,
             'groups_or': [
                 {
                     'groups_and': [
@@ -991,7 +980,6 @@ def test_update_rules__two_rules_same_type_no_api_name__create_new_rule():
     rulesets_data = [
         {
             'api_name': existing_ruleset.api_name,
-            'type': FieldSetRuleType.VALIDATOR,
             'fields': [field_1.api_name, field_2.api_name],
             'groups_or': [
                 {
@@ -1005,7 +993,6 @@ def test_update_rules__two_rules_same_type_no_api_name__create_new_rule():
             ],
         },
         {
-            'type': FieldSetRuleType.VALIDATOR,
             'fields': [field_1.api_name, field_2.api_name],
             'groups_or': [
                 {
@@ -1026,7 +1013,6 @@ def test_update_rules__two_rules_same_type_no_api_name__create_new_rule():
     # assert
     assert fieldset.rulesets.count() == 2
     existing_ruleset.refresh_from_db()
-    assert existing_ruleset.type == FieldSetRuleType.VALIDATOR
     assert existing_ruleset.fields.count() == 2
     assert existing_ruleset.fields.get(id=field_1.id)
     assert existing_ruleset.fields.get(id=field_2.id)
@@ -1039,7 +1025,6 @@ def test_update_rules__two_rules_same_type_no_api_name__create_new_rule():
     new_ruleset = fieldset.rulesets.exclude(
         api_name=existing_ruleset.api_name,
     ).get()
-    assert new_ruleset.type == FieldSetRuleType.VALIDATOR
     assert new_ruleset.fields.count() == 2
     assert new_ruleset.fields.get(id=field_1.id)
     assert new_ruleset.fields.get(id=field_2.id)
@@ -1152,7 +1137,6 @@ def test_partial_update__rulesets__ok(mocker):
         'rulesets': [
             {
                 'api_name': 'ruleset-1',
-                'type': FieldSetRuleType.VALIDATOR,
                 'groups_or': [
                     {
                         'groups_and': [

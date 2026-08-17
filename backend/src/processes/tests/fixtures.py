@@ -29,7 +29,6 @@ from src.processes.enums import (
     FieldRuleType,
     FieldSetLayout,
     FieldSetRuleOperator,
-    FieldSetRuleType,
     FieldType,
     LabelPosition,
     OwnerRole,
@@ -937,7 +936,6 @@ def create_test_shared_fieldset(
             fieldset=fieldset,
             account=account,
             api_name=f'{fieldset.api_name}-shared-rule-1',
-            type=FieldSetRuleType.VALIDATOR,
             message=rule_message,
         )
         group_or = FieldSetTemplateRuleGroupOr.objects.create(
@@ -1105,7 +1103,6 @@ def create_test_fieldset(
             fieldset=fieldset,
             account=account,
             api_name=f'{fieldset.api_name}-rule-1',
-            type=FieldSetRuleType.VALIDATOR,
             message=rule_message,
         )
         group_or = FieldSetRuleGroupOr.objects.create(

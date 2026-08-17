@@ -2,7 +2,6 @@ import pytest
 from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
     FieldSetRuleOperator,
-    FieldSetRuleType,
     FieldType,
 )
 from src.processes.messages.fieldset import (
@@ -374,7 +373,6 @@ def test__create_rules__with_template__ok(mocker):
     ruleset = FieldSetTemplateRuleSet.objects.create(
         account=account,
         fieldset=fieldset_template,
-        type=FieldSetRuleType.VALIDATOR,
         api_name='ruleset-1',
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
@@ -421,7 +419,6 @@ def test__create_rules__with_template__ok(mocker):
     assert create_kwargs['skip_validation'] is None
     runtime_rule = create_kwargs['instance_template']
     assert runtime_rule.api_name == ruleset.api_name
-    assert runtime_rule.type == FieldSetRuleType.SUM_EQUAL
     assert runtime_rule.value == '100'
 
 
@@ -566,7 +563,6 @@ def test_validate_rules__two_same_type_rules__first_value_matches__ok():
     rule_0 = FieldSetRule.objects.create(
         account=account,
         fieldset=fieldset,
-        type=FieldSetRuleType.VALIDATOR,
         value='0',
     )
     rule_0.fields.add(field)
@@ -606,7 +602,6 @@ def test_validate_rules__two_same_type_rules__second_value_matches__ok():
     rule_10 = FieldSetRule.objects.create(
         account=account,
         fieldset=fieldset,
-        type=FieldSetRuleType.VALIDATOR,
         value='10',
     )
     rule_10.fields.add(field)
@@ -648,7 +643,6 @@ def test_validate_rules__two_same_type_rules__none_matches__raise():
     rule_0 = FieldSetRule.objects.create(
         account=account,
         fieldset=fieldset,
-        type=FieldSetRuleType.VALIDATOR,
         value='0',
     )
     rule_0.fields.add(field)

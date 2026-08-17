@@ -3,7 +3,6 @@ from django.db import models
 from src.accounts.models import AccountBaseMixin
 from src.generics.managers import BaseSoftDeleteManager
 from src.processes.enums import (
-    FieldSetRuleType,
     FieldSetRuleOperator,
 )
 from src.processes.models.base import BaseApiNameModel
@@ -88,10 +87,6 @@ class FieldSetRuleSet(
         FieldSet,
         on_delete=models.CASCADE,
         related_name='rulesets',
-    )
-    type = models.CharField(
-        max_length=50,
-        choices=FieldSetRuleType.CHOICES,
     )
     message = models.TextField(
         null=True,

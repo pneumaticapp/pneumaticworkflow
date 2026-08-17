@@ -4,7 +4,6 @@ from django.test import override_settings
 
 from src.processes.enums import (
     FieldSetRuleOperator,
-    FieldSetRuleType,
     FieldType,
     WorkflowEventType,
 )
@@ -2728,7 +2727,6 @@ def test__link_rules__multiple_rules__ok():
         fieldset=fieldset_template,
         account=account,
         api_name=f'{fieldset_api_name}-ruleset-2',
-        type=FieldSetRuleType.VALIDATOR,
     )
     group_or_2 = FieldSetTemplateRuleGroupOr.objects.create(
         fieldset_rule=ruleset_tmpl_2,
@@ -2764,7 +2762,6 @@ def test__link_rules__multiple_rules__ok():
         fieldset=fieldset,
         account=account,
         api_name=ruleset_tmpl_2.api_name,
-        type=FieldSetRuleType.VALIDATOR,
         value='200',
     )
     task_field = fieldset.fields.first()
@@ -2814,7 +2811,6 @@ def test__link_rules__partial_match__ok():
         fieldset=fieldset_template,
         account=account,
         api_name=f'{fieldset_api_name}-ruleset-2',
-        type=FieldSetRuleType.VALIDATOR,
     )
     group_or_2 = FieldSetTemplateRuleGroupOr.objects.create(
         fieldset_rule=ruleset_tmpl_2,
@@ -2903,7 +2899,6 @@ def test__link_rules__no_matching_rules__empty():
         fieldset=fieldset,
         account=account,
         api_name='different-rule',
-        type=FieldSetRuleType.VALIDATOR,
         value='999',
     )
     task_field = fieldset.fields.first()

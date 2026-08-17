@@ -30,7 +30,6 @@ def migrate_fieldset_template_rules(apps, schema_editor):
 
         ruleset = RuleSet.objects.create(
             api_name=rule.api_name,
-            type=rule.type,
             message=None,
             order=order_in_fieldset,
             fieldset_id=rule.fieldset_id,
@@ -139,7 +138,6 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('is_deleted', models.BooleanField(default=False)),
                 ('api_name', models.CharField(max_length=200)),
-                ('type', models.CharField(choices=[('validator', 'Validator')], max_length=50)),
                 ('message', models.TextField(blank=True, help_text='custom error message for a type="validator"', null=True)),
                 ('order', models.PositiveIntegerField(default=0)),
             ],
@@ -180,7 +178,6 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('is_deleted', models.BooleanField(default=False)),
                 ('api_name', models.CharField(max_length=200)),
-                ('type', models.CharField(choices=[('validator', 'Validator')], max_length=50)),
                 ('message', models.TextField(blank=True, help_text='custom error message for a type="validator"', null=True)),
                 ('order', models.PositiveIntegerField(default=0)),
             ],
@@ -238,11 +235,6 @@ class Migration(migrations.Migration):
         migrations.RemoveConstraint(
             model_name='fieldtemplate',
             name='processes_fieldtemplate_template_api_name_unique',
-        ),
-        migrations.AlterField(
-            model_name='fieldsetrule',
-            name='type',
-            field=models.CharField(choices=[('validator', 'Validator')], max_length=50),
         ),
         migrations.AlterField(
             model_name='fieldsettemplaterule',

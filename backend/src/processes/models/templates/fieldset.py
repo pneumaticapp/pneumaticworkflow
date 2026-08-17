@@ -3,7 +3,7 @@ from django.db.models import Q, UniqueConstraint
 
 from src.accounts.models import AccountBaseMixin
 from src.generics.managers import BaseSoftDeleteManager
-from src.processes.enums import FieldSetRuleType, FieldSetRuleOperator
+from src.processes.enums import FieldSetRuleOperator
 from src.processes.models.base import BaseApiNameModel
 from src.processes.models.mixins import (
     BaseFieldSetMixin, BaseFieldSetRuleMixin,
@@ -136,10 +136,6 @@ class FieldSetTemplateRuleSet(
         FieldsetTemplate,
         on_delete=models.CASCADE,
         related_name='rulesets',
-    )
-    type = models.CharField(
-        max_length=50,
-        choices=FieldSetRuleType.CHOICES,
     )
     message = models.TextField(
         null=True,

@@ -2,12 +2,10 @@ from decimal import Decimal
 from types import SimpleNamespace
 
 import pytest
-from django.db import IntegrityError
 
 from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
     FieldSetRuleOperator,
-    FieldSetRuleType,
     FieldType,
 )
 from src.processes.messages import fieldset as fs_messages
@@ -54,7 +52,6 @@ def test__validate_sum__default_params__ok():
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
         fieldset_rule=ruleset,
@@ -110,7 +107,6 @@ def test__validate_sum__falsy_value__raise_exception():
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
         fieldset_rule=ruleset,
@@ -158,7 +154,6 @@ def test__validate_sum__invalid_decimal__raise_exception():
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
         fieldset_rule=ruleset,
@@ -206,7 +201,6 @@ def test__validate_sum__non_number_fields__raise_exception():
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
         fieldset_rule=ruleset,
@@ -263,7 +257,6 @@ def test__validate_sum__all_fields_are_number__ok():
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
         fieldset_rule=ruleset,
@@ -310,7 +303,6 @@ def test__get_valid_fields__default_params__ok():
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
     )
     field_1 = FieldTemplate.objects.create(
         account=account,
@@ -356,7 +348,6 @@ def test__get_valid_fields__type_kwarg_provided__raise_exception():
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
     )
     missing_api_name = 'missing-field-1'
     rule_type = 'custom-rule'
@@ -401,7 +392,6 @@ def test__get_valid_fields__type_kwarg_omitted_or_falsy__raise_exception():
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
     )
     missing_api_name = 'missing-field-1'
     fields_api_names = [missing_api_name]
@@ -421,7 +411,6 @@ def test__get_valid_fields__type_kwarg_omitted_or_falsy__raise_exception():
 
     # assert
     assert ex.value.message == fs_messages.MSG_FS_0005(
-        rule=FieldSetRuleType.VALIDATOR,
         field=missing_api_name,
     )
 
@@ -445,7 +434,6 @@ def test__get_valid_fields__all_api_names_found__ok():
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
     )
     field_1 = FieldTemplate.objects.create(
         account=account,
@@ -506,7 +494,6 @@ def test__get_valid_fields__missing_api_name__raise_exception():
         fieldset=fieldset_1,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
     )
     field_1 = FieldTemplate.objects.create(
         account=account,
@@ -531,7 +518,6 @@ def test__get_valid_fields__missing_api_name__raise_exception():
 
     # assert
     assert ex.value.message == fs_messages.MSG_FS_0005(
-        rule=FieldSetRuleType.VALIDATOR,
         field=field_1.api_name,
     )
 
@@ -555,7 +541,6 @@ def test__get_valid_fields__empty_fields_api_names__ok():
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
     )
     fields_api_names = []
     service = FieldsetTemplateRuleSetService(
@@ -592,18 +577,15 @@ def test__create_instance__default_params__ok():
         is_superuser=False,
         auth_type=AuthTokenType.USER,
     )
-    ruleset_type = FieldSetRuleType.VALIDATOR
 
     # act
     result = service._create_instance(
-        type=ruleset_type,
         fieldset_id=fieldset.id,
     )
 
     # assert
     assert result == service.instance
     assert result.fieldset_id == fieldset.id
-    assert result.type == ruleset_type
     assert result.message is None
     assert result.order == 0
     assert result.template_id == template.id
@@ -631,11 +613,9 @@ def test__create_instance__resolve_template_id_from_fieldset__ok():
         is_superuser=False,
         auth_type=AuthTokenType.USER,
     )
-    ruleset_type = FieldSetRuleType.VALIDATOR
 
     # act
     result = service._create_instance(
-        type=ruleset_type,
         fieldset_id=fieldset.id,
         template_id=None,
     )
@@ -668,11 +648,9 @@ def test__create_instance__explicit_template_id__ok():
         is_superuser=False,
         auth_type=AuthTokenType.USER,
     )
-    ruleset_type = FieldSetRuleType.VALIDATOR
 
     # act
     result = service._create_instance(
-        type=ruleset_type,
         fieldset_id=fieldset.id,
         template_id=template_2.id,
     )
@@ -680,33 +658,6 @@ def test__create_instance__explicit_template_id__ok():
     # assert
     assert result.template_id == template_2.id
     assert result.fieldset_id == fieldset.id
-
-
-def test__create_instance__fieldset_id_is_none__raise_exception():
-
-    """
-    fieldset_id is None
-    """
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    service = FieldsetTemplateRuleSetService(
-        user=user,
-        is_superuser=False,
-        auth_type=AuthTokenType.USER,
-    )
-    ruleset_type = FieldSetRuleType.VALIDATOR
-
-    # act
-    with pytest.raises(IntegrityError) as ex:
-        service._create_instance(type=ruleset_type)
-
-    # assert
-    assert str(ex.value).split('\n')[0] == (
-        'null value in column "fieldset_id" of relation '
-        '"processes_fieldsettemplateruleset" violates not-null constraint'
-    )
 
 
 def test__create_instance__api_name_provided__ok():
@@ -729,12 +680,10 @@ def test__create_instance__api_name_provided__ok():
         is_superuser=False,
         auth_type=AuthTokenType.USER,
     )
-    ruleset_type = FieldSetRuleType.VALIDATOR
     api_name = 'ruleset-custom-1'
 
     # act
     result = service._create_instance(
-        type=ruleset_type,
         fieldset_id=fieldset.id,
         api_name=api_name,
     )
@@ -763,11 +712,9 @@ def test__create_instance__api_name_omitted__ok():
         is_superuser=False,
         auth_type=AuthTokenType.USER,
     )
-    ruleset_type = FieldSetRuleType.VALIDATOR
 
     # act
     result = service._create_instance(
-        type=ruleset_type,
         fieldset_id=fieldset.id,
         api_name='',
     )
@@ -795,7 +742,6 @@ def test__validate__default_params__ok(mocker):
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
         fieldset_rule=ruleset,
@@ -899,7 +845,6 @@ def test__validate__operator_not_a_sum_operator__ok(mocker):
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
         fieldset_rule=ruleset,
@@ -951,7 +896,6 @@ def test__set_fields__default_params__ok(mocker):
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
     )
     field_1 = FieldTemplate.objects.create(
         account=account,
@@ -1006,7 +950,6 @@ def test__set_fields__non_empty_fields_api_names__ok(mocker):
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
     )
     field_1 = FieldTemplate.objects.create(
         account=account,
@@ -1071,7 +1014,6 @@ def test__set_fields__empty_fields_api_names__ok(mocker):
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
     )
     field_1 = FieldTemplate.objects.create(
         account=account,
@@ -1122,7 +1064,6 @@ def test__create_group_and__default_params__ok(mocker):
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
         fieldset_rule=ruleset,
@@ -1178,7 +1119,6 @@ def test__create_group_and__api_name_provided__ok(mocker):
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
         fieldset_rule=ruleset,
@@ -1231,7 +1171,6 @@ def test__create_group_and__api_name_omitted__ok(mocker):
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
         fieldset_rule=ruleset,
@@ -1283,7 +1222,6 @@ def test__create_group_and__value_provided__ok(mocker):
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
         fieldset_rule=ruleset,
@@ -1336,7 +1274,6 @@ def test__update_group_and__default_params__ok(mocker):
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
         fieldset_rule=ruleset,
@@ -1395,7 +1332,6 @@ def test__update_group_and__operator_in_payload__ok(mocker):
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
         fieldset_rule=ruleset,
@@ -1457,7 +1393,6 @@ def test__update_group_and__value_in_payload__ok(mocker):
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
         fieldset_rule=ruleset,
@@ -1519,7 +1454,6 @@ def test__update_group_and__operator_and_value_in_payload__ok(mocker):
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
         fieldset_rule=ruleset,
@@ -1583,7 +1517,6 @@ def test__update_group_and__no_operator_or_value__ok(mocker):
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
         fieldset_rule=ruleset,
@@ -1644,7 +1577,6 @@ def test__set_groups_and__default_params__ok(mocker):
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
         fieldset_rule=ruleset,
@@ -1706,7 +1638,6 @@ def test__set_groups_and__matching_api_name__ok(mocker):
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
         fieldset_rule=ruleset,
@@ -1776,7 +1707,6 @@ def test__set_groups_and__unknown_or_missing_api_name__ok(mocker):
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
         fieldset_rule=ruleset,
@@ -1847,7 +1777,6 @@ def test__set_groups_and__mixed_payload__ok(mocker):
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
         fieldset_rule=ruleset,
@@ -1935,7 +1864,6 @@ def test__create_group_or__default_params__ok(mocker):
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
     )
     group_or_data = {}
     service = FieldsetTemplateRuleSetService(
@@ -1979,7 +1907,6 @@ def test__create_group_or__api_name_provided__ok(mocker):
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
     )
     api_name = 'group-or-custom-1'
     group_or_data = {
@@ -2023,7 +1950,6 @@ def test__create_group_or__api_name_omitted__ok(mocker):
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
     )
     group_or_data = {
         'api_name': '',
@@ -2066,7 +1992,6 @@ def test__create_group_or__groups_and_omitted__ok(mocker):
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
     )
     group_or_data = {
         'api_name': 'group-or-1',
@@ -2110,7 +2035,6 @@ def test__create_group_or__groups_and_is_not_none__ok(mocker):
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
     )
     group_and_data_1 = {
         'operator': FieldSetRuleOperator.SUM_EQUAL,
@@ -2160,7 +2084,6 @@ def test__update_group_or__default_params__ok(mocker):
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
         fieldset_rule=ruleset,
@@ -2211,7 +2134,6 @@ def test__update_group_or__groups_and_omitted__ok(mocker):
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
         fieldset_rule=ruleset,
@@ -2272,7 +2194,6 @@ def test__update_group_or__groups_and_is_not_none__ok(mocker):
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
     )
     group_or = FieldSetTemplateRuleGroupOr.objects.create(
         fieldset_rule=ruleset,
@@ -2333,7 +2254,6 @@ def test__set_groups_or__default_params__ok(mocker):
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
     )
     group_or_1 = FieldSetTemplateRuleGroupOr.objects.create(
         fieldset_rule=ruleset,
@@ -2385,7 +2305,6 @@ def test__set_groups_or__matching_api_name__ok(mocker):
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
     )
     group_or_1 = FieldSetTemplateRuleGroupOr.objects.create(
         fieldset_rule=ruleset,
@@ -2444,7 +2363,6 @@ def test__set_groups_or__unknown_or_missing_api_name__ok(mocker):
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
     )
     group_or_1 = FieldSetTemplateRuleGroupOr.objects.create(
         fieldset_rule=ruleset,
@@ -2503,7 +2421,6 @@ def test__set_groups_or__mixed_payload__ok(mocker):
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
     )
     group_or_1 = FieldSetTemplateRuleGroupOr.objects.create(
         fieldset_rule=ruleset,
@@ -2576,7 +2493,6 @@ def test__create_related__default_params__ok(mocker):
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
     )
     service = FieldsetTemplateRuleSetService(
         user=user,
@@ -2621,7 +2537,6 @@ def test__create_related__fields_is_none__ok(mocker):
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
     )
     service = FieldsetTemplateRuleSetService(
         user=user,
@@ -2666,7 +2581,6 @@ def test__create_related__fields_is_not_none__ok(mocker):
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
     )
     fields = ['field-1']
     service = FieldsetTemplateRuleSetService(
@@ -2712,7 +2626,6 @@ def test__create_related__groups_or_is_none__ok(mocker):
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
     )
     service = FieldsetTemplateRuleSetService(
         user=user,
@@ -2757,7 +2670,6 @@ def test__create_related__groups_or_is_not_none__ok(mocker):
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
     )
     groups_or = [
         {
@@ -2807,7 +2719,6 @@ def test_create__default_params__ok(mocker):
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
     )
     service = FieldsetTemplateRuleSetService(
         user=user,
@@ -2857,7 +2768,6 @@ def test_partial_update__default_params__ok(mocker):
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
         message=None,
         order=0,
     )
@@ -2907,7 +2817,6 @@ def test_partial_update__scalar_fields_updated__ok(mocker):
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
         message=None,
         order=0,
     )
@@ -2962,7 +2871,6 @@ def test_partial_update__fields_is_none__ok(mocker):
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
         message=None,
     )
     message = 'Updated message'
@@ -3014,7 +2922,6 @@ def test_partial_update__fields_is_not_none__ok(mocker):
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
         message=None,
     )
     message = 'Updated message'
@@ -3067,7 +2974,6 @@ def test_partial_update__groups_or_is_none__ok(mocker):
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
         order=0,
     )
     order = 3
@@ -3119,7 +3025,6 @@ def test_partial_update__groups_or_is_not_none__ok(mocker):
         fieldset=fieldset,
         account=account,
         template=template,
-        type=FieldSetRuleType.VALIDATOR,
         order=0,
     )
     order = 3

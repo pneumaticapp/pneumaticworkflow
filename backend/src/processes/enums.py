@@ -777,13 +777,17 @@ class FieldSetLayout:
 
 class FieldSetRuleType:
 
+    # TODO Deprecated
+
     VALIDATOR = 'validator'
+    SUM_EQUAL = 'sum_equal'
 
     CHOICES = (
+        (SUM_EQUAL, 'Sum equal'),
         (VALIDATOR, 'Validator'),
     )
 
-    LITERALS = Literal[VALIDATOR]
+    LITERALS = Literal[SUM_EQUAL, VALIDATOR]
 
 
 class FieldRuleType:

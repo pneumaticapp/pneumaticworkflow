@@ -7,7 +7,6 @@ from django.utils import timezone
 from src.accounts.enums import BillingPlanType
 from src.accounts.messages import MSG_A_0035, MSG_A_0037, MSG_A_0041
 from src.processes.enums import (
-    FieldSetRuleType,
     FieldSetRuleOperator,
     FieldRuleType,
     FieldRuleOperator,
@@ -97,7 +96,6 @@ def test_list_fieldsets__all_data__ok(api_client):
     assert len(fieldset_data['rulesets']) == 1
     rule_data = fieldset_data['rulesets'][0]
     assert rule_data['api_name'] == rule.api_name
-    assert rule_data['type'] == FieldSetRuleType.VALIDATOR
     assert rule_data['message'] is None
     assert rule_data['order'] == 0
     assert rule_data['fields'] == []

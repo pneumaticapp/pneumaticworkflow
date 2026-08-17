@@ -12,7 +12,6 @@ from src.processes.enums import (
     FieldRuleType,
     FieldSetLayout,
     FieldSetRuleOperator,
-    FieldSetRuleType,
     FieldType,
     LabelPosition,
 )
@@ -55,7 +54,6 @@ def test_create__all_fields__ok(api_client, mocker):
         'rulesets': [
             {
                 'api_name': 'r1',
-                'type': FieldSetRuleType.VALIDATOR,
                 'order': 1,
                 'fields': [],
                 'groups_or': [
@@ -124,7 +122,6 @@ def test_create__all_fields__ok(api_client, mocker):
 
     assert len(response.data['rulesets']) == 1
     ruleset_data = response.data['rulesets'][0]
-    assert ruleset_data['type'] == FieldSetRuleType.VALIDATOR
     assert ruleset_data['api_name'] == ruleset.api_name
 
     assert len(ruleset_data['groups_or']) == 1
@@ -621,7 +618,6 @@ def test_create__rule_invalid_operator__validation_error(api_client, mocker):
         'name': 'Invalid Operator Fieldset',
         'rulesets': [
             {
-                'type': FieldSetRuleType.VALIDATOR,
                 'groups_or': [
                     {
                         'groups_and': [
@@ -665,7 +661,6 @@ def test_create__rule_missing_operator__validation_error(api_client, mocker):
         'name': 'Missing Operator Fieldset',
         'rulesets': [
             {
-                'type': FieldSetRuleType.VALIDATOR,
                 'groups_or': [
                     {
                         'groups_and': [
@@ -708,7 +703,7 @@ def test_create__rule_missing_group_or__validation_error(api_client, mocker):
         'name': 'Missing GroupOr Fieldset',
         'rulesets': [
             {
-                'type': FieldSetRuleType.VALIDATOR,
+                'api_name': 'ruleset-1',
             },
         ],
     }
@@ -773,8 +768,8 @@ def test_create__field_rule_missing_type__validation_error(api_client, mocker):
 def test_create__field_rule_invalid_type__validation_error(api_client, mocker):
 
     """
-    Create fieldset with a field rule using type 'sum_equal' which belongs to
-    FieldSetRuleType (not FieldRuleType) and verify 400 is returned.
+    Create fieldset with a field rule using type 'sum_equal'
+    and verify 400 is returned.
     """
 
     # arrange
@@ -790,7 +785,6 @@ def test_create__field_rule_invalid_type__validation_error(api_client, mocker):
                 'api_name': 'f-1',
                 'rulesets': [
                     {
-                        'type': FieldSetRuleType.VALIDATOR,
                         'groups_or': [],
                     },
                 ],

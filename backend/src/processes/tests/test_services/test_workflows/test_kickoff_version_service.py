@@ -3,7 +3,6 @@ import pytest
 from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
     FieldSetLayout,
-    FieldSetRuleType,
     FieldType,
     LabelPosition, FieldSetRuleOperator,
 )
@@ -361,7 +360,6 @@ def test__update_fieldset_rules__provided__ok():
     rules_data = [
         {
             'api_name': 'rule-1',
-            'type': FieldSetRuleType.VALIDATOR,
             'value': '100',
         },
     ]
@@ -376,7 +374,6 @@ def test__update_fieldset_rules__provided__ok():
     rules = fieldset.rulesets.all()
     assert rules.count() == 1
     assert rules[0].api_name == 'rule-1'
-    assert rules[0].type == FieldSetRuleType.SUM_EQUAL
     assert rules[0].value == '100'
     assert rules[0].account_id == account.id
     assert FieldSetRule.objects.filter(
@@ -846,7 +843,6 @@ def test__update_fieldsets__provided__ok(mocker):
     rules_data_1 = [
         {
             'api_name': 'rule-1',
-            'type': FieldSetRuleType.VALIDATOR,
             'value': '100',
         },
     ]

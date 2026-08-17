@@ -10,7 +10,6 @@ from src.generics.exceptions import BaseServiceException
 from src.processes.enums import (
     FieldSetLayout,
     LabelPosition,
-    FieldSetRuleType,
     FieldType,
     FieldRuleType,
     FieldRuleOperator,
@@ -61,7 +60,6 @@ def test_partial_update__fieldset_data__ok(api_client, mocker):
         ],
         'rulesets': [
             {
-                'type': FieldSetRuleType.VALIDATOR,
                 'api_name': rule_api_name,
                 'fields': [field_api_name],
                 'groups_or': [
@@ -173,7 +171,6 @@ def test_partial_update__rules_operator__ok(
         'rulesets': [
             {
                 'api_name': 'r-1',
-                'type': FieldSetRuleType.VALIDATOR,
                 'order': 1,
                 'fields': ['field-1', 'field-2'],
                 'groups_or': [
@@ -372,7 +369,6 @@ def test_partial_update__response_rules_data__ok(api_client, mocker):
     user = create_test_owner(account=account)
     fieldset = create_test_shared_fieldset(
         account=account,
-        rule_type=FieldSetRuleType.VALIDATOR,
         rule_value='100',
         rule_message='Error message',
     )
@@ -505,74 +501,6 @@ def test_partial_update__response_fields_data__ok(api_client, mocker):
     partial_update_mock.assert_called_once_with(
         name=data['name'],
     )
-
-
-@pytest.mark.parametrize(
-    'rule_type',
-    (
-        FieldSetRuleType.VALIDATOR,
-    ),
-)
-def test_partial_update__rules_type__ok(
-    api_client,
-    rule_type,
-    mocker,
-):
-
-    """ Valid fieldset rules->type values are accepted """
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    fieldset = create_test_shared_fieldset(account=account)
-    data = {
-        'rulesets': [
-            {
-                'api_name': 'r-1',
-                'type': rule_type,
-                'order': 1,
-                'fields': [],
-                'groups_or': [
-                    {
-                        'api_name': 'g-or-1',
-                        'groups_and': [
-                            {
-                                'api_name': 'g-and-1',
-                                'operator': FieldSetRuleOperator.SUM_EQUAL,
-                                'value': '100',
-                            },
-                        ],
-                    },
-                ],
-            },
-        ],
-    }
-    field_set_template_service_init_mock = mocker.patch.object(
-        FieldSetTemplateService,
-        attribute='__init__',
-        return_value=None,
-    )
-    partial_update_mock = mocker.patch(
-        'src.processes.views.fieldset.FieldSetTemplateService.partial_update',
-        return_value=fieldset,
-    )
-    api_client.token_authenticate(user=user)
-
-    # act
-    response = api_client.patch(
-        f'/fieldsets/{fieldset.id}',
-        data=data,
-    )
-
-    # assert
-    assert response.status_code == 200
-    field_set_template_service_init_mock.assert_called_once_with(
-        user=user,
-        instance=fieldset,
-        is_superuser=False,
-        auth_type=AuthTokenType.USER,
-    )
-    partial_update_mock.assert_called_once()
 
 
 @pytest.mark.parametrize(
@@ -1095,7 +1023,6 @@ def test_partial_update__invalid_rules_operator__validation_error(
         'rulesets': [
             {
                 'api_name': 'r-1',
-                'type': FieldSetRuleType.VALIDATOR,
                 'order': 1,
                 'fields': [],
                 'groups_or': [
@@ -1240,7 +1167,6 @@ def test_partial_update__two_rules_same_type__ok(api_client, mocker):
         'rulesets': [
             {
                 'api_name': existing_ruleset.api_name,
-                'type': FieldSetRuleType.VALIDATOR,
                 'fields': [field_1.api_name, field_2.api_name],
                 'groups_or': [
                     {
@@ -1254,7 +1180,6 @@ def test_partial_update__two_rules_same_type__ok(api_client, mocker):
                 ],
             },
             {
-                'type': FieldSetRuleType.VALIDATOR,
                 'fields': [field_1.api_name, field_2.api_name],
                 'groups_or': [
                     {

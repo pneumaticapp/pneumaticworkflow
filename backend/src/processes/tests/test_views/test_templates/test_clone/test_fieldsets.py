@@ -3,7 +3,6 @@ import pytest
 from src.processes.enums import (
     FieldSetLayout,
     FieldSetRuleOperator,
-    FieldSetRuleType,
     FieldType,
     LabelPosition,
     OwnerRole,
@@ -328,7 +327,6 @@ def test_clone__fieldset_with_rules__ok(api_client):
     rules = fieldset['rulesets']
     assert len(rules) == 1
     rule_data = rules[0]
-    assert rule_data['type'] == FieldSetRuleType.VALIDATOR
     assert rule_data['groups_or'][0]['groups_and'][0]['operator'] == (
         FieldSetRuleOperator.SUM_EQUAL
     )
@@ -540,7 +538,6 @@ def test_clone__fieldset_rule_multi_fields__ok(api_client):
     assert response.status_code == 200
     clone_fieldsets = response.data['kickoff']['fieldsets'][0]
     rule_data = clone_fieldsets['rulesets'][0]
-    assert rule_data['type'] == FieldSetRuleType.VALIDATOR
     assert rule_data['groups_or'][0]['groups_and'][0]['operator'] == (
         FieldSetRuleOperator.SUM_EQUAL
     )

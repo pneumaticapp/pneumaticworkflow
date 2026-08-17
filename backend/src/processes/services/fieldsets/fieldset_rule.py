@@ -7,13 +7,11 @@ from django.db import transaction
 from src.generics.base.service import BaseModelService
 from src.processes.enums import (
     FieldSetRuleOperator,
-    FieldSetRuleType,
     FieldType,
 )
 from src.processes.messages.fieldset import MSG_FS_0005
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.models.templates.fieldset import (
-    FieldsetTemplate,
     FieldSetTemplateRuleGroupAnd,
     FieldSetTemplateRuleGroupOr,
     FieldSetTemplateRuleSet,
@@ -52,29 +50,19 @@ class FieldsetTemplateRuleSetService(BaseModelService):
         group_and: FieldSetTemplateRuleGroupAnd,
     ):
 
-        if (
-            self.instance.type == FieldSetRuleType.VALIDATOR
-            and group_and.operator in FieldSetRuleOperator.SUM_OPERATORS
-        ):
+        if group_and.operator in FieldSetRuleOperator.SUM_OPERATORS:
             self._validate_sum(group_and=group_and)
 
     def _create_instance(
         self,
-        type: FieldSetRuleType.LITERALS,  # noqa: A002
-        fieldset_id: Optional[int] = None,
+        fieldset_id: int,
         api_name: Optional[str] = None,
         message: Optional[str] = None,
         order: int = 0,
         template_id: Optional[int] = None,
         **kwargs,
     ):
-        if template_id is None and fieldset_id is not None:
-            template_id = (
-                FieldsetTemplate.objects
-                .filter(id=fieldset_id)
-                .values_list('template_id', flat=True)
-                .first()
-            )
+
         create_kwargs = {
             'account': self.account,
             'type': type,

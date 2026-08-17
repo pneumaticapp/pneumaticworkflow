@@ -2,8 +2,8 @@ import pytest
 
 from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
-    FieldSetRuleType,
-    FieldType, FieldSetRuleOperator,
+    FieldType,
+    FieldSetRuleOperator,
 )
 from src.processes.messages import fieldset as fs_messages
 from src.processes.models.templates.fieldset import (
@@ -50,7 +50,6 @@ def test__create_instance__with_template__ok():
     rule_template = FieldsetTemplateRule.objects.create(
         account=account,
         fieldset=fieldset_template,
-        type=FieldSetRuleType.VALIDATOR,
         value='100',
     )
     service = FieldSetRuleService(
@@ -68,7 +67,6 @@ def test__create_instance__with_template__ok():
     # assert
     assert service.instance is not None
     assert service.instance.fieldset_id == fieldset.id
-    assert service.instance.type == FieldSetRuleType.SUM_EQUAL
     assert service.instance.value == '100'
     assert service.instance.api_name == rule_template.api_name
     assert service.instance.account_id == account.id

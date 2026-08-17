@@ -1,7 +1,6 @@
 import pytest
 
 from src.processes.enums import (
-    FieldSetRuleType,
     FieldType,
     OwnerRole,
     OwnerType,
@@ -2797,7 +2796,6 @@ def test_update__duplicate_fieldset_rule_api_name__validation_error(
     shared_group_and = shared_ruleset.groups_or.first().groups_and.first()
     fs_rule_api_name = 'fs-ruleset'
     kickoff_ruleset_payload = {
-        'type': FieldSetRuleType.VALIDATOR,
         'api_name': fs_rule_api_name,
         'fields': [],
         'groups_or': [
@@ -2814,7 +2812,6 @@ def test_update__duplicate_fieldset_rule_api_name__validation_error(
         ],
     }
     task_ruleset_payload = {
-        'type': FieldSetRuleType.VALIDATOR,
         'api_name': fs_rule_api_name,
         'fields': [],
         'groups_or': [
