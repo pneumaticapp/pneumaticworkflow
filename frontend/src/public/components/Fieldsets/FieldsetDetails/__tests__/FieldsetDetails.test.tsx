@@ -137,10 +137,15 @@ jest.mock('../../../TemplateEdit/ExtraFields/utils/ExtraFieldsMap', () => ({
 }));
 
 jest.mock('../../../TemplateEdit/ExtraFields/utils/ExtraFieldIcon', () => ({
-  ExtraFieldIcon: jest.fn((props: { id: string; onClick: () => void }) =>
+  ExtraFieldIcon: jest.fn((props: { id: string; onClick: () => void; disabled?: boolean }) =>
     React.createElement('button', {
       'data-testid': `field-icon-${props.id}`,
-      onClick: props.onClick,
+      disabled: props.disabled,
+      onClick: () => {
+        if (!props.disabled) {
+          props.onClick();
+        }
+      },
     }),
   ),
 }));
@@ -354,22 +359,21 @@ describe('FieldsetDetails', () => {
     it('syncs description and labelPosition from fieldset', () => {
       renderWithState(makeLoadedState({ description: 'Test desc', labelPosition: 'left' }));
       const textarea = screen.getByLabelText(formatMsg('fieldsets.settings.description'));
-      const select = screen.getByLabelText(formatMsg('fieldsets.settings.label-position'));
       expect(textarea).toHaveValue('Test desc');
-      expect(select).toHaveValue('left');
+      const filterMock = getFilterSelectMock();
+      expect(filterMock).toHaveBeenCalledWith(
+        expect.objectContaining({ selectedOption: 'left' }),
+        {},
+      );
     });
 
-    // --- Новые тесты: синхронизация и редактирование Title ---
-
-    it('синхронизирует title из fieldset', () => {
-      // title из стора отображается в input
+    it('syncs title from fieldset', () => {
       renderWithState(makeLoadedState({ title: 'Custom Title' }));
       const input = screen.getByLabelText(formatMsg('fieldsets.settings.title'));
       expect(input).toHaveValue('Custom Title');
     });
 
-    it('активирует Save после изменения title', () => {
-      // аналог теста для description — новый хендлер handleSettingsTitleChange
+    it('enables Save after changing title', () => {
       renderWithState(makeLoadedState());
       const input = screen.getByLabelText(formatMsg('fieldsets.settings.title'));
       userEvent.clear(input);
@@ -378,8 +382,7 @@ describe('FieldsetDetails', () => {
       expect(screen.getByText(UNSAVED_HINT)).toBeInTheDocument();
     });
 
-    it('Save отправляет updateFieldsetAction только с изменённым title', () => {
-      // payload содержит только title, без description/fields/rules
+    it('Save dispatches updateFieldsetAction with only changed title', () => {
       renderWithState(makeLoadedState({ id: 10, title: 'Old' }));
       const input = screen.getByLabelText(formatMsg('fieldsets.settings.title'));
       userEvent.clear(input);
@@ -401,8 +404,7 @@ describe('FieldsetDetails', () => {
       expect(getUpdateActionMock().mock.calls[0][0]).not.toHaveProperty('rules');
     });
 
-    it('показывает warning и не отправляет PATCH при пустом title', () => {
-      // validateFieldsetTitle вернёт ключ ошибки для пустой строки
+    it('shows warning and does not dispatch PATCH when title is empty', () => {
       renderWithState(makeLoadedState({ id: 10, title: 'X' }));
       const input = screen.getByLabelText(formatMsg('fieldsets.settings.title'));
       userEvent.clear(input);
@@ -426,8 +428,11 @@ describe('FieldsetDetails', () => {
 
     it('enables Save after changing label position', () => {
       renderWithState(makeLoadedState());
-      const select = screen.getByLabelText(formatMsg('fieldsets.settings.label-position'));
-      userEvent.selectOptions(select, 'left');
+      const filterMock = getFilterSelectMock();
+      const labelPositionOnChange = filterMock.mock.calls[0][0].onChange;
+      act(() => {
+        labelPositionOnChange('left');
+      });
       expect(screen.getByRole('button', { name: SAVE_LABEL })).not.toBeDisabled();
     });
 
@@ -713,14 +718,18 @@ describe('FieldsetDetails', () => {
 
       userEvent.click(screen.getByRole('button', { name: new RegExp(ADD_RULE_TEXT, 'i') }));
 
-      expect(screen.getByTestId('filter-placeholder')).toHaveTextContent(
+      const getFieldsPlaceholder = () => {
+        const all = screen.getAllByTestId('filter-placeholder');
+        return all[all.length - 1];
+      };
+      expect(getFieldsPlaceholder()).toHaveTextContent(
         formatMsg('fieldsets.rule-fields-placeholder'),
       );
 
       userEvent.click(screen.getByTestId('filter-option-field-1'));
       userEvent.click(screen.getByTestId('filter-option-field-3'));
 
-      expect(screen.getByTestId('filter-placeholder')).toHaveTextContent(/^Total, Discount$/);
+      expect(getFieldsPlaceholder()).toHaveTextContent(/^Total, Discount$/);
     });
   });
 
@@ -837,8 +846,7 @@ describe('FieldsetDetails', () => {
       expect(getModifyDropdownProps().isReadOnly).toBe(true);
     });
 
-    it('рендерит not-linked баннер при пустом usage', () => {
-      // при usage=[] отображается текст "не привязан"
+    it('renders not-linked banner when usage is empty', () => {
       renderWithState(makeLoadedState());
       expect(screen.getByText(formatMsg('fieldsets.usage.not-linked'))).toBeInTheDocument();
     });
@@ -859,54 +867,48 @@ describe('FieldsetDetails', () => {
     });
   });
 
-  // --- Новый блок: Readonly mode при привязке филдсета (isLinked = usage.length > 0) ---
-  // Проверяем, что при наличии usage все редактируемые элементы заблокированы
-  describe('Readonly mode когда филдсет привязан к шаблонам', () => {
+  describe('Readonly mode when fieldset is linked to templates', () => {
     const LINKED_USAGE = [{ id: 1, name: 'Template 1' }];
 
-    it('Settings Title disabled при isLinked', () => {
-      // input для title должен быть disabled
+    it('disables Settings Title when isLinked', () => {
       renderWithState(makeLoadedState({ title: 'Custom', usage: LINKED_USAGE }));
       const input = screen.getByLabelText(formatMsg('fieldsets.settings.title'));
       expect(input).toBeDisabled();
     });
 
-    it('Settings Description disabled при isLinked', () => {
-      // textarea для description должен быть disabled
+    it('disables Settings Description when isLinked', () => {
       renderWithState(makeLoadedState({ usage: LINKED_USAGE }));
       const textarea = screen.getByLabelText(formatMsg('fieldsets.settings.description'));
       expect(textarea).toBeDisabled();
     });
 
-    it('Settings Label Position disabled при isLinked', () => {
-      // select для labelPosition должен быть disabled
+    it('disables Settings Label Position when isLinked', () => {
       renderWithState(makeLoadedState({ usage: LINKED_USAGE }));
-      const select = screen.getByLabelText(formatMsg('fieldsets.settings.label-position'));
-      expect(select).toBeDisabled();
+      const filterMock = getFilterSelectMock();
+      expect(filterMock).toHaveBeenCalledWith(
+        expect.objectContaining({ isDisabled: true }),
+        {},
+      );
     });
 
-    it('Save bar скрыт при isLinked', () => {
-      // кнопка Save не должна рендериться
+    it('hides Save bar when isLinked', () => {
       renderWithState(makeLoadedState({ usage: LINKED_USAGE }));
       expect(screen.queryByRole('button', { name: SAVE_LABEL })).not.toBeInTheDocument();
     });
 
-    it('Add Rule кнопка скрыта при isLinked', () => {
-      // кнопка добавления правила не рендерится
+    it('hides Add Rule button when isLinked', () => {
       renderWithState(makeLoadedState({ usage: LINKED_USAGE }));
       expect(screen.queryByRole('button', { name: new RegExp(ADD_RULE_TEXT, 'i') })).not.toBeInTheDocument();
     });
 
-    it('Rule delete кнопка скрыта при isLinked', () => {
-      // кнопка удаления правила не рендерится (условный рендер !isLinked)
+    it('hides Rule delete button when isLinked', () => {
       const rules = [makeFieldsetTemplateRule({ apiName: 'rule-1', value: '100', fields: ['f1'] })];
       const fields = [makeField({ apiName: 'f1', order: 1 })];
       renderWithState(makeLoadedState({ fields, rules, usage: LINKED_USAGE }));
       expect(screen.queryByText(RULE_DELETE_TEXT)).not.toBeInTheDocument();
     });
 
-    it('Rule inputs disabled при isLinked', () => {
-      // value input и type select правила disabled
+    it('disables Rule inputs when isLinked', () => {
       const rules = [makeFieldsetTemplateRule({ apiName: 'rule-1', value: '100', fields: ['f1'] })];
       const fields = [makeField({ apiName: 'f1', order: 1 })];
       renderWithState(makeLoadedState({ fields, rules, usage: LINKED_USAGE }));
@@ -914,13 +916,12 @@ describe('FieldsetDetails', () => {
       const ruleValueInput = screen.getByDisplayValue('100');
       expect(ruleValueInput).toBeDisabled();
 
-      // type select тоже disabled
-      const ruleTypeSelect = screen.getByDisplayValue(formatMsg('fieldsets.rule-type-sum_equal'));
-      expect(ruleTypeSelect).toBeDisabled();
+      const filterMock = getFilterSelectMock();
+      const lastCall = filterMock.mock.calls[filterMock.mock.calls.length - 1];
+      expect(lastCall[0]).toEqual(expect.objectContaining({ isDisabled: true }));
     });
 
-    it('ExtraFieldIntl получает isDisabled=true при isLinked', () => {
-      // wrapper-подход: проверяем prop isDisabled через mock.calls
+    it('passes isDisabled=true to ExtraFieldIntl when isLinked', () => {
       const fields = [makeField({ apiName: 'f1', order: 1 })];
       renderWithState(makeLoadedState({ fields, usage: LINKED_USAGE }));
 
@@ -929,8 +930,7 @@ describe('FieldsetDetails', () => {
       expect(lastCall[0].isDisabled).toBe(true);
     });
 
-    it('FilterSelect получает isDisabled=true при isLinked', () => {
-      // wrapper-подход: проверяем prop isDisabled через mock.calls
+    it('passes isDisabled=true to FilterSelect when isLinked', () => {
       const rules = [makeFieldsetTemplateRule({ apiName: 'rule-1', value: '100', fields: ['f1'] })];
       const fields = [makeField({ apiName: 'f1', order: 1 })];
       renderWithState(makeLoadedState({ fields, rules, usage: LINKED_USAGE }));
@@ -938,6 +938,34 @@ describe('FieldsetDetails', () => {
       const mock = getFilterSelectMock();
       const lastCall = mock.mock.calls[mock.mock.calls.length - 1];
       expect(lastCall[0].isDisabled).toBe(true);
+    });
+
+    it('does not set isDirty on reselecting the same label position', () => {
+      renderWithState(makeLoadedState({ labelPosition: 'left' }));
+      const filterMock = getFilterSelectMock();
+
+      const labelPositionCall = filterMock.mock.calls.find(
+        (call: [{ selectedOption?: string }]) => call[0].selectedOption === 'left',
+      );
+      const labelPositionOnChange = labelPositionCall[0].onChange;
+
+      act(() => {
+        labelPositionOnChange('left');
+      });
+
+      const saveButton = screen.getByRole('button', { name: SAVE_LABEL });
+      expect(saveButton).toBeDisabled();
+      expect(screen.queryByText(UNSAVED_HINT)).not.toBeInTheDocument();
+    });
+
+    it('disables field creation icons in linked fieldset', () => {
+      renderWithState(makeLoadedState({ usage: LINKED_USAGE }));
+
+      const stringFieldIcon = screen.getByTestId('field-icon-string');
+      userEvent.click(stringFieldIcon);
+
+      expect(getEmptyField).not.toHaveBeenCalled();
+      expect(screen.queryByRole('button', { name: SAVE_LABEL })).not.toBeInTheDocument();
     });
   });
 });
