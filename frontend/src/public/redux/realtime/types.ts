@@ -1,5 +1,6 @@
 import { IWorkflowLogItem } from "../../types/workflow";
 import { ETaskStatus } from "../../types/tasks";
+import { EUserStatus, IUserVacation } from "../../types/user";
 import { EUserGroupType } from "../team/types";
 
 export interface IWsEnvelopeBase {
@@ -20,6 +21,7 @@ export enum ERealtimeEnvelopeType {
   GROUP_CREATED = 'group_created',
   GROUP_UPDATED = 'group_updated',
   GROUP_DELETED = 'group_deleted',
+  ACCOUNT_PLAN_CHANGED = 'account_plan_changed',
 }
 
 export type IRealtimeWsEnvelope =
@@ -35,6 +37,8 @@ export type IRealtimeWsEnvelope =
   | (IWsEnvelopeBase & { type: ERealtimeEnvelopeType.GROUP_CREATED; data: IWsGroupData })
   | (IWsEnvelopeBase & { type: ERealtimeEnvelopeType.GROUP_UPDATED; data: IWsGroupData })
   | (IWsEnvelopeBase & { type: ERealtimeEnvelopeType.GROUP_DELETED; data: IWsGroupData })
+  // account events
+  | (IWsEnvelopeBase & { type: ERealtimeEnvelopeType.ACCOUNT_PLAN_CHANGED; data: IWsAccountPlanChangedData })
   // notification events
   | (IWsEnvelopeBase & { type: ERealtimeEnvelopeType.NOTIFICATION_CREATED; data: IWsNotificationCreatedData })
   // process events
@@ -212,10 +216,13 @@ export interface IWsUserData {
   lastName: string;
   email: string;
   photo: string | null;
+  phone?: string;
+  status?: EUserStatus;
   isAdmin: boolean;
   isAccountOwner: boolean;
   managerId: number | null;
   subordinatesIds: number[];
+  vacation?: IUserVacation | null;
 }
 
 export interface IWsGroupData {
@@ -224,6 +231,11 @@ export interface IWsGroupData {
   photo: string | null;
   type: EUserGroupType;
   users: number[];
+}
+
+export interface IWsAccountPlanChangedData {
+  activeUsers: number;
+  tenantsActiveUsers: number;
 }
 
 // ======================= utils

@@ -1469,6 +1469,7 @@ export const ruMessages = {
   'fieldset.validation-error.sum-max': 'Сумма числовых полей в «{name}» не должна превышать {value}.',
   'fieldsets.usage.linked': 'Используется в {count} {count, plural, one {шаблоне} few {шаблонах} other {шаблонах}}. Редактирование заблокировано.',
   'fieldsets.usage.not-linked': 'Не используется ни в одном шаблоне',
+  'fieldsets.readonly-badge': 'Только чтение',
   'fieldsets.usage.show': 'Показать',
   'fieldsets.usage.hide': 'Скрыть',
   'fieldsets.usage.disabled-tooltip': 'Набор полей используется в шаблонах. Редактирование и удаление заблокированы.',

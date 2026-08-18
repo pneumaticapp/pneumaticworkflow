@@ -62,17 +62,20 @@
 }
 
 .settings-label {
-  font-weight: 600;
-  color: var(--pneumatic-color-black72);
   display: flex;
   gap: 0.4rem;
+  font-weight: 600;
+  color: var(--pneumatic-color-black72);
 
   @mixin text-base;
 }
 
 .settings-description {
+  display: block;
+  box-sizing: border-box;
+  width: 100% !important;
+  max-width: 100%;
   padding: 1.2rem 1.6rem;
-  width: 100%;
   min-height: 8rem;
   font-family: inherit;
   resize: vertical;
@@ -88,30 +91,78 @@
   }
 
   &:disabled {
-    @mixin fieldset-textarea-readonly;
+    cursor: default;
+    color: var(--pneumatic-color-black72);
+    background-color: var(--pneumatic-color-black4);
+    border: 0.1rem solid transparent;
+    opacity: 1;
+    resize: none !important;
+    field-sizing: content;
+    min-height: unset;
+    white-space: pre-wrap;
+    word-break: break-word;
   }
 }
 
-.settings-label-position {
+.settings-select {
   padding: 0.8rem 1.2rem;
   width: fit-content;
-  min-width: 20rem;
-  cursor: pointer;
+  min-width: 15rem;
   background-color: var(--pneumatic-color-white);
   border: 1px solid var(--pneumatic-color-black16);
   border-radius: 0.8rem;
-  outline: none;
   transition: border-color 0.2s;
-  appearance: auto;
 
-  @mixin text-base;
-
-  &:focus {
+  &:focus-within,
+  &:hover:not(:has(:disabled)) {
     border-color: var(--pneumatic-color-blue);
   }
 
-  &:disabled {
-    @mixin fieldset-field-readonly;
+  &:has(:disabled),
+  &:has(button:disabled),
+  &[class*="filter-select_disabled"] {
+    cursor: default;
+    background-color: var(--pneumatic-color-black4);
+    border: 0.1rem solid transparent;
+    opacity: 1;
+
+    button,
+    span {
+      color: var(--pneumatic-color-black72);
+    }
+
+    svg {
+      color: var(--pneumatic-color-black32);
+    }
+  }
+}
+
+.settings-select__toggle {
+  @mixin text-base;
+
+  font-weight: normal !important;
+  color: var(--pneumatic-color-black100);
+
+  &:hover {
+    color: var(--pneumatic-color-black100) !important;
+  }
+}
+
+.settings-select__toggle:focus,
+.settings-select__toggle:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.settings-select__menu {
+  margin-left: 0 !important;
+  width: 100%;
+
+  button:focus,
+  button:focus-visible,
+  button:active {
+    outline: none !important;
+    box-shadow: none !important;
   }
 }
 
@@ -128,23 +179,48 @@
 }
 
 .settings-title {
+  display: block;
+  box-sizing: border-box;
+  width: 100% !important;
+  max-width: 100%;
   padding: 0.8rem 1.2rem;
-  width: fit-content;
-  min-width: 20rem;
+  font-family: inherit;
+  resize: none !important;
   border: 1px solid var(--pneumatic-color-black16);
   border-radius: 0.8rem;
   outline: none;
   transition: border-color 0.2s;
 
   @mixin text-base;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 
   &:focus {
     border-color: var(--pneumatic-color-blue);
   }
 
   &:disabled {
-    @mixin fieldset-field-readonly;
+    cursor: default;
+    color: var(--pneumatic-color-black72);
+    background-color: var(--pneumatic-color-black4);
+    border: 0.1rem solid transparent;
+    opacity: 1;
+    resize: none !important;
+    field-sizing: content;
+    min-height: unset;
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow: visible;
   }
+
+  &::-webkit-resizer {
+    display: none !important;
+  }
+}
+
+.settings-description::-webkit-resizer {
+  display: none !important;
 }
 
 .settings-title_error {
@@ -158,6 +234,7 @@
 }
 
 .components {
+  margin-bottom: 2.4rem;
   display: flex;
   flex-flow: row nowrap;
   overflow-x: scroll;
@@ -177,6 +254,10 @@
 .fields {
   margin-top: 1.6rem;
 
+  input {
+    text-overflow: ellipsis;
+  }
+
   [data-use-input]:disabled {
     cursor: default !important;
     resize: none !important;
@@ -185,6 +266,18 @@
     border: 1px solid transparent !important;
     border-radius: 0.8rem !important;
     opacity: 1 !important;
+  }
+
+  &.fieldset_readonly textarea[data-use-input]:disabled {
+    field-sizing: content;
+    min-height: unset;
+    max-width: 100%;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  &.fieldset_readonly [class*="kickoff-create-field-option__labeled-checkbox"] {
+    align-items: flex-start;
   }
 
   [class*="kick-off-input__name-textarea"]:disabled,
@@ -203,13 +296,19 @@
   }
 
   [class*="kickoff-create-field-option__input"]:disabled {
-    @mixin fieldset-option-readonly;
+    field-sizing: content;
+    width: auto !important;
+    padding: 0.4rem 1.2rem;
+    border-radius: 0.6rem;
     max-width: 100%;
   }
 
   [class*="labeled-checkbox__input"]:disabled,
   [class*="labeled-radiobutton__input"]:disabled {
-    @mixin fieldset-option-readonly;
+    field-sizing: content;
+    width: auto !important;
+    padding: 0.4rem 1.2rem;
+    border-radius: 0.6rem;
     max-width: calc(100% - 3.2rem);
   }
 
@@ -248,6 +347,16 @@
   &.fieldset_readonly [class*="edit-name-button"],
   &.fieldset_readonly [class*="kick-off-edit-name"] {
     display: none !important;
+  }
+
+  &.fieldset_readonly [class*="kick-off-input"] [class*="icon-container"] [class*="icon"] {
+    color: var(--pneumatic-color-black16);
+
+    svg,
+    svg path {
+      fill: var(--pneumatic-color-black16);
+      color: var(--pneumatic-color-black16);
+    }
   }
 }
 
@@ -359,7 +468,11 @@
   }
 
   &:disabled {
-    @mixin fieldset-field-readonly;
+    cursor: default;
+    color: var(--pneumatic-color-black72);
+    background-color: var(--pneumatic-color-black4);
+    border: 0.1rem solid transparent;
+    opacity: 1;
   }
 }
 
@@ -380,7 +493,11 @@
   }
 
   &:disabled {
-    @mixin fieldset-field-readonly;
+    cursor: default;
+    color: var(--pneumatic-color-black72);
+    background-color: var(--pneumatic-color-black4);
+    border: 0.1rem solid transparent;
+    opacity: 1;
     opacity: 0.55;
   }
 }
@@ -463,6 +580,19 @@
 .usage-banner .usage-banner__row .usage-banner__dropdown .usage-banner__option {
   display: block !important;
   @mixin text-truncate;
+}
+
+.usage-banner__option-tooltip {
+  span {
+    display: block;
+    width: 100%;
+    @mixin text-truncate;
+  }
+}
+
+.usage-banner__tooltip-content {
+  padding: 0.4rem 0.8rem;
+  text-align: center;
 }
 
 .usage-banner__dropdown button {

@@ -95,7 +95,7 @@ export function ProfileAccount({
           <AttachmentField
             title={formatMessage({ id: 'user-info.logo-sm' })}
             accountId={accountId!}
-            uploadedFiles={logoSm ? [getFileByUrl(logoSm)] : []}
+            uploadedFiles={state.logoSm ? [getFileByUrl(state.logoSm)] : []}
             setUploadedFiles={(files) => changeField('logoSm')(getUrlByFile(files[0]))}
             description={formatMessage({ id: 'user-info.logo-sm-desc' })}
             containerClassName={styles['field']}
@@ -107,7 +107,7 @@ export function ProfileAccount({
           <AttachmentField
             title={formatMessage({ id: 'user-info.logo-lg' })}
             accountId={accountId!}
-            uploadedFiles={logoLg ? [getFileByUrl(logoLg)] : []}
+            uploadedFiles={state.logoLg ? [getFileByUrl(state.logoLg)] : []}
             setUploadedFiles={(files) => changeField('logoLg')(getUrlByFile(files[0]))}
             description={formatMessage({ id: 'user-info.logo-lg-desc' })}
             containerClassName={styles['field']}

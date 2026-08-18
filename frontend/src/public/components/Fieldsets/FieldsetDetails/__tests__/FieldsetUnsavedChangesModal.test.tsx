@@ -121,14 +121,14 @@ describe('FieldsetUnsavedChangesModal', () => {
 
   describe('Conditional navigation on Save button click in modal', () => {
     it('passes onSave handler to modal options', () => {
-      const onSaveMock = jest.fn().mockReturnValue(true);
+      const onSaveMock = jest.fn();
       render(React.createElement(FieldsetUnsavedChangesModal, { isChanged: true, onSave: onSaveMock }));
 
       expect(RouteLeavingGuard).toHaveBeenCalledTimes(1);
     });
 
-    it('calls confirmLeave when onSave handler returns true', () => {
-      const onSaveMock = jest.fn().mockReturnValue(true);
+    it('calls onSave with confirmLeave callback on Save click', () => {
+      const onSaveMock = jest.fn();
       render(React.createElement(FieldsetUnsavedChangesModal, { isChanged: true, onSave: onSaveMock }));
 
       const renderControlls = (RouteLeavingGuard as jest.Mock).mock.calls[0][0].renderControlls;
@@ -141,25 +141,7 @@ describe('FieldsetUnsavedChangesModal', () => {
       saveButton.click();
 
       expect(onSaveMock).toHaveBeenCalledTimes(1);
-      expect(confirmLeaveMock).toHaveBeenCalledTimes(1);
-    });
-
-    it('calls stay() and does not call confirmLeave when onSave returns false', () => {
-      const onSaveMock = jest.fn().mockReturnValue(false);
-      render(React.createElement(FieldsetUnsavedChangesModal, { isChanged: true, onSave: onSaveMock }));
-
-      const renderControlls = (RouteLeavingGuard as jest.Mock).mock.calls[0][0].renderControlls;
-      const confirmLeaveMock = jest.fn();
-      const stayMock = jest.fn();
-
-      const controls = render(renderControlls(confirmLeaveMock, stayMock));
-      const saveButton = controls.getByText(formatMsg('fieldsets.leave-unsaved-save'));
-
-      saveButton.click();
-
-      expect(onSaveMock).toHaveBeenCalledTimes(1);
-      expect(confirmLeaveMock).not.toHaveBeenCalled();
-      expect(stayMock).toHaveBeenCalledTimes(1);
+      expect(onSaveMock).toHaveBeenCalledWith(confirmLeaveMock);
     });
   });
 });

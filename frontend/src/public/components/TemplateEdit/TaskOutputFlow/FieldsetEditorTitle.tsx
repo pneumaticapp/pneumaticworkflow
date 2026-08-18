@@ -59,6 +59,8 @@ export function FieldsetEditorTitle({
       />
       {!isFocused && (
         <button
+          type="button"
+          aria-label="Edit"
           onClick={() => inputRef.current?.focus()}
           className={kickoffStyles['kick-off-edit-name']}
         >

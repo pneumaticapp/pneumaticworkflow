@@ -79,7 +79,7 @@ export function MergedOutputRows({
           >
             <div className={kickoffStyles['kick-off-input__field']}>
               <div className={styles['flow__fieldset-header']}>
-                {formatMessage({ id: 'fieldsets.header-label' })}: {name}
+                {formatMessage({ id: 'fieldsets.header-label' })}:{'\u00a0'}{name}
               </div>
               <FieldsetEditorTitle
                 apiNameBinding={apiNameBinding}
@@ -95,7 +95,7 @@ export function MergedOutputRows({
             </div>
             <div className={kickoffStyles['kick-off-input__dropdown']}>
               <FieldsetFlowRowDropdown
-                headerTitle={title}
+                headerTitle={apiNameBinding}
                 isFirstItem={isFirst}
                 isLastItem={isLast}
                 onMoveUp={() => onMoveRow(index, 'up')}

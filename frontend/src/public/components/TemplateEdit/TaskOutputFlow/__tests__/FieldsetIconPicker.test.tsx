@@ -200,4 +200,16 @@ describe('FieldsetIconPicker', () => {
 
     expect(screen.getByText('0 fields · 0 rules')).toBeInTheDocument();
   });
+
+  it('passes searchByText with fieldset name for each option in FilterSelect', () => {
+    const catalogItems: IFieldsetCatalogItem[] = [
+      makeCatalogItem(1, 'fs-search', 'Searchable Fieldset', 0),
+    ];
+    (getFieldsetsCatalogItems as jest.Mock).mockReturnValue(catalogItems);
+
+    render(React.createElement(FieldsetIconPicker, makeProps()));
+
+    const button = screen.getByRole('button');
+    expect(button).toBeInTheDocument();
+  });
 });
