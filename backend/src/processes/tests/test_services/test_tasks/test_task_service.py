@@ -1685,7 +1685,7 @@ def test_create_conditions_from_template__no_conditions__ok(mocker):
     workflow = create_test_workflow(user=user, template=template)
     task = workflow.tasks.get(number=1)
     create_rules_mock = mocker.patch(
-        'src.processes.services.tasks.mixins.ConditionMixin.create_rules',
+        'src.processes.services.tasks.mixins.ConditionMixin.create_rulesets',
     )
     service = TaskService(user=user, instance=task)
 
@@ -1711,7 +1711,7 @@ def test_create_conditions_from_template__with_conditions__ok(mocker):
     workflow = create_test_workflow(user=user, template=template)
     task = workflow.tasks.get(number=2)
     create_rules_mock = mocker.patch(
-        'src.processes.services.tasks.mixins.ConditionMixin.create_rules',
+        'src.processes.services.tasks.mixins.ConditionMixin.create_rulesets',
     )
     service = TaskService(user=user, instance=task)
 

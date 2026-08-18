@@ -11,7 +11,7 @@ from src.processes.enums import (
     FieldType,
     PerformerType,
     PredicateOperator,
-    WorkflowStatus,
+    WorkflowStatus, FieldSetRuleOperator,
 )
 from src.processes.models.workflows.fieldset import FieldSet, FieldSetRule
 from src.processes.models.workflows.fields import FieldSelection, TaskField
@@ -42,7 +42,6 @@ from src.processes.tests.fixtures import (
 
 from src.processes.enums import (
     FieldSetLayout,
-    FieldSetRuleType,
     LabelPosition,
 )
 
@@ -2226,7 +2225,6 @@ def test__update_fieldset_rules__rules_data_none__skip():
     existing_rule = FieldSetRule.objects.create(
         fieldset=fieldset,
         account_id=user.account_id,
-        type=FieldSetRuleType.SUM_EQUAL,
         value='100',
         api_name='rule-1',
     )
@@ -2261,7 +2259,6 @@ def test__update_fieldset_rules__rules_data_empty__skip():
     existing_rule = FieldSetRule.objects.create(
         fieldset=fieldset,
         account_id=user.account_id,
-        type=FieldSetRuleType.SUM_EQUAL,
         value='100',
         api_name='rule-1',
     )
@@ -2296,7 +2293,6 @@ def test__update_fieldset_rules__rules_data_provided__ok():
     old_rule = FieldSetRule.objects.create(
         fieldset=fieldset,
         account_id=user.account_id,
-        type=FieldSetRuleType.SUM_EQUAL,
         value='50',
         api_name='old-rule-1',
     )
@@ -2309,7 +2305,6 @@ def test__update_fieldset_rules__rules_data_provided__ok():
     rules_data = [
         {
             'api_name': 'rule-1',
-            'type': FieldSetRuleType.SUM_EQUAL,
             'value': '100',
         },
     ]
@@ -2322,7 +2317,6 @@ def test__update_fieldset_rules__rules_data_provided__ok():
     assert FieldSetRule.objects.filter(
         fieldset=fieldset,
         api_name='rule-1',
-        type=FieldSetRuleType.SUM_EQUAL,
         value='100',
     ).exists()
 
@@ -2626,7 +2620,6 @@ def test__update_fieldsets__data_provided__ok(mocker):
             'rules': [
                 {
                     'api_name': 'rule-1',
-                    'type': FieldSetRuleType.SUM_EQUAL,
                     'value': '100',
                 },
             ],
@@ -2691,10 +2684,10 @@ def test__update_field_rules__rules_provided__ok():
         workflow=workflow,
         task=task,
         api_name='fs-1',
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='100',
     )
-    rule = fieldset.rules.first()
+    rule = fieldset.rulesets.first()
     field = fieldset.fields.first()
     service = TaskUpdateVersionService(
         user=user,
@@ -2712,8 +2705,8 @@ def test__update_field_rules__rules_provided__ok():
     service._update_field_rules(field, field_data, fieldset)
 
     # assert
-    assert field.rules.count() == 1
-    assert field.rules.filter(id=rule.id).exists()
+    assert field.rulesets.count() == 1
+    assert field.rulesets.filter(id=rule.id).exists()
 
 
 def test__update_field_rules__rules_empty_list__clear():
@@ -2731,12 +2724,12 @@ def test__update_field_rules__rules_empty_list__clear():
         workflow=workflow,
         task=task,
         api_name='fs-1',
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='100',
     )
-    rule = fieldset.rules.get(api_name='fs-1-rule-1')
+    rule = fieldset.rulesets.get(api_name='fs-1-rule-1')
     field = fieldset.fields.get(api_name='fs-1-field-1')
-    field.rules.add(rule)
+    field.rulesets.add(rule)
     service = TaskUpdateVersionService(
         user=user,
         instance=task,
@@ -2749,7 +2742,7 @@ def test__update_field_rules__rules_empty_list__clear():
     service._update_field_rules(field, field_data, fieldset)
 
     # assert
-    assert field.rules.count() == 0
+    assert field.rulesets.count() == 0
 
 
 def test__update_field_rules__rules_key_missing__clear():
@@ -2767,12 +2760,12 @@ def test__update_field_rules__rules_key_missing__clear():
         workflow=workflow,
         task=task,
         api_name='fs-1',
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='100',
     )
-    rule = fieldset.rules.get(api_name='fs-1-rule-1')
+    rule = fieldset.rulesets.get(api_name='fs-1-rule-1')
     field = fieldset.fields.get(api_name='fs-1-field-1')
-    field.rules.add(rule)
+    field.rulesets.add(rule)
     service = TaskUpdateVersionService(
         user=user,
         instance=task,
@@ -2785,7 +2778,7 @@ def test__update_field_rules__rules_key_missing__clear():
     service._update_field_rules(field, field_data, fieldset)
 
     # assert
-    assert field.rules.count() == 0
+    assert field.rulesets.count() == 0
 
 
 def test__update_field_rules__multiple_rules__ok():
@@ -2803,14 +2796,13 @@ def test__update_field_rules__multiple_rules__ok():
         workflow=workflow,
         task=task,
         api_name='fs-1',
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='100',
     )
-    rule_1 = fieldset.rules.get(api_name='fs-1-rule-1')
+    rule_1 = fieldset.rulesets.get(api_name='fs-1-rule-1')
     rule_2 = FieldSetRule.objects.create(
         fieldset=fieldset,
         account_id=user.account_id,
-        type=FieldSetRuleType.SUM_EQUAL,
         value='200',
         api_name='fs-1-rule-2',
     )
@@ -2832,9 +2824,9 @@ def test__update_field_rules__multiple_rules__ok():
     service._update_field_rules(field, field_data, fieldset)
 
     # assert
-    assert field.rules.count() == 2
-    assert field.rules.filter(id=rule_1.id).exists()
-    assert field.rules.filter(id=rule_2.id).exists()
+    assert field.rulesets.count() == 2
+    assert field.rulesets.filter(id=rule_1.id).exists()
+    assert field.rulesets.filter(id=rule_2.id).exists()
 
 
 def test__update_field_rules__replaces_existing_rules__ok():
@@ -2851,19 +2843,18 @@ def test__update_field_rules__replaces_existing_rules__ok():
         workflow=workflow,
         task=task,
         api_name='fs-1',
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='50',
     )
-    old_rule = fieldset.rules.get(api_name='fs-1-rule-1')
+    old_rule = fieldset.rulesets.get(api_name='fs-1-rule-1')
     new_rule = FieldSetRule.objects.create(
         fieldset=fieldset,
         account_id=user.account_id,
-        type=FieldSetRuleType.SUM_EQUAL,
         value='100',
         api_name='new-rule',
     )
     field = fieldset.fields.get(api_name='fs-1-field-1')
-    field.rules.add(old_rule)
+    field.rulesets.add(old_rule)
     service = TaskUpdateVersionService(
         user=user,
         instance=task,
@@ -2876,9 +2867,9 @@ def test__update_field_rules__replaces_existing_rules__ok():
     service._update_field_rules(field, field_data, fieldset)
 
     # assert
-    assert field.rules.count() == 1
-    assert field.rules.filter(id=new_rule.id).exists()
-    assert not field.rules.filter(id=old_rule.id).exists()
+    assert field.rulesets.count() == 1
+    assert field.rulesets.filter(id=new_rule.id).exists()
+    assert not field.rulesets.filter(id=old_rule.id).exists()
 
 
 def test__update_field_rules__nonexistent_api_name__skip():
@@ -2910,7 +2901,7 @@ def test__update_field_rules__nonexistent_api_name__skip():
     service._update_field_rules(field, field_data, fieldset)
 
     # assert
-    assert field.rules.count() == 0
+    assert field.rulesets.count() == 0
 
 
 def test_update_from_version__tasks_fields_values_include_fieldset_fields__ok(
