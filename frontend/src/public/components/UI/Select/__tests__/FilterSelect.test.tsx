@@ -128,4 +128,25 @@ describe('FilterSelect', () => {
     expect(screen.getByText('Template B')).toBeInTheDocument();
     expect(screen.queryByText('No items found')).not.toBeInTheDocument();
   });
+
+  it('renders option with ReactNode label and triggers onChange on selection click', () => {
+    const handleSelect = jest.fn();
+    render(
+      <FilterSelect
+        {...defaultProps}
+        options={[
+          { id: 1, name: 'Template ReactNode' },
+        ]}
+        onChange={handleSelect}
+      />,
+    );
+
+    openDropdown();
+
+    const optionButton = screen.getByText('Template ReactNode');
+    fireEvent.click(optionButton);
+
+    expect(handleSelect).toHaveBeenCalledTimes(1);
+    expect(handleSelect).toHaveBeenCalledWith(1);
+  });
 });

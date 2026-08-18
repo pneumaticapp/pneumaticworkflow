@@ -1579,6 +1579,7 @@ export const enMessages = {
   'fieldset.validation-error.sum-max': 'The sum of numeric fields in "{name}" must not exceed {value}.',
   'fieldsets.usage.linked': 'Used in {count} {count, plural, one {template} other {templates}}. Editing is locked.',
   'fieldsets.usage.not-linked': 'Not used in any template',
+  'fieldsets.readonly-badge': 'Read-only',
   'fieldsets.usage.show': 'Show',
   'fieldsets.usage.hide': 'Hide',
   'fieldsets.usage.disabled-tooltip': 'Fieldset is used in templates. Editing and deletion are locked.',

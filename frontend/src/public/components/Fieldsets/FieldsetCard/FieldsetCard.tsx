@@ -1,12 +1,11 @@
 import * as React from 'react';
-import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
 
 import { ModifyDropdown } from '../../UI';
 import { EModifyDropdownToggle } from '../../UI/ModifyDropdown/types';
-import { WarningPopup } from '../../UI/WarningPopup';
+
 import { openEditModal, deleteFieldsetAction, cloneFieldsetAction, setCurrentFieldset } from '../../../redux/fieldsets/slice';
 import { history } from '../../../utils/history';
 import { ERoutes } from '../../../constants/routes';
@@ -31,14 +30,7 @@ export function FieldsetCard({
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
 
-  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
-  const handleOpenDeleteModal = () => setIsDeleteModalVisible(true);
-  const handleCloseDeleteModal = () => setIsDeleteModalVisible(false);
 
-  const handleConfirmDelete = () => {
-    dispatch(deleteFieldsetAction({ id }));
-    handleCloseDeleteModal();
-  };
 
   const handleEditName = () => {
     dispatch(setCurrentFieldset({
@@ -73,16 +65,7 @@ export function FieldsetCard({
 
   return (
     <div className={styles['card']} key={id}>
-      <WarningPopup
-        acceptTitle={formatMessage({ id: 'fieldsets.delete' })}
-        declineTitle={formatMessage({ id: 'fieldsets.modal-button-cancel' })}
-        title={formatMessage({ id: 'fieldsets.delete.title' })}
-        message={formatMessage({ id: 'fieldsets.delete.message' }, { name: <b>{name}</b> })}
-        closeModal={handleCloseDeleteModal}
-        isOpen={isDeleteModalVisible}
-        onConfirm={handleConfirmDelete}
-        onReject={handleCloseDeleteModal}
-      />
+
 
       <div className={styles['card__content']}>
         <div className={styles['card__header']}>
@@ -99,7 +82,7 @@ export function FieldsetCard({
           <ModifyDropdown
             onEdit={handleEditName}
             onClone={handleCloneFieldset}
-            onDelete={handleOpenDeleteModal}
+            onDelete={() => dispatch(deleteFieldsetAction({ id }))}
             editLabel={formatMessage({ id: 'fieldsets.edit' })}
             cloneLabel={formatMessage({ id: 'fieldsets.clone' })}
             deleteLabel={formatMessage({ id: 'fieldsets.delete' })}

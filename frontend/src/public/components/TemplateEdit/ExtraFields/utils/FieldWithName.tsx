@@ -37,6 +37,7 @@ interface IKickoffFormFieldWithNameProps {
   handleChangeDescription(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void;
   validate(value: string): string;
   labelPosition: EFieldLabelPosition;
+  children?: ReactNode;
   labelClassName?: string;
   onClick?(): void;
   editorClassName?: string;
@@ -82,6 +83,7 @@ export const FieldWithName = forwardRef<HTMLInputElement, IKickoffFormFieldWithN
       onNumericKeyDown,
       isNumericField,
       editorClassName,
+      children,
     },
     ref,
   ) => {
@@ -144,33 +146,37 @@ export const FieldWithName = forwardRef<HTMLInputElement, IKickoffFormFieldWithN
           isRequired={isRequired}
           isDisabled={isDisabled}
           mode={mode}
+          labelPosition={labelPosition}
           labelBackgroundColor={labelBackgroundColor}
           namePlaceholder={namePlaceholder}
           handleChangeName={handleChangeName}
           {...(labelClassName && { className: labelClassName })}
         />
-        <div className={styles['kick-off-input__description']} {...descriptionInteractiveProps}>
-          <Field
-            labelClassName="w-100"
-            onChange={handleChangeDescription}
-            placeholder={descriptionPlaceholder}
-            validate={validate}
-            value={descriptionFieldValue}
-            className={classnames(inputClassName, styles['kickoff-input_single-line'])}
-            icon={icon}
-            tagName={tagName}
-            disabled={isDisabled}
-            shouldReplaceWithLabel={shouldReplaceWithLabel}
-            labelReplacementClassName={labelReplacementClassName}
-            labelReplacementValue={descriptionPlaceholder}
-            errorMessage={fieldNameError}
-            innerRef={descriptionInputRef}
-            accountId={accountId}
-            editorClassName={editorClassName}
-            onKeyDown={onNumericKeyDown}
-            isNumericField={isNumericField}
-            data-use-input
-          />
+        <div className={styles['kick-off-input__options-content_label-left']}>
+          <div className={styles['kick-off-input__description']} {...descriptionInteractiveProps}>
+            <Field
+              labelClassName="w-100"
+              onChange={handleChangeDescription}
+              placeholder={descriptionPlaceholder}
+              validate={validate}
+              value={descriptionFieldValue}
+              className={classnames(inputClassName, styles['kickoff-input_single-line'])}
+              icon={icon}
+              tagName={tagName}
+              disabled={isDisabled}
+              shouldReplaceWithLabel={shouldReplaceWithLabel}
+              labelReplacementClassName={labelReplacementClassName}
+              labelReplacementValue={descriptionPlaceholder}
+              errorMessage={fieldNameError}
+              innerRef={descriptionInputRef}
+              accountId={accountId}
+              editorClassName={editorClassName}
+              onKeyDown={onNumericKeyDown}
+              isNumericField={isNumericField}
+              data-use-input
+            />
+          </div>
+          {children}
         </div>
       </div>
     );

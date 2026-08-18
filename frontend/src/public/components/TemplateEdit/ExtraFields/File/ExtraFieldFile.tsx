@@ -149,9 +149,9 @@ export function ExtraFieldFile({
           isRequired={field.isRequired || false}
           isDisabled={isDisabled}
           mode={mode}
+          labelPosition={labelPosition}
           labelBackgroundColor={labelBackgroundColor}
           handleChangeName={(event) => editField({ name: event.target.value })}
-          className={kickoffStyles['kick-off-input__name_label-left_aligned-start']}
         />
       ) : (
         <div>
