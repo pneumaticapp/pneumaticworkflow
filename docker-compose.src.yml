@@ -507,7 +507,7 @@ services:
   file-service:
     build:
       context: ./storage
-    image: pneumaticworkflow/file-service:${TAG:-src}
+    image: pneumaticworkflow/pneumatic-file-service:${TAG:-src}
     container_name: pneumatic-file-service
     environment:
       BACKEND_PRIVATE_URL: ${BACKEND_PRIVATE_URL:-http://pneumatic-nginx/}
