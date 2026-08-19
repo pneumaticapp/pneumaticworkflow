@@ -24,8 +24,8 @@ The instructions are multi-platform, but examples are given for Linux Debian / U
 Open a terminal in the "backend" directory and run the following commands:
 1. Start backend containers ``docker compose up -d``.
 2. Install [pyenv](https://github.com/pyenv/pyenv).
-3. Use pyenv to install Python version Python 3.7.5. Command: ``pyenv install 3.7.5``.
-4. Set Python 3.7.5 as the default version. Command: ``pyenv local 3.7.5``.
+3. Use pyenv to install Python version Python 3.8.20. Command: ``pyenv install 3.8.20``.
+4. Set Python 3.8.20 as the default version. Command: ``pyenv local 3.8.20``.
 5. Verify the Python version with the command ``python --version``.
 6. Install the poetry package manager with the command: ``pip install --upgrade pip && pip install poetry``
 7. Create a virtual environment and install the project dependencies. Command: ``poetry install && poetry shell``
@@ -56,7 +56,7 @@ Command: ``docker exec -it pneumatic-postgres sh -c "psql -U postgres_user postg
 Open PowerShell in the backend directory and run the following commands:
 1. Start the backend containers: ``docker compose up -d``.
 2. Download and install Git Bash: ``https://git-scm.com/downloads``.
-3. Download and install Python 3.7.5  ``https://www.python.org/downloads/release/python-375/``. During installation, make sure to check “Add Python to PATH.”
+3. Download and install Python 3.8.10  ``https://www.python.org/downloads/release/python-3810/`` (the last 3.8 release with a Windows installer). During installation, make sure to check “Add Python to PATH.”
 4. Verify that Python is installed: ``python --version``.
 5. Install Poetry 1.5.1 by running the following command in PowerShell: ``$env:POETRY_VERSION="1.5.1"; (Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | py -``
 6. To get started you need to add Poetry's bit directory –C:\Users\{username}\AppData\Roaming\Python\Scripts– to your PATH. Replace {username} with your actual Windows username.
