@@ -24,6 +24,11 @@
   text-overflow: ellipsis;
 }
 
+.fieldset-picker__tooltip-content {
+  padding: 0.4rem 0.8rem;
+  text-align: center;
+}
+
 .fieldset-picker__option-meta {
   font-size: 1.2rem;
   line-height: 1.6rem;

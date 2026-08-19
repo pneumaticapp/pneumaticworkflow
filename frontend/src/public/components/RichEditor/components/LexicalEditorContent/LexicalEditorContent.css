@@ -45,8 +45,11 @@
   top: 1rem;
   right: 1.6rem;
   left: 1.6rem;
+  max-height: 8.8rem;
   pointer-events: none;
   color: var(--default-placeholder-color);
+
+  @mixin text-overflow 4;
 }
 
 :global(.lexical-rich-editor-list-ul),

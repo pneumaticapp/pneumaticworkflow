@@ -55,9 +55,10 @@ export interface IFieldsetCatalogItem {
   title: string;
   rulesets?: IFieldsetRuleSet[];
   fields: IFieldsetField[];
+  usage: { id: number; name: string }[];
 }
 
-export interface IFieldsetBinding extends Omit<IFieldsetCatalogItem, 'id'> {
+export interface IFieldsetBinding extends Omit<IFieldsetCatalogItem, 'id' | 'usage'> {
   sharedFieldsetId: number;
 }
 
@@ -128,6 +129,7 @@ export interface IUpdateFieldsetParams {
   rulesets?: IFieldsetRuleSet[];
   fields?: IFieldsetField[];
   signal?: AbortSignal;
+  onSuccess?: () => void;
 }
 
 export interface IDeleteFieldsetParams {

@@ -7,6 +7,7 @@ import { validateKickoffFieldName } from '../../../../utils/validators';
 import { EInputNameBackgroundColor } from '../../../../types/workflow';
 import { getInputNameBackground } from './getInputNameBackground';
 import { EExtraFieldMode } from '../../../../types/template';
+import { EFieldLabelPosition } from '../../../../types/fieldset';
 import { PencilSmallIcon } from '../../../icons';
 
 import styles from '../../KickoffRedux/KickoffRedux.css';
@@ -16,6 +17,7 @@ export interface IFieldLabelProps {
   isRequired: boolean;
   isDisabled: boolean;
   mode?: EExtraFieldMode;
+  labelPosition?: EFieldLabelPosition;
   labelBackgroundColor?: EInputNameBackgroundColor;
   namePlaceholder?: string;
   className?: string;
@@ -27,6 +29,7 @@ export function FieldLabel({
   isRequired,
   isDisabled,
   mode,
+  labelPosition,
   labelBackgroundColor,
   namePlaceholder,
   className,
@@ -59,11 +62,12 @@ export function FieldLabel({
       classnames(
         getInputNameBackground(labelBackgroundColor),
         styles['kick-off-input__name'],
+        labelPosition === EFieldLabelPosition.Left && styles['kick-off-input__name_label-left_aligned-start'],
         isKickoffEditorMode && styles['kick-off-input__name_kickoff-edit'],
         fieldNameError && styles['kick-off-input__name_error'],
         className,
       ),
-    [labelBackgroundColor, fieldNameError, isKickoffEditorMode, className],
+    [labelBackgroundColor, labelPosition, fieldNameError, isKickoffEditorMode, className],
   );
 
   return (
@@ -80,6 +84,7 @@ export function FieldLabel({
             onBlur={handleNameBlur}
             minRows={1}
             className={styles['kick-off-input__name-textarea']}
+            data-use-input
           />
           {isRequired && <span aria-label="required" className={styles['kick-off-required-sign']} />}
           {!isFocused && (

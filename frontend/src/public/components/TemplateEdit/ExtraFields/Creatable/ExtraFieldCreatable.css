@@ -9,11 +9,11 @@
     padding-top: 1.1rem !important;
     padding-bottom: 1.1rem !important;
     font-family: Nunito, sans-serif;
-    font-size: 15px;
-    line-height: 20px;
+    font-size: 1.5rem;
+    line-height: 2rem;
     color: #262522;
     border-color: #dcdcdb !important;
-    border-radius: 8px !important;
+    border-radius: 0.8rem !important;
     outline: none;
     transition: 0.15s ease-in border-color;
 
@@ -56,6 +56,10 @@
     text-overflow: ellipsis;
     color: #262522 !important;
   }
+
+  [class*="react-select__option"] {
+    overflow-wrap: anywhere;
+  }
   /* stylelint-enable */
 }
 
@@ -66,23 +70,22 @@
 
 .kickoff-create-field-container {
   flex-grow: 1;
-  max-width: calc(100% - 40px);
+  max-width: calc(100% - 4rem);
 
   .measure {
     position: absolute;
     top: -99999px;
     left: -99999px;
     font-family: Nunito, sans-serif;
-    font-size: 15.04px;
-    line-height: 16px;
+    font-size: 1.504rem;
+    line-height: 1.6rem;
     white-space: pre;
   }
 }
 
 .kickoff-create-field-options-wrapper_label-left {
-  margin-left: calc(45% + 3.2rem);
+  margin-left: calc(40% + 3.2rem);
   min-width: 0;
-  max-width: calc(55% - 3.2rem);
 }
 
 .kickoff-create-field-name {
@@ -92,8 +95,8 @@
 }
 
 .kickoff-create-field-name-input {
-  margin-bottom: 8px;
-  max-width: calc(100% - 5px);
+  margin-bottom: 0.8rem;
+  max-width: calc(100% - 0.5rem);
   border: none;
 
   &:focus {
@@ -114,7 +117,7 @@
 }
 
 .kickoff-create-field-option {
-  margin: 0 0 8px;
+  margin: 0 0 0.8rem;
   display: flex;
   align-items: flex-start;
   flex-flow: column;
@@ -128,14 +131,13 @@
 }
 
 .kickoff-create-field-option__remove {
-  margin-left: 8px;
+  margin-left: 0.8rem;
   cursor: pointer;
 }
 
 .kickoff-create-field-option__input {
-  max-width: 100%;
+  max-width: calc(100% - 2.4rem);
   border: none;
-
   @mixin text-truncate;
 
   &:focus {
@@ -163,8 +165,8 @@
 
 .kickoff-set-field-name {
   position: relative;
-  margin-bottom: 8px;
-  padding-right: 7px;
+  margin-bottom: 0.8rem;
+  padding-right: 0.7rem;
   display: inline-block;
   color: var(--pneumatic-color-black72);
 }
@@ -176,16 +178,16 @@
 }
 
 .kickoff-set-field-option {
-  margin: 0 0 8px;
+  margin: 0 0 0.8rem;
   display: flex;
   align-items: center;
 }
 
 .kickoff-create-field__error-text {
-  margin-top: 4px;
+  margin-top: 0.4rem;
   margin-bottom: 0;
   font-family: Nunito, sans-serif;
-  font-size: 13px;
-  line-height: 16px;
+  font-size: 1.3rem;
+  line-height: 1.6rem;
   color: #fc5b67;
 }

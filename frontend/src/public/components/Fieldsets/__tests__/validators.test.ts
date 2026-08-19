@@ -1,7 +1,6 @@
 import {
   FIELDSET_RULES_MSG_FIELDS_NUMBER,
   FIELDSET_RULES_MSG_FIELDS_REQUIRED,
-  FIELDSET_RULES_MSG_INCOMPLETE,
   FIELDSET_RULES_MSG_VALUE_NUMBER,
   FIELDSET_RULES_MSG_VALUE_REQUIRED,
 } from '../constants';
@@ -27,7 +26,7 @@ describe('validateFieldsetRules', () => {
           groupsOr: [{ apiName: 'g-or-1', groupsAnd: [{ apiName: 'g-and-1', operator: EFieldsetNumberRulesetOperator.SumEqual, value: '' }] }],
         }),
       ]),
-    ).toBe(FIELDSET_RULES_MSG_INCOMPLETE);
+    ).toBe(FIELDSET_RULES_MSG_FIELDS_REQUIRED);
   });
 
   it('returns value-required when value is empty but fields are selected', () => {
@@ -140,6 +139,6 @@ describe('validateFieldsetRules', () => {
         ],
         [numberField()],
       ),
-    ).toBe(FIELDSET_RULES_MSG_INCOMPLETE);
+    ).toBe(FIELDSET_RULES_MSG_FIELDS_REQUIRED);
   });
 });

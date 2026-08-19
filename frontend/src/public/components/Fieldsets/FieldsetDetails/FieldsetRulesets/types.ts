@@ -11,4 +11,5 @@ export type TFieldsetRulesetsProps = {
   rulesets: IFieldsetRuleSet[];
   fields: IExtraField[];
   onRulesetsChange: (rulesets: IFieldsetRuleSet[]) => void;
+  isReadOnly?: boolean;
 };

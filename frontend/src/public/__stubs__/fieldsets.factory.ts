@@ -61,6 +61,7 @@ export const makeFieldsetCatalogItem = (overrides: Partial<IFieldsetCatalogItem>
   order: 0,
   rulesets: [],
   fields: [],
+  usage: [],
   ...overrides,
 });
 
