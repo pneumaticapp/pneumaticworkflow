@@ -289,6 +289,9 @@ const workflowsSlice = createSlice({
     clearWorkflow: (state) => {
       state.workflow = null;
       state.workflowEdit = initialWorkflowEdit;
+      state.workflowLog.isOpen = false;
+      state.workflowLog.isOnlyAttachmentsShown = false;
+      state.workflowLog.workflowId = null;
     },
     setCurrentPerformersCounters: (state, action: PayloadAction<TUserCounter[]>) => {
       state.workflowsSettings.counters.performersCounters = action.payload;

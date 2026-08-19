@@ -76,6 +76,8 @@
 }
 
 .flow__fieldset-header {
+  word-break: break-word;
+  overflow-wrap: anywhere;
   color: var(--pneumatic-color-black100);
   word-break: break-word;
   overflow-wrap: anywhere;

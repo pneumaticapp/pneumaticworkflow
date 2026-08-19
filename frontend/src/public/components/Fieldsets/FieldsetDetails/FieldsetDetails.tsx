@@ -3,10 +3,7 @@ import { useEffect, useState, useMemo, useCallback, useRef, ChangeEvent } from '
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
-import classNames from 'classnames';
-
 import TextareaAutosize from 'react-textarea-autosize';
-
 import { validateFieldsetTitle } from '../../../utils/validators';
 
 import {
@@ -59,16 +56,15 @@ import {
   FIELDSET_RULE_VALUE_PLACEHOLDER_BY_TYPE,
 } from '../constants';
 
+import { useCheckDevice } from '../../../hooks/useCheckDevice';
+import { TFieldsetDetailsProps, TDetailFieldsetState, TDetailFieldsetChanges } from './types';
+import styles from './FieldsetDetails.css';
+
 const READONLY_FIELD_ICONS: Partial<Record<EExtraFieldType, React.FC<React.SVGAttributes<SVGElement>>>> = {
   [EExtraFieldType.User]: ArrowDropdownIcon,
   [EExtraFieldType.Date]: DateIcon,
   [EExtraFieldType.Url]: LinkIcon,
 };
-
-import { useCheckDevice } from '../../../hooks/useCheckDevice';
-
-import { TFieldsetDetailsProps, TDetailFieldsetState, TDetailFieldsetChanges } from './types';
-import styles from './FieldsetDetails.css';
 
 const EMPTY_DETAIL_FIELDSET: TDetailFieldsetState = {
   title: '',
@@ -294,7 +290,9 @@ const FieldsetDetails = ({
   }
 
   const isLinked = fieldset.usage.length > 0;
-  const readOnlyBadge = isLinked ? <span className={styles['readonly-badge']}>{formatMessage({ id: 'fieldsets.readonly-badge' })}</span> : null;
+  const readOnlyBadge = isLinked ? (
+    <span className={styles['readonly-badge']}>{formatMessage({ id: 'fieldsets.readonly-badge' })}</span>
+  ) : null;
 
   const handleCloneFieldset = () => {
     if (isChanged) {
@@ -408,7 +406,7 @@ const FieldsetDetails = ({
               <input
                 id="fieldset-title"
                 type="text"
-                className={classNames(
+                className={classnames(
                   styles['settings-title'],
                   Boolean(validateFieldsetTitle(detailFieldset.title)) && styles['settings-title_error'],
                 )}
@@ -452,8 +450,15 @@ const FieldsetDetails = ({
 
           <div className={styles['settings-field']}>
             <span
+              role="button"
+              tabIndex={0}
               className={styles['settings-label']}
               onClick={() => labelPositionRef.current?.querySelector<HTMLButtonElement>('button')?.focus()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  labelPositionRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
+                }
+              }}
             >
               {formatMessage({ id: 'fieldsets.settings.label-position' })}
             </span>

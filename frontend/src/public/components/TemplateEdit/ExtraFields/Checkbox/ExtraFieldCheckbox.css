@@ -85,6 +85,8 @@
   border: none;
   @mixin text-truncate;
 
+  @mixin text-truncate;
+
   &:focus {
     outline: none;
   }
