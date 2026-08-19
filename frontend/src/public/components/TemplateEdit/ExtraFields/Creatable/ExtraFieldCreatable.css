@@ -57,7 +57,7 @@
     color: #262522 !important;
   }
 
-  [class*="react-select__option"] {
+  [class*='react-select__option'] {
     overflow-wrap: anywhere;
   }
   /* stylelint-enable */
@@ -77,7 +77,9 @@
     top: -99999px;
     left: -99999px;
     font-family: Nunito, sans-serif;
+    /* stylelint-disable number-max-precision */
     font-size: 1.504rem;
+    /* stylelint-enable number-max-precision */
     line-height: 1.6rem;
     white-space: pre;
   }
@@ -138,6 +140,7 @@
 .kickoff-create-field-option__input {
   max-width: calc(100% - 2.4rem);
   border: none;
+
   @mixin text-truncate;
 
   &:focus {

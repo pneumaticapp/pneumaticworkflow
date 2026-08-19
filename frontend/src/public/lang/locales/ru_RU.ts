@@ -1467,7 +1467,8 @@ export const ruMessages = {
   'template.fieldset-picker.empty': 'Нет доступных наборов полей. Сначала создайте один.',
   'fieldset.group-title': 'Набор полей: {name}',
   'fieldset.validation-error.sum-max': 'Сумма числовых полей в «{name}» не должна превышать {value}.',
-  'fieldsets.usage.linked': 'Используется в {count} {count, plural, one {шаблоне} few {шаблонах} other {шаблонах}}. Редактирование заблокировано.',
+  'fieldsets.usage.linked':
+    'Используется в {count} {count, plural, one {шаблоне} few {шаблонах} other {шаблонах}}. Редактирование заблокировано.',
   'fieldsets.usage.not-linked': 'Не используется ни в одном шаблоне',
   'fieldsets.readonly-badge': 'Только чтение',
   'fieldsets.usage.show': 'Показать',
