@@ -29,6 +29,7 @@ from src.processes.views.task import (
 from src.processes.views.fieldset import (
     SharedFieldsetTemplateViewSet,
 )
+from src.ai.views import AIAgentViewSet, AIProviderViewSet
 from src.datasets.views import DatasetViewSet, DatasetItemViewSet
 from src.processes.views.template import (
     TemplateViewSet,
@@ -63,6 +64,8 @@ router.register('faq', FaqViewSet, basename='faq')
 router.register('attachments', AttachmentViewSet, basename='attachments')
 router.register('datasets', DatasetViewSet, basename='datasets')
 router.register('datasets/items', DatasetItemViewSet, basename='dataset-items')
+router.register('ai/providers', AIProviderViewSet, basename='ai-providers')
+router.register('ai/agents', AIAgentViewSet, basename='ai-agents')
 router.register(
     prefix='fieldsets',
     viewset=SharedFieldsetTemplateViewSet,

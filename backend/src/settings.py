@@ -435,6 +435,13 @@ class Common(Configuration):
                     'Dashboard highlights and workflow analytics'
                 ),
             },
+            {
+                'name': 'AI',
+                'description': (
+                    'AI providers and agents for account-level '
+                    'model configuration'
+                ),
+            },
         ],
     }
 

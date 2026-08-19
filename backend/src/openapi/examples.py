@@ -127,3 +127,27 @@ WEBHOOK_SUBSCRIBE_EXAMPLE = OpenApiExample(
     },
     request_only=True,
 )
+
+AI_PROVIDER_CREATE_EXAMPLE = OpenApiExample(
+    'Create AI provider',
+    value={
+        'name': 'OpenRouter',
+        'base_url': 'https://openrouter.ai/api/v1',
+        'api_key': 'sk-or-v1-example',
+        'is_active': True,
+    },
+    request_only=True,
+)
+
+AI_AGENT_CREATE_EXAMPLE = OpenApiExample(
+    'Create AI agent',
+    value={
+        'name': 'Research assistant',
+        'photo': 'https://example.com/images/assistant.jpg',
+        'is_active': True,
+        'provider_id': 1,
+        'model': 'openai/gpt-4o',
+        'system_prompt': 'You are a helpful research assistant.',
+    },
+    request_only=True,
+)
