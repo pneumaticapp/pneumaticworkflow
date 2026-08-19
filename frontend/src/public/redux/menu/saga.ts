@@ -2,9 +2,14 @@
 import { all, fork, put, select, takeEvery } from 'redux-saga/effects';
 import { PayloadAction } from '@reduxjs/toolkit';
 import { EMenuActions, mergeMenuItems, setMenuItemCounter } from './actions';
-import { activeUsersCountFetchFinished, setCurrentPlan } from '../accounts/slice';
-import { TActiveUsersCountFetchFinishedPayload } from '../accounts/types';
-import { IAccountPlan } from '../../types/redux';
+import {
+  activeUsersCountFetchFinished,
+  removeUserFromWs,
+  setCurrentPlan,
+  teamFetchFinished,
+  upsertUserFromWs,
+  usersFetchFinished,
+} from '../accounts/slice';
 import { getAuthUser } from '../selectors/user';
 import { generateMenuItems, createMenuCounter } from '../../utils/menu';
 import { IMenuItem } from '../../types/menu';
@@ -31,7 +36,7 @@ export function* generateMenuSaga() {
   }
 }
 
-type TUpdateCounterAction = PayloadAction<number>  | PayloadAction<TActiveUsersCountFetchFinishedPayload> | PayloadAction<IAccountPlan>;
+type TUpdateCounterAction = PayloadAction<unknown>;
 
 export function* updateCounterSaga(action: TUpdateCounterAction) {
   const tasksCount: ReturnType<typeof getTotalTasksCount> = yield select(getTotalTasksCount);
@@ -45,9 +50,14 @@ export function* updateCounterSaga(action: TUpdateCounterAction) {
     },
     {
       check: () =>
-        [activeUsersCountFetchFinished.type, setCurrentPlan.type].some(
-          (t) => t === action.type,
-        ),
+        [
+          activeUsersCountFetchFinished.type,
+          removeUserFromWs.type,
+          setCurrentPlan.type,
+          teamFetchFinished.type,
+          upsertUserFromWs.type,
+          usersFetchFinished.type,
+        ].some((t) => t === action.type),
       getCounters: () =>
         [createMenuCounter('team', teamCount), createMenuCounter('tenants', tenantCount)].filter(
           Boolean,
@@ -71,7 +81,11 @@ export function* watchUpdateCounter() {
     [
       changeTasksCount.type,
       activeUsersCountFetchFinished.type,
+      removeUserFromWs.type,
       setCurrentPlan.type,
+      teamFetchFinished.type,
+      upsertUserFromWs.type,
+      usersFetchFinished.type,
     ],
     updateCounterSaga,
   );

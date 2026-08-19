@@ -23,6 +23,7 @@ export interface IFieldProps extends NativeInputProps {
   isFromConditionValueField?: boolean;
   value?: string | number | string[];
   innerRef?: React.Ref<HTMLInputElement>;
+  'data-use-input'?: boolean;
 }
 
 export enum EFieldTagName {

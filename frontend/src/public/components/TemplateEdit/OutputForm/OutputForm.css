@@ -76,6 +76,8 @@
 }
 
 .flow__fieldset-header {
+  word-break: break-word;
+  overflow-wrap: anywhere;
   color: var(--pneumatic-color-black100);
 }
 
@@ -85,18 +87,22 @@
 }
 
 .flow__fieldset-title-edit {
-  display: inline-flex;
-  align-items: center;
   margin-top: 0.2rem;
   padding-left: 1.2rem;
+  display: inline-flex;
+  align-items: center;
   gap: 0.4rem;
 
   @mixin text-small;
 }
 
+.flow__fieldset-row {
+  min-height: 2rem;
+}
+
 .flow__fieldset-title-input {
-  border: none;
   resize: none;
+  border: none;
   outline: none;
   field-sizing: content;
 
@@ -110,4 +116,3 @@
     color: var(--pneumatic-color-warning);
   }
 }
-
