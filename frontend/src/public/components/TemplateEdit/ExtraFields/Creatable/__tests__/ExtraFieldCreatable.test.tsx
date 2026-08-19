@@ -151,31 +151,33 @@ describe('ExtraFieldCreatable', () => {
   });
 
   describe('label-left support', () => {
-    it('Kickoff + labelPosition=Left: passes labelClassName with centered class to FieldWithName', () => {
+    it('Kickoff + labelPosition=Left: passes labelPosition=Left to FieldWithName', () => {
       render(<ExtraFieldCreatable {...baseKickoffProps} labelPosition={EFieldLabelPosition.Left} />);
 
       const mock = getFieldWithNameMock();
       expect(mock).toHaveBeenCalledTimes(1);
       expect(mock).toHaveBeenCalledWith(
         expect.objectContaining({
-          labelClassName: expect.stringContaining('centered'),
+          labelPosition: EFieldLabelPosition.Left,
         }),
         {},
       );
     });
 
-    it('Kickoff + labelPosition=Top: does NOT pass labelClassName to FieldWithName', () => {
+    it('Kickoff + labelPosition=Top: passes labelPosition=Top to FieldWithName', () => {
       render(<ExtraFieldCreatable {...baseKickoffProps} labelPosition={EFieldLabelPosition.Top} />);
 
       const mock = getFieldWithNameMock();
       expect(mock).toHaveBeenCalledTimes(1);
       expect(mock).toHaveBeenCalledWith(
-        expect.not.objectContaining({ labelClassName: expect.anything() }),
+        expect.objectContaining({
+          labelPosition: EFieldLabelPosition.Top,
+        }),
         {},
       );
     });
 
-    it('ProcessRun + labelPosition=Left: renders FieldLabel with centered class', () => {
+    it('ProcessRun + labelPosition=Left: passes labelPosition=Left to FieldLabel', () => {
       render(
         <ExtraFieldCreatable
           {...baseKickoffProps}
@@ -189,7 +191,7 @@ describe('ExtraFieldCreatable', () => {
       expect(fieldLabelMock).toHaveBeenCalledTimes(1);
       expect(fieldLabelMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          className: expect.stringContaining('centered'),
+          labelPosition: EFieldLabelPosition.Left,
         }),
         {},
       );

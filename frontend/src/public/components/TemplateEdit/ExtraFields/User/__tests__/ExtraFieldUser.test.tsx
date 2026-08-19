@@ -160,14 +160,14 @@ describe('ExtraFieldUser', () => {
   });
 
   describe('label-left support', () => {
-    it('ProcessRun + labelPosition=Left: renders FieldLabel with centered class', () => {
+    it('ProcessRun + labelPosition=Left: passes labelPosition=Left to FieldLabel', () => {
       render(<ExtraFieldUser {...baseProps} labelPosition={EFieldLabelPosition.Left} />);
 
       const fieldLabelMock = FieldLabel as jest.Mock;
       expect(fieldLabelMock).toHaveBeenCalledTimes(1);
       expect(fieldLabelMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          className: expect.stringContaining('centered'),
+          labelPosition: EFieldLabelPosition.Left,
         }),
         {},
       );
