@@ -1,14 +1,28 @@
 import type { IExtraField } from './template';
 
-export enum EFieldsetRuleType {
+export enum EFieldsetNumberRulesetOperator {
   SumEqual = 'sum_equal',
+  SumGreaterThan = 'sum_greater_than',
+  SumLessThan = 'sum_less_than',
 }
 
-export interface IFieldsetTemplateRule {
+export interface IFieldsetRuleGroupAnd {
   apiName: string;
-  type: EFieldsetRuleType;
-  value: string | null;
+  operator: EFieldsetNumberRulesetOperator;
+  value: string;
+}
+
+export interface IFieldsetRuleGroupOr {
+  apiName: string;
+  groupsAnd: IFieldsetRuleGroupAnd[];
+}
+
+export interface IFieldsetRuleSet {
+  apiName: string;
+  message?: string | null;
+  order: number;
   fields: string[];
+  groupsOr: IFieldsetRuleGroupOr[];
 }
 
 export interface IFieldsetField {
@@ -39,7 +53,7 @@ export interface IFieldsetCatalogItem {
   layout: TFieldSetLayout;
   order: number;
   title: string;
-  rules: IFieldsetTemplateRule[];
+  rulesets?: IFieldsetRuleSet[];
   fields: IFieldsetField[];
 }
 
@@ -51,7 +65,7 @@ export interface IFieldsetBindingClient extends Omit<IFieldsetBinding, 'apiName'
   apiNameBinding: string;
 }
 
-export interface IFieldsetRuntime extends Omit<IFieldsetBindingClient, 'fields' | 'sharedFieldsetId' | 'rules'> {
+export interface IFieldsetRuntime extends Omit<IFieldsetBindingClient, 'fields' | 'sharedFieldsetId' | 'rulesets'> {
   fields: IExtraField[];
 }
 
@@ -98,7 +112,7 @@ export interface ICreateFieldsetParams {
   order?: number;
   labelPosition?: EFieldLabelPosition;
   layout?: TFieldSetLayout;
-  rules?: Omit<IFieldsetTemplateRule, 'apiName'>[];
+  rulesets?: Omit<IFieldsetRuleSet, 'apiName'>[];
   fields?: Omit<IFieldsetField, 'apiName'>[];
 }
 
@@ -111,7 +125,7 @@ export interface IUpdateFieldsetParams {
   title?: string;
   labelPosition?: EFieldLabelPosition;
   layout?: TFieldSetLayout;
-  rules?: IFieldsetTemplateRule[];
+  rulesets?: IFieldsetRuleSet[];
   fields?: IFieldsetField[];
   signal?: AbortSignal;
 }

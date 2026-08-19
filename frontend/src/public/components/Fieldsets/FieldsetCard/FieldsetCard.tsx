@@ -24,7 +24,7 @@ export function FieldsetCard({
   layout,
   order,
   title,
-  rules,
+  rulesets = [],
   fields,
 }: IFieldsetCatalogItem) {
   const { formatMessage } = useIntl();
@@ -49,7 +49,7 @@ export function FieldsetCard({
       layout,
       order,
       title,
-      rules,
+      rulesets,
       fields,
     }));
     dispatch(openEditModal());
@@ -89,7 +89,7 @@ export function FieldsetCard({
     },
   ];
 
-  const hasContent = fields.length > 0 || rules.length > 0;
+  const hasContent = fields.length > 0 || rulesets.length > 0;
 
   return (
     <div className={styles['card']} key={id}>
@@ -134,11 +134,11 @@ export function FieldsetCard({
                 )}
               </div>
             )}
-            {rules.length > 0 && (
+            {rulesets.length > 0 && (
               <div className={classnames(styles['card-stats'], styles['card-stats--rules'])}>
                 {formatMessage(
                   { id: 'fieldsets.stats.rules' },
-                  { count: rules.length },
+                  { count: rulesets.length },
                 )}
               </div>
             )}

@@ -24,8 +24,7 @@ import { getEmptyField } from '../../../TemplateEdit/KickoffRedux/utils/getEmpty
 import { getEditedFields } from '../../../TemplateEdit/ExtraFields/utils/getEditedFields';
 import { moveWorkflowField } from '../../../../utils/workflows';
 import { EExtraFieldType, IExtraField } from '../../../../types/template';
-import { EFieldsetRuleType } from '../../../../types/fieldset';
-import { makeFieldsetCatalogItem, makeFieldsetTemplateRule } from '../../../../__stubs__/fieldsets.factory';
+import { makeFieldsetCatalogItem, makeFieldsetRuleset } from '../../../../__stubs__/fieldsets.factory';
 import { makeExtraField } from '../../../../__stubs__/fields.factory';
 import { FIELDSET_RULES_MSG_INCOMPLETE } from '../../constants';
 
@@ -340,8 +339,8 @@ describe('FieldsetDetails', () => {
   describe('Initial save bar state', () => {
     it('shows disabled Save button on initial render', () => {
       const fields = [makeField({ apiName: 'f1', order: 1 })];
-      const rules = [makeFieldsetTemplateRule({ apiName: 'rule-1', value: '100', fields: ['f1'] })];
-      renderWithState(makeLoadedState({ fields, rules }));
+      const rulesets = [makeFieldsetRuleset({ apiName: 'rule-1', fields: ['f1'] })];
+      renderWithState(makeLoadedState({ fields, rulesets }));
 
       const saveButton = screen.getByRole('button', { name: SAVE_LABEL });
       expect(saveButton).toBeInTheDocument();
@@ -392,7 +391,7 @@ describe('FieldsetDetails', () => {
       );
       expect(getUpdateActionMock().mock.calls[0][0]).not.toHaveProperty('labelPosition');
       expect(getUpdateActionMock().mock.calls[0][0]).not.toHaveProperty('fields');
-      expect(getUpdateActionMock().mock.calls[0][0]).not.toHaveProperty('rules');
+      expect(getUpdateActionMock().mock.calls[0][0]).not.toHaveProperty('rulesets');
     });
 
     it('Save dispatches updateFieldsetAction with empty string when description is cleared', () => {
@@ -523,7 +522,7 @@ describe('FieldsetDetails', () => {
 
   describe('Rules section — empty state', () => {
     it('shows "No rules yet" when rules are empty', () => {
-      renderWithState(makeLoadedState({ rules: [] }));
+      renderWithState(makeLoadedState({ rulesets: [] }));
       expect(screen.getByText(NO_RULES_TEXT)).toBeInTheDocument();
     });
 
@@ -591,10 +590,8 @@ describe('FieldsetDetails', () => {
         updateFieldsetAction(
           expect.objectContaining({
             id: 10,
-            rules: expect.arrayContaining([
+            rulesets: expect.arrayContaining([
               expect.objectContaining({
-                type: EFieldsetRuleType.SumEqual,
-                value: '100',
                 fields: ['field-1', 'field-2'],
               }),
             ]),
@@ -602,7 +599,7 @@ describe('FieldsetDetails', () => {
         ),
       );
 
-      const rulesPayload = getUpdateActionMock().mock.calls[0][0].rules;
+      const rulesPayload = getUpdateActionMock().mock.calls[0][0].rulesets;
       expect(rulesPayload[0].apiName).toBeUndefined();
     });
   });
@@ -619,25 +616,18 @@ describe('FieldsetDetails', () => {
     it('re-syncs detailFieldset rules from store and hides save bar on external fieldset update', () => {
       const initialState = makeLoadedState({
         id: 10,
-        rules: [makeFieldsetTemplateRule({ apiName: 'rule-1', value: 'old' })],
+        rulesets: [makeFieldsetRuleset({ apiName: 'rule-1' })],
       });
       mockSelectorState(initialState);
       const { rerender } = render(React.createElement(FieldsetDetails, makeProps()));
 
-      const ruleInput = screen.getByPlaceholderText(RULE_VALUE_PLACEHOLDER);
-      userEvent.type(ruleInput, '!');
-      expect(ruleInput).toHaveValue('old!');
-      expect(screen.getByRole('button', { name: SAVE_LABEL })).not.toBeDisabled();
-
       const updatedState = makeLoadedState({
         id: 10,
-        rules: [makeFieldsetTemplateRule({ apiName: 'rule-2', value: 'fresh' })],
+        rulesets: [makeFieldsetRuleset({ apiName: 'rule-2' })],
       });
       mockSelectorState(updatedState);
       rerender(React.createElement(FieldsetDetails, makeProps()));
 
-      expect(screen.queryByDisplayValue('old!')).not.toBeInTheDocument();
-      expect(screen.getByDisplayValue('fresh')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: SAVE_LABEL })).toBeDisabled();
       expect(mockDispatch).not.toHaveBeenCalledWith(
         expect.objectContaining({ type: 'fieldsets/updateFieldsetAction' }),
@@ -669,7 +659,7 @@ describe('FieldsetDetails', () => {
 
   describe('fieldset rules validation on Save', () => {
     it('shows warning banner and does not dispatch PATCH when rule is incomplete', () => {
-      renderWithState(makeLoadedState({ id: 10, fields: [], rules: [] }));
+      renderWithState(makeLoadedState({ id: 10, fields: [], rulesets: [] }));
 
       userEvent.click(screen.getByRole('button', { name: new RegExp(ADD_RULE_TEXT, 'i') }));
       userEvent.click(screen.getByRole('button', { name: SAVE_LABEL }));
@@ -683,9 +673,9 @@ describe('FieldsetDetails', () => {
   });
 
   describe('combined dirty PATCH on one Save', () => {
-    it('puts description, fields and rules into a single updateFieldsetAction', () => {
+    it('puts description, fields and rulesets into a single updateFieldsetAction', () => {
       const fields = [makeField({ apiName: 'field-1', order: 1, type: EExtraFieldType.Number })];
-      renderWithState(makeLoadedState({ id: 10, description: '', fields, rules: [] }));
+      renderWithState(makeLoadedState({ id: 10, description: '', fields, rulesets: [] }));
 
       const textarea = screen.getByLabelText(formatMsg('fieldsets.settings.description'));
       userEvent.type(textarea, 'combo');
@@ -705,10 +695,8 @@ describe('FieldsetDetails', () => {
             id: 10,
             description: 'combo',
             fields: expect.any(Array),
-            rules: expect.arrayContaining([
+            rulesets: expect.arrayContaining([
               expect.objectContaining({
-                type: EFieldsetRuleType.SumEqual,
-                value: '100',
                 fields: ['field-1'],
               }),
             ]),

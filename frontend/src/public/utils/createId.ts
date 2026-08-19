@@ -28,3 +28,6 @@ export const createOwnerApiName = () => createUniqueId('owner-xxxyxx');
 export const createViewerApiName = () => createUniqueId('viewer-xxxyxx');
 export const createStarterApiName = () => createUniqueId('starter-xxxyxx');
 export const createFieldsetBindingApiName = () => createUniqueId('fieldset-bind-xxxyxx');
+export const createRulesetApiName = () => createUniqueId('ruleset-xxxyxx');
+export const createRulesetGroupOrApiName = () => createUniqueId('ruleset-group-or-xxxyxx');
+export const createRulesetGroupAndApiName = () => createUniqueId('ruleset-group-and-xxxyxx');

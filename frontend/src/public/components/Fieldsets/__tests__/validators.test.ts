@@ -6,9 +6,9 @@ import {
   FIELDSET_RULES_MSG_VALUE_REQUIRED,
 } from '../constants';
 import { validateFieldsetRules } from '../validators';
-import { EFieldsetRuleType } from '../../../types/fieldset';
+import { EFieldsetNumberRulesetOperator } from '../../../types/fieldset';
 import { EExtraFieldType } from '../../../types/template';
-import { makeFieldsetTemplateRule } from '../../../__stubs__/fieldsets.factory';
+import { makeFieldsetRuleset } from '../../../__stubs__/fieldsets.factory';
 import { makeExtraField } from '../../../__stubs__/fields.factory';
 
 const numberField = () => makeExtraField({ apiName: 'f1', type: EExtraFieldType.Number });
@@ -20,41 +20,62 @@ describe('validateFieldsetRules', () => {
   });
 
   it('returns incomplete when rule has empty value and fields', () => {
-    expect(validateFieldsetRules([makeFieldsetTemplateRule({ apiName: 'r1', value: '', fields: [] })])).toBe(
-      FIELDSET_RULES_MSG_INCOMPLETE,
-    );
+    expect(
+      validateFieldsetRules([
+        makeFieldsetRuleset({
+          fields: [],
+          groupsOr: [{ apiName: 'g-or-1', groupsAnd: [{ apiName: 'g-and-1', operator: EFieldsetNumberRulesetOperator.SumEqual, value: '' }] }],
+        }),
+      ]),
+    ).toBe(FIELDSET_RULES_MSG_INCOMPLETE);
   });
 
   it('returns value-required when value is empty but fields are selected', () => {
     expect(
-      validateFieldsetRules([makeFieldsetTemplateRule({ apiName: 'r1', value: '', fields: ['f1'] })], [numberField()]),
+      validateFieldsetRules(
+        [
+          makeFieldsetRuleset({
+            fields: ['f1'],
+            groupsOr: [{ apiName: 'g-or-1', groupsAnd: [{ apiName: 'g-and-1', operator: EFieldsetNumberRulesetOperator.SumEqual, value: '' }] }],
+          }),
+        ],
+        [numberField()],
+      ),
     ).toBe(FIELDSET_RULES_MSG_VALUE_REQUIRED);
   });
 
   it('returns value-number when value is not numeric for sum_equal', () => {
     expect(
       validateFieldsetRules(
-        [makeFieldsetTemplateRule({ apiName: 'r1', value: 'abc', fields: ['f1'] })],
+        [
+          makeFieldsetRuleset({
+            fields: ['f1'],
+            groupsOr: [{ apiName: 'g-or-1', groupsAnd: [{ apiName: 'g-and-1', operator: EFieldsetNumberRulesetOperator.SumEqual, value: 'abc' }] }],
+          }),
+        ],
         [numberField()],
       ),
     ).toBe(FIELDSET_RULES_MSG_VALUE_NUMBER);
   });
 
   it('returns fields-required when fields are empty but value is numeric', () => {
-    expect(validateFieldsetRules([makeFieldsetTemplateRule({ apiName: 'r1', value: '100', fields: [] })])).toBe(
-      FIELDSET_RULES_MSG_FIELDS_REQUIRED,
-    );
+    expect(
+      validateFieldsetRules([
+        makeFieldsetRuleset({
+          fields: [],
+          groupsOr: [{ apiName: 'g-or-1', groupsAnd: [{ apiName: 'g-and-1', operator: EFieldsetNumberRulesetOperator.SumEqual, value: '100' }] }],
+        }),
+      ]),
+    ).toBe(FIELDSET_RULES_MSG_FIELDS_REQUIRED);
   });
 
   it('returns fields-number when selected fields include a non-number field', () => {
     expect(
       validateFieldsetRules(
         [
-          makeFieldsetTemplateRule({
-            apiName: 'r1',
-            type: EFieldsetRuleType.SumEqual,
-            value: '100',
+          makeFieldsetRuleset({
             fields: ['f2'],
+            groupsOr: [{ apiName: 'g-or-1', groupsAnd: [{ apiName: 'g-and-1', operator: EFieldsetNumberRulesetOperator.SumEqual, value: '100' }] }],
           }),
         ],
         [stringField()],
@@ -65,7 +86,12 @@ describe('validateFieldsetRules', () => {
   it('returns empty string when value is numeric and all fields are number', () => {
     expect(
       validateFieldsetRules(
-        [makeFieldsetTemplateRule({ apiName: 'r1', value: '100', fields: ['f1'] })],
+        [
+          makeFieldsetRuleset({
+            fields: ['f1'],
+            groupsOr: [{ apiName: 'g-or-1', groupsAnd: [{ apiName: 'g-and-1', operator: EFieldsetNumberRulesetOperator.SumEqual, value: '100' }] }],
+          }),
+        ],
         [numberField()],
       ),
     ).toBe('');
@@ -74,7 +100,12 @@ describe('validateFieldsetRules', () => {
   it('treats whitespace-only value as empty (trim)', () => {
     expect(
       validateFieldsetRules(
-        [makeFieldsetTemplateRule({ apiName: 'r1', value: '   ', fields: ['f1'] })],
+        [
+          makeFieldsetRuleset({
+            fields: ['f1'],
+            groupsOr: [{ apiName: 'g-or-1', groupsAnd: [{ apiName: 'g-and-1', operator: EFieldsetNumberRulesetOperator.SumEqual, value: '   ' }] }],
+          }),
+        ],
         [numberField()],
       ),
     ).toBe(FIELDSET_RULES_MSG_VALUE_REQUIRED);
@@ -84,11 +115,9 @@ describe('validateFieldsetRules', () => {
     expect(
       validateFieldsetRules(
         [
-          makeFieldsetTemplateRule({
-            apiName: 'r1',
-            type: EFieldsetRuleType.SumEqual,
-            value: '100',
+          makeFieldsetRuleset({
             fields: ['missing'],
+            groupsOr: [{ apiName: 'g-or-1', groupsAnd: [{ apiName: 'g-and-1', operator: EFieldsetNumberRulesetOperator.SumEqual, value: '100' }] }],
           }),
         ],
         [numberField()],
@@ -100,8 +129,14 @@ describe('validateFieldsetRules', () => {
     expect(
       validateFieldsetRules(
         [
-          makeFieldsetTemplateRule({ apiName: 'r1', value: '100', fields: ['f1'] }),
-          makeFieldsetTemplateRule({ apiName: 'r2', value: '', fields: [] }),
+          makeFieldsetRuleset({
+            fields: ['f1'],
+            groupsOr: [{ apiName: 'g-or-1', groupsAnd: [{ apiName: 'g-and-1', operator: EFieldsetNumberRulesetOperator.SumEqual, value: '100' }] }],
+          }),
+          makeFieldsetRuleset({
+            fields: [],
+            groupsOr: [{ apiName: 'g-or-2', groupsAnd: [{ apiName: 'g-and-2', operator: EFieldsetNumberRulesetOperator.SumEqual, value: '' }] }],
+          }),
         ],
         [numberField()],
       ),
