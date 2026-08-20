@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('processes', '0258_rebuild_attachment_permissions'),
+        ('processes', '0259_populate_fieldset_title_from_name'),
     ]
 
     operations = [
