@@ -441,6 +441,42 @@ def test_retrieve__completed_task__ok(api_client, mocker):
     send_task_completed_webhook_mock.assert_not_called()
 
 
+def test_retrieve__user_completed_task__return_as_completed(
+    mocker,
+    api_client,
+):
+
+    """ https://trello.com/c/75aESAb0 """
+
+    # arrange
+    send_task_completed_webhook_mock = mocker.patch(
+        'src.processes.tasks.webhooks.'
+        'send_task_completed_webhook.delay',
+    )
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    another_user = create_test_admin(account=account)
+    workflow = create_test_workflow(user=user)
+    task = workflow.tasks.get(number=1)
+    task.require_completion_by_all = True
+    task.save()
+    raw_performer = task.add_raw_performer(another_user)
+    task.update_performers(raw_performer)
+
+    api_client.token_authenticate(user)
+    api_client.post(f'/v2/tasks/{task.id}/complete')
+
+    # act
+    response = api_client.get(f'/v2/tasks/{task.id}')
+
+    # assert
+    task.refresh_from_db()
+    assert response.status_code == 200
+    assert response.data['is_completed'] is True
+    assert task.is_completed is False
+    send_task_completed_webhook_mock.assert_not_called()
+
+
 def test_retrieve__revert_delayed_task__not_found(
     mocker,
     api_client,

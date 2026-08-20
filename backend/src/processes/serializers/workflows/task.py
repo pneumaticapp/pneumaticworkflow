@@ -111,6 +111,7 @@ class TaskSerializer(serializers.ModelSerializer):
             'date_started_tsp',
             'date_completed_tsp',
             'due_date_tsp',
+            'is_completed',
             'performers',
             'is_urgent',
             'checklists_marked',
@@ -129,6 +130,7 @@ class TaskSerializer(serializers.ModelSerializer):
     workflow = serializers.SerializerMethodField()
     output = TaskFieldSerializer(many=True)
     delay = serializers.SerializerMethodField(required=False, allow_null=True)
+    is_completed = serializers.SerializerMethodField(read_only=True)
     is_urgent = serializers.BooleanField(read_only=True)
     checklists_marked = serializers.IntegerField(read_only=True)
     checklists_total = serializers.IntegerField(read_only=True)
@@ -141,6 +143,25 @@ class TaskSerializer(serializers.ModelSerializer):
 
     def get_performers(self, instance) -> List[Dict[str, Any]]:
         return get_performers_for_task(instance)
+
+    def get_is_completed(self, instance):
+        # Cannot be derived from `performers`: a group member completion is
+        # stored in a hidden GROUP_USER row, which is not serialized there.
+        if instance.is_completed:
+            return True
+        if self.context.get('user'):
+            user = self.context['user']
+
+            user_completed_task = instance.taskperformer_set.filter(
+                is_completed=True,
+                user_id=user.id,
+            )
+            if (
+                instance.require_completion_by_all and
+                user_completed_task.exists()
+            ):
+                return True
+        return False
 
     def get_delay(self, instance):
         delay = instance.get_active_delay()

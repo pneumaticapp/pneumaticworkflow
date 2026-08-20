@@ -63,6 +63,7 @@ def test_send_task_completed_webhook__ok(api_client, mocker):
             'date_started_tsp': task_1.date_started.timestamp(),
             'date_completed_tsp': task_1.date_completed.timestamp(),
             'due_date_tsp': None,
+            'is_completed': True,
             'performers': [
                 OrderedDict([
                     ('is_completed', True),
@@ -231,6 +232,7 @@ def test_send_task_completed_webhook__sub_workflows__ok(api_client, mocker):
             'date_started_tsp': task_1.date_started.timestamp(),
             'date_completed_tsp': task_1.date_completed.timestamp(),
             'due_date_tsp': None,
+            'is_completed': True,
             'performers': [
                 OrderedDict([
                     ('is_completed', True),
@@ -450,6 +452,7 @@ def test_send_task_returned_webhook__ok(api_client, mocker):
             'date_started_tsp': None,
             'date_completed_tsp': None,
             'due_date_tsp': None,
+            'is_completed': False,
             'performers': [
                 OrderedDict([
                     ('is_completed', False),
