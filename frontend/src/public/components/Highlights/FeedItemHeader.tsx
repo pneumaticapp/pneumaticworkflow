@@ -1,27 +1,13 @@
-import * as React from 'react';
-import { useState, useEffect, useRef } from 'react';
-import classnames from 'classnames';
+import React, { useState } from 'react';
 import { useIntl } from 'react-intl';
 
-import { RichText } from '../RichText';
-import { Attachments } from '../Attachments';
 import { EWorkflowLogEvent } from '../../types/workflow';
-import { IFieldsetRuntime } from '../../types/fieldset';
-import { EExtraFieldType, ETemplateOwnerType, IExtraField } from '../../types/template';
-import { IHighlightsItem } from '../../types/highlights';
-import { isArrayWithItems } from '../../utils/helpers';
-import { EKickoffOutputsViewModes, KickoffOutputs } from '../KickoffOutputs';
-import { UserData } from '../UserData';
-import { getUserFullName } from '../../utils/users';
-import UserDataWithGroup from '../UserDataWithGroup';
 import { getSnoozedUntilDate } from '../../utils/dateTime';
 
-import { Ellipsis } from './Ellipsis';
-import { TruncatedContent } from './utils/TruncatedContent';
-
-import styles from './FeedItem.css';
-
-interface IFeedItemHeaderProps extends IHighlightsItem {}
+import { FeedItemComment } from './FeedItemComment';
+import { FeedItemOutputs } from './FeedItemOutputs';
+import { PerformerChange } from './PerformerChange';
+import { IFeedItemHeaderProps } from './types';
 
 export function FeedItemHeader({
   attachments,
@@ -33,243 +19,60 @@ export function FeedItemHeader({
   targetUserId,
   targetGroupId,
 }: IFeedItemHeaderProps) {
-  const { messages, formatMessage } = useIntl();
-  const commentTextRef = useRef<HTMLSpanElement>(null);
-
+  const { formatMessage } = useIntl();
   const [isTextExpanded, setIsTextExpanded] = useState(false);
-  const [isCommentExpandable, setIsCommentExpandable] = useState(true);
+  const handleExpand = () => setIsTextExpanded(true);
 
-  useEffect(() => {
-    const commentTextHeigh = commentTextRef.current?.offsetHeight || 0;
-
-    setIsCommentExpandable(commentTextHeigh > MAX_TRUNCATED_COMMENT_HEIGHT || hasAttachments);
-  }, [commentTextRef.current]);
-
-  const hasAttachments = Boolean(text && attachments && isArrayWithItems(attachments));
-  const hasCommentText = Boolean(text);
-  const MAX_TRUNCATED_COMMENT_HEIGHT = 20 * 5;
-
-  const renderElipsis = () => {
-    return <Ellipsis expand={() => setIsTextExpanded(true)} />;
-  };
-
-  const renderOutputsContents = () => {
-    const { output: taskOutput, fieldsets: taskFieldsets } = task || {};
-    const { output: kickoffOutput, fieldsets: kickoffFieldsets } = kickoff || {};
-
-    if (
-      !isArrayWithItems(taskOutput) &&
-      !isArrayWithItems(kickoffOutput) &&
-      !isArrayWithItems(taskFieldsets) &&
-      !isArrayWithItems(kickoffFieldsets)
-    ) {
-      return null;
-    }
-
-    const OUTPUTS_MAP: { [key in EWorkflowLogEvent]?: IExtraField[] } = {
-      [EWorkflowLogEvent.WorkflowRun]: kickoffOutput,
-      [EWorkflowLogEvent.WorkflowComplete]: taskOutput,
-      [EWorkflowLogEvent.TaskComplete]: taskOutput,
-      [EWorkflowLogEvent.WorkflowsReturned]: taskOutput,
-      [EWorkflowLogEvent.TaskRevert]: taskOutput,
-    };
-
-    const FIELDSETS_MAP: { [key in EWorkflowLogEvent]?: IFieldsetRuntime[] } = {
-      [EWorkflowLogEvent.WorkflowRun]: kickoffFieldsets,
-      [EWorkflowLogEvent.WorkflowComplete]: taskFieldsets,
-      [EWorkflowLogEvent.TaskComplete]: taskFieldsets,
-      [EWorkflowLogEvent.WorkflowsReturned]: taskFieldsets,
-      [EWorkflowLogEvent.TaskRevert]: taskFieldsets,
-    };
-
-    const outputs = OUTPUTS_MAP[type];
-    const fieldsets = FIELDSETS_MAP[type];
-
-    if (!isArrayWithItems(outputs) && !isArrayWithItems(fieldsets)) {
-      return null;
-    }
-
-    const filterField = (output: IExtraField) => {
-      const value = output.type === EExtraFieldType.User ? output.userId || output.groupId : output.value;
-      return value || output.attachments?.length;
-    };
-
-    const filteredOutputs = (outputs || []).filter(filterField);
-
-    const filteredFieldsets = (fieldsets || [])
-      .map((fs) => ({
-        ...fs,
-        fields: fs.fields.filter(filterField),
-      }))
-      .filter((fs) => fs.fields.length > 0);
-
-    return (
-      <>
-        <KickoffOutputs
-          outputs={filteredOutputs}
-          fieldsets={filteredFieldsets}
-          viewMode={EKickoffOutputsViewModes.Short}
-          isTruncated={!isTextExpanded}
+  switch (type) {
+    case EWorkflowLogEvent.TaskComplete:
+    case EWorkflowLogEvent.WorkflowRun:
+    case EWorkflowLogEvent.WorkflowComplete:
+    case EWorkflowLogEvent.WorkflowsReturned:
+      return (
+        <FeedItemOutputs
+          kickoff={kickoff}
+          isTextExpanded={isTextExpanded}
+          onExpand={handleExpand}
+          task={task}
+          type={type}
         />
-        {filteredOutputs.length + filteredFieldsets.flatMap((fs) => fs.fields).length > 1 &&
-          !isTextExpanded &&
-          renderElipsis()}
-      </>
-    );
-  };
+      );
 
-  const renderAttachments = () => {
-    if (!text || !hasAttachments) {
+    case EWorkflowLogEvent.TaskComment:
+    case EWorkflowLogEvent.WorkflowFinished:
+    case EWorkflowLogEvent.TaskRevert:
+      return (
+        <FeedItemComment
+          attachments={attachments}
+          isTextExpanded={isTextExpanded}
+          onExpand={handleExpand}
+          task={task}
+          text={text}
+          type={type}
+        />
+      );
+
+    case EWorkflowLogEvent.AddedPerformer:
+    case EWorkflowLogEvent.RemovedPerformer:
+    case EWorkflowLogEvent.AddedPerformerGroup:
+    case EWorkflowLogEvent.RemovedPerformerGroup:
+      return (
+        <PerformerChange
+          targetGroupId={targetGroupId}
+          targetUserId={targetUserId}
+          type={type}
+        />
+      );
+
+    case EWorkflowLogEvent.WorkflowSnoozedManually:
+      return (
+        <>{formatMessage({ id: 'workflows.event-snoozed-until' }, { date: getSnoozedUntilDate(delay || null) })}</>
+      );
+
+    case EWorkflowLogEvent.WorkflowResumed:
+      return <>{formatMessage({ id: 'workflows.event-resumed' })}</>;
+
+    default:
       return null;
-    }
-
-    return (
-      <>
-        <Attachments attachments={attachments} isTruncated={!isTextExpanded} />
-        {attachments.length > 1 && renderElipsis()}
-      </>
-    );
-  };
-
-  const renderCommentContent = (params: { isTruncated: boolean }) => {
-    if (!text) {
-      return null;
-    }
-
-    const { isTruncated } = params;
-
-    return (
-      <>
-        {hasCommentText && (
-          <div className={styles['header__comment']}>
-            <span className={styles['comment__title']}>
-              {type === EWorkflowLogEvent.TaskRevert
-                ? formatMessage({ id: 'task.log-returned' }, { taskName: task?.name })
-                : messages['general.comment']}
-            </span>
-            <span
-              className={classnames(styles['comment__text'], isTextExpanded && styles['comment__text_expanded'])}
-              ref={commentTextRef}
-            >
-              <TruncatedContent isTruncated={isTruncated} maxHeight={MAX_TRUNCATED_COMMENT_HEIGHT}>
-                <RichText text={text} />
-              </TruncatedContent>
-            </span>
-          </div>
-        )}
-        {hasAttachments && !isTruncated && <Attachments attachments={attachments} />}
-        {isTruncated && renderElipsis()}
-      </>
-    );
-  };
-
-  const renderTaskCommentContent = () => {
-    if (!text) {
-      return null;
-    }
-
-    const hasOnlyAttachments = hasAttachments && !text;
-
-    if (hasOnlyAttachments) {
-      return renderAttachments();
-    }
-
-    const shoudShowTruncatedContent = !isTextExpanded && isCommentExpandable;
-
-    return renderCommentContent({ isTruncated: shoudShowTruncatedContent });
-  };
-
-  const renderAddedPerformer = () => {
-    if (!targetUserId) {
-      return null;
-    }
-
-    return (
-      <div className={styles['changed-performer']}>
-        {formatMessage({ id: 'task.log-added-performer' })}
-        <UserData userId={targetUserId}>
-          {(user) => {
-            if (!user) {
-              return null;
-            }
-
-            return <span className={styles['username']}>{getUserFullName(user, { withAtSign: true })}</span>;
-          }}
-        </UserData>
-      </div>
-    );
-  };
-
-  const renderRemovedPerformer = () => {
-    if (!targetUserId) {
-      return null;
-    }
-
-    return (
-      <div className={styles['changed-performer']}>
-        {formatMessage({ id: 'task.log-removed-performer' })}
-        <UserData userId={targetUserId}>
-          {(user) => {
-            if (!user) {
-              return null;
-            }
-
-            return <span className={styles['username']}>{getUserFullName(user, { withAtSign: true })}</span>;
-          }}
-        </UserData>
-      </div>
-    );
-  };
-
-  const renderAddedPerformerGroup = () => {
-    if (!targetGroupId) {
-      return null;
-    }
-
-    return (
-      <div className={styles['changed-performer']}>
-        {formatMessage({ id: 'task.log-added-performer-group' })}
-        <UserDataWithGroup type={ETemplateOwnerType.UserGroup} idItem={targetGroupId}>
-          {(group) => <span className={styles['username']}>{group.firstName}</span>}
-        </UserDataWithGroup>
-      </div>
-    );
-  };
-
-  const renderRemovedPerformerGroup = () => {
-    if (!targetGroupId) {
-      return null;
-    }
-
-    return (
-      <div className={styles['changed-performer']}>
-        {formatMessage({ id: 'task.log-removed-performer-group' })}
-        <UserDataWithGroup type={ETemplateOwnerType.UserGroup} idItem={targetGroupId}>
-          {(group) => <span className={styles['username']}>{group.firstName}</span>}
-        </UserDataWithGroup>
-      </div>
-    );
-  };
-
-  const EVENT_CONTENT_MAP: { [key in EWorkflowLogEvent]?: JSX.Element | null } = {
-    [EWorkflowLogEvent.TaskComplete]: renderOutputsContents(),
-    [EWorkflowLogEvent.TaskComment]: renderTaskCommentContent(),
-    [EWorkflowLogEvent.WorkflowRun]: renderOutputsContents(),
-    [EWorkflowLogEvent.WorkflowFinished]: renderTaskCommentContent(),
-    [EWorkflowLogEvent.WorkflowComplete]: renderOutputsContents(),
-    [EWorkflowLogEvent.WorkflowsReturned]: renderOutputsContents(),
-    [EWorkflowLogEvent.TaskRevert]: renderTaskCommentContent(),
-    [EWorkflowLogEvent.AddedPerformer]: renderAddedPerformer(),
-    [EWorkflowLogEvent.RemovedPerformer]: renderRemovedPerformer(),
-    [EWorkflowLogEvent.AddedPerformerGroup]: renderAddedPerformerGroup(),
-    [EWorkflowLogEvent.RemovedPerformerGroup]: renderRemovedPerformerGroup(),
-    [EWorkflowLogEvent.WorkflowSnoozedManually]: (
-      <>{formatMessage({ id: 'workflows.event-snoozed-until' }, { date: getSnoozedUntilDate(delay || null) })}</>
-    ),
-    [EWorkflowLogEvent.WorkflowResumed]: <>{formatMessage({ id: 'workflows.event-resumed' })}</>,
-  };
-
-  const FeedItemHeaderComponent = EVENT_CONTENT_MAP[type] ?? null;
-
-  return FeedItemHeaderComponent;
+  }
 }
