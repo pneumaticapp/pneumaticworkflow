@@ -64,6 +64,7 @@ def test_retrieve__workflow_data__ok(api_client):
     assert response.data['name'] == workflow.name
     assert response.data['is_external'] is False
     assert response.data['is_urgent'] is False
+    assert response.data['due_date_tsp'] is None
     assert response.data['date_created_tsp'] == (
         workflow.date_created.timestamp()
     )
@@ -177,6 +178,7 @@ def test_retrieve__workflow_due_date__ok(api_client):
     user = create_test_user()
     api_client.token_authenticate(user)
     due_date = timezone.now() + timedelta(hours=1)
+    due_date_tsp = due_date.timestamp()
     workflow = create_test_workflow(
         user=user,
         tasks_count=1,
@@ -189,6 +191,7 @@ def test_retrieve__workflow_due_date__ok(api_client):
     # assert
     assert response.status_code == 200
     assert response.data['id'] == workflow.id
+    assert response.data['due_date_tsp'] == due_date_tsp
     assert response.data['date_created_tsp'] == (
         workflow.date_created.timestamp()
     )

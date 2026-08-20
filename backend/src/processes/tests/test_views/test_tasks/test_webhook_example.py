@@ -68,6 +68,7 @@ def test_webhook_example__body__ok(api_client):
         'workflow': {
             'id': workflow.id,
             'name': 'Test workflow',
+            'due_date_tsp': None,
             'status': WorkflowStatus.RUNNING,
             'description': None,
             'finalizable': False,

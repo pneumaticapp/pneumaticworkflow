@@ -108,6 +108,7 @@ def test_list__workflow_data__ok(api_client):
     assert wf_data['date_completed_tsp'] == (
         workflow.date_completed.timestamp()
     )
+    assert wf_data['due_date_tsp'] == due_date.timestamp()
     assert wf_data['fields'] == []
     template_data = wf_data['template']
     assert template_data['id'] == template.id

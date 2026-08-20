@@ -247,6 +247,7 @@ def test_run__all__ok(api_client, mocker):
     assert data['description'] == 'Test desc'
     assert data['date_created_tsp'] == workflow.date_created.timestamp()
     assert data['date_completed_tsp'] is None
+    assert data['due_date_tsp'] == due_date.timestamp()
     assert data['is_external'] is False
     assert data['is_urgent'] is True
     assert data['finalizable'] == finalizable
@@ -2824,6 +2825,7 @@ def test_run__due_date_more_than_current__ok(api_client, mocker):
 
     # assert
     assert response.status_code == 200
+    assert response.data['due_date_tsp'] == due_date.timestamp()
     workflow = Workflow.objects.get(id=response.data['id'])
     assert workflow.due_date == due_date
 
