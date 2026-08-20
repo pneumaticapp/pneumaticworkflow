@@ -117,10 +117,13 @@ function* createFieldsetSaga({ payload }: PayloadAction<ICreateFieldsetParams>) 
 
 export function* updateFieldsetSaga({ payload }: PayloadAction<IUpdateFieldsetParams>) {
   const abortController = new AbortController();
+  const { onSuccess, ...updateParams } = payload;
 
   try {
-    const updatedFieldset: IFieldsetCatalogItem = yield call(updateFieldset, { ...payload, signal: abortController.signal });
+    const updatedFieldset: IFieldsetCatalogItem = yield call(updateFieldset, { ...updateParams, signal: abortController.signal });
     yield put(setCurrentFieldset(updatedFieldset));
+    NotificationManager.success({ message: 'fieldsets.save-success' });
+    onSuccess?.();
   } catch (error) {
     if (isRequestCanceled(error)) return;
     NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });

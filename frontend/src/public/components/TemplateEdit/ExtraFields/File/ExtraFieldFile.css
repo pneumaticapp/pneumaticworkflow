@@ -227,4 +227,6 @@
   margin-bottom: 0.8rem;
   padding-right: 0.4rem;
   display: inline-block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }

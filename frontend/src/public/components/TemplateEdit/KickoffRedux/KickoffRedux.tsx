@@ -20,7 +20,7 @@ import { MergedOutputRows } from '../TaskOutputFlow/MergedOutputRows';
 
 import { KickoffMenu } from './KickoffMenu';
 import { IntlMessages } from '../../IntlMessages';
-import {  EExtraFieldType, IExtraField, ETemplateParts, IKickoffClient, ITemplateClient } from '../../../types/template';
+import {  EExtraFieldType, IExtraField, ETemplateParts, ITemplateKickoffClient, ITemplateClient } from '../../../types/template';
 import { IFieldsetCatalogItem } from '../../../types/fieldset';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { ExtraFieldsMap } from '../ExtraFields/utils/ExtraFieldsMap';
@@ -44,7 +44,7 @@ export interface IKickoffReduxProps {
   intl: IntlShape;
   accountId: number;
   templateStatus: ETemplateStatus;
-  setKickoff(value: IKickoffClient): void;
+  setKickoff(value: ITemplateKickoffClient): void;
 }
 
 export function KickoffRedux({
@@ -84,7 +84,7 @@ export function KickoffRedux({
     setIsOpen(!isOpen);
   };
 
-  const handleChangeKickoff = (newKickoff: IKickoffClient) => {
+  const handleChangeKickoff = (newKickoff: ITemplateKickoffClient) => {
     setKickoff(newKickoff);
   };
 
@@ -116,8 +116,8 @@ export function KickoffRedux({
     if (rows) saveOutputOrders(rows);
   };
 
-  const handleRemoveFieldset = (sharedFieldsetId: number) => {
-    const rows = buildRowsWithRemovedFieldset(kickoff.fields, kickoff.fieldsets || [], sharedFieldsetId);
+  const handleRemoveFieldset = (apiNameBinding: string) => {
+    const rows = buildRowsWithRemovedFieldset(kickoff.fields, kickoff.fieldsets || [], apiNameBinding);
     saveOutputOrders(rows);
   };
   const handleDeleteField = (apiName: string) => {
@@ -129,6 +129,13 @@ export function KickoffRedux({
   const handleMoveMergedIndex = (index: number, direction: 'up' | 'down') => {
     const moved = moveMergedRow(mergedRows, index, direction);
     saveOutputOrders(moved);
+  };
+
+  const handleEditFieldsetTitle = (apiNameBinding: string, title: string) => {
+    const nextFieldsets = (kickoff.fieldsets || []).map((fieldset) =>
+      fieldset.apiNameBinding === apiNameBinding ? { ...fieldset, title } : fieldset,
+    );
+    handleChangeKickoff({ ...kickoff, fieldsets: nextFieldsets });
   };
 
   const renderKickoffForm = () => {
@@ -166,9 +173,7 @@ export function KickoffRedux({
           ))}
           <FieldsetIconPicker
             fieldsetsCatalogLoading={fieldsetsCatalogLoading}
-            selectedFieldsetIds={(kickoff.fieldsets || []).map((fieldset) => fieldset.sharedFieldsetId)}
             onSelectFieldset={handleAddKickoffFieldset}
-            onRemoveFieldset={handleRemoveFieldset}
           />
         </div>
         {!isFormEmpty && (
@@ -182,6 +187,7 @@ export function KickoffRedux({
               datasetOptions={datasetOptions}
               accountId={accountId}
               formatMessage={formatMessage}
+              onEditFieldsetTitle={handleEditFieldsetTitle}
             />
           </div>
         )}

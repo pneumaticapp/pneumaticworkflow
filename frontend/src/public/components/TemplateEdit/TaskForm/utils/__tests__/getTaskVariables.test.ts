@@ -1,7 +1,7 @@
 import { createElement } from 'react';
 import { render, screen } from '@testing-library/react';
 
-import { EExtraFieldType, IKickoffClient, ITemplateTaskClient } from '../../../../../types/template';
+import { EExtraFieldType, ITemplateKickoffClient, ITemplateTaskClient } from '../../../../../types/template';
 import { IFieldsetRuntime } from '../../../../../types/fieldset';
 import { makeExtraField } from '../../../../../__stubs__/fields.factory';
 import { makeFieldsetRuntime, makeFieldsetBindingClient, makeFieldsetField } from '../../../../../__stubs__/fieldsets.factory';
@@ -20,7 +20,7 @@ import {
   SYSTEM_VARIABLE_SUBTITLE,
 } from '../getTaskVariables';
 
-const mockKikoff: IKickoffClient = {
+const mockKikoff: ITemplateKickoffClient = {
   description: 'Kickoff description',
   fields: [
     makeExtraField({
@@ -223,7 +223,7 @@ describe('getTaskVariables', () => {
 
 describe('getKickoffVariables with fieldsets', () => {
   it('adds kickoff fieldset fields after regular kickoff fields', () => {
-    const kickoff: IKickoffClient = {
+    const kickoff: ITemplateKickoffClient = {
       ...mockKikoff,
       fieldsets: [makeFieldsetBindingClient({
         apiNameBinding: mockFieldsetData.apiNameBinding,
@@ -242,7 +242,7 @@ describe('getKickoffVariables with fieldsets', () => {
   });
 
   it('skips fieldset missing from catalog without crashing or producing phantom options', () => {
-    const kickoff: IKickoffClient = {
+    const kickoff: ITemplateKickoffClient = {
       ...mockKikoff,
       fieldsets: [
         makeFieldsetBindingClient({ apiNameBinding: 'missing-fs' }),
@@ -379,7 +379,7 @@ describe('useWorkflowNameVariables', () => {
 
   it('includes 4 system variables plus single-line kickoff and fieldset fields, filters out multi-line types', () => {
 
-    const kickoff: IKickoffClient = {
+    const kickoff: ITemplateKickoffClient = {
       description: '',
       fields: [
         makeExtraField({

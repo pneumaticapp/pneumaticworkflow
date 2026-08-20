@@ -62,6 +62,11 @@ jest.mock('../FieldsetFlowRowDropdown', () => ({
     ),
 }));
 
+jest.mock('../FieldsetEditorTitle', () => ({
+  FieldsetEditorTitle: ({ title }: { title: string }) =>
+    React.createElement('div', { 'data-testid': 'fieldset-editor-title' }, title),
+}));
+
 const makeField = (apiName: string) => makeExtraField({
   apiName,
   name: `Field ${apiName}`,
@@ -72,10 +77,11 @@ const fieldRow = (apiName: string): TMergedTaskOutputRow => ({
   field: makeField(apiName),
 });
 
-const fieldsetRow = (apiNameBinding: string, name = 'Test Fieldset', fieldsCount = 0): TMergedTaskOutputRow => ({
+const fieldsetRow = (apiNameBinding: string, name = 'Test Fieldset', fieldsCount = 0, title?: string): TMergedTaskOutputRow => ({
   ...makeFieldsetBindingClient({
     apiNameBinding,
     name,
+    title: title ?? `Title of ${name}`,
     fields: Array.from({ length: fieldsCount }, (_, index) =>
       makeFieldsetField({ apiName: `${apiNameBinding}-field-${index}` }),
     ),
@@ -90,6 +96,7 @@ describe('MergedOutputRows', () => {
     onMoveRow: jest.fn(),
     onEditField: jest.fn(() => jest.fn()),
     onRemoveFieldset: jest.fn(),
+    onEditFieldsetTitle: jest.fn(),
     datasetOptions: [],
     accountId: 1,
     formatMessage: intlMock.formatMessage,
@@ -103,31 +110,22 @@ describe('MergedOutputRows', () => {
     expect(screen.getByText('Field f-1')).toBeInTheDocument();
   });
 
-  it('fieldset with name → renders "<prefix>: <name>" with exact text', () => {
-    const prefix = intlMock.formatMessage({ id: 'fieldsets.title' });
+  it('fieldset row → renders header with catalog name inline and FieldsetEditorTitle with title', () => {
+    const HEADER_LABEL = intlMock.formatMessage({ id: 'fieldsets.header-label' });
 
     render(
       React.createElement(
         MergedOutputRows,
-        makeProps({ mergedRows: [fieldsetRow('fs-1', 'Fieldset Alpha')] }),
+        makeProps({
+          mergedRows: [
+            fieldsetRow('fs-1', 'Fieldset Alpha', 0, 'Custom Title Alpha'),
+          ],
+        }),
       ),
     );
 
-    expect(screen.getByText(`${prefix}: Fieldset Alpha`)).toBeInTheDocument();
-  });
-
-  it('fieldset with empty name → renders "<prefix>: <fallback>" with exact text', () => {
-    const prefix = intlMock.formatMessage({ id: 'fieldsets.title' });
-    const fallback = intlMock.formatMessage({ id: 'tasks.task-fieldsets' });
-
-    render(
-      React.createElement(
-        MergedOutputRows,
-        makeProps({ mergedRows: [fieldsetRow('fs-empty', '')] }),
-      ),
-    );
-
-    expect(screen.getByText(`${prefix}: ${fallback}`)).toBeInTheDocument();
+    expect(screen.getByText(`${HEADER_LABEL}: Fieldset Alpha`)).toBeInTheDocument();
+    expect(screen.getByTestId('fieldset-editor-title')).toHaveTextContent('Custom Title Alpha');
   });
 
   it('renders ExtraFieldsLabels when fieldset has fields', () => {
@@ -163,7 +161,7 @@ describe('MergedOutputRows', () => {
     expect(screen.getByRole('button', { name: 'Remove' })).toBeInTheDocument();
   });
 
-  it('click Remove → onRemoveFieldset(sharedFieldsetId) called once', () => {
+  it('click Remove → onRemoveFieldset(apiNameBinding) called once', () => {
     const onRemoveFieldset = jest.fn();
 
     render(
@@ -176,7 +174,7 @@ describe('MergedOutputRows', () => {
     userEvent.click(screen.getByRole('button', { name: 'Remove' }));
 
     expect(onRemoveFieldset).toHaveBeenCalledTimes(1);
-    expect(onRemoveFieldset).toHaveBeenCalledWith(1);
+    expect(onRemoveFieldset).toHaveBeenCalledWith('fs-1');
   });
 
   it('click Up → onMoveRow(0, "up") called once, "down" not called', () => {

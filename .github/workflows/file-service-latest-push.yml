@@ -30,7 +30,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: "pneumaticworkflow/file-service"
+          images: "pneumaticworkflow/pneumatic-file-service"
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -41,12 +41,12 @@ jobs:
           driver: cloud
           endpoint: "pneumaticworkflow/pneumatic-release-builder"
 
-      - name: Build and push pneumaticworkflow/file-service
+      - name: Build and push pneumaticworkflow/pneumatic-file-service
         uses: docker/build-push-action@v6
         with:
           platforms: linux/amd64,linux/arm64
           context: storage
           file: "storage/Dockerfile"
           push: true
-          tags: "pneumaticworkflow/file-service:latest"
+          tags: "pneumaticworkflow/pneumatic-file-service:latest"
           labels: ${{ steps.meta.outputs.labels }}

@@ -504,7 +504,7 @@ services:
   file-service:
     build:
       context: ./storage
-    image: pneumaticworkflow/file-service:${TAG:-stable}
+    image: pneumaticworkflow/pneumatic-file-service:${TAG:-stable}
     container_name: pneumatic-file-service
     environment:
       DEBUG: ${FILE_DEBUG:-false}

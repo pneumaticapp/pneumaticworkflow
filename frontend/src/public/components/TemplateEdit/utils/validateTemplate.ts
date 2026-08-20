@@ -8,6 +8,7 @@ import { validateWorkflowName } from '../../../utils/validators';
 import { UnassignedTasksWarning, PremiumFeaturesWarning, IInfoWarningProps } from '../InfoWarningsModal/warnings';
 import { areConditionsValid, isNumberConditionsValid } from '../TaskForm/Conditions/utils/conditionsValidators';
 import { areExtraFieldsValid } from './areExtraFieldsValid';
+import { areFieldsetsValid } from './areFieldsetsValid';
 import { isValidTaskForm } from './isValidTaskForm';
 
 type TWarningRule<T> = {
@@ -40,7 +41,7 @@ export function validateTemplate(template: ITemplateClient, isSubscribed: boolea
       getMessage: () => formatMessage({ id: 'template.task-validation-error' }),
     },
     {
-      check: () => !areExtraFieldsValid(kickoff!.fields),
+      check: () => !areExtraFieldsValid(kickoff!.fields) || !areFieldsetsValid(kickoff!.fieldsets),
       getMessage: () => formatMessage({ id: 'template.kickoff-validation-error' }),
     },
     {

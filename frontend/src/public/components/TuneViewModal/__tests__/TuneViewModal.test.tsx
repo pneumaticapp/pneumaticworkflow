@@ -92,13 +92,21 @@ const makeField = (overrides: Partial<IExtraField> = {}) => makeExtraField({
   ...overrides,
 });
 
-const makeFieldsetOutput = (
-  apiNameBinding: string,
-  name: string,
-  fields: IExtraField[],
-): TRuntimeMergedOutputPart => ({
+type TMakeFieldsetOutputArgs = {
+  apiNameBinding?: string;
+  name?: string;
+  title?: string;
+  fields?: IExtraField[];
+};
+
+const makeFieldsetOutput = ({
+  apiNameBinding = 'fs-1',
+  name = 'Catalog FS Name',
+  title = 'FS Title',
+  fields = [],
+}: TMakeFieldsetOutputArgs = {}): TRuntimeMergedOutputPart => ({
   kind: 'fieldset' as const,
-  data: { apiNameBinding, name, description: '', fields, order: 0, labelPosition: EFieldLabelPosition.Top },
+  data: { apiNameBinding, name, title, description: '', fields, order: 0, labelPosition: EFieldLabelPosition.Top },
 });
 
 const makeFieldOutput = (field: IExtraField): TRuntimeMergedOutputPart => ({
@@ -135,7 +143,12 @@ describe('TuneViewModal', () => {
 
       const task = makeTask('task-1', 'Task 1', [
         makeFieldOutput(regularField),
-        makeFieldsetOutput('fs-1', 'My Fieldset', [fsField1, fsField2]),
+        makeFieldsetOutput({
+          apiNameBinding: 'fs-1',
+          name: 'Catalog FS Name',
+          title: 'My Fieldset Title',
+          fields: [fsField1, fsField2],
+        }),
       ]);
 
       mockTemplateTasks.mockReturnValue([task]);
@@ -143,7 +156,8 @@ describe('TuneViewModal', () => {
 
       renderWithIntl(React.createElement(TuneViewModal));
 
-      expect(screen.getByText('My Fieldset')).toBeInTheDocument();
+      expect(screen.getByText('My Fieldset Title')).toBeInTheDocument();
+      expect(screen.queryByText('Catalog FS Name')).not.toBeInTheDocument();
       expect(screen.getByTestId('cb-fs-f1')).toBeInTheDocument();
       expect(screen.getByTestId('cb-fs-f2')).toBeInTheDocument();
       expect(screen.getByTestId('cb-reg-1')).toBeInTheDocument();
@@ -152,7 +166,12 @@ describe('TuneViewModal', () => {
     it('toggles fieldset field checked state', () => {
       const fsField = makeField({ apiName: 'fs-toggle', name: 'Toggle Me' });
       const task = makeTask('task-1', 'Task 1', [
-        makeFieldsetOutput('fs-1', 'FS', [fsField]),
+        makeFieldsetOutput({
+          apiNameBinding: 'fs-1',
+          name: 'Catalog FS Name',
+          title: 'FS Title',
+          fields: [fsField],
+        }),
       ]);
 
       mockTemplateTasks.mockReturnValue([task]);
@@ -171,7 +190,12 @@ describe('TuneViewModal', () => {
     it('auto-expands task when a fieldset field is in savedFields', () => {
       const fsField = makeField({ apiName: 'fs-saved', name: 'Saved FS Field' });
       const task = makeTask('task-auto', 'Auto Task', [
-        makeFieldsetOutput('fs-auto', 'Auto FS', [fsField]),
+        makeFieldsetOutput({
+          apiNameBinding: 'fs-auto',
+          name: 'Auto FS Catalog Name',
+          title: 'Auto FS Title',
+          fields: [fsField],
+        }),
       ]);
 
       mockTemplateTasks.mockReturnValue([task]);
@@ -179,7 +203,7 @@ describe('TuneViewModal', () => {
 
       renderWithIntl(React.createElement(TuneViewModal));
 
-      expect(screen.getByText('Auto FS')).toBeInTheDocument();
+      expect(screen.getByText('Auto FS Title')).toBeInTheDocument();
       expect(screen.getByTestId('cb-fs-saved')).toBeInTheDocument();
     });
 
@@ -192,7 +216,12 @@ describe('TuneViewModal', () => {
 
       const task = makeTask('task-1', 'Task 1', [
         makeFieldOutput(regularField),
-        makeFieldsetOutput('fs-1', 'FS', [fsField1, fsField2]),
+        makeFieldsetOutput({
+          apiNameBinding: 'fs-1',
+          name: 'Catalog FS Name',
+          title: 'FS Title',
+          fields: [fsField1, fsField2],
+        }),
       ]);
 
       mockTemplateTasks.mockReturnValue([task]);
