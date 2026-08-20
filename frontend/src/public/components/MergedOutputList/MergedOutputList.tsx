@@ -15,6 +15,8 @@ export function MergedOutputList({
   labelBackgroundColor,
   fieldClassName,
   accountId,
+  isDisabled,
+  onUploadStateChange,
 }: IMergedOutputListProps) {
   const { isDesktop } = useCheckDevice();
   const mergedOutputs = buildRuntimeMergedOutputParts(fields, fieldsets);
@@ -39,13 +41,15 @@ export function MergedOutputList({
               wrapperClassName={fieldClassName}
               accountId={accountId}
               labelPosition={EFieldLabelPosition.Top}
+              isDisabled={isDisabled}
+              onUploadStateChange={(isUploading) => onUploadStateChange?.(fieldApiName, isUploading)}
             />
           );
         }
         if (mergedOutput.kind === 'fieldset') {
           const {
             apiNameBinding: fieldsetApiName,
-            name: fieldsetName,
+            title: fieldsetTitle,
             description: fieldsetDescription,
             fields: fieldsetFields,
             labelPosition: fieldsetLabelPosition,
@@ -54,7 +58,7 @@ export function MergedOutputList({
           return (
           <FieldsetFieldGroup
             key={fieldsetApiName}
-            title={fieldsetName}
+            title={fieldsetTitle}
             description={fieldsetDescription}
             fields={fieldsetFields}
             onEditField={onEditFieldsetField}
@@ -63,6 +67,8 @@ export function MergedOutputList({
             accountId={accountId}
             fieldClassName={fieldClassName}
             labelPosition={isDesktop ? fieldsetLabelPosition : EFieldLabelPosition.Top}
+            isDisabled={isDisabled}
+            onUploadStateChange={onUploadStateChange}
           />
           );
         }

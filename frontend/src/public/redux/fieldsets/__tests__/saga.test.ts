@@ -2,16 +2,18 @@
 import { runSaga } from 'redux-saga';
 import { call } from 'redux-saga/effects';
 
-import { loadFieldsetsSaga, loadCurrentFieldsetSaga, deleteFieldsetSaga, updateFieldsetSaga } from '../saga';
+import { loadFieldsetsSaga, loadCurrentFieldsetSaga, deleteFieldsetSaga, updateFieldsetSaga, cloneFieldsetSaga } from '../saga';
 import { getFieldsets } from '../../../api/fieldsets/getFieldsets';
 import { getFieldset } from '../../../api/fieldsets/getFieldset';
 import { deleteFieldset } from '../../../api/fieldsets/deleteFieldset';
 import { updateFieldset } from '../../../api/fieldsets/updateFieldset';
+import { cloneFieldset } from '../../../api/fieldsets/cloneFieldset';
 import {
   loadFieldsets, loadFieldsetsSuccess, loadFieldsetsFailed,
   loadCurrentFieldset, loadCurrentFieldsetSuccess,
   removeFieldsetFromList,
   setCurrentFieldset,
+  resetCurrentFieldset,
   updateFieldsetAction,
 } from '../slice';
 import { initialState } from '../slice';
@@ -20,25 +22,30 @@ import { ERoutes } from '../../../constants/routes';
 import { EFieldsetsSorting } from '../../../types/fieldset';
 import { makeFieldsetCatalogItem } from '../../../__stubs__/fieldsets.factory';
 import { isRequestCanceled } from '../../../utils/isRequestCanceled';
+import { NotificationManager } from '../../../components/UI/Notifications';
 
-jest.mock('../../../utils/getConfig', () => ({
-  getBrowserConfigEnv: jest.fn().mockReturnValue({
-    api: { urls: { fieldsets: '/fieldsets', fieldset: '/fieldsets/:id' } },
-  }),
-}));
+jest.mock('../../../utils/getConfig', () => {
+  const config = require('../../../../../config/common.json');
+  return {
+    getBrowserConfigEnv: jest.fn().mockReturnValue({
+      api: { urls: config.api.urls },
+    }),
+  };
+});
 
 jest.mock('../../../api/fieldsets/getFieldsets', () => ({ getFieldsets: jest.fn() }));
 jest.mock('../../../api/fieldsets/getFieldset', () => ({ getFieldset: jest.fn() }));
 jest.mock('../../../api/fieldsets/createFieldset', () => ({ createFieldset: jest.fn() }));
 jest.mock('../../../api/fieldsets/updateFieldset', () => ({ updateFieldset: jest.fn() }));
 jest.mock('../../../api/fieldsets/deleteFieldset', () => ({ deleteFieldset: jest.fn() }));
+jest.mock('../../../api/fieldsets/cloneFieldset', () => ({ cloneFieldset: jest.fn() }));
 
 jest.mock('../../../utils/history', () => ({
   history: { replace: jest.fn(), push: jest.fn() },
 }));
 
 jest.mock('../../../components/UI/Notifications', () => ({
-  NotificationManager: { notifyApiError: jest.fn(), warning: jest.fn() },
+  NotificationManager: { notifyApiError: jest.fn(), warning: jest.fn(), success: jest.fn() },
 }));
 
 jest.mock('../../../utils/logger', () => ({
@@ -198,16 +205,12 @@ describe('loadFieldsetsSaga — additional cases', () => {
   beforeEach(() => { jest.clearAllMocks(); });
 
   const runSagaHelper = async (
-    saga: (...args: unknown[]) => Generator,
-    action: { type: string; payload?: unknown },
-    stateOverrides: Record<string, unknown> = {},
+    saga: typeof loadFieldsetsSaga,
+    action: ReturnType<typeof loadFieldsets>,
+    stateOverrides: Partial<typeof initialState> = {},
   ) => {
     const dispatched: { type: string; payload?: unknown }[] = [];
-    const fieldsets = { ...initialState };
-    Object.keys(stateOverrides).forEach((key) => {
-      (fieldsets as Record<string, unknown>)[key] = stateOverrides[key];
-    });
-    const state = { fieldsets };
+    const state = { fieldsets: { ...initialState, ...stateOverrides } };
 
     function* wrapper() {
       yield call(saga, action);
@@ -294,6 +297,7 @@ describe('deleteFieldsetSaga', () => {
     expect(dispatched).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ type: removeFieldsetFromList.type, payload: 5 }),
+        expect.objectContaining({ type: resetCurrentFieldset.type }),
       ]),
     );
     expect(onSuccess).toHaveBeenCalledTimes(1);
@@ -352,13 +356,17 @@ describe('updateFieldsetSaga', () => {
     return dispatched;
   };
 
-  it('dispatches setCurrentFieldset on API success', async () => {
+  it('dispatches setCurrentFieldset and displays success notification on API success', async () => {
     const updatedFieldset = makeFieldsetCatalogItem({ id: FIELDSET_ID, name: 'Updated' });
     (updateFieldset as jest.Mock).mockResolvedValue(updatedFieldset);
 
     const dispatched = await runUpdateFieldset({ id: FIELDSET_ID, name: 'Updated' });
 
     expect(updateFieldset).toHaveBeenCalledTimes(1);
+
+    expect(NotificationManager.success).toHaveBeenCalledTimes(1);
+    expect(NotificationManager.success).toHaveBeenCalledWith({ message: 'fieldsets.save-success' });
+
     expect(dispatched).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ type: setCurrentFieldset.type }),
@@ -371,17 +379,19 @@ describe('updateFieldsetSaga', () => {
     );
   });
 
-  it('dispatches loadCurrentFieldset on API error to rollback UI state', async () => {
+  it('shows warning and does not reload fieldset on API error', async () => {
     (updateFieldset as jest.Mock).mockRejectedValue(new Error('Cannot modify bound fieldset'));
 
     const dispatched = await runUpdateFieldset({ id: FIELDSET_ID, description: 'new desc' });
 
-    expect(dispatched).toEqual(
+    expect(NotificationManager.notifyApiError).toHaveBeenCalledTimes(1);
+    expect(NotificationManager.notifyApiError).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({ message: 'Cannot modify bound fieldset' }),
+    );
+    expect(dispatched).not.toEqual(
       expect.arrayContaining([
-        expect.objectContaining({
-          type: loadCurrentFieldset.type,
-          payload: { id: FIELDSET_ID },
-        }),
+        expect.objectContaining({ type: loadCurrentFieldset.type }),
       ]),
     );
     expect(dispatched).not.toEqual(
@@ -398,5 +408,77 @@ describe('updateFieldsetSaga', () => {
     const dispatched = await runUpdateFieldset({ id: FIELDSET_ID, name: 'x' });
 
     expect(dispatched).toEqual([]);
+  });
+});
+
+
+describe('cloneFieldsetSaga', () => {
+  beforeEach(() => { jest.clearAllMocks(); });
+
+  const FIELDSET_ID = 5;
+  const CLONED_ID = 42;
+
+  const runCloneFieldset = async (id: number) => {
+    const dispatched: IDispatchedAction[] = [];
+
+    await runSaga(
+      {
+        dispatch: (a: IDispatchedAction) => dispatched.push(a),
+        getState: () => ({ fieldsets: { ...initialState } }),
+      },
+      function* wrapper() {
+        yield call(cloneFieldsetSaga, {
+          type: 'fieldsets/cloneFieldsetAction',
+          payload: { id },
+        });
+      },
+    ).toPromise();
+
+    return dispatched;
+  };
+
+  it('dispatches loadCurrentFieldsetSuccess and redirects to cloned fieldset', async () => {
+    const clonedFieldset = makeFieldsetCatalogItem({ id: CLONED_ID, name: 'Clone of Test' });
+    (cloneFieldset as jest.Mock).mockResolvedValue(clonedFieldset);
+
+    const dispatched = await runCloneFieldset(FIELDSET_ID);
+
+    expect(cloneFieldset).toHaveBeenCalledTimes(1);
+    expect(cloneFieldset).toHaveBeenCalledWith(FIELDSET_ID);
+
+    expect(dispatched).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: loadCurrentFieldsetSuccess.type,
+          payload: clonedFieldset,
+        }),
+      ]),
+    );
+
+    expect(history.push).toHaveBeenCalledTimes(1);
+    expect(history.push).toHaveBeenCalledWith(
+      ERoutes.FieldsetDetail.replace(':id', String(CLONED_ID)),
+    );
+  });
+
+  it('shows notifyApiError and does not redirect on API error', async () => {
+    const error = { status: 500, message: 'Server error' };
+    (cloneFieldset as jest.Mock).mockRejectedValue(error);
+
+    const dispatched = await runCloneFieldset(FIELDSET_ID);
+
+    expect(dispatched).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ type: loadCurrentFieldsetSuccess.type }),
+      ]),
+    );
+
+    expect(history.push).not.toHaveBeenCalled();
+
+    expect(NotificationManager.notifyApiError).toHaveBeenCalledTimes(1);
+    expect(NotificationManager.notifyApiError).toHaveBeenCalledWith(
+      error,
+      expect.objectContaining({ message: 'Server error' }),
+    );
   });
 });

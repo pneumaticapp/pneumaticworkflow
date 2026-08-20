@@ -4,7 +4,7 @@ import { makeFieldsetRuntime } from '../../__stubs__/fieldsets.factory';
 import { IWorkflowDetailsKickoff } from '../../types/workflow';
 
 describe('getEditKickoff', () => {
-  it('returns fieldsets as an empty array even when the source kickoff has fieldsets', () => {
+  it('preserves fieldsets and maps their fields when source kickoff has fieldsets', () => {
     const workflowKickoff: IWorkflowDetailsKickoff = {
       id: 1,
       description: 'Kickoff description',
@@ -14,7 +14,7 @@ describe('getEditKickoff', () => {
 
     const result = getEditKickoff(workflowKickoff);
 
-    expect(result.fieldsets).toEqual([]);
+    expect(result.fieldsets).toEqual([expect.objectContaining({ apiNameBinding: 'fs-1' })]);
     expect(result.description).toBe('Kickoff description');
     expect(result.fields).toEqual(
       expect.arrayContaining([expect.objectContaining({ apiName: 'f1' })]),

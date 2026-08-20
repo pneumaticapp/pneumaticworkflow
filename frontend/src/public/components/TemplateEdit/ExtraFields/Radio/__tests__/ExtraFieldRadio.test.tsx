@@ -170,7 +170,7 @@ describe('ExtraFieldRadio', () => {
       );
     });
 
-    it('ProcessRun + labelPosition=Left: renders FieldLabel with aligned-start class', () => {
+    it('ProcessRun + labelPosition=Left: renders FieldLabel with labelPosition=Left prop', () => {
       render(
         <ExtraFieldRadio
           {...baseKickoffProps}
@@ -184,7 +184,7 @@ describe('ExtraFieldRadio', () => {
       expect(fieldLabelMock).toHaveBeenCalledTimes(1);
       expect(fieldLabelMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          className: expect.stringContaining('aligned-start'),
+          labelPosition: EFieldLabelPosition.Left,
         }),
         {},
       );

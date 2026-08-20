@@ -115,7 +115,7 @@ import { sendWorkflowComment } from '../../api/sendWorkflowComment';
 import { finishWorkflow } from '../../api/finishWorkflow';
 import { editWorkflow, IEditWorkflowResponse } from '../../api/editWorkflow';
 import { getTemplatesTitles, TGetTemplatesTitlesResponse } from '../../api/getTemplatesTitles';
-import { IKickoffClient, ITemplateResponse, TTemplatePreset } from '../../types/template';
+import { IRuntimeKickoffClient, ITemplateResponse, TTemplatePreset } from '../../types/template';
 import { getWorkflowLogStore } from '../selectors/workflowLog';
 
 import { TChannelAction } from '../tasks/saga';
@@ -205,13 +205,13 @@ function* fetchWorkflow({ payload: id }: PayloadAction<number>) {
   }
 }
 
-function* handleOpenWorkflowLogPopup({
+export function* handleOpenWorkflowLogPopup({
   payload: { workflowId, shouldSetWorkflowDetailUrl, redirectTo404IfNotFound },
 }: PayloadAction<TOpenWorkflowLogPopupPayload>) {
   try {
     if (shouldSetWorkflowDetailUrl) {
       const newUrl = ERoutes.WorkflowDetail.replace(':id', String(workflowId)) + history.location.search;
-      window.history.replaceState(null, '', newUrl);
+      history.replace(newUrl);
     }
 
     yield handleLoadWorkflow({ workflowId });
@@ -617,6 +617,9 @@ export function* cloneWorkflowSaga({
       throw new Error('no template id');
     }
 
+    // TODO (Technical Debt): Backend fieldsets in TWorkflowDetailsResponse contain raw backend properties (id, apiName),
+    // which do not match the declared client runtime model IFieldsetRuntime (which expects apiNameBinding
+    // instead of apiName, and lacks id).
     const [workflowDetails, template]: [TWorkflowDetailsResponse, ITemplateResponse] = yield all([
       getWorkflow(workflowId),
       getTemplate(templateId),
@@ -636,7 +639,7 @@ export function* cloneWorkflowSaga({
       return;
     }
 
-    const kickoff: IKickoffClient = yield getClonedKickoff(
+    const kickoff: IRuntimeKickoffClient = yield getClonedKickoff(
       formattedworkflowDetails.kickoff, normalizedTemplate.kickoff,
     );
 
@@ -645,6 +648,7 @@ export function* cloneWorkflowSaga({
         ...runnableWorkflow,
         name: `${workflowName} (Clone)`,
         kickoff,
+        loadedFieldsets: kickoff.fieldsets || [],
       }),
     );
   } catch (error) {

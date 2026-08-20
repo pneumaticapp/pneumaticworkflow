@@ -92,9 +92,10 @@ describe('KickoffOutputs', () => {
     ]);
   });
 
-  it('in full mode renders fieldset group: name, description and only non-empty fields', () => {
+  it('in full mode renders fieldset group: title, description and only non-empty fields', () => {
     const fieldset = makeFieldsetRuntime({
-      name: 'Contacts',
+      name: 'Tech Catalog Name',
+      title: 'User Contacts Title',
       description: 'Reachout details',
       order: 1,
       fields: [
@@ -110,7 +111,8 @@ describe('KickoffOutputs', () => {
       fieldsets: [fieldset],
     }));
 
-    expect(screen.getByText('Contacts')).toBeInTheDocument();
+    expect(screen.getByText('User Contacts Title')).toBeInTheDocument();
+    expect(screen.queryByText('Tech Catalog Name')).not.toBeInTheDocument();
     expect(screen.getByText('Reachout details')).toBeInTheDocument();
 
     expect(screen.getByTestId('text-output-email')).toBeInTheDocument();
@@ -129,6 +131,7 @@ describe('KickoffOutputs', () => {
 
     const fieldset = makeFieldsetRuntime({
       name: 'Docs',
+      title: 'Docs',
       fields: [fileField],
     });
 
@@ -144,6 +147,7 @@ describe('KickoffOutputs', () => {
   it('in truncated mode renders fieldset group title and only the first field', () => {
     const fieldset = makeFieldsetRuntime({
       name: 'Profile',
+      title: 'Profile',
       order: 5,
       fields: [
         makeExtraField({ apiName: 'first', name: 'First', value: 'one' }),

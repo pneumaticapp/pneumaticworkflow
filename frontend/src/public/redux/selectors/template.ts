@@ -1,5 +1,5 @@
 import { IApplicationState } from '../../types/redux';
-import { ITemplateClient, ITemplateTaskClient, IKickoffClient, IExtraField } from '../../types/template';
+import { ITemplateClient, ITemplateTaskClient, ITemplateKickoffClient, IExtraField } from '../../types/template';
 
 export const getTemplateData = (state: IApplicationState): ITemplateClient => {
   return state.template.data;
@@ -7,7 +7,7 @@ export const getTemplateData = (state: IApplicationState): ITemplateClient => {
 
 export const getTemplateStatus = (state: IApplicationState) => state.template.status;
 
-export const getKickoff = (state: IApplicationState): IKickoffClient =>
+export const getKickoff = (state: IApplicationState): ITemplateKickoffClient =>
   state.template.data.kickoff;
 
 export const getKickoffFields = (state: IApplicationState): IExtraField[] =>

@@ -1,6 +1,10 @@
 from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
+from django.views.generic import TemplateView
+from drf_spectacular.views import (
+    SpectacularAPIView,
+)
 from rest_framework.routers import DefaultRouter
 
 from src import views
@@ -90,6 +94,20 @@ urlpatterns = [
 ]
 
 urlpatterns += router.urls
+
+# Public API documentation (access controlled via SPECTACULAR_SETTINGS).
+urlpatterns += [
+    path(
+        'api/schema/',
+        SpectacularAPIView.as_view(),
+        name='schema',
+    ),
+    path(
+        'api/docs/',
+        TemplateView.as_view(template_name='scalar_ui.html'),
+        name='scalar-ui',
+    ),
+]
 
 
 websocket_urlpatterns = [
