@@ -452,7 +452,6 @@ def create_test_workflow(
         account=template.account,
         template=template,
         status=status,
-        status_updated=timezone.now(),
         date_completed=date_completed,
         workflow_starter=workflow_starter,
         is_external=is_external,

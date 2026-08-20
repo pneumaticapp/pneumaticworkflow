@@ -5,10 +5,8 @@ from typing import Iterable, List, Optional, Union
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.db.models import (
-    Avg,
     Count,
     Exists,
-    F,
     Max,
     OuterRef,
     Prefetch,
@@ -208,21 +206,6 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
             ],
             **filter_,
         ).distinct()
-
-    def workflows_updated_from(self, value, as_combine=False):
-        filter_ = Q(workflows__status_updated__gte=value)
-        return self._add_filter(filter_, as_combine, '_workflows_filters')
-
-    def workflows_updated_to(self, value, as_combine=False):
-        filter_ = Q(workflows__status_updated__lt=value)
-        return self._add_filter(filter_, as_combine, '_workflows_filters')
-
-    def avg_workflow_duration(self):
-        duration = (
-            F('workflow__status_updated') -
-            F('workflow__date_created')
-        )
-        return self.annotate(avg_workflow_duration=Avg(duration))
 
     def onboarding_owner(self):
         return self.filter(type=TemplateType.ONBOARDING_ACCOUNT_OWNER)
