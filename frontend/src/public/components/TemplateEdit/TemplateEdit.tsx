@@ -1,9 +1,10 @@
 import * as React from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
 import { RouteComponentProps } from 'react-router-dom';
 import { debounce } from 'throttle-debounce';
+import classnames from 'classnames';
 
 import { IInfoWarningProps } from './InfoWarningsModal';
 import { getClonedTask } from './utils/getClonedTask';
@@ -36,6 +37,12 @@ import { getIsCatalogLoaded } from '../../redux/selectors/fieldsets';
 import { loadFieldsetsCatalog } from '../../redux/fieldsets/slice';
 import { ESubscriptionPlan } from '../../types/account';
 import { TemplateSettings } from './TemplateSettings';
+import { EGraphViewMode, TemplateGraphEditor, GraphTaskEditorPanel } from './TemplateGraphEditor';
+import { getGraphShowcaseTemplate } from './TemplateGraphEditor/fixtures/graphShowcaseTemplate';
+import { KICKOFF_NODE_ID } from './TemplateGraphEditor/utils/templateToGraph';
+import { resetGraphView, setSelectedTask, setViewMode } from '../../redux/templateGraphView/slice';
+import { selectIsGraphCanvas, selectTemplateSelectedTaskApiName } from '../../redux/selectors/templateGraphView';
+import { WorkflowTaskFormContainer } from './TaskForm';
 
 import { TemplateEditVariablesSync } from './TemplateEditVariablesSync';
 
@@ -98,6 +105,9 @@ export function TemplateEdit({
 
   const isFreePlan = billingPlan === ESubscriptionPlan.Free;
   const accessConditions = isSubscribed || isFreePlan;
+  const selectedTaskApiName = useSelector(selectTemplateSelectedTaskApiName);
+  const isGraphCanvas = useSelector(selectIsGraphCanvas);
+  const isGraphEditing = isGraphCanvas && selectedTaskApiName !== null;
 
   const prevUsers = usePrevious(users);
   const prevLocation = usePrevious(location);
@@ -115,6 +125,7 @@ export function TemplateEdit({
 
     return () => {
       resetTemplateStore();
+      dispatch(resetGraphView());
     };
   }, []);
 
@@ -166,7 +177,18 @@ export function TemplateEdit({
       },
       {
         check: isCreateWorflowPage && !workflowTemplateId,
-        init: () => setTemplate(getEmptyTemplate()),
+        init: () => {
+          const emptyTemplate = getEmptyTemplate();
+          const isGraphShowcase = new URLSearchParams(location.search).get('showcase') === 'graph';
+
+          if (!isGraphShowcase) {
+            setTemplate(emptyTemplate);
+            return;
+          }
+
+          setTemplate(getGraphShowcaseTemplate(emptyTemplate));
+          dispatch(setViewMode(EGraphViewMode.Graph));
+        },
       },
       {
         check: isEditWorkflow,
@@ -184,6 +206,18 @@ export function TemplateEdit({
     if (!taskUUID) return;
     setOpenedTasks({ ...openedTasks, [taskUUID]: true });
   };
+
+  const handleTaskSelectInGraph = useCallback((taskApiName: string) => {
+    dispatch(setSelectedTask(taskApiName));
+  }, [dispatch]);
+
+  const handleKickoffEditInGraph = useCallback(() => {
+    dispatch(setSelectedTask(KICKOFF_NODE_ID));
+  }, [dispatch]);
+
+  const handleCloseGraphEditor = useCallback(() => {
+    dispatch(setSelectedTask(null));
+  }, [dispatch]);
 
   const sortedTasks = () => [...tasks].sort((a, b) => a.number - b.number);
 
@@ -297,6 +331,10 @@ export function TemplateEdit({
     const newTasks = tasks
       .filter((task) => task.uuid !== targetTask.uuid)
       .map((task, index) => ({ ...task, number: index + 1 }));
+
+    if (selectedTaskApiName === targetTask.apiName) {
+      dispatch(setSelectedTask(null));
+    }
 
     if (!isArrayWithItems(newTasks)) {
       changeTasks([getNewTask()]);
@@ -473,41 +511,78 @@ export function TemplateEdit({
     );
   };
 
-  return templateStatus === ETemplateStatus.Loading ? (
-    <div className="loading" />
-  ) : (
+  if (templateStatus === ETemplateStatus.Loading) {
+    return <div className="loading" />;
+  }
+
+  const graphEditingTask = sortedTasks().find((task) => task.apiName === selectedTaskApiName) ?? null;
+
+  return (
     <>
       <TemplateEditVariablesSync
         template={template}
         prevTemplate={prevTemplate}
         loadTemplateVariablesSuccess={loadTemplateVariablesSuccess}
       />
-      <div className={styles['container']}>
+      <div className={classnames(styles['container'], isGraphCanvas && styles['container--graph'])}>
         <AutoSaveStatusContainer onRetry={saveTemplate} />
 
-        <div className={styles['template-wrapper']}>
+        <div className={classnames(styles['template-wrapper'], isGraphCanvas && styles['template-wrapper--graph'])}>
           <div className={styles['template-wrapper__info']}>
             <TemplateSettings />
           </div>
           <div className={styles['template-wrapper__tasks']}>
             {!accessConditions && <ConditionsBanner />}
-            <div className={styles['tasks']}>
-              <div className={styles['kickoff-wrapper']}>
-                <KickoffReduxContainer setKickoff={handleChangeTemplateField('kickoff')} />
-              </div>
-              {sortedTasks().map(getTaskListItem)}
-              <AddEntityButton
-                entities={[
-                  {
-                    title: EEntityTitle.Task,
-                    onAddEntity: handleAddTask,
-                  },
-                ]}
+            {isGraphCanvas ? (
+              <TemplateGraphEditor
+                template={template}
+                onTaskEdit={handleTaskSelectInGraph}
+                onKickoffEdit={handleKickoffEditInGraph}
               />
-              <TemplateIntegrations />
-            </div>
+            ) : (
+              <div className={styles['tasks']}>
+                <div className={styles['kickoff-wrapper']}>
+                  <KickoffReduxContainer setKickoff={handleChangeTemplateField('kickoff')} />
+                </div>
+                {sortedTasks().map(getTaskListItem)}
+                <AddEntityButton
+                  entities={[
+                    {
+                      title: EEntityTitle.Task,
+                      onAddEntity: handleAddTask,
+                    },
+                  ]}
+                />
+                <TemplateIntegrations />
+              </div>
+            )}
           </div>
         </div>
+        {isGraphEditing && (
+          <GraphTaskEditorPanel onClose={handleCloseGraphEditor}>
+            {selectedTaskApiName === KICKOFF_NODE_ID ? (
+              <KickoffReduxContainer
+                setKickoff={handleChangeTemplateField('kickoff')}
+                forceOpen
+                embedded
+                onOpenChange={(isOpen: boolean) => {
+                  if (!isOpen) {
+                    handleCloseGraphEditor();
+                  }
+                }}
+              />
+            ) : (
+              graphEditingTask && (
+                <WorkflowTaskFormContainer
+                  task={graphEditingTask}
+                  users={users}
+                  scrollTarget={null}
+                  embedded
+                />
+              )
+            )}
+          </GraphTaskEditorPanel>
+        )}
       </div>
     </>
   );

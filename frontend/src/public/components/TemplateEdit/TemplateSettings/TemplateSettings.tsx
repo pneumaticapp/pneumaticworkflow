@@ -3,10 +3,12 @@ import { useIntl } from 'react-intl';
 import { debounce } from 'throttle-debounce';
 import { useDispatch, useSelector } from 'react-redux';
 import StickyBox from 'react-sticky-box';
+import classnames from 'classnames';
 
 import { EditableText } from '../../UI';
 import { NAVBAR_HEIGHT } from '../../../constants/defaultValues';
 import { getTemplateData } from '../../../redux/selectors/template';
+import { selectIsGraphCanvas } from '../../../redux/selectors/templateGraphView';
 import { saveTemplate, setTemplate, setTemplateStatus } from '../../../redux/actions';
 import { ETemplateStatus } from '../../../types/redux';
 import { ITemplateClient } from '../../../types/template';
@@ -22,6 +24,7 @@ export function TemplateSettings() {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
   const template = useSelector(getTemplateData);
+  const isGraphCanvas = useSelector(selectIsGraphCanvas);
   const [isInfoWarningsModaOpen, setIsInfoWarningsModaOpen] = useState(false);
   const [infoWarnings, setInfoWarnings] = useState<any>([]);
 
@@ -64,40 +67,50 @@ export function TemplateSettings() {
     return <InfoWarningsModal isOpen={isInfoWarningsModaOpen} onClose={handleCloseModal} warnings={infoWarnings} />;
   };
 
+  const nameField = (
+    <EditableText
+      text={template.name}
+      className={classnames(styles['template-name'], isGraphCanvas && styles['template-name--graph'])}
+      onChangeText={handleChangeTextField('name')}
+      placeholder={formatMessage({ id: 'template.name-placeholder' })}
+      editButtonHint={formatMessage({ id: 'template.edit-name' })}
+    />
+  );
+
+  const settingsContent = isGraphCanvas ? (
+    nameField
+  ) : (
+    <StickyBox offsetTop={NAVBAR_HEIGHT} offsetBottom={20}>
+      {nameField}
+      <div className={styles['description']}>
+        <RichEditor
+          key={template.id ?? 'new'}
+          withToolbar={false}
+          withMentions={false}
+          placeholder={formatMessage({ id: 'template.placeholder' })}
+          className={styles['description-editor']}
+          defaultValue={template.description ?? ''}
+          handleChange={(value) => {
+            handleChangeTextField('description')(value);
+            return Promise.resolve(value);
+          }}
+        />
+      </div>
+
+      <TemplateControllsContainer setInfoWarnings={handleSetInfoWarnings} />
+
+      {(template.updatedBy || template.dateUpdated) && (
+        <div className={styles['last-update']}>
+          <TemplateLastUpdateInfo updatedBy={template.updatedBy} dateUpdated={template.dateUpdated} />
+        </div>
+      )}
+    </StickyBox>
+  );
+
   return (
     <>
       {renderInfoWarningsModal()}
-      <StickyBox offsetTop={NAVBAR_HEIGHT} offsetBottom={20}>
-        <EditableText
-          text={template.name}
-          className={styles['template-name']}
-          onChangeText={handleChangeTextField('name')}
-          placeholder={formatMessage({ id: 'template.name-placeholder' })}
-          editButtonHint={formatMessage({ id: 'template.edit-name' })}
-        />
-        <div className={styles['description']}>
-          <RichEditor
-            key={template.id ?? 'new'}
-            withToolbar={false}
-            withMentions={false}
-            placeholder={formatMessage({ id: 'template.placeholder' })}
-            className={styles['description-editor']}
-            defaultValue={template.description ?? ''}
-            handleChange={(value) => {
-              handleChangeTextField('description')(value);
-              return Promise.resolve(value);
-            }}
-          />
-        </div>
-
-        <TemplateControllsContainer setInfoWarnings={handleSetInfoWarnings} />
-
-        {(template.updatedBy || template.dateUpdated) && (
-          <div className={styles['last-update']}>
-            <TemplateLastUpdateInfo updatedBy={template.updatedBy} dateUpdated={template.dateUpdated} />
-          </div>
-        )}
-      </StickyBox>
+      {settingsContent}
     </>
   );
 }

@@ -8,6 +8,10 @@
   color: var(--pneumatic-color-black100);
 }
 
+.template-name--graph {
+  margin-bottom: 0;
+}
+
 .description .textarea {
   @mixin text-base;
 
