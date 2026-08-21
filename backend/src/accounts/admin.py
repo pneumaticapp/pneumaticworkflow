@@ -558,7 +558,6 @@ class AccountAdminForm(forms.ModelForm):
             'logo_sm',
             'logo_lg',
             'bucket_name',
-            'bucket_is_public',
         )
     name = forms.CharField(required=False)
     logo_sm = forms.CharField(required=False)
@@ -567,7 +566,6 @@ class AccountAdminForm(forms.ModelForm):
     billing_plan = forms.ChoiceField(choices=BillingPlanType.CHOICES)
     billing_period = forms.ChoiceField(choices=BillingPeriod.CHOICES)
     bucket_name = forms.CharField(required=False)
-    bucket_is_public = forms.BooleanField(required=False)
 
     def clean_master_account(self):
         value = self.cleaned_data.get('master_account')
@@ -663,7 +661,6 @@ class AccountAdmin(ModelAdmin):
                     'is_verified',
                     'log_api_requests',
                     'bucket_name',
-                    'bucket_is_public',
                 ),
             },
         ),
@@ -734,7 +731,6 @@ class AccountAdmin(ModelAdmin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.prev_lease_level = None
-        self.prev_bucket_is_public = None
 
     def list_tenants(self, obj):
         result = []
@@ -754,7 +750,6 @@ class AccountAdmin(ModelAdmin):
         result = super().get_object(request, object_id, from_field)
         if result:
             self.prev_lease_level = result.lease_level
-            self.prev_bucket_is_public = result.bucket_is_public
         return result
 
     def save_model(self, request, obj, form, change):
@@ -790,7 +785,6 @@ class AccountAdmin(ModelAdmin):
                 max_ai_templates_generations=obj.max_ai_templates_generations,
                 log_api_requests=obj.log_api_requests,
                 bucket_name=obj.bucket_name,
-                bucket_is_public=obj.bucket_is_public,
                 force_save=True,
             )
             converter = AccountLLConverter(
