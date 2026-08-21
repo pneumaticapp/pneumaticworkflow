@@ -8,6 +8,10 @@
   letter-spacing: -1%;
 }
 
+.template-name--graph {
+  margin-bottom: 0;
+}
+
 .description .textarea {
   @mixin text-base;
 
