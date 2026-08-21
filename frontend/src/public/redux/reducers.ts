@@ -30,6 +30,7 @@ import accounts from './accounts/slice';
 import tasks from './tasks/slice';
 import datasets from './datasets/slice';
 import fieldsets from './fieldsets/slice';
+import templateGraphView from './templateGraphView/slice';
 
 export const reducers = combineReducers({
   general,
@@ -56,6 +57,7 @@ export const reducers = combineReducers({
   tenants,
   datasets,
   fieldsets,
+  templateGraphView,
   pages,
 });
 
