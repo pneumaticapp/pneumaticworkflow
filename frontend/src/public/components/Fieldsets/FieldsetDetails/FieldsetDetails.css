@@ -90,16 +90,16 @@
   }
 
   &:disabled {
+    min-height: unset;
+    white-space: pre-wrap;
+    word-break: break-word;
     cursor: default;
+    resize: none !important;
     color: var(--pneumatic-color-black72);
     background-color: var(--pneumatic-color-black4);
     border: 0.1rem solid transparent;
     opacity: 1;
-    resize: none !important;
     field-sizing: content;
-    min-height: unset;
-    white-space: pre-wrap;
-    word-break: break-word;
   }
 
   &::-webkit-resizer {
@@ -111,16 +111,14 @@
   padding: 1.2rem 1.6rem;
   min-height: 8rem;
   resize: vertical;
-
 }
-/* stylelint-enable declaration-no-important */
 
 .settings-title {
   padding: 0.8rem 1.2rem;
-  resize: none !important;
   overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
+  text-overflow: ellipsis;
+  resize: none !important;
 
   &:disabled {
     overflow: visible;
@@ -144,6 +142,7 @@
     }
   }
 }
+/* stylelint-enable declaration-no-important */
 
 .readonly-badge {
   margin-left: 1.2rem;
@@ -177,7 +176,7 @@
 
   &:has(:disabled),
   &:has(button:disabled),
-  &[class*="filter-select_disabled"] {
+  &[class*='filter-select_disabled'] {
     cursor: default;
     background-color: var(--pneumatic-color-black4);
     border: 0.1rem solid transparent;
@@ -194,6 +193,7 @@
   }
 }
 
+/* stylelint-disable declaration-no-important */
 .settings-select__toggle,
 .rule-operator-select__toggle {
   @mixin text-base;
@@ -217,8 +217,8 @@
 .settings-select__menu,
 .rule-operator-select__menu {
   margin-left: 0 !important;
-  min-width: 16rem;
   width: 100%;
+  min-width: 16rem;
 
   button:focus,
   button:focus-visible,
@@ -227,16 +227,17 @@
     box-shadow: none !important;
   }
 }
+/* stylelint-enable declaration-no-important */
 
 .readonly-badge {
   margin-left: 1.2rem;
   padding: 0.2rem 0.8rem;
   font-size: 1.2rem;
   font-weight: 600;
+  vertical-align: middle;
   color: var(--pneumatic-color-black72);
   background-color: var(--pneumatic-color-black4);
   border-radius: 0.4rem;
-  vertical-align: middle;
   opacity: 0.55;
 }
 
@@ -260,8 +261,8 @@
 }
 
 .components_disabled {
-  opacity: 0.45;
   pointer-events: none;
+  opacity: 0.45;
 }
 
 .fields {
@@ -726,6 +727,7 @@
   width: 100%;
 }
 
+/* stylelint-disable declaration-no-important, selector-max-compound-selectors, selector-max-specificity */
 .usage-banner .usage-banner__row .usage-banner__dropdown .usage-banner__menu-list {
   min-width: 24rem !important;
   max-width: 24rem;
@@ -740,6 +742,7 @@
 
   @mixin text-truncate;
 }
+/* stylelint-enable declaration-no-important, selector-max-compound-selectors, selector-max-specificity */
 
 .usage-banner__option-tooltip {
   span {
