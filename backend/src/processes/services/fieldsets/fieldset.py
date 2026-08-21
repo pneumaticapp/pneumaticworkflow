@@ -7,6 +7,7 @@ from django.db import IntegrityError, transaction
 from src.generics.base.service import BaseModelService
 from src.processes.enums import LabelPosition, FieldSetLayout
 from src.processes.messages.fieldset import (
+    MSG_FS_0014,
     MSG_FS_0015,
     MSG_FS_0016,
 )
@@ -367,10 +368,23 @@ class FieldSetTemplateService(BaseModelService):
             is_superuser=self.is_superuser,
             auth_type=self.auth_type,
         )
-        return service.create(
-            fieldset_id=self.instance.id,
-            **ruleset_data,
-        )
+        try:
+            return service.create(
+                fieldset_id=self.instance.id,
+                template_id=self.instance.template_id,
+                **ruleset_data,
+            )
+        except IntegrityError as ex:
+            if 'fieldsetruleset_fieldset_api_name_unique' not in str(ex):
+                raise
+            api_name = ruleset_data.get('api_name')
+            raise_validation_error(
+                api_name=api_name,
+                message=MSG_FS_0014(
+                    name=self._get_step_name(),
+                    api_name=api_name,
+                ),
+            )
 
     def create_rulesets(
         self,

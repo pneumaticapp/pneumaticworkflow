@@ -9,7 +9,6 @@ from src.processes.enums import (
     FieldSetRuleOperator,
     FieldType,
 )
-from src.processes.messages.fieldset import MSG_FS_0005
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.models.templates.fieldset import (
     FieldSetTemplateRuleGroupAnd,
@@ -17,7 +16,6 @@ from src.processes.models.templates.fieldset import (
     FieldSetTemplateRuleSet,
 )
 from src.processes.services.exceptions import (
-    FieldsetTemplateRuleServiceException,
     FieldsetTemplateRuleSumMaxFieldsNotNumber,
     FieldsetTemplateRuleSumMaxInvalidValue,
 )
@@ -65,7 +63,6 @@ class FieldsetTemplateRuleSetService(BaseModelService):
 
         create_kwargs = {
             'account': self.account,
-            'type': type,
             'message': message,
             'order': order,
             'fieldset_id': fieldset_id,
@@ -93,25 +90,13 @@ class FieldsetTemplateRuleSetService(BaseModelService):
         **kwargs,
     ) -> List[FieldTemplate]:
 
-        rule_type = kwargs.get('type') or self.instance.type
-        available_fields = list(
+        return list(
             FieldTemplate.objects
             .filter(
                 fieldset_id=self.instance.fieldset_id,
                 api_name__in=fields_api_names,
             ),
         )
-        fields_api_names = set(fields_api_names)
-        available_api_names = {field.api_name for field in available_fields}
-        failed_api_names = fields_api_names - available_api_names
-        if failed_api_names:
-            raise FieldsetTemplateRuleServiceException(
-                message=MSG_FS_0005(
-                    rule=rule_type,
-                    field=failed_api_names.pop(),
-                ),
-            )
-        return available_fields
 
     def _set_fields(self, fields_api_names: List[str], **kwargs):
         if fields_api_names:
