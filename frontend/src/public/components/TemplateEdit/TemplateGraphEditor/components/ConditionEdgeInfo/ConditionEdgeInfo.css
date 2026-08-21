@@ -1,0 +1,16 @@
+.edge-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  cursor: pointer;
+  background: var(--pneumatic-color-black4);
+  border-radius: 50%;
+}
+
+.edge-info svg {
+  display: block;
+  width: 2rem;
+  height: 2rem;
+}

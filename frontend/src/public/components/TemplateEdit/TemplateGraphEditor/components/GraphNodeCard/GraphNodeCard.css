@@ -1,0 +1,110 @@
+.graph-node-card {
+  position: relative;
+  padding: 1.6rem;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: 30.4rem;
+  height: 11.2rem;
+  cursor: pointer;
+  background: var(--pneumatic-color-white);
+  border-radius: 1.6rem;
+  box-shadow: 0 0.8rem 2.4rem rgba(98, 98, 95, 0.08);
+  transition: box-shadow 0.2s ease;
+}
+
+.graph-node-card:hover,
+.graph-node-card--selected,
+:global(.react-flow__node.graph-item--focused) .graph-node-card {
+  box-shadow: 0 0.8rem 2.4rem rgba(98, 98, 95, 0.16);
+}
+
+.graph-node-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.graph-node-card__label {
+  overflow: hidden;
+  font-size: 1.1rem;
+  font-weight: bold;
+  line-height: 1.6rem;
+  white-space: nowrap;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-overflow: ellipsis;
+  color: var(--pneumatic-color-black48);
+}
+
+.graph-node-card__kebab {
+  padding: 0;
+  display: flex;
+  width: 2rem;
+  height: 2rem;
+  cursor: pointer;
+  color: var(--pneumatic-color-black48);
+  background: transparent;
+  border: none;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+.graph-node-card__kebab:hover {
+  color: var(--pneumatic-color-link-hover);
+}
+
+.graph-node-card__kebab svg {
+  display: block;
+  width: 2rem;
+  height: 2rem;
+}
+
+.graph-node-card__title {
+  margin-top: 0;
+  /* stylelint-disable-next-line value-no-vendor-prefix */
+  display: -webkit-box;
+  overflow: hidden;
+  min-height: 4rem;
+  font-size: 1.5rem;
+  font-weight: bold;
+  line-height: 2rem;
+  color: var(--pneumatic-color-black100);
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  /* stylelint-disable-next-line property-no-vendor-prefix */
+  -webkit-box-orient: vertical;
+}
+
+.graph-node-card__meta {
+  margin-top: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+
+.graph-node-card__meta-item {
+  font-size: 1.3rem;
+  font-weight: normal;
+  line-height: 1.6rem;
+  white-space: nowrap;
+  color: var(--pneumatic-color-black48);
+}
+
+.graph-node-card__meta-item--accent {
+  color: var(--pneumatic-color-link);
+}
+
+.graph-node-card__handle {
+  width: 0.8rem;
+  height: 0.8rem;
+  background: var(--pneumatic-color-black32);
+  border: none;
+}
+
+.graph-node-card__handle--skip,
+:global(.react-flow__handle).graph-node-card__handle--skip {
+  background: var(--pneumatic-color-link);
+}

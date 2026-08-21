@@ -1,0 +1,82 @@
+.template-graph-editor {
+  overflow: hidden;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  min-height: 0;
+  background: var(--pneumatic-color-black4);
+  flex: 1;
+}
+
+:global {
+  .react-flow {
+    width: 100%;
+    height: 100%;
+    background: var(--pneumatic-color-black4);
+  }
+
+  .react-flow__edge-path {
+    stroke: var(--pneumatic-color-black32);
+    stroke-width: 0.1rem;
+  }
+
+  .react-flow__edge.selected .react-flow__edge-path,
+  .react-flow__edge:hover .react-flow__edge-path {
+    stroke: var(--pneumatic-color-black48);
+  }
+
+  .react-flow__edge.graph-edge--skip .react-flow__edge-path {
+    stroke: var(--pneumatic-color-link);
+    stroke-dasharray: 0.6rem 0.4rem;
+  }
+
+  .react-flow__edge.graph-edge--skip.selected .react-flow__edge-path,
+  .react-flow__edge.graph-edge--skip:hover .react-flow__edge-path,
+  .react-flow__edge.graph-edge--skip.graph-item--highlighted .react-flow__edge-path {
+    stroke: var(--pneumatic-color-link-hover);
+  }
+
+  .react-flow__node.graph-item--dimmed {
+    opacity: 0.2;
+    filter: grayscale(80%);
+    transition: opacity 0.2s ease, filter 0.2s ease;
+  }
+
+  .react-flow__node:not(.graph-item--dimmed) {
+    transition: opacity 0.2s ease, filter 0.2s ease;
+  }
+
+  .react-flow__edge.graph-item--dimmed .react-flow__edge-path,
+  .react-flow__edge.graph-item--dimmed .react-flow__edge-text {
+    opacity: 0.15;
+    transition: opacity 0.2s ease, stroke 0.2s ease, stroke-width 0.2s ease;
+  }
+
+  .react-flow__edge.graph-item--highlighted .react-flow__edge-path {
+    stroke: var(--pneumatic-color-black100);
+    stroke-width: 0.2rem;
+    transition: opacity 0.2s ease, stroke 0.2s ease, stroke-width 0.2s ease;
+  }
+
+  .react-flow__edge:not(.graph-item--dimmed) .react-flow__edge-path {
+    transition: opacity 0.2s ease, stroke 0.2s ease, stroke-width 0.2s ease;
+  }
+
+  .react-flow__edge-textbg {
+    fill: transparent;
+  }
+
+  .react-flow__handle {
+    width: 0.8rem;
+    height: 0.8rem;
+    background: var(--pneumatic-color-black32);
+    border: none;
+  }
+
+  .react-flow__node-junction {
+    padding: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+  }
+}

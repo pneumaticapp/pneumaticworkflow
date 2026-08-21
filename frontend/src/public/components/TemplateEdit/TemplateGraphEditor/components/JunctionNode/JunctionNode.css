@@ -1,0 +1,17 @@
+.junction-node {
+  position: relative;
+  box-sizing: border-box;
+  width: 0.8rem;
+  height: 0.8rem;
+  background: var(--pneumatic-color-black32);
+  border: none;
+  border-radius: 50%;
+}
+
+.junction-node__handle {
+  width: 0.8rem;
+  height: 0.8rem;
+  pointer-events: none;
+  border: none;
+  opacity: 0;
+}
