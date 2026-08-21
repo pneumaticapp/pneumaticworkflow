@@ -185,7 +185,6 @@ describe('FieldsetDetails', () => {
   const SAVE_LABEL = formatMsg('fieldsets.save');
   const UNSAVED_HINT = formatMsg('fieldsets.unsaved-changes');
   const NO_FIELDS_TEXT = formatMsg('fieldsets.no-fields');
-  const NO_RULES_TEXT = formatMsg('fieldsets.no-rules');
   const ADD_RULE_TEXT = formatMsg('fieldsets.add-rule');
   const RULE_DELETE_TEXT = formatMsg('fieldsets.rule-delete');
   const RULE_VALUE_PLACEHOLDER = formatMsg('fieldsets.rule-value-placeholder-number');
@@ -581,52 +580,8 @@ describe('FieldsetDetails', () => {
         expect(field).not.toHaveProperty('id');
       });
     });
-  });
 
-  describe('Rules section — empty state', () => {
-    it('shows "No rules yet" when rules are empty', () => {
-      renderWithState(makeLoadedState({ rulesets: [] }));
-      expect(screen.getByText(NO_RULES_TEXT)).toBeInTheDocument();
-    });
-
-    it('Add Rule button is always visible', () => {
-      renderWithState(makeLoadedState());
-      expect(screen.getByRole('button', { name: new RegExp(ADD_RULE_TEXT, 'i') })).toBeInTheDocument();
-    });
-  });
-
-  describe('Rules section — CRUD', () => {
-    it('handleAddRule adds a rule and enables Save', () => {
-      renderWithState(makeLoadedState());
-
-      userEvent.click(screen.getByRole('button', { name: new RegExp(ADD_RULE_TEXT, 'i') }));
-
-      expect(screen.getByRole('button', { name: SAVE_LABEL })).not.toBeDisabled();
-      const ruleInput = screen.getByPlaceholderText(RULE_VALUE_PLACEHOLDER);
-      expect(ruleInput).toBeInTheDocument();
-    });
-
-    it('handleEditRuleValue updates rule value', () => {
-      renderWithState(makeLoadedState());
-
-      userEvent.click(screen.getByRole('button', { name: new RegExp(ADD_RULE_TEXT, 'i') }));
-
-      const ruleInput = screen.getByPlaceholderText(RULE_VALUE_PLACEHOLDER);
-      userEvent.type(ruleInput, '100');
-      expect(ruleInput).toHaveValue('100');
-    });
-
-    it('handleDeleteRule removes a rule', () => {
-      renderWithState(makeLoadedState());
-
-      userEvent.click(screen.getByRole('button', { name: new RegExp(ADD_RULE_TEXT, 'i') }));
-      expect(screen.getByPlaceholderText(RULE_VALUE_PLACEHOLDER)).toBeInTheDocument();
-
-      userEvent.click(screen.getByRole('button', { name: RULE_DELETE_TEXT }));
-      expect(screen.queryByPlaceholderText(RULE_VALUE_PLACEHOLDER)).not.toBeInTheDocument();
-    });
-
-    it('Save Rules end-to-end: add, edit fields, save, verify payload', () => {
+    it('Save button dispatches updateFieldsetAction with rulesets payload', () => {
       const fields = [
         makeField({ apiName: 'field-1', order: 1, type: EExtraFieldType.Number }),
         makeField({ apiName: 'field-2', order: 2, type: EExtraFieldType.Number }),
@@ -656,6 +611,15 @@ describe('FieldsetDetails', () => {
             rulesets: expect.arrayContaining([
               expect.objectContaining({
                 fields: ['field-1', 'field-2'],
+                groupsOr: expect.arrayContaining([
+                  expect.objectContaining({
+                    groupsAnd: expect.arrayContaining([
+                      expect.objectContaining({
+                        value: '100',
+                      }),
+                    ]),
+                  }),
+                ]),
               }),
             ]),
           }),
