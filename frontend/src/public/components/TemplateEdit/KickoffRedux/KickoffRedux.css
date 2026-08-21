@@ -69,6 +69,14 @@
   }
 }
 
+.kick-off--embedded {
+  position: static;
+  margin-bottom: 0;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+}
+
 .kick-off__subtitle {
   margin-bottom: 1.6rem;
   font-size: 1.1rem;
