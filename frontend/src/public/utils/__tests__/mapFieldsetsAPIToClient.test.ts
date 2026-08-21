@@ -1,6 +1,6 @@
 import { mapFieldsetBindingsToClient, mapFieldsetTaskAPIToRuntime } from '../mapFieldsetsAPIToClient';
 import { EFieldLabelPosition } from '../../types/fieldset';
-import { makeFieldsetField, makeFieldsetBinding, makeFieldsetTaskAPI, makeFieldsetTemplateRule } from '../../__stubs__/fieldsets.factory';
+import { makeFieldsetField, makeFieldsetBinding, makeFieldsetTaskAPI, makeFieldsetRuleset } from '../../__stubs__/fieldsets.factory';
 import { makeExtraField } from '../../__stubs__/fields.factory';
 
 describe('mapFieldsetBindingsToClient', () => {
@@ -27,7 +27,7 @@ describe('mapFieldsetBindingsToClient', () => {
       layout: 'horizontal',
       order: 5,
       title: 'Title',
-      rules: [makeFieldsetTemplateRule({ apiName: 'r-1', value: '100', fields: [] })],
+      rulesets: [makeFieldsetRuleset({ apiName: 'r-1', fields: [] })],
       fields,
     });
 
@@ -41,7 +41,7 @@ describe('mapFieldsetBindingsToClient', () => {
     expect(result.layout).toBe('horizontal');
     expect(result.order).toBe(5);
     expect(result.title).toBe('Title');
-    expect(result.rules).toHaveLength(1);
+    expect(result.rulesets).toHaveLength(1);
     expect(result.fields).toHaveLength(1);
   });
 

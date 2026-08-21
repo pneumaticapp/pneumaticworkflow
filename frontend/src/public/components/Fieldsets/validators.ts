@@ -1,5 +1,5 @@
 import { numberRegex } from '../../constants/defaultValues';
-import { IFieldsetField, IFieldsetTemplateRule } from '../../types/fieldset';
+import { IFieldsetField, IFieldsetRuleSet } from '../../types/fieldset';
 import { EExtraFieldType } from '../../types/template';
 import {
   FIELDSET_RULES_MSG_FIELDS_NUMBER,
@@ -11,41 +11,51 @@ import {
 } from './constants';
 
 export function validateFieldsetRules(
-  fieldsetRules: IFieldsetTemplateRule[],
+  fieldsetRules: IFieldsetRuleSet[],
   availableFields: Array<Pick<IFieldsetField, 'apiName' | 'type'>> = [],
 ): string {
   const fieldsByApiName = new Map(availableFields.map((field) => [field.apiName, field]));
 
   for (let i = 0; i < fieldsetRules.length; i += 1) {
     const fieldsetRule = fieldsetRules[i];
-    const value = fieldsetRule.value?.trim() ?? '';
     const hasFields = (fieldsetRule.fields?.length ?? 0) > 0;
-    const hasValue = Boolean(value);
 
-    if (!hasValue && !hasFields) {
+    const rules = fieldsetRule.groupsOr?.flatMap((groupOr) => groupOr.groupsAnd || []) ?? [];
+
+    if (rules.length === 0 && !hasFields) {
       return FIELDSET_RULES_MSG_INCOMPLETE;
     }
 
-    if (!hasValue) {
+    if (rules.length === 0) {
       return FIELDSET_RULES_MSG_VALUE_REQUIRED;
-    }
-
-    if (NUMBER_RULE_TYPES.has(fieldsetRule.type) && !numberRegex.test(value)) {
-      return FIELDSET_RULES_MSG_VALUE_NUMBER;
     }
 
     if (!hasFields) {
       return FIELDSET_RULES_MSG_FIELDS_REQUIRED;
     }
 
-    if (NUMBER_RULE_TYPES.has(fieldsetRule.type)) {
-      const hasNonNumberField = fieldsetRule.fields.some((fieldApiName) => {
-        const field = fieldsByApiName.get(fieldApiName);
-        return !field || field.type !== EExtraFieldType.Number;
-      });
+    for (let j = 0; j < rules.length; j += 1) {
+      const rule = rules[j];
+      const value = rule.value?.trim() ?? '';
+      const hasValue = Boolean(value);
 
-      if (hasNonNumberField) {
-        return FIELDSET_RULES_MSG_FIELDS_NUMBER;
+      if (!hasValue) {
+        return FIELDSET_RULES_MSG_VALUE_REQUIRED;
+      }
+
+      if (rule.operator && NUMBER_RULE_TYPES.has(rule.operator)) {
+        if (!numberRegex.test(value)) {
+          return FIELDSET_RULES_MSG_VALUE_NUMBER;
+        }
+
+        const hasNonNumberField = fieldsetRule.fields.some((fieldApiName: string) => {
+          const field = fieldsByApiName.get(fieldApiName);
+          return !field || field.type !== EExtraFieldType.Number;
+        });
+
+        if (hasNonNumberField) {
+          return FIELDSET_RULES_MSG_FIELDS_NUMBER;
+        }
       }
     }
   }

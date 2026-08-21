@@ -6,7 +6,7 @@ import { useSelector } from 'react-redux';
 import {
   makeFieldsetCatalogItem,
   makeFieldsetField,
-  makeFieldsetTemplateRule,
+  makeFieldsetRuleset,
 } from '../../../../__stubs__/fieldsets.factory';
 import { IFieldsetCatalogItem } from '../../../../types/fieldset';
 import { intlMock } from '../../../../__stubs__/intlMock';
@@ -173,12 +173,12 @@ describe('FieldsetIconPicker', () => {
         makeFieldsetField({ apiName: 'b' }),
         makeFieldsetField({ apiName: 'c' }),
       ],
-      rules: [
-        makeFieldsetTemplateRule(),
-        makeFieldsetTemplateRule(),
-        makeFieldsetTemplateRule(),
-        makeFieldsetTemplateRule(),
-        makeFieldsetTemplateRule(),
+      rulesets: [
+        makeFieldsetRuleset(),
+        makeFieldsetRuleset(),
+        makeFieldsetRuleset(),
+        makeFieldsetRuleset(),
+        makeFieldsetRuleset(),
       ],
     });
     (getFieldsetsCatalogItems as jest.Mock).mockReturnValue([catalogItem]);
@@ -192,7 +192,7 @@ describe('FieldsetIconPicker', () => {
     const catalogItem = makeFieldsetCatalogItem({
       name: 'My Set',
       fields: [],
-      rules: [],
+      rulesets: [],
     });
     (getFieldsetsCatalogItems as jest.Mock).mockReturnValue([catalogItem]);
 

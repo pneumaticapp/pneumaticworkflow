@@ -66,7 +66,8 @@ class FieldSetService(BaseModelService):
             )
 
     def _create_rules(self, instance_template, **kwargs):
-        for rule_template in instance_template.rules.filter(is_deleted=False):
+        ruleset_templates = instance_template.rulesets.filter(is_deleted=False)
+        for rule_template in ruleset_templates:
             service = FieldSetRuleService(user=self.user)
             service.create(
                 instance_template=rule_template,
@@ -79,7 +80,7 @@ class FieldSetService(BaseModelService):
         self._create_fields(instance_template, **kwargs)
 
     def validate_rules(self) -> bool:
-        rules = list(self.instance.rules.order_by('type').all())
+        rules = list(self.instance.rulesets.order_by('type').all())
         for _, group in groupby(rules, key=lambda r: r.type):
             group_rules = list(group)
             if len(group_rules) == 1:

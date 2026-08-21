@@ -7,7 +7,6 @@ from django.db import IntegrityError, transaction
 from src.generics.base.service import BaseModelService
 from src.processes.enums import LabelPosition, FieldSetLayout
 from src.processes.messages.fieldset import (
-    MSG_FS_0014,
     MSG_FS_0015,
     MSG_FS_0016,
 )
@@ -17,7 +16,9 @@ from src.processes.models.templates.fields import (
 )
 from src.processes.models.templates.fieldset import (
     FieldsetTemplate,
-    FieldsetTemplateRule,
+    FieldSetTemplateRuleSet,
+    FieldSetTemplateRuleGroupOr,
+    FieldSetTemplateRuleGroupAnd,
 )
 from src.processes.services.exceptions import (
     FieldsetTemplateInUseException,
@@ -25,11 +26,10 @@ from src.processes.services.exceptions import (
     FieldsetTemplateSharedIdMissing,
     FieldsetTemplateTemplateIdMissing,
 )
+from src.processes.services.fieldsets.fieldset_rule import \
+    FieldsetTemplateRuleSetService
 from src.processes.services.templates.field_template import (
     FieldTemplateService,
-)
-from src.processes.services.fieldsets.fieldset_rule import (
-    FieldsetTemplateRuleService,
 )
 from src.processes.utils.common import create_api_name
 from src.utils.validation import raise_validation_error
@@ -139,14 +139,14 @@ class FieldSetTemplateService(BaseModelService):
 
     def _create_related(
         self,
-        rules: Optional[List[Dict]] = None,
+        rulesets: Optional[List[Dict]] = None,
         fields: Optional[List[Dict]] = None,
         **kwargs,
     ):
         if fields:
             self._create_fields(fields_data=fields)
-        if rules:
-            self.create_rules(rules_data=rules)
+        if rulesets:
+            self.create_rulesets(rulesets_data=rulesets)
 
     def _get_step_name(self) -> str:
         if self.instance.kickoff_id:
@@ -160,6 +160,10 @@ class FieldSetTemplateService(BaseModelService):
         fields_data: List[Dict],
     ):
         for field_data in fields_data:
+            field_data_dict = dict(field_data)
+            # Field-level rulesets are not created here yet.
+            field_data_dict.pop('rulesets', None)
+            field_data_dict.pop('id', None)
             service = FieldTemplateService(
                 user=self.user,
                 is_superuser=self.is_superuser,
@@ -170,7 +174,7 @@ class FieldSetTemplateService(BaseModelService):
                 service.create(
                     fieldset_id=self.instance.id,
                     template_id=self.instance.template_id,
-                    **field_data,
+                    **field_data_dict,
                 )
             except IntegrityError as ex:
                 ex_str = str(ex)
@@ -179,12 +183,12 @@ class FieldSetTemplateService(BaseModelService):
                     'processes_fieldtemplate_template_api_name_unique'
                     in ex_str
                 ):
-                    api_name = field_data.get('api_name')
+                    api_name = field_data_dict.get('api_name')
                     raise_validation_error(
                         api_name=api_name,
                         message=MSG_FS_0015(
                             name=step_name,
-                            field_name=field_data.get('name'),
+                            field_name=field_data_dict.get('name'),
                             api_name=api_name,
                         ),
                     )
@@ -193,7 +197,7 @@ class FieldSetTemplateService(BaseModelService):
                     '_template_api_name_unique'
                     in ex_str
                 ):
-                    selections = field_data.get('selections') or []
+                    selections = field_data_dict.get('selections') or []
                     api_names = [s.get('api_name') for s in selections]
                     api_name = next(
                         (
@@ -248,16 +252,6 @@ class FieldSetTemplateService(BaseModelService):
 
         self.instance.fields.exclude(api_name__in=fields_api_names).delete()
 
-    def _validate_rules(self):
-        for rule in self.instance.rules.all():
-            service = FieldsetTemplateRuleService(
-                user=self.user,
-                is_superuser=self.is_superuser,
-                auth_type=self.auth_type,
-                instance=rule,
-            )
-            service._validate()
-
     def partial_update(
         self,
         **update_kwargs,
@@ -266,7 +260,7 @@ class FieldSetTemplateService(BaseModelService):
         if self.instance.is_shared and self.instance.child_fieldsets.exists():
             raise FieldsetTemplateInUseException2
 
-        rules_data = update_kwargs.pop('rules', None)
+        rulesets_data = update_kwargs.pop('rulesets', None)
         fields_data = update_kwargs.pop('fields', None)
         with transaction.atomic():
             if update_kwargs:
@@ -277,9 +271,8 @@ class FieldSetTemplateService(BaseModelService):
 
             if fields_data is not None:
                 self._update_fields(fields_data=fields_data)
-            if rules_data is not None:
-                self.update_rules(rules_data=rules_data)
-            self._validate_rules()
+            if rulesets_data is not None:
+                self.update_rulesets(rulesets_data=rulesets_data)
             return self.instance
 
     def partial_update_instance(
@@ -325,16 +318,24 @@ class FieldSetTemplateService(BaseModelService):
         fieldset_data['fields'] = updated_fields_data
 
         updated_rules_data = []
-        for rule_data in fieldset_data.get('rules', []):
-            rule_data['api_name'] = create_api_name(
-                FieldsetTemplateRule.api_name_prefix,
+        for ruleset_data in fieldset_data.get('rulesets', []):
+            ruleset_data['api_name'] = create_api_name(
+                FieldSetTemplateRuleSet.api_name_prefix,
             )
-            rule_data['fields'] = [
+            for group_or_data in ruleset_data.get('groups_or', []):
+                group_or_data['api_name'] = create_api_name(
+                    FieldSetTemplateRuleGroupOr.api_name_prefix,
+                )
+                for group_and_data in group_or_data.get('groups_and', []):
+                    group_and_data['api_name'] = create_api_name(
+                        FieldSetTemplateRuleGroupAnd.api_name_prefix,
+                    )
+            ruleset_data['fields'] = [
                 fields_map[old_api_name]
-                for old_api_name in rule_data.get('fields', [])
+                for old_api_name in ruleset_data.get('fields', [])
             ]
-            updated_rules_data.append(rule_data)
-        fieldset_data['rules'] = updated_rules_data
+            updated_rules_data.append(ruleset_data)
+        fieldset_data['rulesets'] = updated_rules_data
         return fieldset_data
 
     def get_new_fieldset_data(
@@ -353,85 +354,61 @@ class FieldSetTemplateService(BaseModelService):
         if description is not None:
             fieldset_data['description'] = description
         fieldset_data.pop('order', None)
+        fieldset_data.pop('id', None)
         return fieldset_data
 
-    def _raise_duplicate_rule_api_name(self, api_name: Optional[str]):
-        raise_validation_error(
-            api_name=api_name,
-            message=MSG_FS_0014(
-                name=self._get_step_name(),
-                api_name=api_name,
-            ),
-        )
-
-    def create_rules(
+    def create_ruleset(
         self,
-        rules_data: List[Dict],
-    ):
-        service = FieldsetTemplateRuleService(
+        ruleset_data: dict,
+    ) -> FieldSetTemplateRuleSet:
+
+        service = FieldsetTemplateRuleSetService(
             user=self.user,
             is_superuser=self.is_superuser,
             auth_type=self.auth_type,
         )
-        for rule_data in rules_data:
-            api_name = rule_data.get('api_name')
-            if (
-                api_name
-                and self.instance.template_id
-                and FieldsetTemplateRule.objects.filter(
-                    api_name=api_name,
-                    fieldset__template_id=self.instance.template_id,
-                    is_deleted=False,
-                ).exists()
-            ):
-                self._raise_duplicate_rule_api_name(api_name)
-            try:
-                service.create(
-                    fieldset_id=self.instance.id,
-                    **rule_data,
-                )
-            except IntegrityError as ex:
-                if (
-                    'fieldsettemplate_rule_api_name_template_unique'
-                    not in str(ex)
-                ):
-                    raise
-                self._raise_duplicate_rule_api_name(api_name)
+        return service.create(
+            fieldset_id=self.instance.id,
+            **ruleset_data,
+        )
 
-    def update_rules(
+    def create_rulesets(
         self,
-        rules_data: List[Dict],
+        rulesets_data: List[Dict],
     ):
-        """ All dataset items will be updated """
+        for ruleset_data in rulesets_data:
+            self.create_ruleset(ruleset_data)
 
-        existing_rules = {
-            rule.api_name: rule for rule in self.instance.rules.all()
+    def update_rulesets(
+        self,
+        rulesets_data: List[Dict],
+    ):
+        """ All rulesets will be updated """
+
+        existing_rulesets = {
+            ruleset.api_name: ruleset
+            for ruleset in self.instance.rulesets.all()
         }
-        rule_api_names = set()
-        for rule_data in rules_data:
-            rule_api_name = rule_data.get('api_name')
-            if rule_api_name and rule_api_name in existing_rules:
-                service = FieldsetTemplateRuleService(
+        ruleset_api_names = set()
+        for ruleset_data in rulesets_data:
+            ruleset_data_dict = dict(ruleset_data)
+            ruleset_api_name = ruleset_data_dict.get('api_name')
+            if ruleset_api_name and ruleset_api_name in existing_rulesets:
+                service = FieldsetTemplateRuleSetService(
                     user=self.user,
                     is_superuser=self.is_superuser,
                     auth_type=self.auth_type,
-                    instance=existing_rules[rule_api_name],
+                    instance=existing_rulesets[ruleset_api_name],
                 )
-                service.partial_update(**rule_data)
-                rule_api_names.add(rule_api_name)
+                service.partial_update(**ruleset_data)
+                ruleset_api_names.add(ruleset_api_name)
             else:
-                service = FieldsetTemplateRuleService(
-                    user=self.user,
-                    is_superuser=self.is_superuser,
-                    auth_type=self.auth_type,
-                )
-                rule = service.create(
-                    fieldset_id=self.instance.id,
-                    **rule_data,
-                )
-                rule_api_names.add(rule.api_name)
+                ruleset = self.create_ruleset(ruleset_data)
+                ruleset_api_names.add(ruleset.api_name)
 
-        self.instance.rules.exclude(api_name__in=rule_api_names).delete()
+        self.instance.rulesets.exclude(
+            api_name__in=ruleset_api_names,
+        ).delete()
 
     @staticmethod
     def to_json(fieldset: FieldsetTemplate) -> dict:
