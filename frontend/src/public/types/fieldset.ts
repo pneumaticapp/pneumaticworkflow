@@ -6,9 +6,15 @@ export enum EFieldsetNumberRulesetOperator {
   SumLessThan = 'sum_less_than',
 }
 
+export enum ERuleCombinator {
+  And = 'and',
+  Or = 'or',
+}
+
 export interface IFieldsetRuleGroupAnd {
   apiName: string;
-  operator: EFieldsetNumberRulesetOperator;
+  fieldType?: string;
+  operator?: EFieldsetNumberRulesetOperator;
   value: string;
 }
 
