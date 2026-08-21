@@ -230,6 +230,10 @@ const FieldsetDetails = ({
   };
 
 
+  const isTitleError =
+    (fieldsetChanges.title !== undefined || Boolean(localFieldset.title)) &&
+    Boolean(validateFieldsetTitle(localFieldset.title));
+
   if (isLoading) {
     return <FieldsetDetailsSkeleton />;
   }
@@ -357,7 +361,7 @@ const FieldsetDetails = ({
                 type="text"
                 className={classnames(
                   styles['settings-title'],
-                  Boolean(validateFieldsetTitle(localFieldset.title)) && styles['settings-title_error'],
+                  isTitleError && styles['settings-title_error'],
                 )}
                 value={localFieldset.title}
                 placeholder={formatMessage({ id: 'fieldsets.settings.title-placeholder' })}

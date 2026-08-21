@@ -508,6 +508,23 @@
   width: 100%;
 }
 
+.rule-row {
+  padding: 0 2.8rem 0.4rem 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.2rem;
+  border-bottom: 0.1rem solid var(--pneumatic-color-black16);
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover .rule-remove-btn {
+    opacity: 1;
+  }
+}
+
 .rule-item {
   position: relative;
 }
