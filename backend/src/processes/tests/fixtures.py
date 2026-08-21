@@ -1031,7 +1031,6 @@ def create_test_fieldset_template(
             fieldset=fieldset,
             account=account,
             api_name=f'{fieldset.api_name}-ruleset-1',
-            type=shared_ruleset.type,
         )
         for shared_group_or in shared_ruleset.groups_or.all():
             group_or = FieldSetTemplateRuleGroupOr.objects.create(

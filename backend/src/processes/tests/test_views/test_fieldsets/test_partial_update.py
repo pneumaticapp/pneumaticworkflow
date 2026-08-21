@@ -123,7 +123,6 @@ def test_partial_update__fieldset_data__ok(api_client, mocker):
     assert response.data['fields'][0]['api_name'] == field.api_name
 
     assert len(response.data['rulesets']) == 1
-    assert response.data['rulesets'][0]['type'] == rule.type
     assert response.data['rulesets'][0]['api_name'] == rule.api_name
     assert response.data['rulesets'][0]['fields'] == [field.api_name]
     assert (
@@ -371,6 +370,7 @@ def test_partial_update__response_rules_data__ok(api_client, mocker):
         account=account,
         rule_value='100',
         rule_message='Error message',
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
     )
     field = fieldset.fields.first()
     ruleset = fieldset.rulesets.first()
@@ -403,7 +403,6 @@ def test_partial_update__response_rules_data__ok(api_client, mocker):
 
     rule_resp = response.data['rulesets'][0]
     assert rule_resp['api_name'] == ruleset.api_name
-    assert rule_resp['type'] == ruleset.type
     assert rule_resp['message'] == ruleset.message
     assert rule_resp['order'] == ruleset.order
     assert rule_resp['fields'] == [field.api_name]
@@ -478,7 +477,6 @@ def test_partial_update__response_fields_data__ok(api_client, mocker):
     assert len(field_resp['rulesets']) == 1
     rule_resp = field_resp['rulesets'][0]
     assert rule_resp['api_name'] == field_ruleset.api_name
-    assert rule_resp['type'] == field_ruleset.type
     assert rule_resp['message'] == field_ruleset.message
     assert rule_resp['order'] == field_ruleset.order
 
@@ -1139,7 +1137,7 @@ def test_partial_update__invalid_fields_rules_operator__validation_error(
 def test_partial_update__two_rules_same_type__ok(api_client, mocker):
 
     """
-    Partial update with two rules of the same type:
+    Partial update with two rules of the same operator:
     one existing (with api_name) and one new (without api_name).
     Both rules reference the same fields.
     """
