@@ -20,6 +20,7 @@ from src.processes.messages.template import (
     MSG_PT_0030,
     MSG_PT_0031,
     MSG_PT_0052,
+    MSG_PT_0075,
 )
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.models.templates.raw_due_date import (
@@ -120,6 +121,13 @@ class RawDueDateTemplateSerializer(
                         message=MSG_PT_0031,
                         api_name=api_name,
                     )
+        elif rule == DueDateRule.AFTER_PREVIOUS_TASK_COMPLETED:
+            data['source_id'] = None
+            if not task_template.parents and task_template.number > 1:
+                self.raise_validation_error(
+                    message=MSG_PT_0075(name=task_template.name),
+                    api_name=api_name,
+                )
 
     def create(self, validated_data: Dict[str, Any]):
         self.additional_validate(validated_data)

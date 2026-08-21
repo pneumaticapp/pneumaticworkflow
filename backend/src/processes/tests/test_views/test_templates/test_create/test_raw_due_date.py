@@ -1685,3 +1685,164 @@ def test_create__equal_api_names__validation_error(api_client):
     assert response.data['message'] == message
     assert response.data['details']['reason'] == message
     assert response.data['details']['api_name'] == due_date_api_name
+
+
+def test_create__after_prev_task_completed__ok(api_client):
+
+    """ Create due date with previous step completed rule """
+
+    # arrange
+    user = create_test_user()
+    raw_due_date_data = {
+        'api_name': 'raw-due-date-1',
+        'duration': '01:00:00',
+        'duration_months': 2,
+        'rule': DueDateRule.AFTER_PREVIOUS_TASK_COMPLETED,
+        'source_id': None,
+    }
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path='/templates',
+        data={
+            'name': 'Template',
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'is_active': True,
+            'kickoff': {},
+            'tasks': [
+                {
+                    'number': 1,
+                    'api_name': 'task-1',
+                    'name': 'First step',
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+                {
+                    'number': 2,
+                    'api_name': 'task-2',
+                    'name': 'Second step',
+                    'raw_due_date': raw_due_date_data,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                    'conditions': [
+                        {
+                            'order': 0,
+                            'action': 'start_task',
+                            'rules': [
+                                {
+                                    'predicates': [
+                                        {
+                                            'operator': 'completed_or_skipped',
+                                            'field_type': 'task',
+                                            'field': 'task-1',
+                                            'value': None,
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    data = response.data['tasks'][1]['raw_due_date']
+    assert data == raw_due_date_data
+    template_id = response.data['id']
+    raw_due_date = RawDueDateTemplate.objects.get(
+        api_name=data['api_name'],
+        template_id=template_id,
+    )
+    assert raw_due_date.duration == timedelta(hours=1)
+    assert raw_due_date.duration_months == 2
+    assert raw_due_date.rule == (
+        DueDateRule.AFTER_PREVIOUS_TASK_COMPLETED
+    )
+    assert raw_due_date.source_id is None
+
+
+def test_create__after_prev_task_completed__root_task_no_parents__error(
+    api_client,
+):
+
+    """ Root task without parents cannot use previous step completed """
+
+    # arrange
+    user = create_test_user()
+    api_name = 'raw-due-date-1'
+    raw_due_date_data = {
+        'api_name': api_name,
+        'duration': '01:00:00',
+        'duration_months': 0,
+        'rule': DueDateRule.AFTER_PREVIOUS_TASK_COMPLETED,
+        'source_id': None,
+    }
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path='/templates',
+        data={
+            'name': 'Template',
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'is_active': True,
+            'kickoff': {},
+            'tasks': [
+                {
+                    'number': 1,
+                    'api_name': 'task-1',
+                    'name': 'First step',
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+                {
+                    'number': 2,
+                    'api_name': 'task-2',
+                    'name': 'Second step',
+                    'raw_due_date': raw_due_date_data,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert
+    message = messages.MSG_PT_0075(name='Second step')
+    assert response.status_code == 400
+    assert response.data['message'] == message
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['details']['api_name'] == api_name
+    assert response.data['details']['reason'] == message

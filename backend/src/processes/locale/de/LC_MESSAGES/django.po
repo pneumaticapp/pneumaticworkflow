@@ -547,3 +547,6 @@ msgstr "Der Benutzer oder die Gruppe, die für ein Feld des Typs \"Benutzer\" an
 
 msgid "Guest"
 msgstr "Gast"
+
+msgid "Task \"{name}\": the \"Previous task completed\" rule requires a previous task condition."
+msgstr "Aufgabe \u201e{name}\u201c: Die Regel \u201eVorherige Aufgabe abgeschlossen\u201c erfordert eine Bedingung für eine vorherige Aufgabe."

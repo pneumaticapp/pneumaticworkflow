@@ -2127,3 +2127,111 @@ def test_create_fields_from_template__deleted_fieldsets__skip(mocker):
     # assert
     task_field_service_init_mock.assert_not_called()
     task_field_service_create_mock.assert_not_called()
+
+
+def test_get_task_due_date__after_prev_task_completed__ok():
+
+    """ Previous task completed, due date calculated """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=2)
+    task_1 = workflow.tasks.get(number=1)
+    task_1.date_completed = timezone.now() + timedelta(
+        minutes=30,
+    )
+    task_1.save(update_fields=['date_completed'])
+    task_2 = workflow.tasks.get(number=2)
+    duration = timedelta(hours=1)
+    RawDueDate.objects.create(
+        task=task_2,
+        duration=duration,
+        rule=DueDateRule.AFTER_PREVIOUS_TASK_COMPLETED,
+        source_id=None,
+    )
+    service = TaskService(user=user, instance=task_2)
+
+    # act
+    due_date = service.get_task_due_date()
+
+    # assert
+    assert due_date == task_1.date_completed + duration
+
+
+def test_get_task_due_date__after_prev_completed__not_completed__none():
+
+    """ Previous task not completed, no due date """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=2)
+    task_2 = workflow.tasks.get(number=2)
+    RawDueDate.objects.create(
+        task=task_2,
+        duration=timedelta(hours=1),
+        rule=DueDateRule.AFTER_PREVIOUS_TASK_COMPLETED,
+        source_id=None,
+    )
+    service = TaskService(user=user, instance=task_2)
+
+    # act
+    due_date = service.get_task_due_date()
+
+    # assert
+    assert due_date is None
+
+
+def test_get_task_due_date__after_prev_completed__first_task__workflow_start():
+
+    """ First task uses workflow start date """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    duration = timedelta(hours=1)
+    RawDueDate.objects.create(
+        task=task,
+        duration=duration,
+        rule=DueDateRule.AFTER_PREVIOUS_TASK_COMPLETED,
+        source_id=None,
+    )
+    service = TaskService(user=user, instance=task)
+
+    # act
+    due_date = service.get_task_due_date()
+
+    # assert
+    assert due_date == workflow.date_created + duration
+
+
+def test_get_task_due_date__multiple_parents__last_completed__ok():
+
+    """ Multiple parents: select last completed parent """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=3)
+    task_1 = workflow.tasks.get(number=1)
+    task_1.date_completed = timezone.now() + timedelta(minutes=10)
+    task_1.save(update_fields=['date_completed'])
+    task_2 = workflow.tasks.get(number=2)
+    task_2.date_completed = timezone.now() + timedelta(minutes=30)
+    task_2.save(update_fields=['date_completed'])
+    task_3 = workflow.tasks.get(number=3)
+    task_3.parents = [task_1.api_name, task_2.api_name]
+    task_3.save(update_fields=['parents'])
+    duration = timedelta(hours=1)
+    RawDueDate.objects.create(
+        task=task_3,
+        duration=duration,
+        rule=DueDateRule.AFTER_PREVIOUS_TASK_COMPLETED,
+        source_id=None,
+    )
+    service = TaskService(user=user, instance=task_3)
+
+    # act
+    due_date = service.get_task_due_date()
+
+    # assert
+    assert due_date == task_2.date_completed + duration
