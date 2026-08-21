@@ -55,7 +55,6 @@ class FieldSetTemplateRuleSetSerializer(
         model = FieldSetTemplateRuleSet
         fields = (
             'api_name',
-            'type',
             'message',
             'order',
             'fields',
