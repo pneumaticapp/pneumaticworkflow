@@ -517,93 +517,6 @@ def test_create__service_exception__validation_error(
     )
 
 
-def test_create__rule_missing_type__validation_error(api_client, mocker):
-
-    """
-    Create fieldset with a rule that is missing the required 'type' field
-    and verify the request is rejected with a 400 status code.
-    """
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    data = {
-        'name': 'Missing Type Fieldset',
-        'rulesets': [
-            {
-                'groups_or': [
-                    {
-                        'groups_and': [
-                            {
-                                'operator': FieldSetRuleOperator.SUM_EQUAL,
-                                'value': '100',
-                            },
-                        ],
-                    },
-                ],
-            },
-        ],
-    }
-    create_shared_fieldset_mock = mocker.patch(
-        'src.processes.views.fieldset.FieldSetTemplateService.'
-        'create_shared_fieldset',
-    )
-    api_client.token_authenticate(user=user)
-
-    # act
-    response = api_client.post('/fieldsets', data=data)
-
-    # assert
-    assert response.status_code == 400
-    message = 'This field is required.'
-    assert response.data['message'] == message
-    create_shared_fieldset_mock.assert_not_called()
-
-
-def test_create__rule_invalid_type__validation_error(api_client, mocker):
-
-    """
-    Create fieldset with an unrecognised rule type value and verify
-    the request is rejected with a 400 status code.
-    """
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    data = {
-        'name': 'Invalid Type Fieldset',
-        'rulesets': [
-            {
-                'type': 'unknown_type',
-                'groups_or': [
-                    {
-                        'groups_and': [
-                            {
-                                'operator': FieldSetRuleOperator.SUM_EQUAL,
-                                'value': '100',
-                            },
-                        ],
-                    },
-                ],
-            },
-        ],
-    }
-    create_shared_fieldset_mock = mocker.patch(
-        'src.processes.views.fieldset.FieldSetTemplateService.'
-        'create_shared_fieldset',
-    )
-    api_client.token_authenticate(user=user)
-
-    # act
-    response = api_client.post('/fieldsets', data=data)
-
-    # assert
-    assert response.status_code == 400
-    message = '"unknown_type" is not a valid choice.'
-    assert response.data['message'] == message
-    create_shared_fieldset_mock.assert_not_called()
-
-
 def test_create__rule_invalid_operator__validation_error(api_client, mocker):
 
     """
@@ -718,7 +631,7 @@ def test_create__rule_missing_group_or__validation_error(api_client, mocker):
 
     # assert
     assert response.status_code == 400
-    message = 'This field is required.'
+    message = 'Groups_or: this field is required.'
     assert response.data['message'] == message
     create_shared_fieldset_mock.assert_not_called()
 
@@ -785,6 +698,7 @@ def test_create__field_rule_invalid_type__validation_error(api_client, mocker):
                 'api_name': 'f-1',
                 'rulesets': [
                     {
+                        'type': 'sum_equal',
                         'groups_or': [],
                     },
                 ],

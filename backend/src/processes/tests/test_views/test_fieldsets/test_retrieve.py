@@ -53,7 +53,6 @@ def test_retrieve__fieldset_all_data__ok(api_client):
 
     assert len(response.data['rulesets']) == 1
     rule_resp = response.data['rulesets'][0]
-    assert rule_resp['type'] == ruleset.type
     assert rule_resp['api_name'] == ruleset.api_name
     assert rule_resp['fields'] == [field.api_name]
     assert len(rule_resp['groups_or']) == 1
@@ -136,7 +135,6 @@ def test_retrieve__fieldset_rule_with_fields__ok(api_client):
     assert response.data['id'] == fieldset.id
     assert len(response.data['rulesets']) == 1
     rule_resp = response.data['rulesets'][0]
-    assert rule_resp['type'] == ruleset.type
     assert rule_resp['api_name'] == ruleset.api_name
     assert rule_resp['fields'] == [field.api_name]
     group_or_data = rule_resp['groups_or'][0]

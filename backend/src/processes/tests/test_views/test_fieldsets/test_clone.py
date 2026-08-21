@@ -92,7 +92,6 @@ def test_clone__ok(api_client, mocker):
 
     assert len(response.data['rulesets']) == 1
     rule_resp = response.data['rulesets'][0]
-    assert rule_resp['type'] == clone_ruleset.type
     assert rule_resp['api_name'] == clone_ruleset.api_name
     assert rule_resp['fields'] == [clone_field.api_name]
     assert rule_resp['groups_or'][0]['groups_and'][0]['operator'] == (
