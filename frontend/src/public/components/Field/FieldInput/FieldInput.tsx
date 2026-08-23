@@ -64,7 +64,10 @@ export function FieldInput({
     <input
       ref={innerRef}
       type={type}
-      style={{ display: shouldReplaceWithLabel ? 'none' : 'inline' }}
+      style={{
+        display: shouldReplaceWithLabel ? 'none' : 'inline',
+        ...(isFromConditionValueField ? { width: '100%', padding: '0.8rem' } : {}),
+      }}
       value={valueString}
       onChange={onChange}
       onBlur={onBlur}

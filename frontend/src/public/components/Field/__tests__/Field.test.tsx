@@ -60,6 +60,18 @@ describe('Field component', () => {
       const input = screen.getByRole('textbox');
       expect(input).toBeDisabled();
     });
+
+    it('fills its condition value container and preserves the inner spacing', () => {
+      render(
+        <Field
+          value=""
+          isFromConditionValueField
+          onChange={jest.fn()}
+        />,
+      );
+
+      expect(screen.getByRole('textbox')).toHaveStyle({ width: '100%', padding: '0.8rem' });
+    });
   });
 
   describe('Textarea rendering mode', () => {
