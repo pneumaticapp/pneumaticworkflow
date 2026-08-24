@@ -541,6 +541,10 @@
   opacity: 0;
   transition: opacity 0.15s;
 
+  &:focus-visible {
+    opacity: 1;
+  }
+
   @media (hover: none) {
     opacity: 1;
   }
