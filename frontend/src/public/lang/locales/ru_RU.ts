@@ -1444,7 +1444,7 @@ export const ruMessages = {
   'fieldsets.leave-unsaved-title': 'Отменить изменения для набора полей {name}?',
   'fieldsets.leave-unsaved-message': 'Ваши изменения не сохранены.',
   'fieldsets.leave-unsaved-stay': 'Продолжить редактирование',
-  'fieldsets.leave-unsaved-leave': 'Убрать',
+  'fieldsets.leave-unsaved-leave': 'Отменить',
   'fieldsets.leave-unsaved-save': 'Сохранить',
   'fieldsets.clone-unsaved-warning':
     'Пожалуйста, сохраните или отмените несохраненные изменения перед клонированием',
