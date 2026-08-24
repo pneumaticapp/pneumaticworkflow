@@ -228,7 +228,11 @@ class FieldSetTemplateService(BaseModelService):
         }
         fields_api_names = set()
         for field_data in fields_data:
-            field_api_name = field_data.get('api_name')
+            field_data_dict = dict(field_data)
+            # Field-level rulesets are not created here yet.
+            field_data_dict.pop('rulesets', None)
+            field_data_dict.pop('id', None)
+            field_api_name = field_data_dict.get('api_name')
             if field_api_name and field_api_name in existing_fields:
                 service = FieldTemplateService(
                     user=self.user,
@@ -236,7 +240,7 @@ class FieldSetTemplateService(BaseModelService):
                     auth_type=self.auth_type,
                     instance=existing_fields[field_api_name],
                 )
-                service.partial_update(force_save=True, **field_data)
+                service.partial_update(force_save=True, **field_data_dict)
                 fields_api_names.add(field_api_name)
             else:
                 service = FieldTemplateService(
@@ -247,7 +251,7 @@ class FieldSetTemplateService(BaseModelService):
                 field = service.create(
                     fieldset_id=self.instance.id,
                     template_id=self.instance.template_id,
-                    **field_data,
+                    **field_data_dict,
                 )
                 fields_api_names.add(field.api_name)
 

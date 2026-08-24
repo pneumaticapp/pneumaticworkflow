@@ -535,6 +535,65 @@ def test__create_related__both_provided__ok(mocker):
     create_fields_mock.assert_called_once_with(fields_data=fields)
 
 
+def test__update_fields__existing_field_with_rulesets__ok():
+
+    """
+    Nested field rulesets must not be assigned to FieldTemplate.rulesets
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    fieldset = FieldsetTemplate.objects.create(
+        template=template,
+        account=account,
+        name='Fieldset',
+    )
+    field = FieldTemplate.objects.create(
+        account=account,
+        fieldset=fieldset,
+        name='Checkbox Field',
+        type=FieldType.CHECKBOX,
+        order=0,
+        api_name='field-cec847',
+    )
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+        instance=fieldset,
+    )
+    fields_data = [
+        {
+            'name': 'Checkbox Field',
+            'description': '',
+            'type': FieldType.CHECKBOX,
+            'is_required': False,
+            'is_hidden': False,
+            'api_name': field.api_name,
+            'selections': [
+                {'value': 'New option 1', 'api_name': 'selection-60cac2'},
+            ],
+            'default': '',
+            'dataset': None,
+            'order': 0,
+            'rulesets': [],
+        },
+    ]
+
+    # act
+    service._update_fields(fields_data=fields_data)
+
+    # assert
+    field.refresh_from_db()
+    assert field.name == 'Checkbox Field'
+    assert field.type == FieldType.CHECKBOX
+    assert field.selections.count() == 1
+    assert field.selections.first().value == 'New option 1'
+    assert field.rulesets.count() == 0
+
+
 def test__update_fields__existing_field__ok(mocker):
 
     """

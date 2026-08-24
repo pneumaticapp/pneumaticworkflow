@@ -35,6 +35,8 @@ class FieldTemplateService(BaseModelService):
     def partial_update(self, **update_kwargs) -> Model:
         self._validate(**update_kwargs)
         selections_data = update_kwargs.pop('selections', None)
+        # Reverse FK related set — cannot be assigned via setattr.
+        update_kwargs.pop('rulesets', None)
         result = super().partial_update(**update_kwargs)
         if selections_data is not None:
             self.instance.selections.all().delete()
