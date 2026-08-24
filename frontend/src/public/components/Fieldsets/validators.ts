@@ -4,7 +4,7 @@ import { EExtraFieldType } from '../../types/template';
 import {
   FIELDSET_RULES_MSG_FIELDS_NUMBER,
   FIELDSET_RULES_MSG_FIELDS_REQUIRED,
-  FIELDSET_RULES_MSG_INCOMPLETE,
+  FIELDSET_RULES_MSG_RULE_REQUIRED,
   FIELDSET_RULES_MSG_VALUE_NUMBER,
   FIELDSET_RULES_MSG_VALUE_REQUIRED,
   NUMBER_RULE_TYPES,
@@ -22,16 +22,8 @@ export function validateFieldsetRules(
 
     const rules = fieldsetRule.groupsOr?.flatMap((groupOr) => groupOr.groupsAnd || []) ?? [];
 
-    if (rules.length === 0 && !hasFields) {
-      return FIELDSET_RULES_MSG_INCOMPLETE;
-    }
-
     if (rules.length === 0) {
-      return FIELDSET_RULES_MSG_VALUE_REQUIRED;
-    }
-
-    if (!hasFields) {
-      return FIELDSET_RULES_MSG_FIELDS_REQUIRED;
+      return FIELDSET_RULES_MSG_RULE_REQUIRED;
     }
 
     for (let j = 0; j < rules.length; j += 1) {
@@ -57,6 +49,10 @@ export function validateFieldsetRules(
           return FIELDSET_RULES_MSG_FIELDS_NUMBER;
         }
       }
+    }
+
+    if (!hasFields) {
+      return FIELDSET_RULES_MSG_FIELDS_REQUIRED;
     }
   }
 

@@ -1547,7 +1547,7 @@ export const enMessages = {
   'fieldsets.rule-fields-placeholder': 'Select fields',
   'fieldsets.rule-fields-disabled-tooltip': 'Add fields to the fieldset first',
   'fieldsets.rule-fields-no-number-fields-tooltip': 'Add number fields to the fieldset first',
-  'fieldsets.rules-validation-incomplete': 'Fill in the rule value and select at least one field before saving',
+  'fieldsets.rules-validation-rule-required': 'Add at least one rule to the ruleset before saving',
   'fieldsets.rules-validation-value-required': 'Enter a rule value before saving',
   'fieldsets.rules-validation-value-number': 'One of the Sum equal rules has a non-numeric value — enter a number.',
   'fieldsets.rules-validation-fields-required': 'Select at least one field for the rule before saving',

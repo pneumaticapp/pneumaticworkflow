@@ -4,7 +4,7 @@ import {
   ERuleCombinator,
 } from '../../types/fieldset';
 
-export const FIELDSET_RULES_MSG_INCOMPLETE = 'fieldsets.rules-validation-incomplete';
+export const FIELDSET_RULES_MSG_RULE_REQUIRED = 'fieldsets.rules-validation-rule-required';
 export const FIELDSET_RULES_MSG_VALUE_REQUIRED = 'fieldsets.rules-validation-value-required';
 export const FIELDSET_RULES_MSG_VALUE_NUMBER = 'fieldsets.rules-validation-value-number';
 export const FIELDSET_RULES_MSG_FIELDS_REQUIRED = 'fieldsets.rules-validation-fields-required';

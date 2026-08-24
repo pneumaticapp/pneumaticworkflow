@@ -1,7 +1,7 @@
 import {
   FIELDSET_RULES_MSG_FIELDS_NUMBER,
   FIELDSET_RULES_MSG_FIELDS_REQUIRED,
-  FIELDSET_RULES_MSG_INCOMPLETE,
+  FIELDSET_RULES_MSG_RULE_REQUIRED,
   FIELDSET_RULES_MSG_VALUE_NUMBER,
   FIELDSET_RULES_MSG_VALUE_REQUIRED,
 } from '../constants';
@@ -19,7 +19,7 @@ describe('validateFieldsetRules', () => {
     expect(validateFieldsetRules([])).toBe('');
   });
 
-  it('returns incomplete when rule has empty groupsOr and empty fields', () => {
+  it('returns rule-required when rule has empty groupsOr and empty fields', () => {
     expect(
       validateFieldsetRules([
         makeFieldsetRuleset({
@@ -27,10 +27,10 @@ describe('validateFieldsetRules', () => {
           groupsOr: [],
         }),
       ]),
-    ).toBe(FIELDSET_RULES_MSG_INCOMPLETE);
+    ).toBe(FIELDSET_RULES_MSG_RULE_REQUIRED);
   });
 
-  it('returns value-required when groupsOr is empty but fields are selected', () => {
+  it('returns rule-required when groupsOr is empty but fields are selected', () => {
     expect(
       validateFieldsetRules(
         [
@@ -41,7 +41,7 @@ describe('validateFieldsetRules', () => {
         ],
         [numberField()],
       ),
-    ).toBe(FIELDSET_RULES_MSG_VALUE_REQUIRED);
+    ).toBe(FIELDSET_RULES_MSG_RULE_REQUIRED);
   });
 
   it('returns value-required when value is empty but fields are selected', () => {
@@ -59,6 +59,21 @@ describe('validateFieldsetRules', () => {
         ],
         [numberField()],
       ),
+    ).toBe(FIELDSET_RULES_MSG_VALUE_REQUIRED);
+  });
+
+  it('returns value-required before fields-required when both are invalid', () => {
+    expect(
+      validateFieldsetRules([
+        makeFieldsetRuleset({
+          fields: [],
+          groupsOr: [
+            makeFieldsetRuleGroupOr({
+              groupsAnd: [makeFieldsetRuleGroupAnd({ operator: EFieldsetNumberRulesetOperator.SumEqual, value: '' })],
+            }),
+          ],
+        }),
+      ]),
     ).toBe(FIELDSET_RULES_MSG_VALUE_REQUIRED);
   });
 

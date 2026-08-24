@@ -1434,7 +1434,7 @@ export const ruMessages = {
   'fieldsets.rule-fields-placeholder': 'Выберите поля',
   'fieldsets.rule-fields-disabled-tooltip': 'Сначала добавьте поля в филдсет',
   'fieldsets.rule-fields-no-number-fields-tooltip': 'Сначала добавьте числовые поля в филдсет',
-  'fieldsets.rules-validation-incomplete': 'Заполните значение правила и выберите хотя бы одно поле перед сохранением',
+  'fieldsets.rules-validation-rule-required': 'Добавьте хотя бы одно правило в набор правил перед сохранением',
   'fieldsets.rules-validation-value-required': 'Введите значение правила перед сохранением',
   'fieldsets.rules-validation-value-number': 'В одном из правил «Сумма равна» значение не является числом — введите число.',
   'fieldsets.rules-validation-fields-required': 'Выберите хотя бы одно поле для правила перед сохранением',
