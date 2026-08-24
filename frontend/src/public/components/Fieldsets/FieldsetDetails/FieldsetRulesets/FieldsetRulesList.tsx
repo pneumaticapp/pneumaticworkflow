@@ -7,7 +7,7 @@ import { TFieldsetRulesListProps } from './types';
 import { FieldsetRuleItem } from './FieldsetRuleItem';
 import { addGroupAnd } from './utils';
 
-import styles from '../FieldsetDetails.css';
+import styles from './FieldsetRulesets.css';
 
 export const FieldsetRulesList = ({
   ruleSet,

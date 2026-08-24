@@ -12,7 +12,8 @@ import {
 import { FieldsetRulesList } from './FieldsetRulesList';
 import { RulesetFieldsSelector } from './RulesetFieldsSelector';
 
-import styles from '../FieldsetDetails.css';
+import fieldsetDetailsStyles from '../FieldsetDetails.css';
+import styles from './FieldsetRulesets.css';
 
 export const FieldsetRulesets = ({
   rulesets,
@@ -27,18 +28,18 @@ export const FieldsetRulesets = ({
 
 
   return (
-    <div className={styles['list']}>
-      <h2 className={styles['section-title']}>
+    <div className={fieldsetDetailsStyles['list']}>
+      <h2 className={fieldsetDetailsStyles['section-title']}>
         {formatMessage({ id: 'fieldsets.rules-section' })}
         {isReadOnly && (
-          <span className={styles['readonly-badge']}>
+          <span className={fieldsetDetailsStyles['readonly-badge']}>
             {formatMessage({ id: 'fieldsets.readonly-badge' })}
           </span>
         )}
       </h2>
 
       {rulesets.length === 0 && (
-        <p className={styles['empty-text']}>{formatMessage({ id: 'fieldsets.no-rules' })}</p>
+        <p className={fieldsetDetailsStyles['empty-text']}>{formatMessage({ id: 'fieldsets.no-rules' })}</p>
       )}
 
       {rulesets.map((ruleSet) => (

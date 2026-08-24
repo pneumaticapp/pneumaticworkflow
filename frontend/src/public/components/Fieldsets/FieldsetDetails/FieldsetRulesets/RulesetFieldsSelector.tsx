@@ -14,7 +14,8 @@ import {
   removeFieldFromRuleset,
 } from './utils';
 
-import styles from '../FieldsetDetails.css';
+import fieldsetDetailsStyles from '../FieldsetDetails.css';
+import styles from './FieldsetRulesets.css';
 
 export type TRulesetFieldsSelectorProps = {
   ruleSet: IFieldsetRuleSet;
@@ -80,9 +81,9 @@ export const RulesetFieldsSelector = ({
               })
             }
             isDisabled={isReadOnly || numericFields.length === 0}
-            containerClassname={styles['settings-select']}
-            toggleClassName={styles['settings-select__toggle']}
-            menuClassName={styles['settings-select__menu']}
+            containerClassname={fieldsetDetailsStyles['settings-select']}
+            toggleClassName={fieldsetDetailsStyles['settings-select__toggle']}
+            menuClassName={fieldsetDetailsStyles['settings-select__menu']}
             renderPlaceholder={() => formatMessage({ id: 'fieldsets.rule-fields-placeholder' })}
           />
         </div>

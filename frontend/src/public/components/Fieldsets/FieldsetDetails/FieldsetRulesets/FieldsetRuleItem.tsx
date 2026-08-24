@@ -15,7 +15,8 @@ import {
   deleteRule,
 } from './utils';
 
-import styles from '../FieldsetDetails.css';
+import fieldsetDetailsStyles from '../FieldsetDetails.css';
+import styles from './FieldsetRulesets.css';
 
 export const FieldsetRuleItem = ({
   groupAndRule,
@@ -91,9 +92,9 @@ export const FieldsetRuleItem = ({
           resetFilter={() => {}}
           placeholderText={formatMessage({ id: 'fieldsets.rule-operator-placeholder' })}
           isDisabled={isReadOnly}
-          containerClassname={styles['rule-operator-select']}
-          toggleClassName={styles['rule-operator-select__toggle']}
-          menuClassName={styles['rule-operator-select__menu']}
+          containerClassname={fieldsetDetailsStyles['rule-operator-select']}
+          toggleClassName={fieldsetDetailsStyles['rule-operator-select__toggle']}
+          menuClassName={fieldsetDetailsStyles['rule-operator-select__menu']}
           renderPlaceholder={() => selectedOperatorLabel}
         />
 
