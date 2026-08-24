@@ -32,6 +32,7 @@ export function FieldsetFieldsList({
   labelPosition,
   accountId,
   datasetOptions,
+  onOpenFieldRules: openFieldRules,
 }: IFieldsetFieldsListProps) {
   const { formatMessage } = useIntl();
   const { isDesktop } = useCheckDevice();
@@ -91,6 +92,9 @@ export function FieldsetFieldsList({
                 datasetOptions={datasetOptions}
                 labelPosition={isDesktop ? labelPosition : EFieldLabelPosition.Top}
                 {...(IconComponent && { icon: <IconComponent /> })}
+                {...(openFieldRules && {
+                  onOpenFieldRules: () => openFieldRules(field.apiName),
+                })}
               />
             );
           })}

@@ -659,3 +659,9 @@
   margin-top: 2.4rem;
   margin-bottom: 1.6rem;
 }
+
+.dropdown-item-rules {
+  .dropdown-item-icon {
+    margin-left: auto;
+  }
+}

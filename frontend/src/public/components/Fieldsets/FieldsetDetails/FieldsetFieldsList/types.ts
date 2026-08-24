@@ -8,4 +8,5 @@ export interface IFieldsetFieldsListProps {
   labelPosition: EFieldLabelPosition;
   accountId: number;
   datasetOptions: { label: string; value: string }[];
+  onOpenFieldRules?: (fieldApiName: string) => void;
 }

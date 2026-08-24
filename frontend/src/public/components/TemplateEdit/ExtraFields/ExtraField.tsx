@@ -40,6 +40,7 @@ function ExtraField(props: IExtraFieldProps) {
     labelBackgroundColor,
     innerRef,
     labelPosition,
+    onOpenFieldRules,
   } = props;
 
   // eslint-disable-next-line react/destructuring-assignment
@@ -177,6 +178,8 @@ function ExtraField(props: IExtraFieldProps) {
             datasetOptions={datasetOptions}
             {...(field.dataset && { selectedDatasetId: field.dataset })}
             onDatasetSelect={handleDatasetSelect}
+            fieldType={field.type}
+            onOpenFieldRules={onOpenFieldRules}
           />
         </div>
       )}

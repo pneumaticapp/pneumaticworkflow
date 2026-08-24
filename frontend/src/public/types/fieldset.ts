@@ -1,4 +1,5 @@
 import type { IExtraField } from './template';
+import { EConditionOperators } from '../components/TemplateEdit/TaskForm/Conditions';
 
 export enum EFieldsetNumberRulesetOperator {
   SumEqual = 'sum_equal',
@@ -31,6 +32,33 @@ export interface IFieldsetRuleSet {
   groupsOr: IFieldsetRuleGroupOr[];
 }
 
+export enum EFieldRuleType {
+  Show = 'show',
+  Validator = 'validator',
+}
+
+export type TFieldRuleOperator = EConditionOperators;
+
+export interface IFieldRuleGroupAnd {
+  apiName: string;
+  field?: string | null;
+  operator: EConditionOperators;
+  value: string;
+}
+
+export interface IFieldRuleGroupOr {
+  apiName: string;
+  groupsAnd: IFieldRuleGroupAnd[];
+}
+
+export interface IFieldRuleSet {
+  apiName: string;
+  type: EFieldRuleType;
+  message: string | null;
+  order: number;
+  groupsOr: IFieldRuleGroupOr[];
+}
+
 export interface IFieldsetField {
   type: string;
   name: string;
@@ -42,6 +70,7 @@ export interface IFieldsetField {
   apiName: string;
   default?: string;
   dataset?: number | null;
+  rulesets?: IFieldRuleSet[];
 }
 
 export enum EFieldLabelPosition {

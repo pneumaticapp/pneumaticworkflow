@@ -1416,6 +1416,7 @@ export const ruMessages = {
   'fieldsets.add-field': 'Добавить поле',
   'fieldsets.add-rule': 'Добавить правило',
   'fieldsets.add-ruleset': 'Добавить набор правил',
+  'fieldsets.add-field-rules': 'Правила',
   'fieldsets.ruleset-message': 'Сообщение',
   'fieldsets.ruleset-message-placeholder': 'Сообщение об ошибке...',
   'fieldsets.ruleset-delete': 'Удалить рулсет',

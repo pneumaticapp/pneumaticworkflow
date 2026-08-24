@@ -409,6 +409,10 @@ const FieldsetDetails = ({
         labelPosition={localFieldset.labelPosition}
         accountId={accountId}
         datasetOptions={datasetOptions}
+        onOpenFieldRules={(fieldApiName) => {
+          // TODO: Open FieldRuleModal for fieldApiName
+          console.log('Open field rules modal for field:', fieldApiName);
+        }}
       />
 
       <FieldsetRulesets

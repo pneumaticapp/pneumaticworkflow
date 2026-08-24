@@ -4,9 +4,10 @@ import Switch from 'rc-switch';
 import { useIntl } from 'react-intl';
 
 import { IntlMessages } from '../../../IntlMessages';
-import { ArrowDownIcon, ArrowRightIcon, ArrowUpIcon, BurgerIcon, DropdownCrossIcon, TrashIcon } from '../../../icons';
+import { ArrowDownIcon, ArrowRightIcon, ArrowUpIcon, BurgerIcon, DropdownCrossIcon, TuneViewIcon, TrashIcon } from '../../../icons';
 import { Dropdown, TDropdownOption } from '../../../UI';
 import { IKickoffDropdownProps } from './types';
+import { EExtraFieldType } from '../../../../types/template';
 
 import styles from '../../KickoffRedux/KickoffRedux.css';
 
@@ -25,12 +26,14 @@ export function ExtraFieldDropdown({
   datasetOptions,
   selectedDatasetId,
   onDatasetSelect,
+  fieldType,
+  onOpenFieldRules,
 }: IKickoffDropdownProps) {
   const { formatMessage } = useIntl();
 
-  const handleOptionClick = (handler: () => void) => (closeDropdown: () => void) => {
+  const handleOptionClick = (handler?: () => void) => (closeDropdown: () => void) => {
     closeDropdown();
-    handler();
+    handler?.();
   };
 
   const getDatasetSubOptions = (): TDropdownOption[] | undefined => {
@@ -125,6 +128,13 @@ export function ExtraFieldDropdown({
               />
             </div>
           ),
+        },
+        {
+          label: formatMessage({ id: 'fieldsets.add-field-rules' }),
+          onClick: handleOptionClick(onOpenFieldRules),
+          Icon: TuneViewIcon,
+          className: styles['dropdown-item-rules'],
+          isHidden: fieldType !== EExtraFieldType.Number,
         },
         {
           label: formatMessage({ id: 'template.kick-off-form-delete-component' }),

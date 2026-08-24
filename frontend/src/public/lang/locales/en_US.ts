@@ -1529,6 +1529,7 @@ export const enMessages = {
   'fieldsets.add-field': 'Add field',
   'fieldsets.add-rule': 'Add Rule',
   'fieldsets.add-ruleset': 'Add Ruleset',
+  'fieldsets.add-field-rules': 'Add Rules',
   'fieldsets.ruleset-message': 'Message',
   'fieldsets.ruleset-message-placeholder': 'Custom error message...',
   'fieldsets.ruleset-delete': 'Delete ruleset',

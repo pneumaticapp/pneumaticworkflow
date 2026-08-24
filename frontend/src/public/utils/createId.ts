@@ -31,3 +31,6 @@ export const createFieldsetBindingApiName = () => createUniqueId('fieldset-bind-
 export const createRulesetApiName = () => createUniqueId('ruleset-xxxyxx');
 export const createRulesetGroupOrApiName = () => createUniqueId('ruleset-group-or-xxxyxx');
 export const createRulesetGroupAndApiName = () => createUniqueId('ruleset-group-and-xxxyxx');
+export const createFieldRuleSetApiName = () => createUniqueId('field-ruleset-xxxyxx');
+export const createFieldRuleGroupOrApiName = () => createUniqueId('field-rule-group-or-xxxyxx');
+export const createFieldRuleGroupAndApiName = () => createUniqueId('field-rule-group-and-xxxyxx');
