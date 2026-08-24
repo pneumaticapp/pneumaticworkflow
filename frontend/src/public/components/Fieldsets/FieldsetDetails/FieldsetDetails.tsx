@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useEffect, useState, useMemo, useCallback, useRef, ChangeEvent } from 'react';
+import { useEffect, useState, useMemo, useRef, ChangeEvent } from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
@@ -32,37 +32,25 @@ import { FieldsetUnsavedChangesModal } from './FieldsetUnsavedChangesModal';
 import { getCurrentFieldset, isCurrentFieldsetLoading } from '../../../redux/selectors/fieldsets';
 import { getAccountId } from '../../../redux/selectors/user';
 
-import { EExtraFieldMode, EExtraFieldType, IExtraField } from '../../../types/template';
-import { FilledInfoIcon, ArrowDropdownIcon, DateIcon, LinkIcon } from '../../icons';
-import { EInputNameBackgroundColor, EMoveDirections } from '../../../types/workflow';
+import { IExtraField } from '../../../types/template';
+import { FilledInfoIcon } from '../../icons';
 import {
   IFieldsetRuleSet,
   EFieldLabelPosition,
   IUpdateFieldsetParams,
 } from '../../../types/fieldset';
-import { ExtraFieldsMap } from '../../TemplateEdit/ExtraFields/utils/ExtraFieldsMap';
-import { ExtraFieldIcon } from '../../TemplateEdit/ExtraFields/utils/ExtraFieldIcon';
-import { ExtraFieldIntl } from '../../TemplateEdit/ExtraFields';
-import { getEmptyField } from '../../TemplateEdit/KickoffRedux/utils/getEmptyField';
-import { getEditedFields } from '../../TemplateEdit/ExtraFields/utils/getEditedFields';
-import { getNormalizeFieldsOrders, moveWorkflowField } from '../../../utils/workflows';
 import { useDatasetOptions } from '../../TemplateEdit/ExtraFields/utils/useDatasetOptions';
 
 import { normalizeFieldsForUI } from './fieldsetFieldMappers';
-import { SINGLE_LINE_FIELD_TYPES } from './constants';
 import { validateFieldsetRules } from '../validators';
 import { FIELDSET_LABEL_POSITION_OPTIONS } from '../constants';
 
-import { useCheckDevice } from '../../../hooks/useCheckDevice';
 import { TFieldsetDetailsProps, TLocalFieldsetState, TFieldsetChanges } from './types';
 import { FieldsetRulesets } from './FieldsetRulesets/FieldsetRulesets';
+import { FieldsetFieldsList } from './FieldsetFieldsList/FieldsetFieldsList';
 import styles from './FieldsetDetails.css';
 
-const READONLY_FIELD_ICONS: Partial<Record<EExtraFieldType, React.FC<React.SVGAttributes<SVGElement>>>> = {
-  [EExtraFieldType.User]: ArrowDropdownIcon,
-  [EExtraFieldType.Date]: DateIcon,
-  [EExtraFieldType.Url]: LinkIcon,
-};
+
 
 const EMPTY_LOCAL_FIELDSET: TLocalFieldsetState = {
   title: '',
@@ -82,7 +70,7 @@ const FieldsetDetails = ({
   const fieldset = useSelector(getCurrentFieldset);
   const isLoading = useSelector(isCurrentFieldsetLoading);
   const accountId = useSelector(getAccountId);
-  const { isDesktop } = useCheckDevice();
+
 
   const [localFieldset, setLocalFieldset] = useState<TLocalFieldsetState>(EMPTY_LOCAL_FIELDSET);
   const [fieldsetChanges, setFieldsetChanges] = useState<TFieldsetChanges>({});
@@ -144,33 +132,7 @@ const FieldsetDetails = ({
     setFieldsetChanges((prev) => ({ ...prev, description }));
   };
 
-  const getSortedFields = useCallback(() => {
-    return [...localFieldset.fields].sort((a, b) => b.order - a.order);
-  }, [localFieldset.fields]);
-
-  const sortedFields = useMemo(() => getSortedFields(), [getSortedFields]);
-
-  const handleCreateField = (type: EExtraFieldType) => {
-    const newFields = getNormalizeFieldsOrders([...localFieldset.fields, getEmptyField(type, formatMessage)]);
-    setLocalFieldset((prev) => ({ ...prev, fields: newFields }));
-    setFieldsetChanges((prev) => ({ ...prev, fields: newFields }));
-  };
-
-  const handleEditField = (apiName: string) => (changedProps: Partial<IExtraField>) => {
-    const newFields = getEditedFields(getSortedFields(), apiName, changedProps);
-    setLocalFieldset((prev) => ({ ...prev, fields: newFields }));
-    setFieldsetChanges((prev) => ({ ...prev, fields: newFields }));
-  };
-
-  const handleDeleteField = (idx: number) => {
-    const newFields = getNormalizeFieldsOrders(getSortedFields().filter((_, index) => index !== idx));
-    setLocalFieldset((prev) => ({ ...prev, fields: newFields }));
-    setFieldsetChanges((prev) => ({ ...prev, fields: newFields }));
-  };
-
-  const handleMoveField = (from: number, direction: EMoveDirections) => {
-    const to = direction === EMoveDirections.Up ? from - 1 : from + 1;
-    const newFields = moveWorkflowField(from, to, getSortedFields());
+  const handleFieldsChange = (newFields: IExtraField[]) => {
     setLocalFieldset((prev) => ({ ...prev, fields: newFields }));
     setFieldsetChanges((prev) => ({ ...prev, fields: newFields }));
   };
@@ -440,62 +402,14 @@ const FieldsetDetails = ({
         </div>
       </div>
 
-      <div className={styles['list']}>
-        <h2 className={styles['section-title']}>
-          {formatMessage({ id: 'fieldsets.fields-section' })}
-          {readOnlyBadge}
-        </h2>
-
-        <div className={classnames(styles['components'], isLinked && styles['components_disabled'])}>
-          {ExtraFieldsMap.map((x) => (
-            <ExtraFieldIcon
-              {...x}
-              key={x.id}
-              onClick={() => handleCreateField(x.id)}
-              disabled={isLinked}
-            />
-          ))}
-        </div>
-
-        {sortedFields.length > 0 && (
-          <div className={classnames(styles['fields'], isLinked && styles['fieldset_readonly'])}>
-            {sortedFields.map((field, index) => {
-              const readOnlyField =
-                isLinked && SINGLE_LINE_FIELD_TYPES.has(field.type)
-                  ? { ...field, type: EExtraFieldType.Text }
-                  : field;
-
-              const IconComponent = isLinked && READONLY_FIELD_ICONS[field.type];
-
-              return (
-                <ExtraFieldIntl
-                  key={field.apiName}
-                  id={index}
-                  field={readOnlyField}
-                  fieldsCount={sortedFields.length}
-                  labelBackgroundColor={EInputNameBackgroundColor.White}
-                  deleteField={() => handleDeleteField(index)}
-                  moveFieldUp={() => handleMoveField(index, EMoveDirections.Up)}
-                  moveFieldDown={() => handleMoveField(index, EMoveDirections.Down)}
-                  editField={handleEditField(field.apiName)}
-                  accountId={accountId}
-                  mode={EExtraFieldMode.Kickoff}
-                  showDropdown
-                  isDisabled={isLinked}
-                  isFieldsetReadOnly={isLinked}
-                  datasetOptions={datasetOptions}
-                  labelPosition={isDesktop ? localFieldset.labelPosition : EFieldLabelPosition.Top}
-                  {...(IconComponent && { icon: <IconComponent /> })}
-                />
-              );
-            })}
-          </div>
-        )}
-
-        {sortedFields.length === 0 && (
-          <p className={styles['empty-text']}>{formatMessage({ id: 'fieldsets.no-fields' })}</p>
-        )}
-      </div>
+      <FieldsetFieldsList
+        fields={localFieldset.fields}
+        onFieldsChange={handleFieldsChange}
+        isReadOnly={isLinked}
+        labelPosition={localFieldset.labelPosition}
+        accountId={accountId}
+        datasetOptions={datasetOptions}
+      />
 
       <FieldsetRulesets
         rulesets={localFieldset.rulesets}

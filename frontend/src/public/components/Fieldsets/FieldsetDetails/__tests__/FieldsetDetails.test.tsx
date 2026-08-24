@@ -21,12 +21,10 @@ import { NotificationManager } from '../../../UI/Notifications';
 import { ExtraFieldIntl } from '../../../TemplateEdit/ExtraFields';
 import { FieldsetModal } from '../../FieldsetModal/FieldsetModal';
 import { getEmptyField } from '../../../TemplateEdit/KickoffRedux/utils/getEmptyField';
-import { getEditedFields } from '../../../TemplateEdit/ExtraFields/utils/getEditedFields';
-import { moveWorkflowField } from '../../../../utils/workflows';
 import { EExtraFieldType, IExtraField } from '../../../../types/template';
 import { makeFieldsetCatalogItem, makeFieldsetRuleset } from '../../../../__stubs__/fieldsets.factory';
 import { makeExtraField } from '../../../../__stubs__/fields.factory';
-import { FIELDSET_RULES_MSG_FIELDS_REQUIRED } from '../../constants';
+import { FIELDSET_RULES_MSG_VALUE_REQUIRED } from '../../constants';
 
 function requireJestMock(value: unknown, label: string): jest.Mock {
   if (!jest.isMockFunction(value)) {
@@ -184,7 +182,6 @@ describe('FieldsetDetails', () => {
 
   const SAVE_LABEL = formatMsg('fieldsets.save');
   const UNSAVED_HINT = formatMsg('fieldsets.unsaved-changes');
-  const NO_FIELDS_TEXT = formatMsg('fieldsets.no-fields');
   const ADD_RULE_TEXT = formatMsg('fieldsets.add-rule');
   const RULE_DELETE_TEXT = formatMsg('fieldsets.rule-delete');
   const RULE_VALUE_PLACEHOLDER = formatMsg('fieldsets.rule-value-placeholder-number');
@@ -475,95 +472,7 @@ describe('FieldsetDetails', () => {
     });
   });
 
-  describe('Fields section — display', () => {
-    it('shows "No fields yet" when fields are empty', () => {
-      renderWithState(makeLoadedState({ fields: [] }));
-      expect(screen.getByText(NO_FIELDS_TEXT)).toBeInTheDocument();
-    });
-
-    it('renders ExtraFieldIntl for each field (order desc)', () => {
-      const fields = [makeField({ apiName: 'f1', order: 1 }), makeField({ apiName: 'f2', order: 2 })];
-      renderWithState(makeLoadedState({ fields }));
-
-      expect(screen.getByTestId('extra-field-f1')).toBeInTheDocument();
-      expect(screen.getByTestId('extra-field-f2')).toBeInTheDocument();
-
-      const mock = getExtraFieldIntlMock();
-      const fieldCalls = mock.mock.calls.filter((call: unknown[]) => {
-        const props = call[0] as { field: { apiName: string } };
-        return props.field.apiName.startsWith('f');
-      });
-      expect(fieldCalls[0][0].field.apiName).toBe('f2');
-      expect(fieldCalls[1][0].field.apiName).toBe('f1');
-    });
-  });
-
-  describe('Fields section — CRUD', () => {
-    it('handleCreateField adds a field and enables Save', () => {
-      renderWithState(makeLoadedState({ fields: [] }));
-
-      userEvent.click(screen.getByTestId('field-icon-string'));
-
-      expect(getEmptyField).toHaveBeenCalledTimes(1);
-      expect(screen.getByRole('button', { name: SAVE_LABEL })).not.toBeDisabled();
-      expect(screen.getByTestId('extra-field-new-string')).toBeInTheDocument();
-    });
-
-    it('handleEditField calls getEditedFields with correct arguments', () => {
-      const fields = [makeField({ apiName: 'f1', order: 1, name: 'Old' })];
-      renderWithState(makeLoadedState({ fields }));
-
-      const mock = getExtraFieldIntlMock();
-      const editField = mock.mock.calls[mock.mock.calls.length - 1][0].editField;
-      act(() => {
-        editField({ name: 'New' });
-      });
-
-      expect(getEditedFields).toHaveBeenCalledTimes(1);
-      expect(getEditedFields).toHaveBeenCalledWith(
-        expect.arrayContaining([expect.objectContaining({ apiName: 'f1' })]),
-        'f1',
-        { name: 'New' },
-      );
-    });
-
-    it('handleDeleteField removes a field', () => {
-      const fields = [makeField({ apiName: 'f1', order: 2 }), makeField({ apiName: 'f2', order: 1 })];
-      renderWithState(makeLoadedState({ fields }));
-
-      expect(screen.getByTestId('extra-field-f1')).toBeInTheDocument();
-      expect(screen.getByTestId('extra-field-f2')).toBeInTheDocument();
-
-      const mock = getExtraFieldIntlMock();
-      const lastRenderCalls = mock.mock.calls.slice(-2);
-      const deleteField = lastRenderCalls[0][0].deleteField;
-      act(() => {
-        deleteField();
-      });
-
-      expect(screen.queryByTestId('extra-field-f1')).not.toBeInTheDocument();
-      expect(screen.getByTestId('extra-field-f2')).toBeInTheDocument();
-    });
-
-    it('handleMoveField calls moveWorkflowField with correct arguments', () => {
-      const fields = [makeField({ apiName: 'f1', order: 2 }), makeField({ apiName: 'f2', order: 1 })];
-      renderWithState(makeLoadedState({ fields }));
-
-      const mock = getExtraFieldIntlMock();
-      const lastRenderCalls = mock.mock.calls.slice(-2);
-
-      act(() => {
-        lastRenderCalls[0][0].moveFieldDown();
-      });
-
-      expect(moveWorkflowField).toHaveBeenCalledTimes(1);
-      expect(moveWorkflowField).toHaveBeenCalledWith(
-        0,
-        1,
-        expect.arrayContaining([expect.objectContaining({ apiName: 'f1' })]),
-      );
-    });
-
+  describe('Fields section', () => {
     it('Save Fields dispatches updateFieldsetAction without id in fields', () => {
       renderWithState(makeLoadedState({ id: 10, fields: [] }));
 
@@ -698,7 +607,7 @@ describe('FieldsetDetails', () => {
 
       expect(NotificationManager.warning).toHaveBeenCalledTimes(1);
       expect(NotificationManager.warning).toHaveBeenCalledWith(
-        expect.objectContaining({ message: formatMsg(FIELDSET_RULES_MSG_FIELDS_REQUIRED) }),
+        expect.objectContaining({ message: formatMsg(FIELDSET_RULES_MSG_VALUE_REQUIRED) }),
       );
       expect(getUpdateActionMock()).not.toHaveBeenCalled();
     });
@@ -815,7 +724,7 @@ describe('FieldsetDetails', () => {
 
       expect(NotificationManager.warning).toHaveBeenCalledTimes(1);
       expect(NotificationManager.warning).toHaveBeenCalledWith(
-        expect.objectContaining({ message: formatMsg(FIELDSET_RULES_MSG_FIELDS_REQUIRED) }),
+        expect.objectContaining({ message: formatMsg(FIELDSET_RULES_MSG_VALUE_REQUIRED) }),
       );
       expect(getUpdateActionMock()).not.toHaveBeenCalled();
     });
