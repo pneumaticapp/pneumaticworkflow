@@ -1,12 +1,17 @@
 from typing import Any, Dict
 
-from rest_framework.fields import CharField
 from rest_framework.serializers import ModelSerializer
 
+from src.generics.fields import (
+    DocCharField,
+    DocChoiceField,
+    DocIntegerField,
+)
 from src.generics.mixins.serializers import (
     AdditionalValidationMixin,
     CustomValidationErrorMixin,
 )
+from src.processes.enums import FieldRuleOperator, FieldRuleType
 from src.processes.messages.template import (
     MSG_PT_0075,
 )
@@ -49,8 +54,23 @@ class FieldTemplateRuleGroupAndSerializer(
             'account',
         }
 
-    api_name = CharField(max_length=200, required=False)
-    field = CharField(max_length=200)
+    api_name = DocCharField(
+        max_length=200,
+        required=False,
+        example='field-rule-group-and-1',
+    )
+    field = DocCharField(max_length=200, example='need_comments')
+    operator = DocChoiceField(
+        choices=FieldRuleOperator.CHOICES,
+        example=FieldRuleOperator.EQUAL,
+    )
+    value = DocCharField(
+        max_length=200,
+        required=False,
+        allow_null=True,
+        allow_blank=True,
+        example='yes',
+    )
 
     def create(self, validated_data: Dict[str, Any]):
         self.additional_validate(validated_data)
@@ -123,7 +143,11 @@ class FieldTemplateRuleGroupOrSerializer(
             'account',
         }
 
-    api_name = CharField(max_length=200, required=False)
+    api_name = DocCharField(
+        max_length=200,
+        required=False,
+        example='field-rule-group-or-1',
+    )
     groups_and = FieldTemplateRuleGroupAndSerializer(many=True)
 
     def create(self, validated_data: Dict[str, Any]):
@@ -227,7 +251,28 @@ class FieldTemplateRuleSetSerializer(
             'account',
         }
 
-    api_name = CharField(max_length=200, required=False)
+    api_name = DocCharField(
+        max_length=200,
+        required=False,
+        example='field-ruleset-show-single',
+    )
+    type = DocChoiceField(
+        choices=FieldRuleType.CHOICES,
+        example=FieldRuleType.SHOW,
+    )
+    message = DocCharField(
+        required=False,
+        allow_null=True,
+        allow_blank=True,
+        example='Amount must be greater than 0',
+        help_text='Custom error message for type="validator"',
+    )
+    order = DocIntegerField(
+        required=False,
+        default=0,
+        min_value=0,
+        example=0,
+    )
     groups_or = FieldTemplateRuleGroupOrSerializer(many=True)
 
     def create(self, validated_data: Dict[str, Any]):

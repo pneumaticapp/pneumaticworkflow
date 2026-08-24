@@ -7,7 +7,13 @@ from rest_framework.serializers import (
     SerializerMethodField,
 )
 
-from src.generics.fields import AccountPrimaryKeyRelatedField
+from src.generics.fields import (
+    AccountPrimaryKeyRelatedField,
+    DocBooleanField,
+    DocCharField,
+    DocChoiceField,
+    DocIntegerField,
+)
 from src.generics.mixins.serializers import (
     AdditionalValidationMixin,
     CustomValidationErrorMixin,
@@ -104,12 +110,35 @@ class FieldTemplateSerializer(
             'dataset',
         }
 
-    order = IntegerField()
-    api_name = CharField(required=False, max_length=200)
+    name = DocCharField(example='Need comments')
+    description = DocCharField(
+        required=False,
+        allow_null=True,
+        allow_blank=True,
+        example='Ask for extra comments',
+    )
+    type = DocChoiceField(
+        choices=FieldType.CHOICES,
+        example=FieldType.CHECKBOX,
+    )
+    is_required = DocBooleanField(required=False, example=False)
+    is_hidden = DocBooleanField(required=False, example=True)
+    api_name = DocCharField(
+        required=False,
+        max_length=200,
+        example='need_comments',
+    )
+    default = DocCharField(
+        required=False,
+        allow_blank=True,
+        example='',
+    )
+    order = DocIntegerField(example=0)
     dataset = AccountPrimaryKeyRelatedField(
         queryset=Dataset.objects.all(),
         required=False,
         allow_null=True,
+        example=1,
     )
     selections = FieldTemplateSelectionSerializer(
         many=True,

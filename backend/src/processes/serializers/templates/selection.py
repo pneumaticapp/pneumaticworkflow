@@ -1,10 +1,8 @@
 from typing import Any, Dict
 
-from rest_framework.serializers import (
-    CharField,
-    ModelSerializer,
-)
+from rest_framework.serializers import ModelSerializer
 
+from src.generics.fields import DocCharField
 from src.generics.mixins.serializers import (
     AdditionalValidationMixin,
     CustomValidationErrorMixin,
@@ -41,8 +39,12 @@ class FieldTemplateSelectionSerializer(
             'template',
         }
 
-    value = CharField(max_length=200)
-    api_name = CharField(max_length=200, required=False)
+    value = DocCharField(max_length=200, example='yes')
+    api_name = DocCharField(
+        max_length=200,
+        required=False,
+        example='selection-yes',
+    )
 
     def create(self, validated_data: Dict[str, Any]):
         self.additional_validate(validated_data)
