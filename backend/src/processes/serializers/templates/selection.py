@@ -43,7 +43,7 @@ class FieldTemplateSelectionSerializer(
     api_name = DocCharField(
         max_length=200,
         required=False,
-        example='selection-yes',
+        example='option-1',
     )
 
     def create(self, validated_data: Dict[str, Any]):

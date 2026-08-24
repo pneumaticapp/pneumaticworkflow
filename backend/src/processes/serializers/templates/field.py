@@ -110,12 +110,12 @@ class FieldTemplateSerializer(
             'dataset',
         }
 
-    name = DocCharField(example='Need comments')
+    name = DocCharField(example='Leave feedback')
     description = DocCharField(
         required=False,
         allow_null=True,
         allow_blank=True,
-        example='Ask for extra comments',
+        example='Describe how the delivery went',
     )
     type = DocChoiceField(
         choices=FieldType.CHOICES,
@@ -126,12 +126,12 @@ class FieldTemplateSerializer(
     api_name = DocCharField(
         required=False,
         max_length=200,
-        example='need_comments',
+        example='field-1',
     )
     default = DocCharField(
         required=False,
         allow_blank=True,
-        example='',
+        example='no',
     )
     order = DocIntegerField(example=0)
     dataset = AccountPrimaryKeyRelatedField(

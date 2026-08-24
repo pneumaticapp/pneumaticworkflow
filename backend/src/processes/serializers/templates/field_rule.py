@@ -59,7 +59,10 @@ class FieldTemplateRuleGroupAndSerializer(
         required=False,
         example='field-rule-group-and-1',
     )
-    field = DocCharField(max_length=200, example='need_comments')
+    field = DocCharField(
+        max_length=200,
+        example='field-1',
+    )
     operator = DocChoiceField(
         choices=FieldRuleOperator.CHOICES,
         example=FieldRuleOperator.EQUAL,
@@ -254,7 +257,7 @@ class FieldTemplateRuleSetSerializer(
     api_name = DocCharField(
         max_length=200,
         required=False,
-        example='field-ruleset-show-single',
+        example='ruleset-1',
     )
     type = DocChoiceField(
         choices=FieldRuleType.CHOICES,

@@ -33,7 +33,7 @@ class FieldSetTemplateRuleGroupAndSerializer(
     api_name = DocCharField(
         max_length=200,
         required=False,
-        example='fieldset-rule-group-and-1',
+        example='group-and-1',
     )
     operator = DocChoiceField(
         choices=FieldSetRuleOperator.CHOICES,
@@ -63,7 +63,7 @@ class FieldSetTemplateRuleGroupOrSerializer(
     api_name = DocCharField(
         max_length=200,
         required=False,
-        example='fieldset-rule-group-or-1',
+        example='group-or-1',
     )
     groups_and = FieldSetTemplateRuleGroupAndSerializer(many=True)
 
@@ -86,7 +86,7 @@ class FieldSetTemplateRuleSetSerializer(
     api_name = DocCharField(
         max_length=200,
         required=False,
-        example='fieldset-ruleset-1',
+        example='ruleset-1',
     )
     message = DocCharField(
         required=False,

@@ -52,22 +52,22 @@ class FieldsetTemplateSerializer(
     api_name = DocCharField(
         required=False,
         max_length=200,
-        example='fieldset-comments-binding',
+        example='feedback-fieldset',
     )
     name = DocCharField(
         required=False,
         max_length=1000,
-        example='Comments',
+        example='Feedback block',
     )
     title = DocCharField(
         required=False,
         allow_blank=True,
-        example='Comments',
+        example='Feedback form',
     )
     description = DocCharField(
         required=False,
         allow_blank=True,
-        example='Collect extra comments',
+        example='Leave a review about your order',
     )
     label_position = DocChoiceField(
         choices=LabelPosition.CHOICES,
@@ -127,18 +127,21 @@ class SharedFieldsetTemplateSerializer(
     api_name = DocCharField(
         required=False,
         max_length=200,
-        example='fieldset-comments',
+        example='feedback-fieldset',
     )
-    name = DocCharField(max_length=1000, example='Comments')
+    name = DocCharField(
+        max_length=1000,
+        example='Feedback block',
+    )
     title = DocCharField(
         required=False,
         allow_blank=True,
-        example='Comments',
+        example='Feedback form',
     )
     description = DocCharField(
         required=False,
         allow_blank=True,
-        example='Collect extra comments',
+        example='Leave a review about your order',
     )
     label_position = DocChoiceField(
         choices=LabelPosition.CHOICES,
