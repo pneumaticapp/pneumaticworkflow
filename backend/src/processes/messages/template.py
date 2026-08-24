@@ -332,3 +332,13 @@ MSG_PT_0076 = lambda task_name, field_name, api_name: format_lazy(
     field_name=field_name,
     api_name=api_name,
 )
+
+MSG_PT_0078 = lambda field, operator, field_type: format_lazy(
+    _(
+        'Field "{field}": rule operator "{operator}" can\'t be use '
+        'with type of field "{field_type}".',
+    ),
+    field=field,
+    operator=operator,
+    field_type=field_type,
+)

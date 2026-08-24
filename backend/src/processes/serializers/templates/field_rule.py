@@ -72,8 +72,8 @@ class FieldTemplateRuleGroupAndSerializer(
         choices=FieldRuleOperator.CHOICES,
         example=FieldRuleOperator.EQUAL,
         help_text=(
-            'Comparison against `value`: `equal`, '
-            '`greater_than`, or `less_than`.'
+            'Comparison against `value`. Allowed operators '
+            'depend on the source field type.'
         ),
     )
     value = DocCharField(

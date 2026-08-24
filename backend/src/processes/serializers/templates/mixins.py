@@ -290,7 +290,7 @@ class FieldsetMixin:
                         instance=fieldset,
                         user=user,
                     )
-                    service.partial_update_instance(
+                    service.partial_update(
                         order=fieldset_data['order'],
                         title=fieldset_data.get('title'),
                         description=fieldset_data.get('description'),

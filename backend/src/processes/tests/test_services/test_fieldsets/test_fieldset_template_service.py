@@ -2190,68 +2190,6 @@ def test__create_from_shared__all_params__ok(mocker):
     )
 
 
-def test__partial_update_instance__no_kwargs__ok():
-
-    """
-    No kwargs
-    """
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    template = create_test_template(user=user, tasks_count=1)
-    fieldset = create_test_fieldset_template(
-        account=account,
-        template=template,
-    )
-    original_name = fieldset.name
-    service = FieldSetTemplateService(
-        user=user,
-        is_superuser=False,
-        auth_type=AuthTokenType.USER,
-        instance=fieldset,
-    )
-
-    # act
-    result = service.partial_update_instance()
-
-    # assert
-    assert result is fieldset
-    fieldset.refresh_from_db()
-    assert fieldset.name == original_name
-
-
-def test__partial_update_instance__kwargs_provided__ok():
-
-    """
-    kwargs provided
-    """
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    template = create_test_template(user=user, tasks_count=1)
-    fieldset = create_test_fieldset_template(
-        account=account,
-        template=template,
-    )
-    new_name = 'Updated Fieldset Name'
-    service = FieldSetTemplateService(
-        user=user,
-        is_superuser=False,
-        auth_type=AuthTokenType.USER,
-        instance=fieldset,
-    )
-
-    # act
-    result = service.partial_update_instance(name=new_name)
-
-    # assert
-    assert result is not None
-    fieldset.refresh_from_db()
-    assert fieldset.name == new_name
-
-
 def test__to_json__is_shared__ok(mocker):
 
     """

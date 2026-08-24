@@ -266,3 +266,13 @@ class FieldsetServiceException(BaseServiceException):
 class SharedFieldsetNotFoundException(FieldsetServiceException):
 
     default_message = fs_messages.MSG_FS_0008
+
+
+class FieldsetTemplateRuleSetServiceException(BaseServiceException):
+
+    pass
+
+
+class FieldTemplateRuleSetServiceException(BaseServiceException):
+
+    pass
