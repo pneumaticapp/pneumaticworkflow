@@ -1,4 +1,5 @@
 import {
+  IBaseRuleGroupAnd,
   IFieldsetRuleGroupAnd,
   EFieldsetNumberRulesetOperator,
   ERuleCombinator,
@@ -75,7 +76,7 @@ export const updateRuleInRulesets = ({
   rulesetApiName: string;
   ruleGroupOrApiName: string;
   ruleGroupAndApiName: string;
-  ruleChanges: Partial<IFieldsetRuleGroupAnd>;
+  ruleChanges: Partial<IBaseRuleGroupAnd>;
 }) => {
   const updatedRulesets = rulesets.map((ruleset) =>
     ruleset.apiName === rulesetApiName

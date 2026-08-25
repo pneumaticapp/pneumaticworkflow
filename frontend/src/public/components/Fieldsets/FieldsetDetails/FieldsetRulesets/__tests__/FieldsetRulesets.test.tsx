@@ -13,8 +13,8 @@ import { makeExtraField } from '../../../../../__stubs__/fields.factory';
 import { EExtraFieldType } from '../../../../../types/template';
 import { EFieldsetNumberRulesetOperator, ERuleCombinator } from '../../../../../types/fieldset';
 
-jest.mock('../FieldsetRulesList', () => ({
-  FieldsetRulesList: jest.fn(
+jest.mock('../../RuleBase', () => ({
+  RuleList: jest.fn(
     (props: {
       ruleSet: { apiName: string };
       addRule: () => void;
@@ -77,9 +77,6 @@ jest.mock('../FieldsetRulesList', () => ({
         ),
       ),
   ),
-}));
-
-jest.mock('../RulesetMessageInput', () => ({
   RulesetMessageInput: jest.fn(
     (props: { message?: string | null; onChange: (msg: string) => void; isReadOnly?: boolean }) =>
       React.createElement(

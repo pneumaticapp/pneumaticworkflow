@@ -3,6 +3,8 @@ import { EConditionOperators } from '../components/TemplateEdit/TaskForm/Conditi
 
 export interface IBaseRuleGroupAnd {
   apiName: string;
+  operator: string;
+  value: string;
 }
 
 export interface IBaseRuleGroupOr {

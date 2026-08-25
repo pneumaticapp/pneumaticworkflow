@@ -12,24 +12,36 @@ describe('RulesetMessageInput component', () => {
     jest.clearAllMocks();
   });
 
-  it('renders input with current message and triggers onChange on typing', () => {
+  it('renders label and input with message value', () => {
     render(
       <RulesetMessageInput
-        message="Initial error message"
+        message="Custom error message"
         onChange={mockOnChange}
         isReadOnly={false}
       />,
     );
 
-    const input = screen.getByPlaceholderText(
-      formatMsg('fieldsets.ruleset-message-placeholder'),
-    );
-    expect(input).toHaveValue('Initial error message');
+    expect(screen.getByText(formatMsg('fieldsets.ruleset-message'))).toBeInTheDocument();
 
-    fireEvent.change(input, { target: { value: 'Updated error message' } });
+    const input = screen.getByDisplayValue('Custom error message');
+    expect(input).toBeInTheDocument();
+    expect(input).not.toBeDisabled();
+  });
+
+  it('calls onChange callback when user types in input', () => {
+    render(
+      <RulesetMessageInput
+        message=""
+        onChange={mockOnChange}
+        isReadOnly={false}
+      />,
+    );
+
+    const input = screen.getByPlaceholderText(formatMsg('fieldsets.ruleset-message-placeholder'));
+    fireEvent.change(input, { target: { value: 'New message' } });
 
     expect(mockOnChange).toHaveBeenCalledTimes(1);
-    expect(mockOnChange).toHaveBeenCalledWith('Updated error message');
+    expect(mockOnChange).toHaveBeenCalledWith('New message');
   });
 
   it('disables input when isReadOnly is true', () => {
@@ -41,9 +53,7 @@ describe('RulesetMessageInput component', () => {
       />,
     );
 
-    const input = screen.getByPlaceholderText(
-      formatMsg('fieldsets.ruleset-message-placeholder'),
-    );
+    const input = screen.getByDisplayValue('Read-only message');
     expect(input).toBeDisabled();
   });
 });

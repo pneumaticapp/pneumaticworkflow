@@ -13,9 +13,8 @@ import {
   deleteRuleFromRulesets,
   regroupRulesInRulesets,
 } from './utils';
-import { FieldsetRulesList } from './FieldsetRulesList';
+import { RuleList, RulesetMessageInput } from '../RuleBase';
 import { RulesetFieldsSelector } from './RulesetFieldsSelector';
-import { RulesetMessageInput } from './RulesetMessageInput';
 
 import fieldsetDetailsStyles from '../FieldsetDetails.css';
 import styles from './FieldsetRulesets.css';
@@ -60,7 +59,7 @@ export const FieldsetRulesets = ({
             isReadOnly={isReadOnly}
           />
 
-          <FieldsetRulesList
+          <RuleList
             ruleSet={ruleSet}
             isReadOnly={isReadOnly}
             addRule={() =>

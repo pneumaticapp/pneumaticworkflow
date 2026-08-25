@@ -6,14 +6,13 @@ import { TrashIcon } from '../../../icons';
 
 import { EFieldsetNumberRulesetOperator } from '../../../../types/fieldset';
 import { FIELDSET_RULE_COMBINATORS } from '../../constants';
-import { getRuleCombinator } from '../RuleBase/utils';
+import { getRuleCombinator } from './utils';
+import { TRuleItemProps } from './types';
 
 import fieldsetDetailsStyles from '../FieldsetDetails.css';
-import styles from './FieldsetRulesets.css';
+import styles from '../FieldsetRulesets/FieldsetRulesets.css';
 
-import { TFieldsetRuleItemProps } from './types';
-
-export const FieldsetRuleItem = ({
+export const RuleItem = ({
   groupAndRule,
   groupOrApiName,
   groupOrIndex,
@@ -23,7 +22,7 @@ export const FieldsetRuleItem = ({
   updateRule,
   deleteRule,
   regroupRules,
-}: TFieldsetRuleItemProps) => {
+}: TRuleItemProps) => {
   const { formatMessage } = useIntl();
   const { apiName: groupAndApiName, operator, value } = groupAndRule;
 

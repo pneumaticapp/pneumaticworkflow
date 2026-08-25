@@ -3,19 +3,19 @@ import { useMemo } from 'react';
 import { useIntl } from 'react-intl';
 
 import { FIELDSET_RULE_OPERATOR_OPTIONS } from '../../constants';
-import { TFieldsetRulesListProps } from './types';
-import { FieldsetRuleItem } from './FieldsetRuleItem';
+import { TRuleListProps } from './types';
+import { RuleItem } from './RuleItem';
 
-import styles from './FieldsetRulesets.css';
+import styles from '../FieldsetRulesets/FieldsetRulesets.css';
 
-export const FieldsetRulesList = ({
+export const RuleList = ({
   ruleSet,
   isReadOnly,
   addRule,
   updateRule,
   deleteRule,
   regroupRules,
-}: TFieldsetRulesListProps) => {
+}: TRuleListProps) => {
   const { formatMessage } = useIntl();
 
   const ruleOperatorOptions = useMemo(
@@ -37,7 +37,7 @@ export const FieldsetRulesList = ({
 
       {groupsOr.map(({ apiName: groupOrApiName, groupsAnd = [] }, groupOrIndex) =>
         groupsAnd.map((groupAndRule, groupAndIndex) => (
-          <FieldsetRuleItem
+          <RuleItem
             key={groupAndRule.apiName}
             groupAndRule={groupAndRule}
             groupOrApiName={groupOrApiName}

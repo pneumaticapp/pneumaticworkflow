@@ -1,9 +1,8 @@
 import * as React from 'react';
 import { useIntl } from 'react-intl';
 
-import styles from './FieldsetRulesets.css';
-
 import { TRulesetMessageInputProps } from './types';
+import styles from '../FieldsetRulesets/FieldsetRulesets.css';
 
 export const RulesetMessageInput = ({
   message,
