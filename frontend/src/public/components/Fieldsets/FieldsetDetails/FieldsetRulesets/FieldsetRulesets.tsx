@@ -8,9 +8,14 @@ import {
   updateRulesetMessage,
   deleteRuleset,
   addRuleset,
+  addGroupAndToRulesets,
+  updateRuleInRulesets,
+  deleteRuleFromRulesets,
+  regroupRulesInRulesets,
 } from './utils';
 import { FieldsetRulesList } from './FieldsetRulesList';
 import { RulesetFieldsSelector } from './RulesetFieldsSelector';
+import { RulesetMessageInput } from './RulesetMessageInput';
 
 import fieldsetDetailsStyles from '../FieldsetDetails.css';
 import styles from './FieldsetRulesets.css';
@@ -24,8 +29,6 @@ export const FieldsetRulesets = ({
   const { formatMessage } = useIntl();
 
   const numericFields = fields.filter((field) => field.type === EExtraFieldType.Number);
-
-
 
   return (
     <div className={fieldsetDetailsStyles['list']}>
@@ -44,30 +47,49 @@ export const FieldsetRulesets = ({
 
       {rulesets.map((ruleSet) => (
         <div key={ruleSet.apiName} className={styles['ruleset-card']}>
-          <span className={styles['ruleset-card__label']}>
-            {formatMessage({ id: 'fieldsets.ruleset-message' })}
-          </span>
-          <input
-            type="text"
-            className={styles['ruleset-message-input']}
-            value={ruleSet.message || ''}
-            placeholder={formatMessage({ id: 'fieldsets.ruleset-message-placeholder' })}
-            onChange={(e) =>
+          <RulesetMessageInput
+            message={ruleSet.message}
+            onChange={(message) =>
               updateRulesetMessage({
                 rulesets,
                 rulesetApiName: ruleSet.apiName,
-                message: e.target.value,
+                message,
                 onRulesetsChange,
               })
             }
-            disabled={isReadOnly}
+            isReadOnly={isReadOnly}
           />
 
           <FieldsetRulesList
             ruleSet={ruleSet}
-            rulesets={rulesets}
-            onRulesetsChange={onRulesetsChange}
             isReadOnly={isReadOnly}
+            addRule={() =>
+              addGroupAndToRulesets({ rulesets, rulesetApiName: ruleSet.apiName, onRulesetsChange })
+            }
+            updateRule={(params) =>
+              updateRuleInRulesets({
+                ...params,
+                rulesets,
+                rulesetApiName: ruleSet.apiName,
+                onRulesetsChange,
+              })
+            }
+            deleteRule={(params) =>
+              deleteRuleFromRulesets({
+                ...params,
+                rulesets,
+                rulesetApiName: ruleSet.apiName,
+                onRulesetsChange,
+              })
+            }
+            regroupRules={(params) =>
+              regroupRulesInRulesets({
+                ...params,
+                rulesets,
+                rulesetApiName: ruleSet.apiName,
+                onRulesetsChange,
+              })
+            }
           />
 
           <RulesetFieldsSelector

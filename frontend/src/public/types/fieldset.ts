@@ -1,6 +1,20 @@
 import type { IExtraField } from './template';
 import { EConditionOperators } from '../components/TemplateEdit/TaskForm/Conditions';
 
+export interface IBaseRuleGroupAnd {
+  apiName: string;
+}
+
+export interface IBaseRuleGroupOr {
+  apiName: string;
+  groupsAnd: IBaseRuleGroupAnd[];
+}
+
+export interface IBaseRuleSet {
+  apiName: string;
+  groupsOr: IBaseRuleGroupOr[];
+}
+
 export enum EFieldsetNumberRulesetOperator {
   SumEqual = 'sum_equal',
   SumGreaterThan = 'sum_greater_than',
@@ -14,8 +28,7 @@ export enum ERuleCombinator {
 
 export interface IFieldsetRuleGroupAnd {
   apiName: string;
-  fieldType?: string;
-  operator?: EFieldsetNumberRulesetOperator;
+  operator: EFieldsetNumberRulesetOperator;
   value: string;
 }
 

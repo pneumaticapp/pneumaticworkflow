@@ -5,15 +5,16 @@ import { useIntl } from 'react-intl';
 import { FIELDSET_RULE_OPERATOR_OPTIONS } from '../../constants';
 import { TFieldsetRulesListProps } from './types';
 import { FieldsetRuleItem } from './FieldsetRuleItem';
-import { addGroupAnd } from './utils';
 
 import styles from './FieldsetRulesets.css';
 
 export const FieldsetRulesList = ({
   ruleSet,
-  rulesets,
-  onRulesetsChange,
   isReadOnly,
+  addRule,
+  updateRule,
+  deleteRule,
+  regroupRules,
 }: TFieldsetRulesListProps) => {
   const { formatMessage } = useIntl();
 
@@ -26,7 +27,7 @@ export const FieldsetRulesList = ({
     [formatMessage],
   );
 
-  const { apiName: rulesetApiName, groupsOr = [] } = ruleSet;
+  const { groupsOr = [] } = ruleSet;
 
   return (
     <>
@@ -42,11 +43,11 @@ export const FieldsetRulesList = ({
             groupOrApiName={groupOrApiName}
             groupOrIndex={groupOrIndex}
             groupAndIndex={groupAndIndex}
-            rulesetApiName={rulesetApiName}
-            rulesets={rulesets}
             ruleOperatorOptions={ruleOperatorOptions}
             isReadOnly={isReadOnly}
-            onRulesetsChange={onRulesetsChange}
+            updateRule={updateRule}
+            deleteRule={deleteRule}
+            regroupRules={regroupRules}
           />
         )),
       )}
@@ -55,7 +56,7 @@ export const FieldsetRulesList = ({
         <button
           type="button"
           className={styles['add-rule-btn']}
-          onClick={() => addGroupAnd({ rulesets, rulesetApiName, onRulesetsChange })}
+          onClick={addRule}
         >
           {formatMessage({
             id: groupsOr.length > 0 ? 'fieldsets.add-another-rule' : 'fieldsets.add-rule',

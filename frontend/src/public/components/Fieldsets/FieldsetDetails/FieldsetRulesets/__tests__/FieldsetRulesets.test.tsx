@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { FieldsetRulesets } from '../FieldsetRulesets';
@@ -13,77 +13,98 @@ import { makeExtraField } from '../../../../../__stubs__/fields.factory';
 import { EExtraFieldType } from '../../../../../types/template';
 import { EFieldsetNumberRulesetOperator, ERuleCombinator } from '../../../../../types/fieldset';
 
-jest.mock('../../../../UI', () => ({
-  FilterSelect: jest.fn(
+jest.mock('../FieldsetRulesList', () => ({
+  FieldsetRulesList: jest.fn(
     (props: {
-      options: { apiName: string; name: string }[];
-      selectedOptions?: (string | number | null)[];
-      selectedOption?: string;
-      onChange: (val: any) => void;
-      renderPlaceholder?: (opts: any) => React.ReactNode;
-      placeholderText?: string;
-      isDisabled?: boolean;
+      ruleSet: { apiName: string };
+      addRule: () => void;
+      updateRule: (params: any) => void;
+      deleteRule: (params: any) => void;
+      regroupRules: (params: any) => void;
     }) =>
       React.createElement(
         'div',
-        { 'data-testid': 'filter-select' },
+        { 'data-testid': `mock-fieldset-rules-list-${props.ruleSet.apiName}` },
         React.createElement(
-          'span',
-          { 'data-testid': 'filter-placeholder' },
-          props.renderPlaceholder
-            ? props.renderPlaceholder(props.options)
-            : props.placeholderText,
+          'button',
+          {
+            type: 'button',
+            'data-testid': `mock-add-rule-${props.ruleSet.apiName}`,
+            onClick: () => props.addRule(),
+          },
+          'Mock Add Rule',
         ),
-        ...props.options.map((option) =>
-          React.createElement(
-            'button',
-            {
-              key: option.apiName,
-              type: 'button',
-              disabled: props.isDisabled,
-              'data-testid': `filter-option-${option.apiName}`,
-              onClick: () => {
-                if (props.selectedOptions) {
-                  const selected = props.selectedOptions || [];
-                  const isSelected = selected.includes(option.apiName);
-                  const next = isSelected
-                    ? selected.filter((value) => value !== option.apiName)
-                    : [...selected, option.apiName];
-                  props.onChange(next);
-                } else {
-                  props.onChange(option.apiName);
-                }
-              },
-            },
-            option.name,
-          ),
+        React.createElement(
+          'button',
+          {
+            type: 'button',
+            'data-testid': `mock-update-rule-${props.ruleSet.apiName}`,
+            onClick: () =>
+              props.updateRule({
+                ruleGroupOrApiName: 'g-or-1',
+                ruleGroupAndApiName: 'g-and-1',
+                ruleChanges: { value: '500' },
+              }),
+          },
+          'Mock Update Rule',
+        ),
+        React.createElement(
+          'button',
+          {
+            type: 'button',
+            'data-testid': `mock-delete-rule-${props.ruleSet.apiName}`,
+            onClick: () =>
+              props.deleteRule({
+                ruleGroupOrApiName: 'g-or-1',
+                ruleGroupAndApiName: 'g-and-1',
+              }),
+          },
+          'Mock Delete Rule',
+        ),
+        React.createElement(
+          'button',
+          {
+            type: 'button',
+            'data-testid': `mock-regroup-rules-${props.ruleSet.apiName}`,
+            onClick: () =>
+              props.regroupRules({
+                groupOrApiName: 'g-or-1',
+                groupAndApiName: 'g-and-1',
+                ruleCombinator: ERuleCombinator.Or,
+              }),
+          },
+          'Mock Regroup Rules',
         ),
       ),
   ),
-  SelectMenu: jest.fn(
-    (props: {
-      activeValue: string;
-      values: { id: string; name: string }[];
-      onChange: (val: string) => void;
-      isDisabled?: boolean;
-    }) =>
+}));
+
+jest.mock('../RulesetMessageInput', () => ({
+  RulesetMessageInput: jest.fn(
+    (props: { message?: string | null; onChange: (msg: string) => void; isReadOnly?: boolean }) =>
       React.createElement(
-        'select',
-        {
-          'data-testid': 'select-menu',
-          disabled: props.isDisabled,
-          value: props.activeValue,
-          onChange: (e: any) => props.onChange(e.target.value),
-        },
-        props.values.map((v) =>
-          React.createElement('option', { key: v.id, value: v.id }, v.name),
+        'div',
+        { 'data-testid': 'mock-ruleset-message-input', 'data-is-readonly': props.isReadOnly },
+        React.createElement(
+          'button',
+          {
+            type: 'button',
+            'data-testid': 'mock-change-message-btn',
+            onClick: () => props.onChange('New message'),
+          },
+          'Change Message',
         ),
       ),
   ),
+}));
+
+jest.mock('../../../../UI', () => ({
+  FilterSelect: jest.fn(() => React.createElement('div', { 'data-testid': 'filter-select' })),
+  SelectMenu: jest.fn(() => React.createElement('div', { 'data-testid': 'select-menu' })),
   Tooltip: jest.fn(({ children }) => children),
 }));
 
-describe('FieldsetRulesets component', () => {
+describe('FieldsetRulesets container component', () => {
   const mockOnRulesetsChange = jest.fn();
   const formatMsg = (id: string) => intlMock.formatMessage({ id });
 
@@ -125,7 +146,7 @@ describe('FieldsetRulesets component', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders rulesets list and allows updating custom message', () => {
+  it('renders ruleset card with mocked RulesetMessageInput and delegates message changes', () => {
     const ruleset = makeFieldsetRuleset({
       apiName: 'rule-set-1',
       message: 'Test message',
@@ -141,15 +162,15 @@ describe('FieldsetRulesets component', () => {
       />,
     );
 
-    const messageInput = screen.getByPlaceholderText(
-      formatMsg('fieldsets.ruleset-message-placeholder'),
-    );
-    expect(messageInput).toHaveValue('Test message');
+    expect(screen.getByTestId('mock-fieldset-rules-list-rule-set-1')).toBeInTheDocument();
+    expect(screen.getByTestId('mock-ruleset-message-input')).toBeInTheDocument();
 
-    userEvent.clear(messageInput);
-    userEvent.type(messageInput, 'New message');
+    const changeMsgBtn = screen.getByTestId('mock-change-message-btn');
+    userEvent.click(changeMsgBtn);
 
-    expect(mockOnRulesetsChange).toHaveBeenCalled();
+    expect(mockOnRulesetsChange).toHaveBeenCalledTimes(1);
+    const updated = mockOnRulesetsChange.mock.calls[0][0];
+    expect(updated[0].message).toBe('New message');
   });
 
   it('calls addRuleset callback on clicking add ruleset button', () => {
@@ -210,11 +231,10 @@ describe('FieldsetRulesets component', () => {
     );
 
     expect(screen.getByText(formatMsg('fieldsets.readonly-badge'))).toBeInTheDocument();
-
-    const messageInput = screen.getByPlaceholderText(
-      formatMsg('fieldsets.ruleset-message-placeholder'),
+    expect(screen.getByTestId('mock-ruleset-message-input')).toHaveAttribute(
+      'data-is-readonly',
+      'true',
     );
-    expect(messageInput).toBeDisabled();
 
     expect(
       screen.queryByRole('button', { name: formatMsg('fieldsets.ruleset-delete') }),
@@ -224,19 +244,10 @@ describe('FieldsetRulesets component', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('allows changing target AND rule value via input', () => {
+  it('delegates addRule handler to FieldsetRulesList and updates rulesets state', () => {
     const ruleset = makeFieldsetRuleset({
       apiName: 'rule-set-1',
-      groupsOr: [
-        makeFieldsetRuleGroupOr({
-          groupsAnd: [
-            makeFieldsetRuleGroupAnd({
-              operator: EFieldsetNumberRulesetOperator.SumEqual,
-              value: '50',
-            }),
-          ],
-        }),
-      ],
+      groupsOr: [],
     });
 
     render(
@@ -248,23 +259,21 @@ describe('FieldsetRulesets component', () => {
       />,
     );
 
-    const valInput = screen.getByPlaceholderText(
-      formatMsg('fieldsets.rule-value-placeholder-number'),
-    );
-    expect(valInput).toHaveValue('50');
+    const mockAddRuleBtn = screen.getByTestId('mock-add-rule-rule-set-1');
+    userEvent.click(mockAddRuleBtn);
 
-    fireEvent.change(valInput, { target: { value: '150' } });
-
-    expect(mockOnRulesetsChange).toHaveBeenCalled();
+    expect(mockOnRulesetsChange).toHaveBeenCalledTimes(1);
   });
 
-  it('allows changing rule operator (SumGreaterThan, SumLessThan) via FilterSelect', () => {
+  it('delegates updateRule handler to FieldsetRulesList and updates rulesets state', () => {
     const ruleset = makeFieldsetRuleset({
       apiName: 'rule-set-1',
       groupsOr: [
         makeFieldsetRuleGroupOr({
+          apiName: 'g-or-1',
           groupsAnd: [
             makeFieldsetRuleGroupAnd({
+              apiName: 'g-and-1',
               operator: EFieldsetNumberRulesetOperator.SumEqual,
               value: '10',
             }),
@@ -282,19 +291,45 @@ describe('FieldsetRulesets component', () => {
       />,
     );
 
-    const greaterThanBtn = screen.getByTestId(
-      `filter-option-${EFieldsetNumberRulesetOperator.SumGreaterThan}`,
-    );
-    userEvent.click(greaterThanBtn);
+    const mockUpdateRuleBtn = screen.getByTestId('mock-update-rule-rule-set-1');
+    userEvent.click(mockUpdateRuleBtn);
 
-    expect(mockOnRulesetsChange).toHaveBeenCalled();
-    const updated = mockOnRulesetsChange.mock.calls[0][0];
-    expect(updated[0].groupsOr[0].groupsAnd[0].operator).toBe(
-      EFieldsetNumberRulesetOperator.SumGreaterThan,
-    );
+    expect(mockOnRulesetsChange).toHaveBeenCalledTimes(1);
+    const updatedRulesets = mockOnRulesetsChange.mock.calls[0][0];
+    expect(updatedRulesets[0].groupsOr[0].groupsAnd[0].value).toBe('500');
   });
 
-  it('allows changing rule combinator (AND / OR) via SelectMenu', () => {
+  it('delegates deleteRule handler to FieldsetRulesList and updates rulesets state', () => {
+    const ruleset = makeFieldsetRuleset({
+      apiName: 'rule-set-1',
+      groupsOr: [
+        makeFieldsetRuleGroupOr({
+          apiName: 'g-or-1',
+          groupsAnd: [
+            makeFieldsetRuleGroupAnd({
+              apiName: 'g-and-1',
+            }),
+          ],
+        }),
+      ],
+    });
+
+    render(
+      <FieldsetRulesets
+        rulesets={[ruleset]}
+        fields={defaultFields}
+        onRulesetsChange={mockOnRulesetsChange}
+        isReadOnly={false}
+      />,
+    );
+
+    const mockDeleteRuleBtn = screen.getByTestId('mock-delete-rule-rule-set-1');
+    userEvent.click(mockDeleteRuleBtn);
+
+    expect(mockOnRulesetsChange).toHaveBeenCalledTimes(1);
+  });
+
+  it('delegates regroupRules handler to FieldsetRulesList and updates rulesets state', () => {
     const ruleset = makeFieldsetRuleset({
       apiName: 'rule-set-1',
       groupsOr: [
@@ -317,9 +352,9 @@ describe('FieldsetRulesets component', () => {
       />,
     );
 
-    const selectElement = screen.getByTestId('select-menu');
-    fireEvent.change(selectElement, { target: { value: ERuleCombinator.Or } });
+    const mockRegroupBtn = screen.getByTestId('mock-regroup-rules-rule-set-1');
+    userEvent.click(mockRegroupBtn);
 
-    expect(mockOnRulesetsChange).toHaveBeenCalled();
+    expect(mockOnRulesetsChange).toHaveBeenCalledTimes(1);
   });
 });

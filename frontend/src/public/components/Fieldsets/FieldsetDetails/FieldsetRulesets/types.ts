@@ -3,12 +3,33 @@ import {
   IFieldsetRuleGroupAnd,
   IFieldsetRuleSet,
   EFieldsetNumberRulesetOperator,
+  ERuleCombinator,
 } from '../../../../types/fieldset';
 
-export type TRulePath = {
-  rulesetApiName: string;
-  ruleGroupOrApiName: string;
-  ruleGroupAndApiName: string;
+export type TRuleHandlers = {
+  updateRule: (params: {
+    ruleGroupOrApiName: string;
+    ruleGroupAndApiName: string;
+    ruleChanges: Partial<IFieldsetRuleGroupAnd>;
+  }) => void;
+  deleteRule: (params: {
+    ruleGroupOrApiName: string;
+    ruleGroupAndApiName: string;
+  }) => void;
+  regroupRules: (params: {
+    groupOrApiName: string;
+    groupAndApiName: string;
+    ruleCombinator: ERuleCombinator;
+  }) => void;
+};
+
+export type TFieldsetRuleItemProps = TRuleHandlers & {
+  groupAndRule: IFieldsetRuleGroupAnd;
+  groupOrApiName: string;
+  groupOrIndex: number;
+  groupAndIndex: number;
+  ruleOperatorOptions: { apiName: EFieldsetNumberRulesetOperator; name: string }[];
+  isReadOnly?: boolean;
 };
 
 export type TRulesetsParams = {
@@ -27,21 +48,15 @@ export type TFieldsetRulesetsProps = {
   isReadOnly?: boolean;
 };
 
-export type TFieldsetRulesListProps = {
+export type TFieldsetRulesListProps = TRuleHandlers & {
   ruleSet: IFieldsetRuleSet;
-  rulesets: IFieldsetRuleSet[];
-  onRulesetsChange: (rulesets: IFieldsetRuleSet[]) => void;
+  isReadOnly?: boolean;
+  addRule: () => void;
+};
+
+export type TRulesetMessageInputProps = {
+  message?: string | null;
+  onChange: (message: string) => void;
   isReadOnly?: boolean;
 };
 
-export type TFieldsetRuleItemProps = {
-  groupAndRule: IFieldsetRuleGroupAnd;
-  groupOrApiName: string;
-  groupOrIndex: number;
-  groupAndIndex: number;
-  rulesetApiName: string;
-  rulesets: IFieldsetRuleSet[];
-  ruleOperatorOptions: { apiName: EFieldsetNumberRulesetOperator; name: string }[];
-  isReadOnly?: boolean;
-  onRulesetsChange: (rulesets: IFieldsetRuleSet[]) => void;
-};

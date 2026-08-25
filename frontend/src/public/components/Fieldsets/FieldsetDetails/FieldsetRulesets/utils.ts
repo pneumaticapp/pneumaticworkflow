@@ -1,15 +1,23 @@
 import {
-  IFieldsetRuleSet,
   IFieldsetRuleGroupAnd,
   EFieldsetNumberRulesetOperator,
   ERuleCombinator,
+  IFieldsetRuleSet,
 } from '../../../../types/fieldset';
 import {
   createRulesetApiName,
   createRulesetGroupOrApiName,
   createRulesetGroupAndApiName,
 } from '../../../../utils/createId';
-import { TRulePath, TRulesetsParams, TRulesetParams } from './types';
+import { TRulesetsParams, TRulesetParams } from './types';
+import {
+  updateRule,
+  deleteRule,
+  addRule,
+  regroupRules,
+} from '../RuleBase/utils';
+
+export { getRuleCombinator } from '../RuleBase/utils';
 
 const createEmptyRuleset = (): IFieldsetRuleSet => ({
   apiName: createRulesetApiName(),
@@ -33,7 +41,7 @@ export const addRuleset = ({ rulesets, onRulesetsChange }: TRulesetsParams) => {
   onRulesetsChange(getNormalizedRulesetOrders([...rulesets, createEmptyRuleset()]));
 };
 
-export const addGroupAnd = ({
+export const addGroupAndToRulesets = ({
   rulesets,
   rulesetApiName,
   onRulesetsChange,
@@ -41,30 +49,11 @@ export const addGroupAnd = ({
   const ruleSet = rulesets.find((ruleset) => ruleset.apiName === rulesetApiName);
   if (!ruleSet) return;
 
-  const lastGroupOr = ruleSet.groupsOr[ruleSet.groupsOr.length - 1];
-  const newGroupAnd = createEmptyGroupAnd();
-
-  const updatedRulesets = rulesets.map((ruleset) => {
-    if (ruleset.apiName !== rulesetApiName) return ruleset;
-
-    if (lastGroupOr) {
-      const updatedGroupsOr = (ruleset.groupsOr || []).map((groupOr) => {
-        if (groupOr.apiName !== lastGroupOr.apiName) return groupOr;
-        return {
-          ...groupOr,
-          groupsAnd: [...(groupOr.groupsAnd || []), newGroupAnd],
-        };
-      });
-      return { ...ruleset, groupsOr: updatedGroupsOr };
-    }
-
-    const newGroupOr = {
-      apiName: createRulesetGroupOrApiName(),
-      groupsAnd: [newGroupAnd],
-    };
-    return { ...ruleset, groupsOr: [...(ruleset.groupsOr || []), newGroupOr] };
-  });
-
+  const updatedRulesets = rulesets.map((ruleset) =>
+    ruleset.apiName === rulesetApiName
+      ? addRule(ruleset, createEmptyGroupAnd)
+      : ruleset,
+  );
   onRulesetsChange(updatedRulesets);
 };
 
@@ -75,46 +64,24 @@ export const getNormalizedRulesetOrders = (rulesets: IFieldsetRuleSet[]): IField
   }));
 };
 
-const traverseGroupsAnd = (
-  rulesets: IFieldsetRuleSet[],
-  { rulesetApiName, ruleGroupOrApiName }: Omit<TRulePath, 'ruleGroupAndApiName'>,
-  changeRules: (groupsAnd: IFieldsetRuleGroupAnd[]) => IFieldsetRuleGroupAnd[],
-): IFieldsetRuleSet[] => {
-  return rulesets.map((ruleset) => {
-    if (ruleset.apiName !== rulesetApiName) return ruleset;
-
-    const { groupsOr = [] } = ruleset;
-    const updatedGroupsOr = groupsOr
-      .map((groupOr) => {
-        if (groupOr.apiName !== ruleGroupOrApiName) return groupOr;
-
-        return { ...groupOr, groupsAnd: changeRules(groupOr.groupsAnd || []) };
-      })
-      .filter((groupOr) => groupOr.groupsAnd.length > 0);
-
-    return { ...ruleset, groupsOr: updatedGroupsOr };
-  });
-};
-
-export const updateRuleset = ({
+export const updateRuleInRulesets = ({
   rulesets,
-  rulePath: { rulesetApiName, ruleGroupOrApiName, ruleGroupAndApiName },
+  rulesetApiName,
+  ruleGroupOrApiName,
+  ruleGroupAndApiName,
   ruleChanges,
   onRulesetsChange,
 }: TRulesetsParams & {
-  rulePath: TRulePath;
+  rulesetApiName: string;
+  ruleGroupOrApiName: string;
+  ruleGroupAndApiName: string;
   ruleChanges: Partial<IFieldsetRuleGroupAnd>;
 }) => {
-  const updatedRulesets = traverseGroupsAnd(
-    rulesets,
-    { rulesetApiName, ruleGroupOrApiName },
-    (groupsAnd) => groupsAnd.map((ruleGroupAnd) =>
-      ruleGroupAnd.apiName === ruleGroupAndApiName
-        ? { ...ruleGroupAnd, ...ruleChanges }
-        : ruleGroupAnd,
-    ),
+  const updatedRulesets = rulesets.map((ruleset) =>
+    ruleset.apiName === rulesetApiName
+      ? updateRule(ruleset, ruleGroupOrApiName, ruleGroupAndApiName, ruleChanges)
+      : ruleset,
   );
-
   onRulesetsChange(updatedRulesets);
 };
 
@@ -157,19 +124,22 @@ export const deleteRuleset = ({
   onRulesetsChange(getNormalizedRulesetOrders(filtered));
 };
 
-export const deleteRule = ({
+export const deleteRuleFromRulesets = ({
   rulesets,
-  rulePath: { rulesetApiName, ruleGroupOrApiName, ruleGroupAndApiName },
+  rulesetApiName,
+  ruleGroupOrApiName,
+  ruleGroupAndApiName,
   onRulesetsChange,
-}: TRulesetsParams & { rulePath: TRulePath }) => {
-  const updatedRulesets = traverseGroupsAnd(
-    rulesets,
-    { rulesetApiName, ruleGroupOrApiName },
-    (groupsAnd) => groupsAnd.filter(
-      (ruleGroupAnd) => ruleGroupAnd.apiName !== ruleGroupAndApiName,
-    ),
+}: TRulesetsParams & {
+  rulesetApiName: string;
+  ruleGroupOrApiName: string;
+  ruleGroupAndApiName: string;
+}) => {
+  const updatedRulesets = rulesets.map((ruleset) =>
+    ruleset.apiName === rulesetApiName
+      ? deleteRule(ruleset, ruleGroupOrApiName, ruleGroupAndApiName)
+      : ruleset,
   );
-
   onRulesetsChange(updatedRulesets);
 };
 
@@ -188,7 +158,7 @@ export const removeFieldFromRuleset = ({
   onRulesetsChange(updatedRulesets);
 };
 
-export const regroupRules = ({
+export const regroupRulesInRulesets = ({
   rulesets,
   rulesetApiName,
   groupOrApiName,
@@ -200,54 +170,13 @@ export const regroupRules = ({
   groupAndApiName: string;
   ruleCombinator: ERuleCombinator;
 }) => {
-  const updatedRulesets = rulesets.map((ruleset) => {
-    if (ruleset.apiName !== rulesetApiName) return ruleset;
-
-    const { groupsOr = [] } = ruleset;
-
-    if (ruleCombinator === ERuleCombinator.Or) {
-      const newGroupsOr = groupsOr.flatMap((groupOr) => {
-        if (groupOr.apiName !== groupOrApiName) return [groupOr];
-
-        const splitIndex = groupOr.groupsAnd.findIndex((groupAnd) => groupAnd.apiName === groupAndApiName);
-        if (splitIndex <= 0) return [groupOr];
-
-        const before = groupOr.groupsAnd.slice(0, splitIndex);
-        const after = groupOr.groupsAnd.slice(splitIndex);
-
-        return [
-          { ...groupOr, groupsAnd: before },
-          { apiName: createRulesetGroupOrApiName(), groupsAnd: after },
-        ];
-      });
-
-      return { ...ruleset, groupsOr: newGroupsOr };
-    }
-
-    const groupOrIndex = groupsOr.findIndex((group) => group.apiName === groupOrApiName);
-    if (groupOrIndex <= 0) return ruleset;
-
-    const prevGroupOr = groupsOr[groupOrIndex - 1];
-    const currentGroupOr = groupsOr[groupOrIndex];
-    const merged = {
-      ...prevGroupOr,
-      groupsAnd: [...prevGroupOr.groupsAnd, ...currentGroupOr.groupsAnd],
-    };
-
-    const newGroupsOr = [
-      ...groupsOr.slice(0, groupOrIndex - 1),
-      merged,
-      ...groupsOr.slice(groupOrIndex + 1),
-    ];
-
-    return { ...ruleset, groupsOr: newGroupsOr };
-  });
-
+  const updatedRulesets = rulesets.map((ruleset) =>
+    ruleset.apiName === rulesetApiName
+      ? regroupRules(ruleset, groupOrApiName, groupAndApiName, ruleCombinator)
+      : ruleset,
+  );
   onRulesetsChange(updatedRulesets);
 };
-
-export const getRuleCombinator = (groupAndIndex: number): ERuleCombinator =>
-  groupAndIndex > 0 ? ERuleCombinator.And : ERuleCombinator.Or;
 
 export const getFieldsTooltipText = (
   hasFields: boolean,

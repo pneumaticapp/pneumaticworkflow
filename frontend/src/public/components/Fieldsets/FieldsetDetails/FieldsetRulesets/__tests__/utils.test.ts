@@ -1,14 +1,14 @@
 import {
   addRuleset,
-  addGroupAnd,
+  addGroupAndToRulesets,
   getNormalizedRulesetOrders,
-  updateRuleset,
+  updateRuleInRulesets,
   updateRulesetMessage,
   updateRulesetFields,
   deleteRuleset,
-  deleteRule,
+  deleteRuleFromRulesets,
   removeFieldFromRuleset,
-  regroupRules,
+  regroupRulesInRulesets,
   getRuleCombinator,
   getFieldsTooltipText,
 } from '../utils';
@@ -56,34 +56,30 @@ describe('FieldsetRulesets utils', () => {
       expect(resultRulesets).toHaveLength(2);
       expect(resultRulesets[0].apiName).toBe('r1');
       expect(resultRulesets[1].order).toBe(1);
-      expect(resultRulesets[1].groupsOr).toHaveLength(1);
-      expect(resultRulesets[1].groupsOr[0].groupsAnd).toHaveLength(1);
     });
   });
 
-  describe('addGroupAnd', () => {
-    it('should add a new AND rule to the last OR group of the targeted ruleset', () => {
-      const groupOr = makeFieldsetRuleGroupOr({
-        apiName: 'g-or-1',
-        groupsAnd: [makeFieldsetRuleGroupAnd({ apiName: 'g-and-1' })],
-      });
-      const ruleset = makeFieldsetRuleset({ apiName: 'r1', groupsOr: [groupOr] });
+  describe('addGroupAndToRulesets', () => {
+    it('should map over rulesets and apply addRule to targeted ruleset', () => {
+      const r1 = makeFieldsetRuleset({ apiName: 'r1' });
+      const r2 = makeFieldsetRuleset({ apiName: 'r2' });
 
-      addGroupAnd({
-        rulesets: [ruleset],
+      addGroupAndToRulesets({
+        rulesets: [r1, r2],
         rulesetApiName: 'r1',
         onRulesetsChange: onRulesetsChangeMock,
       });
 
       expect(onRulesetsChangeMock).toHaveBeenCalledTimes(1);
       const updated: IFieldsetRuleSet[] = onRulesetsChangeMock.mock.calls[0][0];
-      expect(updated[0].groupsOr[0].groupsAnd).toHaveLength(2);
+      expect(updated[0].groupsOr[0].groupsAnd.length).toBeGreaterThan(r1.groupsOr[0].groupsAnd.length);
+      expect(updated[1]).toEqual(r2);
     });
 
     it('should do nothing when ruleset is not found by apiName', () => {
       const ruleset = makeFieldsetRuleset({ apiName: 'r1' });
 
-      addGroupAnd({
+      addGroupAndToRulesets({
         rulesets: [ruleset],
         rulesetApiName: 'non-existent',
         onRulesetsChange: onRulesetsChangeMock,
@@ -93,25 +89,23 @@ describe('FieldsetRulesets utils', () => {
     });
   });
 
-  describe('updateRuleset', () => {
-    it('should modify target AND rule properties (operator, value)', () => {
+  describe('updateRuleInRulesets', () => {
+    it('should map over rulesets and update matching rule in targeted ruleset', () => {
       const groupAnd = makeFieldsetRuleGroupAnd({
         apiName: 'g-and-1',
         operator: EFieldsetNumberRulesetOperator.SumEqual,
         value: '10',
       });
       const groupOr = makeFieldsetRuleGroupOr({ apiName: 'g-or-1', groupsAnd: [groupAnd] });
-      const ruleset = makeFieldsetRuleset({ apiName: 'r1', groupsOr: [groupOr] });
+      const r1 = makeFieldsetRuleset({ apiName: 'r1', groupsOr: [groupOr] });
+      const r2 = makeFieldsetRuleset({ apiName: 'r2' });
 
-      updateRuleset({
-        rulesets: [ruleset],
-        rulePath: {
-          rulesetApiName: 'r1',
-          ruleGroupOrApiName: 'g-or-1',
-          ruleGroupAndApiName: 'g-and-1',
-        },
+      updateRuleInRulesets({
+        rulesets: [r1, r2],
+        rulesetApiName: 'r1',
+        ruleGroupOrApiName: 'g-or-1',
+        ruleGroupAndApiName: 'g-and-1',
         ruleChanges: {
-          operator: EFieldsetNumberRulesetOperator.SumGreaterThan,
           value: '50',
         },
         onRulesetsChange: onRulesetsChangeMock,
@@ -119,19 +113,18 @@ describe('FieldsetRulesets utils', () => {
 
       expect(onRulesetsChangeMock).toHaveBeenCalledTimes(1);
       const updated: IFieldsetRuleSet[] = onRulesetsChangeMock.mock.calls[0][0];
-      const targetRule = updated[0].groupsOr[0].groupsAnd[0];
-
-      expect(targetRule.operator).toBe(EFieldsetNumberRulesetOperator.SumGreaterThan);
-      expect(targetRule.value).toBe('50');
+      expect(updated[0].groupsOr[0].groupsAnd[0].value).toBe('50');
+      expect(updated[1]).toEqual(r2);
     });
   });
 
   describe('updateRulesetMessage', () => {
     it('should update custom error message for targeted ruleset', () => {
-      const ruleset = makeFieldsetRuleset({ apiName: 'r1', message: 'Old' });
+      const r1 = makeFieldsetRuleset({ apiName: 'r1', message: 'Old' });
+      const r2 = makeFieldsetRuleset({ apiName: 'r2' });
 
       updateRulesetMessage({
-        rulesets: [ruleset],
+        rulesets: [r1, r2],
         rulesetApiName: 'r1',
         message: 'New message',
         onRulesetsChange: onRulesetsChangeMock,
@@ -139,17 +132,18 @@ describe('FieldsetRulesets utils', () => {
 
       expect(onRulesetsChangeMock).toHaveBeenCalledTimes(1);
       const updated: IFieldsetRuleSet[] = onRulesetsChangeMock.mock.calls[0][0];
-
       expect(updated[0].message).toBe('New message');
+      expect(updated[1]).toEqual(r2);
     });
   });
 
   describe('updateRulesetFields', () => {
-    it('should filter non-string values and keep valid field apiNames', () => {
-      const ruleset = makeFieldsetRuleset({ apiName: 'r1', fields: [] });
+    it('should filter non-string values and update fields in targeted ruleset', () => {
+      const r1 = makeFieldsetRuleset({ apiName: 'r1', fields: [] });
+      const r2 = makeFieldsetRuleset({ apiName: 'r2' });
 
       updateRulesetFields({
-        rulesets: [ruleset],
+        rulesets: [r1, r2],
         rulesetApiName: 'r1',
         fieldApiNames: ['field-1', null, 123, 'field-2'],
         onRulesetsChange: onRulesetsChangeMock,
@@ -157,12 +151,12 @@ describe('FieldsetRulesets utils', () => {
 
       expect(onRulesetsChangeMock).toHaveBeenCalledTimes(1);
       const updated: IFieldsetRuleSet[] = onRulesetsChangeMock.mock.calls[0][0];
-
       expect(updated[0].fields).toEqual(['field-1', 'field-2']);
+      expect(updated[1]).toEqual(r2);
     });
   });
 
-  describe('deleteRuleset & deleteRule', () => {
+  describe('deleteRuleset & deleteRuleFromRulesets', () => {
     it('should remove entire ruleset and normalize order of remaining rulesets', () => {
       const r1 = makeFieldsetRuleset({ apiName: 'r1', order: 0 });
       const r2 = makeFieldsetRuleset({ apiName: 'r2', order: 1 });
@@ -175,38 +169,37 @@ describe('FieldsetRulesets utils', () => {
 
       expect(onRulesetsChangeMock).toHaveBeenCalledTimes(1);
       const updated: IFieldsetRuleSet[] = onRulesetsChangeMock.mock.calls[0][0];
-
       expect(updated).toHaveLength(1);
       expect(updated[0].apiName).toBe('r2');
       expect(updated[0].order).toBe(0);
     });
 
-    it('should delete AND rule and remove empty OR group', () => {
+    it('should remove target rule from targeted ruleset and keep other rulesets untouched', () => {
       const groupAnd = makeFieldsetRuleGroupAnd({ apiName: 'g-and-1' });
       const groupOr = makeFieldsetRuleGroupOr({ apiName: 'g-or-1', groupsAnd: [groupAnd] });
-      const ruleset = makeFieldsetRuleset({ apiName: 'r1', groupsOr: [groupOr] });
+      const r1 = makeFieldsetRuleset({ apiName: 'r1', groupsOr: [groupOr] });
+      const r2 = makeFieldsetRuleset({ apiName: 'r2' });
 
-      deleteRule({
-        rulesets: [ruleset],
-        rulePath: {
-          rulesetApiName: 'r1',
-          ruleGroupOrApiName: 'g-or-1',
-          ruleGroupAndApiName: 'g-and-1',
-        },
+      deleteRuleFromRulesets({
+        rulesets: [r1, r2],
+        rulesetApiName: 'r1',
+        ruleGroupOrApiName: 'g-or-1',
+        ruleGroupAndApiName: 'g-and-1',
         onRulesetsChange: onRulesetsChangeMock,
       });
 
       expect(onRulesetsChangeMock).toHaveBeenCalledTimes(1);
       const updated: IFieldsetRuleSet[] = onRulesetsChangeMock.mock.calls[0][0];
-
       expect(updated[0].groupsOr).toHaveLength(0);
+      expect(updated[1]).toEqual(r2);
     });
 
-    it('should remove targeted field from fields array', () => {
-      const ruleset = makeFieldsetRuleset({ apiName: 'r1', fields: ['f1', 'f2'] });
+    it('should remove targeted field from fields array in targeted ruleset', () => {
+      const r1 = makeFieldsetRuleset({ apiName: 'r1', fields: ['f1', 'f2'] });
+      const r2 = makeFieldsetRuleset({ apiName: 'r2' });
 
       removeFieldFromRuleset({
-        rulesets: [ruleset],
+        rulesets: [r1, r2],
         rulesetApiName: 'r1',
         fieldApiName: 'f1',
         onRulesetsChange: onRulesetsChangeMock,
@@ -214,20 +207,21 @@ describe('FieldsetRulesets utils', () => {
 
       expect(onRulesetsChangeMock).toHaveBeenCalledTimes(1);
       const updated: IFieldsetRuleSet[] = onRulesetsChangeMock.mock.calls[0][0];
-
       expect(updated[0].fields).toEqual(['f2']);
+      expect(updated[1]).toEqual(r2);
     });
   });
 
-  describe('regroupRules', () => {
-    it('should split rules into a new OR group when using ERuleCombinator.Or', () => {
+  describe('regroupRulesInRulesets', () => {
+    it('should regroup rules in targeted ruleset while preserving other rulesets', () => {
       const gAnd1 = makeFieldsetRuleGroupAnd({ apiName: 'g-and-1' });
       const gAnd2 = makeFieldsetRuleGroupAnd({ apiName: 'g-and-2' });
       const groupOr = makeFieldsetRuleGroupOr({ apiName: 'g-or-1', groupsAnd: [gAnd1, gAnd2] });
-      const ruleset = makeFieldsetRuleset({ apiName: 'r1', groupsOr: [groupOr] });
+      const r1 = makeFieldsetRuleset({ apiName: 'r1', groupsOr: [groupOr] });
+      const r2 = makeFieldsetRuleset({ apiName: 'r2' });
 
-      regroupRules({
-        rulesets: [ruleset],
+      regroupRulesInRulesets({
+        rulesets: [r1, r2],
         rulesetApiName: 'r1',
         groupOrApiName: 'g-or-1',
         groupAndApiName: 'g-and-2',
@@ -237,33 +231,8 @@ describe('FieldsetRulesets utils', () => {
 
       expect(onRulesetsChangeMock).toHaveBeenCalledTimes(1);
       const updated: IFieldsetRuleSet[] = onRulesetsChangeMock.mock.calls[0][0];
-
       expect(updated[0].groupsOr).toHaveLength(2);
-      expect(updated[0].groupsOr[0].groupsAnd[0].apiName).toBe('g-and-1');
-      expect(updated[0].groupsOr[1].groupsAnd[0].apiName).toBe('g-and-2');
-    });
-
-    it('should merge OR group into previous group when using ERuleCombinator.And', () => {
-      const gAnd1 = makeFieldsetRuleGroupAnd({ apiName: 'g-and-1' });
-      const gAnd2 = makeFieldsetRuleGroupAnd({ apiName: 'g-and-2' });
-      const groupOr1 = makeFieldsetRuleGroupOr({ apiName: 'g-or-1', groupsAnd: [gAnd1] });
-      const groupOr2 = makeFieldsetRuleGroupOr({ apiName: 'g-or-2', groupsAnd: [gAnd2] });
-      const ruleset = makeFieldsetRuleset({ apiName: 'r1', groupsOr: [groupOr1, groupOr2] });
-
-      regroupRules({
-        rulesets: [ruleset],
-        rulesetApiName: 'r1',
-        groupOrApiName: 'g-or-2',
-        groupAndApiName: 'g-and-2',
-        ruleCombinator: ERuleCombinator.And,
-        onRulesetsChange: onRulesetsChangeMock,
-      });
-
-      expect(onRulesetsChangeMock).toHaveBeenCalledTimes(1);
-      const updated: IFieldsetRuleSet[] = onRulesetsChangeMock.mock.calls[0][0];
-
-      expect(updated[0].groupsOr).toHaveLength(1);
-      expect(updated[0].groupsOr[0].groupsAnd).toHaveLength(2);
+      expect(updated[1]).toEqual(r2);
     });
   });
 

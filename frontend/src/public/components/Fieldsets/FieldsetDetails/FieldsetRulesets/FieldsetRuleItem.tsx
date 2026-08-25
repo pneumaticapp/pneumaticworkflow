@@ -6,37 +6,26 @@ import { TrashIcon } from '../../../icons';
 
 import { EFieldsetNumberRulesetOperator } from '../../../../types/fieldset';
 import { FIELDSET_RULE_COMBINATORS } from '../../constants';
-
-import { TRulePath, TFieldsetRuleItemProps } from './types';
-import {
-  getRuleCombinator,
-  regroupRules,
-  updateRuleset,
-  deleteRule,
-} from './utils';
+import { getRuleCombinator } from '../RuleBase/utils';
 
 import fieldsetDetailsStyles from '../FieldsetDetails.css';
 import styles from './FieldsetRulesets.css';
+
+import { TFieldsetRuleItemProps } from './types';
 
 export const FieldsetRuleItem = ({
   groupAndRule,
   groupOrApiName,
   groupOrIndex,
   groupAndIndex,
-  rulesetApiName,
-  rulesets,
   ruleOperatorOptions,
   isReadOnly,
-  onRulesetsChange,
+  updateRule,
+  deleteRule,
+  regroupRules,
 }: TFieldsetRuleItemProps) => {
   const { formatMessage } = useIntl();
   const { apiName: groupAndApiName, operator, value } = groupAndRule;
-
-  const rulePath: TRulePath = {
-    rulesetApiName,
-    ruleGroupOrApiName: groupOrApiName,
-    ruleGroupAndApiName: groupAndApiName,
-  };
 
   const isFirstRule = groupOrIndex === 0 && groupAndIndex === 0;
   const ruleCombinator = getRuleCombinator(groupAndIndex);
@@ -59,12 +48,9 @@ export const FieldsetRuleItem = ({
             onChange={(newCombinator) => {
               if (newCombinator !== ruleCombinator) {
                 regroupRules({
-                  rulesets,
-                  rulesetApiName,
                   groupOrApiName,
                   groupAndApiName,
                   ruleCombinator: newCombinator,
-                  onRulesetsChange,
                 });
               }
             }}
@@ -79,13 +65,12 @@ export const FieldsetRuleItem = ({
           selectedOption={ruleOperator}
           onChange={(key) => {
             if (key && key !== operator) {
-              updateRuleset({
-                rulesets,
-                rulePath,
+              updateRule({
+                ruleGroupOrApiName: groupOrApiName,
+                ruleGroupAndApiName: groupAndApiName,
                 ruleChanges: {
                   operator: key as EFieldsetNumberRulesetOperator,
                 },
-                onRulesetsChange,
               });
             }
           }}
@@ -104,11 +89,10 @@ export const FieldsetRuleItem = ({
           value={value}
           placeholder={formatMessage({ id: 'fieldsets.rule-value-placeholder-number' })}
           onChange={(e) =>
-            updateRuleset({
-              rulesets,
-              rulePath,
+            updateRule({
+              ruleGroupOrApiName: groupOrApiName,
+              ruleGroupAndApiName: groupAndApiName,
               ruleChanges: { value: e.target.value },
-              onRulesetsChange,
             })
           }
           disabled={isReadOnly}
@@ -119,7 +103,7 @@ export const FieldsetRuleItem = ({
             type="button"
             aria-label={formatMessage({ id: 'fieldsets.rule-delete' })}
             className={styles['rule-remove-btn']}
-            onClick={() => deleteRule({ rulesets, rulePath, onRulesetsChange })}
+            onClick={() => deleteRule({ ruleGroupOrApiName: groupOrApiName, ruleGroupAndApiName: groupAndApiName })}
           >
             <TrashIcon />
           </button>
