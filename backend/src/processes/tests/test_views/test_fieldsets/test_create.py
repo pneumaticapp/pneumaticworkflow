@@ -49,6 +49,7 @@ def test_create__all_fields__ok(api_client, mocker):
                 'type': FieldType.TEXT,
                 'order': 1,
                 'api_name': 'f1',
+                'rulesets': [],
             },
         ],
         'rulesets': [
@@ -146,8 +147,9 @@ def test_create__all_fields__ok(api_client, mocker):
         layout=data['layout'],
         label_position=data['label_position'],
         api_name=data['api_name'],
-        rulesets=mocker.ANY,
-        fields=mocker.ANY,
+        order=0,
+        rulesets=data['rulesets'],
+        fields=data['fields'],
     )
 
 
@@ -362,6 +364,7 @@ def test_create__admin__ok(api_client, mocker):
         name=data['name'],
         rulesets=[],
         fields=[],
+        order=0,
     )
 
 
@@ -514,6 +517,7 @@ def test_create__service_exception__validation_error(
         name='Test Fieldset',
         rulesets=[],
         fields=[],
+        order=0,
     )
 
 

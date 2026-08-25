@@ -250,7 +250,6 @@ def test_update__create_kickoff_fieldset_all_fieldset_data__ok(
     assert len(fieldset_data['rulesets']) == 1
 
     ruleset_data = fieldset_data['rulesets'][0]
-    assert ruleset_data['type'] == shared_ruleset.type
     assert ruleset_data['api_name'] == ruleset.api_name
 
     assert len(ruleset_data['groups_or']) == 1
@@ -829,7 +828,6 @@ def test_update__kickoff_update_active_template__not_change_fs_api_names(
                         ],
                         'rulesets': [
                             {
-                                'type': ruleset.type,
                                 'api_name': ruleset.api_name,
                                 'fields': [field.api_name],
                                 'groups_or': [
@@ -1005,7 +1003,6 @@ def test_update__kickoff_update_inactive_template__not_change_fs_api_names(
                         ],
                         'rulesets': [
                             {
-                                'type': ruleset.type,
                                 'api_name': ruleset.api_name,
                                 'fields': [field.api_name],
                                 'groups_or': [
@@ -1299,7 +1296,6 @@ def test_update__create_task_fieldset_all_fieldset_data__ok(
     assert len(fieldset_data['rulesets']) == 1
 
     ruleset_data = fieldset_data['rulesets'][0]
-    assert ruleset_data['type'] == shared_ruleset.type
     assert ruleset_data['api_name'] == ruleset.api_name
 
     assert len(ruleset_data['groups_or']) == 1
@@ -1973,7 +1969,6 @@ def test_update_task_update_template_inactive__not_change_fs_api_names(
                             ],
                             'rulesets': [
                                 {
-                                    'type': ruleset.type,
                                     'api_name': ruleset.api_name,
                                     'fields': [field.api_name],
                                     'groups_or': [
@@ -3497,7 +3492,6 @@ def test_update__create_fieldset_with_shared_api_names__preserved_in_response(
                         ],
                         'rulesets': [
                             {
-                                'type': shared_rule.type,
                                 'api_name': shared_rule.api_name,
                                 'fields': [shared_number_field.api_name],
                                 'groups_or': [

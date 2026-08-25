@@ -1,12 +1,17 @@
 from typing import Any, Dict
 
-from rest_framework.fields import CharField
 from rest_framework.serializers import ModelSerializer
 
+from src.generics.fields import (
+    DocCharField,
+    DocChoiceField,
+    DocIntegerField,
+)
 from src.generics.mixins.serializers import (
     AdditionalValidationMixin,
     CustomValidationErrorMixin,
 )
+from src.processes.enums import FieldRuleOperator, FieldRuleType
 from src.processes.messages.template import (
     MSG_PT_0075,
 )
@@ -49,8 +54,38 @@ class FieldTemplateRuleGroupAndSerializer(
             'account',
         }
 
-    api_name = CharField(max_length=200, required=False)
-    field = CharField(max_length=200)
+    api_name = DocCharField(
+        max_length=200,
+        required=False,
+        example='field-rule-group-and-1',
+        help_text='Stable unique identifier. Generated if omitted.',
+    )
+    field = DocCharField(
+        max_length=200,
+        example='field-1',
+        help_text=(
+            '`api_name` of the source field this '
+            'condition reads.'
+        ),
+    )
+    operator = DocChoiceField(
+        choices=FieldRuleOperator.CHOICES,
+        example=FieldRuleOperator.EQUAL,
+        help_text=(
+            'Comparison against `value`. Allowed operators '
+            'depend on the source field type.'
+        ),
+    )
+    value = DocCharField(
+        max_length=200,
+        required=False,
+        allow_null=True,
+        allow_blank=True,
+        example='yes',
+        help_text=(
+            'Value the source field is compared against.'
+        ),
+    )
 
     def create(self, validated_data: Dict[str, Any]):
         self.additional_validate(validated_data)
@@ -123,8 +158,19 @@ class FieldTemplateRuleGroupOrSerializer(
             'account',
         }
 
-    api_name = CharField(max_length=200, required=False)
-    groups_and = FieldTemplateRuleGroupAndSerializer(many=True)
+    api_name = DocCharField(
+        max_length=200,
+        required=False,
+        example='field-rule-group-or-1',
+        help_text='Stable unique identifier. Generated if omitted.',
+    )
+    groups_and = FieldTemplateRuleGroupAndSerializer(
+        many=True,
+        help_text=(
+            'AND conditions inside this OR branch. '
+            'All must be true for the branch to pass.'
+        ),
+    )
 
     def create(self, validated_data: Dict[str, Any]):
         self.additional_validate(validated_data)
@@ -227,8 +273,48 @@ class FieldTemplateRuleSetSerializer(
             'account',
         }
 
-    api_name = CharField(max_length=200, required=False)
-    groups_or = FieldTemplateRuleGroupOrSerializer(many=True)
+    api_name = DocCharField(
+        max_length=200,
+        required=False,
+        example='ruleset-1',
+        help_text='Stable unique identifier. Generated if omitted.',
+    )
+    type = DocChoiceField(
+        choices=FieldRuleType.CHOICES,
+        example=FieldRuleType.SHOW,
+        help_text=(
+            '`show` — reveal this field when conditions '
+            'are true. `validator` — treat the value as '
+            'valid when conditions are true.'
+        ),
+    )
+    message = DocCharField(
+        required=False,
+        allow_null=True,
+        allow_blank=True,
+        example='Amount must be greater than 0',
+        help_text=(
+            'Error shown when a `validator` ruleset '
+            'fails. Unused for `show`.'
+        ),
+    )
+    order = DocIntegerField(
+        required=False,
+        default=0,
+        min_value=0,
+        example=0,
+        help_text=(
+            'Evaluation order among this field\'s '
+            'rulesets. Starts at 0.'
+        ),
+    )
+    groups_or = FieldTemplateRuleGroupOrSerializer(
+        many=True,
+        help_text=(
+            'OR branches. The ruleset passes if any '
+            'branch is true.'
+        ),
+    )
 
     def create(self, validated_data: Dict[str, Any]):
         self.additional_validate(validated_data)

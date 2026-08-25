@@ -80,7 +80,7 @@ class FieldSetService(BaseModelService):
         self._create_fields(instance_template, **kwargs)
 
     def validate_rules(self) -> bool:
-        rules = list(self.instance.rulesets.order_by('type').all())
+        rules = list(self.instance.rulesets.order_by('id').all())
         for _, group in groupby(rules, key=lambda r: r.type):
             group_rules = list(group)
             if len(group_rules) == 1:

@@ -1,13 +1,19 @@
-from typing import Optional
-
+from typing import Optional, List, Dict
 from django.db.models import Model
 
 from src.generics.base.service import BaseModelService
 from src.processes.enums import FieldType
-from src.processes.models.templates.fields import FieldTemplate
+from src.processes.models.templates.fields import (
+    FieldTemplate,
+    FieldTemplateRuleSet,
+)
 from src.processes.services.exceptions import (
     FieldTemplateSelectionsRequired,
-    FieldTemplateUserMustBeRequired,
+    FieldTemplateUserMustBeRequired, FieldTemplateServiceException,
+    FieldTemplateRuleSetServiceException,
+)
+from src.processes.services.templates.field_template_rule import (
+    FieldTemplateRuleSetService,
 )
 from src.processes.services.templates.field_template_selection import (
     FieldTemplateSelectionService,
@@ -35,10 +41,13 @@ class FieldTemplateService(BaseModelService):
     def partial_update(self, **update_kwargs) -> Model:
         self._validate(**update_kwargs)
         selections_data = update_kwargs.pop('selections', None)
+        rulesets_data = update_kwargs.pop('rulesets', None)
         result = super().partial_update(**update_kwargs)
         if selections_data is not None:
             self.instance.selections.all().delete()
             self.create_selections(selections_data=selections_data)
+        if rulesets_data is not None:
+            self.update_rulesets(rulesets_data=rulesets_data)
         return result
 
     def _create_instance(
@@ -84,10 +93,13 @@ class FieldTemplateService(BaseModelService):
     def _create_related(
         self,
         selections: Optional[list] = None,
+        rulesets: Optional[List[Dict]] = None,
         **kwargs,
     ):
         if selections:
             self.create_selections(selections_data=selections)
+        if rulesets:
+            self.create_rulesets(rulesets_data=rulesets)
 
     def create_selections(self, selections_data: list):
         service = FieldTemplateSelectionService(
@@ -101,3 +113,60 @@ class FieldTemplateService(BaseModelService):
                 template_id=self.instance.template_id,
                 **selection_data,
             )
+
+    def create_ruleset(
+        self,
+        ruleset_data: dict,
+    ) -> FieldTemplateRuleSet:
+
+        service = FieldTemplateRuleSetService(
+            user=self.user,
+            is_superuser=self.is_superuser,
+            auth_type=self.auth_type,
+        )
+        try:
+            return service.create(
+                field_id=self.instance.id,
+                template_id=self.instance.template_id,
+                **ruleset_data,
+            )
+        except FieldTemplateRuleSetServiceException as ex:
+            raise FieldTemplateServiceException(message=ex.message) from ex
+
+    def create_rulesets(
+        self,
+        rulesets_data: List[Dict],
+    ):
+        for ruleset_data in rulesets_data:
+            self.create_ruleset(ruleset_data)
+
+    def update_rulesets(
+        self,
+        rulesets_data: List[Dict],
+    ):
+        """ All rulesets will be updated """
+
+        existing_rulesets = {
+            ruleset.api_name: ruleset
+            for ruleset in self.instance.rulesets.all()
+        }
+        ruleset_api_names = set()
+        for ruleset_data in rulesets_data:
+            ruleset_data_dict = dict(ruleset_data)
+            ruleset_api_name = ruleset_data_dict.get('api_name')
+            if ruleset_api_name and ruleset_api_name in existing_rulesets:
+                service = FieldTemplateRuleSetService(
+                    user=self.user,
+                    is_superuser=self.is_superuser,
+                    auth_type=self.auth_type,
+                    instance=existing_rulesets[ruleset_api_name],
+                )
+                service.partial_update(**ruleset_data)
+                ruleset_api_names.add(ruleset_api_name)
+            else:
+                ruleset = self.create_ruleset(ruleset_data)
+                ruleset_api_names.add(ruleset.api_name)
+
+        self.instance.rulesets.exclude(
+            api_name__in=ruleset_api_names,
+        ).delete()

@@ -216,7 +216,6 @@ def test_create__kickoff_fieldset_all_fieldset_data__ok(
 
     assert len(fieldset_data['rulesets']) == 1
     ruleset_data = fieldset_data['rulesets'][0]
-    assert ruleset_data['type'] == shared_ruleset.type
     assert ruleset_data['api_name'] != shared_ruleset.api_name
     assert ruleset_data['fields'] == [field.api_name]
 
@@ -500,7 +499,6 @@ def test_create__task_fieldset_all_fieldset_data__ok(
 
     assert len(fieldset_data['rulesets']) == 1
     ruleset_data = fieldset_data['rulesets'][0]
-    assert ruleset_data['type'] == shared_ruleset.type
     assert ruleset_data['api_name'] != shared_ruleset.api_name
     assert ruleset_data['fields'] == [field.api_name]
 

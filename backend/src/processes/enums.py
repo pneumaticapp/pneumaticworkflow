@@ -806,16 +806,72 @@ class FieldRuleType:
 class FieldRuleOperator:
 
     EQUAL = 'equal'
+    NOT_EQUAL = 'not_equals'
     GREATER_THAN = 'greater_than'
     LESS_THAN = 'less_than'
+    CONTAIN = 'contains'
+    NOT_CONTAIN = 'not_contains'
 
     CHOICES = (
         (EQUAL, 'Equal'),
+        (NOT_EQUAL, 'Not equal'),
         (GREATER_THAN, 'Greater than'),
         (LESS_THAN, 'Less than'),
+        (CONTAIN, 'Contains'),
+        (NOT_CONTAIN, 'Not contains'),
     )
 
-    LITERALS = Literal[EQUAL, GREATER_THAN, LESS_THAN]
+    LITERALS = Literal[
+        EQUAL,
+        NOT_EQUAL,
+        GREATER_THAN,
+        LESS_THAN,
+        CONTAIN,
+        NOT_CONTAIN,
+    ]
+
+    ALLOWED_OPERATORS = {
+        FieldType.STRING: {
+            EQUAL,
+            NOT_EQUAL,
+            CONTAIN,
+            NOT_CONTAIN,
+        },
+        FieldType.TEXT: {
+            EQUAL,
+            NOT_EQUAL,
+            CONTAIN,
+            NOT_CONTAIN,
+        },
+        FieldType.URL: {
+            EQUAL,
+            NOT_EQUAL,
+            CONTAIN,
+            NOT_CONTAIN,
+        },
+        FieldType.CHECKBOX: {
+            EQUAL,
+            NOT_EQUAL,
+            CONTAIN,
+            NOT_CONTAIN,
+        },
+        FieldType.RADIO: {EQUAL, NOT_EQUAL},
+        FieldType.DROPDOWN: {EQUAL, NOT_EQUAL},
+        FieldType.USER: {EQUAL, NOT_EQUAL},
+        FieldType.DATE: {
+            EQUAL,
+            NOT_EQUAL,
+            GREATER_THAN,
+            LESS_THAN,
+        },
+        FieldType.NUMBER: {
+            EQUAL,
+            NOT_EQUAL,
+            GREATER_THAN,
+            LESS_THAN,
+        },
+        FieldType.FILE: set(),
+    }
 
 
 class FieldSetRuleOperator:
