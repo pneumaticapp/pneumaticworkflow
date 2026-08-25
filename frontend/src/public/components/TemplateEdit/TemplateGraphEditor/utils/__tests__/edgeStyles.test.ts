@@ -1,4 +1,11 @@
-import { GRAPH_EDGE_CLASS_SKIP, isSkipGraphEdge } from '../edgeStyles';
+import {
+  EDGE_STYLE_CONDITIONAL,
+  EDGE_STYLE_DEFAULT,
+  getGraphEdgeVisual,
+  GRAPH_EDGE_CLASS_CONDITIONAL,
+  isConditionalGraphEdge,
+  isSkipGraphEdge,
+} from '../edgeStyles';
 
 describe('isSkipGraphEdge', () => {
   it('should detect a skip suffix without matching skippable task ids', () => {
@@ -27,15 +34,52 @@ describe('isSkipGraphEdge', () => {
       }),
     ).toBe(false);
   });
+});
 
-  it('should detect a remapped skip edge by class name', () => {
+describe('isConditionalGraphEdge', () => {
+  it('should treat start-condition and skip edges as conditional', () => {
     expect(
-      isSkipGraphEdge({
-        id: 'edge-task-linear-task-url-title-skip-0',
-        source: 'junction-fork-task-linear',
-        target: 'junction-join-task-url-title',
-        className: GRAPH_EDGE_CLASS_SKIP,
+      isConditionalGraphEdge({
+        id: 'edge-kickoff-task-1-0',
+        source: 'kickoff',
+        target: 'task-1',
+        data: { isConditional: true, summary: 'Client filled' },
       }),
     ).toBe(true);
+
+    expect(
+      isConditionalGraphEdge({
+        id: 'edge-task-linear-task-url-title-skip-0',
+        source: 'task-linear',
+        target: 'task-url-title',
+        sourceHandle: 'source-skip',
+      }),
+    ).toBe(true);
+  });
+
+  it('should not treat a default edge as conditional', () => {
+    expect(
+      isConditionalGraphEdge({
+        id: 'edge-kickoff-task-1-0',
+        source: 'kickoff',
+        target: 'task-1',
+        data: { isConditional: false },
+      }),
+    ).toBe(false);
+  });
+});
+
+describe('getGraphEdgeVisual', () => {
+  it('should return a gray solid line for a default connection', () => {
+    expect(getGraphEdgeVisual(false)).toEqual({
+      style: EDGE_STYLE_DEFAULT,
+    });
+  });
+
+  it('should return an orange dashed line for a condition connection', () => {
+    expect(getGraphEdgeVisual(true)).toEqual({
+      className: GRAPH_EDGE_CLASS_CONDITIONAL,
+      style: EDGE_STYLE_CONDITIONAL,
+    });
   });
 });

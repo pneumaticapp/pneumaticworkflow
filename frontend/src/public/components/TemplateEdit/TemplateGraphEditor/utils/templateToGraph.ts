@@ -1,162 +1,182 @@
 import { ITemplateClient, ITemplateTaskClient } from '../../../../types/template';
-import {
-  ICondition,
-  EConditionAction,
-  EConditionOperators,
-  TConditionRule,
-} from '../../TaskForm/Conditions';
-import { EGraphNodeType, IGraphState, TGraphNode, TGraphEdge } from '../types';
-import { applyConnectedHandles } from './applyConnectedHandles';
-import { GRAPH_NODE_HEIGHT, GRAPH_NODE_WIDTH } from './applyDagreLayout';
-import { EDGE_STYLE_DEFAULT, EDGE_STYLE_SKIP, GRAPH_EDGE_CLASS_SKIP } from './edgeStyles';
+import { EConditionAction } from '../../TaskForm/Conditions';
+import { EStartingType } from '../../TaskForm/Conditions/utils/getDropdownOperators';
+import { EGraphNodeType, IGraphState, TGraphEdge, TGraphNode } from '../types';
+import { GRAPH_NODE_HEIGHT, GRAPH_NODE_WIDTH } from './graphGeometry';
+import { getGraphEdgeVisual } from './edgeStyles';
 import { insertJunctionNodes } from './insertJunctionNodes';
 
 export const KICKOFF_NODE_ID = 'kickoff';
+
+/** Marker for the kick-off form as an edge source; the label is localized in the UI. */
+export const KICKOFF_START_AFTER = '__kickoff__';
 
 function buildEdgeId(source: string, target: string, suffix: string): string {
   return `edge-${source}-${target}-${suffix}`;
 }
 
-function buildFieldMap(template: ITemplateClient): Map<string, string> {
-  const map = new Map<string, string>();
-  template.kickoff?.fields?.forEach((f) => map.set(f.apiName, f.name));
-  template.tasks?.forEach((task) => task.fields?.forEach((f) => map.set(f.apiName, f.name)));
+function uniqueIds(ids: string[]): string[] {
+  const seen = new Set<string>();
 
-  return map;
+  return ids.filter((id) => {
+    if (seen.has(id)) {
+      return false;
+    }
+
+    seen.add(id);
+
+    return true;
+  });
 }
 
-function getOperatorLabel(operator: EConditionOperators | null): string {
-  if (!operator) return '';
-  const labels: Record<EConditionOperators, string> = {
-    [EConditionOperators.Equal]: '=',
-    [EConditionOperators.NotEqual]: '≠',
-    [EConditionOperators.Exist]: 'filled',
-    [EConditionOperators.NotExist]: 'empty',
-    [EConditionOperators.Contain]: 'contains',
-    [EConditionOperators.NotContain]: "doesn't contain",
-    [EConditionOperators.MoreThan]: '>',
-    [EConditionOperators.LessThan]: '<',
-    [EConditionOperators.Completed]: 'completed',
-    [EConditionOperators.Skipped]: 'skipped',
-    [EConditionOperators.CompletedOrSkipped]: 'done/skipped',
-  };
+function getStartAfterLabel(sourceId: string, sortedTasks: ITemplateTaskClient[]): string {
+  if (sourceId === KICKOFF_NODE_ID) {
+    return KICKOFF_START_AFTER;
+  }
 
-  return labels[operator] ?? operator;
+  const source = sortedTasks.find((task) => task.apiName === sourceId);
+
+  return source?.name || sourceId;
 }
 
-function getRuleLabel(rule: TConditionRule, fieldMap: Map<string, string>): string {
-  const fieldName = rule.field ? (fieldMap.get(rule.field) ?? rule.field) : '';
-  const operatorLabel = getOperatorLabel(rule.operator);
-  const ruleWithValue = rule as { value?: string | number | null };
-  const value = ruleWithValue.value != null ? String(ruleWithValue.value) : '';
-  const parts = [fieldName, operatorLabel, value].filter(Boolean);
+function getStartAfterSources(task: ITemplateTaskClient, taskApiNameSet: Set<string>): string[] {
+  const startCondition = task.conditions.find((condition) => condition.action === EConditionAction.StartTask);
+  const sources: string[] = [];
 
-  return parts.join(' ');
+  startCondition?.rules.forEach((rule) => {
+    if (rule.fieldType === EStartingType.Kickoff) {
+      sources.push(KICKOFF_NODE_ID);
+
+      return;
+    }
+
+    if (rule.fieldType === EStartingType.Task && rule.field && taskApiNameSet.has(rule.field)) {
+      sources.push(rule.field);
+    }
+  });
+
+  return uniqueIds(sources);
 }
 
-function getConditionSummary(condition: ICondition, fieldMap: Map<string, string>): string {
-  if (condition.rules.length === 0) return 'condition';
-  const firstLabel = getRuleLabel(condition.rules[0], fieldMap);
-  const suffix = condition.rules.length > 1 ? ` +${condition.rules.length - 1}` : '';
+/** `ancestors` from the API is a transitive closure; the graph only needs direct parents. */
+function getDirectParents(
+  task: ITemplateTaskClient,
+  tasksByApiName: Map<string, ITemplateTaskClient>,
+): string[] {
+  return task.ancestors.filter((apiName) => {
+    if (apiName === KICKOFF_NODE_ID) {
+      return true;
+    }
 
-  return (firstLabel || 'condition') + suffix;
+    if (!tasksByApiName.has(apiName)) {
+      return false;
+    }
+
+    return !task.ancestors.some((otherApiName) => {
+      if (otherApiName === apiName) {
+        return false;
+      }
+
+      return tasksByApiName.get(otherApiName)?.ancestors.includes(apiName) ?? false;
+    });
+  });
 }
 
-function buildEdgesForTask(
+function isUpstreamOf(
+  maybeAncestorId: string,
+  taskId: string,
+  tasksByApiName: Map<string, ITemplateTaskClient>,
+  taskApiNameSet: Set<string>,
+): boolean {
+  if (maybeAncestorId === KICKOFF_NODE_ID && taskId !== KICKOFF_NODE_ID) {
+    return true;
+  }
+
+  const seen = new Set<string>();
+  const stack = [taskId];
+
+  while (stack.length > 0) {
+    const currentId = stack.pop();
+
+    if (currentId && !seen.has(currentId)) {
+      if (currentId === maybeAncestorId) {
+        return true;
+      }
+
+      seen.add(currentId);
+      const current = tasksByApiName.get(currentId);
+
+      if (current) {
+        current.ancestors.forEach((ancestorId) => stack.push(ancestorId));
+        getStartAfterSources(current, taskApiNameSet).forEach((sourceId) => stack.push(sourceId));
+      }
+    }
+  }
+
+  return false;
+}
+
+/** Drop a source if another listed source already sits downstream of it. */
+function dropImpliedSources(
+  sources: string[],
+  tasksByApiName: Map<string, ITemplateTaskClient>,
+  taskApiNameSet: Set<string>,
+): string[] {
+  return sources.filter((sourceId) => (
+    !sources.some((otherId) => (
+      otherId !== sourceId
+      && isUpstreamOf(sourceId, otherId, tasksByApiName, taskApiNameSet)
+    ))
+  ));
+}
+
+function getIncomingSources(
   task: ITemplateTaskClient,
   taskIndex: number,
   sortedTasks: ITemplateTaskClient[],
   taskApiNameSet: Set<string>,
-  fieldMap: Map<string, string>,
-): TGraphEdge[] {
-  const edges: TGraphEdge[] = [];
-  const hasAncestors = task.ancestors.length > 0;
-  const skipConditions = task.conditions.filter((c) => c.action === EConditionAction.SkipTask);
-  const startConditions = task.conditions.filter((c) => c.action === EConditionAction.StartTask);
-  const hasConditions = skipConditions.length > 0 || startConditions.length > 0;
-  const incomingSummary = hasConditions
-    ? startConditions.map((c) => getConditionSummary(c, fieldMap)).join(' | ') || undefined
-    : undefined;
-
-  if (!hasAncestors) {
-    const sourceId = taskIndex === 0 ? KICKOFF_NODE_ID : sortedTasks[taskIndex - 1].apiName;
-    edges.push({
-      id: buildEdgeId(sourceId, task.apiName, '0'),
-      source: sourceId,
-      target: task.apiName,
-      sourceHandle: 'source-bottom',
-      targetHandle: 'target-top',
-      type: 'smoothstep',
-      data: {
-        summary: incomingSummary,
-        isConditional: false,
-      },
-      labelShowBg: false,
-      style: EDGE_STYLE_DEFAULT,
-    });
-  } else {
-    task.ancestors.forEach((ancestorApiName, idx) => {
-      if (!taskApiNameSet.has(ancestorApiName) && ancestorApiName !== KICKOFF_NODE_ID) return;
-      edges.push({
-        id: buildEdgeId(ancestorApiName, task.apiName, String(idx)),
-        source: ancestorApiName,
-        target: task.apiName,
-        sourceHandle: 'source-bottom',
-        targetHandle: 'target-top',
-        type: 'smoothstep',
-        data: {
-          summary: incomingSummary,
-          isConditional: false,
-        },
-        labelShowBg: false,
-        style: EDGE_STYLE_DEFAULT,
-      });
-    });
+  tasksByApiName: Map<string, ITemplateTaskClient>,
+): string[] {
+  const fromStartAfter = getStartAfterSources(task, taskApiNameSet);
+  if (fromStartAfter.length > 0) {
+    return dropImpliedSources(fromStartAfter, tasksByApiName, taskApiNameSet);
   }
 
-  if (skipConditions.length > 0) {
-    const nextTask = sortedTasks[taskIndex + 1];
-    let sourceId: string;
-
-    if (hasAncestors) {
-      [sourceId] = task.ancestors;
-    } else if (taskIndex === 0) {
-      sourceId = KICKOFF_NODE_ID;
-    } else {
-      sourceId = sortedTasks[taskIndex - 1].apiName;
-    }
-
-    if (nextTask) {
-      skipConditions.forEach((condition, idx) => {
-        edges.push({
-          id: buildEdgeId(sourceId, nextTask.apiName, `skip-${idx}`),
-          source: sourceId,
-          target: nextTask.apiName,
-          sourceHandle: 'source-skip',
-          targetHandle: 'target-skip',
-          type: 'smoothstep',
-          data: {
-            summary: getConditionSummary(condition, fieldMap),
-            isConditional: true,
-          },
-          labelShowBg: false,
-          className: GRAPH_EDGE_CLASS_SKIP,
-          style: EDGE_STYLE_SKIP,
-        });
-      });
-    }
+  const directParents = getDirectParents(task, tasksByApiName).filter(
+    (apiName) => taskApiNameSet.has(apiName) || apiName === KICKOFF_NODE_ID,
+  );
+  if (directParents.length > 0) {
+    return directParents;
   }
 
-  return edges;
+  return [taskIndex === 0 ? KICKOFF_NODE_ID : sortedTasks[taskIndex - 1].apiName];
 }
 
-export function templateToGraph(template: ITemplateClient): IGraphState {
-  const { tasks = [], kickoff, name } = template;
-  const sortedTasks = [...tasks].sort((a, b) => a.number - b.number);
-  const taskApiNameSet = new Set<string>(sortedTasks.map((t) => t.apiName));
-  const fieldMap = buildFieldMap(template);
-  const nodeStyle = { width: GRAPH_NODE_WIDTH, height: GRAPH_NODE_HEIGHT };
+function buildIncomingEdge(
+  sourceId: string,
+  task: ITemplateTaskClient,
+  suffix: string,
+  sortedTasks: ITemplateTaskClient[],
+): TGraphEdge {
+  return {
+    id: buildEdgeId(sourceId, task.apiName, suffix),
+    source: sourceId,
+    target: task.apiName,
+    sourceHandle: 'source-bottom',
+    targetHandle: 'target-top',
+    type: 'smoothstep',
+    data: {
+      isConditional: false,
+      startAfter: [getStartAfterLabel(sourceId, sortedTasks)],
+    },
+    labelShowBg: false,
+    ...getGraphEdgeVisual(false),
+  };
+}
 
+function buildCardNodes(template: ITemplateClient, sortedTasks: ITemplateTaskClient[]): TGraphNode[] {
+  const { kickoff, name } = template;
+  const nodeStyle = { width: GRAPH_NODE_WIDTH, height: GRAPH_NODE_HEIGHT };
   const kickoffNode: TGraphNode = {
     id: KICKOFF_NODE_ID,
     type: EGraphNodeType.Kickoff,
@@ -167,7 +187,6 @@ export function templateToGraph(template: ITemplateClient): IGraphState {
       templateName: name ?? '',
     },
   };
-
   const taskNodes: TGraphNode[] = sortedTasks.map((task) => ({
     id: task.apiName,
     type: EGraphNodeType.Task,
@@ -180,9 +199,20 @@ export function templateToGraph(template: ITemplateClient): IGraphState {
     },
   }));
 
-  const edges: TGraphEdge[] = sortedTasks.flatMap((task, index) =>
-    buildEdgesForTask(task, index, sortedTasks, taskApiNameSet, fieldMap),
-  );
+  return [kickoffNode, ...taskNodes];
+}
 
-  return applyConnectedHandles(insertJunctionNodes([kickoffNode, ...taskNodes], edges));
+export function templateToGraph(template: ITemplateClient): IGraphState {
+  const { tasks = [] } = template;
+  const sortedTasks = [...tasks].sort((a, b) => a.number - b.number);
+  const taskApiNameSet = new Set<string>(sortedTasks.map((task) => task.apiName));
+  const tasksByApiName = new Map(sortedTasks.map((task) => [task.apiName, task]));
+  const nodes = buildCardNodes(template, sortedTasks);
+  const edges: TGraphEdge[] = sortedTasks.flatMap((task, index) => (
+    getIncomingSources(task, index, sortedTasks, taskApiNameSet, tasksByApiName).map((sourceId, idx) =>
+      buildIncomingEdge(sourceId, task, String(idx), sortedTasks),
+    )
+  ));
+
+  return insertJunctionNodes(nodes, edges);
 }

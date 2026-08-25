@@ -1,11 +1,15 @@
 import { EExtraFieldType, ITemplateClient, ITemplateTaskClient } from '../../../../../types/template';
 import { createEmptyTaskDueDate } from '../../../../../utils/dueDate/createEmptyTaskDueDate';
 import { EConditionAction, EConditionLogicOperations, EConditionOperators } from '../../../TaskForm/Conditions';
+import { EStartingType } from '../../../TaskForm/Conditions/utils/getDropdownOperators';
 import { GRAPH_SHOWCASE_TEMPLATE } from '../../fixtures/graphShowcaseTemplate';
 import { EGraphNodeType } from '../../types';
 import { applyDagreLayout, GRAPH_JUNCTION_SIZE, GRAPH_NODE_WIDTH } from '../applyDagreLayout';
-import { GRAPH_EDGE_CLASS_SKIP } from '../edgeStyles';
-import { KICKOFF_NODE_ID, templateToGraph } from '../templateToGraph';
+import { GRAPH_COLUMN_GAP } from '../graphGeometry';
+import { EMPTY_CONNECTED_HANDLES } from '../applyConnectedHandles';
+import { buildTemplateGraph } from '../buildTemplateGraph';
+import { getGraphEdgeLine, isLaneRoutedGraphEdge, isSkipGraphEdge } from '../edgeStyles';
+import { KICKOFF_NODE_ID, KICKOFF_START_AFTER, templateToGraph } from '../templateToGraph';
 
 function createTask(overrides: Partial<ITemplateTaskClient> = {}): ITemplateTaskClient {
   return {
@@ -79,49 +83,16 @@ describe('templateToGraph', () => {
     expect(edges[0].data?.isConditional).toBe(false);
   });
 
-  it('should expose only handles that have connected edges', () => {
-    const { nodes } = templateToGraph(
-      createTemplate({
-        tasks: [
-          createTask({ apiName: 'task-1', number: 1, uuid: 'uuid-1' }),
-          createTask({ apiName: 'task-2', number: 2, uuid: 'uuid-2' }),
-        ],
-      }),
-    );
-    const kickoff = nodes.find((node) => node.id === KICKOFF_NODE_ID);
-    const firstTask = nodes.find((node) => node.id === 'task-1');
-    const lastTask = nodes.find((node) => node.id === 'task-2');
-
-    expect(kickoff && 'handles' in kickoff.data ? kickoff.data.handles : null).toEqual({
-      hasTargetTop: false,
-      hasSourceBottom: true,
-      hasSourceSkip: false,
-      hasTargetSkip: false,
-    });
-    expect(firstTask && 'handles' in firstTask.data ? firstTask.data.handles : null).toEqual({
-      hasTargetTop: true,
-      hasSourceBottom: true,
-      hasSourceSkip: false,
-      hasTargetSkip: false,
-    });
-    expect(lastTask && 'handles' in lastTask.data ? lastTask.data.handles : null).toEqual({
-      hasTargetTop: true,
-      hasSourceBottom: false,
-      hasSourceSkip: false,
-      hasTargetSkip: false,
-    });
-  });
-
-  it('should mark skip edges as conditional', () => {
+  it('should keep a start-condition incoming edge as a gray start-after line', () => {
     const { edges } = templateToGraph(
       createTemplate({
         tasks: [
           createTask({
             conditions: [
               {
-                apiName: 'condition-1',
+                apiName: 'condition-start',
                 order: 1,
-                action: EConditionAction.SkipTask,
+                action: EConditionAction.StartTask,
                 rules: [
                   {
                     ruleApiName: 'rule-1',
@@ -134,25 +105,51 @@ describe('templateToGraph', () => {
               },
             ],
           }),
-          createTask({ apiName: 'task-2', name: 'Next', number: 2, uuid: 'uuid-2' }),
         ],
       }),
     );
 
-    const skipEdge = edges.find((edge) => edge.id.includes('skip'));
-
-    expect(skipEdge).toBeDefined();
-    expect(skipEdge?.data?.isConditional).toBe(true);
-    expect(skipEdge?.className).toBe('graph-edge--skip');
-    expect(skipEdge?.style).toEqual(
+    expect(edges[0].data?.isConditional).toBe(false);
+    expect(edges[0].data?.summary).toBeUndefined();
+    expect(edges[0].data?.startAfter).toEqual([KICKOFF_START_AFTER]);
+    expect(getGraphEdgeLine(edges[0])).toBe('solid');
+    expect(edges[0].className).toBeUndefined();
+    expect(edges[0].style).toEqual(
       expect.objectContaining({
-        stroke: 'var(--pneumatic-color-link)',
-        strokeDasharray: '6 4',
+        stroke: 'var(--pneumatic-color-black32)',
       }),
     );
   });
 
-  it('should insert fork and join nodes for a skippable task', () => {
+  it('should expose only handles that have connected edges', () => {
+    const { nodes } = buildTemplateGraph(
+      createTemplate({
+        tasks: [
+          createTask({ apiName: 'task-1', number: 1, uuid: 'uuid-1' }),
+          createTask({ apiName: 'task-2', number: 2, uuid: 'uuid-2' }),
+        ],
+      }),
+    );
+    const kickoff = nodes.find((node) => node.id === KICKOFF_NODE_ID);
+    const firstTask = nodes.find((node) => node.id === 'task-1');
+    const lastTask = nodes.find((node) => node.id === 'task-2');
+
+    expect(kickoff && 'handles' in kickoff.data ? kickoff.data.handles : null).toEqual({
+      ...EMPTY_CONNECTED_HANDLES,
+      hasSourceBottom: true,
+    });
+    expect(firstTask && 'handles' in firstTask.data ? firstTask.data.handles : null).toEqual({
+      ...EMPTY_CONNECTED_HANDLES,
+      hasTargetTop: true,
+      hasSourceBottom: true,
+    });
+    expect(lastTask && 'handles' in lastTask.data ? lastTask.data.handles : null).toEqual({
+      ...EMPTY_CONNECTED_HANDLES,
+      hasTargetTop: true,
+    });
+  });
+
+  it('should not draw a skip line from check-if conditions', () => {
     const { nodes, edges } = templateToGraph(
       createTemplate({
         tasks: [
@@ -179,9 +176,183 @@ describe('templateToGraph', () => {
       }),
     );
 
-    expect(nodes.some((node) => node.id === 'junction-fork-kickoff')).toBe(true);
-    expect(nodes.some((node) => node.id === 'junction-join-task-2')).toBe(true);
+    expect(edges.filter((edge) => isSkipGraphEdge(edge))).toHaveLength(0);
+    expect(edges.filter((edge) => isLaneRoutedGraphEdge(edge))).toHaveLength(0);
+    expect(nodes.some((node) => node.type === EGraphNodeType.Junction)).toBe(false);
     expect(edges.some((edge) => edge.source === 'kickoff' && edge.target === 'task-2')).toBe(false);
+    expect(edges.some((edge) => edge.source === 'kickoff' && edge.target === 'task-1')).toBe(true);
+    expect(edges.some((edge) => edge.source === 'task-1' && edge.target === 'task-2')).toBe(true);
+    expect(edges.every((edge) => getGraphEdgeLine(edge) === 'solid')).toBe(true);
+  });
+
+  it('should draw a start-after edge only from the listed task, not from transitive ancestors', () => {
+    const { nodes, edges } = templateToGraph(
+      createTemplate({
+        tasks: [
+          createTask({ apiName: 'task-a', name: 'First', number: 1, uuid: 'uuid-a' }),
+          createTask({
+            apiName: 'task-b',
+            name: 'Second',
+            number: 2,
+            uuid: 'uuid-b',
+            ancestors: ['task-a'],
+          }),
+          createTask({
+            apiName: 'task-c',
+            name: 'Third',
+            number: 3,
+            uuid: 'uuid-c',
+            ancestors: ['task-a', 'task-b'],
+            conditions: [
+              {
+                apiName: 'start-after-b',
+                order: 1,
+                action: EConditionAction.StartTask,
+                rules: [
+                  {
+                    ruleApiName: 'rule-1',
+                    predicateApiName: 'predicate-1',
+                    field: 'task-b',
+                    fieldType: EStartingType.Task,
+                    operator: EConditionOperators.Completed,
+                    logicOperation: EConditionLogicOperations.And,
+                  },
+                ],
+              },
+            ],
+          }),
+        ],
+      }),
+    );
+    const intoC = edges.filter((edge) => edge.target === 'task-c');
+
+    expect(intoC).toHaveLength(1);
+    expect(intoC[0].source).toBe('task-b');
+    expect(intoC[0].data?.startAfter).toEqual(['Second']);
+    expect(edges.some((edge) => edge.source === 'task-a' && edge.target === 'task-c')).toBe(false);
+    expect(nodes.some((node) => node.id === 'junction-join-task-c')).toBe(false);
+  });
+
+  it('should drop an implied ancestor from a start-after list that already names its descendant', () => {
+    const { nodes, edges } = templateToGraph(
+      createTemplate({
+        tasks: [
+          createTask({ apiName: 'task-a', name: 'First', number: 1, uuid: 'uuid-a' }),
+          createTask({
+            apiName: 'task-b',
+            name: 'Second',
+            number: 2,
+            uuid: 'uuid-b',
+            ancestors: ['task-a'],
+          }),
+          createTask({
+            apiName: 'task-c',
+            name: 'Third',
+            number: 3,
+            uuid: 'uuid-c',
+            conditions: [
+              {
+                apiName: 'start-after-two',
+                order: 1,
+                action: EConditionAction.StartTask,
+                rules: [
+                  {
+                    ruleApiName: 'rule-a',
+                    predicateApiName: 'predicate-a',
+                    field: 'task-a',
+                    fieldType: EStartingType.Task,
+                    operator: EConditionOperators.Completed,
+                    logicOperation: EConditionLogicOperations.And,
+                  },
+                  {
+                    ruleApiName: 'rule-b',
+                    predicateApiName: 'predicate-b',
+                    field: 'task-b',
+                    fieldType: EStartingType.Task,
+                    operator: EConditionOperators.Completed,
+                    logicOperation: EConditionLogicOperations.And,
+                  },
+                ],
+              },
+            ],
+          }),
+        ],
+      }),
+    );
+    const intoC = edges.filter((edge) => edge.target === 'task-c');
+
+    expect(intoC).toHaveLength(1);
+    expect(intoC[0].source).toBe('task-b');
+    expect(edges.some((edge) => edge.source === 'task-a' && edge.target === 'task-c')).toBe(false);
+    expect(nodes.some((node) => node.id === 'junction-join-task-c')).toBe(false);
+    expect(nodes.some((node) => node.id === 'junction-fork-task-a')).toBe(false);
+  });
+
+  it('should drop transitive ancestors when start-after rules are empty', () => {
+    const { nodes, edges } = templateToGraph(
+      createTemplate({
+        tasks: [
+          createTask({ apiName: 'task-a', number: 1, uuid: 'uuid-a' }),
+          createTask({ apiName: 'task-b', number: 2, uuid: 'uuid-b', ancestors: ['task-a'] }),
+          createTask({
+            apiName: 'task-c',
+            number: 3,
+            uuid: 'uuid-c',
+            ancestors: ['task-a', 'task-b'],
+          }),
+        ],
+      }),
+    );
+    const intoC = edges.filter((edge) => edge.target === 'task-c');
+
+    expect(intoC).toHaveLength(1);
+    expect(intoC[0].source).toBe('task-b');
+    expect(nodes.some((node) => node.id === 'junction-join-task-c')).toBe(false);
+  });
+
+  it('should keep a start-condition sibling on the same gray fork as a plain successor', () => {
+    const { nodes, edges } = templateToGraph(
+      createTemplate({
+        tasks: [
+          createTask({ apiName: 'task-a', number: 1, uuid: 'uuid-a' }),
+          createTask({ apiName: 'task-b', number: 2, uuid: 'uuid-b', ancestors: ['task-a'] }),
+          createTask({
+            apiName: 'task-c',
+            number: 3,
+            uuid: 'uuid-c',
+            ancestors: ['task-a'],
+            conditions: [
+              {
+                apiName: 'condition-start',
+                order: 1,
+                action: EConditionAction.StartTask,
+                rules: [
+                  {
+                    ruleApiName: 'rule-1',
+                    predicateApiName: 'predicate-1',
+                    field: 'field-1',
+                    operator: EConditionOperators.Exist,
+                    logicOperation: EConditionLogicOperations.And,
+                  },
+                ],
+              },
+            ],
+          }),
+        ],
+      }),
+    );
+    const fork = nodes.find((node) => node.id === 'junction-fork-task-a');
+    const toB = edges.find((edge) => edge.target === 'task-b');
+    const toC = edges.find((edge) => edge.target === 'task-c');
+
+    expect(fork).toBeDefined();
+    expect(toB?.source).toBe('junction-fork-task-a');
+    expect(toC?.source).toBe('junction-fork-task-a');
+    expect(toB?.data?.isConditional).toBe(false);
+    expect(toC?.data?.isConditional).toBe(false);
+    expect(toC?.data?.isLaneRouted).toBeUndefined();
+    expect(getGraphEdgeLine(toB!)).toBe('solid');
+    expect(getGraphEdgeLine(toC!)).toBe('solid');
   });
 
   it('should insert a fork node when a task has two parallel successors', () => {
@@ -203,6 +374,11 @@ describe('templateToGraph', () => {
     expect(edges.some((edge) => edge.source === 'task-a' && edge.target === 'junction-fork-task-a')).toBe(true);
     expect(edges.filter((edge) => edge.source === 'junction-fork-task-a')).toHaveLength(2);
     expect(edges.some((edge) => edge.source === 'task-a' && edge.target === 'task-b')).toBe(false);
+    const stem = edges.find((edge) => edge.source === 'task-a' && edge.target === 'junction-fork-task-a');
+    const branches = edges.filter((edge) => edge.source === 'junction-fork-task-a');
+
+    expect(stem?.data?.startAfter).toEqual(['Prepare Layout']);
+    expect(branches.every((edge) => !edge.data?.startAfter?.length)).toBe(true);
   });
 
   it('should insert a join node when a task has two ancestors', () => {
@@ -229,11 +405,15 @@ describe('templateToGraph', () => {
     expect(edges.filter((edge) => edge.target === 'junction-join-task-d')).toHaveLength(2);
     expect(edges.some((edge) => edge.source === 'junction-join-task-d' && edge.target === 'task-d')).toBe(true);
     expect(edges.some((edge) => edge.source === 'task-b' && edge.target === 'task-d')).toBe(false);
+    const intoJoin = edges.filter((edge) => edge.target === 'junction-join-task-d');
+    const afterJoin = edges.find((edge) => edge.source === 'junction-join-task-d');
+
+    expect(intoJoin.every((edge) => Boolean(edge.data?.startAfter?.length))).toBe(true);
+    expect(afterJoin?.data?.startAfter).toBeUndefined();
   });
 
-  it('should map the showcase template to every edge variant', () => {
+  it('should map the showcase template to gray start-after edges', () => {
     const { nodes, edges } = templateToGraph(GRAPH_SHOWCASE_TEMPLATE);
-    const skipEdges = edges.filter((edge) => edge.className === GRAPH_EDGE_CLASS_SKIP);
     const taskIds = nodes.filter((node) => node.type === EGraphNodeType.Task).map((node) => node.id);
 
     expect(nodes.some((node) => node.id === KICKOFF_NODE_ID)).toBe(true);
@@ -246,13 +426,14 @@ describe('templateToGraph', () => {
       'task-join',
       'task-long-title',
     ]);
-    expect(nodes.some((node) => node.id === 'junction-fork-task-linear')).toBe(true);
-    expect(nodes.some((node) => node.id === 'junction-join-task-url-title')).toBe(true);
     expect(nodes.some((node) => node.id === 'junction-fork-task-url-title')).toBe(true);
     expect(nodes.some((node) => node.id === 'junction-join-task-join')).toBe(true);
-    expect(skipEdges.length).toBeGreaterThan(0);
-    expect(skipEdges.every((edge) => edge.data?.isConditional)).toBe(true);
-    expect(skipEdges.every((edge) => edge.style?.stroke === 'var(--pneumatic-color-link)')).toBe(true);
+    expect(nodes.some((node) => node.id === 'junction-fork-task-linear')).toBe(false);
+    expect(nodes.some((node) => node.id === 'junction-join-task-url-title')).toBe(false);
+    expect(edges.filter((edge) => isSkipGraphEdge(edge))).toHaveLength(0);
+    expect(edges.filter((edge) => isLaneRoutedGraphEdge(edge))).toHaveLength(0);
+    expect(edges.every((edge) => getGraphEdgeLine(edge) === 'solid')).toBe(true);
+    expect(edges.every((edge) => edge.style?.stroke === 'var(--pneumatic-color-black32)')).toBe(true);
   });
 });
 
@@ -296,6 +477,176 @@ describe('applyDagreLayout', () => {
     expect(taskB!.position.x).not.toBe(taskC!.position.x);
   });
 
+  it('should keep the longest flow on one vertical and send shorter branches aside', () => {
+    const { nodes, edges } = templateToGraph(
+      createTemplate({
+        tasks: [
+          createTask({ apiName: 'task-a', number: 1, uuid: 'uuid-a' }),
+          createTask({ apiName: 'task-b1', number: 2, uuid: 'uuid-b1', ancestors: ['task-a'] }),
+          createTask({ apiName: 'task-b2', number: 3, uuid: 'uuid-b2', ancestors: ['task-b1'] }),
+          createTask({ apiName: 'task-c', number: 4, uuid: 'uuid-c', ancestors: ['task-a'] }),
+        ],
+      }),
+    );
+    const layouted = applyDagreLayout(nodes, edges);
+    const centerX = (id: string) => {
+      const node = layouted.find((item) => item.id === id);
+
+      return (node?.position.x ?? 0) + (node?.width ?? GRAPH_NODE_WIDTH) / 2;
+    };
+
+    expect(centerX('kickoff')).toBe(centerX('task-a'));
+    expect(centerX('task-a')).toBe(centerX('task-b1'));
+    expect(centerX('task-b1')).toBe(centerX('task-b2'));
+    expect(centerX('task-c')).toBeLessThan(centerX('task-b1'));
+  });
+
+  it('should fan side branches from the stem to the left and right', () => {
+    const { nodes, edges } = templateToGraph(
+      createTemplate({
+        tasks: [
+          createTask({ apiName: 'task-a', number: 1, uuid: 'uuid-a' }),
+          createTask({ apiName: 'task-short', number: 2, uuid: 'uuid-short', ancestors: ['task-a'] }),
+          createTask({ apiName: 'task-mid-1', number: 3, uuid: 'uuid-mid-1', ancestors: ['task-a'] }),
+          createTask({ apiName: 'task-mid-2', number: 4, uuid: 'uuid-mid-2', ancestors: ['task-mid-1'] }),
+          createTask({ apiName: 'task-long-1', number: 5, uuid: 'uuid-long-1', ancestors: ['task-a'] }),
+          createTask({ apiName: 'task-long-2', number: 6, uuid: 'uuid-long-2', ancestors: ['task-long-1'] }),
+          createTask({ apiName: 'task-long-3', number: 7, uuid: 'uuid-long-3', ancestors: ['task-long-2'] }),
+        ],
+      }),
+    );
+    const layouted = applyDagreLayout(nodes, edges);
+    const centerX = (id: string) => {
+      const node = layouted.find((item) => item.id === id);
+
+      return (node?.position.x ?? 0) + (node?.width ?? GRAPH_NODE_WIDTH) / 2;
+    };
+
+    expect(centerX('task-a')).toBe(centerX('task-long-1'));
+    expect(centerX('task-short')).toBeLessThan(centerX('task-long-1'));
+    expect(centerX('task-mid-1')).toBeGreaterThan(centerX('task-long-1'));
+    expect(centerX('task-mid-1')).toBe(centerX('task-mid-2'));
+    expect(centerX('task-long-1')).toBe(centerX('task-long-3'));
+  });
+
+  it('should grow nested extras of a side branch outward, not through the stem', () => {
+    const { nodes, edges } = templateToGraph(
+      createTemplate({
+        tasks: [
+          createTask({ apiName: 'task-a', number: 1, uuid: 'uuid-a' }),
+          createTask({ apiName: 'task-short', number: 2, uuid: 'uuid-short', ancestors: ['task-a'] }),
+          createTask({ apiName: 'task-mid-1', number: 3, uuid: 'uuid-mid-1', ancestors: ['task-a'] }),
+          createTask({ apiName: 'task-mid-2', number: 4, uuid: 'uuid-mid-2', ancestors: ['task-mid-1'] }),
+          createTask({ apiName: 'task-mid-side', number: 5, uuid: 'uuid-mid-side', ancestors: ['task-mid-1'] }),
+          createTask({ apiName: 'task-long-1', number: 6, uuid: 'uuid-long-1', ancestors: ['task-a'] }),
+          createTask({ apiName: 'task-long-2', number: 7, uuid: 'uuid-long-2', ancestors: ['task-long-1'] }),
+          createTask({ apiName: 'task-long-3', number: 8, uuid: 'uuid-long-3', ancestors: ['task-long-2'] }),
+        ],
+      }),
+    );
+    const layouted = applyDagreLayout(nodes, edges);
+    const centerX = (id: string) => {
+      const node = layouted.find((item) => item.id === id);
+
+      return (node?.position.x ?? 0) + (node?.width ?? GRAPH_NODE_WIDTH) / 2;
+    };
+
+    expect(centerX('task-mid-1')).toBeGreaterThan(centerX('task-long-1'));
+    expect(centerX('task-mid-2')).toBe(centerX('task-mid-1'));
+    expect(centerX('task-mid-side')).toBeGreaterThan(centerX('task-mid-1'));
+  });
+
+  it('should keep extras from jumping over a tree already occupying the other side', () => {
+    const { nodes, edges } = templateToGraph(
+      createTemplate({
+        tasks: [
+          createTask({ apiName: 'task-a', number: 1, uuid: 'uuid-a' }),
+          createTask({ apiName: 'task-leaf', number: 2, uuid: 'uuid-leaf', ancestors: ['task-a'] }),
+          createTask({ apiName: 'task-right-1', number: 3, uuid: 'uuid-right-1', ancestors: ['task-a'] }),
+          createTask({ apiName: 'task-right-2', number: 4, uuid: 'uuid-right-2', ancestors: ['task-right-1'] }),
+          createTask({ apiName: 'task-right-3', number: 5, uuid: 'uuid-right-3', ancestors: ['task-right-2'] }),
+          createTask({ apiName: 'task-stem-1', number: 6, uuid: 'uuid-stem-1', ancestors: ['task-a'] }),
+          createTask({ apiName: 'task-stem-2', number: 7, uuid: 'uuid-stem-2', ancestors: ['task-stem-1'] }),
+          createTask({ apiName: 'task-stem-3', number: 8, uuid: 'uuid-stem-3', ancestors: ['task-stem-2'] }),
+          createTask({ apiName: 'task-stem-4', number: 9, uuid: 'uuid-stem-4', ancestors: ['task-stem-3'] }),
+          createTask({ apiName: 'task-extra-a', number: 10, uuid: 'uuid-extra-a', ancestors: ['task-stem-2'] }),
+          createTask({ apiName: 'task-extra-b', number: 11, uuid: 'uuid-extra-b', ancestors: ['task-stem-2'] }),
+          createTask({ apiName: 'task-extra-c', number: 12, uuid: 'uuid-extra-c', ancestors: ['task-stem-2'] }),
+        ],
+      }),
+    );
+    const layouted = applyDagreLayout(nodes, edges);
+    const centerX = (id: string) => {
+      const node = layouted.find((item) => item.id === id);
+
+      return (node?.position.x ?? 0) + (node?.width ?? GRAPH_NODE_WIDTH) / 2;
+    };
+
+    expect(centerX('task-right-3')).toBeGreaterThan(centerX('task-stem-3'));
+    expect(centerX('task-extra-a')).toBeLessThan(centerX('task-stem-3'));
+    expect(centerX('task-extra-b')).toBeLessThan(centerX('task-stem-3'));
+    expect(centerX('task-extra-c')).toBeLessThan(centerX('task-stem-3'));
+  });
+
+  it('should keep kickoff extras in the adjacent columns around the stem', () => {
+    const { nodes, edges } = templateToGraph(
+      createTemplate({
+        tasks: [
+          createTask({ apiName: 'task-1', number: 1, uuid: 'uuid-1', ancestors: ['kickoff'] }),
+          createTask({ apiName: 'task-2', number: 2, uuid: 'uuid-2', ancestors: ['task-1'] }),
+          createTask({ apiName: 'task-3', number: 3, uuid: 'uuid-3', ancestors: ['task-2'] }),
+          createTask({ apiName: 'task-4', number: 4, uuid: 'uuid-4', ancestors: ['task-3'] }),
+          createTask({ apiName: 'task-5', number: 5, uuid: 'uuid-5', ancestors: ['kickoff'] }),
+          createTask({ apiName: 'task-6', number: 6, uuid: 'uuid-6', ancestors: ['kickoff'] }),
+          createTask({ apiName: 'task-7', number: 7, uuid: 'uuid-7', ancestors: ['task-4'] }),
+          createTask({ apiName: 'task-8', number: 8, uuid: 'uuid-8', ancestors: ['task-4'] }),
+          createTask({ apiName: 'task-9', number: 9, uuid: 'uuid-9', ancestors: ['task-5'] }),
+          createTask({ apiName: 'task-10', number: 10, uuid: 'uuid-10', ancestors: ['task-2'] }),
+          createTask({ apiName: 'task-11', number: 11, uuid: 'uuid-11', ancestors: ['task-2'] }),
+          createTask({ apiName: 'task-12', number: 12, uuid: 'uuid-12', ancestors: ['task-2'] }),
+          createTask({ apiName: 'task-13', number: 13, uuid: 'uuid-13', ancestors: ['task-9'] }),
+        ],
+      }),
+    );
+    const layouted = applyDagreLayout(nodes, edges);
+    const centerX = (id: string) => {
+      const node = layouted.find((item) => item.id === id);
+
+      return (node?.position.x ?? 0) + (node?.width ?? GRAPH_NODE_WIDTH) / 2;
+    };
+    const pitch = GRAPH_NODE_WIDTH + GRAPH_COLUMN_GAP;
+
+    expect(centerX('task-6')).toBe(centerX('task-1') - pitch);
+    expect(centerX('task-5')).toBe(centerX('task-1') + pitch);
+    expect(centerX('task-13')).toBe(centerX('task-5'));
+    expect(centerX('task-10')).toBeLessThan(centerX('task-1'));
+    expect(centerX('task-11')).toBeLessThan(centerX('task-1'));
+    expect(centerX('task-12')).toBeLessThan(centerX('task-1'));
+  });
+
+  it('should keep a side branch stacked in its own column', () => {
+    const { nodes, edges } = templateToGraph(
+      createTemplate({
+        tasks: [
+          createTask({ apiName: 'task-a', number: 1, uuid: 'uuid-a' }),
+          createTask({ apiName: 'task-b', number: 2, uuid: 'uuid-b', ancestors: ['task-a'] }),
+          createTask({ apiName: 'task-c1', number: 3, uuid: 'uuid-c1', ancestors: ['task-a'] }),
+          createTask({ apiName: 'task-c2', number: 4, uuid: 'uuid-c2', ancestors: ['task-c1'] }),
+        ],
+      }),
+    );
+    const layouted = applyDagreLayout(nodes, edges);
+    const centerX = (id: string) => {
+      const node = layouted.find((item) => item.id === id);
+
+      return (node?.position.x ?? 0) + (node?.width ?? GRAPH_NODE_WIDTH) / 2;
+    };
+
+    expect(centerX('task-a')).toBe(centerX('task-c1'));
+    expect(centerX('task-c1')).toBe(centerX('task-c2'));
+    expect(centerX('task-b')).not.toBe(centerX('task-c1'));
+  });
+
   it('should place a fork node between the parent and parallel children', () => {
     const { nodes, edges } = templateToGraph(
       createTemplate({
@@ -319,5 +670,27 @@ describe('applyDagreLayout', () => {
     const forkCenter = fork!.position.x + GRAPH_JUNCTION_SIZE / 2;
 
     expect(forkCenter).toBe(parentCenter);
+  });
+
+  it('should put cards of the same nesting depth on one row', () => {
+    const { nodes, edges } = templateToGraph(
+      createTemplate({
+        tasks: [
+          createTask({ apiName: 'task-a', number: 1, uuid: 'uuid-a' }),
+          createTask({ apiName: 'task-b', number: 2, uuid: 'uuid-b', ancestors: ['task-a'] }),
+          createTask({ apiName: 'task-c', number: 3, uuid: 'uuid-c', ancestors: ['task-a'] }),
+          createTask({ apiName: 'task-d', number: 4, uuid: 'uuid-d', ancestors: ['task-c'] }),
+          createTask({ apiName: 'task-e', number: 5, uuid: 'uuid-e', ancestors: ['task-b'] }),
+        ],
+      }),
+    );
+    const layouted = applyDagreLayout(nodes, edges);
+    const taskD = layouted.find((node) => node.id === 'task-d');
+    const taskE = layouted.find((node) => node.id === 'task-e');
+    const taskC = layouted.find((node) => node.id === 'task-c');
+
+    expect(taskD!.position.y).toBe(taskE!.position.y);
+    expect(taskC!.position.x).toBe(taskD!.position.x);
+    expect(Math.abs(taskE!.position.x - taskD!.position.x)).toBe(GRAPH_NODE_WIDTH + GRAPH_COLUMN_GAP);
   });
 });
