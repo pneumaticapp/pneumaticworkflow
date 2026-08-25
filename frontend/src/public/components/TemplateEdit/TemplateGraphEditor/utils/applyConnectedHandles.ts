@@ -10,27 +10,43 @@ import {
 
 export const EMPTY_CONNECTED_HANDLES: IConnectedHandles = {
   hasTargetTop: false,
+  hasTargetBottom: false,
+  hasTargetLeft: false,
+  hasTargetRight: false,
+  hasSourceTop: false,
   hasSourceBottom: false,
-  hasSourceSkip: false,
-  hasTargetSkip: false,
+  hasSourceLeft: false,
+  hasSourceRight: false,
+};
+
+const SOURCE_HANDLE_FLAGS: Record<string, keyof IConnectedHandles> = {
+  'source-top': 'hasSourceTop',
+  'source-bottom': 'hasSourceBottom',
+  'source-left': 'hasSourceLeft',
+  'source-right': 'hasSourceRight',
+  'source-skip': 'hasSourceRight',
+};
+
+const TARGET_HANDLE_FLAGS: Record<string, keyof IConnectedHandles> = {
+  'target-top': 'hasTargetTop',
+  'target-bottom': 'hasTargetBottom',
+  'target-left': 'hasTargetLeft',
+  'target-right': 'hasTargetRight',
+  'target-skip': 'hasTargetRight',
 };
 
 export function collectConnectedHandles(nodeId: string, edges: TGraphEdge[]): IConnectedHandles {
   return edges.reduce<IConnectedHandles>((handles, edge) => {
     if (edge.source === nodeId) {
-      if (edge.sourceHandle === 'source-skip') {
-        return { ...handles, hasSourceSkip: true };
-      }
+      const flag = SOURCE_HANDLE_FLAGS[edge.sourceHandle ?? 'source-bottom'] ?? 'hasSourceBottom';
 
-      return { ...handles, hasSourceBottom: true };
+      return { ...handles, [flag]: true };
     }
 
     if (edge.target === nodeId) {
-      if (edge.targetHandle === 'target-skip') {
-        return { ...handles, hasTargetSkip: true };
-      }
+      const flag = TARGET_HANDLE_FLAGS[edge.targetHandle ?? 'target-top'] ?? 'hasTargetTop';
 
-      return { ...handles, hasTargetTop: true };
+      return { ...handles, [flag]: true };
     }
 
     return handles;

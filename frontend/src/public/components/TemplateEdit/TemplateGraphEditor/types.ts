@@ -26,13 +26,25 @@ export enum EGraphNodeType {
   Junction = 'junction',
 }
 
+export interface IGraphNodePosition {
+  x: number;
+  y: number;
+}
+
+export type TGraphNodePositions = Record<string, IGraphNodePosition>;
+export type TGraphPositionsStorage = Record<string, TGraphNodePositions>;
+
 export type TJunctionKind = 'fork' | 'join';
 
 export interface IConnectedHandles {
   hasTargetTop: boolean;
+  hasTargetBottom: boolean;
+  hasTargetLeft: boolean;
+  hasTargetRight: boolean;
+  hasSourceTop: boolean;
   hasSourceBottom: boolean;
-  hasSourceSkip: boolean;
-  hasTargetSkip: boolean;
+  hasSourceLeft: boolean;
+  hasSourceRight: boolean;
 }
 
 export interface ITaskNodeData {
@@ -58,9 +70,41 @@ export type TKickoffNode = Node<IKickoffNodeData, EGraphNodeType.Kickoff>;
 export type TJunctionNode = Node<IJunctionNodeData, EGraphNodeType.Junction>;
 export type TGraphNode = TTaskNode | TKickoffNode | TJunctionNode;
 
+export type TGraphEdgePathKind = 'straight' | 'from-task' | 'from-fork' | 'skip';
+
+/** Visual kind of a line. Template edges are gray solid start-after links. */
+export type TGraphEdgeLine = 'solid' | 'dashed';
+
+export type TGraphEdgeFocus = 'highlighted' | 'dimmed';
+
+export interface IGraphEdgeAnchor {
+  x: number;
+  y: number;
+}
+
 export interface IConditionEdgeData {
   summary?: string;
   isConditional?: boolean;
+  /** Labels of the cards the task starts after. `KICKOFF_START_AFTER` means the kick-off form. */
+  startAfter?: string[];
+  pathKind?: TGraphEdgePathKind;
+  /** Side-lane X for a skip around a column, or the tree gutter a fork branch turns in. */
+  laneX?: number;
+  /** Row-gap Y used with a gutter turn when the destination row would run under a card. */
+  laneY?: number;
+  /** Which side a detour uses when it must leave the column. */
+  laneSide?: 'left' | 'right';
+  /** The line runs in a side lane instead of the vertical stem, so it never joins a junction. */
+  isLaneRouted?: boolean;
+  /** Flow-space point on the source card face. The SVG path uses this instead of React Flow handleBounds. */
+  sourceAnchor?: IGraphEdgeAnchor;
+  /** Flow-space point on the target card face. */
+  targetAnchor?: IGraphEdgeAnchor;
+  /** Handle ids used to build the path; preferred over React Flow's live handleBounds. */
+  sourceHandle?: string;
+  targetHandle?: string;
+  /** Focus state assigned by `applyGraphFocus`; drives the label appearance. */
+  focus?: TGraphEdgeFocus;
 }
 
 export type TGraphEdge = Edge<IConditionEdgeData>;

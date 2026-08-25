@@ -1,30 +1,25 @@
+import { EMPTY_CONNECTED_HANDLES, applyConnectedHandles, collectConnectedHandles } from '../applyConnectedHandles';
 import { EGraphNodeType, TGraphEdge, TGraphNode } from '../../types';
-import { applyConnectedHandles, collectConnectedHandles } from '../applyConnectedHandles';
 
 describe('collectConnectedHandles', () => {
   it('should mark only handles that have an edge', () => {
     const edges: TGraphEdge[] = [
       { id: 'e1', source: 'kickoff', target: 'task-1', sourceHandle: 'source-bottom', targetHandle: 'target-top' },
-      { id: 'e2', source: 'task-1', target: 'task-2', sourceHandle: 'source-skip', targetHandle: 'target-skip' },
+      { id: 'e2', source: 'task-1', target: 'task-2', sourceHandle: 'source-right', targetHandle: 'target-left' },
     ];
 
     expect(collectConnectedHandles('kickoff', edges)).toEqual({
-      hasTargetTop: false,
+      ...EMPTY_CONNECTED_HANDLES,
       hasSourceBottom: true,
-      hasSourceSkip: false,
-      hasTargetSkip: false,
     });
     expect(collectConnectedHandles('task-1', edges)).toEqual({
+      ...EMPTY_CONNECTED_HANDLES,
       hasTargetTop: true,
-      hasSourceBottom: false,
-      hasSourceSkip: true,
-      hasTargetSkip: false,
+      hasSourceRight: true,
     });
     expect(collectConnectedHandles('task-2', edges)).toEqual({
-      hasTargetTop: false,
-      hasSourceBottom: false,
-      hasSourceSkip: false,
-      hasTargetSkip: true,
+      ...EMPTY_CONNECTED_HANDLES,
+      hasTargetLeft: true,
     });
   });
 });
@@ -45,10 +40,8 @@ describe('applyConnectedHandles', () => {
     const junction = next.nodes.find((node) => node.id === 'junction-fork-kickoff');
 
     expect(kickoff && 'handles' in kickoff.data ? kickoff.data.handles : null).toEqual({
-      hasTargetTop: false,
+      ...EMPTY_CONNECTED_HANDLES,
       hasSourceBottom: true,
-      hasSourceSkip: false,
-      hasTargetSkip: false,
     });
     expect(junction && 'handles' in junction.data ? junction.data.handles : undefined).toBeUndefined();
   });

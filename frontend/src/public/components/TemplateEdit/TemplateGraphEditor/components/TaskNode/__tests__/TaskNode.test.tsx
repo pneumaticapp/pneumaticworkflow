@@ -8,6 +8,7 @@ import { EExtraFieldType, ETaskPerformerType, ITemplateTaskClient } from '../../
 import { createEmptyTaskDueDate } from '../../../../../../utils/dueDate/createEmptyTaskDueDate';
 import { EConditionAction, EConditionLogicOperations, EConditionOperators } from '../../../../TaskForm/Conditions';
 import { TaskNode } from '../TaskNode';
+import { EMPTY_CONNECTED_HANDLES } from '../../../utils/applyConnectedHandles';
 
 configure({ testIdAttribute: 'data-test-id' });
 
@@ -100,13 +101,17 @@ describe('TaskNode', () => {
     expect(screen.queryByText(/condition/)).not.toBeInTheDocument();
   });
 
-  it('should hide handles that have no connected edges', () => {
+  it('should keep all handles mounted so edges can switch sides', () => {
     const { container } = renderTaskNode(createTask());
 
-    expect(container.querySelectorAll('.react-flow__handle')).toHaveLength(0);
+    expect(container.querySelectorAll('.react-flow__handle')).toHaveLength(8);
+    expect(container.querySelectorAll('.react-flow__handle-top')).toHaveLength(2);
+    expect(container.querySelectorAll('.react-flow__handle-bottom')).toHaveLength(2);
+    expect(container.querySelectorAll('.react-flow__handle-left')).toHaveLength(2);
+    expect(container.querySelectorAll('.react-flow__handle-right')).toHaveLength(2);
   });
 
-  it('should render only connected skip handles', () => {
+  it('should mark only connected handles as visible', () => {
     const { container } = render(
       <ReactFlowProvider>
         <TaskNode
@@ -117,10 +122,8 @@ describe('TaskNode', () => {
             isSelected: false,
             onEdit: jest.fn(),
             handles: {
-              hasTargetTop: false,
-              hasSourceBottom: false,
-              hasSourceSkip: true,
-              hasTargetSkip: false,
+              ...EMPTY_CONNECTED_HANDLES,
+              hasSourceRight: true,
             },
           }}
           selected={false}
@@ -133,8 +136,14 @@ describe('TaskNode', () => {
       </ReactFlowProvider>,
     );
 
-    expect(container.querySelectorAll('.react-flow__handle')).toHaveLength(1);
-    expect(container.querySelector('.react-flow__handle-right')?.className).toMatch(/handle--skip/);
+    expect(container.querySelectorAll('.react-flow__handle')).toHaveLength(8);
+    const idleHandles = Array.from(container.querySelectorAll('.react-flow__handle'))
+      .filter((element) => element.className.includes('handle--idle'));
+    const visibleRight = Array.from(container.querySelectorAll('.react-flow__handle-right'))
+      .find((element) => !element.className.includes('handle--idle'));
+
+    expect(idleHandles).toHaveLength(7);
+    expect(visibleRight).toBeTruthy();
   });
 
   it('should call onEdit when the kebab is clicked', () => {

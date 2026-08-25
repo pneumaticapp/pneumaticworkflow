@@ -1,19 +1,36 @@
 import * as React from 'react';
-import { useCallback } from 'react';
-import { Handle, Position, NodeProps } from 'reactflow';
+import { useCallback, useEffect } from 'react';
+import { NodeProps, useUpdateNodeInternals } from 'reactflow';
 import { useIntl } from 'react-intl';
 
 import { ITaskNodeData } from '../../types';
 import { EMPTY_CONNECTED_HANDLES } from '../../utils/applyConnectedHandles';
-import { GraphNodeCard, graphNodeHandleClassName, graphNodeSkipHandleClassName } from '../GraphNodeCard/GraphNodeCard';
+import { GraphCardHandles } from '../GraphCardHandles/GraphCardHandles';
+import { GraphNodeCard } from '../GraphNodeCard/GraphNodeCard';
 import cardStyles from '../GraphNodeCard/GraphNodeCard.css';
 
-export const TaskNode = ({ data, selected }: NodeProps<ITaskNodeData>) => {
+export const TaskNode = ({ id, data, selected }: NodeProps<ITaskNodeData>) => {
   const { formatMessage } = useIntl();
+  const updateNodeInternals = useUpdateNodeInternals();
   const { task, onEdit, handles = EMPTY_CONNECTED_HANDLES } = data;
   const performersCount = task.rawPerformers?.length ?? 0;
   const conditionsCount = task.conditions?.length ?? 0;
   const fieldsCount = task.fields?.length ?? 0;
+
+  const connectedSignature = [
+    handles.hasSourceTop,
+    handles.hasSourceBottom,
+    handles.hasSourceLeft,
+    handles.hasSourceRight,
+    handles.hasTargetTop,
+    handles.hasTargetBottom,
+    handles.hasTargetLeft,
+    handles.hasTargetRight,
+  ].join('');
+
+  useEffect(() => {
+    updateNodeInternals(id);
+  }, [id, connectedSignature, updateNodeInternals]);
 
   const handleEdit = useCallback(() => {
     onEdit(task.apiName);
@@ -49,20 +66,7 @@ export const TaskNode = ({ data, selected }: NodeProps<ITaskNodeData>) => {
       editLabel={formatMessage({ id: 'template.task-edit' })}
       meta={meta}
       handles={(
-        <>
-          {handles.hasTargetTop && (
-            <Handle type="target" position={Position.Top} id="target-top" className={graphNodeHandleClassName} />
-          )}
-          {handles.hasSourceBottom && (
-            <Handle type="source" position={Position.Bottom} id="source-bottom" className={graphNodeHandleClassName} />
-          )}
-          {handles.hasSourceSkip && (
-            <Handle type="source" position={Position.Right} id="source-skip" className={graphNodeSkipHandleClassName} />
-          )}
-          {handles.hasTargetSkip && (
-            <Handle type="target" position={Position.Left} id="target-skip" className={graphNodeSkipHandleClassName} />
-          )}
-        </>
+        <GraphCardHandles handles={handles} includeTargets />
       )}
     />
   );

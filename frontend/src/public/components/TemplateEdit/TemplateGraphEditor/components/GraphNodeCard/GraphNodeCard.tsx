@@ -4,7 +4,6 @@ import { MoreIcon } from '../../../../icons';
 import styles from './GraphNodeCard.css';
 
 export const graphNodeHandleClassName = styles['graph-node-card__handle'];
-export const graphNodeSkipHandleClassName = `${styles['graph-node-card__handle']} ${styles['graph-node-card__handle--skip']}`;
 
 interface IGraphNodeCardProps {
   label: string;
