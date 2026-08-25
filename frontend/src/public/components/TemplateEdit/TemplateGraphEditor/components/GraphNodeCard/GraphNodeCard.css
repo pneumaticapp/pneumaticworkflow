@@ -104,7 +104,8 @@
   border: none;
 }
 
-.graph-node-card__handle--skip,
-:global(.react-flow__handle).graph-node-card__handle--skip {
-  background: var(--pneumatic-color-link);
+.graph-node-card__handle--idle {
+  pointer-events: none;
+  background: transparent;
+  opacity: 0;
 }

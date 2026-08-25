@@ -1,19 +1,33 @@
 import * as React from 'react';
-import { Handle, Position, NodeProps } from 'reactflow';
+import { useEffect } from 'react';
+import { NodeProps, useUpdateNodeInternals } from 'reactflow';
 import { useIntl } from 'react-intl';
 
 import { IKickoffNodeData } from '../../types';
 import { EMPTY_CONNECTED_HANDLES } from '../../utils/applyConnectedHandles';
 import { getPlainText } from '../../utils/getPlainText';
-import { GraphNodeCard, graphNodeHandleClassName, graphNodeSkipHandleClassName } from '../GraphNodeCard/GraphNodeCard';
+import { GraphCardHandles } from '../GraphCardHandles/GraphCardHandles';
+import { GraphNodeCard } from '../GraphNodeCard/GraphNodeCard';
 import cardStyles from '../GraphNodeCard/GraphNodeCard.css';
 
-export const KickoffNode = ({ data, selected }: NodeProps<IKickoffNodeData>) => {
+export const KickoffNode = ({ id, data, selected }: NodeProps<IKickoffNodeData>) => {
   const { formatMessage } = useIntl();
+  const updateNodeInternals = useUpdateNodeInternals();
   const kickoff = data?.kickoff;
   const handles = data?.handles ?? EMPTY_CONNECTED_HANDLES;
   const fieldsCount = kickoff?.fields?.length ?? 0;
   const title = getPlainText(kickoff?.description);
+
+  const connectedSignature = [
+    handles.hasSourceTop,
+    handles.hasSourceBottom,
+    handles.hasSourceLeft,
+    handles.hasSourceRight,
+  ].join('');
+
+  useEffect(() => {
+    updateNodeInternals(id);
+  }, [id, connectedSignature, updateNodeInternals]);
 
   const meta = fieldsCount > 0 ? (
     <div className={cardStyles['graph-node-card__meta']}>
@@ -33,14 +47,7 @@ export const KickoffNode = ({ data, selected }: NodeProps<IKickoffNodeData>) => 
       editLabel={formatMessage({ id: 'kickoff.menu-edit' })}
       meta={meta}
       handles={(
-        <>
-          {handles.hasSourceBottom && (
-            <Handle type="source" position={Position.Bottom} id="source-bottom" className={graphNodeHandleClassName} />
-          )}
-          {handles.hasSourceSkip && (
-            <Handle type="source" position={Position.Right} id="source-skip" className={graphNodeSkipHandleClassName} />
-          )}
-        </>
+        <GraphCardHandles handles={handles} includeTargets={false} />
       )}
     />
   );
