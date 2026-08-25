@@ -19,6 +19,34 @@ from src.generics.messages import (
 )
 
 
+class DocExampleMixin:
+    """Adds an OpenAPI ``example`` without changing field validation."""
+
+    def __init__(self, *args, example=None, **kwargs):
+        self.example = example
+        super().__init__(*args, **kwargs)
+
+
+class DocCharField(DocExampleMixin, serializers.CharField):
+    pass
+
+
+class DocIntegerField(DocExampleMixin, serializers.IntegerField):
+    pass
+
+
+class DocChoiceField(DocExampleMixin, serializers.ChoiceField):
+    pass
+
+
+class DocBooleanField(DocExampleMixin, serializers.BooleanField):
+    pass
+
+
+class DocURLField(DocExampleMixin, serializers.URLField):
+    pass
+
+
 class AccountQstMixin:
 
     def _get_account(self) -> Account:
@@ -46,6 +74,7 @@ class TemplateQstMixin:
 
 
 class AccountPrimaryKeyRelatedField(
+    DocExampleMixin,
     AccountQstMixin,
     serializers.PrimaryKeyRelatedField,
 ):
@@ -116,7 +145,7 @@ class RelatedListField(serializers.ListField):
         ]
 
 
-class RelatedApiNameListField(serializers.ListField):
+class RelatedApiNameListField(DocExampleMixin, serializers.ListField):
 
     child = serializers.CharField()
 

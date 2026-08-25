@@ -362,39 +362,6 @@ class Common(Configuration):
         'SERVERS': [{'url': '/', 'description': 'Pneumatic Core API Server'}],
         'TAGS': [
             {
-                'name': 'Auth',
-                'description': (
-                    'Sign in, token obtain/refresh, password '
-                    'management, and user context'
-                ),
-            },
-            {
-                'name': 'Templates',
-                'description': (
-                    'Create, configure, and manage workflow templates'
-                ),
-            },
-            {
-                'name': 'Templates Public',
-                'description': (
-                    'Public and embedded templates for external forms'
-                ),
-            },
-            {
-                'name': 'Workflows',
-                'description': (
-                    'Running workflow instances — complete, return, '
-                    'snooze, comment, and track progress'
-                ),
-            },
-            {
-                'name': 'Tasks',
-                'description': (
-                    'Task operations — complete, revert, manage '
-                    'performers, due dates, and events'
-                ),
-            },
-            {
                 'name': 'Accounts',
                 'description': (
                     'Account settings, users, invites, groups, '
@@ -402,14 +369,21 @@ class Common(Configuration):
                 ),
             },
             {
+                'name': 'AI',
+                'description': (
+                    'AI providers and agents for account-level '
+                    'model configuration'
+                ),
+            },
+            {
                 'name': 'Attachments',
                 'description': 'File attachments linked to workflows',
             },
             {
-                'name': 'Webhooks',
+                'name': 'Auth',
                 'description': (
-                    'Subscribe to workflow events and manage '
-                    'webhook endpoints'
+                    'Sign in, token obtain/refresh, password '
+                    'management, and user context'
                 ),
             },
             {
@@ -426,20 +400,46 @@ class Common(Configuration):
                 ),
             },
             {
-                'name': 'Tenants',
-                'description': 'Multi-tenant workspace management',
-            },
-            {
                 'name': 'Reports',
                 'description': (
                     'Dashboard highlights and workflow analytics'
                 ),
             },
             {
-                'name': 'AI',
+                'name': 'Tasks',
                 'description': (
-                    'AI providers and agents for account-level '
-                    'model configuration'
+                    'Task operations — complete, revert, manage '
+                    'performers, due dates, and events'
+                ),
+            },
+            {
+                'name': 'Templates',
+                'description': (
+                    'Create, configure, and manage workflow templates'
+                ),
+            },
+            {
+                'name': 'Templates Public',
+                'description': (
+                    'Public and embedded templates for external forms'
+                ),
+            },
+            {
+                'name': 'Tenants',
+                'description': 'Multi-tenant workspace management',
+            },
+            {
+                'name': 'Webhooks',
+                'description': (
+                    'Subscribe to workflow events and manage '
+                    'webhook endpoints'
+                ),
+            },
+            {
+                'name': 'Workflows',
+                'description': (
+                    'Running workflow instances — complete, return, '
+                    'snooze, comment, and track progress'
                 ),
             },
         ],

@@ -1,13 +1,15 @@
 from rest_framework.serializers import (
-    BooleanField,
-    CharField,
-    IntegerField,
     ModelSerializer,
     Serializer,
-    URLField,
 )
 
 from src.ai.models import AIAgent, AIProvider
+from src.generics.fields import (
+    DocBooleanField,
+    DocCharField,
+    DocIntegerField,
+    DocURLField,
+)
 from src.generics.mixins.serializers import CustomValidationErrorMixin
 
 
@@ -26,11 +28,35 @@ class AIProviderSerializer(
             'is_active',
         )
 
-    id = IntegerField(read_only=True)
-    name = CharField(max_length=255)
-    base_url = URLField(max_length=1024)
-    api_key = CharField(write_only=True)
-    is_active = BooleanField(required=False, default=True)
+    id = DocIntegerField(
+        read_only=True,
+        help_text='Unique identifier of the AI provider',
+        example=1,
+    )
+    name = DocCharField(
+        max_length=255,
+        help_text='Display name of the provider',
+        example='OpenRouter',
+    )
+    base_url = DocURLField(
+        max_length=1024,
+        help_text='Base URL of the provider API',
+        example='https://openrouter.ai/api/v1',
+    )
+    api_key = DocCharField(
+        write_only=True,
+        help_text=(
+            'Secret API key for the provider. '
+            'Write-only — never returned in responses'
+        ),
+        example='sk-or-v1-example',
+    )
+    is_active = DocBooleanField(
+        required=False,
+        default=True,
+        help_text='Whether the provider is enabled',
+        example=True,
+    )
 
 
 class AIModelSerializer(
@@ -38,8 +64,14 @@ class AIModelSerializer(
     Serializer,
 ):
 
-    name = CharField()
-    slug = CharField()
+    name = DocCharField(
+        help_text='Human-readable model name',
+        example='GPT-4o',
+    )
+    slug = DocCharField(
+        help_text='Model identifier in OpenRouter-style format',
+        example='openai/gpt-4o',
+    )
 
 
 class AIAgentSerializer(
@@ -59,15 +91,39 @@ class AIAgentSerializer(
             'system_prompt',
         )
 
-    id = IntegerField(read_only=True)
-    name = CharField(max_length=255)
-    photo = URLField(
+    id = DocIntegerField(
+        read_only=True,
+        help_text='Unique identifier of the AI agent',
+        example=1,
+    )
+    name = DocCharField(
+        max_length=255,
+        help_text='Display name of the agent',
+        example='Research assistant',
+    )
+    photo = DocURLField(
         max_length=1024,
         required=False,
         allow_null=True,
         allow_blank=True,
+        help_text='URL of the agent avatar',
+        example='https://example.com/images/assistant.jpg',
     )
-    is_active = BooleanField()
-    provider_id = IntegerField()
-    model = CharField(max_length=200)
-    system_prompt = CharField(default='')
+    is_active = DocBooleanField(
+        help_text='Whether the agent is enabled',
+        example=True,
+    )
+    provider_id = DocIntegerField(
+        help_text='Identifier of the AI provider this agent uses',
+        example=1,
+    )
+    model = DocCharField(
+        max_length=200,
+        help_text='OpenRouter-style model slug',
+        example='openai/gpt-4o',
+    )
+    system_prompt = DocCharField(
+        default='',
+        help_text='System instructions that define the agent behavior',
+        example='You are a helpful research assistant.',
+    )
