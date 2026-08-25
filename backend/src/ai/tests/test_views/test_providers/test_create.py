@@ -123,6 +123,7 @@ def test_create__full_data__ok(api_client, mocker):
         'id',
         'name',
         'base_url',
+        'api_key_prefix',
         'is_active',
     }
     assert response.data['id'] == provider.id

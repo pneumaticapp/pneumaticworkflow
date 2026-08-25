@@ -8,6 +8,7 @@ from src.generics.fields import (
     DocBooleanField,
     DocCharField,
     DocIntegerField,
+    DocSerializerMethodField,
     DocURLField,
 )
 from src.generics.mixins.serializers import CustomValidationErrorMixin
@@ -25,6 +26,7 @@ class AIProviderSerializer(
             'name',
             'base_url',
             'api_key',
+            'api_key_prefix',
             'is_active',
         )
 
@@ -57,6 +59,14 @@ class AIProviderSerializer(
         help_text='Whether the provider is enabled',
         example=True,
     )
+    api_key_prefix = DocSerializerMethodField(
+        help_text='Secret API key prefix for the provider',
+        example='sk-or-v1-744afb981...',
+    )
+
+    def get_api_key_prefix(self, obj) -> str:
+        length = AIProvider.API_KEY_PREFIX_DISPLAY_LENGTH
+        return obj.api_key[:length]
 
 
 class AIModelSerializer(

@@ -176,6 +176,8 @@ class AIProvider(
     EncryptionMixin,
 ):
 
+    API_KEY_PREFIX_DISPLAY_LENGTH = 14
+
     class Meta:
         ordering = ('id',)
 

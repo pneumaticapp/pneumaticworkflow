@@ -137,6 +137,7 @@ def test_partial_update__full_data__ok(api_client, mocker):
         'id',
         'name',
         'base_url',
+        'api_key_prefix',
         'is_active',
     }
     assert response.data['id'] == updated_provider.id

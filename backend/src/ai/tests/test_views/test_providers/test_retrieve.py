@@ -44,6 +44,7 @@ def test_retrieve__ok(api_client):
         'id',
         'name',
         'base_url',
+        'api_key_prefix',
         'is_active',
     }
     assert response.data['id'] == provider.id

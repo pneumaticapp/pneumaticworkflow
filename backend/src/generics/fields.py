@@ -47,6 +47,13 @@ class DocURLField(DocExampleMixin, serializers.URLField):
     pass
 
 
+class DocSerializerMethodField(
+    DocExampleMixin,
+    serializers.SerializerMethodField,
+):
+    pass
+
+
 class AccountQstMixin:
 
     def _get_account(self) -> Account:
