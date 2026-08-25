@@ -5,7 +5,7 @@
   width: 2rem;
   height: 2rem;
   cursor: pointer;
-  background: var(--pneumatic-color-black4);
+  background: var(--pneumatic-color-white);
   border-radius: 50%;
 }
 
@@ -13,4 +13,30 @@
   display: block;
   width: 2rem;
   height: 2rem;
+}
+
+.edge-info--conditional:hover svg {
+  fill: var(--pneumatic-color-link-hover);
+}
+
+.tooltip-box {
+  box-sizing: border-box;
+  width: 19.2rem;
+  max-width: 19.2rem;
+  background-color: var(--pneumatic-color-black72);
+  border-radius: 0.8rem;
+}
+
+.tooltip-box :global(.tippy-content) {
+  padding: 0.4rem 0.8rem;
+}
+
+.tooltip-content {
+  width: 100%;
+  font-size: 1.3rem;
+  font-weight: normal;
+  line-height: 1.6rem;
+  text-align: center;
+  color: var(--pneumatic-color-beige);
+  overflow-wrap: break-word;
 }
