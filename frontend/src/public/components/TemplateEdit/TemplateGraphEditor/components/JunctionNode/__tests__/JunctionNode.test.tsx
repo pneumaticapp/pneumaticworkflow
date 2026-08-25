@@ -42,4 +42,18 @@ describe('JunctionNode', () => {
 
     expect(screen.getByTestId('graph-junction-node')).toHaveAttribute('data-kind', 'join');
   });
+
+  it('should keep docking handles invisible and centred on the node', () => {
+    const { container } = render(
+      <ReactFlowProvider>
+        <JunctionNode {...nodeProps} data={{ kind: 'fork' }} />
+      </ReactFlowProvider>,
+    );
+    const handles = container.querySelectorAll('.react-flow__handle');
+
+    expect(handles).toHaveLength(8);
+    handles.forEach((handle) => {
+      expect(handle).toHaveStyle({ opacity: '0', top: '50%', left: '50%' });
+    });
+  });
 });

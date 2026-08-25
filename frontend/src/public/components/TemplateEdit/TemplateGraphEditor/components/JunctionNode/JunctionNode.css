@@ -9,9 +9,8 @@
 }
 
 .junction-node__handle {
-  width: 0.8rem;
-  height: 0.8rem;
   pointer-events: none;
+  background: transparent;
   border: none;
   opacity: 0;
 }
