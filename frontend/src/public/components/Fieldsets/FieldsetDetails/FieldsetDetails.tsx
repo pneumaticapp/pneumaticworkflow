@@ -48,6 +48,7 @@ import { FIELDSET_LABEL_POSITION_OPTIONS } from '../constants';
 import { TFieldsetDetailsProps, TLocalFieldsetState, TFieldsetChanges } from './types';
 import { FieldsetRulesets } from './FieldsetRulesets/FieldsetRulesets';
 import { FieldsetFieldsList } from './FieldsetFieldsList/FieldsetFieldsList';
+import { FieldRuleModal } from './FieldRuleModal';
 import styles from './FieldsetDetails.css';
 
 
@@ -74,6 +75,7 @@ const FieldsetDetails = ({
 
   const [localFieldset, setLocalFieldset] = useState<TLocalFieldsetState>(EMPTY_LOCAL_FIELDSET);
   const [fieldsetChanges, setFieldsetChanges] = useState<TFieldsetChanges>({});
+  const [activeFieldRulesApiName, setActiveFieldRulesApiName] = useState<string | null>(null);
   const datasetOptions = useDatasetOptions(localFieldset.fields);
   const labelPositionRef = useRef<HTMLDivElement>(null);
 
@@ -410,8 +412,7 @@ const FieldsetDetails = ({
         accountId={accountId}
         datasetOptions={datasetOptions}
         onOpenFieldRules={(fieldApiName) => {
-          // TODO: Open FieldRuleModal for fieldApiName
-          console.log('Open field rules modal for field:', fieldApiName);
+          setActiveFieldRulesApiName(fieldApiName);
         }}
       />
 
@@ -436,6 +437,13 @@ const FieldsetDetails = ({
           )}
         </div>
       )}
+
+      <FieldRuleModal
+        isOpen={Boolean(activeFieldRulesApiName)}
+        onClose={() => setActiveFieldRulesApiName(null)}
+        onSave={() => setActiveFieldRulesApiName(null)}
+        onDelete={() => setActiveFieldRulesApiName(null)}
+      />
 
       <FieldsetModal type={EFieldsetModalType.Edit} />
     </div>
