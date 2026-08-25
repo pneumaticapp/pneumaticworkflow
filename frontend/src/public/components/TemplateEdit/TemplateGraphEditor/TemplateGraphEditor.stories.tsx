@@ -1,3 +1,4 @@
+import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 
 import { GRAPH_SHOWCASE_TEMPLATE } from './fixtures/graphShowcaseTemplate';
@@ -23,6 +24,17 @@ type Story = StoryObj<typeof meta>;
 export const AllVariants: Story = {
   args: {
     template: GRAPH_SHOWCASE_TEMPLATE,
+    onTaskEdit: () => undefined,
+    onKickoffEdit: () => undefined,
+  },
+};
+
+export const PersistentPositions: Story = {
+  args: {
+    template: {
+      ...GRAPH_SHOWCASE_TEMPLATE,
+      id: 900001,
+    },
     onTaskEdit: () => undefined,
     onKickoffEdit: () => undefined,
   },
