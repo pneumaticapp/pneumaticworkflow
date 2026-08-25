@@ -1,6 +1,8 @@
 import { EGraphNodeType, IGraphState, TGraphEdge, TGraphNode, TJunctionKind } from '../types';
-import { GRAPH_JUNCTION_SIZE } from './applyDagreLayout';
-import { EDGE_STYLE_DEFAULT, GRAPH_EDGE_CLASS_SKIP, isSkipGraphEdge } from './edgeStyles';
+import { getGraphEdgeVisual } from './edgeStyles';
+import { GRAPH_HANDLE, GRAPH_JUNCTION_SIZE } from './graphGeometry';
+
+type TEdgeEndpoint = 'source' | 'target';
 
 function createJunctionNode(id: string, kind: TJunctionKind): TGraphNode {
   return {
@@ -17,33 +19,56 @@ function createJunctionNode(id: string, kind: TJunctionKind): TGraphNode {
   };
 }
 
-function createPlainEdge(source: string, target: string, suffix: string): TGraphEdge {
+function createStemEdge(source: string, target: string, suffix: string): TGraphEdge {
   return {
     id: `edge-${source}-${target}-${suffix}`,
     source,
     target,
-    sourceHandle: 'source-bottom',
-    targetHandle: 'target-top',
+    sourceHandle: GRAPH_HANDLE.SourceBottom,
+    targetHandle: GRAPH_HANDLE.TargetTop,
     type: 'smoothstep',
     data: { isConditional: false },
     labelShowBg: false,
-    style: EDGE_STYLE_DEFAULT,
+    ...getGraphEdgeVisual(false),
   };
 }
 
-function groupBy(edges: TGraphEdge[], key: 'source' | 'target'): Map<string, TGraphEdge[]> {
+function groupBy(edges: TGraphEdge[], key: TEdgeEndpoint): Map<string, TGraphEdge[]> {
   const map = new Map<string, TGraphEdge[]>();
 
   edges.forEach((edge) => {
     const id = edge[key];
-    const list = map.get(id) ?? [];
-    list.push(edge);
-    map.set(id, list);
+    map.set(id, [...(map.get(id) ?? []), edge]);
   });
 
   return map;
 }
 
+function uniqueLabels(labels: string[]): string[] {
+  const seen = new Set<string>();
+
+  return labels.filter((label) => {
+    if (seen.has(label)) {
+      return false;
+    }
+
+    seen.add(label);
+
+    return true;
+  });
+}
+
+function withoutBadge(edge: TGraphEdge): TGraphEdge {
+  const { summary, startAfter, ...restData } = edge.data ?? {};
+
+  return { ...edge, data: restData };
+}
+
+/**
+ * A card keeps a single vertical stem. Extra incoming or outgoing links meet at a
+ * fork or join so the card itself never has two edges on the same handle.
+ * The start-after badge sits on the first segment leaving a card, before any fork.
+ */
 export function insertJunctionNodes(nodes: TGraphNode[], edges: TGraphEdge[]): IGraphState {
   const outgoing = groupBy(edges, 'source');
   const incoming = groupBy(edges, 'target');
@@ -52,14 +77,20 @@ export function insertJunctionNodes(nodes: TGraphNode[], edges: TGraphEdge[]): I
   const junctionNodes: TGraphNode[] = [];
 
   outgoing.forEach((list, sourceId) => {
-    if (list.length < 2) return;
+    if (list.length < 2) {
+      return;
+    }
+
     const forkId = `junction-fork-${sourceId}`;
     forkBySource.set(sourceId, forkId);
     junctionNodes.push(createJunctionNode(forkId, 'fork'));
   });
 
   incoming.forEach((list, targetId) => {
-    if (list.length < 2) return;
+    if (list.length < 2) {
+      return;
+    }
+
     const joinId = `junction-join-${targetId}`;
     joinByTarget.set(targetId, joinId);
     junctionNodes.push(createJunctionNode(joinId, 'join'));
@@ -72,34 +103,29 @@ export function insertJunctionNodes(nodes: TGraphNode[], edges: TGraphEdge[]): I
   const nextEdges: TGraphEdge[] = [];
 
   forkBySource.forEach((forkId, sourceId) => {
-    nextEdges.push(createPlainEdge(sourceId, forkId, 'out'));
+    const branches = outgoing.get(sourceId) ?? [];
+    const startAfter = uniqueLabels(branches.flatMap((edge) => edge.data?.startAfter ?? []));
+    const stem = createStemEdge(sourceId, forkId, 'out');
+
+    nextEdges.push({ ...stem, data: { ...stem.data, startAfter } });
   });
 
   joinByTarget.forEach((joinId, targetId) => {
-    const originals = incoming.get(targetId) ?? [];
-    const summaryEdge = originals.find((edge) => edge.data?.summary && !isSkipGraphEdge(edge));
-    nextEdges.push({
-      ...createPlainEdge(joinId, targetId, 'in'),
-      data: summaryEdge?.data ?? { isConditional: false },
-      style: EDGE_STYLE_DEFAULT,
-    });
+    nextEdges.push(createStemEdge(joinId, targetId, 'in'));
   });
 
   edges.forEach((edge) => {
-    const source = forkBySource.get(edge.source) ?? edge.source;
-    const target = joinByTarget.get(edge.target) ?? edge.target;
-    const isSkip = isSkipGraphEdge(edge);
-    const isJoinInbound = joinByTarget.has(edge.target) && !isSkip;
+    const forkId = forkBySource.get(edge.source);
+    const joinId = joinByTarget.get(edge.target);
+    const segment = forkId ? withoutBadge(edge) : edge;
 
     nextEdges.push({
-      ...edge,
-      source,
-      target,
-      sourceHandle: 'source-bottom',
-      targetHandle: 'target-top',
-      className: isSkip ? GRAPH_EDGE_CLASS_SKIP : edge.className,
-      data: isJoinInbound ? { isConditional: false } : edge.data,
-      style: isJoinInbound ? EDGE_STYLE_DEFAULT : edge.style,
+      ...segment,
+      source: forkId ?? edge.source,
+      target: joinId ?? edge.target,
+      sourceHandle: GRAPH_HANDLE.SourceBottom,
+      targetHandle: GRAPH_HANDLE.TargetTop,
+      ...getGraphEdgeVisual(false),
     });
   });
 
