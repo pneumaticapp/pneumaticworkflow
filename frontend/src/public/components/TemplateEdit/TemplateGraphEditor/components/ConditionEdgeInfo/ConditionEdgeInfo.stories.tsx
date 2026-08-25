@@ -1,18 +1,34 @@
+import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 
-import { ConditionEdgeInfo } from './ConditionEdgeInfo';
+import { ConditionEdgeInfo, IConditionEdgeInfoProps } from './ConditionEdgeInfo';
 
-const meta = {
+const meta: Meta<IConditionEdgeInfoProps> = {
   title: 'TemplateEdit/ConditionEdgeInfo',
   component: ConditionEdgeInfo,
   tags: ['autodocs'],
-} satisfies Meta<typeof ConditionEdgeInfo>;
+  decorators: [
+    (Story) => (
+      <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '12rem' }}>
+        <Story />
+      </div>
+    ),
+  ],
+};
 
 export default meta;
-type Story = StoryObj<typeof meta>;
+type Story = StoryObj<IConditionEdgeInfoProps>;
 
-export const Default: Story = {
-  args: {},
+export const StartAfter: Story = {
+  args: {
+    startAfter: ['Prepare layout'],
+  },
+};
+
+export const StartAfterMerged: Story = {
+  args: {
+    startAfter: ['Prepare layout', 'Collect assets', 'Approve budget'],
+  },
 };
 
 export const Conditional: Story = {

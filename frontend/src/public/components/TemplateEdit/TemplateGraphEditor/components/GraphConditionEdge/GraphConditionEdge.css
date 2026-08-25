@@ -1,0 +1,10 @@
+.edge-label {
+  position: absolute;
+  pointer-events: all;
+  transition: opacity 0.2s ease;
+}
+
+.edge-label--dimmed {
+  pointer-events: none;
+  opacity: 0.15;
+}
