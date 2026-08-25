@@ -9,7 +9,7 @@ import { useTemplateGraph } from '../../../hooks/useTemplateGraph';
 import { TaskNode } from './components/TaskNode/TaskNode';
 import { KickoffNode } from './components/KickoffNode/KickoffNode';
 import { JunctionNode } from './components/JunctionNode/JunctionNode';
-import { ConditionEdgeInfo } from './components/ConditionEdgeInfo/ConditionEdgeInfo';
+import { GraphConditionEdge } from './components/GraphConditionEdge/GraphConditionEdge';
 import { applyGraphFocus } from './utils/applyGraphFocus';
 import styles from './TemplateGraphEditor.css';
 
@@ -25,12 +25,23 @@ const nodeTypes = {
   [EGraphNodeType.Junction]: JunctionNode,
 };
 
+const edgeTypes = {
+  smoothstep: GraphConditionEdge,
+};
+
 function isCardNode(type?: string): boolean {
   return type === EGraphNodeType.Task || type === EGraphNodeType.Kickoff;
 }
 
 export const TemplateGraphEditor = ({ template, onTaskEdit, onKickoffEdit }: ITemplateGraphEditorProps) => {
-  const { nodes, edges, onNodesChange, onEdgesChange } = useTemplateGraph(template);
+  const {
+    nodes,
+    edges,
+    onNodesChange,
+    onEdgesChange,
+    onNodeDrag,
+    onNodeDragStop,
+  } = useTemplateGraph(template);
   const [focusedNodeId, setFocusedNodeId] = useState<string | null>(null);
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const activeNodeId = hoveredNodeId ?? focusedNodeId;
@@ -108,29 +119,17 @@ export const TemplateGraphEditor = ({ template, onTaskEdit, onKickoffEdit }: ITe
     [nodesWithCallback, edges, activeNodeId],
   );
 
-  const edgesWithLabels = useMemo(
-    () =>
-      displayEdges.map((edge) => ({
-        ...edge,
-        labelShowBg: false,
-        label: (
-          <ConditionEdgeInfo
-            summary={edge.data?.summary}
-            isConditional={Boolean(edge.data?.isConditional)}
-          />
-        ),
-      })),
-    [displayEdges],
-  );
-
   return (
     <div className={styles['template-graph-editor']} data-test-id="template-graph-editor">
       <ReactFlow
         nodes={displayNodes}
-        edges={edgesWithLabels}
+        edges={displayEdges}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
+        onNodeDragStop={onNodeDragStop}
+        onNodeDrag={onNodeDrag}
         onNodeClick={handleNodeClick}
         onNodeMouseEnter={handleNodeMouseEnter}
         onNodeMouseLeave={handleNodeMouseLeave}

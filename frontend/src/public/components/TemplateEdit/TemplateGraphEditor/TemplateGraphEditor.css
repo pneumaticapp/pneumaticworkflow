@@ -16,6 +16,7 @@
   }
 
   .react-flow__edge-path {
+    fill: none;
     stroke: var(--pneumatic-color-black32);
     stroke-width: 0.1rem;
   }
@@ -25,11 +26,15 @@
     stroke: var(--pneumatic-color-black48);
   }
 
+  .react-flow__edge.graph-edge--conditional .react-flow__edge-path,
   .react-flow__edge.graph-edge--skip .react-flow__edge-path {
     stroke: var(--pneumatic-color-link);
     stroke-dasharray: 0.6rem 0.4rem;
   }
 
+  .react-flow__edge.graph-edge--conditional.selected .react-flow__edge-path,
+  .react-flow__edge.graph-edge--conditional:hover .react-flow__edge-path,
+  .react-flow__edge.graph-edge--conditional.graph-item--highlighted .react-flow__edge-path,
   .react-flow__edge.graph-edge--skip.selected .react-flow__edge-path,
   .react-flow__edge.graph-edge--skip:hover .react-flow__edge-path,
   .react-flow__edge.graph-edge--skip.graph-item--highlighted .react-flow__edge-path {
@@ -37,17 +42,31 @@
   }
 
   .react-flow__node.graph-item--dimmed {
-    opacity: 0.2;
     filter: grayscale(80%);
-    transition: opacity 0.2s ease, filter 0.2s ease;
+    transition: filter 0.2s ease;
+  }
+
+  .react-flow__node-task.graph-item--dimmed::after,
+  .react-flow__node-kickoff.graph-item--dimmed::after {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    pointer-events: none;
+    content: '';
+    background: var(--pneumatic-color-black4);
+    border-radius: 1.6rem;
+    opacity: 0.65;
   }
 
   .react-flow__node:not(.graph-item--dimmed) {
-    transition: opacity 0.2s ease, filter 0.2s ease;
+    transition: filter 0.2s ease;
   }
 
   .react-flow__edge.graph-item--dimmed .react-flow__edge-path,
-  .react-flow__edge.graph-item--dimmed .react-flow__edge-text {
+  .react-flow__edge.graph-item--dimmed .react-flow__edge-text,
+  .react-flow__edge.graph-item--dimmed .react-flow__edge-textwrapper {
     opacity: 0.15;
     transition: opacity 0.2s ease, stroke 0.2s ease, stroke-width 0.2s ease;
   }
@@ -71,6 +90,25 @@
     height: 0.8rem;
     background: var(--pneumatic-color-black32);
     border: none;
+  }
+
+  .react-flow__node-junction .react-flow__handle,
+  .react-flow__node-junction .react-flow__handle-top,
+  .react-flow__node-junction .react-flow__handle-bottom,
+  .react-flow__node-junction .react-flow__handle-left,
+  .react-flow__node-junction .react-flow__handle-right {
+    top: 50%;
+    right: auto;
+    left: 50%;
+    bottom: auto;
+    width: 0.2rem;
+    min-width: 0;
+    height: 0.2rem;
+    min-height: 0;
+    background: transparent;
+    border: none;
+    opacity: 0;
+    transform: translate(-50%, -50%);
   }
 
   .react-flow__node-junction {
