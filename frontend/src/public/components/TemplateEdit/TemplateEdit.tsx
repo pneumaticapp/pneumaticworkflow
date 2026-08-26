@@ -50,6 +50,7 @@ import { ESubscriptionPlan } from '../../types/account';
 import { TemplateSettings } from './TemplateSettings';
 import { EGraphViewMode, TemplateGraphEditor, GraphTaskEditorPanel } from './TemplateGraphEditor';
 import { getGraphShowcaseTemplate } from './TemplateGraphEditor/fixtures/graphShowcaseTemplate';
+import { getGraphWeaveTemplate } from './TemplateGraphEditor/fixtures/graphWeaveTemplate';
 import { KICKOFF_NODE_ID } from './TemplateGraphEditor/utils/templateToGraph';
 import { resetGraphView, setSelectedTask, setViewMode } from '../../redux/templateGraphView/slice';
 import { selectIsGraphCanvas, selectTemplateSelectedTaskApiName } from '../../redux/selectors/templateGraphView';
@@ -190,14 +191,18 @@ export function TemplateEdit({
         check: isCreateWorflowPage && !workflowTemplateId,
         init: () => {
           const emptyTemplate = getEmptyTemplate();
-          const isGraphShowcase = new URLSearchParams(location.search).get('showcase') === 'graph';
+          const showcase = new URLSearchParams(location.search).get('showcase');
+          const isGraphShowcase = showcase === 'graph' || showcase === 'graph-weave';
 
           if (!isGraphShowcase) {
             setTemplate(emptyTemplate);
             return;
           }
 
-          setTemplate(getGraphShowcaseTemplate(emptyTemplate));
+          const showcaseTemplate = showcase === 'graph-weave'
+            ? getGraphWeaveTemplate(emptyTemplate)
+            : getGraphShowcaseTemplate(emptyTemplate);
+          setTemplate(showcaseTemplate);
           dispatch(setViewMode(EGraphViewMode.Graph));
         },
       },
