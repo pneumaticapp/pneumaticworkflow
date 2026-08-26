@@ -54,6 +54,21 @@ export const StartAfter: Story = {
   },
 };
 
+export const InsertPlus: Story = {
+  args: {
+    ...edgeArgs,
+    data: {
+      isConditional: false,
+      startAfter: ['Prepare layout'],
+      addTaskIntent: { kind: 'insert', afterId: 'task-a', beforeId: 'task-b' },
+      onAddTask: () => undefined,
+    },
+    style: {
+      stroke: 'var(--pneumatic-color-black32)',
+    },
+  },
+};
+
 export const Conditional: Story = {
   args: {
     ...edgeArgs,

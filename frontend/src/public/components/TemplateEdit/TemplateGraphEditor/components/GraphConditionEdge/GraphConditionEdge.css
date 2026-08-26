@@ -5,6 +5,12 @@
   transition: opacity 0.2s ease;
 }
 
+.edge-label__row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
 .edge-label--dimmed {
   pointer-events: none;
   opacity: 0.15;

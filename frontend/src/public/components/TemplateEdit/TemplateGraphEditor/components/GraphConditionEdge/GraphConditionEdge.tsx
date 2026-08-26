@@ -4,6 +4,7 @@ import { EdgeLabelRenderer, EdgeProps } from 'reactflow';
 import { IConditionEdgeData } from '../../types';
 import { getGraphEdgePath } from '../../utils/getGraphEdgePath';
 import { ConditionEdgeInfo } from '../ConditionEdgeInfo/ConditionEdgeInfo';
+import { GraphAddTaskButton } from '../GraphAddTaskButton/GraphAddTaskButton';
 import styles from './GraphConditionEdge.css';
 
 export const GraphConditionEdge = ({
@@ -38,6 +39,10 @@ export const GraphConditionEdge = ({
   const hasCheckIfInfo = Boolean(data?.isConditional && (data.summary || data.clauses?.length));
   const hasStartAfterInfo = Boolean(!data?.isConditional && data?.startAfter?.length);
   const hasInfo = hasCheckIfInfo || hasStartAfterInfo;
+  const addTaskIntent = data?.addTaskIntent;
+  const onAddTask = data?.onAddTask;
+  const showAddTask = Boolean(addTaskIntent && onAddTask);
+  const showLabel = hasInfo || showAddTask;
   const labelClassName = [
     styles['edge-label'],
     data?.focus === 'dimmed' ? styles['edge-label--dimmed'] : '',
@@ -57,19 +62,26 @@ export const GraphConditionEdge = ({
         style={{ ...style, pointerEvents: 'none' }}
         markerEnd={markerEnd}
       />
-      {hasInfo && (
+      {showLabel && (
         <EdgeLabelRenderer>
           <div
             className={labelClassName}
             style={{ transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)` }}
             data-test-id="graph-edge-label"
           >
-            <ConditionEdgeInfo
-              summary={data?.summary}
-              startAfter={data?.startAfter}
-              isConditional={Boolean(data?.isConditional)}
-              clauses={data?.clauses}
-            />
+            <div className={styles['edge-label__row']}>
+              {hasInfo && (
+                <ConditionEdgeInfo
+                  summary={data?.summary}
+                  startAfter={data?.startAfter}
+                  isConditional={Boolean(data?.isConditional)}
+                  clauses={data?.clauses}
+                />
+              )}
+              {showAddTask && addTaskIntent && onAddTask && (
+                <GraphAddTaskButton intent={addTaskIntent} onAddTask={onAddTask} />
+              )}
+            </div>
           </div>
         </EdgeLabelRenderer>
       )}

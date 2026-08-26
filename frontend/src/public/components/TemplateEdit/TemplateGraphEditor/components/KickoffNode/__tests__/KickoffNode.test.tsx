@@ -102,4 +102,33 @@ describe('KickoffNode', () => {
 
     expect(onEdit).toHaveBeenCalled();
   });
+
+  it('should call onAddTask when the plus is clicked', () => {
+    const onAddTask = jest.fn();
+
+    render(
+      <ReactFlowProvider>
+        <KickoffNode
+          id="kickoff"
+          type="kickoff"
+          data={{
+            templateName: 'New Template',
+            onAddTask,
+            addTaskIntent: { kind: 'continue', afterId: 'kickoff' },
+            kickoff: { description: '', fields: [], fieldsets: [] },
+          }}
+          selected={false}
+          isConnectable
+          dragging={false}
+          zIndex={1}
+          xPos={0}
+          yPos={0}
+        />
+      </ReactFlowProvider>,
+    );
+
+    userEvent.click(screen.getByTestId('graph-add-task'));
+
+    expect(onAddTask).toHaveBeenCalledWith({ kind: 'continue', afterId: 'kickoff' });
+  });
 });

@@ -41,6 +41,11 @@
     stroke: var(--pneumatic-color-link-hover);
   }
 
+  .react-flow__node-task,
+  .react-flow__node-kickoff {
+    overflow: visible;
+  }
+
   .react-flow__node.graph-item--dimmed {
     filter: grayscale(80%);
     transition: filter 0.2s ease;

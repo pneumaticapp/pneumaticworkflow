@@ -122,3 +122,17 @@ export const EmptyMeta: Story = {
     },
   },
 };
+
+export const LeafWithAdd: Story = {
+  args: {
+    ...nodeProps,
+    selected: false,
+    data: {
+      task,
+      isSelected: false,
+      onEdit: () => undefined,
+      onAddTask: () => undefined,
+      addTaskIntent: { kind: 'continue', afterId: 'task-1' },
+    },
+  },
+};

@@ -14,6 +14,7 @@ interface IGraphNodeCardProps {
   onEdit?: () => void;
   editLabel?: string;
   handles?: React.ReactNode;
+  addTask?: React.ReactNode;
   testId?: string;
 }
 
@@ -26,6 +27,7 @@ export const GraphNodeCard = ({
   onEdit,
   editLabel,
   handles,
+  addTask,
   testId,
 }: IGraphNodeCardProps) => {
   const className = isSelected
@@ -75,6 +77,11 @@ export const GraphNodeCard = ({
       </div>
       <div className={styles['graph-node-card__title']}>{title}</div>
       {meta}
+      {addTask && (
+        <div className={styles['graph-node-card__add']}>
+          {addTask}
+        </div>
+      )}
     </div>
   );
 };
