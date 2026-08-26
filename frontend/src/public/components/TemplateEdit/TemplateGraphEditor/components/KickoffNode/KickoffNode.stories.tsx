@@ -68,3 +68,19 @@ export const Empty: Story = {
     },
   },
 };
+
+export const LeafWithAdd: Story = {
+  args: {
+    ...nodeProps,
+    data: {
+      templateName: 'New Template',
+      onAddTask: () => undefined,
+      addTaskIntent: { kind: 'continue', afterId: 'kickoff' },
+      kickoff: {
+        description: '',
+        fields: [],
+        fieldsets: [],
+      },
+    },
+  },
+};
