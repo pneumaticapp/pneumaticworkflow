@@ -1,0 +1,24 @@
+.graph-add-task {
+  padding: 0;
+  display: flex;
+  width: 2rem;
+  height: 2rem;
+  cursor: pointer;
+  color: var(--pneumatic-color-link);
+  background: var(--pneumatic-color-white);
+  border: 1px solid var(--pneumatic-color-black16);
+  border-radius: 50%;
+  box-shadow: 0 0.4rem 1.2rem rgba(98, 98, 95, 0.12);
+  align-items: center;
+  justify-content: center;
+}
+
+.graph-add-task:hover {
+  color: var(--pneumatic-color-link-hover);
+}
+
+.graph-add-task svg {
+  display: block;
+  width: 1.2rem;
+  height: 1.2rem;
+}
