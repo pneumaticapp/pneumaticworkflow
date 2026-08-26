@@ -2,8 +2,11 @@ import * as React from 'react';
 import { useIntl } from 'react-intl';
 
 import { FilterSelect } from '../../../UI';
+import { FIELD_RULE_VALIDATOR_OPERATOR_OPTIONS } from '../../constants';
 import { EFieldRuleType } from '../../../../types/fieldset';
-import { RulesetMessageInput } from '../RuleBase';
+import { RuleList, RulesetMessageInput } from '../RuleBase';
+import { addRule, deleteRule, regroupRules, updateRule } from '../RuleBase/utils';
+import { createEmptyFieldRule } from './utils';
 import { IFieldRulesetBodyProps } from './types';
 
 import fieldsetDetailsStyles from '../FieldsetDetails.css';
@@ -43,11 +46,29 @@ export function FieldRulesetBody({ localRuleSet, onUpdateRuleSet }: IFieldRulese
         renderPlaceholder={() => selectedTypeLabel}
       />
       {type === EFieldRuleType.Validator && (
-        <RulesetMessageInput
-          message={message}
-          onChange={(msg) => onUpdateRuleSet({ message: msg })}
-        />
+        <>
+          <RulesetMessageInput
+            message={message}
+            onChange={(msg) => onUpdateRuleSet({ message: msg })}
+          />
+          <RuleList
+            ruleSet={localRuleSet}
+            operatorOptions={FIELD_RULE_VALIDATOR_OPERATOR_OPTIONS}
+            addRule={() => onUpdateRuleSet(addRule(localRuleSet, createEmptyFieldRule))}
+            updateRule={({ ruleGroupOrApiName, ruleGroupAndApiName, ruleChanges }) =>
+              onUpdateRuleSet(updateRule(localRuleSet, ruleGroupOrApiName, ruleGroupAndApiName, ruleChanges))
+            }
+            deleteRule={({ ruleGroupOrApiName, ruleGroupAndApiName }) =>
+              onUpdateRuleSet(deleteRule(localRuleSet, ruleGroupOrApiName, ruleGroupAndApiName))
+            }
+            regroupRules={({ groupOrApiName, groupAndApiName, ruleCombinator }) =>
+              onUpdateRuleSet(regroupRules(localRuleSet, groupOrApiName, groupAndApiName, ruleCombinator))
+            }
+          />
+        </>
       )}
     </>
   );
 }
+
+

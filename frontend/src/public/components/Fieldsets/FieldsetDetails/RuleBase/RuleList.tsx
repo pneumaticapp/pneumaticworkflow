@@ -2,7 +2,6 @@ import * as React from 'react';
 import { useMemo } from 'react';
 import { useIntl } from 'react-intl';
 
-import { FIELDSET_RULE_OPERATOR_OPTIONS } from '../../constants';
 import { TRuleListProps } from './types';
 import { RuleItem } from './RuleItem';
 
@@ -10,6 +9,7 @@ import styles from '../FieldsetRulesets/FieldsetRulesets.css';
 
 export const RuleList = ({
   ruleSet,
+  operatorOptions,
   isReadOnly,
   addRule,
   updateRule,
@@ -20,11 +20,11 @@ export const RuleList = ({
 
   const ruleOperatorOptions = useMemo(
     () =>
-      FIELDSET_RULE_OPERATOR_OPTIONS.map((operatorOption) => ({
+      operatorOptions.map((operatorOption) => ({
         apiName: operatorOption.value,
         name: formatMessage({ id: operatorOption.labelKey }),
       })),
-    [formatMessage],
+    [formatMessage, operatorOptions],
   );
 
   const { groupsOr = [] } = ruleSet;

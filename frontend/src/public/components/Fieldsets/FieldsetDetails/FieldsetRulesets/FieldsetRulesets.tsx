@@ -4,6 +4,7 @@ import { useIntl } from 'react-intl';
 import { EExtraFieldType } from '../../../../types/template';
 
 import { TFieldsetRulesetsProps } from './types';
+import { FIELDSET_RULE_OPERATOR_OPTIONS } from '../../constants';
 import {
   updateRulesetMessage,
   deleteRuleset,
@@ -61,6 +62,7 @@ export const FieldsetRulesets = ({
 
           <RuleList
             ruleSet={ruleSet}
+            operatorOptions={FIELDSET_RULE_OPERATOR_OPTIONS}
             isReadOnly={isReadOnly}
             addRule={() =>
               addGroupAndToRulesets({ rulesets, rulesetApiName: ruleSet.apiName, onRulesetsChange })

@@ -2,6 +2,7 @@ import * as React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 
 import { RuleList } from '../RuleList';
+import { FIELDSET_RULE_OPERATOR_OPTIONS } from '../../../constants';
 import { intlMock } from '../../../../../__stubs__/intlMock';
 import {
   makeFieldsetRuleset,
@@ -47,6 +48,7 @@ describe('RuleList component', () => {
     render(
       <RuleList
         ruleSet={emptyRuleset}
+        operatorOptions={FIELDSET_RULE_OPERATOR_OPTIONS}
         isReadOnly={false}
         addRule={mockAddRule}
         updateRule={mockUpdateRule}
@@ -80,6 +82,7 @@ describe('RuleList component', () => {
     render(
       <RuleList
         ruleSet={ruleset}
+        operatorOptions={FIELDSET_RULE_OPERATOR_OPTIONS}
         isReadOnly={false}
         addRule={mockAddRule}
         updateRule={mockUpdateRule}
@@ -105,6 +108,7 @@ describe('RuleList component', () => {
     render(
       <RuleList
         ruleSet={ruleset}
+        operatorOptions={FIELDSET_RULE_OPERATOR_OPTIONS}
         isReadOnly={false}
         addRule={mockAddRule}
         updateRule={mockUpdateRule}
@@ -129,6 +133,7 @@ describe('RuleList component', () => {
     render(
       <RuleList
         ruleSet={emptyRuleset}
+        operatorOptions={FIELDSET_RULE_OPERATOR_OPTIONS}
         isReadOnly={true}
         addRule={mockAddRule}
         updateRule={mockUpdateRule}

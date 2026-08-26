@@ -1,7 +1,6 @@
 import {
   IBaseRuleGroupAnd,
   IBaseRuleSet,
-  EFieldsetNumberRulesetOperator,
   ERuleCombinator,
 } from '../../../../types/fieldset';
 
@@ -22,17 +21,20 @@ export type TRuleHandlers = {
   }) => void;
 };
 
+export type TRuleOperatorOption = { apiName: string; name: string };
+
 export type TRuleItemProps = TRuleHandlers & {
   groupAndRule: IBaseRuleGroupAnd;
   groupOrApiName: string;
   groupOrIndex: number;
   groupAndIndex: number;
-  ruleOperatorOptions: { apiName: EFieldsetNumberRulesetOperator; name: string }[];
+  ruleOperatorOptions: TRuleOperatorOption[];
   isReadOnly?: boolean;
 };
 
 export type TRuleListProps = TRuleHandlers & {
   ruleSet: IBaseRuleSet;
+  operatorOptions: { value: string; labelKey: string }[];
   isReadOnly?: boolean;
   addRule: () => void;
 };

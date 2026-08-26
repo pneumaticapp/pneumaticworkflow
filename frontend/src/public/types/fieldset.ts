@@ -1,5 +1,4 @@
 import type { IExtraField } from './template';
-import { EConditionOperators } from '../components/TemplateEdit/TaskForm/Conditions';
 
 export interface IBaseRuleGroupAnd {
   apiName: string;
@@ -21,6 +20,12 @@ export enum EFieldsetNumberRulesetOperator {
   SumEqual = 'sum_equal',
   SumGreaterThan = 'sum_greater_than',
   SumLessThan = 'sum_less_than',
+}
+
+export enum EFieldRuleValidatorOperator {
+  Equal = 'equal',
+  GreaterThan = 'greater_than',
+  LessThan = 'less_than',
 }
 
 export enum ERuleCombinator {
@@ -52,12 +57,12 @@ export enum EFieldRuleType {
   Validator = 'validator',
 }
 
-export type TFieldRuleOperator = EConditionOperators;
+export type TFieldRuleOperator = EFieldRuleValidatorOperator;
 
 export interface IFieldRuleGroupAnd {
   apiName: string;
   field?: string | null;
-  operator: EConditionOperators;
+  operator: EFieldRuleValidatorOperator;
   value: string;
 }
 

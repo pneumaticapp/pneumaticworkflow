@@ -4,10 +4,9 @@ import { useIntl } from 'react-intl';
 import { FilterSelect, SelectMenu } from '../../../UI';
 import { TrashIcon } from '../../../icons';
 
-import { EFieldsetNumberRulesetOperator } from '../../../../types/fieldset';
 import { FIELDSET_RULE_COMBINATORS } from '../../constants';
 import { getRuleCombinator } from './utils';
-import { TRuleItemProps } from './types';
+import { TRuleItemProps, TRuleOperatorOption } from './types';
 
 import fieldsetDetailsStyles from '../FieldsetDetails.css';
 import styles from '../FieldsetRulesets/FieldsetRulesets.css';
@@ -28,10 +27,9 @@ export const RuleItem = ({
 
   const isFirstRule = groupOrIndex === 0 && groupAndIndex === 0;
   const ruleCombinator = getRuleCombinator(groupAndIndex);
-  const ruleOperator = operator || EFieldsetNumberRulesetOperator.SumEqual;
 
   const selectedOperatorLabel =
-    ruleOperatorOptions.find((option) => option.apiName === ruleOperator)?.name || '';
+    ruleOperatorOptions.find((option) => option.apiName === operator)?.name || '';
 
   return (
     <div className={styles['rule-item']}>
@@ -57,18 +55,18 @@ export const RuleItem = ({
         </div>
       )}
       <div className={styles['rule-row']}>
-        <FilterSelect<'apiName', 'name', { apiName: EFieldsetNumberRulesetOperator; name: string }>
+        <FilterSelect<'apiName', 'name', TRuleOperatorOption>
           optionIdKey="apiName"
           optionLabelKey="name"
           options={ruleOperatorOptions}
-          selectedOption={ruleOperator}
+          selectedOption={operator}
           onChange={(key) => {
             if (key && key !== operator) {
               updateRule({
                 ruleGroupOrApiName: groupOrApiName,
                 ruleGroupAndApiName: groupAndApiName,
                 ruleChanges: {
-                  operator: key as EFieldsetNumberRulesetOperator,
+                  operator: String(key),
                 },
               });
             }

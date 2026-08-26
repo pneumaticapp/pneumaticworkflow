@@ -32,7 +32,7 @@ export function FieldRuleModal({
   };
 
   return (
-    <BaseModal isOpen={isOpen} toggle={onClose}>
+    <BaseModal isOpen={isOpen} toggle={onClose} className={styles['modal-dialog']}>
       <ModalHeader toggle={onClose}>
         {formatMessage({ id: 'fieldsets.field-rule-modal.title' })}
       </ModalHeader>

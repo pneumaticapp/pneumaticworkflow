@@ -1,10 +1,10 @@
-import { EConditionOperators } from '../../../TemplateEdit/TaskForm/Conditions';
 import {
   createFieldRuleSetApiName,
   createFieldRuleGroupOrApiName,
   createFieldRuleGroupAndApiName,
 } from '../../../../utils/createId';
 import {
+  EFieldRuleValidatorOperator,
   EFieldRuleType,
   IFieldRuleGroupAnd,
   IFieldRuleGroupOr,
@@ -14,7 +14,7 @@ import {
 export const createEmptyFieldRule = (): IFieldRuleGroupAnd => ({
   apiName: createFieldRuleGroupAndApiName(),
   field: null,
-  operator: EConditionOperators.Equal,
+  operator: EFieldRuleValidatorOperator.Equal,
   value: '',
 });
 

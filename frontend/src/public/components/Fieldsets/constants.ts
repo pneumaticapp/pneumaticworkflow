@@ -1,5 +1,6 @@
 import {
   EFieldLabelPosition,
+  EFieldRuleValidatorOperator,
   EFieldsetNumberRulesetOperator,
   ERuleCombinator,
 } from '../../types/fieldset';
@@ -23,6 +24,15 @@ export const FIELDSET_RULE_OPERATOR_OPTIONS: {
   { value: EFieldsetNumberRulesetOperator.SumEqual, labelKey: 'fieldsets.rule-type-sum_equal' },
   { value: EFieldsetNumberRulesetOperator.SumGreaterThan, labelKey: 'fieldsets.rule-type-sum_greater_than' },
   { value: EFieldsetNumberRulesetOperator.SumLessThan, labelKey: 'fieldsets.rule-type-sum_less_than' },
+];
+
+export const FIELD_RULE_VALIDATOR_OPERATOR_OPTIONS: {
+  value: EFieldRuleValidatorOperator;
+  labelKey: string;
+}[] = [
+  { value: EFieldRuleValidatorOperator.Equal, labelKey: 'fieldsets.field-rule.validator.operator.equal' },
+  { value: EFieldRuleValidatorOperator.GreaterThan, labelKey: 'fieldsets.field-rule.validator.operator.greater_than' },
+  { value: EFieldRuleValidatorOperator.LessThan, labelKey: 'fieldsets.field-rule.validator.operator.less_than' },
 ];
 
 export const FIELDSET_RULE_COMBINATORS = [ERuleCombinator.And, ERuleCombinator.Or];
