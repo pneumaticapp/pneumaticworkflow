@@ -48,11 +48,34 @@ export interface IConnectedHandles {
   hasSourceRight: boolean;
 }
 
+export type TGraphAddTaskKind = 'continue' | 'insert';
+
+export interface IGraphContinueTaskIntent {
+  kind: Extract<TGraphAddTaskKind, 'continue'>;
+  afterId: string;
+}
+
+export interface IGraphInsertTaskIntent {
+  kind: Extract<TGraphAddTaskKind, 'insert'>;
+  afterId: string;
+  beforeId: string;
+}
+
+export type TGraphAddTaskIntent = IGraphContinueTaskIntent | IGraphInsertTaskIntent;
+
+export interface IGraphNewTaskDraft {
+  name: string;
+  number: number;
+  conditions: ITemplateTaskClient['conditions'];
+}
+
 export interface ITaskNodeData {
   task: ITemplateTaskClient;
   isSelected: boolean;
   onEdit: (apiName: string) => void;
   handles?: IConnectedHandles;
+  addTaskIntent?: TGraphAddTaskIntent;
+  onAddTask?: (intent: TGraphAddTaskIntent) => void;
 }
 
 export interface IKickoffNodeData {
@@ -60,6 +83,8 @@ export interface IKickoffNodeData {
   templateName: string;
   onEdit?: () => void;
   handles?: IConnectedHandles;
+  addTaskIntent?: TGraphAddTaskIntent;
+  onAddTask?: (intent: TGraphAddTaskIntent) => void;
 }
 
 export interface IJunctionNodeData {
@@ -120,6 +145,9 @@ export interface IConditionEdgeData {
   targetStandoff?: number;
   /** Focus state assigned by `applyGraphFocus`; drives the label appearance. */
   focus?: TGraphEdgeFocus;
+  /** Insert-between intent for a unique gray stem; stamped by `applyGraphAddAffordances`. */
+  addTaskIntent?: TGraphAddTaskIntent;
+  onAddTask?: (intent: TGraphAddTaskIntent) => void;
 }
 
 export type TGraphEdge = Edge<IConditionEdgeData>;
