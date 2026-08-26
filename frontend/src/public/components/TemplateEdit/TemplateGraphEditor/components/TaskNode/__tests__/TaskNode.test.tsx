@@ -229,6 +229,38 @@ describe('TaskNode', () => {
     expect(onEdit).toHaveBeenCalledWith('task-1');
   });
 
+  it('should call onAddTask when the plus is clicked', () => {
+    const onAddTask = jest.fn();
+    const onEdit = jest.fn();
+
+    render(
+      <ReactFlowProvider>
+        <TaskNode
+          id="task-1"
+          type="task"
+          data={{
+            task: createTask(),
+            isSelected: false,
+            onEdit,
+            onAddTask,
+            addTaskIntent: { kind: 'continue', afterId: 'task-1' },
+          }}
+          selected={false}
+          isConnectable
+          dragging={false}
+          zIndex={1}
+          xPos={0}
+          yPos={0}
+        />
+      </ReactFlowProvider>,
+    );
+
+    userEvent.click(screen.getByTestId('graph-add-task'));
+
+    expect(onAddTask).toHaveBeenCalledWith({ kind: 'continue', afterId: 'task-1' });
+    expect(onEdit).not.toHaveBeenCalled();
+  });
+
   it('should mark the card as selected', () => {
     render(
       <ReactFlowProvider>

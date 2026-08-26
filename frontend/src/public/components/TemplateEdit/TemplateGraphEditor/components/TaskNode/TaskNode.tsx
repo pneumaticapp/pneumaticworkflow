@@ -6,6 +6,7 @@ import { useIntl } from 'react-intl';
 import { ITaskNodeData } from '../../types';
 import { EMPTY_CONNECTED_HANDLES } from '../../utils/applyConnectedHandles';
 import { countCheckIfConditions } from '../../utils/countCheckIfConditions';
+import { GraphAddTaskButton } from '../GraphAddTaskButton/GraphAddTaskButton';
 import { GraphCardHandles } from '../GraphCardHandles/GraphCardHandles';
 import { GraphNodeCard } from '../GraphNodeCard/GraphNodeCard';
 import cardStyles from '../GraphNodeCard/GraphNodeCard.css';
@@ -13,7 +14,7 @@ import cardStyles from '../GraphNodeCard/GraphNodeCard.css';
 export const TaskNode = ({ id, data, selected }: NodeProps<ITaskNodeData>) => {
   const { formatMessage } = useIntl();
   const updateNodeInternals = useUpdateNodeInternals();
-  const { task, onEdit, handles = EMPTY_CONNECTED_HANDLES } = data;
+  const { task, onEdit, handles = EMPTY_CONNECTED_HANDLES, addTaskIntent, onAddTask } = data;
   const performersCount = task.rawPerformers?.length ?? 0;
   const conditionsCount = countCheckIfConditions(task.conditions);
   const fieldsCount = task.fields?.length ?? 0;
@@ -69,6 +70,9 @@ export const TaskNode = ({ id, data, selected }: NodeProps<ITaskNodeData>) => {
       handles={(
         <GraphCardHandles handles={handles} includeTargets />
       )}
+      addTask={addTaskIntent && onAddTask ? (
+        <GraphAddTaskButton intent={addTaskIntent} onAddTask={onAddTask} />
+      ) : null}
     />
   );
 };

@@ -1,9 +1,11 @@
 import * as React from 'react';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { configure } from '@testing-library/react';
 import { Position, ReactFlowProvider } from 'reactflow';
 
 import { GraphConditionEdge } from '../GraphConditionEdge';
+import { TGraphAddTaskIntent } from '../../../types';
 
 configure({ testIdAttribute: 'data-test-id' });
 
@@ -30,6 +32,8 @@ const renderEdge = (data?: {
   isConditional?: boolean;
   startAfter?: string[];
   focus?: 'highlighted' | 'dimmed';
+  addTaskIntent?: TGraphAddTaskIntent;
+  onAddTask?: (intent: TGraphAddTaskIntent) => void;
 }) =>
   render(
     <ReactFlowProvider>
@@ -116,5 +120,55 @@ describe('GraphConditionEdge', () => {
     const path = container.querySelector('.react-flow__edge-path');
 
     expect(path?.getAttribute('d')).toBe('M 100,40 L 220,40');
+  });
+
+  it('should render an insert plus on a gray edge and emit the intent', () => {
+    const onAddTask = jest.fn();
+
+    render(
+      <ReactFlowProvider>
+        <svg>
+          <GraphConditionEdge
+            id="edge-1"
+            source="task-a"
+            target="task-b"
+            sourceX={0}
+            sourceY={0}
+            targetX={0}
+            targetY={80}
+            sourcePosition={Position.Bottom}
+            targetPosition={Position.Top}
+            data={{
+              isConditional: false,
+              startAfter: ['Prepare layout'],
+              addTaskIntent: { kind: 'insert', afterId: 'task-a', beforeId: 'task-b' },
+              onAddTask,
+            }}
+          />
+        </svg>
+      </ReactFlowProvider>,
+    );
+
+    userEvent.click(screen.getByTestId('graph-add-task'));
+
+    expect(onAddTask).toHaveBeenCalledWith({
+      kind: 'insert',
+      afterId: 'task-a',
+      beforeId: 'task-b',
+    });
+  });
+
+  it('should keep the insert plus from receiving clicks on a dimmed edge', () => {
+    const onAddTask = jest.fn();
+
+    renderEdge({
+      isConditional: false,
+      startAfter: ['Prepare layout'],
+      focus: 'dimmed',
+      addTaskIntent: { kind: 'insert', afterId: 'task-a', beforeId: 'task-b' },
+      onAddTask,
+    });
+
+    expect(screen.getByTestId('graph-edge-label').getAttribute('class')).toContain('dimmed');
   });
 });

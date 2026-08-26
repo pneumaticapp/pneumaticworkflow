@@ -2,6 +2,7 @@
   position: relative;
   padding: 1.6rem;
   display: flex;
+  overflow: visible;
   flex-direction: column;
   box-sizing: border-box;
   width: 30.4rem;
@@ -112,4 +113,12 @@
   pointer-events: none;
   background: transparent;
   opacity: 0;
+}
+
+.graph-node-card__add {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  bottom: 0;
+  transform: translate(-50%, 50%);
 }
