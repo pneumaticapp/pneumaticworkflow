@@ -1,8 +1,9 @@
 import { EGraphNodeType, TGraphNode, TGraphEdge } from '../types';
 import { assignSpineLanes } from './assignSpineLanes';
+import { isStemGraphEdge } from './edgeStyles';
 import {
-  GRAPH_COLUMN_GAP,
   GRAPH_JUNCTION_SIZE,
+  GRAPH_LANE_PITCH,
   GRAPH_NODE_HEIGHT,
   GRAPH_NODE_WIDTH,
   GRAPH_ROW_GAP,
@@ -12,7 +13,7 @@ import { alignJunctionNodes } from './alignJunctionNodes';
 
 export { GRAPH_JUNCTION_SIZE, GRAPH_NODE_HEIGHT, GRAPH_NODE_WIDTH } from './graphGeometry';
 
-const LANE_PITCH = GRAPH_NODE_WIDTH + GRAPH_COLUMN_GAP;
+const LANE_PITCH = GRAPH_LANE_PITCH;
 const CARD_ROW_PITCH = GRAPH_NODE_HEIGHT + GRAPH_ROW_GAP;
 
 interface INodeSize {
@@ -85,7 +86,8 @@ export function computeLevels(nodes: TGraphNode[], edges: TGraphEdge[]): Map<str
 export function applyDagreLayout(nodes: TGraphNode[], edges: TGraphEdge[]): TGraphNode[] {
   if (nodes.length === 0) return nodes;
 
-  const levels = computeLevels(nodes, edges);
+  const stemEdges = edges.filter(isStemGraphEdge);
+  const levels = computeLevels(nodes, stemEdges);
   const lanes = assignSpineLanes(nodes, edges, levels);
   const posMap = new Map<string, { x: number; y: number }>();
 
@@ -127,5 +129,5 @@ export function applyDagreLayout(nodes: TGraphNode[], edges: TGraphEdge[]): TGra
     };
   });
 
-  return alignJunctionNodes(positionedNodes, edges);
+  return alignJunctionNodes(positionedNodes, stemEdges);
 }

@@ -1,5 +1,6 @@
 .edge-label {
   position: absolute;
+  z-index: 1;
   pointer-events: all;
   transition: opacity 0.2s ease;
 }

@@ -161,7 +161,7 @@ describe('getGraphEdgePath', () => {
       targetHandle: 'target-left',
     });
 
-    expect(path).toBe('M 100,50 L 300,50');
+    expect(path).toBe('M 100,50 L 300,50 L 300,54');
   });
 
   it('should leave a fork sideways before dropping into a side handle', () => {
@@ -188,6 +188,117 @@ describe('getGraphEdgePath', () => {
       targetHandle: 'target-left',
     });
 
-    expect(path).toBe('M 360,40 L 300,40 L 300,120');
+    expect(path).toBe('M 360,40 L 360,120 L 300,120');
+  });
+
+  it('should leave and enter a card with a Miro-style standoff before turning', () => {
+    const { path } = getGraphEdgePath({
+      sourceX: 100,
+      sourceY: 50,
+      targetX: 300,
+      targetY: 80,
+      sourceHandle: 'source-right',
+      targetHandle: 'target-left',
+      sourceStandoff: 10,
+      targetStandoff: 10,
+    });
+
+    expect(path).toBe('M 100,50 L 290,50 L 290,80 L 300,80');
+  });
+
+  it('should wrap around a card when the target sits behind the exit', () => {
+    const { path } = getGraphEdgePath({
+      sourceX: 100,
+      sourceY: 50,
+      targetX: 80,
+      targetY: 120,
+      sourceHandle: 'source-right',
+      targetHandle: 'target-left',
+      sourceStandoff: 10,
+    });
+
+    expect(path).toBe('M 100,50 L 110,50 L 110,120 L 80,120');
+  });
+
+  it('should keep a left standoff when a gutter sits on the start x', () => {
+    const { path } = getGraphEdgePath({
+      sourceX: 100,
+      sourceY: 50,
+      targetX: 300,
+      targetY: 80,
+      sourceHandle: 'source-left',
+      sourceStandoff: 20,
+      laneX: 100,
+      laneY: 20,
+    });
+
+    expect(path.startsWith('M 100,50 L 80,50')).toBe(true);
+  });
+
+  it('should enter a card with a perpendicular standoff, not along the edge', () => {
+    const { path } = getGraphEdgePath({
+      sourceX: 40,
+      sourceY: 40,
+      targetX: 200,
+      targetY: 120,
+      sourceHandle: 'source-bottom',
+      targetHandle: 'target-left',
+      targetStandoff: 32,
+      laneX: 40,
+      laneY: 80,
+    });
+
+    expect(path).toContain('L 168,120 L 200,120');
+    expect(path).not.toContain('L 200,80 L 200,120');
+  });
+
+  it('should not glance up a card edge when the source sits on the handle x', () => {
+    const { path } = getGraphEdgePath({
+      sourceX: 200,
+      sourceY: 200,
+      targetX: 200,
+      targetY: 80,
+      sourceHandle: 'source-top',
+      targetHandle: 'target-left',
+      targetStandoff: 32,
+    });
+
+    expect(path).toContain('L 168,80 L 200,80');
+    expect(path).not.toMatch(/L 200,\d+ L 200,/);
+  });
+
+  it('should wrap past a join on the outer standoff before entering the side', () => {
+    const { path } = getGraphEdgePath({
+      sourceX: 40,
+      sourceY: 40,
+      targetX: 200,
+      targetY: 120,
+      sourceHandle: 'source-left',
+      targetHandle: 'target-right',
+      sourceStandoff: 20,
+      targetStandoff: 32,
+      laneX: 20,
+      laneY: 80,
+    });
+
+    expect(path).toContain('L 232,80');
+    expect(path).toContain('L 232,120 L 200,120');
+  });
+
+  it('should not glance along a card edge when the lane sits a few pixels inside the standoff', () => {
+    const { path } = getGraphEdgePath({
+      sourceX: 204,
+      sourceY: 240,
+      targetX: 200,
+      targetY: 120,
+      sourceHandle: 'source-top',
+      targetHandle: 'target-left',
+      targetStandoff: 32,
+      laneX: 204,
+      laneY: 200,
+    });
+
+    expect(path).toContain('L 168,120 L 200,120');
+    expect(path).not.toMatch(/L 20[0-4],\d+ L 20[0-4],/);
   });
 });

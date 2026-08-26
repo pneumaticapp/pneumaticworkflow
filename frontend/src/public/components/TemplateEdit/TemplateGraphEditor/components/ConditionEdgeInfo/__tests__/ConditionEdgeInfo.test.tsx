@@ -2,8 +2,8 @@ import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 import { configure } from '@testing-library/react';
 
+import { EConditionLogicOperations, EConditionOperators } from '../../../../TaskForm/Conditions';
 import { ConditionEdgeInfo } from '../ConditionEdgeInfo';
-import { KICKOFF_START_AFTER } from '../../../utils/templateToGraph';
 
 configure({ testIdAttribute: 'data-test-id' });
 
@@ -28,35 +28,33 @@ jest.mock('../../../../../UI', () => ({
 
 describe('ConditionEdgeInfo', () => {
   it('should render a fallback tooltip when the condition has no summary', () => {
-    render(<ConditionEdgeInfo isConditional />);
+    render(<ConditionEdgeInfo />);
 
     expect(screen.getByTestId('graph-edge-info')).toBeInTheDocument();
     expect(screen.getByText('check if: condition')).toBeInTheDocument();
   });
 
   it('should expose the condition summary in the mockup tooltip', () => {
-    render(<ConditionEdgeInfo summary="Client filled" isConditional />);
+    render(<ConditionEdgeInfo summary="Client filled" />);
 
     expect(screen.getByTestId('graph-edge-info')).toBeInTheDocument();
     expect(screen.getByTestId('graph-edge-tooltip')).toBeInTheDocument();
     expect(screen.getByText('check if: Client filled')).toBeInTheDocument();
   });
 
-  it('should describe a plain edge as a start dependency', () => {
-    render(<ConditionEdgeInfo startAfter={['Prepare layout']} />);
+  it('should describe a check-if clause with the localized operator', () => {
+    render(
+      <ConditionEdgeInfo
+        clauses={[
+          {
+            fieldLabel: 'Client',
+            operator: EConditionOperators.Exist,
+            logicOperation: EConditionLogicOperations.And,
+          },
+        ]}
+      />,
+    );
 
-    expect(screen.getByText('start after: Prepare layout')).toBeInTheDocument();
-  });
-
-  it('should list every source of a merged start dependency', () => {
-    render(<ConditionEdgeInfo startAfter={['Prepare layout', 'Collect assets']} />);
-
-    expect(screen.getByText('start after: Prepare layout, Collect assets')).toBeInTheDocument();
-  });
-
-  it('should localize the kick-off form as a start dependency source', () => {
-    render(<ConditionEdgeInfo startAfter={[KICKOFF_START_AFTER]} />);
-
-    expect(screen.getByText('start after: Kick-off Form')).toBeInTheDocument();
+    expect(screen.getByText('check if: Client Exists')).toBeInTheDocument();
   });
 });

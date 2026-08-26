@@ -64,14 +64,13 @@ describe('GraphConditionEdge', () => {
     expect(screen.getByText('check if: Client filled')).toBeInTheDocument();
   });
 
-  it('should show the start dependency badge on a plain edge', () => {
+  it('should hide the start-after badge on a plain edge', () => {
     renderEdge({ isConditional: false, startAfter: ['Prepare layout'] });
 
-    expect(screen.getByTestId('graph-edge-label')).toBeInTheDocument();
-    expect(screen.getByText('start after: Prepare layout')).toBeInTheDocument();
+    expect(screen.queryByTestId('graph-edge-label')).not.toBeInTheDocument();
   });
 
-  it('should hide the badge on a dashed segment that has nothing to describe', () => {
+  it('should hide the badge on a dashed stem that only feeds a check-if fork', () => {
     renderEdge({ isConditional: true });
 
     expect(screen.queryByTestId('graph-edge-label')).not.toBeInTheDocument();

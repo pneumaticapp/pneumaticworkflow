@@ -37,16 +37,18 @@ describe('isSkipGraphEdge', () => {
 });
 
 describe('isConditionalGraphEdge', () => {
-  it('should treat start-condition and skip edges as conditional', () => {
+  it('should treat a check-if edge as conditional', () => {
     expect(
       isConditionalGraphEdge({
-        id: 'edge-kickoff-task-1-0',
+        id: 'edge-kickoff-task-1-checkif-0',
         source: 'kickoff',
         target: 'task-1',
-        data: { isConditional: true, summary: 'Client filled' },
+        data: { isConditional: true, summary: 'Client exists' },
       }),
     ).toBe(true);
+  });
 
+  it('should not treat a skip-lane start-after edge as conditional', () => {
     expect(
       isConditionalGraphEdge({
         id: 'edge-task-linear-task-url-title-skip-0',
@@ -54,7 +56,7 @@ describe('isConditionalGraphEdge', () => {
         target: 'task-url-title',
         sourceHandle: 'source-skip',
       }),
-    ).toBe(true);
+    ).toBe(false);
   });
 
   it('should not treat a default edge as conditional', () => {
