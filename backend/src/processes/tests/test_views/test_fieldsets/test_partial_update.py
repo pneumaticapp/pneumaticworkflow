@@ -16,6 +16,7 @@ from src.processes.enums import (
     FieldSetRuleOperator,
 )
 from src.processes.models.templates.fields import FieldTemplate
+from src.processes.messages.template import MSG_PT_0079
 from src.processes.services.fieldsets.fieldset import (
     FieldSetTemplateService,
 )
@@ -1134,6 +1135,135 @@ def test_partial_update__invalid_fields_rules_operator__validation_error(
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['details']['api_name'] == 'g-and-1'
     assert response.data['details']['reason'] == message
+    fieldset_service_init_mock.assert_not_called()
+    fieldset_partial_update_mock.assert_not_called()
+
+
+def test_partial_update__show_field_rule_missing_field__validation_error(
+    api_client,
+    mocker,
+):
+
+    """ SHOW field rule without group_and.field returns 400 """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    fieldset = create_test_shared_fieldset(account=account)
+    data = {
+        'fields': [
+            {
+                'name': 'Field 1',
+                'type': FieldType.TEXT,
+                'order': 1,
+                'api_name': 'field-1',
+                'rulesets': [
+                    {
+                        'api_name': 'r-1',
+                        'name': 'Ruleset',
+                        'type': FieldRuleType.SHOW,
+                        'order': 1,
+                        'groups_or': [
+                            {
+                                'api_name': 'g-or-1',
+                                'groups_and': [
+                                    {
+                                        'api_name': 'g-and-1',
+                                        'operator': FieldRuleOperator.EQUAL,
+                                        'value': 'yes',
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+    }
+    fieldset_service_init_mock = mocker.patch.object(
+        FieldSetTemplateService,
+        attribute='__init__',
+        return_value=None,
+    )
+    fieldset_partial_update_mock = mocker.patch(
+        'src.processes.views.fieldset.FieldSetTemplateService.partial_update',
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.patch(
+        f'/fieldsets/{fieldset.id}',
+        data=data,
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['message'] == MSG_PT_0079
+    fieldset_service_init_mock.assert_not_called()
+    fieldset_partial_update_mock.assert_not_called()
+
+
+def test_partial_update__show_field_rule_field_null__validation_error(
+    api_client,
+    mocker,
+):
+
+    """ SHOW field rule without group_and.field returns 400 """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    fieldset = create_test_shared_fieldset(account=account)
+    data = {
+        'fields': [
+            {
+                'name': 'Field 1',
+                'type': FieldType.TEXT,
+                'order': 1,
+                'api_name': 'field-1',
+                'rulesets': [
+                    {
+                        'api_name': 'r-1',
+                        'name': 'Ruleset',
+                        'type': FieldRuleType.SHOW,
+                        'order': 1,
+                        'groups_or': [
+                            {
+                                'api_name': 'g-or-1',
+                                'groups_and': [
+                                    {
+                                        'field': None,
+                                        'api_name': 'g-and-1',
+                                        'operator': FieldRuleOperator.EQUAL,
+                                        'value': 'yes',
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+    }
+    fieldset_service_init_mock = mocker.patch.object(
+        FieldSetTemplateService,
+        attribute='__init__',
+        return_value=None,
+    )
+    fieldset_partial_update_mock = mocker.patch(
+        'src.processes.views.fieldset.FieldSetTemplateService.partial_update',
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.patch(
+        f'/fieldsets/{fieldset.id}',
+        data=data,
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['message'] == MSG_PT_0079
     fieldset_service_init_mock.assert_not_called()
     fieldset_partial_update_mock.assert_not_called()
 

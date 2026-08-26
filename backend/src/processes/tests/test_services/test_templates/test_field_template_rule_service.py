@@ -305,7 +305,7 @@ def test__validate__allowed_operator__ok(field_type, operator):
         type=FieldRuleType.SHOW,
     )
     group_or = FieldTemplateRuleGroupOr.objects.create(
-        field_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
     )
@@ -373,7 +373,7 @@ def test__validate__operator_not_allowed__raise_exception(
         type=FieldRuleType.SHOW,
     )
     group_or = FieldTemplateRuleGroupOr.objects.create(
-        field_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
     )
@@ -428,7 +428,7 @@ def test__create_group_and__default_params__ok():
         type=FieldRuleType.SHOW,
     )
     group_or = FieldTemplateRuleGroupOr.objects.create(
-        field_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
     )
@@ -482,7 +482,7 @@ def test__create_group_and__api_name_provided__ok():
         type=FieldRuleType.SHOW,
     )
     group_or = FieldTemplateRuleGroupOr.objects.create(
-        field_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
     )
@@ -532,7 +532,7 @@ def test__create_group_and__api_name_omitted__ok():
         type=FieldRuleType.SHOW,
     )
     group_or = FieldTemplateRuleGroupOr.objects.create(
-        field_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
     )
@@ -582,7 +582,7 @@ def test__create_group_and__field_and_value_provided__ok():
         type=FieldRuleType.SHOW,
     )
     group_or = FieldTemplateRuleGroupOr.objects.create(
-        field_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
     )
@@ -636,7 +636,7 @@ def test__update_group_and__default_params__ok():
         type=FieldRuleType.SHOW,
     )
     group_or = FieldTemplateRuleGroupOr.objects.create(
-        field_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
     )
@@ -695,7 +695,7 @@ def test__update_group_and__field_in_payload__ok():
         type=FieldRuleType.SHOW,
     )
     group_or = FieldTemplateRuleGroupOr.objects.create(
-        field_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
     )
@@ -757,7 +757,7 @@ def test__update_group_and__operator_in_payload__ok():
         type=FieldRuleType.SHOW,
     )
     group_or = FieldTemplateRuleGroupOr.objects.create(
-        field_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
     )
@@ -819,7 +819,7 @@ def test__update_group_and__value_in_payload__ok():
         type=FieldRuleType.SHOW,
     )
     group_or = FieldTemplateRuleGroupOr.objects.create(
-        field_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
     )
@@ -881,7 +881,7 @@ def test__update_group_and__all_fields_in_payload__ok():
         type=FieldRuleType.SHOW,
     )
     group_or = FieldTemplateRuleGroupOr.objects.create(
-        field_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
     )
@@ -946,7 +946,7 @@ def test__set_groups_and__default_params__ok(mocker):
         type=FieldRuleType.SHOW,
     )
     group_or = FieldTemplateRuleGroupOr.objects.create(
-        field_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
     )
@@ -1011,7 +1011,7 @@ def test__set_groups_and__matching_api_name__ok(mocker):
         type=FieldRuleType.SHOW,
     )
     group_or = FieldTemplateRuleGroupOr.objects.create(
-        field_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
     )
@@ -1084,7 +1084,7 @@ def test__set_groups_and__unknown_or_missing_api_name__ok(mocker):
         type=FieldRuleType.SHOW,
     )
     group_or = FieldTemplateRuleGroupOr.objects.create(
-        field_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
     )
@@ -1159,7 +1159,7 @@ def test__set_groups_and__mixed_payload__ok(mocker):
         type=FieldRuleType.SHOW,
     )
     group_or = FieldTemplateRuleGroupOr.objects.create(
-        field_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
     )
@@ -1487,7 +1487,7 @@ def test__update_group_or__default_params__ok(mocker):
         type=FieldRuleType.SHOW,
     )
     group_or = FieldTemplateRuleGroupOr.objects.create(
-        field_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
     )
@@ -1538,7 +1538,7 @@ def test__update_group_or__groups_and_omitted__ok(mocker):
         type=FieldRuleType.SHOW,
     )
     group_or = FieldTemplateRuleGroupOr.objects.create(
-        field_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
     )
@@ -1591,7 +1591,7 @@ def test__update_group_or__groups_and_is_not_none__ok(mocker):
         type=FieldRuleType.SHOW,
     )
     group_or = FieldTemplateRuleGroupOr.objects.create(
-        field_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
     )
@@ -1654,7 +1654,7 @@ def test__set_groups_or__default_params__ok(mocker):
         type=FieldRuleType.SHOW,
     )
     group_or_1 = FieldTemplateRuleGroupOr.objects.create(
-        field_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
         api_name='group-or-1',
@@ -1708,7 +1708,7 @@ def test__set_groups_or__matching_api_name__ok(mocker):
         type=FieldRuleType.SHOW,
     )
     group_or_1 = FieldTemplateRuleGroupOr.objects.create(
-        field_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
         api_name='group-or-1',
@@ -1769,7 +1769,7 @@ def test__set_groups_or__unknown_or_missing_api_name__ok(mocker):
         type=FieldRuleType.SHOW,
     )
     group_or_1 = FieldTemplateRuleGroupOr.objects.create(
-        field_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
         api_name='group-or-1',
@@ -1830,13 +1830,13 @@ def test__set_groups_or__mixed_payload__ok(mocker):
         type=FieldRuleType.SHOW,
     )
     group_or_1 = FieldTemplateRuleGroupOr.objects.create(
-        field_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
         api_name='group-or-1',
     )
     group_or_2 = FieldTemplateRuleGroupOr.objects.create(
-        field_rule=ruleset,
+        ruleset=ruleset,
         account=account,
         template=template,
         api_name='group-or-2',

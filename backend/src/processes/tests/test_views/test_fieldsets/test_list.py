@@ -61,7 +61,7 @@ def test_list_fieldsets__all_data__ok(api_client):
         order=0,
     )
     field_group_or = FieldTemplateRuleGroupOr.objects.create(
-        field_rule=field_ruleset,
+        ruleset=field_ruleset,
         account=account,
         api_name=f'{field.api_name}-group-or-1',
     )

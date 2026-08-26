@@ -152,7 +152,7 @@ class FieldRuleGroupOr(
         on_delete=models.CASCADE,
         related_name='field_ruleset_groups_or',
     )
-    field_rule = models.ForeignKey(
+    ruleset = models.ForeignKey(
         FieldRuleSet,
         on_delete=models.CASCADE,
         related_name='groups_or',

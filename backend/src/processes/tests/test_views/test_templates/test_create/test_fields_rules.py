@@ -13,6 +13,7 @@ from src.processes.models.templates.fields import (
     FieldTemplateRuleGroupOr,
     FieldTemplateRuleSet,
 )
+from src.processes.messages.template import MSG_PT_0079
 from src.processes.tests.fixtures import (
     create_test_account, create_test_owner,
 )
@@ -140,7 +141,7 @@ def test_create_task_field_rules__active_template_all_data__ok(api_client):
 
     group_or = FieldTemplateRuleGroupOr.objects.get(
         api_name=group_or_api_name,
-        field_rule=ruleset,
+        ruleset=ruleset,
     )
 
     group_and = FieldTemplateRuleGroupAnd.objects.get(
@@ -205,3 +206,142 @@ def test_create_task_field_rules__missing_name__validation_error(api_client):
     # assert
     assert response.status_code == 400
     assert response.data['message'] == 'Name: this field is required.'
+
+
+def test_create_task_field_rules__show_missing_field__validation_error(
+    api_client,
+):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        '/templates',
+        data={
+            'name': 'Template',
+            'is_active': True,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {},
+            'tasks': [
+                {
+                    'number': 1,
+                    'name': 'First step',
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                    'fields': [
+                        {
+                            'type': FieldType.STRING,
+                            'name': 'String field',
+                            'order': 1,
+                            'api_name': 'field-1',
+                            'rulesets': [
+                                {
+                                    'name': 'Show ruleset',
+                                    'type': FieldRuleType.SHOW,
+                                    'groups_or': [
+                                        {
+                                            'groups_and': [
+                                                {
+                                                    'operator': (
+                                                        FieldRuleOperator.EQUAL
+                                                    ),
+                                                    'value': 'yes',
+                                                },
+                                            ],
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['message'] == MSG_PT_0079
+
+
+def test_create_task_field_rules__show_field_null__validation_error(
+    api_client,
+):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        '/templates',
+        data={
+            'name': 'Template',
+            'is_active': True,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {},
+            'tasks': [
+                {
+                    'number': 1,
+                    'name': 'First step',
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                    'fields': [
+                        {
+                            'type': FieldType.STRING,
+                            'name': 'String field',
+                            'order': 1,
+                            'api_name': 'field-1',
+                            'rulesets': [
+                                {
+                                    'name': 'Show ruleset',
+                                    'type': FieldRuleType.SHOW,
+                                    'groups_or': [
+                                        {
+                                            'groups_and': [
+                                                {
+                                                    'field': None,
+                                                    'operator': (
+                                                        FieldRuleOperator.EQUAL
+                                                    ),
+                                                    'value': 'yes',
+                                                },
+                                            ],
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['message'] == MSG_PT_0079

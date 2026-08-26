@@ -342,3 +342,6 @@ MSG_PT_0078 = lambda field, operator, field_type: format_lazy(
     operator=operator,
     field_type=field_type,
 )
+MSG_PT_0079 = _(
+    'You should set the "field" for a rule with the type "show".',
+)

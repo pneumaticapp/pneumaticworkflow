@@ -975,7 +975,7 @@ def create_test_shared_fieldset(
         )
         field_group_or = FieldTemplateRuleGroupOr.objects.create(
             account=account,
-            field_rule=field_ruleset,
+            ruleset=field_ruleset,
             api_name=f'{fieldset.api_name}-field-group-or-1',
         )
         FieldTemplateRuleGroupAnd.objects.create(
