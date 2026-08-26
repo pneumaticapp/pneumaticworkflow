@@ -2,6 +2,7 @@ import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 
 import { GRAPH_SHOWCASE_TEMPLATE } from './fixtures/graphShowcaseTemplate';
+import { GRAPH_WEAVE_TEMPLATE } from './fixtures/graphWeaveTemplate';
 import { TemplateGraphEditor } from './TemplateGraphEditor';
 
 const meta = {
@@ -24,6 +25,14 @@ type Story = StoryObj<typeof meta>;
 export const AllVariants: Story = {
   args: {
     template: GRAPH_SHOWCASE_TEMPLATE,
+    onTaskEdit: () => undefined,
+    onKickoffEdit: () => undefined,
+  },
+};
+
+export const WeaveConditions: Story = {
+  args: {
+    template: GRAPH_WEAVE_TEMPLATE,
     onTaskEdit: () => undefined,
     onKickoffEdit: () => undefined,
   },
