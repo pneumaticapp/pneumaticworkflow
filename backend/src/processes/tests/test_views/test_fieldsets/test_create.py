@@ -660,6 +660,7 @@ def test_create__field_rule_missing_type__validation_error(api_client, mocker):
                 'api_name': 'f-1',
                 'rulesets': [
                     {
+                        'name': 'Ruleset',
                         'groups_or': [],
                     },
                 ],
@@ -702,6 +703,7 @@ def test_create__field_rule_invalid_type__validation_error(api_client, mocker):
                 'api_name': 'f-1',
                 'rulesets': [
                     {
+                        'name': 'Ruleset',
                         'type': 'sum_equal',
                         'groups_or': [],
                     },
@@ -746,6 +748,7 @@ def test_create__field_rule_invalid_op__validation_error(api_client, mocker):
                 'api_name': 'f-1',
                 'rulesets': [
                     {
+                        'name': 'Ruleset',
                         'type': FieldRuleType.SHOW,
                         'groups_or': [
                             {
@@ -800,6 +803,7 @@ def test_create__field_rule_missing_op__validation_error(api_client, mocker):
                 'api_name': 'f-1',
                 'rulesets': [
                     {
+                        'name': 'Ruleset',
                         'type': FieldRuleType.SHOW,
                         'groups_or': [
                             {
@@ -851,6 +855,7 @@ def test_create__field_rule_grp_and_field_missing__err(api_client, mocker):
                 'api_name': 'f-1',
                 'rulesets': [
                     {
+                        'name': 'Ruleset',
                         'type': FieldRuleType.SHOW,
                         'groups_or': [
                             {
@@ -903,6 +908,7 @@ def test_create__field_rule_missing_grp_or__err(api_client, mocker):
                 'api_name': 'f-1',
                 'rulesets': [
                     {
+                        'name': 'Ruleset',
                         'type': FieldRuleType.SHOW,
                     },
                 ],
@@ -921,5 +927,48 @@ def test_create__field_rule_missing_grp_or__err(api_client, mocker):
     # assert
     assert response.status_code == 400
     message = 'Groups_or: this field is required.'
+    assert response.data['message'] == message
+    create_shared_fieldset_mock.assert_not_called()
+
+
+def test_create__field_rule_missing_name__validation_error(api_client, mocker):
+
+    """
+    Create fieldset with a field rule that is missing the required 'name' field
+    and verify the request is rejected with a 400 status code.
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    data = {
+        'name': 'Field Rule Missing Name Fieldset',
+        'fields': [
+            {
+                'name': 'Field 1',
+                'type': FieldType.TEXT,
+                'order': 1,
+                'api_name': 'f-1',
+                'rulesets': [
+                    {
+                        'type': FieldRuleType.SHOW,
+                        'groups_or': [],
+                    },
+                ],
+            },
+        ],
+    }
+    create_shared_fieldset_mock = mocker.patch(
+        'src.processes.views.fieldset.FieldSetTemplateService.'
+        'create_shared_fieldset',
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.post('/fieldsets', data=data)
+
+    # assert
+    assert response.status_code == 400
+    message = 'Name: this field is required.'
     assert response.data['message'] == message
     create_shared_fieldset_mock.assert_not_called()

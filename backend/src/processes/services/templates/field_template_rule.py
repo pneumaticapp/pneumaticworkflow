@@ -20,6 +20,7 @@ class FieldTemplateRuleSetService(BaseModelService):
         self,
         field_id: int,
         type: str,  # noqa: A002
+        name: str,
         api_name: Optional[str] = None,
         message: Optional[str] = None,
         order: int = 0,
@@ -29,6 +30,7 @@ class FieldTemplateRuleSetService(BaseModelService):
 
         create_kwargs = {
             'account': self.account,
+            'name': name,
             'type': type,
             'message': message,
             'order': order,

@@ -258,6 +258,7 @@ class FieldTemplateRuleSetSerializer(
         api_primary_field = 'api_name'
         fields = (
             'api_name',
+            'name',
             'type',
             'message',
             'order',
@@ -265,6 +266,7 @@ class FieldTemplateRuleSetSerializer(
         )
         create_or_update_fields = {
             'api_name',
+            'name',
             'type',
             'message',
             'order',
@@ -278,6 +280,11 @@ class FieldTemplateRuleSetSerializer(
         required=False,
         example='ruleset-1',
         help_text='Stable unique identifier. Generated if omitted.',
+    )
+    name = DocCharField(
+        max_length=200,
+        example='Show when value is yes',
+        help_text='The ruleset name displayed in the editor.',
     )
     type = DocChoiceField(
         choices=FieldRuleType.CHOICES,

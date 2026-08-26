@@ -309,6 +309,7 @@ def test_partial_update__fields_operator__ok(
                 'rulesets': [
                     {
                         'api_name': 'r-1',
+                        'name': 'Ruleset',
                         'type': FieldRuleType.VALIDATOR,
                         'order': 1,
                         'groups_or': [
@@ -477,6 +478,7 @@ def test_partial_update__response_fields_data__ok(api_client, mocker):
     assert len(field_resp['rulesets']) == 1
     rule_resp = field_resp['rulesets'][0]
     assert rule_resp['api_name'] == field_ruleset.api_name
+    assert rule_resp['name'] == field_ruleset.name
     assert rule_resp['message'] == field_ruleset.message
     assert rule_resp['order'] == field_ruleset.order
 
@@ -531,6 +533,7 @@ def test_partial_update__fields_rules_type__ok(
                 'rulesets': [
                     {
                         'api_name': 'r-1',
+                        'name': 'Ruleset',
                         'type': rule_type,
                         'order': 1,
                         'groups_or': [
@@ -1087,6 +1090,7 @@ def test_partial_update__invalid_fields_rules_operator__validation_error(
                 'rulesets': [
                     {
                         'api_name': 'r-1',
+                        'name': 'Ruleset',
                         'type': FieldRuleType.SHOW,
                         'order': 1,
                         'groups_or': [

@@ -147,6 +147,7 @@ class FieldTemplateRuleSet(
         on_delete=models.CASCADE,
         related_name='rulesets',
     )
+    name = models.CharField(max_length=200)
     type = models.CharField(
         max_length=50,
         choices=FieldRuleType.CHOICES,

@@ -968,6 +968,7 @@ def create_test_shared_fieldset(
             account=account,
             field=field,
             api_name=f'{fieldset.api_name}-field-ruleset-1',
+            name='Field ruleset',
             type=field_rule_type,
             message=field_rule_message,
             order=1,
