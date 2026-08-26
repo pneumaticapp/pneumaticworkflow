@@ -90,6 +90,43 @@ describe('TaskNode', () => {
     expect(screen.getByText('Prepare Layout For Development')).toBeInTheDocument();
     expect(screen.getByText('1 performer')).toBeInTheDocument();
     expect(screen.getByText('1 field')).toBeInTheDocument();
+    expect(screen.queryByText(/condition/)).not.toBeInTheDocument();
+  });
+
+  it('should count only check-if conditions on the card', () => {
+    renderTaskNode(createTask({
+      conditions: [
+        {
+          apiName: 'start',
+          order: 1,
+          action: EConditionAction.StartTask,
+          rules: [
+            {
+              ruleApiName: 'start-rule',
+              predicateApiName: 'start-predicate',
+              field: 'field-1',
+              operator: EConditionOperators.Exist,
+              logicOperation: EConditionLogicOperations.And,
+            },
+          ],
+        },
+        {
+          apiName: 'skip',
+          order: 2,
+          action: EConditionAction.SkipTask,
+          rules: [
+            {
+              ruleApiName: 'skip-rule',
+              predicateApiName: 'skip-predicate',
+              field: 'field-1',
+              operator: EConditionOperators.Exist,
+              logicOperation: EConditionLogicOperations.And,
+            },
+          ],
+        },
+      ],
+    }));
+
     expect(screen.getByText('1 condition')).toBeInTheDocument();
   });
 
@@ -144,6 +181,43 @@ describe('TaskNode', () => {
 
     expect(idleHandles).toHaveLength(7);
     expect(visibleRight).toBeTruthy();
+    expect(visibleRight?.className).toMatch(/handle--check-if/);
+    expect(visibleRight?.className).toMatch(/graph-handle--check-if/);
+  });
+
+  it('should keep top and bottom stem handles gray', () => {
+    const { container } = render(
+      <ReactFlowProvider>
+        <TaskNode
+          id="task-1"
+          type="task"
+          data={{
+            task: createTask(),
+            isSelected: false,
+            onEdit: jest.fn(),
+            handles: {
+              ...EMPTY_CONNECTED_HANDLES,
+              hasSourceBottom: true,
+              hasTargetTop: true,
+            },
+          }}
+          selected={false}
+          isConnectable
+          dragging={false}
+          zIndex={1}
+          xPos={0}
+          yPos={0}
+        />
+      </ReactFlowProvider>,
+    );
+
+    const visibleBottom = Array.from(container.querySelectorAll('.react-flow__handle-bottom'))
+      .find((element) => !element.className.includes('handle--idle'));
+    const visibleTop = Array.from(container.querySelectorAll('.react-flow__handle-top'))
+      .find((element) => !element.className.includes('handle--idle'));
+
+    expect(visibleBottom?.className).not.toMatch(/check-if/);
+    expect(visibleTop?.className).not.toMatch(/check-if/);
   });
 
   it('should call onEdit when the kebab is clicked', () => {
