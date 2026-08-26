@@ -639,6 +639,7 @@ export const enMessages = {
   'template.graph-join': 'Merge',
   'template.graph-task-editor': 'Task editor',
   'template.graph-task-editor-close': 'Close',
+  'template.graph-add-task': 'Add task',
   'template.invite-team-member': 'Invite team member',
   'template.all-users': 'All Users',
   'template.edit-name': 'Edit Template Name',

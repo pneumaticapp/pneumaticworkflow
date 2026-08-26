@@ -549,6 +549,7 @@ export const ruMessages = {
   'template.graph-join': 'Схождение',
   'template.graph-task-editor': 'Редактор задачи',
   'template.graph-task-editor-close': 'Закрыть',
+  'template.graph-add-task': 'Добавить задачу',
   'template.invite-team-member': 'Пригласить исполнителя',
   'template.edit-name': 'Изменить Название Шаблона',
   'template.save-failed': 'Не удалось сохранить Процесс',
