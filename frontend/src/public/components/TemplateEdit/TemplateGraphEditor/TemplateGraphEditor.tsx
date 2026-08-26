@@ -4,12 +4,13 @@ import ReactFlow, { Node as ReactFlowNode } from 'reactflow';
 import 'reactflow/dist/style.css';
 
 import { ITemplateClient } from '../../../types/template';
-import { EGraphNodeType, TGraphNode } from './types';
+import { EGraphNodeType, TGraphAddTaskIntent, TGraphEdge, TGraphNode } from './types';
 import { useTemplateGraph } from '../../../hooks/useTemplateGraph';
 import { TaskNode } from './components/TaskNode/TaskNode';
 import { KickoffNode } from './components/KickoffNode/KickoffNode';
 import { JunctionNode } from './components/JunctionNode/JunctionNode';
 import { GraphConditionEdge } from './components/GraphConditionEdge/GraphConditionEdge';
+import { applyGraphAddAffordances } from './utils/applyGraphAddAffordances';
 import { applyGraphFocus } from './utils/applyGraphFocus';
 import styles from './TemplateGraphEditor.css';
 
@@ -17,6 +18,7 @@ interface ITemplateGraphEditorProps {
   template: ITemplateClient;
   onTaskEdit: (taskApiName: string) => void;
   onKickoffEdit: () => void;
+  onAddTask?: (intent: TGraphAddTaskIntent) => void;
 }
 
 const nodeTypes = {
@@ -33,7 +35,12 @@ function isCardNode(type?: string): boolean {
   return type === EGraphNodeType.Task || type === EGraphNodeType.Kickoff;
 }
 
-export const TemplateGraphEditor = ({ template, onTaskEdit, onKickoffEdit }: ITemplateGraphEditorProps) => {
+export const TemplateGraphEditor = ({
+  template,
+  onTaskEdit,
+  onKickoffEdit,
+  onAddTask,
+}: ITemplateGraphEditorProps) => {
   const {
     nodes,
     edges,
@@ -86,37 +93,67 @@ export const TemplateGraphEditor = ({ template, onTaskEdit, onKickoffEdit }: ITe
     setHoveredNodeId(null);
   }, []);
 
+  const { nodes: affordedNodes, edges: affordedEdges } = useMemo(
+    () => applyGraphAddAffordances(nodes, edges),
+    [nodes, edges],
+  );
+
   const nodesWithCallback = useMemo(
     () =>
-      nodes.map((node) => {
+      affordedNodes.map((node) => {
         if (node.type === EGraphNodeType.Task) {
+          const canAdd = Boolean(onAddTask && node.data.addTaskIntent);
+
           return {
             ...node,
             data: {
               ...node.data,
               onEdit: onTaskEdit,
+              onAddTask: canAdd ? onAddTask : undefined,
             },
           };
         }
 
         if (node.type === EGraphNodeType.Kickoff) {
+          const canAdd = Boolean(onAddTask && node.data.addTaskIntent);
+
           return {
             ...node,
             data: {
               ...node.data,
               onEdit: onKickoffEdit,
+              onAddTask: canAdd ? onAddTask : undefined,
             },
           };
         }
 
         return node;
       }),
-    [nodes, onTaskEdit, onKickoffEdit],
+    [affordedNodes, onTaskEdit, onKickoffEdit, onAddTask],
+  );
+
+  const edgesWithCallback = useMemo(
+    () =>
+      affordedEdges.map((edge) => {
+        const canAdd = Boolean(onAddTask && edge.data?.addTaskIntent);
+        if (!canAdd) {
+          return edge;
+        }
+
+        return {
+          ...edge,
+          data: {
+            ...edge.data,
+            onAddTask,
+          },
+        };
+      }),
+    [affordedEdges, onAddTask],
   );
 
   const { nodes: displayNodes, edges: displayEdges } = useMemo(
-    () => applyGraphFocus(nodesWithCallback as TGraphNode[], edges, activeNodeId),
-    [nodesWithCallback, edges, activeNodeId],
+    () => applyGraphFocus(nodesWithCallback as TGraphNode[], edgesWithCallback as TGraphEdge[], activeNodeId),
+    [nodesWithCallback, edgesWithCallback, activeNodeId],
   );
 
   return (

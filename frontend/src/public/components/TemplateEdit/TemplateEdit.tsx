@@ -38,6 +38,8 @@ import { loadFieldsetsCatalog } from '../../redux/fieldsets/slice';
 import { ESubscriptionPlan } from '../../types/account';
 import { TemplateSettings } from './TemplateSettings';
 import { EGraphViewMode, TemplateGraphEditor, GraphTaskEditorPanel } from './TemplateGraphEditor';
+import { TGraphAddTaskIntent } from './TemplateGraphEditor/types';
+import { insertGraphTask } from './TemplateGraphEditor/utils/insertGraphTask';
 import { getGraphShowcaseTemplate } from './TemplateGraphEditor/fixtures/graphShowcaseTemplate';
 import { getGraphWeaveTemplate } from './TemplateGraphEditor/fixtures/graphWeaveTemplate';
 import { KICKOFF_NODE_ID } from './TemplateGraphEditor/utils/templateToGraph';
@@ -403,6 +405,21 @@ export function TemplateEdit({
     toggleIsOpenTask(newTask.uuid);
   };
 
+  const handleAddTaskFromGraph = (intent: TGraphAddTaskIntent) => {
+    const { tasks: nextTasks, createdApiName } = insertGraphTask(
+      tasks,
+      intent,
+      (draft) => getNewTask(draft),
+    );
+
+    if (!createdApiName) {
+      return;
+    }
+
+    changeTasks(nextTasks);
+    dispatch(setSelectedTask(createdApiName));
+  };
+
   const toggleIsOpenTask = (taskUUID: string) => {
     const isTaskOpen = Boolean(openedTasks[taskUUID]);
 
@@ -543,6 +560,7 @@ export function TemplateEdit({
                 template={template}
                 onTaskEdit={handleTaskSelectInGraph}
                 onKickoffEdit={handleKickoffEditInGraph}
+                onAddTask={handleAddTaskFromGraph}
               />
             ) : (
               <div className={styles['tasks']}>
