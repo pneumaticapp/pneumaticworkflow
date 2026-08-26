@@ -3,6 +3,7 @@ import {
   GRAPH_NODE_HEIGHT,
   GRAPH_NODE_WIDTH,
   GRAPH_ROW_GAP,
+  GRAPH_SKIP_LANE_STEP,
 } from '../graphGeometry';
 import { pickClearY, pickTreeGutterX, segmentCrowdsCard, segmentHitsCard } from '../graphPathCollision';
 
@@ -65,5 +66,12 @@ describe('graphPathCollision', () => {
 
     expect(y).toBeGreaterThan(600 + GRAPH_NODE_HEIGHT);
     expect(y).toBeLessThan(776);
+  });
+
+  it('should step off a taken alley y even when no card sits on the span', () => {
+    const y = pickClearY(40, 400, 80, [], new Set(), [80]);
+
+    expect(y).not.toBe(80);
+    expect(Math.abs(y - 80)).toBeGreaterThanOrEqual(GRAPH_SKIP_LANE_STEP);
   });
 });

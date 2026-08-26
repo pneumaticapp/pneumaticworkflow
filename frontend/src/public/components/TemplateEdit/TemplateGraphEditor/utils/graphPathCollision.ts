@@ -1,13 +1,19 @@
 import { TGraphEdge, TGraphNode } from '../types';
+import { isConditionalGraphEdge } from './edgeStyles';
+import { isCheckIfStemEdge } from './graphConstants';
 import { getGraphEdgePath } from './getGraphEdgePath';
 import {
+  GRAPH_EDGE_STANDOFF,
   GRAPH_ROW_GAP,
   GRAPH_SKIP_LANE_GAP,
   GRAPH_SKIP_LANE_STEP,
+  faceFromHandle,
   getGraphNodeBox,
   getHandleAnchor,
   isCardNode,
+  offsetAlongFace,
   sharesStemX,
+  snapOutOfStandoffStrip,
 } from './graphGeometry';
 
 export const CARD_HIT_INSET = 2;
@@ -25,6 +31,7 @@ export interface IPathSegment {
 export interface IGutterDetour {
   laneX: number;
   laneY?: number;
+  targetStandoff?: number;
 }
 
 export function parseGraphPath(path: string): IPathSegment[] {
@@ -108,6 +115,8 @@ export function getEdgePathSegments(
     laneY: edge.data?.laneY,
     sourceHandle: edge.data?.sourceHandle ?? edge.sourceHandle,
     targetHandle: edge.data?.targetHandle ?? edge.targetHandle,
+    sourceStandoff: edge.data?.sourceStandoff,
+    targetStandoff: edge.data?.targetStandoff,
   });
 
   return parseGraphPath(path);
@@ -150,6 +159,7 @@ function withGutterPath(
   edge: TGraphEdge,
   laneX: number,
   laneY?: number,
+  targetStandoff?: number,
 ): TGraphEdge {
   return {
     ...edge,
@@ -157,6 +167,7 @@ function withGutterPath(
       ...edge.data,
       laneX,
       laneY,
+      targetStandoff: targetStandoff ?? edge.data?.targetStandoff,
       pathKind: edge.data?.pathKind === 'skip' ? 'from-fork' : edge.data?.pathKind,
     },
   };
@@ -197,9 +208,10 @@ export function pickTreeGutterX(
   const goingRight = toX >= fromX;
   const nearX = firstObstacleNearX(fromX, toX, fromY, cards);
   const limitX = nearX == null ? (fromX + toX) / 2 : nearX;
+  const minOut = goingRight ? fromX + GRAPH_EDGE_STANDOFF : fromX - GRAPH_EDGE_STANDOFF;
   const preferred = goingRight
-    ? Math.min(limitX - GRAPH_SKIP_LANE_GAP, Math.max(fromX, (fromX + limitX) / 2))
-    : Math.max(limitX + GRAPH_SKIP_LANE_GAP, Math.min(fromX, (fromX + limitX) / 2));
+    ? Math.min(limitX - GRAPH_SKIP_LANE_GAP, Math.max(minOut, (fromX + limitX) / 2))
+    : Math.max(limitX + GRAPH_SKIP_LANE_GAP, Math.min(minOut, (fromX + limitX) / 2));
 
   const isFree = (x: number): boolean => {
     if (takenXs.some((taken) => Math.abs(taken - x) < GRAPH_SKIP_LANE_STEP)) {
@@ -293,6 +305,21 @@ export function pickClearY(
   }
 
   if (occupied.length === 0) {
+    const step = GRAPH_SKIP_LANE_STEP;
+
+    for (let offset = step; offset <= GRAPH_ROW_GAP; offset += step) {
+      const above = preferredY - offset;
+      const below = preferredY + offset;
+
+      if (isFree(above)) {
+        return above;
+      }
+
+      if (isFree(below)) {
+        return below;
+      }
+    }
+
     return preferredY;
   }
 
@@ -333,11 +360,23 @@ export function planObstacleDetours(
     const source = nodeById.get(edge.source);
     const target = nodeById.get(edge.target);
 
-    if (!source || !target || edge.data?.isLaneRouted) {
+    if (!source || !target) {
       return;
     }
 
-    const hit = classifyCardHit(edge, source, target, nodes);
+    if (edge.data?.isLaneRouted && !isConditionalGraphEdge(edge)) {
+      return;
+    }
+
+    if (isCheckIfStemEdge(source.id, target.id) || edge.data?.laneY != null) {
+      return;
+    }
+
+    let hit = classifyCardHit(edge, source, target, nodes);
+
+    if (hit === 'vertical' && isConditionalGraphEdge(edge)) {
+      hit = 'horizontal';
+    }
 
     if (hit === 'vertical') {
       xIds.add(edge.id);
@@ -351,8 +390,24 @@ export function planObstacleDetours(
 
     const from = edge.data?.sourceAnchor ?? getHandleAnchor(source, edge.sourceHandle);
     const to = edge.data?.targetAnchor ?? getHandleAnchor(target, edge.targetHandle);
+    const sourceFace = faceFromHandle(edge.data?.sourceHandle ?? edge.sourceHandle);
+    const targetFace = faceFromHandle(edge.data?.targetHandle ?? edge.targetHandle);
+    const fromExit = offsetAlongFace(from, sourceFace, edge.data?.sourceStandoff ?? 0);
     const ignoreIds = new Set([source.id, target.id]);
-    const laneX = pickTreeGutterX(from.x, to.x, from.y, nodes, ignoreIds, takenXs);
+    const gutterX = pickTreeGutterX(fromExit.x, to.x, fromExit.y, nodes, ignoreIds, takenXs);
+    let laneX = gutterX;
+
+    if (sourceFace === 'left') {
+      laneX = Math.min(gutterX, fromExit.x);
+    } else if (sourceFace === 'right') {
+      laneX = Math.max(gutterX, fromExit.x);
+    }
+
+    if (targetFace === 'left' || targetFace === 'right') {
+      const entry = offsetAlongFace(to, targetFace, edge.data?.targetStandoff ?? GRAPH_EDGE_STANDOFF);
+      laneX = snapOutOfStandoffStrip(laneX, to.x, entry.x);
+    }
+
     const laneY = pickClearY(laneX, to.x, to.y, nodes, ignoreIds, takenYs);
     const detour: IGutterDetour = laneY === to.y
       ? { laneX }
@@ -373,4 +428,86 @@ export function planObstacleDetours(
   });
 
   return { xIds, gutters };
+}
+
+export function planCheckIfCardWraps(
+  nodes: TGraphNode[],
+  edges: TGraphEdge[],
+): Map<string, IGutterDetour> {
+  const nodeById = new Map(nodes.map((node) => [node.id, node]));
+  const takenYs: number[] = [];
+
+  edges.forEach((edge) => {
+    if (isConditionalGraphEdge(edge)) {
+      return;
+    }
+
+    const source = nodeById.get(edge.source);
+    const target = nodeById.get(edge.target);
+
+    if (!source || !target) {
+      return;
+    }
+
+    getEdgePathSegments(edge, source, target).forEach((segment) => {
+      if (isHorizontalSegment(segment) && Math.abs(segment.a.x - segment.b.x) > GRAPH_SKIP_LANE_STEP) {
+        takenYs.push(segment.a.y);
+      }
+    });
+  });
+
+  const wraps = new Map<string, IGutterDetour>();
+  const candidates = edges
+    .filter((edge) => {
+      const target = nodeById.get(edge.target);
+
+      return Boolean(
+        target
+        && isConditionalGraphEdge(edge)
+        && isCardNode(target)
+        && !isCheckIfStemEdge(edge.source, edge.target)
+        && !edge.data?.isLaneRouted
+        && edge.data?.laneX == null,
+      );
+    })
+    .sort((first, second) => first.id.localeCompare(second.id));
+
+  candidates.forEach((edge) => {
+    const source = nodeById.get(edge.source);
+    const target = nodeById.get(edge.target);
+
+    if (!source || !target) {
+      return;
+    }
+
+    const from = edge.data?.sourceAnchor ?? getHandleAnchor(source, edge.sourceHandle);
+    const to = edge.data?.targetAnchor ?? getHandleAnchor(target, edge.targetHandle);
+    const sourceFace = faceFromHandle(edge.data?.sourceHandle ?? edge.sourceHandle);
+    const targetFace = faceFromHandle(edge.data?.targetHandle ?? edge.targetHandle);
+    const fromExit = offsetAlongFace(from, sourceFace, edge.data?.sourceStandoff ?? 0);
+    const entry = offsetAlongFace(to, targetFace, edge.data?.targetStandoff ?? GRAPH_EDGE_STANDOFF);
+    const sourceBox = getGraphNodeBox(source);
+    const targetBox = getGraphNodeBox(target);
+    let preferredY = fromExit.y;
+
+    if (sourceBox.bottom <= targetBox.y) {
+      preferredY = (sourceBox.bottom + targetBox.y) / 2;
+    } else if (targetBox.bottom <= sourceBox.y) {
+      preferredY = (targetBox.bottom + sourceBox.y) / 2;
+    }
+
+    const ignoreIds = new Set([source.id, target.id]);
+    let laneX = fromExit.x;
+
+    if (targetFace === 'left' || targetFace === 'right') {
+      laneX = snapOutOfStandoffStrip(laneX, to.x, entry.x);
+    }
+
+    const laneY = pickClearY(laneX, to.x, preferredY, nodes, ignoreIds, takenYs);
+
+    wraps.set(edge.id, { laneX, laneY });
+    takenYs.push(laneY);
+  });
+
+  return wraps;
 }

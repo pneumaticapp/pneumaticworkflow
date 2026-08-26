@@ -1,13 +1,14 @@
-import { ITemplateClient, ITemplateTaskClient } from '../../../../../types/template';
+import { EExtraFieldType, ITemplateClient, ITemplateTaskClient } from '../../../../../types/template';
 import { createEmptyTaskDueDate } from '../../../../../utils/dueDate/createEmptyTaskDueDate';
 import { EConditionAction, EConditionLogicOperations, EConditionOperators } from '../../../TaskForm/Conditions';
 import { EStartingType } from '../../../TaskForm/Conditions/utils/getDropdownOperators';
 import { GRAPH_SHOWCASE_TEMPLATE } from '../../fixtures/graphShowcaseTemplate';
+import { GRAPH_WEAVE_TEMPLATE } from '../../fixtures/graphWeaveTemplate';
 import { EGraphNodeType, TGraphEdge, TGraphNode } from '../../types';
 import { buildTemplateGraph } from '../buildTemplateGraph';
 import { getGraphEdgeLine, isLaneRoutedGraphEdge } from '../edgeStyles';
 import { getGraphEdgePath } from '../getGraphEdgePath';
-import { getGraphNodeBox, getHandleAnchor } from '../graphGeometry';
+import { GRAPH_EDGE_STANDOFF, getGraphNodeBox, getHandleAnchor } from '../graphGeometry';
 
 interface IPoint {
   x: number;
@@ -147,6 +148,8 @@ function collectSegments(nodes: TGraphNode[], edges: TGraphEdge[]): ISegment[] {
       laneY: edge.data?.laneY,
       sourceHandle: edge.sourceHandle,
       targetHandle: edge.targetHandle,
+      sourceStandoff: edge.data?.sourceStandoff,
+      targetStandoff: edge.data?.targetStandoff,
     });
 
     return parseSegments(edge.id, path);
@@ -179,8 +182,33 @@ function findCardCrossings(nodes: TGraphNode[], edges: TGraphEdge[]): string[] {
     .map((card) => `${segment.edgeId} over ${card.id}`));
 }
 
-function hasEdgeInfo(edge: TGraphEdge): boolean {
-  return Boolean(edge.data?.summary || edge.data?.startAfter?.length);
+function findEdgeGlances(nodes: TGraphNode[], edges: TGraphEdge[]): string[] {
+  const cards = nodes.filter((node) => node.type !== EGraphNodeType.Junction);
+
+  return collectSegments(nodes, edges).flatMap((segment) => {
+    const isVertical = Math.abs(segment.a.x - segment.b.x) < 0.5;
+
+    if (!isVertical) {
+      return [];
+    }
+
+    const minY = Math.min(segment.a.y, segment.b.y);
+    const maxY = Math.max(segment.a.y, segment.b.y);
+
+    return cards
+      .filter((card) => {
+        const box = getGraphNodeBox(card);
+        const onSide = Math.abs(segment.a.x - box.x) < 0.5 || Math.abs(segment.a.x - box.right) < 0.5;
+        const overlap = getOverlapLength(minY, maxY, box.y, box.bottom);
+
+        return onSide && overlap > 2;
+      })
+      .map((card) => `${segment.edgeId} along ${card.id}`);
+  });
+}
+
+function hasCheckIfInfo(edge: TGraphEdge): boolean {
+  return Boolean(edge.data?.isConditional);
 }
 
 function getOverlapLength(a1: number, a2: number, b1: number, b2: number): number {
@@ -203,7 +231,7 @@ function findOverlaps(segments: ISegment[]): string[] {
       const isSecondHorizontal = Math.abs(second.a.y - second.b.y) < 0.5;
 
       if (isFirstVertical && isSecondVertical && Math.abs(first.a.x - second.a.x) < 0.5) {
-        if (getOverlapLength(first.a.y, first.b.y, second.a.y, second.b.y) > 1) {
+        if (getOverlapLength(first.a.y, first.b.y, second.a.y, second.b.y) > GRAPH_EDGE_STANDOFF) {
           overlaps.push(`${first.edgeId} | ${second.edgeId}`);
         }
       }
@@ -282,16 +310,61 @@ const JOIN_TWO_PREVIOUS_TEMPLATE = createTemplate([
   }),
 ]);
 
+const CROSS_CHECK_IF_TEMPLATE = createTemplate([
+  createTask({ apiName: 'task-a', number: 1, uuid: 'a', ancestors: ['kickoff'] }),
+  createTask({
+    apiName: 'task-side',
+    number: 2,
+    uuid: 'side',
+    ancestors: ['kickoff'],
+    fields: [
+      {
+        apiName: 'side-field',
+        name: 'Flag',
+        type: EExtraFieldType.String,
+        order: 0,
+        userId: null,
+        groupId: null,
+      },
+    ],
+  }),
+  createTask({ apiName: 'task-b', number: 3, uuid: 'b', ancestors: ['task-a'] }),
+  createTask({
+    apiName: 'task-c',
+    number: 4,
+    uuid: 'c',
+    ancestors: ['task-b'],
+    conditions: [
+      {
+        apiName: 'skip-c',
+        order: 1,
+        action: EConditionAction.SkipTask,
+        rules: [
+          {
+            ruleApiName: 'skip-c-rule',
+            predicateApiName: 'skip-c-predicate',
+            field: 'side-field',
+            operator: EConditionOperators.Exist,
+            logicOperation: EConditionLogicOperations.And,
+          },
+        ],
+      },
+    ],
+  }),
+]);
+
 describe.each([
   ['showcase', GRAPH_SHOWCASE_TEMPLATE],
+  ['weave check-if', GRAPH_WEAVE_TEMPLATE],
   ['consecutive skips', MULTI_SKIP_TEMPLATE],
   ['mixed fork', MIXED_FORK_TEMPLATE],
   ['uneven branches', UNEVEN_BRANCH_TEMPLATE],
   ['join two previous', JOIN_TWO_PREVIOUS_TEMPLATE],
+  ['cross-column check-if', CROSS_CHECK_IF_TEMPLATE],
 ])('graph edge layout: %s', (_name, template) => {
   const { nodes, edges } = buildTemplateGraph(template);
   const cardNodes = nodes.filter((node) => node.type !== EGraphNodeType.Junction);
-  const stemEdges = edges.filter((edge) => !isLaneRoutedGraphEdge(edge));
+  const stemEdges = edges.filter((edge) => !isLaneRoutedGraphEdge(edge) && !edge.data?.isConditional);
 
   it('should keep a single incoming and a single outgoing stem on every card', () => {
     cardNodes.forEach((node) => {
@@ -309,21 +382,34 @@ describe.each([
     expect(branching.every((node) => node.type === EGraphNodeType.Junction)).toBe(true);
   });
 
-  it('should never mix solid and dashed lines on a junction', () => {
-    const junctions = nodes.filter((node) => node.type === EGraphNodeType.Junction);
+  it('should keep gray and check-if off the same junction', () => {
+    const joins = nodes.filter((node) => node.type === EGraphNodeType.Junction && 'kind' in node.data && node.data.kind === 'join');
 
-    junctions.forEach((junction) => {
-      const lines = edges
-        .filter((edge) => edge.source === junction.id || edge.target === junction.id)
-        .map((edge) => getGraphEdgeLine(edge));
+    joins.forEach((join) => {
+      const outbound = edges.filter((edge) => edge.source === join.id);
+      const inbound = edges.filter((edge) => edge.target === join.id);
+      const hasGrayIn = inbound.some((edge) => !edge.data?.isConditional);
+      const hasOrangeIn = inbound.some((edge) => edge.data?.isConditional);
 
-      expect(new Set(lines).size).toBe(1);
+      expect(outbound).toHaveLength(1);
+      expect(hasGrayIn && hasOrangeIn).toBe(false);
+
+      if (hasGrayIn) {
+        expect(getGraphEdgeLine(outbound[0])).toBe('solid');
+      }
+
+      if (hasOrangeIn) {
+        expect(getGraphEdgeLine(outbound[0])).toBe('dashed');
+      }
     });
   });
 
-  it('should draw only gray start-after lines', () => {
-    expect(edges.every((edge) => getGraphEdgeLine(edge) === 'solid')).toBe(true);
-    expect(edges.every((edge) => !edge.data?.summary)).toBe(true);
+  it('should keep start-after lines gray and check-if lines dashed', () => {
+    const startAfter = edges.filter((edge) => !edge.data?.isConditional);
+    const checkIf = edges.filter((edge) => edge.data?.isConditional);
+
+    expect(startAfter.every((edge) => getGraphEdgeLine(edge) === 'solid')).toBe(true);
+    expect(checkIf.every((edge) => getGraphEdgeLine(edge) === 'dashed')).toBe(true);
   });
 
   it('should never put two edges on the same handle', () => {
@@ -337,6 +423,72 @@ describe.each([
     });
 
     expect([...anchors.values()].every((count) => count === 1)).toBe(true);
+  });
+
+  it('should dock gray lines on the top and bottom of cards and check-if on the sides', () => {
+    const cardIds = new Set(cardNodes.map((node) => node.id));
+    const isVertical = (handle?: string | null) => Boolean(handle && (handle.includes('top') || handle.includes('bottom')));
+    const isHorizontal = (handle?: string | null) => Boolean(handle && (handle.includes('left') || handle.includes('right')));
+
+    edges.forEach((edge) => {
+      if (cardIds.has(edge.source)) {
+        if (edge.data?.isConditional) {
+          expect(isHorizontal(edge.sourceHandle)).toBe(true);
+        } else {
+          expect(isVertical(edge.sourceHandle)).toBe(true);
+        }
+      }
+
+      if (cardIds.has(edge.target)) {
+        if (edge.data?.isConditional) {
+          expect(isHorizontal(edge.targetHandle)).toBe(true);
+        } else {
+          expect(isVertical(edge.targetHandle)).toBe(true);
+        }
+      }
+    });
+  });
+
+  it('should leave and enter cards with a standoff before turning', () => {
+    const cardIds = new Set(cardNodes.map((node) => node.id));
+    const isHorizontal = (handle?: string | null) => Boolean(
+      handle && (handle.includes('left') || handle.includes('right')),
+    );
+    const byEdge = new Map<string, ISegment[]>();
+
+    collectSegments(nodes, edges).forEach((segment) => {
+      const list = byEdge.get(segment.edgeId) ?? [];
+      list.push(segment);
+      byEdge.set(segment.edgeId, list);
+    });
+
+    edges.forEach((edge) => {
+      const segments = byEdge.get(edge.id);
+
+      if (!segments || segments.length === 0) {
+        return;
+      }
+
+      if (cardIds.has(edge.source) && isHorizontal(edge.sourceHandle)) {
+        const first = segments[0];
+        const run = Math.hypot(first.b.x - first.a.x, first.b.y - first.a.y);
+
+        expect(run).toBeGreaterThanOrEqual(GRAPH_EDGE_STANDOFF);
+        expect(Math.abs(first.a.y - first.b.y)).toBeLessThan(0.5);
+      }
+
+      if (cardIds.has(edge.target) && isHorizontal(edge.targetHandle)) {
+        const last = segments[segments.length - 1];
+        const run = Math.hypot(last.b.x - last.a.x, last.b.y - last.a.y);
+
+        expect(run).toBeGreaterThanOrEqual(GRAPH_EDGE_STANDOFF);
+        expect(Math.abs(last.a.y - last.b.y)).toBeLessThan(0.5);
+      }
+    });
+  });
+
+  it('should not run a vertical along a card side', () => {
+    expect(findEdgeGlances(nodes, edges)).toEqual([]);
   });
 
   it('should not let two edges run along the same line', () => {
@@ -356,11 +508,13 @@ describe.each([
     expect(diagonals).toEqual([]);
   });
 
-  it('should describe every line that leaves a card', () => {
+  it('should describe check-if lines and leave start-after without a badge', () => {
     const cardIds = new Set(cardNodes.map((node) => node.id));
-    const outbound = edges.filter((edge) => cardIds.has(edge.source));
+    const outboundStartAfter = edges.filter((edge) => cardIds.has(edge.source) && !edge.data?.isConditional);
+    const outboundCheckIf = edges.filter((edge) => cardIds.has(edge.source) && edge.data?.isConditional);
 
-    expect(outbound.every((edge) => hasEdgeInfo(edge))).toBe(true);
+    expect(outboundStartAfter.every((edge) => !hasCheckIfInfo(edge))).toBe(true);
+    expect(outboundCheckIf.every((edge) => hasCheckIfInfo(edge))).toBe(true);
   });
 
   it('should not repeat the description on segments after a junction', () => {
@@ -369,6 +523,6 @@ describe.each([
     );
     const outbound = edges.filter((edge) => junctionIds.has(edge.source));
 
-    expect(outbound.every((edge) => !hasEdgeInfo(edge))).toBe(true);
+    expect(outbound.filter((edge) => getGraphEdgeLine(edge) === 'solid').every((edge) => !hasCheckIfInfo(edge))).toBe(true);
   });
 });

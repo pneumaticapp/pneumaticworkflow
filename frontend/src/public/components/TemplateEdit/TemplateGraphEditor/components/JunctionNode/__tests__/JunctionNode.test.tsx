@@ -56,4 +56,28 @@ describe('JunctionNode', () => {
       expect(handle).toHaveStyle({ opacity: '0', top: '50%', left: '50%' });
     });
   });
+
+  it('should paint a check-if junction orange', () => {
+    const { container } = render(
+      <ReactFlowProvider>
+        <JunctionNode
+          {...nodeProps}
+          id="junction-fork-checkif-kickoff"
+          data={{ kind: 'fork' }}
+        />
+      </ReactFlowProvider>,
+    );
+
+    expect(container.querySelector('[data-test-id="graph-junction-node"]')?.className).toMatch(/check-if/);
+  });
+
+  it('should keep a gray fork gray', () => {
+    const { container } = render(
+      <ReactFlowProvider>
+        <JunctionNode {...nodeProps} data={{ kind: 'fork' }} />
+      </ReactFlowProvider>,
+    );
+
+    expect(container.querySelector('[data-test-id="graph-junction-node"]')?.className).not.toMatch(/check-if/);
+  });
 });

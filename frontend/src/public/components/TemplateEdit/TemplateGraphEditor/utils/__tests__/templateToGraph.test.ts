@@ -5,10 +5,10 @@ import { EStartingType } from '../../../TaskForm/Conditions/utils/getDropdownOpe
 import { GRAPH_SHOWCASE_TEMPLATE } from '../../fixtures/graphShowcaseTemplate';
 import { EGraphNodeType } from '../../types';
 import { applyDagreLayout, GRAPH_JUNCTION_SIZE, GRAPH_NODE_WIDTH } from '../applyDagreLayout';
-import { GRAPH_COLUMN_GAP } from '../graphGeometry';
+import { GRAPH_CARD_Z_INDEX, GRAPH_COLUMN_GAP } from '../graphGeometry';
 import { EMPTY_CONNECTED_HANDLES } from '../applyConnectedHandles';
 import { buildTemplateGraph } from '../buildTemplateGraph';
-import { getGraphEdgeLine, isLaneRoutedGraphEdge, isSkipGraphEdge } from '../edgeStyles';
+import { getGraphEdgeLine, isSkipGraphEdge } from '../edgeStyles';
 import { KICKOFF_NODE_ID, KICKOFF_START_AFTER, templateToGraph } from '../templateToGraph';
 
 function createTask(overrides: Partial<ITemplateTaskClient> = {}): ITemplateTaskClient {
@@ -149,7 +149,7 @@ describe('templateToGraph', () => {
     });
   });
 
-  it('should not draw a skip line from check-if conditions', () => {
+  it('should draw a dashed check-if line from the field owner without changing start-after', () => {
     const { nodes, edges } = templateToGraph(
       createTemplate({
         tasks: [
@@ -175,14 +175,20 @@ describe('templateToGraph', () => {
         ],
       }),
     );
+    const startAfter = edges.filter((edge) => !edge.data?.isConditional);
+    const checkIf = edges.filter((edge) => edge.data?.isConditional);
 
     expect(edges.filter((edge) => isSkipGraphEdge(edge))).toHaveLength(0);
-    expect(edges.filter((edge) => isLaneRoutedGraphEdge(edge))).toHaveLength(0);
-    expect(nodes.some((node) => node.type === EGraphNodeType.Junction)).toBe(false);
-    expect(edges.some((edge) => edge.source === 'kickoff' && edge.target === 'task-2')).toBe(false);
-    expect(edges.some((edge) => edge.source === 'kickoff' && edge.target === 'task-1')).toBe(true);
-    expect(edges.some((edge) => edge.source === 'task-1' && edge.target === 'task-2')).toBe(true);
-    expect(edges.every((edge) => getGraphEdgeLine(edge) === 'solid')).toBe(true);
+    expect(nodes.some((node) => node.id === 'junction-join-task-1')).toBe(false);
+    expect(startAfter.some((edge) => edge.source === 'kickoff' && edge.target === 'task-2')).toBe(false);
+    expect(startAfter.some((edge) => edge.source === 'kickoff' && edge.target === 'task-1')).toBe(true);
+    expect(startAfter.some((edge) => edge.source === 'task-1' && edge.target === 'task-2')).toBe(true);
+    expect(startAfter.every((edge) => getGraphEdgeLine(edge) === 'solid')).toBe(true);
+    expect(checkIf).toHaveLength(1);
+    expect(checkIf[0].source).toBe('kickoff');
+    expect(checkIf[0].target).toBe('task-1');
+    expect(getGraphEdgeLine(checkIf[0])).toBe('dashed');
+    expect(checkIf[0].data?.clauses?.[0].fieldLabel).toBe('Client');
   });
 
   it('should draw a start-after edge only from the listed task, not from transitive ancestors', () => {
@@ -412,9 +418,11 @@ describe('templateToGraph', () => {
     expect(afterJoin?.data?.startAfter).toBeUndefined();
   });
 
-  it('should map the showcase template to gray start-after edges', () => {
+  it('should map the showcase template to start-after stems and a check-if line', () => {
     const { nodes, edges } = templateToGraph(GRAPH_SHOWCASE_TEMPLATE);
     const taskIds = nodes.filter((node) => node.type === EGraphNodeType.Task).map((node) => node.id);
+    const startAfter = edges.filter((edge) => !edge.data?.isConditional);
+    const checkIf = edges.filter((edge) => edge.data?.isConditional);
 
     expect(nodes.some((node) => node.id === KICKOFF_NODE_ID)).toBe(true);
     expect(taskIds).toEqual([
@@ -428,12 +436,20 @@ describe('templateToGraph', () => {
     ]);
     expect(nodes.some((node) => node.id === 'junction-fork-task-url-title')).toBe(true);
     expect(nodes.some((node) => node.id === 'junction-join-task-join')).toBe(true);
+    expect(nodes.some((node) => node.id === 'junction-join-task-skippable')).toBe(false);
     expect(nodes.some((node) => node.id === 'junction-fork-task-linear')).toBe(false);
     expect(nodes.some((node) => node.id === 'junction-join-task-url-title')).toBe(false);
     expect(edges.filter((edge) => isSkipGraphEdge(edge))).toHaveLength(0);
-    expect(edges.filter((edge) => isLaneRoutedGraphEdge(edge))).toHaveLength(0);
-    expect(edges.every((edge) => getGraphEdgeLine(edge) === 'solid')).toBe(true);
-    expect(edges.every((edge) => edge.style?.stroke === 'var(--pneumatic-color-black32)')).toBe(true);
+    expect(startAfter.every((edge) => getGraphEdgeLine(edge) === 'solid')).toBe(true);
+    expect(startAfter.every((edge) => edge.style?.stroke === 'var(--pneumatic-color-black32)')).toBe(true);
+    expect(checkIf).toHaveLength(1);
+    expect(checkIf[0].source).toBe(KICKOFF_NODE_ID);
+    expect(checkIf[0].target).toBe('task-skippable');
+    expect(getGraphEdgeLine(checkIf[0])).toBe('dashed');
+    const cards = nodes.filter((node) => node.type !== EGraphNodeType.Junction);
+
+    expect(cards.every((node) => (node.zIndex ?? 0) >= GRAPH_CARD_Z_INDEX)).toBe(true);
+    expect(checkIf[0].zIndex ?? 0).toBeLessThan(GRAPH_CARD_Z_INDEX);
   });
 });
 
@@ -527,6 +543,69 @@ describe('applyDagreLayout', () => {
     expect(centerX('task-mid-1')).toBeGreaterThan(centerX('task-long-1'));
     expect(centerX('task-mid-1')).toBe(centerX('task-mid-2'));
     expect(centerX('task-long-1')).toBe(centerX('task-long-3'));
+  });
+
+  it('should keep a check-if partner on the same side of the stem as its source card', () => {
+    const { nodes, edges } = templateToGraph(
+      createTemplate({
+        tasks: [
+          createTask({ apiName: 'task-a', number: 1, uuid: 'uuid-a' }),
+          createTask({
+            apiName: 'task-left',
+            number: 2,
+            uuid: 'uuid-left',
+            ancestors: ['task-a'],
+            fields: [
+              {
+                apiName: 'left-field',
+                name: 'Flag',
+                type: EExtraFieldType.String,
+                order: 0,
+                userId: null,
+                groupId: null,
+              },
+            ],
+          }),
+          createTask({
+            apiName: 'task-mid',
+            number: 3,
+            uuid: 'uuid-mid',
+            ancestors: ['task-a'],
+            conditions: [
+              {
+                apiName: 'mid-skip',
+                order: 1,
+                action: EConditionAction.SkipTask,
+                rules: [
+                  {
+                    ruleApiName: 'mid-skip-rule',
+                    predicateApiName: 'mid-skip-predicate',
+                    field: 'left-field',
+                    operator: EConditionOperators.Exist,
+                    logicOperation: EConditionLogicOperations.And,
+                  },
+                ],
+              },
+            ],
+          }),
+          createTask({ apiName: 'task-long-1', number: 4, uuid: 'uuid-long-1', ancestors: ['task-a'] }),
+          createTask({ apiName: 'task-long-2', number: 5, uuid: 'uuid-long-2', ancestors: ['task-long-1'] }),
+          createTask({ apiName: 'task-long-3', number: 6, uuid: 'uuid-long-3', ancestors: ['task-long-2'] }),
+        ],
+      }),
+    );
+    const layouted = applyDagreLayout(nodes, edges);
+    const centerX = (id: string) => {
+      const node = layouted.find((item) => item.id === id);
+
+      return (node?.position.x ?? 0) + (node?.width ?? GRAPH_NODE_WIDTH) / 2;
+    };
+
+    expect(centerX('task-left')).toBeLessThan(centerX('task-a'));
+    expect(centerX('task-mid')).toBeLessThan(centerX('task-a'));
+    expect(Math.sign(centerX('task-mid') - centerX('task-a'))).toBe(
+      Math.sign(centerX('task-left') - centerX('task-a')),
+    );
   });
 
   it('should grow nested extras of a side branch outward, not through the stem', () => {

@@ -4,7 +4,9 @@ import {
   GRAPH_NODE_HEIGHT,
   GRAPH_NODE_WIDTH,
   getHandleAnchor,
+  offsetAlongFace,
   preferredFaces,
+  snapOutOfStandoffStrip,
 } from '../graphGeometry';
 
 function card(id: string, x: number, y: number): TGraphNode {
@@ -28,6 +30,31 @@ function junction(id: string, x: number, y: number, kind: 'fork' | 'join'): TGra
     data: { kind },
   };
 }
+
+describe('offsetAlongFace', () => {
+  it('should move a point out of the card along the given face', () => {
+    expect(offsetAlongFace({ x: 10, y: 20 }, 'right', 10)).toEqual({ x: 20, y: 20 });
+    expect(offsetAlongFace({ x: 10, y: 20 }, 'left', 10)).toEqual({ x: 0, y: 20 });
+    expect(offsetAlongFace({ x: 10, y: 20 }, 'top', 10)).toEqual({ x: 10, y: 10 });
+    expect(offsetAlongFace({ x: 10, y: 20 }, 'bottom', 10)).toEqual({ x: 10, y: 30 });
+  });
+});
+
+describe('snapOutOfStandoffStrip', () => {
+  it('should push a coordinate on the handle out to the standoff', () => {
+    expect(snapOutOfStandoffStrip(200, 200, 168)).toBe(168);
+  });
+
+  it('should push a coordinate inside the strip out to the standoff', () => {
+    expect(snapOutOfStandoffStrip(190, 200, 168)).toBe(168);
+    expect(snapOutOfStandoffStrip(210, 200, 232)).toBe(232);
+  });
+
+  it('should keep a coordinate already on the standoff or outside it', () => {
+    expect(snapOutOfStandoffStrip(168, 200, 168)).toBe(168);
+    expect(snapOutOfStandoffStrip(40, 200, 168)).toBe(40);
+  });
+});
 
 describe('preferredFaces', () => {
   it('should keep a stacked successor on the top and bottom', () => {

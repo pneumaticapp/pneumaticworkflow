@@ -35,11 +35,14 @@ export function isSkipGraphEdge(edge: TGraphEdge): boolean {
 
 export function isConditionalGraphEdge(edge: TGraphEdge): boolean {
   return (
-    Boolean(edge.data?.isConditional) ||
-    isSkipGraphEdge(edge) ||
-    Boolean(edge.className?.split(' ').includes(GRAPH_EDGE_CLASS_CONDITIONAL)) ||
-    Boolean(edge.className?.split(' ').includes('graph-edge--skip'))
+    Boolean(edge.data?.isConditional)
+    || Boolean(edge.className?.split(' ').includes(GRAPH_EDGE_CLASS_CONDITIONAL))
   );
+}
+
+/** Start-after topology used for layout, junctions and the vertical stem. */
+export function isStemGraphEdge(edge: TGraphEdge): boolean {
+  return !isConditionalGraphEdge(edge);
 }
 
 export function getGraphEdgeLine(edge: TGraphEdge): TGraphEdgeLine {

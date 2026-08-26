@@ -30,11 +30,12 @@ export const GraphConditionEdge = ({
     laneY: data?.laneY,
     sourceHandle: data?.sourceHandle ?? sourceHandleId,
     targetHandle: data?.targetHandle ?? targetHandleId,
+    sourceStandoff: data?.sourceStandoff,
+    targetStandoff: data?.targetStandoff,
     sourcePosition,
     targetPosition,
   });
-  const isConditional = Boolean(data?.isConditional);
-  const hasInfo = Boolean(data?.summary) || Boolean(data?.startAfter?.length);
+  const hasInfo = Boolean(data?.isConditional && (data.summary || data.clauses?.length));
   const labelClassName = [
     styles['edge-label'],
     data?.focus === 'dimmed' ? styles['edge-label--dimmed'] : '',
@@ -51,7 +52,7 @@ export const GraphConditionEdge = ({
         className="react-flow__edge-path"
         d={edgePath}
         fill="none"
-        style={style}
+        style={{ ...style, pointerEvents: 'none' }}
         markerEnd={markerEnd}
       />
       {hasInfo && (
@@ -63,8 +64,7 @@ export const GraphConditionEdge = ({
           >
             <ConditionEdgeInfo
               summary={data?.summary}
-              startAfter={data?.startAfter}
-              isConditional={isConditional}
+              clauses={data?.clauses}
             />
           </div>
         </EdgeLabelRenderer>

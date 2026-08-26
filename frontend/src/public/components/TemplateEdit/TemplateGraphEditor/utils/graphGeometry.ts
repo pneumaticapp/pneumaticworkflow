@@ -5,9 +5,18 @@ export const GRAPH_NODE_HEIGHT = 112;
 export const GRAPH_JUNCTION_SIZE = 8;
 export const GRAPH_EDGE_SIDEWAYS_THRESHOLD = 8;
 export const GRAPH_COLUMN_GAP = 140;
-export const GRAPH_ROW_GAP = 64;
+export const GRAPH_LANE_PITCH = GRAPH_NODE_WIDTH + GRAPH_COLUMN_GAP;
+export const GRAPH_ROW_GAP = 96;
 export const GRAPH_SKIP_LANE_GAP = 32;
 export const GRAPH_SKIP_LANE_STEP = 32;
+/** Perpendicular run off a card face before the first turn (Miro-style, 1rem). */
+export const GRAPH_EDGE_STANDOFF = 32;
+/** Same-column Check If sits in the next free column, not along the gray stem. */
+export const GRAPH_CHECK_IF_LANE_GAP = GRAPH_LANE_PITCH - GRAPH_NODE_WIDTH / 2;
+/** React Flow puts each edge zIndex in its own SVG; keep lines below cards. */
+export const GRAPH_EDGE_Z_INDEX = 0;
+export const GRAPH_CARD_Z_INDEX = 2;
+export const GRAPH_JUNCTION_Z_INDEX = 10;
 
 export const GRAPH_HANDLE = {
   SourceTop: 'source-top',
@@ -92,6 +101,56 @@ export function getGraphNodeBox(node: TGraphNode): IGraphNodeBox {
 export interface IGraphHandleAnchor {
   x: number;
   y: number;
+}
+
+export function offsetAlongFace(
+  point: IGraphHandleAnchor,
+  face: TGraphFace,
+  distance: number,
+): IGraphHandleAnchor {
+  if (distance <= 0) {
+    return point;
+  }
+
+  if (face === 'right') {
+    return { x: point.x + distance, y: point.y };
+  }
+
+  if (face === 'left') {
+    return { x: point.x - distance, y: point.y };
+  }
+
+  if (face === 'top') {
+    return { x: point.x, y: point.y - distance };
+  }
+
+  return { x: point.x, y: point.y + distance };
+}
+
+const STANDOFF_STRIP_EPSILON = 0.5;
+
+/** Move an X that sits on a side handle or in its standoff strip out to the standoff. */
+export function snapOutOfStandoffStrip(
+  x: number,
+  handleX: number,
+  standoffX: number,
+): number {
+  if (Math.abs(handleX - standoffX) < STANDOFF_STRIP_EPSILON) {
+    return x;
+  }
+
+  if (Math.abs(x - standoffX) < STANDOFF_STRIP_EPSILON) {
+    return standoffX;
+  }
+
+  const lo = Math.min(handleX, standoffX);
+  const hi = Math.max(handleX, standoffX);
+
+  if (x >= lo - STANDOFF_STRIP_EPSILON && x <= hi + STANDOFF_STRIP_EPSILON) {
+    return standoffX;
+  }
+
+  return x;
 }
 
 export function getHandleAnchor(node: TGraphNode, handleId?: string | null): IGraphHandleAnchor {

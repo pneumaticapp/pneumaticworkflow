@@ -1,5 +1,62 @@
 import { EGraphNodeType, TGraphEdge, TGraphNode } from '../types';
-import { isCardNode } from './graphGeometry';
+import { isConditionalGraphEdge } from './edgeStyles';
+import { getJunctionKind, isCardNode } from './graphGeometry';
+
+function resolveCheckIfCard(
+  id: string,
+  nodeById: Map<string, TGraphNode>,
+  edges: TGraphEdge[],
+): string {
+  const node = nodeById.get(id);
+
+  if (node && isCardNode(node)) {
+    return id;
+  }
+
+  const stemOut = edges.find((edge) => edge.source === id && !isConditionalGraphEdge(edge));
+  const stemTarget = stemOut ? nodeById.get(stemOut.target) : undefined;
+
+  if (stemOut && stemTarget && isCardNode(stemTarget)) {
+    return stemOut.target;
+  }
+
+  const inbound = edges.find((edge) => edge.target === id);
+  const inboundSource = inbound ? nodeById.get(inbound.source) : undefined;
+
+  if (inbound && inboundSource && isCardNode(inboundSource)) {
+    return inbound.source;
+  }
+
+  return id;
+}
+
+function buildCheckIfPartners(nodes: TGraphNode[], edges: TGraphEdge[]): Map<string, string[]> {
+  const nodeById = new Map(nodes.map((node) => [node.id, node]));
+  const partners = new Map<string, string[]>();
+
+  const link = (from: string, to: string) => {
+    if (from === to) {
+      return;
+    }
+
+    const list = partners.get(from) ?? [];
+    list.push(to);
+    partners.set(from, list);
+  };
+
+  edges.forEach((edge) => {
+    if (!isConditionalGraphEdge(edge)) {
+      return;
+    }
+
+    const from = resolveCheckIfCard(edge.source, nodeById, edges);
+    const to = resolveCheckIfCard(edge.target, nodeById, edges);
+    link(from, to);
+    link(to, from);
+  });
+
+  return partners;
+}
 
 function buildAdjacency(nodes: TGraphNode[], edges: TGraphEdge[]) {
   const successors = new Map<string, string[]>();
@@ -40,7 +97,9 @@ export function assignSpineLanes(
   levels: Map<string, number>,
 ): Map<string, number> {
   const nodeById = new Map(nodes.map((node) => [node.id, node]));
-  const { successors, predecessors } = buildAdjacency(nodes, edges);
+  const stemEdges = edges.filter((edge) => !isConditionalGraphEdge(edge));
+  const checkIfPartners = buildCheckIfPartners(nodes, edges);
+  const { successors, predecessors } = buildAdjacency(nodes, stemEdges);
   const depthMemo = new Map<string, number>();
 
   const remainingCards = (id: string, visiting: Set<string> = new Set()): number => {
@@ -196,7 +255,22 @@ export function assignSpineLanes(
     };
 
     ordered.forEach((id, index) => {
-      const preferLeft = side === 'left' || (side === 'both' && index % 2 === 0);
+      const partnerPull = (checkIfPartners.get(id) ?? []).reduce((sum, partnerId) => {
+        if (!lanes.has(partnerId)) {
+          return sum;
+        }
+
+        return sum + ((lanes.get(partnerId) ?? 0) - origin);
+      }, 0);
+      let preferLeft = side === 'left' || (side === 'both' && index % 2 === 0);
+
+      if (side === 'both' && partnerPull > 0) {
+        preferLeft = false;
+      }
+
+      if (side === 'both' && partnerPull < 0) {
+        preferLeft = true;
+      }
       const preferred = preferLeft ? takeLeft() : takeRight();
       let other: number | undefined;
 
@@ -225,6 +299,19 @@ export function assignSpineLanes(
     }
 
     return first.localeCompare(second);
+  };
+
+  const compareExtras = (first: string, second: string): number => {
+    const placedLinks = (id: string): number => (
+      (checkIfPartners.get(id) ?? []).filter((partnerId) => lanes.has(partnerId)).length
+    );
+    const linkDiff = placedLinks(second) - placedLinks(first);
+
+    if (linkDiff !== 0) {
+      return linkDiff;
+    }
+
+    return compareBranchesShortFirst(first, second);
   };
 
   const roots = nodes
@@ -271,6 +358,12 @@ export function assignSpineLanes(
     return Math.abs(lanes.get(first) ?? 0) - Math.abs(lanes.get(second) ?? 0);
   };
 
+  const isSyntheticCheckIfJoin = (id: string): boolean => {
+    const node = nodeById.get(id);
+
+    return Boolean(node && getJunctionKind(node) === 'join' && (predecessors.get(id) ?? []).length === 1);
+  };
+
   const pickPlacedParent = (id: string): string | undefined => {
     const parentIds = (predecessors.get(id) ?? []).filter((parentId) => lanes.has(parentId));
 
@@ -280,7 +373,16 @@ export function assignSpineLanes(
 
     parentIds.sort(sortParents);
 
-    return parentIds[0];
+    const parentId = parentIds[0];
+
+    if (!parentId || !isSyntheticCheckIfJoin(parentId)) {
+      return parentId;
+    }
+
+    const grandparentIds = (predecessors.get(parentId) ?? []).filter((grandId) => lanes.has(grandId));
+    grandparentIds.sort(sortParents);
+
+    return grandparentIds[0] ?? parentId;
   };
 
   const propagateJunctionLanes = () => {
@@ -348,7 +450,7 @@ export function assignSpineLanes(
         return (lanes.get(first[0]) ?? 0) - (lanes.get(second[0]) ?? 0);
       })
       .forEach(([parentId, group]) => {
-        const ordered = [...group].sort(compareBranchesShortFirst);
+        const ordered = [...group].sort(compareExtras);
 
         if (parentId === '__root__') {
           assignExtraLanes(0, level, ordered, 'both');
