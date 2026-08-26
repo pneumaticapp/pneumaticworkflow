@@ -2,14 +2,14 @@ import { ITemplateClient, ITemplateTaskClient } from '../../../../types/template
 import { EConditionAction } from '../../TaskForm/Conditions';
 import { EStartingType } from '../../TaskForm/Conditions/utils/getDropdownOperators';
 import { EGraphNodeType, IGraphState, TGraphEdge, TGraphNode } from '../types';
-import { GRAPH_NODE_HEIGHT, GRAPH_NODE_WIDTH } from './graphGeometry';
+import { GRAPH_CARD_Z_INDEX, GRAPH_NODE_HEIGHT, GRAPH_NODE_WIDTH } from './graphGeometry';
 import { getGraphEdgeVisual } from './edgeStyles';
+import { buildCheckIfEdges } from './buildCheckIfEdges';
+import { KICKOFF_NODE_ID, KICKOFF_START_AFTER } from './graphConstants';
 import { insertJunctionNodes } from './insertJunctionNodes';
+import { attachCheckIfJunctions } from './attachCheckIfJunctions';
 
-export const KICKOFF_NODE_ID = 'kickoff';
-
-/** Marker for the kick-off form as an edge source; the label is localized in the UI. */
-export const KICKOFF_START_AFTER = '__kickoff__';
+export { KICKOFF_NODE_ID, KICKOFF_START_AFTER } from './graphConstants';
 
 function buildEdgeId(source: string, target: string, suffix: string): string {
   return `edge-${source}-${target}-${suffix}`;
@@ -181,6 +181,7 @@ function buildCardNodes(template: ITemplateClient, sortedTasks: ITemplateTaskCli
     id: KICKOFF_NODE_ID,
     type: EGraphNodeType.Kickoff,
     position: { x: 0, y: 0 },
+    zIndex: GRAPH_CARD_Z_INDEX,
     style: nodeStyle,
     data: {
       kickoff: kickoff ?? { description: '', fields: [] },
@@ -191,6 +192,7 @@ function buildCardNodes(template: ITemplateClient, sortedTasks: ITemplateTaskCli
     id: task.apiName,
     type: EGraphNodeType.Task,
     position: { x: 0, y: 0 },
+    zIndex: GRAPH_CARD_Z_INDEX,
     style: nodeStyle,
     data: {
       task,
@@ -208,11 +210,13 @@ export function templateToGraph(template: ITemplateClient): IGraphState {
   const taskApiNameSet = new Set<string>(sortedTasks.map((task) => task.apiName));
   const tasksByApiName = new Map(sortedTasks.map((task) => [task.apiName, task]));
   const nodes = buildCardNodes(template, sortedTasks);
-  const edges: TGraphEdge[] = sortedTasks.flatMap((task, index) => (
+  const startAfterEdges: TGraphEdge[] = sortedTasks.flatMap((task, index) => (
     getIncomingSources(task, index, sortedTasks, taskApiNameSet, tasksByApiName).map((sourceId, idx) =>
       buildIncomingEdge(sourceId, task, String(idx), sortedTasks),
     )
   ));
+  const { nodes: graphNodes, edges: stemEdges } = insertJunctionNodes(nodes, startAfterEdges);
+  const checkIfEdges = buildCheckIfEdges(template, sortedTasks, taskApiNameSet);
 
-  return insertJunctionNodes(nodes, edges);
+  return attachCheckIfJunctions(graphNodes, stemEdges, checkIfEdges);
 }

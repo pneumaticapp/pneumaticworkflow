@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { Node, Edge } from 'reactflow';
 import { ITemplateKickoffClient, ITemplateTaskClient } from '../../../types/template';
+import { EConditionLogicOperations, EConditionOperators } from '../TaskForm/Conditions';
 
 export enum EGraphViewMode {
   /** Linear task list. UI label is "Line". */
@@ -72,7 +73,7 @@ export type TGraphNode = TTaskNode | TKickoffNode | TJunctionNode;
 
 export type TGraphEdgePathKind = 'straight' | 'from-task' | 'from-fork' | 'skip';
 
-/** Visual kind of a line. Template edges are gray solid start-after links. */
+/** Visual kind of a line: gray solid start-after, or orange dashed check-if. */
 export type TGraphEdgeLine = 'solid' | 'dashed';
 
 export type TGraphEdgeFocus = 'highlighted' | 'dimmed';
@@ -82,9 +83,19 @@ export interface IGraphEdgeAnchor {
   y: number;
 }
 
+/** One Check If predicate shown on a dashed edge tooltip. */
+export interface IGraphConditionClause {
+  fieldLabel: string;
+  operator: EConditionOperators | null;
+  value?: string;
+  logicOperation?: EConditionLogicOperations;
+}
+
 export interface IConditionEdgeData {
   summary?: string;
   isConditional?: boolean;
+  /** Check If predicates for the tooltip; formatted in `ConditionEdgeInfo`. */
+  clauses?: IGraphConditionClause[];
   /** Labels of the cards the task starts after. `KICKOFF_START_AFTER` means the kick-off form. */
   startAfter?: string[];
   pathKind?: TGraphEdgePathKind;
@@ -103,6 +114,10 @@ export interface IConditionEdgeData {
   /** Handle ids used to build the path; preferred over React Flow's live handleBounds. */
   sourceHandle?: string;
   targetHandle?: string;
+  /** Perpendicular run off a card before the first turn. Junctions stay 0. */
+  sourceStandoff?: number;
+  /** Perpendicular run into a card after the last turn. Junctions stay 0. */
+  targetStandoff?: number;
   /** Focus state assigned by `applyGraphFocus`; drives the label appearance. */
   focus?: TGraphEdgeFocus;
 }

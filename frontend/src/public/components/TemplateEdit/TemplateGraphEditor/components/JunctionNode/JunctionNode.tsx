@@ -3,6 +3,7 @@ import { Handle, Position, NodeProps } from 'reactflow';
 import { useIntl } from 'react-intl';
 
 import { IJunctionNodeData } from '../../types';
+import { isCheckIfJunctionId } from '../../utils/graphConstants';
 import styles from './JunctionNode.css';
 
 const JUNCTION_HANDLE_STYLE: React.CSSProperties = {
@@ -32,23 +33,28 @@ const JUNCTION_HANDLES: { id: string; type: 'source' | 'target'; position: Posit
   { id: 'source-right', type: 'source', position: Position.Right },
 ];
 
-export const JunctionNode = ({ data }: NodeProps<IJunctionNodeData>) => {
+export const JunctionNode = ({ id, data }: NodeProps<IJunctionNodeData>) => {
   const { formatMessage } = useIntl();
   const labelId = data.kind === 'fork' ? 'template.graph-fork' : 'template.graph-join';
+  let nodeClassName = styles['junction-node'];
+
+  if (isCheckIfJunctionId(id)) {
+    nodeClassName = `${styles['junction-node']} ${styles['junction-node--check-if']}`;
+  }
 
   return (
     <div
-      className={styles['junction-node']}
+      className={nodeClassName}
       data-test-id="graph-junction-node"
       data-kind={data.kind}
       aria-label={formatMessage({ id: labelId })}
     >
-      {JUNCTION_HANDLES.map(({ id, type, position }) => (
+      {JUNCTION_HANDLES.map(({ id: handleId, type, position }) => (
         <Handle
-          key={id}
+          key={handleId}
           type={type}
           position={position}
-          id={id}
+          id={handleId}
           isConnectable={false}
           className={styles['junction-node__handle']}
           style={JUNCTION_HANDLE_STYLE}

@@ -54,6 +54,20 @@ export const StartAfter: Story = {
   },
 };
 
+export const Conditional: Story = {
+  args: {
+    ...edgeArgs,
+    data: {
+      isConditional: true,
+      summary: 'Client Exists',
+    },
+    style: {
+      stroke: 'var(--pneumatic-color-link)',
+      strokeDasharray: '6 4',
+    },
+  },
+};
+
 export const FromTask: Story = {
   args: {
     ...edgeArgs,

@@ -1,12 +1,13 @@
-import { ITemplateClient, ITemplateTaskClient } from '../../../../../types/template';
+import { EExtraFieldType, ITemplateClient, ITemplateTaskClient } from '../../../../../types/template';
 import { createEmptyTaskDueDate } from '../../../../../utils/dueDate/createEmptyTaskDueDate';
 import { EConditionAction, EConditionLogicOperations, EConditionOperators } from '../../../TaskForm/Conditions';
 import { EStartingType } from '../../../TaskForm/Conditions/utils/getDropdownOperators';
 import { GRAPH_SHOWCASE_TEMPLATE } from '../../fixtures/graphShowcaseTemplate';
+import { GRAPH_WEAVE_TEMPLATE } from '../../fixtures/graphWeaveTemplate';
 import { EGraphNodeType, TGraphEdge, TGraphNode } from '../../types';
 import { buildTemplateGraph } from '../buildTemplateGraph';
-import { isLaneRoutedGraphEdge, isSkipGraphEdge } from '../edgeStyles';
-import { GRAPH_NODE_HEIGHT, GRAPH_NODE_WIDTH, getHandleAnchor } from '../graphGeometry';
+import { getGraphEdgeLine, isLaneRoutedGraphEdge, isSkipGraphEdge } from '../edgeStyles';
+import { GRAPH_CHECK_IF_LANE_GAP, GRAPH_JUNCTION_SIZE, GRAPH_LANE_PITCH, GRAPH_NODE_HEIGHT, GRAPH_NODE_WIDTH, GRAPH_SKIP_LANE_GAP, getGraphNodeBox, getHandleAnchor } from '../graphGeometry';
 import { applyEdgeAnchors } from '../applyEdgeAnchors';
 import { applyMovedCard } from '../routeGraph';
 import { getGraphEdgePath } from '../getGraphEdgePath';
@@ -137,7 +138,60 @@ describe('applyEdgeAnchors', () => {
     expect(joinEdges.every((edge) => edge.data?.pathKind === 'from-task' || edge.data?.pathKind === 'straight')).toBe(true);
   });
 
-  it('should keep check-if conditions off the graph and on the stem handles', () => {
+  it('should send a resolved check-if line to a side lane so it does not share stem handles', () => {
+    const { edges } = layoutGraph(
+      createTemplate({
+        kickoff: {
+          description: '',
+          fields: [
+            {
+              apiName: 'field-1',
+              name: 'Client',
+              type: EExtraFieldType.String,
+              order: 0,
+              userId: null,
+              groupId: null,
+            },
+          ],
+          fieldsets: [],
+        },
+        tasks: [
+          createTask({
+            conditions: [
+              {
+                apiName: 'condition-1',
+                order: 1,
+                action: EConditionAction.SkipTask,
+                rules: [
+                  {
+                    ruleApiName: 'rule-1',
+                    predicateApiName: 'predicate-1',
+                    field: 'field-1',
+                    operator: EConditionOperators.Exist,
+                    logicOperation: EConditionLogicOperations.And,
+                  },
+                ],
+              },
+            ],
+          }),
+          createTask({ apiName: 'task-2', name: 'Next', number: 2, uuid: 'uuid-2' }),
+        ],
+      }),
+    );
+    const startAfter = edges.filter((edge) => !edge.data?.isConditional);
+    const checkIf = edges.find((edge) => edge.data?.isConditional);
+
+    expect(startAfter).toHaveLength(2);
+    expect(startAfter.filter((edge) => edge.source === 'kickoff')
+      .every((edge) => edge.sourceHandle === 'source-bottom' || edge.targetHandle === 'target-top')).toBe(true);
+    expect(checkIf?.data?.isLaneRouted).toBe(true);
+    expect(checkIf?.target).toBe('task-1');
+    expect(checkIf?.sourceHandle === 'source-left' || checkIf?.sourceHandle === 'source-right').toBe(true);
+    expect(checkIf?.targetHandle === 'target-left' || checkIf?.targetHandle === 'target-right').toBe(true);
+    expect(getGraphEdgeLine(checkIf!)).toBe('dashed');
+  });
+
+  it('should keep an unresolved check-if field off the graph and on the stem handles', () => {
     const { edges } = layoutGraph(
       createTemplate({
         tasks: [
@@ -172,12 +226,34 @@ describe('applyEdgeAnchors', () => {
     expect(edges.every((edge) => edge.data?.laneX === undefined)).toBe(true);
   });
 
-  it('should keep showcase skippable tasks on the column instead of a side lane', () => {
-    const { edges } = layoutGraph(GRAPH_SHOWCASE_TEMPLATE);
+  it('should keep showcase start-after on the column and send check-if to a side lane', () => {
+    const { nodes, edges } = layoutGraph(GRAPH_SHOWCASE_TEMPLATE);
+    const startAfter = edges.filter((edge) => !edge.data?.isConditional);
+    const checkIf = edges.filter((edge) => edge.data?.isConditional);
+    const kickoff = nodes.find((node) => node.id === 'kickoff');
+    const linear = nodes.find((node) => node.id === 'task-linear');
 
     expect(edges.filter((edge) => isSkipGraphEdge(edge))).toHaveLength(0);
-    expect(edges.every((edge) => edge.data?.pathKind !== 'skip')).toBe(true);
-    expect(edges.every((edge) => edge.data?.laneX === undefined)).toBe(true);
+    expect(startAfter.every((edge) => edge.data?.pathKind !== 'skip')).toBe(true);
+    expect(startAfter.every((edge) => edge.data?.laneX === undefined)).toBe(true);
+    expect(checkIf).toHaveLength(1);
+    expect(checkIf[0].target).toBe('task-skippable');
+    expect(checkIf[0].data?.isLaneRouted).toBe(true);
+    expect(checkIf[0].data?.laneX).toBeDefined();
+    expect(checkIf[0].sourceHandle === 'source-left' || checkIf[0].sourceHandle === 'source-right').toBe(true);
+    expect(checkIf[0].targetHandle === 'target-left' || checkIf[0].targetHandle === 'target-right').toBe(true);
+
+    if (kickoff && linear && checkIf[0].data?.laneX != null) {
+      const kickoffBox = getGraphNodeBox(kickoff);
+      const linearBox = getGraphNodeBox(linear);
+      const laneX = checkIf[0].data.laneX;
+      const gap = checkIf[0].data.laneSide === 'right'
+        ? Math.min(laneX - kickoffBox.right, laneX - linearBox.right)
+        : Math.min(kickoffBox.x - laneX, linearBox.x - laneX);
+
+      expect(gap).toBeGreaterThanOrEqual(GRAPH_CHECK_IF_LANE_GAP);
+      expect(Math.abs(laneX - kickoffBox.centerX)).toBeGreaterThanOrEqual(GRAPH_LANE_PITCH);
+    }
   });
 
   it('should not detour around a card that already stands between an ancestor and a descendant', () => {
@@ -476,10 +552,10 @@ describe('applyEdgeAnchors', () => {
     });
     const edge = next.edges.find((item) => item.source === 'task-1' && item.target === 'task-2');
 
-    expect(edge?.sourceHandle).toBe('source-right');
-    expect(edge?.targetHandle).toBe('target-left');
-    expect(edge?.data?.sourceAnchor).toEqual(getHandleAnchor(next.nodes.find((node) => node.id === 'task-1')!, 'source-right'));
-    expect(edge?.data?.targetAnchor).toEqual(getHandleAnchor(next.nodes.find((node) => node.id === 'task-2')!, 'target-left'));
+    expect(edge?.sourceHandle).toBe('source-bottom');
+    expect(edge?.targetHandle).toBe('target-top');
+    expect(edge?.data?.sourceAnchor).toEqual(getHandleAnchor(next.nodes.find((node) => node.id === 'task-1')!, 'source-bottom'));
+    expect(edge?.data?.targetAnchor).toEqual(getHandleAnchor(next.nodes.find((node) => node.id === 'task-2')!, 'target-top'));
   });
 
   it('should drop an offset fork child onto the top handle', () => {
@@ -587,5 +663,45 @@ describe('applyEdgeAnchors', () => {
     }).path.startsWith(
       `M ${forkAnchor.x},${forkAnchor.y} L ${side!.data!.targetAnchor!.x},${forkAnchor.y}`,
     )).toBe(true);
+  });
+
+  it('should park a check-if join beside the card and take incoming lines on distinct faces', () => {
+    const { nodes, edges } = layoutGraph(GRAPH_WEAVE_TEMPLATE);
+    const join = nodes.find((node) => node.id === 'junction-join-checkif-task-5');
+    const task5 = nodes.find((node) => node.id === 'task-5');
+    const incoming = edges.filter((edge) => edge.target === 'junction-join-checkif-task-5');
+
+    expect(join).toBeDefined();
+    expect(task5).toBeDefined();
+    expect(incoming).toHaveLength(3);
+
+    const joinBox = getGraphNodeBox(join!);
+    const cardBox = getGraphNodeBox(task5!);
+    const onRight = Math.abs(joinBox.centerX - (cardBox.right + GRAPH_SKIP_LANE_GAP)) <= GRAPH_JUNCTION_SIZE;
+    const onLeft = Math.abs(joinBox.centerX - (cardBox.x - GRAPH_SKIP_LANE_GAP)) <= GRAPH_JUNCTION_SIZE;
+
+    expect(onRight || onLeft).toBe(true);
+    expect(Math.abs(joinBox.centerY - cardBox.centerY)).toBeLessThanOrEqual(GRAPH_JUNCTION_SIZE);
+    const forkXs = nodes
+      .filter((node) => node.id.startsWith('junction-fork-checkif-'))
+      .map((node) => getGraphNodeBox(node).centerX);
+    expect(forkXs.every((x) => Math.abs(x - joinBox.centerX) >= GRAPH_SKIP_LANE_GAP)).toBe(true);
+    expect(incoming.map((edge) => edge.targetHandle).sort()).toEqual(
+      [...new Set(incoming.map((edge) => edge.targetHandle))].sort(),
+    );
+    incoming.forEach((edge) => {
+      const source = nodes.find((node) => node.id === edge.source);
+      if (source && (source.type === EGraphNodeType.Task || source.type === EGraphNodeType.Kickoff)) {
+        expect(edge.sourceHandle === 'source-left' || edge.sourceHandle === 'source-right').toBe(true);
+      }
+    });
+
+    const outbound = edges.find((edge) => edge.source === 'junction-join-checkif-task-5');
+    const stemFace = outbound?.sourceHandle?.replace('source-', '');
+
+    expect(stemFace).toBeDefined();
+    incoming.forEach((edge) => {
+      expect(edge.targetHandle?.replace('target-', '')).not.toBe(stemFace);
+    });
   });
 });

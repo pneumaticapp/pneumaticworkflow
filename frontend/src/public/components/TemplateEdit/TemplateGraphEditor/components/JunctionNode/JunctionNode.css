@@ -8,6 +8,10 @@
   border-radius: 50%;
 }
 
+.junction-node--check-if {
+  background: var(--pneumatic-color-link);
+}
+
 .junction-node__handle {
   pointer-events: none;
   background: transparent;

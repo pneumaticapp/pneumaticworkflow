@@ -1,5 +1,6 @@
 import { GRAPH_SHOWCASE_TEMPLATE } from '../../fixtures/graphShowcaseTemplate';
 import { EGraphNodeType, TGraphEdge, TGraphNode } from '../../types';
+import { GRAPH_CARD_Z_INDEX } from '../graphGeometry';
 import { KICKOFF_NODE_ID, templateToGraph } from '../templateToGraph';
 import {
   applyGraphFocus,
@@ -237,5 +238,26 @@ describe('applyGraphFocus', () => {
         strokeWidth: 2,
       }),
     );
+  });
+
+  it('should keep a highlighted check-if line below cards', () => {
+    const nodes: TGraphNode[] = [
+      { ...createNode('task-a', EGraphNodeType.Task), zIndex: GRAPH_CARD_Z_INDEX },
+      { ...createNode('task-b', EGraphNodeType.Task), zIndex: GRAPH_CARD_Z_INDEX },
+    ];
+    const edges: TGraphEdge[] = [
+      {
+        id: 'edge-check-if',
+        source: 'task-a',
+        target: 'task-b',
+        zIndex: 0,
+        data: { isConditional: true, summary: 'Client exists' },
+      },
+    ];
+
+    const { edges: nextEdges } = applyGraphFocus(nodes, edges, 'task-a');
+
+    expect(nextEdges[0].className).toContain(GRAPH_HIGHLIGHTED_EDGE_CLASS);
+    expect(nextEdges[0].zIndex ?? 0).toBeLessThan(GRAPH_CARD_Z_INDEX);
   });
 });

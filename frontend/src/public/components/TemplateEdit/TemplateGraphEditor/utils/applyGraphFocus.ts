@@ -131,7 +131,6 @@ export function applyGraphFocus(
           .join(' '),
         // Labels live outside the edge element, so they follow the state through the edge data.
         data: { ...edge.data, focus },
-        zIndex: isHighlighted ? 1001 : edge.zIndex,
         style: isHighlighted
           ? {
             ...edge.style,
