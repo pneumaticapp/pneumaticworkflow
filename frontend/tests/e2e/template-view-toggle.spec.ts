@@ -73,6 +73,18 @@ test.describe('Template view toggle', () => {
     await expect(page.getByTestId('template-graph-editor')).toBeVisible();
   });
 
+  test('should add a task from a leaf plus and open the editor panel', async ({ page }) => {
+    await page.getByTestId('template-view-toggle').getByRole('button', { name: 'Graph' }).click();
+    await expect(page.getByTestId('template-graph-editor')).toBeVisible({ timeout: TIMEOUT.medium });
+
+    const taskCount = await page.getByTestId('graph-task-node').count();
+    await page.locator('[data-test-id="graph-add-task"][data-kind="continue"]').first().click();
+
+    await expect(page.getByTestId('graph-task-editor')).toBeVisible({ timeout: TIMEOUT.medium });
+    await expect(page.getByTestId('graph-task-node')).toHaveCount(taskCount + 1);
+    await expect(page.getByTestId('template-graph-editor')).toBeVisible();
+  });
+
   test('should restore a moved graph card after switching views', async ({ page }) => {
     await page.evaluate((storageKey) => localStorage.removeItem(storageKey), GRAPH_POSITIONS_STORAGE_KEY);
 
