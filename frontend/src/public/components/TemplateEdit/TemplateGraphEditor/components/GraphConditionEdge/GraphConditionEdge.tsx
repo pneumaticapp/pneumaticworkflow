@@ -35,7 +35,9 @@ export const GraphConditionEdge = ({
     sourcePosition,
     targetPosition,
   });
-  const hasInfo = Boolean(data?.isConditional && (data.summary || data.clauses?.length));
+  const hasCheckIfInfo = Boolean(data?.isConditional && (data.summary || data.clauses?.length));
+  const hasStartAfterInfo = Boolean(!data?.isConditional && data?.startAfter?.length);
+  const hasInfo = hasCheckIfInfo || hasStartAfterInfo;
   const labelClassName = [
     styles['edge-label'],
     data?.focus === 'dimmed' ? styles['edge-label--dimmed'] : '',
@@ -64,6 +66,8 @@ export const GraphConditionEdge = ({
           >
             <ConditionEdgeInfo
               summary={data?.summary}
+              startAfter={data?.startAfter}
+              isConditional={Boolean(data?.isConditional)}
               clauses={data?.clauses}
             />
           </div>
