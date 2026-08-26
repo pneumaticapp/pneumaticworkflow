@@ -5,6 +5,7 @@ import { useIntl } from 'react-intl';
 
 import { ITaskNodeData } from '../../types';
 import { EMPTY_CONNECTED_HANDLES } from '../../utils/applyConnectedHandles';
+import { countCheckIfConditions } from '../../utils/countCheckIfConditions';
 import { GraphCardHandles } from '../GraphCardHandles/GraphCardHandles';
 import { GraphNodeCard } from '../GraphNodeCard/GraphNodeCard';
 import cardStyles from '../GraphNodeCard/GraphNodeCard.css';
@@ -14,7 +15,7 @@ export const TaskNode = ({ id, data, selected }: NodeProps<ITaskNodeData>) => {
   const updateNodeInternals = useUpdateNodeInternals();
   const { task, onEdit, handles = EMPTY_CONNECTED_HANDLES } = data;
   const performersCount = task.rawPerformers?.length ?? 0;
-  const conditionsCount = task.conditions?.length ?? 0;
+  const conditionsCount = countCheckIfConditions(task.conditions);
   const fieldsCount = task.fields?.length ?? 0;
 
   const connectedSignature = [

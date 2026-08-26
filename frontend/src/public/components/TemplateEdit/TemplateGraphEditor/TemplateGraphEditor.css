@@ -92,6 +92,10 @@
     border: none;
   }
 
+  .react-flow__handle.graph-handle--check-if {
+    background: var(--pneumatic-color-link);
+  }
+
   .react-flow__node-junction .react-flow__handle,
   .react-flow__node-junction .react-flow__handle-top,
   .react-flow__node-junction .react-flow__handle-bottom,

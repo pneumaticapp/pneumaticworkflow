@@ -35,13 +35,27 @@ const task: ITemplateTaskClient = {
   rawDueDate: createEmptyTaskDueDate(),
   conditions: [
     {
-      apiName: 'condition-1',
+      apiName: 'condition-start',
       order: 1,
       action: EConditionAction.StartTask,
       rules: [
         {
-          ruleApiName: 'rule-1',
-          predicateApiName: 'predicate-1',
+          ruleApiName: 'rule-start',
+          predicateApiName: 'predicate-start',
+          field: 'field-0',
+          operator: EConditionOperators.Exist,
+          logicOperation: EConditionLogicOperations.And,
+        },
+      ],
+    },
+    {
+      apiName: 'condition-skip',
+      order: 2,
+      action: EConditionAction.SkipTask,
+      rules: [
+        {
+          ruleApiName: 'rule-skip',
+          predicateApiName: 'predicate-skip',
           field: 'field-0',
           operator: EConditionOperators.Exist,
           logicOperation: EConditionLogicOperations.And,

@@ -31,10 +31,20 @@ const TARGET_HANDLES: IHandleSpec[] = [
   { id: 'target-right', type: 'target', position: Position.Right, flag: 'hasTargetRight' },
 ];
 
-function handleClassName(isConnected: boolean): string {
-  return isConnected
-    ? graphNodeHandleClassName
-    : `${graphNodeHandleClassName} ${cardStyles['graph-node-card__handle--idle']}`;
+function isCheckIfHandle(id: string): boolean {
+  return id.includes('left') || id.includes('right');
+}
+
+function handleClassName(id: string, isConnected: boolean): string {
+  if (!isConnected) {
+    return `${graphNodeHandleClassName} ${cardStyles['graph-node-card__handle--idle']}`;
+  }
+
+  if (isCheckIfHandle(id)) {
+    return `${graphNodeHandleClassName} ${cardStyles['graph-node-card__handle--check-if']} graph-handle--check-if`;
+  }
+
+  return graphNodeHandleClassName;
 }
 
 export const GraphCardHandles = ({ handles, includeTargets }: IGraphCardHandlesProps) => (
@@ -46,7 +56,7 @@ export const GraphCardHandles = ({ handles, includeTargets }: IGraphCardHandlesP
         position={position}
         id={id}
         isConnectable={false}
-        className={handleClassName(handles[flag])}
+        className={handleClassName(id, handles[flag])}
       />
     ))}
     {includeTargets && TARGET_HANDLES.map(({ id, type, position, flag }) => (
@@ -56,7 +66,7 @@ export const GraphCardHandles = ({ handles, includeTargets }: IGraphCardHandlesP
         position={position}
         id={id}
         isConnectable={false}
-        className={handleClassName(handles[flag])}
+        className={handleClassName(id, handles[flag])}
       />
     ))}
   </>

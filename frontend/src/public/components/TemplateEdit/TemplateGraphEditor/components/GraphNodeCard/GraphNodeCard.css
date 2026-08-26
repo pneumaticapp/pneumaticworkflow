@@ -104,6 +104,10 @@
   border: none;
 }
 
+.graph-node-card__handle--check-if {
+  background: var(--pneumatic-color-link);
+}
+
 .graph-node-card__handle--idle {
   pointer-events: none;
   background: transparent;
