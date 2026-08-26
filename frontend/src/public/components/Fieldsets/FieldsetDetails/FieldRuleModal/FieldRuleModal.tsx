@@ -3,17 +3,33 @@ import { useIntl } from 'react-intl';
 
 import { BaseModal, ModalHeader, ModalBody, ModalFooter } from '../../../UI/BaseModal';
 import { Button } from '../../../UI/Buttons/Button';
+import { IFieldRuleSet } from '../../../../types/fieldset';
 import { IFieldRuleModalProps } from './types';
+import { createEmptyFieldRuleSet } from './utils';
+import { FieldRulesetBody } from './FieldRulesetBody';
 
 import styles from './FieldRuleModal.css';
 
 export function FieldRuleModal({
   isOpen,
-  onClose,
+  ruleset,
   onSave,
-  onDelete,
+  onClose,
 }: IFieldRuleModalProps) {
   const { formatMessage } = useIntl();
+  const [localRuleSet, setLocalRuleSet] = React.useState<IFieldRuleSet>(
+    () => ruleset || createEmptyFieldRuleSet(),
+  );
+
+  React.useEffect(() => {
+    if (isOpen) {
+      setLocalRuleSet(ruleset || createEmptyFieldRuleSet());
+    }
+  }, [isOpen]);
+
+  const updateRuleSet = (changes: Partial<IFieldRuleSet>) => {
+    setLocalRuleSet((prev) => ({ ...prev, ...changes }));
+  };
 
   return (
     <BaseModal isOpen={isOpen} toggle={onClose}>
@@ -21,7 +37,7 @@ export function FieldRuleModal({
         {formatMessage({ id: 'fieldsets.field-rule-modal.title' })}
       </ModalHeader>
       <ModalBody>
-        {/* Rules content will be added in subsequent steps */}
+        <FieldRulesetBody localRuleSet={localRuleSet} onUpdateRuleSet={updateRuleSet} />
       </ModalBody>
       <ModalFooter>
         <div className={styles['footer-buttons']}>
@@ -32,15 +48,9 @@ export function FieldRuleModal({
             size="md"
           />
           <Button
-            buttonStyle="transparent-orange"
-            label={formatMessage({ id: 'fieldsets.field-rule-modal.delete-rules' })}
-            onClick={onDelete}
-            size="md"
-          />
-          <Button
             buttonStyle="yellow"
             label={formatMessage({ id: 'fieldsets.field-rule-modal.save' })}
-            onClick={onSave}
+            onClick={() => onSave(localRuleSet)}
             size="md"
           />
         </div>

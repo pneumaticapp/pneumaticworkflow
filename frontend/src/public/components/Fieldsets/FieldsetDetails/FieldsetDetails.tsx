@@ -36,6 +36,7 @@ import { IExtraField } from '../../../types/template';
 import { FilledInfoIcon } from '../../icons';
 import {
   IFieldsetRuleSet,
+  IFieldRuleSet,
   EFieldLabelPosition,
   IUpdateFieldsetParams,
 } from '../../../types/fieldset';
@@ -49,6 +50,7 @@ import { TFieldsetDetailsProps, TLocalFieldsetState, TFieldsetChanges } from './
 import { FieldsetRulesets } from './FieldsetRulesets/FieldsetRulesets';
 import { FieldsetFieldsList } from './FieldsetFieldsList/FieldsetFieldsList';
 import { FieldRuleModal } from './FieldRuleModal';
+import { saveFieldRuleset } from './utils';
 import styles from './FieldsetDetails.css';
 
 
@@ -75,7 +77,8 @@ const FieldsetDetails = ({
 
   const [localFieldset, setLocalFieldset] = useState<TLocalFieldsetState>(EMPTY_LOCAL_FIELDSET);
   const [fieldsetChanges, setFieldsetChanges] = useState<TFieldsetChanges>({});
-  const [activeFieldRulesApiName, setActiveFieldRulesApiName] = useState<string | null>(null);
+  const [activeFieldApiName, setActiveFieldApiName] = useState<string | null>(null);
+  const [activeFieldRuleset, setActiveFieldRuleset] = useState<IFieldRuleSet | null>(null);
   const datasetOptions = useDatasetOptions(localFieldset.fields);
   const labelPositionRef = useRef<HTMLDivElement>(null);
 
@@ -142,6 +145,15 @@ const FieldsetDetails = ({
   const handleRulesetsChange = (rulesets: IFieldsetRuleSet[]) => {
     setLocalFieldset((prev) => ({ ...prev, rulesets }));
     setFieldsetChanges((prev) => ({ ...prev, rulesets }));
+  };
+
+  const handleFieldRuleSave = (ruleset: IFieldRuleSet) => {
+    handleFieldsChange(saveFieldRuleset(localFieldset.fields, activeFieldApiName!, ruleset));
+    setActiveFieldApiName(null);
+  };
+
+  const handleFieldRuleClose = () => {
+    setActiveFieldApiName(null);
   };
 
   const handleSave = (onSuccess?: () => void): void => {
@@ -411,8 +423,9 @@ const FieldsetDetails = ({
         labelPosition={localFieldset.labelPosition}
         accountId={accountId}
         datasetOptions={datasetOptions}
-        onOpenFieldRules={(fieldApiName) => {
-          setActiveFieldRulesApiName(fieldApiName);
+        onCreateFieldRule={(fieldApiName) => {
+          setActiveFieldApiName(fieldApiName);
+          setActiveFieldRuleset(null);
         }}
       />
 
@@ -439,10 +452,10 @@ const FieldsetDetails = ({
       )}
 
       <FieldRuleModal
-        isOpen={Boolean(activeFieldRulesApiName)}
-        onClose={() => setActiveFieldRulesApiName(null)}
-        onSave={() => setActiveFieldRulesApiName(null)}
-        onDelete={() => setActiveFieldRulesApiName(null)}
+        isOpen={Boolean(activeFieldApiName)}
+        ruleset={activeFieldRuleset}
+        onSave={handleFieldRuleSave}
+        onClose={handleFieldRuleClose}
       />
 
       <FieldsetModal type={EFieldsetModalType.Edit} />

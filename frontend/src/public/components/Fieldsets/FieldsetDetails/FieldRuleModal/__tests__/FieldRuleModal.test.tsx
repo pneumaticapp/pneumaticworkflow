@@ -6,6 +6,9 @@ import { RawIntlProvider, createIntl, createIntlCache } from 'react-intl';
 import { FieldRuleModal } from '../FieldRuleModal';
 import { enMessages } from '../../../../../lang/locales/en_US';
 
+import { EFieldRuleType } from '../../../../../types/fieldset';
+import { createEmptyFieldRuleSet } from '../utils';
+
 const cache = createIntlCache();
 const intl = createIntl({ locale: 'en-US', messages: enMessages }, cache);
 
@@ -16,16 +19,16 @@ const renderWithIntl = (component: React.ReactNode) => {
 describe('FieldRuleModal', () => {
   const defaultProps = {
     isOpen: true,
-    onClose: jest.fn(),
+    ruleset: createEmptyFieldRuleSet(EFieldRuleType.Show),
     onSave: jest.fn(),
-    onDelete: jest.fn(),
+    onClose: jest.fn(),
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('renders modal with correct header title and buttons in order (Discard, Delete rules, Save) when open', () => {
+  it('renders modal with correct header title and buttons (Discard, Save) when open', () => {
     renderWithIntl(<FieldRuleModal {...defaultProps} />);
 
     expect(screen.getByText('Field rules')).toBeInTheDocument();
@@ -34,8 +37,8 @@ describe('FieldRuleModal', () => {
     const buttonLabels = buttons.map((btn) => btn.textContent?.trim());
 
     expect(buttonLabels).toContain('Discard');
-    expect(buttonLabels).toContain('Delete rules');
     expect(buttonLabels).toContain('Save');
+    expect(buttonLabels).not.toContain('Delete rules');
   });
 
   it('does not render when isOpen is false', () => {
@@ -58,10 +61,17 @@ describe('FieldRuleModal', () => {
     expect(defaultProps.onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('calls onDelete when Delete rules button is clicked', () => {
-    renderWithIntl(<FieldRuleModal {...defaultProps} />);
+  it('creates empty ruleset with Show type when ruleset prop is null', () => {
+    renderWithIntl(<FieldRuleModal {...defaultProps} ruleset={null} />);
 
-    userEvent.click(screen.getByText('Delete rules'));
-    expect(defaultProps.onDelete).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('Field rules')).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('Custom error message...')).not.toBeInTheDocument();
+  });
+
+  it('shows message input when ruleset type is Validator', () => {
+    const validatorRuleset = createEmptyFieldRuleSet(EFieldRuleType.Validator);
+    renderWithIntl(<FieldRuleModal {...defaultProps} ruleset={validatorRuleset} />);
+
+    expect(screen.getByPlaceholderText('Custom error message...')).toBeInTheDocument();
   });
 });

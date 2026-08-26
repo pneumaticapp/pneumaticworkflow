@@ -1,6 +1,13 @@
+import { IFieldRuleSet } from '../../../../types/fieldset';
+
 export interface IFieldRuleModalProps {
   isOpen: boolean;
+  ruleset: IFieldRuleSet | null;
+  onSave: (ruleset: IFieldRuleSet) => void;
   onClose: () => void;
-  onSave?: () => void;
-  onDelete?: () => void;
+}
+
+export interface IFieldRulesetBodyProps {
+  localRuleSet: IFieldRuleSet;
+  onUpdateRuleSet: (changes: Partial<IFieldRuleSet>) => void;
 }
