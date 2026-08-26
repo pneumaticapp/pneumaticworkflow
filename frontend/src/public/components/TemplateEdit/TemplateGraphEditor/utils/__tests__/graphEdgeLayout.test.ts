@@ -508,12 +508,13 @@ describe.each([
     expect(diagonals).toEqual([]);
   });
 
-  it('should describe check-if lines and leave start-after without a badge', () => {
+  it('should describe check-if lines and keep start-after on the first gray segment', () => {
     const cardIds = new Set(cardNodes.map((node) => node.id));
     const outboundStartAfter = edges.filter((edge) => cardIds.has(edge.source) && !edge.data?.isConditional);
     const outboundCheckIf = edges.filter((edge) => cardIds.has(edge.source) && edge.data?.isConditional);
 
     expect(outboundStartAfter.every((edge) => !hasCheckIfInfo(edge))).toBe(true);
+    expect(outboundStartAfter.every((edge) => Boolean(edge.data?.startAfter?.length))).toBe(true);
     expect(outboundCheckIf.every((edge) => hasCheckIfInfo(edge))).toBe(true);
   });
 
@@ -522,7 +523,9 @@ describe.each([
       nodes.filter((node) => node.type === EGraphNodeType.Junction).map((node) => node.id),
     );
     const outbound = edges.filter((edge) => junctionIds.has(edge.source));
+    const solidOutbound = outbound.filter((edge) => getGraphEdgeLine(edge) === 'solid');
 
-    expect(outbound.filter((edge) => getGraphEdgeLine(edge) === 'solid').every((edge) => !hasCheckIfInfo(edge))).toBe(true);
+    expect(solidOutbound.every((edge) => !hasCheckIfInfo(edge))).toBe(true);
+    expect(solidOutbound.every((edge) => !edge.data?.startAfter?.length)).toBe(true);
   });
 });
