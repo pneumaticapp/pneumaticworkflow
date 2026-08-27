@@ -14,8 +14,8 @@ export function saveFieldRuleset(
     );
     const updatedRulesets = isExistingRuleset
       ? (field.rulesets || []).map(
-          (existingRuleset) => existingRuleset.apiName === ruleset.apiName ? ruleset : existingRuleset,
-        )
+        (existingRuleset) => existingRuleset.apiName === ruleset.apiName ? ruleset : existingRuleset,
+      )
       : [...(field.rulesets || []), ruleset];
 
     return { ...field, rulesets: updatedRulesets };

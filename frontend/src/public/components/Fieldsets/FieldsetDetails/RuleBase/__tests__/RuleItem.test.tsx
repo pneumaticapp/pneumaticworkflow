@@ -4,37 +4,54 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { RuleItem } from '../RuleItem';
 import { intlMock } from '../../../../../__stubs__/intlMock';
 import { makeFieldsetRuleGroupAnd } from '../../../../../__stubs__/fieldsets.factory';
-import { EFieldsetNumberRulesetOperator, ERuleCombinator } from '../../../../../types/fieldset';
+import { EFieldsetNumberRulesetOperator, ERuleCombinator, EFieldRuleType } from '../../../../../types/fieldset';
+
+const EMPTY_FIELD_OPTIONS: Array<{ apiName: string; name: string }> = [];
+
+jest.mock('react-redux', () => ({
+  useSelector: jest.fn(() => EMPTY_FIELD_OPTIONS),
+}));
 
 jest.mock('../../../../UI', () => ({
-  FilterSelect: (props: any) => (
+  FilterSelect: (props: {
+    selectedOption?: string;
+    isDisabled?: boolean;
+    onChange: (val: string) => void;
+    options?: { apiName: string; name: string }[];
+  }) => (
     <select
       data-testid="filter-select"
       value={props.selectedOption}
       disabled={props.isDisabled}
-      onChange={(e) => props.onChange(e.target.value)}
+      onChange={(event) => props.onChange(event.target.value)}
     >
-      {props.options?.map((opt: any) => (
-        <option key={opt.apiName} value={opt.apiName}>
-          {opt.name}
+      {props.options?.map((option) => (
+        <option key={option.apiName} value={option.apiName}>
+          {option.name}
         </option>
       ))}
     </select>
   ),
-  SelectMenu: (props: any) => (
+  SelectMenu: (props: {
+    activeValue?: string;
+    isDisabled?: boolean;
+    onChange: (val: string) => void;
+    values?: string[];
+  }) => (
     <select
       data-testid="select-menu"
       value={props.activeValue}
       disabled={props.isDisabled}
-      onChange={(e) => props.onChange(e.target.value)}
+      onChange={(event) => props.onChange(event.target.value)}
     >
-      {props.values?.map((v: any) => (
-        <option key={v} value={v}>
-          {v}
+      {props.values?.map((value) => (
+        <option key={value} value={value}>
+          {value}
         </option>
       ))}
     </select>
   ),
+  Tooltip: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
 }));
 
 describe('RuleItem component', () => {
@@ -67,6 +84,7 @@ describe('RuleItem component', () => {
         groupOrIndex={0}
         groupAndIndex={0}
         ruleOperatorOptions={defaultOperatorOptions}
+        ruleType={EFieldRuleType.Validator}
         isReadOnly={false}
         updateRule={mockUpdateRule}
         deleteRule={mockDeleteRule}
@@ -95,6 +113,7 @@ describe('RuleItem component', () => {
         groupOrIndex={0}
         groupAndIndex={1}
         ruleOperatorOptions={defaultOperatorOptions}
+        ruleType={EFieldRuleType.Validator}
         isReadOnly={false}
         updateRule={mockUpdateRule}
         deleteRule={mockDeleteRule}
@@ -128,6 +147,7 @@ describe('RuleItem component', () => {
         groupOrIndex={0}
         groupAndIndex={0}
         ruleOperatorOptions={defaultOperatorOptions}
+        ruleType={EFieldRuleType.Validator}
         isReadOnly={false}
         updateRule={mockUpdateRule}
         deleteRule={mockDeleteRule}
@@ -159,6 +179,7 @@ describe('RuleItem component', () => {
         groupOrIndex={0}
         groupAndIndex={0}
         ruleOperatorOptions={defaultOperatorOptions}
+        ruleType={EFieldRuleType.Validator}
         isReadOnly={false}
         updateRule={mockUpdateRule}
         deleteRule={mockDeleteRule}
@@ -173,5 +194,71 @@ describe('RuleItem component', () => {
       ruleGroupOrApiName: 'g-or-1',
       ruleGroupAndApiName: 'g-and-1',
     });
+  });
+
+  it('renders field select for Show ruleType', () => {
+    const groupAndRule = {
+      ...makeFieldsetRuleGroupAnd({
+        apiName: 'g-and-1',
+        operator: EFieldsetNumberRulesetOperator.SumEqual,
+        value: '100',
+      }),
+      field: 'field-1',
+    };
+
+    const rulesFieldOptions = [
+      { apiName: 'field-1', name: 'Field 1' },
+      { apiName: 'field-2', name: 'Field 2' },
+    ];
+
+    render(
+      <RuleItem
+        groupAndRule={groupAndRule}
+        groupOrApiName="g-or-1"
+        groupOrIndex={0}
+        groupAndIndex={0}
+        ruleOperatorOptions={defaultOperatorOptions}
+        rulesFieldOptions={rulesFieldOptions}
+        ruleType={EFieldRuleType.Show}
+        isReadOnly={false}
+        updateRule={mockUpdateRule}
+        deleteRule={mockDeleteRule}
+        regroupRules={mockRegroupRules}
+      />,
+    );
+
+    const filterSelects = screen.getAllByTestId('filter-select');
+    expect(filterSelects).toHaveLength(2);
+    expect(filterSelects[0]).toHaveValue('field-1');
+  });
+
+  it('disables field select when rulesFieldOptions is empty', () => {
+    const groupAndRule = {
+      ...makeFieldsetRuleGroupAnd({
+        apiName: 'g-and-1',
+        operator: EFieldsetNumberRulesetOperator.SumEqual,
+        value: '100',
+      }),
+      field: 'field-1',
+    };
+
+    render(
+      <RuleItem
+        groupAndRule={groupAndRule}
+        groupOrApiName="g-or-1"
+        groupOrIndex={0}
+        groupAndIndex={0}
+        ruleOperatorOptions={defaultOperatorOptions}
+        rulesFieldOptions={[]}
+        ruleType={EFieldRuleType.Show}
+        isReadOnly={false}
+        updateRule={mockUpdateRule}
+        deleteRule={mockDeleteRule}
+        regroupRules={mockRegroupRules}
+      />,
+    );
+
+    const filterSelects = screen.getAllByTestId('filter-select');
+    expect(filterSelects[0]).toBeDisabled();
   });
 });

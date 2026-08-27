@@ -1546,6 +1546,8 @@ export const enMessages = {
   'fieldsets.rule-value': 'Value',
   'fieldsets.rule-value-placeholder-number': 'Enter a number...',
   'fieldsets.rule-value-placeholder-value': 'Enter value',
+  'fieldsets.field-rule.select-field-placeholder': 'Select field',
+  'fieldsets.field-rule.no-other-fields-tooltip': 'Requires at least one other field in the fieldset to bind a condition',
   'fieldsets.field-rule.validator.operator.equal': 'Equal',
   'fieldsets.field-rule.validator.operator.greater_than': 'Greater than',
   'fieldsets.field-rule.validator.operator.less_than': 'Less than',

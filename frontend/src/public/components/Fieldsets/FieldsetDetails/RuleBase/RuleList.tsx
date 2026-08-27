@@ -10,6 +10,8 @@ import styles from '../FieldsetRulesets/FieldsetRulesets.css';
 export const RuleList = ({
   ruleSet,
   operatorOptions,
+  rulesFieldOptions,
+  ruleType,
   isReadOnly,
   addRule,
   updateRule,
@@ -44,6 +46,8 @@ export const RuleList = ({
             groupOrIndex={groupOrIndex}
             groupAndIndex={groupAndIndex}
             ruleOperatorOptions={ruleOperatorOptions}
+            rulesFieldOptions={rulesFieldOptions}
+            ruleType={ruleType}
             isReadOnly={isReadOnly}
             updateRule={updateRule}
             deleteRule={deleteRule}

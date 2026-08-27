@@ -2,7 +2,8 @@ import type { IExtraField } from './template';
 
 export interface IBaseRuleGroupAnd {
   apiName: string;
-  operator: string;
+  field?: string | null;
+  operator: string | null;
   value: string;
 }
 
@@ -35,7 +36,7 @@ export enum ERuleCombinator {
 
 export interface IFieldsetRuleGroupAnd {
   apiName: string;
-  operator: EFieldsetNumberRulesetOperator;
+  operator: EFieldsetNumberRulesetOperator | null;
   value: string;
 }
 
@@ -62,7 +63,7 @@ export type TFieldRuleOperator = EFieldRuleValidatorOperator;
 export interface IFieldRuleGroupAnd {
   apiName: string;
   field?: string | null;
-  operator: EFieldRuleValidatorOperator;
+  operator: EFieldRuleValidatorOperator | null;
   value: string;
 }
 

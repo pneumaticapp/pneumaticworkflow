@@ -1,5 +1,6 @@
 import { IExtraField } from '../../../../types/template';
 import { IFieldsetRuleSet } from '../../../../types/fieldset';
+
 export {
   TRuleHandlers,
   TRuleItemProps as TFieldsetRuleItemProps,

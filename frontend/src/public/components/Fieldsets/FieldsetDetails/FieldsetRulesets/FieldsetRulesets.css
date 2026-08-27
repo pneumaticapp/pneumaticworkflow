@@ -57,6 +57,25 @@
   @mixin text-base;
 }
 
+.rule-field-select {
+  width: 18rem;
+  flex-shrink: 0;
+}
+
+.rule-field-tooltip {
+  padding: 0.4rem 0.8rem;
+  text-align: center;
+}
+
+.rule-select-placeholder {
+  color: var(--pneumatic-color-black32);
+}
+
+.rule-operator-select {
+  width: 12rem;
+  flex-shrink: 0;
+}
+
 .rule-value-input,
 .ruleset-message-input {
   padding: 0.8rem 1.2rem;
@@ -81,6 +100,20 @@
 
 .rule-value-input {
   flex: 1;
+}
+
+.rule-value-select {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+
+  [class*='react-datepicker__input-container'] input {
+    background-color: var(--pneumatic-color-white) !important; /* stylelint-disable-line declaration-no-important */
+  }
+}
+
+.rule-value-select-inner {
+  width: 100%;
 }
 
 .ruleset-message-input {

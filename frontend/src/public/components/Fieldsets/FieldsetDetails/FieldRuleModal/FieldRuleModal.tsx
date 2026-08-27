@@ -13,6 +13,7 @@ import styles from './FieldRuleModal.css';
 export function FieldRuleModal({
   isOpen,
   ruleset,
+  rulesFieldOptions,
   onSave,
   onClose,
 }: IFieldRuleModalProps) {
@@ -37,7 +38,11 @@ export function FieldRuleModal({
         {formatMessage({ id: 'fieldsets.field-rule-modal.title' })}
       </ModalHeader>
       <ModalBody>
-        <FieldRulesetBody localRuleSet={localRuleSet} onUpdateRuleSet={updateRuleSet} />
+        <FieldRulesetBody
+          localRuleSet={localRuleSet}
+          rulesFieldOptions={rulesFieldOptions}
+          onUpdateRuleSet={updateRuleSet}
+        />
       </ModalBody>
       <ModalFooter>
         <div className={styles['footer-buttons']}>

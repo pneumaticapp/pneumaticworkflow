@@ -12,7 +12,11 @@ import { IFieldRulesetBodyProps } from './types';
 import fieldsetDetailsStyles from '../FieldsetDetails.css';
 import rulesetStyles from '../FieldsetRulesets/FieldsetRulesets.css';
 
-export function FieldRulesetBody({ localRuleSet, onUpdateRuleSet }: IFieldRulesetBodyProps) {
+export function FieldRulesetBody({
+  localRuleSet,
+  rulesFieldOptions,
+  onUpdateRuleSet,
+}: IFieldRulesetBodyProps) {
   const { formatMessage } = useIntl();
 
   const { type, message } = localRuleSet;
@@ -46,27 +50,27 @@ export function FieldRulesetBody({ localRuleSet, onUpdateRuleSet }: IFieldRulese
         renderPlaceholder={() => selectedTypeLabel}
       />
       {type === EFieldRuleType.Validator && (
-        <>
-          <RulesetMessageInput
-            message={message}
-            onChange={(msg) => onUpdateRuleSet({ message: msg })}
-          />
-          <RuleList
-            ruleSet={localRuleSet}
-            operatorOptions={FIELD_RULE_VALIDATOR_OPERATOR_OPTIONS}
-            addRule={() => onUpdateRuleSet(addRule(localRuleSet, createEmptyFieldRule))}
-            updateRule={({ ruleGroupOrApiName, ruleGroupAndApiName, ruleChanges }) =>
-              onUpdateRuleSet(updateRule(localRuleSet, ruleGroupOrApiName, ruleGroupAndApiName, ruleChanges))
-            }
-            deleteRule={({ ruleGroupOrApiName, ruleGroupAndApiName }) =>
-              onUpdateRuleSet(deleteRule(localRuleSet, ruleGroupOrApiName, ruleGroupAndApiName))
-            }
-            regroupRules={({ groupOrApiName, groupAndApiName, ruleCombinator }) =>
-              onUpdateRuleSet(regroupRules(localRuleSet, groupOrApiName, groupAndApiName, ruleCombinator))
-            }
-          />
-        </>
+        <RulesetMessageInput
+          message={message}
+          onChange={(newMessage) => onUpdateRuleSet({ message: newMessage })}
+        />
       )}
+      <RuleList
+        ruleSet={localRuleSet}
+        ruleType={type}
+        operatorOptions={FIELD_RULE_VALIDATOR_OPERATOR_OPTIONS}
+        rulesFieldOptions={rulesFieldOptions}
+        addRule={() => onUpdateRuleSet(addRule(localRuleSet, () => createEmptyFieldRule(type)))}
+        updateRule={({ ruleGroupOrApiName, ruleGroupAndApiName, ruleChanges }) =>
+          onUpdateRuleSet(updateRule(localRuleSet, ruleGroupOrApiName, ruleGroupAndApiName, ruleChanges))
+        }
+        deleteRule={({ ruleGroupOrApiName, ruleGroupAndApiName }) =>
+          onUpdateRuleSet(deleteRule(localRuleSet, ruleGroupOrApiName, ruleGroupAndApiName))
+        }
+        regroupRules={({ groupOrApiName, groupAndApiName, ruleCombinator }) =>
+          onUpdateRuleSet(regroupRules(localRuleSet, groupOrApiName, groupAndApiName, ruleCombinator))
+        }
+      />
     </>
   );
 }

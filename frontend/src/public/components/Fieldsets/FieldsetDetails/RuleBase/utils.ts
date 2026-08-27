@@ -4,21 +4,43 @@ import {
   ERuleCombinator,
 } from '../../../../types/fieldset';
 import { createRulesetGroupOrApiName } from '../../../../utils/createId';
+import { getDropdownOperators } from '../../../TemplateEdit/TaskForm/Conditions/utils/getDropdownOperators';
+import { EConditionOperators } from '../../../TemplateEdit/TaskForm/Conditions/types';
+import { EExtraFieldType } from '../../../../types/template';
+import { TRuleOperatorOption } from './types';
+
+const EXCLUDED_FIELDSET_OPERATORS = [
+  EConditionOperators.Exist,
+  EConditionOperators.NotExist,
+];
+
+export const getFieldsetRuleShowOperators = (
+  fieldType: EExtraFieldType,
+  messages: Record<string, string>,
+): TRuleOperatorOption[] => {
+  const operators = getDropdownOperators(fieldType, messages);
+  return operators
+    .filter((item) => !EXCLUDED_FIELDSET_OPERATORS.includes(item.operator))
+    .map((item) => ({
+      apiName: item.operator,
+      name: item.label,
+    }));
+};
 
 export const traverseGroupsAnd = <T extends IBaseRuleSet>(
   ruleSet: T,
   groupOrApiName: string,
   changeRules: (groupsAnd: IBaseRuleGroupAnd[]) => IBaseRuleGroupAnd[],
 ): T => ({
-  ...ruleSet,
-  groupsOr: ruleSet.groupsOr
-    .map((groupOr) => {
-      if (groupOr.apiName !== groupOrApiName) return groupOr;
+    ...ruleSet,
+    groupsOr: ruleSet.groupsOr
+      .map((groupOr) => {
+        if (groupOr.apiName !== groupOrApiName) return groupOr;
 
-      return { ...groupOr, groupsAnd: changeRules(groupOr.groupsAnd || []) };
-    })
-    .filter((groupOr) => groupOr.groupsAnd.length > 0),
-});
+        return { ...groupOr, groupsAnd: changeRules(groupOr.groupsAnd || []) };
+      })
+      .filter((groupOr) => groupOr.groupsAnd.length > 0),
+  });
 
 export const updateRule = <T extends IBaseRuleSet>(
   ruleSet: T,
@@ -26,25 +48,25 @@ export const updateRule = <T extends IBaseRuleSet>(
   ruleApiName: string,
   changes: Partial<IBaseRuleGroupAnd>,
 ): T =>
-  traverseGroupsAnd(
-    ruleSet,
-    groupOrApiName,
-    (groupsAnd) =>
-      groupsAnd.map((rule) =>
-        rule.apiName === ruleApiName ? { ...rule, ...changes } : rule,
-      ),
-  );
+    traverseGroupsAnd(
+      ruleSet,
+      groupOrApiName,
+      (groupsAnd) =>
+        groupsAnd.map((rule) =>
+          rule.apiName === ruleApiName ? { ...rule, ...changes } : rule,
+        ),
+    );
 
 export const deleteRule = <T extends IBaseRuleSet>(
   ruleSet: T,
   groupOrApiName: string,
   ruleApiName: string,
 ): T =>
-  traverseGroupsAnd(
-    ruleSet,
-    groupOrApiName,
-    (groupsAnd) => groupsAnd.filter((rule) => rule.apiName !== ruleApiName),
-  );
+    traverseGroupsAnd(
+      ruleSet,
+      groupOrApiName,
+      (groupsAnd) => groupsAnd.filter((rule) => rule.apiName !== ruleApiName),
+    );
 
 export const addRule = <T extends IBaseRuleSet>(
   ruleSet: T,

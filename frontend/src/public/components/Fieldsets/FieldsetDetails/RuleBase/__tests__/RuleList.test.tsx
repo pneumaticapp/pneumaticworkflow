@@ -10,6 +10,8 @@ import {
   makeFieldsetRuleGroupAnd,
 } from '../../../../../__stubs__/fieldsets.factory';
 
+import { EFieldRuleType } from '../../../../../types/fieldset';
+
 jest.mock('../RuleItem', () => ({
   RuleItem: jest.fn((props) => (
     <div data-testid={`mock-rule-item-${props.groupAndRule.apiName}`}>
@@ -48,6 +50,7 @@ describe('RuleList component', () => {
     render(
       <RuleList
         ruleSet={emptyRuleset}
+        ruleType={EFieldRuleType.Validator}
         operatorOptions={FIELDSET_RULE_OPERATOR_OPTIONS}
         isReadOnly={false}
         addRule={mockAddRule}
@@ -82,6 +85,7 @@ describe('RuleList component', () => {
     render(
       <RuleList
         ruleSet={ruleset}
+        ruleType={EFieldRuleType.Validator}
         operatorOptions={FIELDSET_RULE_OPERATOR_OPTIONS}
         isReadOnly={false}
         addRule={mockAddRule}
@@ -108,6 +112,7 @@ describe('RuleList component', () => {
     render(
       <RuleList
         ruleSet={ruleset}
+        ruleType={EFieldRuleType.Validator}
         operatorOptions={FIELDSET_RULE_OPERATOR_OPTIONS}
         isReadOnly={false}
         addRule={mockAddRule}
@@ -133,6 +138,7 @@ describe('RuleList component', () => {
     render(
       <RuleList
         ruleSet={emptyRuleset}
+        ruleType={EFieldRuleType.Validator}
         operatorOptions={FIELDSET_RULE_OPERATOR_OPTIONS}
         isReadOnly={true}
         addRule={mockAddRule}

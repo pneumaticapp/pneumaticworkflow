@@ -11,16 +11,20 @@ import {
   IFieldRuleSet,
 } from '../../../../types/fieldset';
 
-export const createEmptyFieldRule = (): IFieldRuleGroupAnd => ({
+export const createEmptyFieldRule = (
+  type: EFieldRuleType = EFieldRuleType.Show,
+): IFieldRuleGroupAnd => ({
   apiName: createFieldRuleGroupAndApiName(),
   field: null,
-  operator: EFieldRuleValidatorOperator.Equal,
+  operator: type === EFieldRuleType.Validator ? EFieldRuleValidatorOperator.Equal : null,
   value: '',
 });
 
-export const createEmptyFieldRuleGroupOr = (): IFieldRuleGroupOr => ({
+export const createEmptyFieldRuleGroupOr = (
+  type: EFieldRuleType = EFieldRuleType.Show,
+): IFieldRuleGroupOr => ({
   apiName: createFieldRuleGroupOrApiName(),
-  groupsAnd: [createEmptyFieldRule()],
+  groupsAnd: [createEmptyFieldRule(type)],
 });
 
 export const createEmptyFieldRuleSet = (type: EFieldRuleType = EFieldRuleType.Show): IFieldRuleSet => ({
@@ -28,7 +32,7 @@ export const createEmptyFieldRuleSet = (type: EFieldRuleType = EFieldRuleType.Sh
   type,
   message: type === EFieldRuleType.Validator ? '' : null,
   order: 0,
-  groupsOr: [createEmptyFieldRuleGroupOr()],
+  groupsOr: [createEmptyFieldRuleGroupOr(type)],
 });
 
 export const traverseFieldRuleSetGroupsAnd = (

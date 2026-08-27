@@ -1433,6 +1433,7 @@ export const ruMessages = {
   'fieldsets.rule-value': 'Значение',
   'fieldsets.rule-value-placeholder-number': 'Введите число...',
   'fieldsets.rule-value-placeholder-value': 'Введите значение',
+  'fieldsets.field-rule.select-field-placeholder': 'Выберите поле',
   'fieldsets.field-rule.validator.operator.equal': 'Равно',
   'fieldsets.field-rule.validator.operator.greater_than': 'Больше чем',
   'fieldsets.field-rule.validator.operator.less_than': 'Меньше чем',
@@ -1513,4 +1514,5 @@ export const ruMessages = {
   'user-info.vacation.deactivate': 'Вернуться',
   'user-info.vacation.activated-success': 'Отпуск активирован',
   'user-info.vacation.deactivated-success': 'Отпуск деактивирован',
+  'fieldsets.field-rule.no-other-fields-tooltip': 'Требуется хотя бы еще одно поле в наборе полей для привязки условия',
 };

@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useIntl } from 'react-intl';
 
 import { EExtraFieldType } from '../../../../types/template';
+import { EFieldRuleType } from '../../../../types/fieldset';
 
 import { TFieldsetRulesetsProps } from './types';
 import { FIELDSET_RULE_OPERATOR_OPTIONS } from '../../constants';
@@ -62,6 +63,7 @@ export const FieldsetRulesets = ({
 
           <RuleList
             ruleSet={ruleSet}
+            ruleType={EFieldRuleType.Validator}
             operatorOptions={FIELDSET_RULE_OPERATOR_OPTIONS}
             isReadOnly={isReadOnly}
             addRule={() =>
