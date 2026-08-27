@@ -29,24 +29,23 @@ def test_partial_update__minimal_data__ok(api_client, mocker):
     user = create_test_owner(account=account)
     provider = AIProvider(
         account=account,
-        name='Old Name',
+        name='OpenRouter',
         base_url='https://openrouter.ai/api/v1',
         is_active=True,
     )
     provider.api_key = 'sk-or-v1-example'
     provider.save()
-    new_name = 'New Name'
     updated_provider = AIProvider(
         account=account,
-        name=new_name,
+        name='OpenRouter',
         base_url='https://openrouter.ai/api/v1',
-        is_active=True,
+        is_active=False,
     )
     updated_provider.api_key = 'sk-or-v1-example'
     updated_provider.save()
     path = f'/ai/providers/{provider.id}'
     data = {
-        'name': new_name,
+        'is_active': False,
     }
     ai_provider_service_init_mock = mocker.patch.object(
         AIProviderService,
@@ -68,7 +67,7 @@ def test_partial_update__minimal_data__ok(api_client, mocker):
     # assert
     assert response.status_code == 200
     assert response.data['id'] == updated_provider.id
-    assert response.data['name'] == new_name
+    assert response.data['is_active'] is False
     assert 'api_key' not in response.data
     ai_provider_service_init_mock.assert_called_once_with(
         user=user,
@@ -77,7 +76,7 @@ def test_partial_update__minimal_data__ok(api_client, mocker):
         auth_type=AuthTokenType.USER,
     )
     partial_update_mock.assert_called_once_with(
-        name=new_name,
+        is_active=False,
     )
 
 
@@ -96,12 +95,11 @@ def test_partial_update__full_data__ok(api_client, mocker):
     )
     provider.api_key = 'sk-or-v1-example'
     provider.save()
-    updated_name = 'Updated name'
     updated_base_url = 'https://updated.example.com'
     updated_api_key = 'sk-or-v1-updated'
     updated_provider = AIProvider(
         account=account,
-        name=updated_name,
+        name='OpenAI compatible',
         base_url=updated_base_url,
         is_active=False,
     )
@@ -109,7 +107,6 @@ def test_partial_update__full_data__ok(api_client, mocker):
     updated_provider.save()
     path = f'/ai/providers/{provider.id}'
     data = {
-        'name': updated_name,
         'base_url': updated_base_url,
         'api_key': updated_api_key,
         'is_active': False,
@@ -138,10 +135,11 @@ def test_partial_update__full_data__ok(api_client, mocker):
         'name',
         'base_url',
         'api_key_prefix',
+        'vendor',
         'is_active',
     }
     assert response.data['id'] == updated_provider.id
-    assert response.data['name'] == updated_name
+    assert response.data['name'] == updated_provider.name
     assert response.data['base_url'] == updated_base_url
     assert response.data['is_active'] is False
     assert 'api_key' not in response.data
@@ -152,7 +150,6 @@ def test_partial_update__full_data__ok(api_client, mocker):
         auth_type=AuthTokenType.USER,
     )
     partial_update_mock.assert_called_once_with(
-        name=updated_name,
         base_url=updated_base_url,
         api_key=updated_api_key,
         is_active=False,
@@ -373,52 +370,6 @@ def test_partial_update__soft_deleted__not_found(api_client):
     assert response.data['detail'] == message
 
 
-def test_partial_update__empty_name__validation_error(api_client, mocker):
-
-    """ Empty name """
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    provider = AIProvider(
-        account=account,
-        name='OpenRouter',
-        base_url='https://openrouter.ai/api/v1',
-        is_active=True,
-    )
-    provider.api_key = 'sk-or-v1-example'
-    provider.save()
-    path = f'/ai/providers/{provider.id}'
-    data = {
-        'name': '',
-    }
-    ai_provider_service_init_mock = mocker.patch.object(
-        AIProviderService,
-        attribute='__init__',
-        return_value=None,
-    )
-    partial_update_mock = mocker.patch(
-        'src.ai.views.AIProviderService.partial_update',
-    )
-    api_client.token_authenticate(user=user)
-
-    # act
-    response = api_client.patch(
-        path=path,
-        data=data,
-    )
-
-    # assert
-    assert response.status_code == 400
-    assert response.data['message'] == str(
-        CharField.default_error_messages['blank'],
-    )
-    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['details']['name'] == 'name'
-    ai_provider_service_init_mock.assert_not_called()
-    partial_update_mock.assert_not_called()
-
-
 def test_partial_update__empty_api_key__validation_error(api_client, mocker):
 
     """ Empty api_key """
@@ -461,52 +412,6 @@ def test_partial_update__empty_api_key__validation_error(api_client, mocker):
     )
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['details']['name'] == 'api_key'
-    ai_provider_service_init_mock.assert_not_called()
-    partial_update_mock.assert_not_called()
-
-
-def test_partial_update__name_too_long__validation_error(api_client, mocker):
-
-    """ Name too long """
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    provider = AIProvider(
-        account=account,
-        name='OpenRouter',
-        base_url='https://openrouter.ai/api/v1',
-        is_active=True,
-    )
-    provider.api_key = 'sk-or-v1-example'
-    provider.save()
-    path = f'/ai/providers/{provider.id}'
-    data = {
-        'name': 'x' * 256,
-    }
-    ai_provider_service_init_mock = mocker.patch.object(
-        AIProviderService,
-        attribute='__init__',
-        return_value=None,
-    )
-    partial_update_mock = mocker.patch(
-        'src.ai.views.AIProviderService.partial_update',
-    )
-    api_client.token_authenticate(user=user)
-
-    # act
-    response = api_client.patch(
-        path=path,
-        data=data,
-    )
-
-    # assert
-    assert response.status_code == 400
-    assert response.data['message'] == str(
-        CharField.default_error_messages['max_length'],
-    ).format(max_length=255)
-    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['details']['name'] == 'name'
     ai_provider_service_init_mock.assert_not_called()
     partial_update_mock.assert_not_called()
 
@@ -678,7 +583,7 @@ def test_partial_update__service_exception__validation_error(
     provider.save()
     path = f'/ai/providers/{provider.id}'
     data = {
-        'name': 'Updated Name',
+        'is_active': False,
     }
     error_message = 'AI service error'
     ai_provider_service_init_mock = mocker.patch.object(
@@ -709,5 +614,5 @@ def test_partial_update__service_exception__validation_error(
         auth_type=AuthTokenType.USER,
     )
     partial_update_mock.assert_called_once_with(
-        name='Updated Name',
+        is_active=False,
     )

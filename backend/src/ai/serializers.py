@@ -3,12 +3,13 @@ from rest_framework.serializers import (
     Serializer,
 )
 
+from src.ai.enums import AIVendor
 from src.ai.models import AIAgent, AIProvider
 from src.generics.fields import (
     DocBooleanField,
     DocCharField,
+    DocChoiceField,
     DocIntegerField,
-    DocSerializerMethodField,
     DocURLField,
 )
 from src.generics.mixins.serializers import CustomValidationErrorMixin
@@ -27,6 +28,7 @@ class AIProviderSerializer(
             'base_url',
             'api_key',
             'api_key_prefix',
+            'vendor',
             'is_active',
         )
 
@@ -36,6 +38,7 @@ class AIProviderSerializer(
         example=1,
     )
     name = DocCharField(
+        read_only=True,
         max_length=255,
         help_text='Display name of the provider',
         example='OpenRouter',
@@ -59,14 +62,20 @@ class AIProviderSerializer(
         help_text='Whether the provider is enabled',
         example=True,
     )
-    api_key_prefix = DocSerializerMethodField(
+    api_key_prefix = DocCharField(
+        read_only=True,
         help_text='Secret API key prefix for the provider',
         example='sk-or-v1-744afb981...',
     )
+    vendor = DocChoiceField(
+        choices=AIVendor.CHOICES,
+        read_only=True,
+        help_text='Detected vendor of the provider API',
+        example=AIVendor.OPENROUTER,
+    )
 
-    def get_api_key_prefix(self, obj) -> str:
-        length = AIProvider.API_KEY_PREFIX_DISPLAY_LENGTH
-        return obj.api_key[:length]
+    def validate_base_url(self, value):
+        return value.rstrip('/')
 
 
 class AIModelSerializer(

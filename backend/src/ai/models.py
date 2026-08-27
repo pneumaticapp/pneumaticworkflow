@@ -8,6 +8,7 @@ from django.db.models import Q, UniqueConstraint
 
 from src.accounts.models import AccountBaseMixin
 from src.ai.enums import (
+    AIVendor,
     OpenAiModel,
     OpenAIPromptTarget,
     OpenAIRole,
@@ -181,9 +182,18 @@ class AIProvider(
     class Meta:
         ordering = ('id',)
 
-    name = models.CharField(max_length=255)
+    name = models.CharField(
+        max_length=255,
+        help_text='Display name of the provider',
+    )
     base_url = models.URLField(max_length=1024)
     api_key_encrypted = models.TextField()
+    vendor = models.CharField(
+        max_length=50,
+        choices=AIVendor.CHOICES,
+        default=AIVendor.OPENAI_COMPATIBLE,
+        help_text='Detected vendor of the provider API',
+    )
     is_active = models.BooleanField(default=True)
 
     objects = BaseSoftDeleteManager.from_queryset(AIProviderQuerySet)()
@@ -195,6 +205,10 @@ class AIProvider(
     @api_key.setter
     def api_key(self, value: str):
         self.api_key_encrypted = self.encrypt(value)
+
+    @property
+    def api_key_prefix(self) -> str:
+        return self.api_key[:self.API_KEY_PREFIX_DISPLAY_LENGTH]
 
     def __str__(self):
         return self.name

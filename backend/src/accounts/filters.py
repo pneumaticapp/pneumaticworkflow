@@ -1,4 +1,4 @@
-from django_filters import ChoiceFilter
+from django_filters import BooleanFilter, ChoiceFilter
 from django_filters.rest_framework import (
     FilterSet,
 )
@@ -68,6 +68,7 @@ class UsersListFilterSet(FilterSet):
             'type',
             'ordering',
             'groups',
+            'is_ai',
         )
 
     ordering = DefaultOrderingFilter(
@@ -96,6 +97,8 @@ class UsersListFilterSet(FilterSet):
         lookup_expr='in',
         distinct=True,
     )
+
+    is_ai = BooleanFilter()
 
 
 class TenantsFilterSet(FilterSet):

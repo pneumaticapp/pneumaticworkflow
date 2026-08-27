@@ -308,6 +308,11 @@ USERS_LIST_PARAMS = [
             'Comma-separated group IDs to filter users by.'
         ),
     ),
+    query_param(
+        'is_ai',
+        OpenApiTypes.BOOL,
+        description='Filter by AI user flag.',
+    ),
     *LIMIT_OFFSET_PARAMS,
 ]
 

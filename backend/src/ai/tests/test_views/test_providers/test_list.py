@@ -46,6 +46,7 @@ def test_list__ok(api_client):
         'name',
         'base_url',
         'api_key_prefix',
+        'vendor',
         'is_active',
     }
     assert response.data[0]['id'] == provider.id
