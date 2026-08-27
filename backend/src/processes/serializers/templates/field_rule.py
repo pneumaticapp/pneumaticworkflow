@@ -1,6 +1,6 @@
 from typing import Any, Dict
 
-from rest_framework.serializers import ModelSerializer
+from rest_framework.serializers import ModelSerializer, ValidationError
 
 from src.generics.fields import (
     DocCharField,
@@ -14,6 +14,7 @@ from src.generics.mixins.serializers import (
 from src.processes.enums import FieldRuleOperator, FieldRuleType
 from src.processes.messages.template import (
     MSG_PT_0075,
+    MSG_PT_0079,
 )
 from src.processes.models.templates.fields import (
     FieldTemplateRuleGroupAnd,
@@ -64,9 +65,11 @@ class FieldTemplateRuleGroupAndSerializer(
         max_length=200,
         example='field-1',
         help_text=(
-            '`api_name` of the source field this '
-            'condition reads.'
+            '`api_name` of the source field this condition reads. '
+            'Required for a type "show".'
         ),
+        required=False,
+        allow_null=True,
     )
     operator = DocChoiceField(
         choices=FieldRuleOperator.CHOICES,
@@ -86,6 +89,17 @@ class FieldTemplateRuleGroupAndSerializer(
             'Value the source field is compared against.'
         ),
     )
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        ruleset_type = (
+            self.context['ruleset'].type
+            if self.context.get('ruleset')
+            else self.context['ruleset_type']
+        )
+        if ruleset_type == FieldRuleType.SHOW and not attrs.get('field'):
+            raise ValidationError(MSG_PT_0079)
+        return attrs
 
     def create(self, validated_data: Dict[str, Any]):
         self.additional_validate(validated_data)
@@ -153,7 +167,7 @@ class FieldTemplateRuleGroupOrSerializer(
         )
         create_or_update_fields = {
             'api_name',
-            'field_rule',
+            'ruleset',
             'template',
             'account',
         }
@@ -182,7 +196,7 @@ class FieldTemplateRuleGroupOrSerializer(
             validated_data={
                 'template': self.context['template'],
                 'account': self.context['account'],
-                'field_rule': self.context['field_rule'],
+                'ruleset': self.context['ruleset'],
                 **validated_data,
             },
             not_unique_exception_msg=MSG_PT_0075(
@@ -220,7 +234,7 @@ class FieldTemplateRuleGroupOrSerializer(
             validated_data={
                 'template': self.context['template'],
                 'account': self.context['account'],
-                'field_rule': self.context['field_rule'],
+                'ruleset': self.context['ruleset'],
                 **validated_data,
             },
             not_unique_exception_msg=MSG_PT_0075(
@@ -258,6 +272,7 @@ class FieldTemplateRuleSetSerializer(
         api_primary_field = 'api_name'
         fields = (
             'api_name',
+            'name',
             'type',
             'message',
             'order',
@@ -265,6 +280,7 @@ class FieldTemplateRuleSetSerializer(
         )
         create_or_update_fields = {
             'api_name',
+            'name',
             'type',
             'message',
             'order',
@@ -278,6 +294,11 @@ class FieldTemplateRuleSetSerializer(
         required=False,
         example='ruleset-1',
         help_text='Stable unique identifier. Generated if omitted.',
+    )
+    name = DocCharField(
+        max_length=200,
+        example='Show when value is yes',
+        help_text='The ruleset name displayed in the editor.',
     )
     type = DocChoiceField(
         choices=FieldRuleType.CHOICES,
@@ -316,6 +337,11 @@ class FieldTemplateRuleSetSerializer(
         ),
     )
 
+    def to_internal_value(self, data):
+        if isinstance(data, dict):
+            self.context['ruleset_type'] = data.get('type')
+        return super().to_internal_value(data)
+
     def create(self, validated_data: Dict[str, Any]):
         self.additional_validate(validated_data)
         task = self.context.get('task')
@@ -339,11 +365,11 @@ class FieldTemplateRuleSetSerializer(
             data=validated_data.get('groups_or'),
             slz_cls=FieldTemplateRuleGroupOrSerializer,
             ancestors_data={
-                'field_rule': instance,
+                'ruleset': instance,
                 'template': self.context['template'],
             },
             slz_context={
-                'field_rule': instance,
+                'ruleset': instance,
                 **self.context,
             },
         )
@@ -377,11 +403,11 @@ class FieldTemplateRuleSetSerializer(
             data=validated_data.get('groups_or'),
             slz_cls=FieldTemplateRuleGroupOrSerializer,
             ancestors_data={
-                'field_rule': instance,
+                'ruleset': instance,
                 'template': self.context['template'],
             },
             slz_context={
-                'field_rule': instance,
+                'ruleset': instance,
                 **self.context,
             },
         )

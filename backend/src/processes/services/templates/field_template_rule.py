@@ -20,6 +20,7 @@ class FieldTemplateRuleSetService(BaseModelService):
         self,
         field_id: int,
         type: str,  # noqa: A002
+        name: str,
         api_name: Optional[str] = None,
         message: Optional[str] = None,
         order: int = 0,
@@ -29,6 +30,7 @@ class FieldTemplateRuleSetService(BaseModelService):
 
         create_kwargs = {
             'account': self.account,
+            'name': name,
             'type': type,
             'message': message,
             'order': order,
@@ -140,7 +142,7 @@ class FieldTemplateRuleSetService(BaseModelService):
         group_or_data_dict = dict(group_or_data)
         groups_and_data = group_or_data_dict.pop('groups_and', None)
         create_kwargs = {
-            'field_rule': self.instance,
+            'ruleset': self.instance,
             'account': self.account,
             'template_id': self.instance.template_id,
         }

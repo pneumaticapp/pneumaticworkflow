@@ -147,6 +147,7 @@ class FieldTemplateRuleSet(
         on_delete=models.CASCADE,
         related_name='rulesets',
     )
+    name = models.CharField(max_length=200)
     type = models.CharField(
         max_length=50,
         choices=FieldRuleType.CHOICES,
@@ -185,7 +186,7 @@ class FieldTemplateRuleGroupOr(
         blank=True,
         related_name='field_ruleset_groups_or',
     )
-    field_rule = models.ForeignKey(
+    ruleset = models.ForeignKey(
         FieldTemplateRuleSet,
         on_delete=models.CASCADE,
         related_name='groups_or',

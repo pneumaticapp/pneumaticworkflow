@@ -968,13 +968,14 @@ def create_test_shared_fieldset(
             account=account,
             field=field,
             api_name=f'{fieldset.api_name}-field-ruleset-1',
+            name='Field ruleset',
             type=field_rule_type,
             message=field_rule_message,
             order=1,
         )
         field_group_or = FieldTemplateRuleGroupOr.objects.create(
             account=account,
-            field_rule=field_ruleset,
+            ruleset=field_ruleset,
             api_name=f'{fieldset.api_name}-field-group-or-1',
         )
         FieldTemplateRuleGroupAnd.objects.create(

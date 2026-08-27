@@ -56,11 +56,12 @@ def test_list_fieldsets__all_data__ok(api_client):
         field=field,
         account=account,
         api_name=f'{field.api_name}-ruleset-1',
+        name='Field ruleset',
         type=field_rule_type,
         order=0,
     )
     field_group_or = FieldTemplateRuleGroupOr.objects.create(
-        field_rule=field_ruleset,
+        ruleset=field_ruleset,
         account=account,
         api_name=f'{field.api_name}-group-or-1',
     )
@@ -126,6 +127,7 @@ def test_list_fieldsets__all_data__ok(api_client):
     assert len(field_data['rulesets']) == 1
     field_rule_data = field_data['rulesets'][0]
     assert field_rule_data['api_name'] == field_ruleset.api_name
+    assert field_rule_data['name'] == field_ruleset.name
     assert field_rule_data['type'] == field_rule_type
     assert field_rule_data['message'] is None
     assert field_rule_data['order'] == 0
