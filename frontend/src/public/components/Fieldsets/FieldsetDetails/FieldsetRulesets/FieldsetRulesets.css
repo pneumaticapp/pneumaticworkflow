@@ -120,6 +120,17 @@
   width: 100%;
 }
 
+.rule-option_disabled {
+  cursor: not-allowed;
+  color: var(--pneumatic-color-black32);
+}
+
+.ruleset-message-input_error,
+.rule-value-input_error {
+  /* stylelint-disable-next-line declaration-no-important */
+  border: 0.1rem solid var(--pneumatic-color-notification1) !important;
+}
+
 .rule-remove-btn {
   position: absolute;
   top: 1rem;

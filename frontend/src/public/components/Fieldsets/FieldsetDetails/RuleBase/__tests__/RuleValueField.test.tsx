@@ -68,11 +68,17 @@ jest.mock('../../../../UI/form/DatePicker', () => ({
 jest.mock('react-number-format', () => ({
   NumericFormat: (props: {
     value?: string;
+    className?: string;
+    onFocus?: () => void;
+    onBlur?: () => void;
     onValueChange: (values: { value: string }) => void;
   }) => (
     <input
       data-testid="numeric-format"
+      className={props.className}
       value={props.value || ''}
+      onFocus={props.onFocus}
+      onBlur={props.onBlur}
       onChange={(e) => props.onValueChange({ value: e.target.value })}
     />
   ),
@@ -193,5 +199,25 @@ describe('FieldsetFieldRulesValue component', () => {
     fireEvent.change(input, { target: { value: 'Updated Text' } });
     expect(handleChange).toHaveBeenCalledTimes(1);
     expect(handleChange).toHaveBeenCalledWith('Updated Text');
+  });
+
+  it('highlights error on blur and removes highlight on focus when text value is empty', () => {
+    render(
+      <FieldsetFieldRulesValue
+        fieldType={EExtraFieldType.Text}
+        value=""
+        onChange={jest.fn()}
+      />,
+    );
+
+    const input = screen.getByRole('textbox');
+    expect(input).not.toHaveClass('rule-value-input_error');
+
+    fireEvent.focus(input);
+    fireEvent.blur(input);
+    expect(input).toHaveClass('rule-value-input_error');
+
+    fireEvent.focus(input);
+    expect(input).not.toHaveClass('rule-value-input_error');
   });
 });

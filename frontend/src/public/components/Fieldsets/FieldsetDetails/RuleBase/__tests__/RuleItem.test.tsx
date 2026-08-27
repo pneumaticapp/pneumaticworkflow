@@ -232,33 +232,4 @@ describe('RuleItem component', () => {
     expect(filterSelects[0]).toHaveValue('field-1');
   });
 
-  it('disables field select when rulesFieldOptions is empty', () => {
-    const groupAndRule = {
-      ...makeFieldsetRuleGroupAnd({
-        apiName: 'g-and-1',
-        operator: EFieldsetNumberRulesetOperator.SumEqual,
-        value: '100',
-      }),
-      field: 'field-1',
-    };
-
-    render(
-      <RuleItem
-        groupAndRule={groupAndRule}
-        groupOrApiName="g-or-1"
-        groupOrIndex={0}
-        groupAndIndex={0}
-        ruleOperatorOptions={defaultOperatorOptions}
-        rulesFieldOptions={[]}
-        ruleType={EFieldRuleType.Show}
-        isReadOnly={false}
-        updateRule={mockUpdateRule}
-        deleteRule={mockDeleteRule}
-        regroupRules={mockRegroupRules}
-      />,
-    );
-
-    const filterSelects = screen.getAllByTestId('filter-select');
-    expect(filterSelects[0]).toBeDisabled();
-  });
 });

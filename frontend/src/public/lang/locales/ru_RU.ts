@@ -1421,6 +1421,8 @@ export const ruMessages = {
   'fieldsets.field-rule-modal.save': 'Сохранить',
   'fieldsets.field-rule-modal.discard': 'Отменить',
   'fieldsets.field-rule-modal.delete-rules': 'Удалить правила',
+  'fieldsets.field-rule-modal.name-label': 'Название',
+  'fieldsets.field-rule-modal.name-placeholder': 'Название рулсета...',
   'fieldsets.field-rule-modal.type-label': 'Тип',
   'fieldsets.field-rule-modal.type-show': 'Показать',
   'fieldsets.field-rule-modal.type-validator': 'Валидатор',

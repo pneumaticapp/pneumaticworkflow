@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useState, useEffect } from 'react';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
 import { useSelector } from 'react-redux';
@@ -110,6 +111,14 @@ export const FieldsetFieldRulesValue = ({
     );
   }
 
+  const [isTouched, setIsTouched] = useState(false);
+
+  useEffect(() => {
+    setIsTouched(false);
+  }, [value, fieldType]);
+
+  const isValueError = isTouched && (!value || !value.trim());
+
   if (fieldType === EExtraFieldType.Number) {
     const placeholderText = formatMessage({ id: 'fieldsets.rule-value-placeholder-number' });
 
@@ -119,13 +128,17 @@ export const FieldsetFieldRulesValue = ({
         onValueChange={(values) => {
           onChange(values.value);
         }}
+        onFocus={() => setIsTouched(false)}
+        onBlur={() => setIsTouched(true)}
         allowNegative
         decimalSeparator="."
         thousandSeparator={false}
         allowedDecimalSeparators={['.', ',']}
         disabled={isReadOnly}
         placeholder={placeholderText}
-        className={styles['rule-value-input']}
+        className={classnames(styles['rule-value-input'], {
+          [styles['rule-value-input_error']]: isValueError,
+        })}
       />
     );
   }
@@ -135,10 +148,16 @@ export const FieldsetFieldRulesValue = ({
   return (
     <input
       type="text"
-      className={styles['rule-value-input']}
+      className={classnames(styles['rule-value-input'], {
+        [styles['rule-value-input_error']]: isValueError,
+      })}
       value={value}
       placeholder={placeholderText}
-      onChange={(event) => onChange(event.target.value)}
+      onChange={(event) => {
+        onChange(event.target.value);
+      }}
+      onFocus={() => setIsTouched(false)}
+      onBlur={() => setIsTouched(true)}
       disabled={isReadOnly}
     />
   );

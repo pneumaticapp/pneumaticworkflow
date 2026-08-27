@@ -74,6 +74,7 @@ export interface IFieldRuleGroupOr {
 
 export interface IFieldRuleSet {
   apiName: string;
+  name: string;
   type: EFieldRuleType;
   message: string | null;
   order: number;

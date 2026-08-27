@@ -6,7 +6,8 @@ import { RawIntlProvider, createIntl, createIntlCache } from 'react-intl';
 import { FieldRuleModal } from '../FieldRuleModal';
 import { enMessages } from '../../../../../lang/locales/en_US';
 
-import { EFieldRuleType } from '../../../../../types/fieldset';
+import { EFieldRuleType, EFieldRuleValidatorOperator, IFieldRuleSet } from '../../../../../types/fieldset';
+import { EExtraFieldType } from '../../../../../types/template';
 import { createEmptyFieldRuleSet } from '../utils';
 
 const cache = createIntlCache();
@@ -17,9 +18,30 @@ const renderWithIntl = (component: React.ReactNode) => {
 };
 
 describe('FieldRuleModal', () => {
+  const mockFieldOption = { apiName: 'field_1', name: 'Field 1', type: EExtraFieldType.Text };
+
+  const validRuleset: IFieldRuleSet = {
+    ...createEmptyFieldRuleSet(EFieldRuleType.Show),
+    name: 'Test Ruleset',
+    groupsOr: [
+      {
+        apiName: 'or-1',
+        groupsAnd: [
+          {
+            apiName: 'and-1',
+            field: 'field_1',
+            operator: EFieldRuleValidatorOperator.Equal,
+            value: 'test value',
+          },
+        ],
+      },
+    ],
+  };
+
   const defaultProps = {
     isOpen: true,
-    ruleset: createEmptyFieldRuleSet(EFieldRuleType.Show),
+    ruleset: validRuleset,
+    rulesFieldOptions: [mockFieldOption],
     onSave: jest.fn(),
     onClose: jest.fn(),
   };
@@ -47,8 +69,19 @@ describe('FieldRuleModal', () => {
     expect(screen.queryByText('Field rules')).not.toBeInTheDocument();
   });
 
-  it('calls onSave when Save button is clicked', () => {
+  it('disables Save button when ruleset is invalid', () => {
+    const invalidRuleset = createEmptyFieldRuleSet(EFieldRuleType.Show);
+    renderWithIntl(<FieldRuleModal {...defaultProps} ruleset={invalidRuleset} />);
+
+    const saveButton = screen.getByText('Save').closest('button');
+    expect(saveButton).toBeDisabled();
+  });
+
+  it('calls onSave when Save button is clicked on valid ruleset', () => {
     renderWithIntl(<FieldRuleModal {...defaultProps} />);
+
+    const saveButton = screen.getByText('Save').closest('button');
+    expect(saveButton).not.toBeDisabled();
 
     userEvent.click(screen.getByText('Save'));
     expect(defaultProps.onSave).toHaveBeenCalledTimes(1);
@@ -61,17 +94,45 @@ describe('FieldRuleModal', () => {
     expect(defaultProps.onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('creates empty ruleset with Show type when ruleset prop is null', () => {
+  it('creates empty ruleset with default Validator type when ruleset prop is null', () => {
     renderWithIntl(<FieldRuleModal {...defaultProps} ruleset={null} />);
 
     expect(screen.getByText('Field rules')).toBeInTheDocument();
-    expect(screen.queryByPlaceholderText('Custom error message...')).not.toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Custom error message...')).toBeInTheDocument();
   });
 
   it('shows message input when ruleset type is Validator', () => {
-    const validatorRuleset = createEmptyFieldRuleSet(EFieldRuleType.Validator);
+    const validatorRuleset = {
+      ...createEmptyFieldRuleSet(EFieldRuleType.Validator),
+      name: 'Validator Rule',
+    };
     renderWithIntl(<FieldRuleModal {...defaultProps} ruleset={validatorRuleset} />);
 
     expect(screen.getByPlaceholderText('Custom error message...')).toBeInTheDocument();
+  });
+
+  it('highlights name input error on blur and removes error highlight on focus', () => {
+    renderWithIntl(<FieldRuleModal {...defaultProps} ruleset={{ ...validRuleset, name: '' }} />);
+
+    const nameInput = screen.getByPlaceholderText('Ruleset name...');
+
+    expect(nameInput).not.toHaveClass('ruleset-message-input_error');
+
+    userEvent.click(nameInput);
+    userEvent.tab();
+
+    expect(nameInput).toHaveClass('ruleset-message-input_error');
+
+    userEvent.click(nameInput);
+    expect(nameInput).not.toHaveClass('ruleset-message-input_error');
+  });
+
+  it('renders disabled Show option with tooltip when no field options available', () => {
+    renderWithIntl(<FieldRuleModal {...defaultProps} rulesFieldOptions={[]} />);
+
+    const showElements = screen.getAllByText('Show');
+    const disabledOptionText = showElements.find((el) => el.classList.contains('rule-option_disabled'));
+    
+    expect(disabledOptionText).toBeInTheDocument();
   });
 });

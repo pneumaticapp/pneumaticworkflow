@@ -1534,6 +1534,8 @@ export const enMessages = {
   'fieldsets.field-rule-modal.save': 'Save',
   'fieldsets.field-rule-modal.discard': 'Discard',
   'fieldsets.field-rule-modal.delete-rules': 'Delete rules',
+  'fieldsets.field-rule-modal.name-label': 'Name',
+  'fieldsets.field-rule-modal.name-placeholder': 'Ruleset name...',
   'fieldsets.field-rule-modal.type-label': 'Type',
   'fieldsets.field-rule-modal.type-show': 'Show',
   'fieldsets.field-rule-modal.type-validator': 'Validator',

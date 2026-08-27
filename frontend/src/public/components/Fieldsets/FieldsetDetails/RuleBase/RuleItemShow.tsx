@@ -4,7 +4,7 @@ import { useIntl } from 'react-intl';
 
 import classnames from 'classnames';
 
-import { FilterSelect, Tooltip } from '../../../UI';
+import { FilterSelect } from '../../../UI';
 import { EExtraFieldType } from '../../../../types/template';
 import { getFieldsetRuleShowOperators } from './utils';
 import { FieldsetFieldRulesValue } from './RuleValueField';
@@ -22,12 +22,12 @@ export const RuleItemShow = ({
   updateRule,
 }: TRuleItemShowProps) => {
   const { formatMessage, messages } = useIntl();
-  const { apiName: groupAndApiName, operator, value, field } = groupAndRule;
+  const { apiName: groupAndApiName, operator, value, field: fieldApiName } = groupAndRule;
 
   const fieldPlaceholderText = formatMessage({ id: 'fieldsets.field-rule.select-field-placeholder' });
   const operatorPlaceholderText = formatMessage({ id: 'templates.conditions.operator-placeholder' });
 
-  const selectedFieldOption = rulesFieldOptions.find((option) => option.apiName === field);
+  const selectedFieldOption = rulesFieldOptions.find((option) => option.apiName === fieldApiName);
   const selectedFieldLabel = selectedFieldOption?.name || '';
   const isFileField = selectedFieldOption?.type === EExtraFieldType.File;
 
@@ -44,59 +44,41 @@ export const RuleItemShow = ({
   const selectedOperatorLabel =
     fieldOperatorOptions.find((option) => option.apiName === operator)?.name || '';
 
-  const isNoOtherFields = rulesFieldOptions.length === 0;
-  const isFieldSelectDisabled = isReadOnly || isNoOtherFields;
-
-  const fieldSelectComponent = (
-    <FilterSelect<'apiName', 'name', TRuleFieldOption>
-      optionIdKey="apiName"
-      optionLabelKey="name"
-      options={rulesFieldOptions}
-      selectedOption={field || ''}
-      onChange={(key) => {
-        if (key && key !== field) {
-          updateRule({
-            ruleGroupOrApiName: groupOrApiName,
-            ruleGroupAndApiName: groupAndApiName,
-            ruleChanges: {
-              field: String(key),
-              operator: null,
-              value: '',
-            },
-          });
-        }
-      }}
-      resetFilter={() => {}}
-      placeholderText={fieldPlaceholderText}
-      isDisabled={isFieldSelectDisabled}
-      containerClassname={classnames(
-        fieldsetDetailsStyles['rule-operator-select'],
-        styles['rule-field-select'],
-      )}
-      toggleClassName={fieldsetDetailsStyles['rule-operator-select__toggle']}
-      menuClassName={fieldsetDetailsStyles['rule-operator-select__menu']}
-      renderPlaceholder={() =>
-        selectedFieldLabel || <span className={styles['rule-select-placeholder']}>{fieldPlaceholderText}</span>
-      }
-    />
-  );
+  const isFieldSelectDisabled = isReadOnly;
 
   return (
     <>
-      {isNoOtherFields ? (
-        <Tooltip
-          interactive={false}
-          containerClassName={styles['rule-field-select']}
-          contentClassName={styles['rule-field-tooltip']}
-          content={formatMessage({ id: 'fieldsets.field-rule.no-other-fields-tooltip' })}
-        >
-          <span>
-            {fieldSelectComponent}
-          </span>
-        </Tooltip>
-      ) : (
-        fieldSelectComponent
-      )}
+      <FilterSelect<'apiName', 'name', TRuleFieldOption>
+        optionIdKey="apiName"
+        optionLabelKey="name"
+        options={rulesFieldOptions}
+        selectedOption={fieldApiName || ''}
+        onChange={(key) => {
+          if (key && key !== fieldApiName) {
+            updateRule({
+              ruleGroupOrApiName: groupOrApiName,
+              ruleGroupAndApiName: groupAndApiName,
+              ruleChanges: {
+                field: String(key),
+                operator: null,
+                value: '',
+              },
+            });
+          }
+        }}
+        resetFilter={() => {}}
+        placeholderText={fieldPlaceholderText}
+        isDisabled={isFieldSelectDisabled}
+        containerClassname={classnames(
+          fieldsetDetailsStyles['rule-operator-select'],
+          styles['rule-field-select'],
+        )}
+        toggleClassName={fieldsetDetailsStyles['rule-operator-select__toggle']}
+        menuClassName={fieldsetDetailsStyles['rule-operator-select__menu']}
+        renderPlaceholder={() =>
+          selectedFieldLabel || <span className={styles['rule-select-placeholder']}>{fieldPlaceholderText}</span>
+        }
+      />
 
       {!isFileField && (
         <>

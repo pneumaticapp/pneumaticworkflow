@@ -35,11 +35,17 @@ jest.mock('../../../../UI', () => ({
 jest.mock('react-number-format', () => ({
   NumericFormat: (props: {
     value?: string;
+    className?: string;
+    onFocus?: () => void;
+    onBlur?: () => void;
     onValueChange: (values: { value: string }) => void;
   }) => (
     <input
       data-testid="numeric-format"
+      className={props.className}
       value={props.value || ''}
+      onFocus={props.onFocus}
+      onBlur={props.onBlur}
       onChange={(e) => props.onValueChange({ value: e.target.value })}
     />
   ),
@@ -105,5 +111,32 @@ describe('RuleItemValidator component', () => {
         value: '^[a-z]+$',
       },
     });
+  });
+
+  it('highlights value input error on blur and removes highlight on focus when value is empty', () => {
+    const emptyValueRule: IBaseRuleGroupAnd = {
+      apiName: 'and_1',
+      operator: 'regex',
+      value: '',
+    };
+
+    render(
+      <RuleItemValidator
+        groupAndRule={emptyValueRule}
+        groupOrApiName="or_1"
+        ruleOperatorOptions={mockOperatorOptions}
+        updateRule={jest.fn()}
+      />,
+    );
+
+    const input = screen.getByRole('textbox');
+    expect(input).not.toHaveClass('rule-value-input_error');
+
+    fireEvent.focus(input);
+    fireEvent.blur(input);
+    expect(input).toHaveClass('rule-value-input_error');
+
+    fireEvent.focus(input);
+    expect(input).not.toHaveClass('rule-value-input_error');
   });
 });

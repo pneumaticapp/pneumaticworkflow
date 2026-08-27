@@ -1,11 +1,12 @@
 import * as React from 'react';
+import { useState, useEffect } from 'react';
 import { useIntl } from 'react-intl';
 
 import { BaseModal, ModalHeader, ModalBody, ModalFooter } from '../../../UI/BaseModal';
 import { Button } from '../../../UI/Buttons/Button';
 import { IFieldRuleSet } from '../../../../types/fieldset';
 import { IFieldRuleModalProps } from './types';
-import { createEmptyFieldRuleSet } from './utils';
+import { createEmptyFieldRuleSet, isFieldRulesetValid } from './utils';
 import { FieldRulesetBody } from './FieldRulesetBody';
 
 import styles from './FieldRuleModal.css';
@@ -18,11 +19,11 @@ export function FieldRuleModal({
   onClose,
 }: IFieldRuleModalProps) {
   const { formatMessage } = useIntl();
-  const [localRuleSet, setLocalRuleSet] = React.useState<IFieldRuleSet>(
+  const [localRuleSet, setLocalRuleSet] = useState<IFieldRuleSet>(
     () => ruleset || createEmptyFieldRuleSet(),
   );
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isOpen) {
       setLocalRuleSet(ruleset || createEmptyFieldRuleSet());
     }
@@ -31,6 +32,8 @@ export function FieldRuleModal({
   const updateRuleSet = (changes: Partial<IFieldRuleSet>) => {
     setLocalRuleSet((prev) => ({ ...prev, ...changes }));
   };
+
+  const isValid = isFieldRulesetValid(localRuleSet, rulesFieldOptions);
 
   return (
     <BaseModal isOpen={isOpen} toggle={onClose} className={styles['modal-dialog']}>
@@ -57,6 +60,7 @@ export function FieldRuleModal({
             label={formatMessage({ id: 'fieldsets.field-rule-modal.save' })}
             onClick={() => onSave(localRuleSet)}
             size="md"
+            disabled={!isValid}
           />
         </div>
       </ModalFooter>
