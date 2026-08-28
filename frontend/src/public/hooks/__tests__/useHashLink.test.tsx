@@ -91,6 +91,36 @@ describe('useHashLink', () => {
     expect(scrollToElementWhenStableMock).toHaveBeenCalledTimes(2);
   });
 
+  it('cancels the pending scroll when navigating to a hash it does not own', () => {
+    render(<Probe handleApi={jest.fn()} />);
+    history.push('/templates/1#api');
+
+    history.push('/templates/1#zap-manager');
+
+    expect(cancel).toHaveBeenCalledTimes(1);
+    expect(scrollToElementWhenStableMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('cancels the pending scroll when navigating away from the hash entirely', () => {
+    render(<Probe handleApi={jest.fn()} />);
+    history.push('/templates/1#api');
+
+    history.push('/templates/1');
+
+    expect(cancel).toHaveBeenCalledTimes(1);
+    expect(scrollToElementWhenStableMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not re-cancel an already superseded scroll', () => {
+    render(<Probe handleApi={jest.fn()} />);
+    history.push('/templates/1#api');
+
+    history.push('/templates/1');
+    history.push('/templates/1?a=1');
+
+    expect(cancel).toHaveBeenCalledTimes(1);
+  });
+
   it('cancels the pending scroll and stops listening on unmount', () => {
     history.replace('/templates/1#api');
     const { unmount } = render(<Probe handleApi={jest.fn()} />);

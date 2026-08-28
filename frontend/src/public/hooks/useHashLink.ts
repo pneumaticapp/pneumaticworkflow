@@ -16,6 +16,11 @@ export function useHashLink(settings: THashLinkHandler[]) {
 
   useEffect(() => {
     const handleHashLinkUrl = () => {
+      // any navigation supersedes a scroll that is still settling, even one that
+      // lands on a hash nobody here owns, otherwise it drags the user back later
+      cancelScrollRef.current?.();
+      cancelScrollRef.current = null;
+
       const { hash } = history.location;
       if (!hash) {
         return;
@@ -35,7 +40,6 @@ export function useHashLink(settings: THashLinkHandler[]) {
 
       // the target section is still expanding and its content is still loading,
       // so the scroll has to wait until its position stops moving
-      cancelScrollRef.current?.();
       cancelScrollRef.current = scrollToElementWhenStable(element.current);
     };
 
