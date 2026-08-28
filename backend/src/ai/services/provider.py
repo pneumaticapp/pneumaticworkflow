@@ -2,6 +2,7 @@ from typing import List, Tuple
 from urllib.parse import urlparse
 
 from src.ai.enums import AIVendor
+from src.ai.exceptions import AIProviderInUseException
 from src.ai.models import AIProvider
 from src.ai.serializers import AIModelSerializer
 from src.ai.services.vendors.anthropic import AnthropicVendor
@@ -86,6 +87,8 @@ class AIProviderService(
         )
 
     def delete(self) -> None:
+        if self.instance.ai_agents.exists():
+            raise AIProviderInUseException
         self._delete_cache(key=self.instance.name)
         super().delete()
 

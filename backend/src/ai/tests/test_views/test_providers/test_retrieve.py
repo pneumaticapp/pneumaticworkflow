@@ -1,10 +1,11 @@
 import pytest
 
-from src.ai.models import AIProvider
+from src.ai.models import AIAgent, AIProvider
 from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.processes.models.workflows.task import TaskPerformer
 from src.processes.tests.fixtures import (
     create_test_account,
+    create_test_admin,
     create_test_guest,
     create_test_not_admin,
     create_test_owner,
@@ -13,6 +14,24 @@ from src.processes.tests.fixtures import (
 )
 
 pytestmark = pytest.mark.django_db
+
+
+def _create_agent(account, provider, name, email):
+    agent_user = create_test_admin(
+        account=account,
+        email=email,
+        first_name=name,
+        is_ai=True,
+    )
+    return AIAgent.objects.create(
+        account=account,
+        name=name,
+        model='openai/gpt-4o',
+        system_prompt='You are helpful.',
+        is_active=True,
+        provider=provider,
+        user=agent_user,
+    )
 
 
 def test_retrieve__ok(api_client):
@@ -47,12 +66,114 @@ def test_retrieve__ok(api_client):
         'api_key_prefix',
         'vendor',
         'is_active',
+        'usage',
     }
     assert response.data['id'] == provider.id
     assert response.data['name'] == provider.name
     assert response.data['base_url'] == provider.base_url
     assert response.data['is_active'] == provider.is_active
+    assert response.data['usage'] == []
     assert 'api_key' not in response.data
+
+
+def test_retrieve__usage__ok(api_client):
+
+    """ Returns agents that use the provider """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    provider = AIProvider(
+        account=account,
+        name='OpenRouter',
+        base_url='https://openrouter.ai/api/v1',
+        is_active=True,
+    )
+    provider.api_key = 'sk-or-v1-example'
+    provider.save()
+    other_provider = AIProvider(
+        account=account,
+        name='Other',
+        base_url='https://other.example.com',
+        is_active=True,
+    )
+    other_provider.api_key = 'sk-or-v1-other'
+    other_provider.save()
+    agent_a = _create_agent(
+        account=account,
+        provider=provider,
+        name='Agent A',
+        email='agent-a@pneumatic.app',
+    )
+    agent_b = _create_agent(
+        account=account,
+        provider=provider,
+        name='Agent B',
+        email='agent-b@pneumatic.app',
+    )
+    _create_agent(
+        account=account,
+        provider=other_provider,
+        name='Agent C',
+        email='agent-c@pneumatic.app',
+    )
+    path = f'/ai/providers/{provider.id}'
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get(
+        path=path,
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert response.data['usage'] == [
+        {'id': agent_a.id, 'name': agent_a.name},
+        {'id': agent_b.id, 'name': agent_b.name},
+    ]
+
+
+def test_retrieve__soft_deleted_agent__not_in_usage(api_client):
+
+    """ Soft-deleted agents are excluded from usage """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    provider = AIProvider(
+        account=account,
+        name='OpenRouter',
+        base_url='https://openrouter.ai/api/v1',
+        is_active=True,
+    )
+    provider.api_key = 'sk-or-v1-example'
+    provider.save()
+    agent = _create_agent(
+        account=account,
+        provider=provider,
+        name='Agent A',
+        email='agent-a@pneumatic.app',
+    )
+    deleted_agent = _create_agent(
+        account=account,
+        provider=provider,
+        name='Agent B',
+        email='agent-b@pneumatic.app',
+    )
+    deleted_agent.delete()
+    path = f'/ai/providers/{provider.id}'
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get(
+        path=path,
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert response.data['usage'] == [
+        {'id': agent.id, 'name': agent.name},
+    ]
 
 
 def test_retrieve__non_admin__ok(api_client):

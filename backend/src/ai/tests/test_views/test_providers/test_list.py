@@ -1,10 +1,11 @@
 import pytest
 
-from src.ai.models import AIProvider
+from src.ai.models import AIAgent, AIProvider
 from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.processes.models.workflows.task import TaskPerformer
 from src.processes.tests.fixtures import (
     create_test_account,
+    create_test_admin,
     create_test_guest,
     create_test_not_admin,
     create_test_owner,
@@ -13,6 +14,24 @@ from src.processes.tests.fixtures import (
 )
 
 pytestmark = pytest.mark.django_db
+
+
+def _create_agent(account, provider, name, email):
+    agent_user = create_test_admin(
+        account=account,
+        email=email,
+        first_name=name,
+        is_ai=True,
+    )
+    return AIAgent.objects.create(
+        account=account,
+        name=name,
+        model='openai/gpt-4o',
+        system_prompt='You are helpful.',
+        is_active=True,
+        provider=provider,
+        user=agent_user,
+    )
 
 
 def test_list__ok(api_client):
@@ -48,12 +67,62 @@ def test_list__ok(api_client):
         'api_key_prefix',
         'vendor',
         'is_active',
+        'usage',
     }
     assert response.data[0]['id'] == provider.id
     assert response.data[0]['name'] == provider.name
     assert response.data[0]['base_url'] == provider.base_url
     assert response.data[0]['is_active'] == provider.is_active
+    assert response.data[0]['usage'] == []
     assert 'api_key' not in response.data[0]
+
+
+def test_list__usage__ok(api_client):
+
+    """ Returns agents that use each provider """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    provider_1 = AIProvider(
+        account=account,
+        name='Provider 1',
+        base_url='https://provider-1.example.com',
+        is_active=True,
+    )
+    provider_1.api_key = 'sk-or-v1-example-1'
+    provider_1.save()
+    provider_2 = AIProvider(
+        account=account,
+        name='Provider 2',
+        base_url='https://provider-2.example.com',
+        is_active=True,
+    )
+    provider_2.api_key = 'sk-or-v1-example-2'
+    provider_2.save()
+    agent = _create_agent(
+        account=account,
+        provider=provider_1,
+        name='Agent A',
+        email='agent-a@pneumatic.app',
+    )
+    path = '/ai/providers'
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get(
+        path=path,
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 2
+    assert response.data[0]['id'] == provider_1.id
+    assert response.data[0]['usage'] == [
+        {'id': agent.id, 'name': agent.name},
+    ]
+    assert response.data[1]['id'] == provider_2.id
+    assert response.data[1]['usage'] == []
 
 
 def test_list__non_admin__ok(api_client):

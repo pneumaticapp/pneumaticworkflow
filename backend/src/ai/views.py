@@ -1,3 +1,4 @@
+from django.db.models import Prefetch
 from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
@@ -62,6 +63,17 @@ class AIProviderViewSet(
         return self.prefetch_queryset(
             AIProvider.objects.on_account(self.request.user.account_id),
         )
+
+    def prefetch_queryset(self, queryset, extra_fields=None):
+        prefetch_fields = [
+            Prefetch(
+                'ai_agents',
+                queryset=AIAgent.objects.all(),
+            ),
+        ]
+        if extra_fields:
+            prefetch_fields.extend(extra_fields)
+        return queryset.prefetch_related(*prefetch_fields)
 
     @extend_schema(
         tags=['AI'],

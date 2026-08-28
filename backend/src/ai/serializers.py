@@ -15,6 +15,29 @@ from src.generics.fields import (
 from src.generics.mixins.serializers import CustomValidationErrorMixin
 
 
+class UsageSerializer(
+    CustomValidationErrorMixin,
+    ModelSerializer,
+):
+
+    class Meta:
+        model = AIAgent
+        fields = (
+            'id',
+            'name',
+        )
+
+    id = DocIntegerField(
+        help_text='Unique identifier of the AI agent',
+        example=1,
+    )
+    name = DocCharField(
+        max_length=255,
+        help_text='Display name of the agent',
+        example='Research assistant',
+    )
+
+
 class AIProviderSerializer(
     CustomValidationErrorMixin,
     ModelSerializer,
@@ -30,6 +53,7 @@ class AIProviderSerializer(
             'api_key_prefix',
             'vendor',
             'is_active',
+            'usage',
         )
 
     id = DocIntegerField(
@@ -72,6 +96,12 @@ class AIProviderSerializer(
         read_only=True,
         help_text='Detected vendor of the provider API',
         example=AIVendor.OPENROUTER,
+    )
+    usage = UsageSerializer(
+        source='ai_agents',
+        many=True,
+        read_only=True,
+        help_text='AI agents that use this provider',
     )
 
     def validate_base_url(self, value):
