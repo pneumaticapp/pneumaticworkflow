@@ -232,25 +232,18 @@ class AIAgent(
     name = models.CharField(max_length=255)
     photo = models.URLField(max_length=1024, null=True, blank=True)
     is_active = models.BooleanField(default=True)
-    system_prompt = models.TextField(blank=True, default='')
+    system_prompt = models.TextField(null=False, blank=False)
     provider = models.ForeignKey(
         AIProvider,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
+        on_delete=models.CASCADE,
         related_name='ai_agents',
         help_text='NULL means the platform default connection',
     )
-    model = models.CharField(
-        max_length=200,
-        help_text='OpenRouter-style model slug',
-    )
-    user = models.ForeignKey(
+    model = models.CharField(max_length=200)
+    user = models.OneToOneField(
         UserModel,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='ai_agents',
+        on_delete=models.CASCADE,
+        related_name='ai_agent',
         help_text='The user the AI agent runs on',
     )
 

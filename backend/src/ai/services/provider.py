@@ -79,6 +79,7 @@ class AIProviderService(
             name, vendor = self._identify_vendor(update_kwargs['base_url'])
             update_kwargs['vendor'] = vendor
             update_kwargs['name'] = name
+            self._delete_cache(key=self.instance.name)
         return super().partial_update(
             force_save=force_save,
             **update_kwargs,

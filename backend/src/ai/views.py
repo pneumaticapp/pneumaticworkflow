@@ -4,10 +4,7 @@ from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.viewsets import GenericViewSet
 
 from src.accounts.permissions import (
-    BillingPlanPermission,
-    ExpiredSubscriptionPermission,
     UserIsAdminOrAccountOwner,
-    UsersOverlimitedPermission,
 )
 from src.ai.exceptions import AIServiceException
 from src.ai.models import AIAgent, AIProvider
@@ -34,7 +31,6 @@ from src.openapi.examples import (
     AI_AGENT_CREATE_EXAMPLE,
     AI_PROVIDER_CREATE_EXAMPLE,
 )
-from src.services.permissions import AIPermission
 from src.utils.validation import raise_validation_error
 
 
@@ -226,11 +222,7 @@ class AIAgentViewSet(
     def get_permissions(self):
         if self.action in ('create', 'partial_update', 'destroy'):
             return (
-                AIPermission(),
                 UserIsAuthenticated(),
-                ExpiredSubscriptionPermission(),
-                BillingPlanPermission(),
-                UsersOverlimitedPermission(),
                 UserIsAdminOrAccountOwner(),
             )
         return (

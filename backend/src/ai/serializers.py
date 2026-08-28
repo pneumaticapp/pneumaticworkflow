@@ -142,7 +142,6 @@ class AIAgentSerializer(
         example='openai/gpt-4o',
     )
     system_prompt = DocCharField(
-        default='',
         help_text='System instructions that define the agent behavior',
         example='You are a helpful research assistant.',
     )
