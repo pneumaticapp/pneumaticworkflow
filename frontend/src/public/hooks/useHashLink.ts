@@ -1,39 +1,55 @@
-import { useEffect } from 'react';
-import { scrollToElement } from '../utils/helpers';
+import { MutableRefObject, useEffect, useRef } from 'react';
+import { scrollToElementWhenStable } from '../utils/scroll';
 import { history } from '../utils/history';
 
 type THashLinkHandler = {
   hash: string;
-  element: React.MutableRefObject<HTMLDivElement | null>;
+  element: MutableRefObject<HTMLDivElement | null>;
   handle?(): void;
 };
 
 export function useHashLink(settings: THashLinkHandler[]) {
+  const settingsRef = useRef(settings);
+  settingsRef.current = settings;
+
+  const cancelScrollRef = useRef<(() => void) | null>(null);
+
   useEffect(() => {
     const handleHashLinkUrl = () => {
-      const {hash} = history.location;
+      // any navigation supersedes a scroll that is still settling, even one that
+      // lands on a hash nobody here owns, otherwise it drags the user back later
+      cancelScrollRef.current?.();
+      cancelScrollRef.current = null;
+
+      const { hash } = history.location;
       if (!hash) {
         return;
       }
 
-      const currentSetting = settings.find(
-        (setting) => `#${setting.hash}` === hash
-      );
+      const currentSetting = settingsRef.current.find((setting) => `#${setting.hash}` === hash);
       if (!currentSetting) {
         return;
       }
 
       const { element, handle } = currentSetting;
       handle?.();
-      if (element.current) {
-        scrollToElement(element.current);
+
+      if (!element.current) {
+        return;
       }
-    }
+
+      // the target section is still expanding and its content is still loading,
+      // so the scroll has to wait until its position stops moving
+      cancelScrollRef.current = scrollToElementWhenStable(element.current);
+    };
 
     handleHashLinkUrl();
 
     const unregister = history.listen(handleHashLinkUrl);
 
-    return unregister;
+    return () => {
+      cancelScrollRef.current?.();
+      unregister();
+    };
   }, []);
 }
