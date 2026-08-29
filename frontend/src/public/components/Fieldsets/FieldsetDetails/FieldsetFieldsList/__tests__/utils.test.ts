@@ -1,4 +1,4 @@
-import { EExtraFieldType } from '../../../../../types/template';
+import { EExtraFieldType, IExtraField } from '../../../../../types/template';
 import { EMoveDirections } from '../../../../../types/workflow';
 import { getSortedFields, createField, editField, deleteField, moveField } from '../utils';
 import { intlMock } from '../../../../../__stubs__/intlMock';
@@ -14,16 +14,16 @@ jest.mock('../../../../TemplateEdit/KickoffRedux/utils/getEmptyField', () => ({
 }));
 
 jest.mock('../../../../TemplateEdit/ExtraFields/utils/getEditedFields', () => ({
-  getEditedFields: jest.fn((fields: unknown[], apiName: string, changedProps: object) =>
-    fields.map((f: any) => (f.apiName === apiName ? { ...f, ...changedProps } : f)),
+  getEditedFields: jest.fn((fields: IExtraField[], apiName: string, changedProps: Partial<IExtraField>) =>
+    fields.map((field) => (field.apiName === apiName ? { ...field, ...changedProps } : field)),
   ),
 }));
 
 jest.mock('../../../../../utils/workflows', () => ({
-  getNormalizeFieldsOrders: jest.fn((fields: unknown[]) =>
-    fields.map((f: any, idx: number) => ({ ...f, order: fields.length - idx })),
+  getNormalizeFieldsOrders: jest.fn((fields: IExtraField[]) =>
+    fields.map((field, idx: number) => ({ ...field, order: fields.length - idx })),
   ),
-  moveWorkflowField: jest.fn((from: number, to: number, fields: unknown[]) => {
+  moveWorkflowField: jest.fn((from: number, to: number, fields: IExtraField[]) => {
     const copy = [...fields];
     const [moved] = copy.splice(from, 1);
     copy.splice(to, 0, moved);
@@ -58,8 +58,8 @@ describe('FieldsetFieldsList/utils', () => {
   });
 
   describe('deleteField', () => {
-    it('removes field by index and renormalizes orders', () => {
-      const result = deleteField([field1, field2], 0);
+    it('removes field by apiName and renormalizes orders', () => {
+      const result = deleteField([field1, field2], 'f1');
       expect(result).toHaveLength(1);
       expect(result[0].apiName).toBe('f2');
     });

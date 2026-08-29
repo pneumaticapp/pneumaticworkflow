@@ -1,5 +1,5 @@
 import { IExtraField } from '../../../types/template';
-import { IFieldRuleSet } from '../../../types/fieldset';
+import { IFieldRuleSet, EFieldRuleType } from '../../../types/fieldset';
 
 export function saveFieldRuleset(
   fields: IExtraField[],
@@ -19,5 +19,26 @@ export function saveFieldRuleset(
       : [...(field.rulesets || []), ruleset];
 
     return { ...field, rulesets: updatedRulesets };
+  });
+}
+
+export function getFieldsWithFilteredRulesets(
+  fields: IExtraField[],
+  deletedFieldApiName: string,
+): IExtraField[] {
+  return fields.map((field) => {
+    if (!field.rulesets?.length) return field;
+
+    const filteredRulesets = field.rulesets.filter((ruleset) => {
+      if (ruleset.type !== EFieldRuleType.Show) return true;
+
+      return ruleset.groupsOr.every((groupOr) =>
+        groupOr.groupsAnd.every((groupAnd) => groupAnd.field !== deletedFieldApiName),
+      );
+    });
+
+    if (filteredRulesets.length === field.rulesets.length) return field;
+
+    return { ...field, rulesets: filteredRulesets };
   });
 }

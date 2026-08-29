@@ -13,7 +13,7 @@ import { ArrowDropdownIcon, DateIcon, LinkIcon } from '../../../icons';
 
 import { useCheckDevice } from '../../../../hooks/useCheckDevice';
 
-import { getSortedFields, createField, editField, deleteField, moveField } from './utils';
+import { getSortedFields, createField, editField, deleteFieldWithCleanup, moveField } from './utils';
 import { IFieldsetFieldsListProps } from './types';
 import { SINGLE_LINE_FIELD_TYPES } from '../constants';
 import fieldsetDetailsStyles from '../FieldsetDetails.css';
@@ -78,7 +78,7 @@ export function FieldsetFieldsList({
                 field={readOnlyField}
                 fieldsCount={sortedFields.length}
                 labelBackgroundColor={EInputNameBackgroundColor.White}
-                deleteField={() => onFieldsChange(deleteField(sortedFields, index))}
+                deleteField={() => onFieldsChange(deleteFieldWithCleanup(sortedFields, field.apiName))}
                 moveFieldUp={() => onFieldsChange(moveField(sortedFields, index, EMoveDirections.Up))}
                 moveFieldDown={() => onFieldsChange(moveField(sortedFields, index, EMoveDirections.Down))}
                 editField={(changedProps: Partial<IExtraField>) =>
