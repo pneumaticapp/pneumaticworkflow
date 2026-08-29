@@ -5,6 +5,7 @@ import {
   ERuleCombinator,
   IFieldsetRuleSet,
 } from '../../../../types/fieldset';
+import { IExtraField } from '../../../../types/template';
 import {
   createRulesetApiName,
   createRulesetGroupOrApiName,
@@ -63,6 +64,21 @@ export const getNormalizedRulesetOrders = (rulesets: IFieldsetRuleSet[]): IField
     ...ruleSet,
     order: index,
   }));
+};
+
+export const getFilteredFieldsetRulesets = (
+  rulesets: IFieldsetRuleSet[],
+  existingFields: IExtraField[],
+): IFieldsetRuleSet[] => {
+  const existingApiNames = new Set(existingFields.map((field) => field.apiName));
+
+  const filteredRulesets = rulesets.filter((ruleSet) =>
+    ruleSet.fields.some((apiName) => existingApiNames.has(apiName)),
+  );
+
+  if (filteredRulesets.length === rulesets.length) return rulesets;
+
+  return getNormalizedRulesetOrders(filteredRulesets);
 };
 
 export const updateRuleInRulesets = ({

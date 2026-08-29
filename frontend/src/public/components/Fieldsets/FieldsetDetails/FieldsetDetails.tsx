@@ -51,6 +51,7 @@ import { FieldsetRulesets } from './FieldsetRulesets/FieldsetRulesets';
 import { FieldsetFieldsList } from './FieldsetFieldsList/FieldsetFieldsList';
 import { FieldRuleModal } from './FieldRuleModal';
 import { saveFieldRuleset } from './utils';
+import { getFilteredFieldsetRulesets } from './FieldsetRulesets/utils';
 import styles from './FieldsetDetails.css';
 
 
@@ -138,8 +139,19 @@ const FieldsetDetails = ({
   };
 
   const handleFieldsChange = (newFields: IExtraField[]) => {
-    setLocalFieldset((prev) => ({ ...prev, fields: newFields }));
-    setFieldsetChanges((prev) => ({ ...prev, fields: newFields }));
+    const updatedRulesets = getFilteredFieldsetRulesets(localFieldset.rulesets, newFields);
+    const rulesetsChanged = updatedRulesets !== localFieldset.rulesets;
+
+    setLocalFieldset((prev) => ({
+      ...prev,
+      fields: newFields,
+      ...(rulesetsChanged && { rulesets: updatedRulesets }),
+    }));
+    setFieldsetChanges((prev) => ({
+      ...prev,
+      fields: newFields,
+      ...(rulesetsChanged && { rulesets: updatedRulesets }),
+    }));
   };
 
   const handleRulesetsChange = (rulesets: IFieldsetRuleSet[]) => {

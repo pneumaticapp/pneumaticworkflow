@@ -11,6 +11,7 @@ import {
   regroupRulesInRulesets,
   getRuleCombinator,
   getFieldsTooltipText,
+  getFilteredFieldsetRulesets,
 } from '../utils';
 import { ERuleCombinator, EFieldsetNumberRulesetOperator, IFieldsetRuleSet } from '../../../../../types/fieldset';
 import {
@@ -18,6 +19,7 @@ import {
   makeFieldsetRuleGroupOr,
   makeFieldsetRuleGroupAnd,
 } from '../../../../../__stubs__/fieldsets.factory';
+import { makeExtraField } from '../../../../../__stubs__/fields.factory';
 
 describe('FieldsetRulesets utils', () => {
   let onRulesetsChangeMock: jest.Mock;
@@ -248,6 +250,46 @@ describe('FieldsetRulesets utils', () => {
       expect(getFieldsTooltipText(false, true, formatMsgMock)).toBe('translated:fieldsets.rule-fields-disabled-tooltip');
       expect(getFieldsTooltipText(true, false, formatMsgMock)).toBe('translated:fieldsets.rule-fields-no-number-fields-tooltip');
       expect(getFieldsTooltipText(true, true, formatMsgMock)).toBe('');
+    });
+  });
+
+  describe('getFilteredFieldsetRulesets', () => {
+    it('removes rulesets whose fields no longer exist', () => {
+      const r1 = makeFieldsetRuleset({ apiName: 'r1', fields: ['f1'], order: 0 });
+      const r2 = makeFieldsetRuleset({ apiName: 'r2', fields: ['f2'], order: 1 });
+      const existingFields = [makeExtraField({ apiName: 'f1' })];
+
+      const result = getFilteredFieldsetRulesets([r1, r2], existingFields);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].apiName).toBe('r1');
+      expect(result[0].order).toBe(0);
+    });
+
+    it('keeps ruleset if at least one field still exists', () => {
+      const r1 = makeFieldsetRuleset({ apiName: 'r1', fields: ['f1', 'f2'] });
+      const existingFields = [makeExtraField({ apiName: 'f1' })];
+
+      const result = getFilteredFieldsetRulesets([r1], existingFields);
+
+      expect(result).toHaveLength(1);
+    });
+
+    it('returns same reference when no rulesets are removed', () => {
+      const rulesets = [makeFieldsetRuleset({ apiName: 'r1', fields: ['f1'] })];
+      const existingFields = [makeExtraField({ apiName: 'f1' })];
+
+      const result = getFilteredFieldsetRulesets(rulesets, existingFields);
+
+      expect(result).toBe(rulesets);
+    });
+
+    it('removes all rulesets when no fields exist', () => {
+      const r1 = makeFieldsetRuleset({ apiName: 'r1', fields: ['f1'] });
+
+      const result = getFilteredFieldsetRulesets([r1], []);
+
+      expect(result).toHaveLength(0);
     });
   });
 });
