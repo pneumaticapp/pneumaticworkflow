@@ -1610,4 +1610,5 @@ export const enMessages = {
   'fieldsets.usage.show': 'Show',
   'fieldsets.usage.hide': 'Hide',
   'fieldsets.usage.disabled-tooltip': 'Fieldset is used in templates. Editing and deletion are locked.',
+  'fieldsets.field-rulesets-badge': 'Rulesets: {count}',
 };

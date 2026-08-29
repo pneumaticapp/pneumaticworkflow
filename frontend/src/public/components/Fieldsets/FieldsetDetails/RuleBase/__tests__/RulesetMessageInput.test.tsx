@@ -57,7 +57,7 @@ describe('RulesetMessageInput component', () => {
     expect(input).toBeDisabled();
   });
 
-  it('highlights message input error on blur and removes error highlight on focus when message is empty', () => {
+  it('does not show error state when message is empty because message is optional', () => {
     render(
       <RulesetMessageInput
         message=""
@@ -67,13 +67,6 @@ describe('RulesetMessageInput component', () => {
     );
 
     const input = screen.getByPlaceholderText(formatMsg('fieldsets.ruleset-message-placeholder'));
-    expect(input).not.toHaveClass('ruleset-message-input_error');
-
-    fireEvent.focus(input);
-    fireEvent.blur(input);
-    expect(input).toHaveClass('ruleset-message-input_error');
-
-    fireEvent.focus(input);
     expect(input).not.toHaveClass('ruleset-message-input_error');
   });
 });

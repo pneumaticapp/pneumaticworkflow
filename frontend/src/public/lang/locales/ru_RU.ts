@@ -1517,4 +1517,5 @@ export const ruMessages = {
   'user-info.vacation.activated-success': 'Отпуск активирован',
   'user-info.vacation.deactivated-success': 'Отпуск деактивирован',
   'fieldsets.field-rule.no-other-fields-tooltip': 'Требуется хотя бы еще одно поле в наборе полей для привязки условия',
+  'fieldsets.field-rulesets-badge': 'Наборы правил: {count}',
 };
