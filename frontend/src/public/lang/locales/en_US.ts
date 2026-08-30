@@ -1533,7 +1533,7 @@ export const enMessages = {
   'fieldsets.field-rule-modal.title': 'Field rules',
   'fieldsets.field-rule-modal.save': 'Save',
   'fieldsets.field-rule-modal.discard': 'Discard',
-  'fieldsets.field-rule-modal.delete-rules': 'Delete rules',
+  'fieldsets.field-rule-modal.delete-ruleset': 'Delete ruleset',
   'fieldsets.field-rule-modal.name-label': 'Name',
   'fieldsets.field-rule-modal.name-placeholder': 'Ruleset name...',
   'fieldsets.field-rule-modal.type-label': 'Type',
@@ -1611,4 +1611,8 @@ export const enMessages = {
   'fieldsets.usage.hide': 'Hide',
   'fieldsets.usage.disabled-tooltip': 'Fieldset is used in templates. Editing and deletion are locked.',
   'fieldsets.field-rulesets-badge': 'Rulesets: {count}',
+  'fieldsets.field-rulesets-submenu': 'Rulesets',
+  'fieldsets.field-rulesets-add-new': 'Add new ruleset',
+  'fieldsets.field-rule-modal.delete-confirm-accept': 'Confirm deletion',
+  'fieldsets.field-rule-modal.delete-confirm-cancel': 'Cancel',
 };

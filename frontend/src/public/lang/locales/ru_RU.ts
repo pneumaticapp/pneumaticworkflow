@@ -1420,7 +1420,7 @@ export const ruMessages = {
   'fieldsets.field-rule-modal.title': 'Правила поля',
   'fieldsets.field-rule-modal.save': 'Сохранить',
   'fieldsets.field-rule-modal.discard': 'Отменить',
-  'fieldsets.field-rule-modal.delete-rules': 'Удалить правила',
+  'fieldsets.field-rule-modal.delete-ruleset': 'Удалить рулсет',
   'fieldsets.field-rule-modal.name-label': 'Название',
   'fieldsets.field-rule-modal.name-placeholder': 'Название рулсета...',
   'fieldsets.field-rule-modal.type-label': 'Тип',
@@ -1518,4 +1518,8 @@ export const ruMessages = {
   'user-info.vacation.deactivated-success': 'Отпуск деактивирован',
   'fieldsets.field-rule.no-other-fields-tooltip': 'Требуется хотя бы еще одно поле в наборе полей для привязки условия',
   'fieldsets.field-rulesets-badge': 'Наборы правил: {count}',
+  'fieldsets.field-rulesets-submenu': 'Наборы правил',
+  'fieldsets.field-rulesets-add-new': 'Добавить набор правил',
+  'fieldsets.field-rule-modal.delete-confirm-accept': 'Подтвердить удаление',
+  'fieldsets.field-rule-modal.delete-confirm-cancel': 'Отмена',
 };

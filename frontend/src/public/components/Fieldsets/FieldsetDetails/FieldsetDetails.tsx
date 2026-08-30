@@ -160,7 +160,8 @@ const FieldsetDetails = ({
   };
 
   const handleFieldRuleSave = (ruleset: IFieldRuleSet) => {
-    handleFieldsChange(saveFieldRuleset(localFieldset.fields, activeFieldApiName!, ruleset));
+    if (!activeFieldApiName) return;
+    handleFieldsChange(saveFieldRuleset(localFieldset.fields, activeFieldApiName, ruleset));
     setActiveFieldApiName(null);
   };
 
@@ -449,9 +450,9 @@ const FieldsetDetails = ({
         labelPosition={localFieldset.labelPosition}
         accountId={accountId}
         datasetOptions={datasetOptions}
-        onCreateFieldRule={(fieldApiName) => {
+        onOpenFieldRule={(fieldApiName, ruleset) => {
           setActiveFieldApiName(fieldApiName);
-          setActiveFieldRuleset(null);
+          setActiveFieldRuleset(ruleset || null);
         }}
       />
 

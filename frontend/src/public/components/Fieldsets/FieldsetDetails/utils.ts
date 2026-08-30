@@ -22,6 +22,22 @@ export function saveFieldRuleset(
   });
 }
 
+export function deleteFieldRuleset(
+  fields: IExtraField[],
+  fieldApiName: string,
+  rulesetApiName: string,
+): IExtraField[] {
+  return fields.map((field) => {
+    if (field.apiName !== fieldApiName) return field;
+
+    const updatedRulesets = (field.rulesets || []).filter(
+      (ruleset) => ruleset.apiName !== rulesetApiName,
+    );
+
+    return { ...field, rulesets: updatedRulesets };
+  });
+}
+
 export function getFieldsWithFilteredRulesets(
   fields: IExtraField[],
   deletedFieldApiName: string,

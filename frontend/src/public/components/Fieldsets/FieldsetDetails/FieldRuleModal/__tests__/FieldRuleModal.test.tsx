@@ -60,7 +60,7 @@ describe('FieldRuleModal', () => {
 
     expect(buttonLabels).toContain('Discard');
     expect(buttonLabels).toContain('Save');
-    expect(buttonLabels).not.toContain('Delete rules');
+    expect(buttonLabels).not.toContain('Delete ruleset');
   });
 
   it('does not render when isOpen is false', () => {

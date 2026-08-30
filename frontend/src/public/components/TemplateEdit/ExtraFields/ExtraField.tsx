@@ -41,6 +41,8 @@ function ExtraField(props: IExtraFieldProps) {
     innerRef,
     labelPosition,
     onOpenFieldRules,
+    fieldRulesets,
+    onDeleteFieldRuleset,
   } = props;
 
   // eslint-disable-next-line react/destructuring-assignment
@@ -179,7 +181,9 @@ function ExtraField(props: IExtraFieldProps) {
             {...(field.dataset && { selectedDatasetId: field.dataset })}
             onDatasetSelect={handleDatasetSelect}
             fieldType={field.type}
+            fieldRulesets={fieldRulesets}
             onOpenFieldRules={onOpenFieldRules}
+            onDeleteFieldRuleset={onDeleteFieldRuleset}
           />
         </div>
       )}

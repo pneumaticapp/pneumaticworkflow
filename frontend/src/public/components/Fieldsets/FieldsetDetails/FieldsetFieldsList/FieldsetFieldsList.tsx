@@ -14,6 +14,7 @@ import { ArrowDropdownIcon, DateIcon, LinkIcon } from '../../../icons';
 import { useCheckDevice } from '../../../../hooks/useCheckDevice';
 
 import { getSortedFields, createField, editField, deleteFieldWithCleanup, moveField } from './utils';
+import { deleteFieldRuleset } from '../utils';
 import { IFieldsetFieldsListProps } from './types';
 import { SINGLE_LINE_FIELD_TYPES } from '../constants';
 import fieldsetDetailsStyles from '../FieldsetDetails.css';
@@ -32,7 +33,7 @@ export function FieldsetFieldsList({
   labelPosition,
   accountId,
   datasetOptions,
-  onCreateFieldRule: createFieldRule,
+  onOpenFieldRule: openFieldRule,
 }: IFieldsetFieldsListProps) {
   const { formatMessage } = useIntl();
   const { isDesktop } = useCheckDevice();
@@ -92,8 +93,11 @@ export function FieldsetFieldsList({
                 datasetOptions={datasetOptions}
                 labelPosition={isDesktop ? labelPosition : EFieldLabelPosition.Top}
                 {...(IconComponent && { icon: <IconComponent /> })}
-                {...(createFieldRule && {
-                  onOpenFieldRules: () => createFieldRule(field.apiName),
+                {...(openFieldRule && {
+                  fieldRulesets: field.rulesets,
+                  onOpenFieldRules: (ruleset) => openFieldRule(field.apiName, ruleset),
+                  onDeleteFieldRuleset: (rulesetApiName: string) =>
+                    onFieldsChange(deleteFieldRuleset(sortedFields, field.apiName, rulesetApiName)),
                 })}
               />
             );

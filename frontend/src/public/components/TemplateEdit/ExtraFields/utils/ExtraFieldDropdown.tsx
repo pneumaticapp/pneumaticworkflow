@@ -4,11 +4,12 @@ import Switch from 'rc-switch';
 import { useIntl } from 'react-intl';
 
 import { IntlMessages } from '../../../IntlMessages';
-import { ArrowDownIcon, ArrowRightIcon, ArrowUpIcon, BurgerIcon, DropdownCrossIcon, TuneViewIcon, TrashIcon } from '../../../icons';
+import { ArrowDownIcon, ArrowRightIcon, ArrowUpIcon, BurgerIcon, DropdownCrossIcon, TrashIcon } from '../../../icons';
 import { Dropdown, TDropdownOption } from '../../../UI';
 import { IKickoffDropdownProps } from './types';
 import { EExtraFieldType } from '../../../../types/template';
 
+import { DeletableDropdownOption } from './DeletableDropdownOption';
 import styles from '../../KickoffRedux/KickoffRedux.css';
 
 export function ExtraFieldDropdown({
@@ -27,12 +28,14 @@ export function ExtraFieldDropdown({
   selectedDatasetId,
   onDatasetSelect,
   fieldType,
+  fieldRulesets,
   onOpenFieldRules,
+  onDeleteFieldRuleset,
 }: IKickoffDropdownProps) {
   const { formatMessage } = useIntl();
 
-  const handleOptionClick = (handler?: () => void) => (closeDropdown: () => void) => {
-    closeDropdown();
+  const handleOptionClick = (handler?: () => void) => (closeDropdown?: () => void) => {
+    closeDropdown?.();
     handler?.();
   };
 
@@ -130,11 +133,27 @@ export function ExtraFieldDropdown({
           ),
         },
         {
-          label: formatMessage({ id: 'fieldsets.add-field-rules' }),
-          onClick: handleOptionClick(onOpenFieldRules),
-          Icon: TuneViewIcon,
-          className: styles['dropdown-item-rules'],
+          label: formatMessage({ id: 'fieldsets.field-rulesets-submenu' }),
           isHidden: fieldType !== EExtraFieldType.Number,
+          Icon: ArrowRightIcon,
+          className: classnames(styles['dataset-submenu'], styles['dropdown-item-rules']),
+          subOptions: [
+            {
+              label: formatMessage({ id: 'fieldsets.field-rulesets-add-new' }),
+              onClick: handleOptionClick(() => onOpenFieldRules?.()),
+            },
+            ...(fieldRulesets || []).map((ruleset, index) => ({
+              mapKey: `field-ruleset-${ruleset.apiName}`,
+              label: (
+                <DeletableDropdownOption
+                  label={ruleset.name}
+                  onDelete={() => onDeleteFieldRuleset?.(ruleset.apiName)}
+                />
+              ),
+              onClick: handleOptionClick(() => onOpenFieldRules?.(ruleset)),
+              withUpperline: index === 0,
+            })),
+          ],
         },
         {
           label: formatMessage({ id: 'template.kick-off-form-delete-component' }),

@@ -4,8 +4,10 @@ import userEvent from '@testing-library/user-event';
 import { IntlProvider } from 'react-intl';
 
 import { ExtraFieldDropdown } from '../ExtraFieldDropdown';
-import { Dropdown } from '../../../../UI';
+import { Dropdown, TDropdownOption } from '../../../../UI';
 import { enMessages } from '../../../../../lang/locales/en_US';
+import { EExtraFieldType } from '../../../../../types/template';
+import { EFieldRuleType } from '../../../../../types/fieldset';
 
 jest.mock('../../../../UI', () => {
   const actual = jest.requireActual('../../../../UI');
@@ -127,10 +129,53 @@ describe('ExtraFieldDropdown', () => {
 
       const dropdownProps = (Dropdown as jest.Mock).mock.calls[0]?.[0];
       const datasetMenuItem = dropdownProps.options.find(
-        (opt: any) => opt.className && opt.className.includes('dataset-submenu'),
+        (option: TDropdownOption) => option.className && option.className.includes('dataset-submenu'),
       );
       expect(datasetMenuItem.subOptions).toBeDefined();
       expect(datasetMenuItem.subOptions.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('Rulesets submenu for number field type', () => {
+    const onOpenFieldRules = jest.fn();
+    const rulesetProps = {
+      ...baseProps,
+      fieldType: EExtraFieldType.Number,
+      onOpenFieldRules,
+      fieldRulesets: [
+        { apiName: 'rule_1', name: 'Rule 1', type: EFieldRuleType.Validator, message: null, order: 1, groupsOr: [] },
+      ],
+    };
+
+    it('renders Rulesets submenu with side-submenu styling class', () => {
+      (Dropdown as jest.Mock).mockClear();
+      renderWithIntl(<ExtraFieldDropdown {...rulesetProps} />);
+
+      const dropdownProps = (Dropdown as jest.Mock).mock.calls[0]?.[0];
+      const rulesetMenuItem = dropdownProps.options.find(
+        (option: TDropdownOption) =>
+          option.className &&
+          option.className.includes('dataset-submenu') &&
+          option.className.includes('dropdown-item-rules'),
+      );
+      expect(rulesetMenuItem).toBeDefined();
+      expect(rulesetMenuItem.subOptions).toHaveLength(2);
+    });
+
+    it('triggers onOpenFieldRules with undefined when Add new ruleset is clicked', () => {
+      renderWithIntl(<ExtraFieldDropdown {...rulesetProps} />);
+
+      userEvent.click(screen.getByText('Add new ruleset'));
+
+      expect(onOpenFieldRules).toHaveBeenCalledWith();
+    });
+
+    it('triggers onOpenFieldRules with ruleset object when an existing ruleset is clicked', () => {
+      renderWithIntl(<ExtraFieldDropdown {...rulesetProps} />);
+
+      userEvent.click(screen.getByText('Rule 1'));
+
+      expect(onOpenFieldRules).toHaveBeenCalledWith(rulesetProps.fieldRulesets[0]);
     });
   });
 });

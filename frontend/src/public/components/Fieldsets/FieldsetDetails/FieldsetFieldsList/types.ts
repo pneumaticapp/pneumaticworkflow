@@ -1,5 +1,5 @@
 import { IExtraField } from '../../../../types/template';
-import { EFieldLabelPosition } from '../../../../types/fieldset';
+import { EFieldLabelPosition, IFieldRuleSet } from '../../../../types/fieldset';
 
 export interface IFieldsetFieldsListProps {
   fields: IExtraField[];
@@ -8,5 +8,5 @@ export interface IFieldsetFieldsListProps {
   labelPosition: EFieldLabelPosition;
   accountId: number;
   datasetOptions: { label: string; value: string }[];
-  onCreateFieldRule?: (fieldApiName: string) => void;
+  onOpenFieldRule?: (fieldApiName: string, ruleset?: IFieldRuleSet) => void;
 }

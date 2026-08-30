@@ -27,7 +27,7 @@ export function FieldRuleModal({
     if (isOpen) {
       setLocalRuleSet(ruleset || createEmptyFieldRuleSet());
     }
-  }, [isOpen]);
+  }, [isOpen, ruleset]);
 
   const updateRuleSet = (changes: Partial<IFieldRuleSet>) => {
     setLocalRuleSet((prev) => ({ ...prev, ...changes }));
