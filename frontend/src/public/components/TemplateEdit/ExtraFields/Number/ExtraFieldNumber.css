@@ -3,9 +3,9 @@
 }
 
 .rulesets-badge {
-  display: inline-block;
   margin-top: 0.8rem;
   padding: 0.1rem 0.8rem;
+  display: inline-block;
   color: var(--pneumatic-color-black100);
   background-color: var(--pneumatic-color-selection);
   border-radius: 0.4rem;

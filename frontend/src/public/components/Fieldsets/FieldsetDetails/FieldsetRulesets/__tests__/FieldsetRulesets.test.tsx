@@ -18,9 +18,9 @@ jest.mock('../../RuleBase', () => ({
     (props: {
       ruleSet: { apiName: string };
       addRule: () => void;
-      updateRule: (params: any) => void;
-      deleteRule: (params: any) => void;
-      regroupRules: (params: any) => void;
+      updateRule: (params: { ruleGroupOrApiName: string; ruleGroupAndApiName: string; ruleChanges: Record<string, string> }) => void;
+      deleteRule: (params: { ruleGroupOrApiName: string; ruleGroupAndApiName: string }) => void;
+      regroupRules: (params: { groupOrApiName: string; groupAndApiName: string; ruleCombinator: string }) => void;
     }) =>
       React.createElement(
         'div',

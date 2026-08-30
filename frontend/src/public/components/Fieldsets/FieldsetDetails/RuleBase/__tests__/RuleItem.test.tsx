@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { RuleItem } from '../RuleItem';
 import { intlMock } from '../../../../../__stubs__/intlMock';
@@ -188,7 +189,7 @@ describe('RuleItem component', () => {
     );
 
     const deleteBtn = screen.getByRole('button', { name: formatMsg('fieldsets.rule-delete') });
-    fireEvent.click(deleteBtn);
+    userEvent.click(deleteBtn);
 
     expect(mockDeleteRule).toHaveBeenCalledWith({
       ruleGroupOrApiName: 'g-or-1',

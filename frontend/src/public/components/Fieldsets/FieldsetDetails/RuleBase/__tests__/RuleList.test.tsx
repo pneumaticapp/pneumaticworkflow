@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { RuleList } from '../RuleList';
 import { FIELDSET_RULE_OPERATOR_OPTIONS } from '../../../constants';
@@ -65,7 +66,7 @@ describe('RuleList component', () => {
     const addBtn = screen.getByRole('button', { name: formatMsg('fieldsets.add-rule') });
     expect(addBtn).toBeInTheDocument();
 
-    fireEvent.click(addBtn);
+    userEvent.click(addBtn);
     expect(mockAddRule).toHaveBeenCalledTimes(1);
   });
 
@@ -123,7 +124,7 @@ describe('RuleList component', () => {
     );
 
     const updateBtn = screen.getByTestId('mock-update-rule-1');
-    fireEvent.click(updateBtn);
+    userEvent.click(updateBtn);
 
     expect(mockUpdateRule).toHaveBeenCalledWith({
       ruleGroupOrApiName: 'g-or-1',

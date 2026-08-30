@@ -10,6 +10,8 @@ import { createIntl, createIntlCache, IntlProvider } from 'react-intl';
 
 const cache = createIntlCache();
 const intl = createIntl({ locale: 'en-US', messages: enMessages }, cache);
+const formatMsg = (id: string, values?: Record<string, string | number>) =>
+  intl.formatMessage({ id }, values);
 
 const baseProps = {
   field: makeExtraField({ type: EExtraFieldType.Number, apiName: 'num-1', name: 'Numeric field' }),
@@ -58,7 +60,7 @@ describe('ExtraFieldNumber rulesets badge', () => {
 
     renderWithIntl(<ExtraFieldNumber {...baseProps} field={field} />);
 
-    expect(screen.getByText('Rulesets: 2')).toBeInTheDocument();
+    expect(screen.getByText(formatMsg('fieldsets.field-rulesets-badge', { count: 2 }))).toBeInTheDocument();
   });
 
   it('renders rulesets badge with count 1 for a single ruleset', () => {
@@ -72,6 +74,6 @@ describe('ExtraFieldNumber rulesets badge', () => {
 
     renderWithIntl(<ExtraFieldNumber {...baseProps} field={field} />);
 
-    expect(screen.getByText('Rulesets: 1')).toBeInTheDocument();
+    expect(screen.getByText(formatMsg('fieldsets.field-rulesets-badge', { count: 1 }))).toBeInTheDocument();
   });
 });

@@ -14,6 +14,6 @@
 
 .delete-icon {
   margin-left: 0.8rem;
-  color: var(--pneumatic-color-notification1);
   cursor: pointer;
+  color: var(--pneumatic-color-notification1);
 }

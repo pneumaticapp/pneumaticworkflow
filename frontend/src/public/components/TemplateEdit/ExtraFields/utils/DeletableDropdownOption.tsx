@@ -43,6 +43,7 @@ export function DeletableDropdownOption({ label, onDelete }: IDeletableDropdownO
     return (
       <div
         className={classnames(dropdownStyles['dropdown-confirm'], styles['confirmation-container'])}
+        role="presentation"
         onClick={handleContainerClick}
       >
         <span>{formatMessage({ id: 'dropdown.are-you-sure' })}</span>

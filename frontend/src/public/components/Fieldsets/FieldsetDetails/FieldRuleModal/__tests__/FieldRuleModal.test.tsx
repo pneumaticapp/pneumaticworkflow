@@ -135,4 +135,25 @@ describe('FieldRuleModal', () => {
     
     expect(disabledOptionText).toBeInTheDocument();
   });
+
+  it('renders prefilled ruleset name when opened in edit mode', () => {
+    renderWithIntl(<FieldRuleModal {...defaultProps} ruleset={validRuleset} />);
+
+    const nameInput = screen.getByPlaceholderText('Ruleset name...');
+    expect(nameInput).toHaveValue('Test Ruleset');
+  });
+
+  it('calls onSave with existing apiName when saving in edit mode', () => {
+    const onSave = jest.fn();
+    renderWithIntl(
+      <FieldRuleModal {...defaultProps} ruleset={validRuleset} onSave={onSave} />,
+    );
+
+    userEvent.click(screen.getByText('Save'));
+
+    expect(onSave).toHaveBeenCalledTimes(1);
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({ apiName: validRuleset.apiName }),
+    );
+  });
 });

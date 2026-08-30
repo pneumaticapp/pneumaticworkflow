@@ -22,7 +22,7 @@ jest.mock('../../../../redux/selectors/fieldsets', () => ({
 }));
 
 jest.mock('../../../UI', () => ({
-  FilterSelect: jest.fn(({ options, onChange, isLoading, placeholderText }: any) => {
+  FilterSelect: jest.fn(({ options, onChange, isLoading, placeholderText }: { options: { id: number; label: string }[]; onChange: (id: number) => void; isLoading: boolean; placeholderText: string }) => {
     if (isLoading && options.length === 0) {
       return <div>Loading…</div>;
     }
@@ -31,7 +31,7 @@ jest.mock('../../../UI', () => ({
     }
     return (
       <div data-testid="mock-filter-select">
-        {options.map((option: any) => (
+        {options.map((option: { id: number; label: string }) => (
           <button
             key={option.id}
             type="button"
