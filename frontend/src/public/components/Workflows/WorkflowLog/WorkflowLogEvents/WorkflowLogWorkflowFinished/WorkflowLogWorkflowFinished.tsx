@@ -6,14 +6,39 @@ import { WorkflowEndedIcon } from '../../../../icons';
 import { DateFormat } from '../../../../UI/DateFormat';
 import { getUserFullName } from '../../../../../utils/users';
 import { UserData } from '../../../../UserData';
-import { IWorkflowLogItem } from '../../../../../types/workflow';
+import { EWorkflowLogEvent, IWorkflowLogItem } from '../../../../../types/workflow';
 
 import styles from './WorkflowLogWorkflowFinished.css';
 
-export type TWorkflowLogWorkflowFinishedProps = Pick<IWorkflowLogItem, 'userId' | 'created'>;
+export type TWorkflowLogWorkflowFinishedProps = Pick<IWorkflowLogItem, 'userId' | 'created' | 'type'>;
 
-export function WorkflowLogWorkflowFinished({ userId, created }: TWorkflowLogWorkflowFinishedProps) {
+export function WorkflowLogWorkflowFinished({ userId, created, type }: TWorkflowLogWorkflowFinishedProps) {
   const { formatMessage } = useIntl();
+
+  const renderEvent = (title: string, avatar: React.ReactNode) => (
+    <div className={styles['container']}>
+      <div className={styles['avatar']}>{avatar}</div>
+      <div className={styles['body']}>
+        <p className={styles['title']}>
+          <span className={styles['title__text']}>{title}</span>
+          <span className={styles['title__icon']}>
+            <WorkflowEndedIcon />
+          </span>
+          <span className={styles['title__date']}>
+            <DateFormat date={created} />
+          </span>
+        </p>
+        <div className={styles['text']}>{formatMessage({ id: 'workflows.log-workflow-ended' })}</div>
+      </div>
+    </div>
+  );
+
+  if (type !== EWorkflowLogEvent.WorkflowComplete) {
+    return renderEvent(
+      formatMessage({ id: 'general.pneumatic' }),
+      <Avatar size="lg" sizeMobile="sm" isSystemAvatar />,
+    );
+  }
 
   return (
     <UserData userId={userId}>
@@ -22,23 +47,7 @@ export function WorkflowLogWorkflowFinished({ userId, created }: TWorkflowLogWor
           return null;
         }
 
-        return (
-          <div className={styles['container']}>
-            <div className={styles['avatar']}>
-              <Avatar user={user} size="lg" sizeMobile="sm" />
-            </div>
-            <div className={styles['body']}>
-              <p className={styles['title']}>
-                <span className={styles['title__text']}>{getUserFullName(user)}</span>
-                <span className={styles['title__icon']}>
-                  <WorkflowEndedIcon />
-                </span>
-                <span className={styles['title__date']}><DateFormat date={created} /></span>
-              </p>
-              <div className={styles['text']}>{formatMessage({ id: 'workflows.log-workflow-ended' })}</div>
-            </div>
-          </div>
-        );
+        return renderEvent(getUserFullName(user), <Avatar user={user} size="lg" sizeMobile="sm" />);
       }}
     </UserData>
   );

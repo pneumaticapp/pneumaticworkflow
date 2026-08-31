@@ -41,9 +41,7 @@ jest.mock('../../ExtraFields/utils/ExtraFieldIcon', () => ({
 
 jest.mock('../../TaskOutputFlow/FieldsetIconPicker', () => ({
   FieldsetIconPicker: (props: {
-    selectedFieldsetIds: number[];
     onSelectFieldset: (item: IFieldsetCatalogItem) => void;
-    onRemoveFieldset: (sharedFieldsetId: number) => void;
   }) => {
     const catalogItems = (getFieldsetsCatalogItems as jest.Mock)();
     return React.createElement(
@@ -60,17 +58,6 @@ jest.mock('../../TaskOutputFlow/FieldsetIconPicker', () => ({
           `Add fieldset ${item.name}`,
         ),
       ),
-      props.selectedFieldsetIds.map((id: number) =>
-        React.createElement(
-          'button',
-          {
-            key: `remove-${id}`,
-            type: 'button',
-            onClick: () => props.onRemoveFieldset(id),
-          },
-          `Remove fieldset ${id}`,
-        ),
-      ),
     );
   },
 }));
@@ -79,12 +66,12 @@ jest.mock('../../TaskOutputFlow/MergedOutputRows', () => ({
   MergedOutputRows: (props: {
     mergedRows: Array<
       | { kind: 'field'; field: IExtraField }
-      | { kind: 'fieldset'; apiName: string; order: number }
+      | { kind: 'fieldset'; apiNameBinding: string; sharedFieldsetId?: number }
     >;
     onDeleteField: (apiName: string) => void;
     onMoveRow: (index: number, direction: 'up' | 'down') => void;
     onEditField: (apiName: string) => (changed: Partial<IExtraField>) => void;
-    onRemoveFieldset: (apiName: string) => void;
+    onRemoveFieldset: (apiNameBinding: string) => void;
   }) =>
     React.createElement(
       'div',
@@ -120,9 +107,18 @@ jest.mock('../../TaskOutputFlow/MergedOutputRows', () => ({
             ),
           );
         }
+        const apiNameBinding = row.apiNameBinding;
         return React.createElement(
           'div',
-          { key: `fieldset-${row.apiName}` },
+          { key: `fieldset-${apiNameBinding}` },
+          React.createElement(
+            'button',
+            {
+              type: 'button',
+              onClick: () => props.onRemoveFieldset(apiNameBinding),
+            },
+            `Remove fieldset ${apiNameBinding}`,
+          ),
           React.createElement(
             'button',
             { type: 'button', onClick: () => props.onMoveRow(index, 'up') },
@@ -277,7 +273,7 @@ describe('OutputFormTaskMerged', () => {
       expect(arg.changedFields.fieldsets).toBeDefined();
     });
 
-    it('does not send PATCH when adding an already-connected fieldset', () => {
+    it('allows adding an already-connected fieldset and sends PATCH with a new fieldset binding', () => {
       const catalogItem = makeFieldsetCatalogItem({ id: 1, apiName: 'fs-1', name: 'Fieldset 1' });
       const { patchTask } = renderForm({
         task: makeTask({ fields: [], fieldsets: [makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 0, sharedFieldsetId: 1 })] }),
@@ -286,7 +282,9 @@ describe('OutputFormTaskMerged', () => {
 
       userEvent.click(screen.getByRole('button', { name: 'Add fieldset Fieldset 1' }));
 
-      expect(patchTask).not.toHaveBeenCalled();
+      expect(patchTask).toHaveBeenCalledTimes(1);
+      const arg = patchTask.mock.calls[0][0];
+      expect(arg.changedFields.fieldsets).toHaveLength(2);
     });
 
     it('removing a fieldset sends PATCH without it and recomputes order of remaining ones', () => {
@@ -294,13 +292,13 @@ describe('OutputFormTaskMerged', () => {
         task: makeTask({
           fields: [],
           fieldsets: [
-             makeFieldsetBindingClient({ apiNameBinding: 'fs-a', order: 0, sharedFieldsetId: 10 }),
+            makeFieldsetBindingClient({ apiNameBinding: 'fs-a', order: 0, sharedFieldsetId: 10 }),
             makeFieldsetBindingClient({ apiNameBinding: 'fs-b', order: 1, sharedFieldsetId: 20 }),
           ],
         }),
       });
 
-      userEvent.click(screen.getByRole('button', { name: 'Remove fieldset 10' }));
+      userEvent.click(screen.getByRole('button', { name: 'Remove fieldset fs-a' }));
 
       expect(patchTask).toHaveBeenCalledTimes(1);
       const arg = patchTask.mock.calls[0][0];

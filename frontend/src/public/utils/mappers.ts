@@ -1,7 +1,8 @@
-import { IExtraField, IKickoffClient } from '../types/template';
+import { IExtraField, IRuntimeKickoffClient } from '../types/template';
 import { isArrayWithItems } from './helpers';
 import { IRunWorkflow } from '../components/WorkflowEditPopup/types';
 import { ExtraFieldsHelper } from '../components/TemplateEdit/ExtraFields/utils/ExtraFieldsHelper';
+import { normalizeCheckboxValue } from './fields';
 import {
   getEndOfDayTsp,
   toDateString,
@@ -107,16 +108,7 @@ export const mapOutputToCompleteTask = (output: IExtraField[]): IExtraField[] =>
       };
     }
     if (item.type === 'checkbox') {
-      let checkboxValue: string[];
-      if (Array.isArray(item.value)) {
-        checkboxValue = item.value;
-      } else if (item.value) {
-        checkboxValue = (item.value as string).split(', ');
-      } else {
-        checkboxValue = [];
-      }
-
-      return { ...item, value: checkboxValue };
+      return { ...item, value: normalizeCheckboxValue(item.value) };
     }
     return item;
   });
@@ -170,7 +162,7 @@ export const mapEndOfDayTsp = (fields: IExtraField[]): IExtraField[] => {
   }));
 };
 
-export const getNormalizedKickoff = (kickoff: Pick<IKickoffClient, 'fields'>): { [key: string]: string } => {
+export const getNormalizedKickoff = (kickoff: Pick<IRuntimeKickoffClient, 'fields'>): { [key: string]: string } => {
   const mappedKickoffFields = new ExtraFieldsHelper(kickoff.fields).normalizeFieldsValues();
   const mappedKickoff = isArrayWithItems(mappedKickoffFields) ? Object.assign({}, ...mappedKickoffFields) : null;
   return mappedKickoff;

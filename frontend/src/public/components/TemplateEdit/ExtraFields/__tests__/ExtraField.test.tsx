@@ -108,4 +108,17 @@ describe('ExtraField', () => {
       expect(Array.isArray(dropdownCall.datasetOptions)).toBe(true);
     });
   });
+
+  describe('Read-only status and icon rendering', () => {
+    it('does not render ExtraFieldDropdown when isDisabled=true', () => {
+      renderWithIntl(
+        <ExtraFieldIntl
+          {...baseProps}
+          isDisabled
+        />,
+      );
+
+      expect(ExtraFieldDropdown as jest.Mock).not.toHaveBeenCalled();
+    });
+  });
 });

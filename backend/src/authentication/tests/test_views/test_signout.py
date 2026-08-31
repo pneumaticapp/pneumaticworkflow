@@ -1,8 +1,6 @@
 import pytest
 
-from src.accounts.models import APIKey
 from src.authentication.enums import AuthTokenType
-from src.authentication.tokens import PneumaticToken
 from src.processes.tests.fixtures import (
     create_test_user,
 )
@@ -14,16 +12,6 @@ def test_signout__user_token__ok(api_client, mocker):
 
     # arrange
     user = create_test_user()
-    token = PneumaticToken.create(
-        user=user,
-        for_api_key=True,
-    )
-    APIKey.objects.create(
-        user=user,
-        account=user.account,
-        name='Token for API',
-        key=token,
-    )
     expire_token_mock = mocker.patch(
         'src.authentication.tokens.'
         'PneumaticToken.expire_token',

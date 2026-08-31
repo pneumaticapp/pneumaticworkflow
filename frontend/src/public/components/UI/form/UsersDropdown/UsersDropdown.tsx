@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 import { ActionMeta, FormatOptionLabelMeta } from 'react-select';
 
 import { TDropdownOptionBase, IDropdownListProps, DropdownList, Checkbox, Avatar, TAvatarUser } from '../..';
-import { TUserListItem, isUserAbsent } from '../../../../types/user';
+import { EUserStatus, TUserListItem, isUserAbsent } from '../../../../types/user';
 import { BoldPlusIcon } from '../../../icons';
 import { ETaskPerformerType } from '../../../../types/template';
 import { getUserById } from '../../../UserData/utils/getUserById';
@@ -25,6 +26,8 @@ export enum EOptionTypes {
 export type TUsersDropdownOption = TDropdownOptionBase & {
   firstName?: string;
   lastName?: string;
+  email?: string;
+  status?: EUserStatus;
   id: number;
   optionType: EOptionTypes;
 };
@@ -156,9 +159,13 @@ export function UsersDropdownComponent<TOption extends TUsersDropdownOption>({
     const renderLabel = () => {
       const currentUser: TUserListItem | TUsersDropdownOption | null =
         option.optionType !== EOptionTypes.Group ? getUserById(users, Number(option.id)) : option;
+      const isInvited = currentUser?.status === EUserStatus.Invited || option.status === EUserStatus.Invited;
+      const displayLabel = isInvited
+        ? currentUser?.email || option.email || String(option.label).replace(/\s*\(invited user\)\s*$/i, '')
+        : option.label;
 
       return (
-        <div className={styles['user-option__content']} title={option.label as string}>
+        <div className={styles['user-option__content']} title={displayLabel as string}>
           {formatOptionLabelMeta.context === 'menu' && (
             <Avatar
               size="sm"
@@ -167,8 +174,13 @@ export function UsersDropdownComponent<TOption extends TUsersDropdownOption>({
               isEmpty={option.optionType !== EOptionTypes.User && option.optionType !== EOptionTypes.Group}
             />
           )}
-          <p className={styles['user-option__label']}>
-            {option.label}
+          <p
+            className={classnames(
+              styles['user-option__label'],
+              isInvited && styles['user-option__label_invited'],
+            )}
+          >
+            {displayLabel}
             {isUserAbsent(currentUser as TUserListItem) && (
               <span className={styles['user-option__badge']}>
                 {(currentUser as TUserListItem)?.vacation?.absenceStatus === 'sick_leave' ? ' 🏥' : ' ✈️'}
@@ -189,6 +201,9 @@ export function UsersDropdownComponent<TOption extends TUsersDropdownOption>({
             }}
             title={renderLabel()}
             checked={isSelected}
+            containerClassName={styles['user-option__checkbox']}
+            labelClassName={styles['user-option__checkbox-label']}
+            titleClassName={styles['user-option__checkbox-title']}
           />
         ) : (
           renderLabel()

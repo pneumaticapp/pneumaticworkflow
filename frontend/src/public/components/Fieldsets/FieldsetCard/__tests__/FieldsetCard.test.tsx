@@ -4,11 +4,12 @@ import userEvent from '@testing-library/user-event';
 import { useDispatch } from 'react-redux';
 
 import { FieldsetCard } from '../FieldsetCard';
-import { Dropdown } from '../../../UI';
-import { WarningPopup } from '../../../UI/WarningPopup';
+import { ModifyDropdown } from '../../../UI';
+
 import {
   openEditModal,
   deleteFieldsetAction,
+  cloneFieldsetAction,
   setCurrentFieldset,
 } from '../../../../redux/fieldsets/slice';
 import { history } from '../../../../utils/history';
@@ -27,31 +28,30 @@ jest.mock('../../../../utils/strings', () => ({
 jest.mock('../../../../redux/fieldsets/slice', () => ({
   openEditModal: jest.fn(() => ({ type: 'fieldsets/openEditModal' })),
   deleteFieldsetAction: jest.fn((p) => ({ type: 'fieldsets/deleteFieldsetAction', payload: p })),
+  cloneFieldsetAction: jest.fn((p) => ({ type: 'fieldsets/cloneFieldsetAction', payload: p })),
   setCurrentFieldset: jest.fn((p) => ({ type: 'fieldsets/setCurrentFieldset', payload: p })),
 }));
 
 jest.mock('../../../UI', () => ({
-  Dropdown: jest.fn(() => null),
+  ModifyDropdown: jest.fn(() => null),
 }));
 
-jest.mock('../../../UI/WarningPopup', () => ({
-  WarningPopup: jest.fn(() => null),
-}));
+
 
 jest.mock('../../../icons', () => ({
   MoreIcon: () => null,
   PencilIcon: () => null,
   TrashIcon: () => null,
+  UnionIcon: () => null,
 }));
 
 describe('FieldsetCard', () => {
   const mockDispatch = jest.fn();
 
-  const formatMsg = (id: string) => intlMock.formatMessage({ id });
-  const EDIT_LABEL = formatMsg('fieldsets.edit');
-  const DELETE_LABEL = formatMsg('fieldsets.delete');
-  const FIELDS_STATS = (count: number) => intlMock.formatMessage({ id: 'fieldsets.stats.fields' }, { count });
-  const RULES_STATS = (count: number) => intlMock.formatMessage({ id: 'fieldsets.stats.rules' }, { count });
+  const formatMsg = (id: string, values?: Record<string, string | number>): string =>
+    intlMock.formatMessage({ id }, values) as string;
+  const FIELDS_STATS = (count: number) => formatMsg('fieldsets.stats.fields', { count });
+  const RULES_STATS = (count: number) => formatMsg('fieldsets.stats.rules', { count });
 
   let fieldCounter = 0;
 
@@ -65,21 +65,13 @@ describe('FieldsetCard', () => {
 
   const makeProps = makeFieldsetCatalogItem;
   
-  const getDropdownOptions = () => {
-    const mock = Dropdown as unknown as jest.Mock;
-    const lastCall = mock.mock.calls[mock.mock.calls.length - 1];
-    return lastCall[0].options;
-  };
-
-  const findDropdownOption = (label: string) => {
-    return getDropdownOptions().find((opt: { label: string }) => opt.label === label);
-  };
-
-  const getWarningPopupProps = () => {
-    const mock = WarningPopup as jest.Mock;
+  const getModifyDropdownProps = () => {
+    const mock = ModifyDropdown as jest.Mock;
     const lastCall = mock.mock.calls[mock.mock.calls.length - 1];
     return lastCall[0];
   };
+
+
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -115,8 +107,7 @@ describe('FieldsetCard', () => {
       const props = makeProps();
       render(React.createElement(FieldsetCard, props));
 
-      const editOption = findDropdownOption(EDIT_LABEL);
-      editOption.onClick();
+      act(() => { getModifyDropdownProps().onEdit(); });
 
       expect(mockDispatch).toHaveBeenCalledWith(
         setCurrentFieldset({
@@ -130,6 +121,7 @@ describe('FieldsetCard', () => {
           title: props.title,
           rules: props.rules,
           fields: props.fields,
+          usage: props.usage,
         }),
       );
       expect(mockDispatch).toHaveBeenCalledWith(openEditModal());
@@ -138,39 +130,45 @@ describe('FieldsetCard', () => {
   });
 
   describe('Dropdown — Delete', () => {
-    it('opens WarningPopup on Delete click', () => {
-      render(React.createElement(FieldsetCard, makeProps()));
-
-      expect(getWarningPopupProps().isOpen).toBe(false);
-
-      const deleteOption = findDropdownOption(DELETE_LABEL);
-      act(() => { deleteOption.onClick(); });
-
-      expect(getWarningPopupProps().isOpen).toBe(true);
-    });
-
-    it('dispatches deleteFieldsetAction on WarningPopup confirm', () => {
+    it('dispatches deleteFieldsetAction on Delete click', () => {
       render(React.createElement(FieldsetCard, makeProps({ id: 10 })));
 
-      act(() => { findDropdownOption(DELETE_LABEL).onClick(); });
-      act(() => { getWarningPopupProps().onConfirm(); });
+      act(() => { getModifyDropdownProps().onDelete(); });
 
       expect(mockDispatch).toHaveBeenCalledTimes(1);
       expect(mockDispatch).toHaveBeenCalledWith(deleteFieldsetAction({ id: 10 }));
+    });
+  });
 
-      expect(getWarningPopupProps().isOpen).toBe(false);
+  describe('Dropdown — Clone', () => {
+    it('dispatches cloneFieldsetAction on Clone click', () => {
+      const props = makeProps({ id: 10 });
+      render(React.createElement(FieldsetCard, props));
+
+      act(() => { getModifyDropdownProps().onClone(); });
+
+      expect(mockDispatch).toHaveBeenCalledTimes(1);
+      expect(mockDispatch).toHaveBeenCalledWith(cloneFieldsetAction({ id: 10 }));
+    });
+  });
+
+  describe('ModifyDropdown — isReadOnly state (linked fieldsets)', () => {
+    it('passes isReadOnly=true to ModifyDropdown when usage contains linked templates', () => {
+      const props = makeProps({
+        usage: [
+          { id: 1, name: 'Template 1' },
+        ],
+      });
+      render(React.createElement(FieldsetCard, props));
+
+      expect(getModifyDropdownProps().isReadOnly).toBe(true);
     });
 
-    it('closes WarningPopup without dispatch on cancel', () => {
-      render(React.createElement(FieldsetCard, makeProps()));
+    it('passes isReadOnly=false to ModifyDropdown when usage is empty', () => {
+      const props = makeProps({ usage: [] });
+      render(React.createElement(FieldsetCard, props));
 
-      act(() => { findDropdownOption(DELETE_LABEL).onClick(); });
-      expect(getWarningPopupProps().isOpen).toBe(true);
-
-      act(() => { getWarningPopupProps().onReject(); });
-
-      expect(getWarningPopupProps().isOpen).toBe(false);
-      expect(deleteFieldsetAction).not.toHaveBeenCalled();
+      expect(getModifyDropdownProps().isReadOnly).toBe(false);
     });
   });
 

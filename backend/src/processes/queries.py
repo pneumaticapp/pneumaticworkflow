@@ -1161,7 +1161,8 @@ class TaskListQuery(
               pt.is_deleted IS FALSE
             )
             LEFT JOIN processes_taskperformer ptp ON (
-              pt.id = ptp.task_id
+              pt.id = ptp.task_id AND
+              ptp.is_deleted IS FALSE
             )
             LEFT JOIN accounts_usergroup_users aug ON (
               ptp.group_id = aug.usergroup_id AND

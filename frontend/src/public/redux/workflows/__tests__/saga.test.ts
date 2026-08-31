@@ -1,3 +1,24 @@
+import { runSaga } from 'redux-saga';
+import { call, takeEvery } from 'redux-saga/effects';
+
+import { makeFieldsetRuntime } from '../../../__stubs__/fieldsets.factory';
+import { makeTemplateResponse } from '../../../__stubs__/templates.factory';
+import * as deleteApi from '../../../api/deleteWorkflow';
+import * as finishWorkflowApi from '../../../api/finishWorkflow';
+import { getTemplate } from '../../../api/getTemplate';
+import { getTemplateSteps } from '../../../api/getTemplateSteps';
+import { getWorkflow } from '../../../api/getWorkflow';
+import { NotificationManager } from '../../../components/UI/Notifications';
+import { getClonedKickoff } from '../../../components/Workflows/WorkflowsGridPage/WorkflowCard/utils/getClonedKickoff';
+import {
+  getRunnableWorkflow,
+  loadDatasetsMap,
+} from '../../../components/TemplateEdit/utils/getRunnableWorkflow';
+import { ERoutes } from '../../../constants/routes';
+import { IKickoff } from '../../../types/template';
+import { history } from '../../../utils/history';
+import { mapTemplateFieldsetsToRuntime } from '../../../utils/mapTemplateFieldsetsToRuntime';
+import { handleLoadTemplateVariables } from '../../templates/saga';
 import {
   watchCloneWorkflow,
   cloneWorkflowSaga,
@@ -7,27 +28,16 @@ import {
   returnWorkflowToTaskSaga,
   setWorkflowFinishedSaga,
   fetchFilterSteps,
+  handleOpenWorkflowLogPopup,
 } from '../saga';
-import * as deleteApi from '../../../api/deleteWorkflow';
-import * as finishWorkflowApi from '../../../api/finishWorkflow';
-import { NotificationManager } from '../../../components/UI/Notifications';
-import { cloneWorkflowAction, deleteWorkflowAction, returnWorkflowToTaskAction, setWorkflowFinished } from '../slice';
-import { runSaga } from 'redux-saga';
-import { call } from 'redux-saga/effects';
-import { getWorkflow } from '../../../api/getWorkflow';
-import { getTemplate } from '../../../api/getTemplate';
 import {
-  loadDatasetsMap,
-  getRunnableWorkflow,
-} from '../../../components/TemplateEdit/utils/getRunnableWorkflow';
-import { mapTemplateFieldsetsToRuntime } from '../../../utils/mapTemplateFieldsetsToRuntime';
-import { getClonedKickoff } from '../../../components/Workflows/WorkflowsGridPage/WorkflowCard/utils/getClonedKickoff';
-import { getTemplateSteps } from '../../../api/getTemplateSteps';
-import { handleLoadTemplateVariables } from '../../templates/saga';
-import { IKickoff } from '../../../types/template';
-import { loadFilterSteps } from '../slice';
-import { makeFieldsetRuntime } from '../../../__stubs__/fieldsets.factory';
-import { makeTemplateResponse } from '../../../__stubs__/templates.factory';
+  cloneWorkflowAction,
+  deleteWorkflowAction,
+  loadFilterSteps,
+  openWorkflowLogPopup,
+  returnWorkflowToTaskAction,
+  setWorkflowFinished,
+} from '../slice';
 
 jest.mock('../../../api/getWorkflow', () => ({
   getWorkflow: jest.fn(),
@@ -55,7 +65,9 @@ jest.mock('../../../api/getTemplateSteps', () => ({
 }));
 
 jest.mock('../../templates/saga', () => ({
-  handleLoadTemplateVariables: jest.fn(function* () {}),
+  handleLoadTemplateVariables: jest.fn(function* handleLoadTemplateVariablesMock() {
+    yield undefined;
+  }),
 }));
 
 jest.mock('../../../utils/dateTime', () => ({
@@ -76,6 +88,20 @@ jest.mock('../../../utils/isRequestCanceled', () => ({
 }));
 
 describe('workflows saga', () => {
+  it('updates the workflow detail URL through router history', () => {
+    const replaceHistory = jest.spyOn(history, 'replace').mockImplementation(() => undefined);
+    const expectedUrl = ERoutes.WorkflowDetail.replace(':id', '42') + history.location.search;
+    const saga = handleOpenWorkflowLogPopup(openWorkflowLogPopup({
+      workflowId: 42,
+      shouldSetWorkflowDetailUrl: true,
+    }));
+
+    saga.next();
+
+    expect(replaceHistory).toHaveBeenCalledWith(expectedUrl);
+    replaceHistory.mockRestore();
+  });
+
   it('deleteWorkflowSaga work', () => {
     const saga = deleteWorkflowSaga({ type: deleteWorkflowAction.type, payload: { workflowId: 1 } });
     const deleteApiMock = jest.spyOn(deleteApi, 'deleteWorkflow').mockImplementation(() => Promise.resolve());
@@ -110,9 +136,10 @@ describe('workflows saga', () => {
       [watchReturnWorkflowToTask, returnWorkflowToTaskAction.type, returnWorkflowToTaskSaga],
     ])(
       'for the function %s, calls takeEvery with parameters %s and %s',
-      (testingFn, _action, _expectedFn) => {
+      (testingFn, action, expectedFn) => {
         const result = (testingFn as () => Generator)();
-        result.next();
+
+        expect(result.next().value).toEqual(takeEvery(action, expectedFn));
       },
     );
   });

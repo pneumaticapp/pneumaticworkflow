@@ -1,10 +1,11 @@
-import { call, select } from 'redux-saga/effects';
+import { call, put, select } from 'redux-saga/effects';
 
 import { routeRealtimeEvent } from '../utils/routeRealtimeEvent';
 import { handleRemoveTask } from '../../tasks/saga';
 import { ERealtimeEnvelopeType, IRealtimeWsEnvelope } from '../types';
 import { ETaskListCompletionStatus, ETaskStatus } from '../../../types/tasks';
 import { getTasksSettings } from '../../selectors/tasks';
+import { activeUsersCountFetchFinished, upsertUserFromWs } from '../../accounts/slice';
 
 jest.mock('../../../utils/logger', () => ({
   logger: { info: jest.fn(), error: jest.fn() },
@@ -110,5 +111,46 @@ describe('routeRealtimeEvent — task_deleted list updates', () => {
     const step = gen.next();
 
     expect(step.value).toEqual(call(handleRemoveTask, 45, true));
+  });
+
+  it('USER_CREATED upserts user', () => {
+    const envelope = {
+      id: '5',
+      dateCreatedTsp: 0,
+      type: ERealtimeEnvelopeType.USER_CREATED,
+      data: {
+        id: 2,
+        firstName: 'Artyom',
+        lastName: '',
+        email: 'artyom@test.com',
+        photo: null,
+        isAdmin: false,
+        isAccountOwner: false,
+        managerId: null,
+        subordinatesIds: [],
+      },
+    } as IRealtimeWsEnvelope;
+
+    const gen = routeRealtimeEvent(envelope);
+
+    expect(gen.next().value).toEqual(put(upsertUserFromWs(expect.objectContaining({ id: 2, firstName: 'Artyom' }))));
+    expect(gen.next().done).toBe(true);
+  });
+
+  it('ACCOUNT_PLAN_CHANGED updates active users count', () => {
+    const envelope = {
+      id: '6',
+      dateCreatedTsp: 0,
+      type: ERealtimeEnvelopeType.ACCOUNT_PLAN_CHANGED,
+      data: {
+        activeUsers: 2,
+        tenantsActiveUsers: 1,
+      },
+    } as IRealtimeWsEnvelope;
+
+    const gen = routeRealtimeEvent(envelope);
+
+    expect(gen.next().value).toEqual(put(activeUsersCountFetchFinished({ activeUsers: 2, tenantsActiveUsers: 1 })));
+    expect(gen.next().done).toBe(true);
   });
 });

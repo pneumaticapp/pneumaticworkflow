@@ -124,11 +124,21 @@ export function OutputFormTaskMerged({
   );
 
   const handleRemoveFieldset = useCallback(
-    (sharedFieldsetId: number) => {
-      const rows = buildRowsWithRemovedFieldset(task.fields || [], task.fieldsets || [], sharedFieldsetId);
+    (apiNameBinding: string) => {
+      const rows = buildRowsWithRemovedFieldset(task.fields || [], task.fieldsets || [], apiNameBinding);
       saveOutputOrders(rows).catch(() => undefined);
     },
     [saveOutputOrders, task.fieldsets, task.fields],
+  );
+
+  const handleEditFieldsetTitle = useCallback(
+    (apiNameBinding: string, title: string) => {
+      const nextFieldsets = (task.fieldsets || []).map((fieldset) =>
+        fieldset.apiNameBinding === apiNameBinding ? { ...fieldset, title } : fieldset,
+      );
+      patchTask({ taskUUID: task.uuid, changedFields: { fieldsets: nextFieldsets } });
+    },
+    [patchTask, task.fieldsets, task.uuid],
   );
 
 
@@ -142,9 +152,7 @@ export function OutputFormTaskMerged({
         ))}
         <FieldsetIconPicker
           fieldsetsCatalogLoading={fieldsetsCatalogLoading}
-          selectedFieldsetIds={(task.fieldsets || []).map((fieldset) => fieldset.sharedFieldsetId)}
           onSelectFieldset={handleAddFieldset}
-          onRemoveFieldset={handleRemoveFieldset}
         />
       </div>
 
@@ -160,6 +168,7 @@ export function OutputFormTaskMerged({
             accountId={accountId}
             formatMessage={formatMessage}
             innerRef={outputRef}
+            onEditFieldsetTitle={handleEditFieldsetTitle}
           />
         </div>
       )}

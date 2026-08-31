@@ -167,6 +167,7 @@ class Common(Configuration):
 
         'rest_framework',
         'rest_framework_simplejwt',
+        'drf_spectacular',
 
         'corsheaders',
 
@@ -255,12 +256,15 @@ class Common(Configuration):
         'DEFAULT_RENDERER_CLASSES': [
             'rest_framework.renderers.JSONRenderer',
         ],
+        'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
         'DEFAULT_PERMISSION_CLASSES': (
             'rest_framework.permissions.IsAuthenticated',
         ),
         'DEFAULT_AUTHENTICATION_CLASSES': (
             'src.authentication.services.public_auth.PublicAuthService',
             'src.authentication.services.guest_auth.GuestJWTAuthService',
+            'src.authentication.services.api_key_auth.'
+            'APIKeyAuthentication',
             'src.authentication.services.user_auth.'
             'PneumaticTokenAuthentication',
             'src.authentication.services.jwt_auth.PneumaticJWTAuthentication',
@@ -296,6 +300,142 @@ class Common(Configuration):
             'rest_framework_simplejwt.tokens.AccessToken',
             'src.authentication.tokens.GuestToken',
         ),
+    }
+
+    SPECTACULAR_SETTINGS = {
+        'TITLE': 'Pneumatic Workflow API',
+        'DESCRIPTION': (
+            'The Pneumatic API gives you programmatic access to everything '
+            'you can do in the product — running workflows, managing tasks, '
+            'assigning performers, and integrating with internal systems.\n\n'
+
+            '### Authentication\n'
+            'Every request requires a `Bearer` token. You can find your '
+            'personal API key inside the app:\n'
+            '1. Go to **Integrations** in the left menu.\n'
+            '2. Copy your key from the **Your API Key** section.\n\n'
+            'Pass the key in the `Authorization` header:\n'
+            '```http\n'
+            'Authorization: Bearer <your_api_key>\n'
+            '```\n\n'
+            'Or click the **Authorize** button above and paste your key '
+            'to test endpoints directly.\n\n'
+
+            '### Why Use the API?\n'
+            '- **Custom Dashboards:** Pull live task counts and workflow '
+            'progress into your BI tools.\n'
+            '- **Automated Triggers:** Start new workflows automatically '
+            'when events happen in your CRM or ERP.\n'
+            '- **Task Sync:** Sync Pneumatic tasks to your internal task '
+            'trackers.\n'
+            '- **Webhook Integrations:** Subscribe to workflow events and '
+            'push data to Slack, email, or custom endpoints.'
+        ),
+        'VERSION': '1.0.0',
+        'SERVE_INCLUDE_SCHEMA': False,
+        'SERVE_PERMISSIONS': [
+            'rest_framework.permissions.AllowAny',
+        ],
+        'SERVE_AUTHENTICATION': [],
+        'PREPROCESSING_HOOKS': [
+            'src.openapi.preprocessing.exclude_private_endpoints',
+        ],
+        'SCHEMA_PATH_PREFIX': r'/',
+        # Schema is at /api/schema/; without SERVERS OpenAPI clients use
+        # /api as base and breaks real paths (/auth, /templates, …).
+        'ENUM_NAME_OVERRIDES': {
+            'UserStatusEnum': 'src.accounts.enums.UserStatus.CHOICES',
+            'WorkflowStatusEnum': 'src.processes.enums.WorkflowStatus.CHOICES',
+            'FieldTypeEnum': 'src.processes.enums.FieldType.CHOICES',
+            'WorkflowEventTypeEnum': (
+                'src.processes.enums.WorkflowEventType.CHOICES'
+            ),
+            'PerformerTypeEnum': (
+                'src.processes.enums.PerformerType.filter_choices'
+            ),
+            'AccountUserTypeEnum': 'src.accounts.enums.UserType.CHOICES',
+            'LanguageEnum': 'src.accounts.enums.Language.CHOICES',
+            'ResetPasswordStatusEnum': (
+                'src.authentication.enums.ResetPasswordStatus.CHOICES'
+            ),
+        },
+        'SERVERS': [{'url': '/', 'description': 'Pneumatic Core API Server'}],
+        'TAGS': [
+            {
+                'name': 'Auth',
+                'description': (
+                    'Sign in, token obtain/refresh, password '
+                    'management, and user context'
+                ),
+            },
+            {
+                'name': 'Templates',
+                'description': (
+                    'Create, configure, and manage workflow templates'
+                ),
+            },
+            {
+                'name': 'Templates Public',
+                'description': (
+                    'Public and embedded templates for external forms'
+                ),
+            },
+            {
+                'name': 'Workflows',
+                'description': (
+                    'Running workflow instances — complete, return, '
+                    'snooze, comment, and track progress'
+                ),
+            },
+            {
+                'name': 'Tasks',
+                'description': (
+                    'Task operations — complete, revert, manage '
+                    'performers, due dates, and events'
+                ),
+            },
+            {
+                'name': 'Accounts',
+                'description': (
+                    'Account settings, users, invites, groups, '
+                    'and billing plan'
+                ),
+            },
+            {
+                'name': 'Attachments',
+                'description': 'File attachments linked to workflows',
+            },
+            {
+                'name': 'Webhooks',
+                'description': (
+                    'Subscribe to workflow events and manage '
+                    'webhook endpoints'
+                ),
+            },
+            {
+                'name': 'Datasets',
+                'description': (
+                    'Reusable data collections for dropdown '
+                    'and selection fields'
+                ),
+            },
+            {
+                'name': 'Fieldsets',
+                'description': (
+                    'Shared field groups reusable across templates'
+                ),
+            },
+            {
+                'name': 'Tenants',
+                'description': 'Multi-tenant workspace management',
+            },
+            {
+                'name': 'Reports',
+                'description': (
+                    'Dashboard highlights and workflow analytics'
+                ),
+            },
+        ],
     }
 
     # Email

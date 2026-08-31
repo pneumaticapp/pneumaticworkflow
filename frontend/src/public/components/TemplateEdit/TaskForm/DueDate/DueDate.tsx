@@ -5,7 +5,7 @@ import classnames from 'classnames';
 import { DropdownList, Duration } from '../../../UI';
 import { TrashIcon } from '../../../icons';
 
-import { IDueDate, IKickoffClient, ITemplateTaskClient } from '../../../../types/template';
+import { IDueDate, ITemplateKickoffClient, ITemplateTaskClient } from '../../../../types/template';
 import { START_DURATION } from '../../constants';
 import { getRuleTargetOptions, TRuleTargetOption } from './utils/getRuleTargetOptions';
 import { getRulePrepositionOptions, TRulePrepositionOption } from './utils/getRulePrepositionOptions';
@@ -17,7 +17,7 @@ import stylesTaskForm from '../TaskForm.css';
 interface IDueInProps {
   currentTask: ITemplateTaskClient;
   tasks: ITemplateTaskClient[];
-  kickoff: IKickoffClient;
+  kickoff: ITemplateKickoffClient;
   onChange(value: IDueDate): void;
   dueDate: ITemplateTaskClient['rawDueDate'];
 }

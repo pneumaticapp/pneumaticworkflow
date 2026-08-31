@@ -9,6 +9,7 @@ import { isArrayWithItems } from '../../../utils/helpers';
 import { ExtraFieldIntl } from '../ExtraFields';
 import { ExtraFieldsLabels } from '../ExtraFields/utils/ExtraFieldsLabels';
 import { FieldsetFlowRowDropdown } from './FieldsetFlowRowDropdown';
+import { FieldsetEditorTitle } from './FieldsetEditorTitle';
 import { TMergedTaskOutputRow } from './mergeTaskOutputFlow';
 
 import styles from '../OutputForm/OutputForm.css';
@@ -19,11 +20,12 @@ export interface IMergedOutputRowsProps {
   onDeleteField: (apiName: string) => void;
   onMoveRow: (index: number, direction: 'up' | 'down') => void;
   onEditField: (apiName: string) => (changedProps: Partial<IExtraField>) => void;
-  onRemoveFieldset: (sharedFieldsetId: number) => void;
+  onRemoveFieldset: (apiNameBinding: string) => void;
   datasetOptions: { value: string; label: string }[];
   accountId: number;
   formatMessage: (descriptor: { id: string }) => string;
   innerRef?: React.RefObject<HTMLInputElement>;
+  onEditFieldsetTitle: (apiNameBinding: string, title: string) => void;
 }
 
 export function MergedOutputRows({
@@ -36,6 +38,7 @@ export function MergedOutputRows({
   accountId,
   formatMessage,
   innerRef,
+  onEditFieldsetTitle,
 }: IMergedOutputRowsProps) {
   return (
     <>
@@ -64,23 +67,26 @@ export function MergedOutputRows({
             />
           );
         }
-        const { name, fields, apiNameBinding } = mapFieldsetBindingClientToRuntime(row);
-        const fieldsetTitle = name || formatMessage({ id: 'tasks.task-fieldsets' });
+        const { name, title, fields, apiNameBinding } = mapFieldsetBindingClientToRuntime(row);
         return (
           <div
             key={`fieldset-${apiNameBinding}`}
             className={classNames(
               kickoffStyles['with-label'],
               kickoffStyles['kick-off-input'],
+              styles['flow__fieldset-row'],
             )}
           >
             <div className={kickoffStyles['kick-off-input__field']}>
-              <div
-                className={classNames(kickoffStyles['kick-off-input__name-readonly'], styles['flow__fieldset-name'])}
-                title={fieldsetTitle}
-              >
-                {formatMessage({ id: 'fieldsets.title' })}: {fieldsetTitle}
+              <div className={styles['flow__fieldset-header']}>
+                {formatMessage({ id: 'fieldsets.header-label' })}:{'\u00a0'}{name}
               </div>
+              <FieldsetEditorTitle
+                apiNameBinding={apiNameBinding}
+                title={title}
+                onEditFieldsetTitle={onEditFieldsetTitle}
+                formatMessage={formatMessage}
+              />
               {isArrayWithItems(fields) &&
                 <div className={styles['flow__fieldset-nested-fields']}>
                   <ExtraFieldsLabels extraFields={fields} />
@@ -88,14 +94,13 @@ export function MergedOutputRows({
               }
             </div>
             <div className={kickoffStyles['kick-off-input__dropdown']}>
-              {/* sharedFieldsetId is synced with FieldsetIconPicker — do not replace with apiNameBinding */}
               <FieldsetFlowRowDropdown
-                headerTitle={fieldsetTitle}
+                headerTitle={apiNameBinding}
                 isFirstItem={isFirst}
                 isLastItem={isLast}
                 onMoveUp={() => onMoveRow(index, 'up')}
                 onMoveDown={() => onMoveRow(index, 'down')}
-                onRemove={() => onRemoveFieldset(row.sharedFieldsetId)}
+                onRemove={() => onRemoveFieldset(row.apiNameBinding)}
               />
             </div>
           </div>
