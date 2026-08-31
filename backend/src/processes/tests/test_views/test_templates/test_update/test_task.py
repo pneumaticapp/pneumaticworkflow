@@ -1039,7 +1039,7 @@ class TestUpdateTemplateTask:
             user=user2_new,
         )
 
-    def test_update__change_performer_for_completed_task__do_nothing(
+    def test_update__change_performer_for_completed_task__sync_raw(
         self,
         mocker,
         api_client,
@@ -1185,12 +1185,13 @@ class TestUpdateTemplateTask:
         workflow.refresh_from_db()
         completed_task = workflow.tasks.get(number=1)
         assert completed_task.is_completed
+        task_field2 = TaskField.objects.get(
+            api_name=field_template_2.api_name,
+        )
         raw_performers = completed_task.raw_performers.all()
         assert raw_performers.count() == 2
-        raw_performer_1 = raw_performers.get(type=PerformerType.USER)
-        assert raw_performer_1.user_id == user1.id
-        raw_performer_2 = raw_performers.get(type=PerformerType.FIELD)
-        assert raw_performer_2.field.api_name == field_template_1.api_name
+        assert raw_performers.get(user_id=user1_new.id)
+        assert raw_performers.get(field__api_name=task_field2.api_name)
 
         assert completed_task.taskperformer_set.count() == 2
         assert TaskPerformer.objects.get(
