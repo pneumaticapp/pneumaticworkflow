@@ -55,11 +55,11 @@ export function FieldsetFieldsList({
       </h2>
 
       <div className={classnames(styles['components'], isReadOnly && styles['components_disabled'])}>
-        {ExtraFieldsMap.map((x) => (
+        {ExtraFieldsMap.map((field) => (
           <ExtraFieldIcon
-            {...x}
-            key={x.id}
-            onClick={() => onFieldsChange(createField(fields, x.id, formatMessage))}
+            {...field}
+            key={field.id}
+            onClick={() => onFieldsChange(createField(sortedFields, field.id, formatMessage))}
             disabled={isReadOnly}
           />
         ))}
