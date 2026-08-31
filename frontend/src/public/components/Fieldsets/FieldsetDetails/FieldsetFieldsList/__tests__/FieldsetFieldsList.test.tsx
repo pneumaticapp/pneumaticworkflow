@@ -75,6 +75,8 @@ describe('FieldsetFieldsList Component', () => {
     labelPosition: EFieldLabelPosition.Top,
     accountId: 1,
     datasetOptions: [],
+    rulesets: [],
+    onRulesetsChange: jest.fn(),
   };
 
   beforeEach(() => {
@@ -104,7 +106,22 @@ describe('FieldsetFieldsList Component', () => {
     expect(onFieldsChange).toHaveBeenCalledTimes(1);
   });
 
-  it('triggers onFieldsChange on delete, edit, moveUp and moveDown', () => {
+  it('should trigger both onFieldsChange and onRulesetsChange on field deletion', () => {
+    const onFieldsChange = jest.fn();
+    const onRulesetsChange = jest.fn();
+    const fields = [
+      makeExtraField({ apiName: 'f1', order: 2 }),
+      makeExtraField({ apiName: 'f2', order: 1 }),
+    ];
+    render(React.createElement(FieldsetFieldsList, { ...defaultProps, fields, onFieldsChange, onRulesetsChange }));
+
+    userEvent.click(screen.getByTestId('delete-f1'));
+
+    expect(onFieldsChange).toHaveBeenCalledTimes(1);
+    expect(onRulesetsChange).toHaveBeenCalledTimes(1);
+  });
+
+  it('triggers onFieldsChange on edit, moveUp and moveDown', () => {
     const onFieldsChange = jest.fn();
     const fields = [
       makeExtraField({ apiName: 'f1', order: 2 }),
@@ -112,16 +129,13 @@ describe('FieldsetFieldsList Component', () => {
     ];
     render(React.createElement(FieldsetFieldsList, { ...defaultProps, fields, onFieldsChange }));
 
-    userEvent.click(screen.getByTestId('delete-f1'));
+    userEvent.click(screen.getByTestId('move-down-f1'));
     expect(onFieldsChange).toHaveBeenCalledTimes(1);
 
-    userEvent.click(screen.getByTestId('move-down-f1'));
+    userEvent.click(screen.getByTestId('move-up-f2'));
     expect(onFieldsChange).toHaveBeenCalledTimes(2);
 
-    userEvent.click(screen.getByTestId('move-up-f2'));
-    expect(onFieldsChange).toHaveBeenCalledTimes(3);
-
     userEvent.click(screen.getByTestId('edit-f1'));
-    expect(onFieldsChange).toHaveBeenCalledTimes(4);
+    expect(onFieldsChange).toHaveBeenCalledTimes(3);
   });
 });

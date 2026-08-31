@@ -5,7 +5,7 @@ import {
   ERuleCombinator,
   IFieldsetRuleSet,
 } from '../../../../types/fieldset';
-import { IExtraField } from '../../../../types/template';
+
 import {
   createRulesetApiName,
   createRulesetGroupOrApiName,
@@ -66,20 +66,25 @@ export const getNormalizedRulesetOrders = (rulesets: IFieldsetRuleSet[]): IField
   }));
 };
 
-export const getFilteredFieldsetRulesets = (
+export const removeDeletedFieldFromRulesets = (
   rulesets: IFieldsetRuleSet[],
-  existingFields: IExtraField[],
+  deletedFieldApiName: string,
 ): IFieldsetRuleSet[] => {
-  const existingApiNames = new Set(existingFields.map((field) => field.apiName));
+  const isFieldUsedInRulesets = rulesets.some((ruleSet) => ruleSet.fields.includes(deletedFieldApiName));
+  if (!isFieldUsedInRulesets) return rulesets;
 
-  const filteredRulesets = rulesets.filter((ruleSet) =>
-    ruleSet.fields.some((apiName) => existingApiNames.has(apiName)),
-  );
+  const updatedRulesets = rulesets
+    .map((ruleSet) => ({
+      ...ruleSet,
+      fields: ruleSet.fields.filter((apiName) => apiName !== deletedFieldApiName),
+    }))
+    .filter((ruleSet, index) =>
+      ruleSet.fields.length > 0 || !rulesets[index].fields.includes(deletedFieldApiName),
+    );
 
-  if (filteredRulesets.length === rulesets.length) return rulesets;
-
-  return getNormalizedRulesetOrders(filteredRulesets);
+  return getNormalizedRulesetOrders(updatedRulesets);
 };
+
 
 export const updateRuleInRulesets = ({
   rulesets,

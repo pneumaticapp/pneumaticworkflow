@@ -51,7 +51,7 @@ import { FieldsetRulesets } from './FieldsetRulesets/FieldsetRulesets';
 import { FieldsetFieldsList } from './FieldsetFieldsList/FieldsetFieldsList';
 import { FieldRuleModal } from './FieldRuleModal';
 import { saveFieldRuleset } from './utils';
-import { getFilteredFieldsetRulesets } from './FieldsetRulesets/utils';
+
 import styles from './FieldsetDetails.css';
 
 
@@ -139,19 +139,8 @@ const FieldsetDetails = ({
   };
 
   const handleFieldsChange = (newFields: IExtraField[]) => {
-    const updatedRulesets = getFilteredFieldsetRulesets(localFieldset.rulesets, newFields);
-    const rulesetsChanged = updatedRulesets !== localFieldset.rulesets;
-
-    setLocalFieldset((prev) => ({
-      ...prev,
-      fields: newFields,
-      ...(rulesetsChanged && { rulesets: updatedRulesets }),
-    }));
-    setFieldsetChanges((prev) => ({
-      ...prev,
-      fields: newFields,
-      ...(rulesetsChanged && { rulesets: updatedRulesets }),
-    }));
+    setLocalFieldset((prev) => ({ ...prev, fields: newFields }));
+    setFieldsetChanges((prev) => ({ ...prev, fields: newFields }));
   };
 
   const handleRulesetsChange = (rulesets: IFieldsetRuleSet[]) => {
@@ -450,6 +439,8 @@ const FieldsetDetails = ({
         labelPosition={localFieldset.labelPosition}
         accountId={accountId}
         datasetOptions={datasetOptions}
+        rulesets={localFieldset.rulesets}
+        onRulesetsChange={handleRulesetsChange}
         onOpenFieldRule={(fieldApiName, ruleset) => {
           setActiveFieldApiName(fieldApiName);
           setActiveFieldRuleset(ruleset || null);
