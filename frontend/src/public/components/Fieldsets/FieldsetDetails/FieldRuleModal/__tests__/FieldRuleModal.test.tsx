@@ -41,7 +41,7 @@ describe('FieldRuleModal', () => {
   const defaultProps = {
     isOpen: true,
     ruleset: validRuleset,
-    rulesFieldOptions: [mockFieldOption],
+    fieldRulesetShowFieldOptions: [mockFieldOption],
     onSave: jest.fn(),
     onClose: jest.fn(),
   };
@@ -128,7 +128,7 @@ describe('FieldRuleModal', () => {
   });
 
   it('renders disabled Show option with tooltip when no field options available', () => {
-    renderWithIntl(<FieldRuleModal {...defaultProps} rulesFieldOptions={[]} />);
+    renderWithIntl(<FieldRuleModal {...defaultProps} fieldRulesetShowFieldOptions={[]} />);
 
     const showElements = screen.getAllByText('Show');
     const disabledOptionText = showElements.find((el) => el.classList.contains('rule-option_disabled'));

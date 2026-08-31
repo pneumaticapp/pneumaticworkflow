@@ -158,7 +158,7 @@ const FieldsetDetails = ({
     setActiveFieldApiName(null);
   };
 
-  const rulesFieldOptions = useMemo(() => {
+  const fieldRulesetShowFieldOptions = useMemo(() => {
     if (!activeFieldApiName || !localFieldset.fields) {
       return [];
     }
@@ -169,6 +169,7 @@ const FieldsetDetails = ({
         name: field.name,
         type: field.type,
         selections: field.selections,
+        datasetId: field.dataset,
       }));
   }, [activeFieldApiName, localFieldset.fields]);
 
@@ -472,7 +473,7 @@ const FieldsetDetails = ({
       <FieldRuleModal
         isOpen={Boolean(activeFieldApiName)}
         ruleset={activeFieldRuleset}
-        rulesFieldOptions={rulesFieldOptions}
+        fieldRulesetShowFieldOptions={fieldRulesetShowFieldOptions}
         onSave={handleFieldRuleSave}
         onClose={handleFieldRuleClose}
       />

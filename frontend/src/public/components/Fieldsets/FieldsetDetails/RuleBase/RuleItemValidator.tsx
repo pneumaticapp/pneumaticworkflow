@@ -5,7 +5,7 @@ import classnames from 'classnames';
 import { NumericFormat } from 'react-number-format';
 
 import { FilterSelect } from '../../../UI';
-import { TRuleOperatorOption, TRuleItemValidatorProps } from './types';
+import { IFieldRulesetBaseOperatorOption, IFieldRulesetValidatorItemProps } from './types';
 
 import fieldsetDetailsStyles from '../FieldsetDetails.css';
 import styles from '../FieldsetRulesets/FieldsetRulesets.css';
@@ -13,10 +13,10 @@ import styles from '../FieldsetRulesets/FieldsetRulesets.css';
 export const RuleItemValidator = ({
   groupAndRule,
   groupOrApiName,
-  ruleOperatorOptions,
+  fieldRulesetBaseOperatorOptions,
   isReadOnly,
   updateRule,
-}: TRuleItemValidatorProps) => {
+}: IFieldRulesetValidatorItemProps) => {
   const { formatMessage } = useIntl();
   const [isTouched, setIsTouched] = useState(false);
   const { apiName: groupAndApiName, operator, value } = groupAndRule;
@@ -26,7 +26,7 @@ export const RuleItemValidator = ({
   }, [value, operator]);
 
   const selectedValidatorOperatorOption =
-    ruleOperatorOptions.find((option) => option.apiName === operator) || ruleOperatorOptions[0];
+    fieldRulesetBaseOperatorOptions.find((option) => option.apiName === operator) || fieldRulesetBaseOperatorOptions[0];
 
   const selectedValidatorOperatorLabel = selectedValidatorOperatorOption?.name || '';
   const currentValidatorOperator = selectedValidatorOperatorOption?.apiName || '';
@@ -35,16 +35,16 @@ export const RuleItemValidator = ({
 
   return (
     <>
-      <FilterSelect<'apiName', 'name', TRuleOperatorOption>
+      <FilterSelect<'apiName', 'name', IFieldRulesetBaseOperatorOption>
         optionIdKey="apiName"
         optionLabelKey="name"
-        options={ruleOperatorOptions}
+        options={fieldRulesetBaseOperatorOptions}
         selectedOption={currentValidatorOperator}
         onChange={(key) => {
           if (key && key !== operator) {
             updateRule({
-              ruleGroupOrApiName: groupOrApiName,
-              ruleGroupAndApiName: groupAndApiName,
+              groupOrApiName,
+              groupAndApiName,
               ruleChanges: {
                 operator: String(key),
               },
@@ -67,8 +67,8 @@ export const RuleItemValidator = ({
         value={value}
         onValueChange={(values) => {
           updateRule({
-            ruleGroupOrApiName: groupOrApiName,
-            ruleGroupAndApiName: groupAndApiName,
+            groupOrApiName,
+            groupAndApiName,
             ruleChanges: { value: values.value },
           });
         }}

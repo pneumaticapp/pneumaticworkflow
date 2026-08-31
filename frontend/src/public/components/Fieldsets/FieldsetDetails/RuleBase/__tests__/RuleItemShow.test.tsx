@@ -81,8 +81,8 @@ describe('RuleItemShow component', () => {
       <RuleItemShow
         groupAndRule={mockGroupAndRule}
         groupOrApiName="or_1"
-        ruleOperatorOptions={mockOperatorOptions}
-        rulesFieldOptions={mockOptions}
+        fieldRulesetBaseOperatorOptions={mockOperatorOptions}
+        fieldRulesetShowFieldOptions={mockOptions}
         updateRule={handleUpdateRule}
       />,
     );
@@ -92,8 +92,8 @@ describe('RuleItemShow component', () => {
 
     expect(handleUpdateRule).toHaveBeenCalledTimes(1);
     expect(handleUpdateRule).toHaveBeenCalledWith({
-      ruleGroupOrApiName: 'or_1',
-      ruleGroupAndApiName: 'and_1',
+      groupOrApiName: 'or_1',
+      groupAndApiName: 'and_1',
       ruleChanges: {
         field: 'field_2',
         operator: null,
@@ -109,8 +109,8 @@ describe('RuleItemShow component', () => {
       <RuleItemShow
         groupAndRule={mockGroupAndRule}
         groupOrApiName="or_1"
-        ruleOperatorOptions={mockOperatorOptions}
-        rulesFieldOptions={mockOptions}
+        fieldRulesetBaseOperatorOptions={mockOperatorOptions}
+        fieldRulesetShowFieldOptions={mockOptions}
         updateRule={handleUpdateRule}
       />,
     );
@@ -120,8 +120,8 @@ describe('RuleItemShow component', () => {
 
     expect(handleUpdateRule).toHaveBeenCalledTimes(1);
     expect(handleUpdateRule).toHaveBeenCalledWith({
-      ruleGroupOrApiName: 'or_1',
-      ruleGroupAndApiName: 'and_1',
+      groupOrApiName: 'or_1',
+      groupAndApiName: 'and_1',
       ruleChanges: {
         operator: 'not_equals',
       },
@@ -135,8 +135,8 @@ describe('RuleItemShow component', () => {
       <RuleItemShow
         groupAndRule={mockGroupAndRule}
         groupOrApiName="or_1"
-        ruleOperatorOptions={mockOperatorOptions}
-        rulesFieldOptions={mockOptions}
+        fieldRulesetBaseOperatorOptions={mockOperatorOptions}
+        fieldRulesetShowFieldOptions={mockOptions}
         updateRule={handleUpdateRule}
       />,
     );
@@ -146,8 +146,8 @@ describe('RuleItemShow component', () => {
 
     expect(handleUpdateRule).toHaveBeenCalledTimes(1);
     expect(handleUpdateRule).toHaveBeenCalledWith({
-      ruleGroupOrApiName: 'or_1',
-      ruleGroupAndApiName: 'and_1',
+      groupOrApiName: 'or_1',
+      groupAndApiName: 'and_1',
       ruleChanges: {
         value: 'new value',
       },

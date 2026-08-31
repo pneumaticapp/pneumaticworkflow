@@ -12,7 +12,7 @@ import {
 } from '../../../../../types/fieldset';
 
 import { EExtraFieldType } from '../../../../../types/template';
-import { TRuleFieldOption } from '../../RuleBase/types';
+import { IFieldRulesetShowFieldOption } from '../../RuleBase/types';
 
 const makeValidRuleset = (overrides: Partial<IFieldRuleSet> = {}): IFieldRuleSet => ({
   apiName: 'rs-1',
@@ -36,7 +36,7 @@ const makeValidRuleset = (overrides: Partial<IFieldRuleSet> = {}): IFieldRuleSet
   ...overrides,
 });
 
-const makeFieldOptions = (overrides: Partial<TRuleFieldOption> = {}): TRuleFieldOption[] => [
+const makeFieldOptions = (overrides: Partial<IFieldRulesetShowFieldOption> = {}): IFieldRulesetShowFieldOption[] => [
   { apiName: 'field_1', name: 'Field 1', type: EExtraFieldType.Text, ...overrides },
 ];
 

@@ -104,8 +104,8 @@ describe('FieldsetRulesets utils', () => {
       updateRuleInRulesets({
         rulesets: [r1, r2],
         rulesetApiName: 'r1',
-        ruleGroupOrApiName: 'g-or-1',
-        ruleGroupAndApiName: 'g-and-1',
+        groupOrApiName: 'g-or-1',
+        groupAndApiName: 'g-and-1',
         ruleChanges: {
           value: '50',
         },
@@ -184,8 +184,8 @@ describe('FieldsetRulesets utils', () => {
       deleteRuleFromRulesets({
         rulesets: [r1, r2],
         rulesetApiName: 'r1',
-        ruleGroupOrApiName: 'g-or-1',
-        ruleGroupAndApiName: 'g-and-1',
+        groupOrApiName: 'g-or-1',
+        groupAndApiName: 'g-and-1',
         onRulesetsChange: onRulesetsChangeMock,
       });
 

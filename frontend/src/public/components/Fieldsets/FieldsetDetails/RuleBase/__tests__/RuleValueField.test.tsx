@@ -18,10 +18,23 @@ const mockState = {
     language: 'en',
     timezone: 'UTC',
   },
+  datasets: {
+    datasetsMap: {
+      10: {
+        id: 10,
+        name: 'Cities',
+        items: [
+          { id: 101, value: 'New York' },
+          { id: 102, value: 'London' },
+        ],
+      },
+    },
+  },
 };
 
 jest.mock('react-redux', () => ({
-  useSelector: jest.fn((selector) => selector(mockState)),
+  useSelector: jest.fn((selector: (state: typeof mockState) => unknown) => selector(mockState)),
+  useDispatch: jest.fn(() => jest.fn()),
 }));
 
 jest.mock('react-intl', () => {
@@ -219,5 +232,26 @@ describe('FieldsetFieldRulesValue component', () => {
 
     fireEvent.focus(input);
     expect(input).not.toHaveClass('rule-value-input_error');
+  });
+
+  it('renders select options from dataset when dataset prop is provided', () => {
+    const handleChange = jest.fn();
+
+    render(
+      <FieldsetFieldRulesValue
+        fieldType={EExtraFieldType.Radio}
+        datasetId={10}
+        value="New York"
+        onChange={handleChange}
+      />,
+    );
+
+    const select = screen.getByTestId('filter-select');
+    expect(select).toBeInTheDocument();
+    expect(select).toHaveValue('New York');
+
+    fireEvent.change(select, { target: { value: 'London' } });
+    expect(handleChange).toHaveBeenCalledTimes(1);
+    expect(handleChange).toHaveBeenCalledWith('London');
   });
 });

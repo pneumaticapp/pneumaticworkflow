@@ -11,7 +11,7 @@ import {
   IFieldRuleSet,
 } from '../../../../types/fieldset';
 import { EExtraFieldType } from '../../../../types/template';
-import { TRuleFieldOption } from '../RuleBase/types';
+import { IFieldRulesetShowFieldOption } from '../RuleBase/types';
 
 export const createEmptyFieldRule = (
   type: EFieldRuleType = EFieldRuleType.Validator,
@@ -96,7 +96,7 @@ export const updateFieldRule = (
 
 export const isFieldRulesetValid = (
   ruleSet: IFieldRuleSet,
-  rulesFieldOptions: TRuleFieldOption[] = [],
+  fieldRulesetShowFieldOptions: IFieldRulesetShowFieldOption[] = [],
 ): boolean => {
   if (!ruleSet.name?.trim()) {
     return false;
@@ -112,7 +112,7 @@ export const isFieldRulesetValid = (
       if (!rule.field) {
         return false;
       }
-      const selectedField = rulesFieldOptions.find((fieldOption) => fieldOption.apiName === rule.field);
+      const selectedField = fieldRulesetShowFieldOptions.find((fieldOption) => fieldOption.apiName === rule.field);
       const isFileField = selectedField?.type === EExtraFieldType.File;
       if (!isFileField) {
         const valStr = rule.value != null ? String(rule.value).trim() : '';

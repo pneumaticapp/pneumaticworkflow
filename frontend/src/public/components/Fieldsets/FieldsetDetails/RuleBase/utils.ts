@@ -7,7 +7,7 @@ import { createRulesetGroupOrApiName } from '../../../../utils/createId';
 import { getDropdownOperators } from '../../../TemplateEdit/TaskForm/Conditions/utils/getDropdownOperators';
 import { EConditionOperators } from '../../../TemplateEdit/TaskForm/Conditions/types';
 import { EExtraFieldType } from '../../../../types/template';
-import { TRuleOperatorOption } from './types';
+import { IFieldRulesetBaseOperatorOption } from './types';
 
 const EXCLUDED_FIELDSET_OPERATORS = [
   EConditionOperators.Exist,
@@ -17,7 +17,7 @@ const EXCLUDED_FIELDSET_OPERATORS = [
 export const getFieldsetRuleShowOperators = (
   fieldType: EExtraFieldType,
   messages: Record<string, string>,
-): TRuleOperatorOption[] => {
+): IFieldRulesetBaseOperatorOption[] => {
   const operators = getDropdownOperators(fieldType, messages);
   return operators
     .filter((item) => !EXCLUDED_FIELDSET_OPERATORS.includes(item.operator))

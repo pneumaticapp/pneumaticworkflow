@@ -7,7 +7,7 @@ import { TrashIcon } from '../../../icons';
 import { EFieldRuleType } from '../../../../types/fieldset';
 import { FIELDSET_RULE_COMBINATORS } from '../../constants';
 import { getRuleCombinator } from './utils';
-import { TRuleItemProps } from './types';
+import { IFieldRulesetBaseItemProps } from './types';
 import { RuleItemShow } from './RuleItemShow';
 import { RuleItemValidator } from './RuleItemValidator';
 
@@ -18,14 +18,14 @@ export const RuleItem = ({
   groupOrApiName,
   groupOrIndex,
   groupAndIndex,
-  ruleOperatorOptions,
-  rulesFieldOptions,
+  fieldRulesetBaseOperatorOptions,
+  fieldRulesetShowFieldOptions,
   ruleType,
   isReadOnly,
   updateRule,
   deleteRule,
   regroupRules,
-}: TRuleItemProps) => {
+}: IFieldRulesetBaseItemProps) => {
   const { formatMessage } = useIntl();
   const { apiName: groupAndApiName } = groupAndRule;
 
@@ -61,8 +61,8 @@ export const RuleItem = ({
           <RuleItemShow
             groupAndRule={groupAndRule}
             groupOrApiName={groupOrApiName}
-            ruleOperatorOptions={ruleOperatorOptions}
-            rulesFieldOptions={rulesFieldOptions || []}
+            fieldRulesetBaseOperatorOptions={fieldRulesetBaseOperatorOptions}
+            fieldRulesetShowFieldOptions={fieldRulesetShowFieldOptions || []}
             isReadOnly={isReadOnly}
             updateRule={updateRule}
           />
@@ -70,7 +70,7 @@ export const RuleItem = ({
           <RuleItemValidator
             groupAndRule={groupAndRule}
             groupOrApiName={groupOrApiName}
-            ruleOperatorOptions={ruleOperatorOptions}
+            fieldRulesetBaseOperatorOptions={fieldRulesetBaseOperatorOptions}
             isReadOnly={isReadOnly}
             updateRule={updateRule}
           />
@@ -81,7 +81,7 @@ export const RuleItem = ({
             type="button"
             aria-label={formatMessage({ id: 'fieldsets.rule-delete' })}
             className={styles['rule-remove-btn']}
-            onClick={() => deleteRule({ ruleGroupOrApiName: groupOrApiName, ruleGroupAndApiName: groupAndApiName })}
+            onClick={() => deleteRule({ groupOrApiName, groupAndApiName })}
           >
             <TrashIcon />
           </button>

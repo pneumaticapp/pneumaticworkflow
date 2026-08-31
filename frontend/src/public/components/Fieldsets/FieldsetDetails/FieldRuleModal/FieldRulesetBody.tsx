@@ -16,7 +16,7 @@ import rulesetStyles from '../FieldsetRulesets/FieldsetRulesets.css';
 
 export function FieldRulesetBody({
   localRuleSet,
-  rulesFieldOptions,
+  fieldRulesetShowFieldOptions,
   onUpdateRuleSet,
 }: IFieldRulesetBodyProps) {
   const { formatMessage } = useIntl();
@@ -28,7 +28,7 @@ export function FieldRulesetBody({
     setIsTouchedName(false);
   }, [type]);
 
-  const isNoOtherFields = (rulesFieldOptions?.length ?? 0) === 0;
+  const isNoOtherFields = (fieldRulesetShowFieldOptions?.length ?? 0) === 0;
 
   const typeOptions: Array<{
     apiName: EFieldRuleType;
@@ -116,13 +116,13 @@ export function FieldRulesetBody({
         ruleSet={localRuleSet}
         ruleType={type}
         operatorOptions={FIELD_RULE_VALIDATOR_OPERATOR_OPTIONS}
-        rulesFieldOptions={rulesFieldOptions}
+        fieldRulesetShowFieldOptions={fieldRulesetShowFieldOptions}
         addRule={() => onUpdateRuleSet(addRule(localRuleSet, () => createEmptyFieldRule(type)))}
-        updateRule={({ ruleGroupOrApiName, ruleGroupAndApiName, ruleChanges }) =>
-          onUpdateRuleSet(updateRule(localRuleSet, ruleGroupOrApiName, ruleGroupAndApiName, ruleChanges))
+        updateRule={({ groupOrApiName, groupAndApiName, ruleChanges }) =>
+          onUpdateRuleSet(updateRule(localRuleSet, groupOrApiName, groupAndApiName, ruleChanges))
         }
-        deleteRule={({ ruleGroupOrApiName, ruleGroupAndApiName }) =>
-          onUpdateRuleSet(deleteRule(localRuleSet, ruleGroupOrApiName, ruleGroupAndApiName))
+        deleteRule={({ groupOrApiName, groupAndApiName }) =>
+          onUpdateRuleSet(deleteRule(localRuleSet, groupOrApiName, groupAndApiName))
         }
         regroupRules={({ groupOrApiName, groupAndApiName, ruleCombinator }) =>
           onUpdateRuleSet(regroupRules(localRuleSet, groupOrApiName, groupAndApiName, ruleCombinator))

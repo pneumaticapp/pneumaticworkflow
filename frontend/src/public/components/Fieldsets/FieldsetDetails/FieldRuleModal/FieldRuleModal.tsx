@@ -14,7 +14,7 @@ import styles from './FieldRuleModal.css';
 export function FieldRuleModal({
   isOpen,
   ruleset,
-  rulesFieldOptions,
+  fieldRulesetShowFieldOptions,
   onSave,
   onClose,
 }: IFieldRuleModalProps) {
@@ -33,7 +33,7 @@ export function FieldRuleModal({
     setLocalRuleSet((prev) => ({ ...prev, ...changes }));
   };
 
-  const isValid = isFieldRulesetValid(localRuleSet, rulesFieldOptions);
+  const isValid = isFieldRulesetValid(localRuleSet, fieldRulesetShowFieldOptions);
 
   return (
     <BaseModal isOpen={isOpen} toggle={onClose} className={styles['modal-dialog']}>
@@ -43,7 +43,7 @@ export function FieldRuleModal({
       <ModalBody>
         <FieldRulesetBody
           localRuleSet={localRuleSet}
-          rulesFieldOptions={rulesFieldOptions}
+          fieldRulesetShowFieldOptions={fieldRulesetShowFieldOptions}
           onUpdateRuleSet={updateRuleSet}
         />
       </ModalBody>

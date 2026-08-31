@@ -4,18 +4,17 @@ import {
   ERuleCombinator,
   EFieldRuleType,
 } from '../../../../types/fieldset';
-
 import { EExtraFieldType, IExtraFieldSelection } from '../../../../types/template';
 
-export type TRuleHandlers = {
+export type IFieldRulesetBaseHandlers = {
   updateRule: (params: {
-    ruleGroupOrApiName: string;
-    ruleGroupAndApiName: string;
+    groupOrApiName: string;
+    groupAndApiName: string;
     ruleChanges: Partial<IBaseRuleGroupAnd>;
   }) => void;
   deleteRule: (params: {
-    ruleGroupOrApiName: string;
-    ruleGroupAndApiName: string;
+    groupOrApiName: string;
+    groupAndApiName: string;
   }) => void;
   regroupRules: (params: {
     groupOrApiName: string;
@@ -24,61 +23,68 @@ export type TRuleHandlers = {
   }) => void;
 };
 
-export type TRuleOperatorOption = { apiName: string; name: string };
-export type TRuleFieldOption = {
+export type IFieldRulesetBaseOperatorOption = {
+  apiName: string;
+  name: string;
+};
+
+export type IFieldRulesetShowFieldOption = {
   apiName: string;
   name: string;
   type?: EExtraFieldType;
   selections?: IExtraFieldSelection[] | string[];
+  datasetId?: number | null;
 };
 
-export type TRuleItemProps = TRuleHandlers & {
+export type IFieldRulesetBaseItemProps = IFieldRulesetBaseHandlers & {
   groupAndRule: IBaseRuleGroupAnd;
   groupOrApiName: string;
   groupOrIndex: number;
   groupAndIndex: number;
-  ruleOperatorOptions: TRuleOperatorOption[];
-  rulesFieldOptions?: TRuleFieldOption[];
+  fieldRulesetBaseOperatorOptions: IFieldRulesetBaseOperatorOption[];
+  fieldRulesetShowFieldOptions?: IFieldRulesetShowFieldOption[];
   ruleType: EFieldRuleType;
   isReadOnly?: boolean;
 };
 
-export type TRuleListProps = TRuleHandlers & {
+export type IFieldRulesetBaseListProps = IFieldRulesetBaseHandlers & {
   ruleSet: IBaseRuleSet;
   operatorOptions: { value: string; labelKey: string }[];
-  rulesFieldOptions?: TRuleFieldOption[];
+  fieldRulesetShowFieldOptions?: IFieldRulesetShowFieldOption[];
   ruleType: EFieldRuleType;
   isReadOnly?: boolean;
   addRule: () => void;
 };
 
-export type TRulesetMessageInputProps = {
+export type IFieldRulesetMessageInputProps = {
   message?: string | null;
   onChange: (message: string) => void;
   isReadOnly?: boolean;
 };
 
-export type TRuleItemShowProps = {
+export type IFieldRulesetShowItemProps = {
   groupAndRule: IBaseRuleGroupAnd;
   groupOrApiName: string;
-  ruleOperatorOptions: TRuleOperatorOption[];
-  rulesFieldOptions: TRuleFieldOption[];
+  fieldRulesetBaseOperatorOptions: IFieldRulesetBaseOperatorOption[];
+  fieldRulesetShowFieldOptions: IFieldRulesetShowFieldOption[];
   isReadOnly?: boolean;
-  updateRule: TRuleHandlers['updateRule'];
+  updateRule: IFieldRulesetBaseHandlers['updateRule'];
 };
 
-export type TRuleItemValidatorProps = {
+export type IFieldRulesetValidatorItemProps = {
   groupAndRule: IBaseRuleGroupAnd;
   groupOrApiName: string;
-  ruleOperatorOptions: TRuleOperatorOption[];
+  fieldRulesetBaseOperatorOptions: IFieldRulesetBaseOperatorOption[];
   isReadOnly?: boolean;
-  updateRule: TRuleHandlers['updateRule'];
+  updateRule: IFieldRulesetBaseHandlers['updateRule'];
 };
 
-export type TFieldsetFieldRulesValueProps = {
+export type IFieldRulesetValueFieldProps = {
   fieldType?: EExtraFieldType;
   value: string;
   selections?: IExtraFieldSelection[] | string[];
+  datasetId?: number | null;
   isReadOnly?: boolean;
   onChange: (value: string) => void;
 };
+

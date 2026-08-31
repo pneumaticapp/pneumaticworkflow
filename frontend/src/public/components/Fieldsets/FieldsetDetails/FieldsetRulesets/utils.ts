@@ -89,19 +89,19 @@ export const removeDeletedFieldFromRulesets = (
 export const updateRuleInRulesets = ({
   rulesets,
   rulesetApiName,
-  ruleGroupOrApiName,
-  ruleGroupAndApiName,
+  groupOrApiName,
+  groupAndApiName,
   ruleChanges,
   onRulesetsChange,
 }: TRulesetsParams & {
   rulesetApiName: string;
-  ruleGroupOrApiName: string;
-  ruleGroupAndApiName: string;
+  groupOrApiName: string;
+  groupAndApiName: string;
   ruleChanges: Partial<IBaseRuleGroupAnd>;
 }) => {
   const updatedRulesets = rulesets.map((ruleset) =>
     ruleset.apiName === rulesetApiName
-      ? updateRule(ruleset, ruleGroupOrApiName, ruleGroupAndApiName, ruleChanges)
+      ? updateRule(ruleset, groupOrApiName, groupAndApiName, ruleChanges)
       : ruleset,
   );
   onRulesetsChange(updatedRulesets);
@@ -149,17 +149,17 @@ export const deleteRuleset = ({
 export const deleteRuleFromRulesets = ({
   rulesets,
   rulesetApiName,
-  ruleGroupOrApiName,
-  ruleGroupAndApiName,
+  groupOrApiName,
+  groupAndApiName,
   onRulesetsChange,
 }: TRulesetsParams & {
   rulesetApiName: string;
-  ruleGroupOrApiName: string;
-  ruleGroupAndApiName: string;
+  groupOrApiName: string;
+  groupAndApiName: string;
 }) => {
   const updatedRulesets = rulesets.map((ruleset) =>
     ruleset.apiName === rulesetApiName
-      ? deleteRule(ruleset, ruleGroupOrApiName, ruleGroupAndApiName)
+      ? deleteRule(ruleset, groupOrApiName, groupAndApiName)
       : ruleset,
   );
   onRulesetsChange(updatedRulesets);

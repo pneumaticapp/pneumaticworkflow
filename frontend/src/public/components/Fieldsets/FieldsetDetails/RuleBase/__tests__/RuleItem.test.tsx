@@ -11,6 +11,7 @@ const EMPTY_FIELD_OPTIONS: Array<{ apiName: string; name: string }> = [];
 
 jest.mock('react-redux', () => ({
   useSelector: jest.fn(() => EMPTY_FIELD_OPTIONS),
+  useDispatch: jest.fn(() => jest.fn()),
 }));
 
 jest.mock('../../../../UI', () => ({
@@ -84,7 +85,7 @@ describe('RuleItem component', () => {
         groupOrApiName="g-or-1"
         groupOrIndex={0}
         groupAndIndex={0}
-        ruleOperatorOptions={defaultOperatorOptions}
+        fieldRulesetBaseOperatorOptions={defaultOperatorOptions}
         ruleType={EFieldRuleType.Validator}
         isReadOnly={false}
         updateRule={mockUpdateRule}
@@ -113,7 +114,7 @@ describe('RuleItem component', () => {
         groupOrApiName="g-or-1"
         groupOrIndex={0}
         groupAndIndex={1}
-        ruleOperatorOptions={defaultOperatorOptions}
+        fieldRulesetBaseOperatorOptions={defaultOperatorOptions}
         ruleType={EFieldRuleType.Validator}
         isReadOnly={false}
         updateRule={mockUpdateRule}
@@ -147,7 +148,7 @@ describe('RuleItem component', () => {
         groupOrApiName="g-or-1"
         groupOrIndex={0}
         groupAndIndex={0}
-        ruleOperatorOptions={defaultOperatorOptions}
+        fieldRulesetBaseOperatorOptions={defaultOperatorOptions}
         ruleType={EFieldRuleType.Validator}
         isReadOnly={false}
         updateRule={mockUpdateRule}
@@ -160,8 +161,8 @@ describe('RuleItem component', () => {
     fireEvent.change(input, { target: { value: '150' } });
 
     expect(mockUpdateRule).toHaveBeenCalledWith({
-      ruleGroupOrApiName: 'g-or-1',
-      ruleGroupAndApiName: 'g-and-1',
+      groupOrApiName: 'g-or-1',
+      groupAndApiName: 'g-and-1',
       ruleChanges: { value: '150' },
     });
   });
@@ -179,7 +180,7 @@ describe('RuleItem component', () => {
         groupOrApiName="g-or-1"
         groupOrIndex={0}
         groupAndIndex={0}
-        ruleOperatorOptions={defaultOperatorOptions}
+        fieldRulesetBaseOperatorOptions={defaultOperatorOptions}
         ruleType={EFieldRuleType.Validator}
         isReadOnly={false}
         updateRule={mockUpdateRule}
@@ -192,8 +193,8 @@ describe('RuleItem component', () => {
     userEvent.click(deleteBtn);
 
     expect(mockDeleteRule).toHaveBeenCalledWith({
-      ruleGroupOrApiName: 'g-or-1',
-      ruleGroupAndApiName: 'g-and-1',
+      groupOrApiName: 'g-or-1',
+      groupAndApiName: 'g-and-1',
     });
   });
 
@@ -207,7 +208,7 @@ describe('RuleItem component', () => {
       field: 'field-1',
     };
 
-    const rulesFieldOptions = [
+    const fieldRulesetShowFieldOptions = [
       { apiName: 'field-1', name: 'Field 1' },
       { apiName: 'field-2', name: 'Field 2' },
     ];
@@ -218,8 +219,8 @@ describe('RuleItem component', () => {
         groupOrApiName="g-or-1"
         groupOrIndex={0}
         groupAndIndex={0}
-        ruleOperatorOptions={defaultOperatorOptions}
-        rulesFieldOptions={rulesFieldOptions}
+        fieldRulesetBaseOperatorOptions={defaultOperatorOptions}
+        fieldRulesetShowFieldOptions={fieldRulesetShowFieldOptions}
         ruleType={EFieldRuleType.Show}
         isReadOnly={false}
         updateRule={mockUpdateRule}

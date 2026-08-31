@@ -1,16 +1,16 @@
 import { IFieldRuleSet } from '../../../../types/fieldset';
-import { TRuleFieldOption } from '../RuleBase/types';
+import { IFieldRulesetShowFieldOption } from '../RuleBase/types';
 
 export interface IFieldRuleModalProps {
   isOpen: boolean;
   ruleset: IFieldRuleSet | null;
-  rulesFieldOptions?: TRuleFieldOption[];
+  fieldRulesetShowFieldOptions?: IFieldRulesetShowFieldOption[];
   onSave: (ruleset: IFieldRuleSet) => void;
   onClose: () => void;
 }
 
 export interface IFieldRulesetBodyProps {
   localRuleSet: IFieldRuleSet;
-  rulesFieldOptions?: TRuleFieldOption[];
+  fieldRulesetShowFieldOptions?: IFieldRulesetShowFieldOption[];
   onUpdateRuleSet: (changes: Partial<IFieldRuleSet>) => void;
 }

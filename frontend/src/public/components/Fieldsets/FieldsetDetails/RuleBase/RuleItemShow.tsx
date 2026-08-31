@@ -8,7 +8,11 @@ import { FilterSelect } from '../../../UI';
 import { EExtraFieldType } from '../../../../types/template';
 import { getFieldsetRuleShowOperators } from './utils';
 import { FieldsetFieldRulesValue } from './RuleValueField';
-import { TRuleFieldOption, TRuleOperatorOption, TRuleItemShowProps } from './types';
+import {
+  IFieldRulesetShowFieldOption,
+  IFieldRulesetBaseOperatorOption,
+  IFieldRulesetShowItemProps,
+} from './types';
 
 import fieldsetDetailsStyles from '../FieldsetDetails.css';
 import styles from '../FieldsetRulesets/FieldsetRulesets.css';
@@ -16,18 +20,18 @@ import styles from '../FieldsetRulesets/FieldsetRulesets.css';
 export const RuleItemShow = ({
   groupAndRule,
   groupOrApiName,
-  ruleOperatorOptions,
-  rulesFieldOptions,
+  fieldRulesetBaseOperatorOptions,
+  fieldRulesetShowFieldOptions,
   isReadOnly,
   updateRule,
-}: TRuleItemShowProps) => {
+}: IFieldRulesetShowItemProps) => {
   const { formatMessage, messages } = useIntl();
   const { apiName: groupAndApiName, operator, value, field: fieldApiName } = groupAndRule;
 
   const fieldPlaceholderText = formatMessage({ id: 'fieldsets.field-rule.select-field-placeholder' });
   const operatorPlaceholderText = formatMessage({ id: 'templates.conditions.operator-placeholder' });
 
-  const selectedFieldOption = rulesFieldOptions.find((option) => option.apiName === fieldApiName);
+  const selectedFieldOption = fieldRulesetShowFieldOptions.find((option) => option.apiName === fieldApiName);
   const selectedFieldLabel = selectedFieldOption?.name || '';
   const isFileField = selectedFieldOption?.type === EExtraFieldType.File;
 
@@ -38,8 +42,8 @@ export const RuleItemShow = ({
         messages as Record<string, string>,
       );
     }
-    return ruleOperatorOptions;
-  }, [selectedFieldOption?.type, messages, ruleOperatorOptions]);
+    return fieldRulesetBaseOperatorOptions;
+  }, [selectedFieldOption?.type, messages, fieldRulesetBaseOperatorOptions]);
 
   const selectedOperatorLabel =
     fieldOperatorOptions.find((option) => option.apiName === operator)?.name || '';
@@ -48,16 +52,16 @@ export const RuleItemShow = ({
 
   return (
     <>
-      <FilterSelect<'apiName', 'name', TRuleFieldOption>
+      <FilterSelect<'apiName', 'name', IFieldRulesetShowFieldOption>
         optionIdKey="apiName"
         optionLabelKey="name"
-        options={rulesFieldOptions}
+        options={fieldRulesetShowFieldOptions}
         selectedOption={fieldApiName || ''}
         onChange={(key) => {
           if (key && key !== fieldApiName) {
             updateRule({
-              ruleGroupOrApiName: groupOrApiName,
-              ruleGroupAndApiName: groupAndApiName,
+              groupOrApiName,
+              groupAndApiName,
               ruleChanges: {
                 field: String(key),
                 operator: null,
@@ -82,7 +86,7 @@ export const RuleItemShow = ({
 
       {!isFileField && (
         <>
-          <FilterSelect<'apiName', 'name', TRuleOperatorOption>
+          <FilterSelect<'apiName', 'name', IFieldRulesetBaseOperatorOption>
             optionIdKey="apiName"
             optionLabelKey="name"
             options={fieldOperatorOptions}
@@ -90,8 +94,8 @@ export const RuleItemShow = ({
             onChange={(key) => {
               if (key && key !== operator) {
                 updateRule({
-                  ruleGroupOrApiName: groupOrApiName,
-                  ruleGroupAndApiName: groupAndApiName,
+                  groupOrApiName,
+                  groupAndApiName,
                   ruleChanges: {
                     operator: String(key),
                   },
@@ -117,11 +121,12 @@ export const RuleItemShow = ({
               fieldType={selectedFieldOption?.type}
               value={value}
               selections={selectedFieldOption?.selections}
+              datasetId={selectedFieldOption?.datasetId}
               isReadOnly={isReadOnly}
               onChange={(newValue) =>
                 updateRule({
-                  ruleGroupOrApiName: groupOrApiName,
-                  ruleGroupAndApiName: groupAndApiName,
+                  groupOrApiName,
+                  groupAndApiName,
                   ruleChanges: { value: newValue },
                 })
               }

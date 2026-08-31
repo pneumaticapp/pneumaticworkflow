@@ -1,8 +1,8 @@
 import * as React from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 
 import { NumericFormat } from 'react-number-format';
 import { EExtraFieldType } from '../../../../types/template';
@@ -11,7 +11,10 @@ import { DatePickerCustom } from '../../../UI/form/DatePicker';
 import { toDate, toTspDate } from '../../../../utils/dateTime';
 import { getUsers } from '../../../../redux/selectors/user';
 import { getNotDeletedUsers, getUserFullName } from '../../../../utils/users';
-import { TFieldsetFieldRulesValueProps } from './types';
+import { IFieldRulesetValueFieldProps } from './types';
+import { loadDatasetForMap } from '../../../../redux/datasets/slice';
+import { getDatasetFromMap } from '../../../../redux/selectors/datasets';
+import { IApplicationState } from '../../../../types/redux';
 
 import fieldsetDetailsStyles from '../FieldsetDetails.css';
 import styles from '../FieldsetRulesets/FieldsetRulesets.css';
@@ -26,32 +29,58 @@ export const FieldsetFieldRulesValue = ({
   fieldType,
   value,
   selections,
+  datasetId,
   isReadOnly,
   onChange,
-}: TFieldsetFieldRulesValueProps) => {
+}: IFieldRulesetValueFieldProps) => {
   const { formatMessage } = useIntl();
+  const dispatch = useDispatch();
   const users = useSelector(getUsers) || [];
+
+  const isSelectionField = Boolean(fieldType && SELECTION_FIELD_TYPES.includes(fieldType));
+
+  const datasetFromMap = useSelector((state: IApplicationState) =>
+    datasetId ? getDatasetFromMap(datasetId)(state) : undefined,
+  );
+
+  useEffect(() => {
+    if (isSelectionField && datasetId && !datasetFromMap) {
+      dispatch(loadDatasetForMap(datasetId));
+    }
+  }, [isSelectionField, datasetId, datasetFromMap, dispatch]);
+
+  const isUserField = fieldType === EExtraFieldType.User;
+
+  const dropdownOptions = useMemo(() => {
+    if (!isSelectionField && !isUserField) {
+      return [];
+    }
+    if (isUserField) {
+      return getNotDeletedUsers(users).map((user) => ({
+        apiName: String(user.id),
+        name: getUserFullName(user),
+      }));
+    }
+    if (datasetId) {
+      return (datasetFromMap?.items || []).map((item) => ({
+        apiName: item.value,
+        name: item.value,
+      }));
+    }
+    return (selections || []).map((item) => {
+      const optionValue = typeof item === 'string' ? item : item.value;
+      return {
+        apiName: optionValue,
+        name: optionValue,
+      };
+    });
+  }, [isSelectionField, isUserField, users, datasetId, datasetFromMap?.items, selections]);
 
   if (fieldType === EExtraFieldType.File) {
     return null;
   }
 
-  const isSelectionField = Boolean(fieldType && SELECTION_FIELD_TYPES.includes(fieldType));
-  const isUserField = fieldType === EExtraFieldType.User;
-
   if (isSelectionField || isUserField) {
-    const dropdownOptions = isUserField
-      ? getNotDeletedUsers(users).map((user) => ({
-        apiName: String(user.id),
-        name: getUserFullName(user),
-      }))
-      : (selections || []).map((item) => {
-        const optionValue = typeof item === 'string' ? item : item.value;
-        return {
-          apiName: optionValue,
-          name: optionValue,
-        };
-      });
 
     const selectedOption = dropdownOptions.find((option) => option.apiName === value);
     const selectedLabel = selectedOption?.name || '';

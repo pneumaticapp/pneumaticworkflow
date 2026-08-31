@@ -70,7 +70,7 @@ describe('RuleItemValidator component', () => {
       <RuleItemValidator
         groupAndRule={mockGroupAndRule}
         groupOrApiName="or_1"
-        ruleOperatorOptions={mockOperatorOptions}
+        fieldRulesetBaseOperatorOptions={mockOperatorOptions}
         updateRule={handleUpdateRule}
       />,
     );
@@ -80,8 +80,8 @@ describe('RuleItemValidator component', () => {
 
     expect(handleUpdateRule).toHaveBeenCalledTimes(1);
     expect(handleUpdateRule).toHaveBeenCalledWith({
-      ruleGroupOrApiName: 'or_1',
-      ruleGroupAndApiName: 'and_1',
+      groupOrApiName: 'or_1',
+      groupAndApiName: 'and_1',
       ruleChanges: {
         operator: 'min_length',
       },
@@ -95,7 +95,7 @@ describe('RuleItemValidator component', () => {
       <RuleItemValidator
         groupAndRule={mockGroupAndRule}
         groupOrApiName="or_1"
-        ruleOperatorOptions={mockOperatorOptions}
+        fieldRulesetBaseOperatorOptions={mockOperatorOptions}
         updateRule={handleUpdateRule}
       />,
     );
@@ -105,8 +105,8 @@ describe('RuleItemValidator component', () => {
 
     expect(handleUpdateRule).toHaveBeenCalledTimes(1);
     expect(handleUpdateRule).toHaveBeenCalledWith({
-      ruleGroupOrApiName: 'or_1',
-      ruleGroupAndApiName: 'and_1',
+      groupOrApiName: 'or_1',
+      groupAndApiName: 'and_1',
       ruleChanges: {
         value: '^[a-z]+$',
       },
@@ -124,7 +124,7 @@ describe('RuleItemValidator component', () => {
       <RuleItemValidator
         groupAndRule={emptyValueRule}
         groupOrApiName="or_1"
-        ruleOperatorOptions={mockOperatorOptions}
+        fieldRulesetBaseOperatorOptions={mockOperatorOptions}
         updateRule={jest.fn()}
       />,
     );

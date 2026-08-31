@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useMemo } from 'react';
 import { useIntl } from 'react-intl';
 
-import { TRuleListProps } from './types';
+import { IFieldRulesetBaseListProps } from './types';
 import { RuleItem } from './RuleItem';
 
 import styles from '../FieldsetRulesets/FieldsetRulesets.css';
@@ -10,17 +10,17 @@ import styles from '../FieldsetRulesets/FieldsetRulesets.css';
 export const RuleList = ({
   ruleSet,
   operatorOptions,
-  rulesFieldOptions,
+  fieldRulesetShowFieldOptions,
   ruleType,
   isReadOnly,
   addRule,
   updateRule,
   deleteRule,
   regroupRules,
-}: TRuleListProps) => {
+}: IFieldRulesetBaseListProps) => {
   const { formatMessage } = useIntl();
 
-  const ruleOperatorOptions = useMemo(
+  const fieldRulesetBaseOperatorOptions = useMemo(
     () =>
       operatorOptions.map((operatorOption) => ({
         apiName: operatorOption.value,
@@ -45,8 +45,8 @@ export const RuleList = ({
             groupOrApiName={groupOrApiName}
             groupOrIndex={groupOrIndex}
             groupAndIndex={groupAndIndex}
-            ruleOperatorOptions={ruleOperatorOptions}
-            rulesFieldOptions={rulesFieldOptions}
+            fieldRulesetBaseOperatorOptions={fieldRulesetBaseOperatorOptions}
+            fieldRulesetShowFieldOptions={fieldRulesetShowFieldOptions}
             ruleType={ruleType}
             isReadOnly={isReadOnly}
             updateRule={updateRule}
