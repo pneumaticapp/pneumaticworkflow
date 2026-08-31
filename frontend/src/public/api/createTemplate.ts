@@ -5,7 +5,9 @@ import { mapRequestBody } from '../utils/mappers';
 import { commonRequest } from './commonRequest';
 
 export function createTemplate(template: ITemplateRequest) {
-  const { api: { urls } } = getBrowserConfigEnv();
+  const {
+    api: { urls },
+  } = getBrowserConfigEnv();
 
   return commonRequest<ITemplateResponse>(
     urls.templates,

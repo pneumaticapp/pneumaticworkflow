@@ -17,15 +17,11 @@ describe('resolveNotificationUrl', () => {
   });
 
   it('builds task url when link is missing and host has no trailing slash', () => {
-    expect(
-      resolveNotificationUrl({ task_id: '123' }, hostWithoutSlash),
-    ).toBe('http://localhost/tasks/123/');
+    expect(resolveNotificationUrl({ task_id: '123' }, hostWithoutSlash)).toBe('http://localhost/tasks/123/');
   });
 
   it('builds task url when link is missing and host has trailing slash', () => {
-    expect(
-      resolveNotificationUrl({ task_id: '123' }, hostWithSlash),
-    ).toBe('http://localhost/tasks/123/');
+    expect(resolveNotificationUrl({ task_id: '123' }, hostWithSlash)).toBe('http://localhost/tasks/123/');
   });
 
   it('returns null when payload has neither link nor task_id', () => {

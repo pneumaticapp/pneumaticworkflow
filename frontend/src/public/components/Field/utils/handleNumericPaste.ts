@@ -32,10 +32,7 @@ export function handleNumericPaste(
   const decimalPosition = currentValue.indexOf('.');
   let newValue: string;
   if (hasDecimalSeparator && selStart <= decimalPosition) {
-    newValue =
-      currentValue.substring(0, selStart) +
-      processedText +
-      currentValue.substring(selEnd).replace(/\./g, '');
+    newValue = currentValue.substring(0, selStart) + processedText + currentValue.substring(selEnd).replace(/\./g, '');
   } else if (!hasDecimalSeparator) {
     newValue = currentValue.substring(0, selStart) + processedText + currentValue.substring(selEnd);
   } else {

@@ -12,9 +12,7 @@ export interface IPasteAttachmentPluginProps {
  * handler (COMMAND_PRIORITY_EDITOR), which otherwise swallows files via
  * unused DRAG_DROP_PASTE or falls through to HTML paste when text types exist.
  */
-export function PasteAttachmentPlugin({
-  onPasteFiles,
-}: IPasteAttachmentPluginProps): null {
+export function PasteAttachmentPlugin({ onPasteFiles }: IPasteAttachmentPluginProps): null {
   const [editor] = useLexicalComposerContext();
 
   useEffect(() => {

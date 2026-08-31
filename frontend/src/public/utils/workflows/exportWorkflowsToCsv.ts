@@ -21,9 +21,7 @@ export function escapeCsvCell(value: string): string {
 }
 
 export function encodeWorkflowRowsToCsvString(rows: string[][]): string {
-  const lines = rows.map((cells) =>
-    cells.map((cell) => escapeCsvCell(cell ?? '')).join(CSV_DELIMITER),
-  );
+  const lines = rows.map((cells) => cells.map((cell) => escapeCsvCell(cell ?? '')).join(CSV_DELIMITER));
   return lines.join('\r\n');
 }
 
@@ -32,9 +30,6 @@ export function buildWorkflowsCsvBlob(rows: string[][]): Blob {
   return new Blob([UTF8_BOM + body], { type: WORKFLOWS_CSV_MIME });
 }
 
-export function downloadWorkflowsCsv(
-  rows: string[][],
-  filename = WORKFLOWS_CSV_DEFAULT_FILENAME,
-): void {
+export function downloadWorkflowsCsv(rows: string[][], filename = WORKFLOWS_CSV_DEFAULT_FILENAME): void {
   downloadBlobInBrowser(buildWorkflowsCsvBlob(rows), filename);
 }

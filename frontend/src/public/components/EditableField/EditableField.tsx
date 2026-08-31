@@ -29,28 +29,22 @@ export class EditableField extends React.Component<IEditableFieldProps, IEditabl
   };
 
   public shouldComponentUpdate(nextProps: IEditableFieldProps, nextState: IEditableFieldState): boolean {
-    return !this.isTextEqual(nextProps.value, this.textContent) ||
-      nextState.isEditable !== this.state.isEditable;
+    return !this.isTextEqual(nextProps.value, this.textContent) || nextState.isEditable !== this.state.isEditable;
   }
 
   public fieldRef = React.createRef<HTMLSpanElement>();
   public render() {
-    const {
-      id,
-      hiddenIcon,
-      fieldClassName,
-      value,
-    } = this.props;
+    const { id, hiddenIcon, fieldClassName, value } = this.props;
     const { isEditable } = this.state;
     const error = this.getError();
 
     return (
       <span
         id={id}
-        className={classnames(
-          styles['edit'],
-          {[styles['edit--editable']]: isEditable, [styles['edit--hidden-icon']]: hiddenIcon},
-        )}
+        className={classnames(styles['edit'], {
+          [styles['edit--editable']]: isEditable,
+          [styles['edit--hidden-icon']]: hiddenIcon,
+        })}
       >
         <span
           className={classnames(styles['edit-field'], fieldClassName)}
@@ -64,21 +58,14 @@ export class EditableField extends React.Component<IEditableFieldProps, IEditabl
         >
           {sanitizeText(value)}
         </span>
-        {!hiddenIcon &&
-          <i
-            className={classnames('simple-icon-pencil', styles['edit-icon'])}
-            onClick={this.onEditClick}
-          />
-        }
-        {error &&
-          <Tooltip
-            placement="left"
-            isOpen
-            target={id}
-          >
-            <IntlMessages id={error}/>
+        {!hiddenIcon && (
+          <i className={classnames('simple-icon-pencil', styles['edit-icon'])} onClick={this.onEditClick} />
+        )}
+        {error && (
+          <Tooltip placement="left" isOpen target={id}>
+            <IntlMessages id={error} />
           </Tooltip>
-        }
+        )}
       </span>
     );
   }
@@ -92,7 +79,7 @@ export class EditableField extends React.Component<IEditableFieldProps, IEditabl
   };
 
   private get textContent() {
-    return this.fieldRef.current && this.fieldRef.current.textContent || '';
+    return (this.fieldRef.current && this.fieldRef.current.textContent) || '';
   }
 
   private getError = () => {
@@ -108,14 +95,14 @@ export class EditableField extends React.Component<IEditableFieldProps, IEditabl
 
   private onEditClick = () => {
     if (!this.state.isEditable) {
-      this.setState({isEditable: true}, this.handleCaret);
+      this.setState({ isEditable: true }, this.handleCaret);
     }
   };
 
-  private blockEditable = () => this.setState({isEditable: false, touched: true});
+  private blockEditable = () => this.setState({ isEditable: false, touched: true });
 
   private handleCaret = () => {
-    const {current: element} = this.fieldRef;
+    const { current: element } = this.fieldRef;
     if (!element) {
       return;
     }

@@ -17,13 +17,7 @@ import { buildAttachmentMarkdownString } from './attachmentMarkdownFormat';
 
 export type SerializedImageAttachmentNode = TAttachmentPayload & SerializedLexicalNode;
 
-function ImageAttachmentComponent({
-  nodeKey,
-  url,
-}: {
-  nodeKey: NodeKey;
-  url: string;
-}): React.ReactElement {
+function ImageAttachmentComponent({ nodeKey, url }: { nodeKey: NodeKey; url: string }): React.ReactElement {
   const [editor] = useLexicalComposerContext();
   const deleteFile = useCallback(() => {
     editor.update(() => {
@@ -34,14 +28,7 @@ function ImageAttachmentComponent({
     });
   }, [editor, nodeKey]);
 
-  return (
-    <ImageAttachment
-      thumbnailUrl={url}
-      url={url}
-      isEdit
-      deleteFile={deleteFile}
-    />
-  );
+  return <ImageAttachment thumbnailUrl={url} url={url} isEdit deleteFile={deleteFile} />;
 }
 
 export class ImageAttachmentNode extends DecoratorNode<React.ReactElement> {
@@ -56,12 +43,7 @@ export class ImageAttachmentNode extends DecoratorNode<React.ReactElement> {
   }
 
   static clone(node: ImageAttachmentNode): ImageAttachmentNode {
-    return new ImageAttachmentNode(
-      node.attachmentUrl,
-      node.attachmentId,
-      node.attachmentName,
-      node.getKey(),
-    );
+    return new ImageAttachmentNode(node.attachmentUrl, node.attachmentId, node.attachmentName, node.getKey());
   }
 
   static importJSON(serialized: SerializedImageAttachmentNode): ImageAttachmentNode {
@@ -132,31 +114,18 @@ export class ImageAttachmentNode extends DecoratorNode<React.ReactElement> {
   }
 
   getTextContent(): string {
-    return buildAttachmentMarkdownString(
-      this.attachmentName ?? '',
-      this.attachmentUrl,
-      this.attachmentId,
-      'image',
-    );
+    return buildAttachmentMarkdownString(this.attachmentName ?? '', this.attachmentUrl, this.attachmentId, 'image');
   }
 
   decorate(): React.ReactElement {
-    return (
-      <ImageAttachmentComponent nodeKey={this.getKey()} url={this.attachmentUrl} />
-    );
+    return <ImageAttachmentComponent nodeKey={this.getKey()} url={this.attachmentUrl} />;
   }
 }
 
-export function $createImageAttachmentNode(
-  payload: TAttachmentPayload,
-): ImageAttachmentNode {
-  return $applyNodeReplacement(
-    new ImageAttachmentNode(payload.url, payload.id, payload.name),
-  );
+export function $createImageAttachmentNode(payload: TAttachmentPayload): ImageAttachmentNode {
+  return $applyNodeReplacement(new ImageAttachmentNode(payload.url, payload.id, payload.name));
 }
 
-export function $isImageAttachmentNode(
-  node: LexicalNode | null | undefined,
-): node is ImageAttachmentNode {
+export function $isImageAttachmentNode(node: LexicalNode | null | undefined): node is ImageAttachmentNode {
   return node instanceof ImageAttachmentNode;
 }

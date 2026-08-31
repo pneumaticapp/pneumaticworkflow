@@ -13,8 +13,7 @@ type TProfileDispatchProps = Pick<
 export function mapStateToProps({ authUser, accounts }: IApplicationState): TProfileProps {
   return {
     user: authUser,
-    availableUsers: (accounts.users || [])
-      .filter((u) => u.id !== authUser.id && u.status === 'active'),
+    availableUsers: (accounts.users || []).filter((u) => u.id !== authUser.id && u.status === 'active'),
   };
 }
 
@@ -26,5 +25,7 @@ export const mapDispatchToProps: TProfileDispatchProps = {
   onVacationDeactivate: vacationDeactivate,
 };
 
-export const ProfileContainer = connect<TProfileProps, TProfileDispatchProps>
-(mapStateToProps, mapDispatchToProps)(Profile);
+export const ProfileContainer = connect<TProfileProps, TProfileDispatchProps>(
+  mapStateToProps,
+  mapDispatchToProps,
+)(Profile);

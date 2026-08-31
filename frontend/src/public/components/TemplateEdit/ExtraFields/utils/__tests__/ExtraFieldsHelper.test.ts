@@ -47,15 +47,12 @@ describe('ExtraFieldsHelper', () => {
       const helper = new ExtraFieldsHelper([field]);
       const result = helper.getFieldsWithValues();
 
-      expect(result[0].value).toEqual([
-        '[doc.pdf](https://files.example.com/abc-123)',
-      ]);
+      expect(result[0].value).toEqual(['[doc.pdf](https://files.example.com/abc-123)']);
     });
 
     it('parses multiple files from markdownValue', () => {
       const field = createFileField({
-        markdownValue:
-          '[a.pdf](https://files.example.com/1), [b.png](https://files.example.com/2)',
+        markdownValue: '[a.pdf](https://files.example.com/1), [b.png](https://files.example.com/2)',
       });
 
       const helper = new ExtraFieldsHelper([field]);
@@ -110,9 +107,7 @@ describe('ExtraFieldsHelper', () => {
       const result = helper.getFieldsWithValues();
 
       expect(result[0].attachments).toEqual(storageAttachments);
-      expect(result[0].value).toEqual([
-        '[new.pdf](https://files.example.com/new)',
-      ]);
+      expect(result[0].value).toEqual(['[new.pdf](https://files.example.com/new)']);
     });
 
     it('filters out isRemoved files from storageOutput', () => {
@@ -215,9 +210,7 @@ describe('ExtraFieldsHelper', () => {
       const helper = new ExtraFieldsHelper([field]);
       const result = helper.normalizeFieldsValues();
 
-      expect(result).toEqual([
-        { 'field-abc123': ['[doc.pdf](https://files.example.com/abc)'] },
-      ]);
+      expect(result).toEqual([{ 'field-abc123': ['[doc.pdf](https://files.example.com/abc)'] }]);
     });
   });
 });

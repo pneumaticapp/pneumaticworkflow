@@ -21,8 +21,6 @@ import { SSOProvider } from '../../../../server/types';
 
 import styles from '../User.css';
 
-
-
 const INITIAL_VALUES_FORMIK: TLoginValues = {
   email: '',
   password: '',

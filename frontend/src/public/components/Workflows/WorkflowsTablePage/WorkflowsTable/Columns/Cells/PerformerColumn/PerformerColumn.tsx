@@ -1,4 +1,4 @@
-import React, { PropsWithChildren , useCallback } from 'react';
+import React, { PropsWithChildren, useCallback } from 'react';
 
 import { useDispatch } from 'react-redux';
 import { CellProps } from 'react-table';

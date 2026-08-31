@@ -1,12 +1,12 @@
 .output-field-content {
   position: relative;
-  margin-top: 1.6rem;
-  display: flex;
   box-sizing: border-box;
-  max-width: 100%;
-  justify-content: space-between;
-  align-items: flex-start;
+  display: flex;
   gap: 1.6rem;
+  align-items: flex-start;
+  justify-content: space-between;
+  max-width: 100%;
+  margin-top: 1.6rem;
 
   @media (--mobile) {
     flex-direction: column-reverse;
@@ -24,19 +24,19 @@
 .output-field-content__info {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
   gap: 0.4rem;
+  align-items: flex-start;
   min-width: 0;
   max-width: 100%;
 }
 
 .output-field-content__info-dataset {
-  margin-top: 0.4rem;
   display: flex;
-  align-items: center;
   gap: 0.8rem;
+  align-items: center;
   min-width: 0;
   max-width: 100%;
+  margin-top: 0.4rem;
 }
 
 .output-field-content__info-label {
@@ -66,9 +66,9 @@
 
 .output-field-content__info-tag-tooltip {
   display: block;
-  overflow: hidden;
   min-width: 0;
   max-width: 100%;
+  overflow: hidden;
 }
 
 .output-field-content__tooltip-box {

@@ -1,4 +1,3 @@
-/* eslint-disable */
 /* prettier-ignore */
 import * as React from 'react';
 
@@ -19,9 +18,7 @@ export class IntegrationsLayout extends React.Component {
                 <IntegrationsCommonContainer />
               </div>
 
-              <div className={styles['content']}>
-                {this.props.children}
-              </div>
+              <div className={styles['content']}>{this.props.children}</div>
             </div>
           </div>
         </main>

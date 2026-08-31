@@ -16,28 +16,23 @@ import styles from './Profile.css';
 interface IProfileManagerProps {
   currentUserId: number;
   managerId: number | null;
-  onManagerChange: (
-    managerId: number | null,
-    callbacks?: { onSuccess?: () => void; onError?: () => void },
-  ) => void;
+  onManagerChange: (managerId: number | null, callbacks?: { onSuccess?: () => void; onError?: () => void }) => void;
 }
 
 export function ProfileManager({ currentUserId, managerId, onManagerChange }: IProfileManagerProps) {
   const { formatMessage } = useIntl();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  
+
   const allUsers = useSelector(getUsers);
   const teamList = useSelector(getAccountsTeamList);
   const users = getNotDeletedUsers([...allUsers, ...teamList]);
-  
-  const manager = managerId ? users.find(u => Number(u.id) === Number(managerId)) : null;
+
+  const manager = managerId ? users.find((u) => Number(u.id) === Number(managerId)) : null;
 
   return (
     <div className={styles['manager-section']}>
-      <SectionTitle className={styles['fields-group__title']}>
-        Manager
-      </SectionTitle>
+      <SectionTitle className={styles['fields-group__title']}>Manager</SectionTitle>
 
       {manager ? (
         <>
@@ -72,7 +67,6 @@ export function ProfileManager({ currentUserId, managerId, onManagerChange }: IP
           buttonStyle="transparent-black"
           size="sm"
         />
-
       )}
 
       {isModalOpen && (

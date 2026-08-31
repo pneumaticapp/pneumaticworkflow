@@ -1,9 +1,9 @@
 .checklist-item {
   position: relative;
-  padding-left: 2.8rem;
   display: flex;
-  align-items: flex-start;
   gap: 0.8rem;
+  align-items: flex-start;
+  padding-left: 2.8rem;
 }
 
 .checkbox {

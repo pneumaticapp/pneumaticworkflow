@@ -38,7 +38,7 @@ const mockRegisterData = {
   photo: '/some/photo.jpg',
   fromEmail: true,
   password: 'test_pwd',
-  timezone: ''
+  timezone: '',
 };
 
 describe('saga', () => {
@@ -244,10 +244,7 @@ describe('saga', () => {
       gen.throw(fsError);
 
       expect(mockGetErrorMessage).toHaveBeenCalledWith(fsError);
-      expect(mockNotifyApiError).toHaveBeenCalledWith(
-        fsError,
-        { message: 'file-service.size-exceeded' },
-      );
+      expect(mockNotifyApiError).toHaveBeenCalledWith(fsError, { message: 'file-service.size-exceeded' });
     });
 
     it('shows fallback notification on network error', () => {
@@ -263,10 +260,7 @@ describe('saga', () => {
       gen.throw(networkError);
 
       expect(mockGetErrorMessage).toHaveBeenCalledWith(networkError);
-      expect(mockNotifyApiError).toHaveBeenCalledWith(
-        networkError,
-        { message: 'Network Error' },
-      );
+      expect(mockNotifyApiError).toHaveBeenCalledWith(networkError, { message: 'Network Error' });
     });
 
     it('handleDeleteUserPhoto shows notification on error', () => {
@@ -281,10 +275,7 @@ describe('saga', () => {
       gen.throw(error);
 
       expect(mockGetErrorMessage).toHaveBeenCalledWith(error);
-      expect(mockNotifyApiError).toHaveBeenCalledWith(
-        error,
-        { message: 'Delete failed' },
-      );
+      expect(mockNotifyApiError).toHaveBeenCalledWith(error, { message: 'Delete failed' });
     });
 
     it('handleDeleteUserPhoto shows FS error notification', () => {
@@ -300,10 +291,7 @@ describe('saga', () => {
       gen.throw(fsError);
 
       expect(mockGetErrorMessage).toHaveBeenCalledWith(fsError);
-      expect(mockNotifyApiError).toHaveBeenCalledWith(
-        fsError,
-        { message: 'file-service.permission-denied' },
-      );
+      expect(mockNotifyApiError).toHaveBeenCalledWith(fsError, { message: 'file-service.permission-denied' });
     });
   });
 });

@@ -10,7 +10,7 @@ export type TTeamProps = Pick<IGroupsProps, 'groupsListSorting'>;
 
 export function mapStateToProps(state: IApplicationState): TTeamProps {
   const {
-    groups: { groupsListSorting }
+    groups: { groupsListSorting },
   } = state;
 
   return {

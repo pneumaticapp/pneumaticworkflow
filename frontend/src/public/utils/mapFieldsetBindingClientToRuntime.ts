@@ -3,14 +3,14 @@ import { IExtraField, EExtraFieldType } from '../types/template';
 
 export function mapFieldsToExtraFields(fields: IFieldsetField[]): IExtraField[] {
   return (fields || []).map(
-    ({
-      apiName, name, description, type, isRequired, isHidden,
-      order, default: defaultValue, selections, dataset,
-    }, index) => ({
+    (
+      { apiName, name, description, type, isRequired, isHidden, order, default: defaultValue, selections, dataset },
+      index,
+    ) => ({
       apiName: apiName || '',
       name: name || '',
       description: description || '',
-      type: type as EExtraFieldType || EExtraFieldType.String,
+      type: (type as EExtraFieldType) || EExtraFieldType.String,
       isRequired: isRequired ?? false,
       isHidden: isHidden ?? false,
       order: order ?? index,
@@ -22,7 +22,6 @@ export function mapFieldsToExtraFields(fields: IFieldsetField[]): IExtraField[] 
     }),
   );
 }
-
 
 export function mapFieldsetBindingClientToRuntime({
   apiNameBinding,
@@ -42,9 +41,7 @@ export function mapFieldsetBindingClientToRuntime({
     description: description || '',
     fields,
     order: order ?? 0,
-    labelPosition: labelPosition === EFieldLabelPosition.Left
-      ? EFieldLabelPosition.Left
-      : EFieldLabelPosition.Top,
+    labelPosition: labelPosition === EFieldLabelPosition.Left ? EFieldLabelPosition.Left : EFieldLabelPosition.Top,
     layout,
     title,
   };

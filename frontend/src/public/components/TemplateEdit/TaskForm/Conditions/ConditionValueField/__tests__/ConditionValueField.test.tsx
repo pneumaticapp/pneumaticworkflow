@@ -13,13 +13,8 @@ const buildDropdownEntities = (): TConditionEntity[] => {
   return [...labelGroups, ...labelUsers];
 };
 
-const findSelectedEntity = (
-  entities: TConditionEntity[],
-  rule: { value: number; fieldType: 'user' | 'group' },
-) =>
-  entities.find(
-    (entity) => entity.id === Number(rule.value) && entity.entityType === rule.fieldType,
-  ) || null;
+const findSelectedEntity = (entities: TConditionEntity[], rule: { value: number; fieldType: 'user' | 'group' }) =>
+  entities.find((entity) => entity.id === Number(rule.value) && entity.entityType === rule.fieldType) || null;
 
 describe('ConditionValueField user/group selection logic', () => {
   const dropdownEntities = buildDropdownEntities();

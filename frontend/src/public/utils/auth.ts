@@ -5,9 +5,7 @@ import { history } from './history';
 import { identifyAppPartOnClient } from './identifyAppPart/identifyAppPartOnClient';
 import { EAppPart } from './identifyAppPart/types';
 
-
-export const getOAuthId = (): string | null =>
-  history.location.pathname.split('/').slice(-1)[0] || null;
+export const getOAuthId = (): string | null => history.location.pathname.split('/').slice(-1)[0] || null;
 
 export const getOAuthType = (): EOAuthType | null => {
   return null;

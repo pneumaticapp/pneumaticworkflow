@@ -185,9 +185,7 @@ describe('OpenModal — fieldsets acceptance', () => {
     }
 
     expect(result.workflow.kickoff.fieldsets).toHaveLength(1);
-    expect(result.workflow.kickoff.fieldsets).toMatchObject([
-      { apiNameBinding: 'fs-contacts' },
-    ]);
+    expect(result.workflow.kickoff.fieldsets).toMatchObject([{ apiNameBinding: 'fs-contacts' }]);
 
     expect(result.workflow.loadedFieldsets).toHaveLength(1);
     expect(result.workflow.loadedFieldsets).toEqual([mockFieldsetData]);

@@ -4,7 +4,9 @@ import { getBrowserConfigEnv } from '../utils/getConfig';
 import { ITemplateResponse } from '../types/template';
 
 export function copyTemplate(id: number) {
-  const { api: { urls } } = getBrowserConfigEnv();
+  const {
+    api: { urls },
+  } = getBrowserConfigEnv();
 
   return commonRequest<ITemplateResponse>(
     urls.copyTemplate.replace(':id', String(id)),

@@ -56,7 +56,7 @@ export function EditKickoff({
             type="submit"
             disabled={
               !checkExtraFieldsAreValid(kickoff.fields) ||
-              fieldsets.some(fieldset => !checkExtraFieldsAreValid(fieldset.fields))
+              fieldsets.some((fieldset) => !checkExtraFieldsAreValid(fieldset.fields))
             }
             label={formatMessage({ id: 'kickoff-edit.buttons.save' })}
             buttonStyle="yellow"
@@ -74,7 +74,6 @@ export function EditKickoff({
       </div>
     );
   };
-
 
   const renderKickoffFields = () => {
     return (

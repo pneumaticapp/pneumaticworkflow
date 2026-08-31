@@ -5,7 +5,9 @@ import { mapRequestBody } from '../utils/mappers';
 import { commonRequest } from './commonRequest';
 
 export function createTemplateBySteps(template: TTemplateWithTasksOnly) {
-  const { api: { urls } } = getBrowserConfigEnv();
+  const {
+    api: { urls },
+  } = getBrowserConfigEnv();
 
   return commonRequest<ITemplateResponse>(
     urls.templateBySteps,

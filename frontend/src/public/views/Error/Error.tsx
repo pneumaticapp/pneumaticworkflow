@@ -1,4 +1,3 @@
-/* eslint-disable */
 /* prettier-ignore */
 import * as React from 'react';
 import { Link } from 'react-router-dom';
@@ -35,18 +34,12 @@ export function Error() {
       <div className={styles['error-text-container']}>
         <ErrorIcon />
 
-        <Header
-          className={styles.header}
-          tag="h6"
-          size="2"
-        >
+        <Header className={styles.header} tag="h6" size="2">
           {formatMessage({ id: 'error.oh-no' })}
         </Header>
         <div className={styles.text}>
           {formatMessage({ id: 'error.this-page-doesnt-exist' })}
-          <div>
-            {formatMessage({ id: 'error.you-may-mistyped' })}
-          </div>
+          <div>{formatMessage({ id: 'error.you-may-mistyped' })}</div>
         </div>
 
         <Button
@@ -60,17 +53,16 @@ export function Error() {
       </div>
 
       <div className={styles.copyright}>
-        {formatMessage({ id: 'public-form.copyright' }, {
-          link: (
-            <a
-              className={styles['copyright__link']}
-              href={mainPage}
-              target="_blank"
-            >
-              {formatMessage({ id: 'public-form.pneumatic' })}
-            </a>
-          ),
-        })}
+        {formatMessage(
+          { id: 'public-form.copyright' },
+          {
+            link: (
+              <a className={styles['copyright__link']} href={mainPage} target="_blank">
+                {formatMessage({ id: 'public-form.pneumatic' })}
+              </a>
+            ),
+          },
+        )}
       </div>
     </div>
   );

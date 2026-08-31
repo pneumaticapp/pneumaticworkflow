@@ -8,16 +8,18 @@ import { changeGroupsListSorting } from '../../redux/actions';
 type TMapStateToProps = Pick<ISelectMenuProps<EGroupsListSorting>, 'activeValue' | 'values'>;
 type TMapDispatchToProps = Pick<ISelectMenuProps<EGroupsListSorting>, 'onChange'>;
 
-const mapStateToProps = ({ groups: { groupsListSorting }}: IApplicationState): TMapStateToProps => {
+const mapStateToProps = ({ groups: { groupsListSorting } }: IApplicationState): TMapStateToProps => {
   return {
     activeValue: groupsListSorting,
     values: groupListSortingValues,
   };
 };
 
-const mapDispatchToProps: TMapDispatchToProps  = {
+const mapDispatchToProps: TMapDispatchToProps = {
   onChange: changeGroupsListSorting,
 };
 
-export const GroupListSortingContainer = connect<TMapStateToProps, TMapDispatchToProps>
-(mapStateToProps, mapDispatchToProps)(SelectMenu);
+export const GroupListSortingContainer = connect<TMapStateToProps, TMapDispatchToProps>(
+  mapStateToProps,
+  mapDispatchToProps,
+)(SelectMenu);

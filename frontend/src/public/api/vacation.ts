@@ -10,34 +10,21 @@ export interface IVacationActivateRequest {
   absenceStatus?: string;
 }
 
-export function activateVacation(
-  body: IVacationActivateRequest,
-  userId?: number,
-) {
+export function activateVacation(body: IVacationActivateRequest, userId?: number) {
   const urls = getBrowserConfigEnv().api.urls as Record<string, string>;
-  const url = userId 
-    ? urls.vacationUserActivate.replace(':id', String(userId)) 
-    : urls.vacationActivate;
+  const url = userId ? urls.vacationUserActivate.replace(':id', String(userId)) : urls.vacationActivate;
 
-  return commonRequest<IUserResponse>(
-    url,
-    {
-      data: mapRequestBody(body),
-      method: 'POST',
-    },
-  );
+  return commonRequest<IUserResponse>(url, {
+    data: mapRequestBody(body),
+    method: 'POST',
+  });
 }
 
 export function deactivateVacation(userId?: number) {
   const urls = getBrowserConfigEnv().api.urls as Record<string, string>;
-  const url = userId 
-    ? urls.vacationUserDeactivate.replace(':id', String(userId)) 
-    : urls.vacationDeactivate;
+  const url = userId ? urls.vacationUserDeactivate.replace(':id', String(userId)) : urls.vacationDeactivate;
 
-  return commonRequest<IUserResponse>(
-    url,
-    {
-      method: 'POST',
-    },
-  );
+  return commonRequest<IUserResponse>(url, {
+    method: 'POST',
+  });
 }

@@ -1381,7 +1381,7 @@ export const enMessages = {
   'integrations.create-api-key-modal-title': 'New API Key',
   'integrations.create-api-key-modal-description': 'Give your API key a descriptive name so you can identify it later.',
   'integrations.api-key-created-title': 'Key Created Successfully',
-  'integrations.api-key-created-warning': 'Copy this key now. You won\'t be able to see it again.',
+  'integrations.api-key-created-warning': "Copy this key now. You won't be able to see it again.",
   'integrations.api-key-copied': '✓ Copied!',
   'integrations.api-key-copy': 'Copy Key',
   'integrations.delete-api-key-confirm': 'Are you sure? Integrations using this key will stop working.',
@@ -1463,9 +1463,11 @@ export const enMessages = {
   'datasets.title.tooltip': 'Collections of data items for use in drop-down fields',
   'datasets.new-dataset.title': 'New Dataset',
   'datasets.new-dataset.caption': 'Create a new dataset for use in dropdown lists',
-  'datasets.new-dataset.description': 'Once a new dataset has been created, you can immediately start adding items to it.',
+  'datasets.new-dataset.description':
+    'Once a new dataset has been created, you can immediately start adding items to it.',
   'datasets.edit-dataset.title': 'Edit Dataset Name',
-  'datasets.edit-dataset.description': 'Change the name of the dataset. This will be reflected in all dropdown lists where it is used.',
+  'datasets.edit-dataset.description':
+    'Change the name of the dataset. This will be reflected in all dropdown lists where it is used.',
   'datasets.modal-button-create': 'Create',
   'datasets.modal-button-confirm': 'Confirm',
   'datasets.modal-button-cancel': 'CANCEL',
@@ -1539,7 +1541,8 @@ export const enMessages = {
   'fieldsets.rules-validation-value-required': 'Enter a rule value before saving',
   'fieldsets.rules-validation-value-number': 'One of the Sum equal rules has a non-numeric value — enter a number.',
   'fieldsets.rules-validation-fields-required': 'Select at least one field for the rule before saving',
-  'fieldsets.rules-validation-fields-number': 'One of the Sum equal rules contains a non-number field. Only number fields are allowed.',
+  'fieldsets.rules-validation-fields-number':
+    'One of the Sum equal rules contains a non-number field. Only number fields are allowed.',
   'fieldsets.leave-unsaved-title': 'Discard changes for fieldset {name}?',
   'fieldsets.leave-unsaved-message': 'Your changes are not saved.',
   'fieldsets.leave-unsaved-stay': 'Keep editing',

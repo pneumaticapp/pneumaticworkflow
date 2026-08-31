@@ -301,7 +301,6 @@ export function* setTaskCompleted({ payload: { taskId, output, viewMode } }: TSe
   }
 
   try {
-
     const mappedOutput = mapOutputToCompleteTask(output);
 
     const usersList: TUserListItem[] = yield select(getUsers);
@@ -432,13 +431,15 @@ export function* updatePerformersSaga({ type, payload: { taskId, userId } }: TUp
 
   const fetchMethodMap = [
     {
-      check: () => type === ETaskActions.AddTaskPerformer && userId.type === ETemplateOwnerType.User && user?.type !== 'guest',
+      check: () =>
+        type === ETaskActions.AddTaskPerformer && userId.type === ETemplateOwnerType.User && user?.type !== 'guest',
       *fetch() {
         yield call(addTaskPerformer, taskId, userId.sourceId);
       },
     },
     {
-      check: () => type === ETaskActions.RemoveTaskPerformer && userId.type === ETemplateOwnerType.User && user?.type !== 'guest',
+      check: () =>
+        type === ETaskActions.RemoveTaskPerformer && userId.type === ETemplateOwnerType.User && user?.type !== 'guest',
       *fetch() {
         yield call(removeTaskPerformer, taskId, userId.sourceId);
       },
@@ -456,7 +457,8 @@ export function* updatePerformersSaga({ type, payload: { taskId, userId } }: TUp
       },
     },
     {
-      check: () => type === ETaskActions.RemoveTaskPerformer && userId.type === ETemplateOwnerType.User && user?.type === 'guest',
+      check: () =>
+        type === ETaskActions.RemoveTaskPerformer && userId.type === ETemplateOwnerType.User && user?.type === 'guest',
       *fetch() {
         yield call(removeTaskGuest, taskId, user?.email || '');
       },

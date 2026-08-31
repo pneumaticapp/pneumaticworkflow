@@ -23,13 +23,7 @@ export function WorkflowsTableGrid({
   shouldSkeletonDefaultTable,
   shouldSkeletonOptionalTable,
 }: WorkflowsTableGridProps) {
-  const {
-    getTableProps,
-    getTableBodyProps,
-    headerGroups,
-    rows,
-    prepareRow,
-  } = table;
+  const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = table;
 
   const getTableBodyContent = () => {
     if (shouldSkeletonDefaultTable) {

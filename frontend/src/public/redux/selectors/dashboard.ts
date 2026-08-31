@@ -10,5 +10,4 @@ export const getDashboardTimeRange = (state: IApplicationState): EDashboardTimeR
 export const getDashboardBreakdownItems = (state: IApplicationState): TDashboardBreakdownItem[] =>
   state.dashboard.breakdownItems;
 
-export const getDashboardMode = (state: IApplicationState): EDashboardModes =>
-  state.dashboard.mode;
+export const getDashboardMode = (state: IApplicationState): EDashboardModes => state.dashboard.mode;

@@ -3,9 +3,7 @@ import type { MentionMenuOption } from './types';
 
 export const MENTION_TRIGGER = '@';
 
-export const TRIGGER_REGEX = new RegExp(
-  `(^|\\s|\\()(${MENTION_TRIGGER}([^\\s@]*))$`,
-);
+export const TRIGGER_REGEX = new RegExp(`(^|\\s|\\()(${MENTION_TRIGGER}([^\\s@]*))$`);
 
 export function buildOptions(mentions: TMentionData[]): MentionMenuOption[] {
   return mentions.map((m) => ({
@@ -16,10 +14,7 @@ export function buildOptions(mentions: TMentionData[]): MentionMenuOption[] {
   }));
 }
 
-export function filterOptions(
-  options: MentionMenuOption[],
-  query: string | null,
-): MentionMenuOption[] {
+export function filterOptions(options: MentionMenuOption[], query: string | null): MentionMenuOption[] {
   if (!query || !query.trim()) return options;
   const q = query.toLowerCase();
   return options.filter((opt) => opt.name.toLowerCase().includes(q));

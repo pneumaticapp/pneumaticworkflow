@@ -1,9 +1,6 @@
 import { LexicalEditor } from 'lexical';
 
-export function subscribeBlurClose(
-  editor: LexicalEditor,
-  closeMenu: () => void,
-): (() => void) | undefined {
+export function subscribeBlurClose(editor: LexicalEditor, closeMenu: () => void): (() => void) | undefined {
   const rootElement = editor.getRootElement();
   if (!rootElement) return undefined;
 

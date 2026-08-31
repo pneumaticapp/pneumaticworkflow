@@ -6,19 +6,19 @@
   flex-direction: column;
 
   .tune-view-modal__header {
-    margin-bottom: 2.6rem;
     flex-shrink: 0;
-    letter-spacing: 0.06rem;
-    text-transform: uppercase;
+    margin-bottom: 2.6rem;
     color: var(--pneumatic-color-white);
+    text-transform: uppercase;
+    letter-spacing: 0.06rem;
 
     @mixin text-small-extra bold;
   }
 
   .tune-view-modal__body {
-    margin-bottom: 3.2rem;
-    padding-right: 3.2rem;
     flex: 1;
+    padding-right: 3.2rem;
+    margin-bottom: 3.2rem;
     overflow-y: scroll;
 
     &::-webkit-scrollbar {
@@ -31,17 +31,17 @@
     }
 
     .tune-view-modal__fields-container {
-      margin-left: 1.6rem;
       padding-bottom: 0.8rem;
+      margin-left: 1.6rem;
     }
   }
 
   .tune-view-modal__task-box-title {
-    margin-bottom: 1.6rem;
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
     height: 2rem;
+    margin-bottom: 1.6rem;
     cursor: pointer;
 
     &:hover {
@@ -52,11 +52,11 @@
   }
 
   .tune-view-modal__footer {
-    margin-right: 3.2rem;
     display: flex;
-    gap: 0.8rem;
     flex-shrink: 0;
+    gap: 0.8rem;
     height: 4rem;
+    margin-right: 3.2rem;
 
     .footer-button {
       width: 17.2rem;
@@ -65,8 +65,8 @@
 }
 
 .tune-view-modal__task-title {
-  margin-right: 1.6rem;
   width: fit-content;
+  margin-right: 1.6rem;
 
   @mixin text-overflow;
 }
@@ -74,7 +74,9 @@
 .tune-view-modal__task-arrow {
   margin-right: 0.7rem;
   color: var(--pneumatic-color-black72);
-  transition: transform 0.3s, color 0.3s;
+  transition:
+    transform 0.3s,
+    color 0.3s;
 }
 
 .tune-view-modal__task-arrow-rotated {
@@ -85,10 +87,10 @@
   margin-bottom: 0.8rem;
 
   .tune-view-modal__label {
-    margin-bottom: 0;
     display: flex;
     justify-content: space-between;
     width: 100%;
+    margin-bottom: 0;
 
     .tune-view-modal__field-name {
       margin-right: 1.6rem;
@@ -100,9 +102,9 @@
 }
 
 .tune-view-modal__fieldset-group {
+  padding-left: 1.2rem;
   margin-top: 1.6rem;
   margin-bottom: 1.6rem;
-  padding-left: 1.2rem;
   border-left: 3px solid var(--pneumatic-color-black72);
 }
 

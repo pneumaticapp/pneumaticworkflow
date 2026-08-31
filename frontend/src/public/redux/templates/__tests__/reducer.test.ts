@@ -94,12 +94,9 @@ describe('LoadTemplateVariablesSuccess — template variables merge', () => {
     const result = reducer(state, action);
 
     expect(result.templatesVariablesMap[TEMPLATE_ID]).toHaveLength(3);
-    expect(result.templatesVariablesMap[TEMPLATE_ID].find((v) => v.apiName === 'var-1')?.title)
-      .toBe('New V1');
-    expect(result.templatesVariablesMap[TEMPLATE_ID].find((v) => v.apiName === 'var-2')?.title)
-      .toBe('Old V2');
-    expect(result.templatesVariablesMap[TEMPLATE_ID].find((v) => v.apiName === 'var-3')?.title)
-      .toBe('New V3');
+    expect(result.templatesVariablesMap[TEMPLATE_ID].find((v) => v.apiName === 'var-1')?.title).toBe('New V1');
+    expect(result.templatesVariablesMap[TEMPLATE_ID].find((v) => v.apiName === 'var-2')?.title).toBe('Old V2');
+    expect(result.templatesVariablesMap[TEMPLATE_ID].find((v) => v.apiName === 'var-3')?.title).toBe('New V3');
   });
 
   it('does not clear existing variables on pre-flush with empty array', () => {

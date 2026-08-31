@@ -17,10 +17,12 @@ import styles from './Profile.css';
 interface IProfileReportsProps {
   currentUserId: number;
   reportIds: number[] | undefined;
-  editCurrentUser(body: IUpdateUserRequest & {
-    onSuccess?: () => void;
-    onError?: () => void;
-  }): void;
+  editCurrentUser(
+    body: IUpdateUserRequest & {
+      onSuccess?: () => void;
+      onError?: () => void;
+    },
+  ): void;
 }
 
 export function ProfileReports({ currentUserId, reportIds = [], editCurrentUser }: IProfileReportsProps) {
@@ -31,8 +33,8 @@ export function ProfileReports({ currentUserId, reportIds = [], editCurrentUser 
   const allUsers = useSelector(getUsers);
   const teamList = useSelector(getAccountsTeamList);
   const users = getNotDeletedUsers([...allUsers, ...teamList]);
-  
-  const reports = reportIds.map(id => users.find(u => Number(u.id) === Number(id))).filter(Boolean) as typeof users;
+
+  const reports = reportIds.map((id) => users.find((u) => Number(u.id) === Number(id))).filter(Boolean) as typeof users;
 
   const handleReportsChange = (newReportIds: number[]) => {
     setIsSaving(true);
@@ -50,9 +52,7 @@ export function ProfileReports({ currentUserId, reportIds = [], editCurrentUser 
 
   return (
     <div className={styles['manager-section']}>
-      <SectionTitle className={styles['fields-group__title']}>
-        Reports
-      </SectionTitle>
+      <SectionTitle className={styles['fields-group__title']}>Reports</SectionTitle>
 
       {reports && reports.length > 0 ? (
         <>

@@ -10,5 +10,5 @@ export function getLinkToTemplate({ templateId, templatePart }: TGetLinkToTempla
   const templateRoute = ERoutes.TemplatesEdit.replace(':id', String(templateId));
   const anchor = templatePart ? `#${templatePart}` : '';
 
-  return  templateRoute + anchor;
+  return templateRoute + anchor;
 }

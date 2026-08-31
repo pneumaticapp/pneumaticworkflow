@@ -1,11 +1,7 @@
 import React, { useRef } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { FORMAT_TEXT_COMMAND } from 'lexical';
-import {
-  INSERT_ORDERED_LIST_COMMAND,
-  INSERT_UNORDERED_LIST_COMMAND,
-  REMOVE_LIST_COMMAND,
-} from '@lexical/list';
+import { INSERT_ORDERED_LIST_COMMAND, INSERT_UNORDERED_LIST_COMMAND, REMOVE_LIST_COMMAND } from '@lexical/list';
 import { TOGGLE_LINK_COMMAND } from '@lexical/link';
 
 import {
@@ -29,8 +25,6 @@ import { TOOLBAR_LABELS, ATTACHMENT_ACCEPT } from './constants';
 import type { IEditorToolbarProps } from './types';
 
 import styles from './EditorToolbar.css';
-
-
 
 export function EditorToolbar({
   withChecklists,
@@ -88,7 +82,13 @@ export function EditorToolbar({
 
   const formatButtons = [
     { Icon: BoldButtonIcon, labels: TOOLBAR_LABELS.bold, isActive: isBold, onMouseDown: applyBold, ref: undefined },
-    { Icon: ItalicButtonIcon, labels: TOOLBAR_LABELS.italic, isActive: isItalic, onMouseDown: applyItalic, ref: undefined },
+    {
+      Icon: ItalicButtonIcon,
+      labels: TOOLBAR_LABELS.italic,
+      isActive: isItalic,
+      onMouseDown: applyItalic,
+      ref: undefined,
+    },
     {
       Icon: OrderedListButtonIcon,
       labels: TOOLBAR_LABELS.orderedList,
@@ -103,10 +103,24 @@ export function EditorToolbar({
       onMouseDown: applyUnorderedList,
       ref: undefined,
     },
-    { Icon: LinkButtonIcon, labels: TOOLBAR_LABELS.link, isActive: isLink, onMouseDown: toggleLink, ref: linkButtonRef },
+    {
+      Icon: LinkButtonIcon,
+      labels: TOOLBAR_LABELS.link,
+      isActive: isLink,
+      onMouseDown: toggleLink,
+      ref: linkButtonRef,
+    },
     ...(withChecklists
-      ? [{ Icon: ChecklistIcon, labels: TOOLBAR_LABELS.checklist, isActive: isChecklist, onMouseDown: applyChecklist, ref: undefined }]
-      : [])
+      ? [
+          {
+            Icon: ChecklistIcon,
+            labels: TOOLBAR_LABELS.checklist,
+            isActive: isChecklist,
+            onMouseDown: applyChecklist,
+            ref: undefined,
+          },
+        ]
+      : []),
   ];
 
   const allAttachmentButtons = [
@@ -167,16 +181,16 @@ export function EditorToolbar({
         )}
         {showAttachmentButtons &&
           attachmentButtons.map(({ Icon, labels, accept }) => (
-          <AttachmentToolbarButton
-            key={labels.aria}
-            tooltipText={labels.tooltip}
-            ariaLabel={labels.aria}
-            accept={accept}
-            isModal={isModal}
-            onFileChange={handleAttachmentUpload}
-          >
-            <Icon />
-          </AttachmentToolbarButton>
+            <AttachmentToolbarButton
+              key={labels.aria}
+              tooltipText={labels.tooltip}
+              ariaLabel={labels.aria}
+              accept={accept}
+              isModal={isModal}
+              onFileChange={handleAttachmentUpload}
+            >
+              <Icon />
+            </AttachmentToolbarButton>
           ))}
       </div>
     </div>

@@ -99,30 +99,26 @@ export function TemplatesLayout({ children }: ITemplatesLayoutProps) {
 
     return (
       <div className={styles['navbar-left__content']}>
-          <Tabs
-            activeValueId={activeTab}
-            values={tabValues}
-            onChange={handleTabChange}
+        <Tabs activeValueId={activeTab} values={tabValues} onChange={handleTabChange} />
+        {activeTab === ETemplatesTab.Templates && <TemplatesSortingContainer />}
+        {activeTab === ETemplatesTab.Datasets && (
+          <SelectMenu
+            closeOnSelect
+            activeValue={datasetsSortingType}
+            values={datasetsSortingValues}
+            toggleTextClassName={styles['sorting-toggle-text']}
+            onChange={handleDatasetsSortingChange}
           />
-          {activeTab === ETemplatesTab.Templates && <TemplatesSortingContainer />}
-          {activeTab === ETemplatesTab.Datasets && (
-            <SelectMenu
-              closeOnSelect
-              activeValue={datasetsSortingType}
-              values={datasetsSortingValues}
-              toggleTextClassName={styles['sorting-toggle-text']}
-              onChange={handleDatasetsSortingChange}
-            />
-          )}
-          {activeTab === ETemplatesTab.Fieldsets && (
-            <SelectMenu
-              closeOnSelect
-              activeValue={fieldsetsSortingType}
-              values={fieldsetsSortingValues}
-              toggleTextClassName={styles['sorting-toggle-text']}
-              onChange={handleFieldsetsSortingChange}
-            />
-          )}
+        )}
+        {activeTab === ETemplatesTab.Fieldsets && (
+          <SelectMenu
+            closeOnSelect
+            activeValue={fieldsetsSortingType}
+            values={fieldsetsSortingValues}
+            toggleTextClassName={styles['sorting-toggle-text']}
+            onChange={handleFieldsetsSortingChange}
+          />
+        )}
       </div>
     );
   };
@@ -131,9 +127,7 @@ export function TemplatesLayout({ children }: ITemplatesLayoutProps) {
     <>
       <TopNavContainer leftContent={renderLeftContent()} />
       <main>
-        <div className="container-fluid">
-          {children}
-        </div>
+        <div className="container-fluid">{children}</div>
       </main>
     </>
   );

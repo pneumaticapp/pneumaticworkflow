@@ -51,9 +51,7 @@ function MentionMenuListComponent({
       className={`${styles.menu} ${visible ? styles['menu-visible'] : ''}`}
       role="listbox"
       tabIndex={0}
-      aria-activedescendant={
-        options[highlightedIndex] ? `mention-option-${options[highlightedIndex].key}` : undefined
-      }
+      aria-activedescendant={options[highlightedIndex] ? `mention-option-${options[highlightedIndex].key}` : undefined}
       style={{
         top: position.top,
         left: position.left,

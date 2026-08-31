@@ -1,12 +1,14 @@
 .container {
-  margin: 0 auto;
   display: block;
   max-width: 864px;
+  margin: 0 auto;
 }
+
 .container-loading {
   pointer-events: none;
   opacity: 0.4;
 }
+
 .tenants {
   &__item + &__item {
     margin-top: 8px;
@@ -14,16 +16,18 @@
 }
 
 .tenants-add {
-  margin-bottom: 8px;
-  padding: 31px 32px;
   width: 100%;
+  padding: 31px 32px;
+  margin-bottom: 8px;
+  color: var(--pneumatic-color-link-dark);
   text-align: left;
   cursor: pointer;
-  color: var(--pneumatic-color-link-dark);
   background: transparent;
   border: 1px solid var(--pneumatic-color-link-dark);
   border-radius: 24px;
-  transition: color 0.2s, border-color 0.2s;
+  transition:
+    color 0.2s,
+    border-color 0.2s;
 
   @media (--desktop) {
     display: flex;
@@ -73,8 +77,8 @@
   font-size: 11px;
   font-weight: bold;
   line-height: 16px;
-  text-transform: uppercase;
   color: var(--pneumatic-color-link-dark);
+  text-transform: uppercase;
   transition: color 0.1s ease-in-out;
 
   &:hover {

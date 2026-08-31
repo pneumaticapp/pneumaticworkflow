@@ -6,10 +6,7 @@ import { intlMock } from '../../../../__stubs__/intlMock';
 import { makeExtraField } from '../../../../__stubs__/fields.factory';
 import { makeFieldsetBindingClient, makeFieldsetCatalogItem } from '../../../../__stubs__/fieldsets.factory';
 import { makeTemplateTaskClient } from '../../../../__stubs__/templates.factory';
-import {
-  IExtraField,
-  ITemplateTaskClient,
-} from '../../../../types/template';
+import { IExtraField, ITemplateTaskClient } from '../../../../types/template';
 import { IFieldsetCatalogItem } from '../../../../types/fieldset';
 
 jest.mock('../../../../redux/selectors/fieldsets', () => ({
@@ -32,17 +29,11 @@ jest.mock('../../ExtraFields/utils/ExtraFieldsMap', () => ({
 
 jest.mock('../../ExtraFields/utils/ExtraFieldIcon', () => ({
   ExtraFieldIcon: (props: { id: string; onClick: () => void }) =>
-    React.createElement(
-      'button',
-      { type: 'button', onClick: props.onClick },
-      `Add field ${props.id}`,
-    ),
+    React.createElement('button', { type: 'button', onClick: props.onClick }, `Add field ${props.id}`),
 }));
 
 jest.mock('../../TaskOutputFlow/FieldsetIconPicker', () => ({
-  FieldsetIconPicker: (props: {
-    onSelectFieldset: (item: IFieldsetCatalogItem) => void;
-  }) => {
+  FieldsetIconPicker: (props: { onSelectFieldset: (item: IFieldsetCatalogItem) => void }) => {
     const catalogItems = (getFieldsetsCatalogItems as jest.Mock)();
     return React.createElement(
       'div',
@@ -65,8 +56,7 @@ jest.mock('../../TaskOutputFlow/FieldsetIconPicker', () => ({
 jest.mock('../../TaskOutputFlow/MergedOutputRows', () => ({
   MergedOutputRows: (props: {
     mergedRows: Array<
-      | { kind: 'field'; field: IExtraField }
-      | { kind: 'fieldset'; apiNameBinding: string; sharedFieldsetId?: number }
+      { kind: 'field'; field: IExtraField } | { kind: 'fieldset'; apiNameBinding: string; sharedFieldsetId?: number }
     >;
     onDeleteField: (apiName: string) => void;
     onMoveRow: (index: number, direction: 'up' | 'down') => void;
@@ -140,10 +130,11 @@ import { getEmptyField } from '../../KickoffRedux/utils/getEmptyField';
 describe('OutputFormTaskMerged', () => {
   const makeTask = makeTemplateTaskClient;
 
-  const makeField = (overrides: Partial<IExtraField> = {}) => makeExtraField({
-    name: 'Field 1',
-    ...overrides,
-  });
+  const makeField = (overrides: Partial<IExtraField> = {}) =>
+    makeExtraField({
+      name: 'Field 1',
+      ...overrides,
+    });
 
   const NEW_FIELD: IExtraField = makeExtraField({
     apiName: 'new-field',
@@ -276,7 +267,10 @@ describe('OutputFormTaskMerged', () => {
     it('allows adding an already-connected fieldset and sends PATCH with a new fieldset binding', () => {
       const catalogItem = makeFieldsetCatalogItem({ id: 1, apiName: 'fs-1', name: 'Fieldset 1' });
       const { patchTask } = renderForm({
-        task: makeTask({ fields: [], fieldsets: [makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 0, sharedFieldsetId: 1 })] }),
+        task: makeTask({
+          fields: [],
+          fieldsets: [makeFieldsetBindingClient({ apiNameBinding: 'fs-1', order: 0, sharedFieldsetId: 1 })],
+        }),
         catalogItems: [catalogItem],
       });
 

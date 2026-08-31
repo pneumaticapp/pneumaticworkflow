@@ -6,38 +6,33 @@ interface IPneumaticConfig {
 
 const getEnv = (key: string): string | undefined => {
   if (typeof window !== 'undefined') {
-    // eslint-disable-next-line no-underscore-dangle
     const pneumaticConfig = (window as unknown as { __pneumaticConfig?: IPneumaticConfig }).__pneumaticConfig;
     if (pneumaticConfig?.config?.featureFlags && pneumaticConfig.config.featureFlags[key] !== undefined) {
       return pneumaticConfig.config.featureFlags[key];
     }
   }
 
-  return typeof process !== 'undefined' && process.env
-    ? process.env[key]
-    : undefined;
+  return typeof process !== 'undefined' && process.env ? process.env[key] : undefined;
 };
 
-export const envLanguageCode: string | undefined  =     getEnv('LANGUAGE_CODE');
-export const envBackendURL: string | undefined =        getEnv('BACKEND_URL');
-export const envSentry: string | undefined =            getEnv('SENTRY_DSN');
-export const envWssURL: string | undefined =            getEnv('WSS_URL');
-export const envDevMode: boolean =  process.env.NODE_ENV === 'development';
+export const envLanguageCode: string | undefined = getEnv('LANGUAGE_CODE');
+export const envBackendURL: string | undefined = getEnv('BACKEND_URL');
+export const envSentry: string | undefined = getEnv('SENTRY_DSN');
+export const envWssURL: string | undefined = getEnv('WSS_URL');
+export const envDevMode: boolean = process.env.NODE_ENV === 'development';
 
-export const isEnvCaptcha: boolean =    getEnv('CAPTCHA') !== 'no';
+export const isEnvCaptcha: boolean = getEnv('CAPTCHA') !== 'no';
 export const isEnvGoogleAuth: boolean = getEnv('GOOGLE_AUTH') !== 'no';
-export const isEnvMsAuth: boolean =     getEnv('MS_AUTH') !== 'no';
-export const isEnvSSOAuth: boolean =    getEnv('SSO_AUTH') !== 'no';
-export const isEnvSignup: boolean =     getEnv('SIGNUP') !== 'no';
-export const isEnvBilling: boolean =    getEnv('BILLING') !== 'no';
-export const isEnvAi: boolean =         getEnv('AI') !== 'no';
-export const isEnvPush: boolean =       getEnv('PUSH') !== 'no';
-export const isEnvAnalytics: boolean =  getEnv('ANALYTICS') !== 'no';
+export const isEnvMsAuth: boolean = getEnv('MS_AUTH') !== 'no';
+export const isEnvSSOAuth: boolean = getEnv('SSO_AUTH') !== 'no';
+export const isEnvSignup: boolean = getEnv('SIGNUP') !== 'no';
+export const isEnvBilling: boolean = getEnv('BILLING') !== 'no';
+export const isEnvAi: boolean = getEnv('AI') !== 'no';
+export const isEnvPush: boolean = getEnv('PUSH') !== 'no';
+export const isEnvAnalytics: boolean = getEnv('ANALYTICS') !== 'no';
 export const envSSOProvider: string | undefined = getEnv('SSO_PROVIDER');
 
-
 // New ENV
-
 
 export const envHost: string | undefined = getEnv('HOST');
 export const envAnalyticsId: string | undefined = getEnv('ANALYTICS_ID');
@@ -68,6 +63,6 @@ export const envFirebase: IFirebaseConfig = {
     storageBucket: getEnv('FIREBASE_STORAGE_BUCKET'),
     messagingSenderId: getEnv('FIREBASE_SENDER_ID'),
     appId: getEnv('FIREBASE_APP_ID'),
-    measurementId: getEnv('FIREBASE_MEASUREMENT_ID')
-  }
+    measurementId: getEnv('FIREBASE_MEASUREMENT_ID'),
+  },
 };

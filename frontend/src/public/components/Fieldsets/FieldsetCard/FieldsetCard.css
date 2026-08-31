@@ -11,9 +11,9 @@
 }
 
 .card__title {
+  color: inherit;
   text-decoration: none;
   cursor: pointer;
-  color: inherit;
 
   &:hover {
     color: var(--pneumatic-color-link-hover);
@@ -27,10 +27,10 @@
 }
 
 .card__footer {
-  margin-top: auto;
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
+  margin-top: auto;
 
   .card-stats {
     font-style: normal;

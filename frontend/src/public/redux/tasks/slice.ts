@@ -62,7 +62,6 @@ const tasksSlice = createSlice({
       state.taskListStatus = action.payload;
     },
 
-
     changeTaskListSorting: (state, action: PayloadAction<ETaskListSorting | ETaskListCompleteSorting>) => {
       state.tasksSettings.sorting = action.payload;
     },
@@ -121,8 +120,6 @@ const tasksSlice = createSlice({
       state.tasksSettings.isHasFilter = areFiltersChanged(state.tasksSettings);
     },
 
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     loadFilterSteps: (state, action: PayloadAction<TLoadFilterStepsPayload>) => {
       state.tasksSettings.templateStepList.isLoading = true;
       state.tasksSettings.isHasFilter = areFiltersChanged(state.tasksSettings);
@@ -137,11 +134,9 @@ const tasksSlice = createSlice({
       state.tasksSettings.templateStepList.isLoading = false;
     },
 
-
     setFilterStep: (state, action: PayloadAction<string | null>) => {
       state.tasksSettings.filterValues.taskApiNameFilter = action.payload;
     },
-
 
     showNewTasksNotification: (state, action: PayloadAction<boolean>) => {
       state.hasNewTasks = action.payload;

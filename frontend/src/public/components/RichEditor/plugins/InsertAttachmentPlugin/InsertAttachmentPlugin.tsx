@@ -46,13 +46,7 @@ export function InsertAttachmentPlugin(): null {
   const [editor] = useLexicalComposerContext();
 
   useEffect(() => {
-    if (
-      !editor.hasNodes([
-        ImageAttachmentNode,
-        VideoAttachmentNode,
-        FileAttachmentNode,
-      ])
-    ) {
+    if (!editor.hasNodes([ImageAttachmentNode, VideoAttachmentNode, FileAttachmentNode])) {
       throw new Error(
         'InsertAttachmentPlugin: ImageAttachmentNode, VideoAttachmentNode, FileAttachmentNode must be registered',
       );
@@ -83,18 +77,9 @@ export function InsertAttachmentPlugin(): null {
       COMMAND_PRIORITY_EDITOR,
     );
 
-    const removeImageTransform = editor.registerNodeTransform(
-      ImageAttachmentNode,
-      $promoteBlockDecorator,
-    );
-    const removeVideoTransform = editor.registerNodeTransform(
-      VideoAttachmentNode,
-      $promoteBlockDecorator,
-    );
-    const removeFileTransform = editor.registerNodeTransform(
-      FileAttachmentNode,
-      $promoteBlockDecorator,
-    );
+    const removeImageTransform = editor.registerNodeTransform(ImageAttachmentNode, $promoteBlockDecorator);
+    const removeVideoTransform = editor.registerNodeTransform(VideoAttachmentNode, $promoteBlockDecorator);
+    const removeFileTransform = editor.registerNodeTransform(FileAttachmentNode, $promoteBlockDecorator);
 
     return () => {
       removeInsert();

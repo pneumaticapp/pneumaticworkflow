@@ -23,16 +23,12 @@ describe('EditorHeader', () => {
   });
 
   it('returns null when title is absent', () => {
-    const { container } = render(
-      React.createElement(EditorHeader, { title: undefined, foregroundColor: 'white' }),
-    );
+    const { container } = render(React.createElement(EditorHeader, { title: undefined, foregroundColor: 'white' }));
     expect(container.firstChild).toBeNull();
   });
 
   it('returns null when title is empty string', () => {
-    const { container } = render(
-      React.createElement(EditorHeader, { title: '', foregroundColor: 'white' }),
-    );
+    const { container } = render(React.createElement(EditorHeader, { title: '', foregroundColor: 'white' }));
     expect(container.firstChild).toBeNull();
   });
 

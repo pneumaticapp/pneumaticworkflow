@@ -4,11 +4,9 @@ import { IApplicationState } from '../../../types/redux';
 
 type TStoreProps = Pick<IWorkflowControllsProps, 'timezone'>;
 
-function mapStateToProps({
-  authUser: { timezone },
-}: IApplicationState): TStoreProps {
+function mapStateToProps({ authUser: { timezone } }: IApplicationState): TStoreProps {
   return {
-    timezone
+    timezone,
   };
 }
 

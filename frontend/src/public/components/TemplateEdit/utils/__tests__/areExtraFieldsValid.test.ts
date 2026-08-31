@@ -3,11 +3,12 @@ import { makeExtraField } from '../../../../__stubs__/fields.factory';
 import { EExtraFieldType, IExtraField } from '../../../../types/template';
 
 describe('areExtraFieldsValid', () => {
-  const makeField = (overrides: Partial<IExtraField> = {}) => makeExtraField({
-    name: 'Test Field',
-    type: EExtraFieldType.Checkbox,
-    ...overrides,
-  });
+  const makeField = (overrides: Partial<IExtraField> = {}) =>
+    makeExtraField({
+      name: 'Test Field',
+      type: EExtraFieldType.Checkbox,
+      ...overrides,
+    });
 
   it('returns valid when Checkbox has dataset and empty selections (dataset bypass)', () => {
     const fields = [makeField({ dataset: 5, selections: [] })];

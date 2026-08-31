@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 import * as React from 'react';
 
 export type TTurnOffIconProps = React.SVGAttributes<SVGElement>;

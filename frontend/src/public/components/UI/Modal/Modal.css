@@ -26,12 +26,12 @@
 
 .modal-content {
   position: relative;
-  margin: auto;
-  padding: 80px;
   width: 640px !important;
   max-width: 100%;
+  padding: 80px;
+  margin: auto;
   border-radius: 32px !important;
-  box-shadow: 0 8px 24px rgba(98, 98, 95, 0.08);
+  box-shadow: 0 8px 24px rgb(98 98 95 / 8%);
 
   @media (--mobile) {
     padding: 80px 32px;
@@ -43,8 +43,8 @@
   position: absolute;
   top: 32px;
   right: 32px;
-  cursor: pointer;
   color: var(--pneumatic-color-black16);
+  cursor: pointer;
   transition: color 0.3s;
 
   &:hover {
