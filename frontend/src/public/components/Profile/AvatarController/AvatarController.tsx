@@ -1,5 +1,3 @@
-/* eslint-disable max-len */
-/* eslint-disable no-param-reassign */
 import React, { useEffect, useState, useRef, ComponentProps } from 'react';
 import classnames from 'classnames';
 import { useDispatch } from 'react-redux';

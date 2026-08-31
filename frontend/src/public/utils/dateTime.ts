@@ -1,4 +1,3 @@
-/* eslint-disable indent */
 import moment, { duration as momentDuration } from 'moment';
 import 'moment-timezone';
 import 'moment-duration-format';

@@ -1,17 +1,17 @@
 .form-skeleton {
+  width: 100%;
   margin-bottom: 1rem;
   overflow: visible;
-  width: 100%;
   background-color: white;
   border-radius: 24px;
 }
 
 .form-skeleton__data {
   position: relative;
-  padding: 32px 32px 0;
   display: flex;
-  overflow: hidden;
   flex-flow: column;
+  padding: 32px 32px 0;
+  overflow: hidden;
   background-color: white;
   border-radius: 24px;
 
@@ -21,10 +21,10 @@
 }
 
 .form-skeleton__links {
-  padding: 0 32px 22px;
   display: flex;
   align-items: center;
   min-height: 32px;
+  padding: 0 32px 22px;
 
   @media (--mobile) {
     padding-bottom: 28px;
@@ -32,6 +32,6 @@
 }
 
 .form-skeleton__button {
-  margin-left: auto;
   display: inline-block;
+  margin-left: auto;
 }

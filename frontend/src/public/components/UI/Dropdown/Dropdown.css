@@ -7,6 +7,7 @@
   all: unset;
   display: flex;
 }
+
 .dropdown-toggle-centered {
   align-items: center;
   height: 100%;
@@ -18,9 +19,9 @@
 
 .dropdown-menu {
   z-index: 1000;
-  padding: 0.5rem 0;
   display: none;
   width: 19.2rem;
+  padding: 0.5rem 0;
   font-size: 1.5rem;
   font-weight: initial;
   background: white;
@@ -57,23 +58,23 @@
 .dropdown-item {
   position: relative;
   z-index: 1;
-  padding: 0.5rem 1.6rem;
   display: flex;
+  align-items: center;
   width: 100%;
+  padding: 0.5rem 1.6rem;
   text-align: inherit;
   white-space: nowrap;
   cursor: pointer;
   background-color: transparent;
   border: 0;
-  align-items: center;
 
   &::before {
     position: absolute;
-    z-index: -1;
     top: -0.1rem;
     right: 0.4rem;
-    left: 0.4rem;
     bottom: -0.1rem;
+    left: 0.4rem;
+    z-index: -1;
     content: '';
     background: var(--pneumatic-color-beige);
     border-radius: 0.4rem;
@@ -88,6 +89,7 @@
     }
   }
 }
+
 .dropdown-item_disabled {
   pointer-events: none;
   opacity: 0.32;
@@ -111,11 +113,11 @@
   color: #4caf50 !important;
 
   &:hover {
-    color: currentColor;
+    color: currentcolor;
   }
 
   .dropdown-item-icon {
-    color: currentColor;
+    color: currentcolor;
   }
 }
 
@@ -124,11 +126,11 @@
   color: #f44336 !important;
 
   &:hover {
-    color: currentColor;
+    color: currentcolor;
   }
 
   .dropdown-item-icon {
-    color: currentColor;
+    color: currentcolor;
   }
 }
 
@@ -137,11 +139,11 @@
   color: var(--pneumatic-color-link-dark) !important;
 
   &:hover {
-    color: currentColor;
+    color: currentcolor;
   }
 
   .dropdown-item-icon {
-    color: currentColor;
+    color: currentcolor;
   }
 }
 
@@ -152,8 +154,8 @@
 
 .line {
   all: unset;
-  margin: 0.5rem 1.2rem;
   display: block;
+  margin: 0.5rem 1.2rem;
   border: 0;
   border-top: 0.1rem solid var(--pneumatic-color-black16);
 }
@@ -174,8 +176,8 @@
 }
 
 .label {
-  overflow: hidden;
   min-width: 0;
+  overflow: hidden;
   text-overflow: ellipsis;
 }
 

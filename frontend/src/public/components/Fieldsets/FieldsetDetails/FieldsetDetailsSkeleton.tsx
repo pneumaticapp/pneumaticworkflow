@@ -6,7 +6,10 @@ export function FieldsetDetailsSkeleton() {
   return (
     <div className={styles['container']}>
       <header className={styles['header']}>
-        <div className={styles['header-skeleton']} style={{ width: '30rem', height: '3.2rem', borderRadius: '0.8rem' }} />
+        <div
+          className={styles['header-skeleton']}
+          style={{ width: '30rem', height: '3.2rem', borderRadius: '0.8rem' }}
+        />
       </header>
       <div className={styles['list']}>
         <div

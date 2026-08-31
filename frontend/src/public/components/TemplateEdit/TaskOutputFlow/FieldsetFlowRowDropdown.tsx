@@ -35,10 +35,10 @@ export const FieldsetFlowRowDropdown = ({
 
   const openDetailOption: TDropdownOption | null = onOpenDetail
     ? {
-      mapKey: 'fieldset-flow-open-detail',
-      label: formatMessage({ id: 'fieldsets.title' }),
-      onClick: handleOptionClick(onOpenDetail),
-    }
+        mapKey: 'fieldset-flow-open-detail',
+        label: formatMessage({ id: 'fieldsets.title' }),
+        onClick: handleOptionClick(onOpenDetail),
+      }
     : null;
 
   const menuOptions: TDropdownOption[] = [

@@ -289,9 +289,7 @@ describe('TaskCard', () => {
     it('does not cross-select user and group performers with the same id', async () => {
       const task = {
         ...baseTask,
-        performers: [
-          { sourceId: 5, type: ETemplateOwnerType.User, label: 'John Doe' },
-        ],
+        performers: [{ sourceId: 5, type: ETemplateOwnerType.User, label: 'John Doe' }],
       };
 
       render(
@@ -352,17 +350,13 @@ describe('TaskCard', () => {
 
     it('updates visible fields when only server field metadata changes', async () => {
       const field = makeField({ apiName: 'metadata-field', isHidden: false, value: '' });
-      const { rerender } = render(
-        <TaskCard {...baseProps} task={{ ...baseTask, output: [field] }} />,
-      );
+      const { rerender } = render(<TaskCard {...baseProps} task={{ ...baseTask, output: [field] }} />);
 
       await waitFor(() => {
         expect(screen.getByTestId('extra-field')).toBeInTheDocument();
       });
 
-      rerender(
-        <TaskCard {...baseProps} task={{ ...baseTask, output: [{ ...field, isHidden: true }] }} />,
-      );
+      rerender(<TaskCard {...baseProps} task={{ ...baseTask, output: [{ ...field, isHidden: true }] }} />);
 
       await waitFor(() => {
         expect(screen.queryByTestId('extra-field')).not.toBeInTheDocument();
@@ -417,10 +411,11 @@ describe('TaskCard', () => {
         expect(mockExtraFieldIntl).toHaveBeenCalledTimes(2);
       });
       const [firstFieldProps, secondFieldProps] = mockExtraFieldIntl.mock.calls.map(([props]) => props);
-      const getCompleteButtonProps = () => [...mockButton.mock.calls]
-        .reverse()
-        .map(([props]) => props)
-        .find(({ buttonStyle }) => buttonStyle === 'yellow');
+      const getCompleteButtonProps = () =>
+        [...mockButton.mock.calls]
+          .reverse()
+          .map(([props]) => props)
+          .find(({ buttonStyle }) => buttonStyle === 'yellow');
 
       act(() => {
         firstFieldProps.onUploadStateChange(true);

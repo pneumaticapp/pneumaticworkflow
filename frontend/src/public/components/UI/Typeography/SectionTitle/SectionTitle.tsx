@@ -9,9 +9,5 @@ interface ISectionTitleProps {
 }
 
 export function SectionTitle({ className, children }: ISectionTitleProps) {
-  return (
-    <p className={classnames(styles['container'], className)}>
-      {children}
-    </p>
-  );
+  return <p className={classnames(styles['container'], className)}>{children}</p>;
 }

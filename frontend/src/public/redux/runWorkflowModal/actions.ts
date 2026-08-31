@@ -11,27 +11,34 @@ export const enum ERunWorkflowModalActions {
 }
 
 export type TOpenRunWorkflowModal = ITypedReduxAction<ERunWorkflowModalActions.OpenModal, IRunWorkflow>;
-export const openRunWorkflowModal: (payload: IRunWorkflow) => TOpenRunWorkflowModal =
-  actionGenerator<ERunWorkflowModalActions.OpenModal, IRunWorkflow>(ERunWorkflowModalActions.OpenModal);
+export const openRunWorkflowModal: (payload: IRunWorkflow) => TOpenRunWorkflowModal = actionGenerator<
+  ERunWorkflowModalActions.OpenModal,
+  IRunWorkflow
+>(ERunWorkflowModalActions.OpenModal);
 
 export type TCloseRunWorkflowModal = ITypedReduxAction<ERunWorkflowModalActions.CloseModal, void>;
-export const closeRunWorkflowModal: (payload?: void) => TCloseRunWorkflowModal =
-  actionGenerator<ERunWorkflowModalActions.CloseModal, void>(ERunWorkflowModalActions.CloseModal);
+export const closeRunWorkflowModal: (payload?: void) => TCloseRunWorkflowModal = actionGenerator<
+  ERunWorkflowModalActions.CloseModal,
+  void
+>(ERunWorkflowModalActions.CloseModal);
 
 export type TRunWorkflow = ITypedReduxAction<ERunWorkflowModalActions.RunWorkflow, IRunWorkflow>;
-export const runWorkflow: (payload: IRunWorkflow) => TRunWorkflow =
-  actionGenerator<ERunWorkflowModalActions.RunWorkflow, IRunWorkflow>(ERunWorkflowModalActions.RunWorkflow);
+export const runWorkflow: (payload: IRunWorkflow) => TRunWorkflow = actionGenerator<
+  ERunWorkflowModalActions.RunWorkflow,
+  IRunWorkflow
+>(ERunWorkflowModalActions.RunWorkflow);
 
 export type TRunWorkflowSuccess = ITypedReduxAction<ERunWorkflowModalActions.RunWorkflowSuccess, void>;
-export const runWorkflowSuccess: (payload?: void) => TRunWorkflowSuccess =
-  actionGenerator<ERunWorkflowModalActions.RunWorkflowSuccess, void>(ERunWorkflowModalActions.RunWorkflowSuccess);
+export const runWorkflowSuccess: (payload?: void) => TRunWorkflowSuccess = actionGenerator<
+  ERunWorkflowModalActions.RunWorkflowSuccess,
+  void
+>(ERunWorkflowModalActions.RunWorkflowSuccess);
 
 export type TRunWorkflowFailed = ITypedReduxAction<ERunWorkflowModalActions.RunWorkflowFailed, void>;
-export const runWorkflowFailed: (payload?: void) => TRunWorkflowFailed =
-  actionGenerator<ERunWorkflowModalActions.RunWorkflowFailed, void>(ERunWorkflowModalActions.RunWorkflowFailed);
+export const runWorkflowFailed: (payload?: void) => TRunWorkflowFailed = actionGenerator<
+  ERunWorkflowModalActions.RunWorkflowFailed,
+  void
+>(ERunWorkflowModalActions.RunWorkflowFailed);
 
-export type TRunWorkflowModalActions = TOpenRunWorkflowModal
-| TCloseRunWorkflowModal
-| TRunWorkflow
-| TRunWorkflowSuccess
-| TRunWorkflowFailed;
+export type TRunWorkflowModalActions =
+  TOpenRunWorkflowModal | TCloseRunWorkflowModal | TRunWorkflow | TRunWorkflowSuccess | TRunWorkflowFailed;

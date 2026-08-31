@@ -11,10 +11,11 @@ jest.mock('../dateTime', () => ({
   formatDateToISOInTask: jest.fn(),
 }));
 
-const makeField = (overrides: Partial<IExtraField>) => makeExtraField({
-  name: 'Test',
-  ...overrides,
-});
+const makeField = (overrides: Partial<IExtraField>) =>
+  makeExtraField({
+    name: 'Test',
+    ...overrides,
+  });
 
 describe('mapOutputToCompleteTask', () => {
   beforeEach(() => {
@@ -57,21 +58,25 @@ describe('mapOutputToCompleteTask', () => {
     });
 
     it('preserves other field properties', () => {
-      const output = [makeField({
-        apiName: 'cb-field',
-        name: 'My Checkbox',
-        type: EExtraFieldType.Checkbox,
-        value: 'opt',
-        isRequired: true,
-      })];
+      const output = [
+        makeField({
+          apiName: 'cb-field',
+          name: 'My Checkbox',
+          type: EExtraFieldType.Checkbox,
+          value: 'opt',
+          isRequired: true,
+        }),
+      ];
       const [first] = mapOutputToCompleteTask(output);
-      expect(first).toEqual(expect.objectContaining({
-        apiName: 'cb-field',
-        name: 'My Checkbox',
-        type: 'checkbox',
-        value: ['opt'],
-        isRequired: true,
-      }));
+      expect(first).toEqual(
+        expect.objectContaining({
+          apiName: 'cb-field',
+          name: 'My Checkbox',
+          type: 'checkbox',
+          value: ['opt'],
+          isRequired: true,
+        }),
+      );
     });
   });
 

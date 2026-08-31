@@ -1,25 +1,25 @@
 /* stylelint-disable declaration-no-important */
 .container {
-  margin-top: 32px;
   display: flex;
   flex-direction: column;
   width: 100%;
+  margin-top: 32px;
 }
 
 .breakdown {
-  margin-bottom: 8px;
-  padding: 3.2rem;
   display: flex;
   flex-direction: column;
+  padding: 3.2rem;
+  margin-bottom: 8px;
   background: white;
   border-radius: 24px;
   transition: box-shadow 0.2s ease-in-out;
 
   &:hover {
-    box-shadow: 0 8px 24px rgba(98, 98, 95, 0.08);
+    box-shadow: 0 8px 24px rgb(98 98 95 / 8%);
   }
 
-  @media (max-width: 999px) {
+  @media (width <= 999px) {
     padding: 32px;
   }
 
@@ -46,9 +46,9 @@
 
 .breakdown__container {
   display: flex;
-  min-height: 40px;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+  min-height: 40px;
 
   @media (--desktop) {
     width: calc(100% - 9.2rem);
@@ -56,8 +56,8 @@
 
   @media (--mobile) {
     flex-direction: column;
-    width: 100%;
     align-items: flex-start;
+    width: 100%;
 
     .breakdown__dashboard_cards {
       width: 100% !important;
@@ -75,31 +75,31 @@
 
 .breakdown__title {
   display: flex;
+  align-items: center;
   overflow: hidden;
   color: var(--pneumatic-color-black100);
   transition: color 0.1s ease-in-out;
-  align-items: center;
 
   &:hover {
     color: var(--pneumatic-color-link-hover);
   }
 
-  @media (max-width: 999px) {
+  @media (width <= 999px) {
     margin-bottom: 16px;
   }
 }
 
 .breakdown__title-text {
-  overflow: hidden;
   width: 100%;
-  white-space: nowrap;
+  overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
   cursor: pointer;
 }
 
 .breakdown__title-text_with-image {
-  margin-left: 1.6rem;
   width: 100%;
+  margin-left: 1.6rem;
 
   @media (--mobile) {
     margin-left: 0;
@@ -108,9 +108,9 @@
 
 .breakdown__task_card,
 .breakdown__card {
-  margin: 0 4px;
   width: 40px;
   height: 40px;
+  margin: 0 4px;
   text-align: center;
   border-radius: 8px;
 
@@ -139,7 +139,7 @@
 }
 
 .breakdown__dashboard_task_label {
-  font-family: Nunito;
+  font-family: Nunito, sans-serif;
   font-size: 15px;
   font-weight: bold;
   line-height: 20px;
@@ -152,26 +152,28 @@
   border-top: 1px solid var(--pneumatic-color-black16);
   border-bottom: 1px solid var(--pneumatic-color-black16);
 }
+
 .breakdown__tasks-mode-worflows {
   margin: 3.2rem 0;
 }
+
 .breakdown__tasks-mode-tasks {
   margin: 3.2rem 0 0;
 }
 
 .breadown__loader {
-  margin-top: 32px;
   display: flex;
   justify-content: center;
+  margin-top: 32px;
 }
 
 .task__container {
-  margin-top: 8px;
-  padding: 8px 0 16px;
   display: flex;
-  width: 100%;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 0 16px;
+  margin-top: 8px;
   border-bottom: 1px solid var(--pneumatic-color-black16);
 
   &:first-child {
@@ -195,8 +197,8 @@
 .task__name_container {
   display: flex;
   align-items: baseline;
-  overflow: hidden;
   width: 100%;
+  overflow: hidden;
 }
 
 .my_tasks__name {
@@ -208,10 +210,10 @@
   width: 20px;
   font-size: 11px;
   line-height: 16px;
-  text-align: center;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
   color: var(--pneumatic-color-black32);
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 
   @media (--mobile) {
     display: none;
@@ -219,13 +221,13 @@
 }
 
 .task__name {
-  padding: 0 1.6rem;
   display: flex;
-  width: 100%;
   flex-grow: 1;
+  width: 100%;
+  padding: 0 1.6rem;
   font-weight: bold;
-  overflow-wrap: anywhere;
   color: var(--pneumatic-color-black100);
+  overflow-wrap: anywhere;
 
   &.task__name_empty {
     color: var(--pneumatic-color-black32);
@@ -233,8 +235,8 @@
 
   div {
     overflow: hidden;
-    white-space: nowrap;
     text-overflow: ellipsis;
+    white-space: nowrap;
 
     span {
       display: inline !important;
@@ -243,6 +245,7 @@
 
   @media (--mobile) {
     padding: 0;
+
     div {
       @mixin text-overflow 2;
     }
@@ -268,9 +271,9 @@
   }
 
   @media (--mobile) {
+    width: 100%;
     margin: 0 -4px;
     margin-top: 8px;
-    width: 100%;
   }
 }
 
@@ -298,8 +301,8 @@
 
 .breakdown__skeleton {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
 
   @media (--mobile) {
     margin: 0 auto;
@@ -308,8 +311,8 @@
 
 .breakdown__skeleton-names {
   flex-grow: 1;
-  margin-right: 16px;
   max-width: 536px;
+  margin-right: 16px;
 
   @media (--mobile) {
     display: none;
@@ -317,16 +320,16 @@
 }
 
 .breakdown__skeleton-counters {
-  margin: 0 -4px;
   display: flex;
   justify-content: space-between;
+  margin: 0 -4px;
 }
 
 .breakdown__skeleton-counters-item {
-  margin: 0 4px;
   display: inline-block;
   width: 40px;
   height: 40px;
+  margin: 0 4px;
 }
 
 .placeholder {
@@ -342,28 +345,28 @@
   display: flex;
 
   @media (--mobile) {
-    width: 100%;
     justify-content: center;
+    width: 100%;
   }
 }
 
 .controls {
-  margin: 0 -4px;
   display: flex;
+  margin: 0 -4px;
 
   > * {
     margin: 0 4px;
   }
 
   @media (--mobile) {
-    margin: 0;
     flex-direction: column;
     width: 100%;
+    margin: 0;
 
     > * {
+      width: 100%;
       margin-right: 0;
       margin-left: 0;
-      width: 100%;
     }
 
     > *:not(:last-child) {
@@ -395,12 +398,12 @@
 }
 
 .card__more_disabled {
-  opacity: 32%;
+  opacity: 0.32;
 }
 
 .card__more_disabled:hover {
   color: var(--pneumatic-color-black32);
-  opacity: 32%;
+  opacity: 0.32;
 }
 
 .breakdown__head_container-wrapper {
@@ -412,24 +415,26 @@
 
   @media (--mobile) {
     display: flex;
-    width: 100%;
     justify-content: space-between;
+    width: 100%;
   }
 }
+
 .breakdown__title-link {
   display: block;
-  overflow: hidden;
   width: 100%;
-  white-space: nowrap;
+  overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .breakdown__title-button {
-  overflow: hidden;
   width: 100%;
-  white-space: nowrap;
+  overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
+
 .breakdown__title-button:hover {
   color: var(--pneumatic-color-link-hover);
 }

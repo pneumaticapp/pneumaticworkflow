@@ -31,7 +31,6 @@ import tasks from './tasks/slice';
 import datasets from './datasets/slice';
 import fieldsets from './fieldsets/slice';
 
-
 export const reducers = combineReducers({
   general,
   accounts,
@@ -60,7 +59,6 @@ export const reducers = combineReducers({
   pages,
 });
 
-// eslint-disable-next-line @typescript-eslint/default-param-last
 export const rootReducer: RootStateOrAny = (state: IApplicationState = initialState, action: any) => {
   if (action.type === EAuthActions.LogoutUserSuccess) {
     return reducers(initialState, action);

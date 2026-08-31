@@ -45,15 +45,18 @@ jest.mock('../../../utils/history', () => ({
 
 jest.mock('../../UI/Buttons/Button', () => ({
   Button: (props: { label: string; disabled?: boolean; type?: string; onClick?: () => void; isLoading?: boolean }) =>
-    React.createElement('button', {
-      type: props.type || 'button',
-      disabled: props.disabled,
-    }, props.label),
+    React.createElement(
+      'button',
+      {
+        type: props.type || 'button',
+        disabled: props.disabled,
+      },
+      props.label,
+    ),
 }));
 
 jest.mock('../../UI', () => ({
-  SectionTitle: ({ children }: { children: React.ReactNode }) =>
-    React.createElement('div', null, children),
+  SectionTitle: ({ children }: { children: React.ReactNode }) => React.createElement('div', null, children),
 }));
 
 jest.mock('../../RichText', () => ({
@@ -64,15 +67,17 @@ jest.mock('../../icons', () => ({
   PlayLogoIcon: () => null,
 }));
 
-const makeField = (overrides: Partial<IExtraField> = {}) => makeExtraField({
-  apiName: `f-${Math.random()}`,
-  ...overrides,
-});
+const makeField = (overrides: Partial<IExtraField> = {}) =>
+  makeExtraField({
+    apiName: `f-${Math.random()}`,
+    ...overrides,
+  });
 
-const makeFieldset = (overrides: Partial<IFieldsetRuntime> & { fields: IExtraField[] }) => makeFieldsetRuntime({
-  name: 'Fieldset',
-  ...overrides,
-});
+const makeFieldset = (overrides: Partial<IFieldsetRuntime> & { fields: IExtraField[] }) =>
+  makeFieldsetRuntime({
+    name: 'Fieldset',
+    ...overrides,
+  });
 
 const baseWorkflow = {
   id: 1,
@@ -114,9 +119,7 @@ describe('WorkflowEditPopup', () => {
   });
 
   it('renders MergedOutputList and passes fields and fieldsets', () => {
-    const loadedFieldsets = [
-      makeFieldset({ fields: [], order: 2 }),
-    ];
+    const loadedFieldsets = [makeFieldset({ fields: [], order: 2 })];
 
     const workflow = {
       ...baseWorkflow,
@@ -198,9 +201,7 @@ describe('WorkflowEditPopup', () => {
       },
       loadedFieldsets: [
         makeFieldset({
-          fields: [
-            makeField({ apiName: 'fs-field-1', isRequired: true, value: '', order: 1 }),
-          ],
+          fields: [makeField({ apiName: 'fs-field-1', isRequired: true, value: '', order: 1 })],
           order: 1,
         }),
       ],
@@ -222,9 +223,7 @@ describe('WorkflowEditPopup', () => {
       },
       loadedFieldsets: [
         makeFieldset({
-          fields: [
-            makeField({ apiName: 'fs-field-1', isRequired: true, value: 'also filled', order: 1 }),
-          ],
+          fields: [makeField({ apiName: 'fs-field-1', isRequired: true, value: 'also filled', order: 1 })],
           order: 1,
         }),
       ],
@@ -289,9 +288,7 @@ describe('WorkflowEditPopup', () => {
       const workflow = {
         ...baseWorkflow,
         kickoff: { description: '', fields: [], fieldsets: [] },
-        loadedFieldsets: [
-          makeFieldset({ fields: [fsField], order: 1 }),
-        ],
+        loadedFieldsets: [makeFieldset({ fields: [fsField], order: 1 })],
       };
 
       renderWithIntl(<WorkflowEditPopup {...baseProps} workflow={workflow} />);
@@ -309,9 +306,7 @@ describe('WorkflowEditPopup', () => {
       expect(baseProps.onRunWorkflow).toHaveBeenCalledWith(
         expect.objectContaining({
           kickoff: expect.objectContaining({
-            fields: expect.arrayContaining([
-              expect.objectContaining({ apiName: 'fs-edit-1', value: 'new-value' }),
-            ]),
+            fields: expect.arrayContaining([expect.objectContaining({ apiName: 'fs-edit-1', value: 'new-value' })]),
           }),
         }),
       );
@@ -344,9 +339,7 @@ describe('WorkflowEditPopup', () => {
       const workflow = {
         ...baseWorkflow,
         kickoff: { description: '', fields: [], fieldsets: [] },
-        loadedFieldsets: [
-          makeFieldset({ fields: [makeField({ apiName: 'fs-only-1' })], order: 1 }),
-        ],
+        loadedFieldsets: [makeFieldset({ fields: [makeField({ apiName: 'fs-only-1' })], order: 1 })],
       };
 
       renderWithIntl(<WorkflowEditPopup {...baseProps} workflow={workflow} />);
@@ -371,10 +364,7 @@ describe('WorkflowEditPopup', () => {
       renderWithIntl(<WorkflowEditPopup {...baseProps} workflow={workflow} />);
 
       expect(RichText as jest.Mock).toHaveBeenCalledTimes(1);
-      expect(RichText as jest.Mock).toHaveBeenCalledWith(
-        expect.objectContaining({ text: '**Bold description**' }),
-        {},
-      );
+      expect(RichText as jest.Mock).toHaveBeenCalledWith(expect.objectContaining({ text: '**Bold description**' }), {});
     });
   });
 });

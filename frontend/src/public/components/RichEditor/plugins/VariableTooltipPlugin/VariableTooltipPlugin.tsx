@@ -4,8 +4,6 @@ import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext
 
 import { CustomTooltip } from '../../../UI';
 
-
-
 // Constants
 const VARIABLE_CHIP_SELECTOR = '.lexical-rich-editor-variable';
 const VARIABLE_TITLE_ATTRIBUTE = 'data-tooltip-title';
@@ -50,7 +48,6 @@ function extractVariableData(element: HTMLElement): IHoveredVariable {
     subtitle,
   };
 }
-
 
 /**
  * Plugin that shows tooltips when hovering over variable chips in the rich text editor.
@@ -130,12 +127,7 @@ export function VariableTooltipPlugin(): React.ReactElement | null {
     });
   }, [editor]);
 
-  if (
-    !refReady ||
-    !hoveredVariable ||
-    typeof document === 'undefined' ||
-    !document.body
-  ) {
+  if (!refReady || !hoveredVariable || typeof document === 'undefined' || !document.body) {
     return null;
   }
 

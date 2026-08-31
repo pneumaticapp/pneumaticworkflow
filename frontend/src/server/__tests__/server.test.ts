@@ -71,11 +71,11 @@ const setupMocks = () => {
   router = createRouterMock();
   (express as unknown as jest.Mock).mockReturnValue(app);
   (express.Router as unknown as jest.Mock).mockReturnValue(router);
-  
+
   if (!mockConfig || !mockConfig.api?.urls) {
     mockConfig = initMockConfig();
   }
-  
+
   const getConfigMock = jest.requireMock('../../public/utils/getConfig');
   getConfigMock.getConfig = jest.fn(() => mockConfig);
 };
@@ -169,7 +169,7 @@ describe('server', () => {
       });
 
       initServer();
-      
+
       expect(app.get).toHaveBeenCalledTimes(8);
     });
 

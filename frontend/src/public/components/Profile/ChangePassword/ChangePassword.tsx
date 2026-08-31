@@ -104,7 +104,7 @@ export function ChangePassword({ isOpen, handleCloseModal, sendChangePassword, l
               type="button"
               size="md"
               onClick={handleCloseModal}
-              buttonStyle='transparent-yellow'
+              buttonStyle="transparent-yellow"
             />
           </footer>
         </Form>

@@ -54,9 +54,7 @@ describe('variableMarkdown', () => {
   });
 
   describe('isKnownVariableApiName', () => {
-    const list: TTaskVariable[] = [
-      { apiName: 'date', title: 'Date', type: EExtraFieldType.Text },
-    ];
+    const list: TTaskVariable[] = [{ apiName: 'date', title: 'Date', type: EExtraFieldType.Text }];
 
     it('matches template list by apiName', () => {
       expect(isKnownVariableApiName('date', list)).toBe(true);

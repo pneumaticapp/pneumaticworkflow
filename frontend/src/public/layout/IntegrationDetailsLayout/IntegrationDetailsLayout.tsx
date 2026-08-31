@@ -15,12 +15,7 @@ export function IntegrationDetailsLayout({ children }: IIntegrationDetailsLayout
   const { formatMessage } = useIntl();
 
   const renderLeftContent = () => {
-    return (
-      <ReturnLink
-        label={formatMessage({ id: 'menu.integrations' })}
-        route={ERoutes.Integrations}
-      />
-    );
+    return <ReturnLink label={formatMessage({ id: 'menu.integrations' })} route={ERoutes.Integrations} />;
   };
 
   return (
@@ -33,9 +28,7 @@ export function IntegrationDetailsLayout({ children }: IIntegrationDetailsLayout
               <IntegrationsCommonContainer />
             </div>
 
-            <div className={styles['content']}>
-              {children}
-            </div>
+            <div className={styles['content']}>{children}</div>
           </div>
         </div>
       </main>

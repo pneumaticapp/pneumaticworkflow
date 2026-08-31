@@ -1,7 +1,7 @@
 .title_required {
   &::after {
-    content: '*';
     color: var(--pneumatic-color-warning);
+    content: '*';
   }
 }
 

@@ -12,11 +12,7 @@ export const RichTextMoreLink = ({ onExpand }: IRichTextMoreLinkProps) => {
   const { formatMessage } = useIntl();
 
   return (
-    <button
-      type="button"
-      onClick={onExpand}
-      className={styles['more-link']}
-    >
+    <button type="button" onClick={onExpand} className={styles['more-link']}>
       <span className={styles['more-link__delimiter']}>{ELLIPSIS_CHAR}</span>
       {formatMessage({ id: 'templates.description-more' })}
     </button>

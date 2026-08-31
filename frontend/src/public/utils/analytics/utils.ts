@@ -7,7 +7,9 @@ import { getBrowserConfig } from '../getConfig';
 import { removePneumaticSuffix } from '../strings';
 
 export const getAnalyticsId = () => {
-  const { config: { analyticsId } } = getBrowserConfig();
+  const {
+    config: { analyticsId },
+  } = getBrowserConfig();
 
   return analyticsId;
 };
@@ -17,10 +19,9 @@ export const getAnalyticsPageParams = (pathname: string, search?: string) => {
     pathname.includes(ERoutes.Workflows) && !search,
     pathname.includes(ERoutes.Workflows) && search?.includes('type=workflows-in-work'),
   ].some(Boolean);
-  const isWorkflowsDelayed = [
-    pathname.includes(ERoutes.Workflows),
-    search?.includes('type=workflows-delayed'),
-  ].every(Boolean);
+  const isWorkflowsDelayed = [pathname.includes(ERoutes.Workflows), search?.includes('type=workflows-delayed')].every(
+    Boolean,
+  );
   const isWorkflowsCompleted = [
     pathname.includes(ERoutes.Workflows),
     search?.includes('type=workflows-completed'),
@@ -86,7 +87,6 @@ export const getAnalyticsPageParams = (pathname: string, search?: string) => {
   const isLegacy = analyticsInfo.name.includes('templates');
 
   if (isLegacy) {
-
   }
   const { category, name, title } = analyticsInfo;
 
@@ -97,17 +97,19 @@ const normalizedRoutes = convertEnumToObject(ERoutes);
 const normalizedTitles = convertEnumToObject(TITLES);
 
 export interface IAnalyticsRoutesTitlesMap {
-  [route: string]: {
-    name: string;
-    title: string;
-    category?: string;
-  } | undefined;
+  [route: string]:
+    | {
+        name: string;
+        title: string;
+        category?: string;
+      }
+    | undefined;
 }
 
 export const ANALYTICS_CATEGORIES: string[] = [];
 
-export const ANALYTICS_ROUTES_TITLES_MAP: IAnalyticsRoutesTitlesMap = Object.keys(normalizedRoutes)
-  .reduce((acc, key) => {
+export const ANALYTICS_ROUTES_TITLES_MAP: IAnalyticsRoutesTitlesMap = Object.keys(normalizedRoutes).reduce(
+  (acc, key) => {
     const route = normalizedRoutes[key].replace(':id/', '');
     const title = normalizedTitles[key];
 
@@ -116,7 +118,9 @@ export const ANALYTICS_ROUTES_TITLES_MAP: IAnalyticsRoutesTitlesMap = Object.key
     }
 
     const name = removePneumaticSuffix(title);
-    const category = ANALYTICS_CATEGORIES.find(category => name.toLowerCase().includes(category.toLowerCase()));
+    const category = ANALYTICS_CATEGORIES.find((category) => name.toLowerCase().includes(category.toLowerCase()));
 
-    return { ...acc, [route]: { category, name, title }};
-  }, {});
+    return { ...acc, [route]: { category, name, title } };
+  },
+  {},
+);

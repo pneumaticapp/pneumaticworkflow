@@ -1,4 +1,3 @@
-/* eslint-disable */
 /* prettier-ignore */
 import { all, fork, put, select, takeEvery } from 'redux-saga/effects';
 

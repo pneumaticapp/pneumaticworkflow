@@ -5,7 +5,6 @@ import { GroupIcon } from '../../../icons';
 import { Avatar } from '../Avatar';
 import styles from '../Avatar.css';
 
-
 describe('Avatar', () => {
   it('renders image', () => {
     const url = '/some/image.png';
@@ -14,7 +13,7 @@ describe('Avatar', () => {
       lastName: '',
       photo: url,
       email: '',
-    }
+    };
     const wrapper = shallow(<Avatar user={user} />);
 
     expect(wrapper.find('img').prop('src')).toEqual(url);
@@ -23,19 +22,15 @@ describe('Avatar', () => {
   it('renders initials', () => {
     const firstName = 'Test';
     const lastName = 'User';
-    const email = "test@test.com"
-    const photo = "";
+    const email = 'test@test.com';
+    const photo = '';
     const user = {
       firstName,
       lastName,
       photo,
       email,
-    }
-    const wrapper = shallow(
-      <Avatar
-        user={user}
-      />,
-    );
+    };
+    const wrapper = shallow(<Avatar user={user} />);
 
     const avatarElement = wrapper.find(`.${styles['avatar']}`);
 
@@ -48,7 +43,7 @@ describe('Avatar', () => {
       lastName: '',
       photo: '',
       email: '',
-    }
+    };
 
     const wrapper = shallow(<Avatar user={user} />);
 

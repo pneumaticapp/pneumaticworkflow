@@ -14,17 +14,11 @@ describe('usersDropdownOptionValue', () => {
 
   it('compares options by optionType and id', () => {
     expect(
-      isUsersDropdownOptionEqual(
-        { optionType: EOptionTypes.User, id: 5 },
-        { optionType: EOptionTypes.Group, id: 5 },
-      ),
+      isUsersDropdownOptionEqual({ optionType: EOptionTypes.User, id: 5 }, { optionType: EOptionTypes.Group, id: 5 }),
     ).toBe(false);
 
     expect(
-      isUsersDropdownOptionEqual(
-        { optionType: EOptionTypes.User, id: 5 },
-        { optionType: EOptionTypes.User, id: 5 },
-      ),
+      isUsersDropdownOptionEqual({ optionType: EOptionTypes.User, id: 5 }, { optionType: EOptionTypes.User, id: 5 }),
     ).toBe(true);
   });
 

@@ -4,14 +4,15 @@
 
 .toolbar {
   display: flex;
-  align-items: center;
   gap: 0.8rem;
+  align-items: center;
+  margin-top: 1rem;
 }
 
 .toolbar-format {
   display: flex;
-  align-items: center;
   gap: 0.8rem;
+  align-items: center;
 }
 
 .separator {
@@ -30,8 +31,8 @@
 
 .button {
   display: block;
-  cursor: pointer;
   color: var(--pneumatic-color-black32);
+  cursor: pointer;
 
   &.is-active {
     color: var(--pneumatic-color-link-hover);
@@ -48,8 +49,8 @@
   position: absolute;
   top: 0;
   left: -9999rem;
-  overflow: hidden;
   width: 0;
   height: 0;
+  overflow: hidden;
   opacity: 0;
 }

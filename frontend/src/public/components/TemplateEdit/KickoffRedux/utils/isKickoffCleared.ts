@@ -1,4 +1,3 @@
-/* eslint-disable */
 /* prettier-ignore */
 import { ITemplateKickoffClient } from '../../../../types/template';
 import { isArrayWithItems } from '../../../../utils/helpers';

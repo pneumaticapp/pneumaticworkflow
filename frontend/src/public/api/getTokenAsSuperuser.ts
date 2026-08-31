@@ -7,14 +7,20 @@ export interface IGetTokenAsSuperuserResponse {
 }
 
 export function getTokenAsSuperuser(email: string) {
-  const { api: { urls } } = getBrowserConfigEnv();
+  const {
+    api: { urls },
+  } = getBrowserConfigEnv();
   const url = urls.superuserToken;
 
-  return commonRequest<IGetTokenAsSuperuserResponse>(url, {
-    method: 'POST',
-    data: mapRequestBody({ email }),
-  }, {
-    type: 'local',
-    shouldThrow: true,
-  });
+  return commonRequest<IGetTokenAsSuperuserResponse>(
+    url,
+    {
+      method: 'POST',
+      data: mapRequestBody({ email }),
+    },
+    {
+      type: 'local',
+      shouldThrow: true,
+    },
+  );
 }

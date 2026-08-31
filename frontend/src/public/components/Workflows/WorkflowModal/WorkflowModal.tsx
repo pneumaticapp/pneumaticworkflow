@@ -99,8 +99,6 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps, IWorkflo
     };
   }
 
-
-
   public componentDidMount() {
     const { workflow, setWorkflowEdit, isOpen } = this.props;
     syncWorkflowModalPrintMode(isOpen);
@@ -140,9 +138,7 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps, IWorkflo
     return (props.workflow?.kickoff?.fieldsets || []).map((fs) => ({
       ...fs,
       fields: fs.fields.map((field) =>
-        field.type === EExtraFieldType.Checkbox
-          ? { ...field, value: normalizeCheckboxValue(field.value) }
-          : field,
+        field.type === EExtraFieldType.Checkbox ? { ...field, value: normalizeCheckboxValue(field.value) } : field,
       ),
     }));
   }
@@ -496,12 +492,12 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps, IWorkflo
             const userData =
               workflow && workflow.isExternal
                 ? {
-                  status: EUserStatus.External,
-                  email: '',
-                  firstName: 'External User',
-                  lastName: '',
-                  photo: '',
-                }
+                    status: EUserStatus.External,
+                    email: '',
+                    firstName: 'External User',
+                    lastName: '',
+                    photo: '',
+                  }
                 : user;
 
             return (

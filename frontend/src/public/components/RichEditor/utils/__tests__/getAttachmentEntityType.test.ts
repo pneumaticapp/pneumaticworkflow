@@ -1,8 +1,5 @@
 import { ECustomEditorEntities } from '../types';
-import {
-  getAttachmentEntityType,
-  getAttachmentEntityTypeByFilename,
-} from '../getAttachmentEntityType';
+import { getAttachmentEntityType, getAttachmentEntityTypeByFilename } from '../getAttachmentEntityType';
 
 jest.mock('../../../Attachments/utils/getAttachmentType', () => ({
   getAttachmentTypeByUrl: jest.fn(),
@@ -24,38 +21,28 @@ describe('getAttachmentEntityType', () => {
 
   it('returns File when getAttachmentTypeByUrl returns null', () => {
     getAttachmentTypeByUrl.mockReturnValue(null);
-    expect(getAttachmentEntityType('https://example.com/file.xyz')).toBe(
-      ECustomEditorEntities.File,
-    );
+    expect(getAttachmentEntityType('https://example.com/file.xyz')).toBe(ECustomEditorEntities.File);
   });
 
   it('returns File when type is file', () => {
     getAttachmentTypeByUrl.mockReturnValue('file');
-    expect(getAttachmentEntityType('https://example.com/doc.pdf')).toBe(
-      ECustomEditorEntities.File,
-    );
+    expect(getAttachmentEntityType('https://example.com/doc.pdf')).toBe(ECustomEditorEntities.File);
   });
 
   it('returns Image when type is image', () => {
     getAttachmentTypeByUrl.mockReturnValue('image');
-    expect(getAttachmentEntityType('https://example.com/photo.jpg')).toBe(
-      ECustomEditorEntities.Image,
-    );
+    expect(getAttachmentEntityType('https://example.com/photo.jpg')).toBe(ECustomEditorEntities.Image);
   });
 
   it('returns Video when type is video', () => {
     getAttachmentTypeByUrl.mockReturnValue('video');
-    expect(getAttachmentEntityType('https://example.com/video.mp4')).toBe(
-      ECustomEditorEntities.Video,
-    );
+    expect(getAttachmentEntityType('https://example.com/video.mp4')).toBe(ECustomEditorEntities.Video);
   });
 
   it('calls getAttachmentTypeByUrl with the given url', () => {
     getAttachmentTypeByUrl.mockReturnValue('file');
     getAttachmentEntityType('https://storage.example.com/abc.pdf');
-    expect(getAttachmentTypeByUrl).toHaveBeenCalledWith(
-      'https://storage.example.com/abc.pdf',
-    );
+    expect(getAttachmentTypeByUrl).toHaveBeenCalledWith('https://storage.example.com/abc.pdf');
   });
 
   describe('edge cases', () => {
@@ -67,9 +54,7 @@ describe('getAttachmentEntityType', () => {
 
     it('returns File for unknown type in entitiesMap', () => {
       getAttachmentTypeByUrl.mockReturnValue('file');
-      expect(getAttachmentEntityType('https://example.com/file.xyz')).toBe(
-        ECustomEditorEntities.File,
-      );
+      expect(getAttachmentEntityType('https://example.com/file.xyz')).toBe(ECustomEditorEntities.File);
     });
   });
 });
@@ -81,37 +66,27 @@ describe('getAttachmentEntityTypeByFilename', () => {
 
   it('returns Link when getAttachmentTypeByFilename returns null', () => {
     getAttachmentTypeByFilename.mockReturnValue(null);
-    expect(getAttachmentEntityTypeByFilename('no-extension-file')).toBe(
-      ECustomEditorEntities.Link,
-    );
+    expect(getAttachmentEntityTypeByFilename('no-extension-file')).toBe(ECustomEditorEntities.Link);
   });
 
   it('returns File when type is file', () => {
     getAttachmentTypeByFilename.mockReturnValue('file');
-    expect(getAttachmentEntityTypeByFilename('report.pdf')).toBe(
-      ECustomEditorEntities.File,
-    );
+    expect(getAttachmentEntityTypeByFilename('report.pdf')).toBe(ECustomEditorEntities.File);
   });
 
   it('returns Image when type is image', () => {
     getAttachmentTypeByFilename.mockReturnValue('image');
-    expect(getAttachmentEntityTypeByFilename('screenshot.png')).toBe(
-      ECustomEditorEntities.Image,
-    );
+    expect(getAttachmentEntityTypeByFilename('screenshot.png')).toBe(ECustomEditorEntities.Image);
   });
 
   it('returns Video when type is video', () => {
     getAttachmentTypeByFilename.mockReturnValue('video');
-    expect(getAttachmentEntityTypeByFilename('clip.mp4')).toBe(
-      ECustomEditorEntities.Video,
-    );
+    expect(getAttachmentEntityTypeByFilename('clip.mp4')).toBe(ECustomEditorEntities.Video);
   });
 
   it('returns Link for empty filename', () => {
     getAttachmentTypeByFilename.mockReturnValue(null);
-    expect(getAttachmentEntityTypeByFilename('')).toBe(
-      ECustomEditorEntities.Link,
-    );
+    expect(getAttachmentEntityTypeByFilename('')).toBe(ECustomEditorEntities.Link);
   });
 
   it('calls getAttachmentTypeByFilename with the given filename', () => {

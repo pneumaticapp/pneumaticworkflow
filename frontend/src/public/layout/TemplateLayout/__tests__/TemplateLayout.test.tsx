@@ -40,9 +40,7 @@ describe('TemplateLayout', () => {
   });
 
   it('renders children content', () => {
-    render(
-      React.createElement(TemplateLayout, null, 'test-child-content'),
-    );
+    render(React.createElement(TemplateLayout, null, 'test-child-content'));
 
     expect(screen.getByText('test-child-content')).toBeInTheDocument();
   });

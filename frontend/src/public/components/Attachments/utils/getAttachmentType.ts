@@ -32,34 +32,17 @@ function getUrlFileExtension(url: string) {
   return regEx.exec(url)?.[1] || '';
 }
 
-const VIDEO_FILE_EXTENSIONS = [
-  'MP4',
-  'MOV',
-  'WMV',
-  'AVI',
-  'FLV',
-  'F4V',
-  'SWF',
-  'MKV',
-  'WEBM',
-];
+const VIDEO_FILE_EXTENSIONS = ['MP4', 'MOV', 'WMV', 'AVI', 'FLV', 'F4V', 'SWF', 'MKV', 'WEBM'];
 
-const IMAGE_FILE_EXTENSIONS = [
-  'JPG',
-  'JPEG',
-  'PNG',
-  'GIF',
-  'SVG',
-  'WEBP',
-];
+const IMAGE_FILE_EXTENSIONS = ['JPG', 'JPEG', 'PNG', 'GIF', 'SVG', 'WEBP'];
 
 const getAttachemntTypeMap: { check(fileExtension: string): boolean; type: TAttachmentType }[] = [
   {
-    check: (fileExtension: string) => IMAGE_FILE_EXTENSIONS.some(extension => extension === fileExtension),
+    check: (fileExtension: string) => IMAGE_FILE_EXTENSIONS.some((extension) => extension === fileExtension),
     type: 'image',
   },
   {
-    check: (fileExtension: string) => VIDEO_FILE_EXTENSIONS.some(extension => extension === fileExtension),
+    check: (fileExtension: string) => VIDEO_FILE_EXTENSIONS.some((extension) => extension === fileExtension),
     type: 'video',
   },
   {

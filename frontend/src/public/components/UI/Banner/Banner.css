@@ -1,9 +1,9 @@
 .banner {
-  margin-bottom: 32px;
-  padding: 32px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+  padding: 32px;
+  margin-bottom: 32px;
   background-color: var(--pneumatic-color-beige);
   border-radius: 24px;
 

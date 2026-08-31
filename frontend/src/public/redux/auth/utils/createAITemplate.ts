@@ -1,6 +1,6 @@
-import { call } from "redux-saga/effects";
-import { getLandingTemplateObject, resetLandingTemplate } from "../../../utils/landingTemplate";
-import { createTemplateBySteps } from "../../../api/createTemplateBySteps";
+import { call } from 'redux-saga/effects';
+import { getLandingTemplateObject, resetLandingTemplate } from '../../../utils/landingTemplate';
+import { createTemplateBySteps } from '../../../api/createTemplateBySteps';
 
 export function* createAITemplate() {
   const template = getLandingTemplateObject();

@@ -6,9 +6,11 @@ type TGetTemplatesIntegrationsStatsConfig = {
   templates: number[];
 };
 export function getTemplatesIntegrationsStats({ templates }: TGetTemplatesIntegrationsStatsConfig) {
-  const { api: { urls } } = getBrowserConfigEnv();
+  const {
+    api: { urls },
+  } = getBrowserConfigEnv();
 
-  const url = `${urls.templatesIntegrationsStats  }?template_id=${templates.join(',')}`;
+  const url = `${urls.templatesIntegrationsStats}?template_id=${templates.join(',')}`;
 
   return commonRequest<TTemplateIntegrationStatsApi[]>(
     url,

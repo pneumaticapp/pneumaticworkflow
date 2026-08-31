@@ -12,12 +12,7 @@ import { Modal } from '../UI/Modal/Modal';
 import { NotificationManager } from '../UI/Notifications';
 import { EPageTitle } from '../../constants/defaultValues';
 import { PageTitle } from '../PageTitle/PageTitle';
-import {
-  loadApiKeys,
-  createApiKey,
-  deleteApiKey,
-  clearNewlyCreatedKey,
-} from '../../redux/actions';
+import { loadApiKeys, createApiKey, deleteApiKey, clearNewlyCreatedKey } from '../../redux/actions';
 
 import styles from './IntegrationsCommon.css';
 
@@ -28,10 +23,7 @@ interface IApiKeyListItemProps {
   onRevoke: (id: number) => void;
 }
 
-const ApiKeyListItem = React.memo(({
-  apiKey,
-  onRevoke,
-}: IApiKeyListItemProps) => {
+const ApiKeyListItem = React.memo(({ apiKey, onRevoke }: IApiKeyListItemProps) => {
   const { formatMessage } = useIntl();
 
   const handleRevoke = React.useCallback(() => {
@@ -43,16 +35,16 @@ const ApiKeyListItem = React.memo(({
       <div className={styles['api-keys__item-info']}>
         <span className={styles['api-keys__item-name']}>{apiKey.name}</span>
         <span className={styles['api-keys__item-prefix']}>
-          {apiKey.prefix}{KEY_MASK}
+          {apiKey.prefix}
+          {KEY_MASK}
         </span>
         <span className={styles['api-keys__item-meta']}>
           {apiKey.lastUsedAt
             ? formatMessage(
-              { id: 'integrations.api-key-last-used' },
-              { date: <FormattedDate value={new Date(apiKey.lastUsedAt)} /> },
-            )
-            : formatMessage({ id: 'integrations.api-key-never-used' })
-          }
+                { id: 'integrations.api-key-last-used' },
+                { date: <FormattedDate value={new Date(apiKey.lastUsedAt)} /> },
+              )
+            : formatMessage({ id: 'integrations.api-key-never-used' })}
         </span>
       </div>
       <div className={styles['api-keys__item-actions']}>
@@ -74,15 +66,9 @@ export function IntegrationsCommon() {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
 
-  const apiKeys = useSelector(
-    (state: IApplicationState) => state.integrations.apiKeys.data,
-  );
-  const isLoading = useSelector(
-    (state: IApplicationState) => state.integrations.apiKeys.isLoading,
-  );
-  const newlyCreatedKey = useSelector(
-    (state: IApplicationState) => state.integrations.apiKeys.newlyCreatedKey,
-  );
+  const apiKeys = useSelector((state: IApplicationState) => state.integrations.apiKeys.data);
+  const isLoading = useSelector((state: IApplicationState) => state.integrations.apiKeys.isLoading);
+  const newlyCreatedKey = useSelector((state: IApplicationState) => state.integrations.apiKeys.newlyCreatedKey);
 
   const [confirmDeleteId, setConfirmDeleteId] = React.useState<number | null>(null);
   const [newKeyName, setNewKeyName] = React.useState('');
@@ -145,12 +131,9 @@ export function IntegrationsCommon() {
     }
   }, [newlyCreatedKey]);
 
-  const handleNameChange = React.useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setNewKeyName(e.target.value);
-    },
-    [],
-  );
+  const handleNameChange = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewKeyName(e.target.value);
+  }, []);
 
   const supportEmail = formatMessage({ id: 'integrations.support-email' });
   const supportEmailLink = `mailto:${supportEmail}`;
@@ -158,15 +141,11 @@ export function IntegrationsCommon() {
   return (
     <>
       <PageTitle titleId={EPageTitle.Integrations} />
-      <p className={styles['description']}>
-        {formatMessage({ id: 'integrations.description' })}
-      </p>
+      <p className={styles['description']}>{formatMessage({ id: 'integrations.description' })}</p>
 
       <div className={styles['api-keys']} data-testid="api-keys-section">
         <div className={styles['api-keys__header']}>
-          <p className={styles['api-keys__title']}>
-            {formatMessage({ id: 'integrations.api-keys-title' })}
-          </p>
+          <p className={styles['api-keys__title']}>{formatMessage({ id: 'integrations.api-keys-title' })}</p>
           <Button
             className={styles['api-keys__create-btn']}
             type="button"
@@ -179,9 +158,7 @@ export function IntegrationsCommon() {
         </div>
 
         {isLoading && (
-          <p className={styles['api-keys__loading']}>
-            {formatMessage({ id: 'integrations.loading-api-key' })}
-          </p>
+          <p className={styles['api-keys__loading']}>{formatMessage({ id: 'integrations.loading-api-key' })}</p>
         )}
 
         {!isLoading && apiKeys.length === 0 && (
@@ -193,11 +170,7 @@ export function IntegrationsCommon() {
         {!isLoading && apiKeys.length > 0 && (
           <div className={styles['api-keys__list']} data-testid="api-keys-list">
             {apiKeys.map((key: IApiKeyItem) => (
-              <ApiKeyListItem
-                key={key.id}
-                apiKey={key}
-                onRevoke={handleConfirmDeleteStart}
-              />
+              <ApiKeyListItem key={key.id} apiKey={key} onRevoke={handleConfirmDeleteStart} />
             ))}
           </div>
         )}
@@ -213,10 +186,7 @@ export function IntegrationsCommon() {
             {formatMessage({ id: 'integrations.api-key-created-warning' })}
           </p>
           <div className={styles['api-keys__modal-key']}>
-            <code
-              className={styles['api-keys__modal-key-value']}
-              data-testid="raw-key-value"
-            >
+            <code className={styles['api-keys__modal-key-value']} data-testid="raw-key-value">
               {newlyCreatedKey}
             </code>
             <button
@@ -258,7 +228,12 @@ export function IntegrationsCommon() {
               label={formatMessage({ id: 'integrations.api-key-revoke' })}
               data-testid="confirm-revoke-btn"
             />
-            <button type="button" className="cancel-button" onClick={handleConfirmDeleteCancel} data-testid="cancel-revoke-btn">
+            <button
+              type="button"
+              className="cancel-button"
+              onClick={handleConfirmDeleteCancel}
+              data-testid="cancel-revoke-btn"
+            >
               {formatMessage({ id: 'integrations.cancel' })}
             </button>
           </div>
@@ -291,7 +266,12 @@ export function IntegrationsCommon() {
                 label={formatMessage({ id: 'integrations.create-api-key' })}
                 data-testid="submit-create-key"
               />
-              <button type="button" className="cancel-button" onClick={handleHideCreateForm} data-testid="cancel-create-key">
+              <button
+                type="button"
+                className="cancel-button"
+                onClick={handleHideCreateForm}
+                data-testid="cancel-create-key"
+              >
                 {formatMessage({ id: 'integrations.cancel' })}
               </button>
             </div>
@@ -301,7 +281,9 @@ export function IntegrationsCommon() {
 
       <p className={styles['hint']}>
         {formatMessage({ id: 'integrations.hint' })}
-        <a className={styles['link']} href={supportEmailLink}>{supportEmail}</a>
+        <a className={styles['link']} href={supportEmailLink}>
+          {supportEmail}
+        </a>
       </p>
     </>
   );

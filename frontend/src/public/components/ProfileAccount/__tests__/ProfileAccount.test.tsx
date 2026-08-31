@@ -13,11 +13,10 @@ jest.mock('../../UI/Fields/AttachmentField', () => ({
 }));
 
 const attachmentFieldMock = AttachmentField as unknown as jest.Mock;
-const getLogoProps = (expectedImageWidth: number) => (
+const getLogoProps = (expectedImageWidth: number) =>
   [...attachmentFieldMock.mock.calls]
     .reverse()
-    .find(([props]) => props.expectedImageWidth === expectedImageWidth)?.[0] as IAttachmentFieldProps
-);
+    .find(([props]) => props.expectedImageWidth === expectedImageWidth)?.[0] as IAttachmentFieldProps;
 
 const defaultProps: IProfileAccountProps = {
   accountId: 1,

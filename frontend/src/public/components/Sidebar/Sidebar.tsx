@@ -40,18 +40,12 @@ export function Sidebar() {
     menuItems,
     pendingActions,
   } = useSelector(getSidebarState);
-  const {
-    activeItemId,
-    closeMenu,
-    handleCloseMenu,
-    handleMobileMenuToggle,
-    handleOpenMenu,
-    isMobile,
-  } = useSidebarNavigation({
-    containerClassnames,
-    menuHiddenBreakpoint,
-    menuItems,
-  });
+  const { activeItemId, closeMenu, handleCloseMenu, handleMobileMenuToggle, handleOpenMenu, isMobile } =
+    useSidebarNavigation({
+      containerClassnames,
+      menuHiddenBreakpoint,
+      menuItems,
+    });
   const extraSpace = checkHasTopBar(Boolean(isBlocked), plan, Boolean(isSupermode));
   const handleRunWorkflow = useCallback(() => {
     if (!pendingActions.includes(EPlanActions.ChoosePlan)) {

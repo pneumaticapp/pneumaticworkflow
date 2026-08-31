@@ -5,9 +5,9 @@
 
   :global {
     .rc-slider-handle {
-      margin-top: -10px !important;
       width: 40px !important;
       height: 24px !important;
+      margin-top: -10px !important;
       cursor: pointer !important;
       background: var(--pneumatic-color-link) !important;
       border: none !important;

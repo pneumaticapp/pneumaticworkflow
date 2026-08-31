@@ -3,5 +3,5 @@ export interface ITaxRates {
 }
 
 export const TAX_RATES: ITaxRates = {
-  Texas : 8.25,
+  Texas: 8.25,
 };

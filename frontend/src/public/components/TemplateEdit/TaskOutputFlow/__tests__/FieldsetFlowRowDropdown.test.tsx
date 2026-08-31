@@ -101,9 +101,7 @@ describe('FieldsetFlowRowDropdown', () => {
     );
 
     expect(getDropdownOptions()).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ mapKey: 'fieldset-flow-open-detail' }),
-      ]),
+      expect.arrayContaining([expect.objectContaining({ mapKey: 'fieldset-flow-open-detail' })]),
     );
   });
 
@@ -111,9 +109,7 @@ describe('FieldsetFlowRowDropdown', () => {
     render(React.createElement(FieldsetFlowRowDropdown, { ...baseProps }));
 
     expect(getDropdownOptions()).not.toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ mapKey: 'fieldset-flow-open-detail' }),
-      ]),
+      expect.arrayContaining([expect.objectContaining({ mapKey: 'fieldset-flow-open-detail' })]),
     );
   });
 
@@ -156,8 +152,7 @@ describe('FieldsetFlowRowDropdown', () => {
 
       expect(closeDropdown).toHaveBeenCalledTimes(1);
       expect(handler).toHaveBeenCalledTimes(1);
-      expect(closeDropdown.mock.invocationCallOrder[0])
-        .toBeLessThan(handler.mock.invocationCallOrder[0]);
+      expect(closeDropdown.mock.invocationCallOrder[0]).toBeLessThan(handler.mock.invocationCallOrder[0]);
     });
   });
 
@@ -179,9 +174,7 @@ describe('FieldsetFlowRowDropdown', () => {
   it('Delete option is present regardless of onOpenDetail presence', () => {
     render(React.createElement(FieldsetFlowRowDropdown, { ...baseProps }));
     expect(getDropdownOptions()).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ label: formatMsg('user.avatar.delete') }),
-      ]),
+      expect.arrayContaining([expect.objectContaining({ label: formatMsg('user.avatar.delete') })]),
     );
 
     (Dropdown as jest.Mock).mockClear();
@@ -193,9 +186,7 @@ describe('FieldsetFlowRowDropdown', () => {
       }),
     );
     expect(getDropdownOptions()).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ label: formatMsg('user.avatar.delete') }),
-      ]),
+      expect.arrayContaining([expect.objectContaining({ label: formatMsg('user.avatar.delete') })]),
     );
   });
 });

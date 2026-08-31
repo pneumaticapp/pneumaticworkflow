@@ -4,16 +4,16 @@
 }
 
 .card-user {
+  flex-shrink: 0;
   width: 2rem;
   height: 2rem;
-  flex-shrink: 0;
 
   img {
     width: 100%;
     height: 100%;
     vertical-align: unset;
-    border-radius: 50%;
     object-fit: cover;
+    border-radius: 50%;
   }
 }
 
@@ -22,13 +22,13 @@
 }
 
 .card-users button {
-  padding: 0;
+  flex-shrink: 0;
   width: 2rem;
   height: 2rem;
+  padding: 0;
   cursor: pointer;
   background: transparent;
   border: none;
-  flex-shrink: 0;
 }
 
 .card-users > button:not(:first-child) {

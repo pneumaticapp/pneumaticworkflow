@@ -1,5 +1,5 @@
 import * as React from 'react';
-import  { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -28,8 +28,6 @@ import { IUsersProps } from './types';
 import { openCreateUserModal, closeCreateUserModal } from '../../../redux/accounts/slice';
 
 import styles from './Users.css';
-
-
 
 export const STATUS_TITLE_MAP: { [key: string]: string } = {
   active: 'team.title-group-active',
@@ -182,7 +180,11 @@ export function Users({
       <DeleteTeamUserPopupContainer />
       <AddGuestsBanner />
       <CreateUserModal isOpen={isCreateUserModalOpen} onClose={handleCloseCreateUserModal} />
-      <VacationSettingsModal isOpen={!!vacationModalUser} onClose={() => setVacationModalUser(null)} user={vacationModalUser} />
+      <VacationSettingsModal
+        isOpen={!!vacationModalUser}
+        onClose={() => setVacationModalUser(null)}
+        user={vacationModalUser}
+      />
 
       <PageTitle titleId={EPageTitle.Team} withUnderline={false} />
       {renderSearch()}

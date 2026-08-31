@@ -15,10 +15,11 @@ describe('getPerformersForDropdown', () => {
   const formatMsg = (id: string, values?: Record<string, string>) => intlMock.formatMessage({ id }, values);
   const MANAGER_LABEL = (step: string) => formatMsg('tasks.task-manager-of-step', { step });
 
-  const makeTask = (overrides: Partial<ITemplateTaskClient> = {}) => makeTemplateTaskClient({
-    name: 'First Step',
-    ...overrides,
-  });
+  const makeTask = (overrides: Partial<ITemplateTaskClient> = {}) =>
+    makeTemplateTaskClient({
+      name: 'First Step',
+      ...overrides,
+    });
 
   describe('Manager options', () => {
     it('generates a Manager option for each step except the current one', () => {
@@ -29,14 +30,7 @@ describe('getPerformersForDropdown', () => {
         makeTask({ apiName: 'task-3', name: 'Third Step', number: 3 }),
       ];
 
-      const result = getPerformersForDropdown(
-        [],
-        [],
-        [],
-        intlMock.formatMessage,
-        currentTask,
-        tasks,
-      );
+      const result = getPerformersForDropdown([], [], [], intlMock.formatMessage, currentTask, tasks);
 
       const managerOptions = result.filter((o) => o.optionType === EOptionTypes.Manager);
 
@@ -55,12 +49,7 @@ describe('getPerformersForDropdown', () => {
     });
 
     it('returns empty Manager options array when tasks are not provided', () => {
-      const result = getPerformersForDropdown(
-        [],
-        [],
-        [],
-        intlMock.formatMessage,
-      );
+      const result = getPerformersForDropdown([], [], [], intlMock.formatMessage);
 
       const managerOptions = result.filter((o) => o.optionType === EOptionTypes.Manager);
 
@@ -70,14 +59,7 @@ describe('getPerformersForDropdown', () => {
     it('returns empty Manager options array for a single step', () => {
       const task = makeTask();
 
-      const result = getPerformersForDropdown(
-        [],
-        [],
-        [],
-        intlMock.formatMessage,
-        task,
-        [task],
-      );
+      const result = getPerformersForDropdown([], [], [], intlMock.formatMessage, task, [task]);
 
       const managerOptions = result.filter((o) => o.optionType === EOptionTypes.Manager);
 
@@ -101,14 +83,7 @@ describe('getPerformersForDropdown', () => {
       const currentTask = makeTask({ apiName: 'task-2', number: 2 });
       const tasks = [makeTask(), currentTask];
 
-      const result = getPerformersForDropdown(
-        [],
-        [],
-        [],
-        intlMock.formatMessage,
-        currentTask,
-        tasks,
-      );
+      const result = getPerformersForDropdown([], [], [], intlMock.formatMessage, currentTask, tasks);
 
       const managerOptions = result.filter((o) => o.optionType === EOptionTypes.Manager);
 

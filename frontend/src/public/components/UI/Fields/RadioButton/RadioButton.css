@@ -3,26 +3,26 @@
 /* Radio */
 
 .radio {
-  margin-bottom: 0;
-  padding-left: 2.8rem;
   display: inline-flex;
+  padding-left: 2.8rem;
+  margin-bottom: 0;
 }
 
 .radio__input {
   position: absolute;
   width: 0;
   height: 0;
+  appearance: none;
   /* stylelint-disable-next-line declaration-no-important */
   opacity: 0 !important;
-  appearance: none;
 }
 
 .radio__box {
   position: absolute;
-  margin-left: -2.8rem;
   box-sizing: border-box;
   width: 2rem;
   height: 2rem;
+  margin-left: -2.8rem;
   background-color: transparent;
   border: 0.1rem solid var(--pneumatic-color-black16);
   border-radius: 0.4rem;
@@ -32,8 +32,8 @@
     position: absolute;
     top: 0.7rem;
     right: 0.7rem;
-    left: 0.7rem;
     bottom: 0.7rem;
+    left: 0.7rem;
     display: block;
     width: 0.6rem;
     height: 0.6rem;

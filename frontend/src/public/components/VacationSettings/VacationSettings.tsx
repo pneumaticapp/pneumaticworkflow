@@ -69,7 +69,7 @@ export function VacationSettings({
   };
 
   useEffect(() => {
-    setActiveTab(isAbsent ? (absenceStatus || 'vacation') : 'active');
+    setActiveTab(isAbsent ? absenceStatus || 'vacation' : 'active');
   }, [isAbsent, absenceStatus]);
 
   const validateDates = (start: string | null, end: string | null): boolean => {
@@ -122,7 +122,7 @@ export function VacationSettings({
         <DropdownList
           label={formatMessage({ id: 'user-info.vacation.status', defaultMessage: 'Options' })}
           options={STATUS_OPTIONS}
-          value={STATUS_OPTIONS.find(o => o.value === activeTab)}
+          value={STATUS_OPTIONS.find((o) => o.value === activeTab)}
           onChange={(option: { value: string }) => setActiveTab(option.value)}
           controlSize="lg"
           isSearchable={false}
@@ -168,9 +168,9 @@ export function VacationSettings({
                 errorMessage={
                   hasSubmitted && selectedUserIds.length === 0
                     ? formatMessage({
-                      id: 'validation.required',
-                      defaultMessage: 'Please select at least one substitute.',
-                    })
+                        id: 'validation.required',
+                        defaultMessage: 'Please select at least one substitute.',
+                      })
                     : undefined
                 }
               />

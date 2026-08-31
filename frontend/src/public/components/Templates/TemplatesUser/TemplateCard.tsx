@@ -150,12 +150,7 @@ export function TemplateCard({
           )}
         </div>
 
-        <TemplateCardFooter
-          templateId={id}
-          isActive={isActive}
-          tasksCount={tasksCount}
-          onRunWorkflow={onRunWorkflow}
-        />
+        <TemplateCardFooter templateId={id} isActive={isActive} tasksCount={tasksCount} onRunWorkflow={onRunWorkflow} />
       </div>
     </div>
   );
