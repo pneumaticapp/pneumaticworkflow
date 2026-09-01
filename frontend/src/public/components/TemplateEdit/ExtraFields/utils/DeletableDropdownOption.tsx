@@ -8,7 +8,7 @@ import { IDeletableDropdownOptionProps } from './types';
 import dropdownStyles from '../../../UI/Dropdown/Dropdown.css';
 import styles from './DeletableDropdownOption.css';
 
-export function DeletableDropdownOption({ label, onDelete, onClick }: IDeletableDropdownOptionProps) {
+export function DeletableDropdownOption({ label, onDelete, onClick, closeDropdown }: IDeletableDropdownOptionProps) {
   const { formatMessage } = useIntl();
   const [isConfirming, setIsConfirming] = useState(false);
 
@@ -27,6 +27,7 @@ export function DeletableDropdownOption({ label, onDelete, onClick }: IDeletable
 
   const handleConfirm: MouseEventHandler<HTMLButtonElement> = (event) => {
     event.stopPropagation();
+    closeDropdown?.();
     onDelete();
   };
 

@@ -56,6 +56,16 @@ describe('DeletableDropdownOption', () => {
     expect(defaultProps.onDelete).toHaveBeenCalledTimes(1);
   });
 
+  it('calls closeDropdown when Yes is clicked', () => {
+    const closeDropdown = jest.fn();
+    render(<DeletableDropdownOption {...defaultProps} closeDropdown={closeDropdown} />);
+
+    userEvent.click(screen.getByTestId('trash-icon'));
+    userEvent.click(screen.getByText(YES_LABEL));
+
+    expect(closeDropdown).toHaveBeenCalledTimes(1);
+  });
+
   it('returns to normal mode when No is clicked', () => {
     render(<DeletableDropdownOption {...defaultProps} />);
 

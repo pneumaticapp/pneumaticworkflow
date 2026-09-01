@@ -31,4 +31,5 @@ export interface IDeletableDropdownOptionProps {
   label: string;
   onDelete(): void;
   onClick?(): void;
+  closeDropdown?(): void;
 }

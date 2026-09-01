@@ -144,11 +144,12 @@ export function ExtraFieldDropdown({
             },
             ...(fieldRulesets || []).map((ruleset, index) => ({
               mapKey: `field-ruleset-${ruleset.apiName}`,
-              label: (
+              onClick: handleOptionClick(() => onOpenFieldRules?.(ruleset)),
+              label: (closeDropdown?: () => void) => (
                 <DeletableDropdownOption
                   label={ruleset.name}
-                  onClick={handleOptionClick(() => onOpenFieldRules?.(ruleset))}
                   onDelete={() => onDeleteFieldRuleset?.(ruleset.apiName)}
+                  closeDropdown={closeDropdown}
                 />
               ),
               withUpperline: index === 0,
