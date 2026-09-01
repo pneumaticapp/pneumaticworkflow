@@ -12,7 +12,7 @@ import {
 } from '../../../../../types/fieldset';
 
 import { EExtraFieldType } from '../../../../../types/template';
-import { IFieldRulesetShowFieldOption } from '../../RuleBase/types';
+import { IFieldRuleShowFieldOption, EFieldRuleShowOperator } from '../../RuleBase/types';
 
 const makeValidRuleset = (overrides: Partial<IFieldRuleSet> = {}): IFieldRuleSet => ({
   apiName: 'rs-1',
@@ -36,7 +36,7 @@ const makeValidRuleset = (overrides: Partial<IFieldRuleSet> = {}): IFieldRuleSet
   ...overrides,
 });
 
-const makeFieldOptions = (overrides: Partial<IFieldRulesetShowFieldOption> = {}): IFieldRulesetShowFieldOption[] => [
+const makeFieldOptions = (overrides: Partial<IFieldRuleShowFieldOption> = {}): IFieldRuleShowFieldOption[] => [
   { apiName: 'field_1', name: 'Field 1', type: EExtraFieldType.Text, ...overrides },
 ];
 
@@ -166,7 +166,7 @@ describe('FieldRuleModal utils', () => {
       expect(isFieldRulesetValid(ruleset, makeFieldOptions())).toBe(false);
     });
 
-    it('returns true when show rule has empty value for a File field', () => {
+    it('returns true when show rule has empty value for an operator without value (exist/not_exist)', () => {
       const ruleset = makeValidRuleset({
         type: EFieldRuleType.Show,
         groupsOr: [{
@@ -174,15 +174,13 @@ describe('FieldRuleModal utils', () => {
           groupsAnd: [{
             apiName: 'and-1',
             field: 'field_1',
-            operator: EFieldRuleValidatorOperator.Equal,
+            operator: EFieldRuleShowOperator.Exist,
             value: '',
           }],
         }],
       });
 
-      const fileFieldOptions = makeFieldOptions({ type: EExtraFieldType.File });
-
-      expect(isFieldRulesetValid(ruleset, fileFieldOptions)).toBe(true);
+      expect(isFieldRulesetValid(ruleset)).toBe(true);
     });
   });
 });

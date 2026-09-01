@@ -58,12 +58,14 @@ export enum EFieldRuleType {
   Validator = 'validator',
 }
 
-export type TFieldRuleOperator = EFieldRuleValidatorOperator;
+import { EFieldRuleShowOperator } from '../components/Fieldsets/FieldsetDetails/RuleBase/types';
+
+export type TFieldRuleOperator = EFieldRuleValidatorOperator | EFieldRuleShowOperator;
 
 export interface IFieldRuleGroupAnd {
   apiName: string;
   field?: string | null;
-  operator: EFieldRuleValidatorOperator | null;
+  operator: TFieldRuleOperator | null;
   value: string;
 }
 

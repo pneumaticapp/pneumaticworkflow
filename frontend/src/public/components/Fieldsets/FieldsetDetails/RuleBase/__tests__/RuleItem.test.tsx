@@ -85,7 +85,7 @@ describe('RuleItem component', () => {
         groupOrApiName="g-or-1"
         groupOrIndex={0}
         groupAndIndex={0}
-        fieldRulesetBaseOperatorOptions={defaultOperatorOptions}
+        fieldRuleBaseOperatorOptions={defaultOperatorOptions}
         ruleType={EFieldRuleType.Validator}
         isReadOnly={false}
         updateRule={mockUpdateRule}
@@ -114,7 +114,7 @@ describe('RuleItem component', () => {
         groupOrApiName="g-or-1"
         groupOrIndex={0}
         groupAndIndex={1}
-        fieldRulesetBaseOperatorOptions={defaultOperatorOptions}
+        fieldRuleBaseOperatorOptions={defaultOperatorOptions}
         ruleType={EFieldRuleType.Validator}
         isReadOnly={false}
         updateRule={mockUpdateRule}
@@ -148,7 +148,7 @@ describe('RuleItem component', () => {
         groupOrApiName="g-or-1"
         groupOrIndex={0}
         groupAndIndex={0}
-        fieldRulesetBaseOperatorOptions={defaultOperatorOptions}
+        fieldRuleBaseOperatorOptions={defaultOperatorOptions}
         ruleType={EFieldRuleType.Validator}
         isReadOnly={false}
         updateRule={mockUpdateRule}
@@ -180,7 +180,7 @@ describe('RuleItem component', () => {
         groupOrApiName="g-or-1"
         groupOrIndex={0}
         groupAndIndex={0}
-        fieldRulesetBaseOperatorOptions={defaultOperatorOptions}
+        fieldRuleBaseOperatorOptions={defaultOperatorOptions}
         ruleType={EFieldRuleType.Validator}
         isReadOnly={false}
         updateRule={mockUpdateRule}
@@ -208,7 +208,7 @@ describe('RuleItem component', () => {
       field: 'field-1',
     };
 
-    const fieldRulesetShowFieldOptions = [
+    const fieldRuleShowFieldOptions = [
       { apiName: 'field-1', name: 'Field 1' },
       { apiName: 'field-2', name: 'Field 2' },
     ];
@@ -219,8 +219,8 @@ describe('RuleItem component', () => {
         groupOrApiName="g-or-1"
         groupOrIndex={0}
         groupAndIndex={0}
-        fieldRulesetBaseOperatorOptions={defaultOperatorOptions}
-        fieldRulesetShowFieldOptions={fieldRulesetShowFieldOptions}
+        fieldRuleBaseOperatorOptions={defaultOperatorOptions}
+        fieldRuleShowFieldOptions={fieldRuleShowFieldOptions}
         ruleType={EFieldRuleType.Show}
         isReadOnly={false}
         updateRule={mockUpdateRule}

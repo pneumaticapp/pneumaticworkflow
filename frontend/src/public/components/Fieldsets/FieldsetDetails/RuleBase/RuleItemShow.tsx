@@ -5,13 +5,14 @@ import { useIntl } from 'react-intl';
 import classnames from 'classnames';
 
 import { FilterSelect } from '../../../UI';
-import { EExtraFieldType } from '../../../../types/template';
-import { getFieldsetRuleShowOperators } from './utils';
+import { getFieldRuleShowOperators } from './utils';
 import { FieldsetFieldRulesValue } from './RuleValueField';
 import {
-  IFieldRulesetShowFieldOption,
-  IFieldRulesetBaseOperatorOption,
-  IFieldRulesetShowItemProps,
+  IFieldRuleShowFieldOption,
+  IFieldRuleBaseOperatorOption,
+  IFieldRuleShowItemProps,
+  FIELD_RULE_SHOW_OPERATORS_WITHOUT_VALUE,
+  EFieldRuleShowOperator,
 } from './types';
 
 import fieldsetDetailsStyles from '../FieldsetDetails.css';
@@ -20,42 +21,44 @@ import styles from '../FieldsetRulesets/FieldsetRulesets.css';
 export const RuleItemShow = ({
   groupAndRule,
   groupOrApiName,
-  fieldRulesetBaseOperatorOptions,
-  fieldRulesetShowFieldOptions,
+  fieldRuleBaseOperatorOptions,
+  fieldRuleShowFieldOptions,
   isReadOnly,
   updateRule,
-}: IFieldRulesetShowItemProps) => {
+}: IFieldRuleShowItemProps) => {
   const { formatMessage, messages } = useIntl();
   const { apiName: groupAndApiName, operator, value, field: fieldApiName } = groupAndRule;
 
   const fieldPlaceholderText = formatMessage({ id: 'fieldsets.field-rule.select-field-placeholder' });
   const operatorPlaceholderText = formatMessage({ id: 'templates.conditions.operator-placeholder' });
 
-  const selectedFieldOption = fieldRulesetShowFieldOptions.find((option) => option.apiName === fieldApiName);
+  const selectedFieldOption = fieldRuleShowFieldOptions.find((option) => option.apiName === fieldApiName);
   const selectedFieldLabel = selectedFieldOption?.name || '';
-  const isFileField = selectedFieldOption?.type === EExtraFieldType.File;
 
   const fieldOperatorOptions = useMemo(() => {
     if (selectedFieldOption?.type) {
-      return getFieldsetRuleShowOperators(
+      return getFieldRuleShowOperators(
         selectedFieldOption.type,
         messages as Record<string, string>,
       );
     }
-    return fieldRulesetBaseOperatorOptions;
-  }, [selectedFieldOption?.type, messages, fieldRulesetBaseOperatorOptions]);
+    return fieldRuleBaseOperatorOptions;
+  }, [selectedFieldOption?.type, messages, fieldRuleBaseOperatorOptions]);
 
   const selectedOperatorLabel =
     fieldOperatorOptions.find((option) => option.apiName === operator)?.name || '';
 
   const isFieldSelectDisabled = isReadOnly;
+  const isOperatorWithoutValue = FIELD_RULE_SHOW_OPERATORS_WITHOUT_VALUE.includes(
+    operator as EFieldRuleShowOperator,
+  );
 
   return (
     <>
-      <FilterSelect<'apiName', 'name', IFieldRulesetShowFieldOption>
+      <FilterSelect<'apiName', 'name', IFieldRuleShowFieldOption>
         optionIdKey="apiName"
         optionLabelKey="name"
-        options={fieldRulesetShowFieldOptions}
+        options={fieldRuleShowFieldOptions}
         selectedOption={fieldApiName || ''}
         onChange={(key) => {
           if (key && key !== fieldApiName) {
@@ -84,55 +87,53 @@ export const RuleItemShow = ({
         }
       />
 
-      {!isFileField && (
-        <>
-          <FilterSelect<'apiName', 'name', IFieldRulesetBaseOperatorOption>
-            optionIdKey="apiName"
-            optionLabelKey="name"
-            options={fieldOperatorOptions}
-            selectedOption={operator}
-            onChange={(key) => {
-              if (key && key !== operator) {
-                updateRule({
-                  groupOrApiName,
-                  groupAndApiName,
-                  ruleChanges: {
-                    operator: String(key),
-                  },
-                });
-              }
-            }}
-            resetFilter={() => {}}
-            placeholderText={operatorPlaceholderText}
-            isDisabled={isReadOnly}
-            containerClassname={classnames(
-              fieldsetDetailsStyles['rule-operator-select'],
-              styles['rule-operator-select'],
-            )}
-            toggleClassName={fieldsetDetailsStyles['rule-operator-select__toggle']}
-            menuClassName={fieldsetDetailsStyles['rule-operator-select__menu']}
-            renderPlaceholder={() =>
-              selectedOperatorLabel || <span className={styles['rule-select-placeholder']}>{operatorPlaceholderText}</span>
-            }
-          />
+      <FilterSelect<'apiName', 'name', IFieldRuleBaseOperatorOption>
+        optionIdKey="apiName"
+        optionLabelKey="name"
+        options={fieldOperatorOptions}
+        selectedOption={operator}
+        onChange={(key) => {
+          if (key && key !== operator) {
+            const isNewOperatorWithoutValue = FIELD_RULE_SHOW_OPERATORS_WITHOUT_VALUE.includes(key as EFieldRuleShowOperator);
+            updateRule({
+              groupOrApiName,
+              groupAndApiName,
+              ruleChanges: {
+                operator: String(key),
+                ...(isNewOperatorWithoutValue ? { value: '' } : {}),
+              },
+            });
+          }
+        }}
+        resetFilter={() => {}}
+        placeholderText={operatorPlaceholderText}
+        isDisabled={isReadOnly}
+        containerClassname={classnames(
+          fieldsetDetailsStyles['rule-operator-select'],
+          styles['rule-operator-select'],
+        )}
+        toggleClassName={fieldsetDetailsStyles['rule-operator-select__toggle']}
+        menuClassName={fieldsetDetailsStyles['rule-operator-select__menu']}
+        renderPlaceholder={() =>
+          selectedOperatorLabel || <span className={styles['rule-select-placeholder']}>{operatorPlaceholderText}</span>
+        }
+      />
 
-          {Boolean(operator) && (
-            <FieldsetFieldRulesValue
-              fieldType={selectedFieldOption?.type}
-              value={value}
-              selections={selectedFieldOption?.selections}
-              datasetId={selectedFieldOption?.datasetId}
-              isReadOnly={isReadOnly}
-              onChange={(newValue) =>
-                updateRule({
-                  groupOrApiName,
-                  groupAndApiName,
-                  ruleChanges: { value: newValue },
-                })
-              }
-            />
-          )}
-        </>
+      {Boolean(operator) && !isOperatorWithoutValue && (
+        <FieldsetFieldRulesValue
+          fieldType={selectedFieldOption?.type}
+          value={value}
+          selections={selectedFieldOption?.selections}
+          datasetId={selectedFieldOption?.datasetId}
+          isReadOnly={isReadOnly}
+          onChange={(newValue) =>
+            updateRule({
+              groupOrApiName,
+              groupAndApiName,
+              ruleChanges: { value: newValue },
+            })
+          }
+        />
       )}
     </>
   );

@@ -11,7 +11,7 @@ import { DatePickerCustom } from '../../../UI/form/DatePicker';
 import { toDate, toTspDate } from '../../../../utils/dateTime';
 import { getUsers } from '../../../../redux/selectors/user';
 import { getNotDeletedUsers, getUserFullName } from '../../../../utils/users';
-import { IFieldRulesetValueFieldProps } from './types';
+import { IFieldRuleValueFieldProps } from './types';
 import { loadDatasetForMap } from '../../../../redux/datasets/slice';
 import { getDatasetFromMap } from '../../../../redux/selectors/datasets';
 import { IApplicationState } from '../../../../types/redux';
@@ -32,7 +32,7 @@ export const FieldsetFieldRulesValue = ({
   datasetId,
   isReadOnly,
   onChange,
-}: IFieldRulesetValueFieldProps) => {
+}: IFieldRuleValueFieldProps) => {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
   const users = useSelector(getUsers) || [];

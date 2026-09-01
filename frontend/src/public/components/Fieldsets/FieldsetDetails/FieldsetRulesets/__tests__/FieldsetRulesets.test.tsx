@@ -18,8 +18,8 @@ jest.mock('../../RuleBase', () => ({
     (props: {
       ruleSet: { apiName: string };
       addRule: () => void;
-      updateRule: (params: { ruleGroupOrApiName: string; ruleGroupAndApiName: string; ruleChanges: Record<string, string> }) => void;
-      deleteRule: (params: { ruleGroupOrApiName: string; ruleGroupAndApiName: string }) => void;
+      updateRule: (params: { groupOrApiName: string; groupAndApiName: string; ruleChanges: Record<string, string> }) => void;
+      deleteRule: (params: { groupOrApiName: string; groupAndApiName: string }) => void;
       regroupRules: (params: { groupOrApiName: string; groupAndApiName: string; ruleCombinator: string }) => void;
     }) =>
       React.createElement(
@@ -41,8 +41,8 @@ jest.mock('../../RuleBase', () => ({
             'data-testid': `mock-update-rule-${props.ruleSet.apiName}`,
             onClick: () =>
               props.updateRule({
-                ruleGroupOrApiName: 'g-or-1',
-                ruleGroupAndApiName: 'g-and-1',
+                groupOrApiName: 'g-or-1',
+                groupAndApiName: 'g-and-1',
                 ruleChanges: { value: '500' },
               }),
           },
@@ -55,8 +55,8 @@ jest.mock('../../RuleBase', () => ({
             'data-testid': `mock-delete-rule-${props.ruleSet.apiName}`,
             onClick: () =>
               props.deleteRule({
-                ruleGroupOrApiName: 'g-or-1',
-                ruleGroupAndApiName: 'g-and-1',
+                groupOrApiName: 'g-or-1',
+                groupAndApiName: 'g-and-1',
               }),
           },
           'Mock Delete Rule',

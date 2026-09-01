@@ -5,7 +5,7 @@ import classnames from 'classnames';
 import { NumericFormat } from 'react-number-format';
 
 import { FilterSelect } from '../../../UI';
-import { IFieldRulesetBaseOperatorOption, IFieldRulesetValidatorItemProps } from './types';
+import { IFieldRuleBaseOperatorOption, IFieldRuleValidatorItemProps } from './types';
 
 import fieldsetDetailsStyles from '../FieldsetDetails.css';
 import styles from '../FieldsetRulesets/FieldsetRulesets.css';
@@ -13,10 +13,10 @@ import styles from '../FieldsetRulesets/FieldsetRulesets.css';
 export const RuleItemValidator = ({
   groupAndRule,
   groupOrApiName,
-  fieldRulesetBaseOperatorOptions,
+  fieldRuleBaseOperatorOptions,
   isReadOnly,
   updateRule,
-}: IFieldRulesetValidatorItemProps) => {
+}: IFieldRuleValidatorItemProps) => {
   const { formatMessage } = useIntl();
   const [isTouched, setIsTouched] = useState(false);
   const { apiName: groupAndApiName, operator, value } = groupAndRule;
@@ -26,7 +26,7 @@ export const RuleItemValidator = ({
   }, [value, operator]);
 
   const selectedValidatorOperatorOption =
-    fieldRulesetBaseOperatorOptions.find((option) => option.apiName === operator) || fieldRulesetBaseOperatorOptions[0];
+    fieldRuleBaseOperatorOptions.find((option) => option.apiName === operator) || fieldRuleBaseOperatorOptions[0];
 
   const selectedValidatorOperatorLabel = selectedValidatorOperatorOption?.name || '';
   const currentValidatorOperator = selectedValidatorOperatorOption?.apiName || '';
@@ -35,10 +35,10 @@ export const RuleItemValidator = ({
 
   return (
     <>
-      <FilterSelect<'apiName', 'name', IFieldRulesetBaseOperatorOption>
+      <FilterSelect<'apiName', 'name', IFieldRuleBaseOperatorOption>
         optionIdKey="apiName"
         optionLabelKey="name"
-        options={fieldRulesetBaseOperatorOptions}
+        options={fieldRuleBaseOperatorOptions}
         selectedOption={currentValidatorOperator}
         onChange={(key) => {
           if (key && key !== operator) {

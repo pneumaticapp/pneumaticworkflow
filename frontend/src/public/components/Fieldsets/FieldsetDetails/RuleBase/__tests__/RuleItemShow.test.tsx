@@ -4,6 +4,7 @@ import { RuleItemShow } from '../RuleItemShow';
 import { EExtraFieldType } from '../../../../../types/template';
 import { intlMock } from '../../../../../__stubs__/intlMock';
 import { IBaseRuleGroupAnd } from '../../../../../types/fieldset';
+import { EFieldRuleShowOperator } from '../types';
 
 jest.mock('react-intl', () => {
   const actualIntl = jest.requireActual('react-intl');
@@ -50,7 +51,7 @@ describe('RuleItemShow component', () => {
   const mockGroupAndRule: IBaseRuleGroupAnd = {
     apiName: 'and_1',
     field: 'field_1',
-    operator: 'equals',
+    operator: EFieldRuleShowOperator.Equal,
     value: 'test_val',
   };
 
@@ -70,8 +71,8 @@ describe('RuleItemShow component', () => {
   ];
 
   const mockOperatorOptions = [
-    { apiName: 'equals', name: 'Equals' },
-    { apiName: 'not_equals', name: 'Not equals' },
+    { apiName: EFieldRuleShowOperator.Equal, name: 'Equals' },
+    { apiName: EFieldRuleShowOperator.NotEqual, name: 'Not equals' },
   ];
 
   it('triggers updateRule when field is changed', () => {
@@ -81,8 +82,8 @@ describe('RuleItemShow component', () => {
       <RuleItemShow
         groupAndRule={mockGroupAndRule}
         groupOrApiName="or_1"
-        fieldRulesetBaseOperatorOptions={mockOperatorOptions}
-        fieldRulesetShowFieldOptions={mockOptions}
+        fieldRuleBaseOperatorOptions={mockOperatorOptions}
+        fieldRuleShowFieldOptions={mockOptions}
         updateRule={handleUpdateRule}
       />,
     );
@@ -109,21 +110,21 @@ describe('RuleItemShow component', () => {
       <RuleItemShow
         groupAndRule={mockGroupAndRule}
         groupOrApiName="or_1"
-        fieldRulesetBaseOperatorOptions={mockOperatorOptions}
-        fieldRulesetShowFieldOptions={mockOptions}
+        fieldRuleBaseOperatorOptions={mockOperatorOptions}
+        fieldRuleShowFieldOptions={mockOptions}
         updateRule={handleUpdateRule}
       />,
     );
 
     const selects = screen.getAllByTestId('filter-select');
-    fireEvent.change(selects[1], { target: { value: 'not_equals' } });
+    fireEvent.change(selects[1], { target: { value: EFieldRuleShowOperator.NotEqual } });
 
     expect(handleUpdateRule).toHaveBeenCalledTimes(1);
     expect(handleUpdateRule).toHaveBeenCalledWith({
       groupOrApiName: 'or_1',
       groupAndApiName: 'and_1',
       ruleChanges: {
-        operator: 'not_equals',
+        operator: EFieldRuleShowOperator.NotEqual,
       },
     });
   });
@@ -135,8 +136,8 @@ describe('RuleItemShow component', () => {
       <RuleItemShow
         groupAndRule={mockGroupAndRule}
         groupOrApiName="or_1"
-        fieldRulesetBaseOperatorOptions={mockOperatorOptions}
-        fieldRulesetShowFieldOptions={mockOptions}
+        fieldRuleBaseOperatorOptions={mockOperatorOptions}
+        fieldRuleShowFieldOptions={mockOptions}
         updateRule={handleUpdateRule}
       />,
     );
@@ -150,6 +151,33 @@ describe('RuleItemShow component', () => {
       groupAndApiName: 'and_1',
       ruleChanges: {
         value: 'new value',
+      },
+    });
+  });
+
+  it('resets value when operator is changed to one without value', () => {
+    const handleUpdateRule = jest.fn();
+
+    render(
+      <RuleItemShow
+        groupAndRule={mockGroupAndRule}
+        groupOrApiName="or_1"
+        fieldRuleBaseOperatorOptions={mockOperatorOptions}
+        fieldRuleShowFieldOptions={mockOptions}
+        updateRule={handleUpdateRule}
+      />,
+    );
+
+    const selects = screen.getAllByTestId('filter-select');
+    fireEvent.change(selects[1], { target: { value: EFieldRuleShowOperator.Exist } });
+
+    expect(handleUpdateRule).toHaveBeenCalledTimes(1);
+    expect(handleUpdateRule).toHaveBeenCalledWith({
+      groupOrApiName: 'or_1',
+      groupAndApiName: 'and_1',
+      ruleChanges: {
+        operator: EFieldRuleShowOperator.Exist,
+        value: '',
       },
     });
   });

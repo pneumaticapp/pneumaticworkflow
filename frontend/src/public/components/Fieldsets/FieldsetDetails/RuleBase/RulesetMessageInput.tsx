@@ -1,14 +1,14 @@
 import * as React from 'react';
 import { useIntl } from 'react-intl';
 
-import { IFieldRulesetMessageInputProps } from './types';
+import { IFieldRuleMessageInputProps } from './types';
 import styles from '../FieldsetRulesets/FieldsetRulesets.css';
 
 export const RulesetMessageInput = ({
   message,
   onChange,
   isReadOnly,
-}: IFieldRulesetMessageInputProps) => {
+}: IFieldRuleMessageInputProps) => {
   const { formatMessage } = useIntl();
 
   return (

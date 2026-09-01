@@ -70,7 +70,7 @@ describe('RuleItemValidator component', () => {
       <RuleItemValidator
         groupAndRule={mockGroupAndRule}
         groupOrApiName="or_1"
-        fieldRulesetBaseOperatorOptions={mockOperatorOptions}
+        fieldRuleBaseOperatorOptions={mockOperatorOptions}
         updateRule={handleUpdateRule}
       />,
     );
@@ -95,7 +95,7 @@ describe('RuleItemValidator component', () => {
       <RuleItemValidator
         groupAndRule={mockGroupAndRule}
         groupOrApiName="or_1"
-        fieldRulesetBaseOperatorOptions={mockOperatorOptions}
+        fieldRuleBaseOperatorOptions={mockOperatorOptions}
         updateRule={handleUpdateRule}
       />,
     );
@@ -124,7 +124,7 @@ describe('RuleItemValidator component', () => {
       <RuleItemValidator
         groupAndRule={emptyValueRule}
         groupOrApiName="or_1"
-        fieldRulesetBaseOperatorOptions={mockOperatorOptions}
+        fieldRuleBaseOperatorOptions={mockOperatorOptions}
         updateRule={jest.fn()}
       />,
     );

@@ -6,7 +6,24 @@ import {
 } from '../../../../types/fieldset';
 import { EExtraFieldType, IExtraFieldSelection } from '../../../../types/template';
 
-export type IFieldRulesetBaseHandlers = {
+export enum EFieldRuleShowOperator {
+  Equal = 'equal',
+  NotEqual = 'not_equal',
+  Exist = 'exist',
+  NotExist = 'not_exist',
+  Contain = 'contain',
+  NotContain = 'not_contain',
+  GreaterThan = 'greater_than',
+  LessThan = 'less_than',
+}
+
+export const FIELD_RULE_SHOW_OPERATORS_WITHOUT_VALUE: EFieldRuleShowOperator[] = [
+  EFieldRuleShowOperator.Exist,
+  EFieldRuleShowOperator.NotExist,
+];
+
+
+export type IFieldRuleBaseHandlers = {
   updateRule: (params: {
     groupOrApiName: string;
     groupAndApiName: string;
@@ -23,12 +40,12 @@ export type IFieldRulesetBaseHandlers = {
   }) => void;
 };
 
-export type IFieldRulesetBaseOperatorOption = {
+export type IFieldRuleBaseOperatorOption = {
   apiName: string;
   name: string;
 };
 
-export type IFieldRulesetShowFieldOption = {
+export type IFieldRuleShowFieldOption = {
   apiName: string;
   name: string;
   type?: EExtraFieldType;
@@ -36,50 +53,50 @@ export type IFieldRulesetShowFieldOption = {
   datasetId?: number | null;
 };
 
-export type IFieldRulesetBaseItemProps = IFieldRulesetBaseHandlers & {
+export type IFieldRuleBaseItemProps = IFieldRuleBaseHandlers & {
   groupAndRule: IBaseRuleGroupAnd;
   groupOrApiName: string;
   groupOrIndex: number;
   groupAndIndex: number;
-  fieldRulesetBaseOperatorOptions: IFieldRulesetBaseOperatorOption[];
-  fieldRulesetShowFieldOptions?: IFieldRulesetShowFieldOption[];
+  fieldRuleBaseOperatorOptions: IFieldRuleBaseOperatorOption[];
+  fieldRuleShowFieldOptions?: IFieldRuleShowFieldOption[];
   ruleType: EFieldRuleType;
   isReadOnly?: boolean;
 };
 
-export type IFieldRulesetBaseListProps = IFieldRulesetBaseHandlers & {
+export type IFieldRuleBaseListProps = IFieldRuleBaseHandlers & {
   ruleSet: IBaseRuleSet;
   operatorOptions: { value: string; labelKey: string }[];
-  fieldRulesetShowFieldOptions?: IFieldRulesetShowFieldOption[];
+  fieldRuleShowFieldOptions?: IFieldRuleShowFieldOption[];
   ruleType: EFieldRuleType;
   isReadOnly?: boolean;
   addRule: () => void;
 };
 
-export type IFieldRulesetMessageInputProps = {
+export type IFieldRuleMessageInputProps = {
   message?: string | null;
   onChange: (message: string) => void;
   isReadOnly?: boolean;
 };
 
-export type IFieldRulesetShowItemProps = {
+export type IFieldRuleShowItemProps = {
   groupAndRule: IBaseRuleGroupAnd;
   groupOrApiName: string;
-  fieldRulesetBaseOperatorOptions: IFieldRulesetBaseOperatorOption[];
-  fieldRulesetShowFieldOptions: IFieldRulesetShowFieldOption[];
+  fieldRuleBaseOperatorOptions: IFieldRuleBaseOperatorOption[];
+  fieldRuleShowFieldOptions: IFieldRuleShowFieldOption[];
   isReadOnly?: boolean;
-  updateRule: IFieldRulesetBaseHandlers['updateRule'];
+  updateRule: IFieldRuleBaseHandlers['updateRule'];
 };
 
-export type IFieldRulesetValidatorItemProps = {
+export type IFieldRuleValidatorItemProps = {
   groupAndRule: IBaseRuleGroupAnd;
   groupOrApiName: string;
-  fieldRulesetBaseOperatorOptions: IFieldRulesetBaseOperatorOption[];
+  fieldRuleBaseOperatorOptions: IFieldRuleBaseOperatorOption[];
   isReadOnly?: boolean;
-  updateRule: IFieldRulesetBaseHandlers['updateRule'];
+  updateRule: IFieldRuleBaseHandlers['updateRule'];
 };
 
-export type IFieldRulesetValueFieldProps = {
+export type IFieldRuleValueFieldProps = {
   fieldType?: EExtraFieldType;
   value: string;
   selections?: IExtraFieldSelection[] | string[];

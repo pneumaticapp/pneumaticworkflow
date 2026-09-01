@@ -7,7 +7,7 @@ import { TrashIcon } from '../../../icons';
 import { EFieldRuleType } from '../../../../types/fieldset';
 import { FIELDSET_RULE_COMBINATORS } from '../../constants';
 import { getRuleCombinator } from './utils';
-import { IFieldRulesetBaseItemProps } from './types';
+import { IFieldRuleBaseItemProps } from './types';
 import { RuleItemShow } from './RuleItemShow';
 import { RuleItemValidator } from './RuleItemValidator';
 
@@ -18,14 +18,14 @@ export const RuleItem = ({
   groupOrApiName,
   groupOrIndex,
   groupAndIndex,
-  fieldRulesetBaseOperatorOptions,
-  fieldRulesetShowFieldOptions,
+  fieldRuleBaseOperatorOptions,
+  fieldRuleShowFieldOptions,
   ruleType,
   isReadOnly,
   updateRule,
   deleteRule,
   regroupRules,
-}: IFieldRulesetBaseItemProps) => {
+}: IFieldRuleBaseItemProps) => {
   const { formatMessage } = useIntl();
   const { apiName: groupAndApiName } = groupAndRule;
 
@@ -61,8 +61,8 @@ export const RuleItem = ({
           <RuleItemShow
             groupAndRule={groupAndRule}
             groupOrApiName={groupOrApiName}
-            fieldRulesetBaseOperatorOptions={fieldRulesetBaseOperatorOptions}
-            fieldRulesetShowFieldOptions={fieldRulesetShowFieldOptions || []}
+            fieldRuleBaseOperatorOptions={fieldRuleBaseOperatorOptions}
+            fieldRuleShowFieldOptions={fieldRuleShowFieldOptions || []}
             isReadOnly={isReadOnly}
             updateRule={updateRule}
           />
@@ -70,7 +70,7 @@ export const RuleItem = ({
           <RuleItemValidator
             groupAndRule={groupAndRule}
             groupOrApiName={groupOrApiName}
-            fieldRulesetBaseOperatorOptions={fieldRulesetBaseOperatorOptions}
+            fieldRuleBaseOperatorOptions={fieldRuleBaseOperatorOptions}
             isReadOnly={isReadOnly}
             updateRule={updateRule}
           />

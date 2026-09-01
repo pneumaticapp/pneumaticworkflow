@@ -4,27 +4,23 @@ import {
   ERuleCombinator,
 } from '../../../../types/fieldset';
 import { createRulesetGroupOrApiName } from '../../../../utils/createId';
-import { getDropdownOperators } from '../../../TemplateEdit/TaskForm/Conditions/utils/getDropdownOperators';
-import { EConditionOperators } from '../../../TemplateEdit/TaskForm/Conditions/types';
 import { EExtraFieldType } from '../../../../types/template';
-import { IFieldRulesetBaseOperatorOption } from './types';
+import { IFieldRuleBaseOperatorOption } from './types';
 
-const EXCLUDED_FIELDSET_OPERATORS = [
-  EConditionOperators.Exist,
-  EConditionOperators.NotExist,
-];
+import {
+  fieldRuleShowOperatorsByFieldTypeMap,
+  fieldRuleShowOperatorLabelMap,
+} from './constants';
 
-export const getFieldsetRuleShowOperators = (
+export const getFieldRuleShowOperators = (
   fieldType: EExtraFieldType,
   messages: Record<string, string>,
-): IFieldRulesetBaseOperatorOption[] => {
-  const operators = getDropdownOperators(fieldType, messages);
-  return operators
-    .filter((item) => !EXCLUDED_FIELDSET_OPERATORS.includes(item.operator))
-    .map((item) => ({
-      apiName: item.operator,
-      name: item.label,
-    }));
+): IFieldRuleBaseOperatorOption[] => {
+  const operators = fieldRuleShowOperatorsByFieldTypeMap[fieldType] || [];
+  return operators.map((operator) => ({
+    apiName: operator,
+    name: messages[fieldRuleShowOperatorLabelMap[operator]],
+  }));
 };
 
 export const traverseGroupsAnd = <T extends IBaseRuleSet>(

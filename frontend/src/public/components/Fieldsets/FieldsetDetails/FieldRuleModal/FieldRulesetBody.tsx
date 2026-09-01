@@ -16,7 +16,7 @@ import rulesetStyles from '../FieldsetRulesets/FieldsetRulesets.css';
 
 export function FieldRulesetBody({
   localRuleSet,
-  fieldRulesetShowFieldOptions,
+  fieldRuleShowFieldOptions,
   onUpdateRuleSet,
 }: IFieldRulesetBodyProps) {
   const { formatMessage } = useIntl();
@@ -28,7 +28,7 @@ export function FieldRulesetBody({
     setIsTouchedName(false);
   }, [type]);
 
-  const isNoOtherFields = (fieldRulesetShowFieldOptions?.length ?? 0) === 0;
+  const isNoOtherFields = (fieldRuleShowFieldOptions?.length ?? 0) === 0;
 
   const typeOptions: Array<{
     apiName: EFieldRuleType;
@@ -116,7 +116,7 @@ export function FieldRulesetBody({
         ruleSet={localRuleSet}
         ruleType={type}
         operatorOptions={FIELD_RULE_VALIDATOR_OPERATOR_OPTIONS}
-        fieldRulesetShowFieldOptions={fieldRulesetShowFieldOptions}
+        fieldRuleShowFieldOptions={fieldRuleShowFieldOptions}
         addRule={() => onUpdateRuleSet(addRule(localRuleSet, () => createEmptyFieldRule(type)))}
         updateRule={({ groupOrApiName, groupAndApiName, ruleChanges }) =>
           onUpdateRuleSet(updateRule(localRuleSet, groupOrApiName, groupAndApiName, ruleChanges))

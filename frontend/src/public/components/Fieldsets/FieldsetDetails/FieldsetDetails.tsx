@@ -158,7 +158,7 @@ const FieldsetDetails = ({
     setActiveFieldApiName(null);
   };
 
-  const fieldRulesetShowFieldOptions = useMemo(() => {
+  const fieldRuleShowFieldOptions = useMemo(() => {
     if (!activeFieldApiName || !localFieldset.fields) {
       return [];
     }
@@ -473,7 +473,7 @@ const FieldsetDetails = ({
       <FieldRuleModal
         isOpen={Boolean(activeFieldApiName)}
         ruleset={activeFieldRuleset}
-        fieldRulesetShowFieldOptions={fieldRulesetShowFieldOptions}
+        fieldRuleShowFieldOptions={fieldRuleShowFieldOptions}
         onSave={handleFieldRuleSave}
         onClose={handleFieldRuleClose}
       />

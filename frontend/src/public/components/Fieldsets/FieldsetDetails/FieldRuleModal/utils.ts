@@ -10,8 +10,11 @@ import {
   IFieldRuleGroupOr,
   IFieldRuleSet,
 } from '../../../../types/fieldset';
-import { EExtraFieldType } from '../../../../types/template';
-import { IFieldRulesetShowFieldOption } from '../RuleBase/types';
+import {
+  FIELD_RULE_SHOW_OPERATORS_WITHOUT_VALUE,
+  EFieldRuleShowOperator,
+  IFieldRuleShowFieldOption,
+} from '../RuleBase/types';
 
 export const createEmptyFieldRule = (
   type: EFieldRuleType = EFieldRuleType.Validator,
@@ -96,7 +99,7 @@ export const updateFieldRule = (
 
 export const isFieldRulesetValid = (
   ruleSet: IFieldRuleSet,
-  fieldRulesetShowFieldOptions: IFieldRulesetShowFieldOption[] = [],
+  _fieldRuleShowFieldOptions?: IFieldRuleShowFieldOption[],
 ): boolean => {
   if (!ruleSet.name?.trim()) {
     return false;
@@ -112,20 +115,17 @@ export const isFieldRulesetValid = (
       if (!rule.field) {
         return false;
       }
-      const selectedField = fieldRulesetShowFieldOptions.find((fieldOption) => fieldOption.apiName === rule.field);
-      const isFileField = selectedField?.type === EExtraFieldType.File;
-      if (!isFileField) {
-        const valStr = rule.value != null ? String(rule.value).trim() : '';
-        if (!valStr) {
-          return false;
-        }
+      const isOperatorWithoutValue = FIELD_RULE_SHOW_OPERATORS_WITHOUT_VALUE.includes(
+        rule.operator as EFieldRuleShowOperator,
+      );
+      if (!isOperatorWithoutValue && !rule.value.trim()) {
+        return false;
       }
       return true;
     }
 
     if (ruleSet.type === EFieldRuleType.Validator) {
-      const valStr = rule.value != null ? String(rule.value).trim() : '';
-      if (!valStr) {
+      if (!rule.value.trim()) {
         return false;
       }
       return true;
