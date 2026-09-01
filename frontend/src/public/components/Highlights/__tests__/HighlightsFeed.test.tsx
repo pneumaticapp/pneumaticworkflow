@@ -5,6 +5,7 @@ import { IntlProvider } from 'react-intl';
 
 import { HighlightsFeed, IHighlightsFeedProps } from '../HighlightsFeed';
 import { EHighlightsDateFilter } from '../../../types/highlights';
+import { IHighlightsFilters } from '../../../types/redux';
 import { enMessages } from '../../../lang/locales/en_US';
 import { ELocale } from '../../../types/redux';
 
@@ -31,6 +32,10 @@ const END_OF_TODAY_IN_ZONE = '2024-11-27T18:59:59.000Z';
 
 let nowSpy: jest.SpyInstance;
 
+/**
+ * Mirrors the store round-trip: setFilters is recorded and also fed back as props, the way the
+ * connected component sees it. Without that the mount effect's correction would never reach the child.
+ */
 const renderFeed = (props: Partial<IHighlightsFeedProps> = {}) => {
   const defaultProps: IHighlightsFeedProps = {
     count: 0,
@@ -56,9 +61,36 @@ const renderFeed = (props: Partial<IHighlightsFeedProps> = {}) => {
     ...props,
   };
 
+  const Harness = () => {
+    const [range, setRange] = React.useState({
+      startDate: defaultProps.startDate,
+      endDate: defaultProps.endDate,
+    });
+
+    const handleSetFilters = (value: Partial<IHighlightsFilters>) => {
+      defaultProps.setFilters(value);
+
+      if (value.startDate || value.endDate) {
+        setRange((current) => ({
+          startDate: value.startDate ?? current.startDate,
+          endDate: value.endDate ?? current.endDate,
+        }));
+      }
+    };
+
+    return (
+      <HighlightsFeed
+        {...defaultProps}
+        startDate={range.startDate}
+        endDate={range.endDate}
+        setFilters={handleSetFilters}
+      />
+    );
+  };
+
   render(
     <IntlProvider locale="en" messages={enMessages as unknown as Record<string, string>}>
-      <HighlightsFeed {...defaultProps} />
+      <Harness />
     </IntlProvider>,
   );
 
@@ -89,6 +121,16 @@ describe('HighlightsFeed date filters', () => {
     expect((setFilters as jest.Mock).mock.invocationCallOrder[0]).toBeLessThan(
       (loadHighlights as jest.Mock).mock.invocationCallOrder[0],
     );
+  });
+
+  it('requests template titles once, with the corrected range', () => {
+    const { loadTemplatesTitles } = renderFeed();
+
+    expect(loadTemplatesTitles).toHaveBeenCalledTimes(1);
+    expect(loadTemplatesTitles).toHaveBeenCalledWith({
+      eventDateFrom: new Date(START_OF_TODAY_IN_ZONE),
+      eventDateTo: new Date(END_OF_TODAY_IN_ZONE),
+    });
   });
 
   it('keeps a Custom range untouched on mount', () => {
