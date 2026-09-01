@@ -1,12 +1,15 @@
 from typing import Optional, List, Dict
+from django.db import IntegrityError, transaction
 from django.db.models import Model
 
 from src.generics.base.service import BaseModelService
 from src.processes.enums import FieldType
+from src.processes.messages.fieldset import MSG_FS_0015, MSG_FS_0016
 from src.processes.models.templates.fields import (
     FieldTemplate,
     FieldTemplateRuleSet,
 )
+from src.processes.models.templates.fieldset import FieldsetTemplate
 from src.processes.services.exceptions import (
     FieldTemplateSelectionsRequired,
     FieldTemplateUserMustBeRequired, FieldTemplateServiceException,
@@ -33,6 +36,20 @@ class FieldTemplateService(BaseModelService):
 
         if field_type == FieldType.USER and kwargs.get('is_required') is False:
             raise FieldTemplateUserMustBeRequired
+
+    def _get_step_name(self, fieldset_id: Optional[int] = None) -> str:
+        fieldset = None
+        if fieldset_id:
+            fieldset = FieldsetTemplate.objects.filter(id=fieldset_id).first()
+        elif self.instance and self.instance.fieldset_id:
+            fieldset = self.instance.fieldset
+        if not fieldset:
+            return 'Kickoff'
+        if fieldset.kickoff_id:
+            return 'Kickoff'
+        if fieldset.task_id:
+            return fieldset.task.name
+        return 'Kickoff'
 
     def create(self, **kwargs) -> Model:
         self._validate(**kwargs)
@@ -87,7 +104,18 @@ class FieldTemplateService(BaseModelService):
         }
         if api_name:
             params['api_name'] = api_name
-        self.instance = FieldTemplate.objects.create(**params)
+        step_name = self._get_step_name(fieldset_id=fieldset_id)
+        try:
+            with transaction.atomic():
+                self.instance = FieldTemplate.objects.create(**params)
+        except IntegrityError as ex:
+            raise FieldTemplateServiceException(
+                message=MSG_FS_0015(
+                    name=step_name,
+                    field_name=name,
+                    api_name=api_name,
+                ),
+            ) from ex
         return self.instance
 
     def _create_related(
@@ -107,12 +135,21 @@ class FieldTemplateService(BaseModelService):
             is_superuser=self.is_superuser,
             auth_type=self.auth_type,
         )
+        step_name = self._get_step_name()
         for selection_data in selections_data:
-            service.create(
-                field_template_id=self.instance.id,
-                template_id=self.instance.template_id,
-                **selection_data,
-            )
+            try:
+                service.create(
+                    field_template_id=self.instance.id,
+                    template_id=self.instance.template_id,
+                    **selection_data,
+                )
+            except IntegrityError as ex:
+                raise FieldTemplateServiceException(
+                    message=MSG_FS_0016(
+                        name=step_name,
+                        api_name=selection_data.get('api_name'),
+                    ),
+                ) from ex
 
     def create_ruleset(
         self,

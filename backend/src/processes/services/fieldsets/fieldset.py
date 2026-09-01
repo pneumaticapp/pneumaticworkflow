@@ -2,10 +2,11 @@
 from copy import deepcopy
 from typing import Dict, List, Optional
 from django.contrib.auth import get_user_model
-from django.db import transaction
+from django.db import IntegrityError, transaction
 
 from src.generics.base.service import BaseModelService
 from src.processes.enums import LabelPosition, FieldSetLayout
+from src.processes.messages.fieldset import MSG_FS_0014
 
 from src.processes.models.templates.fields import (
     FieldTemplate,
@@ -346,6 +347,13 @@ class FieldSetTemplateService(BaseModelService):
             )
         except FieldsetTemplateRuleSetServiceException as ex:
             raise FieldsetTemplateServiceException(message=ex.message) from ex
+        except IntegrityError as ex:
+            raise FieldsetTemplateServiceException(
+                message=MSG_FS_0014(
+                    name=self._get_step_name(),
+                    api_name=ruleset_data.get('api_name'),
+                ),
+            ) from ex
 
     def create_rulesets(
         self,
