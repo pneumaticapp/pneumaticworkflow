@@ -4,6 +4,8 @@ import userEvent from '@testing-library/user-event';
 import { Field } from '../Field';
 import { EFieldTagName } from '../types';
 
+import styles from '../Field.css';
+
 jest.mock('../../RichEditor', () => ({
   RichEditor: ({ placeholder }: { placeholder?: string }) => (
     <div data-testid="rich-editor">{placeholder}</div>
@@ -70,7 +72,7 @@ describe('Field component', () => {
         />,
       );
 
-      expect(screen.getByRole('textbox')).toHaveStyle({ width: '100%', padding: '0.8rem' });
+      expect(screen.getByRole('textbox')).toHaveClass(styles['input_condition-value']);
     });
   });
 

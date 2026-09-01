@@ -16,6 +16,23 @@
   padding-right: 5rem !important;
 }
 
+.input_hidden {
+  display: none;
+}
+
+.input_inline {
+  display: inline;
+}
+
+.input_block {
+  display: block;
+}
+
+.input_condition-value {
+  width: 100%;
+  padding: 0.8rem;
+}
+
 .icon-container {
   position: relative;
 }

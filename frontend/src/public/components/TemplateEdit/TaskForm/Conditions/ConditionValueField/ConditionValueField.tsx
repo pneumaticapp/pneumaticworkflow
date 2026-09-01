@@ -214,10 +214,7 @@ export function ConditionValueField({
   if (!conditionValueField) return null;
 
   return (
-    <div
-      className={classnames(styles['condition-rule__setting'], styles['condition-rule__value'])}
-      style={{ minWidth: 0 }}
-    >
+    <div className={classnames(styles['condition-rule__setting'], styles['condition-rule__value'])}>
       {conditionValueField}
     </div>
   );
