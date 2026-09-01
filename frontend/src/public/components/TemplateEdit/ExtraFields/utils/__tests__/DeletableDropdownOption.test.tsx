@@ -75,4 +75,22 @@ describe('DeletableDropdownOption', () => {
 
     expect(screen.getByText(SURE_LABEL)).toBeInTheDocument();
   });
+
+  it('calls onClick when label is clicked', () => {
+    const onClick = jest.fn();
+    render(<DeletableDropdownOption {...defaultProps} onClick={onClick} />);
+
+    userEvent.click(screen.getByText('Rule 1'));
+
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not trigger onClick when trash icon is clicked', () => {
+    const onClick = jest.fn();
+    render(<DeletableDropdownOption {...defaultProps} onClick={onClick} />);
+
+    userEvent.click(screen.getByTestId('trash-icon'));
+
+    expect(onClick).not.toHaveBeenCalled();
+  });
 });
