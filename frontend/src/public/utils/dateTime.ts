@@ -1,48 +1,16 @@
-/* eslint-disable indent */
 import moment, { duration as momentDuration } from 'moment';
 import 'moment-timezone';
 import 'moment-duration-format';
-import {
-  endOfMonth,
-  endOfToday,
-  endOfWeek,
-  endOfYesterday,
-  startOfMonth,
-  startOfToday,
-  startOfWeek,
-  startOfYesterday,
-  isAfter,
-  format,
-} from 'date-fns';
+import { isAfter, format } from 'date-fns';
 import { useIntl } from 'react-intl';
 
 import { IWorkflowDelay, IWorkflowTaskDelay, WorkflowWithDateFields, WorkflowWithTspFields } from '../types/workflow';
-import { EHighlightsDateFilter } from '../types/highlights';
 import { TaskWithDateFields, TaskWithTspFields } from '../types/tasks';
 import { getDate } from './strings';
 
 export const SEC_IN_DAY = 24 * 60 * 60;
 export const SEC_IN_HOUR = 60 * 60;
 export const SEC_IN_MINUTE = 60;
-
-export const PROCESS_HIGHLIGHTS_DATE_RANGE_MAP = {
-  [EHighlightsDateFilter.Today]: {
-    startDate: startOfToday(),
-    endDate: endOfToday(),
-  },
-  [EHighlightsDateFilter.Yesterday]: {
-    startDate: startOfYesterday(),
-    endDate: endOfYesterday(),
-  },
-  [EHighlightsDateFilter.Week]: {
-    startDate: startOfWeek(new Date()),
-    endDate: endOfWeek(new Date()),
-  },
-  [EHighlightsDateFilter.Month]: {
-    startDate: startOfMonth(new Date()),
-    endDate: endOfMonth(new Date()),
-  },
-};
 
 export const formatDateToQuery = (date?: Date | null) => {
   if (!date) return null;

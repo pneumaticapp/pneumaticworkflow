@@ -1,20 +1,29 @@
 import produce from 'immer';
-import { endOfToday, startOfToday } from 'date-fns';
 
 import { IHighlightsStore, IHighlightsFilters } from '../../types/redux';
 import { IHighlightsItem, EHighlightsDateFilter } from '../../types/highlights';
 import { ITemplateTitleBaseWithCount } from '../../types/template';
+import { getTodayDateRange } from '../../utils/highlightsDateRange';
 
 import { THighlightsActions, EHighlightsActions } from './actions';
 import { EGeneralActions, TGeneralActions } from '../actions';
 
-export const INIT_FILTERS: IHighlightsFilters = {
-  timeRange: EHighlightsDateFilter.Today,
-  startDate: startOfToday(),
-  endDate: endOfToday(),
-  usersFilter: [],
-  templatesFilter: [],
-  filtersChanged: false,
+/**
+ * Built on every call: a module-level constant would freeze "today" at the moment the bundle loaded
+ * and keep serving it after midnight. The browser timezone is only a placeholder here — the reducer
+ * has no access to the profile one, so HighlightsFeed re-applies the range on mount.
+ */
+export const getInitHighlightsFilters = (): IHighlightsFilters => {
+  const { startDate, endDate } = getTodayDateRange('');
+
+  return {
+    timeRange: EHighlightsDateFilter.Today,
+    startDate,
+    endDate,
+    usersFilter: [],
+    templatesFilter: [],
+    filtersChanged: false,
+  };
 };
 
 const INIT_STATE: IHighlightsStore = {
@@ -24,7 +33,7 @@ const INIT_STATE: IHighlightsStore = {
   isTemplatesTitlesLoading: false,
   items: [] as IHighlightsItem[],
   templatesTitles: [] as ITemplateTitleBaseWithCount[],
-  filters: INIT_FILTERS,
+  filters: getInitHighlightsFilters(),
 };
 
 export const reducer = (state = INIT_STATE, action: THighlightsActions | TGeneralActions): IHighlightsStore => {
@@ -60,7 +69,7 @@ export const reducer = (state = INIT_STATE, action: THighlightsActions | TGenera
         draftState.filters.filtersChanged = true;
       });
     case EGeneralActions.ClearAppFilters:
-      return { ...state, filters: INIT_FILTERS };
+      return { ...state, filters: getInitHighlightsFilters() };
     default:
       return { ...state };
   }
