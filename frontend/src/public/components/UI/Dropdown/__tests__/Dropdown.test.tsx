@@ -5,23 +5,39 @@ import { Dropdown } from '../Dropdown';
 
 jest.mock('react-outside-click-handler', () => ({
   __esModule: true,
-  default: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  default: ({ children }: { children: React.ReactNode }) => children,
 }));
 
-jest.mock('../Dropdown.css', () => new Proxy({}, { get: (_t, k) => String(k) }));
+jest.mock('reactstrap', () => {
+  const actual = jest.requireActual('reactstrap');
+  return {
+    ...actual,
+    DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  };
+});
 
 describe('Dropdown', () => {
   it('supports label as a render prop function receiving closeDropdown', () => {
     const renderLabelMock = jest.fn((closeDropdown?: () => void) => (
-      <button type="button" onClick={closeDropdown}>
+      <span
+        role="button"
+        tabIndex={0}
+        onClick={closeDropdown}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            closeDropdown?.();
+          }
+        }}
+      >
         Render Prop Option
-      </button>
+      </span>
     ));
 
     const options = [
       {
         mapKey: 'custom-option',
         label: renderLabelMock,
+        onClick: jest.fn(),
       },
     ];
 
