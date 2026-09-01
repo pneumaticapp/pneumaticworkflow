@@ -146,38 +146,39 @@ export function EditorToolbar({
         onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => e.preventDefault()}
       >
         {!isMobile && (
-          <>
-            <div className={styles['toolbar-format']}>
-              {formatButtons.map(({ Icon, labels, isActive, onMouseDown, ref: btnRef }) => (
-                <ToolbarButton
-                  key={labels.aria}
-                  ref={btnRef}
-                  isActive={isActive}
-                  tooltipText={labels.tooltip}
-                  ariaLabel={labels.aria}
-                  isModal={isModal}
-                  onMouseDown={onMouseDown}
-                >
-                  <Icon />
-                </ToolbarButton>
-              ))}
-            </div>
-            <div className={styles['separator']} aria-hidden />
-          </>
+          <div className={styles['toolbar-format']}>
+            {formatButtons.map(({ Icon, labels, isActive, onMouseDown, ref: btnRef }) => (
+              <ToolbarButton
+                key={labels.aria}
+                ref={btnRef}
+                isActive={isActive}
+                tooltipText={labels.tooltip}
+                ariaLabel={labels.aria}
+                isModal={isModal}
+                onMouseDown={onMouseDown}
+              >
+                <Icon />
+              </ToolbarButton>
+            ))}
+          </div>
         )}
         {showAttachmentButtons &&
-          attachmentButtons.map(({ Icon, labels, accept }) => (
-          <AttachmentToolbarButton
-            key={labels.aria}
-            tooltipText={labels.tooltip}
-            ariaLabel={labels.aria}
-            accept={accept}
-            isModal={isModal}
-            onFileChange={handleAttachmentUpload}
-          >
-            <Icon />
-          </AttachmentToolbarButton>
+        <>
+          <div className={styles['separator']} aria-hidden />
+          {attachmentButtons.map(({ Icon, labels, accept }) => (
+            <AttachmentToolbarButton
+              key={labels.aria}
+              tooltipText={labels.tooltip}
+              ariaLabel={labels.aria}
+              accept={accept}
+              isModal={isModal}
+              onFileChange={handleAttachmentUpload}
+            >
+              <Icon />
+            </AttachmentToolbarButton>
           ))}
+        </>}
+
       </div>
     </div>
   );
