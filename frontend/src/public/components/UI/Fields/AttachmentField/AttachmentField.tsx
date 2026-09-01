@@ -76,15 +76,15 @@ export function AttachmentField({
   ...props
 }: IAttachmentFieldProps) {
   const { messages, formatMessage } = useIntl();
-  const inputRef = inputRefProp || React.useRef(null);
+  const fallbackInputRef = React.useRef<HTMLInputElement>(null);
+  const inputRef = inputRefProp || fallbackInputRef;
   const normalizedErrorMessage = errorMessage && (messages[errorMessage] || errorMessage);
-  const uploadFieldRef = React.createRef<HTMLInputElement>();
+  const uploadFieldRef = React.useRef<HTMLInputElement>(null);
   const [isUploading, setUploadingState] = React.useState(false);
   const [filesToUploadState, setFilesToUploadState] = React.useState<TUploadedFile[]>(uploadedFiles);
+  const filesToUploadRef = React.useRef(filesToUploadState);
 
-  React.useEffect(() => {
-    setFilesToUploadState(uploadedFiles);
-  }, [uploadedFiles]);
+  filesToUploadRef.current = filesToUploadState;
 
   React.useEffect(() => {
     // clear file input value after uploading
@@ -147,8 +147,9 @@ export function AttachmentField({
 
       const allFiles =
         isMultiple || !isArrayWithItems(newFileWithThumbnailUrl)
-          ? [...filesToUploadState, ...(newFileWithThumbnailUrl as TUploadedFile[])]
+          ? [...filesToUploadRef.current, ...(newFileWithThumbnailUrl as TUploadedFile[])]
           : [...newFileWithThumbnailUrl];
+      filesToUploadRef.current = allFiles;
       setFilesToUploadState(allFiles);
       setUploadedFiles(allFiles);
     } catch (error) {
@@ -160,7 +161,10 @@ export function AttachmentField({
   };
 
   const handleDeleteFile = (id: string) => () => {
-    const newUploadedFiles = filesToUploadState.map((file) => (file.id === id ? { ...file, isRemoved: true } : file));
+    const newUploadedFiles = filesToUploadRef.current.map((file) => (
+      file.id === id ? { ...file, isRemoved: true } : file
+    ));
+    filesToUploadRef.current = newUploadedFiles;
     setFilesToUploadState(newUploadedFiles);
     setUploadedFiles(newUploadedFiles);
   };
@@ -231,12 +235,14 @@ export function AttachmentField({
       {normalizedErrorMessage && <p className={styles['error-text']}>{normalizedErrorMessage}</p>}
       {description && <p className={styles['field-description']}>{description}</p>}
 
-      <ExtraFieldFilesGrid
-        attachments={filesToUploadState}
-        deleteFile={handleDeleteFile}
-        isUploading={isUploading}
-        isEdit={canDeleteUploadedFiles}
-      />
+      <div className={styles['preview-container']}>
+        <ExtraFieldFilesGrid
+          attachments={filesToUploadState}
+          deleteFile={handleDeleteFile}
+          isUploading={isUploading}
+          isEdit={canDeleteUploadedFiles}
+        />
+      </div>
     </div>
   );
 }

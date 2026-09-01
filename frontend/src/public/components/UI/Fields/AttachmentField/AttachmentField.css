@@ -172,3 +172,7 @@
   line-height: 16px;
   color: var(--pneumatic-color-black48);
 }
+
+.preview-container {
+  margin-top: 8px;
+}
