@@ -8,9 +8,22 @@ import { IDeletableDropdownOptionProps } from './types';
 import dropdownStyles from '../../../UI/Dropdown/Dropdown.css';
 import styles from './DeletableDropdownOption.css';
 
-export function DeletableDropdownOption({ label, onDelete }: IDeletableDropdownOptionProps) {
+export function DeletableDropdownOption({ label, onDelete, onClick }: IDeletableDropdownOptionProps) {
   const { formatMessage } = useIntl();
   const [isConfirming, setIsConfirming] = useState(false);
+
+  const handleLabelClick: MouseEventHandler<HTMLSpanElement> = (event) => {
+    event.stopPropagation();
+    onClick?.();
+  };
+
+  const handleLabelKeyDown: KeyboardEventHandler<HTMLSpanElement> = (event) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      event.stopPropagation();
+      onClick?.();
+    }
+  };
 
   const handleConfirm: MouseEventHandler<HTMLButtonElement> = (event) => {
     event.stopPropagation();
@@ -70,7 +83,16 @@ export function DeletableDropdownOption({ label, onDelete }: IDeletableDropdownO
 
   return (
     <div className={styles['container']}>
-      <span>{label}</span>
+      <span
+        {...(onClick && {
+          role: 'button',
+          tabIndex: 0,
+          onClick: handleLabelClick,
+          onKeyDown: handleLabelKeyDown,
+        })}
+      >
+        {label}
+      </span>
       <TrashIcon
         className={styles['delete-icon']}
         role="button"

@@ -30,4 +30,5 @@ export interface IKickoffDropdownProps {
 export interface IDeletableDropdownOptionProps {
   label: string;
   onDelete(): void;
+  onClick?(): void;
 }

@@ -147,10 +147,10 @@ export function ExtraFieldDropdown({
               label: (
                 <DeletableDropdownOption
                   label={ruleset.name}
+                  onClick={handleOptionClick(() => onOpenFieldRules?.(ruleset))}
                   onDelete={() => onDeleteFieldRuleset?.(ruleset.apiName)}
                 />
               ),
-              onClick: handleOptionClick(() => onOpenFieldRules?.(ruleset)),
               withUpperline: index === 0,
             })),
           ],
