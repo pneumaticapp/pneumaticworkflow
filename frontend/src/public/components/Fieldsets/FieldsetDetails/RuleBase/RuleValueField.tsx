@@ -11,7 +11,7 @@ import { DatePickerCustom } from '../../../UI/form/DatePicker';
 import { toDate, toTspDate } from '../../../../utils/dateTime';
 import { getUsers } from '../../../../redux/selectors/user';
 import { getNotDeletedUsers, getUserFullName } from '../../../../utils/users';
-import { IFieldRuleValueFieldProps } from './types';
+import { IFieldRuleValueFieldProps, SELECTION_FIELD_TYPES } from './types';
 import { loadDatasetForMap } from '../../../../redux/datasets/slice';
 import { getDatasetFromMap } from '../../../../redux/selectors/datasets';
 import { IApplicationState } from '../../../../types/redux';
@@ -19,11 +19,6 @@ import { IApplicationState } from '../../../../types/redux';
 import fieldsetDetailsStyles from '../FieldsetDetails.css';
 import styles from '../FieldsetRulesets/FieldsetRulesets.css';
 
-const SELECTION_FIELD_TYPES = [
-  EExtraFieldType.Checkbox,
-  EExtraFieldType.Radio,
-  EExtraFieldType.Creatable,
-];
 
 export const FieldsetFieldRulesValue = ({
   fieldType,
@@ -48,6 +43,12 @@ export const FieldsetFieldRulesValue = ({
       dispatch(loadDatasetForMap(datasetId));
     }
   }, [isSelectionField, datasetId, datasetFromMap, dispatch]);
+
+  const [isTouched, setIsTouched] = useState(false);
+
+  useEffect(() => {
+    setIsTouched(false);
+  }, [value, fieldType]);
 
   const isUserField = fieldType === EExtraFieldType.User;
 
@@ -139,12 +140,6 @@ export const FieldsetFieldRulesValue = ({
       </div>
     );
   }
-
-  const [isTouched, setIsTouched] = useState(false);
-
-  useEffect(() => {
-    setIsTouched(false);
-  }, [value, fieldType]);
 
   const isValueError = isTouched && (!value || !value.trim());
 

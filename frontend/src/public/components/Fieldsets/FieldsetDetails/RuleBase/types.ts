@@ -22,6 +22,12 @@ export const FIELD_RULE_SHOW_OPERATORS_WITHOUT_VALUE: EFieldRuleShowOperator[] =
   EFieldRuleShowOperator.NotExist,
 ];
 
+export const SELECTION_FIELD_TYPES: EExtraFieldType[] = [
+  EExtraFieldType.Checkbox,
+  EExtraFieldType.Radio,
+  EExtraFieldType.Creatable,
+];
+
 
 export type IFieldRuleBaseHandlers = {
   updateRule: (params: {
