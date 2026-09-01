@@ -361,6 +361,30 @@ describe('WorkflowEditPopup', () => {
     });
   });
 
+  describe('Sub-workflow run', () => {
+    it('keeps ancestorTaskId in the submitted payload, so the saga skips the redirect', () => {
+      const workflow = { ...baseWorkflow, ancestorTaskId: 77 };
+
+      renderWithIntl(<WorkflowEditPopup {...baseProps} workflow={workflow} />);
+
+      userEvent.click(screen.getByRole('button', { name: START_LABEL }));
+
+      expect(baseProps.onRunWorkflow).toHaveBeenCalledWith(
+        expect.objectContaining({ ancestorTaskId: 77 }),
+      );
+    });
+
+    it('submits no ancestorTaskId for a standalone run', () => {
+      renderWithIntl(<WorkflowEditPopup {...baseProps} workflow={baseWorkflow} />);
+
+      userEvent.click(screen.getByRole('button', { name: START_LABEL }));
+
+      expect(baseProps.onRunWorkflow).toHaveBeenCalledWith(
+        expect.not.objectContaining({ ancestorTaskId: expect.anything() }),
+      );
+    });
+  });
+
   describe('Template description', () => {
     it('renders template description via RichText', () => {
       const workflow = {
