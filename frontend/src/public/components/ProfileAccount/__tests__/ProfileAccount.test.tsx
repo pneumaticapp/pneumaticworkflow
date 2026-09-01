@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { act, render } from '@testing-library/react';
+import { act, fireEvent, render } from '@testing-library/react';
 import { IntlProvider } from 'react-intl';
 
 import { enMessages } from '../../../lang/locales/en_US';
@@ -62,5 +62,23 @@ describe('ProfileAccount', () => {
     act(() => getLogoProps(expectedImageWidth).setUploadedFiles([{ ...uploadedLogo, isRemoved: true }]));
 
     expect(getLogoProps(expectedImageWidth).uploadedFiles).toEqual([]);
+  });
+
+  it('keeps the uploaded logo after an unrelated field change', () => {
+    const uploadedLogo: TUploadedFile = {
+      id: 'new-logo',
+      name: 'new-logo.png',
+      size: 100,
+      url: 'https://example.com/new-logo.png',
+      thumbnailUrl: 'https://example.com/new-logo.png',
+    };
+
+    const { getByDisplayValue } = renderProfileAccount();
+
+    act(() => getLogoProps(80).setUploadedFiles([uploadedLogo]));
+
+    fireEvent.change(getByDisplayValue('Acme'), { target: { value: 'Acme Inc' } });
+
+    expect(getLogoProps(80).uploadedFiles[0]?.url).toBe(uploadedLogo.url);
   });
 });

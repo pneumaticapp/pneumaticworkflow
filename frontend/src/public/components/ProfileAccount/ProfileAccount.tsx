@@ -28,6 +28,8 @@ export interface IProfileAccountProps {
   onChangeTab(tab: ESettingsTabs): void;
 }
 
+const EMPTY_UPLOADED_FILES: TUploadedFile[] = [];
+
 export function ProfileAccount({
   accountId,
   name,
@@ -40,16 +42,12 @@ export function ProfileAccount({
   onChangeTab,
   editCurrentAccount,
 }: IProfileAccountProps) {
-  const hasNoData = !accountId && !name;
-
   const { formatMessage } = useIntl();
-
-  if (hasNoData) {
-    return loading ? <div className="loading" /> : null;
-  }
-  const initialState: TEditableFields = { name, logoSm, logoLg };
-  const [state, changeState] = React.useState(initialState);
-  const [isDirty, changeDirty] = React.useState(false);
+  const savedState: TEditableFields = { name, logoSm, logoLg };
+  const [state, changeState] = React.useState<TEditableFields>(savedState);
+  const isDirty = isContentChanged(savedState, state) && isValidState(state);
+  const hasNoData = !accountId && !name;
+  const wasEmptyRef = React.useRef(hasNoData);
 
   React.useEffect(() => {
     document.title = TITLES.AccountSettings;
@@ -58,16 +56,40 @@ export function ProfileAccount({
     onChangeTab(ESettingsTabs.AccountSettings);
   }, []);
   React.useEffect(() => {
-    changeDirty(false);
-  }, [name, logoSm, logoLg]);
+    if (!wasEmptyRef.current || hasNoData) {
+      return;
+    }
+
+    wasEmptyRef.current = false;
+    changeState({ name, logoSm, logoLg });
+  }, [hasNoData, name, logoSm, logoLg]);
+
+  const logoSmFiles = React.useMemo(
+    () => (state.logoSm ? [getFileByUrl(state.logoSm)] : EMPTY_UPLOADED_FILES),
+    [state.logoSm],
+  );
+  const logoLgFiles = React.useMemo(
+    () => (state.logoLg ? [getFileByUrl(state.logoLg)] : EMPTY_UPLOADED_FILES),
+    [state.logoLg],
+  );
 
   const changeField = (field: keyof TEditableFields) => (value: TEditableFields[keyof TEditableFields]) => {
-    const newState = { ...state, [field]: value };
-    changeState(newState);
-    changeDirty(isContentChanged(initialState, newState) && isValidState(newState));
+    changeState((prevState) => ({ ...prevState, [field]: value }));
   };
 
+  const handleLogoSmFiles = React.useCallback((files: TUploadedFile[]) => {
+    changeState((prevState) => ({ ...prevState, logoSm: getUrlByFile(files[0]) }));
+  }, []);
+
+  const handleLogoLgFiles = React.useCallback((files: TUploadedFile[]) => {
+    changeState((prevState) => ({ ...prevState, logoLg: getUrlByFile(files[0]) }));
+  }, []);
+
   const handleSubmit = () => editCurrentAccount(state);
+
+  if (hasNoData) {
+    return loading ? <div className="loading" /> : null;
+  }
 
   return (
     <div className={styles['settings-form']}>
@@ -93,10 +115,11 @@ export function ProfileAccount({
           </SectionTitle>
 
           <AttachmentField
+            key={`logo-sm-${accountId}`}
             title={formatMessage({ id: 'user-info.logo-sm' })}
             accountId={accountId!}
-            uploadedFiles={state.logoSm ? [getFileByUrl(state.logoSm)] : []}
-            setUploadedFiles={(files) => changeField('logoSm')(getUrlByFile(files[0]))}
+            uploadedFiles={logoSmFiles}
+            setUploadedFiles={handleLogoSmFiles}
             description={formatMessage({ id: 'user-info.logo-sm-desc' })}
             containerClassName={styles['field']}
             acceptedType="image"
@@ -105,10 +128,11 @@ export function ProfileAccount({
           />
 
           <AttachmentField
+            key={`logo-lg-${accountId}`}
             title={formatMessage({ id: 'user-info.logo-lg' })}
             accountId={accountId!}
-            uploadedFiles={state.logoLg ? [getFileByUrl(state.logoLg)] : []}
-            setUploadedFiles={(files) => changeField('logoLg')(getUrlByFile(files[0]))}
+            uploadedFiles={logoLgFiles}
+            setUploadedFiles={handleLogoLgFiles}
             description={formatMessage({ id: 'user-info.logo-lg-desc' })}
             containerClassName={styles['field']}
             acceptedType="image"
@@ -148,7 +172,7 @@ function isValidState({ name }: TEditableFields) {
 
 const getFileByUrl = (url: string): TUploadedFile => {
   return {
-    id: '-1',
+    id: url,
     url,
     thumbnailUrl: url,
     name: '',
