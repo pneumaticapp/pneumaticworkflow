@@ -129,6 +129,11 @@
     }
   }
   /* stylelint-enable selector-max-specificity, selector-max-compound-selectors */
+
+  &.fieldset_readonly [class*='rulesets-badge'] {
+    color: var(--pneumatic-color-black48);
+    background-color: var(--pneumatic-color-black4);
+  }
 }
 
 .fields-table {
