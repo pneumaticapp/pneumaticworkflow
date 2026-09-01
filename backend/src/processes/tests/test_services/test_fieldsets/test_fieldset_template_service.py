@@ -19,6 +19,7 @@ from src.processes.models.templates.fields import (
 )
 from src.processes.services.exceptions import (
     FieldsetTemplateInUseException,
+    FieldsetTemplateServiceException,
     FieldsetTemplateSharedIdMissing,
     FieldsetTemplateTemplateIdMissing,
 )
@@ -2312,3 +2313,225 @@ def test__get_clone__ok(mocker):
         shared_fieldset_data=instance_data,
     )
     create_shared_fieldset_mock.assert_called_once_with(**result_data)
+
+
+def test_create__duplicate_ruleset_api_name__raise_exception():
+
+    """
+    Duplicate ruleset api_name across kickoff and task fieldsets
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    kickoff = template.kickoff_instance
+    task = template.tasks.first()
+    shared_fieldset = create_test_shared_fieldset(account=account)
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    ruleset_api_name = 'fs-ruleset'
+    service.create(
+        name=shared_fieldset.name,
+        is_shared=False,
+        shared_fieldset_id=shared_fieldset.id,
+        template_id=template.id,
+        kickoff_id=kickoff.id,
+        api_name='fs-kickoff',
+        fields=[],
+        rulesets=[
+            {
+                'api_name': ruleset_api_name,
+                'fields': [],
+                'groups_or': [
+                    {
+                        'api_name': 'g-or-kickoff',
+                        'groups_and': [
+                            {
+                                'api_name': 'g-and-kickoff',
+                                'operator': FieldSetRuleOperator.SUM_EQUAL,
+                                'value': '100',
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+    )
+
+    # act
+    with pytest.raises(FieldsetTemplateServiceException) as ex:
+        service.create(
+            name=shared_fieldset.name,
+            is_shared=False,
+            shared_fieldset_id=shared_fieldset.id,
+            template_id=template.id,
+            task_id=task.id,
+            api_name='fs-task',
+            fields=[],
+            rulesets=[
+                {
+                    'api_name': ruleset_api_name,
+                    'fields': [],
+                    'groups_or': [
+                        {
+                            'api_name': 'g-or-task',
+                            'groups_and': [
+                                {
+                                    'api_name': 'g-and-task',
+                                    'operator': FieldSetRuleOperator.SUM_EQUAL,
+                                    'value': '100',
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        )
+
+    # assert
+    assert ex.value.message == fs_messages.MSG_FS_0014(
+        name=task.name,
+        api_name=ruleset_api_name,
+    )
+
+
+def test_create__duplicate_field_api_name__raise_exception():
+
+    """
+    Duplicate field api_name across kickoff and task fieldsets
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    kickoff = template.kickoff_instance
+    task = template.tasks.first()
+    shared_fieldset = create_test_shared_fieldset(account=account)
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    field_name = 'Fieldset field'
+    field_api_name = 'field-api-name'
+    service.create(
+        name=shared_fieldset.name,
+        is_shared=False,
+        shared_fieldset_id=shared_fieldset.id,
+        template_id=template.id,
+        kickoff_id=kickoff.id,
+        api_name='fs-kickoff',
+        fields=[
+            {
+                'name': field_name,
+                'type': FieldType.STRING,
+                'order': 1,
+                'api_name': field_api_name,
+            },
+        ],
+    )
+
+    # act
+    with pytest.raises(FieldsetTemplateServiceException) as ex:
+        service.create(
+            name=shared_fieldset.name,
+            is_shared=False,
+            shared_fieldset_id=shared_fieldset.id,
+            template_id=template.id,
+            task_id=task.id,
+            api_name='fs-task',
+            fields=[
+                {
+                    'name': field_name,
+                    'type': FieldType.STRING,
+                    'order': 1,
+                    'api_name': field_api_name,
+                },
+            ],
+        )
+
+    # assert
+    assert ex.value.message == fs_messages.MSG_FS_0015(
+        name=task.name,
+        field_name=field_name,
+        api_name=field_api_name,
+    )
+
+
+def test_create__duplicate_selection_api_name__raise_exception():
+
+    """
+    Duplicate selection api_name across kickoff and task fieldsets
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    kickoff = template.kickoff_instance
+    task = template.tasks.first()
+    shared_fieldset = create_test_shared_fieldset(account=account)
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    selection_api_name = 'selection-1'
+    service.create(
+        name=shared_fieldset.name,
+        is_shared=False,
+        shared_fieldset_id=shared_fieldset.id,
+        template_id=template.id,
+        kickoff_id=kickoff.id,
+        api_name='fs-kickoff',
+        fields=[
+            {
+                'name': 'Dropdown field',
+                'type': FieldType.DROPDOWN,
+                'order': 1,
+                'api_name': 'field-dropdown-kickoff',
+                'selections': [
+                    {
+                        'value': 'Option B',
+                        'api_name': selection_api_name,
+                    },
+                ],
+            },
+        ],
+    )
+
+    # act
+    with pytest.raises(FieldsetTemplateServiceException) as ex:
+        service.create(
+            name=shared_fieldset.name,
+            is_shared=False,
+            shared_fieldset_id=shared_fieldset.id,
+            template_id=template.id,
+            task_id=task.id,
+            api_name='fs-task',
+            fields=[
+                {
+                    'name': 'Dropdown field',
+                    'type': FieldType.DROPDOWN,
+                    'order': 1,
+                    'api_name': 'field-dropdown-task',
+                    'selections': [
+                        {
+                            'value': 'Option B',
+                            'api_name': selection_api_name,
+                        },
+                    ],
+                },
+            ],
+        )
+
+    # assert
+    assert ex.value.message == fs_messages.MSG_FS_0016(
+        name=task.name,
+        api_name=selection_api_name,
+    )

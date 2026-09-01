@@ -13,7 +13,7 @@ from src.processes.models.templates.fields import (
     FieldTemplateRuleGroupOr,
     FieldTemplateRuleSet,
 )
-from src.processes.messages.template import MSG_PT_0079
+from src.processes.messages.template import MSG_PT_0079, MSG_PT_0080
 from src.processes.tests.fixtures import (
     create_test_account, create_test_owner,
 )
@@ -345,3 +345,328 @@ def test_create_task_field_rules__show_field_null__validation_error(
     # assert
     assert response.status_code == 400
     assert response.data['message'] == MSG_PT_0079
+
+
+@pytest.mark.parametrize(
+    ('field_type', 'operator', 'value'),
+    (
+        (FieldType.STRING, FieldRuleOperator.EQUAL, 'yes'),
+        (FieldType.TEXT, FieldRuleOperator.CONTAIN, 'text'),
+        (FieldType.URL, FieldRuleOperator.NOT_EQUAL, 'http://example.com'),
+        (FieldType.DATE, FieldRuleOperator.GREATER_THAN, '1577836800'),
+        (FieldType.NUMBER, FieldRuleOperator.LESS_THAN, '10'),
+        (FieldType.FILE, FieldRuleOperator.EXIST, None),
+    ),
+)
+def test_create_task_field_rules__validator_by_field_type__ok(
+    api_client,
+    field_type,
+    operator,
+    value,
+):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    rule_message = 'Value is invalid'
+    field_data = {
+        'type': field_type,
+        'name': 'Field',
+        'order': 1,
+        'rulesets': [
+            {
+                'name': 'Some name',
+                'type': FieldRuleType.VALIDATOR,
+                'message': rule_message,
+                'order': 1,
+                'groups_or': [
+                    {
+                        'groups_and': [
+                            {
+                                'operator': operator,
+                                'value': value,
+                                'field': None,
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+    }
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        '/templates',
+        data={
+            'name': 'Template',
+            'is_active': True,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {},
+            'tasks': [
+                {
+                    'number': 1,
+                    'name': 'First step',
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                    'fields': [field_data],
+                },
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    field_response = response.data['tasks'][0]['fields'][0]
+    ruleset_data = field_response['rulesets'][0]
+    assert ruleset_data['type'] == FieldRuleType.VALIDATOR
+    group_or_data = ruleset_data['groups_or'][0]
+    group_and_data = group_or_data['groups_and'][0]
+    assert group_and_data['field'] is None
+    assert group_and_data['operator'] == operator
+    assert group_and_data['value'] == value
+
+
+def test_create_task_field_rules__date_invalid_value__validation_error(
+    api_client,
+):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        '/templates',
+        data={
+            'name': 'Template',
+            'is_active': True,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {},
+            'tasks': [
+                {
+                    'number': 1,
+                    'name': 'First step',
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                    'fields': [
+                        {
+                            'type': FieldType.DATE,
+                            'name': 'Field',
+                            'order': 1,
+                            'rulesets': [
+                                {
+                                    'name': 'Some name',
+                                    'type': FieldRuleType.VALIDATOR,
+                                    'groups_or': [
+                                        {
+                                            'groups_and': [
+                                                {
+                                                    'operator': (
+                                                        FieldRuleOperator
+                                                        .GREATER_THAN
+                                                    ),
+                                                    'value': '2020-01-01',
+                                                },
+                                            ],
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['message'] == MSG_PT_0080
+
+
+def test_create_task_field_rules__validator_user_field__ok(api_client):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    operator = FieldRuleOperator.EQUAL
+    value = '1'
+    rule_message = 'Value is invalid'
+    field_data = {
+        'type': FieldType.USER,
+        'name': 'Field',
+        'order': 1,
+        'is_required': True,
+        'rulesets': [
+            {
+                'name': 'Some name',
+                'type': FieldRuleType.VALIDATOR,
+                'message': rule_message,
+                'order': 1,
+                'groups_or': [
+                    {
+                        'groups_and': [
+                            {
+                                'operator': operator,
+                                'value': value,
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+    }
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        '/templates',
+        data={
+            'name': 'Template',
+            'is_active': True,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {},
+            'tasks': [
+                {
+                    'number': 1,
+                    'name': 'First step',
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                    'fields': [field_data],
+                },
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    field_response = response.data['tasks'][0]['fields'][0]
+    ruleset_data = field_response['rulesets'][0]
+    assert ruleset_data['type'] == FieldRuleType.VALIDATOR
+    group_or_data = ruleset_data['groups_or'][0]
+    group_and_data = group_or_data['groups_and'][0]
+    assert group_and_data['field'] is None
+    assert group_and_data['operator'] == operator
+    assert group_and_data['value'] == value
+
+
+@pytest.mark.parametrize(
+    ('field_type', 'operator', 'value'),
+    (
+        (FieldType.CHECKBOX, FieldRuleOperator.CONTAIN, 'First'),
+        (FieldType.RADIO, FieldRuleOperator.EQUAL, 'First'),
+        (FieldType.DROPDOWN, FieldRuleOperator.NOT_EQUAL, 'First'),
+    ),
+)
+def test_create_task_field_rules__validator_types_with_selections__ok(
+    api_client,
+    field_type,
+    operator,
+    value,
+):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    rule_message = 'Value is invalid'
+    field_data = {
+        'type': field_type,
+        'name': 'Field',
+        'order': 1,
+        'selections': [
+            {'value': 'First'},
+            {'value': 'Second'},
+        ],
+        'rulesets': [
+            {
+                'name': 'Some name',
+                'type': FieldRuleType.VALIDATOR,
+                'message': rule_message,
+                'order': 1,
+                'groups_or': [
+                    {
+                        'groups_and': [
+                            {
+                                'operator': operator,
+                                'value': value,
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+    }
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        '/templates',
+        data={
+            'name': 'Template',
+            'is_active': True,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {},
+            'tasks': [
+                {
+                    'number': 1,
+                    'name': 'First step',
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                    'fields': [field_data],
+                },
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    field_response = response.data['tasks'][0]['fields'][0]
+    ruleset_data = field_response['rulesets'][0]
+    assert ruleset_data['type'] == FieldRuleType.VALIDATOR
+    group_or_data = ruleset_data['groups_or'][0]
+    group_and_data = group_or_data['groups_and'][0]
+    assert group_and_data['field'] is None
+    assert group_and_data['operator'] == operator
+    assert group_and_data['value'] == value

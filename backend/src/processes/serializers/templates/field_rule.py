@@ -1,3 +1,5 @@
+from datetime import datetime
+from datetime import timezone as tz
 from typing import Any, Dict
 
 from rest_framework.serializers import ModelSerializer, ValidationError
@@ -11,10 +13,11 @@ from src.generics.mixins.serializers import (
     AdditionalValidationMixin,
     CustomValidationErrorMixin,
 )
-from src.processes.enums import FieldRuleOperator, FieldRuleType
+from src.processes.enums import FieldRuleOperator, FieldRuleType, FieldType
 from src.processes.messages.template import (
     MSG_PT_0075,
     MSG_PT_0079,
+    MSG_PT_0080,
 )
 from src.processes.models.templates.fields import (
     FieldTemplateRuleGroupAnd,
@@ -101,6 +104,17 @@ class FieldTemplateRuleGroupAndSerializer(
             raise ValidationError(MSG_PT_0079)
         return attrs
 
+    def additional_validate_value(self, value, data: Dict[str, Any]):
+        field = self.context.get('field')
+        if field and field.type == FieldType.DATE and value:
+            try:
+                datetime.fromtimestamp(int(value), tz=tz.utc)
+            except (TypeError, ValueError):
+                self.raise_validation_error(
+                    message=MSG_PT_0080,
+                    api_name=data.get('api_name'),
+                )
+
     def create(self, validated_data: Dict[str, Any]):
         self.additional_validate(validated_data)
         task = self.context.get('task')
@@ -112,7 +126,6 @@ class FieldTemplateRuleGroupAndSerializer(
                 'template': self.context['template'],
                 'account': self.context['account'],
                 'group_or': self.context['group_or'],
-                'field': field,
                 **validated_data,
             },
             not_unique_exception_msg=MSG_PT_0075(
@@ -138,7 +151,6 @@ class FieldTemplateRuleGroupAndSerializer(
                 'template': self.context['template'],
                 'account': self.context['account'],
                 'group_or': self.context['group_or'],
-                'field': field,
                 **validated_data,
             },
             not_unique_exception_msg=MSG_PT_0075(

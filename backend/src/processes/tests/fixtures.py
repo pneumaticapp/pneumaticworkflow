@@ -1137,3 +1137,47 @@ def create_test_fieldset(
         value=field_value,
     )
     return fieldset
+
+
+def create_test_field_show_ruleset(
+    account,
+    template,
+    field,
+    source_field_api_name,
+    ruleset_api_name='field-ruleset-1',
+    group_or_api_name='field-group-or-1',
+    group_and_api_name='field-group-and-1',
+    name='Show ruleset',
+    message=None,
+    order=0,
+    operator=FieldRuleOperator.EQUAL,
+    value='yes',
+):
+    """Creating a SHOW field ruleset with one OR/AND group."""
+
+    ruleset = FieldTemplateRuleSet.objects.create(
+        account=account,
+        template=template,
+        field=field,
+        api_name=ruleset_api_name,
+        name=name,
+        type=FieldRuleType.SHOW,
+        message=message,
+        order=order,
+    )
+    group_or = FieldTemplateRuleGroupOr.objects.create(
+        account=account,
+        template=template,
+        ruleset=ruleset,
+        api_name=group_or_api_name,
+    )
+    group_and = FieldTemplateRuleGroupAnd.objects.create(
+        account=account,
+        template=template,
+        group_or=group_or,
+        api_name=group_and_api_name,
+        field=source_field_api_name,
+        operator=operator,
+        value=value,
+    )
+    return ruleset, group_or, group_and

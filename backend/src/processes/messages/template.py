@@ -345,3 +345,4 @@ MSG_PT_0078 = lambda field, operator, field_type: format_lazy(
 MSG_PT_0079 = _(
     'You should set the "field" for a rule with the type "show".',
 )
+MSG_PT_0080 = _('The value must be a timestamp.')
