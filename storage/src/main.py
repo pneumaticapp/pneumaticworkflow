@@ -20,8 +20,10 @@ from src.shared_kernel.middleware.rate_limit import RateLimitMiddleware
 from src.shared_kernel.middleware.security_headers import (
     SecurityHeadersMiddleware,
 )
+from src.shared_kernel.sentry import init_sentry
 
 settings = get_settings()
+init_sentry()
 
 
 # ── Constants ────────────────────────────────────────────────
