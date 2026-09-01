@@ -5,6 +5,8 @@ from typing import Optional
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter
 
+from src.permissions.enums import PermissionObjectType
+
 
 def query_param(
     name: str,
@@ -283,6 +285,22 @@ CONTACTS_PARAMS = [
         description='Filter by contact source.',
     ),
     *LIMIT_OFFSET_PARAMS,
+]
+
+USER_PERMISSION_PARAMS = [
+    query_param(
+        'obj_type',
+        required=True,
+        description=(
+            'Object type. Allowed values: '
+            f'{", ".join(v for v, _ in PermissionObjectType.CHOICES)}.'
+        ),
+    ),
+    query_param(
+        'obj_ids',
+        required=True,
+        description='Comma-separated list of object ids, e.g. obj_ids=1,2,3.',
+    ),
 ]
 
 USERS_LIST_PARAMS = [
