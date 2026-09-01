@@ -8,11 +8,11 @@ import { EExtraFieldType, IExtraFieldSelection } from '../../../../types/templat
 
 export enum EFieldRuleShowOperator {
   Equal = 'equal',
-  NotEqual = 'not_equal',
-  Exist = 'exist',
-  NotExist = 'not_exist',
-  Contain = 'contain',
-  NotContain = 'not_contain',
+  NotEqual = 'not_equals',
+  Exist = 'exists',
+  NotExist = 'not_exists',
+  Contain = 'contains',
+  NotContain = 'not_contains',
   GreaterThan = 'greater_than',
   LessThan = 'less_than',
 }
