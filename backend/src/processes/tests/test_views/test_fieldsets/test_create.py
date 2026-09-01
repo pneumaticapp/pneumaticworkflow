@@ -926,3 +926,317 @@ def test_create__field_rule_missing_name__validation_error(api_client, mocker):
     message = 'Name: this field is required.'
     assert response.data['message'] == message
     create_shared_fieldset_mock.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    ('field_type', 'operator', 'value'),
+    (
+        (FieldType.STRING, FieldRuleOperator.EQUAL, 'yes'),
+        (FieldType.TEXT, FieldRuleOperator.CONTAIN, 'text'),
+        (FieldType.URL, FieldRuleOperator.NOT_EQUAL, 'http://example.com'),
+        (FieldType.DATE, FieldRuleOperator.GREATER_THAN, '1577836800'),
+        (FieldType.NUMBER, FieldRuleOperator.LESS_THAN, '10'),
+        (FieldType.FILE, FieldRuleOperator.EXIST, None),
+    ),
+)
+def test_create__field_rule_validator_by_field_type__ok(
+    api_client,
+    mocker,
+    field_type,
+    operator,
+    value,
+):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    data = {
+        'name': 'Validator Fieldset',
+        'fields': [
+            {
+                'name': 'Field',
+                'type': field_type,
+                'order': 1,
+                'api_name': 'field-1',
+                'rulesets': [
+                    {
+                        'name': 'Some name',
+                        'type': FieldRuleType.VALIDATOR,
+                        'message': 'Value is invalid',
+                        'order': 1,
+                        'groups_or': [
+                            {
+                                'groups_and': [
+                                    {
+                                        'operator': operator,
+                                        'value': value,
+                                        'field': None,
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+    }
+    fieldset = create_test_shared_fieldset(
+        account=account,
+        name=data['name'],
+        field_rule_type=FieldRuleType.VALIDATOR,
+        field_rule_operator=operator,
+        field_rule_value=value,
+        field_rule_message='Value is invalid',
+    )
+    fieldset_service_create_mock = mocker.patch(
+        'src.processes.views.fieldset.FieldSetTemplateService.'
+        'create_shared_fieldset',
+        return_value=fieldset,
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.post('/fieldsets', data=data)
+
+    # assert
+    assert response.status_code == 201
+    field_response = response.data['fields'][0]
+    ruleset_data = field_response['rulesets'][0]
+    assert ruleset_data['type'] == FieldRuleType.VALIDATOR
+    fieldset_service_create_mock.assert_called_once()
+    call_kwargs = fieldset_service_create_mock.call_args[1]
+    field_payload = call_kwargs['fields'][0]
+    ruleset_payload = field_payload['rulesets'][0]
+    assert ruleset_payload['type'] == FieldRuleType.VALIDATOR
+    group_and_payload = ruleset_payload['groups_or'][0]['groups_and'][0]
+    assert group_and_payload['operator'] == operator
+    assert group_and_payload['value'] == value
+
+
+def test_create__field_rule_validator_user_field__ok(api_client, mocker):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    operator = FieldRuleOperator.EQUAL
+    value = '1'
+    data = {
+        'name': 'Validator User Fieldset',
+        'fields': [
+            {
+                'name': 'Field',
+                'type': FieldType.USER,
+                'order': 1,
+                'api_name': 'field-1',
+                'is_required': True,
+                'rulesets': [
+                    {
+                        'name': 'Some name',
+                        'type': FieldRuleType.VALIDATOR,
+                        'message': 'Value is invalid',
+                        'order': 1,
+                        'groups_or': [
+                            {
+                                'groups_and': [
+                                    {
+                                        'operator': operator,
+                                        'value': value,
+                                        'field': None,
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+    }
+    fieldset = create_test_shared_fieldset(
+        account=account,
+        name=data['name'],
+        field_rule_type=FieldRuleType.VALIDATOR,
+        field_rule_operator=operator,
+        field_rule_value=value,
+        field_rule_message='Value is invalid',
+    )
+    fieldset_service_create_mock = mocker.patch(
+        'src.processes.views.fieldset.FieldSetTemplateService.'
+        'create_shared_fieldset',
+        return_value=fieldset,
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.post('/fieldsets', data=data)
+
+    # assert
+    assert response.status_code == 201
+    field_response = response.data['fields'][0]
+    ruleset_data = field_response['rulesets'][0]
+    assert ruleset_data['type'] == FieldRuleType.VALIDATOR
+    fieldset_service_create_mock.assert_called_once()
+    call_kwargs = fieldset_service_create_mock.call_args[1]
+    field_payload = call_kwargs['fields'][0]
+    ruleset_payload = field_payload['rulesets'][0]
+    assert ruleset_payload['type'] == FieldRuleType.VALIDATOR
+    group_and_payload = ruleset_payload['groups_or'][0]['groups_and'][0]
+    assert group_and_payload['operator'] == operator
+    assert group_and_payload['value'] == value
+
+
+@pytest.mark.parametrize(
+    ('field_type', 'operator', 'value'),
+    (
+        (FieldType.CHECKBOX, FieldRuleOperator.CONTAIN, 'Second'),
+        (FieldType.RADIO, FieldRuleOperator.EQUAL, 'Second'),
+        (FieldType.DROPDOWN, FieldRuleOperator.NOT_EQUAL, 'Second'),
+    ),
+)
+def test_create__field_rule_validator_types_with_selections__ok(
+    api_client,
+    mocker,
+    field_type,
+    operator,
+    value,
+):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    data = {
+        'name': 'Validator Selections Fieldset',
+        'fields': [
+            {
+                'name': 'Field',
+                'type': field_type,
+                'order': 1,
+                'api_name': 'field-1',
+                'selections': [
+                    {'value': 'First'},
+                    {'value': 'Second'},
+                ],
+                'rulesets': [
+                    {
+                        'name': 'Some name',
+                        'type': FieldRuleType.VALIDATOR,
+                        'message': 'Value is invalid',
+                        'order': 1,
+                        'groups_or': [
+                            {
+                                'groups_and': [
+                                    {
+                                        'operator': operator,
+                                        'value': value,
+                                        'field': None,
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+    }
+    fieldset = create_test_shared_fieldset(
+        account=account,
+        name=data['name'],
+        field_rule_type=FieldRuleType.VALIDATOR,
+        field_rule_operator=operator,
+        field_rule_value=value,
+        field_rule_message='Value is invalid',
+    )
+    fieldset_service_create_mock = mocker.patch(
+        'src.processes.views.fieldset.FieldSetTemplateService.'
+        'create_shared_fieldset',
+        return_value=fieldset,
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.post('/fieldsets', data=data)
+
+    # assert
+    assert response.status_code == 201
+    field_response = response.data['fields'][0]
+    ruleset_data = field_response['rulesets'][0]
+    assert ruleset_data['type'] == FieldRuleType.VALIDATOR
+    fieldset_service_create_mock.assert_called_once()
+    call_kwargs = fieldset_service_create_mock.call_args[1]
+    field_payload = call_kwargs['fields'][0]
+    ruleset_payload = field_payload['rulesets'][0]
+    assert ruleset_payload['type'] == FieldRuleType.VALIDATOR
+    group_and_payload = ruleset_payload['groups_or'][0]['groups_and'][0]
+    assert group_and_payload['operator'] == operator
+    assert group_and_payload['value'] == value
+
+
+def test_create__field_rule_show_file_field__ok(api_client, mocker):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    source_api_name = 'src-1'
+    data = {
+        'name': 'Show File Fieldset',
+        'fields': [
+            {
+                'name': 'Image original',
+                'type': FieldType.FILE,
+                'order': 1,
+                'api_name': source_api_name,
+            },
+            {
+                'name': 'Image resized',
+                'type': FieldType.FILE,
+                'order': 2,
+                'api_name': 'file-1',
+                'rulesets': [
+                    {
+                        'name': 'Some name',
+                        'type': FieldRuleType.SHOW,
+                        'order': 1,
+                        'groups_or': [
+                            {
+                                'groups_and': [
+                                    {
+                                        'field': source_api_name,
+                                        'operator': FieldRuleOperator.EXIST,
+                                        'value': None,
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+    }
+    fieldset = create_test_shared_fieldset(
+        account=account,
+        name=data['name'],
+        field_rule_type=FieldRuleType.SHOW,
+        field_rule_operator=FieldRuleOperator.EXIST,
+    )
+    fieldset_service_create_mock = mocker.patch(
+        'src.processes.views.fieldset.FieldSetTemplateService.'
+        'create_shared_fieldset',
+        return_value=fieldset,
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.post('/fieldsets', data=data)
+
+    # assert
+    assert response.status_code == 201
+    field_with_ruleset = response.data['fields'][0]
+    assert field_with_ruleset['rulesets'][0]['type'] == FieldRuleType.SHOW
+    fieldset_service_create_mock.assert_called_once()
+    call_kwargs = fieldset_service_create_mock.call_args[1]
+    file_payload = call_kwargs['fields'][1]
+    ruleset_payload = file_payload['rulesets'][0]
+    assert ruleset_payload['type'] == FieldRuleType.SHOW
+    group_and_payload = ruleset_payload['groups_or'][0]['groups_and'][0]
+    assert group_and_payload['field'] == source_api_name
+    assert group_and_payload['operator'] == FieldRuleOperator.EXIST
+    assert group_and_payload['value'] is None

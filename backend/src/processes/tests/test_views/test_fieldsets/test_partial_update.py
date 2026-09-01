@@ -504,85 +504,6 @@ def test_partial_update__response_fields_data__ok(api_client, mocker):
     )
 
 
-@pytest.mark.parametrize(
-    'rule_type',
-    (
-        FieldRuleType.SHOW,
-        FieldRuleType.VALIDATOR,
-    ),
-)
-def test_partial_update__fields_rules_type__ok(
-    api_client,
-    rule_type,
-    mocker,
-):
-
-    """ Valid fieldset fields->rules->type values are accepted """
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    fieldset = create_test_shared_fieldset(account=account)
-    field = fieldset.fields.first()
-    data = {
-        'fields': [
-            {
-                'name': 'Field 1',
-                'type': FieldType.NUMBER,
-                'order': 1,
-                'api_name': 'field-1',
-                'rulesets': [
-                    {
-                        'api_name': 'r-1',
-                        'name': 'Ruleset',
-                        'type': rule_type,
-                        'order': 1,
-                        'groups_or': [
-                            {
-                                'api_name': 'g-or-1',
-                                'groups_and': [
-                                    {
-                                        'api_name': 'g-and-1',
-                                        'field': field.api_name,
-                                        'operator': FieldRuleOperator.EQUAL,
-                                        'value': 'apple',
-                                    },
-                                ],
-                            },
-                        ],
-                    },
-                ],
-            },
-        ],
-    }
-    field_set_template_service_init_mock = mocker.patch.object(
-        FieldSetTemplateService,
-        attribute='__init__',
-        return_value=None,
-    )
-    partial_update_mock = mocker.patch(
-        'src.processes.views.fieldset.FieldSetTemplateService.partial_update',
-        return_value=fieldset,
-    )
-    api_client.token_authenticate(user=user)
-
-    # act
-    response = api_client.patch(
-        f'/fieldsets/{fieldset.id}',
-        data=data,
-    )
-
-    # assert
-    assert response.status_code == 200
-    field_set_template_service_init_mock.assert_called_once_with(
-        user=user,
-        instance=fieldset,
-        is_superuser=False,
-        auth_type=AuthTokenType.USER,
-    )
-    partial_update_mock.assert_called_once()
-
-
 def test_partial_update__unauthenticated__unauthorized(api_client, mocker):
 
     """ Unauthenticated request returns 401 """
@@ -1356,3 +1277,346 @@ def test_partial_update__two_rules_same_type__ok(api_client, mocker):
     fieldset_partial_update_mock.assert_called_once_with(
         rulesets=mocker.ANY,
     )
+
+
+@pytest.mark.parametrize(
+    ('field_type', 'operator', 'value'),
+    (
+        (FieldType.STRING, FieldRuleOperator.EQUAL, 'yes'),
+        (FieldType.TEXT, FieldRuleOperator.CONTAIN, 'text'),
+        (FieldType.URL, FieldRuleOperator.NOT_EQUAL, 'http://example.com'),
+        (FieldType.DATE, FieldRuleOperator.GREATER_THAN, '1577836800'),
+        (FieldType.NUMBER, FieldRuleOperator.LESS_THAN, '10'),
+        (FieldType.FILE, FieldRuleOperator.EXIST, None),
+    ),
+)
+def test_partial_update__field_rule_validator_by_field_type__ok(
+    api_client,
+    mocker,
+    field_type,
+    operator,
+    value,
+):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    fieldset = create_test_shared_fieldset(
+        account=account,
+        field_rule_type=FieldRuleType.VALIDATOR,
+        field_rule_operator=FieldRuleOperator.EQUAL,
+        field_rule_value='yes',
+    )
+    field = fieldset.fields.first()
+    ruleset = field.rulesets.first()
+    group_or = ruleset.groups_or.first()
+    group_and = group_or.groups_and.first()
+    data = {
+        'fields': [
+            {
+                'name': field.name,
+                'type': field_type,
+                'order': 1,
+                'api_name': field.api_name,
+                'rulesets': [
+                    {
+                        'api_name': ruleset.api_name,
+                        'name': 'Some name',
+                        'type': FieldRuleType.VALIDATOR,
+                        'message': 'Value is invalid',
+                        'order': 1,
+                        'groups_or': [
+                            {
+                                'api_name': group_or.api_name,
+                                'groups_and': [
+                                    {
+                                        'api_name': group_and.api_name,
+                                        'operator': operator,
+                                        'value': value,
+                                        'field': None,
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+    }
+    fieldset_partial_update_mock = mocker.patch(
+        'src.processes.views.fieldset.FieldSetTemplateService.'
+        'partial_update',
+        return_value=fieldset,
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.patch(
+        f'/fieldsets/{fieldset.id}',
+        data=data,
+    )
+
+    # assert
+    assert response.status_code == 200
+    field_response = response.data['fields'][0]
+    assert field_response['rulesets'][0]['type'] == FieldRuleType.VALIDATOR
+    fieldset_partial_update_mock.assert_called_once()
+    call_kwargs = fieldset_partial_update_mock.call_args[1]
+    field_payload = call_kwargs['fields'][0]
+    ruleset_payload = field_payload['rulesets'][0]
+    assert ruleset_payload['type'] == FieldRuleType.VALIDATOR
+    group_and_payload = ruleset_payload['groups_or'][0]['groups_and'][0]
+    assert group_and_payload['operator'] == operator
+    assert group_and_payload['value'] == value
+
+
+def test_partial_update__field_rule_validator_user_field__ok(
+    api_client,
+    mocker,
+):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    operator = FieldRuleOperator.EQUAL
+    value = '1'
+    fieldset = create_test_shared_fieldset(
+        account=account,
+        field_rule_type=FieldRuleType.VALIDATOR,
+        field_rule_operator=FieldRuleOperator.EQUAL,
+        field_rule_value='yes',
+    )
+    field = fieldset.fields.first()
+    ruleset = field.rulesets.first()
+    group_or = ruleset.groups_or.first()
+    group_and = group_or.groups_and.first()
+    data = {
+        'fields': [
+            {
+                'name': field.name,
+                'type': FieldType.USER,
+                'order': 1,
+                'api_name': field.api_name,
+                'is_required': True,
+                'rulesets': [
+                    {
+                        'api_name': ruleset.api_name,
+                        'name': 'Some name',
+                        'type': FieldRuleType.VALIDATOR,
+                        'message': 'Value is invalid',
+                        'order': 1,
+                        'groups_or': [
+                            {
+                                'api_name': group_or.api_name,
+                                'groups_and': [
+                                    {
+                                        'api_name': group_and.api_name,
+                                        'operator': operator,
+                                        'value': value,
+                                        'field': None,
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+    }
+    fieldset_partial_update_mock = mocker.patch(
+        'src.processes.views.fieldset.FieldSetTemplateService.'
+        'partial_update',
+        return_value=fieldset,
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.patch(
+        f'/fieldsets/{fieldset.id}',
+        data=data,
+    )
+
+    # assert
+    assert response.status_code == 200
+    field_response = response.data['fields'][0]
+    assert field_response['rulesets'][0]['type'] == FieldRuleType.VALIDATOR
+    fieldset_partial_update_mock.assert_called_once()
+    call_kwargs = fieldset_partial_update_mock.call_args[1]
+    field_payload = call_kwargs['fields'][0]
+    ruleset_payload = field_payload['rulesets'][0]
+    assert ruleset_payload['type'] == FieldRuleType.VALIDATOR
+    group_and_payload = ruleset_payload['groups_or'][0]['groups_and'][0]
+    assert group_and_payload['operator'] == operator
+    assert group_and_payload['value'] == value
+
+
+@pytest.mark.parametrize(
+    ('field_type', 'operator', 'value'),
+    (
+        (FieldType.CHECKBOX, FieldRuleOperator.CONTAIN, 'Second'),
+        (FieldType.RADIO, FieldRuleOperator.EQUAL, 'Second'),
+        (FieldType.DROPDOWN, FieldRuleOperator.NOT_EQUAL, 'Second'),
+    ),
+)
+def test_partial_update__field_rule_validator_types_with_selections__ok(
+    api_client,
+    mocker,
+    field_type,
+    operator,
+    value,
+):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    fieldset = create_test_shared_fieldset(
+        account=account,
+        field_rule_type=FieldRuleType.VALIDATOR,
+        field_rule_operator=FieldRuleOperator.EQUAL,
+        field_rule_value='yes',
+    )
+    field = fieldset.fields.first()
+    ruleset = field.rulesets.first()
+    group_or = ruleset.groups_or.first()
+    group_and = group_or.groups_and.first()
+    data = {
+        'fields': [
+            {
+                'name': field.name,
+                'type': field_type,
+                'order': 1,
+                'api_name': field.api_name,
+                'selections': [
+                    {'value': 'First'},
+                    {'value': 'Second'},
+                ],
+                'rulesets': [
+                    {
+                        'api_name': ruleset.api_name,
+                        'name': 'Some name',
+                        'type': FieldRuleType.VALIDATOR,
+                        'message': 'Value is invalid',
+                        'order': 1,
+                        'groups_or': [
+                            {
+                                'api_name': group_or.api_name,
+                                'groups_and': [
+                                    {
+                                        'api_name': group_and.api_name,
+                                        'operator': operator,
+                                        'value': value,
+                                        'field': None,
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+    }
+    fieldset_partial_update_mock = mocker.patch(
+        'src.processes.views.fieldset.FieldSetTemplateService.'
+        'partial_update',
+        return_value=fieldset,
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.patch(
+        f'/fieldsets/{fieldset.id}',
+        data=data,
+    )
+
+    # assert
+    assert response.status_code == 200
+    field_response = response.data['fields'][0]
+    assert field_response['rulesets'][0]['type'] == FieldRuleType.VALIDATOR
+    fieldset_partial_update_mock.assert_called_once()
+    call_kwargs = fieldset_partial_update_mock.call_args[1]
+    field_payload = call_kwargs['fields'][0]
+    ruleset_payload = field_payload['rulesets'][0]
+    assert ruleset_payload['type'] == FieldRuleType.VALIDATOR
+    group_and_payload = ruleset_payload['groups_or'][0]['groups_and'][0]
+    assert group_and_payload['operator'] == operator
+    assert group_and_payload['value'] == value
+
+
+def test_partial_update__field_rule_show_file_field__ok(api_client, mocker):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    source_api_name = 'src-1'
+    fieldset = create_test_shared_fieldset(
+        account=account,
+        field_rule_type=FieldRuleType.SHOW,
+        field_rule_operator=FieldRuleOperator.EXIST,
+    )
+    field = fieldset.fields.first()
+    ruleset = field.rulesets.first()
+    group_or = ruleset.groups_or.first()
+    group_and = group_or.groups_and.first()
+    data = {
+        'fields': [
+            {
+                'name': 'Image original',
+                'type': FieldType.FILE,
+                'order': 1,
+                'api_name': source_api_name,
+            },
+            {
+                'name': 'Image resized',
+                'type': FieldType.FILE,
+                'order': 2,
+                'api_name': field.api_name,
+                'rulesets': [
+                    {
+                        'api_name': ruleset.api_name,
+                        'name': 'Some name',
+                        'type': FieldRuleType.SHOW,
+                        'order': 1,
+                        'groups_or': [
+                            {
+                                'api_name': group_or.api_name,
+                                'groups_and': [
+                                    {
+                                        'api_name': group_and.api_name,
+                                        'field': source_api_name,
+                                        'operator': FieldRuleOperator.EXIST,
+                                        'value': None,
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+    }
+    fieldset_partial_update_mock = mocker.patch(
+        'src.processes.views.fieldset.FieldSetTemplateService.'
+        'partial_update',
+        return_value=fieldset,
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.patch(
+        f'/fieldsets/{fieldset.id}',
+        data=data,
+    )
+
+    # assert
+    assert response.status_code == 200
+    field_with_ruleset = response.data['fields'][0]
+    assert field_with_ruleset['rulesets'][0]['type'] == FieldRuleType.SHOW
+    fieldset_partial_update_mock.assert_called_once()
+    call_kwargs = fieldset_partial_update_mock.call_args[1]
+    file_payload = call_kwargs['fields'][1]
+    ruleset_payload = file_payload['rulesets'][0]
+    assert ruleset_payload['type'] == FieldRuleType.SHOW
+    group_and_payload = ruleset_payload['groups_or'][0]['groups_and'][0]
+    assert group_and_payload['field'] == source_api_name
+    assert group_and_payload['operator'] == FieldRuleOperator.EXIST
+    assert group_and_payload['value'] is None

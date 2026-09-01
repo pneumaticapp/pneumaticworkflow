@@ -807,6 +807,8 @@ class FieldRuleOperator:
 
     EQUAL = 'equal'
     NOT_EQUAL = 'not_equals'
+    EXIST = 'exists'
+    NOT_EXIST = 'not_exists'
     GREATER_THAN = 'greater_than'
     LESS_THAN = 'less_than'
     CONTAIN = 'contains'
@@ -815,6 +817,8 @@ class FieldRuleOperator:
     CHOICES = (
         (EQUAL, 'Equal'),
         (NOT_EQUAL, 'Not equal'),
+        (EXIST, 'Exists'),
+        (NOT_EXIST, 'Not exists'),
         (GREATER_THAN, 'Greater than'),
         (LESS_THAN, 'Less than'),
         (CONTAIN, 'Contains'),
@@ -824,6 +828,8 @@ class FieldRuleOperator:
     LITERALS = Literal[
         EQUAL,
         NOT_EQUAL,
+        EXIST,
+        NOT_EXIST,
         GREATER_THAN,
         LESS_THAN,
         CONTAIN,
@@ -836,41 +842,53 @@ class FieldRuleOperator:
             NOT_EQUAL,
             CONTAIN,
             NOT_CONTAIN,
+            EXIST,
+            NOT_EXIST,
         },
         FieldType.TEXT: {
             EQUAL,
             NOT_EQUAL,
             CONTAIN,
             NOT_CONTAIN,
+            EXIST,
+            NOT_EXIST,
         },
         FieldType.URL: {
             EQUAL,
             NOT_EQUAL,
             CONTAIN,
             NOT_CONTAIN,
+            EXIST,
+            NOT_EXIST,
         },
         FieldType.CHECKBOX: {
             EQUAL,
             NOT_EQUAL,
             CONTAIN,
             NOT_CONTAIN,
+            EXIST,
+            NOT_EXIST,
         },
-        FieldType.RADIO: {EQUAL, NOT_EQUAL},
-        FieldType.DROPDOWN: {EQUAL, NOT_EQUAL},
-        FieldType.USER: {EQUAL, NOT_EQUAL},
+        FieldType.RADIO: {EQUAL, NOT_EQUAL, EXIST, NOT_EXIST},
+        FieldType.DROPDOWN: {EQUAL, NOT_EQUAL, EXIST, NOT_EXIST},
+        FieldType.USER: {EQUAL, NOT_EQUAL, EXIST, NOT_EXIST},
         FieldType.DATE: {
             EQUAL,
             NOT_EQUAL,
             GREATER_THAN,
             LESS_THAN,
+            EXIST,
+            NOT_EXIST,
         },
         FieldType.NUMBER: {
             EQUAL,
             NOT_EQUAL,
             GREATER_THAN,
             LESS_THAN,
+            EXIST,
+            NOT_EXIST,
         },
-        FieldType.FILE: set(),
+        FieldType.FILE: {EXIST, NOT_EXIST},
     }
 
 
