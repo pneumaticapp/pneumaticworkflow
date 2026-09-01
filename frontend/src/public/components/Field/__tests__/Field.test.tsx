@@ -4,6 +4,8 @@ import userEvent from '@testing-library/user-event';
 import { Field } from '../Field';
 import { EFieldTagName } from '../types';
 
+import styles from '../Field.css';
+
 jest.mock('../../RichEditor', () => ({
   RichEditor: ({ placeholder }: { placeholder?: string }) => (
     <div data-testid="rich-editor">{placeholder}</div>
@@ -59,6 +61,18 @@ describe('Field component', () => {
 
       const input = screen.getByRole('textbox');
       expect(input).toBeDisabled();
+    });
+
+    it('fills its condition value container and preserves the inner spacing', () => {
+      render(
+        <Field
+          value=""
+          isFromConditionValueField
+          onChange={jest.fn()}
+        />,
+      );
+
+      expect(screen.getByRole('textbox')).toHaveClass(styles['input_condition-value']);
     });
   });
 

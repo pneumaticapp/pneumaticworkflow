@@ -1,4 +1,3 @@
-/* eslint-disable indent */
 import React, { useState, ReactNode, ChangeEvent } from 'react';
 import { useSelector } from 'react-redux';
 import classnames from 'classnames';
@@ -75,7 +74,8 @@ export function ConditionValueField({
         onChange={(e: ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
           changeRuleValue(e.target.value);
         }}
-        {...(isNumberType && { isNumericField, isFromConditionValueField: true })}
+        isFromConditionValueField
+        {...(isNumberType && { isNumericField })}
       />
     );
   }
@@ -119,10 +119,10 @@ export function ConditionValueField({
         formatOptionLabel={(option: IDropdownSelection, { context }) =>
           context === 'menu'
             ? getFormattedDropdownOption({
-                label: option.label,
-                isSelected: option.value === rule.value,
-                isTooltip: true,
-              })
+              label: option.label,
+              isSelected: option.value === rule.value,
+              isTooltip: true,
+            })
             : option.label
         }
         classNames={{ menu: () => styles['condition__value-field-select-menu'] }}
@@ -170,10 +170,10 @@ export function ConditionValueField({
         formatOptionLabel={(option: IDropdownUser, { context }) =>
           context === 'menu'
             ? getFormattedDropdownOption({
-                label: option.label,
-                isSelected: option.id === rule.value && option.entityType === rule.fieldType,
-                isTooltip: true,
-              })
+              label: option.label,
+              isSelected: option.id === rule.value && option.entityType === rule.fieldType,
+              isTooltip: true,
+            })
             : option.label
         }
         classNames={{ menu: () => styles['condition__value-field-select-menu'] }}
