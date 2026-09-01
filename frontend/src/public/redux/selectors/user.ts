@@ -25,6 +25,10 @@ export const getIsBlocked = ({
 
 export const getIsAdmin = ({ authUser }: IApplicationState) => authUser.isAdmin || false;
 
+/** Mirrors UserIsAdminOrAccountOwner on /templates/integrations, which 403s for anyone else. */
+export const getCanAccessTemplateIntegrations = ({ authUser }: IApplicationState) =>
+  (authUser?.isAdmin || authUser?.isAccountOwner) || false;
+
 export const getCanAccessWorkflows = ({ authUser }: IApplicationState) => 
   (authUser?.isAdmin || authUser?.hasWorkflowViewerAccess || authUser?.hasWorkflowStarterAccess) || false;
 
