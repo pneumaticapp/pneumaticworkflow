@@ -16,6 +16,17 @@
     display: flex;
   }
 
+  &:disabled {
+    cursor: default;
+    opacity: 0.48;
+  }
+
+  &:disabled:hover,
+  &:disabled:hover h2 {
+    color: var(--pneumatic-color-link-dark);
+    border-color: var(--pneumatic-color-link-dark);
+  }
+
   &:hover {
     color: var(--pneumatic-color-link-hover);
     border-color: var(--pneumatic-color-link-hover);

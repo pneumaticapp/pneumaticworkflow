@@ -1,0 +1,111 @@
+.container {
+  padding-bottom: 4rem;
+}
+
+.buttons-row {
+  margin: 0 auto;
+  max-width: 66.4rem;
+}
+
+.cards {
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  max-width: 66.4rem;
+  gap: 1.6rem;
+}
+
+.empty {
+  padding: 2.4rem 0;
+  font-size: 1.4rem;
+  text-align: center;
+  color: var(--pneumatic-color-black48);
+}
+
+.agent-card {
+  padding: 1.6rem 2.4rem;
+  display: flex;
+  background: var(--pneumatic-color-white);
+  border: 0.1rem solid var(--pneumatic-color-black16);
+  border-radius: 2.4rem;
+  align-items: center;
+  gap: 1.6rem;
+}
+
+.agent-card__avatar {
+  display: flex;
+  overflow: hidden;
+  flex-shrink: 0;
+  width: 4.8rem;
+  height: 4.8rem;
+  font-size: 1.6rem;
+  font-weight: bold;
+  color: var(--pneumatic-color-black48);
+  background: var(--pneumatic-color-black8);
+  border-radius: 50%;
+  align-items: center;
+  justify-content: center;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.agent-card__info {
+  display: flex;
+  overflow: hidden;
+  flex-grow: 1;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.agent-card__name {
+  overflow: hidden;
+  font-size: 1.6rem;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--pneumatic-color-black100);
+}
+
+.agent-card__meta {
+  overflow: hidden;
+  font-size: 1.3rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--pneumatic-color-black48);
+}
+
+.agent-card__inactive {
+  font-size: 1.2rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--pneumatic-color-warning);
+}
+
+.agent-card__actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.delete-modal__title {
+  margin-bottom: 0.8rem;
+}
+
+.delete-modal__text {
+  margin-bottom: 1.6rem;
+  font-size: 1.4rem;
+  color: var(--pneumatic-color-black72);
+}
+
+.delete-modal__footer {
+  margin-top: 2.4rem;
+  display: flex;
+  align-items: center;
+  gap: 1.6rem;
+}

@@ -41,6 +41,7 @@ export enum ERoutes {
   Highlights = '/workflow-highlights/',
   HighlightsByTemplateId = '/workflow-highlights/?templates=:templateId',
   Team = '/team/',
+  TeamAIAgents = '/team/ai-agents/',
   Groups = '/team/groups/',
   GroupDetails = '/team/groups/:id',
   Reports = '/reports/',

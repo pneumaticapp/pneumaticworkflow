@@ -88,6 +88,10 @@ function* setTeamActiveTab({ payload: processesType }: PayloadAction<TeamPages>)
   if (processesType === TeamPages.Users) {
     history.push(ERoutes.Team);
   }
+
+  if (processesType === TeamPages.AIAgents) {
+    history.push(ERoutes.TeamAIAgents);
+  }
 }
 
 export function* watchSetProcessTypeSorting() {

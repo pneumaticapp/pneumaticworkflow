@@ -115,6 +115,7 @@ function* createAIAgentSaga({ payload }: PayloadAction<ICreateAIAgentRequest>) {
     yield createAIAgentApi(payload);
     // Providers carry a usage list, which the new agent has just changed.
     yield all([fetchAIAgents(), fetchAIProviders()]);
+    NotificationManager.success({ message: 'team.ai-agents.created' });
   } catch (error) {
     NotificationManager.warning({ message: getErrorMessage(error) });
     logger.error('failed to create AI agent', error);
@@ -131,6 +132,7 @@ function* updateAIAgentSaga({
   try {
     yield updateAIAgentApi(id, data);
     yield all([fetchAIAgents(), fetchAIProviders()]);
+    NotificationManager.success({ message: 'team.ai-agents.updated' });
   } catch (error) {
     NotificationManager.warning({ message: getErrorMessage(error) });
     logger.error('failed to update AI agent', error);
@@ -145,6 +147,7 @@ function* deleteAIAgentSaga({ payload: id }: PayloadAction<number>) {
   try {
     yield deleteAIAgentApi(id);
     yield all([fetchAIAgents(), fetchAIProviders()]);
+    NotificationManager.success({ message: 'team.ai-agents.deleted' });
   } catch (error) {
     NotificationManager.warning({ message: getErrorMessage(error) });
     logger.error('failed to delete AI agent', error);
