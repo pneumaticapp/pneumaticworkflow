@@ -83,6 +83,7 @@ function* createAIProviderSaga({ payload }: PayloadAction<ICreateAIProviderReque
   try {
     yield createAIProviderApi(payload);
     yield fetchAIProviders();
+    NotificationManager.success({ message: 'ai-providers.created' });
   } catch (error) {
     NotificationManager.warning({ message: getErrorMessage(error) });
     logger.error('failed to create AI provider', error);
@@ -97,6 +98,7 @@ function* deleteAIProviderSaga({ payload: id }: PayloadAction<number>) {
   try {
     yield deleteAIProviderApi(id);
     yield fetchAIProviders();
+    NotificationManager.success({ message: 'ai-providers.deleted' });
   } catch (error) {
     // The API refuses to delete a provider still referenced by an agent (MSG_AI_0005).
     NotificationManager.warning({ message: getErrorMessage(error) });

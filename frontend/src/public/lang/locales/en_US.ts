@@ -1375,6 +1375,23 @@ export const enMessages = {
     "Sorry, the image you're trying to upload is the wrong size." +
     " It's {width}x{height}px, but we only accept {expectedWidth}x{expectedHeight}px images.",
 
+  'ai-providers.title': 'AI providers',
+  'ai-providers.add': 'Add AI provider',
+  'ai-providers.loading': 'Loading AI providers…',
+  'ai-providers.empty': 'No AI providers yet. Add one to start creating AI agents.',
+  'ai-providers.delete': 'Delete',
+  'ai-providers.usage': 'Used by: {agents}',
+  'ai-providers.delete-disabled-tooltip': 'This provider is used by AI agents: {agents}. Remove those agents first.',
+  'ai-providers.create-modal-title': 'Add AI provider',
+  'ai-providers.create-modal-description': 'Paste the base URL of the provider API and your secret key. The provider is detected automatically and becomes available to the whole account.',
+  'ai-providers.base-url-label': 'Base URL',
+  'ai-providers.base-url-placeholder': 'https://openrouter.ai/api/v1',
+  'ai-providers.api-key-label': 'API key',
+  'ai-providers.api-key-placeholder': 'sk-…',
+  'ai-providers.delete-modal-title': 'Delete AI provider',
+  'ai-providers.delete-confirm': 'Delete provider {name}? This cannot be undone.',
+  'ai-providers.created': 'Provider added. You can now create AI agents on the Team page.',
+  'ai-providers.deleted': 'Provider deleted',
   'integrations.title': 'Integrations',
   'integrations.title.tooltip': 'Get your API key and go to Zapier or make to link up Pneumatic to external apps.',
   'integrations.description':

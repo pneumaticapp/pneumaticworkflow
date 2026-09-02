@@ -1,0 +1,126 @@
+.providers {
+  margin: 3.2rem 0;
+}
+
+.providers__header {
+  margin-bottom: 1.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.providers__title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: bold;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--pneumatic-color-black100);
+}
+
+.providers__create-btn {
+  font-size: 1.3rem;
+  line-height: 1.6rem;
+}
+
+.providers__loading,
+.providers__empty {
+  padding: 2.4rem 0;
+  font-size: 1.4rem;
+  text-align: center;
+  color: var(--pneumatic-color-black48);
+}
+
+.providers__list {
+  display: flex;
+  overflow: hidden;
+  flex-direction: column;
+  border: 0.1rem solid var(--pneumatic-color-black16);
+  border-radius: 0.6rem;
+}
+
+.providers__item {
+  padding: 1.2rem 1.6rem;
+  display: flex;
+  border-bottom: 0.1rem solid var(--pneumatic-color-black8);
+  align-items: center;
+  justify-content: space-between;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.providers__item-info {
+  display: flex;
+  overflow: hidden;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.providers__item-name {
+  overflow: hidden;
+  font-size: 1.4rem;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--pneumatic-color-black100);
+}
+
+.providers__item-url {
+  overflow: hidden;
+  font-size: 1.2rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--pneumatic-color-black48);
+}
+
+.providers__item-key {
+  overflow: hidden;
+  font-family: monospace;
+  font-size: 1.3rem;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+  text-overflow: ellipsis;
+  color: var(--pneumatic-color-black48);
+}
+
+.providers__item-usage {
+  font-size: 1.2rem;
+  color: var(--pneumatic-color-black32);
+}
+
+.providers__item-actions {
+  flex-shrink: 0;
+  margin-left: 1.6rem;
+}
+
+.create-modal__title {
+  margin-bottom: 0.8rem;
+}
+
+.create-modal__description {
+  margin-bottom: 1.6rem;
+  font-size: 1.4rem;
+  color: var(--pneumatic-color-black48);
+}
+
+.create-modal__fields {
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
+}
+
+.create-modal__warning {
+  margin-bottom: 1.6rem;
+  font-size: 1.4rem;
+  color: var(--pneumatic-color-black72);
+}
+
+.create-modal__footer {
+  margin-top: 2.4rem;
+  display: flex;
+  align-items: center;
+  gap: 1.6rem;
+}
