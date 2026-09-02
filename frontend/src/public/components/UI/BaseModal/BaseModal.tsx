@@ -111,12 +111,19 @@ interface IModalPartProps {
   className?: string;
   toggle?(): void;
   tag?: keyof JSX.IntrinsicElements;
+  titleTag?: keyof JSX.IntrinsicElements;
 }
 
-export function ModalHeader({ children, className = '', toggle, tag: Tag = 'div' }: IModalPartProps) {
+export function ModalHeader({
+  children,
+  className = '',
+  toggle,
+  tag: Tag = 'div',
+  titleTag: TitleTag = 'p',
+}: IModalPartProps) {
   return (
     <Tag className={classnames(styles['modal-header'], className)}>
-      <p className={styles['title']}>{children}</p>
+      <TitleTag className={styles['title']}>{children}</TitleTag>
       {toggle && (
         <button type="button" onClick={toggle} className={styles['close-button']} aria-label="Close modal">
           <ClearIcon />

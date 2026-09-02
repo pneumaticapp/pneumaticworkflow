@@ -9,6 +9,7 @@ exports[`Team rendered correctly 1`] = `
   <CreateUserModal
     isOpen={false}
     onClose={[Function]}
+    onCreateAIAgent={[Function]}
   />
   <VacationSettingsModal
     isOpen={false}
@@ -329,6 +330,7 @@ exports[`Team rendered correctly with descending sorting 1`] = `
   <CreateUserModal
     isOpen={false}
     onClose={[Function]}
+    onCreateAIAgent={[Function]}
   />
   <VacationSettingsModal
     isOpen={false}
