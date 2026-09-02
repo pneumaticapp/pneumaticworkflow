@@ -15,6 +15,7 @@ import { rootSaga as templatesSagas } from './templates/saga';
 import { rootSaga as selectTemplateModal } from './selectTemplateModal/saga';
 import { rootSaga as templateSagas } from './template/saga';
 import { rootSaga as integrationsSagas } from './integrations/saga';
+import { rootSaga as aiSagas } from './ai/saga';
 import { rootSaga as notificationsSagas } from './notifications/saga';
 import { rootSaga as runWorkflowModalSagas } from './runWorkflowModal/saga';
 import { rootSaga as tasksSagas } from './tasks/saga';
@@ -53,6 +54,7 @@ export function* rootSaga() {
       fork(pagesSagas),
       fork(datasetsSagas),
       fork(fieldsetsSagas),
+      fork(aiSagas),
     ]);
 
     yield take(EAuthActions.RedirectToLogin);
