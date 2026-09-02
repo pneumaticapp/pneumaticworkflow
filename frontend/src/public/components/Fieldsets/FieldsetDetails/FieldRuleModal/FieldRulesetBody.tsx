@@ -16,6 +16,9 @@ import rulesetStyles from '../FieldsetRulesets/FieldsetRulesets.css';
 
 export function FieldRulesetBody({
   localRuleSet,
+  fieldType,
+  selections,
+  datasetId,
   fieldRuleShowFieldOptions,
   onUpdateRuleSet,
 }: IFieldRulesetBodyProps) {
@@ -95,7 +98,7 @@ export function FieldRulesetBody({
             onUpdateRuleSet({
               type: newType,
               message: newType === EFieldRuleType.Validator ? '' : null,
-              groupsOr: [createEmptyFieldRuleGroupOr(newType)],
+              groupsOr: [createEmptyFieldRuleGroupOr()],
             });
           }
         }}
@@ -115,9 +118,12 @@ export function FieldRulesetBody({
       <RuleList
         ruleSet={localRuleSet}
         ruleType={type}
+        fieldType={fieldType}
+        selections={selections}
+        datasetId={datasetId}
         operatorOptions={FIELD_RULE_VALIDATOR_OPERATOR_OPTIONS}
         fieldRuleShowFieldOptions={fieldRuleShowFieldOptions}
-        addRule={() => onUpdateRuleSet(addRule(localRuleSet, () => createEmptyFieldRule(type)))}
+        addRule={() => onUpdateRuleSet(addRule(localRuleSet, () => createEmptyFieldRule()))}
         updateRule={({ groupOrApiName, groupAndApiName, ruleChanges }) =>
           onUpdateRuleSet(updateRule(localRuleSet, groupOrApiName, groupAndApiName, ruleChanges))
         }

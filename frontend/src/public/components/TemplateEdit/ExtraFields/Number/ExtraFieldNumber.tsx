@@ -39,8 +39,6 @@ export const ExtraFieldNumber = ({
     [editField],
   );
 
-  const rulesetsCount = field.rulesets?.length ?? 0;
-
   const renderField = () => {
     const baseField = (
       <FieldWithName
@@ -58,13 +56,7 @@ export const ExtraFieldNumber = ({
         {...(mode !== EExtraFieldMode.Kickoff && {
           isNumericField: true,
         })}
-      >
-        {rulesetsCount > 0 && (
-          <span className={fieldStyles['rulesets-badge']}>
-            {intl.formatMessage({ id: 'fieldsets.field-rulesets-badge' }, { count: rulesetsCount })}
-          </span>
-        )}
-      </FieldWithName>
+      />
     );
     const fieldsMap: { [key in EExtraFieldMode]: ReactElement } = {
       [EExtraFieldMode.Kickoff]: baseField,

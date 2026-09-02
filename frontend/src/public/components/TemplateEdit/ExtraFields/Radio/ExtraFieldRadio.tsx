@@ -134,6 +134,14 @@ export function ExtraFieldRadio({
           {customOptionsList}
           {!isDisabled && addOptionButton}
         </OutputFieldContent>
+
+        {(field.rulesets?.length ?? 0) > 0 && (
+          <div>
+            <span className={styles['rulesets-badge']}>
+              <IntlMessages id="fieldsets.field-rulesets-badge" values={{ count: field.rulesets?.length ?? 0 }} />
+            </span>
+          </div>
+        )}
       </div>
     );
   };

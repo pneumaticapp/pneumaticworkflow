@@ -4,7 +4,6 @@ import {
   createFieldRuleGroupAndApiName,
 } from '../../../../utils/createId';
 import {
-  EFieldRuleValidatorOperator,
   EFieldRuleType,
   IFieldRuleGroupAnd,
   IFieldRuleGroupOr,
@@ -13,23 +12,18 @@ import {
 import {
   FIELD_RULE_SHOW_OPERATORS_WITHOUT_VALUE,
   EFieldRuleShowOperator,
-  IFieldRuleShowFieldOption,
 } from '../RuleBase/types';
 
-export const createEmptyFieldRule = (
-  type: EFieldRuleType = EFieldRuleType.Validator,
-): IFieldRuleGroupAnd => ({
+export const createEmptyFieldRule = (): IFieldRuleGroupAnd => ({
   apiName: createFieldRuleGroupAndApiName(),
   field: null,
-  operator: type === EFieldRuleType.Validator ? EFieldRuleValidatorOperator.Equal : null,
+  operator: null,
   value: '',
 });
 
-export const createEmptyFieldRuleGroupOr = (
-  type: EFieldRuleType = EFieldRuleType.Validator,
-): IFieldRuleGroupOr => ({
+export const createEmptyFieldRuleGroupOr = (): IFieldRuleGroupOr => ({
   apiName: createFieldRuleGroupOrApiName(),
-  groupsAnd: [createEmptyFieldRule(type)],
+  groupsAnd: [createEmptyFieldRule()],
 });
 
 export const createEmptyFieldRuleSet = (type: EFieldRuleType = EFieldRuleType.Validator): IFieldRuleSet => ({
@@ -38,7 +32,7 @@ export const createEmptyFieldRuleSet = (type: EFieldRuleType = EFieldRuleType.Va
   type,
   message: type === EFieldRuleType.Validator ? '' : null,
   order: 0,
-  groupsOr: [createEmptyFieldRuleGroupOr(type)],
+  groupsOr: [createEmptyFieldRuleGroupOr()],
 });
 
 export const traverseFieldRuleSetGroupsAnd = (
@@ -99,7 +93,6 @@ export const updateFieldRule = (
 
 export const isFieldRulesetValid = (
   ruleSet: IFieldRuleSet,
-  _fieldRuleShowFieldOptions?: IFieldRuleShowFieldOption[],
 ): boolean => {
   if (!ruleSet.name?.trim()) {
     return false;
@@ -125,7 +118,13 @@ export const isFieldRulesetValid = (
     }
 
     if (ruleSet.type === EFieldRuleType.Validator) {
-      if (!rule.value.trim()) {
+      if (!rule.operator) {
+        return false;
+      }
+      const isOperatorWithoutValue = FIELD_RULE_SHOW_OPERATORS_WITHOUT_VALUE.includes(
+        rule.operator as EFieldRuleShowOperator,
+      );
+      if (!isOperatorWithoutValue && !rule.value.trim()) {
         return false;
       }
       return true;

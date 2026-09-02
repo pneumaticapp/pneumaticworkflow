@@ -3,6 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { RuleItemValidator } from '../RuleItemValidator';
 import { intlMock } from '../../../../../__stubs__/intlMock';
 import { IBaseRuleGroupAnd } from '../../../../../types/fieldset';
+import { EExtraFieldType } from '../../../../../types/template';
 
 jest.mock('react-intl', () => {
   const actualIntl = jest.requireActual('react-intl');
@@ -16,16 +17,16 @@ jest.mock('../../../../UI', () => ({
   FilterSelect: (props: {
     options?: { apiName: string; name: string }[];
     selectedOption?: string;
-    onChange: (val: string) => void;
+    onChange: (value: string) => void;
   }) => (
     <select
       data-testid="filter-select"
       value={props.selectedOption || ''}
-      onChange={(e) => props.onChange(e.target.value)}
+      onChange={(event) => props.onChange(event.target.value)}
     >
-      {props.options?.map((opt) => (
-        <option key={opt.apiName} value={opt.apiName}>
-          {opt.name}
+      {props.options?.map((option) => (
+        <option key={option.apiName} value={option.apiName}>
+          {option.name}
         </option>
       ))}
     </select>
@@ -46,7 +47,7 @@ jest.mock('react-number-format', () => ({
       value={props.value || ''}
       onFocus={props.onFocus}
       onBlur={props.onBlur}
-      onChange={(e) => props.onValueChange({ value: e.target.value })}
+      onChange={(event) => props.onValueChange({ value: event.target.value })}
     />
   ),
 }));
@@ -71,19 +72,20 @@ describe('RuleItemValidator component', () => {
         groupAndRule={mockGroupAndRule}
         groupOrApiName="or_1"
         fieldRuleBaseOperatorOptions={mockOperatorOptions}
+        fieldType={EExtraFieldType.Number}
         updateRule={handleUpdateRule}
       />,
     );
 
     const select = screen.getByTestId('filter-select');
-    fireEvent.change(select, { target: { value: 'min_length' } });
+    fireEvent.change(select, { target: { value: 'not_equals' } });
 
     expect(handleUpdateRule).toHaveBeenCalledTimes(1);
     expect(handleUpdateRule).toHaveBeenCalledWith({
       groupOrApiName: 'or_1',
       groupAndApiName: 'and_1',
       ruleChanges: {
-        operator: 'min_length',
+        operator: 'not_equals',
       },
     });
   });
@@ -96,6 +98,7 @@ describe('RuleItemValidator component', () => {
         groupAndRule={mockGroupAndRule}
         groupOrApiName="or_1"
         fieldRuleBaseOperatorOptions={mockOperatorOptions}
+        fieldType={EExtraFieldType.Number}
         updateRule={handleUpdateRule}
       />,
     );
@@ -125,6 +128,7 @@ describe('RuleItemValidator component', () => {
         groupAndRule={emptyValueRule}
         groupOrApiName="or_1"
         fieldRuleBaseOperatorOptions={mockOperatorOptions}
+        fieldType={EExtraFieldType.Number}
         updateRule={jest.fn()}
       />,
     );

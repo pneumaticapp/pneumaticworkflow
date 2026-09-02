@@ -12,6 +12,7 @@ import {
 } from '../../../../../__stubs__/fieldsets.factory';
 
 import { EFieldRuleType } from '../../../../../types/fieldset';
+import { EExtraFieldType } from '../../../../../types/template';
 
 jest.mock('../RuleItem', () => ({
   RuleItem: jest.fn((props) => (
@@ -52,6 +53,7 @@ describe('RuleList component', () => {
       <RuleList
         ruleSet={emptyRuleset}
         ruleType={EFieldRuleType.Validator}
+        fieldType={EExtraFieldType.Number}
         operatorOptions={FIELDSET_RULE_OPERATOR_OPTIONS}
         isReadOnly={false}
         addRule={mockAddRule}
@@ -87,6 +89,7 @@ describe('RuleList component', () => {
       <RuleList
         ruleSet={ruleset}
         ruleType={EFieldRuleType.Validator}
+        fieldType={EExtraFieldType.Number}
         operatorOptions={FIELDSET_RULE_OPERATOR_OPTIONS}
         isReadOnly={false}
         addRule={mockAddRule}
@@ -114,6 +117,7 @@ describe('RuleList component', () => {
       <RuleList
         ruleSet={ruleset}
         ruleType={EFieldRuleType.Validator}
+        fieldType={EExtraFieldType.Number}
         operatorOptions={FIELDSET_RULE_OPERATOR_OPTIONS}
         isReadOnly={false}
         addRule={mockAddRule}
@@ -140,6 +144,7 @@ describe('RuleList component', () => {
       <RuleList
         ruleSet={emptyRuleset}
         ruleType={EFieldRuleType.Validator}
+        fieldType={EExtraFieldType.Number}
         operatorOptions={FIELDSET_RULE_OPERATOR_OPTIONS}
         isReadOnly={true}
         addRule={mockAddRule}

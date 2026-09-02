@@ -180,7 +180,6 @@ function ExtraField(props: IExtraFieldProps) {
             datasetOptions={datasetOptions}
             {...(field.dataset && { selectedDatasetId: field.dataset })}
             onDatasetSelect={handleDatasetSelect}
-            fieldType={field.type}
             fieldRulesets={fieldRulesets}
             onOpenFieldRules={onOpenFieldRules}
             onDeleteFieldRuleset={onDeleteFieldRuleset}

@@ -11,8 +11,7 @@ import {
   IFieldRuleSet,
 } from '../../../../../types/fieldset';
 
-import { EExtraFieldType } from '../../../../../types/template';
-import { IFieldRuleShowFieldOption, EFieldRuleShowOperator } from '../../RuleBase/types';
+import { EFieldRuleShowOperator } from '../../RuleBase/types';
 
 const makeValidRuleset = (overrides: Partial<IFieldRuleSet> = {}): IFieldRuleSet => ({
   apiName: 'rs-1',
@@ -36,26 +35,15 @@ const makeValidRuleset = (overrides: Partial<IFieldRuleSet> = {}): IFieldRuleSet
   ...overrides,
 });
 
-const makeFieldOptions = (overrides: Partial<IFieldRuleShowFieldOption> = {}): IFieldRuleShowFieldOption[] => [
-  { apiName: 'field_1', name: 'Field 1', type: EExtraFieldType.Text, ...overrides },
-];
-
 describe('FieldRuleModal utils', () => {
   describe('createEmptyFieldRule', () => {
-    it('creates a rule with operator Equal for Validator type', () => {
-      const rule = createEmptyFieldRule(EFieldRuleType.Validator);
+    it('creates a rule with operator null by default', () => {
+      const rule = createEmptyFieldRule();
 
       expect(rule.apiName).toBeTruthy();
-      expect(rule.operator).toBe(EFieldRuleValidatorOperator.Equal);
-      expect(rule.field).toBeNull();
-      expect(rule.value).toBe('');
-    });
-
-    it('creates a rule with operator null for Show type', () => {
-      const rule = createEmptyFieldRule(EFieldRuleType.Show);
-
       expect(rule.operator).toBeNull();
       expect(rule.field).toBeNull();
+      expect(rule.value).toBe('');
     });
   });
 
@@ -146,7 +134,7 @@ describe('FieldRuleModal utils', () => {
         }],
       });
 
-      expect(isFieldRulesetValid(ruleset, makeFieldOptions())).toBe(false);
+      expect(isFieldRulesetValid(ruleset)).toBe(false);
     });
 
     it('returns false when show rule has empty value for a non-File field', () => {
@@ -163,7 +151,7 @@ describe('FieldRuleModal utils', () => {
         }],
       });
 
-      expect(isFieldRulesetValid(ruleset, makeFieldOptions())).toBe(false);
+      expect(isFieldRulesetValid(ruleset)).toBe(false);
     });
 
     it('returns true when show rule has empty value for an operator without value (exist/not_exist)', () => {

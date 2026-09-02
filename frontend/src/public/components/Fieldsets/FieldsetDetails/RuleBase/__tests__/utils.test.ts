@@ -5,8 +5,10 @@ import {
   addRule,
   regroupRules,
   getRuleCombinator,
+  getFieldRuleShowOperators,
 } from '../utils';
 import { ERuleCombinator, EFieldsetNumberRulesetOperator, IFieldsetRuleGroupAnd } from '../../../../../types/fieldset';
+import { EExtraFieldType } from '../../../../../types/template';
 import {
   makeFieldsetRuleset,
   makeFieldsetRuleGroupOr,
@@ -133,6 +135,21 @@ describe('RuleBase utils', () => {
     it('should return Or for index 0 and And for index > 0', () => {
       expect(getRuleCombinator(0)).toBe(ERuleCombinator.Or);
       expect(getRuleCombinator(1)).toBe(ERuleCombinator.And);
+    });
+  });
+
+  describe('getFieldRuleShowOperators', () => {
+    it('returns list of operators with localized labels for specified field type', () => {
+      const messages = {
+        'templates.conditions.equal': 'Equal',
+        'templates.conditions.not-equals': 'Not equal',
+      };
+
+      const result = getFieldRuleShowOperators(EExtraFieldType.Text, messages);
+
+      expect(result.length).toBeGreaterThan(0);
+      expect(result[0]).toHaveProperty('apiName');
+      expect(result[0]).toHaveProperty('name');
     });
   });
 });

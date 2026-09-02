@@ -41,6 +41,7 @@ describe('FieldRuleModal', () => {
   const defaultProps = {
     isOpen: true,
     ruleset: validRuleset,
+    fieldType: EExtraFieldType.Number,
     fieldRuleShowFieldOptions: [mockFieldOption],
     onSave: jest.fn(),
     onClose: jest.fn(),

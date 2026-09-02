@@ -11,7 +11,7 @@ import { DatePickerCustom } from '../../../UI/form/DatePicker';
 import { toDate, toTspDate } from '../../../../utils/dateTime';
 import { getUsers } from '../../../../redux/selectors/user';
 import { getNotDeletedUsers, getUserFullName } from '../../../../utils/users';
-import { IFieldRuleValueFieldProps, SELECTION_FIELD_TYPES } from './types';
+import { IFieldRuleValueInputProps, SELECTION_FIELD_TYPES } from './types';
 import { loadDatasetForMap } from '../../../../redux/datasets/slice';
 import { getDatasetFromMap } from '../../../../redux/selectors/datasets';
 import { IApplicationState } from '../../../../types/redux';
@@ -19,15 +19,14 @@ import { IApplicationState } from '../../../../types/redux';
 import fieldsetDetailsStyles from '../FieldsetDetails.css';
 import styles from '../FieldsetRulesets/FieldsetRulesets.css';
 
-
-export const FieldsetFieldRulesValue = ({
+export const RuleValueInput = ({
   fieldType,
   value,
   selections,
   datasetId,
   isReadOnly,
   onChange,
-}: IFieldRuleValueFieldProps) => {
+}: IFieldRuleValueInputProps) => {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
   const users = useSelector(getUsers) || [];
@@ -52,6 +51,8 @@ export const FieldsetFieldRulesValue = ({
 
   const isUserField = fieldType === EExtraFieldType.User;
 
+  const isDatasetLoading = Boolean(datasetId && !datasetFromMap);
+
   const dropdownOptions = useMemo(() => {
     if (!isSelectionField && !isUserField) {
       return [];
@@ -63,10 +64,14 @@ export const FieldsetFieldRulesValue = ({
       }));
     }
     if (datasetId) {
-      return (datasetFromMap?.items || []).map((item) => ({
+      const options = (datasetFromMap?.items || []).map((item) => ({
         apiName: item.value,
         name: item.value,
       }));
+      if (options.length === 0 && value) {
+        return [{ apiName: value, name: value }];
+      }
+      return options;
     }
     return (selections || []).map((item) => {
       const optionValue = typeof item === 'string' ? item : item.value;
@@ -75,14 +80,13 @@ export const FieldsetFieldRulesValue = ({
         name: optionValue,
       };
     });
-  }, [isSelectionField, isUserField, users, datasetId, datasetFromMap?.items, selections]);
+  }, [isSelectionField, isUserField, users, datasetId, datasetFromMap?.items, selections, value]);
 
   if (fieldType === EExtraFieldType.File) {
     return null;
   }
 
   if (isSelectionField || isUserField) {
-
     const selectedOption = dropdownOptions.find((option) => option.apiName === value);
     const selectedLabel = selectedOption?.name || '';
     const placeholderText = formatMessage({ id: 'templates.conditions.value-placeholder' });
@@ -94,6 +98,7 @@ export const FieldsetFieldRulesValue = ({
           optionLabelKey="name"
           options={dropdownOptions}
           selectedOption={value}
+          isLoading={isDatasetLoading}
           onChange={(key) => {
             if (key) {
               onChange(String(key));

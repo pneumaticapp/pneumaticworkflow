@@ -21,6 +21,9 @@ export const RuleItem = ({
   fieldRuleBaseOperatorOptions,
   fieldRuleShowFieldOptions,
   ruleType,
+  fieldType,
+  selections,
+  datasetId,
   isReadOnly,
   updateRule,
   deleteRule,
@@ -71,6 +74,9 @@ export const RuleItem = ({
             groupAndRule={groupAndRule}
             groupOrApiName={groupOrApiName}
             fieldRuleBaseOperatorOptions={fieldRuleBaseOperatorOptions}
+            fieldType={fieldType}
+            selections={selections}
+            datasetId={datasetId}
             isReadOnly={isReadOnly}
             updateRule={updateRule}
           />

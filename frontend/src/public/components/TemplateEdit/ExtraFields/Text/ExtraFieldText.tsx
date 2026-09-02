@@ -9,7 +9,6 @@ import { FieldWithName } from '../utils/FieldWithName';
 import { IWorkflowExtraFieldProps } from '..';
 
 import styles from '../../KickoffRedux/KickoffRedux.css';
-import fieldStyles from '../Number/ExtraFieldNumber.css';
 
 export const ExtraFieldText = ({
   field,
@@ -43,8 +42,6 @@ export const ExtraFieldText = ({
     [editField],
   );
 
-  const rulesetsCount = field.rulesets?.length ?? 0;
-
   return (
     <FieldWithName
       ref={innerRef}
@@ -62,12 +59,6 @@ export const ExtraFieldText = ({
       isDisabled={isDisabled}
       accountId={accountId}
       icon={icon}
-    >
-      {rulesetsCount > 0 && (
-        <span className={fieldStyles['rulesets-badge']}>
-          {intl.formatMessage({ id: 'fieldsets.field-rulesets-badge' }, { count: rulesetsCount })}
-        </span>
-      )}
-    </FieldWithName>
+    />
   );
 };

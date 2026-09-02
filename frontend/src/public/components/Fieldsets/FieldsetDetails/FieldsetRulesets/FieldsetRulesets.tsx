@@ -64,6 +64,7 @@ export const FieldsetRulesets = ({
           <RuleList
             ruleSet={ruleSet}
             ruleType={EFieldRuleType.Validator}
+            fieldType={EExtraFieldType.Number}
             operatorOptions={FIELDSET_RULE_OPERATOR_OPTIONS}
             isReadOnly={isReadOnly}
             addRule={() =>

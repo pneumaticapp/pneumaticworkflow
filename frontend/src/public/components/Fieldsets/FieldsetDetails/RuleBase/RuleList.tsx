@@ -12,6 +12,9 @@ export const RuleList = ({
   operatorOptions,
   fieldRuleShowFieldOptions,
   ruleType,
+  fieldType,
+  selections,
+  datasetId,
   isReadOnly,
   addRule,
   updateRule,
@@ -48,6 +51,9 @@ export const RuleList = ({
             fieldRuleBaseOperatorOptions={fieldRuleBaseOperatorOptions}
             fieldRuleShowFieldOptions={fieldRuleShowFieldOptions}
             ruleType={ruleType}
+            fieldType={fieldType}
+            selections={selections}
+            datasetId={datasetId}
             isReadOnly={isReadOnly}
             updateRule={updateRule}
             deleteRule={deleteRule}

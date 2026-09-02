@@ -183,22 +183,6 @@ export function ExtraFieldCreatable({
     );
   };
 
-  const renderKickoffField = () => (
-    <FieldWithName
-      labelBackgroundColor={labelBackgroundColor}
-      field={field}
-      descriptionPlaceholder={descriptionPlaceholder}
-      namePlaceholder={namePlaceholder}
-      mode={mode}
-      handleChangeName={handleChangeName}
-      handleChangeDescription={handleChangeDescription}
-      validate={getFieldValidator(field, mode)}
-      isDisabled={isDisabled}
-      icon={<ArrowDropdownIcon />}
-      labelPosition={labelPosition}
-      innerRef={innerRef}
-    />
-  );
 
   const renderKickoffView = () => {
     const customOptionsList = selectionItems && (
@@ -220,34 +204,25 @@ export function ExtraFieldCreatable({
 
     const isLabelLeft = labelPosition === EFieldLabelPosition.Left;
 
-    if (isLabelLeft) {
-      return (
-        <div className={inputStyles['kickoff-create-field-container']}>
-          <FieldWithName
-            inputClassName={inputStyles['kickoff-dropdown-field']}
-            labelBackgroundColor={labelBackgroundColor}
-            field={field}
-            descriptionPlaceholder={descriptionPlaceholder}
-            namePlaceholder={namePlaceholder}
-            mode={mode}
-            handleChangeName={handleChangeName}
-            handleChangeDescription={handleChangeDescription}
-            validate={getFieldValidator(field, mode)}
-            isDisabled={isDisabled}
-            icon={<ArrowDropdownIcon />}
-            labelPosition={labelPosition}
-            innerRef={innerRef}
-          >
-            {optionsContent}
-          </FieldWithName>
-        </div>
-      );
-    }
-
     return (
       <div className={inputStyles['kickoff-create-field-container']}>
-        {renderKickoffField()}
-        {optionsContent}
+        <FieldWithName
+          {...(isLabelLeft && { inputClassName: inputStyles['kickoff-dropdown-field'] })}
+          labelBackgroundColor={labelBackgroundColor}
+          field={field}
+          descriptionPlaceholder={descriptionPlaceholder}
+          namePlaceholder={namePlaceholder}
+          mode={mode}
+          handleChangeName={handleChangeName}
+          handleChangeDescription={handleChangeDescription}
+          validate={getFieldValidator(field, mode)}
+          isDisabled={isDisabled}
+          icon={<ArrowDropdownIcon />}
+          labelPosition={labelPosition}
+          innerRef={innerRef}
+        >
+          {optionsContent}
+        </FieldWithName>
       </div>
     );
   };

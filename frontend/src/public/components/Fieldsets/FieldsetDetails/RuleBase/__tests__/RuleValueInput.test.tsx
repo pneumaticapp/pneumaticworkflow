@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { FieldsetFieldRulesValue } from '../RuleValueField';
+import { RuleValueInput } from '../RuleValueInput';
 import { EExtraFieldType, IExtraFieldSelection } from '../../../../../types/template';
 import { EUserStatus } from '../../../../../types/user';
 import { intlMock } from '../../../../../__stubs__/intlMock';
@@ -49,16 +49,18 @@ jest.mock('../../../../UI', () => ({
   FilterSelect: (props: {
     options?: { apiName: string; name: string }[];
     selectedOption?: string;
-    onChange: (val: string) => void;
+    isLoading?: boolean;
+    onChange: (value: string) => void;
   }) => (
     <select
       data-testid="filter-select"
+      data-is-loading={props.isLoading ? 'true' : 'false'}
       value={props.selectedOption || ''}
-      onChange={(e) => props.onChange(e.target.value)}
+      onChange={(event) => props.onChange(event.target.value)}
     >
-      {props.options?.map((opt) => (
-        <option key={opt.apiName} value={opt.apiName}>
-          {opt.name}
+      {props.options?.map((option) => (
+        <option key={option.apiName} value={option.apiName}>
+          {option.name}
         </option>
       ))}
     </select>
@@ -73,7 +75,7 @@ jest.mock('../../../../UI/form/DatePicker', () => ({
     <input
       data-testid="date-picker"
       value={props.selected ? props.selected.toISOString().substring(0, 10) : ''}
-      onChange={(e) => props.onChange(e.target.value ? new Date(e.target.value) : null)}
+      onChange={(event) => props.onChange(event.target.value ? new Date(event.target.value) : null)}
     />
   ),
 }));
@@ -92,15 +94,15 @@ jest.mock('react-number-format', () => ({
       value={props.value || ''}
       onFocus={props.onFocus}
       onBlur={props.onBlur}
-      onChange={(e) => props.onValueChange({ value: e.target.value })}
+      onChange={(event) => props.onValueChange({ value: event.target.value })}
     />
   ),
 }));
 
-describe('FieldsetFieldRulesValue component', () => {
+describe('RuleValueInput component', () => {
   it('returns null when fieldType is File', () => {
     const { container } = render(
-      <FieldsetFieldRulesValue
+      <RuleValueInput
         fieldType={EExtraFieldType.File}
         value=""
         onChange={jest.fn()}
@@ -114,7 +116,7 @@ describe('FieldsetFieldRulesValue component', () => {
     const handleChange = jest.fn();
 
     render(
-      <FieldsetFieldRulesValue
+      <RuleValueInput
         fieldType={EExtraFieldType.User}
         value="1"
         onChange={handleChange}
@@ -138,7 +140,7 @@ describe('FieldsetFieldRulesValue component', () => {
     ];
 
     render(
-      <FieldsetFieldRulesValue
+      <RuleValueInput
         fieldType={EExtraFieldType.Radio}
         selections={selections}
         value="Option A"
@@ -159,7 +161,7 @@ describe('FieldsetFieldRulesValue component', () => {
     const handleChange = jest.fn();
 
     render(
-      <FieldsetFieldRulesValue
+      <RuleValueInput
         fieldType={EExtraFieldType.Date}
         value="1767225600"
         onChange={handleChange}
@@ -178,7 +180,7 @@ describe('FieldsetFieldRulesValue component', () => {
     const handleChange = jest.fn();
 
     render(
-      <FieldsetFieldRulesValue
+      <RuleValueInput
         fieldType={EExtraFieldType.Number}
         value="100"
         onChange={handleChange}
@@ -198,7 +200,7 @@ describe('FieldsetFieldRulesValue component', () => {
     const handleChange = jest.fn();
 
     render(
-      <FieldsetFieldRulesValue
+      <RuleValueInput
         fieldType={EExtraFieldType.Text}
         value="Initial Text"
         onChange={handleChange}
@@ -216,7 +218,7 @@ describe('FieldsetFieldRulesValue component', () => {
 
   it('highlights error on blur and removes highlight on focus when text value is empty', () => {
     render(
-      <FieldsetFieldRulesValue
+      <RuleValueInput
         fieldType={EExtraFieldType.Text}
         value=""
         onChange={jest.fn()}
@@ -238,7 +240,7 @@ describe('FieldsetFieldRulesValue component', () => {
     const handleChange = jest.fn();
 
     render(
-      <FieldsetFieldRulesValue
+      <RuleValueInput
         fieldType={EExtraFieldType.Radio}
         datasetId={10}
         value="New York"
@@ -253,5 +255,33 @@ describe('FieldsetFieldRulesValue component', () => {
     fireEvent.change(select, { target: { value: 'London' } });
     expect(handleChange).toHaveBeenCalledTimes(1);
     expect(handleChange).toHaveBeenCalledWith('London');
+  });
+
+  it('passes isLoading=true prop when loading dataset items', () => {
+    render(
+      <RuleValueInput
+        fieldType={EExtraFieldType.Radio}
+        datasetId={999}
+        value=""
+        onChange={jest.fn()}
+      />,
+    );
+
+    const select = screen.getByTestId('filter-select');
+    expect(select).toHaveAttribute('data-is-loading', 'true');
+  });
+
+  it('retains current value in options while dataset is loading', () => {
+    render(
+      <RuleValueInput
+        fieldType={EExtraFieldType.Radio}
+        datasetId={999}
+        value="Pending City"
+        onChange={jest.fn()}
+      />,
+    );
+
+    const select = screen.getByTestId('filter-select');
+    expect(select).toHaveValue('Pending City');
   });
 });

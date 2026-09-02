@@ -21,7 +21,6 @@ export interface IKickoffDropdownProps {
   datasetOptions: IDatasetOption[];
   selectedDatasetId?: number;
   onDatasetSelect: (datasetId: number) => void;
-  fieldType?: string;
   fieldRulesets?: IFieldRuleSet[];
   onOpenFieldRules?(ruleset?: IFieldRuleSet): void;
   onDeleteFieldRuleset?(rulesetApiName: string): void;

@@ -6,6 +6,7 @@ import { RuleItem } from '../RuleItem';
 import { intlMock } from '../../../../../__stubs__/intlMock';
 import { makeFieldsetRuleGroupAnd } from '../../../../../__stubs__/fieldsets.factory';
 import { EFieldsetNumberRulesetOperator, ERuleCombinator, EFieldRuleType } from '../../../../../types/fieldset';
+import { EExtraFieldType } from '../../../../../types/template';
 
 const EMPTY_FIELD_OPTIONS: Array<{ apiName: string; name: string }> = [];
 
@@ -87,6 +88,7 @@ describe('RuleItem component', () => {
         groupAndIndex={0}
         fieldRuleBaseOperatorOptions={defaultOperatorOptions}
         ruleType={EFieldRuleType.Validator}
+        fieldType={EExtraFieldType.Number}
         isReadOnly={false}
         updateRule={mockUpdateRule}
         deleteRule={mockDeleteRule}
@@ -116,6 +118,7 @@ describe('RuleItem component', () => {
         groupAndIndex={1}
         fieldRuleBaseOperatorOptions={defaultOperatorOptions}
         ruleType={EFieldRuleType.Validator}
+        fieldType={EExtraFieldType.Number}
         isReadOnly={false}
         updateRule={mockUpdateRule}
         deleteRule={mockDeleteRule}
@@ -150,6 +153,7 @@ describe('RuleItem component', () => {
         groupAndIndex={0}
         fieldRuleBaseOperatorOptions={defaultOperatorOptions}
         ruleType={EFieldRuleType.Validator}
+        fieldType={EExtraFieldType.Number}
         isReadOnly={false}
         updateRule={mockUpdateRule}
         deleteRule={mockDeleteRule}
@@ -182,6 +186,7 @@ describe('RuleItem component', () => {
         groupAndIndex={0}
         fieldRuleBaseOperatorOptions={defaultOperatorOptions}
         ruleType={EFieldRuleType.Validator}
+        fieldType={EExtraFieldType.Number}
         isReadOnly={false}
         updateRule={mockUpdateRule}
         deleteRule={mockDeleteRule}
@@ -222,6 +227,7 @@ describe('RuleItem component', () => {
         fieldRuleBaseOperatorOptions={defaultOperatorOptions}
         fieldRuleShowFieldOptions={fieldRuleShowFieldOptions}
         ruleType={EFieldRuleType.Show}
+        fieldType={EExtraFieldType.Number}
         isReadOnly={false}
         updateRule={mockUpdateRule}
         deleteRule={mockDeleteRule}

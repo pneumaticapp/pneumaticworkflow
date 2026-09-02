@@ -7,10 +7,21 @@ import { IntlMessages } from '../../../IntlMessages';
 import { ArrowDownIcon, ArrowRightIcon, ArrowUpIcon, BurgerIcon, DropdownCrossIcon, TrashIcon } from '../../../icons';
 import { Dropdown, TDropdownOption } from '../../../UI';
 import { IKickoffDropdownProps } from './types';
-import { EExtraFieldType } from '../../../../types/template';
 
+import { IFieldRuleSet } from '../../../../types/fieldset';
 import { DeletableDropdownOption } from './DeletableDropdownOption';
 import styles from '../../KickoffRedux/KickoffRedux.css';
+
+const renderRulesetOption = (
+  ruleset: IFieldRuleSet,
+  onDeleteFieldRuleset?: (rulesetApiName: string) => void,
+) => (closeDropdown?: () => void) => (
+  <DeletableDropdownOption
+    label={ruleset.name}
+    onDelete={() => onDeleteFieldRuleset?.(ruleset.apiName)}
+    closeDropdown={closeDropdown}
+  />
+);
 
 export function ExtraFieldDropdown({
   apiName,
@@ -27,7 +38,6 @@ export function ExtraFieldDropdown({
   datasetOptions,
   selectedDatasetId,
   onDatasetSelect,
-  fieldType,
   fieldRulesets,
   onOpenFieldRules,
   onDeleteFieldRuleset,
@@ -134,7 +144,6 @@ export function ExtraFieldDropdown({
         },
         {
           label: formatMessage({ id: 'fieldsets.field-rulesets-submenu' }),
-          isHidden: fieldType !== EExtraFieldType.Number,
           Icon: ArrowRightIcon,
           className: classnames(styles['dataset-submenu'], styles['dropdown-item-rules']),
           subOptions: [
@@ -145,13 +154,7 @@ export function ExtraFieldDropdown({
             ...(fieldRulesets || []).map((ruleset, index) => ({
               mapKey: `field-ruleset-${ruleset.apiName}`,
               onClick: handleOptionClick(() => onOpenFieldRules?.(ruleset)),
-              label: (closeDropdown?: () => void) => (
-                <DeletableDropdownOption
-                  label={ruleset.name}
-                  onDelete={() => onDeleteFieldRuleset?.(ruleset.apiName)}
-                  closeDropdown={closeDropdown}
-                />
-              ),
+              label: renderRulesetOption(ruleset, onDeleteFieldRuleset),
               withUpperline: index === 0,
             })),
           ],

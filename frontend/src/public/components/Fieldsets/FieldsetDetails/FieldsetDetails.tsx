@@ -227,6 +227,14 @@ const FieldsetDetails = ({
     (fieldsetChanges.title !== undefined || Boolean(localFieldset.title)) &&
     Boolean(validateFieldsetTitle(localFieldset.title));
 
+  const activeField = useMemo(() => {
+    return localFieldset.fields?.find((field) => field.apiName === activeFieldApiName);
+  }, [activeFieldApiName, localFieldset.fields]);
+
+  const activeFieldType = activeField?.type;
+  const activeFieldSelections = activeField?.selections;
+  const activeFieldDatasetId = activeField?.dataset;
+  
   if (isLoading) {
     return <FieldsetDetailsSkeleton />;
   }
@@ -470,13 +478,18 @@ const FieldsetDetails = ({
         </div>
       )}
 
-      <FieldRuleModal
-        isOpen={Boolean(activeFieldApiName)}
-        ruleset={activeFieldRuleset}
-        fieldRuleShowFieldOptions={fieldRuleShowFieldOptions}
-        onSave={handleFieldRuleSave}
-        onClose={handleFieldRuleClose}
-      />
+      {activeFieldType && (
+        <FieldRuleModal
+          isOpen={Boolean(activeFieldApiName)}
+          ruleset={activeFieldRuleset}
+          fieldType={activeFieldType}
+          selections={activeFieldSelections}
+          datasetId={activeFieldDatasetId}
+          fieldRuleShowFieldOptions={fieldRuleShowFieldOptions}
+          onSave={handleFieldRuleSave}
+          onClose={handleFieldRuleClose}
+        />
+      )}
 
       <FieldsetModal type={EFieldsetModalType.Edit} />
     </div>

@@ -67,6 +67,9 @@ export type IFieldRuleBaseItemProps = IFieldRuleBaseHandlers & {
   fieldRuleBaseOperatorOptions: IFieldRuleBaseOperatorOption[];
   fieldRuleShowFieldOptions?: IFieldRuleShowFieldOption[];
   ruleType: EFieldRuleType;
+  fieldType: EExtraFieldType;
+  selections?: IExtraFieldSelection[] | string[];
+  datasetId?: number | null;
   isReadOnly?: boolean;
 };
 
@@ -75,6 +78,9 @@ export type IFieldRuleBaseListProps = IFieldRuleBaseHandlers & {
   operatorOptions: { value: string; labelKey: string }[];
   fieldRuleShowFieldOptions?: IFieldRuleShowFieldOption[];
   ruleType: EFieldRuleType;
+  fieldType: EExtraFieldType;
+  selections?: IExtraFieldSelection[] | string[];
+  datasetId?: number | null;
   isReadOnly?: boolean;
   addRule: () => void;
 };
@@ -98,16 +104,27 @@ export type IFieldRuleValidatorItemProps = {
   groupAndRule: IBaseRuleGroupAnd;
   groupOrApiName: string;
   fieldRuleBaseOperatorOptions: IFieldRuleBaseOperatorOption[];
+  fieldType: EExtraFieldType;
+  selections?: IExtraFieldSelection[] | string[];
+  datasetId?: number | null;
   isReadOnly?: boolean;
   updateRule: IFieldRuleBaseHandlers['updateRule'];
 };
 
-export type IFieldRuleValueFieldProps = {
+export type IFieldRuleValueInputProps = {
   fieldType?: EExtraFieldType;
   value: string;
   selections?: IExtraFieldSelection[] | string[];
   datasetId?: number | null;
   isReadOnly?: boolean;
   onChange: (value: string) => void;
+};
+
+export type IRuleOperatorSelectProps = {
+  fieldType?: EExtraFieldType;
+  operator?: string | null;
+  isReadOnly?: boolean;
+  defaultOptions?: IFieldRuleBaseOperatorOption[];
+  onChange: (newOperator: string, isOperatorWithoutValue: boolean) => void;
 };
 

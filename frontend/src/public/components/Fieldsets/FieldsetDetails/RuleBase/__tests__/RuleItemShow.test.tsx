@@ -18,31 +18,31 @@ jest.mock('../../../../UI', () => ({
   FilterSelect: (props: {
     options?: { apiName: string; name: string }[];
     selectedOption?: string;
-    onChange: (val: string) => void;
+    onChange: (value: string) => void;
   }) => (
     <select
       data-testid="filter-select"
       value={props.selectedOption || ''}
-      onChange={(e) => props.onChange(e.target.value)}
+      onChange={(event) => props.onChange(event.target.value)}
     >
-      {props.options?.map((opt) => (
-        <option key={opt.apiName} value={opt.apiName}>
-          {opt.name}
+      {props.options?.map((option) => (
+        <option key={option.apiName} value={option.apiName}>
+          {option.name}
         </option>
       ))}
     </select>
   ),
 }));
 
-jest.mock('../RuleValueField', () => ({
-  FieldsetFieldRulesValue: (props: {
+jest.mock('../RuleValueInput', () => ({
+  RuleValueInput: (props: {
     value?: string;
-    onChange: (val: string) => void;
+    onChange: (value: string) => void;
   }) => (
     <input
       data-testid="rule-value-input"
       value={props.value || ''}
-      onChange={(e) => props.onChange(e.target.value)}
+      onChange={(event) => props.onChange(event.target.value)}
     />
   ),
 }));

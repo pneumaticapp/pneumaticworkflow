@@ -1,4 +1,5 @@
 import type { IExtraField } from './template';
+import type { EFieldRuleShowOperator } from '../components/Fieldsets/FieldsetDetails/RuleBase/types';
 
 export interface IBaseRuleGroupAnd {
   apiName: string;
@@ -57,8 +58,6 @@ export enum EFieldRuleType {
   Show = 'show',
   Validator = 'validator',
 }
-
-import { EFieldRuleShowOperator } from '../components/Fieldsets/FieldsetDetails/RuleBase/types';
 
 export type TFieldRuleOperator = EFieldRuleValidatorOperator | EFieldRuleShowOperator;
 

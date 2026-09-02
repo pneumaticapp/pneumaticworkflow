@@ -212,11 +212,13 @@ describe('FieldsetDetails', () => {
   const loadingState = {
     fieldsets: { currentFieldset: null, isCurrentFieldsetLoading: true },
     authUser: { account: { id: 1 } },
+    accounts: { users: [] },
   };
 
   const nullFieldsetState = {
     fieldsets: { currentFieldset: null, isCurrentFieldsetLoading: false },
     authUser: { account: { id: 1 } },
+    accounts: { users: [] },
   };
 
   const makeLoadedState = (fieldsetOverrides = {}) => {
@@ -228,6 +230,7 @@ describe('FieldsetDetails', () => {
     return {
       fieldsets: { currentFieldset: fieldset, isCurrentFieldsetLoading: false },
       authUser: { account: { id: 1 } },
+      accounts: { users: [] },
     };
   };
 
