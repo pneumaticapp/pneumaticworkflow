@@ -3,7 +3,8 @@ import { ICreateUserRequest } from '../../../../types/user';
 export interface ICreateUserModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreateAIAgent?(values: ICreateAIAgentFormValues): void;
+  /** Tab shown on open; the Team AI Agents page opens straight on the agent form. */
+  initialTab?: ECreateUserModalTab;
 }
 
 export enum ECreateUserModalTab {
@@ -25,19 +26,25 @@ export interface ICreateUserFormValues extends Required<Pick<ICreateUserRequest,
   role: EUserRole;
 }
 
-export interface ICreateAIAgentFormValues {
-  firstName: string;
-  lastName: string;
-  position: string;
+/**
+ * Mirrors the AIAgent API contract: the provider credentials live on the provider
+ * (Integrations page), the agent only references it by id and picks a model slug.
+ */
+export interface IAIAgentFormValues {
+  name: string;
+  /** Stringified provider id — dropdown values are strings; '' means not selected. */
+  providerId: string;
+  /** Model slug from GET /ai/providers/:id/models. */
   model: string;
-  endpoint: string;
-  apiKey: string;
   systemPrompt: string;
-  avatar: string;
+  /** Hosted avatar URL; '' renders initials. */
+  photo: string;
 }
 
-export interface ICreateAIAgentFormProps {
+export interface IAIAgentFormProps {
   isActive: boolean;
   isOpen: boolean;
-  onSubmit(values: ICreateAIAgentFormValues): void;
+  initialValues?: IAIAgentFormValues;
+  submitLabel: string;
+  onSubmit(values: IAIAgentFormValues): void;
 }

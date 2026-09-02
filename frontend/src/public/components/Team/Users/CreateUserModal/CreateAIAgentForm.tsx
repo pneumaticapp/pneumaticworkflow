@@ -1,28 +1,30 @@
 import React, { useEffect, useRef } from 'react';
 import { Formik, useField, useFormikContext } from 'formik';
 import { useIntl } from 'react-intl';
+import { useDispatch, useSelector } from 'react-redux';
 
 import { Button } from '../../../UI/Buttons/Button';
 import { FormikDropdownList } from '../../../UI/DropdownList';
 import { FormikInputField } from '../../../UI/Fields/InputField';
 import { ModalBody, ModalFooter } from '../../../UI/BaseModal';
-import { isEmpty, isInvalidUrlWithProtocol, validateName } from '../../../../utils/validators';
-import { ICreateAIAgentFormProps, ICreateAIAgentFormValues } from './types';
+import { isEmpty } from '../../../../utils/validators';
+import { uploadUserAvatar } from '../../../../utils/uploadFiles';
+import { loadAIProviderModels } from '../../../../redux/ai/slice';
+import { getAIProviderModelsState, getAIProviders } from '../../../../redux/selectors/ai';
+import { IAIAgentFormProps, IAIAgentFormValues } from './types';
 
 import styles from './CreateUserModal.css';
 
-const MODEL_OPTIONS = [
-  { label: 'OpenAI', value: 'openai' },
-  { label: 'Anthropic', value: 'anthropic' },
-  { label: 'Google Gemini', value: 'gemini' },
-];
-
 const REQUIRED_ERROR = 'team.create-ai-agent-modal.validation-required';
 const validateRequired = (value: string) => (isEmpty(value) ? REQUIRED_ERROR : '');
-const validateEndpoint = (value: string) => (
-  validateRequired(value)
-  || (isInvalidUrlWithProtocol(value) ? 'validation.url-invalid' : '')
-);
+
+export const EMPTY_AI_AGENT_FORM_VALUES: IAIAgentFormValues = {
+  name: '',
+  providerId: '',
+  model: '',
+  systemPrompt: '',
+  photo: '',
+};
 
 function ResetFormOnReopen({
   isOpen,
@@ -31,7 +33,7 @@ function ResetFormOnReopen({
   isOpen: boolean;
   latestAvatarActionRef: React.MutableRefObject<number>;
 }) {
-  const { resetForm } = useFormikContext<ICreateAIAgentFormValues>();
+  const { resetForm } = useFormikContext<IAIAgentFormValues>();
   const wasOpenRef = useRef(isOpen);
 
   useEffect(() => {
@@ -41,6 +43,39 @@ function ResetFormOnReopen({
     }
     wasOpenRef.current = isOpen;
   }, [isOpen, latestAvatarActionRef, resetForm]);
+
+  return null;
+}
+
+/**
+ * Keeps the model list in sync with the picked provider: loads models when a provider is
+ * selected, clears the picked model when the provider changes (a slug belongs to one provider),
+ * and preselects the provider when the account has exactly one.
+ */
+function ProviderModelsSync({ initialProviderId }: { initialProviderId: string }) {
+  const dispatch = useDispatch();
+  const providers = useSelector(getAIProviders);
+  const { values, setFieldValue } = useFormikContext<IAIAgentFormValues>();
+  const prevProviderIdRef = useRef(initialProviderId);
+
+  useEffect(() => {
+    if (!values.providerId && providers.length === 1) {
+      setFieldValue('providerId', String(providers[0].id));
+    }
+  }, [values.providerId, providers, setFieldValue]);
+
+  useEffect(() => {
+    if (!values.providerId) {
+      return;
+    }
+
+    if (values.providerId !== prevProviderIdRef.current && values.model) {
+      setFieldValue('model', '');
+    }
+    prevProviderIdRef.current = values.providerId;
+
+    dispatch(loadAIProviderModels(Number(values.providerId)));
+  }, [values.providerId, dispatch, setFieldValue]);
 
   return null;
 }
@@ -60,55 +95,74 @@ function SystemPromptField() {
   );
 }
 
-export function CreateAIAgentForm({ isActive, isOpen, onSubmit }: ICreateAIAgentFormProps) {
+export function CreateAIAgentForm({
+  isActive,
+  isOpen,
+  initialValues = EMPTY_AI_AGENT_FORM_VALUES,
+  submitLabel,
+  onSubmit,
+}: IAIAgentFormProps) {
   const { formatMessage } = useIntl();
   const latestAvatarActionRef = useRef(0);
-  const initialValues: ICreateAIAgentFormValues = {
-    firstName: '',
-    lastName: '',
-    position: '',
-    model: '',
-    endpoint: '',
-    apiKey: '',
-    systemPrompt: '',
-    avatar: '',
-  };
+  const providers = useSelector(getAIProviders);
+  const modelsState = useSelector(getAIProviderModelsState);
+
+  const providerOptions = providers.map((provider) => ({
+    label: `${provider.name} — ${provider.baseUrl}`,
+    value: String(provider.id),
+  }));
 
   return (
     <Formik
       initialValues={initialValues}
       validateOnMount
       validate={(values) => {
+        const providerError = validateRequired(values.providerId);
         const modelError = validateRequired(values.model);
 
         return {
-          ...(validateName(values.firstName) && { firstName: validateName(values.firstName) }),
-          ...(validateName(values.lastName) && { lastName: validateName(values.lastName) }),
-          ...(validateRequired(values.position) && { position: validateRequired(values.position) }),
+          ...(validateRequired(values.name) && { name: validateRequired(values.name) }),
+          ...(providerError && { providerId: formatMessage({ id: providerError }) }),
           ...(modelError && { model: formatMessage({ id: modelError }) }),
-          ...(validateEndpoint(values.endpoint) && { endpoint: validateEndpoint(values.endpoint) }),
-          ...(validateRequired(values.apiKey) && { apiKey: validateRequired(values.apiKey) }),
+          ...(validateRequired(values.systemPrompt) && { systemPrompt: validateRequired(values.systemPrompt) }),
         };
       }}
       onSubmit={onSubmit}
     >
       {({ dirty, handleSubmit, isValid, setFieldValue, values }) => {
-        const initials = `${values.firstName.charAt(0)}${values.lastName.charAt(0)}`.toUpperCase();
-        const handleAvatarUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const initials = values.name
+          .split(' ')
+          .filter(Boolean)
+          .slice(0, 2)
+          .map((word) => word.charAt(0))
+          .join('')
+          .toUpperCase();
+
+        const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
           const file = event.target.files?.[0];
           if (!file) return;
 
           latestAvatarActionRef.current += 1;
           const actionId = latestAvatarActionRef.current;
-          const reader = new FileReader();
-          reader.onload = () => {
-            if (actionId === latestAvatarActionRef.current) {
-              setFieldValue('avatar', String(reader.result));
-            }
-          };
-          reader.readAsDataURL(file);
           event.currentTarget.value = '';
+
+          // The API stores a hosted URL, so the file goes to the file service right away.
+          const [uploaded] = await uploadUserAvatar(file);
+          if (actionId === latestAvatarActionRef.current && uploaded && !uploaded.error) {
+            setFieldValue('photo', uploaded.url);
+          }
         };
+
+        const isModelSelectDisabled = !values.providerId || modelsState.isLoading;
+        const modelOptions =
+          modelsState.providerId === Number(values.providerId)
+            ? modelsState.list.map((model) => ({ label: model.name, value: model.slug }))
+            : [];
+        const modelPlaceholder = (() => {
+          if (!values.providerId) return formatMessage({ id: 'team.create-ai-agent-modal.model-select-provider' });
+          if (modelsState.isLoading) return formatMessage({ id: 'team.create-ai-agent-modal.model-loading' });
+          return undefined;
+        })();
 
         const resetFormOnReopen = (
           <ResetFormOnReopen
@@ -122,12 +176,11 @@ export function CreateAIAgentForm({ isActive, isOpen, onSubmit }: ICreateAIAgent
         return (
           <form onSubmit={handleSubmit}>
             {resetFormOnReopen}
+            <ProviderModelsSync initialProviderId={initialValues.providerId} />
             <ModalBody className={styles['modal__body']}>
               <div className={styles['modal__agent-avatar']}>
                 <div className={styles['modal__avatar-preview']}>
-                  {values.avatar.startsWith('data:')
-                    ? <img src={values.avatar} alt="" />
-                    : values.avatar === 'generated' && initials}
+                  {values.photo ? <img src={values.photo} alt="" /> : initials}
                 </div>
                 <div className={styles['modal__avatar-actions']}>
                   <label htmlFor="ai-agent-avatar-upload">
@@ -144,7 +197,7 @@ export function CreateAIAgentForm({ isActive, isOpen, onSubmit }: ICreateAIAgent
                     type="button"
                     onClick={() => {
                       latestAvatarActionRef.current += 1;
-                      setFieldValue('avatar', 'generated');
+                      setFieldValue('photo', '');
                     }}
                   >
                     {formatMessage({ id: 'team.create-ai-agent-modal.generate' })}
@@ -154,20 +207,8 @@ export function CreateAIAgentForm({ isActive, isOpen, onSubmit }: ICreateAIAgent
 
               <div className={styles['modal__form']}>
                 <FormikInputField
-                  name="firstName"
-                  title={formatMessage({ id: 'team.create-user-modal.first-name' })}
-                  isRequired
-                  fieldSize="lg"
-                />
-                <FormikInputField
-                  name="lastName"
-                  title={formatMessage({ id: 'team.create-user-modal.last-name' })}
-                  isRequired
-                  fieldSize="lg"
-                />
-                <FormikInputField
-                  name="position"
-                  title={formatMessage({ id: 'team.create-ai-agent-modal.position' })}
+                  name="name"
+                  title={formatMessage({ id: 'team.create-ai-agent-modal.name' })}
                   isRequired
                   fieldSize="lg"
                 />
@@ -175,24 +216,22 @@ export function CreateAIAgentForm({ isActive, isOpen, onSubmit }: ICreateAIAgent
                   {formatMessage({ id: 'team.create-ai-agent-modal.parameters' })}
                 </h3>
                 <FormikDropdownList
+                  name="providerId"
+                  label={formatMessage({ id: 'team.create-ai-agent-modal.provider' })}
+                  options={providerOptions}
+                  isRequired
+                />
+                <FormikDropdownList
                   name="model"
                   label={formatMessage({ id: 'team.create-ai-agent-modal.model' })}
-                  options={MODEL_OPTIONS}
+                  options={modelOptions}
                   isRequired
-                />
-                <FormikInputField
-                  name="endpoint"
-                  title={formatMessage({ id: 'team.create-ai-agent-modal.endpoint' })}
-                  isRequired
-                  fieldSize="lg"
-                />
-                <FormikInputField
-                  name="apiKey"
-                  title={formatMessage({ id: 'team.create-ai-agent-modal.api-key' })}
-                  isRequired
-                  fieldSize="lg"
-                  type="password"
-                  showPasswordVisibilityToggle
+                  isSearchable
+                  isDisabled={isModelSelectDisabled}
+                  placeholder={modelPlaceholder}
+                  filterOption={(option: { label: string; value: string }, input: string) =>
+                    `${option.label} ${option.value}`.toLowerCase().includes(input.toLowerCase())
+                  }
                 />
                 <SystemPromptField />
               </div>
@@ -201,7 +240,7 @@ export function CreateAIAgentForm({ isActive, isOpen, onSubmit }: ICreateAIAgent
               <Button
                 className={styles['modal__submit']}
                 type="submit"
-                label={formatMessage({ id: 'team.create-ai-agent-modal.submit' })}
+                label={submitLabel}
                 buttonStyle="yellow"
                 disabled={!dirty || !isValid}
               />

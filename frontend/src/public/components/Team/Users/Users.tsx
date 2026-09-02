@@ -80,10 +80,6 @@ export function Users({
     dispatch(closeCreateUserModal());
   };
 
-  const handleCreateAIAgent = () => {
-    NotificationManager.warning({ message: 'team.create-ai-agent-modal.backend-unavailable' });
-  };
-
   const renderSearch = () => {
     return (
       <div className={styles['search']}>
@@ -185,11 +181,7 @@ export function Users({
     <div className={styles['container']}>
       <DeleteTeamUserPopupContainer />
       <AddGuestsBanner />
-      <CreateUserModal
-        isOpen={isCreateUserModalOpen}
-        onClose={handleCloseCreateUserModal}
-        onCreateAIAgent={handleCreateAIAgent}
-      />
+      <CreateUserModal isOpen={isCreateUserModalOpen} onClose={handleCloseCreateUserModal} />
       <VacationSettingsModal isOpen={!!vacationModalUser} onClose={() => setVacationModalUser(null)} user={vacationModalUser} />
 
       <PageTitle titleId={EPageTitle.Team} withUnderline={false} />

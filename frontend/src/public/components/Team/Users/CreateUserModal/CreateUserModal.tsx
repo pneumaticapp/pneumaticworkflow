@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { Formik } from 'formik';
 import { useIntl } from 'react-intl';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
 import { BaseModal, ModalHeader, ModalBody, ModalFooter } from '../../../UI/BaseModal';
 import { FormikInputField } from '../../../UI/Fields/InputField';
@@ -15,11 +15,14 @@ import { copyToClipboard } from '../../../../utils/helpers';
 import { createPassword } from '../../../../utils/createPassword';
 import { NotificationManager } from '../../../UI/Notifications';
 import { createUser } from '../../../../redux/accounts/slice';
+import { createAIAgent, loadAIProviders } from '../../../../redux/ai/slice';
+import { getAIProvidersState } from '../../../../redux/selectors/ai';
 
 import { CreateAIAgentForm } from './CreateAIAgentForm';
 import {
   ECreateUserModalTab,
   EUserRole,
+  IAIAgentFormValues,
   ICreateUserFormValues,
   ICreateUserModalProps,
   IStatusOption,
@@ -38,14 +41,19 @@ const formatStatusOption = (
   return label;
 };
 
-export function CreateUserModal({ isOpen, onClose, onCreateAIAgent }: ICreateUserModalProps) {
+export function CreateUserModal({ isOpen, onClose, initialTab = ECreateUserModalTab.User }: ICreateUserModalProps) {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
-  const [activeTab, setActiveTab] = useState(ECreateUserModalTab.User);
+  const [activeTab, setActiveTab] = useState(initialTab);
+  const { isLoaded: areProvidersLoaded, list: providers } = useSelector(getAIProvidersState);
 
   useEffect(() => {
-    if (isOpen) setActiveTab(ECreateUserModalTab.User);
-  }, [isOpen]);
+    if (isOpen) {
+      setActiveTab(initialTab);
+      // The agent form needs the providers for its dropdown and for the "register one first" hint.
+      dispatch(loadAIProviders());
+    }
+  }, [isOpen, initialTab]);
 
   const statusOptions: IStatusOption[] = [
     { label: formatMessage({ id: 'team.create-user-modal.status-admin' }), value: EUserRole.Admin },
@@ -67,6 +75,22 @@ export function CreateUserModal({ isOpen, onClose, onCreateAIAgent }: ICreateUse
     const { role, ...userData } = values;
     dispatch(createUser({ ...userData, isAdmin: role === EUserRole.Admin }));
   };
+
+  const handleCreateAIAgent = (values: IAIAgentFormValues) => {
+    dispatch(
+      createAIAgent({
+        name: values.name.trim(),
+        providerId: Number(values.providerId),
+        model: values.model,
+        systemPrompt: values.systemPrompt,
+        photo: values.photo || null,
+        isActive: true,
+      }),
+    );
+    onClose();
+  };
+
+  const hasProviders = providers.length > 0;
 
   return (
     <BaseModal
@@ -103,10 +127,19 @@ export function CreateUserModal({ isOpen, onClose, onCreateAIAgent }: ICreateUse
         </div>
       </ModalHeader>
 
+      {activeTab === ECreateUserModalTab.AIAgent && areProvidersLoaded && !hasProviders && (
+        <ModalBody className={styles['modal__body']}>
+          <p className={styles['modal__no-providers-hint']} data-testid="ai-agent-no-providers-hint">
+            {formatMessage({ id: 'team.create-ai-agent-modal.no-providers-hint' })}
+          </p>
+        </ModalBody>
+      )}
+
       <CreateAIAgentForm
-        isActive={activeTab === ECreateUserModalTab.AIAgent}
+        isActive={activeTab === ECreateUserModalTab.AIAgent && hasProviders}
         isOpen={isOpen}
-        onSubmit={(values) => onCreateAIAgent?.(values)}
+        submitLabel={formatMessage({ id: 'team.create-ai-agent-modal.submit' })}
+        onSubmit={handleCreateAIAgent}
       />
       <Formik
         initialValues={initialValues}
