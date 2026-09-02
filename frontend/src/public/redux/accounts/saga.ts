@@ -167,6 +167,8 @@ function* fetchTeam() {
     const rawUsers: TUserListItem[] = yield getUsers({
       type: 'user',
       status: [EUserStatus.Active, EUserStatus.Invited],
+      // AI agents live on their own Team tab and must not appear among people.
+      isAi: false,
     });
     const users = rawUsers.map(normalizeUserReportIds);
 
