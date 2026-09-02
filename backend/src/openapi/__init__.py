@@ -2,6 +2,7 @@
 
 # Registers OpenApiAuthenticationExtension subclasses.
 from src.openapi import auth_extensions as _auth_extensions  # noqa: F401
+from src.openapi import field_extensions as _field_extensions  # noqa: F401
 from src.openapi.entities import PermissionDoc
 from src.openapi.helpers import (
     LIMIT_OFFSET_LEGACY_NOTE,
@@ -41,6 +42,8 @@ from src.openapi.permission_docs import (
     ACCESS_ADMIN,
     ACCESS_ADMIN_BASE,
     ACCESS_ADMIN_BASIC,
+    ACCESS_AI,
+    ACCESS_AI_ADMIN,
     ACCESS_ATTACHMENT,
     ACCESS_AUTH,
     ACCESS_AUTH_BASIC,
@@ -103,6 +106,8 @@ __all__ = (
     'ACCESS_ADMIN',
     'ACCESS_ADMIN_BASE',
     'ACCESS_ADMIN_BASIC',
+    'ACCESS_AI',
+    'ACCESS_AI_ADMIN',
     'ACCESS_ATTACHMENT',
     'ACCESS_AUTH',
     'ACCESS_AUTH_BASIC',

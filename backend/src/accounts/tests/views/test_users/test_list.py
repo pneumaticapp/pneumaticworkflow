@@ -17,8 +17,10 @@ from src.processes.models.workflows.task import TaskPerformer
 from src.processes.tests.fixtures import (
     create_invited_user,
     create_test_account,
+    create_test_admin,
     create_test_group,
     create_test_guest,
+    create_test_owner,
     create_test_user,
     create_test_workflow,
 )
@@ -395,6 +397,46 @@ def test_list__type_invalid_value__ok(api_client):
     # assert
     assert response.status_code == 400
     assert response.data[0] == MSG_GE_0001(undefined_type)
+
+
+def test_list__is_ai_true__ok(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    ai_user = create_test_admin(account=account, is_ai=True)
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.get(
+        '/accounts/users',
+        data={'is_ai': True},
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 1
+    assert response.data[0]['id'] == ai_user.id
+
+
+def test_list__is_ai_false__ok(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    create_test_admin(account=account, is_ai=True)
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.get(
+        '/accounts/users',
+        data={'is_ai': False},
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 1
+    assert response.data[0]['id'] == owner.id
 
 
 def test_list__ordering_by_status__ok(api_client):

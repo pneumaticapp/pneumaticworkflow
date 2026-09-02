@@ -1,6 +1,7 @@
 from django.db.models import QuerySet
 
 from src.ai.enums import OpenAIPromptTarget
+from src.generics.querysets import AccountBaseQuerySet
 
 
 class OpenAiPromptQueryset(QuerySet):
@@ -19,3 +20,11 @@ class OpenAiPromptMessageQueryset(QuerySet):
 
     def active(self):
         return self.filter(is_active=True)
+
+
+class AIProviderQuerySet(AccountBaseQuerySet):
+    pass
+
+
+class AIAgentQuerySet(AccountBaseQuerySet):
+    pass
