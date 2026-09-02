@@ -152,7 +152,10 @@ describe('openRunWorflowByTemplateDataSaga — fieldset selections enrichment', 
       throw new Error('Expected openRunWorkflowModal PUT not found');
     }
 
-    const { loadedFieldsets } = openModalPut.payload.action.payload;
+    const { loadedFieldsets, ancestorTaskId } = openModalPut.payload.action.payload;
+
+    // Keeps the run-workflow saga on its sub-workflow branch, which skips the redirect.
+    expect(ancestorTaskId).toBe(99);
 
     expect(loadedFieldsets).toEqual(
       expect.arrayContaining([
