@@ -177,7 +177,7 @@ describe('ExtraFieldCheckbox', () => {
       expect(fieldLabelMock).toHaveBeenCalledTimes(1);
       expect(fieldLabelMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          className: expect.stringContaining('aligned-start'),
+          labelPosition: EFieldLabelPosition.Left,
         }),
         {},
       );

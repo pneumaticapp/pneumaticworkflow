@@ -19,9 +19,12 @@ export interface IWorkflowExtraFieldProps {
   moveFieldDown?(): void;
   editField(changedProps: Partial<IExtraField>): void;
   isDisabled?: boolean;
+  isFieldsetReadOnly?: boolean;
   innerRef?: Ref<HTMLInputElement>;
   accountId: number;
   datasetName?: string;
+  onUploadStateChange?(isUploading: boolean): void;
+  icon?: React.ReactNode;
 }
 
 type IExtraFieldPropsBase = Omit<IWorkflowExtraFieldProps, 'showDropdown'> & {

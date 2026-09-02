@@ -61,10 +61,9 @@ import { setGeneralLoaderVisibility } from '../general/actions';
 import { auth } from '../../api/auth';
 import { startFreeSubscription } from '../../api/startFreeSubscription';
 import { getActiveUsersCount, IGetActiveUsersCountResponse } from '../../api/getActiveUsersCount';
-import { sortUsersByStatus, sortUsersByNameAsc, sortUsersByNameDesc } from '../../utils/users';
+import { getActiveUsers, sortUsersByStatus, sortUsersByNameAsc, sortUsersByNameDesc } from '../../utils/users';
 import { getAccountPlan } from '../selectors/accounts';
 import { getAbsolutePath } from '../../utils/getAbsolutePath';
-import { getTenantsCountStore } from '../selectors/tenants';
 import { createUser as createUserApi } from '../../api/createUser';
 import { editTeamUser } from '../../api/editTeamUser';
 
@@ -120,10 +119,14 @@ export function* fetchUsers(
 
 export function* fetchActiveUsersCount() {
   try {
-    const { activeUsers }: IGetActiveUsersCountResponse = yield call(getActiveUsersCount);
-    const tenantCount: number = yield select(getTenantsCountStore);
+    const { activeUsers, tenantsActiveUsers }: IGetActiveUsersCountResponse = yield call(getActiveUsersCount);
+    const accounts: ReturnType<typeof getAccountsStore> = yield select(getAccountsStore);
+    const localUsers = accounts.team.list.length ? accounts.team.list : accounts.users;
 
-    yield put(activeUsersCountFetchFinished({ activeUsers, tenantsActiveUsers: tenantCount || 333 }));
+    yield put(activeUsersCountFetchFinished({
+      activeUsers: localUsers.length ? getActiveUsers(localUsers).length : activeUsers,
+      tenantsActiveUsers,
+    }));
   } catch (error) {
     console.info('fetch active users count error : ', error);
   }

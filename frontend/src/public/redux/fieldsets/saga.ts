@@ -22,6 +22,7 @@ import { getAllFieldsetsCatalog } from '../../api/fieldsets/getAllFieldsetsCatal
 import { createFieldset } from '../../api/fieldsets/createFieldset';
 import { updateFieldset } from '../../api/fieldsets/updateFieldset';
 import { deleteFieldset } from '../../api/fieldsets/deleteFieldset';
+import { cloneFieldset } from '../../api/fieldsets/cloneFieldset';
 
 import {
   loadFieldsets,
@@ -31,9 +32,11 @@ import {
   loadCurrentFieldsetSuccess,
   loadCurrentFieldsetFailed,
   setCurrentFieldset,
+  resetCurrentFieldset,
   createFieldsetAction,
   updateFieldsetAction,
   deleteFieldsetAction,
+  cloneFieldsetAction,
   removeFieldsetFromList,
   loadFieldsetsCatalog,
   loadFieldsetsCatalogSuccess,
@@ -73,7 +76,7 @@ export function* loadFieldsetsSaga({ payload }: ReturnType<typeof loadFieldsets>
   } catch (error) {
     if (isRequestCanceled(error)) return;
     yield put(loadFieldsetsFailed());
-    NotificationManager.warning({ message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
     logger.error('failed to load fieldsets', error);
 
     if (error?.status === 404) {
@@ -94,7 +97,7 @@ export function* loadCurrentFieldsetSaga({ payload: { id } }: PayloadAction<{ id
     if (isRequestCanceled(error)) return;
     yield put(loadCurrentFieldsetFailed());
     history.push(getFieldsetsRoute());
-    NotificationManager.warning({ message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
     logger.error('failed to load current fieldset', error);
   } finally {
     abortController.abort();
@@ -107,22 +110,24 @@ function* createFieldsetSaga({ payload }: PayloadAction<ICreateFieldsetParams>) 
     yield put(loadCurrentFieldsetSuccess(createdFieldset));
     history.push(getFieldsetDetailRoute(createdFieldset.id));
   } catch (error) {
-    NotificationManager.warning({ message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
     logger.error('failed to create fieldset', error);
   }
 }
 
 export function* updateFieldsetSaga({ payload }: PayloadAction<IUpdateFieldsetParams>) {
   const abortController = new AbortController();
+  const { onSuccess, ...updateParams } = payload;
 
   try {
-    const updatedFieldset: IFieldsetCatalogItem = yield call(updateFieldset, { ...payload, signal: abortController.signal });
+    const updatedFieldset: IFieldsetCatalogItem = yield call(updateFieldset, { ...updateParams, signal: abortController.signal });
     yield put(setCurrentFieldset(updatedFieldset));
+    NotificationManager.success({ message: 'fieldsets.save-success' });
+    onSuccess?.();
   } catch (error) {
     if (isRequestCanceled(error)) return;
-    NotificationManager.warning({ message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
     logger.error('failed to update fieldset', error);
-    yield put(loadCurrentFieldset({ id: payload.id }));
   } finally {
     abortController.abort();
   }
@@ -132,11 +137,23 @@ export function* deleteFieldsetSaga({ payload: { id, onSuccess } }: PayloadActio
   try {
     yield call(deleteFieldset, { id });
     yield put(removeFieldsetFromList(id));
+    yield put(resetCurrentFieldset());
     onSuccess?.();
   } catch (error) {
     yield put(loadFieldsetsFailed());
-    NotificationManager.warning({ message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
     logger.error('failed to delete fieldset', error);
+  }
+}
+
+export function* cloneFieldsetSaga({ payload: { id } }: PayloadAction<{ id: number }>) {
+  try {
+    const clonedFieldset: IFieldsetCatalogItem = yield call(cloneFieldset, id);
+    history.push(getFieldsetDetailRoute(clonedFieldset.id));
+    yield put(loadCurrentFieldsetSuccess(clonedFieldset));
+  } catch (error) {
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
+    logger.error('failed to clone fieldset', error);
   }
 }
 
@@ -160,6 +177,10 @@ function* watchDeleteFieldset() {
   yield takeEvery(deleteFieldsetAction.type, deleteFieldsetSaga);
 }
 
+function* watchCloneFieldset() {
+  yield takeEvery(cloneFieldsetAction.type, cloneFieldsetSaga);
+}
+
 function* loadFieldsetsCatalogSaga() {
   const abortController = new AbortController();
 
@@ -170,7 +191,7 @@ function* loadFieldsetsCatalogSaga() {
   } catch (error) {
     if (isRequestCanceled(error)) return;
     yield put(loadFieldsetsCatalogFailed());
-    NotificationManager.warning({ message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
     logger.error('failed to load fieldsets catalog', error);
   } finally {
     abortController.abort();
@@ -188,6 +209,7 @@ export function* rootSaga() {
     fork(watchCreateFieldset),
     fork(watchUpdateFieldset),
     fork(watchDeleteFieldset),
+    fork(watchCloneFieldset),
     fork(watchLoadFieldsetsCatalog),
   ]);
 }

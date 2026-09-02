@@ -1,8 +1,12 @@
 import type { IExtraField } from './template';
 
+export enum EFieldsetRuleType {
+  SumEqual = 'sum_equal',
+}
+
 export interface IFieldsetTemplateRule {
   apiName: string;
-  type: string;
+  type: EFieldsetRuleType;
   value: string | null;
   fields: string[];
 }
@@ -37,9 +41,10 @@ export interface IFieldsetCatalogItem {
   title: string;
   rules: IFieldsetTemplateRule[];
   fields: IFieldsetField[];
+  usage: { id: number; name: string }[];
 }
 
-export interface IFieldsetBinding extends Omit<IFieldsetCatalogItem, 'id'> {
+export interface IFieldsetBinding extends Omit<IFieldsetCatalogItem, 'id' | 'usage'> {
   sharedFieldsetId: number;
 }
 
@@ -63,13 +68,9 @@ export interface IFieldsetTaskAPI {
   fields: IExtraField[];
 }
 
-export interface IFieldsetBindingMeta {
-  sharedFieldsetId: number;
-  order: number;
+export type IFieldsetBindingMeta = Omit<IFieldsetBindingClient, 'apiNameBinding'> & {
   apiName?: string;
-  title?: string;
-  description?: string;
-}
+};
 
 export interface IGetFieldsetsResponse {
   count: number;
@@ -114,6 +115,7 @@ export interface IUpdateFieldsetParams {
   rules?: IFieldsetTemplateRule[];
   fields?: IFieldsetField[];
   signal?: AbortSignal;
+  onSuccess?: () => void;
 }
 
 export interface IDeleteFieldsetParams {

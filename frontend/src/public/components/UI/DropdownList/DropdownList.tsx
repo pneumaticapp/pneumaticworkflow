@@ -167,12 +167,15 @@ const DropdownIndicator = ({ isDisabled }: any) => {
 };
 
 const MenuSM = ({ children, ...props }: any) => {
+  const customClassName = props.selectProps.classNames?.menuList?.(props);
+
   return (
     <div
       className={classnames(
         'react-select__menu-list',
         props.selectProps.staticMenu ? 'is-static' : 'is-sm',
         props.selectProps.placement === 'left' && 'is-left',
+        customClassName,
       )}
     >
       <components.Menu {...props}>{children}</components.Menu>

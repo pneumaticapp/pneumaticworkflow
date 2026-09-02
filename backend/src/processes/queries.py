@@ -4,17 +4,24 @@ from datetime import datetime
 from typing import List, Optional, Tuple
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.models import ContentType
+from django.db.models import IntegerField, Q, Subquery
+from django.db.models.functions import Cast
 
+from src.accounts.enums import UserStatus, UserType
 from src.accounts.models import User, UserGroup
 from src.generics.mixins.managers import SearchSqlQueryMixin
 from src.generics.mixins.queries import (
     DereferencedOwnersMixin,
     DereferencedPerformersMixin,
 )
+from src.permissions.models import UserObjectPermission
 from src.processes.enums import (
     DirectlyStatus,
     OwnerRole,
     OwnerType,
+    PerformerType,
     TaskOrdering,
     TaskStatus,
     TemplateOrdering,
@@ -22,6 +29,7 @@ from src.processes.enums import (
     WorkflowApiStatus,
     WorkflowEventType,
     WorkflowOrdering,
+    WorkflowPermission,
     WorkflowStatus, SearchContentType,
 )
 from src.processes.messages.workflow import (
@@ -33,7 +41,45 @@ from src.queries import (
     SqlQueryObject,
 )
 
+
 UserModel = get_user_model()
+
+
+class GuardianOwnerJoinMixin:
+    """Generates Guardian-based workflow owner JOIN SQL.
+
+    Replaces the old: LEFT JOIN processes_workflow_owners
+    The permissions_userobjectpermission table has a `user_id` column
+    just like the old M2M table, so WHERE clauses like
+    `{alias}.user_id` work as before.
+
+    Uses parameterized content_type_id and permission_id
+    instead of subqueries for better performance.
+    """
+
+    @staticmethod
+    def _guardian_owner_join(
+        alias: str,
+        workflow_col: str,
+        params: dict,
+    ) -> str:
+        ct = ContentType.objects.get(
+            app_label='processes', model='workflow',
+        )
+        perm = Permission.objects.get(
+            codename=WorkflowPermission.CHANGE,
+            content_type=ct,
+        )
+        params['_guardian_ct_id'] = ct.id
+        params['_guardian_perm_id'] = perm.id
+        table = UserObjectPermission._meta.db_table
+        return f"""
+            LEFT JOIN {table} {alias} ON (
+                {alias}.object_pk = CAST({workflow_col} AS VARCHAR)
+                AND {alias}.content_type_id = %(_guardian_ct_id)s
+                AND {alias}.permission_id = %(_guardian_perm_id)s
+            )
+        """
 
 
 class TemplateOwnerRoleMixin:
@@ -67,6 +113,7 @@ class TemplateOwnerRoleMixin:
 
 
 class WorkflowListQuery(
+    GuardianOwnerJoinMixin,
     TemplateOwnerRoleMixin,
     SqlQueryObject,
     SearchSqlQueryMixin,
@@ -159,7 +206,10 @@ class WorkflowListQuery(
             prefix='current_performer',
         )
         self.params.update(params)
-        return f"ptp.user_id in {result}"
+        return (
+            f"ptp.user_id in {result} "
+            f"AND ptp.type = '{PerformerType.USER}'"
+        )
 
     def _get_current_performer_group_ids(self):
         result, params = self._to_sql_list(
@@ -167,7 +217,10 @@ class WorkflowListQuery(
             prefix='current_performer_group_ids',
         )
         self.params.update(params)
-        return f"ptp.group_id in {result}"
+        return (
+            f"ptp.group_id in {result} "
+            f"AND ptp.type = '{PerformerType.GROUP}'"
+        )
 
     def _get_workflow_starter(self):
         result, params = self._to_sql_list(
@@ -266,11 +319,9 @@ class WorkflowListQuery(
         return where
 
     def _get_from(self):
-        result = """
+        result = f"""
             FROM processes_workflow pw
-            LEFT JOIN processes_workflow_owners pwo ON (
-                pw.id = pwo.workflow_id
-            )
+            {self._guardian_owner_join('pwo', 'pw.id', self.params)}
             INNER JOIN processes_task pt ON (
                 pw.id = pt.workflow_id
                 AND pt.is_deleted IS FALSE
@@ -371,6 +422,7 @@ class WorkflowListQuery(
 
 
 class WorkflowCountsByWfStarterQuery(
+    GuardianOwnerJoinMixin,
     TemplateOwnerRoleMixin,
     SqlQueryObject,
 ):
@@ -421,7 +473,10 @@ class WorkflowCountsByWfStarterQuery(
             prefix='current_performer_id',
         )
         self.params.update(params)
-        return f"ptp.user_id in {result}"
+        return (
+            f"ptp.user_id in {result} "
+            f"AND ptp.type = '{PerformerType.USER}'"
+        )
 
     def _get_current_performer_group_ids(self):
         result, params = self._to_sql_list(
@@ -429,7 +484,10 @@ class WorkflowCountsByWfStarterQuery(
             prefix='current_performer_group_ids',
         )
         self.params.update(params)
-        return f"ptp.group_id in {result}"
+        return (
+            f"ptp.group_id in {result} "
+            f"AND ptp.type = '{PerformerType.GROUP}'"
+        )
 
     def _get_inner_where(self):
         where = f"""
@@ -483,11 +541,10 @@ class WorkflowCountsByWfStarterQuery(
         return where
 
     def _get_from(self):
-        result = """
+        result = f"""
         FROM processes_workflow pw
             LEFT JOIN processes_template t ON t.id = pw.template_id
-            LEFT JOIN processes_workflow_owners ptra
-              ON pw.id = ptra.workflow_id
+            {self._guardian_owner_join('ptra', 'pw.id', self.params)}
             LEFT JOIN accounts_user au ON au.id = ptra.user_id
         """
         if self.current_performer_ids or self.current_performer_group_ids:
@@ -533,6 +590,7 @@ class WorkflowCountsByWfStarterQuery(
 
 
 class WorkflowCountsByCPerformerQuery(
+    GuardianOwnerJoinMixin,
     TemplateOwnerRoleMixin,
     SqlQueryObject,
 ):
@@ -603,7 +661,8 @@ class WorkflowCountsByCPerformerQuery(
                     }
                 )
             )
-            AND ptp.directly_status != '{DirectlyStatus.DELETED}' """
+            AND ptp.directly_status != '{DirectlyStatus.DELETED}'
+            AND ptp.type = '{PerformerType.USER}' """
 
         if self.template_ids:
             where = f'{where} AND {self._get_template_ids()}'
@@ -633,8 +692,7 @@ class WorkflowCountsByCPerformerQuery(
     def _get_from(self):
         return f"""
         FROM processes_workflow pw
-            LEFT JOIN processes_workflow_owners ptra
-              ON pw.id = ptra.workflow_id
+            {self._guardian_owner_join('ptra', 'pw.id', self.params)}
             LEFT JOIN accounts_user au ON au.id = ptra.user_id
             INNER JOIN processes_task pt
               ON pw.id = pt.workflow_id
@@ -661,8 +719,7 @@ class WorkflowCountsByCPerformerQuery(
                 aug.user_id AS user_id,
                 pw.id AS workflow_id
             FROM processes_workflow pw
-                LEFT JOIN processes_workflow_owners ptra
-                  ON pw.id = ptra.workflow_id
+                {self._guardian_owner_join('ptra', 'pw.id', self.params)}
                 LEFT JOIN accounts_user au ON au.id = ptra.user_id
                 INNER JOIN processes_task pt
                   ON pw.id = pt.workflow_id
@@ -694,7 +751,7 @@ class WorkflowCountsByCPerformerQuery(
                 )
                 AND ptp.directly_status != '{DirectlyStatus.DELETED}'
                 AND ag.is_deleted IS FALSE
-                AND ptp.group_id IS NOT NULL
+                AND ptp.type = '{PerformerType.GROUP}'
                 {self._build_conditional_wheres()}
         ),
         -- For groups, we take into account cases when the group is explicitly
@@ -705,8 +762,7 @@ class WorkflowCountsByCPerformerQuery(
                 ptp.group_id AS group_id,
                 pw.id AS workflow_id
             FROM processes_workflow pw
-                LEFT JOIN processes_workflow_owners ptra
-                  ON pw.id = ptra.workflow_id
+                {self._guardian_owner_join('ptra', 'pw.id', self.params)}
                 LEFT JOIN accounts_user au ON au.id = ptra.user_id
                 INNER JOIN processes_task pt
                   ON pw.id = pt.workflow_id
@@ -736,7 +792,7 @@ class WorkflowCountsByCPerformerQuery(
                 )
                 AND ptp.directly_status != '{DirectlyStatus.DELETED}'
                 AND ag.is_deleted IS FALSE
-                AND ptp.group_id IS NOT NULL
+                AND ptp.type = '{PerformerType.GROUP}'
                 {self._build_conditional_wheres()}
         )
 
@@ -849,7 +905,10 @@ class WorkflowCountsByTemplateTaskQuery(
             prefix='current_performer_id',
         )
         self.params.update(params)
-        return f"ptp.user_id in {result}"
+        return (
+            f"ptp.user_id in {result} "
+            f"AND ptp.type = '{PerformerType.USER}'"
+        )
 
     def _get_current_performer_group_ids(self):
         result, params = self._to_sql_list(
@@ -857,7 +916,10 @@ class WorkflowCountsByTemplateTaskQuery(
             prefix='current_performer_group_ids',
         )
         self.params.update(params)
-        return f"ptp.group_id in {result}"
+        return (
+            f"ptp.group_id in {result} "
+            f"AND ptp.type = '{PerformerType.GROUP}'"
+        )
 
     def _get_workflow_starter_ids(self):
         result, params = self._to_sql_list(
@@ -1050,11 +1112,17 @@ class TaskListQuery(
 
     def get_is_completed_where(self):
         if self.is_completed:
-            return 'ptp.is_completed IS TRUE'
+            return """
+            (
+              ptp.is_completed IS TRUE
+              OR ptp_completed.id IS NOT NULL
+            )
+            """
         return f"""
                 pt.status = '{TaskStatus.ACTIVE}'
                 AND ptp.is_completed IS FALSE
                 AND pw.status = '{WorkflowStatus.RUNNING}'
+                AND ptp_completed.id IS NULL
             """
 
     def _get_template_task_api_name(self):
@@ -1071,6 +1139,10 @@ class TaskListQuery(
             AND pw.account_id = %(account_id)s
             AND (ptp.user_id = %(assigned_to)s OR aug.user_id IS NOT NULL)
             AND ptp.directly_status != '{DirectlyStatus.DELETED}'
+            AND ptp.type IN (
+              '{PerformerType.USER}',
+              '{PerformerType.GROUP}'
+            )
             AND {self.get_is_completed_where()}
         """
 
@@ -1089,7 +1161,8 @@ class TaskListQuery(
               pt.is_deleted IS FALSE
             )
             LEFT JOIN processes_taskperformer ptp ON (
-              pt.id = ptp.task_id
+              pt.id = ptp.task_id AND
+              ptp.is_deleted IS FALSE
             )
             LEFT JOIN accounts_usergroup_users aug ON (
               ptp.group_id = aug.usergroup_id AND
@@ -1099,6 +1172,19 @@ class TaskListQuery(
               ag.id = aug.usergroup_id AND
               ag.is_deleted IS FALSE
             )
+        """
+        result += f"""
+          LEFT JOIN processes_taskperformer ptp_completed ON (
+            ptp_completed.task_id = pt.id
+            AND ptp_completed.directly_status != '{DirectlyStatus.DELETED}'
+            AND ptp_completed.user_id = %(assigned_to)s
+            AND ptp_completed.is_completed IS TRUE
+            AND ptp_completed.type IN (
+              '{PerformerType.USER}',
+              '{PerformerType.GROUP_USER}'
+            )
+            AND ptp_completed.is_deleted IS FALSE
+          )
         """
         if self.search_tsquery:
             # Join task and workflow name search content only
@@ -1742,6 +1828,10 @@ class TemplateExportQuery(
 
 
 class RunningTaskTemplateQuery(SqlQueryObject):
+
+    """ Return template tasks that still have
+        running workflow for the user. """
+
     def __init__(self, template_id: int, user_id: int):
         self._template_id = template_id
         self._user_id = user_id
@@ -1756,15 +1846,36 @@ class RunningTaskTemplateQuery(SqlQueryObject):
           JOIN processes_task pt ON ptt.id = pt.template_id
           JOIN processes_workflow wf ON pt.workflow_id = wf.id AND
             wf.status = %(running_status)s
-          JOIN processes_taskperformer ptp on pt.id = ptp.task_id AND
-            ptp.user_id = %(user_id)s AND
-            ptp.is_completed IS FALSE AND
-            ptp.directly_status != '{DirectlyStatus.DELETED}'
+          JOIN processes_taskperformer ptp ON pt.id = ptp.task_id
+            AND ptp.directly_status != '{DirectlyStatus.DELETED}'
+            AND ptp.is_deleted IS FALSE
+            AND ptp.type IN (
+              '{PerformerType.USER}',
+              '{PerformerType.GROUP}'
+            )
+            AND ptp.is_completed IS FALSE
+          LEFT JOIN accounts_usergroup_users aug ON (
+            ptp.group_id = aug.usergroup_id
+            AND aug.user_id = %(user_id)s
+          )
+          LEFT JOIN processes_taskperformer ptp_completed ON (
+            ptp_completed.task_id = pt.id
+            AND ptp_completed.directly_status != '{DirectlyStatus.DELETED}'
+            AND ptp_completed.is_deleted IS FALSE
+            AND ptp_completed.user_id = %(user_id)s
+            AND ptp_completed.is_completed IS TRUE
+            AND ptp_completed.type IN (
+              '{PerformerType.USER}',
+              '{PerformerType.GROUP_USER}'
+            )
+          )
           WHERE ptt.is_deleted IS FALSE AND
             ptt.template_id = %(template_id)s AND
             pt.is_deleted IS FALSE AND
             pt.date_started IS NOT NULL AND
-            pt.status != 'completed'
+            pt.status != 'completed' AND
+            (ptp.user_id = %(user_id)s OR aug.user_id IS NOT NULL) AND
+            ptp_completed.id IS NULL
           ORDER BY ptt.number;
         """, {
             'user_id': self._user_id,
@@ -1804,10 +1915,11 @@ class TemplateStepsQuery(
                   ON dereferenced_owners.template_id = t.id"""
         else:
             result += f"""
-                JOIN processes_task pt
-                  ON ptt.api_name = pt.api_name
                 JOIN processes_workflow pw
+                  ON pw.template_id = t.id
+                JOIN processes_task pt
                   ON pt.workflow_id = pw.id
+                  AND pt.api_name = ptt.api_name
                 JOIN ({self.dereferenced_performers()}) dereferenced_performers
                   ON pt.id = dereferenced_performers.task_id """
         return result
@@ -1829,12 +1941,14 @@ class TemplateStepsQuery(
             AND {self._get_filter_by_type()}"""
         if self.with_tasks_in_progress is True:
             result += f"""
+                AND pw.is_deleted IS FALSE
                 AND pt.is_deleted IS FALSE
                 AND dereferenced_performers.is_completed IS FALSE
                 AND pt.status = '{TaskStatus.ACTIVE}'
                 AND pw.status = {WorkflowStatus.RUNNING}"""
         elif self.with_tasks_in_progress is False:
             result += """
+                AND pw.is_deleted IS FALSE
                 AND pt.is_deleted IS FALSE
                 AND dereferenced_performers.is_completed IS TRUE"""
         return result
@@ -1852,7 +1966,7 @@ class TemplateStepsQuery(
         """, self.params
 
 
-class HighlightsQuery(SqlQueryObject):
+class HighlightsQuery(GuardianOwnerJoinMixin, SqlQueryObject):
     event_types = (
         WorkflowEventType.COMMENT,
         WorkflowEventType.TASK_COMPLETE,
@@ -1930,7 +2044,7 @@ class HighlightsQuery(SqlQueryObject):
         self.sql_params['starter_type_user'] = OwnerType.USER
         self.sql_params['starter_type_group'] = OwnerType.GROUP
         self.sql_params['role_starter'] = OwnerRole.STARTER
-        subquery = """
+        subquery = f"""
         SELECT DISTINCT ON (we.workflow_id)
           we.id,
           we.type,
@@ -1947,8 +2061,7 @@ class HighlightsQuery(SqlQueryObject):
           we.workflow_id = workflow.id
         LEFT JOIN processes_template template ON
           workflow.template_id = template.id
-        LEFT JOIN processes_workflow_owners workflow_owners ON
-          workflow.id = workflow_owners.workflow_id
+        {self._guardian_owner_join('wfo', 'workflow.id', self.sql_params)}
         LEFT JOIN processes_templateowner ptv_user ON
           template.id = ptv_user.template_id
           AND ptv_user.is_deleted IS FALSE
@@ -1983,7 +2096,7 @@ class HighlightsQuery(SqlQueryObject):
           NOT workflow.is_deleted AND
           NOT template.is_deleted AND
           (
-            workflow_owners.user_id = %(user_id)s
+            wfo.user_id = %(user_id)s
             OR ptv_user.id IS NOT NULL
             OR grp_u.user_id IS NOT NULL
             OR (
@@ -2409,76 +2522,186 @@ class TemplateTitlesByTasksQuery(
         """, self.params
 
 
-class UpdateWorkflowOwnersQuery(
-    SqlQueryObject,
-    SearchSqlQueryMixin,
-    OrderByMixin,
-    DereferencedOwnersMixin,
-):
+class WorkflowPermissionQuery:
+    """Stateless Q-object builder for Guardian-based workflow permissions.
+
+    Provides classmethod helpers that return django.db.models.Q objects
+    for filtering Workflow querysets by the user's object-level permissions
+    stored in permissions_userobjectpermission.
+
+    Separated from WorkflowPermissionService to avoid circular imports
+    when used in Permission classes and QuerySets.
+    """
+
+    @classmethod
+    def _get_perm_subquery(cls, user_id: int, codename: str):
+        """Return a Subquery of workflow PKs that user has permission for.
+
+        Casts ``object_pk`` to integer for comparison with workflow PKs.
+        Guardian stores ``object_pk`` as varchar; casting inside the
+        subquery keeps the outer ``__in`` lookup type-safe.
+
+        ContentType is resolved by app_label/model (not
+        get_for_model(Workflow)) to avoid circular import:
+        Workflow -> querysets -> queries.
+        """
+        ct = ContentType.objects.get(
+            app_label='processes',
+            model='workflow',
+        )
+        return Subquery(
+            UserObjectPermission.objects.filter(
+                user_id=user_id,
+                permission__codename=codename,
+                content_type=ct,
+            ).annotate(
+                object_pk_int=Cast('object_pk', IntegerField()),
+            ).values('object_pk_int'),
+        )
+
+    @classmethod
+    def viewer_q(cls, user_id: int, pk_field: str = 'pk', prefix: str = ''):
+        """Return Q() filter for workflows user can view.
+
+        Args:
+            user_id: The user to check permissions for.
+            pk_field: The field name for the workflow PK lookup.
+            prefix: Optional prefix for related model traversal
+                    (e.g. 'workflow__' when filtering from Task).
+
+        Usage:
+            Workflow.objects.filter(viewer_q(user.id))
+            Task.objects.filter(viewer_q(user.id, prefix='workflow__'))
+        """
+        return Q(**{
+            f'{prefix}{pk_field}__in': cls._get_perm_subquery(
+                user_id, WorkflowPermission.VIEW,
+            ),
+        })
+
+    @classmethod
+    def change_q(cls, user_id: int, pk_field: str = 'pk', prefix: str = ''):
+        """Return Q() filter for workflows user can change."""
+        return Q(**{
+            f'{prefix}{pk_field}__in': cls._get_perm_subquery(
+                user_id, WorkflowPermission.CHANGE,
+            ),
+        })
+
+
+class GetTaskPerformersQuery(SqlQueryObject):
+
+    """ Find and return task performers filtered by completion status.
+
+    Includes:
+    1. Direct USER-type performers (non-deleted, active users only).
+    2. Members of GROUP-type performers (non-deleted, active users
+       from non-deleted groups only).
+
+    Returns user id
+    """
 
     def __init__(
         self,
-        template_id: int,
+        task_id: int,
+        is_completed: Optional[bool] = None,
+        user_type: UserType.LITERALS = None,
     ):
         self.params = {
-            'template_id': template_id,
+            'task_id': task_id,
         }
+        self.is_completed = is_completed
+        self.user_type = user_type
 
-    def get_sql(self) -> Tuple[str, dict]:
-        pass
+    def _user_type_where(self) -> str:
+        if self.user_type is None:
+            return ''
+        return f"AND au.type = '{self.user_type}'"
 
-    def insert_sql(self):
+    def _get_where(self):
+        if self.is_completed is None:
+            return ""
+        if self.is_completed:
+            return "WHERE is_completed IS TRUE"
+        return "WHERE is_completed IS FALSE"
+
+    def _get_inner_sql(self):
         return f"""
-            WITH
-              all_owners AS ({self.dereferenced_owners_by_template_id()})
-            INSERT INTO processes_workflow_owners (workflow_id, user_id)
-            SELECT
-                pw.id AS workflow_id,
-                ao.user_id AS user_id
-            FROM processes_workflow pw
-            JOIN all_owners ao
-              ON pw.template_id = ao.template_id
-            WHERE pw.is_deleted = false;
-        """, self.params
+        SELECT DISTINCT
+              ptp.user_id AS id,
+              au.email,
+              au.is_new_tasks_subscriber,
+              au.is_complete_tasks_subscriber,
+              au.type,
+              (
+                ptp.is_completed = TRUE
+                OR ptp_group_user.id IS NOT NULL
+              ) AS is_completed
+            FROM processes_taskperformer ptp
+            JOIN accounts_user au ON au.id = ptp.user_id
+            LEFT JOIN processes_taskperformer ptp_group_user
+              ON ptp_group_user.task_id = ptp.task_id
+              AND ptp_group_user.type = '{PerformerType.GROUP_USER}'
+              AND ptp_group_user.user_id = ptp.user_id
+              AND ptp_group_user.is_completed = TRUE
+              AND ptp_group_user.is_deleted IS FALSE
+              AND ptp_group_user.directly_status != '{DirectlyStatus.DELETED}'
+            WHERE ptp.task_id = %(task_id)s
+              AND ptp.type = '{PerformerType.USER}'
+              AND ptp.is_deleted IS FALSE
+              AND ptp.directly_status != '{DirectlyStatus.DELETED}'
+              AND au.is_deleted IS FALSE
+              AND au.status = '{UserStatus.ACTIVE}'
+              {self._user_type_where()}
 
+            UNION
 
-class UpdateWorkflowMemberQuery(
-    SqlQueryObject,
-    SearchSqlQueryMixin,
-    OrderByMixin,
-    DereferencedOwnersMixin,
-):
+            SELECT DISTINCT
+              au.id,
+              au.email,
+              au.is_new_tasks_subscriber,
+              au.is_complete_tasks_subscriber,
+              au.type,
+              ptp_user.id IS NOT NULL AS is_completed
+            FROM processes_taskperformer ptp_group
+            JOIN accounts_usergroup aug
+              ON aug.id = ptp_group.group_id
+            JOIN accounts_usergroup_users ugu
+              ON ugu.usergroup_id = ptp_group.group_id
+            JOIN accounts_user au
+              ON au.id = ugu.user_id
+            LEFT JOIN processes_taskperformer ptp_user
+              ON ptp_user.task_id = ptp_group.task_id
+              AND ptp_user.type IN (
+                '{PerformerType.USER}',
+                '{PerformerType.GROUP_USER}'
+              )
+              AND ptp_user.user_id = au.id
+              AND ptp_user.is_completed = TRUE
+              AND ptp_user.is_deleted IS FALSE
+              AND ptp_user.directly_status != '{DirectlyStatus.DELETED}'
+            WHERE ptp_group.task_id = %(task_id)s
+              AND ptp_group.type = '{PerformerType.GROUP}'
+              AND ptp_group.is_deleted IS FALSE
+              AND ptp_group.directly_status != '{DirectlyStatus.DELETED}'
+              AND aug.is_deleted IS FALSE
+              AND au.is_deleted IS FALSE
+              AND au.status = '{UserStatus.ACTIVE}'
+              {self._user_type_where()}
+        """
 
-    def __init__(
-        self,
-        template_id: int,
-    ):
-
-        self.params = {
-            'template_id': template_id,
-        }
-
-    def get_sql(self) -> Tuple[str, dict]:
-        pass
-
-    def insert_sql(self):
+    def get_sql(self):
         return f"""
-            WITH all_users AS (
-              SELECT pw.id AS workflow_id, ao.user_id AS user_id
-              FROM processes_workflow pw
-              JOIN ({self.dereferenced_owners_by_template_id()}) ao
-                ON pw.template_id = ao.template_id
-              WHERE pw.is_deleted = false
-              UNION
-              {self.task_performers_by_template_id()}
-            )
-            INSERT INTO processes_workflow_members (workflow_id, user_id)
-            SELECT
-              au.workflow_id,
-              au.user_id
-            FROM all_users au
-            LEFT JOIN processes_workflow_members pwm
-              ON pwm.workflow_id = au.workflow_id
-              AND pwm.user_id = au.user_id
-            WHERE pwm.workflow_id IS NULL;
+        SELECT
+            id,
+            email,
+            is_new_tasks_subscriber,
+            is_complete_tasks_subscriber,
+            type,
+            is_completed
+        FROM (
+            {self._get_inner_sql()}
+        ) as users_performers
+        {self._get_where()}
+        ORDER BY id
         """, self.params

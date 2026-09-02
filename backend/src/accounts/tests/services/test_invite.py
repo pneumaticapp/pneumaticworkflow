@@ -31,6 +31,9 @@ from src.accounts.tokens import (
 from src.processes.services.system_workflows import (
     SystemWorkflowService,
 )
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 from src.processes.tests.fixtures import (
     create_invited_user,
     create_test_account,
@@ -374,11 +377,6 @@ def test_user_create_actions__premium__ok(mocker, plan):
     # arrange
     account = create_test_account(plan=plan)
     request_user = create_test_user(account=account)
-    key = '!@#W32423'
-    create_key_mock = mocker.patch(
-        'src.accounts.services.user_invite.PneumaticToken.create',
-        return_value=key,
-    )
     current_url = 'http://current.test'
     is_superuser = False
     workflow = create_test_workflow(request_user, tasks_count=1)
@@ -402,16 +400,10 @@ def test_user_create_actions__premium__ok(mocker, plan):
 
     # assert
     workflow.refresh_from_db()
-    assert invited_user not in workflow.members.all()
+    assert not WorkflowPermissionService(workflow).has_view(user=invited_user)
     template = workflow.template
     assert invited_user not in template.owners.all()
-    assert APIKey.objects.get(
-        user=invited_user,
-        name='User Invited',
-        account_id=account.id,
-        key=key,
-    )
-    create_key_mock.assert_called_once_with(invited_user, for_api_key=True)
+    assert not APIKey.objects.filter(user=invited_user).exists()
     send_user_created_mock.assert_called_once_with(
         logging=invited_user.account.log_api_requests,
         account_id=invited_user.account_id,
@@ -441,11 +433,6 @@ def test_user_create_actions__freemium__ok(mocker):
     is_superuser = False
     workflow = create_test_workflow(request_user, tasks_count=1)
     invited_user = create_invited_user(user=request_user)
-    key = '!@#W32423'
-    create_key_mock = mocker.patch(
-        'src.accounts.services.user_invite.PneumaticToken.create',
-        return_value=key,
-    )
     send_user_created_mock = mocker.patch(
         'src.notifications.tasks.send_user_created_notification.delay',
     )
@@ -461,16 +448,10 @@ def test_user_create_actions__freemium__ok(mocker):
 
     # assert
     workflow.refresh_from_db()
-    assert invited_user not in workflow.members.all()
+    assert not WorkflowPermissionService(workflow).has_view(user=invited_user)
     template = workflow.template
     assert invited_user not in template.owners.all()
-    assert APIKey.objects.get(
-        user=invited_user,
-        name='',
-        account_id=account.id,
-        key=key,
-    )
-    create_key_mock.assert_called_once_with(invited_user, for_api_key=True)
+    assert not APIKey.objects.filter(user=invited_user).exists()
     send_user_created_mock.assert_called_once_with(
         logging=invited_user.account.log_api_requests,
         account_id=invited_user.account_id,

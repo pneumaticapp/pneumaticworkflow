@@ -2,7 +2,7 @@
 import pytest
 
 from django.contrib.contenttypes.models import ContentType
-from guardian.models import UserObjectPermission
+from src.permissions.models import UserObjectPermission
 
 from src.permissions.models import GroupObjectPermission
 from src.processes.enums import FieldType

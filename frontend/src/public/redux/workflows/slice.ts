@@ -13,7 +13,7 @@ import { IDeleteComment } from '../../api/workflows/deleteComment';
 import { IEditComment } from '../../api/workflows/editComment';
 
 import { IStoreWorkflows, IWorkflowLog, IWorkflowsList } from '../../types/redux';
-import { IKickoffClient, ITemplateTitleBaseWithCount, TTemplatePreset } from '../../types/template';
+import { IRuntimeKickoffClient, ITemplateTitleBaseWithCount, TTemplatePreset } from '../../types/template';
 import { ITemplateStep } from '../../types/tasks';
 import {
   EWorkflowsLoadingStatus,
@@ -64,7 +64,7 @@ export const initialWorkflowsFilters: IWorkflowsSettings['values'] = {
 const initialWorkflowEdit = {
   workflow: {
     name: '',
-    kickoff: { description: '', fields: [], fieldsets: [] } as IKickoffClient,
+    kickoff: { description: '', fields: [], fieldsets: [] } as IRuntimeKickoffClient,
   },
   isWorkflowNameEditing: false,
   isKickoffEditing: false,
@@ -289,6 +289,9 @@ const workflowsSlice = createSlice({
     clearWorkflow: (state) => {
       state.workflow = null;
       state.workflowEdit = initialWorkflowEdit;
+      state.workflowLog.isOpen = false;
+      state.workflowLog.isOnlyAttachmentsShown = false;
+      state.workflowLog.workflowId = null;
     },
     setCurrentPerformersCounters: (state, action: PayloadAction<TUserCounter[]>) => {
       state.workflowsSettings.counters.performersCounters = action.payload;

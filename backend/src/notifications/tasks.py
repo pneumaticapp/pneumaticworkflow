@@ -49,6 +49,9 @@ from src.processes.models.workflows.task import (
     TaskPerformer,
 )
 from src.processes.models.workflows.workflow import Workflow
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 from src.processes.serializers.workflows.events import (
     WorkflowEventSerializer,
 )
@@ -60,6 +63,7 @@ UserModel = get_user_model()
 
 
 __all__ = [
+    'send_account_plan_changed_notification',
     'send_comment_notification',
     'send_completed_workflow_notification',
     'send_dataset_created_notification',
@@ -1135,13 +1139,19 @@ def _send_event_created(
 
     """ Send ws when workflow event created """
 
+    try:
+        workflow = Workflow.objects.get(id=data['workflow_id'])
+    except Workflow.DoesNotExist:
+        return
     users = (
-        Workflow.members.through.objects.filter(
-            workflow_id=data['workflow_id'],
-            user__status=UserStatus.ACTIVE,
+        UserModel.objects
+        .on_account(account_id)
+        .filter(
+            id__in=WorkflowPermissionService(workflow).get_users_with_view(),
+            status=UserStatus.ACTIVE,
         )
-        .order_by('user_id')
-        .values_list('user_id', 'user__email')
+        .order_by('id')
+        .values_list('id', 'email')
     )
     for (user_id, user_email) in users:
         _send_notification(
@@ -1190,13 +1200,19 @@ def _send_event_updated(
 
     """ Send ws when workflow event updated """
 
+    try:
+        workflow = Workflow.objects.get(id=data['workflow_id'])
+    except Workflow.DoesNotExist:
+        return
     users = (
-        Workflow.members.through.objects.filter(
-            workflow_id=data['workflow_id'],
-            user__status=UserStatus.ACTIVE,
+        UserModel.objects
+        .on_account(account_id)
+        .filter(
+            id__in=WorkflowPermissionService(workflow).get_users_with_view(),
+            status=UserStatus.ACTIVE,
         )
-        .order_by('user_id')
-        .values_list('user_id', 'user__email')
+        .order_by('id')
+        .values_list('id', 'email')
     )
     for (user_id, user_email) in users:
         _send_notification(
@@ -1598,9 +1614,9 @@ def _send_dataset_deleted_notification(
     for (user_id, user_email) in users:
         _send_notification(
             method_name=NotificationMethod.dataset_deleted,
-            account_id=account_id,
             user_id=user_id,
             user_email=user_email,
+            account_id=account_id,
             logging=logging,
             dataset_data=dataset_data,
             sync=True,
@@ -1610,6 +1626,34 @@ def _send_dataset_deleted_notification(
 @shared_task(base=NotificationTask)
 def send_dataset_deleted_notification(**kwargs):
     _send_dataset_deleted_notification(**kwargs)
+
+
+def _send_account_plan_changed_notification(
+    logging: bool,
+    account_id: int,
+    plan_data: dict,
+    **kwargs,
+):
+    users = UserModel.objects.filter(
+        account_id=account_id,
+        status=UserStatus.ACTIVE,
+    ).values_list('id', 'email')
+
+    for (user_id, user_email) in users:
+        _send_notification(
+            method_name=NotificationMethod.account_plan_changed,
+            user_id=user_id,
+            user_email=user_email,
+            account_id=account_id,
+            logging=logging,
+            plan_data=plan_data,
+            sync=True,
+        )
+
+
+@shared_task(base=NotificationTask)
+def send_account_plan_changed_notification(**kwargs):
+    _send_account_plan_changed_notification(**kwargs)
 
 
 def _send_vacation_delegation_notification(

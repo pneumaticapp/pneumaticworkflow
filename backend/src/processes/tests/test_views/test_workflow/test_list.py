@@ -57,6 +57,10 @@ from src.processes.tests.fixtures import (
     create_test_workflow,
 )
 from src.services.markdown import MarkdownService
+from src.permissions.enums import PermissionSource
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 from src.utils.validation import ErrorCode
 
 pytestmark = pytest.mark.django_db
@@ -1951,7 +1955,11 @@ def test_list__filter_multiple_current_performer__ok(api_client):
 
     workflow1 = create_test_workflow(user=user1)
     workflow2 = create_test_workflow(user=user2)
-    workflow2.owners.add(user1)
+    WorkflowPermissionService(workflow2).grant_change(
+        user=user1,
+        source_type=PermissionSource.TEMPLATE_OWNER,
+        source_id=0,
+    )
     api_client.token_authenticate(user1)
 
     # act
@@ -2065,9 +2073,17 @@ def test_list__filter_multiple_workflow_starter__ok(api_client):
     user2 = create_test_user(account=account, email='test3@pneumatic.app')
     create_test_workflow(user=user)
     workflow1 = create_test_workflow(user=user1)
-    workflow1.owners.add(user)
+    WorkflowPermissionService(workflow1).grant_change(
+        user=user,
+        source_type=PermissionSource.TEMPLATE_OWNER,
+        source_id=0,
+    )
     workflow2 = create_test_workflow(user=user2)
-    workflow2.owners.add(user)
+    WorkflowPermissionService(workflow2).grant_change(
+        user=user,
+        source_type=PermissionSource.TEMPLATE_OWNER,
+        source_id=0,
+    )
     api_client.token_authenticate(user)
 
     # act
@@ -2493,7 +2509,7 @@ def test_list__filter_fields_and_template__ok(api_client):
 
     # act
     response = api_client.get(
-        f'/workflows?fields={field_api_name};template_id={template_1.id}',
+        f'/workflows?fields={field_api_name}&template_id={template_1.id}',
     )
 
     # assert
@@ -2534,7 +2550,7 @@ def test_list__filter_fields_and_another_template_id__empty_list(api_client):
 
     # act
     response = api_client.get(
-        f'/workflows?fields={field_api_name};'
+        f'/workflows?fields={field_api_name}&'
         f'template_id={another_template.id}',
     )
 
@@ -2913,7 +2929,7 @@ def test_list__filter_fields_and_template_fieldset__ok(api_client):
 
     # act
     response = api_client.get(
-        f'/workflows?fields={field.api_name};template_id={template_1.id}',
+        f'/workflows?fields={field.api_name}&template_id={template_1.id}',
     )
 
     # assert
@@ -2955,7 +2971,7 @@ def test_list__filter_fields_and_another_template_id_fieldset__empty_list(
 
     # act
     response = api_client.get(
-        f'/workflows?fields={field.api_name};'
+        f'/workflows?fields={field.api_name}&'
         f'template_id={another_template.id}',
     )
 
@@ -3091,7 +3107,11 @@ def test_list__legacy_template_on_freemium__ok(api_client):
     another_user = create_invited_user(user)
     workflow_1 = create_test_workflow(user)
     workflow_2 = create_test_workflow(another_user)
-    workflow_2.owners.add(user)
+    WorkflowPermissionService(workflow_2).grant_change(
+        user=user,
+        source_type=PermissionSource.TEMPLATE_OWNER,
+        source_id=0,
+    )
     api_client.token_authenticate(user)
     api_client.delete(f'/templates/{workflow_1.template.id}')
 
@@ -3558,3 +3578,128 @@ def test_workflow_list__group_template_starter__includes_only_own_workflows(
     workflow_ids = [item['id'] for item in data['results']]
     assert workflow_own.id in workflow_ids
     assert workflow_other.id not in workflow_ids
+
+
+def test_list__filter_current_performer__group_user_only__empty(
+    api_client,
+):
+
+    """
+    Ghost GROUP_USER without USER/GROUP membership for user
+    → current_performer filter does not return the workflow
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user_1 = create_test_not_admin(account=account)
+    user_2 = create_test_admin(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    TaskPerformer.objects.filter(task_id=task.id).delete()
+    group_1 = create_test_group(account=account, users=[user_2])
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP,
+        group_id=group_1.id,
+    )
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        user_id=user_1.id,
+        type=PerformerType.GROUP_USER,
+        is_completed=True,
+        date_completed=timezone.now(),
+    )
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.get(
+        f'/workflows?current_performer={user_1.id}',
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data['results']) == 0
+
+
+def test_list__filter_current_performer__user_with_group_user__ok(
+    api_client,
+):
+
+    """
+    USER assignment + GROUP_USER for same user
+    → current_performer filter returns the workflow
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user_1 = create_test_not_admin(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    TaskPerformer.objects.filter(task_id=task.id).delete()
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        user_id=user_1.id,
+        type=PerformerType.USER,
+    )
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        user_id=user_1.id,
+        type=PerformerType.GROUP_USER,
+        is_completed=True,
+        date_completed=timezone.now(),
+    )
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.get(
+        f'/workflows?current_performer={user_1.id}',
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data['results']) == 1
+    assert response.data['results'][0]['id'] == workflow.id
+
+
+def test_list__filter_current_performer_group_ids__with_group_user__ok(
+    api_client,
+):
+
+    """
+    GROUP assignment + GROUP_USER marker
+    → current_performer_group_ids still returns the workflow
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user_1 = create_test_not_admin(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    TaskPerformer.objects.filter(task_id=task.id).delete()
+    group_1 = create_test_group(account=account, users=[user_1])
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP,
+        group_id=group_1.id,
+    )
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        user_id=user_1.id,
+        type=PerformerType.GROUP_USER,
+        is_completed=True,
+        date_completed=timezone.now(),
+    )
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.get(
+        f'/workflows?current_performer_group_ids={group_1.id}',
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data['results']) == 1
+    assert response.data['results'][0]['id'] == workflow.id

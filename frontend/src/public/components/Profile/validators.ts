@@ -1,6 +1,4 @@
-/* eslint-disable */
-/* prettier-ignore */
-import { hasWhitespaces, IRule, isEmpty, validateFieldCreator } from '../../utils/validators';
+import { hasWhitespaces, IRule, isEmpty, validateFieldCreator, validatePhone } from '../../utils/validators';
 
 export const OLD_PASSWORD_RULES: IRule[] = [
   {
@@ -16,7 +14,7 @@ export const NEW_PASSWORD_RULES: IRule[] = [
   },
   {
     message: 'validation.change-password-field-too-short',
-    isInvalid: value => value.length !== 0 && value.length < 6,
+    isInvalid: (value) => value.length !== 0 && value.length < 6,
   },
   {
     message: 'validation.change-password-field-contain-spaces',
@@ -26,3 +24,5 @@ export const NEW_PASSWORD_RULES: IRule[] = [
 
 export const validateOldPassword = validateFieldCreator(OLD_PASSWORD_RULES);
 export const validateNewPassword = validateFieldCreator(NEW_PASSWORD_RULES);
+export const validateProfilePhone = (value: string) =>
+  (isEmpty(value) ? 'validation.phone-number-empty' : validatePhone(value));

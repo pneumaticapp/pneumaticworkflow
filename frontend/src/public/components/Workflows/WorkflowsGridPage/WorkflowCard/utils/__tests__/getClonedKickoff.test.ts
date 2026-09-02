@@ -1,6 +1,7 @@
 import { IWorkflowDetailsKickoff } from '../../../../../../types/workflow';
-import { EExtraFieldType, IKickoffClient } from '../../../../../../types/template';
-import { makeFieldsetRuntime } from '../../../../../../__stubs__/fieldsets.factory';
+import { EExtraFieldType, ITemplateKickoffClient } from '../../../../../../types/template';
+import { IFieldsetRuntime } from '../../../../../../types/fieldset';
+import { makeFieldsetRuntime, makeFieldsetBindingClient, makeFieldsetField } from '../../../../../../__stubs__/fieldsets.factory';
 import { makeExtraField } from '../../../../../../__stubs__/fields.factory';
 import { getClonedKickoff } from '../getClonedKickoff';
 
@@ -118,7 +119,7 @@ const mockWorkflowDetailKickoff: IWorkflowDetailsKickoff = {
   ],
 };
 
-const templateKickoffMock: IKickoffClient = {
+const templateKickoffMock: ITemplateKickoffClient = {
   description:
     ' youtube: \nhttps://www.youtube.com/watch?v=JZRm7NKTPhk\n loom:\nhttps://www.loom.com/share/29f210bc12484eaa81ca462381fb4415?t=0\n 404 loom:\n\nhttps://www.loom.com/share/9853f0790ad2408094a3717bfcf4a0c0\nYoutube 404 :\n\nhttps://www.youtube.com/watch?v=D6hIeqZt22g',
   fields: [
@@ -332,7 +333,7 @@ describe('getClonedKickoff', () => {
         ],
       };
 
-      const emptyTemplateKickoff: IKickoffClient = {
+      const emptyTemplateKickoff: ITemplateKickoffClient = {
         description: '',
         fields: [],
         fieldsets: [],
@@ -370,7 +371,7 @@ describe('getClonedKickoff', () => {
         ],
       };
 
-      const templateKickoff: IKickoffClient = {
+      const templateKickoff: ITemplateKickoffClient = {
         description: '',
         fields: [
           {
@@ -410,7 +411,7 @@ describe('getClonedKickoff', () => {
         ],
       };
 
-      const templateKickoff: IKickoffClient = {
+      const templateKickoff: ITemplateKickoffClient = {
         description: '',
         fields: [
           {
@@ -431,6 +432,135 @@ describe('getClonedKickoff', () => {
       expect(result.fields).toHaveLength(1);
       expect(result.fields[0].value).toEqual(['a', 'c']);
       expect(result.fields[0].selections).toEqual(['a', 'c', 'd']);
+    });
+
+    it('preserves fieldsets and maps their fields when present in template', () => {
+      const workflowWithFieldsets: IWorkflowDetailsKickoff = {
+        id: 5,
+        description: '',
+        output: [],
+        fieldsets: [
+          makeFieldsetRuntime({
+            apiNameBinding: 'fs-1',
+            name: 'Fieldset 1',
+            fields: [
+              makeExtraField({
+                apiName: 'fs-field-1',
+                name: 'FS Checkbox',
+                type: EExtraFieldType.Checkbox,
+                value: 'Opt1, Opt2',
+              }),
+            ],
+          }),
+        ],
+      };
+
+      const templateKickoff: ITemplateKickoffClient = {
+        description: '',
+        fields: [],
+        fieldsets: [
+          makeFieldsetBindingClient({
+            apiNameBinding: 'fs-1',
+            name: 'Fieldset 1',
+            fields: [
+              makeFieldsetField({
+                apiName: 'fs-field-1',
+                name: 'FS Checkbox',
+                type: EExtraFieldType.Checkbox,
+                selections: [
+                  { apiName: 'Opt1', value: 'Opt1' },
+                  { apiName: 'Opt2', value: 'Opt2' },
+                  { apiName: 'Opt3', value: 'Opt3' },
+                ],
+              }),
+            ],
+          }),
+        ],
+      };
+
+      const result = getClonedKickoff(workflowWithFieldsets, templateKickoff);
+
+      expect(result.fieldsets).toHaveLength(1);
+      const clonedFieldset = result.fieldsets[0] as unknown as IFieldsetRuntime;
+      expect(clonedFieldset.fields[0].value).toEqual(['Opt1', 'Opt2']);
+    });
+
+    it('handles fieldsets with missing or mismatched apiNameBinding gracefully', () => {
+      const workflowWithFieldsets: IWorkflowDetailsKickoff = {
+        id: 6,
+        description: '',
+        output: [],
+        fieldsets: [
+          makeFieldsetRuntime({
+            apiNameBinding: undefined as unknown as string,
+            name: 'Corrupted Fieldset',
+            fields: [makeExtraField({ apiName: 'f-1', value: 'val' })],
+          }),
+        ],
+      };
+
+      const templateKickoff: ITemplateKickoffClient = {
+        description: '',
+        fields: [],
+        fieldsets: [
+          makeFieldsetBindingClient({
+            apiNameBinding: 'fs-valid',
+            name: 'Valid Fieldset',
+            fields: [],
+          }),
+        ],
+      };
+
+      const result = getClonedKickoff(workflowWithFieldsets, templateKickoff);
+
+      expect(result.fieldsets).toEqual([]);
+    });
+
+    it('correctly maps raw backend fieldsets containing apiName and id', () => {
+      const workflowWithRawBackendFieldset: IWorkflowDetailsKickoff = {
+        id: 7,
+        description: '',
+        output: [],
+        fieldsets: [
+          {
+            id: 100,
+            apiName: 'raw-backend-fs',
+            name: 'Raw Backend Fieldset',
+            fields: [
+              makeExtraField({
+                apiName: 'raw-field-1',
+                name: 'Field 1',
+                type: EExtraFieldType.String,
+                value: 'backend value',
+              }),
+            ],
+          } as unknown as IFieldsetRuntime,
+        ],
+      };
+
+      const templateKickoff: ITemplateKickoffClient = {
+        description: '',
+        fields: [],
+        fieldsets: [
+          makeFieldsetBindingClient({
+            apiNameBinding: 'raw-backend-fs',
+            name: 'Template Fieldset',
+            fields: [
+              makeFieldsetField({
+                apiName: 'raw-field-1',
+                name: 'Field 1',
+                type: EExtraFieldType.String,
+              }),
+            ],
+          }),
+        ],
+      };
+
+      const result = getClonedKickoff(workflowWithRawBackendFieldset, templateKickoff);
+
+      expect(result.fieldsets).toHaveLength(1);
+      const clonedFieldset = result.fieldsets[0] as unknown as IFieldsetRuntime;
+      expect(clonedFieldset.fields[0].value).toBe('backend value');
     });
   });
 });

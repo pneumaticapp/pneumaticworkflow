@@ -15,10 +15,10 @@ import {
   UnionIcon,
 } from '../../icons';
 import { WarningPopup } from '../../UI/WarningPopup';
-import { ETemplateParts, ITemplateListItem } from '../../../types/template';
+import { ETemplateParts } from '../../../types/template';
 import { history } from '../../../utils/history';
 import { sanitizeText } from '../../../utils/strings';
-import { TCloneTemplatePayload, TDeleteTemplatePayload } from '../../../redux/actions';
+import { ITemplateCardProps } from './types';
 import { Dropdown, TDropdownOption } from '../../UI';
 import { getTemplateEditRoute } from '../../../utils/routes';
 import { getLinkToHighlightsByTemplate } from '../../../utils/routes/getLinkToHighlightsByTemplate';
@@ -27,22 +27,10 @@ import { getLinkToTemplate } from '../../../utils/routes/getLinkToTemplate';
 
 import styles from '../Templates.css';
 
-export interface ITemplateCardProps extends ITemplateListItem {
-  canEdit: boolean | undefined;
-  onRunWorkflow(): void;
-  cloneTemplate(payload: TCloneTemplatePayload): void;
-  deleteTemplate(payload: TDeleteTemplatePayload): void;
-}
-
-export interface ITemplateCardState {
-  isModalVisible: boolean;
-}
-
 export function TemplateCard({
   canEdit,
   id,
   isActive,
-  isPublic,
   name,
   tasksCount,
   deleteTemplate,
@@ -165,7 +153,6 @@ export function TemplateCard({
         <TemplateCardFooter
           templateId={id}
           isActive={isActive}
-          isPublic={isPublic}
           tasksCount={tasksCount}
           onRunWorkflow={onRunWorkflow}
         />

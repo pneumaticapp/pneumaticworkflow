@@ -12,9 +12,10 @@ export interface IExtraFieldIconProps {
   tooltipText: string;
   tooltipTitle: string;
   onClick(): void;
+  disabled?: boolean;
 }
 
-export function ExtraFieldIcon({ Icon, tooltipText, tooltipTitle, onClick }: IExtraFieldIconProps) {
+export function ExtraFieldIcon({ Icon, tooltipText, tooltipTitle, onClick, disabled }: IExtraFieldIconProps) {
   const buttonRef = React.useRef(null);
 
   return (
@@ -23,6 +24,7 @@ export function ExtraFieldIcon({ Icon, tooltipText, tooltipTitle, onClick }: IEx
         className={styles['component-icon-container']}
         ref={buttonRef}
         onClick={onClick}
+        disabled={disabled}
       >
         <Icon className={styles['component-icon']} />
       </button>

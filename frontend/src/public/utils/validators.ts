@@ -297,6 +297,18 @@ export const FIELDSET_NAME_RULES: IRule[] = [
   },
 ];
 export const validateFieldsetName = validateFieldCreator(FIELDSET_NAME_RULES);
+
+export const FIELDSET_TITLE_RULES: IRule[] = [
+  {
+    message: 'validation.fieldset-title-empty',
+    isInvalid: isEmpty,
+  },
+  {
+    message: 'validation.fieldset-title-to-long',
+    isInvalid: (value) => value.length > 200,
+  },
+];
+export const validateFieldsetTitle = validateFieldCreator(FIELDSET_TITLE_RULES);
 export const validateDatasetRow = (value: string, existingItems: string[], excludeValue?: string) => {
   const filtered = excludeValue
     ? existingItems.filter((item) => item.trim().toLowerCase() !== excludeValue.trim().toLowerCase())

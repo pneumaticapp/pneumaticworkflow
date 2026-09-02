@@ -2,6 +2,7 @@
 import { EExtraFieldType, IExtraField, TExtraFieldValue } from '../../../../types/template';
 import { getEndOfDayTsp } from '../../../../utils/dateTime';
 import { parseMarkdownToFiles } from '../../../../utils/parseMarkdownFiles';
+import { normalizeCheckboxValue } from '../../../../utils/fields';
 
 type TFieldDispatchRecord = {
   [key in EExtraFieldType]: (field: IExtraField) => IExtraField | null;
@@ -108,7 +109,8 @@ export class ExtraFieldsHelper {
       return { ...field, value: this.getFieldValue(field.value, '', field.apiName) };
     },
     [EExtraFieldType.Checkbox]: (field: IExtraField) => {
-      return { ...field, value: this.getFieldValue(field.value, [], field.apiName) };
+      const rawValue = this.getFieldValue(field.value, [], field.apiName);
+      return { ...field, value: normalizeCheckboxValue(rawValue) };
     },
     [EExtraFieldType.Radio]: (field: IExtraField) => {
       if (!field.selections || field.selections.length === 0) {

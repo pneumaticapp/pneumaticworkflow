@@ -5,7 +5,7 @@ import type { IStoreTask, IStoreWorkflows } from '../../../types/redux';
 import { ERealtimeEnvelopeType } from '../types';
 
 import { handleAddTask, handleRemoveTask } from '../../tasks/saga';
-import { upsertUserFromWs, removeUserFromWs } from '../../accounts/slice';
+import { activeUsersCountFetchFinished, upsertUserFromWs, removeUserFromWs } from '../../accounts/slice';
 import { mapWsUserToListItem } from './mapUserFromWs';
 import { mapTaskCreatedDataToListItem } from './mapTaskCreatedToListItem';
 import { upsertGroupFromWs, removeGroupFromWs, updateTaskWorkflowLogItem } from '../../actions';
@@ -20,6 +20,11 @@ import { isWorkflowEndedEventType } from './isWorkflowEndedEventType';
 import { mapBackendNewEventToRedux } from '../../../utils/mappers';
 import { getWorkflowsStore } from '../../selectors/workflows';
 import { getTaskStore } from '../../selectors/task';
+import { getTasksSettings } from '../../selectors/tasks';
+import {
+  shouldDecrementCounterOnDeleted,
+  shouldRemoveTaskOnDeleted,
+} from './shouldRemoveTaskOnDeleted';
 
 export function* routeRealtimeEvent(envelope: IRealtimeWsEnvelope) {
   switch (envelope.type) {
@@ -28,9 +33,28 @@ export function* routeRealtimeEvent(envelope: IRealtimeWsEnvelope) {
       yield call(handleAddTask, task);
       break;
     }
-    case ERealtimeEnvelopeType.TASK_COMPLETED:
+    case ERealtimeEnvelopeType.TASK_COMPLETED: {
+      yield call(handleRemoveTask, envelope.data.id, true);
+      break;
+    }
     case ERealtimeEnvelopeType.TASK_DELETED: {
-      yield call(handleRemoveTask, envelope.data.id);
+      const settings: ReturnType<typeof getTasksSettings> = yield select(getTasksSettings);
+      const { status } = envelope.data;
+
+      if (
+        !shouldRemoveTaskOnDeleted({
+          status,
+          completionStatus: settings.completionStatus,
+        })
+      ) {
+        break;
+      }
+
+      yield call(
+        handleRemoveTask,
+        envelope.data.id,
+        shouldDecrementCounterOnDeleted(status),
+      );
       break;
     }
     case ERealtimeEnvelopeType.USER_CREATED:
@@ -49,6 +73,10 @@ export function* routeRealtimeEvent(envelope: IRealtimeWsEnvelope) {
     }
     case ERealtimeEnvelopeType.GROUP_DELETED: {
       yield put(removeGroupFromWs(envelope.data.id));
+      break;
+    }
+    case ERealtimeEnvelopeType.ACCOUNT_PLAN_CHANGED: {
+      yield put(activeUsersCountFetchFinished(envelope.data));
       break;
     }
     case ERealtimeEnvelopeType.EVENT_CREATED:

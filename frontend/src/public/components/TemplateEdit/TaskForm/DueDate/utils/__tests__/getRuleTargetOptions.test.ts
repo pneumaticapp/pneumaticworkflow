@@ -1,4 +1,4 @@
-import { EExtraFieldType, IKickoffClient, ITemplateTaskClient } from '../../../../../../types/template';
+import { EExtraFieldType, ITemplateKickoffClient, ITemplateTaskClient } from '../../../../../../types/template';
 import { makeFieldsetField, makeFieldsetBindingClient } from '../../../../../../__stubs__/fieldsets.factory';
 import { createEmptyTaskDueDate } from '../../../../../../utils/dueDate/createEmptyTaskDueDate';
 import { getRuleTargetOptions } from '../getRuleTargetOptions';
@@ -28,7 +28,7 @@ const makeTask = (overrides: Partial<ITemplateTaskClient> = {}): ITemplateTaskCl
   ...overrides,
 });
 
-const makeKickoff = (overrides: Partial<IKickoffClient> = {}): IKickoffClient => ({
+const makeKickoff = (overrides: Partial<ITemplateKickoffClient> = {}): ITemplateKickoffClient => ({
   description: '',
   fields: [],
   fieldsets: [],

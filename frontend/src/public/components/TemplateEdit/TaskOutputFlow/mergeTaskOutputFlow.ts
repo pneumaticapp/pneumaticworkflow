@@ -117,10 +117,7 @@ export function buildRowsWithAddedFieldset(
   fields: IExtraField[],
   fieldsets: IFieldsetBindingClient[],
   newFieldsetBinding: IFieldsetBindingClient,
-): TMergedTaskOutputRow[] | null {
-  if (fieldsets.some((fieldset) => fieldset.sharedFieldsetId === newFieldsetBinding.sharedFieldsetId)) {
-    return null;
-  }
+): TMergedTaskOutputRow[] {
   const nextFieldsets = [...fieldsets, newFieldsetBinding];
   return buildMergedTaskOutputRows(fields, nextFieldsets);
 }
@@ -128,9 +125,9 @@ export function buildRowsWithAddedFieldset(
 export function buildRowsWithRemovedFieldset(
   fields: IExtraField[],
   fieldsets: IFieldsetBindingClient[],
-  sharedFieldsetId: number,
+  apiNameBinding: string,
 ): TMergedTaskOutputRow[] {
-  const nextFieldsets = fieldsets.filter((fieldset) => fieldset.sharedFieldsetId !== sharedFieldsetId);
+  const nextFieldsets = fieldsets.filter((fieldset) => fieldset.apiNameBinding !== apiNameBinding);
   return buildMergedTaskOutputRows(fields, nextFieldsets);
 }
 
