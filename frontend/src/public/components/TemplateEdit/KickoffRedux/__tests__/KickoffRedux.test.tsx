@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 
 import { intlMock } from '../../../../__stubs__/intlMock';
 import { makeExtraField } from '../../../../__stubs__/fields.factory';
-import { makeFieldsetBindingClient, makeFieldsetField } from '../../../../__stubs__/fieldsets.factory';
+import { makeFieldsetBindingClient, makeFieldsetField, makeFieldRuleSet } from '../../../../__stubs__/fieldsets.factory';
 import {
   IExtraField,
   ITemplateKickoffClient,
@@ -96,8 +96,24 @@ jest.mock('../../TaskOutputFlow/FieldsetIconPicker', () => ({
 }));
 
 jest.mock('../../TaskOutputFlow/MergedOutputRows', () => ({
-  MergedOutputRows: () =>
-    React.createElement('div', { 'data-testid': 'merged-rows' }),
+  MergedOutputRows: (props: {
+    onOpenFieldRules?: (fieldApiName: string) => void;
+  }) =>
+    React.createElement(
+      'div',
+      { 'data-testid': 'merged-rows' },
+      props.onOpenFieldRules
+        && React.createElement(
+          'button',
+          { 'data-testid': 'open-field-rules-btn', onClick: () => props.onOpenFieldRules!('field-1') },
+          'Open field rules',
+        ),
+    ),
+}));
+
+jest.mock('../../../Fieldsets/FieldsetDetails/FieldRuleModal', () => ({
+  FieldRuleModal: () =>
+    React.createElement('div', { 'data-testid': 'field-rule-modal' }),
 }));
 
 jest.mock('../../FieldsetOutputsPreview/FieldsetOutputsPreview', () => ({
@@ -333,6 +349,36 @@ describe('KickoffRedux', () => {
           description: '',
         }),
       );
+    });
+  });
+
+  describe('field rule modal integration', () => {
+    it('passes onOpenFieldRules to MergedOutputRows and renders FieldRuleModal on click', () => {
+      renderKickoff({
+        kickoff: makeKickoff({
+          fields: [makeField({ apiName: 'field-1', rulesets: [makeFieldRuleSet()] })],
+        }),
+      });
+
+      userEvent.click(screen.getByTestId('kickoff-toggle'));
+
+      expect(screen.getByTestId('open-field-rules-btn')).toBeInTheDocument();
+
+      userEvent.click(screen.getByTestId('open-field-rules-btn'));
+
+      expect(screen.getByTestId('field-rule-modal')).toBeInTheDocument();
+    });
+
+    it('does not render FieldRuleModal when no field is active', () => {
+      renderKickoff({
+        kickoff: makeKickoff({
+          fields: [makeField({ apiName: 'field-1' })],
+        }),
+      });
+
+      userEvent.click(screen.getByTestId('kickoff-toggle'));
+
+      expect(screen.queryByTestId('field-rule-modal')).not.toBeInTheDocument();
     });
   });
 });

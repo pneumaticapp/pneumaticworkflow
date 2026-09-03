@@ -14,7 +14,6 @@ import { ArrowDropdownIcon, DateIcon, LinkIcon } from '../../../icons';
 import { useCheckDevice } from '../../../../hooks/useCheckDevice';
 
 import { getSortedFields, createField, editField, deleteFieldWithCleanup, moveField } from './utils';
-import { deleteFieldRuleset } from '../utils';
 import { removeDeletedFieldFromRulesets } from '../FieldsetRulesets/utils';
 import { IFieldsetFieldsListProps } from './types';
 import { SINGLE_LINE_FIELD_TYPES } from '../constants';
@@ -37,6 +36,7 @@ export function FieldsetFieldsList({
   rulesets,
   onRulesetsChange,
   onOpenFieldRule: openFieldRule,
+  onDeleteFieldRuleset: deleteFieldRuleset,
 }: IFieldsetFieldsListProps) {
   const { formatMessage } = useIntl();
   const { isDesktop } = useCheckDevice();
@@ -103,7 +103,7 @@ export function FieldsetFieldsList({
                   fieldRulesets: field.rulesets,
                   onOpenFieldRules: (ruleset) => openFieldRule(field.apiName, ruleset),
                   onDeleteFieldRuleset: (rulesetApiName: string) =>
-                    onFieldsChange(deleteFieldRuleset(sortedFields, field.apiName, rulesetApiName)),
+                    deleteFieldRuleset?.(field.apiName, rulesetApiName),
                 })}
               />
             );

@@ -11,4 +11,5 @@ export interface IFieldsetFieldsListProps {
   rulesets: IFieldsetRuleSet[];
   onRulesetsChange: (rulesets: IFieldsetRuleSet[]) => void;
   onOpenFieldRule?: (fieldApiName: string, ruleset?: IFieldRuleSet) => void;
+  onDeleteFieldRuleset?: (fieldApiName: string, rulesetApiName: string) => void;
 }

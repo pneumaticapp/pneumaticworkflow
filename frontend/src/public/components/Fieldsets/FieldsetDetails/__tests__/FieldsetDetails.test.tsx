@@ -125,8 +125,26 @@ jest.mock('../FieldsetDetailsSkeleton', () => ({
 }));
 
 jest.mock('../../../TemplateEdit/ExtraFields', () => ({
-  ExtraFieldIntl: jest.fn((props: { field: { apiName: string } }) =>
-    React.createElement('div', { 'data-testid': `extra-field-${props.field.apiName}` }),
+  ExtraFieldIntl: jest.fn(
+    (props: {
+      field: { apiName: string };
+      onOpenFieldRules?: () => void;
+      isDisabled?: boolean;
+      isFieldsetReadOnly?: boolean;
+    }) =>
+    React.createElement(
+      'div',
+      { 'data-testid': `extra-field-${props.field.apiName}` },
+      props.onOpenFieldRules && !props.isDisabled && !props.isFieldsetReadOnly
+        && React.createElement(
+          'button',
+          {
+            'data-testid': `open-field-rules-${props.field.apiName}`,
+            onClick: () => props.onOpenFieldRules!(),
+          },
+          'Open rules',
+        ),
+    ),
   ),
 }));
 
@@ -176,6 +194,13 @@ jest.mock('../fieldsetFieldMappers', () => ({
   normalizeFieldsForUI: jest.fn((f: unknown[]) => f),
 }));
 
+jest.mock('../FieldRuleModal', () => ({
+  FieldRuleModal: jest.fn((props: { isOpen: boolean }) =>
+    props.isOpen
+      ? React.createElement('div', { 'data-testid': 'field-rule-modal' })
+      : null,
+  ),
+}));
 describe('FieldsetDetails', () => {
   const mockDispatch = jest.fn();
   const formatMsg = (id: string) => intlMock.formatMessage({ id });
@@ -832,6 +857,33 @@ describe('FieldsetDetails', () => {
 
       expect(getEmptyField).not.toHaveBeenCalled();
       expect(screen.queryByRole('button', { name: SAVE_LABEL })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Field rule modal integration', () => {
+    it('renders open-field-rules button in ExtraFieldIntl when fieldset is editable', () => {
+      const fields = [makeField({ apiName: 'f1', order: 1 })];
+      renderWithState(makeLoadedState({ fields }));
+
+      expect(screen.getByTestId('open-field-rules-f1')).toBeInTheDocument();
+    });
+
+    it('opens FieldRuleModal when open-field-rules button is clicked', () => {
+      const fields = [makeField({ apiName: 'f1', order: 1, type: EExtraFieldType.String })];
+      renderWithState(makeLoadedState({ fields }));
+
+      expect(screen.queryByTestId('field-rule-modal')).not.toBeInTheDocument();
+
+      userEvent.click(screen.getByTestId('open-field-rules-f1'));
+
+      expect(screen.getByTestId('field-rule-modal')).toBeInTheDocument();
+    });
+
+    it('does not render open-field-rules button when fieldset is linked (readonly)', () => {
+      const fields = [makeField({ apiName: 'f1', order: 1 })];
+      renderWithState(makeLoadedState({ fields, usage: [{ id: 1, name: 'Template 1' }] }));
+
+      expect(screen.queryByTestId('open-field-rules-f1')).not.toBeInTheDocument();
     });
   });
 });

@@ -36,7 +36,6 @@ import { IExtraField } from '../../../types/template';
 import { FilledInfoIcon } from '../../icons';
 import {
   IFieldsetRuleSet,
-  IFieldRuleSet,
   EFieldLabelPosition,
   IUpdateFieldsetParams,
 } from '../../../types/fieldset';
@@ -50,11 +49,9 @@ import { TFieldsetDetailsProps, TLocalFieldsetState, TFieldsetChanges } from './
 import { FieldsetRulesets } from './FieldsetRulesets/FieldsetRulesets';
 import { FieldsetFieldsList } from './FieldsetFieldsList/FieldsetFieldsList';
 import { FieldRuleModal } from './FieldRuleModal';
-import { saveFieldRuleset } from './utils';
+import { useFieldRuleModal } from './useFieldRuleModal';
 
 import styles from './FieldsetDetails.css';
-
-
 
 const EMPTY_LOCAL_FIELDSET: TLocalFieldsetState = {
   title: '',
@@ -78,8 +75,6 @@ const FieldsetDetails = ({
 
   const [localFieldset, setLocalFieldset] = useState<TLocalFieldsetState>(EMPTY_LOCAL_FIELDSET);
   const [fieldsetChanges, setFieldsetChanges] = useState<TFieldsetChanges>({});
-  const [activeFieldApiName, setActiveFieldApiName] = useState<string | null>(null);
-  const [activeFieldRuleset, setActiveFieldRuleset] = useState<IFieldRuleSet | null>(null);
   const datasetOptions = useDatasetOptions(localFieldset.fields);
   const labelPositionRef = useRef<HTMLDivElement>(null);
 
@@ -143,35 +138,12 @@ const FieldsetDetails = ({
     setFieldsetChanges((prev) => ({ ...prev, fields: newFields }));
   };
 
+  const { openFieldRule, handleDeleteFieldRuleset, fieldRuleModalProps } = useFieldRuleModal(localFieldset.fields, handleFieldsChange);
+
   const handleRulesetsChange = (rulesets: IFieldsetRuleSet[]) => {
     setLocalFieldset((prev) => ({ ...prev, rulesets }));
     setFieldsetChanges((prev) => ({ ...prev, rulesets }));
   };
-
-  const handleFieldRuleSave = (ruleset: IFieldRuleSet) => {
-    if (!activeFieldApiName) return;
-    handleFieldsChange(saveFieldRuleset(localFieldset.fields, activeFieldApiName, ruleset));
-    setActiveFieldApiName(null);
-  };
-
-  const handleFieldRuleClose = () => {
-    setActiveFieldApiName(null);
-  };
-
-  const fieldRuleShowFieldOptions = useMemo(() => {
-    if (!activeFieldApiName || !localFieldset.fields) {
-      return [];
-    }
-    return localFieldset.fields
-      .filter((field) => field.apiName !== activeFieldApiName)
-      .map((field) => ({
-        apiName: field.apiName,
-        name: field.name,
-        type: field.type,
-        selections: field.selections,
-        datasetId: field.dataset,
-      }));
-  }, [activeFieldApiName, localFieldset.fields]);
 
   const handleSave = (onSuccess?: () => void): void => {
     if (!fieldset || !isChanged) return;
@@ -227,13 +199,7 @@ const FieldsetDetails = ({
     (fieldsetChanges.title !== undefined || Boolean(localFieldset.title)) &&
     Boolean(validateFieldsetTitle(localFieldset.title));
 
-  const activeField = useMemo(() => {
-    return localFieldset.fields?.find((field) => field.apiName === activeFieldApiName);
-  }, [activeFieldApiName, localFieldset.fields]);
 
-  const activeFieldType = activeField?.type;
-  const activeFieldSelections = activeField?.selections;
-  const activeFieldDatasetId = activeField?.dataset;
   
   if (isLoading) {
     return <FieldsetDetailsSkeleton />;
@@ -450,10 +416,8 @@ const FieldsetDetails = ({
         datasetOptions={datasetOptions}
         rulesets={localFieldset.rulesets}
         onRulesetsChange={handleRulesetsChange}
-        onOpenFieldRule={(fieldApiName, ruleset) => {
-          setActiveFieldApiName(fieldApiName);
-          setActiveFieldRuleset(ruleset || null);
-        }}
+        onOpenFieldRule={openFieldRule}
+        onDeleteFieldRuleset={handleDeleteFieldRuleset}
       />
 
       <FieldsetRulesets
@@ -478,16 +442,10 @@ const FieldsetDetails = ({
         </div>
       )}
 
-      {activeFieldType && (
+      {fieldRuleModalProps.fieldType && (
         <FieldRuleModal
-          isOpen={Boolean(activeFieldApiName)}
-          ruleset={activeFieldRuleset}
-          fieldType={activeFieldType}
-          selections={activeFieldSelections}
-          datasetId={activeFieldDatasetId}
-          fieldRuleShowFieldOptions={fieldRuleShowFieldOptions}
-          onSave={handleFieldRuleSave}
-          onClose={handleFieldRuleClose}
+          {...fieldRuleModalProps}
+          fieldType={fieldRuleModalProps.fieldType}
         />
       )}
 
