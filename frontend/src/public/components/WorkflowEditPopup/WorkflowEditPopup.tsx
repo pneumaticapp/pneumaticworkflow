@@ -222,6 +222,10 @@ function WorkflowEditPopupComponent({
   };
 
   const visibleKickoffFields = kickoffState?.fields.filter((field) => !field.isHidden);
+  const visibleFieldsets = fieldsetStates.map((fieldset) => ({
+    ...fieldset,
+    fields: fieldset.fields.filter((field) => !field.isHidden),
+  }));
 
   return (
     <div className={styles['popup']}>
@@ -252,7 +256,7 @@ function WorkflowEditPopupComponent({
               toolipText={formatMessage({ id: 'kickoff.workflow-name-tooltip' })}
               foregroundColor="beige"
             />
-            {kickoffState && (isArrayWithItems(visibleKickoffFields) || isArrayWithItems(fieldsetStates)) && (
+            {kickoffState && (isArrayWithItems(visibleKickoffFields) || isArrayWithItems(visibleFieldsets)) && (
               <div className={styles['popup__kickoff']}>
                 <SectionTitle className={styles['section-title']}>
                   {formatMessage({ id: 'template.kick-off-form-title' })}
@@ -266,7 +270,7 @@ function WorkflowEditPopupComponent({
                 <div className={styles['kickoff__inputs']}>
                   <MergedOutputList
                     fields={visibleKickoffFields || []}
-                    fieldsets={fieldsetStates}
+                    fieldsets={visibleFieldsets}
                     onEditField={handleEditField}
                     onEditFieldsetField={handleEditFieldsetField}
                     labelBackgroundColor={EInputNameBackgroundColor.OrchidWhite}
