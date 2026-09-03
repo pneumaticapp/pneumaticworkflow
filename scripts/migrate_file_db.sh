@@ -47,6 +47,7 @@ print_info()    { echo -e "${GREEN}$1${NC}"; }
 
 TEMP_CONTAINER_CREATED=false
 FILE_SERVICE_STOPPED=false
+LEGACY_STOPPED=false
 
 fail() {
   print_error "$1"
@@ -58,7 +59,34 @@ fail() {
     # files from it would be worse than serving none.
     print_warning "Container \"$FILE_SERVICE_CONTAINER\" is still stopped. Fix the problem and run this script again, or start it with: docker start $FILE_SERVICE_CONTAINER"
   fi
+  if [ "$LEGACY_STOPPED" = true ]; then
+    print_warning "Legacy container \"$LEGACY_CONTAINER\" is stopped but still holds the original data."
+  fi
   exit 1
+}
+
+# Cancelling is only offered while nothing has been overwritten yet, so put the
+# stack back the way it was found rather than leaving the file service down.
+cancel() {
+  print_warning "Operation cancelled."
+  if [ "$TEMP_CONTAINER_CREATED" = true ]; then
+    docker rm -f "$TEMP_CONTAINER" > /dev/null 2>&1
+  fi
+  if [ "$LEGACY_STOPPED" = true ]; then
+    if docker start "$LEGACY_CONTAINER" > /dev/null 2>&1; then
+      print_info "Legacy container \"$LEGACY_CONTAINER\" started again"
+    else
+      print_warning "Could not start \"$LEGACY_CONTAINER\" again. Start it with: docker start $LEGACY_CONTAINER"
+    fi
+  fi
+  if [ "$FILE_SERVICE_STOPPED" = true ]; then
+    if docker start "$FILE_SERVICE_CONTAINER" > /dev/null 2>&1; then
+      print_info "Container \"$FILE_SERVICE_CONTAINER\" started again"
+    else
+      print_warning "Could not start \"$FILE_SERVICE_CONTAINER\" again. Start it with: docker start $FILE_SERVICE_CONTAINER"
+    fi
+  fi
+  exit 0
 }
 
 # Row count of every table in the file service database, one "table=count" line
@@ -90,7 +118,7 @@ confirm() {
     read -r -p "$1 (y/n): " answer || fail "No input received, aborting."
     case "$answer" in
       y) return 0 ;;
-      n) print_warning "Operation cancelled."; exit 0 ;;
+      n) cancel ;;
       *) ;;
     esac
   done
@@ -224,12 +252,21 @@ if [ "$LEGACY_SOURCE" != "none" ]; then
 fi
 
 # =============================================================================
-# Section 5: Dump the legacy database
+# Section 5: Stop the file service and dump the legacy database
 # =============================================================================
+
+# 5.1 Stop the file service before the legacy database is read. Stopping it
+# afterwards would leave a window in which an upload lands in the old database
+# and never reaches the new one.
+if docker container inspect "$FILE_SERVICE_CONTAINER" > /dev/null 2>&1; then
+  output=$(docker stop "$FILE_SERVICE_CONTAINER" 2>&1) || fail "Could not stop \"$FILE_SERVICE_CONTAINER\": $output"
+  FILE_SERVICE_STOPPED=true
+  print_info "Container \"$FILE_SERVICE_CONTAINER\" stopped"
+fi
 
 if [ "$LEGACY_SOURCE" != "none" ]; then
 
-  # 5.1 Make the legacy database reachable
+  # 5.2 Make the legacy database reachable
   if [ "$LEGACY_SOURCE" = "container" ]; then
     SOURCE_CONTAINER="$LEGACY_CONTAINER"
     if [ "$(docker container inspect -f '{{.State.Running}}' "$LEGACY_CONTAINER")" != "true" ]; then
@@ -252,7 +289,7 @@ if [ "$LEGACY_SOURCE" != "none" ]; then
     print_info "Temporary container \"$TEMP_CONTAINER\" started on \"file-postgres/data\""
   fi
 
-  # 5.2 Wait for the legacy database to become available
+  # 5.3 Wait for the legacy database to become available
   print_info "Waiting for the legacy database to become available..."
   MAX_RETRIES=30
   RETRY_COUNT=0
@@ -274,7 +311,7 @@ if [ "$LEGACY_SOURCE" != "none" ]; then
   SOURCE_COUNTS=$(table_counts "$SOURCE_CONTAINER") || fail "Could not read the tables of the legacy database \"$FILE_POSTGRES_DB\". Nothing has been changed."
   print_info "Legacy database contains: $(format_counts "$SOURCE_COUNTS")"
 
-  # 5.3 Save a plain SQL dump into postgres/backups
+  # 5.4 Save a plain SQL dump into postgres/backups
   mkdir -p "$BACKUPS_DIR"
   DUMP_FILENAME="pneumatic-file-postgres-$(date +%Y-%m-%d_%H-%M-%S).sql"
   print_info "Dumping legacy database to \"postgres/backups/$DUMP_FILENAME\"..."
@@ -284,6 +321,15 @@ if [ "$LEGACY_SOURCE" != "none" ]; then
     fail "Failed to dump the legacy database"
   fi
   print_info "Dump saved"
+
+  # 5.5 The legacy database has been read, so stop its container. It publishes
+  # the same host port as the shared database container does in the frontend
+  # configuration, and the next step could not bind that port otherwise.
+  if [ "$LEGACY_SOURCE" = "container" ]; then
+    output=$(docker stop "$LEGACY_CONTAINER" 2>&1) || fail "Could not stop \"$LEGACY_CONTAINER\": $output"
+    LEGACY_STOPPED=true
+    print_info "Legacy container \"$LEGACY_CONTAINER\" stopped"
+  fi
   echo ""
 
 fi
@@ -292,14 +338,7 @@ fi
 # Section 6: Create the file service database in pneumatic-postgres
 # =============================================================================
 
-# 6.1 Stop the file service so nothing writes to the database during the swap
-if docker container inspect "$FILE_SERVICE_CONTAINER" > /dev/null 2>&1; then
-  docker stop "$FILE_SERVICE_CONTAINER" > /dev/null 2>&1
-  FILE_SERVICE_STOPPED=true
-  print_info "Container \"$FILE_SERVICE_CONTAINER\" stopped"
-fi
-
-# 6.2 Start the shared database container
+# 6.1 Start the shared database container
 output=$(compose up -d postgres 2>&1) || fail "$output"
 
 print_info "Waiting for container \"$TARGET_CONTAINER\" to become available..."
@@ -320,7 +359,7 @@ while true; do
   sleep 1
 done
 
-# 6.3 Run the same provisioning script the container runs on a fresh data directory
+# 6.2 Run the same provisioning script the container runs on a fresh data directory
 # MSYS_NO_PATHCONV keeps Git Bash on Windows from rewriting the container path.
 output=$(MSYS_NO_PATHCONV=1 docker exec "$TARGET_CONTAINER" sh "$INIT_SCRIPT" 2>&1) || fail "$output"
 print_info "Role \"$FILE_POSTGRES_USER\" and database \"$FILE_POSTGRES_DB\" are present in \"$TARGET_CONTAINER\""
@@ -334,7 +373,10 @@ if [ "$LEGACY_SOURCE" != "none" ]; then
 
   # 7.1 Guard against overwriting records created after the upgrade
   # alembic_version only records the schema version, it is not data worth keeping.
-  TARGET_ROWS=$(table_counts "$TARGET_CONTAINER" | grep -v '^alembic_version=' | awk -F= '{sum += $2} END {print sum + 0}')
+  # Read separately from the sum: inside a pipeline the exit status would be
+  # awk's, so an unreadable database would look empty and skip the warning.
+  TARGET_COUNTS=$(table_counts "$TARGET_CONTAINER") || fail "Could not read the target database \"$FILE_POSTGRES_DB\". Nothing has been overwritten."
+  TARGET_ROWS=$(printf '%s\n' "$TARGET_COUNTS" | grep -v '^alembic_version=' | awk -F= '{sum += $2} END {print sum + 0}')
   if [ "$TARGET_ROWS" -gt 0 ]; then
     print_warning "WARNING: database \"$FILE_POSTGRES_DB\" in \"$TARGET_CONTAINER\" already contains $TARGET_ROWS record(s)."
     print_warning "They will be replaced by the contents of the legacy database."
