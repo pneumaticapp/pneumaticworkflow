@@ -13,11 +13,19 @@ services:
       POSTGRES_REPLICA_USER: ${POSTGRES_REPLICA_USER:-postgres_user}
       POSTGRES_REPLICA_PASSWORD: ${POSTGRES_REPLICA_PASSWORD:-postgres_password}
       POSTGRES_REPLICA_DB: ${POSTGRES_REPLICA_DB:-postgres_db}
+      FILE_POSTGRES_USER: ${FILE_POSTGRES_USER:-pneumatic}
+      FILE_POSTGRES_PASSWORD: ${FILE_POSTGRES_PASSWORD:-pneumatic}
+      FILE_POSTGRES_DB: ${FILE_POSTGRES_DB:-pneumatic}
     volumes:
       - ./postgres/data:/var/lib/postgresql/data:rw
       - ./postgres/backups:/backups:rw
+      - ./scripts/postgres-init:/docker-entrypoint-initdb.d:ro
     expose:
       - 5432
+    healthcheck:
+      test: ["CMD", "pg_isready", "-h", "localhost"]
+      interval: 5s
+      start_period: 60s
     networks:
       - pneumatic
     restart: always
@@ -170,7 +178,7 @@ services:
       FILE_POSTGRES_USER: ${FILE_POSTGRES_USER:-pneumatic}
       FILE_POSTGRES_PASSWORD: ${FILE_POSTGRES_PASSWORD:-pneumatic}
       FILE_POSTGRES_DB: ${FILE_POSTGRES_DB:-pneumatic}
-      FILE_POSTGRES_HOST: ${FILE_POSTGRES_HOST:-file-postgres}
+      FILE_POSTGRES_HOST: ${FILE_POSTGRES_HOST:-postgres}
       FILE_POSTGRES_PORT: ${FILE_POSTGRES_PORT:-5432}
     expose:
       - 8000
@@ -297,7 +305,7 @@ services:
       FILE_POSTGRES_USER: ${FILE_POSTGRES_USER:-pneumatic}
       FILE_POSTGRES_PASSWORD: ${FILE_POSTGRES_PASSWORD:-pneumatic}
       FILE_POSTGRES_DB: ${FILE_POSTGRES_DB:-pneumatic}
-      FILE_POSTGRES_HOST: ${FILE_POSTGRES_HOST:-file-postgres}
+      FILE_POSTGRES_HOST: ${FILE_POSTGRES_HOST:-postgres}
       FILE_POSTGRES_PORT: ${FILE_POSTGRES_PORT:-5432}
     volumes:
       - ./backend:/pneumatic_backend
@@ -417,7 +425,7 @@ services:
       FILE_POSTGRES_USER: ${FILE_POSTGRES_USER:-pneumatic}
       FILE_POSTGRES_PASSWORD: ${FILE_POSTGRES_PASSWORD:-pneumatic}
       FILE_POSTGRES_DB: ${FILE_POSTGRES_DB:-pneumatic}
-      FILE_POSTGRES_HOST: ${FILE_POSTGRES_HOST:-file-postgres}
+      FILE_POSTGRES_HOST: ${FILE_POSTGRES_HOST:-postgres}
       FILE_POSTGRES_PORT: ${FILE_POSTGRES_PORT:-5432}
     volumes:
       - ./backend:/pneumatic_backend
@@ -520,7 +528,7 @@ services:
       POSTGRES_USER: ${FILE_POSTGRES_USER:-pneumatic}
       POSTGRES_PASSWORD: ${FILE_POSTGRES_PASSWORD:-pneumatic}
       POSTGRES_DB: ${FILE_POSTGRES_DB:-pneumatic}
-      POSTGRES_HOST: ${FILE_POSTGRES_HOST:-file-postgres}
+      POSTGRES_HOST: ${FILE_POSTGRES_HOST:-postgres}
       POSTGRES_PORT: ${FILE_POSTGRES_PORT:-5432}
       STORAGE_TYPE: ${FILE_STORAGE_TYPE:-local}
       SEAWEEDFS_S3_ENDPOINT: ${FILE_SEAWEEDFS_S3_ENDPOINT:-http://seaweedfs-filer:8333}
@@ -544,30 +552,12 @@ services:
       sh -c "poetry run alembic -c src/shared_kernel/database/alembic.ini upgrade head &&
              poetry run uvicorn src.main:app --host 0.0.0.0 --port ${FILE_PORT:-8000} --workers ${FILE_WORKERS:-1}"
     depends_on:
-      file-postgres:
+      postgres:
         condition: service_healthy
       redis:
         condition: service_started
     expose:
       - 8000
-    networks:
-      - pneumatic
-    restart: always
-
-  file-postgres:
-    image: postgres:15-bookworm
-    container_name: pneumatic-file-postgres
-    environment:
-      POSTGRES_DB: ${FILE_POSTGRES_DB:-pneumatic}
-      POSTGRES_USER: ${FILE_POSTGRES_USER:-pneumatic}
-      POSTGRES_PASSWORD: ${FILE_POSTGRES_PASSWORD:-pneumatic}
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U pneumatic -d pneumatic"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    volumes:
-      - ./file-postgres/data:/var/lib/postgresql/data:rw
     networks:
       - pneumatic
     restart: always
