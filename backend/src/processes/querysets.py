@@ -462,6 +462,10 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
 
 
 class WorkflowQuerySet(WorkflowsBaseQuerySet):
+
+    def by_ids(self, ids: List[int]):
+        return self.filter(id__in=ids)
+
     def running(self):
         return self.filter(
             status__in=[WorkflowStatus.RUNNING, WorkflowStatus.DELAYED],
@@ -557,6 +561,25 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
         )
         return self.filter(
             WorkflowPermissionQuery.viewer_q(user_id),
+        )
+
+    def with_view_access(self, user_id: int):
+        """Guardian view permission or template owner/viewer/starter
+        access (rules of WorkflowMemberOrViewerPermission). Owner
+        access is a subquery, so the outer query needs no DISTINCT."""
+        return self.with_member(user_id) | self.filter(
+            pk__in=self.with_owner_viewer_or_started_by_starter(
+                user_id,
+            ).values('pk'),
+        )
+
+    def with_change_access(self, user_id: int):
+        """Guardian change permission (rule of WorkflowOwnerPermission)."""
+        from src.processes.queries import (
+            WorkflowPermissionQuery,
+        )
+        return self.filter(
+            WorkflowPermissionQuery.change_q(user_id),
         )
 
     def exclude_onboarding(self):
