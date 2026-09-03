@@ -48,46 +48,72 @@ print_info()    { echo -e "${GREEN}$1${NC}"; }
 TEMP_CONTAINER_CREATED=false
 FILE_SERVICE_STOPPED=false
 LEGACY_STOPPED=false
+# Set once the target database is about to be dropped. Up to that point every
+# exit can put the stack back; after it the copy may be incomplete.
+TARGET_MUTATED=false
 
-fail() {
-  print_error "$1"
+# Puts the containers back the way they were found. Only correct while
+# TARGET_MUTATED is false.
+restore_stack() {
+  local legacy_back=true
+
   if [ "$TEMP_CONTAINER_CREATED" = true ]; then
     docker rm -f "$TEMP_CONTAINER" > /dev/null 2>&1
+    TEMP_CONTAINER_CREATED=false
   fi
-  if [ "$FILE_SERVICE_STOPPED" = true ]; then
-    # Deliberately not restarted: the database may be half copied, and serving
-    # files from it would be worse than serving none.
-    print_warning "Container \"$FILE_SERVICE_CONTAINER\" is still stopped. Fix the problem and run this script again, or start it with: docker start $FILE_SERVICE_CONTAINER"
-  fi
-  if [ "$LEGACY_STOPPED" = true ]; then
-    print_warning "Legacy container \"$LEGACY_CONTAINER\" is stopped but still holds the original data."
-  fi
-  exit 1
-}
 
-# Cancelling is only offered while nothing has been overwritten yet, so put the
-# stack back the way it was found rather than leaving the file service down.
-cancel() {
-  print_warning "Operation cancelled."
-  if [ "$TEMP_CONTAINER_CREATED" = true ]; then
-    docker rm -f "$TEMP_CONTAINER" > /dev/null 2>&1
-  fi
   if [ "$LEGACY_STOPPED" = true ]; then
     if docker start "$LEGACY_CONTAINER" > /dev/null 2>&1; then
+      LEGACY_STOPPED=false
       print_info "Legacy container \"$LEGACY_CONTAINER\" started again"
     else
-      print_warning "Could not start \"$LEGACY_CONTAINER\" again. Start it with: docker start $LEGACY_CONTAINER"
+      legacy_back=false
+      print_warning "Could not start \"$LEGACY_CONTAINER\" again, \"$TARGET_CONTAINER\" now holds the host port it publishes."
     fi
   fi
+
   if [ "$FILE_SERVICE_STOPPED" = true ]; then
-    if docker start "$FILE_SERVICE_CONTAINER" > /dev/null 2>&1; then
+    if [ "$legacy_back" = false ]; then
+      # Starting it now would only crash-loop against a database that is gone.
+      print_warning "Container \"$FILE_SERVICE_CONTAINER\" is left stopped, because the database it is configured for is not running."
+      print_warning "To finish the migration instead, run this script again. To go back, stop \"$TARGET_CONTAINER\", then start \"$LEGACY_CONTAINER\" and \"$FILE_SERVICE_CONTAINER\"."
+    elif docker start "$FILE_SERVICE_CONTAINER" > /dev/null 2>&1; then
+      FILE_SERVICE_STOPPED=false
       print_info "Container \"$FILE_SERVICE_CONTAINER\" started again"
     else
       print_warning "Could not start \"$FILE_SERVICE_CONTAINER\" again. Start it with: docker start $FILE_SERVICE_CONTAINER"
     fi
   fi
+}
+
+fail() {
+  print_error "$1"
+  if [ "$TARGET_MUTATED" = true ]; then
+    if [ "$TEMP_CONTAINER_CREATED" = true ]; then
+      docker rm -f "$TEMP_CONTAINER" > /dev/null 2>&1
+    fi
+    # Deliberately not restarted: the target database may be half copied, and
+    # serving files from it would be worse than serving none.
+    print_warning "Container \"$FILE_SERVICE_CONTAINER\" is left stopped, because \"$FILE_POSTGRES_DB\" may be partially restored. The dump is kept in postgres/backups."
+    if [ "$LEGACY_STOPPED" = true ]; then
+      print_warning "Legacy container \"$LEGACY_CONTAINER\" is stopped but still holds the original data."
+    fi
+  else
+    print_warning "Nothing has been overwritten, putting the containers back."
+    restore_stack
+  fi
+  exit 1
+}
+
+cancel() {
+  print_warning "Operation cancelled."
+  restore_stack
   exit 0
 }
+
+# Ctrl+C during the dump, a readiness loop or the restore would otherwise leave
+# containers stopped and the temporary one running.
+trap 'trap - INT TERM; echo ""; fail "Interrupted."' INT TERM
 
 # Row count of every table in the file service database, one "table=count" line
 # each. The copy is verified against this rather than against a single table, so
@@ -385,6 +411,7 @@ if [ "$LEGACY_SOURCE" != "none" ]; then
 
   # 7.2 Recreate the target database through the provisioning script, so that it
   # ends up with the same owner and privileges as on a fresh installation
+  TARGET_MUTATED=true
   output=$(docker exec "$TARGET_CONTAINER" dropdb -U "$POSTGRES_USER" --force --if-exists "$FILE_POSTGRES_DB" 2>&1) || fail "$output"
   output=$(MSYS_NO_PATHCONV=1 docker exec "$TARGET_CONTAINER" sh "$INIT_SCRIPT" 2>&1) || fail "$output"
   print_info "Database \"$FILE_POSTGRES_DB\" recreated"
