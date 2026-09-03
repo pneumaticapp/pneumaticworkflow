@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.test import override_settings
 
 from src.processes.enums import (
-    FieldSetRuleType,
+    FieldSetRuleOperator,
     FieldType,
     WorkflowEventType,
 )
@@ -13,7 +13,9 @@ from src.processes.models.templates.fields import (
     FieldTemplateSelection,
 )
 from src.processes.models.templates.fieldset import (
-    FieldsetTemplateRule,
+    FieldSetTemplateRuleGroupAnd,
+    FieldSetTemplateRuleGroupOr,
+    FieldSetTemplateRuleSet,
 )
 from src.processes.models.workflows.fieldset import (
     FieldSetRule,
@@ -1058,11 +1060,11 @@ def test__create_related__with_rules__ok(mocker):
         account=account,
         template=template,
         task=task_template,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
     )
     field_template = fieldset_template.fields.first()
-    rule_template = fieldset_template.rules.first()
-    rule_template.fields.add(field_template)
+    ruleset_template = fieldset_template.rulesets.first()
+    ruleset_template.fields.add(field_template)
     workflow = create_test_workflow(user=user, template=template)
     task = workflow.tasks.get(number=1)
     task_field = TaskField.objects.create(
@@ -2645,7 +2647,7 @@ def test__get_valid_value__not_required_and_null_value__ok(
 
 def test__link_rules__one_rule__ok():
 
-    """One template rule → one FieldSetRule linked"""
+    """One template ruleset → one FieldSetRule linked"""
 
     # arrange
     account = create_test_account()
@@ -2661,11 +2663,11 @@ def test__link_rules__one_rule__ok():
         template=template,
         task=task_template,
         api_name=fieldset_api_name,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
     )
     field_template = fieldset_template.fields.first()
-    rule_template = fieldset_template.rules.first()
-    rule_template.fields.add(field_template)
+    ruleset_template = fieldset_template.rulesets.first()
+    ruleset_template.fields.add(field_template)
 
     workflow = create_test_workflow(
         user=user,
@@ -2676,9 +2678,12 @@ def test__link_rules__one_rule__ok():
         workflow=workflow,
         task=task,
         api_name=fieldset_api_name,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
     )
-    rule = fieldset.rules.first()
+    # Keep runtime rule api_name in sync with template ruleset
+    rule = fieldset.rulesets.first()
+    rule.api_name = ruleset_template.api_name
+    rule.save(update_fields=['api_name'])
     task_field = fieldset.fields.first()
 
     service = TaskFieldService(
@@ -2693,13 +2698,13 @@ def test__link_rules__one_rule__ok():
     )
 
     # assert
-    assert task_field.rules.count() == 1
-    assert task_field.rules.first() == rule
+    assert task_field.rulesets.count() == 1
+    assert task_field.rulesets.first() == rule
 
 
 def test__link_rules__multiple_rules__ok():
 
-    """Two template rules → two FieldSetRules linked"""
+    """Two template rulesets → two FieldSetRules linked"""
 
     # arrange
     account = create_test_account()
@@ -2715,22 +2720,29 @@ def test__link_rules__multiple_rules__ok():
         template=template,
         task=task_template,
         api_name=fieldset_api_name,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
     )
-    rule_tmpl_2 = FieldsetTemplateRule.objects.create(
+    ruleset_tmpl_1 = fieldset_template.rulesets.first()
+    ruleset_tmpl_2 = FieldSetTemplateRuleSet.objects.create(
         fieldset=fieldset_template,
         account=account,
-        api_name=f'{fieldset_api_name}-rule-2',
-        type=FieldSetRuleType.SUM_EQUAL,
+        api_name=f'{fieldset_api_name}-ruleset-2',
+    )
+    group_or_2 = FieldSetTemplateRuleGroupOr.objects.create(
+        fieldset_rule=ruleset_tmpl_2,
+        account=account,
+        api_name=f'{fieldset_api_name}-group-or-2',
+    )
+    FieldSetTemplateRuleGroupAnd.objects.create(
+        group_or=group_or_2,
+        account=account,
+        api_name=f'{fieldset_api_name}-group-and-2',
+        operator=FieldSetRuleOperator.SUM_EQUAL,
         value='200',
     )
     field_template = fieldset_template.fields.first()
-    rule_tmpl_1 = fieldset_template.rules.get(
-        api_name=f'{fieldset_api_name}-rule-1',
-    )
-    field_template.rules.set(
-        [rule_tmpl_1, rule_tmpl_2],
-    )
+    ruleset_tmpl_1.fields.add(field_template)
+    ruleset_tmpl_2.fields.add(field_template)
 
     workflow = create_test_workflow(
         user=user,
@@ -2741,16 +2753,17 @@ def test__link_rules__multiple_rules__ok():
         workflow=workflow,
         task=task,
         api_name=fieldset_api_name,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
     )
+    rule_1 = fieldset.rulesets.first()
+    rule_1.api_name = ruleset_tmpl_1.api_name
+    rule_1.save(update_fields=['api_name'])
     rule_2 = FieldSetRule.objects.create(
         fieldset=fieldset,
         account=account,
-        api_name=f'{fieldset_api_name}-rule-2',
-        type=FieldSetRuleType.SUM_EQUAL,
+        api_name=ruleset_tmpl_2.api_name,
         value='200',
     )
-    rule_1 = fieldset.rules.exclude(id=rule_2.id).first()
     task_field = fieldset.fields.first()
 
     service = TaskFieldService(
@@ -2765,16 +2778,16 @@ def test__link_rules__multiple_rules__ok():
     )
 
     # assert
-    assert task_field.rules.count() == 2
+    assert task_field.rulesets.count() == 2
     linked_ids = set(
-        task_field.rules.values_list('id', flat=True),
+        task_field.rulesets.values_list('id', flat=True),
     )
     assert linked_ids == {rule_1.id, rule_2.id}
 
 
 def test__link_rules__partial_match__ok():
 
-    """Two template rules, only one FieldSetRule exists
+    """Two template rulesets, only one FieldSetRule exists
     — only matched one linked"""
 
     # arrange
@@ -2791,22 +2804,29 @@ def test__link_rules__partial_match__ok():
         template=template,
         task=task_template,
         api_name=fieldset_api_name,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
     )
-    rule_tmpl_2 = FieldsetTemplateRule.objects.create(
+    ruleset_tmpl_1 = fieldset_template.rulesets.first()
+    ruleset_tmpl_2 = FieldSetTemplateRuleSet.objects.create(
         fieldset=fieldset_template,
         account=account,
-        api_name=f'{fieldset_api_name}-rule-2',
-        type=FieldSetRuleType.SUM_EQUAL,
+        api_name=f'{fieldset_api_name}-ruleset-2',
+    )
+    group_or_2 = FieldSetTemplateRuleGroupOr.objects.create(
+        fieldset_rule=ruleset_tmpl_2,
+        account=account,
+        api_name=f'{fieldset_api_name}-group-or-2',
+    )
+    FieldSetTemplateRuleGroupAnd.objects.create(
+        group_or=group_or_2,
+        account=account,
+        api_name=f'{fieldset_api_name}-group-and-2',
+        operator=FieldSetRuleOperator.SUM_EQUAL,
         value='200',
     )
     field_template = fieldset_template.fields.first()
-    rule_tmpl_1 = fieldset_template.rules.get(
-        api_name=f'{fieldset_api_name}-rule-1',
-    )
-    field_template.rules.set(
-        [rule_tmpl_1, rule_tmpl_2],
-    )
+    ruleset_tmpl_1.fields.add(field_template)
+    ruleset_tmpl_2.fields.add(field_template)
 
     workflow = create_test_workflow(
         user=user,
@@ -2817,9 +2837,11 @@ def test__link_rules__partial_match__ok():
         workflow=workflow,
         task=task,
         api_name=fieldset_api_name,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
     )
-    rule = fieldset.rules.first()
+    rule = fieldset.rulesets.first()
+    rule.api_name = ruleset_tmpl_1.api_name
+    rule.save(update_fields=['api_name'])
     task_field = fieldset.fields.first()
 
     service = TaskFieldService(
@@ -2834,13 +2856,13 @@ def test__link_rules__partial_match__ok():
     )
 
     # assert
-    assert task_field.rules.count() == 1
-    assert task_field.rules.first() == rule
+    assert task_field.rulesets.count() == 1
+    assert task_field.rulesets.first() == rule
 
 
 def test__link_rules__no_matching_rules__empty():
 
-    """Template has rule, but no FieldSetRule
+    """Template has ruleset, but no FieldSetRule
     with that api_name — M2M stays empty"""
 
     # arrange
@@ -2857,11 +2879,11 @@ def test__link_rules__no_matching_rules__empty():
         template=template,
         task=task_template,
         api_name=fieldset_api_name,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
     )
     field_template = fieldset_template.fields.first()
-    rule_template = fieldset_template.rules.first()
-    rule_template.fields.add(field_template)
+    ruleset_template = fieldset_template.rulesets.first()
+    ruleset_template.fields.add(field_template)
 
     workflow = create_test_workflow(
         user=user,
@@ -2877,7 +2899,6 @@ def test__link_rules__no_matching_rules__empty():
         fieldset=fieldset,
         account=account,
         api_name='different-rule',
-        type=FieldSetRuleType.SUM_EQUAL,
         value='999',
     )
     task_field = fieldset.fields.first()
@@ -2894,7 +2915,7 @@ def test__link_rules__no_matching_rules__empty():
     )
 
     # assert
-    assert task_field.rules.count() == 0
+    assert task_field.rulesets.count() == 0
 
 
 def test__link_rules__another_fieldset_rule__not_linked():
@@ -2916,11 +2937,11 @@ def test__link_rules__another_fieldset_rule__not_linked():
         template=template,
         task=task_template,
         api_name=fieldset_api_name,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
     )
     field_template = fieldset_template.fields.first()
-    rule_template = fieldset_template.rules.first()
-    rule_template.fields.add(field_template)
+    ruleset_template = fieldset_template.rulesets.first()
+    ruleset_template.fields.add(field_template)
 
     workflow = create_test_workflow(
         user=user,
@@ -2933,12 +2954,15 @@ def test__link_rules__another_fieldset_rule__not_linked():
         api_name=fieldset_api_name,
     )
     task_field = fieldset_1.fields.first()
-    create_test_fieldset(
+    fieldset_2 = create_test_fieldset(
         workflow=workflow,
         task=task,
         api_name='fs2',
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
     )
+    rule_2 = fieldset_2.rulesets.first()
+    rule_2.api_name = ruleset_template.api_name
+    rule_2.save(update_fields=['api_name'])
 
     service = TaskFieldService(
         instance=task_field,
@@ -2952,4 +2976,4 @@ def test__link_rules__another_fieldset_rule__not_linked():
     )
 
     # assert
-    assert task_field.rules.count() == 0
+    assert task_field.rulesets.count() == 0

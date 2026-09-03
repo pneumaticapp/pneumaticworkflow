@@ -1,0 +1,163 @@
+.components {
+  margin-bottom: 2.4rem;
+  display: flex;
+  flex-flow: row nowrap;
+  overflow-x: scroll;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.components::-webkit-scrollbar {
+  display: none;
+}
+
+.components_disabled {
+  pointer-events: none;
+  opacity: 0.45;
+}
+
+.fields {
+  margin-top: 1.6rem;
+
+  input {
+    text-overflow: ellipsis;
+  }
+
+  /* stylelint-disable declaration-no-important */
+  [data-use-input]:disabled {
+    cursor: default !important;
+    resize: none !important;
+    color: var(--pneumatic-color-black72) !important;
+    background-color: var(--pneumatic-color-black4) !important;
+    border: 0.1rem solid transparent !important;
+    border-radius: 0.8rem !important;
+    opacity: 1 !important;
+  }
+
+  /* stylelint-disable selector-max-specificity */
+  &.fieldset_readonly textarea[data-use-input]:disabled {
+    max-width: 100%;
+    min-height: unset;
+    field-sizing: content;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  /* stylelint-enable selector-max-specificity */
+
+  &.fieldset_readonly [class*='kickoff-create-field-option__labeled-checkbox'] {
+    align-items: flex-start;
+  }
+
+  [class*='kick-off-input__name-textarea']:disabled,
+  [class*='kickoff-create-field-name-input']:disabled,
+  [class*='extra-field-file__input-name--template']:disabled {
+    padding: 0 0.8rem !important;
+    border-radius: 0.6rem !important;
+  }
+
+  [class*='kick-off-input__name']:has(:disabled) {
+    background: transparent !important;
+  }
+
+  &.fieldset_readonly [class*='kick-off-required-sign'] {
+    background-color: transparent !important;
+  }
+
+  [class*='kickoff-create-field-option__input']:disabled {
+    padding: 0.4rem 1.2rem;
+    width: auto !important;
+    max-width: 100%;
+    border-radius: 0.6rem;
+    field-sizing: content;
+  }
+
+  [class*='labeled-checkbox__input']:disabled,
+  [class*='labeled-radiobutton__input']:disabled {
+    padding: 0.4rem 1.2rem;
+    width: auto !important;
+    max-width: calc(100% - 3.2rem);
+    border-radius: 0.6rem;
+    field-sizing: content;
+  }
+
+  &.fieldset_readonly [class*='checkbox__text'],
+  &.fieldset_readonly [class*='radio__text'],
+  &.fieldset_readonly [class*='checkbox__title'],
+  &.fieldset_readonly [class*='radio__title'] {
+    color: var(--pneumatic-color-black88) !important;
+  }
+
+  [data-use-input]:disabled::placeholder {
+    color: var(--pneumatic-color-black48) !important;
+    -webkit-text-fill-color: var(--pneumatic-color-black48) !important;
+    opacity: 1 !important;
+  }
+
+  &.fieldset_readonly [class*='kickoff-create-field-container'],
+  &.fieldset_readonly [class*='extra-field-file__conteiner--template'] {
+    max-width: 100% !important;
+  }
+
+  &.fieldset_readonly [class*='extra-field-file__upload-button--template'] {
+    cursor: default !important;
+    color: var(--pneumatic-color-black48) !important;
+    border-color: var(--pneumatic-color-black16) !important;
+    opacity: 0.55 !important;
+  }
+
+  [class*='checkbox__input']:disabled + [class*='checkbox__box'],
+  [class*='radio__input']:disabled + [class*='radio__box'] {
+    cursor: default !important;
+    border-color: var(--pneumatic-color-black16) !important;
+    opacity: 0.32 !important;
+  }
+
+  &.fieldset_readonly [class*='edit-name-button'],
+  &.fieldset_readonly [class*='kick-off-edit-name'] {
+    display: none !important;
+  }
+  /* stylelint-enable declaration-no-important */
+
+  /* stylelint-disable selector-max-specificity, selector-max-compound-selectors */
+  &.fieldset_readonly [class*='kick-off-input'] [class*='icon-container'] [class*='icon'] {
+    color: var(--pneumatic-color-black16);
+
+    svg,
+    svg path {
+      fill: var(--pneumatic-color-black16);
+      color: var(--pneumatic-color-black16);
+    }
+  }
+  /* stylelint-enable selector-max-specificity, selector-max-compound-selectors */
+
+  &.fieldset_readonly [class*='rulesets-badge'] {
+    color: var(--pneumatic-color-black48);
+    background-color: var(--pneumatic-color-black4);
+  }
+}
+
+.fields-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.fields-table th {
+  padding: 0.8rem 1.6rem;
+  font-weight: 600;
+  text-align: left;
+  color: var(--pneumatic-color-black48);
+  border-bottom: 0.2rem solid var(--pneumatic-color-black16);
+
+  @mixin text-small;
+}
+
+.fields-table td {
+  padding: 1.2rem 1.6rem;
+  border-bottom: 0.1rem solid var(--pneumatic-color-black16);
+
+  @mixin text-base;
+}
+
+.fields-table tbody tr:hover {
+  background-color: var(--pneumatic-color-black4);
+}

@@ -10,6 +10,7 @@ import {
   useCallback,
   useMemo,
 } from 'react';
+import { useIntl } from 'react-intl';
 
 import { Field, EFieldTagName } from '../../../Field';
 import { validateKickoffFieldName } from '../../../../utils/validators';
@@ -62,7 +63,7 @@ const assignInputRef = (
 export const FieldWithName = forwardRef<HTMLInputElement, IKickoffFormFieldWithNameProps>(
   (
     {
-      field: { description = '', isRequired = false, name, value },
+      field: { description = '', isRequired = false, name, value, rulesets },
       inputClassName,
       icon,
       descriptionPlaceholder,
@@ -87,6 +88,9 @@ export const FieldWithName = forwardRef<HTMLInputElement, IKickoffFormFieldWithN
     },
     ref,
   ) => {
+    const intl = useIntl();
+    const rulesetsCount = rulesets?.length ?? 0;
+
     const descriptionInputRef = useCallback(
       (node: HTMLInputElement | null) => {
         assignInputRef(innerRef, node);
@@ -177,6 +181,11 @@ export const FieldWithName = forwardRef<HTMLInputElement, IKickoffFormFieldWithN
             />
           </div>
           {children}
+          {rulesetsCount > 0 && (
+            <span className={styles['rulesets-badge']}>
+              {intl.formatMessage({ id: 'fieldsets.field-rulesets-badge' }, { count: rulesetsCount })}
+            </span>
+          )}
         </div>
       </div>
     );

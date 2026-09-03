@@ -1,0 +1,27 @@
+.modal-dialog {
+  max-width: 84rem;
+}
+
+.footer-buttons {
+  display: flex;
+  align-items: center;
+
+  > *:not(:last-child) {
+    margin-right: 0.8rem;
+  }
+
+  @media (--mobile) {
+    flex-direction: column;
+    width: 100%;
+
+    > * {
+      margin-right: 0;
+      margin-bottom: 0.8rem;
+      width: 100%;
+    }
+
+    > :last-child {
+      margin-bottom: 0;
+    }
+  }
+}

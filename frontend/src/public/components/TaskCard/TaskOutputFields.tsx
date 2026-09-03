@@ -21,8 +21,12 @@ export function TaskOutputFields({
   taskId,
 }: ITaskOutputFieldsProps) {
   const visibleOutputs = outputValues.filter((field) => !field.isHidden);
+  const visibleFieldsets = fieldsetOutputValues.map((fieldset) => ({
+    ...fieldset,
+    fields: fieldset.fields.filter((field) => !field.isHidden),
+  }));
 
-  if ((!isArrayWithItems(visibleOutputs) && !isArrayWithItems(fieldsetOutputValues)) || status === ETaskStatus.Completed) {
+  if ((!isArrayWithItems(visibleOutputs) && !isArrayWithItems(visibleFieldsets)) || status === ETaskStatus.Completed) {
     return null;
   }
 
@@ -34,7 +38,7 @@ export function TaskOutputFields({
       <MergedOutputList
         key={taskId}
         fields={visibleOutputs}
-        fieldsets={fieldsetOutputValues}
+        fieldsets={visibleFieldsets}
         onEditField={editField}
         onEditFieldsetField={editFieldsetField}
         labelBackgroundColor={EInputNameBackgroundColor.OrchidWhite}

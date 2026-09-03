@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useCallback, ChangeEvent, ReactNode } from 'react';
+import { useCallback, ChangeEvent, ReactElement } from 'react';
 
 import { getFieldValidator } from '../utils/getFieldValidator';
 import { EExtraFieldMode } from '../../../../types/template';
@@ -58,7 +58,7 @@ export const ExtraFieldNumber = ({
         })}
       />
     );
-    const fieldsMap: { [key in EExtraFieldMode]: ReactNode } = {
+    const fieldsMap: { [key in EExtraFieldMode]: ReactElement } = {
       [EExtraFieldMode.Kickoff]: baseField,
       [EExtraFieldMode.ProcessRun]: <div className={fieldStyles['run-container']}>{baseField}</div>,
     };

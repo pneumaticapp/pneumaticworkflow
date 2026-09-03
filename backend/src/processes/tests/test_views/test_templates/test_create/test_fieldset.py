@@ -1,13 +1,10 @@
 import pytest
 
 from src.processes.enums import (
-    FieldSetLayout,
-    FieldSetRuleType,
     FieldType,
-    LabelPosition,
     OwnerRole,
     OwnerType,
-    PerformerType,
+    PerformerType, FieldSetRuleOperator,
 )
 from src.processes.models.templates.fieldset import FieldsetTemplate
 from src.processes.models.templates.template import Template
@@ -48,30 +45,8 @@ def test_create__kickoff_fieldset_only_required_data__ok(
         'src.processes.views.template.'
         'AnalyticService.templates_kickoff_created',
     )
-    fs_title = 'Some title'
-    fs_description = 'Some desc'
-    fs_name = 'Some name'
-    fs_order = 3
-    label_position = LabelPosition.LEFT
-    layout = FieldSetLayout.HORIZONTAL
-    rule_type = FieldSetRuleType.SUM_EQUAL
-    rule_value = '500'
-    api_name = 'fs-some-api-name'
-    shared_fieldset = create_test_shared_fieldset(
-        title=fs_title,
-        description=fs_description,
-        name=fs_name,
-        order=fs_order,
-        label_position=label_position,
-        layout=layout,
-        rule_type=rule_type,
-        rule_value=rule_value,
-        api_name=api_name,
-        account=account,
-    )
-    shared_field = shared_fieldset.fields.first()
-    shared_rule = shared_fieldset.rules.first()
-    shared_rule.fields.add(shared_field)
+    shared_fieldset = create_test_shared_fieldset(account=account)
+    shared_fieldset.fields.all().delete()
     request_data = {
         'name': 'Template with fieldset',
         'owners': [
@@ -113,44 +88,26 @@ def test_create__kickoff_fieldset_only_required_data__ok(
     assert response.status_code == 200
     template = Template.objects.get(id=response.data['id'])
     kickoff = template.kickoff_instance
-    fieldset = FieldsetTemplate.objects.get(
+    assert FieldsetTemplate.objects.get(
         kickoff=kickoff,
         shared_fieldset=shared_fieldset,
         is_shared=False,
     )
-    field = fieldset.fields.first()
-    rule = fieldset.rules.first()
 
     kickoff_data = response.data['kickoff']
     assert len(kickoff_data['fieldsets']) == 1
     fieldset_data = kickoff_data['fieldsets'][0]
     assert fieldset_data['shared_fieldset_id'] == shared_fieldset.id
     assert fieldset_data['order'] == 0
-    assert fieldset_data['title'] == fs_title
-    assert fieldset_data['description'] == fs_description
-    assert fieldset_data['name'] == fs_name
-    assert len(fieldset_data['api_name'])
+    assert fieldset_data['name'] == shared_fieldset.name
+    assert fieldset_data['description'] == shared_fieldset.description
+    assert fieldset_data['title'] == shared_fieldset.name
     assert fieldset_data['api_name'] != shared_fieldset.api_name
-    assert fieldset_data['label_position'] == label_position
-    assert fieldset_data['layout'] == layout
+    assert fieldset_data['label_position'] == shared_fieldset.label_position
+    assert fieldset_data['layout'] == shared_fieldset.layout
 
-    assert len(fieldset_data['rules']) == 1
-    rule_data = fieldset_data['rules'][0]
-    assert rule_data['type'] == rule_type
-    assert rule_data['value'] == str(rule_value)
-    assert rule_data['api_name'] == rule.api_name
-    assert rule_data['fields'] == [field.api_name]
-
-    assert len(fieldset_data['fields']) == 1
-    field_data = fieldset_data['fields'][0]
-    assert field_data['name'] == shared_field.name
-    assert field_data['type'] == shared_field.type
-    assert field_data['order'] == shared_field.order
-    assert field_data['is_required'] == shared_field.is_required
-    assert field_data['is_hidden'] == shared_field.is_hidden
-    assert field_data['description'] == ''
-    assert field_data['default'] == ''
-    assert field_data['api_name'] == field.api_name
+    assert fieldset_data['rulesets'] == []
+    assert fieldset_data['fields'] == []
 
 
 def test_create__kickoff_fieldset_all_fieldset_data__ok(
@@ -179,14 +136,16 @@ def test_create__kickoff_fieldset_all_fieldset_data__ok(
     fs_description = 'Some desc'
     fs_order = 3
     fs_api_name = 'fs-some-api-name'
-    field_dropdown_api_name = 'field-dropdown-api-name'
-    field_number_api_name = 'field-number-api-name'
-    selection_api_name = 'selection-api-name'
-    rule_api_name = 'rule-api-name'
-    rule_type = FieldSetRuleType.SUM_EQUAL
-    rule_value = '100'
-    shared_fieldset = create_test_shared_fieldset(account=account)
-    shared_fieldset.fields.all().delete()
+    shared_fieldset = create_test_shared_fieldset(
+        account=account,
+        rule_value='500',
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
+    )
+    shared_field = shared_fieldset.fields.first()
+    shared_ruleset = shared_fieldset.rulesets.first()
+    shared_ruleset.fields.add(shared_field)
+    shared_group_or = shared_ruleset.groups_or.first()
+    shared_group_and = shared_group_or.groups_and.first()
     request_data = {
         'name': 'Template with fieldset',
         'owners': [
@@ -205,34 +164,6 @@ def test_create__kickoff_fieldset_all_fieldset_data__ok(
                     'title': fs_title,
                     'description': fs_description,
                     'api_name': fs_api_name,
-                    'fields': [
-                        {
-                            'name': 'Dropdown field',
-                            'type': FieldType.DROPDOWN,
-                            'order': 1,
-                            'api_name': field_dropdown_api_name,
-                            'selections': [
-                                {
-                                    'value': 'Option A',
-                                    'api_name': selection_api_name,
-                                },
-                            ],
-                        },
-                        {
-                            'name': 'Number field',
-                            'type': FieldType.NUMBER,
-                            'order': 2,
-                            'api_name': field_number_api_name,
-                        },
-                    ],
-                    'rules': [
-                        {
-                            'type': rule_type,
-                            'value': rule_value,
-                            'api_name': rule_api_name,
-                            'fields': [field_number_api_name],
-                        },
-                    ],
                 },
             ],
         },
@@ -266,13 +197,10 @@ def test_create__kickoff_fieldset_all_fieldset_data__ok(
         is_shared=False,
         api_name=fs_api_name,
     )
-    dropdown_field = fieldset.fields.get(api_name=field_dropdown_api_name)
-    number_field = fieldset.fields.get(api_name=field_number_api_name)
-    rule = fieldset.rules.get(api_name=rule_api_name)
-    selection = dropdown_field.selections.get(api_name=selection_api_name)
-    rule_field = rule.fields.get(api_name=field_number_api_name)
-    assert selection.value == 'Option A'
-    assert rule_field == number_field
+    field = fieldset.fields.first()
+    ruleset = fieldset.rulesets.first()
+    group_or = ruleset.groups_or.first()
+    group_and = group_or.groups_and.first()
 
     kickoff_data = response.data['kickoff']
     assert len(kickoff_data['fieldsets']) == 1
@@ -286,23 +214,34 @@ def test_create__kickoff_fieldset_all_fieldset_data__ok(
     assert fieldset_data['label_position'] == shared_fieldset.label_position
     assert fieldset_data['layout'] == shared_fieldset.layout
 
-    # FieldTemplate ordering is -order
-    assert len(fieldset_data['fields']) == 2
-    field_1_data = fieldset_data['fields'][0]
-    field_2_data = fieldset_data['fields'][1]
-    selection_data = field_2_data['selections'][0]
-    assert field_1_data['api_name'] == field_number_api_name
-    assert field_1_data['type'] == FieldType.NUMBER
-    assert field_2_data['api_name'] == field_dropdown_api_name
-    assert field_2_data['type'] == FieldType.DROPDOWN
-    assert selection_data['api_name'] == selection_api_name
+    assert len(fieldset_data['rulesets']) == 1
+    ruleset_data = fieldset_data['rulesets'][0]
+    assert ruleset_data['api_name'] != shared_ruleset.api_name
+    assert ruleset_data['fields'] == [field.api_name]
 
-    assert len(fieldset_data['rules']) == 1
-    rule_data = fieldset_data['rules'][0]
-    assert rule_data['type'] == rule_type
-    assert rule_data['value'] == rule_value
-    assert rule_data['api_name'] == rule_api_name
-    assert rule_data['fields'] == [field_number_api_name]
+    assert len(ruleset_data['groups_or']) == 1
+    groups_or_data = ruleset_data['groups_or'][0]
+    assert groups_or_data['api_name'] != shared_group_or.api_name
+    assert groups_or_data['api_name'] == group_or.api_name
+
+    assert len(groups_or_data['groups_and']) == 1
+    group_and_data = groups_or_data['groups_and'][0]
+    assert group_and_data['api_name'] != shared_group_and.api_name
+    assert group_and_data['api_name'] == group_and.api_name
+    assert group_and_data['operator'] == group_and.operator
+    assert group_and_data['value'] == group_and.value
+
+    assert len(fieldset_data['fields']) == 1
+    field_data = fieldset_data['fields'][0]
+    assert field_data['name'] == shared_field.name
+    assert field_data['type'] == shared_field.type
+    assert field_data['order'] == shared_field.order
+    assert field_data['is_required'] == shared_field.is_required
+    assert field_data['is_hidden'] == shared_field.is_hidden
+    assert field_data['description'] == ''
+    assert field_data['default'] == ''
+    assert field_data['api_name'] != shared_field.api_name
+    assert field_data['api_name'] == field.api_name
 
 
 def test_create__kickoff_with_empty_fieldsets__no_created(
@@ -393,30 +332,9 @@ def test_create__task_fieldset_only_required_data__ok(
         'src.processes.views.template.'
         'AnalyticService.templates_kickoff_created',
     )
-    fs_title = 'Some title'
-    fs_description = 'Some desc'
-    fs_name = 'Some name'
-    fs_order = 3
-    label_position = LabelPosition.LEFT
-    layout = FieldSetLayout.HORIZONTAL
-    rule_type = FieldSetRuleType.SUM_EQUAL
-    rule_value = '500'
-    api_name = 'fs-some-api-name'
-    shared_fieldset = create_test_shared_fieldset(
-        title=fs_title,
-        description=fs_description,
-        name=fs_name,
-        order=fs_order,
-        label_position=label_position,
-        layout=layout,
-        rule_type=rule_type,
-        rule_value=rule_value,
-        api_name=api_name,
-        account=account,
-    )
-    shared_field = shared_fieldset.fields.first()
-    shared_rule = shared_fieldset.rules.first()
-    shared_rule.fields.add(shared_field)
+    shared_fieldset = create_test_shared_fieldset(account=account)
+    shared_fieldset.fields.all().delete()
+
     request_data = {
         'name': 'Template with task fieldset',
         'owners': [
@@ -457,44 +375,26 @@ def test_create__task_fieldset_only_required_data__ok(
     assert response.status_code == 200
     template = Template.objects.get(id=response.data['id'])
     task = template.tasks.first()
-    fieldset = FieldsetTemplate.objects.get(
+    assert FieldsetTemplate.objects.get(
         task=task,
         shared_fieldset=shared_fieldset,
         is_shared=False,
     )
-    field = fieldset.fields.first()
-    rule = fieldset.rules.first()
 
     task_data = response.data['tasks'][0]
     assert len(task_data['fieldsets']) == 1
     fieldset_data = task_data['fieldsets'][0]
     assert fieldset_data['shared_fieldset_id'] == shared_fieldset.id
     assert fieldset_data['order'] == 0
-    assert fieldset_data['title'] == fs_title
-    assert fieldset_data['description'] == fs_description
-    assert fieldset_data['name'] == fs_name
-    assert len(fieldset_data['api_name'])
+    assert fieldset_data['name'] == shared_fieldset.name
+    assert fieldset_data['description'] == shared_fieldset.description
+    assert fieldset_data['title'] == shared_fieldset.name
     assert fieldset_data['api_name'] != shared_fieldset.api_name
-    assert fieldset_data['label_position'] == label_position
-    assert fieldset_data['layout'] == layout
+    assert fieldset_data['label_position'] == shared_fieldset.label_position
+    assert fieldset_data['layout'] == shared_fieldset.layout
 
-    assert len(fieldset_data['rules']) == 1
-    rule_data = fieldset_data['rules'][0]
-    assert rule_data['type'] == rule_type
-    assert rule_data['value'] == rule_value
-    assert rule_data['api_name'] == rule.api_name
-    assert rule_data['fields'] == [field.api_name]
-
-    assert len(fieldset_data['fields']) == 1
-    field_data = fieldset_data['fields'][0]
-    assert field_data['name'] == shared_field.name
-    assert field_data['type'] == shared_field.type
-    assert field_data['order'] == shared_field.order
-    assert field_data['is_required'] == shared_field.is_required
-    assert field_data['is_hidden'] == shared_field.is_hidden
-    assert field_data['description'] == ''
-    assert field_data['default'] == ''
-    assert field_data['api_name'] == field.api_name
+    assert fieldset_data['rulesets'] == []
+    assert fieldset_data['fields'] == []
 
 
 def test_create__task_fieldset_all_fieldset_data__ok(
@@ -519,8 +419,17 @@ def test_create__task_fieldset_all_fieldset_data__ok(
     fs_description = 'Some desc'
     fs_order = 3
     fs_api_name = 'fs-some-api-name'
-    shared_fieldset = create_test_shared_fieldset(account=account)
-    shared_fieldset.fields.all().delete()
+    shared_fieldset = create_test_shared_fieldset(
+        account=account,
+        rule_value='500',
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
+    )
+    shared_field = shared_fieldset.fields.first()
+    shared_ruleset = shared_fieldset.rulesets.first()
+    shared_ruleset.fields.add(shared_field)
+    shared_group_or = shared_ruleset.groups_or.first()
+    shared_group_and = shared_group_or.groups_and.first()
+
     request_data = {
         'name': 'Template with task fieldset',
         'owners': [
@@ -565,12 +474,16 @@ def test_create__task_fieldset_all_fieldset_data__ok(
     assert response.status_code == 200
     template = Template.objects.get(id=response.data['id'])
     task = template.tasks.first()
-    assert FieldsetTemplate.objects.get(
+    fieldset = FieldsetTemplate.objects.get(
         task=task,
         shared_fieldset=shared_fieldset,
         is_shared=False,
         api_name=fs_api_name,
     )
+    field = fieldset.fields.first()
+    ruleset = fieldset.rulesets.first()
+    group_or = ruleset.groups_or.first()
+    group_and = group_or.groups_and.first()
 
     task_data = response.data['tasks'][0]
     assert len(task_data['fieldsets']) == 1
@@ -583,8 +496,35 @@ def test_create__task_fieldset_all_fieldset_data__ok(
     assert fieldset_data['api_name'] == fs_api_name
     assert fieldset_data['label_position'] == shared_fieldset.label_position
     assert fieldset_data['layout'] == shared_fieldset.layout
-    assert fieldset_data['rules'] == []
-    assert fieldset_data['fields'] == []
+
+    assert len(fieldset_data['rulesets']) == 1
+    ruleset_data = fieldset_data['rulesets'][0]
+    assert ruleset_data['api_name'] != shared_ruleset.api_name
+    assert ruleset_data['fields'] == [field.api_name]
+
+    assert len(ruleset_data['groups_or']) == 1
+    groups_or_data = ruleset_data['groups_or'][0]
+    assert groups_or_data['api_name'] != shared_group_or.api_name
+    assert groups_or_data['api_name'] == group_or.api_name
+
+    assert len(groups_or_data['groups_and']) == 1
+    group_and_data = groups_or_data['groups_and'][0]
+    assert group_and_data['api_name'] != shared_group_and.api_name
+    assert group_and_data['api_name'] == group_and.api_name
+    assert group_and_data['operator'] == group_and.operator
+    assert group_and_data['value'] == group_and.value
+
+    assert len(fieldset_data['fields']) == 1
+    field_data = fieldset_data['fields'][0]
+    assert field_data['name'] == shared_field.name
+    assert field_data['type'] == shared_field.type
+    assert field_data['order'] == shared_field.order
+    assert field_data['is_required'] == shared_field.is_required
+    assert field_data['is_hidden'] == shared_field.is_hidden
+    assert field_data['description'] == ''
+    assert field_data['default'] == ''
+    assert field_data['api_name'] != shared_field.api_name
+    assert field_data['api_name'] == field.api_name
 
 
 def test_create__task_with_empty_fieldsets__no_created(
@@ -758,7 +698,7 @@ def test_create__draft_fieldset_from_another_account__excluded(
         title='Private title',
         description='Private description',
         name='Private fieldset',
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='100',
     )
     request_data = {
@@ -819,7 +759,8 @@ def test_create__kickoff_fieldset_with_expanded_fields__preserves_api_names(
 ):
 
     """ Creating an active template with already expanded fieldset fields
-        must keep provided field/rule api_names (create path, not clone). """
+        must keep provided field/ruleset api_names
+        (create path, not clone). """
 
     # arrange
     account = create_test_account()
@@ -919,7 +860,7 @@ def test_create__task_fieldset_with_expanded_fields__preserves_api_names(
 ):
 
     """ Creating an active template with already expanded task fieldset
-        fields must keep provided field/rule api_names. """
+        fields must keep provided field/ruleset api_names. """
 
     # arrange
     account = create_test_account()
@@ -1072,7 +1013,7 @@ def test_create__kickoff_fieldset_expanded_fields_used_in_task_text__ok(
                             'default': '',
                         },
                     ],
-                    'rules': [],
+                    'rulesets': [],
                 },
             ],
         },

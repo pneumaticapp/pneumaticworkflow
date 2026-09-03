@@ -95,6 +95,13 @@ export function ExtraFieldFileTemplate({
           className={styles['extra-field-file__upload-button--template']}
         />
       </div>
+      {(field.rulesets?.length ?? 0) > 0 && (
+        <div>
+          <span className={kickoffStyles['rulesets-badge']}>
+            <IntlMessages id="fieldsets.field-rulesets-badge" values={{ count: field.rulesets?.length ?? 0 }} />
+          </span>
+        </div>
+      )}
     </div>
   );
 }

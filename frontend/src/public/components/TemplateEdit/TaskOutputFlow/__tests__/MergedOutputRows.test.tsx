@@ -8,11 +8,16 @@ import { IExtraField } from '../../../../types/template';
 import { intlMock } from '../../../../__stubs__/intlMock';
 import { MergedOutputRows, IMergedOutputRowsProps } from '../MergedOutputRows';
 import { TMergedTaskOutputRow } from '../mergeTaskOutputFlow';
+import { IFieldRuleSet } from '../../../../types/fieldset';
+import { makeFieldRuleSet } from '../../../../__stubs__/fieldsets.factory';
 
 type TExtraFieldIntlMockProps = {
   field: IExtraField;
   moveFieldUp?: () => void;
   moveFieldDown?: () => void;
+  fieldRulesets?: IFieldRuleSet[];
+  onOpenFieldRules?: (ruleset?: IFieldRuleSet) => void;
+  onDeleteFieldRuleset?: (rulesetApiName: string) => void;
 };
 
 type TFieldsetFlowRowDropdownMockProps = {
@@ -22,7 +27,7 @@ type TFieldsetFlowRowDropdownMockProps = {
 };
 
 jest.mock('../../ExtraFields', () => ({
-  ExtraFieldIntl: ({ field, moveFieldUp, moveFieldDown }: TExtraFieldIntlMockProps) =>
+  ExtraFieldIntl: ({ field, moveFieldUp, moveFieldDown, onOpenFieldRules, fieldRulesets, onDeleteFieldRuleset }: TExtraFieldIntlMockProps) =>
     React.createElement(
       'div',
       { 'data-testid': 'extra-field-intl' },
@@ -38,6 +43,24 @@ jest.mock('../../ExtraFields', () => ({
           'button',
           { 'data-testid': `field-down-${field.apiName}`, onClick: moveFieldDown },
           'FieldDown',
+        ),
+      onOpenFieldRules
+        && React.createElement(
+          'button',
+          { 'data-testid': `open-rules-${field.apiName}`, onClick: () => onOpenFieldRules() },
+          'OpenRules',
+        ),
+      fieldRulesets
+        && React.createElement(
+          'span',
+          { 'data-testid': `rulesets-count-${field.apiName}` },
+          String(fieldRulesets.length),
+        ),
+      onDeleteFieldRuleset
+        && React.createElement(
+          'button',
+          { 'data-testid': `delete-rule-${field.apiName}`, onClick: () => onDeleteFieldRuleset('rule-1') },
+          'DeleteRule',
         ),
     ),
 }));
@@ -230,5 +253,85 @@ describe('MergedOutputRows', () => {
 
     expect(screen.getByTestId('field-up-f-2')).toBeInTheDocument();
     expect(screen.queryByTestId('field-down-f-2')).not.toBeInTheDocument();
+  });
+
+  describe('field rule props passthrough', () => {
+    it('passes fieldRulesets and onOpenFieldRules to ExtraFieldIntl when provided', () => {
+      const ruleset = makeFieldRuleSet({ apiName: 'rule-1' });
+      const fieldWithRulesets = makeExtraField({
+        apiName: 'f-rules',
+        name: 'Field With Rules',
+        rulesets: [ruleset],
+      });
+      const fieldRowWithRules: TMergedTaskOutputRow = { kind: 'field', field: fieldWithRulesets };
+      const onOpenFieldRules = jest.fn();
+      const onDeleteFieldRuleset = jest.fn();
+
+      render(
+        React.createElement(
+          MergedOutputRows,
+          makeProps({
+            mergedRows: [fieldRowWithRules],
+            onOpenFieldRules,
+            onDeleteFieldRuleset,
+          }),
+        ),
+      );
+
+      expect(screen.getByTestId('rulesets-count-f-rules')).toHaveTextContent('1');
+      expect(screen.getByTestId('open-rules-f-rules')).toBeInTheDocument();
+      expect(screen.getByTestId('delete-rule-f-rules')).toBeInTheDocument();
+    });
+
+    it('does not pass field rule props when onOpenFieldRules is not provided', () => {
+      render(
+        React.createElement(
+          MergedOutputRows,
+          makeProps({ mergedRows: [fieldRow('f-1')] }),
+        ),
+      );
+
+      expect(screen.queryByTestId('open-rules-f-1')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('rulesets-count-f-1')).not.toBeInTheDocument();
+    });
+
+    it('click OpenRules calls onOpenFieldRules with fieldApiName', () => {
+      const onOpenFieldRules = jest.fn();
+
+      render(
+        React.createElement(
+          MergedOutputRows,
+          makeProps({
+            mergedRows: [fieldRow('f-1')],
+            onOpenFieldRules,
+          }),
+        ),
+      );
+
+      userEvent.click(screen.getByTestId('open-rules-f-1'));
+
+      expect(onOpenFieldRules).toHaveBeenCalledTimes(1);
+      expect(onOpenFieldRules).toHaveBeenCalledWith('f-1', undefined);
+    });
+
+    it('click DeleteRule calls onDeleteFieldRuleset with fieldApiName and rulesetApiName', () => {
+      const onDeleteFieldRuleset = jest.fn();
+
+      render(
+        React.createElement(
+          MergedOutputRows,
+          makeProps({
+            mergedRows: [fieldRow('f-1')],
+            onOpenFieldRules: jest.fn(),
+            onDeleteFieldRuleset,
+          }),
+        ),
+      );
+
+      userEvent.click(screen.getByTestId('delete-rule-f-1'));
+
+      expect(onDeleteFieldRuleset).toHaveBeenCalledTimes(1);
+      expect(onDeleteFieldRuleset).toHaveBeenCalledWith('f-1', 'rule-1');
+    });
   });
 });

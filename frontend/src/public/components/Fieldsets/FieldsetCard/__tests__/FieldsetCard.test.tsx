@@ -15,7 +15,7 @@ import {
 import { history } from '../../../../utils/history';
 import { intlMock } from '../../../../__stubs__/intlMock';
 import { IFieldsetField } from '../../../../types/fieldset';
-import { makeFieldsetCatalogItem, makeFieldsetTemplateRule } from '../../../../__stubs__/fieldsets.factory';
+import { makeFieldsetCatalogItem, makeFieldsetRuleset } from '../../../../__stubs__/fieldsets.factory';
 
 jest.mock('../../../../utils/history', () => ({
   history: { push: jest.fn(), location: { pathname: '/' }, listen: jest.fn() },
@@ -119,7 +119,7 @@ describe('FieldsetCard', () => {
           layout: props.layout,
           order: props.order,
           title: props.title,
-          rules: props.rules,
+          rulesets: props.rulesets,
           fields: props.fields,
           usage: props.usage,
         }),
@@ -176,7 +176,7 @@ describe('FieldsetCard', () => {
     it('shows field count and rule count when both are > 0', () => {
       const props = makeProps({
         fields: [makeField(), makeField()],
-        rules: [makeFieldsetTemplateRule()],
+        rulesets: [makeFieldsetRuleset()],
       });
       render(React.createElement(FieldsetCard, props));
 
@@ -185,21 +185,21 @@ describe('FieldsetCard', () => {
     });
 
     it('hides footer when fields and rules are both empty', () => {
-      render(React.createElement(FieldsetCard, makeProps({ fields: [], rules: [] })));
+      render(React.createElement(FieldsetCard, makeProps({ fields: [], rulesets: [] })));
 
       expect(screen.queryByText(FIELDS_STATS(0))).not.toBeInTheDocument();
       expect(screen.queryByText(RULES_STATS(0))).not.toBeInTheDocument();
     });
 
     it('shows only fields count when rules are empty', () => {
-      render(React.createElement(FieldsetCard, makeProps({ fields: [makeField()], rules: [] })));
+      render(React.createElement(FieldsetCard, makeProps({ fields: [makeField()], rulesets: [] })));
 
       expect(screen.getByText(FIELDS_STATS(1))).toBeInTheDocument();
       expect(screen.queryByText(RULES_STATS(0))).not.toBeInTheDocument();
     });
 
     it('shows only rules count when fields are empty', () => {
-      render(React.createElement(FieldsetCard, makeProps({ fields: [], rules: [makeFieldsetTemplateRule()] })));
+      render(React.createElement(FieldsetCard, makeProps({ fields: [], rulesets: [makeFieldsetRuleset()] })));
 
       expect(screen.getByText(RULES_STATS(1))).toBeInTheDocument();
       expect(screen.queryByText(FIELDS_STATS(0))).not.toBeInTheDocument();

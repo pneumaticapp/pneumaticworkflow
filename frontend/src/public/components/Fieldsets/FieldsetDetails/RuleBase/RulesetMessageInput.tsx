@@ -1,0 +1,29 @@
+import * as React from 'react';
+import { useIntl } from 'react-intl';
+
+import { IFieldRuleMessageInputProps } from './types';
+import styles from '../FieldsetRulesets/FieldsetRulesets.css';
+
+export const RulesetMessageInput = ({
+  message,
+  onChange,
+  isReadOnly,
+}: IFieldRuleMessageInputProps) => {
+  const { formatMessage } = useIntl();
+
+  return (
+    <>
+      <span className={styles['ruleset-card__label']}>
+        {formatMessage({ id: 'fieldsets.ruleset-message' })}
+      </span>
+      <input
+        type="text"
+        className={styles['ruleset-message-input']}
+        value={message || ''}
+        placeholder={formatMessage({ id: 'fieldsets.ruleset-message-placeholder' })}
+        onChange={(event) => onChange(event.target.value)}
+        disabled={isReadOnly}
+      />
+    </>
+  );
+};

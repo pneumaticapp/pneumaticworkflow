@@ -3,7 +3,7 @@ import { IntlShape } from 'react-intl';
 
 import { EExtraFieldMode, IExtraField } from '../../../types/template';
 import { EInputNameBackgroundColor } from '../../../types/workflow';
-import { EFieldLabelPosition } from '../../../types/fieldset';
+import { EFieldLabelPosition, IFieldRuleSet } from '../../../types/fieldset';
 
 export interface IWorkflowExtraFieldProps {
   field: IExtraField;
@@ -25,6 +25,9 @@ export interface IWorkflowExtraFieldProps {
   datasetName?: string;
   onUploadStateChange?(isUploading: boolean): void;
   icon?: React.ReactNode;
+  fieldRulesets?: IFieldRuleSet[];
+  onOpenFieldRules?(ruleset?: IFieldRuleSet): void;
+  onDeleteFieldRuleset?(rulesetApiName: string): void;
 }
 
 type IExtraFieldPropsBase = Omit<IWorkflowExtraFieldProps, 'showDropdown'> & {

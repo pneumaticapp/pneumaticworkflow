@@ -3,9 +3,8 @@ import pytest
 from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
     FieldSetLayout,
-    FieldSetRuleType,
     FieldType,
-    LabelPosition,
+    LabelPosition, FieldSetRuleOperator,
 )
 from src.processes.models.workflows.fields import (
     FieldSelection,
@@ -298,10 +297,10 @@ def test__update_fieldset_rules__rules_data_is_none__delete_all():
         kickoff=kickoff,
         name='FS',
         api_name='fs-1',
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='100',
     )
-    existing_rule = fieldset.rules.first()
+    existing_rule = fieldset.rulesets.first()
     service = KickoffUpdateVersionService(
         user=user,
         auth_type=AuthTokenType.USER,
@@ -316,7 +315,7 @@ def test__update_fieldset_rules__rules_data_is_none__delete_all():
     )
 
     # assert
-    assert fieldset.rules.count() == 0
+    assert fieldset.rulesets.count() == 0
     assert FieldSetRule.objects.filter(
         id=existing_rule.id,
     ).exists() is False
@@ -346,12 +345,12 @@ def test__update_fieldset_rules__provided__ok():
         kickoff=kickoff,
         name='FS',
         api_name='fs-1',
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='50',
     )
 
     # stale rule to be deleted
-    stale_rule = fieldset.rules.first()
+    stale_rule = fieldset.rulesets.first()
     service = KickoffUpdateVersionService(
         user=user,
         auth_type=AuthTokenType.USER,
@@ -361,7 +360,6 @@ def test__update_fieldset_rules__provided__ok():
     rules_data = [
         {
             'api_name': 'rule-1',
-            'type': FieldSetRuleType.SUM_EQUAL,
             'value': '100',
         },
     ]
@@ -373,10 +371,9 @@ def test__update_fieldset_rules__provided__ok():
     )
 
     # assert
-    rules = fieldset.rules.all()
+    rules = fieldset.rulesets.all()
     assert rules.count() == 1
     assert rules[0].api_name == 'rule-1'
-    assert rules[0].type == FieldSetRuleType.SUM_EQUAL
     assert rules[0].value == '100'
     assert rules[0].account_id == account.id
     assert FieldSetRule.objects.filter(
@@ -408,10 +405,10 @@ def test__update_field_rules__provided__ok():
         kickoff=kickoff,
         name='FS',
         api_name='fs-1',
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='100',
     )
-    rule_1 = fieldset.rules.first()
+    rule_1 = fieldset.rulesets.first()
     field = TaskField.objects.create(
         kickoff=kickoff,
         workflow=workflow,
@@ -442,8 +439,8 @@ def test__update_field_rules__provided__ok():
     )
 
     # assert
-    assert field.rules.count() == 1
-    assert field.rules.filter(id=rule_1.id).exists() is True
+    assert field.rulesets.count() == 1
+    assert field.rulesets.filter(id=rule_1.id).exists() is True
 
 
 def test__update_field_rules__empty__clear():
@@ -470,10 +467,10 @@ def test__update_field_rules__empty__clear():
         kickoff=kickoff,
         name='FS',
         api_name='fs-1',
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='100',
     )
-    rule_1 = fieldset.rules.first()
+    rule_1 = fieldset.rulesets.first()
     field = TaskField.objects.create(
         kickoff=kickoff,
         workflow=workflow,
@@ -484,7 +481,7 @@ def test__update_field_rules__empty__clear():
         type=FieldType.NUMBER,
         order=1,
     )
-    field.rules.add(rule_1)
+    field.rulesets.add(rule_1)
     service = KickoffUpdateVersionService(
         user=user,
         auth_type=AuthTokenType.USER,
@@ -501,7 +498,7 @@ def test__update_field_rules__empty__clear():
     )
 
     # assert
-    assert field.rules.count() == 0
+    assert field.rulesets.count() == 0
 
 
 def test__update_fields__provided__ok(mocker):
@@ -846,7 +843,6 @@ def test__update_fieldsets__provided__ok(mocker):
     rules_data_1 = [
         {
             'api_name': 'rule-1',
-            'type': FieldSetRuleType.SUM_EQUAL,
             'value': '100',
         },
     ]
