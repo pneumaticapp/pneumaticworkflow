@@ -122,6 +122,28 @@ describe('AttachmentField', () => {
     ]);
   });
 
+  it('should show files when the parent hydrates uploadedFiles after mount', () => {
+    const { rerender } = renderField({ uploadedFiles: [] });
+
+    expect(screen.queryByAltText(savedLogo.name)).not.toBeInTheDocument();
+    expect(screen.queryByAltText(savedLogo.url)).not.toBeInTheDocument();
+
+    rerender(
+      <IntlProvider locale="en" messages={enMessages}>
+        <AttachmentField
+          accountId={1}
+          uploadedFiles={[savedLogo]}
+          setUploadedFiles={jest.fn()}
+          acceptedType="image"
+          expectedImageWidth={80}
+          expectedImageHeight={80}
+        />
+      </IntlProvider>,
+    );
+
+    expect(screen.getByAltText(savedLogo.name)).toBeInTheDocument();
+  });
+
   it('should keep the local preview when the parent re-renders with the previously saved file', async () => {
     mockedUploadFiles.mockResolvedValue([uploadedLogo]);
     const { rerender, container } = renderField();

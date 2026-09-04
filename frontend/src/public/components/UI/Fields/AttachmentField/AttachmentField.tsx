@@ -83,8 +83,29 @@ export function AttachmentField({
   const [isUploading, setUploadingState] = React.useState(false);
   const [filesToUploadState, setFilesToUploadState] = React.useState<TUploadedFile[]>(uploadedFiles);
   const filesToUploadRef = React.useRef(filesToUploadState);
+  const hasPendingLocalChangeRef = React.useRef(false);
 
   filesToUploadRef.current = filesToUploadState;
+
+  React.useEffect(() => {
+    const parentSignature = getFilesSignature(uploadedFiles);
+    const localSignature = getFilesSignature(filesToUploadRef.current);
+
+    if (hasPendingLocalChangeRef.current) {
+      if (parentSignature === localSignature) {
+        hasPendingLocalChangeRef.current = false;
+      }
+
+      return;
+    }
+
+    if (parentSignature === localSignature) {
+      return;
+    }
+
+    filesToUploadRef.current = uploadedFiles;
+    setFilesToUploadState(uploadedFiles);
+  }, [uploadedFiles]);
 
   React.useEffect(() => {
     // clear file input value after uploading
@@ -94,6 +115,13 @@ export function AttachmentField({
       current.value = '';
     }
   }, [filesToUploadState]);
+
+  const applyLocalFiles = (files: TUploadedFile[]) => {
+    hasPendingLocalChangeRef.current = true;
+    filesToUploadRef.current = files;
+    setFilesToUploadState(files);
+    setUploadedFiles(files);
+  };
 
   const handleOpenUploadWindow = () => {
     if (!uploadFieldRef.current) {
@@ -149,9 +177,7 @@ export function AttachmentField({
         isMultiple || !isArrayWithItems(newFileWithThumbnailUrl)
           ? [...filesToUploadRef.current, ...(newFileWithThumbnailUrl as TUploadedFile[])]
           : [...newFileWithThumbnailUrl];
-      filesToUploadRef.current = allFiles;
-      setFilesToUploadState(allFiles);
-      setUploadedFiles(allFiles);
+      applyLocalFiles(allFiles);
     } catch (error) {
       NotificationManager.warning({ message: 'workflows.tasks-failed-to-upload-files' });
       logger.error(error);
@@ -164,9 +190,7 @@ export function AttachmentField({
     const newUploadedFiles = filesToUploadRef.current.map((file) => (
       file.id === id ? { ...file, isRemoved: true } : file
     ));
-    filesToUploadRef.current = newUploadedFiles;
-    setFilesToUploadState(newUploadedFiles);
-    setUploadedFiles(newUploadedFiles);
+    applyLocalFiles(newUploadedFiles);
   };
 
   const renderInput = () => {
@@ -246,3 +270,9 @@ export function AttachmentField({
     </div>
   );
 }
+
+const getFilesSignature = (files: TUploadedFile[]): string => {
+  return files
+    .map((file) => `${file.id}:${file.url}:${file.isRemoved ? '1' : '0'}`)
+    .join('|');
+};
