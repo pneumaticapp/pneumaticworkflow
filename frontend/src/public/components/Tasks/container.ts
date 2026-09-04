@@ -107,7 +107,7 @@ const SyncedTasks = withSyncedQueryString<TTasksStoreProps>(
     {
       propName: 'taskSorting',
       queryParamName: 'sorting',
-      defaultAction: changeTaskListSorting(ETaskListSorting.DateAsc),
+      defaultAction: changeTaskListSorting(ETaskListSorting.DateDesc),
       createAction: changeTaskListSorting,
       getQueryParamByProp: (value) => value,
     },

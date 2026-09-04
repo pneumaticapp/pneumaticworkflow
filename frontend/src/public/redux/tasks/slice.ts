@@ -28,7 +28,7 @@ const initFilterValues = {
 const initTasksSettings: ITasksSettings = {
   isHasFilter: false,
   completionStatus: ETaskListCompletionStatus.Active,
-  sorting: ETaskListSorting.DateAsc,
+  sorting: ETaskListSorting.DateDesc,
   filterValues: initFilterValues,
   templateList: {
     items: [],
