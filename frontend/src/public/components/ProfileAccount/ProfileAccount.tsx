@@ -55,14 +55,11 @@ export function ProfileAccount({
   React.useLayoutEffect(() => {
     onChangeTab(ESettingsTabs.AccountSettings);
   }, []);
-  React.useEffect(() => {
-    if (!wasEmptyRef.current || hasNoData) {
-      return;
-    }
 
+  if (wasEmptyRef.current && !hasNoData) {
     wasEmptyRef.current = false;
     changeState({ name, logoSm, logoLg });
-  }, [hasNoData, name, logoSm, logoLg]);
+  }
 
   const logoSmFiles = React.useMemo(
     () => (state.logoSm ? [getFileByUrl(state.logoSm)] : EMPTY_UPLOADED_FILES),

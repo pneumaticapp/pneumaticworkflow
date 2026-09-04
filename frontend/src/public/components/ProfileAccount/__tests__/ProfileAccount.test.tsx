@@ -64,6 +64,46 @@ describe('ProfileAccount', () => {
     expect(getLogoProps(expectedImageWidth).uploadedFiles).toEqual([]);
   });
 
+  it('shows saved logos after account data arrives', () => {
+    const { rerender } = render(
+      <IntlProvider locale="en" messages={enMessages}>
+        <ProfileAccount
+          name=""
+          logoSm={null}
+          logoLg={null}
+          loading
+          leaseLevel="standard"
+          billingPlan={ESubscriptionPlan.Premium}
+          isAdmin
+          editCurrentAccount={jest.fn()}
+          onChangeTab={jest.fn()}
+        />
+      </IntlProvider>,
+    );
+
+    expect(attachmentFieldMock).not.toHaveBeenCalled();
+
+    rerender(
+      <IntlProvider locale="en" messages={enMessages}>
+        <ProfileAccount
+          accountId={1}
+          name="Acme"
+          logoSm="https://example.com/old-small.png"
+          logoLg="https://example.com/old-large.png"
+          loading={false}
+          leaseLevel="standard"
+          billingPlan={ESubscriptionPlan.Premium}
+          isAdmin
+          editCurrentAccount={jest.fn()}
+          onChangeTab={jest.fn()}
+        />
+      </IntlProvider>,
+    );
+
+    expect(getLogoProps(80).uploadedFiles[0]?.url).toBe('https://example.com/old-small.png');
+    expect(getLogoProps(340).uploadedFiles[0]?.url).toBe('https://example.com/old-large.png');
+  });
+
   it('keeps the uploaded logo after an unrelated field change', () => {
     const uploadedLogo: TUploadedFile = {
       id: 'new-logo',
