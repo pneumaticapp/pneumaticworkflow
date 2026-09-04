@@ -76,13 +76,34 @@ export function AttachmentField({
   ...props
 }: IAttachmentFieldProps) {
   const { messages, formatMessage } = useIntl();
-  const inputRef = inputRefProp || React.useRef(null);
+  const fallbackInputRef = React.useRef<HTMLInputElement>(null);
+  const inputRef = inputRefProp || fallbackInputRef;
   const normalizedErrorMessage = errorMessage && (messages[errorMessage] || errorMessage);
-  const uploadFieldRef = React.createRef<HTMLInputElement>();
+  const uploadFieldRef = React.useRef<HTMLInputElement>(null);
   const [isUploading, setUploadingState] = React.useState(false);
   const [filesToUploadState, setFilesToUploadState] = React.useState<TUploadedFile[]>(uploadedFiles);
+  const filesToUploadRef = React.useRef(filesToUploadState);
+  const hasPendingLocalChangeRef = React.useRef(false);
+
+  filesToUploadRef.current = filesToUploadState;
 
   React.useEffect(() => {
+    const parentSignature = getFilesSignature(uploadedFiles);
+    const localSignature = getFilesSignature(filesToUploadRef.current);
+
+    if (hasPendingLocalChangeRef.current) {
+      if (parentSignature === localSignature) {
+        hasPendingLocalChangeRef.current = false;
+      }
+
+      return;
+    }
+
+    if (parentSignature === localSignature) {
+      return;
+    }
+
+    filesToUploadRef.current = uploadedFiles;
     setFilesToUploadState(uploadedFiles);
   }, [uploadedFiles]);
 
@@ -94,6 +115,13 @@ export function AttachmentField({
       current.value = '';
     }
   }, [filesToUploadState]);
+
+  const applyLocalFiles = (files: TUploadedFile[]) => {
+    hasPendingLocalChangeRef.current = true;
+    filesToUploadRef.current = files;
+    setFilesToUploadState(files);
+    setUploadedFiles(files);
+  };
 
   const handleOpenUploadWindow = () => {
     if (!uploadFieldRef.current) {
@@ -147,10 +175,9 @@ export function AttachmentField({
 
       const allFiles =
         isMultiple || !isArrayWithItems(newFileWithThumbnailUrl)
-          ? [...filesToUploadState, ...(newFileWithThumbnailUrl as TUploadedFile[])]
+          ? [...filesToUploadRef.current, ...(newFileWithThumbnailUrl as TUploadedFile[])]
           : [...newFileWithThumbnailUrl];
-      setFilesToUploadState(allFiles);
-      setUploadedFiles(allFiles);
+      applyLocalFiles(allFiles);
     } catch (error) {
       NotificationManager.warning({ message: 'workflows.tasks-failed-to-upload-files' });
       logger.error(error);
@@ -160,9 +187,10 @@ export function AttachmentField({
   };
 
   const handleDeleteFile = (id: string) => () => {
-    const newUploadedFiles = filesToUploadState.map((file) => (file.id === id ? { ...file, isRemoved: true } : file));
-    setFilesToUploadState(newUploadedFiles);
-    setUploadedFiles(newUploadedFiles);
+    const newUploadedFiles = filesToUploadRef.current.map((file) => (
+      file.id === id ? { ...file, isRemoved: true } : file
+    ));
+    applyLocalFiles(newUploadedFiles);
   };
 
   const renderInput = () => {
@@ -231,12 +259,22 @@ export function AttachmentField({
       {normalizedErrorMessage && <p className={styles['error-text']}>{normalizedErrorMessage}</p>}
       {description && <p className={styles['field-description']}>{description}</p>}
 
-      <ExtraFieldFilesGrid
-        attachments={filesToUploadState}
-        deleteFile={handleDeleteFile}
-        isUploading={isUploading}
-        isEdit={canDeleteUploadedFiles}
-      />
+      <div className={styles['preview-container']}>
+        <ExtraFieldFilesGrid
+          attachments={filesToUploadState}
+          deleteFile={handleDeleteFile}
+          isUploading={isUploading}
+          isEdit={canDeleteUploadedFiles}
+        />
+      </div>
     </div>
   );
 }
+
+// Ids differ between a freshly uploaded file and the same file rebuilt by the parent, so only urls are compared
+const getFilesSignature = (files: TUploadedFile[]): string => {
+  return files
+    .filter((file) => !file.isRemoved)
+    .map((file) => file.url)
+    .join('|');
+};
