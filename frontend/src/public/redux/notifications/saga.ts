@@ -35,9 +35,7 @@ import { getUnreadNotificationsCount } from '../../api/getUnreadNotificationsCou
 import { NotificationManager } from '../../components/UI/Notifications';
 
 function* fetchNotificationsAsRead() {
-  const { items: notificationsList, unreadItemsCount }: IStoreNotification = yield select(
-    getNotificationsStore,
-  );
+  const { items: notificationsList, unreadItemsCount }: IStoreNotification = yield select(getNotificationsStore);
   const newNotificationsIds = notificationsList.filter(({ status }) => status === 'new').map(({ id }) => id);
 
   if (!isArrayWithItems(newNotificationsIds)) {
@@ -83,9 +81,7 @@ function* fetchNotifications({ payload: { offset } = { offset: 0 } }: TLoadNotif
 }
 
 export function* handleRemoveNotification({ payload: { notificationId } }: TRemoveNotificationItem) {
-  const { items, totalItemsCount, unreadItemsCount }: IStoreNotification = yield select(
-    getNotificationsStore,
-  );
+  const { items, totalItemsCount, unreadItemsCount }: IStoreNotification = yield select(getNotificationsStore);
   const deletingItem = items.find(({ id }) => id === notificationId);
 
   if (!deletingItem) {
@@ -96,10 +92,12 @@ export function* handleRemoveNotification({ payload: { notificationId } }: TRemo
   const remainingTotalItemsCount = Math.max(0, totalItemsCount - 1);
   const newItems = items.filter(({ id }) => id !== notificationId);
 
-  yield put(changeNotificationsList({
-    items: newItems,
-    count: remainingTotalItemsCount,
-  }));
+  yield put(
+    changeNotificationsList({
+      items: newItems,
+      count: remainingTotalItemsCount,
+    }),
+  );
 
   if (deletingItem.status === 'new') {
     yield put(changeUnreadNotificationsCount(Math.max(0, unreadItemsCount - 1)));
@@ -126,25 +124,24 @@ export function* handleRemoveNotification({ payload: { notificationId } }: TRemo
   }
 
   try {
-    const {
-      results: olderItems,
-      count: updatedTotalItemsCount,
-    }: TGetNotificationsResponse = yield call(getNotifications, {
-      offset: currentItems.length,
-      limit: refillItemsCount,
-    });
-    const {
-      items: latestItems,
-      totalItemsCount: latestTotalItemsCount,
-    }: IStoreNotification = yield select(getNotificationsStore);
-    const safeTotalItemsCount = latestTotalItemsCount === remainingTotalItemsCount
-      ? updatedTotalItemsCount
-      : latestTotalItemsCount;
+    const { results: olderItems, count: updatedTotalItemsCount }: TGetNotificationsResponse = yield call(
+      getNotifications,
+      {
+        offset: currentItems.length,
+        limit: refillItemsCount,
+      },
+    );
+    const { items: latestItems, totalItemsCount: latestTotalItemsCount }: IStoreNotification =
+      yield select(getNotificationsStore);
+    const safeTotalItemsCount =
+      latestTotalItemsCount === remainingTotalItemsCount ? updatedTotalItemsCount : latestTotalItemsCount;
 
-    yield put(changeNotificationsList({
-      items: uniqBy([...latestItems, ...olderItems], 'id'),
-      count: safeTotalItemsCount,
-    }));
+    yield put(
+      changeNotificationsList({
+        items: uniqBy([...latestItems, ...olderItems], 'id'),
+        count: safeTotalItemsCount,
+      }),
+    );
   } catch (error) {
     NotificationManager.notifyApiError(error, {
       title: 'notifications.fetch-error',

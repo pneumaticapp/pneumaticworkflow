@@ -1,4 +1,3 @@
-/* eslint-disable indent */
 import { isValidPhoneNumber } from 'react-phone-number-input';
 import { couponRegex, emailRegex, urlRegex, urlWithProtocolRegex, whitespaceRegex } from '../constants/defaultValues';
 
@@ -245,7 +244,7 @@ export const getDatasetRowRules = (existingItems: string[]): IRule[] => [
     message: 'validation.dataset-row-exists',
     isInvalid: (value: string) => {
       const trimmedValue = (value || '').trim().toLowerCase();
-      if (!trimmedValue) return false; 
+      if (!trimmedValue) return false;
       return existingItems.some((item) => item.trim().toLowerCase() === trimmedValue);
     },
   },

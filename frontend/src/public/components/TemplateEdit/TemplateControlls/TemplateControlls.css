@@ -9,18 +9,18 @@
 }
 
 .info-controls-switch {
-  margin-bottom: 32px;
   display: flex;
   flex-flow: column;
   gap: 1.6rem;
+  margin-bottom: 32px;
 }
 
 .switch-label {
   font-size: 11px;
   font-weight: bold;
   line-height: 16px;
-  letter-spacing: 0.05em;
   text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .info-controls .info-control_switch {
@@ -32,8 +32,8 @@
   all: unset;
   display: flex;
   align-items: center;
-  cursor: pointer;
   color: var(--pneumatic-color-black72);
+  cursor: pointer;
   transition: color 0.1s ease-in-out;
 
   &:hover {
@@ -65,9 +65,9 @@
 }
 
 .control-button {
+  width: 100%;
   margin-bottom: 16px;
   overflow: hidden;
-  width: 100%;
   white-space: nowrap;
 }
 
@@ -89,8 +89,8 @@
 }
 
 .enable-button_disable {
-  margin-right: 8px;
   width: 40px;
+  margin-right: 8px;
 }
 
 .run-button {
@@ -102,16 +102,16 @@
 }
 
 .external-links-warning {
-  margin-bottom: 16px;
   display: flex;
   align-items: flex-start;
+  margin-bottom: 16px;
 }
 
 .external-links-warning__icon {
+  flex-shrink: 0;
   width: 40px;
   height: 40px;
   color: #f44336;
-  flex-shrink: 0;
 }
 
 .external-links-warning__text {

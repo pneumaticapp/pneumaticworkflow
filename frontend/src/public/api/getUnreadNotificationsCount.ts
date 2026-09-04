@@ -6,7 +6,9 @@ export type TGetUnreadNotificationsCount = {
 };
 
 export function getUnreadNotificationsCount() {
-  const { api: { urls } } = getBrowserConfigEnv();
+  const {
+    api: { urls },
+  } = getBrowserConfigEnv();
 
   return commonRequest<TGetUnreadNotificationsCount>(
     `${urls.getNotificationsCount}?status=new`,

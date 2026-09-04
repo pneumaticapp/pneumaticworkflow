@@ -25,16 +25,13 @@ export function Placeholder({
   containerClassName,
 }: IPlaceholderProps) {
   return (
-    <div
-      className={classnames(
-        styles['container'],
-        containerClassName,
-      )}
-    >
+    <div className={classnames(styles['container'], containerClassName)}>
       <div className={styles['icon']}>
         <Icon mood={mood} />
       </div>
-      <Header tag="p" size="6" className={styles['title']}>{title}</Header>
+      <Header tag="p" size="6" className={styles['title']}>
+        {title}
+      </Header>
       {description && <p className={styles['description']}>{description}</p>}
       {footer && <div className={styles['footer']}>{footer}</div>}
     </div>

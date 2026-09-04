@@ -3,8 +3,7 @@ import { IFieldsetRuntime, IFieldsetCatalogItem, IFieldsetBindingClient } from '
 import { createFieldsetBindingApiName } from '../../../utils/createId';
 
 export type TMergedTaskOutputRow =
-  | { kind: 'field'; field: IExtraField }
-  | (IFieldsetBindingClient & { kind: 'fieldset' });
+  { kind: 'field'; field: IExtraField } | (IFieldsetBindingClient & { kind: 'fieldset' });
 
 function rowOrder(row: TMergedTaskOutputRow): number {
   return row.kind === 'field' ? row.field.order : row.order;

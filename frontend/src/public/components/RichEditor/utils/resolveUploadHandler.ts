@@ -1,5 +1,5 @@
 import type React from 'react';
-import type { IRichEditorProps } from "../types";
+import type { IRichEditorProps } from '../types';
 
 export function resolveUploadHandler(
   propHandler: IRichEditorProps['onUploadAttachments'],

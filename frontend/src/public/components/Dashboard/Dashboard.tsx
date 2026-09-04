@@ -1,5 +1,4 @@
 /* eslint-disable jsx-a11y/mouse-events-have-key-events */
-/* eslint-disable react/destructuring-assignment */
 import * as React from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
@@ -49,6 +48,7 @@ const { useRef, useState, useEffect, useCallback } = React;
 export const Dashboard = (props: IDashboardProps) => {
   const { formatMessage } = useIntl();
   const { isMobile } = useCheckDevice();
+
   useEffect(() => {
     return () => props.resetDashboardData();
   }, []);

@@ -2,18 +2,18 @@ import { Dispatch, SetStateAction } from 'react';
 import { IExtraFieldSelection } from '../../../../types/template';
 import { getSelectionDuplicateError } from '../../../../utils/validators';
 
-export const handleSelectionBlur = (
-  setDuplicateErrors: Dispatch<SetStateAction<Record<string, string>>>,
-  selections?: IExtraFieldSelection[],
-) => (apiName: string) => () => {
-  const selection = selections?.find((item) => item.apiName === apiName);
-  const value = selection?.value || '';
-  const allValues = selections?.map((item) => item.value) || [];
-  const error = getSelectionDuplicateError(value, allValues);
-  if (error) {
-    setDuplicateErrors((prev) => ({ ...prev, [apiName]: error }));
-  }
-};
+export const handleSelectionBlur =
+  (setDuplicateErrors: Dispatch<SetStateAction<Record<string, string>>>, selections?: IExtraFieldSelection[]) =>
+  (apiName: string) =>
+  () => {
+    const selection = selections?.find((item) => item.apiName === apiName);
+    const value = selection?.value || '';
+    const allValues = selections?.map((item) => item.value) || [];
+    const error = getSelectionDuplicateError(value, allValues);
+    if (error) {
+      setDuplicateErrors((prev) => ({ ...prev, [apiName]: error }));
+    }
+  };
 
 export function recalculateDuplicateErrors(selections: IExtraFieldSelection[]): Record<string, string> {
   const errors: Record<string, string> = {};

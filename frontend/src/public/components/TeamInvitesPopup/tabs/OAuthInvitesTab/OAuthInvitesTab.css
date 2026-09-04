@@ -1,12 +1,12 @@
 .scrollbar {
+  /* stylelint-disable-next-line declaration-no-important */
+  padding-right: 32px !important;
+  padding-bottom: 32px;
+  padding-left: 32px;
   margin-top: 32px;
   /* stylelint-disable-next-line declaration-no-important */
   margin-right: -32px !important;
   margin-left: -32px;
-  /* stylelint-disable-next-line declaration-no-important */
-  padding-right: 32px !important;
-  padding-left: 32px;
-  padding-bottom: 32px;
 }
 
 .user {
@@ -30,16 +30,16 @@
 .user-info__name {
   margin: 0;
   overflow: hidden;
-  line-height: inherit;
   text-overflow: ellipsis;
+  line-height: inherit;
   color: white;
 }
 
 .user-info__email {
   margin: 0;
   overflow: hidden;
-  line-height: inherit;
   text-overflow: ellipsis;
+  line-height: inherit;
   color: var(--pneumatic-color-black48);
 }
 
@@ -49,11 +49,11 @@
 
 .empty-list-placeholder {
   position: absolute;
-  z-index: -1;
   top: 0;
   right: 0;
-  left: 0;
   bottom: 0;
+  left: 0;
+  z-index: -1;
   display: flex;
   align-items: center;
   justify-content: center;

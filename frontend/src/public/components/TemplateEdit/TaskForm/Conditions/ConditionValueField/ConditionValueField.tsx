@@ -1,4 +1,3 @@
-/* eslint-disable indent */
 import React, { useState, ReactNode, ChangeEvent } from 'react';
 import { useSelector } from 'react-redux';
 import classnames from 'classnames';
@@ -95,11 +94,12 @@ export function ConditionValueField({
         value: item.value,
         label: item.value,
       }));
-
     } else if (variable?.selections?.length) {
-      dropdownSelections = variable.selections.map((selectionValue) => ({ value: selectionValue, label: selectionValue }));
+      dropdownSelections = variable.selections.map((selectionValue) => ({
+        value: selectionValue,
+        label: selectionValue,
+      }));
     } else {
-
       return null;
     }
 
@@ -151,9 +151,9 @@ export function ConditionValueField({
       value: `group-${group.id}`,
     }));
     const dropdownEntities = [...labelGroups, ...labelUsers];
-    const selectedEntity = dropdownEntities.find(
-      (entity) => entity.id === Number(rule.value) && entity.entityType === rule.fieldType,
-    ) || null;
+    const selectedEntity =
+      dropdownEntities.find((entity) => entity.id === Number(rule.value) && entity.entityType === rule.fieldType) ||
+      null;
 
     return (
       <DropdownList

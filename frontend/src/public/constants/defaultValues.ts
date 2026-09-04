@@ -1,6 +1,5 @@
 /* eslint-disable no-useless-escape */
-/* eslint-disable no-irregular-whitespace */
-/* eslint-disable max-len */
+
 import { Config } from 'react-player';
 
 import { TMenuType } from '../types/common';

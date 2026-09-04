@@ -32,7 +32,7 @@ const initialState: IAccounts = {
     billingPlan: ESubscriptionPlan.Unknown,
     trialIsActive: true,
     isSubscribed: false,
-    tenantsActiveUsers: null
+    tenantsActiveUsers: null,
   },
   isLoading: false,
   users: [],
@@ -45,9 +45,8 @@ const initialState: IAccounts = {
   isCreateUserModalOpen: false,
 };
 
-
 function setUserProperties(users: TUserListItem[], userId: number, changedProps: Partial<TUserListItem>) {
-  return users.map(user => {
+  return users.map((user) => {
     if (user.id === userId) {
       return {
         ...user,
@@ -84,9 +83,8 @@ function sortUsers(users: TUserListItem[], sorting: EUserListSorting) {
   return sorted;
 }
 
-const getActiveUsersCount = (users: TUserListItem[]) => users.filter(
-  (user) => user.status === EUserStatus.Active && user.type === 'user',
-).length;
+const getActiveUsersCount = (users: TUserListItem[]) =>
+  users.filter((user) => user.status === EUserStatus.Active && user.type === 'user').length;
 
 const accountsSlice = createSlice({
   name: 'accounts',
@@ -151,16 +149,17 @@ const accountsSlice = createSlice({
     changeUserManager: (state, action: PayloadAction<{ id: number; managerId: number | null }>) => {
       const { id: userId, managerId } = action.payload;
 
-      const updateList = (list: TUserListItem[]) => list.map(user => {
-        if (user.id === userId) return { ...user, managerId };
-        if (user.reportIds && user.reportIds.includes(userId) && user.id !== managerId) {
-          return { ...user, reportIds: user.reportIds.filter(id => id !== userId) };
-        }
-        if (user.id === managerId && (!user.reportIds || !user.reportIds.includes(userId))) {
-          return { ...user, reportIds: [...(user.reportIds || []), userId] };
-        }
-        return user;
-      });
+      const updateList = (list: TUserListItem[]) =>
+        list.map((user) => {
+          if (user.id === userId) return { ...user, managerId };
+          if (user.reportIds && user.reportIds.includes(userId) && user.id !== managerId) {
+            return { ...user, reportIds: user.reportIds.filter((id) => id !== userId) };
+          }
+          if (user.id === managerId && (!user.reportIds || !user.reportIds.includes(userId))) {
+            return { ...user, reportIds: [...(user.reportIds || []), userId] };
+          }
+          return user;
+        });
 
       state.team.list = updateList(state.team.list);
       state.users = updateList(state.users);
@@ -169,29 +168,30 @@ const accountsSlice = createSlice({
     changeUserReports: (state, action: PayloadAction<{ id: number; reportIds: number[] }>) => {
       const { id: userId, reportIds } = action.payload;
 
-      const updateList = (list: TUserListItem[]) => list.map(user => {
-        if (user.id === userId) return { ...user, reportIds };
+      const updateList = (list: TUserListItem[]) =>
+        list.map((user) => {
+          if (user.id === userId) return { ...user, reportIds };
 
-        let newReportIds = user.reportIds;
-        if (user.id !== userId && user.reportIds) {
-          const filtered = user.reportIds.filter(rId => !reportIds.includes(rId));
-          if (filtered.length !== user.reportIds.length) {
-            newReportIds = filtered;
+          let newReportIds = user.reportIds;
+          if (user.id !== userId && user.reportIds) {
+            const filtered = user.reportIds.filter((rId) => !reportIds.includes(rId));
+            if (filtered.length !== user.reportIds.length) {
+              newReportIds = filtered;
+            }
           }
-        }
 
-        let newManagerId = user.managerId;
-        if (reportIds.includes(user.id)) {
-          newManagerId = userId;
-        } else if (user.managerId === userId && !reportIds.includes(user.id)) {
-          newManagerId = null;
-        }
+          let newManagerId = user.managerId;
+          if (reportIds.includes(user.id)) {
+            newManagerId = userId;
+          } else if (user.managerId === userId && !reportIds.includes(user.id)) {
+            newManagerId = null;
+          }
 
-        if (newReportIds !== user.reportIds || newManagerId !== user.managerId) {
-          return { ...user, reportIds: newReportIds, managerId: newManagerId };
-        }
-        return user;
-      });
+          if (newReportIds !== user.reportIds || newManagerId !== user.managerId) {
+            return { ...user, reportIds: newReportIds, managerId: newManagerId };
+          }
+          return user;
+        });
 
       state.team.list = updateList(state.team.list);
       state.users = updateList(state.users);
@@ -257,7 +257,7 @@ const accountsSlice = createSlice({
 });
 
 export const usersFetchStarted = createAction('accounts/usersFetchStarted', (payload?: TUsersFetchPayload) => ({
-  payload
+  payload,
 }));
 export const teamFetchStarted = createAction<ITeamFetchStartedProps>('accounts/teamFetchStarted');
 export const loadChangeUserAdmin = createAction<IChangeUserAdminProps>('accounts/loadChangeUserAdmin');

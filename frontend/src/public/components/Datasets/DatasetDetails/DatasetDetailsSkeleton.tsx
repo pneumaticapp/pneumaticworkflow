@@ -24,18 +24,10 @@ export const DatasetDetailsSkeleton = () => {
         {SKELETON_ROWS.map((row) => (
           <div key={row} className={rowStyles['container']}>
             <div className={rowStyles['value']}>
-              <Skeleton
-                width="65%"
-                height="2rem"
-                borderRadius="0.4rem"
-              />
+              <Skeleton width="65%" height="2rem" borderRadius="0.4rem" />
             </div>
             <div className={rowStyles['actions']}>
-              <Skeleton
-                width="2.4rem"
-                height="2.4rem"
-                borderRadius="0.4rem"
-              />
+              <Skeleton width="2.4rem" height="2.4rem" borderRadius="0.4rem" />
             </div>
           </div>
         ))}

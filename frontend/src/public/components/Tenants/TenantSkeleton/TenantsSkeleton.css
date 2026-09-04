@@ -1,7 +1,7 @@
 .skeleton {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   width: 100%;
 
   @media (--mobile) {
@@ -10,20 +10,20 @@
 
   &__names {
     flex-grow: 1;
-    margin-right: 16px;
     max-width: 536px;
+    margin-right: 16px;
   }
 
   &__counters {
-    margin: 0 -4px;
     display: flex;
     justify-content: space-between;
+    margin: 0 -4px;
   }
 
   &__counters-item {
-    margin: 0 4px;
     display: inline-block;
     width: 40px;
     height: 40px;
+    margin: 0 4px;
   }
 }

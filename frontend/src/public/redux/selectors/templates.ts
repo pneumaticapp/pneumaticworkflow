@@ -27,10 +27,10 @@ export const getTemplatesIntegrationsStats = (state: IApplicationState) => state
 
 export const getTemplatesTasks =
   (templateId: number) =>
-    (state: IApplicationState): TTransformedTask[] =>
-      state.templates.templatesTasksMap[templateId];
+  (state: IApplicationState): TTransformedTask[] =>
+    state.templates.templatesTasksMap[templateId];
 
 export const getTemplatesVariables =
   (templateId: number) =>
-    (state: IApplicationState): TTaskVariable[] =>
-      state.templates.templatesVariablesMap[templateId];
+  (state: IApplicationState): TTaskVariable[] =>
+    state.templates.templatesVariablesMap[templateId];

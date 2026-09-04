@@ -1352,7 +1352,8 @@ export const ruMessages = {
   'datasets.new-dataset.caption': 'Создайте новый набор данных для использования в выпадающих списках',
   'datasets.new-dataset.description': 'После создания набора данных вы сможете сразу начать добавлять в него элементы.',
   'datasets.edit-dataset.title': 'Изменить название набора данных',
-  'datasets.edit-dataset.description': 'Измените название набора данных. Переименование отразится во всех полях, где он используется.',
+  'datasets.edit-dataset.description':
+    'Измените название набора данных. Переименование отразится во всех полях, где он используется.',
   'datasets.modal-button-create': 'Создать',
   'datasets.modal-button-confirm': 'Подтвердить',
   'datasets.modal-button-cancel': 'ОТМЕНА',
@@ -1424,18 +1425,17 @@ export const ruMessages = {
   'fieldsets.rule-fields-placeholder': 'Выберите поля...',
   'fieldsets.rules-validation-incomplete': 'Заполните значение правила и выберите хотя бы одно поле перед сохранением',
   'fieldsets.rules-validation-value-required': 'Введите значение правила перед сохранением',
-  'fieldsets.rules-validation-value-number': 'В одном из правил «Сумма равна» значение не является числом — введите число.',
+  'fieldsets.rules-validation-value-number':
+    'В одном из правил «Сумма равна» значение не является числом — введите число.',
   'fieldsets.rules-validation-fields-required': 'Выберите хотя бы одно поле для правила перед сохранением',
   'fieldsets.rules-validation-fields-number':
-    'В одном из правил «Сумма равна» есть поле не типа «число». ' +
-    'Допускаются только числовые поля.',
+    'В одном из правил «Сумма равна» есть поле не типа «число». ' + 'Допускаются только числовые поля.',
   'fieldsets.leave-unsaved-title': 'Отменить изменения для набора полей {name}?',
   'fieldsets.leave-unsaved-message': 'Ваши изменения не сохранены.',
   'fieldsets.leave-unsaved-stay': 'Продолжить редактирование',
   'fieldsets.leave-unsaved-leave': 'Убрать',
   'fieldsets.leave-unsaved-save': 'Сохранить',
-  'fieldsets.clone-unsaved-warning':
-    'Пожалуйста, сохраните или отмените несохраненные изменения перед клонированием',
+  'fieldsets.clone-unsaved-warning': 'Пожалуйста, сохраните или отмените несохраненные изменения перед клонированием',
   'fieldsets.settings-section': 'Настройки',
   'fieldsets.header-label': 'Филдсет',
   'fieldsets.name-label': 'Имя',

@@ -12,9 +12,7 @@ jest.mock('../../..', () => ({
   DropdownList: ({ options, formatOptionLabel }: any) => (
     <div>
       {options.map((option: any) => (
-        <div key={option.value}>
-          {formatOptionLabel(option, { context: 'menu', selectValue: [] })}
-        </div>
+        <div key={option.value}>{formatOptionLabel(option, { context: 'menu', selectValue: [] })}</div>
       ))}
     </div>
   ),

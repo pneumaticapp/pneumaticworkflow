@@ -18,11 +18,7 @@ import { teamFetchStarted } from '../../../redux/accounts/slice';
 import { IGroup } from '../../../redux/team/types';
 import { EUserListSorting, TUserListItem } from '../../../types/user';
 
-import {
-  IntegrateIcon,
-  SearchLargeIcon,
-  AddUserIcon,
-} from '../../icons';
+import { IntegrateIcon, SearchLargeIcon, AddUserIcon } from '../../icons';
 import {
   TDropdownOption,
   InputField,
@@ -53,7 +49,7 @@ export function GroupDetails({ match }: any) {
   const group: IGroup | null = useSelector(getCurrentGroupData);
   const sorting: EUserListSorting = useSelector(getCurrentGroupUserListSorting);
   const users: TUserListItem[] = useSelector(getAccountsTeamList);
-  
+
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {

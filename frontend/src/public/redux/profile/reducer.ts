@@ -1,6 +1,4 @@
-import {
-  IStoreProfile,
-} from '../../types/redux';
+import { IStoreProfile } from '../../types/redux';
 import { EProfileSettingsActions, TProfileSettingsActions } from './actions';
 import { ESettingsTabs } from '../../types/profile';
 import { checkSomeRouteIsActive } from '../../utils/history';
@@ -18,6 +16,7 @@ export const reducer = (state = INIT_STATE, action: TProfileSettingsActions): IS
   switch (action.type) {
     case EProfileSettingsActions.ChangeProfileSettingsActiveTab:
       return { ...state, settingsTab: action.payload };
-    default: return { ...state };
+    default:
+      return { ...state };
   }
 };

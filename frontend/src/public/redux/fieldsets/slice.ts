@@ -1,9 +1,9 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { IFieldsetsStore, IFieldsetsList } from '../../types/redux';
 import {
-  IFieldsetCatalogItem, ICreateFieldsetParams,
+  IFieldsetCatalogItem,
+  ICreateFieldsetParams,
   IUpdateFieldsetParams,
   EFieldsetsSorting,
 } from '../../types/fieldset';
@@ -93,9 +93,7 @@ const fieldsetsSlice = createSlice({
       state.currentFieldset = action.payload;
       state.isCurrentFieldsetLoading = false;
 
-      const listIndex = state.fieldsetsList.items.findIndex(
-        (item) => item.id === action.payload.id
-      );
+      const listIndex = state.fieldsetsList.items.findIndex((item) => item.id === action.payload.id);
       if (listIndex !== -1) {
         state.fieldsetsList.items[listIndex].name = action.payload.name;
         state.fieldsetsList.items[listIndex].description = action.payload.description;

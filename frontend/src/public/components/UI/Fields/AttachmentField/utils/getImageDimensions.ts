@@ -1,9 +1,9 @@
-export function getImageDimensions(file: File | Blob): Promise<{ width: number, height: number }> {
+export function getImageDimensions(file: File | Blob): Promise<{ width: number; height: number }> {
   return new Promise((resolve, reject) => {
-    const fr = new FileReader;
+    const fr = new FileReader();
 
     fr.onload = () => {
-      const img = new Image;
+      const img = new Image();
 
       img.onload = () => {
         const { width, height } = img;
@@ -16,7 +16,6 @@ export function getImageDimensions(file: File | Blob): Promise<{ width: number, 
       };
 
       img.src = fr.result as string;
-
     };
 
     fr.readAsDataURL(file);

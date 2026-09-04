@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 import * as React from 'react';
 import { useMemo } from 'react';
 import { useIntl } from 'react-intl';
@@ -90,37 +89,26 @@ export function getSystemVariables(): TTaskVariable[] {
   ];
 }
 
-export function getFieldVariables({
-  kickoff,
-  tasks,
-  templateId,
-}: TGetVariablesParam): TTaskVariable[] {
-  const tasksVariables =
-    tasks.flatMap((task) => {
-      const taskName = task.name || '';
-      const richTaskName = templateId ? (
-        <StepName initialStepName={taskName} templateId={templateId} />
-      ) : (
-        taskName
-      );
+export function getFieldVariables({ kickoff, tasks, templateId }: TGetVariablesParam): TTaskVariable[] {
+  const tasksVariables = tasks.flatMap((task) => {
+    const taskName = task.name || '';
+    const richTaskName = templateId ? <StepName initialStepName={taskName} templateId={templateId} /> : taskName;
 
-      const fromTaskFields = task.fields.map((field) =>
-        getVariableFromField(field, taskName, richTaskName),
-      );
+    const fromTaskFields = task.fields.map((field) => getVariableFromField(field, taskName, richTaskName));
 
-      const fromTaskFieldsets = getVariablesFromSelectedFieldsets(
-        task.fieldsets,
-        (fieldset) => `${taskName} · ${fieldset.name}`,
-        (fieldset) => (
-          <>
-            {richTaskName}
-            {` · ${fieldset.name}`}
-          </>
-        ),
-      );
+    const fromTaskFieldsets = getVariablesFromSelectedFieldsets(
+      task.fieldsets,
+      (fieldset) => `${taskName} · ${fieldset.name}`,
+      (fieldset) => (
+        <>
+          {richTaskName}
+          {` · ${fieldset.name}`}
+        </>
+      ),
+    );
 
-      return [...fromTaskFields, ...fromTaskFieldsets];
-    });
+    return [...fromTaskFields, ...fromTaskFieldsets];
+  });
 
   const kickoffVariables = getKickoffVariables(kickoff);
 
@@ -132,7 +120,9 @@ export function getVariables(params: TGetVariablesParam): TTaskVariable[] {
 }
 
 export function getKickoffVariables(
-  kickoff?: Pick<ITemplateKickoffClient, 'fields'> & { fieldsets?: (IFieldsetBindingClient | TTemplateFieldFieldset)[] },
+  kickoff?: Pick<ITemplateKickoffClient, 'fields'> & {
+    fieldsets?: (IFieldsetBindingClient | TTemplateFieldFieldset)[];
+  },
 ) {
   const fromFields = kickoff?.fields.map((field) => getVariableFromField(field, 'Kick-off form')) ?? [];
   const fromFieldsets = getVariablesFromSelectedFieldsets(
@@ -228,13 +218,10 @@ export const useWorkflowNameVariables = (
     [formatMessage],
   );
 
-  const kickoffSingleLineVriables = useMemo(
-    () => getSingleLineVariables(getKickoffVariables(kickoff)),
-    [kickoff],
-  );
+  const kickoffSingleLineVriables = useMemo(() => getSingleLineVariables(getKickoffVariables(kickoff)), [kickoff]);
 
-  return useMemo(() => [...CUSTOM_VARIABLES, ...kickoffSingleLineVriables], [
-    CUSTOM_VARIABLES,
-    kickoffSingleLineVriables,
-  ]);
+  return useMemo(
+    () => [...CUSTOM_VARIABLES, ...kickoffSingleLineVriables],
+    [CUSTOM_VARIABLES, kickoffSingleLineVriables],
+  );
 };

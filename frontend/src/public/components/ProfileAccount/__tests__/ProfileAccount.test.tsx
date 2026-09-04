@@ -13,28 +13,28 @@ jest.mock('../../UI/Fields/AttachmentField', () => ({
 }));
 
 const attachmentFieldMock = AttachmentField as unknown as jest.Mock;
-const getLogoProps = (expectedImageWidth: number) => (
+const getLogoProps = (expectedImageWidth: number) =>
   [...attachmentFieldMock.mock.calls]
     .reverse()
-    .find(([props]) => props.expectedImageWidth === expectedImageWidth)?.[0] as IAttachmentFieldProps
-);
+    .find(([props]) => props.expectedImageWidth === expectedImageWidth)?.[0] as IAttachmentFieldProps;
 
-const renderProfileAccount = () => render(
-  <IntlProvider locale="en" messages={enMessages}>
-    <ProfileAccount
-      accountId={1}
-      name="Acme"
-      logoSm="https://example.com/old-small.png"
-      logoLg="https://example.com/old-large.png"
-      loading={false}
-      leaseLevel="standard"
-      billingPlan={ESubscriptionPlan.Premium}
-      isAdmin
-      editCurrentAccount={jest.fn()}
-      onChangeTab={jest.fn()}
-    />
-  </IntlProvider>,
-);
+const renderProfileAccount = () =>
+  render(
+    <IntlProvider locale="en" messages={enMessages}>
+      <ProfileAccount
+        accountId={1}
+        name="Acme"
+        logoSm="https://example.com/old-small.png"
+        logoLg="https://example.com/old-large.png"
+        loading={false}
+        leaseLevel="standard"
+        billingPlan={ESubscriptionPlan.Premium}
+        isAdmin
+        editCurrentAccount={jest.fn()}
+        onChangeTab={jest.fn()}
+      />
+    </IntlProvider>,
+  );
 
 describe('ProfileAccount', () => {
   beforeEach(() => {

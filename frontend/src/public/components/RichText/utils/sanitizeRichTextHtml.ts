@@ -15,6 +15,4 @@ const RICH_TEXT_SANITIZE_CONFIG: DOMPurify.Config = {
   ],
 };
 
-export const sanitizeRichTextHtml = (html: string): string => (
-  DOMPurify.sanitize(html, RICH_TEXT_SANITIZE_CONFIG)
-);
+export const sanitizeRichTextHtml = (html: string): string => DOMPurify.sanitize(html, RICH_TEXT_SANITIZE_CONFIG);

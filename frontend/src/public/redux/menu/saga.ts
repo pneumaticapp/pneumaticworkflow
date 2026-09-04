@@ -1,4 +1,3 @@
-/* eslint-disable no-restricted-syntax */
 import { all, fork, put, select, takeEvery } from 'redux-saga/effects';
 import { PayloadAction } from '@reduxjs/toolkit';
 import { EMenuActions, mergeMenuItems, setMenuItemCounter } from './actions';

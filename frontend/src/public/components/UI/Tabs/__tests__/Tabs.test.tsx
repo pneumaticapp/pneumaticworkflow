@@ -27,7 +27,9 @@ const makeProps = (overrides: Partial<ITabsProps<TTabOption>> = {}): ITabsProps<
 const getTabButtons = () => screen.getAllByRole('button');
 
 describe('Tabs — middle tab separator logic', () => {
-  beforeEach(() => { jest.clearAllMocks(); });
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
 
   it('middle tab gets separator-right when first tab is active', () => {
     render(React.createElement(Tabs, makeProps({ activeValueId: 1 })));
@@ -64,7 +66,9 @@ describe('Tabs — middle tab separator logic', () => {
 });
 
 describe('Tabs — active tab and click behavior', () => {
-  beforeEach(() => { jest.clearAllMocks(); });
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
 
   it('applies tab_active class only to the active tab', () => {
     render(React.createElement(Tabs, makeProps({ activeValueId: 2 })));

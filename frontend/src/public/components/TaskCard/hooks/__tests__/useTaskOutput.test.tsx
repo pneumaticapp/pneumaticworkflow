@@ -39,25 +39,17 @@ describe('useTaskOutput', () => {
     });
     const serverFieldset = makeFieldsetRuntime({
       title: 'Updated fieldset',
-      fields: [
-        makeField('existing-field', 'server value'),
-        makeField('new-required-field', '', true),
-      ],
+      fields: [makeField('existing-field', 'server value'), makeField('new-required-field', '', true)],
     });
     (fieldsetsStorage.get as jest.Mock).mockReturnValue([storedFieldset]);
 
-    render(
-      <HookHarness
-        task={makeTask({ fieldsets: [serverFieldset] })}
-      />,
-    );
+    render(<HookHarness task={makeTask({ fieldsets: [serverFieldset] })} />);
 
-    expect(hookResult.fieldsetOutputValues).toEqual([{
-      ...serverFieldset,
-      fields: [
-        makeField('existing-field', 'draft value'),
-        makeField('new-required-field', '', true),
-      ],
-    }]);
+    expect(hookResult.fieldsetOutputValues).toEqual([
+      {
+        ...serverFieldset,
+        fields: [makeField('existing-field', 'draft value'), makeField('new-required-field', '', true)],
+      },
+    ]);
   });
 });

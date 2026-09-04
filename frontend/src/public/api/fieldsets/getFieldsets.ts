@@ -32,5 +32,7 @@ function getFieldsetsQueryString({ ordering, limit, offset }: IGetFieldsetsParam
     backendOrdering && `ordering=${backendOrdering}`,
     limit !== undefined && `limit=${limit}`,
     offset !== undefined && `offset=${offset}`,
-  ].filter(Boolean).join('&');
+  ]
+    .filter(Boolean)
+    .join('&');
 }

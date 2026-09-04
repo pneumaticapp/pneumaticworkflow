@@ -13,19 +13,14 @@ export function setJwtCookie(token: string, rememberMeMode: boolean = true) {
     domain: window.location.hostname,
     expires: COOKIE_EXPIRES,
     samesite: 'none',
-    secure: true
+    secure: true,
   };
 
   setCookie('token', token, COOKIE_OPTIONS);
 }
 
 export function removeAuthCookies() {
-  const REMOVE_COOKIE_LIST = [
-    'token',
-    'ajs_user_id',
-    'ajs_group_id',
-    'ajs_anonymous_id',
-  ];
+  const REMOVE_COOKIE_LIST = ['token', 'ajs_user_id', 'ajs_group_id', 'ajs_anonymous_id'];
 
-  REMOVE_COOKIE_LIST.forEach(key => deleteCookie(key, { domain: window.location.hostname }));
+  REMOVE_COOKIE_LIST.forEach((key) => deleteCookie(key, { domain: window.location.hostname }));
 }

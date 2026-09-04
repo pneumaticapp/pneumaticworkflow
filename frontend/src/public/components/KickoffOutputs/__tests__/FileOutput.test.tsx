@@ -76,8 +76,7 @@ describe('FileOutput', () => {
   });
 
   it('renders multiple files from markdownValue', () => {
-    const markdownValue =
-      '[a.pdf](https://files.example.com/1), [b.png](https://files.example.com/2)';
+    const markdownValue = '[a.pdf](https://files.example.com/1), [b.png](https://files.example.com/2)';
 
     render(React.createElement(FileOutput, { ...baseProps, markdownValue }));
 

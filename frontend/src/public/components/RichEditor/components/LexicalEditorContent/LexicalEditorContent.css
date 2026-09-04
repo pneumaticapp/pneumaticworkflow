@@ -1,10 +1,10 @@
 .editor {
   position: relative;
-  padding: 1rem 1.6rem;
-  flex: 1;
   display: flex;
+  flex: 1;
   flex-direction: column;
   width: 100%;
+  padding: 1rem 1.6rem;
   cursor: text;
   background: transparent;
   border: 0.1rem solid var(--pneumatic-color-black16);
@@ -23,11 +23,11 @@
 
 .controls-wrapper {
   display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  flex-wrap: wrap;
-  gap: 0.8rem;
 }
 
 .content-editable {
@@ -46,8 +46,8 @@
   right: 1.6rem;
   left: 1.6rem;
   max-height: 8.8rem;
-  pointer-events: none;
   color: var(--default-placeholder-color);
+  pointer-events: none;
 
   @mixin text-overflow 4;
 }
@@ -83,10 +83,10 @@
 }
 
 :global(.lexical-rich-editor-paragraph) {
-  margin: 0;
-  padding: 0;
   min-width: 0.1rem;
   min-height: 2rem;
+  padding: 0;
+  margin: 0;
 }
 
 :global(.lexical-rich-editor-heading-h1),
@@ -95,8 +95,8 @@
 :global(.lexical-rich-editor-heading-h4),
 :global(.lexical-rich-editor-heading-h5),
 :global(.lexical-rich-editor-heading-h6) {
-  margin: 0;
   padding: 0;
+  margin: 0;
   font-weight: 800;
   line-height: 1.3;
   color: var(--pneumatic-color-black100);
@@ -157,9 +157,9 @@
 
 :global(.lexical-rich-editor-checklist-item) {
   display: flex;
-  list-style: none;
-  align-items: flex-start;
   gap: 0.8rem;
+  align-items: flex-start;
+  list-style: none;
 }
 
 :global(.lexical-rich-editor-checklist-item + .lexical-rich-editor-checklist-item) {
@@ -167,7 +167,7 @@
 }
 
 :global(.lexical-rich-editor-checklist-checkbox) {
-  cursor: pointer;
   flex-shrink: 0;
   pointer-events: none;
+  cursor: pointer;
 }

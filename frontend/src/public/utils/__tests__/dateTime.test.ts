@@ -1,10 +1,4 @@
-import {
-  DELAY_TITLE_TEMPLATE,
-  formatDelayRequest,
-  formatDuration,
-  getSeconds,
-  parseDuration,
-} from '../dateTime';
+import { DELAY_TITLE_TEMPLATE, formatDelayRequest, formatDuration, getSeconds, parseDuration } from '../dateTime';
 
 describe('dateTime', () => {
   const mockDuration = '12 05:30:00';

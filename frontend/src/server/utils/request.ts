@@ -1,5 +1,3 @@
-/* eslint-disable no-promise-executor-return */
-/* eslint-disable class-methods-use-this */
 import * as request from 'request';
 import * as dotenv from 'dotenv';
 import { mergePaths } from '../../public/utils/urls';

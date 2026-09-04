@@ -8,8 +8,6 @@ import { RichEditor, type IRichEditorHandle, type IRichEditorProps } from '../..
 
 import styles from './InputWithVariables.css';
 
-
-
 export interface IEditorWithVariablesProps {
   placeholder?: string;
   listVariables: TTaskVariable[];
@@ -61,11 +59,7 @@ export const InputWithVariables: React.FC<IEditorWithVariablesProps> = ({
     const newVariable = listVariables?.find((variable) => variable.apiName === apiName);
     if (!newVariable) return;
 
-    editorRef.current.insertVariable(
-      apiName,
-      newVariable.title,
-      newVariable.subtitle ?? '',
-    );
+    editorRef.current.insertVariable(apiName, newVariable.title, newVariable.subtitle ?? '');
   };
 
   return (

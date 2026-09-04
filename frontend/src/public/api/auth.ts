@@ -1,4 +1,3 @@
-/* eslint-disable class-methods-use-this */
 import { getToken } from './getToken';
 import { NotificationManager } from '../components/UI/Notifications';
 import { registerUser } from './registerUser';

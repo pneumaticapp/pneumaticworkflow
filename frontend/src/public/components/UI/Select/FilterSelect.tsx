@@ -215,7 +215,7 @@ export function FilterSelect<
     }
 
     const filteredValues: (TOption | string)[] = [];
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
     Array.from(groupedOptions.entries()).forEach(([_, group]) => {
       if (!searchText) {
         filteredValues.push(group.title, ...group.options);

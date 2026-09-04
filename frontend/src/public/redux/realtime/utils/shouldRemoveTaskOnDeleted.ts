@@ -10,10 +10,7 @@ interface IShouldRemoveTaskOnDeletedParams {
  * Non-active deletions only apply on the Completed tab to avoid wiping a
  * card just re-added via task_created (return/revert WS race).
  */
-export function shouldRemoveTaskOnDeleted({
-  status,
-  completionStatus,
-}: IShouldRemoveTaskOnDeletedParams): boolean {
+export function shouldRemoveTaskOnDeleted({ status, completionStatus }: IShouldRemoveTaskOnDeletedParams): boolean {
   if (status === ETaskStatus.Active) {
     return true;
   }

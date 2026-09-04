@@ -2,17 +2,13 @@ import * as React from 'react';
 import { render } from '@testing-library/react';
 
 import { getVariables } from '../TaskForm/utils/getTaskVariables';
-import {
-  ITemplateEditVariablesSyncProps,
-  TemplateEditVariablesSync,
-} from '../TemplateEditVariablesSync';
+import { ITemplateEditVariablesSyncProps, TemplateEditVariablesSync } from '../TemplateEditVariablesSync';
 
 jest.mock('../TaskForm/utils/getTaskVariables', () => ({
   getVariables: jest.fn(),
 }));
 
-const makeTemplate = (id: number | undefined) =>
-  ({ id, kickoff: { fields: [], fieldsets: [] }, tasks: [] } as any);
+const makeTemplate = (id: number | undefined) => ({ id, kickoff: { fields: [], fieldsets: [] }, tasks: [] }) as any;
 
 describe('TemplateEditVariablesSync', () => {
   beforeEach(() => {
@@ -23,9 +19,7 @@ describe('TemplateEditVariablesSync', () => {
     const loadTemplateVariablesSuccess = jest.fn();
     const mockVariables = [{ apiName: 'v1' }, { apiName: 'v2' }] as any[];
 
-    (getVariables as jest.Mock)
-      .mockReturnValueOnce(mockVariables)
-      .mockReturnValueOnce([{ apiName: 'v1' }]);
+    (getVariables as jest.Mock).mockReturnValueOnce(mockVariables).mockReturnValueOnce([{ apiName: 'v1' }]);
 
     render(
       React.createElement(TemplateEditVariablesSync, {
@@ -42,18 +36,14 @@ describe('TemplateEditVariablesSync', () => {
     });
 
     expect(getVariables).toHaveBeenCalledTimes(2);
-    expect(getVariables).toHaveBeenCalledWith(
-      expect.objectContaining({ templateId: 10 }),
-    );
+    expect(getVariables).toHaveBeenCalledWith(expect.objectContaining({ templateId: 10 }));
   });
 
   it('does NOT call loadTemplateVariablesSuccess when variable count is unchanged', () => {
     const loadTemplateVariablesSuccess = jest.fn();
     const sameVars = [{ apiName: 'v1' }, { apiName: 'v2' }] as any[];
 
-    (getVariables as jest.Mock)
-      .mockReturnValueOnce(sameVars)
-      .mockReturnValueOnce(sameVars);
+    (getVariables as jest.Mock).mockReturnValueOnce(sameVars).mockReturnValueOnce(sameVars);
 
     render(
       React.createElement(TemplateEditVariablesSync, {

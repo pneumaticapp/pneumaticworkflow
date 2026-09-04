@@ -14,11 +14,7 @@ export interface IMarkdownToken {
   hidden: boolean;
 }
 
-export const createMarkdownToken = (
-  type: string,
-  tag: string,
-  nesting: number,
-): IMarkdownToken => ({
+export const createMarkdownToken = (type: string, tag: string, nesting: number): IMarkdownToken => ({
   type,
   tag,
   attrs: null,

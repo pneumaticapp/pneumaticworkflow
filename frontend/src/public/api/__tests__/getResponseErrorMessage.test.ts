@@ -38,8 +38,9 @@ import axios from 'axios';
 
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 const mockInstance = mockedAxios.create.mock.results[0].value;
-const responseErrorHandler = mockInstance.interceptors.response.use.mock.calls[0][1] as
-  (error: AxiosError) => Promise<never>;
+const responseErrorHandler = mockInstance.interceptors.response.use.mock.calls[0][1] as (
+  error: AxiosError,
+) => Promise<never>;
 
 function makeAxiosError(data: unknown, status: number): AxiosError {
   return {
@@ -53,7 +54,6 @@ function makeAxiosError(data: unknown, status: number): AxiosError {
     toJSON: () => ({}),
   } as AxiosError;
 }
-
 
 describe('response interceptor: payload propagation to InterceptorError', () => {
   beforeEach(() => {
@@ -89,4 +89,3 @@ describe('response interceptor: payload propagation to InterceptorError', () => 
     });
   });
 });
-

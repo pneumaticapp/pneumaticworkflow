@@ -1,4 +1,3 @@
-/* eslint-disable */
 /* prettier-ignore */
 import { ITypedReduxAction } from '../../types/redux';
 import { actionGenerator } from '../../utils/redux';
@@ -36,7 +35,4 @@ export const clearAppFilters: (payload?: void) => TClearAppFilters = actionGener
 >(EGeneralActions.ClearAppFilters);
 
 export type TGeneralActions =
-  | TSetGeneralLoaderVisibility
-  | TOpenFullscreenImage
-  | TCloseFullscreenImage
-  | TClearAppFilters;
+  TSetGeneralLoaderVisibility | TOpenFullscreenImage | TCloseFullscreenImage | TClearAppFilters;

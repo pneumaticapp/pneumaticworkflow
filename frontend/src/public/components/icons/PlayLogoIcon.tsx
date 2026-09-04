@@ -2,7 +2,7 @@
 /* prettier-ignore */
 import * as React from 'react';
 
-export interface IPlayLogoIconProps extends React.SVGAttributes<SVGElement> { }
+export interface IPlayLogoIconProps extends React.SVGAttributes<SVGElement> {}
 
 export function PlayLogoIcon({ fill = 'currentColor', ...rest }: IPlayLogoIconProps) {
   return (

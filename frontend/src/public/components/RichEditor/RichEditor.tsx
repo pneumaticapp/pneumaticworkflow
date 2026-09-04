@@ -1,10 +1,4 @@
-import React, {
-  forwardRef,
-  useCallback,
-  useImperativeHandle,
-  useRef,
-  useState,
-} from 'react';
+import React, { forwardRef, useCallback, useImperativeHandle, useRef, useState } from 'react';
 import classnames from 'classnames';
 import type { EditorState, LexicalEditor } from 'lexical';
 import {
@@ -37,12 +31,7 @@ import { resolveUploadHandler } from './utils/resolveUploadHandler';
 
 import styles from './RichEditor.css';
 
-
-
-export const RichEditor = forwardRef<
-  IRichEditorHandle,
-  IRichEditorProps
->(function RichEditor(
+export const RichEditor = forwardRef<IRichEditorHandle, IRichEditorProps>(function RichEditor(
   {
     className,
     editorClassName,
@@ -102,8 +91,8 @@ export const RichEditor = forwardRef<
     editorState:
       defaultValue != null && defaultValue.trim() !== ''
         ? (editor: LexicalEditor) => {
-          applyContentToEditor(editor, defaultValue);
-        }
+            applyContentToEditor(editor, defaultValue);
+          }
         : undefined,
   };
 
@@ -156,49 +145,46 @@ export const RichEditor = forwardRef<
     [handleChange, handleChangeChecklists],
   );
 
-  const insertVariableToEditor = useCallback(
-    (apiName: string, variableTitle: string, subtitle: string): void => {
-      const editor = editorRef.current;
-      if (!editor) return;
+  const insertVariableToEditor = useCallback((apiName: string, variableTitle: string, subtitle: string): void => {
+    const editor = editorRef.current;
+    if (!editor) return;
 
-      editor.update(() => {
-        const selection = $getSelection();
-        if (!$isRangeSelection(selection)) return;
+    editor.update(() => {
+      const selection = $getSelection();
+      if (!$isRangeSelection(selection)) return;
 
-        const variableNode = $createVariableNode({
-          apiName,
-          title: variableTitle,
-          subtitle,
-        });
-
-        const needSpace = ((): boolean => {
-          if (!selection.isCollapsed()) return true;
-          const {anchor} = selection;
-          const node = anchor.getNode();
-          if ($isTextNode(node)) {
-            const text = node.getTextContent();
-            if (anchor.offset < text.length && text[anchor.offset] === ' ') return false;
-          }
-          const nextNode = node.getNextSibling();
-          if (nextNode && $isTextNode(nextNode) && nextNode.getTextContent().startsWith(' ')) {
-            return false;
-          }
-          return true;
-        })();
-
-        if (needSpace) {
-          $insertNodes([variableNode, $createTextNode(' ')]);
-          const after = variableNode.getNextSibling();
-          if (after && $isTextNode(after)) after.selectEnd();
-          else variableNode.selectNext();
-        } else {
-          $insertNodes([variableNode]);
-          variableNode.selectNext();
-        }
+      const variableNode = $createVariableNode({
+        apiName,
+        title: variableTitle,
+        subtitle,
       });
-    },
-    [],
-  );
+
+      const needSpace = ((): boolean => {
+        if (!selection.isCollapsed()) return true;
+        const { anchor } = selection;
+        const node = anchor.getNode();
+        if ($isTextNode(node)) {
+          const text = node.getTextContent();
+          if (anchor.offset < text.length && text[anchor.offset] === ' ') return false;
+        }
+        const nextNode = node.getNextSibling();
+        if (nextNode && $isTextNode(nextNode) && nextNode.getTextContent().startsWith(' ')) {
+          return false;
+        }
+        return true;
+      })();
+
+      if (needSpace) {
+        $insertNodes([variableNode, $createTextNode(' ')]);
+        const after = variableNode.getNextSibling();
+        if (after && $isTextNode(after)) after.selectEnd();
+        else variableNode.selectNext();
+      } else {
+        $insertNodes([variableNode]);
+        variableNode.selectNext();
+      }
+    });
+  }, []);
 
   const clearContent = useCallback((): void => {
     const editor = editorRef.current;
@@ -212,11 +198,14 @@ export const RichEditor = forwardRef<
     });
   }, []);
 
-  const replaceContent = useCallback((content: string): void => {
-    const editor = editorRef.current;
-    if (!editor) return;
-    applyContentToEditor(editor, content);
-  }, [applyContentToEditor]);
+  const replaceContent = useCallback(
+    (content: string): void => {
+      const editor = editorRef.current;
+      if (!editor) return;
+      applyContentToEditor(editor, content);
+    },
+    [applyContentToEditor],
+  );
 
   useImperativeHandle(
     ref,
@@ -236,8 +225,6 @@ export const RichEditor = forwardRef<
     }),
     [insertVariableToEditor, clearContent, replaceContent],
   );
-
-
 
   return (
     <div

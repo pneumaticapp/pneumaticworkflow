@@ -8,7 +8,9 @@ export interface ISaveFirebaseDeviceTokenResponse {
 }
 
 export function saveFirebaseDeviceToken(token: string) {
-  const { api: { urls }} = getBrowserConfigEnv();
+  const {
+    api: { urls },
+  } = getBrowserConfigEnv();
 
   return commonRequest<ISaveFirebaseDeviceTokenResponse>(
     urls.fcmDevice,

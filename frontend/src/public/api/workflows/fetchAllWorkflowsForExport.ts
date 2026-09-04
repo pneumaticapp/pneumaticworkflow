@@ -17,11 +17,7 @@ function transformPageResults(response: IRawWorkflowsPageResponse): IWorkflowCli
   return mapWorkflowsAddComputedPropsToRedux(withDates as IWorkflow[]);
 }
 
-function getRemainingOffsets(
-  totalCount: number,
-  firstPageLength: number,
-  pageLimit: number,
-): number[] {
+function getRemainingOffsets(totalCount: number, firstPageLength: number, pageLimit: number): number[] {
   const remaining = totalCount - firstPageLength;
   if (remaining <= 0) return [];
   const pageCount = Math.ceil(remaining / pageLimit);
@@ -45,15 +41,12 @@ export async function fetchAllWorkflowsForExport(
   }
 
   const offsets = getRemainingOffsets(rawFirst.count, rawFirst.results.length, pageLimit);
-  const restResults = await offsets.reduce<Promise<IWorkflowClient[]>>(
-    async (accPromise, offset) => {
-      const acc = await accPromise;
-      const next = await getWorkflows({ ...params, offset, limit: pageLimit });
-      const rawNext = next as unknown as IRawWorkflowsPageResponse;
-      return [...acc, ...transformPageResults(rawNext)];
-    },
-    Promise.resolve([]),
-  );
+  const restResults = await offsets.reduce<Promise<IWorkflowClient[]>>(async (accPromise, offset) => {
+    const acc = await accPromise;
+    const next = await getWorkflows({ ...params, offset, limit: pageLimit });
+    const rawNext = next as unknown as IRawWorkflowsPageResponse;
+    return [...acc, ...transformPageResults(rawNext)];
+  }, Promise.resolve([]));
 
   return [...allResults, ...restResults];
 }

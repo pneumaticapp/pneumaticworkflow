@@ -28,7 +28,7 @@ export function IntegrationsList({ integrations, isLoading, loadIntegrationsList
 
     return (
       <div className={styles['integraions-list']}>
-        {integrations.map(integration => (
+        {integrations.map((integration) => (
           <div key={integration.id} className={styles['integraion-card']}>
             <IntegrationCard {...integration} />
           </div>
@@ -37,9 +37,5 @@ export function IntegrationsList({ integrations, isLoading, loadIntegrationsList
     );
   };
 
-  return (
-    <div className={styles['container']}>
-      {renderList()}
-    </div>
-  );
+  return <div className={styles['container']}>{renderList()}</div>;
 }
