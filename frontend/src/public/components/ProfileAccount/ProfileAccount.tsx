@@ -45,9 +45,8 @@ export function ProfileAccount({
   const { formatMessage } = useIntl();
   const savedState: TEditableFields = { name, logoSm, logoLg };
   const [state, changeState] = React.useState<TEditableFields>(savedState);
-  const isDirty = isContentChanged(savedState, state) && isValidState(state);
+  const savedStateRef = React.useRef(savedState);
   const hasNoData = !accountId && !name;
-  const wasEmptyRef = React.useRef(hasNoData);
 
   React.useEffect(() => {
     document.title = TITLES.AccountSettings;
@@ -56,10 +55,13 @@ export function ProfileAccount({
     onChangeTab(ESettingsTabs.AccountSettings);
   }, []);
 
-  if (wasEmptyRef.current && !hasNoData) {
-    wasEmptyRef.current = false;
-    changeState({ name, logoSm, logoLg });
+  // Account data is hydrated after the first render and refreshed after every save
+  if (isContentChanged(savedStateRef.current, savedState)) {
+    savedStateRef.current = savedState;
+    changeState(savedState);
   }
+
+  const isDirty = isContentChanged(savedState, state) && isValidState(state);
 
   const logoSmFiles = React.useMemo(
     () => (state.logoSm ? [getFileByUrl(state.logoSm)] : EMPTY_UPLOADED_FILES),
