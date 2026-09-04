@@ -144,6 +144,44 @@ describe('AttachmentField', () => {
     expect(screen.getByAltText(savedLogo.name)).toBeInTheDocument();
   });
 
+  it('should show the stored file when the parent saves the upload under another url', async () => {
+    mockedUploadFiles.mockResolvedValue([uploadedLogo]);
+    const storedLogo: TUploadedFile = {
+      id: 'https://cdn.example.com/new-logo.png',
+      name: '',
+      url: 'https://cdn.example.com/new-logo.png',
+      thumbnailUrl: 'https://cdn.example.com/new-logo.png',
+      size: 0,
+    };
+    const { rerender, container } = renderField();
+
+    const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
+    const file = new File(['logo'], 'new-logo.png', { type: 'image/png' });
+
+    await act(async () => {
+      fireEvent.change(fileInput, { target: { files: [file] } });
+    });
+
+    const renderWithFiles = (files: TUploadedFile[]) => rerender(
+      <IntlProvider locale="en" messages={enMessages}>
+        <AttachmentField
+          accountId={1}
+          uploadedFiles={files}
+          setUploadedFiles={jest.fn()}
+          acceptedType="image"
+          expectedImageWidth={80}
+          expectedImageHeight={80}
+        />
+      </IntlProvider>,
+    );
+
+    renderWithFiles([{ ...uploadedLogo, id: uploadedLogo.url, name: '' }]);
+    renderWithFiles([storedLogo]);
+
+    expect(screen.getByAltText(storedLogo.url)).toBeInTheDocument();
+    expect(screen.queryByAltText(uploadedLogo.name)).not.toBeInTheDocument();
+  });
+
   it('should keep the local preview when the parent re-renders with the previously saved file', async () => {
     mockedUploadFiles.mockResolvedValue([uploadedLogo]);
     const { rerender, container } = renderField();

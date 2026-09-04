@@ -271,8 +271,10 @@ export function AttachmentField({
   );
 }
 
+// Ids differ between a freshly uploaded file and the same file rebuilt by the parent, so only urls are compared
 const getFilesSignature = (files: TUploadedFile[]): string => {
   return files
-    .map((file) => `${file.id}:${file.url}:${file.isRemoved ? '1' : '0'}`)
+    .filter((file) => !file.isRemoved)
+    .map((file) => file.url)
     .join('|');
 };
