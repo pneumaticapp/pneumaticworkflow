@@ -287,9 +287,7 @@ describe('TaskCard', () => {
     it('does not cross-select user and group performers with the same id', async () => {
       const task = {
         ...baseTask,
-        performers: [
-          { sourceId: 5, type: ETemplateOwnerType.User, label: 'John Doe' },
-        ],
+        performers: [{ sourceId: 5, type: ETemplateOwnerType.User, label: 'John Doe' }],
       };
 
       render(
@@ -347,6 +345,21 @@ describe('TaskCard', () => {
         expect(screen.getAllByTestId('extra-field')).toHaveLength(2);
       });
     });
+
+    it('updates visible fields when only server field metadata changes', async () => {
+      const field = makeField({ apiName: 'metadata-field', isHidden: false, value: '' });
+      const { rerender } = render(<TaskCard {...baseProps} task={{ ...baseTask, output: [field] }} />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('extra-field')).toBeInTheDocument();
+      });
+
+      rerender(<TaskCard {...baseProps} task={{ ...baseTask, output: [{ ...field, isHidden: true }] }} />);
+
+      await waitFor(() => {
+        expect(screen.queryByTestId('extra-field')).not.toBeInTheDocument();
+      });
+    });
   });
 
   describe('Output field ordering', () => {
@@ -367,7 +380,10 @@ describe('TaskCard', () => {
         expect(ExtraFieldIntl).toHaveBeenCalled();
       });
 
-      const renderedApiNames = ExtraFieldIntl.mock.calls.map((call: any[]) => call[0].field.apiName);
+      const renderedApiNames = ExtraFieldIntl.mock.calls.map((call: unknown[]) => {
+        const props = call[0] as { field: { apiName: string } };
+        return props.field.apiName;
+      });
 
       expect(renderedApiNames).toEqual(['file-field', 'url-field']);
     });
@@ -412,11 +428,12 @@ describe('TaskCard', () => {
       await waitFor(() => expect(ExtraFieldIntl.mock.calls.length).toBeGreaterThanOrEqual(2));
       const [firstFieldProps, secondFieldProps] = ExtraFieldIntl.mock.calls
         .slice(-2)
-        .map(([props]: any[]) => props);
-      const getCompleteButtonProps = () => [...mockButton.mock.calls]
-        .reverse()
-        .map(([props]) => props)
-        .find(({ buttonStyle }) => buttonStyle === 'yellow');
+        .map(([props]: [{ onUploadStateChange: (isUploading: boolean) => void }]) => props);
+      const getCompleteButtonProps = () =>
+        [...mockButton.mock.calls]
+          .reverse()
+          .map(([props]) => props)
+          .find(({ buttonStyle }) => buttonStyle === 'yellow');
 
       act(() => {
         firstFieldProps.onUploadStateChange(true);
@@ -444,10 +461,7 @@ describe('TaskCard', () => {
           fields: [fieldsetField],
         } as any;
         const { unmount } = render(
-          <TaskCard
-            {...baseProps}
-            task={{ ...baseTask, output: [outputField], fieldsets: [fieldset] }}
-          />,
+          <TaskCard {...baseProps} task={{ ...baseTask, output: [outputField], fieldsets: [fieldset] }} />,
         );
         const outputProps = ExtraFieldIntl.mock.calls.find(
           ([props]: any[]) => props.field.apiName === 'output-field',
@@ -487,9 +501,7 @@ describe('TaskCard', () => {
         const { ExtraFieldIntl } = jest.requireMock('../../TemplateEdit/ExtraFields');
         const { addOrUpdateStorageOutput } = jest.requireMock('../utils/storageOutputs');
         const field = makeField({ apiName: 'url-field', value: 'https://server.example' });
-        const { rerender } = render(
-          <TaskCard {...baseProps} task={{ ...baseTask, output: [field] }} />,
-        );
+        const { rerender } = render(<TaskCard {...baseProps} task={{ ...baseTask, output: [field] }} />);
         const lastCall = ExtraFieldIntl.mock.calls[ExtraFieldIntl.mock.calls.length - 1];
 
         act(() => {
@@ -511,11 +523,7 @@ describe('TaskCard', () => {
         });
 
         expect(addOrUpdateStorageOutput).toHaveBeenCalledTimes(1);
-        expect(addOrUpdateStorageOutput).toHaveBeenCalledWith(
-          baseTask.id,
-          [],
-          expect.any(Object),
-        );
+        expect(addOrUpdateStorageOutput).toHaveBeenCalledWith(baseTask.id, [], expect.any(Object));
       } finally {
         jest.useRealTimers();
       }
@@ -526,26 +534,15 @@ describe('TaskCard', () => {
       const { addOrUpdateStorageOutput, getOutputFromStorage } = jest.requireMock('../utils/storageOutputs');
       const field = makeField({ apiName: 'url-field', value: 'https://server.example' });
       getOutputFromStorage.mockReturnValue([{ ...field, value: 'https://draft.example' }]);
-      const { rerender } = render(
-        <TaskCard {...baseProps} task={{ ...baseTask, output: [field] }} />,
-      );
+      const { rerender } = render(<TaskCard {...baseProps} task={{ ...baseTask, output: [field] }} />);
 
-      rerender(
-        <TaskCard
-          {...baseProps}
-          task={{ ...baseTask, output: [{ ...field, value: '' }] }}
-        />,
-      );
+      rerender(<TaskCard {...baseProps} task={{ ...baseTask, output: [{ ...field, value: '' }] }} />);
 
       await waitFor(() => {
         const lastCall = ExtraFieldIntl.mock.calls[ExtraFieldIntl.mock.calls.length - 1];
         expect(lastCall[0].field.value).toBe('');
       });
-      expect(addOrUpdateStorageOutput).toHaveBeenCalledWith(
-        baseTask.id,
-        [],
-        expect.any(Object),
-      );
+      expect(addOrUpdateStorageOutput).toHaveBeenCalledWith(baseTask.id, [], expect.any(Object));
     });
 
     it('flushes pending drafts and clears all affected task ids before return', async () => {
@@ -612,11 +609,7 @@ describe('TaskCard', () => {
           expect.objectContaining({ apiName: 'changed-field', value: 'updated server value' }),
         ]);
       });
-      expect(addOrUpdateStorageOutput).toHaveBeenCalledWith(
-        baseTask.id,
-        [emptyFieldDraft],
-        expect.any(Object),
-      );
+      expect(addOrUpdateStorageOutput).toHaveBeenCalledWith(baseTask.id, [emptyFieldDraft], expect.any(Object));
     });
   });
 });

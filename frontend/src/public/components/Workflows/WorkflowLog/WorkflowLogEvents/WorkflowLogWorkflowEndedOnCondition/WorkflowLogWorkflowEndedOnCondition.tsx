@@ -16,23 +16,19 @@ export function WorkflowLogWorkflowEndedOnCondition({ created }: IWorkflowLogWor
   return (
     <div className={styles['container']}>
       <div className={styles['avatar']}>
-        <Avatar
-          size="lg"
-          sizeMobile="sm"
-          isSystemAvatar
-        />
+        <Avatar size="lg" sizeMobile="sm" isSystemAvatar />
       </div>
       <div className={styles['body']}>
         <p className={styles['title']}>
-          <span className={styles['title__text']}>
-            {formatMessage({ id: 'general.pneumatic' })}
+          <span className={styles['title__text']}>{formatMessage({ id: 'general.pneumatic' })}</span>
+          <span className={styles['title__icon']}>
+            <WorkflowEndedIcon />
           </span>
-          <span className={styles['title__icon']}><WorkflowEndedIcon /></span>
-          <span className={styles['title__date']}><DateFormat date={created} /></span>
+          <span className={styles['title__date']}>
+            <DateFormat date={created} />
+          </span>
         </p>
-        <div className={styles['text']}>
-          {formatMessage({ id: 'workflows.log-workflow-ended-on-condition' })}
-        </div>
+        <div className={styles['text']}>{formatMessage({ id: 'workflows.log-workflow-ended-on-condition' })}</div>
       </div>
     </div>
   );

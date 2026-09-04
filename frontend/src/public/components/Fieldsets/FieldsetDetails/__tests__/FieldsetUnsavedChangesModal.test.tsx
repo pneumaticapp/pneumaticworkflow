@@ -29,8 +29,7 @@ type TRouteLeavingGuardProps = {
 };
 
 describe('FieldsetUnsavedChangesModal', () => {
-  const formatMsg = (id: string, values?: Record<string, string>) =>
-    intlMock.formatMessage({ id }, values);
+  const formatMsg = (id: string, values?: Record<string, string>) => intlMock.formatMessage({ id }, values);
   const fieldset = makeFieldsetCatalogItem({ id: 10, name: 'My Fieldset' });
   const detailPath = ERoutes.FieldsetDetail.replace(':id', String(fieldset.id));
 
@@ -51,16 +50,12 @@ describe('FieldsetUnsavedChangesModal', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (useSelector as jest.Mock).mockImplementation((selector: (state: object) => unknown) =>
-      selector(mockState),
-    );
+    (useSelector as jest.Mock).mockImplementation((selector: (state: object) => unknown) => selector(mockState));
   });
 
   it('does not render guard when currentFieldset is null', () => {
     const emptyState = { fieldsets: { currentFieldset: null } };
-    (useSelector as jest.Mock).mockImplementation((selector: (state: object) => unknown) =>
-      selector(emptyState),
-    );
+    (useSelector as jest.Mock).mockImplementation((selector: (state: object) => unknown) => selector(emptyState));
 
     const { container } = render(
       React.createElement(FieldsetUnsavedChangesModal, { isChanged: true, onSave: jest.fn() }),
@@ -87,10 +82,7 @@ describe('FieldsetUnsavedChangesModal', () => {
     render(React.createElement(FieldsetUnsavedChangesModal, { isChanged: true, onSave: jest.fn() }));
 
     expect(RouteLeavingGuard).toHaveBeenCalledTimes(1);
-    expect(RouteLeavingGuard).toHaveBeenCalledWith(
-      expect.objectContaining({ when: true }),
-      {},
-    );
+    expect(RouteLeavingGuard).toHaveBeenCalledWith(expect.objectContaining({ when: true }), {});
   });
 
   it('shouldBlockNavigation returns false for the same detail path', () => {

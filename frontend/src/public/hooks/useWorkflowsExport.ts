@@ -100,10 +100,7 @@ export function useWorkflowsExport() {
           timezone: timezone ?? undefined,
           headerLabels,
           multipleTasksLabel: formatMessage({ id: 'workflows.multiple-active-tasks' }),
-          deletedGroupFallbackTemplate: formatMessage(
-            { id: 'workflows.export-deleted-group' },
-            { id: '{id}' },
-          ),
+          deletedGroupFallbackTemplate: formatMessage({ id: 'workflows.export-deleted-group' }, { id: '{id}' }),
         });
         if (exportFormat === 'csv') {
           downloadWorkflowsCsv(rows);

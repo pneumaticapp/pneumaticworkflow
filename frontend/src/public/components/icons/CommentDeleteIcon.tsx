@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 import * as React from 'react';
 
 export type TCommentDeleteIconProps = React.SVGAttributes<SVGElement>;

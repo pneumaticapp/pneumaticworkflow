@@ -3,11 +3,12 @@ import { makeExtraField } from '../../../../../__stubs__/fields.factory';
 import { EExtraFieldType, IExtraField } from '../../../../../types/template';
 
 describe('getVariableFromField', () => {
-  const makeField = (overrides: Partial<IExtraField> = {}) => makeExtraField({
-    name: 'Test Field',
-    type: EExtraFieldType.Checkbox,
-    ...overrides,
-  });
+  const makeField = (overrides: Partial<IExtraField> = {}) =>
+    makeExtraField({
+      name: 'Test Field',
+      type: EExtraFieldType.Checkbox,
+      ...overrides,
+    });
 
   it('includes datasetId when field has dataset', () => {
     const field = makeField({ dataset: 5 });

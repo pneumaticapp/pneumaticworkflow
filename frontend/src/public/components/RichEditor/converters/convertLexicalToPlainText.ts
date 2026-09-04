@@ -2,8 +2,6 @@ import type { EditorState } from 'lexical';
 
 import { serializeEditorToPlainTextWithVariables } from './serializePlainTextWithVariables';
 
-
-
 export function convertLexicalToPlainText(editorState: EditorState): string {
   try {
     return serializeEditorToPlainTextWithVariables(editorState);

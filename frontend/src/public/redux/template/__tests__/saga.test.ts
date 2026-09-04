@@ -164,9 +164,7 @@ describe('fetchTemplate saga', () => {
 
       const dispatched = await runFetchTemplate(42, makeMockState());
 
-      const catalogIndex = dispatched.findIndex(
-        (a) => a.type === loadFieldsetsCatalog.type,
-      );
+      const catalogIndex = dispatched.findIndex((a) => a.type === loadFieldsetsCatalog.type);
       const savedIndex = dispatched.findIndex(
         (a) => a.type === ETemplateActions.SetTemplateStatus && a.payload === ETemplateStatus.Saved,
       );
@@ -182,9 +180,7 @@ describe('fetchTemplate saga', () => {
 
       const dispatched = await runFetchTemplate(42, makeMockState());
 
-      const catalogIndex = dispatched.findIndex(
-        (a) => a.type === loadFieldsetsCatalog.type,
-      );
+      const catalogIndex = dispatched.findIndex((a) => a.type === loadFieldsetsCatalog.type);
       const savedIndex = dispatched.findIndex(
         (a) => a.type === ETemplateActions.SetTemplateStatus && a.payload === ETemplateStatus.Saved,
       );
@@ -206,9 +202,7 @@ describe('fetchTemplate saga', () => {
 
       const dispatched = await runFetchTemplate(42, mockState);
 
-      const catalogAction = dispatched.find(
-        (a) => a.type === loadFieldsetsCatalog.type,
-      );
+      const catalogAction = dispatched.find((a) => a.type === loadFieldsetsCatalog.type);
       expect(catalogAction).toBeUndefined();
 
       const savedAction = dispatched.find(
@@ -321,10 +315,7 @@ describe('patchTemplateSaga — fieldsets reference cleanup', () => {
     },
   });
 
-  const runPatchTemplate = async (
-    changedFields: Partial<ITemplate>,
-    stateOverrides = {},
-  ) => {
+  const runPatchTemplate = async (changedFields: Partial<ITemplate>, stateOverrides = {}) => {
     const channel = stdChannel();
     const dispatched: IDispatchedAction[] = [];
     const mockState = makePatchMockState(stateOverrides);
@@ -357,9 +348,7 @@ describe('patchTemplateSaga — fieldsets reference cleanup', () => {
     await runPatchTemplate({ tasks: newTasks } as Partial<ITemplate>);
 
     expect(cleanTemplateReferences).toHaveBeenCalledTimes(1);
-    expect(cleanTemplateReferences).toHaveBeenCalledWith(
-      expect.objectContaining({ tasks: newTasks }),
-    );
+    expect(cleanTemplateReferences).toHaveBeenCalledWith(expect.objectContaining({ tasks: newTasks }));
   });
 
   it('calls cleanTemplateReferences when kickoff changes', async () => {
@@ -368,9 +357,7 @@ describe('patchTemplateSaga — fieldsets reference cleanup', () => {
     await runPatchTemplate({ kickoff: newKickoff } as Partial<ITemplate>);
 
     expect(cleanTemplateReferences).toHaveBeenCalledTimes(1);
-    expect(cleanTemplateReferences).toHaveBeenCalledWith(
-      expect.objectContaining({ kickoff: newKickoff }),
-    );
+    expect(cleanTemplateReferences).toHaveBeenCalledWith(expect.objectContaining({ kickoff: newKickoff }));
   });
 
   it('does not call cleanTemplateReferences when only name changes', async () => {
@@ -463,9 +450,7 @@ describe('fetchSaveTemplate — fieldsets in mapTemplateRequest', () => {
     saga.cancel();
 
     expect(mapTemplateRequest).toHaveBeenCalledTimes(1);
-    expect(mapTemplateRequest).toHaveBeenCalledWith(
-      mockState.template.data,
-    );
+    expect(mapTemplateRequest).toHaveBeenCalledWith(mockState.template.data);
   });
 
   it('uses kickoff and task fieldsets from backend response after save', async () => {

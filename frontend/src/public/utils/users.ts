@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-shadow */
 import { EUserStatus, TUserListItem } from '../types/user';
 import { InviteResponse } from '../api/sendInvites';
 import { capitalize } from './strings';

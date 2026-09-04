@@ -1,4 +1,3 @@
-/* eslint-disable indent */
 import { KeyboardEvent } from 'react';
 
 export const enum EKeycodes {

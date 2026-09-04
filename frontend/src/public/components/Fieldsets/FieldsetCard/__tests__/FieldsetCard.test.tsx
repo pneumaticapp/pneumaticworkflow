@@ -36,8 +36,6 @@ jest.mock('../../../UI', () => ({
   ModifyDropdown: jest.fn(() => null),
 }));
 
-
-
 jest.mock('../../../icons', () => ({
   MoreIcon: () => null,
   PencilIcon: () => null,
@@ -64,14 +62,12 @@ describe('FieldsetCard', () => {
   });
 
   const makeProps = makeFieldsetCatalogItem;
-  
+
   const getModifyDropdownProps = () => {
     const mock = ModifyDropdown as jest.Mock;
     const lastCall = mock.mock.calls[mock.mock.calls.length - 1];
     return lastCall[0];
   };
-
-
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -107,7 +103,9 @@ describe('FieldsetCard', () => {
       const props = makeProps();
       render(React.createElement(FieldsetCard, props));
 
-      act(() => { getModifyDropdownProps().onEdit(); });
+      act(() => {
+        getModifyDropdownProps().onEdit();
+      });
 
       expect(mockDispatch).toHaveBeenCalledWith(
         setCurrentFieldset({
@@ -133,7 +131,9 @@ describe('FieldsetCard', () => {
     it('dispatches deleteFieldsetAction on Delete click', () => {
       render(React.createElement(FieldsetCard, makeProps({ id: 10 })));
 
-      act(() => { getModifyDropdownProps().onDelete(); });
+      act(() => {
+        getModifyDropdownProps().onDelete();
+      });
 
       expect(mockDispatch).toHaveBeenCalledTimes(1);
       expect(mockDispatch).toHaveBeenCalledWith(deleteFieldsetAction({ id: 10 }));
@@ -145,7 +145,9 @@ describe('FieldsetCard', () => {
       const props = makeProps({ id: 10 });
       render(React.createElement(FieldsetCard, props));
 
-      act(() => { getModifyDropdownProps().onClone(); });
+      act(() => {
+        getModifyDropdownProps().onClone();
+      });
 
       expect(mockDispatch).toHaveBeenCalledTimes(1);
       expect(mockDispatch).toHaveBeenCalledWith(cloneFieldsetAction({ id: 10 }));
@@ -155,9 +157,7 @@ describe('FieldsetCard', () => {
   describe('ModifyDropdown — isReadOnly state (linked fieldsets)', () => {
     it('passes isReadOnly=true to ModifyDropdown when usage contains linked templates', () => {
       const props = makeProps({
-        usage: [
-          { id: 1, name: 'Template 1' },
-        ],
+        usage: [{ id: 1, name: 'Template 1' }],
       });
       render(React.createElement(FieldsetCard, props));
 

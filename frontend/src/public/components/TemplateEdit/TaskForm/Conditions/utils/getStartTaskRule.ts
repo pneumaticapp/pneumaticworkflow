@@ -10,6 +10,6 @@ export function getBaseStartRule(field: any): TConditionRule {
     field,
     fieldType: EStartingType.Task,
     operator: EConditionOperators.Completed,
-    value: null
+    value: null,
   } as TConditionRule;
 }

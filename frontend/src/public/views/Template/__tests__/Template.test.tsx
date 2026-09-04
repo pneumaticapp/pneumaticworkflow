@@ -23,15 +23,8 @@ jest.mock('../../../components/UI', () => ({
 }));
 
 describe('TemplateView — routing contract', () => {
-
   const renderWithRoute = (url: string) => {
-    return render(
-      React.createElement(
-        MemoryRouter,
-        { initialEntries: [url] },
-        React.createElement(TemplateView),
-      ),
-    );
+    return render(React.createElement(MemoryRouter, { initialEntries: [url] }, React.createElement(TemplateView)));
   };
 
   beforeEach(() => {

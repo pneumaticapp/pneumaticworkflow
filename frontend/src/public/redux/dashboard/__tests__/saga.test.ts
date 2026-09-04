@@ -62,21 +62,19 @@ describe('fetchBreakdownTasks', () => {
       yield call(fetchBreakdownTasks, fetchBreakdownTasksAction);
     }
 
-    return (
-      expectSaga(wrapper)
-        .provide([
-          [matchers.select.selector(getCanAccessWorkflows), true],
-          [matchers.select.selector(getDashboardStore), mockDashboardStore],
-          [matchers.call.fn(getDashboardWorkflowsTasks), mockTasks],
-        ])
-        .withReducer(reducer, mockDashboardStore)
+    return expectSaga(wrapper)
+      .provide([
+        [matchers.select.selector(getCanAccessWorkflows), true],
+        [matchers.select.selector(getDashboardStore), mockDashboardStore],
+        [matchers.call.fn(getDashboardWorkflowsTasks), mockTasks],
+      ])
+      .withReducer(reducer, mockDashboardStore)
 
-        .put({
-          type: 'PATCH_DASHBOARD_BREAKDOWN_ITEM',
-          payload: { templateId: 1, changedFields: { tasks: mockTasks } },
-        })
-        .run()
-    );
+      .put({
+        type: 'PATCH_DASHBOARD_BREAKDOWN_ITEM',
+        payload: { templateId: 1, changedFields: { tasks: mockTasks } },
+      })
+      .run();
   });
 });
 
@@ -138,15 +136,11 @@ describe('openRunWorflowByTemplateDataSaga — fieldset selections enrichment', 
     }
 
     const { effects } = await expectSaga(wrapper)
-      .provide([
-        [matchers.call.fn(loadDatasetsMap), { [DATASET_ID]: DATASET_OPTIONS }],
-      ])
+      .provide([[matchers.call.fn(loadDatasetsMap), { [DATASET_ID]: DATASET_OPTIONS }]])
       .run();
 
     const putEffects = effects.put || [];
-    const openModalPut = putEffects.find(
-      (effect) => effect.payload.action.type === openModalActionType,
-    );
+    const openModalPut = putEffects.find((effect) => effect.payload.action.type === openModalActionType);
 
     if (!openModalPut) {
       throw new Error('Expected openRunWorkflowModal PUT not found');

@@ -5,8 +5,8 @@
 .edit-button {
   position: relative;
   left: 8px;
-  cursor: pointer;
   color: var(--pneumatic-color-link);
+  cursor: pointer;
   transition: color 0.1s ease-in-out;
 
   &:hover {
@@ -15,23 +15,24 @@
 }
 
 .text {
-  padding-bottom: 1px;
   display: flex;
+  padding-bottom: 1px;
+  overflow-wrap: anywhere;
   white-space: pre-wrap;
-  word-break: break-word;
+
   svg {
     display: inline-block;
   }
 }
 
 .textarea {
-  padding: 0;
   display: block;
   width: 100%;
+  padding: 0;
   font-weight: inherit;
   letter-spacing: inherit;
   resize: none;
+  outline: none;
   background-color: transparent;
   border: 0;
-  outline: none;
 }

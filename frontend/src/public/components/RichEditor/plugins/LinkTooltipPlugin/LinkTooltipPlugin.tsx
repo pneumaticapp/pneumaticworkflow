@@ -6,8 +6,6 @@ import { CustomTooltip } from '../../../UI';
 import { truncateString } from '../../../../utils/truncateString';
 import type { IHoveredLink } from './types';
 
-
-
 const LINK_SELECTOR = 'a.lexical-rich-editor-link';
 const TOOLTIP_MAX_URL_LENGTH = 50;
 
@@ -19,7 +17,6 @@ function getLinkFromTarget(target: EventTarget | null): HTMLAnchorElement | null
 function getHref(anchor: HTMLAnchorElement): string {
   return anchor.getAttribute('href') ?? anchor.href ?? '';
 }
-
 
 export function LinkTooltipPlugin(): React.ReactElement | null {
   const [editor] = useLexicalComposerContext();
@@ -69,11 +66,7 @@ export function LinkTooltipPlugin(): React.ReactElement | null {
     };
   }, [editor]);
 
-  const canShowTooltip =
-    refReady &&
-    hoveredLink &&
-    typeof document !== 'undefined' &&
-    Boolean(document.body);
+  const canShowTooltip = refReady && hoveredLink && typeof document !== 'undefined' && Boolean(document.body);
 
   if (!canShowTooltip) return null;
 

@@ -15,8 +15,8 @@
 
 .tab {
   all: unset;
-  padding: 8px 16px;
   flex-grow: 1;
+  padding: 8px 16px;
   text-align: center;
   border-radius: 1.6rem;
   transition: color 0.1s ease-in-out;

@@ -1,4 +1,3 @@
-/* eslint-disable jsx-a11y/label-has-associated-control */
 import * as React from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
@@ -187,9 +186,9 @@ export function AttachmentField({
   };
 
   const handleDeleteFile = (id: string) => () => {
-    const newUploadedFiles = filesToUploadRef.current.map((file) => (
-      file.id === id ? { ...file, isRemoved: true } : file
-    ));
+    const newUploadedFiles = filesToUploadRef.current.map((file) =>
+      file.id === id ? { ...file, isRemoved: true } : file,
+    );
     applyLocalFiles(newUploadedFiles);
   };
 

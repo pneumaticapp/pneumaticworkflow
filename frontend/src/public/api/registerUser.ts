@@ -8,14 +8,18 @@ export interface IRegisterUserResponse {
 }
 
 export function registerUser(user: IUserRegister, utmParams?: IUserUtm, captcha?: string) {
-  return commonRequest<IRegisterUserResponse>('registerUrl', {
-    method: 'POST',
-    data: mapRequestBody({ ...user, ...utmParams, captcha }),
-    headers: {
-      'Content-Type': 'application/json',
+  return commonRequest<IRegisterUserResponse>(
+    'registerUrl',
+    {
+      method: 'POST',
+      data: mapRequestBody({ ...user, ...utmParams, captcha }),
+      headers: {
+        'Content-Type': 'application/json',
+      },
     },
-  }, {
-    type: 'local',
-    shouldThrow: true,
-  });
+    {
+      type: 'local',
+      shouldThrow: true,
+    },
+  );
 }

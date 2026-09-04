@@ -14,23 +14,25 @@ import { withSyncedQueryString } from '../../HOCs/withSyncedQueryString';
 import { EDashboardTimeRange } from '../../types/dashboard';
 import { getIsUserSubsribed, getCanAccessWorkflows } from '../../redux/selectors/user';
 
-type TDashboardStoreProps = Pick<IDashboardProps,
-| 'isLoading'
-| 'counters'
-| 'isVerified'
-| 'timeRange'
-| 'isSubscribed'
-| 'dashboardMode'
-| 'settingsChanged'
-| 'breakdownItems'
+type TDashboardStoreProps = Pick<
+  IDashboardProps,
+  | 'isLoading'
+  | 'counters'
+  | 'isVerified'
+  | 'timeRange'
+  | 'isSubscribed'
+  | 'dashboardMode'
+  | 'settingsChanged'
+  | 'breakdownItems'
 >;
-type TDashboardDispatchProps = Pick<IDashboardProps,
-| 'loadDashboardData'
-| 'resetDashboardData'
-| 'openSelectTemplateModal'
-| 'loadBreakdownTasks'
-| 'setDashboardMode'
-| 'openRunWorkflowModalOnDashboard'
+type TDashboardDispatchProps = Pick<
+  IDashboardProps,
+  | 'loadDashboardData'
+  | 'resetDashboardData'
+  | 'openSelectTemplateModal'
+  | 'loadBreakdownTasks'
+  | 'setDashboardMode'
+  | 'openRunWorkflowModalOnDashboard'
 >;
 
 export function mapStateToProps(state: IApplicationState): TDashboardStoreProps {
@@ -59,15 +61,17 @@ export const mapDispatchToProps: TDashboardDispatchProps = {
   openRunWorkflowModalOnDashboard: openRunWorkflowModalByTemplateId,
 };
 
-const SyncedDashboard = withSyncedQueryString<IDashboardProps>([{
-  propName: 'timeRange',
-  queryParamName: 'time-range',
-  defaultAction: setDashboardTimeRange(EDashboardTimeRange.Today),
-  createAction: setDashboardTimeRange,
-  getQueryParamByProp: value => value,
-}])(Dashboard);
+const SyncedDashboard = withSyncedQueryString<IDashboardProps>([
+  {
+    propName: 'timeRange',
+    queryParamName: 'time-range',
+    defaultAction: setDashboardTimeRange(EDashboardTimeRange.Today),
+    createAction: setDashboardTimeRange,
+    getQueryParamByProp: (value) => value,
+  },
+])(Dashboard);
 
-export const DashboardContainer = connect<
-TDashboardStoreProps,
-TDashboardDispatchProps
->(mapStateToProps, mapDispatchToProps)(SyncedDashboard);
+export const DashboardContainer = connect<TDashboardStoreProps, TDashboardDispatchProps>(
+  mapStateToProps,
+  mapDispatchToProps,
+)(SyncedDashboard);

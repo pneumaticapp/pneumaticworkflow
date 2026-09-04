@@ -1,6 +1,11 @@
 import { mapFieldsetBindingsToClient, mapFieldsetTaskAPIToRuntime } from '../mapFieldsetsAPIToClient';
 import { EFieldLabelPosition } from '../../types/fieldset';
-import { makeFieldsetField, makeFieldsetBinding, makeFieldsetTaskAPI, makeFieldsetTemplateRule } from '../../__stubs__/fieldsets.factory';
+import {
+  makeFieldsetField,
+  makeFieldsetBinding,
+  makeFieldsetTaskAPI,
+  makeFieldsetTemplateRule,
+} from '../../__stubs__/fieldsets.factory';
 import { makeExtraField } from '../../__stubs__/fields.factory';
 
 describe('mapFieldsetBindingsToClient', () => {
@@ -46,10 +51,7 @@ describe('mapFieldsetBindingsToClient', () => {
   });
 
   it('maps multiple bindings', () => {
-    const bindings = [
-      makeFieldsetBinding({ apiName: 'fs-a' }),
-      makeFieldsetBinding({ apiName: 'fs-b' }),
-    ];
+    const bindings = [makeFieldsetBinding({ apiName: 'fs-a' }), makeFieldsetBinding({ apiName: 'fs-b' })];
 
     const results = mapFieldsetBindingsToClient(bindings);
 
@@ -65,9 +67,7 @@ describe('mapFieldsetTaskAPIToRuntime', () => {
   });
 
   it('renames apiName to apiNameBinding and drops both id and apiName', () => {
-    const result = mapFieldsetTaskAPIToRuntime([
-      makeFieldsetTaskAPI({ id: 999, apiName: 'task-xyz' }),
-    ]);
+    const result = mapFieldsetTaskAPIToRuntime([makeFieldsetTaskAPI({ id: 999, apiName: 'task-xyz' })]);
 
     expect(result).toHaveLength(1);
     expect(result[0].apiNameBinding).toBe('task-xyz');

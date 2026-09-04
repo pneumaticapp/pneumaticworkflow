@@ -1,7 +1,7 @@
 /* stylelint-disable declaration-no-important */
 .container {
-  padding: 0.6rem 1.6rem;
   display: flex;
+  padding: 0.6rem 1.6rem;
   background: var(--pneumatic-color-white);
   border-radius: 1.6rem;
 
@@ -9,6 +9,7 @@
     width: calc(100%);
   }
 }
+
 .container--select-menu {
   @media (--mobile) {
     width: calc(100% - 4.2rem);
@@ -16,9 +17,9 @@
 }
 
 .dropdown-menu {
+  width: 19.2rem;
   margin-top: 0.6rem !important;
   margin-left: -1.6rem !important;
-  width: 19.2rem;
 
   @media (--mobile) {
     width: 100%;
@@ -54,10 +55,10 @@
 }
 
 .dropdown-menu__scrollbar {
-  margin-right: 0 !important;
-  padding-right: 0 !important;
   height: 100%;
   max-height: 20rem;
+  padding-right: 0 !important;
+  margin-right: 0 !important;
 }
 
 .dropdown-item_search {
@@ -75,9 +76,9 @@
 }
 
 .dropdown-item-check__label {
+  align-items: center;
   width: 100%;
   cursor: pointer;
-  align-items: center;
 }
 
 .dropdown-item-check__title {
@@ -86,16 +87,16 @@
 
 .dropdown-item-content {
   display: flex;
+  gap: 0.8rem;
   align-items: center;
   width: 100%;
-  gap: 0.8rem;
 }
 
 .dropdown-item-content__text {
   @mixin text-truncate;
 
-  min-width: 0;
   flex: 1 1 0;
+  min-width: 0;
 
   > * {
     @mixin text-truncate;
@@ -106,10 +107,10 @@
   @mixin text-small-extra bold;
 
   margin: 0 0.8rem;
-  text-align: center;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
   color: var(--pneumatic-color-black48);
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .dropdown-item-content__count {
@@ -117,13 +118,13 @@
 
   display: flex;
   flex-shrink: 0;
-  min-width: 2rem;
-  height: 2rem;
-  letter-spacing: 0.05em;
-  color: var(--pneumatic-color-black48);
-  border-radius: 1.2rem;
   align-items: center;
   justify-content: flex-end;
+  min-width: 2rem;
+  height: 2rem;
+  color: var(--pneumatic-color-black48);
+  letter-spacing: 0.05em;
+  border-radius: 1.2rem;
 }
 
 .dropdown-item__text_stub {
@@ -135,17 +136,17 @@
 .active-value {
   @mixin text-small bold;
 
-  padding: 0;
   display: flex;
+  align-items: center;
   width: 100%;
+  padding: 0;
   font-weight: bold !important;
-  white-space: nowrap;
   color: var(--pneumatic-color-black100);
+  white-space: nowrap;
   background: transparent;
   border-width: 0;
-  align-items: center;
 
-  &:not(.active-value_clear-hovered):not([disabled]):hover {
+  &:not(.active-value_clear-hovered, [disabled]):hover {
     color: var(--pneumatic-color-link-hover);
   }
 
@@ -162,10 +163,10 @@
   }
 
   .expand-icon {
+    flex-shrink: 0;
     margin-left: auto;
     color: var(--pneumatic-color-black32);
     transition: transform 0.3s;
-    flex-shrink: 0;
   }
 
   @media (--mobile) {
@@ -188,17 +189,17 @@
 }
 
 .filter-select_disabled {
-  opacity: 32%;
+  opacity: 0.32;
 }
 
 .value-item {
   @mixin text-base 800;
 
+  display: flex !important;
+  align-items: center;
   padding-top: 0.5rem !important;
   padding-bottom: 0.5rem !important;
-  display: flex !important;
   color: var(--pneumatic-color-black100) !important;
-  align-items: center;
 
   &:hover {
     color: var(--pneumatic-color-link-hover) !important;
@@ -207,8 +208,8 @@
   }
 
   &__disabled {
-    pointer-events: none;
     color: var(--pneumatic-color-black32) !important;
+    pointer-events: none;
   }
 }
 
@@ -222,9 +223,9 @@
 }
 
 .search__input {
+  width: 100% !important;
   padding-top: 1rem !important;
   padding-bottom: 1rem !important;
-  width: 100% !important;
   border: 0 !important;
 }
 
@@ -234,8 +235,8 @@
 }
 
 .icon {
-  margin-right: 0.4rem;
   flex-shrink: 0;
+  margin-right: 0.4rem;
 }
 
 .filter-container {
@@ -244,10 +245,12 @@
 
 .clear-button {
   all: unset;
+  flex-shrink: 0;
   margin-left: auto;
   color: var(--pneumatic-color-black32);
-  transition: transform 0.3s color 0.1s;
-  flex-shrink: 0;
+  transition:
+    transform 0.3s,
+    color 0.1s;
 
   &:not([aria-disabled='true']):hover {
     color: var(--pneumatic-color-link-hover);
@@ -255,9 +258,9 @@
 }
 
 .dropdown-item-content__title {
-  letter-spacing: 0.06rem;
-  text-transform: uppercase;
   color: var(--pneumatic-color-black48);
+  text-transform: uppercase;
+  letter-spacing: 0.06rem;
 
   @mixin text-small-extra bold;
   @mixin text-truncate;

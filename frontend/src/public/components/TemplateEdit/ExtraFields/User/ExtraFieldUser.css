@@ -13,9 +13,9 @@
     font-size: 15px;
     line-height: 20px;
     color: #262522;
+    outline: none;
     border-color: #dcdcdb !important;
     border-radius: 8px !important;
-    outline: none;
     transition: 0.15s ease-in border-color;
 
     &:focus {
@@ -28,8 +28,8 @@
     }
 
     &:disabled {
-      cursor: text;
       color: #b9b9b8 !important;
+      cursor: text;
       background-color: white;
     }
 
@@ -44,18 +44,18 @@
 
   :global .react-select__placeholder {
     display: block;
-    overflow: hidden;
     max-width: 100%;
-    white-space: nowrap;
+    overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   :global .react-select__single-value {
-    overflow: hidden;
     max-width: 100%;
-    white-space: nowrap;
+    overflow: hidden;
     text-overflow: ellipsis;
     color: #262522 !important;
+    white-space: nowrap;
   }
   /* stylelint-enable */
 }
@@ -87,8 +87,8 @@
 }
 
 .kickoff-create-field-name-input {
-  margin-bottom: 8px;
   max-width: calc(100% - 5px);
+  margin-bottom: 8px;
   border: none;
 
   &:focus {

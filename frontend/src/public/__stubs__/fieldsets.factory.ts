@@ -1,6 +1,13 @@
 import {
-  EFieldLabelPosition, EFieldsetRuleType, IFieldsetBinding, IFieldsetBindingClient, IFieldsetCatalogItem,
-  IFieldsetField, IFieldsetRuntime, IFieldsetTaskAPI, IFieldsetTemplateRule,
+  EFieldLabelPosition,
+  EFieldsetRuleType,
+  IFieldsetBinding,
+  IFieldsetBindingClient,
+  IFieldsetCatalogItem,
+  IFieldsetField,
+  IFieldsetRuntime,
+  IFieldsetTaskAPI,
+  IFieldsetTemplateRule,
 } from '../types/fieldset';
 import { IExtraField } from '../types/template';
 
@@ -29,7 +36,6 @@ export const makeFieldsetRuntime = (overrides: Partial<IFieldsetRuntime> = {}): 
   layout: 'vertical',
   ...overrides,
 });
-
 
 export const makeFieldsetTemplateRule = (overrides: Partial<IFieldsetTemplateRule> = {}): IFieldsetTemplateRule => ({
   apiName: 'rule-1',

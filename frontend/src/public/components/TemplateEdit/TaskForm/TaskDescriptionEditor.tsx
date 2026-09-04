@@ -34,10 +34,7 @@ export function TaskDescriptionEditor({
   const lastEmittedValue = useRef<string | undefined>(value);
 
   const users = useSelector(getUsers);
-  const mentions = useMemo(
-    () => getMentionData(getNotDeletedUsers(users)),
-    [users],
-  );
+  const mentions = useMemo(() => getMentionData(getNotDeletedUsers(users)), [users]);
 
   const wrappedHandleChange = useCallback(
     (markdown: string) => {
@@ -66,11 +63,7 @@ export function TaskDescriptionEditor({
 
     if (!newVariable) return;
 
-    editorRef.current.insertVariable(
-      apiName,
-      newVariable.title,
-      newVariable.subtitle,
-    );
+    editorRef.current.insertVariable(apiName, newVariable.title, newVariable.subtitle);
   };
 
   return (

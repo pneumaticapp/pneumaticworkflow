@@ -1,8 +1,4 @@
-import React, {
-  createRef,
-  type MutableRefObject,
-  type ReactElement,
-} from 'react';
+import React, { createRef, type MutableRefObject, type ReactElement } from 'react';
 import { render, waitFor, act } from '@testing-library/react';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
@@ -20,10 +16,7 @@ import {
 import type { LexicalEditor } from 'lexical';
 import { CopyAttachmentPlugin } from '../CopyAttachmentPlugin';
 import { SetEditorRefPlugin } from '../../SetEditorRefPlugin';
-import {
-  ImageAttachmentNode,
-  $createImageAttachmentNode,
-} from '../../../nodes/attachments/ImageAttachmentNode';
+import { ImageAttachmentNode, $createImageAttachmentNode } from '../../../nodes/attachments/ImageAttachmentNode';
 import { LEXICAL_NODES } from '../../../nodes';
 import { lexicalTheme } from '../../../theme';
 
@@ -34,11 +27,10 @@ interface SerializedNode {
 }
 
 function collectTypes(nodes: SerializedNode[]): string[] {
-  return nodes.reduce<string[]>((types, node) => [
-    ...types,
-    node.type,
-    ...(node.children ? collectTypes(node.children) : []),
-  ], []);
+  return nodes.reduce<string[]>(
+    (types, node) => [...types, node.type, ...(node.children ? collectTypes(node.children) : [])],
+    [],
+  );
 }
 
 function findNodeDeep(nodes: SerializedNode[], type: string): SerializedNode | undefined {
@@ -96,17 +88,10 @@ function createClipboardEvent(type: 'copy' | 'cut'): ClipboardEvent {
   } as unknown as ClipboardEvent;
 }
 
-function TestHarness({
-  editorRef,
-}: {
-  editorRef: MutableRefObject<LexicalEditor | null>;
-}): ReactElement {
+function TestHarness({ editorRef }: { editorRef: MutableRefObject<LexicalEditor | null> }): ReactElement {
   return (
     <LexicalComposer initialConfig={initialConfig}>
-      <RichTextPlugin
-        contentEditable={<ContentEditable />}
-        ErrorBoundary={LexicalErrorBoundary}
-      />
+      <RichTextPlugin contentEditable={<ContentEditable />} ErrorBoundary={LexicalErrorBoundary} />
       <SetEditorRefPlugin editorRef={editorRef} />
       <CopyAttachmentPlugin />
     </LexicalComposer>
@@ -130,11 +115,7 @@ function selectAll(editor: LexicalEditor): void {
 
       const selection = $createRangeSelection();
       selection.anchor.set(firstChild.getKey(), 0, 'text');
-      selection.focus.set(
-        lastChild.getKey(),
-        lastChild.getTextContentSize?.() ?? 0,
-        'text',
-      );
+      selection.focus.set(lastChild.getKey(), lastChild.getTextContentSize?.() ?? 0, 'text');
       $setSelection(selection);
     },
     { discrete: true },

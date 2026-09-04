@@ -1,18 +1,10 @@
-/* eslint-disable max-len */
 import React from 'react';
 
 export type TTuneViewIconProps = React.SVGAttributes<SVGElement>;
 
 export function TuneViewIcon({ ...rest }: TTuneViewIconProps) {
   return (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 20 20"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      {...rest}
-    >
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" {...rest}>
       <path
         fillRule="evenodd"
         clipRule="evenodd"

@@ -6,20 +6,20 @@ import { ENotificationsActions, ETemplatesActions } from '../actions';
 export function createDeclineForbiddenActionsMiddleware(): Middleware {
   return ({ getState }) =>
     (next) =>
-      (action) => {
-        const TRIAL_ENDED_FORBIDDEN_ACTIONS = [ETemplatesActions.LoadTemplatesSystem, ENotificationsActions.LoadList];
+    (action) => {
+      const TRIAL_ENDED_FORBIDDEN_ACTIONS = [ETemplatesActions.LoadTemplatesSystem, ENotificationsActions.LoadList];
 
-        if (!TRIAL_ENDED_FORBIDDEN_ACTIONS.includes(action.type)) {
-          next(action);
-          return;
-        }
-
-        if (isTrialEnded(getState)) {
-          return;
-        }
-
+      if (!TRIAL_ENDED_FORBIDDEN_ACTIONS.includes(action.type)) {
         next(action);
-      };
+        return;
+      }
+
+      if (isTrialEnded(getState)) {
+        return;
+      }
+
+      next(action);
+    };
 }
 
 const isTrialEnded = (getState: () => IApplicationState) => {

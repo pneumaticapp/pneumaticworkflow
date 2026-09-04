@@ -36,7 +36,10 @@ const SingleDatePickerWithState = ({ initialDate = null, ...props }: ISingleDate
   );
 };
 
-interface IRangeDatePickerStateProps extends Omit<IRangeDatePickerProps, 'onChange' | 'startDate' | 'endDate' | 'selectsRange'> {
+interface IRangeDatePickerStateProps extends Omit<
+  IRangeDatePickerProps,
+  'onChange' | 'startDate' | 'endDate' | 'selectsRange'
+> {
   initialStartDate?: Date | null;
   initialEndDate?: Date | null;
 }

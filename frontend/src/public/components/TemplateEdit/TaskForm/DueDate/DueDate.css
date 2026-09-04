@@ -8,8 +8,8 @@
 }
 
 .rule {
-  margin-top: 8px;
   display: flex;
+  margin-top: 8px;
 
   @media (--mobile) {
     flex-direction: column;
@@ -17,12 +17,12 @@
 }
 
 .rule-preposition {
-  margin-right: 8px;
   width: 166px;
+  margin-right: 8px;
 
   @media (--mobile) {
-    margin-bottom: 8px;
     width: 100%;
+    margin-bottom: 8px;
   }
 }
 

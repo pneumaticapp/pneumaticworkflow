@@ -5,8 +5,8 @@
 }
 
 .button {
-  margin-top: 16px;
   align-self: flex-start;
+  margin-top: 16px;
 }
 
 .warning-title {
@@ -34,8 +34,8 @@
 
 .warning-link {
   all: unset;
-  cursor: pointer;
   color: var(--pneumatic-color-link-dark);
+  cursor: pointer;
   transition: color 0.1s ease-in-out;
 
   &:hover {

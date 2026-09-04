@@ -15,9 +15,7 @@ import type { TTaskVariable } from '../../TemplateEdit/types';
 const CLIST_START_REGEX = /\[clist:([\w-]+)\|([\w-]+)\]/;
 const CLIST_END_REGEX = /\[\/clist\]/;
 
-export function createChecklistTransformer(
-  templateVariables?: TTaskVariable[],
-): MultilineElementTransformer {
+export function createChecklistTransformer(templateVariables?: TTaskVariable[]): MultilineElementTransformer {
   return {
     dependencies: [ChecklistNode, ChecklistItemNode],
     regExpStart: CLIST_START_REGEX,
@@ -57,11 +55,7 @@ export function createChecklistTransformer(
       const lastChild = rootNode.getLastChild();
       if (lastChild != null && $isChecklistNode(lastChild) && lastChild.getListApiName() === listApiName) {
         lastChild.getWritable().append(itemNode);
-      } else if (
-        lastChild != null &&
-        $isChecklistItemNode(lastChild) &&
-        lastChild.getListApiName() === listApiName
-      ) {
+      } else if (lastChild != null && $isChecklistItemNode(lastChild) && lastChild.getListApiName() === listApiName) {
         const parent = lastChild.getParent();
         if (parent != null && $isChecklistNode(parent)) {
           parent.getWritable().append(itemNode);

@@ -1,4 +1,3 @@
-
 const MOCK_URLS = {
   templateFields: '/templates/:id/fields',
 };

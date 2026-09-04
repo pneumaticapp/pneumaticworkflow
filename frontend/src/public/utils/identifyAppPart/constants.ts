@@ -7,13 +7,8 @@ export const FORMS_PATH_PREFIX = '/forms';
  * - Path-based: domain.com/forms/*
  * - Subdomain: form.domain.com/*
  */
-export function isFormPath(
-  hostname: string,
-  pathname: string,
-  formSubdomain: string | undefined,
-): boolean {
-  const isPathBased = pathname.startsWith(`${FORMS_PATH_PREFIX}/`)
-    || pathname === FORMS_PATH_PREFIX;
+export function isFormPath(hostname: string, pathname: string, formSubdomain: string | undefined): boolean {
+  const isPathBased = pathname.startsWith(`${FORMS_PATH_PREFIX}/`) || pathname === FORMS_PATH_PREFIX;
 
   const isSubdomain = !!formSubdomain && hostname === formSubdomain;
 
@@ -26,8 +21,7 @@ export function isFormPath(
  * - Subdomain mode (forms.domain.com/{token}): returns undefined (no prefix to strip)
  */
 export function getFormsBasename(pathname: string): string | undefined {
-  const isPathBased = pathname.startsWith(`${FORMS_PATH_PREFIX}/`)
-    || pathname === FORMS_PATH_PREFIX;
+  const isPathBased = pathname.startsWith(`${FORMS_PATH_PREFIX}/`) || pathname === FORMS_PATH_PREFIX;
 
   return isPathBased ? FORMS_PATH_PREFIX : undefined;
 }

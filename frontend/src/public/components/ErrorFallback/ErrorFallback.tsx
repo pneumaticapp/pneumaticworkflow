@@ -14,7 +14,12 @@ const chunkFailedMessage = /chunk/;
 
 function getErrorMessage(error: Error | unknown): string | undefined {
   if (error instanceof Error) return error.message;
-  if (error !== null && typeof error === 'object' && 'message' in error && typeof (error as { message: unknown }).message === 'string') {
+  if (
+    error !== null &&
+    typeof error === 'object' &&
+    'message' in error &&
+    typeof (error as { message: unknown }).message === 'string'
+  ) {
     return (error as { message: string }).message;
   }
   return undefined;

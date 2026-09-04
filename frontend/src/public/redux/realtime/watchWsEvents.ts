@@ -10,10 +10,10 @@ import type { IRealtimeWsEnvelope } from './types';
 import { routeRealtimeEvent } from './utils/routeRealtimeEvent';
 import { logger } from '../../utils/logger';
 
-
-
 export function* watchWsEvents() {
-  const { api: { wsPublicUrl, urls } } = getBrowserConfigEnv();
+  const {
+    api: { wsPublicUrl, urls },
+  } = getBrowserConfigEnv();
   const url = mergePaths(
     envWssURL || wsPublicUrl,
     `${urls.wsEvents}?auth_token=${parseCookies(document.cookie).token}`,

@@ -11,14 +11,12 @@ type THashLinkHandler = {
 export function useHashLink(settings: THashLinkHandler[]) {
   useEffect(() => {
     const handleHashLinkUrl = () => {
-      const {hash} = history.location;
+      const { hash } = history.location;
       if (!hash) {
         return;
       }
 
-      const currentSetting = settings.find(
-        (setting) => `#${setting.hash}` === hash
-      );
+      const currentSetting = settings.find((setting) => `#${setting.hash}` === hash);
       if (!currentSetting) {
         return;
       }
@@ -28,7 +26,7 @@ export function useHashLink(settings: THashLinkHandler[]) {
       if (element.current) {
         scrollToElement(element.current);
       }
-    }
+    };
 
     handleHashLinkUrl();
 

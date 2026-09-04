@@ -32,11 +32,7 @@ const getLinkEntityType = (
   isImageMarkdown = false,
 ): ECustomEditorEntities => {
   const googleBucket = 'https://storage.googleapis.com/';
-  const attachmentEntityTypes = [
-    ECustomEditorEntities.Image,
-    ECustomEditorEntities.File,
-    ECustomEditorEntities.Video,
-  ];
+  const attachmentEntityTypes = [ECustomEditorEntities.Image, ECustomEditorEntities.File, ECustomEditorEntities.Video];
 
   if (entityType) {
     return attachmentEntityTypes.includes(entityType as ECustomEditorEntities)

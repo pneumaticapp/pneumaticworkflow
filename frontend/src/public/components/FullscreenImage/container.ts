@@ -1,4 +1,3 @@
-/* eslint-disable */
 /* prettier-ignore */
 import { connect } from 'react-redux';
 import { FullscreenImage, IFullscreenImageProps } from './FullscreenImage';

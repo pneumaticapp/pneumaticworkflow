@@ -3,7 +3,9 @@ import { commonRequest } from './commonRequest';
 import { getBrowserConfigEnv } from '../utils/getConfig';
 
 export function getApiKeys() {
-  const { api: { urls } } = getBrowserConfigEnv();
+  const {
+    api: { urls },
+  } = getBrowserConfigEnv();
   const url = urls.apiKeys.replace('/:id?', '');
 
   return commonRequest<IApiKeyItem[]>(
@@ -17,7 +19,9 @@ export function getApiKeys() {
 }
 
 export function createApiKey(name: string) {
-  const { api: { urls } } = getBrowserConfigEnv();
+  const {
+    api: { urls },
+  } = getBrowserConfigEnv();
   const url = urls.apiKeys.replace('/:id?', '');
 
   return commonRequest<IApiKeyCreateResponse>(
@@ -34,7 +38,9 @@ export function createApiKey(name: string) {
 }
 
 export function deleteApiKey(id: number) {
-  const { api: { urls } } = getBrowserConfigEnv();
+  const {
+    api: { urls },
+  } = getBrowserConfigEnv();
   const url = urls.apiKeys.replace(':id?', String(id));
 
   return commonRequest<void>(

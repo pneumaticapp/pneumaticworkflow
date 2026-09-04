@@ -6,13 +6,13 @@ import { makeFieldsetBindingClient, makeFieldsetField } from '../../../../__stub
 import { IExtraField, IFieldsetBindingClient } from '../../../../types/template';
 import { TaskRenderExtraFieldsInfo } from '../TaskRenderExtraFieldsInfo';
 
-const makeField = (apiName: string) => makeExtraField({
-  apiName,
-  name: apiName,
-});
+const makeField = (apiName: string) =>
+  makeExtraField({
+    apiName,
+    name: apiName,
+  });
 
-const makeTask = (fields: IExtraField[], fieldsets: IFieldsetBindingClient[]) =>
-  ({ fields, fieldsets } as any);
+const makeTask = (fields: IExtraField[], fieldsets: IFieldsetBindingClient[]) => ({ fields, fieldsets }) as any;
 
 describe('TaskRenderExtraFieldsInfo', () => {
   it('does not render when fields are empty and fieldsets are empty', () => {
@@ -29,10 +29,7 @@ describe('TaskRenderExtraFieldsInfo', () => {
   it('does not render when fieldsets have no fields', () => {
     render(
       React.createElement(TaskRenderExtraFieldsInfo as React.FC<any>, {
-        task: makeTask(
-          [],
-          [makeFieldsetBindingClient({ apiNameBinding: 'fs-1', fields: [] })],
-        ),
+        task: makeTask([], [makeFieldsetBindingClient({ apiNameBinding: 'fs-1', fields: [] })]),
         onClick: jest.fn(),
       }),
     );
@@ -59,10 +56,12 @@ describe('TaskRenderExtraFieldsInfo', () => {
       React.createElement(TaskRenderExtraFieldsInfo as React.FC<any>, {
         task: makeTask(
           [makeField('field-1')],
-          [makeFieldsetBindingClient({
-            apiNameBinding: 'fs-1',
-            fields: [makeFieldsetField({ apiName: 'f-1' }), makeFieldsetField({ apiName: 'f-2' })],
-          })],
+          [
+            makeFieldsetBindingClient({
+              apiNameBinding: 'fs-1',
+              fields: [makeFieldsetField({ apiName: 'f-1' }), makeFieldsetField({ apiName: 'f-2' })],
+            }),
+          ],
         ),
         onClick: jest.fn(),
       }),
@@ -110,17 +109,20 @@ describe('TaskRenderExtraFieldsInfo', () => {
 
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
 
-    const updatedTask = makeTask([], [
-      makeFieldsetBindingClient({
-        apiNameBinding: 'fs-1',
-        fields: [
-          makeFieldsetField({ apiName: 'f-1' }),
-          makeFieldsetField({ apiName: 'f-2' }),
-          makeFieldsetField({ apiName: 'f-3' }),
-          makeFieldsetField({ apiName: 'f-4' }),
-        ],
-      }),
-    ]);
+    const updatedTask = makeTask(
+      [],
+      [
+        makeFieldsetBindingClient({
+          apiNameBinding: 'fs-1',
+          fields: [
+            makeFieldsetField({ apiName: 'f-1' }),
+            makeFieldsetField({ apiName: 'f-2' }),
+            makeFieldsetField({ apiName: 'f-3' }),
+            makeFieldsetField({ apiName: 'f-4' }),
+          ],
+        }),
+      ],
+    );
 
     rerender(
       React.createElement(TaskRenderExtraFieldsInfo as React.FC<any>, {

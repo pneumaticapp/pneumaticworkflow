@@ -17,12 +17,12 @@
 }
 
 .control {
-  margin: 0;
-  padding: 6px 8px;
   display: flex;
+  align-items: center;
+  padding: 6px 8px;
+  margin: 0;
   background: var(--pneumatic-color-black4);
   border-radius: 16px;
-  align-items: center;
 
   &:hover .control-value {
     color: var(--pneumatic-color-link-hover);
@@ -44,8 +44,8 @@
 
 .content {
   z-index: 20;
-  padding: 16px;
   display: none;
+  padding: 16px;
   overflow: hidden;
   background: white;
   border-radius: 8px;

@@ -74,9 +74,7 @@ describe('fileServiceUpload', () => {
 
     const file = new File([''], 'fail.txt', { type: 'text/plain' });
 
-    await expect(
-      uploadFileToFileService({ file, filename: 'fail.txt' }),
-    ).rejects.toThrow('Network error');
+    await expect(uploadFileToFileService({ file, filename: 'fail.txt' })).rejects.toThrow('Network error');
   });
 
   it('works with Blob instead of File', async () => {
@@ -102,9 +100,7 @@ describe('fileServiceUpload', () => {
 
     const file = new File(['large'], 'big.zip', { type: 'application/zip' });
 
-    await expect(
-      uploadFileToFileService({ file, filename: 'big.zip' }),
-    ).rejects.toMatchObject({
+    await expect(uploadFileToFileService({ file, filename: 'big.zip' })).rejects.toMatchObject({
       message: 'File size exceeds limit',
       data: { code: 'FILE_003' },
     });
@@ -120,9 +116,7 @@ describe('fileServiceUpload', () => {
 
     const file = new File(['data'], 'secret.pdf', { type: 'application/pdf' });
 
-    await expect(
-      uploadFileToFileService({ file, filename: 'secret.pdf' }),
-    ).rejects.toMatchObject({
+    await expect(uploadFileToFileService({ file, filename: 'secret.pdf' })).rejects.toMatchObject({
       message: 'Permission denied',
       data: { code: 'PERM_001' },
       status: 403,

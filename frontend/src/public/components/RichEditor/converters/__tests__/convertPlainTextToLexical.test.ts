@@ -17,11 +17,8 @@ jest.mock('lexical', () => {
 const mockRemoveUnknownVariableTokens = jest.fn();
 
 jest.mock('../variableMarkdown', () => ({
-  parseTextWithVariables: (
-    text: string,
-    templateVariables?: unknown,
-    options?: { variablesOnly?: boolean },
-  ) => mockParseTextWithVariables(text, templateVariables, options),
+  parseTextWithVariables: (text: string, templateVariables?: unknown, options?: { variablesOnly?: boolean }) =>
+    mockParseTextWithVariables(text, templateVariables, options),
   removeUnknownVariableTokens: (text: string, templateVariables?: unknown) =>
     mockRemoveUnknownVariableTokens(text, templateVariables),
 }));
@@ -46,10 +43,6 @@ describe('applyPlainTextToEditor', () => {
     applyPlainTextToEditor(editor, '**urgent** {{date}}');
 
     expect(mockRemoveUnknownVariableTokens).toHaveBeenCalledWith('**urgent** {{date}}', undefined);
-    expect(mockParseTextWithVariables).toHaveBeenCalledWith(
-      '**urgent** {{date}}',
-      undefined,
-      { variablesOnly: true },
-    );
+    expect(mockParseTextWithVariables).toHaveBeenCalledWith('**urgent** {{date}}', undefined, { variablesOnly: true });
   });
 });

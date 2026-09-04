@@ -284,9 +284,9 @@ function* fetchWorkflowsList({ payload: offset = 0 }: PayloadAction<number>) {
     sessionStorage.getItem('isInternalNavigation') === 'true' &&
     Boolean(
       view === EWorkflowsView.Table &&
-        offset === 0 &&
-        currentTemplateId &&
-        String(lastLoadedTemplateIdForTable) !== String(currentTemplateId),
+      offset === 0 &&
+      currentTemplateId &&
+      String(lastLoadedTemplateIdForTable) !== String(currentTemplateId),
     );
   const externalNavigation = Boolean(view === EWorkflowsView.Table && currentTemplateId && selectedFields.length === 0);
 
@@ -404,7 +404,6 @@ function* editWorkflowInWork({ payload }: PayloadAction<TEditWorkflowPayload>) {
   if (name) yield put(setIsSavingWorkflowName(true));
   if (kickoff) yield put(setIsSavingKickoff(true));
 
-
   try {
     yield put(setGeneralLoaderVisibility(true));
 
@@ -435,12 +434,12 @@ function* editWorkflowInWork({ payload }: PayloadAction<TEditWorkflowPayload>) {
     const normalizedOutputs = getNormalizeOutputUsersToEmails(formattedPayload.kickoff?.fields || [], setUsers);
     const normalizedPayload = formattedPayload.kickoff
       ? {
-        ...formattedPayload,
-        kickoff: {
-          ...formattedPayload.kickoff,
-          fields: normalizedOutputs,
-        },
-      }
+          ...formattedPayload,
+          kickoff: {
+            ...formattedPayload.kickoff,
+            fields: normalizedOutputs,
+          },
+        }
       : formattedPayload;
 
     const editedWorkflow: IEditWorkflowResponse = yield editWorkflow(normalizedPayload);
@@ -472,12 +471,7 @@ function* editWorkflowInWork({ payload }: PayloadAction<TEditWorkflowPayload>) {
       );
     }
     if (name) {
-      yield syncRenamedWorkflowToTasks(
-        task,
-        payload.workflowId,
-        formattedEditedWorkflow.name,
-        formattedWorkflow.tasks,
-      );
+      yield syncRenamedWorkflowToTasks(task, payload.workflowId, formattedEditedWorkflow.name, formattedWorkflow.tasks);
     }
     // yield put(loadWorkflowsList(0));
     yield updateDetailedWorkflow(payload.workflowId);
@@ -631,7 +625,9 @@ export function* cloneWorkflowSaga({
 
     const { normalizedTemplate, loadedFieldsets } = mapTemplateFieldsetsToRuntime(template);
     const datasetsMap: Record<number, string[]> = yield call(
-      loadDatasetsMap, normalizedTemplate.kickoff, loadedFieldsets,
+      loadDatasetsMap,
+      normalizedTemplate.kickoff,
+      loadedFieldsets,
     );
 
     const runnableWorkflow = getRunnableWorkflow(normalizedTemplate, datasetsMap, loadedFieldsets);
@@ -640,7 +636,8 @@ export function* cloneWorkflowSaga({
     }
 
     const kickoff: IRuntimeKickoffClient = yield getClonedKickoff(
-      formattedworkflowDetails.kickoff, normalizedTemplate.kickoff,
+      formattedworkflowDetails.kickoff,
+      normalizedTemplate.kickoff,
     );
 
     yield put(

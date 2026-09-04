@@ -47,15 +47,12 @@ describe('ExtraFieldsHelper', () => {
       const helper = new ExtraFieldsHelper([field]);
       const result = helper.getFieldsWithValues();
 
-      expect(result[0].value).toEqual([
-        '[doc.pdf](https://files.example.com/abc-123)',
-      ]);
+      expect(result[0].value).toEqual(['[doc.pdf](https://files.example.com/abc-123)']);
     });
 
     it('parses multiple files from markdownValue', () => {
       const field = createFileField({
-        markdownValue:
-          '[a.pdf](https://files.example.com/1), [b.png](https://files.example.com/2)',
+        markdownValue: '[a.pdf](https://files.example.com/1), [b.png](https://files.example.com/2)',
       });
 
       const helper = new ExtraFieldsHelper([field]);
@@ -110,6 +107,7 @@ describe('ExtraFieldsHelper', () => {
       const result = helper.getFieldsWithValues();
 
       expect(result[0].attachments).toEqual(storageAttachments);
+      expect(result[0].value).toEqual(['[new.pdf](https://files.example.com/new)']);
     });
 
     it('uses storageOutput attachments when server field has no value', () => {
@@ -134,9 +132,7 @@ describe('ExtraFieldsHelper', () => {
       const result = helper.getFieldsWithValues();
 
       expect(result[0].attachments).toEqual(storageAttachments);
-      expect(result[0].value).toEqual([
-        '[new.pdf](https://files.example.com/new)',
-      ]);
+      expect(result[0].value).toEqual(['[new.pdf](https://files.example.com/new)']);
     });
 
     it('filters out isRemoved files from storageOutput', () => {
@@ -174,13 +170,15 @@ describe('ExtraFieldsHelper', () => {
       const serverField = createFileField({ markdownValue });
       const storageField = createFileField({
         markdownValue,
-        attachments: [{
-          id: 'old',
-          name: 'old.pdf',
-          url: 'https://files.example.com/old',
-          size: 100,
-          isRemoved: true,
-        }],
+        attachments: [
+          {
+            id: 'old',
+            name: 'old.pdf',
+            url: 'https://files.example.com/old',
+            size: 100,
+            isRemoved: true,
+          },
+        ],
       });
 
       const result = new ExtraFieldsHelper([serverField], [storageField]).getFieldsWithValues();
@@ -214,9 +212,7 @@ describe('ExtraFieldsHelper', () => {
           size: 100,
         },
       ]);
-      expect(result[0].value).toEqual([
-        '[server.pdf](https://files.example.com/server)',
-      ]);
+      expect(result[0].value).toEqual(['[server.pdf](https://files.example.com/server)']);
     });
 
     it('falls back to markdownValue when storageOutput has no matching field', () => {
@@ -299,11 +295,13 @@ describe('ExtraFieldsHelper', () => {
 
       const result = new ExtraFieldsHelper([serverField], [storageField]).getFieldsWithValues();
 
-      expect(result[0]).toEqual(expect.objectContaining({
-        value: 'draft group',
-        userId: null,
-        groupId: 7,
-      }));
+      expect(result[0]).toEqual(
+        expect.objectContaining({
+          value: 'draft group',
+          userId: null,
+          groupId: 7,
+        }),
+      );
     });
 
     it('returns null for radio field with no selections', () => {
@@ -369,9 +367,7 @@ describe('ExtraFieldsHelper', () => {
       const helper = new ExtraFieldsHelper([field]);
       const result = helper.normalizeFieldsValues();
 
-      expect(result).toEqual([
-        { 'field-abc123': ['[doc.pdf](https://files.example.com/abc)'] },
-      ]);
+      expect(result).toEqual([{ 'field-abc123': ['[doc.pdf](https://files.example.com/abc)'] }]);
     });
   });
 });

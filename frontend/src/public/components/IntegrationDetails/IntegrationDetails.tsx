@@ -52,17 +52,9 @@ export function IntegrationDetails({
       return null;
     }
 
-    const buttonText = integration?.buttonText || messages['integrations.connect-account'] as string;
+    const buttonText = integration?.buttonText || (messages['integrations.connect-account'] as string);
 
-    return (
-      <Button
-        wrapper="a"
-        href={integration?.url}
-        target="_blank"
-        label={buttonText}
-        buttonStyle="yellow"
-      />
-    );
+    return <Button wrapper="a" href={integration?.url} target="_blank" label={buttonText} buttonStyle="yellow" />;
   };
 
   const renderIntegration = () => {
@@ -87,9 +79,5 @@ export function IntegrationDetails({
     );
   };
 
-  return (
-    <div className={styles['container']}>
-      {renderIntegration()}
-    </div>
-  );
+  return <div className={styles['container']}>{renderIntegration()}</div>;
 }
