@@ -4,6 +4,10 @@
   "description": "pneumatic frontend",
   "main": "webpack.config.js",
   "private": true,
+  "browserslist": [
+    "defaults",
+    "not op_mini all"
+  ],
   "dependencies": {
     "@draft-js-plugins/editor": "^4.1.0",
     "@draft-js-plugins/focus": "^4.1.3",
