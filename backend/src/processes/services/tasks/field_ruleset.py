@@ -103,7 +103,11 @@ class FieldRuleSetService(BaseModelService):
             ),
             value=group_and.value,
         )
-        return ConditionCheckService.check_predicate(predicate, workflow_id)
+        return ConditionCheckService.check_predicate(
+            predicate,
+            workflow_id,
+            field=source,
+        )
 
     @classmethod
     def _check_ruleset(
@@ -157,7 +161,11 @@ class FieldRuleSetService(BaseModelService):
         }
 
     @classmethod
-    def apply_show_rulesets(cls, fields: List[TaskField]):
+    def apply_show_rulesets(
+        cls,
+        fields: List[TaskField],
+        workflow_id: int = None,
+    ):
 
         """ A field with show rulesets stays visible while at least one
             of them passes. Fields without show rulesets are left as
@@ -165,6 +173,8 @@ class FieldRuleSetService(BaseModelService):
 
         if not fields:
             return
+        if workflow_id is None:
+            raise TypeError('workflow_id is required')
         rulesets_by_field = {}
         show_rulesets = (
             FieldRuleSet.objects
@@ -178,7 +188,7 @@ class FieldRuleSetService(BaseModelService):
 
         source_fields = cls._get_source_fields(
             rulesets_by_field=rulesets_by_field,
-            workflow_id=fields[0].workflow_id,
+            workflow_id=workflow_id,
         )
         changed = []
         for field in fields:
@@ -212,8 +222,10 @@ class FieldRuleSetService(BaseModelService):
             list(
                 TaskField.objects.filter(
                     Q(fieldset__task=task) | Q(task=task),
-                ),
+                    rulesets__type=FieldRuleType.SHOW,
+                ).distinct(),
             ),
+            workflow_id=task.workflow_id,
         )
 
     @classmethod
@@ -224,7 +236,13 @@ class FieldRuleSetService(BaseModelService):
             kickoff (Note) and still read another kickoff field. """
 
         cls.apply_show_rulesets(
-            list(TaskField.objects.filter(workflow=workflow)),
+            list(
+                TaskField.objects.filter(
+                    workflow=workflow,
+                    rulesets__type=FieldRuleType.SHOW,
+                ).distinct(),
+            ),
+            workflow_id=workflow.id,
         )
 
 

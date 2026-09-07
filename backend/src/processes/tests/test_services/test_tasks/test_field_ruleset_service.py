@@ -1,4 +1,6 @@
 import pytest
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 
 from src.processes.enums import (
     FieldRuleOperator,
@@ -135,7 +137,10 @@ def test_apply_show_rulesets__condition_matches__visible():
     create_show_ruleset(field, 'source-field-1', value='yes')
 
     # act
-    FieldRuleSetService.apply_show_rulesets([field])
+    FieldRuleSetService.apply_show_rulesets(
+        [field],
+        workflow_id=workflow.id,
+    )
 
     # assert
     field.refresh_from_db()
@@ -155,7 +160,10 @@ def test_apply_show_rulesets__condition_fails__hidden():
     create_show_ruleset(field, 'source-field-1', value='yes')
 
     # act
-    FieldRuleSetService.apply_show_rulesets([field])
+    FieldRuleSetService.apply_show_rulesets(
+        [field],
+        workflow_id=workflow.id,
+    )
 
     # assert
     field.refresh_from_db()
@@ -190,7 +198,10 @@ def test_apply_show_rulesets__second_group_or_matches__visible():
     )
 
     # act
-    FieldRuleSetService.apply_show_rulesets([field])
+    FieldRuleSetService.apply_show_rulesets(
+        [field],
+        workflow_id=workflow.id,
+    )
 
     # assert
     field.refresh_from_db()
@@ -215,7 +226,10 @@ def test_apply_show_rulesets__validator_ruleset__not_applied():
     )
 
     # act
-    FieldRuleSetService.apply_show_rulesets([field])
+    FieldRuleSetService.apply_show_rulesets(
+        [field],
+        workflow_id=workflow.id,
+    )
 
     # assert
     field.refresh_from_db()
@@ -235,7 +249,10 @@ def test_apply_show_rulesets__field_without_rulesets__untouched():
     field.save(update_fields=['is_hidden'])
 
     # act
-    FieldRuleSetService.apply_show_rulesets([field])
+    FieldRuleSetService.apply_show_rulesets(
+        [field],
+        workflow_id=workflow.id,
+    )
 
     # assert
     field.refresh_from_db()
@@ -255,7 +272,10 @@ def test_apply_show_rulesets__source_field_missing__hidden():
     create_show_ruleset(field, 'nonexistent-field', value='yes')
 
     # act
-    FieldRuleSetService.apply_show_rulesets([field])
+    FieldRuleSetService.apply_show_rulesets(
+        [field],
+        workflow_id=workflow.id,
+    )
 
     # assert
     field.refresh_from_db()
@@ -378,3 +398,35 @@ def test_apply_show_rulesets_for_workflow__kickoff_fieldset_field__recalculated(
     assert note.is_hidden is True
     assert note.task_id is None
     assert note.fieldset.task_id is None
+
+
+def test_apply_show_rulesets_for_workflow__no_show_rules__one_query():
+
+    """ Without show rulesets the helper must not load every field. """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+
+    # act
+    with CaptureQueriesContext(connection) as ctx:
+        FieldRuleSetService.apply_show_rulesets_for_workflow(workflow)
+
+    # assert
+    assert len(ctx.captured_queries) == 1
+
+
+def test_apply_show_rulesets__without_workflow_id__type_error():
+
+    """ workflow_id is required so a mixed list cannot pick the
+        wrong process from fields[0]. """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    field = create_target_field(workflow, task)
+
+    # act / assert
+    with pytest.raises(TypeError):
+        FieldRuleSetService.apply_show_rulesets([field])

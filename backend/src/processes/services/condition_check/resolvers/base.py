@@ -1,3 +1,5 @@
+from typing import Optional
+
 from src.processes.enums import PredicateOperator
 from src.processes.models.workflows.conditions import Predicate
 from src.processes.models.workflows.fields import TaskField
@@ -9,10 +11,17 @@ class Resolver:
     field_value = None
     _predicate = None
     _workflow_id = None
+    _field = None
 
-    def __init__(self, predicate: Predicate, workflow_id: int):
+    def __init__(
+        self,
+        predicate: Predicate,
+        workflow_id: int,
+        field: Optional[TaskField] = None,
+    ):
         self._predicate = predicate
         self._workflow_id = workflow_id
+        self._field = field
         self._prepare_args()
 
     def _get_field(self) -> TaskField:
@@ -20,6 +29,8 @@ class Resolver:
         """ Matched by workflow, not by task or kickoff: a field inside
             a fieldset is linked to neither of them. """
 
+        if self._field is not None:
+            return self._field
         return TaskField.objects.get(
             workflow_id=self._workflow_id,
             api_name=self._predicate.field,
