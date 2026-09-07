@@ -1937,7 +1937,7 @@ def test__update_field__fieldset_provided__ok():
     assert created is True
     assert field.api_name == 'field-1'
     assert field.fieldset == fieldset
-    assert field.task == task
+    assert field.task_id is None
     assert field.workflow == workflow
     assert field.account == user.account
 
@@ -1946,7 +1946,7 @@ def test__update_field__fieldset_existing_runtime_field__preserves_values():
 
     """
     Runtime fieldset fields have task=None. Lookup by fieldset+api_name
-    updates metadata, sets task, and preserves field values.
+    updates metadata, keeps task empty, and preserves field values.
     """
 
     # arrange
@@ -2002,7 +2002,7 @@ def test__update_field__fieldset_existing_runtime_field__preserves_values():
     assert created is False
     assert field.id == existing_field.id
     assert field.fieldset == fieldset
-    assert field.task == task
+    assert field.task_id is None
     assert field.name == 'Updated name'
     assert field.description == 'Updated description'
     assert field.is_required is True
@@ -2213,6 +2213,131 @@ def test__update_fields__preserves_fieldset_fields(mocker):
     assert TaskField.objects.filter(id=field.id).exists()
     assert not TaskField.objects.filter(id=stale_field.id).exists()
     assert TaskField.objects.filter(id=fieldset_field.id).exists()
+
+
+def test__update_fields__rulesets_provided__created():
+
+    """ Top-level task fields must get FieldRuleSet on version update,
+        same as fields inside a fieldset. """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    field = TaskField.objects.create(
+        task=task,
+        workflow=workflow,
+        account=user.account,
+        api_name='comment',
+        name='Comment',
+        type=FieldType.STRING,
+        order=1,
+    )
+    service = TaskUpdateVersionService(
+        user=user,
+        instance=task,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+    field_data = {
+        'api_name': 'comment',
+        'name': 'Comment',
+        'description': '',
+        'type': FieldType.STRING,
+        'is_required': False,
+        'is_hidden': False,
+        'order': 1,
+        'dataset_id': None,
+        'rulesets': [
+            {
+                'api_name': 'show-comment',
+                'name': 'Show when status is yes',
+                'type': FieldRuleType.SHOW,
+                'message': None,
+                'order': 0,
+                'groups_or': [
+                    {
+                        'api_name': 'group-or-1',
+                        'groups_and': [
+                            {
+                                'api_name': 'group-and-1',
+                                'field': 'status',
+                                'operator': FieldRuleOperator.EQUAL,
+                                'value': 'yes',
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+    }
+
+    # act
+    service._update_fields(data=[field_data], version=2)
+
+    # assert
+    ruleset = FieldRuleSet.objects.get(field=field, api_name='show-comment')
+    assert ruleset.type == FieldRuleType.SHOW
+    assert ruleset.name == 'Show when status is yes'
+    group_and = ruleset.groups_or.get().groups_and.get()
+    assert group_and.field == 'status'
+    assert group_and.value == 'yes'
+
+
+def test__update_field__fieldset_polluted_task_fk__cleared():
+
+    """ A previous version update wrote task= on a fieldset field.
+        The next bump must clear it so the field stays out of output[]. """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    fieldset = create_test_fieldset(
+        workflow=workflow,
+        task=task,
+        api_name='fs-1',
+    )
+    fieldset.fields.all().delete()
+    existing_field = TaskField.objects.create(
+        account=user.account,
+        workflow=workflow,
+        fieldset=fieldset,
+        task=task,
+        name='Note',
+        type=FieldType.STRING,
+        order=1,
+        api_name='note',
+        value='keep me',
+    )
+    service = TaskUpdateVersionService(
+        user=user,
+        instance=task,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+    field_data = {
+        'api_name': 'note',
+        'name': 'Note',
+        'description': '',
+        'type': FieldType.STRING,
+        'is_required': False,
+        'is_hidden': False,
+        'order': 1,
+        'dataset_id': None,
+    }
+
+    # act
+    field, created = service._update_field(
+        field_data=field_data,
+        fieldset=fieldset,
+    )
+
+    # assert
+    assert created is False
+    assert field.id == existing_field.id
+    assert field.task_id is None
+    assert field.value == 'keep me'
 
 
 def test__update_fieldset_rulesets__data_none__keep():

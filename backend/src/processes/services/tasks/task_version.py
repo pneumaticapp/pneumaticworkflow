@@ -82,6 +82,7 @@ class TaskUpdateVersionService(
     def _update_fields(
         self,
         data: Optional[List[Dict]] = None,
+        version: int = 0,
     ):
 
         # TODO Move to TaskFieldService
@@ -92,6 +93,7 @@ class TaskUpdateVersionService(
                 field, _ = self._update_field(field_data, fieldset=None)
                 field_ids.append(field.id)
                 self._update_field_selections(field, field_data)
+                self._update_field_rulesets(field, field_data, version)
         self.instance.output.filter(
             fieldset__isnull=True,
         ).exclude(id__in=field_ids).delete()
@@ -192,7 +194,7 @@ class TaskUpdateVersionService(
                     'workflow': self.instance.workflow,
                     'account': self.instance.account,
                     'dataset_id': field_data['dataset_id'],
-                    'task': self.instance,
+                    'task': None,
                 },
             )
 
@@ -518,7 +520,7 @@ class TaskUpdateVersionService(
             workflow=workflow,
             fields_values=tasks_fields_values,
         )
-        self._update_fields(data=data.get('fields'))
+        self._update_fields(data=data.get('fields'), version=version)
         if data.get('fieldsets') is not None:
             self._update_fieldsets(data=data['fieldsets'], version=version)
         self._update_conditions(data=data.get('conditions'))

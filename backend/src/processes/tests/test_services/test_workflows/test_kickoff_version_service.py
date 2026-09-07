@@ -140,7 +140,7 @@ def test__update_field__fieldset__ok():
 
     # assert
     assert created is True
-    assert field.kickoff == kickoff
+    assert field.kickoff_id is None
     assert field.fieldset == fieldset
     assert field.api_name == 'field-1'
     assert field.name == 'Number field'
@@ -620,6 +620,79 @@ def test__update_fields__provided__ok(mocker):
     assert TaskField.objects.filter(
         id=stale_field.id,
     ).exists() is False
+
+
+def test__update_fields__rulesets_provided__created():
+
+    """ Top-level kickoff fields must get FieldRuleSet on version update. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    workflow = create_test_workflow(user=user, template=template)
+    kickoff = workflow.kickoff_instance
+    field = TaskField.objects.create(
+        kickoff=kickoff,
+        workflow=workflow,
+        account=account,
+        api_name='comment',
+        name='Comment',
+        type=FieldType.STRING,
+        order=1,
+    )
+    service = KickoffUpdateVersionService(
+        user=user,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+        instance=kickoff,
+    )
+    field_data = {
+        'api_name': 'comment',
+        'name': 'Comment',
+        'description': '',
+        'type': FieldType.STRING,
+        'is_required': False,
+        'is_hidden': False,
+        'order': 1,
+        'dataset_id': None,
+        'rulesets': [
+            {
+                'api_name': 'show-comment',
+                'name': 'Show when status is yes',
+                'type': FieldRuleType.SHOW,
+                'message': None,
+                'order': 0,
+                'groups_or': [
+                    {
+                        'api_name': 'group-or-1',
+                        'groups_and': [
+                            {
+                                'api_name': 'group-and-1',
+                                'field': 'status',
+                                'operator': FieldRuleOperator.EQUAL,
+                                'value': 'yes',
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+    }
+
+    # act
+    service._update_fields(data=[field_data], version=2)
+
+    # assert
+    ruleset = FieldRuleSet.objects.get(field=field, api_name='show-comment')
+    assert ruleset.type == FieldRuleType.SHOW
+    group_and = ruleset.groups_or.get().groups_and.get()
+    assert group_and.field == 'status'
+    assert group_and.value == 'yes'
 
 
 def test__update_fs_fields__none__delete_all(mocker):
