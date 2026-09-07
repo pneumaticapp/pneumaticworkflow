@@ -1,9 +1,6 @@
 from typing import Dict, List, Optional
 
-from src.processes.models.workflows.fieldset import (
-    FieldSet,
-    FieldSetRule,
-)
+from src.processes.models.workflows.fieldset import FieldSet
 from src.processes.models.workflows.fields import (
     FieldSelection,
     TaskField,
@@ -11,9 +8,13 @@ from src.processes.models.workflows.fields import (
 from src.processes.services.base import (
     BaseUpdateVersionService,
 )
+from src.processes.services.tasks.mixins import RuleSetVersionMixin
 
 
-class KickoffUpdateVersionService(BaseUpdateVersionService):
+class KickoffUpdateVersionService(
+    BaseUpdateVersionService,
+    RuleSetVersionMixin,
+):
 
     def _update_field(
         self,
@@ -97,49 +98,11 @@ class KickoffUpdateVersionService(BaseUpdateVersionService):
             fieldset__isnull=True,
         ).exclude(id__in=field_ids).delete()
 
-    def _update_fieldset_rules(
-        self,
-        fieldset: FieldSet,
-        rules_data: Optional[List[Dict]] = None,
-    ) -> None:
-
-        rule_ids = []
-        rules_data = rules_data or []
-        for rule_data in rules_data:
-            rule, _ = FieldSetRule.objects.update_or_create(
-                fieldset=fieldset,
-                api_name=rule_data['api_name'],
-                defaults={
-                    'account_id': fieldset.account_id,
-                    'type': rule_data['type'],
-                    'value': rule_data.get('value'),
-                },
-            )
-            rule_ids.append(rule.id)
-        fieldset.rulesets.exclude(id__in=rule_ids).delete()
-
-    def _update_field_rules(
-        self,
-        field: TaskField,
-        field_data: Dict,
-        fieldset: FieldSet,
-    ) -> None:
-
-        rules = field_data.get('rules', [])
-        if rules:
-            rules_api_names = [e['api_name'] for e in rules]
-            rules = FieldSetRule.objects.filter(
-                fieldset=fieldset,
-                api_name__in=rules_api_names,
-            )
-            field.rulesets.set(rules)
-        else:
-            field.rulesets.clear()
-
     def _update_fieldset_fields(
         self,
         fieldset: FieldSet,
         fields_data: Optional[List[Dict]],
+        version: int,
     ) -> None:
 
         field_ids = []
@@ -148,12 +111,12 @@ class KickoffUpdateVersionService(BaseUpdateVersionService):
             field, _ = self._update_field(field_data, fieldset=fieldset)
             field_ids.append(field.id)
             self._update_field_selections(field, field_data)
-            self._update_field_rules(field, field_data, fieldset)
+            self._update_field_rulesets(field, field_data, version)
         TaskField.objects.filter(
             fieldset=fieldset,
         ).exclude(id__in=field_ids).delete()
 
-    def _update_fieldsets(self, data: Optional[List]) -> None:
+    def _update_fieldsets(self, data: Optional[List], version: int) -> None:
 
         fs_api_names = set()
         for fs_data in data or []:
@@ -171,13 +134,16 @@ class KickoffUpdateVersionService(BaseUpdateVersionService):
                     'layout': fs_data['layout'],
                 },
             )
-            self._update_fieldset_rules(
-                fieldset=fieldset,
-                rules_data=fs_data.get('rules'),
-            )
+            # Fields first: the ruleset fields m2m resolves api_names
             self._update_fieldset_fields(
                 fieldset=fieldset,
                 fields_data=fs_data.get('fields'),
+                version=version,
+            )
+            self._update_fieldset_rulesets(
+                fieldset=fieldset,
+                version=version,
+                rulesets_data=fs_data.get('rulesets'),
             )
             fs_api_names.add(fs_data['api_name'])
         FieldSet.objects.filter(
@@ -201,4 +167,4 @@ class KickoffUpdateVersionService(BaseUpdateVersionService):
         if data.get('fields'):
             self._update_fields(data=data['fields'])
         if data.get('fieldsets') is not None:
-            self._update_fieldsets(data=data['fieldsets'])
+            self._update_fieldsets(data=data['fieldsets'], version=version)
