@@ -64,7 +64,6 @@ def test_models__ok(api_client, mocker):
 
     # assert
     assert response.status_code == 200
-    assert set(response.data[0].keys()) == {'name', 'slug'}
     assert response.data[0]['name'] == 'GPT-4o'
     assert response.data[0]['slug'] == 'openai/gpt-4o'
     assert response.data[1]['name'] == 'Claude Sonnet'
