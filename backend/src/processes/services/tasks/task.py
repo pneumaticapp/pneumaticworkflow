@@ -211,7 +211,7 @@ class TaskService(
                     ))
                 conditions_tree[template.api_name] = rules_tree
             conditions = Condition.objects.bulk_create(conditions)
-            self.create_rulesets(conditions, conditions_tree)
+            self.create_rules(conditions, conditions_tree)
 
     def create_fields_from_template(self, instance_template: TaskTemplate):
         active_fieldset_ids = (
@@ -237,7 +237,11 @@ class TaskService(
         fieldsets = (
             FieldsetTemplate.objects
             .filter(task=instance_template)
-            .prefetch_related('rules', 'fields')
+            .prefetch_related(
+                'rulesets__groups_or__groups_and',
+                'rulesets__fields',
+                'fields__rulesets__groups_or__groups_and',
+            )
             .order_by('order')
         )
         for fieldset in fieldsets:

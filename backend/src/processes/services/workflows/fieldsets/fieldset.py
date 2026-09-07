@@ -1,15 +1,14 @@
-from itertools import groupby
 from typing import List, Optional, Dict
 from django.contrib.auth import get_user_model
 
 from src.generics.base.service import BaseModelService
-from src.processes.messages.fieldset import MSG_FS_0007, MSG_FS_0012
+from src.processes.messages.fieldset import MSG_FS_0007
 from src.processes.models.templates.fieldset import FieldsetTemplate
 from src.processes.models.workflows.fieldset import FieldSet
 from src.processes.services.exceptions import FieldsetServiceException
 from src.processes.services.tasks.field import TaskFieldService
-from src.processes.services.workflows.fieldsets.fieldset_rule import (
-    FieldSetRuleService,
+from src.processes.services.workflows.fieldsets.fieldset_ruleset import (
+    FieldSetRuleSetService,
 )
 
 UserModel = get_user_model()
@@ -65,48 +64,28 @@ class FieldSetService(BaseModelService):
                 value=fields_data.get(field_template.api_name, ''),
             )
 
-    def _create_rules(self, instance_template, **kwargs):
-        ruleset_templates = instance_template.rulesets.filter(is_deleted=False)
-        for rule_template in ruleset_templates:
-            service = FieldSetRuleService(user=self.user)
+    def _create_rulesets(self, instance_template, **kwargs):
+        for ruleset_template in instance_template.rulesets.all():
+            service = FieldSetRuleSetService(user=self.user)
             service.create(
-                instance_template=rule_template,
+                instance_template=ruleset_template,
                 fieldset=self.instance,
                 skip_validation=kwargs.get('skip_value'),
             )
 
     def _create_related(self, instance_template, **kwargs):
-        self._create_rules(instance_template, **kwargs)
+        # Fields go first: the rulesets m2m points at existing TaskField
         self._create_fields(instance_template, **kwargs)
+        self._create_rulesets(instance_template, **kwargs)
 
     def validate_rules(self) -> bool:
-        rules = list(self.instance.rulesets.order_by('id').all())
-        for _, group in groupby(rules, key=lambda r: r.type):
-            group_rules = list(group)
-            if len(group_rules) == 1:
-                # Single rule of this type — standard validation
-                service = FieldSetRuleService(
-                    user=self.user,
-                    instance=group_rules[0],
-                )
-                service.validate()
-            else:
-                # Multiple rules of the same type — OR logic:
-                # validation passes if at least one rule succeeds
-                ex_counter = 0
-                for rule in group_rules:
-                    try:
-                        service = FieldSetRuleService(
-                            user=self.user,
-                            instance=rule,
-                        )
-                        service.validate()
-                    except FieldsetServiceException:
-                        ex_counter += 1
-                if len(group_rules) == ex_counter:
-                    values = ', '.join(
-                        str(rule.value) for rule in group_rules
-                    )
-                    raise FieldsetServiceException(
-                        message=MSG_FS_0012(values),
-                    )
+
+        """ Alternatives live inside a ruleset now, so every ruleset of
+            the fieldset has to pass on its own. """
+
+        for ruleset in self.instance.rulesets.all():
+            FieldSetRuleSetService(
+                user=self.user,
+                instance=ruleset,
+            ).validate()
+        return True

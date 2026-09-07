@@ -15,10 +15,10 @@ from src.processes.messages import workflow as messages
 from src.processes.models.templates.fields import (
     FieldTemplate,
 )
-from src.processes.models.workflows.fieldset import FieldSetRule
 from src.processes.models.workflows.fields import TaskField
 from src.processes.services.base import BaseWorkflowService
 from src.processes.services.tasks.exceptions import TaskFieldException
+from src.processes.services.tasks.field_ruleset import FieldRuleSetService
 from src.processes.services.tasks.selection import SelectionService
 from src.services.markdown import MarkdownService
 from src.storage.enums import AccessType, SourceType
@@ -351,8 +351,7 @@ class TaskFieldService(BaseWorkflowService):
             self._link_new_attachments(raw_value)
         elif self.instance.type in FieldType.TYPES_WITH_SELECTIONS:
             self._create_selections(instance_template)
-        if instance_template.rulesets.all().exists():
-            self._link_rules(instance_template, **kwargs)
+        self._create_rulesets(instance_template, **kwargs)
 
     def _link_new_attachments(
         self,
@@ -382,21 +381,22 @@ class TaskFieldService(BaseWorkflowService):
                 field_id=self.instance.id,
             )
 
-    def _link_rules(
+    def _create_rulesets(
         self,
         instance_template: FieldTemplate,
         **kwargs,
     ):
 
-        rule_api_names = set(
-            instance_template.rulesets.values_list('api_name', flat=True),
-        )
-        rules = FieldSetRule.objects.filter(
-            account=self.account,
-            fieldset_id=kwargs['fieldset_id'],
-            api_name__in=rule_api_names,
-        )
-        self.instance.rulesets.set(rules)
+        for ruleset_template in instance_template.rulesets.all():
+            service = FieldRuleSetService(
+                user=self.user,
+                is_superuser=self.is_superuser,
+                auth_type=self.auth_type,
+            )
+            service.create(
+                instance_template=ruleset_template,
+                field=self.instance,
+            )
 
     def _remove_unused_attachments(
         self,
