@@ -3,6 +3,8 @@ from datetime import timedelta
 import pytest
 
 from rest_framework import status
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 
 from src.accounts.enums import (
@@ -11,6 +13,8 @@ from src.accounts.enums import (
 from src.authentication.enums import AuthTokenType
 from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.processes.enums import (
+    FieldRuleOperator,
+    FieldRuleType,
     FieldType,
     OwnerRole,
     OwnerType,
@@ -24,6 +28,9 @@ from src.processes.models.templates.checklist import (
 )
 from src.processes.models.templates.fields import (
     FieldTemplate,
+    FieldTemplateRuleGroupAnd,
+    FieldTemplateRuleGroupOr,
+    FieldTemplateRuleSet,
     FieldTemplateSelection,
 )
 from src.processes.models.templates.owner import TemplateOwner
@@ -2271,3 +2278,158 @@ def test_retrieve__update_from_version__fieldset_field_variable__not_changed(
     assert response.status_code == 200
     assert response.data['name'] == f'Updated task {field_value}'
     assert response.data['description'] == f'Description {field_value}'
+
+
+def _create_field_with_show_ruleset(account, template, task_template, index):
+
+    """ Task field visible while its own value is filled """
+
+    field = FieldTemplate.objects.create(
+        account=account,
+        template=template,
+        task=task_template,
+        name=f'Field {index}',
+        type=FieldType.STRING,
+        order=index,
+        api_name=f'field-{index}',
+    )
+    ruleset = FieldTemplateRuleSet.objects.create(
+        account=account,
+        template=template,
+        field=field,
+        api_name=f'ruleset-{index}',
+        name='Show when filled',
+        type=FieldRuleType.SHOW,
+        order=0,
+    )
+    group_or = FieldTemplateRuleGroupOr.objects.create(
+        account=account,
+        template=template,
+        ruleset=ruleset,
+        api_name=f'group-or-{index}',
+    )
+    FieldTemplateRuleGroupAnd.objects.create(
+        account=account,
+        template=template,
+        group_or=group_or,
+        api_name=f'group-and-{index}',
+        field=field.api_name,
+        operator=FieldRuleOperator.EXIST,
+        value=None,
+    )
+    return field
+
+
+def test_retrieve__field_rulesets__no_n_plus_one(api_client):
+
+    """ Query count does not grow with the number of fields carrying
+        rulesets """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    api_client.token_authenticate(user)
+    template = create_test_template(user=user, is_active=True, tasks_count=1)
+    task_template = template.tasks.first()
+    _create_field_with_show_ruleset(account, template, task_template, 1)
+    workflow = create_test_workflow(user=user, template=template)
+    task = workflow.tasks.get(number=1)
+    api_client.get(f'/v2/tasks/{task.id}')
+
+    # act
+    with CaptureQueriesContext(connection) as one_field:
+        first_response = api_client.get(f'/v2/tasks/{task.id}')
+
+    for index in (2, 3, 4):
+        _create_field_with_show_ruleset(
+            account,
+            template,
+            task_template,
+            index,
+        )
+    second_workflow = create_test_workflow(user=user, template=template)
+    second_task = second_workflow.tasks.get(number=1)
+    api_client.get(f'/v2/tasks/{second_task.id}')
+
+    with CaptureQueriesContext(connection) as four_fields:
+        second_response = api_client.get(f'/v2/tasks/{second_task.id}')
+
+    # assert
+    assert first_response.status_code == 200
+    assert second_response.status_code == 200
+    assert len(first_response.data['output']) == 1
+    assert len(second_response.data['output']) == 4
+    assert len(second_response.data['output'][0]['rulesets']) == 1
+    assert len(four_fields) == len(one_field)
+
+
+def test_retrieve__field_rulesets__shape_matches_template(api_client):
+
+    """ The runtime ruleset repeats the template shape one to one """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    api_client.token_authenticate(user)
+    template = create_test_template(user=user, is_active=True, tasks_count=1)
+    task_template = template.tasks.first()
+    field_template = _create_field_with_show_ruleset(
+        account,
+        template,
+        task_template,
+        1,
+    )
+    ruleset_template = field_template.rulesets.first()
+    group_or_template = ruleset_template.groups_or.first()
+    group_and_template = group_or_template.groups_and.first()
+    workflow = create_test_workflow(user=user, template=template)
+    task = workflow.tasks.get(number=1)
+
+    # act
+    response = api_client.get(f'/v2/tasks/{task.id}')
+
+    # assert
+    assert response.status_code == 200
+    field_data = response.data['output'][0]
+    ruleset_data = field_data['rulesets'][0]
+    assert ruleset_data['api_name'] == ruleset_template.api_name
+    assert ruleset_data['name'] == ruleset_template.name
+    assert ruleset_data['type'] == FieldRuleType.SHOW
+    assert ruleset_data['message'] == ruleset_template.message
+    assert ruleset_data['order'] == ruleset_template.order
+    group_or_data = ruleset_data['groups_or'][0]
+    assert group_or_data['api_name'] == group_or_template.api_name
+    group_and_data = group_or_data['groups_and'][0]
+    assert group_and_data['api_name'] == group_and_template.api_name
+    assert group_and_data['field'] == group_and_template.field
+    assert group_and_data['operator'] == FieldRuleOperator.EXIST
+    assert group_and_data['value'] == group_and_template.value
+
+
+def test_retrieve__field_without_rulesets__empty_list(api_client):
+
+    """ A field with no rules still carries the key """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    api_client.token_authenticate(user)
+    template = create_test_template(user=user, is_active=True, tasks_count=1)
+    FieldTemplate.objects.create(
+        account=account,
+        template=template,
+        task=template.tasks.first(),
+        name='Plain field',
+        type=FieldType.STRING,
+        order=0,
+        api_name='plain-field-1',
+    )
+    workflow = create_test_workflow(user=user, template=template)
+    task = workflow.tasks.get(number=1)
+
+    # act
+    response = api_client.get(f'/v2/tasks/{task.id}')
+
+    # assert
+    assert response.status_code == 200
+    assert response.data['output'][0]['rulesets'] == []

@@ -358,7 +358,38 @@ def test_partial_update__fields_operator__ok(
         is_superuser=False,
         auth_type=AuthTokenType.USER,
     )
-    partial_update_mock.assert_called_once()
+    partial_update_mock.assert_called_once_with(
+        fields=[
+            {
+                'name': 'Field 1',
+                'type': FieldType.NUMBER,
+                'is_hidden': True,
+                'api_name': 'field-1',
+                'order': 2,
+                'rulesets': [
+                    {
+                        'api_name': 'r-1',
+                        'name': 'Ruleset',
+                        'type': FieldRuleType.VALIDATOR,
+                        'order': 1,
+                        'groups_or': [
+                            {
+                                'api_name': 'g-or-1',
+                                'groups_and': [
+                                    {
+                                        'api_name': 'g-and-1',
+                                        'field': field.api_name,
+                                        'operator': operator,
+                                        'value': 'apple',
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+    )
 
 
 def test_partial_update__response_rules_data__ok(api_client, mocker):
@@ -1360,14 +1391,38 @@ def test_partial_update__field_rule_validator_by_field_type__ok(
     assert response.status_code == 200
     field_response = response.data['fields'][0]
     assert field_response['rulesets'][0]['type'] == FieldRuleType.VALIDATOR
-    fieldset_partial_update_mock.assert_called_once()
-    call_kwargs = fieldset_partial_update_mock.call_args[1]
-    field_payload = call_kwargs['fields'][0]
-    ruleset_payload = field_payload['rulesets'][0]
-    assert ruleset_payload['type'] == FieldRuleType.VALIDATOR
-    group_and_payload = ruleset_payload['groups_or'][0]['groups_and'][0]
-    assert group_and_payload['operator'] == operator
-    assert group_and_payload['value'] == value
+    fieldset_partial_update_mock.assert_called_once_with(
+        fields=[
+            {
+                'name': field.name,
+                'type': field_type,
+                'api_name': field.api_name,
+                'order': 1,
+                'rulesets': [
+                    {
+                        'api_name': ruleset.api_name,
+                        'name': 'Some name',
+                        'type': FieldRuleType.VALIDATOR,
+                        'message': 'Value is invalid',
+                        'order': 1,
+                        'groups_or': [
+                            {
+                                'api_name': group_or.api_name,
+                                'groups_and': [
+                                    {
+                                        'api_name': group_and.api_name,
+                                        'field': None,
+                                        'operator': operator,
+                                        'value': value,
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+    )
 
 
 def test_partial_update__field_rule_validator_user_field__ok(
@@ -1440,14 +1495,39 @@ def test_partial_update__field_rule_validator_user_field__ok(
     assert response.status_code == 200
     field_response = response.data['fields'][0]
     assert field_response['rulesets'][0]['type'] == FieldRuleType.VALIDATOR
-    fieldset_partial_update_mock.assert_called_once()
-    call_kwargs = fieldset_partial_update_mock.call_args[1]
-    field_payload = call_kwargs['fields'][0]
-    ruleset_payload = field_payload['rulesets'][0]
-    assert ruleset_payload['type'] == FieldRuleType.VALIDATOR
-    group_and_payload = ruleset_payload['groups_or'][0]['groups_and'][0]
-    assert group_and_payload['operator'] == operator
-    assert group_and_payload['value'] == value
+    fieldset_partial_update_mock.assert_called_once_with(
+        fields=[
+            {
+                'name': field.name,
+                'type': FieldType.USER,
+                'is_required': True,
+                'api_name': field.api_name,
+                'order': 1,
+                'rulesets': [
+                    {
+                        'api_name': ruleset.api_name,
+                        'name': 'Some name',
+                        'type': FieldRuleType.VALIDATOR,
+                        'message': 'Value is invalid',
+                        'order': 1,
+                        'groups_or': [
+                            {
+                                'api_name': group_or.api_name,
+                                'groups_and': [
+                                    {
+                                        'api_name': group_and.api_name,
+                                        'field': None,
+                                        'operator': operator,
+                                        'value': value,
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+    )
 
 
 @pytest.mark.parametrize(
@@ -1532,14 +1612,42 @@ def test_partial_update__field_rule_validator_types_with_selections__ok(
     assert response.status_code == 200
     field_response = response.data['fields'][0]
     assert field_response['rulesets'][0]['type'] == FieldRuleType.VALIDATOR
-    fieldset_partial_update_mock.assert_called_once()
-    call_kwargs = fieldset_partial_update_mock.call_args[1]
-    field_payload = call_kwargs['fields'][0]
-    ruleset_payload = field_payload['rulesets'][0]
-    assert ruleset_payload['type'] == FieldRuleType.VALIDATOR
-    group_and_payload = ruleset_payload['groups_or'][0]['groups_and'][0]
-    assert group_and_payload['operator'] == operator
-    assert group_and_payload['value'] == value
+    fieldset_partial_update_mock.assert_called_once_with(
+        fields=[
+            {
+                'name': field.name,
+                'type': field_type,
+                'api_name': field.api_name,
+                'order': 1,
+                'selections': [
+                    {'value': 'First'},
+                    {'value': 'Second'},
+                ],
+                'rulesets': [
+                    {
+                        'api_name': ruleset.api_name,
+                        'name': 'Some name',
+                        'type': FieldRuleType.VALIDATOR,
+                        'message': 'Value is invalid',
+                        'order': 1,
+                        'groups_or': [
+                            {
+                                'api_name': group_or.api_name,
+                                'groups_and': [
+                                    {
+                                        'api_name': group_and.api_name,
+                                        'field': None,
+                                        'operator': operator,
+                                        'value': value,
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+    )
 
 
 def test_partial_update__field_rule_show_file_field__ok(api_client, mocker):
@@ -1611,12 +1719,40 @@ def test_partial_update__field_rule_show_file_field__ok(api_client, mocker):
     assert response.status_code == 200
     field_with_ruleset = response.data['fields'][0]
     assert field_with_ruleset['rulesets'][0]['type'] == FieldRuleType.SHOW
-    fieldset_partial_update_mock.assert_called_once()
-    call_kwargs = fieldset_partial_update_mock.call_args[1]
-    file_payload = call_kwargs['fields'][1]
-    ruleset_payload = file_payload['rulesets'][0]
-    assert ruleset_payload['type'] == FieldRuleType.SHOW
-    group_and_payload = ruleset_payload['groups_or'][0]['groups_and'][0]
-    assert group_and_payload['field'] == source_api_name
-    assert group_and_payload['operator'] == FieldRuleOperator.EXIST
-    assert group_and_payload['value'] is None
+    fieldset_partial_update_mock.assert_called_once_with(
+        fields=[
+            {
+                'name': 'Image original',
+                'type': FieldType.FILE,
+                'api_name': source_api_name,
+                'order': 1,
+            },
+            {
+                'name': 'Image resized',
+                'type': FieldType.FILE,
+                'api_name': field.api_name,
+                'order': 2,
+                'rulesets': [
+                    {
+                        'api_name': ruleset.api_name,
+                        'name': 'Some name',
+                        'type': FieldRuleType.SHOW,
+                        'order': 1,
+                        'groups_or': [
+                            {
+                                'api_name': group_or.api_name,
+                                'groups_and': [
+                                    {
+                                        'api_name': group_and.api_name,
+                                        'field': source_api_name,
+                                        'operator': FieldRuleOperator.EXIST,
+                                        'value': None,
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+    )

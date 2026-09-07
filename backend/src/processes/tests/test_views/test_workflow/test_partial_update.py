@@ -58,7 +58,9 @@ from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
     create_test_attachment,
+    create_test_field_show_ruleset,
     create_test_fieldset,
+    create_test_fieldset_template,
     create_test_not_admin,
     create_test_owner,
     create_test_template,
@@ -2717,3 +2719,116 @@ def test_workflow_update__template_starter_own_workflow__forbidden(api_client):
 
     # assert
     assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+def test_partial_update__kickoff_change__show_rule_reapplied(api_client):
+
+    """ The kickoff drives the show rules, so a PATCH of its values has
+        to recalculate the task fields """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    api_client.token_authenticate(user)
+    template = create_test_template(user=user, is_active=True, tasks_count=1)
+    FieldTemplate.objects.create(
+        account=account,
+        template=template,
+        kickoff=template.kickoff_instance,
+        name='Source',
+        type=FieldType.STRING,
+        order=0,
+        api_name='source-field-1',
+    )
+    target_template = FieldTemplate.objects.create(
+        account=account,
+        template=template,
+        task=template.tasks.first(),
+        name='Target',
+        type=FieldType.STRING,
+        order=1,
+        api_name='target-field-1',
+    )
+    create_test_field_show_ruleset(
+        account=account,
+        template=template,
+        field=target_template,
+        source_field_api_name='source-field-1',
+        value='yes',
+    )
+    run_response = api_client.post(
+        f'/templates/{template.id}/run',
+        data={'kickoff': {'source-field-1': 'no'}},
+    )
+    workflow_id = run_response.data['id']
+    target_field = TaskField.objects.get(
+        workflow_id=workflow_id,
+        api_name='target-field-1',
+    )
+    assert target_field.is_hidden is True
+
+    # act
+    response = api_client.patch(
+        f'/workflows/{workflow_id}',
+        data={'kickoff': {'source-field-1': 'yes'}},
+    )
+
+    # assert
+    assert response.status_code == 200
+    target_field.refresh_from_db()
+    assert target_field.is_hidden is False
+
+
+def test_partial_update__kickoff_fieldset_show_rule_reapplied(api_client):
+
+    """ PATCH of Fieldset status must flip Note on the kickoff
+        fieldset, not only task fields. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    api_client.token_authenticate(user)
+    template = create_test_template(user=user, is_active=True, tasks_count=1)
+    FieldTemplate.objects.create(
+        account=account,
+        template=template,
+        kickoff=template.kickoff_instance,
+        name='Fieldset status',
+        type=FieldType.STRING,
+        order=0,
+        api_name='fieldset-status',
+    )
+    fieldset_template = create_test_fieldset_template(
+        account=account,
+        template=template,
+        kickoff=template.kickoff_instance,
+    )
+    note_template = fieldset_template.fields.first()
+    create_test_field_show_ruleset(
+        account=account,
+        template=template,
+        field=note_template,
+        source_field_api_name='fieldset-status',
+        value='yes',
+    )
+    run_response = api_client.post(
+        f'/templates/{template.id}/run',
+        data={'kickoff': {'fieldset-status': 'no'}},
+    )
+    workflow_id = run_response.data['id']
+    note = TaskField.objects.get(
+        workflow_id=workflow_id,
+        api_name=note_template.api_name,
+    )
+    assert note.is_hidden is True
+
+    # act
+    response = api_client.patch(
+        f'/workflows/{workflow_id}',
+        data={'kickoff': {'fieldset-status': 'yes'}},
+    )
+
+    # assert
+    assert response.status_code == 200
+    note.refresh_from_db()
+    assert note.is_hidden is False

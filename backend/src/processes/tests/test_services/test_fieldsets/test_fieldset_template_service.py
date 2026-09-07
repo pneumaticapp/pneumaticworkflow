@@ -1,6 +1,7 @@
 import pytest
 from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
+    FieldRuleOperator,
     FieldSetLayout,
     FieldSetRuleOperator,
     FieldType,
@@ -16,6 +17,9 @@ from src.processes.models.templates.fieldset import (
 from src.processes.models.templates.fields import (
     FieldTemplate,
     FieldTemplateSelection,
+    FieldTemplateRuleSet,
+    FieldTemplateRuleGroupOr,
+    FieldTemplateRuleGroupAnd,
 )
 from src.processes.services.exceptions import (
     FieldsetTemplateInUseException,
@@ -1551,6 +1555,169 @@ def test__replace_api_names__fields_and_rules__ok(mocker):
         ],
         any_order=True,
     )
+
+
+def test__replace_api_names__rule_on_later_field__ok(mocker):
+
+    """
+    Rule references a field declared after it in the list
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    source_api_name = 'old-source'
+    shared_fieldset_data = {
+        'api_name': 'old-fs',
+        'fields': [
+            {
+                'api_name': 'old-target',
+                'name': 'Target',
+                'rulesets': [
+                    {
+                        'api_name': 'old-field-ruleset',
+                        'groups_or': [
+                            {
+                                'api_name': 'old-field-group-or',
+                                'groups_and': [
+                                    {
+                                        'api_name': 'old-field-group-and',
+                                        'field': source_api_name,
+                                        'operator': FieldRuleOperator.EQUAL,
+                                        'value': 'yes',
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+            {
+                'api_name': source_api_name,
+                'name': 'Source',
+            },
+        ],
+        'rulesets': [],
+    }
+    new_target_api = 'new-target'
+    new_source_api = 'new-source'
+    create_api_name_mock = mocker.patch(
+        'src.processes.services.fieldsets.fieldset.create_api_name',
+        side_effect=[
+            'new-fs',
+            new_target_api,
+            new_source_api,
+            'new-field-ruleset',
+            'new-field-group-or',
+            'new-field-group-and',
+        ],
+    )
+
+    # act
+    result = service._replace_api_names(
+        shared_fieldset_data=shared_fieldset_data,
+    )
+
+    # assert
+    assert result['fields'][0]['api_name'] == new_target_api
+    assert result['fields'][1]['api_name'] == new_source_api
+    ruleset_data = result['fields'][0]['rulesets'][0]
+    group_and_data = ruleset_data['groups_or'][0]['groups_and'][0]
+    assert group_and_data['field'] == new_source_api
+    assert create_api_name_mock.call_count == 6
+    create_api_name_mock.assert_has_calls(
+        [
+            mocker.call(FieldsetTemplate.api_name_prefix),
+            mocker.call(FieldTemplate.api_name_prefix),
+            mocker.call(FieldTemplateRuleSet.api_name_prefix),
+            mocker.call(FieldTemplateRuleGroupOr.api_name_prefix),
+            mocker.call(FieldTemplateRuleGroupAnd.api_name_prefix),
+        ],
+        any_order=True,
+    )
+
+
+def test__replace_api_names__rule_on_outer_field__keep_api_name(mocker):
+
+    """
+    Rule references a field outside the fieldset, api_name is kept
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    outer_api_name = 'kickoff-field-1'
+    shared_fieldset_data = {
+        'api_name': 'old-fs',
+        'fields': [
+            {
+                'api_name': 'old-target',
+                'name': 'Target',
+                'rulesets': [
+                    {
+                        'api_name': 'old-field-ruleset',
+                        'groups_or': [
+                            {
+                                'api_name': 'old-field-group-or',
+                                'groups_and': [
+                                    {
+                                        'api_name': 'old-field-group-and',
+                                        'field': outer_api_name,
+                                        'operator': FieldRuleOperator.EQUAL,
+                                        'value': 'yes',
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+        'rulesets': [
+            {
+                'api_name': 'old-fieldset-ruleset',
+                'fields': ['old-target', outer_api_name],
+                'groups_or': [],
+            },
+        ],
+    }
+    new_target_api = 'new-target'
+    create_api_name_mock = mocker.patch(
+        'src.processes.services.fieldsets.fieldset.create_api_name',
+        side_effect=[
+            'new-fs',
+            new_target_api,
+            'new-field-ruleset',
+            'new-field-group-or',
+            'new-field-group-and',
+            'new-fieldset-ruleset',
+        ],
+    )
+
+    # act
+    result = service._replace_api_names(
+        shared_fieldset_data=shared_fieldset_data,
+    )
+
+    # assert
+    ruleset_data = result['fields'][0]['rulesets'][0]
+    group_and_data = ruleset_data['groups_or'][0]['groups_and'][0]
+    assert group_and_data['field'] == outer_api_name
+    assert result['rulesets'][0]['fields'] == [
+        new_target_api,
+        outer_api_name,
+    ]
+    assert create_api_name_mock.call_count == 6
 
 
 def test__replace_api_names__no_fields_key__ok(mocker):

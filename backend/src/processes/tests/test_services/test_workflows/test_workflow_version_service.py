@@ -298,8 +298,8 @@ class TestWorkflowUpdateVersionService:
         condition = task_1.conditions.get(
             action=ConditionAction.SKIP_TASK,
         )
-        assert condition.rulesets.count() == 1
-        rule = condition.rulesets.get()
+        assert condition.rules.count() == 1
+        rule = condition.rules.get()
         assert rule.predicates.count() == 1
         assert rule.predicates.get(
             operator=PredicateOperator.EQUAL,

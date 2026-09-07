@@ -1,6 +1,8 @@
 import pytest
 from datetime import timedelta
 
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 
 from src.accounts.enums import BillingPlanType
@@ -15,11 +17,13 @@ from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
     OwnerRole,
     DueDateRule,
+    FieldSetRuleOperator,
     FieldType,
     OwnerType,
     PerformerType,
 )
 from src.processes.messages import template as messages
+from src.processes.models.templates.fieldset import FieldSetTemplateRuleSet
 from src.processes.models.templates.template import Template
 from src.processes.services.templates.integrations import (
     TemplateIntegrationsService,
@@ -813,3 +817,103 @@ def test_retrieve__fieldsets__ok(api_client):
     assert len(task_fieldsets) == 1
     assert task_fieldsets[0]['api_name'] == task_fieldset.api_name
     assert task_fieldsets[0]['order'] == 1
+
+
+def test_retrieve__fieldset_soft_deleted_ruleset__excluded(api_client):
+
+    """ Soft-deleted ruleset is excluded, the live one is kept """
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    api_client.token_authenticate(account_owner)
+    template = create_test_template(
+        user=account_owner,
+        is_active=True,
+        tasks_count=1,
+    )
+    fieldset = create_test_fieldset_template(
+        account=account,
+        template=template,
+        kickoff=template.kickoff_instance,
+        api_name='fieldset-kickoff-1',
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
+        rule_value='10',
+    )
+    deleted_ruleset = fieldset.rulesets.get()
+    live_ruleset = FieldSetTemplateRuleSet.objects.create(
+        fieldset=fieldset,
+        template=template,
+        account=account,
+        api_name='fieldset-kickoff-1-ruleset-2',
+    )
+    FieldSetTemplateRuleSet.objects.filter(id=deleted_ruleset.id).update(
+        is_deleted=True,
+    )
+
+    # act
+    response = api_client.get(f'/templates/{template.id}')
+
+    # assert
+    assert response.status_code == 200
+    fieldsets = response.data['kickoff']['fieldsets']
+    assert len(fieldsets) == 1
+    rulesets = fieldsets[0]['rulesets']
+    assert len(rulesets) == 1
+    assert rulesets[0]['api_name'] == live_ruleset.api_name
+
+
+def test_retrieve__fieldset_rulesets__no_n_plus_one(api_client):
+
+    """ Query count does not grow with the number of rulesets """
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    api_client.token_authenticate(account_owner)
+    template = create_test_template(
+        user=account_owner,
+        is_active=True,
+        tasks_count=1,
+    )
+    kickoff = template.kickoff_instance
+    create_test_fieldset_template(
+        account=account,
+        template=template,
+        kickoff=kickoff,
+        api_name='fieldset-1',
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
+        rule_value='10',
+    )
+    api_client.get(f'/templates/{template.id}')
+
+    # act
+    with CaptureQueriesContext(connection) as one_fieldset:
+        first_response = api_client.get(f'/templates/{template.id}')
+
+    create_test_fieldset_template(
+        account=account,
+        template=template,
+        kickoff=kickoff,
+        api_name='fieldset-2',
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
+        rule_value='10',
+    )
+    create_test_fieldset_template(
+        account=account,
+        template=template,
+        kickoff=kickoff,
+        api_name='fieldset-3',
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
+        rule_value='10',
+    )
+
+    with CaptureQueriesContext(connection) as three_fieldsets:
+        second_response = api_client.get(f'/templates/{template.id}')
+
+    # assert
+    assert first_response.status_code == 200
+    assert second_response.status_code == 200
+    assert len(first_response.data['kickoff']['fieldsets']) == 1
+    assert len(second_response.data['kickoff']['fieldsets']) == 3
+    assert len(three_fieldsets) == len(one_fieldset)
