@@ -3,23 +3,15 @@ import {
   IBaseRuleSet,
   ERuleCombinator,
   EFieldRuleType,
+  EFieldRuleOperator,
 } from '../../../../types/fieldset';
 import { EExtraFieldType, IExtraFieldSelection } from '../../../../types/template';
 
-export enum EFieldRuleShowOperator {
-  Equal = 'equal',
-  NotEqual = 'not_equals',
-  Exist = 'exists',
-  NotExist = 'not_exists',
-  Contain = 'contains',
-  NotContain = 'not_contains',
-  GreaterThan = 'greater_than',
-  LessThan = 'less_than',
-}
+export { EFieldRuleOperator };
 
-export const FIELD_RULE_SHOW_OPERATORS_WITHOUT_VALUE: EFieldRuleShowOperator[] = [
-  EFieldRuleShowOperator.Exist,
-  EFieldRuleShowOperator.NotExist,
+export const FIELD_RULE_OPERATORS_WITHOUT_VALUE: EFieldRuleOperator[] = [
+  EFieldRuleOperator.Exist,
+  EFieldRuleOperator.NotExist,
 ];
 
 export const SELECTION_FIELD_TYPES: EExtraFieldType[] = [
@@ -46,6 +38,11 @@ export type IFieldRuleBaseHandlers = {
   }) => void;
 };
 
+export type TOperatorOption = {
+  value: string;
+  labelKey: string;
+};
+
 export type IFieldRuleBaseOperatorOption = {
   apiName: string;
   name: string;
@@ -64,24 +61,24 @@ export type IFieldRuleBaseItemProps = IFieldRuleBaseHandlers & {
   groupOrApiName: string;
   groupOrIndex: number;
   groupAndIndex: number;
-  fieldRuleBaseOperatorOptions: IFieldRuleBaseOperatorOption[];
   fieldRuleShowFieldOptions?: IFieldRuleShowFieldOption[];
   ruleType: EFieldRuleType;
   fieldType: EExtraFieldType;
   selections?: IExtraFieldSelection[] | string[];
   datasetId?: number | null;
   isReadOnly?: boolean;
+  isFieldsetRuleset?: boolean;
 };
 
 export type IFieldRuleBaseListProps = IFieldRuleBaseHandlers & {
   ruleSet: IBaseRuleSet;
-  operatorOptions: { value: string; labelKey: string }[];
   fieldRuleShowFieldOptions?: IFieldRuleShowFieldOption[];
   ruleType: EFieldRuleType;
   fieldType: EExtraFieldType;
   selections?: IExtraFieldSelection[] | string[];
   datasetId?: number | null;
   isReadOnly?: boolean;
+  isFieldsetRuleset?: boolean;
   addRule: () => void;
 };
 
@@ -94,7 +91,6 @@ export type IFieldRuleMessageInputProps = {
 export type IFieldRuleShowItemProps = {
   groupAndRule: IBaseRuleGroupAnd;
   groupOrApiName: string;
-  fieldRuleBaseOperatorOptions: IFieldRuleBaseOperatorOption[];
   fieldRuleShowFieldOptions: IFieldRuleShowFieldOption[];
   isReadOnly?: boolean;
   updateRule: IFieldRuleBaseHandlers['updateRule'];
@@ -103,11 +99,11 @@ export type IFieldRuleShowItemProps = {
 export type IFieldRuleValidatorItemProps = {
   groupAndRule: IBaseRuleGroupAnd;
   groupOrApiName: string;
-  fieldRuleBaseOperatorOptions: IFieldRuleBaseOperatorOption[];
   fieldType: EExtraFieldType;
   selections?: IExtraFieldSelection[] | string[];
   datasetId?: number | null;
   isReadOnly?: boolean;
+  isFieldsetRuleset?: boolean;
   updateRule: IFieldRuleBaseHandlers['updateRule'];
 };
 
@@ -124,7 +120,7 @@ export type IRuleOperatorSelectProps = {
   fieldType?: EExtraFieldType;
   operator?: string | null;
   isReadOnly?: boolean;
-  defaultOptions?: IFieldRuleBaseOperatorOption[];
-  onChange: (newOperator: string, isOperatorWithoutValue: boolean) => void;
+  isFieldsetRuleset?: boolean;
+  onChange: (newOperator: string) => void;
 };
 

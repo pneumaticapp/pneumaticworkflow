@@ -8,9 +8,8 @@ import { RuleValueInput } from './RuleValueInput';
 import {
   IFieldRuleShowFieldOption,
   IFieldRuleShowItemProps,
-  FIELD_RULE_SHOW_OPERATORS_WITHOUT_VALUE,
-  EFieldRuleShowOperator,
 } from './types';
+import { isOperatorWithoutValue } from './utils';
 
 import fieldsetDetailsStyles from '../FieldsetDetails.css';
 import styles from '../FieldsetRulesets/FieldsetRulesets.css';
@@ -18,7 +17,6 @@ import styles from '../FieldsetRulesets/FieldsetRulesets.css';
 export const RuleItemShow = ({
   groupAndRule,
   groupOrApiName,
-  fieldRuleBaseOperatorOptions,
   fieldRuleShowFieldOptions,
   isReadOnly,
   updateRule,
@@ -32,9 +30,7 @@ export const RuleItemShow = ({
   const selectedFieldLabel = selectedFieldOption?.name || '';
 
   const isFieldSelectDisabled = isReadOnly;
-  const isOperatorWithoutValue = FIELD_RULE_SHOW_OPERATORS_WITHOUT_VALUE.includes(
-    operator as EFieldRuleShowOperator,
-  );
+  const isWithoutValue = isOperatorWithoutValue(operator);
 
   return (
     <>
@@ -74,20 +70,19 @@ export const RuleItemShow = ({
         fieldType={selectedFieldOption?.type}
         operator={operator}
         isReadOnly={isReadOnly}
-        defaultOptions={fieldRuleBaseOperatorOptions}
-        onChange={(newOperator, isWithoutValue) => {
+        onChange={(newOperator) => {
           updateRule({
             groupOrApiName,
             groupAndApiName,
             ruleChanges: {
               operator: newOperator,
-              ...(isWithoutValue ? { value: '' } : {}),
+              ...(isOperatorWithoutValue(newOperator) ? { value: '' } : {}),
             },
           });
         }}
       />
 
-      {Boolean(operator) && !isOperatorWithoutValue && (
+      {Boolean(operator) && !isWithoutValue && (
         <RuleValueInput
           fieldType={selectedFieldOption?.type}
           value={value}

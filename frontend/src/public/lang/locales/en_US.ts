@@ -1517,6 +1517,8 @@ export const enMessages = {
   'fieldsets.all-fieldsets': 'ALL FIELDSETS',
   'fieldsets.stats.fields': '{count} fields',
   'fieldsets.stats.rules': '{count} rules',
+  'fieldsets.card.used': 'Used in {count} {count, plural, one {template} other {templates}}',
+  'fieldsets.card.not-used': 'Not used',
   'fieldsets.delete.title': 'Confirm Action',
   'fieldsets.delete.message': 'Are you sure you want to delete the {name} fieldset?',
   'fieldsets.fields-section': 'Fields',

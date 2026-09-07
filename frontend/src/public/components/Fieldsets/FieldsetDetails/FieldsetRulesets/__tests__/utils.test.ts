@@ -13,7 +13,7 @@ import {
   getFieldsTooltipText,
   removeDeletedFieldFromRulesets,
 } from '../utils';
-import { ERuleCombinator, EFieldsetNumberRulesetOperator, IFieldsetRuleSet } from '../../../../../types/fieldset';
+import { ERuleCombinator, EFieldsetRulesetNumericOperator, IFieldsetRuleSet } from '../../../../../types/fieldset';
 import {
   makeFieldsetRuleset,
   makeFieldsetRuleGroupOr,
@@ -94,7 +94,7 @@ describe('FieldsetRulesets utils', () => {
     it('should map over rulesets and update matching rule in targeted ruleset', () => {
       const groupAnd = makeFieldsetRuleGroupAnd({
         apiName: 'g-and-1',
-        operator: EFieldsetNumberRulesetOperator.SumEqual,
+        operator: EFieldsetRulesetNumericOperator.SumEqual,
         value: '10',
       });
       const groupOr = makeFieldsetRuleGroupOr({ apiName: 'g-or-1', groupsAnd: [groupAnd] });

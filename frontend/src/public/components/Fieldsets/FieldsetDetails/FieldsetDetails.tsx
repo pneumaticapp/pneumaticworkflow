@@ -5,6 +5,7 @@ import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
 import TextareaAutosize from 'react-textarea-autosize';
+import { Link } from 'react-router-dom';
 
 import { validateFieldsetTitle } from '../../../utils/validators';
 
@@ -18,6 +19,7 @@ import {
 } from '../../../redux/fieldsets/slice';
 
 import { history } from '../../../utils/history';
+import { getTemplateEditRoute } from '../../../utils/routes';
 import { ERoutes } from '../../../constants/routes';
 
 import { ModifyDropdown, Button, Tooltip, FilterSelect } from '../../UI';
@@ -265,6 +267,9 @@ const FieldsetDetails = ({
               title={formatMessage({ id: 'fieldsets.usage.show' })}
               options={fieldset.usage.map((template) => ({
                 value: template.name,
+                onClick: () => {
+                  history.push(getTemplateEditRoute(template.id));
+                },
                 label: (
                   <Tooltip
                     content={template.name}
@@ -274,7 +279,12 @@ const FieldsetDetails = ({
                     containerClassName={styles['usage-banner__option-tooltip']}
                     contentClassName={styles['usage-banner__tooltip-content']}
                   >
-                    <span>{template.name}</span>
+                    <Link
+                      to={getTemplateEditRoute(template.id)}
+                      className={styles['usage-banner__link']}
+                    >
+                      {template.name}
+                    </Link>
                   </Tooltip>
                 ),
               }))}

@@ -6,7 +6,7 @@ import { RawIntlProvider, createIntl, createIntlCache } from 'react-intl';
 import { FieldRuleModal } from '../FieldRuleModal';
 import { enMessages } from '../../../../../lang/locales/en_US';
 
-import { EFieldRuleType, EFieldRuleValidatorOperator, IFieldRuleSet } from '../../../../../types/fieldset';
+import { EFieldRuleType, EFieldRuleOperator, IFieldRuleSet } from '../../../../../types/fieldset';
 import { EExtraFieldType } from '../../../../../types/template';
 import { createEmptyFieldRuleSet } from '../utils';
 
@@ -30,7 +30,7 @@ describe('FieldRuleModal', () => {
           {
             apiName: 'and-1',
             field: 'field_1',
-            operator: EFieldRuleValidatorOperator.Equal,
+            operator: EFieldRuleOperator.Equal,
             value: 'test value',
           },
         ],

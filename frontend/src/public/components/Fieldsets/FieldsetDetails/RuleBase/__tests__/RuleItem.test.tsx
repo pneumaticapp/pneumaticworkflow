@@ -5,7 +5,7 @@ import userEvent from '@testing-library/user-event';
 import { RuleItem } from '../RuleItem';
 import { intlMock } from '../../../../../__stubs__/intlMock';
 import { makeFieldsetRuleGroupAnd } from '../../../../../__stubs__/fieldsets.factory';
-import { EFieldsetNumberRulesetOperator, ERuleCombinator, EFieldRuleType } from '../../../../../types/fieldset';
+import { EFieldsetRulesetNumericOperator, ERuleCombinator, EFieldRuleType } from '../../../../../types/fieldset';
 import { EExtraFieldType } from '../../../../../types/template';
 
 const EMPTY_FIELD_OPTIONS: Array<{ apiName: string; name: string }> = [];
@@ -62,11 +62,6 @@ describe('RuleItem component', () => {
   const mockDeleteRule = jest.fn();
   const mockRegroupRules = jest.fn();
 
-  const defaultOperatorOptions = [
-    { apiName: EFieldsetNumberRulesetOperator.SumEqual, name: 'Sum is equal to' },
-    { apiName: EFieldsetNumberRulesetOperator.SumGreaterThan, name: 'Sum is greater than' },
-  ];
-
   const formatMsg = (id: string) => intlMock.formatMessage({ id });
 
   beforeEach(() => {
@@ -76,7 +71,7 @@ describe('RuleItem component', () => {
   it('renders rule values and operator selector correctly', () => {
     const groupAndRule = makeFieldsetRuleGroupAnd({
       apiName: 'g-and-1',
-      operator: EFieldsetNumberRulesetOperator.SumEqual,
+      operator: EFieldsetRulesetNumericOperator.SumEqual,
       value: '100',
     });
 
@@ -86,7 +81,6 @@ describe('RuleItem component', () => {
         groupOrApiName="g-or-1"
         groupOrIndex={0}
         groupAndIndex={0}
-        fieldRuleBaseOperatorOptions={defaultOperatorOptions}
         ruleType={EFieldRuleType.Validator}
         fieldType={EExtraFieldType.Number}
         isReadOnly={false}
@@ -106,7 +100,7 @@ describe('RuleItem component', () => {
   it('renders combinator select for non-first rules and triggers regroupRules on change', () => {
     const groupAndRule = makeFieldsetRuleGroupAnd({
       apiName: 'g-and-2',
-      operator: EFieldsetNumberRulesetOperator.SumEqual,
+      operator: EFieldsetRulesetNumericOperator.SumEqual,
       value: '200',
     });
 
@@ -116,7 +110,6 @@ describe('RuleItem component', () => {
         groupOrApiName="g-or-1"
         groupOrIndex={0}
         groupAndIndex={1}
-        fieldRuleBaseOperatorOptions={defaultOperatorOptions}
         ruleType={EFieldRuleType.Validator}
         fieldType={EExtraFieldType.Number}
         isReadOnly={false}
@@ -141,7 +134,7 @@ describe('RuleItem component', () => {
   it('triggers updateRule on value change', () => {
     const groupAndRule = makeFieldsetRuleGroupAnd({
       apiName: 'g-and-1',
-      operator: EFieldsetNumberRulesetOperator.SumEqual,
+      operator: EFieldsetRulesetNumericOperator.SumEqual,
       value: '100',
     });
 
@@ -151,7 +144,6 @@ describe('RuleItem component', () => {
         groupOrApiName="g-or-1"
         groupOrIndex={0}
         groupAndIndex={0}
-        fieldRuleBaseOperatorOptions={defaultOperatorOptions}
         ruleType={EFieldRuleType.Validator}
         fieldType={EExtraFieldType.Number}
         isReadOnly={false}
@@ -174,7 +166,7 @@ describe('RuleItem component', () => {
   it('triggers deleteRule on delete button click', () => {
     const groupAndRule = makeFieldsetRuleGroupAnd({
       apiName: 'g-and-1',
-      operator: EFieldsetNumberRulesetOperator.SumEqual,
+      operator: EFieldsetRulesetNumericOperator.SumEqual,
       value: '100',
     });
 
@@ -184,7 +176,6 @@ describe('RuleItem component', () => {
         groupOrApiName="g-or-1"
         groupOrIndex={0}
         groupAndIndex={0}
-        fieldRuleBaseOperatorOptions={defaultOperatorOptions}
         ruleType={EFieldRuleType.Validator}
         fieldType={EExtraFieldType.Number}
         isReadOnly={false}
@@ -207,7 +198,7 @@ describe('RuleItem component', () => {
     const groupAndRule = {
       ...makeFieldsetRuleGroupAnd({
         apiName: 'g-and-1',
-        operator: EFieldsetNumberRulesetOperator.SumEqual,
+        operator: EFieldsetRulesetNumericOperator.SumEqual,
         value: '100',
       }),
       field: 'field-1',
@@ -224,7 +215,6 @@ describe('RuleItem component', () => {
         groupOrApiName="g-or-1"
         groupOrIndex={0}
         groupAndIndex={0}
-        fieldRuleBaseOperatorOptions={defaultOperatorOptions}
         fieldRuleShowFieldOptions={fieldRuleShowFieldOptions}
         ruleType={EFieldRuleType.Show}
         fieldType={EExtraFieldType.Number}

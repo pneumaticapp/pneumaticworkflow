@@ -33,6 +33,7 @@
   gap: 0.4rem;
 
   .card-stats {
+    padding-left: 0.4rem;
     font-style: normal;
     color: var(--pneumatic-color-black48);
 
@@ -44,14 +45,30 @@
   }
 
   .card-stats--items {
-    color: var(--pneumatic-color-black72);
+    font-weight: bold;
 
-    @mixin text-base 700;
+    @mixin text-small;
   }
 
   .card-stats--rules {
     color: var(--pneumatic-color-black48);
 
     @mixin text-small;
+  }
+
+  .card-usage {
+    padding: 0.8rem 1.2rem;
+    color: var(--pneumatic-color-black72);
+    border-radius: 0.8rem;
+
+    @mixin text-small;
+  }
+
+  .card-usage--not-linked {
+    background-color: var(--pneumatic-success-color-light);
+  }
+
+  .card-usage--linked {
+    background-color: var(--pneumatic-color-beige);
   }
 }

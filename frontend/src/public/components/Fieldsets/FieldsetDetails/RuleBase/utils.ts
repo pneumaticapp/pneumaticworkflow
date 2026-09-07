@@ -5,21 +5,32 @@ import {
 } from '../../../../types/fieldset';
 import { createRulesetGroupOrApiName } from '../../../../utils/createId';
 import { EExtraFieldType } from '../../../../types/template';
-import { IFieldRuleBaseOperatorOption } from './types';
-
 import {
-  fieldRuleShowOperatorsByFieldTypeMap,
-  fieldRuleShowOperatorLabelMap,
+  IFieldRuleBaseOperatorOption,
+  TOperatorOption,
+  FIELD_RULE_OPERATORS_WITHOUT_VALUE,
+  EFieldRuleOperator,
+} from './types';
+import {
+  fieldRuleOperatorsByFieldTypeMap,
+  FIELDSET_RULESET_NUMERIC_OPERATOR_OPTIONS,
 } from './constants';
 
-export const getFieldRuleShowOperators = (
+export const isOperatorWithoutValue = (operator?: string | null): boolean =>
+  Boolean(operator && FIELD_RULE_OPERATORS_WITHOUT_VALUE.includes(operator as EFieldRuleOperator));
+
+export const getRuleOperators = (
   fieldType: EExtraFieldType,
-  messages: Record<string, string>,
+  formatMessage: (descriptor: { id: string }) => string,
+  isFieldsetRuleset?: boolean,
 ): IFieldRuleBaseOperatorOption[] => {
-  const operators = fieldRuleShowOperatorsByFieldTypeMap[fieldType] || [];
-  return operators.map((operator) => ({
-    apiName: operator,
-    name: messages[fieldRuleShowOperatorLabelMap[operator]],
+  const options: TOperatorOption[] = isFieldsetRuleset
+    ? FIELDSET_RULESET_NUMERIC_OPERATOR_OPTIONS
+    : fieldRuleOperatorsByFieldTypeMap[fieldType];
+
+  return options.map((option) => ({
+    apiName: option.value,
+    name: formatMessage({ id: option.labelKey }),
   }));
 };
 

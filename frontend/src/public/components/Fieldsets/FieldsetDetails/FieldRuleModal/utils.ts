@@ -9,10 +9,7 @@ import {
   IFieldRuleGroupOr,
   IFieldRuleSet,
 } from '../../../../types/fieldset';
-import {
-  FIELD_RULE_SHOW_OPERATORS_WITHOUT_VALUE,
-  EFieldRuleShowOperator,
-} from '../RuleBase/types';
+import { isOperatorWithoutValue } from '../RuleBase/utils';
 
 export const createEmptyFieldRule = (): IFieldRuleGroupAnd => ({
   apiName: createFieldRuleGroupAndApiName(),
@@ -35,62 +32,6 @@ export const createEmptyFieldRuleSet = (type: EFieldRuleType = EFieldRuleType.Va
   groupsOr: [createEmptyFieldRuleGroupOr()],
 });
 
-export const traverseFieldRuleSetGroupsAnd = (
-  ruleSet: IFieldRuleSet,
-  changeRules: (groupsAnd: IFieldRuleGroupAnd[]) => IFieldRuleGroupAnd[],
-  targetGroupOrApiName?: string,
-): IFieldRuleSet => {
-  const targetGroupOr = targetGroupOrApiName || ruleSet.groupsOr[0]?.apiName;
-  if (!targetGroupOr) return ruleSet;
-
-  return {
-    ...ruleSet,
-    groupsOr: ruleSet.groupsOr.map((groupOr) => {
-      if (groupOr.apiName !== targetGroupOr) return groupOr;
-      return {
-        ...groupOr,
-        groupsAnd: changeRules(groupOr.groupsAnd || []),
-      };
-    }),
-  };
-};
-
-export const addFieldRule = (
-  ruleSet: IFieldRuleSet,
-  targetGroupOrApiName?: string,
-): IFieldRuleSet =>
-  traverseFieldRuleSetGroupsAnd(
-    ruleSet,
-    (groupsAnd) => [...groupsAnd, createEmptyFieldRule()],
-    targetGroupOrApiName,
-  );
-
-export const deleteFieldRule = (
-  ruleSet: IFieldRuleSet,
-  ruleApiName: string,
-  targetGroupOrApiName?: string,
-): IFieldRuleSet =>
-  traverseFieldRuleSetGroupsAnd(
-    ruleSet,
-    (groupsAnd) => groupsAnd.filter((rule) => rule.apiName !== ruleApiName),
-    targetGroupOrApiName,
-  );
-
-export const updateFieldRule = (
-  ruleSet: IFieldRuleSet,
-  ruleApiName: string,
-  changes: Partial<IFieldRuleGroupAnd>,
-  targetGroupOrApiName?: string,
-): IFieldRuleSet =>
-  traverseFieldRuleSetGroupsAnd(
-    ruleSet,
-    (groupsAnd) =>
-      groupsAnd.map((rule) =>
-        rule.apiName === ruleApiName ? { ...rule, ...changes } : rule,
-      ),
-    targetGroupOrApiName,
-  );
-
 export const isFieldRulesetValid = (
   ruleSet: IFieldRuleSet,
 ): boolean => {
@@ -108,10 +49,7 @@ export const isFieldRulesetValid = (
       if (!rule.field) {
         return false;
       }
-      const isOperatorWithoutValue = FIELD_RULE_SHOW_OPERATORS_WITHOUT_VALUE.includes(
-        rule.operator as EFieldRuleShowOperator,
-      );
-      if (!isOperatorWithoutValue && !rule.value.trim()) {
+      if (!isOperatorWithoutValue(rule.operator) && !rule.value.trim()) {
         return false;
       }
       return true;
@@ -121,10 +59,7 @@ export const isFieldRulesetValid = (
       if (!rule.operator) {
         return false;
       }
-      const isOperatorWithoutValue = FIELD_RULE_SHOW_OPERATORS_WITHOUT_VALUE.includes(
-        rule.operator as EFieldRuleShowOperator,
-      );
-      if (!isOperatorWithoutValue && !rule.value.trim()) {
+      if (!isOperatorWithoutValue(rule.operator) && !rule.value.trim()) {
         return false;
       }
       return true;

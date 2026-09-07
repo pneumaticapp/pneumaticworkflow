@@ -1,7 +1,7 @@
 import {
   IBaseRuleGroupAnd,
   IFieldsetRuleGroupAnd,
-  EFieldsetNumberRulesetOperator,
+  EFieldsetRulesetNumericOperator,
   ERuleCombinator,
   IFieldsetRuleSet,
 } from '../../../../types/fieldset';
@@ -35,7 +35,7 @@ const createEmptyRuleset = (): IFieldsetRuleSet => ({
 
 const createEmptyGroupAnd = (): IFieldsetRuleGroupAnd => ({
   apiName: createRulesetGroupAndApiName(),
-  operator: EFieldsetNumberRulesetOperator.SumEqual,
+  operator: EFieldsetRulesetNumericOperator.SumEqual,
   value: '',
 });
 

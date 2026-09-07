@@ -6,7 +6,7 @@ import {
   FIELDSET_RULES_MSG_VALUE_REQUIRED,
 } from '../constants';
 import { validateFieldsetRules } from '../validators';
-import { EFieldsetNumberRulesetOperator } from '../../../types/fieldset';
+import { EFieldsetRulesetNumericOperator } from '../../../types/fieldset';
 import { EExtraFieldType } from '../../../types/template';
 import { makeFieldsetRuleset, makeFieldsetRuleGroupOr, makeFieldsetRuleGroupAnd } from '../../../__stubs__/fieldsets.factory';
 import { makeExtraField } from '../../../__stubs__/fields.factory';
@@ -52,7 +52,7 @@ describe('validateFieldsetRules', () => {
             fields: ['f1'],
             groupsOr: [
               makeFieldsetRuleGroupOr({
-                groupsAnd: [makeFieldsetRuleGroupAnd({ operator: EFieldsetNumberRulesetOperator.SumEqual, value: '' })],
+                groupsAnd: [makeFieldsetRuleGroupAnd({ operator: EFieldsetRulesetNumericOperator.SumEqual, value: '' })],
               }),
             ],
           }),
@@ -69,7 +69,7 @@ describe('validateFieldsetRules', () => {
           fields: [],
           groupsOr: [
             makeFieldsetRuleGroupOr({
-              groupsAnd: [makeFieldsetRuleGroupAnd({ operator: EFieldsetNumberRulesetOperator.SumEqual, value: '' })],
+              groupsAnd: [makeFieldsetRuleGroupAnd({ operator: EFieldsetRulesetNumericOperator.SumEqual, value: '' })],
             }),
           ],
         }),
@@ -79,9 +79,9 @@ describe('validateFieldsetRules', () => {
 
   describe('operator validations & numeric values', () => {
     const operators = [
-      EFieldsetNumberRulesetOperator.SumEqual,
-      EFieldsetNumberRulesetOperator.SumGreaterThan,
-      EFieldsetNumberRulesetOperator.SumLessThan,
+      EFieldsetRulesetNumericOperator.SumEqual,
+      EFieldsetRulesetNumericOperator.SumGreaterThan,
+      EFieldsetRulesetNumericOperator.SumLessThan,
     ];
 
     operators.forEach((operator) => {
@@ -134,7 +134,7 @@ describe('validateFieldsetRules', () => {
           fields: [],
           groupsOr: [
             makeFieldsetRuleGroupOr({
-              groupsAnd: [makeFieldsetRuleGroupAnd({ operator: EFieldsetNumberRulesetOperator.SumGreaterThan, value: '100' })],
+              groupsAnd: [makeFieldsetRuleGroupAnd({ operator: EFieldsetRulesetNumericOperator.SumGreaterThan, value: '100' })],
             }),
           ],
         }),
@@ -150,7 +150,7 @@ describe('validateFieldsetRules', () => {
             fields: ['f2'],
             groupsOr: [
               makeFieldsetRuleGroupOr({
-                groupsAnd: [makeFieldsetRuleGroupAnd({ operator: EFieldsetNumberRulesetOperator.SumLessThan, value: '100' })],
+                groupsAnd: [makeFieldsetRuleGroupAnd({ operator: EFieldsetRulesetNumericOperator.SumLessThan, value: '100' })],
               }),
             ],
           }),
@@ -168,7 +168,7 @@ describe('validateFieldsetRules', () => {
             fields: ['f1'],
             groupsOr: [
               makeFieldsetRuleGroupOr({
-                groupsAnd: [makeFieldsetRuleGroupAnd({ operator: EFieldsetNumberRulesetOperator.SumEqual, value: '   ' })],
+                groupsAnd: [makeFieldsetRuleGroupAnd({ operator: EFieldsetRulesetNumericOperator.SumEqual, value: '   ' })],
               }),
             ],
           }),
@@ -186,7 +186,7 @@ describe('validateFieldsetRules', () => {
             fields: ['missing'],
             groupsOr: [
               makeFieldsetRuleGroupOr({
-                groupsAnd: [makeFieldsetRuleGroupAnd({ operator: EFieldsetNumberRulesetOperator.SumEqual, value: '100' })],
+                groupsAnd: [makeFieldsetRuleGroupAnd({ operator: EFieldsetRulesetNumericOperator.SumEqual, value: '100' })],
               }),
             ],
           }),
@@ -205,8 +205,8 @@ describe('validateFieldsetRules', () => {
             groupsOr: [
               makeFieldsetRuleGroupOr({
                 groupsAnd: [
-                  makeFieldsetRuleGroupAnd({ operator: EFieldsetNumberRulesetOperator.SumGreaterThan, value: '10' }),
-                  makeFieldsetRuleGroupAnd({ operator: EFieldsetNumberRulesetOperator.SumLessThan, value: 'invalid' }),
+                  makeFieldsetRuleGroupAnd({ operator: EFieldsetRulesetNumericOperator.SumGreaterThan, value: '10' }),
+                  makeFieldsetRuleGroupAnd({ operator: EFieldsetRulesetNumericOperator.SumLessThan, value: 'invalid' }),
                 ],
               }),
             ],
@@ -226,13 +226,13 @@ describe('validateFieldsetRules', () => {
             groupsOr: [
               makeFieldsetRuleGroupOr({
                 groupsAnd: [
-                  makeFieldsetRuleGroupAnd({ operator: EFieldsetNumberRulesetOperator.SumGreaterThan, value: '10' }),
-                  makeFieldsetRuleGroupAnd({ operator: EFieldsetNumberRulesetOperator.SumLessThan, value: '500' }),
+                  makeFieldsetRuleGroupAnd({ operator: EFieldsetRulesetNumericOperator.SumGreaterThan, value: '10' }),
+                  makeFieldsetRuleGroupAnd({ operator: EFieldsetRulesetNumericOperator.SumLessThan, value: '500' }),
                 ],
               }),
               makeFieldsetRuleGroupOr({
                 groupsAnd: [
-                  makeFieldsetRuleGroupAnd({ operator: EFieldsetNumberRulesetOperator.SumEqual, value: '250' }),
+                  makeFieldsetRuleGroupAnd({ operator: EFieldsetRulesetNumericOperator.SumEqual, value: '250' }),
                 ],
               }),
             ],

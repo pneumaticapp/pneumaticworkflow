@@ -1,11 +1,8 @@
 import * as React from 'react';
 import { RuleOperatorSelect } from './RuleOperatorSelect';
 import { RuleValueInput } from './RuleValueInput';
-import {
-  IFieldRuleValidatorItemProps,
-  FIELD_RULE_SHOW_OPERATORS_WITHOUT_VALUE,
-  EFieldRuleShowOperator,
-} from './types';
+import { IFieldRuleValidatorItemProps } from './types';
+import { isOperatorWithoutValue } from './utils';
 
 export const RuleItemValidator = ({
   groupAndRule,
@@ -14,33 +11,33 @@ export const RuleItemValidator = ({
   selections,
   datasetId,
   isReadOnly,
+  isFieldsetRuleset,
   updateRule,
 }: IFieldRuleValidatorItemProps) => {
   const { apiName: groupAndApiName, operator, value } = groupAndRule;
 
-  const isOperatorWithoutValue = FIELD_RULE_SHOW_OPERATORS_WITHOUT_VALUE.includes(
-    operator as EFieldRuleShowOperator,
-  );
+  const isWithoutValue = isOperatorWithoutValue(operator);
 
   return (
     <>
       <RuleOperatorSelect
         fieldType={fieldType}
         operator={operator}
+        isFieldsetRuleset={isFieldsetRuleset}
         isReadOnly={isReadOnly}
-        onChange={(newOperator, isWithoutValue) => {
+        onChange={(newOperator) => {
           updateRule({
             groupOrApiName,
             groupAndApiName,
             ruleChanges: {
               operator: newOperator,
-              ...(isWithoutValue ? { value: '' } : {}),
+              ...(isOperatorWithoutValue(newOperator) ? { value: '' } : {}),
             },
           });
         }}
       />
 
-      {Boolean(operator) && !isOperatorWithoutValue && (
+      {Boolean(operator) && !isWithoutValue && (
         <RuleValueInput
           fieldType={fieldType}
           value={value}

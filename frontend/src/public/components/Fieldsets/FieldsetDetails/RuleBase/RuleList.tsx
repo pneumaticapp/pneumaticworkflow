@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { useMemo } from 'react';
 import { useIntl } from 'react-intl';
 
 import { IFieldRuleBaseListProps } from './types';
@@ -9,13 +8,13 @@ import styles from '../FieldsetRulesets/FieldsetRulesets.css';
 
 export const RuleList = ({
   ruleSet,
-  operatorOptions,
   fieldRuleShowFieldOptions,
   ruleType,
   fieldType,
   selections,
   datasetId,
   isReadOnly,
+  isFieldsetRuleset,
   addRule,
   updateRule,
   deleteRule,
@@ -23,16 +22,7 @@ export const RuleList = ({
 }: IFieldRuleBaseListProps) => {
   const { formatMessage } = useIntl();
 
-  const fieldRuleBaseOperatorOptions = useMemo(
-    () =>
-      operatorOptions.map((operatorOption) => ({
-        apiName: operatorOption.value,
-        name: formatMessage({ id: operatorOption.labelKey }),
-      })),
-    [formatMessage, operatorOptions],
-  );
-
-  const { groupsOr = [] } = ruleSet;
+  const { groupsOr } = ruleSet;
 
   return (
     <>
@@ -40,7 +30,7 @@ export const RuleList = ({
         {formatMessage({ id: 'fieldsets.rules' })}
       </span>
 
-      {groupsOr.map(({ apiName: groupOrApiName, groupsAnd = [] }, groupOrIndex) =>
+      {groupsOr.map(({ apiName: groupOrApiName, groupsAnd }, groupOrIndex) =>
         groupsAnd.map((groupAndRule, groupAndIndex) => (
           <RuleItem
             key={groupAndRule.apiName}
@@ -48,13 +38,13 @@ export const RuleList = ({
             groupOrApiName={groupOrApiName}
             groupOrIndex={groupOrIndex}
             groupAndIndex={groupAndIndex}
-            fieldRuleBaseOperatorOptions={fieldRuleBaseOperatorOptions}
             fieldRuleShowFieldOptions={fieldRuleShowFieldOptions}
             ruleType={ruleType}
             fieldType={fieldType}
             selections={selections}
             datasetId={datasetId}
             isReadOnly={isReadOnly}
+            isFieldsetRuleset={isFieldsetRuleset}
             updateRule={updateRule}
             deleteRule={deleteRule}
             regroupRules={regroupRules}

@@ -18,13 +18,13 @@ export const RuleItem = ({
   groupOrApiName,
   groupOrIndex,
   groupAndIndex,
-  fieldRuleBaseOperatorOptions,
   fieldRuleShowFieldOptions,
   ruleType,
   fieldType,
   selections,
   datasetId,
   isReadOnly,
+  isFieldsetRuleset,
   updateRule,
   deleteRule,
   regroupRules,
@@ -64,7 +64,6 @@ export const RuleItem = ({
           <RuleItemShow
             groupAndRule={groupAndRule}
             groupOrApiName={groupOrApiName}
-            fieldRuleBaseOperatorOptions={fieldRuleBaseOperatorOptions}
             fieldRuleShowFieldOptions={fieldRuleShowFieldOptions || []}
             isReadOnly={isReadOnly}
             updateRule={updateRule}
@@ -73,11 +72,11 @@ export const RuleItem = ({
           <RuleItemValidator
             groupAndRule={groupAndRule}
             groupOrApiName={groupOrApiName}
-            fieldRuleBaseOperatorOptions={fieldRuleBaseOperatorOptions}
             fieldType={fieldType}
             selections={selections}
             datasetId={datasetId}
             isReadOnly={isReadOnly}
+            isFieldsetRuleset={isFieldsetRuleset}
             updateRule={updateRule}
           />
         )}

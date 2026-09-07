@@ -1,5 +1,4 @@
 import type { IExtraField } from './template';
-import type { EFieldRuleShowOperator } from '../components/Fieldsets/FieldsetDetails/RuleBase/types';
 
 export interface IBaseRuleGroupAnd {
   apiName: string;
@@ -18,14 +17,19 @@ export interface IBaseRuleSet {
   groupsOr: IBaseRuleGroupOr[];
 }
 
-export enum EFieldsetNumberRulesetOperator {
+export enum EFieldsetRulesetNumericOperator {
   SumEqual = 'sum_equal',
   SumGreaterThan = 'sum_greater_than',
   SumLessThan = 'sum_less_than',
 }
 
-export enum EFieldRuleValidatorOperator {
+export enum EFieldRuleOperator {
   Equal = 'equal',
+  NotEqual = 'not_equals',
+  Exist = 'exists',
+  NotExist = 'not_exists',
+  Contain = 'contains',
+  NotContain = 'not_contains',
   GreaterThan = 'greater_than',
   LessThan = 'less_than',
 }
@@ -37,7 +41,7 @@ export enum ERuleCombinator {
 
 export interface IFieldsetRuleGroupAnd {
   apiName: string;
-  operator: EFieldsetNumberRulesetOperator | null;
+  operator: EFieldsetRulesetNumericOperator | null;
   value: string;
 }
 
@@ -59,12 +63,10 @@ export enum EFieldRuleType {
   Validator = 'validator',
 }
 
-export type TFieldRuleOperator = EFieldRuleValidatorOperator | EFieldRuleShowOperator;
-
 export interface IFieldRuleGroupAnd {
   apiName: string;
   field?: string | null;
-  operator: TFieldRuleOperator | null;
+  operator: EFieldRuleOperator | null;
   value: string;
 }
 

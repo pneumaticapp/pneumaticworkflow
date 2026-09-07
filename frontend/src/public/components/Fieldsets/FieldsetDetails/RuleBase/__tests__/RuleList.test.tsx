@@ -3,7 +3,6 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { RuleList } from '../RuleList';
-import { FIELDSET_RULE_OPERATOR_OPTIONS } from '../../../constants';
 import { intlMock } from '../../../../../__stubs__/intlMock';
 import {
   makeFieldsetRuleset,
@@ -54,7 +53,6 @@ describe('RuleList component', () => {
         ruleSet={emptyRuleset}
         ruleType={EFieldRuleType.Validator}
         fieldType={EExtraFieldType.Number}
-        operatorOptions={FIELDSET_RULE_OPERATOR_OPTIONS}
         isReadOnly={false}
         addRule={mockAddRule}
         updateRule={mockUpdateRule}
@@ -90,7 +88,6 @@ describe('RuleList component', () => {
         ruleSet={ruleset}
         ruleType={EFieldRuleType.Validator}
         fieldType={EExtraFieldType.Number}
-        operatorOptions={FIELDSET_RULE_OPERATOR_OPTIONS}
         isReadOnly={false}
         addRule={mockAddRule}
         updateRule={mockUpdateRule}
@@ -118,7 +115,6 @@ describe('RuleList component', () => {
         ruleSet={ruleset}
         ruleType={EFieldRuleType.Validator}
         fieldType={EExtraFieldType.Number}
-        operatorOptions={FIELDSET_RULE_OPERATOR_OPTIONS}
         isReadOnly={false}
         addRule={mockAddRule}
         updateRule={mockUpdateRule}
@@ -145,7 +141,6 @@ describe('RuleList component', () => {
         ruleSet={emptyRuleset}
         ruleType={EFieldRuleType.Validator}
         fieldType={EExtraFieldType.Number}
-        operatorOptions={FIELDSET_RULE_OPERATOR_OPTIONS}
         isReadOnly={true}
         addRule={mockAddRule}
         updateRule={mockUpdateRule}

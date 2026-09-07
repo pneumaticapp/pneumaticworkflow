@@ -7,11 +7,9 @@ import {
 
 import {
   EFieldRuleType,
-  EFieldRuleValidatorOperator,
+  EFieldRuleOperator,
   IFieldRuleSet,
 } from '../../../../../types/fieldset';
-
-import { EFieldRuleShowOperator } from '../../RuleBase/types';
 
 const makeValidRuleset = (overrides: Partial<IFieldRuleSet> = {}): IFieldRuleSet => ({
   apiName: 'rs-1',
@@ -26,7 +24,7 @@ const makeValidRuleset = (overrides: Partial<IFieldRuleSet> = {}): IFieldRuleSet
         {
           apiName: 'and-1',
           field: null,
-          operator: EFieldRuleValidatorOperator.Equal,
+          operator: EFieldRuleOperator.Equal,
           value: '100',
         },
       ],
@@ -103,7 +101,7 @@ describe('FieldRuleModal utils', () => {
           groupsAnd: [{
             apiName: 'and-1',
             field: null,
-            operator: EFieldRuleValidatorOperator.Equal,
+            operator: EFieldRuleOperator.Equal,
             value: '',
           }],
         }],
@@ -128,7 +126,7 @@ describe('FieldRuleModal utils', () => {
           groupsAnd: [{
             apiName: 'and-1',
             field: null,
-            operator: EFieldRuleValidatorOperator.Equal,
+            operator: EFieldRuleOperator.Equal,
             value: 'test',
           }],
         }],
@@ -145,7 +143,7 @@ describe('FieldRuleModal utils', () => {
           groupsAnd: [{
             apiName: 'and-1',
             field: 'field_1',
-            operator: EFieldRuleValidatorOperator.Equal,
+            operator: EFieldRuleOperator.Equal,
             value: '',
           }],
         }],
@@ -162,7 +160,7 @@ describe('FieldRuleModal utils', () => {
           groupsAnd: [{
             apiName: 'and-1',
             field: 'field_1',
-            operator: EFieldRuleShowOperator.Exist,
+            operator: EFieldRuleOperator.Exist,
             value: '',
           }],
         }],

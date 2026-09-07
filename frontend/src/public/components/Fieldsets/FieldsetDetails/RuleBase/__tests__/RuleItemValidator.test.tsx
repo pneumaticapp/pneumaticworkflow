@@ -2,7 +2,7 @@ import * as React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { RuleItemValidator } from '../RuleItemValidator';
 import { intlMock } from '../../../../../__stubs__/intlMock';
-import { IBaseRuleGroupAnd } from '../../../../../types/fieldset';
+import { IBaseRuleGroupAnd, EFieldRuleOperator } from '../../../../../types/fieldset';
 import { EExtraFieldType } from '../../../../../types/template';
 
 jest.mock('react-intl', () => {
@@ -55,14 +55,9 @@ jest.mock('react-number-format', () => ({
 describe('RuleItemValidator component', () => {
   const mockGroupAndRule: IBaseRuleGroupAnd = {
     apiName: 'and_1',
-    operator: 'regex',
+    operator: EFieldRuleOperator.Equal,
     value: '^[0-9]+$',
   };
-
-  const mockOperatorOptions = [
-    { apiName: 'regex', name: 'Regular expression' },
-    { apiName: 'min_length', name: 'Min length' },
-  ];
 
   it('triggers updateRule when operator is changed', () => {
     const handleUpdateRule = jest.fn();
@@ -71,21 +66,20 @@ describe('RuleItemValidator component', () => {
       <RuleItemValidator
         groupAndRule={mockGroupAndRule}
         groupOrApiName="or_1"
-        fieldRuleBaseOperatorOptions={mockOperatorOptions}
         fieldType={EExtraFieldType.Number}
         updateRule={handleUpdateRule}
       />,
     );
 
     const select = screen.getByTestId('filter-select');
-    fireEvent.change(select, { target: { value: 'not_equals' } });
+    fireEvent.change(select, { target: { value: EFieldRuleOperator.NotEqual } });
 
     expect(handleUpdateRule).toHaveBeenCalledTimes(1);
     expect(handleUpdateRule).toHaveBeenCalledWith({
       groupOrApiName: 'or_1',
       groupAndApiName: 'and_1',
       ruleChanges: {
-        operator: 'not_equals',
+        operator: EFieldRuleOperator.NotEqual,
       },
     });
   });
@@ -97,7 +91,6 @@ describe('RuleItemValidator component', () => {
       <RuleItemValidator
         groupAndRule={mockGroupAndRule}
         groupOrApiName="or_1"
-        fieldRuleBaseOperatorOptions={mockOperatorOptions}
         fieldType={EExtraFieldType.Number}
         updateRule={handleUpdateRule}
       />,
@@ -119,7 +112,7 @@ describe('RuleItemValidator component', () => {
   it('highlights value input error on blur and removes highlight on focus when value is empty', () => {
     const emptyValueRule: IBaseRuleGroupAnd = {
       apiName: 'and_1',
-      operator: 'regex',
+      operator: EFieldRuleOperator.Equal,
       value: '',
     };
 
@@ -127,7 +120,6 @@ describe('RuleItemValidator component', () => {
       <RuleItemValidator
         groupAndRule={emptyValueRule}
         groupOrApiName="or_1"
-        fieldRuleBaseOperatorOptions={mockOperatorOptions}
         fieldType={EExtraFieldType.Number}
         updateRule={jest.fn()}
       />,

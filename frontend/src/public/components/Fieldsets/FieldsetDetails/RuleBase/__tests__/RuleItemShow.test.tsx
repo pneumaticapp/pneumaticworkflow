@@ -3,8 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { RuleItemShow } from '../RuleItemShow';
 import { EExtraFieldType } from '../../../../../types/template';
 import { intlMock } from '../../../../../__stubs__/intlMock';
-import { IBaseRuleGroupAnd } from '../../../../../types/fieldset';
-import { EFieldRuleShowOperator } from '../types';
+import { IBaseRuleGroupAnd, EFieldRuleOperator } from '../../../../../types/fieldset';
 
 jest.mock('react-intl', () => {
   const actualIntl = jest.requireActual('react-intl');
@@ -51,7 +50,7 @@ describe('RuleItemShow component', () => {
   const mockGroupAndRule: IBaseRuleGroupAnd = {
     apiName: 'and_1',
     field: 'field_1',
-    operator: EFieldRuleShowOperator.Equal,
+    operator: EFieldRuleOperator.Equal,
     value: 'test_val',
   };
 
@@ -70,11 +69,6 @@ describe('RuleItemShow component', () => {
     },
   ];
 
-  const mockOperatorOptions = [
-    { apiName: EFieldRuleShowOperator.Equal, name: 'Equals' },
-    { apiName: EFieldRuleShowOperator.NotEqual, name: 'Not equals' },
-  ];
-
   it('triggers updateRule when field is changed', () => {
     const handleUpdateRule = jest.fn();
 
@@ -82,7 +76,6 @@ describe('RuleItemShow component', () => {
       <RuleItemShow
         groupAndRule={mockGroupAndRule}
         groupOrApiName="or_1"
-        fieldRuleBaseOperatorOptions={mockOperatorOptions}
         fieldRuleShowFieldOptions={mockOptions}
         updateRule={handleUpdateRule}
       />,
@@ -110,21 +103,20 @@ describe('RuleItemShow component', () => {
       <RuleItemShow
         groupAndRule={mockGroupAndRule}
         groupOrApiName="or_1"
-        fieldRuleBaseOperatorOptions={mockOperatorOptions}
         fieldRuleShowFieldOptions={mockOptions}
         updateRule={handleUpdateRule}
       />,
     );
 
     const selects = screen.getAllByTestId('filter-select');
-    fireEvent.change(selects[1], { target: { value: EFieldRuleShowOperator.NotEqual } });
+    fireEvent.change(selects[1], { target: { value: EFieldRuleOperator.NotEqual } });
 
     expect(handleUpdateRule).toHaveBeenCalledTimes(1);
     expect(handleUpdateRule).toHaveBeenCalledWith({
       groupOrApiName: 'or_1',
       groupAndApiName: 'and_1',
       ruleChanges: {
-        operator: EFieldRuleShowOperator.NotEqual,
+        operator: EFieldRuleOperator.NotEqual,
       },
     });
   });
@@ -136,7 +128,6 @@ describe('RuleItemShow component', () => {
       <RuleItemShow
         groupAndRule={mockGroupAndRule}
         groupOrApiName="or_1"
-        fieldRuleBaseOperatorOptions={mockOperatorOptions}
         fieldRuleShowFieldOptions={mockOptions}
         updateRule={handleUpdateRule}
       />,
@@ -162,21 +153,20 @@ describe('RuleItemShow component', () => {
       <RuleItemShow
         groupAndRule={mockGroupAndRule}
         groupOrApiName="or_1"
-        fieldRuleBaseOperatorOptions={mockOperatorOptions}
         fieldRuleShowFieldOptions={mockOptions}
         updateRule={handleUpdateRule}
       />,
     );
 
     const selects = screen.getAllByTestId('filter-select');
-    fireEvent.change(selects[1], { target: { value: EFieldRuleShowOperator.Exist } });
+    fireEvent.change(selects[1], { target: { value: EFieldRuleOperator.Exist } });
 
     expect(handleUpdateRule).toHaveBeenCalledTimes(1);
     expect(handleUpdateRule).toHaveBeenCalledWith({
       groupOrApiName: 'or_1',
       groupAndApiName: 'and_1',
       ruleChanges: {
-        operator: EFieldRuleShowOperator.Exist,
+        operator: EFieldRuleOperator.Exist,
         value: '',
       },
     });

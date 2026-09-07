@@ -4,11 +4,9 @@ import { useIntl } from 'react-intl';
 import classnames from 'classnames';
 
 import { FilterSelect } from '../../../UI';
-import { getFieldRuleShowOperators } from './utils';
+import { getRuleOperators } from './utils';
 import {
   IFieldRuleBaseOperatorOption,
-  FIELD_RULE_SHOW_OPERATORS_WITHOUT_VALUE,
-  EFieldRuleShowOperator,
   IRuleOperatorSelectProps,
 } from './types';
 
@@ -19,18 +17,18 @@ export const RuleOperatorSelect = ({
   fieldType,
   operator,
   isReadOnly,
-  defaultOptions = [],
+  isFieldsetRuleset,
   onChange,
 }: IRuleOperatorSelectProps) => {
-  const { formatMessage, messages } = useIntl();
+  const { formatMessage } = useIntl();
   const operatorPlaceholderText = formatMessage({ id: 'templates.conditions.operator-placeholder' });
 
   const fieldOperatorOptions = useMemo(() => {
     if (fieldType) {
-      return getFieldRuleShowOperators(fieldType, messages as Record<string, string>);
+      return getRuleOperators(fieldType, formatMessage, isFieldsetRuleset);
     }
-    return defaultOptions;
-  }, [fieldType, messages, defaultOptions]);
+    return [];
+  }, [fieldType, formatMessage, isFieldsetRuleset]);
 
   const selectedOperatorLabel =
     fieldOperatorOptions.find((option) => option.apiName === operator)?.name || '';
@@ -43,10 +41,7 @@ export const RuleOperatorSelect = ({
       selectedOption={operator || ''}
       onChange={(key) => {
         if (key && key !== operator) {
-          const isWithoutValue = FIELD_RULE_SHOW_OPERATORS_WITHOUT_VALUE.includes(
-            key as EFieldRuleShowOperator,
-          );
-          onChange(String(key), isWithoutValue);
+          onChange(String(key));
         }
       }}
       resetFilter={() => {}}

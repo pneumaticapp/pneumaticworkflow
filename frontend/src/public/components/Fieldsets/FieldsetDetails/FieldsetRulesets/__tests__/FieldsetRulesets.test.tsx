@@ -11,7 +11,7 @@ import {
 } from '../../../../../__stubs__/fieldsets.factory';
 import { makeExtraField } from '../../../../../__stubs__/fields.factory';
 import { EExtraFieldType } from '../../../../../types/template';
-import { EFieldsetNumberRulesetOperator, ERuleCombinator } from '../../../../../types/fieldset';
+import { EFieldsetRulesetNumericOperator, ERuleCombinator } from '../../../../../types/fieldset';
 
 jest.mock('../../RuleBase', () => ({
   RuleList: jest.fn(
@@ -271,7 +271,7 @@ describe('FieldsetRulesets container component', () => {
           groupsAnd: [
             makeFieldsetRuleGroupAnd({
               apiName: 'g-and-1',
-              operator: EFieldsetNumberRulesetOperator.SumEqual,
+              operator: EFieldsetRulesetNumericOperator.SumEqual,
               value: '10',
             }),
           ],

@@ -57,7 +57,7 @@ describe('RuleOperatorSelect component', () => {
     fireEvent.change(select, { target: { value: 'not_equals' } });
 
     expect(handleChange).toHaveBeenCalledTimes(1);
-    expect(handleChange).toHaveBeenCalledWith('not_equals', false);
+    expect(handleChange).toHaveBeenCalledWith('not_equals');
   });
 
   it('disables select when isReadOnly is true', () => {
@@ -74,7 +74,7 @@ describe('RuleOperatorSelect component', () => {
     expect(select).toBeDisabled();
   });
 
-  it('passes isWithoutValue=true when selecting an operator without value', () => {
+  it('triggers onChange with selected operator', () => {
     const handleChange = jest.fn();
 
     render(
@@ -90,6 +90,6 @@ describe('RuleOperatorSelect component', () => {
     fireEvent.change(select, { target: { value: 'exists' } });
 
     expect(handleChange).toHaveBeenCalledTimes(1);
-    expect(handleChange).toHaveBeenCalledWith('exists', true);
+    expect(handleChange).toHaveBeenCalledWith('exists');
   });
 });

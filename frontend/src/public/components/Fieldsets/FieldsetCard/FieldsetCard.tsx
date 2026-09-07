@@ -61,7 +61,6 @@ export function FieldsetCard({
   };
 
   const isLinked = Boolean(usage && usage.length > 0);
-  const hasContent = fields.length > 0 || rulesets.length > 0;
 
   return (
     <div className={styles['card']} key={id}>
@@ -91,26 +90,32 @@ export function FieldsetCard({
           />
         </div>
 
-        {hasContent && (
-          <div className={styles['card__footer']}>
-            {fields.length > 0 && (
-              <div className={classnames(styles['card-stats'], styles['card-stats--items'])}>
-                {formatMessage(
-                  { id: 'fieldsets.stats.fields' },
-                  { count: fields.length },
-                )}
-              </div>
-            )}
-            {rulesets.length > 0 && (
-              <div className={classnames(styles['card-stats'], styles['card-stats--rules'])}>
-                {formatMessage(
-                  { id: 'fieldsets.stats.rules' },
-                  { count: rulesets.length },
-                )}
-              </div>
-            )}
+        <div className={styles['card__footer']}>
+          {fields.length > 0 && (
+            <div className={classnames(styles['card-stats'], styles['card-stats--items'])}>
+              {formatMessage(
+                { id: 'fieldsets.stats.fields' },
+                { count: fields.length },
+              )}
+            </div>
+          )}
+          {rulesets.length > 0 && (
+            <div className={classnames(styles['card-stats'], styles['card-stats--rules'])}>
+              {formatMessage(
+                { id: 'fieldsets.stats.rules' },
+                { count: rulesets.length },
+              )}
+            </div>
+          )}
+          <div className={classnames(
+            styles['card-usage'],
+            isLinked ? styles['card-usage--linked'] : styles['card-usage--not-linked'],
+          )}>
+            {isLinked
+              ? formatMessage({ id: 'fieldsets.card.used' }, { count: usage.length })
+              : formatMessage({ id: 'fieldsets.card.not-used' })}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

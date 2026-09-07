@@ -7,8 +7,8 @@ import {
   FIELDSET_RULES_MSG_RULE_REQUIRED,
   FIELDSET_RULES_MSG_VALUE_NUMBER,
   FIELDSET_RULES_MSG_VALUE_REQUIRED,
-  NUMBER_RULE_TYPES,
 } from './constants';
+import { FIELDSET_RULESET_NUMERIC_OPERATOR_OPTIONS } from './FieldsetDetails/RuleBase/constants';
 
 export function validateFieldsetRules(
   fieldsetRules: IFieldsetRuleSet[],
@@ -35,7 +35,10 @@ export function validateFieldsetRules(
         return FIELDSET_RULES_MSG_VALUE_REQUIRED;
       }
 
-      if (rule.operator && NUMBER_RULE_TYPES.has(rule.operator)) {
+      if (
+        rule.operator &&
+        FIELDSET_RULESET_NUMERIC_OPERATOR_OPTIONS.some((option) => option.value === rule.operator)
+      ) {
         if (!numberRegex.test(value)) {
           return FIELDSET_RULES_MSG_VALUE_NUMBER;
         }

@@ -4,7 +4,6 @@ import { useIntl } from 'react-intl';
 import classnames from 'classnames';
 
 import { FilterSelect, Tooltip } from '../../../UI';
-import { FIELD_RULE_VALIDATOR_OPERATOR_OPTIONS } from '../../constants';
 import { EFieldRuleType } from '../../../../types/fieldset';
 import { RuleList, RulesetMessageInput } from '../RuleBase';
 import { addRule, deleteRule, regroupRules, updateRule } from '../RuleBase/utils';
@@ -121,7 +120,6 @@ export function FieldRulesetBody({
         fieldType={fieldType}
         selections={selections}
         datasetId={datasetId}
-        operatorOptions={FIELD_RULE_VALIDATOR_OPERATOR_OPTIONS}
         fieldRuleShowFieldOptions={fieldRuleShowFieldOptions}
         addRule={() => onUpdateRuleSet(addRule(localRuleSet, () => createEmptyFieldRule()))}
         updateRule={({ groupOrApiName, groupAndApiName, ruleChanges }) =>

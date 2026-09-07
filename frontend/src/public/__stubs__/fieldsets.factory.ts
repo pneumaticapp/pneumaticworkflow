@@ -1,7 +1,7 @@
 import {
-  EFieldLabelPosition, EFieldsetNumberRulesetOperator, IFieldsetBinding, IFieldsetBindingClient, IFieldsetCatalogItem,
+  EFieldLabelPosition, EFieldsetRulesetNumericOperator, IFieldsetBinding, IFieldsetBindingClient, IFieldsetCatalogItem,
   IFieldsetField, IFieldsetRuntime, IFieldsetTaskAPI, IFieldsetRuleSet, IFieldsetRuleGroupAnd, IFieldsetRuleGroupOr,
-  IFieldRuleSet, IFieldRuleGroupAnd, IFieldRuleGroupOr, EFieldRuleType, EFieldRuleValidatorOperator,
+  IFieldRuleSet, IFieldRuleGroupAnd, IFieldRuleGroupOr, EFieldRuleType, EFieldRuleOperator,
 } from '../types/fieldset';
 import { IExtraField } from '../types/template';
 
@@ -34,7 +34,7 @@ export const makeFieldsetRuntime = (overrides: Partial<IFieldsetRuntime> = {}): 
 
 export const makeFieldsetRuleGroupAnd = (overrides: Partial<IFieldsetRuleGroupAnd> = {}): IFieldsetRuleGroupAnd => ({
   apiName: 'group-and-1',
-  operator: EFieldsetNumberRulesetOperator.SumEqual,
+  operator: EFieldsetRulesetNumericOperator.SumEqual,
   value: '100',
   ...overrides,
 });
@@ -112,7 +112,7 @@ export const makeFieldsetTaskAPI = (overrides: Partial<IFieldsetTaskAPI> = {}): 
 export const makeFieldRuleGroupAnd = (overrides: Partial<IFieldRuleGroupAnd> = {}): IFieldRuleGroupAnd => ({
   apiName: 'field-rule-and-1',
   field: null,
-  operator: EFieldRuleValidatorOperator.Equal,
+  operator: EFieldRuleOperator.Equal,
   value: '',
   ...overrides,
 });

@@ -5,7 +5,6 @@ import { EExtraFieldType } from '../../../../types/template';
 import { EFieldRuleType } from '../../../../types/fieldset';
 
 import { TFieldsetRulesetsProps } from './types';
-import { FIELDSET_RULE_OPERATOR_OPTIONS } from '../../constants';
 import {
   updateRulesetMessage,
   deleteRuleset,
@@ -15,7 +14,10 @@ import {
   deleteRuleFromRulesets,
   regroupRulesInRulesets,
 } from './utils';
-import { RuleList, RulesetMessageInput } from '../RuleBase';
+import {
+  RuleList,
+  RulesetMessageInput,
+} from '../RuleBase';
 import { RulesetFieldsSelector } from './RulesetFieldsSelector';
 
 import fieldsetDetailsStyles from '../FieldsetDetails.css';
@@ -65,7 +67,7 @@ export const FieldsetRulesets = ({
             ruleSet={ruleSet}
             ruleType={EFieldRuleType.Validator}
             fieldType={EExtraFieldType.Number}
-            operatorOptions={FIELDSET_RULE_OPERATOR_OPTIONS}
+            isFieldsetRuleset
             isReadOnly={isReadOnly}
             addRule={() =>
               addGroupAndToRulesets({ rulesets, rulesetApiName: ruleSet.apiName, onRulesetsChange })

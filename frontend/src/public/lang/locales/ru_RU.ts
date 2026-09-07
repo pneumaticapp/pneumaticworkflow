@@ -1404,6 +1404,8 @@ export const ruMessages = {
   'fieldsets.all-fieldsets': 'ВСЕ НАБОРЫ ПОЛЕЙ',
   'fieldsets.stats.fields': '{count} полей',
   'fieldsets.stats.rules': '{count} правил',
+  'fieldsets.card.used': 'Используется в {count} {count, plural, one {шаблоне} few {шаблонах} other {шаблонах}}',
+  'fieldsets.card.not-used': 'Не используется',
   'fieldsets.delete.title': 'Подтверждение',
   'fieldsets.delete.message': 'Вы уверены, что хотите удалить набор полей {name}?',
   'fieldsets.fields-section': 'Поля',

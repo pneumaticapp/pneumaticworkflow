@@ -36,6 +36,11 @@ jest.mock('../../../../utils/history', () => ({
   history: { push: jest.fn(), location: { pathname: '/' }, listen: jest.fn() },
 }));
 
+jest.mock('react-router-dom', () => ({
+  Link: ({ children, to, className }: { children: React.ReactNode; to: string; className?: string }) =>
+    React.createElement('a', { href: to, className }, children),
+}));
+
 jest.mock('../../../../redux/fieldsets/slice', () => ({
   openEditModal: jest.fn(() => ({ type: 'fieldsets/openEditModal' })),
   deleteFieldsetAction: jest.fn((p) => ({ type: 'fieldsets/deleteFieldsetAction', payload: p })),
@@ -132,10 +137,10 @@ jest.mock('../../../TemplateEdit/ExtraFields', () => ({
       isDisabled?: boolean;
       isFieldsetReadOnly?: boolean;
     }) =>
-    React.createElement(
-      'div',
-      { 'data-testid': `extra-field-${props.field.apiName}` },
-      props.onOpenFieldRules && !props.isDisabled && !props.isFieldsetReadOnly
+      React.createElement(
+        'div',
+        { 'data-testid': `extra-field-${props.field.apiName}` },
+        props.onOpenFieldRules && !props.isDisabled && !props.isFieldsetReadOnly
         && React.createElement(
           'button',
           {
@@ -144,7 +149,7 @@ jest.mock('../../../TemplateEdit/ExtraFields', () => ({
           },
           'Open rules',
         ),
-    ),
+      ),
   ),
 }));
 
@@ -716,7 +721,7 @@ describe('FieldsetDetails', () => {
   });
 
   describe('Usage Banner in editor mode (usage-banner)', () => {
-    it('renders usage banner with list of linked templates', () => {
+    it('renders usage banner with list of linked templates and links to their edit pages', () => {
       const state = makeLoadedState({
         usage: [
           { id: 101, name: 'Very long template name for testing overflow' },
@@ -726,6 +731,17 @@ describe('FieldsetDetails', () => {
       renderWithState(state);
 
       expect(screen.getByText(/Used in 2 templates/)).toBeInTheDocument();
+
+      const showButton = screen.getByRole('button', { name: new RegExp(formatMsg('fieldsets.usage.show'), 'i') });
+      userEvent.click(showButton);
+
+      const link1 = screen.getByRole('link', { name: 'Very long template name for testing overflow' });
+      expect(link1).toBeInTheDocument();
+      expect(link1).toHaveAttribute('href', '/templates/edit/101/');
+
+      const link2 = screen.getByRole('link', { name: 'Procurement template' });
+      expect(link2).toBeInTheDocument();
+      expect(link2).toHaveAttribute('href', '/templates/edit/102/');
     });
 
     it('passes isReadOnly=true when usage is present', () => {
