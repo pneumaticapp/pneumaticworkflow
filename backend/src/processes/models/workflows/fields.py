@@ -3,6 +3,7 @@ from django.db import models
 
 from src.accounts.models import AccountBaseMixin
 from src.generics.managers import BaseSoftDeleteManager
+from src.generics.querysets import AccountBaseQuerySet
 from src.generics.models import SoftDeleteModel
 from src.processes.enums import FieldRuleType, FieldRuleOperator
 from src.processes.models.base import BaseApiNameModel
@@ -124,6 +125,7 @@ class FieldRuleSet(
         on_delete=models.CASCADE,
         related_name='rulesets',
     )
+    name = models.CharField(max_length=200)
     type = models.CharField(
         max_length=50,
         choices=FieldRuleType.CHOICES,
@@ -134,6 +136,8 @@ class FieldRuleSet(
         help_text='custom error message for a type="validator"',
     )
     order = models.PositiveIntegerField(default=0)
+
+    objects = BaseSoftDeleteManager.from_queryset(AccountBaseQuerySet)()
 
     def __str__(self):
         return self.api_name
@@ -157,6 +161,8 @@ class FieldRuleGroupOr(
         on_delete=models.CASCADE,
         related_name='groups_or',
     )
+
+    objects = BaseSoftDeleteManager.from_queryset(AccountBaseQuerySet)()
 
     def __str__(self):
         return self.api_name
@@ -190,6 +196,8 @@ class FieldRuleGroupAnd(
         max_length=200,
         null=True,
     )
+
+    objects = BaseSoftDeleteManager.from_queryset(AccountBaseQuerySet)()
 
     def __str__(self):
         return self.api_name
