@@ -51,7 +51,11 @@ class ConditionCheckService:
     }
 
     @classmethod
-    def _check_predicate(cls, predicate: Predicate, workflow_id: int) -> bool:
+    def check_predicate(cls, predicate: Predicate, workflow_id: int) -> bool:
+
+        """ Also used for field rulesets, which describe a condition
+            with the same shape but their own operator names. """
+
         resolver = cls.RESOLVERS[predicate.field_type](predicate, workflow_id)
         return resolver.resolve()
 
@@ -62,7 +66,7 @@ class ConditionCheckService:
         workflow_id: int,
     ) -> bool:
         for predicate in predicates:
-            if not cls._check_predicate(predicate, workflow_id):
+            if not cls.check_predicate(predicate, workflow_id):
                 return False
         return True
 
