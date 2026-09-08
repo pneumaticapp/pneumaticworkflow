@@ -5,13 +5,13 @@ import classnames from 'classnames';
 
 import { FilterSelect, Tooltip } from '../../../UI';
 import { EFieldRuleType } from '../../../../types/fieldset';
-import { RuleList, RulesetMessageInput } from '../RuleBase';
+import { RulesetRuleList, RulesetMessageInput } from '../RuleBase';
 import { addRule, deleteRule, regroupRules, updateRule } from '../RuleBase/utils';
 import { createEmptyFieldRule, createEmptyFieldRuleGroupOr } from './utils';
 import { IFieldRulesetBodyProps } from './types';
 
 import fieldsetDetailsStyles from '../FieldsetDetails.css';
-import rulesetStyles from '../FieldsetRulesets/FieldsetRulesets.css';
+import rulesetStyles from '../FieldsetRulesetsList/FieldsetRulesets.css';
 
 export function FieldRulesetBody({
   localRuleSet,
@@ -114,7 +114,7 @@ export function FieldRulesetBody({
           onChange={(newMessage) => onUpdateRuleSet({ message: newMessage })}
         />
       )}
-      <RuleList
+      <RulesetRuleList
         ruleSet={localRuleSet}
         ruleType={type}
         fieldType={fieldType}

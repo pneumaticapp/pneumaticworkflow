@@ -7,13 +7,13 @@ import { TrashIcon } from '../../../icons';
 import { EFieldRuleType } from '../../../../types/fieldset';
 import { FIELDSET_RULE_COMBINATORS } from '../../constants';
 import { getRuleCombinator } from './utils';
-import { IFieldRuleBaseItemProps } from './types';
+import { IRulesetRuleItemProps } from './types';
 import { RuleItemShow } from './RuleItemShow';
 import { RuleItemValidator } from './RuleItemValidator';
 
-import styles from '../FieldsetRulesets/FieldsetRulesets.css';
+import styles from '../FieldsetRulesetsList/FieldsetRulesets.css';
 
-export const RuleItem = ({
+export const RulesetRuleItem = ({
   groupAndRule,
   groupOrApiName,
   groupOrIndex,
@@ -28,7 +28,7 @@ export const RuleItem = ({
   updateRule,
   deleteRule,
   regroupRules,
-}: IFieldRuleBaseItemProps) => {
+}: IRulesetRuleItemProps) => {
   const { formatMessage } = useIntl();
   const { apiName: groupAndApiName } = groupAndRule;
 

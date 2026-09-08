@@ -48,7 +48,7 @@ import { validateFieldsetRules } from '../validators';
 import { FIELDSET_LABEL_POSITION_OPTIONS } from '../constants';
 
 import { TFieldsetDetailsProps, TLocalFieldsetState, TFieldsetChanges } from './types';
-import { FieldsetRulesets } from './FieldsetRulesets/FieldsetRulesets';
+import { FieldsetRulesetsList } from './FieldsetRulesetsList/FieldsetRulesetsList';
 import { FieldsetFieldsList } from './FieldsetFieldsList/FieldsetFieldsList';
 import { FieldRuleModal } from './FieldRuleModal';
 import { useFieldRuleModal } from './useFieldRuleModal';
@@ -430,7 +430,7 @@ const FieldsetDetails = ({
         onDeleteFieldRuleset={handleDeleteFieldRuleset}
       />
 
-      <FieldsetRulesets
+      <FieldsetRulesetsList
         rulesets={localFieldset.rulesets}
         fields={localFieldset.fields}
         onRulesetsChange={handleRulesetsChange}

@@ -14,7 +14,7 @@ import { ArrowDropdownIcon, DateIcon, LinkIcon } from '../../../icons';
 import { useCheckDevice } from '../../../../hooks/useCheckDevice';
 
 import { getSortedFields, createField, editField, deleteFieldWithCleanup, moveField } from './utils';
-import { removeDeletedFieldFromRulesets } from '../FieldsetRulesets/utils';
+import { removeDeletedFieldFromRulesets } from '../FieldsetRulesetsList/utils';
 import { IFieldsetFieldsListProps } from './types';
 import { SINGLE_LINE_FIELD_TYPES } from '../constants';
 import fieldsetDetailsStyles from '../FieldsetDetails.css';

@@ -2,7 +2,7 @@ import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { RuleList } from '../RuleList';
+import { RulesetRuleList } from '../RulesetRuleList';
 import { intlMock } from '../../../../../__stubs__/intlMock';
 import {
   makeFieldsetRuleset,
@@ -13,8 +13,8 @@ import {
 import { EFieldRuleType } from '../../../../../types/fieldset';
 import { EExtraFieldType } from '../../../../../types/template';
 
-jest.mock('../RuleItem', () => ({
-  RuleItem: jest.fn((props) => (
+jest.mock('../RulesetRuleItem', () => ({
+  RulesetRuleItem: jest.fn((props) => (
     <div data-testid={`mock-rule-item-${props.groupAndRule.apiName}`}>
       <button
         type="button"
@@ -33,7 +33,7 @@ jest.mock('../RuleItem', () => ({
   )),
 }));
 
-describe('RuleList component', () => {
+describe('RulesetRuleList component', () => {
   const mockAddRule = jest.fn();
   const mockUpdateRule = jest.fn();
   const mockDeleteRule = jest.fn();
@@ -49,7 +49,7 @@ describe('RuleList component', () => {
     const emptyRuleset = makeFieldsetRuleset({ groupsOr: [] });
 
     render(
-      <RuleList
+      <RulesetRuleList
         ruleSet={emptyRuleset}
         ruleType={EFieldRuleType.Validator}
         fieldType={EExtraFieldType.Number}
@@ -84,7 +84,7 @@ describe('RuleList component', () => {
     });
 
     render(
-      <RuleList
+      <RulesetRuleList
         ruleSet={ruleset}
         ruleType={EFieldRuleType.Validator}
         fieldType={EExtraFieldType.Number}
@@ -111,7 +111,7 @@ describe('RuleList component', () => {
     });
 
     render(
-      <RuleList
+      <RulesetRuleList
         ruleSet={ruleset}
         ruleType={EFieldRuleType.Validator}
         fieldType={EExtraFieldType.Number}
@@ -137,7 +137,7 @@ describe('RuleList component', () => {
     const emptyRuleset = makeFieldsetRuleset({ groupsOr: [] });
 
     render(
-      <RuleList
+      <RulesetRuleList
         ruleSet={emptyRuleset}
         ruleType={EFieldRuleType.Validator}
         fieldType={EExtraFieldType.Number}

@@ -1,12 +1,12 @@
 import * as React from 'react';
 import { useIntl } from 'react-intl';
 
-import { IFieldRuleBaseListProps } from './types';
-import { RuleItem } from './RuleItem';
+import { IRulesetRuleListProps } from './types';
+import { RulesetRuleItem } from './RulesetRuleItem';
 
-import styles from '../FieldsetRulesets/FieldsetRulesets.css';
+import styles from '../FieldsetRulesetsList/FieldsetRulesets.css';
 
-export const RuleList = ({
+export const RulesetRuleList = ({
   ruleSet,
   fieldRuleShowFieldOptions,
   ruleType,
@@ -19,7 +19,7 @@ export const RuleList = ({
   updateRule,
   deleteRule,
   regroupRules,
-}: IFieldRuleBaseListProps) => {
+}: IRulesetRuleListProps) => {
   const { formatMessage } = useIntl();
 
   const { groupsOr } = ruleSet;
@@ -32,7 +32,7 @@ export const RuleList = ({
 
       {groupsOr.map(({ apiName: groupOrApiName, groupsAnd }, groupOrIndex) =>
         groupsAnd.map((groupAndRule, groupAndIndex) => (
-          <RuleItem
+          <RulesetRuleItem
             key={groupAndRule.apiName}
             groupAndRule={groupAndRule}
             groupOrApiName={groupOrApiName}

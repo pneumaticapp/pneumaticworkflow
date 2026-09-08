@@ -2,7 +2,7 @@ import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { FieldsetRulesets } from '../FieldsetRulesets';
+import { FieldsetRulesetItem } from '../FieldsetRulesetItem';
 import { intlMock } from '../../../../../__stubs__/intlMock';
 import {
   makeFieldsetRuleset,
@@ -13,8 +13,8 @@ import { makeExtraField } from '../../../../../__stubs__/fields.factory';
 import { EExtraFieldType } from '../../../../../types/template';
 import { EFieldsetRulesetNumericOperator, ERuleCombinator } from '../../../../../types/fieldset';
 
-jest.mock('../../RuleBase', () => ({
-  RuleList: jest.fn(
+jest.mock('../../RuleBase', () => {
+  const mockRuleList = jest.fn(
     (props: {
       ruleSet: { apiName: string };
       addRule: () => void;
@@ -76,24 +76,27 @@ jest.mock('../../RuleBase', () => ({
           'Mock Regroup Rules',
         ),
       ),
-  ),
-  RulesetMessageInput: jest.fn(
-    (props: { message?: string | null; onChange: (msg: string) => void; isReadOnly?: boolean }) =>
-      React.createElement(
-        'div',
-        { 'data-testid': 'mock-ruleset-message-input', 'data-is-readonly': props.isReadOnly },
+  );
+  return {
+    RulesetRuleList: mockRuleList,
+    RulesetMessageInput: jest.fn(
+      (props: { message?: string | null; onChange: (msg: string) => void; isReadOnly?: boolean }) =>
         React.createElement(
-          'button',
-          {
-            type: 'button',
-            'data-testid': 'mock-change-message-btn',
-            onClick: () => props.onChange('New message'),
-          },
-          'Change Message',
+          'div',
+          { 'data-testid': 'mock-ruleset-message-input', 'data-is-readonly': props.isReadOnly },
+          React.createElement(
+            'button',
+            {
+              type: 'button',
+              'data-testid': 'mock-change-message-btn',
+              onClick: () => props.onChange('New message'),
+            },
+            'Change Message',
+          ),
         ),
-      ),
-  ),
-}));
+    ),
+  };
+});
 
 jest.mock('../../../../UI', () => ({
   FilterSelect: jest.fn(() => React.createElement('div', { 'data-testid': 'filter-select' })),
@@ -101,7 +104,7 @@ jest.mock('../../../../UI', () => ({
   Tooltip: jest.fn(({ children }) => children),
 }));
 
-describe('FieldsetRulesets container component', () => {
+describe('FieldsetRulesetItem component', () => {
   const mockOnRulesetsChange = jest.fn();
   const formatMsg = (id: string) => intlMock.formatMessage({ id });
 
@@ -122,25 +125,10 @@ describe('FieldsetRulesets container component', () => {
   });
 
   const defaultFields = [numField1, numField2, textField];
+  const numericFields = [numField1, numField2];
 
   beforeEach(() => {
     jest.clearAllMocks();
-  });
-
-  it('renders empty state when rulesets array is empty', () => {
-    render(
-      <FieldsetRulesets
-        rulesets={[]}
-        fields={defaultFields}
-        onRulesetsChange={mockOnRulesetsChange}
-        isReadOnly={false}
-      />,
-    );
-
-    expect(screen.getByText(formatMsg('fieldsets.no-rules'))).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: new RegExp(formatMsg('fieldsets.add-ruleset'), 'i') }),
-    ).toBeInTheDocument();
   });
 
   it('renders ruleset card with mocked RulesetMessageInput and delegates message changes', () => {
@@ -151,9 +139,11 @@ describe('FieldsetRulesets container component', () => {
     });
 
     render(
-      <FieldsetRulesets
+      <FieldsetRulesetItem
+        ruleSet={ruleset}
         rulesets={[ruleset]}
         fields={defaultFields}
+        numericFields={numericFields}
         onRulesetsChange={mockOnRulesetsChange}
         isReadOnly={false}
       />,
@@ -170,25 +160,6 @@ describe('FieldsetRulesets container component', () => {
     expect(updated[0].message).toBe('New message');
   });
 
-  it('calls addRuleset callback on clicking add ruleset button', () => {
-    render(
-      <FieldsetRulesets
-        rulesets={[]}
-        fields={defaultFields}
-        onRulesetsChange={mockOnRulesetsChange}
-        isReadOnly={false}
-      />,
-    );
-
-    const addBtn = screen.getByRole('button', {
-      name: new RegExp(formatMsg('fieldsets.add-ruleset'), 'i'),
-    });
-    userEvent.click(addBtn);
-
-    expect(mockOnRulesetsChange).toHaveBeenCalledTimes(1);
-    expect(mockOnRulesetsChange.mock.calls[0][0]).toHaveLength(1);
-  });
-
   it('calls deleteRuleset callback on clicking delete ruleset button', () => {
     const ruleset = makeFieldsetRuleset({
       apiName: 'rule-set-1',
@@ -196,9 +167,11 @@ describe('FieldsetRulesets container component', () => {
     });
 
     render(
-      <FieldsetRulesets
+      <FieldsetRulesetItem
+        ruleSet={ruleset}
         rulesets={[ruleset]}
         fields={defaultFields}
+        numericFields={numericFields}
         onRulesetsChange={mockOnRulesetsChange}
         isReadOnly={false}
       />,
@@ -212,22 +185,23 @@ describe('FieldsetRulesets container component', () => {
     expect(mockOnRulesetsChange).toHaveBeenCalledWith([]);
   });
 
-  it('disables controls and displays readonly badge when isReadOnly is true', () => {
+  it('disables controls and hides delete button when isReadOnly is true', () => {
     const ruleset = makeFieldsetRuleset({
       apiName: 'rule-set-1',
       message: 'Read-only message',
     });
 
     render(
-      <FieldsetRulesets
+      <FieldsetRulesetItem
+        ruleSet={ruleset}
         rulesets={[ruleset]}
         fields={defaultFields}
+        numericFields={numericFields}
         onRulesetsChange={mockOnRulesetsChange}
         isReadOnly={true}
       />,
     );
 
-    expect(screen.getByText(formatMsg('fieldsets.readonly-badge'))).toBeInTheDocument();
     expect(screen.getByTestId('mock-ruleset-message-input')).toHaveAttribute(
       'data-is-readonly',
       'true',
@@ -236,21 +210,20 @@ describe('FieldsetRulesets container component', () => {
     expect(
       screen.queryByRole('button', { name: formatMsg('fieldsets.ruleset-delete') }),
     ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole('button', { name: new RegExp(formatMsg('fieldsets.add-ruleset'), 'i') }),
-    ).not.toBeInTheDocument();
   });
 
-  it('delegates addRule handler to FieldsetRulesList and updates rulesets state', () => {
+  it('delegates addRule handler to RulesetRuleList and updates rulesets state', () => {
     const ruleset = makeFieldsetRuleset({
       apiName: 'rule-set-1',
       groupsOr: [],
     });
 
     render(
-      <FieldsetRulesets
+      <FieldsetRulesetItem
+        ruleSet={ruleset}
         rulesets={[ruleset]}
         fields={defaultFields}
+        numericFields={numericFields}
         onRulesetsChange={mockOnRulesetsChange}
         isReadOnly={false}
       />,
@@ -262,7 +235,7 @@ describe('FieldsetRulesets container component', () => {
     expect(mockOnRulesetsChange).toHaveBeenCalledTimes(1);
   });
 
-  it('delegates updateRule handler to FieldsetRulesList and updates rulesets state', () => {
+  it('delegates updateRule handler to RulesetRuleList and updates rulesets state', () => {
     const ruleset = makeFieldsetRuleset({
       apiName: 'rule-set-1',
       groupsOr: [
@@ -280,9 +253,11 @@ describe('FieldsetRulesets container component', () => {
     });
 
     render(
-      <FieldsetRulesets
+      <FieldsetRulesetItem
+        ruleSet={ruleset}
         rulesets={[ruleset]}
         fields={defaultFields}
+        numericFields={numericFields}
         onRulesetsChange={mockOnRulesetsChange}
         isReadOnly={false}
       />,
@@ -296,7 +271,7 @@ describe('FieldsetRulesets container component', () => {
     expect(updatedRulesets[0].groupsOr[0].groupsAnd[0].value).toBe('500');
   });
 
-  it('delegates deleteRule handler to FieldsetRulesList and updates rulesets state', () => {
+  it('delegates deleteRule handler to RulesetRuleList and updates rulesets state', () => {
     const ruleset = makeFieldsetRuleset({
       apiName: 'rule-set-1',
       groupsOr: [
@@ -312,9 +287,11 @@ describe('FieldsetRulesets container component', () => {
     });
 
     render(
-      <FieldsetRulesets
+      <FieldsetRulesetItem
+        ruleSet={ruleset}
         rulesets={[ruleset]}
         fields={defaultFields}
+        numericFields={numericFields}
         onRulesetsChange={mockOnRulesetsChange}
         isReadOnly={false}
       />,
@@ -326,7 +303,7 @@ describe('FieldsetRulesets container component', () => {
     expect(mockOnRulesetsChange).toHaveBeenCalledTimes(1);
   });
 
-  it('delegates regroupRules handler to FieldsetRulesList and updates rulesets state', () => {
+  it('delegates regroupRules handler to RulesetRuleList and updates rulesets state', () => {
     const ruleset = makeFieldsetRuleset({
       apiName: 'rule-set-1',
       groupsOr: [
@@ -341,9 +318,11 @@ describe('FieldsetRulesets container component', () => {
     });
 
     render(
-      <FieldsetRulesets
+      <FieldsetRulesetItem
+        ruleSet={ruleset}
         rulesets={[ruleset]}
         fields={defaultFields}
+        numericFields={numericFields}
         onRulesetsChange={mockOnRulesetsChange}
         isReadOnly={false}
       />,

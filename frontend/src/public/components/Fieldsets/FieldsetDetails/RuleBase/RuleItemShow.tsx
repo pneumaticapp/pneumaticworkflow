@@ -12,7 +12,7 @@ import {
 import { isOperatorWithoutValue } from './utils';
 
 import fieldsetDetailsStyles from '../FieldsetDetails.css';
-import styles from '../FieldsetRulesets/FieldsetRulesets.css';
+import styles from '../FieldsetRulesetsList/FieldsetRulesets.css';
 
 export const RuleItemShow = ({
   groupAndRule,

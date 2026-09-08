@@ -56,7 +56,7 @@ export type IFieldRuleShowFieldOption = {
   datasetId?: number | null;
 };
 
-export type IFieldRuleBaseItemProps = IFieldRuleBaseHandlers & {
+export type IRulesetRuleItemProps = IFieldRuleBaseHandlers & {
   groupAndRule: IBaseRuleGroupAnd;
   groupOrApiName: string;
   groupOrIndex: number;
@@ -70,7 +70,7 @@ export type IFieldRuleBaseItemProps = IFieldRuleBaseHandlers & {
   isFieldsetRuleset?: boolean;
 };
 
-export type IFieldRuleBaseListProps = IFieldRuleBaseHandlers & {
+export type IRulesetRuleListProps = IFieldRuleBaseHandlers & {
   ruleSet: IBaseRuleSet;
   fieldRuleShowFieldOptions?: IFieldRuleShowFieldOption[];
   ruleType: EFieldRuleType;

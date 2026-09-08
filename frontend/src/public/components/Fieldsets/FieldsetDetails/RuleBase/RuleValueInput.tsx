@@ -17,7 +17,7 @@ import { getDatasetFromMap } from '../../../../redux/selectors/datasets';
 import { IApplicationState } from '../../../../types/redux';
 
 import fieldsetDetailsStyles from '../FieldsetDetails.css';
-import styles from '../FieldsetRulesets/FieldsetRulesets.css';
+import styles from '../FieldsetRulesetsList/FieldsetRulesets.css';
 
 export const RuleValueInput = ({
   fieldType,

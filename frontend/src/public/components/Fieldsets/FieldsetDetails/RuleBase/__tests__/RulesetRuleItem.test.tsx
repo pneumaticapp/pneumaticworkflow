@@ -2,7 +2,7 @@ import * as React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { RuleItem } from '../RuleItem';
+import { RulesetRuleItem } from '../RulesetRuleItem';
 import { intlMock } from '../../../../../__stubs__/intlMock';
 import { makeFieldsetRuleGroupAnd } from '../../../../../__stubs__/fieldsets.factory';
 import { EFieldsetRulesetNumericOperator, ERuleCombinator, EFieldRuleType } from '../../../../../types/fieldset';
@@ -57,7 +57,7 @@ jest.mock('../../../../UI', () => ({
   Tooltip: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
 }));
 
-describe('RuleItem component', () => {
+describe('RulesetRuleItem component', () => {
   const mockUpdateRule = jest.fn();
   const mockDeleteRule = jest.fn();
   const mockRegroupRules = jest.fn();
@@ -76,7 +76,7 @@ describe('RuleItem component', () => {
     });
 
     render(
-      <RuleItem
+      <RulesetRuleItem
         groupAndRule={groupAndRule}
         groupOrApiName="g-or-1"
         groupOrIndex={0}
@@ -105,7 +105,7 @@ describe('RuleItem component', () => {
     });
 
     render(
-      <RuleItem
+      <RulesetRuleItem
         groupAndRule={groupAndRule}
         groupOrApiName="g-or-1"
         groupOrIndex={0}
@@ -139,7 +139,7 @@ describe('RuleItem component', () => {
     });
 
     render(
-      <RuleItem
+      <RulesetRuleItem
         groupAndRule={groupAndRule}
         groupOrApiName="g-or-1"
         groupOrIndex={0}
@@ -171,7 +171,7 @@ describe('RuleItem component', () => {
     });
 
     render(
-      <RuleItem
+      <RulesetRuleItem
         groupAndRule={groupAndRule}
         groupOrApiName="g-or-1"
         groupOrIndex={0}
@@ -210,7 +210,7 @@ describe('RuleItem component', () => {
     ];
 
     render(
-      <RuleItem
+      <RulesetRuleItem
         groupAndRule={groupAndRule}
         groupOrApiName="g-or-1"
         groupOrIndex={0}
@@ -229,5 +229,4 @@ describe('RuleItem component', () => {
     expect(filterSelects).toHaveLength(2);
     expect(filterSelects[0]).toHaveValue('field-1');
   });
-
 });

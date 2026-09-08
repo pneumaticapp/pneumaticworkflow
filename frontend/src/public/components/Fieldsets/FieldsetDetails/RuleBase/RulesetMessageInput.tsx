@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useIntl } from 'react-intl';
 
 import { IFieldRuleMessageInputProps } from './types';
-import styles from '../FieldsetRulesets/FieldsetRulesets.css';
+import styles from '../FieldsetRulesetsList/FieldsetRulesets.css';
 
 export const RulesetMessageInput = ({
   message,
