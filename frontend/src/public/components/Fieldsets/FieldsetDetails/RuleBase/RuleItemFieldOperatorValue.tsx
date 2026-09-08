@@ -7,20 +7,20 @@ import { RuleOperatorSelect } from './RuleOperatorSelect';
 import { RuleValueInput } from './RuleValueInput';
 import {
   IFieldRuleShowFieldOption,
-  IFieldRuleShowItemProps,
+  IRuleItemFieldOperatorValueProps,
 } from './types';
 import { isOperatorWithoutValue } from './utils';
 
 import fieldsetDetailsStyles from '../FieldsetDetails.css';
 import styles from '../FieldsetRulesetsList/FieldsetRulesets.css';
 
-export const RuleItemShow = ({
+export const RuleItemFieldOperatorValue = ({
   groupAndRule,
   groupOrApiName,
   fieldRuleShowFieldOptions,
   isReadOnly,
   updateRule,
-}: IFieldRuleShowItemProps) => {
+}: IRuleItemFieldOperatorValueProps) => {
   const { formatMessage } = useIntl();
   const { apiName: groupAndApiName, operator, value, field: fieldApiName } = groupAndRule;
 

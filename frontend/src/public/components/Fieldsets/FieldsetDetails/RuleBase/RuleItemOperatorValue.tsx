@@ -1,10 +1,10 @@
 import * as React from 'react';
 import { RuleOperatorSelect } from './RuleOperatorSelect';
 import { RuleValueInput } from './RuleValueInput';
-import { IFieldRuleValidatorItemProps } from './types';
+import { IRuleItemOperatorValueProps } from './types';
 import { isOperatorWithoutValue } from './utils';
 
-export const RuleItemValidator = ({
+export const RuleItemOperatorValue = ({
   groupAndRule,
   groupOrApiName,
   fieldType,
@@ -13,7 +13,7 @@ export const RuleItemValidator = ({
   isReadOnly,
   isFieldsetRuleset,
   updateRule,
-}: IFieldRuleValidatorItemProps) => {
+}: IRuleItemOperatorValueProps) => {
   const { apiName: groupAndApiName, operator, value } = groupAndRule;
 
   const isWithoutValue = isOperatorWithoutValue(operator);

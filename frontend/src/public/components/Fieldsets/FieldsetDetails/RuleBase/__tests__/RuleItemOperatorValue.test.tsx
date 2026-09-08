@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { RuleItemValidator } from '../RuleItemValidator';
+import { RuleItemOperatorValue } from '../RuleItemOperatorValue';
 import { intlMock } from '../../../../../__stubs__/intlMock';
 import { IBaseRuleGroupAnd, EFieldRuleOperator } from '../../../../../types/fieldset';
 import { EExtraFieldType } from '../../../../../types/template';
@@ -52,7 +52,7 @@ jest.mock('react-number-format', () => ({
   ),
 }));
 
-describe('RuleItemValidator component', () => {
+describe('RuleItemOperatorValue component', () => {
   const mockGroupAndRule: IBaseRuleGroupAnd = {
     apiName: 'and_1',
     operator: EFieldRuleOperator.Equal,
@@ -63,7 +63,7 @@ describe('RuleItemValidator component', () => {
     const handleUpdateRule = jest.fn();
 
     render(
-      <RuleItemValidator
+      <RuleItemOperatorValue
         groupAndRule={mockGroupAndRule}
         groupOrApiName="or_1"
         fieldType={EExtraFieldType.Number}
@@ -88,7 +88,7 @@ describe('RuleItemValidator component', () => {
     const handleUpdateRule = jest.fn();
 
     render(
-      <RuleItemValidator
+      <RuleItemOperatorValue
         groupAndRule={mockGroupAndRule}
         groupOrApiName="or_1"
         fieldType={EExtraFieldType.Number}
@@ -117,7 +117,7 @@ describe('RuleItemValidator component', () => {
     };
 
     render(
-      <RuleItemValidator
+      <RuleItemOperatorValue
         groupAndRule={emptyValueRule}
         groupOrApiName="or_1"
         fieldType={EExtraFieldType.Number}

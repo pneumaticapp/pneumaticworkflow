@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { RuleItemShow } from '../RuleItemShow';
+import { RuleItemFieldOperatorValue } from '../RuleItemFieldOperatorValue';
 import { EExtraFieldType } from '../../../../../types/template';
 import { intlMock } from '../../../../../__stubs__/intlMock';
 import { IBaseRuleGroupAnd, EFieldRuleOperator } from '../../../../../types/fieldset';
@@ -46,7 +46,7 @@ jest.mock('../RuleValueInput', () => ({
   ),
 }));
 
-describe('RuleItemShow component', () => {
+describe('RuleItemFieldOperatorValue component', () => {
   const mockGroupAndRule: IBaseRuleGroupAnd = {
     apiName: 'and_1',
     field: 'field_1',
@@ -73,7 +73,7 @@ describe('RuleItemShow component', () => {
     const handleUpdateRule = jest.fn();
 
     render(
-      <RuleItemShow
+      <RuleItemFieldOperatorValue
         groupAndRule={mockGroupAndRule}
         groupOrApiName="or_1"
         fieldRuleShowFieldOptions={mockOptions}
@@ -100,7 +100,7 @@ describe('RuleItemShow component', () => {
     const handleUpdateRule = jest.fn();
 
     render(
-      <RuleItemShow
+      <RuleItemFieldOperatorValue
         groupAndRule={mockGroupAndRule}
         groupOrApiName="or_1"
         fieldRuleShowFieldOptions={mockOptions}
@@ -125,7 +125,7 @@ describe('RuleItemShow component', () => {
     const handleUpdateRule = jest.fn();
 
     render(
-      <RuleItemShow
+      <RuleItemFieldOperatorValue
         groupAndRule={mockGroupAndRule}
         groupOrApiName="or_1"
         fieldRuleShowFieldOptions={mockOptions}
@@ -150,7 +150,7 @@ describe('RuleItemShow component', () => {
     const handleUpdateRule = jest.fn();
 
     render(
-      <RuleItemShow
+      <RuleItemFieldOperatorValue
         groupAndRule={mockGroupAndRule}
         groupOrApiName="or_1"
         fieldRuleShowFieldOptions={mockOptions}

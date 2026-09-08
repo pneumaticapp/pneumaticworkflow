@@ -88,7 +88,7 @@ export type IFieldRuleMessageInputProps = {
   isReadOnly?: boolean;
 };
 
-export type IFieldRuleShowItemProps = {
+export type IRuleItemFieldOperatorValueProps = {
   groupAndRule: IBaseRuleGroupAnd;
   groupOrApiName: string;
   fieldRuleShowFieldOptions: IFieldRuleShowFieldOption[];
@@ -96,7 +96,7 @@ export type IFieldRuleShowItemProps = {
   updateRule: IFieldRuleBaseHandlers['updateRule'];
 };
 
-export type IFieldRuleValidatorItemProps = {
+export type IRuleItemOperatorValueProps = {
   groupAndRule: IBaseRuleGroupAnd;
   groupOrApiName: string;
   fieldType: EExtraFieldType;

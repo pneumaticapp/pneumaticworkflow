@@ -8,8 +8,8 @@ import { EFieldRuleType } from '../../../../types/fieldset';
 import { FIELDSET_RULE_COMBINATORS } from '../../constants';
 import { getRuleCombinator } from './utils';
 import { IRulesetRuleItemProps } from './types';
-import { RuleItemShow } from './RuleItemShow';
-import { RuleItemValidator } from './RuleItemValidator';
+import { RuleItemFieldOperatorValue } from './RuleItemFieldOperatorValue';
+import { RuleItemOperatorValue } from './RuleItemOperatorValue';
 
 import styles from '../FieldsetRulesetsList/FieldsetRulesets.css';
 
@@ -61,7 +61,7 @@ export const RulesetRuleItem = ({
       )}
       <div className={styles['rule-row']}>
         {isShowRule ? (
-          <RuleItemShow
+          <RuleItemFieldOperatorValue
             groupAndRule={groupAndRule}
             groupOrApiName={groupOrApiName}
             fieldRuleShowFieldOptions={fieldRuleShowFieldOptions || []}
@@ -69,7 +69,7 @@ export const RulesetRuleItem = ({
             updateRule={updateRule}
           />
         ) : (
-          <RuleItemValidator
+          <RuleItemOperatorValue
             groupAndRule={groupAndRule}
             groupOrApiName={groupOrApiName}
             fieldType={fieldType}
