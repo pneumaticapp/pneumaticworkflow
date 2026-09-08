@@ -16,29 +16,32 @@ import {
   resetCurrentFieldset,
   updateFieldsetAction,
 } from '../../../../redux/fieldsets/slice';
-import { ModifyDropdown, FilterSelect } from '../../../UI';
+import { ModifyDropdown } from '../../../UI';
 import { NotificationManager } from '../../../UI/Notifications';
-import { ExtraFieldIntl } from '../../../TemplateEdit/ExtraFields';
-import { FieldsetModal } from '../../FieldsetModal/FieldsetModal';
-import { getEmptyField } from '../../../TemplateEdit/KickoffRedux/utils/getEmptyField';
-import { EExtraFieldType, IExtraField } from '../../../../types/template';
+import { IExtraField, EExtraFieldType } from '../../../../types/template';
+import { EFieldLabelPosition } from '../../../../types/fieldset';
 import { makeFieldsetCatalogItem, makeFieldsetRuleset } from '../../../../__stubs__/fieldsets.factory';
 import { makeExtraField } from '../../../../__stubs__/fields.factory';
-import { FIELDSET_RULES_MSG_VALUE_REQUIRED } from '../../constants';
+import { FIELDSET_RULES_MSG_RULE_REQUIRED } from '../../constants';
+import { FieldsetSettings } from '../FieldsetSettings/FieldsetSettings';
+import { FieldsetFieldsList } from '../FieldsetFieldsList/FieldsetFieldsList';
+import { FieldsetRulesetsList } from '../FieldsetRulesetsList/FieldsetRulesetsList';
+import { IApplicationState } from '../../../../types/redux';
 
-function requireJestMock(value: unknown, label: string): jest.Mock {
-  if (!jest.isMockFunction(value)) {
-    throw new Error(`${label} is not a jest.Mock`);
-  }
-  return value;
-}
 jest.mock('../../../../utils/history', () => ({
-  history: { push: jest.fn(), location: { pathname: '/' }, listen: jest.fn() },
-}));
-
-jest.mock('react-router-dom', () => ({
-  Link: ({ children, to, className }: { children: React.ReactNode; to: string; className?: string }) =>
-    React.createElement('a', { href: to, className }, children),
+  history: {
+    push: jest.fn(),
+    location: { pathname: '/' },
+    listen: jest.fn(),
+    length: 1,
+    action: 'PUSH',
+    go: jest.fn(),
+    goBack: jest.fn(),
+    goForward: jest.fn(),
+    replace: jest.fn(),
+    block: jest.fn(),
+    createHref: jest.fn(),
+  },
 }));
 
 jest.mock('../../../../redux/fieldsets/slice', () => ({
@@ -51,61 +54,12 @@ jest.mock('../../../../redux/fieldsets/slice', () => ({
 }));
 
 jest.mock('../../../UI', () => ({
-  ModifyDropdown: jest.fn(
-    (props: { onEdit?: () => void; onDelete?: () => void; onClone?: () => void }) =>
-      React.createElement(
-        'div',
-        { 'data-testid': 'modify-dropdown' },
-        React.createElement('button', { 'data-testid': 'modify-clone', onClick: props.onClone }),
-      ),
+  ModifyDropdown: jest.fn((props: { onClone?: () => void }) =>
+    React.createElement('div', null, React.createElement('button', { 'data-testid': 'modify-clone', onClick: props.onClone })),
   ),
   Button: jest.fn((props: { label: string; onClick?: () => void; disabled?: boolean }) =>
-    React.createElement(
-      'button',
-      {
-        onClick: props.onClick,
-        disabled: props.disabled,
-      },
-      props.label,
-    ),
+    React.createElement('button', { onClick: props.onClick, disabled: props.disabled }, props.label),
   ),
-  FilterSelect: jest.fn(
-    (props: {
-      options: { apiName: string; name: string }[];
-      selectedOptions: (string | number | null)[];
-      onChange: (vals: (string | number | null)[]) => void;
-      renderPlaceholder?: (opts: { apiName: string; name: string }[]) => React.ReactNode;
-    }) =>
-      React.createElement(
-        'div',
-        { 'data-testid': 'filter-select' },
-        React.createElement(
-          'span',
-          { 'data-testid': 'filter-placeholder' },
-          props.renderPlaceholder ? props.renderPlaceholder(props.options) : null,
-        ),
-        ...props.options.map((option) =>
-          React.createElement(
-            'button',
-            {
-              key: option.apiName,
-              type: 'button',
-              'data-testid': `filter-option-${option.apiName}`,
-              onClick: () => {
-                const selected = props.selectedOptions || [];
-                const isSelected = selected.includes(option.apiName);
-                const next = isSelected
-                  ? selected.filter((value) => value !== option.apiName)
-                  : [...selected, option.apiName];
-                props.onChange(next);
-              },
-            },
-            option.name,
-          ),
-        ),
-      ),
-  ),
-  Tooltip: jest.fn(({ children }) => children),
   RouteLeavingGuard: jest.fn(() => null),
 }));
 
@@ -113,177 +67,109 @@ jest.mock('../../../UI/Notifications', () => ({
   NotificationManager: { warning: jest.fn() },
 }));
 
-jest.mock('../../../UI/ModifyDropdown/types', () => ({
-  EModifyDropdownToggle: { Modify: 'modify' },
-}));
-
 jest.mock('../../FieldsetModal/FieldsetModal', () => ({
   FieldsetModal: jest.fn(() => null),
-}));
-
-jest.mock('../../FieldsetModal/types', () => ({
-  EFieldsetModalType: { Edit: 'edit' },
 }));
 
 jest.mock('../FieldsetDetailsSkeleton', () => ({
   FieldsetDetailsSkeleton: jest.fn(() => React.createElement('div', { role: 'status', 'aria-label': 'Loading' })),
 }));
 
-jest.mock('../../../TemplateEdit/ExtraFields', () => ({
-  ExtraFieldIntl: jest.fn(
-    (props: {
-      field: { apiName: string };
-      onOpenFieldRules?: () => void;
-      isDisabled?: boolean;
-      isFieldsetReadOnly?: boolean;
-    }) =>
-      React.createElement(
-        'div',
-        { 'data-testid': `extra-field-${props.field.apiName}` },
-        props.onOpenFieldRules && !props.isDisabled && !props.isFieldsetReadOnly
-        && React.createElement(
-          'button',
-          {
-            'data-testid': `open-field-rules-${props.field.apiName}`,
-            onClick: () => props.onOpenFieldRules!(),
-          },
-          'Open rules',
-        ),
-      ),
+jest.mock('../FieldRuleModal', () => ({
+  FieldRuleModal: jest.fn((props: { isOpen: boolean }) =>
+    props.isOpen ? React.createElement('div', { 'data-testid': 'field-rule-modal' }) : null,
   ),
 }));
 
-jest.mock('../../../TemplateEdit/ExtraFields/utils/ExtraFieldsMap', () => ({
-  ExtraFieldsMap: [{ id: 'string', title: 'Text' }],
+jest.mock('../FieldsetUsageBanner/FieldsetUsageBanner', () => ({
+  FieldsetUsageBanner: jest.fn(() => null),
 }));
 
-jest.mock('../../../TemplateEdit/ExtraFields/utils/ExtraFieldIcon', () => ({
-  ExtraFieldIcon: jest.fn((props: { id: string; onClick: () => void; disabled?: boolean }) =>
-    React.createElement('button', {
-      'data-testid': `field-icon-${props.id}`,
-      disabled: props.disabled,
-      onClick: () => {
-        if (!props.disabled) {
-          props.onClick();
-        }
-      },
-    }),
-  ),
+jest.mock('../FieldsetSettings/FieldsetSettings', () => ({
+  FieldsetSettings: jest.fn(() => null),
 }));
 
-jest.mock('../../../TemplateEdit/KickoffRedux/utils/getEmptyField', () => ({
-  getEmptyField: jest.fn((type: string) => ({
-    apiName: `new-${type}`,
-    name: 'New Field',
-    type,
-    order: 0,
-    userId: null,
-    groupId: null,
-  })),
+jest.mock('../FieldsetFieldsList/FieldsetFieldsList', () => ({
+  FieldsetFieldsList: jest.fn(() => null),
 }));
 
-jest.mock('../../../TemplateEdit/ExtraFields/utils/getEditedFields', () => ({
-  getEditedFields: jest.fn((fields: unknown[]) => fields),
-}));
-
-jest.mock('../../../../utils/workflows', () => ({
-  getNormalizeFieldsOrders: jest.fn((f: unknown[]) => f),
-  moveWorkflowField: jest.fn((_from: number, _to: number, fields: unknown[]) => fields),
+jest.mock('../FieldsetRulesetsList/FieldsetRulesetsList', () => ({
+  FieldsetRulesetsList: jest.fn(() => null),
 }));
 
 jest.mock('../../../TemplateEdit/ExtraFields/utils/useDatasetOptions', () => ({
   useDatasetOptions: jest.fn(() => []),
 }));
 
-jest.mock('../fieldsetFieldMappers', () => ({
-  normalizeFieldsForUI: jest.fn((f: unknown[]) => f),
-}));
-
-jest.mock('../FieldRuleModal', () => ({
-  FieldRuleModal: jest.fn((props: { isOpen: boolean }) =>
-    props.isOpen
-      ? React.createElement('div', { 'data-testid': 'field-rule-modal' })
-      : null,
-  ),
-}));
 describe('FieldsetDetails', () => {
   const mockDispatch = jest.fn();
   const formatMsg = (id: string) => intlMock.formatMessage({ id });
 
   const SAVE_LABEL = formatMsg('fieldsets.save');
   const UNSAVED_HINT = formatMsg('fieldsets.unsaved-changes');
-  const ADD_RULE_TEXT = formatMsg('fieldsets.add-rule');
-  const RULE_DELETE_TEXT = formatMsg('fieldsets.rule-delete');
-  const RULE_VALUE_PLACEHOLDER = formatMsg('fieldsets.rule-value-placeholder-number');
 
   const makeProps = (id: string = '10'): TFieldsetDetailsProps => ({
     match: { params: { id }, isExact: true, path: '', url: '' },
-    location: {
-      pathname: `/fieldsets/${id}/`,
-      search: '',
-      hash: '',
-      state: undefined,
-    },
-    history: {
-      ...history,
-      length: 1,
-      action: 'PUSH' as const,
-      go: jest.fn(),
-      goBack: jest.fn(),
-      goForward: jest.fn(),
-      replace: jest.fn(),
-      block: jest.fn(),
-      createHref: jest.fn(),
-    },
+    location: { pathname: `/fieldsets/${id}/`, search: '', hash: '', state: undefined },
+    history,
   });
 
   const makeField = (overrides: Partial<IExtraField> = {}) => makeExtraField(overrides);
 
-  const loadingState = {
-    fieldsets: { currentFieldset: null, isCurrentFieldsetLoading: true },
-    authUser: { account: { id: 1 } },
-    accounts: { users: [] },
+  const loadingState: Partial<IApplicationState> = {
+    fieldsets: { currentFieldset: null, isCurrentFieldsetLoading: true } as IApplicationState['fieldsets'],
+    authUser: { account: { id: 1 } } as IApplicationState['authUser'],
+    accounts: { users: [] } as unknown as IApplicationState['accounts'],
   };
 
-  const nullFieldsetState = {
-    fieldsets: { currentFieldset: null, isCurrentFieldsetLoading: false },
-    authUser: { account: { id: 1 } },
-    accounts: { users: [] },
+  const nullFieldsetState: Partial<IApplicationState> = {
+    fieldsets: { currentFieldset: null, isCurrentFieldsetLoading: false } as IApplicationState['fieldsets'],
+    authUser: { account: { id: 1 } } as IApplicationState['authUser'],
+    accounts: { users: [] } as unknown as IApplicationState['accounts'],
   };
 
-  const makeLoadedState = (fieldsetOverrides = {}) => {
+  const makeLoadedState = (fieldsetOverrides = {}): Partial<IApplicationState> => {
     const fieldset = makeFieldsetCatalogItem({
       id: 10,
       layout: 'horizontal' as const,
       ...fieldsetOverrides,
     });
     return {
-      fieldsets: { currentFieldset: fieldset, isCurrentFieldsetLoading: false },
-      authUser: { account: { id: 1 } },
-      accounts: { users: [] },
+      fieldsets: { currentFieldset: fieldset, isCurrentFieldsetLoading: false } as IApplicationState['fieldsets'],
+      authUser: { account: { id: 1 } } as IApplicationState['authUser'],
+      accounts: { users: [] } as unknown as IApplicationState['accounts'],
     };
   };
 
-  const getModifyDropdownProps = () => requireJestMock(ModifyDropdown, 'ModifyDropdown').mock.calls[0][0];
-  const getFieldsetModalProps = () => requireJestMock(FieldsetModal, 'FieldsetModal').mock.calls[0][0];
-  const getExtraFieldIntlMock = () => requireJestMock(ExtraFieldIntl, 'ExtraFieldIntl');
-  const getUpdateActionMock = () => requireJestMock(updateFieldsetAction, 'updateFieldsetAction');
-  const getFilterSelectMock = () => requireJestMock(FilterSelect, 'FilterSelect');
+  const getModifyDropdownProps = () => (ModifyDropdown as unknown as jest.Mock).mock.calls[0][0];
+  const getUpdateActionMock = () => (updateFieldsetAction as unknown as jest.Mock);
+  const getFieldsetSettingsProps = () => {
+    const calls = (FieldsetSettings as unknown as jest.Mock).mock.calls;
+    return calls[calls.length - 1][0];
+  };
+  const getFieldsetFieldsListProps = () => {
+    const calls = (FieldsetFieldsList as unknown as jest.Mock).mock.calls;
+    return calls[calls.length - 1][0];
+  };
+  const getFieldsetRulesetsListProps = () => {
+    const calls = (FieldsetRulesetsList as unknown as jest.Mock).mock.calls;
+    return calls[calls.length - 1][0];
+  };
 
-  const mockSelectorState = (state: object) => {
-    requireJestMock(useSelector, 'useSelector').mockImplementation((selector: (store: object) => unknown) =>
-      selector(state),
+  const mockSelectorState = (state: Partial<IApplicationState>) => {
+    (useSelector as unknown as jest.Mock).mockImplementation(
+      (selector: (state: IApplicationState) => unknown) => selector(state as IApplicationState),
     );
   };
 
-  const renderWithState = (state: object, props = makeProps()) => {
+  const renderWithState = (state: Partial<IApplicationState>, props = makeProps()) => {
     mockSelectorState(state);
     return render(React.createElement(FieldsetDetails, props));
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
-    requireJestMock(useDispatch, 'useDispatch').mockReturnValue(mockDispatch);
+    (useDispatch as unknown as jest.Mock).mockReturnValue(mockDispatch);
     mockSelectorState(loadingState);
   });
 
@@ -384,42 +270,14 @@ describe('FieldsetDetails', () => {
     });
   });
 
-  describe('Settings section', () => {
-    it('enables Save after changing title', () => {
-      renderWithState(makeLoadedState());
-      const input = screen.getByLabelText(formatMsg('fieldsets.settings.title'));
-      userEvent.clear(input);
-      userEvent.type(input, 'New Title');
-      expect(screen.getByRole('button', { name: SAVE_LABEL })).not.toBeDisabled();
-      expect(screen.getByText(UNSAVED_HINT)).toBeInTheDocument();
-    });
-
-    it('Save dispatches updateFieldsetAction with only changed title', () => {
-      renderWithState(makeLoadedState({ id: 10, title: 'Old' }));
-      const input = screen.getByLabelText(formatMsg('fieldsets.settings.title'));
-      userEvent.clear(input);
-      userEvent.type(input, 'New');
-
-      userEvent.click(screen.getByRole('button', { name: SAVE_LABEL }));
-
-      expect(getUpdateActionMock()).toHaveBeenCalledTimes(1);
-      expect(mockDispatch).toHaveBeenCalledWith(
-        updateFieldsetAction(
-          expect.objectContaining({
-            id: 10,
-            title: 'New',
-          }),
-        ),
-      );
-      expect(getUpdateActionMock().mock.calls[0][0]).not.toHaveProperty('description');
-      expect(getUpdateActionMock().mock.calls[0][0]).not.toHaveProperty('fields');
-      expect(getUpdateActionMock().mock.calls[0][0]).not.toHaveProperty('rules');
-    });
-
+  describe('Validation on Save', () => {
     it('shows warning and does not dispatch PATCH when title is empty', () => {
       renderWithState(makeLoadedState({ id: 10, title: 'X' }));
-      const input = screen.getByLabelText(formatMsg('fieldsets.settings.title'));
-      userEvent.clear(input);
+
+      const { onTitleChange } = getFieldsetSettingsProps();
+      act(() => {
+        onTitleChange({ target: { value: '' } });
+      });
 
       userEvent.click(screen.getByRole('button', { name: SAVE_LABEL }));
 
@@ -430,28 +288,50 @@ describe('FieldsetDetails', () => {
       expect(getUpdateActionMock()).not.toHaveBeenCalled();
     });
 
-    it('enables Save after changing description', () => {
-      renderWithState(makeLoadedState());
-      const textarea = screen.getByLabelText(formatMsg('fieldsets.settings.description'));
-      userEvent.type(textarea, 'new text');
+    it('shows warning banner and does not dispatch PATCH when rule is incomplete', () => {
+      renderWithState(makeLoadedState({ id: 10, fields: [], rulesets: [] }));
+
+      const { onRulesetsChange } = getFieldsetRulesetsListProps();
+      act(() => {
+        onRulesetsChange([makeFieldsetRuleset({ fields: ['f1'], groupsOr: [] })]);
+      });
+
+      userEvent.click(screen.getByRole('button', { name: SAVE_LABEL }));
+
+      expect(NotificationManager.warning).toHaveBeenCalledTimes(1);
+      expect(NotificationManager.warning).toHaveBeenCalledWith(
+        expect.objectContaining({ message: formatMsg(FIELDSET_RULES_MSG_RULE_REQUIRED) }),
+      );
+      expect(getUpdateActionMock()).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Saving changes', () => {
+    it('dispatches updateFieldsetAction with combined changes and strips id from fields', () => {
+      const validRuleset = makeFieldsetRuleset({
+        apiName: 'rule-1',
+        fields: ['new-field'],
+        groupsOr: [
+          {
+            apiName: 'or-1',
+            groupsAnd: [{ apiName: 'and-1', operator: 'sum_equal' as any, value: '100' }],
+          },
+        ],
+      });
+      renderWithState(makeLoadedState({ id: 10, title: 'Old Title', description: '' }));
+
+      act(() => {
+        getFieldsetSettingsProps().onTitleChange({ target: { value: 'New Title' } });
+        getFieldsetSettingsProps().onDescriptionChange({ target: { value: 'New Desc' } });
+        getFieldsetSettingsProps().onLabelPositionChange(EFieldLabelPosition.Left);
+        getFieldsetFieldsListProps().onFieldsChange([
+          makeField({ id: 99, apiName: 'new-field', type: EExtraFieldType.Number }),
+        ]);
+        getFieldsetRulesetsListProps().onRulesetsChange([validRuleset]);
+      });
+
       expect(screen.getByRole('button', { name: SAVE_LABEL })).not.toBeDisabled();
       expect(screen.getByText(UNSAVED_HINT)).toBeInTheDocument();
-    });
-
-    it('enables Save after changing label position', () => {
-      renderWithState(makeLoadedState());
-      const filterMock = getFilterSelectMock();
-      const labelPositionOnChange = filterMock.mock.calls[0][0].onChange;
-      act(() => {
-        labelPositionOnChange('left');
-      });
-      expect(screen.getByRole('button', { name: SAVE_LABEL })).not.toBeDisabled();
-    });
-
-    it('Save dispatches updateFieldsetAction with only changed description', () => {
-      renderWithState(makeLoadedState({ id: 10, description: '' }));
-      const textarea = screen.getByLabelText(formatMsg('fieldsets.settings.description'));
-      userEvent.type(textarea, 'updated');
 
       userEvent.click(screen.getByRole('button', { name: SAVE_LABEL }));
 
@@ -460,107 +340,19 @@ describe('FieldsetDetails', () => {
         updateFieldsetAction(
           expect.objectContaining({
             id: 10,
-            description: 'updated',
+            title: 'New Title',
+            description: 'New Desc',
+            labelPosition: EFieldLabelPosition.Left,
+            rulesets: [validRuleset],
           }),
         ),
       );
-      expect(getUpdateActionMock().mock.calls[0][0]).not.toHaveProperty('labelPosition');
-      expect(getUpdateActionMock().mock.calls[0][0]).not.toHaveProperty('fields');
-      expect(getUpdateActionMock().mock.calls[0][0]).not.toHaveProperty('rulesets');
-    });
-
-    it('Save dispatches updateFieldsetAction with empty string when description is cleared', () => {
-      renderWithState(makeLoadedState({ id: 10, description: 'Initial desc' }));
-      const textarea = screen.getByLabelText(formatMsg('fieldsets.settings.description'));
-      userEvent.clear(textarea);
-
-      userEvent.click(screen.getByRole('button', { name: SAVE_LABEL }));
-
-      expect(getUpdateActionMock()).toHaveBeenCalledTimes(1);
-      expect(mockDispatch).toHaveBeenCalledWith(
-        updateFieldsetAction(
-          expect.objectContaining({
-            id: 10,
-            description: '',
-          }),
-        ),
-      );
-    });
-  });
-
-  describe('Fields section', () => {
-    it('Save Fields dispatches updateFieldsetAction without id in fields', () => {
-      renderWithState(makeLoadedState({ id: 10, fields: [] }));
-
-      userEvent.click(screen.getByTestId('field-icon-string'));
-
-      userEvent.click(screen.getByRole('button', { name: SAVE_LABEL }));
-
-      expect(getUpdateActionMock()).toHaveBeenCalledTimes(1);
-      expect(mockDispatch).toHaveBeenCalledWith(updateFieldsetAction(expect.objectContaining({ id: 10 })));
 
       const fieldsPayload = getUpdateActionMock().mock.calls[0][0].fields;
-      expect(fieldsPayload).toBeDefined();
-      fieldsPayload.forEach((field: Record<string, unknown>) => {
-        expect(field).not.toHaveProperty('id');
-      });
-    });
-
-    it('Save button dispatches updateFieldsetAction with rulesets payload', () => {
-      const fields = [
-        makeField({ apiName: 'field-1', order: 1, type: EExtraFieldType.Number }),
-        makeField({ apiName: 'field-2', order: 2, type: EExtraFieldType.Number }),
-      ];
-      renderWithState(makeLoadedState({ id: 10, fields }));
-
-      userEvent.click(screen.getByRole('button', { name: new RegExp(ADD_RULE_TEXT, 'i') }));
-
-      const ruleInput = screen.getByPlaceholderText(RULE_VALUE_PLACEHOLDER);
-      userEvent.type(ruleInput, '100');
-
-      const filterMock = getFilterSelectMock();
-      const lastFilterCall = filterMock.mock.calls[filterMock.mock.calls.length - 1];
-      const onChange = lastFilterCall[0].onChange;
-
-      act(() => {
-        onChange(['field-1', null, 42, 'field-2']);
-      });
-
-      userEvent.click(screen.getByRole('button', { name: SAVE_LABEL }));
-
-      expect(getUpdateActionMock()).toHaveBeenCalledTimes(1);
-      expect(mockDispatch).toHaveBeenCalledWith(
-        updateFieldsetAction(
-          expect.objectContaining({
-            id: 10,
-            rulesets: expect.arrayContaining([
-              expect.objectContaining({
-                fields: ['field-1', 'field-2'],
-                groupsOr: expect.arrayContaining([
-                  expect.objectContaining({
-                    groupsAnd: expect.arrayContaining([
-                      expect.objectContaining({
-                        value: '100',
-                      }),
-                    ]),
-                  }),
-                ]),
-              }),
-            ]),
-          }),
-        ),
-      );
-
-      const rulesPayload = getUpdateActionMock().mock.calls[0][0].rulesets;
-      expect(rulesPayload[0].apiName).toBeDefined();
-    });
-  });
-
-  describe('FieldsetModal', () => {
-    it('renders FieldsetModal with type=Edit', () => {
-      renderWithState(makeLoadedState());
-      const props = getFieldsetModalProps();
-      expect(props.type).toBe('edit');
+      expect(fieldsPayload).toEqual([
+        expect.objectContaining({ apiName: 'new-field' }),
+      ]);
+      expect(fieldsPayload[0]).not.toHaveProperty('id');
     });
   });
 
@@ -587,96 +379,6 @@ describe('FieldsetDetails', () => {
     });
   });
 
-  describe('Selected fields placeholder in FilterSelect', () => {
-    it('shows selected field names joined by comma after picking fields in UI', () => {
-      const fields = [
-        makeField({ apiName: 'field-1', name: 'Total', order: 1, type: EExtraFieldType.Number }),
-        makeField({ apiName: 'field-2', name: 'Tax', order: 2, type: EExtraFieldType.Number }),
-        makeField({ apiName: 'field-3', name: 'Discount', order: 3, type: EExtraFieldType.Number }),
-      ];
-      renderWithState(makeLoadedState({ id: 10, fields }));
-
-      userEvent.click(screen.getByRole('button', { name: new RegExp(ADD_RULE_TEXT, 'i') }));
-
-      const getFieldsPlaceholder = () => {
-        const all = screen.getAllByTestId('filter-placeholder');
-        return all[all.length - 1];
-      };
-      expect(getFieldsPlaceholder()).toHaveTextContent(
-        formatMsg('fieldsets.rule-fields-placeholder'),
-      );
-
-      userEvent.click(screen.getByTestId('filter-option-field-1'));
-      userEvent.click(screen.getByTestId('filter-option-field-3'));
-
-      expect(screen.getAllByText('Total').length).toBeGreaterThan(0);
-      expect(screen.getAllByText('Discount').length).toBeGreaterThan(0);
-    });
-  });
-
-  describe('fieldset rules validation on Save', () => {
-    it('shows warning banner and does not dispatch PATCH when rule is incomplete', () => {
-      renderWithState(makeLoadedState({ id: 10, fields: [], rulesets: [] }));
-
-      userEvent.click(screen.getByRole('button', { name: new RegExp(ADD_RULE_TEXT, 'i') }));
-      userEvent.click(screen.getByRole('button', { name: SAVE_LABEL }));
-
-      expect(NotificationManager.warning).toHaveBeenCalledTimes(1);
-      expect(NotificationManager.warning).toHaveBeenCalledWith(
-        expect.objectContaining({ message: formatMsg(FIELDSET_RULES_MSG_VALUE_REQUIRED) }),
-      );
-      expect(getUpdateActionMock()).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('combined dirty PATCH on one Save', () => {
-    it('puts description, fields and rulesets into a single updateFieldsetAction', () => {
-      const fields = [makeField({ apiName: 'field-1', order: 1, type: EExtraFieldType.Number })];
-      renderWithState(makeLoadedState({ id: 10, description: '', fields, rulesets: [] }));
-
-      const textarea = screen.getByLabelText(formatMsg('fieldsets.settings.description'));
-      userEvent.type(textarea, 'combo');
-
-      userEvent.click(screen.getByTestId('field-icon-string'));
-
-      userEvent.click(screen.getByRole('button', { name: new RegExp(ADD_RULE_TEXT, 'i') }));
-      userEvent.type(screen.getByPlaceholderText(RULE_VALUE_PLACEHOLDER), '100');
-      userEvent.click(screen.getByTestId('filter-option-field-1'));
-
-      userEvent.click(screen.getByRole('button', { name: SAVE_LABEL }));
-
-      expect(getUpdateActionMock()).toHaveBeenCalledTimes(1);
-      expect(mockDispatch).toHaveBeenCalledWith(
-        updateFieldsetAction(
-          expect.objectContaining({
-            id: 10,
-            description: 'combo',
-            fields: expect.any(Array),
-            rulesets: expect.arrayContaining([
-              expect.objectContaining({
-                fields: ['field-1'],
-              }),
-            ]),
-          }),
-        ),
-      );
-    });
-  });
-
-  describe('FilterSelect rules without Select all', () => {
-    it('does not pass selectAllLabel to FilterSelect', () => {
-      const fields = [makeField({ apiName: 'field-1', name: 'Total', order: 1, type: EExtraFieldType.Number })];
-      renderWithState(makeLoadedState({ id: 10, fields }));
-
-      userEvent.click(screen.getByRole('button', { name: new RegExp(ADD_RULE_TEXT, 'i') }));
-
-      const filterMock = getFilterSelectMock();
-      const lastProps = filterMock.mock.calls[filterMock.mock.calls.length - 1][0] as Record<string, unknown>;
-
-      expect(lastProps).not.toHaveProperty('selectAllLabel');
-    });
-  });
-
   describe('Clone protection guard', () => {
     it('dispatches cloneFieldsetAction when there are no unsaved changes', () => {
       renderWithState(makeLoadedState({ id: 10 }));
@@ -692,8 +394,10 @@ describe('FieldsetDetails', () => {
     it('blocks clone and shows warning notification when there are unsaved changes', () => {
       renderWithState(makeLoadedState({ id: 10, description: 'Initial' }));
 
-      const textarea = screen.getByLabelText(formatMsg('fieldsets.settings.description'));
-      userEvent.type(textarea, 'dirty change');
+      const { onDescriptionChange } = getFieldsetSettingsProps();
+      act(() => {
+        onDescriptionChange({ target: { value: 'dirty change' } });
+      });
 
       userEvent.click(screen.getByTestId('modify-clone'));
 
@@ -703,165 +407,37 @@ describe('FieldsetDetails', () => {
     });
   });
 
-  describe('Usage Banner in editor mode (usage-banner)', () => {
-    it('renders usage banner with list of linked templates and links to their edit pages', () => {
-      const state = makeLoadedState({
-        usage: [
-          { id: 101, name: 'Very long template name for testing overflow' },
-          { id: 102, name: 'Procurement template' },
-        ],
-      });
-      renderWithState(state);
-
-      expect(screen.getByText(/Used in 2 templates/)).toBeInTheDocument();
-
-      const showButton = screen.getByRole('button', { name: new RegExp(formatMsg('fieldsets.usage.show'), 'i') });
-      userEvent.click(showButton);
-
-      const link1 = screen.getByRole('link', { name: 'Very long template name for testing overflow' });
-      expect(link1).toBeInTheDocument();
-      expect(link1).toHaveAttribute('href', '/templates/edit/101/');
-
-      const link2 = screen.getByRole('link', { name: 'Procurement template' });
-      expect(link2).toBeInTheDocument();
-      expect(link2).toHaveAttribute('href', '/templates/edit/102/');
-    });
-
-    it('passes isReadOnly=true when usage is present', () => {
-      const state = makeLoadedState({
-        usage: [{ id: 1, name: 'Template 1' }],
-      });
-      renderWithState(state);
-
-      expect(getModifyDropdownProps().isReadOnly).toBe(true);
-    });
-
-    it('renders not-linked banner when usage is empty', () => {
-      renderWithState(makeLoadedState());
-      expect(screen.getByText(formatMsg('fieldsets.usage.not-linked'))).toBeInTheDocument();
-    });
-  });
-
-  describe('handleSave return status (boolean)', () => {
-    it('returns false and shows warning when rules are invalid', () => {
-      renderWithState(makeLoadedState({ id: 10, fields: [], rules: [] }));
-
-      userEvent.click(screen.getByRole('button', { name: new RegExp(ADD_RULE_TEXT, 'i') }));
-      userEvent.click(screen.getByRole('button', { name: SAVE_LABEL }));
-
-      expect(NotificationManager.warning).toHaveBeenCalledTimes(1);
-      expect(NotificationManager.warning).toHaveBeenCalledWith(
-        expect.objectContaining({ message: formatMsg(FIELDSET_RULES_MSG_VALUE_REQUIRED) }),
-      );
-      expect(getUpdateActionMock()).not.toHaveBeenCalled();
-    });
-  });
-
   describe('Readonly mode when fieldset is linked to templates', () => {
     const LINKED_USAGE = [{ id: 1, name: 'Template 1' }];
+
+    it('passes isReadOnly=true to child components when usage is present', () => {
+      renderWithState(makeLoadedState({ usage: LINKED_USAGE }));
+
+      expect(getModifyDropdownProps().isReadOnly).toBe(true);
+      expect(getFieldsetSettingsProps().isReadOnly).toBe(true);
+      expect(getFieldsetFieldsListProps().isReadOnly).toBe(true);
+      expect(getFieldsetRulesetsListProps().isReadOnly).toBe(true);
+    });
 
     it('hides Save bar when isLinked', () => {
       renderWithState(makeLoadedState({ usage: LINKED_USAGE }));
       expect(screen.queryByRole('button', { name: SAVE_LABEL })).not.toBeInTheDocument();
     });
-
-    it('hides Add Rule button when isLinked', () => {
-      renderWithState(makeLoadedState({ usage: LINKED_USAGE }));
-      expect(screen.queryByRole('button', { name: new RegExp(ADD_RULE_TEXT, 'i') })).not.toBeInTheDocument();
-    });
-
-    it('hides Rule delete button when isLinked', () => {
-      const rulesets = [makeFieldsetRuleset({ apiName: 'rule-1', fields: ['f1'] })];
-      const fields = [makeField({ apiName: 'f1', order: 1 })];
-      renderWithState(makeLoadedState({ fields, rulesets, usage: LINKED_USAGE }));
-      expect(screen.queryByText(RULE_DELETE_TEXT)).not.toBeInTheDocument();
-    });
-
-    it('disables Rule inputs when isLinked', () => {
-      const rulesets = [makeFieldsetRuleset({ apiName: 'rule-1', fields: ['f1'] })];
-      const fields = [makeField({ apiName: 'f1', order: 1 })];
-      renderWithState(makeLoadedState({ fields, rulesets, usage: LINKED_USAGE }));
-
-      const ruleValueInput = screen.getByDisplayValue('100');
-      expect(ruleValueInput).toBeDisabled();
-
-      const filterMock = getFilterSelectMock();
-      const lastCall = filterMock.mock.calls[filterMock.mock.calls.length - 1];
-      expect(lastCall[0]).toEqual(expect.objectContaining({ isDisabled: true }));
-    });
-
-    it('passes isDisabled=true to ExtraFieldIntl when isLinked', () => {
-      const fields = [makeField({ apiName: 'f1', order: 1 })];
-      renderWithState(makeLoadedState({ fields, usage: LINKED_USAGE }));
-
-      const mock = getExtraFieldIntlMock();
-      const lastCall = mock.mock.calls[mock.mock.calls.length - 1];
-      expect(lastCall[0].isDisabled).toBe(true);
-    });
-
-    it('passes isDisabled=true to FilterSelect when isLinked', () => {
-      const rulesets = [makeFieldsetRuleset({ apiName: 'rule-1', fields: ['f1'] })];
-      const fields = [makeField({ apiName: 'f1', order: 1 })];
-      renderWithState(makeLoadedState({ fields, rulesets, usage: LINKED_USAGE }));
-
-      const mock = getFilterSelectMock();
-      const lastCall = mock.mock.calls[mock.mock.calls.length - 1];
-      expect(lastCall[0].isDisabled).toBe(true);
-    });
-
-    it('does not set isDirty on reselecting the same label position', () => {
-      renderWithState(makeLoadedState({ labelPosition: 'left' }));
-      const filterMock = getFilterSelectMock();
-
-      const labelPositionCall = filterMock.mock.calls.find(
-        (call: [{ selectedOption?: string }]) => call[0].selectedOption === 'left',
-      );
-      const labelPositionOnChange = labelPositionCall[0].onChange;
-
-      act(() => {
-        labelPositionOnChange('left');
-      });
-
-      const saveButton = screen.getByRole('button', { name: SAVE_LABEL });
-      expect(saveButton).toBeDisabled();
-      expect(screen.queryByText(UNSAVED_HINT)).not.toBeInTheDocument();
-    });
-
-    it('disables field creation icons in linked fieldset', () => {
-      renderWithState(makeLoadedState({ usage: LINKED_USAGE }));
-
-      const stringFieldIcon = screen.getByTestId('field-icon-string');
-      userEvent.click(stringFieldIcon);
-
-      expect(getEmptyField).not.toHaveBeenCalled();
-      expect(screen.queryByRole('button', { name: SAVE_LABEL })).not.toBeInTheDocument();
-    });
   });
 
   describe('Field rule modal integration', () => {
-    it('renders open-field-rules button in ExtraFieldIntl when fieldset is editable', () => {
-      const fields = [makeField({ apiName: 'f1', order: 1 })];
-      renderWithState(makeLoadedState({ fields }));
-
-      expect(screen.getByTestId('open-field-rules-f1')).toBeInTheDocument();
-    });
-
-    it('opens FieldRuleModal when open-field-rules button is clicked', () => {
+    it('opens FieldRuleModal when onOpenFieldRule callback is called', () => {
       const fields = [makeField({ apiName: 'f1', order: 1, type: EExtraFieldType.String })];
       renderWithState(makeLoadedState({ fields }));
 
       expect(screen.queryByTestId('field-rule-modal')).not.toBeInTheDocument();
 
-      userEvent.click(screen.getByTestId('open-field-rules-f1'));
+      const { onOpenFieldRule } = getFieldsetFieldsListProps();
+      act(() => {
+        onOpenFieldRule('f1');
+      });
 
       expect(screen.getByTestId('field-rule-modal')).toBeInTheDocument();
-    });
-
-    it('does not render open-field-rules button when fieldset is linked (readonly)', () => {
-      const fields = [makeField({ apiName: 'f1', order: 1 })];
-      renderWithState(makeLoadedState({ fields, usage: [{ id: 1, name: 'Template 1' }] }));
-
-      expect(screen.queryByTestId('open-field-rules-f1')).not.toBeInTheDocument();
     });
   });
 });

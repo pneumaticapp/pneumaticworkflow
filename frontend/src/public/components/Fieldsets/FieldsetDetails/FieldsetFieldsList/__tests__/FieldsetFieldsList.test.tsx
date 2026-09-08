@@ -6,7 +6,14 @@ import { intlMock } from '../../../../../__stubs__/intlMock';
 import { EFieldLabelPosition } from '../../../../../types/fieldset';
 import { IExtraField } from '../../../../../types/template';
 import { makeExtraField } from '../../../../../__stubs__/fields.factory';
+import { ExtraFieldIntl } from '../../../../TemplateEdit/ExtraFields';
 
+function requireJestMock(value: unknown, label: string): jest.Mock {
+  if (!jest.isMockFunction(value)) {
+    throw new Error(`${label} is not a jest.Mock`);
+  }
+  return value;
+}
 jest.mock('react-intl', () => ({
   ...jest.requireActual('react-intl'),
   useIntl: () => intlMock,
@@ -23,6 +30,9 @@ jest.mock('../../../../TemplateEdit/ExtraFields', () => ({
     moveFieldUp: () => void;
     moveFieldDown: () => void;
     editField: (props: Partial<IExtraField>) => void;
+    onOpenFieldRules?: (ruleset?: unknown) => void;
+    isDisabled?: boolean;
+    isFieldsetReadOnly?: boolean;
   }) =>
     React.createElement('div', { 'data-testid': `extra-field-${props.field.apiName}` }, [
       React.createElement('button', {
@@ -45,6 +55,12 @@ jest.mock('../../../../TemplateEdit/ExtraFields', () => ({
         'data-testid': `edit-${props.field.apiName}`,
         onClick: () => props.editField({ name: 'Renamed' }),
       }),
+      props.onOpenFieldRules && !props.isDisabled && !props.isFieldsetReadOnly
+        && React.createElement('button', {
+          key: 'open-rules',
+          'data-testid': `open-field-rules-${props.field.apiName}`,
+          onClick: () => props.onOpenFieldRules!(),
+        }),
     ]),
   ),
 }));
@@ -138,4 +154,77 @@ describe('FieldsetFieldsList Component', () => {
     userEvent.click(screen.getByTestId('edit-f1'));
     expect(onFieldsChange).toHaveBeenCalledTimes(3);
   });
+
+  it('disables field creation icons when isReadOnly=true', () => {
+    render(React.createElement(FieldsetFieldsList, { ...defaultProps, isReadOnly: true }));
+
+    const icon = screen.getByTestId('field-icon-string');
+    expect(icon).toBeDisabled();
+  });
+
+  it('does not disable field creation icons when isReadOnly=false', () => {
+    render(React.createElement(FieldsetFieldsList, defaultProps));
+
+    const icon = screen.getByTestId('field-icon-string');
+    expect(icon).not.toBeDisabled();
+  });
+
+  it('passes isDisabled=true to ExtraFieldIntl when isReadOnly=true', () => {
+    const fields = [makeExtraField({ apiName: 'f1', order: 1 })];
+    render(React.createElement(FieldsetFieldsList, { ...defaultProps, fields, isReadOnly: true }));
+
+    const mock = requireJestMock(ExtraFieldIntl, 'ExtraFieldIntl');
+    const lastCall = mock.mock.calls[mock.mock.calls.length - 1];
+    expect(lastCall[0].isDisabled).toBe(true);
+  });
+
+  it('passes isDisabled=false to ExtraFieldIntl when isReadOnly=false', () => {
+    const fields = [makeExtraField({ apiName: 'f1', order: 1 })];
+    render(React.createElement(FieldsetFieldsList, { ...defaultProps, fields }));
+
+    const mock = requireJestMock(ExtraFieldIntl, 'ExtraFieldIntl');
+    const lastCall = mock.mock.calls[mock.mock.calls.length - 1];
+    expect(lastCall[0].isDisabled).toBe(false);
+  });
+
+  describe('open-field-rules integration', () => {
+    it('renders open-field-rules button when onOpenFieldRule provided and not readonly', () => {
+      const fields = [makeExtraField({ apiName: 'f1', order: 1 })];
+      render(React.createElement(FieldsetFieldsList, {
+        ...defaultProps,
+        fields,
+        onOpenFieldRule: jest.fn(),
+      }));
+
+      expect(screen.getByTestId('open-field-rules-f1')).toBeInTheDocument();
+    });
+
+    it('does not render open-field-rules button when isReadOnly=true', () => {
+      const fields = [makeExtraField({ apiName: 'f1', order: 1 })];
+      render(React.createElement(FieldsetFieldsList, {
+        ...defaultProps,
+        fields,
+        isReadOnly: true,
+        onOpenFieldRule: jest.fn(),
+      }));
+
+      expect(screen.queryByTestId('open-field-rules-f1')).not.toBeInTheDocument();
+    });
+
+    it('calls onOpenFieldRule with field apiName when button clicked', () => {
+      const onOpenFieldRule = jest.fn();
+      const fields = [makeExtraField({ apiName: 'f1', order: 1 })];
+      render(React.createElement(FieldsetFieldsList, {
+        ...defaultProps,
+        fields,
+        onOpenFieldRule,
+      }));
+
+      userEvent.click(screen.getByTestId('open-field-rules-f1'));
+
+      expect(onOpenFieldRule).toHaveBeenCalledTimes(1);
+      expect(onOpenFieldRule).toHaveBeenCalledWith('f1', undefined);
+    });
+  });
 });
+
