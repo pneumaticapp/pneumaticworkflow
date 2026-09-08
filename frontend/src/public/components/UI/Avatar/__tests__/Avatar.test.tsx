@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
 
+import { GroupIcon } from '../../../icons';
 import { Avatar } from '../Avatar';
 import styles from '../Avatar.css';
 
@@ -54,5 +55,20 @@ describe('Avatar', () => {
     const avatarElement = wrapper.find(`.${styles['avatar']}`);
 
     expect(avatarElement.text()).toEqual('');
+  });
+
+  it('does not nest container for group avatar', () => {
+    const user = {
+      firstName: '',
+      lastName: '',
+      photo: '',
+      email: '',
+      type: 'group' as const,
+    };
+    const wrapper = shallow(<Avatar user={user} containerClassName="avatar-container" />);
+
+    expect(wrapper.hasClass('avatar-container')).toBe(true);
+    expect(wrapper.find(GroupIcon).parents('.avatar-container')).toHaveLength(1);
+    expect(wrapper.find(GroupIcon)).toHaveLength(1);
   });
 });
