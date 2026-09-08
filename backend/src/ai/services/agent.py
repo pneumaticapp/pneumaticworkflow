@@ -99,4 +99,6 @@ class AIAgentService(BaseModelService):
         return result
 
     def delete(self) -> None:
-        pass
+        with transaction.atomic():
+            self.instance.user.delete()
+            self.instance.delete()

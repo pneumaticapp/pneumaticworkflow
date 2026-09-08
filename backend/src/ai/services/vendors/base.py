@@ -37,7 +37,7 @@ class BaseVendor(ABC):
         self.account = user.account
 
     def _create_url(self, path: str) -> str:
-        return f'{self.instance.base_url()}/{path}'
+        return f'{self.instance.base_url}/{path}'
 
     @abstractmethod
     def _auth_headers(self) -> dict:
@@ -65,11 +65,12 @@ class BaseVendor(ABC):
         if not isinstance(response_data, dict):
             return None
         error = response_data.get('error')
-        if not isinstance(error, dict):
-            return None
-        message = error.get('message')
-        if isinstance(message, str) and message:
-            return message
+        if isinstance(error, str):
+            return error
+        if isinstance(error, dict):
+            message = error.get('message')
+            if isinstance(message, str) and message:
+                return message
         return None
 
     def _request(
@@ -101,12 +102,13 @@ class BaseVendor(ABC):
                 except ValueError:
                     response_data = {'body': response.text}
                 error_message = self._parse_error(
-                    http_status,
-                    response_data,
+                    http_status=http_status,
+                    response_data=response_data,
                 )
                 if error_message is None:
                     raise AIProviderRequestFailedException
-                raise AIServiceException(message=error_message)
+                message = f'"{error_message}" ({http_status})'
+                raise AIServiceException(message=message)
             try:
                 response_data = response.json()
             except ValueError as ex:
