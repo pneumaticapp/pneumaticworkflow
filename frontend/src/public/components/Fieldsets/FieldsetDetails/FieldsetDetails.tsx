@@ -1,10 +1,7 @@
 import * as React from 'react';
-import { useEffect, useState, useMemo, useRef, ChangeEvent } from 'react';
-import classnames from 'classnames';
+import { useEffect, useState, ChangeEvent } from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
-
-import TextareaAutosize from 'react-textarea-autosize';
 
 import { validateFieldsetTitle } from '../../../utils/validators';
 
@@ -20,7 +17,7 @@ import {
 import { history } from '../../../utils/history';
 import { ERoutes } from '../../../constants/routes';
 
-import { ModifyDropdown, Button, Tooltip, FilterSelect } from '../../UI';
+import { ModifyDropdown, Button } from '../../UI';
 import { EModifyDropdownToggle } from '../../UI/ModifyDropdown/types';
 import { NotificationManager } from '../../UI/Notifications';
 import { FieldsetModal } from '../FieldsetModal/FieldsetModal';
@@ -32,7 +29,6 @@ import { getCurrentFieldset, isCurrentFieldsetLoading } from '../../../redux/sel
 import { getAccountId } from '../../../redux/selectors/user';
 
 import { IExtraField } from '../../../types/template';
-import { FilledInfoIcon } from '../../icons';
 import {
   IFieldsetRuleSet,
   EFieldLabelPosition,
@@ -42,13 +38,13 @@ import { useDatasetOptions } from '../../TemplateEdit/ExtraFields/utils/useDatas
 
 import { normalizeFieldsForUI } from './fieldsetFieldMappers';
 import { validateFieldsetRules } from '../validators';
-import { FIELDSET_LABEL_POSITION_OPTIONS } from '../constants';
 
 import { TFieldsetDetailsProps, TLocalFieldsetState, TFieldsetChanges } from './types';
 import { FieldsetRulesetsList } from './FieldsetRulesetsList/FieldsetRulesetsList';
 import { FieldsetFieldsList } from './FieldsetFieldsList/FieldsetFieldsList';
 import { FieldRuleModal } from './FieldRuleModal';
 import { FieldsetUsageBanner } from './FieldsetUsageBanner/FieldsetUsageBanner';
+import { FieldsetSettings } from './FieldsetSettings/FieldsetSettings';
 import { useFieldRuleModal } from './useFieldRuleModal';
 
 import styles from './FieldsetDetails.css';
@@ -76,7 +72,6 @@ const FieldsetDetails = ({
   const [localFieldset, setLocalFieldset] = useState<TLocalFieldsetState>(EMPTY_LOCAL_FIELDSET);
   const [fieldsetChanges, setFieldsetChanges] = useState<TFieldsetChanges>({});
   const datasetOptions = useDatasetOptions(localFieldset.fields);
-  const labelPositionRef = useRef<HTMLDivElement>(null);
 
   const fieldsetListRoute = ERoutes.Fieldsets;
   const isChanged = Object.keys(fieldsetChanges).length > 0;
@@ -112,15 +107,6 @@ const FieldsetDetails = ({
     setFieldsetChanges({});
   }, [fieldset?.id, fieldset?.title, fieldset?.description, fieldset?.labelPosition, fieldset?.fields, fieldset?.rulesets]);
 
-  const labelPositionOptions = useMemo(
-    () =>
-      FIELDSET_LABEL_POSITION_OPTIONS.map((option) => ({
-        id: option.value,
-        name: formatMessage({ id: option.labelKey }),
-      })),
-    [formatMessage],
-  );
-
   const handleSettingsTitleChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const title = event.target.value;
     setLocalFieldset((prev) => ({ ...prev, title }));
@@ -131,6 +117,11 @@ const FieldsetDetails = ({
     const description = event.target.value;
     setLocalFieldset((prev) => ({ ...prev, description }));
     setFieldsetChanges((prev) => ({ ...prev, description }));
+  };
+
+  const handleLabelPositionChange = (key: EFieldLabelPosition) => {
+    setLocalFieldset((prev) => ({ ...prev, labelPosition: key }));
+    setFieldsetChanges((prev) => ({ ...prev, labelPosition: key }));
   };
 
   const handleFieldsChange = (newFields: IExtraField[]) => {
@@ -192,8 +183,7 @@ const FieldsetDetails = ({
     }
 
     dispatch(updateFieldsetAction(payload));
-  };
-
+  }
 
   const isTitleError =
     (fieldsetChanges.title !== undefined || Boolean(localFieldset.title)) &&
@@ -210,9 +200,6 @@ const FieldsetDetails = ({
   }
 
   const isLinked = fieldset.usage.length > 0;
-  const readOnlyBadge = isLinked ? (
-    <span className={styles['readonly-badge']}>{formatMessage({ id: 'fieldsets.readonly-badge' })}</span>
-  ) : null;
 
   const handleCloneFieldset = () => {
     if (isChanged) {
@@ -255,117 +242,16 @@ const FieldsetDetails = ({
 
       <FieldsetUsageBanner usage={fieldset.usage} />
 
-      <div className={styles['list']}>
-        <h2 className={styles['section-title']}>
-          {formatMessage({ id: 'fieldsets.settings-section' })}
-          {readOnlyBadge}
-        </h2>
-
-        <div className={styles['settings-form']}>
-          <div className={styles['settings-field']}>
-            <label htmlFor="fieldset-title" className={styles['settings-label']}>
-              {formatMessage({ id: 'fieldsets.settings.title' })}
-              <Tooltip
-                content={formatMessage({ id: 'fieldsets.settings.title-tooltip' })}
-                placement="top"
-              >
-                <span>
-                  <FilledInfoIcon />
-                </span>
-              </Tooltip>
-            </label>
-            {isLinked ? (
-              <TextareaAutosize
-                id="fieldset-title"
-                minRows={1}
-                className={styles['settings-title']}
-                value={localFieldset.title}
-                disabled
-              />
-            ) : (
-              <input
-                id="fieldset-title"
-                type="text"
-                className={classnames(
-                  styles['settings-title'],
-                  isTitleError && styles['settings-title_error'],
-                )}
-                value={localFieldset.title}
-                placeholder={formatMessage({ id: 'fieldsets.settings.title-placeholder' })}
-                onChange={handleSettingsTitleChange}
-              />
-            )}
-          </div>
-
-          <div className={styles['settings-field']}>
-            <label htmlFor="fieldset-description" className={styles['settings-label']}>
-              {formatMessage({ id: 'fieldsets.settings.description' })}
-              <Tooltip
-                content={formatMessage({ id: 'fieldsets.settings.description-tooltip' })}
-                placement="top"
-              >
-                <span className={styles['settings-info-icon']}>
-                  <FilledInfoIcon />
-                </span>
-              </Tooltip>
-            </label>
-            {isLinked ? (
-              <TextareaAutosize
-                id="fieldset-description"
-                minRows={3}
-                className={styles['settings-description']}
-                value={localFieldset.description}
-                disabled
-              />
-            ) : (
-              <textarea
-                id="fieldset-description"
-                className={styles['settings-description']}
-                value={localFieldset.description}
-                placeholder={formatMessage({ id: 'fieldsets.settings.description-placeholder' })}
-                onChange={handleSettingsDescriptionChange}
-              />
-            )}
-          </div>
-
-          <div className={styles['settings-field']}>
-            <span
-              role="button"
-              tabIndex={0}
-              className={styles['settings-label']}
-              onClick={() => labelPositionRef.current?.querySelector<HTMLButtonElement>('button')?.focus()}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  labelPositionRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
-                }
-              }}
-            >
-              {formatMessage({ id: 'fieldsets.settings.label-position' })}
-            </span>
-            <div ref={labelPositionRef}>
-              <FilterSelect<'id', 'name', { id: EFieldLabelPosition; name: string }>
-                optionIdKey="id"
-                optionLabelKey="name"
-                options={labelPositionOptions}
-                selectedOption={localFieldset.labelPosition}
-                onChange={(key) => {
-                  if (key && key !== localFieldset.labelPosition) {
-                    setLocalFieldset((prev) => ({ ...prev, labelPosition: key as EFieldLabelPosition }));
-                    setFieldsetChanges((prev) => ({ ...prev, labelPosition: key as EFieldLabelPosition }));
-                  }
-                }}
-                resetFilter={() => { }}
-                placeholderText=""
-                isDisabled={isLinked}
-                containerClassname={styles['settings-select']}
-                toggleClassName={styles['settings-select__toggle']}
-                menuClassName={styles['settings-select__menu']}
-                renderPlaceholder={() => labelPositionOptions.find((option) => option.id === localFieldset.labelPosition)?.name || ''}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
+      <FieldsetSettings
+        title={localFieldset.title}
+        description={localFieldset.description}
+        labelPosition={localFieldset.labelPosition}
+        isReadOnly={isLinked}
+        isTitleError={isTitleError}
+        onTitleChange={handleSettingsTitleChange}
+        onDescriptionChange={handleSettingsDescriptionChange}
+        onLabelPositionChange={handleLabelPositionChange}
+      />
 
       <FieldsetFieldsList
         fields={localFieldset.fields}

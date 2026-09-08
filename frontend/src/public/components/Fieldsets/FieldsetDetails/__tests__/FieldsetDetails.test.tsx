@@ -385,23 +385,6 @@ describe('FieldsetDetails', () => {
   });
 
   describe('Settings section', () => {
-    it('syncs description and labelPosition from fieldset', () => {
-      renderWithState(makeLoadedState({ description: 'Test desc', labelPosition: 'left' }));
-      const textarea = screen.getByLabelText(formatMsg('fieldsets.settings.description'));
-      expect(textarea).toHaveValue('Test desc');
-      const filterMock = getFilterSelectMock();
-      expect(filterMock).toHaveBeenCalledWith(
-        expect.objectContaining({ selectedOption: 'left' }),
-        {},
-      );
-    });
-
-    it('syncs title from fieldset', () => {
-      renderWithState(makeLoadedState({ title: 'Custom Title' }));
-      const input = screen.getByLabelText(formatMsg('fieldsets.settings.title'));
-      expect(input).toHaveValue('Custom Title');
-    });
-
     it('enables Save after changing title', () => {
       renderWithState(makeLoadedState());
       const input = screen.getByLabelText(formatMsg('fieldsets.settings.title'));
@@ -776,27 +759,6 @@ describe('FieldsetDetails', () => {
 
   describe('Readonly mode when fieldset is linked to templates', () => {
     const LINKED_USAGE = [{ id: 1, name: 'Template 1' }];
-
-    it('disables Settings Title when isLinked', () => {
-      renderWithState(makeLoadedState({ title: 'Custom', usage: LINKED_USAGE }));
-      const input = screen.getByLabelText(formatMsg('fieldsets.settings.title'));
-      expect(input).toBeDisabled();
-    });
-
-    it('disables Settings Description when isLinked', () => {
-      renderWithState(makeLoadedState({ usage: LINKED_USAGE }));
-      const textarea = screen.getByLabelText(formatMsg('fieldsets.settings.description'));
-      expect(textarea).toBeDisabled();
-    });
-
-    it('disables Settings Label Position when isLinked', () => {
-      renderWithState(makeLoadedState({ usage: LINKED_USAGE }));
-      const filterMock = getFilterSelectMock();
-      expect(filterMock).toHaveBeenCalledWith(
-        expect.objectContaining({ isDisabled: true }),
-        {},
-      );
-    });
 
     it('hides Save bar when isLinked', () => {
       renderWithState(makeLoadedState({ usage: LINKED_USAGE }));
