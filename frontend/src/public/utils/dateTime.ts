@@ -156,11 +156,26 @@ export const isExpired = (deadlineDateISO: string | null, compareDateISO?: strin
 export const DATE_STRING_MOMENT_TEMPLATE = 'MMM DD, YYYY';
 export const DATE_STRING_FNS_TEMPLATE = 'MMM dd, yyyy';
 
+const UNIX_SECONDS_RE = /^[0-9]+(\.[0-9]+)?$/;
+
+export const parseUnixSeconds = (value: unknown): number | null => {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === 'string' && UNIX_SECONDS_RE.test(value)) {
+    return Number(value);
+  }
+
+  return null;
+};
+
 export const getEndOfDayTsp = (date: string | Date): number | null => {
   if (!date) return null;
 
-  if (typeof date === 'string' && /^[0-9]+(\.[0-9]+)?$/.test(date)) {
-    return +date;
+  const unixSeconds = parseUnixSeconds(date);
+  if (unixSeconds !== null) {
+    return unixSeconds;
   }
   const momentDate = moment(date);
 
@@ -173,8 +188,9 @@ export const getEndOfDayTsp = (date: string | Date): number | null => {
 
 export const toDate = (date: number | string | null): Date | null => {
   if (!date) return null;
-  if (typeof date === 'number' || (typeof date === 'string' && /^[0-9]+(\.[0-9]+)?$/.test(date))) {
-    return moment(+date * 1000).toDate();
+  const unixSeconds = parseUnixSeconds(date);
+  if (unixSeconds !== null) {
+    return moment(unixSeconds * 1000).toDate();
   }
   if (typeof date === 'string') {
     return moment(date).toDate();
@@ -183,18 +199,30 @@ export const toDate = (date: number | string | null): Date | null => {
 };
 
 export const toDateString = (date: Date | number | string, timezone?: string): string | null => {
-  if (!date) return null;
+  if (!date && date !== 0) return null;
 
+  const zone = timezone || 'UTC';
   let momentDate;
+
   if (date instanceof Date) {
-    momentDate = moment(date);
+    momentDate = moment(date).tz(zone);
   } else {
-    momentDate = moment.tz(+date * 1000, timezone || 'UTC');
+    const unixSeconds = parseUnixSeconds(date);
+    if (unixSeconds !== null) {
+      momentDate = moment.tz(unixSeconds * 1000, zone);
+    } else if (typeof date === 'string') {
+      const isoDate = moment.utc(date, moment.ISO_8601, true);
+      const formattedDate = moment(date, DATE_STRING_MOMENT_TEMPLATE, true);
+      momentDate = isoDate.isValid() ? isoDate.tz(zone) : formattedDate;
+    } else {
+      return null;
+    }
   }
 
   if (!momentDate.isValid()) {
-    throw new Error(`toDateString: Invalid data format. Received: date: ${date}, timezone: ${timezone}`);
+    return null;
   }
+
   return momentDate.format(DATE_STRING_MOMENT_TEMPLATE);
 };
 

@@ -236,10 +236,20 @@ export const mapBackandworkflowLogToRedux = (workflowLog: IWorkflowLogItem[], ti
 };
 
 export const mapTspToString = (output: IExtraField[], timezone: string): IExtraField[] => {
-  return output.map((item) => ({
-    ...item,
-    value: item.type === 'date' && typeof item.value === 'string' ? toDateString(item.value, timezone) : item.value,
-  }));
+  return output.map((item) => {
+    if (item.type !== 'date' || item.value == null || item.value === '') {
+      return item;
+    }
+
+    if (typeof item.value !== 'string' && typeof item.value !== 'number') {
+      return item;
+    }
+
+    return {
+      ...item,
+      value: toDateString(item.value, timezone),
+    };
+  });
 };
 
 export const formatTaskDatesForRedux = <T extends TFormatTaskDates>(
