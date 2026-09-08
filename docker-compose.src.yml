@@ -421,7 +421,7 @@ services:
       FILE_POSTGRES_PORT: ${FILE_POSTGRES_PORT:-5432}
     volumes:
       - ./backend:/pneumatic_backend
-    command: celery --pidfile= --app src.celery_app:app beat -l warning -S django
+    command: celery --app src.celery_app:app beat -l warning -S django
     depends_on:
       - postgres
       - rabbitmq

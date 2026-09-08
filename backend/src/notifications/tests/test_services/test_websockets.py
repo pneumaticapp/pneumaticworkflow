@@ -1,9 +1,13 @@
-﻿from datetime import timedelta
+﻿import json
+from datetime import timedelta
 
 import pytest
+from channels.layers import get_channel_layer
 from channels.testing import WebsocketCommunicator
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
+from uvicorn.protocols.utils import ClientDisconnected
+from websockets.exceptions import ConnectionClosedError
 
 from src.accounts.enums import NotificationType, UserType
 from src.accounts.models import Notification
@@ -23,6 +27,7 @@ from src.notifications.services.websockets import (
 from src.processes.models.workflows.task import Delay
 from src.processes.tests.fixtures import (
     create_invited_user,
+    create_test_owner,
     create_test_user,
     create_test_workflow,
 )
@@ -704,6 +709,98 @@ async def test_consumer__ping_pong__ok(mocker, api_client):
     # assert
     response = await communicator.receive_output()
     assert response['text'] == PneumaticBaseConsumer.HEARTBEAT_PONG_MESSAGE
+    await communicator.disconnect()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    'send_side_effect',
+    (ClientDisconnected(), ConnectionClosedError(None, None)),
+)
+async def test_receive__closed_socket__suppressed(
+    mocker,
+    send_side_effect,
+):
+
+    """ Closed socket during PONG must not leak into Sentry. """
+
+    # arrange
+    user = create_test_owner()
+    get_user_from_token_mock = mocker.patch(
+        'src.authentication.'
+        'middleware.PneumaticToken.get_user_from_token',
+        return_value=user,
+    )
+    communicator = WebsocketCommunicator(
+        application,
+        '/ws/events?auth_token=123456',
+    )
+    await communicator.connect()
+    send_mock = mocker.patch(
+        'src.consumers.AsyncWebsocketConsumer.send',
+        side_effect=send_side_effect,
+    )
+
+    # act
+    await communicator.send_to(
+        text_data=PneumaticBaseConsumer.HEARTBEAT_PING_MESSAGE,
+    )
+
+    # assert
+    assert await communicator.receive_nothing()
+    get_user_from_token_mock.assert_called_once_with('123456')
+    send_mock.assert_called_once_with(
+        text_data=PneumaticBaseConsumer.HEARTBEAT_PONG_MESSAGE,
+    )
+    await communicator.disconnect()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    'send_side_effect',
+    (ClientDisconnected(), ConnectionClosedError(None, None)),
+)
+async def test_notification__closed_socket__suppressed(
+    mocker,
+    send_side_effect,
+):
+
+    """ Closed socket during event push must not leak into Sentry. """
+
+    # arrange
+    user = create_test_owner()
+    notification = {'id': 1}
+    get_user_from_token_mock = mocker.patch(
+        'src.authentication.'
+        'middleware.PneumaticToken.get_user_from_token',
+        return_value=user,
+    )
+    communicator = WebsocketCommunicator(
+        application,
+        '/ws/events?auth_token=123456',
+    )
+    await communicator.connect()
+    send_mock = mocker.patch(
+        'src.consumers.AsyncWebsocketConsumer.send',
+        side_effect=send_side_effect,
+    )
+    layer = get_channel_layer()
+
+    # act
+    await layer.group_send(
+        f'events_{user.id}',
+        {
+            'type': 'notification',
+            'notification': notification,
+        },
+    )
+
+    # assert
+    assert await communicator.receive_nothing()
+    get_user_from_token_mock.assert_called_once_with('123456')
+    send_mock.assert_called_once_with(
+        text_data=json.dumps(notification),
+    )
     await communicator.disconnect()
 
 

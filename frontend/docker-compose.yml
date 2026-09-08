@@ -394,7 +394,7 @@ services:
       ENABLE_LOGGING: ${ENABLE_LOGGING:-no}
     volumes:
       - ../backend:/pneumatic_backend
-    command: celery --pidfile= --app src.celery_app:app beat -l warning -S django
+    command: celery --app src.celery_app:app beat -l warning -S django
     depends_on:
       - postgres
       - rabbitmq
