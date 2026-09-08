@@ -5,7 +5,6 @@ import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
 import TextareaAutosize from 'react-textarea-autosize';
-import { Link } from 'react-router-dom';
 
 import { validateFieldsetTitle } from '../../../utils/validators';
 
@@ -19,12 +18,10 @@ import {
 } from '../../../redux/fieldsets/slice';
 
 import { history } from '../../../utils/history';
-import { getTemplateEditRoute } from '../../../utils/routes';
 import { ERoutes } from '../../../constants/routes';
 
 import { ModifyDropdown, Button, Tooltip, FilterSelect } from '../../UI';
 import { EModifyDropdownToggle } from '../../UI/ModifyDropdown/types';
-import { DropdownList } from '../../UI/DropdownList';
 import { NotificationManager } from '../../UI/Notifications';
 import { FieldsetModal } from '../FieldsetModal/FieldsetModal';
 import { EFieldsetModalType } from '../FieldsetModal/types';
@@ -51,6 +48,7 @@ import { TFieldsetDetailsProps, TLocalFieldsetState, TFieldsetChanges } from './
 import { FieldsetRulesetsList } from './FieldsetRulesetsList/FieldsetRulesetsList';
 import { FieldsetFieldsList } from './FieldsetFieldsList/FieldsetFieldsList';
 import { FieldRuleModal } from './FieldRuleModal';
+import { FieldsetUsageBanner } from './FieldsetUsageBanner/FieldsetUsageBanner';
 import { useFieldRuleModal } from './useFieldRuleModal';
 
 import styles from './FieldsetDetails.css';
@@ -202,7 +200,7 @@ const FieldsetDetails = ({
     Boolean(validateFieldsetTitle(localFieldset.title));
 
 
-  
+
   if (isLoading) {
     return <FieldsetDetailsSkeleton />;
   }
@@ -255,55 +253,7 @@ const FieldsetDetails = ({
         </div>
       </header>
 
-      {isLinked ? (
-        <div className={`${styles['usage-banner']} ${styles['usage-banner--linked']}`}>
-          <div className={styles['usage-banner__row']}>
-            <span>
-              {formatMessage({ id: 'fieldsets.usage.linked' }, { count: fieldset.usage.length })}
-            </span>
-            <DropdownList
-              controlSize="sm"
-              className={styles['usage-banner__dropdown']}
-              title={formatMessage({ id: 'fieldsets.usage.show' })}
-              options={fieldset.usage.map((template) => ({
-                value: template.name,
-                onClick: () => {
-                  history.push(getTemplateEditRoute(template.id));
-                },
-                label: (
-                  <Tooltip
-                    content={template.name}
-                    placement="top"
-                    interactive={false}
-                    appendTo={() => document.body}
-                    containerClassName={styles['usage-banner__option-tooltip']}
-                    contentClassName={styles['usage-banner__tooltip-content']}
-                  >
-                    <Link
-                      to={getTemplateEditRoute(template.id)}
-                      className={styles['usage-banner__link']}
-                    >
-                      {template.name}
-                    </Link>
-                  </Tooltip>
-                ),
-              }))}
-              filterOption={(option, inputValue) =>
-                (option.data as { value: string }).value?.toLowerCase().includes(inputValue.toLowerCase()) ?? true
-              }
-              placement="left"
-              classNames={{
-                menuList: () => styles['usage-banner__menu-list'],
-                option: () => styles['usage-banner__option'],
-              }}
-            />
-          </div>
-        </div>
-      ) : (
-        <div className={`${styles['usage-banner']} ${styles['usage-banner--not-linked']}`}>
-          {formatMessage({ id: 'fieldsets.usage.not-linked' })}
-        </div>
-      )}
+      <FieldsetUsageBanner usage={fieldset.usage} />
 
       <div className={styles['list']}>
         <h2 className={styles['section-title']}>
@@ -393,25 +343,25 @@ const FieldsetDetails = ({
               {formatMessage({ id: 'fieldsets.settings.label-position' })}
             </span>
             <div ref={labelPositionRef}>
-            <FilterSelect<'id', 'name', { id: EFieldLabelPosition; name: string }>
-              optionIdKey="id"
-              optionLabelKey="name"
-              options={labelPositionOptions}
-              selectedOption={localFieldset.labelPosition}
-              onChange={(key) => {
-                if (key && key !== localFieldset.labelPosition) {
-                  setLocalFieldset((prev) => ({ ...prev, labelPosition: key as EFieldLabelPosition }));
-                  setFieldsetChanges((prev) => ({ ...prev, labelPosition: key as EFieldLabelPosition }));
-                }
-              }}
-              resetFilter={() => {}}
-              placeholderText=""
-              isDisabled={isLinked}
-              containerClassname={styles['settings-select']}
-              toggleClassName={styles['settings-select__toggle']}
-              menuClassName={styles['settings-select__menu']}
-              renderPlaceholder={() => labelPositionOptions.find((option) => option.id === localFieldset.labelPosition)?.name || ''}
-            />
+              <FilterSelect<'id', 'name', { id: EFieldLabelPosition; name: string }>
+                optionIdKey="id"
+                optionLabelKey="name"
+                options={labelPositionOptions}
+                selectedOption={localFieldset.labelPosition}
+                onChange={(key) => {
+                  if (key && key !== localFieldset.labelPosition) {
+                    setLocalFieldset((prev) => ({ ...prev, labelPosition: key as EFieldLabelPosition }));
+                    setFieldsetChanges((prev) => ({ ...prev, labelPosition: key as EFieldLabelPosition }));
+                  }
+                }}
+                resetFilter={() => { }}
+                placeholderText=""
+                isDisabled={isLinked}
+                containerClassname={styles['settings-select']}
+                toggleClassName={styles['settings-select__toggle']}
+                menuClassName={styles['settings-select__menu']}
+                renderPlaceholder={() => labelPositionOptions.find((option) => option.id === localFieldset.labelPosition)?.name || ''}
+              />
             </div>
           </div>
         </div>
