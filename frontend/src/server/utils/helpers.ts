@@ -28,7 +28,6 @@ export function set<T>(target: INested<T>, path: string, value?: T) {
     if (pathArr[index] in result) {
       result = result[pathArr[index]] as INested<T>;
     } else {
-      // eslint-disable-next-line no-multi-assign
       result = result[pathArr[index]] = {};
     }
 

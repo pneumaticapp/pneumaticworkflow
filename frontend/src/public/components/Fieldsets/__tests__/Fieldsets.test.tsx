@@ -6,10 +6,7 @@ import { Fieldsets } from '../Fieldsets';
 import { FieldsetCard } from '../FieldsetCard';
 import { FieldsetModal } from '../FieldsetModal/FieldsetModal';
 import { AddCardButton } from '../../UI';
-import {
-  openCreateModal,
-  loadFieldsets,
-} from '../../../redux/fieldsets/slice';
+import { openCreateModal, loadFieldsets } from '../../../redux/fieldsets/slice';
 import { intlMock } from '../../../__stubs__/intlMock';
 import { EFieldsetsSorting, IFieldsetCatalogItem } from '../../../types/fieldset';
 import { makeFieldsetCatalogItem } from '../../../__stubs__/fieldsets.factory';

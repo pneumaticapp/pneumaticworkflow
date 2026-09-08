@@ -1,8 +1,4 @@
-import {
-  youtubeVideoRegexp,
-  loomVideoRegexp,
-  wistiaVideoRegexp,
-} from '../../../constants/defaultValues';
+import { youtubeVideoRegexp, loomVideoRegexp, wistiaVideoRegexp } from '../../../constants/defaultValues';
 
 export interface IRenderEmbedVideoHtmlOptions {
   videoClassName: string;
@@ -47,16 +43,13 @@ const renderEmbedIframeHtml = (
   const extraAttrs = iframeExtraAttrs ? ` ${iframeExtraAttrs}` : '';
 
   return (
-    `<div class="${videoContainerClassName}">`
-    + `<iframe class="${videoClassName}" frameborder="0" src="${embedSrc}" ${IFRAME_COMMON_ATTRS}${extraAttrs}></iframe>`
-    + '</div>'
+    `<div class="${videoContainerClassName}">` +
+    `<iframe class="${videoClassName}" frameborder="0" src="${embedSrc}" ${IFRAME_COMMON_ATTRS}${extraAttrs}></iframe>` +
+    '</div>'
   );
 };
 
-export const renderEmbedVideoHtml = (
-  url: string,
-  options: IRenderEmbedVideoHtmlOptions,
-): string | null => {
+export const renderEmbedVideoHtml = (url: string, options: IRenderEmbedVideoHtmlOptions): string | null => {
   const matchedRule = EMBED_VIDEO_RULES.find(({ regExp }) => getVideoUrlMatch(url, regExp));
 
   if (!matchedRule) {
@@ -69,11 +62,7 @@ export const renderEmbedVideoHtml = (
     return null;
   }
 
-  return renderEmbedIframeHtml(
-    matchedRule.getEmbedSrc(match),
-    options,
-    matchedRule.iframeExtraAttrs,
-  );
+  return renderEmbedIframeHtml(matchedRule.getEmbedSrc(match), options, matchedRule.iframeExtraAttrs);
 };
 
 export const renderLinkHtml = (

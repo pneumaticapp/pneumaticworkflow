@@ -174,12 +174,7 @@ export function UsersDropdownComponent<TOption extends TUsersDropdownOption>({
               isEmpty={option.optionType !== EOptionTypes.User && option.optionType !== EOptionTypes.Group}
             />
           )}
-          <p
-            className={classnames(
-              styles['user-option__label'],
-              isInvited && styles['user-option__label_invited'],
-            )}
-          >
+          <p className={classnames(styles['user-option__label'], isInvited && styles['user-option__label_invited'])}>
             {displayLabel}
             {isUserAbsent(currentUser as TUserListItem) && (
               <span className={styles['user-option__badge']}>

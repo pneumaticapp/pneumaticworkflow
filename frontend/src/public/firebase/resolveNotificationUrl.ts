@@ -8,10 +8,7 @@ export interface INotificationPayloadData {
  * Prefer the backend-provided `link`; fall back to a task URL built from host + task_id.
  * Keep in sync with firebase-messaging-sw.ejs.
  */
-export function resolveNotificationUrl(
-  data: INotificationPayloadData | null | undefined,
-  host: string,
-): string | null {
+export function resolveNotificationUrl(data: INotificationPayloadData | null | undefined, host: string): string | null {
   if (!data) {
     return null;
   }

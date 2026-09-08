@@ -20,9 +20,7 @@ const EXPECTED_AUTH_PATTERNS = [
 ];
 
 // Validation — user input errors, not code bugs
-const EXPECTED_VALIDATION_PATTERNS = [
-  'validation_error',
-];
+const EXPECTED_VALIDATION_PATTERNS = ['validation_error'];
 
 const ALL_EXPECTED_PATTERNS = [...EXPECTED_AUTH_PATTERNS, ...EXPECTED_VALIDATION_PATTERNS];
 const EXPECTED_CLIENT_ERROR_REGEX = new RegExp(ALL_EXPECTED_PATTERNS.join('|'));

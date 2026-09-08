@@ -20,14 +20,9 @@ type TUseColumnWidthsParams = {
   templateId?: number;
 };
 
-const readWidths = (key: string): Record<string, number> =>
-  JSON.parse(localStorage.getItem(key) || '{}');
+const readWidths = (key: string): Record<string, number> => JSON.parse(localStorage.getItem(key) || '{}');
 
-export function useSavedColumnWidths({
-  currentUserId,
-  templateId,
-  maxPerformersCount,
-}: TUseSavedColumnWidthsParams) {
+export function useSavedColumnWidths({ currentUserId, templateId, maxPerformersCount }: TUseSavedColumnWidthsParams) {
   const savedGlobalWidths = useMemo(
     () => readWidths(`workflow-column-widths-${currentUserId}-global`),
     [currentUserId],
@@ -38,8 +33,7 @@ export function useSavedColumnWidths({
   );
   const performerColumnMinWidth = getPerformersAvatarsWidth(maxPerformersCount);
   const performerColumnWidth = Math.max(
-    savedGlobalWidths['system-column-performer']
-      || ETableViewFieldsWidth['system-column-performer'],
+    savedGlobalWidths['system-column-performer'] || ETableViewFieldsWidth['system-column-performer'],
     performerColumnMinWidth,
   );
 
@@ -61,9 +55,8 @@ export function mergeColumnWidths(
     const id = column.accessor as string;
     const width = column.width as number;
 
-    nextWidths[id] = id === 'system-column-performer' && nextWidths[id]
-      ? Math.max(nextWidths[id], width)
-      : nextWidths[id] || width;
+    nextWidths[id] =
+      id === 'system-column-performer' && nextWidths[id] ? Math.max(nextWidths[id], width) : nextWidths[id] || width;
   });
 
   return nextWidths;
@@ -83,8 +76,8 @@ export function useWorkflowColumnWidths({
 
   useEffect(() => {
     if (
-      workflowsLoadingStatus !== EWorkflowsLoadingStatus.Loaded
-      && workflowsLoadingStatus !== EWorkflowsLoadingStatus.LoadingNextPage
+      workflowsLoadingStatus !== EWorkflowsLoadingStatus.Loaded &&
+      workflowsLoadingStatus !== EWorkflowsLoadingStatus.LoadingNextPage
     ) {
       return;
     }
@@ -95,11 +88,6 @@ export function useWorkflowColumnWidths({
   return {
     colWidths,
     setColWidths,
-    handleMouseDown: createResizeHandler(
-      colWidths,
-      setColWidths,
-      currentUserId,
-      templateId,
-    ),
+    handleMouseDown: createResizeHandler(colWidths, setColWidths, currentUserId, templateId),
   };
 }

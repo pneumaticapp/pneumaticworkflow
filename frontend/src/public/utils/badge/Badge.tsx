@@ -1,4 +1,3 @@
-/* eslint-disable */
 /* prettier-ignore */
 import * as React from 'react';
 import classnames from 'classnames';
@@ -14,12 +13,7 @@ export interface IVariableProps {
   className?: string;
 }
 
-export const Badge = ({
-  title,
-  subtitle,
-  fontSize,
-  className,
-}: IVariableProps) => {
+export const Badge = ({ title, subtitle, fontSize, className }: IVariableProps) => {
   const tooltipTargetRef = React.useRef(null);
 
   return (
@@ -29,12 +23,7 @@ export const Badge = ({
       style={{ fontSize }}
     >
       {title}
-      {subtitle && (
-        <CustomTooltip
-          target={tooltipTargetRef}
-          tooltipText={subtitle}
-        />
-      )}
+      {subtitle && <CustomTooltip target={tooltipTargetRef} tooltipText={subtitle} />}
     </span>
   );
 };

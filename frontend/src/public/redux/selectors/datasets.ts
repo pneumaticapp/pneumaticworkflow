@@ -27,6 +27,10 @@ export const isCurrentDatasetLoading = (state: IApplicationState): boolean => st
 
 export const getCurrentSearchQuery = (state: IApplicationState): string => state.datasets.currentSearchQuery;
 
-export const getCurrentSortOrder = (state: IApplicationState): TDatasetItemsSortOrder => state.datasets.currentSortOrder;
+export const getCurrentSortOrder = (state: IApplicationState): TDatasetItemsSortOrder =>
+  state.datasets.currentSortOrder;
 
-export const getDatasetFromMap = (id: number) => (state: IApplicationState): IDataset | undefined => state.datasets.datasetsMap[id];
+export const getDatasetFromMap =
+  (id: number) =>
+  (state: IApplicationState): IDataset | undefined =>
+    state.datasets.datasetsMap[id];

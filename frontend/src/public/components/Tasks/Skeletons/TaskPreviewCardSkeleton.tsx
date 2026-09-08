@@ -1,4 +1,3 @@
-/* eslint-disable */
 /* prettier-ignore */
 import * as React from 'react';
 import classnames from 'classnames';
@@ -11,7 +10,6 @@ export interface ITaskCardLoaderProps {
 }
 
 export function TaskPreviewCardSkeleton({ className }: ITaskCardLoaderProps) {
-
   return (
     <div className={classnames(styles['card-skeleton'], className)}>
       <div className={styles['card-skeleton__inner']}>

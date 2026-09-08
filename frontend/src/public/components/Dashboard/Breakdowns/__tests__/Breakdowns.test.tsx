@@ -22,4 +22,4 @@ describe('Breakdowns', () => {
 
     expect(screen.getByText(/You don't have data to display yet/)).toBeInTheDocument();
   });
-})
+});

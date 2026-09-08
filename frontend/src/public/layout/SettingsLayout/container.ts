@@ -14,4 +14,7 @@ export const mapStateToProps = ({ profile: { settingsTab } }: IApplicationState)
 
 export const mapDispatchToProps: TMapDispatchToProps = { onChangeTab: setProfileSettingsActiveTab };
 
-export const SettingsLayout = connect<TMapStateToProps, TMapDispatchToProps>(mapStateToProps, mapDispatchToProps)(SettingsLayoutComponent);
+export const SettingsLayout = connect<TMapStateToProps, TMapDispatchToProps>(
+  mapStateToProps,
+  mapDispatchToProps,
+)(SettingsLayoutComponent);

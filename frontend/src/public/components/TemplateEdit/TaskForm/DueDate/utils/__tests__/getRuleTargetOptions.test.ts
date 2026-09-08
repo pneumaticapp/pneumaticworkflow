@@ -35,7 +35,6 @@ const makeKickoff = (overrides: Partial<ITemplateKickoffClient> = {}): ITemplate
   ...overrides,
 });
 
-
 describe('getRuleTargetOptions', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -43,11 +42,7 @@ describe('getRuleTargetOptions', () => {
 
   it('returns 2 system rules (workflow started, task started) even without fieldsets', () => {
     const currentTask = makeTask();
-    const [systemRules, dateFieldsRules, tasksRules] = getRuleTargetOptions(
-      currentTask,
-      [currentTask],
-      makeKickoff(),
-    );
+    const [systemRules, dateFieldsRules, tasksRules] = getRuleTargetOptions(currentTask, [currentTask], makeKickoff());
 
     expect(systemRules).toHaveLength(2);
     expect(systemRules.find((r) => r.ruleTarget === 'workflow started')).toBeDefined();
@@ -60,21 +55,19 @@ describe('getRuleTargetOptions', () => {
     const fieldsetApiName = 'fs-kickoff';
 
     const kickoff = makeKickoff({
-      fieldsets: [makeFieldsetBindingClient({
-        apiNameBinding: fieldsetApiName,
-        fields: [
-          makeFieldsetField({ apiName: 'date-field', name: 'Date Field', type: EExtraFieldType.Date }),
-          makeFieldsetField({ apiName: 'string-field', name: 'String Field', order: 1 }),
-        ],
-      })],
+      fieldsets: [
+        makeFieldsetBindingClient({
+          apiNameBinding: fieldsetApiName,
+          fields: [
+            makeFieldsetField({ apiName: 'date-field', name: 'Date Field', type: EExtraFieldType.Date }),
+            makeFieldsetField({ apiName: 'string-field', name: 'String Field', order: 1 }),
+          ],
+        }),
+      ],
     });
 
     const currentTask = makeTask();
-    const [systemRules, dateFieldsRules] = getRuleTargetOptions(
-      currentTask,
-      [currentTask],
-      kickoff,
-    );
+    const [systemRules, dateFieldsRules] = getRuleTargetOptions(currentTask, [currentTask], kickoff);
 
     expect(systemRules).toHaveLength(2);
 

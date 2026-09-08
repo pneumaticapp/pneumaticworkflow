@@ -1,4 +1,3 @@
-/* eslint-disable */
 /* prettier-ignore */
 import { screen } from '@testing-library/react';
 

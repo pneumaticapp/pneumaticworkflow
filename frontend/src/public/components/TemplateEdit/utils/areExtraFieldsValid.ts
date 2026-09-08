@@ -1,5 +1,9 @@
 import { EExtraFieldType, IExtraField, IExtraFieldSelection } from '../../../types/template';
-import { validateCheckboxAndRadioField, getSelectionDuplicateError, validateKickoffFieldName } from '../../../utils/validators';
+import {
+  validateCheckboxAndRadioField,
+  getSelectionDuplicateError,
+  validateKickoffFieldName,
+} from '../../../utils/validators';
 
 const areSelectionsValid = (field: IExtraField) => {
   if (field.dataset) return true;

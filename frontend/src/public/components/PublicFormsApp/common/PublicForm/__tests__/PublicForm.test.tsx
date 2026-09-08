@@ -38,16 +38,19 @@ jest.mock('../../../../MergedOutputList', () => ({
 
 jest.mock('../../../../UI/Buttons/Button', () => ({
   Button: (props: { label: string; disabled?: boolean; onClick?: () => void }) =>
-    React.createElement('button', {
-      type: 'button',
-      disabled: props.disabled,
-      onClick: props.onClick,
-    }, props.label),
+    React.createElement(
+      'button',
+      {
+        type: 'button',
+        disabled: props.disabled,
+        onClick: props.onClick,
+      },
+      props.label,
+    ),
 }));
 
 jest.mock('../../../../UI/Typeography/Header', () => ({
-  Header: ({ children }: { children: React.ReactNode }) =>
-    React.createElement('h1', null, children),
+  Header: ({ children }: { children: React.ReactNode }) => React.createElement('h1', null, children),
 }));
 
 jest.mock('../../../../RichText', () => ({
@@ -95,10 +98,12 @@ jest.mock('../../../../UI/Notifications', () => ({
 const formatMsg = (id: string) => intlMock.formatMessage({ id });
 const SUBMIT_LABEL = formatMsg('public-form.launch');
 
-const makePublicFormResponse = (overrides: {
-  fields?: IExtraField[];
-  fieldsets?: IFieldsetRuntime[];
-} = {}) => ({
+const makePublicFormResponse = (
+  overrides: {
+    fields?: IExtraField[];
+    fieldsets?: IFieldsetRuntime[];
+  } = {},
+) => ({
   accountId: 1,
   name: 'Test Form',
   description: '',
@@ -146,9 +151,7 @@ describe('PublicForm', () => {
 
       const props = getLastMergedOutputListProps();
       expect(props.fields).toHaveLength(2);
-      expect(props.fields.map((field: IExtraField) => field.apiName)).toEqual(
-        expect.arrayContaining(['f2', 'f3']),
-      );
+      expect(props.fields.map((field: IExtraField) => field.apiName)).toEqual(expect.arrayContaining(['f2', 'f3']));
     });
   });
 
@@ -175,9 +178,7 @@ describe('PublicForm', () => {
       expect(MergedOutputList).toHaveBeenCalledTimes(1);
       expect(MergedOutputList).toHaveBeenCalledWith(
         expect.objectContaining({
-          fieldsets: expect.arrayContaining([
-            expect.objectContaining({ apiNameBinding: 'fs-1' }),
-          ]),
+          fieldsets: expect.arrayContaining([expect.objectContaining({ apiNameBinding: 'fs-1' })]),
         }),
         expect.anything(),
       );
@@ -195,9 +196,7 @@ describe('PublicForm', () => {
         order: 1,
       });
 
-      (getPublicForm as jest.Mock).mockResolvedValue(
-        makePublicFormResponse({ fieldsets: [fieldset] }),
-      );
+      (getPublicForm as jest.Mock).mockResolvedValue(makePublicFormResponse({ fieldsets: [fieldset] }));
 
       render(React.createElement(PublicForm, { type: 'shared' }));
 
@@ -304,8 +303,8 @@ describe('PublicForm', () => {
       expect(runPublicForm).toHaveBeenCalledWith(
         '',
         expect.objectContaining({
-          'k1': 'kickoff-val',
-          'fs1': 'fs-val',
+          k1: 'kickoff-val',
+          fs1: 'fs-val',
         }),
       );
     });

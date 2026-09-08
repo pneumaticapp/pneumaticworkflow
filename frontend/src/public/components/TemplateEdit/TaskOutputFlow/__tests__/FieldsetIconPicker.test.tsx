@@ -32,11 +32,7 @@ jest.mock('../../../UI', () => ({
     return (
       <div data-testid="mock-filter-select">
         {options.map((option: any) => (
-          <button
-            key={option.id}
-            type="button"
-            onClick={() => onChange(option.id)}
-          >
+          <button key={option.id} type="button" onClick={() => onChange(option.id)}>
             {option.label}
           </button>
         ))}
@@ -54,20 +50,15 @@ jest.mock('../../../icons/FieldsetIcon', () => ({
   FieldsetIcon: () => null,
 }));
 
-const makeCatalogItem = (
-  id: number,
-  apiName: string,
-  name: string,
-  order: number,
-): IFieldsetCatalogItem => makeFieldsetCatalogItem({
-  id,
-  apiName,
-  name,
-  order,
-});
+const makeCatalogItem = (id: number, apiName: string, name: string, order: number): IFieldsetCatalogItem =>
+  makeFieldsetCatalogItem({
+    id,
+    apiName,
+    name,
+    order,
+  });
 
-const formatMsg = (id: string, defaultMessage?: string) =>
-  intlMock.formatMessage({ id, defaultMessage });
+const formatMsg = (id: string, defaultMessage?: string) => intlMock.formatMessage({ id, defaultMessage });
 
 const EMPTY_STATE = {};
 
@@ -87,24 +78,12 @@ describe('FieldsetIconPicker', () => {
   });
 
   it('fieldsetsCatalogLoading=true and empty catalog -> loading text is rendered', () => {
-    render(
-      React.createElement(
-        FieldsetIconPicker,
-        makeProps({ fieldsetsCatalogLoading: true }),
-      ),
-    );
-    expect(
-      screen.getByText(formatMsg('template.fieldset-picker.loading', 'Loading…')),
-    ).toBeInTheDocument();
+    render(React.createElement(FieldsetIconPicker, makeProps({ fieldsetsCatalogLoading: true })));
+    expect(screen.getByText(formatMsg('template.fieldset-picker.loading', 'Loading…'))).toBeInTheDocument();
   });
 
   it('fieldsetsCatalogLoading=false and empty catalog -> empty text is rendered', () => {
-    render(
-      React.createElement(
-        FieldsetIconPicker,
-        makeProps({ fieldsetsCatalogLoading: false }),
-      ),
-    );
+    render(React.createElement(FieldsetIconPicker, makeProps({ fieldsetsCatalogLoading: false })));
     expect(screen.getByText(formatMsg('template.fieldset-picker.empty'))).toBeInTheDocument();
   });
 
@@ -126,9 +105,7 @@ describe('FieldsetIconPicker', () => {
 
   it('click on fieldset option calls onSelectFieldset with fieldset object', () => {
     const onSelectFieldset = jest.fn();
-    const catalogItems: IFieldsetCatalogItem[] = [
-      makeCatalogItem(1, 'fs-1', 'My Fieldset', 0),
-    ];
+    const catalogItems: IFieldsetCatalogItem[] = [makeCatalogItem(1, 'fs-1', 'My Fieldset', 0)];
     (getFieldsetsCatalogItems as jest.Mock).mockReturnValue(catalogItems);
 
     render(
@@ -147,21 +124,12 @@ describe('FieldsetIconPicker', () => {
   });
 
   it('background catalog load does not show loading text when list is not empty', () => {
-    const catalogItems: IFieldsetCatalogItem[] = [
-      makeCatalogItem(1, 'fs-1', 'My Set', 0),
-    ];
+    const catalogItems: IFieldsetCatalogItem[] = [makeCatalogItem(1, 'fs-1', 'My Set', 0)];
     (getFieldsetsCatalogItems as jest.Mock).mockReturnValue(catalogItems);
 
-    render(
-      React.createElement(
-        FieldsetIconPicker,
-        makeProps({ fieldsetsCatalogLoading: true }),
-      ),
-    );
+    render(React.createElement(FieldsetIconPicker, makeProps({ fieldsetsCatalogLoading: true })));
 
-    expect(
-      screen.queryByText(formatMsg('template.fieldset-picker.loading', 'Loading…')),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText(formatMsg('template.fieldset-picker.loading', 'Loading…'))).not.toBeInTheDocument();
     expect(screen.getByText('My Set')).toBeInTheDocument();
   });
 
@@ -202,9 +170,7 @@ describe('FieldsetIconPicker', () => {
   });
 
   it('passes searchByText with fieldset name for each option in FilterSelect', () => {
-    const catalogItems: IFieldsetCatalogItem[] = [
-      makeCatalogItem(1, 'fs-search', 'Searchable Fieldset', 0),
-    ];
+    const catalogItems: IFieldsetCatalogItem[] = [makeCatalogItem(1, 'fs-search', 'Searchable Fieldset', 0)];
     (getFieldsetsCatalogItems as jest.Mock).mockReturnValue(catalogItems);
 
     render(React.createElement(FieldsetIconPicker, makeProps()));

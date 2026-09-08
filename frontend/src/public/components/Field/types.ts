@@ -1,9 +1,6 @@
 import type { ChangeEvent, KeyboardEvent, ReactNode } from 'react';
 
-type NativeInputProps = Omit<
-  React.InputHTMLAttributes<HTMLInputElement>,
-  'onChange' | 'value'
->;
+type NativeInputProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'value'>;
 
 export interface IFieldProps extends NativeInputProps {
   labelClassName?: string;

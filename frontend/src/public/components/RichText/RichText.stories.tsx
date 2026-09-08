@@ -1,10 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import * as React from 'react';
 import { RichText } from './RichText';
-import {
-  createStoryTask,
-  InteractiveRichText,
-} from './stories/interactiveChecklistStoryUtils';
+import { createStoryTask, InteractiveRichText } from './stories/interactiveChecklistStoryUtils';
 import { DASHBOARD_VIDEO_URL } from '../../constants/defaultValues';
 import { EExtraFieldType } from '../../types/template';
 import { TTaskVariable } from '../TemplateEdit/types';

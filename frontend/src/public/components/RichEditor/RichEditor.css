@@ -9,8 +9,8 @@
 
   &_in-task-description-editor {
     @media (--mobile) {
-      margin-right: -4rem;
       min-height: 20.2rem;
+      margin-right: -4rem;
     }
   }
 

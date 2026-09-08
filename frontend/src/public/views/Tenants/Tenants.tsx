@@ -16,10 +16,7 @@ export const TenantsView = () => {
     <TenantsLayout>
       <React.Suspense fallback={<div className="loading" />}>
         <Switch>
-          <Route
-            path={ERoutes.Tenants}
-            component={Tenants}
-          />
+          <Route path={ERoutes.Tenants} component={Tenants} />
           <Redirect to={ERoutes.Error} />
         </Switch>
       </React.Suspense>

@@ -10,10 +10,7 @@ export const initSentryServer = (): void => {
 
   if (!dsn || env === 'local') return;
 
-  const release =
-    typeof process.env.SENTRY_RELEASE === 'string'
-      ? process.env.SENTRY_RELEASE
-      : undefined;
+  const release = typeof process.env.SENTRY_RELEASE === 'string' ? process.env.SENTRY_RELEASE : undefined;
 
   Sentry.init({
     dsn,

@@ -8,11 +8,9 @@ export type TLoadWebhooksResponse = {
 };
 
 export function loadWebhooks() {
-  const { api: { urls }} = getBrowserConfigEnv();
+  const {
+    api: { urls },
+  } = getBrowserConfigEnv();
 
-  return commonRequest<TLoadWebhooksResponse[]>(
-    urls.webhooks,
-    { method: 'GET' },
-    { shouldThrow: true },
-  );
+  return commonRequest<TLoadWebhooksResponse[]>(urls.webhooks, { method: 'GET' }, { shouldThrow: true });
 }

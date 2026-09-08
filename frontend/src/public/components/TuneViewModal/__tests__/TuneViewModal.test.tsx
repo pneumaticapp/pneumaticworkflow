@@ -46,9 +46,19 @@ jest.mock('../../../redux/workflows/slice', () => ({
 jest.mock('../../UI', () => ({
   Button: ({ label, onClick }: { label: string; onClick: () => void }) =>
     React.createElement('button', { onClick, 'data-testid': `btn-${label}` }, label),
-  Checkbox: ({ title, checked, onChange, checkboxId }: {
-    title: string; checked: boolean; onChange: () => void; checkboxId: string;
-    titlePosition?: string; labelClassName?: string; disabled?: boolean;
+  Checkbox: ({
+    title,
+    checked,
+    onChange,
+    checkboxId,
+  }: {
+    title: string;
+    checked: boolean;
+    onChange: () => void;
+    checkboxId: string;
+    titlePosition?: string;
+    labelClassName?: string;
+    disabled?: boolean;
   }) =>
     React.createElement('input', {
       type: 'checkbox',
@@ -69,8 +79,7 @@ jest.mock('../../UI', () => ({
         React.createElement('div', { 'data-testid': 'side-modal-footer' }, children),
     },
   ),
-  Tooltip: ({ children }: { children: React.ReactNode }) =>
-    React.createElement('span', null, children),
+  Tooltip: ({ children }: { children: React.ReactNode }) => React.createElement('span', null, children),
 }));
 
 jest.mock('../../icons', () => ({
@@ -87,10 +96,11 @@ jest.mock('../../TemplateEdit/TooltipRichContent', () => ({
 
 import { TuneViewModal } from '../TuneViewModal';
 
-const makeField = (overrides: Partial<IExtraField> = {}) => makeExtraField({
-  name: 'Field 1',
-  ...overrides,
-});
+const makeField = (overrides: Partial<IExtraField> = {}) =>
+  makeExtraField({
+    name: 'Field 1',
+    ...overrides,
+  });
 
 type TMakeFieldsetOutputArgs = {
   apiNameBinding?: string;
@@ -121,9 +131,7 @@ const makeTask = (apiName: string, name: string, mergedOutputs: TRuntimeMergedOu
 });
 
 const renderWithIntl = (ui: React.ReactElement) =>
-  render(
-    React.createElement(IntlProvider, { locale: 'en', messages: enMessages }, ui),
-  );
+  render(React.createElement(IntlProvider, { locale: 'en', messages: enMessages }, ui));
 
 describe('TuneViewModal', () => {
   beforeEach(() => {
@@ -229,9 +237,7 @@ describe('TuneViewModal', () => {
 
       renderWithIntl(React.createElement(TuneViewModal));
 
-      const applyBtn = screen.getAllByRole('button').find(
-        (btn) => btn.textContent?.toLowerCase().includes('apply'),
-      );
+      const applyBtn = screen.getAllByRole('button').find((btn) => btn.textContent?.toLowerCase().includes('apply'));
       if (!applyBtn) throw new Error('Apply button not found');
       userEvent.click(applyBtn);
 

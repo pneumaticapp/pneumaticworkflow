@@ -3,15 +3,14 @@ import { closeRunWorkflowModal, runWorkflow } from '../../redux/actions';
 import { IApplicationState } from '../../types/redux';
 import { INullableWorkflowEditPopupProps, WorkflowEditPopup } from './WorkflowEditPopup';
 
-type TStoreProps = Pick<INullableWorkflowEditPopupProps, 'isLoading' | 'isOpen' | 'workflow' | 'accountId' | 'isAdmin' | 'timezone'>;
+type TStoreProps = Pick<
+  INullableWorkflowEditPopupProps,
+  'isLoading' | 'isOpen' | 'workflow' | 'accountId' | 'isAdmin' | 'timezone'
+>;
 type TDispatchProps = Pick<INullableWorkflowEditPopupProps, 'onRunWorkflow' | 'closeModal'>;
 
 function mapStateToProps({
-  runWorkflowModal: {
-    isOpen,
-    isWorkflowStarting,
-    workflow,
-  },
+  runWorkflowModal: { isOpen, isWorkflowStarting, workflow },
   authUser: { account, isAdmin, timezone },
 }: IApplicationState): TStoreProps {
   return {

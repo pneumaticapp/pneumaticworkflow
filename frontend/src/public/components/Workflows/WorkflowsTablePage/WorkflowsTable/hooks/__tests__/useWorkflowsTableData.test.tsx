@@ -4,10 +4,7 @@ import { IntlProvider } from 'react-intl';
 import { useSelector } from 'react-redux';
 
 import { getCurrentUser } from '../../../../../../redux/selectors/authUser';
-import {
-  getLastLoadedTemplateIdForTable,
-  getSavedFields,
-} from '../../../../../../redux/selectors/workflows';
+import { getLastLoadedTemplateIdForTable, getSavedFields } from '../../../../../../redux/selectors/workflows';
 import { IWorkflowsList } from '../../../../../../types/redux';
 import { EExtraFieldType } from '../../../../../../types/template';
 import { EWorkflowsLoadingStatus } from '../../../../../../types/workflow';
@@ -24,15 +21,19 @@ let lastLoadedTemplateId: number | null = 1;
 const makeWorkflowsList = (fieldApiName: string): IWorkflowsList => ({
   count: 1,
   offset: 0,
-  items: [{
-    id: 1,
-    fields: [{
-      apiName: fieldApiName,
-      name: fieldApiName,
-      type: EExtraFieldType.String,
-      value: '',
-    }],
-  }] as IWorkflowsList['items'],
+  items: [
+    {
+      id: 1,
+      fields: [
+        {
+          apiName: fieldApiName,
+          name: fieldApiName,
+          type: EExtraFieldType.String,
+          value: '',
+        },
+      ],
+    },
+  ] as IWorkflowsList['items'],
 });
 
 const HookHarness = ({

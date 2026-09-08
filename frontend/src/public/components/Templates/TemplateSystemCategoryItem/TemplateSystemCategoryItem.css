@@ -1,16 +1,16 @@
 .categories {
-  margin: 4px;
-  padding: 5px 16px;
   display: flex;
   align-items: center;
+  padding: 5px 16px;
+  margin: 4px;
   border: 1px solid;
   border-radius: 16px;
   transition: all 0.1s ease;
 
   &__icon {
-    margin-right: 4px;
     width: 20px;
     height: 20px;
+    margin-right: 4px;
 
     img,
     svg {

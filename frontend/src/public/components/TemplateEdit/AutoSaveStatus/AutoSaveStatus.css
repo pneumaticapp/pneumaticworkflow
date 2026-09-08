@@ -1,7 +1,8 @@
-@keyframes slideInFromTop {
+@keyframes slide-in-from-top {
   0% {
     transform: translateY(-100%);
   }
+
   100% {
     transform: translateY(0);
   }
@@ -9,16 +10,16 @@
 
 .container {
   position: fixed;
-  z-index: 1030;
   top: 32px;
   right: 32px;
   left: 104px;
-  padding: 8px 0;
+  z-index: 1030;
   display: flex;
+  justify-content: center;
+  padding: 8px 0;
   font-size: 15px;
   line-height: 20px;
   pointer-events: none;
-  justify-content: center;
 
   &.container__with-paywall {
     top: 56px;
@@ -28,8 +29,8 @@
     top: 0;
     right: 0;
     left: 0;
-    background: rgba(246, 246, 246, 0.72);
-    animation: slideInFromTop var(--menu-collapse-time) ease-out;
+    background: rgb(246 246 246 / 72%);
+    animation: slide-in-from-top var(--menu-collapse-time) ease-out;
 
     &.container__with-paywall {
       top: 0;
@@ -38,10 +39,10 @@
 }
 
 .message {
-  margin: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  margin: 0;
 }
 
 .icon {
@@ -58,9 +59,9 @@
 
 .retry {
   margin-left: 5px;
-  cursor: pointer;
-  pointer-events: auto;
   color: var(--pneumatic-color-link);
+  pointer-events: auto;
+  cursor: pointer;
   transition: color 0.1s ease-in-out;
 
   &:hover {

@@ -19,9 +19,9 @@
 
 .fieldset-picker__option-name {
   overflow: hidden;
+  text-overflow: ellipsis;
   font-weight: 600;
   white-space: nowrap;
-  text-overflow: ellipsis;
 }
 
 .fieldset-picker__tooltip-content {

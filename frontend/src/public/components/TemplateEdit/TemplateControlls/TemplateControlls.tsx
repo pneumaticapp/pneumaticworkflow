@@ -104,7 +104,6 @@ export function TemplateControlls({
 
   const isSavedTemplate = React.useMemo(() => Boolean(templateId), [templateId]);
 
-
   const handleRunProcess = async () => {
     if (!template.id) return;
     const loadedFieldsets = template.kickoff.fieldsets.map(mapFieldsetBindingClientToRuntime);
@@ -395,7 +394,6 @@ export function TemplateControlls({
           />
         </div>
       </div>
-
 
       {showDraftWarning && (
         <div className={styles['external-links-warning']}>

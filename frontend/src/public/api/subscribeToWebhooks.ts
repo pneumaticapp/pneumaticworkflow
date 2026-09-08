@@ -4,7 +4,9 @@ import { mapRequestBody } from '../utils/mappers';
 import { EWebhooksTypeEvent } from '../types/webhooks';
 
 export function subscribeToWebhooks(event: EWebhooksTypeEvent, url: string) {
-  const { api: { urls }} = getBrowserConfigEnv();
+  const {
+    api: { urls },
+  } = getBrowserConfigEnv();
 
   const URL = urls.webhooksSubscribe.replace(':event', String(event));
 

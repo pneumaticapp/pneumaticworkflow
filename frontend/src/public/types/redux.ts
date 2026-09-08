@@ -380,17 +380,17 @@ export type IDatasetsStore = {
   isAllDatasetsLoading: boolean;
   isAllDatasetsLoaded: boolean;
   isLoading: boolean;
-  searchQuery: string;                
-  datasetsListSorting: EDatasetsSorting;         
+  searchQuery: string;
+  datasetsListSorting: EDatasetsSorting;
 
   isCreateModalOpen: boolean;
   isEditModalOpen: boolean;
-  
-  currentDataset: IDataset | null;    
-  isCurrentDatasetLoading: boolean;   
-  currentSearchQuery: string;         
+
+  currentDataset: IDataset | null;
+  isCurrentDatasetLoading: boolean;
+  currentSearchQuery: string;
   currentSortOrder: TDatasetItemsSortOrder;
- 
+
   datasetsMap: Record<number, IDataset>;
 };
 

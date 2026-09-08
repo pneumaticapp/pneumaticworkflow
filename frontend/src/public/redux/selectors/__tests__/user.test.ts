@@ -1,12 +1,7 @@
 import { ELoggedState, IApplicationState, IAuthUser } from '../../../types/redux';
 import { ESubscriptionPlan } from '../../../types/account';
 import { EUserStatus } from '../../../types/user';
-import {
-  getCanAccessWorkflows,
-  getHasExtendedInterface,
-  getHasBasicInterface,
-  getIsAdmin,
-} from '../user';
+import { getCanAccessWorkflows, getHasExtendedInterface, getHasBasicInterface, getIsAdmin } from '../user';
 
 const createMockAuthUser = (overrides: Partial<IAuthUser> = {}): IAuthUser => ({
   id: 1,
@@ -54,9 +49,10 @@ const createMockAuthUser = (overrides: Partial<IAuthUser> = {}): IAuthUser => ({
   ...overrides,
 });
 
-const createMockState = (authUserOverrides: Partial<IAuthUser> = {}): IApplicationState => ({
-  authUser: createMockAuthUser(authUserOverrides),
-} as IApplicationState);
+const createMockState = (authUserOverrides: Partial<IAuthUser> = {}): IApplicationState =>
+  ({
+    authUser: createMockAuthUser(authUserOverrides),
+  }) as IApplicationState;
 
 describe('user selectors', () => {
   describe('getIsAdmin', () => {

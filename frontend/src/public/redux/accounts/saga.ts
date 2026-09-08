@@ -80,7 +80,10 @@ function normalizeUserReportIds(user: TUserListItem): TUserListItem {
 }
 
 export function* fetchUsers(
-  action: PayloadAction<TUsersFetchPayload> = { type: 'accounts/usersFetchStarted', payload: { showErrorNotification: true } }
+  action: PayloadAction<TUsersFetchPayload> = {
+    type: 'accounts/usersFetchStarted',
+    payload: { showErrorNotification: true },
+  },
 ) {
   const { payload: { showErrorNotification } = { showErrorNotification: true } } = action;
 
@@ -123,10 +126,12 @@ export function* fetchActiveUsersCount() {
     const accounts: ReturnType<typeof getAccountsStore> = yield select(getAccountsStore);
     const localUsers = accounts.team.list.length ? accounts.team.list : accounts.users;
 
-    yield put(activeUsersCountFetchFinished({
-      activeUsers: localUsers.length ? getActiveUsers(localUsers).length : activeUsers,
-      tenantsActiveUsers,
-    }));
+    yield put(
+      activeUsersCountFetchFinished({
+        activeUsers: localUsers.length ? getActiveUsers(localUsers).length : activeUsers,
+        tenantsActiveUsers,
+      }),
+    );
   } catch (error) {
     console.info('fetch active users count error : ', error);
   }
@@ -260,7 +265,9 @@ function* fetchDeleteUser({ payload: { userId, reassignedUserId } }: PayloadActi
   }
 }
 
-function* fetchDeclineInvite({ payload: { userId, inviteId, reassignedUserId } }: PayloadAction<TDeclineInvitePayload>) {
+function* fetchDeclineInvite({
+  payload: { userId, inviteId, reassignedUserId },
+}: PayloadAction<TDeclineInvitePayload>) {
   try {
     yield put(setDeleteUserModalState(EDeleteUserModalState.PerformingAction));
     yield call(fetchReassignWorkflows, userId, reassignedUserId);
@@ -355,7 +362,7 @@ function* createUserSaga({ payload }: PayloadAction<ICreateUserRequest>) {
     yield put(usersFetchStarted());
     yield put(loadActiveUsersCount());
   } catch (error) {
-    NotificationManager.notifyApiError( error, { message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
     logger.error('failed to create user', error);
   }
 }
@@ -389,10 +396,7 @@ export function* watchChangeUserReports() {
 }
 
 export function* watchOpenDeleteUserModal() {
-  yield takeLatest(
-    [openDeleteUserModal.type, closeDeleteUserModal.type],
-    handleToggleDeleteUserModal,
-  );
+  yield takeLatest([openDeleteUserModal.type, closeDeleteUserModal.type], handleToggleDeleteUserModal);
 }
 
 export function* watchDeleteUser() {

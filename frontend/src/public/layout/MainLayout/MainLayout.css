@@ -1,15 +1,15 @@
 .main-layout {
   display: flex;
-  overflow: scroll;
-  overflow-x: hidden;
   flex-direction: column;
   height: 100%;
+  overflow: scroll;
+  overflow-x: hidden;
 }
 
 @media print {
   /* stylelint-disable declaration-no-important */
   .main-layout {
-    overflow: visible !important;
     height: auto !important;
+    overflow: visible !important;
   }
 }

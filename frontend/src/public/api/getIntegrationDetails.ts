@@ -11,9 +11,5 @@ export function getIntegrationDetails(id: number) {
 
   const url = urls.integrationDetails.replace(':id', String(id));
 
-  return commonRequest<TGetIntegrationDetailsResponse>(
-    url,
-    {},
-    { shouldThrow: true },
-  );
+  return commonRequest<TGetIntegrationDetailsResponse>(url, {}, { shouldThrow: true });
 }

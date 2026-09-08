@@ -9,8 +9,6 @@ import {
   $setSelection,
 } from 'lexical';
 
-
-
 export function useLinkActions(editor: LexicalEditor, onFormClose: () => void) {
   const applyLink = useCallback(
     (url: string, linkText?: string) => {
