@@ -7,11 +7,11 @@ import { ERoutes } from '../../constants/routes';
 import { EHighlightsDateFilter, EHighlightsFilterType, IHighlightsItem } from '../../types/highlights';
 import { TITLES } from '../../constants/titles';
 import { history } from '../../utils/history';
-import { PROCESS_HIGHLIGHTS_DATE_RANGE_MAP } from '../../utils/dateTime';
+import { getHighlightsDateRange, IHighlightsDateRange } from '../../utils/highlightsDateRange';
 import { UsersFilter } from './UsersFilter';
 import { ILoadHighlightsConfig } from '../../redux/highlights/actions';
 import { IHighlightsFilters } from '../../types/redux';
-import { INIT_FILTERS } from '../../redux/highlights/reducer';
+import { getInitHighlightsFilters } from '../../redux/highlights/reducer';
 import { isArrayWithItems } from '../../utils/helpers';
 import { TUserListItem } from '../../types/user';
 import { ITemplateTitleBaseWithCount } from '../../types/template';
@@ -26,6 +26,7 @@ import styles from './HighlightsFeed.css';
 import { EPageTitle } from '../../constants/defaultValues';
 import { PageTitle } from '../PageTitle/PageTitle';
 import { IGetHighlightsTitlesRequestConfig } from '../../api/getHighlightsTitles';
+import { useDatePickerSettings } from '../../hooks/useDatePickerSettings';
 
 export interface IHighlightsFeedProps {
   count: number;
@@ -72,14 +73,25 @@ export function HighlightsFeed({
   loadTemplatesTitles,
   setFiltersChanged,
 }: IHighlightsFeedProps) {
-  const { useCallback, useEffect, useMemo, useState } = React;
+  const { useCallback, useEffect, useMemo, useRef, useState } = React;
   const { formatMessage } = useIntl();
+  const { timezone, dateFdw } = useDatePickerSettings();
 
   const [isFirstFetch, setIsFirstFetch] = useState(true);
   const [isDateFilterReady, setIsDateFilterReady] = useState(true);
+  const pendingInitialRangeRef = useRef<IHighlightsDateRange | null>(null);
 
   useEffect(() => {
     document.title = TITLES.WorkflowHighlights;
+
+    // The store and the query-string defaults are built without the profile timezone, and a tab left
+    // open overnight still holds the previous day, so a preset range is recomputed before the first fetch.
+    const currentRange = getHighlightsDateRange(timeRange, timezone, dateFdw);
+
+    if (currentRange) {
+      pendingInitialRangeRef.current = currentRange;
+      setFilters(currentRange);
+    }
 
     loadHighlights({ onScroll: true });
     setIsFirstFetch(false);
@@ -90,6 +102,18 @@ export function HighlightsFeed({
   }, []);
 
   useEffect(() => {
+    // Titles are fetched with takeEvery, so a request sent with the pre-recomputed range could resolve
+    // last and overwrite the right one. Wait for the props to carry the range the mount effect applied.
+    const pendingRange = pendingInitialRangeRef.current;
+
+    if (pendingRange) {
+      if (pendingRange.startDate !== startDate || pendingRange.endDate !== endDate) {
+        return;
+      }
+
+      pendingInitialRangeRef.current = null;
+    }
+
     loadTemplatesTitles({ eventDateFrom: startDate, eventDateTo: endDate });
   }, [endDate, startDate]);
 
@@ -167,15 +191,11 @@ export function HighlightsFeed({
         return;
       }
 
-      setFilters({ timeRange: selectedTimeRange });
+      const newRange = getHighlightsDateRange(selectedTimeRange, timezone, dateFdw);
 
-      if (selectedTimeRange !== EHighlightsDateFilter.Custom) {
-        const { startDate: newStartDate, endDate: newEndDate } = PROCESS_HIGHLIGHTS_DATE_RANGE_MAP[selectedTimeRange];
-
-        setFilters({ startDate: newStartDate, endDate: newEndDate });
-      }
+      setFilters({ timeRange: selectedTimeRange, ...newRange });
     },
-    [timeRange],
+    [timeRange, timezone, dateFdw],
   );
 
   const handleApplyFilters = () => {
@@ -184,7 +204,9 @@ export function HighlightsFeed({
   };
 
   const handleClearFilters = () => {
-    setFilters(INIT_FILTERS);
+    const initFilters = getInitHighlightsFilters();
+
+    setFilters({ ...initFilters, ...getHighlightsDateRange(initFilters.timeRange, timezone, dateFdw) });
 
     loadHighlights({});
   };
