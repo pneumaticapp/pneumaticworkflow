@@ -7,13 +7,13 @@ readme = "README.md"
 packages = [{include = "src"}]
 
 [tool.poetry.dependencies]
-python = "~3.8"
+python = "~3.9"
 django = "2.2.28"
 djangorestframework = "3.13.1"
 requests = "2.22.0"
 django-configurations = "2.1"
 django-extensions = "2.1.7"
-psycopg2-binary = "2.8.5"
+psycopg2-binary = "2.8.6"
 gunicorn = "19.9.0"
 whitenoise = "4.1.2"
 django-cors-headers = "3.6.0"
@@ -29,8 +29,8 @@ user-agents = "^2.2.0"
 django-tinymce = "3.1.0"
 celery = "4.4.7"
 channels = "3.0.2"
-uvloop = [{version = "0.14.0", platform = 'darwin'}, {version = "0.14.0", platform = 'linux'},]
-httptools = "0.1.1"
+uvloop = [{version = "0.15.3", platform = 'darwin'}, {version = "0.15.3", platform = 'linux'},]
+httptools = "0.1.2"
 uvicorn = "0.13.1"
 channels-redis = "3.2.0"
 pyjwt = "1.7.1"
