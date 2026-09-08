@@ -60,9 +60,7 @@ const uploadedLogo: TUploadedFile = {
   size: 20,
 };
 
-const renderField = (
-  props: Partial<React.ComponentProps<typeof AttachmentField>> = {},
-) => {
+const renderField = (props: Partial<React.ComponentProps<typeof AttachmentField>> = {}) => {
   const setUploadedFiles = props.setUploadedFiles || jest.fn();
 
   return {
@@ -117,9 +115,7 @@ describe('AttachmentField', () => {
     await waitFor(() => {
       expect(screen.queryByAltText(savedLogo.name)).not.toBeInTheDocument();
     });
-    expect(setUploadedFiles).toHaveBeenCalledWith([
-      expect.objectContaining({ id: savedLogo.id, isRemoved: true }),
-    ]);
+    expect(setUploadedFiles).toHaveBeenCalledWith([expect.objectContaining({ id: savedLogo.id, isRemoved: true })]);
   });
 
   it('should show files when the parent hydrates uploadedFiles after mount', () => {
@@ -162,18 +158,19 @@ describe('AttachmentField', () => {
       fireEvent.change(fileInput, { target: { files: [file] } });
     });
 
-    const renderWithFiles = (files: TUploadedFile[]) => rerender(
-      <IntlProvider locale="en" messages={enMessages}>
-        <AttachmentField
-          accountId={1}
-          uploadedFiles={files}
-          setUploadedFiles={jest.fn()}
-          acceptedType="image"
-          expectedImageWidth={80}
-          expectedImageHeight={80}
-        />
-      </IntlProvider>,
-    );
+    const renderWithFiles = (files: TUploadedFile[]) =>
+      rerender(
+        <IntlProvider locale="en" messages={enMessages}>
+          <AttachmentField
+            accountId={1}
+            uploadedFiles={files}
+            setUploadedFiles={jest.fn()}
+            acceptedType="image"
+            expectedImageWidth={80}
+            expectedImageHeight={80}
+          />
+        </IntlProvider>,
+      );
 
     renderWithFiles([{ ...uploadedLogo, id: uploadedLogo.url, name: '' }]);
     renderWithFiles([storedLogo]);
