@@ -7,11 +7,17 @@ import * as getTemplatesApi from '../../../api/getTemplates';
 import { IGetTemplatesResponsePaginated } from '../../../api/getTemplates';
 import * as getSystemTemplatesApi from '../../../api/getSystemTemplates';
 import * as getSystemTemplatesCategoriesApi from '../../../api/getSystemTemplatesCategories';
+import * as getTemplatesIntegrationsStatsApi from '../../../api/getTemplatesIntegrationsStats';
 import { ETemplatesSorting } from '../../../types/workflow';
 import { LIMIT_LOAD_TEMPLATES, LIMIT_LOAD_SYSTEMS_TEMPLATES } from '../../../constants/defaultValues';
-import { getIsAdmin } from '../../selectors/user';
+import { getCanAccessTemplateIntegrations, getIsAdmin } from '../../selectors/user';
 import { getTemplatesSystemList } from '../../selectors/templates';
-import { fetchTemplatesSystem, fetchTemplatesSystemCategories, handleLoadTemplateVariables } from '../saga';
+import {
+  fetchTemplatesSystem,
+  fetchTemplatesSystemCategories,
+  handleLoadTemplateVariables,
+  loadTemplateIntegrationsStatsSaga,
+} from '../saga';
 import { getTemplateFields } from '../../../api/getTemplateFields';
 import { buildRuntimeMergedOutputParts } from '../../../components/TemplateEdit/TaskOutputFlow/mergeTaskOutputFlow';
 
@@ -117,6 +123,34 @@ describe('templates saga', () => {
         .run()
         .then(() => {
           expect(getCategoriesMock).not.toHaveBeenCalled();
+        });
+    });
+  });
+
+  describe('loadTemplateIntegrationsStatsSaga', () => {
+    const action = { payload: { templates: [1, 2] } };
+
+    it('does not call the integrations stats API for a user who is neither admin nor account owner', () => {
+      const getStatsMock = jest.spyOn(getTemplatesIntegrationsStatsApi, 'getTemplatesIntegrationsStats');
+
+      return expectSaga(loadTemplateIntegrationsStatsSaga as any, action)
+        .provide([[matchers.select.selector(getCanAccessTemplateIntegrations), false]])
+        .run()
+        .then(() => {
+          expect(getStatsMock).not.toHaveBeenCalled();
+        });
+    });
+
+    it('calls the integrations stats API when the user may access integrations', () => {
+      const getStatsMock = jest
+        .spyOn(getTemplatesIntegrationsStatsApi, 'getTemplatesIntegrationsStats')
+        .mockResolvedValue([]);
+
+      return expectSaga(loadTemplateIntegrationsStatsSaga as any, action)
+        .provide([[matchers.select.selector(getCanAccessTemplateIntegrations), true]])
+        .run()
+        .then(() => {
+          expect(getStatsMock).toHaveBeenCalledWith({ templates: [1, 2] });
         });
     });
   });

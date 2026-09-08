@@ -39,7 +39,7 @@ import { LIMIT_LOAD_SYSTEMS_TEMPLATES, LIMIT_LOAD_TEMPLATES, varibleIdRegex } fr
 import { SYSTEM_MERGED_OUTPUTS } from '../../components/Workflows/WorkflowsTablePage/WorkflowsTable/constants';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { isRequestCanceled } from '../../utils/isRequestCanceled';
-import { getIsAdmin } from '../selectors/user';
+import { getCanAccessTemplateIntegrations, getIsAdmin } from '../selectors/user';
 
 export function* fetchTemplatesSystem() {
   const isAdmin: ReturnType<typeof getIsAdmin> = yield select(getIsAdmin);
@@ -189,6 +189,14 @@ export function* handleLoadTemplateVariables(templateId: number) {
 }
 
 export function* loadTemplateIntegrationsStatsSaga({ payload: { templates } }: TLoadTemplateIntegrationsStats) {
+  const canAccessIntegrations: ReturnType<typeof getCanAccessTemplateIntegrations> = yield select(
+    getCanAccessTemplateIntegrations,
+  );
+
+  if (!canAccessIntegrations) {
+    return;
+  }
+
   try {
     const stats: TTemplateIntegrationStatsApi[] = yield call(getTemplatesIntegrationsStats, { templates });
     yield put(setTemplateIntegrationsStats(stats));
