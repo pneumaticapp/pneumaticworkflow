@@ -1,17 +1,13 @@
 import * as React from 'react';
-import { useEffect, useState, ChangeEvent } from 'react';
+import { useEffect, useState } from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
-
-import { validateFieldsetTitle } from '../../../utils/validators';
 
 import {
   openEditModal,
   deleteFieldsetAction,
-  cloneFieldsetAction,
   loadCurrentFieldset,
   resetCurrentFieldset,
-  updateFieldsetAction,
 } from '../../../redux/fieldsets/slice';
 
 import { history } from '../../../utils/history';
@@ -19,7 +15,6 @@ import { ERoutes } from '../../../constants/routes';
 
 import { ModifyDropdown, Button } from '../../UI';
 import { EModifyDropdownToggle } from '../../UI/ModifyDropdown/types';
-import { NotificationManager } from '../../UI/Notifications';
 import { FieldsetModal } from '../FieldsetModal/FieldsetModal';
 import { EFieldsetModalType } from '../FieldsetModal/types';
 import { FieldsetDetailsSkeleton } from './FieldsetDetailsSkeleton';
@@ -29,15 +24,16 @@ import { getCurrentFieldset, isCurrentFieldsetLoading } from '../../../redux/sel
 import { getAccountId } from '../../../redux/selectors/user';
 
 import { IExtraField } from '../../../types/template';
-import {
-  IFieldsetRuleSet,
-  EFieldLabelPosition,
-  IUpdateFieldsetParams,
-} from '../../../types/fieldset';
 import { useDatasetOptions } from '../../TemplateEdit/ExtraFields/utils/useDatasetOptions';
 
-import { normalizeFieldsForUI } from './fieldsetFieldMappers';
-import { validateFieldsetRules } from '../validators';
+import { EMPTY_LOCAL_FIELDSET } from './constants';
+import {
+  initLocalFieldset,
+  checkIsTitleError,
+  updateFieldsetProperty,
+  saveFieldset,
+  cloneFieldset,
+} from './utils';
 
 import { TFieldsetDetailsProps, TLocalFieldsetState, TFieldsetChanges } from './types';
 import { FieldsetRulesetsList } from './FieldsetRulesetsList/FieldsetRulesetsList';
@@ -49,14 +45,6 @@ import { useFieldRuleModal } from './useFieldRuleModal';
 
 import styles from './FieldsetDetails.css';
 
-const EMPTY_LOCAL_FIELDSET: TLocalFieldsetState = {
-  title: '',
-  description: '',
-  labelPosition: EFieldLabelPosition.Top,
-  fields: [],
-  rulesets: [],
-};
-
 const FieldsetDetails = ({
   match: {
     params: { id: matchParamId },
@@ -67,7 +55,6 @@ const FieldsetDetails = ({
   const fieldset = useSelector(getCurrentFieldset);
   const isLoading = useSelector(isCurrentFieldsetLoading);
   const accountId = useSelector(getAccountId);
-
 
   const [localFieldset, setLocalFieldset] = useState<TLocalFieldsetState>(EMPTY_LOCAL_FIELDSET);
   const [fieldsetChanges, setFieldsetChanges] = useState<TFieldsetChanges>({});
@@ -88,108 +75,27 @@ const FieldsetDetails = ({
     dispatch(loadCurrentFieldset({ id }));
   }, [matchParamId]);
 
-  useEffect(() => {
-    return () => {
-      dispatch(resetCurrentFieldset());
-    };
+  useEffect(() => () => {
+    dispatch(resetCurrentFieldset());
   }, []);
 
   useEffect(() => {
     if (!fieldset) return;
 
-    setLocalFieldset({
-      title: fieldset.title,
-      description: fieldset.description || '',
-      labelPosition: fieldset.labelPosition,
-      fields: normalizeFieldsForUI(fieldset.fields as unknown as IExtraField[]),
-      rulesets: fieldset.rulesets || [],
-    });
+    setLocalFieldset(initLocalFieldset(fieldset));
     setFieldsetChanges({});
   }, [fieldset?.id, fieldset?.title, fieldset?.description, fieldset?.labelPosition, fieldset?.fields, fieldset?.rulesets]);
 
-  const handleSettingsTitleChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const title = event.target.value;
-    setLocalFieldset((prev) => ({ ...prev, title }));
-    setFieldsetChanges((prev) => ({ ...prev, title }));
-  };
-
-  const handleSettingsDescriptionChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
-    const description = event.target.value;
-    setLocalFieldset((prev) => ({ ...prev, description }));
-    setFieldsetChanges((prev) => ({ ...prev, description }));
-  };
-
-  const handleLabelPositionChange = (key: EFieldLabelPosition) => {
-    setLocalFieldset((prev) => ({ ...prev, labelPosition: key }));
-    setFieldsetChanges((prev) => ({ ...prev, labelPosition: key }));
-  };
-
   const handleFieldsChange = (newFields: IExtraField[]) => {
-    setLocalFieldset((prev) => ({ ...prev, fields: newFields }));
-    setFieldsetChanges((prev) => ({ ...prev, fields: newFields }));
+    updateFieldsetProperty('fields', newFields, setLocalFieldset, setFieldsetChanges);
   };
 
-  const { openFieldRule, handleDeleteFieldRuleset, fieldRuleModalProps } = useFieldRuleModal(localFieldset.fields, handleFieldsChange);
+  const { openFieldRule, handleDeleteFieldRuleset, fieldRuleModalProps } = useFieldRuleModal(
+    localFieldset.fields,
+    handleFieldsChange,
+  );
 
-  const handleRulesetsChange = (rulesets: IFieldsetRuleSet[]) => {
-    setLocalFieldset((prev) => ({ ...prev, rulesets }));
-    setFieldsetChanges((prev) => ({ ...prev, rulesets }));
-  };
-
-  const handleSave = (onSuccess?: () => void): void => {
-    if (!fieldset || !isChanged) return;
-
-    const titleErrorMessageKey = validateFieldsetTitle(localFieldset.title);
-
-    if (titleErrorMessageKey) {
-      NotificationManager.warning({
-        message: formatMessage({ id: titleErrorMessageKey }),
-      });
-      return;
-    }
-
-    if (fieldsetChanges.rulesets) {
-      const ruleErrorMessageKey = validateFieldsetRules(fieldsetChanges.rulesets, localFieldset.fields);
-
-      if (ruleErrorMessageKey) {
-        NotificationManager.warning({
-          message: formatMessage({ id: ruleErrorMessageKey }),
-        });
-        return;
-      }
-    }
-
-    const payload: IUpdateFieldsetParams = {
-      id: fieldset.id,
-      onSuccess,
-    };
-
-    if (fieldsetChanges.title !== undefined) {
-      payload.title = fieldsetChanges.title;
-    }
-    if (fieldsetChanges.description !== undefined) {
-      payload.description = fieldsetChanges.description;
-    }
-    if (fieldsetChanges.labelPosition) {
-      payload.labelPosition = fieldsetChanges.labelPosition;
-    }
-    if (fieldsetChanges.fields) {
-      payload.fields = fieldsetChanges.fields.map(
-        ({ id: _id, ...rest }) => rest,
-      ) as IUpdateFieldsetParams['fields'];
-    }
-    if (fieldsetChanges.rulesets) {
-      payload.rulesets = fieldsetChanges.rulesets;
-    }
-
-    dispatch(updateFieldsetAction(payload));
-  }
-
-  const isTitleError =
-    (fieldsetChanges.title !== undefined || Boolean(localFieldset.title)) &&
-    Boolean(validateFieldsetTitle(localFieldset.title));
-
-
+  const isTitleError = checkIsTitleError(localFieldset.title, fieldsetChanges.title !== undefined);
 
   if (isLoading) {
     return <FieldsetDetailsSkeleton />;
@@ -201,19 +107,22 @@ const FieldsetDetails = ({
 
   const isLinked = fieldset.usage.length > 0;
 
-  const handleCloneFieldset = () => {
-    if (isChanged) {
-      NotificationManager.warning({
-        message: formatMessage({ id: 'fieldsets.clone-unsaved-warning' }),
-      });
-      return;
-    }
-    dispatch(cloneFieldsetAction({ id: fieldset.id }));
-  };
-
   return (
     <div className={styles['container']}>
-      <FieldsetUnsavedChangesModal isChanged={isChanged} onSave={handleSave} />
+      <FieldsetUnsavedChangesModal
+        isChanged={isChanged}
+        onSave={(onSuccess) =>
+          saveFieldset({
+            fieldset,
+            isChanged,
+            localFieldset,
+            fieldsetChanges,
+            dispatch,
+            formatMessage,
+            onSuccess,
+          })
+        }
+      />
 
       <header className={styles['header']}>
         <h1 title={fieldset.name}>{fieldset.name}</h1>
@@ -230,7 +139,14 @@ const FieldsetDetails = ({
                 })
               );
             }}
-            onClone={handleCloneFieldset}
+            onClone={() =>
+              cloneFieldset({
+                fieldsetId: fieldset.id,
+                isChanged,
+                dispatch,
+                formatMessage,
+              })
+            }
             editLabel={formatMessage({ id: 'fieldsets.edit' })}
             deleteLabel={formatMessage({ id: 'fieldsets.delete' })}
             cloneLabel={formatMessage({ id: 'fieldsets.clone' })}
@@ -248,9 +164,15 @@ const FieldsetDetails = ({
         labelPosition={localFieldset.labelPosition}
         isReadOnly={isLinked}
         isTitleError={isTitleError}
-        onTitleChange={handleSettingsTitleChange}
-        onDescriptionChange={handleSettingsDescriptionChange}
-        onLabelPositionChange={handleLabelPositionChange}
+        onTitleChange={(event) =>
+          updateFieldsetProperty('title', event.target.value, setLocalFieldset, setFieldsetChanges)
+        }
+        onDescriptionChange={(event) =>
+          updateFieldsetProperty('description', event.target.value, setLocalFieldset, setFieldsetChanges)
+        }
+        onLabelPositionChange={(key) =>
+          updateFieldsetProperty('labelPosition', key, setLocalFieldset, setFieldsetChanges)
+        }
       />
 
       <FieldsetFieldsList
@@ -261,7 +183,9 @@ const FieldsetDetails = ({
         accountId={accountId}
         datasetOptions={datasetOptions}
         rulesets={localFieldset.rulesets}
-        onRulesetsChange={handleRulesetsChange}
+        onRulesetsChange={(rulesets) =>
+          updateFieldsetProperty('rulesets', rulesets, setLocalFieldset, setFieldsetChanges)
+        }
         onOpenFieldRule={openFieldRule}
         onDeleteFieldRuleset={handleDeleteFieldRuleset}
       />
@@ -269,7 +193,9 @@ const FieldsetDetails = ({
       <FieldsetRulesetsList
         rulesets={localFieldset.rulesets}
         fields={localFieldset.fields}
-        onRulesetsChange={handleRulesetsChange}
+        onRulesetsChange={(rulesets) =>
+          updateFieldsetProperty('rulesets', rulesets, setLocalFieldset, setFieldsetChanges)
+        }
         isReadOnly={isLinked}
       />
 
@@ -279,7 +205,16 @@ const FieldsetDetails = ({
             label={formatMessage({ id: 'fieldsets.save' })}
             buttonStyle="yellow"
             size="md"
-            onClick={() => handleSave()}
+            onClick={() =>
+              saveFieldset({
+                fieldset,
+                isChanged,
+                localFieldset,
+                fieldsetChanges,
+                dispatch,
+                formatMessage,
+              })
+            }
             disabled={!isChanged}
           />
           {isChanged && (

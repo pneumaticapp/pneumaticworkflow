@@ -11,22 +11,24 @@ import { TFieldsetDetailsProps } from '../types';
 import {
   openEditModal,
   deleteFieldsetAction,
-  cloneFieldsetAction,
   loadCurrentFieldset,
   resetCurrentFieldset,
-  updateFieldsetAction,
 } from '../../../../redux/fieldsets/slice';
 import { ModifyDropdown } from '../../../UI';
-import { NotificationManager } from '../../../UI/Notifications';
 import { IExtraField, EExtraFieldType } from '../../../../types/template';
-import { EFieldLabelPosition } from '../../../../types/fieldset';
 import { makeFieldsetCatalogItem, makeFieldsetRuleset } from '../../../../__stubs__/fieldsets.factory';
 import { makeExtraField } from '../../../../__stubs__/fields.factory';
-import { FIELDSET_RULES_MSG_RULE_REQUIRED } from '../../constants';
 import { FieldsetSettings } from '../FieldsetSettings/FieldsetSettings';
 import { FieldsetFieldsList } from '../FieldsetFieldsList/FieldsetFieldsList';
 import { FieldsetRulesetsList } from '../FieldsetRulesetsList/FieldsetRulesetsList';
 import { IApplicationState } from '../../../../types/redux';
+import { saveFieldset, cloneFieldset } from '../utils';
+
+jest.mock('../utils', () => ({
+  ...jest.requireActual('../utils'),
+  saveFieldset: jest.fn(),
+  cloneFieldset: jest.fn(),
+}));
 
 jest.mock('../../../../utils/history', () => ({
   history: {
@@ -61,10 +63,6 @@ jest.mock('../../../UI', () => ({
     React.createElement('button', { onClick: props.onClick, disabled: props.disabled }, props.label),
   ),
   RouteLeavingGuard: jest.fn(() => null),
-}));
-
-jest.mock('../../../UI/Notifications', () => ({
-  NotificationManager: { warning: jest.fn() },
 }));
 
 jest.mock('../../FieldsetModal/FieldsetModal', () => ({
@@ -142,7 +140,6 @@ describe('FieldsetDetails', () => {
   };
 
   const getModifyDropdownProps = () => (ModifyDropdown as unknown as jest.Mock).mock.calls[0][0];
-  const getUpdateActionMock = () => (updateFieldsetAction as unknown as jest.Mock);
   const getFieldsetSettingsProps = () => {
     const calls = (FieldsetSettings as unknown as jest.Mock).mock.calls;
     return calls[calls.length - 1][0];
@@ -240,15 +237,17 @@ describe('FieldsetDetails', () => {
       );
     });
 
-    it('onClone in ModifyDropdown dispatches cloneFieldsetAction and passes cloneLabel', () => {
+    it('onClone in ModifyDropdown calls cloneFieldset and passes cloneLabel', () => {
       renderWithState(makeLoadedState({ id: 10 }), makeProps('10'));
       const props = getModifyDropdownProps();
 
       expect(props.cloneLabel).toBe(formatMsg('fieldsets.clone'));
 
       props.onClone();
-      expect(cloneFieldsetAction).toHaveBeenCalledTimes(1);
-      expect(mockDispatch).toHaveBeenCalledWith(cloneFieldsetAction({ id: 10 }));
+      expect(cloneFieldset).toHaveBeenCalledTimes(1);
+      expect(cloneFieldset).toHaveBeenCalledWith(
+        expect.objectContaining({ fieldsetId: 10 }),
+      );
     });
 
     it('skips loadCurrentFieldset when fieldset is already loaded with same id', () => {
@@ -270,64 +269,12 @@ describe('FieldsetDetails', () => {
     });
   });
 
-  describe('Validation on Save', () => {
-    it('shows warning and does not dispatch PATCH when title is empty', () => {
-      renderWithState(makeLoadedState({ id: 10, title: 'X' }));
-
-      const { onTitleChange } = getFieldsetSettingsProps();
-      act(() => {
-        onTitleChange({ target: { value: '' } });
-      });
-
-      userEvent.click(screen.getByRole('button', { name: SAVE_LABEL }));
-
-      expect(NotificationManager.warning).toHaveBeenCalledTimes(1);
-      expect(NotificationManager.warning).toHaveBeenCalledWith(
-        expect.objectContaining({ message: formatMsg('validation.fieldset-title-empty') }),
-      );
-      expect(getUpdateActionMock()).not.toHaveBeenCalled();
-    });
-
-    it('shows warning banner and does not dispatch PATCH when rule is incomplete', () => {
-      renderWithState(makeLoadedState({ id: 10, fields: [], rulesets: [] }));
-
-      const { onRulesetsChange } = getFieldsetRulesetsListProps();
-      act(() => {
-        onRulesetsChange([makeFieldsetRuleset({ fields: ['f1'], groupsOr: [] })]);
-      });
-
-      userEvent.click(screen.getByRole('button', { name: SAVE_LABEL }));
-
-      expect(NotificationManager.warning).toHaveBeenCalledTimes(1);
-      expect(NotificationManager.warning).toHaveBeenCalledWith(
-        expect.objectContaining({ message: formatMsg(FIELDSET_RULES_MSG_RULE_REQUIRED) }),
-      );
-      expect(getUpdateActionMock()).not.toHaveBeenCalled();
-    });
-  });
-
   describe('Saving changes', () => {
-    it('dispatches updateFieldsetAction with combined changes and strips id from fields', () => {
-      const validRuleset = makeFieldsetRuleset({
-        apiName: 'rule-1',
-        fields: ['new-field'],
-        groupsOr: [
-          {
-            apiName: 'or-1',
-            groupsAnd: [{ apiName: 'and-1', operator: 'sum_equal' as any, value: '100' }],
-          },
-        ],
-      });
-      renderWithState(makeLoadedState({ id: 10, title: 'Old Title', description: '' }));
+    it('calls saveFieldset on save button click with changes', () => {
+      renderWithState(makeLoadedState({ id: 10, title: 'Old Title' }));
 
       act(() => {
         getFieldsetSettingsProps().onTitleChange({ target: { value: 'New Title' } });
-        getFieldsetSettingsProps().onDescriptionChange({ target: { value: 'New Desc' } });
-        getFieldsetSettingsProps().onLabelPositionChange(EFieldLabelPosition.Left);
-        getFieldsetFieldsListProps().onFieldsChange([
-          makeField({ id: 99, apiName: 'new-field', type: EExtraFieldType.Number }),
-        ]);
-        getFieldsetRulesetsListProps().onRulesetsChange([validRuleset]);
       });
 
       expect(screen.getByRole('button', { name: SAVE_LABEL })).not.toBeDisabled();
@@ -335,24 +282,14 @@ describe('FieldsetDetails', () => {
 
       userEvent.click(screen.getByRole('button', { name: SAVE_LABEL }));
 
-      expect(getUpdateActionMock()).toHaveBeenCalledTimes(1);
-      expect(mockDispatch).toHaveBeenCalledWith(
-        updateFieldsetAction(
-          expect.objectContaining({
-            id: 10,
-            title: 'New Title',
-            description: 'New Desc',
-            labelPosition: EFieldLabelPosition.Left,
-            rulesets: [validRuleset],
-          }),
-        ),
+      expect(saveFieldset).toHaveBeenCalledTimes(1);
+      expect(saveFieldset).toHaveBeenCalledWith(
+        expect.objectContaining({
+          fieldset: expect.objectContaining({ id: 10 }),
+          isChanged: true,
+          fieldsetChanges: expect.objectContaining({ title: 'New Title' }),
+        }),
       );
-
-      const fieldsPayload = getUpdateActionMock().mock.calls[0][0].fields;
-      expect(fieldsPayload).toEqual([
-        expect.objectContaining({ apiName: 'new-field' }),
-      ]);
-      expect(fieldsPayload[0]).not.toHaveProperty('id');
     });
   });
 
@@ -373,37 +310,6 @@ describe('FieldsetDetails', () => {
       rerender(React.createElement(FieldsetDetails, makeProps()));
 
       expect(screen.getByRole('button', { name: SAVE_LABEL })).toBeDisabled();
-      expect(mockDispatch).not.toHaveBeenCalledWith(
-        expect.objectContaining({ type: 'fieldsets/updateFieldsetAction' }),
-      );
-    });
-  });
-
-  describe('Clone protection guard', () => {
-    it('dispatches cloneFieldsetAction when there are no unsaved changes', () => {
-      renderWithState(makeLoadedState({ id: 10 }));
-
-      userEvent.click(screen.getByTestId('modify-clone'));
-
-      expect(mockDispatch).toHaveBeenCalledWith(
-        cloneFieldsetAction({ id: 10 }),
-      );
-      expect(NotificationManager.warning).not.toHaveBeenCalled();
-    });
-
-    it('blocks clone and shows warning notification when there are unsaved changes', () => {
-      renderWithState(makeLoadedState({ id: 10, description: 'Initial' }));
-
-      const { onDescriptionChange } = getFieldsetSettingsProps();
-      act(() => {
-        onDescriptionChange({ target: { value: 'dirty change' } });
-      });
-
-      userEvent.click(screen.getByTestId('modify-clone'));
-
-      expect(mockDispatch).not.toHaveBeenCalledWith(
-        cloneFieldsetAction({ id: 10 }),
-      );
     });
   });
 
