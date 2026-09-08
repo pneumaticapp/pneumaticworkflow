@@ -57,16 +57,17 @@ const dateVariable: TTaskVariable = {
   type: EExtraFieldType.Date,
 };
 
-const makeDateRule = (overrides: Partial<TConditionRule> = {}): TConditionRule => ({
-  ruleApiName: 'rule-1',
-  predicateApiName: 'pred-1',
-  logicOperation: EConditionLogicOperations.And,
-  field: dateVariable.apiName,
-  fieldType: EExtraFieldType.Date,
-  operator: null,
-  value: undefined,
-  ...overrides,
-} as TConditionRule);
+const makeDateRule = (overrides: Partial<TConditionRule> = {}): TConditionRule =>
+  ({
+    ruleApiName: 'rule-1',
+    predicateApiName: 'pred-1',
+    logicOperation: EConditionLogicOperations.And,
+    field: dateVariable.apiName,
+    fieldType: EExtraFieldType.Date,
+    operator: null,
+    value: undefined,
+    ...overrides,
+  }) as TConditionRule;
 
 const renderValueField = (props: Partial<React.ComponentProps<typeof ConditionValueField>> = {}) =>
   render(

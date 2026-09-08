@@ -193,7 +193,6 @@ export function EditorToolbar({
             ))}
           </>
         )}
-
       </div>
     </div>
   );
