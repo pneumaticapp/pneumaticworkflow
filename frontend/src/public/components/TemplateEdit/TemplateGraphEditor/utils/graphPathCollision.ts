@@ -35,7 +35,7 @@ export interface IGutterDetour {
 }
 
 export function parseGraphPath(path: string): IPathSegment[] {
-  const tokens = path.match(/[MLQ][^MLQ]*/g) ?? [];
+  const tokens: string[] = path.match(/[MLQ][^MLQ]*/g) ?? [];
   const segments: IPathSegment[] = [];
   let cursor: IPathPoint = { x: 0, y: 0 };
 
@@ -75,10 +75,10 @@ export function segmentHitsCard(segment: IPathSegment, card: TGraphNode): boolea
   const maxY = Math.max(segment.a.y, segment.b.y);
 
   return (
-    maxX > box.x + CARD_HIT_INSET
-    && minX < box.right - CARD_HIT_INSET
-    && maxY > box.y + CARD_HIT_INSET
-    && minY < box.bottom - CARD_HIT_INSET
+    maxX > box.x + CARD_HIT_INSET &&
+    minX < box.right - CARD_HIT_INSET &&
+    maxY > box.y + CARD_HIT_INSET &&
+    minY < box.bottom - CARD_HIT_INSET
   );
 }
 
@@ -90,19 +90,10 @@ export function segmentCrowdsCard(segment: IPathSegment, card: TGraphNode): bool
   const minY = Math.min(segment.a.y, segment.b.y);
   const maxY = Math.max(segment.a.y, segment.b.y);
 
-  return (
-    maxX > box.x - pad
-    && minX < box.right + pad
-    && maxY > box.y - pad
-    && minY < box.bottom + pad
-  );
+  return maxX > box.x - pad && minX < box.right + pad && maxY > box.y - pad && minY < box.bottom + pad;
 }
 
-export function getEdgePathSegments(
-  edge: TGraphEdge,
-  source: TGraphNode,
-  target: TGraphNode,
-): IPathSegment[] {
+export function getEdgePathSegments(edge: TGraphEdge, source: TGraphNode, target: TGraphNode): IPathSegment[] {
   const from = edge.data?.sourceAnchor ?? getHandleAnchor(source, edge.sourceHandle);
   const to = edge.data?.targetAnchor ?? getHandleAnchor(target, edge.targetHandle);
   const { path } = getGraphEdgePath({
@@ -155,12 +146,7 @@ export function classifyCardHit(
   return 'vertical';
 }
 
-function withGutterPath(
-  edge: TGraphEdge,
-  laneX: number,
-  laneY?: number,
-  targetStandoff?: number,
-): TGraphEdge {
+function withGutterPath(edge: TGraphEdge, laneX: number, laneY?: number, targetStandoff?: number): TGraphEdge {
   return {
     ...edge,
     data: {
@@ -173,17 +159,9 @@ function withGutterPath(
   };
 }
 
-function firstObstacleNearX(
-  fromX: number,
-  toX: number,
-  y: number,
-  cards: TGraphNode[],
-): number | null {
+function firstObstacleNearX(fromX: number, toX: number, y: number, cards: TGraphNode[]): number | null {
   const goingRight = toX >= fromX;
-  const hits = cards.filter((card) => segmentHitsCard(
-    { a: { x: fromX, y }, b: { x: toX, y } },
-    card,
-  ));
+  const hits = cards.filter((card) => segmentHitsCard({ a: { x: fromX, y }, b: { x: toX, y } }, card));
 
   if (hits.length === 0) {
     return null;
@@ -277,9 +255,9 @@ function mergeYIntervals(intervals: IYInterval[]): IYInterval[] {
 
 function yCollidesInterval(y: number, interval: IYInterval): boolean {
   return (
-    (y > interval.top + CARD_HIT_INSET && y < interval.bottom - CARD_HIT_INSET)
-    || Math.abs(y - interval.top) < BORDER_GLUE
-    || Math.abs(y - interval.bottom) < BORDER_GLUE
+    (y > interval.top + CARD_HIT_INSET && y < interval.bottom - CARD_HIT_INSET) ||
+    Math.abs(y - interval.top) < BORDER_GLUE ||
+    Math.abs(y - interval.bottom) < BORDER_GLUE
   );
 }
 
@@ -294,11 +272,10 @@ export function pickClearY(
   const cards = nodes.filter((node) => isCardNode(node) && !ignoreIds.has(node.id));
   const occupied = mergeYIntervals(occupiedYIntervals(cards, fromX, toX));
 
-  const isFree = (y: number): boolean => (
-    !takenYs.some((taken) => Math.abs(taken - y) < GRAPH_SKIP_LANE_STEP)
-    && !occupied.some((interval) => yCollidesInterval(y, interval))
-    && !cards.some((card) => segmentHitsCard({ a: { x: fromX, y }, b: { x: toX, y } }, card))
-  );
+  const isFree = (y: number): boolean =>
+    !takenYs.some((taken) => Math.abs(taken - y) < GRAPH_SKIP_LANE_STEP) &&
+    !occupied.some((interval) => yCollidesInterval(y, interval)) &&
+    !cards.some((card) => segmentHitsCard({ a: { x: fromX, y }, b: { x: toX, y } }, card));
 
   if (isFree(preferredY)) {
     return preferredY;
@@ -323,9 +300,7 @@ export function pickClearY(
     return preferredY;
   }
 
-  const gaps: { lo: number; hi: number }[] = [
-    { lo: occupied[0].top - GRAPH_ROW_GAP, hi: occupied[0].top },
-  ];
+  const gaps: { lo: number; hi: number }[] = [{ lo: occupied[0].top - GRAPH_ROW_GAP, hi: occupied[0].top }];
 
   occupied.forEach((interval, index) => {
     const next = occupied[index + 1];
@@ -409,9 +384,7 @@ export function planObstacleDetours(
     }
 
     const laneY = pickClearY(laneX, to.x, to.y, nodes, ignoreIds, takenYs);
-    const detour: IGutterDetour = laneY === to.y
-      ? { laneX }
-      : { laneX, laneY };
+    const detour: IGutterDetour = laneY === to.y ? { laneX } : { laneX, laneY };
     const candidate = withGutterPath(edge, detour.laneX, detour.laneY);
 
     if (classifyCardHit(candidate, source, target, nodes)) {
@@ -430,10 +403,7 @@ export function planObstacleDetours(
   return { xIds, gutters };
 }
 
-export function planCheckIfCardWraps(
-  nodes: TGraphNode[],
-  edges: TGraphEdge[],
-): Map<string, IGutterDetour> {
+export function planCheckIfCardWraps(nodes: TGraphNode[], edges: TGraphEdge[]): Map<string, IGutterDetour> {
   const nodeById = new Map(nodes.map((node) => [node.id, node]));
   const takenYs: number[] = [];
 
@@ -462,12 +432,12 @@ export function planCheckIfCardWraps(
       const target = nodeById.get(edge.target);
 
       return Boolean(
-        target
-        && isConditionalGraphEdge(edge)
-        && isCardNode(target)
-        && !isCheckIfStemEdge(edge.source, edge.target)
-        && !edge.data?.isLaneRouted
-        && edge.data?.laneX == null,
+        target &&
+        isConditionalGraphEdge(edge) &&
+        isCardNode(target) &&
+        !isCheckIfStemEdge(edge.source, edge.target) &&
+        !edge.data?.isLaneRouted &&
+        edge.data?.laneX == null,
       );
     })
     .sort((first, second) => first.id.localeCompare(second.id));

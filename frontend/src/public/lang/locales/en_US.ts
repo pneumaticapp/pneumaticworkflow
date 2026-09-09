@@ -633,7 +633,6 @@ export const enMessages = {
   'template.graph-fields-count': '{count, plural, one {# field} other {# fields}}',
   'template.graph-conditions-count': '{count, plural, one {# condition} other {# conditions}}',
   'template.graph-edge-if': 'check if: {summary}',
-  'template.graph-edge-start-after': 'start after: {summary}',
   'template.graph-edge-condition': 'condition',
   'template.graph-fork': 'Branch',
   'template.graph-join': 'Merge',

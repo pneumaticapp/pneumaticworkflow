@@ -545,7 +545,6 @@ export const ruMessages = {
   'template.graph-conditions-count':
     '{count, plural, one {# условие} few {# условия} many {# условий} other {# условия}}',
   'template.graph-edge-if': 'проверить, если: {summary}',
-  'template.graph-edge-start-after': 'старт после: {summary}',
   'template.graph-edge-condition': 'условие',
   'template.graph-fork': 'Разветвление',
   'template.graph-join': 'Схождение',

@@ -28,21 +28,14 @@ jest.mock('../../../../../UI', () => ({
 
 describe('ConditionEdgeInfo', () => {
   it('should render a fallback tooltip when the condition has no summary', () => {
-    render(<ConditionEdgeInfo isConditional />);
+    render(<ConditionEdgeInfo />);
 
     expect(screen.getByTestId('graph-edge-info')).toBeInTheDocument();
     expect(screen.getByText('check if: condition')).toBeInTheDocument();
   });
 
-  it('should describe start-after sources on a gray edge', () => {
-    render(<ConditionEdgeInfo startAfter={['Prepare layout']} />);
-
-    expect(screen.getByTestId('graph-edge-info')).toBeInTheDocument();
-    expect(screen.getByText('start after: Prepare layout')).toBeInTheDocument();
-  });
-
   it('should expose the condition summary in the mockup tooltip', () => {
-    render(<ConditionEdgeInfo isConditional summary="Client filled" />);
+    render(<ConditionEdgeInfo summary="Client filled" />);
 
     expect(screen.getByTestId('graph-edge-info')).toBeInTheDocument();
     expect(screen.getByTestId('graph-edge-tooltip')).toBeInTheDocument();
@@ -52,7 +45,6 @@ describe('ConditionEdgeInfo', () => {
   it('should describe a check-if clause with the localized operator', () => {
     render(
       <ConditionEdgeInfo
-        isConditional
         clauses={[
           {
             fieldLabel: 'Client',

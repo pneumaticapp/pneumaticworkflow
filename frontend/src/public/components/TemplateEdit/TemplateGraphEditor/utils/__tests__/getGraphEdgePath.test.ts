@@ -1,4 +1,4 @@
-import { getGraphEdgePath, GRAPH_EDGE_LABEL_OFFSET, resolveGraphEdgePathKind } from '../getGraphEdgePath';
+import { getGraphEdgePath, resolveGraphEdgePathKind } from '../getGraphEdgePath';
 
 describe('resolveGraphEdgePathKind', () => {
   it('should keep from-task even when the ends are nearly aligned', () => {
@@ -11,6 +11,52 @@ describe('resolveGraphEdgePathKind', () => {
 
   it('should keep skip even when the ends share an x', () => {
     expect(resolveGraphEdgePathKind(100, 100, 'skip')).toBe('skip');
+  });
+});
+
+describe('getGraphEdgePath center', () => {
+  it('should center a straight vertical run between its ends', () => {
+    const { centerX, centerY } = getGraphEdgePath({
+      sourceX: 120,
+      sourceY: 10,
+      targetX: 120,
+      targetY: 90,
+      sourceHandle: 'source-bottom',
+      targetHandle: 'target-top',
+    });
+
+    expect(centerX).toBe(120);
+    expect(centerY).toBe(50);
+  });
+
+  it('should center a branch on its longest run instead of the corner', () => {
+    const { path, centerX, centerY } = getGraphEdgePath({
+      sourceX: 760,
+      sourceY: 514,
+      targetX: 216,
+      targetY: 584,
+      pathKind: 'from-fork',
+      sourceHandle: 'source-left',
+      targetHandle: 'target-top',
+    });
+
+    expect(path).toBe('M 760,514 L 216,514 L 216,584');
+    expect(centerX).toBe(488);
+    expect(centerY).toBe(514);
+  });
+
+  it('should center a skip detour on its long side lane', () => {
+    const { centerX, centerY } = getGraphEdgePath({
+      sourceX: 120,
+      sourceY: 40,
+      targetX: 120,
+      targetY: 400,
+      pathKind: 'skip',
+      laneX: 340,
+    });
+
+    expect(centerX).toBe(340);
+    expect(centerY).toBe(220);
   });
 });
 
@@ -43,7 +89,7 @@ describe('getGraphEdgePath', () => {
   });
 
   it('should drop down from a task before turning into a side handle', () => {
-    const { path, labelX } = getGraphEdgePath({
+    const { path } = getGraphEdgePath({
       sourceX: 20,
       sourceY: 40,
       targetX: 120,
@@ -53,7 +99,6 @@ describe('getGraphEdgePath', () => {
     });
 
     expect(path).toBe('M 20,40 L 20,120 L 120,120');
-    expect(labelX).toBe(20);
   });
 
   it('should leave a slightly offset fork sideways instead of drawing a diagonal', () => {
@@ -111,7 +156,7 @@ describe('getGraphEdgePath', () => {
   });
 
   it('should use the skip lane as the vertical segment', () => {
-    const { path, labelX } = getGraphEdgePath({
+    const { path } = getGraphEdgePath({
       sourceX: 120,
       sourceY: 40,
       targetX: 120,
@@ -121,7 +166,6 @@ describe('getGraphEdgePath', () => {
     });
 
     expect(path).toBe('M 120,40 L 340,40 L 340,200 L 120,200');
-    expect(labelX).toBe(120 + GRAPH_EDGE_LABEL_OFFSET);
   });
 
   it('should turn in a column gutter instead of running under a card', () => {

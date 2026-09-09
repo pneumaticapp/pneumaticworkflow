@@ -26,8 +26,9 @@ interface IGraphEdgePathParams {
 
 export interface IGraphEdgePath {
   path: string;
-  labelX: number;
-  labelY: number;
+  /** Middle of the longest straight run, so a badge never lands on a corner. */
+  centerX: number;
+  centerY: number;
 }
 
 interface IPoint {
@@ -36,19 +37,44 @@ interface IPoint {
 }
 
 const AXIS_EPSILON = 0.5;
-export const GRAPH_EDGE_LABEL_OFFSET = 28;
 
 function buildPath(points: IPoint[]): string {
-  return points
-    .map(({ x, y }, index) => `${index === 0 ? 'M' : 'L'} ${x},${y}`)
-    .join(' ');
+  return points.map(({ x, y }, index) => `${index === 0 ? 'M' : 'L'} ${x},${y}`).join(' ');
 }
 
-function withPath(points: IPoint[], label: IPoint): IGraphEdgePath {
+function centerOnLongestSegment(points: IPoint[]): IPoint {
+  if (points.length < 2) {
+    return points[0] ?? { x: 0, y: 0 };
+  }
+
+  let from = points[0];
+  let to = points[1];
+  let longest = -1;
+
+  points.slice(1).forEach((point, index) => {
+    const previous = points[index];
+    const length = Math.hypot(point.x - previous.x, point.y - previous.y);
+
+    if (length > longest) {
+      longest = length;
+      from = previous;
+      to = point;
+    }
+  });
+
+  return {
+    x: (from.x + to.x) / 2,
+    y: (from.y + to.y) / 2,
+  };
+}
+
+function withPath(points: IPoint[]): IGraphEdgePath {
+  const center = centerOnLongestSegment(points);
+
   return {
     path: buildPath(points),
-    labelX: label.x,
-    labelY: label.y,
+    centerX: center.x,
+    centerY: center.y,
   };
 }
 
@@ -164,14 +190,11 @@ function closeOnAxis(first: number, second: number): boolean {
   return Math.abs(first - second) <= GRAPH_EDGE_SIDEWAYS_THRESHOLD;
 }
 
-function isFacingSides(
-  sourceFace: TGraphFace,
-  targetFace: TGraphFace,
-  sourceX: number,
-  targetX: number,
-): boolean {
-  return (sourceFace === 'right' && targetFace === 'left' && sourceX <= targetX)
-    || (sourceFace === 'left' && targetFace === 'right' && sourceX >= targetX);
+function isFacingSides(sourceFace: TGraphFace, targetFace: TGraphFace, sourceX: number, targetX: number): boolean {
+  return (
+    (sourceFace === 'right' && targetFace === 'left' && sourceX <= targetX) ||
+    (sourceFace === 'left' && targetFace === 'right' && sourceX >= targetX)
+  );
 }
 
 function isOutwardX(face: TGraphFace, fromX: number, toX: number): boolean {
@@ -186,12 +209,7 @@ function isOutwardX(face: TGraphFace, fromX: number, toX: number): boolean {
   return true;
 }
 
-function nudgeLaneX(
-  laneX: number,
-  startX: number,
-  standoffX: number,
-  face: TGraphFace,
-): number {
+function nudgeLaneX(laneX: number, startX: number, standoffX: number, face: TGraphFace): number {
   if (face === 'right' && laneX > startX && laneX < standoffX) {
     return standoffX;
   }
@@ -228,12 +246,7 @@ function pullRoutingOffStrip(points: IPoint[], handleX: number, standoffX: numbe
   return result;
 }
 
-function forcePerpendicularDock(
-  points: IPoint[],
-  dock: IPoint,
-  standoff: IPoint,
-  face: TGraphFace,
-): IPoint[] {
+function forcePerpendicularDock(points: IPoint[], dock: IPoint, standoff: IPoint, face: TGraphFace): IPoint[] {
   if ((face !== 'left' && face !== 'right') || points.length === 0) {
     return points;
   }
@@ -247,12 +260,7 @@ function forcePerpendicularDock(
 
   const tail = body[body.length - 1] ?? standoff;
 
-  return simplifyPoints([
-    ...body,
-    { x: standoff.x, y: tail.y },
-    standoff,
-    dock,
-  ]);
+  return simplifyPoints([...body, { x: standoff.x, y: tail.y }, standoff, dock]);
 }
 
 function orthogonalPoints(
@@ -265,8 +273,10 @@ function orthogonalPoints(
   laneX?: number,
   pathKind?: TGraphEdgePathKind,
 ): IPoint[] {
-  if ((sourceFace === 'right' && targetFace === 'right' || sourceFace === 'left' && targetFace === 'left')
-    && laneX != null) {
+  if (
+    ((sourceFace === 'right' && targetFace === 'right') || (sourceFace === 'left' && targetFace === 'left')) &&
+    laneX != null
+  ) {
     return simplifyPoints([
       { x: sourceX, y: sourceY },
       { x: laneX, y: sourceY },
@@ -345,46 +355,6 @@ function orthogonalPoints(
   ]);
 }
 
-function labelAtStart(points: IPoint[]): IPoint {
-  if (points.length < 2) {
-    return points[0] ?? { x: 0, y: 0 };
-  }
-
-  for (let index = 0; index < points.length - 1; index += 1) {
-    const from = points[index];
-    const to = points[index + 1];
-    const dx = to.x - from.x;
-    const dy = to.y - from.y;
-    const distance = Math.hypot(dx, dy);
-
-    if (distance >= GRAPH_EDGE_LABEL_OFFSET) {
-      const ratio = GRAPH_EDGE_LABEL_OFFSET / distance;
-
-      return {
-        x: from.x + dx * ratio,
-        y: from.y + dy * ratio,
-      };
-    }
-  }
-
-  const from = points[0];
-  const to = points[1];
-  const dx = to.x - from.x;
-  const dy = to.y - from.y;
-  const distance = Math.hypot(dx, dy);
-
-  if (distance < 1) {
-    return from;
-  }
-
-  const ratio = Math.min(GRAPH_EDGE_LABEL_OFFSET / distance, 0.45);
-
-  return {
-    x: from.x + dx * ratio,
-    y: from.y + dy * ratio,
-  };
-}
-
 export function resolveGraphEdgePathKind(
   sourceX: number,
   targetX: number,
@@ -412,33 +382,26 @@ export function getGraphEdgePath(params: IGraphEdgePathParams): IGraphEdgePath {
 
   if (params.laneX != null) {
     const midY = params.laneY ?? entry.y;
-    let laneX = nudgeLaneX(
-      nudgeLaneX(params.laneX, start.x, exit.x, sourceFace),
-      end.x,
-      entry.x,
-      targetFace,
-    );
+    let laneX = nudgeLaneX(nudgeLaneX(params.laneX, start.x, exit.x, sourceFace), end.x, entry.x, targetFace);
 
     if (dockOnSide) {
       laneX = snapOutOfStandoffStrip(laneX, end.x, entry.x);
     }
 
     const points = forcePerpendicularDock(
-      simplifyPoints(pullRoutingOffStrip([
-        start,
-        exit,
-        { x: laneX, y: exit.y },
-        { x: laneX, y: midY },
-        { x: entry.x, y: midY },
-        entry,
-        end,
-      ], end.x, entry.x)),
+      simplifyPoints(
+        pullRoutingOffStrip(
+          [start, exit, { x: laneX, y: exit.y }, { x: laneX, y: midY }, { x: entry.x, y: midY }, entry, end],
+          end.x,
+          entry.x,
+        ),
+      ),
       end,
       entry,
       targetFace,
     );
 
-    return withPath(points, labelAtStart(points));
+    return withPath(points);
   }
 
   const routeExitX = dockOnSide ? snapOutOfStandoffStrip(exit.x, end.x, entry.x) : exit.x;
@@ -459,5 +422,5 @@ export function getGraphEdgePath(params: IGraphEdgePathParams): IGraphEdgePath {
     targetFace,
   );
 
-  return withPath(points, labelAtStart(points));
+  return withPath(points);
 }

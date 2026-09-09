@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { configure } from '@testing-library/react';
 import { Position, ReactFlowProvider } from 'reactflow';
@@ -68,11 +68,11 @@ describe('GraphConditionEdge', () => {
     expect(screen.getByText('check if: Client filled')).toBeInTheDocument();
   });
 
-  it('should show the start-after badge and tooltip on a gray edge', () => {
+  it('should hide the tooltip on a gray edge', () => {
     renderEdge({ isConditional: false, startAfter: ['Prepare layout'] });
 
-    expect(screen.getByTestId('graph-edge-label')).toBeInTheDocument();
-    expect(screen.getByText('start after: Prepare layout')).toBeInTheDocument();
+    expect(screen.queryByTestId('graph-edge-label')).not.toBeInTheDocument();
+    expect(screen.queryByText('start after: Prepare layout')).not.toBeInTheDocument();
   });
 
   it('should hide the badge on a dashed stem that only feeds a check-if fork', () => {
@@ -151,11 +151,58 @@ describe('GraphConditionEdge', () => {
 
     userEvent.click(screen.getByTestId('graph-add-task'));
 
+    expect(screen.queryByTestId('graph-edge-info')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('graph-edge-label')).not.toBeInTheDocument();
     expect(onAddTask).toHaveBeenCalledWith({
       kind: 'insert',
       afterId: 'task-a',
       beforeId: 'task-b',
     });
+  });
+
+  it('should place the plus at the middle of the line, not at its start', () => {
+    render(
+      <ReactFlowProvider>
+        <svg>
+          <GraphConditionEdge
+            id="edge-1"
+            source="task-a"
+            target="task-b"
+            sourceX={0}
+            sourceY={0}
+            targetX={0}
+            targetY={80}
+            sourcePosition={Position.Bottom}
+            targetPosition={Position.Top}
+            data={{
+              isConditional: false,
+              addTaskIntent: { kind: 'insert', afterId: 'task-a', beforeId: 'task-b' },
+              onAddTask: jest.fn(),
+            }}
+          />
+        </svg>
+      </ReactFlowProvider>,
+    );
+
+    expect(screen.getByTestId('graph-edge-add-task').getAttribute('style')).toContain('translate(0px, 40px)');
+  });
+
+  it('should darken the plus while the line under it is hovered', () => {
+    renderEdge({
+      isConditional: false,
+      addTaskIntent: { kind: 'insert', afterId: 'task-a', beforeId: 'task-b' },
+      onAddTask: jest.fn(),
+    });
+
+    expect(screen.getByTestId('graph-add-task').getAttribute('class')).not.toContain('highlighted');
+
+    fireEvent.mouseEnter(screen.getByTestId('graph-edge-hit-area'));
+
+    expect(screen.getByTestId('graph-add-task').getAttribute('class')).toContain('highlighted');
+
+    fireEvent.mouseLeave(screen.getByTestId('graph-edge-hit-area'));
+
+    expect(screen.getByTestId('graph-add-task').getAttribute('class')).not.toContain('highlighted');
   });
 
   it('should keep the insert plus from receiving clicks on a dimmed edge', () => {
@@ -169,6 +216,6 @@ describe('GraphConditionEdge', () => {
       onAddTask,
     });
 
-    expect(screen.getByTestId('graph-edge-label').getAttribute('class')).toContain('dimmed');
+    expect(screen.getByTestId('graph-edge-add-task').getAttribute('class')).toContain('dimmed');
   });
 });
