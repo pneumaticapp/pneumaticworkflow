@@ -550,6 +550,8 @@ export const ruMessages = {
   'template.graph-join': 'Схождение',
   'template.graph-task-editor': 'Редактор задачи',
   'template.graph-task-editor-close': 'Закрыть',
+  'template.graph-task-actions': 'Действия с задачей',
+  'template.graph-task-edit': 'Редактировать задачу',
   'template.graph-add-task': 'Добавить задачу',
   'template.graph-auto-arrange': 'Авторасположение',
   'template.invite-team-member': 'Пригласить исполнителя',
