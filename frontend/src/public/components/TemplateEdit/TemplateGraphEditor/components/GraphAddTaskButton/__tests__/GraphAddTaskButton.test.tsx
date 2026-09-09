@@ -14,10 +14,7 @@ describe('GraphAddTaskButton', () => {
 
     render(
       <div onClick={onParentClick}>
-        <GraphAddTaskButton
-          intent={{ kind: 'continue', afterId: 'task-a' }}
-          onAddTask={onAddTask}
-        />
+        <GraphAddTaskButton intent={{ kind: 'continue', afterId: 'task-a' }} onAddTask={onAddTask} />
       </div>,
     );
 
@@ -32,10 +29,7 @@ describe('GraphAddTaskButton', () => {
     const onAddTask = jest.fn();
 
     render(
-      <GraphAddTaskButton
-        intent={{ kind: 'insert', afterId: 'task-a', beforeId: 'task-b' }}
-        onAddTask={onAddTask}
-      />,
+      <GraphAddTaskButton intent={{ kind: 'insert', afterId: 'task-a', beforeId: 'task-b' }} onAddTask={onAddTask} />,
     );
 
     userEvent.click(screen.getByRole('button', { name: 'Add task' }));
@@ -45,5 +39,19 @@ describe('GraphAddTaskButton', () => {
       afterId: 'task-a',
       beforeId: 'task-b',
     });
+  });
+
+  it('should stay muted until the line it sits on is highlighted', () => {
+    const { rerender } = render(
+      <GraphAddTaskButton intent={{ kind: 'continue', afterId: 'task-a' }} onAddTask={jest.fn()} />,
+    );
+
+    expect(screen.getByTestId('graph-add-task').getAttribute('class')).not.toContain('highlighted');
+
+    rerender(
+      <GraphAddTaskButton intent={{ kind: 'continue', afterId: 'task-a' }} onAddTask={jest.fn()} isHighlighted />,
+    );
+
+    expect(screen.getByTestId('graph-add-task').getAttribute('class')).toContain('highlighted');
   });
 });
