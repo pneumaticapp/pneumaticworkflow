@@ -5,13 +5,14 @@
   transition: opacity 0.2s ease;
 }
 
-.edge-label__row {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
 .edge-label--dimmed {
   pointer-events: none;
   opacity: 0.15;
+}
+
+/* Invisible strip that makes the line itself hoverable, so its plus can react. */
+.edge-hit-area {
+  pointer-events: stroke;
+  stroke: transparent;
+  stroke-width: 12;
 }

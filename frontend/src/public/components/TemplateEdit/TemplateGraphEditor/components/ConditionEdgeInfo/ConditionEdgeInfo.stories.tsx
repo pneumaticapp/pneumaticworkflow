@@ -20,22 +20,19 @@ const meta: Meta<IConditionEdgeInfoProps> = {
 export default meta;
 type Story = StoryObj<IConditionEdgeInfoProps>;
 
-export const StartAfter: Story = {
-  args: {
-    startAfter: ['Prepare layout'],
-  },
+export const Fallback: Story = {
+  args: {},
 };
 
 export const Conditional: Story = {
   args: {
-    isConditional: true,
-    summary: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque facilisis odio eu diam efficitur malesuada',
+    summary:
+      'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque facilisis odio eu diam efficitur malesuada',
   },
 };
 
 export const Clause: Story = {
   args: {
-    isConditional: true,
     clauses: [
       {
         fieldLabel: 'Client',

@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useCallback, useState } from 'react';
 import { EdgeLabelRenderer, EdgeProps } from 'reactflow';
 
 import { IConditionEdgeData } from '../../types';
@@ -21,7 +22,11 @@ export const GraphConditionEdge = ({
   data,
   markerEnd,
 }: EdgeProps<IConditionEdgeData>) => {
-  const { path: edgePath, labelX, labelY } = getGraphEdgePath({
+  const {
+    path: edgePath,
+    centerX,
+    centerY,
+  } = getGraphEdgePath({
     sourceX: data?.sourceAnchor?.x ?? sourceX,
     sourceY: data?.sourceAnchor?.y ?? sourceY,
     targetX: data?.targetAnchor?.x ?? targetX,
@@ -36,13 +41,13 @@ export const GraphConditionEdge = ({
     sourcePosition,
     targetPosition,
   });
-  const hasCheckIfInfo = Boolean(data?.isConditional && (data.summary || data.clauses?.length));
-  const hasStartAfterInfo = Boolean(!data?.isConditional && data?.startAfter?.length);
-  const hasInfo = hasCheckIfInfo || hasStartAfterInfo;
+  const hasInfo = Boolean(data?.isConditional && (data.summary || data.clauses?.length));
   const addTaskIntent = data?.addTaskIntent;
   const onAddTask = data?.onAddTask;
   const showAddTask = Boolean(addTaskIntent && onAddTask);
-  const showLabel = hasInfo || showAddTask;
+  const [isLineHovered, setIsLineHovered] = useState(false);
+  const handleLineEnter = useCallback(() => setIsLineHovered(true), []);
+  const handleLineLeave = useCallback(() => setIsLineHovered(false), []);
   const labelClassName = [
     styles['edge-label'],
     data?.focus === 'dimmed' ? styles['edge-label--dimmed'] : '',
@@ -62,26 +67,35 @@ export const GraphConditionEdge = ({
         style={{ ...style, pointerEvents: 'none' }}
         markerEnd={markerEnd}
       />
-      {showLabel && (
+      {showAddTask && (
+        <path
+          className={styles['edge-hit-area']}
+          d={edgePath}
+          fill="none"
+          onMouseEnter={handleLineEnter}
+          onMouseLeave={handleLineLeave}
+          data-test-id="graph-edge-hit-area"
+        />
+      )}
+      {hasInfo && (
         <EdgeLabelRenderer>
           <div
             className={labelClassName}
-            style={{ transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)` }}
+            style={{ transform: `translate(-50%, -50%) translate(${centerX}px, ${centerY}px)` }}
             data-test-id="graph-edge-label"
           >
-            <div className={styles['edge-label__row']}>
-              {hasInfo && (
-                <ConditionEdgeInfo
-                  summary={data?.summary}
-                  startAfter={data?.startAfter}
-                  isConditional={Boolean(data?.isConditional)}
-                  clauses={data?.clauses}
-                />
-              )}
-              {showAddTask && addTaskIntent && onAddTask && (
-                <GraphAddTaskButton intent={addTaskIntent} onAddTask={onAddTask} />
-              )}
-            </div>
+            <ConditionEdgeInfo summary={data?.summary} clauses={data?.clauses} />
+          </div>
+        </EdgeLabelRenderer>
+      )}
+      {showAddTask && addTaskIntent && onAddTask && (
+        <EdgeLabelRenderer>
+          <div
+            className={labelClassName}
+            style={{ transform: `translate(-50%, -50%) translate(${centerX}px, ${centerY}px)` }}
+            data-test-id="graph-edge-add-task"
+          >
+            <GraphAddTaskButton intent={addTaskIntent} onAddTask={onAddTask} isHighlighted={isLineHovered} />
           </div>
         </EdgeLabelRenderer>
       )}
