@@ -1,7 +1,7 @@
 import pytest
 from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
-    FieldSetRuleType,
+    FieldSetRuleOperator,
     FieldType,
 )
 from src.processes.messages.fieldset import (
@@ -11,19 +11,22 @@ from src.processes.messages.fieldset import (
 )
 from src.processes.models.templates.fieldset import (
     FieldsetTemplate,
-    FieldsetTemplateRule,
+    FieldSetTemplateRuleSet,
+    FieldSetTemplateRuleGroupOr,
+    FieldSetTemplateRuleGroupAnd,
 )
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.models.workflows.fieldset import (
-    FieldSetRule,
+    FieldSetRuleGroupAnd,
+    FieldSetRuleGroupOr,
 )
 from src.processes.services.exceptions import FieldsetServiceException
 from src.processes.services.tasks.field import TaskFieldService
 from src.processes.services.workflows.fieldsets.fieldset import (
     FieldSetService,
 )
-from src.processes.services.workflows.fieldsets.fieldset_rule import (
-    FieldSetRuleService,
+from src.processes.services.workflows.fieldsets.fieldset_ruleset import (
+    FieldSetRuleSetService,
 )
 from src.processes.tests.fixtures import (
     create_test_account,
@@ -352,7 +355,7 @@ def test__create_fields__skip_value_true__ok(mocker):
     )
 
 
-def test__create_rules__with_template__ok(mocker):
+def test__create_rulesets__with_template__ok(mocker):
 
     """
     Call with instance_template
@@ -368,10 +371,21 @@ def test__create_rules__with_template__ok(mocker):
         account=account,
         name='Fieldset',
     )
-    rule_template = FieldsetTemplateRule.objects.create(
+    ruleset = FieldSetTemplateRuleSet.objects.create(
         account=account,
         fieldset=fieldset_template,
-        type=FieldSetRuleType.SUM_EQUAL,
+        api_name='ruleset-1',
+    )
+    group_or = FieldSetTemplateRuleGroupOr.objects.create(
+        fieldset_rule=ruleset,
+        account=account,
+        api_name='group-or-1',
+    )
+    FieldSetTemplateRuleGroupAnd.objects.create(
+        group_or=group_or,
+        account=account,
+        api_name='group-and-1',
+        operator=FieldSetRuleOperator.SUM_EQUAL,
         value='100',
     )
     fieldset = create_test_fieldset(
@@ -383,25 +397,25 @@ def test__create_rules__with_template__ok(mocker):
         auth_type=AuthTokenType.USER,
         instance=fieldset,
     )
-    field_set_rule_service_init_mock = mocker.patch.object(
-        FieldSetRuleService,
+    ruleset_service_init_mock = mocker.patch.object(
+        FieldSetRuleSetService,
         attribute='__init__',
         return_value=None,
     )
-    field_set_rule_service_create_mock = mocker.patch(
-        'src.processes.services.workflows.fieldsets.fieldset_rule.'
-        'FieldSetRuleService.create',
+    ruleset_service_create_mock = mocker.patch(
+        'src.processes.services.workflows.fieldsets.fieldset_ruleset.'
+        'FieldSetRuleSetService.create',
     )
 
     # act
-    service._create_rules(instance_template=fieldset_template)
+    service._create_rulesets(instance_template=fieldset_template)
 
     # assert
-    field_set_rule_service_init_mock.assert_called_once_with(
+    ruleset_service_init_mock.assert_called_once_with(
         user=user,
     )
-    field_set_rule_service_create_mock.assert_called_once_with(
-        instance_template=rule_template,
+    ruleset_service_create_mock.assert_called_once_with(
+        instance_template=ruleset,
         fieldset=fieldset,
         skip_validation=None,
     )
@@ -431,16 +445,16 @@ def test__create_related__with_template__ok(mocker):
         'src.processes.services.workflows.fieldsets.fieldset.'
         'FieldSetService._create_fields',
     )
-    create_rules_mock = mocker.patch(
+    create_rulesets_mock = mocker.patch(
         'src.processes.services.workflows.fieldsets.fieldset.'
-        'FieldSetService._create_rules',
+        'FieldSetService._create_rulesets',
     )
 
     # act
     service._create_related(instance_template=fieldset_template)
 
     # assert
-    create_rules_mock.assert_called_once_with(
+    create_rulesets_mock.assert_called_once_with(
         fieldset_template,
     )
     create_fields_mock.assert_called_once_with(
@@ -461,35 +475,35 @@ def test_validate_rules__one_rule__ok(mocker):
     workflow = create_test_workflow(user=user, template=template)
     fieldset = create_test_fieldset(
         workflow=workflow,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='100',
     )
-    rule = fieldset.rules.first()
+    rule = fieldset.rulesets.first()
     service = FieldSetService(
         user=user,
         is_superuser=False,
         auth_type=AuthTokenType.USER,
         instance=fieldset,
     )
-    field_set_rule_service_init_mock = mocker.patch.object(
-        FieldSetRuleService,
+    ruleset_service_init_mock = mocker.patch.object(
+        FieldSetRuleSetService,
         attribute='__init__',
         return_value=None,
     )
-    field_set_rule_service_validate_mock = mocker.patch(
-        'src.processes.services.workflows.fieldsets.fieldset_rule.'
-        'FieldSetRuleService.validate',
+    ruleset_service_validate_mock = mocker.patch(
+        'src.processes.services.workflows.fieldsets.fieldset_ruleset.'
+        'FieldSetRuleSetService.validate',
     )
 
     # act
     service.validate_rules()
 
     # assert
-    field_set_rule_service_init_mock.assert_called_once_with(
+    ruleset_service_init_mock.assert_called_once_with(
         user=user,
         instance=rule,
     )
-    field_set_rule_service_validate_mock.assert_called_once_with()
+    ruleset_service_validate_mock.assert_called_once_with()
 
 
 def test_validate_rules__one_rule_none_matches__raise_exception(mocker):
@@ -505,11 +519,11 @@ def test_validate_rules__one_rule_none_matches__raise_exception(mocker):
     workflow = create_test_workflow(user=user, template=template)
     fieldset = create_test_fieldset(
         workflow=workflow,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='100',
     )
     field = fieldset.fields.first()
-    rule_100 = fieldset.rules.first()
+    rule_100 = fieldset.rulesets.first()
     rule_100.fields.add(field)
     service = FieldSetService(
         user=user,
@@ -526,11 +540,11 @@ def test_validate_rules__one_rule_none_matches__raise_exception(mocker):
     assert ex.value.message == MSG_FS_0002('100')
 
 
-def test_validate_rules__two_same_type_rules__first_value_matches__ok():
+def test_validate_rules__two_groups_or__first_matches__ok():
 
     """
-    Two sum_equal rules with different values.
-    Fields sum equals first rule value — OR-logic: validation passes.
+    One ruleset with two OR-branches, sum_equal 10 and 0.
+    Fields sum equals the first branch — validation passes.
     """
 
     # arrange
@@ -539,19 +553,26 @@ def test_validate_rules__two_same_type_rules__first_value_matches__ok():
     workflow = create_test_workflow(user=user)
     fieldset = create_test_fieldset(
         workflow=workflow,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='10',
     )
     field = fieldset.fields.first()
-    rule_10 = fieldset.rules.first()
-    rule_10.fields.add(field)
-    rule_0 = FieldSetRule.objects.create(
+    ruleset = fieldset.rulesets.first()
+    ruleset.fields.add(field)
+    group_or_0 = FieldSetRuleGroupOr.objects.create(
         account=account,
-        fieldset=fieldset,
-        type=FieldSetRuleType.SUM_EQUAL,
+        workflow=workflow,
+        fieldset_rule=ruleset,
+        api_name='group-or-2',
+    )
+    FieldSetRuleGroupAnd.objects.create(
+        account=account,
+        workflow=workflow,
+        group_or=group_or_0,
+        api_name='group-and-2',
+        operator=FieldSetRuleOperator.SUM_EQUAL,
         value='0',
     )
-    rule_0.fields.add(field)
     service = FieldSetService(
         user=user,
         is_superuser=False,
@@ -566,11 +587,11 @@ def test_validate_rules__two_same_type_rules__first_value_matches__ok():
     assert service.instance == fieldset
 
 
-def test_validate_rules__two_same_type_rules__second_value_matches__ok():
+def test_validate_rules__two_groups_or__second_matches__ok():
 
     """
-    Two sum_equal rules with different values.
-    Fields sum equals second rule value — OR-logic: validation passes.
+    One ruleset with two OR-branches, sum_equal 100 and 10.
+    Fields sum equals the second branch — validation passes.
     """
 
     # arrange
@@ -579,19 +600,26 @@ def test_validate_rules__two_same_type_rules__second_value_matches__ok():
     workflow = create_test_workflow(user=user)
     fieldset = create_test_fieldset(
         workflow=workflow,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='100',
     )
     field = fieldset.fields.first()
-    rule_100 = fieldset.rules.first()
-    rule_100.fields.add(field)
-    rule_10 = FieldSetRule.objects.create(
+    ruleset = fieldset.rulesets.first()
+    ruleset.fields.add(field)
+    group_or_10 = FieldSetRuleGroupOr.objects.create(
         account=account,
-        fieldset=fieldset,
-        type=FieldSetRuleType.SUM_EQUAL,
+        workflow=workflow,
+        fieldset_rule=ruleset,
+        api_name='group-or-2',
+    )
+    FieldSetRuleGroupAnd.objects.create(
+        account=account,
+        workflow=workflow,
+        group_or=group_or_10,
+        api_name='group-and-2',
+        operator=FieldSetRuleOperator.SUM_EQUAL,
         value='10',
     )
-    rule_10.fields.add(field)
     service = FieldSetService(
         user=user,
         is_superuser=False,
@@ -606,13 +634,12 @@ def test_validate_rules__two_same_type_rules__second_value_matches__ok():
     assert service.instance == fieldset
 
 
-def test_validate_rules__two_same_type_rules__none_matches__raise():
+def test_validate_rules__two_groups_or__none_matches__raise():
 
     """
-    Two sum_equal rules with different values.
-    Fields sum does not match any rule value —
-    raises FieldsetServiceException with MSG_FS_0012
-    listing all values from the group.
+    One ruleset with two OR-branches, sum_equal 100 and 0.
+    Fields sum matches neither — raises FieldsetServiceException
+    with MSG_FS_0012 listing the values of both branches.
     """
 
     # arrange
@@ -621,19 +648,26 @@ def test_validate_rules__two_same_type_rules__none_matches__raise():
     workflow = create_test_workflow(user=user)
     fieldset = create_test_fieldset(
         workflow=workflow,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='100',
     )
     field = fieldset.fields.first()
-    rule_100 = fieldset.rules.first()
-    rule_100.fields.add(field)
-    rule_0 = FieldSetRule.objects.create(
+    ruleset = fieldset.rulesets.first()
+    ruleset.fields.add(field)
+    group_or_0 = FieldSetRuleGroupOr.objects.create(
         account=account,
-        fieldset=fieldset,
-        type=FieldSetRuleType.SUM_EQUAL,
+        workflow=workflow,
+        fieldset_rule=ruleset,
+        api_name='group-or-2',
+    )
+    FieldSetRuleGroupAnd.objects.create(
+        account=account,
+        workflow=workflow,
+        group_or=group_or_0,
+        api_name='group-and-2',
+        operator=FieldSetRuleOperator.SUM_EQUAL,
         value='0',
     )
-    rule_0.fields.add(field)
     service = FieldSetService(
         user=user,
         is_superuser=False,

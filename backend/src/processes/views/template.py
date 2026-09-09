@@ -280,11 +280,20 @@ class TemplateViewSet(
             owners_qs = TemplateOwner.objects.filter(
                 is_deleted=False,
             ).order_by('role', 'type', 'id')
+            # Template.kickoff_instance calls first(), which re-queries
+            # unless the prefetched queryset is ordered.
+            kickoff_qs = Kickoff.objects.order_by('id').prefetch_related(
+                'fields',
+                'fields__selections',
+                'fields__rulesets__groups_or__groups_and',
+                'fieldsets',
+                'fieldsets__rulesets__groups_or__groups_and',
+                'fieldsets__rulesets__fields',
+                'fieldsets__fields__selections',
+                'fieldsets__fields__rulesets__groups_or__groups_and',
+            )
             queryset = queryset.prefetch_related(
-                'kickoff',
-                'kickoff__fields',
-                'kickoff__fields__selections',
-                'kickoff__fieldsets',
+                Prefetch('kickoff', queryset=kickoff_qs),
                 Prefetch('owners', queryset=owners_qs),
                 Prefetch(
                     lookup='tasks',
@@ -294,7 +303,13 @@ class TemplateViewSet(
                         .prefetch_related(
                             'fields',
                             'fields__selections',
+                            'fields__rulesets__groups_or__groups_and',
                             'fieldsets',
+                            'fieldsets__rulesets__groups_or__groups_and',
+                            'fieldsets__rulesets__fields',
+                            'fieldsets__fields__selections',
+                            'fieldsets__fields__rulesets'
+                            '__groups_or__groups_and',
                             'checklists',
                             'checklists__selections',
                             'conditions',

@@ -1,7 +1,3 @@
-from django.db.models import Q
-
-from src.processes.models.workflows.fields import TaskField
-
 from .base import Resolver
 
 
@@ -12,9 +8,5 @@ class UserResolver(Resolver):
             if self._predicate.value
             else None
         )
-        field = TaskField.objects.get(
-            Q(task__workflow_id=self._workflow_id) |
-            Q(kickoff__workflow_id=self._workflow_id),
-            api_name=self._predicate.field,
-        )
+        field = self._get_field()
         self.field_value = field.user_id or None
