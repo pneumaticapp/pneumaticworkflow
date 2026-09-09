@@ -59,10 +59,7 @@ function getStartAfterSources(task: ITemplateTaskClient, taskApiNameSet: Set<str
 }
 
 /** `ancestors` from the API is a transitive closure; the graph only needs direct parents. */
-function getDirectParents(
-  task: ITemplateTaskClient,
-  tasksByApiName: Map<string, ITemplateTaskClient>,
-): string[] {
+function getDirectParents(task: ITemplateTaskClient, tasksByApiName: Map<string, ITemplateTaskClient>): string[] {
   return task.ancestors.filter((apiName) => {
     if (apiName === KICKOFF_NODE_ID) {
       return true;
@@ -122,12 +119,12 @@ function dropImpliedSources(
   tasksByApiName: Map<string, ITemplateTaskClient>,
   taskApiNameSet: Set<string>,
 ): string[] {
-  return sources.filter((sourceId) => (
-    !sources.some((otherId) => (
-      otherId !== sourceId
-      && isUpstreamOf(sourceId, otherId, tasksByApiName, taskApiNameSet)
-    ))
-  ));
+  return sources.filter(
+    (sourceId) =>
+      !sources.some(
+        (otherId) => otherId !== sourceId && isUpstreamOf(sourceId, otherId, tasksByApiName, taskApiNameSet),
+      ),
+  );
 }
 
 function getIncomingSources(
@@ -198,6 +195,7 @@ function buildCardNodes(template: ITemplateClient, sortedTasks: ITemplateTaskCli
       task,
       isSelected: false,
       onEdit: () => {},
+      onDelete: () => {},
     },
   }));
 
@@ -210,11 +208,11 @@ export function templateToGraph(template: ITemplateClient): IGraphState {
   const taskApiNameSet = new Set<string>(sortedTasks.map((task) => task.apiName));
   const tasksByApiName = new Map(sortedTasks.map((task) => [task.apiName, task]));
   const nodes = buildCardNodes(template, sortedTasks);
-  const startAfterEdges: TGraphEdge[] = sortedTasks.flatMap((task, index) => (
+  const startAfterEdges: TGraphEdge[] = sortedTasks.flatMap((task, index) =>
     getIncomingSources(task, index, sortedTasks, taskApiNameSet, tasksByApiName).map((sourceId, idx) =>
       buildIncomingEdge(sourceId, task, String(idx), sortedTasks),
-    )
-  ));
+    ),
+  );
   const { nodes: graphNodes, edges: stemEdges } = insertJunctionNodes(nodes, startAfterEdges);
   const checkIfEdges = buildCheckIfEdges(template, sortedTasks, taskApiNameSet);
 

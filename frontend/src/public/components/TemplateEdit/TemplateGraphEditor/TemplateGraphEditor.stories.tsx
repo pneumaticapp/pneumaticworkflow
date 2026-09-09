@@ -26,6 +26,7 @@ export const AllVariants: Story = {
   args: {
     template: GRAPH_SHOWCASE_TEMPLATE,
     onTaskEdit: () => undefined,
+    onTaskDelete: () => undefined,
     onKickoffEdit: () => undefined,
     onAddTask: () => undefined,
   },
@@ -35,6 +36,7 @@ export const WeaveConditions: Story = {
   args: {
     template: GRAPH_WEAVE_TEMPLATE,
     onTaskEdit: () => undefined,
+    onTaskDelete: () => undefined,
     onKickoffEdit: () => undefined,
     onAddTask: () => undefined,
   },
@@ -47,6 +49,7 @@ export const PersistentPositions: Story = {
       id: 900001,
     },
     onTaskEdit: () => undefined,
+    onTaskDelete: () => undefined,
     onKickoffEdit: () => undefined,
     onAddTask: () => undefined,
   },

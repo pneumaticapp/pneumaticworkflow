@@ -99,7 +99,7 @@ export const Default: Story = {
   args: {
     ...nodeProps,
     selected: false,
-    data: { task, isSelected: false, onEdit: () => undefined },
+    data: { task, isSelected: false, onEdit: () => undefined, onDelete: () => undefined },
   },
 };
 
@@ -107,7 +107,7 @@ export const Selected: Story = {
   args: {
     ...nodeProps,
     selected: true,
-    data: { task, isSelected: true, onEdit: () => undefined },
+    data: { task, isSelected: true, onEdit: () => undefined, onDelete: () => undefined },
   },
 };
 
@@ -119,6 +119,7 @@ export const EmptyMeta: Story = {
       task: { ...task, rawPerformers: [], fields: [], conditions: [] },
       isSelected: false,
       onEdit: () => undefined,
+      onDelete: () => undefined,
     },
   },
 };
@@ -131,6 +132,7 @@ export const LeafWithAdd: Story = {
       task,
       isSelected: false,
       onEdit: () => undefined,
+      onDelete: () => undefined,
       onAddTask: () => undefined,
       addTaskIntent: { kind: 'continue', afterId: 'task-1' },
     },

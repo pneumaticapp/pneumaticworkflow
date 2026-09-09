@@ -18,6 +18,7 @@ import styles from './TemplateGraphEditor.css';
 interface ITemplateGraphEditorProps {
   template: ITemplateClient;
   onTaskEdit: (taskApiName: string) => void;
+  onTaskDelete: (taskApiName: string) => void;
   onKickoffEdit: () => void;
   onAddTask?: (intent: TGraphAddTaskIntent) => void;
 }
@@ -36,7 +37,13 @@ function isCardNode(type?: string): boolean {
   return type === EGraphNodeType.Task || type === EGraphNodeType.Kickoff;
 }
 
-export const TemplateGraphEditor = ({ template, onTaskEdit, onKickoffEdit, onAddTask }: ITemplateGraphEditorProps) => {
+export const TemplateGraphEditor = ({
+  template,
+  onTaskEdit,
+  onTaskDelete,
+  onKickoffEdit,
+  onAddTask,
+}: ITemplateGraphEditorProps) => {
   const { nodes, edges, onNodesChange, onEdgesChange, onNodeDrag, onNodeDragStop, hasCustomLayout, resetLayout } =
     useTemplateGraph(template);
   const [focusedNodeId, setFocusedNodeId] = useState<string | null>(null);
@@ -99,6 +106,7 @@ export const TemplateGraphEditor = ({ template, onTaskEdit, onKickoffEdit, onAdd
             data: {
               ...node.data,
               onEdit: onTaskEdit,
+              onDelete: onTaskDelete,
               onAddTask: canAdd ? onAddTask : undefined,
             },
           };
@@ -119,7 +127,7 @@ export const TemplateGraphEditor = ({ template, onTaskEdit, onKickoffEdit, onAdd
 
         return node;
       }),
-    [affordedNodes, onTaskEdit, onKickoffEdit, onAddTask],
+    [affordedNodes, onTaskEdit, onTaskDelete, onKickoffEdit, onAddTask],
   );
 
   const edgesWithCallback = useMemo(

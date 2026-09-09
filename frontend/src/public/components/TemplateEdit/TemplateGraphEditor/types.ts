@@ -73,6 +73,7 @@ export interface ITaskNodeData {
   task: ITemplateTaskClient;
   isSelected: boolean;
   onEdit: (apiName: string) => void;
+  onDelete: (apiName: string) => void;
   handles?: IConnectedHandles;
   addTaskIntent?: TGraphAddTaskIntent;
   onAddTask?: (intent: TGraphAddTaskIntent) => void;

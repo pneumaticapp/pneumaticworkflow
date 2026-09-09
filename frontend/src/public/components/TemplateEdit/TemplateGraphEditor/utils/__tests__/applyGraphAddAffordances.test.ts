@@ -23,6 +23,7 @@ function taskNode(id: string): TGraphNode {
     data: {
       isSelected: false,
       onEdit: () => undefined,
+      onDelete: () => undefined,
       task: {
         apiName: id,
         name: id,
@@ -114,10 +115,7 @@ describe('applyGraphAddAffordances', () => {
   });
 
   it('should treat a card with only check-if outgoing as a leaf', () => {
-    const { nodes } = applyGraphAddAffordances(
-      [kickoffNode(), taskNode('task-a')],
-      [orangeEdge('kickoff', 'task-a')],
-    );
+    const { nodes } = applyGraphAddAffordances([kickoffNode(), taskNode('task-a')], [orangeEdge('kickoff', 'task-a')]);
 
     expect(continueAfter(nodes)).toEqual(['kickoff', 'task-a']);
   });
@@ -125,11 +123,7 @@ describe('applyGraphAddAffordances', () => {
   it('should insert on fork→B and skip A→fork', () => {
     const { edges } = applyGraphAddAffordances(
       [taskNode('task-a'), junctionNode('fork-1', 'fork'), taskNode('task-b'), taskNode('task-c')],
-      [
-        grayEdge('task-a', 'fork-1'),
-        grayEdge('fork-1', 'task-b'),
-        grayEdge('fork-1', 'task-c'),
-      ],
+      [grayEdge('task-a', 'fork-1'), grayEdge('fork-1', 'task-b'), grayEdge('fork-1', 'task-c')],
     );
     const inserts = insertIntents(edges);
 
@@ -143,17 +137,15 @@ describe('applyGraphAddAffordances', () => {
       afterId: 'task-a',
       beforeId: 'task-c',
     });
-    expect(edges.find((edge) => edge.source === 'task-a' && edge.target === 'fork-1')?.data?.addTaskIntent).toBeUndefined();
+    expect(
+      edges.find((edge) => edge.source === 'task-a' && edge.target === 'fork-1')?.data?.addTaskIntent,
+    ).toBeUndefined();
   });
 
   it('should insert on A→join and skip join→B', () => {
     const { edges } = applyGraphAddAffordances(
       [taskNode('task-a'), taskNode('task-c'), junctionNode('join-1', 'join'), taskNode('task-b')],
-      [
-        grayEdge('task-a', 'join-1'),
-        grayEdge('task-c', 'join-1'),
-        grayEdge('join-1', 'task-b'),
-      ],
+      [grayEdge('task-a', 'join-1'), grayEdge('task-c', 'join-1'), grayEdge('join-1', 'task-b')],
     );
     const inserts = insertIntents(edges);
 
