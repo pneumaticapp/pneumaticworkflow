@@ -158,6 +158,8 @@ import { addTemplatePreset } from '../../api/addTemplatePreset';
 import { ALL_SYSTEM_FIELD_NAMES } from '../../components/Workflows/WorkflowsTablePage/WorkflowsTable/constants';
 import { TUserListItem } from '../../types/user';
 import { isRequestCanceled } from '../../utils/isRequestCanceled';
+import { EPermissionObjectType } from '../../types/permissions';
+import { loadObjectPermissions } from '../permissions/slice';
 
 function* handleLoadWorkflow({ workflowId, showLoader = true }: { workflowId: number; showLoader?: boolean }) {
   const {
@@ -187,6 +189,12 @@ function* handleLoadWorkflow({ workflowId, showLoader = true }: { workflowId: nu
 
     yield put(changeWorkflow(formattedWorkflow));
     yield put(changeWorkflowLog({ items: formattedWorkflowLog, workflowId }));
+    yield put(
+      loadObjectPermissions({
+        objType: EPermissionObjectType.Workflow,
+        objIds: [workflowId],
+      }),
+    );
   } catch (error) {
     logger.info('fetch prorcess error : ', error);
     throw error;
@@ -353,6 +361,14 @@ function* fetchWorkflowsList({ payload: offset = 0 }: PayloadAction<number>) {
     const items = offset > 0 ? uniqBy([...workflowsList.items, ...formattedResults], 'id') : formattedResults;
 
     yield put(changeWorkflowsList({ count, offset, items: mapWorkflowsAddComputedPropsToRedux(items) }));
+    // Asked per page and not awaited: the list renders at once and the controls appear as soon
+    // as the permissions for that page arrive.
+    yield put(
+      loadObjectPermissions({
+        objType: EPermissionObjectType.Workflow,
+        objIds: results.map(({ id }) => id),
+      }),
+    );
   } catch (error) {
     logger.info('fetch workflows list error : ', error);
     yield put(loadWorkflowsListFailed());
