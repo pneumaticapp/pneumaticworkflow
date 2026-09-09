@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { TemplateOwners } from '../TemplateOwners';
 import { TemplateViewers } from '../TemplateViewers';
 import { TemplateStarters } from '../TemplateStarters';
@@ -16,24 +16,15 @@ import { getLinkToWorkflows } from '../../../utils/routes/getLinkToWorkflows';
 import { getLinkToHighlightsByTemplate } from '../../../utils/routes/getLinkToHighlightsByTemplate';
 import { Button } from '../../UI/Buttons/Button';
 import { ETemplateOwnerRole, ITemplateOwner, ITemplateClient } from '../../../types/template';
-import {
-  TCloneTemplatePayload,
-  TDeleteTemplatePayload,
-  TPatchTemplatePayload,
-  discardTemplateChanges,
-} from '../../../redux/actions';
+import { TCloneTemplatePayload, TDeleteTemplatePayload, TPatchTemplatePayload } from '../../../redux/actions';
 import { getRunnableWorkflow, loadDatasetsMap } from '../utils/getRunnableWorkflow';
 import { mapFieldsetBindingClientToRuntime } from '../../../utils/mapFieldsetBindingClientToRuntime';
 import { ETemplateStatus } from '../../../types/redux';
 import { IRunWorkflow } from '../../WorkflowEditPopup/types';
 import { WarningPopup } from '../../UI/WarningPopup';
-import { validateTemplate } from '../utils/validateTemplate';
-import { isArrayWithItems } from '../../../utils/helpers';
-import { NotificationManager } from '../../UI/Notifications';
-import { IInfoWarningProps } from '../InfoWarningsModal';
-import { isCreateTemplate, history, checkSomeRouteMatchesLocation } from '../../../utils/history';
-import { ERoutes } from '../../../constants/routes';
-import { RouteLeavingGuard } from '../../UI';
+import { isCreateTemplate } from '../../../utils/history';
+import { InfoWarningsModal } from '../InfoWarningsModal';
+import { useTemplateActivation } from '../../../hooks/useTemplateActivation';
 import { useTemplateIntegrationsList } from '../../TemplateIntegrationsStats';
 import { checkShowDraftTemplateWarning } from '../../Templates';
 
@@ -49,7 +40,7 @@ export interface ITemplateControllsProps {
   patchTemplate(payload: TPatchTemplatePayload): void;
   deleteTemplate(payload: TDeleteTemplatePayload): void;
   openRunWorkflowModal(payload: IRunWorkflow): void;
-  setInfoWarnings(infoWarnings: ((props: IInfoWarningProps) => JSX.Element)[]): void;
+  onTemplateDeleted(): void;
 }
 
 export function TemplateControlls({
@@ -60,22 +51,20 @@ export function TemplateControlls({
   cloneTemplate,
   deleteTemplate,
   openRunWorkflowModal,
-  setInfoWarnings,
+  onTemplateDeleted,
 }: ITemplateControllsProps) {
-  const intl = useIntl();
-  const { formatMessage } = intl;
-  const dispatch = useDispatch();
+  const { formatMessage } = useIntl();
   const billingPlan = useSelector(getSubscriptionPlan);
   const isFreePlan = billingPlan === ESubscriptionPlan.Free;
   const accessConditions = isSubscribed || isFreePlan;
+  const { isActivating, infoWarnings, isInfoWarningsOpen, closeInfoWarnings, setTemplateActive } =
+    useTemplateActivation({ template, accessConditions, patchTemplate });
 
   const templateIntegrations = useTemplateIntegrationsList(template.id);
   const [showDraftWarning, setShowDraftWarning] = useState(
     checkShowDraftTemplateWarning(template.isActive, template.isPublic, templateIntegrations),
   );
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [isTemplateActivating, setIsTemplateActivating] = useState(false);
-  const [isTemplateDeleted, setIsTemplateDeleted] = useState(false);
 
   useEffect(() => {
     // sets warning only when integrations are initially loaded
@@ -114,48 +103,13 @@ export function TemplateControlls({
     }
   };
 
-  const handleChangeIsActive = (value: ITemplateClient['isActive'], redirectUrl?: string) => {
-    if (!value) {
-      patchTemplate({ changedFields: { isActive: false } });
-      return;
-    }
-
-    const { commonWarnings, infoWarnings } = validateTemplate(template, accessConditions, intl);
-    if (isArrayWithItems(infoWarnings)) {
-      setInfoWarnings(infoWarnings);
-      return;
-    }
-    if (isArrayWithItems(commonWarnings)) {
-      commonWarnings.forEach((message) => NotificationManager.warning({ message }));
-      return;
-    }
-
-    setIsTemplateActivating(true);
-
-    patchTemplate({
-      changedFields: {
-        isActive: true,
-      },
-      onSuccess: () => {
-        setIsTemplateActivating(false);
-
-        if (redirectUrl) {
-          history.push(redirectUrl);
-        }
-      },
-      onFailed: () => {
-        setIsTemplateActivating(false);
-      },
-    });
-  };
-
   const renderDeleteTemplateModal = () => {
     if (!templateId) {
       return null;
     }
 
     const onDeleteTemplate = () => {
-      setIsTemplateDeleted(true);
+      onTemplateDeleted();
       deleteTemplate({ templateId });
     };
 
@@ -173,65 +127,8 @@ export function TemplateControlls({
     );
   };
 
-  const renderLeavingGuard = () => {
-    const showLeavingGuard = !template.isActive && !isTemplateDeleted;
-
-    return (
-      <RouteLeavingGuard
-        when={showLeavingGuard}
-        title={formatMessage({ id: 'templates.inactive-warning-title' })}
-        message={formatMessage({ id: 'templates.inactive-warning-message' })}
-        onConfirm={(path) => {
-          handleChangeIsActive(true, path);
-        }}
-        onReject={(path) => {
-          history.push(path);
-        }}
-        shouldBlockNavigation={(location) => {
-          return !checkSomeRouteMatchesLocation(location.pathname, [
-            ERoutes.TemplateView,
-            ERoutes.TemplatesEdit,
-            ERoutes.TemplatesCreate,
-            ERoutes.Login,
-          ]);
-        }}
-        renderControlls={(confirm, reject) => {
-          return (
-            <>
-              <Button
-                label={formatMessage({ id: 'templates.save-and-enable-button' })}
-                onClick={confirm}
-                buttonStyle="yellow"
-                size="md"
-              />
-
-              <Button
-                label={formatMessage({ id: 'templates.save-as-draft' })}
-                onClick={reject}
-                buttonStyle="transparent-black"
-                size="md"
-              />
-
-              {templateId && (
-                <button
-                  type="button"
-                  className={classnames('cancel-button', styles['keep-draf-button'])}
-                  onClick={() => {
-                    dispatch(discardTemplateChanges({ templateId, onSuccess: reject }));
-                  }}
-                >
-                  {formatMessage({ id: 'templates.discard-changes' })}
-                </button>
-              )}
-            </>
-          );
-        }}
-      />
-    );
-  };
-
   const renderControllButtons = () => {
-    const showEnableTemplateButton = !isTemplateActive || isTemplateActivating;
+    const showEnableTemplateButton = !isTemplateActive || isActivating;
 
     return (
       <div className={styles['control-buttons']}>
@@ -244,11 +141,11 @@ export function TemplateControlls({
               showEnableTemplateButton ? styles['enable-button_enable'] : styles['enable-button_disable'],
             )}
             type="button"
-            onClick={() => handleChangeIsActive(!isTemplateActive)}
+            onClick={() => setTemplateActive(!isTemplateActive)}
             label={showEnableTemplateButton ? formatMessage({ id: 'templates.enable-template-button' }) : ''}
             buttonStyle="yellow"
             icon={EnableIcon}
-            isLoading={isTemplateActivating}
+            isLoading={isActivating}
           />
           <Button
             size="md"
@@ -271,7 +168,7 @@ export function TemplateControlls({
   return (
     <>
       {renderDeleteTemplateModal()}
-      {templateId && renderLeavingGuard()}
+      <InfoWarningsModal isOpen={isInfoWarningsOpen} onClose={closeInfoWarnings} warnings={infoWarnings} />
 
       <div className={styles['settings-block']}>
         <ShowMore label={formatMessage({ id: 'template.owners' })} isInitiallyVisible={isCreateTemplate()}>

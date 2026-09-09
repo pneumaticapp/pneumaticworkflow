@@ -67,7 +67,7 @@ const renderSettings = (viewMode: EGraphViewMode, selectedTaskApiName: string | 
     }),
   );
 
-  return render(<TemplateSettings />);
+  return render(<TemplateSettings onTemplateDeleted={jest.fn()} />);
 };
 
 describe('TemplateSettings', () => {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useIntl } from 'react-intl';
 import { debounce } from 'throttle-debounce';
 import { useDispatch, useSelector } from 'react-redux';
@@ -13,20 +13,20 @@ import { saveTemplate, setTemplate, setTemplateStatus } from '../../../redux/act
 import { ETemplateStatus } from '../../../types/redux';
 import { ITemplateClient } from '../../../types/template';
 import { TemplateControllsContainer } from '../TemplateControlls';
-import { isArrayWithItems } from '../../../utils/helpers';
-import { IInfoWarningProps, InfoWarningsModal } from '../InfoWarningsModal';
 import { TemplateLastUpdateInfo } from '../TemplateLastUpdateInfo';
 import { RichEditor } from '../../RichEditor';
 
 import styles from './TemplateSettings.css';
 
-export function TemplateSettings() {
+export interface ITemplateSettingsProps {
+  onTemplateDeleted(): void;
+}
+
+export function TemplateSettings({ onTemplateDeleted }: ITemplateSettingsProps) {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
   const template = useSelector(getTemplateData);
   const isGraphCanvas = useSelector(selectIsGraphCanvas);
-  const [isInfoWarningsModaOpen, setIsInfoWarningsModaOpen] = useState(false);
-  const [infoWarnings, setInfoWarnings] = useState<any>([]);
 
   const handleChangeTemplateField =
     (field: keyof ITemplateClient) => (value: ITemplateClient[keyof ITemplateClient]) => {
@@ -55,19 +55,6 @@ export function TemplateSettings() {
     handleChangeTemplateField(field)(value);
 
   const submitDebounced = debounce(350, () => dispatch(saveTemplate()));
-
-  const handleSetInfoWarnings = (infoWarningsLocal: ((props: IInfoWarningProps) => JSX.Element)[]) => {
-    if (isArrayWithItems(infoWarningsLocal)) {
-      setIsInfoWarningsModaOpen(true);
-      setInfoWarnings(infoWarningsLocal);
-    }
-  };
-
-  const renderInfoWarningsModal = () => {
-    const handleCloseModal = () => setIsInfoWarningsModaOpen(false);
-
-    return <InfoWarningsModal isOpen={isInfoWarningsModaOpen} onClose={handleCloseModal} warnings={infoWarnings} />;
-  };
 
   const nameField = (
     <EditableText
@@ -99,7 +86,7 @@ export function TemplateSettings() {
         />
       </div>
 
-      <TemplateControllsContainer setInfoWarnings={handleSetInfoWarnings} />
+      <TemplateControllsContainer onTemplateDeleted={onTemplateDeleted} />
 
       {(template.updatedBy || template.dateUpdated) && (
         <div className={styles['last-update']}>
@@ -109,10 +96,5 @@ export function TemplateSettings() {
     </StickyBox>
   );
 
-  return (
-    <>
-      {renderInfoWarningsModal()}
-      {settingsContent}
-    </>
-  );
+  return settingsContent;
 }
