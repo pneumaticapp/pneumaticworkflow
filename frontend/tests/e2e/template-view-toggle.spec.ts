@@ -123,9 +123,9 @@ test.describe('Template view toggle', () => {
 
     const restoredNode = page.locator(`.react-flow__node-task[data-id="${nodeId}"]`);
     await expect(restoredNode).toBeVisible({ timeout: TIMEOUT.medium });
-    await expect.poll(
-      () => restoredNode.evaluate((element) => (element as HTMLElement).style.transform),
-    ).toBe(movedTransform);
+    await expect
+      .poll(() => restoredNode.evaluate((element) => (element as HTMLElement).style.transform))
+      .toBe(movedTransform);
 
     await page.reload();
     await expect(page.getByTestId('template-view-toggle')).toBeVisible({ timeout: TIMEOUT.nav });
@@ -133,9 +133,52 @@ test.describe('Template view toggle', () => {
 
     const reloadedNode = page.locator(`.react-flow__node-task[data-id="${nodeId}"]`);
     await expect(reloadedNode).toBeVisible({ timeout: TIMEOUT.medium });
-    await expect.poll(
-      () => reloadedNode.evaluate((element) => (element as HTMLElement).style.transform),
-    ).toBe(movedTransform);
+    await expect
+      .poll(() => reloadedNode.evaluate((element) => (element as HTMLElement).style.transform))
+      .toBe(movedTransform);
+  });
+
+  test('should reset a moved graph card back to the automatic layout with Auto-arrange', async ({ page }) => {
+    await page.getByTestId('template-view-toggle').getByRole('button', { name: 'Graph' }).click();
+    await expect(page.getByTestId('template-graph-editor')).toBeVisible({ timeout: TIMEOUT.medium });
+
+    const autoArrangeButton = page.getByTestId('graph-auto-arrange');
+    await expect(autoArrangeButton).toBeDisabled();
+
+    const taskNode = page.locator('.react-flow__node-task').first();
+    await expect(taskNode).toBeVisible({ timeout: TIMEOUT.medium });
+
+    const nodeId = await taskNode.getAttribute('data-id');
+    const initialTransform = await taskNode.evaluate((element) => (element as HTMLElement).style.transform);
+    const nodeBox = await taskNode.boundingBox();
+
+    expect(nodeId).not.toBeNull();
+    expect(nodeBox).not.toBeNull();
+
+    await page.mouse.move(nodeBox!.x + 20, nodeBox!.y + 20);
+    await page.mouse.down();
+    await page.mouse.move(nodeBox!.x + 140, nodeBox!.y + 80, { steps: 10 });
+    await page.mouse.up();
+
+    await expect(autoArrangeButton).toBeEnabled();
+    await expect
+      .poll(() => taskNode.evaluate((element) => (element as HTMLElement).style.transform))
+      .not.toBe(initialTransform);
+
+    await autoArrangeButton.click();
+
+    const restoredNode = page.locator(`.react-flow__node-task[data-id="${nodeId}"]`);
+    await expect
+      .poll(() => restoredNode.evaluate((element) => (element as HTMLElement).style.transform))
+      .toBe(initialTransform);
+    await expect(autoArrangeButton).toBeDisabled();
+
+    const storedPositions = await page.evaluate(
+      (storageKey) => localStorage.getItem(storageKey),
+      GRAPH_POSITIONS_STORAGE_KEY,
+    );
+
+    expect(storedPositions).not.toContain(`"${nodeId}"`);
   });
 
   test('should keep Line selected when the active segment is clicked again', async ({ page }) => {

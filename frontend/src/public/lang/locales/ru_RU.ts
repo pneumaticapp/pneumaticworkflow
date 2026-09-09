@@ -539,9 +539,11 @@ export const ruMessages = {
   'template.view-line': 'Линия',
   'template.view-graph': 'Граф',
   'template.all-templates': 'Все шаблоны',
-  'template.graph-performers-count': '{count, plural, one {# исполнитель} few {# исполнителя} many {# исполнителей} other {# исполнителя}}',
+  'template.graph-performers-count':
+    '{count, plural, one {# исполнитель} few {# исполнителя} many {# исполнителей} other {# исполнителя}}',
   'template.graph-fields-count': '{count, plural, one {# поле} few {# поля} many {# полей} other {# поля}}',
-  'template.graph-conditions-count': '{count, plural, one {# условие} few {# условия} many {# условий} other {# условия}}',
+  'template.graph-conditions-count':
+    '{count, plural, one {# условие} few {# условия} many {# условий} other {# условия}}',
   'template.graph-edge-if': 'проверить, если: {summary}',
   'template.graph-edge-start-after': 'старт после: {summary}',
   'template.graph-edge-condition': 'условие',
@@ -550,6 +552,7 @@ export const ruMessages = {
   'template.graph-task-editor': 'Редактор задачи',
   'template.graph-task-editor-close': 'Закрыть',
   'template.graph-add-task': 'Добавить задачу',
+  'template.graph-auto-arrange': 'Авторасположение',
   'template.invite-team-member': 'Пригласить исполнителя',
   'template.edit-name': 'Изменить Название Шаблона',
   'template.save-failed': 'Не удалось сохранить Процесс',

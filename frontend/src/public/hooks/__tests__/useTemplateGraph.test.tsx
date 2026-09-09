@@ -4,8 +4,14 @@ import { act, render, waitFor } from '@testing-library/react';
 import { Node } from 'reactflow';
 
 import { GRAPH_SHOWCASE_TEMPLATE } from '../../components/TemplateEdit/TemplateGraphEditor/fixtures/graphShowcaseTemplate';
-import { GRAPH_JUNCTION_SIZE, GRAPH_NODE_WIDTH } from '../../components/TemplateEdit/TemplateGraphEditor/utils/graphGeometry';
-import { getGraphNodePositions } from '../../components/TemplateEdit/TemplateGraphEditor/utils/graphPositionsStorage';
+import {
+  GRAPH_JUNCTION_SIZE,
+  GRAPH_NODE_WIDTH,
+} from '../../components/TemplateEdit/TemplateGraphEditor/utils/graphGeometry';
+import {
+  getGraphNodePositions,
+  saveGraphNodePosition,
+} from '../../components/TemplateEdit/TemplateGraphEditor/utils/graphPositionsStorage';
 import { useTemplateGraph } from '../useTemplateGraph';
 
 type TTemplateGraphResult = ReturnType<typeof useTemplateGraph>;
@@ -75,9 +81,9 @@ describe('useTemplateGraph', () => {
 
     const taskNode = currentGraph!.nodes.find((node) => node.id === 'task-url-title');
     const nextPosition = { x: (taskNode?.position.x ?? 0) + 200, y: taskNode?.position.y ?? 0 };
-    const nodesDuringDrag = currentGraph!.nodes.map((node) => (
-      node.id === 'task-url-title' ? { ...node, position: nextPosition } : node
-    ));
+    const nodesDuringDrag = currentGraph!.nodes.map((node) =>
+      node.id === 'task-url-title' ? { ...node, position: nextPosition } : node,
+    );
 
     expect(taskNode).toBeDefined();
 
@@ -118,9 +124,7 @@ describe('useTemplateGraph', () => {
     expect(previousAnchor).toBeDefined();
 
     act(() => {
-      currentGraph!.onNodesChange([
-        { id: 'task-linear', type: 'position', dragging: true, position: nextPosition },
-      ]);
+      currentGraph!.onNodesChange([{ id: 'task-linear', type: 'position', dragging: true, position: nextPosition }]);
     });
 
     await waitFor(() => {
@@ -129,6 +133,62 @@ describe('useTemplateGraph', () => {
 
       expect(moved?.position).toEqual(nextPosition);
       expect(edgeAfter?.data?.targetAnchor?.x).toBe((previousAnchor?.x ?? 0) + 280);
+    });
+  });
+
+  it('should mark the layout as custom after a drag and restore it on reset', async () => {
+    let currentGraph: TTemplateGraphResult | undefined;
+    const handleChange = jest.fn((graph: TTemplateGraphResult) => {
+      currentGraph = graph;
+    });
+
+    render(<HookHarness onChange={handleChange} />);
+
+    await waitFor(() => {
+      expect(currentGraph?.nodes.length).toBeGreaterThan(0);
+    });
+
+    expect(currentGraph?.hasCustomLayout).toBe(false);
+
+    const taskNode = currentGraph!.nodes.find((node) => node.id === 'task-linear');
+    const autoPosition = taskNode!.position;
+
+    act(() => {
+      currentGraph!.onNodeDragStop(
+        {} as React.MouseEvent<Element>,
+        { ...taskNode!, position: { x: 900, y: 450 } } as Node,
+        [],
+      );
+    });
+
+    await waitFor(() => {
+      expect(currentGraph?.hasCustomLayout).toBe(true);
+    });
+
+    act(() => {
+      currentGraph!.resetLayout();
+    });
+
+    await waitFor(() => {
+      expect(currentGraph?.hasCustomLayout).toBe(false);
+      expect(currentGraph?.nodes.find((node) => node.id === 'task-linear')?.position).toEqual(autoPosition);
+    });
+
+    expect(getGraphNodePositions(42)).toEqual({});
+  });
+
+  it('should mark the layout as custom on mount when positions are already stored', async () => {
+    saveGraphNodePosition(42, 'task-linear', { x: 900, y: 450 });
+
+    let currentGraph: TTemplateGraphResult | undefined;
+    const handleChange = jest.fn((graph: TTemplateGraphResult) => {
+      currentGraph = graph;
+    });
+
+    render(<HookHarness onChange={handleChange} />);
+
+    await waitFor(() => {
+      expect(currentGraph?.hasCustomLayout).toBe(true);
     });
   });
 
@@ -152,11 +212,9 @@ describe('useTemplateGraph', () => {
     expect(taskNode).toBeDefined();
 
     act(() => {
-      currentGraph!.onNodeDrag(
-        {} as React.MouseEvent<Element>,
+      currentGraph!.onNodeDrag({} as React.MouseEvent<Element>, { ...taskNode!, position: nextPosition } as Node, [
         { ...taskNode!, position: nextPosition } as Node,
-        [{ ...taskNode!, position: nextPosition } as Node],
-      );
+      ]);
     });
 
     await waitFor(() => {

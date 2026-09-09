@@ -12,10 +12,7 @@ function isGraphNodePosition(value: unknown): value is IGraphNodePosition {
   }
 
   return (
-    typeof value.x === 'number'
-    && Number.isFinite(value.x)
-    && typeof value.y === 'number'
-    && Number.isFinite(value.y)
+    typeof value.x === 'number' && Number.isFinite(value.x) && typeof value.y === 'number' && Number.isFinite(value.y)
   );
 }
 
@@ -65,6 +62,25 @@ export function getGraphNodePositions(templateId?: number): TGraphNodePositions 
   }
 
   return readStorage()[String(templateId)] ?? {};
+}
+
+export function hasGraphNodePositions(templateId?: number): boolean {
+  return Object.keys(getGraphNodePositions(templateId)).length > 0;
+}
+
+export function clearGraphNodePositions(templateId?: number): void {
+  if (templateId == null || typeof localStorage === 'undefined') {
+    return;
+  }
+
+  try {
+    const storage = readStorage();
+    delete storage[String(templateId)];
+
+    localStorage.setItem(GRAPH_POSITIONS_STORAGE_KEY, JSON.stringify(storage));
+  } catch {
+    // Storage can be unavailable because of browser privacy settings or quota limits.
+  }
 }
 
 export function saveGraphNodePosition(
