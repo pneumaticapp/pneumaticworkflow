@@ -50,6 +50,10 @@ export interface IWorkflowClientProperties {
 export interface IWorkflowDetails {
   id: number;
   name: string;
+  /**
+   * Still returned by the API, but no longer a permission source: what the current user may do
+   * with a workflow comes from GET /accounts/user/permission (see redux/permissions).
+   */
   owners: number[];
   status: EWorkflowStatus;
   dateCreated: string;
@@ -168,6 +172,10 @@ export interface IWorkflowDetailsClient extends Omit<IWorkflowDetails, 'tasks'>,
 export interface IWorkflow {
   id: number;
   name: string;
+  /**
+   * Still returned by the API, but no longer a permission source: what the current user may do
+   * with a workflow comes from GET /accounts/user/permission (see redux/permissions).
+   */
   owners: number[];
   status: EWorkflowStatus;
   dateCreated: string;

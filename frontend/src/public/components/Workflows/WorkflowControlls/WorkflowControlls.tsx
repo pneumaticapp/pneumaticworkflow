@@ -16,7 +16,7 @@ import {
   ReturnToIcon,
 } from '../../icons';
 import { isArrayWithItems } from '../../../utils/helpers';
-import { getAuthUser } from '../../../redux/selectors/user';
+import { getCanChangeWorkflow } from '../../../redux/selectors/permissions';
 import { EWorkflowStatus, IPassedTask, IWorkflowClient, IWorkflowDetailsClient } from '../../../types/workflow';
 import { NotificationManager } from '../../UI/Notifications';
 import {
@@ -31,8 +31,6 @@ import {
 import { getSnoozeOptions } from '../utils/getSnoozeOptions';
 import { getTemplateEditRoute } from '../../../utils/routes';
 import { history } from '../../../utils/history';
-
-import { checkCanControlWorkflow } from './utils/checkCanControlWorkflow';
 
 import styles from './WorkflowControlls.css';
 
@@ -63,12 +61,11 @@ export function WorkflowControllsComponents({
   const { formatMessage } = useIntl();
   const [isUrgent, setIsUrgent] = React.useState(workflow.isUrgent);
 
-  const { authUser } = useSelector(getAuthUser);
-  const canControlWorkflow = checkCanControlWorkflow(authUser, workflow.owners);
-
-  if (!canControlWorkflow) {
-    return <>{children([])}</>;
-  }
+  // Permissions arrive after the list itself, so an unresolved workflow shows no controls until
+  // the answer lands. The options are still built either way: getSnoozeOptions calls useSelector
+  // under the hood, so returning early here would change the hook count between renders once the
+  // permission flips.
+  const canControlWorkflow = useSelector(getCanChangeWorkflow(workflow.id));
 
   const workflowId = workflow.id;
   const templateId = workflow.template?.id;
@@ -259,5 +256,5 @@ export function WorkflowControllsComponents({
     },
   ];
 
-  return <>{children(options)}</>;
+  return <>{children(canControlWorkflow ? options : [])}</>;
 }
