@@ -1,11 +1,12 @@
 .template-graph-editor {
-  overflow: hidden;
+  position: relative;
+  flex: 1;
   width: 100%;
   min-width: 0;
   height: 100%;
   min-height: 0;
+  overflow: hidden;
   background: var(--pneumatic-color-black4);
-  flex: 1;
 }
 
 :global {
@@ -56,8 +57,8 @@
     position: absolute;
     top: 0;
     right: 0;
-    left: 0;
     bottom: 0;
+    left: 0;
     pointer-events: none;
     content: '';
     background: var(--pneumatic-color-black4);
@@ -73,17 +74,26 @@
   .react-flow__edge.graph-item--dimmed .react-flow__edge-text,
   .react-flow__edge.graph-item--dimmed .react-flow__edge-textwrapper {
     opacity: 0.15;
-    transition: opacity 0.2s ease, stroke 0.2s ease, stroke-width 0.2s ease;
+    transition:
+      opacity 0.2s ease,
+      stroke 0.2s ease,
+      stroke-width 0.2s ease;
   }
 
   .react-flow__edge.graph-item--highlighted .react-flow__edge-path {
     stroke: var(--pneumatic-color-black100);
     stroke-width: 0.2rem;
-    transition: opacity 0.2s ease, stroke 0.2s ease, stroke-width 0.2s ease;
+    transition:
+      opacity 0.2s ease,
+      stroke 0.2s ease,
+      stroke-width 0.2s ease;
   }
 
   .react-flow__edge:not(.graph-item--dimmed) .react-flow__edge-path {
-    transition: opacity 0.2s ease, stroke 0.2s ease, stroke-width 0.2s ease;
+    transition:
+      opacity 0.2s ease,
+      stroke 0.2s ease,
+      stroke-width 0.2s ease;
   }
 
   .react-flow__edge-textbg {
@@ -108,8 +118,8 @@
   .react-flow__node-junction .react-flow__handle-right {
     top: 50%;
     right: auto;
-    left: 50%;
     bottom: auto;
+    left: 50%;
     width: 0.2rem;
     min-width: 0;
     height: 0.2rem;

@@ -10,6 +10,7 @@ import { TaskNode } from './components/TaskNode/TaskNode';
 import { KickoffNode } from './components/KickoffNode/KickoffNode';
 import { JunctionNode } from './components/JunctionNode/JunctionNode';
 import { GraphConditionEdge } from './components/GraphConditionEdge/GraphConditionEdge';
+import { GraphAutoArrangeButton } from './components/GraphAutoArrangeButton';
 import { applyGraphAddAffordances } from './utils/applyGraphAddAffordances';
 import { applyGraphFocus } from './utils/applyGraphFocus';
 import styles from './TemplateGraphEditor.css';
@@ -35,20 +36,9 @@ function isCardNode(type?: string): boolean {
   return type === EGraphNodeType.Task || type === EGraphNodeType.Kickoff;
 }
 
-export const TemplateGraphEditor = ({
-  template,
-  onTaskEdit,
-  onKickoffEdit,
-  onAddTask,
-}: ITemplateGraphEditorProps) => {
-  const {
-    nodes,
-    edges,
-    onNodesChange,
-    onEdgesChange,
-    onNodeDrag,
-    onNodeDragStop,
-  } = useTemplateGraph(template);
+export const TemplateGraphEditor = ({ template, onTaskEdit, onKickoffEdit, onAddTask }: ITemplateGraphEditorProps) => {
+  const { nodes, edges, onNodesChange, onEdgesChange, onNodeDrag, onNodeDragStop, hasCustomLayout, resetLayout } =
+    useTemplateGraph(template);
   const [focusedNodeId, setFocusedNodeId] = useState<string | null>(null);
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const activeNodeId = hoveredNodeId ?? focusedNodeId;
@@ -158,6 +148,7 @@ export const TemplateGraphEditor = ({
 
   return (
     <div className={styles['template-graph-editor']} data-test-id="template-graph-editor">
+      <GraphAutoArrangeButton isActive={hasCustomLayout} onReset={resetLayout} />
       <ReactFlow
         nodes={displayNodes}
         edges={displayEdges}
