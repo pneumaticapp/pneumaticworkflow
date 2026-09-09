@@ -12,6 +12,7 @@ import {
 } from '../../../redux/workflows/slice';
 
 import { IApplicationState } from '../../../types/redux';
+import { EPermissionObjectType } from '../../../types/permissions';
 
 import { WorkflowModal, IWorkflowModalProps } from './WorkflowModal';
 
@@ -50,7 +51,8 @@ export type TDispatchProps = Pick<
 >;
 
 export function mapStateToProps({
-  authUser: { id: currentUserId, isAccountOwner, isAdmin, timezone, dateFmt, language },
+  authUser: { isAccountOwner, timezone, dateFmt, language },
+  permissions,
   workflows: {
     workflowLog: {
       workflowId,
@@ -71,8 +73,9 @@ export function mapStateToProps({
     fullscreenImage: { isOpen: isFullscreenImageOpen },
   },
 }: IApplicationState): TStoreProps {
-  const isWorkflowOwner = workflow?.owners?.some((id) => id === currentUserId) ?? false;
-  const canEdit = Boolean(isAccountOwner) || (isWorkflowOwner && Boolean(isAdmin));
+  // Editing the workflow is the same right the controls need, so it comes from the same answer
+  // and stays false until the permissions request for this workflow lands.
+  const canEdit = workflow ? Boolean(permissions[EPermissionObjectType.Workflow][workflow.id]?.hasChange) : false;
 
   return {
     dateFmt,

@@ -121,6 +121,7 @@
       "getCustomerPortalLink": "/payment/customer-portal?cancel_url=:cancel_url",
       "apiKeys": "/api/accounts/api-keys/:id?",
       "getTasksCount": "/accounts/user/counters",
+      "userObjectPermissions": "/accounts/user/permission",
       "createKickoffForm": "/kickoffs",
       "editKickoffForm": "/kickoffs/:id/edit",
       "highlights": "/reports/highlights",
