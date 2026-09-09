@@ -64,13 +64,34 @@ test.describe('Template view toggle', () => {
     await page.getByTestId('template-view-toggle').getByRole('button', { name: 'Graph' }).click();
     await expect(page.getByTestId('template-graph-editor')).toBeVisible({ timeout: TIMEOUT.medium });
 
-    await page.getByTestId('graph-node-edit').first().click();
+    await page.getByTestId('graph-task-actions').first().click();
+    await page.getByRole('menuitem', { name: 'Edit task' }).click();
     await expect(page.getByTestId('graph-task-editor')).toBeVisible({ timeout: TIMEOUT.medium });
     await expect(page.getByTestId('template-graph-editor')).toBeVisible();
 
-    await page.getByTestId('graph-task-editor-close').click();
+    await page.getByTestId('graph-task-editor-overlay').click({ position: { x: 20, y: 20 } });
     await expect(page.getByTestId('graph-task-editor')).toHaveCount(0);
     await expect(page.getByTestId('template-graph-editor')).toBeVisible();
+  });
+
+  test('should cancel and confirm task deletion from the card dropdown', async ({ page }) => {
+    await page.getByTestId('template-view-toggle').getByRole('button', { name: 'Graph' }).click();
+    await expect(page.getByTestId('template-graph-editor')).toBeVisible({ timeout: TIMEOUT.medium });
+
+    const taskNodes = page.getByTestId('graph-task-node');
+    const taskCount = await taskNodes.count();
+    expect(taskCount).toBeGreaterThan(1);
+
+    await page.getByTestId('graph-task-actions').first().click();
+    await page.getByRole('menuitem', { name: 'Delete' }).click();
+    await expect(page.getByText('Sure?')).toBeVisible();
+    await page.getByRole('button', { name: 'No' }).click();
+    await expect(taskNodes).toHaveCount(taskCount);
+
+    await page.getByRole('menuitem', { name: 'Delete' }).click();
+    await page.getByRole('button', { name: 'Yes' }).click();
+
+    await expect(taskNodes).toHaveCount(taskCount - 1);
   });
 
   test('should add a task from a leaf plus and open the editor panel', async ({ page }) => {
