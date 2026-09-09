@@ -6,9 +6,10 @@ import classnames from 'classnames';
 
 import { TopNavContainer } from '../../components/TopNav';
 import { GraphViewToggle, EGraphViewMode } from '../../components/TemplateEdit/TemplateGraphEditor';
-import { ReturnLink } from '../../components/UI';
+import { NavLink } from '../../components/NavLink';
 import { ERoutes } from '../../constants/routes';
 import { selectIsGraphCanvas, selectTemplateViewMode } from '../../redux/selectors/templateGraphView';
+import templateIcon from '../../assets/img/template-20.svg';
 
 import styles from './TemplateLayout.css';
 
@@ -43,7 +44,12 @@ export function TemplateLayout({ children }: ITemplateLayoutProps) {
     return (
       <div className={styles['navbar-left__content']}>
         <GraphViewToggle />
-        <ReturnLink label={formatMessage({ id: 'menu.templates' })} route={ERoutes.Templates} />
+        <NavLink to={ERoutes.Templates} className={styles['all-templates']}>
+          <span className={styles['all-templates__icon']}>
+            <img src={templateIcon} alt="" />
+          </span>
+          {formatMessage({ id: 'template.all-templates' })}
+        </NavLink>
       </div>
     );
   };
@@ -56,9 +62,7 @@ export function TemplateLayout({ children }: ITemplateLayoutProps) {
         data-test-id="template-layout"
         data-graph-mode={String(isGraphMode)}
       >
-        <div className={classnames('container-fluid', isGraphCanvas && styles['content--graph'])}>
-          {children}
-        </div>
+        <div className={classnames('container-fluid', isGraphCanvas && styles['content--graph'])}>{children}</div>
       </main>
     </>
   );

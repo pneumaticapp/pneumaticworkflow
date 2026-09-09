@@ -12,43 +12,36 @@ import { setViewMode } from '../../../redux/templateGraphView/slice';
 import { enMessages } from '../../../lang/locales/en_US';
 
 jest.mock('../../../components/TopNav', () => ({
-  TopNavContainer: ({ leftContent }: { leftContent: React.ReactNode }) => (
-    <div>{leftContent}</div>
-  ),
+  TopNavContainer: ({ leftContent }: { leftContent: React.ReactNode }) => <div>{leftContent}</div>,
 }));
 
-jest.mock('../../../components/UI', () => {
-  const actual = jest.requireActual('../../../components/UI') as typeof import('../../../components/UI');
-
-  return {
-    ...actual,
-    Tabs: ({
-      values,
-      onChange,
-      activeValueId,
-    }: {
-      values: { id: string; label: React.ReactNode }[];
-      onChange: (id: string) => void;
-      activeValueId: string;
-    }) => (
-      <div>
-        {values.map((value) => (
-          <button
-            key={String(value.id)}
-            type="button"
-            onClick={() => {
-              if (value.id !== activeValueId) {
-                onChange(value.id);
-              }
-            }}
-          >
-            {value.label}
-          </button>
-        ))}
-      </div>
-    ),
-  };
-});
+jest.mock('../../../components/UI', () => ({
+  Tabs: ({
+    values,
+    onChange,
+    activeValueId,
+  }: {
+    values: { id: string; label: React.ReactNode }[];
+    onChange: (id: string) => void;
+    activeValueId: string;
+  }) => (
+    <div>
+      {values.map((value) => (
+        <button
+          key={String(value.id)}
+          type="button"
+          onClick={() => {
+            if (value.id !== activeValueId) {
+              onChange(value.id);
+            }
+          }}
+        >
+          {value.label}
+        </button>
+      ))}
+    </div>
+  ),
+}));
 
 jest.mock('../../../utils/history', () => ({
   history: {
@@ -60,10 +53,7 @@ jest.mock('../../../utils/history', () => ({
 
 const mockDispatch = jest.fn();
 
-const renderLayout = (
-  viewMode: EGraphViewMode = EGraphViewMode.List,
-  selectedTaskApiName: string | null = null,
-) => {
+const renderLayout = (viewMode: EGraphViewMode = EGraphViewMode.List, selectedTaskApiName: string | null = null) => {
   (useDispatch as jest.Mock).mockReturnValue(mockDispatch);
   (useSelector as jest.Mock).mockImplementation((selector: (state: unknown) => unknown) =>
     selector({
@@ -96,15 +86,16 @@ describe('TemplateLayout', () => {
     document.getElementById('app-container')?.classList.remove('template-graph-lock');
   });
 
-  it('should render Line/Graph toggle and Templates return link', () => {
+  it('should render Line/Graph toggle and All Templates link', () => {
     renderLayout();
 
-    const templatesLink = screen.getByRole('link', { name: /Templates/ });
+    const allTemplatesLink = screen.getByRole('link', { name: /All Templates/ });
 
     expect(screen.getByRole('button', { name: 'Line' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Graph' })).toBeInTheDocument();
-    expect(templatesLink).toBeInTheDocument();
-    expect(templatesLink).toHaveAttribute('href', ERoutes.Templates);
+    expect(allTemplatesLink).toBeInTheDocument();
+    expect(allTemplatesLink).toHaveAttribute('href', ERoutes.Templates);
+    expect(allTemplatesLink.querySelector('img')).toBeInTheDocument();
   });
 
   it('should switch store to graph view from the header toggle', () => {
