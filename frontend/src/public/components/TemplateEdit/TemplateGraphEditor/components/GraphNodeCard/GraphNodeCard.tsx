@@ -13,6 +13,7 @@ interface IGraphNodeCardProps {
   onClick?: () => void;
   onEdit?: () => void;
   editLabel?: string;
+  menu?: React.ReactNode;
   handles?: React.ReactNode;
   addTask?: React.ReactNode;
   testId?: string;
@@ -26,6 +27,7 @@ export const GraphNodeCard = ({
   onClick,
   onEdit,
   editLabel,
+  menu,
   handles,
   addTask,
   testId,
@@ -56,32 +58,29 @@ export const GraphNodeCard = ({
       {handles}
       <div className={styles['graph-node-card__header']}>
         <span className={styles['graph-node-card__label']}>{label}</span>
-        {onEdit ? (
-          <button
-            type="button"
-            className={`${styles['graph-node-card__kebab']} nodrag nopan`}
-            aria-label={editLabel}
-            data-test-id="graph-node-edit"
-            onClick={(event) => {
-              event.stopPropagation();
-              onEdit();
-            }}
-          >
-            <MoreIcon fill="currentColor" />
-          </button>
-        ) : (
-          <span className={styles['graph-node-card__kebab']} aria-hidden="true">
-            <MoreIcon fill="currentColor" />
-          </span>
-        )}
+        {menu ||
+          (onEdit ? (
+            <button
+              type="button"
+              className={`${styles['graph-node-card__kebab']} nodrag nopan`}
+              aria-label={editLabel}
+              data-test-id="graph-node-edit"
+              onClick={(event) => {
+                event.stopPropagation();
+                onEdit();
+              }}
+            >
+              <MoreIcon fill="currentColor" />
+            </button>
+          ) : (
+            <span className={styles['graph-node-card__kebab']} aria-hidden="true">
+              <MoreIcon fill="currentColor" />
+            </span>
+          ))}
       </div>
       <div className={styles['graph-node-card__title']}>{title}</div>
       {meta}
-      {addTask && (
-        <div className={styles['graph-node-card__add']}>
-          {addTask}
-        </div>
-      )}
+      {addTask && <div className={styles['graph-node-card__add']}>{addTask}</div>}
     </div>
   );
 };

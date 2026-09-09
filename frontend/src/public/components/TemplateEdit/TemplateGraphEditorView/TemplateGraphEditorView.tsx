@@ -38,6 +38,14 @@ export function TemplateGraphEditorView({
     [selectTask],
   );
 
+  const handleTaskDelete = useCallback(
+    (taskApiName: string): void => {
+      const task = controller.sortedTasks.find(({ apiName }) => apiName === taskApiName);
+      if (task) controller.removeTask(task);
+    },
+    [controller],
+  );
+
   const handleKickoffEdit = useCallback((): void => {
     selectTask(KICKOFF_NODE_ID);
   }, [selectTask]);
@@ -59,6 +67,7 @@ export function TemplateGraphEditorView({
       <TemplateGraphEditor
         template={template}
         onTaskEdit={handleTaskEdit}
+        onTaskDelete={handleTaskDelete}
         onKickoffEdit={handleKickoffEdit}
         onAddTask={handleAddTask}
       />
