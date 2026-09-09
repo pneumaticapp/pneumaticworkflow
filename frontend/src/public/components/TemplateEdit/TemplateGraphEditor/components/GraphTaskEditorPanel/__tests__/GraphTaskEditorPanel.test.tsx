@@ -12,7 +12,6 @@ configure({ testIdAttribute: 'data-test-id' });
 const renderPanel = (onClose = jest.fn()) =>
   render(
     <div>
-      <button type="button">outside</button>
       <IntlProvider locale="en" messages={enMessages}>
         <GraphTaskEditorPanel onClose={onClose}>
           <div>task-form-content</div>
@@ -38,11 +37,11 @@ describe('GraphTaskEditorPanel', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('should close the panel when the user clicks outside the form', () => {
+  it('should close the panel when the overlay is clicked', () => {
     const onClose = jest.fn();
     renderPanel(onClose);
 
-    userEvent.click(screen.getByRole('button', { name: 'outside' }));
+    userEvent.click(screen.getByTestId('graph-task-editor-overlay'));
 
     expect(onClose).toHaveBeenCalledTimes(1);
   });
