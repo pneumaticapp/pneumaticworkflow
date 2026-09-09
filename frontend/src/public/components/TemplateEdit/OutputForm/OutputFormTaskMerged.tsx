@@ -14,6 +14,9 @@ import { ExtraFieldIcon } from '../ExtraFields/utils/ExtraFieldIcon';
 import { FieldsetIconPicker } from '../TaskOutputFlow/FieldsetIconPicker';
 import { MergedOutputRows } from '../TaskOutputFlow/MergedOutputRows';
 import { TPatchTaskPayload } from '../../../redux/actions';
+import { useFieldRuleModal } from '../../Fieldsets/FieldsetDetails/useFieldRuleModal';
+import { FieldRuleModal } from '../../Fieldsets/FieldsetDetails/FieldRuleModal';
+import { getFieldsWithFilteredRulesets } from '../../Fieldsets/FieldsetDetails/utils';
 
 import {
   buildMergedTaskOutputRows,
@@ -61,6 +64,18 @@ export function OutputFormTaskMerged({
   );
   const datasetOptions = useDatasetOptions(task.fields || []);
 
+  const handleFieldsUpdate = useCallback(
+    (newFields: IExtraField[]) => {
+      patchTask({ taskUUID: task.uuid, changedFields: { fields: newFields } });
+    },
+    [patchTask, task.uuid],
+  );
+
+  const { openFieldRule, handleDeleteFieldRuleset, fieldRuleModalProps } = useFieldRuleModal(
+    task.fields || [],
+    handleFieldsUpdate,
+  );
+
   const saveOutputOrders = useCallback(
     async (
       rows: TMergedTaskOutputRow[],
@@ -99,7 +114,8 @@ export function OutputFormTaskMerged({
 
   const handleDeleteField = useCallback(
     (apiName: string) => {
-      const nextFields = (task.fields || []).filter((f) => f.apiName !== apiName);
+      const filteredFields = (task.fields || []).filter((f) => f.apiName !== apiName);
+      const nextFields = getFieldsWithFilteredRulesets(filteredFields, apiName);
       const rows = buildMergedTaskOutputRows(nextFields, task.fieldsets || []);
       saveOutputOrders(rows, nextFields).catch(() => undefined);
     },
@@ -169,8 +185,16 @@ export function OutputFormTaskMerged({
             formatMessage={formatMessage}
             innerRef={outputRef}
             onEditFieldsetTitle={handleEditFieldsetTitle}
+            onOpenFieldRules={openFieldRule}
+            onDeleteFieldRuleset={handleDeleteFieldRuleset}
           />
         </div>
+      )}
+      {fieldRuleModalProps.fieldType && (
+        <FieldRuleModal
+          {...fieldRuleModalProps}
+          fieldType={fieldRuleModalProps.fieldType}
+        />
       )}
     </>
   );

@@ -1,16 +1,14 @@
 import * as React from 'react';
 import { useMemo } from 'react';
 import { useIntl } from 'react-intl';
-import classnames from 'classnames';
 
-import { FilterSelect } from '../../../UI';
+import { DropdownList } from '../../../UI';
 import { getRuleOperators } from './utils';
 import {
   IFieldRuleBaseOperatorOption,
   IRuleOperatorSelectProps,
 } from './types';
 
-import fieldsetDetailsStyles from '../FieldsetDetails.css';
 import styles from '../FieldsetRulesetsList/FieldsetRulesets.css';
 
 export const RuleOperatorSelect = ({
@@ -30,32 +28,23 @@ export const RuleOperatorSelect = ({
     return [];
   }, [fieldType, formatMessage, isFieldsetRuleset]);
 
-  const selectedOperatorLabel =
-    fieldOperatorOptions.find((option) => option.apiName === operator)?.name || '';
+  const selectedOption = fieldOperatorOptions.find((option) => option.apiName === operator) || null;
 
   return (
-    <FilterSelect<'apiName', 'name', IFieldRuleBaseOperatorOption>
-      optionIdKey="apiName"
-      optionLabelKey="name"
-      options={fieldOperatorOptions}
-      selectedOption={operator || ''}
-      onChange={(key) => {
-        if (key && key !== operator) {
-          onChange(String(key));
+    <DropdownList
+      className={styles['rule-operator-select']}
+      isDisabled={isReadOnly}
+      placeholder={operatorPlaceholderText}
+      isSearchable={false}
+      value={selectedOption}
+      onChange={(option: IFieldRuleBaseOperatorOption | null) => {
+        if (option && option.apiName !== operator) {
+          onChange(option.apiName);
         }
       }}
-      resetFilter={() => {}}
-      placeholderText={operatorPlaceholderText}
-      isDisabled={isReadOnly}
-      containerClassname={classnames(
-        fieldsetDetailsStyles['rule-operator-select'],
-        styles['rule-operator-select'],
-      )}
-      toggleClassName={fieldsetDetailsStyles['rule-operator-select__toggle']}
-      menuClassName={fieldsetDetailsStyles['rule-operator-select__menu']}
-      renderPlaceholder={() =>
-        selectedOperatorLabel || <span className={styles['rule-select-placeholder']}>{operatorPlaceholderText}</span>
-      }
+      isClearable={false}
+      options={fieldOperatorOptions}
+      classNames={{ menu: () => styles['rule-operator-select__menu'] }}
     />
   );
 };

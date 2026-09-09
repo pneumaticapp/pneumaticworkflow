@@ -72,8 +72,12 @@
 }
 
 .rule-operator-select {
-  width: 12rem;
+  width: 19rem;
   flex-shrink: 0;
+}
+
+.rule-operator-select__menu {
+  min-width: max-content;
 }
 
 .rule-value-input,

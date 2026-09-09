@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { getEmptyField } from './utils/getEmptyField';
 import { KickoffShareForm } from './KickoffShareForm';
 import { isKickoffCleared } from './utils/isKickoffCleared';
+import { getFieldsWithFilteredRulesets } from '../../Fieldsets/FieldsetDetails/utils';
 import { FieldsetIconPicker } from '../TaskOutputFlow/FieldsetIconPicker';
 import {
   buildMergedTaskOutputRows,
@@ -132,7 +133,8 @@ export function KickoffRedux({
     saveOutputOrders(rows);
   };
   const handleDeleteField = (apiName: string) => {
-    const nextFields = (kickoff.fields || []).filter((f) => f.apiName !== apiName);
+    const filteredFields = (kickoff.fields || []).filter((f) => f.apiName !== apiName);
+    const nextFields = getFieldsWithFilteredRulesets(filteredFields, apiName);
     const rows = buildMergedTaskOutputRows(nextFields, kickoff.fieldsets || []);
     saveOutputOrders(rows, nextFields);
   };

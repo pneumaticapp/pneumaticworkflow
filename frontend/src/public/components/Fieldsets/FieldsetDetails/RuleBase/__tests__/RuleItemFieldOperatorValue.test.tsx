@@ -1,9 +1,11 @@
 import * as React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { RuleItemFieldOperatorValue } from '../RuleItemFieldOperatorValue';
 import { EExtraFieldType } from '../../../../../types/template';
 import { intlMock } from '../../../../../__stubs__/intlMock';
-import { IBaseRuleGroupAnd, EFieldRuleOperator } from '../../../../../types/fieldset';
+import { EFieldRuleOperator } from '../../../../../types/fieldset';
+import { makeFieldRuleGroupAnd } from '../../../../../__stubs__/fieldsets.factory';
 
 jest.mock('react-intl', () => {
   const actualIntl = jest.requireActual('react-intl');
@@ -14,6 +16,7 @@ jest.mock('react-intl', () => {
 });
 
 jest.mock('../../../../UI', () => ({
+  DropdownList: require('../../../../../__stubs__/uiMocks').DropdownListMock,
   FilterSelect: (props: {
     options?: { apiName: string; name: string }[];
     selectedOption?: string;
@@ -47,12 +50,16 @@ jest.mock('../RuleValueInput', () => ({
 }));
 
 describe('RuleItemFieldOperatorValue component', () => {
-  const mockGroupAndRule: IBaseRuleGroupAnd = {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  const mockGroupAndRule = makeFieldRuleGroupAnd({
     apiName: 'and_1',
     field: 'field_1',
     operator: EFieldRuleOperator.Equal,
     value: 'test_val',
-  };
+  });
 
   const mockOptions = [
     {
@@ -81,8 +88,8 @@ describe('RuleItemFieldOperatorValue component', () => {
       />,
     );
 
-    const selects = screen.getAllByTestId('filter-select');
-    fireEvent.change(selects[0], { target: { value: 'field_2' } });
+    const fieldSelect = screen.getByTestId('filter-select');
+    userEvent.selectOptions(fieldSelect, 'field_2');
 
     expect(handleUpdateRule).toHaveBeenCalledTimes(1);
     expect(handleUpdateRule).toHaveBeenCalledWith({
@@ -108,8 +115,8 @@ describe('RuleItemFieldOperatorValue component', () => {
       />,
     );
 
-    const selects = screen.getAllByTestId('filter-select');
-    fireEvent.change(selects[1], { target: { value: EFieldRuleOperator.NotEqual } });
+    const operatorSelect = screen.getByRole('combobox', { name: 'operator' });
+    userEvent.selectOptions(operatorSelect, EFieldRuleOperator.NotEqual);
 
     expect(handleUpdateRule).toHaveBeenCalledTimes(1);
     expect(handleUpdateRule).toHaveBeenCalledWith({
@@ -126,7 +133,7 @@ describe('RuleItemFieldOperatorValue component', () => {
 
     render(
       <RuleItemFieldOperatorValue
-        groupAndRule={mockGroupAndRule}
+        groupAndRule={{ ...mockGroupAndRule, value: '' }}
         groupOrApiName="or_1"
         fieldRuleShowFieldOptions={mockOptions}
         updateRule={handleUpdateRule}
@@ -134,7 +141,7 @@ describe('RuleItemFieldOperatorValue component', () => {
     );
 
     const valueInput = screen.getByTestId('rule-value-input');
-    fireEvent.change(valueInput, { target: { value: 'new value' } });
+    userEvent.paste(valueInput, 'new value');
 
     expect(handleUpdateRule).toHaveBeenCalledTimes(1);
     expect(handleUpdateRule).toHaveBeenCalledWith({
@@ -158,8 +165,8 @@ describe('RuleItemFieldOperatorValue component', () => {
       />,
     );
 
-    const selects = screen.getAllByTestId('filter-select');
-    fireEvent.change(selects[1], { target: { value: EFieldRuleOperator.Exist } });
+    const operatorSelect = screen.getByRole('combobox', { name: 'operator' });
+    userEvent.selectOptions(operatorSelect, EFieldRuleOperator.Exist);
 
     expect(handleUpdateRule).toHaveBeenCalledTimes(1);
     expect(handleUpdateRule).toHaveBeenCalledWith({

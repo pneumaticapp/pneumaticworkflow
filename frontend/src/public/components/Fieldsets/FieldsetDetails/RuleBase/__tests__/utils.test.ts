@@ -145,18 +145,38 @@ describe('RuleBase utils', () => {
   });
 
   describe('getRuleOperators', () => {
-    it('returns list of operators with localized labels for specified field type', () => {
-      const messages: Record<string, string> = {
-        'templates.conditions.equal': 'Equal',
-        'templates.conditions.not-equal': 'Not equal',
-      };
-      const formatMessageMock = ({ id }: { id: string }) => messages[id] || id;
+    const messages: Record<string, string> = {
+      'templates.conditions.equal': 'Equal',
+      'templates.conditions.not-equal': 'Not equal',
+      'fieldsets.rule-type-sum_equal': 'Sum equal',
+    };
+    const formatMessageMock = ({ id }: { id: string }) => messages[id] || id;
 
+    it('returns list of operators with localized labels when isFieldsetRuleset is false', () => {
       const result = getRuleOperators(EExtraFieldType.Text, formatMessageMock, false);
 
       expect(result.length).toBeGreaterThan(0);
       expect(result[0]).toHaveProperty('apiName');
-      expect(result[0]).toHaveProperty('name', 'Equal');
+      expect(result[0]).toHaveProperty('label', 'Equal');
+      expect(result[0]).not.toHaveProperty('name');
+    });
+
+    it('returns fieldset ruleset numeric operators when isFieldsetRuleset is true', () => {
+      const result = getRuleOperators(EExtraFieldType.Number, formatMessageMock, true);
+
+      expect(result.length).toBeGreaterThan(0);
+      expect(result[0]).toHaveProperty('apiName');
+      expect(result[0]).toHaveProperty('label', 'Sum equal');
+      expect(result[0]).not.toHaveProperty('name');
+    });
+
+    it('defaults to field operators when isFieldsetRuleset is undefined', () => {
+      const result = getRuleOperators(EExtraFieldType.Text, formatMessageMock);
+
+      expect(result.length).toBeGreaterThan(0);
+      expect(result[0]).toHaveProperty('apiName');
+      expect(result[0]).toHaveProperty('label', 'Equal');
+      expect(result[0]).not.toHaveProperty('name');
     });
   });
 

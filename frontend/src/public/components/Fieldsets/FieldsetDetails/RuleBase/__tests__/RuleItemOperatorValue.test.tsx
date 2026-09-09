@@ -1,9 +1,11 @@
 import * as React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { RuleItemOperatorValue } from '../RuleItemOperatorValue';
 import { intlMock } from '../../../../../__stubs__/intlMock';
-import { IBaseRuleGroupAnd, EFieldRuleOperator } from '../../../../../types/fieldset';
+import { EFieldRuleOperator } from '../../../../../types/fieldset';
 import { EExtraFieldType } from '../../../../../types/template';
+import { makeFieldRuleGroupAnd } from '../../../../../__stubs__/fieldsets.factory';
 
 jest.mock('react-intl', () => {
   const actualIntl = jest.requireActual('react-intl');
@@ -14,23 +16,7 @@ jest.mock('react-intl', () => {
 });
 
 jest.mock('../../../../UI', () => ({
-  FilterSelect: (props: {
-    options?: { apiName: string; name: string }[];
-    selectedOption?: string;
-    onChange: (value: string) => void;
-  }) => (
-    <select
-      data-testid="filter-select"
-      value={props.selectedOption || ''}
-      onChange={(event) => props.onChange(event.target.value)}
-    >
-      {props.options?.map((option) => (
-        <option key={option.apiName} value={option.apiName}>
-          {option.name}
-        </option>
-      ))}
-    </select>
-  ),
+  DropdownList: require('../../../../../__stubs__/uiMocks').DropdownListMock,
 }));
 
 jest.mock('react-number-format', () => ({
@@ -53,11 +39,15 @@ jest.mock('react-number-format', () => ({
 }));
 
 describe('RuleItemOperatorValue component', () => {
-  const mockGroupAndRule: IBaseRuleGroupAnd = {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  const mockGroupAndRule = makeFieldRuleGroupAnd({
     apiName: 'and_1',
     operator: EFieldRuleOperator.Equal,
     value: '^[0-9]+$',
-  };
+  });
 
   it('triggers updateRule when operator is changed', () => {
     const handleUpdateRule = jest.fn();
@@ -71,8 +61,8 @@ describe('RuleItemOperatorValue component', () => {
       />,
     );
 
-    const select = screen.getByTestId('filter-select');
-    fireEvent.change(select, { target: { value: EFieldRuleOperator.NotEqual } });
+    const select = screen.getByRole('combobox', { name: 'operator' });
+    userEvent.selectOptions(select, EFieldRuleOperator.NotEqual);
 
     expect(handleUpdateRule).toHaveBeenCalledTimes(1);
     expect(handleUpdateRule).toHaveBeenCalledWith({
@@ -89,7 +79,7 @@ describe('RuleItemOperatorValue component', () => {
 
     render(
       <RuleItemOperatorValue
-        groupAndRule={mockGroupAndRule}
+        groupAndRule={{ ...mockGroupAndRule, value: '' }}
         groupOrApiName="or_1"
         fieldType={EExtraFieldType.Number}
         updateRule={handleUpdateRule}
@@ -97,7 +87,7 @@ describe('RuleItemOperatorValue component', () => {
     );
 
     const input = screen.getByRole('textbox');
-    fireEvent.change(input, { target: { value: '^[a-z]+$' } });
+    userEvent.paste(input, '^[a-z]+$');
 
     expect(handleUpdateRule).toHaveBeenCalledTimes(1);
     expect(handleUpdateRule).toHaveBeenCalledWith({
@@ -110,11 +100,11 @@ describe('RuleItemOperatorValue component', () => {
   });
 
   it('highlights value input error on blur and removes highlight on focus when value is empty', () => {
-    const emptyValueRule: IBaseRuleGroupAnd = {
+    const emptyValueRule = makeFieldRuleGroupAnd({
       apiName: 'and_1',
       operator: EFieldRuleOperator.Equal,
       value: '',
-    };
+    });
 
     render(
       <RuleItemOperatorValue

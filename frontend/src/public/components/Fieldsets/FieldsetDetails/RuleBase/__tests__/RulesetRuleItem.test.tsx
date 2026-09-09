@@ -19,7 +19,7 @@ jest.mock('../../../../UI', () => ({
   FilterSelect: (props: {
     selectedOption?: string;
     isDisabled?: boolean;
-    onChange: (val: string) => void;
+    onChange: (targetValue: string) => void;
     options?: { apiName: string; name: string }[];
   }) => (
     <select
@@ -38,7 +38,7 @@ jest.mock('../../../../UI', () => ({
   SelectMenu: (props: {
     activeValue?: string;
     isDisabled?: boolean;
-    onChange: (val: string) => void;
+    onChange: (targetValue: string) => void;
     values?: string[];
   }) => (
     <select
@@ -55,6 +55,7 @@ jest.mock('../../../../UI', () => ({
     </select>
   ),
   Tooltip: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+  DropdownList: require('../../../../../__stubs__/uiMocks').DropdownListMock,
 }));
 
 describe('RulesetRuleItem component', () => {
@@ -91,6 +92,7 @@ describe('RulesetRuleItem component', () => {
     );
 
     expect(screen.getByDisplayValue('100')).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'operator' })).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: formatMsg('fieldsets.rule-delete') }),
     ).toBeInTheDocument();
@@ -194,7 +196,7 @@ describe('RulesetRuleItem component', () => {
     });
   });
 
-  it('renders field select for Show ruleType', () => {
+  it('renders field select and operator selector for Show ruleType', () => {
     const groupAndRule = {
       ...makeFieldsetRuleGroupAnd({
         apiName: 'g-and-1',
@@ -225,8 +227,9 @@ describe('RulesetRuleItem component', () => {
       />,
     );
 
-    const filterSelects = screen.getAllByTestId('filter-select');
-    expect(filterSelects).toHaveLength(2);
-    expect(filterSelects[0]).toHaveValue('field-1');
+    const fieldSelect = screen.getByTestId('filter-select');
+    expect(fieldSelect).toBeInTheDocument();
+    expect(fieldSelect).toHaveValue('field-1');
+    expect(screen.getByRole('combobox', { name: 'operator' })).toBeInTheDocument();
   });
 });

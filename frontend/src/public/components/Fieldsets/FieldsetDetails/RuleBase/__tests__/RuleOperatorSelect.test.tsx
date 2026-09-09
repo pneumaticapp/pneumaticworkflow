@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { RuleOperatorSelect } from '../RuleOperatorSelect';
 import { EExtraFieldType } from '../../../../../types/template';
 import { intlMock } from '../../../../../__stubs__/intlMock';
@@ -13,32 +14,30 @@ jest.mock('react-intl', () => {
 });
 
 jest.mock('../../../../UI', () => ({
-  FilterSelect: (props: {
-    options?: { apiName: string; name: string }[];
-    selectedOption?: string;
-    placeholderText?: string;
-    isDisabled?: boolean;
-    onChange: (value: string) => void;
-  }) => (
-    <select
-      data-testid="filter-select-operator"
-      disabled={props.isDisabled}
-      value={props.selectedOption || ''}
-      onChange={(event) => {
-        props.onChange(event.target.value);
-      }}
-    >
-      {props.options?.map((option) => (
-        <option key={option.apiName} value={option.apiName}>
-          {option.name}
-        </option>
-      ))}
-    </select>
-  ),
+  DropdownList: require('../../../../../__stubs__/uiMocks').DropdownListMock,
 }));
 
 describe('RuleOperatorSelect component', () => {
-  it('renders operator options and triggers onChange when selected', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('renders operator select with current operator value', () => {
+    render(
+      <RuleOperatorSelect
+        fieldType={EExtraFieldType.Text}
+        operator="equal"
+        isReadOnly={false}
+        onChange={jest.fn()}
+      />,
+    );
+
+    const select = screen.getByRole('combobox', { name: 'operator' });
+    expect(select).toBeInTheDocument();
+    expect(select).toHaveValue('equal');
+  });
+
+  it('triggers onChange when a different operator is selected', () => {
     const handleChange = jest.fn();
 
     render(
@@ -50,14 +49,26 @@ describe('RuleOperatorSelect component', () => {
       />,
     );
 
-    const select = screen.getByTestId('filter-select-operator');
+    const select = screen.getByRole('combobox', { name: 'operator' });
     expect(select).toBeInTheDocument();
-    expect(select).toHaveValue('equal');
 
-    fireEvent.change(select, { target: { value: 'not_equals' } });
+    userEvent.selectOptions(select, 'not_equals');
 
     expect(handleChange).toHaveBeenCalledTimes(1);
     expect(handleChange).toHaveBeenCalledWith('not_equals');
+  });
+
+  it('renders empty selection when operator is undefined', () => {
+    render(
+      <RuleOperatorSelect
+        fieldType={EExtraFieldType.Text}
+        onChange={jest.fn()}
+      />,
+    );
+
+    const select = screen.getByRole('combobox', { name: 'operator' });
+    expect(select).toBeInTheDocument();
+    expect(select).toHaveValue('');
   });
 
   it('disables select when isReadOnly is true', () => {
@@ -70,11 +81,22 @@ describe('RuleOperatorSelect component', () => {
       />,
     );
 
-    const select = screen.getByTestId('filter-select-operator');
-    expect(select).toBeDisabled();
+    expect(screen.getByRole('combobox', { name: 'operator' })).toBeDisabled();
   });
 
-  it('triggers onChange with selected operator', () => {
+  it('enables select when isReadOnly is undefined', () => {
+    render(
+      <RuleOperatorSelect
+        fieldType={EExtraFieldType.Text}
+        operator="equal"
+        onChange={jest.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('combobox', { name: 'operator' })).not.toBeDisabled();
+  });
+
+  it('does not trigger onChange when re-selecting current operator', () => {
     const handleChange = jest.fn();
 
     render(
@@ -86,10 +108,51 @@ describe('RuleOperatorSelect component', () => {
       />,
     );
 
-    const select = screen.getByTestId('filter-select-operator');
-    fireEvent.change(select, { target: { value: 'exists' } });
+    const select = screen.getByRole('combobox', { name: 'operator' });
+    userEvent.selectOptions(select, 'equal');
 
-    expect(handleChange).toHaveBeenCalledTimes(1);
-    expect(handleChange).toHaveBeenCalledWith('exists');
+    expect(handleChange).not.toHaveBeenCalled();
+  });
+
+  it('renders numeric ruleset operators when isFieldsetRuleset is true', () => {
+    render(
+      <RuleOperatorSelect
+        fieldType={EExtraFieldType.Number}
+        isFieldsetRuleset={true}
+        onChange={jest.fn()}
+      />,
+    );
+
+    const select = screen.getByRole('combobox', { name: 'operator' });
+    expect(select).toBeInTheDocument();
+    expect(within(select).queryAllByRole('option').length).toBeGreaterThan(0);
+  });
+
+  it('renders standard numeric operators when isFieldsetRuleset is false', () => {
+    render(
+      <RuleOperatorSelect
+        fieldType={EExtraFieldType.Number}
+        isFieldsetRuleset={false}
+        onChange={jest.fn()}
+      />,
+    );
+
+    const select = screen.getByRole('combobox', { name: 'operator' });
+    expect(select).toBeInTheDocument();
+    expect(within(select).queryAllByRole('option').length).toBeGreaterThan(0);
+  });
+
+  it('renders only placeholder option when fieldType is undefined', () => {
+    render(
+      <RuleOperatorSelect
+        onChange={jest.fn()}
+      />,
+    );
+
+    const select = screen.getByRole('combobox', { name: 'operator' });
+    expect(select).toBeInTheDocument();
+    const options = within(select).queryAllByRole('option');
+    expect(options).toHaveLength(1);
+    expect(options[0]).toHaveValue('');
   });
 });
