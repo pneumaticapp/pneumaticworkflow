@@ -40,7 +40,6 @@ export interface IOutputFormTaskMergedOwnProps {
   intl: IntlShape;
 }
 
-
 export function OutputFormTaskMerged({
   task,
   fieldsetsCatalogLoading,
@@ -77,10 +76,7 @@ export function OutputFormTaskMerged({
   );
 
   const saveOutputOrders = useCallback(
-    async (
-      rows: TMergedTaskOutputRow[],
-      allFieldsSource?: IExtraField[],
-    ) => {
+    async (rows: TMergedTaskOutputRow[], allFieldsSource?: IExtraField[]) => {
       const allFields = allFieldsSource ?? task.fields ?? [];
       const { nextFields, nextFieldsets } = normalizeMergedTaskOutputOrders(rows, allFields);
       patchTask({
@@ -95,10 +91,7 @@ export function OutputFormTaskMerged({
     (type: EExtraFieldType) => {
       const newField = getEmptyField(type, formatMessage, -1);
       const mergedTaskFields = [...(task.fields || []), newField];
-      const rowsWithNew = buildMergedTaskOutputRows(
-        mergedTaskFields,
-        task.fieldsets || [],
-      );
+      const rowsWithNew = buildMergedTaskOutputRows(mergedTaskFields, task.fieldsets || []);
       saveOutputOrders(rowsWithNew, mergedTaskFields).catch(() => undefined);
     },
     [formatMessage, saveOutputOrders, task.fieldsets, task.fields],
@@ -157,7 +150,6 @@ export function OutputFormTaskMerged({
     [patchTask, task.fieldsets, task.uuid],
   );
 
-
   const isEmpty = !isArrayWithItems(task.fields) && !(task.fieldsets || []).length;
 
   return (
@@ -166,10 +158,7 @@ export function OutputFormTaskMerged({
         {ExtraFieldsMap.map((field) => (
           <ExtraFieldIcon {...field} key={field.id} onClick={() => handleCreateField(field.id)} />
         ))}
-        <FieldsetIconPicker
-          fieldsetsCatalogLoading={fieldsetsCatalogLoading}
-          onSelectFieldset={handleAddFieldset}
-        />
+        <FieldsetIconPicker fieldsetsCatalogLoading={fieldsetsCatalogLoading} onSelectFieldset={handleAddFieldset} />
       </div>
 
       {!isEmpty && (

@@ -2,15 +2,9 @@ import * as React from 'react';
 import { useIntl } from 'react-intl';
 import classNames from 'classnames';
 
-import {
-  TrashIcon,
-  PencilIcon,
-  UnionIcon,
-  SettingsIcon,
-  MoreIcon,
-} from '../../icons';
+import { TrashIcon, PencilIcon, UnionIcon, SettingsIcon, MoreIcon } from '../../icons';
 
-import { Dropdown , TDropdownOption } from '../Dropdown';
+import { Dropdown, TDropdownOption } from '../Dropdown';
 
 import { IModifyDropdownProps, EModifyDropdownToggle } from './types';
 
@@ -41,12 +35,16 @@ export function ModifyDropdown({
         disabledTooltip: formatMessage({ id: 'fieldsets.usage.disabled-tooltip' }),
       }),
     },
-    ...(cloneLabel ? [{
-      label: cloneLabel,
-      onClick: onClone,
-      Icon: UnionIcon,
-      size: 'sm' as const,
-    }] : []),
+    ...(cloneLabel
+      ? [
+          {
+            label: cloneLabel,
+            onClick: onClone,
+            Icon: UnionIcon,
+            size: 'sm' as const,
+          },
+        ]
+      : []),
     {
       label: deleteLabel,
       onClick: onDelete,
@@ -84,10 +82,5 @@ export function ModifyDropdown({
     );
   };
 
-  return (
-    <Dropdown
-      renderToggle={renderToggle}
-      options={options}
-    />
-  );
+  return <Dropdown renderToggle={renderToggle} options={options} />;
 }

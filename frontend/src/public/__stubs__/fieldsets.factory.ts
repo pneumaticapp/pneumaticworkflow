@@ -31,7 +31,6 @@ export const makeFieldsetRuntime = (overrides: Partial<IFieldsetRuntime> = {}): 
   ...overrides,
 });
 
-
 export const makeFieldsetRuleGroupAnd = (overrides: Partial<IFieldsetRuleGroupAnd> = {}): IFieldsetRuleGroupAnd => ({
   apiName: 'group-and-1',
   operator: EFieldsetRulesetNumericOperator.SumEqual,

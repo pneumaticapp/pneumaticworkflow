@@ -68,25 +68,15 @@ describe('ExtraField', () => {
 
   describe('Passing isHidden to ExtraFieldDropdown', () => {
     it('passes isHidden=true to ExtraFieldDropdown', () => {
-      renderWithIntl(
-        <ExtraFieldIntl {...baseProps} field={{ ...baseField, isHidden: true }} />,
-      );
+      renderWithIntl(<ExtraFieldIntl {...baseProps} field={{ ...baseField, isHidden: true }} />);
 
-      expect(ExtraFieldDropdown as jest.Mock).toHaveBeenCalledWith(
-        expect.objectContaining({ isHidden: true }),
-        {},
-      );
+      expect(ExtraFieldDropdown as jest.Mock).toHaveBeenCalledWith(expect.objectContaining({ isHidden: true }), {});
     });
 
     it('passes isHidden=false by default when field has no isHidden', () => {
-      renderWithIntl(
-        <ExtraFieldIntl {...baseProps} field={{ ...baseField }} />,
-      );
+      renderWithIntl(<ExtraFieldIntl {...baseProps} field={{ ...baseField }} />);
 
-      expect(ExtraFieldDropdown as jest.Mock).toHaveBeenCalledWith(
-        expect.objectContaining({ isHidden: false }),
-        {},
-      );
+      expect(ExtraFieldDropdown as jest.Mock).toHaveBeenCalledWith(expect.objectContaining({ isHidden: false }), {});
     });
   });
 
@@ -111,12 +101,7 @@ describe('ExtraField', () => {
 
   describe('Read-only status and icon rendering', () => {
     it('does not render ExtraFieldDropdown when isDisabled=true', () => {
-      renderWithIntl(
-        <ExtraFieldIntl
-          {...baseProps}
-          isDisabled
-        />,
-      );
+      renderWithIntl(<ExtraFieldIntl {...baseProps} isDisabled />);
 
       expect(ExtraFieldDropdown as jest.Mock).not.toHaveBeenCalled();
     });

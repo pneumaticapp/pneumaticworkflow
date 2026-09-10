@@ -5,11 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import { DatasetModal } from '../DatasetModal';
 import { EDatasetModalType } from '../types';
-import {
-  closeCreateModal,
-  createDatasetAction,
-  updateDatasetAction,
-} from '../../../../redux/datasets/slice';
+import { closeCreateModal, createDatasetAction, updateDatasetAction } from '../../../../redux/datasets/slice';
 import { intlMock } from '../../../../__stubs__/intlMock';
 
 jest.mock('../../../../redux/datasets/slice', () => ({
@@ -29,14 +25,20 @@ jest.mock('../../../UI', () => ({
     isOpen ? React.createElement('div', { 'data-testid': 'modal' }, children) : null,
   ),
   Button: jest.fn((props: { label: string; disabled?: boolean; type?: string; onClick?: () => void }) =>
-    React.createElement('button', {
-      type: props.type || 'button',
-      disabled: props.disabled,
-      onClick: props.onClick,
-    }, props.label),
+    React.createElement(
+      'button',
+      {
+        type: props.type || 'button',
+        disabled: props.disabled,
+        onClick: props.onClick,
+      },
+      props.label,
+    ),
   ),
   InputField: jest.fn((props: { value: string; onChange: (e: any) => void; errorMessage?: string }) =>
-    React.createElement('div', null,
+    React.createElement(
+      'div',
+      null,
       React.createElement('input', {
         'data-testid': 'name-input',
         value: props.value,
@@ -79,9 +81,7 @@ describe('DatasetModal', () => {
         currentDataset: { id: 10, name, description: '', dateCreatedTsp: 0, items: [] },
       },
     };
-    (useSelector as jest.Mock).mockImplementation((selector: Function) =>
-      selector(mockState),
-    );
+    (useSelector as jest.Mock).mockImplementation((selector: Function) => selector(mockState));
   };
 
   beforeEach(() => {

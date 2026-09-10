@@ -8,9 +8,9 @@
   font-size: 11px;
   font-weight: 800;
   line-height: 16px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
   color: #b9b9b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .kickoff__description {
@@ -18,8 +18,8 @@
   font-family: Nunito, sans-serif;
   font-size: 15px;
   line-height: 20px;
-  word-break: break-word;
   color: #262522;
+  overflow-wrap: anywhere;
 }
 
 .kickoff__field {
@@ -27,16 +27,16 @@
 
   /* stylelint-disable-next-line */
   :global .react-datepicker-wrapper input {
-    padding: 14px 50px 14px 16px !important;
     width: 100% !important;
+    padding: 14px 50px 14px 16px !important;
     font-family: Nunito, sans-serif !important;
     font-size: 15px !important;
     line-height: 20px !important;
     color: #262522 !important;
+    outline: none !important;
     background: white !important;
     border: 1px solid #dcdcdb !important;
     border-radius: 8px !important;
-    outline: none !important;
     transition: 0.15s ease-in border-color !important;
 
     /* stylelint-disable-next-line selector-max-compound-selectors */

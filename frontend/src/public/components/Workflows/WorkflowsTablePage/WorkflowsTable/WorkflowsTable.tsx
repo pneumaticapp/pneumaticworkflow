@@ -44,7 +44,7 @@ export function WorkflowsTable({
   const [searchQuery, setSearchQuery] = useState(searchText);
   const [tableHeight, setTableHeight] = useState<number>(0);
   const { isMobile } = useCheckDevice();
-  
+
   useEffect(() => {
     const appContainer = document.getElementById('app-container');
     if (appContainer) {
@@ -76,19 +76,22 @@ export function WorkflowsTable({
     };
   }, []);
 
-  const searchHeader = useMemo(() => (
-    <div className={styles['search']}>
-      <SearchMediumIcon className={styles['search__icon']} />
-      <InputField
-        value={searchQuery}
-        onChange={(event) => setSearchQuery(event.currentTarget.value)}
-        className={styles['search-field__input']}
-        placeholder={formatMessage({ id: 'workflows.search' })}
-        fieldSize="md"
-        onClear={() => setSearchQuery('')}
-      />
-    </div>
-  ), [formatMessage, searchQuery]);
+  const searchHeader = useMemo(
+    () => (
+      <div className={styles['search']}>
+        <SearchMediumIcon className={styles['search__icon']} />
+        <InputField
+          value={searchQuery}
+          onChange={(event) => setSearchQuery(event.currentTarget.value)}
+          className={styles['search-field__input']}
+          placeholder={formatMessage({ id: 'workflows.search' })}
+          fieldSize="md"
+          onClear={() => setSearchQuery('')}
+        />
+      </div>
+    ),
+    [formatMessage, searchQuery],
+  );
 
   const renderWorkflowColumn = useCallback(
     (props: CellProps<TableColumns>) => (

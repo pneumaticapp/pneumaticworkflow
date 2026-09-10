@@ -14,6 +14,7 @@
 
 .return-modal__editor {
   margin-bottom: 3.2rem;
+
   [class*='DraftEditor-root'] {
     min-height: 10.9rem;
   }

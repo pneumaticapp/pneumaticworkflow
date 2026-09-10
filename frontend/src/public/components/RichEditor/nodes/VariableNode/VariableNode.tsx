@@ -25,19 +25,13 @@ const VARIABLE_TITLE_ATTRIBUTE = 'data-lexical-variable-title';
 const VARIABLE_SUBTITLE_ATTRIBUTE = 'data-lexical-variable-subtitle';
 const LEXICAL_DECORATOR_ATTRIBUTE = 'data-lexical-decorator';
 
-
-
 interface VariableComponentProps {
   apiName: string;
   title: string;
   subtitle?: string;
 }
 
-function VariableComponent({
-  apiName,
-  title,
-  subtitle,
-}: VariableComponentProps): React.ReactElement {
+function VariableComponent({ apiName, title, subtitle }: VariableComponentProps): React.ReactElement {
   const { formatMessage } = useIntl();
   const { title: localizedTitle, subtitle: localizedSubtitle } = getLocalizedSystemVariable({
     apiName,
@@ -82,12 +76,7 @@ export class VariableNode extends DecoratorNode<React.ReactElement> {
    * Creates a clone of the variable node.
    */
   static clone(node: VariableNode): VariableNode {
-    return new VariableNode(
-      node.variableApiName,
-      node.variableTitle,
-      node.variableSubtitle,
-      node.getKey(),
-    );
+    return new VariableNode(node.variableApiName, node.variableTitle, node.variableSubtitle, node.getKey());
   }
 
   /**
@@ -108,12 +97,7 @@ export class VariableNode extends DecoratorNode<React.ReactElement> {
    * @param subtitle - Optional subtitle for the variable
    * @param key - Optional node key
    */
-  constructor(
-    apiName: string,
-    title: string,
-    subtitle?: string,
-    key?: NodeKey,
-  ) {
+  constructor(apiName: string, title: string, subtitle?: string, key?: NodeKey) {
     super(key);
     this.variableApiName = apiName;
     this.variableTitle = title;
@@ -144,7 +128,7 @@ export class VariableNode extends DecoratorNode<React.ReactElement> {
   /**
    * Indicates that this node should be treated as inline content.
    */
-  // eslint-disable-next-line class-methods-use-this
+
   isInline(): boolean {
     return true;
   }
@@ -242,7 +226,7 @@ export class VariableNode extends DecoratorNode<React.ReactElement> {
   /**
    * Since VariableNode content is static and doesn't change, always return false.
    */
-  // eslint-disable-next-line class-methods-use-this
+
   updateDOM(): false {
     return false;
   }
@@ -252,11 +236,7 @@ export class VariableNode extends DecoratorNode<React.ReactElement> {
    */
   decorate(): React.ReactElement {
     return (
-      <VariableComponent
-        apiName={this.variableApiName}
-        title={this.variableTitle}
-        subtitle={this.variableSubtitle}
-      />
+      <VariableComponent apiName={this.variableApiName} title={this.variableTitle} subtitle={this.variableSubtitle} />
     );
   }
 }
@@ -268,9 +248,7 @@ export class VariableNode extends DecoratorNode<React.ReactElement> {
  */
 export function $createVariableNode(payload: TVariableNodePayload): VariableNode {
   const title = payload.title ?? payload.apiName;
-  return $applyNodeReplacement(
-    new VariableNode(payload.apiName, title, payload.subtitle),
-  );
+  return $applyNodeReplacement(new VariableNode(payload.apiName, title, payload.subtitle));
 }
 
 /**
@@ -278,8 +256,6 @@ export function $createVariableNode(payload: TVariableNodePayload): VariableNode
  * @param node - The node to check
  * @returns True if the node is a VariableNode, false otherwise
  */
-export function $isVariableNode(
-  node: LexicalNode | null | undefined,
-): node is VariableNode {
+export function $isVariableNode(node: LexicalNode | null | undefined): node is VariableNode {
   return node instanceof VariableNode;
 }

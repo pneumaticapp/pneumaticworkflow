@@ -52,16 +52,15 @@ jest.mock('../TemplateEntity', () => ({
   TemplateEntity: jest.fn(() => null),
 }));
 jest.mock('../AddEntityButton', () => ({
-  AddEntityButton: jest.fn(
-    (props: { entities: { title: string; onAddEntity: (apiName?: string) => void }[] }) =>
-      React.createElement(
-        'button',
-        {
-          type: 'button',
-          onClick: () => props.entities[0].onAddEntity(),
-        },
-        'Add',
-      ),
+  AddEntityButton: jest.fn((props: { entities: { title: string; onAddEntity: (apiName?: string) => void }[] }) =>
+    React.createElement(
+      'button',
+      {
+        type: 'button',
+        onClick: () => props.entities[0].onAddEntity(),
+      },
+      'Add',
+    ),
   ),
   EEntityTitle: { Task: 'task', Delay: 'delay' },
 }));
@@ -116,9 +115,7 @@ describe('TemplateEdit', () => {
     isActive: false,
     finalizable: false,
     owners: [],
-    tasks: [
-      { uuid: 'u-task-1', apiName: 'task-1', number: 1, fields: [], fieldsets: [] } as any,
-    ],
+    tasks: [{ uuid: 'u-task-1', apiName: 'task-1', number: 1, fields: [], fieldsets: [] } as any],
     kickoff: { description: '', fields: [], fieldsets: [] },
     isPublic: false,
     publicUrl: null,

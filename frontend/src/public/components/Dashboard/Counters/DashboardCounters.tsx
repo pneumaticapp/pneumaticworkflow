@@ -1,4 +1,3 @@
-/* eslint-disable react/no-array-index-key */
 import * as React from 'react';
 import classnames from 'classnames';
 import { DashboardCounter, IDashboardCounterProps } from './DashboardCounter';

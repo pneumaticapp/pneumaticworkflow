@@ -1,15 +1,16 @@
 import { Dispatch, SetStateAction, useCallback, useEffect, useRef, useState } from 'react';
 
 interface IUseStatePromiseFn {
-  <T>(initialState: T | (() => T), skipFirst?: boolean): readonly [
-    T,
-    (value: SetStateAction<T>) => Promise<T>,
-    Dispatch<SetStateAction<T>>
-  ];
-  <T = undefined>(skipFirst?: boolean): readonly [
+  <T>(
+    initialState: T | (() => T),
+    skipFirst?: boolean,
+  ): readonly [T, (value: SetStateAction<T>) => Promise<T>, Dispatch<SetStateAction<T>>];
+  <T = undefined>(
+    skipFirst?: boolean,
+  ): readonly [
     T | undefined,
     (value: SetStateAction<T | undefined>) => Promise<T | undefined>,
-    Dispatch<SetStateAction<T | undefined>>
+    Dispatch<SetStateAction<T | undefined>>,
   ];
 }
 

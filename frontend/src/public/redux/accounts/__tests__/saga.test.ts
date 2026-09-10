@@ -25,10 +25,12 @@ describe('accounts saga', () => {
 
     expect(gen.next().value).toEqual(call(getActiveUsersCount));
     expect(gen.next({ activeUsers: 1, tenantsActiveUsers: 4 } as never).value).toEqual(select(getAccountsStore));
-    expect(gen.next({
-      users: [],
-      team: { list: [makeUser(1), makeUser(2), makeUser(3, EUserStatus.Invited)] },
-    } as never).value).toEqual(put(activeUsersCountFetchFinished({ activeUsers: 2, tenantsActiveUsers: 4 })));
+    expect(
+      gen.next({
+        users: [],
+        team: { list: [makeUser(1), makeUser(2), makeUser(3, EUserStatus.Invited)] },
+      } as never).value,
+    ).toEqual(put(activeUsersCountFetchFinished({ activeUsers: 2, tenantsActiveUsers: 4 })));
     expect(gen.next().done).toBe(true);
   });
 });

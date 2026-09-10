@@ -1,4 +1,3 @@
-/* eslint-disable */
 /* prettier-ignore */
 import { hasFieldError } from '../../TemplateEdit/ExtraFields/utils/getFieldValidator';
 import { isArrayWithItems } from '../../../utils/helpers';

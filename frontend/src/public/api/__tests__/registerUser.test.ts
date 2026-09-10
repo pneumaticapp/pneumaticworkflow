@@ -17,22 +17,26 @@ describe('registerUser', () => {
       lastName: 'Test',
       photo: '/url/to/photo.jpg',
       fromEmail: true,
-      timezone: ''
+      timezone: '',
     };
     (commonRequest as jest.Mock).mockResolvedValueOnce('OK');
 
     const result = await registerUser(userData);
 
     expect(result).toEqual('OK');
-    expect(commonRequest).toHaveBeenCalledWith('registerUrl', {
-      method: 'POST',
-      data: mapRequestBody(userData),
-      headers: {
-        'Content-Type': 'application/json',
+    expect(commonRequest).toHaveBeenCalledWith(
+      'registerUrl',
+      {
+        method: 'POST',
+        data: mapRequestBody(userData),
+        headers: {
+          'Content-Type': 'application/json',
+        },
       },
-    }, {
-      type: 'local',
-      shouldThrow: true,
-    });
+      {
+        type: 'local',
+        shouldThrow: true,
+      },
+    );
   });
 });

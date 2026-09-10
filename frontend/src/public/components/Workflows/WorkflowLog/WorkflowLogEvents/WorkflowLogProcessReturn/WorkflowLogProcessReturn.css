@@ -12,14 +12,14 @@
 }
 
 .title {
-  margin: 0 -8px 0 0;
-  padding-right: 64px;
   display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  padding-right: 64px;
+  margin: 0 -8px 0 0;
   font-size: 15px;
   line-height: 20px;
   color: var(--pneumatic-color-black100);
-  flex-wrap: wrap;
-  align-items: center;
 }
 
 .title__text {

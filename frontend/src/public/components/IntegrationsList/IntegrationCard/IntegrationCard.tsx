@@ -1,4 +1,3 @@
-/* eslint-disable */
 /* prettier-ignore */
 import * as React from 'react';
 import { Link } from 'react-router-dom';
@@ -27,11 +26,7 @@ export function IntegrationCard({ id, name, logo, shortDescription }: IIntegrati
         </div>
       )}
 
-      {normalizedDecription && (
-        <p className={styles['card-description']}>
-          {normalizedDecription}
-        </p>
-      )}
+      {normalizedDecription && <p className={styles['card-description']}>{normalizedDecription}</p>}
     </Link>
   );
 }

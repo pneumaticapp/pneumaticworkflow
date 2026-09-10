@@ -18,12 +18,7 @@ const shuffleString = (str: string): string => {
 };
 
 export const createPassword = (length = 8): string => {
-  const password = [
-    getRandomChar(LOWERCASE),
-    getRandomChar(UPPERCASE),
-    getRandomChar(DIGITS),
-    getRandomChar(SPECIAL),
-  ];
+  const password = [getRandomChar(LOWERCASE), getRandomChar(UPPERCASE), getRandomChar(DIGITS), getRandomChar(SPECIAL)];
 
   for (let i = password.length; i < length; i += 1) {
     password.push(getRandomChar(ALL_CHARACTERS));

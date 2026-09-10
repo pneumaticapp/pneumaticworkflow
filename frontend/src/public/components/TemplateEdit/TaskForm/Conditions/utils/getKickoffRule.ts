@@ -10,6 +10,6 @@ export function getKickoffRule(): TConditionRule {
     field: null,
     fieldType: EStartingType.Kickoff,
     operator: EConditionOperators.Completed,
-    value: null
+    value: null,
   } as TConditionRule;
 }

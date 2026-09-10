@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useCallback, useMemo } from 'react';
 import classnames from 'classnames';
-import { injectIntl} from 'react-intl';
+import { injectIntl } from 'react-intl';
 
 import { ExtraFieldString } from './String';
 import { ExtraFieldText } from './Text';
@@ -45,7 +45,6 @@ function ExtraField(props: IExtraFieldProps) {
     onDeleteFieldRuleset,
   } = props;
 
-  // eslint-disable-next-line react/destructuring-assignment
   const datasetOptions = showDropdown ? (props.datasetOptions ?? []) : [];
 
   const isDatasetField = DATASET_FIELD_TYPES.includes(field.type);
@@ -153,7 +152,8 @@ function ExtraField(props: IExtraFieldProps) {
   const getDropdownClassName = () => {
     return classnames(
       styles['kick-off-input__dropdown'],
-      (field.type === EExtraFieldType.Checkbox || field.type === EExtraFieldType.Radio) && styles['kick-off-input__dropdown_choices'],
+      (field.type === EExtraFieldType.Checkbox || field.type === EExtraFieldType.Radio) &&
+        styles['kick-off-input__dropdown_choices'],
       field.type === EExtraFieldType.Creatable && styles['kick-off-input__dropdown_creatable'],
       labelPosition === EFieldLabelPosition.Left && styles['kick-off-input__dropdown_label-left'],
     );

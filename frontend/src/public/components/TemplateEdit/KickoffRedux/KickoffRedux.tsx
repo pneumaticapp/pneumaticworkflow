@@ -21,7 +21,13 @@ import { MergedOutputRows } from '../TaskOutputFlow/MergedOutputRows';
 
 import { KickoffMenu } from './KickoffMenu';
 import { IntlMessages } from '../../IntlMessages';
-import {  EExtraFieldType, IExtraField, ETemplateParts, ITemplateKickoffClient, ITemplateClient } from '../../../types/template';
+import {
+  EExtraFieldType,
+  IExtraField,
+  ETemplateParts,
+  ITemplateKickoffClient,
+  ITemplateClient,
+} from '../../../types/template';
 import { IFieldsetCatalogItem } from '../../../types/fieldset';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { ExtraFieldsMap } from '../ExtraFields/utils/ExtraFieldsMap';
@@ -62,7 +68,7 @@ export function KickoffRedux({
   const variables = useWorkflowNameVariables(kickoff);
   const datasetOptions = useDatasetOptions(kickoff.fields);
   const fieldsetsCatalogLoading = useSelector(getFieldsetsCatalogIsLoading);
-  
+
   const mergedRows = useMemo(
     () => buildMergedTaskOutputRows(kickoff.fields || [], kickoff.fieldsets || []),
     [kickoff.fields, kickoff.fieldsets],
@@ -90,7 +96,6 @@ export function KickoffRedux({
       },
     },
   ]);
-
 
   const toggleExpanded = () => {
     setIsOpen(!isOpen);
@@ -214,9 +219,7 @@ export function KickoffRedux({
 
   const renderKickoffLabels = () => {
     const { fields, fieldsets } = kickoff;
-    const hasFieldsetChips = (fieldsets || []).some(
-      (taskFieldset) => isArrayWithItems(taskFieldset.fields),
-    );
+    const hasFieldsetChips = (fieldsets || []).some((taskFieldset) => isArrayWithItems(taskFieldset.fields));
 
     if (!isArrayWithItems(fields) && !hasFieldsetChips) {
       return null;

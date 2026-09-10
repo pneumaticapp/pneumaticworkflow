@@ -467,10 +467,7 @@ describe('RichText', () => {
 
     it('renders mixed content with images and documents correctly', () => {
       const props: IRichTextProps = {
-        text: [
-          `[photo.png](${FILE_SERVICE_URL}/aaa)`,
-          `[report.pdf](${FILE_SERVICE_URL}/bbb)`,
-        ].join('\n'),
+        text: [`[photo.png](${FILE_SERVICE_URL}/aaa)`, `[report.pdf](${FILE_SERVICE_URL}/bbb)`].join('\n'),
         isMarkdownMode: true,
       };
 

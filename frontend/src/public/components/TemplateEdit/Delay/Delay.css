@@ -1,8 +1,8 @@
 .delay {
   position: relative;
-  margin-bottom: 16px;
-  padding: 32px 74px 32px 32px;
   width: 100%;
+  padding: 32px 74px 32px 32px;
+  margin-bottom: 16px;
   background: white;
   border-radius: 24px;
 }
@@ -14,8 +14,8 @@
 }
 
 .card-more {
-  cursor: pointer;
   color: var(--pneumatic-color-black16);
+  cursor: pointer;
   transition: color 0.1s ease-in-out;
 
   &.card-more_active,
@@ -26,7 +26,7 @@
 
 .header__title {
   width: 100%;
-  font-family: 'Abhaya Libre', 'Times New Roman', Arial;
+  font-family: 'Abhaya Libre', 'Times New Roman', Arial, serif;
   font-size: 20px;
   font-weight: 800;
   line-height: 24px;
@@ -34,8 +34,8 @@
   transition: color 0.1s ease-in-out;
 
   &:hover {
-    cursor: pointer;
     color: #e79a26;
+    cursor: pointer;
   }
 }
 

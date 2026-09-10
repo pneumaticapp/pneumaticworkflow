@@ -1,4 +1,3 @@
-
 import * as React from 'react';
 import { useCallback } from 'react';
 import classnames from 'classnames';
@@ -18,24 +17,18 @@ export interface IWorkflowSkippedTaskProps extends Pick<IWorkflowLogItem, 'task'
   onClickTask?(): void;
 }
 
-export function WorkflowSkippedTask({
-  task,
-  areTasksClickable,
-  theme,
-  onClickTask,
-}: IWorkflowSkippedTaskProps) {
+export function WorkflowSkippedTask({ task, areTasksClickable, theme, onClickTask }: IWorkflowSkippedTaskProps) {
   const { formatMessage } = useIntl();
 
   const renderTitle = () => {
     const redirectUrl = ERoutes.TaskDetail.replace(':id', String(task?.id));
     const title = areTasksClickable ? (
-      <Link
-        to={redirectUrl}
-        onClick={onClickTask}
-      >
+      <Link to={redirectUrl} onClick={onClickTask}>
         {task?.name}
       </Link>
-    ) : task?.name;
+    ) : (
+      task?.name
+    );
 
     return (
       <Header tag="h3" size="6" className={styles['task-name']}>
@@ -59,9 +52,7 @@ export function WorkflowSkippedTask({
         <div className={styles['top-area__meta']}>
           {renderTitle()}
           <p className={styles['date-started']}>
-            <span className={styles['date-started__date']}>
-              {formatMessage({ id: 'workflow.skipped-task' })}
-            </span>
+            <span className={styles['date-started__date']}>{formatMessage({ id: 'workflow.skipped-task' })}</span>
           </p>
         </div>
       </div>

@@ -84,7 +84,14 @@ const FieldsetDetails = ({
 
     setLocalFieldset(initLocalFieldset(fieldset));
     setFieldsetChanges({});
-  }, [fieldset?.id, fieldset?.title, fieldset?.description, fieldset?.labelPosition, fieldset?.fields, fieldset?.rulesets]);
+  }, [
+    fieldset?.id,
+    fieldset?.title,
+    fieldset?.description,
+    fieldset?.labelPosition,
+    fieldset?.fields,
+    fieldset?.rulesets,
+  ]);
 
   const handleFieldsChange = (newFields: IExtraField[]) => {
     updateFieldsetProperty('fields', newFields, setLocalFieldset, setFieldsetChanges);
@@ -136,7 +143,7 @@ const FieldsetDetails = ({
                   onSuccess: () => {
                     history.push(fieldsetListRoute);
                   },
-                })
+                }),
               );
             }}
             onClone={() =>

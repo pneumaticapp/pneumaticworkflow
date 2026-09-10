@@ -8,9 +8,7 @@ describe('getNormalizedTask', () => {
   describe('fieldset normalization', () => {
     it('maps IFieldsetTaskAPI[] to IFieldsetRuntime[] via mapFieldsetTaskAPIToRuntime', () => {
       const task = makeTaskAPI({
-        fieldsets: [
-          makeFieldsetTaskAPI({ id: 50, apiName: 'fs-binding-abc', name: 'Budget' }),
-        ],
+        fieldsets: [makeFieldsetTaskAPI({ id: 50, apiName: 'fs-binding-abc', name: 'Budget' })],
       });
 
       const result = getNormalizedTask(task);

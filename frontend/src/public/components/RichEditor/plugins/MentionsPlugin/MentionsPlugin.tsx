@@ -6,13 +6,7 @@ import type { MentionsPluginProps } from './types';
 export type { MentionMenuOption, MentionsPluginProps } from './types';
 
 export function MentionsPlugin({ mentions }: MentionsPluginProps): React.ReactElement | null {
-  const {
-    menuState,
-    filteredOptions,
-    highlightedIndex,
-    setHighlightedIndex,
-    applyMention,
-  } = useMentionMenu(mentions);
+  const { menuState, filteredOptions, highlightedIndex, setHighlightedIndex, applyMention } = useMentionMenu(mentions);
 
   if (mentions.length === 0) return null;
   if (!menuState) return null;

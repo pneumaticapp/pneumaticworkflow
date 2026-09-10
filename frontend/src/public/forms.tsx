@@ -34,7 +34,6 @@ const currentAppLocale = AppLocale[defaultLocale];
 ReactDOM.render(
   <Provider store={store}>
     <React.Suspense fallback={<div className="loading" />}>
-
       <Router history={formsHistory}>
         <IntlProvider locale={currentAppLocale.locale} messages={currentAppLocale.messages}>
           <Switch>

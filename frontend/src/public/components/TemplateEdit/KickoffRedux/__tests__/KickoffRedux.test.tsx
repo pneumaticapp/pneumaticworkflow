@@ -54,11 +54,7 @@ jest.mock('../../ExtraFields/utils/ExtraFieldsMap', () => ({
 
 jest.mock('../../ExtraFields/utils/ExtraFieldIcon', () => ({
   ExtraFieldIcon: (props: { id: string; onClick: () => void }) =>
-    React.createElement(
-      'button',
-      { type: 'button', onClick: props.onClick },
-      `Add field ${props.id}`,
-    ),
+    React.createElement('button', { type: 'button', onClick: props.onClick }, `Add field ${props.id}`),
 }));
 
 jest.mock('../../ExtraFields/utils/ExtraFieldsLabels', () => ({
@@ -66,9 +62,7 @@ jest.mock('../../ExtraFields/utils/ExtraFieldsLabels', () => ({
     React.createElement(
       'div',
       { 'data-testid': 'extra-fields-labels' },
-      props.extraFields.map((f) =>
-        React.createElement('span', { key: f.apiName }, f.apiName),
-      ),
+      props.extraFields.map((f) => React.createElement('span', { key: f.apiName }, f.apiName)),
     ),
 }));
 
@@ -142,19 +136,13 @@ jest.mock('../../../Fieldsets/FieldsetDetails/FieldRuleModal', () => ({
 }));
 
 jest.mock('../../FieldsetOutputsPreview/FieldsetOutputsPreview', () => ({
-  FieldsetOutputsPreview: (props: {
-    fieldsets: { apiNameBinding: string; fields?: unknown[] }[];
-  }) => {
-    const groups = props.fieldsets.filter(
-      (fieldset) => fieldset.fields && fieldset.fields.length > 0,
-    );
+  FieldsetOutputsPreview: (props: { fieldsets: { apiNameBinding: string; fields?: unknown[] }[] }) => {
+    const groups = props.fieldsets.filter((fieldset) => fieldset.fields && fieldset.fields.length > 0);
     if (!groups.length) return null;
     return React.createElement(
       'div',
       { 'data-testid': 'fieldset-outputs-preview' },
-      groups.map((fieldset) =>
-        React.createElement('span', { key: fieldset.apiNameBinding }, fieldset.apiNameBinding),
-      ),
+      groups.map((fieldset) => React.createElement('span', { key: fieldset.apiNameBinding }, fieldset.apiNameBinding)),
     );
   },
 }));
@@ -200,22 +188,20 @@ jest.mock('../../InputWithVariables', () => ({
 }));
 
 jest.mock('../../../IntlMessages', () => ({
-  IntlMessages: (props: { id: string }) =>
-    React.createElement('span', null, props.id),
+  IntlMessages: (props: { id: string }) => React.createElement('span', null, props.id),
 }));
 
 import { KickoffRedux } from '../KickoffRedux';
 import { getEmptyField } from '../utils/getEmptyField';
 import { useSelector } from 'react-redux';
-import {
-  getFieldsetsCatalogIsLoading,
-} from '../../../../redux/selectors/fieldsets';
+import { getFieldsetsCatalogIsLoading } from '../../../../redux/selectors/fieldsets';
 
 describe('KickoffRedux', () => {
-  const makeField = (overrides: Partial<IExtraField> = {}) => makeExtraField({
-    name: 'Field 1',
-    ...overrides,
-  });
+  const makeField = (overrides: Partial<IExtraField> = {}) =>
+    makeExtraField({
+      name: 'Field 1',
+      ...overrides,
+    });
 
   const makeKickoff = (overrides: Partial<ITemplateKickoffClient> = {}): ITemplateKickoffClient => ({
     description: '',
@@ -224,11 +210,12 @@ describe('KickoffRedux', () => {
     ...overrides,
   });
 
-  const makeTemplate = (kickoff: ITemplateKickoffClient): ITemplateClient => ({
-    id: 1,
-    kickoff,
-    wfNameTemplate: '',
-  } as unknown as ITemplateClient);
+  const makeTemplate = (kickoff: ITemplateKickoffClient): ITemplateClient =>
+    ({
+      id: 1,
+      kickoff,
+      wfNameTemplate: '',
+    }) as unknown as ITemplateClient;
 
   const NEW_FIELD: IExtraField = makeExtraField({
     apiName: 'new-field',
@@ -236,10 +223,7 @@ describe('KickoffRedux', () => {
     order: -1,
   });
 
-  const renderKickoff = (params: {
-    kickoff: ITemplateKickoffClient;
-    setKickoff?: jest.Mock;
-  }) => {
+  const renderKickoff = (params: { kickoff: ITemplateKickoffClient; setKickoff?: jest.Mock }) => {
     const setKickoff = params.setKickoff ?? jest.fn();
 
     (getFieldsetsCatalogIsLoading as jest.Mock).mockReturnValue(false);
@@ -270,11 +254,13 @@ describe('KickoffRedux', () => {
     it('renders FieldsetOutputsPreview when a fieldset binding has fields', () => {
       renderKickoff({
         kickoff: makeKickoff({
-          fieldsets: [makeFieldsetBindingClient({
-            apiNameBinding: 'fs-1',
-            order: 0,
-            fields: [makeFieldsetField({ apiName: 'fs-field-1' })],
-          })],
+          fieldsets: [
+            makeFieldsetBindingClient({
+              apiNameBinding: 'fs-1',
+              order: 0,
+              fields: [makeFieldsetField({ apiName: 'fs-field-1' })],
+            }),
+          ],
         }),
       });
 
@@ -321,9 +307,7 @@ describe('KickoffRedux', () => {
       expect(setKickoff).toHaveBeenCalledTimes(1);
       expect(setKickoff).toHaveBeenCalledWith(
         expect.objectContaining({
-          fieldsets: expect.arrayContaining([
-            expect.objectContaining({ sharedFieldsetId: 200 }),
-          ]),
+          fieldsets: expect.arrayContaining([expect.objectContaining({ sharedFieldsetId: 200 })]),
         }),
       );
     });
@@ -343,12 +327,8 @@ describe('KickoffRedux', () => {
       expect(setKickoff).toHaveBeenCalledTimes(1);
       expect(setKickoff).toHaveBeenCalledWith(
         expect.objectContaining({
-          fields: expect.arrayContaining([
-            expect.objectContaining({ apiName: 'new-field' }),
-          ]),
-          fieldsets: expect.arrayContaining([
-            expect.objectContaining({ apiNameBinding: 'fs-1' }),
-          ]),
+          fields: expect.arrayContaining([expect.objectContaining({ apiName: 'new-field' })]),
+          fieldsets: expect.arrayContaining([expect.objectContaining({ apiNameBinding: 'fs-1' })]),
         }),
       );
     });

@@ -30,28 +30,31 @@ export function SelectManagerModal({
 }: ISelectManagerModalProps) {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
-  
+
   const storeUsers = useSelector(getUsers);
   const teamList = useSelector(getAccountsTeamList);
   const allUsers = useMemo(() => {
     const merged = getNotDeletedUsers([...storeUsers, ...teamList]);
     const seen = new Set<number>();
-    return merged.filter(user => {
+    return merged.filter((user) => {
       const id = Number(user.id);
       if (seen.has(id)) return false;
       seen.add(id);
       return true;
     });
   }, [storeUsers, teamList]);
-  
+
   // Filter out the current user so they can't be their own manager
-  const selectableUsers = useMemo(() => allUsers.filter(user => user.id !== currentUserId), [allUsers, currentUserId]);
+  const selectableUsers = useMemo(
+    () => allUsers.filter((user) => user.id !== currentUserId),
+    [allUsers, currentUserId],
+  );
 
   const [selectedManager, setSelectedManager] = useState<TUsersDropdownOption | null>(null);
 
   useEffect(() => {
     if (currentManagerId) {
-      const manager = selectableUsers.find(u => u.id === currentManagerId);
+      const manager = selectableUsers.find((u) => u.id === currentManagerId);
       if (manager) {
         setSelectedManager({
           id: manager.id,
@@ -65,12 +68,16 @@ export function SelectManagerModal({
     setSelectedManager(null);
   }, [selectableUsers, currentManagerId]);
 
-  const selectionsDropdownOption: TUsersDropdownOption[] = useMemo(() => selectableUsers.map((item) => ({
-    ...item,
-    optionType: EOptionTypes.User,
-    label: getUserFullName(item),
-    value: String(item.id),
-  })), [selectableUsers]);
+  const selectionsDropdownOption: TUsersDropdownOption[] = useMemo(
+    () =>
+      selectableUsers.map((item) => ({
+        ...item,
+        optionType: EOptionTypes.User,
+        label: getUserFullName(item),
+        value: String(item.id),
+      })),
+    [selectableUsers],
+  );
 
   const handleConfirm = useCallback(() => {
     onConfirm(selectedManager ? Number(selectedManager.id) : null);
@@ -87,9 +94,7 @@ export function SelectManagerModal({
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <div className={styles['select-manager-modal']}>
-        <p className={styles['select-manager-modal__title']}>
-          Select Manager
-        </p>
+        <p className={styles['select-manager-modal__title']}>Select Manager</p>
 
         <div className={styles['select-manager-modal__content']}>
           <UsersDropdownComponent

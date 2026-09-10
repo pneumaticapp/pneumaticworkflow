@@ -78,12 +78,14 @@ describe('uploadFiles', () => {
         file,
         filename: 'report.pdf',
       });
-      expect(result).toEqual([{
-        id: 'file-abc',
-        name: 'report.pdf',
-        url: 'https://cdn.example.com/a.pdf',
-        size: file.size,
-      }]);
+      expect(result).toEqual([
+        {
+          id: 'file-abc',
+          name: 'report.pdf',
+          url: 'https://cdn.example.com/a.pdf',
+          size: file.size,
+        },
+      ]);
     });
 
     it('uploads multiple files', async () => {
@@ -109,8 +111,9 @@ describe('uploadFiles', () => {
         callOrder.push(Date.now());
         return { publicUrl: 'https://cdn/f', fileId: `id-${callOrder.length}` };
       });
-      const files = Array.from({ length: 5 }, (_, i) =>
-        new File([`content-${i}`], `file${i}.pdf`, { type: 'application/pdf' }),
+      const files = Array.from(
+        { length: 5 },
+        (_, i) => new File([`content-${i}`], `file${i}.pdf`, { type: 'application/pdf' }),
       );
 
       const result = await uploadFiles(files);
@@ -168,8 +171,6 @@ describe('uploadFiles', () => {
     });
   });
 
-
-
   describe('error handling', () => {
     it('returns error object on upload failure', async () => {
       const error = new Error('Network error');
@@ -178,10 +179,7 @@ describe('uploadFiles', () => {
 
       const result = await uploadFiles([file]);
 
-      expect(mockNotificationManager.notifyApiError).toHaveBeenCalledWith(
-        error,
-        { message: 'Network error' },
-      );
+      expect(mockNotificationManager.notifyApiError).toHaveBeenCalledWith(error, { message: 'Network error' });
       expect(result).toHaveLength(1);
       expect(result[0].error).toBe('Network error');
       expect(result[0].url).toBe('');
@@ -218,10 +216,9 @@ describe('uploadFiles', () => {
 
       const result = await uploadFiles([file]);
 
-      expect(mockNotificationManager.notifyApiError).toHaveBeenCalledWith(
-        fsError,
-        { message: 'file-service.size-exceeded' },
-      );
+      expect(mockNotificationManager.notifyApiError).toHaveBeenCalledWith(fsError, {
+        message: 'file-service.size-exceeded',
+      });
       expect(result).toHaveLength(1);
       expect(result[0].error).toBe('file-service.size-exceeded');
       expect(result[0].url).toBe('');
@@ -238,10 +235,9 @@ describe('uploadFiles', () => {
 
       const result = await uploadFiles([file]);
 
-      expect(mockNotificationManager.notifyApiError).toHaveBeenCalledWith(
-        fsError,
-        { message: 'file-service.auth-failed' },
-      );
+      expect(mockNotificationManager.notifyApiError).toHaveBeenCalledWith(fsError, {
+        message: 'file-service.auth-failed',
+      });
       expect(result).toHaveLength(1);
       expect(result[0].error).toBe('file-service.auth-failed');
     });

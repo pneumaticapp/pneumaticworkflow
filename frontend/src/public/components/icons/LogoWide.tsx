@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 import React from 'react';
 
 export type TLogoWideProps = React.SVGAttributes<SVGElement>;

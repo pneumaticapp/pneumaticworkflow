@@ -1,4 +1,3 @@
-/* eslint-disable indent */
 import React, { ReactNode, useMemo, useState } from 'react';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';

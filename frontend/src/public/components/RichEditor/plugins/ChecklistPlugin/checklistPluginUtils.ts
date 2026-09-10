@@ -28,10 +28,7 @@ import {
   $isChecklistItemNode,
 } from '../../nodes';
 import { createChecklistApiName, createChecklistSelectionApiName } from '../../../../utils/createId';
-import type {
-  InsertParagraphFromEmptyChecklistPayload,
-  BackspaceOnEmptyChecklistPayload,
-} from './types';
+import type { InsertParagraphFromEmptyChecklistPayload, BackspaceOnEmptyChecklistPayload } from './types';
 
 /** Normalize for dedup: trim + collapse spaces/newlines. */
 function normalizeTextForDedup(text: string): string {
@@ -99,7 +96,9 @@ function shouldDropClipboardNode(
   if (!$isParagraphNode(node)) return false;
   const text = normalizeTextForDedup(node.getTextContent());
   const afterChecklist = hasChecklist && checklistIdx >= 0 && index === checklistIdx + 1;
-  return (afterChecklist && (text.length === 0 || checklistTexts.has(text))) || (text.length > 0 && checklistTexts.has(text));
+  return (
+    (afterChecklist && (text.length === 0 || checklistTexts.has(text))) || (text.length > 0 && checklistTexts.has(text))
+  );
 }
 
 /** On paste: drop only the trailing empty paragraph after checklist and duplicate paragraph texts. */
@@ -129,7 +128,7 @@ export function assignNewChecklistIds(nodes: LexicalNode[]): void {
     if ($isChecklistNode(node)) {
       const listNode = node as ChecklistNode;
       const newId = createChecklistApiName();
-      /* eslint-disable no-underscore-dangle -- clipboard nodes not in editor state yet */
+
       (listNode as { __listApiName: string }).__listApiName = newId;
       listNode.getChildren().forEach((child: LexicalNode) => {
         if ($isChecklistItemNode(child)) {
@@ -138,7 +137,6 @@ export function assignNewChecklistIds(nodes: LexicalNode[]): void {
           (item as { __itemApiName: string }).__itemApiName = createChecklistSelectionApiName();
         }
       });
-      /* eslint-enable no-underscore-dangle */
     } else if ($isElementNode(node)) assignNewChecklistIds(node.getChildren());
   });
 }
@@ -165,12 +163,14 @@ export function getInsertParagraphFromEmptyChecklistPayload(): InsertParagraphFr
   if (!item || !isChecklistItemEmpty(item)) return null;
   const parent = item.getParent();
   if (!parent || !$isChecklistNode(parent)) return null;
-  return { itemKey: item.getKey(), parentKey: parent.getKey(), nextSiblingKeys: item.getNextSiblings().map((s) => s.getKey()) };
+  return {
+    itemKey: item.getKey(),
+    parentKey: parent.getKey(),
+    nextSiblingKeys: item.getNextSiblings().map((s) => s.getKey()),
+  };
 }
 
-export function applyInsertParagraphFromEmptyChecklist(
-  payload: InsertParagraphFromEmptyChecklistPayload,
-): void {
+export function applyInsertParagraphFromEmptyChecklist(payload: InsertParagraphFromEmptyChecklistPayload): void {
   const item = $getNodeByKey(payload.itemKey);
   const parent = $getNodeByKey(payload.parentKey);
   if (!item || !$isChecklistItemNode(item) || !parent || !$isChecklistNode(parent)) return;
@@ -227,9 +227,9 @@ export function getSelectedRootBlocks(): ElementNode[] {
     }
   });
   const root = $getRoot();
-  return root.getChildren().filter(
-    (child): child is ElementNode => $isElementNode(child) && blockKeys.has(child.getKey()),
-  );
+  return root
+    .getChildren()
+    .filter((child): child is ElementNode => $isElementNode(child) && blockKeys.has(child.getKey()));
 }
 
 /**
@@ -325,7 +325,9 @@ export function convertListToChecklist(listNode: LexicalNode): ChecklistItemNode
   if (listType === 'check') return null;
   const listApiName = createChecklistApiName();
   const checklistRoot = $createChecklistNode({ listApiName });
-  const listItems = list.getChildren().filter((n): n is import('@lexical/list').ListItemNode => $isLexicalListItemNode(n));
+  const listItems = list
+    .getChildren()
+    .filter((n): n is import('@lexical/list').ListItemNode => $isLexicalListItemNode(n));
   listItems.forEach((listItem) => {
     const checklistItem = $createChecklistItemNode({
       listApiName,
@@ -351,7 +353,10 @@ export function convertListToChecklist(listNode: LexicalNode): ChecklistItemNode
 /**
  * Converts a ChecklistNode into a Lexical ListNode (bullet or number). Each ChecklistItemNode becomes a ListItemNode.
  */
-export function convertChecklistToList(checklistNode: LexicalNode, listType: 'number' | 'bullet'): import('@lexical/list').ListNode | null {
+export function convertChecklistToList(
+  checklistNode: LexicalNode,
+  listType: 'number' | 'bullet',
+): import('@lexical/list').ListNode | null {
   if (!$isChecklistNode(checklistNode)) return null;
   const checklist = checklistNode as ChecklistNode;
   const lexicalList = $createLexicalListNode(listType);
@@ -409,7 +414,11 @@ export function getBackspaceOnEmptyChecklistPayload(): BackspaceOnEmptyChecklist
   const item = getChecklistItemNodeFromSelection();
   if (!item || !isChecklistItemEmpty(item)) return null;
   const parent = item.getParent();
-  return { itemKey: item.getKey(), parentKey: parent?.getKey() ?? null, prevItemKey: item.getPreviousSibling()?.getKey() ?? null };
+  return {
+    itemKey: item.getKey(),
+    parentKey: parent?.getKey() ?? null,
+    prevItemKey: item.getPreviousSibling()?.getKey() ?? null,
+  };
 }
 
 export function isCursorAtStartOfChecklistItem(): string | null {

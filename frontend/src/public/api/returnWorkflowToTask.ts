@@ -7,14 +7,16 @@ export interface IReturnWorkflowToTaskConfig {
   taskId: number;
 }
 
-export function returnWorkflowToTask({id, taskId}: IReturnWorkflowToTaskConfig) {
-  const { api: { urls }} = getBrowserConfigEnv();
+export function returnWorkflowToTask({ id, taskId }: IReturnWorkflowToTaskConfig) {
+  const {
+    api: { urls },
+  } = getBrowserConfigEnv();
   const url = urls.returnWorkflowToTask.replace(':id', String(id));
 
   return commonRequest(
     url,
     {
-      data: mapRequestBody({task: taskId}),
+      data: mapRequestBody({ task: taskId }),
       method: 'POST',
     },
     { responseType: 'empty', shouldThrow: true },

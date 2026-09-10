@@ -22,9 +22,7 @@ import { ITableViewFields } from '../../../types/template';
 import { ETemplateOwnerType } from '../../../types/template';
 import { EExtraFieldType } from '../../../types/template';
 
-const minimalWorkflow = (
-  overrides: Partial<IWorkflowClient> = {},
-): IWorkflowClient =>
+const minimalWorkflow = (overrides: Partial<IWorkflowClient> = {}): IWorkflowClient =>
   ({
     id: 1,
     name: 'Workflow One',
@@ -75,14 +73,7 @@ describe('exportWorkflowsToExcel', () => {
         headerLabels: systemHeaderLabels,
       });
       expect(rows).toHaveLength(1);
-      expect(rows[0]).toEqual([
-        'Workflow',
-        'Template',
-        'Starter',
-        'Progress',
-        'Step',
-        'Performer',
-      ]);
+      expect(rows[0]).toEqual(['Workflow', 'Template', 'Starter', 'Progress', 'Step', 'Performer']);
     });
 
     it('uses default system columns when selectedFields is empty and no optional fields', () => {
@@ -92,14 +83,7 @@ describe('exportWorkflowsToExcel', () => {
         optionalFieldsFromWorkflow: [],
         headerLabels: systemHeaderLabels,
       });
-      expect(rows[0]).toEqual([
-        'Workflow',
-        'Template',
-        'Starter',
-        'Progress',
-        'Step',
-        'Performer',
-      ]);
+      expect(rows[0]).toEqual(['Workflow', 'Template', 'Starter', 'Progress', 'Step', 'Performer']);
     });
 
     it('outputs one data row for one workflow with system columns', () => {
@@ -131,28 +115,12 @@ describe('exportWorkflowsToExcel', () => {
         headerLabels: systemHeaderLabels,
       });
       expect(rows).toHaveLength(2);
-      expect(rows[0]).toEqual([
-        'Workflow',
-        'Template',
-        'Starter',
-        'Progress',
-        'Step',
-        'Performer',
-      ]);
-      expect(rows[1]).toEqual([
-        'My Process',
-        'T1',
-        'Alice Smith',
-        '50%',
-        'Task A',
-        '',
-      ]);
+      expect(rows[0]).toEqual(['Workflow', 'Template', 'Starter', 'Progress', 'Step', 'Performer']);
+      expect(rows[1]).toEqual(['My Process', 'T1', 'Alice Smith', '50%', 'Task A', '']);
     });
 
     it('keeps raw cell values with comma and double quote without CSV escaping', () => {
-      const workflows = [
-        minimalWorkflow({ name: 'Name with "quotes" and, comma' }),
-      ];
+      const workflows = [minimalWorkflow({ name: 'Name with "quotes" and, comma' })];
       const rows = buildWorkflowsExportRows({
         ...baseConfig,
         workflows,
@@ -205,9 +173,7 @@ describe('exportWorkflowsToExcel', () => {
     });
 
     it('uses localized multipleTasksLabel for step when areMultipleTasks is true', () => {
-      const workflows = [
-        minimalWorkflow({ areMultipleTasks: true, oneActiveTaskName: null }),
-      ];
+      const workflows = [minimalWorkflow({ areMultipleTasks: true, oneActiveTaskName: null })];
       const rows = buildWorkflowsExportRows({
         ...baseConfig,
         workflows,
@@ -221,9 +187,7 @@ describe('exportWorkflowsToExcel', () => {
     it('uses deletedGroupFallbackTemplate for performer when group is not in list', () => {
       const workflows = [
         minimalWorkflow({
-          selectedUsers: [
-            { type: ETemplateOwnerType.UserGroup, sourceId: 999 },
-          ],
+          selectedUsers: [{ type: ETemplateOwnerType.UserGroup, sourceId: 999 }],
         }),
       ];
       const rows = buildWorkflowsExportRows({

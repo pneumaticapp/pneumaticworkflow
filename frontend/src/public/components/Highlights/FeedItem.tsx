@@ -68,7 +68,7 @@ export function FeedItem({
                   Icon: EditIcon,
                   size: 'lg',
                 } as TDropdownOption,
-            ]
+              ]
             : []),
           ...(template
             ? [
@@ -77,7 +77,7 @@ export function FeedItem({
                   onClick: applyTemplatesFilter(template.id),
                   size: 'lg',
                 } as TDropdownOption,
-            ]
+              ]
             : []),
           {
             label: formatMessage({ id: 'process-highlights.review-workflows-of' }, { user: userName }),

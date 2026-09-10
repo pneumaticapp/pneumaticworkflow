@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
 
+import { GroupIcon } from '../../../icons';
 import { Avatar } from '../Avatar';
 import styles from '../Avatar.css';
-
 
 describe('Avatar', () => {
   it('renders image', () => {
@@ -13,7 +13,7 @@ describe('Avatar', () => {
       lastName: '',
       photo: url,
       email: '',
-    }
+    };
     const wrapper = shallow(<Avatar user={user} />);
 
     expect(wrapper.find('img').prop('src')).toEqual(url);
@@ -22,19 +22,15 @@ describe('Avatar', () => {
   it('renders initials', () => {
     const firstName = 'Test';
     const lastName = 'User';
-    const email = "test@test.com"
-    const photo = "";
+    const email = 'test@test.com';
+    const photo = '';
     const user = {
       firstName,
       lastName,
       photo,
       email,
-    }
-    const wrapper = shallow(
-      <Avatar
-        user={user}
-      />,
-    );
+    };
+    const wrapper = shallow(<Avatar user={user} />);
 
     const avatarElement = wrapper.find(`.${styles['avatar']}`);
 
@@ -47,12 +43,27 @@ describe('Avatar', () => {
       lastName: '',
       photo: '',
       email: '',
-    }
+    };
 
     const wrapper = shallow(<Avatar user={user} />);
 
     const avatarElement = wrapper.find(`.${styles['avatar']}`);
 
     expect(avatarElement.text()).toEqual('');
+  });
+
+  it('does not nest container for group avatar', () => {
+    const user = {
+      firstName: '',
+      lastName: '',
+      photo: '',
+      email: '',
+      type: 'group' as const,
+    };
+    const wrapper = shallow(<Avatar user={user} containerClassName="avatar-container" />);
+
+    expect(wrapper.hasClass('avatar-container')).toBe(true);
+    expect(wrapper.find(GroupIcon).parents('.avatar-container')).toHaveLength(1);
+    expect(wrapper.find(GroupIcon)).toHaveLength(1);
   });
 });

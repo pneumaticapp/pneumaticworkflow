@@ -31,38 +31,41 @@ jest.mock('../../../UI', () => ({
   Modal: jest.fn(({ isOpen, children }: { isOpen: boolean; children: React.ReactNode }) =>
     isOpen ? React.createElement('div', { 'data-testid': 'modal' }, children) : null,
   ),
-  InputField: jest.fn(({ value, onChange, errorMessage }: {
-    value: string;
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-    errorMessage?: string;
-  }) =>
-    React.createElement('div', null,
-      React.createElement('input', {
-        'data-testid': 'fieldset-name-input',
-        value,
-        onChange,
-      }),
-      errorMessage
-        ? React.createElement('span', { 'data-testid': 'error-message' }, errorMessage)
-        : null,
-    ),
+  InputField: jest.fn(
+    ({
+      value,
+      onChange,
+      errorMessage,
+    }: {
+      value: string;
+      onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+      errorMessage?: string;
+    }) =>
+      React.createElement(
+        'div',
+        null,
+        React.createElement('input', {
+          'data-testid': 'fieldset-name-input',
+          value,
+          onChange,
+        }),
+        errorMessage ? React.createElement('span', { 'data-testid': 'error-message' }, errorMessage) : null,
+      ),
   ),
-  Button: jest.fn(({ type, disabled, onClick, label }: {
-    type?: string;
-    disabled?: boolean;
-    onClick?: () => void;
-    label: string;
-  }) =>
-    React.createElement('button', {
-      type: type || 'button',
-      disabled,
-      onClick,
-      'data-testid': `btn-${label}`,
-    }, label),
+  Button: jest.fn(
+    ({ type, disabled, onClick, label }: { type?: string; disabled?: boolean; onClick?: () => void; label: string }) =>
+      React.createElement(
+        'button',
+        {
+          type: type || 'button',
+          disabled,
+          onClick,
+          'data-testid': `btn-${label}`,
+        },
+        label,
+      ),
   ),
-  Header: jest.fn(({ children }: { children: React.ReactNode }) =>
-    React.createElement('span', null, children),
-  ),
+  Header: jest.fn(({ children }: { children: React.ReactNode }) => React.createElement('span', null, children)),
 }));
 
 describe('FieldsetModal', () => {
@@ -99,11 +102,9 @@ describe('FieldsetModal', () => {
     },
   };
 
-  const getSubmitButton = (label: string) =>
-    screen.getByTestId(`btn-${label}`);
+  const getSubmitButton = (label: string) => screen.getByTestId(`btn-${label}`);
 
-  const getNameInput = () =>
-    screen.getByTestId('fieldset-name-input');
+  const getNameInput = () => screen.getByTestId('fieldset-name-input');
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -124,9 +125,7 @@ describe('FieldsetModal', () => {
       const submitBtn = getSubmitButton(CREATE_LABEL);
       userEvent.click(submitBtn);
 
-      expect(mockDispatch).toHaveBeenCalledWith(
-        createFieldsetAction({ name: 'New FS', title: 'New FS' }),
-      );
+      expect(mockDispatch).toHaveBeenCalledWith(createFieldsetAction({ name: 'New FS', title: 'New FS' }));
       expect(mockDispatch).toHaveBeenCalledWith(closeCreateModal());
       expect(mockDispatch).toHaveBeenCalledTimes(2);
     });
@@ -145,9 +144,7 @@ describe('FieldsetModal', () => {
       const submitBtn = getSubmitButton(CONFIRM_LABEL);
       userEvent.click(submitBtn);
 
-      expect(mockDispatch).toHaveBeenCalledWith(
-        updateFieldsetAction({ id: 10, name: 'New Name' }),
-      );
+      expect(mockDispatch).toHaveBeenCalledWith(updateFieldsetAction({ id: 10, name: 'New Name' }));
       expect(mockDispatch).toHaveBeenCalledWith(closeEditModal());
       expect(mockDispatch).toHaveBeenCalledTimes(2);
     });
@@ -253,9 +250,7 @@ describe('FieldsetModal', () => {
       (validateFieldsetName as jest.Mock).mockReturnValue('Name is required');
       (useSelector as jest.Mock).mockImplementation((selector) => selector(createOpenState));
 
-      const { rerender } = render(
-        React.createElement(FieldsetModal, { type: EFieldsetModalType.Create }),
-      );
+      const { rerender } = render(React.createElement(FieldsetModal, { type: EFieldsetModalType.Create }));
 
       const input = getNameInput();
       userEvent.type(input, 'bad');
@@ -266,15 +261,11 @@ describe('FieldsetModal', () => {
       expect(screen.getByTestId('error-message')).toBeInTheDocument();
 
       (useSelector as jest.Mock).mockImplementation((selector) => selector(defaultState));
-      rerender(
-        React.createElement(FieldsetModal, { type: EFieldsetModalType.Create }),
-      );
+      rerender(React.createElement(FieldsetModal, { type: EFieldsetModalType.Create }));
 
       (validateFieldsetName as jest.Mock).mockReturnValue('');
       (useSelector as jest.Mock).mockImplementation((selector) => selector(createOpenState));
-      rerender(
-        React.createElement(FieldsetModal, { type: EFieldsetModalType.Create }),
-      );
+      rerender(React.createElement(FieldsetModal, { type: EFieldsetModalType.Create }));
 
       expect(screen.queryByTestId('error-message')).not.toBeInTheDocument();
     });

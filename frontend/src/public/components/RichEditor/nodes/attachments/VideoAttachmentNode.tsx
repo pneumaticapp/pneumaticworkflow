@@ -18,13 +18,7 @@ import styles from './VideoAttachmentNode.css';
 
 export type SerializedVideoAttachmentNode = TAttachmentPayload & SerializedLexicalNode;
 
-function VideoAttachmentComponent({
-  nodeKey,
-  url,
-}: {
-  nodeKey: NodeKey;
-  url: string;
-}): React.ReactElement {
+function VideoAttachmentComponent({ nodeKey, url }: { nodeKey: NodeKey; url: string }): React.ReactElement {
   const [editor] = useLexicalComposerContext();
   const onDelete = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -42,21 +36,10 @@ function VideoAttachmentComponent({
 
   return (
     <div className={styles.container} role="group">
-      <video
-        src={url}
-        preload="auto"
-        className={styles.video}
-        controls
-        onClick={(e) => e.stopPropagation()}
-      >
+      <video src={url} preload="auto" className={styles.video} controls onClick={(e) => e.stopPropagation()}>
         <track kind="captions" />
       </video>
-      <button
-        type="button"
-        aria-label="Delete video"
-        className={styles.delete}
-        onClick={onDelete}
-      >
+      <button type="button" aria-label="Delete video" className={styles.delete} onClick={onDelete}>
         <DeleteBoldIcon />
       </button>
     </div>
@@ -75,17 +58,10 @@ export class VideoAttachmentNode extends DecoratorNode<React.ReactElement> {
   }
 
   static clone(node: VideoAttachmentNode): VideoAttachmentNode {
-    return new VideoAttachmentNode(
-      node.attachmentUrl,
-      node.attachmentId,
-      node.attachmentName,
-      node.getKey(),
-    );
+    return new VideoAttachmentNode(node.attachmentUrl, node.attachmentId, node.attachmentName, node.getKey());
   }
 
-  static importJSON(
-    serialized: SerializedVideoAttachmentNode,
-  ): VideoAttachmentNode {
+  static importJSON(serialized: SerializedVideoAttachmentNode): VideoAttachmentNode {
     return $createVideoAttachmentNode(serialized);
   }
 
@@ -152,31 +128,18 @@ export class VideoAttachmentNode extends DecoratorNode<React.ReactElement> {
   }
 
   getTextContent(): string {
-    return buildAttachmentMarkdownString(
-      this.attachmentName ?? '',
-      this.attachmentUrl,
-      this.attachmentId,
-      'video',
-    );
+    return buildAttachmentMarkdownString(this.attachmentName ?? '', this.attachmentUrl, this.attachmentId, 'video');
   }
 
   decorate(): React.ReactElement {
-    return (
-      <VideoAttachmentComponent nodeKey={this.getKey()} url={this.attachmentUrl} />
-    );
+    return <VideoAttachmentComponent nodeKey={this.getKey()} url={this.attachmentUrl} />;
   }
 }
 
-export function $createVideoAttachmentNode(
-  payload: TAttachmentPayload,
-): VideoAttachmentNode {
-  return $applyNodeReplacement(
-    new VideoAttachmentNode(payload.url, payload.id, payload.name),
-  );
+export function $createVideoAttachmentNode(payload: TAttachmentPayload): VideoAttachmentNode {
+  return $applyNodeReplacement(new VideoAttachmentNode(payload.url, payload.id, payload.name));
 }
 
-export function $isVideoAttachmentNode(
-  node: LexicalNode | null | undefined,
-): node is VideoAttachmentNode {
+export function $isVideoAttachmentNode(node: LexicalNode | null | undefined): node is VideoAttachmentNode {
   return node instanceof VideoAttachmentNode;
 }

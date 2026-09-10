@@ -47,20 +47,26 @@ describe('OutputFieldContent', () => {
 
   it('shows children when dataset is not set', () => {
     const childText = 'Custom Options Here';
-    render(React.createElement(OutputFieldContent, baseProps,
-      React.createElement('div', { 'data-testid': 'children' }, childText),
-    ));
+    render(
+      React.createElement(
+        OutputFieldContent,
+        baseProps,
+        React.createElement('div', { 'data-testid': 'children' }, childText),
+      ),
+    );
 
     expect(screen.getByTestId('children')).toBeInTheDocument();
     expect(screen.getByTestId('children')).toHaveTextContent(childText);
   });
 
   it('shows dataset name when dataset is set', () => {
-    render(React.createElement(OutputFieldContent, {
-      ...baseProps,
-      field: datasetField as any,
-      datasetName: 'My Dataset',
-    }));
+    render(
+      React.createElement(OutputFieldContent, {
+        ...baseProps,
+        field: datasetField as any,
+        datasetName: 'My Dataset',
+      }),
+    );
 
     expect(screen.queryByTestId('children')).not.toBeInTheDocument();
     expect(screen.getByText('My Dataset')).toBeInTheDocument();
@@ -69,11 +75,13 @@ describe('OutputFieldContent', () => {
   it('calls editField with saved selections on Clear button click', () => {
     const { rerender } = render(React.createElement(OutputFieldContent, baseProps));
 
-    rerender(React.createElement(OutputFieldContent, {
-      ...baseProps,
-      field: datasetField as any,
-      datasetName: 'My Dataset',
-    }));
+    rerender(
+      React.createElement(OutputFieldContent, {
+        ...baseProps,
+        field: datasetField as any,
+        datasetName: 'My Dataset',
+      }),
+    );
 
     userEvent.click(screen.getByText(CLEAR_LABEL));
 
@@ -85,22 +93,26 @@ describe('OutputFieldContent', () => {
   });
 
   it('does not show Clear button when isDisabled=true', () => {
-    render(React.createElement(OutputFieldContent, {
-      ...baseProps,
-      field: datasetField as any,
-      datasetName: 'My Dataset',
-      isDisabled: true,
-    }));
+    render(
+      React.createElement(OutputFieldContent, {
+        ...baseProps,
+        field: datasetField as any,
+        datasetName: 'My Dataset',
+        isDisabled: true,
+      }),
+    );
 
     expect(screen.queryByText(CLEAR_LABEL)).not.toBeInTheDocument();
   });
 
   it('calls editField with empty selection when no selections were saved', () => {
-    render(React.createElement(OutputFieldContent, {
-      ...baseProps,
-      field: datasetField as any,
-      datasetName: 'My Dataset',
-    }));
+    render(
+      React.createElement(OutputFieldContent, {
+        ...baseProps,
+        field: datasetField as any,
+        datasetName: 'My Dataset',
+      }),
+    );
 
     userEvent.click(screen.getByText(CLEAR_LABEL));
 

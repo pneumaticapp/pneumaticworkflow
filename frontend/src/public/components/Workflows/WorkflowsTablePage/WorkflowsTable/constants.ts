@@ -25,6 +25,9 @@ export const SYSTEM_FIELDS: TSystemField[] = [
   { apiName: 'system-column-performer', name: 'performer', isDisabled: false, hasNotTooltip: true },
 ];
 
-export const SYSTEM_MERGED_OUTPUTS: TRuntimeMergedOutputPart[] = SYSTEM_FIELDS.map((field) => ({ kind: 'system', field }));
+export const SYSTEM_MERGED_OUTPUTS: TRuntimeMergedOutputPart[] = SYSTEM_FIELDS.map((field) => ({
+  kind: 'system',
+  field,
+}));
 
 export const SKELETON_ROWS = Array.from({ length: 5 }, (_, index) => `skeleton-row-${index}`);

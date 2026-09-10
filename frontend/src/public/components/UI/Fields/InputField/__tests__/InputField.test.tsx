@@ -11,13 +11,7 @@ describe('InputField', () => {
   it('Renders closing button if onClear prop is passed and click handling is correct', () => {
     const onClearMock = jest.fn();
 
-    render(
-      <InputField
-        value={'value'}
-        onChange={() => {}}
-        onClear={onClearMock}
-      />,
-    );
+    render(<InputField value={'value'} onChange={() => {}} onClear={onClearMock} />);
 
     const clearButton = PageObject.getClearButton();
     fireEvent.click(clearButton);

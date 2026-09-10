@@ -54,7 +54,7 @@ export function Tabs<TOption extends TOptionBase>({
               tabClassName,
               middleTabBorderClass,
               index === activeTabIndex && styles['tab_active'],
-              index === activeTabIndex && activeTabClassName
+              index === activeTabIndex && activeTabClassName,
             )}
           >
             {value.label}

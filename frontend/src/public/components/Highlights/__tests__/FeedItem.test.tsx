@@ -15,8 +15,11 @@ jest.mock('../FeedItemIcon', () => ({
 }));
 
 jest.mock('../../UserData', () => ({
-  UserData: ({ children }: { children: (user: { id: number; firstName: string; lastName: string }) => React.ReactNode }) =>
-    children({ id: 1, firstName: 'John', lastName: 'Doe' }),
+  UserData: ({
+    children,
+  }: {
+    children: (user: { id: number; firstName: string; lastName: string }) => React.ReactNode;
+  }) => children({ id: 1, firstName: 'John', lastName: 'Doe' }),
 }));
 
 jest.mock('../../UI', () => ({

@@ -2,7 +2,7 @@ import { EUserStatus, TUserListItem } from '../types/user';
 import { getBrowserConfigEnv } from '../utils/getConfig';
 import { isArrayWithItems } from '../utils/helpers';
 import { identifyAppPartOnClient } from '../utils/identifyAppPart/identifyAppPartOnClient';
-import { EAppPart } from  '../utils/identifyAppPart/types';
+import { EAppPart } from '../utils/identifyAppPart/types';
 import { commonRequest } from './commonRequest';
 
 export type TResponseUser = TUserListItem[];
@@ -13,7 +13,9 @@ export interface IGetUsersConfig {
 }
 
 const getUrl = () => {
-  const { api: { urls }} = getBrowserConfigEnv();
+  const {
+    api: { urls },
+  } = getBrowserConfigEnv();
 
   const appPart = identifyAppPartOnClient();
 
@@ -33,10 +35,9 @@ export function getUsersQueryString(config?: IGetUsersConfig) {
 
   const { type, status } = config;
 
-  const queryString = [
-    type && `type=${type}`,
-    isArrayWithItems(status) && `status=${status.join(',')}`,
-  ].filter(Boolean).join('&');
+  const queryString = [type && `type=${type}`, isArrayWithItems(status) && `status=${status.join(',')}`]
+    .filter(Boolean)
+    .join('&');
 
   return queryString ? `?${queryString}` : '';
 }

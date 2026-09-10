@@ -65,7 +65,7 @@ describe('SelectManagerModal', () => {
           onConfirm={mockOnConfirm}
           currentManagerId={null}
           currentUserId={1}
-        />
+        />,
       );
 
       // assert
@@ -81,7 +81,7 @@ describe('SelectManagerModal', () => {
           onConfirm={mockOnConfirm}
           currentManagerId={2}
           currentUserId={1}
-        />
+        />,
       );
 
       // assert
@@ -97,7 +97,7 @@ describe('SelectManagerModal', () => {
           onConfirm={mockOnConfirm}
           currentManagerId={null}
           currentUserId={1}
-        />
+        />,
       );
 
       // assert
@@ -115,7 +115,7 @@ describe('SelectManagerModal', () => {
           onConfirm={mockOnConfirm}
           currentManagerId={2}
           currentUserId={1}
-        />
+        />,
       );
 
       // act
@@ -135,7 +135,7 @@ describe('SelectManagerModal', () => {
           onConfirm={mockOnConfirm}
           currentManagerId={null}
           currentUserId={1} // The current user
-        />
+        />,
       );
 
       // assert
@@ -156,9 +156,9 @@ describe('SelectManagerModal', () => {
           onConfirm={mockOnConfirm}
           currentManagerId={null}
           currentUserId={1}
-        />
+        />,
       );
-      
+
       // Simulate selecting a manager
       const dropdownProps = (UsersDropdownComponent as jest.Mock).mock.calls[0][0];
       dropdownProps.onChange({ value: '3', id: 3, label: 'Another Manager' });
@@ -180,7 +180,7 @@ describe('SelectManagerModal', () => {
           onConfirm={mockOnConfirm}
           currentManagerId={null}
           currentUserId={1}
-        />
+        />,
       );
 
       // assert
@@ -196,7 +196,7 @@ describe('SelectManagerModal', () => {
           onConfirm={mockOnConfirm}
           currentManagerId={null}
           currentUserId={1}
-        />
+        />,
       );
 
       // act
@@ -216,7 +216,7 @@ describe('SelectManagerModal', () => {
           onConfirm={mockOnConfirm}
           currentManagerId={2}
           currentUserId={1}
-        />
+        />,
       );
 
       // act
@@ -236,7 +236,7 @@ describe('SelectManagerModal', () => {
           onConfirm={mockOnConfirm}
           currentManagerId={2}
           currentUserId={1}
-        />
+        />,
       );
 
       // First render: dropdown value should be null (no users loaded)
@@ -255,7 +255,7 @@ describe('SelectManagerModal', () => {
           onConfirm={mockOnConfirm}
           currentManagerId={2}
           currentUserId={1}
-        />
+        />,
       );
 
       // assert — dropdown should now have the manager selected

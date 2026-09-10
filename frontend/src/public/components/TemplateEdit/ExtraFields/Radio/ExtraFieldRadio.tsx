@@ -49,8 +49,8 @@ export function ExtraFieldRadio({
   }, [selectionItems]);
 
   const [activeOptionIndex, setActiveOptionIndex] = useState<number | null>(null);
-  const [duplicateErrors, setDuplicateErrors] = useState<Record<string, string>>(
-    () => recalculateDuplicateErrors(selectionItems || []),
+  const [duplicateErrors, setDuplicateErrors] = useState<Record<string, string>>(() =>
+    recalculateDuplicateErrors(selectionItems || []),
   );
 
   const fieldNameErrorMessage = validateKickoffFieldName(name) || '';
@@ -70,10 +70,12 @@ export function ExtraFieldRadio({
     );
 
     return (
-      <div className={classnames(
-        fieldStyles['kickoff-create-field-container'],
-        labelPosition === EFieldLabelPosition.Left && styles['kick-off-input__field_label-left'],
-      )}>
+      <div
+        className={classnames(
+          fieldStyles['kickoff-create-field-container'],
+          labelPosition === EFieldLabelPosition.Left && styles['kick-off-input__field_label-left'],
+        )}
+      >
         {labelPosition === EFieldLabelPosition.Left ? (
           <div className={styles['field-label-wrapper']}>
             <FieldLabel
@@ -133,7 +135,9 @@ export function ExtraFieldRadio({
           editField={editField}
           isDisabled={isDisabled}
           datasetName={datasetName}
-          {...(labelPosition === EFieldLabelPosition.Left && { className: styles['kick-off-input__options-content_label-left'] })}
+          {...(labelPosition === EFieldLabelPosition.Left && {
+            className: styles['kick-off-input__options-content_label-left'],
+          })}
         >
           {customOptionsList}
           {!isDisabled && addOptionButton}
@@ -250,7 +254,12 @@ export function ExtraFieldRadio({
 
     return (
       <li key={selectionValue} className={fieldStyles['kickoff-set-field-option']}>
-        <RadioButton id={`${field.apiName}-${selectionValue}`} title={selectionValue} onChange={handleToggleOption(selectionValue)} checked={isChecked} />
+        <RadioButton
+          id={`${field.apiName}-${selectionValue}`}
+          title={selectionValue}
+          onChange={handleToggleOption(selectionValue)}
+          checked={isChecked}
+        />
       </li>
     );
   };

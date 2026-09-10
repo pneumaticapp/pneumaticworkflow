@@ -8,8 +8,8 @@
   position: absolute !important;
   top: 0 !important;
   right: 0 !important;
-  left: 0 !important;
   bottom: 0 !important;
+  left: 0 !important;
   /* stylelint-enable declaration-no-important */
   margin: auto;
   opacity: 1;
@@ -24,8 +24,8 @@
 
   margin-bottom: 1.6rem;
   font-weight: 800;
-  letter-spacing: -0.01em;
   color: var(--pneumatic-color-black100);
+  letter-spacing: -0.01em;
 }
 
 .filters__separator {
@@ -34,10 +34,10 @@
 }
 
 .filters__buttons {
-  margin-top: 3.2rem;
   display: flex;
   flex-flow: row wrap;
   align-items: center;
+  margin-top: 3.2rem;
 }
 
 .button_save-container {
@@ -51,15 +51,16 @@
 .feed__spinner {
   /* stylelint-disable-next-line declaration-no-important */
   position: absolute !important;
-  align-self: center;
   /* stylelint-disable-next-line declaration-no-important */
   top: 100% !important;
+  align-self: center;
 }
 
 .feed {
   position: relative;
   display: flex;
   flex-flow: column;
+
   /* The min height is needed for the infinite scroll to work properly  */
   min-height: 1rem;
 

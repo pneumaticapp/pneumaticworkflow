@@ -23,10 +23,7 @@ describe('withScrolling', () => {
     const wrapper = shallow<any>(<WrapperComponent />);
     const instance = wrapper.instance() as any;
 
-    expect(addEventListener).toHaveBeenCalledWith(
-      'scroll',
-      instance.throttledScrollingHandler,
-    );
+    expect(addEventListener).toHaveBeenCalledWith('scroll', instance.throttledScrollingHandler);
   });
 
   it('unsubscribes from the scroll event', () => {
@@ -37,10 +34,7 @@ describe('withScrolling', () => {
     const instance = wrapper.instance() as any;
     wrapper.unmount();
 
-    expect(removeEventListener).toHaveBeenCalledWith(
-      'scroll',
-      instance.throttledScrollingHandler,
-    );
+    expect(removeEventListener).toHaveBeenCalledWith('scroll', instance.throttledScrollingHandler);
   });
 
   describe('handleChangeScrolling', () => {
