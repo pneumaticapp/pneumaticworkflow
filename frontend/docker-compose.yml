@@ -13,11 +13,21 @@ services:
       POSTGRES_REPLICA_USER: ${POSTGRES_REPLICA_USER:-postgres_user}
       POSTGRES_REPLICA_PASSWORD: ${POSTGRES_REPLICA_PASSWORD:-postgres_password}
       POSTGRES_REPLICA_DB: ${POSTGRES_REPLICA_DB:-postgres_db}
+      FILE_POSTGRES_USER: ${FILE_POSTGRES_USER:-pneumatic}
+      FILE_POSTGRES_PASSWORD: ${FILE_POSTGRES_PASSWORD:-pneumatic}
+      FILE_POSTGRES_DB: ${FILE_POSTGRES_DB:-pneumatic}
     volumes:
       - ../postgres/data:/var/lib/postgresql/data:rw
       - ../postgres/backups:/backups:rw
+      - ../scripts/postgres-init:/docker-entrypoint-initdb.d:ro
     expose:
       - 5432
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-h", "localhost"]
+      interval: 5s
+      start_period: 60s
     networks:
       - pneumatic
     restart: always
@@ -418,7 +428,7 @@ services:
       POSTGRES_USER: ${FILE_POSTGRES_USER:-pneumatic}
       POSTGRES_PASSWORD: ${FILE_POSTGRES_PASSWORD:-pneumatic}
       POSTGRES_DB: ${FILE_POSTGRES_DB:-pneumatic}
-      POSTGRES_HOST: ${FILE_POSTGRES_HOST:-file-postgres}
+      POSTGRES_HOST: ${FILE_POSTGRES_HOST:-postgres}
       POSTGRES_PORT: ${FILE_POSTGRES_PORT:-5432}
       STORAGE_TYPE: ${FILE_STORAGE_TYPE:-local}
       SEAWEEDFS_S3_ENDPOINT: ${FILE_SEAWEEDFS_S3_ENDPOINT:-http://seaweedfs-filer:8333}
@@ -440,24 +450,12 @@ services:
     ports:
       - "8002:8000"
     depends_on:
-      - file-postgres
-      - redis
-      - seaweedfs-filer
-    networks:
-      - pneumatic
-    restart: always
-
-  file-postgres:
-    image: postgres:15-bookworm
-    container_name: pneumatic-file-postgres
-    environment:
-      POSTGRES_DB: ${FILE_POSTGRES_DB:-pneumatic}
-      POSTGRES_USER: ${FILE_POSTGRES_USER:-pneumatic}
-      POSTGRES_PASSWORD: ${FILE_POSTGRES_PASSWORD:-pneumatic}
-    ports:
-      - "5433:5432"
-    volumes:
-      - ../file-postgres/data:/var/lib/postgresql/data:rw
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      seaweedfs-filer:
+        condition: service_started
     networks:
       - pneumatic
     restart: always
