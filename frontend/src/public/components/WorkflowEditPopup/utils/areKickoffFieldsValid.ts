@@ -10,7 +10,7 @@ export const checkExtraFieldsAreValid = <T extends IExtraField[]>(fields?: T) =>
   }
 
   const numberOfErrorFields = fields
-    .filter(field => hasFieldError(field, EExtraFieldMode.ProcessRun))
+    .filter(field => !field.isHidden && hasFieldError(field, EExtraFieldMode.ProcessRun))
     .length;
 
   return numberOfErrorFields === 0;

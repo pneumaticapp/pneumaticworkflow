@@ -291,6 +291,52 @@ describe('WorkflowEditPopup', () => {
     expect(startButton).not.toBeDisabled();
   });
 
+  describe('Validation: hidden required fields do not block workflow start', () => {
+    it('enables Start button when an empty required field in kickoff is hidden (isHidden: true)', () => {
+      const workflow = {
+        ...baseWorkflow,
+        kickoff: {
+          description: '',
+          fields: [
+            makeField({ apiName: 'f1', value: 'filled' }),
+            makeField({ apiName: 'f-hidden-required', isRequired: true, isHidden: true, value: '' }),
+          ],
+          fieldsets: [],
+        },
+      };
+
+      renderWithIntl(<WorkflowEditPopup {...baseProps} workflow={workflow} />);
+
+      const startButton = screen.getByRole('button', { name: START_LABEL });
+      expect(startButton).not.toBeDisabled();
+    });
+
+    it('enables Start button when an empty required field in fieldset is hidden (isHidden: true)', () => {
+      const workflow = {
+        ...baseWorkflow,
+        kickoff: {
+          description: '',
+          fields: [
+            makeField({ apiName: 'f1', value: 'filled' }),
+          ],
+          fieldsets: [],
+        },
+        loadedFieldsets: [
+          makeFieldset({
+            fields: [
+              makeField({ apiName: 'fs-hidden-required', isRequired: true, isHidden: true, value: '' }),
+            ],
+          }),
+        ],
+      };
+
+      renderWithIntl(<WorkflowEditPopup {...baseProps} workflow={workflow} />);
+
+      const startButton = screen.getByRole('button', { name: START_LABEL });
+      expect(startButton).not.toBeDisabled();
+    });
+  });
+
   it('passes showInsertButton=false to InputWithVariables', () => {
     renderWithIntl(<WorkflowEditPopup {...baseProps} workflow={baseWorkflow} />);
 
