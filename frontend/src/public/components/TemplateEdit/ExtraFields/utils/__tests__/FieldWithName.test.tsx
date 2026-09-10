@@ -1,11 +1,12 @@
 import * as React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 
 import { FieldWithName } from '../FieldWithName';
 import { FieldLabel } from '../FieldLabel';
 import { Field } from '../../../../Field';
+import { FieldsetRulesetsBadge } from '../../../../Fieldsets/FieldsetRulesetsBadge/FieldsetRulesetsBadge';
 import { EExtraFieldMode } from '../../../../../types/template';
-import { EFieldLabelPosition } from '../../../../../types/fieldset';
+import { EFieldLabelPosition, EFieldRuleType } from '../../../../../types/fieldset';
 import { makeExtraField } from '../../../../../__stubs__/fields.factory';
 
 jest.mock('../FieldLabel', () => ({
@@ -19,6 +20,10 @@ jest.mock('../../../../Field', () => ({
 
 jest.mock('../../../../../utils/validators', () => ({
   validateKickoffFieldName: jest.fn(() => ''),
+}));
+
+jest.mock('../../../../Fieldsets/FieldsetRulesetsBadge/FieldsetRulesetsBadge', () => ({
+  FieldsetRulesetsBadge: jest.fn(() => React.createElement('span', { 'data-testid': 'rulesets-badge' })),
 }));
 
 describe('FieldWithName', () => {
@@ -117,6 +122,94 @@ describe('FieldWithName', () => {
       expect(fieldMock).toHaveBeenCalledTimes(1);
       expect(fieldMock).toHaveBeenCalledWith(
         expect.objectContaining({ value: 'Val text' }),
+        {},
+      );
+    });
+  });
+
+  describe('rulesets badge positioning by labelPosition', () => {
+    const ruleset = {
+      apiName: 'rs-1',
+      name: 'Rule 1',
+      type: EFieldRuleType.Validator,
+      message: '',
+      groupsOr: [],
+      order: 0,
+    };
+
+    it('labelPosition=Left: renders badge in left label column', () => {
+      render(
+        React.createElement(FieldWithName, {
+          ...baseProps,
+          labelPosition: EFieldLabelPosition.Left,
+          field: makeExtraField({
+            name: 'Test',
+            rulesets: [ruleset],
+          }),
+        }),
+      );
+
+      const labelCol = screen.getByLabelText('label-col');
+      expect(within(labelCol).getByTestId('rulesets-badge')).toBeInTheDocument();
+
+      const optionsContent = screen.getByLabelText('options-content');
+      expect(within(optionsContent).queryByTestId('rulesets-badge')).not.toBeInTheDocument();
+    });
+
+    it('labelPosition=Top: renders badge in options content', () => {
+      render(
+        React.createElement(FieldWithName, {
+          ...baseProps,
+          labelPosition: EFieldLabelPosition.Top,
+          field: makeExtraField({
+            name: 'Test',
+            rulesets: [ruleset],
+          }),
+        }),
+      );
+
+      expect(screen.queryByLabelText('label-col')).not.toBeInTheDocument();
+
+      const optionsContent = screen.getByLabelText('options-content');
+      expect(within(optionsContent).getByTestId('rulesets-badge')).toBeInTheDocument();
+    });
+
+    it('passes rulesets to FieldsetRulesetsBadge', () => {
+      const rulesets = [ruleset];
+
+      render(
+        React.createElement(FieldWithName, {
+          ...baseProps,
+          field: makeExtraField({
+            name: 'Test',
+            rulesets,
+          }),
+        }),
+      );
+
+      const badgeMock = FieldsetRulesetsBadge as jest.Mock;
+      expect(badgeMock).toHaveBeenCalledTimes(1);
+      expect(badgeMock).toHaveBeenCalledWith(
+        expect.objectContaining({ rulesets }),
+        {},
+      );
+    });
+
+    it('empty rulesets: badge is called with empty array', () => {
+      render(
+        React.createElement(FieldWithName, {
+          ...baseProps,
+          field: makeExtraField({
+            name: 'Test',
+            rulesets: [],
+          }),
+        }),
+      );
+
+      const badgeMock = FieldsetRulesetsBadge as jest.Mock;
+      expect(badgeMock).toHaveBeenCalledTimes(1);
+      expect(badgeMock).toHaveBeenCalledWith(
+        expect.objectContaining({ rulesets: [] }),
         {},
       );
     });

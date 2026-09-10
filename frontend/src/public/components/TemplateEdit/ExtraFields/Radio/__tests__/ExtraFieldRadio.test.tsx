@@ -5,11 +5,12 @@ import { ExtraFieldRadio } from '../ExtraFieldRadio';
 import { OutputFieldContent } from '../../utils/OutputFieldContent';
 import { FieldLabel } from '../../utils/FieldLabel';
 import { RadioButton } from '../../../../UI/Fields/RadioButton';
+import { FieldsetRulesetsBadge } from '../../../../Fieldsets/FieldsetRulesetsBadge/FieldsetRulesetsBadge';
 import { IWorkflowExtraFieldProps } from '../../types';
 import { intlMock } from '../../../../../__stubs__/intlMock';
 import { makeExtraField } from '../../../../../__stubs__/fields.factory';
 import { EExtraFieldMode, EExtraFieldType, IExtraFieldSelection } from '../../../../../types/template';
-import { EFieldLabelPosition } from '../../../../../types/fieldset';
+import { EFieldLabelPosition, EFieldRuleType } from '../../../../../types/fieldset';
 
 jest.mock('../../utils/OutputFieldContent', () => ({
   OutputFieldContent: jest.fn(({ children }: { children: React.ReactNode }) =>
@@ -59,6 +60,10 @@ jest.mock('../../../KickoffRedux/utils/getEmptySelection', () => ({
 
 jest.mock('../../utils/FieldLabel', () => ({
   FieldLabel: jest.fn(() => null),
+}));
+
+jest.mock('../../../../Fieldsets/FieldsetRulesetsBadge/FieldsetRulesetsBadge', () => ({
+  FieldsetRulesetsBadge: jest.fn(() => React.createElement('span', { 'data-testid': 'rulesets-badge' })),
 }));
 
 describe('ExtraFieldRadio', () => {
@@ -250,6 +255,46 @@ describe('ExtraFieldRadio', () => {
 
       const field2Ids = allIds.filter((id: string) => id.includes('radio-2'));
       expect(field2Ids).toHaveLength(sharedSelections.length);
+    });
+  });
+
+  describe('FieldsetRulesetsBadge integration', () => {
+    const rulesets = [
+      { apiName: 'rs-1', name: 'Rule', type: EFieldRuleType.Validator, message: '', groupsOr: [], order: 0 },
+    ];
+
+    it('labelPosition=Left: passes rulesets to FieldsetRulesetsBadge', () => {
+      render(
+        <ExtraFieldRadio
+          {...baseKickoffProps}
+          labelPosition={EFieldLabelPosition.Left}
+          field={makeExtraField({ name: 'Test', type: EExtraFieldType.Radio, selections: kickoffSelections, rulesets })}
+        />,
+      );
+
+      const badgeMock = FieldsetRulesetsBadge as jest.Mock;
+      expect(badgeMock).toHaveBeenCalledTimes(1);
+      expect(badgeMock).toHaveBeenCalledWith(
+        expect.objectContaining({ rulesets }),
+        {},
+      );
+    });
+
+    it('labelPosition=Top: passes rulesets to FieldsetRulesetsBadge', () => {
+      render(
+        <ExtraFieldRadio
+          {...baseKickoffProps}
+          labelPosition={EFieldLabelPosition.Top}
+          field={makeExtraField({ name: 'Test', type: EExtraFieldType.Radio, selections: kickoffSelections, rulesets })}
+        />,
+      );
+
+      const badgeMock = FieldsetRulesetsBadge as jest.Mock;
+      expect(badgeMock).toHaveBeenCalledTimes(1);
+      expect(badgeMock).toHaveBeenCalledWith(
+        expect.objectContaining({ rulesets }),
+        {},
+      );
     });
   });
 });

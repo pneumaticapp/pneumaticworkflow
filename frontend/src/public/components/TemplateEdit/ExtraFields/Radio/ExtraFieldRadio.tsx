@@ -7,6 +7,7 @@ import { getEmptySelection } from '../../KickoffRedux/utils/getEmptySelection';
 import { validateCheckboxAndRadioField, validateKickoffFieldName } from '../../../../utils/validators';
 import { handleSelectionBlur, recalculateDuplicateErrors } from '../utils/handleSelectionBlur';
 import { IntlMessages } from '../../../IntlMessages';
+import { FieldsetRulesetsBadge } from '../../../Fieldsets/FieldsetRulesetsBadge/FieldsetRulesetsBadge';
 import { EExtraFieldMode, IExtraFieldSelection } from '../../../../types/template';
 import { EFieldLabelPosition } from '../../../../types/fieldset';
 import { FieldLabel } from '../utils/FieldLabel';
@@ -74,15 +75,18 @@ export function ExtraFieldRadio({
         labelPosition === EFieldLabelPosition.Left && styles['kick-off-input__field_label-left'],
       )}>
         {labelPosition === EFieldLabelPosition.Left ? (
-          <FieldLabel
-            name={name}
-            isRequired={isRequired}
-            isDisabled={isDisabled}
-            mode={mode}
-            labelPosition={labelPosition}
-            namePlaceholder={namePlaceholder}
-            handleChangeName={handleChangeName}
-          />
+          <div className={styles['field-label-wrapper']}>
+            <FieldLabel
+              name={name}
+              isRequired={isRequired}
+              isDisabled={isDisabled}
+              mode={mode}
+              labelPosition={labelPosition}
+              namePlaceholder={namePlaceholder}
+              handleChangeName={handleChangeName}
+            />
+            <FieldsetRulesetsBadge rulesets={field.rulesets} />
+          </div>
         ) : (
           <div className={fieldNameClassName}>
             <textarea
@@ -135,13 +139,7 @@ export function ExtraFieldRadio({
           {!isDisabled && addOptionButton}
         </OutputFieldContent>
 
-        {(field.rulesets?.length ?? 0) > 0 && (
-          <div>
-            <span className={styles['rulesets-badge']}>
-              <IntlMessages id="fieldsets.field-rulesets-badge" values={{ count: field.rulesets?.length ?? 0 }} />
-            </span>
-          </div>
-        )}
+        {labelPosition !== EFieldLabelPosition.Left && <FieldsetRulesetsBadge rulesets={field.rulesets} />}
       </div>
     );
   };

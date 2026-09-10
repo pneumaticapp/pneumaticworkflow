@@ -100,6 +100,23 @@
     flex-direction: row;
     gap: 3.2rem;
 
+    .field-label-wrapper {
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      align-items: flex-start;
+      align-self: flex-start;
+      width: 40%;
+
+      .kick-off-input__name {
+        width: 100%;
+      }
+    }
+
+    [class*='rulesets-badge'] {
+      margin-left: 1.2rem;
+    }
+
     .kick-off-input__name {
       margin: 0;
       flex-shrink: 0;
@@ -664,15 +681,4 @@
   .dropdown-item-icon {
     margin-left: auto;
   }
-}
-
-.rulesets-badge {
-  margin-top: 0.8rem;
-  padding: 0.1rem 0.8rem;
-  display: inline-block;
-  color: var(--pneumatic-color-black100);
-  background-color: var(--pneumatic-color-selection);
-  border-radius: 0.4rem;
-
-  @mixin text-small;
 }
