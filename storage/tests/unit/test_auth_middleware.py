@@ -5,8 +5,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from src.shared_kernel.auth.user_types import UserType
-from src.shared_kernel.events.schema import ActorType
+from src.shared_kernel.auth.user_types import ActorType, UserType
 from src.shared_kernel.middleware.auth_middleware import AuthUser
 
 

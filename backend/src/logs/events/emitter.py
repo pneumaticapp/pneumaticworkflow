@@ -10,13 +10,12 @@ from django.utils import timezone
 
 from src.logs.events.context import (
     RequestContext,
-    get_client_ip,
     get_context,
     get_user_agent_header,
 )
 from src.logs.enums import LogsBackend
 from src.logs.events.enums import ActorType
-from src.logs.events.registry import ACTOR_PII, EventRegistry
+from src.logs.events.registry import resolve_event_type
 from src.logs.events.reporting import report_error
 from src.logs.events.schema import (
     Actor,
@@ -25,6 +24,7 @@ from src.logs.events.schema import (
     normalize_payload,
 )
 from src.logs.events.stream import get_stream
+from src.utils.http import get_client_ip
 
 logger = logging.getLogger('pneumatic.events')
 
@@ -75,7 +75,7 @@ def emit(
         Writing never raises: it happens in an on_commit callback and
         is wrapped in _write. Building can raise UnknownEventTypeError
         for an undeclared type, but only under the strict
-        configurations (see EventRegistry.resolve) so that a typo
+        configurations (see resolve_event_type) so that a typo
         breaks tests instead of production. """
 
     if settings.LOGS_BACKEND == LogsBackend.NONE:
@@ -112,7 +112,7 @@ def build_event(
         The caller always wins, then the request it handles, then the
         context published by EventContextMiddleware. """
 
-    declared = EventRegistry.resolve(event_type)
+    declared = resolve_event_type(event_type)
     context = get_context()
     event = Event(
         type=event_type,
@@ -139,15 +139,18 @@ def build_event(
         user_agent=_from_request_or_context(
             get_user_agent_header, request, context, 'user_agent',
         ),
-        request_id=_request_id(request, context),
+        request_id=_from_request_or_context(
+            _request_id, request, context, 'request_id',
+        ),
     )
-    event.pii = _present_pii(declared.pii, event)
+    event.pii = _present_pii(declared.effective_pii, event)
     return event
 
 
 def reset_circuit():
 
-    """ Forget a past failure, for the tests and for the smoke command. """
+    """ Forget a past failure. Used by the test fixture that keeps
+        one failed write from silencing the next test. """
 
     _circuit.reset()
 
@@ -223,6 +226,10 @@ def _from_request_or_context(
     context: Optional[RequestContext],
     attr: str,
 ) -> Optional[str]:
+
+    """ The request the caller handles wins over the context
+        published by EventContextMiddleware. """
+
     if request is not None:
         value = getter(request)
         if value:
@@ -230,29 +237,21 @@ def _from_request_or_context(
     return getattr(context, attr, None)
 
 
-def _request_id(request, context: Optional[RequestContext]) -> Optional[str]:
-    if request is not None:
-        request_id = getattr(request, 'request_id', None)
-        if request_id:
-            return request_id
-    return getattr(context, 'request_id', None)
+def _request_id(request) -> Optional[str]:
+
+    """ Correlation id EventContextMiddleware put on the request. """
+
+    return getattr(request, 'request_id', None)
 
 
 def _present_pii(paths: Tuple[str, ...], event: Event) -> Tuple[str, ...]:
 
-    """ Keep only the declared personal data the event really
-        carries: the list is the audit answer to "what left the
-        system" and must not name empty fields.
+    """ Keep only the personal data the event really carries: the
+        list is the audit answer to "what left the system" and must
+        not name empty fields. The paths come from
+        EventType.effective_pii, the one list the sink reads too. """
 
-        ACTOR_PII is added unconditionally. The actor e-mail, the ip
-        and the user agent are personal data of whoever made the
-        request, no matter which type the event has, and a type that
-        forgot to declare them would leak them as plain attributes. """
-
-    declared = tuple(paths) + tuple(
-        path for path in ACTOR_PII if path not in paths
-    )
-    return tuple(path for path in declared if _has_value(event, path))
+    return tuple(path for path in paths if _has_value(event, path))
 
 
 def _has_value(event: Event, path: str) -> bool:

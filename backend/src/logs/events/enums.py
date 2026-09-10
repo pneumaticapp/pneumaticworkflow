@@ -130,7 +130,9 @@ class EventName:
     WEBHOOK_UNSUBSCRIBE = 'webhook.unsubscribe'
 
     # Files: written by the file service into the same stream, the
-    # backend only declares them (docs/logging-file-service-design.md)
+    # backend only declares them. The record it writes is built in
+    # storage/src/shared_kernel/events/schema.py, and the shape both
+    # sides agree on is checked by tests/test_file_service_contract.py
     FILE_UPLOAD = 'file.upload'
     FILE_DOWNLOAD = 'file.download'
     FILE_ACCESS_DENIED = 'file.access_denied'

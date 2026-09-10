@@ -15,8 +15,9 @@ from src.logs.events.registry import (
     REGISTRY,
     TARGET_PII,
     WORKFLOW_PII,
-    EventRegistry,
     EventType,
+    get_event_type,
+    resolve_event_type,
     validate_registry,
 )
 from src.logs.events.tests.fakes import event_name_values
@@ -248,7 +249,7 @@ def test_registry__file_type__audit_with_the_filename_as_personal(name):
 def test_get__declared_type__returns_declaration():
 
     # act
-    event_type = EventRegistry.get(EventName.WORKFLOW_RUN)
+    event_type = get_event_type(EventName.WORKFLOW_RUN)
 
     # assert
     assert event_type.name == EventName.WORKFLOW_RUN
@@ -260,7 +261,7 @@ def test_get__unknown_type__raise():
 
     # act
     with pytest.raises(UnknownEventTypeError) as ex:
-        EventRegistry.get('nope.nope')
+        get_event_type('nope.nope')
 
     # assert
     assert str(ex.value) == 'Unknown event type: nope.nope'
@@ -270,7 +271,7 @@ def test_resolve__unknown_type_in_strict_mode__raise():
 
     # act
     with pytest.raises(UnknownEventTypeError) as ex:
-        EventRegistry.resolve('nope.nope')
+        resolve_event_type('nope.nope')
 
     # assert
     assert str(ex.value) == 'Unknown event type: nope.nope'
@@ -293,7 +294,7 @@ def test_resolve__unknown_type_in_running_deployment__debug_category(
     mocker.patch.object(registry_module, '_reported_unknown_types', set())
 
     # act
-    event_type = EventRegistry.resolve('nope.nope')
+    event_type = resolve_event_type('nope.nope')
 
     # assert
     assert event_type.name == 'nope.nope'
@@ -319,8 +320,8 @@ def test_resolve__same_unknown_type_twice__reported_once(
     mocker.patch.object(registry_module, '_reported_unknown_types', set())
 
     # act
-    EventRegistry.resolve('nope.nope')
-    EventRegistry.resolve('nope.nope')
+    resolve_event_type('nope.nope')
+    resolve_event_type('nope.nope')
 
     # assert
     capture_sentry_message_mock.assert_called_once_with(

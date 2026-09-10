@@ -7,7 +7,6 @@ from rest_framework.viewsets import GenericViewSet
 
 from src.accounts.enums import SourceType
 from src.analysis.mixins import BaseIdentifyMixin
-from src.authentication.enums import LoginFailedReason
 from src.authentication.messages import MSG_AU_0003
 from src.authentication.permissions import MSAuthPermission
 from src.authentication.serializers import (
@@ -28,11 +27,11 @@ from src.authentication.throttling import (
     AuthMSTokenThrottle,
 )
 from src.authentication.views.mixins import (
+    LoginEventMixin,
     SignUpMixin,
     SSORestrictionMixin,
 )
 from src.generics.mixins.views import CustomViewSetMixin
-from src.logs.events import AuditEventService
 from src.utils.logging import (
     SentryLogLevel,
     capture_sentry_message,
@@ -45,6 +44,7 @@ UserModel = get_user_model()
 class MSAuthViewSet(
     SSORestrictionMixin,
     SignUpMixin,
+    LoginEventMixin,
     CustomViewSetMixin,
     BaseIdentifyMixin,
     GenericViewSet,
@@ -89,14 +89,7 @@ class MSAuthViewSet(
                     ),
                     user_ip=request.META.get('HTTP_X_REAL_IP'),
                 )
-                # Only the branch of an account that already exists:
-                # the sign up of the other one is reported by
-                # SignUpMixin.after_signup.
-                AuditEventService.user_logged_in(
-                    user=user,
-                    source=SourceType.MICROSOFT,
-                    request=request,
-                )
+                self.emit_login(user, request)
             except ObjectDoesNotExist as ex:
                 if settings.PROJECT_CONF['SIGNUP']:
                     user, token = self.signup(
@@ -109,13 +102,7 @@ class MSAuthViewSet(
                         gclid=slz.validated_data.get('gclid'),
                     )
                 else:
-                    # Without a sign up an unknown address means a
-                    # deactivated user of this closed deployment.
-                    AuditEventService.login_failed(
-                        request=request,
-                        reason=LoginFailedReason.ACCOUNT_INACTIVE,
-                        email=user_data['email'],
-                    )
+                    self.emit_login_denied(request, user_data['email'])
                     raise AuthenticationFailed(MSG_AU_0003) from ex
             service.apply_photo_to_user(user, user_data)
             service.save_tokens_for_user(user)

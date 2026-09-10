@@ -10,6 +10,7 @@ from src.analysis.services import AnalyticService
 from src.generics.base.service import BaseModelService
 from src.logs.events import emit
 from src.logs.events.adapters.workflow import workflow_event_to_kwargs
+from src.logs.events.reporting import report_error
 from src.notifications.tasks import (
     send_comment_notification,
     send_event_created,
@@ -56,7 +57,6 @@ from src.storage.tasks import (
     schedule_sync_workflow_attachment_permissions,
 )
 from src.storage.utils import refresh_attachments
-from src.logs.events.reporting import report_error
 
 UserModel = get_user_model()
 
@@ -79,8 +79,9 @@ class WorkflowEventService:
 
         """ A broken pipeline must never break the workflow event
             itself: the user action is already done and saved.
-            A typo still fails the tests, the way EventRegistry
-            .resolve does: both read the same LOGS_STRICT flag. """
+            A typo still fails the tests, the way
+            resolve_event_type does: both read the same
+            LOGS_STRICT flag. """
 
         try:
             emit(**workflow_event_to_kwargs(event))

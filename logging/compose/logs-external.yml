@@ -1,7 +1,7 @@
 # LOGS_BACKEND=otlp | elasticsearch: events go to a store outside this compose
 # file, so the bundled Loki and Grafana are not started. The collector stays:
 # it is what forwards them. The record is forwarded whole, pii.* attributes
-# included - see decision 2 in docs/logging-design.md.
+# included - see the note in logging/otel/base.yaml.
 #
 #   docker compose -f docker-compose.yml -f logging/compose/logs-external.yml up -d
 #

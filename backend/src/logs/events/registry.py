@@ -15,6 +15,9 @@ from src.utils.logging import (
 )
 
 EVENT_NAME_PATTERN = re.compile(r'^[a-z_]+\.[a-z_]+$')
+
+# Personal data sets of the declaration table below. A path names a
+# field of the record: "ip", "actor.email", "payload.<key>".
 ACTOR_PII = ('actor.email', 'ip', 'user_agent')
 ANONYMOUS_PII = ('ip', 'user_agent')
 WORKFLOW_PII = (
@@ -22,9 +25,16 @@ WORKFLOW_PII = (
     'payload.workflow_name',
     'payload.task_name',
 )
+WORKFLOW_NAME_PII = (*ACTOR_PII, 'payload.workflow_name')
 NAMED_PII = (*ACTOR_PII, 'payload.name')
 TARGET_PII = (*ACTOR_PII, 'payload.target_email')
 FILE_PII = (*ACTOR_PII, 'payload.filename')
+URL_PII = (*ACTOR_PII, 'payload.url')
+PATH_PII = (*ACTOR_PII, 'payload.path')
+# The reason of a login as is free text typed by a staff member: it
+# names people and tickets as often as not.
+LOGIN_AS_PII = (*TARGET_PII, 'payload.reason')
+
 PII_ROOTS = ('ip', 'user_agent')
 PII_NAMESPACES = ('actor', 'object', 'payload')
 
@@ -39,325 +49,133 @@ class EventType:
     pii: Tuple[str, ...] = ()
     description: str = ''
 
+    @property
+    def effective_pii(self) -> Tuple[str, ...]:
 
-EVENT_TYPES: Tuple[EventType, ...] = (
+        """ The declared personal fields together with ACTOR_PII,
+            which counts for every type: the actor e-mail, the ip and
+            the user agent are personal data of whoever made the
+            request whatever the type is, and a type that forgot to
+            declare them would leak them as plain attributes.
 
-    # One type per WorkflowEventType constant, mapped by
-    # adapters/workflow.py; a new constant there needs a line here.
-    EventType(
-        name=EventName.WORKFLOW_RUN,
-        category=EventCategory.AUDIT,
-        pii=WORKFLOW_PII,
-        description='Workflow started',
-    ),
-    EventType(
-        name=EventName.WORKFLOW_COMPLETE,
-        category=EventCategory.AUDIT,
-        pii=WORKFLOW_PII,
-        description='Workflow completed',
-    ),
-    EventType(
-        name=EventName.TASK_START,
-        category=EventCategory.ACTIVITY,
-        pii=WORKFLOW_PII,
-        description='Task started',
-    ),
-    EventType(
-        name=EventName.TASK_COMPLETE,
-        category=EventCategory.AUDIT,
-        pii=WORKFLOW_PII,
-        description='Task completed',
-    ),
-    EventType(
-        name=EventName.TASK_REVERT,
-        category=EventCategory.AUDIT,
-        pii=WORKFLOW_PII,
-        description='Task returned to the previous performer',
-    ),
-    EventType(
-        name=EventName.TASK_COMMENT,
-        category=EventCategory.ACTIVITY,
-        pii=WORKFLOW_PII,
-        description='Comment added to a task',
-    ),
-    EventType(
-        name=EventName.WORKFLOW_ENDED,
-        category=EventCategory.AUDIT,
-        pii=WORKFLOW_PII,
-        description='Workflow ended by a user',
-    ),
-    EventType(
-        name=EventName.WORKFLOW_DELAY,
-        category=EventCategory.ACTIVITY,
-        pii=WORKFLOW_PII,
-        description='Workflow delayed',
-    ),
-    EventType(
-        name=EventName.WORKFLOW_REVERT,
-        category=EventCategory.AUDIT,
-        pii=WORKFLOW_PII,
-        description='Workflow returned to a previous task',
-    ),
-    EventType(
-        name=EventName.TASK_SKIP,
-        category=EventCategory.ACTIVITY,
-        pii=WORKFLOW_PII,
-        description='Task skipped',
-    ),
-    EventType(
-        name=EventName.WORKFLOW_ENDED_BY_CONDITION,
-        category=EventCategory.ACTIVITY,
-        pii=WORKFLOW_PII,
-        description='Workflow ended by a condition',
-    ),
-    EventType(
-        name=EventName.WORKFLOW_URGENT,
-        category=EventCategory.ACTIVITY,
-        pii=WORKFLOW_PII,
-        description='Workflow marked as urgent',
-    ),
-    EventType(
-        name=EventName.WORKFLOW_NOT_URGENT,
-        category=EventCategory.ACTIVITY,
-        pii=WORKFLOW_PII,
-        description='Workflow urgent mark removed',
-    ),
-    EventType(
-        name=EventName.TASK_SKIP_NO_PERFORMERS,
-        category=EventCategory.ACTIVITY,
-        pii=WORKFLOW_PII,
-        description='Task skipped because it has no performers',
-    ),
-    EventType(
-        name=EventName.TASK_PERFORMER_CREATED,
-        category=EventCategory.AUDIT,
-        pii=WORKFLOW_PII,
-        description='Task performer added',
-    ),
-    EventType(
-        name=EventName.TASK_PERFORMER_DELETED,
-        category=EventCategory.AUDIT,
-        pii=WORKFLOW_PII,
-        description='Task performer removed',
-    ),
-    EventType(
-        name=EventName.WORKFLOW_FORCE_RESUME,
-        category=EventCategory.ACTIVITY,
-        pii=WORKFLOW_PII,
-        description='Workflow resumed manually',
-    ),
-    EventType(
-        name=EventName.WORKFLOW_FORCE_DELAY,
-        category=EventCategory.ACTIVITY,
-        pii=WORKFLOW_PII,
-        description='Workflow delayed manually',
-    ),
-    EventType(
-        name=EventName.TASK_DUE_DATE_CHANGED,
-        category=EventCategory.ACTIVITY,
-        pii=WORKFLOW_PII,
-        description='Task due date changed',
-    ),
-    EventType(
-        name=EventName.WORKFLOW_SUB_WORKFLOW_RUN,
-        category=EventCategory.ACTIVITY,
-        pii=WORKFLOW_PII,
-        description='Sub-workflow started',
-    ),
-    EventType(
-        name=EventName.TASK_PERFORMER_GROUP_CREATED,
-        category=EventCategory.AUDIT,
-        pii=WORKFLOW_PII,
-        description='Task performer group added',
-    ),
-    EventType(
-        name=EventName.TASK_PERFORMER_GROUP_DELETED,
-        category=EventCategory.AUDIT,
-        pii=WORKFLOW_PII,
-        description='Task performer group removed',
-    ),
-    EventType(
-        name=EventName.TASK_DELAY,
-        category=EventCategory.ACTIVITY,
-        pii=WORKFLOW_PII,
-        description='Task delayed',
-    ),
-    EventType(
-        name=EventName.TASK_DELEGATION,
-        category=EventCategory.AUDIT,
-        pii=WORKFLOW_PII,
-        description='Task delegated to another performer',
-    ),
+            Both ends of the pipeline read this one list, the emitter
+            to fill Event.pii and the sink to move the same paths
+            into the pii.* namespace. Two lists would disagree, and a
+            personal field would end up outside that namespace. """
+
+        return self.pii + tuple(
+            path for path in ACTOR_PII if path not in self.pii
+        )
+
+
+# Short names of the categories, for the width of the table below.
+AUDIT = EventCategory.AUDIT
+ACTIVITY = EventCategory.ACTIVITY
+HTTP = EventCategory.HTTP
+
+# The declaration table: one row per event type, as
+# (name, category, personal data, description).
+#
+# The first block holds one row per WorkflowEventType constant,
+# mapped by adapters/workflow.py; a new constant there needs a row
+# here. A name that is not declared in this table fails the tests
+# through LOGS_STRICT (resolve_event_type).
+DECLARATIONS = (
+    (EventName.WORKFLOW_RUN, AUDIT, WORKFLOW_PII, 'Workflow started'),
+    (EventName.WORKFLOW_COMPLETE, AUDIT, WORKFLOW_PII, 'Workflow completed'),
+    (EventName.TASK_START, ACTIVITY, WORKFLOW_PII, 'Task started'),
+    (EventName.TASK_COMPLETE, AUDIT, WORKFLOW_PII, 'Task completed'),
+    (EventName.TASK_REVERT, AUDIT, WORKFLOW_PII,
+     'Task returned to the previous performer'),
+    (EventName.TASK_COMMENT, ACTIVITY, WORKFLOW_PII,
+     'Comment added to a task'),
+    (EventName.WORKFLOW_ENDED, AUDIT, WORKFLOW_PII,
+     'Workflow ended by a user'),
+    (EventName.WORKFLOW_DELAY, ACTIVITY, WORKFLOW_PII, 'Workflow delayed'),
+    (EventName.WORKFLOW_REVERT, AUDIT, WORKFLOW_PII,
+     'Workflow returned to a previous task'),
+    (EventName.TASK_SKIP, ACTIVITY, WORKFLOW_PII, 'Task skipped'),
+    (EventName.WORKFLOW_ENDED_BY_CONDITION, ACTIVITY, WORKFLOW_PII,
+     'Workflow ended by a condition'),
+    (EventName.WORKFLOW_URGENT, ACTIVITY, WORKFLOW_PII,
+     'Workflow marked as urgent'),
+    (EventName.WORKFLOW_NOT_URGENT, ACTIVITY, WORKFLOW_PII,
+     'Workflow urgent mark removed'),
+    (EventName.TASK_SKIP_NO_PERFORMERS, ACTIVITY, WORKFLOW_PII,
+     'Task skipped because it has no performers'),
+    (EventName.TASK_PERFORMER_CREATED, AUDIT, WORKFLOW_PII,
+     'Task performer added'),
+    (EventName.TASK_PERFORMER_DELETED, AUDIT, WORKFLOW_PII,
+     'Task performer removed'),
+    (EventName.WORKFLOW_FORCE_RESUME, ACTIVITY, WORKFLOW_PII,
+     'Workflow resumed manually'),
+    (EventName.WORKFLOW_FORCE_DELAY, ACTIVITY, WORKFLOW_PII,
+     'Workflow delayed manually'),
+    (EventName.TASK_DUE_DATE_CHANGED, ACTIVITY, WORKFLOW_PII,
+     'Task due date changed'),
+    (EventName.WORKFLOW_SUB_WORKFLOW_RUN, ACTIVITY, WORKFLOW_PII,
+     'Sub-workflow started'),
+    (EventName.TASK_PERFORMER_GROUP_CREATED, AUDIT, WORKFLOW_PII,
+     'Task performer group added'),
+    (EventName.TASK_PERFORMER_GROUP_DELETED, AUDIT, WORKFLOW_PII,
+     'Task performer group removed'),
+    (EventName.TASK_DELAY, ACTIVITY, WORKFLOW_PII, 'Task delayed'),
+    (EventName.TASK_DELEGATION, AUDIT, WORKFLOW_PII,
+     'Task delegated to another performer'),
 
     # Authentication
-    EventType(
-        name=EventName.USER_LOGIN,
-        category=EventCategory.AUDIT,
-        pii=ACTOR_PII,
-        description='User signed in',
-    ),
-    EventType(
-        name=EventName.USER_LOGOUT,
-        category=EventCategory.AUDIT,
-        pii=ACTOR_PII,
-        description='User signed out',
-    ),
-    EventType(
-        name=EventName.USER_LOGIN_FAILED,
-        category=EventCategory.AUDIT,
-        pii=ANONYMOUS_PII,
-        description='Sign in attempt failed',
-    ),
-    EventType(
-        name=EventName.USER_LOGIN_AS,
-        category=EventCategory.AUDIT,
-        # The reason is free text typed by a staff member: it names
-        # people and tickets as often as not.
-        pii=(*TARGET_PII, 'payload.reason'),
-        description='Superuser signed in as a user',
-    ),
-    EventType(
-        name=EventName.TENANT_LOGIN_AS,
-        category=EventCategory.AUDIT,
-        pii=ACTOR_PII,
-        description='Master account signed in as a tenant',
-    ),
-    EventType(
-        name=EventName.USER_SIGNUP,
-        category=EventCategory.AUDIT,
-        pii=ACTOR_PII,
-        description='User signed up',
-    ),
+    (EventName.USER_LOGIN, AUDIT, ACTOR_PII, 'User signed in'),
+    (EventName.USER_LOGOUT, AUDIT, ACTOR_PII, 'User signed out'),
+    (EventName.USER_LOGIN_FAILED, AUDIT, ANONYMOUS_PII,
+     'Sign in attempt failed'),
+    (EventName.USER_LOGIN_AS, AUDIT, LOGIN_AS_PII,
+     'Superuser signed in as a user'),
+    (EventName.TENANT_LOGIN_AS, AUDIT, ACTOR_PII,
+     'Master account signed in as a tenant'),
+    (EventName.USER_SIGNUP, AUDIT, ACTOR_PII, 'User signed up'),
 
     # Users, groups and API keys
-    EventType(
-        name=EventName.USER_DEACTIVATE,
-        category=EventCategory.AUDIT,
-        pii=TARGET_PII,
-        description='User deactivated',
-    ),
-    EventType(
-        name=EventName.USER_ADMIN_TOGGLE,
-        category=EventCategory.AUDIT,
-        pii=TARGET_PII,
-        description='User admin permission changed',
-    ),
-    EventType(
-        name=EventName.INVITE_ACCEPT,
-        category=EventCategory.AUDIT,
-        pii=ACTOR_PII,
-        description='Invite accepted',
-    ),
-    EventType(
-        name=EventName.GROUP_CREATE,
-        category=EventCategory.AUDIT,
-        pii=NAMED_PII,
-        description='Group created',
-    ),
-    EventType(
-        name=EventName.GROUP_UPDATE,
-        category=EventCategory.AUDIT,
-        pii=ACTOR_PII,
-        description='Group updated',
-    ),
-    EventType(
-        name=EventName.GROUP_DELETE,
-        category=EventCategory.AUDIT,
-        pii=NAMED_PII,
-        description='Group deleted',
-    ),
-    EventType(
-        name=EventName.API_KEY_CREATE,
-        category=EventCategory.AUDIT,
-        pii=NAMED_PII,
-        description='API key created',
-    ),
-    EventType(
-        name=EventName.API_KEY_REVOKE,
-        category=EventCategory.AUDIT,
-        pii=NAMED_PII,
-        description='API key revoked',
-    ),
+    (EventName.USER_DEACTIVATE, AUDIT, TARGET_PII, 'User deactivated'),
+    (EventName.USER_ADMIN_TOGGLE, AUDIT, TARGET_PII,
+     'User admin permission changed'),
+    (EventName.INVITE_ACCEPT, AUDIT, ACTOR_PII, 'Invite accepted'),
+    (EventName.GROUP_CREATE, AUDIT, NAMED_PII, 'Group created'),
+    (EventName.GROUP_UPDATE, AUDIT, ACTOR_PII, 'Group updated'),
+    (EventName.GROUP_DELETE, AUDIT, NAMED_PII, 'Group deleted'),
+    (EventName.API_KEY_CREATE, AUDIT, NAMED_PII, 'API key created'),
+    (EventName.API_KEY_REVOKE, AUDIT, NAMED_PII, 'API key revoked'),
 
     # Templates and workflows
-    EventType(
-        name=EventName.TEMPLATE_PUBLISH,
-        category=EventCategory.AUDIT,
-        pii=NAMED_PII,
-        description='Template published',
-    ),
-    EventType(
-        name=EventName.TEMPLATE_DRAFT_SAVE,
-        category=EventCategory.ACTIVITY,
-        pii=NAMED_PII,
-        description='Template draft saved',
-    ),
-    EventType(
-        name=EventName.TEMPLATE_CLONE,
-        category=EventCategory.ACTIVITY,
-        pii=NAMED_PII,
-        description='Template cloned into a new draft',
-    ),
-    EventType(
-        name=EventName.TEMPLATE_DELETE,
-        category=EventCategory.AUDIT,
-        pii=NAMED_PII,
-        description='Template deleted',
-    ),
-    EventType(
-        name=EventName.TEMPLATE_EXPORT,
-        category=EventCategory.AUDIT,
-        pii=ACTOR_PII,
-        description='Templates exported',
-    ),
-    EventType(
-        name=EventName.WORKFLOW_TERMINATE,
-        category=EventCategory.AUDIT,
-        pii=(*ACTOR_PII, 'payload.workflow_name'),
-        description='Workflow deleted',
-    ),
+    (EventName.TEMPLATE_PUBLISH, AUDIT, NAMED_PII, 'Template published'),
+    (EventName.TEMPLATE_DRAFT_SAVE, ACTIVITY, NAMED_PII,
+     'Template draft saved'),
+    (EventName.TEMPLATE_CLONE, ACTIVITY, NAMED_PII,
+     'Template cloned into a new draft'),
+    (EventName.TEMPLATE_DELETE, AUDIT, NAMED_PII, 'Template deleted'),
+    (EventName.TEMPLATE_EXPORT, AUDIT, ACTOR_PII, 'Templates exported'),
+    (EventName.WORKFLOW_TERMINATE, AUDIT, WORKFLOW_NAME_PII,
+     'Workflow deleted'),
 
     # Webhooks
-    EventType(
-        name=EventName.WEBHOOK_SUBSCRIBE,
-        category=EventCategory.AUDIT,
-        pii=(*ACTOR_PII, 'payload.url'),
-        description='Webhook subscription created',
-    ),
-    EventType(
-        name=EventName.WEBHOOK_UNSUBSCRIBE,
-        category=EventCategory.AUDIT,
-        pii=(*ACTOR_PII, 'payload.url'),
-        description='Webhook subscription removed',
-    ),
+    (EventName.WEBHOOK_SUBSCRIBE, AUDIT, URL_PII,
+     'Webhook subscription created'),
+    (EventName.WEBHOOK_UNSUBSCRIBE, AUDIT, URL_PII,
+     'Webhook subscription removed'),
 
     # Files
-    EventType(
-        name=EventName.FILE_UPLOAD,
-        category=EventCategory.AUDIT,
-        pii=FILE_PII,
-        description='File uploaded to the file service',
-    ),
-    EventType(
-        name=EventName.FILE_DOWNLOAD,
-        category=EventCategory.AUDIT,
-        pii=FILE_PII,
-        description='File handed out by the file service',
-    ),
-    EventType(
-        name=EventName.FILE_ACCESS_DENIED,
-        category=EventCategory.AUDIT,
-        pii=FILE_PII,
-        description='File download refused by the permission check',
-    ),
+    (EventName.FILE_UPLOAD, AUDIT, FILE_PII,
+     'File uploaded to the file service'),
+    (EventName.FILE_DOWNLOAD, AUDIT, FILE_PII,
+     'File handed out by the file service'),
+    (EventName.FILE_ACCESS_DENIED, AUDIT, FILE_PII,
+     'File download refused by the permission check'),
 
     # Service types
-    EventType(
-        name=EventName.HTTP_REQUEST,
-        category=EventCategory.HTTP,
-        pii=(*ACTOR_PII, 'payload.path'),
-        description='API request',
-    ),
+    (EventName.HTTP_REQUEST, HTTP, PATH_PII, 'API request'),
+)
+
+EVENT_TYPES: Tuple[EventType, ...] = tuple(
+    EventType(*declaration) for declaration in DECLARATIONS
 )
 
 REGISTRY: Dict[str, EventType] = {
@@ -365,50 +183,47 @@ REGISTRY: Dict[str, EventType] = {
 }
 
 
-class EventRegistry:
+def get_event_type(name: str) -> EventType:
 
-    @staticmethod
-    def get(name: str) -> EventType:
+    """ Return the declared event type or raise. """
 
-        """ Return the declared event type or raise. """
+    event_type = REGISTRY.get(name)
+    if event_type is None:
+        raise UnknownEventTypeError(f'Unknown event type: {name}')
+    return event_type
 
-        event_type = REGISTRY.get(name)
-        if event_type is None:
-            raise UnknownEventTypeError(f'Unknown event type: {name}')
+
+def resolve_event_type(name: str) -> EventType:
+
+    """ Return the declared event type.
+        A typo has to break tests, but it must not break a user
+        request in a running deployment: there the event is
+        downgraded to the debug category and reported to Sentry
+        once per name per process.
+
+        The switch is the explicit LOGS_STRICT flag, not the name
+        of the environment: ENVIRONMENT is optional and falls back
+        to Development, so any deployment that forgot to set it
+        would get the strict mode on live traffic. """
+
+    event_type = REGISTRY.get(name)
+    if event_type is not None:
         return event_type
-
-    @staticmethod
-    def resolve(name: str) -> EventType:
-
-        """ Return the declared event type.
-            A typo has to break tests, but it must not break a user
-            request in a running deployment: there the event is
-            downgraded to the debug category and reported to Sentry
-            once per name per process.
-
-            The switch is the explicit LOGS_STRICT flag, not the name
-            of the environment: ENVIRONMENT is optional and falls back
-            to Development, so any deployment that forgot to set it
-            would get the strict mode on live traffic. """
-
-        event_type = REGISTRY.get(name)
-        if event_type is not None:
-            return event_type
-        if settings.LOGS_STRICT:
-            raise UnknownEventTypeError(f'Unknown event type: {name}')
-        if name not in _reported_unknown_types:
-            _reported_unknown_types.add(name)
-            capture_sentry_message(
-                message='Unknown event type',
-                data={'event_type': name},
-                level=SentryLogLevel.WARNING,
-            )
-        # ACTOR_PII, not an empty tuple: the sink moves declared paths
-        # into the pii.* namespace, and the collector drops that
-        # namespace for external backends. An undeclared type with an
-        # empty list would send the e-mail and the ip as plain
-        # attributes, straight past the redaction rule.
-        return EventType(name, EventCategory.DEBUG, ACTOR_PII)
+    if settings.LOGS_STRICT:
+        raise UnknownEventTypeError(f'Unknown event type: {name}')
+    if name not in _reported_unknown_types:
+        _reported_unknown_types.add(name)
+        capture_sentry_message(
+            message='Unknown event type',
+            data={'event_type': name},
+            level=SentryLogLevel.WARNING,
+        )
+    # ACTOR_PII, not an empty tuple: the sink moves declared paths
+    # into the pii.* namespace, and the collector drops that
+    # namespace for external backends. An undeclared type with an
+    # empty list would send the e-mail and the ip as plain
+    # attributes, straight past the redaction rule.
+    return EventType(name, EventCategory.DEBUG, ACTOR_PII)
 
 
 def validate_registry() -> None:

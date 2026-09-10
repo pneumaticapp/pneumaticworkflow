@@ -1,18 +1,13 @@
 # LOGS_BACKEND=elasticsearch: write events straight into an Elasticsearch that
 # lives outside this machine.
 #
-# The record is delivered exactly as the local mode delivers it, pii.*
-# attributes included. Both deployments this mode was written for - our own
-# store on a machine of ours, and a self-hosted installation writing into the
-# journal of the company that runs it - keep the data with its owner, so there
-# is nothing to strip. A receiver outside the owner's organisation (a managed
-# observability vendor) is a processor relationship: settle it in the contract,
-# not by dropping half of every record by default.
+# Personal data leaves with the record, see the note in base.yaml.
 #
-# The store is not part of this compose file. Its configuration - node, Kibana,
-# certificates, roles, index lifecycle, snapshots - is in
-# logging/elasticsearch, and the whole procedure is in
-# docs/elasticsearch-production.md.
+# The store is not part of this compose file. Its configuration - node,
+# Kibana, certificates, roles, index lifecycle, snapshots - is in
+# logging/elasticsearch: the header of its docker-compose.yml lists the
+# steps in order, elasticsearch.env.example every setting, and the three
+# scripts do the work (make-certs.sh, bootstrap.sh, rotate-api-key.sh).
 #
 # Two things have to be prepared on THIS machine before the mode starts:
 #
@@ -130,7 +125,6 @@ service:
       # events were dropped lives exactly there:
       #   otelcol_exporter_send_failed_log_records_total
       #   otelcol_exporter_queue_size / otelcol_exporter_queue_capacity
-      # See the monitoring section of docs/elasticsearch-production.md.
       readers:
         - pull:
             exporter:

@@ -17,11 +17,11 @@ from src.authentication.throttling import (
     SSOAuthUriThrottle,
     SSOTokenThrottle,
 )
+from src.authentication.views.mixins import LoginEventMixin
 from src.generics.mixins.views import (
     AnonymousMixin,
     CustomViewSetMixin,
 )
-from src.logs.events import AuditEventService
 from src.utils.logging import (
     SentryLogLevel,
     capture_sentry_message,
@@ -35,9 +35,11 @@ class Auth0ViewSet(
     AnonymousMixin,
     CustomViewSetMixin,
     BaseIdentifyMixin,
+    LoginEventMixin,
     GenericViewSet,
 ):
     permission_classes = (SSOPermission,)
+    source = SourceType.AUTH0
 
     @property
     def throttle_classes(self):
@@ -64,12 +66,9 @@ class Auth0ViewSet(
             raise_validation_error(message=ex.message)
         else:
             self.identify(user)
-            if not service.is_new_user:
-                AuditEventService.user_logged_in(
-                    user=user,
-                    source=SourceType.AUTH0,
-                    request=request,
-                )
+            self.emit_login(
+                user, request, is_new_user=service.is_new_user,
+            )
             return self.response_ok({'token': token})
 
     @action(methods=('GET',), detail=False, url_path='auth-uri')

@@ -23,7 +23,7 @@ def test_subscribe__all_events__emit_webhook_subscribe(mocker):
     # arrange
     user = create_test_owner()
     url = 'https://93.184.216.34/hook'
-    emit_mock = mocker.patch('src.webhooks.services.emit')
+    emit_mock = mocker.patch('src.logs.events.mixins.emit')
     webhooks_subscribed_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.webhooks_subscribed',
@@ -61,7 +61,7 @@ def test_subscribe__api_key_auth__emit_api_key_actor_type(mocker):
     # arrange
     user = create_test_owner()
     url = 'https://93.184.216.34/hook'
-    emit_mock = mocker.patch('src.webhooks.services.emit')
+    emit_mock = mocker.patch('src.logs.events.mixins.emit')
     webhooks_subscribed_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.webhooks_subscribed',
@@ -100,7 +100,7 @@ def test_subscribe_event__single_event__emit_webhook_subscribe(mocker):
     user = create_test_owner()
     event = HookEvent.WORKFLOW_STARTED
     url = 'https://93.184.216.34/hook'
-    emit_mock = mocker.patch('src.webhooks.services.emit')
+    emit_mock = mocker.patch('src.logs.events.mixins.emit')
     webhooks_subscribed_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.webhooks_subscribed',
@@ -139,7 +139,7 @@ def test_unsubscribe__all_events__emit_webhook_unsubscribe(mocker):
     user = create_test_owner()
     url = 'https://93.184.216.34/hook'
     create_test_webhooks(user=user, url=url)
-    emit_mock = mocker.patch('src.webhooks.services.emit')
+    emit_mock = mocker.patch('src.logs.events.mixins.emit')
     webhooks_unsubscribed_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.webhooks_unsubscribed',
@@ -183,7 +183,7 @@ def test_unsubscribe__two_targets__emit_an_event_per_target(mocker):
         event=HookEvent.WORKFLOW_COMPLETED,
         url=second_url,
     )
-    emit_mock = mocker.patch('src.webhooks.services.emit')
+    emit_mock = mocker.patch('src.logs.events.mixins.emit')
     webhooks_unsubscribed_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.webhooks_unsubscribed',
@@ -226,7 +226,7 @@ def test_unsubscribe__no_subscriptions__no_event(mocker):
 
     # arrange
     user = create_test_owner()
-    emit_mock = mocker.patch('src.webhooks.services.emit')
+    emit_mock = mocker.patch('src.logs.events.mixins.emit')
     webhooks_unsubscribed_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.webhooks_unsubscribed',
@@ -248,7 +248,7 @@ def test_unsubscribe_event__single_event__emit_webhook_unsubscribe(mocker):
     event = HookEvent.WORKFLOW_STARTED
     url = 'https://93.184.216.34/hook'
     create_test_webhook(user=user, event=event, url=url)
-    emit_mock = mocker.patch('src.webhooks.services.emit')
+    emit_mock = mocker.patch('src.logs.events.mixins.emit')
     webhooks_unsubscribed_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.webhooks_unsubscribed',
@@ -288,7 +288,7 @@ def test_unsubscribe_event__other_subscriptions_remain__emit_only(mocker):
         event=HookEvent.WORKFLOW_COMPLETED,
         url=url,
     )
-    emit_mock = mocker.patch('src.webhooks.services.emit')
+    emit_mock = mocker.patch('src.logs.events.mixins.emit')
     webhooks_unsubscribed_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.webhooks_unsubscribed',
@@ -317,7 +317,7 @@ def test_unsubscribe_event__no_subscription__no_event(mocker):
 
     # arrange
     user = create_test_owner()
-    emit_mock = mocker.patch('src.webhooks.services.emit')
+    emit_mock = mocker.patch('src.logs.events.mixins.emit')
     webhooks_unsubscribed_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.webhooks_unsubscribed',

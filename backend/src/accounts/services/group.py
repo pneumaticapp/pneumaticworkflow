@@ -16,8 +16,8 @@ from src.analysis.events import GroupsAnalyticsEvent
 from src.analysis.tasks import track_group_analytics
 from src.executor import RawSqlExecutor
 from src.generics.base.service import BaseModelService
-from src.logs.events import Actor, EventObject, emit
 from src.logs.events.enums import EventName, EventObjectType
+from src.logs.events.mixins import EventEmitMixin
 from src.notifications.tasks import (
     send_group_created_notification,
     send_group_deleted_notification,
@@ -50,16 +50,14 @@ from src.storage.utils import sync_account_file_fields
 UserModel = get_user_model()
 
 
-class UserGroupService(BaseModelService):
+class UserGroupService(EventEmitMixin, BaseModelService):
 
     def _emit(self, event_type: str, payload: dict):
-        emit(
+        self._publish(
             event_type,
             account_id=self.instance.account_id,
-            actor=Actor.from_user(self.user, self.auth_type),
-            event_object=EventObject(
-                type=EventObjectType.GROUP, id=self.instance.id,
-            ),
+            object_type=EventObjectType.GROUP,
+            object_id=self.instance.id,
             payload=payload,
         )
 

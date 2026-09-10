@@ -1,6 +1,7 @@
 import json
 import logging
 import socket
+from dataclasses import dataclass, field
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 import redis
@@ -23,6 +24,56 @@ AUTOCLAIM_START = '0-0'
 MALFORMED_REASON = 'malformed'
 
 Entries = List[Tuple[str, Event]]
+RawEntries = List[Tuple[str, dict]]
+
+
+@dataclass
+class ParsedEntries:
+
+    """ What one answer of Redis holds.
+
+        Three kinds of entries come back besides the good ones, all
+        after the stream was trimmed past records that were still
+        pending: XAUTOCLAIM of Redis 6.2 answers a deleted record as
+        a (None, None) pair, XREADGROUP answers it as an id with no
+        fields. Both are gone for good, nothing can be delivered or
+        parked: the id, when there is one, is acked and the pair is
+        dropped. A record that is there but cannot be parsed goes to
+        the dead letter. """
+
+    events: Entries = field(default_factory=list)
+    malformed: RawEntries = field(default_factory=list)
+    vanished: List[str] = field(default_factory=list)
+
+
+def _parse_entries(entries: list) -> ParsedEntries:
+
+    """ Sort the answer of Redis into the three kinds. Reading only:
+        the caller acks and parks, so that what happens to an entry
+        stays in one place. """
+
+    parsed = ParsedEntries()
+    for entry_id, fields in entries:
+        if entry_id is None:
+            continue
+        if not fields:
+            parsed.vanished.append(entry_id)
+            continue
+        event = _to_event(entry_id, fields)
+        if event is None:
+            parsed.malformed.append((entry_id, fields))
+        else:
+            parsed.events.append((entry_id, event))
+    return parsed
+
+
+def _to_event(entry_id: str, fields: dict) -> Optional[Event]:
+    try:
+        event = Event.from_dict(json.loads(fields['data']))
+    except (KeyError, TypeError, ValueError):
+        return None
+    event.id = entry_id
+    return event
 
 
 class EventStream:
@@ -68,49 +119,22 @@ class EventStream:
 
     def _to_events(self, entries: list) -> Entries:
 
-        """ Parse what Redis handed out. Three kinds of entries come
-            back besides the good ones, all after the stream was
-            trimmed past records that were still pending:
-            XAUTOCLAIM of Redis 6.2 answers a deleted record as a
-            (None, None) pair, XREADGROUP answers it as an id with no
-            fields. Both are gone for good, nothing can be delivered
-            or parked: the id, when there is one, is acked and the
-            pair is dropped. A record that is there but cannot be
-            parsed goes to the dead letter. """
+        """ Turn what Redis handed out into events, and clear the
+            entries that cannot become one. """
 
-        events = []
-        malformed = []
-        vanished = []
-        for entry_id, fields in entries:
-            if entry_id is None:
-                continue
-            if not fields:
-                vanished.append(entry_id)
-                continue
-            event = self._to_event(entry_id, fields)
-            if event is None:
-                malformed.append((entry_id, fields))
-            else:
-                events.append((entry_id, event))
-        if vanished:
-            logger.warning('Trimmed pending events acked: %s', vanished)
-            self.ack(vanished)
-        if malformed:
+        parsed = _parse_entries(entries)
+        if parsed.vanished:
+            logger.warning(
+                'Trimmed pending events acked: %s', parsed.vanished,
+            )
+            self.ack(parsed.vanished)
+        if parsed.malformed:
             logger.warning(
                 'Malformed events dropped: %s',
-                [entry_id for entry_id, _ in malformed],
+                [entry_id for entry_id, _ in parsed.malformed],
             )
-            self.dead_letter(malformed, MALFORMED_REASON)
-        return events
-
-    @staticmethod
-    def _to_event(entry_id: str, fields: dict) -> Optional[Event]:
-        try:
-            event = Event.from_dict(json.loads(fields['data']))
-        except (KeyError, TypeError, ValueError):
-            return None
-        event.id = entry_id
-        return event
+            self.dead_letter(parsed.malformed, MALFORMED_REASON)
+        return parsed.events
 
     @staticmethod
     def _dead_fields(entry_id: str, event: Any, reason: str) -> Dict[str, str]:
@@ -226,25 +250,6 @@ class EventStream:
             )
             ids.append(entry_id)
         return self.ack(ids)
-
-    def stats(self) -> Dict[str, Any]:
-
-        """ Numbers for the smoke command and for debugging. """
-
-        pending = 0
-        groups: List[dict] = []
-        try:
-            pending = self.client.xpending(self.key, self.group)['pending']
-            groups = self.client.xinfo_groups(self.key)
-        except redis.ResponseError:
-            # No stream or no group yet: nothing is pending.
-            pass
-        return {
-            'length': self.client.xlen(self.key),
-            'dead_length': self.client.xlen(self.dead_key),
-            'pending': pending,
-            'groups': groups,
-        }
 
 
 _streams: Dict[Tuple[str, str, str, int], EventStream] = {}

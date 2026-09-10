@@ -13,12 +13,11 @@ from src.shared_kernel.auth import (
     PublicAuthService,
 )
 from src.shared_kernel.auth.guest_token import GuestToken
-from src.shared_kernel.auth.user_types import UserType
+from src.shared_kernel.auth.user_types import ActorType, UserType
 from src.shared_kernel.browser_utils import (
     is_browser_navigation,
     redirect_to_login,
 )
-from src.shared_kernel.events.schema import ActorType
 from src.shared_kernel.exceptions import AuthenticationError
 
 logger = logging.getLogger(__name__)

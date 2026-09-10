@@ -2,8 +2,9 @@
 #
 # This file belongs to the STORAGE machine, not to the machine that runs
 # Pneumatic. The application side is one collector config
-# (logging/otel/backend-elasticsearch.yaml) plus a few variables in .env - see
-# docs/elasticsearch-production.md.
+# (logging/otel/backend-elasticsearch.yaml, its header lists what has to be
+# prepared) plus a few variables in the .env of that machine, described in
+# the Elasticsearch section of default.env.
 #
 #   cp elasticsearch.env.example .env   # then fill every REQUIRED line in
 #   ./scripts/make-certs.sh             # CA + node certificates

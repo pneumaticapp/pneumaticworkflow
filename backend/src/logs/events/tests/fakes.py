@@ -16,7 +16,7 @@ from src.logs.events.enums import (
 from src.logs.events.exceptions import SinkTemporaryError
 from src.logs.events.schema import Actor, Event, EventObject
 from src.logs.events.sinks.base import BaseSink
-from src.logs.events.sinks.otlp import build_otlp_payload
+from src.logs.events.sinks.otlp_payload import build_otlp_payload
 from src.logs.events.stream import (
     AUTOCLAIM_START,
     DEAD_MAXLEN,
@@ -148,20 +148,6 @@ class FakeEventStream:
             self.dead.append((entry_id, event, reason))
         del self.dead[:-DEAD_MAXLEN]
         return self.ack([entry_id for entry_id, _ in entries])
-
-    def stats(self) -> Dict[str, Any]:
-        return {
-            'length': len(self.events),
-            'dead_length': len(self.dead),
-            'pending': len(self.pending),
-            'groups': [
-                {
-                    'name': self.group,
-                    'consumers': len(self._consumers()),
-                    'pending': len(self.pending),
-                },
-            ],
-        }
 
     def last_event(self) -> Optional[Event]:
 

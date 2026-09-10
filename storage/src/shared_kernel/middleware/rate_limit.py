@@ -17,7 +17,7 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
 from src.shared_kernel.config import get_settings
-from src.shared_kernel.events.context import get_client_ip
+from src.shared_kernel.http_context import get_client_ip
 
 
 @dataclass

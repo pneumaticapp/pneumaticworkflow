@@ -27,6 +27,21 @@ NC='\033[0m'
 print_error()   { echo -e "${RED}$1${NC}"; }
 print_warning() { echo -e "${ORANGE}$1${NC}"; }
 print_info()    { echo -e "${GREEN}$1${NC}"; }
+
+gen_password() {
+    openssl rand -base64 "${1:-32}" | tr -d "=+/" | cut -c1-"${2:-25}"
+}
+
+set_env_var() {
+    local name="$1" value="$2"
+    if grep -qE "^#?\s*${name}=" "$ENV_FILE"; then
+        sed -i "s|^#\?\s*${name}=.*|${name}=${value}|" "$ENV_FILE"
+    else
+        [ -z "$(tail -c1 "$ENV_FILE")" ] || echo "" >> "$ENV_FILE"
+        echo "${name}=${value}" >> "$ENV_FILE"
+    fi
+}
+
 strip_invisible() {
     local s
     # Remove ANSI/VT escape sequences (e.g. bracket paste mode: \e[200~ ... \e[201~)
@@ -201,12 +216,12 @@ if [ ! -f ".env" ]; then
     if [ "$ADDRESS_IS_LOCALHOST" = false ]; then
 
         # 2.5.1 Generate passwords (not needed for localhost)
-        POSTGRES_PASSWORD=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-25)
-        REDIS_PASSWORD=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-25)
-        RABBITMQ_PASSWORD=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-25)
-        SEAWEEDFS_ACCESS_KEY=$(openssl rand -base64 24 | tr -d "=+/" | cut -c1-20)
-        SEAWEEDFS_SECRET_KEY=$(openssl rand -base64 48 | tr -d "=+/" | cut -c1-40)
-        FILE_POSTGRES_PASSWORD=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-25)
+        POSTGRES_PASSWORD=$(gen_password)
+        REDIS_PASSWORD=$(gen_password)
+        RABBITMQ_PASSWORD=$(gen_password)
+        SEAWEEDFS_ACCESS_KEY=$(gen_password 24 20)
+        SEAWEEDFS_SECRET_KEY=$(gen_password 48 40)
+        FILE_POSTGRES_PASSWORD=$(gen_password)
 
         # 2.5.2 Write passwords to .env
         sed -i "s|^#\?\s*POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$POSTGRES_PASSWORD|"                  "$ENV_FILE"
@@ -220,8 +235,7 @@ if [ ! -f ".env" ]; then
     fi
 
     # 2.5.3 Grafana
-    GRAFANA_ADMIN_PASSWORD=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-25)
-    sed -i "s|^#\?\s*GRAFANA_ADMIN_PASSWORD=.*|GRAFANA_ADMIN_PASSWORD=$GRAFANA_ADMIN_PASSWORD|" "$ENV_FILE"
+    set_env_var GRAFANA_ADMIN_PASSWORD "$(gen_password)"
     print_info "Grafana admin password written to .env (GRAFANA_ADMIN_PASSWORD)"
 
     # 2.6 SSL
@@ -321,20 +335,11 @@ fi
 # An .env written by an older start.sh has no GRAFANA_ADMIN_PASSWORD (compose
 # refuses to start without it, see the grafana service in docker-compose.yml).
 # A fresh .env got it in section 2.5, so only an existing file is touched
-# here, and only when the line is still missing: a commented template line
-# from default.env is filled in, otherwise the line is appended.
+# here, and only when the line is still missing.
 
 if [ "$ENV_FILE_CREATED" = false ] && \
    ! grep -qE "^\s*GRAFANA_ADMIN_PASSWORD=\S" "$ENV_FILE"; then
-    value=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-25)
-    if grep -qE "^#?\s*GRAFANA_ADMIN_PASSWORD=" "$ENV_FILE"; then
-        sed -i "s|^#\?\s*GRAFANA_ADMIN_PASSWORD=.*|GRAFANA_ADMIN_PASSWORD=${value}|" "$ENV_FILE"
-    else
-        # Keep the new line on a line of its own even if the file has no
-        # trailing newline.
-        [ -z "$(tail -c1 "$ENV_FILE")" ] || echo "" >> "$ENV_FILE"
-        echo "GRAFANA_ADMIN_PASSWORD=${value}" >> "$ENV_FILE"
-    fi
+    set_env_var GRAFANA_ADMIN_PASSWORD "$(gen_password)"
     print_info "GRAFANA_ADMIN_PASSWORD was missing from .env: a generated value was added"
 fi
 

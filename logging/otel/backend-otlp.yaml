@@ -1,13 +1,7 @@
 # LOGS_BACKEND=otlp: forward events to an OTLP/HTTP receiver outside this
 # machine (the customer's own observability stack).
 #
-# The record is delivered exactly as the local mode delivers it, pii.*
-# attributes included. Both deployments this mode was written for - our own
-# store on a machine of ours, and a self-hosted installation writing into the
-# journal of the company that runs it - keep the data with its owner, so there
-# is nothing to strip. A receiver outside the owner's organisation (a managed
-# observability vendor) is a processor relationship: settle it in the contract,
-# not by dropping half of every record by default.
+# Personal data leaves with the record, see the note in base.yaml.
 #
 # The bundled Loki and Grafana are not started in this mode:
 #   docker compose -f docker-compose.yml -f logging/compose/logs-external.yml up -d

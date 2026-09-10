@@ -1,8 +1,7 @@
 """Tests for the authenticated user of the endpoints."""
 
 from src.shared_kernel.auth.dependencies import AuthenticatedUser
-from src.shared_kernel.auth.user_types import UserType
-from src.shared_kernel.events.schema import ActorType
+from src.shared_kernel.auth.user_types import ActorType, UserType
 from src.shared_kernel.middleware.auth_middleware import AuthUser
 
 

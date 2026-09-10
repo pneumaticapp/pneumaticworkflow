@@ -7,7 +7,7 @@ from starlette.middleware.base import (
 from starlette.requests import Request
 from starlette.responses import Response
 
-from src.shared_kernel.events.context import (
+from src.shared_kernel.http_context import (
     REQUEST_ID_HEADER,
     REQUEST_ID_HEADER_KEY,
     resolve_request_id,

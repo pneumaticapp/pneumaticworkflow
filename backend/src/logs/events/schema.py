@@ -22,7 +22,13 @@ TS_SUFFIX = 'Z'
 PAYLOAD_STR_MAX = 2000
 PAYLOAD_MAX_BYTES = 32768
 PAYLOAD_MAX_DEPTH = 2
+FIRST_DEPTH = 1
+# Depth of a value inside a container that is collapsed into a JSON
+# string: nothing below it can be collapsed any further.
+NO_DEPTH_LIMIT = None
 REDACTED_VALUE = '[redacted]'
+TRUNCATED_KEY = '_truncated'
+SIZE_KEY = '_size'
 SECRET_KEY_PARTS = (
     'password',
     'passwd',
@@ -217,7 +223,7 @@ def normalize_payload(payload: Optional[dict]) -> dict:
 
     if not payload:
         return {}
-    normalized = _normalize_dict(payload, depth=1)
+    normalized = _normalize_dict(payload, depth=FIRST_DEPTH)
     size = len(to_json(normalized).encode('utf-8'))
     if size > PAYLOAD_MAX_BYTES:
 
@@ -229,11 +235,11 @@ def normalize_payload(payload: Optional[dict]) -> dict:
             {'size': size, 'limit': PAYLOAD_MAX_BYTES},
             level=SentryLogLevel.WARNING,
         )
-        return {'_truncated': True, '_size': size}
+        return {TRUNCATED_KEY: True, SIZE_KEY: size}
     return normalized
 
 
-def _normalize_dict(value: dict, depth: int) -> Dict[str, Any]:
+def _normalize_dict(value: dict, depth: Optional[int]) -> Dict[str, Any]:
     normalized = {}
     for key, item in value.items():
         name = str(key)
@@ -244,20 +250,60 @@ def _normalize_dict(value: dict, depth: int) -> Dict[str, Any]:
     return normalized
 
 
-def _normalize_value(value: Any, depth: int) -> Any:
+def _normalize_value(value: Any, depth: Optional[int]) -> Any:
+
+    """ One pass over the payload: secrets out, query strings off,
+        long strings cut, unknown types stringified.
+
+        depth is NO_DEPTH_LIMIT inside a container that is being
+        collapsed into a JSON string: whatever it holds ends up in
+        that one string, so there is nothing left to collapse. """
+
     if value is None or isinstance(value, (bool, int, float)):
         return value
     if isinstance(value, str):
         return without_query(value)[:PAYLOAD_STR_MAX]
     if isinstance(value, dict):
-        if depth >= PAYLOAD_MAX_DEPTH:
-            return _to_json_value(value)
-        return _normalize_dict(value, depth + 1)
+        if _too_deep(depth):
+            return _collapse(_normalize_dict(value, NO_DEPTH_LIMIT))
+        return _normalize_dict(value, _deeper(depth))
     if isinstance(value, (list, tuple, set, frozenset)):
-        if depth >= PAYLOAD_MAX_DEPTH:
-            return _to_json_value(value)
-        return [_normalize_value(item, depth + 1) for item in value]
+        if _too_deep(depth):
+            return _collapse([
+                _normalize_value(item, NO_DEPTH_LIMIT) for item in value
+            ])
+        return [_normalize_value(item, _deeper(depth)) for item in value]
     return _to_scalar(value)
+
+
+def _too_deep(depth: Optional[int]) -> bool:
+    return depth is not None and depth >= PAYLOAD_MAX_DEPTH
+
+
+def _deeper(depth: Optional[int]) -> Optional[int]:
+
+    """ Depth of the values inside a container. NO_DEPTH_LIMIT stays
+        itself: inside a container that is being collapsed the whole
+        subtree goes into one string, however deep it is. """
+
+    if depth is NO_DEPTH_LIMIT:
+        return NO_DEPTH_LIMIT
+    return depth + 1
+
+
+def _collapse(value: Any) -> str:
+
+    """ A container deeper than PAYLOAD_MAX_DEPTH becomes one
+        attribute of the record instead of a tree the log backend
+        would index field by field.
+
+        The value is normalized before it is dumped, not after: a
+        JSON string cut to PAYLOAD_STR_MAX would end mid-escape and
+        arrive at the backend as broken JSON. Normalizing first also
+        bounds the result, since every string inside is cut, and
+        PAYLOAD_MAX_BYTES bounds the payload as a whole. """
+
+    return to_json(value)
 
 
 def _is_secret_key(name: str) -> bool:
@@ -299,14 +345,6 @@ def _to_scalar(value: Any) -> Any:
         return str(value)[:PAYLOAD_STR_MAX]
 
 
-def _to_json_value(value: Any) -> str:
-
-    """ Collapse a too deep container into a JSON string,
-        keeping secrets redacted at any depth. """
-
-    return to_json(_redact(value))[:PAYLOAD_STR_MAX]
-
-
 def to_json(value: Any) -> str:
 
     """ JSON of anything, used by the payload size check and by the
@@ -317,19 +355,3 @@ def to_json(value: Any) -> str:
         return json.dumps(value, cls=DjangoJSONEncoder)
     except (TypeError, ValueError):
         return json.dumps(str(value))
-
-
-def _redact(value: Any) -> Any:
-    if isinstance(value, str):
-        return without_query(value)
-    if isinstance(value, dict):
-        return {
-            str(key): (
-                REDACTED_VALUE if _is_secret_key(str(key))
-                else _redact(item)
-            )
-            for key, item in value.items()
-        }
-    if isinstance(value, (list, tuple, set, frozenset)):
-        return [_redact(item) for item in value]
-    return value

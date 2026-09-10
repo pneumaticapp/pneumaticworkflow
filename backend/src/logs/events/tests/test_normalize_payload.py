@@ -1,3 +1,4 @@
+import json
 from decimal import Decimal
 from uuid import UUID
 
@@ -234,8 +235,10 @@ def test_normalize_payload__unknown_type__string():
 
 def test_normalize_payload__unencodable_value_too_deep__string():
 
-    """ A container the encoder cannot handle becomes its text, so one
-        odd value never breaks the whole batch of the sink. """
+    """ A value the encoder cannot handle becomes its text, so one
+        odd value never breaks the whole batch of the sink. The
+        container around it keeps its shape: the collapsed string is
+        built from the normalized value, not from the raw one. """
 
     # arrange
     payload = {'a': {'b': {'obj': range(3)}}}
@@ -244,7 +247,74 @@ def test_normalize_payload__unencodable_value_too_deep__string():
     result = normalize_payload(payload)
 
     # assert
-    assert result == {'a': {'b': '"{\'obj\': range(0, 3)}"'}}
+    assert result == {'a': {'b': '{"obj": "range(0, 3)"}'}}
+
+
+def test_normalize_payload__nesting_below_the_limit__collapsed_whole():
+
+    """ The subtree of a collapsed container goes into that one
+        string however deep it is: the collapse is where the depth
+        limit stops mattering. """
+
+    # arrange
+    payload = {'a': {'b': {'c': {'d': 1}}}, 'list': {'x': [[1, 2]]}}
+
+    # act
+    result = normalize_payload(payload)
+
+    # assert
+    assert result == {
+        'a': {'b': '{"c": {"d": 1}}'},
+        'list': {'x': '[[1, 2]]'},
+    }
+
+
+def test_normalize_payload__secret_below_the_limit__value_redacted():
+
+    """ Depth is no way past the redaction: the keys of the whole
+        collapsed subtree are checked, not only its first level. """
+
+    # arrange
+    payload = {'a': {'b': {'auth': {'token': 'secret-value'}}}}
+
+    # act
+    result = normalize_payload(payload)
+
+    # assert
+    assert result == {'a': {'b': '{"auth": {"token": "[redacted]"}}'}}
+
+
+def test_normalize_payload__too_deep_long_string__string_cut():
+
+    """ A long string inside a collapsed container is cut before
+        the container is dumped, so the attribute stays valid
+        JSON instead of ending mid-escape. """
+
+    # arrange
+    payload = {'a': {'b': {'text': 'y' * (PAYLOAD_STR_MAX + 100)}}}
+
+    # act
+    result = normalize_payload(payload)
+
+    # assert
+    assert json.loads(result['a']['b']) == {
+        'text': 'y' * PAYLOAD_STR_MAX,
+    }
+
+    """ A long string inside a collapsed container is cut before
+        the container is dumped, so the attribute stays valid
+        JSON. """
+
+    # arrange
+    payload = {'a': {'b': {'text': 'y' * (PAYLOAD_STR_MAX + 100)}}}
+
+    # act
+    result = normalize_payload(payload)
+
+    # assert
+    assert json.loads(result['a']['b']) == {
+        'text': 'y' * PAYLOAD_STR_MAX,
+    }
 
 
 def test_normalize_payload__oversized__replaced_by_size_marker(mocker):

@@ -32,30 +32,34 @@ compose() {
     fi
 }
 
-# es_api METHOD PATH [BODY_FILE]
-#
-# curl runs inside the node container: the certificate authority and the
-# password are already there, so neither ever appears in a host process list
-# and the storage machine needs no curl of its own. The body is piped through
-# stdin for the same reason.
-es_api() {
-    local method="$1" path="$2" body_file="${3:-}"
+# The curl command every request runs, as a string for `sh -c` inside the
+# node container: the certificate authority and the password are already
+# there, so neither ever appears in a host process list and the storage
+# machine needs no curl of its own. WITH_BODY is "body" when the request
+# sends one, and it always arrives through stdin for the same reason.
+_es_curl() {
+    local method="$1" path="$2" with_body="${3:-none}"
     local cmd='curl -sS --cacert config/certs/ca/ca.crt -u "elastic:$ELASTIC_PASSWORD"'
     cmd="$cmd -X $method -H 'Content-Type: application/json' \"https://localhost:9200$path\""
-    if [ -n "$body_file" ]; then
+    if [ "$with_body" = body ]; then
         cmd="$cmd --data-binary @-"
-        compose exec -T elasticsearch sh -c "$cmd" < "$body_file"
+    fi
+    printf '%s' "$cmd"
+}
+
+# es_api METHOD PATH [BODY_FILE]
+es_api() {
+    local method="$1" path="$2" body_file="${3:-}"
+    if [ -n "$body_file" ]; then
+        compose exec -T elasticsearch             sh -c "$(_es_curl "$method" "$path" body)" < "$body_file"
     else
-        compose exec -T elasticsearch sh -c "$cmd" < /dev/null
+        compose exec -T elasticsearch             sh -c "$(_es_curl "$method" "$path")" < /dev/null
     fi
 }
 
 # Same, with the body coming from stdin.
 es_api_stdin() {
-    local method="$1" path="$2"
-    local cmd='curl -sS --cacert config/certs/ca/ca.crt -u "elastic:$ELASTIC_PASSWORD"'
-    cmd="$cmd -X $method -H 'Content-Type: application/json' \"https://localhost:9200$path\" --data-binary @-"
-    compose exec -T elasticsearch sh -c "$cmd"
+    compose exec -T elasticsearch sh -c "$(_es_curl "$1" "$2" body)"
 }
 
 # json_escape STRING - makes a value safe between the quotes of a JSON string:

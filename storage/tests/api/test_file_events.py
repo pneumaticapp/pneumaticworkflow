@@ -175,9 +175,8 @@ def test_download__range_past_first_byte__same_download_not_journaled(
     # assert
     assert response.status_code == 206
     # The ranges that follow the one opening a download are the same
-    # download. The accepted cost is the gap in the risk table of
-    # docs/logging-file-service-design.md: a client that never asks
-    # for byte zero leaves no record at all.
+    # download. The accepted cost: a client that never asks for byte
+    # zero leaves no record at all.
     mock_events_file_download.assert_not_awaited()
     mock_http_client.assert_not_awaited()
 

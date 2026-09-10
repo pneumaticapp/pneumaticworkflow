@@ -3,6 +3,15 @@
 #   --config=/etc/otel/base.yaml --config=/etc/otel/backend-${LOGS_BACKEND:-local}.yaml
 # The mode file owns the exporters and the whole `service.pipelines.logs` block
 # (on merge lists are replaced, not appended).
+#
+# Personal data, in every mode: the record is delivered as it was written,
+# pii.* attributes included. The deployments these modes were written for -
+# our own store on a machine of ours, a self-hosted installation writing into
+# the journal of the company that runs it, the bundled Loki - keep the data
+# with its owner, so there is nothing to strip. A receiver outside the
+# owner's organisation (a managed observability vendor) is a processor
+# relationship: settle it in the contract, not by dropping half of every
+# record by default.
 receivers:
   otlp:
     protocols:

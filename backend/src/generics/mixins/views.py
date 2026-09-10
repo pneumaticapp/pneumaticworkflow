@@ -10,6 +10,7 @@ from rest_framework.response import Response
 
 from src.processes.models.templates.template import Template
 from src.processes.utils.common import get_prefetch_fields
+from src.utils.http import get_client_ip
 
 
 class BaseResponseMixin:
@@ -162,15 +163,13 @@ class AnonymousMixin:
         ).hexdigest()
 
     def get_user_ip(self, request: Request) -> Optional[str]:
-        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-        if isinstance(x_forwarded_for, str):
-            ip = x_forwarded_for.split(',')[0]
-        else:
-            ip = request.headers.get(
-                'Remote-Addr',
-                request.META.get('REMOTE_ADDR'),
-            )
-        return ip
+
+        """ One definition of the client address for the whole
+            backend, see src/utils/http.py: the journal, the token
+            of an SSO sign in and the abuse counters below all name
+            the same person by it. """
+
+        return get_client_ip(request)
 
     def get_user_agent(self, request: Request) -> str:
         return request.headers.get(

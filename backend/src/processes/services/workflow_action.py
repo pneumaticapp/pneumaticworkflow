@@ -11,8 +11,8 @@ from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
 from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.executor import RawSqlExecutor
-from src.logs.events import Actor, EventObject, emit
 from src.logs.events.enums import EventName, EventObjectType
+from src.logs.events.mixins import EventEmitMixin
 from src.notifications.tasks import (
     send_task_completed_notification,
     send_task_completed_websocket,
@@ -71,7 +71,7 @@ from src.webhooks.models import WebHook
 UserModel = get_user_model()
 
 
-class WorkflowActionService:
+class WorkflowActionService(EventEmitMixin):
 
     def __init__(
         self,
@@ -283,13 +283,11 @@ class WorkflowActionService:
                 is_superuser=self.is_superuser,
                 auth_type=self.auth_type,
             )
-            emit(
+            self._publish(
                 EventName.WORKFLOW_TERMINATE,
                 account_id=self.account.id,
-                actor=Actor.from_user(self.user, self.auth_type),
-                event_object=EventObject(
-                    type=EventObjectType.WORKFLOW, id=self.workflow.id,
-                ),
+                object_type=EventObjectType.WORKFLOW,
+                object_id=self.workflow.id,
                 workflow_id=self.workflow.id,
                 payload={
                     'workflow_name': self.workflow.name,

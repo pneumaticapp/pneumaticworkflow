@@ -26,13 +26,12 @@ from src.shared_kernel.auth.redis_client import (
     get_redis_client,
 )
 from src.shared_kernel.auth.token_auth import _compute_pbkdf2
-from src.shared_kernel.auth.user_types import UserType
+from src.shared_kernel.auth.user_types import ActorType, UserType
 from src.shared_kernel.database.models import FileRecordORM
 from src.shared_kernel.events.emitter import EventEmitter, get_event_emitter
 from src.shared_kernel.events.request_events import RequestEvents
 from src.shared_kernel.events.schema import (
     Actor,
-    ActorType,
     Event,
     EventName,
     RequestContext,

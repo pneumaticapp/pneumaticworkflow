@@ -9,7 +9,6 @@ from rest_framework.viewsets import GenericViewSet
 
 from src.accounts.enums import SourceType
 from src.analysis.mixins import BaseIdentifyMixin
-from src.authentication.enums import LoginFailedReason
 from src.authentication.messages import (
     MSG_AU_0003,
 )
@@ -28,13 +27,13 @@ from src.authentication.throttling import (
     AuthGoogleTokenThrottle,
 )
 from src.authentication.views.mixins import (
+    LoginEventMixin,
     SignUpMixin,
     SSORestrictionMixin,
 )
 from src.generics.mixins.views import (
     CustomViewSetMixin,
 )
-from src.logs.events import AuditEventService
 from src.utils.logging import (
     SentryLogLevel,
     capture_sentry_message,
@@ -47,6 +46,7 @@ UserModel = get_user_model()
 class GoogleAuthViewSet(
     SSORestrictionMixin,
     SignUpMixin,
+    LoginEventMixin,
     CustomViewSetMixin,
     BaseIdentifyMixin,
     GenericViewSet,
@@ -92,11 +92,7 @@ class GoogleAuthViewSet(
                     ),
                     user_ip=request.META.get('HTTP_X_REAL_IP'),
                 )
-                AuditEventService.user_logged_in(
-                    user=user,
-                    source=SourceType.GOOGLE,
-                    request=request,
-                )
+                self.emit_login(user, request)
             except ObjectDoesNotExist as err:
                 if settings.PROJECT_CONF['SIGNUP']:
                     user, token = self.signup(
@@ -109,11 +105,7 @@ class GoogleAuthViewSet(
                         gclid=slz.validated_data.get('gclid'),
                     )
                 else:
-                    AuditEventService.login_failed(
-                        request=request,
-                        reason=LoginFailedReason.ACCOUNT_INACTIVE,
-                        email=user_data['email'],
-                    )
+                    self.emit_login_denied(request, user_data['email'])
                     raise AuthenticationFailed(MSG_AU_0003) from err
 
             service.save_tokens_for_user(user)

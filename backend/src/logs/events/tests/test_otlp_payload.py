@@ -10,7 +10,7 @@ from src.logs.events.registry import (
     ACTOR_PII,
 )
 from src.logs.events.schema import Actor, EventObject
-from src.logs.events.sinks.otlp import (
+from src.logs.events.sinks.otlp_payload import (
     MAX_ATTRIBUTES,
     _fit_limit,
     _payload_values,

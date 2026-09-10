@@ -7,7 +7,7 @@
     of the dead letter of a running deployment. """
 
 from src.logs.events.enums import EventCategory, EventName
-from src.logs.events.registry import FILE_PII, EventRegistry
+from src.logs.events.registry import FILE_PII, resolve_event_type
 from src.logs.events.schema import Event
 from src.logs.events.tests.fakes import (
     FILE_SERVICE_FILE_ID,
@@ -62,7 +62,7 @@ def test_resolve__file_service_record__category_of_the_registry():
     event = Event.from_dict(load_file_service_record())
 
     # act
-    declared = EventRegistry.resolve(event.type)
+    declared = resolve_event_type(event.type)
 
     # assert
     assert declared.category == EventCategory.AUDIT

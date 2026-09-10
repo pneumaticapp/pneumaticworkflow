@@ -16,7 +16,10 @@ from src.accounts.services.exceptions import (
     UserServiceException,
 )
 from src.accounts.services.user import UserService
-from src.authentication.enums import AuthTokenType
+from src.authentication.enums import (
+    AuthTokenType,
+    LoginFailedReason,
+)
 from src.authentication.messages import MSG_AU_0016
 from src.authentication.services.user_auth import AuthService
 from src.authentication.tokens import PneumaticToken
@@ -192,6 +195,45 @@ class SignUpMixin:
                     user_ip=request.META.get('HTTP_X_REAL_IP'),
                 )
         return account_owner, token
+
+
+class LoginEventMixin:
+
+    """ The sign in events of a provider view: which provider signed
+        somebody in, and which refusal to journal when it did not.
+
+        source names the provider once per view, instead of a literal
+        at every call, and the sign up branch of a provider is the
+        one place that publishes no login: after_signup already
+        published user.signup for the very same request. """
+
+    source = None
+
+    def emit_login(
+        self,
+        user: UserModel,
+        request,
+        *,
+        is_new_user: bool = False,
+    ) -> None:
+        if is_new_user:
+            return
+        AuditEventService.user_logged_in(
+            user=user,
+            source=self.source,
+            request=request,
+        )
+
+    def emit_login_denied(self, request, email: str) -> None:
+
+        """ The deployment takes no sign ups, so an address nobody
+            knows is a deactivated user of it. """
+
+        AuditEventService.login_failed(
+            request=request,
+            reason=LoginFailedReason.ACCOUNT_INACTIVE,
+            email=email,
+        )
 
 
 class SSORestrictionMixin:

@@ -3,13 +3,13 @@ from src.logs.events.context import (
     USER_AGENT_MAX,
     RequestContext,
     context_from_request,
-    get_client_ip,
     get_context,
     get_user_agent_header,
     reset_context,
     set_context,
 )
 from src.logs.events.enums import ActorType
+from src.utils.http import get_client_ip
 
 
 def test_get_client_ip__real_ip__wins(request_factory):

@@ -39,7 +39,7 @@ def test_deactivate__service_call__emit_user_deactivate(
     send_user_deleted_mock = mocker.patch(
         'src.notifications.tasks.send_user_deleted_notification.delay',
     )
-    emit_mock = mocker.patch('src.accounts.services.user.emit')
+    emit_mock = mocker.patch('src.logs.events.mixins.emit')
     service = UserService(instance=target, user=owner)
 
     # act
@@ -99,7 +99,7 @@ def test_deactivate__api_key_auth__emit_api_key_actor_type(
     send_user_deleted_mock = mocker.patch(
         'src.notifications.tasks.send_user_deleted_notification.delay',
     )
-    emit_mock = mocker.patch('src.accounts.services.user.emit')
+    emit_mock = mocker.patch('src.logs.events.mixins.emit')
     service = UserService(
         instance=target,
         user=owner,
@@ -161,7 +161,7 @@ def test_deactivate__no_user__emit_system_actor(
     send_user_deleted_mock = mocker.patch(
         'src.notifications.tasks.send_user_deleted_notification.delay',
     )
-    emit_mock = mocker.patch('src.accounts.services.user.emit')
+    emit_mock = mocker.patch('src.logs.events.mixins.emit')
     service = UserService(account=account, instance=target)
 
     # act
@@ -214,7 +214,7 @@ def test_decline__invited_user__emit_actor_is_the_invited_user(
     send_user_deleted_mock = mocker.patch(
         'src.notifications.tasks.send_user_deleted_notification.delay',
     )
-    emit_mock = mocker.patch('src.accounts.services.user.emit')
+    emit_mock = mocker.patch('src.logs.events.mixins.emit')
     service = UserInviteService(request_user=invited)
 
     # act
@@ -268,7 +268,7 @@ def test_destroy__users_endpoint__emit_user_deactivate(
     send_user_deleted_mock = mocker.patch(
         'src.notifications.tasks.send_user_deleted_notification.delay',
     )
-    emit_mock = mocker.patch('src.accounts.services.user.emit')
+    emit_mock = mocker.patch('src.logs.events.mixins.emit')
 
     # act
     response = api_client.delete(f'/accounts/users/{target.id}')
@@ -326,7 +326,7 @@ def test_delete__deprecated_endpoint__emit_user_deactivate(
     send_user_deleted_mock = mocker.patch(
         'src.notifications.tasks.send_user_deleted_notification.delay',
     )
-    emit_mock = mocker.patch('src.accounts.services.user.emit')
+    emit_mock = mocker.patch('src.logs.events.mixins.emit')
 
     # act
     response = api_client.post(f'/accounts/users/{target.id}/delete')

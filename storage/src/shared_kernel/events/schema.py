@@ -5,6 +5,8 @@ from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Any, Protocol
 
+from src.shared_kernel.auth.user_types import ActorType
+
 TS_FORMAT = '%Y-%m-%dT%H:%M:%S.%f'
 TS_SUFFIX = 'Z'
 OBJECT_TYPE_FILE = 'file'
@@ -23,14 +25,6 @@ class EventCategory(StrEnum):
     """Category of the backend registry; every file type is audit."""
 
     AUDIT = 'audit'
-
-
-class ActorType(StrEnum):
-    """Who acted, in the vocabulary of the backend (ActorType there)."""
-
-    USER = 'user'
-    API_KEY = 'api_key'
-    GUEST = 'guest'
 
 
 class ActorSource(Protocol):

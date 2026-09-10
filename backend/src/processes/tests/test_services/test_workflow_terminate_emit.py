@@ -42,7 +42,7 @@ def test_terminate_workflow__user_action__emit_workflow_terminate(
         '.workflows_terminated',
     )
     emit_mock = mocker.patch(
-        'src.processes.services.workflow_action.emit',
+        'src.logs.events.mixins.emit',
     )
     service = WorkflowActionService(user=owner, workflow=workflow)
 
@@ -107,7 +107,7 @@ def test_terminate_workflow__api_key_auth__emit_api_key_actor_type(
         '.workflows_terminated',
     )
     emit_mock = mocker.patch(
-        'src.processes.services.workflow_action.emit',
+        'src.logs.events.mixins.emit',
     )
     service = WorkflowActionService(
         user=owner,

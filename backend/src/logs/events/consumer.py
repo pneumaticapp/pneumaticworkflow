@@ -224,8 +224,7 @@ class EventsConsumer:
         """ The sink may know better: a short Retry-After of the
             receiver wins over the fixed backoff. """
 
-        retry_after = getattr(exc, 'retry_after', None)
-        return retry_after or RETRY_BACKOFF[attempt]
+        return exc.retry_after or RETRY_BACKOFF[attempt]
 
     def run_once(self) -> ConsumerStats:
 

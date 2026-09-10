@@ -1,6 +1,7 @@
-# LOGS_BACKEND=none: the whole event pipeline is off. The backend stops
-# emitting (settings.LOGS_ENABLED), so the collector has nothing to receive
-# and is not started. The buffer is db4 of the main Redis and needs nothing.
+# LOGS_BACKEND=none: the whole event pipeline is off. emit() writes nothing
+# and the consumer tick returns at once, so the collector has nothing to
+# receive and is not started. The buffer is db4 of the main Redis and needs
+# nothing.
 #
 # Set LOGS_BACKEND=none together with this file. This file alone, with the
 # pipeline still on, means events pile up in the buffer with no collector to

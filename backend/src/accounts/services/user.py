@@ -34,12 +34,8 @@ from src.accounts.services.vacation import VacationDelegationService
 from src.analysis.mixins import BaseIdentifyMixin
 from src.analysis.services import AnalyticService
 from src.generics.base.service import BaseModelService
-from src.logs.events import Actor, EventObject, emit
-from src.logs.events.enums import (
-    ActorType,
-    EventName,
-    EventObjectType,
-)
+from src.logs.events.enums import EventName, EventObjectType
+from src.logs.events.mixins import EventEmitMixin
 from src.notifications.tasks import (
     send_user_created_notification,
     send_user_deleted_notification,
@@ -61,6 +57,7 @@ UserModel = get_user_model()
 
 
 class UserService(
+    EventEmitMixin,
     BaseModelService,
     BaseIdentifyMixin,
 ):
@@ -441,18 +438,12 @@ class UserService(
         # endpoint, its deprecated twin, a declined invite and a
         # transfer to another account. In the last two the actor is
         # the deactivated person themselves; a service without a
-        # user is a background job.
-        emit(
+        # user is a background job (see EventEmitMixin).
+        self._publish(
             EventName.USER_DEACTIVATE,
             account_id=self.account.id,
-            actor=(
-                Actor.from_user(self.user, self.auth_type)
-                if self.user
-                else Actor(type=ActorType.SYSTEM)
-            ),
-            event_object=EventObject(
-                type=EventObjectType.USER, id=self.instance.id,
-            ),
+            object_type=EventObjectType.USER,
+            object_id=self.instance.id,
             payload={
                 'target_email': self.instance.email,
                 'status_before': status_before,

@@ -12,8 +12,8 @@ from src.generics.mixins.services import DefaultClsCacheMixin
 from src.logs.enums import (
     AccountEventStatus,
 )
-from src.logs.events import Actor, EventObject, emit
 from src.logs.events.enums import EventName, EventObjectType
+from src.logs.events.mixins import EventEmitMixin
 from src.logs.service import AccountLogService
 from src.processes.services.templates.integrations import (
     TemplateIntegrationsService,
@@ -34,7 +34,7 @@ CONNECTION_ERROR = 'ConnectionError'
 ALL_EVENTS = 'all'
 
 
-class WebhookService:
+class WebhookService(EventEmitMixin):
 
     def __init__(
         self,
@@ -62,11 +62,10 @@ class WebhookService:
             a receiver token rides there, and the host with the path
             is what identifies the destination. """
 
-        emit(
+        self._publish(
             event_type,
             account_id=self.account.id,
-            actor=Actor.from_user(self.user, self.auth_type),
-            event_object=EventObject(type=EventObjectType.WEBHOOK),
+            object_type=EventObjectType.WEBHOOK,
             payload={'url': url, 'event': event},
         )
 

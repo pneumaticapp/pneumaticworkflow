@@ -36,7 +36,7 @@ def test_create__group__emit_group_create(mocker):
     sync_account_file_fields_mock = mocker.patch(
         'src.accounts.services.group.sync_account_file_fields',
     )
-    emit_mock = mocker.patch('src.accounts.services.group.emit')
+    emit_mock = mocker.patch('src.logs.events.mixins.emit')
     service = UserGroupService(user=owner, auth_type=AuthTokenType.USER)
 
     # act
@@ -102,7 +102,7 @@ def test_partial_update__name_and_users__emit_group_update(mocker):
     send_task_deleted_mock = mocker.patch(
         'src.notifications.tasks.send_task_deleted_notification.delay',
     )
-    emit_mock = mocker.patch('src.accounts.services.group.emit')
+    emit_mock = mocker.patch('src.logs.events.mixins.emit')
     service = UserGroupService(
         user=owner,
         instance=group,
@@ -183,7 +183,7 @@ def test_partial_update__removed_users__emit_removed_users_ids(mocker):
     send_task_deleted_mock = mocker.patch(
         'src.notifications.tasks.send_task_deleted_notification.delay',
     )
-    emit_mock = mocker.patch('src.accounts.services.group.emit')
+    emit_mock = mocker.patch('src.logs.events.mixins.emit')
     service = UserGroupService(
         user=owner,
         instance=group,
@@ -259,7 +259,7 @@ def test_partial_update__name_only__emit_no_membership_change(mocker):
     send_task_deleted_mock = mocker.patch(
         'src.notifications.tasks.send_task_deleted_notification.delay',
     )
-    emit_mock = mocker.patch('src.accounts.services.group.emit')
+    emit_mock = mocker.patch('src.logs.events.mixins.emit')
     service = UserGroupService(
         user=owner,
         instance=group,
@@ -332,7 +332,7 @@ def test_delete__group__emit_group_delete(mocker):
     send_task_deleted_mock = mocker.patch(
         'src.notifications.tasks.send_task_deleted_notification.delay',
     )
-    emit_mock = mocker.patch('src.accounts.services.group.emit')
+    emit_mock = mocker.patch('src.logs.events.mixins.emit')
     service = UserGroupService(
         user=owner,
         instance=group,

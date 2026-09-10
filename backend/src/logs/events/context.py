@@ -1,14 +1,13 @@
-import ipaddress
 from contextvars import ContextVar, Token
 from dataclasses import dataclass
 from typing import Optional
 
 from src.authentication.enums import AuthTokenType
 from src.logs.events.enums import ActorType, actor_type_from_auth
+from src.utils.http import get_client_ip
 
 USER_AGENT_MAX = 500
 CONTEXT_VAR_NAME = 'pneumatic_event_context'
-FORWARDED_SEPARATOR = ','
 
 
 @dataclass
@@ -42,40 +41,6 @@ def reset_context(token: Token) -> None:
 
 def get_context() -> Optional[RequestContext]:
     return _context.get()
-
-
-def get_client_ip(request) -> Optional[str]:
-
-    """ Order of trust: the address set by our own nginx, then the
-        first hop of the proxy chain, then the socket address.
-        Same order as in AnonymousMixin.get_user_ip plus X-Real-IP.
-
-        Behind somebody else's balancer the first two are client
-        controlled, so the result is only kept when it really is an
-        address: anything else would ride in every event of the
-        request at whatever length the client chose. """
-
-    meta = request.META
-    real_ip = _valid_ip(meta.get('HTTP_X_REAL_IP'))
-    if real_ip:
-        return real_ip
-    forwarded = meta.get('HTTP_X_FORWARDED_FOR')
-    if forwarded:
-        first_hop = _valid_ip(forwarded.split(FORWARDED_SEPARATOR)[0])
-        if first_hop:
-            return first_hop
-    return _valid_ip(meta.get('REMOTE_ADDR'))
-
-
-def _valid_ip(value: Optional[str]) -> Optional[str]:
-    if not value:
-        return None
-    address = value.strip()
-    try:
-        ipaddress.ip_address(address)
-    except ValueError:
-        return None
-    return address
 
 
 def get_user_agent_header(request) -> Optional[str]:

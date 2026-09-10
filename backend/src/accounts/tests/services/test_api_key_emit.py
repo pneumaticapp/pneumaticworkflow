@@ -23,7 +23,7 @@ def test_create__api_key__emit_api_key_create(mocker):
     # arrange
     account = create_test_account()
     owner = create_test_owner(account=account)
-    emit_mock = mocker.patch('src.accounts.services.api_key.emit')
+    emit_mock = mocker.patch('src.logs.events.mixins.emit')
     service = APIKeyService(user=owner, auth_type=AuthTokenType.USER)
 
     # act
@@ -52,7 +52,7 @@ def test_create__key_of_another_user__emit_target_user_id(mocker):
     account = create_test_account()
     owner = create_test_owner(account=account)
     target = create_test_admin(account=account)
-    emit_mock = mocker.patch('src.accounts.services.api_key.emit')
+    emit_mock = mocker.patch('src.logs.events.mixins.emit')
     service = APIKeyService(user=owner, auth_type=AuthTokenType.USER)
 
     # act
@@ -80,7 +80,7 @@ def test_create__api_key_auth__emit_api_key_actor_type(mocker):
     # arrange
     account = create_test_account()
     owner = create_test_owner(account=account)
-    emit_mock = mocker.patch('src.accounts.services.api_key.emit')
+    emit_mock = mocker.patch('src.logs.events.mixins.emit')
     service = APIKeyService(user=owner, auth_type=AuthTokenType.API)
 
     # act
@@ -109,7 +109,7 @@ def test_revoke__api_key__emit_api_key_revoke(mocker):
     account = create_test_account()
     owner = create_test_owner(account=account)
     api_key = create_test_api_key(user=owner, name='To revoke')
-    emit_mock = mocker.patch('src.accounts.services.api_key.emit')
+    emit_mock = mocker.patch('src.logs.events.mixins.emit')
     service = APIKeyService(
         user=owner,
         instance=api_key,
