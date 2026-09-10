@@ -22,27 +22,35 @@ jest.mock('../../../../redux/selectors/fieldsets', () => ({
 }));
 
 jest.mock('../../../UI', () => ({
-  FilterSelect: jest.fn(({ options, onChange, isLoading, placeholderText }: { options: { id: number; label: string }[]; onChange: (id: number) => void; isLoading: boolean; placeholderText: string }) => {
-    if (isLoading && options.length === 0) {
-      return <div>Loading…</div>;
-    }
-    if (options.length === 0) {
-      return <div>{placeholderText}</div>;
-    }
-    return (
-      <div data-testid="mock-filter-select">
-        {options.map((option: { id: number; label: string }) => (
-          <button
-            key={option.id}
-            type="button"
-            onClick={() => onChange(option.id)}
-          >
-            {option.label}
-          </button>
-        ))}
-      </div>
-    );
-  }),
+  FilterSelect: jest.fn(
+    ({
+      options,
+      onChange,
+      isLoading,
+      placeholderText,
+    }: {
+      options: { id: number; label: string }[];
+      onChange: (id: number) => void;
+      isLoading: boolean;
+      placeholderText: string;
+    }) => {
+      if (isLoading && options.length === 0) {
+        return <div>Loading…</div>;
+      }
+      if (options.length === 0) {
+        return <div>{placeholderText}</div>;
+      }
+      return (
+        <div data-testid="mock-filter-select">
+          {options.map((option: { id: number; label: string }) => (
+            <button key={option.id} type="button" onClick={() => onChange(option.id)}>
+              {option.label}
+            </button>
+          ))}
+        </div>
+      );
+    },
+  ),
   CustomTooltip: () => null,
 }));
 

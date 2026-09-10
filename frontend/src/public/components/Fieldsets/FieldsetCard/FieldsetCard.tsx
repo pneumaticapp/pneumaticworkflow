@@ -102,10 +102,12 @@ export function FieldsetCard({
               {formatMessage({ id: 'fieldsets.stats.rules' }, { count: rulesets.length })}
             </div>
           )}
-          <div className={classnames(
-            styles['card-usage'],
-            isLinked ? styles['card-usage--linked'] : styles['card-usage--not-linked'],
-          )}>
+          <div
+            className={classnames(
+              styles['card-usage'],
+              isLinked ? styles['card-usage--linked'] : styles['card-usage--not-linked'],
+            )}
+          >
             {isLinked
               ? formatMessage({ id: 'fieldsets.card.used' }, { count: usage.length })
               : formatMessage({ id: 'fieldsets.card.not-used' })}

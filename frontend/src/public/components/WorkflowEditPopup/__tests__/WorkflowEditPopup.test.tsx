@@ -67,10 +67,11 @@ jest.mock('../../icons', () => ({
   PlayLogoIcon: () => null,
 }));
 
-const makeField = (overrides: Partial<IExtraField> = {}) => makeExtraField({
-  apiName: `field-${Math.random()}`,
-  ...overrides,
-});
+const makeField = (overrides: Partial<IExtraField> = {}) =>
+  makeExtraField({
+    apiName: `field-${Math.random()}`,
+    ...overrides,
+  });
 
 const makeFieldset = (overrides: Partial<IFieldsetRuntime> & { fields: IExtraField[] }) =>
   makeFieldsetRuntime({
@@ -314,16 +315,12 @@ describe('WorkflowEditPopup', () => {
         ...baseWorkflow,
         kickoff: {
           description: '',
-          fields: [
-            makeField({ apiName: 'f1', value: 'filled' }),
-          ],
+          fields: [makeField({ apiName: 'f1', value: 'filled' })],
           fieldsets: [],
         },
         loadedFieldsets: [
           makeFieldset({
-            fields: [
-              makeField({ apiName: 'fs-hidden-required', isRequired: true, isHidden: true, value: '' }),
-            ],
+            fields: [makeField({ apiName: 'fs-hidden-required', isRequired: true, isHidden: true, value: '' })],
           }),
         ],
       };

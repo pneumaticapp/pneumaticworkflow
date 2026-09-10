@@ -57,7 +57,11 @@ jest.mock('../../../../redux/fieldsets/slice', () => ({
 
 jest.mock('../../../UI', () => ({
   ModifyDropdown: jest.fn((props: { onClone?: () => void }) =>
-    React.createElement('div', null, React.createElement('button', { 'data-testid': 'modify-clone', onClick: props.onClone })),
+    React.createElement(
+      'div',
+      null,
+      React.createElement('button', { 'data-testid': 'modify-clone', onClick: props.onClone }),
+    ),
   ),
   Button: jest.fn((props: { label: string; onClick?: () => void; disabled?: boolean }) =>
     React.createElement('button', { onClick: props.onClick, disabled: props.disabled }, props.label),
@@ -154,8 +158,8 @@ describe('FieldsetDetails', () => {
   };
 
   const mockSelectorState = (state: Partial<IApplicationState>) => {
-    (useSelector as unknown as jest.Mock).mockImplementation(
-      (selector: (state: IApplicationState) => unknown) => selector(state as IApplicationState),
+    (useSelector as unknown as jest.Mock).mockImplementation((selector: (state: IApplicationState) => unknown) =>
+      selector(state as IApplicationState),
     );
   };
 
@@ -245,9 +249,7 @@ describe('FieldsetDetails', () => {
 
       props.onClone();
       expect(cloneFieldset).toHaveBeenCalledTimes(1);
-      expect(cloneFieldset).toHaveBeenCalledWith(
-        expect.objectContaining({ fieldsetId: 10 }),
-      );
+      expect(cloneFieldset).toHaveBeenCalledWith(expect.objectContaining({ fieldsetId: 10 }));
     });
 
     it('skips loadCurrentFieldset when fieldset is already loaded with same id', () => {

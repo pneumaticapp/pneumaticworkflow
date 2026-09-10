@@ -27,13 +27,7 @@ import { IExtraField } from '../../../types/template';
 import { useDatasetOptions } from '../../TemplateEdit/ExtraFields/utils/useDatasetOptions';
 
 import { EMPTY_LOCAL_FIELDSET } from './constants';
-import {
-  initLocalFieldset,
-  checkIsTitleError,
-  updateFieldsetProperty,
-  saveFieldset,
-  cloneFieldset,
-} from './utils';
+import { initLocalFieldset, checkIsTitleError, updateFieldsetProperty, saveFieldset, cloneFieldset } from './utils';
 
 import { TFieldsetDetailsProps, TLocalFieldsetState, TFieldsetChanges } from './types';
 import { FieldsetRulesetsList } from './FieldsetRulesetsList/FieldsetRulesetsList';
@@ -75,9 +69,12 @@ const FieldsetDetails = ({
     dispatch(loadCurrentFieldset({ id }));
   }, [matchParamId]);
 
-  useEffect(() => () => {
-    dispatch(resetCurrentFieldset());
-  }, []);
+  useEffect(
+    () => () => {
+      dispatch(resetCurrentFieldset());
+    },
+    [],
+  );
 
   useEffect(() => {
     if (!fieldset) return;
@@ -231,10 +228,7 @@ const FieldsetDetails = ({
       )}
 
       {fieldRuleModalProps.fieldType && (
-        <FieldRuleModal
-          {...fieldRuleModalProps}
-          fieldType={fieldRuleModalProps.fieldType}
-        />
+        <FieldRuleModal {...fieldRuleModalProps} fieldType={fieldRuleModalProps.fieldType} />
       )}
 
       <FieldsetModal type={EFieldsetModalType.Edit} />

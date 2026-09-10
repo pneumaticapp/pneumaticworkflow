@@ -12,16 +12,8 @@ import {
   makeFieldRuleGroupAnd,
 } from '../../../../__stubs__/fieldsets.factory';
 import { makeTemplateTaskClient } from '../../../../__stubs__/templates.factory';
-import {
-  IExtraField,
-  ITemplateTaskClient,
-  EExtraFieldType,
-} from '../../../../types/template';
-import {
-  IFieldsetCatalogItem,
-  EFieldRuleType,
-  EFieldRuleOperator,
-} from '../../../../types/fieldset';
+import { IExtraField, ITemplateTaskClient, EExtraFieldType } from '../../../../types/template';
+import { IFieldsetCatalogItem, EFieldRuleType, EFieldRuleOperator } from '../../../../types/fieldset';
 
 jest.mock('../../../../redux/selectors/fieldsets', () => ({
   getFieldsetsCatalogItems: jest.fn(() => []),
@@ -157,11 +149,7 @@ jest.mock('../../TaskOutputFlow/MergedOutputRows', () => ({
 }));
 
 jest.mock('../../../Fieldsets/FieldsetDetails/FieldRuleModal', () => ({
-  FieldRuleModal: (props: {
-    isOpen?: boolean;
-    fieldType?: EExtraFieldType;
-    onClose?: () => void;
-  }) =>
+  FieldRuleModal: (props: { isOpen?: boolean; fieldType?: EExtraFieldType; onClose?: () => void }) =>
     React.createElement(
       'div',
       { 'data-testid': 'field-rule-modal' },
@@ -482,9 +470,7 @@ describe('OutputFormTaskMerged', () => {
         ]),
       );
       expect(patchArg.changedFields.fields).not.toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({ apiName: 'f-a' }),
-        ]),
+        expect.arrayContaining([expect.objectContaining({ apiName: 'f-a' })]),
       );
     });
   });

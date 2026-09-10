@@ -1,9 +1,9 @@
 .usage-banner {
-  margin-bottom: 2rem;
-  padding: 1.2rem 2rem;
   display: flex;
   align-items: center;
   min-height: 5.6rem;
+  padding: 1.2rem 2rem;
+  margin-bottom: 2rem;
   border-radius: 0.8rem;
 
   @mixin text-base;
@@ -20,8 +20,8 @@
 
 .usage-banner__row {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   width: 100%;
 }
 
@@ -53,8 +53,8 @@
 }
 
 .usage-banner__link {
-  text-decoration: none;
   color: var(--pneumatic-color-link-dark);
+  text-decoration: none;
   transition: color 0.1s ease-in-out;
 
   &:hover {

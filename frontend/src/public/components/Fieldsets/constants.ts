@@ -1,7 +1,4 @@
-import {
-  EFieldLabelPosition,
-  ERuleCombinator,
-} from '../../types/fieldset';
+import { EFieldLabelPosition, ERuleCombinator } from '../../types/fieldset';
 
 export const FIELDSET_RULES_MSG_RULE_REQUIRED = 'fieldsets.rules-validation-rule-required';
 export const FIELDSET_RULES_MSG_VALUE_REQUIRED = 'fieldsets.rules-validation-value-required';

@@ -22,14 +22,14 @@
 /* stylelint-disable declaration-no-important */
 .settings-description,
 .settings-title {
-  display: block;
   box-sizing: border-box;
+  display: block;
   width: 100% !important;
   max-width: 100%;
   font-family: inherit;
+  outline: none;
   border: 0.1rem solid var(--pneumatic-color-black16);
   border-radius: 0.8rem;
-  outline: none;
   transition: border-color 0.2s;
 
   @mixin text-base;
@@ -40,11 +40,11 @@
 
   &:disabled {
     min-height: unset;
+    color: var(--pneumatic-color-black72);
+    overflow-wrap: break-word;
     white-space: pre-wrap;
-    word-break: break-word;
     cursor: default;
     resize: none !important;
-    color: var(--pneumatic-color-black72);
     background-color: var(--pneumatic-color-black4);
     border: 0.1rem solid transparent;
     opacity: 1;
@@ -57,16 +57,16 @@
 }
 
 .settings-description {
-  padding: 1.2rem 1.6rem;
   min-height: 8rem;
+  padding: 1.2rem 1.6rem;
   resize: vertical;
 }
 
 .settings-title {
   padding: 0.8rem 1.2rem;
   overflow: hidden;
-  white-space: nowrap;
   text-overflow: ellipsis;
+  white-space: nowrap;
   resize: none !important;
 
   &:disabled {

@@ -1,7 +1,20 @@
 import {
-  EFieldLabelPosition, EFieldsetRulesetNumericOperator, IFieldsetBinding, IFieldsetBindingClient, IFieldsetCatalogItem,
-  IFieldsetField, IFieldsetRuntime, IFieldsetTaskAPI, IFieldsetRuleSet, IFieldsetRuleGroupAnd, IFieldsetRuleGroupOr,
-  IFieldRuleSet, IFieldRuleGroupAnd, IFieldRuleGroupOr, EFieldRuleType, EFieldRuleOperator,
+  EFieldLabelPosition,
+  EFieldsetRulesetNumericOperator,
+  IFieldsetBinding,
+  IFieldsetBindingClient,
+  IFieldsetCatalogItem,
+  IFieldsetField,
+  IFieldsetRuntime,
+  IFieldsetTaskAPI,
+  IFieldsetRuleSet,
+  IFieldsetRuleGroupAnd,
+  IFieldsetRuleGroupOr,
+  IFieldRuleSet,
+  IFieldRuleGroupAnd,
+  IFieldRuleGroupOr,
+  EFieldRuleType,
+  EFieldRuleOperator,
 } from '../types/fieldset';
 import { IExtraField } from '../types/template';
 

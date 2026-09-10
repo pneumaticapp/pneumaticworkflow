@@ -11,17 +11,8 @@ import {
   makeFieldRuleGroupOr,
   makeFieldRuleGroupAnd,
 } from '../../../../__stubs__/fieldsets.factory';
-import {
-  IExtraField,
-  ITemplateKickoffClient,
-  ITemplateClient,
-  EExtraFieldType,
-} from '../../../../types/template';
-import {
-  IFieldsetCatalogItem,
-  EFieldRuleType,
-  EFieldRuleOperator,
-} from '../../../../types/fieldset';
+import { IExtraField, ITemplateKickoffClient, ITemplateClient, EExtraFieldType } from '../../../../types/template';
+import { IFieldsetCatalogItem, EFieldRuleType, EFieldRuleOperator } from '../../../../types/fieldset';
 import { ETemplateStatus } from '../../../../types/redux';
 
 jest.mock('../../../../redux/selectors/fieldsets', () => ({
@@ -109,20 +100,20 @@ jest.mock('../../TaskOutputFlow/MergedOutputRows', () => ({
     React.createElement(
       'div',
       { 'data-testid': 'merged-rows' },
-      props.onOpenFieldRules
-        && React.createElement(
+      props.onOpenFieldRules &&
+        React.createElement(
           'button',
           { 'data-testid': 'open-field-rules-btn', onClick: () => props.onOpenFieldRules?.('field-1') },
           'Open field rules',
         ),
-      props.onDeleteField
-        && React.createElement(
+      props.onDeleteField &&
+        React.createElement(
           'button',
           { type: 'button', onClick: () => props.onDeleteField?.('f-a') },
           'Delete field f-a',
         ),
-      props.onDeleteFieldRuleset
-        && React.createElement(
+      props.onDeleteFieldRuleset &&
+        React.createElement(
           'button',
           { type: 'button', onClick: () => props.onDeleteFieldRuleset?.('field-1', 'ruleset-1') },
           'Delete ruleset field-1',
@@ -131,8 +122,7 @@ jest.mock('../../TaskOutputFlow/MergedOutputRows', () => ({
 }));
 
 jest.mock('../../../Fieldsets/FieldsetDetails/FieldRuleModal', () => ({
-  FieldRuleModal: () =>
-    React.createElement('div', { 'data-testid': 'field-rule-modal' }),
+  FieldRuleModal: () => React.createElement('div', { 'data-testid': 'field-rule-modal' }),
 }));
 
 jest.mock('../../FieldsetOutputsPreview/FieldsetOutputsPreview', () => ({
@@ -470,9 +460,7 @@ describe('KickoffRedux', () => {
       );
       expect(setKickoff).not.toHaveBeenCalledWith(
         expect.objectContaining({
-          fields: expect.arrayContaining([
-            expect.objectContaining({ apiName: 'f-a' }),
-          ]),
+          fields: expect.arrayContaining([expect.objectContaining({ apiName: 'f-a' })]),
         }),
       );
     });

@@ -1,7 +1,7 @@
 .components {
-  margin-bottom: 2.4rem;
   display: flex;
   flex-flow: row nowrap;
+  margin-bottom: 2.4rem;
   overflow-x: scroll;
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -25,9 +25,9 @@
 
   /* stylelint-disable declaration-no-important */
   [data-use-input]:disabled {
+    color: var(--pneumatic-color-black72) !important;
     cursor: default !important;
     resize: none !important;
-    color: var(--pneumatic-color-black72) !important;
     background-color: var(--pneumatic-color-black4) !important;
     border: 0.1rem solid transparent !important;
     border-radius: 0.8rem !important;
@@ -38,9 +38,9 @@
   &.fieldset_readonly textarea[data-use-input]:disabled {
     max-width: 100%;
     min-height: unset;
-    field-sizing: content;
+    overflow-wrap: break-word;
     white-space: pre-wrap;
-    word-break: break-word;
+    field-sizing: content;
   }
   /* stylelint-enable selector-max-specificity */
 
@@ -64,18 +64,18 @@
   }
 
   [class*='kickoff-create-field-option__input']:disabled {
-    padding: 0.4rem 1.2rem;
     width: auto !important;
     max-width: 100%;
+    padding: 0.4rem 1.2rem;
     border-radius: 0.6rem;
     field-sizing: content;
   }
 
   [class*='labeled-checkbox__input']:disabled,
   [class*='labeled-radiobutton__input']:disabled {
-    padding: 0.4rem 1.2rem;
     width: auto !important;
     max-width: calc(100% - 3.2rem);
+    padding: 0.4rem 1.2rem;
     border-radius: 0.6rem;
     field-sizing: content;
   }
@@ -99,8 +99,8 @@
   }
 
   &.fieldset_readonly [class*='extra-field-file__upload-button--template'] {
-    cursor: default !important;
     color: var(--pneumatic-color-black48) !important;
+    cursor: default !important;
     border-color: var(--pneumatic-color-black16) !important;
     opacity: 0.55 !important;
   }
@@ -124,8 +124,8 @@
 
     svg,
     svg path {
-      fill: var(--pneumatic-color-black16);
       color: var(--pneumatic-color-black16);
+      fill: var(--pneumatic-color-black16);
     }
   }
   /* stylelint-enable selector-max-specificity, selector-max-compound-selectors */
@@ -144,8 +144,8 @@
 .fields-table th {
   padding: 0.8rem 1.6rem;
   font-weight: 600;
-  text-align: left;
   color: var(--pneumatic-color-black48);
+  text-align: left;
   border-bottom: 0.2rem solid var(--pneumatic-color-black16);
 
   @mixin text-small;

@@ -1,10 +1,10 @@
 .rule-row {
   position: relative;
-  padding: 0 2.8rem 0.4rem 0;
   display: flex;
-  align-items: center;
   flex-wrap: wrap;
   gap: 1.2rem;
+  align-items: center;
+  padding: 0 2.8rem 0.4rem 0;
 
   &:hover .rule-remove-btn {
     opacity: 1;
@@ -13,9 +13,9 @@
 
 .rule-fields-selector {
   display: flex;
-  align-items: center;
-  gap: 0.8rem;
   flex-basis: 100%;
+  gap: 0.8rem;
+  align-items: center;
 }
 
 .rule-fields-tooltip-wrapper {
@@ -24,8 +24,8 @@
 
 .rule-fields-label {
   font-weight: 600;
-  white-space: nowrap;
   color: var(--pneumatic-color-black72);
+  white-space: nowrap;
 
   @mixin text-base;
 }
@@ -58,8 +58,8 @@
 }
 
 .rule-field-select {
-  width: 18rem;
   flex-shrink: 0;
+  width: 18rem;
 }
 
 .rule-field-tooltip {
@@ -72,8 +72,8 @@
 }
 
 .rule-operator-select {
-  width: 19rem;
   flex-shrink: 0;
+  width: 19rem;
 }
 
 .rule-operator-select__menu {
@@ -88,9 +88,9 @@
 .rule-value-input,
 .ruleset-message-input {
   padding: 0.8rem 1.2rem;
+  outline: none;
   border: 0.1rem solid var(--pneumatic-color-black16);
   border-radius: 0.8rem;
-  outline: none;
   transition: border-color 0.2s;
 
   @mixin text-base;
@@ -98,9 +98,10 @@
   &:focus {
     border-color: var(--pneumatic-color-blue);
   }
+
   &:disabled {
-    cursor: default;
     color: var(--pneumatic-color-black72);
+    cursor: default;
     background-color: var(--pneumatic-color-black4);
     border: 0.1rem solid transparent;
     opacity: 1;
@@ -130,8 +131,8 @@
 }
 
 .rule-option_disabled {
-  cursor: not-allowed;
   color: var(--pneumatic-color-black32);
+  cursor: not-allowed;
 }
 
 .ruleset-message-input_error,
@@ -145,8 +146,8 @@
   top: 1rem;
   right: 0;
   padding: 0;
-  cursor: pointer;
   color: var(--pneumatic-color-notification1);
+  cursor: pointer;
   background: transparent;
   border: 0;
   opacity: 0;
@@ -162,8 +163,8 @@
 }
 
 .rule-item__combinator {
-  margin: 0.4rem 0 0.8rem;
   width: 10rem;
+  margin: 0.4rem 0 0.8rem;
 }
 
 .select-rule-combinator {
@@ -178,12 +179,12 @@
 }
 
 .add-rule-btn {
-  padding: 0;
   display: block;
+  padding: 0;
   font-size: 1.3rem;
   line-height: 1.6rem;
-  cursor: pointer;
   color: var(--pneumatic-color-link-dark);
+  cursor: pointer;
   background: none;
   border: none;
   transition: 0.1s ease-in-out all;
@@ -199,28 +200,28 @@
 
 .ruleset-card {
   position: relative;
-  margin-bottom: 1.6rem;
   padding: 1.6rem;
+  margin-bottom: 1.6rem;
   background-color: var(--pneumatic-color-white);
   border: 0.1rem solid var(--pneumatic-color-black16);
   border-radius: 1.2rem;
 }
 
 .ruleset-card__footer {
-  margin-top: 1.2rem;
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  margin-top: 1.2rem;
 }
 
 .ruleset-card__delete-btn {
-  padding: 0.6rem 1.2rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  padding: 0.6rem 1.2rem;
   font-weight: 500;
-  cursor: pointer;
   color: var(--pneumatic-color-black72);
+  cursor: pointer;
   background: transparent;
   border: 0.1rem solid var(--pneumatic-color-black16);
   border-radius: 0.8rem;
@@ -240,15 +241,15 @@
 }
 
 .ruleset-card__field {
-  margin-bottom: 1.2rem;
   display: flex;
-  align-items: center;
   gap: 0.8rem;
+  align-items: center;
+  margin-bottom: 1.2rem;
 }
 
 .ruleset-card__label {
-  margin: 1.2rem 0 0.4rem;
   display: block;
+  margin: 1.2rem 0 0.4rem;
   font-size: 1.2rem;
   font-weight: 500;
   line-height: 1.6rem;
@@ -260,16 +261,16 @@
 }
 
 .field-tags-list {
-  margin-top: 0.8rem;
   display: flex;
   flex-wrap: wrap;
   gap: 0.6rem;
+  margin-top: 0.8rem;
 }
 
 .field-tag {
-  padding: 0.4rem 0.8rem;
   display: inline-flex;
   align-items: center;
+  padding: 0.4rem 0.8rem;
   background-color: var(--pneumatic-color-black4);
   border-radius: 1.6rem;
 
@@ -281,11 +282,11 @@
 }
 
 .field-tag__close {
-  margin-left: 0.4rem;
   display: flex;
   align-items: center;
-  cursor: pointer;
+  margin-left: 0.4rem;
   color: var(--pneumatic-color-black16);
+  cursor: pointer;
   transition: color 0.1s ease;
 
   &:hover {
@@ -294,11 +295,11 @@
 }
 
 .add-ruleset-btn {
-  margin-top: 1.6rem;
   padding: 0.8rem 1.6rem;
+  margin-top: 1.6rem;
   font-weight: 600;
-  cursor: pointer;
   color: var(--pneumatic-color-blue);
+  cursor: pointer;
   background: none;
   border: 0.1rem dashed var(--pneumatic-color-black16);
   border-radius: 0.8rem;
@@ -312,8 +313,8 @@
   }
 
   &:disabled {
-    cursor: default;
     color: var(--pneumatic-color-black32);
+    cursor: default;
     border-color: var(--pneumatic-color-black16);
     opacity: 0.55;
   }
