@@ -14,7 +14,9 @@ from os import environ as env
 from urllib.parse import urlparse
 
 from configurations import Configuration, values
+from django.core.exceptions import ImproperlyConfigured
 from corsheaders.defaults import default_headers
+from src.logs.enums import LogsBackend
 from src.notifications.enums import EmailProvider
 
 
@@ -213,6 +215,7 @@ class Common(Configuration):
         'django.middleware.csrf.CsrfViewMiddleware',
         'src.authentication.middleware.UserAgentMiddleware',
         'src.authentication.middleware.AuthMiddleware',
+        'src.logs.events.middleware.EventContextMiddleware',
         'src.authentication.middleware.UserLocaleMiddleware',
         'src.storage.middleware.FileServiceAuthMiddleware',
         'django.contrib.messages.middleware.MessageMiddleware',
@@ -522,6 +525,7 @@ class Common(Configuration):
     CELERY_IMPORTS = [
         'src.accounts.tasks',
         'src.authentication.tasks',
+        'src.logs.events.tasks',
         'src.processes.tasks.delay',
         'src.processes.tasks.tasks',
         'src.processes.tasks.update_workflow',
@@ -529,6 +533,21 @@ class Common(Configuration):
         'src.reports.tasks',
         'src.analysis.tasks',
     ]
+
+    LOGS_BACKEND = env.get('LOGS_BACKEND', LogsBackend.LOCAL)
+    LOGS_REDIS_URL = env.get('LOGS_REDIS_URL', '')
+    LOGS_OTLP_ENDPOINT = env.get(
+        'LOGS_OTLP_ENDPOINT',
+        'http://otel-collector:4318',
+    )
+    LOGS_STREAM_KEY = 'pneumatic:events'
+    LOGS_STREAM_MAXLEN = int(env.get('LOGS_STREAM_MAXLEN', '250000'))
+    LOGS_CONSUMER_GROUP = 'otlp'
+    LOGS_CONSUMER_BATCH_SIZE = int(env.get('LOGS_CONSUMER_BATCH_SIZE', '1000'))
+    LOGS_CONSUMER_IDLE_MS = 60000
+    LOGS_SERVICE_NAME = 'pneumatic-backend'
+    LOGS_SERVICE_VERSION = env.get('RELEASE', '0.0.0')
+    LOGS_STRICT = False
 
     # reCaptcha
     DRF_RECAPTCHA_SITE_KEY = env.get('RECAPTCHA_SITE_KEY') or 'key'
@@ -628,6 +647,13 @@ class Common(Configuration):
 class Testing(Common):
 
     TEST_RUNNER = 'djcelery.contrib.test_runner.CeleryTestSuiteRunner'
+
+    # No event reaches Redis unless a test asks for it
+    # (fixture events_enabled of src/logs/events/tests).
+    LOGS_BACKEND = LogsBackend.NONE
+    # A typo in an event type has to break the test, not to end up
+    # in the debug category unnoticed.
+    LOGS_STRICT = True
 
     # CELERY_ALWAYS_EAGER mean that Celery will not schedule tasks
     # to run as it would regularly do, via sending a message to the broker.

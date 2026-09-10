@@ -1,0 +1,47 @@
+# This override belongs to the APPLICATION machine, not to the storage one.
+# It is what makes LOGS_BACKEND=elasticsearch work with the root
+# docker-compose.yml, and it does two things.
+#
+# 1. Gives the collector a disk for the sending queue. Without it the
+#    collector holds undelivered batches in memory only, and a restart loses
+#    them: the consumer has already been answered 2xx and has already XACKed
+#    those records, so nothing else in the system has a copy.
+#
+# 2. Passes the three variables the elasticsearch mode added. The root compose
+#    file knows LOGS_ELASTICSEARCH_URL, _USER, _PASSWORD and _INDEX; the API
+#    key, the certificate authority and the queue directory are new.
+#
+# Put all three files into COMPOSE_FILE, in .env:
+#
+#   COMPOSE_FILE=docker-compose.yml:logging/compose/logs-external.yml:logging/elasticsearch/docker-compose.collector-elasticsearch.yml
+#
+# One time, before the first start - the collector image runs as uid 10001 and
+# a fresh named volume belongs to root, so the collector cannot create its
+# database inside it:
+#
+#   docker volume create pneumatic_otel-queue
+#   docker run --rm -v pneumatic_otel-queue:/q alpine chown 10001:10001 /q
+#
+# (`pneumatic` is the compose project name - the directory name of the
+# checkout. Check with: docker volume ls | grep otel-queue)
+#
+# Checks afterwards: the collector log has no "permission denied", and
+#   docker run --rm -v pneumatic_otel-queue:/q alpine ls -l /q/queue
+# shows the queue database.
+
+services:
+  otel-collector:
+    environment:
+      LOGS_ELASTICSEARCH_API_KEY: ${LOGS_ELASTICSEARCH_API_KEY:-}
+      LOGS_ELASTICSEARCH_CA_FILE: ${LOGS_ELASTICSEARCH_CA_FILE:-/etc/otel/es-ca.crt}
+      LOGS_ELASTICSEARCH_QUEUE_DIR: ${LOGS_ELASTICSEARCH_QUEUE_DIR:-/var/lib/otelcol/queue}
+      # Same default as the root compose file, repeated so that this file is
+      # complete on its own. The name of the data stream is what belongs here:
+      # a plain index name such as `pneumatic-events` matches no template, so
+      # it would get no lifecycle policy, no retention and no OTel mapping.
+      LOGS_ELASTICSEARCH_INDEX: ${LOGS_ELASTICSEARCH_INDEX:-logs-pneumatic.events.otel-default}
+    volumes:
+      - otel-queue:/var/lib/otelcol
+
+volumes:
+  otel-queue:

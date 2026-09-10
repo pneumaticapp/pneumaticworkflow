@@ -1,0 +1,1410 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "description": "Where new customers come from and how far they get. A sign-up creates an account; invites add users to it. The funnel counts the accounts that signed up over the time range and, among them, those that published a template, ran a workflow and completed a task.",
+  "editable": false,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [
+    {
+      "asDropdown": true,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": true,
+      "tags": [
+        "pneumatic"
+      ],
+      "targetBlank": false,
+      "title": "Pneumatic dashboards",
+      "tooltip": "",
+      "type": "dashboards",
+      "url": ""
+    }
+  ],
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "panels": [],
+      "title": "Over the time range",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "pneumatic-loki"
+      },
+      "description": "user.signup events.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [],
+          "noValue": "0",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "purple",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 1
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "pneumatic-loki"
+          },
+          "editorMode": "code",
+          "expr": "sum(count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=\"user.signup\" [$__range]))",
+          "instant": true,
+          "legendFormat": "",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "title": "Sign-ups",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "pneumatic-loki"
+      },
+      "description": "Accounts with a sign-up.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [],
+          "noValue": "0",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "purple",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 1
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "pneumatic-loki"
+          },
+          "editorMode": "code",
+          "expr": "count(sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=\"user.signup\" [$__range])))",
+          "instant": true,
+          "legendFormat": "",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "title": "New accounts",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "pneumatic-loki"
+      },
+      "description": "invite.accept: users who joined an existing account.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [],
+          "noValue": "0",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 1
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "pneumatic-loki"
+          },
+          "editorMode": "code",
+          "expr": "sum(count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=\"invite.accept\" [$__range]))",
+          "instant": true,
+          "legendFormat": "",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "title": "Invites accepted",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "pneumatic-loki"
+      },
+      "description": "template.publish by an account that signed up over the time range.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [],
+          "noValue": "0",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 12,
+        "y": 1
+      },
+      "id": 5,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "pneumatic-loki"
+          },
+          "editorMode": "code",
+          "expr": "count((sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=\"template.publish\" [$__range]))) and sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=\"user.signup\" [$__range])))",
+          "instant": true,
+          "legendFormat": "",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "title": "New accounts that published a template",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "pneumatic-loki"
+      },
+      "description": "workflow.run by a new account.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [],
+          "noValue": "0",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 16,
+        "y": 1
+      },
+      "id": 6,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "pneumatic-loki"
+          },
+          "editorMode": "code",
+          "expr": "count((sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=\"workflow.run\" [$__range]))) and sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=\"user.signup\" [$__range])))",
+          "instant": true,
+          "legendFormat": "",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "title": "New accounts that ran a workflow",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "pneumatic-loki"
+      },
+      "description": "task.complete by a new account.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [],
+          "noValue": "0",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 1
+      },
+      "id": 7,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "pneumatic-loki"
+          },
+          "editorMode": "code",
+          "expr": "count((sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=\"task.complete\" [$__range]))) and sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=\"user.signup\" [$__range])))",
+          "instant": true,
+          "legendFormat": "",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "title": "New accounts that completed a task",
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 5
+      },
+      "id": 8,
+      "panels": [],
+      "title": "Activation",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "pneumatic-loki"
+      },
+      "description": "Accounts that signed up over the time range and how far they got.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "decimals": 0,
+          "mappings": [],
+          "min": 0,
+          "noValue": "0",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Signed up"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "purple",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Published a template"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Ran a workflow"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Completed a task"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "dark-green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 0,
+        "y": 6
+      },
+      "id": 9,
+      "options": {
+        "displayMode": "gradient",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "left",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "text"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "pneumatic-loki"
+          },
+          "editorMode": "code",
+          "expr": "count(sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=\"user.signup\" [$__range])))",
+          "instant": true,
+          "legendFormat": "Signed up",
+          "queryType": "instant",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "pneumatic-loki"
+          },
+          "editorMode": "code",
+          "expr": "count((sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=\"template.publish\" [$__range]))) and sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=\"user.signup\" [$__range])))",
+          "instant": true,
+          "legendFormat": "Published a template",
+          "queryType": "instant",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "pneumatic-loki"
+          },
+          "editorMode": "code",
+          "expr": "count((sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=\"workflow.run\" [$__range]))) and sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=\"user.signup\" [$__range])))",
+          "instant": true,
+          "legendFormat": "Ran a workflow",
+          "queryType": "instant",
+          "refId": "C"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "pneumatic-loki"
+          },
+          "editorMode": "code",
+          "expr": "count((sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=\"task.complete\" [$__range]))) and sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=\"user.signup\" [$__range])))",
+          "instant": true,
+          "legendFormat": "Completed a task",
+          "queryType": "instant",
+          "refId": "D"
+        }
+      ],
+      "title": "Activation funnel of the new accounts",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "pneumatic-loki"
+      },
+      "description": "user.signup and invite.accept in each time bucket.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "events",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 0,
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "user.signup"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "purple",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "invite.accept"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 8,
+        "y": 6
+      },
+      "id": 10,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "pneumatic-loki"
+          },
+          "editorMode": "code",
+          "expr": "sum by (event_type) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=~\"user.signup|invite.accept\" [$__auto]))",
+          "legendFormat": "{{event_type}}",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Sign-ups and invites",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "pneumatic-loki"
+      },
+      "description": "Accounts with a sign-up in each time bucket.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "events",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 0,
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "new accounts"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "purple",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 16,
+        "y": 6
+      },
+      "id": 11,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "pneumatic-loki"
+          },
+          "editorMode": "code",
+          "expr": "count(sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=\"user.signup\" [$__auto])))",
+          "legendFormat": "new accounts",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "New accounts per bucket",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 15
+      },
+      "id": 12,
+      "panels": [],
+      "title": "New accounts",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "pneumatic-loki"
+      },
+      "description": "Accounts that signed up over the time range: who joined, what they built and when they were last seen.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false,
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Signed up at"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsIso"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Last activity"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeFromNow"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Account"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "targetBlank": false,
+                    "title": "Open account activity",
+                    "url": "/d/pneumatic-account-activity/account-activity?var-account_id=${__data.fields.account_id}&${__url_time_range}"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 24,
+        "x": 0,
+        "y": 16
+      },
+      "id": 13,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Signed up at"
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "pneumatic-loki"
+          },
+          "editorMode": "code",
+          "expr": "sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=\"user.signup\" [$__range]))",
+          "instant": true,
+          "legendFormat": "",
+          "queryType": "instant",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "pneumatic-loki"
+          },
+          "editorMode": "code",
+          "expr": "(sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=\"invite.accept\" [$__range]))) and sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=\"user.signup\" [$__range]))",
+          "instant": true,
+          "legendFormat": "",
+          "queryType": "instant",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "pneumatic-loki"
+          },
+          "editorMode": "code",
+          "expr": "(sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=\"template.publish\" [$__range]))) and sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=\"user.signup\" [$__range]))",
+          "instant": true,
+          "legendFormat": "",
+          "queryType": "instant",
+          "refId": "C"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "pneumatic-loki"
+          },
+          "editorMode": "code",
+          "expr": "(sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=\"workflow.run\" [$__range]))) and sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=\"user.signup\" [$__range]))",
+          "instant": true,
+          "legendFormat": "",
+          "queryType": "instant",
+          "refId": "D"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "pneumatic-loki"
+          },
+          "editorMode": "code",
+          "expr": "(sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=\"task.complete\" [$__range]))) and sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=\"user.signup\" [$__range]))",
+          "instant": true,
+          "legendFormat": "",
+          "queryType": "instant",
+          "refId": "E"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "pneumatic-loki"
+          },
+          "editorMode": "code",
+          "expr": "(sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=\"file.upload\" [$__range]))) and sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=\"user.signup\" [$__range]))",
+          "instant": true,
+          "legendFormat": "",
+          "queryType": "instant",
+          "refId": "F"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "pneumatic-loki"
+          },
+          "editorMode": "code",
+          "expr": "min by (account_id) (min_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=\"user.signup\" | unwrap observed_timestamp | __error__=\"\" [$__range])) / 1000000",
+          "instant": true,
+          "legendFormat": "",
+          "queryType": "instant",
+          "refId": "G"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "pneumatic-loki"
+          },
+          "editorMode": "code",
+          "expr": "(max by (account_id) (max_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | unwrap observed_timestamp | __error__=\"\" [$__range])) / 1000000) and sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=\"user.signup\" [$__range]))",
+          "instant": true,
+          "legendFormat": "",
+          "queryType": "instant",
+          "refId": "H"
+        }
+      ],
+      "title": "New accounts and what they did",
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {
+            "mode": "columns"
+          }
+        },
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "indexByName": {
+              "Value #A": 1,
+              "Value #B": 2,
+              "Value #C": 3,
+              "Value #D": 4,
+              "Value #E": 5,
+              "Value #F": 6,
+              "Value #G": 7,
+              "Value #H": 8,
+              "account_id": 0
+            },
+            "renameByName": {
+              "Value #A": "Sign-ups",
+              "Value #B": "Users joined",
+              "Value #C": "Templates published",
+              "Value #D": "Workflows started",
+              "Value #E": "Tasks completed",
+              "Value #F": "Files uploaded",
+              "Value #G": "Signed up at",
+              "Value #H": "Last activity",
+              "account_id": "Account"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "pneumatic-loki"
+      },
+      "description": "Distinct users behind the events of each new account.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "decimals": 0,
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 27
+      },
+      "id": 14,
+      "options": {
+        "displayMode": "gradient",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "left",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [],
+          "fields": "",
+          "limit": 15,
+          "values": true
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "text"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "pneumatic-loki"
+          },
+          "editorMode": "code",
+          "expr": "(count by (account_id) (sum by (account_id, actor_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | actor_type=\"user\" [$__range])))) and sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=\"user.signup\" [$__range]))",
+          "instant": true,
+          "legendFormat": "{{account_id}}",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "title": "Team size of the new accounts",
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {
+            "mode": "columns"
+          }
+        },
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "indexByName": {
+              "Value": 1,
+              "Value #A": 1,
+              "account_id": 0
+            },
+            "renameByName": {
+              "account_id": "Account"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "desc": true,
+                "field": "Value #A"
+              }
+            ]
+          }
+        }
+      ],
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "pneumatic-loki"
+      },
+      "description": "template.publish per new account.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "decimals": 0,
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 27
+      },
+      "id": 15,
+      "options": {
+        "displayMode": "gradient",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "left",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [],
+          "fields": "",
+          "limit": 15,
+          "values": true
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "text"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "pneumatic-loki"
+          },
+          "editorMode": "code",
+          "expr": "(sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=\"template.publish\" [$__range]))) and sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=\"user.signup\" [$__range]))",
+          "instant": true,
+          "legendFormat": "{{account_id}}",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "title": "Templates published by the new accounts",
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {
+            "mode": "columns"
+          }
+        },
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "indexByName": {
+              "Value": 1,
+              "Value #A": 1,
+              "account_id": 0
+            },
+            "renameByName": {
+              "account_id": "Account"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "desc": true,
+                "field": "Value #A"
+              }
+            ]
+          }
+        }
+      ],
+      "type": "bargauge"
+    }
+  ],
+  "preload": false,
+  "refresh": "5m",
+  "schemaVersion": 39,
+  "tags": [
+    "pneumatic",
+    "events",
+    "growth"
+  ],
+  "templating": {
+    "list": [
+      {
+        "allValue": ".*",
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "datasource": {
+          "type": "loki",
+          "uid": "pneumatic-loki"
+        },
+        "definition": "label_values({service_name=~\"pneumatic-.*\"}, deployment_environment)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Environment",
+        "multi": true,
+        "name": "environment",
+        "options": [],
+        "query": {
+          "label": "deployment_environment",
+          "refId": "LokiVariableQueryEditor-VariableQuery",
+          "stream": "{service_name=~\"pneumatic-.*\"}",
+          "type": 1
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-30d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Growth and onboarding",
+  "uid": "pneumatic-growth",
+  "version": 1,
+  "weekStart": ""
+}

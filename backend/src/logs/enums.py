@@ -42,3 +42,23 @@ class RequestDirection:
         (RECEIVED, RECEIVED),
         (SENT, SENT),
     )
+
+
+class LogsBackend:
+
+    """ Value of LOGS_BACKEND: where the collector sends the events.
+        NONE switches the whole pipeline off, emit() writes nothing. """
+
+    LOCAL = 'local'
+    OTLP = 'otlp'
+    ELASTICSEARCH = 'elasticsearch'
+    NONE = 'none'
+
+    VALUES = {LOCAL, OTLP, ELASTICSEARCH, NONE}
+
+    LITERALS = Literal[
+        LOCAL,
+        OTLP,
+        ELASTICSEARCH,
+        NONE,
+    ]

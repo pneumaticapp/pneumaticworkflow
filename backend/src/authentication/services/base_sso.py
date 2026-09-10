@@ -69,6 +69,7 @@ class BaseSSOService(SignUpMixin, CacheMixin, EncryptionMixin, ABC):
     sso_provider: SSOProvider = None
     source = None
     exception_class = None
+    is_new_user = False
 
     def __init__(self, domain: Optional[str] = None):
         """
@@ -277,11 +278,13 @@ class BaseSSOService(SignUpMixin, CacheMixin, EncryptionMixin, ABC):
             UserModel.objects.filter(email=user_data['email']).first()
         )
         if existing_user and existing_user.status != UserStatus.INACTIVE:
+            self.is_new_user = False
             if existing_user.status == UserStatus.ACTIVE:
                 user = existing_user
             else:
                 user = self._activate_invited_user(existing_user, user_data)
         else:
+            self.is_new_user = True
             user = self._create_new_user(user_data)
         token = AuthService.get_auth_token(
             user=user,

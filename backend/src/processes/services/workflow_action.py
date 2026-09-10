@@ -11,6 +11,8 @@ from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
 from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.executor import RawSqlExecutor
+from src.logs.events import Actor, EventObject, emit
+from src.logs.events.enums import EventName, EventObjectType
 from src.notifications.tasks import (
     send_task_completed_notification,
     send_task_completed_websocket,
@@ -252,28 +254,49 @@ class WorkflowActionService:
 
     def terminate_workflow(self):
 
-        for task in self.workflow.tasks.active():
-            recipients = self._get_incompleted_recipients(
-                task=task,
-                user_type=UserType.USER,
+        """ The only workflow action that leaves no WorkflowEvent
+            behind, so the event is published here. The transaction
+            ties it to the delete: emit() writes on commit, a delete
+            that fails rolls the event back with it, and the name and
+            the template of the workflow are read before they are
+            gone. """
+
+        with transaction.atomic():
+            for task in self.workflow.tasks.active():
+                recipients = self._get_incompleted_recipients(
+                    task=task,
+                    user_type=UserType.USER,
+                )
+                send_task_deleted_notification.delay(
+                    task_id=task.id,
+                    task_data=task.get_data_for_list(),
+                    recipients=recipients,
+                    account_id=task.account_id,
+                )
+            for task_id in self.workflow.tasks.only_ids():
+                GuestJWTAuthService.deactivate_task_guest_cache(
+                    task_id=task_id,
+                )
+            AnalyticService.workflows_terminated(
+                user=self.user,
+                workflow=self.workflow,
+                is_superuser=self.is_superuser,
+                auth_type=self.auth_type,
             )
-            send_task_deleted_notification.delay(
-                task_id=task.id,
-                task_data=task.get_data_for_list(),
-                recipients=recipients,
-                account_id=task.account_id,
+            emit(
+                EventName.WORKFLOW_TERMINATE,
+                account_id=self.account.id,
+                actor=Actor.from_user(self.user, self.auth_type),
+                event_object=EventObject(
+                    type=EventObjectType.WORKFLOW, id=self.workflow.id,
+                ),
+                workflow_id=self.workflow.id,
+                payload={
+                    'workflow_name': self.workflow.name,
+                    'template_id': self.workflow.template_id,
+                },
             )
-        for task_id in self.workflow.tasks.only_ids():
-            GuestJWTAuthService.deactivate_task_guest_cache(
-                task_id=task_id,
-            )
-        AnalyticService.workflows_terminated(
-            user=self.user,
-            workflow=self.workflow,
-            is_superuser=self.is_superuser,
-            auth_type=self.auth_type,
-        )
-        self.workflow.delete()
+            self.workflow.delete()
 
     def _complete_workflow(self):
 

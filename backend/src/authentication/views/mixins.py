@@ -20,6 +20,7 @@ from src.authentication.enums import AuthTokenType
 from src.authentication.messages import MSG_AU_0016
 from src.authentication.services.user_auth import AuthService
 from src.authentication.tokens import PneumaticToken
+from src.logs.events import AuditEventService
 from src.logs.service import AccountLogService
 from src.payment.stripe.exceptions import StripeServiceException
 from src.payment.stripe.service import StripeService
@@ -40,7 +41,13 @@ class SignUpMixin:
     source = None
 
     def after_signup(self, user: UserModel):
-        """Create signup log and send notification if enabled"""
+
+        """ Create signup log and send notification if enabled.
+            The one place every sign up source goes through, so the
+            user.signup event is published here and nowhere else.
+            A service has no request: the address and the browser
+            then come from the context of the middleware. """
+
         if user.account.log_api_requests and self.source:
             service = AccountLogService(user)
             service.signup(user=user, source=self.source)
@@ -49,6 +56,11 @@ class SignUpMixin:
                 send_new_signup_notification,
             )
             send_new_signup_notification.delay(user.account_id)
+        AuditEventService.user_signed_up(
+            user=user,
+            source=self.source,
+            request=getattr(self, 'request', None),
+        )
 
     def join_existing_account(
         self,

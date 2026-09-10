@@ -34,6 +34,12 @@ from src.accounts.services.vacation import VacationDelegationService
 from src.analysis.mixins import BaseIdentifyMixin
 from src.analysis.services import AnalyticService
 from src.generics.base.service import BaseModelService
+from src.logs.events import Actor, EventObject, emit
+from src.logs.events.enums import (
+    ActorType,
+    EventName,
+    EventObjectType,
+)
 from src.notifications.tasks import (
     send_user_created_notification,
     send_user_deleted_notification,
@@ -418,18 +424,40 @@ class UserService(
                 user_data=UserWebsocketSerializer(old_manager).data,
             )
 
-    def deactivate(self, skip_validation=False):
+    def deactivate(self, skip_validation: bool = False):
 
         """ Deactivate user and call delete actions
             If user is invited not send identify and deactivation email """
 
         if not skip_validation:
             self._validate_deactivate()
-        run_deactivate_actions = self.instance.status == UserStatus.ACTIVE
+        status_before = self.instance.status
+        run_deactivate_actions = status_before == UserStatus.ACTIVE
         self._deactivate()
         # Refresh to clear stale prefetch cache (e.g. subordinates)
         # so the WS payload reflects the post-deactivation state.
         self.instance.refresh_from_db()
+        # One point for every entry of the deactivation: the user
+        # endpoint, its deprecated twin, a declined invite and a
+        # transfer to another account. In the last two the actor is
+        # the deactivated person themselves; a service without a
+        # user is a background job.
+        emit(
+            EventName.USER_DEACTIVATE,
+            account_id=self.account.id,
+            actor=(
+                Actor.from_user(self.user, self.auth_type)
+                if self.user
+                else Actor(type=ActorType.SYSTEM)
+            ),
+            event_object=EventObject(
+                type=EventObjectType.USER, id=self.instance.id,
+            ),
+            payload={
+                'target_email': self.instance.email,
+                'status_before': status_before,
+            },
+        )
         send_user_deleted_notification.delay(
             logging=self.account.log_api_requests,
             account_id=self.account.id,

@@ -14,6 +14,7 @@ from src.generics.mixins.views import (
 from src.generics.permissions import (
     UserIsAuthenticated,
 )
+from src.logs.events import AuditEventService
 
 
 class SignOutView(
@@ -30,4 +31,5 @@ class SignOutView(
         # API key tokens should not be expired on logout
         if request.token_type != AuthTokenType.API:
             PneumaticToken.expire_token(token)
+        AuditEventService.user_logged_out(request=request)
         return self.response_ok()

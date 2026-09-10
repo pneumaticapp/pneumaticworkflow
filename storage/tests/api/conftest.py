@@ -11,6 +11,9 @@ from tests.fixtures.e2e import (  # noqa: F401
 from tests.fixtures.unit import (  # noqa: F401
     mock_download_use_case_get_metadata,
     mock_download_use_case_get_stream,
+    mock_events_file_access_denied,
+    mock_events_file_download,
+    mock_events_file_upload,
     mock_http_client_check_permission,
     mock_redis_auth_client_get,
     mock_upload_use_case_execute,

@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from src.shared_kernel.auth.user_types import UserType
+from src.shared_kernel.events.schema import ActorType
 from src.shared_kernel.middleware.auth_middleware import AuthUser
 
 
@@ -333,3 +334,98 @@ async def test_dispatch__authenticated_browser_get__passes_through(
     # assert
     assert response.status_code == 200
     token_data_mock.assert_called_once_with('valid-token')
+
+
+@pytest.mark.asyncio
+async def test_authenticate_token__api_key_token__is_api_key(
+    auth_middleware,
+    mocker,
+):
+    # arrange
+    token = 'api-key-token'
+    token_data_mock = mocker.patch(
+        'src.shared_kernel.middleware.auth_middleware.PneumaticToken.data',
+        new_callable=AsyncMock,
+        return_value={'user_id': 1, 'account_id': 2, 'for_api_key': True},
+    )
+
+    # act
+    result = await auth_middleware.authenticate_token(token)
+
+    # assert
+    assert result is not None
+    assert result.is_api_key is True
+    assert result.actor_type == ActorType.API_KEY
+    token_data_mock.assert_called_once_with(token)
+
+
+@pytest.mark.asyncio
+async def test_authenticate_token__session_token__not_api_key(
+    auth_middleware,
+    mocker,
+):
+    # arrange
+    token = 'session-token'
+    token_data_mock = mocker.patch(
+        'src.shared_kernel.middleware.auth_middleware.PneumaticToken.data',
+        new_callable=AsyncMock,
+        return_value={'user_id': 1, 'account_id': 2},
+    )
+
+    # act
+    result = await auth_middleware.authenticate_token(token)
+
+    # assert
+    assert result is not None
+    assert result.is_api_key is False
+    assert result.actor_type == ActorType.USER
+    token_data_mock.assert_called_once_with(token)
+
+
+def test_auth_user__authenticated__actor_user():
+    # arrange
+    user = AuthUser(auth_type=UserType.AUTHENTICATED, user_id=1, account_id=2)
+
+    # act
+    result = user.actor_type
+
+    # assert
+    assert result == ActorType.USER
+
+
+def test_auth_user__api_key__actor_api_key():
+    # arrange
+    user = AuthUser(
+        auth_type=UserType.AUTHENTICATED,
+        user_id=1,
+        account_id=2,
+        is_api_key=True,
+    )
+
+    # act
+    result = user.actor_type
+
+    # assert
+    assert result == ActorType.API_KEY
+
+
+def test_auth_user__guest_token__actor_guest():
+    # arrange
+    user = AuthUser(auth_type=UserType.GUEST_TOKEN, user_id=1, account_id=2)
+
+    # act
+    result = user.actor_type
+
+    # assert
+    assert result == ActorType.GUEST
+
+
+def test_auth_user__public_token__actor_guest():
+    # arrange
+    user = AuthUser(auth_type=UserType.PUBLIC_TOKEN, account_id=2)
+
+    # act
+    result = user.actor_type
+
+    # assert
+    assert result == ActorType.GUEST

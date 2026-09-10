@@ -23,6 +23,8 @@ from src.generics.serializers import CustomValidationErrorMixin
 from src.processes.enums import OwnerRole, OwnerType
 from src.processes.models.templates.owner import TemplateOwner
 
+SUPERUSER_REASON_MAX_LENGTH = 500
+
 UserModel = get_user_model()
 
 
@@ -440,6 +442,22 @@ class ChangePasswordSerializer(
         if not user:
             raise serializers.ValidationError(MSG_AU_0012)
         return value
+
+
+class SuperuserEmailTokenSerializer(
+    CustomValidationErrorMixin,
+    serializers.Serializer,
+):
+
+    """ Who a superuser signs in as, and why: the reason is kept in
+        the user.login_as event only. """
+
+    email = serializers.EmailField()
+    reason = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=SUPERUSER_REASON_MAX_LENGTH,
+    )
 
 
 class OktaLogoutSerializer(

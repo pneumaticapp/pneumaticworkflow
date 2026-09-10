@@ -1,8 +1,11 @@
 """API DTOs."""
 
+from dataclasses import dataclass
 from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict
+
+FIRST_BYTE = 0
 
 
 class FileUploadResponse(BaseModel):
@@ -24,3 +27,12 @@ class FileInfoResponse(BaseModel):
     user_id: int | None
     account_id: int
     created_at: datetime
+
+
+@dataclass(frozen=True)
+class RangePlan:
+    """Status, headers and the first byte of a download response."""
+
+    status_code: int
+    headers: dict[str, str]
+    start: int = FIRST_BYTE

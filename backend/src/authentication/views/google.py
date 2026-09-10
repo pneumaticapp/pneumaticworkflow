@@ -7,7 +7,9 @@ from rest_framework.exceptions import (
 )
 from rest_framework.viewsets import GenericViewSet
 
+from src.accounts.enums import SourceType
 from src.analysis.mixins import BaseIdentifyMixin
+from src.authentication.enums import LoginFailedReason
 from src.authentication.messages import (
     MSG_AU_0003,
 )
@@ -32,6 +34,7 @@ from src.authentication.views.mixins import (
 from src.generics.mixins.views import (
     CustomViewSetMixin,
 )
+from src.logs.events import AuditEventService
 from src.utils.logging import (
     SentryLogLevel,
     capture_sentry_message,
@@ -52,6 +55,7 @@ class GoogleAuthViewSet(
         GoogleAuthPermission,
     )
     serializer_class = GoogleTokenSerializer
+    source = SourceType.GOOGLE
 
     @property
     def throttle_classes(self):
@@ -88,6 +92,11 @@ class GoogleAuthViewSet(
                     ),
                     user_ip=request.META.get('HTTP_X_REAL_IP'),
                 )
+                AuditEventService.user_logged_in(
+                    user=user,
+                    source=SourceType.GOOGLE,
+                    request=request,
+                )
             except ObjectDoesNotExist as err:
                 if settings.PROJECT_CONF['SIGNUP']:
                     user, token = self.signup(
@@ -100,6 +109,11 @@ class GoogleAuthViewSet(
                         gclid=slz.validated_data.get('gclid'),
                     )
                 else:
+                    AuditEventService.login_failed(
+                        request=request,
+                        reason=LoginFailedReason.ACCOUNT_INACTIVE,
+                        email=user_data['email'],
+                    )
                     raise AuthenticationFailed(MSG_AU_0003) from err
 
             service.save_tokens_for_user(user)

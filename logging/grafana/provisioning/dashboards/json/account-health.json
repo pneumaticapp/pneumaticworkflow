@@ -1,0 +1,1227 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "description": "Which accounts are alive, which ones went quiet. The counters use fixed windows of the last 7 and 30 days, whatever the time picker says; the trend and the map follow the picker.",
+  "editable": false,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [
+    {
+      "asDropdown": true,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": true,
+      "tags": [
+        "pneumatic"
+      ],
+      "targetBlank": false,
+      "title": "Pneumatic dashboards",
+      "tooltip": "",
+      "type": "dashboards",
+      "url": ""
+    }
+  ],
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "panels": [],
+      "title": "Last 7 and last 30 days, independent of the time picker",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "pneumatic-loki"
+      },
+      "description": "Accounts with at least one event in the last 7 days.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [],
+          "noValue": "0",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 1
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "pneumatic-loki"
+          },
+          "editorMode": "code",
+          "expr": "count(sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} [7d])))",
+          "instant": true,
+          "legendFormat": "",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "title": "Active accounts, 7 days",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "pneumatic-loki"
+      },
+      "description": "Accounts with at least one event in the last 30 days.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [],
+          "noValue": "0",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 1
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "pneumatic-loki"
+          },
+          "editorMode": "code",
+          "expr": "count(sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} [30d])))",
+          "instant": true,
+          "legendFormat": "",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "title": "Active accounts, 30 days",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "pneumatic-loki"
+      },
+      "description": "Active in the last 30 days, nothing in the last 7: the churn watch list.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [],
+          "noValue": "0",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 1
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "pneumatic-loki"
+          },
+          "editorMode": "code",
+          "expr": "count(sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} [30d])) unless sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} [7d])))",
+          "instant": true,
+          "legendFormat": "",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "title": "Silent accounts",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "pneumatic-loki"
+      },
+      "description": "Distinct users with an event in the last 7 days.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [],
+          "noValue": "0",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 12,
+        "y": 1
+      },
+      "id": 5,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "pneumatic-loki"
+          },
+          "editorMode": "code",
+          "expr": "count(sum by (actor_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | actor_type=\"user\" [7d])))",
+          "instant": true,
+          "legendFormat": "",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "title": "Active users, 7 days",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "pneumatic-loki"
+      },
+      "description": "Distinct users with an event in the last 30 days.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [],
+          "noValue": "0",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 16,
+        "y": 1
+      },
+      "id": 6,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "pneumatic-loki"
+          },
+          "editorMode": "code",
+          "expr": "count(sum by (actor_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | actor_type=\"user\" [30d])))",
+          "instant": true,
+          "legendFormat": "",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "title": "Active users, 30 days",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "pneumatic-loki"
+      },
+      "description": "Accounts where one user produced every event of the last 30 days: nobody else was invited, or nobody else came.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [],
+          "noValue": "0",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 1
+      },
+      "id": 7,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "pneumatic-loki"
+          },
+          "editorMode": "code",
+          "expr": "count(count by (account_id) (sum by (account_id, actor_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | actor_type=\"user\" [30d]))) == 1)",
+          "instant": true,
+          "legendFormat": "",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "title": "Single-user accounts, 30 days",
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 5
+      },
+      "id": 8,
+      "panels": [],
+      "title": "Trend",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "pneumatic-loki"
+      },
+      "description": "At every point: accounts and users with an event in the 7 days before it.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 0,
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "accounts"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "users"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 6
+      },
+      "id": 9,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "pneumatic-loki"
+          },
+          "editorMode": "code",
+          "expr": "count(sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} [7d])))",
+          "legendFormat": "accounts",
+          "queryType": "range",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "pneumatic-loki"
+          },
+          "editorMode": "code",
+          "expr": "count(sum by (actor_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | actor_type=\"user\" [7d])))",
+          "legendFormat": "users",
+          "queryType": "range",
+          "refId": "B"
+        }
+      ],
+      "title": "Rolling 7-day active accounts and users",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "pneumatic-loki"
+      },
+      "description": "Accounts by the number of events in the last 30 days.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "decimals": 0,
+          "mappings": [],
+          "min": 0,
+          "noValue": "0",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "100 or more events"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "10 to 99 events"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "1 to 9 events"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 6
+      },
+      "id": 10,
+      "options": {
+        "displayMode": "gradient",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "left",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "text"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "pneumatic-loki"
+          },
+          "editorMode": "code",
+          "expr": "count(sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} [30d])) >= 100)",
+          "instant": true,
+          "legendFormat": "100 or more events",
+          "queryType": "instant",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "pneumatic-loki"
+          },
+          "editorMode": "code",
+          "expr": "count((sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} [30d])) >= 10) < 100)",
+          "instant": true,
+          "legendFormat": "10 to 99 events",
+          "queryType": "instant",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "pneumatic-loki"
+          },
+          "editorMode": "code",
+          "expr": "count(sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} [30d])) < 10)",
+          "instant": true,
+          "legendFormat": "1 to 9 events",
+          "queryType": "instant",
+          "refId": "C"
+        }
+      ],
+      "title": "Activity tiers, last 30 days",
+      "type": "bargauge"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 14
+      },
+      "id": 11,
+      "panels": [],
+      "title": "Accounts",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "pneumatic-loki"
+      },
+      "description": "Active in the last 30 days, nothing in the last 7. Click an account to see what it used to do.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false,
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Last activity"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeFromNow"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Account"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "targetBlank": false,
+                    "title": "Open account activity",
+                    "url": "/d/pneumatic-account-activity/account-activity?var-account_id=${__data.fields.account_id}&${__url_time_range}"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 15
+      },
+      "id": 12,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Last activity"
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "pneumatic-loki"
+          },
+          "editorMode": "code",
+          "expr": "sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} [30d])) unless sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} [7d]))",
+          "instant": true,
+          "legendFormat": "",
+          "queryType": "instant",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "pneumatic-loki"
+          },
+          "editorMode": "code",
+          "expr": "(max by (account_id) (max_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | unwrap observed_timestamp | __error__=\"\" [30d])) / 1000000) unless sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} [7d]))",
+          "instant": true,
+          "legendFormat": "",
+          "queryType": "instant",
+          "refId": "B"
+        }
+      ],
+      "title": "Silent accounts",
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {
+            "mode": "columns"
+          }
+        },
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "indexByName": {
+              "Value #A": 1,
+              "Value #B": 2,
+              "account_id": 0
+            },
+            "renameByName": {
+              "Value #A": "Events, 30 days",
+              "Value #B": "Last activity",
+              "account_id": "Account"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "pneumatic-loki"
+      },
+      "description": "Every account active in the last 30 days: this week against the week before.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false,
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Last activity"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeFromNow"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Account"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "targetBlank": false,
+                    "title": "Open account activity",
+                    "url": "/d/pneumatic-account-activity/account-activity?var-account_id=${__data.fields.account_id}&${__url_time_range}"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 15
+      },
+      "id": 13,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Events, 30 days"
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "pneumatic-loki"
+          },
+          "editorMode": "code",
+          "expr": "sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} [30d]))",
+          "instant": true,
+          "legendFormat": "",
+          "queryType": "instant",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "pneumatic-loki"
+          },
+          "editorMode": "code",
+          "expr": "sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} [7d]))",
+          "instant": true,
+          "legendFormat": "",
+          "queryType": "instant",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "pneumatic-loki"
+          },
+          "editorMode": "code",
+          "expr": "sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} [7d] offset 7d))",
+          "instant": true,
+          "legendFormat": "",
+          "queryType": "instant",
+          "refId": "C"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "pneumatic-loki"
+          },
+          "editorMode": "code",
+          "expr": "count by (account_id) (sum by (account_id, actor_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | actor_type=\"user\" [30d])))",
+          "instant": true,
+          "legendFormat": "",
+          "queryType": "instant",
+          "refId": "D"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "pneumatic-loki"
+          },
+          "editorMode": "code",
+          "expr": "max by (account_id) (max_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | unwrap observed_timestamp | __error__=\"\" [30d])) / 1000000",
+          "instant": true,
+          "legendFormat": "",
+          "queryType": "instant",
+          "refId": "E"
+        }
+      ],
+      "title": "Accounts by activity",
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {
+            "mode": "columns"
+          }
+        },
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "indexByName": {
+              "Value #A": 1,
+              "Value #B": 2,
+              "Value #C": 3,
+              "Value #D": 4,
+              "Value #E": 5,
+              "account_id": 0
+            },
+            "renameByName": {
+              "Value #A": "Events, 30 days",
+              "Value #B": "Events, 7 days",
+              "Value #C": "Previous 7 days",
+              "Value #D": "Users, 30 days",
+              "Value #E": "Last activity",
+              "account_id": "Account"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "pneumatic-loki"
+      },
+      "description": "One row per account, one cell per bucket of the time range; the darker the cell, the more events. A row that fades out is an account drifting away.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-BlPu"
+          },
+          "custom": {
+            "fillOpacity": 85,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 0
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 25
+      },
+      "id": 14,
+      "maxDataPoints": 100,
+      "options": {
+        "colWidth": 0.9,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "rowHeight": 0.9,
+        "showValue": "never",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "pneumatic-loki"
+          },
+          "editorMode": "code",
+          "expr": "sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} [$__auto]))",
+          "legendFormat": "account {{account_id}}",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Activity map by account",
+      "type": "status-history"
+    }
+  ],
+  "preload": false,
+  "refresh": "5m",
+  "schemaVersion": 39,
+  "tags": [
+    "pneumatic",
+    "events",
+    "accounts",
+    "churn"
+  ],
+  "templating": {
+    "list": [
+      {
+        "allValue": ".*",
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "datasource": {
+          "type": "loki",
+          "uid": "pneumatic-loki"
+        },
+        "definition": "label_values({service_name=~\"pneumatic-.*\"}, deployment_environment)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Environment",
+        "multi": true,
+        "name": "environment",
+        "options": [],
+        "query": {
+          "label": "deployment_environment",
+          "refId": "LokiVariableQueryEditor-VariableQuery",
+          "stream": "{service_name=~\"pneumatic-.*\"}",
+          "type": 1
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-30d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Account health and churn watch",
+  "uid": "pneumatic-account-health",
+  "version": 1,
+  "weekStart": ""
+}

@@ -43,6 +43,7 @@ from src.generics.mixins.views import (
 from src.generics.permissions import (
     UserIsAuthenticated,
 )
+from src.logs.events import AuditEventService
 from src.utils.validation import raise_validation_error
 
 UserModel = get_user_model()
@@ -171,6 +172,11 @@ class UserInviteViewSet(
         except AlreadyRegisteredException as ex:
             raise_validation_error(message=ex.message)
         else:
+            AuditEventService.invite_accepted(
+                request=request,
+                user=user,
+                invite=invite,
+            )
             token = AuthService.get_auth_token(
                 user=user,
                 user_agent=request.headers.get(

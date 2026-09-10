@@ -36,6 +36,7 @@ from src.generics.mixins.views import (
 from src.generics.permissions import (
     UserIsAuthenticated,
 )
+from src.logs.events import AuditEventService
 from src.payment.stripe.exceptions import StripeServiceException
 from src.payment.stripe.service import StripeService
 from src.payment.tasks import (
@@ -312,6 +313,10 @@ class TenantsViewSet(
             tenant_account=tenant_account,
             is_superuser=request.is_superuser,
             auth_type=request.token_type,
+        )
+        AuditEventService.tenant_logged_in_as(
+            request=request,
+            tenant_account=tenant_account,
         )
         return self.response_ok({'token': token})
 

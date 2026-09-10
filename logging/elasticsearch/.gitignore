@@ -1,0 +1,4 @@
+# Secrets and generated material of the storage machine.
+.env
+certs/
+snapshots/

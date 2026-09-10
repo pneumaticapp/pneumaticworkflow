@@ -18,6 +18,7 @@ from src.shared_kernel.browser_utils import (
     is_browser_navigation,
     redirect_to_login,
 )
+from src.shared_kernel.events.schema import ActorType
 from src.shared_kernel.exceptions import AuthenticationError
 
 logger = logging.getLogger(__name__)
@@ -32,6 +33,8 @@ class AuthUser:
         user_id: int | None = None,
         account_id: int | None = None,
         token: str | None = None,
+        *,
+        is_api_key: bool = False,
     ) -> None:
         """Initialize authenticated user.
 
@@ -40,12 +43,22 @@ class AuthUser:
             user_id: Optional user ID.
             account_id: Optional account ID.
             token: Optional authentication token.
+            is_api_key: The token is a permanent API key of the user,
+                not a session (for_api_key of the token cache).
 
         """
         self.auth_type = auth_type
         self.user_id = user_id
         self.account_id = account_id
         self.token = token
+        self.is_api_key = is_api_key
+
+    @property
+    def actor_type(self) -> ActorType:
+        """Who acted, for the audit journal."""
+        if self.auth_type == UserType.AUTHENTICATED:
+            return ActorType.API_KEY if self.is_api_key else ActorType.USER
+        return ActorType.GUEST
 
     @property
     def is_anonymous(self) -> bool:
@@ -125,6 +138,7 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
                     user_id=token_data['user_id'],
                     account_id=token_data['account_id'],
                     token=token,
+                    is_api_key=bool(token_data.get('for_api_key')),
                 )
         except (ValueError, KeyError, TypeError) as e:
             # Handle specific authentication errors

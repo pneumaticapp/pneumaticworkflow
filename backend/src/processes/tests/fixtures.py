@@ -17,11 +17,13 @@ from src.accounts.enums import (
 from src.accounts.models import (
     Account,
     AccountSignupData,
+    APIKey,
     UserGroup,
     UserInvite,
 )
 from src.accounts.services.guests import GuestService
 from src.authentication.enums import AuthTokenType
+from src.authentication.tokens import PneumaticToken
 from src.payment.enums import BillingPeriod
 from src.processes.enums import (
     ConditionAction,
@@ -251,6 +253,21 @@ def create_test_guest(
     return GuestService.create(
         email=email,
         account_id=account.id,
+    )
+
+
+def create_test_api_key(
+    user: UserModel,
+    name: str = 'Test API key',
+) -> APIKey:
+
+    """ Creating API keys: the row and the token it authenticates. """
+
+    return APIKey.objects.create(
+        user=user,
+        account=user.account,
+        name=name,
+        token=PneumaticToken.create(user=user, for_api_key=True),
     )
 
 

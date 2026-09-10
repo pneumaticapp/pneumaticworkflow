@@ -1,0 +1,13 @@
+# LOGS_BACKEND=local: deliver events to the Loki that ships with the compose
+# stack. No PII redaction - the local stack belongs to the data owner and the
+# account activity dashboard shows the actor e-mail.
+exporters:
+  otlp_http/loki:
+    endpoint: http://loki:3100/otlp
+
+service:
+  pipelines:
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlp_http/loki]

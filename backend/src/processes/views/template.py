@@ -26,6 +26,7 @@ from src.generics.mixins.views import (
     CustomViewSetMixin,
 )
 from src.generics.permissions import UserIsAuthenticated
+from src.logs.events import AuditEventService
 from src.openapi import (
     ACCESS_ACCOUNT_OWNER,
     ACCESS_ADMIN,
@@ -410,6 +411,12 @@ class TemplateViewSet(
                 template = serializer.save()
             else:
                 template = serializer.save_as_draft()
+        response_data = serializer.get_response_data()
+        AuditEventService.template_saved(
+            request=request,
+            template=template,
+            name=response_data['name'],
+        )
         AnalyticService.templates_kickoff_created(
             user=request.user,
             template=template,
@@ -433,7 +440,7 @@ class TemplateViewSet(
                 template=template,
                 user_agent=get_user_agent(request),
             )
-        return self.response_ok(serializer.get_response_data())
+        return self.response_ok(response_data)
 
     @extend_schema(
         tags=['Templates'],
@@ -462,6 +469,13 @@ class TemplateViewSet(
             else:
                 template = serializer.save_as_draft()
         template = self.get_queryset().get(pk=template.pk)
+        response_slz = self.get_serializer(instance=template)
+        response_data = response_slz.get_response_data()
+        AuditEventService.template_saved(
+            request=request,
+            template=template,
+            name=response_data['name'],
+        )
         service = TemplateIntegrationsService(
             account=request.user.account,
             is_superuser=request.is_superuser,
@@ -494,8 +508,7 @@ class TemplateViewSet(
                 auth_type=request.token_type,
                 **serializer.get_analysis_counters(),
             )
-        response_serializer = self.get_serializer(instance=template)
-        return self.response_ok(response_serializer.get_response_data())
+        return self.response_ok(response_data)
 
     @extend_schema(
         tags=['Templates'],
@@ -516,7 +529,12 @@ class TemplateViewSet(
         )
         serializer = self.get_serializer(data=template_data_clone)
         with transaction.atomic():
-            serializer.save_as_draft()
+            clone = serializer.save_as_draft()
+        AuditEventService.template_cloned(
+            request=request,
+            template=clone,
+            name=template_data_clone['name'],
+        )
         return self.response_ok(serializer.get_response_data())
 
     @extend_schema(
@@ -731,6 +749,10 @@ class TemplateViewSet(
             template=template,
             auth_type=request.token_type,
             is_superuser=request.is_superuser,
+        )
+        AuditEventService.template_deleted(
+            request=request,
+            template=template,
         )
         return self.response_ok()
 
@@ -1044,6 +1066,11 @@ class TemplateViewSet(
             account_id=user.account_id,
             **filter_slz.validated_data,
         )
+        if not filter_slz.validated_data.get('offset'):
+            AuditEventService.templates_exported(
+                request=request,
+                filters=dict(filter_slz.validated_data),
+            )
         return self.paginated_response(queryset)
 
     @extend_schema(

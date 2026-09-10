@@ -1,0 +1,40 @@
+# Kibana of the Pneumatic audit journal.
+# ${VAR} is substituted from the container environment (docker-compose.yml).
+
+server.name: pneumatic-kibana
+server.host: 0.0.0.0
+server.port: 5601
+# Used in generated links and required by several features. Set it to the
+# address people type in the browser, including the port.
+server.publicBaseUrl: ${KIBANA_PUBLIC_URL}
+
+# HTTPS in the browser. The certificate is issued by the same private CA as
+# the node certificate, so the first visit shows a warning until the CA is
+# added to the operator machine: import certs/ca/ca.crt there once.
+server.ssl.enabled: true
+server.ssl.certificate: /usr/share/kibana/config/certs/kibana/kibana.crt
+server.ssl.key: /usr/share/kibana/config/certs/kibana/kibana.key
+
+elasticsearch.hosts:
+  - https://elasticsearch:9200
+elasticsearch.username: kibana_system
+elasticsearch.password: ${KIBANA_SYSTEM_PASSWORD}
+elasticsearch.ssl.certificateAuthorities:
+  - /usr/share/kibana/config/certs/ca/ca.crt
+# full = the hostname in the certificate is checked too, not just the chain.
+elasticsearch.ssl.verificationMode: full
+
+# One key for all three: they encrypt saved objects, reports and the session
+# cookie. Losing it means re-creating alert rules and connectors by hand.
+xpack.encryptedSavedObjects.encryptionKey: ${KIBANA_ENCRYPTION_KEY}
+xpack.reporting.encryptionKey: ${KIBANA_ENCRYPTION_KEY}
+xpack.security.encryptionKey: ${KIBANA_ENCRYPTION_KEY}
+
+# An unattended browser tab stops being a way into the audit journal.
+xpack.security.session.idleTimeout: 1h
+xpack.security.session.lifespan: 8h
+
+telemetry.enabled: false
+telemetry.optIn: false
+
+logging.root.level: info

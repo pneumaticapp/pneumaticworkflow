@@ -1,6 +1,7 @@
 from collections import defaultdict
 from typing import List, Optional
 
+from celery import Task as CeleryTask
 from django.contrib.auth import get_user_model
 from django.db import transaction
 
@@ -15,6 +16,8 @@ from src.analysis.events import GroupsAnalyticsEvent
 from src.analysis.tasks import track_group_analytics
 from src.executor import RawSqlExecutor
 from src.generics.base.service import BaseModelService
+from src.logs.events import Actor, EventObject, emit
+from src.logs.events.enums import EventName, EventObjectType
 from src.notifications.tasks import (
     send_group_created_notification,
     send_group_deleted_notification,
@@ -49,7 +52,18 @@ UserModel = get_user_model()
 
 class UserGroupService(BaseModelService):
 
-    def _get_template_ids(self):
+    def _emit(self, event_type: str, payload: dict):
+        emit(
+            event_type,
+            account_id=self.instance.account_id,
+            actor=Actor.from_user(self.user, self.auth_type),
+            event_object=EventObject(
+                type=EventObjectType.GROUP, id=self.instance.id,
+            ),
+            payload=payload,
+        )
+
+    def _get_template_ids(self) -> List[int]:
         template_owner_ids = TemplateOwner.objects.filter(
             type=OwnerType.GROUP,
             group=self.instance,
@@ -72,7 +86,7 @@ class UserGroupService(BaseModelService):
         photo: Optional[str] = '',
         users: Optional[List[int]] = None,
         **kwargs,
-    ):
+    ) -> UserGroup:
         self.instance = UserGroup.objects.create(
             name=name,
             photo=photo,
@@ -122,11 +136,18 @@ class UserGroupService(BaseModelService):
             account_id=self.user.account_id,
             group_data=GroupWebsocketSerializer(self.instance).data,
         )
+        self._emit(
+            EventName.GROUP_CREATE,
+            payload={
+                'name': self.instance.name,
+                'users_ids': list(users or ()),
+            },
+        )
 
     def _send_users_notification(
         self,
         user_ids: List[int],
-        send_notification_task,
+        send_notification_task: CeleryTask,
     ):
         query = FetchGroupTaskNotificationRecipientsQuery(
             group_id=self.instance.id,
@@ -165,7 +186,10 @@ class UserGroupService(BaseModelService):
             send_notification_task=send_new_task_websocket,
         )
 
-    def _send_removed_users_notifications(self, user_ids: List[int]):
+    def _send_removed_users_notifications(
+        self,
+        user_ids: List[int],
+    ):
         self._send_users_notification(
             user_ids=user_ids,
             send_notification_task=send_task_deleted_notification,
@@ -235,8 +259,9 @@ class UserGroupService(BaseModelService):
         self,
         force_save: bool = False,
         **update_kwargs,
-    ):
+    ) -> UserGroup:
         old_photo = self.instance.photo
+        changed_fields = sorted(update_kwargs.keys())
         users = update_kwargs.pop('users', None)
         new_name = update_kwargs.get('name')
         new_photo = update_kwargs.get('photo')
@@ -311,6 +336,14 @@ class UserGroupService(BaseModelService):
             account_id=self.user.account_id,
             group_data=GroupWebsocketSerializer(self.instance).data,
         )
+        self._emit(
+            EventName.GROUP_UPDATE,
+            payload={
+                'changed_fields': changed_fields,
+                'added_users_ids': added_users_ids or [],
+                'removed_users_ids': removed_users_ids or [],
+            },
+        )
 
         if added_users_ids:
             self._send_added_users_notifications(added_users_ids)
@@ -361,6 +394,13 @@ class UserGroupService(BaseModelService):
             group_name=self.instance.name,
             auth_type=self.auth_type,
             is_superuser=self.is_superuser,
+        )
+        self._emit(
+            EventName.GROUP_DELETE,
+            payload={
+                'name': self.instance.name,
+                'users_ids': users,
+            },
         )
         self.instance.delete()
         # Revoke PERFORMER_GROUP view permissions.  After soft-delete

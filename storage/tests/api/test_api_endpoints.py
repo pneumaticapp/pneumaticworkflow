@@ -276,6 +276,7 @@ def test_download__invalid_range_header__return_416(
     # assert
     assert response.status_code == 416
     assert response.headers['content-range'] == 'bytes */1000'
+    mock_download_use_case_get_stream.assert_not_awaited()
 
 
 def test_download__no_auth__return_401(e2e_client):

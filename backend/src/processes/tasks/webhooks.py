@@ -14,6 +14,7 @@ class WebhookTask(CeleryTask):
     autoretry_for = (
         ConnectionError,
         requests.ConnectionError,
+        requests.Timeout,
         requests.HTTPError,
         ObjectDoesNotExist,
     )

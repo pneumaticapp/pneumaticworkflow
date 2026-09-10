@@ -25,7 +25,11 @@ from src.application.use_cases import (
 )
 from src.domain.entities.file_record import FileRecord
 from src.infra.http_client import HttpClient
-from src.presentation.dto import FileUploadResponse
+from src.presentation.dto import (
+    FIRST_BYTE,
+    FileUploadResponse,
+    RangePlan,
+)
 from src.shared_kernel.auth.dependencies import (
     AuthenticatedUser,
     get_current_user,
@@ -37,6 +41,7 @@ from src.shared_kernel.di import (
     get_settings_dep,
     get_upload_use_case,
 )
+from src.shared_kernel.events.request_events import RequestEventsDep
 from src.shared_kernel.exceptions import (
     FileAccessDeniedError,
     FileSizeExceededError,
@@ -79,6 +84,7 @@ async def upload_file(
     current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
     use_case: Annotated[UploadFileUseCase, Depends(get_upload_use_case)],
     settings: Annotated[BaseAppSettings, Depends(get_settings_dep)],
+    events: RequestEventsDep,
 ) -> FileUploadResponse:
     """Upload file to storage.
 
@@ -87,6 +93,7 @@ async def upload_file(
         current_user: Current authenticated user.
         use_case: Upload use case dependency.
         settings: Application settings.
+        events: Records of this request for the audit journal.
 
     Returns:
         FileUploadResponse: Upload result with file ID and public URL.
@@ -115,6 +122,13 @@ async def upload_file(
 
     # Execute command
     response = await use_case.execute(command)
+
+    # The record is committed: the file exists, journal it
+    await events.file_upload(
+        user=current_user,
+        file_id=response.file_id,
+        file=command,
+    )
     return FileUploadResponse(
         public_url=response.public_url,
         file_id=response.file_id,
@@ -122,11 +136,12 @@ async def upload_file(
 
 
 @router.get('/{file_id}', dependencies=[Depends(is_authenticated)])
-async def download_file(
+async def download_file(  # noqa: PLR0913
     file_id: Annotated[str, Path(min_length=1, max_length=512)],
     current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
     use_case: Annotated[DownloadFileUseCase, Depends(get_download_use_case)],
     http_client: Annotated[HttpClient, Depends(get_http_client)],
+    events: RequestEventsDep,
     range_header: Annotated[str | None, Header(alias='Range')] = None,
 ) -> StreamingResponse:
     """Download file from storage.
@@ -136,6 +151,7 @@ async def download_file(
         current_user: Current authenticated user.
         use_case: Download use case dependency.
         http_client: HTTP client for permission checks.
+        events: Records of this request for the audit journal.
         range_header: Optional HTTP Range header.
 
     Returns:
@@ -164,30 +180,40 @@ async def download_file(
             file_id=file_id,
         )
         if not has_access:
+            await events.file_access_denied(
+                user=current_user,
+                file_record=file_record,
+            )
             raise FileAccessDeniedError(file_id, current_user.user_id)
 
-    # Load the file stream only if access is granted
+    plan = _plan_response(
+        file_record=file_record,
+        range_header=range_header,
+    )
+    if plan.status_code == HTTPStatus.REQUESTED_RANGE_NOT_SATISFIABLE:
+        return StreamingResponse(
+            iter([b'']),
+            status_code=HTTPStatus.REQUESTED_RANGE_NOT_SATISFIABLE,
+            headers=plan.headers,
+        )
+
     file_stream = await use_case.get_stream(
         file_record=file_record,
         range_header=range_header,
     )
 
-    status_code, headers = _build_response_headers(
-        file_record=file_record,
-        range_header=range_header,
-    )
-    if status_code == HTTPStatus.REQUESTED_RANGE_NOT_SATISFIABLE:
-        return StreamingResponse(
-            iter([b'']),
-            status_code=HTTPStatus.REQUESTED_RANGE_NOT_SATISFIABLE,
-            headers=headers,
+    if plan.start == FIRST_BYTE:
+        await events.file_download(
+            user=current_user,
+            file_record=file_record,
+            is_owner=is_owner,
         )
 
     return StreamingResponse(
         file_stream,
-        status_code=status_code,
+        status_code=plan.status_code,
         media_type=file_record.content_type,
-        headers=headers,
+        headers=plan.headers,
     )
 
 
@@ -206,11 +232,11 @@ def _check_file_ownership(
     )
 
 
-def _build_response_headers(
+def _plan_response(
     file_record: FileRecord,
     range_header: str | None,
-) -> tuple[int, dict[str, str]]:
-    """Build status code and response headers for file download."""
+) -> RangePlan:
+    """Build status code, response headers and start for a download."""
     quoted_filename = urllib.parse.quote(
         file_record.filename or 'unnamed_file'
     )
@@ -225,23 +251,28 @@ def _build_response_headers(
 
     if not range_header:
         headers['Content-Length'] = str(total_size)
-        return 200, headers
+        return RangePlan(status_code=HTTPStatus.OK, headers=headers)
 
     range_match = _RE_RANGE.match(range_header)
     if not range_match:
         headers['Content-Length'] = str(total_size)
-        return 200, headers
+        return RangePlan(status_code=HTTPStatus.OK, headers=headers)
 
     start = int(range_match.group(1))
     end = int(range_match.group(2)) if range_match.group(2) else total_size - 1
     end = min(end, total_size - 1)
     if start > total_size - 1 or start > end:
-        return (
-            HTTPStatus.REQUESTED_RANGE_NOT_SATISFIABLE,
-            {'Content-Range': f'bytes */{total_size}'},
+        return RangePlan(
+            status_code=HTTPStatus.REQUESTED_RANGE_NOT_SATISFIABLE,
+            headers={'Content-Range': f'bytes */{total_size}'},
+            start=start,
         )
 
     content_length = end - start + 1
     headers['Content-Range'] = f'bytes {start}-{end}/{total_size}'
     headers['Content-Length'] = str(content_length)
-    return 206, headers
+    return RangePlan(
+        status_code=HTTPStatus.PARTIAL_CONTENT,
+        headers=headers,
+        start=start,
+    )

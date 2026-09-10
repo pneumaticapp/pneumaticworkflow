@@ -1,0 +1,23 @@
+# LOGS_BACKEND=otlp | elasticsearch: events go to a store outside this compose
+# file, so the bundled Loki and Grafana are not started. The collector stays:
+# it is what forwards them. The record is forwarded whole, pii.* attributes
+# included - see decision 2 in docs/logging-design.md.
+#
+#   docker compose -f docker-compose.yml -f logging/compose/logs-external.yml up -d
+#
+# or, permanently, in .env:
+#
+#   COMPOSE_FILE=docker-compose.yml:logging/compose/logs-external.yml
+#
+# `docker compose` interpolates the base file whatever the profiles say, so
+# GRAFANA_ADMIN_PASSWORD still has to hold a value even though Grafana never
+# starts here. Any string will do - it is never used.
+#
+# `profiles` is used as an off switch: a service that belongs to a profile is
+# skipped unless that profile is enabled, and `disabled` never is.
+services:
+  loki:
+    profiles: ["disabled"]
+
+  grafana:
+    profiles: ["disabled"]

@@ -1,0 +1,36 @@
+# LOGS_BACKEND=otlp: forward events to an OTLP/HTTP receiver outside this
+# machine (the customer's own observability stack).
+#
+# The record is delivered exactly as the local mode delivers it, pii.*
+# attributes included. Both deployments this mode was written for - our own
+# store on a machine of ours, and a self-hosted installation writing into the
+# journal of the company that runs it - keep the data with its owner, so there
+# is nothing to strip. A receiver outside the owner's organisation (a managed
+# observability vendor) is a processor relationship: settle it in the contract,
+# not by dropping half of every record by default.
+#
+# The bundled Loki and Grafana are not started in this mode:
+#   docker compose -f docker-compose.yml -f logging/compose/logs-external.yml up -d
+exporters:
+  otlp_http/external:
+    endpoint: ${env:LOGS_OTLP_EXPORT_ENDPOINT}
+    headers:
+      Authorization: ${env:LOGS_OTLP_EXPORT_AUTH:-}
+    # The receiver is on the far side of the internet: keep retrying for five
+    # minutes and hold the backlog in memory meanwhile. The queue is bounded so
+    # an unreachable receiver cannot grow the collector past its mem_limit; the
+    # consumer keeps its own copy in the Redis stream until the collector
+    # answers 2xx, so a full queue costs redelivery, not data.
+    retry_on_failure:
+      enabled: true
+      max_elapsed_time: 300s
+    sending_queue:
+      enabled: true
+      queue_size: 5000
+
+service:
+  pipelines:
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlp_http/external]

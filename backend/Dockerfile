@@ -8,6 +8,8 @@ LABEL org.opencontainers.image.title="Pneumatic API" \
       org.opencontainers.image.documentation="https://github.com/pneumaticapp/pneumaticworkflow/wiki" \
       org.opencontainers.image.licenses="Apache-2.0"
 
+RUN sed -i '/bullseye-security/d' /etc/apt/sources.list
+
 # Install Internationalization requirements
 RUN apt-get update && \
     apt-get -y install gettext

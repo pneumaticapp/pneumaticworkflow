@@ -1,0 +1,418 @@
+# Alert rules of the Pneumatic event journal.
+#
+# Grafana reads this file at startup only - unlike the dashboards, alerting
+# provisioning is not re-read on a timer. After an edit:
+#   docker compose restart grafana
+#
+# The rules are read-only in the Grafana UI (that is what provisioning means):
+# to change a threshold, edit the number here and restart. Every threshold sits
+# in a `params` list of a `threshold` node and is marked with a TUNE comment.
+#
+# Where the alerts go: nowhere until a contact point is set up. Firing rules are
+# visible in Alerting -> Alert rules; add a contact point and a notification
+# policy in the Grafana UI (they are stored in the pneumatic_grafana-data
+# volume, so they survive a restart and stay editable). This file deliberately
+# provisions no contact point: a hard-wired one would be read-only, and every
+# installation notifies somewhere else.
+#
+# Every query but one ends with `or vector(0)`. Without it an empty result is an
+# empty vector, Grafana calls that NoData, and a rule that should read "zero
+# refusals" turns into "no data" instead. The rule that alerts per source
+# address keeps the empty vector on purpose: no series means nobody is
+# knocking, and noDataState says that is fine.
+apiVersion: 1
+
+groups:
+
+  # ---------------------------------------------------------------------
+  # Sign-ins and file access. One minute is the shortest useful interval:
+  # the consumer ticks every 10 s and the collector batches for 2 s, so an
+  # event reaches Loki about 12 s after it happens.
+  # ---------------------------------------------------------------------
+  - orgId: 1
+    name: Security
+    folder: Pneumatic alerts
+    interval: 1m
+    rules:
+
+      - uid: pneumatic-failed-signins
+        title: Failed sign-ins burst
+        # The whole installation together: a spray across many accounts is
+        # exactly what one account's counter would miss.
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: pneumatic-loki
+            model:
+              datasource:
+                type: loki
+                uid: pneumatic-loki
+              editorMode: code
+              expr: 'sum(count_over_time({service_name="pneumatic-backend"} | event_type="user.login_failed" [5m])) or vector(0)'
+              intervalMs: 1000
+              maxDataPoints: 43200
+              queryType: instant
+              refId: A
+          - refId: B
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: __expr__
+            model:
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: A
+              reducer: last
+              refId: B
+              type: reduce
+          - refId: C
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    # TUNE: failed sign-ins in five minutes, whole installation.
+                    params: [10]
+                    type: gt
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: B
+              refId: C
+              type: threshold
+        for: 0m
+        noDataState: OK
+        execErrState: Error
+        labels:
+          severity: critical
+          area: security
+        annotations:
+          summary: More than 10 failed sign-ins in five minutes
+          description: >-
+            user.login_failed events across the whole installation. A single
+            person mistyping a password does not get here; a spread of
+            addresses or of target e-mails does. The Critical events dashboard
+            breaks it down by source address and by the hash of the e-mail that
+            was tried - the e-mail itself is never stored.
+        isPaused: false
+
+      - uid: pneumatic-bruteforce-source
+        title: Failed sign-ins from one address
+        # One alert instance per source address: the address is in the labels
+        # of the instance, so the notification names it.
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 900
+              to: 0
+            datasourceUid: pneumatic-loki
+            model:
+              datasource:
+                type: loki
+                uid: pneumatic-loki
+              editorMode: code
+              expr: 'sum by (pii_ip) (count_over_time({service_name="pneumatic-backend"} | event_type="user.login_failed" [10m]))'
+              intervalMs: 1000
+              maxDataPoints: 43200
+              queryType: instant
+              refId: A
+          - refId: B
+            relativeTimeRange:
+              from: 900
+              to: 0
+            datasourceUid: __expr__
+            model:
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: A
+              reducer: last
+              refId: B
+              type: reduce
+          - refId: C
+            relativeTimeRange:
+              from: 900
+              to: 0
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    # TUNE: failed sign-ins in ten minutes from one address.
+                    params: [5]
+                    type: gt
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: B
+              refId: C
+              type: threshold
+        for: 0m
+        # No series at all means nobody failed a sign-in anywhere.
+        noDataState: OK
+        execErrState: Error
+        labels:
+          severity: critical
+          area: security
+        annotations:
+          summary: More than 5 failed sign-ins in ten minutes from one address
+          description: >-
+            One source address is trying passwords; the address is in the
+            labels of this alert. It is whatever nginx saw, so check that a
+            proxy in front of it is not collapsing every client into one
+            address before blocking anything.
+        isPaused: false
+
+      - uid: pneumatic-file-refusals
+        title: File downloads refused
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 900
+              to: 0
+            datasourceUid: pneumatic-loki
+            model:
+              datasource:
+                type: loki
+                uid: pneumatic-loki
+              editorMode: code
+              expr: 'sum(count_over_time({service_name="pneumatic-file-service"} | event_type="file.access_denied" [10m])) or vector(0)'
+              intervalMs: 1000
+              maxDataPoints: 43200
+              queryType: instant
+              refId: A
+          - refId: B
+            relativeTimeRange:
+              from: 900
+              to: 0
+            datasourceUid: __expr__
+            model:
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: A
+              reducer: last
+              refId: B
+              type: reduce
+          - refId: C
+            relativeTimeRange:
+              from: 900
+              to: 0
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    # TUNE: refused downloads in ten minutes. A stale link in
+                    # somebody's mail refuses once; a broken permission check
+                    # or somebody walking file ids refuses in bursts.
+                    params: [3]
+                    type: gt
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: B
+              refId: C
+              type: threshold
+        for: 0m
+        noDataState: OK
+        execErrState: Error
+        labels:
+          severity: warning
+          area: security
+        annotations:
+          summary: More than 3 file downloads refused in ten minutes
+          description: >-
+            file.access_denied of the file service: the permission check of the
+            backend said no. Innocent causes exist - an old link, a user
+            removed from a task - but a burst is either a permission check
+            broken by a deploy or somebody walking file ids.
+        isPaused: false
+
+      - uid: pneumatic-file-cross-account
+        title: Cross-account file access attempt
+        # The asking account is not the one that owns the file. Unlike a plain
+        # refusal this has no innocent explanation worth waiting for, so the
+        # threshold is zero.
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 900
+              to: 0
+            datasourceUid: pneumatic-loki
+            model:
+              datasource:
+                type: loki
+                uid: pneumatic-loki
+              editorMode: code
+              expr: 'sum(count_over_time({service_name="pneumatic-file-service"} | event_type="file.access_denied" | label_format cross="{{ if ne .payload_file_account_id .account_id }}yes{{ else }}no{{ end }}" | cross="yes" [10m])) or vector(0)'
+              intervalMs: 1000
+              maxDataPoints: 43200
+              queryType: instant
+              refId: A
+          - refId: B
+            relativeTimeRange:
+              from: 900
+              to: 0
+            datasourceUid: __expr__
+            model:
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: A
+              reducer: last
+              refId: B
+              type: reduce
+          - refId: C
+            relativeTimeRange:
+              from: 900
+              to: 0
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    # TUNE: attempts in ten minutes. Zero means the first one
+                    # raises the alert.
+                    params: [0]
+                    type: gt
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: B
+              refId: C
+              type: threshold
+        for: 0m
+        noDataState: OK
+        execErrState: Error
+        labels:
+          severity: critical
+          area: security
+        annotations:
+          summary: A file of another account was asked for and refused
+          description: >-
+            file.access_denied where payload.file_account_id is not the account
+            of the actor. The refusal itself worked; what is worth reading is
+            who asked and for which file. The Critical events dashboard has the
+            journal with the actor, the file and the owning account.
+        isPaused: false
+
+  # ---------------------------------------------------------------------
+  # The pipeline itself. Five minutes: this is about a stopped consumer, not
+  # about a single record.
+  # ---------------------------------------------------------------------
+  - orgId: 1
+    name: Pipeline
+    folder: Pneumatic alerts
+    interval: 5m
+    rules:
+
+      - uid: pneumatic-pipeline-silent
+        title: Event pipeline delivered nothing
+        # Nothing arrived in an hour while the day before was busy. That is a
+        # consumer that stopped ticking, a collector that cannot be reached or
+        # a Loki that refuses writes - all three look the same from here.
+        #
+        # The second query is what keeps the rule quiet on an installation that
+        # is simply idle at night: below the day threshold the rule says
+        # nothing, because an hour of silence there means nobody was working.
+        #
+        # Delivery lag itself is not measurable here. A record carries the
+        # moment the consumer read it (observed_timestamp) and is stored under
+        # the moment the event happened, but this Loki gives no access to a
+        # record's own timestamp inside label_format, so the two cannot be
+        # subtracted in LogQL. Absence is the signal that is left.
+        condition: E
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 3900
+              to: 0
+            datasourceUid: pneumatic-loki
+            model:
+              datasource:
+                type: loki
+                uid: pneumatic-loki
+              editorMode: code
+              expr: 'sum(count_over_time({service_name=~"pneumatic-.*"} [60m])) or vector(0)'
+              intervalMs: 1000
+              maxDataPoints: 43200
+              queryType: instant
+              refId: A
+          - refId: B
+            relativeTimeRange:
+              from: 90000
+              to: 0
+            datasourceUid: pneumatic-loki
+            model:
+              datasource:
+                type: loki
+                uid: pneumatic-loki
+              editorMode: code
+              expr: 'sum(count_over_time({service_name=~"pneumatic-.*"} [24h])) or vector(0)'
+              intervalMs: 1000
+              maxDataPoints: 43200
+              queryType: instant
+              refId: B
+          - refId: C
+            relativeTimeRange:
+              from: 3900
+              to: 0
+            datasourceUid: __expr__
+            model:
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: A
+              reducer: last
+              refId: C
+              type: reduce
+          - refId: D
+            relativeTimeRange:
+              from: 90000
+              to: 0
+            datasourceUid: __expr__
+            model:
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: B
+              reducer: last
+              refId: D
+              type: reduce
+          - refId: E
+            relativeTimeRange:
+              from: 3900
+              to: 0
+            datasourceUid: __expr__
+            model:
+              datasource:
+                type: __expr__
+                uid: __expr__
+              # TUNE: 200 is the day volume below which the installation counts
+              # as idle and the rule stays silent.
+              expression: $C == 0 && $D > 200
+              refId: E
+              type: math
+        for: 10m
+        noDataState: OK
+        execErrState: Error
+        labels:
+          severity: critical
+          area: pipeline
+        annotations:
+          summary: No events reached the journal in the last hour
+          description: >-
+            Nothing was delivered in an hour although the last day was busy.
+            Look at the consumer first - `docker compose logs celery | grep
+            consumer` shows a line per tick - then at the collector and at
+            Loki. Events are not lost while this lasts: they wait in the Redis
+            stream in db4 and arrive once the pipeline moves again, bounded by
+            LOGS_STREAM_MAXLEN.
+        isPaused: false

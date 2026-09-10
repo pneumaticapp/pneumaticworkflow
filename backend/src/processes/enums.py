@@ -647,6 +647,7 @@ class WorkflowEventType:
         (TASK_PERFORMER_DELETED, 'Performer deleted from task'),
         (FORCE_RESUME, 'Workflow resumed'),
         (DUE_DATE_CHANGED, 'Due date changed'),
+        (SUB_WORKFLOW_RUN, 'Sub-workflow started'),
         (TASK_PERFORMER_GROUP_CREATED, 'Performer group added to task'),
         (TASK_PERFORMER_GROUP_DELETED, 'Performer group deleted from task'),
         (TASK_DELAY, 'Task snoozed from template'),
@@ -677,7 +678,28 @@ class WorkflowEventType:
         TASK_PERFORMER_GROUP_CREATED,
         TASK_PERFORMER_GROUP_DELETED,
         TASK_DELAY,
+        TASK_DELEGATION,
     ]
+
+    HIGHLIGHT_TYPES = (
+        COMMENT,
+        TASK_COMPLETE,
+        RUN,
+        COMPLETE,
+        ENDED,
+        TASK_REVERT,
+        REVERT,
+        URGENT,
+        NOT_URGENT,
+        TASK_PERFORMER_CREATED,
+        TASK_PERFORMER_DELETED,
+        TASK_PERFORMER_GROUP_CREATED,
+        TASK_PERFORMER_GROUP_DELETED,
+        FORCE_DELAY,
+        FORCE_RESUME,
+        DUE_DATE_CHANGED,
+        SUB_WORKFLOW_RUN,
+    )
 
 
 class WorkflowEventActionType:

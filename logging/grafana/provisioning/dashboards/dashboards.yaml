@@ -1,0 +1,14 @@
+apiVersion: 1
+
+providers:
+  - name: pneumatic
+    orgId: 1
+    folder: Pneumatic
+    folderUid: pneumatic
+    type: file
+    disableDeletion: false
+    allowUiUpdates: true
+    updateIntervalSeconds: 30
+    options:
+      path: /etc/grafana/provisioning/dashboards/json
+      foldersFromFilesStructure: false

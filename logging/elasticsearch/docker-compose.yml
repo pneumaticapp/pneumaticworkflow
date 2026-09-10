@@ -1,0 +1,128 @@
+# Elasticsearch + Kibana for the Pneumatic audit journal.
+#
+# This file belongs to the STORAGE machine, not to the machine that runs
+# Pneumatic. The application side is one collector config
+# (logging/otel/backend-elasticsearch.yaml) plus a few variables in .env - see
+# docs/elasticsearch-production.md.
+#
+#   cp elasticsearch.env.example .env   # then fill every REQUIRED line in
+#   ./scripts/make-certs.sh             # CA + node certificates
+#   docker compose up -d
+#   ./scripts/bootstrap.sh              # roles, users, ILM, template, SLM
+#
+# Everything that holds data is a named docker volume: a missing bind-mount
+# source is created as root:root and a container that runs as uid 1000 cannot
+# write into it, while an empty named volume inherits owner and mode from the
+# image. Same reasoning as loki-data in the root docker-compose.yml.
+name: pneumatic-es
+
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.5.3
+    container_name: pneumatic-elasticsearch
+    environment:
+      NODE_NAME: ${ES_NODE_NAME:-pneumatic-es-01}
+      CLUSTER_NAME: ${ES_CLUSTER_NAME:-pneumatic-audit}
+      MEMORY_LOCK: ${ES_MEMORY_LOCK:-true}
+      # No default. Whoever holds this password is the superuser of the audit
+      # journal of every account, so the stack refuses to start until a
+      # password is set in .env.
+      ELASTIC_PASSWORD: "${ES_ELASTIC_PASSWORD:?set ES_ELASTIC_PASSWORD in .env}"
+      # Half of ES_MEM_LIMIT, never above 31g (above that the JVM loses
+      # compressed object pointers and effectively gets less usable memory).
+      ES_JAVA_OPTS: -Xms${ES_HEAP_SIZE:-2g} -Xmx${ES_HEAP_SIZE:-2g}
+      # The entrypoint generates its own certificates and passwords when it
+      # finds none. We bring our own, so the guesswork is off.
+      xpack.security.autoconfiguration.enabled: "false"
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+      # Snapshots. A named volume by default; point it at a disk of its own,
+      # an NFS export or an S3 bucket before you rely on it - a backup on the
+      # same disk as the data does not survive the failure it exists for.
+      - es-snapshots:/snapshots
+      - ./config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+      - ./certs:/usr/share/elasticsearch/config/certs:ro
+    ports:
+      # The collector connects from the application machine, so unlike Kibana
+      # this port is open on all interfaces by default. It is TLS only and
+      # rejects anonymous requests; keep it behind a firewall rule that admits
+      # the application machine and nothing else.
+      - "${ES_BIND:-0.0.0.0}:${ES_PORT:-9200}:9200"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65535
+        hard: 65535
+    mem_limit: ${ES_MEM_LIMIT:-4g}
+    cap_add:
+      # mlockall(): keeps the heap out of swap. Without it bootstrap.memory_lock
+      # fails and the node refuses to start. Not in the default set of
+      # docker, so it has to be added.
+      - IPC_LOCK
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >
+          curl -sf --cacert /usr/share/elasticsearch/config/certs/ca/ca.crt
+          -u "elastic:$${ELASTIC_PASSWORD}"
+          https://localhost:9200/_cluster/health
+          | grep -qE '"status":"(green|yellow)"'
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 60s
+    networks:
+      - pneumatic-es
+    restart: always
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:9.5.3
+    container_name: pneumatic-kibana
+    environment:
+      # Password of the built-in kibana_system user, set by bootstrap.sh.
+      # No default: an empty password makes Kibana loop on 401 with a message
+      # that says nothing about the cause.
+      KIBANA_SYSTEM_PASSWORD: "${KIBANA_SYSTEM_PASSWORD:?set KIBANA_SYSTEM_PASSWORD in .env}"
+      # 32+ random characters. Kibana encrypts saved objects (alert rules,
+      # connectors) with it; a value that changes on restart makes them
+      # unreadable for good. Generate once: openssl rand -hex 32
+      KIBANA_ENCRYPTION_KEY: "${KIBANA_ENCRYPTION_KEY:?set KIBANA_ENCRYPTION_KEY in .env}"
+      KIBANA_PUBLIC_URL: ${KIBANA_PUBLIC_URL:-https://localhost:5601}
+    volumes:
+      - kibana-data:/usr/share/kibana/data
+      - ./config/kibana.yml:/usr/share/kibana/config/kibana.yml:ro
+      - ./certs:/usr/share/kibana/config/certs:ro
+    ports:
+      # Local only by default. Kibana reads the audit journal of every account
+      # in the installation; publish it through a reverse proxy with your own
+      # access control, or reach it over an SSH tunnel:
+      #   ssh -L 5601:127.0.0.1:5601 user@storage-host
+      - "${KIBANA_BIND:-127.0.0.1}:${KIBANA_PORT:-5601}:5601"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    mem_limit: ${KIBANA_MEM_LIMIT:-1500m}
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >
+          curl -sf --cacert /usr/share/kibana/config/certs/ca/ca.crt
+          https://localhost:5601/api/status
+          | grep -q '"level":"available"'
+      interval: 15s
+      timeout: 10s
+      retries: 40
+      start_period: 120s
+    networks:
+      - pneumatic-es
+    restart: always
+
+networks:
+  pneumatic-es:
+
+volumes:
+  es-data:
+  es-snapshots:
+  kibana-data:

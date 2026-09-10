@@ -1,0 +1,25 @@
+{
+  "template": {
+    "settings": {
+      "index": {
+        "lifecycle": {
+          "name": "pneumatic-events-365d"
+        },
+        "mode": "__INDEX_MODE__",
+        "number_of_shards": "__SHARDS__",
+        "number_of_replicas": "__REPLICAS__",
+        "refresh_interval": "10s",
+        "mapping": {
+          "total_fields": {
+            "limit": 2000,
+            "ignore_dynamic_beyond_limit": true
+          }
+        }
+      }
+    }
+  },
+  "_meta": {
+    "description": "Pneumatic audit journal. Hooked into the built-in logs-otel@template, which already lists logs-otel@custom in composed_of, so Elasticsearch keeps owning the OTel document shape and only these settings are ours. Settings only, no mappings: a component template that redefines the passthrough object attributes or resource.attributes REPLACES the properties of the built-in components instead of merging with them, and the field aliases of semconv-resource-to-ecs@mappings then point at fields that no longer exist (checked on 9.5.3: 'an alias must refer to an existing field in the mappings'). The dynamic mapping already gives keyword to every attribute of the event schema, which is what the schema needs.",
+    "managed_by": "logging/elasticsearch/scripts/bootstrap.sh"
+  }
+}

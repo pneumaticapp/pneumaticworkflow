@@ -219,6 +219,11 @@ if [ ! -f ".env" ]; then
 
     fi
 
+    # 2.5.3 Grafana
+    GRAFANA_ADMIN_PASSWORD=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-25)
+    sed -i "s|^#\?\s*GRAFANA_ADMIN_PASSWORD=.*|GRAFANA_ADMIN_PASSWORD=$GRAFANA_ADMIN_PASSWORD|" "$ENV_FILE"
+    print_info "Grafana admin password written to .env (GRAFANA_ADMIN_PASSWORD)"
+
     # 2.6 SSL
     SSL=false
     CERTBOT_ENABLE=false
@@ -308,6 +313,29 @@ if [ ! -f ".env" ]; then
     # 2.12 Mark setup as complete
     sed -i "/^SETUP_INCOMPLETE=/d" "$ENV_FILE"
 
+fi
+
+# =============================================================================
+# 2.13 Upgrade of an existing .env: add the variables this version introduced
+# =============================================================================
+# An .env written by an older start.sh has no GRAFANA_ADMIN_PASSWORD (compose
+# refuses to start without it, see the grafana service in docker-compose.yml).
+# A fresh .env got it in section 2.5, so only an existing file is touched
+# here, and only when the line is still missing: a commented template line
+# from default.env is filled in, otherwise the line is appended.
+
+if [ "$ENV_FILE_CREATED" = false ] && \
+   ! grep -qE "^\s*GRAFANA_ADMIN_PASSWORD=\S" "$ENV_FILE"; then
+    value=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-25)
+    if grep -qE "^#?\s*GRAFANA_ADMIN_PASSWORD=" "$ENV_FILE"; then
+        sed -i "s|^#\?\s*GRAFANA_ADMIN_PASSWORD=.*|GRAFANA_ADMIN_PASSWORD=${value}|" "$ENV_FILE"
+    else
+        # Keep the new line on a line of its own even if the file has no
+        # trailing newline.
+        [ -z "$(tail -c1 "$ENV_FILE")" ] || echo "" >> "$ENV_FILE"
+        echo "GRAFANA_ADMIN_PASSWORD=${value}" >> "$ENV_FILE"
+    fi
+    print_info "GRAFANA_ADMIN_PASSWORD was missing from .env: a generated value was added"
 fi
 
 # =============================================================================

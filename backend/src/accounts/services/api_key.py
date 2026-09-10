@@ -4,6 +4,8 @@ from typing import Optional
 from src.accounts.models import APIKey, User
 from src.authentication.tokens import PneumaticToken
 from src.generics.base.service import BaseModelService
+from src.logs.events import Actor, EventObject, emit
+from src.logs.events.enums import EventName, EventObjectType
 
 
 class APIKeyService(BaseModelService):
@@ -48,8 +50,32 @@ class APIKeyService(BaseModelService):
 
         self.raw_key = raw_key
 
+    def _emit(self, event_type: str):
+
+        """ The payload names the key and its owner and nothing else.
+            Neither self.raw_key nor instance.token may be put here:
+            the journal leaves the deployment, and a key that reaches
+            a log backend is a key an operator can sign in with. """
+
+        emit(
+            event_type,
+            account_id=self.instance.account_id,
+            actor=Actor.from_user(self.user, self.auth_type),
+            event_object=EventObject(
+                type=EventObjectType.API_KEY, id=self.instance.id,
+            ),
+            payload={
+                'name': self.instance.name,
+                'target_user_id': self.instance.user_id,
+            },
+        )
+
+    def _create_actions(self, **kwargs):
+        self._emit(EventName.API_KEY_CREATE)
+
     def revoke(self):
         self.instance.is_active = False
         self.instance.save(update_fields=['is_active'])
         cache_key = PneumaticToken.encrypt(self.instance.token)
         PneumaticToken.cache.delete(cache_key)
+        self._emit(EventName.API_KEY_REVOKE)

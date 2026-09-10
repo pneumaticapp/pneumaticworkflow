@@ -3,6 +3,7 @@ from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework_simplejwt.views import TokenRefreshView
 from rest_framework.exceptions import (
     AuthenticationFailed,
+    ValidationError,
 )
 from rest_framework.generics import (
     CreateAPIView,
@@ -16,7 +17,10 @@ from src.accounts.tokens import (
 )
 from src.analysis.mixins import BaseIdentifyMixin
 from src.analysis.services import AnalyticService
-from src.authentication.enums import AuthTokenType
+from src.authentication.enums import (
+    AuthTokenType,
+    LoginFailedReason,
+)
 from src.authentication.messages import (
     MSG_AU_0002,
     MSG_AU_0003,
@@ -25,11 +29,15 @@ from src.authentication.permissions import (
     IsSuperuserPermission,
     PrivateApiPermission,
 )
+from src.authentication.serializers import (
+    SuperuserEmailTokenSerializer,
+)
 from src.authentication.services.user_auth import AuthService
 from src.authentication.views.mixins import SSORestrictionMixin
 from src.generics.mixins.views import (
     BaseResponseMixin,
 )
+from src.logs.events import AuditEventService
 from src.notifications.tasks import send_verification_notification
 
 UserModel = get_user_model()
@@ -48,9 +56,20 @@ class TokenObtainPairCustomView(
         user = authenticate(**request.data)
 
         if not user:
+            AuditEventService.login_failed(
+                request=request,
+                reason=LoginFailedReason.BAD_CREDENTIALS,
+            )
             raise AuthenticationFailed(MSG_AU_0003)
 
-        self.check_sso_restrictions(user)
+        try:
+            self.check_sso_restrictions(user)
+        except ValidationError:
+            AuditEventService.login_failed(
+                request=request,
+                reason=LoginFailedReason.SSO_REQUIRED,
+            )
+            raise
 
         if user.account.is_verification_timed_out():
             owner = user.account.users.get(is_account_owner=True)
@@ -61,6 +80,10 @@ class TokenObtainPairCustomView(
                 user_first_name=owner.first_name,
                 token=str(VerificationToken.for_user(owner)),
                 logo_lg=user.account.logo_lg,
+            )
+            AuditEventService.login_failed(
+                request=request,
+                reason=LoginFailedReason.ACCOUNT_INACTIVE,
             )
             raise AuthenticationFailed(MSG_AU_0002(owner.email))
 
@@ -78,6 +101,11 @@ class TokenObtainPairCustomView(
                 request.META.get('HTTP_USER_AGENT'),
             ),
             user_ip=request.META.get('HTTP_X_REAL_IP'),
+        )
+        AuditEventService.user_logged_in(
+            user=user,
+            source=SourceType.EMAIL,
+            request=request,
         )
         return self.response_ok({'token': token})
 
@@ -99,9 +127,19 @@ class SuperuserEmailTokenView(
     BaseResponseMixin,
 ):
     permission_classes = (PrivateApiPermission, IsSuperuserPermission)
+    serializer_class = SuperuserEmailTokenSerializer
 
     def create(self, request, *args, **kwargs):
-        email = request.data.get('email')
-        user = get_object_or_404(UserModel.objects.active(), email=email)
+        slz = self.get_serializer(data=request.data)
+        slz.is_valid(raise_exception=True)
+        user = get_object_or_404(
+            UserModel.objects.active(),
+            email=slz.validated_data['email'],
+        )
         token = AuthService.get_superuser_auth_token(user)
+        AuditEventService.superuser_logged_in_as(
+            request=request,
+            user=user,
+            reason=slz.validated_data.get('reason'),
+        )
         return self.response_ok({'token': token})

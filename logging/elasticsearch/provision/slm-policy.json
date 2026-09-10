@@ -1,0 +1,17 @@
+{
+  "schedule": "__SNAPSHOT_SCHEDULE__",
+  "name": "<pneumatic-events-{now/d}>",
+  "repository": "pneumatic-snapshots",
+  "config": {
+    "indices": [
+      "__INDEX_PATTERN__"
+    ],
+    "include_global_state": true,
+    "partial": false
+  },
+  "retention": {
+    "expire_after": "__SNAPSHOT_RETENTION__",
+    "min_count": 14,
+    "max_count": 120
+  }
+}

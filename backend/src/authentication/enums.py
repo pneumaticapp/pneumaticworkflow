@@ -57,6 +57,23 @@ class AuthTokenType:
     ]
 
 
+class LoginFailedReason:
+
+    """ Why a sign in was refused, the reason of a user.login_failed
+        event. One value per refusing branch, so that an alert can
+        tell a brute force burst from a deactivated account. """
+
+    BAD_CREDENTIALS = 'bad_credentials'
+    ACCOUNT_INACTIVE = 'account_inactive'
+    SSO_REQUIRED = 'sso_required'
+
+    LITERALS = Literal[
+        BAD_CREDENTIALS,
+        ACCOUNT_INACTIVE,
+        SSO_REQUIRED,
+    ]
+
+
 class OktaLogoutFormat:
 
     EMAIL = 'email'

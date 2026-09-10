@@ -30,6 +30,7 @@ class AuthenticatedUser:
             raise TypeError(msg)
         self.account_id: int = auth_user.account_id
         self.token = auth_user.token
+        self.actor_type = auth_user.actor_type
 
     @property
     def is_anonymous(self) -> bool:

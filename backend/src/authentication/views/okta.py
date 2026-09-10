@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from rest_framework.decorators import action
 from rest_framework.viewsets import GenericViewSet
 
+from src.accounts.enums import SourceType
 from src.analysis.mixins import BaseIdentifyMixin
 from src.authentication.permissions import SSOPermission
 from src.authentication.serializers import (
@@ -20,6 +21,7 @@ from src.generics.mixins.views import (
     AnonymousMixin,
     CustomViewSetMixin,
 )
+from src.logs.events import AuditEventService
 from src.utils.validation import raise_validation_error
 
 UserModel = get_user_model()
@@ -58,6 +60,12 @@ class OktaViewSet(
             raise_validation_error(message=ex.message)
         else:
             self.identify(user)
+            if not service.is_new_user:
+                AuditEventService.user_logged_in(
+                    user=user,
+                    source=SourceType.OKTA,
+                    request=request,
+                )
             return self.response_ok({'token': token})
 
     @action(methods=('GET',), detail=False, url_path='auth-uri')

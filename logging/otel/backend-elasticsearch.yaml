@@ -1,0 +1,148 @@
+# LOGS_BACKEND=elasticsearch: write events straight into an Elasticsearch that
+# lives outside this machine.
+#
+# The record is delivered exactly as the local mode delivers it, pii.*
+# attributes included. Both deployments this mode was written for - our own
+# store on a machine of ours, and a self-hosted installation writing into the
+# journal of the company that runs it - keep the data with its owner, so there
+# is nothing to strip. A receiver outside the owner's organisation (a managed
+# observability vendor) is a processor relationship: settle it in the contract,
+# not by dropping half of every record by default.
+#
+# The store is not part of this compose file. Its configuration - node, Kibana,
+# certificates, roles, index lifecycle, snapshots - is in
+# logging/elasticsearch, and the whole procedure is in
+# docs/elasticsearch-production.md.
+#
+# Two things have to be prepared on THIS machine before the mode starts:
+#
+#   1. logging/otel/es-ca.crt - the certificate authority of the store
+#      (logging/elasticsearch/certs/ca/ca.crt, copied over). Without it the
+#      collector refuses the connection: a private certificate is not
+#      verifiable against the system roots. Set LOGS_ELASTICSEARCH_CA_FILE
+#      to an empty value if the store has a publicly trusted certificate.
+#
+#   2. A writable directory for the sending queue, and the variables this mode
+#      added. Both come from an override file, in .env:
+#        COMPOSE_FILE=docker-compose.yml:logging/compose/logs-external.yml:logging/elasticsearch/docker-compose.collector-elasticsearch.yml
+#      plus the one time chown described in it.
+#
+# The bundled Loki and Grafana are not started in this mode - that is what the
+# logging/compose/logs-external.yml part of the line above does.
+
+extensions:
+  # The queue lives on disk, not in memory: a collector restart used to drop
+  # every batch it was holding, and the consumer had already been answered
+  # 2xx and XACKed the records, so those events existed nowhere else.
+  file_storage/es_queue:
+    directory: ${env:LOGS_ELASTICSEARCH_QUEUE_DIR:-/var/lib/otelcol/queue}
+    create_directory: true
+    # Compaction keeps the bbolt file from growing after a long outage that
+    # filled the queue and then drained it.
+    compaction:
+      on_start: true
+      directory: ${env:LOGS_ELASTICSEARCH_QUEUE_DIR:-/var/lib/otelcol/queue}
+
+exporters:
+  elasticsearch:
+    endpoints:
+      - ${env:LOGS_ELASTICSEARCH_URL}
+    # An API key, not a login. It carries its own role, so the key the
+    # collector holds can only append to the journal - see the writer role in
+    # logging/elasticsearch/provision. It expires on a date of its own, it is
+    # revoked one by one without touching anybody else, and rotating it is a
+    # variable change, not a password change (SOC DAT-05).
+    # LOGS_ELASTICSEARCH_USER/PASSWORD still work for a store that has no API
+    # keys enabled; set one pair or the other, never both.
+    api_key: ${env:LOGS_ELASTICSEARCH_API_KEY:-}
+    user: ${env:LOGS_ELASTICSEARCH_USER:-}
+    password: ${env:LOGS_ELASTICSEARCH_PASSWORD:-}
+    tls:
+      # Empty = the system certificate store, for a publicly trusted
+      # certificate. The default is the private CA of the store.
+      ca_file: ${env:LOGS_ELASTICSEARCH_CA_FILE:-/etc/otel/es-ca.crt}
+      # Never turn verification off here: the audit journal is exactly the
+      # traffic an interceptor would want to rewrite.
+      insecure_skip_verify: false
+    # The data stream, not an index. `logs-<dataset>.otel-<namespace>` is the
+    # naming Elasticsearch built-in templates recognise, and `.otel` is what
+    # tells it to expect OTel documents.
+    logs_index: ${env:LOGS_ELASTICSEARCH_INDEX:-logs-pneumatic.events.otel-default}
+    # Off on purpose: with dynamic routing the destination would depend on
+    # attributes of the record, and one wrong attribute would silently create
+    # a data stream outside the retention policy and outside the writer role.
+    logs_dynamic_index:
+      enabled: false
+    # OTel-native mapping keeps the attribute names of the event schema
+    # (event.type, actor.id, payload.*) instead of flattening them into ECS.
+    mapping:
+      mode: otel
+    # Retries of the bulk indexer: the documents Elasticsearch answered with
+    # 429 or 5xx are sent again. A hundred attempts with a minute between them
+    # is between one and two hours of patience - long enough for a restart, a
+    # merge storm or a disk that was freed by hand. The batch waits in the
+    # queue on disk meanwhile; when the queue fills, the collector starts
+    # answering the consumer with an error and the records stay in the Redis
+    # stream. Every step of that chain keeps the events.
+    retry:
+      enabled: true
+      max_retries: 100
+      initial_interval: 1s
+      max_interval: 60s
+    # No retry_on_failure here on purpose. The elasticsearch exporter accepts
+    # the setting and ignores it: measured on 0.160.0, an unreachable store
+    # (connection refused, name does not resolve) produces one attempt and
+    # then "Exporting failed. Dropping data. dropped_items: 1000", with and
+    # without the block, and with `retry` enabled or disabled. Transport
+    # failures are not retried at all - only answers from Elasticsearch are.
+    # The consequence: before restarting the store, stop the
+    # collector, and keep an alert on the drop counter.
+    sending_queue:
+      enabled: true
+      storage: file_storage/es_queue
+      # Records land on disk first and are grouped into bulk requests only
+      # when they are read back out, so a crash between "received" and "sent"
+      # costs nothing. (`flush` and `num_workers` of the exporter do the same
+      # in memory; since 0.160 they are deprecated and ignored.)
+      sizer: items
+      # Log records, not batches: 200 000 of them is about 300 MB of disk in
+      # the worst case. The store has to be unreachable for that long before
+      # the queue fills; after that the collector answers the consumer with an
+      # error, the records stay in the Redis stream and are redelivered.
+      queue_size: 200000
+      num_consumers: 2
+      batch:
+        # A full batch of 1000 records (~1.5 MB) leaves at once, a quiet
+        # installation still delivers within five seconds.
+        flush_timeout: 5s
+        min_size: 1000
+        max_size: 5000
+
+service:
+  # The list replaces the one from base.yaml, so health_check has to be
+  # repeated here.
+  extensions: [health_check, file_storage/es_queue]
+  telemetry:
+    metrics:
+      # Own metrics of the collector on :8888, reachable from the compose
+      # network. The default binds them to localhost inside the container,
+      # where nothing can scrape them - and the counter that says how many
+      # events were dropped lives exactly there:
+      #   otelcol_exporter_send_failed_log_records_total
+      #   otelcol_exporter_queue_size / otelcol_exporter_queue_capacity
+      # See the monitoring section of docs/elasticsearch-production.md.
+      readers:
+        - pull:
+            exporter:
+              prometheus:
+                host: 0.0.0.0
+                port: 8888
+  pipelines:
+    logs:
+      # No `batch` processor here, unlike the other two modes: it would hold
+      # up to a thousand records in memory in front of the queue, and those
+      # are exactly the records a restart must not lose. The exporter batches
+      # after the queue instead (sending_queue.batch).
+      receivers: [otlp]
+      processors: [memory_limiter]
+      exporters: [elasticsearch]

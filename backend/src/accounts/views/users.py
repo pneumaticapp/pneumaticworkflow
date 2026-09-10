@@ -60,6 +60,7 @@ from src.generics.permissions import (
     IsAuthenticated,
     UserIsAuthenticated,
 )
+from src.logs.events import AuditEventService
 from src.notifications.tasks import send_user_updated_notification
 from src.openapi import (
     ACCESS_ACCOUNT_OWNER,
@@ -351,6 +352,7 @@ class UsersViewSet(
         user = self.get_object()
         user.is_admin = not user.is_admin
         user.save(update_fields=['is_admin'])
+        AuditEventService.user_admin_toggled(request=request, user=user)
         self.identify(user)
         send_user_updated_notification.delay(
             logging=request.user.account.log_api_requests,

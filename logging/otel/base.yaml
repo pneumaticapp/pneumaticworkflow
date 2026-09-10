@@ -1,0 +1,29 @@
+# Common part of the OpenTelemetry Collector config for the Pneumatic event
+# pipeline. Always loaded together with a mode file:
+#   --config=/etc/otel/base.yaml --config=/etc/otel/backend-${LOGS_BACKEND:-local}.yaml
+# The mode file owns the exporters and the whole `service.pipelines.logs` block
+# (on merge lists are replaced, not appended).
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 200
+    spike_limit_mib: 50
+  batch:
+    send_batch_size: 1000
+    timeout: 2s
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+service:
+  extensions: [health_check]
+  telemetry:
+    logs:
+      level: warn
