@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useMemo } from 'react';
 import { useIntl } from 'react-intl';
+import classnames from 'classnames';
 
 import { DropdownList } from '../../../UI';
 import { getRuleOperators } from './utils';
@@ -44,7 +45,11 @@ export const RuleOperatorSelect = ({
       }}
       isClearable={false}
       options={fieldOperatorOptions}
-      classNames={{ menu: () => styles['rule-operator-select__menu'] }}
+      classNames={{
+        menu: () => styles['rule-operator-select__menu'],
+        option: ({ isSelected }: { isSelected: boolean }) =>
+          classnames(isSelected && styles['rule-operator-select__option_selected']),
+      }}
     />
   );
 };

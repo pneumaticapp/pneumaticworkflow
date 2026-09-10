@@ -45,6 +45,7 @@ export type TOperatorOption = {
 
 export type IFieldRuleBaseOperatorOption = {
   apiName: string;
+  value: string;
   label: string;
 };
 

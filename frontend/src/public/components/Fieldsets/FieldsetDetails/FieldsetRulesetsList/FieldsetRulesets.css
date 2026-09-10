@@ -80,6 +80,11 @@
   min-width: max-content;
 }
 
+.rule-operator-select .rule-operator-select__menu .rule-operator-select__option_selected {
+  /* stylelint-disable-next-line declaration-no-important */
+  color: var(--pneumatic-color-black32) !important;
+}
+
 .rule-value-input,
 .ruleset-message-input {
   padding: 0.8rem 1.2rem;

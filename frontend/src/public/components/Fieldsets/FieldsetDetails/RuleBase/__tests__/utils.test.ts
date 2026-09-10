@@ -157,6 +157,7 @@ describe('RuleBase utils', () => {
 
       expect(result.length).toBeGreaterThan(0);
       expect(result[0]).toHaveProperty('apiName');
+      expect(result[0]).toHaveProperty('value', result[0].apiName);
       expect(result[0]).toHaveProperty('label', 'Equal');
       expect(result[0]).not.toHaveProperty('name');
     });
@@ -166,6 +167,7 @@ describe('RuleBase utils', () => {
 
       expect(result.length).toBeGreaterThan(0);
       expect(result[0]).toHaveProperty('apiName');
+      expect(result[0]).toHaveProperty('value', result[0].apiName);
       expect(result[0]).toHaveProperty('label', 'Sum equal');
       expect(result[0]).not.toHaveProperty('name');
     });
@@ -175,6 +177,7 @@ describe('RuleBase utils', () => {
 
       expect(result.length).toBeGreaterThan(0);
       expect(result[0]).toHaveProperty('apiName');
+      expect(result[0]).toHaveProperty('value', result[0].apiName);
       expect(result[0]).toHaveProperty('label', 'Equal');
       expect(result[0]).not.toHaveProperty('name');
     });

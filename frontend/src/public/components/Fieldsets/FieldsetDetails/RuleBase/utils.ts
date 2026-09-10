@@ -30,6 +30,7 @@ export const getRuleOperators = (
 
   return options.map((option) => ({
     apiName: option.value,
+    value: option.value,
     label: formatMessage({ id: option.labelKey }),
   }));
 };
