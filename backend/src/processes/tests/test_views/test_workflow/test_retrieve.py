@@ -9,6 +9,9 @@ from django.test import override_settings
 
 from src.accounts.enums import BillingPlanType
 from src.processes.enums import (
+    FieldRuleOperator,
+    FieldRuleType,
+    FieldSetRuleOperator,
     FieldType,
     OwnerRole,
     OwnerType,
@@ -30,6 +33,8 @@ from src.processes.models.workflows.task import (
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.tests.fixtures import (
     create_test_account,
+    create_test_field_show_ruleset,
+    create_test_fieldset_template,
     create_test_admin,
     create_test_group,
     create_test_not_admin,
@@ -891,3 +896,90 @@ def test_workflow_retrieve__template_starter__is_read_only_viewer_true(
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
     assert data['is_read_only_viewer'] is True
+
+
+def test_workflow_retrieve__kickoff_field_rulesets__ok(api_client):
+
+    """ Kickoff fields carry their rulesets in the workflow detail """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    api_client.token_authenticate(user)
+    template = create_test_template(user=user, is_active=True, tasks_count=1)
+    field_template = FieldTemplate.objects.create(
+        account=account,
+        template=template,
+        kickoff=template.kickoff_instance,
+        name='Target',
+        type=FieldType.STRING,
+        order=0,
+        api_name='target-field-1',
+    )
+    ruleset_template, group_or_template, group_and_template = (
+        create_test_field_show_ruleset(
+            account=account,
+            template=template,
+            field=field_template,
+            source_field_api_name='source-field-1',
+            value='yes',
+        )
+    )
+    run_response = api_client.post(f'/templates/{template.id}/run')
+    workflow_id = run_response.data['id']
+
+    # act
+    response = api_client.get(f'/workflows/{workflow_id}')
+
+    # assert
+    assert response.status_code == status.HTTP_200_OK
+    field_data = response.data['kickoff']['output'][0]
+    ruleset_data = field_data['rulesets'][0]
+    assert ruleset_data['api_name'] == ruleset_template.api_name
+    assert ruleset_data['name'] == ruleset_template.name
+    assert ruleset_data['type'] == FieldRuleType.SHOW
+    assert ruleset_data['order'] == ruleset_template.order
+    group_or_data = ruleset_data['groups_or'][0]
+    assert group_or_data['api_name'] == group_or_template.api_name
+    group_and_data = group_or_data['groups_and'][0]
+    assert group_and_data['field'] == group_and_template.field
+    assert group_and_data['operator'] == FieldRuleOperator.EQUAL
+    assert group_and_data['value'] == 'yes'
+
+
+def test_workflow_retrieve__fieldset_rulesets__ok(api_client):
+
+    """ Fieldset-level rulesets are visible too, otherwise the rules
+        created on run would be invisible to the client """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    api_client.token_authenticate(user)
+    template = create_test_template(user=user, is_active=True, tasks_count=1)
+    fieldset_template = create_test_fieldset_template(
+        account=account,
+        template=template,
+        kickoff=template.kickoff_instance,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
+        rule_value='100',
+    )
+    ruleset_template = fieldset_template.rulesets.first()
+    group_and_template = (
+        ruleset_template.groups_or.first().groups_and.first()
+    )
+    run_response = api_client.post(f'/templates/{template.id}/run')
+    workflow_id = run_response.data['id']
+
+    # act
+    response = api_client.get(f'/workflows/{workflow_id}')
+
+    # assert
+    assert response.status_code == status.HTTP_200_OK
+    fieldset_data = response.data['kickoff']['fieldsets'][0]
+    ruleset_data = fieldset_data['rulesets'][0]
+    assert ruleset_data['api_name'] == ruleset_template.api_name
+    assert ruleset_data['order'] == ruleset_template.order
+    group_and_data = ruleset_data['groups_or'][0]['groups_and'][0]
+    assert group_and_data['operator'] == group_and_template.operator
+    assert group_and_data['value'] == group_and_template.value

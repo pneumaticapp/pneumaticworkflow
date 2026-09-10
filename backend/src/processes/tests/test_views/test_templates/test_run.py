@@ -31,6 +31,7 @@ from src.processes.enums import (
     WorkflowStatus,
     LabelPosition,
     FieldSetLayout, FieldSetRuleOperator,
+    FieldRuleType,
 )
 from src.processes.messages import workflow as messages
 from src.processes.messages.fieldset import MSG_FS_0002
@@ -52,6 +53,7 @@ from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.templates.raw_due_date import RawDueDateTemplate
 from src.processes.models.templates.template import Template
 from src.processes.models.workflows.event import WorkflowEvent
+from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.kickoff import KickoffValue
 from src.processes.models.workflows.task import TaskPerformer
 from src.processes.models.workflows.workflow import Workflow
@@ -68,6 +70,7 @@ from src.processes.services.workflows.workflow import (
     WorkflowService,
 )
 from src.processes.tests.fixtures import (
+    create_test_field_show_ruleset,
     create_test_account,
     create_test_admin,
     create_test_dataset,
@@ -5701,3 +5704,112 @@ def test_run__kickoff_fieldset_sum_equal__validation_error(
     assert response.data['message'] == MSG_FS_0002('100')
     wf_run_mock.assert_not_called()
     analytics_mock.assert_not_called()
+
+
+def test_run__field_show_rule_fails__hidden_in_response(api_client):
+
+    """ Show rules are evaluated right after the kickoff values are in,
+        so the very first response already carries the flag """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    api_client.token_authenticate(user)
+    template = create_test_template(user=user, is_active=True, tasks_count=1)
+    FieldTemplate.objects.create(
+        account=account,
+        template=template,
+        kickoff=template.kickoff_instance,
+        name='Source',
+        type=FieldType.STRING,
+        order=0,
+        api_name='source-field-1',
+    )
+    target_template = FieldTemplate.objects.create(
+        account=account,
+        template=template,
+        task=template.tasks.first(),
+        name='Target',
+        type=FieldType.STRING,
+        order=1,
+        api_name='target-field-1',
+    )
+    create_test_field_show_ruleset(
+        account=account,
+        template=template,
+        field=target_template,
+        source_field_api_name='source-field-1',
+        value='yes',
+    )
+
+    # act
+    response = api_client.post(
+        f'/templates/{template.id}/run',
+        data={'kickoff': {'source-field-1': 'no'}},
+    )
+
+    # assert
+    assert response.status_code == 200
+    target_field = TaskField.objects.get(
+        workflow_id=response.data['id'],
+        api_name='target-field-1',
+    )
+    assert target_field.is_hidden is True
+
+    # tasks in the run response go through a short serializer,
+    # the field itself is only visible on retrieve
+    task_id = response.data['tasks'][0]['id']
+    task_response = api_client.get(f'/v2/tasks/{task_id}')
+    field_data = task_response.data['output'][0]
+    assert field_data['is_hidden'] is True
+    assert len(field_data['rulesets']) == 1
+    assert field_data['rulesets'][0]['type'] == FieldRuleType.SHOW
+
+
+def test_run__kickoff_fieldset_show_rule_fails__hidden(api_client):
+
+    """ Note lives on a kickoff fieldset: no task FK, fieldset.task
+        is null. Show must still run on start. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    api_client.token_authenticate(user)
+    template = create_test_template(user=user, is_active=True, tasks_count=1)
+    FieldTemplate.objects.create(
+        account=account,
+        template=template,
+        kickoff=template.kickoff_instance,
+        name='Fieldset status',
+        type=FieldType.STRING,
+        order=0,
+        api_name='fieldset-status',
+    )
+    fieldset_template = create_test_fieldset_template(
+        account=account,
+        template=template,
+        kickoff=template.kickoff_instance,
+    )
+    note_template = fieldset_template.fields.first()
+    create_test_field_show_ruleset(
+        account=account,
+        template=template,
+        field=note_template,
+        source_field_api_name='fieldset-status',
+        value='yes',
+    )
+
+    # act
+    response = api_client.post(
+        f'/templates/{template.id}/run',
+        data={'kickoff': {'fieldset-status': 'no'}},
+    )
+
+    # assert
+    assert response.status_code == 200
+    note = TaskField.objects.get(
+        workflow_id=response.data['id'],
+        api_name=note_template.api_name,
+    )
+    assert note.is_hidden is True
+    assert note.task_id is None

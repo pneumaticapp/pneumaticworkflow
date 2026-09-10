@@ -3,6 +3,7 @@ from django.db.models import Q, UniqueConstraint
 
 from src.accounts.models import AccountBaseMixin
 from src.generics.managers import BaseSoftDeleteManager
+from src.generics.querysets import AccountBaseQuerySet
 from src.processes.enums import FieldRuleType, FieldRuleOperator
 from src.processes.models.base import BaseApiNameModel
 from src.processes.models.mixins import (
@@ -132,6 +133,13 @@ class FieldTemplateRuleSet(
                 condition=Q(is_deleted=False),
                 name='fieldtemplateruleset_field_api_name_unique',
             ),
+            # Fields of shared fieldsets have template_id IS NULL, and in
+            # Postgres NULL != NULL, so the constraint above never fires.
+            UniqueConstraint(
+                fields=['field', 'api_name', 'account'],
+                condition=Q(is_deleted=False, template__isnull=True),
+                name='fieldtemplateruleset_shared_api_name_unique',
+            ),
         ]
 
     api_name_prefix = 'field-ruleset'
@@ -159,6 +167,8 @@ class FieldTemplateRuleSet(
     )
     order = models.PositiveIntegerField(default=0)
 
+    objects = BaseSoftDeleteManager.from_queryset(AccountBaseQuerySet)()
+
     def __str__(self):
         return self.api_name
 
@@ -176,6 +186,11 @@ class FieldTemplateRuleGroupOr(
                 condition=Q(is_deleted=False),
                 name='rulegroupor_field_rule_api_name_unique',
             ),
+            UniqueConstraint(
+                fields=['ruleset', 'api_name', 'account'],
+                condition=Q(is_deleted=False, template__isnull=True),
+                name='rulegroupor_shared_api_name_unique',
+            ),
         ]
 
     api_name_prefix = 'field-rule-group-or'
@@ -191,6 +206,8 @@ class FieldTemplateRuleGroupOr(
         on_delete=models.CASCADE,
         related_name='groups_or',
     )
+
+    objects = BaseSoftDeleteManager.from_queryset(AccountBaseQuerySet)()
 
     def __str__(self):
         return self.api_name
@@ -208,6 +225,11 @@ class FieldTemplateRuleGroupAnd(
                 fields=['template', 'api_name', 'account'],
                 condition=Q(is_deleted=False),
                 name='rulegroupand_group_or_api_name_unique',
+            ),
+            UniqueConstraint(
+                fields=['group_or', 'api_name', 'account'],
+                condition=Q(is_deleted=False, template__isnull=True),
+                name='rulegroupand_shared_api_name_unique',
             ),
         ]
 
@@ -233,6 +255,8 @@ class FieldTemplateRuleGroupAnd(
         max_length=200,
         null=True,
     )
+
+    objects = BaseSoftDeleteManager.from_queryset(AccountBaseQuerySet)()
 
     def __str__(self):
         return self.api_name
