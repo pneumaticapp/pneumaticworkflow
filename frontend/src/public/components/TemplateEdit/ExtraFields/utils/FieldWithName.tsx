@@ -1,8 +1,8 @@
 import classnames from 'classnames';
 import * as React from 'react';
 import { ChangeEvent, forwardRef, KeyboardEvent, MutableRefObject, ReactNode, Ref, useCallback, useMemo } from 'react';
-
 import { Field, EFieldTagName } from '../../../Field';
+import { FieldsetRulesetsBadge } from '../../../Fieldsets/FieldsetRulesetsBadge/FieldsetRulesetsBadge';
 import { validateKickoffFieldName } from '../../../../utils/validators';
 import { EInputNameBackgroundColor } from '../../../../types/workflow';
 import { EExtraFieldMode, IExtraField } from '../../../../types/template';
@@ -50,7 +50,7 @@ const assignInputRef = (targetRef: Ref<HTMLInputElement> | undefined, node: HTML
 export const FieldWithName = forwardRef<HTMLInputElement, IKickoffFormFieldWithNameProps>(
   (
     {
-      field: { description = '', isRequired = false, name, value },
+      field: { description = '', isRequired = false, name, value, rulesets },
       inputClassName,
       icon,
       descriptionPlaceholder,
@@ -122,25 +122,40 @@ export const FieldWithName = forwardRef<HTMLInputElement, IKickoffFormFieldWithN
       [onClick, handleDescriptionWrapperKeyDown],
     );
 
+    const isLabelLeft = labelPosition === EFieldLabelPosition.Left;
+
     const fieldContainerClassName = classnames(
       styles['kick-off-input__field'],
-      labelPosition === EFieldLabelPosition.Left && styles['kick-off-input__field_label-left'],
+      isLabelLeft && styles['kick-off-input__field_label-left'],
+    );
+
+    const rulesetsBadge = <FieldsetRulesetsBadge rulesets={rulesets} />;
+
+    const fieldLabelElement = (
+      <FieldLabel
+        name={name}
+        isRequired={isRequired}
+        isDisabled={isDisabled}
+        mode={mode}
+        labelPosition={labelPosition}
+        labelBackgroundColor={labelBackgroundColor}
+        namePlaceholder={namePlaceholder}
+        handleChangeName={handleChangeName}
+        {...(labelClassName && { className: labelClassName })}
+      />
     );
 
     return (
       <div className={fieldContainerClassName} data-autofocus-first-field aria-label="field-container">
-        <FieldLabel
-          name={name}
-          isRequired={isRequired}
-          isDisabled={isDisabled}
-          mode={mode}
-          labelPosition={labelPosition}
-          labelBackgroundColor={labelBackgroundColor}
-          namePlaceholder={namePlaceholder}
-          handleChangeName={handleChangeName}
-          {...(labelClassName && { className: labelClassName })}
-        />
-        <div className={styles['kick-off-input__options-content_label-left']}>
+        {isLabelLeft ? (
+          <div className={styles['field-label-wrapper']} aria-label="label-col">
+            {fieldLabelElement}
+            {rulesetsBadge}
+          </div>
+        ) : (
+          fieldLabelElement
+        )}
+        <div className={styles['kick-off-input__options-content_label-left']} aria-label="options-content">
           <div className={styles['kick-off-input__description']} {...descriptionInteractiveProps}>
             <Field
               labelClassName="w-100"
@@ -165,6 +180,7 @@ export const FieldWithName = forwardRef<HTMLInputElement, IKickoffFormFieldWithN
             />
           </div>
           {children}
+          {!isLabelLeft && rulesetsBadge}
         </div>
       </div>
     );

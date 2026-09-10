@@ -4,6 +4,8 @@ from django.db import models
 from src.accounts.models import AccountBaseMixin
 from src.generics.managers import BaseSoftDeleteManager
 from src.generics.models import SoftDeleteModel
+from src.processes.enums import FieldRuleType, FieldRuleOperator
+from src.processes.models.base import BaseApiNameModel
 from src.processes.models.mixins import (
     ApiNameMixin,
     FieldMixin,
@@ -102,3 +104,92 @@ class FieldSelection(
 
     def __str__(self):
         return self.value
+
+
+class FieldRuleSet(
+    BaseApiNameModel,
+    AccountBaseMixin,
+):
+
+    class Meta:
+        ordering = ['order', 'id']
+
+    workflow = models.ForeignKey(
+        Workflow,
+        on_delete=models.CASCADE,
+        related_name='field_rulesets',
+    )
+    field = models.ForeignKey(
+        TaskField,
+        on_delete=models.CASCADE,
+        related_name='rulesets',
+    )
+    type = models.CharField(
+        max_length=50,
+        choices=FieldRuleType.CHOICES,
+    )
+    message = models.TextField(
+        null=True,
+        blank=True,
+        help_text='custom error message for a type="validator"',
+    )
+    order = models.PositiveIntegerField(default=0)
+
+    def __str__(self):
+        return self.api_name
+
+
+class FieldRuleGroupOr(
+    BaseApiNameModel,
+    AccountBaseMixin,
+):
+
+    class Meta:
+        ordering = ['id']
+
+    workflow = models.ForeignKey(
+        Workflow,
+        on_delete=models.CASCADE,
+        related_name='field_ruleset_groups_or',
+    )
+    ruleset = models.ForeignKey(
+        FieldRuleSet,
+        on_delete=models.CASCADE,
+        related_name='groups_or',
+    )
+
+    def __str__(self):
+        return self.api_name
+
+
+class FieldRuleGroupAnd(
+    BaseApiNameModel,
+    AccountBaseMixin,
+):
+
+    class Meta:
+        ordering = ['id']
+
+    api_name_prefix = 'field-rule-group-and'
+    group_or = models.ForeignKey(
+        FieldRuleGroupOr,
+        on_delete=models.CASCADE,
+        related_name='groups_and',
+    )
+    workflow = models.ForeignKey(
+        Workflow,
+        on_delete=models.CASCADE,
+        related_name='field_rules_group_and',
+    )
+    operator = models.CharField(
+        max_length=50,
+        choices=FieldRuleOperator.CHOICES,
+    )
+    value = models.CharField(max_length=200, null=True, blank=True)
+    field = models.CharField(
+        max_length=200,
+        null=True,
+    )
+
+    def __str__(self):
+        return self.api_name

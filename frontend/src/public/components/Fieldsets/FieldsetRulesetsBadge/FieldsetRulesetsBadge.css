@@ -1,0 +1,10 @@
+.rulesets-badge {
+  display: inline-block;
+  padding: 0.1rem 0.8rem;
+  margin-top: 0.8rem;
+  color: var(--pneumatic-color-black100);
+  background-color: var(--pneumatic-color-selection);
+  border-radius: 0.4rem;
+
+  @mixin text-small;
+}

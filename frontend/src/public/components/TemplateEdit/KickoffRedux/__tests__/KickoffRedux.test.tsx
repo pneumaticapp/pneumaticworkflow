@@ -4,9 +4,15 @@ import userEvent from '@testing-library/user-event';
 
 import { intlMock } from '../../../../__stubs__/intlMock';
 import { makeExtraField } from '../../../../__stubs__/fields.factory';
-import { makeFieldsetBindingClient, makeFieldsetField } from '../../../../__stubs__/fieldsets.factory';
-import { IExtraField, ITemplateKickoffClient, ITemplateClient } from '../../../../types/template';
-import { IFieldsetCatalogItem } from '../../../../types/fieldset';
+import {
+  makeFieldsetBindingClient,
+  makeFieldsetField,
+  makeFieldRuleSet,
+  makeFieldRuleGroupOr,
+  makeFieldRuleGroupAnd,
+} from '../../../../__stubs__/fieldsets.factory';
+import { IExtraField, ITemplateKickoffClient, ITemplateClient, EExtraFieldType } from '../../../../types/template';
+import { IFieldsetCatalogItem, EFieldRuleType, EFieldRuleOperator } from '../../../../types/fieldset';
 import { ETemplateStatus } from '../../../../types/redux';
 
 jest.mock('../../../../redux/selectors/fieldsets', () => ({
@@ -86,7 +92,37 @@ jest.mock('../../TaskOutputFlow/FieldsetIconPicker', () => ({
 }));
 
 jest.mock('../../TaskOutputFlow/MergedOutputRows', () => ({
-  MergedOutputRows: () => React.createElement('div', { 'data-testid': 'merged-rows' }),
+  MergedOutputRows: (props: {
+    onOpenFieldRules?: (fieldApiName: string) => void;
+    onDeleteField?: (fieldApiName: string) => void;
+    onDeleteFieldRuleset?: (fieldApiName: string, rulesetApiName: string) => void;
+  }) =>
+    React.createElement(
+      'div',
+      { 'data-testid': 'merged-rows' },
+      props.onOpenFieldRules &&
+        React.createElement(
+          'button',
+          { 'data-testid': 'open-field-rules-btn', onClick: () => props.onOpenFieldRules?.('field-1') },
+          'Open field rules',
+        ),
+      props.onDeleteField &&
+        React.createElement(
+          'button',
+          { type: 'button', onClick: () => props.onDeleteField?.('f-a') },
+          'Delete field f-a',
+        ),
+      props.onDeleteFieldRuleset &&
+        React.createElement(
+          'button',
+          { type: 'button', onClick: () => props.onDeleteFieldRuleset?.('field-1', 'ruleset-1') },
+          'Delete ruleset field-1',
+        ),
+    ),
+}));
+
+jest.mock('../../../Fieldsets/FieldsetDetails/FieldRuleModal', () => ({
+  FieldRuleModal: () => React.createElement('div', { 'data-testid': 'field-rule-modal' }),
 }));
 
 jest.mock('../../FieldsetOutputsPreview/FieldsetOutputsPreview', () => ({
@@ -306,6 +342,125 @@ describe('KickoffRedux', () => {
           fields: [],
           fieldsets: [],
           description: '',
+        }),
+      );
+    });
+  });
+
+  describe('field rule modal integration', () => {
+    it('passes onOpenFieldRules to MergedOutputRows and renders FieldRuleModal on click', () => {
+      renderKickoff({
+        kickoff: makeKickoff({
+          fields: [makeField({ apiName: 'field-1', rulesets: [makeFieldRuleSet()] })],
+        }),
+      });
+
+      userEvent.click(screen.getByTestId('kickoff-toggle'));
+
+      expect(screen.getByTestId('open-field-rules-btn')).toBeInTheDocument();
+
+      userEvent.click(screen.getByTestId('open-field-rules-btn'));
+
+      expect(screen.getByTestId('field-rule-modal')).toBeInTheDocument();
+    });
+
+    it('does not render FieldRuleModal when no field is active', () => {
+      renderKickoff({
+        kickoff: makeKickoff({
+          fields: [makeField({ apiName: 'field-1' })],
+        }),
+      });
+
+      userEvent.click(screen.getByTestId('kickoff-toggle'));
+
+      expect(screen.queryByTestId('field-rule-modal')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('field rules integration and ruleset cleanup on field deletion', () => {
+    it('calls setKickoff with updated fields when deleting a field ruleset', () => {
+      const fieldWithRules = makeField({
+        apiName: 'field-1',
+        type: EExtraFieldType.Text,
+        rulesets: [
+          makeFieldRuleSet({
+            apiName: 'ruleset-1',
+            type: EFieldRuleType.Show,
+            groupsOr: [],
+          }),
+        ],
+      });
+      const { setKickoff } = renderKickoff({
+        kickoff: makeKickoff({
+          fields: [fieldWithRules],
+        }),
+      });
+
+      userEvent.click(screen.getByTestId('kickoff-toggle'));
+      userEvent.click(screen.getByRole('button', { name: 'Delete ruleset field-1' }));
+
+      expect(setKickoff).toHaveBeenCalledTimes(1);
+      expect(setKickoff).toHaveBeenCalledWith(
+        expect.objectContaining({
+          fields: expect.arrayContaining([
+            expect.objectContaining({
+              apiName: 'field-1',
+              rulesets: [],
+            }),
+          ]),
+        }),
+      );
+    });
+
+    it('cleans up dependent rules from other fields via getFieldsWithFilteredRulesets when deleting a field', () => {
+      const fieldA = makeField({ apiName: 'f-a', order: 0 });
+      const fieldBWithRuleOnA = makeField({
+        apiName: 'f-b',
+        order: 1,
+        rulesets: [
+          makeFieldRuleSet({
+            apiName: 'ruleset-b',
+            type: EFieldRuleType.Show,
+            groupsOr: [
+              makeFieldRuleGroupOr({
+                apiName: 'or-1',
+                groupsAnd: [
+                  makeFieldRuleGroupAnd({
+                    apiName: 'and-1',
+                    field: 'f-a',
+                    operator: EFieldRuleOperator.Equal,
+                    value: 'test',
+                  }),
+                ],
+              }),
+            ],
+          }),
+        ],
+      });
+
+      const { setKickoff } = renderKickoff({
+        kickoff: makeKickoff({
+          fields: [fieldA, fieldBWithRuleOnA],
+        }),
+      });
+
+      userEvent.click(screen.getByTestId('kickoff-toggle'));
+      userEvent.click(screen.getByRole('button', { name: 'Delete field f-a' }));
+
+      expect(setKickoff).toHaveBeenCalledTimes(1);
+      expect(setKickoff).toHaveBeenCalledWith(
+        expect.objectContaining({
+          fields: expect.arrayContaining([
+            expect.objectContaining({
+              apiName: 'f-b',
+              rulesets: [],
+            }),
+          ]),
+        }),
+      );
+      expect(setKickoff).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          fields: expect.arrayContaining([expect.objectContaining({ apiName: 'f-a' })]),
         }),
       );
     });

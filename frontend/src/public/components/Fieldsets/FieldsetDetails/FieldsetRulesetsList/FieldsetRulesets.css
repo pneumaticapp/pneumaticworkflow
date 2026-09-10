@@ -1,0 +1,321 @@
+.rule-row {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.2rem;
+  align-items: center;
+  padding: 0 2.8rem 0.4rem 0;
+
+  &:hover .rule-remove-btn {
+    opacity: 1;
+  }
+}
+
+.rule-fields-selector {
+  display: flex;
+  flex-basis: 100%;
+  gap: 0.8rem;
+  align-items: center;
+}
+
+.rule-fields-tooltip-wrapper {
+  display: inline-flex;
+}
+
+.rule-fields-label {
+  font-weight: 600;
+  color: var(--pneumatic-color-black72);
+  white-space: nowrap;
+
+  @mixin text-base;
+}
+
+.rule-fields-select {
+  flex: 1;
+  min-width: 0;
+
+  [aria-disabled='true'] [class*='clear-button'],
+  [class*='clear-button'][aria-disabled='true'] {
+    display: none;
+  }
+
+  [class*='active-value'] {
+    font-weight: bold;
+    color: var(--pneumatic-color-black88);
+    opacity: 1;
+  }
+
+  [class*='filter-select_disabled'] {
+    opacity: 1;
+  }
+}
+
+.rule-type-label {
+  min-width: 10rem;
+  font-weight: 600;
+
+  @mixin text-base;
+}
+
+.rule-field-select {
+  flex-shrink: 0;
+  width: 18rem;
+}
+
+.rule-field-tooltip {
+  padding: 0.4rem 0.8rem;
+  text-align: center;
+}
+
+.rule-select-placeholder {
+  color: var(--pneumatic-color-black32);
+}
+
+.rule-operator-select {
+  flex-shrink: 0;
+  width: 19rem;
+}
+
+.rule-operator-select__menu {
+  min-width: max-content;
+}
+
+.rule-operator-select .rule-operator-select__menu .rule-operator-select__option_selected {
+  /* stylelint-disable-next-line declaration-no-important */
+  color: var(--pneumatic-color-black32) !important;
+}
+
+.rule-value-input,
+.ruleset-message-input {
+  padding: 0.8rem 1.2rem;
+  outline: none;
+  border: 0.1rem solid var(--pneumatic-color-black16);
+  border-radius: 0.8rem;
+  transition: border-color 0.2s;
+
+  @mixin text-base;
+
+  &:focus {
+    border-color: var(--pneumatic-color-blue);
+  }
+
+  &:disabled {
+    color: var(--pneumatic-color-black72);
+    cursor: default;
+    background-color: var(--pneumatic-color-black4);
+    border: 0.1rem solid transparent;
+    opacity: 1;
+  }
+}
+
+.rule-value-input {
+  flex: 1;
+}
+
+.rule-value-select {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+
+  [class*='react-datepicker__input-container'] input {
+    background-color: var(--pneumatic-color-white) !important; /* stylelint-disable-line declaration-no-important */
+  }
+}
+
+.rule-value-select-inner {
+  width: 100%;
+}
+
+.ruleset-message-input {
+  width: 100%;
+}
+
+.rule-option_disabled {
+  color: var(--pneumatic-color-black32);
+  cursor: not-allowed;
+}
+
+.ruleset-message-input_error,
+.rule-value-input_error {
+  /* stylelint-disable-next-line declaration-no-important */
+  border: 0.1rem solid var(--pneumatic-color-notification1) !important;
+}
+
+.rule-remove-btn {
+  position: absolute;
+  top: 1rem;
+  right: 0;
+  padding: 0;
+  color: var(--pneumatic-color-notification1);
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  opacity: 0;
+  transition: opacity 0.15s;
+
+  &:focus-visible {
+    opacity: 1;
+  }
+
+  @media (hover: none) {
+    opacity: 1;
+  }
+}
+
+.rule-item__combinator {
+  width: 10rem;
+  margin: 0.4rem 0 0.8rem;
+}
+
+.select-rule-combinator {
+  display: inline-block;
+  background: var(--pneumatic-color-black4);
+}
+
+.select-toggle {
+  width: auto;
+  font-weight: normal;
+  text-transform: uppercase;
+}
+
+.add-rule-btn {
+  display: block;
+  padding: 0;
+  font-size: 1.3rem;
+  line-height: 1.6rem;
+  color: var(--pneumatic-color-link-dark);
+  cursor: pointer;
+  background: none;
+  border: none;
+  transition: 0.1s ease-in-out all;
+
+  &:hover {
+    color: var(--pneumatic-color-link-hover);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.ruleset-card {
+  position: relative;
+  padding: 1.6rem;
+  margin-bottom: 1.6rem;
+  background-color: var(--pneumatic-color-white);
+  border: 0.1rem solid var(--pneumatic-color-black16);
+  border-radius: 1.2rem;
+}
+
+.ruleset-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-top: 1.2rem;
+}
+
+.ruleset-card__delete-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.6rem 1.2rem;
+  font-weight: 500;
+  color: var(--pneumatic-color-black72);
+  cursor: pointer;
+  background: transparent;
+  border: 0.1rem solid var(--pneumatic-color-black16);
+  border-radius: 0.8rem;
+  transition: all 0.2s ease;
+
+  @mixin text-base;
+
+  &:hover {
+    color: var(--pneumatic-color-black);
+    background-color: var(--pneumatic-color-black4);
+    border-color: var(--pneumatic-color-black32);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.ruleset-card__field {
+  display: flex;
+  gap: 0.8rem;
+  align-items: center;
+  margin-bottom: 1.2rem;
+}
+
+.ruleset-card__label {
+  display: block;
+  margin: 1.2rem 0 0.4rem;
+  font-size: 1.2rem;
+  font-weight: 500;
+  line-height: 1.6rem;
+  color: var(--pneumatic-color-black48);
+
+  &:first-of-type {
+    margin-top: 0;
+  }
+}
+
+.field-tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 0.8rem;
+}
+
+.field-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.4rem 0.8rem;
+  background-color: var(--pneumatic-color-black4);
+  border-radius: 1.6rem;
+
+  @mixin text-small;
+}
+
+.field-tag__name {
+  margin: 0;
+}
+
+.field-tag__close {
+  display: flex;
+  align-items: center;
+  margin-left: 0.4rem;
+  color: var(--pneumatic-color-black16);
+  cursor: pointer;
+  transition: color 0.1s ease;
+
+  &:hover {
+    color: var(--pneumatic-color-link-hover);
+  }
+}
+
+.add-ruleset-btn {
+  padding: 0.8rem 1.6rem;
+  margin-top: 1.6rem;
+  font-weight: 600;
+  color: var(--pneumatic-color-blue);
+  cursor: pointer;
+  background: none;
+  border: 0.1rem dashed var(--pneumatic-color-black16);
+  border-radius: 0.8rem;
+  transition: all 0.2s;
+
+  @mixin text-base;
+
+  &:hover:not(:disabled) {
+    background-color: var(--pneumatic-color-blue-light);
+    border-color: var(--pneumatic-color-blue);
+  }
+
+  &:disabled {
+    color: var(--pneumatic-color-black32);
+    cursor: default;
+    border-color: var(--pneumatic-color-black16);
+    opacity: 0.55;
+  }
+}

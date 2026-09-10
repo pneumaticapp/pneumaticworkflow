@@ -62,7 +62,6 @@ from src.processes.tests.fixtures import (
     create_test_owner,
     create_test_shared_fieldset,
     create_test_template,
-    create_test_user,
     create_test_workflow,
 )
 from src.utils.dates import date_format
@@ -190,20 +189,16 @@ def test_retrieve__delayed__ok(api_client, mocker):
 def test_retrieve__workflow_member__ok(api_client):
 
     # arrange
-    user = create_test_user()
-    another_user = create_test_user(
-        account=user.account,
-        email='admin@test.test',
-        is_account_owner=False,
-    )
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    another_user = create_test_admin(account=account)
     workflow = create_test_workflow(user)
     WorkflowPermissionService(workflow).grant_view(
         user=another_user,
         source_type=PermissionSource.PERFORMER,
         source_id=0,
     )
-    tasks = workflow.tasks.order_by('number')
-    task = tasks[0]
+    task = workflow.tasks.order_by('number').first()
     api_client.token_authenticate(another_user)
 
     # act
@@ -236,7 +231,7 @@ def test_retrieve__account_owner_not_wf_member__ok(api_client):
 def test_retrieve__admin_not_workflow_member__permission_denied(api_client):
 
     # arrange
-    account = create_test_account(plan=BillingPlanType.PREMIUM)
+    account = create_test_account()
     user = create_test_owner(account=account)
     another_user = create_test_admin(account=account)
     workflow = create_test_workflow(user=user)
@@ -687,6 +682,58 @@ def test_retrieve__performers_type_field__ok(api_client):
             'date_completed_tsp': None,
         },
     ]
+
+
+def test_retrieve__performer_type_group_user__skip(api_client, mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    group = create_test_group(account=account, users=[user])
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task.taskperformer_set.all().delete()
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        group_id=group.id,
+        type=PerformerType.GROUP,
+    )
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        user_id=user.id,
+        type=PerformerType.GROUP_USER,
+    )
+    task.due_date = task.date_first_started + timedelta(hours=24)
+    task.save(update_fields=['due_date'])
+
+    identify_mock = mocker.patch(
+        'src.processes.views.task.TaskViewSet.'
+        'identify',
+    )
+    group_mock = mocker.patch(
+        'src.processes.views.task.TaskViewSet.'
+        'group',
+    )
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.get(f'/v2/tasks/{task.id}')
+
+    # assert
+    assert response.status_code == 200
+    performers = response.data['performers']
+    assert len(performers) == 1
+    assert performers == [
+        {
+            'source_id': group.id,
+            'type': PerformerType.GROUP,
+            'is_completed': False,
+            'date_completed_tsp': None,
+        },
+    ]
+    identify_mock.assert_not_called()
+    group_mock.assert_not_called()
 
 
 def test_retrieve__is_urgent__ok(api_client):
@@ -1650,8 +1697,7 @@ def test_retrieve__user_is_member_in_deleted_task__not_found(api_client):
     # arrange
     user = create_test_owner()
     admin = create_test_admin(account=user.account)
-    api_client.token_authenticate(admin)
-    workflow = create_test_workflow(user, tasks_count=1)
+    workflow = create_test_workflow(user=user, tasks_count=1)
     WorkflowPermissionService(workflow).grant_view(
         user=admin,
         source_type=PermissionSource.PERFORMER,
@@ -2031,6 +2077,8 @@ def test_retrieve__task_performer__is_read_only_viewer_false(
         'group',
     )
 
+    api_client.token_authenticate(performer_user)
+
     # act
     response = api_client.get(f'/v2/tasks/{task.id}')
 
@@ -2055,13 +2103,7 @@ def test_retrieve__workflow_member__ok_read_only(
     template = create_test_template(user=template_owner)
     workflow = create_test_workflow(template=template, user=template_owner)
     task = workflow.tasks.get(number=1)
-
-    member_user = create_test_user(
-        account=account,
-        email='member@test.com',
-        is_account_owner=False,
-        is_admin=False,
-    )
+    member_user = create_test_not_admin(account=account)
     WorkflowPermissionService(workflow).grant_view(
         user=member_user,
         source_type=PermissionSource.PERFORMER,
@@ -2078,6 +2120,8 @@ def test_retrieve__workflow_member__ok_read_only(
         'src.processes.views.task.TaskViewSet.'
         'group',
     )
+
+    api_client.token_authenticate(member_user)
 
     # act
     response = api_client.get(f'/v2/tasks/{task.id}')

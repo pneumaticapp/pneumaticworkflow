@@ -69,7 +69,7 @@ jest.mock('../../icons', () => ({
 
 const makeField = (overrides: Partial<IExtraField> = {}) =>
   makeExtraField({
-    apiName: `f-${Math.random()}`,
+    apiName: `field-${Math.random()}`,
     ...overrides,
   });
 
@@ -125,7 +125,7 @@ describe('WorkflowEditPopup', () => {
       ...baseWorkflow,
       kickoff: {
         description: '',
-        fields: [makeField({ apiName: 'f1', order: 1 })],
+        fields: [makeField({ apiName: 'field-1', order: 1 })],
         fieldsets: [],
       },
       loadedFieldsets,
@@ -138,7 +138,7 @@ describe('WorkflowEditPopup', () => {
     expect(MergedOutputList).toHaveBeenCalledTimes(1);
     expect(MergedOutputList).toHaveBeenCalledWith(
       expect.objectContaining({
-        fields: expect.arrayContaining([expect.objectContaining({ apiName: 'f1' })]),
+        fields: expect.arrayContaining([expect.objectContaining({ apiName: 'field-1' })]),
         fieldsets: loadedFieldsets,
       }),
       expect.anything(),
@@ -191,6 +191,61 @@ describe('WorkflowEditPopup', () => {
     );
   });
 
+  describe('Fieldsets: hidden-field filtering', () => {
+    it('filters out isHidden fields inside fieldsets before passing to MergedOutputList', () => {
+      const workflow = {
+        ...baseWorkflow,
+        kickoff: {
+          description: '',
+          fields: [],
+          fieldsets: [],
+        },
+        loadedFieldsets: [
+          makeFieldset({
+            name: 'Group 1',
+            fields: [
+              makeField({ apiName: 'fieldset-hidden-1', isHidden: true }),
+              makeField({ apiName: 'fieldset-visible-1', isHidden: false }),
+            ],
+          }),
+        ],
+      };
+
+      renderWithIntl(<WorkflowEditPopup {...baseProps} workflow={workflow} />);
+
+      const callArgs = (MergedOutputList as jest.Mock).mock.calls[0][0];
+      expect(callArgs.fieldsets).toHaveLength(1);
+      expect(callArgs.fieldsets[0].fields).toHaveLength(1);
+      expect(callArgs.fieldsets[0].fields[0].apiName).toBe('fieldset-visible-1');
+    });
+
+    it('preserves fieldset structure with empty fields array if all internal fields are hidden', () => {
+      const workflow = {
+        ...baseWorkflow,
+        kickoff: {
+          description: '',
+          fields: [],
+          fieldsets: [],
+        },
+        loadedFieldsets: [
+          makeFieldset({
+            name: 'All Hidden Group',
+            fields: [
+              makeField({ apiName: 'fieldset-hidden-1', isHidden: true }),
+              makeField({ apiName: 'fieldset-hidden-2', isHidden: true }),
+            ],
+          }),
+        ],
+      };
+
+      renderWithIntl(<WorkflowEditPopup {...baseProps} workflow={workflow} />);
+
+      const callArgs = (MergedOutputList as jest.Mock).mock.calls[0][0];
+      expect(callArgs.fieldsets).toHaveLength(1);
+      expect(callArgs.fieldsets[0].fields).toHaveLength(0);
+    });
+  });
+
   it('disables Start button when fieldset contains an empty required field', () => {
     const workflow = {
       ...baseWorkflow,
@@ -233,6 +288,48 @@ describe('WorkflowEditPopup', () => {
 
     const startButton = screen.getByRole('button', { name: START_LABEL });
     expect(startButton).not.toBeDisabled();
+  });
+
+  describe('Validation: hidden required fields do not block workflow start', () => {
+    it('enables Start button when an empty required field in kickoff is hidden (isHidden: true)', () => {
+      const workflow = {
+        ...baseWorkflow,
+        kickoff: {
+          description: '',
+          fields: [
+            makeField({ apiName: 'f1', value: 'filled' }),
+            makeField({ apiName: 'f-hidden-required', isRequired: true, isHidden: true, value: '' }),
+          ],
+          fieldsets: [],
+        },
+      };
+
+      renderWithIntl(<WorkflowEditPopup {...baseProps} workflow={workflow} />);
+
+      const startButton = screen.getByRole('button', { name: START_LABEL });
+      expect(startButton).not.toBeDisabled();
+    });
+
+    it('enables Start button when an empty required field in fieldset is hidden (isHidden: true)', () => {
+      const workflow = {
+        ...baseWorkflow,
+        kickoff: {
+          description: '',
+          fields: [makeField({ apiName: 'f1', value: 'filled' })],
+          fieldsets: [],
+        },
+        loadedFieldsets: [
+          makeFieldset({
+            fields: [makeField({ apiName: 'fs-hidden-required', isRequired: true, isHidden: true, value: '' })],
+          }),
+        ],
+      };
+
+      renderWithIntl(<WorkflowEditPopup {...baseProps} workflow={workflow} />);
+
+      const startButton = screen.getByRole('button', { name: START_LABEL });
+      expect(startButton).not.toBeDisabled();
+    });
   });
 
   it('passes showInsertButton=false to InputWithVariables', () => {

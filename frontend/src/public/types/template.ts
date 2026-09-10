@@ -7,7 +7,7 @@ import {
 } from '../components/TemplateEdit/TaskForm/Conditions';
 import { TUploadedFile } from '../utils/uploadFiles';
 import { TSystemField } from '../components/Workflows/WorkflowsTablePage/WorkflowsTable/types';
-import { IFieldsetBinding, IFieldsetBindingClient, IFieldsetBindingMeta, IFieldsetRuntime } from './fieldset';
+import { IFieldsetBinding, IFieldsetBindingClient, IFieldsetBindingMeta, IFieldsetRuntime, IFieldRuleSet } from './fieldset';
 
 export type { IFieldsetBindingClient } from './fieldset';
 
@@ -300,6 +300,7 @@ export interface IExtraField {
   order: number;
   userId: number | null;
   groupId: number | null;
+  rulesets?: IFieldRuleSet[];
 }
 
 export type TExtraFieldValue = TExtraFieldSingleValue | TExtraFieldMultipleValue | TExtraFieldTimestampValue | null;

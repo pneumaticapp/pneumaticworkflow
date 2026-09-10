@@ -4,10 +4,16 @@ import userEvent from '@testing-library/user-event';
 
 import { intlMock } from '../../../../__stubs__/intlMock';
 import { makeExtraField } from '../../../../__stubs__/fields.factory';
-import { makeFieldsetBindingClient, makeFieldsetCatalogItem } from '../../../../__stubs__/fieldsets.factory';
+import {
+  makeFieldsetBindingClient,
+  makeFieldsetCatalogItem,
+  makeFieldRuleSet,
+  makeFieldRuleGroupOr,
+  makeFieldRuleGroupAnd,
+} from '../../../../__stubs__/fieldsets.factory';
 import { makeTemplateTaskClient } from '../../../../__stubs__/templates.factory';
-import { IExtraField, ITemplateTaskClient } from '../../../../types/template';
-import { IFieldsetCatalogItem } from '../../../../types/fieldset';
+import { IExtraField, ITemplateTaskClient, EExtraFieldType } from '../../../../types/template';
+import { IFieldsetCatalogItem, EFieldRuleType, EFieldRuleOperator } from '../../../../types/fieldset';
 
 jest.mock('../../../../redux/selectors/fieldsets', () => ({
   getFieldsetsCatalogItems: jest.fn(() => []),
@@ -62,6 +68,8 @@ jest.mock('../../TaskOutputFlow/MergedOutputRows', () => ({
     onMoveRow: (index: number, direction: 'up' | 'down') => void;
     onEditField: (apiName: string) => (changed: Partial<IExtraField>) => void;
     onRemoveFieldset: (apiNameBinding: string) => void;
+    onOpenFieldRules?: (fieldApiName: string) => void;
+    onDeleteFieldRuleset?: (fieldApiName: string, rulesetApiName: string) => void;
   }) =>
     React.createElement(
       'div',
@@ -84,6 +92,22 @@ jest.mock('../../TaskOutputFlow/MergedOutputRows', () => ({
                 onClick: () => props.onEditField(apiName)({ name: 'EditedName' }),
               },
               `Edit ${apiName}`,
+            ),
+            React.createElement(
+              'button',
+              {
+                type: 'button',
+                onClick: () => props.onOpenFieldRules?.(apiName),
+              },
+              `Open rules ${apiName}`,
+            ),
+            React.createElement(
+              'button',
+              {
+                type: 'button',
+                onClick: () => props.onDeleteFieldRuleset?.(apiName, 'ruleset-1'),
+              },
+              `Delete ruleset ${apiName}`,
             ),
             React.createElement(
               'button',
@@ -121,6 +145,22 @@ jest.mock('../../TaskOutputFlow/MergedOutputRows', () => ({
           ),
         );
       }),
+    ),
+}));
+
+jest.mock('../../../Fieldsets/FieldsetDetails/FieldRuleModal', () => ({
+  FieldRuleModal: (props: { isOpen?: boolean; fieldType?: EExtraFieldType; onClose?: () => void }) =>
+    React.createElement(
+      'div',
+      { 'data-testid': 'field-rule-modal' },
+      React.createElement(
+        'button',
+        {
+          type: 'button',
+          onClick: () => props.onClose?.(),
+        },
+        'Close rule modal',
+      ),
     ),
 }));
 
@@ -325,6 +365,113 @@ describe('OutputFormTaskMerged', () => {
       expect(fsPatch).toBeDefined();
       expect(fsPatch.order).toBe(1);
       expect(field.order).toBe(0);
+    });
+  });
+
+  describe('field rules integration and ruleset cleanup on field deletion', () => {
+    it('opens FieldRuleModal when onOpenFieldRules is called', () => {
+      const field = makeField({ apiName: 'f-1', type: EExtraFieldType.Text });
+      renderForm({
+        task: makeTask({ fields: [field], fieldsets: [] }),
+      });
+
+      expect(screen.queryByTestId('field-rule-modal')).not.toBeInTheDocument();
+
+      userEvent.click(screen.getByRole('button', { name: 'Open rules f-1' }));
+      expect(screen.getByTestId('field-rule-modal')).toBeInTheDocument();
+    });
+
+    it('closes FieldRuleModal when onClose is called', () => {
+      const field = makeField({ apiName: 'f-1', type: EExtraFieldType.Text });
+      renderForm({
+        task: makeTask({ fields: [field], fieldsets: [] }),
+      });
+
+      userEvent.click(screen.getByRole('button', { name: 'Open rules f-1' }));
+      expect(screen.getByTestId('field-rule-modal')).toBeInTheDocument();
+
+      userEvent.click(screen.getByRole('button', { name: 'Close rule modal' }));
+      expect(screen.queryByTestId('field-rule-modal')).not.toBeInTheDocument();
+    });
+
+    it('sends PATCH with updated fields when deleting a field ruleset', () => {
+      const fieldWithRules = makeField({
+        apiName: 'f-1',
+        type: EExtraFieldType.Text,
+        rulesets: [
+          makeFieldRuleSet({
+            apiName: 'ruleset-1',
+            type: EFieldRuleType.Show,
+            groupsOr: [],
+          }),
+        ],
+      });
+      const { patchTask } = renderForm({
+        task: makeTask({ fields: [fieldWithRules], fieldsets: [] }),
+      });
+
+      userEvent.click(screen.getByRole('button', { name: 'Delete ruleset f-1' }));
+
+      expect(patchTask).toHaveBeenCalledTimes(1);
+      expect(patchTask).toHaveBeenCalledWith({
+        taskUUID: 'task-uuid',
+        changedFields: {
+          fields: expect.arrayContaining([
+            expect.objectContaining({
+              apiName: 'f-1',
+              rulesets: [],
+            }),
+          ]),
+        },
+      });
+    });
+
+    it('cleans up dependent rules from other fields via getFieldsWithFilteredRulesets when deleting a field', () => {
+      const fieldA = makeField({ apiName: 'f-a', order: 0 });
+      const fieldBWithRuleOnA = makeField({
+        apiName: 'f-b',
+        order: 1,
+        rulesets: [
+          makeFieldRuleSet({
+            apiName: 'ruleset-b',
+            type: EFieldRuleType.Show,
+            groupsOr: [
+              makeFieldRuleGroupOr({
+                apiName: 'or-1',
+                groupsAnd: [
+                  makeFieldRuleGroupAnd({
+                    apiName: 'and-1',
+                    field: 'f-a',
+                    operator: EFieldRuleOperator.Equal,
+                    value: 'test',
+                  }),
+                ],
+              }),
+            ],
+          }),
+        ],
+      });
+
+      const { patchTask } = renderForm({
+        task: makeTask({ fields: [fieldA, fieldBWithRuleOnA], fieldsets: [] }),
+      });
+
+      userEvent.click(screen.getByRole('button', { name: 'Delete f-a' }));
+
+      expect(patchTask).toHaveBeenCalledTimes(1);
+      const patchArg = patchTask.mock.calls[0][0];
+      expect(patchArg.taskUUID).toBe('task-uuid');
+      expect(patchArg.changedFields.fields).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            apiName: 'f-b',
+            rulesets: [],
+          }),
+        ]),
+      );
+      expect(patchArg.changedFields.fields).not.toEqual(
+        expect.arrayContaining([expect.objectContaining({ apiName: 'f-a' })]),
+      );
     });
   });
 });

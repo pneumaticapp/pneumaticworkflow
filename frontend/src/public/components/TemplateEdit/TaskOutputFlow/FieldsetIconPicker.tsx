@@ -41,7 +41,7 @@ const buildCatalogPickerRows = (catalogFieldsetItems: IFieldsetCatalogItem[]): I
     apiName: catalogFieldsetItem.apiName,
     name: catalogFieldsetItem.name,
     fieldsCount: catalogFieldsetItem.fields.length,
-    rulesCount: catalogFieldsetItem.rules.length,
+    rulesCount: catalogFieldsetItem.rulesets?.length || 0,
     order: catalogFieldsetItem.order,
   }));
   rows.sort((a, b) => {

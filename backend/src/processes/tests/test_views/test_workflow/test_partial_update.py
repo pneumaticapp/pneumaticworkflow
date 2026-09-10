@@ -23,13 +23,12 @@ from src.authentication.enums import AuthTokenType
 from src.generics.messages import MSG_GE_0007
 from src.processes.enums import (
     DueDateRule,
-    FieldSetRuleType,
     FieldType,
     OwnerRole,
     OwnerType,
     PerformerType,
     TaskStatus,
-    WorkflowEventType,
+    WorkflowEventType, FieldSetRuleOperator,
 )
 from src.processes.messages.fieldset import MSG_FS_0002
 from src.processes.messages.workflow import (
@@ -552,7 +551,7 @@ class TestPartialUpdateWorkflow:
         self,
     ):
         """
-        Field updates and fieldset rule validation run in one transaction.
+        Field updates and fieldset ruleset validation run in one transaction.
         If validate_rules fails, earlier TaskField values are not persisted.
         """
         # arrange
@@ -563,7 +562,7 @@ class TestPartialUpdateWorkflow:
         fieldset = create_test_fieldset(
             workflow=workflow,
             kickoff=kickoff,
-            rule_type=FieldSetRuleType.SUM_EQUAL,
+            rule_operator=FieldSetRuleOperator.SUM_EQUAL,
             rule_value='100',
             api_name='kickoff-fieldset',
         )
@@ -580,8 +579,8 @@ class TestPartialUpdateWorkflow:
             api_name='kickoff-fieldset-field-2',
             value='40',
         )
-        rule = fieldset.rules.first()
-        rule.fields.add(field_1, field_2)
+        ruleset = fieldset.rulesets.first()
+        ruleset.fields.add(field_1, field_2)
         serializer = KickoffValueSerializer(
             instance=kickoff,
             data={

@@ -13,7 +13,7 @@ UserModel = get_user_model()
 class ConditionMixin:
 
     @staticmethod
-    def create_rules(
+    def create_rulesets(
         conditions,
         conditions_tree,
     ):
