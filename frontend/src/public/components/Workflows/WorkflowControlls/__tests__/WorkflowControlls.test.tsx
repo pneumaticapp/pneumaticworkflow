@@ -21,11 +21,9 @@ type TResumeCase = {
 
 describe('WorkflowControllsComponents', () => {
   const RESUME_LABEL = enMessages['workflows.card-resume'];
-  const authUser = { id: 1, isAccountOwner: true, isAdmin: false };
   const createWorkflow = (status: EWorkflowStatus) => {
     const workflow: Partial<IWorkflowClient> = {
       id: 1,
-      owners: [authUser.id],
       status,
       isUrgent: false,
       finalizable: true,
@@ -52,7 +50,8 @@ describe('WorkflowControllsComponents', () => {
 
   beforeEach(() => {
     (useDispatch as jest.Mock).mockReturnValue(jest.fn());
-    (useSelector as jest.Mock).mockReturnValue({ authUser });
+    // The only value the component reads from the store is "may this user change the workflow".
+    (useSelector as jest.Mock).mockReturnValue(true);
   });
 
   const cases: TResumeCase[] = [
@@ -77,5 +76,19 @@ describe('WorkflowControllsComponents', () => {
     renderResumeOption(status);
 
     expect(screen.getByLabelText(RESUME_LABEL)).toHaveAttribute('data-hidden', String(isHidden));
+  });
+
+  it('renders no options while the permissions answer for the workflow has not arrived', () => {
+    (useSelector as jest.Mock).mockReturnValue(false);
+
+    const renderChildren = jest.fn(() => null);
+
+    render(
+      <WorkflowControllsComponents workflow={createWorkflow(EWorkflowStatus.Snoozed)} timezone="UTC">
+        {renderChildren}
+      </WorkflowControllsComponents>,
+    );
+
+    expect(renderChildren).toHaveBeenCalledWith([]);
   });
 });
