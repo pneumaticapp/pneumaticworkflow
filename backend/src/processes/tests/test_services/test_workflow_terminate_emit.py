@@ -154,8 +154,6 @@ def test_terminate_workflow__api_key_auth__emit_api_key_actor_type(
 
 def test_terminate_workflow__deleted_workflow__event_keeps_the_name(
     mocker,
-    events_enabled,
-    run_on_commit,
     fake_stream,
 ):
 

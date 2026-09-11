@@ -4,6 +4,7 @@ from datetime import UTC, datetime, timedelta, timezone
 
 from src.shared_kernel.events.schema import (
     FILE_PII,
+    STREAM_KEY,
     Actor,
     ActorType,
     format_ts,
@@ -63,6 +64,30 @@ def test_to_dict__download_record__matches_backend_contract(
     assert result == backend_contract_record
 
 
+def test_to_dict__upload_record__matches_backend_contract(
+    sample_upload_event,
+    backend_upload_contract_record,
+):
+    # act
+    result = sample_upload_event.to_dict()
+
+    # assert
+    assert result == backend_upload_contract_record
+
+
+def test_to_dict__denied_record__matches_backend_contract(
+    sample_denied_event,
+    backend_denied_contract_record,
+):
+    """A refusal names the account of the file when it is foreign."""
+
+    # act
+    result = sample_denied_event.to_dict()
+
+    # assert
+    assert result == backend_denied_contract_record
+
+
 def test_to_dict__any_record__personal_fields_declared(sample_event):
     # act
     result = sample_event.to_dict()
@@ -101,3 +126,23 @@ def test_actor_to_dict__public_token__no_user():
 
     # assert
     assert result == {'type': 'guest', 'id': None, 'email': None}
+
+
+def test_stream_key__backend_contract__same_stream(backend_service_contract):
+    """A rename here would write records the backend never reads."""
+
+    # act
+    result = STREAM_KEY
+
+    # assert
+    assert result == backend_service_contract['stream_key']
+
+
+def test_actor_type__backend_contract__same_values(backend_service_contract):
+    """A type the backend does not declare must not reach the stream."""
+
+    # act
+    result = sorted(member.value for member in ActorType)
+
+    # assert
+    assert result == sorted(backend_service_contract['actor_types'])

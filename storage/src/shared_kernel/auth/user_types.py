@@ -15,8 +15,10 @@ class UserType(StrEnum):
 class ActorType(StrEnum):
     """Who acted, in the vocabulary of the backend (ActorType there).
 
-    Part of the event contract, checked by the backend test
-    src/logs/events/tests/test_file_service_contract.py.
+    Part of the event contract: file_service_contract.json in the
+    backend fixtures lists these values, test_events_schema.py pins
+    them here and test_file_service_contract.py checks that the backend
+    declares every one of them.
     """
 
     USER = 'user'

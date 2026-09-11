@@ -72,8 +72,6 @@ def test_destroy__template__emit_template_delete(
 def test_destroy__template__event_keeps_request_context(
     mocker,
     api_client,
-    events_enabled,
-    run_on_commit,
     fake_stream,
 ):
 

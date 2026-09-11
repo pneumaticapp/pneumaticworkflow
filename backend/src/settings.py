@@ -16,7 +16,12 @@ from urllib.parse import urlparse
 from configurations import Configuration, values
 from django.core.exceptions import ImproperlyConfigured
 from corsheaders.defaults import default_headers
-from src.logs.enums import LogsBackend
+from src.logs.enums import (
+    DEFAULT_CONSUMER_BATCH_SIZE,
+    DEFAULT_CONSUMER_IDLE_MS,
+    DEFAULT_CONSUMER_INTERVAL_SECONDS,
+    LogsBackend,
+)
 from src.notifications.enums import EmailProvider
 
 
@@ -534,7 +539,15 @@ class Common(Configuration):
         'src.analysis.tasks',
     ]
 
-    LOGS_BACKEND = env.get('LOGS_BACKEND', LogsBackend.LOCAL)
+    LOGS_BACKEND = env.get('LOGS_BACKEND', LogsBackend.NONE)
+    if LOGS_BACKEND not in LogsBackend.VALUES:
+
+        # A typo would silently behave like an unknown backend: emit()
+        # keeps writing, the collector gets a config nobody wrote.
+        raise ImproperlyConfigured(
+            f'LOGS_BACKEND is "{LOGS_BACKEND}", expected one of: '
+            f'{", ".join(sorted(LogsBackend.VALUES))}.',
+        )
     LOGS_REDIS_URL = env.get('LOGS_REDIS_URL', '')
     LOGS_OTLP_ENDPOINT = env.get(
         'LOGS_OTLP_ENDPOINT',
@@ -543,8 +556,11 @@ class Common(Configuration):
     LOGS_STREAM_KEY = 'pneumatic:events'
     LOGS_STREAM_MAXLEN = int(env.get('LOGS_STREAM_MAXLEN', '250000'))
     LOGS_CONSUMER_GROUP = 'otlp'
-    LOGS_CONSUMER_BATCH_SIZE = int(env.get('LOGS_CONSUMER_BATCH_SIZE', '1000'))
-    LOGS_CONSUMER_IDLE_MS = 60000
+    LOGS_CONSUMER_BATCH_SIZE = int(
+        env.get('LOGS_CONSUMER_BATCH_SIZE', DEFAULT_CONSUMER_BATCH_SIZE),
+    )
+    LOGS_CONSUMER_IDLE_MS = DEFAULT_CONSUMER_IDLE_MS
+    LOGS_CONSUMER_INTERVAL_SECONDS = DEFAULT_CONSUMER_INTERVAL_SECONDS
     LOGS_SERVICE_NAME = 'pneumatic-backend'
     LOGS_SERVICE_VERSION = env.get('RELEASE', '0.0.0')
     LOGS_STRICT = False
@@ -742,7 +758,6 @@ class Development(Common):
             },
         },
     }
-
 
 
 class Staging(Development):

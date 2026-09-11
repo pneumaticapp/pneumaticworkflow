@@ -1,3 +1,7 @@
+from importlib import import_module
+
+import pytest
+
 from src.processes.enums import WorkflowEventType
 
 
@@ -60,7 +64,16 @@ def test_literals__every_declared_constant__accepted():
     assert declared - accepted == set()
 
 
-def test_highlight_types__hidden_types__excluded():
+@pytest.mark.parametrize('hidden_type', (
+    WorkflowEventType.TASK_START,
+    WorkflowEventType.DELAY,
+    WorkflowEventType.TASK_SKIP,
+    WorkflowEventType.ENDED_BY_CONDITION,
+    WorkflowEventType.TASK_SKIP_NO_PERFORMERS,
+    WorkflowEventType.TASK_DELAY,
+    WorkflowEventType.TASK_DELEGATION,
+))
+def test_highlight_types__hidden_type__excluded(hidden_type):
 
     """ The seven types the highlights feed hides on purpose. The
         frontend allow list (Highlights/FeedItem.tsx) leaves out the
@@ -69,22 +82,11 @@ def test_highlight_types__hidden_types__excluded():
         HIGHLIGHT_TYPES would compare the constant with a copy of
         itself. """
 
-    # arrange
-    hidden = {
-        WorkflowEventType.TASK_START,
-        WorkflowEventType.DELAY,
-        WorkflowEventType.TASK_SKIP,
-        WorkflowEventType.ENDED_BY_CONDITION,
-        WorkflowEventType.TASK_SKIP_NO_PERFORMERS,
-        WorkflowEventType.TASK_DELAY,
-        WorkflowEventType.TASK_DELEGATION,
-    }
-
     # act
-    unexpected = hidden.intersection(WorkflowEventType.HIGHLIGHT_TYPES)
+    included = hidden_type in WorkflowEventType.HIGHLIGHT_TYPES
 
     # assert
-    assert unexpected == set()
+    assert included is False
 
 
 def test_highlight_types__every_other_type__included():
@@ -113,9 +115,37 @@ def test_highlight_types__every_other_type__included():
 
 def test_highlight_types__composition__without_duplicates():
 
+    # arrange
+    declared = {
+        value for name, value in vars(WorkflowEventType).items()
+        if name.isupper() and isinstance(value, int)
+    }
+
     # act
     types = WorkflowEventType.HIGHLIGHT_TYPES
 
     # assert
     assert len(types) == len(set(types))
-    assert len(types) == 17
+    assert len(types) == len(declared) - 7
+
+
+def test_choices__migration_0260__same_pairs_as_the_enum():
+
+    """ The column of the database carries the choices of the last
+        migration, not of the enum: a constant added to CHOICES
+        without a migration shows a bare number in the admin site and
+        leaves makemigrations with a pending change forever. """
+
+    # arrange
+    migration = import_module(
+        'src.processes.migrations.0260_workflowevent_type_choices',
+    )
+    field = migration.Migration.operations[0].field
+
+    # act
+    migrated = tuple(tuple(pair) for pair in field.choices)
+
+    # assert
+    assert migrated == tuple(
+        tuple(pair) for pair in WorkflowEventType.CHOICES
+    )

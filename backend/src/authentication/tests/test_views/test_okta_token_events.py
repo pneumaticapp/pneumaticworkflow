@@ -28,8 +28,6 @@ def test_okta_token__existent_user__emit_user_login(
     api_client,
     identify_mock,
     settings,
-    events_enabled,
-    run_on_commit,
     fake_stream,
 ):
 
@@ -136,8 +134,6 @@ def test_okta_token__new_user__emit_user_signup_only(
     identify_mock,
     group_mock,
     settings,
-    events_enabled,
-    run_on_commit,
     fake_stream,
 ):
 

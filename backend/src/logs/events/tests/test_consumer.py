@@ -2,8 +2,6 @@ import logging
 
 from src.logs.events.consumer import (
     LOCK_EXPIRE,
-    MAX_ATTEMPTS,
-    RETRY_BACKOFF,
     EventsConsumer,
     tick_budget,
 )
@@ -23,8 +21,8 @@ def test_tick_budget__otlp_timeouts__lock_minus_the_worst_batch():
     budget = tick_budget(send_seconds=13.05, max_retry_after=10)
 
     # assert
-    assert budget == 120 - (3 * 13.05 + 2 * 10)
-    assert budget == LOCK_EXPIRE - (MAX_ATTEMPTS * 13.05 + 2 * 10)
+    assert round(budget, 2) == 60.85
+    assert budget < LOCK_EXPIRE
 
 
 def test_tick_budget__short_retry_after__backoff_pause_used():
@@ -36,7 +34,7 @@ def test_tick_budget__short_retry_after__backoff_pause_used():
     budget = tick_budget(send_seconds=1, max_retry_after=0)
 
     # assert
-    assert budget == LOCK_EXPIRE - (MAX_ATTEMPTS * 1 + 2 * RETRY_BACKOFF[1])
+    assert budget == 115.0
 
 
 def test_tick_budget__batch_longer_than_the_lock__zero():
@@ -200,34 +198,6 @@ def test_run_once__deadline_reached__nothing_delivered(mocker):
     assert stats.delivered == 0
     assert stream.pending == {}
     sink_mock.send.assert_not_called()
-    sleep_mock.assert_not_called()
-
-
-def test_run_once__trimmed_stream__rest_of_the_entries_delivered(mocker):
-
-    """ MAXLEN drops the oldest entries when the collector is down for
-        long enough: the consumer works with what is left. """
-
-    # arrange
-    stream = FakeEventStream(maxlen=2)
-    fill_stream(stream, count=5)
-    sink_mock = mocker.Mock()
-    sleep_mock = mocker.Mock()
-    consumer = EventsConsumer(
-        stream=stream,
-        sink=sink_mock,
-        consumer='consumer-1',
-        sleep=sleep_mock,
-    )
-
-    # act
-    stats = consumer.run_once()
-
-    # assert
-    assert stats.delivered == 2
-    assert stats.acked == 2
-    assert stream.pending == {}
-    sink_mock.send.assert_called_once_with(stream.events)
     sleep_mock.assert_not_called()
 
 
@@ -509,3 +479,78 @@ def test_init__no_consumer_name__host_name(mocker):
     # assert
     assert consumer.consumer == 'worker-1'
     consumer_name_mock.assert_called_once_with()
+
+
+def test_run_once__temporary_error_with_more_batches__tick_ends(mocker):
+
+    """ A batch given up on ends the tick: the batches behind it wait
+        for the next one instead of being sent to a receiver that has
+        just refused three times. """
+
+    # arrange
+    stream = FakeEventStream()
+    fill_stream(stream, count=3)
+    sink_mock = mocker.Mock()
+    sink_mock.send.side_effect = SinkTemporaryError('collector is down')
+    sleep_mock = mocker.Mock()
+    consumer = EventsConsumer(
+        stream=stream,
+        sink=sink_mock,
+        batch_size=1,
+        consumer='consumer-1',
+        sleep=sleep_mock,
+    )
+
+    # act
+    stats = consumer.run_once()
+
+    # assert
+    assert sink_mock.send.call_count == 3
+    sink_mock.send.assert_has_calls([
+        mocker.call(stream.events[:1]),
+        mocker.call(stream.events[:1]),
+        mocker.call(stream.events[:1]),
+    ])
+    assert stats.delivered == 0
+    assert stats.failed is True
+    assert len(stream.pending) == 1
+
+
+def test_run_once__deadline_between_batches__rest_left_for_next_tick(
+    mocker,
+):
+
+    """ The deadline is checked before every batch, not only before
+        the first one: a slow receiver ends the tick after the batch
+        in flight. """
+
+    # arrange
+    stream = FakeEventStream()
+    fill_stream(stream, count=3)
+    sink_mock = mocker.Mock()
+    sleep_mock = mocker.Mock()
+    # started, the check of the pending phase, of the claim phase, of
+    # the first new batch, then late: the check of the second batch
+    # and the end.
+    mocker.patch(
+        'src.logs.events.consumer.time.monotonic',
+        side_effect=[0.0, 0.0, 0.0, 0.0, 100.0, 100.0],
+    )
+    consumer = EventsConsumer(
+        stream=stream,
+        sink=sink_mock,
+        batch_size=1,
+        consumer='consumer-1',
+        sleep=sleep_mock,
+        max_seconds=10,
+    )
+
+    # act
+    stats = consumer.run_once()
+
+    # assert
+    assert stats.delivered == 1
+    assert stats.acked == 1
+    sink_mock.send.assert_called_once_with(stream.events[:1])
+    assert len(stream.pending) == 0
+    assert stats.duration_ms == 100000

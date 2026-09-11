@@ -1,5 +1,6 @@
 import pytest
 
+from src.logs.events.exceptions import EventsError
 from src.logs.events.enums import (
     ActorType,
     EventName,
@@ -25,7 +26,7 @@ def test_workflow_run_event__ok__emit_workflow_run(mocker):
     # arrange
     user = create_test_owner()
     workflow = create_test_workflow(user=user, tasks_count=1)
-    emit_mock = mocker.patch('src.processes.services.events.emit')
+    emit_mock = mocker.patch('src.logs.events.adapters.workflow.emit')
 
     # act
     event = WorkflowEventService.workflow_run_event(
@@ -60,7 +61,7 @@ def test_task_complete_event__ok__emit_task_complete(mocker):
     user = create_test_owner()
     workflow = create_test_workflow(user=user, tasks_count=1)
     task = workflow.tasks.get(number=1)
-    emit_mock = mocker.patch('src.processes.services.events.emit')
+    emit_mock = mocker.patch('src.logs.events.adapters.workflow.emit')
 
     # act
     event = WorkflowEventService.task_complete_event(
@@ -95,7 +96,7 @@ def test_task_started_event__no_user__emit_system_actor(mocker):
     user = create_test_owner()
     workflow = create_test_workflow(user=user, tasks_count=1)
     task = workflow.tasks.get(number=1)
-    emit_mock = mocker.patch('src.processes.services.events.emit')
+    emit_mock = mocker.patch('src.logs.events.adapters.workflow.emit')
 
     # act
     event = WorkflowEventService.task_started_event(
@@ -128,7 +129,7 @@ def test_workflow_urgent_event__not_urgent__emit_workflow_not_urgent(mocker):
     # arrange
     user = create_test_owner()
     workflow = create_test_workflow(user=user, tasks_count=1)
-    emit_mock = mocker.patch('src.processes.services.events.emit')
+    emit_mock = mocker.patch('src.logs.events.adapters.workflow.emit')
 
     # act
     event = WorkflowEventService.workflow_urgent_event(
@@ -166,15 +167,15 @@ def test_workflow_run_event__emit_error_in_production__event_created(
 
     # arrange
     settings.LOGS_STRICT = False
-    error = ValueError('the pipeline is broken')
+    error = EventsError('the pipeline is broken')
     user = create_test_owner()
     workflow = create_test_workflow(user=user, tasks_count=1)
     emit_mock = mocker.patch(
-        'src.processes.services.events.emit',
+        'src.logs.events.adapters.workflow.emit',
         side_effect=error,
     )
     report_error_mock = mocker.patch(
-        'src.processes.services.events.report_error',
+        'src.logs.events.adapters.workflow.report_error',
     )
 
     # act
@@ -213,6 +214,61 @@ def test_workflow_run_event__emit_error_in_production__event_created(
     )
 
 
+def test_workflow_run_event__bug_in_the_pipeline__raises(
+    mocker,
+    settings,
+):
+
+    """ Only the errors of the pipeline are swallowed. A TypeError of
+        the adapter is a bug and has to reach the caller, otherwise a
+        broken build looks like a healthy one with no events. """
+
+    # arrange
+    settings.LOGS_STRICT = False
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    emit_mock = mocker.patch(
+        'src.logs.events.adapters.workflow.emit',
+        side_effect=TypeError('emit() got an unexpected argument'),
+    )
+    report_error_mock = mocker.patch(
+        'src.logs.events.adapters.workflow.report_error',
+    )
+
+    # act
+    with pytest.raises(TypeError) as ex:
+        WorkflowEventService.workflow_run_event(
+            workflow=workflow,
+            user=user,
+        )
+
+    # assert
+    assert str(ex.value) == 'emit() got an unexpected argument'
+    event = WorkflowEvent.objects.get(
+        workflow=workflow,
+        type=WorkflowEventType.RUN,
+    )
+    emit_mock.assert_called_once_with(
+        event_type=EventName.WORKFLOW_RUN,
+        account_id=user.account_id,
+        actor=Actor(type=ActorType.USER, id=user.id, email=user.email),
+        event_object=EventObject(
+            type=EventObjectType.WORKFLOW,
+            id=workflow.id,
+        ),
+        workflow_id=workflow.id,
+        task_id=None,
+        ts=event.created,
+        payload={
+            'workflow_event_id': event.id,
+            'with_attachments': False,
+            'workflow_name': workflow.name,
+            'template_id': workflow.template_id,
+        },
+    )
+    report_error_mock.assert_not_called()
+
+
 def test_workflow_run_event__emit_error_in_testing__raises(
     mocker,
     settings,
@@ -223,11 +279,11 @@ def test_workflow_run_event__emit_error_in_testing__raises(
     user = create_test_owner()
     workflow = create_test_workflow(user=user, tasks_count=1)
     emit_mock = mocker.patch(
-        'src.processes.services.events.emit',
+        'src.logs.events.adapters.workflow.emit',
         side_effect=ValueError('the pipeline is broken'),
     )
     report_error_mock = mocker.patch(
-        'src.processes.services.events.report_error',
+        'src.logs.events.adapters.workflow.report_error',
     )
 
     # act

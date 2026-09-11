@@ -1,3 +1,5 @@
+from unittest.mock import call
+
 import pytest
 
 from src.logs.events import registry as registry_module
@@ -10,13 +12,8 @@ from src.logs.events.exceptions import (
 from src.logs.events.registry import (
     ACTOR_PII,
     EVENT_TYPES,
-    FILE_PII,
-    NAMED_PII,
     REGISTRY,
-    TARGET_PII,
-    WORKFLOW_PII,
     EventType,
-    get_event_type,
     resolve_event_type,
     validate_registry,
 )
@@ -162,10 +159,10 @@ def test_validate_registry__every_pii_form__ok(mocker):
     )
 
     # act
-    validate_registry()
+    result = validate_registry()
 
     # assert
-    assert registry_module.EVENT_TYPES[0].name == 'user.login'
+    assert result is None
 
 
 def test_registry__event_names__one_declaration_per_constant():
@@ -183,7 +180,7 @@ def test_registry__event_names__one_declaration_per_constant():
 
     # assert
     assert declared == names
-    assert len(EVENT_TYPES) == 50
+    assert len(EVENT_TYPES) == len(REGISTRY)
 
 
 @pytest.mark.parametrize('name', sorted(WORKFLOW_EVENT_TYPE_NAMES.values()))
@@ -198,7 +195,13 @@ def test_registry__workflow_type__declares_the_names_as_personal(name):
     event_type = REGISTRY[name]
 
     # assert
-    assert event_type.pii == WORKFLOW_PII
+    assert event_type.pii == (
+        'actor.email',
+        'ip',
+        'user_agent',
+        'payload.workflow_name',
+        'payload.task_name',
+    )
 
 
 def test_registry__login_as__reason_declared_as_personal():
@@ -210,7 +213,13 @@ def test_registry__login_as__reason_declared_as_personal():
     event_type = REGISTRY[EventName.USER_LOGIN_AS]
 
     # assert
-    assert event_type.pii == (*TARGET_PII, 'payload.reason')
+    assert event_type.pii == (
+        'actor.email',
+        'ip',
+        'user_agent',
+        'payload.target_email',
+        'payload.reason',
+    )
     assert event_type.category == EventCategory.AUDIT
 
 
@@ -220,7 +229,12 @@ def test_registry__template_clone__activity_with_the_name_as_personal():
     event_type = REGISTRY[EventName.TEMPLATE_CLONE]
 
     # assert
-    assert event_type.pii == NAMED_PII
+    assert event_type.pii == (
+        'actor.email',
+        'ip',
+        'user_agent',
+        'payload.name',
+    )
     assert event_type.category == EventCategory.ACTIVITY
 
 
@@ -243,31 +257,18 @@ def test_registry__file_type__audit_with_the_filename_as_personal(name):
 
     # assert
     assert event_type.category == EventCategory.AUDIT
-    assert event_type.pii == FILE_PII
+    assert event_type.pii == (
+        'actor.email',
+        'ip',
+        'user_agent',
+        'payload.filename',
+    )
 
 
-def test_get__declared_type__returns_declaration():
+def test_resolve__unknown_type_in_strict_mode__raise(settings):
 
-    # act
-    event_type = get_event_type(EventName.WORKFLOW_RUN)
-
-    # assert
-    assert event_type.name == EventName.WORKFLOW_RUN
-    assert event_type.category == EventCategory.AUDIT
-    assert event_type.pii == WORKFLOW_PII
-
-
-def test_get__unknown_type__raise():
-
-    # act
-    with pytest.raises(UnknownEventTypeError) as ex:
-        get_event_type('nope.nope')
-
-    # assert
-    assert str(ex.value) == 'Unknown event type: nope.nope'
-
-
-def test_resolve__unknown_type_in_strict_mode__raise():
+    # arrange
+    settings.LOGS_STRICT = True
 
     # act
     with pytest.raises(UnknownEventTypeError) as ex:
@@ -288,10 +289,9 @@ def test_resolve__unknown_type_in_running_deployment__debug_category(
 
     # arrange
     settings.LOGS_STRICT = False
-    capture_sentry_message_mock = mocker.patch(
-        'src.logs.events.registry.capture_sentry_message',
+    report_error_mock = mocker.patch(
+        'src.logs.events.registry.report_error',
     )
-    mocker.patch.object(registry_module, '_reported_unknown_types', set())
 
     # act
     event_type = resolve_event_type('nope.nope')
@@ -300,32 +300,87 @@ def test_resolve__unknown_type_in_running_deployment__debug_category(
     assert event_type.name == 'nope.nope'
     assert event_type.category == EventCategory.DEBUG
     assert event_type.pii == ACTOR_PII
-    capture_sentry_message_mock.assert_called_once_with(
+    report_error_mock.assert_called_once_with(
         message='Unknown event type',
         data={'event_type': 'nope.nope'},
         level=SentryLogLevel.WARNING,
+        key='unknown-event-type:nope.nope',
     )
 
 
-def test_resolve__same_unknown_type_twice__reported_once(
+def test_resolve__two_unknown_types__reported_under_their_own_keys(
     mocker,
     settings,
 ):
 
+    """ The throttle lives in report_error and buckets by key, so the
+        key has to name the type: one silent type must not hide the
+        next one. """
+
     # arrange
     settings.LOGS_STRICT = False
-    capture_sentry_message_mock = mocker.patch(
-        'src.logs.events.registry.capture_sentry_message',
+    report_error_mock = mocker.patch(
+        'src.logs.events.registry.report_error',
     )
-    mocker.patch.object(registry_module, '_reported_unknown_types', set())
 
     # act
     resolve_event_type('nope.nope')
-    resolve_event_type('nope.nope')
+    resolve_event_type('other.other')
 
     # assert
-    capture_sentry_message_mock.assert_called_once_with(
-        message='Unknown event type',
-        data={'event_type': 'nope.nope'},
-        level=SentryLogLevel.WARNING,
-    )
+    assert report_error_mock.call_count == 2
+    report_error_mock.assert_has_calls([
+        call(
+            message='Unknown event type',
+            data={'event_type': 'nope.nope'},
+            level=SentryLogLevel.WARNING,
+            key='unknown-event-type:nope.nope',
+        ),
+        call(
+            message='Unknown event type',
+            data={'event_type': 'other.other'},
+            level=SentryLogLevel.WARNING,
+            key='unknown-event-type:other.other',
+        ),
+    ])
+
+
+@pytest.mark.parametrize(
+    ('name', 'pii'),
+    (
+        (
+            EventName.USER_PASSWORD_RESET_REQUEST,
+            ('actor.email', 'ip', 'user_agent', 'payload.target_email'),
+        ),
+        (EventName.USER_PASSWORD_RESET, ('actor.email', 'ip', 'user_agent')),
+        (EventName.USER_PASSWORD_CHANGE, ('actor.email', 'ip', 'user_agent')),
+        (EventName.ACCOUNT_UPDATE, ('actor.email', 'ip', 'user_agent')),
+        (
+            EventName.USER_CREATE,
+            ('actor.email', 'ip', 'user_agent', 'payload.target_email'),
+        ),
+        (EventName.USER_TRANSFER, ('actor.email', 'ip', 'user_agent')),
+        (
+            EventName.INVITE_CREATE,
+            ('actor.email', 'ip', 'user_agent', 'payload.target_email'),
+        ),
+        (
+            EventName.INVITE_RESEND,
+            ('actor.email', 'ip', 'user_agent', 'payload.target_email'),
+        ),
+    ),
+)
+def test_registry__account_and_password_type__audit_with_declared_pii(
+    name,
+    pii,
+):
+
+    """ The address of the person an admin or a guest acts upon is
+        personal data like the address of the actor. """
+
+    # act
+    event_type = REGISTRY[name]
+
+    # assert
+    assert event_type.category == EventCategory.AUDIT
+    assert event_type.pii == pii

@@ -25,8 +25,10 @@ class EventContextMiddleware(MiddlewareMixin):
         try:
             return super().__call__(request)
         finally:
-            # process_response is skipped when an inner middleware
-            # raises, the context must not leak to the next request.
+            # The one place the context is reset: process_response is
+            # skipped when an inner middleware raises, and this runs
+            # either way, so the context cannot leak to the next
+            # request of the same thread.
             self._reset(request)
 
     def process_request(self, request) -> None:
@@ -39,7 +41,6 @@ class EventContextMiddleware(MiddlewareMixin):
         request_id = getattr(request, 'request_id', None)
         if request_id:
             response[REQUEST_ID_HEADER] = request_id
-        self._reset(request)
         return response
 
     @staticmethod

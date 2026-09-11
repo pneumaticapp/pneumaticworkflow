@@ -2,14 +2,12 @@ import json
 import logging
 import socket
 from dataclasses import dataclass, field
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Dict, Iterable, List, Optional, Tuple, Union
 
 import redis
 from django.conf import settings
-from django.core.serializers.json import DjangoJSONEncoder
 
-from src.logs.events.exceptions import EventsError
-from src.logs.events.schema import Event
+from src.logs.events.schema import Event, dump_json
 
 logger = logging.getLogger('pneumatic.events')
 
@@ -137,18 +135,22 @@ class EventStream:
         return parsed.events
 
     @staticmethod
-    def _dead_fields(entry_id: str, event: Any, reason: str) -> Dict[str, str]:
-        if isinstance(event, Event):
-            data = event.to_dict()
-        elif isinstance(event, dict):
-            data = event
-        else:
-            data = {}
+    def _dead_fields(
+        entry_id: str,
+        event: Union[Event, dict],
+        reason: str,
+    ) -> Dict[str, str]:
+
+        """ An entry is parked either as the Event the sink refused or
+            as the raw fields of a record that could not be parsed:
+            nothing else ever reaches the dead letter. """
+
+        data = event.to_dict() if isinstance(event, Event) else event
         return {
             'type': data.get('type') or '',
             'reason': reason,
             'source_id': entry_id,
-            'data': json.dumps(data, cls=DjangoJSONEncoder),
+            'data': dump_json(data),
         }
 
     def close(self) -> None:
@@ -164,7 +166,7 @@ class EventStream:
             name=self.key,
             fields={
                 'type': event.type,
-                'data': json.dumps(event.to_dict(), cls=DjangoJSONEncoder),
+                'data': dump_json(event.to_dict()),
             },
             maxlen=self.maxlen,
             approximate=True,
@@ -208,7 +210,13 @@ class EventStream:
 
         """ Take over entries stuck in the pending list of a dead
             consumer. The next cursor is dropped on purpose: every
-            tick starts over from the beginning of the pending list. """
+            tick starts over from the beginning of the pending list.
+
+            A pending record the stream no longer holds has no id to
+            ack: Redis 7.0 removes it from the pending list on its
+            own, Redis 6.2 keeps it there, and the claim above resets
+            its idle time, so it costs one slot of count once per
+            idle window until the group is recreated. """
 
         response = self.client.xautoclaim(
             name=self.key,
@@ -232,24 +240,34 @@ class EventStream:
 
     def dead_letter(
         self,
-        entries: List[Tuple[str, Any]],
+        entries: List[Tuple[str, Union[Event, dict]]],
         reason: str,
     ) -> int:
 
         """ Move undeliverable entries aside and ack them: a poison
             record must not block the stream. An entry holds an Event
-            or, when it could not be parsed, its raw fields. """
+            or, when it could not be parsed, its raw fields.
 
-        ids = []
+            One pipeline for the whole batch: a rejected batch is as
+            long as a delivered one, and a round trip per record would
+            hold the tick for longer than the lock lasts. The ack
+            rides in the same transaction, so a failure parks either
+            everything or nothing. """
+
+        if not entries:
+            return 0
+        pipe = self.client.pipeline(transaction=True)
         for entry_id, event in entries:
-            self.client.xadd(
+            pipe.xadd(
                 name=self.dead_key,
                 fields=self._dead_fields(entry_id, event, reason),
                 maxlen=DEAD_MAXLEN,
                 approximate=True,
             )
-            ids.append(entry_id)
-        return self.ack(ids)
+        pipe.xack(
+            self.key, self.group, *[entry_id for entry_id, _ in entries],
+        )
+        return pipe.execute()[-1]
 
 
 _streams: Dict[Tuple[str, str, str, int], EventStream] = {}
@@ -259,16 +277,6 @@ def get_stream() -> EventStream:
 
     """ Shared stream client of the process: the connection pool is
         reused between emits. A settings change gives a new client. """
-
-    if not settings.LOGS_REDIS_URL:
-
-        # A clear message instead of the ValueError redis-py raises for
-        # an empty url: the pipeline is on by default, so a deployment
-        # that forgot the variable must be told what exactly is wrong.
-        raise EventsError(
-            'LOGS_REDIS_URL is empty while LOGS_BACKEND is not "none": '
-            'the event pipeline has nowhere to write',
-        )
 
     params = (
         settings.LOGS_REDIS_URL,

@@ -2,7 +2,7 @@
   "annotations": {
     "list": []
   },
-  "description": "The events a security officer wants to see first: failed sign-ins and brute force attempts, staff signing in on behalf of users and tenants, API keys, admin rights and deactivations, deletions and exports, webhook subscriptions (an outbound channel for the data) and refused file downloads, cross-account attempts among them. Everything here is category audit.",
+  "description": "The events a security officer wants to see first: failed sign-ins and brute force attempts, staff signing in on behalf of users and tenants, API keys, admin rights, new users, invites, transfers, deactivations and password resets, deletions and exports, webhook subscriptions (an outbound channel for the data) and refused file downloads, cross-account attempts among them. Everything here is category audit.",
   "editable": false,
   "graphTooltip": 1,
   "id": null,
@@ -1057,7 +1057,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "sum by (event_type) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=~\"user.login_failed|user.login_as|tenant.login_as|api_key.create|api_key.revoke|user.admin_toggle|user.deactivate|group.delete|template.delete|template.export|workflow.terminate|webhook.subscribe|webhook.unsubscribe|file.access_denied\" [$__auto]))",
+          "expr": "sum by (event_type) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=~\"user.login_failed|user.login_as|tenant.login_as|api_key.create|api_key.revoke|user.admin_toggle|user.deactivate|user.create|user.transfer|invite.create|user.password_reset|user.password_change|group.delete|template.delete|template.export|workflow.terminate|webhook.subscribe|webhook.unsubscribe|file.access_denied\" [$__auto]))",
           "legendFormat": "{{event_type}}",
           "queryType": "range",
           "refId": "A"
@@ -1129,7 +1129,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=~\"user.login_failed|user.login_as|tenant.login_as|api_key.create|api_key.revoke|user.admin_toggle|user.deactivate|group.delete|template.delete|template.export|workflow.terminate|webhook.subscribe|webhook.unsubscribe|file.access_denied\" [$__auto]))",
+          "expr": "sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=~\"user.login_failed|user.login_as|tenant.login_as|api_key.create|api_key.revoke|user.admin_toggle|user.deactivate|user.create|user.transfer|invite.create|user.password_reset|user.password_change|group.delete|template.delete|template.export|workflow.terminate|webhook.subscribe|webhook.unsubscribe|file.access_denied\" [$__auto]))",
           "legendFormat": "account {{account_id}}",
           "queryType": "range",
           "refId": "A"
@@ -1611,7 +1611,7 @@
         "type": "loki",
         "uid": "pneumatic-loki"
       },
-      "description": "API keys created and revoked, admin rights toggled, users deactivated.",
+      "description": "API keys created and revoked, admin rights toggled, users created, invited, moved over from another account or deactivated, passwords reset or changed.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1671,7 +1671,7 @@
           },
           "direction": "backward",
           "editorMode": "code",
-          "expr": "{service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=~\"api_key.create|api_key.revoke|user.admin_toggle|user.deactivate\" | line_format \"{{.event_type}} {{.actor_type}}:{{.actor_id}} {{.object_type}}:{{.object_id}}\"",
+          "expr": "{service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=~\"api_key.create|api_key.revoke|user.admin_toggle|user.deactivate|user.create|user.transfer|invite.create|user.password_reset|user.password_change\" | line_format \"{{.event_type}} {{.actor_type}}:{{.actor_id}} {{.object_type}}:{{.object_id}}\"",
           "legendFormat": "",
           "queryType": "range",
           "refId": "A"

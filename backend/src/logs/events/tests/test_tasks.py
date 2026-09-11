@@ -7,10 +7,7 @@ from src.logs.events.consumer import (
     LOCK_EXPIRE,
     MAX_ATTEMPTS,
     ConsumerStats,
-    tick_budget,
 )
-from src.logs.events.exceptions import EventsError
-from src.logs.events.sinks.otlp import DEFAULT_TIMEOUT, MAX_RETRY_AFTER
 from src.logs.events.tasks import (
     LOCK_ID,
     MAX_SECONDS,
@@ -21,17 +18,21 @@ from src.logs.events.tasks import (
 def test_max_seconds__otlp_timeouts__budget_of_the_lock():
 
     """ The reading budget of a tick leaves room for the slowest
-        batch the OTLP sink may still be sending. """
+        batch the OTLP sink may still be sending: three sends of
+        13.05 s with two pauses of the longest Retry-After between
+        them, out of the 120 s of the lock.
+
+        The expected value is a literal on purpose: computing it with
+        tick_budget() again would compare the function with itself,
+        and a change to DEFAULT_TIMEOUT or MAX_RETRY_AFTER would pass
+        unnoticed. """
 
     # act
-    expected = tick_budget(
-        send_seconds=sum(DEFAULT_TIMEOUT),
-        max_retry_after=MAX_RETRY_AFTER,
-    )
+    budget = MAX_SECONDS
 
     # assert
-    assert expected == MAX_SECONDS
-    assert 0 < MAX_SECONDS < LOCK_EXPIRE
+    assert round(budget, 2) == 60.85
+    assert budget < LOCK_EXPIRE
 
 
 def test_consume_events__pipeline_off__lock_not_taken(mocker, settings):
@@ -189,47 +190,6 @@ def test_consume_events__redis_error__reported_to_sentry(
     )
 
 
-def test_consume_events__missing_stream_url__reported_not_raised(
-    mocker,
-    events_enabled,
-):
-
-    """ get_stream raises EventsError for an empty LOGS_REDIS_URL: a
-        beat task that fails every 5 seconds is a Sentry flood, so
-        the error is reported through the throttle instead. """
-
-    # arrange
-    periodic_lock_mock = mocker.patch(
-        'src.logs.events.tasks.periodic_lock',
-    )
-    periodic_lock_mock.return_value.__enter__.return_value = True
-    error = EventsError('LOGS_REDIS_URL is empty')
-    get_stream_mock = mocker.patch(
-        'src.logs.events.tasks.get_stream',
-        side_effect=error,
-    )
-    get_sink_mock = mocker.patch('src.logs.events.tasks.get_sink')
-    consumer_class_mock = mocker.patch(
-        'src.logs.events.tasks.EventsConsumer',
-    )
-    report_error_mock = mocker.patch('src.logs.events.tasks.report_error')
-
-    # act
-    consume_events()
-
-    # assert
-    report_error_mock.assert_called_once_with(
-        message='Events consumer tick failed',
-        data={'error': repr(error)},
-    )
-    get_stream_mock.assert_called_once_with()
-    get_sink_mock.assert_not_called()
-    consumer_class_mock.assert_not_called()
-    periodic_lock_mock.assert_called_once_with(
-        LOCK_ID, lock_expire=LOCK_EXPIRE,
-    )
-
-
 def test_consume_events__os_error__reported_not_raised(
     mocker,
     events_enabled,
@@ -328,6 +288,43 @@ def test_consume_events__batch_left_pending__delivery_failure_reported(
     )
     get_stream_mock.assert_called_once_with()
     get_sink_mock.assert_called_once_with()
+    periodic_lock_mock.assert_called_once_with(
+        LOCK_ID, lock_expire=LOCK_EXPIRE,
+    )
+
+
+def test_consume_events__lock_unavailable__reported_not_raised(
+    mocker,
+    events_enabled,
+    caplog,
+):
+
+    """ The lock lives in the same Redis as the buffer: when the
+        buffer is down the lock is down first, and that must not
+        raise out of the beat task either. """
+
+    # arrange
+    caplog.set_level(logging.WARNING, logger='pneumatic.events.consumer')
+    error = redis.ConnectionError('connection refused')
+    periodic_lock_mock = mocker.patch(
+        'src.logs.events.tasks.periodic_lock',
+    )
+    periodic_lock_mock.return_value.__enter__.side_effect = error
+    consumer_class_mock = mocker.patch(
+        'src.logs.events.tasks.EventsConsumer',
+    )
+    report_error_mock = mocker.patch('src.logs.events.tasks.report_error')
+
+    # act
+    consume_events()
+
+    # assert
+    assert caplog.messages == [f'Events consumer tick failed: {error}']
+    report_error_mock.assert_called_once_with(
+        message='Events consumer tick failed',
+        data={'error': repr(error)},
+    )
+    consumer_class_mock.assert_not_called()
     periodic_lock_mock.assert_called_once_with(
         LOCK_ID, lock_expire=LOCK_EXPIRE,
     )

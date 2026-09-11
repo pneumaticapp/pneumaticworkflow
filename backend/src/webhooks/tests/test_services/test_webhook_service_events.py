@@ -22,7 +22,7 @@ def test_subscribe__all_events__emit_webhook_subscribe(mocker):
 
     # arrange
     user = create_test_owner()
-    url = 'https://93.184.216.34/hook'
+    url = 'https://192.0.2.1/hook'
     emit_mock = mocker.patch('src.logs.events.mixins.emit')
     webhooks_subscribed_mock = mocker.patch(
         'src.processes.services.templates.'
@@ -60,7 +60,7 @@ def test_subscribe__api_key_auth__emit_api_key_actor_type(mocker):
 
     # arrange
     user = create_test_owner()
-    url = 'https://93.184.216.34/hook'
+    url = 'https://192.0.2.1/hook'
     emit_mock = mocker.patch('src.logs.events.mixins.emit')
     webhooks_subscribed_mock = mocker.patch(
         'src.processes.services.templates.'
@@ -99,7 +99,7 @@ def test_subscribe_event__single_event__emit_webhook_subscribe(mocker):
     # arrange
     user = create_test_owner()
     event = HookEvent.WORKFLOW_STARTED
-    url = 'https://93.184.216.34/hook'
+    url = 'https://192.0.2.1/hook'
     emit_mock = mocker.patch('src.logs.events.mixins.emit')
     webhooks_subscribed_mock = mocker.patch(
         'src.processes.services.templates.'
@@ -137,7 +137,7 @@ def test_unsubscribe__all_events__emit_webhook_unsubscribe(mocker):
 
     # arrange
     user = create_test_owner()
-    url = 'https://93.184.216.34/hook'
+    url = 'https://192.0.2.1/hook'
     create_test_webhooks(user=user, url=url)
     emit_mock = mocker.patch('src.logs.events.mixins.emit')
     webhooks_unsubscribed_mock = mocker.patch(
@@ -171,8 +171,8 @@ def test_unsubscribe__two_targets__emit_an_event_per_target(mocker):
 
     # arrange
     user = create_test_owner()
-    first_url = 'https://93.184.216.34/first'
-    second_url = 'https://93.184.216.34/second'
+    first_url = 'https://192.0.2.1/first'
+    second_url = 'https://192.0.2.1/second'
     create_test_webhook(
         user=user,
         event=HookEvent.WORKFLOW_STARTED,
@@ -246,7 +246,7 @@ def test_unsubscribe_event__single_event__emit_webhook_unsubscribe(mocker):
     # arrange
     user = create_test_owner()
     event = HookEvent.WORKFLOW_STARTED
-    url = 'https://93.184.216.34/hook'
+    url = 'https://192.0.2.1/hook'
     create_test_webhook(user=user, event=event, url=url)
     emit_mock = mocker.patch('src.logs.events.mixins.emit')
     webhooks_unsubscribed_mock = mocker.patch(
@@ -281,7 +281,7 @@ def test_unsubscribe_event__other_subscriptions_remain__emit_only(mocker):
     # arrange
     user = create_test_owner()
     event = HookEvent.WORKFLOW_STARTED
-    url = 'https://93.184.216.34/hook'
+    url = 'https://192.0.2.1/hook'
     create_test_webhook(user=user, event=event, url=url)
     create_test_webhook(
         user=user,

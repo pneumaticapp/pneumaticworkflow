@@ -32,22 +32,22 @@ SIZE_KEY = '_size'
 SECRET_KEY_PARTS = (
     'password',
     'passwd',
-    'pwd',
-    'token',
     'apikey',
+    'token',
     'secret',
     'authorization',
     'credential',
-    'private',
     'cookie',
-    'session',
     'signature',
-    'salt',
     'bearer',
     'jwt',
-    'otp',
-    'refresh',
+    'privatekey',
+    'sessionid',
+    'sessionkey',
 )
+SECRET_KEY_WORDS = ('pwd', 'otp', 'salt')
+SECRET_KEY_NAMES = ('session', 'refresh', 'access', 'private')
+KEY_WORD = re.compile(r'[A-Z]?[a-z0-9]+|[A-Z]+(?![a-z])')
 NOT_ALPHANUMERIC = re.compile(r'[^a-z0-9]')
 QUERY_MARK = '?'
 
@@ -155,10 +155,8 @@ class Event:
     # the stream by eye and for the audit answer "what left".
     pii: Tuple[str, ...] = ()
     # Which service wrote the record: the OTLP resource service.name.
-    # None is a record of the backend written before the field
-    # existed, the sink puts its own name there (P3 of the file
-    # service design).
-    service: Optional[str] = None
+    # Every writer fills it, the sink groups records by it.
+    service: str = ''
     workflow_id: Optional[int] = None
     task_id: Optional[int] = None
     ip: Optional[str] = None
@@ -204,7 +202,7 @@ class Event:
             object=EventObject.from_dict(data.get('object')),
             payload=data.get('payload') or {},
             pii=tuple(data.get('pii') or ()),
-            service=data.get('service'),
+            service=data['service'],
             workflow_id=data.get('workflow_id'),
             task_id=data.get('task_id'),
             ip=data.get('ip'),
@@ -212,6 +210,56 @@ class Event:
             request_id=data.get('request_id'),
             id=data.get('id'),
         )
+
+
+PII_ROOTS = ('ip', 'user_agent')
+PII_NAMESPACES = ('actor', 'object', 'payload')
+
+
+def split_pii_path(path: str) -> Tuple[str, str]:
+
+    """ Split a personal data path into its head and its tail.
+
+        A path names a field of a record: a root of the record itself
+        ("ip"), or a key inside one of its namespaces
+        ("actor.email", "payload.filename"). The registry validating
+        a declaration and the emitter filling Event.pii both split
+        them here; the sink matches whole paths against attribute
+        keys named after them (otlp_payload._extract_pii).
+    """
+
+    head, _, tail = path.partition('.')
+    return head, tail
+
+
+def is_valid_pii_path(path: str) -> bool:
+
+    """ Whether a path can name a field at all.
+
+        An unresolvable path is dropped without a word and the field
+        then leaves as a plain attribute past the redaction rule of
+        the collector, so a typo is a silent data leak.
+    """
+
+    head, tail = split_pii_path(path)
+    if head in PII_ROOTS:
+        return not tail
+    return head in PII_NAMESPACES and bool(tail)
+
+
+def pii_value(event: 'Event', path: str) -> Any:
+
+    """ The value a valid personal data path points at, or None. """
+
+    head, tail = split_pii_path(path)
+    if head == 'payload':
+        return event.payload.get(tail)
+    if head in ('actor', 'object'):
+        holder = getattr(event, head, None)
+        return getattr(holder, tail, None) if holder else None
+    if tail:
+        return None
+    return getattr(event, head, None)
 
 
 def normalize_payload(payload: Optional[dict]) -> dict:
@@ -312,7 +360,12 @@ def _is_secret_key(name: str) -> bool:
         api-key, X-API-Key and apiKey are one and the same key. """
 
     normalized = NOT_ALPHANUMERIC.sub('', name.lower())
-    return any(part in normalized for part in SECRET_KEY_PARTS)
+    if normalized in SECRET_KEY_NAMES:
+        return True
+    if any(part in normalized for part in SECRET_KEY_PARTS):
+        return True
+    words = {word.lower() for word in KEY_WORD.findall(name)}
+    return any(word in words for word in SECRET_KEY_WORDS)
 
 
 def without_query(value: str) -> str:
@@ -345,6 +398,17 @@ def _to_scalar(value: Any) -> Any:
         return str(value)[:PAYLOAD_STR_MAX]
 
 
+def dump_json(value: Any) -> str:
+
+    """ JSON of a value the pipeline built itself.
+
+        Raises on a value that cannot be encoded: in a stream record or
+        an OTLP body that is a bug, and it has to be seen. to_json is
+        the lenient sibling for values that come from outside. """
+
+    return json.dumps(value, cls=DjangoJSONEncoder)
+
+
 def to_json(value: Any) -> str:
 
     """ JSON of anything, used by the payload size check and by the
@@ -352,6 +416,6 @@ def to_json(value: Any) -> str:
         instead of breaking the whole batch. """
 
     try:
-        return json.dumps(value, cls=DjangoJSONEncoder)
+        return dump_json(value)
     except (TypeError, ValueError):
         return json.dumps(str(value))

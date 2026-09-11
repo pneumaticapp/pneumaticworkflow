@@ -14,16 +14,47 @@ from src.shared_kernel.events.request_events import (
     get_request_events,
 )
 from src.shared_kernel.events.schema import (
+    PAYLOAD_STR_MAX,
+    SERVICE_NAME,
     Actor,
     ActorType,
     Event,
     EventName,
     RequestContext,
 )
+from src.shared_kernel.http_context import FALLBACK_IP
 from tests.fixtures.unit import CONTRACT_FILE_ID as FILE_ID
 
 
 @pytest.mark.asyncio
+async def test_file_upload__long_filename__payload_string_cut(
+    request_events,
+    capturing_emitter,
+    actor_user,
+    mock_request_events_now,
+):
+    """The name reaches the record from the request and is unbounded
+    there, so the payload has to bound it the way the backend does."""
+
+    # arrange
+    command = Mock(
+        filename='y' * (PAYLOAD_STR_MAX + 100),
+        content_type='text/plain',
+        size=3,
+    )
+
+    # act
+    await request_events.file_upload(
+        user=actor_user,
+        file_id=FILE_ID,
+        file=command,
+    )
+
+    # assert
+    payload = capturing_emitter.events[0].payload
+    assert payload['filename'] == 'y' * PAYLOAD_STR_MAX
+
+
 async def test_file_download__owner__record_matches_backend_contract(
     request_events,
     capturing_emitter,
@@ -119,7 +150,7 @@ async def test_file_upload__command__upload_record(
     assert capturing_emitter.events == [
         Event(
             type=EventName.FILE_UPLOAD,
-            service='pneumatic-file-service',
+            service=SERVICE_NAME,
             ts=datetime(2026, 9, 9, 12, 0, 0, 123, tzinfo=UTC),
             account_id=42,
             actor=Actor(type=ActorType.USER, id=17),
@@ -266,7 +297,7 @@ async def test_file_access_denied__foreign_account__file_account_in_payload(
 
 
 @pytest.mark.asyncio
-async def test_get_request_events__request__process_emitter_and_settings(
+async def test_get_request_events__request__process_emitter(
     mocker,
     actor_user,
     mock_request_events_now,
@@ -277,10 +308,6 @@ async def test_get_request_events__request__process_emitter_and_settings(
         'src.shared_kernel.events.request_events.get_event_emitter',
         return_value=emitter_mock,
     )
-    get_settings_mock = mocker.patch(
-        'src.shared_kernel.events.request_events.get_settings',
-    )
-    get_settings_mock.return_value.LOGS_SERVICE_NAME = 'pneumatic-files-2'
     request = MagicMock(spec=Request)
     request.headers = {
         'x-real-ip': '203.0.113.7',
@@ -297,17 +324,16 @@ async def test_get_request_events__request__process_emitter_and_settings(
     )
 
     # act
-    events = get_request_events(request)
+    events = await get_request_events(request)
     await events.file_upload(user=actor_user, file_id=FILE_ID, file=command)
 
     # assert
     assert isinstance(events, RequestEvents)
     get_event_emitter_mock.assert_called_once_with()
-    get_settings_mock.assert_called_once_with()
     emitter_mock.emit.assert_awaited_once_with(
         Event(
             type=EventName.FILE_UPLOAD,
-            service='pneumatic-files-2',
+            service=SERVICE_NAME,
             ts=datetime(2026, 9, 9, 12, 0, 0, 123, tzinfo=UTC),
             account_id=42,
             actor=Actor(type=ActorType.USER, id=17),
@@ -325,3 +351,81 @@ async def test_get_request_events__request__process_emitter_and_settings(
         ),
     )
     mock_request_events_now.assert_called_once_with()
+
+
+async def test_get_request_events__headers__context_from_the_request(
+    mocker,
+    actor_user,
+    mock_request_events_now,
+):
+    """The dependency is where a request becomes the context of a
+    record: address, browser and correlation id come from it."""
+
+    # arrange
+    emitter_mock = AsyncMock()
+    mocker.patch(
+        'src.shared_kernel.events.request_events.get_event_emitter',
+        return_value=emitter_mock,
+    )
+    request = MagicMock(spec=Request)
+    request.headers = {
+        'x-real-ip': '203.0.113.7',
+        'user-agent': 'Mozilla/5.0',
+    }
+    request.state = Mock(request_id='req-1')
+
+    # act
+    events = await get_request_events(request)
+
+    # assert
+    assert events._context == RequestContext(
+        ip='203.0.113.7',
+        user_agent='Mozilla/5.0',
+        request_id='req-1',
+    )
+
+
+async def test_get_request_events__no_user_agent__none_in_the_context(
+    mocker,
+    actor_user,
+):
+    # arrange
+    emitter_mock = AsyncMock()
+    mocker.patch(
+        'src.shared_kernel.events.request_events.get_event_emitter',
+        return_value=emitter_mock,
+    )
+    request = MagicMock(spec=Request)
+    request.headers = {'x-real-ip': '203.0.113.7'}
+    request.state = Mock(request_id='req-1')
+
+    # act
+    events = await get_request_events(request)
+
+    # assert
+    assert events._context.user_agent is None
+    assert events._context.ip == '203.0.113.7'
+
+
+async def test_get_request_events__no_client__fallback_address(
+    mocker,
+    actor_user,
+):
+    """No header and no socket: the record still carries an address."""
+
+    # arrange
+    emitter_mock = AsyncMock()
+    mocker.patch(
+        'src.shared_kernel.events.request_events.get_event_emitter',
+        return_value=emitter_mock,
+    )
+    request = MagicMock(spec=Request)
+    request.headers = {}
+    request.client = None
+    request.state = Mock(request_id='req-1')
+
+    # act
+    events = await get_request_events(request)
+
+    # assert
+    assert events._context.ip == FALLBACK_IP

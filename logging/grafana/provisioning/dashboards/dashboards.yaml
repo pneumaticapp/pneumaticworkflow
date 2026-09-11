@@ -1,3 +1,7 @@
+# The JSON files of the json directory are the source of the dashboards:
+# edit them, and Grafana picks the change up within updateIntervalSeconds.
+# They were generated once and have been edited by hand since, so there is
+# no generator to run and nothing to regenerate them from.
 apiVersion: 1
 
 providers:

@@ -270,3 +270,31 @@ def test_to_kwargs__undeclared_type__raise():
 
     # assert
     assert str(ex.value) == 'Unknown workflow event type: 999'
+
+
+def test_to_kwargs__workflow_without_a_template__no_template_id():
+
+    """ A workflow whose template is gone still has a name; the
+        payload then names no template rather than None. """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    workflow.template = None
+    event = WorkflowEvent(
+        type=WorkflowEventType.RUN,
+        account=user.account,
+        workflow=workflow,
+        user=user,
+        with_attachments=True,
+    )
+
+    # act
+    kwargs = workflow_event_to_kwargs(event)
+
+    # assert
+    assert kwargs['payload'] == {
+        'workflow_event_id': None,
+        'with_attachments': True,
+        'workflow_name': workflow.name,
+    }

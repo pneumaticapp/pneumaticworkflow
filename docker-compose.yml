@@ -1,4 +1,11 @@
 name: pneumatic
+
+# The logging stack lives in one file for both root compose
+# files and is off by default: its services start only with
+# the profile of LOGS_BACKEND, see logging/compose/logs.yml.
+include:
+  - logging/compose/logs.yml
+
 services:
   postgres:
     image: postgres:15-bookworm
@@ -174,7 +181,7 @@ services:
       FILE_POSTGRES_DB: ${FILE_POSTGRES_DB:-pneumatic}
       FILE_POSTGRES_HOST: ${FILE_POSTGRES_HOST:-file-postgres}
       FILE_POSTGRES_PORT: ${FILE_POSTGRES_PORT:-5432}
-      LOGS_BACKEND: ${LOGS_BACKEND:-local}
+      LOGS_BACKEND: ${LOGS_BACKEND:-none}
       LOGS_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/4"
       LOGS_OTLP_ENDPOINT: ${LOGS_OTLP_ENDPOINT:-http://otel-collector:4318}
       LOGS_STREAM_MAXLEN: ${LOGS_STREAM_MAXLEN:-250000}
@@ -190,9 +197,6 @@ services:
         condition: service_started
       redis:
         condition: service_started
-      otel-collector:
-        condition: service_started
-        required: false
     healthcheck:
       test: ["CMD", "pg_isready", "-h", postgres]
       interval: 5s
@@ -310,7 +314,7 @@ services:
       FILE_POSTGRES_DB: ${FILE_POSTGRES_DB:-pneumatic}
       FILE_POSTGRES_HOST: ${FILE_POSTGRES_HOST:-file-postgres}
       FILE_POSTGRES_PORT: ${FILE_POSTGRES_PORT:-5432}
-      LOGS_BACKEND: ${LOGS_BACKEND:-local}
+      LOGS_BACKEND: ${LOGS_BACKEND:-none}
       LOGS_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/4"
       LOGS_OTLP_ENDPOINT: ${LOGS_OTLP_ENDPOINT:-http://otel-collector:4318}
       LOGS_STREAM_MAXLEN: ${LOGS_STREAM_MAXLEN:-250000}
@@ -326,10 +330,6 @@ services:
         condition: service_started
       redis:
         condition: service_started
-      # The collector is a start-order dependency, not a requirement:
-      # logging/compose/logs-none.yml moves it into a disabled profile, and
-      # without `required: false` compose would refuse to start this service
-      # at all in that mode.
       otel-collector:
         condition: service_started
         required: false
@@ -445,7 +445,7 @@ services:
       FILE_POSTGRES_DB: ${FILE_POSTGRES_DB:-pneumatic}
       FILE_POSTGRES_HOST: ${FILE_POSTGRES_HOST:-file-postgres}
       FILE_POSTGRES_PORT: ${FILE_POSTGRES_PORT:-5432}
-      LOGS_BACKEND: ${LOGS_BACKEND:-local}
+      LOGS_BACKEND: ${LOGS_BACKEND:-none}
       LOGS_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/4"
       LOGS_OTLP_ENDPOINT: ${LOGS_OTLP_ENDPOINT:-http://otel-collector:4318}
       LOGS_STREAM_MAXLEN: ${LOGS_STREAM_MAXLEN:-250000}
@@ -460,9 +460,6 @@ services:
         condition: service_started
       redis:
         condition: service_started
-      otel-collector:
-        condition: service_started
-        required: false
     networks:
       - pneumatic
     restart: always
@@ -576,7 +573,7 @@ services:
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-django_secret_django_secret_django_secret}
       AUTH_TOKEN_ITERATIONS: ${FILE_AUTH_TOKEN_ITERATIONS:-1}
       BACKEND_PRIVATE_URL: ${BACKEND_PRIVATE_URL:-http://pneumatic-nginx/}
-      LOGS_BACKEND: ${LOGS_BACKEND:-local}
+      LOGS_BACKEND: ${LOGS_BACKEND:-none}
       LOGS_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/4"
       LOGS_STREAM_MAXLEN: ${LOGS_STREAM_MAXLEN:-250000}
     command: >
@@ -661,73 +658,6 @@ services:
       - pneumatic
     restart: always
 
-  otel-collector:
-    image: otel/opentelemetry-collector-contrib:0.160.0
-    container_name: pneumatic-otel-collector
-    command:
-      - --config=/etc/otel/base.yaml
-      - --config=/etc/otel/backend-${LOGS_BACKEND:-local}.yaml
-    environment:
-      LOGS_OTLP_EXPORT_ENDPOINT: ${LOGS_OTLP_EXPORT_ENDPOINT:-}
-      LOGS_OTLP_EXPORT_AUTH: ${LOGS_OTLP_EXPORT_AUTH:-}
-      LOGS_ELASTICSEARCH_URL: ${LOGS_ELASTICSEARCH_URL:-}
-      LOGS_ELASTICSEARCH_USER: ${LOGS_ELASTICSEARCH_USER:-}
-      LOGS_ELASTICSEARCH_PASSWORD: ${LOGS_ELASTICSEARCH_PASSWORD:-}
-      LOGS_ELASTICSEARCH_INDEX: ${LOGS_ELASTICSEARCH_INDEX:-logs-pneumatic.events.otel-default}
-    volumes:
-      - ./logging/otel:/etc/otel:ro
-    expose:
-      - 4318     # OTLP/HTTP receiver
-      - 13133    # health_check extension
-    networks:
-      - pneumatic
-      - pneumatic-logs
-    restart: always
-
-  loki:
-    image: grafana/loki:3.7.7
-    container_name: pneumatic-loki
-    command:
-      - -config.file=/etc/loki/loki-config.yaml
-      - -config.expand-env=true
-    environment:
-      LOGS_RETENTION_PERIOD: ${LOGS_RETENTION_PERIOD:-365d}
-    volumes:
-      - ./logging/loki/loki-config.yaml:/etc/loki/loki-config.yaml:ro
-      - loki-data:/loki
-    expose:
-      - 3100
-    networks:
-      - pneumatic-logs
-    restart: always
-
-  grafana:
-    image: grafana/grafana:12.4.10
-    container_name: pneumatic-grafana
-    environment:
-      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
-      GF_SECURITY_ADMIN_PASSWORD: "${GRAFANA_ADMIN_PASSWORD:?set GRAFANA_ADMIN_PASSWORD in .env}"
-      GF_USERS_ALLOW_SIGN_UP: "false"
-      GF_AUTH_ANONYMOUS_ENABLED: "false"
-      GF_ANALYTICS_REPORTING_ENABLED: "false"
-      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
-      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: ${GRAFANA_HOME_DASHBOARD:-/etc/grafana/provisioning/dashboards/json/project-overview.json}
-    volumes:
-      - ./logging/grafana/provisioning:/etc/grafana/provisioning:ro
-      - grafana-data:/var/lib/grafana
-    ports:
-      - "${GRAFANA_BIND:-127.0.0.1}:${GRAFANA_PORT:-3000}:3000"
-    depends_on:
-      - loki
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health | grep -q '\"database\": *\"ok\"'"]
-      interval: 10s
-      timeout: 5s
-      retries: 12
-    networks:
-      - pneumatic-logs
-    restart: always
-
 networks:
   pneumatic:
   pneumatic-logs:
@@ -735,7 +665,5 @@ networks:
 volumes:
   backend-staticfiles:
   backend-socket:
-  loki-data:
-  grafana-data:
 
 

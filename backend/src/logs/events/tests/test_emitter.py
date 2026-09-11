@@ -1,4 +1,5 @@
 import logging
+from time import monotonic
 
 import pytest
 import redis
@@ -7,12 +8,15 @@ from django.utils import timezone
 from src.authentication.enums import AuthTokenType
 from src.logs.enums import LogsBackend
 from src.logs.events import emitter as emitter_module
+from src.logs.events import mixins as mixins_module
+from src.logs.events import services as services_module
 from src.logs.events.emitter import (
     CIRCUIT_OPEN_SECONDS,
     NO_ACCOUNT,
+    _build_event,
     _report_stream_error,
     _write,
-    build_event,
+    _present_pii,
     emit,
 )
 from src.logs.events.enums import ActorType, EventCategory, EventName
@@ -22,13 +26,11 @@ from src.logs.events.registry import (
     EventType,
 )
 from src.logs.events.schema import Actor, EventObject
-from src.logs.events.tests.fakes import make_smoke_event
+from src.logs.events.tests.fakes import make_event, make_smoke_event
 from src.utils.logging import SentryLogLevel
 
 
 def test_emit__enabled__event_in_the_stream(
-    events_enabled,
-    run_on_commit,
     fake_stream,
 ):
 
@@ -57,7 +59,6 @@ def test_emit__enabled__event_in_the_stream(
 
 def test_emit__pipeline_off__nothing_written(
     settings,
-    run_on_commit,
     fake_stream,
 ):
 
@@ -72,10 +73,12 @@ def test_emit__pipeline_off__nothing_written(
 
 
 def test_emit__unknown_type__raise(
-    events_enabled,
-    run_on_commit,
+    settings,
     fake_stream,
 ):
+
+    # arrange
+    settings.LOGS_STRICT = True
 
     # act
     with pytest.raises(UnknownEventTypeError) as ex:
@@ -87,8 +90,7 @@ def test_emit__unknown_type__raise(
 
 
 def test_emit__open_transaction__nothing_written_before_commit(
-    events_enabled,
-    fake_stream,
+    scheduled_stream,
     mocker,
 ):
 
@@ -106,14 +108,13 @@ def test_emit__open_transaction__nothing_written_before_commit(
     emit(EventName.USER_LOGIN, account_id=5)
 
     # assert
-    assert fake_stream.events == []
+    assert scheduled_stream.events == []
     assert len(callbacks) == 1
     on_commit_mock.assert_called_once_with(callbacks[0])
 
 
 def test_emit__committed_transaction__callback_writes_the_event(
-    events_enabled,
-    fake_stream,
+    scheduled_stream,
     mocker,
 ):
 
@@ -129,14 +130,12 @@ def test_emit__committed_transaction__callback_writes_the_event(
     callbacks[0]()
 
     # assert
-    assert len(fake_stream.events) == 1
-    assert fake_stream.last_event().type == EventName.USER_LOGIN
+    assert len(scheduled_stream.events) == 1
+    assert scheduled_stream.last_event().type == EventName.USER_LOGIN
     on_commit_mock.assert_called_once_with(callbacks[0])
 
 
 def test_emit__stream_error__request_not_broken(
-    events_enabled,
-    run_on_commit,
     fake_stream,
     mocker,
 ):
@@ -153,12 +152,15 @@ def test_emit__stream_error__request_not_broken(
     capture_sentry_message_mock = mocker.patch(
         'src.logs.events.reporting.capture_sentry_message',
     )
+    moment = timezone.now()
 
     # act
-    emit(EventName.USER_LOGIN, account_id=5)
+    emit(EventName.USER_LOGIN, account_id=5, ts=moment)
 
     # assert
-    xadd_mock.assert_called_once_with(mocker.ANY)
+    xadd_mock.assert_called_once_with(
+        _build_event(EventName.USER_LOGIN, account_id=5, ts=moment),
+    )
     capture_sentry_message_mock.assert_called_once_with(
         message='Events stream is unavailable',
         data={'error': repr(error), 'dropped': 0},
@@ -167,8 +169,6 @@ def test_emit__stream_error__request_not_broken(
 
 
 def test_emit__stream_error_twice__reported_once(
-    events_enabled,
-    run_on_commit,
     fake_stream,
     mocker,
 ):
@@ -374,10 +374,12 @@ def test_report_stream_error__dropped_events__count_in_the_report(
     # arrange
     caplog.set_level(logging.WARNING, logger='pneumatic.events')
     error = redis.ConnectionError('down')
-    emitter_module._circuit.dropped = 3
     report_error_mock = mocker.patch(
         'src.logs.events.emitter.report_error',
     )
+    emitter_module._circuit.trip(monotonic())
+    for _ in range(3):
+        _write(make_event())
 
     # act
     _report_stream_error(error)
@@ -406,7 +408,7 @@ def test_build_event__explicit_actor__wins(
     )
 
     # act
-    event = build_event(
+    event = _build_event(
         EventName.USER_LOGIN,
         account_id=5,
         actor=actor,
@@ -438,7 +440,7 @@ def test_build_event__request_user__actor_from_the_request(
     request.token_type = AuthTokenType.API
 
     # act
-    event = build_event(
+    event = _build_event(
         EventName.USER_LOGIN,
         account_id=5,
         request=request,
@@ -463,7 +465,7 @@ def test_build_event__anonymous_request__actor_from_the_context(
     request.user = mocker.Mock(is_authenticated=False)
 
     # act
-    event = build_event(
+    event = _build_event(
         EventName.USER_LOGIN,
         account_id=5,
         request=request,
@@ -480,7 +482,7 @@ def test_build_event__anonymous_request__actor_from_the_context(
 def test_build_event__no_request_no_context__system_actor():
 
     # act
-    event = build_event(EventName.USER_LOGIN, account_id=5)
+    event = _build_event(EventName.USER_LOGIN, account_id=5)
 
     # assert
     assert event.actor == Actor(type=ActorType.SYSTEM)
@@ -500,7 +502,7 @@ def test_build_event__request__ip_and_agent_from_the_request(
     request.request_id = 'req-1'
 
     # act
-    event = build_event(
+    event = _build_event(
         EventName.USER_LOGIN,
         account_id=5,
         request=request,
@@ -525,7 +527,7 @@ def test_build_event__request_without_headers__values_from_context(
     request.META.pop('REMOTE_ADDR', None)
 
     # act
-    event = build_event(
+    event = _build_event(
         EventName.USER_LOGIN,
         account_id=5,
         request=request,
@@ -540,7 +542,7 @@ def test_build_event__request_without_headers__values_from_context(
 def test_build_event__no_request__values_from_context(request_context):
 
     # act
-    event = build_event(EventName.USER_LOGIN, account_id=5)
+    event = _build_event(EventName.USER_LOGIN, account_id=5)
 
     # assert
     assert event.ip == '9.9.9.9'
@@ -551,7 +553,7 @@ def test_build_event__no_request__values_from_context(request_context):
 def test_build_event__no_request_no_context__empty_request_fields():
 
     # act
-    event = build_event(EventName.USER_LOGIN, account_id=5)
+    event = _build_event(EventName.USER_LOGIN, account_id=5)
 
     # assert
     assert event.ip is None
@@ -562,7 +564,7 @@ def test_build_event__no_request_no_context__empty_request_fields():
 def test_build_event__registry__category_and_present_pii():
 
     # act
-    event = build_event(
+    event = _build_event(
         EventName.USER_DEACTIVATE,
         account_id=5,
         actor=Actor(type=ActorType.SYSTEM),
@@ -593,7 +595,7 @@ def test_build_event__filled_fields__all_declared_pii(
     )
 
     # act
-    event = build_event(
+    event = _build_event(
         EventName.USER_DEACTIVATE,
         account_id=5,
         request=request,
@@ -630,7 +632,7 @@ def test_build_event__type_without_declared_actor_pii__pii_added(
     )
 
     # act
-    event = build_event('system.test', account_id=5)
+    event = _build_event('system.test', account_id=5)
 
     # assert
     assert event.pii == ACTOR_PII
@@ -657,7 +659,7 @@ def test_build_event__unresolvable_pii_path__dropped(
     )
 
     # act
-    event = build_event('system.test', account_id=5)
+    event = _build_event('system.test', account_id=5)
 
     # assert
     assert event.pii == ACTOR_PII
@@ -666,7 +668,7 @@ def test_build_event__unresolvable_pii_path__dropped(
 def test_build_event__secret_in_the_payload__redacted():
 
     # act
-    event = build_event(
+    event = _build_event(
         EventName.API_KEY_CREATE,
         account_id=5,
         payload={'name': 'key', 'token': 'raw-secret'},
@@ -682,7 +684,7 @@ def test_build_event__given_ts__used():
     moment = timezone.now()
 
     # act
-    event = build_event(
+    event = _build_event(
         EventName.WORKFLOW_RUN,
         account_id=5,
         workflow_id=11,
@@ -706,7 +708,7 @@ def test_build_event__no_ts__now(mocker):
     )
 
     # act
-    event = build_event(EventName.USER_LOGIN, account_id=5)
+    event = _build_event(EventName.USER_LOGIN, account_id=5)
 
     # assert
     assert event.ts == moment
@@ -721,7 +723,7 @@ def test_build_event__account_not_given__no_account_marker():
         without an account, a failed sign in above all. """
 
     # act
-    event = build_event(EventName.USER_LOGOUT, account_id=None)
+    event = _build_event(EventName.USER_LOGOUT, account_id=None)
 
     # assert
     assert event.account_id == NO_ACCOUNT
@@ -736,7 +738,7 @@ def test_build_event__settings__service_name_of_the_backend(settings):
     settings.LOGS_SERVICE_NAME = 'pneumatic-test'
 
     # act
-    event = build_event(
+    event = _build_event(
         EventName.USER_LOGIN,
         account_id=5,
         actor=Actor(type=ActorType.SYSTEM),
@@ -744,3 +746,31 @@ def test_build_event__settings__service_name_of_the_backend(settings):
 
     # assert
     assert event.service == 'pneumatic-test'
+
+
+def test_present_pii__empty_string__not_listed():
+
+    """ The list is the audit answer to "what left": an empty user
+        agent is nothing that left. """
+
+    # arrange
+    event = make_event(user_agent='', ip=None)
+
+    # act
+    result = _present_pii(('actor.email', 'ip', 'user_agent'), event)
+
+    # assert
+    assert result == ('actor.email',)
+
+
+def test_emit__patched_name__the_one_the_callers_import():
+
+    """ The tests of the services and the views patch
+        src.logs.events.services.emit and src.logs.events.mixins.emit:
+        a module that imported the function from the package instead
+        would leave those patches intercepting nothing, and every
+        "no event" assert would pass for the wrong reason. """
+
+    # assert
+    assert services_module.emit is emit
+    assert mixins_module.emit is emit

@@ -49,8 +49,6 @@ def test_signout__user_token__emit_user_logout(
 def test_signout__user_token__event_keeps_request_context(
     mocker,
     api_client,
-    events_enabled,
-    run_on_commit,
     fake_stream,
 ):
 

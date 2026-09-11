@@ -1,7 +1,10 @@
 import pytest
 
 from src.authentication.enums import AuthTokenType
-from src.processes.tests.fixtures import create_test_user
+from src.processes.tests.fixtures import (
+    create_test_not_admin,
+    create_test_owner,
+)
 from src.utils.validation import ErrorCode
 from src.webhooks import exceptions
 from src.webhooks.views.events import (
@@ -14,7 +17,7 @@ pytestmark = pytest.mark.django_db
 def test_list__ok(api_client, mocker):
 
     # arrange
-    user = create_test_user()
+    user = create_test_owner()
     api_client.token_authenticate(user)
     data = 'some_data'
     service_init_mock = mocker.patch.object(
@@ -39,13 +42,13 @@ def test_list__ok(api_client, mocker):
         is_superuser=False,
         auth_type=AuthTokenType.USER,
     )
-    service_mock.assert_called_once()
+    service_mock.assert_called_once_with()
 
 
 def test_retrieve__ok(api_client, mocker):
 
     # arrange
-    user = create_test_user()
+    user = create_test_owner()
     api_client.token_authenticate(user)
     url = 'some url'
     event = 'event_1'
@@ -77,10 +80,7 @@ def test_retrieve__ok(api_client, mocker):
 def test_retrieve__not_admin__permission_denied(api_client):
 
     # arrange
-    user = create_test_user(
-        is_admin=False,
-        is_account_owner=False,
-    )
+    user = create_test_not_admin()
     api_client.token_authenticate(user)
     event = 'event_1'
 
@@ -106,7 +106,7 @@ def test_retrieve__not_auth__permission_denied(api_client):
 def test_retrieve__invalid_event__not_found(api_client, mocker):
 
     # arrange
-    user = create_test_user()
+    user = create_test_owner()
     api_client.token_authenticate(user)
     event = 'event_1'
     service_init_mock = mocker.patch.object(
@@ -136,9 +136,9 @@ def test_retrieve__invalid_event__not_found(api_client, mocker):
 def test_subscribe__ok(api_client, mocker):
 
     # arrange
-    user = create_test_user()
+    user = create_test_owner()
     api_client.token_authenticate(user)
-    url = 'https://93.184.216.34/hook'
+    url = 'https://192.0.2.1/hook'
     event = 'event_1'
     service_init_mock = mocker.patch.object(
         WebhookService,
@@ -172,9 +172,9 @@ def test_subscribe__ok(api_client, mocker):
 def test_subscribe__invalid_event__not_found(api_client, mocker):
 
     # arrange
-    user = create_test_user()
+    user = create_test_owner()
     api_client.token_authenticate(user)
-    url = 'https://93.184.216.34/hook'
+    url = 'https://192.0.2.1/hook'
     event = 'event_1'
     service_init_mock = mocker.patch.object(
         WebhookService,
@@ -209,7 +209,7 @@ def test_subscribe__invalid_event__not_found(api_client, mocker):
 def test_subscribe__invalid_url__validation__error(api_client, mocker):
 
     # arrange
-    user = create_test_user()
+    user = create_test_owner()
     api_client.token_authenticate(user)
     url = 'some url'
     event = 'event_1'
@@ -237,7 +237,7 @@ def test_subscribe__invalid_url__validation__error(api_client, mocker):
 def test_unsubscribe__ok(api_client, mocker):
 
     # arrange
-    user = create_test_user()
+    user = create_test_owner()
     api_client.token_authenticate(user)
     event = 'event_1'
     service_mock = mocker.patch(
@@ -268,7 +268,7 @@ def test_unsubscribe__ok(api_client, mocker):
 def test_unsubscribe__invalid_event__not_found(api_client, mocker):
 
     # arrange
-    user = create_test_user()
+    user = create_test_owner()
     api_client.token_authenticate(user)
     event = 'event_1'
     service_init_mock = mocker.patch.object(

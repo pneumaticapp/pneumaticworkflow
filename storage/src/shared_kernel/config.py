@@ -2,12 +2,27 @@
 
 import json
 import os
+from enum import StrEnum
 from functools import lru_cache
 from typing import Literal
 from urllib.parse import urlparse
 
 from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class LogsBackend(StrEnum):
+    """Where the collector sends the records (LOGS_BACKEND).
+
+    The file service only ever asks whether the pipeline is on;
+    the values are the ones the backend and the compose files
+    use, so one .env configures both writers.
+    """
+
+    LOCAL = 'local'
+    OTLP = 'otlp'
+    ELASTICSEARCH = 'elasticsearch'
+    NONE = 'none'
 
 
 class BaseAppSettings(BaseSettings):
@@ -108,16 +123,9 @@ class BaseAppSettings(BaseSettings):
     # ── Event pipeline ───────────────────────────────────────
     # The audit journal: records go into the Redis Stream of the backend.
     # Same variables as the backend reads, so one .env configures both writers.
-    LOGS_BACKEND: Literal['local', 'otlp', 'elasticsearch', 'none'] = 'local'
+    LOGS_BACKEND: LogsBackend = LogsBackend.NONE
     LOGS_REDIS_URL: str = 'redis://:redis_password@redis:6379/4'
-    LOGS_STREAM_KEY: str = 'pneumatic:events'
     LOGS_STREAM_MAXLEN: int = 250000
-    LOGS_SERVICE_NAME: str = 'pneumatic-file-service'
-
-    @property
-    def logs_enabled(self) -> bool:
-        """Whether records are written at all."""
-        return self.LOGS_BACKEND != 'none'
 
     # ── Auth ─────────────────────────────────────────────────
     DJANGO_SECRET_KEY: str  # Required, no default (security)
@@ -130,6 +138,11 @@ class BaseAppSettings(BaseSettings):
     BACKEND_PRIVATE_URL: str = 'http://localhost:8001'
 
     # ── Computed properties ──────────────────────────────────
+
+    @property
+    def logs_enabled(self) -> bool:
+        """Whether records are written at all."""
+        return self.LOGS_BACKEND != LogsBackend.NONE
 
     @property
     def root_path(self) -> str:
@@ -160,7 +173,7 @@ class TestingSettings(BaseAppSettings):
     RATE_LIMIT_ENABLED: bool = False
     RELOAD: bool = False
     WORKERS: int = 1
-    LOGS_BACKEND: Literal['local', 'otlp', 'elasticsearch', 'none'] = 'none'
+    LOGS_BACKEND: LogsBackend = LogsBackend.NONE
 
 
 class DevelopmentSettings(BaseAppSettings):

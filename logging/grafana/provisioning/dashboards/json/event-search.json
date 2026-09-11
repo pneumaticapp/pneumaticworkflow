@@ -923,16 +923,11 @@
           },
           {
             "selected": false,
-            "text": "http",
-            "value": "http"
-          },
-          {
-            "selected": false,
             "text": "debug",
             "value": "debug"
           }
         ],
-        "query": "audit,activity,http,debug",
+        "query": "audit,activity,debug",
         "queryValue": "",
         "skipUrlSync": false,
         "type": "custom"
@@ -958,6 +953,11 @@
             "selected": true,
             "text": "All",
             "value": "$__all"
+          },
+          {
+            "selected": false,
+            "text": "account.update",
+            "value": "account.update"
           },
           {
             "selected": false,
@@ -1001,13 +1001,18 @@
           },
           {
             "selected": false,
-            "text": "http.request",
-            "value": "http.request"
+            "text": "invite.accept",
+            "value": "invite.accept"
           },
           {
             "selected": false,
-            "text": "invite.accept",
-            "value": "invite.accept"
+            "text": "invite.create",
+            "value": "invite.create"
+          },
+          {
+            "selected": false,
+            "text": "invite.resend",
+            "value": "invite.resend"
           },
           {
             "selected": false,
@@ -1111,6 +1116,11 @@
           },
           {
             "selected": false,
+            "text": "user.create",
+            "value": "user.create"
+          },
+          {
+            "selected": false,
             "text": "user.deactivate",
             "value": "user.deactivate"
           },
@@ -1136,8 +1146,28 @@
           },
           {
             "selected": false,
+            "text": "user.password_change",
+            "value": "user.password_change"
+          },
+          {
+            "selected": false,
+            "text": "user.password_reset",
+            "value": "user.password_reset"
+          },
+          {
+            "selected": false,
+            "text": "user.password_reset_request",
+            "value": "user.password_reset_request"
+          },
+          {
+            "selected": false,
             "text": "user.signup",
             "value": "user.signup"
+          },
+          {
+            "selected": false,
+            "text": "user.transfer",
+            "value": "user.transfer"
           },
           {
             "selected": false,
@@ -1210,7 +1240,7 @@
             "value": "workflow.urgent"
           }
         ],
-        "query": "api_key.create,api_key.revoke,file.access_denied,file.download,file.upload,group.create,group.delete,group.update,http.request,invite.accept,task.comment,task.complete,task.delay,task.delegation,task.due_date_changed,task.performer_created,task.performer_deleted,task.performer_group_created,task.performer_group_deleted,task.revert,task.skip,task.skip_no_performers,task.start,template.clone,template.delete,template.draft_save,template.export,template.publish,tenant.login_as,user.admin_toggle,user.deactivate,user.login,user.login_as,user.login_failed,user.logout,user.signup,webhook.subscribe,webhook.unsubscribe,workflow.complete,workflow.delay,workflow.ended,workflow.ended_by_condition,workflow.force_delay,workflow.force_resume,workflow.not_urgent,workflow.revert,workflow.run,workflow.sub_workflow_run,workflow.terminate,workflow.urgent",
+        "query": "account.update,api_key.create,api_key.revoke,file.access_denied,file.download,file.upload,group.create,group.delete,group.update,invite.accept,invite.create,invite.resend,task.comment,task.complete,task.delay,task.delegation,task.due_date_changed,task.performer_created,task.performer_deleted,task.performer_group_created,task.performer_group_deleted,task.revert,task.skip,task.skip_no_performers,task.start,template.clone,template.delete,template.draft_save,template.export,template.publish,tenant.login_as,user.admin_toggle,user.create,user.deactivate,user.login,user.login_as,user.login_failed,user.logout,user.password_change,user.password_reset,user.password_reset_request,user.signup,user.transfer,webhook.subscribe,webhook.unsubscribe,workflow.complete,workflow.delay,workflow.ended,workflow.ended_by_condition,workflow.force_delay,workflow.force_resume,workflow.not_urgent,workflow.revert,workflow.run,workflow.sub_workflow_run,workflow.terminate,workflow.urgent",
         "queryValue": "",
         "skipUrlSync": false,
         "type": "custom"

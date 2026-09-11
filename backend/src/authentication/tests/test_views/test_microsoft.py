@@ -49,7 +49,7 @@ def test_token__existent_user__authenticate(
     user_ip = '128.18.0.99'
     token = '!@#E213'
     authenticate_mock = mocker.patch(
-        'src.authentication.views.microsoft.'
+        'src.authentication.services.user_auth.'
         'AuthService.get_auth_token',
         return_value=token,
     )
@@ -131,7 +131,7 @@ def test_token__disable_ms_auth__permission_denied(
     user_ip = '128.18.0.99'
     token = '!@#E213'
     authenticate_mock = mocker.patch(
-        'src.authentication.views.microsoft.'
+        'src.authentication.services.user_auth.'
         'AuthService.get_auth_token',
         return_value=token,
     )
@@ -194,7 +194,7 @@ def test_token__service_exception__validation_error(
         side_effect=AuthException(message),
     )
     authenticate_mock = mocker.patch(
-        'src.authentication.views.microsoft.'
+        'src.authentication.services.user_auth.'
         'AuthService.get_auth_token',
     )
     signup_mock = mocker.patch(
@@ -277,7 +277,7 @@ def test_token__user_not_found__signup(
     user_agent = 'Some/Mozilla'
     user_ip = '128.18.0.99'
     authenticate_mock = mocker.patch(
-        'src.authentication.views.microsoft.'
+        'src.authentication.services.user_auth.'
         'AuthService.get_auth_token',
     )
     token = '!@#Eqa13d'
@@ -386,7 +386,7 @@ def test_token__user_not_found_and_signup_disabled__authentication_error(
     user_agent = 'Some/Mozilla'
     user_ip = '128.18.0.99'
     authenticate_mock = mocker.patch(
-        'src.authentication.views.microsoft.'
+        'src.authentication.services.user_auth.'
         'AuthService.get_auth_token',
     )
     token = '!@#Eqa13d'
@@ -474,7 +474,7 @@ def test_token__skip__code__validation_error(
         'MicrosoftAuthService.apply_photo_to_user',
     )
     authenticate_mock = mocker.patch(
-        'src.authentication.views.microsoft.'
+        'src.authentication.services.user_auth.'
         'AuthService.get_auth_token',
     )
     signup_mock = mocker.patch(
@@ -529,7 +529,7 @@ def test_token__code_blank__validation_error(
         'MicrosoftAuthService.apply_photo_to_user',
     )
     authenticate_mock = mocker.patch(
-        'src.authentication.views.microsoft.'
+        'src.authentication.services.user_auth.'
         'AuthService.get_auth_token',
     )
     signup_mock = mocker.patch(

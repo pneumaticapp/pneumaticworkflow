@@ -26,7 +26,6 @@ from src.accounts.serializers.accounts import AccountCacheSerializer
 from src.accounts.serializers.user import (
     UserPrivilegesSerializer,
     UserSerializer,
-    UserWebsocketSerializer,
     VacationActivateSerializer,
 )
 from src.accounts.serializers.users import (
@@ -61,7 +60,6 @@ from src.generics.permissions import (
     UserIsAuthenticated,
 )
 from src.logs.events import AuditEventService
-from src.notifications.tasks import send_user_updated_notification
 from src.openapi import (
     ACCESS_ACCOUNT_OWNER,
     ACCESS_ADMIN_BASE,
@@ -236,6 +234,9 @@ class UsersViewSet(
             )
         except UserServiceException as ex:
             raise_validation_error(message=ex.message)
+        # Here and not in UserService.create: the sign up and the tenant
+        # owner go through the same method and are not an admin action.
+        AuditEventService.user_created(request=request, user=user)
         return self.response_ok(UserSerializer(instance=user).data)
 
     @extend_schema(
@@ -349,16 +350,13 @@ class UsersViewSet(
         url_path='toggle-admin',
     )
     def toggle_admin(self, request, *args, **kwargs):
-        user = self.get_object()
-        user.is_admin = not user.is_admin
-        user.save(update_fields=['is_admin'])
-        AuditEventService.user_admin_toggled(request=request, user=user)
-        self.identify(user)
-        send_user_updated_notification.delay(
-            logging=request.user.account.log_api_requests,
-            account_id=request.user.account_id,
-            user_data=UserWebsocketSerializer(user).data,
+        service = UserService(
+            instance=self.get_object(),
+            user=request.user,
+            is_superuser=request.is_superuser,
+            auth_type=request.token_type,
         )
+        service.toggle_admin()
         return self.response_ok()
 
     @extend_schema(

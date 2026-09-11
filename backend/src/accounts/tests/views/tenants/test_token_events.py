@@ -67,7 +67,6 @@ def test_token__master_account__emit_tenant_login_as(
             id=tenant_account.id,
         ),
         payload={'master_account_id': master_account.id},
-        request=mocker.ANY,
     )
     get_auth_token_mock.assert_called_once_with(
         user=tenant_account_owner,
@@ -86,8 +85,6 @@ def test_token__master_account__emit_tenant_login_as(
 def test_token__master_account__event_keeps_request_context(
     mocker,
     api_client,
-    events_enabled,
-    run_on_commit,
     fake_stream,
 ):
 

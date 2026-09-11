@@ -312,6 +312,51 @@ def test_partial_update__name_only__emit_no_membership_change(mocker):
     send_task_deleted_mock.assert_not_called()
 
 
+def test_partial_update__nothing_changed__no_event(mocker):
+
+    """ The client sends the whole group on every save, so the keys of
+        the request say nothing about what changed. An update that
+        changes none of them must leave no record behind. """
+
+    # arrange
+    account = create_test_account(plan=BillingPlanType.UNLIMITED)
+    owner = create_test_owner(account=account)
+    member = create_test_admin(account=account)
+    group = create_test_group(
+        account=account,
+        name='Sales',
+        users=[member],
+    )
+    analytics_mock = mocker.patch(
+        'src.analysis.tasks.track_group_analytics.delay',
+    )
+    send_group_updated_mock = mocker.patch(
+        'src.notifications.tasks.send_group_updated_notification.delay',
+    )
+    emit_mock = mocker.patch('src.logs.events.mixins.emit')
+    service = UserGroupService(
+        user=owner,
+        instance=group,
+        auth_type=AuthTokenType.USER,
+    )
+
+    # act
+    service.partial_update(
+        name='Sales',
+        users=[member.id],
+        force_save=True,
+    )
+
+    # assert
+    emit_mock.assert_not_called()
+    analytics_mock.assert_not_called()
+    send_group_updated_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        group_data=mocker.ANY,
+    )
+
+
 def test_delete__group__emit_group_delete(mocker):
 
     # arrange
@@ -379,8 +424,6 @@ def test_delete__group__emit_group_delete(mocker):
 def test_create__groups_endpoint__event_keeps_request_context(
     mocker,
     api_client,
-    events_enabled,
-    run_on_commit,
     fake_stream,
 ):
 

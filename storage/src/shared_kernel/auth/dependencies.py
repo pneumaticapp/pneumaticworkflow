@@ -1,56 +1,45 @@
 """Authentication dependencies."""
 
-from typing import TYPE_CHECKING
-
 from fastapi import Request
 
-from src.shared_kernel.auth.user_types import UserType
 from src.shared_kernel.exceptions import (
     AuthenticationError,
 )
-
-if TYPE_CHECKING:
-    from src.shared_kernel.middleware.auth_middleware import AuthUser
+from src.shared_kernel.middleware.auth_middleware import AuthUser
 
 
-class AuthenticatedUser:
-    """Authenticated user with guaranteed non-null fields."""
+class AuthenticatedUser(AuthUser):
+    """Authenticated user with guaranteed non-null fields.
 
-    def __init__(self, auth_user: 'AuthUser') -> None:
+    Built from the AuthUser the middleware put on the request, so it
+    carries the same fields and properties; what it adds is the promise
+    that account_id is set.
+    """
+
+    account_id: int
+
+    def __init__(self, auth_user: AuthUser) -> None:
         """Initialize authenticated user.
 
         Args:
             auth_user: Base authenticated user.
 
         """
-        self.auth_type = auth_user.auth_type
-        self.user_id = auth_user.user_id
         if auth_user.account_id is None:
             msg = 'account_id must not be None for authenticated users'
             raise TypeError(msg)
-        self.account_id: int = auth_user.account_id
-        self.token = auth_user.token
-        self.actor_type = auth_user.actor_type
+        super().__init__(
+            auth_type=auth_user.auth_type,
+            user_id=auth_user.user_id,
+            account_id=auth_user.account_id,
+            token=auth_user.token,
+            is_api_key=auth_user.is_api_key,
+        )
 
     @property
     def is_anonymous(self) -> bool:
-        """Check if user is anonymous."""
+        """An authenticated user is never anonymous, whatever its type."""
         return False
-
-    @property
-    def is_public_token(self) -> bool:
-        """Check if user has public token."""
-        return self.auth_type == UserType.PUBLIC_TOKEN
-
-    @property
-    def is_authenticated(self) -> bool:
-        """Check if user is authenticated."""
-        return self.auth_type == UserType.AUTHENTICATED
-
-    @property
-    def is_guest_token(self) -> bool:
-        """Check if user has guest token."""
-        return self.auth_type == UserType.GUEST_TOKEN
 
 
 async def get_current_user(request: Request) -> AuthenticatedUser:

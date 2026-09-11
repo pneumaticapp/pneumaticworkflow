@@ -7,6 +7,12 @@
 # The rules are read-only in the Grafana UI (that is what provisioning means):
 # to change a threshold, edit the number here and restart. Every threshold sits
 # in a `params` list of a `threshold` node and is marked with a TUNE comment.
+# Three summaries repeat their number (the failed sign-ins, the burst from one
+# address and the refused downloads): change the summary together with it.
+#
+# The datasource maps and the reduce node the first four rules share are YAML
+# anchors (&loki_datasource, &expr_datasource, &reduce_last_of_a): an edit of
+# the first occurrence applies to every rule that aliases it.
 #
 # Where the alerts go: nowhere until a contact point is set up. Firing rules are
 # visible in Alerting -> Alert rules; add a contact point and a notification
@@ -26,8 +32,9 @@ groups:
 
   # ---------------------------------------------------------------------
   # Sign-ins and file access. One minute is the shortest useful interval:
-  # the consumer ticks every 10 s and the collector batches for 2 s, so an
-  # event reaches Loki about 12 s after it happens.
+  # the consumer ticks every 5 s (LOGS_CONSUMER_INTERVAL_SECONDS) and the
+  # collector batches for 2 s, so an event reaches Loki about 7 s after it
+  # happens.
   # ---------------------------------------------------------------------
   - orgId: 1
     name: Security
@@ -47,7 +54,7 @@ groups:
               to: 0
             datasourceUid: pneumatic-loki
             model:
-              datasource:
+              datasource: &loki_datasource
                 type: loki
                 uid: pneumatic-loki
               editorMode: code
@@ -61,8 +68,8 @@ groups:
               from: 600
               to: 0
             datasourceUid: __expr__
-            model:
-              datasource:
+            model: &reduce_last_of_a
+              datasource: &expr_datasource
                 type: __expr__
                 uid: __expr__
               expression: A
@@ -80,9 +87,7 @@ groups:
                     # TUNE: failed sign-ins in five minutes, whole installation.
                     params: [10]
                     type: gt
-              datasource:
-                type: __expr__
-                uid: __expr__
+              datasource: *expr_datasource
               expression: B
               refId: C
               type: threshold
@@ -93,6 +98,7 @@ groups:
           severity: critical
           area: security
         annotations:
+          __dashboardUid__: pneumatic-critical-events
           summary: More than 10 failed sign-ins in five minutes
           description: >-
             user.login_failed events across the whole installation. A single
@@ -114,9 +120,7 @@ groups:
               to: 0
             datasourceUid: pneumatic-loki
             model:
-              datasource:
-                type: loki
-                uid: pneumatic-loki
+              datasource: *loki_datasource
               editorMode: code
               expr: 'sum by (pii_ip) (count_over_time({service_name="pneumatic-backend"} | event_type="user.login_failed" [10m]))'
               intervalMs: 1000
@@ -128,14 +132,7 @@ groups:
               from: 900
               to: 0
             datasourceUid: __expr__
-            model:
-              datasource:
-                type: __expr__
-                uid: __expr__
-              expression: A
-              reducer: last
-              refId: B
-              type: reduce
+            model: *reduce_last_of_a
           - refId: C
             relativeTimeRange:
               from: 900
@@ -147,9 +144,7 @@ groups:
                     # TUNE: failed sign-ins in ten minutes from one address.
                     params: [5]
                     type: gt
-              datasource:
-                type: __expr__
-                uid: __expr__
+              datasource: *expr_datasource
               expression: B
               refId: C
               type: threshold
@@ -179,9 +174,7 @@ groups:
               to: 0
             datasourceUid: pneumatic-loki
             model:
-              datasource:
-                type: loki
-                uid: pneumatic-loki
+              datasource: *loki_datasource
               editorMode: code
               expr: 'sum(count_over_time({service_name="pneumatic-file-service"} | event_type="file.access_denied" [10m])) or vector(0)'
               intervalMs: 1000
@@ -193,14 +186,7 @@ groups:
               from: 900
               to: 0
             datasourceUid: __expr__
-            model:
-              datasource:
-                type: __expr__
-                uid: __expr__
-              expression: A
-              reducer: last
-              refId: B
-              type: reduce
+            model: *reduce_last_of_a
           - refId: C
             relativeTimeRange:
               from: 900
@@ -214,9 +200,7 @@ groups:
                     # or somebody walking file ids refuses in bursts.
                     params: [3]
                     type: gt
-              datasource:
-                type: __expr__
-                uid: __expr__
+              datasource: *expr_datasource
               expression: B
               refId: C
               type: threshold
@@ -248,9 +232,7 @@ groups:
               to: 0
             datasourceUid: pneumatic-loki
             model:
-              datasource:
-                type: loki
-                uid: pneumatic-loki
+              datasource: *loki_datasource
               editorMode: code
               expr: 'sum(count_over_time({service_name="pneumatic-file-service"} | event_type="file.access_denied" | label_format cross="{{ if ne .payload_file_account_id .account_id }}yes{{ else }}no{{ end }}" | cross="yes" [10m])) or vector(0)'
               intervalMs: 1000
@@ -262,14 +244,7 @@ groups:
               from: 900
               to: 0
             datasourceUid: __expr__
-            model:
-              datasource:
-                type: __expr__
-                uid: __expr__
-              expression: A
-              reducer: last
-              refId: B
-              type: reduce
+            model: *reduce_last_of_a
           - refId: C
             relativeTimeRange:
               from: 900
@@ -282,9 +257,7 @@ groups:
                     # raises the alert.
                     params: [0]
                     type: gt
-              datasource:
-                type: __expr__
-                uid: __expr__
+              datasource: *expr_datasource
               expression: B
               refId: C
               type: threshold
@@ -295,6 +268,7 @@ groups:
           severity: critical
           area: security
         annotations:
+          __dashboardUid__: pneumatic-critical-events
           summary: A file of another account was asked for and refused
           description: >-
             file.access_denied where payload.file_account_id is not the account
@@ -336,9 +310,7 @@ groups:
               to: 0
             datasourceUid: pneumatic-loki
             model:
-              datasource:
-                type: loki
-                uid: pneumatic-loki
+              datasource: *loki_datasource
               editorMode: code
               expr: 'sum(count_over_time({service_name=~"pneumatic-.*"} [60m])) or vector(0)'
               intervalMs: 1000
@@ -351,9 +323,7 @@ groups:
               to: 0
             datasourceUid: pneumatic-loki
             model:
-              datasource:
-                type: loki
-                uid: pneumatic-loki
+              datasource: *loki_datasource
               editorMode: code
               expr: 'sum(count_over_time({service_name=~"pneumatic-.*"} [24h])) or vector(0)'
               intervalMs: 1000
@@ -366,9 +336,7 @@ groups:
               to: 0
             datasourceUid: __expr__
             model:
-              datasource:
-                type: __expr__
-                uid: __expr__
+              datasource: *expr_datasource
               expression: A
               reducer: last
               refId: C
@@ -379,9 +347,7 @@ groups:
               to: 0
             datasourceUid: __expr__
             model:
-              datasource:
-                type: __expr__
-                uid: __expr__
+              datasource: *expr_datasource
               expression: B
               reducer: last
               refId: D
@@ -392,9 +358,7 @@ groups:
               to: 0
             datasourceUid: __expr__
             model:
-              datasource:
-                type: __expr__
-                uid: __expr__
+              datasource: *expr_datasource
               # TUNE: 200 is the day volume below which the installation counts
               # as idle and the rule stays silent.
               expression: $C == 0 && $D > 200

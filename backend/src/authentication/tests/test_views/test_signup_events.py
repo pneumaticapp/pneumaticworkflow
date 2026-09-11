@@ -25,8 +25,6 @@ def test_create__email_signup__emit_user_signup_only(
     identify_mock,
     group_mock,
     settings,
-    events_enabled,
-    run_on_commit,
     fake_stream,
 ):
 

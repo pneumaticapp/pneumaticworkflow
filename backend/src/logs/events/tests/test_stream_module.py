@@ -1,6 +1,3 @@
-import pytest
-
-from src.logs.events.exceptions import EventsError
 from src.logs.events.stream import (
     consumer_name,
     get_stream,
@@ -61,26 +58,6 @@ def test_get_stream__changed_settings__new_client(settings):
     # assert
     assert second is not first
     assert second.url == 'redis://localhost:6379/5'
-
-
-def test_get_stream__empty_url__raise(settings):
-
-    """ redis-py answers an empty url with a bare ValueError. The
-        pipeline is on by default, so a deployment that forgot the
-        variable has to be told what exactly is wrong. """
-
-    # arrange
-    settings.LOGS_REDIS_URL = ''
-
-    # act
-    with pytest.raises(EventsError) as ex:
-        get_stream()
-
-    # assert
-    assert str(ex.value) == (
-        'LOGS_REDIS_URL is empty while LOGS_BACKEND is not "none": '
-        'the event pipeline has nowhere to write'
-    )
 
 
 def test_consumer_name__process__host_name_only(mocker):

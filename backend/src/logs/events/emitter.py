@@ -2,17 +2,13 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime
 from time import monotonic
-from typing import Any, Callable, Optional, Tuple
+from typing import Optional, Tuple
 
 from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
-from src.logs.events.context import (
-    RequestContext,
-    get_context,
-    get_user_agent_header,
-)
+from src.logs.events.context import merge_context
 from src.logs.enums import LogsBackend
 from src.logs.events.enums import ActorType
 from src.logs.events.registry import resolve_event_type
@@ -22,9 +18,9 @@ from src.logs.events.schema import (
     Event,
     EventObject,
     normalize_payload,
+    pii_value,
 )
 from src.logs.events.stream import get_stream
-from src.utils.http import get_client_ip
 
 logger = logging.getLogger('pneumatic.events')
 
@@ -80,7 +76,7 @@ def emit(
 
     if settings.LOGS_BACKEND == LogsBackend.NONE:
         return
-    event = build_event(
+    event = _build_event(
         event_type,
         account_id=account_id,
         actor=actor,
@@ -94,7 +90,7 @@ def emit(
     _schedule(event)
 
 
-def build_event(
+def _build_event(
     event_type: str,
     *,
     account_id: Optional[int],
@@ -113,7 +109,7 @@ def build_event(
         context published by EventContextMiddleware. """
 
     declared = resolve_event_type(event_type)
-    context = get_context()
+    context = merge_context(request)
     event = Event(
         type=event_type,
         category=declared.category,
@@ -125,25 +121,16 @@ def build_event(
         # NO_ACCOUNT is the documented value for an event that has no
         # account, a failed sign in above all.
         account_id=NO_ACCOUNT if account_id is None else account_id,
-        actor=(
-            actor
-            or _actor_from_request(request)
-            or _actor_from_context(context)
-            or Actor(ActorType.SYSTEM)
-        ),
+        actor=actor or context.actor or Actor(ActorType.SYSTEM),
         object=event_object,
         payload=normalize_payload(payload),
         workflow_id=workflow_id,
         task_id=task_id,
-        ip=_from_request_or_context(get_client_ip, request, context, 'ip'),
-        user_agent=_from_request_or_context(
-            get_user_agent_header, request, context, 'user_agent',
-        ),
-        request_id=_from_request_or_context(
-            _request_id, request, context, 'request_id',
-        ),
+        ip=context.ip,
+        user_agent=context.user_agent,
+        request_id=context.request_id,
     )
-    event.pii = _present_pii(declared.effective_pii, event)
+    event.pii = _present_pii(declared.pii, event)
     return event
 
 
@@ -170,8 +157,7 @@ def _write(event: Event):
         would both return 500 for an already committed request and
         silently drop every callback registered after this one
         (attachment permissions, notifications, websocket sends).
-        A missing LOGS_REDIS_URL raises EventsError from get_stream,
-        a Redis outage raises RedisError or OSError. """
+        A Redis outage raises RedisError or OSError. """
 
     now = monotonic()
     if _circuit.is_open(now):
@@ -203,66 +189,16 @@ def _report_stream_error(exc: Exception) -> None:
     )
 
 
-def _actor_from_request(request) -> Optional[Actor]:
-    user = getattr(request, 'user', None) if request is not None else None
-    if user is None or not getattr(user, 'is_authenticated', False):
-        return None
-    return Actor.from_user(user, getattr(request, 'token_type', None))
-
-
-def _actor_from_context(context: Optional[RequestContext]) -> Optional[Actor]:
-    if context is None or context.actor_id is None:
-        return None
-    return Actor(
-        type=context.actor_type,
-        id=context.actor_id,
-        email=context.actor_email,
-    )
-
-
-def _from_request_or_context(
-    getter: Callable[[Any], Optional[str]],
-    request,
-    context: Optional[RequestContext],
-    attr: str,
-) -> Optional[str]:
-
-    """ The request the caller handles wins over the context
-        published by EventContextMiddleware. """
-
-    if request is not None:
-        value = getter(request)
-        if value:
-            return value
-    return getattr(context, attr, None)
-
-
-def _request_id(request) -> Optional[str]:
-
-    """ Correlation id EventContextMiddleware put on the request. """
-
-    return getattr(request, 'request_id', None)
-
-
 def _present_pii(paths: Tuple[str, ...], event: Event) -> Tuple[str, ...]:
 
     """ Keep only the personal data the event really carries: the
         list is the audit answer to "what left the system" and must
         not name empty fields. The paths come from
-        EventType.effective_pii, the one list the sink reads too. """
+        EventType.pii, the one list the sink reads too. """
 
     return tuple(path for path in paths if _has_value(event, path))
 
 
 def _has_value(event: Event, path: str) -> bool:
-    head, _, tail = path.partition('.')
-    if head == 'payload':
-        value = event.payload.get(tail) if tail else event.payload
-    elif head in ('actor', 'object'):
-        holder = getattr(event, head, None)
-        value = getattr(holder, tail, None) if holder else None
-    elif tail:
-        value = None
-    else:
-        value = getattr(event, head, None)
+    value = pii_value(event, path)
     return value is not None and value != ''

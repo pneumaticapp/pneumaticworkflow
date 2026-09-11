@@ -12,6 +12,10 @@ TS_SUFFIX = 'Z'
 OBJECT_TYPE_FILE = 'file'
 FILE_PII = ('ip', 'user_agent', 'payload.filename')
 
+STREAM_KEY = 'pneumatic:events'
+PAYLOAD_STR_MAX = 2000
+SERVICE_NAME = 'pneumatic-file-service'
+
 
 class EventName(StrEnum):
     """Types the backend registry declares for the file service."""
@@ -79,6 +83,13 @@ def format_ts(value: datetime) -> str:
     if value.tzinfo is None:
         value = value.replace(tzinfo=UTC)
     return value.astimezone(UTC).strftime(TS_FORMAT) + TS_SUFFIX
+
+
+def cut(value: str | None) -> str | None:
+    """Trim a payload string to the length the backend allows."""
+    if value is None:
+        return None
+    return value[:PAYLOAD_STR_MAX]
 
 
 @dataclass(frozen=True)

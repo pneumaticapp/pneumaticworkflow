@@ -1,4 +1,5 @@
 import json
+from http import HTTPStatus
 from typing import List, Optional
 
 import requests
@@ -28,8 +29,7 @@ from src.webhooks.models import WebHook
 
 UserModel = get_user_model()
 
-WEBHOOK_TIMEOUT = (3.05, 10)
-SERVER_ERROR_STATUS = 500
+WEBHOOK_TIMEOUT = (3.05, 30)
 CONNECTION_ERROR = 'ConnectionError'
 ALL_EVENTS = 'all'
 
@@ -237,7 +237,7 @@ class WebhookDeliverer:
             if failure is not None:
                 status = AccountEventStatus.FAILED
                 error['response'] = failure
-            if response.status_code >= SERVER_ERROR_STATUS:
+            if response.status_code >= HTTPStatus.INTERNAL_SERVER_ERROR:
                 raise ConnectionError(
                     f'Error sending webhook ({response.status_code})',
                 )
@@ -285,7 +285,7 @@ class WebhookDeliverer:
         return data
 
     def _response_body(self, response: requests.Response) -> dict:
-        if response.status_code == 404:
+        if response.status_code == HTTPStatus.NOT_FOUND:
             return {}
         content_type = response.headers.get('content-type', '')
         if 'text' in content_type:

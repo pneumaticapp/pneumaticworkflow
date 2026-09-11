@@ -3,10 +3,13 @@ from dataclasses import dataclass
 from typing import Optional
 
 from src.authentication.enums import AuthTokenType
-from src.logs.events.enums import ActorType, actor_type_from_auth
-from src.utils.http import get_client_ip
+from src.logs.events.enums import actor_type_from_auth
+from src.logs.events.schema import Actor
+from src.utils.http import (
+    get_client_ip,
+    get_user_agent_header,
+)
 
-USER_AGENT_MAX = 500
 CONTEXT_VAR_NAME = 'pneumatic_event_context'
 
 
@@ -19,10 +22,7 @@ class RequestContext:
     request_id: Optional[str] = None
     ip: Optional[str] = None
     user_agent: Optional[str] = None
-    actor_type: ActorType.LITERALS = ActorType.SYSTEM
-    actor_id: Optional[int] = None
-    actor_email: Optional[str] = None
-    account_id: Optional[int] = None
+    actor: Optional[Actor] = None
 
 
 _context: ContextVar = ContextVar(CONTEXT_VAR_NAME, default=None)
@@ -43,16 +43,6 @@ def get_context() -> Optional[RequestContext]:
     return _context.get()
 
 
-def get_user_agent_header(request) -> Optional[str]:
-
-    """ Raw User-Agent header, trimmed to a sane length. """
-
-    user_agent = request.META.get('HTTP_USER_AGENT')
-    if not user_agent:
-        return None
-    return user_agent[:USER_AGENT_MAX]
-
-
 def context_from_request(request) -> RequestContext:
 
     """ Build the context of an incoming request.
@@ -70,8 +60,33 @@ def context_from_request(request) -> RequestContext:
     user = getattr(request, 'user', None)
     if user is not None and getattr(user, 'is_authenticated', False):
         auth_type = getattr(request, 'token_type', None) or AuthTokenType.USER
-        context.actor_type = actor_type_from_auth(auth_type)
-        context.actor_id = user.id
-        context.actor_email = getattr(user, 'email', None)
-        context.account_id = getattr(user, 'account_id', None)
+        context.actor = Actor(
+            type=actor_type_from_auth(auth_type),
+            id=user.id,
+            email=getattr(user, 'email', None),
+        )
     return context
+
+
+def merge_context(request) -> RequestContext:
+
+    """ What the pipeline knows about the current request.
+
+        The request the caller handles wins over the context the
+        middleware published, field by field: a view that passes
+        request= is authenticated by then, while the middleware ran
+        before DRF and may have seen an anonymous one. Whatever the
+        request does not say falls back to the context. """
+
+    context = get_context()
+    if request is None:
+        return context or RequestContext()
+    from_request = context_from_request(request)
+    if context is None:
+        return from_request
+    return RequestContext(
+        request_id=from_request.request_id or context.request_id,
+        ip=from_request.ip or context.ip,
+        user_agent=from_request.user_agent or context.user_agent,
+        actor=from_request.actor or context.actor,
+    )

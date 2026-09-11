@@ -5,10 +5,9 @@ from typing import Annotated, Any
 
 from fastapi import Depends, Request
 
-from src.shared_kernel.config import get_settings
-from src.shared_kernel.events.context import get_request_context
 from src.shared_kernel.events.emitter import EventEmitter, get_event_emitter
 from src.shared_kernel.events.schema import (
+    SERVICE_NAME,
     Actor,
     ActorSource,
     Event,
@@ -16,6 +15,12 @@ from src.shared_kernel.events.schema import (
     FileFields,
     RequestContext,
     StoredFile,
+    cut,
+)
+from src.shared_kernel.http_context import (
+    get_client_ip,
+    get_request_id,
+    get_user_agent,
 )
 
 
@@ -30,9 +35,9 @@ def _file_payload(file: FileFields) -> dict[str, Any]:
     The content is never in it, nor the bucket or the path in S3.
     """
     return {
-        'filename': file.filename,
+        'filename': cut(file.filename),
         'size': file.size,
-        'content_type': file.content_type,
+        'content_type': cut(file.content_type),
     }
 
 
@@ -44,19 +49,20 @@ class RequestEvents:
         *,
         emitter: EventEmitter,
         context: RequestContext,
-        service: str,
     ) -> None:
         """Bind the records of one request.
+
+        The name this service signs its records with is a constant of
+        the process (SERVICE_NAME), not something a request carries,
+        so it is not threaded through here.
 
         Args:
             emitter: Writer of the stream.
             context: HTTP context of the request.
-            service: Name this service signs its records with.
 
         """
         self._emitter = emitter
         self._context = context
-        self._service = service
 
     async def file_upload(
         self,
@@ -122,7 +128,7 @@ class RequestEvents:
     ) -> None:
         event = Event(
             type=name,
-            service=self._service,
+            service=SERVICE_NAME,
             ts=_now(),
             account_id=user.account_id,
             actor=Actor(type=user.actor_type, id=user.user_id),
@@ -133,12 +139,20 @@ class RequestEvents:
         await self._emitter.emit(event)
 
 
-def get_request_events(request: Request) -> RequestEvents:
-    """FastAPI dependency: the records of this request."""
+async def get_request_events(request: Request) -> RequestEvents:
+    """FastAPI dependency: the records of this request.
+
+    A coroutine on purpose: FastAPI runs a plain function dependency
+    in a thread of the pool, a thread hop per request for three
+    header reads.
+    """
     return RequestEvents(
         emitter=get_event_emitter(),
-        context=get_request_context(request),
-        service=get_settings().LOGS_SERVICE_NAME,
+        context=RequestContext(
+            ip=get_client_ip(request),
+            user_agent=get_user_agent(request),
+            request_id=get_request_id(request),
+        ),
     )
 
 

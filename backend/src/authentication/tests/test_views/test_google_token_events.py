@@ -1,3 +1,5 @@
+from hashlib import sha256
+
 import pytest
 from django.contrib.auth import get_user_model
 
@@ -29,8 +31,6 @@ def test_google_token__existent_user__emit_user_login(
     mocker,
     api_client,
     settings,
-    events_enabled,
-    run_on_commit,
     fake_stream,
 ):
 
@@ -121,8 +121,6 @@ def test_google_token__new_user__emit_user_signup_only(
     identify_mock,
     group_mock,
     settings,
-    events_enabled,
-    run_on_commit,
     fake_stream,
 ):
 
@@ -312,9 +310,7 @@ def test_google_token__inactive_user__emit_login_failed(
     emit_mock = mocker.patch('src.logs.events.services.emit')
     # sha256 of the profile address "sso@pneumatic.app": an SSO
     # callback carries no address in the body, the view passes it.
-    email_hash = (
-        '66b34e03de7a24e7eae47c8022412dc8a05be1e07a1b55e61686cda215e40daa'
-    )
+    email_hash = sha256(b'sso@pneumatic.app').hexdigest()
 
     # act
     response = api_client.get(
@@ -334,7 +330,7 @@ def test_google_token__inactive_user__emit_login_failed(
         event_object=EventObject(type=EventObjectType.USER),
         payload={
             'email_hash': email_hash,
-            'reason': LoginFailedReason.ACCOUNT_INACTIVE,
+            'reason': LoginFailedReason.SIGNUP_DISABLED,
         },
         request=mocker.ANY,
     )

@@ -421,7 +421,36 @@ class UserService(
                 user_data=UserWebsocketSerializer(old_manager).data,
             )
 
-    def deactivate(self, skip_validation: bool = False):
+    def toggle_admin(self):
+
+        """ Flip the admin permission of the user and journal it.
+
+            Granting admin is the privilege escalation the journal
+            exists for, so the write, the record and the notification
+            belong together rather than in whichever view happens to
+            call them.
+        """
+
+        self.instance.is_admin = not self.instance.is_admin
+        self.instance.save(update_fields=['is_admin'])
+        self._publish(
+            EventName.USER_ADMIN_TOGGLE,
+            account_id=self.account.id,
+            object_type=EventObjectType.USER,
+            object_id=self.instance.id,
+            payload={
+                'is_admin': self.instance.is_admin,
+                'target_email': self.instance.email,
+            },
+        )
+        self.identify(self.instance)
+        send_user_updated_notification.delay(
+            logging=self.account.log_api_requests,
+            account_id=self.account.id,
+            user_data=UserWebsocketSerializer(self.instance).data,
+        )
+
+    def deactivate(self, skip_validation: bool = False) -> None:
 
         """ Deactivate user and call delete actions
             If user is invited not send identify and deactivation email """

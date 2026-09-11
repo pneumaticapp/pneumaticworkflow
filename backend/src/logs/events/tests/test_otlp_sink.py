@@ -1,3 +1,5 @@
+import logging
+
 import pytest
 import requests
 
@@ -11,9 +13,11 @@ from src.logs.events.sinks.otlp import (
     JSON_HEADERS,
     OTLPSink,
     get_sink,
+    without_userinfo,
 )
 from src.logs.events.tests.fakes import (
     OBSERVED_NS,
+    assert_posted,
     build_sink_body,
     make_event,
 )
@@ -96,12 +100,7 @@ def test_send__ok_response__batch_posted_to_the_collector(mocker):
     sink.send(records)
 
     # assert
-    post_mock.assert_called_once_with(
-        'http://otel-collector:4318/v1/logs',
-        data=build_sink_body(records, OBSERVED_NS),
-        headers=JSON_HEADERS,
-        timeout=DEFAULT_TIMEOUT,
-    )
+    assert_posted(post_mock, records)
     response.raise_for_status.assert_called_once_with()
     response.json.assert_called_once_with()
     time_ns_mock.assert_called_once_with()
@@ -152,12 +151,7 @@ def test_send__ok_response_without_a_body__delivered(mocker):
     report_error_mock.assert_not_called()
     response.raise_for_status.assert_called_once_with()
     response.json.assert_called_once_with()
-    post_mock.assert_called_once_with(
-        'http://otel-collector:4318/v1/logs',
-        data=build_sink_body(records, OBSERVED_NS),
-        headers=JSON_HEADERS,
-        timeout=DEFAULT_TIMEOUT,
-    )
+    assert_posted(post_mock, records)
     time_ns_mock.assert_called_once_with()
 
 
@@ -185,12 +179,7 @@ def test_send__ok_response_with_a_text_body__delivered(mocker):
 
     # assert
     report_error_mock.assert_not_called()
-    post_mock.assert_called_once_with(
-        'http://otel-collector:4318/v1/logs',
-        data=build_sink_body(records, OBSERVED_NS),
-        headers=JSON_HEADERS,
-        timeout=DEFAULT_TIMEOUT,
-    )
+    assert_posted(post_mock, records)
     time_ns_mock.assert_called_once_with()
 
 
@@ -233,12 +222,7 @@ def test_send__unreadable_partial_success__delivered(
 
     # assert
     report_error_mock.assert_not_called()
-    post_mock.assert_called_once_with(
-        'http://otel-collector:4318/v1/logs',
-        data=build_sink_body(records, OBSERVED_NS),
-        headers=JSON_HEADERS,
-        timeout=DEFAULT_TIMEOUT,
-    )
+    assert_posted(post_mock, records)
     time_ns_mock.assert_called_once_with()
 
 
@@ -282,12 +266,7 @@ def test_send__partial_success__reported_but_delivered(mocker):
         },
         level=SentryLogLevel.WARNING,
     )
-    post_mock.assert_called_once_with(
-        'http://otel-collector:4318/v1/logs',
-        data=build_sink_body(records, OBSERVED_NS),
-        headers=JSON_HEADERS,
-        timeout=DEFAULT_TIMEOUT,
-    )
+    assert_posted(post_mock, records)
     response.raise_for_status.assert_called_once_with()
     time_ns_mock.assert_called_once_with()
 
@@ -316,12 +295,7 @@ def test_send__full_success__nothing_reported(mocker):
 
     # assert
     report_error_mock.assert_not_called()
-    post_mock.assert_called_once_with(
-        'http://otel-collector:4318/v1/logs',
-        data=build_sink_body(records, OBSERVED_NS),
-        headers=JSON_HEADERS,
-        timeout=DEFAULT_TIMEOUT,
-    )
+    assert_posted(post_mock, records)
     response.raise_for_status.assert_called_once_with()
     time_ns_mock.assert_called_once_with()
 
@@ -355,12 +329,7 @@ def test_send__server_error__temporary_error(mocker):
     assert str(ex.value) == 'http://otel-collector:4318/v1/logs answered 503'
     assert ex.value.retry_after is None
     report_error_mock.assert_not_called()
-    post_mock.assert_called_once_with(
-        'http://otel-collector:4318/v1/logs',
-        data=build_sink_body(records, OBSERVED_NS),
-        headers=JSON_HEADERS,
-        timeout=DEFAULT_TIMEOUT,
-    )
+    assert_posted(post_mock, records)
     time_ns_mock.assert_called_once_with()
 
 
@@ -404,12 +373,7 @@ def test_send__misconfigured_endpoint__temporary_error(mocker, status):
     )
     assert ex.value.retry_after is None
     report_error_mock.assert_not_called()
-    post_mock.assert_called_once_with(
-        'http://otel-collector:4318/v1/logs',
-        data=build_sink_body(records, OBSERVED_NS),
-        headers=JSON_HEADERS,
-        timeout=DEFAULT_TIMEOUT,
-    )
+    assert_posted(post_mock, records)
     time_ns_mock.assert_called_once_with()
 
 
@@ -467,12 +431,7 @@ def test_send__too_many_requests__delay_of_the_header(
     assert str(ex.value) == 'http://otel-collector:4318/v1/logs answered 429'
     assert ex.value.retry_after == retry_after
     report_error_mock.assert_not_called()
-    post_mock.assert_called_once_with(
-        'http://otel-collector:4318/v1/logs',
-        data=build_sink_body(records, OBSERVED_NS),
-        headers=JSON_HEADERS,
-        timeout=DEFAULT_TIMEOUT,
-    )
+    assert_posted(post_mock, records)
     time_ns_mock.assert_called_once_with()
 
 
@@ -512,12 +471,7 @@ def test_send__too_many_requests_without_the_header__no_delay(
     # assert
     assert ex.value.retry_after is None
     report_error_mock.assert_not_called()
-    post_mock.assert_called_once_with(
-        'http://otel-collector:4318/v1/logs',
-        data=build_sink_body(records, OBSERVED_NS),
-        headers=JSON_HEADERS,
-        timeout=DEFAULT_TIMEOUT,
-    )
+    assert_posted(post_mock, records)
     time_ns_mock.assert_called_once_with()
 
 
@@ -560,12 +514,7 @@ def test_send__bad_request__permanent_error_with_the_body(mocker):
             'body': 'x' * BODY_LIMIT,
         },
     )
-    post_mock.assert_called_once_with(
-        'http://otel-collector:4318/v1/logs',
-        data=build_sink_body(records, OBSERVED_NS),
-        headers=JSON_HEADERS,
-        timeout=DEFAULT_TIMEOUT,
-    )
+    assert_posted(post_mock, records)
     time_ns_mock.assert_called_once_with()
 
 
@@ -620,12 +569,7 @@ def test_send__batch_condemned_by_the_status__permanent_error(
             'body': 'rejected',
         },
     )
-    post_mock.assert_called_once_with(
-        'http://otel-collector:4318/v1/logs',
-        data=build_sink_body(records, OBSERVED_NS),
-        headers=JSON_HEADERS,
-        timeout=DEFAULT_TIMEOUT,
-    )
+    assert_posted(post_mock, records)
     time_ns_mock.assert_called_once_with()
 
 
@@ -667,12 +611,7 @@ def test_send__unreadable_error_body__permanent_error_without_it(mocker):
             'body': '',
         },
     )
-    post_mock.assert_called_once_with(
-        'http://otel-collector:4318/v1/logs',
-        data=build_sink_body(records, OBSERVED_NS),
-        headers=JSON_HEADERS,
-        timeout=DEFAULT_TIMEOUT,
-    )
+    assert_posted(post_mock, records)
     time_ns_mock.assert_called_once_with()
 
 
@@ -700,15 +639,10 @@ def test_send__connection_error__temporary_error(mocker):
 
     # assert
     assert str(ex.value) == (
-        f'http://otel-collector:4318/v1/logs: {error!r}'
+        'http://otel-collector:4318/v1/logs: ConnectionError'
     )
     report_error_mock.assert_not_called()
-    post_mock.assert_called_once_with(
-        'http://otel-collector:4318/v1/logs',
-        data=build_sink_body(records, OBSERVED_NS),
-        headers=JSON_HEADERS,
-        timeout=DEFAULT_TIMEOUT,
-    )
+    assert_posted(post_mock, records)
     time_ns_mock.assert_called_once_with()
 
 
@@ -736,15 +670,10 @@ def test_send__read_timeout__temporary_error(mocker):
 
     # assert
     assert str(ex.value) == (
-        f'http://otel-collector:4318/v1/logs: {error!r}'
+        'http://otel-collector:4318/v1/logs: Timeout'
     )
     report_error_mock.assert_not_called()
-    post_mock.assert_called_once_with(
-        'http://otel-collector:4318/v1/logs',
-        data=build_sink_body(records, OBSERVED_NS),
-        headers=JSON_HEADERS,
-        timeout=DEFAULT_TIMEOUT,
-    )
+    assert_posted(post_mock, records)
     time_ns_mock.assert_called_once_with()
 
 
@@ -774,15 +703,10 @@ def test_send__error_without_a_response__temporary_error(mocker):
 
     # assert
     assert str(ex.value) == (
-        f'http://otel-collector:4318/v1/logs: {error!r}'
+        'http://otel-collector:4318/v1/logs: TooManyRedirects'
     )
     report_error_mock.assert_not_called()
-    post_mock.assert_called_once_with(
-        'http://otel-collector:4318/v1/logs',
-        data=build_sink_body(records, OBSERVED_NS),
-        headers=JSON_HEADERS,
-        timeout=DEFAULT_TIMEOUT,
-    )
+    assert_posted(post_mock, records)
     time_ns_mock.assert_called_once_with()
 
 
@@ -866,12 +790,7 @@ def test_send__payload_that_is_a_list__delivered(mocker):
     sink.send(records)
 
     # assert
-    post_mock.assert_called_once_with(
-        'http://otel-collector:4318/v1/logs',
-        data=build_sink_body(records, OBSERVED_NS),
-        headers=JSON_HEADERS,
-        timeout=DEFAULT_TIMEOUT,
-    )
+    assert_posted(post_mock, records)
     report_error_mock.assert_not_called()
     time_ns_mock.assert_called_once_with()
 
@@ -918,3 +837,135 @@ def test_send__own_session__reused_between_batches(mocker):
     ])
     assert time_ns_mock.call_count == 2
     time_ns_mock.assert_has_calls([mocker.call(), mocker.call()])
+
+
+@pytest.mark.parametrize(
+    ('url', 'expected'),
+    [
+        (
+                'http://otel-collector:4318/v1/logs',
+                'http://otel-collector:4318/v1/logs',
+        ),
+        (
+                'https://user:secret@collector.test/v1/logs',
+                'https://collector.test/v1/logs',
+        ),
+        (
+                'https://user:secret@collector.test:4318/v1/logs',
+                'https://collector.test:4318/v1/logs',
+        ),
+        (
+                'https://token@collector.test/v1/logs',
+                'https://collector.test/v1/logs',
+        ),
+    ],
+)
+def test_without_userinfo__url__credential_dropped(url, expected):
+
+    # act
+    result = without_userinfo(url)
+
+    # assert
+    assert result == expected
+
+
+def test_send__endpoint_with_credential__not_in_the_error(mocker):
+
+    """ The endpoint is the one place a receiver credential can be
+        put, and the messages of the sink reach the log and Sentry:
+        neither the temporary error nor the transport error may
+        repeat it. """
+
+    # arrange
+    records = [('1-0', make_event())]
+    mocker.patch(
+        'src.logs.events.sinks.otlp.time.time_ns',
+        return_value=OBSERVED_NS,
+    )
+    report_error_mock = mocker.patch(
+        'src.logs.events.sinks.otlp.report_error',
+    )
+    response = mocker.Mock(status_code=503, headers={}, content=b'')
+    response.raise_for_status.side_effect = requests.HTTPError(
+        response=response,
+    )
+    post_mock = mocker.patch(
+        'src.logs.events.sinks.otlp.requests.Session.post',
+        return_value=response,
+    )
+    sink = OTLPSink(endpoint='https://user:secret@collector.test')
+
+    # act
+    with pytest.raises(SinkTemporaryError) as ex:
+        sink.send(records)
+
+    # assert
+    assert sink.url == 'https://user:secret@collector.test/v1/logs'
+    assert str(ex.value) == 'https://collector.test/v1/logs answered 503'
+    assert 'secret' not in str(ex.value)
+    report_error_mock.assert_not_called()
+    post_mock.assert_called_once_with(
+        'https://user:secret@collector.test/v1/logs',
+        data=build_sink_body(records, OBSERVED_NS),
+        headers=JSON_HEADERS,
+        timeout=DEFAULT_TIMEOUT,
+    )
+
+
+def test_send__rejected_with_credential_in_endpoint__report_without_it(
+    mocker,
+    caplog,
+):
+
+    # arrange
+    caplog.set_level(logging.ERROR, logger='pneumatic.events')
+    records = [('1-0', make_event())]
+    mocker.patch(
+        'src.logs.events.sinks.otlp.time.time_ns',
+        return_value=OBSERVED_NS,
+    )
+    report_error_mock = mocker.patch(
+        'src.logs.events.sinks.otlp.report_error',
+    )
+    response = mocker.Mock(status_code=400, headers={}, content=b'bad')
+    response.raise_for_status.side_effect = requests.HTTPError(
+        response=response,
+    )
+    mocker.patch(
+        'src.logs.events.sinks.otlp.requests.Session.post',
+        return_value=response,
+    )
+    sink = OTLPSink(endpoint='https://user:secret@collector.test')
+
+    # act
+    with pytest.raises(SinkPermanentError) as ex:
+        sink.send(records)
+
+    # assert
+    assert str(ex.value) == (
+        'https://collector.test/v1/logs answered 400 for 1 records: bad'
+    )
+    assert caplog.messages == [
+        'https://collector.test/v1/logs answered 400 for 1 records: bad',
+    ]
+    report_error_mock.assert_called_once_with(
+        message='OTLP endpoint rejected the batch',
+        data={
+            'url': 'https://collector.test/v1/logs',
+            'status': 400,
+            'records': 1,
+            'body': 'bad',
+        },
+    )
+
+
+def test_body_prefix__bytes_not_utf8__replaced_not_raised(mocker):
+
+    # arrange
+    response = mocker.Mock(content=b'\xff\xfe bad')
+
+    # act
+    result = OTLPSink._body_prefix(response)
+
+    # assert
+    assert result == '\ufffd\ufffd bad'

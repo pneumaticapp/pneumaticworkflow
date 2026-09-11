@@ -66,8 +66,6 @@ def test_superuser_token__with_reason__emit_user_login_as(
 def test_superuser_token__with_reason__event_keeps_request_context(
     mocker,
     api_client,
-    events_enabled,
-    run_on_commit,
     fake_stream,
 ):
 

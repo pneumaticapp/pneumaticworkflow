@@ -138,8 +138,6 @@ def test_revoke__api_key__emit_api_key_revoke(mocker):
 
 def test_create__api_keys_endpoint__event_has_no_raw_key(
     api_client,
-    events_enabled,
-    run_on_commit,
     fake_stream,
 ):
 
@@ -192,8 +190,6 @@ def test_create__api_keys_endpoint__event_has_no_raw_key(
 
 def test_destroy__api_keys_endpoint__event_has_no_raw_key(
     api_client,
-    events_enabled,
-    run_on_commit,
     fake_stream,
 ):
 

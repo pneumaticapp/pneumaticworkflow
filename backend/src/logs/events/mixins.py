@@ -30,16 +30,22 @@ class EventEmitMixin:
         object_type: str,
         object_id: Optional[Union[int, str]] = None,
         payload: Optional[dict] = None,
+        actor: Optional[Actor] = None,
         **fields,
     ) -> None:
 
         """ Anything else an event may carry (workflow_id, task_id,
-            ts) goes through fields, straight to emit(). """
+            ts) goes through fields, straight to emit().
+
+            actor names somebody other than the person the service
+            acts for: accepting an invite is done by the invited
+            person, while the service is built around them as its
+            request user. """
 
         emit(
             event_type,
             account_id=account_id,
-            actor=self._event_actor(),
+            actor=actor or self._event_actor(),
             event_object=EventObject(type=object_type, id=object_id),
             payload=payload,
             **fields,

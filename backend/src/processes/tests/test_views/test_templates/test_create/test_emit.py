@@ -190,8 +190,6 @@ def test_create__draft__emit_template_draft_save(
 def test_create__published_template__event_keeps_request_context(
     mocker,
     api_client,
-    events_enabled,
-    run_on_commit,
     fake_stream,
 ):
 

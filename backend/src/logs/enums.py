@@ -1,4 +1,4 @@
-from typing_extensions import Literal
+from typing_extensions import Literal, get_args
 
 
 class AccountEventType:
@@ -54,11 +54,15 @@ class LogsBackend:
     ELASTICSEARCH = 'elasticsearch'
     NONE = 'none'
 
-    VALUES = {LOCAL, OTLP, ELASTICSEARCH, NONE}
-
     LITERALS = Literal[
         LOCAL,
         OTLP,
         ELASTICSEARCH,
         NONE,
     ]
+    VALUES = set(get_args(LITERALS))
+
+
+DEFAULT_CONSUMER_BATCH_SIZE = 1000
+DEFAULT_CONSUMER_IDLE_MS = 60000
+DEFAULT_CONSUMER_INTERVAL_SECONDS = 5

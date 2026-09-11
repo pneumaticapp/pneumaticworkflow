@@ -16,6 +16,11 @@ from src.logs.events.enums import (
 from src.logs.events.exceptions import SinkTemporaryError
 from src.logs.events.schema import Actor, Event, EventObject
 from src.logs.events.sinks.base import BaseSink
+from src.logs.events.sinks.otlp import (
+    DEFAULT_TIMEOUT,
+    JSON_HEADERS,
+    LOGS_PATH,
+)
 from src.logs.events.sinks.otlp_payload import build_otlp_payload
 from src.logs.events.stream import (
     AUTOCLAIM_START,
@@ -37,8 +42,12 @@ SMOKE_ACCOUNT_ID = 7
 TIME_KEYS = ('timeUnixNano', 'observedTimeUnixNano')
 FILE_SERVICE_NAME = 'pneumatic-file-service'
 FILE_SERVICE_FILE_ID = '0f8fad5b-d9cb-469f-a165-70867728950e'
+UNIT_STREAM_URL = 'redis://localhost:6379/4'
+UNIT_STREAM_KEY = 'pneumatic:events-unit'
+UNIT_STREAM_DEAD_KEY = 'pneumatic:events-unit:dead'
+FIXTURES_DIR = os.path.join(os.path.dirname(__file__), 'fixtures')
 FILE_SERVICE_RECORD_PATH = os.path.join(
-    os.path.dirname(__file__), 'fixtures', 'file_service_record.json',
+    FIXTURES_DIR, 'file_service_record.json',
 )
 
 
@@ -202,11 +211,29 @@ def make_event(**kwargs) -> Event:
     return Event(**fields)
 
 
-def load_file_service_record() -> Dict[str, Any]:
+def load_file_service_record(
+    name: str = 'file_service_record.json',
+) -> Dict[str, Any]:
 
-    """ The contract record as the consumer reads it off the stream. """
+    """ A contract record as the consumer reads it off the stream.
 
-    with open(FILE_SERVICE_RECORD_PATH, encoding='utf-8') as fixture:
+        One file per event type the file service writes: the tests of
+        the other writer compare what they build with the same file,
+        so a rename on either side breaks both. """
+
+    path = os.path.join(FIXTURES_DIR, name)
+    with open(path, encoding='utf-8') as fixture:
+        return json.load(fixture)
+
+
+def load_file_service_contract() -> Dict[str, Any]:
+
+    """ The names the two writers have to agree on besides the shape
+        of a record: the stream both write into and the actor types
+        the file service may put into a record. """
+
+    path = os.path.join(FIXTURES_DIR, 'file_service_contract.json')
+    with open(path, encoding='utf-8') as fixture:
         return json.load(fixture)
 
 
@@ -240,8 +267,8 @@ def make_unit_stream() -> EventStream:
         replace its _client by a mock. """
 
     return EventStream(
-        url='redis://localhost:6379/4',
-        key='pneumatic:events-unit',
+        url=UNIT_STREAM_URL,
+        key=UNIT_STREAM_KEY,
         group='otlp',
         maxlen=10,
     )
@@ -365,6 +392,17 @@ def build_sample_payload(records: Entries) -> Dict[str, Any]:
     )
 
 
+def dead_letter_pipeline(client_mock, acked: int):
+
+    """ The pipeline EventStream.dead_letter runs on the client: the
+        xack answer is the last item of execute(). Returns the
+        pipeline mock for the asserts. """
+
+    pipe = client_mock.pipeline.return_value
+    pipe.execute.return_value = [acked]
+    return pipe
+
+
 def otlp_records(payload: Dict[str, Any]) -> List[Dict[str, Any]]:
 
     """ Every log record of the request, in the order of the body. """
@@ -409,8 +447,10 @@ class FakeSink(BaseSink):
 
     """ Concrete BaseSink for the tests of its template method.
 
-        classify=False makes _handle_error return instead of raising,
-        which is the contract every sink has to keep. """
+        error is what _send raises; raises is what _handle_error
+        answers it with, a temporary error of the same text unless
+        given. classify=False makes _handle_error return instead of
+        raising, which is the contract every sink has to keep. """
 
     name = 'fake'
 
@@ -418,9 +458,11 @@ class FakeSink(BaseSink):
         self,
         error: Optional[Exception] = None,
         classify: bool = True,
+        raises: Optional[Exception] = None,
     ):
         self.error = error
         self.classify = classify
+        self.raises = raises
         self.handled: List[Exception] = []
 
     def _send(self, records: Entries) -> None:
@@ -429,5 +471,24 @@ class FakeSink(BaseSink):
 
     def _handle_error(self, exc: Exception, records: Entries) -> None:
         self.handled.append(exc)
+        if self.raises is not None:
+            raise self.raises
         if self.classify:
             raise SinkTemporaryError(str(exc))
+
+
+SINK_ENDPOINT = 'http://otel-collector:4318'
+SINK_URL = SINK_ENDPOINT + LOGS_PATH
+
+
+def assert_posted(post_mock, records: Entries, observed_ns: int = OBSERVED_NS):
+
+    """ The one POST OTLPSink makes for a batch, to the sample
+        endpoint of the sink tests. """
+
+    post_mock.assert_called_once_with(
+        SINK_URL,
+        data=build_sink_body(records, observed_ns),
+        headers=JSON_HEADERS,
+        timeout=DEFAULT_TIMEOUT,
+    )

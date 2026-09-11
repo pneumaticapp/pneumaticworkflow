@@ -53,7 +53,12 @@ class SignUpView(
         return self.response_ok({'show_captcha': show_captcha})
 
     def after_signup(self, user: UserModel):
-        super().after_signup(user)
+
+        """ No super(): the account log row and the Slack ping of
+            the mixin belong to the SSO sign ups, an e-mail sign up
+            leaves the journal entry only. """
+
+        self.emit_signup(user)
         account = user.account
         if settings.VERIFICATION_CHECK and not account.is_verified:
             send_verification_notification.delay(

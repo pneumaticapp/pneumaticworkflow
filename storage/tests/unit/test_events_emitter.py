@@ -5,6 +5,7 @@ import logging
 from unittest.mock import AsyncMock, call
 
 import pytest
+import redis.exceptions
 
 from src.shared_kernel.events.emitter import (
     CIRCUIT_OPEN_SECONDS,
@@ -20,6 +21,13 @@ from tests.fixtures.unit import (
     EMITTER_REDIS_PASSWORD,
     EMITTER_REDIS_URL,
     EMITTER_STREAM_KEY,
+)
+
+REDIS_ERRORS = (
+    redis.exceptions.ConnectionError('refused by redis-py'),
+    redis.exceptions.TimeoutError('redis-py timeout'),
+    redis.exceptions.ResponseError('WRONGTYPE'),
+    TimeoutError('asyncio timeout'),
 )
 
 
@@ -347,15 +355,14 @@ async def test_close__never_opened__nothing_to_close(
     mock_events_redis_from_url.assert_not_called()
 
 
-def test_get_event_emitter__called_twice__same_instance(
+def test_get_event_emitter__called_twice__same_instance_of_the_settings(
     clear_event_emitter_cache,
     mock_emitter_settings,
 ):
     # arrange
     mock_emitter_settings.return_value.LOGS_REDIS_URL = EMITTER_REDIS_URL
-    mock_emitter_settings.return_value.LOGS_STREAM_KEY = EMITTER_STREAM_KEY
     mock_emitter_settings.return_value.LOGS_STREAM_MAXLEN = EMITTER_MAXLEN
-    mock_emitter_settings.return_value.logs_enabled = True
+    mock_emitter_settings.return_value.logs_enabled = False
 
     # act
     first = get_event_emitter()
@@ -363,6 +370,10 @@ def test_get_event_emitter__called_twice__same_instance(
 
     # assert
     assert first is second
+    assert first._url == EMITTER_REDIS_URL
+    assert first._key == EMITTER_STREAM_KEY
+    assert first._maxlen == EMITTER_MAXLEN
+    assert first._enabled is False
     mock_emitter_settings.assert_called_once_with()
 
 
@@ -397,3 +408,34 @@ async def test_close_event_emitter__cached__closed_and_forgotten(
         maxlen=EMITTER_MAXLEN,
         approximate=True,
     )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('error', REDIS_ERRORS, ids=lambda e: type(e).__name__)
+async def test_emit__redis_py_error__circuit_open_not_raised(
+    events_emitter,
+    mock_events_redis_from_url,
+    mock_emitter_now,
+    sample_event,
+    caplog,
+    error,
+):
+    """The errors of redis-py are not OSErrors: each of them has to
+    open the circuit rather than reach the endpoint."""
+
+    # arrange
+    caplog.set_level(logging.WARNING)
+    client_mock = AsyncMock()
+    client_mock.xadd.side_effect = error
+    mock_events_redis_from_url.return_value = client_mock
+    mock_emitter_now.return_value = 100.0
+
+    # act
+    await events_emitter.emit(sample_event)
+
+    # assert
+    assert events_emitter.circuit.open_until == 100.0 + CIRCUIT_OPEN_SECONDS
+    assert caplog.messages == [
+        'Events stream is unavailable, events are dropped: '
+        f'{type(error).__name__}',
+    ]

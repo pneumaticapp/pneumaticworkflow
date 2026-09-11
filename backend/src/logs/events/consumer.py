@@ -1,8 +1,13 @@
 import logging
 import time
 from dataclasses import dataclass
+from functools import partial
 from typing import Callable, Optional
 
+from src.logs.enums import (
+    DEFAULT_CONSUMER_BATCH_SIZE,
+    DEFAULT_CONSUMER_IDLE_MS,
+)
 from src.logs.events.exceptions import (
     SinkPermanentError,
     SinkTemporaryError,
@@ -12,12 +17,10 @@ from src.logs.events.stream import Entries, EventStream, consumer_name
 
 logger = logging.getLogger('pneumatic.events.consumer')
 
-DEFAULT_BATCH_SIZE = 1000
 DEFAULT_MAX_BATCHES = 20
-DEFAULT_IDLE_MS = 60000
 LOCK_EXPIRE = 120
-RETRY_BACKOFF = (0.5, 1.0, 2.0)
-MAX_ATTEMPTS = len(RETRY_BACKOFF)
+RETRY_BACKOFF = (0.5, 1.0)
+MAX_ATTEMPTS = len(RETRY_BACKOFF) + 1
 DEFAULT_MAX_SECONDS = LOCK_EXPIRE / 2
 REJECTED_REASON = 'rejected'
 
@@ -34,7 +37,7 @@ def tick_budget(
         each, with a pause between them that a Retry-After of the
         receiver may stretch to max_retry_after. """
 
-    pauses = (MAX_ATTEMPTS - 1) * max(*RETRY_BACKOFF[:-1], max_retry_after)
+    pauses = len(RETRY_BACKOFF) * max(*RETRY_BACKOFF, max_retry_after)
     worst_batch = MAX_ATTEMPTS * send_seconds + pauses
     return max(lock_expire - worst_batch, 0.0)
 
@@ -95,9 +98,9 @@ class EventsConsumer:
         self,
         stream: EventStream,
         sink: BaseSink,
-        batch_size: int = DEFAULT_BATCH_SIZE,
+        batch_size: int = DEFAULT_CONSUMER_BATCH_SIZE,
         max_batches: int = DEFAULT_MAX_BATCHES,
-        idle_ms: int = DEFAULT_IDLE_MS,
+        idle_ms: int = DEFAULT_CONSUMER_IDLE_MS,
         consumer: Optional[str] = None,
         sleep: Callable[[float], None] = time.sleep,
         max_seconds: float = DEFAULT_MAX_SECONDS,
@@ -112,31 +115,24 @@ class EventsConsumer:
         # Injected so that tests spend no time in backoff.
         self.sleep = sleep
 
-    def _read_pending(self) -> Entries:
-        return self.stream.read_pending(
-            consumer=self.consumer,
-            count=self.batch_size,
-        )
+    def _autoclaim(self, stats: ConsumerStats) -> Entries:
 
-    def _autoclaim(self) -> Entries:
-        return self.stream.autoclaim(
+        """ Entries of dead consumers, counted as claimed on the way:
+            the one source whose entries the stats tell apart. """
+
+        entries = self.stream.autoclaim(
             consumer=self.consumer,
             min_idle_ms=self.idle_ms,
             count=self.batch_size,
         )
-
-    def _read_new(self) -> Entries:
-        return self.stream.read_new(
-            consumer=self.consumer,
-            count=self.batch_size,
-        )
+        stats.claimed += len(entries)
+        return entries
 
     def _drain(
         self,
         read: Callable[[], Entries],
         stats: ConsumerStats,
         budget: TickBudget,
-        claimed: bool = False,
     ) -> None:
 
         """ Deliver batch after batch until the source runs dry or the
@@ -147,8 +143,6 @@ class EventsConsumer:
             if not entries:
                 return
             budget.take()
-            if claimed:
-                stats.claimed += len(entries)
             self._deliver(entries, stats, budget)
 
     def _deliver(
@@ -244,9 +238,29 @@ class EventsConsumer:
             deadline=started + self.max_seconds,
         )
         self.stream.ensure_group()
-        self._drain(self._read_pending, stats, budget)
-        self._drain(self._autoclaim, stats, budget, claimed=True)
-        self._drain(self._read_new, stats, budget)
+        self._drain(
+            read=partial(
+                self.stream.read_pending,
+                consumer=self.consumer,
+                count=self.batch_size,
+            ),
+            stats=stats,
+            budget=budget,
+        )
+        self._drain(
+            read=partial(self._autoclaim, stats),
+            stats=stats,
+            budget=budget,
+        )
+        self._drain(
+            read=partial(
+                self.stream.read_new,
+                consumer=self.consumer,
+                count=self.batch_size,
+            ),
+            stats=stats,
+            budget=budget,
+        )
         stats.duration_ms = int((time.monotonic() - started) * 1000)
         logger.info(
             'delivered=%s acked=%s dead=%s claimed=%s in %s ms',

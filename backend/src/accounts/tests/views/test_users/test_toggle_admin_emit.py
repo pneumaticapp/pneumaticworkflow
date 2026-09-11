@@ -29,9 +29,9 @@ def test_toggle_admin__grant__emit_admin_toggle_with_true(
     target = create_test_not_admin(account=account)
     api_client.token_authenticate(owner)
     send_user_updated_mock = mocker.patch(
-        'src.accounts.views.users.send_user_updated_notification.delay',
+        'src.accounts.services.user.send_user_updated_notification.delay',
     )
-    emit_mock = mocker.patch('src.logs.events.services.emit')
+    emit_mock = mocker.patch('src.logs.events.mixins.emit')
 
     # act
     response = api_client.post(
@@ -50,7 +50,6 @@ def test_toggle_admin__grant__emit_admin_toggle_with_true(
         ),
         event_object=EventObject(type=EventObjectType.USER, id=target.id),
         payload={'is_admin': True, 'target_email': target.email},
-        request=mocker.ANY,
     )
     identify_mock.assert_called_once_with(target)
     send_user_updated_mock.assert_called_once_with(
@@ -72,9 +71,9 @@ def test_toggle_admin__revoke__emit_admin_toggle_with_false(
     target = create_test_admin(account=account)
     api_client.token_authenticate(owner)
     send_user_updated_mock = mocker.patch(
-        'src.accounts.views.users.send_user_updated_notification.delay',
+        'src.accounts.services.user.send_user_updated_notification.delay',
     )
-    emit_mock = mocker.patch('src.logs.events.services.emit')
+    emit_mock = mocker.patch('src.logs.events.mixins.emit')
 
     # act
     response = api_client.post(
@@ -93,7 +92,6 @@ def test_toggle_admin__revoke__emit_admin_toggle_with_false(
         ),
         event_object=EventObject(type=EventObjectType.USER, id=target.id),
         payload={'is_admin': False, 'target_email': target.email},
-        request=mocker.ANY,
     )
     identify_mock.assert_called_once_with(target)
     send_user_updated_mock.assert_called_once_with(
@@ -107,8 +105,6 @@ def test_toggle_admin__api_request__event_keeps_request_context(
     mocker,
     identify_mock,
     api_client,
-    events_enabled,
-    run_on_commit,
     fake_stream,
 ):
 
@@ -126,7 +122,7 @@ def test_toggle_admin__api_request__event_keeps_request_context(
         user_ip='10.10.0.7',
     )
     send_user_updated_mock = mocker.patch(
-        'src.accounts.views.users.send_user_updated_notification.delay',
+        'src.accounts.services.user.send_user_updated_notification.delay',
     )
 
     # act

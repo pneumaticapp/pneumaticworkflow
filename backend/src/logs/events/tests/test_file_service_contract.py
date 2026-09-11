@@ -1,18 +1,24 @@
 """ The record the file service writes into the shared stream.
 
-    fixtures/file_service_record.json is the contract between the two
-    writers: the file service tests build their record and compare it
-    with this file, the tests below read it back the way the consumer
-    does. A change on either side breaks the other side's test instead
-    of the dead letter of a running deployment. """
+    fixtures/file_service_*_record.json are the contract between the
+    two writers: the file service tests build their records and compare
+    them with these files, the tests below read them back the way the
+    consumer does. fixtures/file_service_contract.json adds the two
+    names both sides keep as constants of their own, the stream and the
+    actor types. A change on either side breaks the other side's test
+    instead of the dead letter of a running deployment. """
 
-from src.logs.events.enums import EventCategory, EventName
-from src.logs.events.registry import FILE_PII, resolve_event_type
+from django.conf import settings
+from typing_extensions import get_args
+
+from src.logs.events.enums import ActorType, EventCategory, EventName
+from src.logs.events.registry import resolve_event_type
 from src.logs.events.schema import Event
 from src.logs.events.tests.fakes import (
     FILE_SERVICE_FILE_ID,
     FILE_SERVICE_NAME,
     build_sample_payload,
+    load_file_service_contract,
     load_file_service_record,
     otlp_attributes,
     otlp_first_record,
@@ -67,7 +73,12 @@ def test_resolve__file_service_record__category_of_the_registry():
     # assert
     assert declared.category == EventCategory.AUDIT
     assert declared.category == event.category
-    assert declared.pii == FILE_PII
+    assert declared.pii == (
+        'actor.email',
+        'ip',
+        'user_agent',
+        'payload.filename',
+    )
 
 
 def test_build__file_service_record__own_service_name():
@@ -111,3 +122,135 @@ def test_build__file_service_record__filename_in_the_pii_namespace():
     assert otlp_first_record(payload)['body'] == {
         'stringValue': f'file.download file:{FILE_SERVICE_FILE_ID}',
     }
+
+
+def test_from_dict__upload_record__parsed():
+
+    # arrange
+    data = load_file_service_record('file_service_upload_record.json')
+
+    # act
+    event = Event.from_dict(data)
+
+    # assert
+    assert event.type == EventName.FILE_UPLOAD
+    assert event.service == FILE_SERVICE_NAME
+    assert event.object.type == 'file'
+    assert event.object.id == FILE_SERVICE_FILE_ID
+    assert event.payload == {
+        'filename': 'Contract Ann Smith.pdf',
+        'size': 12345,
+        'content_type': 'application/pdf',
+    }
+
+
+def test_resolve__upload_record__category_of_the_registry():
+
+    # arrange
+    event = Event.from_dict(
+        load_file_service_record('file_service_upload_record.json'),
+    )
+
+    # act
+    declared = resolve_event_type(event.type)
+
+    # assert
+    assert declared.category == EventCategory.AUDIT
+    assert declared.pii == (
+        'actor.email',
+        'ip',
+        'user_agent',
+        'payload.filename',
+    )
+
+
+def test_from_dict__denied_record__parsed():
+
+    """ A refusal names the account of the file when it is not the
+        account of the person reaching for it. """
+
+    # arrange
+    data = load_file_service_record('file_service_denied_record.json')
+
+    # act
+    event = Event.from_dict(data)
+
+    # assert
+    assert event.type == EventName.FILE_ACCESS_DENIED
+    assert event.account_id == 42
+    assert event.payload['file_account_id'] == 99
+
+
+def test_resolve__denied_record__category_of_the_registry():
+
+    # arrange
+    event = Event.from_dict(
+        load_file_service_record('file_service_denied_record.json'),
+    )
+
+    # act
+    declared = resolve_event_type(event.type)
+
+    # assert
+    assert declared.category == EventCategory.AUDIT
+    assert declared.pii == (
+        'actor.email',
+        'ip',
+        'user_agent',
+        'payload.filename',
+    )
+
+
+def test_to_dict__every_file_record__round_trip():
+
+    """ Every record the file service writes has to survive the trip
+        through the consumer unchanged, not just the download one. """
+
+    # arrange
+    names = (
+        'file_service_record.json',
+        'file_service_upload_record.json',
+        'file_service_denied_record.json',
+    )
+
+    # act
+    restored = [
+        Event.from_dict(load_file_service_record(name)).to_dict()
+        for name in names
+    ]
+
+    # assert
+    assert restored[0] == load_file_service_record(names[0])
+    assert restored[1] == load_file_service_record(names[1])
+    assert restored[2] == load_file_service_record(names[2])
+
+
+def test_stream_key__file_service_contract__backend_reads_that_stream():
+
+    """ Both writers name the stream as a constant of their own. A
+        rename on one side would send its records into a stream the
+        consumer never reads, with every other test still green. """
+
+    # arrange
+    contract = load_file_service_contract()
+
+    # act
+    stream_key = settings.LOGS_STREAM_KEY
+
+    # assert
+    assert stream_key == contract['stream_key']
+
+
+def test_actor_types__file_service_contract__known_to_the_backend():
+
+    """ Every actor type the file service may write is one the backend
+        declares. The backend has one more of its own, system. """
+
+    # arrange
+    contract = load_file_service_contract()
+
+    # act
+    unknown = set(contract['actor_types']) - set(get_args(ActorType.LITERALS))
+
+    # assert
+    assert unknown == set()

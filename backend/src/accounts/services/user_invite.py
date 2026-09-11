@@ -37,6 +37,9 @@ from src.analysis.mixins import (
 from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
 from src.logs.enums import AccountEventStatus
+from src.logs.events.enums import EventName, EventObjectType
+from src.logs.events.mixins import EventEmitMixin
+from src.logs.events.schema import Actor
 from src.logs.service import AccountLogService
 from src.notifications.enums import EmailProvider
 from src.notifications.tasks import (
@@ -55,6 +58,7 @@ UserModel = get_user_model()
 
 
 class UserInviteService(
+    EventEmitMixin,
     BaseIdentifyMixin,
 ):
 
@@ -68,6 +72,9 @@ class UserInviteService(
     ):
         self.account = request_user.account
         self.request_user = request_user
+        # EventEmitMixin names the person the service acts for user;
+        # here that person is the request user.
+        self.user = request_user
         self.current_url = current_url
         self.is_superuser = is_superuser
         self.auth_type = auth_type
@@ -140,14 +147,38 @@ class UserInviteService(
         self,
         user: UserModel,
         invited_from: SourceType.LITERALS,
-    ):
+    ) -> UserInvite:
 
-        UserInvite.objects.create(
+        return UserInvite.objects.create(
             invited_user=user,
             account_id=self.account.id,  # TODO or another user acc ?
             email=user.email,
             invited_by=self.request_user,
             invited_from=invited_from,
+        )
+
+    def _publish_invite(
+        self,
+        event_type: str,
+        user: UserModel,
+        invite: Optional[UserInvite],
+        is_transfer: bool,
+    ) -> None:
+
+        """ Who was invited, and whether the person already works in
+            another account: then the e-mail offers a transfer instead
+            of a sign up. """
+
+        self._publish(
+            event_type,
+            account_id=self.account.id,
+            object_type=EventObjectType.INVITE,
+            object_id=str(invite.id) if invite else None,
+            payload={
+                'target_email': user.email,
+                'invited_user_id': user.id,
+                'is_transfer': is_transfer,
+            },
         )
 
     def _user_create_actions(self, user: UserModel):
@@ -279,13 +310,19 @@ class UserInviteService(
                 photo=photo,
                 password=another_account_user.password,
             )
-            self._create_user_invite(
+            invite = self._create_user_invite(
                 user=current_account_user,
                 invited_from=invited_from,
             )
             if groups:
                 current_account_user.user_groups.set(groups)
             self._user_create_actions(current_account_user)
+            self._publish_invite(
+                EventName.INVITE_CREATE,
+                user=current_account_user,
+                invite=invite,
+                is_transfer=True,
+            )
             self._user_transfer_actions(
                 current_account_user=current_account_user,
                 another_account_user=another_account_user,
@@ -319,13 +356,19 @@ class UserInviteService(
                 last_name=last_name,
                 photo=photo,
             )
-            self._create_user_invite(
+            invite = self._create_user_invite(
                 user=user,
                 invited_from=invited_from,
             )
             if groups:
                 user.user_groups.set(groups)
             self._user_create_actions(user)
+            self._publish_invite(
+                EventName.INVITE_CREATE,
+                user=user,
+                invite=invite,
+                is_transfer=False,
+            )
             if self.send_email:
                 self._user_invite_actions(user)
 
@@ -398,6 +441,12 @@ class UserInviteService(
                 )
             else:
                 self._user_invite_actions(user)
+            self._publish_invite(
+                EventName.INVITE_RESEND,
+                user=user,
+                invite=user.invite,
+                is_transfer=another_account_user is not None,
+            )
 
     def accept(
         self,
@@ -436,6 +485,18 @@ class UserInviteService(
                 user=user,
             )
             account_service.update_users_counts()
+
+            # Published here and not in the view: the endpoint is not
+            # the only way in, an SSO callback accepts the invite of
+            # an invited person through the same method.
+            self._publish(
+                EventName.INVITE_ACCEPT,
+                account_id=user.account_id,
+                object_type=EventObjectType.INVITE,
+                object_id=str(invite.id),
+                payload={'invited_by_id': invite.invited_by_id},
+                actor=Actor.from_user(user),
+            )
         if (
             user.account.billing_sync
             and user.account.billing_plan == BillingPlanType.PREMIUM

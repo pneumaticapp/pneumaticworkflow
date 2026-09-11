@@ -1,9 +1,15 @@
 import json
 from datetime import timedelta, timezone
 
+import pytest
 from django.core.serializers.json import DjangoJSONEncoder
 
-from src.logs.events.schema import Event
+from src.logs.events.schema import (
+    Event,
+    dump_json,
+    pii_value,
+    to_json,
+)
 from src.logs.events.tests.fakes import EVENT_TS, make_event
 
 
@@ -99,6 +105,7 @@ def test_from_dict__record_without_optional_keys__defaults():
     data = {
         'type': 'system.smoke',
         'category': 'debug',
+        'service': 'pneumatic-backend',
         'ts': '2026-09-08T10:15:30.123456Z',
         'account_id': 7,
     }
@@ -109,7 +116,7 @@ def test_from_dict__record_without_optional_keys__defaults():
     # assert
     assert restored.payload == {}
     assert restored.pii == ()
-    assert restored.service is None
+    assert restored.service == 'pneumatic-backend'
     assert restored.id is None
     assert restored.ts.tzinfo == timezone.utc
 
@@ -177,3 +184,63 @@ def test_from_dict__record_of_another_service__service_kept():
 
     # assert
     assert restored.service == 'pneumatic-file-service'
+
+
+def test_to_json__value_no_encoder_knows__its_text():
+
+    """ The lenient sibling of dump_json: a value that cannot be
+        encoded becomes its text instead of breaking the batch. """
+
+    # arrange
+    value = object()
+
+    # act
+    result = to_json(value)
+
+    # assert
+    assert result == json.dumps(str(value))
+
+
+def test_dump_json__value_no_encoder_knows__raise():
+
+    # act
+    with pytest.raises(TypeError):
+        dump_json(object())
+
+
+@pytest.mark.parametrize(
+    ('path', 'expected'),
+    [
+        ('ip', '203.0.113.7'),
+        ('user_agent', 'Mozilla/5.0'),
+        ('actor.email', 'ann@example.com'),
+        ('actor.id', 17),
+        ('object.id', 9001),
+        ('payload.template_id', 12),
+        ('payload.missing', None),
+        ('ip.value', None),
+        ('nothing', None),
+    ],
+)
+def test_pii_value__path__field_of_the_record(path, expected):
+
+    # arrange
+    event = make_event()
+
+    # act
+    result = pii_value(event, path)
+
+    # assert
+    assert result == expected
+
+
+def test_pii_value__no_actor__none():
+
+    # arrange
+    event = make_event(actor=None)
+
+    # act
+    result = pii_value(event, 'actor.email')
+
+    # assert
+    assert result is None

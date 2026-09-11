@@ -1,7 +1,7 @@
 {
   "schedule": "__SNAPSHOT_SCHEDULE__",
   "name": "<pneumatic-events-{now/d}>",
-  "repository": "pneumatic-snapshots",
+  "repository": "__SNAPSHOT_REPOSITORY__",
   "config": {
     "indices": [
       "__INDEX_PATTERN__"

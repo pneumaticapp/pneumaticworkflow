@@ -1,5 +1,5 @@
 from hashlib import sha256
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from src.logs.events.emitter import NO_ACCOUNT, emit
 from src.logs.events.enums import (
@@ -41,9 +41,19 @@ class AuditEventService:
         return sha256(normalized.encode('utf-8')).hexdigest()
 
     @classmethod
-    def user_logged_in(cls, user, source: str, request) -> None:
+    def _user_event(
+        cls,
+        event_type: str,
+        user,
+        source: str,
+        request=None,
+    ) -> None:
+
+        """ A person signing in or signing up: the person is both the
+            actor and the object, and the source names the provider. """
+
         emit(
-            EventName.USER_LOGIN,
+            event_type,
             account_id=user.account_id,
             actor=Actor.from_user(user),
             event_object=cls._user_object(user),
@@ -52,13 +62,20 @@ class AuditEventService:
         )
 
     @classmethod
+    def user_logged_in(cls, user, source: str, request=None) -> None:
+        cls._user_event(
+            EventName.USER_LOGIN,
+            user=user,
+            source=source,
+            request=request,
+        )
+
+    @classmethod
     def user_signed_up(cls, user, source: str, request=None) -> None:
-        emit(
+        cls._user_event(
             EventName.USER_SIGNUP,
-            account_id=user.account_id,
-            actor=Actor.from_user(user),
-            event_object=cls._user_object(user),
-            payload={'source': source},
+            user=user,
+            source=source,
             request=request,
         )
 
@@ -108,6 +125,89 @@ class AuditEventService:
         )
 
     @classmethod
+    def password_reset_requested(cls, request, user) -> None:
+
+        """ Somebody asked for a reset e-mail of the user. The request
+            is anonymous, so the actor is a guest and the address the
+            e-mail went to is the target. Only an address that belongs
+            to somebody gets here: an unknown one sends no e-mail and
+            leaves nothing in any account. """
+
+        emit(
+            EventName.USER_PASSWORD_RESET_REQUEST,
+            account_id=user.account_id,
+            actor=Actor(type=ActorType.GUEST),
+            event_object=cls._user_object(user),
+            payload={'target_email': user.email},
+            request=request,
+        )
+
+    @classmethod
+    def password_reset(cls, request, user) -> None:
+
+        """ The holder of a reset link set a new password. The request
+            carries no authentication: the link names the person, so
+            the person is the actor. """
+
+        emit(
+            EventName.USER_PASSWORD_RESET,
+            account_id=user.account_id,
+            actor=Actor.from_user(user),
+            event_object=cls._user_object(user),
+            request=request,
+        )
+
+    @classmethod
+    def password_changed(cls, request) -> None:
+        emit(
+            EventName.USER_PASSWORD_CHANGE,
+            account_id=request.user.account_id,
+            actor=cls._actor(request),
+            event_object=cls._user_object(request.user),
+            request=request,
+        )
+
+    @classmethod
+    def user_created(cls, request, user) -> None:
+
+        """ An admin added a user to the account directly, without an
+            invite: the sign up of an account owner is user.signup. """
+
+        emit(
+            EventName.USER_CREATE,
+            account_id=user.account_id,
+            actor=cls._actor(request),
+            event_object=cls._user_object(user),
+            payload={
+                'target_email': user.email,
+                'is_admin': user.is_admin,
+            },
+            request=request,
+        )
+
+    @classmethod
+    def account_updated(
+        cls,
+        request,
+        account,
+        changed_fields: List[str],
+    ) -> None:
+
+        """ Names of the fields only: the values are the name and the
+            logos of the company, and the account itself keeps them. """
+
+        emit(
+            EventName.ACCOUNT_UPDATE,
+            account_id=account.id,
+            actor=cls._actor(request),
+            event_object=EventObject(
+                type=EventObjectType.ACCOUNT, id=account.id,
+            ),
+            payload={'changed_fields': changed_fields},
+            request=request,
+        )
+
+    @classmethod
     def superuser_logged_in_as(
         cls,
         request,
@@ -127,47 +227,25 @@ class AuditEventService:
         )
 
     @classmethod
-    def tenant_logged_in_as(cls, request, tenant_account) -> None:
+    def tenant_logged_in_as(
+        cls,
+        master_user,
+        tenant_account,
+        auth_type: str,
+    ) -> None:
+
+        """ The request is not passed: the call comes from a service,
+            and emit() takes the address and the browser from the
+            context the middleware published for the same request. """
+
         emit(
             EventName.TENANT_LOGIN_AS,
             account_id=tenant_account.id,
-            actor=cls._actor(request),
+            actor=Actor.from_user(master_user, auth_type),
             event_object=EventObject(
                 type=EventObjectType.ACCOUNT, id=tenant_account.id,
             ),
-            payload={'master_account_id': request.user.account_id},
-            request=request,
-        )
-
-    @classmethod
-    def user_admin_toggled(cls, request, user) -> None:
-        emit(
-            EventName.USER_ADMIN_TOGGLE,
-            account_id=request.user.account_id,
-            actor=cls._actor(request),
-            event_object=cls._user_object(user),
-            payload={
-                'is_admin': user.is_admin,
-                'target_email': user.email,
-            },
-            request=request,
-        )
-
-    @classmethod
-    def invite_accepted(cls, request, user, invite) -> None:
-
-        """ The actor is the invited person, not request.user: the
-            endpoint is open and the request is not authenticated. """
-
-        emit(
-            EventName.INVITE_ACCEPT,
-            account_id=user.account_id,
-            actor=Actor.from_user(user),
-            event_object=EventObject(
-                type=EventObjectType.INVITE, id=str(invite.id),
-            ),
-            payload={'invited_by_id': invite.invited_by_id},
-            request=request,
+            payload={'master_account_id': master_user.account_id},
         )
 
     @classmethod

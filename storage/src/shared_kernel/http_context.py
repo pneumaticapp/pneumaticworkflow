@@ -30,6 +30,14 @@ def get_client_ip(request: Request) -> str:
     so the value is kept only when it really is an address: anything
     else would ride in every record of the request, and in the key of
     the rate limit bucket, at whatever length the client chose.
+
+    This is stricter than the backend on purpose: backend/src/utils/
+    http.py falls back to the first hop of X-Forwarded-For, which is
+    client controlled in the same situation. Behind our own nginx
+    both read X-Real-IP and agree; behind a foreign one this service
+    prefers the socket address to a header anybody can write. No test
+    compares the two: the difference is deliberate, so a change to the
+    order of trust on either side has to be made on both by hand.
     """
     real_ip = _valid_ip(request.headers.get(REAL_IP_HEADER))
     if real_ip:
@@ -53,11 +61,17 @@ def resolve_request_id(value: str | None) -> str:
 
 
 def get_request_id(request: Request) -> str:
-    """Return the id RequestIdMiddleware stored, or a fresh one."""
-    request_id = getattr(request.state, 'request_id', None)
-    if request_id:
-        return request_id
-    return resolve_request_id(request.headers.get(REQUEST_ID_HEADER_KEY))
+    """Return the id RequestIdMiddleware stored on the request.
+
+    One source and no fallback: RequestIdMiddleware is the outermost
+    middleware of the application, so the id is always there, and it
+    is the id every response the application builds carries in its
+    X-Request-ID header (a 500 of the server error handler outside
+    that stack carries none). Minting another one here would put an
+    id into a record that the caller never saw.
+    """
+    request_id: str = request.state.request_id
+    return request_id
 
 
 def _valid_ip(value: str | None) -> str | None:

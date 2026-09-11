@@ -153,3 +153,34 @@ def test_report_error__different_messages__each_sent(mocker):
     ])
     assert monotonic_mock.call_count == 2
     monotonic_mock.assert_has_calls([mocker.call(), mocker.call()])
+
+
+def test_report_error__same_message_different_keys__each_sent(mocker):
+
+    """ The key tells apart occurrences that share a message but
+        not a cause: an unknown event type per name. """
+
+    # arrange
+    capture_mock = mocker.patch(
+        'src.logs.events.reporting.capture_sentry_message',
+    )
+
+    # act
+    report_error('Unknown event type', {'event_type': 'a.b'}, key='a.b')
+    report_error('Unknown event type', {'event_type': 'c.d'}, key='c.d')
+    report_error('Unknown event type', {'event_type': 'a.b'}, key='a.b')
+
+    # assert
+    assert capture_mock.call_count == 2
+    capture_mock.assert_has_calls([
+        mocker.call(
+            message='Unknown event type',
+            data={'event_type': 'a.b'},
+            level=SentryLogLevel.ERROR,
+        ),
+        mocker.call(
+            message='Unknown event type',
+            data={'event_type': 'c.d'},
+            level=SentryLogLevel.ERROR,
+        ),
+    ])

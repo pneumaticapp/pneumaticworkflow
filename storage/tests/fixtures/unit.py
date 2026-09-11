@@ -31,6 +31,7 @@ from src.shared_kernel.database.models import FileRecordORM
 from src.shared_kernel.events.emitter import EventEmitter, get_event_emitter
 from src.shared_kernel.events.request_events import RequestEvents
 from src.shared_kernel.events.schema import (
+    SERVICE_NAME,
     Actor,
     Event,
     EventName,
@@ -47,7 +48,7 @@ from src.shared_kernel.middleware.security_headers import (
 
 # The record the backend tests read back: one file for both writers.
 # parents[3] is the repository root: fixtures -> tests -> storage -> root.
-BACKEND_CONTRACT_PATH = (
+BACKEND_CONTRACT_DIR = (
     Path(__file__).resolve().parents[3]
     / 'backend'
     / 'src'
@@ -55,7 +56,16 @@ BACKEND_CONTRACT_PATH = (
     / 'events'
     / 'tests'
     / 'fixtures'
-    / 'file_service_record.json'
+)
+BACKEND_CONTRACT_PATH = BACKEND_CONTRACT_DIR / 'file_service_record.json'
+BACKEND_UPLOAD_CONTRACT_PATH = (
+    BACKEND_CONTRACT_DIR / 'file_service_upload_record.json'
+)
+BACKEND_DENIED_CONTRACT_PATH = (
+    BACKEND_CONTRACT_DIR / 'file_service_denied_record.json'
+)
+BACKEND_SERVICE_CONTRACT_PATH = (
+    BACKEND_CONTRACT_DIR / 'file_service_contract.json'
 )
 CONTRACT_FILE_ID = '0f8fad5b-d9cb-469f-a165-70867728950e'
 CONTRACT_TS = datetime(2026, 9, 9, 12, 0, 0, 123, tzinfo=UTC)
@@ -495,12 +505,84 @@ class CapturingEmitter:
         self.events.append(event)
 
 
+def _read_contract(path: Path) -> dict:
+    """Read a shared contract record, or say why it cannot be read."""
+    if not path.is_file():
+        msg = (
+            f'The backend contract fixture is missing: {path}. '
+            f'The file service and the backend share one record shape '
+            f'and these files are it.'
+        )
+        raise AssertionError(msg)
+    return json.loads(path.read_text(encoding='utf-8'))
+
+
 @pytest.fixture
 def backend_contract_record():
-    """The record of the backend contract fixture, or skip."""
-    if not BACKEND_CONTRACT_PATH.is_file():
-        pytest.skip('backend contract fixture is not next to this repo')
-    return json.loads(BACKEND_CONTRACT_PATH.read_text(encoding='utf-8'))
+    """The record both writers agree on, read from the backend copy.
+
+    Missing means the contract cannot be checked at all, which is the
+    thing this fixture exists to prevent: it fails instead of skipping,
+    so a checkout or an image that cannot see the file says so.
+    """
+    return _read_contract(BACKEND_CONTRACT_PATH)
+
+
+@pytest.fixture
+def backend_upload_contract_record():
+    """The upload record both writers agree on."""
+    return _read_contract(BACKEND_UPLOAD_CONTRACT_PATH)
+
+
+@pytest.fixture
+def backend_denied_contract_record():
+    """The refusal record both writers agree on."""
+    return _read_contract(BACKEND_DENIED_CONTRACT_PATH)
+
+
+@pytest.fixture
+def backend_service_contract():
+    """The names both writers agree on: the stream and the actor types."""
+    return _read_contract(BACKEND_SERVICE_CONTRACT_PATH)
+
+
+@pytest.fixture
+def sample_upload_event(sample_context):
+    """Upload record of the contract."""
+    return Event(
+        type=EventName.FILE_UPLOAD,
+        service=SERVICE_NAME,
+        ts=CONTRACT_TS,
+        account_id=42,
+        actor=Actor(type=ActorType.USER, id=17),
+        file_id=CONTRACT_FILE_ID,
+        context=sample_context,
+        payload={
+            'filename': 'Contract Ann Smith.pdf',
+            'size': 12345,
+            'content_type': 'application/pdf',
+        },
+    )
+
+
+@pytest.fixture
+def sample_denied_event(sample_context):
+    """Refusal record of the contract, for a file of another account."""
+    return Event(
+        type=EventName.FILE_ACCESS_DENIED,
+        service=SERVICE_NAME,
+        ts=CONTRACT_TS,
+        account_id=42,
+        actor=Actor(type=ActorType.USER, id=17),
+        file_id=CONTRACT_FILE_ID,
+        context=sample_context,
+        payload={
+            'filename': 'Contract Ann Smith.pdf',
+            'size': 12345,
+            'content_type': 'application/pdf',
+            'file_account_id': 99,
+        },
+    )
 
 
 @pytest.fixture
@@ -518,7 +600,7 @@ def sample_event(sample_context):
     """Download record of the contract."""
     return Event(
         type=EventName.FILE_DOWNLOAD,
-        service='pneumatic-file-service',
+        service=SERVICE_NAME,
         ts=CONTRACT_TS,
         account_id=42,
         actor=Actor(type=ActorType.USER, id=17),
@@ -540,8 +622,12 @@ def capturing_emitter():
 
 
 @pytest.fixture
-def events_emitter():
-    """Enabled emitter of the unit tests; the Redis client is mocked."""
+def events_emitter(mock_events_redis_from_url):
+    """Enabled emitter of the unit tests; the Redis client is mocked.
+
+    The mock is a dependency and not a convention: without it the
+    first test that forgets to ask for it dials a real host.
+    """
     return EventEmitter(
         url=EMITTER_REDIS_URL,
         key=EMITTER_STREAM_KEY,
@@ -573,7 +659,6 @@ def request_events(capturing_emitter, sample_context):
     return RequestEvents(
         emitter=capturing_emitter,
         context=sample_context,
-        service='pneumatic-file-service',
     )
 
 

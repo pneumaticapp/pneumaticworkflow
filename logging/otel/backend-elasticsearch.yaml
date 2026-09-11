@@ -3,27 +3,10 @@
 #
 # Personal data leaves with the record, see the note in base.yaml.
 #
-# The store is not part of this compose file. Its configuration - node,
-# Kibana, certificates, roles, index lifecycle, snapshots - is in
-# logging/elasticsearch: the header of its docker-compose.yml lists the
-# steps in order, elasticsearch.env.example every setting, and the three
-# scripts do the work (make-certs.sh, bootstrap.sh, rotate-api-key.sh).
-#
-# Two things have to be prepared on THIS machine before the mode starts:
-#
-#   1. logging/otel/es-ca.crt - the certificate authority of the store
-#      (logging/elasticsearch/certs/ca/ca.crt, copied over). Without it the
-#      collector refuses the connection: a private certificate is not
-#      verifiable against the system roots. Set LOGS_ELASTICSEARCH_CA_FILE
-#      to an empty value if the store has a publicly trusted certificate.
-#
-#   2. A writable directory for the sending queue, and the variables this mode
-#      added. Both come from an override file, in .env:
-#        COMPOSE_FILE=docker-compose.yml:logging/compose/logs-external.yml:logging/elasticsearch/docker-compose.collector-elasticsearch.yml
-#      plus the one time chown described in it.
-#
-# The bundled Loki and Grafana are not started in this mode - that is what the
-# logging/compose/logs-external.yml part of the line above does.
+# The store and its setup live in logging/elasticsearch: the header of its
+# docker-compose.yml lists the steps. What THIS machine needs - the CA file,
+# the queue volume and every variable of the mode - is described once, in the
+# header of logging/elasticsearch/docker-compose.collector-elasticsearch.yml.
 
 extensions:
   # The queue lives on disk, not in memory: a collector restart used to drop
@@ -62,7 +45,7 @@ exporters:
     # The data stream, not an index. `logs-<dataset>.otel-<namespace>` is the
     # naming Elasticsearch built-in templates recognise, and `.otel` is what
     # tells it to expect OTel documents.
-    logs_index: ${env:LOGS_ELASTICSEARCH_INDEX:-logs-pneumatic.events.otel-default}
+    logs_index: ${env:LOGS_ELASTICSEARCH_INDEX}
     # Off on purpose: with dynamic routing the destination would depend on
     # attributes of the record, and one wrong attribute would silently create
     # a data stream outside the retention policy and outside the writer role.

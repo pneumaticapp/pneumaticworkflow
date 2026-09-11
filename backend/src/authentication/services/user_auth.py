@@ -8,11 +8,13 @@ from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.request import Request
 
 from src.accounts.enums import UserStatus
-from src.accounts.models import User
+from src.accounts.models import Account, User
+from src.analysis.services import AnalyticService
 from src.authentication.enums import (
     AuthTokenType,
 )
 from src.authentication.tokens import PneumaticToken
+from src.logs.events import AuditEventService
 
 UserModel = get_user_model()
 
@@ -35,6 +37,40 @@ class AuthService:
             user_ip=user_ip,
             for_superuser=superuser_mode,
         )
+
+    @staticmethod
+    def get_tenant_auth_token(
+        master_user: User,
+        tenant_account: Account,
+        user_agent: Optional[str],
+        user_ip: Optional[str],
+        is_superuser: bool,
+        auth_type: AuthTokenType.LITERALS,
+    ) -> str:
+
+        """ A token of the owner of a tenant, for a user of the master
+            account, together with the two records this entry leaves:
+            the analytics of the access and TENANT_LOGIN_AS in the
+            journal. """
+
+        token = AuthService.get_auth_token(
+            user=tenant_account.get_owner(),
+            user_agent=user_agent,
+            user_ip=user_ip,
+            superuser_mode=True,
+        )
+        AnalyticService.tenants_accessed(
+            master_user=master_user,
+            tenant_account=tenant_account,
+            is_superuser=is_superuser,
+            auth_type=auth_type,
+        )
+        AuditEventService.tenant_logged_in_as(
+            master_user=master_user,
+            tenant_account=tenant_account,
+            auth_type=auth_type,
+        )
+        return token
 
     @staticmethod
     def get_superuser_auth_token(user: User) -> str:

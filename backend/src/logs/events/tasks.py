@@ -37,22 +37,25 @@ def consume_events() -> None:
         tick budget (MAX_SECONDS) keeps a tick shorter than the lock
         even with the slowest batch in flight.
 
-        Nothing raises out of here: a beat task that fails every
-        5 seconds is a Sentry flood, so every error is logged on each
-        tick and reported once a minute. """
+        Nothing raises out of here, the lock included: a beat task
+        that fails every 5 seconds is a Sentry flood, so every error
+        is logged on each tick and reported once a minute. """
 
     if settings.LOGS_BACKEND == LogsBackend.NONE:
         return
-    with periodic_lock(LOCK_ID, lock_expire=LOCK_EXPIRE) as acquired:
-        if not acquired:
-            return
-        try:
+    # The lock lives in the cache, and the cache is the same Redis as
+    # the buffer: the outage the tick is built to survive breaks the
+    # lock first, so the lock has to be inside the try as well.
+    try:
+        with periodic_lock(LOCK_ID, lock_expire=LOCK_EXPIRE) as acquired:
+            if not acquired:
+                return
             stats = _run_tick()
-        except Exception as exc:  # noqa: BLE001
-            _report_error('Events consumer tick failed', exc)
-            return
-        if stats.failed:
-            _report_failed_delivery(stats)
+    except Exception as exc:  # noqa: BLE001
+        _report_tick_error('Events consumer tick failed', exc)
+        return
+    if stats.failed:
+        _report_failed_delivery(stats)
 
 
 def _run_tick() -> ConsumerStats:
@@ -66,7 +69,7 @@ def _run_tick() -> ConsumerStats:
     return consumer.run_once()
 
 
-def _report_error(message: str, exc: Exception) -> None:
+def _report_tick_error(message: str, exc: Exception) -> None:
     logger.warning('%s: %s', message, exc)
     report_error(
         message=message,

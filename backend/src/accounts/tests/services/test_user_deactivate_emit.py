@@ -368,8 +368,6 @@ def test_destroy__service_emit__event_keeps_request_context(
     identify_mock,
     group_mock,
     api_client,
-    events_enabled,
-    run_on_commit,
     fake_stream,
 ):
 

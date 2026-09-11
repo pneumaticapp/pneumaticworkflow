@@ -214,8 +214,6 @@ def test_update__draft__emit_template_draft_save_with_draft_name(
 def test_update__draft__event_keeps_request_context(
     mocker,
     api_client,
-    events_enabled,
-    run_on_commit,
     fake_stream,
 ):
 

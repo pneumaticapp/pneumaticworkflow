@@ -7,8 +7,10 @@
 # in the `pneumatic-logs` compose network together with Grafana; the collector
 # is the single member of both networks and the only writer. The application
 # containers (backend, celery, nginx, ...) are NOT in `pneumatic-logs` and
-# cannot reach port 3100 at all - see docker-compose.yml. That is what stops the
-# webhook deliverer from being pointed at Loki by a tenant admin.
+# cannot reach port 3100 at all - see docker-compose.yml. They do reach the
+# collector (its OTLP receiver has no authentication either), but a webhook
+# body is not an OTLP request, so a tenant admin pointing the webhook
+# deliverer at either cannot forge a record.
 auth_enabled: false
 
 server:
@@ -52,7 +54,13 @@ limits_config:
   retention_period: ${LOGS_RETENTION_PERIOD:-365d}
   max_global_streams_per_user: 10000
   reject_old_samples: true
-  reject_old_samples_max_age: 168h
+  # Wider than the default week on purpose: records carry the moment
+  # they happened, and the Redis buffer holds LOGS_STREAM_MAXLEN of
+  # them, which at a low rate is far more than seven days. After a
+  # long outage the consumer replays that backlog, and anything older
+  # than this window would come back 400, which the exporter treats
+  # as permanent and the consumer parks in the dead letter.
+  reject_old_samples_max_age: 720h
   otlp_config:
     resource_attributes:
       # service_name and deployment_environment stay indexed by the Loki

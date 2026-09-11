@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core.management.base import BaseCommand
 from django_celery_beat.models import (
     PeriodicTask,
@@ -193,7 +194,7 @@ class Command(BaseCommand):
 
     def _ensure_events_consumer(self):
         schedule, _ = IntervalSchedule.objects.get_or_create(
-            every=5,
+            every=settings.LOGS_CONSUMER_INTERVAL_SECONDS,
             period=IntervalSchedule.SECONDS,
         )
         self._create_or_skip_task(

@@ -3,18 +3,22 @@
 #
 # Personal data leaves with the record, see the note in base.yaml.
 #
-# The bundled Loki and Grafana are not started in this mode:
-#   docker compose -f docker-compose.yml -f logging/compose/logs-external.yml up -d
+# Only the collector starts in this mode, the bundled Loki and Grafana do not:
+#   docker compose --profile logs-otlp up -d
 exporters:
   otlp_http/external:
     endpoint: ${env:LOGS_OTLP_EXPORT_ENDPOINT}
+    # Sent as is, empty included: a receiver that rejects an empty
+    # Authorization header needs LOGS_OTLP_EXPORT_AUTH set, a receiver
+    # without authentication may need this line removed.
     headers:
       Authorization: ${env:LOGS_OTLP_EXPORT_AUTH:-}
     # The receiver is on the far side of the internet: keep retrying for five
     # minutes and hold the backlog in memory meanwhile. The queue is bounded so
-    # an unreachable receiver cannot grow the collector past its mem_limit; the
-    # consumer keeps its own copy in the Redis stream until the collector
-    # answers 2xx, so a full queue costs redelivery, not data.
+    # an unreachable receiver cannot grow the collector past the ceiling of
+    # its memory_limiter processor; the consumer keeps its own copy in the
+    # Redis stream until the collector answers 2xx, so a full queue costs
+    # redelivery, not data.
     retry_on_failure:
       enabled: true
       max_elapsed_time: 300s
@@ -25,6 +29,4 @@ exporters:
 service:
   pipelines:
     logs:
-      receivers: [otlp]
-      processors: [memory_limiter, batch]
       exporters: [otlp_http/external]

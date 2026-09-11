@@ -1,4 +1,9 @@
-# Import fixtures from fixture modules
+"""Fixtures of the endpoint tests.
+
+Only tests.fixtures.e2e is imported here: tests.fixtures.unit is
+already registered as a plugin by the root conftest.
+"""
+
 from tests.fixtures.e2e import (  # noqa: F401
     auth_headers,
     e2e_client,
@@ -7,14 +12,4 @@ from tests.fixtures.e2e import (  # noqa: F401
     mock_http_client,
     mock_storage_service,
     mock_upload_response,
-)
-from tests.fixtures.unit import (  # noqa: F401
-    mock_download_use_case_get_metadata,
-    mock_download_use_case_get_stream,
-    mock_events_file_access_denied,
-    mock_events_file_download,
-    mock_events_file_upload,
-    mock_http_client_check_permission,
-    mock_redis_auth_client_get,
-    mock_upload_use_case_execute,
 )

@@ -14,9 +14,9 @@ source "$(dirname "${BASH_SOURCE[0]}")/_lib.sh"
 load_env
 
 CERT_DIR="$DEPLOY_DIR/certs"
-IMAGE="${ES_IMAGE:-docker.elastic.co/elasticsearch/elasticsearch:9.5.3}"
-CA_DAYS="${ES_CA_DAYS:-3650}"
-CERT_DAYS="${ES_CERT_DAYS:-730}"
+IMAGE="$ES_IMAGE"
+CA_DAYS="$ES_CA_DAYS"
+CERT_DAYS="$ES_CERT_DAYS"
 MODE="${1:-}"
 
 mkdir -p "$CERT_DIR"

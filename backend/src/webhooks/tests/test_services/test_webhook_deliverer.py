@@ -10,7 +10,6 @@ from src.logs.enums import (
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_owner,
-    create_test_user,
 )
 from src.utils.logging import SentryLogLevel
 from src.webhooks.enums import HookEvent
@@ -29,7 +28,7 @@ def test_send__ok(mocker):
 
     # arrange
     account = create_test_account()
-    user = create_test_user(account=account)
+    user = create_test_owner(account=account)
     event = HookEvent.WORKFLOW_STARTED
     webhook = create_test_webhook(user=user, event=event)
     payload = {'workflow': 'value'}
@@ -95,7 +94,7 @@ def test_send__webhook_with_another_event__skip(mocker):
 
     # arrange
     account = create_test_account()
-    user = create_test_user(account=account)
+    user = create_test_owner(account=account)
     create_test_webhook(user=user, event=HookEvent.WORKFLOW_STARTED)
     payload = {'workflow': 'value'}
     post_mock = mocker.patch('src.webhooks.services.requests.post')
@@ -121,7 +120,7 @@ def test_send__webhook_with_another_account__skip(mocker):
 
     # arrange
     another_account = create_test_account()
-    user = create_test_user()
+    user = create_test_owner()
     event = HookEvent.WORKFLOW_STARTED
     create_test_webhook(user=user, event=event)
     payload = {'workflow': 'value'}
@@ -148,7 +147,7 @@ def test_send__connection_error__create_log(mocker):
 
     # arrange
     account = create_test_account()
-    user = create_test_user(account=account)
+    user = create_test_owner(account=account)
     event = HookEvent.WORKFLOW_STARTED
     webhook = create_test_webhook(user=user, event=event)
     payload = {'workflow': 'value'}
@@ -296,7 +295,7 @@ def test_send__bad_request_content_type_json__ok(mocker):
 
     # arrange
     account = create_test_account()
-    user = create_test_user(account=account)
+    user = create_test_owner(account=account)
     event = HookEvent.WORKFLOW_STARTED
     webhook = create_test_webhook(user=user, event=event)
     payload = {'workflow': 'value'}
@@ -382,7 +381,7 @@ def test_send__permission_denied_type_text__ok(mocker):
 
     # arrange
     account = create_test_account()
-    user = create_test_user(account=account)
+    user = create_test_owner(account=account)
     event = HookEvent.WORKFLOW_STARTED
     webhook = create_test_webhook(user=user, event=event)
     payload = {'workflow': 'value'}
@@ -468,7 +467,7 @@ def test_send__not_found__ok(mocker):
 
     # arrange
     account = create_test_account()
-    user = create_test_user(account=account)
+    user = create_test_owner(account=account)
     event = HookEvent.WORKFLOW_STARTED
     webhook = create_test_webhook(user=user, event=event)
     payload = {'workflow': 'value'}
@@ -551,7 +550,7 @@ def test_send__internal_server_error__raise_exception(mocker):
 
     # arrange
     account = create_test_account()
-    user = create_test_user(account=account)
+    user = create_test_owner(account=account)
     event = HookEvent.WORKFLOW_STARTED
     webhook = create_test_webhook(user=user, event=event)
     payload = {'workflow': 'value'}

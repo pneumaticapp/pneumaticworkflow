@@ -42,6 +42,7 @@ from src.generics.mixins.views import (
 from src.generics.permissions import (
     UserIsAuthenticated,
 )
+from src.logs.events import AuditEventService
 from src.notifications.tasks import (
     send_reset_password_notification,
 )
@@ -52,6 +53,10 @@ from src.openapi import (
     ResetPasswordStatusSerializer,
     TOO_MANY_REQUESTS,
     VALIDATION_ERROR,
+)
+from src.utils.http import (
+    get_client_ip,
+    get_user_agent_header,
 )
 
 UserModel = get_user_model()
@@ -142,6 +147,10 @@ class ResetPasswordViewSet(
                 logging=user.account.log_api_requests,
                 account_id=user.account_id,
             )
+            AuditEventService.password_reset_requested(
+                request=request,
+                user=user,
+            )
         return self.response_ok()
 
     @extend_schema(
@@ -189,12 +198,10 @@ class ResetPasswordViewSet(
         PneumaticToken.expire_all_tokens(user)
         token = AuthService.get_auth_token(
             user=user,
-            user_agent=request.headers.get(
-                'User-Agent',
-                request.META.get('HTTP_USER_AGENT'),
-            ),
-            user_ip=request.META.get('HTTP_X_REAL_IP'),
+            user_agent=get_user_agent_header(request),
+            user_ip=get_client_ip(request),
         )
+        AuditEventService.password_reset(request=request, user=user)
         return self.response_ok({'token': token})
 
 
@@ -224,6 +231,7 @@ class ChangePasswordView(
         token = PneumaticToken.create(
             request.user,
             user_agent=request.user_agent,
-            user_ip=request.META.get('HTTP_X_REAL_IP'),
+            user_ip=get_client_ip(request),
         )
+        AuditEventService.password_changed(request=request)
         return self.response_ok({'token': token})

@@ -1,6 +1,5 @@
 from typing import Any, List, Optional, Tuple
 
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
@@ -8,9 +7,7 @@ from django.utils import timezone
 from src.accounts.models import UserGroup
 from src.analysis.services import AnalyticService
 from src.generics.base.service import BaseModelService
-from src.logs.events import emit
-from src.logs.events.adapters.workflow import workflow_event_to_kwargs
-from src.logs.events.reporting import report_error
+from src.logs.events.adapters.workflow import emit_workflow_event
 from src.notifications.tasks import (
     send_comment_notification,
     send_event_created,
@@ -71,33 +68,8 @@ class WorkflowEventService:
             workflow event type. """
 
         event = WorkflowEvent.objects.create(**kwargs)
-        cls._emit_event(event)
+        emit_workflow_event(event)
         return event
-
-    @classmethod
-    def _emit_event(cls, event: WorkflowEvent):
-
-        """ A broken pipeline must never break the workflow event
-            itself: the user action is already done and saved.
-            A typo still fails the tests, the way
-            resolve_event_type does: both read the same
-            LOGS_STRICT flag. """
-
-        try:
-            emit(**workflow_event_to_kwargs(event))
-        except Exception as ex:
-            if settings.LOGS_STRICT:
-                raise
-            # Throttled: a type missing from the adapter fails on
-            # every event of that type, not once.
-            report_error(
-                message='Failed to emit a workflow event',
-                data={
-                    'workflow_event_id': event.id,
-                    'workflow_event_type': event.type,
-                    'error': repr(ex),
-                },
-            )
 
     @classmethod
     def _after_create_actions(cls, event: WorkflowEvent):

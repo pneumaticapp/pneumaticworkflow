@@ -27,7 +27,6 @@ SEVERITY_DEBUG = (5, 'DEBUG')
 CATEGORY_SEVERITY = {
     EventCategory.AUDIT: SEVERITY_INFO,
     EventCategory.ACTIVITY: SEVERITY_INFO,
-    EventCategory.HTTP: SEVERITY_DEBUG,
     EventCategory.DEBUG: SEVERITY_DEBUG,
 }
 
@@ -55,18 +54,21 @@ def build_otlp_payload(
         separate resourceLogs: Loki takes index labels from resource
         attributes only, record attributes become structured
         metadata and cannot be labels. The stream is shared with the
-        file service, so the service comes from the record; a record
-        without one is a backend record written before the field
-        existed and takes service_name. """
+        file service, so the service comes from the record, and the
+        version is known for one service only: the one this process
+        is (service_name), the others carry none. """
 
     observed = str(observed_ns)
-    groups = _group_records(records, default_service=service_name)
+    groups = _group_records(records)
     resource_logs = [
         {
             'resource': {
                 'attributes': _resource_attributes(
                     service_name=service,
-                    service_version=service_version,
+                    service_version=(
+                        service_version if service == service_name
+                        else None
+                    ),
                     environment=environment,
                     account_id=account_id,
                     category=category,
@@ -87,12 +89,11 @@ def build_otlp_payload(
 
 def _group_records(
     records: List[Tuple[str, Event]],
-    default_service: str,
 ) -> Dict[GroupKey, List[Tuple[str, Event]]]:
     groups: Dict[GroupKey, List[Tuple[str, Event]]] = {}
     for record_id, event in records:
         key = (
-            event.service or default_service,
+            event.service,
             event.account_id,
             event.category,
         )
@@ -103,18 +104,20 @@ def _group_records(
 def _resource_attributes(
     *,
     service_name: str,
-    service_version: str,
+    service_version: Optional[str],
     environment: str,
     account_id: Any,
     category: str,
 ) -> List[Dict[str, Any]]:
-    return [
-        _attr('service.name', service_name),
-        _attr('service.version', service_version),
+    attributes = [_attr('service.name', service_name)]
+    if service_version is not None:
+        attributes.append(_attr('service.version', service_version))
+    attributes += [
         _attr('deployment.environment', environment),
         _attr('account_id', account_id),
         _attr('event_category', category),
     ]
+    return attributes
 
 
 def _log_record(
@@ -177,7 +180,7 @@ def _pii_paths(event: Event) -> Tuple[str, ...]:
         nobody declared the registry answers ACTOR_PII, which is the
         safe side. """
 
-    return resolve_event_type(event.type).effective_pii
+    return resolve_event_type(event.type).pii
 
 
 def _plain_values(record_id: str, event: Event) -> Dict[str, Any]:
@@ -237,8 +240,16 @@ def _extract_pii(
     """ Move the declared personal fields into the pii.* namespace
         and remove them from their original place, so that one prefix
         names every personal attribute of a record. Nothing deletes
-        them on the way out (decision 2 in docs/logging-design.md);
-        a receiver that does not want them drops the prefix. """
+        them on the way out; a receiver that does not want them drops
+        the prefix.
+
+        A path is matched against the attribute keys directly and not
+        split the way schema.split_pii_path splits it: _plain_values
+        and _payload_values name their keys after the paths on
+        purpose ("actor.email", "payload.filename"), so the lookup is
+        the whole resolution. Renaming a key there without renaming
+        the path here leaves a personal field outside the namespace,
+        which is what test_registry pins. """
 
     pii: Dict[str, Any] = {}
     for path in paths:

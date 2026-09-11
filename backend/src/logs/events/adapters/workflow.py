@@ -5,12 +5,19 @@ from typing import (
     Optional,
 )
 
+from django.conf import settings
+
+from src.logs.events.emitter import emit
 from src.logs.events.enums import (
     ActorType,
     EventName,
     EventObjectType,
 )
-from src.logs.events.exceptions import UnknownEventTypeError
+from src.logs.events.exceptions import (
+    EventsError,
+    UnknownEventTypeError,
+)
+from src.logs.events.reporting import report_error
 from src.logs.events.schema import Actor, EventObject
 from src.processes.enums import WorkflowEventType
 
@@ -53,6 +60,38 @@ WORKFLOW_EVENT_TYPE_NAMES: Dict[int, str] = {
 }
 
 
+def emit_workflow_event(event: 'WorkflowEvent') -> None:
+
+    """ Publish a stored workflow event, whatever happens.
+
+        A broken pipeline must never break the workflow event itself:
+        the user action is already done and saved. A typo still fails
+        the tests, the way resolve_event_type does, because both read
+        the same LOGS_STRICT flag; the caller in the processes app
+        does not need to know that this flag exists.
+
+        Only EventsError is caught: an undeclared type and a broken
+        registry belong to the pipeline, while a TypeError from the
+        caller is a bug and has to surface. """
+
+    try:
+        emit(**workflow_event_to_kwargs(event))
+    except EventsError as ex:
+        if settings.LOGS_STRICT:
+            raise
+
+        # Throttled: a type missing from the adapter fails on every
+        # event of that type, not once.
+        report_error(
+            message='Failed to emit a workflow event',
+            data={
+                'workflow_event_id': event.id,
+                'workflow_event_type': event.type,
+                'error': repr(ex),
+            },
+        )
+
+
 def workflow_event_to_kwargs(event: 'WorkflowEvent') -> Dict[str, Any]:
 
     """ Turn a stored WorkflowEvent into emit() keyword arguments.
@@ -89,7 +128,7 @@ def _actor(event: 'WorkflowEvent') -> Actor:
     return Actor(
         type=ActorType.USER,
         id=event.user_id,
-        email=getattr(user, 'email', None),
+        email=user.email if user is not None else None,
     )
 
 

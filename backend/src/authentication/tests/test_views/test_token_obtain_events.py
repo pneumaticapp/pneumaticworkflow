@@ -1,4 +1,5 @@
 from datetime import timedelta
+from hashlib import sha256
 
 import pytest
 
@@ -75,8 +76,6 @@ def test_signin__valid_credentials__event_keeps_request_context(
     mocker,
     api_client,
     identify_mock,
-    events_enabled,
-    run_on_commit,
     fake_stream,
 ):
 
@@ -140,10 +139,7 @@ def test_signin__wrong_password__emit_login_failed_without_email(
     user = create_test_owner()
     user.set_password('12345')
     user.save(update_fields=['password'])
-    # sha256 of 'owner@pneumatic.app'
-    email_hash = (
-        'a8bbd127184a4b72fc726bb79a36918abe2a49e6f23234c2015ede62a6ee2b01'
-    )
+    email_hash = sha256(b'owner@pneumatic.app').hexdigest()
     users_logged_in_mock = mocker.patch(
         'src.authentication.views.signin.'
         'AnalyticService.users_logged_in',
@@ -180,8 +176,6 @@ def test_signin__wrong_password__event_keeps_request_context(
     mocker,
     api_client,
     identify_mock,
-    events_enabled,
-    run_on_commit,
     fake_stream,
 ):
 
@@ -193,10 +187,7 @@ def test_signin__wrong_password__event_keeps_request_context(
     user = create_test_owner()
     user.set_password('12345')
     user.save(update_fields=['password'])
-    # sha256 of 'owner@pneumatic.app'
-    email_hash = (
-        'a8bbd127184a4b72fc726bb79a36918abe2a49e6f23234c2015ede62a6ee2b01'
-    )
+    email_hash = sha256(b'owner@pneumatic.app').hexdigest()
     users_logged_in_mock = mocker.patch(
         'src.authentication.views.signin.'
         'AnalyticService.users_logged_in',
@@ -241,9 +232,7 @@ def test_signin__unknown_email__emit_login_failed_with_same_reason(
 
     # arrange
     # sha256 of 'ghost@pneumatic.app', an address of nobody
-    email_hash = (
-        '16dd70fe57f429d4de2c6156f50c21a9565b70b911c1e277f4bd503b86dea978'
-    )
+    email_hash = sha256(b'ghost@pneumatic.app').hexdigest()
     users_logged_in_mock = mocker.patch(
         'src.authentication.views.signin.'
         'AnalyticService.users_logged_in',
@@ -284,9 +273,7 @@ def test_signin__uppercase_email_with_spaces__emit_same_hash(
 
     # arrange
     # sha256 of 'owner@pneumatic.app', the normalized address
-    email_hash = (
-        'a8bbd127184a4b72fc726bb79a36918abe2a49e6f23234c2015ede62a6ee2b01'
-    )
+    email_hash = sha256(b'owner@pneumatic.app').hexdigest()
     users_logged_in_mock = mocker.patch(
         'src.authentication.views.signin.'
         'AnalyticService.users_logged_in',
@@ -331,10 +318,7 @@ def test_signin__sso_required__emit_login_failed_sso_required(
     user = create_test_admin()
     user.set_password('12345')
     user.save(update_fields=['password'])
-    # sha256 of 'admin@pneumatic.app'
-    email_hash = (
-        '669b45b3f7d9411b9cfb69f99b2df226f7d0c854efb12f840e4e4d2beeafc9f9'
-    )
+    email_hash = sha256(b'admin@pneumatic.app').hexdigest()
     users_logged_in_mock = mocker.patch(
         'src.authentication.views.signin.'
         'AnalyticService.users_logged_in',
@@ -382,10 +366,7 @@ def test_signin__verification_timed_out__emit_login_failed_inactive(
     account.is_verified = False
     account.date_joined = user.date_joined - timedelta(weeks=3)
     account.save(update_fields=['is_verified', 'date_joined'])
-    # sha256 of 'owner@pneumatic.app'
-    email_hash = (
-        'a8bbd127184a4b72fc726bb79a36918abe2a49e6f23234c2015ede62a6ee2b01'
-    )
+    email_hash = sha256(b'owner@pneumatic.app').hexdigest()
     send_verification_mock = mocker.patch(
         'src.authentication.views.signin.'
         'send_verification_notification.delay',
@@ -410,7 +391,7 @@ def test_signin__verification_timed_out__emit_login_failed_inactive(
         event_object=EventObject(type=EventObjectType.USER),
         payload={
             'email_hash': email_hash,
-            'reason': LoginFailedReason.ACCOUNT_INACTIVE,
+            'reason': LoginFailedReason.VERIFICATION_EXPIRED,
         },
         request=mocker.ANY,
     )

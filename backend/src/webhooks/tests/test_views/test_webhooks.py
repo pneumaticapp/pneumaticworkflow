@@ -8,8 +8,8 @@ from src.logs.events.enums import (
     EventObjectType,
 )
 from src.processes.tests.fixtures import (
+    create_test_not_admin,
     create_test_owner,
-    create_test_user,
 )
 from src.utils.validation import ErrorCode
 from src.webhooks.services import ALL_EVENTS
@@ -20,9 +20,9 @@ pytestmark = pytest.mark.django_db
 def test_subscribe__ok(api_client, mocker):
 
     # arrange
-    user = create_test_user()
+    user = create_test_owner()
     api_client.token_authenticate(user)
-    url = 'https://93.184.216.34/hook'
+    url = 'https://192.0.2.1/hook'
     service_mock = mocker.patch(
         'src.webhooks.views.webhooks.WebhookService.subscribe',
     )
@@ -41,7 +41,7 @@ def test_subscribe__ok(api_client, mocker):
 def test_subscribe__invalid_url__validation_error(api_client, mocker):
 
     # arrange
-    user = create_test_user()
+    user = create_test_owner()
     api_client.token_authenticate(user)
     url = 'undefined'
     service_mock = mocker.patch(
@@ -67,9 +67,9 @@ def test_subscribe__invalid_url__validation_error(api_client, mocker):
 def test_subscribe__not_admin__permission_denied(api_client, mocker):
 
     # arrange
-    user = create_test_user(is_admin=False, is_account_owner=False)
+    user = create_test_not_admin()
     api_client.token_authenticate(user)
-    url = 'https://93.184.216.34/hook'
+    url = 'https://192.0.2.1/hook'
     service_mock = mocker.patch(
         'src.webhooks.views.webhooks.WebhookService.subscribe',
     )
@@ -88,7 +88,7 @@ def test_subscribe__not_admin__permission_denied(api_client, mocker):
 def test_unsubscribe__ok(api_client, mocker):
 
     # arrange
-    user = create_test_user()
+    user = create_test_owner()
     api_client.token_authenticate(user)
     service_mock = mocker.patch(
         'src.webhooks.views.webhooks.WebhookService.unsubscribe',
@@ -99,14 +99,12 @@ def test_unsubscribe__ok(api_client, mocker):
 
     # assert
     assert response.status_code == 204
-    service_mock.assert_called_once()
+    service_mock.assert_called_once_with()
 
 
 def test_subscribe__api_key__emit_api_key_actor(
     api_client,
     mocker,
-    events_enabled,
-    run_on_commit,
     fake_stream,
 ):
 
@@ -129,7 +127,7 @@ def test_subscribe__api_key__emit_api_key_actor(
     # act
     response = api_client.post(
         path='/webhooks/subscribe',
-        data={'url': 'https://93.184.216.34/hook'},
+        data={'url': 'https://192.0.2.1/hook'},
         HTTP_X_REQUEST_ID='audit-webhook-1',
     )
 
@@ -146,7 +144,7 @@ def test_subscribe__api_key__emit_api_key_actor(
     )
     assert event.object == EventObject(type=EventObjectType.WEBHOOK)
     assert event.payload == {
-        'url': 'https://93.184.216.34/hook',
+        'url': 'https://192.0.2.1/hook',
         'event': ALL_EVENTS,
     }
     assert event.ip == '192.168.0.1'

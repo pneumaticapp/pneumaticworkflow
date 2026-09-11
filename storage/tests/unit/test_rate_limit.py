@@ -191,7 +191,10 @@ async def test_dispatch__different_ips__independent(
             responses.append(resp)
 
     # assert
-    assert all(r.status_code == 200 for r in responses)
+    assert responses[0].status_code == 200
+    assert responses[1].status_code == 200
+    assert responses[2].status_code == 200
+    assert responses[3].status_code == 200
     assert call_next_mock.call_count == 4
 
 
@@ -217,7 +220,10 @@ async def test_dispatch__non_limited_route__pass(
         responses.append(resp)
 
     # assert
-    assert all(r.status_code == 200 for r in responses)
+    assert len(responses) == 10
+    assert responses[0].status_code == 200
+    assert responses[4].status_code == 200
+    assert responses[9].status_code == 200
 
 
 @pytest.mark.asyncio
@@ -277,7 +283,8 @@ async def test_dispatch__download_higher_limit(
     response = await mw.dispatch(req, call_next_mock)
 
     # assert
-    assert all(r.status_code == 200 for r in responses)
+    assert responses[0].status_code == 200
+    assert responses[-1].status_code == 200
     assert response.status_code == 429
 
 

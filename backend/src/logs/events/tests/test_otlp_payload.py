@@ -4,7 +4,6 @@ from datetime import timedelta, timezone
 
 import pytest
 
-from src.logs.events import registry as registry_module
 from src.logs.events.enums import EventCategory
 from src.logs.events.registry import (
     ACTOR_PII,
@@ -19,6 +18,7 @@ from src.logs.events.tests.fakes import (
     ENVIRONMENT,
     EVENT_TS,
     EVENT_TS_NANO,
+    FILE_SERVICE_NAME,
     OBSERVED_NS,
     SERVICE_NAME,
     SERVICE_VERSION,
@@ -112,29 +112,6 @@ def test_build__two_services__two_resource_logs():
     assert len(second['scopeLogs'][0]['logRecords']) == 1
 
 
-def test_build__record_without_service__service_name_of_the_sink():
-
-    """ A record written before the field existed is a backend
-        record and joins the group of the backend. """
-
-    # arrange
-    records = [
-        ('1-0', make_event(service=None)),
-        ('2-0', make_event(service=SERVICE_NAME)),
-    ]
-
-    # act
-    payload = build_sample_payload(records)
-
-    # assert
-    resource_logs = payload['resourceLogs']
-    assert len(resource_logs) == 1
-    assert otlp_resource_attributes(resource_logs[0])['service.name'] == {
-        'stringValue': SERVICE_NAME,
-    }
-    assert len(resource_logs[0]['scopeLogs'][0]['logRecords']) == 2
-
-
 def test_build__no_records__empty_resource_logs():
 
     # act
@@ -153,6 +130,27 @@ def test_build__any_record__expected_resource_attributes():
     assert otlp_resource_attributes(payload['resourceLogs'][0]) == {
         'service.name': {'stringValue': SERVICE_NAME},
         'service.version': {'stringValue': SERVICE_VERSION},
+        'deployment.environment': {'stringValue': ENVIRONMENT},
+        'account_id': {'stringValue': '42'},
+        'event_category': {'stringValue': EventCategory.AUDIT},
+    }
+
+
+def test_build__record_of_another_service__no_version():
+
+    """ The version of the process is the version of its own
+        service only: a file service record would otherwise show the
+        backend release in Grafana. """
+
+    # arrange
+    event = make_event(service=FILE_SERVICE_NAME)
+
+    # act
+    payload = build_sample_payload([('1-0', event)])
+
+    # assert
+    assert otlp_resource_attributes(payload['resourceLogs'][0]) == {
+        'service.name': {'stringValue': FILE_SERVICE_NAME},
         'deployment.environment': {'stringValue': ENVIRONMENT},
         'account_id': {'stringValue': '42'},
         'event_category': {'stringValue': EventCategory.AUDIT},
@@ -212,7 +210,6 @@ def test_build__naive_ts__treated_as_utc():
     [
         (EventCategory.AUDIT, 9, 'INFO'),
         (EventCategory.ACTIVITY, 9, 'INFO'),
-        (EventCategory.HTTP, 5, 'DEBUG'),
         (EventCategory.DEBUG, 5, 'DEBUG'),
     ],
 )
@@ -414,10 +411,9 @@ def test_build__undeclared_event_type__actor_pii_still_moved(
 
     # arrange
     settings.LOGS_STRICT = False
-    capture_sentry_message_mock = mocker.patch(
-        'src.logs.events.registry.capture_sentry_message',
+    report_error_mock = mocker.patch(
+        'src.logs.events.registry.report_error',
     )
-    mocker.patch.object(registry_module, '_reported_unknown_types', set())
     event = make_event(type='nope.nope', pii=())
 
     # act
@@ -429,10 +425,11 @@ def test_build__undeclared_event_type__actor_pii_still_moved(
         'stringValue': 'ann@example.com',
     }
     assert 'actor.email' not in attributes
-    capture_sentry_message_mock.assert_called_once_with(
+    report_error_mock.assert_called_once_with(
         message='Unknown event type',
         data={'event_type': 'nope.nope'},
         level=SentryLogLevel.WARNING,
+        key='unknown-event-type:nope.nope',
     )
 
 

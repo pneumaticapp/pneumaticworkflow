@@ -4,11 +4,15 @@ from datetime import UTC, datetime
 from unittest.mock import ANY
 
 from src.domain.entities.file_record import FileRecord
+from src.shared_kernel.events.schema import EventName
 from src.shared_kernel.exceptions import (
     DomainFileNotFoundError,
     HttpTimeoutError,
 )
-from tests.fixtures.unit import API_FILE_ID as FILE_ID
+from tests.fixtures.unit import (
+    API_FILE_ID as FILE_ID,
+    CapturingEmitter,
+)
 
 
 def test_upload__ok__upload_journaled(
@@ -39,9 +43,13 @@ def test_upload__ok__upload_journaled(
 
     # assert
     assert response.status_code == 200
-    assert mock_events_file_upload.await_count == 1
+    mock_events_file_upload.assert_awaited_once_with(
+        user=ANY,
+        file_id=mock_upload_response.file_id,
+        file=ANY,
+    )
+    assert len(journaled) == 1
     assert journaled[0]['user'].user_id == 1
-    assert journaled[0]['file_id'] == mock_upload_response.file_id
     assert journaled[0]['file'].filename == 'test.txt'
     assert journaled[0]['file'].content_type == 'text/plain'
     assert journaled[0]['file'].size == len(sample_file_content)
@@ -382,3 +390,49 @@ def test_download__not_found__nothing_journaled(
     mock_events_file_download.assert_not_awaited()
     mock_events_file_access_denied.assert_not_awaited()
     mock_http_client.assert_not_awaited()
+
+
+def test_download__real_records__context_of_the_response(
+    e2e_client,
+    mock_auth_middleware,
+    mock_http_client,
+    mock_storage_service,
+    auth_headers,
+    mock_download_response,
+    mock_download_use_case_get_metadata,
+    mock_download_use_case_get_stream,
+    mocker,
+):
+    """The record carries the id the caller got back in X-Request-ID
+    and the address of the caller: the one property the middleware
+    order in main.py exists for, checked through the real stack."""
+
+    # arrange
+    file_record, stream = mock_download_response
+    mock_download_use_case_get_metadata.return_value = file_record
+    mock_download_use_case_get_stream.return_value = stream
+    emitter = CapturingEmitter()
+    mocker.patch(
+        'src.shared_kernel.events.request_events.get_event_emitter',
+        return_value=emitter,
+    )
+
+    # act
+    response = e2e_client.get(
+        f'/{FILE_ID}',
+        headers={
+            **auth_headers,
+            'X-Real-IP': '203.0.113.7',
+            'User-Agent': 'Reader/1.0',
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(emitter.events) == 1
+    event = emitter.events[0]
+    assert event.type == EventName.FILE_DOWNLOAD
+    assert event.context.request_id == response.headers['x-request-id']
+    assert event.context.ip == '203.0.113.7'
+    assert event.context.user_agent == 'Reader/1.0'
+    assert event.payload['is_owner'] is True

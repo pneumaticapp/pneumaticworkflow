@@ -11,12 +11,6 @@
 source "$(dirname "${BASH_SOURCE[0]}")/_lib.sh"
 load_env
 
-PROVISION="$DEPLOY_DIR/provision"
-DATA_STREAM="${ES_DATA_STREAM:-logs-pneumatic.events.otel-default}"
-ILM_POLICY="pneumatic-events-365d"
-REPOSITORY="pneumatic-snapshots"
-API_KEY_NAME="pneumatic-collector"
-
 log "waiting for the node to answer"
 for _ in $(seq 1 60); do
     health=$(es_api GET '/_cluster/health' 2>/dev/null || true)
@@ -63,9 +57,9 @@ require_ok "$(render "$PROVISION/component-template-logs-otel-custom.json" \
     "component template logs-otel@custom"
 
 log "--- 5. Data stream ---"
-if es_api GET "/_data_stream/$DATA_STREAM" | grep -q '"name"'; then
-    log "data stream $DATA_STREAM already exists"
-    write_index=$(es_api GET "/_data_stream/$DATA_STREAM?filter_path=data_streams.indices.index_name" \
+if es_api GET "/_data_stream/$ES_DATA_STREAM" | grep -q '"name"'; then
+    log "data stream $ES_DATA_STREAM already exists"
+    write_index=$(es_api GET "/_data_stream/$ES_DATA_STREAM?filter_path=data_streams.indices.index_name" \
         | tr ',' '\n' | sed -n 's/.*"index_name":"\([^"]*\)".*/\1/p' | tail -1)
     # Read the effective policy before changing anything: the PUT below would
     # make every index look right and hide the fact that the write index still
@@ -76,7 +70,7 @@ if es_api GET "/_data_stream/$DATA_STREAM" | grep -q '"name"'; then
     # with - by default the built-in `logs` one, which has no delete phase at
     # all. Left alone they would be kept forever.
     printf '{"index.lifecycle.name":"%s"}' "$ILM_POLICY" \
-        | es_api_stdin PUT "/$DATA_STREAM/_settings" > /dev/null
+        | es_api_stdin PUT "/$ES_DATA_STREAM/_settings" > /dev/null
     log "every backing index now follows $ILM_POLICY"
 
     case "$write_index_policy" in
@@ -85,13 +79,13 @@ if es_api GET "/_data_stream/$DATA_STREAM" | grep -q '"name"'; then
         *)
             # Settings of a template apply to indices created after it, so the
             # rollover is what turns the change into a new backing index.
-            es_api POST "/$DATA_STREAM/_rollover" > /dev/null
+            es_api POST "/$ES_DATA_STREAM/_rollover" > /dev/null
             log "rolled over, the new write index carries the new settings"
             ;;
     esac
 else
-    es_api PUT "/_data_stream/$DATA_STREAM" > /dev/null
-    log "data stream $DATA_STREAM created"
+    es_api PUT "/_data_stream/$ES_DATA_STREAM" > /dev/null
+    log "data stream $ES_DATA_STREAM created"
 fi
 
 log "--- 6. Snapshots ---"
@@ -101,18 +95,18 @@ es_container=$(compose ps -q elasticsearch)
 # repository directory has to be handed over once. Done from a throwaway
 # container of the same image - no second image to pull.
 MSYS_NO_PATHCONV=1 docker run --rm --volumes-from "$es_container" -u 0 \
-    --entrypoint sh "${ES_IMAGE:-docker.elastic.co/elasticsearch/elasticsearch:9.5.3}" \
+    --entrypoint sh "$ES_IMAGE" \
     -c 'mkdir -p /snapshots && chown 1000:0 /snapshots && chmod 770 /snapshots'
 
 require_ok "$(render "$PROVISION/snapshot-repository.json" \
-    | es_api_stdin PUT "/_snapshot/$REPOSITORY")" "repository $REPOSITORY"
-verify=$(es_api POST "/_snapshot/$REPOSITORY/_verify")
+    | es_api_stdin PUT "/_snapshot/$SNAPSHOT_REPOSITORY")" "repository $SNAPSHOT_REPOSITORY"
+verify=$(es_api POST "/_snapshot/$SNAPSHOT_REPOSITORY/_verify")
 case "$verify" in
     *'"nodes"'*) log "repository is writable from every node" ;;
     *) die "the repository is not writable: $verify" ;;
 esac
 require_ok "$(render "$PROVISION/slm-policy.json" \
-    | es_api_stdin PUT '/_slm/policy/pneumatic-events-daily')" "schedule pneumatic-events-daily"
+    | es_api_stdin PUT "/_slm/policy/$SLM_POLICY")" "schedule $SLM_POLICY"
 
 log "--- 7. API key of the collector ---"
 existing=$(es_api GET "/_security/api_key?name=$API_KEY_NAME&active_only=true")

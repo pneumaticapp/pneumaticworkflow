@@ -10,7 +10,10 @@ from rest_framework.response import Response
 
 from src.processes.models.templates.template import Template
 from src.processes.utils.common import get_prefetch_fields
-from src.utils.http import get_client_ip
+from src.utils.http import (
+    get_client_ip,
+    get_user_agent_header,
+)
 
 
 class BaseResponseMixin:
@@ -171,11 +174,12 @@ class AnonymousMixin:
 
         return get_client_ip(request)
 
-    def get_user_agent(self, request: Request) -> str:
-        return request.headers.get(
-            'User-Agent',
-            request.META.get('HTTP_USER_AGENT'),
-        )
+    def get_user_agent(self, request: Request) -> Optional[str]:
+
+        """ Kept as a method next to get_user_ip: the views and their
+            tests reach the client through these two. """
+
+        return get_user_agent_header(request)
 
     def _action_exists(
         self,

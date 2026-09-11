@@ -23,6 +23,8 @@ from src.accounts.tokens import TransferToken
 from src.analysis.mixins import BaseIdentifyMixin
 from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
+from src.logs.events.enums import EventName, EventObjectType
+from src.logs.events.mixins import EventEmitMixin
 from src.notifications.tasks import send_user_updated_notification
 from src.payment.stripe.service import StripeService
 from src.payment.tasks import increase_plan_users
@@ -34,6 +36,7 @@ UserModel = get_user_model()
 
 
 class UserTransferService(
+    EventEmitMixin,
     BaseIdentifyMixin,
 ):
 
@@ -189,6 +192,16 @@ class UserTransferService(
             self._deactivate_prev_user()
             self._activate_user()
             self._after_transfer_actions()
+            self._publish(
+                EventName.USER_TRANSFER,
+                account_id=self.user.account_id,
+                object_type=EventObjectType.USER,
+                object_id=self.user.id,
+                payload={
+                    'prev_account_id': self.prev_user.account_id,
+                    'prev_user_id': self.prev_user.id,
+                },
+            )
 
     def get_account(self):
         return self.user.account

@@ -1,6 +1,6 @@
 from typing import Optional
 
-from typing_extensions import Literal
+from typing_extensions import Literal, get_args
 
 from src.authentication.enums import AuthTokenType
 
@@ -9,17 +9,14 @@ class EventCategory:
 
     AUDIT = 'audit'
     ACTIVITY = 'activity'
-    HTTP = 'http'
     DEBUG = 'debug'
-
-    VALUES = {AUDIT, ACTIVITY, HTTP, DEBUG}
 
     LITERALS = Literal[
         AUDIT,
         ACTIVITY,
-        HTTP,
         DEBUG,
     ]
+    VALUES = set(get_args(LITERALS))
 
 
 class ActorType:
@@ -106,10 +103,18 @@ class EventName:
     USER_LOGIN_AS = 'user.login_as'
     TENANT_LOGIN_AS = 'tenant.login_as'
     USER_SIGNUP = 'user.signup'
+    USER_PASSWORD_RESET_REQUEST = 'user.password_reset_request'
+    USER_PASSWORD_RESET = 'user.password_reset'
+    USER_PASSWORD_CHANGE = 'user.password_change'
 
-    # Users, groups and API keys
+    # Accounts, users, groups and API keys
+    ACCOUNT_UPDATE = 'account.update'
+    USER_CREATE = 'user.create'
     USER_DEACTIVATE = 'user.deactivate'
     USER_ADMIN_TOGGLE = 'user.admin_toggle'
+    USER_TRANSFER = 'user.transfer'
+    INVITE_CREATE = 'invite.create'
+    INVITE_RESEND = 'invite.resend'
     INVITE_ACCEPT = 'invite.accept'
     GROUP_CREATE = 'group.create'
     GROUP_UPDATE = 'group.update'
@@ -137,9 +142,6 @@ class EventName:
     FILE_DOWNLOAD = 'file.download'
     FILE_ACCESS_DENIED = 'file.access_denied'
 
-    # Service types
-    HTTP_REQUEST = 'http.request'
-
 
 AUTH_TYPE_ACTOR_TYPES = {
     AuthTokenType.API: ActorType.API_KEY,
@@ -154,8 +156,9 @@ AUTH_TYPE_ACTOR_TYPES = {
 def actor_type_from_auth(auth_type: Optional[str]) -> str:
 
     """ Convert AuthTokenType value to the event actor type.
-        Unknown and empty values mean a non-request context. """
+        An unknown value is the system: the lookup default answers
+        it. A caller that knows a person is behind the call passes
+        AuthTokenType.USER in place of a missing auth type itself
+        (Actor.from_user, context_from_request). """
 
-    if not auth_type:
-        return ActorType.SYSTEM
     return AUTH_TYPE_ACTOR_TYPES.get(auth_type, ActorType.SYSTEM)

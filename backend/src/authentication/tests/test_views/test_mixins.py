@@ -105,7 +105,7 @@ def test_create__all_fields__ok(
 
     is_superuser = False
     user_agent = 'some agent'
-    ip = '456'
+    ip = '192.168.0.10'
     request_mock = mocker.Mock(
         is_superuser=is_superuser,
         headers={
@@ -113,6 +113,7 @@ def test_create__all_fields__ok(
         },
         META={
             'HTTP_X_REAL_IP': ip,
+            'HTTP_USER_AGENT': user_agent,
         },
     )
 
@@ -538,7 +539,7 @@ def test_create__stripe_service_exception__skip_sync(
 
     is_superuser = False
     user_agent = 'some agent'
-    ip = '456'
+    ip = '192.168.0.10'
     request_mock = mocker.Mock(
         is_superuser=is_superuser,
         headers={
@@ -546,6 +547,7 @@ def test_create__stripe_service_exception__skip_sync(
         },
         META={
             'HTTP_X_REAL_IP': ip,
+            'HTTP_USER_AGENT': user_agent,
         },
     )
 

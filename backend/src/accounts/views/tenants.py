@@ -36,7 +36,6 @@ from src.generics.mixins.views import (
 from src.generics.permissions import (
     UserIsAuthenticated,
 )
-from src.logs.events import AuditEventService
 from src.payment.stripe.exceptions import StripeServiceException
 from src.payment.stripe.service import StripeService
 from src.payment.tasks import (
@@ -57,6 +56,7 @@ from src.openapi import (
     UNAUTHORIZED,
     VALIDATION_ERROR,
 )
+from src.utils.http import get_client_ip, get_user_agent_header
 from src.utils.validation import raise_validation_error
 
 UserModel = get_user_model()
@@ -297,26 +297,13 @@ class TenantsViewSet(
     )
     @action(methods=('GET',), detail=True)
     def token(self, request, **kwargs):
-        tenant_account = self.get_object()
-        account_owner = tenant_account.get_owner()
-        token = AuthService.get_auth_token(
-            user=account_owner,
-            user_agent=request.headers.get(
-                'User-Agent',
-                request.META.get('HTTP_USER_AGENT'),
-            ),
-            user_ip=request.META.get('HTTP_X_REAL_IP'),
-            superuser_mode=True,
-        )
-        AnalyticService.tenants_accessed(
+        token = AuthService.get_tenant_auth_token(
             master_user=request.user,
-            tenant_account=tenant_account,
+            tenant_account=self.get_object(),
+            user_agent=get_user_agent_header(request),
+            user_ip=get_client_ip(request),
             is_superuser=request.is_superuser,
             auth_type=request.token_type,
-        )
-        AuditEventService.tenant_logged_in_as(
-            request=request,
-            tenant_account=tenant_account,
         )
         return self.response_ok({'token': token})
 

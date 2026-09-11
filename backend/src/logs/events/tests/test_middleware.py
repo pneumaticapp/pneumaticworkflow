@@ -266,3 +266,30 @@ def test_call__installed_in_the_project__request_id_in_response(api_client):
     assert response.status_code == 401
     assert response[REQUEST_ID_HEADER] == 'abc'
     assert get_context() is None
+
+
+@pytest.mark.parametrize(
+    'given',
+    ('a.b', 'a_b', 'a~b', 'a+b', 'a/b', 'a=b', 'a-b', 'A1'),
+)
+def test_request_id__allowed_punctuation__reused(
+    request_factory,
+    mocker,
+    given,
+):
+
+    """ The characters of a base64 or a uuid with separators pass,
+        the id of a caller is kept as it came. """
+
+    # arrange
+    request = request_factory.get('/', HTTP_X_REQUEST_ID=given)
+    uuid4_mock = mocker.patch('src.logs.events.middleware.uuid4')
+    middleware = EventContextMiddleware(lambda inner: HttpResponse())
+
+    # act
+    response = middleware(request)
+
+    # assert
+    assert request.request_id == given
+    assert response[REQUEST_ID_HEADER] == given
+    uuid4_mock.assert_not_called()

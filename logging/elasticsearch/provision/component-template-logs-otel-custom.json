@@ -3,7 +3,7 @@
     "settings": {
       "index": {
         "lifecycle": {
-          "name": "pneumatic-events-365d"
+          "name": "__ILM_POLICY__"
         },
         "mode": "__INDEX_MODE__",
         "number_of_shards": "__SHARDS__",

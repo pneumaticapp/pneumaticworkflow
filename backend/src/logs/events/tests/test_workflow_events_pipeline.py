@@ -1,5 +1,6 @@
 import pytest
 
+from src.logs.enums import LogsBackend
 from src.logs.events.adapters.workflow import WORKFLOW_EVENT_TYPE_NAMES
 from src.logs.events.enums import (
     ActorType,
@@ -57,8 +58,6 @@ def test_create_event__every_workflow_type__event_in_the_stream(
     type_event,
     name,
     category,
-    events_enabled,
-    run_on_commit,
     fake_stream,
 ):
 
@@ -92,8 +91,6 @@ def test_create_event__every_workflow_type__event_in_the_stream(
 
 
 def test_workflow_run_event__pipeline_enabled__filled_event(
-    events_enabled,
-    run_on_commit,
     fake_stream,
 ):
 
@@ -121,7 +118,7 @@ def test_workflow_run_event__pipeline_enabled__filled_event(
 
 
 def test_workflow_run_event__pipeline_off__nothing_written(
-    run_on_commit,
+    settings,
     fake_stream,
 ):
 
@@ -129,6 +126,7 @@ def test_workflow_run_event__pipeline_off__nothing_written(
         of a deployment that does not collect events at all. """
 
     # arrange
+    settings.LOGS_BACKEND = LogsBackend.NONE
     user = create_test_owner()
     workflow = create_test_workflow(user=user, tasks_count=1)
 

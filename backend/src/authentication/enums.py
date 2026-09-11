@@ -64,12 +64,14 @@ class LoginFailedReason:
         tell a brute force burst from a deactivated account. """
 
     BAD_CREDENTIALS = 'bad_credentials'
-    ACCOUNT_INACTIVE = 'account_inactive'
+    VERIFICATION_EXPIRED = 'verification_expired'
+    SIGNUP_DISABLED = 'signup_disabled'
     SSO_REQUIRED = 'sso_required'
 
     LITERALS = Literal[
         BAD_CREDENTIALS,
-        ACCOUNT_INACTIVE,
+        VERIFICATION_EXPIRED,
+        SIGNUP_DISABLED,
         SSO_REQUIRED,
     ]
 

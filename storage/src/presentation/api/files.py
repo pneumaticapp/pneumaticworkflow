@@ -1,7 +1,9 @@
 """File API endpoints."""
 
+import io
 import re
 import urllib.parse
+from dataclasses import dataclass
 from http import HTTPStatus
 from typing import Annotated
 
@@ -25,11 +27,7 @@ from src.application.use_cases import (
 )
 from src.domain.entities.file_record import FileRecord
 from src.infra.http_client import HttpClient
-from src.presentation.dto import (
-    FIRST_BYTE,
-    FileUploadResponse,
-    RangePlan,
-)
+from src.presentation.dto import FileUploadResponse
 from src.shared_kernel.auth.dependencies import (
     AuthenticatedUser,
     get_current_user,
@@ -57,6 +55,9 @@ _RE_WHITESPACE = re.compile(r'[\s_]+')
 _RE_RANGE = re.compile(r'bytes=(\d+)-(\d*)')
 
 
+FALLBACK_FILENAME = 'unnamed_file'
+
+
 def secure_filename(filename: str | None) -> str:
     """Sanitize filename to prevent path traversal and unsafe characters.
 
@@ -64,7 +65,7 @@ def secure_filename(filename: str | None) -> str:
     control characters, path separators, and shell metacharacters.
     """
     if not filename:
-        return 'unnamed_file'
+        return FALLBACK_FILENAME
     # Keep Unicode word chars (\w), dot, dash, space
     filename = _RE_UNSAFE_CHARS.sub('_', filename)
     # Collapse multiple spaces/underscores
@@ -74,7 +75,7 @@ def secure_filename(filename: str | None) -> str:
     # Strip trailing dots/spaces (Windows FS issue)
     filename = filename.rstrip('. ')
     if not filename:
-        return 'unnamed_file'
+        return FALLBACK_FILENAME
     return filename
 
 
@@ -99,18 +100,17 @@ async def upload_file(
         FileUploadResponse: Upload result with file ID and public URL.
 
     """
-    # Compute size efficiently without reading into memory
-    file.file.seek(0, 2)
+    # Size without reading the file into memory: seek to the end,
+    # ask where that is, rewind.
+    file.file.seek(0, io.SEEK_END)
     file_size = file.file.tell()
     file.file.seek(0)
 
     if file_size > settings.MAX_FILE_SIZE:
         raise FileSizeExceededError(file_size, settings.MAX_FILE_SIZE)
 
-    # Sanitize filename
-    safe_filename = secure_filename(file.filename or '')
+    safe_filename = secure_filename(file.filename)
 
-    # Create command
     command = UploadFileCommand(
         file_stream=file.file,
         filename=safe_filename,
@@ -120,10 +120,13 @@ async def upload_file(
         account_id=current_user.account_id,
     )
 
-    # Execute command
     response = await use_case.execute(command)
 
-    # The record is committed: the file exists, journal it
+    # The record is committed: the file exists, journal it. Awaited
+    # and not a background task: what runs after the response depends
+    # on the server (a client gone mid-response may skip it or not),
+    # and a journal entry has to mean one thing. The wait is bounded
+    # by the emit timeout and, past one failure, by the circuit.
     await events.file_upload(
         user=current_user,
         file_id=response.file_id,
@@ -202,7 +205,7 @@ async def download_file(  # noqa: PLR0913
         range_header=range_header,
     )
 
-    if plan.start == FIRST_BYTE:
+    if plan.is_from_start:
         await events.file_download(
             user=current_user,
             file_record=file_record,
@@ -232,13 +235,31 @@ def _check_file_ownership(
     )
 
 
+@dataclass(frozen=True)
+class RangePlan:
+    """Status, headers and the first byte of a download response."""
+
+    status_code: HTTPStatus
+    headers: dict[str, str]
+    start: int = 0
+
+    @property
+    def is_from_start(self) -> bool:
+        """Whether the response begins with the first byte of the file.
+
+        Only such a response is journaled as a download: a client
+        resuming a transfer asks for the rest of the same file again.
+        """
+        return self.start == 0
+
+
 def _plan_response(
     file_record: FileRecord,
     range_header: str | None,
 ) -> RangePlan:
     """Build status code, response headers and start for a download."""
     quoted_filename = urllib.parse.quote(
-        file_record.filename or 'unnamed_file'
+        file_record.filename or FALLBACK_FILENAME
     )
     headers = {
         'Content-Disposition': (
@@ -265,7 +286,6 @@ def _plan_response(
         return RangePlan(
             status_code=HTTPStatus.REQUESTED_RANGE_NOT_SATISFIABLE,
             headers={'Content-Range': f'bytes */{total_size}'},
-            start=start,
         )
 
     content_length = end - start + 1

@@ -259,7 +259,6 @@ class UserGroupService(EventEmitMixin, BaseModelService):
         **update_kwargs,
     ) -> UserGroup:
         old_photo = self.instance.photo
-        changed_fields = sorted(update_kwargs.keys())
         users = update_kwargs.pop('users', None)
         new_name = update_kwargs.get('name')
         new_photo = update_kwargs.get('photo')
@@ -294,12 +293,15 @@ class UserGroupService(EventEmitMixin, BaseModelService):
                 group_id=self.instance.id,
             ).update(value=new_name)
 
-        if (
-            added_users_ids or
-            removed_users_ids or
-            new_name != self.instance.name or
-            new_photo != self.instance.photo
-        ):
+        changed_fields = []
+        if added_users_ids or removed_users_ids:
+            changed_fields.append('users')
+        if new_name is not None and new_name != self.instance.name:
+            changed_fields.append('name')
+        if new_photo != self.instance.photo:
+            changed_fields.append('photo')
+
+        if changed_fields:
             track_group_analytics.delay(
                 event=GroupsAnalyticsEvent.updated,
                 user_id=self.user.id,
@@ -334,14 +336,15 @@ class UserGroupService(EventEmitMixin, BaseModelService):
             account_id=self.user.account_id,
             group_data=GroupWebsocketSerializer(self.instance).data,
         )
-        self._emit(
-            EventName.GROUP_UPDATE,
-            payload={
-                'changed_fields': changed_fields,
-                'added_users_ids': added_users_ids or [],
-                'removed_users_ids': removed_users_ids or [],
-            },
-        )
+        if changed_fields:
+            self._emit(
+                EventName.GROUP_UPDATE,
+                payload={
+                    'changed_fields': sorted(changed_fields),
+                    'added_users_ids': added_users_ids or [],
+                    'removed_users_ids': removed_users_ids or [],
+                },
+            )
 
         if added_users_ids:
             self._send_added_users_notifications(added_users_ids)
@@ -393,6 +396,7 @@ class UserGroupService(EventEmitMixin, BaseModelService):
             auth_type=self.auth_type,
             is_superuser=self.is_superuser,
         )
+        self.instance.delete()
         self._emit(
             EventName.GROUP_DELETE,
             payload={
@@ -400,7 +404,6 @@ class UserGroupService(EventEmitMixin, BaseModelService):
                 'users_ids': users,
             },
         )
-        self.instance.delete()
         # Revoke PERFORMER_GROUP view permissions.  After soft-delete
         # the group is no longer active, so sync_performer_group calls
         # revoke_view for each workflow.

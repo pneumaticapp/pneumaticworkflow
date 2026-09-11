@@ -149,8 +149,6 @@ def test_export__next_page__no_event(
 
 def test_export__filters__event_keeps_request_context(
     api_client,
-    events_enabled,
-    run_on_commit,
     fake_stream,
 ):
 

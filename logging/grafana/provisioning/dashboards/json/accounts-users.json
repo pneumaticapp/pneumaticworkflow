@@ -1587,16 +1587,11 @@
           },
           {
             "selected": false,
-            "text": "http",
-            "value": "http"
-          },
-          {
-            "selected": false,
             "text": "debug",
             "value": "debug"
           }
         ],
-        "query": "audit,activity,http,debug",
+        "query": "audit,activity,debug",
         "queryValue": "",
         "skipUrlSync": false,
         "type": "custom"

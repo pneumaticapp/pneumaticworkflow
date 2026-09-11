@@ -9,6 +9,7 @@ from src.logs.events.schema import (
     PAYLOAD_STR_MAX,
     REDACTED_VALUE,
     normalize_payload,
+    without_query,
 )
 from src.logs.events.tests.fakes import EVENT_TS
 from src.utils.logging import SentryLogLevel
@@ -32,8 +33,8 @@ def test_normalize_payload__empty_dict__empty_dict():
     assert result == {}
 
 
-# One spelling per entry of SECRET_KEY_PARTS plus the shapes a header
-# or a camelCase serializer produces (finding F-7 of the review).
+# One spelling per entry of the secret lists plus the shapes a header
+# or a camelCase serializer produces.
 @pytest.mark.parametrize(
     'key',
     (
@@ -60,6 +61,11 @@ def test_normalize_payload__empty_dict__empty_dict():
         'jwt',
         'otp_code',
         'refresh_token',
+        'access',
+        'refresh',
+        'session',
+        'private',
+        'OTP',
     ),
 )
 def test_normalize_payload__secret_key__value_redacted(key):
@@ -72,6 +78,31 @@ def test_normalize_payload__secret_key__value_redacted(key):
 
     # assert
     assert result == {key: REDACTED_VALUE}
+
+
+@pytest.mark.parametrize(
+    'key',
+    (
+        'is_private',
+        'session_count',
+        'refresh_interval',
+        'saltwater',
+    ),
+)
+def test_normalize_payload__lookalike_key__value_kept(key):
+
+    """ A secret word inside a longer name is not a secret: a flag
+        named is_private and a counter of sessions reach the journal
+        as they are. """
+
+    # arrange
+    payload = {key: 'plain-value'}
+
+    # act
+    result = normalize_payload(payload)
+
+    # assert
+    assert result == {key: 'plain-value'}
 
 
 def test_normalize_payload__harmless_keys__kept():
@@ -301,21 +332,6 @@ def test_normalize_payload__too_deep_long_string__string_cut():
         'text': 'y' * PAYLOAD_STR_MAX,
     }
 
-    """ A long string inside a collapsed container is cut before
-        the container is dumped, so the attribute stays valid
-        JSON. """
-
-    # arrange
-    payload = {'a': {'b': {'text': 'y' * (PAYLOAD_STR_MAX + 100)}}}
-
-    # act
-    result = normalize_payload(payload)
-
-    # assert
-    assert json.loads(result['a']['b']) == {
-        'text': 'y' * PAYLOAD_STR_MAX,
-    }
-
 
 def test_normalize_payload__oversized__replaced_by_size_marker(mocker):
 
@@ -364,3 +380,16 @@ def test_normalize_payload__at_the_size_limit__kept(mocker):
     assert result == payload
     assert result is not payload
     report_error_mock.assert_not_called()
+
+
+def test_without_query__relative_url__kept_as_it_is():
+
+    """ Only an absolute url is a url: a path with a query string is
+        a plain string to the normalizer, and a caller that puts a
+        token there has to cut it itself. """
+
+    # act
+    result = without_query('/hook?token=x')
+
+    # assert
+    assert result == '/hook?token=x'

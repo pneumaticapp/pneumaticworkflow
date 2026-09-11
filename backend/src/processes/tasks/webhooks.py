@@ -1,13 +1,9 @@
 import requests
 from celery import shared_task
 from celery.task import Task as CeleryTask
-from django.contrib.auth import get_user_model
-from django.db.models import ObjectDoesNotExist
 
 from src.webhooks.enums import HookEvent
 from src.webhooks.services import WebhookDeliverer
-
-UserModel = get_user_model()
 
 
 class WebhookTask(CeleryTask):
@@ -16,7 +12,6 @@ class WebhookTask(CeleryTask):
         requests.ConnectionError,
         requests.Timeout,
         requests.HTTPError,
-        ObjectDoesNotExist,
     )
     retry_backoff = True
     retry_kwargs = {'max_retries': 2}

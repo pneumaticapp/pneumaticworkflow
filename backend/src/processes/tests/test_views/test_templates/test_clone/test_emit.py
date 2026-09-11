@@ -73,8 +73,6 @@ def test_clone__template__emit_template_clone(
 def test_clone__template__event_keeps_request_context(
     mocker,
     api_client,
-    events_enabled,
-    run_on_commit,
     fake_stream,
 ):
 

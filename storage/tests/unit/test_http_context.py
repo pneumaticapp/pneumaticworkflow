@@ -1,5 +1,7 @@
 """Tests for what a request says about its client."""
 
+import re
+
 from src.shared_kernel.http_context import (
     USER_AGENT_MAX,
     get_client_ip,
@@ -96,8 +98,7 @@ def test_resolve_request_id__none__fresh_hex():
     result = resolve_request_id(None)
 
     # assert
-    assert len(result) == 32
-    assert int(result, 16) >= 0
+    assert re.fullmatch(r'[0-9a-f]{32}', result)
 
 
 def test_resolve_request_id__too_long__replaced():
@@ -124,42 +125,20 @@ def test_resolve_request_id__unsafe_chars__replaced():
     assert len(result) == 32
 
 
-def test_get_request_id__stored_by_middleware__returned(
+def test_get_request_id__middleware_ran__id_of_the_request(
     make_context_request,
 ):
+    """One source and no fallback: the id of a record is the id the
+    caller got back in the X-Request-ID header of the response."""
+
     # arrange
-    request = make_context_request(
-        headers={'x-request-id': 'from-header'},
-        request_id='from-state',
-    )
+    request = make_context_request(request_id='req-1')
 
     # act
     result = get_request_id(request)
 
     # assert
-    assert result == 'from-state'
-
-
-def test_get_request_id__no_middleware__from_header(make_context_request):
-    # arrange
-    request = make_context_request(headers={'x-request-id': 'from-header'})
-
-    # act
-    result = get_request_id(request)
-
-    # assert
-    assert result == 'from-header'
-
-
-def test_get_request_id__nothing__fresh_hex(make_context_request):
-    # arrange
-    request = make_context_request()
-
-    # act
-    result = get_request_id(request)
-
-    # assert
-    assert len(result) == 32
+    assert result == 'req-1'
 
 
 def test_get_client_ip__x_real_ip_is_not_an_address__fallback(

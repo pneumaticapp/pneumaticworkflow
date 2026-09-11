@@ -15,16 +15,22 @@
 source "$(dirname "${BASH_SOURCE[0]}")/_lib.sh"
 load_env
 
-API_KEY_NAME="pneumatic-collector"
-EXPIRATION="${ES_API_KEY_EXPIRATION:-90d}"
-PROVISION="$DEPLOY_DIR/provision"
+EXPIRATION="$ES_API_KEY_EXPIRATION"
 
 if [ "${1:-}" = "--revoke-old" ]; then
     log "invalidating every key named $API_KEY_NAME except the newest one"
     # `|| true`: with no active key grep finds nothing and exits 1, which
     # under pipefail would end the script here without a word.
-    keys=$(es_api GET "/_security/api_key?name=$API_KEY_NAME&active_only=true" \
-        | tr ',' '\n' | grep '"id"' | sed 's/.*"id":"\([^"]*\)".*/\1/' || true)
+    # Sorted by creation, newest last: the listing has no documented
+    # order of its own, so picking the last id of the answer would keep
+    # whichever key the cluster happened to name last.
+    fields="api_keys.id,api_keys.creation"
+    pairs=$(es_api GET \
+        "/_security/api_key?name=$API_KEY_NAME&active_only=true&filter_path=$fields" \
+        | tr '{' '\n' \
+        | sed -n 's/.*"id":"\([^"]*\)".*"creation":\([0-9]*\).*/\2 \1/p' \
+        | sort -n || true)
+    keys=$(printf '%s\n' "$pairs" | awk 'NF {print $2}')
     if [ -z "$keys" ]; then
         log "no active key named $API_KEY_NAME, nothing to invalidate"
         log "issue one first: ./scripts/rotate-api-key.sh"
@@ -62,7 +68,7 @@ collector (docker compose up -d otel-collector):
 LOGS_ELASTICSEARCH_API_KEY=$encoded
 
 Then check that events keep arriving:
-  curl --cacert ca.crt -u <reader> "https://<store>:9200/${ES_DATA_STREAM:-logs-pneumatic.events.otel-default}/_count"
+  curl --cacert ca.crt -u <reader> "https://<store>:9200/$ES_DATA_STREAM/_count"
 and only then run:
   ./scripts/rotate-api-key.sh --revoke-old
 EOF

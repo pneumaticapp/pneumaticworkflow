@@ -33,30 +33,39 @@ from src.authentication.serializers import (
     SuperuserEmailTokenSerializer,
 )
 from src.authentication.services.user_auth import AuthService
-from src.authentication.views.mixins import SSORestrictionMixin
+from src.authentication.views.mixins import (
+    LoginEventMixin,
+    SSORestrictionMixin,
+)
 from src.generics.mixins.views import (
     BaseResponseMixin,
 )
 from src.logs.events import AuditEventService
 from src.notifications.tasks import send_verification_notification
+from src.utils.http import (
+    get_client_ip,
+    get_user_agent_header,
+)
 
 UserModel = get_user_model()
 
 
 class TokenObtainPairCustomView(
     SSORestrictionMixin,
+    LoginEventMixin,
     CreateAPIView,
     BaseIdentifyMixin,
     BaseResponseMixin,
 ):
     permission_classes = (AllowAny,)
     authentication_classes = []
+    source = SourceType.EMAIL
 
     def post(self, request, *args, **kwargs):
         user = authenticate(**request.data)
 
         if not user:
-            AuditEventService.login_failed(
+            self.emit_login_failed(
                 request=request,
                 reason=LoginFailedReason.BAD_CREDENTIALS,
             )
@@ -65,7 +74,7 @@ class TokenObtainPairCustomView(
         try:
             self.check_sso_restrictions(user)
         except ValidationError:
-            AuditEventService.login_failed(
+            self.emit_login_failed(
                 request=request,
                 reason=LoginFailedReason.SSO_REQUIRED,
             )
@@ -81,9 +90,9 @@ class TokenObtainPairCustomView(
                 token=str(VerificationToken.for_user(owner)),
                 logo_lg=user.account.logo_lg,
             )
-            AuditEventService.login_failed(
+            self.emit_login_failed(
                 request=request,
-                reason=LoginFailedReason.ACCOUNT_INACTIVE,
+                reason=LoginFailedReason.VERIFICATION_EXPIRED,
             )
             raise AuthenticationFailed(MSG_AU_0002(owner.email))
 
@@ -92,21 +101,14 @@ class TokenObtainPairCustomView(
             user=user,
             is_superuser=False,
             auth_type=AuthTokenType.USER,
-            source=SourceType.EMAIL,
+            source=self.source,
         )
         token = AuthService.get_auth_token(
             user=user,
-            user_agent=request.headers.get(
-                'User-Agent',
-                request.META.get('HTTP_USER_AGENT'),
-            ),
-            user_ip=request.META.get('HTTP_X_REAL_IP'),
+            user_agent=get_user_agent_header(request),
+            user_ip=get_client_ip(request),
         )
-        AuditEventService.user_logged_in(
-            user=user,
-            source=SourceType.EMAIL,
-            request=request,
-        )
+        self.emit_login(user=user, request=request)
         return self.response_ok({'token': token})
 
 

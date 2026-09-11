@@ -10,7 +10,7 @@ from functools import lru_cache
 import redis.asyncio as redis
 
 from src.shared_kernel.config import get_settings
-from src.shared_kernel.events.schema import Event
+from src.shared_kernel.events.schema import STREAM_KEY, Event
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +47,12 @@ class EventEmitter:
 
     The client is created on the first write, so building the emitter
     (and the settings) never opens a connection.
+
+    Three bounds guard the write and none of them is redundant: the
+    connect and socket timeouts belong to the client and cover one
+    socket operation each, while EMIT_TIMEOUT bounds the whole call,
+    including whatever redis-py does between them. The write sits on
+    the request path, so the total is the one that matters there.
     """
 
     timeout: float = EMIT_TIMEOUT
@@ -97,7 +103,7 @@ class EventEmitter:
             return
         try:
             await asyncio.wait_for(self._xadd(event), timeout=self.timeout)
-        except Exception as exc:  # noqa: BLE001
+        except (redis.RedisError, OSError) as exc:
             self.circuit.trip(now)
             logger.warning(
                 'Events stream is unavailable, events are dropped: %s',
@@ -135,7 +141,7 @@ def get_event_emitter() -> EventEmitter:
     settings = get_settings()
     return EventEmitter(
         url=settings.LOGS_REDIS_URL,
-        key=settings.LOGS_STREAM_KEY,
+        key=STREAM_KEY,
         maxlen=settings.LOGS_STREAM_MAXLEN,
         enabled=settings.logs_enabled,
     )

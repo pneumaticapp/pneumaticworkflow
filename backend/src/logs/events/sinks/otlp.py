@@ -1,18 +1,17 @@
-import json
 import logging
 import time
 from typing import Dict, List, Optional, Tuple
+from urllib.parse import urlsplit, urlunsplit
 
 import requests
 from django.conf import settings
-from django.core.serializers.json import DjangoJSONEncoder
 
 from src.logs.events.exceptions import (
     SinkPermanentError,
     SinkTemporaryError,
 )
 from src.logs.events.reporting import report_error
-from src.logs.events.schema import Event
+from src.logs.events.schema import Event, dump_json
 from src.logs.events.sinks.base import BaseSink
 from src.logs.events.sinks.otlp_payload import build_otlp_payload
 from src.utils.logging import SentryLogLevel
@@ -54,6 +53,7 @@ class OTLPSink(BaseSink):
         session: Optional[requests.Session] = None,
     ):
         self.url = endpoint.rstrip('/') + LOGS_PATH
+        self.display_url = without_userinfo(self.url)
         self.timeout = timeout
         # One session per sink, and one sink per endpoint per process
         # (get_sink): a session rebuilt every tick would open a new
@@ -70,7 +70,7 @@ class OTLPSink(BaseSink):
         )
         response = self.session.post(
             self.url,
-            data=json.dumps(payload, cls=DjangoJSONEncoder).encode(),
+            data=dump_json(payload).encode(),
             headers=JSON_HEADERS,
             timeout=self.timeout,
         )
@@ -92,22 +92,30 @@ class OTLPSink(BaseSink):
             go to the dead letter for inspection. """
 
         if isinstance(exc, (requests.ConnectionError, requests.Timeout)):
-            raise SinkTemporaryError(f'{self.url}: {exc!r}') from exc
+            raise SinkTemporaryError(self._transport_message(exc)) from exc
         if not isinstance(exc, requests.RequestException):
             raise self._build_error(exc, len(records)) from exc
-        status = getattr(getattr(exc, 'response', None), 'status_code', None)
+        response = exc.response
+        status = response.status_code if response is not None else None
         if status is None:
             # Unknown transport failure: the batch stays pending.
-            raise SinkTemporaryError(f'{self.url}: {exc!r}') from exc
+            raise SinkTemporaryError(self._transport_message(exc)) from exc
         if status in PERMANENT_STATUSES:
             raise self._permanent_error(
                 exc.response, status, len(records),
             ) from exc
         raise self._temporary_error(exc.response, status) from exc
 
+    def _transport_message(self, exc: Exception) -> str:
+
+        """ requests repeats the url it dialled, credential included,
+            inside its own message: the repr is not to be trusted. """
+
+        return f'{self.display_url}: {type(exc).__name__}'
+
     def _temporary_error(self, response, status: int) -> SinkTemporaryError:
         return SinkTemporaryError(
-            f'{self.url} answered {status}',
+            f'{self.display_url} answered {status}',
             retry_after=self._retry_after(response),
         )
 
@@ -118,12 +126,12 @@ class OTLPSink(BaseSink):
         count: int,
     ) -> SinkPermanentError:
         body = self._body_prefix(response)
-        message = f'{self.url} answered {status} for {count} records'
+        message = f'{self.display_url} answered {status} for {count} records'
         logger.error('%s: %s', message, body)
         report_error(
             message='OTLP endpoint rejected the batch',
             data={
-                'url': self.url,
+                'url': self.display_url,
                 'status': status,
                 'records': count,
                 'body': body,
@@ -158,7 +166,7 @@ class OTLPSink(BaseSink):
         report_error(
             message='OTLP endpoint dropped records of a batch',
             data={
-                'url': self.url,
+                'url': self.display_url,
                 'rejected': rejected,
                 'records': count,
             },
@@ -206,6 +214,19 @@ class OTLPSink(BaseSink):
             return int(partial.get(REJECTED_RECORDS_KEY) or 0)
         except (AttributeError, TypeError, ValueError):
             return 0
+
+
+def without_userinfo(url: str) -> str:
+
+    """ The url without the user:password part of its authority. """
+
+    parts = urlsplit(url)
+    if not parts.username and not parts.password:
+        return url
+    host = parts.hostname or ''
+    if parts.port is not None:
+        host = f'{host}:{parts.port}'
+    return urlunsplit(parts._replace(netloc=host))
 
 
 _sinks: Dict[str, OTLPSink] = {}

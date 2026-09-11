@@ -18,6 +18,7 @@ unset POSTGRES_PASSWORD REDIS_PASSWORD RABBITMQ_PASSWORD
 unset CERTBOT_ENABLE CERTBOT_EMAIL NGINX_CONF_TEMPLATE
 unset FORM_DOMAIN
 unset GIT_BRANCH
+unset GRAFANA_ADMIN_PASSWORD LOGS_REDIS_PASSWORD LOGS_BACKEND
 
 RED='\033[0;31m'
 ORANGE='\033[0;33m'
@@ -234,10 +235,6 @@ if [ ! -f ".env" ]; then
 
     fi
 
-    # 2.5.3 Grafana
-    set_env_var GRAFANA_ADMIN_PASSWORD "$(gen_password)"
-    print_info "Grafana admin password written to .env (GRAFANA_ADMIN_PASSWORD)"
-
     # 2.6 SSL
     SSL=false
     CERTBOT_ENABLE=false
@@ -332,13 +329,14 @@ fi
 # =============================================================================
 # 2.13 Upgrade of an existing .env: add the variables this version introduced
 # =============================================================================
-# An .env written by an older start.sh has no GRAFANA_ADMIN_PASSWORD (compose
-# refuses to start without it, see the grafana service in docker-compose.yml).
-# A fresh .env got it in section 2.5, so only an existing file is touched
-# here, and only when the line is still missing.
+# An .env written by an older start.sh has no GRAFANA_ADMIN_PASSWORD, and a
+# fresh one carries it commented out; Grafana refuses to start without a
+# value (see the grafana service in logging/compose/logs.yml). The
+# value is written whatever LOGS_BACKEND says, so turning the local stack on
+# later is one line in .env. One block covers both cases: the guard is the
+# missing value, not the age of the file.
 
-if [ "$ENV_FILE_CREATED" = false ] && \
-   ! grep -qE "^\s*GRAFANA_ADMIN_PASSWORD=\S" "$ENV_FILE"; then
+if ! grep -qE "^\s*GRAFANA_ADMIN_PASSWORD=\S" "$ENV_FILE"; then
     set_env_var GRAFANA_ADMIN_PASSWORD "$(gen_password)"
     print_info "GRAFANA_ADMIN_PASSWORD was missing from .env: a generated value was added"
 fi
@@ -355,15 +353,15 @@ echo "  2. Latest"
 echo "  3. From sources (Branch: \"$GIT_BRANCH\")"
 
 while true; do
-    read -r -p "Enter number (1-3): " COMPOSE_FILE
-    COMPOSE_FILE=$(strip_invisible "$COMPOSE_FILE")
+    read -r -p "Enter number (1-3): " COMPOSE_CHOICE
+    COMPOSE_CHOICE=$(strip_invisible "$COMPOSE_CHOICE")
 
-    if ! [[ "$COMPOSE_FILE" =~ ^[0-9]+$ ]]; then
+    if ! [[ "$COMPOSE_CHOICE" =~ ^[0-9]+$ ]]; then
         print_error "Please enter a number."
         continue
     fi
 
-    if [ "$COMPOSE_FILE" -lt 1 ] || [ "$COMPOSE_FILE" -gt 3 ]; then
+    if [ "$COMPOSE_CHOICE" -lt 1 ] || [ "$COMPOSE_CHOICE" -gt 3 ]; then
         print_error "Please enter 1, 2 or 3."
         continue
     fi
@@ -371,10 +369,47 @@ while true; do
     break
 done
 
-case "$COMPOSE_FILE" in
+case "$COMPOSE_CHOICE" in
   1) COMPOSE_LABEL="Stable (recommended)";   COMPOSE_ARGS=('-f' 'docker-compose.yml');     COMPOSE_TAG="stable" ;;
   2) COMPOSE_LABEL="Latest";                 COMPOSE_ARGS=('-f' 'docker-compose.yml');     COMPOSE_TAG="latest" ;;
   3) COMPOSE_LABEL="From sources (Branch: \"$GIT_BRANCH\")"; COMPOSE_ARGS=('-f' 'docker-compose.src.yml'); COMPOSE_TAG=""   ;;
+esac
+
+# 3.1.1 The logging stack follows LOGS_BACKEND of .env
+# ---------------------------------------------------
+# The root compose files include the logging stack (collector, Loki,
+# Grafana) with every service behind a profile, so it stays down unless
+# .env names a backend. Passing --profile and -f here would otherwise
+# override COMPOSE_PROFILES and COMPOSE_FILE lines in .env without
+# saying so.
+LOGS_BACKEND_VALUE=$(
+    grep -E "^\s*LOGS_BACKEND=" "$ENV_FILE" 2>/dev/null | tail -1 | cut -d= -f2- | tr -d '"'"'"'[:space:]'
+)
+case "${LOGS_BACKEND_VALUE:-none}" in
+  none|"")
+    ;;
+  local)
+    COMPOSE_ARGS+=('--profile' 'logs-local')
+    print_info "LOGS_BACKEND=local: the collector, Loki and Grafana run"
+    ;;
+  otlp)
+    COMPOSE_ARGS+=('--profile' 'logs-otlp')
+    print_info "LOGS_BACKEND=otlp: only the collector runs"
+    ;;
+  elasticsearch)
+    # The collector override carries the queue on disk and every variable
+    # of the mode; without it the collector starts and delivers nothing.
+    COMPOSE_ARGS+=(
+        '--profile' 'logs-elasticsearch'
+        '-f' 'logging/elasticsearch/docker-compose.collector-elasticsearch.yml'
+    )
+    print_info "LOGS_BACKEND=elasticsearch: only the collector runs, queue on disk"
+    print_info "First start only: hand the queue volume to the collector, see logging/elasticsearch/docker-compose.collector-elasticsearch.yml"
+    ;;
+  *)
+    print_error "LOGS_BACKEND=$LOGS_BACKEND_VALUE is not one of: local, otlp, elasticsearch, none"
+    exit 1
+    ;;
 esac
 
 print_info "Selected configuration: $COMPOSE_LABEL"
@@ -438,6 +473,11 @@ fi
 echo ""
 echo "Pneumatic Workflow started successfully!"
 echo "The application is available at $FRONTEND_URL"
+if [ "${LOGS_BACKEND_VALUE:-}" = local ]; then
+    GRAFANA_PORT_VALUE=$(grep -E '^\s*GRAFANA_PORT=\S' "$ENV_FILE" | tail -1 | cut -d= -f2- | tr -d '[:space:]')
+    echo "The audit journal (Grafana) is available at http://127.0.0.1:${GRAFANA_PORT_VALUE:-3000} on this machine,"
+    echo "user admin, the password is GRAFANA_ADMIN_PASSWORD in .env"
+fi
 print_warning "Please wait a few minutes for all services to fully start"
 print_warning ""
 
