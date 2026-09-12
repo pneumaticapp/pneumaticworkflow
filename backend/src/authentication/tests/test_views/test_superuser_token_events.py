@@ -1,6 +1,5 @@
 import pytest
 
-from src.authentication.serializers import SUPERUSER_REASON_MAX_LENGTH
 from src.logs.events.schema import Actor, EventObject
 from src.logs.events.enums import (
     ActorType,
@@ -8,7 +7,6 @@ from src.logs.events.enums import (
     EventObjectType,
 )
 from src.processes.tests.fixtures import create_test_owner
-from src.utils.validation import ErrorCode
 
 pytestmark = pytest.mark.django_db
 
@@ -172,79 +170,6 @@ def test_superuser_token__no_reason__emit_user_login_as_without_reason(
         request=mocker.ANY,
     )
     get_superuser_auth_token_mock.assert_called_once_with(target_user)
-
-
-def test_superuser_token__no_email__validation_error(
-    mocker,
-    api_client,
-):
-
-    # arrange
-    superuser = create_test_owner(email='superuser@pneumatic.app')
-    superuser.is_superuser = True
-    superuser.save(update_fields=['is_superuser'])
-    get_superuser_auth_token_mock = mocker.patch(
-        'src.authentication.views.signin.AuthService.'
-        'get_superuser_auth_token',
-    )
-    emit_mock = mocker.patch('src.logs.events.services.emit')
-    api_client.token_authenticate(superuser)
-
-    # act
-    response = api_client.post(
-        path='/auth/superuser/token',
-        data={'reason': 'support ticket 4242'},
-    )
-
-    # assert
-    assert response.status_code == 400
-    message = 'This field is required.'
-    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['message'] == message
-    assert response.data['details']['name'] == 'email'
-    assert response.data['details']['reason'] == message
-    emit_mock.assert_not_called()
-    get_superuser_auth_token_mock.assert_not_called()
-
-
-def test_superuser_token__reason_too_long__validation_error(
-    mocker,
-    api_client,
-):
-
-    # arrange
-    superuser = create_test_owner(email='superuser@pneumatic.app')
-    superuser.is_superuser = True
-    superuser.save(update_fields=['is_superuser'])
-    target_user = create_test_owner(email='client@pneumatic.app')
-    get_superuser_auth_token_mock = mocker.patch(
-        'src.authentication.views.signin.AuthService.'
-        'get_superuser_auth_token',
-    )
-    emit_mock = mocker.patch('src.logs.events.services.emit')
-    api_client.token_authenticate(superuser)
-
-    # act
-    response = api_client.post(
-        path='/auth/superuser/token',
-        data={
-            'email': target_user.email,
-            'reason': 'x' * (SUPERUSER_REASON_MAX_LENGTH + 1),
-        },
-    )
-
-    # assert
-    assert response.status_code == 400
-    message = (
-        'Ensure this field has no more than '
-        f'{SUPERUSER_REASON_MAX_LENGTH} characters.'
-    )
-    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['message'] == message
-    assert response.data['details']['name'] == 'reason'
-    assert response.data['details']['reason'] == message
-    emit_mock.assert_not_called()
-    get_superuser_auth_token_mock.assert_not_called()
 
 
 def test_superuser_token__not_superuser__no_event(

@@ -17,7 +17,6 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
 from src.shared_kernel.config import get_settings
-from src.shared_kernel.http_context import get_client_ip
 
 
 @dataclass
@@ -84,6 +83,18 @@ def _classify_route(path: str, method: str) -> str | None:
     return None
 
 
+def _get_client_ip(request: Request) -> str:
+    """Extract client IP securely.
+
+    Relies on X-Real-IP set by Nginx ($remote_addr).
+    Ignores X-Forwarded-For which can be spoofed by clients.
+    """
+    real_ip = request.headers.get('x-real-ip')
+    if real_ip:
+        return real_ip.strip()
+    return request.client.host if request.client else '0.0.0.0'  # noqa: S104
+
+
 _CLEANUP_INTERVAL_SECONDS = 60
 
 
@@ -135,7 +146,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         limit = self._limits[bucket]
-        client_ip = get_client_ip(request)
+        client_ip = _get_client_ip(request)
         key = f'{bucket}:{client_ip}'
         now = time.monotonic()
 

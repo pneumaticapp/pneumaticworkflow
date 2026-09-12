@@ -57,7 +57,6 @@ from src.openapi import (
     UNAUTHORIZED,
     VALIDATION_ERROR,
 )
-from src.utils.http import get_client_ip, get_user_agent_header
 from src.utils.validation import raise_validation_error
 
 UserModel = get_user_model()
@@ -309,8 +308,11 @@ class TenantsViewSet(
         token = AuthService.get_tenant_auth_token(
             master_user=request.user,
             tenant_account=self.get_object(),
-            user_agent=get_user_agent_header(request),
-            user_ip=get_client_ip(request),
+            user_agent=request.headers.get(
+                'User-Agent',
+                request.META.get('HTTP_USER_AGENT'),
+            ),
+            user_ip=request.META.get('HTTP_X_REAL_IP'),
             is_superuser=request.is_superuser,
             auth_type=request.token_type,
         )

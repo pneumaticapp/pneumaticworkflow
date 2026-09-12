@@ -42,7 +42,7 @@ class SignUpView(
         PrivateApiPermission,
         SignupPermission,
     )
-    source = SourceType.EMAIL
+    audit_source = SourceType.EMAIL
 
     def retrieve(self, request, *args, **kwargs):
         if not settings.PROJECT_CONF['CAPTCHA']:

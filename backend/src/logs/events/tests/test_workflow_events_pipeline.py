@@ -25,7 +25,10 @@ def test_type_names__workflow_event_types__every_constant_mapped():
         the adapter needs a line for it and the registry a type. """
 
     # arrange
-    declared_types = {value for value, _ in WorkflowEventType.CHOICES}
+    declared_types = {
+        value for name, value in vars(WorkflowEventType).items()
+        if name.isupper() and isinstance(value, int)
+    }
 
     # act
     mapped_types = set(WORKFLOW_EVENT_TYPE_NAMES)

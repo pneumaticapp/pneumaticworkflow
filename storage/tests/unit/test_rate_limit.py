@@ -1,15 +1,17 @@
 """Tests for rate limiting middleware."""
 
 import time
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+from starlette.requests import Request
 from starlette.responses import Response
 
 from src.shared_kernel.middleware.rate_limit import (
     _CLEANUP_INTERVAL_SECONDS,
     RateLimitMiddleware,
     _classify_route,
+    _get_client_ip,
     _RateLimit,
     _SlidingWindow,
 )
@@ -64,6 +66,74 @@ def test_classify_route__health_get__none():
 
     # assert
     assert result is None
+
+
+def test_get_client_ip__no_proxy__use_client_host():
+    # arrange
+    request = MagicMock(spec=Request)
+    request.headers = {}
+    request.client = MagicMock()
+    request.client.host = '192.168.1.1'
+
+    # act
+    result = _get_client_ip(request)
+
+    # assert
+    assert result == '192.168.1.1'
+
+
+def test_get_client_ip__x_real_ip__use_it():
+    # arrange
+    request = MagicMock(spec=Request)
+    request.headers = {
+        'x-real-ip': '10.0.0.1',
+    }
+
+    # act
+    result = _get_client_ip(request)
+
+    # assert
+    assert result == '10.0.0.1'
+
+
+def test_get_client_ip__x_real_ip_with_spaces__stripped():
+    # arrange
+    request = MagicMock(spec=Request)
+    request.headers = {'x-real-ip': ' 203.0.113.5 '}
+
+    # act
+    result = _get_client_ip(request)
+
+    # assert
+    assert result == '203.0.113.5'
+
+
+def test_get_client_ip__x_forwarded_only__ignored():
+    """X-Forwarded-For is ignored; only X-Real-IP is trusted."""
+    # arrange
+    request = MagicMock(spec=Request)
+    request.headers = {'x-forwarded-for': '10.0.0.1, 172.16.0.1'}
+    request.client = MagicMock()
+    request.client.host = '192.168.1.1'
+
+    # act
+    result = _get_client_ip(request)
+
+    # assert — falls through to client.host since x-real-ip is absent
+    assert result == '192.168.1.1'
+
+
+def test_get_client_ip__no_client__fallback():
+    # arrange
+    request = MagicMock(spec=Request)
+    request.headers = {}
+    request.client = None
+
+    # act
+    result = _get_client_ip(request)
+
+    # assert
+    assert result == '0.0.0.0'
 
 
 def test_sliding_window__empty__zero_count():
@@ -191,10 +261,7 @@ async def test_dispatch__different_ips__independent(
             responses.append(resp)
 
     # assert
-    assert responses[0].status_code == 200
-    assert responses[1].status_code == 200
-    assert responses[2].status_code == 200
-    assert responses[3].status_code == 200
+    assert all(r.status_code == 200 for r in responses)
     assert call_next_mock.call_count == 4
 
 
@@ -220,10 +287,7 @@ async def test_dispatch__non_limited_route__pass(
         responses.append(resp)
 
     # assert
-    assert len(responses) == 10
-    assert responses[0].status_code == 200
-    assert responses[4].status_code == 200
-    assert responses[9].status_code == 200
+    assert all(r.status_code == 200 for r in responses)
 
 
 @pytest.mark.asyncio
@@ -283,8 +347,7 @@ async def test_dispatch__download_higher_limit(
     response = await mw.dispatch(req, call_next_mock)
 
     # assert
-    assert responses[0].status_code == 200
-    assert responses[-1].status_code == 200
+    assert all(r.status_code == 200 for r in responses)
     assert response.status_code == 429
 
 

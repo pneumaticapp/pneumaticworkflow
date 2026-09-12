@@ -340,7 +340,7 @@ def make_rate_request():
 # --- redis cache management ---
 
 
-@pytest.fixture
+@pytest.fixture(autouse=False)
 def clear_redis_cache():
     """Clear lru_cache before and after test."""
     get_redis_client.cache_clear()

@@ -2201,26 +2201,19 @@ class TemplateTitlesByEventsQuery(SqlQueryObject):
         date_to_tsp: Optional[datetime] = None,
     ):
 
-        self.date_from = date_from_tsp
-        self.date_to = date_to_tsp
+        self.date_before = date_from_tsp
+        self.date_after = date_to_tsp
         self.params = {
             'account_id': user.account.id,
             'user_id': user.id,
         }
 
-    def _get_date_condition(self) -> str:
-
-        """ Bound parameters and not an f-string: the values come
-            from a request, and psycopg quotes them correctly for
-            every timezone and format on its own. """
-
-        condition = ''
-        if self.date_from is not None:
-            self.params['date_from'] = self.date_from
-            condition += ' AND we.created >= %(date_from)s'
-        if self.date_to is not None:
-            self.params['date_to'] = self.date_to
-            condition += ' AND we.created < %(date_to)s'
+    def _get_date_condition(self):
+        condition = ""
+        if self.date_before is not None:
+            condition += f""" AND we.created >= '{self.date_before}'"""
+        if self.date_after is not None:
+            condition += f""" AND we.created < '{self.date_after}'"""
         return condition
 
     def get_sql(self):

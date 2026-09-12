@@ -1,6 +1,5 @@
 """File API endpoints."""
 
-import io
 import re
 import urllib.parse
 from dataclasses import dataclass
@@ -100,17 +99,18 @@ async def upload_file(
         FileUploadResponse: Upload result with file ID and public URL.
 
     """
-    # Size without reading the file into memory: seek to the end,
-    # ask where that is, rewind.
-    file.file.seek(0, io.SEEK_END)
+    # Compute size efficiently without reading into memory
+    file.file.seek(0, 2)
     file_size = file.file.tell()
     file.file.seek(0)
 
     if file_size > settings.MAX_FILE_SIZE:
         raise FileSizeExceededError(file_size, settings.MAX_FILE_SIZE)
 
-    safe_filename = secure_filename(file.filename)
+    # Sanitize filename
+    safe_filename = secure_filename(file.filename or '')
 
+    # Create command
     command = UploadFileCommand(
         file_stream=file.file,
         filename=safe_filename,
@@ -120,6 +120,7 @@ async def upload_file(
         account_id=current_user.account_id,
     )
 
+    # Execute command
     response = await use_case.execute(command)
 
     # The record is committed: the file exists, journal it. Awaited
@@ -189,6 +190,12 @@ async def download_file(  # noqa: PLR0913
             )
             raise FileAccessDeniedError(file_id, current_user.user_id)
 
+    # Load the file stream only if access is granted
+    file_stream = await use_case.get_stream(
+        file_record=file_record,
+        range_header=range_header,
+    )
+
     plan = _plan_response(
         file_record=file_record,
         range_header=range_header,
@@ -199,11 +206,6 @@ async def download_file(  # noqa: PLR0913
             status_code=HTTPStatus.REQUESTED_RANGE_NOT_SATISFIABLE,
             headers=plan.headers,
         )
-
-    file_stream = await use_case.get_stream(
-        file_record=file_record,
-        range_header=range_header,
-    )
 
     if plan.is_from_start:
         await events.file_download(

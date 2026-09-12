@@ -87,7 +87,7 @@ class CommentViewSet(
         user = self.request.user
         qst = (
             WorkflowEvent.objects
-            .select_related('workflow', 'task')
+            .select_related('workflow')
             .type_comment()
         )
         if self.action in {'partial_update', 'destroy'}:

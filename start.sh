@@ -18,7 +18,7 @@ unset POSTGRES_PASSWORD REDIS_PASSWORD RABBITMQ_PASSWORD
 unset CERTBOT_ENABLE CERTBOT_EMAIL NGINX_CONF_TEMPLATE
 unset FORM_DOMAIN
 unset GIT_BRANCH
-unset GRAFANA_ADMIN_PASSWORD LOGS_REDIS_PASSWORD LOGS_BACKEND
+unset GRAFANA_ADMIN_PASSWORD LOGS_BACKEND
 
 RED='\033[0;31m'
 ORANGE='\033[0;33m'
@@ -327,21 +327,6 @@ if [ ! -f ".env" ]; then
 fi
 
 # =============================================================================
-# 2.13 Upgrade of an existing .env: add the variables this version introduced
-# =============================================================================
-# An .env written by an older start.sh has no GRAFANA_ADMIN_PASSWORD, and a
-# fresh one carries it commented out; Grafana refuses to start without a
-# value (see the grafana service in logging/compose/logs.yml). The
-# value is written whatever LOGS_BACKEND says, so turning the local stack on
-# later is one line in .env. One block covers both cases: the guard is the
-# missing value, not the age of the file.
-
-if ! grep -qE "^\s*GRAFANA_ADMIN_PASSWORD=\S" "$ENV_FILE"; then
-    set_env_var GRAFANA_ADMIN_PASSWORD "$(gen_password)"
-    print_info "GRAFANA_ADMIN_PASSWORD was missing from .env: a generated value was added"
-fi
-
-# =============================================================================
 # 3. Start Docker containers
 # =============================================================================
 
@@ -353,15 +338,15 @@ echo "  2. Latest"
 echo "  3. From sources (Branch: \"$GIT_BRANCH\")"
 
 while true; do
-    read -r -p "Enter number (1-3): " COMPOSE_CHOICE
-    COMPOSE_CHOICE=$(strip_invisible "$COMPOSE_CHOICE")
+    read -r -p "Enter number (1-3): " COMPOSE_FILE
+    COMPOSE_FILE=$(strip_invisible "$COMPOSE_FILE")
 
-    if ! [[ "$COMPOSE_CHOICE" =~ ^[0-9]+$ ]]; then
+    if ! [[ "$COMPOSE_FILE" =~ ^[0-9]+$ ]]; then
         print_error "Please enter a number."
         continue
     fi
 
-    if [ "$COMPOSE_CHOICE" -lt 1 ] || [ "$COMPOSE_CHOICE" -gt 3 ]; then
+    if [ "$COMPOSE_FILE" -lt 1 ] || [ "$COMPOSE_FILE" -gt 3 ]; then
         print_error "Please enter 1, 2 or 3."
         continue
     fi
@@ -369,7 +354,7 @@ while true; do
     break
 done
 
-case "$COMPOSE_CHOICE" in
+case "$COMPOSE_FILE" in
   1) COMPOSE_LABEL="Stable (recommended)";   COMPOSE_ARGS=('-f' 'docker-compose.yml');     COMPOSE_TAG="stable" ;;
   2) COMPOSE_LABEL="Latest";                 COMPOSE_ARGS=('-f' 'docker-compose.yml');     COMPOSE_TAG="latest" ;;
   3) COMPOSE_LABEL="From sources (Branch: \"$GIT_BRANCH\")"; COMPOSE_ARGS=('-f' 'docker-compose.src.yml'); COMPOSE_TAG=""   ;;
@@ -413,6 +398,18 @@ case "${LOGS_BACKEND_VALUE:-none}" in
     exit 1
     ;;
 esac
+
+# 3.1.2 The local stack needs a Grafana password in .env
+# ------------------------------------------------------
+# An .env written by an older start.sh has no GRAFANA_ADMIN_PASSWORD, and a
+# fresh one carries it commented out; Grafana refuses to start without a
+# value (see the grafana service in logging/compose/logs.yml). The .env of
+# an installation that does not run the stack is left as it is.
+if [ "${LOGS_BACKEND_VALUE:-}" = local ] \
+    && ! grep -qE "^\s*GRAFANA_ADMIN_PASSWORD=\S" "$ENV_FILE"; then
+    set_env_var GRAFANA_ADMIN_PASSWORD "$(gen_password)"
+    print_info "GRAFANA_ADMIN_PASSWORD was missing from .env: a generated value was added"
+fi
 
 print_info "Selected configuration: $COMPOSE_LABEL"
 echo ""

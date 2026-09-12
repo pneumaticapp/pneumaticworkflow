@@ -18,8 +18,7 @@ def get_client_ip(request) -> Optional[str]:
         Behind somebody else's balancer the headers are client
         controlled, so the result is only kept when it really is an
         address. Anything else would ride in every event of the
-        request, and in every abuse counter keyed by the address, at
-        whatever length and value the client chose.
+        request at whatever length and value the client chose.
 
         The file service resolves the same address without the
         X-Forwarded-For step (storage/src/shared_kernel/http_context.py):
@@ -45,9 +44,8 @@ def get_user_agent_header(request) -> Optional[str]:
 
     """ Raw User-Agent header, trimmed to a sane length.
 
-        One definition for the journal, the token of a sign in and the
-        log of an API request alike: the log column holds 500
-        characters, and a header is whatever length a client sent. """
+        The events of a request carry it, and a header is whatever
+        length a client sent. """
 
     user_agent = request.META.get('HTTP_USER_AGENT')
     if not user_agent:

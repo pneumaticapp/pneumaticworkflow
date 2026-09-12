@@ -54,10 +54,8 @@ class CheckListViewSet(
         return context
 
     def get_queryset(self):
-        qst = (
-            Checklist.objects
-            .select_related('task__workflow')
-            .filter(task__account_id=self.request.user.account_id)
+        qst = Checklist.objects.filter(
+            task__account_id=self.request.user.account_id,
         )
         user = self.request.user
         skip_member_access = (

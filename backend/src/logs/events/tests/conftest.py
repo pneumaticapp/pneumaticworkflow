@@ -11,6 +11,17 @@ from src.logs.events.context import (
 )
 from src.logs.events.enums import ActorType
 from src.logs.events.schema import Actor
+from src.logs.events.tests.plugin import (  # noqa: F401
+    events_enabled,
+    fake_stream,
+    request_factory,
+    reset_error_throttle,
+    reset_sink_cache,
+    reset_stream_cache,
+    reset_stream_circuit,
+    run_on_commit,
+    scheduled_stream,
+)
 
 
 def pytest_configure(config):

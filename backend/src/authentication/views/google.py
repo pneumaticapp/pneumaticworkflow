@@ -1,9 +1,19 @@
 from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.db.models import ObjectDoesNotExist
 from rest_framework.decorators import action
+from rest_framework.exceptions import (
+    AuthenticationFailed,
+    ValidationError,
+)
 from rest_framework.viewsets import GenericViewSet
 
 from src.accounts.enums import SourceType
 from src.analysis.mixins import BaseIdentifyMixin
+from src.authentication.enums import LoginFailedReason
+from src.authentication.messages import (
+    MSG_AU_0003,
+)
 from src.authentication.permissions import (
     GoogleAuthPermission,
 )
@@ -12,6 +22,7 @@ from src.authentication.serializers import (
 )
 from src.authentication.services.exceptions import AuthException
 from src.authentication.services.google import GoogleAuthService
+from src.authentication.services.user_auth import AuthService
 from src.authentication.tasks import update_google_contacts
 from src.authentication.throttling import (
     AuthGoogleAuthUriThrottle,
@@ -31,6 +42,8 @@ from src.utils.logging import (
 )
 from src.utils.validation import raise_validation_error
 
+UserModel = get_user_model()
+
 
 class GoogleAuthViewSet(
     SSORestrictionMixin,
@@ -43,8 +56,8 @@ class GoogleAuthViewSet(
     permission_classes = (
         GoogleAuthPermission,
     )
+    audit_source = SourceType.GOOGLE
     serializer_class = GoogleTokenSerializer
-    source = SourceType.GOOGLE
 
     @property
     def throttle_classes(self):
@@ -70,12 +83,45 @@ class GoogleAuthViewSet(
         except AuthException as ex:
             raise_validation_error(message=ex.message)
         else:
-            user, token = self._login_or_signup(
-                request=request,
-                user_data=user_data,
-                validated_data=slz.validated_data,
-                signup_enabled=settings.PROJECT_CONF['SIGNUP'],
-            )
+            try:
+                user = UserModel.objects.active().get(email=user_data['email'])
+                self.check_sso_restrictions(user)
+                token = AuthService.get_auth_token(
+                    user=user,
+                    user_agent=request.headers.get(
+                        'User-Agent',
+                        request.META.get('HTTP_USER_AGENT'),
+                    ),
+                    user_ip=request.META.get('HTTP_X_REAL_IP'),
+                )
+            except ObjectDoesNotExist as err:
+                if settings.PROJECT_CONF['SIGNUP']:
+                    user, token = self.signup(
+                        **user_data,
+                        utm_source=slz.validated_data.get('utm_source'),
+                        utm_medium=slz.validated_data.get('utm_medium'),
+                        utm_campaign=slz.validated_data.get('utm_campaign'),
+                        utm_term=slz.validated_data.get('utm_term'),
+                        utm_content=slz.validated_data.get('utm_content'),
+                        gclid=slz.validated_data.get('gclid'),
+                    )
+                else:
+                    self.emit_login_failed(
+                        request=request,
+                        reason=LoginFailedReason.SIGNUP_DISABLED,
+                        email=user_data['email'],
+                    )
+                    raise AuthenticationFailed(MSG_AU_0003) from err
+            except ValidationError:
+                self.emit_login_failed(
+                    request=request,
+                    reason=LoginFailedReason.SSO_REQUIRED,
+                    email=user.email,
+                )
+                raise
+            else:
+                self.emit_login(user=user, request=request)
+
             service.save_tokens_for_user(user)
             update_google_contacts.delay(user.id)
             return self.response_ok({'token': token})

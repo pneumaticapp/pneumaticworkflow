@@ -27,16 +27,15 @@ def get_client_ip(request: Request) -> str:
 
     Behind somebody else's balancer X-Real-IP is client controlled,
     so the value is kept only when it really is an address: anything
-    else would ride in every record of the request, and in the key of
-    the rate limit bucket, at whatever length the client chose.
+    else would ride in every record of the request at whatever
+    length the client chose.
 
     This is stricter than the backend on purpose: backend/src/utils/
     http.py falls back to the first hop of X-Forwarded-For, which is
     client controlled in the same situation. Behind our own nginx
     both read X-Real-IP and agree; behind a foreign one this service
-    prefers the socket address to a header anybody can write. No test
-    compares the two: the difference is deliberate, so a change to the
-    order of trust on either side has to be made on both by hand.
+    prefers the socket address to a header anybody can write. The
+    rate limit middleware keeps its own reading of the header.
     """
     real_ip = _valid_ip(request.headers.get(REAL_IP_HEADER))
     if real_ip:

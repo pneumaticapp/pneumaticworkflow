@@ -412,12 +412,6 @@ class TemplateViewSet(
                 template = serializer.save()
             else:
                 template = serializer.save_as_draft()
-        response_data = serializer.get_response_data()
-        AuditEventService.template_saved(
-            request=request,
-            template=template,
-            name=response_data['name'],
-        )
         AnalyticService.templates_kickoff_created(
             user=request.user,
             template=template,
@@ -441,6 +435,12 @@ class TemplateViewSet(
                 template=template,
                 user_agent=get_user_agent(request),
             )
+        response_data = serializer.get_response_data()
+        AuditEventService.template_saved(
+            request=request,
+            template=template,
+            name=response_data['name'],
+        )
         return self.response_ok(response_data)
 
     @extend_schema(
@@ -470,13 +470,6 @@ class TemplateViewSet(
             else:
                 template = serializer.save_as_draft()
         template = self.get_queryset().get(pk=template.pk)
-        response_slz = self.get_serializer(instance=template)
-        response_data = response_slz.get_response_data()
-        AuditEventService.template_saved(
-            request=request,
-            template=template,
-            name=response_data['name'],
-        )
         service = TemplateIntegrationsService(
             account=request.user.account,
             is_superuser=request.is_superuser,
@@ -509,6 +502,13 @@ class TemplateViewSet(
                 auth_type=request.token_type,
                 **serializer.get_analysis_counters(),
             )
+        response_serializer = self.get_serializer(instance=template)
+        response_data = response_serializer.get_response_data()
+        AuditEventService.template_saved(
+            request=request,
+            template=template,
+            name=response_data['name'],
+        )
         return self.response_ok(response_data)
 
     @extend_schema(
@@ -1044,12 +1044,12 @@ class TemplateViewSet(
     @action(methods=['POST'], detail=True, url_path='discard-changes')
     def discard_changes(self, request, pk, *args, **kwargs):
         template = self.get_object()
-        # A template that was never published has nothing to go back to.
-        template_deleted = not template.tasks.exists()
-        if template_deleted:
-            template.delete()
+        template_deleted = template.tasks.all().count() == 0
+        if not template_deleted:
+            slz = self.get_serializer(instance=template)
+            slz.discard_changes()
         else:
-            self.get_serializer(instance=template).discard_changes()
+            template.delete()
         AuditEventService.template_draft_discarded(
             request=request,
             template=template,

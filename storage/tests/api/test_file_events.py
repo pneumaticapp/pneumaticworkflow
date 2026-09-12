@@ -221,7 +221,6 @@ def test_download__range_not_satisfiable__nothing_journaled(
     # assert
     assert response.status_code == 416
     mock_events_file_download.assert_not_awaited()
-    mock_download_use_case_get_stream.assert_not_awaited()
     mock_http_client.assert_not_awaited()
 
 

@@ -349,8 +349,11 @@ class WorkflowViewSet(
             data=request.data,
         )
         serializer.is_valid(raise_exception=True)
+        is_urgent = serializer.validated_data.get('is_urgent')
+        is_urgent_changed = (
+            is_urgent is not None and is_urgent != workflow.is_urgent
+        )
         changed_fields = serializer.get_changed_fields()
-        is_urgent_changed = 'is_urgent' in changed_fields
         workflow = serializer.save()
         AnalyticService.workflows_updated(
             workflow=workflow,
@@ -374,9 +377,8 @@ class WorkflowViewSet(
                 is_superuser=request.is_superuser,
                 user=request.user,
                 action=(
-                    WorkflowActions.marked
-                    if serializer.validated_data['is_urgent']
-                    else WorkflowActions.unmarked
+                    WorkflowActions.marked if is_urgent else
+                    WorkflowActions.unmarked
                 ),
             )
         return self.response_ok(

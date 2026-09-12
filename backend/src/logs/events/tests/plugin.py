@@ -1,7 +1,7 @@
-""" Fixtures of the event pipeline shared by every test of the
-    backend: registered once in the root conftest as a pytest plugin,
-    so that an app adding emit tests gets the resets of the process
-    globals without importing anything. """
+""" Fixtures of the event pipeline: the resets of its process
+    globals and the in memory stream. An app whose tests read the
+    events back imports them in its tests/conftest.py, and the
+    resets come along with the stream: they are autouse there. """
 
 import pytest
 from django.test import RequestFactory

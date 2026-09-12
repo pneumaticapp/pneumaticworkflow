@@ -8,7 +8,7 @@ UserModel = get_user_model()
 
 def create_test_webhooks(
     user: UserModel,
-    url: str = 'https://192.0.2.1/hook',
+    url: str = 'http://test.test',
 ):
     account = user.account
     WebHook.objects.bulk_create(
@@ -24,7 +24,7 @@ def create_test_webhooks(
 def create_test_webhook(
     user: UserModel,
     event: str,
-    url: str = 'https://192.0.2.1/hook',
+    url: str = 'http://test.test',
 ):
     return WebHook.objects.create(
         user_id=user.id,
