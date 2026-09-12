@@ -3,7 +3,7 @@ from urllib.parse import urlparse
 
 from django.conf import settings
 
-from src.ai.enums import AIVendor
+from src.ai.enums import AIVendor, OpenAIRole
 from src.ai.services.vendors.base import BaseVendor
 
 
@@ -103,3 +103,55 @@ class OpenAICompatibleVendor(BaseVendor):
                 },
             )
         return models
+
+    def get_completion(
+        self,
+        system_message: str,
+        user_message: str,
+        model: str,
+    ) -> str:
+        _status, payload = self._request(
+            method='POST',
+            url=self._create_url('chat/completions'),
+            headers=self._auth_headers(),
+            json={
+                'model': model,
+                'messages': [
+                    {
+                        'role': OpenAIRole.SYSTEM,
+                        'content': system_message,
+                    },
+                    {
+                        'role': OpenAIRole.USER,
+                        'content': user_message,
+                    },
+                ],
+            },
+            timeout=self.completion_timeout,
+        )
+        return self._parse_completion(payload)
+
+    def _parse_completion(self, payload: Any) -> str:
+        """Parse an OpenAI-compatible chat completion payload.
+
+        Docs: https://platform.openai.com/docs/api-reference/chat/object
+
+        Example:
+
+            {
+                "id": "chatcmpl-123",
+                "object": "chat.completion",
+                "choices": [
+                    {
+                        "index": 0,
+                        "message": {
+                            "role": "assistant",
+                            "content": "Hello!"
+                        },
+                        "finish_reason": "stop"
+                    }
+                ]
+            }
+
+        """
+        return payload['choices'][0]['message']['content']

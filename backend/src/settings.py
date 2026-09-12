@@ -535,6 +535,7 @@ class Common(Configuration):
         'src.processes.tasks.webhooks',
         'src.reports.tasks',
         'src.analysis.tasks',
+        'src.ai.tasks',
     ]
 
     # reCaptcha

@@ -1,5 +1,6 @@
 from typing import Any, List, Optional
 
+from src.ai.enums import OpenAIRole
 from src.ai.services.vendors.base import BaseVendor
 
 
@@ -89,3 +90,55 @@ class AnthropicVendor(BaseVendor):
                 },
             )
         return models
+
+    def get_completion(
+        self,
+        system_message: str,
+        user_message: str,
+        model: str,
+    ) -> str:
+        _status, payload = self._request(
+            method='POST',
+            url=self._create_url('messages'),
+            headers=self._auth_headers(),
+            json={
+                'model': model,
+                'max_tokens': self.DEFAULT_MAX_TOKENS,
+                'system': system_message,
+                'messages': [
+                    {
+                        'role': OpenAIRole.USER,
+                        'content': user_message,
+                    },
+                ],
+            },
+            timeout=self.completion_timeout,
+        )
+        return self._parse_completion(payload)
+
+    def _parse_completion(self, payload: Any) -> str:
+        """Parse an Anthropic Messages API payload.
+
+        Docs: https://platform.claude.com/docs/en/api/messages
+
+        Example:
+
+            {
+                "id": "msg_01XFDUDYJgAACzvnptvVoYEL",
+                "type": "message",
+                "role": "assistant",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": "Hello!"
+                    }
+                ],
+                "stop_reason": "end_turn"
+            }
+
+        """
+        texts = []
+        for block in payload['content']:
+            if block.get('type') == 'text':
+                texts.append(block['text'])
+        return ''.join(texts)

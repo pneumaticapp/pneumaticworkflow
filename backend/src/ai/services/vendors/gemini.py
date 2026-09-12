@@ -85,3 +85,59 @@ class GeminiVendor(BaseVendor):
             headers=self._auth_headers(),
         )
         return self._parse_models(payload)
+
+    def get_completion(
+        self,
+        system_message: str,
+        user_message: str,
+        model: str,
+    ) -> str:
+        _status, payload = self._request(
+            method='POST',
+            url=self._create_url(self._completion_path(model)),
+            headers=self._auth_headers(),
+            json={
+                'systemInstruction': {
+                    'parts': [{'text': system_message}],
+                },
+                'contents': [
+                    {
+                        'role': 'user',
+                        'parts': [{'text': user_message}],
+                    },
+                ],
+            },
+            timeout=self.completion_timeout,
+        )
+        return self._parse_completion(payload)
+
+    def _completion_path(self, model: str) -> str:
+        slug = model if model.startswith('models/') else f'models/{model}'
+        return f'{slug}:generateContent'
+
+    def _parse_completion(self, payload: Any) -> str:
+        """Parse a Gemini generateContent payload.
+
+        Docs: https://ai.google.dev/api/generate-content
+
+        Example:
+
+            {
+                "candidates": [
+                    {
+                        "content": {
+                            "parts": [{"text": "Hello!"}],
+                            "role": "model"
+                        },
+                        "finishReason": "STOP"
+                    }
+                ]
+            }
+
+        """
+        texts = []
+        parts = payload['candidates'][0]['content']['parts']
+        for part in parts:
+            if 'text' in part:
+                texts.append(part['text'])
+        return ''.join(texts)
