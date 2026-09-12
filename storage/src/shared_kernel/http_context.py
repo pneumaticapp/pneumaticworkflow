@@ -13,11 +13,10 @@ from fastapi import Request
 
 USER_AGENT_MAX = 500
 REQUEST_ID_HEADER = 'X-Request-ID'
-REQUEST_ID_HEADER_KEY = REQUEST_ID_HEADER.lower()
 REQUEST_ID_PATTERN = re.compile(r'^[A-Za-z0-9._~+/=-]{1,64}\Z')
 FALLBACK_IP = '0.0.0.0'  # noqa: S104
-REAL_IP_HEADER = 'x-real-ip'
-USER_AGENT_HEADER = 'user-agent'
+REAL_IP_HEADER = 'X-Real-IP'
+USER_AGENT_HEADER = 'User-Agent'
 
 
 def get_client_ip(request: Request) -> str:

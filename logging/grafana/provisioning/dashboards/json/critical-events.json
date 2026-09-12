@@ -670,7 +670,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "sum(count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=~\"group.delete|template.delete|workflow.terminate\" [$__range]))",
+          "expr": "sum(count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=~\"group.delete|template.delete|workflow.terminate|tenant.delete|task.comment_delete|fieldset.delete|dataset.delete\" [$__range]))",
           "instant": true,
           "legendFormat": "",
           "queryType": "instant",
@@ -1057,7 +1057,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "sum by (event_type) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=~\"user.login_failed|user.login_as|tenant.login_as|api_key.create|api_key.revoke|user.admin_toggle|user.deactivate|user.create|user.transfer|invite.create|user.password_reset|user.password_change|group.delete|template.delete|template.export|workflow.terminate|webhook.subscribe|webhook.unsubscribe|file.access_denied\" [$__auto]))",
+          "expr": "sum by (event_type) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=~\"user.login_failed|user.login_as|tenant.login_as|api_key.create|api_key.revoke|user.admin_toggle|user.deactivate|user.create|user.transfer|invite.create|user.password_reset|user.password_change|user.password_set|user.reassign|user.vacation_activate|user.vacation_deactivate|tenant.create|admin.create|admin.update|admin.delete|group.delete|tenant.delete|task.comment_delete|fieldset.delete|dataset.delete|template.delete|template.export|workflow.terminate|webhook.subscribe|webhook.unsubscribe|file.access_denied\" [$__auto]))",
           "legendFormat": "{{event_type}}",
           "queryType": "range",
           "refId": "A"
@@ -1129,7 +1129,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=~\"user.login_failed|user.login_as|tenant.login_as|api_key.create|api_key.revoke|user.admin_toggle|user.deactivate|user.create|user.transfer|invite.create|user.password_reset|user.password_change|group.delete|template.delete|template.export|workflow.terminate|webhook.subscribe|webhook.unsubscribe|file.access_denied\" [$__auto]))",
+          "expr": "sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=~\"user.login_failed|user.login_as|tenant.login_as|api_key.create|api_key.revoke|user.admin_toggle|user.deactivate|user.create|user.transfer|invite.create|user.password_reset|user.password_change|user.password_set|user.reassign|user.vacation_activate|user.vacation_deactivate|tenant.create|admin.create|admin.update|admin.delete|group.delete|tenant.delete|task.comment_delete|fieldset.delete|dataset.delete|template.delete|template.export|workflow.terminate|webhook.subscribe|webhook.unsubscribe|file.access_denied\" [$__auto]))",
           "legendFormat": "account {{account_id}}",
           "queryType": "range",
           "refId": "A"
@@ -1671,7 +1671,7 @@
           },
           "direction": "backward",
           "editorMode": "code",
-          "expr": "{service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=~\"api_key.create|api_key.revoke|user.admin_toggle|user.deactivate|user.create|user.transfer|invite.create|user.password_reset|user.password_change\" | line_format \"{{.event_type}} {{.actor_type}}:{{.actor_id}} {{.object_type}}:{{.object_id}}\"",
+          "expr": "{service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=~\"api_key.create|api_key.revoke|user.admin_toggle|user.deactivate|user.create|user.transfer|invite.create|user.password_reset|user.password_change|user.password_set|user.reassign|user.vacation_activate|user.vacation_deactivate|tenant.create|admin.create|admin.update|admin.delete\" | line_format \"{{.event_type}} {{.actor_type}}:{{.actor_id}} {{.object_type}}:{{.object_id}}\"",
           "legendFormat": "",
           "queryType": "range",
           "refId": "A"
@@ -1804,7 +1804,7 @@
           },
           "direction": "backward",
           "editorMode": "code",
-          "expr": "{service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=~\"group.delete|template.delete|template.export|workflow.terminate\" | line_format \"{{.event_type}} {{.actor_type}}:{{.actor_id}} {{.object_type}}:{{.object_id}}\"",
+          "expr": "{service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=~\"group.delete|template.delete|template.export|workflow.terminate|tenant.delete|task.comment_delete|fieldset.delete|dataset.delete\" | line_format \"{{.event_type}} {{.actor_type}}:{{.actor_id}} {{.object_type}}:{{.object_id}}\"",
           "legendFormat": "",
           "queryType": "range",
           "refId": "A"

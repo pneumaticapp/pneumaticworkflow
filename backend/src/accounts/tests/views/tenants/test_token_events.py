@@ -5,7 +5,7 @@ from src.accounts.enums import (
     LeaseLevel,
 )
 from src.authentication.enums import AuthTokenType
-from src.logs.events import Actor, EventObject
+from src.logs.events.schema import Actor, EventObject
 from src.logs.events.enums import (
     ActorType,
     EventName,

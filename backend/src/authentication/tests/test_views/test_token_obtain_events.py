@@ -8,7 +8,8 @@ from src.authentication.enums import (
     AuthTokenType,
     LoginFailedReason,
 )
-from src.logs.events import Actor, EventObject
+from src.authentication.messages import MSG_AU_0016
+from src.logs.events.schema import Actor, EventObject
 from src.logs.events.emitter import NO_ACCOUNT
 from src.logs.events.enums import (
     ActorType,
@@ -139,7 +140,7 @@ def test_signin__wrong_password__emit_login_failed_without_email(
     user = create_test_owner()
     user.set_password('12345')
     user.save(update_fields=['password'])
-    email_hash = sha256(b'owner@pneumatic.app').hexdigest()
+    email_hash = sha256(user.email.encode()).hexdigest()
     users_logged_in_mock = mocker.patch(
         'src.authentication.views.signin.'
         'AnalyticService.users_logged_in',
@@ -187,7 +188,7 @@ def test_signin__wrong_password__event_keeps_request_context(
     user = create_test_owner()
     user.set_password('12345')
     user.save(update_fields=['password'])
-    email_hash = sha256(b'owner@pneumatic.app').hexdigest()
+    email_hash = sha256(user.email.encode()).hexdigest()
     users_logged_in_mock = mocker.patch(
         'src.authentication.views.signin.'
         'AnalyticService.users_logged_in',
@@ -318,7 +319,7 @@ def test_signin__sso_required__emit_login_failed_sso_required(
     user = create_test_admin()
     user.set_password('12345')
     user.save(update_fields=['password'])
-    email_hash = sha256(b'admin@pneumatic.app').hexdigest()
+    email_hash = sha256(user.email.encode()).hexdigest()
     users_logged_in_mock = mocker.patch(
         'src.authentication.views.signin.'
         'AnalyticService.users_logged_in',
@@ -336,6 +337,7 @@ def test_signin__sso_required__emit_login_failed_sso_required(
 
     # assert
     assert response.status_code == 400
+    assert response.data[0] == MSG_AU_0016
     emit_mock.assert_called_once_with(
         EventName.USER_LOGIN_FAILED,
         account_id=NO_ACCOUNT,
@@ -366,7 +368,7 @@ def test_signin__verification_timed_out__emit_login_failed_inactive(
     account.is_verified = False
     account.date_joined = user.date_joined - timedelta(weeks=3)
     account.save(update_fields=['is_verified', 'date_joined'])
-    email_hash = sha256(b'owner@pneumatic.app').hexdigest()
+    email_hash = sha256(user.email.encode()).hexdigest()
     send_verification_mock = mocker.patch(
         'src.authentication.views.signin.'
         'send_verification_notification.delay',

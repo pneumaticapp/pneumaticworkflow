@@ -50,7 +50,7 @@ class APIKeyService(EventEmitMixin, BaseModelService):
 
         self.raw_key = raw_key
 
-    def _emit(self, event_type: str):
+    def _publish_api_key(self, event_type: str):
 
         """ The payload names the key and its owner and nothing else.
             Neither self.raw_key nor instance.token may be put here:
@@ -69,11 +69,11 @@ class APIKeyService(EventEmitMixin, BaseModelService):
         )
 
     def _create_actions(self, **kwargs):
-        self._emit(EventName.API_KEY_CREATE)
+        self._publish_api_key(EventName.API_KEY_CREATE)
 
     def revoke(self):
         self.instance.is_active = False
         self.instance.save(update_fields=['is_active'])
         cache_key = PneumaticToken.encrypt(self.instance.token)
         PneumaticToken.cache.delete(cache_key)
-        self._emit(EventName.API_KEY_REVOKE)
+        self._publish_api_key(EventName.API_KEY_REVOKE)

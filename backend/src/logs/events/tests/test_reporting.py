@@ -161,7 +161,7 @@ def test_report_error__same_message_different_keys__each_sent(mocker):
         not a cause: an unknown event type per name. """
 
     # arrange
-    capture_mock = mocker.patch(
+    capture_sentry_message_mock = mocker.patch(
         'src.logs.events.reporting.capture_sentry_message',
     )
 
@@ -171,8 +171,8 @@ def test_report_error__same_message_different_keys__each_sent(mocker):
     report_error('Unknown event type', {'event_type': 'a.b'}, key='a.b')
 
     # assert
-    assert capture_mock.call_count == 2
-    capture_mock.assert_has_calls([
+    assert capture_sentry_message_mock.call_count == 2
+    capture_sentry_message_mock.assert_has_calls([
         mocker.call(
             message='Unknown event type',
             data={'event_type': 'a.b'},

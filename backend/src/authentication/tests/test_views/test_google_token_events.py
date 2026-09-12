@@ -9,8 +9,9 @@ from src.authentication.enums import (
     AuthTokenType,
     LoginFailedReason,
 )
+from src.authentication.messages import MSG_AU_0016
 from src.authentication.services.google import GoogleAuthService
-from src.logs.events import Actor, EventObject
+from src.logs.events.schema import Actor, EventObject
 from src.logs.events.emitter import NO_ACCOUNT
 from src.logs.events.enums import (
     ActorType,
@@ -20,7 +21,11 @@ from src.logs.events.enums import (
 from src.processes.services.system_workflows import (
     SystemWorkflowService,
 )
-from src.processes.tests.fixtures import create_test_owner
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_admin,
+    create_test_owner,
+)
 
 UserModel = get_user_model()
 
@@ -308,9 +313,10 @@ def test_google_token__inactive_user__emit_login_failed(
         'update_google_contacts.delay',
     )
     emit_mock = mocker.patch('src.logs.events.services.emit')
+
     # sha256 of the profile address "sso@pneumatic.app": an SSO
     # callback carries no address in the body, the view passes it.
-    email_hash = sha256(b'sso@pneumatic.app').hexdigest()
+    email_hash = sha256(user.email.encode()).hexdigest()
 
     # act
     response = api_client.get(
@@ -334,6 +340,93 @@ def test_google_token__inactive_user__emit_login_failed(
         },
         request=mocker.ANY,
     )
+    google_auth_service_init_mock.assert_called_once_with()
+    get_user_data_mock.assert_called_once_with(
+        auth_response={
+            'code': '4/0AbUR2VMeHxU...',
+            'state': 'random_state_string',
+        },
+    )
+    get_auth_token_mock.assert_not_called()
+    save_tokens_mock.assert_not_called()
+    update_contacts_mock.assert_not_called()
+
+
+def test_google_token__sso_required__emit_login_failed(
+    mocker,
+    api_client,
+    settings,
+    fake_stream,
+):
+
+    """ A person who is not the owner of the account may only sign
+        in through the SSO provider the deployment is set up with. """
+
+    # arrange
+    settings.PROJECT_CONF = {
+        **settings.PROJECT_CONF,
+        'GOOGLE_AUTH': True,
+        'SSO_AUTH': True,
+    }
+    account = create_test_account()
+    create_test_owner(account=account)
+    user = create_test_admin(
+        account=account,
+        email='sso@pneumatic.app',
+    )
+    google_auth_service_init_mock = mocker.patch.object(
+        GoogleAuthService,
+        attribute='__init__',
+        return_value=None,
+    )
+    get_user_data_mock = mocker.patch(
+        'src.authentication.services.google.'
+        'GoogleAuthService.get_user_data',
+        return_value=UserData(
+            email=user.email,
+            first_name='John',
+            last_name='Doe',
+            company_name='',
+            photo=None,
+            job_title='',
+        ),
+    )
+    get_auth_token_mock = mocker.patch(
+        'src.authentication.services.user_auth.'
+        'AuthService.get_auth_token',
+    )
+    save_tokens_mock = mocker.patch(
+        'src.authentication.services.google.'
+        'GoogleAuthService.save_tokens_for_user',
+    )
+    update_contacts_mock = mocker.patch(
+        'src.authentication.tasks.'
+        'update_google_contacts.delay',
+    )
+    email_hash = sha256(user.email.encode()).hexdigest()
+
+    # act
+    response = api_client.get(
+        path='/auth/google/token',
+        data={
+            'code': '4/0AbUR2VMeHxU...',
+            'state': 'random_state_string',
+        },
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data[0] == MSG_AU_0016
+    assert len(fake_stream.events) == 1
+    event = fake_stream.last_event()
+    assert event.type == EventName.USER_LOGIN_FAILED
+    assert event.account_id == NO_ACCOUNT
+    assert event.actor == Actor(type=ActorType.GUEST)
+    assert event.object == EventObject(type=EventObjectType.USER)
+    assert event.payload == {
+        'email_hash': email_hash,
+        'reason': LoginFailedReason.SSO_REQUIRED,
+    }
     google_auth_service_init_mock.assert_called_once_with()
     get_user_data_mock.assert_called_once_with(
         auth_response={

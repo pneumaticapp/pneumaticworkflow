@@ -61,6 +61,7 @@ if es_api GET "/_data_stream/$ES_DATA_STREAM" | grep -q '"name"'; then
     log "data stream $ES_DATA_STREAM already exists"
     write_index=$(es_api GET "/_data_stream/$ES_DATA_STREAM?filter_path=data_streams.indices.index_name" \
         | tr ',' '\n' | sed -n 's/.*"index_name":"\([^"]*\)".*/\1/p' | tail -1)
+    [ -n "$write_index" ] || die "the data stream $ES_DATA_STREAM names no backing index"
     # Read the effective policy before changing anything: the PUT below would
     # make every index look right and hide the fact that the write index still
     # carries the settings of the old template.

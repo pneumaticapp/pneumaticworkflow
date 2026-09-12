@@ -90,6 +90,8 @@ def test_create__published_template__emit_template_publish(
             'version': template.version,
             'is_active': True,
         },
+        workflow_id=None,
+        task_id=None,
         request=mocker.ANY,
     )
     templates_created_mock.assert_called_once_with(
@@ -165,6 +167,8 @@ def test_create__draft__emit_template_draft_save(
             'version': template.version,
             'is_active': False,
         },
+        workflow_id=None,
+        task_id=None,
         request=mocker.ANY,
     )
     templates_created_mock.assert_called_once_with(

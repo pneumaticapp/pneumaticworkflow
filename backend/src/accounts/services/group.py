@@ -52,7 +52,7 @@ UserModel = get_user_model()
 
 class UserGroupService(EventEmitMixin, BaseModelService):
 
-    def _emit(self, event_type: str, payload: dict):
+    def _publish_group(self, event_type: str, payload: dict) -> None:
         self._publish(
             event_type,
             account_id=self.instance.account_id,
@@ -134,7 +134,7 @@ class UserGroupService(EventEmitMixin, BaseModelService):
             account_id=self.user.account_id,
             group_data=GroupWebsocketSerializer(self.instance).data,
         )
-        self._emit(
+        self._publish_group(
             EventName.GROUP_CREATE,
             payload={
                 'name': self.instance.name,
@@ -293,15 +293,23 @@ class UserGroupService(EventEmitMixin, BaseModelService):
                 group_id=self.instance.id,
             ).update(value=new_name)
 
+        # Read before the write below: the photo is nullable in the
+        # row and an empty string in the request, and the two mean the
+        # same picture.
         changed_fields = []
         if added_users_ids or removed_users_ids:
             changed_fields.append('users')
         if new_name is not None and new_name != self.instance.name:
             changed_fields.append('name')
-        if new_photo != self.instance.photo:
+        if 'photo' in update_kwargs and (new_photo or '') != (old_photo or ''):
             changed_fields.append('photo')
 
-        if changed_fields:
+        if (
+            added_users_ids or
+            removed_users_ids or
+            new_name != self.instance.name or
+            new_photo != self.instance.photo
+        ):
             track_group_analytics.delay(
                 event=GroupsAnalyticsEvent.updated,
                 user_id=self.user.id,
@@ -337,7 +345,7 @@ class UserGroupService(EventEmitMixin, BaseModelService):
             group_data=GroupWebsocketSerializer(self.instance).data,
         )
         if changed_fields:
-            self._emit(
+            self._publish_group(
                 EventName.GROUP_UPDATE,
                 payload={
                     'changed_fields': sorted(changed_fields),
@@ -397,7 +405,7 @@ class UserGroupService(EventEmitMixin, BaseModelService):
             is_superuser=self.is_superuser,
         )
         self.instance.delete()
-        self._emit(
+        self._publish_group(
             EventName.GROUP_DELETE,
             payload={
                 'name': self.instance.name,

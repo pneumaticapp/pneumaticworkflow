@@ -36,6 +36,7 @@ from src.generics.mixins.views import (
 from src.generics.permissions import (
     UserIsAuthenticated,
 )
+from src.logs.events import AuditEventService
 from src.payment.stripe.exceptions import StripeServiceException
 from src.payment.stripe.service import StripeService
 from src.payment.tasks import (
@@ -145,6 +146,10 @@ class TenantsViewSet(
                 except StripeServiceException as ex:
                     raise_validation_error(message=ex.message)
             instance.delete()
+            AuditEventService.tenant_deleted(
+                request=self.request,
+                tenant=instance,
+            )
             account_service = AccountService(
                 instance=master_account,
                 user=self.request.user,
@@ -280,6 +285,10 @@ class TenantsViewSet(
                     tenant_account=tenant_account,
                     is_superuser=request.is_superuser,
                     auth_type=request.token_type,
+                )
+                AuditEventService.tenant_created(
+                    request=request,
+                    tenant=tenant_account,
                 )
         response_slz = self.serializer_class(instance=tenant_account)
         return self.response_ok(response_slz.data)

@@ -26,6 +26,9 @@ WORKFLOW_PII = (
 WORKFLOW_NAME_PII = (*ACTOR_PII, 'payload.workflow_name')
 NAMED_PII = (*ACTOR_PII, 'payload.name')
 TARGET_PII = (*ACTOR_PII, 'payload.target_email')
+# The address a user had before an edit: the one thing that tells an
+# account takeover from an ordinary change of the address.
+USER_UPDATE_PII = (*TARGET_PII, 'payload.previous_email')
 FILE_PII = (*ACTOR_PII, 'payload.filename')
 URL_PII = (*ACTOR_PII, 'payload.url')
 # The reason of a login as is free text typed by a staff member: it
@@ -114,6 +117,18 @@ DECLARATIONS = (
     (EventName.TASK_DELEGATION, _AUDIT, WORKFLOW_PII,
      'Task delegated to another performer'),
 
+    # Workflows and tasks changed in place
+    (EventName.WORKFLOW_UPDATE, _AUDIT, WORKFLOW_NAME_PII,
+     'Workflow name, kickoff fields or due date changed'),
+    (EventName.TASK_COMMENT_UPDATE, _AUDIT, WORKFLOW_PII,
+     'Comment edited by its author'),
+    (EventName.TASK_COMMENT_DELETE, _AUDIT, WORKFLOW_PII,
+     'Comment deleted by its author'),
+    (EventName.TASK_CHECKLIST_MARK, _ACTIVITY, WORKFLOW_PII,
+     'Checklist item marked'),
+    (EventName.TASK_CHECKLIST_UNMARK, _ACTIVITY, WORKFLOW_PII,
+     'Checklist item unmarked'),
+
     # Authentication
     (EventName.USER_LOGIN, _AUDIT, ACTOR_PII, 'User signed in'),
     (EventName.USER_LOGOUT, _AUDIT, ACTOR_PII, 'User signed out'),
@@ -134,13 +149,33 @@ DECLARATIONS = (
     # Accounts, users, groups and API keys
     (EventName.ACCOUNT_UPDATE, _AUDIT, ACTOR_PII,
      'Account settings changed'),
+    (EventName.ACCOUNT_VERIFY, _AUDIT, ACTOR_PII,
+     'Account verified through the e-mail link'),
+    (EventName.ACCOUNT_VERIFICATION_RESEND, _ACTIVITY, TARGET_PII,
+     'Account verification e-mail sent again'),
+    (EventName.TENANT_CREATE, _AUDIT, NAMED_PII,
+     'Tenant account created'),
+    (EventName.TENANT_DELETE, _AUDIT, NAMED_PII,
+     'Tenant account deleted'),
     (EventName.USER_CREATE, _AUDIT, TARGET_PII,
      'User created by an admin'),
+    (EventName.USER_UPDATE, _AUDIT, USER_UPDATE_PII,
+     'User profile, permissions, groups or manager changed'),
+    (EventName.USER_PASSWORD_SET, _AUDIT, TARGET_PII,
+     'Password of a user set by somebody else'),
     (EventName.USER_DEACTIVATE, _AUDIT, TARGET_PII, 'User deactivated'),
     (EventName.USER_ADMIN_TOGGLE, _AUDIT, TARGET_PII,
      'User admin permission changed'),
     (EventName.USER_TRANSFER, _AUDIT, ACTOR_PII,
      'User moved over from another account'),
+    (EventName.USER_REASSIGN, _AUDIT, ACTOR_PII,
+     'Tasks and templates handed over to another user or group'),
+    (EventName.USER_VACATION_ACTIVATE, _AUDIT, TARGET_PII,
+     'Vacation turned on, tasks delegated to substitutes'),
+    (EventName.USER_VACATION_DEACTIVATE, _AUDIT, TARGET_PII,
+     'Vacation turned off, delegation withdrawn'),
+    (EventName.USER_UNSUBSCRIBE, _AUDIT, ACTOR_PII,
+     'E-mail subscription turned off through a link'),
     (EventName.INVITE_CREATE, _AUDIT, TARGET_PII, 'User invited'),
     (EventName.INVITE_RESEND, _AUDIT, TARGET_PII, 'Invite sent again'),
     (EventName.INVITE_ACCEPT, _AUDIT, ACTOR_PII, 'Invite accepted'),
@@ -158,8 +193,63 @@ DECLARATIONS = (
      'Template cloned into a new draft'),
     (EventName.TEMPLATE_DELETE, _AUDIT, NAMED_PII, 'Template deleted'),
     (EventName.TEMPLATE_EXPORT, _AUDIT, ACTOR_PII, 'Templates exported'),
+    (EventName.TEMPLATE_DRAFT_DISCARD, _ACTIVITY, NAMED_PII,
+     'Template draft changes discarded'),
+    (EventName.TEMPLATE_AI_GENERATE, _ACTIVITY, ACTOR_PII,
+     'Template generated with AI'),
+    (EventName.TEMPLATE_LIBRARY_FILL, _ACTIVITY, NAMED_PII,
+     'Template filled from a library template'),
+    (EventName.TEMPLATE_LIBRARY_IMPORT, _AUDIT, ACTOR_PII,
+     'Library templates imported by staff'),
+    (EventName.TEMPLATE_PRESET_CREATE, _ACTIVITY, NAMED_PII,
+     'Template preset created'),
+    (EventName.TEMPLATE_PRESET_UPDATE, _ACTIVITY, NAMED_PII,
+     'Template preset changed'),
+    (EventName.TEMPLATE_PRESET_DELETE, _ACTIVITY, NAMED_PII,
+     'Template preset deleted'),
+    (EventName.TEMPLATE_PRESET_SET_DEFAULT, _ACTIVITY, NAMED_PII,
+     'Template preset made the default one'),
+    (EventName.FIELDSET_CREATE, _AUDIT, NAMED_PII,
+     'Shared fieldset created'),
+    (EventName.FIELDSET_UPDATE, _AUDIT, NAMED_PII,
+     'Shared fieldset changed'),
+    (EventName.FIELDSET_CLONE, _ACTIVITY, NAMED_PII,
+     'Shared fieldset cloned'),
+    (EventName.FIELDSET_DELETE, _AUDIT, NAMED_PII,
+     'Shared fieldset deleted'),
     (EventName.WORKFLOW_TERMINATE, _AUDIT, WORKFLOW_NAME_PII,
      'Workflow deleted'),
+
+    # Datasets
+    (EventName.DATASET_CREATE, _AUDIT, NAMED_PII, 'Dataset created'),
+    (EventName.DATASET_UPDATE, _AUDIT, NAMED_PII, 'Dataset changed'),
+    (EventName.DATASET_DELETE, _AUDIT, NAMED_PII, 'Dataset deleted'),
+    (EventName.DATASET_ITEMS_ADD, _AUDIT, NAMED_PII,
+     'Rows added to a dataset'),
+    (EventName.DATASET_ITEMS_REPLACE, _AUDIT, NAMED_PII,
+     'Rows of a dataset replaced'),
+    (EventName.DATASET_ITEM_CREATE, _AUDIT, ACTOR_PII,
+     'Dataset row created'),
+    (EventName.DATASET_ITEM_UPDATE, _AUDIT, ACTOR_PII,
+     'Dataset row changed'),
+    (EventName.DATASET_ITEM_DELETE, _AUDIT, ACTOR_PII,
+     'Dataset row deleted'),
+
+    # Billing
+    (EventName.BILLING_PURCHASE, _AUDIT, ACTOR_PII,
+     'Subscription purchased or checkout started'),
+    (EventName.BILLING_SUBSCRIPTION_CANCEL, _AUDIT, ACTOR_PII,
+     'Subscription cancelled'),
+    (EventName.BILLING_PAYMENT_CONFIRM, _AUDIT, ACTOR_PII,
+     'Payment confirmed through the checkout link'),
+
+    # Django admin site
+    (EventName.ADMIN_CREATE, _AUDIT, ACTOR_PII,
+     'Row created in the admin site'),
+    (EventName.ADMIN_UPDATE, _AUDIT, ACTOR_PII,
+     'Row changed in the admin site'),
+    (EventName.ADMIN_DELETE, _AUDIT, ACTOR_PII,
+     'Row deleted in the admin site'),
 
     # Webhooks
     (EventName.WEBHOOK_SUBSCRIBE, _AUDIT, URL_PII,
@@ -210,10 +300,10 @@ def resolve_event_type(name: str) -> EventType:
         key=f'unknown-event-type:{name}',
     )
     # ACTOR_PII, not an empty tuple: the sink moves declared paths
-    # into the pii.* namespace, and the collector drops that
-    # namespace for external backends. An undeclared type with an
-    # empty list would send the e-mail and the ip as plain
-    # attributes, straight past the redaction rule.
+    # into the pii.* namespace, the one prefix a receiver can drop
+    # or a reader can avoid. An undeclared type with an empty list
+    # would send the e-mail and the ip as plain attributes, which
+    # nothing downstream can tell from the rest of the record.
     return EventType(name, EventCategory.DEBUG, ACTOR_PII)
 
 
@@ -240,9 +330,9 @@ def validate_registry() -> None:
 def _validate_pii(event_type: EventType) -> None:
 
     """ An unresolvable path is dropped by the emitter without a word,
-        and the field then leaves as a plain attribute past the
-        collector rule. A typo here is a silent data leak, so it has
-        to break the build instead. """
+        and the field then leaves as a plain attribute, outside the
+        pii.* namespace a receiver drops by. A typo here is a silent
+        data leak, so it has to break the build instead. """
 
     for path in event_type.pii:
         if is_valid_pii_path(path):

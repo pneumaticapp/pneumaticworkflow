@@ -7,13 +7,16 @@ from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
 from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
+from django.forms import MultiWidget
 
+from src.authentication.enums import AuthTokenType
 from src.logs.events.enums import (
     ActorType,
     EventCategory,
     EventName,
 )
 from src.logs.events.exceptions import SinkTemporaryError
+from src.logs.events.mixins import EventEmitMixin
 from src.logs.events.schema import Actor, Event, EventObject
 from src.logs.events.sinks.base import BaseSink
 from src.logs.events.sinks.otlp import (
@@ -110,6 +113,7 @@ class FakeEventStream:
         now = monotonic()
         entries = []
         for entry in self._pending_of(consumer)[:count]:
+
             # Reading own pending list resets idle, as XREADGROUP does.
             entry.delivered_at = now
             entries.append((entry.entry_id, entry.event))
@@ -492,3 +496,42 @@ def assert_posted(post_mock, records: Entries, observed_ns: int = OBSERVED_NS):
         headers=JSON_HEADERS,
         timeout=DEFAULT_TIMEOUT,
     )
+
+
+class FakeEmittingService(EventEmitMixin):
+
+    """ Smallest service the mixin serves: a user and an auth type,
+        for the tests of the actor it builds and of _publish. """
+
+    def __init__(self, user=None, auth_type=AuthTokenType.USER):
+        self.user = user
+        self.auth_type = auth_type
+
+
+def admin_form_data(page) -> Dict[str, Any]:
+
+    """ What a browser posts back from an admin change page without
+        touching a field: every initial value in the format of its
+        widget, the hidden initial inputs of date_joined and the
+        management forms of the inlines. """
+
+    form = page.context['adminform'].form
+    data: Dict[str, Any] = {}
+    for name, form_field in form.fields.items():
+        value = form.initial.get(name)
+        if isinstance(form_field.widget, MultiWidget):
+            parts = form_field.widget.decompress(value)
+            data[f'{name}_0'] = parts[0] or ''
+            data[f'{name}_1'] = parts[1] or ''
+        elif value is True:
+            data[name] = 'on'
+        elif value is not None and value is not False:
+            data[name] = value
+
+    data['initial-date_joined_0'] = data['date_joined_0']
+    data['initial-date_joined_1'] = data['date_joined_1']
+    for inline in page.context['inline_admin_formsets']:
+        management_form = inline.formset.management_form
+        for name, value in management_form.initial.items():
+            data[management_form.add_prefix(name)] = value
+    return data

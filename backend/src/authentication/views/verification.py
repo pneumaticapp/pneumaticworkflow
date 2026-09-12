@@ -24,6 +24,7 @@ from src.generics.mixins.views import (
 from src.generics.permissions import (
     UserIsAuthenticated,
 )
+from src.logs.events import AuditEventService
 from src.notifications.tasks import send_verification_notification
 from src.utils.validation import raise_validation_error
 
@@ -57,6 +58,7 @@ class VerificationTokenView(
                 is_superuser=request.is_superuser,
                 auth_type=AuthTokenType.USER,
             )
+            AuditEventService.account_verified(request=request, user=user)
         return self.response_ok()
 
 
@@ -81,6 +83,10 @@ class VerificationTokenResendView(
                 user_first_name=user.first_name,
                 token=str(VerificationToken.for_user(user)),
                 logo_lg=user.account.logo_lg,
+            )
+            AuditEventService.verification_resent(
+                request=request,
+                account_owner=user,
             )
 
         return self.response_ok({'email': user.email})

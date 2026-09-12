@@ -11,6 +11,7 @@ from src.accounts.permissions import (
 from src.analysis.mixins import BaseIdentifyMixin
 from src.generics.mixins.views import CustomViewSetMixin
 from src.generics.permissions import IsAuthenticated
+from src.logs.events import AuditEventService
 from src.openapi import (
     ACCESS_CHECKLIST,
     FORBIDDEN,
@@ -53,8 +54,10 @@ class CheckListViewSet(
         return context
 
     def get_queryset(self):
-        qst = Checklist.objects.filter(
-            task__account_id=self.request.user.account_id,
+        qst = (
+            Checklist.objects
+            .select_related('task__workflow')
+            .filter(task__account_id=self.request.user.account_id)
         )
         user = self.request.user
         skip_member_access = (
@@ -105,12 +108,18 @@ class CheckListViewSet(
                 is_superuser=request.is_superuser,
                 auth_type=request.token_type,
             )
-            checklist_service.mark(
+            is_marked = checklist_service.mark(
                 selection_id=request_slz.validated_data['selection_id'],
             )
         except ChecklistServiceException as ex:
             raise_validation_error(message=ex.message)
         else:
+            if is_marked:
+                AuditEventService.checklist_item_marked(
+                    request=request,
+                    checklist=checklist,
+                    selection_id=request_slz.validated_data['selection_id'],
+                )
             slz = self.get_serializer(instance=checklist_service.instance)
             return self.response_ok(slz.data)
 
@@ -139,11 +148,17 @@ class CheckListViewSet(
                 is_superuser=request.is_superuser,
                 auth_type=request.token_type,
             )
-            checklist_service.unmark(
+            is_unmarked = checklist_service.unmark(
                 selection_id=request_slz.validated_data['selection_id'],
             )
         except ChecklistServiceException as ex:
             raise_validation_error(message=ex.message)
         else:
+            if is_unmarked:
+                AuditEventService.checklist_item_unmarked(
+                    request=request,
+                    checklist=checklist,
+                    selection_id=request_slz.validated_data['selection_id'],
+                )
             slz = self.get_serializer(instance=checklist_service.instance)
             return self.response_ok(slz.data)

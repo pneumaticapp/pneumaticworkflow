@@ -65,6 +65,8 @@ def test_clone__template__emit_template_clone(
             'version': clone.version,
             'is_active': False,
         },
+        workflow_id=None,
+        task_id=None,
         request=mocker.ANY,
     )
     create_integrations_mock.assert_called_once_with(template=clone)

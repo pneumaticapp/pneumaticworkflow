@@ -382,8 +382,10 @@ esac
 # .env names a backend. Passing --profile and -f here would otherwise
 # override COMPOSE_PROFILES and COMPOSE_FILE lines in .env without
 # saying so.
+# The trailing comment of a line like `LOGS_BACKEND=local  # the bundled
+# stack` is cut off first: it is part of the value otherwise.
 LOGS_BACKEND_VALUE=$(
-    grep -E "^\s*LOGS_BACKEND=" "$ENV_FILE" 2>/dev/null | tail -1 | cut -d= -f2- | tr -d '"'"'"'[:space:]'
+    grep -E "^\s*LOGS_BACKEND=" "$ENV_FILE" 2>/dev/null | tail -1 | cut -d= -f2- | sed 's/#.*//' | tr -d '"'"'"'[:space:]'
 )
 case "${LOGS_BACKEND_VALUE:-none}" in
   none|"")

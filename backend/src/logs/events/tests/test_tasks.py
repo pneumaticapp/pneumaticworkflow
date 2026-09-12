@@ -94,21 +94,21 @@ def test_consume_events__lock_acquired__consumer_runs_once(
         'src.logs.events.tasks.periodic_lock',
     )
     periodic_lock_mock.return_value.__enter__.return_value = True
-    stream = mocker.Mock()
+    stream_mock = mocker.Mock()
     get_stream_mock = mocker.patch(
         'src.logs.events.tasks.get_stream',
-        return_value=stream,
+        return_value=stream_mock,
     )
-    sink = mocker.Mock()
+    sink_mock = mocker.Mock()
     get_sink_mock = mocker.patch(
         'src.logs.events.tasks.get_sink',
-        return_value=sink,
+        return_value=sink_mock,
     )
-    consumer = mocker.Mock()
-    consumer.run_once.return_value = ConsumerStats(delivered=3, acked=3)
+    consumer_mock = mocker.Mock()
+    consumer_mock.run_once.return_value = ConsumerStats(delivered=3, acked=3)
     consumer_class_mock = mocker.patch(
         'src.logs.events.tasks.EventsConsumer',
-        return_value=consumer,
+        return_value=consumer_mock,
     )
     report_error_mock = mocker.patch('src.logs.events.tasks.report_error')
 
@@ -122,13 +122,13 @@ def test_consume_events__lock_acquired__consumer_runs_once(
     get_stream_mock.assert_called_once_with()
     get_sink_mock.assert_called_once_with()
     consumer_class_mock.assert_called_once_with(
-        stream=stream,
-        sink=sink,
+        stream=stream_mock,
+        sink=sink_mock,
         batch_size=500,
         idle_ms=30000,
         max_seconds=MAX_SECONDS,
     )
-    consumer.run_once.assert_called_once_with()
+    consumer_mock.run_once.assert_called_once_with()
     report_error_mock.assert_not_called()
 
 
@@ -147,22 +147,22 @@ def test_consume_events__redis_error__reported_to_sentry(
         'src.logs.events.tasks.periodic_lock',
     )
     periodic_lock_mock.return_value.__enter__.return_value = True
-    stream = mocker.Mock()
+    stream_mock = mocker.Mock()
     get_stream_mock = mocker.patch(
         'src.logs.events.tasks.get_stream',
-        return_value=stream,
+        return_value=stream_mock,
     )
-    sink = mocker.Mock()
+    sink_mock = mocker.Mock()
     get_sink_mock = mocker.patch(
         'src.logs.events.tasks.get_sink',
-        return_value=sink,
+        return_value=sink_mock,
     )
     error = redis.ConnectionError('connection refused')
-    consumer = mocker.Mock()
-    consumer.run_once.side_effect = error
+    consumer_mock = mocker.Mock()
+    consumer_mock.run_once.side_effect = error
     consumer_class_mock = mocker.patch(
         'src.logs.events.tasks.EventsConsumer',
-        return_value=consumer,
+        return_value=consumer_mock,
     )
     report_error_mock = mocker.patch('src.logs.events.tasks.report_error')
 
@@ -175,10 +175,10 @@ def test_consume_events__redis_error__reported_to_sentry(
         message='Events consumer tick failed',
         data={'error': repr(error)},
     )
-    consumer.run_once.assert_called_once_with()
+    consumer_mock.run_once.assert_called_once_with()
     consumer_class_mock.assert_called_once_with(
-        stream=stream,
-        sink=sink,
+        stream=stream_mock,
+        sink=sink_mock,
         batch_size=events_enabled.LOGS_CONSUMER_BATCH_SIZE,
         idle_ms=events_enabled.LOGS_CONSUMER_IDLE_MS,
         max_seconds=MAX_SECONDS,
@@ -243,18 +243,18 @@ def test_consume_events__batch_left_pending__delivery_failure_reported(
         'src.logs.events.tasks.periodic_lock',
     )
     periodic_lock_mock.return_value.__enter__.return_value = True
-    stream = mocker.Mock()
+    stream_mock = mocker.Mock()
     get_stream_mock = mocker.patch(
         'src.logs.events.tasks.get_stream',
-        return_value=stream,
+        return_value=stream_mock,
     )
-    sink = mocker.Mock()
+    sink_mock = mocker.Mock()
     get_sink_mock = mocker.patch(
         'src.logs.events.tasks.get_sink',
-        return_value=sink,
+        return_value=sink_mock,
     )
-    consumer = mocker.Mock()
-    consumer.run_once.return_value = ConsumerStats(
+    consumer_mock = mocker.Mock()
+    consumer_mock.run_once.return_value = ConsumerStats(
         delivered=1000,
         acked=1000,
         failed=True,
@@ -262,7 +262,7 @@ def test_consume_events__batch_left_pending__delivery_failure_reported(
     )
     consumer_class_mock = mocker.patch(
         'src.logs.events.tasks.EventsConsumer',
-        return_value=consumer,
+        return_value=consumer_mock,
     )
     report_error_mock = mocker.patch('src.logs.events.tasks.report_error')
 
@@ -278,10 +278,10 @@ def test_consume_events__batch_left_pending__delivery_failure_reported(
             'duration_ms': 4500,
         },
     )
-    consumer.run_once.assert_called_once_with()
+    consumer_mock.run_once.assert_called_once_with()
     consumer_class_mock.assert_called_once_with(
-        stream=stream,
-        sink=sink,
+        stream=stream_mock,
+        sink=sink_mock,
         batch_size=events_enabled.LOGS_CONSUMER_BATCH_SIZE,
         idle_ms=events_enabled.LOGS_CONSUMER_IDLE_MS,
         max_seconds=MAX_SECONDS,

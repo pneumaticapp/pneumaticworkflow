@@ -237,7 +237,11 @@ class UserViewSet(
         )
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
-        service = VacationDelegationService(user=user)
+        service = VacationDelegationService(
+            user=user,
+            request_user=request.user,
+            auth_type=request.token_type,
+        )
         user = service.activate(
             substitute_user_ids=data['substitute_user_ids'],
             absence_status=data['absence_status'],
@@ -268,6 +272,10 @@ class UserViewSet(
             raise_validation_error(
                 message=MSG_A_0052,
             )
-        service = VacationDelegationService(user=user)
+        service = VacationDelegationService(
+            user=user,
+            request_user=request.user,
+            auth_type=request.token_type,
+        )
         user = service.deactivate()
         return self.response_ok(UserSerializer(instance=user).data)

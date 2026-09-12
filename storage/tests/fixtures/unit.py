@@ -9,6 +9,7 @@ import pytest
 from botocore.exceptions import ClientError
 from fastapi import Request
 from starlette.applications import Starlette
+from starlette.datastructures import Headers
 from starlette.responses import PlainTextResponse, Response
 from starlette.routing import Route
 from starlette.testclient import TestClient
@@ -741,7 +742,11 @@ def request_id_client():
 
 @pytest.fixture
 def make_context_request():
-    """Factory for mock requests of the events context."""
+    """Factory for mock requests of the events context.
+
+    The headers are real Starlette Headers, case-insensitive as in
+    production, so the tests may spell a name any way they like.
+    """
 
     def _factory(
         headers=None,
@@ -751,7 +756,7 @@ def make_context_request():
         request_id=None,
     ):
         request = MagicMock(spec=Request)
-        request.headers = headers or {}
+        request.headers = Headers(headers or {})
         if has_client:
             request.client = MagicMock()
             request.client.host = client_ip

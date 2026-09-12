@@ -57,7 +57,11 @@ $(for a in ${KIBANA_CERT_IP:-}; do echo "      - $a"; done)
 EOF
 
 log "issuing certificates (CA $CA_DAYS days, nodes $CERT_DAYS days)"
+# As root, and the files are handed to uid 1000 at the end: the image runs as
+# the elasticsearch user, and $CERT_DIR belongs to whoever ran this script. On
+# a Linux host with any other uid the certutil could not write into it.
 MSYS_NO_PATHCONV=1 docker run --rm \
+    -u 0 \
     -v "$CERT_DIR:/certs" \
     -w /usr/share/elasticsearch \
     "$IMAGE" bash -c "
@@ -74,6 +78,7 @@ MSYS_NO_PATHCONV=1 docker run --rm \
         rm -f /certs/certs.zip
         chmod 644 /certs/ca/ca.crt /certs/es/es.crt /certs/kibana/kibana.crt
         chmod 640 /certs/ca/ca.key /certs/es/es.key /certs/kibana/kibana.key
+        chown -R 1000:0 /certs
     "
 
 log "expiry dates:"

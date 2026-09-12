@@ -1826,7 +1826,7 @@
           },
           "direction": "backward",
           "editorMode": "code",
-          "expr": "{service_name=~\"$service\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=~\"api_key.create|api_key.revoke|user.admin_toggle|user.deactivate|group.create|group.update|group.delete|webhook.subscribe|webhook.unsubscribe|template.delete|workflow.terminate\" | line_format \"{{.event_type}} {{.actor_type}}:{{.actor_id}} {{.object_type}}:{{.object_id}}\"",
+          "expr": "{service_name=~\"$service\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=~\"api_key.create|api_key.revoke|user.admin_toggle|user.deactivate|group.create|group.update|group.delete|webhook.subscribe|webhook.unsubscribe|template.delete|workflow.terminate|user.update|user.password_set|user.reassign|user.vacation_activate|user.vacation_deactivate|tenant.create|tenant.delete|admin.create|admin.update|admin.delete|billing.purchase|billing.subscription_cancel|billing.payment_confirm\" | line_format \"{{.event_type}} {{.actor_type}}:{{.actor_id}} {{.object_type}}:{{.object_id}}\"",
           "legendFormat": "",
           "queryType": "range",
           "refId": "A"
@@ -2023,7 +2023,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "sum by (event_type) (count_over_time({service_name=~\"$service\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=~\"workflow.run|workflow.complete|workflow.ended|workflow.ended_by_condition|workflow.revert|workflow.terminate\" [$__auto]))",
+          "expr": "sum by (event_type) (count_over_time({service_name=~\"$service\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=~\"workflow.run|workflow.complete|workflow.ended|workflow.ended_by_condition|workflow.revert|workflow.terminate|workflow.update\" [$__auto]))",
           "legendFormat": "{{event_type}}",
           "queryType": "range",
           "refId": "A"
@@ -2148,7 +2148,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "sum by (event_type) (count_over_time({service_name=~\"$service\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=~\"task.start|task.complete|task.revert|task.comment|task.delegation|task.skip\" [$__auto]))",
+          "expr": "sum by (event_type) (count_over_time({service_name=~\"$service\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=~\"task.start|task.complete|task.revert|task.comment|task.delegation|task.skip|task.comment_update|task.comment_delete|task.checklist_mark|task.checklist_unmark\" [$__auto]))",
           "legendFormat": "{{event_type}}",
           "queryType": "range",
           "refId": "A"
@@ -2273,7 +2273,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "sum by (event_type) (count_over_time({service_name=~\"$service\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=~\"template.publish|template.draft_save|template.clone|template.delete|template.export\" [$__auto]))",
+          "expr": "sum by (event_type) (count_over_time({service_name=~\"$service\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=~\"template.publish|template.draft_save|template.clone|template.delete|template.export|template.draft_discard|template.ai_generate|template.library_fill|template.library_import\" [$__auto]))",
           "legendFormat": "{{event_type}}",
           "queryType": "range",
           "refId": "A"

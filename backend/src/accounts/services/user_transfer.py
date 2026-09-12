@@ -127,6 +127,7 @@ class UserTransferService(
             service = ReassignService(
                 old_user=self.prev_user,
                 new_user=new_user,
+                request_user=self.user,
             )
             service.reassign_everywhere()
         remove_user_from_draft(

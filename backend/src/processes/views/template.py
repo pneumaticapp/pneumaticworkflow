@@ -27,6 +27,7 @@ from src.generics.mixins.views import (
 )
 from src.generics.permissions import UserIsAuthenticated
 from src.logs.events import AuditEventService
+from src.logs.events.enums import TemplateSource
 from src.openapi import (
     ACCESS_ACCOUNT_OWNER,
     ACCESS_ADMIN,
@@ -936,6 +937,7 @@ class TemplateViewSet(
         except OpenAiServiceException as ex:
             raise_validation_error(message=ex.message)
         else:
+            AuditEventService.template_generated_with_ai(request=request)
             return self.response_ok(data)
 
     @extend_schema(
@@ -966,6 +968,12 @@ class TemplateViewSet(
         except TemplateServiceException as ex:
             raise_validation_error(message=ex.message)
         else:
+            AuditEventService.template_saved(
+                request=request,
+                template=template,
+                name=template.name,
+                source=TemplateSource.BY_STEPS,
+            )
             slz = TemplateSerializer(instance=template)
             return self.response_ok(slz.get_response_data())
 
@@ -1013,6 +1021,12 @@ class TemplateViewSet(
         except TemplateServiceException as ex:
             raise_validation_error(message=ex.message)
         else:
+            AuditEventService.template_saved(
+                request=request,
+                template=template,
+                name=template.name,
+                source=TemplateSource.LIBRARY,
+            )
             slz = TemplateSerializer(instance=template)
             return self.response_ok(slz.get_response_data())
 
@@ -1030,11 +1044,17 @@ class TemplateViewSet(
     @action(methods=['POST'], detail=True, url_path='discard-changes')
     def discard_changes(self, request, pk, *args, **kwargs):
         template = self.get_object()
-        if template.tasks.all().count() != 0:
-            slz = self.get_serializer(instance=template)
-            slz.discard_changes()
-            return self.response_ok()
-        template.delete()
+        # A template that was never published has nothing to go back to.
+        template_deleted = not template.tasks.exists()
+        if template_deleted:
+            template.delete()
+        else:
+            self.get_serializer(instance=template).discard_changes()
+        AuditEventService.template_draft_discarded(
+            request=request,
+            template=template,
+            template_deleted=template_deleted,
+        )
         return self.response_ok()
 
     @extend_schema(
@@ -1066,6 +1086,8 @@ class TemplateViewSet(
             account_id=user.account_id,
             **filter_slz.validated_data,
         )
+        # One record per export, not one per page: the client walks
+        # the pages with offset, and only the first one is the action.
         if not filter_slz.validated_data.get('offset'):
             AuditEventService.templates_exported(
                 request=request,
@@ -1128,7 +1150,10 @@ class TemplateViewSet(
             )
         except TemplatePresetServiceException as ex:
             raise_validation_error(message=ex.message)
-
+        AuditEventService.template_preset_created(
+            request=request,
+            preset=preset,
+        )
         return self.response_ok(self.get_serializer(preset).data)
 
 

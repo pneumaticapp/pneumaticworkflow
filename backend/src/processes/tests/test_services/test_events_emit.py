@@ -1,12 +1,14 @@
 import pytest
 
-from src.logs.events.exceptions import EventsError
 from src.logs.events.enums import (
     ActorType,
     EventName,
     EventObjectType,
 )
-from src.logs.events.exceptions import UnknownEventTypeError
+from src.logs.events.exceptions import (
+    EventsError,
+    UnknownEventTypeError,
+)
 from src.logs.events.schema import Actor, EventObject
 from src.processes.enums import WorkflowEventType
 from src.processes.models.workflows.event import WorkflowEvent

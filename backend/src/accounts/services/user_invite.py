@@ -167,7 +167,11 @@ class UserInviteService(
 
         """ Who was invited, and whether the person already works in
             another account: then the e-mail offers a transfer instead
-            of a sign up. """
+            of a sign up.
+
+            A resend reads the invite of the user, and a row a
+            superuser deleted by hand leaves none: the event still
+            has to be written, with no object id. """
 
         self._publish(
             event_type,

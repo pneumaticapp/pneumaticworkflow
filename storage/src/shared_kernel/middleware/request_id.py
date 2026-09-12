@@ -9,7 +9,6 @@ from starlette.responses import Response
 
 from src.shared_kernel.http_context import (
     REQUEST_ID_HEADER,
-    REQUEST_ID_HEADER_KEY,
     resolve_request_id,
 )
 
@@ -24,7 +23,7 @@ class RequestIdMiddleware(BaseHTTPMiddleware):
     ) -> Response:
         """Resolve the id before the request, add the header after."""
         request_id = resolve_request_id(
-            request.headers.get(REQUEST_ID_HEADER_KEY),
+            request.headers.get(REQUEST_ID_HEADER),
         )
         request.state.request_id = request_id
         response = await call_next(request)

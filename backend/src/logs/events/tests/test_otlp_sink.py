@@ -88,11 +88,11 @@ def test_send__ok_response__batch_posted_to_the_collector(mocker):
     report_error_mock = mocker.patch(
         'src.logs.events.sinks.otlp.report_error',
     )
-    response = mocker.Mock(status_code=200, headers={})
-    response.json.return_value = {}
+    response_mock = mocker.Mock(status_code=200, headers={})
+    response_mock.json.return_value = {}
     post_mock = mocker.patch(
         'src.logs.events.sinks.otlp.requests.Session.post',
-        return_value=response,
+        return_value=response_mock,
     )
     sink = OTLPSink(endpoint='http://otel-collector:4318')
 
@@ -101,8 +101,8 @@ def test_send__ok_response__batch_posted_to_the_collector(mocker):
 
     # assert
     assert_posted(post_mock, records)
-    response.raise_for_status.assert_called_once_with()
-    response.json.assert_called_once_with()
+    response_mock.raise_for_status.assert_called_once_with()
+    response_mock.json.assert_called_once_with()
     time_ns_mock.assert_called_once_with()
     report_error_mock.assert_not_called()
 
@@ -136,11 +136,11 @@ def test_send__ok_response_without_a_body__delivered(mocker):
     report_error_mock = mocker.patch(
         'src.logs.events.sinks.otlp.report_error',
     )
-    response = mocker.Mock(status_code=200, headers={})
-    response.json.side_effect = ValueError('no json')
+    response_mock = mocker.Mock(status_code=200, headers={})
+    response_mock.json.side_effect = ValueError('no json')
     post_mock = mocker.patch(
         'src.logs.events.sinks.otlp.requests.Session.post',
-        return_value=response,
+        return_value=response_mock,
     )
     sink = OTLPSink(endpoint='http://otel-collector:4318')
 
@@ -149,8 +149,8 @@ def test_send__ok_response_without_a_body__delivered(mocker):
 
     # assert
     report_error_mock.assert_not_called()
-    response.raise_for_status.assert_called_once_with()
-    response.json.assert_called_once_with()
+    response_mock.raise_for_status.assert_called_once_with()
+    response_mock.json.assert_called_once_with()
     assert_posted(post_mock, records)
     time_ns_mock.assert_called_once_with()
 
@@ -166,11 +166,11 @@ def test_send__ok_response_with_a_text_body__delivered(mocker):
     report_error_mock = mocker.patch(
         'src.logs.events.sinks.otlp.report_error',
     )
-    response = mocker.Mock(status_code=200, headers={})
-    response.json.return_value = 'accepted'
+    response_mock = mocker.Mock(status_code=200, headers={})
+    response_mock.json.return_value = 'accepted'
     post_mock = mocker.patch(
         'src.logs.events.sinks.otlp.requests.Session.post',
-        return_value=response,
+        return_value=response_mock,
     )
     sink = OTLPSink(endpoint='http://otel-collector:4318')
 
@@ -209,11 +209,11 @@ def test_send__unreadable_partial_success__delivered(
     report_error_mock = mocker.patch(
         'src.logs.events.sinks.otlp.report_error',
     )
-    response = mocker.Mock(status_code=200, headers={})
-    response.json.return_value = {'partialSuccess': partial_success}
+    response_mock = mocker.Mock(status_code=200, headers={})
+    response_mock.json.return_value = {'partialSuccess': partial_success}
     post_mock = mocker.patch(
         'src.logs.events.sinks.otlp.requests.Session.post',
-        return_value=response,
+        return_value=response_mock,
     )
     sink = OTLPSink(endpoint='http://otel-collector:4318')
 
@@ -240,8 +240,8 @@ def test_send__partial_success__reported_but_delivered(mocker):
     report_error_mock = mocker.patch(
         'src.logs.events.sinks.otlp.report_error',
     )
-    response = mocker.Mock(status_code=200, headers={})
-    response.json.return_value = {
+    response_mock = mocker.Mock(status_code=200, headers={})
+    response_mock.json.return_value = {
         'partialSuccess': {
             'rejectedLogRecords': '2',
             'errorMessage': 'too old',
@@ -249,7 +249,7 @@ def test_send__partial_success__reported_but_delivered(mocker):
     }
     post_mock = mocker.patch(
         'src.logs.events.sinks.otlp.requests.Session.post',
-        return_value=response,
+        return_value=response_mock,
     )
     sink = OTLPSink(endpoint='http://otel-collector:4318')
 
@@ -267,7 +267,7 @@ def test_send__partial_success__reported_but_delivered(mocker):
         level=SentryLogLevel.WARNING,
     )
     assert_posted(post_mock, records)
-    response.raise_for_status.assert_called_once_with()
+    response_mock.raise_for_status.assert_called_once_with()
     time_ns_mock.assert_called_once_with()
 
 
@@ -282,11 +282,11 @@ def test_send__full_success__nothing_reported(mocker):
     report_error_mock = mocker.patch(
         'src.logs.events.sinks.otlp.report_error',
     )
-    response = mocker.Mock(status_code=200, headers={})
-    response.json.return_value = {'partialSuccess': {}}
+    response_mock = mocker.Mock(status_code=200, headers={})
+    response_mock.json.return_value = {'partialSuccess': {}}
     post_mock = mocker.patch(
         'src.logs.events.sinks.otlp.requests.Session.post',
-        return_value=response,
+        return_value=response_mock,
     )
     sink = OTLPSink(endpoint='http://otel-collector:4318')
 
@@ -296,7 +296,7 @@ def test_send__full_success__nothing_reported(mocker):
     # assert
     report_error_mock.assert_not_called()
     assert_posted(post_mock, records)
-    response.raise_for_status.assert_called_once_with()
+    response_mock.raise_for_status.assert_called_once_with()
     time_ns_mock.assert_called_once_with()
 
 
@@ -311,13 +311,17 @@ def test_send__server_error__temporary_error(mocker):
     report_error_mock = mocker.patch(
         'src.logs.events.sinks.otlp.report_error',
     )
-    response = mocker.Mock(status_code=503, headers={}, content=b'overloaded')
-    response.raise_for_status.side_effect = requests.HTTPError(
-        response=response,
+    response_mock = mocker.Mock(
+        status_code=503,
+        headers={},
+        content=b'overloaded',
+    )
+    response_mock.raise_for_status.side_effect = requests.HTTPError(
+        response=response_mock,
     )
     post_mock = mocker.patch(
         'src.logs.events.sinks.otlp.requests.Session.post',
-        return_value=response,
+        return_value=response_mock,
     )
     sink = OTLPSink(endpoint='http://otel-collector:4318')
 
@@ -349,17 +353,17 @@ def test_send__misconfigured_endpoint__temporary_error(mocker, status):
     report_error_mock = mocker.patch(
         'src.logs.events.sinks.otlp.report_error',
     )
-    response = mocker.Mock(
+    response_mock = mocker.Mock(
         status_code=status,
         headers={},
         content=b'no route',
     )
-    response.raise_for_status.side_effect = requests.HTTPError(
-        response=response,
+    response_mock.raise_for_status.side_effect = requests.HTTPError(
+        response=response_mock,
     )
     post_mock = mocker.patch(
         'src.logs.events.sinks.otlp.requests.Session.post',
-        return_value=response,
+        return_value=response_mock,
     )
     sink = OTLPSink(endpoint='http://otel-collector:4318')
 
@@ -409,17 +413,17 @@ def test_send__too_many_requests__delay_of_the_header(
     report_error_mock = mocker.patch(
         'src.logs.events.sinks.otlp.report_error',
     )
-    response = mocker.Mock(
+    response_mock = mocker.Mock(
         status_code=429,
         headers={'Retry-After': header},
         content=b'slow down',
     )
-    response.raise_for_status.side_effect = requests.HTTPError(
-        response=response,
+    response_mock.raise_for_status.side_effect = requests.HTTPError(
+        response=response_mock,
     )
     post_mock = mocker.patch(
         'src.logs.events.sinks.otlp.requests.Session.post',
-        return_value=response,
+        return_value=response_mock,
     )
     sink = OTLPSink(endpoint='http://otel-collector:4318')
 
@@ -450,17 +454,17 @@ def test_send__too_many_requests_without_the_header__no_delay(
     report_error_mock = mocker.patch(
         'src.logs.events.sinks.otlp.report_error',
     )
-    response = mocker.Mock(
+    response_mock = mocker.Mock(
         status_code=429,
         headers=headers,
         content=b'slow down',
     )
-    response.raise_for_status.side_effect = requests.HTTPError(
-        response=response,
+    response_mock.raise_for_status.side_effect = requests.HTTPError(
+        response=response_mock,
     )
     post_mock = mocker.patch(
         'src.logs.events.sinks.otlp.requests.Session.post',
-        return_value=response,
+        return_value=response_mock,
     )
     sink = OTLPSink(endpoint='http://otel-collector:4318')
 
@@ -486,13 +490,17 @@ def test_send__bad_request__permanent_error_with_the_body(mocker):
     report_error_mock = mocker.patch(
         'src.logs.events.sinks.otlp.report_error',
     )
-    response = mocker.Mock(status_code=400, headers={}, content=b'x' * 600)
-    response.raise_for_status.side_effect = requests.HTTPError(
-        response=response,
+    response_mock = mocker.Mock(
+        status_code=400,
+        headers={},
+        content=b'x' * 600,
+    )
+    response_mock.raise_for_status.side_effect = requests.HTTPError(
+        response=response_mock,
     )
     post_mock = mocker.patch(
         'src.logs.events.sinks.otlp.requests.Session.post',
-        return_value=response,
+        return_value=response_mock,
     )
     sink = OTLPSink(endpoint='http://otel-collector:4318')
 
@@ -537,17 +545,17 @@ def test_send__batch_condemned_by_the_status__permanent_error(
     report_error_mock = mocker.patch(
         'src.logs.events.sinks.otlp.report_error',
     )
-    response = mocker.Mock(
+    response_mock = mocker.Mock(
         status_code=status,
         headers={},
         content=b'rejected',
     )
-    response.raise_for_status.side_effect = requests.HTTPError(
-        response=response,
+    response_mock.raise_for_status.side_effect = requests.HTTPError(
+        response=response_mock,
     )
     post_mock = mocker.patch(
         'src.logs.events.sinks.otlp.requests.Session.post',
-        return_value=response,
+        return_value=response_mock,
     )
     sink = OTLPSink(endpoint='http://otel-collector:4318')
 
@@ -584,13 +592,13 @@ def test_send__unreadable_error_body__permanent_error_without_it(mocker):
     report_error_mock = mocker.patch(
         'src.logs.events.sinks.otlp.report_error',
     )
-    response = mocker.Mock(status_code=413, headers={}, content=None)
-    response.raise_for_status.side_effect = requests.HTTPError(
-        response=response,
+    response_mock = mocker.Mock(status_code=413, headers={}, content=None)
+    response_mock.raise_for_status.side_effect = requests.HTTPError(
+        response=response_mock,
     )
     post_mock = mocker.patch(
         'src.logs.events.sinks.otlp.requests.Session.post',
-        return_value=response,
+        return_value=response_mock,
     )
     sink = OTLPSink(endpoint='http://otel-collector:4318')
 
@@ -778,11 +786,11 @@ def test_send__payload_that_is_a_list__delivered(mocker):
     report_error_mock = mocker.patch(
         'src.logs.events.sinks.otlp.report_error',
     )
-    response = mocker.Mock(status_code=200, headers={})
-    response.json.return_value = {}
+    response_mock = mocker.Mock(status_code=200, headers={})
+    response_mock.json.return_value = {}
     post_mock = mocker.patch(
         'src.logs.events.sinks.otlp.requests.Session.post',
-        return_value=response,
+        return_value=response_mock,
     )
     sink = OTLPSink(endpoint='http://otel-collector:4318')
 
@@ -805,11 +813,12 @@ def test_send__own_session__reused_between_batches(mocker):
         return_value=OBSERVED_NS,
     )
     session_mock = mocker.Mock()
+
     # Named, so that the calls on the response are not recorded as
     # calls of the session (a nameless return value gets a parent).
-    response = mocker.Mock(name='response', status_code=200, headers={})
-    response.json.return_value = {}
-    session_mock.post.return_value = response
+    response_mock = mocker.Mock(name='response', status_code=200, headers={})
+    response_mock.json.return_value = {}
+    session_mock.post.return_value = response_mock
     sink = OTLPSink(
         endpoint='http://otel-collector:4318',
         session=session_mock,
@@ -878,20 +887,20 @@ def test_send__endpoint_with_credential__not_in_the_error(mocker):
 
     # arrange
     records = [('1-0', make_event())]
-    mocker.patch(
+    time_ns_mock = mocker.patch(
         'src.logs.events.sinks.otlp.time.time_ns',
         return_value=OBSERVED_NS,
     )
     report_error_mock = mocker.patch(
         'src.logs.events.sinks.otlp.report_error',
     )
-    response = mocker.Mock(status_code=503, headers={}, content=b'')
-    response.raise_for_status.side_effect = requests.HTTPError(
-        response=response,
+    response_mock = mocker.Mock(status_code=503, headers={}, content=b'')
+    response_mock.raise_for_status.side_effect = requests.HTTPError(
+        response=response_mock,
     )
     post_mock = mocker.patch(
         'src.logs.events.sinks.otlp.requests.Session.post',
-        return_value=response,
+        return_value=response_mock,
     )
     sink = OTLPSink(endpoint='https://user:secret@collector.test')
 
@@ -910,6 +919,7 @@ def test_send__endpoint_with_credential__not_in_the_error(mocker):
         headers=JSON_HEADERS,
         timeout=DEFAULT_TIMEOUT,
     )
+    time_ns_mock.assert_called_once_with()
 
 
 def test_send__rejected_with_credential_in_endpoint__report_without_it(
@@ -920,20 +930,20 @@ def test_send__rejected_with_credential_in_endpoint__report_without_it(
     # arrange
     caplog.set_level(logging.ERROR, logger='pneumatic.events')
     records = [('1-0', make_event())]
-    mocker.patch(
+    time_ns_mock = mocker.patch(
         'src.logs.events.sinks.otlp.time.time_ns',
         return_value=OBSERVED_NS,
     )
     report_error_mock = mocker.patch(
         'src.logs.events.sinks.otlp.report_error',
     )
-    response = mocker.Mock(status_code=400, headers={}, content=b'bad')
-    response.raise_for_status.side_effect = requests.HTTPError(
-        response=response,
+    response_mock = mocker.Mock(status_code=400, headers={}, content=b'bad')
+    response_mock.raise_for_status.side_effect = requests.HTTPError(
+        response=response_mock,
     )
-    mocker.patch(
+    post_mock = mocker.patch(
         'src.logs.events.sinks.otlp.requests.Session.post',
-        return_value=response,
+        return_value=response_mock,
     )
     sink = OTLPSink(endpoint='https://user:secret@collector.test')
 
@@ -957,15 +967,22 @@ def test_send__rejected_with_credential_in_endpoint__report_without_it(
             'body': 'bad',
         },
     )
+    post_mock.assert_called_once_with(
+        'https://user:secret@collector.test/v1/logs',
+        data=build_sink_body(records, OBSERVED_NS),
+        headers=JSON_HEADERS,
+        timeout=DEFAULT_TIMEOUT,
+    )
+    time_ns_mock.assert_called_once_with()
 
 
 def test_body_prefix__bytes_not_utf8__replaced_not_raised(mocker):
 
     # arrange
-    response = mocker.Mock(content=b'\xff\xfe bad')
+    response_mock = mocker.Mock(content=b'\xff\xfe bad')
 
     # act
-    result = OTLPSink._body_prefix(response)
+    result = OTLPSink._body_prefix(response_mock)
 
     # assert
     assert result == '\ufffd\ufffd bad'

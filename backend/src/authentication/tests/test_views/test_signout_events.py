@@ -1,7 +1,7 @@
 import pytest
 
 from src.authentication.enums import AuthTokenType
-from src.logs.events import Actor, EventObject
+from src.logs.events.schema import Actor, EventObject
 from src.logs.events.enums import (
     ActorType,
     EventName,
@@ -41,6 +41,8 @@ def test_signout__user_token__emit_user_logout(
         ),
         event_object=EventObject(type=EventObjectType.USER, id=user.id),
         payload={'auth_type': AuthTokenType.USER},
+        workflow_id=None,
+        task_id=None,
         request=mocker.ANY,
     )
     expire_token_mock.assert_called_once_with(token)
@@ -121,6 +123,8 @@ def test_signout__api_key__emit_user_logout_with_api_key_actor(
         ),
         event_object=EventObject(type=EventObjectType.USER, id=user.id),
         payload={'auth_type': AuthTokenType.API},
+        workflow_id=None,
+        task_id=None,
         request=mocker.ANY,
     )
     expire_token_mock.assert_not_called()

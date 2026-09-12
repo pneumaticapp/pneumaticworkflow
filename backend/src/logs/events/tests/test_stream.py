@@ -595,6 +595,7 @@ def test_read_new__vanished_and_malformed_in_one_answer__both_cleared(
     result = stream.read_new(consumer='consumer-1', count=5)
 
     # assert
-    assert [entry_id for entry_id, _ in result] == ['3-0']
+    assert len(result) == 1
+    assert result[0][0] == '3-0'
     client_mock.xack.assert_called_once_with(UNIT_STREAM_KEY, 'otlp', '1-0')
     pipe.xack.assert_called_once_with(UNIT_STREAM_KEY, 'otlp', '2-0')

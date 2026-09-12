@@ -102,6 +102,7 @@ async def test_emit__write_failed__circuit_open_and_no_raise(
     # assert
     assert events_emitter.circuit.open_until == 100.0 + CIRCUIT_OPEN_SECONDS
     assert events_emitter.circuit.is_open(100.0 + CIRCUIT_OPEN_SECONDS - 1)
+    assert events_emitter.circuit.dropped == 1
     client_mock.xadd.assert_awaited_once_with(
         name=EMITTER_STREAM_KEY,
         fields=sample_stream_fields,
@@ -187,9 +188,9 @@ async def test_emit__circuit_open__dropped_not_written(
     client_mock.xadd.side_effect = [ConnectionError('refused'), None]
     mock_events_redis_from_url.return_value = client_mock
     mock_emitter_now.side_effect = [100.0, 101.0]
+    await events_emitter.emit(sample_event)
 
     # act
-    await events_emitter.emit(sample_event)
     await events_emitter.emit(sample_event)
 
     # assert
@@ -199,7 +200,7 @@ async def test_emit__circuit_open__dropped_not_written(
         maxlen=EMITTER_MAXLEN,
         approximate=True,
     )
-    assert events_emitter.circuit.dropped == 1
+    assert events_emitter.circuit.dropped == 2
     assert mock_emitter_now.call_count == 2
 
 
@@ -222,10 +223,10 @@ async def test_emit__window_passed__written_and_recovery_logged(
         101.0,
         100.0 + CIRCUIT_OPEN_SECONDS,
     ]
+    await events_emitter.emit(sample_event)
+    await events_emitter.emit(sample_event)
 
     # act
-    await events_emitter.emit(sample_event)
-    await events_emitter.emit(sample_event)
     await events_emitter.emit(sample_event)
 
     # assert
@@ -250,7 +251,7 @@ async def test_emit__window_passed__written_and_recovery_logged(
     assert mock_emitter_now.call_count == 3
     assert caplog.messages == [
         'Events stream is unavailable, events are dropped: ConnectionError',
-        'Events stream is back, events dropped meanwhile: 1',
+        'Events stream is back, events dropped meanwhile: 2',
     ]
 
 
@@ -387,7 +388,6 @@ async def test_close_event_emitter__cached__closed_and_forgotten(
 ):
     # arrange
     mock_emitter_settings.return_value.LOGS_REDIS_URL = EMITTER_REDIS_URL
-    mock_emitter_settings.return_value.LOGS_STREAM_KEY = EMITTER_STREAM_KEY
     mock_emitter_settings.return_value.LOGS_STREAM_MAXLEN = EMITTER_MAXLEN
     mock_emitter_settings.return_value.logs_enabled = True
     client_mock = AsyncMock()
@@ -420,8 +420,9 @@ async def test_emit__redis_py_error__circuit_open_not_raised(
     caplog,
     error,
 ):
-    """The errors of redis-py are not OSErrors: each of them has to
-    open the circuit rather than reach the endpoint."""
+    """The errors of redis-py are not OSErrors, and the TimeoutError of
+    asyncio.wait_for is one: each of them has to open the circuit rather
+    than reach the endpoint."""
 
     # arrange
     caplog.set_level(logging.WARNING)
@@ -438,4 +439,37 @@ async def test_emit__redis_py_error__circuit_open_not_raised(
     assert caplog.messages == [
         'Events stream is unavailable, events are dropped: '
         f'{type(error).__name__}',
+    ]
+
+
+@pytest.mark.asyncio
+async def test_emit__bad_url__circuit_open_not_raised(
+    events_emitter,
+    mock_events_redis_from_url,
+    mock_emitter_now,
+    sample_event,
+    caplog,
+):
+    """redis.from_url refuses a URL of another scheme with a ValueError,
+    on the first write and not at start: the request must survive it."""
+
+    # arrange
+    caplog.set_level(logging.WARNING)
+    mock_events_redis_from_url.side_effect = ValueError('unknown scheme')
+    mock_emitter_now.return_value = 100.0
+
+    # act
+    await events_emitter.emit(sample_event)
+
+    # assert
+    assert events_emitter.circuit.open_until == 100.0 + CIRCUIT_OPEN_SECONDS
+    assert events_emitter.circuit.dropped == 1
+    mock_events_redis_from_url.assert_called_once_with(
+        EMITTER_REDIS_URL,
+        decode_responses=True,
+        socket_connect_timeout=CONNECT_TIMEOUT,
+        socket_timeout=SOCKET_TIMEOUT,
+    )
+    assert caplog.messages == [
+        'Events stream is unavailable, events are dropped: ValueError',
     ]

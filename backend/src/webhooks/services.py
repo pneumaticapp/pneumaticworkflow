@@ -54,7 +54,7 @@ class WebhookService(EventEmitMixin):
         if event not in self._get_events():
             raise exceptions.InvalidEventException
 
-    def _emit(self, event_type: str, url: str, event: str):
+    def _publish_webhook(self, event_type: str, url: str, event: str):
 
         """ Who pointed which address at which event, the two
             questions the journal has to answer about a webhook.
@@ -83,7 +83,7 @@ class WebhookService(EventEmitMixin):
         )
         service.webhooks_unsubscribed()
         for target in targets:
-            self._emit(
+            self._publish_webhook(
                 EventName.WEBHOOK_UNSUBSCRIBE,
                 url=target,
                 event=ALL_EVENTS,
@@ -106,7 +106,7 @@ class WebhookService(EventEmitMixin):
             )
             service.webhooks_unsubscribed()
         for target in targets:
-            self._emit(
+            self._publish_webhook(
                 EventName.WEBHOOK_UNSUBSCRIBE,
                 url=target,
                 event=event,
@@ -133,7 +133,7 @@ class WebhookService(EventEmitMixin):
                 user=self.user,
                 is_superuser=self.is_superuser,
             )
-            self._emit(
+            self._publish_webhook(
                 EventName.WEBHOOK_SUBSCRIBE,
                 url=url,
                 event=ALL_EVENTS,
@@ -163,7 +163,11 @@ class WebhookService(EventEmitMixin):
                 user=self.user,
                 is_superuser=self.is_superuser,
             )
-        self._emit(EventName.WEBHOOK_SUBSCRIBE, url=url, event=event)
+        self._publish_webhook(
+            EventName.WEBHOOK_SUBSCRIBE,
+            url=url,
+            event=event,
+        )
 
     def get_event_url(
         self,

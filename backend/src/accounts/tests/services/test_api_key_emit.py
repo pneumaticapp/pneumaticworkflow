@@ -210,6 +210,11 @@ def test_destroy__api_keys_endpoint__event_has_no_raw_key(
     assert api_key.token not in record
     assert event.type == EventName.API_KEY_REVOKE
     assert event.account_id == account.id
+    assert event.actor == Actor(
+        type=ActorType.USER,
+        id=owner.id,
+        email=owner.email,
+    )
     assert event.object == EventObject(
         type=EventObjectType.API_KEY,
         id=api_key.id,

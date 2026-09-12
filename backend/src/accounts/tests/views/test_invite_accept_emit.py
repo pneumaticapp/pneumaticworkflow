@@ -46,8 +46,14 @@ def test_accept__invited_user__emit_invite_accept(
     users_joined_mock = mocker.patch(
         'src.accounts.services.user_invite.AnalyticService.users_joined',
     )
-    identify_mock = mocker.patch.object(UserInviteService, 'identify')
-    group_mock = mocker.patch.object(UserInviteService, 'group')
+    identify_mock = mocker.patch.object(
+        UserInviteService,
+        attribute='identify',
+    )
+    group_mock = mocker.patch.object(
+        UserInviteService,
+        attribute='group',
+    )
     emit_mock = mocker.patch('src.logs.events.mixins.emit')
 
     # act
@@ -117,8 +123,14 @@ def test_accept__sso_callback__emit_invite_accept(
     users_joined_mock = mocker.patch(
         'src.accounts.services.user_invite.AnalyticService.users_joined',
     )
-    identify_mock = mocker.patch.object(UserInviteService, 'identify')
-    group_mock = mocker.patch.object(UserInviteService, 'group')
+    identify_mock = mocker.patch.object(
+        UserInviteService,
+        attribute='identify',
+    )
+    group_mock = mocker.patch.object(
+        UserInviteService,
+        attribute='group',
+    )
     service = UserInviteService(
         request_user=invited,
         current_url='',
@@ -227,8 +239,14 @@ def test_accept__anonymous_request__event_keeps_request_context(
     users_joined_mock = mocker.patch(
         'src.accounts.services.user_invite.AnalyticService.users_joined',
     )
-    identify_mock = mocker.patch.object(UserInviteService, 'identify')
-    group_mock = mocker.patch.object(UserInviteService, 'group')
+    identify_mock = mocker.patch.object(
+        UserInviteService,
+        attribute='identify',
+    )
+    group_mock = mocker.patch.object(
+        UserInviteService,
+        attribute='group',
+    )
 
     # act
     response = api_client.post(
@@ -248,15 +266,20 @@ def test_accept__anonymous_request__event_keeps_request_context(
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
     assert event.type == EventName.INVITE_ACCEPT
+    assert event.account_id == account.id
     assert event.actor == Actor(
         type=ActorType.USER,
         id=invited.id,
         email=invited.email,
     )
+    assert event.object == EventObject(
+        type=EventObjectType.INVITE,
+        id=str(invite.id),
+    )
+    assert event.payload == {'invited_by_id': owner.id}
     assert event.ip == '10.10.0.9'
     assert event.user_agent == 'Safari/18'
     assert event.request_id == 'audit-invite-1'
-
     create_onboarding_workflows_mock.assert_called_once_with()
     create_activated_workflows_mock.assert_called_once_with()
     send_user_updated_mock.assert_called_once_with(

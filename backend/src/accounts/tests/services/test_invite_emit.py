@@ -14,7 +14,6 @@ from src.processes.tests.fixtures import (
     create_invited_user,
     create_test_account,
     create_test_owner,
-    create_test_user,
 )
 
 pytestmark = pytest.mark.django_db
@@ -78,7 +77,7 @@ def test_invite_user__person_of_another_account__emit_transfer_invite(
     account = create_test_account()
     owner = create_test_owner(account=account)
     other_account = create_test_account(name='Other')
-    other_user = create_test_user(
+    other_user = create_test_owner(
         account=other_account,
         email='moving@test.test',
     )
@@ -108,6 +107,11 @@ def test_invite_user__person_of_another_account__emit_transfer_invite(
     event = fake_stream.last_event()
     assert event.type == EventName.INVITE_CREATE
     assert event.account_id == account.id
+    assert event.actor == Actor(
+        type=ActorType.USER,
+        id=owner.id,
+        email=owner.email,
+    )
     assert event.object == EventObject(
         type=EventObjectType.INVITE,
         id=str(invite.id),
@@ -207,7 +211,7 @@ def test_resend_invite__person_of_another_account__transfer_resent(
     owner = create_test_owner(account=account)
     invited = create_invited_user(user=owner, email='moving@test.test')
     other_account = create_test_account(name='Other')
-    other_user = create_test_user(
+    other_user = create_test_owner(
         account=other_account,
         email='moving@test.test',
     )
@@ -228,6 +232,16 @@ def test_resend_invite__person_of_another_account__transfer_resent(
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
     assert event.type == EventName.INVITE_RESEND
+    assert event.account_id == account.id
+    assert event.actor == Actor(
+        type=ActorType.USER,
+        id=owner.id,
+        email=owner.email,
+    )
+    assert event.object == EventObject(
+        type=EventObjectType.INVITE,
+        id=str(invited.invite.id),
+    )
     assert event.payload == {
         'target_email': 'moving@test.test',
         'invited_user_id': invited.id,

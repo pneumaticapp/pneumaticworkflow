@@ -660,7 +660,6 @@ services:
 
 networks:
   pneumatic:
-  pneumatic-logs:
 
 volumes:
   backend-staticfiles:

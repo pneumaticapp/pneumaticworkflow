@@ -261,7 +261,7 @@ def test_get_sql__event_inside_both_dates__template_returned():
     ]
 
 
-def test_get_sql__naive_datetime__bound_not_interpolated():
+def test_get_sql__aware_datetime__bound_not_interpolated():
 
     """ The value reaches psycopg as a parameter, so a quote in the
         rendered value cannot end the literal. The SQL itself must
@@ -301,13 +301,18 @@ def test_get_sql__two_templates__ordered_by_running_workflows():
         is_active=True,
         name='Bbb busy',
     )
-    for template in (template_1, template_2):
-        workflow = create_test_workflow(user=user, template=template)
-        create_test_event(
-            workflow=workflow,
-            user=user,
-            type_event=WorkflowEventType.RUN,
-        )
+    workflow_1 = create_test_workflow(user=user, template=template_1)
+    create_test_event(
+        workflow=workflow_1,
+        user=user,
+        type_event=WorkflowEventType.RUN,
+    )
+    workflow_2 = create_test_workflow(user=user, template=template_2)
+    create_test_event(
+        workflow=workflow_2,
+        user=user,
+        type_event=WorkflowEventType.RUN,
+    )
     second = create_test_workflow(user=user, template=template_2)
     create_test_event(
         workflow=second,

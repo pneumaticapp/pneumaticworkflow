@@ -69,7 +69,7 @@ class EventEmitter:
 
         Args:
             url: Redis URL of the events buffer (LOGS_REDIS_URL).
-            key: Name of the stream (LOGS_STREAM_KEY).
+            key: Name of the stream (STREAM_KEY).
             maxlen: Approximate cap of the stream (LOGS_STREAM_MAXLEN).
             enabled: False makes every write a no-op (LOGS_BACKEND=none).
 
@@ -103,8 +103,12 @@ class EventEmitter:
             return
         try:
             await asyncio.wait_for(self._xadd(event), timeout=self.timeout)
-        except (redis.RedisError, OSError) as exc:
+        except (redis.RedisError, OSError, ValueError) as exc:
+            # ValueError is redis.from_url refusing the URL: the client
+            # is built on the first write, so a bad LOGS_REDIS_URL that
+            # got past the settings shows up here and not at start.
             self.circuit.trip(now)
+            self.circuit.dropped += 1
             logger.warning(
                 'Events stream is unavailable, events are dropped: %s',
                 type(exc).__name__,

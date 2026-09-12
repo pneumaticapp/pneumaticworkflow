@@ -59,6 +59,8 @@ def test_destroy__template__emit_template_delete(
             'version': template.version,
             'is_active': True,
         },
+        workflow_id=None,
+        task_id=None,
         request=mocker.ANY,
     )
     templates_deleted_mock.assert_called_once_with(

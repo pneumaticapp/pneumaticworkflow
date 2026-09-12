@@ -110,6 +110,8 @@ def test_update__published_template__emit_template_publish(
             'version': template.version,
             'is_active': True,
         },
+        workflow_id=None,
+        task_id=None,
         request=mocker.ANY,
     )
     update_workflows_mock.assert_called_once_with(
@@ -205,6 +207,8 @@ def test_update__draft__emit_template_draft_save_with_draft_name(
             'version': template.version,
             'is_active': False,
         },
+        workflow_id=None,
+        task_id=None,
         request=mocker.ANY,
     )
     update_workflows_mock.assert_not_called()

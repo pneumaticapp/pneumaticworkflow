@@ -63,6 +63,7 @@ def test_deactivate__service_call__emit_user_deactivate(
         },
     )
     identify_mock.assert_called_once_with(target)
+
     # The deactivated person is no longer among the users the account
     # service tells the analytics about.
     identify_users_mock.assert_called_once_with(user_ids=(owner.id,))
@@ -178,6 +179,7 @@ def test_deactivate__no_user__emit_system_actor(
             'status_before': UserStatus.ACTIVE,
         },
     )
+
     # No user, no account analytics: only the target is identified.
     identify_mock.assert_called_once_with(target)
     identify_users_mock.assert_called_once_with(user_ids=())
@@ -238,6 +240,7 @@ def test_decline__invited_user__emit_actor_is_the_invited_user(
     identify_mock.assert_called_once_with(invited)
     identify_users_mock.assert_called_once_with(user_ids=(owner.id,))
     group_mock.assert_called_once_with(user=invited, account=account)
+
     # An invited person never signed in: no deactivation email.
     send_user_deactivated_mock.assert_not_called()
     send_user_deleted_mock.assert_called_once_with(

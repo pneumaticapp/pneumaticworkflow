@@ -155,6 +155,7 @@ def test_partial_update__name_and_users__emit_group_update(mocker):
         account_id=account.id,
         group_data=mocker.ANY,
     )
+
     # The group performs no task: nobody to tell about the membership.
     send_new_task_websocket_mock.assert_not_called()
     send_task_deleted_mock.assert_not_called()
@@ -444,6 +445,9 @@ def test_create__groups_endpoint__event_keeps_request_context(
     send_group_created_mock = mocker.patch(
         'src.notifications.tasks.send_group_created_notification.delay',
     )
+    sync_account_file_fields_mock = mocker.patch(
+        'src.accounts.services.group.sync_account_file_fields',
+    )
 
     # act
     response = api_client.post(
@@ -492,4 +496,10 @@ def test_create__groups_endpoint__event_keeps_request_context(
         logging=account.log_api_requests,
         account_id=account.id,
         group_data=mocker.ANY,
+    )
+    sync_account_file_fields_mock.assert_called_once_with(
+        account=account,
+        user=owner,
+        old_values=[None],
+        new_values=[group.photo],
     )

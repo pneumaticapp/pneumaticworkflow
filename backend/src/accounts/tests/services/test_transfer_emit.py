@@ -12,7 +12,7 @@ from src.logs.events.schema import Actor, EventObject
 from src.processes.tests.fixtures import (
     create_invited_user,
     create_test_account,
-    create_test_user,
+    create_test_owner,
 )
 
 pytestmark = pytest.mark.django_db
@@ -29,12 +29,12 @@ def test_accept_transfer__valid_token__emit_in_the_new_account(
 
     # arrange
     prev_account = create_test_account(name='prev')
-    prev_user = create_test_user(
+    prev_user = create_test_owner(
         account=prev_account,
         email='transferred@test.test',
     )
     new_account = create_test_account(name='new')
-    new_account_owner = create_test_user(account=new_account)
+    new_account_owner = create_test_owner(account=new_account)
     new_user = create_invited_user(
         user=new_account_owner,
         email='transferred@test.test',
@@ -108,13 +108,13 @@ def test_accept_transfer__activation_failed__no_event(
 
     # arrange
     prev_account = create_test_account(name='prev')
-    prev_user = create_test_user(
+    prev_user = create_test_owner(
         account=prev_account,
         email='transferred@test.test',
     )
     new_account = create_test_account(name='new')
     new_user = create_invited_user(
-        user=create_test_user(account=new_account),
+        user=create_test_owner(account=new_account),
         email='transferred@test.test',
     )
     token = TransferToken()
@@ -145,10 +145,11 @@ def test_accept_transfer__activation_failed__no_event(
     service = UserTransferService()
 
     # act
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError) as ex:
         service.accept_transfer(user_id=new_user.id, token_str='token')
 
     # assert
+    assert str(ex.value) == 'broken'
     assert fake_stream.events == []
     get_valid_token_mock.assert_called_once_with('token')
     get_valid_user_mock.assert_called_once_with(new_user.id)

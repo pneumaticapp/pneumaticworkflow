@@ -91,10 +91,7 @@ class AccountView(
             data=request.data,
         )
         slz.is_valid(raise_exception=True)
-        changed_fields = sorted(
-            name for name, value in slz.validated_data.items()
-            if getattr(instance, name) != value
-        )
+        changed_fields = slz.get_changed_fields()
         service = AccountService(
             instance=slz.instance,
             user=self.request.user,

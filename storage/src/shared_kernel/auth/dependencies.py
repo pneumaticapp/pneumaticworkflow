@@ -36,11 +36,6 @@ class AuthenticatedUser(AuthUser):
             is_api_key=auth_user.is_api_key,
         )
 
-    @property
-    def is_anonymous(self) -> bool:
-        """An authenticated user is never anonymous, whatever its type."""
-        return False
-
 
 async def get_current_user(request: Request) -> AuthenticatedUser:
     """Get current authenticated user from request state.

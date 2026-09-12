@@ -9,8 +9,9 @@ from src.authentication.enums import (
     AuthTokenType,
     LoginFailedReason,
 )
+from src.authentication.messages import MSG_AU_0016
 from src.authentication.services.microsoft import MicrosoftAuthService
-from src.logs.events import Actor, EventObject
+from src.logs.events.schema import Actor, EventObject
 from src.logs.events.emitter import NO_ACCOUNT
 from src.logs.events.enums import (
     ActorType,
@@ -20,7 +21,11 @@ from src.logs.events.enums import (
 from src.processes.services.system_workflows import (
     SystemWorkflowService,
 )
-from src.processes.tests.fixtures import create_test_owner
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_admin,
+    create_test_owner,
+)
 
 UserModel = get_user_model()
 
@@ -321,9 +326,10 @@ def test_microsoft_token__inactive_user__emit_login_failed(
         'update_microsoft_contacts.delay',
     )
     emit_mock = mocker.patch('src.logs.events.services.emit')
+
     # sha256 of the profile address "sso@pneumatic.app": an SSO
     # callback carries no address in the body, the view passes it.
-    email_hash = sha256(b'sso@pneumatic.app').hexdigest()
+    email_hash = sha256(user.email.encode()).hexdigest()
     auth_response = {
         'code': '0.Ab0Aa_jrV8Qkv...9UWtS972sufQ',
         'client_info': 'eyJ1aWQi...0YjY2ZGFkIn0',
@@ -350,6 +356,97 @@ def test_microsoft_token__inactive_user__emit_login_failed(
         },
         request=mocker.ANY,
     )
+    microsoft_auth_service_init_mock.assert_called_once_with()
+    get_user_data_mock.assert_called_once_with(auth_response=auth_response)
+    get_auth_token_mock.assert_not_called()
+    apply_photo_mock.assert_not_called()
+    save_tokens_mock.assert_not_called()
+    update_contacts_mock.assert_not_called()
+
+
+def test_microsoft_token__sso_required__emit_login_failed(
+    mocker,
+    api_client,
+    settings,
+    fake_stream,
+):
+
+    """ A person who is not the owner of the account may only sign
+        in through the SSO provider the deployment is set up with. """
+
+    # arrange
+    settings.PROJECT_CONF = {
+        **settings.PROJECT_CONF,
+        'MS_AUTH': True,
+        'SSO_AUTH': True,
+    }
+    account = create_test_account()
+    create_test_owner(account=account)
+    user = create_test_admin(
+        account=account,
+        email='sso@pneumatic.app',
+    )
+    user_data = UserData(
+        email=user.email,
+        first_name='',
+        last_name='',
+        company_name='',
+        photo=None,
+        job_title='',
+    )
+    microsoft_auth_service_init_mock = mocker.patch.object(
+        MicrosoftAuthService,
+        attribute='__init__',
+        return_value=None,
+    )
+    get_user_data_mock = mocker.patch(
+        'src.authentication.services.microsoft.'
+        'MicrosoftAuthService.get_user_data',
+        return_value=user_data,
+    )
+    get_auth_token_mock = mocker.patch(
+        'src.authentication.services.user_auth.'
+        'AuthService.get_auth_token',
+    )
+    apply_photo_mock = mocker.patch(
+        'src.authentication.services.microsoft.'
+        'MicrosoftAuthService.apply_photo_to_user',
+    )
+    save_tokens_mock = mocker.patch(
+        'src.authentication.services.microsoft.'
+        'MicrosoftAuthService.save_tokens_for_user',
+    )
+    update_contacts_mock = mocker.patch(
+        'src.authentication.tasks.'
+        'update_microsoft_contacts.delay',
+    )
+    email_hash = sha256(user.email.encode()).hexdigest()
+    auth_response = {
+        'code': '0.Ab0Aa_jrV8Qkv...9UWtS972sufQ',
+        'client_info': 'eyJ1aWQi...0YjY2ZGFkIn0',
+        'state': 'KvpfgTSUmwtOaPny',
+        'session_state': '0d046a4b-061a-4de5-be04-472a06763149',
+    }
+
+    # act
+    response = api_client.get(
+        path='/auth/microsoft/token',
+        data=auth_response,
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data[0] == MSG_AU_0016
+    assert len(fake_stream.events) == 1
+    event = fake_stream.last_event()
+    assert event.type == EventName.USER_LOGIN_FAILED
+    assert event.account_id == NO_ACCOUNT
+    assert event.actor == Actor(type=ActorType.GUEST)
+    assert event.object == EventObject(type=EventObjectType.USER)
+    assert event.payload == {
+        'email_hash': email_hash,
+        'reason': LoginFailedReason.SSO_REQUIRED,
+    }
     microsoft_auth_service_init_mock.assert_called_once_with()
     get_user_data_mock.assert_called_once_with(auth_response=auth_response)
     get_auth_token_mock.assert_not_called()

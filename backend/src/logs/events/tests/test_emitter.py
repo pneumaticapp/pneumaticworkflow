@@ -147,7 +147,9 @@ def test_emit__stream_error__request_not_broken(
     # arrange
     error = redis.ConnectionError('down')
     xadd_mock = mocker.patch.object(
-        fake_stream, 'xadd', side_effect=error,
+        fake_stream,
+        attribute='xadd',
+        side_effect=error,
     )
     capture_sentry_message_mock = mocker.patch(
         'src.logs.events.reporting.capture_sentry_message',
@@ -181,7 +183,9 @@ def test_emit__stream_error_twice__reported_once(
     # arrange
     error = redis.ConnectionError('down')
     xadd_mock = mocker.patch.object(
-        fake_stream, 'xadd', side_effect=error,
+        fake_stream,
+        attribute='xadd',
+        side_effect=error,
     )
     monotonic_mock = mocker.patch(
         'src.logs.events.emitter.monotonic',
@@ -378,8 +382,9 @@ def test_report_stream_error__dropped_events__count_in_the_report(
         'src.logs.events.emitter.report_error',
     )
     emitter_module._circuit.trip(monotonic())
-    for _ in range(3):
-        _write(make_event())
+    _write(make_event())
+    _write(make_event())
+    _write(make_event())
 
     # act
     _report_stream_error(error)
@@ -481,8 +486,11 @@ def test_build_event__anonymous_request__actor_from_the_context(
 
 def test_build_event__no_request_no_context__system_actor():
 
+    # arrange
+    account_id = 5
+
     # act
-    event = _build_event(EventName.USER_LOGIN, account_id=5)
+    event = _build_event(EventName.USER_LOGIN, account_id=account_id)
 
     # assert
     assert event.actor == Actor(type=ActorType.SYSTEM)
@@ -541,8 +549,11 @@ def test_build_event__request_without_headers__values_from_context(
 
 def test_build_event__no_request__values_from_context(request_context):
 
+    # arrange
+    account_id = 5
+
     # act
-    event = _build_event(EventName.USER_LOGIN, account_id=5)
+    event = _build_event(EventName.USER_LOGIN, account_id=account_id)
 
     # assert
     assert event.ip == '9.9.9.9'
@@ -552,8 +563,11 @@ def test_build_event__no_request__values_from_context(request_context):
 
 def test_build_event__no_request_no_context__empty_request_fields():
 
+    # arrange
+    account_id = 5
+
     # act
-    event = _build_event(EventName.USER_LOGIN, account_id=5)
+    event = _build_event(EventName.USER_LOGIN, account_id=account_id)
 
     # assert
     assert event.ip is None
@@ -563,12 +577,16 @@ def test_build_event__no_request_no_context__empty_request_fields():
 
 def test_build_event__registry__category_and_present_pii():
 
+    # arrange
+    actor = Actor(type=ActorType.SYSTEM)
+    payload = {'target_email': 'target@test.test'}
+
     # act
     event = _build_event(
         EventName.USER_DEACTIVATE,
         account_id=5,
-        actor=Actor(type=ActorType.SYSTEM),
-        payload={'target_email': 'target@test.test'},
+        actor=actor,
+        payload=payload,
     )
 
     # assert
@@ -667,11 +685,14 @@ def test_build_event__unresolvable_pii_path__dropped(
 
 def test_build_event__secret_in_the_payload__redacted():
 
+    # arrange
+    payload = {'name': 'key', 'token': 'raw-secret'}
+
     # act
     event = _build_event(
         EventName.API_KEY_CREATE,
         account_id=5,
-        payload={'name': 'key', 'token': 'raw-secret'},
+        payload=payload,
     )
 
     # assert
@@ -722,8 +743,11 @@ def test_build_event__account_not_given__no_account_marker():
         literal label "None"; 5.1 of the plan reserves 0 for an event
         without an account, a failed sign in above all. """
 
+    # arrange
+    account_id = None
+
     # act
-    event = _build_event(EventName.USER_LOGOUT, account_id=None)
+    event = _build_event(EventName.USER_LOGOUT, account_id=account_id)
 
     # assert
     assert event.account_id == NO_ACCOUNT
@@ -771,6 +795,13 @@ def test_emit__patched_name__the_one_the_callers_import():
         would leave those patches intercepting nothing, and every
         "no event" assert would pass for the wrong reason. """
 
+    # arrange
+    name = 'emit'
+
+    # act
+    services_emit = getattr(services_module, name)
+    mixins_emit = getattr(mixins_module, name)
+
     # assert
-    assert services_module.emit is emit
-    assert mixins_module.emit is emit
+    assert services_emit is emit
+    assert mixins_emit is emit

@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 
 from src.accounts.enums import SourceType
 from src.authentication.enums import AuthTokenType
-from src.logs.events import Actor, EventObject
+from src.logs.events.schema import Actor, EventObject
 from src.logs.events.enums import (
     ActorType,
     EventCategory,

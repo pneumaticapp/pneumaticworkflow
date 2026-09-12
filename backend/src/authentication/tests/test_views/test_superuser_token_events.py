@@ -1,7 +1,7 @@
 import pytest
 
 from src.authentication.serializers import SUPERUSER_REASON_MAX_LENGTH
-from src.logs.events import Actor, EventObject
+from src.logs.events.schema import Actor, EventObject
 from src.logs.events.enums import (
     ActorType,
     EventName,

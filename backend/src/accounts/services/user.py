@@ -381,10 +381,18 @@ class UserService(
         with transaction.atomic():
             self._deactivate_subordinates()
             # Remove from personal (vacation substitute) groups
-            VacationDelegationService.clear_substitute_groups(user)
+            VacationDelegationService.clear_substitute_groups(
+                user,
+                request_user=self.user,
+                auth_type=self.auth_type,
+            )
             # Also deactivate own vacation if active
             if user.is_absent:
-                VacationDelegationService(user).deactivate()
+                VacationDelegationService(
+                    user,
+                    request_user=self.user,
+                    auth_type=self.auth_type,
+                ).deactivate()
             remove_user_from_draft(
                 account_id=user.account_id,
                 user_id=user.id,
@@ -433,16 +441,7 @@ class UserService(
 
         self.instance.is_admin = not self.instance.is_admin
         self.instance.save(update_fields=['is_admin'])
-        self._publish(
-            EventName.USER_ADMIN_TOGGLE,
-            account_id=self.account.id,
-            object_type=EventObjectType.USER,
-            object_id=self.instance.id,
-            payload={
-                'is_admin': self.instance.is_admin,
-                'target_email': self.instance.email,
-            },
-        )
+        self._publish_admin_toggle()
         self.identify(self.instance)
         send_user_updated_notification.delay(
             logging=self.account.log_api_requests,
@@ -468,11 +467,8 @@ class UserService(
         # transfer to another account. In the last two the actor is
         # the deactivated person themselves; a service without a
         # user is a background job (see EventEmitMixin).
-        self._publish(
+        self._publish_user_event(
             EventName.USER_DEACTIVATE,
-            account_id=self.account.id,
-            object_type=EventObjectType.USER,
-            object_id=self.instance.id,
             payload={
                 'target_email': self.instance.email,
                 'status_before': status_before,
@@ -597,6 +593,16 @@ class UserService(
     ) -> UserModel:
 
         subordinates = update_kwargs.pop('subordinates', None)
+        # Read before anything is written: afterwards the instance holds
+        # the new values and nothing tells what the update changed.
+        previous_email = self.instance.email
+        group_changes = self._group_changes(user_groups)
+        changed_fields = self._changed_fields(
+            update_kwargs=update_kwargs,
+            subordinates=subordinates,
+            raw_password=raw_password,
+            groups_changed=bool(group_changes),
+        )
         old_name = self.instance.name
         old_manager = self.instance.manager
         manager_changed = (
@@ -662,8 +668,134 @@ class UserService(
             account_id=self.account.id,
             user_data=ws_data,
         )
+        self._publish_update(
+            changed_fields=changed_fields,
+            previous_email=previous_email,
+            group_changes=group_changes,
+        )
 
         return self.instance
+
+    def _group_changes(self, user_groups: Optional[list]) -> dict:
+
+        """ The ids the update adds to the groups of the user and takes
+            away from them, read before it writes them. Empty when the
+            request sends no groups, or sends the ones already set.
+
+            The read costs one query, and it has to happen here: after
+            the update the groups of the user are the new ones and
+            nothing tells what the request changed. """
+
+        if user_groups is None:
+            return {}
+        before = set(self.instance.user_groups.values_list('id', flat=True))
+        # Ids or instances, whichever the caller has: user_groups.set()
+        # below takes both, and so must the comparison.
+        after = {getattr(group, 'id', group) for group in user_groups}
+        added = sorted(after - before)
+        removed = sorted(before - after)
+        if not (added or removed):
+            return {}
+        return {
+            'added_groups_ids': added,
+            'removed_groups_ids': removed,
+        }
+
+    def _changed_fields(
+        self,
+        update_kwargs: dict,
+        subordinates: Optional[list],
+        raw_password: Optional[str],
+        groups_changed: bool,
+    ) -> List[str]:
+
+        """ Fields of the user row the update is going to change and
+            the relations it rewrites, read before it writes them. """
+
+        # A default: BaseModelService.partial_update sets any attribute
+        # it is given, one the model does not declare included.
+        changed = {
+            name for name, value in update_kwargs.items()
+            if getattr(self.instance, name, None) != value
+        }
+        if raw_password:
+            changed.add('password')
+        if groups_changed:
+            changed.add('groups')
+        if subordinates is not None:
+            before = set(
+                self.instance.subordinates.values_list('id', flat=True),
+            )
+            if before != {user.id for user in subordinates}:
+                changed.add('subordinates')
+        return sorted(changed)
+
+    def _publish_user_event(
+        self,
+        event_type: str,
+        payload: Optional[dict] = None,
+    ) -> None:
+        self._publish(
+            event_type,
+            account_id=self.instance.account_id,
+            object_type=EventObjectType.USER,
+            object_id=self.instance.id,
+            payload=payload,
+        )
+
+    def _publish_admin_toggle(self) -> None:
+        self._publish_user_event(
+            EventName.USER_ADMIN_TOGGLE,
+            payload={
+                'is_admin': self.instance.is_admin,
+                'target_email': self.instance.email,
+            },
+        )
+
+    def _publish_password_event(self) -> None:
+
+        """ The owner changing their own password and somebody else
+            setting it are two different records: an alert watches the
+            second one. """
+
+        if self.user is not None and self.user.id == self.instance.id:
+            self._publish_user_event(EventName.USER_PASSWORD_CHANGE)
+            return
+        self._publish_user_event(
+            EventName.USER_PASSWORD_SET,
+            payload={'target_email': self.instance.email},
+        )
+
+    def _publish_update(
+        self,
+        changed_fields: List[str],
+        previous_email: str,
+        group_changes: dict,
+    ) -> None:
+
+        """ One user.update naming every changed field, and apart from
+            it the records an alert watches for: the admin permission
+            and a password. An admin edit of the user reaches both of
+            them through here and not through toggle_admin or the
+            password views, and without them a grant of admin made this
+            way would not be seen by the alert. """
+
+        if not changed_fields:
+            return
+        payload = {
+            'target_email': self.instance.email,
+            'changed_fields': changed_fields,
+            **group_changes,
+        }
+        if 'email' in changed_fields:
+            payload['previous_email'] = previous_email
+        if 'manager' in changed_fields:
+            payload['manager_id'] = self.instance.manager_id
+        self._publish_user_event(EventName.USER_UPDATE, payload=payload)
+        if 'is_admin' in changed_fields:
+            self._publish_admin_toggle()
+        if 'password' in changed_fields:
+            self._publish_password_event()
 
     def _update_subordinates(
         self,

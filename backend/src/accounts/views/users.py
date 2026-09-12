@@ -380,11 +380,16 @@ class UsersViewSet(
             service = ReassignService(
                 is_superuser=request.is_superuser,
                 auth_type=request.token_type,
+                request_user=request.user,
                 **serializer.validated_data,
             )
             service.reassign_everywhere()
         except ReassignServiceException as ex:
             raise_validation_error(message=ex.message)
+        AuditEventService.user_reassigned(
+            request=request,
+            **serializer.validated_data,
+        )
         return self.response_ok()
 
     # TODO uncomment in https://my.pneumatic.app/workflows/15691/
@@ -485,7 +490,11 @@ class UsersViewSet(
         )
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
-        service = VacationDelegationService(user=user)
+        service = VacationDelegationService(
+            user=user,
+            request_user=request.user,
+            auth_type=request.token_type,
+        )
         user = service.activate(
             substitute_user_ids=data['substitute_user_ids'],
             absence_status=data['absence_status'],
@@ -515,7 +524,11 @@ class UsersViewSet(
         user = self.get_object()
         if not user.vacation:
             raise_validation_error(message=MSG_A_0052)
-        service = VacationDelegationService(user=user)
+        service = VacationDelegationService(
+            user=user,
+            request_user=request.user,
+            auth_type=request.token_type,
+        )
         user = service.deactivate()
         return self.response_ok(UserSerializer(instance=user).data)
 

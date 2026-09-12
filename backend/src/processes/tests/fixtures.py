@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from typing import List, Optional
 
 from django.conf import settings
@@ -6,11 +6,13 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 
 from src.accounts.enums import (
+    AbsenceStatus,
     BillingPlanType,
     Language,
     LeaseLevel,
     UserDateFormat,
     UserFirstDayWeek,
+    UserGroupType,
     UserInviteStatus,
     UserStatus,
 )
@@ -20,8 +22,10 @@ from src.accounts.models import (
     APIKey,
     UserGroup,
     UserInvite,
+    UserVacation,
 )
 from src.accounts.services.guests import GuestService
+from src.accounts.services.vacation import SUBSTITUTE_GROUP_PREFIX
 from src.authentication.enums import AuthTokenType
 from src.authentication.tokens import PneumaticToken
 from src.payment.enums import BillingPeriod
@@ -35,6 +39,7 @@ from src.processes.enums import (
     PerformerType,
     PredicateOperator,
     PredicateType,
+    SysTemplateType,
     TaskStatus,
     TemplateType,
     WorkflowEventType,
@@ -61,6 +66,7 @@ from src.processes.models.templates.preset import (
     TemplatePreset,
     TemplatePresetField,
 )
+from src.processes.models.templates.system_template import SystemTemplate
 from src.processes.models.templates.task import TaskTemplate
 from src.processes.models.templates.template import Template
 from src.datasets.models import Dataset, DatasetItem
@@ -76,7 +82,7 @@ from src.processes.models.workflows.fields import (
 )
 from src.processes.models.workflows.fieldset import FieldSet, FieldSetRule
 from src.processes.models.workflows.kickoff import KickoffValue
-from src.processes.models.workflows.task import Task
+from src.processes.models.workflows.task import Task, TaskPerformer
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.serializers.templates.template import (
     TemplateSerializer,
@@ -715,6 +721,36 @@ def create_test_group(
     return group
 
 
+def create_test_vacation(
+    user: UserModel,
+    substitutes: List[UserModel],
+    absence_status: AbsenceStatus.LITERALS = AbsenceStatus.VACATION,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
+    substitute_group: Optional[UserGroup] = None,
+) -> UserVacation:
+
+    """ Creating a vacation the way VacationDelegationService does:
+        the personal substitute group with the substitutes in it
+        and the vacation row that points to it. """
+
+    if substitute_group is None:
+        substitute_group = UserGroup.include_personal.create(
+            name=f'{SUBSTITUTE_GROUP_PREFIX} {user.get_full_name()}',
+            type=UserGroupType.PERSONAL,
+            account=user.account,
+        )
+        substitute_group.users.set(substitutes)
+    return UserVacation.objects.create(
+        user=user,
+        account=user.account,
+        substitute_group=substitute_group,
+        start_date=start_date,
+        end_date=end_date,
+        absence_status=absence_status,
+    )
+
+
 def create_wf_created_webhook(user: UserModel) -> WebHook:
 
     """Testing workflow started webhooks."""
@@ -1073,3 +1109,54 @@ def create_test_fieldset(
         value=field_value,
     )
     return fieldset
+
+
+def create_test_system_template(
+    name: str = 'Test system template',
+    type_: str = SysTemplateType.LIBRARY,
+    is_active: bool = True,
+    template: Optional[dict] = None,
+) -> SystemTemplate:
+
+    """Creating system (library) templates."""
+
+    return SystemTemplate.objects.create(
+        name=name,
+        type=type_,
+        is_active=is_active,
+        template=template or {},
+    )
+
+
+def create_test_performer(
+    task: Task,
+    user: UserModel,
+) -> TaskPerformer:
+
+    """Adding a user (a guest as well) to the performers of a task."""
+
+    return TaskPerformer.objects.create(
+        task_id=task.id,
+        user_id=user.id,
+    )
+
+
+def create_test_kickoff_field(
+    workflow: Workflow,
+    name: str = 'Test field',
+    api_name: str = 'test-field',
+    type_: str = FieldType.STRING,
+    value: str = '',
+) -> TaskField:
+
+    """Creating a kickoff field of a running workflow."""
+
+    return TaskField.objects.create(
+        type=type_,
+        name=name,
+        api_name=api_name,
+        kickoff=workflow.kickoff_instance,
+        value=value,
+        workflow=workflow,
+        account=workflow.account,
+    )

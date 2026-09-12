@@ -17,8 +17,15 @@ def test_tick_budget__otlp_timeouts__lock_minus_the_worst_batch():
     """ Three sends of 13.05 s with two pauses of the longest
         Retry-After between them: 120 - 59.15 s. """
 
+    # arrange
+    send_seconds = 13.05
+    max_retry_after = 10
+
     # act
-    budget = tick_budget(send_seconds=13.05, max_retry_after=10)
+    budget = tick_budget(
+        send_seconds=send_seconds,
+        max_retry_after=max_retry_after,
+    )
 
     # assert
     assert round(budget, 2) == 60.85
@@ -30,8 +37,15 @@ def test_tick_budget__short_retry_after__backoff_pause_used():
     """ The receiver cannot shorten the pause below the fixed
         backoff: the worst pause is the longer of the two. """
 
+    # arrange
+    send_seconds = 1
+    max_retry_after = 0
+
     # act
-    budget = tick_budget(send_seconds=1, max_retry_after=0)
+    budget = tick_budget(
+        send_seconds=send_seconds,
+        max_retry_after=max_retry_after,
+    )
 
     # assert
     assert budget == 115.0
@@ -39,8 +53,15 @@ def test_tick_budget__short_retry_after__backoff_pause_used():
 
 def test_tick_budget__batch_longer_than_the_lock__zero():
 
+    # arrange
+    send_seconds = 100
+    max_retry_after = 10
+
     # act
-    budget = tick_budget(send_seconds=100, max_retry_after=10)
+    budget = tick_budget(
+        send_seconds=send_seconds,
+        max_retry_after=max_retry_after,
+    )
 
     # assert
     assert budget == 0.0
@@ -48,8 +69,15 @@ def test_tick_budget__batch_longer_than_the_lock__zero():
 
 def test_tick_budget__given_lock_expire__used():
 
+    # arrange
+    lock_expire = 10
+
     # act
-    budget = tick_budget(send_seconds=1, max_retry_after=0, lock_expire=10)
+    budget = tick_budget(
+        send_seconds=1,
+        max_retry_after=0,
+        lock_expire=lock_expire,
+    )
 
     # assert
     assert budget == 5.0
@@ -378,8 +406,9 @@ def test_run_once__idle_entries_of_a_dead_consumer__claimed(mocker):
     stream = FakeEventStream()
     fill_stream(stream, count=3)
     abandoned = stream.read_new(consumer='dead-consumer', count=1000)
-    for entry in stream.pending.values():
-        entry.delivered_at -= 120
+    stream.pending['1-0'].delivered_at -= 120
+    stream.pending['2-0'].delivered_at -= 120
+    stream.pending['3-0'].delivered_at -= 120
     sink_mock = mocker.Mock()
     sleep_mock = mocker.Mock()
     consumer = EventsConsumer(
@@ -529,10 +558,11 @@ def test_run_once__deadline_between_batches__rest_left_for_next_tick(
     fill_stream(stream, count=3)
     sink_mock = mocker.Mock()
     sleep_mock = mocker.Mock()
+
     # started, the check of the pending phase, of the claim phase, of
     # the first new batch, then late: the check of the second batch
     # and the end.
-    mocker.patch(
+    monotonic_mock = mocker.patch(
         'src.logs.events.consumer.time.monotonic',
         side_effect=[0.0, 0.0, 0.0, 0.0, 100.0, 100.0],
     )
@@ -554,3 +584,4 @@ def test_run_once__deadline_between_batches__rest_left_for_next_tick(
     sink_mock.send.assert_called_once_with(stream.events[:1])
     assert len(stream.pending) == 0
     assert stats.duration_ms == 100000
+    assert monotonic_mock.call_count == 6

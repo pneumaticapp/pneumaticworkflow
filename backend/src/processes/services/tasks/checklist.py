@@ -74,21 +74,27 @@ class ChecklistService(BaseWorkflowService):
     def mark(
         self,
         selection_id: int,
-    ):
+    ) -> bool:
+
+        """ Whether the item was marked now. """
+
         selection = self._get_selection(selection_id)
         selection_service = ChecklistSelectionService(
             instance=selection,
             user=self.user,
         )
-        selection_service.mark()
+        return selection_service.mark()
 
     def unmark(
         self,
         selection_id: int,
-    ):
+    ) -> bool:
+
+        """ Whether the item was unmarked now. """
+
         selection = self._get_selection(selection_id)
         selection_service = ChecklistSelectionService(
             instance=selection,
             user=self.user,
         )
-        selection_service.unmark()
+        return selection_service.unmark()

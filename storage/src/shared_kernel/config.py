@@ -2,27 +2,15 @@
 
 import json
 import os
-from enum import StrEnum
 from functools import lru_cache
 from typing import Literal
 from urllib.parse import urlparse
 
-from pydantic import field_validator, model_validator
+from pydantic import ValidationInfo, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-
-class LogsBackend(StrEnum):
-    """Where the collector sends the records (LOGS_BACKEND).
-
-    The file service only ever asks whether the pipeline is on;
-    the values are the ones the backend and the compose files
-    use, so one .env configures both writers.
-    """
-
-    LOCAL = 'local'
-    OTLP = 'otlp'
-    ELASTICSEARCH = 'elasticsearch'
-    NONE = 'none'
+LOGS_BACKEND_NONE = 'none'
+REDIS_URL_SCHEMES = ('redis', 'rediss')
 
 
 class BaseAppSettings(BaseSettings):
@@ -59,6 +47,24 @@ class BaseAppSettings(BaseSettings):
     def strip_trailing_slash(cls, v: str) -> str:
         """Strip trailing slash from URLs."""
         return v.rstrip('/')
+
+    @field_validator('LOGS_REDIS_URL', mode='after')
+    @classmethod
+    def require_redis_url(cls, v: str, info: ValidationInfo) -> str:
+        """Refuse a URL the emitter cannot dial while the pipeline is on.
+
+        redis.from_url raises ValueError on any other scheme, and it
+        does so on the first write, not at start: better to fail here.
+        Reads LOGS_BACKEND, which is declared above LOGS_REDIS_URL and
+        so is already validated when this runs.
+        """
+        backend = info.data.get('LOGS_BACKEND', LOGS_BACKEND_NONE)
+        if backend == LOGS_BACKEND_NONE:
+            return v
+        if urlparse(v).scheme not in REDIS_URL_SCHEMES:
+            msg = 'LOGS_REDIS_URL must be a redis:// or rediss:// URL'
+            raise ValueError(msg)
+        return v
 
     @field_validator('ALLOWED_ORIGINS', mode='before')
     @classmethod
@@ -123,7 +129,7 @@ class BaseAppSettings(BaseSettings):
     # ── Event pipeline ───────────────────────────────────────
     # The audit journal: records go into the Redis Stream of the backend.
     # Same variables as the backend reads, so one .env configures both writers.
-    LOGS_BACKEND: LogsBackend = LogsBackend.NONE
+    LOGS_BACKEND: str = LOGS_BACKEND_NONE
     LOGS_REDIS_URL: str = 'redis://:redis_password@redis:6379/4'
     LOGS_STREAM_MAXLEN: int = 250000
 
@@ -142,7 +148,7 @@ class BaseAppSettings(BaseSettings):
     @property
     def logs_enabled(self) -> bool:
         """Whether records are written at all."""
-        return self.LOGS_BACKEND != LogsBackend.NONE
+        return self.LOGS_BACKEND != LOGS_BACKEND_NONE
 
     @property
     def root_path(self) -> str:
@@ -173,7 +179,6 @@ class TestingSettings(BaseAppSettings):
     RATE_LIMIT_ENABLED: bool = False
     RELOAD: bool = False
     WORKERS: int = 1
-    LOGS_BACKEND: LogsBackend = LogsBackend.NONE
 
 
 class DevelopmentSettings(BaseAppSettings):

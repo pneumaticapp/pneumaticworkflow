@@ -43,6 +43,8 @@ def test_export__no_filters__emit_template_export(
         ),
         event_object=EventObject(type=EventObjectType.TEMPLATE),
         payload={'filters': {'is_active': None, 'is_public': None}},
+        workflow_id=None,
+        task_id=None,
         request=mocker.ANY,
     )
 
@@ -82,6 +84,8 @@ def test_export__filters__emit_the_filters_of_the_request(
                 'ordering': 'name',
             },
         },
+        workflow_id=None,
+        task_id=None,
         request=mocker.ANY,
     )
 
@@ -120,6 +124,8 @@ def test_export__first_page__emit_template_export(
                 'offset': 0,
             },
         },
+        workflow_id=None,
+        task_id=None,
         request=mocker.ANY,
     )
 

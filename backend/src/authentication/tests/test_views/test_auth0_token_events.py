@@ -7,7 +7,7 @@ from src.accounts.enums import SourceType
 from src.authentication.enums import AuthTokenType
 from src.authentication.services.auth0 import Auth0Service
 from src.generics.mixins.services import EncryptionMixin
-from src.logs.events import Actor, EventObject
+from src.logs.events.schema import Actor, EventObject
 from src.logs.events.enums import (
     ActorType,
     EventName,
@@ -240,6 +240,7 @@ def test_auth0_token__new_user__emit_user_signup_only(
         auth_type=AuthTokenType.USER,
         source=SourceType.AUTH0,
     )
+
     # Once by the user service that created the person, once by the view.
     assert identify_mock.call_count == 2
     identify_mock.assert_has_calls(

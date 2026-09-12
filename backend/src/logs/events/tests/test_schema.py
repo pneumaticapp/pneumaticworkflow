@@ -203,9 +203,17 @@ def test_to_json__value_no_encoder_knows__its_text():
 
 def test_dump_json__value_no_encoder_knows__raise():
 
+    # arrange
+    value = object()
+
     # act
-    with pytest.raises(TypeError):
-        dump_json(object())
+    with pytest.raises(TypeError) as ex:
+        dump_json(value)
+
+    # assert
+    assert str(ex.value) == (
+        'Object of type object is not JSON serializable'
+    )
 
 
 @pytest.mark.parametrize(

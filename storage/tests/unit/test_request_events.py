@@ -2,10 +2,9 @@
 
 import io
 from datetime import UTC, datetime
-from unittest.mock import AsyncMock, MagicMock, Mock
+from unittest.mock import AsyncMock, Mock
 
 import pytest
-from fastapi import Request
 
 from src.application.dto import UploadFileCommand
 from src.domain.entities import FileRecord
@@ -31,7 +30,6 @@ async def test_file_upload__long_filename__payload_string_cut(
     request_events,
     capturing_emitter,
     actor_user,
-    mock_request_events_now,
 ):
     """The name reaches the record from the request and is unbounded
     there, so the payload has to bound it the way the backend does."""
@@ -299,6 +297,7 @@ async def test_file_access_denied__foreign_account__file_account_in_payload(
 @pytest.mark.asyncio
 async def test_get_request_events__request__process_emitter(
     mocker,
+    make_context_request,
     actor_user,
     mock_request_events_now,
 ):
@@ -308,12 +307,10 @@ async def test_get_request_events__request__process_emitter(
         'src.shared_kernel.events.request_events.get_event_emitter',
         return_value=emitter_mock,
     )
-    request = MagicMock(spec=Request)
-    request.headers = {
-        'x-real-ip': '203.0.113.7',
-        'user-agent': 'Mozilla/5.0',
-    }
-    request.state = Mock(request_id='req-1')
+    request = make_context_request(
+        headers={'x-real-ip': '203.0.113.7', 'user-agent': 'Mozilla/5.0'},
+        request_id='req-1',
+    )
     command = UploadFileCommand(
         file_stream=io.BytesIO(b''),
         filename='a.txt',
@@ -355,8 +352,7 @@ async def test_get_request_events__request__process_emitter(
 
 async def test_get_request_events__headers__context_from_the_request(
     mocker,
-    actor_user,
-    mock_request_events_now,
+    make_context_request,
 ):
     """The dependency is where a request becomes the context of a
     record: address, browser and correlation id come from it."""
@@ -367,12 +363,10 @@ async def test_get_request_events__headers__context_from_the_request(
         'src.shared_kernel.events.request_events.get_event_emitter',
         return_value=emitter_mock,
     )
-    request = MagicMock(spec=Request)
-    request.headers = {
-        'x-real-ip': '203.0.113.7',
-        'user-agent': 'Mozilla/5.0',
-    }
-    request.state = Mock(request_id='req-1')
+    request = make_context_request(
+        headers={'x-real-ip': '203.0.113.7', 'user-agent': 'Mozilla/5.0'},
+        request_id='req-1',
+    )
 
     # act
     events = await get_request_events(request)
@@ -387,7 +381,7 @@ async def test_get_request_events__headers__context_from_the_request(
 
 async def test_get_request_events__no_user_agent__none_in_the_context(
     mocker,
-    actor_user,
+    make_context_request,
 ):
     # arrange
     emitter_mock = AsyncMock()
@@ -395,9 +389,10 @@ async def test_get_request_events__no_user_agent__none_in_the_context(
         'src.shared_kernel.events.request_events.get_event_emitter',
         return_value=emitter_mock,
     )
-    request = MagicMock(spec=Request)
-    request.headers = {'x-real-ip': '203.0.113.7'}
-    request.state = Mock(request_id='req-1')
+    request = make_context_request(
+        headers={'x-real-ip': '203.0.113.7'},
+        request_id='req-1',
+    )
 
     # act
     events = await get_request_events(request)
@@ -409,7 +404,7 @@ async def test_get_request_events__no_user_agent__none_in_the_context(
 
 async def test_get_request_events__no_client__fallback_address(
     mocker,
-    actor_user,
+    make_context_request,
 ):
     """No header and no socket: the record still carries an address."""
 
@@ -419,10 +414,7 @@ async def test_get_request_events__no_client__fallback_address(
         'src.shared_kernel.events.request_events.get_event_emitter',
         return_value=emitter_mock,
     )
-    request = MagicMock(spec=Request)
-    request.headers = {}
-    request.client = None
-    request.state = Mock(request_id='req-1')
+    request = make_context_request(has_client=False, request_id='req-1')
 
     # act
     events = await get_request_events(request)

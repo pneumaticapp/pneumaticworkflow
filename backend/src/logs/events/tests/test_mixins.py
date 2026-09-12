@@ -4,21 +4,14 @@ from src.logs.events.enums import (
     EventName,
     EventObjectType,
 )
-from src.logs.events.mixins import EventEmitMixin
 from src.logs.events.schema import Actor, EventObject
-
-
-class SomeService(EventEmitMixin):
-
-    def __init__(self, user=None, auth_type=AuthTokenType.USER):
-        self.user = user
-        self.auth_type = auth_type
+from src.logs.events.tests.fakes import FakeEmittingService
 
 
 def test_event_actor__no_user__system():
 
     # arrange
-    service = SomeService()
+    service = FakeEmittingService()
 
     # act
     actor = service._event_actor()
@@ -31,7 +24,7 @@ def test_event_actor__user_with_api_key__api_key_actor(mocker):
 
     # arrange
     user = mocker.Mock(id=5, email='ann@test.test')
-    service = SomeService(user=user, auth_type=AuthTokenType.API)
+    service = FakeEmittingService(user=user, auth_type=AuthTokenType.API)
 
     # act
     actor = service._event_actor()
@@ -49,7 +42,7 @@ def test_publish__service_actor__emit_called_with_it(mocker):
     # arrange
     user = mocker.Mock(id=5, email='ann@test.test')
     emit_mock = mocker.patch('src.logs.events.mixins.emit')
-    service = SomeService(user=user)
+    service = FakeEmittingService(user=user)
 
     # act
     service._publish(
@@ -77,7 +70,7 @@ def test_publish__given_actor__wins_over_the_service_user(mocker):
     # arrange
     user = mocker.Mock(id=5, email='ann@test.test')
     emit_mock = mocker.patch('src.logs.events.mixins.emit')
-    service = SomeService(user=user)
+    service = FakeEmittingService(user=user)
     invited = Actor(type=ActorType.USER, id=8, email='bob@test.test')
 
     # act

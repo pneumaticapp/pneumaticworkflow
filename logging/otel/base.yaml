@@ -1,8 +1,9 @@
 # Common part of the OpenTelemetry Collector config for the Pneumatic event
 # pipeline. Always loaded together with a mode file:
 #   --config=/etc/otel/base.yaml --config=/etc/otel/backend-${LOGS_BACKEND:-none}.yaml
-# The mode file owns the exporters and the whole `service.pipelines.logs` block
-# (on merge lists are replaced, not appended).
+# The mode file owns the exporters, and may override any other key of
+# `service.pipelines.logs`: the collector merges the two configs key by key,
+# and a list it finds in both is replaced, not appended.
 #
 # Personal data, in every mode: the record is delivered as it was written,
 # pii.* attributes included. The deployments these modes were written for -

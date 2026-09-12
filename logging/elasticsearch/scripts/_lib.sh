@@ -59,9 +59,11 @@ compose() {
 
 # The curl command every request runs, as a string for `sh -c` inside the
 # node container: the certificate authority and the password are already
-# there, so neither ever appears in a host process list and the storage
-# machine needs no curl of its own. WITH_BODY is "body" when the request
-# sends one, and it always arrives through stdin for the same reason.
+# there, so the storage machine needs no curl of its own and neither value
+# is typed on the command line of this script. The password is expanded by
+# the shell of the container, so it does show in the process list of that
+# container for as long as the request runs. WITH_BODY is "body" when the
+# request sends one, and it always arrives through stdin.
 # --fail-with-body: a 4xx or 5xx answer exits non-zero and, under set -e,
 # stops the script with the body on stdout, instead of passing as success
 # through every `> /dev/null` below (curl 7.76+, the image has it).

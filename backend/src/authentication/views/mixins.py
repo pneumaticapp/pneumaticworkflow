@@ -1,9 +1,9 @@
-from django.db.models import ObjectDoesNotExist
 from typing import Optional, Tuple
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import transaction
+from django.db.models import ObjectDoesNotExist
 from django.http import HttpRequest
 from rest_framework.exceptions import (
     AuthenticationFailed,

@@ -116,6 +116,15 @@ def test_highlight_types__every_other_type__included():
 def test_highlight_types__composition__without_duplicates():
 
     # arrange
+    hidden = {
+        WorkflowEventType.TASK_START,
+        WorkflowEventType.DELAY,
+        WorkflowEventType.TASK_SKIP,
+        WorkflowEventType.ENDED_BY_CONDITION,
+        WorkflowEventType.TASK_SKIP_NO_PERFORMERS,
+        WorkflowEventType.TASK_DELAY,
+        WorkflowEventType.TASK_DELEGATION,
+    }
     declared = {
         value for name, value in vars(WorkflowEventType).items()
         if name.isupper() and isinstance(value, int)
@@ -126,7 +135,7 @@ def test_highlight_types__composition__without_duplicates():
 
     # assert
     assert len(types) == len(set(types))
-    assert len(types) == len(declared) - 7
+    assert len(types) == len(declared) - len(hidden)
 
 
 def test_choices__migration_0260__same_pairs_as_the_enum():

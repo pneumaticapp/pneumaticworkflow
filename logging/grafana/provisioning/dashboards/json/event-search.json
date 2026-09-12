@@ -961,6 +961,31 @@
           },
           {
             "selected": false,
+            "text": "account.verification_resend",
+            "value": "account.verification_resend"
+          },
+          {
+            "selected": false,
+            "text": "account.verify",
+            "value": "account.verify"
+          },
+          {
+            "selected": false,
+            "text": "admin.create",
+            "value": "admin.create"
+          },
+          {
+            "selected": false,
+            "text": "admin.delete",
+            "value": "admin.delete"
+          },
+          {
+            "selected": false,
+            "text": "admin.update",
+            "value": "admin.update"
+          },
+          {
+            "selected": false,
             "text": "api_key.create",
             "value": "api_key.create"
           },
@@ -968,6 +993,81 @@
             "selected": false,
             "text": "api_key.revoke",
             "value": "api_key.revoke"
+          },
+          {
+            "selected": false,
+            "text": "billing.payment_confirm",
+            "value": "billing.payment_confirm"
+          },
+          {
+            "selected": false,
+            "text": "billing.purchase",
+            "value": "billing.purchase"
+          },
+          {
+            "selected": false,
+            "text": "billing.subscription_cancel",
+            "value": "billing.subscription_cancel"
+          },
+          {
+            "selected": false,
+            "text": "dataset.create",
+            "value": "dataset.create"
+          },
+          {
+            "selected": false,
+            "text": "dataset.delete",
+            "value": "dataset.delete"
+          },
+          {
+            "selected": false,
+            "text": "dataset.item_create",
+            "value": "dataset.item_create"
+          },
+          {
+            "selected": false,
+            "text": "dataset.item_delete",
+            "value": "dataset.item_delete"
+          },
+          {
+            "selected": false,
+            "text": "dataset.item_update",
+            "value": "dataset.item_update"
+          },
+          {
+            "selected": false,
+            "text": "dataset.items_add",
+            "value": "dataset.items_add"
+          },
+          {
+            "selected": false,
+            "text": "dataset.items_replace",
+            "value": "dataset.items_replace"
+          },
+          {
+            "selected": false,
+            "text": "dataset.update",
+            "value": "dataset.update"
+          },
+          {
+            "selected": false,
+            "text": "fieldset.clone",
+            "value": "fieldset.clone"
+          },
+          {
+            "selected": false,
+            "text": "fieldset.create",
+            "value": "fieldset.create"
+          },
+          {
+            "selected": false,
+            "text": "fieldset.delete",
+            "value": "fieldset.delete"
+          },
+          {
+            "selected": false,
+            "text": "fieldset.update",
+            "value": "fieldset.update"
           },
           {
             "selected": false,
@@ -1016,8 +1116,28 @@
           },
           {
             "selected": false,
+            "text": "task.checklist_mark",
+            "value": "task.checklist_mark"
+          },
+          {
+            "selected": false,
+            "text": "task.checklist_unmark",
+            "value": "task.checklist_unmark"
+          },
+          {
+            "selected": false,
             "text": "task.comment",
             "value": "task.comment"
+          },
+          {
+            "selected": false,
+            "text": "task.comment_delete",
+            "value": "task.comment_delete"
+          },
+          {
+            "selected": false,
+            "text": "task.comment_update",
+            "value": "task.comment_update"
           },
           {
             "selected": false,
@@ -1081,6 +1201,11 @@
           },
           {
             "selected": false,
+            "text": "template.ai_generate",
+            "value": "template.ai_generate"
+          },
+          {
+            "selected": false,
             "text": "template.clone",
             "value": "template.clone"
           },
@@ -1088,6 +1213,11 @@
             "selected": false,
             "text": "template.delete",
             "value": "template.delete"
+          },
+          {
+            "selected": false,
+            "text": "template.draft_discard",
+            "value": "template.draft_discard"
           },
           {
             "selected": false,
@@ -1101,8 +1231,48 @@
           },
           {
             "selected": false,
+            "text": "template.library_fill",
+            "value": "template.library_fill"
+          },
+          {
+            "selected": false,
+            "text": "template.library_import",
+            "value": "template.library_import"
+          },
+          {
+            "selected": false,
             "text": "template.publish",
             "value": "template.publish"
+          },
+          {
+            "selected": false,
+            "text": "template_preset.create",
+            "value": "template_preset.create"
+          },
+          {
+            "selected": false,
+            "text": "template_preset.delete",
+            "value": "template_preset.delete"
+          },
+          {
+            "selected": false,
+            "text": "template_preset.set_default",
+            "value": "template_preset.set_default"
+          },
+          {
+            "selected": false,
+            "text": "template_preset.update",
+            "value": "template_preset.update"
+          },
+          {
+            "selected": false,
+            "text": "tenant.create",
+            "value": "tenant.create"
+          },
+          {
+            "selected": false,
+            "text": "tenant.delete",
+            "value": "tenant.delete"
           },
           {
             "selected": false,
@@ -1161,6 +1331,16 @@
           },
           {
             "selected": false,
+            "text": "user.password_set",
+            "value": "user.password_set"
+          },
+          {
+            "selected": false,
+            "text": "user.reassign",
+            "value": "user.reassign"
+          },
+          {
+            "selected": false,
             "text": "user.signup",
             "value": "user.signup"
           },
@@ -1168,6 +1348,26 @@
             "selected": false,
             "text": "user.transfer",
             "value": "user.transfer"
+          },
+          {
+            "selected": false,
+            "text": "user.unsubscribe",
+            "value": "user.unsubscribe"
+          },
+          {
+            "selected": false,
+            "text": "user.update",
+            "value": "user.update"
+          },
+          {
+            "selected": false,
+            "text": "user.vacation_activate",
+            "value": "user.vacation_activate"
+          },
+          {
+            "selected": false,
+            "text": "user.vacation_deactivate",
+            "value": "user.vacation_deactivate"
           },
           {
             "selected": false,
@@ -1236,11 +1436,16 @@
           },
           {
             "selected": false,
+            "text": "workflow.update",
+            "value": "workflow.update"
+          },
+          {
+            "selected": false,
             "text": "workflow.urgent",
             "value": "workflow.urgent"
           }
         ],
-        "query": "account.update,api_key.create,api_key.revoke,file.access_denied,file.download,file.upload,group.create,group.delete,group.update,invite.accept,invite.create,invite.resend,task.comment,task.complete,task.delay,task.delegation,task.due_date_changed,task.performer_created,task.performer_deleted,task.performer_group_created,task.performer_group_deleted,task.revert,task.skip,task.skip_no_performers,task.start,template.clone,template.delete,template.draft_save,template.export,template.publish,tenant.login_as,user.admin_toggle,user.create,user.deactivate,user.login,user.login_as,user.login_failed,user.logout,user.password_change,user.password_reset,user.password_reset_request,user.signup,user.transfer,webhook.subscribe,webhook.unsubscribe,workflow.complete,workflow.delay,workflow.ended,workflow.ended_by_condition,workflow.force_delay,workflow.force_resume,workflow.not_urgent,workflow.revert,workflow.run,workflow.sub_workflow_run,workflow.terminate,workflow.urgent",
+        "query": "account.update,account.verification_resend,account.verify,admin.create,admin.delete,admin.update,api_key.create,api_key.revoke,billing.payment_confirm,billing.purchase,billing.subscription_cancel,dataset.create,dataset.delete,dataset.item_create,dataset.item_delete,dataset.item_update,dataset.items_add,dataset.items_replace,dataset.update,fieldset.clone,fieldset.create,fieldset.delete,fieldset.update,file.access_denied,file.download,file.upload,group.create,group.delete,group.update,invite.accept,invite.create,invite.resend,task.checklist_mark,task.checklist_unmark,task.comment,task.comment_delete,task.comment_update,task.complete,task.delay,task.delegation,task.due_date_changed,task.performer_created,task.performer_deleted,task.performer_group_created,task.performer_group_deleted,task.revert,task.skip,task.skip_no_performers,task.start,template.ai_generate,template.clone,template.delete,template.draft_discard,template.draft_save,template.export,template.library_fill,template.library_import,template.publish,template_preset.create,template_preset.delete,template_preset.set_default,template_preset.update,tenant.create,tenant.delete,tenant.login_as,user.admin_toggle,user.create,user.deactivate,user.login,user.login_as,user.login_failed,user.logout,user.password_change,user.password_reset,user.password_reset_request,user.password_set,user.reassign,user.signup,user.transfer,user.unsubscribe,user.update,user.vacation_activate,user.vacation_deactivate,webhook.subscribe,webhook.unsubscribe,workflow.complete,workflow.delay,workflow.ended,workflow.ended_by_condition,workflow.force_delay,workflow.force_resume,workflow.not_urgent,workflow.revert,workflow.run,workflow.sub_workflow_run,workflow.terminate,workflow.update,workflow.urgent",
         "queryValue": "",
         "skipUrlSync": false,
         "type": "custom"

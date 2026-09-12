@@ -237,8 +237,9 @@ def is_valid_pii_path(path: str) -> bool:
     """ Whether a path can name a field at all.
 
         An unresolvable path is dropped without a word and the field
-        then leaves as a plain attribute past the redaction rule of
-        the collector, so a typo is a silent data leak.
+        then leaves as a plain attribute, outside the pii.* namespace
+        that tells a receiver what is personal: a typo is a silent
+        data leak.
     """
 
     head, tail = split_pii_path(path)
