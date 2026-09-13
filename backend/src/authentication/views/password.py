@@ -42,6 +42,7 @@ from src.generics.mixins.views import (
 from src.generics.permissions import (
     UserIsAuthenticated,
 )
+from src.logs.events import AuditEventService
 from src.notifications.tasks import (
     send_reset_password_notification,
 )
@@ -142,6 +143,10 @@ class ResetPasswordViewSet(
                 logging=user.account.log_api_requests,
                 account_id=user.account_id,
             )
+            AuditEventService.password_reset_requested(
+                request=request,
+                user=user,
+            )
         return self.response_ok()
 
     @extend_schema(
@@ -195,6 +200,7 @@ class ResetPasswordViewSet(
             ),
             user_ip=request.META.get('HTTP_X_REAL_IP'),
         )
+        AuditEventService.password_reset(request=request, user=user)
         return self.response_ok({'token': token})
 
 
@@ -226,4 +232,5 @@ class ChangePasswordView(
             user_agent=request.user_agent,
             user_ip=request.META.get('HTTP_X_REAL_IP'),
         )
+        AuditEventService.password_changed(request=request)
         return self.response_ok({'token': token})

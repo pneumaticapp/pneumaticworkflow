@@ -36,6 +36,7 @@ from src.generics.mixins.views import (
 from src.generics.permissions import (
     UserIsAuthenticated,
 )
+from src.logs.events import AuditEventService
 from src.payment.stripe.exceptions import StripeServiceException
 from src.payment.stripe.service import StripeService
 from src.payment.tasks import (
@@ -144,6 +145,10 @@ class TenantsViewSet(
                 except StripeServiceException as ex:
                     raise_validation_error(message=ex.message)
             instance.delete()
+            AuditEventService.tenant_deleted(
+                request=self.request,
+                tenant=instance,
+            )
             account_service = AccountService(
                 instance=master_account,
                 user=self.request.user,
@@ -280,6 +285,10 @@ class TenantsViewSet(
                     is_superuser=request.is_superuser,
                     auth_type=request.token_type,
                 )
+                AuditEventService.tenant_created(
+                    request=request,
+                    tenant=tenant_account,
+                )
         response_slz = self.serializer_class(instance=tenant_account)
         return self.response_ok(response_slz.data)
 
@@ -296,20 +305,14 @@ class TenantsViewSet(
     )
     @action(methods=('GET',), detail=True)
     def token(self, request, **kwargs):
-        tenant_account = self.get_object()
-        account_owner = tenant_account.get_owner()
-        token = AuthService.get_auth_token(
-            user=account_owner,
+        token = AuthService.get_tenant_auth_token(
+            master_user=request.user,
+            tenant_account=self.get_object(),
             user_agent=request.headers.get(
                 'User-Agent',
                 request.META.get('HTTP_USER_AGENT'),
             ),
             user_ip=request.META.get('HTTP_X_REAL_IP'),
-            superuser_mode=True,
-        )
-        AnalyticService.tenants_accessed(
-            master_user=request.user,
-            tenant_account=tenant_account,
             is_superuser=request.is_superuser,
             auth_type=request.token_type,
         )

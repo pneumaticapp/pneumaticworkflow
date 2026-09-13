@@ -4,10 +4,13 @@ from django.db.models import ObjectDoesNotExist
 from rest_framework.decorators import action
 from rest_framework.exceptions import (
     AuthenticationFailed,
+    ValidationError,
 )
 from rest_framework.viewsets import GenericViewSet
 
+from src.accounts.enums import SourceType
 from src.analysis.mixins import BaseIdentifyMixin
+from src.authentication.enums import LoginFailedReason
 from src.authentication.messages import (
     MSG_AU_0003,
 )
@@ -26,6 +29,7 @@ from src.authentication.throttling import (
     AuthGoogleTokenThrottle,
 )
 from src.authentication.views.mixins import (
+    LoginEventMixin,
     SignUpMixin,
     SSORestrictionMixin,
 )
@@ -44,6 +48,7 @@ UserModel = get_user_model()
 class GoogleAuthViewSet(
     SSORestrictionMixin,
     SignUpMixin,
+    LoginEventMixin,
     CustomViewSetMixin,
     BaseIdentifyMixin,
     GenericViewSet,
@@ -51,6 +56,7 @@ class GoogleAuthViewSet(
     permission_classes = (
         GoogleAuthPermission,
     )
+    audit_source = SourceType.GOOGLE
     serializer_class = GoogleTokenSerializer
 
     @property
@@ -100,7 +106,21 @@ class GoogleAuthViewSet(
                         gclid=slz.validated_data.get('gclid'),
                     )
                 else:
+                    self.emit_login_failed(
+                        request=request,
+                        reason=LoginFailedReason.SIGNUP_DISABLED,
+                        email=user_data['email'],
+                    )
                     raise AuthenticationFailed(MSG_AU_0003) from err
+            except ValidationError:
+                self.emit_login_failed(
+                    request=request,
+                    reason=LoginFailedReason.SSO_REQUIRED,
+                    email=user.email,
+                )
+                raise
+            else:
+                self.emit_login(user=user, request=request)
 
             service.save_tokens_for_user(user)
             update_google_contacts.delay(user.id)

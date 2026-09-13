@@ -1,4 +1,11 @@
 name: pneumatic
+
+# The logging stack lives in one file for both root compose
+# files and is off by default: its services start only with
+# the profile of LOGS_BACKEND, see logging/compose/logs.yml.
+include:
+  - logging/compose/logs.yml
+
 services:
   postgres:
     image: postgres:15-bookworm
@@ -33,7 +40,9 @@ services:
       --dbfilename dump.rdb
       --dir /data
       --requirepass ${REDIS_PASSWORD:-redis_password}
-      --save 20 1 300 100 60 10000
+      --save 20 1
+      --save 300 100
+      --save 60 10000
     volumes:
       - ./redis/data:/data
     expose:
@@ -172,6 +181,11 @@ services:
       FILE_POSTGRES_DB: ${FILE_POSTGRES_DB:-pneumatic}
       FILE_POSTGRES_HOST: ${FILE_POSTGRES_HOST:-file-postgres}
       FILE_POSTGRES_PORT: ${FILE_POSTGRES_PORT:-5432}
+      LOGS_BACKEND: ${LOGS_BACKEND:-none}
+      LOGS_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/4"
+      LOGS_OTLP_ENDPOINT: ${LOGS_OTLP_ENDPOINT:-http://otel-collector:4318}
+      LOGS_STREAM_MAXLEN: ${LOGS_STREAM_MAXLEN:-250000}
+      LOGS_CONSUMER_BATCH_SIZE: ${LOGS_CONSUMER_BATCH_SIZE:-1000}
     expose:
       - 8000
     volumes:
@@ -179,9 +193,12 @@ services:
       - backend-socket:/tmp/gunicorn
       - backend-staticfiles:/pneumatic_backend/staticfiles
     depends_on:
-      - postgres
-      - rabbitmq
-      - redis
+      postgres:
+        condition: service_started
+      rabbitmq:
+        condition: service_started
+      redis:
+        condition: service_started
     healthcheck:
       test: ["CMD", "pg_isready", "-h", postgres]
       interval: 5s
@@ -299,14 +316,25 @@ services:
       FILE_POSTGRES_DB: ${FILE_POSTGRES_DB:-pneumatic}
       FILE_POSTGRES_HOST: ${FILE_POSTGRES_HOST:-file-postgres}
       FILE_POSTGRES_PORT: ${FILE_POSTGRES_PORT:-5432}
+      LOGS_BACKEND: ${LOGS_BACKEND:-none}
+      LOGS_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/4"
+      LOGS_OTLP_ENDPOINT: ${LOGS_OTLP_ENDPOINT:-http://otel-collector:4318}
+      LOGS_STREAM_MAXLEN: ${LOGS_STREAM_MAXLEN:-250000}
+      LOGS_CONSUMER_BATCH_SIZE: ${LOGS_CONSUMER_BATCH_SIZE:-1000}
     volumes:
       - ./backend:/pneumatic_backend
     command: >
       sh -c "celery --app src.celery_app:app worker -l warning"
     depends_on:
-      - postgres
-      - rabbitmq
-      - redis
+      postgres:
+        condition: service_started
+      rabbitmq:
+        condition: service_started
+      redis:
+        condition: service_started
+      otel-collector:
+        condition: service_started
+        required: false
     networks:
       - pneumatic
     restart: always
@@ -419,13 +447,21 @@ services:
       FILE_POSTGRES_DB: ${FILE_POSTGRES_DB:-pneumatic}
       FILE_POSTGRES_HOST: ${FILE_POSTGRES_HOST:-file-postgres}
       FILE_POSTGRES_PORT: ${FILE_POSTGRES_PORT:-5432}
+      LOGS_BACKEND: ${LOGS_BACKEND:-none}
+      LOGS_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/4"
+      LOGS_OTLP_ENDPOINT: ${LOGS_OTLP_ENDPOINT:-http://otel-collector:4318}
+      LOGS_STREAM_MAXLEN: ${LOGS_STREAM_MAXLEN:-250000}
+      LOGS_CONSUMER_BATCH_SIZE: ${LOGS_CONSUMER_BATCH_SIZE:-1000}
     volumes:
       - ./backend:/pneumatic_backend
     command: celery --pidfile= --app src.celery_app:app beat -l warning -S django
     depends_on:
-      - postgres
-      - rabbitmq
-      - redis
+      postgres:
+        condition: service_started
+      rabbitmq:
+        condition: service_started
+      redis:
+        condition: service_started
     networks:
       - pneumatic
     restart: always
@@ -540,6 +576,9 @@ services:
       KEY_PREFIX_REDIS: ${FILE_KEY_PREFIX_REDIS:-:1:}
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-django_secret_django_secret_django_secret}
       AUTH_TOKEN_ITERATIONS: ${FILE_AUTH_TOKEN_ITERATIONS:-1}
+      LOGS_BACKEND: ${LOGS_BACKEND:-none}
+      LOGS_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/4"
+      LOGS_STREAM_MAXLEN: ${LOGS_STREAM_MAXLEN:-250000}
     command: >
       sh -c "poetry run alembic -c src/shared_kernel/database/alembic.ini upgrade head &&
              poetry run uvicorn src.main:app --host 0.0.0.0 --port ${FILE_PORT:-8000} --workers ${FILE_WORKERS:-1}"

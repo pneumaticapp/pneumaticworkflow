@@ -1,12 +1,15 @@
 """Fixtures specific to unit tests."""
 
+import json
 from datetime import UTC, datetime
+from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, Mock
 
 import pytest
 from botocore.exceptions import ClientError
 from fastapi import Request
 from starlette.applications import Starlette
+from starlette.datastructures import Headers
 from starlette.responses import PlainTextResponse, Response
 from starlette.routing import Route
 from starlette.testclient import TestClient
@@ -24,15 +27,61 @@ from src.shared_kernel.auth.redis_client import (
     get_redis_client,
 )
 from src.shared_kernel.auth.token_auth import _compute_pbkdf2
-from src.shared_kernel.auth.user_types import UserType
+from src.shared_kernel.auth.user_types import ActorType, UserType
 from src.shared_kernel.database.models import FileRecordORM
+from src.shared_kernel.events.emitter import EventEmitter, get_event_emitter
+from src.shared_kernel.events.request_events import RequestEvents
+from src.shared_kernel.events.schema import (
+    SERVICE_NAME,
+    Actor,
+    Event,
+    EventName,
+    RequestContext,
+)
 from src.shared_kernel.middleware.auth_middleware import (
     AuthenticationMiddleware,
 )
 from src.shared_kernel.middleware.rate_limit import _RateLimit
+from src.shared_kernel.middleware.request_id import RequestIdMiddleware
 from src.shared_kernel.middleware.security_headers import (
     SecurityHeadersMiddleware,
 )
+
+# The record the backend tests read back: one file for both writers.
+# parents[3] is the repository root: fixtures -> tests -> storage -> root.
+BACKEND_CONTRACT_DIR = (
+    Path(__file__).resolve().parents[3]
+    / 'backend'
+    / 'src'
+    / 'logs'
+    / 'events'
+    / 'tests'
+    / 'fixtures'
+)
+BACKEND_CONTRACT_PATH = BACKEND_CONTRACT_DIR / 'file_service_record.json'
+BACKEND_UPLOAD_CONTRACT_PATH = (
+    BACKEND_CONTRACT_DIR / 'file_service_upload_record.json'
+)
+BACKEND_DENIED_CONTRACT_PATH = (
+    BACKEND_CONTRACT_DIR / 'file_service_denied_record.json'
+)
+BACKEND_SERVICE_CONTRACT_PATH = (
+    BACKEND_CONTRACT_DIR / 'file_service_contract.json'
+)
+CONTRACT_FILE_ID = '0f8fad5b-d9cb-469f-a165-70867728950e'
+CONTRACT_TS = datetime(2026, 9, 9, 12, 0, 0, 123, tzinfo=UTC)
+# The id the endpoint tests download and upload.
+API_FILE_ID = '12345678-1234-5678-1234-567812345678'
+# Host and password of the emitter under test: both are secrets the
+# emitter must keep out of its log lines, the tests look for them there.
+EMITTER_REDIS_HOST = 'redis-host.test'
+EMITTER_REDIS_PASSWORD = 'emitter-secret'
+EMITTER_REDIS_URL = (
+    f'redis://:{EMITTER_REDIS_PASSWORD}@{EMITTER_REDIS_HOST}:6379/4'
+)
+EMITTER_STREAM_KEY = 'pneumatic:events'
+EMITTER_MAXLEN = 10
+
 
 # --- auth_middleware fixtures ---
 
@@ -442,3 +491,281 @@ def mock_auth_middleware_pneumatic_token_data(mocker):
     return mocker.patch(
         'src.shared_kernel.middleware.auth_middleware.PneumaticToken.data',
     )
+
+
+# --- events fixtures ---
+
+
+class CapturingEmitter:
+    """Emitter of the unit tests: keeps the records instead of Redis."""
+
+    def __init__(self) -> None:
+        self.events: list[Event] = []
+
+    async def emit(self, event: Event) -> None:
+        self.events.append(event)
+
+
+def _read_contract(path: Path) -> dict:
+    """Read a shared contract record, or say why it cannot be read."""
+    if not path.is_file():
+        msg = (
+            f'The backend contract fixture is missing: {path}. '
+            f'The file service and the backend share one record shape '
+            f'and these files are it.'
+        )
+        raise AssertionError(msg)
+    return json.loads(path.read_text(encoding='utf-8'))
+
+
+@pytest.fixture
+def backend_contract_record():
+    """The record both writers agree on, read from the backend copy.
+
+    Missing means the contract cannot be checked at all, which is the
+    thing this fixture exists to prevent: it fails instead of skipping,
+    so a checkout or an image that cannot see the file says so.
+    """
+    return _read_contract(BACKEND_CONTRACT_PATH)
+
+
+@pytest.fixture
+def backend_upload_contract_record():
+    """The upload record both writers agree on."""
+    return _read_contract(BACKEND_UPLOAD_CONTRACT_PATH)
+
+
+@pytest.fixture
+def backend_denied_contract_record():
+    """The refusal record both writers agree on."""
+    return _read_contract(BACKEND_DENIED_CONTRACT_PATH)
+
+
+@pytest.fixture
+def backend_service_contract():
+    """The names both writers agree on: the stream and the actor types."""
+    return _read_contract(BACKEND_SERVICE_CONTRACT_PATH)
+
+
+@pytest.fixture
+def sample_upload_event(sample_context):
+    """Upload record of the contract."""
+    return Event(
+        type=EventName.FILE_UPLOAD,
+        service=SERVICE_NAME,
+        ts=CONTRACT_TS,
+        account_id=42,
+        actor=Actor(type=ActorType.USER, id=17),
+        file_id=CONTRACT_FILE_ID,
+        context=sample_context,
+        payload={
+            'filename': 'Contract Ann Smith.pdf',
+            'size': 12345,
+            'content_type': 'application/pdf',
+        },
+    )
+
+
+@pytest.fixture
+def sample_denied_event(sample_context):
+    """Refusal record of the contract, for a file of another account."""
+    return Event(
+        type=EventName.FILE_ACCESS_DENIED,
+        service=SERVICE_NAME,
+        ts=CONTRACT_TS,
+        account_id=42,
+        actor=Actor(type=ActorType.USER, id=17),
+        file_id=CONTRACT_FILE_ID,
+        context=sample_context,
+        payload={
+            'filename': 'Contract Ann Smith.pdf',
+            'size': 12345,
+            'content_type': 'application/pdf',
+            'file_account_id': 99,
+        },
+    )
+
+
+@pytest.fixture
+def sample_context():
+    """HTTP context of the contract record."""
+    return RequestContext(
+        ip='203.0.113.7',
+        user_agent='Mozilla/5.0 (X11; Linux x86_64)',
+        request_id='3f9c2c1e6d0b4a0f9e2b7c1d5a6e8f90',
+    )
+
+
+@pytest.fixture
+def sample_event(sample_context):
+    """Download record of the contract."""
+    return Event(
+        type=EventName.FILE_DOWNLOAD,
+        service=SERVICE_NAME,
+        ts=CONTRACT_TS,
+        account_id=42,
+        actor=Actor(type=ActorType.USER, id=17),
+        file_id=CONTRACT_FILE_ID,
+        context=sample_context,
+        payload={
+            'filename': 'Contract Ann Smith.pdf',
+            'size': 12345,
+            'content_type': 'application/pdf',
+            'is_owner': True,
+        },
+    )
+
+
+@pytest.fixture
+def capturing_emitter():
+    """Emitter that keeps the records."""
+    return CapturingEmitter()
+
+
+@pytest.fixture
+def events_emitter(mock_events_redis_from_url):
+    """Enabled emitter of the unit tests; the Redis client is mocked.
+
+    The mock is a dependency and not a convention: without it the
+    first test that forgets to ask for it dials a real host.
+    """
+    return EventEmitter(
+        url=EMITTER_REDIS_URL,
+        key=EMITTER_STREAM_KEY,
+        maxlen=EMITTER_MAXLEN,
+        enabled=True,
+    )
+
+
+@pytest.fixture
+def sample_stream_fields(sample_event):
+    """The fields xadd writes for the sample event."""
+    return {
+        'type': 'file.download',
+        'data': json.dumps(sample_event.to_dict()),
+    }
+
+
+@pytest.fixture
+def clear_event_emitter_cache():
+    """Clear the process emitter before and after the test."""
+    get_event_emitter.cache_clear()
+    yield
+    get_event_emitter.cache_clear()
+
+
+@pytest.fixture
+def request_events(capturing_emitter, sample_context):
+    """RequestEvents bound to the contract context."""
+    return RequestEvents(
+        emitter=capturing_emitter,
+        context=sample_context,
+    )
+
+
+@pytest.fixture
+def actor_user():
+    """The actor of the contract record."""
+    return Mock(user_id=17, account_id=42, actor_type=ActorType.USER)
+
+
+@pytest.fixture
+def mock_request_events_now(mocker):
+    """Fixed moment for the records of RequestEvents."""
+    return mocker.patch(
+        'src.shared_kernel.events.request_events._now',
+        return_value=CONTRACT_TS,
+    )
+
+
+@pytest.fixture
+def mock_emitter_now(mocker):
+    """Mock for the monotonic clock of the emitter."""
+    return mocker.patch('src.shared_kernel.events.emitter._now')
+
+
+@pytest.fixture
+def mock_events_redis_from_url(mocker):
+    """Mock for redis.asyncio.from_url as the emitter imports it."""
+    return mocker.patch('src.shared_kernel.events.emitter.redis.from_url')
+
+
+@pytest.fixture
+def mock_emitter_settings(mocker):
+    """Mock for get_settings in the emitter module."""
+    return mocker.patch('src.shared_kernel.events.emitter.get_settings')
+
+
+@pytest.fixture
+def mock_events_file_upload(mocker):
+    """Mock for RequestEvents.file_upload."""
+    return mocker.patch(
+        'src.shared_kernel.events.request_events.RequestEvents.file_upload',
+        new_callable=AsyncMock,
+    )
+
+
+@pytest.fixture
+def mock_events_file_download(mocker):
+    """Mock for RequestEvents.file_download."""
+    return mocker.patch(
+        'src.shared_kernel.events.request_events.RequestEvents.file_download',
+        new_callable=AsyncMock,
+    )
+
+
+@pytest.fixture
+def mock_events_file_access_denied(mocker):
+    """Mock for RequestEvents.file_access_denied."""
+    return mocker.patch(
+        'src.shared_kernel.events.request_events.'
+        'RequestEvents.file_access_denied',
+        new_callable=AsyncMock,
+    )
+
+
+# --- request_id fixtures ---
+
+
+def _request_id_echo(request):
+    """Echo the id the middleware stored."""
+    return PlainTextResponse(request.state.request_id)
+
+
+@pytest.fixture
+def request_id_client():
+    """Test client of an app with RequestIdMiddleware only."""
+    app = Starlette(routes=[Route('/', _request_id_echo)])
+    app.add_middleware(RequestIdMiddleware)
+    return TestClient(app)
+
+
+@pytest.fixture
+def make_context_request():
+    """Factory for mock requests of the events context.
+
+    The headers are real Starlette Headers, case-insensitive as in
+    production, so the tests may spell a name any way they like.
+    """
+
+    def _factory(
+        headers=None,
+        client_ip='127.0.0.1',
+        *,
+        has_client: bool = True,
+        request_id=None,
+    ):
+        request = MagicMock(spec=Request)
+        request.headers = Headers(headers or {})
+        if has_client:
+            request.client = MagicMock()
+            request.client.host = client_ip
+        else:
+            request.client = None
+        state = type('State', (), {})()
+        if request_id is not None:
+            state.request_id = request_id
+        request.state = state
+        return request
+
+    return _factory

@@ -1,5 +1,6 @@
 import pytest
 
+from src.authentication.enums import AuthTokenType
 from src.processes.tests.fixtures import create_test_user
 from src.utils.validation import ErrorCode
 from src.webhooks import exceptions
@@ -36,6 +37,7 @@ def test_list__ok(api_client, mocker):
     service_init_mock.assert_called_once_with(
         user=user,
         is_superuser=False,
+        auth_type=AuthTokenType.USER,
     )
     service_mock.assert_called_once()
 
@@ -67,6 +69,7 @@ def test_retrieve__ok(api_client, mocker):
     service_init_mock.assert_called_once_with(
         user=user,
         is_superuser=False,
+        auth_type=AuthTokenType.USER,
     )
     service_mock.assert_called_once_with(event=event)
 
@@ -125,6 +128,7 @@ def test_retrieve__invalid_event__not_found(api_client, mocker):
     service_init_mock.assert_called_once_with(
         user=user,
         is_superuser=False,
+        auth_type=AuthTokenType.USER,
     )
     service_mock.assert_called_once_with(event=event)
 
@@ -157,6 +161,7 @@ def test_subscribe__ok(api_client, mocker):
     service_init_mock.assert_called_once_with(
         user=user,
         is_superuser=False,
+        auth_type=AuthTokenType.USER,
     )
     service_mock.assert_called_once_with(
         event=event,
@@ -193,6 +198,7 @@ def test_subscribe__invalid_event__not_found(api_client, mocker):
     service_init_mock.assert_called_once_with(
         user=user,
         is_superuser=False,
+        auth_type=AuthTokenType.USER,
     )
     service_mock.assert_called_once_with(
         event=event,
@@ -254,6 +260,7 @@ def test_unsubscribe__ok(api_client, mocker):
     service_init_mock.assert_called_once_with(
         user=user,
         is_superuser=False,
+        auth_type=AuthTokenType.USER,
     )
     service_mock.assert_called_once_with(event=event)
 
@@ -285,5 +292,6 @@ def test_unsubscribe__invalid_event__not_found(api_client, mocker):
     service_init_mock.assert_called_once_with(
         user=user,
         is_superuser=False,
+        auth_type=AuthTokenType.USER,
     )
     service_mock.assert_called_once_with(event=event)

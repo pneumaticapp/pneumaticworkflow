@@ -20,6 +20,7 @@ from src.generics.mixins.views import (
 from src.generics.permissions import (
     UserIsAuthenticated,
 )
+from src.logs.events import AuditEventService
 from src.openapi import (
     ACCESS_ADMIN_BASE,
     ACCESS_AUTH,
@@ -90,11 +91,18 @@ class AccountView(
             data=request.data,
         )
         slz.is_valid(raise_exception=True)
+        changed_fields = slz.get_changed_fields()
         service = AccountService(
             instance=slz.instance,
             user=self.request.user,
         )
         service.partial_update(**slz.validated_data, force_save=True)
+        if changed_fields:
+            AuditEventService.account_updated(
+                request=request,
+                account=instance,
+                changed_fields=changed_fields,
+            )
         return self.response_ok(slz.data)
 
 

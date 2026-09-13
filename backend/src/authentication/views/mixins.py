@@ -16,10 +16,14 @@ from src.accounts.services.exceptions import (
     UserServiceException,
 )
 from src.accounts.services.user import UserService
-from src.authentication.enums import AuthTokenType
+from src.authentication.enums import (
+    AuthTokenType,
+    LoginFailedReason,
+)
 from src.authentication.messages import MSG_AU_0016
 from src.authentication.services.user_auth import AuthService
 from src.authentication.tokens import PneumaticToken
+from src.logs.events import AuditEventService
 from src.logs.service import AccountLogService
 from src.payment.stripe.exceptions import StripeServiceException
 from src.payment.stripe.service import StripeService
@@ -39,6 +43,20 @@ class SignUpMixin:
 
     source = None
 
+    # The provider the journal names. A view leaves source alone:
+    # source switches the account log on, and no view had it.
+    audit_source = None
+
+    def _get_request(self) -> Optional[HttpRequest]:
+
+        """ The request being handled, when there is one.
+
+            A view has it as an attribute; a service that mixes this
+            in has none, and then the events fall back to the context
+            the middleware published. """
+
+        return getattr(self, 'request', None)
+
     def after_signup(self, user: UserModel):
         """Create signup log and send notification if enabled"""
         if user.account.log_api_requests and self.source:
@@ -49,6 +67,20 @@ class SignUpMixin:
                 send_new_signup_notification,
             )
             send_new_signup_notification.delay(user.account_id)
+        self.emit_signup(user)
+
+    def emit_signup(self, user: UserModel) -> None:
+
+        """ The one place every sign up source goes through, so the
+            user.signup event is published here and nowhere else.
+            A service has no request: the address and the browser
+            then come from the context of the middleware. """
+
+        AuditEventService.user_signed_up(
+            user=user,
+            source=self.audit_source or self.source,
+            request=self._get_request(),
+        )
 
     def join_existing_account(
         self,
@@ -65,7 +97,7 @@ class SignUpMixin:
         password: Optional[str] = None,
     ) -> UserModel:
 
-        request = getattr(self, 'request', None)
+        request = self._get_request()
         is_superuser = getattr(request, 'is_superuser', False)
         user_service = UserService(
             is_superuser=is_superuser,
@@ -114,7 +146,7 @@ class SignUpMixin:
         ms_graph_user_id: Optional[str] = None,
     ) -> Tuple[UserModel, PneumaticToken]:
 
-        request = request or self.request
+        request = request or self._get_request()
         is_superuser = getattr(request, 'is_superuser', False)  # for Admin
         account_service = AccountService(
             is_superuser=is_superuser,
@@ -180,6 +212,38 @@ class SignUpMixin:
                     user_ip=request.META.get('HTTP_X_REAL_IP'),
                 )
         return account_owner, token
+
+
+class LoginEventMixin:
+
+    """ The sign in events of a login view: which provider signed
+        somebody in, and which refusal to journal when it did not.
+        Every view that mixes this in names its audit_source.
+
+        The SSO providers built on BaseSSOService journal the login in
+        the service instead, where the new and the returning person
+        are told apart without the view having to ask. """
+
+    audit_source = None
+
+    def emit_login(self, user: UserModel, request) -> None:
+        AuditEventService.user_logged_in(
+            user=user,
+            source=self.audit_source,
+            request=request,
+        )
+
+    def emit_login_failed(
+        self,
+        request,
+        reason: LoginFailedReason.LITERALS,
+        email: Optional[str] = None,
+    ):
+        AuditEventService.login_failed(
+            request=request,
+            reason=reason,
+            email=email,
+        )
 
 
 class SSORestrictionMixin:

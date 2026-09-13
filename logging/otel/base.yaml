@@ -1,0 +1,46 @@
+# Common part of the OpenTelemetry Collector config for the Pneumatic event
+# pipeline. Always loaded together with a mode file:
+#   --config=/etc/otel/base.yaml --config=/etc/otel/backend-${LOGS_BACKEND:-none}.yaml
+# The mode file owns the exporters, and may override any other key of
+# `service.pipelines.logs`: the collector merges the two configs key by key,
+# and a list it finds in both is replaced, not appended.
+#
+# Personal data, in every mode: the record is delivered as it was written,
+# pii.* attributes included. The deployments these modes were written for -
+# our own store on a machine of ours, a self-hosted installation writing into
+# the journal of the company that runs it, the bundled Loki - keep the data
+# with its owner, so there is nothing to strip. A receiver outside the
+# owner's organisation (a managed observability vendor) is a processor
+# relationship: settle it in the contract, not by dropping half of every
+# record by default.
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 200
+    spike_limit_mib: 50
+  batch:
+    send_batch_size: 1000
+    timeout: 2s
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+service:
+  extensions: [health_check]
+  pipelines:
+    logs:
+      # Shared by every mode: the collector merges these two lists
+      # per key, so a backend-*.yaml only names its exporters (the
+      # elasticsearch one overrides processors as well).
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+  telemetry:
+    logs:
+      level: warn

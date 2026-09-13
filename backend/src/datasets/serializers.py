@@ -6,10 +6,14 @@ from rest_framework.serializers import (
 
 from src.generics.fields import TimeStampField
 from src.datasets.models import Dataset, DatasetItem
-from src.generics.mixins.serializers import CustomValidationErrorMixin
+from src.generics.mixins.serializers import (
+    ChangedFieldsMixin,
+    CustomValidationErrorMixin,
+)
 
 
 class DatasetItemSerializer(
+    ChangedFieldsMixin,
     CustomValidationErrorMixin,
     ModelSerializer,
 ):
@@ -50,9 +54,12 @@ class DatasetListSerializer(ModelSerializer):
 
 
 class DatasetSerializer(
+    ChangedFieldsMixin,
     CustomValidationErrorMixin,
     ModelSerializer,
 ):
+
+    always_changed_fields = ('items',)
 
     class Meta:
         model = Dataset

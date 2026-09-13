@@ -16,6 +16,7 @@ from src.generics.mixins.views import CustomViewSetMixin
 from src.generics.permissions import (
     UserIsAuthenticated,
 )
+from src.logs.events import AuditEventService
 from src.openapi import (
     ACCESS_PRESET,
     EMPTY,
@@ -95,7 +96,10 @@ class TemplatePresetViewSet(
             )
         except TemplatePresetServiceException as ex:
             raise_validation_error(message=ex.message)
-
+        AuditEventService.template_preset_updated(
+            request=request,
+            preset=preset,
+        )
         return self.response_ok(self.get_serializer(preset).data)
 
     @extend_schema(
@@ -139,6 +143,10 @@ class TemplatePresetViewSet(
             service.delete()
         except TemplatePresetServiceException as ex:
             raise_validation_error(message=ex.message)
+        AuditEventService.template_preset_deleted(
+            request=request,
+            preset=preset,
+        )
         return self.response_ok()
 
     @extend_schema(
@@ -166,4 +174,8 @@ class TemplatePresetViewSet(
             service.set_default()
         except TemplatePresetServiceException as ex:
             raise_validation_error(message=ex.message)
+        AuditEventService.template_preset_set_default(
+            request=request,
+            preset=preset,
+        )
         return self.response_ok()

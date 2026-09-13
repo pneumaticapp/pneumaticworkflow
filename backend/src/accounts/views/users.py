@@ -26,7 +26,6 @@ from src.accounts.serializers.accounts import AccountCacheSerializer
 from src.accounts.serializers.user import (
     UserPrivilegesSerializer,
     UserSerializer,
-    UserWebsocketSerializer,
     VacationActivateSerializer,
 )
 from src.accounts.serializers.users import (
@@ -60,7 +59,7 @@ from src.generics.permissions import (
     IsAuthenticated,
     UserIsAuthenticated,
 )
-from src.notifications.tasks import send_user_updated_notification
+from src.logs.events import AuditEventService
 from src.openapi import (
     ACCESS_ACCOUNT_OWNER,
     ACCESS_ADMIN_BASE,
@@ -235,6 +234,9 @@ class UsersViewSet(
             )
         except UserServiceException as ex:
             raise_validation_error(message=ex.message)
+        # Here and not in UserService.create: the sign up and the tenant
+        # owner go through the same method and are not an admin action.
+        AuditEventService.user_created(request=request, user=user)
         return self.response_ok(UserSerializer(instance=user).data)
 
     @extend_schema(
@@ -348,15 +350,13 @@ class UsersViewSet(
         url_path='toggle-admin',
     )
     def toggle_admin(self, request, *args, **kwargs):
-        user = self.get_object()
-        user.is_admin = not user.is_admin
-        user.save(update_fields=['is_admin'])
-        self.identify(user)
-        send_user_updated_notification.delay(
-            logging=request.user.account.log_api_requests,
-            account_id=request.user.account_id,
-            user_data=UserWebsocketSerializer(user).data,
+        service = UserService(
+            instance=self.get_object(),
+            user=request.user,
+            is_superuser=request.is_superuser,
+            auth_type=request.token_type,
         )
+        service.toggle_admin()
         return self.response_ok()
 
     @extend_schema(
@@ -380,11 +380,16 @@ class UsersViewSet(
             service = ReassignService(
                 is_superuser=request.is_superuser,
                 auth_type=request.token_type,
+                request_user=request.user,
                 **serializer.validated_data,
             )
             service.reassign_everywhere()
         except ReassignServiceException as ex:
             raise_validation_error(message=ex.message)
+        AuditEventService.user_reassigned(
+            request=request,
+            **serializer.validated_data,
+        )
         return self.response_ok()
 
     # TODO uncomment in https://my.pneumatic.app/workflows/15691/
@@ -485,7 +490,11 @@ class UsersViewSet(
         )
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
-        service = VacationDelegationService(user=user)
+        service = VacationDelegationService(
+            user=user,
+            request_user=request.user,
+            auth_type=request.token_type,
+        )
         user = service.activate(
             substitute_user_ids=data['substitute_user_ids'],
             absence_status=data['absence_status'],
@@ -515,7 +524,11 @@ class UsersViewSet(
         user = self.get_object()
         if not user.vacation:
             raise_validation_error(message=MSG_A_0052)
-        service = VacationDelegationService(user=user)
+        service = VacationDelegationService(
+            user=user,
+            request_user=request.user,
+            auth_type=request.token_type,
+        )
         user = service.deactivate()
         return self.response_ok(UserSerializer(instance=user).data)
 

@@ -18,6 +18,7 @@ unset POSTGRES_PASSWORD REDIS_PASSWORD RABBITMQ_PASSWORD
 unset CERTBOT_ENABLE CERTBOT_EMAIL NGINX_CONF_TEMPLATE
 unset FORM_DOMAIN
 unset GIT_BRANCH
+unset GRAFANA_ADMIN_PASSWORD LOGS_BACKEND
 
 RED='\033[0;31m'
 ORANGE='\033[0;33m'
@@ -27,6 +28,21 @@ NC='\033[0m'
 print_error()   { echo -e "${RED}$1${NC}"; }
 print_warning() { echo -e "${ORANGE}$1${NC}"; }
 print_info()    { echo -e "${GREEN}$1${NC}"; }
+
+gen_password() {
+    openssl rand -base64 "${1:-32}" | tr -d "=+/" | cut -c1-"${2:-25}"
+}
+
+set_env_var() {
+    local name="$1" value="$2"
+    if grep -qE "^#?\s*${name}=" "$ENV_FILE"; then
+        sed -i "s|^#\?\s*${name}=.*|${name}=${value}|" "$ENV_FILE"
+    else
+        [ -z "$(tail -c1 "$ENV_FILE")" ] || echo "" >> "$ENV_FILE"
+        echo "${name}=${value}" >> "$ENV_FILE"
+    fi
+}
+
 strip_invisible() {
     local s
     # Remove ANSI/VT escape sequences (e.g. bracket paste mode: \e[200~ ... \e[201~)
@@ -201,12 +217,12 @@ if [ ! -f ".env" ]; then
     if [ "$ADDRESS_IS_LOCALHOST" = false ]; then
 
         # 2.5.1 Generate passwords (not needed for localhost)
-        POSTGRES_PASSWORD=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-25)
-        REDIS_PASSWORD=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-25)
-        RABBITMQ_PASSWORD=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-25)
-        SEAWEEDFS_ACCESS_KEY=$(openssl rand -base64 24 | tr -d "=+/" | cut -c1-20)
-        SEAWEEDFS_SECRET_KEY=$(openssl rand -base64 48 | tr -d "=+/" | cut -c1-40)
-        FILE_POSTGRES_PASSWORD=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-25)
+        POSTGRES_PASSWORD=$(gen_password)
+        REDIS_PASSWORD=$(gen_password)
+        RABBITMQ_PASSWORD=$(gen_password)
+        SEAWEEDFS_ACCESS_KEY=$(gen_password 24 20)
+        SEAWEEDFS_SECRET_KEY=$(gen_password 48 40)
+        FILE_POSTGRES_PASSWORD=$(gen_password)
 
         # 2.5.2 Write passwords to .env
         sed -i "s|^#\?\s*POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$POSTGRES_PASSWORD|"                  "$ENV_FILE"
@@ -344,6 +360,57 @@ case "$COMPOSE_FILE" in
   3) COMPOSE_LABEL="From sources (Branch: \"$GIT_BRANCH\")"; COMPOSE_ARGS=('-f' 'docker-compose.src.yml'); COMPOSE_TAG=""   ;;
 esac
 
+# 3.1.1 The logging stack follows LOGS_BACKEND of .env
+# ---------------------------------------------------
+# The root compose files include the logging stack (collector, Loki,
+# Grafana) with every service behind a profile, so it stays down unless
+# .env names a backend. Passing --profile and -f here would otherwise
+# override COMPOSE_PROFILES and COMPOSE_FILE lines in .env without
+# saying so.
+# The trailing comment of a line like `LOGS_BACKEND=local  # the bundled
+# stack` is cut off first: it is part of the value otherwise.
+LOGS_BACKEND_VALUE=$(
+    grep -E "^\s*LOGS_BACKEND=" "$ENV_FILE" 2>/dev/null | tail -1 | cut -d= -f2- | sed 's/#.*//' | tr -d '"'"'"'[:space:]'
+)
+case "${LOGS_BACKEND_VALUE:-none}" in
+  none|"")
+    ;;
+  local)
+    COMPOSE_ARGS+=('--profile' 'logs-local')
+    print_info "LOGS_BACKEND=local: the collector, Loki and Grafana run"
+    ;;
+  otlp)
+    COMPOSE_ARGS+=('--profile' 'logs-otlp')
+    print_info "LOGS_BACKEND=otlp: only the collector runs"
+    ;;
+  elasticsearch)
+    # The collector override carries the queue on disk and every variable
+    # of the mode; without it the collector starts and delivers nothing.
+    COMPOSE_ARGS+=(
+        '--profile' 'logs-elasticsearch'
+        '-f' 'logging/elasticsearch/docker-compose.collector-elasticsearch.yml'
+    )
+    print_info "LOGS_BACKEND=elasticsearch: only the collector runs, queue on disk"
+    print_info "First start only: hand the queue volume to the collector, see logging/elasticsearch/docker-compose.collector-elasticsearch.yml"
+    ;;
+  *)
+    print_error "LOGS_BACKEND=$LOGS_BACKEND_VALUE is not one of: local, otlp, elasticsearch, none"
+    exit 1
+    ;;
+esac
+
+# 3.1.2 The local stack needs a Grafana password in .env
+# ------------------------------------------------------
+# An .env written by an older start.sh has no GRAFANA_ADMIN_PASSWORD, and a
+# fresh one carries it commented out; Grafana refuses to start without a
+# value (see the grafana service in logging/compose/logs.yml). The .env of
+# an installation that does not run the stack is left as it is.
+if [ "${LOGS_BACKEND_VALUE:-}" = local ] \
+    && ! grep -qE "^\s*GRAFANA_ADMIN_PASSWORD=\S" "$ENV_FILE"; then
+    set_env_var GRAFANA_ADMIN_PASSWORD "$(gen_password)"
+    print_info "GRAFANA_ADMIN_PASSWORD was missing from .env: a generated value was added"
+fi
+
 print_info "Selected configuration: $COMPOSE_LABEL"
 echo ""
 
@@ -405,6 +472,11 @@ fi
 echo ""
 echo "Pneumatic Workflow started successfully!"
 echo "The application is available at $FRONTEND_URL"
+if [ "${LOGS_BACKEND_VALUE:-}" = local ]; then
+    GRAFANA_PORT_VALUE=$(grep -E '^\s*GRAFANA_PORT=\S' "$ENV_FILE" | tail -1 | cut -d= -f2- | tr -d '[:space:]')
+    echo "The audit journal (Grafana) is available at http://127.0.0.1:${GRAFANA_PORT_VALUE:-3000} on this machine,"
+    echo "user admin, the password is GRAFANA_ADMIN_PASSWORD in .env"
+fi
 print_warning "Please wait a few minutes for all services to fully start"
 print_warning ""
 

@@ -1,0 +1,87 @@
+{
+  "resourceLogs": [
+    {
+      "resource": {
+        "attributes": [
+          {"key": "service.name", "value": {"stringValue": "pneumatic-backend"}},
+          {"key": "service.version", "value": {"stringValue": "1.0.0"}},
+          {"key": "deployment.environment", "value": {"stringValue": "Production"}},
+          {"key": "account_id", "value": {"stringValue": "42"}},
+          {"key": "event_category", "value": {"stringValue": "audit"}}
+        ]
+      },
+      "scopeLogs": [
+        {
+          "scope": {"name": "pneumatic.events", "version": "1"},
+          "logRecords": [
+            {
+              "timeUnixNano": "1788830100123456000",
+              "observedTimeUnixNano": "1788830105000000000",
+              "severityNumber": 9,
+              "severityText": "INFO",
+              "body": {"stringValue": "workflow.run workflow:9001"},
+              "attributes": [
+                {"key": "event.id", "value": {"stringValue": "1788830100123-0"}},
+                {"key": "event.type", "value": {"stringValue": "workflow.run"}},
+                {"key": "actor.type", "value": {"stringValue": "user"}},
+                {"key": "actor.id", "value": {"stringValue": "17"}},
+                {"key": "object.type", "value": {"stringValue": "workflow"}},
+                {"key": "object.id", "value": {"stringValue": "9001"}},
+                {"key": "workflow_id", "value": {"stringValue": "9001"}},
+                {"key": "request_id", "value": {"stringValue": "3f9c2c1e6d0b4a0f9e2b7c1d5a6e8f90"}},
+                {"key": "payload.workflow_event_id", "value": {"stringValue": "555"}},
+                {"key": "payload.template_id", "value": {"stringValue": "12"}},
+                {"key": "pii.actor.email", "value": {"stringValue": "ann@example.com"}},
+                {"key": "pii.ip", "value": {"stringValue": "203.0.113.7"}},
+                {"key": "pii.user_agent", "value": {"stringValue": "Mozilla/5.0 (X11; Linux x86_64)"}},
+                {"key": "pii.payload.workflow_name", "value": {"stringValue": "Onboarding: Ann"}}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "resource": {
+        "attributes": [
+          {"key": "service.name", "value": {"stringValue": "pneumatic-backend"}},
+          {"key": "service.version", "value": {"stringValue": "1.0.0"}},
+          {"key": "deployment.environment", "value": {"stringValue": "Production"}},
+          {"key": "account_id", "value": {"stringValue": "77"}},
+          {"key": "event_category", "value": {"stringValue": "activity"}}
+        ]
+      },
+      "scopeLogs": [
+        {
+          "scope": {"name": "pneumatic.events", "version": "1"},
+          "logRecords": [
+            {
+              "timeUnixNano": "1788830110654321000",
+              "observedTimeUnixNano": "1788830115000000000",
+              "severityNumber": 9,
+              "severityText": "INFO",
+              "body": {"stringValue": "task.complete task:7002"},
+              "attributes": [
+                {"key": "event.id", "value": {"stringValue": "1788830110654-0"}},
+                {"key": "event.type", "value": {"stringValue": "task.complete"}},
+                {"key": "actor.type", "value": {"stringValue": "user"}},
+                {"key": "actor.id", "value": {"stringValue": "31"}},
+                {"key": "object.type", "value": {"stringValue": "task"}},
+                {"key": "object.id", "value": {"stringValue": "7002"}},
+                {"key": "workflow_id", "value": {"stringValue": "9105"}},
+                {"key": "task_id", "value": {"stringValue": "7002"}},
+                {"key": "request_id", "value": {"stringValue": "b41d7e0a9c3f4d2eb8a15c60f7d92311"}},
+                {"key": "payload.workflow_event_id", "value": {"stringValue": "901"}},
+                {"key": "payload.task_number", "value": {"stringValue": "2"}},
+                {"key": "pii.actor.email", "value": {"stringValue": "bob@example.com"}},
+                {"key": "pii.ip", "value": {"stringValue": "198.51.100.14"}},
+                {"key": "pii.user_agent", "value": {"stringValue": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"}},
+                {"key": "pii.payload.task_name", "value": {"stringValue": "Sign the contract with Bob"}}
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

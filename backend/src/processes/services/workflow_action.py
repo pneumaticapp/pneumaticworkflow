@@ -11,6 +11,8 @@ from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
 from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.executor import RawSqlExecutor
+from src.logs.events.enums import EventName, EventObjectType
+from src.logs.events.mixins import EventEmitMixin
 from src.notifications.tasks import (
     send_task_completed_notification,
     send_task_completed_websocket,
@@ -69,7 +71,7 @@ from src.webhooks.models import WebHook
 UserModel = get_user_model()
 
 
-class WorkflowActionService:
+class WorkflowActionService(EventEmitMixin):
 
     def __init__(
         self,
@@ -252,6 +254,11 @@ class WorkflowActionService:
 
     def terminate_workflow(self):
 
+        """ The only workflow action that leaves no WorkflowEvent
+            behind, so the event is published here, after the delete:
+            a delete that fails raises before it, and the delete is a
+            soft one, so the name and the template are still there. """
+
         for task in self.workflow.tasks.active():
             recipients = self._get_incompleted_recipients(
                 task=task,
@@ -274,6 +281,17 @@ class WorkflowActionService:
             auth_type=self.auth_type,
         )
         self.workflow.delete()
+        self._publish(
+            EventName.WORKFLOW_TERMINATE,
+            account_id=self.account.id,
+            object_type=EventObjectType.WORKFLOW,
+            object_id=self.workflow.id,
+            workflow_id=self.workflow.id,
+            payload={
+                'workflow_name': self.workflow.name,
+                'template_id': self.workflow.template_id,
+            },
+        )
 
     def _complete_workflow(self):
 

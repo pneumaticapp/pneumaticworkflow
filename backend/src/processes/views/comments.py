@@ -14,6 +14,7 @@ from src.generics.permissions import (
     DenyAll,
     IsAuthenticated,
 )
+from src.logs.events import AuditEventService
 from src.openapi import (
     ACCESS_COMMENT_EDIT,
     ACCESS_COMMENT_REACTION,
@@ -135,6 +136,7 @@ class CommentViewSet(
             )
         except CommentServiceException as ex:
             raise_validation_error(message=ex.message)
+        AuditEventService.comment_updated(request=request, comment=event)
         return self.response_ok(
             WorkflowEventSerializer(instance=event).data,
         )
@@ -162,6 +164,7 @@ class CommentViewSet(
             event = service.delete()
         except CommentServiceException as ex:
             raise_validation_error(message=ex.message)
+        AuditEventService.comment_deleted(request=request, comment=event)
         return self.response_ok(
             WorkflowEventSerializer(instance=event).data,
         )

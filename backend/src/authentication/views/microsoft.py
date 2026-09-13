@@ -2,10 +2,15 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import ObjectDoesNotExist
 from rest_framework.decorators import action
-from rest_framework.exceptions import AuthenticationFailed
+from rest_framework.exceptions import (
+    AuthenticationFailed,
+    ValidationError,
+)
 from rest_framework.viewsets import GenericViewSet
 
+from src.accounts.enums import SourceType
 from src.analysis.mixins import BaseIdentifyMixin
+from src.authentication.enums import LoginFailedReason
 from src.authentication.messages import MSG_AU_0003
 from src.authentication.permissions import MSAuthPermission
 from src.authentication.serializers import (
@@ -26,6 +31,7 @@ from src.authentication.throttling import (
     AuthMSTokenThrottle,
 )
 from src.authentication.views.mixins import (
+    LoginEventMixin,
     SignUpMixin,
     SSORestrictionMixin,
 )
@@ -42,11 +48,13 @@ UserModel = get_user_model()
 class MSAuthViewSet(
     SSORestrictionMixin,
     SignUpMixin,
+    LoginEventMixin,
     CustomViewSetMixin,
     BaseIdentifyMixin,
     GenericViewSet,
 ):
     permission_classes = (MSAuthPermission,)
+    audit_source = SourceType.MICROSOFT
     serializer_class = MSTokenSerializer
 
     @property
@@ -97,7 +105,21 @@ class MSAuthViewSet(
                         gclid=slz.validated_data.get('gclid'),
                     )
                 else:
+                    self.emit_login_failed(
+                        request=request,
+                        reason=LoginFailedReason.SIGNUP_DISABLED,
+                        email=user_data['email'],
+                    )
                     raise AuthenticationFailed(MSG_AU_0003) from ex
+            except ValidationError:
+                self.emit_login_failed(
+                    request=request,
+                    reason=LoginFailedReason.SSO_REQUIRED,
+                    email=user.email,
+                )
+                raise
+            else:
+                self.emit_login(user=user, request=request)
             service.apply_photo_to_user(user, user_data)
             service.save_tokens_for_user(user)
             update_microsoft_contacts.delay(user.id)

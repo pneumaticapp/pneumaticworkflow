@@ -1,0 +1,84 @@
+# Loki 3.x single-binary for the Pneumatic event pipeline.
+# Started with: -config.file=/etc/loki/loki-config.yaml -config.expand-env=true
+#
+# Loki has no authentication of its own here (auth_enabled: false means "single
+# tenant", not "log in first"), so the only thing standing between the audit
+# journal and anything that can send an HTTP request is the network. Loki lives
+# in the `pneumatic-logs` compose network together with Grafana; the collector
+# is the single member of both networks and the only writer. The application
+# containers (backend, celery, nginx, ...) are NOT in `pneumatic-logs` and
+# cannot reach port 3100 at all - see docker-compose.yml. They do reach the
+# collector (its OTLP receiver has no authentication either), but a webhook
+# body is not an OTLP request, so a tenant admin pointing the webhook
+# deliverer at either cannot forge a record.
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+  grpc_listen_port: 9096
+  log_level: warn
+
+common:
+  path_prefix: /loki
+  storage:
+    filesystem:
+      chunks_directory: /loki/chunks
+      rules_directory: /loki/rules
+  replication_factor: 1
+  ring:
+    kvstore:
+      store: inmemory
+
+# tsdb + v13 are required by structured metadata (all log attributes of an event
+# land there).
+schema_config:
+  configs:
+    - from: 2024-04-01
+      store: tsdb
+      object_store: filesystem
+      schema: v13
+      index:
+        prefix: index_
+        period: 24h
+
+limits_config:
+  # Structured metadata carries event_type, actor_id, request_id, payload_*,
+  # pii_* without turning them into index labels.
+  allow_structured_metadata: true
+  # An audit journal must not have a delete button. `disabled` makes
+  # /loki/api/v1/delete answer 400 "deletion is not available" instead of 204,
+  # so a single unauthenticated request can no longer erase a tenant's history.
+  # Retention is unaffected: it is driven by retention_period plus the compactor
+  # below, not by the delete API.
+  deletion_mode: disabled
+  retention_period: ${LOGS_RETENTION_PERIOD:-365d}
+  max_global_streams_per_user: 10000
+  reject_old_samples: true
+  # Wider than the default week on purpose: records carry the moment
+  # they happened, and the Redis buffer holds LOGS_STREAM_MAXLEN of
+  # them, which at a low rate is far more than seven days. After a
+  # long outage the consumer replays that backlog, and anything older
+  # than this window would come back 400, which the exporter treats
+  # as permanent and the consumer parks in the dead letter.
+  reject_old_samples_max_age: 720h
+  otlp_config:
+    resource_attributes:
+      # service_name and deployment_environment stay indexed by the Loki
+      # defaults; account_id and event_category are added for the dashboard.
+      # actor_id is intentionally absent: unbounded cardinality.
+      attributes_config:
+        - action: index_label
+          attributes:
+            - account_id
+            - event_category
+
+# Without an enabled compactor limits_config.retention_period is ignored.
+# delete_request_store stays set even with deletion_mode: disabled - Loki
+# refuses to start with retention_enabled and no delete request store.
+compactor:
+  working_directory: /loki/compactor
+  retention_enabled: true
+  delete_request_store: filesystem
+
+analytics:
+  reporting_enabled: false

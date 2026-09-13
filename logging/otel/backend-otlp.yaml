@@ -1,0 +1,32 @@
+# LOGS_BACKEND=otlp: forward events to an OTLP/HTTP receiver outside this
+# machine (the customer's own observability stack).
+#
+# Personal data leaves with the record, see the note in base.yaml.
+#
+# Only the collector starts in this mode, the bundled Loki and Grafana do not:
+#   docker compose --profile logs-otlp up -d
+exporters:
+  otlp_http/external:
+    endpoint: ${env:LOGS_OTLP_EXPORT_ENDPOINT}
+    # Sent as is, empty included: a receiver that rejects an empty
+    # Authorization header needs LOGS_OTLP_EXPORT_AUTH set, a receiver
+    # without authentication may need this line removed.
+    headers:
+      Authorization: ${env:LOGS_OTLP_EXPORT_AUTH:-}
+    # The receiver is on the far side of the internet: keep retrying for five
+    # minutes and hold the backlog in memory meanwhile. The queue is bounded so
+    # an unreachable receiver cannot grow the collector past the ceiling of
+    # its memory_limiter processor; the consumer keeps its own copy in the
+    # Redis stream until the collector answers 2xx, so a full queue costs
+    # redelivery, not data.
+    retry_on_failure:
+      enabled: true
+      max_elapsed_time: 300s
+    sending_queue:
+      enabled: true
+      queue_size: 5000
+
+service:
+  pipelines:
+    logs:
+      exporters: [otlp_http/external]

@@ -1,7 +1,7 @@
 from ast import literal_eval
 from collections import OrderedDict
 from collections.abc import Iterable, Mapping
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework.exceptions import ValidationError
@@ -67,6 +67,27 @@ class ValidationUtilsMixin:
             else:
                 raise validation_error
             return result
+
+
+class ChangedFieldsMixin:
+
+    """ Names of the fields a partial update is going to write,
+        read before it writes them: afterwards the instance holds
+        the new values and nothing tells what the request changed.
+        Call it after is_valid() and before save(). """
+
+    # Relations the request rewrites as a whole: named whenever
+    # they are sent, since their rows are replaced, not compared.
+    always_changed_fields: Tuple[str, ...] = ()
+
+    def get_changed_fields(self) -> List[str]:
+        if self.instance is None:
+            return []
+        return sorted(
+            name for name, value in self.validated_data.items()
+            if name in self.always_changed_fields
+            or getattr(self.instance, name, None) != value
+        )
 
 
 class AdditionalValidationMixin:

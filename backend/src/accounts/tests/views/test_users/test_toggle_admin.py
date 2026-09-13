@@ -30,7 +30,7 @@ def test_toggle_admin__upgrade_to_admin__ok(
     invited = create_invited_user(user, is_admin=False)
     api_client.token_authenticate(user)
     send_user_updated_mock = mocker.patch(
-        'src.accounts.views.users.send_user_updated_notification.delay',
+        'src.accounts.services.user.send_user_updated_notification.delay',
     )
 
     # act
@@ -68,7 +68,7 @@ def test_toggle_admin__downgrade_admin__ok(
     invited = create_invited_user(user, is_admin=True)
     api_client.token_authenticate(user)
     send_user_updated_mock = mocker.patch(
-        'src.accounts.views.users.send_user_updated_notification.delay',
+        'src.accounts.services.user.send_user_updated_notification.delay',
     )
 
     # act

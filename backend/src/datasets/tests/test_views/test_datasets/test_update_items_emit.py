@@ -1,0 +1,172 @@
+import pytest
+
+from src.datasets.exceptions import DataSetServiceException
+from src.datasets.messages import MSG_DS_0002
+from src.datasets.services.dataset import DataSetService
+from src.logs.events.enums import (
+    ActorType,
+    EventCategory,
+    EventName,
+    EventObjectType,
+)
+from src.logs.events.schema import Actor, EventObject
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_dataset,
+    create_test_owner,
+)
+from src.utils.validation import ErrorCode
+
+pytestmark = pytest.mark.django_db
+
+
+def test_update_items__one_item__emit_dataset_items_replace(
+    api_client,
+    fake_stream,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    dataset = create_test_dataset(
+        account=account,
+        name='Clients',
+        items_count=2,
+    )
+    item = dataset.items.get(order=1)
+    api_client.token_authenticate(user=owner)
+
+    # act
+    response = api_client.put(
+        path=f'/datasets/{dataset.id}/items',
+        data=[{'id': item.id, 'value': 'Renamed', 'order': 1}],
+        format='json',
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert dataset.items.count() == 1
+    assert len(fake_stream.events) == 1
+    event = fake_stream.last_event()
+    assert event.type == EventName.DATASET_ITEMS_REPLACE
+    assert event.category == EventCategory.AUDIT
+    assert event.account_id == account.id
+    assert event.actor == Actor(
+        type=ActorType.USER,
+        id=owner.id,
+        email=owner.email,
+    )
+    assert event.object == EventObject(
+        type=EventObjectType.DATASET,
+        id=dataset.id,
+    )
+    assert event.payload == {'name': 'Clients', 'items_count': 1}
+
+
+def test_update_items__value_too_long__no_event(
+    mocker,
+    api_client,
+    fake_stream,
+):
+
+    """ A body of many=True is validated by the ListSerializer of the
+        framework, which does not carry the custom is_valid of the
+        project: the error keeps the enriched framework format instead
+        of {message, code, details}. Asserted as the endpoint answers
+        today. """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    dataset = create_test_dataset(account=account)
+    message = 'Ensure this field has no more than 200 characters.'
+    update_items_mock = mocker.patch.object(
+        DataSetService,
+        attribute='update_items',
+    )
+    api_client.token_authenticate(user=owner)
+
+    # act
+    response = api_client.put(
+        path=f'/datasets/{dataset.id}/items',
+        data=[{'value': 'x' * 201}],
+        format='json',
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data[0]['value'][0]['message__'] == message
+    assert response.data[0]['value'][0]['name__'] == 'value'
+    assert fake_stream.events == []
+    update_items_mock.assert_not_called()
+
+
+def test_update_items__another_account__no_event(
+    mocker,
+    api_client,
+    fake_stream,
+):
+
+    # arrange
+    owner = create_test_owner()
+    another_account = create_test_account(name='Another Company')
+    dataset = create_test_dataset(account=another_account)
+    update_items_mock = mocker.patch.object(
+        DataSetService,
+        attribute='update_items',
+    )
+    api_client.token_authenticate(user=owner)
+
+    # act
+    response = api_client.put(
+        path=f'/datasets/{dataset.id}/items',
+        data=[{'value': 'Renamed', 'order': 1}],
+        format='json',
+    )
+
+    # assert
+    assert response.status_code == 404
+    assert fake_stream.events == []
+    update_items_mock.assert_not_called()
+
+
+def test_update_items__service_exception__no_event(
+    mocker,
+    api_client,
+    fake_stream,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    dataset = create_test_dataset(account=account)
+    message = MSG_DS_0002(value='Same')
+    update_items_mock = mocker.patch.object(
+        DataSetService,
+        attribute='update_items',
+        side_effect=DataSetServiceException(message=message),
+    )
+    api_client.token_authenticate(user=owner)
+
+    # act
+    response = api_client.put(
+        path=f'/datasets/{dataset.id}/items',
+        data=[
+            {'value': 'Same', 'order': 1},
+            {'value': 'Same', 'order': 2},
+        ],
+        format='json',
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == message
+    assert response.data['details'] == {}
+    assert fake_stream.events == []
+    update_items_mock.assert_called_once_with(
+        items_data=[
+            {'value': 'Same', 'order': 1},
+            {'value': 'Same', 'order': 2},
+        ],
+    )

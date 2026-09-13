@@ -1,5 +1,5 @@
 import re
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
@@ -241,6 +241,34 @@ class WorkflowUpdateSerializer(
         if value and value <= timezone.now():
             raise ValidationError(messages.MSG_PW_0051)
         return value
+
+    def get_changed_fields(self) -> List[str]:
+
+        """ Names of the fields this request changes. Call it before
+            save(): afterwards the instance holds the new values.
+
+            Not the same list as the fields update() writes: it rewrites
+            a name it is given even when the given name is the one
+            already stored, and a kickoff field by field. What the
+            journal records is what the request really changes, and a
+            kickoff is named whenever one is sent. """
+
+        data = self.validated_data
+        changed: List[str] = []
+        name = data.get('name')
+        if name and name != self.instance.name_template:
+            changed.append('name')
+        if (
+            'due_date_tsp' in data
+            and data['due_date_tsp'] != self.instance.due_date
+        ):
+            changed.append('due_date')
+        is_urgent = data.get('is_urgent')
+        if is_urgent is not None and is_urgent != self.instance.is_urgent:
+            changed.append('is_urgent')
+        if data.get('kickoff'):
+            changed.append('kickoff')
+        return changed
 
     def update(
         self,

@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core.management.base import BaseCommand
 from django_celery_beat.models import (
     PeriodicTask,
@@ -34,6 +35,7 @@ class Command(BaseCommand):
             self._ensure_reminder_task_notification,
             self._ensure_process_vacations,
             self._ensure_delegate_vacation_tasks,
+            self._ensure_events_consumer,
         )
 
         for task_func in tasks:
@@ -188,4 +190,15 @@ class Command(BaseCommand):
             ),
             schedule_obj=schedule,
             schedule_field="crontab",
+        )
+
+    def _ensure_events_consumer(self):
+        schedule, _ = IntervalSchedule.objects.get_or_create(
+            every=settings.LOGS_CONSUMER_INTERVAL_SECONDS,
+            period=IntervalSchedule.SECONDS,
+        )
+        self._create_or_skip_task(
+            name="Deliver events to log backend",
+            task_path="src.logs.events.tasks.consume_events",
+            schedule_obj=schedule,
         )

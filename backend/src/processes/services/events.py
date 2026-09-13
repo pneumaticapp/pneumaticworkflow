@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
 from django.contrib.auth import get_user_model
 from django.db import transaction
@@ -7,6 +7,7 @@ from django.utils import timezone
 from src.accounts.models import UserGroup
 from src.analysis.services import AnalyticService
 from src.generics.base.service import BaseModelService
+from src.logs.events.adapters.workflow import emit_workflow_event
 from src.notifications.tasks import (
     send_comment_notification,
     send_event_created,
@@ -60,6 +61,17 @@ UserModel = get_user_model()
 class WorkflowEventService:
 
     @classmethod
+    def _create_event(cls, **kwargs: Any) -> WorkflowEvent:
+
+        """ The only place where a workflow event is born, so it is
+            also the only hook the events pipeline needs to see every
+            workflow event type. """
+
+        event = WorkflowEvent.objects.create(**kwargs)
+        emit_workflow_event(event)
+        return event
+
+    @classmethod
     def _after_create_actions(cls, event: WorkflowEvent):
 
         """ Send workflow event websocket """
@@ -81,7 +93,7 @@ class WorkflowEventService:
     ) -> WorkflowEvent:
 
         with_attachments = task.output.with_attachments().exists()
-        event = WorkflowEvent.objects.create(
+        event = cls._create_event(
             type=WorkflowEventType.TASK_COMPLETE,
             account=user.account,
             task=task,
@@ -107,7 +119,7 @@ class WorkflowEventService:
         after_create_actions: bool = True,
     ) -> WorkflowEvent:
 
-        event = WorkflowEvent.objects.create(
+        event = cls._create_event(
             type=WorkflowEventType.TASK_REVERT,
             text=text,
             clear_text=clear_text or text,
@@ -133,7 +145,7 @@ class WorkflowEventService:
         after_create_actions: bool = True,
     ) -> WorkflowEvent:
 
-        event = WorkflowEvent.objects.create(
+        event = cls._create_event(
             type=WorkflowEventType.TASK_DELAY,
             account=user.account,
             task=task,
@@ -156,7 +168,7 @@ class WorkflowEventService:
         after_create_actions: bool = True,
     ) -> WorkflowEvent:
 
-        event = WorkflowEvent.objects.create(
+        event = cls._create_event(
             type=WorkflowEventType.ENDED,
             account=user.account,
             workflow=workflow,
@@ -175,7 +187,7 @@ class WorkflowEventService:
         after_create_actions: bool = True,
     ) -> WorkflowEvent:
 
-        event = WorkflowEvent.objects.create(
+        event = cls._create_event(
             type=WorkflowEventType.FORCE_DELAY,
             account=user.account,
             user=user,
@@ -194,7 +206,7 @@ class WorkflowEventService:
         after_create_actions: bool = True,
     ) -> WorkflowEvent:
 
-        event = WorkflowEvent.objects.create(
+        event = cls._create_event(
             type=WorkflowEventType.FORCE_RESUME,
             account=user.account,
             user=user,
@@ -212,7 +224,7 @@ class WorkflowEventService:
         after_create_actions: bool = True,
     ) -> WorkflowEvent:
 
-        event = WorkflowEvent.objects.create(
+        event = cls._create_event(
             account=user.account,
             type=WorkflowEventType.REVERT,
             workflow=task.workflow,
@@ -237,7 +249,7 @@ class WorkflowEventService:
         after_create_actions: bool = True,
     ) -> WorkflowEvent:
 
-        event = WorkflowEvent.objects.create(
+        event = cls._create_event(
             account=user.account,
             type=WorkflowEventType.COMMENT,
             text=text,
@@ -264,7 +276,7 @@ class WorkflowEventService:
         after_create_actions: bool = True,
     ) -> WorkflowEvent:
 
-        event = WorkflowEvent.objects.create(
+        event = cls._create_event(
             type=event_type,
             account=user.account,
             workflow=workflow,
@@ -283,7 +295,7 @@ class WorkflowEventService:
         after_create_actions: bool = True,
     ) -> WorkflowEvent:
 
-        event = WorkflowEvent.objects.create(
+        event = cls._create_event(
             type=WorkflowEventType.TASK_PERFORMER_CREATED,
             account=user.account,
             task=task,
@@ -310,7 +322,7 @@ class WorkflowEventService:
         after_create_actions: bool = True,
     ) -> WorkflowEvent:
 
-        event = WorkflowEvent.objects.create(
+        event = cls._create_event(
             type=WorkflowEventType.TASK_PERFORMER_GROUP_CREATED,
             account=user.account,
             task=task,
@@ -338,7 +350,7 @@ class WorkflowEventService:
         after_create_actions: bool = True,
     ) -> WorkflowEvent:
 
-        event = WorkflowEvent.objects.create(
+        event = cls._create_event(
             type=WorkflowEventType.TASK_PERFORMER_DELETED,
             account=user.account,
             task=task,
@@ -365,7 +377,7 @@ class WorkflowEventService:
         after_create_actions: bool = True,
     ) -> WorkflowEvent:
 
-        event = WorkflowEvent.objects.create(
+        event = cls._create_event(
             type=WorkflowEventType.TASK_PERFORMER_GROUP_DELETED,
             account=user.account,
             task=task,
@@ -392,7 +404,7 @@ class WorkflowEventService:
         after_create_actions: bool = True,
     ) -> WorkflowEvent:
 
-        event = WorkflowEvent.objects.create(
+        event = cls._create_event(
             type=WorkflowEventType.DUE_DATE_CHANGED,
             account=user.account,
             workflow=task.workflow,
@@ -414,7 +426,7 @@ class WorkflowEventService:
         after_create_actions: bool = True,
     ) -> WorkflowEvent:
 
-        event = WorkflowEvent.objects.create(
+        event = cls._create_event(
             type=WorkflowEventType.TASK_SKIP,
             account=task.account,
             workflow=task.workflow,
@@ -435,7 +447,7 @@ class WorkflowEventService:
         user: Optional[UserModel] = None,
     ) -> WorkflowEvent:
 
-        return WorkflowEvent.objects.create(
+        return cls._create_event(
             type=WorkflowEventType.RUN,
             account=workflow.account,
             workflow=workflow,
@@ -451,7 +463,7 @@ class WorkflowEventService:
         after_create_actions: bool = True,
     ) -> WorkflowEvent:
 
-        event = WorkflowEvent.objects.create(
+        event = cls._create_event(
             type=WorkflowEventType.SUB_WORKFLOW_RUN,
             account=workflow.account,
             workflow=workflow,
@@ -478,7 +490,7 @@ class WorkflowEventService:
         after_create_actions: bool = True,
     ) -> WorkflowEvent:
 
-        event = WorkflowEvent.objects.create(
+        event = cls._create_event(
             type=WorkflowEventType.COMPLETE,
             account=workflow.account,
             task=task,
@@ -502,7 +514,7 @@ class WorkflowEventService:
         after_create_actions: bool = True,
     ) -> WorkflowEvent:
 
-        event = WorkflowEvent.objects.create(
+        event = cls._create_event(
             type=WorkflowEventType.ENDED_BY_CONDITION,
             account=workflow.account,
             task=task,
@@ -525,7 +537,7 @@ class WorkflowEventService:
         after_create_actions: bool = True,
     ) -> WorkflowEvent:
 
-        event = WorkflowEvent.objects.create(
+        event = cls._create_event(
             type=WorkflowEventType.DELAY,
             account=workflow.account,
             workflow=workflow,
@@ -542,7 +554,7 @@ class WorkflowEventService:
         after_create_actions: bool = True,
     ) -> WorkflowEvent:
 
-        event = WorkflowEvent.objects.create(
+        event = cls._create_event(
             type=WorkflowEventType.TASK_START,
             account=task.account,
             task=task,
@@ -563,7 +575,7 @@ class WorkflowEventService:
         after_create_actions: bool = True,
     ) -> WorkflowEvent:
 
-        event = WorkflowEvent.objects.create(
+        event = cls._create_event(
             type=WorkflowEventType.TASK_SKIP_NO_PERFORMERS,
             account=task.account,
             workflow=task.workflow,
@@ -588,7 +600,7 @@ class WorkflowEventService:
         after_create_actions: bool = True,
     ) -> WorkflowEvent:
 
-        event = WorkflowEvent.objects.create(
+        event = cls._create_event(
             type=WorkflowEventType.TASK_DELEGATION,
             account=task.account,
             task=task,

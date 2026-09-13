@@ -22,6 +22,7 @@ from src.generics.mixins.views import (
 from src.generics.permissions import (
     UserIsAuthenticated,
 )
+from src.logs.events import AuditEventService
 from src.openapi import (
     ACCESS_STAFF_IMPORT,
     ACCESS_SYSTEM_TEMPLATE,
@@ -120,6 +121,10 @@ class SystemTemplateViewSet(
             auth_type=request.token_type,
         )
         data = service.get_from_sys_template(system_template)
+        AuditEventService.template_filled_from_library(
+            request=request,
+            system_template=system_template,
+        )
         return self.response_ok(data)
 
     @extend_schema(
@@ -172,4 +177,8 @@ class SystemTemplatesImportViewSet(
             is_superuser=request.is_superuser,
         )
         service.import_library_templates(data=slz.validated_data['templates'])
+        AuditEventService.library_templates_imported(
+            request=request,
+            templates_count=len(slz.validated_data['templates']),
+        )
         return self.response_ok()

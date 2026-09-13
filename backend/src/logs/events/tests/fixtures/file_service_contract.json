@@ -1,0 +1,8 @@
+{
+  "stream_key": "pneumatic:events",
+  "actor_types": [
+    "api_key",
+    "guest",
+    "user"
+  ]
+}

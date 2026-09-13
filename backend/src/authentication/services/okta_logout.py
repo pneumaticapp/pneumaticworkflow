@@ -18,12 +18,18 @@ from src.authentication.enums import (
 )
 from src.authentication.models import AccessToken
 from src.authentication.tokens import PneumaticToken
+from src.logs.events.enums import (
+    EventName,
+    EventObjectType,
+    LogoutReason,
+)
+from src.logs.events.mixins import EventEmitMixin
 from src.utils.logging import SentryLogLevel, capture_sentry_message
 
 UserModel = get_user_model()
 
 
-class OktaLogoutService:
+class OktaLogoutService(EventEmitMixin):
     """Service for handling Okta Back-Channel Logout operations."""
 
     SOURCE = SourceType.OKTA
@@ -231,6 +237,18 @@ class OktaLogoutService:
 
         self.cache.delete(f'{self.CACHE_KEY_PREFIX}_{sub}')
         PneumaticToken.expire_all_tokens(user)
+        # Okta ended the sessions, not the user: the service acts for
+        # nobody, so the actor is the system (see EventEmitMixin).
+        self._publish(
+            EventName.USER_LOGOUT,
+            account_id=user.account_id,
+            object_type=EventObjectType.USER,
+            object_id=user.id,
+            payload={
+                'source': self.SOURCE,
+                'reason': LogoutReason.IDENTITY_PROVIDER,
+            },
+        )
 
     def process_logout(
         self,

@@ -27,6 +27,7 @@ from src.generics.permissions import (
     IsAuthenticated,
     UserIsAuthenticated,
 )
+from src.logs.events import AuditEventService
 from src.openapi import (
     ACCESS_ACCOUNT_OWNER,
     ACCESS_AUTH,
@@ -352,6 +353,7 @@ class WorkflowViewSet(
         is_urgent_changed = (
             is_urgent is not None and is_urgent != workflow.is_urgent
         )
+        changed_fields = serializer.get_changed_fields()
         workflow = serializer.save()
         AnalyticService.workflows_updated(
             workflow=workflow,
@@ -359,6 +361,15 @@ class WorkflowViewSet(
             is_superuser=request.is_superuser,
             user=request.user,
         )
+        if changed_fields:
+            AuditEventService.workflow_updated(
+                request=request,
+                workflow=workflow,
+                changed_fields=changed_fields,
+                kickoff_fields=sorted(
+                    serializer.validated_data.get('kickoff') or (),
+                ),
+            )
         if is_urgent_changed:
             AnalyticService.workflows_urgent(
                 workflow=workflow,

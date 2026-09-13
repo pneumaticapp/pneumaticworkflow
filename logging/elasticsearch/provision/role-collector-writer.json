@@ -1,0 +1,19 @@
+{
+  "cluster": [],
+  "indices": [
+    {
+      "names": [
+        "__INDEX_PATTERN__"
+      ],
+      "privileges": [
+        "create_doc",
+        "auto_configure"
+      ],
+      "allow_restricted_indices": false
+    }
+  ],
+  "metadata": {
+    "description": "The collector on the application machine. create_doc appends documents and nothing else: no delete, no update, no search, no other index. auto_configure lets a new payload key add itself to the mapping and lets the data stream be created on the first event.",
+    "managed_by": "logging/elasticsearch/scripts/bootstrap.sh"
+  }
+}

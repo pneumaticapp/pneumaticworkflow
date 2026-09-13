@@ -12,6 +12,7 @@ from src.generics.mixins.views import (
     CustomViewSetMixin,
 )
 from src.generics.permissions import UserIsAuthenticated
+from src.logs.events import AuditEventService
 from src.payment import messages
 from src.payment.models import (
     Price,
@@ -104,6 +105,11 @@ class PaymentViewSet(
         except StripeServiceException as ex:
             raise_validation_error(message=ex.message)
         else:
+            AuditEventService.purchase_made(
+                request=request,
+                products=slz.validated_data['products'],
+                checkout_required=bool(payment_link),
+            )
             if payment_link:
                 return self.response_ok({'payment_link': payment_link})
             return self.response_ok()
@@ -120,10 +126,17 @@ class PaymentViewSet(
             is_superuser=token['is_superuser'],
             user=token.user,
         )
+        subscription_data = token.get_subscription_data()
         try:
-            service.confirm(subscription_data=token.get_subscription_data())
+            service.confirm(subscription_data=subscription_data)
         except StripeServiceException as ex:
             raise_validation_error(message=ex.message)
+        AuditEventService.payment_confirmed(
+            request=request,
+            user=token.user,
+            auth_type=token['auth_type'],
+            subscription_data=subscription_data,
+        )
         return self.response_ok()
 
     @action(methods=('GET',), detail=False, url_path='card-setup')
@@ -214,6 +227,7 @@ class SubscriptionViewSet(
         except StripeServiceException as ex:
             raise_validation_error(message=ex.message)
         else:
+            AuditEventService.subscription_cancelled(request=request)
             return self.response_ok()
 
 

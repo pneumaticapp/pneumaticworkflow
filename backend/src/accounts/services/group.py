@@ -1,6 +1,7 @@
 from collections import defaultdict
 from typing import List, Optional
 
+from celery import Task as CeleryTask
 from django.contrib.auth import get_user_model
 from django.db import transaction
 
@@ -15,6 +16,8 @@ from src.analysis.events import GroupsAnalyticsEvent
 from src.analysis.tasks import track_group_analytics
 from src.executor import RawSqlExecutor
 from src.generics.base.service import BaseModelService
+from src.logs.events.enums import EventName, EventObjectType
+from src.logs.events.mixins import EventEmitMixin
 from src.notifications.tasks import (
     send_group_created_notification,
     send_group_deleted_notification,
@@ -47,9 +50,18 @@ from src.storage.utils import sync_account_file_fields
 UserModel = get_user_model()
 
 
-class UserGroupService(BaseModelService):
+class UserGroupService(EventEmitMixin, BaseModelService):
 
-    def _get_template_ids(self):
+    def _publish_group(self, event_type: str, payload: dict) -> None:
+        self._publish(
+            event_type,
+            account_id=self.instance.account_id,
+            object_type=EventObjectType.GROUP,
+            object_id=self.instance.id,
+            payload=payload,
+        )
+
+    def _get_template_ids(self) -> List[int]:
         template_owner_ids = TemplateOwner.objects.filter(
             type=OwnerType.GROUP,
             group=self.instance,
@@ -72,7 +84,7 @@ class UserGroupService(BaseModelService):
         photo: Optional[str] = '',
         users: Optional[List[int]] = None,
         **kwargs,
-    ):
+    ) -> UserGroup:
         self.instance = UserGroup.objects.create(
             name=name,
             photo=photo,
@@ -122,11 +134,18 @@ class UserGroupService(BaseModelService):
             account_id=self.user.account_id,
             group_data=GroupWebsocketSerializer(self.instance).data,
         )
+        self._publish_group(
+            EventName.GROUP_CREATE,
+            payload={
+                'name': self.instance.name,
+                'users_ids': list(users or ()),
+            },
+        )
 
     def _send_users_notification(
         self,
         user_ids: List[int],
-        send_notification_task,
+        send_notification_task: CeleryTask,
     ):
         query = FetchGroupTaskNotificationRecipientsQuery(
             group_id=self.instance.id,
@@ -165,7 +184,10 @@ class UserGroupService(BaseModelService):
             send_notification_task=send_new_task_websocket,
         )
 
-    def _send_removed_users_notifications(self, user_ids: List[int]):
+    def _send_removed_users_notifications(
+        self,
+        user_ids: List[int],
+    ):
         self._send_users_notification(
             user_ids=user_ids,
             send_notification_task=send_task_deleted_notification,
@@ -235,7 +257,7 @@ class UserGroupService(BaseModelService):
         self,
         force_save: bool = False,
         **update_kwargs,
-    ):
+    ) -> UserGroup:
         old_photo = self.instance.photo
         users = update_kwargs.pop('users', None)
         new_name = update_kwargs.get('name')
@@ -270,6 +292,17 @@ class UserGroupService(BaseModelService):
                 type=FieldType.USER,
                 group_id=self.instance.id,
             ).update(value=new_name)
+
+        # Read before the write below: the photo is nullable in the
+        # row and an empty string in the request, and the two mean the
+        # same picture.
+        changed_fields = []
+        if added_users_ids or removed_users_ids:
+            changed_fields.append('users')
+        if new_name is not None and new_name != self.instance.name:
+            changed_fields.append('name')
+        if 'photo' in update_kwargs and (new_photo or '') != (old_photo or ''):
+            changed_fields.append('photo')
 
         if (
             added_users_ids or
@@ -311,6 +344,15 @@ class UserGroupService(BaseModelService):
             account_id=self.user.account_id,
             group_data=GroupWebsocketSerializer(self.instance).data,
         )
+        if changed_fields:
+            self._publish_group(
+                EventName.GROUP_UPDATE,
+                payload={
+                    'changed_fields': sorted(changed_fields),
+                    'added_users_ids': added_users_ids or [],
+                    'removed_users_ids': removed_users_ids or [],
+                },
+            )
 
         if added_users_ids:
             self._send_added_users_notifications(added_users_ids)
@@ -363,6 +405,13 @@ class UserGroupService(BaseModelService):
             is_superuser=self.is_superuser,
         )
         self.instance.delete()
+        self._publish_group(
+            EventName.GROUP_DELETE,
+            payload={
+                'name': self.instance.name,
+                'users_ids': users,
+            },
+        )
         # Revoke PERFORMER_GROUP view permissions.  After soft-delete
         # the group is no longer active, so sync_performer_group calls
         # revoke_view for each workflow.
