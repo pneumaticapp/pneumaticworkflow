@@ -6,12 +6,7 @@ import { TLoggerArgs } from './types';
  * Errors matching these patterns are logged at info level (not sent to Sentry).
  * All other errors remain at error level to preserve visibility.
  */
-const EXPECTED_ERROR_PATTERNS = [
-  'token_not_valid',
-  'Token is invalid',
-  'Token is expired',
-  'Request was throttled',
-];
+const EXPECTED_ERROR_PATTERNS = ['token_not_valid', 'Token is invalid', 'Token is expired', 'Request was throttled'];
 
 /**
  * Documented 401 response from /accounts/public/account for invalid/inactive shareKey.
@@ -26,7 +21,8 @@ const EXPECTED_ERROR_REGEX = new RegExp(EXPECTED_ERROR_PATTERNS.join('|'));
 export function errorToString(error: TLoggerArgs[number]): string {
   if (error instanceof Error) {
     return error.message;
-  } if (typeof error === 'object' && error !== null) {
+  }
+  if (typeof error === 'object' && error !== null) {
     return JSON.stringify(error);
   }
 

@@ -16,18 +16,8 @@ import { Tooltip } from '../../UI';
 import { TeamUserSkeleton } from '../TeamUserSkeleton';
 import { CreateUserModal } from '../Users/CreateUserModal';
 import { ECreateUserModalTab } from '../Users/CreateUserModal/types';
-import {
-  deleteAIAgent,
-  loadAIAgents,
-  loadAIProviders,
-  updateAIAgent,
-} from '../../../redux/ai/slice';
-import {
-  getAIAgentsState,
-  getAIProviders,
-  getCanCreateAIAgent,
-  getIsAISaving,
-} from '../../../redux/selectors/ai';
+import { deleteAIAgent, loadAIAgents, loadAIProviders, updateAIAgent } from '../../../redux/ai/slice';
+import { getAIAgentsState, getAIProviders, getCanCreateAIAgent, getIsAISaving } from '../../../redux/selectors/ai';
 
 import { EditAIAgentModal } from './EditAIAgentModal';
 import styles from './AIAgents.css';
@@ -75,19 +65,14 @@ export function AIAgents() {
       .toUpperCase();
 
   const renderAgentCard = (agent: IAIAgent) => (
-    <div
-      key={agent.id}
-      className={styles['agent-card']}
-      data-testid={`ai-agent-${agent.id}`}
-    >
+    <div key={agent.id} className={styles['agent-card']} data-testid={`ai-agent-${agent.id}`}>
       <div className={styles['agent-card__avatar']}>
         {agent.photo ? <img src={agent.photo} alt="" /> : renderInitials(agent.name)}
       </div>
       <div className={styles['agent-card__info']}>
         <span className={styles['agent-card__name']}>{agent.name}</span>
         <span className={styles['agent-card__meta']}>
-          {providerNameById.get(agent.providerId) ??
-            formatMessage({ id: 'team.ai-agents.unknown-provider' })}
+          {providerNameById.get(agent.providerId) ?? formatMessage({ id: 'team.ai-agents.unknown-provider' })}
           {' · '}
           {agent.model}
         </span>

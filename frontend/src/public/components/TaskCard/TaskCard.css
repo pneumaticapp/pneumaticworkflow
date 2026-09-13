@@ -45,10 +45,10 @@
 }
 
 .dot {
-  margin: 0 0.8rem 0.2rem;
   display: inline-block;
   width: 0.4rem;
   height: 0.4rem;
+  margin: 0 0.8rem 0.2rem;
   vertical-align: baseline;
   background: var(--pneumatic-color-black48);
   border-radius: 50%;
@@ -58,8 +58,8 @@
   display: block;
   font-size: 1.3rem;
   font-weight: 600;
-  white-space: nowrap;
   color: var(--pneumatic-color-black48);
+  white-space: nowrap;
 
   @media (--mobile) {
     margin: 0 0 0.8rem;
@@ -73,21 +73,21 @@
 .workflow-name {
   position: relative;
   margin-bottom: 0;
-  overflow-wrap: break-word;
   overflow: hidden;
   color: var(--pneumatic-color-black48);
+  overflow-wrap: break-word;
 }
 
 .task-name-container {
-  margin: 0.8rem 0;
   display: flex;
+  margin: 0.8rem 0;
 }
 
 .task-name__urgent-marker {
+  display: inline-flex;
+  padding: 0.1rem 0.8rem;
   margin-top: -0.2rem;
   margin-right: 0.8rem;
-  padding: 0.1rem 0.8rem;
-  display: inline-flex;
   font-size: 1.3rem;
   font-weight: normal;
   line-height: 1.6rem;
@@ -101,14 +101,14 @@
   margin: 1.6rem 0;
   font-size: 1.5rem;
   line-height: 2rem;
-  word-break: break-word;
   color: var(--pneumatic-color-black72);
+  overflow-wrap: anywhere;
 }
 
 .info {
-  margin: 3.2rem 0;
   display: flex;
   justify-content: space-between;
+  margin: 3.2rem 0;
 
   @media (--mobile) {
     flex-direction: column;
@@ -116,9 +116,9 @@
 }
 
 .performers {
-  margin: -0.4rem;
   display: flex;
   flex-wrap: wrap;
+  margin: -0.4rem;
 
   > * {
     margin: 0.4rem;
@@ -126,16 +126,16 @@
 }
 
 .performer {
-  align-items: center;
-  margin: 0.4rem;
-  padding: 0.6rem 0.8rem;
   display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 0.8rem;
+  margin: 0.4rem;
   font-size: 1.3rem;
   line-height: 1.6rem;
   color: var(--pneumatic-color-black100);
   background: var(--pneumatic-color-beige);
   border-radius: 1.6rem;
-  justify-content: space-between;
 
   button {
     background-color: transparent;
@@ -149,8 +149,8 @@
 
 .performer__delete {
   margin-left: 0.4rem;
-  cursor: pointer;
   color: var(--pneumatic-color-black16);
+  cursor: pointer;
   transition: color 0.1s ease-in-out;
 
   &:hover {
@@ -161,8 +161,8 @@
 .complete-form {
   position: relative;
   z-index: 1;
-  margin: 3.2rem 0;
   padding: 3.2rem;
+  margin: 3.2rem 0;
 
   @media (--mobile) {
     padding: 3.2rem 0;
@@ -170,11 +170,11 @@
 
   &::before {
     position: absolute;
-    z-index: -1;
     top: 0;
     right: 0;
-    left: 0;
     bottom: 0;
+    left: 0;
+    z-index: -1;
     content: '';
     background: var(--pneumatic-color-beige);
     border-radius: 2.4rem;
@@ -187,8 +187,8 @@
 }
 
 .complete-form_readonly {
-  margin: 0;
   padding: 0;
+  margin: 0;
 
   &::before {
     display: none;
@@ -209,9 +209,9 @@
 .absent-warning {
   @mixin text-small;
 
-  margin-top: 0.8rem;
   display: flex;
   align-items: center;
+  margin-top: 0.8rem;
   color: var(--pneumatic-color-warning);
 
   &-icon {
@@ -223,16 +223,16 @@
   margin: 0 0 2rem;
 
   :global .react-datepicker-wrapper input {
-    padding: 1.4rem 5rem 1.4rem 1.6rem !important;
     width: 100% !important;
+    padding: 1.4rem 5rem 1.4rem 1.6rem !important;
     font-family: Nunito, sans-serif !important;
     font-size: 1.5rem !important;
     line-height: 2rem !important;
     color: var(--pneumatic-color-black100) !important;
+    outline: none !important;
     background: var(--pneumatic-color-beige) !important;
     border: 0.1rem solid var(--pneumatic-color-black16) !important;
     border-radius: 0.8rem !important;
-    outline: none !important;
     transition: 0.15s ease-in border-color !important;
 
     &:focus {
@@ -266,15 +266,15 @@
 }
 
 .minimize-log-button {
-  margin-top: 3.2rem;
   width: 100%;
+  margin-top: 3.2rem;
 }
 
 .completed,
 .returned {
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
 
   &__text {
     margin: 0 0 0 0.8rem;
@@ -296,10 +296,10 @@
 }
 
 .due-in {
-  margin-left: 0.8rem;
-  padding: 0.6rem 0;
   display: block;
   flex-shrink: 0;
+  padding: 0.6rem 0;
+  margin-left: 0.8rem;
 
   @media (--mobile) {
     margin: 3.2rem 0 0;
@@ -308,19 +308,19 @@
 
 .guest-task-name {
   margin-bottom: 1.6rem;
-  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .help-trigger {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  padding: 0;
   margin-bottom: 1.6rem;
   margin-left: auto;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
   font: inherit;
-  cursor: pointer;
   color: var(--pneumatic-color-link-dark);
+  cursor: pointer;
   background: none;
   border: none;
 

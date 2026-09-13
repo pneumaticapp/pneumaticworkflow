@@ -1,4 +1,3 @@
-/* eslint-disable */
 /* prettier-ignore */
 import { ITemplateClient, ITemplateTaskClient, ITemplateKickoffClient, IExtraField } from '../../../types/template';
 import { IFieldsetRuntime } from '../../../types/fieldset';
@@ -28,15 +27,16 @@ function getKickoffDatasetIds(kickoff: ITemplateKickoffClient, fieldsets: IField
   return [...ids];
 }
 
-export async function loadDatasetsMap(kickoff: ITemplateKickoffClient, fieldsets: IFieldsetRuntime[] = []): Promise<Record<number, string[]>> {
+export async function loadDatasetsMap(
+  kickoff: ITemplateKickoffClient,
+  fieldsets: IFieldsetRuntime[] = [],
+): Promise<Record<number, string[]>> {
   const datasetIds = getKickoffDatasetIds(kickoff, fieldsets);
   if (datasetIds.length === 0) {
     return {};
   }
 
-  const datasets = await Promise.all(
-    datasetIds.map((id) => getDataset({ id })),
-  );
+  const datasets = await Promise.all(datasetIds.map((id) => getDataset({ id })));
 
   const datasetsMap: Record<number, string[]> = {};
   datasetIds.forEach((id, i) => {
@@ -46,17 +46,17 @@ export async function loadDatasetsMap(kickoff: ITemplateKickoffClient, fieldsets
   return datasetsMap;
 }
 
-
 function applyDatasetsToFields(fields: IExtraField[], datasetsMap: Record<number, string[]>): IExtraField[] {
   return fields.map((field) => ({
     ...field,
-    selections: field.dataset
-      ? datasetsMap[field.dataset] || []
-      : normalizeSelections(field.selections),
+    selections: field.dataset ? datasetsMap[field.dataset] || [] : normalizeSelections(field.selections),
   }));
 }
 
-function convertSelectionsToValues(kickoff: ITemplateKickoffClient, datasetsMap: Record<number, string[]>): ITemplateKickoffClient {
+function convertSelectionsToValues(
+  kickoff: ITemplateKickoffClient,
+  datasetsMap: Record<number, string[]>,
+): ITemplateKickoffClient {
   return {
     ...kickoff,
     fields: applyDatasetsToFields(kickoff.fields, datasetsMap),

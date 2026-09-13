@@ -19,14 +19,15 @@ export const insertId = <T extends { [key: string]: any }>(initialObj: T, savedO
     const initialValue = acc[key];
 
     if (Array.isArray(savedValue) && Array.isArray(initialValue)) {
-      const newArr = initialValue.map(initialItem => {
+      const newArr = initialValue.map((initialItem) => {
         if (!isObject(initialItem)) {
           return initialItem;
         }
 
-        const sameSavedItem = savedValue.find(savedItem => {
-          return EQUALTY_KEYS
-            .some(equaltyKey => savedItem[equaltyKey] && savedItem[equaltyKey] === initialItem[equaltyKey]);
+        const sameSavedItem = savedValue.find((savedItem) => {
+          return EQUALTY_KEYS.some(
+            (equaltyKey) => savedItem[equaltyKey] && savedItem[equaltyKey] === initialItem[equaltyKey],
+          );
         });
 
         if (!sameSavedItem) {
@@ -43,7 +44,7 @@ export const insertId = <T extends { [key: string]: any }>(initialObj: T, savedO
       return { ...acc, [key]: insertId(initialValue, savedValue) };
     }
 
-    if (ID_KEYS.some(idKey => idKey === key)) {
+    if (ID_KEYS.some((idKey) => idKey === key)) {
       return { ...acc, [key]: savedValue };
     }
 

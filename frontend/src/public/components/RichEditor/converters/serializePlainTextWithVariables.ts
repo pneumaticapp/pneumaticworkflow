@@ -3,8 +3,6 @@ import { $getRoot, $isElementNode, $isTextNode } from 'lexical';
 
 import { $isVariableNode } from '../nodes/VariableNode';
 
-
-
 function serializeNodeToPlainText(node: LexicalNode): string {
   if ($isVariableNode(node)) {
     return `{{${node.getApiName()}}}`;

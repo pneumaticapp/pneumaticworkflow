@@ -6,10 +6,7 @@ import { enMessages } from '../../../../lang/locales/en_US';
 
 import { WorkflowsGridPage } from '../WorkflowsGridPage';
 import { getTemplate } from '../../../../api/getTemplate';
-import {
-  getRunnableWorkflow,
-  loadDatasetsMap,
-} from '../../../TemplateEdit/utils/getRunnableWorkflow';
+import { getRunnableWorkflow, loadDatasetsMap } from '../../../TemplateEdit/utils/getRunnableWorkflow';
 import { mapTemplateFieldsetsToRuntime } from '../../../../utils/mapTemplateFieldsetsToRuntime';
 import { EWorkflowsLoadingStatus, EWorkflowsView } from '../../../../types/workflow';
 import { ITemplateTitle } from '../../../../types/template';
@@ -17,9 +14,7 @@ import { intlMock } from '../../../../__stubs__/intlMock';
 import { makeFieldsetRuntime } from '../../../../__stubs__/fieldsets.factory';
 
 const renderWithIntl = (ui: React.ReactElement) =>
-  render(
-    React.createElement(IntlProvider, { locale: 'en', messages: enMessages }, ui),
-  );
+  render(React.createElement(IntlProvider, { locale: 'en', messages: enMessages }, ui));
 
 jest.mock('../../../../api/getTemplate', () => ({
   getTemplate: jest.fn(),
@@ -47,8 +42,7 @@ jest.mock('../../../UI/Notifications', () => ({
 }));
 
 jest.mock('../../../UI/Typeography/Header', () => ({
-  Header: ({ children }: { children: React.ReactNode }) =>
-    React.createElement('span', null, children),
+  Header: ({ children }: { children: React.ReactNode }) => React.createElement('span', null, children),
 }));
 
 jest.mock('../../../icons', () => ({
@@ -75,8 +69,7 @@ jest.mock('../WorkflowCardLoader', () => ({
 
 jest.mock('react-infinite-scroll-component', () => ({
   __esModule: true,
-  default: ({ children }: { children: React.ReactNode }) =>
-    React.createElement('div', null, children),
+  default: ({ children }: { children: React.ReactNode }) => React.createElement('div', null, children),
 }));
 
 jest.mock('../../../../utils/helpers', () => {
@@ -133,8 +126,9 @@ describe('WorkflowsGridPage', () => {
 
   const clickRunButton = () => {
     const buttons = screen.getAllByRole('button');
-    const runBtn = buttons.find((btn) => btn.textContent?.includes(RUN_WORKFLOW_TEXT)
-      || btn.textContent?.includes('Template'));
+    const runBtn = buttons.find(
+      (btn) => btn.textContent?.includes(RUN_WORKFLOW_TEXT) || btn.textContent?.includes('Template'),
+    );
     if (!runBtn) throw new Error('Run Workflow button not found');
     userEvent.click(runBtn);
   };

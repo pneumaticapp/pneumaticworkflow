@@ -49,18 +49,18 @@ export function getNotificationListItemProps({
       return {
         ...commonProps,
         avatar: author && (
-          <Avatar
-            user={author}
-            className={styles['avatar__image']}
-            containerClassName={styles['avatar__container']}
-          />
+          <Avatar user={author} className={styles['avatar__image']} containerClassName={styles['avatar__container']} />
         ),
         icon: <TaskCompleteIcon size="sm" />,
         title: getUserFullName(author),
         subtitle: notification.workflow.name,
         text: formatMessage(
           { id: 'workflows.log-complete' },
-          { taskName: <span className={styles['notification-item__completed-task-name']}>{notification.task.name}</span> },
+          {
+            taskName: (
+              <span className={styles['notification-item__completed-task-name']}>{notification.task.name}</span>
+            ),
+          },
         ),
         link: getTaskDetailRoute(notification.task.id),
       };
@@ -81,11 +81,7 @@ export function getNotificationListItemProps({
       return {
         ...commonProps,
         avatar: author && (
-          <Avatar
-            user={author}
-            className={styles['avatar__image']}
-            containerClassName={styles['avatar__container']}
-          />
+          <Avatar user={author} className={styles['avatar__image']} containerClassName={styles['avatar__container']} />
         ),
         icon: <CommentInfoIcon />,
         title: getUserFullName(author),
@@ -100,11 +96,7 @@ export function getNotificationListItemProps({
       return {
         ...commonProps,
         avatar: author && (
-          <Avatar
-            user={author}
-            className={styles['avatar__image']}
-            containerClassName={styles['avatar__container']}
-          />
+          <Avatar user={author} className={styles['avatar__image']} containerClassName={styles['avatar__container']} />
         ),
         icon: <UrgentColorIcon />,
         title: getUserFullName(author),
@@ -119,11 +111,7 @@ export function getNotificationListItemProps({
       return {
         ...commonProps,
         avatar: author && (
-          <Avatar
-            user={author}
-            className={styles['avatar__image']}
-            containerClassName={styles['avatar__container']}
-          />
+          <Avatar user={author} className={styles['avatar__image']} containerClassName={styles['avatar__container']} />
         ),
         icon: <NotUrgentIcon fill="#B9B9B8" />,
         title: getUserFullName(author),
@@ -139,11 +127,7 @@ export function getNotificationListItemProps({
       return {
         ...commonProps,
         avatar: author && (
-          <Avatar
-            user={author}
-            className={styles['avatar__image']}
-            containerClassName={styles['avatar__container']}
-          />
+          <Avatar user={author} className={styles['avatar__image']} containerClassName={styles['avatar__container']} />
         ),
         icon: <CommentInfoIcon />,
         title: getUserFullName(author),
@@ -177,11 +161,7 @@ export function getNotificationListItemProps({
       return {
         ...commonProps,
         avatar: author && (
-          <Avatar
-            user={author}
-            className={styles['avatar__image']}
-            containerClassName={styles['avatar__container']}
-          />
+          <Avatar user={author} className={styles['avatar__image']} containerClassName={styles['avatar__container']} />
         ),
         icon: <AlarmIcon fill="#F44336" />,
         title: getUserFullName(author),
@@ -196,11 +176,7 @@ export function getNotificationListItemProps({
       return {
         ...commonProps,
         avatar: author && (
-          <Avatar
-            user={author}
-            className={styles['avatar__image']}
-            containerClassName={styles['avatar__container']}
-          />
+          <Avatar user={author} className={styles['avatar__image']} containerClassName={styles['avatar__container']} />
         ),
         icon: <AlarmCrossedIcon fill="#4CAF50" />,
         title: getUserFullName(author),

@@ -9,18 +9,26 @@ import { deleteAIAgent, loadAIAgents, loadAIProviders, updateAIAgent } from '../
 import { EAIVendor, IAIAgent, IAIProvider } from '../../../../types/ai';
 
 jest.mock('../../../UI', () => ({
-  Tooltip: ({ children, content }: any) => <div data-testid="tooltip" data-content={content}>{children}</div>,
+  Tooltip: ({ children, content }: any) => (
+    <div data-testid="tooltip" data-content={content}>
+      {children}
+    </div>
+  ),
 }));
 
 jest.mock('../../../UI/Buttons/Button', () => ({
   Button: ({ label, onClick, 'data-testid': testId, disabled }: any) => (
-    <button onClick={onClick} data-testid={testId} disabled={disabled}>{label}</button>
+    <button onClick={onClick} data-testid={testId} disabled={disabled}>
+      {label}
+    </button>
   ),
 }));
 
 jest.mock('../../../UI/Buttons/AddButton', () => ({
   AddButton: ({ title, onClick, disabled }: any) => (
-    <button data-testid="create-ai-agent-btn" onClick={onClick} disabled={disabled}>{title}</button>
+    <button data-testid="create-ai-agent-btn" onClick={onClick} disabled={disabled}>
+      {title}
+    </button>
   ),
 }));
 

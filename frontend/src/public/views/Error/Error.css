@@ -1,10 +1,10 @@
 .container {
-  padding: 32px;
   display: flex;
   flex-direction: column;
-  height: 100%;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+  height: 100%;
+  padding: 32px;
   background: var(--pneumatic-color-black4);
 }
 
@@ -35,20 +35,20 @@
   margin-top: 16px;
   font-size: 15px;
   line-height: 20px;
-  text-align: center;
   color: var(--pneumatic-color-black100);
+  text-align: center;
 }
 
 .error-text-container {
-  padding-bottom: 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  padding-bottom: 16px;
 }
 
 .back-button {
-  margin-top: 32px;
   width: 209px;
+  margin-top: 32px;
 }
 
 .copyright__link {

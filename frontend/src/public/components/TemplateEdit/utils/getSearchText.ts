@@ -1,9 +1,6 @@
 import { EditorState, SelectionState } from 'draft-js';
 
-export function getSearchText(
-  editorState: EditorState,
-  selection: SelectionState,
-) {
+export function getSearchText(editorState: EditorState, selection: SelectionState) {
   const anchorKey = selection.getAnchorKey();
   const anchorOffset = selection.getAnchorOffset();
   const currentContent = editorState.getCurrentContent();

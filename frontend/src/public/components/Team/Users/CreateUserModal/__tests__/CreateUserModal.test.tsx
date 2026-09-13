@@ -76,7 +76,8 @@ describe('CreateUserModal', () => {
     passwordInput: screen.getByLabelText(getTranslatedText('team.create-user-modal.password')) as HTMLInputElement,
   });
 
-  const getSubmitButton = () => screen.getByRole('button', { name: getTranslatedText('team.create-user-modal.submit') });
+  const getSubmitButton = () =>
+    screen.getByRole('button', { name: getTranslatedText('team.create-user-modal.submit') });
 
   const getCopyButton = () => screen.getByRole('button', { name: getTranslatedText('team.create-user-modal.copy') });
 
@@ -128,9 +129,11 @@ describe('CreateUserModal', () => {
   };
 
   const openAIAgentTab = async () => {
-    await userEvent.click(screen.getByRole('button', {
-      name: getTranslatedText('team.create-user-modal.tab-ai-agent'),
-    }));
+    await userEvent.click(
+      screen.getByRole('button', {
+        name: getTranslatedText('team.create-user-modal.tab-ai-agent'),
+      }),
+    );
   };
 
   const fillInput = (input: HTMLInputElement, value: string) => {
@@ -184,13 +187,17 @@ describe('CreateUserModal', () => {
     it('displays submit button', async () => {
       await openModal();
 
-      expect(screen.getByRole('button', { name: getTranslatedText('team.create-user-modal.submit') })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: getTranslatedText('team.create-user-modal.submit') }),
+      ).toBeInTheDocument();
     });
 
     it('displays password copy button', async () => {
       await openModal();
 
-      expect(screen.getByRole('button', { name: getTranslatedText('team.create-user-modal.copy') })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: getTranslatedText('team.create-user-modal.copy') }),
+      ).toBeInTheDocument();
     });
   });
 
@@ -222,9 +229,7 @@ describe('CreateUserModal', () => {
       await openAIAgentTab();
 
       expect(screen.getByTestId('ai-agent-no-providers-hint')).toBeInTheDocument();
-      expect(
-        screen.queryByLabelText(getTranslatedText('team.create-ai-agent-modal.name')),
-      ).not.toBeInTheDocument();
+      expect(screen.queryByLabelText(getTranslatedText('team.create-ai-agent-modal.name'))).not.toBeInTheDocument();
     });
 
     it('preselects the provider and loads its models when the account has exactly one', async () => {
@@ -254,7 +259,11 @@ describe('CreateUserModal', () => {
 
     it('ignores a stale avatar upload finished after Generate was pressed', async () => {
       let resolveUpload!: (value: unknown) => void;
-      (uploadUserAvatar as jest.Mock).mockReturnValue(new Promise((resolve) => { resolveUpload = resolve; }));
+      (uploadUserAvatar as jest.Mock).mockReturnValue(
+        new Promise((resolve) => {
+          resolveUpload = resolve;
+        }),
+      );
 
       render(<CreateUserModal isOpen={true} onClose={mockOnClose} />);
       await openAIAgentTab();
@@ -264,9 +273,11 @@ describe('CreateUserModal', () => {
         screen.getByLabelText(getTranslatedText('team.create-ai-agent-modal.upload')),
         new File(['old-avatar'], 'old.png', { type: 'image/png' }),
       );
-      await userEvent.click(screen.getByRole('button', {
-        name: getTranslatedText('team.create-ai-agent-modal.generate'),
-      }));
+      await userEvent.click(
+        screen.getByRole('button', {
+          name: getTranslatedText('team.create-ai-agent-modal.generate'),
+        }),
+      );
 
       await act(async () => {
         resolveUpload([{ id: 'file-old', name: 'old.png', url: 'https://files.example.com/old.png', size: 1 }]);
@@ -279,24 +290,20 @@ describe('CreateUserModal', () => {
     it('preserves both forms while switching tabs', async () => {
       render(<CreateUserModal isOpen={true} onClose={mockOnClose} />);
 
-      const userFirstName = screen.getByLabelText(
-        getTranslatedText('team.create-user-modal.first-name'),
-      );
-      const generatedPassword = screen.getByLabelText(
-        getTranslatedText('team.create-user-modal.password'),
-      ).getAttribute('value');
+      const userFirstName = screen.getByLabelText(getTranslatedText('team.create-user-modal.first-name'));
+      const generatedPassword = screen
+        .getByLabelText(getTranslatedText('team.create-user-modal.password'))
+        .getAttribute('value');
       await userEvent.type(userFirstName, 'User draft');
 
       await openAIAgentTab();
       await userEvent.type(getNameInput(), 'Agent draft');
 
       await userEvent.click(screen.getByText(getTranslatedText('team.create-user-modal.tab-user')));
-      expect(screen.getByLabelText(
-        getTranslatedText('team.create-user-modal.first-name'),
-      )).toHaveValue('User draft');
-      expect(screen.getByLabelText(
-        getTranslatedText('team.create-user-modal.password'),
-      )).toHaveValue(generatedPassword);
+      expect(screen.getByLabelText(getTranslatedText('team.create-user-modal.first-name'))).toHaveValue('User draft');
+      expect(screen.getByLabelText(getTranslatedText('team.create-user-modal.password'))).toHaveValue(
+        generatedPassword,
+      );
 
       await openAIAgentTab();
       expect(screen.getByDisplayValue('Agent draft')).toBeInTheDocument();
@@ -306,14 +313,14 @@ describe('CreateUserModal', () => {
       render(<CreateUserModal isOpen={true} onClose={mockOnClose} />);
       await openAIAgentTab();
 
-      const modelDropdown = screen.getByText(
-        getTranslatedText('team.create-ai-agent-modal.model'),
-      ).closest('.react-select') as HTMLElement;
+      const modelDropdown = screen
+        .getByText(getTranslatedText('team.create-ai-agent-modal.model'))
+        .closest('.react-select') as HTMLElement;
       await userEvent.click(modelDropdown.querySelector('.react-select__control') as HTMLElement);
       await userEvent.tab();
-      expect(await within(modelDropdown).findByText(
-        getTranslatedText('team.create-ai-agent-modal.validation-required'),
-      )).toBeInTheDocument();
+      expect(
+        await within(modelDropdown).findByText(getTranslatedText('team.create-ai-agent-modal.validation-required')),
+      ).toBeInTheDocument();
       expect(within(modelDropdown).getAllByText('*')).toHaveLength(1);
       expect(screen.queryByText('team.create-ai-agent-modal.validation-required')).not.toBeInTheDocument();
     });
@@ -329,7 +336,11 @@ describe('CreateUserModal', () => {
 
     it('clears the draft and a pending avatar upload on a quick reopen', async () => {
       let resolveUpload!: (value: unknown) => void;
-      (uploadUserAvatar as jest.Mock).mockReturnValue(new Promise((resolve) => { resolveUpload = resolve; }));
+      (uploadUserAvatar as jest.Mock).mockReturnValue(
+        new Promise((resolve) => {
+          resolveUpload = resolve;
+        }),
+      );
 
       const { rerender } = render(<CreateUserModal isOpen={true} onClose={mockOnClose} />);
       await openAIAgentTab();
@@ -341,9 +352,9 @@ describe('CreateUserModal', () => {
 
       rerender(<CreateUserModal isOpen={false} onClose={mockOnClose} />);
       rerender(<CreateUserModal isOpen={true} onClose={mockOnClose} />);
-      await waitFor(() => expect(screen.getByLabelText(
-        getTranslatedText('team.create-user-modal.email'),
-      )).toBeInTheDocument());
+      await waitFor(() =>
+        expect(screen.getByLabelText(getTranslatedText('team.create-user-modal.email'))).toBeInTheDocument(),
+      );
 
       await act(async () => {
         resolveUpload([{ id: 'file-old', name: 'old.png', url: 'https://files.example.com/old.png', size: 1 }]);
@@ -395,14 +406,16 @@ describe('CreateUserModal', () => {
       await userEvent.click(submitButton);
 
       await waitFor(() => {
-        expect(mockDispatch).toHaveBeenCalledWith(createAIAgent({
-          name: 'Research assistant',
-          providerId: 1,
-          model: 'openai/gpt-4o',
-          systemPrompt: 'You are helpful.',
-          photo: null,
-          isActive: true,
-        }));
+        expect(mockDispatch).toHaveBeenCalledWith(
+          createAIAgent({
+            name: 'Research assistant',
+            providerId: 1,
+            model: 'openai/gpt-4o',
+            systemPrompt: 'You are helpful.',
+            photo: null,
+            isActive: true,
+          }),
+        );
       });
       expect(mockOnClose).toHaveBeenCalled();
     });

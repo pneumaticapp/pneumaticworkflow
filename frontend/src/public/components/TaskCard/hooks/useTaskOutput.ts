@@ -11,14 +11,8 @@ import { createFlushableDebounce } from '../utils/createFlushableDebounce';
 export function useTaskOutput(task: ITask) {
   const [outputValues, setOutputValues] = useState<IExtraField[]>([]);
   const [fieldsetOutputValues, setFieldsetOutputValues] = useState<IFieldsetRuntime[]>([]);
-  const saveOutputsToStorageDebounced = useMemo(
-    () => createFlushableDebounce(300, addOrUpdateStorageOutput),
-    [],
-  );
-  const saveFieldsetsToStorageDebounced = useMemo(
-    () => createFlushableDebounce(300, fieldsetsStorage.save),
-    [],
-  );
+  const saveOutputsToStorageDebounced = useMemo(() => createFlushableDebounce(300, addOrUpdateStorageOutput), []);
+  const saveFieldsetsToStorageDebounced = useMemo(() => createFlushableDebounce(300, fieldsetsStorage.save), []);
   const taskOutputSignature = useMemo(() => JSON.stringify(task.output), [task.output]);
   const taskFieldsetsSignature = useMemo(() => JSON.stringify(task.fieldsets), [task.fieldsets]);
 

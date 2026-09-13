@@ -1,4 +1,3 @@
-/* eslint-disable */
 /* prettier-ignore */
 import * as React from 'react';
 import classnames from 'classnames';
@@ -16,8 +15,6 @@ import { toDate, toTspDate } from '../../../../utils/dateTime';
 
 import fieldStyles from './ExtraFieldDate.css';
 import styles from '../../KickoffRedux/KickoffRedux.css';
-
-
 
 export function ExtraFieldDate({
   field,
@@ -87,7 +84,12 @@ export function ExtraFieldDate({
             {isRequired && <span className={styles['kick-off-required-sign']} />}
           </div>
         )}
-        <div className={classnames(fieldStyles['date-input-wrapper'], isLabelLeft && fieldStyles['date-input-wrapper_label-left'])}>
+        <div
+          className={classnames(
+            fieldStyles['date-input-wrapper'],
+            isLabelLeft && fieldStyles['date-input-wrapper_label-left'],
+          )}
+        >
           <DatePickerCustom
             isClearable={false}
             onChange={handleChangeDate}

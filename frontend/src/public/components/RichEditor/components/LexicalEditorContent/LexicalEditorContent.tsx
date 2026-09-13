@@ -33,8 +33,6 @@ import styles from './LexicalEditorContent.css';
 
 const MARKDOWN_SHORTCUT_TRANSFORMERS = [...ELEMENT_TRANSFORMERS, ...TEXT_FORMAT_TRANSFORMERS];
 
-
-
 export function LexicalEditorContent({
   placeholder = '',
   withChecklists,
@@ -109,9 +107,7 @@ export function LexicalEditorContent({
       <HistoryPlugin />
       {showRichTextPlugins && <ListPlugin />}
       <SetEditorRefPlugin editorRef={editorRef} />
-      {withControls && onSubmit ? (
-        <SubmitOnKeyPlugin onSubmit={onSubmit} />
-      ) : null}
+      {withControls && onSubmit ? <SubmitOnKeyPlugin onSubmit={onSubmit} /> : null}
       <OnChangePlugin ignoreSelectionChange onChange={onChange} />
       {showRichTextPlugins && <MarkdownShortcutPlugin transformers={MARKDOWN_SHORTCUT_TRANSFORMERS} />}
       {plainText && <DisableRichTextFormattingPlugin />}
@@ -124,9 +120,7 @@ export function LexicalEditorContent({
       {showRichTextPlugins && <InsertAttachmentPlugin />}
       {showRichTextPlugins && <CopyAttachmentPlugin />}
       <DecoratorNavigationPlugin />
-      {onPasteFiles ? (
-        <PasteAttachmentPlugin onPasteFiles={onPasteFiles} />
-      ) : null}
+      {onPasteFiles ? <PasteAttachmentPlugin onPasteFiles={onPasteFiles} /> : null}
       {showMentions && mentions ? <MentionsPlugin mentions={mentions} /> : null}
     </div>
   );

@@ -51,10 +51,7 @@ const AIProviderListItem = React.memo(({ provider, onDelete }: IAIProviderListIt
         </span>
         {isUsed && (
           <span className={styles['providers__item-usage']} data-testid={`ai-provider-usage-${provider.id}`}>
-            {formatMessage(
-              { id: 'ai-providers.usage' },
-              { agents: provider.usage.map(({ name }) => name).join(', ') },
-            )}
+            {formatMessage({ id: 'ai-providers.usage' }, { agents: provider.usage.map(({ name }) => name).join(', ') })}
           </span>
         )}
       </div>
@@ -194,7 +191,12 @@ export function AIProviders() {
                 label={formatMessage({ id: 'ai-providers.add' })}
                 data-testid="submit-create-ai-provider"
               />
-              <button type="button" className="cancel-button" onClick={resetCreateForm} data-testid="cancel-create-ai-provider">
+              <button
+                type="button"
+                className="cancel-button"
+                onClick={resetCreateForm}
+                data-testid="cancel-create-ai-provider"
+              >
                 {formatMessage({ id: 'integrations.cancel' })}
               </button>
             </div>

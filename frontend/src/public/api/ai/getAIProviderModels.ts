@@ -7,9 +7,5 @@ export function getAIProviderModels(providerId: number) {
     api: { urls },
   } = getBrowserConfigEnv();
 
-  return commonRequest<IAIModel[]>(
-    urls.aiProviderModels.replace(':id', String(providerId)),
-    {},
-    { shouldThrow: true },
-  );
+  return commonRequest<IAIModel[]>(urls.aiProviderModels.replace(':id', String(providerId)), {}, { shouldThrow: true });
 }

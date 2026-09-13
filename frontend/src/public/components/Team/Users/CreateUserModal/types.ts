@@ -22,7 +22,9 @@ export interface IStatusOption {
   value: EUserRole;
 }
 
-export interface ICreateUserFormValues extends Required<Pick<ICreateUserRequest, 'firstName' | 'lastName' | 'email' | 'password'>> {
+export interface ICreateUserFormValues extends Required<
+  Pick<ICreateUserRequest, 'firstName' | 'lastName' | 'email' | 'password'>
+> {
   role: EUserRole;
 }
 

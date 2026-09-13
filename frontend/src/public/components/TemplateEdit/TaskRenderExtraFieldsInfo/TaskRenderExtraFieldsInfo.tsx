@@ -10,9 +10,7 @@ interface ITaskRenderExtraFieldsInfoProps {
   onClick: () => void;
 }
 
-function countFieldsetOutputFields(
-  fieldsets: IFieldsetBindingClient[] | undefined,
-): number {
+function countFieldsetOutputFields(fieldsets: IFieldsetBindingClient[] | undefined): number {
   if (!fieldsets?.length) {
     return 0;
   }
@@ -20,7 +18,10 @@ function countFieldsetOutputFields(
   return fieldsets.reduce((acc, taskFieldset) => acc + taskFieldset.fields.length, 0);
 }
 
-export const TaskRenderExtraFieldsInfo = ({ task: { fields, fieldsets }, onClick }: ITaskRenderExtraFieldsInfoProps) => {
+export const TaskRenderExtraFieldsInfo = ({
+  task: { fields, fieldsets },
+  onClick,
+}: ITaskRenderExtraFieldsInfoProps) => {
   const { formatMessage } = useIntl();
 
   const totalCount = useMemo(() => {

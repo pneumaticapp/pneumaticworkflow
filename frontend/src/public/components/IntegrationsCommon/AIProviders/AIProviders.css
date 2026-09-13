@@ -3,19 +3,19 @@
 }
 
 .providers__header {
-  margin-bottom: 1.6rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  margin-bottom: 1.6rem;
 }
 
 .providers__title {
   margin: 0;
   font-size: 1.1rem;
   font-weight: bold;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
   color: var(--pneumatic-color-black100);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .providers__create-btn {
@@ -27,24 +27,24 @@
 .providers__empty {
   padding: 2.4rem 0;
   font-size: 1.4rem;
-  text-align: center;
   color: var(--pneumatic-color-black48);
+  text-align: center;
 }
 
 .providers__list {
   display: flex;
-  overflow: hidden;
   flex-direction: column;
+  overflow: hidden;
   border: 0.1rem solid var(--pneumatic-color-black16);
   border-radius: 0.6rem;
 }
 
 .providers__item {
-  padding: 1.2rem 1.6rem;
   display: flex;
-  border-bottom: 0.1rem solid var(--pneumatic-color-black8);
   align-items: center;
   justify-content: space-between;
+  padding: 1.2rem 1.6rem;
+  border-bottom: 0.1rem solid var(--pneumatic-color-black8);
 
   &:last-child {
     border-bottom: none;
@@ -53,37 +53,37 @@
 
 .providers__item-info {
   display: flex;
-  overflow: hidden;
   flex-direction: column;
   gap: 0.4rem;
   min-width: 0;
+  overflow: hidden;
 }
 
 .providers__item-name {
   overflow: hidden;
+  text-overflow: ellipsis;
   font-size: 1.4rem;
   font-weight: 600;
-  white-space: nowrap;
-  text-overflow: ellipsis;
   color: var(--pneumatic-color-black100);
+  white-space: nowrap;
 }
 
 .providers__item-url {
   overflow: hidden;
-  font-size: 1.2rem;
-  white-space: nowrap;
   text-overflow: ellipsis;
+  font-size: 1.2rem;
   color: var(--pneumatic-color-black48);
+  white-space: nowrap;
 }
 
 .providers__item-key {
   overflow: hidden;
+  text-overflow: ellipsis;
   font-family: monospace;
   font-size: 1.3rem;
-  white-space: nowrap;
-  letter-spacing: 0.02em;
-  text-overflow: ellipsis;
   color: var(--pneumatic-color-black48);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 
 .providers__item-usage {
@@ -119,8 +119,8 @@
 }
 
 .create-modal__footer {
-  margin-top: 2.4rem;
   display: flex;
-  align-items: center;
   gap: 1.6rem;
+  align-items: center;
+  margin-top: 2.4rem;
 }

@@ -9,7 +9,11 @@ import { createAIProvider, deleteAIProvider, loadAIProviders } from '../../../..
 import { EAIVendor, IAIProvider } from '../../../../types/ai';
 
 jest.mock('../../../UI', () => ({
-  Tooltip: ({ children, content }: any) => <div data-testid="tooltip" data-content={content}>{children}</div>,
+  Tooltip: ({ children, content }: any) => (
+    <div data-testid="tooltip" data-content={content}>
+      {children}
+    </div>
+  ),
 }));
 
 jest.mock('../../../UI/Buttons/Button', () => ({
