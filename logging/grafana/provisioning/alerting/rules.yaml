@@ -99,6 +99,7 @@ groups:
           area: security
         annotations:
           __dashboardUid__: pneumatic-critical-events
+          __panelId__: "2"
           summary: More than 10 failed sign-ins in five minutes
           description: >-
             user.login_failed events across the whole installation. A single
@@ -269,6 +270,7 @@ groups:
           area: security
         annotations:
           __dashboardUid__: pneumatic-critical-events
+          __panelId__: "12"
           summary: A file of another account was asked for and refused
           description: >-
             file.access_denied where payload.file_account_id is not the account
