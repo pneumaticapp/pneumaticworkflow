@@ -162,7 +162,12 @@
       "vacationDeactivate": "/accounts/user/deactivate-vacation",
       "vacationUserActivate": "/accounts/users/:id/activate-vacation",
       "vacationUserDeactivate": "/accounts/users/:id/deactivate-vacation",
-      "wsEvents": "/ws/events"
+      "wsEvents": "/ws/events",
+      "aiProviders": "/ai/providers",
+      "aiProvider": "/ai/providers/:id",
+      "aiProviderModels": "/ai/providers/:id/models",
+      "aiAgents": "/ai/agents",
+      "aiAgent": "/ai/agents/:id"
     }
   },
   "exposedToBrowser": [

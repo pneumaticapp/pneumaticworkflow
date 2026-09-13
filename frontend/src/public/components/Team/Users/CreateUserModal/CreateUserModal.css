@@ -1,12 +1,35 @@
+.modal__dialog {
+  position: relative;
+  bottom: auto;
+  align-items: flex-start;
+  height: auto;
+  min-height: calc(100% - 3.2rem);
+  margin: 1.6rem auto;
+}
+
+.modal__content {
+  height: auto;
+
+  /* Centres the card without clipping it: auto margins collapse to zero once the form outgrows
+     the viewport, whereas align-items: center would push its top out of the scroll area. Both
+     tabs get this, so switching between them never moves the card. */
+  margin: auto 0;
+}
+
+.modal__content > form {
+  flex: 1 1 auto;
+  height: auto;
+}
+
+.modal__body {
+  padding-top: 1.6rem;
+  overflow: visible;
+}
+
 .modal__form {
   display: flex;
   flex-direction: column;
   gap: 0.8rem;
-}
-
-.modal__dropdown--required p::after {
-  color: var(--pneumatic-color-warning);
-  content: '*';
 }
 
 .modal__option--selected {
@@ -36,4 +59,163 @@
   &:hover {
     color: var(--pneumatic-color-link-hover);
   }
+}
+
+.modal__header {
+  flex-shrink: 0;
+
+  > :first-child {
+    width: 100%;
+  }
+}
+
+.modal__tabs {
+  width: 100%;
+  margin: 0;
+}
+
+.modal__tabs-switcher {
+  width: 100%;
+  height: 3.2rem;
+  background-color: var(--pneumatic-color-beige);
+  border-radius: 1.6rem;
+}
+
+.modal__tab {
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+  color: var(--pneumatic-color-black100);
+  border-radius: 1.6rem;
+
+  @mixin text-small bold;
+}
+
+.modal__tab_active {
+  color: var(--pneumatic-color-white);
+  background-color: var(--pneumatic-color-link-hover);
+}
+
+.modal__agent-avatar {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  align-items: center;
+  margin-bottom: 2.4rem;
+}
+
+.modal__avatar-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 6.4rem;
+  height: 6.4rem;
+  overflow: hidden;
+  color: var(--pneumatic-color-black72);
+  background-color: var(--pneumatic-color-black16);
+  border-radius: 50%;
+
+  @mixin text-base bold;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.modal__avatar-actions {
+  display: flex;
+  gap: 0.8rem;
+  align-items: center;
+  height: 2.4rem;
+  color: var(--pneumatic-color-link-dark);
+  text-transform: uppercase;
+
+  @mixin text-small-extra bold;
+
+  label,
+  button,
+  span {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    padding: 0;
+    font: inherit;
+    line-height: 1.6rem;
+  }
+
+  label,
+  button {
+    color: inherit;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  label {
+    margin-bottom: 0;
+  }
+
+  input {
+    position: absolute;
+    width: 0.1rem;
+    height: 0.1rem;
+    overflow: hidden;
+    opacity: 0;
+  }
+}
+
+.modal__avatar-separator {
+  color: var(--pneumatic-color-black48);
+}
+
+.modal__section-title {
+  margin: 1.6rem 0 0.8rem;
+  color: var(--pneumatic-color-black48);
+  text-transform: uppercase;
+
+  @mixin text-small bold;
+}
+
+.modal__textarea-field {
+  position: relative;
+  display: block;
+  padding-top: 0.8rem;
+
+  > span:first-child {
+    position: absolute;
+    top: 0;
+    left: 1.2rem;
+    padding: 0 0.4rem;
+    color: var(--pneumatic-color-black72);
+    background-color: var(--pneumatic-color-white);
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 8.8rem;
+    padding: 1.2rem 1.6rem;
+    color: var(--pneumatic-color-black100);
+    resize: vertical;
+    outline: none;
+    border: 0.1rem solid var(--pneumatic-color-black16);
+    border-radius: 0.8rem;
+
+    &:focus {
+      border-color: var(--pneumatic-color-black48);
+    }
+  }
+}
+
+.modal__footer {
+  flex-shrink: 0;
+}
+
+.modal__submit {
+  width: 100%;
+}
+
+.modal__error {
+  display: block;
+  color: var(--pneumatic-color-warning);
 }
