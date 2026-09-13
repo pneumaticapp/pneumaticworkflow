@@ -1224,7 +1224,7 @@
       "options": {
         "legend": {
           "calcs": [
-            "sum"
+            "max"
           ],
           "displayMode": "table",
           "placement": "right",
