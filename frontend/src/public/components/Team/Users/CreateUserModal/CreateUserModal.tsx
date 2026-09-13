@@ -96,11 +96,7 @@ export function CreateUserModal({ isOpen, onClose, initialTab = ECreateUserModal
     <BaseModal
       isOpen={isOpen}
       toggle={onClose}
-      className={
-        activeTab === ECreateUserModalTab.AIAgent
-          ? `${styles['modal__dialog']} ${styles['modal__dialog--ai-agent']}`
-          : styles['modal__dialog']
-      }
+      className={styles['modal__dialog']}
       contentClassName={styles['modal__content']}
     >
       <ModalHeader toggle={onClose} className={styles['modal__header']} titleTag="div">

@@ -51,7 +51,7 @@ export function EditAIAgentModal({ agent, onClose }: IEditAIAgentModalProps) {
     <BaseModal
       isOpen
       toggle={onClose}
-      className={`${modalStyles['modal__dialog']} ${modalStyles['modal__dialog--ai-agent']}`}
+      className={modalStyles['modal__dialog']}
       contentClassName={modalStyles['modal__content']}
     >
       <ModalHeader toggle={onClose} className={modalStyles['modal__header']} titleTag="div">

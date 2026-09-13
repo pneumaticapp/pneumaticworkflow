@@ -2,15 +2,16 @@
   position: relative;
   bottom: auto;
   margin: 1.6rem auto;
+  align-items: flex-start;
   height: auto;
   min-height: calc(100% - 3.2rem);
 }
 
-.modal__dialog--ai-agent {
-  align-items: flex-start;
-}
-
 .modal__content {
+  /* Centres the card without clipping it: auto margins collapse to zero once the form outgrows
+     the viewport, whereas align-items: center would push its top out of the scroll area. Both
+     tabs get this, so switching between them never moves the card. */
+  margin: auto 0;
   height: auto;
 }
 
