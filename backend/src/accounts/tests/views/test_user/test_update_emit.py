@@ -273,3 +273,38 @@ def test_put__escalate_privileges__no_event(
     assert fake_stream.events == []
     identify_mock.assert_not_called()
     send_user_updated_mock.assert_not_called()
+
+
+def test_put__blank_photo_over_null__not_emit(
+    mocker,
+    identify_mock,
+    api_client,
+    fake_stream,
+):
+
+    """ A profile without a photo stores NULL, the client sends it back
+        as an empty string: the same absence, not an edit. """
+
+    # arrange
+    account = create_test_account()
+    create_test_owner(account=account)
+    user = create_test_not_admin(account=account, photo=None)
+    mocker.patch(
+        'src.accounts.services.user.send_user_updated_notification.delay',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.put(
+        '/accounts/user',
+        data={
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'photo': '',
+        },
+        format='json',
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert fake_stream.events == []

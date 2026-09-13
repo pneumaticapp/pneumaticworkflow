@@ -277,15 +277,14 @@ class BaseSSOService(SignUpMixin, CacheMixin, EncryptionMixin, ABC):
         existing_user = (
             UserModel.objects.filter(email=user_data['email']).first()
         )
-        if existing_user and existing_user.status != UserStatus.INACTIVE:
+        is_returning = bool(
+            existing_user and existing_user.status != UserStatus.INACTIVE,
+        )
+        if is_returning:
             if existing_user.status == UserStatus.ACTIVE:
                 user = existing_user
             else:
                 user = self._activate_invited_user(existing_user, user_data)
-            AuditEventService.user_logged_in(
-                user=user,
-                source=self.source,
-            )
         else:
             user = self._create_new_user(user_data)
         token = AuthService.get_auth_token(
@@ -294,6 +293,11 @@ class BaseSSOService(SignUpMixin, CacheMixin, EncryptionMixin, ABC):
             user_ip=user_ip,
         )
         self.save_tokens_for_user(user)
+        if is_returning:
+            AuditEventService.user_logged_in(
+                user=user,
+                source=self.source,
+            )
         AnalyticService.users_logged_in(
             user=user,
             is_superuser=False,

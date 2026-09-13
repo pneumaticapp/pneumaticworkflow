@@ -716,7 +716,10 @@ class UserService(
         # it is given, one the model does not declare included.
         changed = {
             name for name, value in update_kwargs.items()
-            if getattr(self.instance, name, None) != value
+            if (
+                self._blank_as_none(getattr(self.instance, name, None))
+                != self._blank_as_none(value)
+            )
         }
         if raw_password:
             changed.add('password')
@@ -729,6 +732,16 @@ class UserService(
             if before != {user.id for user in subordinates}:
                 changed.add('subordinates')
         return sorted(changed)
+
+    @staticmethod
+    def _blank_as_none(value):
+
+        """ A nullable text field is empty both as NULL and as '': a
+            profile without a photo stores NULL and the client sends it
+            back as an empty string. Only '' is folded, so that False
+            and 0 stay values of their own. """
+
+        return None if value == '' else value
 
     def _publish_user_event(
         self,
