@@ -6,8 +6,10 @@ export const enum ESettingsActions {
 }
 
 export type TChangeLocale = ITypedReduxAction<ESettingsActions.ChangeLocale, ELocale>;
-export const changeLocale: (payload: ELocale) => TChangeLocale =
-  actionGenerator<ESettingsActions.ChangeLocale, ELocale>(ESettingsActions.ChangeLocale);
+export const changeLocale: (payload: ELocale) => TChangeLocale = actionGenerator<
+  ESettingsActions.ChangeLocale,
+  ELocale
+>(ESettingsActions.ChangeLocale);
 
 export const changeLocaleSettings = (locale: ELocale) => {
   localStorage.setItem('currentLanguage', locale);
@@ -15,6 +17,4 @@ export const changeLocaleSettings = (locale: ELocale) => {
   return changeLocale(locale);
 };
 
-export type TSettingsActions =
-  TChangeLocale
-;
+export type TSettingsActions = TChangeLocale;

@@ -3,11 +3,11 @@
   max-nesting-depth
 */
 .container {
-  margin: 0 auto;
   display: flex;
   flex-flow: column;
   max-width: 108.8rem;
   min-height: 100%;
+  margin: 0 auto;
 
   @media (--mobile) {
     padding-top: 2rem;
@@ -28,7 +28,9 @@
 }
 
 /* ================ */
+
 /*  Card */
+
 /* ================ */
 
 .card {
@@ -59,17 +61,17 @@
 }
 
 .card__description {
-  margin-bottom: auto;
   /* stylelint-disable-next-line value-no-vendor-prefix */
   display: -webkit-box;
+  margin-bottom: auto;
   overflow: hidden;
   -webkit-line-clamp: 3;
   line-clamp: 3;
-  /* stylelint-disable-next-line property-no-vendor-prefix */
-  -webkit-box-orient: vertical;
   font-size: 1.3rem;
   line-height: 1.6rem;
   color: var(--pneumatic-color-black72);
+  /* stylelint-disable-next-line property-no-vendor-prefix */
+  -webkit-box-orient: vertical;
 }
 
 .card__more {
@@ -77,25 +79,25 @@
 }
 
 .card__icon {
-  margin-left: auto;
   display: flex;
-  width: 4rem;
-  height: 4rem;
-  background-color: white;
-  border-radius: 50%;
   align-items: center;
   justify-content: center;
+  width: 4rem;
+  height: 4rem;
+  margin-left: auto;
+  background-color: white;
+  border-radius: 50%;
 }
 
 .container .btn-more {
-  margin: 1.6rem auto 3.2rem;
   width: 100%;
   height: 4.8rem;
+  margin: 1.6rem auto 3.2rem;
   font-size: 1.5rem;
   font-weight: bold;
   line-height: 2rem;
   color: var(--pneumatic-color-link);
-  border: 0.1rem solid currentColor;
+  border: 0.1rem solid currentcolor;
   border-radius: 2.4rem;
 
   &:hover {
@@ -104,9 +106,9 @@
 }
 
 .card__footer {
-  margin-top: auto;
   display: flex;
   justify-content: space-between;
+  margin-top: auto;
 
   .card-footer__left {
     display: block;
@@ -133,6 +135,8 @@
 
   .card-draft {
     display: flex;
+    align-items: center;
+    justify-content: center;
     width: 4rem;
     height: 4rem;
     font-size: 1.3rem;
@@ -140,13 +144,11 @@
     color: var(--pneumatic-notification-1);
     background: var(--pneumatic-error-color-light);
     border-radius: 50%;
-    align-items: center;
-    justify-content: center;
   }
 
   .card-integration {
-    margin-bottom: 0.6rem;
     padding: 0.1rem 0.8rem;
+    margin-bottom: 0.6rem;
     font-size: 1.3rem;
     line-height: 1.6rem;
     border-radius: 1.4rem;
@@ -167,7 +169,7 @@
     height: 2rem;
   }
 
-  @media only screen and (min-device-width: 1000px) and (max-device-width: 1023px) and (orientation: portrait) {
+  @media only screen and (device-width >= 1000px) and (device-width <= 1023px) and (orientation: portrait) {
     div {
       white-space: nowrap;
     }
@@ -176,8 +178,8 @@
 
 .card-pending {
   composes: card;
-  cursor: wait;
   pointer-events: none;
+  cursor: wait;
   opacity: 0.7;
 }
 
@@ -188,9 +190,9 @@
 }
 
 .card-avatar-container {
-  margin-right: 1.3rem !important;
-  width: 2rem;
   align-self: center;
+  width: 2rem;
+  margin-right: 1.3rem !important;
 
   img {
     margin-top: -0.3rem;
@@ -205,7 +207,9 @@
 }
 
 /* ========================= */
+
 /*  Categories */
+
 /* ========================= */
 
 .categories {
@@ -213,7 +217,9 @@
 }
 
 /* ========================= */
+
 /*  Search field */
+
 /* ========================= */
 
 .search-field {
@@ -235,7 +241,9 @@
 }
 
 /* ========================= */
+
 /*  Other */
+
 /* ========================= */
 
 .placeholder {
@@ -243,10 +251,10 @@
 }
 
 .scrollbar-container {
-  margin-left: -1.5rem;
-  padding-left: 1.5rem;
   display: flex;
   flex-wrap: wrap;
+  padding-left: 1.5rem;
+  margin-left: -1.5rem;
 
   @media (--mobile) {
     flex-wrap: nowrap;
@@ -254,8 +262,8 @@
 }
 
 .popup-header {
-  padding: 8rem 8rem 6rem !important;
   height: auto !important;
+  padding: 8rem 8rem 6rem !important;
   background: white;
   border: none !important;
   border-radius: 3.2rem 3.2rem 0 0 !important;
@@ -282,53 +290,53 @@
 }
 
 .popup-title {
-  margin: 1.6rem 0 0.8rem;
   display: flex;
+  margin: 1.6rem 0 0.8rem;
 }
 
 .popup-title__name {
-  font-family: 'Abhaya Libre', 'Times New Roman', Arial;
+  font-family: 'Abhaya Libre', 'Times New Roman', Arial, serif;
   font-size: 2.8rem;
   font-weight: 800;
   line-height: 3.2rem;
   letter-spacing: -0.01em;
-  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .popup-title__urgent {
-  margin-right: 0.8rem;
-  padding: 0 0.8rem;
   display: inline;
   align-self: center;
-  font-family: Nunito;
+  padding: 0 0.8rem;
+  margin-right: 0.8rem;
+  font-family: Nunito, sans-serif;
   font-size: 1.3rem;
   font-weight: normal;
   line-height: 1.8rem;
   vertical-align: middle;
-  letter-spacing: -0.01em;
   color: white;
+  letter-spacing: -0.01em;
   background: var(--pneumatic-notification-1);
   border-radius: 1.4rem;
 }
 
 .popup-description {
+  width: 100%;
   margin-bottom: 0.8rem;
   overflow: hidden;
-  width: 100%;
+  text-overflow: ellipsis;
   font-size: 1.3rem;
   line-height: 1.6rem;
-  text-overflow: ellipsis;
-  word-break: break-word;
   color: var(--pneumatic-warning-color);
+  overflow-wrap: anywhere;
 }
 
 .popup-buttons {
-  margin-top: 3.2rem;
   display: flex;
+  margin-top: 3.2rem;
 
   .popup-buttons__button {
-    margin-right: 0.8rem;
     width: 14.1rem;
+    margin-right: 0.8rem;
   }
 
   @media (--mobile) {
@@ -337,9 +345,9 @@
 
     .popup-buttons__button_edit-template,
     .popup-buttons__button {
+      width: 100%;
       margin-right: 0;
       margin-bottom: 0.8rem;
-      width: 100%;
     }
   }
 }
@@ -356,14 +364,15 @@
     .modal-dialog {
       position: absolute;
       right: 0;
-      left: 0;
       bottom: 0;
-      margin: auto;
-      padding: 0 1.5rem;
-      padding-top: 1.6rem;
+      left: 0;
       max-width: 89.4rem;
       height: 100% !important;
+      padding: 0 1.5rem;
+      padding-top: 1.6rem;
+      margin: auto;
     }
+
     .modal-body {
       padding: 3.2rem 8rem 8rem !important;
       background: var(--pneumatic-color-beige);
@@ -373,6 +382,7 @@
         padding: 4rem 4rem 8rem !important;
       }
     }
+
     .modal-content {
       border-radius: 3.2rem;
 
@@ -390,9 +400,11 @@
         height: 100% !important;
       }
     }
+
     .modal-backdrop {
       background: var(--pneumatic-color-link);
     }
+
     .modal-backdrop.show {
       opacity: 0.7;
     }
@@ -414,9 +426,11 @@
     .has-float-label > span::after {
       background: var(--pneumatic-color-beige) !important;
     }
+
     label {
       background: var(--pneumatic-color-beige) !important;
     }
+
     label > span::after {
       background: var(--pneumatic-color-beige) !important;
     }
@@ -426,6 +440,7 @@
     background: var(--pneumatic-color-beige) !important;
     opacity: 1 !important;
   }
+
   .popup-body {
     .field-button {
       .has-float-label label::after,
@@ -448,9 +463,9 @@
 }
 
 .popup-body {
-  margin-top: -2.8rem;
-  padding-bottom: 33.2rem !important;
   height: auto !important;
+  padding-bottom: 33.2rem !important;
+  margin-top: -2.8rem;
 
   .has-float-label label::after,
   .has-float-label > span::after {
@@ -478,23 +493,23 @@
 
   & > span {
     position: absolute;
-    z-index: 3;
     top: -0.5em;
     left: 1rem;
+    z-index: 3;
     padding: 0 1rem;
     font-size: 1.3rem;
     line-height: 1;
     line-height: 1.6rem;
-    cursor: text;
     color: var(--pneumatic-warning-color);
+    cursor: text;
     opacity: 1;
 
     &::after {
       position: absolute;
-      z-index: -1;
       top: 0.6rem;
       right: -0.2em;
       left: -0.2em;
+      z-index: -1;
       display: block;
       height: 0.5rem;
       content: ' ';
@@ -512,30 +527,31 @@
   font-size: 1.1rem;
   font-weight: 800;
   line-height: 1.6rem;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
   color: var(--pneumatic-color-black32);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .kickoff__description {
   font-family: Nunito, sans-serif;
   font-size: 1.5rem;
   line-height: 2rem;
-  word-break: break-word;
   color: var(--pneumatic-color-black100);
+  overflow-wrap: anywhere;
 }
 
 .dropdown-menu {
-  padding: 0 !important;
   width: 19.2rem;
+  padding: 0 !important;
   border: none !important;
   border-radius: 0.8rem !important;
-  box-shadow: 0 0.8rem 1.6rem rgba(98, 98, 95, 0.08) !important;
+  box-shadow: 0 0.8rem 1.6rem rgb(98 98 95 / 8%) !important;
 }
 
 .dropdown-item {
   padding: 1rem 1.6rem !important;
   font-size: 1.5rem;
+
   &:hover {
     background-color: var(--pneumatic-color-beige) !important;
     border-radius: 0.8rem !important;
@@ -567,16 +583,16 @@
 
   /* stylelint-disable-next-line selector-pseudo-class-no-unknown */
   :global .react-datepicker-wrapper input {
-    padding: 1.4rem 5rem 1.4rem 1.6rem !important;
     width: 100% !important;
+    padding: 1.4rem 5rem 1.4rem 1.6rem !important;
     font-family: Nunito, sans-serif !important;
     font-size: 1.5rem !important;
     line-height: 2rem !important;
     color: var(--pneumatic-color-black100) !important;
+    outline: none !important;
     background: var(--pneumatic-color-beige) !important;
     border: 0.1rem solid var(--pneumatic-color-black16) !important;
     border-radius: 0.8rem !important;
-    outline: none !important;
     transition: 0.15s ease-in border-color !important;
 
     &:focus {
@@ -626,10 +642,10 @@ body .share-dropdown-item {
 }
 
 .urgent-switch {
-  margin-left: auto;
   display: flex;
-  height: 2rem;
   align-items: center;
+  height: 2rem;
+  margin-left: auto;
 }
 
 .urgent-switch__label {
@@ -637,9 +653,9 @@ body .share-dropdown-item {
   font-size: 1.1rem;
   font-weight: bold;
   line-height: 1.6rem;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
   color: var(--pneumatic-color-black100);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .section-title {

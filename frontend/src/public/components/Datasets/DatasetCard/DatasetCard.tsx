@@ -7,7 +7,12 @@ import classnames from 'classnames';
 import { Dropdown, TDropdownOption } from '../../UI';
 import { MoreIcon, PencilIcon, TrashIcon, UnionIcon } from '../../icons';
 import { WarningPopup } from '../../UI/WarningPopup';
-import { openEditModal, deleteDatasetAction, setCurrentDataset, cloneDatasetAction } from '../../../redux/datasets/slice';
+import {
+  openEditModal,
+  deleteDatasetAction,
+  setCurrentDataset,
+  cloneDatasetAction,
+} from '../../../redux/datasets/slice';
 import { history } from '../../../utils/history';
 import { ERoutes } from '../../../constants/routes';
 import { sanitizeText } from '../../../utils/strings';
@@ -16,34 +21,30 @@ import { IDatasetCardProps } from './types';
 
 import styles from './DatasetCard.css';
 
-export function DatasetCard({
-  id,
-  name,
-  description,
-  dateCreatedTsp,
-  itemsCount,
-}: IDatasetCardProps) {
+export function DatasetCard({ id, name, description, dateCreatedTsp, itemsCount }: IDatasetCardProps) {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
-  
+
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const handleOpenDeleteModal = () => setIsDeleteModalVisible(true);
   const handleCloseDeleteModal = () => setIsDeleteModalVisible(false);
 
   const handleConfirmDelete = () => {
-    dispatch(deleteDatasetAction({ id })); 
+    dispatch(deleteDatasetAction({ id }));
     handleCloseDeleteModal();
   };
 
   const handleEditName = () => {
-    dispatch(setCurrentDataset({
-      id,
-      name,
-      description,
-      dateCreatedTsp,
-      items: [],
-    }));
-    dispatch(openEditModal()); 
+    dispatch(
+      setCurrentDataset({
+        id,
+        name,
+        description,
+        dateCreatedTsp,
+        items: [],
+      }),
+    );
+    dispatch(openEditModal());
   };
 
   const handleCloneDataset = () => {
@@ -53,7 +54,7 @@ export function DatasetCard({
   const handleCardClick = () => {
     history.push(ERoutes.DatasetDetail.replace(':id', id.toString()));
   };
-  
+
   const dropdownOptions: TDropdownOption[] = [
     {
       label: formatMessage({ id: 'datasets.edit' }),
@@ -91,7 +92,7 @@ export function DatasetCard({
         onConfirm={handleConfirmDelete}
         onReject={handleCloseDeleteModal}
       />
-      
+
       <div className={styles['card__content']}>
         <div className={styles['card__header']}>
           <div
@@ -103,7 +104,7 @@ export function DatasetCard({
           >
             {sanitizeText(name)}
           </div>
-          
+
           <Dropdown
             renderToggle={(isOpen: boolean) => (
               <MoreIcon className={classnames(styles['card__more'], isOpen && styles['is-active'])} />
@@ -119,7 +120,7 @@ export function DatasetCard({
                 { id: 'datasets.stats.entries' },
                 {
                   count: itemsCount,
-                }
+                },
               )}
             </div>
             <div className={classnames(styles['card-stats'], styles['card-stats--date'])}>
@@ -127,7 +128,7 @@ export function DatasetCard({
                 { id: 'datasets.card.created' },
                 {
                   date: formatDateTimeAmPm(dateCreatedTsp * 1000),
-                }
+                },
               )}
             </div>
           </div>

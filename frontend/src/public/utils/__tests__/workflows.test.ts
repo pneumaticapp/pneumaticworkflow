@@ -16,9 +16,7 @@ describe('getEditKickoff', () => {
 
     expect(result.fieldsets).toEqual([expect.objectContaining({ apiNameBinding: 'fs-1' })]);
     expect(result.description).toBe('Kickoff description');
-    expect(result.fields).toEqual(
-      expect.arrayContaining([expect.objectContaining({ apiName: 'f1' })]),
-    );
+    expect(result.fields).toEqual(expect.arrayContaining([expect.objectContaining({ apiName: 'f1' })]));
   });
 
   it('returns empty string description when source description is null', () => {

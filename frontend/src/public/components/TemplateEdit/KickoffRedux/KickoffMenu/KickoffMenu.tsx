@@ -14,15 +14,10 @@ interface IKickoffMenuProps {
   toggleKickoff(): void;
 }
 
-export function KickoffMenu({
-  isKickoffOpen,
-  isClearDisabled,
-  toggleKickoff,
-  clearForm,
-}: IKickoffMenuProps) {
+export function KickoffMenu({ isKickoffOpen, isClearDisabled, toggleKickoff, clearForm }: IKickoffMenuProps) {
   const { formatMessage } = useIntl();
 
-  const handleOptionClick = (handler: () => void) =>  (closeDropdown: () => void) => {
+  const handleOptionClick = (handler: () => void) => (closeDropdown: () => void) => {
     closeDropdown();
     handler();
   };
@@ -32,13 +27,13 @@ export function KickoffMenu({
       label: formatMessage({ id: 'kickoff.menu-edit' }),
       onClick: handleOptionClick(toggleKickoff),
       Icon: EditIcon,
-      size: "sm",
+      size: 'sm',
       isHidden: isKickoffOpen,
     },
     {
       label: formatMessage({ id: 'kickoff.menu-close' }),
       onClick: handleOptionClick(toggleKickoff),
-      size: "sm",
+      size: 'sm',
       isHidden: !isKickoffOpen,
     },
     {
@@ -50,16 +45,14 @@ export function KickoffMenu({
       withConfirmation: true,
       withUpperline: true,
       className: classnames(isClearDisabled && styles['disabled-option']),
-    }
+    },
   ];
 
   return (
     <div className={styles['card-more-container']}>
       <Dropdown
-        renderToggle={isOpen => (
-          <MoreIcon
-            className={classnames(styles['card-more'], isOpen && styles['card-more_active'])}
-          />
+        renderToggle={(isOpen) => (
+          <MoreIcon className={classnames(styles['card-more'], isOpen && styles['card-more_active'])} />
         )}
         options={dropdownOptions}
       />

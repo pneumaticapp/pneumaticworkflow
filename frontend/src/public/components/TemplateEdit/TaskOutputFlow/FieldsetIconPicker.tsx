@@ -53,10 +53,7 @@ const buildCatalogPickerRows = (catalogFieldsetItems: IFieldsetCatalogItem[]): I
   return rows;
 };
 
-export const FieldsetIconPicker = ({
-  fieldsetsCatalogLoading,
-  onSelectFieldset,
-}: IFieldsetIconPickerProps) => {
+export const FieldsetIconPicker = ({ fieldsetsCatalogLoading, onSelectFieldset }: IFieldsetIconPickerProps) => {
   const { formatMessage } = useIntl();
   const triggerRef = useRef<HTMLSpanElement>(null);
   const fieldsetsCatalogItems = useSelector(getFieldsetsCatalogItems);
@@ -116,10 +113,7 @@ export const FieldsetIconPicker = ({
         menuClassName={pickerStyles['fieldset-picker__menu']}
         arrowClassName={pickerStyles['fieldset-picker__arrow_hidden']}
         renderPlaceholder={() => (
-          <span
-            ref={triggerRef}
-            className={kickoffStyles['component-icon-container']}
-          >
+          <span ref={triggerRef} className={kickoffStyles['component-icon-container']}>
             <FieldsetIcon className={kickoffStyles['component-icon']} aria-hidden />
           </span>
         )}
@@ -135,4 +129,3 @@ export const FieldsetIconPicker = ({
     </div>
   );
 };
-

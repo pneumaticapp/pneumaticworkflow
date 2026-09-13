@@ -1,12 +1,7 @@
 import { runSaga } from 'redux-saga';
 import { call } from 'redux-saga/effects';
 
-import {
-  fetchTasksFilterSteps,
-  handleAddTask,
-  handleRemoveTask,
-  refreshTasksFilters,
-} from '../saga';
+import { fetchTasksFilterSteps, handleAddTask, handleRemoveTask, refreshTasksFilters } from '../saga';
 import {
   initState,
   insertNewTask,
@@ -125,10 +120,7 @@ describe('refreshTasksFilters', () => {
       wrapper,
     ).toPromise();
 
-    expect(dispatched).toEqual([
-      loadFilterTemplates(),
-      loadFilterSteps({ templateId: 7 }),
-    ]);
+    expect(dispatched).toEqual([loadFilterTemplates(), loadFilterSteps({ templateId: 7 })]);
   });
 
   it('reloads only templates when template filter is not set', async () => {

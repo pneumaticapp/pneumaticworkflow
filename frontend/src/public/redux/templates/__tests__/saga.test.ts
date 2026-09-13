@@ -107,10 +107,7 @@ describe('templates saga', () => {
 
   describe('fetchTemplatesSystemCategories', () => {
     it('does not call system templates categories API for non-admin', () => {
-      const getCategoriesMock = jest.spyOn(
-        getSystemTemplatesCategoriesApi,
-        'getTemplatesSystemCategories',
-      );
+      const getCategoriesMock = jest.spyOn(getSystemTemplatesCategoriesApi, 'getTemplatesSystemCategories');
 
       return expectSaga(fetchTemplatesSystemCategories as any)
         .provide([[matchers.select.selector(getIsAdmin), false]])
@@ -123,17 +120,15 @@ describe('templates saga', () => {
 
   describe('fetchTemplates', () => {
     it('calls getTemplatesByOwners with correct parameters', async () => {
-      const getTemplatesByOwnersMock = jest
-        .spyOn(getTemplatesApi, 'getTemplatesByOwners')
-        .mockResolvedValue({
-          count: 2,
-          next: '',
-          previous: '',
-          results: [
-            { id: 1, name: 'Template 1' },
-            { id: 2, name: 'Template 2' },
-          ],
-        } as IGetTemplatesResponsePaginated);
+      const getTemplatesByOwnersMock = jest.spyOn(getTemplatesApi, 'getTemplatesByOwners').mockResolvedValue({
+        count: 2,
+        next: '',
+        previous: '',
+        results: [
+          { id: 1, name: 'Template 1' },
+          { id: 2, name: 'Template 2' },
+        ],
+      } as IGetTemplatesResponsePaginated);
 
       await getTemplatesApi.getTemplatesByOwners({
         offset: 0,
@@ -203,9 +198,12 @@ describe('templates saga', () => {
 
   describe('fetchIsTemplateOwner', () => {
     it('uses getTemplates (not getTemplatesByOwners) to check ownership', async () => {
-      const getTemplatesMock = jest
-        .spyOn(getTemplatesApi, 'getTemplates')
-        .mockResolvedValue({ count: 1, next: '', previous: '', results: [{ id: 1 }] } as IGetTemplatesResponsePaginated);
+      const getTemplatesMock = jest.spyOn(getTemplatesApi, 'getTemplates').mockResolvedValue({
+        count: 1,
+        next: '',
+        previous: '',
+        results: [{ id: 1 }],
+      } as IGetTemplatesResponsePaginated);
 
       await getTemplatesApi.getTemplates({
         limit: 1,
@@ -256,13 +254,15 @@ describe('handleLoadTemplateVariables — empty fieldsets filtering', () => {
         fields: [{ apiName: 'kf-1', name: 'KF1', type: 'string', order: 0, isRequired: false }],
         fieldsets: [fullFieldset, emptyFieldset],
       },
-      tasks: [{
-        id: 1,
-        name: 'Task One',
-        apiName: 'task-1',
-        fields: [{ apiName: 'tf-1', name: 'TF1', type: 'string', order: 0, isRequired: false }],
-        fieldsets: [taskFieldset1, taskFieldset2, taskEmptyFieldset],
-      }],
+      tasks: [
+        {
+          id: 1,
+          name: 'Task One',
+          apiName: 'task-1',
+          fields: [{ apiName: 'tf-1', name: 'TF1', type: 'string', order: 0, isRequired: false }],
+          fieldsets: [taskFieldset1, taskFieldset2, taskEmptyFieldset],
+        },
+      ],
     };
 
     (getTemplateFields as jest.Mock).mockResolvedValue(apiResponse);
@@ -289,16 +289,11 @@ describe('handleLoadTemplateVariables — empty fieldsets filtering', () => {
 
     expect(buildRuntimeMergedOutputParts).toHaveBeenCalledTimes(2);
 
-    expect(buildRuntimeMergedOutputParts).toHaveBeenNthCalledWith(
-      1,
-      apiResponse.kickoff.fields,
-      [fullFieldset],
-    );
+    expect(buildRuntimeMergedOutputParts).toHaveBeenNthCalledWith(1, apiResponse.kickoff.fields, [fullFieldset]);
 
-    expect(buildRuntimeMergedOutputParts).toHaveBeenNthCalledWith(
-      2,
-      apiResponse.tasks[0].fields,
-      [taskFieldset1, taskFieldset2],
-    );
+    expect(buildRuntimeMergedOutputParts).toHaveBeenNthCalledWith(2, apiResponse.tasks[0].fields, [
+      taskFieldset1,
+      taskFieldset2,
+    ]);
   });
 });

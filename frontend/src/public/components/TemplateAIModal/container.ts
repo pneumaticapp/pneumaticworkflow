@@ -11,26 +11,14 @@ import {
 
 import { ITemplateAIModalProps, TemplateAIModal } from './TemplateAIModal';
 
-export type TStoreProps = Pick<
-ITemplateAIModalProps,
-| 'isOpen'
-| 'generationStatus'
-| 'generatedTemplate'
->;
+export type TStoreProps = Pick<ITemplateAIModalProps, 'isOpen' | 'generationStatus' | 'generatedTemplate'>;
 
 export type TDispatchProps = Pick<
-ITemplateAIModalProps,
-| 'setIsModalOpened'
-| 'generateTemplate'
-| 'stopTemplateGeneration'
-| 'applyTemplate'
-| 'setTemplateGenerationStatus'
+  ITemplateAIModalProps,
+  'setIsModalOpened' | 'generateTemplate' | 'stopTemplateGeneration' | 'applyTemplate' | 'setTemplateGenerationStatus'
 >;
 
-const mapStateToProps = ({
-  template,
-}: IApplicationState): TStoreProps => {
-
+const mapStateToProps = ({ template }: IApplicationState): TStoreProps => {
   return {
     isOpen: template.AITemplate.isModalOpened,
     generationStatus: template.AITemplate.generationStatus,

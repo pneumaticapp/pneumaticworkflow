@@ -25,13 +25,14 @@ export const reducer = (state = INIT_STATE, action: TSelectTemplateModalActions)
       return produce(state, (draftState) => {
         draftState.isOpen = false;
         draftState.ancestorTaskId = null;
-        draftState.templatesIdsFilter =  [];
+        draftState.templatesIdsFilter = [];
       });
     }
     case ESelectTemplateModalActions.LoadSelectTemplateModalTemplates:
       return { ...state, isLoading: true };
     case ESelectTemplateModalActions.SetSelectTemplateModalTemplates:
       return { ...state, isLoading: false, items: action.payload };
-    default: return { ...state };
+    default:
+      return { ...state };
   }
 };

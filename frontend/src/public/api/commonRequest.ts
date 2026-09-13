@@ -147,7 +147,6 @@ export async function commonRequest<T>(
   options?: Partial<ICommonRequestOptions>,
 ): Promise<T>;
 
-/* eslint-disable consistent-return */
 export async function commonRequest<T>(
   rawUrl: string,
   params: Partial<AxiosRequestConfig> = {},
@@ -168,7 +167,9 @@ export async function commonRequest<T>(
   const requestBaseUrlsMap = cachedRequestBaseUrlsMap;
 
   try {
-    const { api: { urls } } = getBrowserConfigEnv();
+    const {
+      api: { urls },
+    } = getBrowserConfigEnv();
     const url = (urls as { [key in string]: string })[rawUrl] || rawUrl;
     const fullUrl = mergePaths(requestBaseUrlsMap[type], url);
 
@@ -194,7 +195,5 @@ export async function commonRequest<T>(
     if (!(error instanceof InterceptorError)) {
       logger.error(error);
     }
-    
   }
 }
-/* eslint-enable consistent-return */

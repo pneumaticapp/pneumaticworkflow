@@ -31,11 +31,7 @@ jest.mock('../../UI/form/UsersDropdown', () => ({
   UsersDropdown: ({ options, onChange }: any) => (
     <div data-testid="users-dropdown">
       {options.map((opt: any) => (
-        <button
-          key={opt.value}
-          data-testid={`select-user-${opt.value}`}
-          onClick={() => onChange(opt)}
-        >
+        <button key={opt.value} data-testid={`select-user-${opt.value}`} onClick={() => onChange(opt)}>
           {opt.label}
         </button>
       ))}
@@ -91,7 +87,6 @@ describe('VacationSettings', () => {
 
   const ACTIVE_MSG = t('user-info.vacation.active');
 
-
   const makeUser = (overrides: Record<string, unknown> = {}) => ({
     id: 10,
     firstName: 'Alice',
@@ -105,10 +100,7 @@ describe('VacationSettings', () => {
     vacationStartDate: null as string | null,
     vacationEndDate: null as string | null,
     substituteUserIds: [] as number[],
-    availableUsers: [
-      makeUser({ id: 10 }),
-      makeUser({ id: 20, firstName: 'Bob', lastName: 'Jones' }),
-    ] as any[],
+    availableUsers: [makeUser({ id: 10 }), makeUser({ id: 20, firstName: 'Bob', lastName: 'Jones' })] as any[],
     onActivate: mockOnActivate,
     onDeactivate: mockOnDeactivate,
     isLoading: false,
@@ -204,9 +196,7 @@ describe('VacationSettings', () => {
 
       userEvent.click(screen.getByTestId('vacation-activate-btn'));
 
-      expect(mockOnActivate).toHaveBeenCalledWith(
-        expect.objectContaining({ substituteUserIds: [20] }),
-      );
+      expect(mockOnActivate).toHaveBeenCalledWith(expect.objectContaining({ substituteUserIds: [20] }));
     });
   });
 });

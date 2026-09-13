@@ -1,8 +1,8 @@
 .variables {
   position: absolute;
-  z-index: 2;
   right: 1.6rem;
   bottom: 1rem;
+  z-index: 2;
   display: flex;
   transition: all 0.15s ease-in 0s;
 }

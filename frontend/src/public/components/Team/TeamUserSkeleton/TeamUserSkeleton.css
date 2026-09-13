@@ -1,23 +1,23 @@
 .skeleton {
-  margin-bottom: 8px;
-  padding: 32px;
   display: flex;
-  overflow: visible;
   width: 100%;
   min-height: 104px;
+  padding: 32px;
+  margin-bottom: 8px;
+  overflow: visible;
   background-color: white;
   border-radius: 24px;
 }
 
 .skeleton-avatar {
-  margin-right: 16px;
   width: 40px;
   height: 40px;
+  margin-right: 16px;
   border-radius: 50%;
 }
 
 .skeleton-data {
-  flex-grow: 1;
   display: flex;
+  flex-grow: 1;
   flex-direction: column;
 }

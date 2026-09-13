@@ -24,9 +24,9 @@
 }
 
 .integration__is_used {
-  margin: 0;
-  padding: 1px 8px;
   align-self: flex-start;
+  padding: 1px 8px;
+  margin: 0;
   font-size: 13px;
   line-height: 16px;
   color: var(--pneumatic-color-black4);

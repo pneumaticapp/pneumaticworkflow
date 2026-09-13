@@ -2,9 +2,11 @@ import { commonRequest } from './commonRequest';
 import { getBrowserConfigEnv } from '../utils/getConfig';
 
 export function resetFirebaseDeviceToken(token: string) {
-  const { api: { urls }} = getBrowserConfigEnv();
+  const {
+    api: { urls },
+  } = getBrowserConfigEnv();
 
-  const url = urls.fcmDeviceToken.replace(":token", token);
+  const url = urls.fcmDeviceToken.replace(':token', token);
 
   return commonRequest(
     url,
@@ -13,7 +15,7 @@ export function resetFirebaseDeviceToken(token: string) {
     },
     {
       shouldThrow: false,
-      responseType: "empty",
+      responseType: 'empty',
     },
   );
 }

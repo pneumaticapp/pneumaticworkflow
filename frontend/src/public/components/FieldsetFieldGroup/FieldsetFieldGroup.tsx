@@ -56,9 +56,7 @@ export function FieldsetFieldGroup({
           onUploadStateChange={(isUploading) => onUploadStateChange?.(field.apiName, isUploading)}
         />
       ))}
-      {validationError && (
-        <p className={styles['fieldset-group__error']}>{validationError}</p>
-      )}
+      {validationError && <p className={styles['fieldset-group__error']}>{validationError}</p>}
     </div>
   );
 }

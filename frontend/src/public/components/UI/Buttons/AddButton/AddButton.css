@@ -1,16 +1,17 @@
-
 .add-button {
-  margin-bottom: 3.2rem;
-  padding: 31px 32px;
   width: 100%;
+  padding: 31px 32px;
+  margin-bottom: 3.2rem;
+  color: var(--pneumatic-color-link-dark);
   text-align: left;
   cursor: pointer;
-  color: var(--pneumatic-color-link-dark);
+  outline: none;
   background: transparent;
   border: 1px solid var(--pneumatic-color-link-dark);
   border-radius: 24px;
-  outline: none;
-  transition: color 0.2s, border-color 0.2s;
+  transition:
+    color 0.2s,
+    border-color 0.2s;
 
   @media (--desktop) {
     display: flex;

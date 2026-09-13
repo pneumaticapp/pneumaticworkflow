@@ -3,14 +3,14 @@ import { Users } from './Users';
 import { IUsersProps } from './types';
 import { IApplicationState } from '../../../types/redux';
 import { getIsUserSubsribed } from '../../../redux/selectors/user';
-import {setGeneralLoaderVisibility} from '../../../redux/actions';
-import {  
+import { setGeneralLoaderVisibility } from '../../../redux/actions';
+import {
   teamFetchStarted,
   loadChangeUserAdmin,
   openDeleteUserModal,
   loadChangeUserManager,
   loadChangeUserReports,
-  userListSortingChanged as changeUserListSorting
+  userListSortingChanged as changeUserListSorting,
 } from '../../../redux/accounts/slice';
 import { openTeamInvitesPopup, loadInvitesUsers } from '../../../redux/team/slice';
 import { EUserListSorting } from '../../../types/user';
@@ -81,7 +81,7 @@ const SyncedUsers = withSyncedQueryString<TTeamProps>([
     defaultAction: changeUserListSorting(EUserListSorting.NameAsc),
     createAction: changeUserListSorting,
     getQueryParamByProp: (value) => value,
-  }
+  },
 ])(Users);
 
 export const UsersContainer = connect<TTeamProps, TTeamDispatchProps>(mapStateToProps, mapDispatchToProps)(SyncedUsers);

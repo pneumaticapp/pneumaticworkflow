@@ -36,8 +36,6 @@ import { Tooltip } from '../../../../UI';
 import { ICreateReaction } from '../../../../../api/workflows/createReactionComment';
 import { IDeleteReaction } from '../../../../../api/workflows/deleteReactionComment';
 
-
-
 import styles from './WorkflowLogTaskComment.css';
 import { DateFormat } from '../../../../UI/DateFormat';
 
@@ -269,9 +267,7 @@ export function WorkflowLogTaskComment({
         {userIds.map((listedUserId) => {
           const user = getUserById(users, listedUserId);
 
-          return (
-            <li key={listedUserId}>{user ? getUserFullName(user) : null}</li>
-          );
+          return <li key={listedUserId}>{user ? getUserFullName(user) : null}</li>;
         })}
       </ul>
     );
