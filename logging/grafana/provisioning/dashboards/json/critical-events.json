@@ -1570,7 +1570,6 @@
                 "pii_payload_target_email",
                 "object_type",
                 "object_id",
-                "pii_payload_reason",
                 "pii_ip"
               ]
             }
@@ -1587,8 +1586,7 @@
               "object_id": 6,
               "object_type": 5,
               "pii_actor_email": 3,
-              "pii_ip": 8,
-              "pii_payload_reason": 7,
+              "pii_ip": 7,
               "pii_payload_target_email": 4
             },
             "renameByName": {
@@ -1598,7 +1596,6 @@
               "object_type": "Object type",
               "pii_actor_email": "Staff e-mail",
               "pii_ip": "IP address",
-              "pii_payload_reason": "Reason",
               "pii_payload_target_email": "Target user"
             }
           }

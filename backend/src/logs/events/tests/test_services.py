@@ -3,6 +3,7 @@ from hashlib import sha256
 import pytest
 from django.contrib.auth.models import AnonymousUser
 
+from src.accounts.enums import BillingPlanType
 from src.authentication.enums import AuthTokenType
 from src.logs.events.emitter import NO_ACCOUNT
 from src.logs.events.enums import (
@@ -14,12 +15,21 @@ from src.logs.events.enums import (
 )
 from src.logs.events.schema import Actor, EventObject
 from src.logs.events.services import AuditEventService
+from src.processes.enums import WorkflowEventType
+from src.processes.models.workflows.checklist import ChecklistSelection
 from src.processes.tests.fixtures import (
+    create_checklist_template,
     create_test_account,
+    create_test_dataset,
+    create_test_event,
     create_test_group,
     create_test_not_admin,
     create_test_owner,
+    create_test_shared_fieldset,
+    create_test_system_template,
     create_test_template,
+    create_test_template_preset,
+    create_test_workflow,
 )
 
 pytestmark = pytest.mark.django_db
@@ -204,7 +214,7 @@ def test_user_logged_out__request__logout_event_with_the_auth_type(
     assert event.payload == {'auth_type': AuthTokenType.API}
 
 
-def test_superuser_logged_in_as__request__target_and_reason(
+def test_superuser_logged_in_as__request__target_in_payload(
     fake_stream,
     request_factory,
 ):
@@ -220,7 +230,6 @@ def test_superuser_logged_in_as__request__target_and_reason(
     AuditEventService.superuser_logged_in_as(
         request=request,
         user=target,
-        reason='Ticket 42',
     )
 
     # assert
@@ -237,15 +246,11 @@ def test_superuser_logged_in_as__request__target_and_reason(
         type=EventObjectType.USER,
         id=target.id,
     )
-    assert event.payload == {
-        'target_email': target.email,
-        'reason': 'Ticket 42',
-    }
+    assert event.payload == {'target_email': target.email}
     assert event.pii == (
         'actor.email',
         'ip',
         'payload.target_email',
-        'payload.reason',
     )
 
 
@@ -804,3 +809,1499 @@ def test_template_saved__empty_source__no_source_key(
         'version': template.version,
         'is_active': False,
     }
+
+
+def test_user_reassigned__old_user__user_object(
+    mocker,
+    events_enabled,
+    request_factory,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    old_user = create_test_not_admin(account=account)
+    new_group = create_test_group(account=account)
+    request = request_factory.post(path='/accounts/users/reassign')
+    request.user = owner
+    request.token_type = AuthTokenType.USER
+    emit_mock = mocker.patch('src.logs.events.services.emit')
+
+    # act
+    AuditEventService.user_reassigned(
+        request=request,
+        old_user=old_user,
+        new_group=new_group,
+    )
+
+    # assert
+    emit_mock.assert_called_once_with(
+        EventName.USER_REASSIGN,
+        account_id=account.id,
+        actor=Actor(type=ActorType.USER, id=owner.id, email=owner.email),
+        event_object=EventObject(type=EventObjectType.USER, id=old_user.id),
+        payload={
+            'old_user_id': old_user.id,
+            'old_group_id': None,
+            'new_user_id': None,
+            'new_group_id': new_group.id,
+        },
+        workflow_id=None,
+        task_id=None,
+        request=request,
+    )
+
+
+def test_user_unsubscribed__anonymous_request__user_of_the_link_acts(
+    mocker,
+    events_enabled,
+    request_factory,
+):
+
+    # arrange
+    user = create_test_owner()
+    request = request_factory.get(path='/accounts/emails/unsubscribe')
+    request.user = AnonymousUser()
+    emit_mock = mocker.patch('src.logs.events.services.emit')
+
+    # act
+    AuditEventService.user_unsubscribed(
+        request=request,
+        user=user,
+        email_type='digest',
+    )
+
+    # assert
+    emit_mock.assert_called_once_with(
+        EventName.USER_UNSUBSCRIBE,
+        account_id=user.account_id,
+        actor=Actor(type=ActorType.USER, id=user.id, email=user.email),
+        event_object=EventObject(type=EventObjectType.USER, id=user.id),
+        payload={'email_type': 'digest'},
+        request=request,
+    )
+
+
+def test_account_verified__anonymous_request__user_of_the_link_acts(
+    mocker,
+    events_enabled,
+    request_factory,
+):
+
+    # arrange
+    user = create_test_owner()
+    request = request_factory.get(path='/auth/verification')
+    request.user = AnonymousUser()
+    emit_mock = mocker.patch('src.logs.events.services.emit')
+
+    # act
+    AuditEventService.account_verified(request=request, user=user)
+
+    # assert
+    emit_mock.assert_called_once_with(
+        EventName.ACCOUNT_VERIFY,
+        account_id=user.account_id,
+        actor=Actor(type=ActorType.USER, id=user.id, email=user.email),
+        event_object=EventObject(
+            type=EventObjectType.ACCOUNT,
+            id=user.account_id,
+        ),
+        request=request,
+    )
+
+
+def test_verification_resent__request__account_object_with_target(
+    mocker,
+    events_enabled,
+    request_factory,
+):
+
+    # arrange
+    owner = create_test_owner()
+    request = request_factory.post(path='/auth/resend-verification')
+    request.user = owner
+    request.token_type = AuthTokenType.USER
+    emit_mock = mocker.patch('src.logs.events.services.emit')
+
+    # act
+    AuditEventService.verification_resent(
+        request=request,
+        account_owner=owner,
+    )
+
+    # assert
+    emit_mock.assert_called_once_with(
+        EventName.ACCOUNT_VERIFICATION_RESEND,
+        account_id=owner.account_id,
+        actor=Actor(type=ActorType.USER, id=owner.id, email=owner.email),
+        event_object=EventObject(
+            type=EventObjectType.ACCOUNT,
+            id=owner.account_id,
+        ),
+        payload={'target_email': owner.email},
+        workflow_id=None,
+        task_id=None,
+        request=request,
+    )
+
+
+def test_tenant_created__request__tenant_in_master_account(
+    mocker,
+    events_enabled,
+    request_factory,
+):
+
+    # arrange
+    master = create_test_owner()
+    tenant = create_test_account(
+        master_account=master.account,
+        tenant_name='Tenant',
+        plan=BillingPlanType.PREMIUM,
+    )
+    request = request_factory.post(path='/tenants')
+    request.user = master
+    request.token_type = AuthTokenType.USER
+    emit_mock = mocker.patch('src.logs.events.services.emit')
+
+    # act
+    AuditEventService.tenant_created(request=request, tenant=tenant)
+
+    # assert
+    emit_mock.assert_called_once_with(
+        EventName.TENANT_CREATE,
+        account_id=master.account_id,
+        actor=Actor(type=ActorType.USER, id=master.id, email=master.email),
+        event_object=EventObject(type=EventObjectType.ACCOUNT, id=tenant.id),
+        payload={
+            'name': 'Tenant',
+            'billing_plan': BillingPlanType.PREMIUM,
+        },
+        workflow_id=None,
+        task_id=None,
+        request=request,
+    )
+
+
+def test_tenant_deleted__request__tenant_in_master_account(
+    mocker,
+    events_enabled,
+    request_factory,
+):
+
+    # arrange
+    master = create_test_owner()
+    tenant = create_test_account(
+        master_account=master.account,
+        tenant_name='Tenant',
+        plan=BillingPlanType.PREMIUM,
+    )
+    request = request_factory.delete(path='/tenants/1')
+    request.user = master
+    request.token_type = AuthTokenType.USER
+    emit_mock = mocker.patch('src.logs.events.services.emit')
+
+    # act
+    AuditEventService.tenant_deleted(request=request, tenant=tenant)
+
+    # assert
+    emit_mock.assert_called_once_with(
+        EventName.TENANT_DELETE,
+        account_id=master.account_id,
+        actor=Actor(type=ActorType.USER, id=master.id, email=master.email),
+        event_object=EventObject(type=EventObjectType.ACCOUNT, id=tenant.id),
+        payload={
+            'name': 'Tenant',
+            'billing_plan': BillingPlanType.PREMIUM,
+        },
+        workflow_id=None,
+        task_id=None,
+        request=request,
+    )
+
+
+def test_purchase_made__products__quantity_by_code(
+    mocker,
+    events_enabled,
+    request_factory,
+):
+
+    # arrange
+    owner = create_test_owner()
+    request = request_factory.post(path='/payment/purchase')
+    request.user = owner
+    request.token_type = AuthTokenType.USER
+    emit_mock = mocker.patch('src.logs.events.services.emit')
+
+    # act
+    AuditEventService.purchase_made(
+        request=request,
+        products=[
+            {'code': 'unlimited_month', 'quantity': 1},
+            {'code': 'extra_users', 'quantity': 2},
+        ],
+    )
+
+    # assert
+    emit_mock.assert_called_once_with(
+        EventName.BILLING_PURCHASE,
+        account_id=owner.account_id,
+        actor=Actor(type=ActorType.USER, id=owner.id, email=owner.email),
+        event_object=EventObject(
+            type=EventObjectType.ACCOUNT,
+            id=owner.account_id,
+        ),
+        payload={
+            'products': {'unlimited_month': 1, 'extra_users': 2},
+        },
+        workflow_id=None,
+        task_id=None,
+        request=request,
+    )
+
+
+def test_purchase_made__repeated_code__quantity_summed(
+    mocker,
+    events_enabled,
+    request_factory,
+):
+
+    # arrange
+    owner = create_test_owner()
+    request = request_factory.post(path='/payment/purchase')
+    request.user = owner
+    request.token_type = AuthTokenType.USER
+    emit_mock = mocker.patch('src.logs.events.services.emit')
+
+    # act
+    AuditEventService.purchase_made(
+        request=request,
+        products=[
+            {'code': 'extra_users', 'quantity': 2},
+            {'code': 'extra_users', 'quantity': 3},
+        ],
+    )
+
+    # assert
+    emit_mock.assert_called_once_with(
+        EventName.BILLING_PURCHASE,
+        account_id=owner.account_id,
+        actor=Actor(type=ActorType.USER, id=owner.id, email=owner.email),
+        event_object=EventObject(
+            type=EventObjectType.ACCOUNT,
+            id=owner.account_id,
+        ),
+        payload={
+            'products': {'extra_users': 5},
+        },
+        workflow_id=None,
+        task_id=None,
+        request=request,
+    )
+
+
+def test_subscription_cancelled__request__account_object(
+    mocker,
+    events_enabled,
+    request_factory,
+):
+
+    # arrange
+    owner = create_test_owner()
+    request = request_factory.post(path='/payment/subscription/cancel')
+    request.user = owner
+    request.token_type = AuthTokenType.USER
+    emit_mock = mocker.patch('src.logs.events.services.emit')
+
+    # act
+    AuditEventService.subscription_cancelled(request=request)
+
+    # assert
+    emit_mock.assert_called_once_with(
+        EventName.BILLING_SUBSCRIPTION_CANCEL,
+        account_id=owner.account_id,
+        actor=Actor(type=ActorType.USER, id=owner.id, email=owner.email),
+        event_object=EventObject(
+            type=EventObjectType.ACCOUNT,
+            id=owner.account_id,
+        ),
+        payload=None,
+        workflow_id=None,
+        task_id=None,
+        request=request,
+    )
+
+
+def test_payment_confirmed__subscription_data__plan_in_payload(
+    mocker,
+    events_enabled,
+    request_factory,
+):
+
+    # arrange
+    user = create_test_owner()
+    request = request_factory.get(path='/payment/confirm')
+    request.user = AnonymousUser()
+    emit_mock = mocker.patch('src.logs.events.services.emit')
+
+    # act
+    AuditEventService.payment_confirmed(
+        request=request,
+        user=user,
+        auth_type=AuthTokenType.API,
+        subscription_data={
+            'billing_plan': BillingPlanType.PREMIUM,
+            'max_users': 10,
+            'trial_ended': True,
+        },
+    )
+
+    # assert
+    emit_mock.assert_called_once_with(
+        EventName.BILLING_PAYMENT_CONFIRM,
+        account_id=user.account_id,
+        actor=Actor(type=ActorType.API_KEY, id=user.id, email=user.email),
+        event_object=EventObject(
+            type=EventObjectType.ACCOUNT,
+            id=user.account_id,
+        ),
+        payload={
+            'billing_plan': BillingPlanType.PREMIUM,
+            'max_users': 10,
+        },
+        request=request,
+    )
+
+
+def test_template_draft_discarded__never_published__template_deleted(
+    mocker,
+    events_enabled,
+    request_factory,
+):
+
+    # arrange
+    owner = create_test_owner()
+    template = create_test_template(
+        user=owner,
+        is_active=False,
+        name='Onboarding',
+    )
+    request = request_factory.post(path='/templates/1/discard-changes')
+    request.user = owner
+    request.token_type = AuthTokenType.USER
+    emit_mock = mocker.patch('src.logs.events.services.emit')
+
+    # act
+    AuditEventService.template_draft_discarded(
+        request=request,
+        template=template,
+        template_deleted=True,
+    )
+
+    # assert
+    emit_mock.assert_called_once_with(
+        EventName.TEMPLATE_DRAFT_DISCARD,
+        account_id=owner.account_id,
+        actor=Actor(type=ActorType.USER, id=owner.id, email=owner.email),
+        event_object=EventObject(
+            type=EventObjectType.TEMPLATE,
+            id=template.id,
+        ),
+        payload={
+            'name': 'Onboarding',
+            'version': template.version,
+            'is_active': False,
+            'template_deleted': True,
+        },
+        workflow_id=None,
+        task_id=None,
+        request=request,
+    )
+
+
+def test_template_generated_with_ai__request__no_object_id_no_payload(
+    mocker,
+    events_enabled,
+    request_factory,
+):
+
+    # arrange
+    owner = create_test_owner()
+    request = request_factory.post(path='/templates/ai')
+    request.user = owner
+    request.token_type = AuthTokenType.USER
+    emit_mock = mocker.patch('src.logs.events.services.emit')
+
+    # act
+    AuditEventService.template_generated_with_ai(request=request)
+
+    # assert
+    emit_mock.assert_called_once_with(
+        EventName.TEMPLATE_AI_GENERATE,
+        account_id=owner.account_id,
+        actor=Actor(type=ActorType.USER, id=owner.id, email=owner.email),
+        event_object=EventObject(type=EventObjectType.TEMPLATE, id=None),
+        payload=None,
+        workflow_id=None,
+        task_id=None,
+        request=request,
+    )
+
+
+def test_template_filled_from_library__request__system_template_object(
+    mocker,
+    events_enabled,
+    request_factory,
+):
+
+    # arrange
+    owner = create_test_owner()
+    system_template = create_test_system_template(name='Hiring')
+    request = request_factory.get(path='/templates/system/1/fill')
+    request.user = owner
+    request.token_type = AuthTokenType.USER
+    emit_mock = mocker.patch('src.logs.events.services.emit')
+
+    # act
+    AuditEventService.template_filled_from_library(
+        request=request,
+        system_template=system_template,
+    )
+
+    # assert
+    emit_mock.assert_called_once_with(
+        EventName.TEMPLATE_LIBRARY_FILL,
+        account_id=owner.account_id,
+        actor=Actor(type=ActorType.USER, id=owner.id, email=owner.email),
+        event_object=EventObject(
+            type=EventObjectType.SYSTEM_TEMPLATE,
+            id=system_template.id,
+        ),
+        payload={'name': 'Hiring'},
+        workflow_id=None,
+        task_id=None,
+        request=request,
+    )
+
+
+def test_library_templates_imported__request__templates_count(
+    mocker,
+    events_enabled,
+    request_factory,
+):
+
+    # arrange
+    owner = create_test_owner()
+    request = request_factory.post(path='/templates/system/import')
+    request.user = owner
+    request.token_type = AuthTokenType.USER
+    emit_mock = mocker.patch('src.logs.events.services.emit')
+
+    # act
+    AuditEventService.library_templates_imported(
+        request=request,
+        templates_count=3,
+    )
+
+    # assert
+    emit_mock.assert_called_once_with(
+        EventName.TEMPLATE_LIBRARY_IMPORT,
+        account_id=owner.account_id,
+        actor=Actor(type=ActorType.USER, id=owner.id, email=owner.email),
+        event_object=EventObject(
+            type=EventObjectType.SYSTEM_TEMPLATE,
+            id=None,
+        ),
+        payload={'templates_count': 3},
+        workflow_id=None,
+        task_id=None,
+        request=request,
+    )
+
+
+def test_template_preset_created__request__preset_object(
+    mocker,
+    events_enabled,
+    request_factory,
+):
+
+    # arrange
+    owner = create_test_owner()
+    template = create_test_template(user=owner, is_active=True)
+    preset = create_test_template_preset(
+        template=template,
+        author=owner,
+        name='Weekly',
+    )
+    request = request_factory.post(path='/templates/1/presets')
+    request.user = owner
+    request.token_type = AuthTokenType.USER
+    emit_mock = mocker.patch('src.logs.events.services.emit')
+
+    # act
+    AuditEventService.template_preset_created(
+        request=request,
+        preset=preset,
+    )
+
+    # assert
+    emit_mock.assert_called_once_with(
+        EventName.TEMPLATE_PRESET_CREATE,
+        account_id=owner.account_id,
+        actor=Actor(type=ActorType.USER, id=owner.id, email=owner.email),
+        event_object=EventObject(
+            type=EventObjectType.TEMPLATE_PRESET,
+            id=preset.id,
+        ),
+        payload={
+            'name': 'Weekly',
+            'template_id': template.id,
+            'type': 'personal',
+            'is_default': False,
+        },
+        workflow_id=None,
+        task_id=None,
+        request=request,
+    )
+
+
+def test_template_preset_updated__request__preset_object(
+    mocker,
+    events_enabled,
+    request_factory,
+):
+
+    # arrange
+    owner = create_test_owner()
+    template = create_test_template(user=owner, is_active=True)
+    preset = create_test_template_preset(
+        template=template,
+        author=owner,
+        name='Weekly',
+    )
+    request = request_factory.put(path='/templates/presets/1')
+    request.user = owner
+    request.token_type = AuthTokenType.USER
+    emit_mock = mocker.patch('src.logs.events.services.emit')
+
+    # act
+    AuditEventService.template_preset_updated(
+        request=request,
+        preset=preset,
+    )
+
+    # assert
+    emit_mock.assert_called_once_with(
+        EventName.TEMPLATE_PRESET_UPDATE,
+        account_id=owner.account_id,
+        actor=Actor(type=ActorType.USER, id=owner.id, email=owner.email),
+        event_object=EventObject(
+            type=EventObjectType.TEMPLATE_PRESET,
+            id=preset.id,
+        ),
+        payload={
+            'name': 'Weekly',
+            'template_id': template.id,
+            'type': 'personal',
+            'is_default': False,
+        },
+        workflow_id=None,
+        task_id=None,
+        request=request,
+    )
+
+
+def test_template_preset_deleted__request__preset_object(
+    mocker,
+    events_enabled,
+    request_factory,
+):
+
+    # arrange
+    owner = create_test_owner()
+    template = create_test_template(user=owner, is_active=True)
+    preset = create_test_template_preset(
+        template=template,
+        author=owner,
+        name='Weekly',
+    )
+    request = request_factory.delete(path='/templates/presets/1')
+    request.user = owner
+    request.token_type = AuthTokenType.USER
+    emit_mock = mocker.patch('src.logs.events.services.emit')
+
+    # act
+    AuditEventService.template_preset_deleted(
+        request=request,
+        preset=preset,
+    )
+
+    # assert
+    emit_mock.assert_called_once_with(
+        EventName.TEMPLATE_PRESET_DELETE,
+        account_id=owner.account_id,
+        actor=Actor(type=ActorType.USER, id=owner.id, email=owner.email),
+        event_object=EventObject(
+            type=EventObjectType.TEMPLATE_PRESET,
+            id=preset.id,
+        ),
+        payload={
+            'name': 'Weekly',
+            'template_id': template.id,
+            'type': 'personal',
+            'is_default': False,
+        },
+        workflow_id=None,
+        task_id=None,
+        request=request,
+    )
+
+
+def test_template_preset_set_default__default_preset__is_default_true(
+    mocker,
+    events_enabled,
+    request_factory,
+):
+
+    # arrange
+    owner = create_test_owner()
+    template = create_test_template(user=owner, is_active=True)
+    preset = create_test_template_preset(
+        template=template,
+        author=owner,
+        name='Weekly',
+        is_default=True,
+    )
+    request = request_factory.post(path='/templates/presets/1/default')
+    request.user = owner
+    request.token_type = AuthTokenType.USER
+    emit_mock = mocker.patch('src.logs.events.services.emit')
+
+    # act
+    AuditEventService.template_preset_set_default(
+        request=request,
+        preset=preset,
+    )
+
+    # assert
+    emit_mock.assert_called_once_with(
+        EventName.TEMPLATE_PRESET_SET_DEFAULT,
+        account_id=owner.account_id,
+        actor=Actor(type=ActorType.USER, id=owner.id, email=owner.email),
+        event_object=EventObject(
+            type=EventObjectType.TEMPLATE_PRESET,
+            id=preset.id,
+        ),
+        payload={
+            'name': 'Weekly',
+            'template_id': template.id,
+            'type': 'personal',
+            'is_default': True,
+        },
+        workflow_id=None,
+        task_id=None,
+        request=request,
+    )
+
+
+def test_fieldset_created__request__fieldset_object(
+    mocker,
+    events_enabled,
+    request_factory,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    fieldset = create_test_shared_fieldset(account=account, name='Address')
+    request = request_factory.post(path='/templates/fieldsets')
+    request.user = owner
+    request.token_type = AuthTokenType.USER
+    emit_mock = mocker.patch('src.logs.events.services.emit')
+
+    # act
+    AuditEventService.fieldset_created(request=request, fieldset=fieldset)
+
+    # assert
+    emit_mock.assert_called_once_with(
+        EventName.FIELDSET_CREATE,
+        account_id=account.id,
+        actor=Actor(type=ActorType.USER, id=owner.id, email=owner.email),
+        event_object=EventObject(
+            type=EventObjectType.FIELDSET,
+            id=fieldset.id,
+        ),
+        payload={'name': 'Address'},
+        workflow_id=None,
+        task_id=None,
+        request=request,
+    )
+
+
+def test_fieldset_updated__request__fieldset_object(
+    mocker,
+    events_enabled,
+    request_factory,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    fieldset = create_test_shared_fieldset(account=account, name='Address')
+    request = request_factory.put(path='/templates/fieldsets/1')
+    request.user = owner
+    request.token_type = AuthTokenType.USER
+    emit_mock = mocker.patch('src.logs.events.services.emit')
+
+    # act
+    AuditEventService.fieldset_updated(request=request, fieldset=fieldset)
+
+    # assert
+    emit_mock.assert_called_once_with(
+        EventName.FIELDSET_UPDATE,
+        account_id=account.id,
+        actor=Actor(type=ActorType.USER, id=owner.id, email=owner.email),
+        event_object=EventObject(
+            type=EventObjectType.FIELDSET,
+            id=fieldset.id,
+        ),
+        payload={'name': 'Address'},
+        workflow_id=None,
+        task_id=None,
+        request=request,
+    )
+
+
+def test_fieldset_cloned__request__source_fieldset_id_in_payload(
+    mocker,
+    events_enabled,
+    request_factory,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    fieldset = create_test_shared_fieldset(account=account, name='Address')
+    clone = create_test_shared_fieldset(
+        account=account,
+        name='Copy of Address',
+    )
+    request = request_factory.post(path='/templates/fieldsets/1/clone')
+    request.user = owner
+    request.token_type = AuthTokenType.USER
+    emit_mock = mocker.patch('src.logs.events.services.emit')
+
+    # act
+    AuditEventService.fieldset_cloned(
+        request=request,
+        clone=clone,
+        source_fieldset_id=fieldset.id,
+    )
+
+    # assert
+    emit_mock.assert_called_once_with(
+        EventName.FIELDSET_CLONE,
+        account_id=account.id,
+        actor=Actor(type=ActorType.USER, id=owner.id, email=owner.email),
+        event_object=EventObject(type=EventObjectType.FIELDSET, id=clone.id),
+        payload={
+            'name': 'Copy of Address',
+            'source_fieldset_id': fieldset.id,
+        },
+        workflow_id=None,
+        task_id=None,
+        request=request,
+    )
+
+
+def test_fieldset_deleted__request__fieldset_object(
+    mocker,
+    events_enabled,
+    request_factory,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    fieldset = create_test_shared_fieldset(account=account, name='Address')
+    request = request_factory.delete(path='/templates/fieldsets/1')
+    request.user = owner
+    request.token_type = AuthTokenType.USER
+    emit_mock = mocker.patch('src.logs.events.services.emit')
+
+    # act
+    AuditEventService.fieldset_deleted(request=request, fieldset=fieldset)
+
+    # assert
+    emit_mock.assert_called_once_with(
+        EventName.FIELDSET_DELETE,
+        account_id=account.id,
+        actor=Actor(type=ActorType.USER, id=owner.id, email=owner.email),
+        event_object=EventObject(
+            type=EventObjectType.FIELDSET,
+            id=fieldset.id,
+        ),
+        payload={'name': 'Address'},
+        workflow_id=None,
+        task_id=None,
+        request=request,
+    )
+
+
+def test_dataset_created__request__items_count_in_payload(
+    mocker,
+    events_enabled,
+    request_factory,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    dataset = create_test_dataset(account=account, name='Cities')
+    request = request_factory.post(path='/datasets')
+    request.user = owner
+    request.token_type = AuthTokenType.USER
+    emit_mock = mocker.patch('src.logs.events.services.emit')
+
+    # act
+    AuditEventService.dataset_created(
+        request=request,
+        dataset=dataset,
+        items_count=2,
+    )
+
+    # assert
+    emit_mock.assert_called_once_with(
+        EventName.DATASET_CREATE,
+        account_id=account.id,
+        actor=Actor(type=ActorType.USER, id=owner.id, email=owner.email),
+        event_object=EventObject(type=EventObjectType.DATASET, id=dataset.id),
+        payload={'name': 'Cities', 'items_count': 2},
+        workflow_id=None,
+        task_id=None,
+        request=request,
+    )
+
+
+def test_dataset_updated__changed_fields__names_only(
+    mocker,
+    events_enabled,
+    request_factory,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    dataset = create_test_dataset(account=account, name='Cities')
+    request = request_factory.put(path='/datasets/1')
+    request.user = owner
+    request.token_type = AuthTokenType.USER
+    emit_mock = mocker.patch('src.logs.events.services.emit')
+
+    # act
+    AuditEventService.dataset_updated(
+        request=request,
+        dataset=dataset,
+        changed_fields=['description', 'name'],
+    )
+
+    # assert
+    emit_mock.assert_called_once_with(
+        EventName.DATASET_UPDATE,
+        account_id=account.id,
+        actor=Actor(type=ActorType.USER, id=owner.id, email=owner.email),
+        event_object=EventObject(type=EventObjectType.DATASET, id=dataset.id),
+        payload={
+            'name': 'Cities',
+            'changed_fields': ['description', 'name'],
+        },
+        workflow_id=None,
+        task_id=None,
+        request=request,
+    )
+
+
+def test_dataset_deleted__request__dataset_object(
+    mocker,
+    events_enabled,
+    request_factory,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    dataset = create_test_dataset(account=account, name='Cities')
+    request = request_factory.delete(path='/datasets/1')
+    request.user = owner
+    request.token_type = AuthTokenType.USER
+    emit_mock = mocker.patch('src.logs.events.services.emit')
+
+    # act
+    AuditEventService.dataset_deleted(request=request, dataset=dataset)
+
+    # assert
+    emit_mock.assert_called_once_with(
+        EventName.DATASET_DELETE,
+        account_id=account.id,
+        actor=Actor(type=ActorType.USER, id=owner.id, email=owner.email),
+        event_object=EventObject(type=EventObjectType.DATASET, id=dataset.id),
+        payload={'name': 'Cities'},
+        workflow_id=None,
+        task_id=None,
+        request=request,
+    )
+
+
+def test_dataset_items_added__request__items_count_in_payload(
+    mocker,
+    events_enabled,
+    request_factory,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    dataset = create_test_dataset(account=account, name='Cities')
+    request = request_factory.post(path='/datasets/1/items')
+    request.user = owner
+    request.token_type = AuthTokenType.USER
+    emit_mock = mocker.patch('src.logs.events.services.emit')
+
+    # act
+    AuditEventService.dataset_items_added(
+        request=request,
+        dataset=dataset,
+        items_count=3,
+    )
+
+    # assert
+    emit_mock.assert_called_once_with(
+        EventName.DATASET_ITEMS_ADD,
+        account_id=account.id,
+        actor=Actor(type=ActorType.USER, id=owner.id, email=owner.email),
+        event_object=EventObject(type=EventObjectType.DATASET, id=dataset.id),
+        payload={'name': 'Cities', 'items_count': 3},
+        workflow_id=None,
+        task_id=None,
+        request=request,
+    )
+
+
+def test_dataset_items_replaced__request__items_count_in_payload(
+    mocker,
+    events_enabled,
+    request_factory,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    dataset = create_test_dataset(account=account, name='Cities')
+    request = request_factory.put(path='/datasets/1/items')
+    request.user = owner
+    request.token_type = AuthTokenType.USER
+    emit_mock = mocker.patch('src.logs.events.services.emit')
+
+    # act
+    AuditEventService.dataset_items_replaced(
+        request=request,
+        dataset=dataset,
+        items_count=4,
+    )
+
+    # assert
+    emit_mock.assert_called_once_with(
+        EventName.DATASET_ITEMS_REPLACE,
+        account_id=account.id,
+        actor=Actor(type=ActorType.USER, id=owner.id, email=owner.email),
+        event_object=EventObject(type=EventObjectType.DATASET, id=dataset.id),
+        payload={'name': 'Cities', 'items_count': 4},
+        workflow_id=None,
+        task_id=None,
+        request=request,
+    )
+
+
+def test_dataset_item_created__request__item_object(
+    mocker,
+    events_enabled,
+    request_factory,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    dataset = create_test_dataset(account=account)
+    item = dataset.items.get(order=1)
+    request = request_factory.post(path='/datasets/1/items')
+    request.user = owner
+    request.token_type = AuthTokenType.USER
+    emit_mock = mocker.patch('src.logs.events.services.emit')
+
+    # act
+    AuditEventService.dataset_item_created(request=request, item=item)
+
+    # assert
+    emit_mock.assert_called_once_with(
+        EventName.DATASET_ITEM_CREATE,
+        account_id=account.id,
+        actor=Actor(type=ActorType.USER, id=owner.id, email=owner.email),
+        event_object=EventObject(
+            type=EventObjectType.DATASET_ITEM,
+            id=item.id,
+        ),
+        payload={'dataset_id': dataset.id},
+        workflow_id=None,
+        task_id=None,
+        request=request,
+    )
+
+
+def test_dataset_item_updated__changed_fields__names_only(
+    mocker,
+    events_enabled,
+    request_factory,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    dataset = create_test_dataset(account=account)
+    item = dataset.items.get(order=1)
+    request = request_factory.put(path='/datasets/items/1')
+    request.user = owner
+    request.token_type = AuthTokenType.USER
+    emit_mock = mocker.patch('src.logs.events.services.emit')
+
+    # act
+    AuditEventService.dataset_item_updated(
+        request=request,
+        item=item,
+        changed_fields=['value'],
+    )
+
+    # assert
+    emit_mock.assert_called_once_with(
+        EventName.DATASET_ITEM_UPDATE,
+        account_id=account.id,
+        actor=Actor(type=ActorType.USER, id=owner.id, email=owner.email),
+        event_object=EventObject(
+            type=EventObjectType.DATASET_ITEM,
+            id=item.id,
+        ),
+        payload={
+            'dataset_id': dataset.id,
+            'changed_fields': ['value'],
+        },
+        workflow_id=None,
+        task_id=None,
+        request=request,
+    )
+
+
+def test_dataset_item_deleted__request__item_object(
+    mocker,
+    events_enabled,
+    request_factory,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    dataset = create_test_dataset(account=account)
+    item = dataset.items.get(order=1)
+    request = request_factory.delete(path='/datasets/items/1')
+    request.user = owner
+    request.token_type = AuthTokenType.USER
+    emit_mock = mocker.patch('src.logs.events.services.emit')
+
+    # act
+    AuditEventService.dataset_item_deleted(request=request, item=item)
+
+    # assert
+    emit_mock.assert_called_once_with(
+        EventName.DATASET_ITEM_DELETE,
+        account_id=account.id,
+        actor=Actor(type=ActorType.USER, id=owner.id, email=owner.email),
+        event_object=EventObject(
+            type=EventObjectType.DATASET_ITEM,
+            id=item.id,
+        ),
+        payload={'dataset_id': dataset.id},
+        workflow_id=None,
+        task_id=None,
+        request=request,
+    )
+
+
+def test_workflow_updated__kickoff_fields__kickoff_key(
+    mocker,
+    events_enabled,
+    request_factory,
+):
+
+    # arrange
+    owner = create_test_owner()
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    request = request_factory.patch(path='/workflows/1')
+    request.user = owner
+    request.token_type = AuthTokenType.USER
+    emit_mock = mocker.patch('src.logs.events.services.emit')
+
+    # act
+    AuditEventService.workflow_updated(
+        request=request,
+        workflow=workflow,
+        changed_fields=['kickoff', 'name'],
+        kickoff_fields=['field-1'],
+    )
+
+    # assert
+    emit_mock.assert_called_once_with(
+        EventName.WORKFLOW_UPDATE,
+        account_id=owner.account_id,
+        actor=Actor(type=ActorType.USER, id=owner.id, email=owner.email),
+        event_object=EventObject(
+            type=EventObjectType.WORKFLOW,
+            id=workflow.id,
+        ),
+        payload={
+            'workflow_name': workflow.name,
+            'changed_fields': ['kickoff', 'name'],
+            'kickoff_fields': ['field-1'],
+        },
+        workflow_id=workflow.id,
+        task_id=None,
+        request=request,
+    )
+
+
+def test_workflow_updated__no_kickoff_fields__no_kickoff_key(
+    mocker,
+    events_enabled,
+    request_factory,
+):
+
+    # arrange
+    owner = create_test_owner()
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    request = request_factory.patch(path='/workflows/1')
+    request.user = owner
+    request.token_type = AuthTokenType.USER
+    emit_mock = mocker.patch('src.logs.events.services.emit')
+
+    # act
+    AuditEventService.workflow_updated(
+        request=request,
+        workflow=workflow,
+        changed_fields=['name'],
+        kickoff_fields=[],
+    )
+
+    # assert
+    emit_mock.assert_called_once_with(
+        EventName.WORKFLOW_UPDATE,
+        account_id=owner.account_id,
+        actor=Actor(type=ActorType.USER, id=owner.id, email=owner.email),
+        event_object=EventObject(
+            type=EventObjectType.WORKFLOW,
+            id=workflow.id,
+        ),
+        payload={
+            'workflow_name': workflow.name,
+            'changed_fields': ['name'],
+        },
+        workflow_id=workflow.id,
+        task_id=None,
+        request=request,
+    )
+
+
+def test_comment_updated__comment_with_task__task_name(
+    mocker,
+    events_enabled,
+    request_factory,
+):
+
+    # arrange
+    owner = create_test_owner()
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    comment = create_test_event(
+        workflow=workflow,
+        user=owner,
+        type_event=WorkflowEventType.COMMENT,
+    )
+    request = request_factory.put(path='/workflows/comments/1')
+    request.user = owner
+    request.token_type = AuthTokenType.USER
+    emit_mock = mocker.patch('src.logs.events.services.emit')
+
+    # act
+    AuditEventService.comment_updated(request=request, comment=comment)
+
+    # assert
+    emit_mock.assert_called_once_with(
+        EventName.TASK_COMMENT_UPDATE,
+        account_id=owner.account_id,
+        actor=Actor(type=ActorType.USER, id=owner.id, email=owner.email),
+        event_object=EventObject(
+            type=EventObjectType.COMMENT,
+            id=comment.id,
+        ),
+        payload={
+            'workflow_name': workflow.name,
+            'task_name': task.name,
+        },
+        workflow_id=workflow.id,
+        task_id=task.id,
+        request=request,
+    )
+
+
+def test_comment_updated__comment_without_task__no_task_name(
+    mocker,
+    events_enabled,
+    request_factory,
+):
+
+    # arrange
+    owner = create_test_owner()
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    comment = create_test_event(
+        workflow=workflow,
+        user=owner,
+        type_event=WorkflowEventType.COMMENT,
+    )
+    comment.task = None
+    request = request_factory.put(path='/workflows/comments/1')
+    request.user = owner
+    request.token_type = AuthTokenType.USER
+    emit_mock = mocker.patch('src.logs.events.services.emit')
+
+    # act
+    AuditEventService.comment_updated(request=request, comment=comment)
+
+    # assert
+    emit_mock.assert_called_once_with(
+        EventName.TASK_COMMENT_UPDATE,
+        account_id=owner.account_id,
+        actor=Actor(type=ActorType.USER, id=owner.id, email=owner.email),
+        event_object=EventObject(
+            type=EventObjectType.COMMENT,
+            id=comment.id,
+        ),
+        payload={'workflow_name': workflow.name},
+        workflow_id=workflow.id,
+        task_id=None,
+        request=request,
+    )
+
+
+def test_comment_deleted__request__comment_object(
+    mocker,
+    events_enabled,
+    request_factory,
+):
+
+    # arrange
+    owner = create_test_owner()
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    comment = create_test_event(
+        workflow=workflow,
+        user=owner,
+        type_event=WorkflowEventType.COMMENT,
+    )
+    request = request_factory.delete(path='/workflows/comments/1')
+    request.user = owner
+    request.token_type = AuthTokenType.USER
+    emit_mock = mocker.patch('src.logs.events.services.emit')
+
+    # act
+    AuditEventService.comment_deleted(request=request, comment=comment)
+
+    # assert
+    emit_mock.assert_called_once_with(
+        EventName.TASK_COMMENT_DELETE,
+        account_id=owner.account_id,
+        actor=Actor(type=ActorType.USER, id=owner.id, email=owner.email),
+        event_object=EventObject(
+            type=EventObjectType.COMMENT,
+            id=comment.id,
+        ),
+        payload={
+            'workflow_name': workflow.name,
+            'task_name': task.name,
+        },
+        workflow_id=workflow.id,
+        task_id=task.id,
+        request=request,
+    )
+
+
+def test_checklist_item_marked__request__checklist_object(
+    mocker,
+    events_enabled,
+    request_factory,
+):
+
+    # arrange
+    owner = create_test_owner()
+    template = create_test_template(
+        user=owner,
+        is_active=True,
+        tasks_count=1,
+    )
+    create_checklist_template(task_template=template.tasks.get(number=1))
+    workflow = create_test_workflow(user=owner, template=template)
+    task = workflow.tasks.get(number=1)
+    checklist = task.checklists.get()
+    selection = ChecklistSelection.objects.get(
+        checklist=checklist,
+        api_name='cl-selection-1',
+    )
+    request = request_factory.post(path='/v2/tasks/checklists/1/mark')
+    request.user = owner
+    request.token_type = AuthTokenType.USER
+    emit_mock = mocker.patch('src.logs.events.services.emit')
+
+    # act
+    AuditEventService.checklist_item_marked(
+        request=request,
+        checklist=checklist,
+        selection_id=selection.id,
+    )
+
+    # assert
+    emit_mock.assert_called_once_with(
+        EventName.TASK_CHECKLIST_MARK,
+        account_id=owner.account_id,
+        actor=Actor(type=ActorType.USER, id=owner.id, email=owner.email),
+        event_object=EventObject(
+            type=EventObjectType.CHECKLIST,
+            id=checklist.id,
+        ),
+        payload={
+            'workflow_name': workflow.name,
+            'task_name': task.name,
+            'checklist_api_name': 'checklist',
+            'selection_id': selection.id,
+        },
+        workflow_id=workflow.id,
+        task_id=task.id,
+        request=request,
+    )
+
+
+def test_checklist_item_unmarked__request__checklist_object(
+    mocker,
+    events_enabled,
+    request_factory,
+):
+
+    # arrange
+    owner = create_test_owner()
+    template = create_test_template(
+        user=owner,
+        is_active=True,
+        tasks_count=1,
+    )
+    create_checklist_template(task_template=template.tasks.get(number=1))
+    workflow = create_test_workflow(user=owner, template=template)
+    task = workflow.tasks.get(number=1)
+    checklist = task.checklists.get()
+    selection = ChecklistSelection.objects.get(
+        checklist=checklist,
+        api_name='cl-selection-1',
+    )
+    request = request_factory.post(path='/v2/tasks/checklists/1/unmark')
+    request.user = owner
+    request.token_type = AuthTokenType.USER
+    emit_mock = mocker.patch('src.logs.events.services.emit')
+
+    # act
+    AuditEventService.checklist_item_unmarked(
+        request=request,
+        checklist=checklist,
+        selection_id=selection.id,
+    )
+
+    # assert
+    emit_mock.assert_called_once_with(
+        EventName.TASK_CHECKLIST_UNMARK,
+        account_id=owner.account_id,
+        actor=Actor(type=ActorType.USER, id=owner.id, email=owner.email),
+        event_object=EventObject(
+            type=EventObjectType.CHECKLIST,
+            id=checklist.id,
+        ),
+        payload={
+            'workflow_name': workflow.name,
+            'task_name': task.name,
+            'checklist_api_name': 'checklist',
+            'selection_id': selection.id,
+        },
+        workflow_id=workflow.id,
+        task_id=task.id,
+        request=request,
+    )
+
+
+def test_comment_updated__logs_disabled__no_event(
+    mocker,
+    request_factory,
+):
+
+    # arrange
+    owner = create_test_owner()
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    comment = create_test_event(
+        workflow=workflow,
+        user=owner,
+        type_event=WorkflowEventType.COMMENT,
+    )
+    request = request_factory.put(path='/workflows/comments/1')
+    request.user = owner
+    request.token_type = AuthTokenType.USER
+    emit_mock = mocker.patch('src.logs.events.services.emit')
+
+    # act
+    AuditEventService.comment_updated(request=request, comment=comment)
+
+    # assert
+    emit_mock.assert_not_called()
+
+
+def test_checklist_item_marked__logs_disabled__no_event(
+    mocker,
+    request_factory,
+):
+
+    # arrange
+    owner = create_test_owner()
+    template = create_test_template(
+        user=owner,
+        is_active=True,
+        tasks_count=1,
+    )
+    create_checklist_template(task_template=template.tasks.get(number=1))
+    workflow = create_test_workflow(user=owner, template=template)
+    checklist = workflow.tasks.get(number=1).checklists.get()
+    selection = ChecklistSelection.objects.get(
+        checklist=checklist,
+        api_name='cl-selection-1',
+    )
+    request = request_factory.post(path='/v2/tasks/checklists/1/mark')
+    request.user = owner
+    request.token_type = AuthTokenType.USER
+    emit_mock = mocker.patch('src.logs.events.services.emit')
+
+    # act
+    AuditEventService.checklist_item_marked(
+        request=request,
+        checklist=checklist,
+        selection_id=selection.id,
+    )
+
+    # assert
+    emit_mock.assert_not_called()

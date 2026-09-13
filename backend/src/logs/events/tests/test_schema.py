@@ -1,16 +1,21 @@
 import json
-from datetime import timedelta, timezone
+from datetime import datetime, timedelta, timezone
 
 import pytest
 from django.core.serializers.json import DjangoJSONEncoder
 
+from src.logs.events.enums import ActorType, EventObjectType
 from src.logs.events.schema import (
+    Actor,
     Event,
+    EventObject,
     dump_json,
     pii_value,
     to_json,
+    without_userinfo,
 )
-from src.logs.events.tests.fakes import EVENT_TS, make_event
+from src.logs.events.tests.fixtures import EVENT_TS, make_event
+from src.processes.tests.fixtures import create_test_owner
 
 
 def test_to_dict__filled_event__expected_json():
@@ -77,9 +82,10 @@ def test_from_dict__to_dict_result__round_trip():
 
     # arrange
     event = make_event(id='1725790000000-0')
+    data = json.loads(json.dumps(event.to_dict()))
 
     # act
-    restored = Event.from_dict(json.loads(json.dumps(event.to_dict())))
+    restored = Event.from_dict(data=data)
 
     # assert
     assert restored == event
@@ -89,9 +95,10 @@ def test_from_dict__event_without_actor_and_object__both_none():
 
     # arrange
     event = make_event(actor=None, object=None, pii=(), payload={}, id=None)
+    data = event.to_dict()
 
     # act
-    restored = Event.from_dict(event.to_dict())
+    restored = Event.from_dict(data=data)
 
     # assert
     assert restored.actor is None
@@ -111,7 +118,7 @@ def test_from_dict__record_without_optional_keys__defaults():
     }
 
     # act
-    restored = Event.from_dict(data)
+    restored = Event.from_dict(data=data)
 
     # assert
     assert restored.payload == {}
@@ -149,13 +156,15 @@ def test_to_dict__naive_ts__treated_as_utc():
 def test_from_dict__utc_string__same_moment():
 
     # arrange
-    event = make_event(ts=EVENT_TS)
+    data = make_event(ts=EVENT_TS).to_dict()
 
     # act
-    restored = Event.from_dict(event.to_dict())
+    restored = Event.from_dict(data=data)
 
     # assert
-    assert restored.ts == EVENT_TS
+    assert restored.ts == datetime(
+        2026, 9, 8, 10, 15, 30, 123456, tzinfo=timezone.utc,
+    )
 
 
 def test_to_dict__no_service__key_written_as_null():
@@ -180,10 +189,62 @@ def test_from_dict__record_of_another_service__service_kept():
     data = make_event(service='pneumatic-file-service').to_dict()
 
     # act
-    restored = Event.from_dict(data)
+    restored = Event.from_dict(data=data)
 
     # assert
     assert restored.service == 'pneumatic-file-service'
+
+
+def test_actor_from_dict__empty_dict__none():
+
+    # arrange
+    data = {}
+
+    # act
+    actor = Actor.from_dict(data=data)
+
+    # assert
+    assert actor is None
+
+
+def test_event_object_from_dict__empty_dict__none():
+
+    # arrange
+    data = {}
+
+    # act
+    event_object = EventObject.from_dict(data=data)
+
+    # assert
+    assert event_object is None
+
+
+def test_event_object_from_dict__filled_dict__object():
+
+    # arrange
+    data = {'type': EventObjectType.GROUP, 'id': 5}
+
+    # act
+    event_object = EventObject.from_dict(data=data)
+
+    # assert
+    assert event_object == EventObject(type=EventObjectType.GROUP, id=5)
+
+
+@pytest.mark.django_db
+def test_actor_from_user__no_auth_type__user_actor():
+
+    """ A service that does not know the auth type acts for a person
+        signed in to a browser session. """
+
+    # arrange
+    user = create_test_owner()
+
+    # act
+    actor = Actor.from_user(user=user)
+
+    # assert
+    assert actor == Actor(type=ActorType.USER, id=user.id, email=user.email)
 
 
 def test_to_json__value_no_encoder_knows__its_text():
@@ -195,7 +256,7 @@ def test_to_json__value_no_encoder_knows__its_text():
     value = object()
 
     # act
-    result = to_json(value)
+    result = to_json(value=value)
 
     # assert
     assert result == json.dumps(str(value))
@@ -208,7 +269,7 @@ def test_dump_json__value_no_encoder_knows__raise():
 
     # act
     with pytest.raises(TypeError) as ex:
-        dump_json(value)
+        dump_json(value=value)
 
     # assert
     assert str(ex.value) == (
@@ -236,7 +297,7 @@ def test_pii_value__path__field_of_the_record(path, expected):
     event = make_event()
 
     # act
-    result = pii_value(event, path)
+    result = pii_value(event=event, path=path)
 
     # assert
     assert result == expected
@@ -246,9 +307,55 @@ def test_pii_value__no_actor__none():
 
     # arrange
     event = make_event(actor=None)
+    path = 'actor.email'
 
     # act
-    result = pii_value(event, 'actor.email')
+    result = pii_value(event=event, path=path)
 
     # assert
     assert result is None
+
+
+@pytest.mark.parametrize(
+    ('url', 'expected'),
+    [
+        (
+                'http://otel-collector:4318/v1/logs',
+                'http://otel-collector:4318/v1/logs',
+        ),
+        (
+                'https://user:secret@collector.test/v1/logs',
+                'https://collector.test/v1/logs',
+        ),
+        (
+                'https://user:secret@collector.test:4318/v1/logs',
+                'https://collector.test:4318/v1/logs',
+        ),
+        (
+                'https://token@collector.test/v1/logs',
+                'https://collector.test/v1/logs',
+        ),
+    ],
+)
+def test_without_userinfo__url__credential_dropped(url, expected):
+
+    # arrange
+    endpoint_url = url
+
+    # act
+    result = without_userinfo(url=endpoint_url)
+
+    # assert
+    assert result == expected
+
+
+def test_without_userinfo__ipv6_host_with_credential__brackets_kept():
+
+    # arrange
+    url = 'http://user:secret@[::1]:4318/v1/logs'
+
+    # act
+    result = without_userinfo(url=url)
+
+    # assert
+    assert result == 'http://[::1]:4318/v1/logs'

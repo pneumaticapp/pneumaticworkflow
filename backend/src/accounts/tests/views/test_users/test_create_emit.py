@@ -1,5 +1,6 @@
 import pytest
 
+from src.accounts.services.exceptions import UserServiceException
 from src.accounts.services.user import UserService
 from src.logs.events.enums import (
     ActorType,
@@ -13,6 +14,7 @@ from src.processes.tests.fixtures import (
     create_test_not_admin,
     create_test_owner,
 )
+from src.utils.validation import ErrorCode
 
 pytestmark = pytest.mark.django_db
 
@@ -101,3 +103,40 @@ def test_create__not_admin__no_event(
     assert response.status_code == 403
     assert fake_stream.events == []
     create_mock.assert_not_called()
+
+
+def test_create__service_exception__no_event(
+    mocker,
+    api_client,
+    fake_stream,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    create_mock = mocker.patch.object(
+        UserService,
+        attribute='create',
+        side_effect=UserServiceException(message='Service error'),
+    )
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.post(
+        '/accounts/users',
+        {'email': 'new@test.test', 'is_admin': False},
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data == {
+        'code': ErrorCode.VALIDATION_ERROR,
+        'message': 'Service error',
+        'details': {},
+    }
+    assert fake_stream.events == []
+    create_mock.assert_called_once_with(
+        account=account,
+        email='new@test.test',
+        is_admin=False,
+    )

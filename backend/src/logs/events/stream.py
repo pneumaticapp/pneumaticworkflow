@@ -66,9 +66,25 @@ def _parse_entries(entries: list) -> ParsedEntries:
 
 
 def _to_event(entry_id: str, fields: dict) -> Optional[Event]:
+
+    """ The event of a record, or None for a record that is not one.
+
+        The types of the fields the sink builds on are checked too: a
+        record written by hand with a number for the type passes
+        Event.from_dict and would then break the whole batch in the
+        sink instead of going to the dead letter alone. """
+
     try:
         event = Event.from_dict(json.loads(fields['data']))
     except (KeyError, TypeError, ValueError):
+        return None
+    if not (
+        isinstance(event.type, str)
+        and isinstance(event.category, str)
+        and isinstance(event.service, str)
+        and isinstance(event.account_id, int)
+        and isinstance(event.payload, dict)
+    ):
         return None
     event.id = entry_id
     return event
@@ -103,7 +119,7 @@ class EventStream:
     def dead_key(self) -> str:
         return f'{self.key}{DEAD_SUFFIX}'
 
-    def _read(self, consumer: str, count: int, last_id: str) -> Entries:
+    def _read(self, consumer: str, count: int, last_id: str) -> ParsedEntries:
         response = self.client.xreadgroup(
             groupname=self.group,
             consumername=consumer,
@@ -113,26 +129,26 @@ class EventStream:
         entries = []
         for _key, records in response or ():
             entries.extend(records)
-        return self._to_events(entries)
+        return self._clear_entries(entries)
 
-    def _to_events(self, entries: list) -> Entries:
+    def _clear_entries(self, entries: list) -> ParsedEntries:
 
         """ Turn what Redis handed out into events, and clear the
-            entries that cannot become one. """
+            entries that cannot become one. All three kinds go back
+            to the caller, which counts the cleared ones. """
 
         parsed = _parse_entries(entries)
         if parsed.vanished:
             logger.warning(
-                'Trimmed pending events acked: %s', parsed.vanished,
+                'Trimmed pending events acked: %s', len(parsed.vanished),
             )
             self.ack(parsed.vanished)
         if parsed.malformed:
             logger.warning(
-                'Malformed events dropped: %s',
-                [entry_id for entry_id, _ in parsed.malformed],
+                'Malformed events dropped: %s', len(parsed.malformed),
             )
             self.dead_letter(parsed.malformed, MALFORMED_REASON)
-        return parsed.events
+        return parsed
 
     @staticmethod
     def _dead_fields(
@@ -152,11 +168,6 @@ class EventStream:
             'source_id': entry_id,
             'data': dump_json(data),
         }
-
-    def close(self) -> None:
-        if self._client is not None:
-            self._client.close()
-            self._client = None
 
     def xadd(self, event: Event) -> str:
 
@@ -188,13 +199,13 @@ class EventStream:
             if BUSYGROUP not in str(exc):
                 raise
 
-    def read_pending(self, consumer: str, count: int) -> Entries:
+    def read_pending(self, consumer: str, count: int) -> ParsedEntries:
 
         """ Entries this consumer read but did not ack yet. """
 
         return self._read(consumer, count, PENDING_ENTRIES)
 
-    def read_new(self, consumer: str, count: int) -> Entries:
+    def read_new(self, consumer: str, count: int) -> ParsedEntries:
 
         """ Entries never delivered to the group. """
 
@@ -206,7 +217,7 @@ class EventStream:
         min_idle_ms: int,
         count: int,
         start_id: str = AUTOCLAIM_START,
-    ) -> Entries:
+    ) -> ParsedEntries:
 
         """ Take over entries stuck in the pending list of a dead
             consumer. The next cursor is dropped on purpose: every
@@ -230,7 +241,7 @@ class EventStream:
         # pair for every claimed record the stream no longer holds;
         # Redis 7.0 drops those and adds the list of deleted ids.
         entries = response[1] if len(response) > 1 else []
-        return self._to_events(entries)
+        return self._clear_entries(entries)
 
     def ack(self, ids: Iterable[str]) -> int:
         ids = list(ids)
@@ -297,7 +308,13 @@ def consumer_name() -> str:
         task never overlap (periodic_lock), so whichever worker
         process runs the next tick may take over the pending list of
         the previous one right away instead of waiting for it to go
-        idle; and a deployment does not leave a trail of dead
-        consumer names in the group. """
+        idle.
+
+        The host name of a container is its id, a new one on every
+        deployment, and nothing calls XGROUP DELCONSUMER: each
+        deployment leaves the name of the previous container in the
+        group. Its pending entries go idle and the next autoclaim
+        takes them over; what stays is an empty consumer listed by
+        XINFO CONSUMERS. """
 
     return socket.gethostname()

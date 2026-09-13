@@ -3,16 +3,17 @@ from django.contrib.auth import get_user_model
 
 from src.accounts.enums import SourceType
 from src.authentication.enums import AuthTokenType
-from src.logs.events.schema import Actor, EventObject
 from src.logs.events.enums import (
     ActorType,
     EventCategory,
     EventName,
     EventObjectType,
 )
+from src.logs.events.schema import Actor, EventObject
 from src.processes.services.system_workflows import (
     SystemWorkflowService,
 )
+from src.utils.validation import ErrorCode
 
 UserModel = get_user_model()
 
@@ -126,3 +127,60 @@ def test_create__email_signup__emit_user_signup_only(
         user_agent='Some/Mozilla',
         user_ip='128.18.0.99',
     )
+
+
+def test_create__signup_disabled__no_event(
+    mocker,
+    api_client,
+    settings,
+    fake_stream,
+):
+
+    # arrange
+    settings.PROJECT_CONF = {**settings.PROJECT_CONF, 'SIGNUP': False}
+    account_created_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.account_created',
+    )
+    email = 'new_user@pneumatic.app'
+
+    # act
+    response = api_client.post(
+        path='/auth/signup',
+        data={'email': email},
+    )
+
+    # assert
+    assert response.status_code == 401
+    assert fake_stream.events == []
+    account_created_mock.assert_not_called()
+
+
+def test_create__invalid_email__no_event(
+    mocker,
+    api_client,
+    settings,
+    fake_stream,
+):
+
+    # arrange
+    settings.PROJECT_CONF = {**settings.PROJECT_CONF, 'SIGNUP': True}
+    account_created_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.account_created',
+    )
+    email = 'not-an-email'
+
+    # act
+    response = api_client.post(
+        path='/auth/signup',
+        data={'email': email},
+    )
+
+    # assert
+    assert response.status_code == 400
+    message = 'Enter a valid email address.'
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == message
+    assert response.data['details']['name'] == 'email'
+    assert response.data['details']['reason'] == message
+    assert fake_stream.events == []
+    account_created_mock.assert_not_called()

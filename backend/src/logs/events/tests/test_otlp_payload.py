@@ -5,30 +5,15 @@ from datetime import timedelta, timezone
 import pytest
 
 from src.logs.events.enums import EventCategory
-from src.logs.events.registry import (
-    ACTOR_PII,
-)
+from src.logs.events.registry import ACTOR_PII
 from src.logs.events.schema import Actor, EventObject
 from src.logs.events.sinks.otlp_payload import (
     MAX_ATTRIBUTES,
     _fit_limit,
     _payload_values,
+    build_otlp_payload,
 )
-from src.logs.events.tests.fakes import (
-    ENVIRONMENT,
-    EVENT_TS,
-    EVENT_TS_NANO,
-    FILE_SERVICE_NAME,
-    OBSERVED_NS,
-    SERVICE_NAME,
-    SERVICE_VERSION,
-    build_sample_payload,
-    make_event,
-    otlp_attributes,
-    otlp_first_record,
-    otlp_resource_attributes,
-    scrub_times,
-)
+from src.logs.events.tests.fixtures import EVENT_TS, make_event
 from src.utils.logging import SentryLogLevel
 
 
@@ -45,17 +30,23 @@ def test_build__two_accounts__two_resource_logs():
     ]
 
     # act
-    payload = build_sample_payload(records)
+    payload = build_otlp_payload(
+        records=records,
+        service_name='pneumatic-backend',
+        service_version='1.0.0',
+        environment='Production',
+        observed_ns=1788862535000000000,
+    )
 
     # assert
-    resource_logs = payload['resourceLogs']
-    assert len(resource_logs) == 2
-    first, second = resource_logs
-    assert otlp_resource_attributes(first)['account_id'] == {
-        'stringValue': '42',
+    first, second = payload['resourceLogs']
+    assert first['resource']['attributes'][3] == {
+        'key': 'account_id',
+        'value': {'stringValue': '42'},
     }
-    assert otlp_resource_attributes(second)['account_id'] == {
-        'stringValue': '77',
+    assert second['resource']['attributes'][3] == {
+        'key': 'account_id',
+        'value': {'stringValue': '77'},
     }
     assert len(first['scopeLogs'][0]['logRecords']) == 2
     assert len(second['scopeLogs'][0]['logRecords']) == 1
@@ -70,16 +61,23 @@ def test_build__one_account_two_categories__two_resource_logs():
     ]
 
     # act
-    payload = build_sample_payload(records)
+    payload = build_otlp_payload(
+        records=records,
+        service_name='pneumatic-backend',
+        service_version='1.0.0',
+        environment='Production',
+        observed_ns=1788862535000000000,
+    )
 
     # assert
-    resource_logs = payload['resourceLogs']
-    assert len(resource_logs) == 2
-    assert otlp_resource_attributes(resource_logs[0])['event_category'] == {
-        'stringValue': EventCategory.AUDIT,
+    first, second = payload['resourceLogs']
+    assert first['resource']['attributes'][4] == {
+        'key': 'event_category',
+        'value': {'stringValue': 'audit'},
     }
-    assert otlp_resource_attributes(resource_logs[1])['event_category'] == {
-        'stringValue': EventCategory.ACTIVITY,
+    assert second['resource']['attributes'][4] == {
+        'key': 'event_category',
+        'value': {'stringValue': 'activity'},
     }
 
 
@@ -96,17 +94,23 @@ def test_build__two_services__two_resource_logs():
     ]
 
     # act
-    payload = build_sample_payload(records)
+    payload = build_otlp_payload(
+        records=records,
+        service_name='pneumatic-backend',
+        service_version='1.0.0',
+        environment='Production',
+        observed_ns=1788862535000000000,
+    )
 
     # assert
-    resource_logs = payload['resourceLogs']
-    assert len(resource_logs) == 2
-    first, second = resource_logs
-    assert otlp_resource_attributes(first)['service.name'] == {
-        'stringValue': 'pneumatic-backend',
+    first, second = payload['resourceLogs']
+    assert first['resource']['attributes'][0] == {
+        'key': 'service.name',
+        'value': {'stringValue': 'pneumatic-backend'},
     }
-    assert otlp_resource_attributes(second)['service.name'] == {
-        'stringValue': 'pneumatic-file-service',
+    assert second['resource']['attributes'][0] == {
+        'key': 'service.name',
+        'value': {'stringValue': 'pneumatic-file-service'},
     }
     assert len(first['scopeLogs'][0]['logRecords']) == 2
     assert len(second['scopeLogs'][0]['logRecords']) == 1
@@ -114,8 +118,17 @@ def test_build__two_services__two_resource_logs():
 
 def test_build__no_records__empty_resource_logs():
 
+    # arrange
+    records = []
+
     # act
-    payload = build_sample_payload([])
+    payload = build_otlp_payload(
+        records=records,
+        service_name='pneumatic-backend',
+        service_version='1.0.0',
+        environment='Production',
+        observed_ns=1788862535000000000,
+    )
 
     # assert
     assert payload == {'resourceLogs': []}
@@ -123,17 +136,29 @@ def test_build__no_records__empty_resource_logs():
 
 def test_build__any_record__expected_resource_attributes():
 
+    # arrange
+    records = [('1-0', make_event())]
+
     # act
-    payload = build_sample_payload([('1-0', make_event())])
+    payload = build_otlp_payload(
+        records=records,
+        service_name='pneumatic-backend',
+        service_version='1.0.0',
+        environment='Production',
+        observed_ns=1788862535000000000,
+    )
 
     # assert
-    assert otlp_resource_attributes(payload['resourceLogs'][0]) == {
-        'service.name': {'stringValue': SERVICE_NAME},
-        'service.version': {'stringValue': SERVICE_VERSION},
-        'deployment.environment': {'stringValue': ENVIRONMENT},
-        'account_id': {'stringValue': '42'},
-        'event_category': {'stringValue': EventCategory.AUDIT},
-    }
+    assert payload['resourceLogs'][0]['resource']['attributes'] == [
+        {'key': 'service.name', 'value': {'stringValue': 'pneumatic-backend'}},
+        {'key': 'service.version', 'value': {'stringValue': '1.0.0'}},
+        {
+            'key': 'deployment.environment',
+            'value': {'stringValue': 'Production'},
+        },
+        {'key': 'account_id', 'value': {'stringValue': '42'}},
+        {'key': 'event_category', 'value': {'stringValue': 'audit'}},
+    ]
 
 
 def test_build__record_of_another_service__no_version():
@@ -143,24 +168,45 @@ def test_build__record_of_another_service__no_version():
         backend release in Grafana. """
 
     # arrange
-    event = make_event(service=FILE_SERVICE_NAME)
+    records = [('1-0', make_event(service='pneumatic-file-service'))]
 
     # act
-    payload = build_sample_payload([('1-0', event)])
+    payload = build_otlp_payload(
+        records=records,
+        service_name='pneumatic-backend',
+        service_version='1.0.0',
+        environment='Production',
+        observed_ns=1788862535000000000,
+    )
 
     # assert
-    assert otlp_resource_attributes(payload['resourceLogs'][0]) == {
-        'service.name': {'stringValue': FILE_SERVICE_NAME},
-        'deployment.environment': {'stringValue': ENVIRONMENT},
-        'account_id': {'stringValue': '42'},
-        'event_category': {'stringValue': EventCategory.AUDIT},
-    }
+    assert payload['resourceLogs'][0]['resource']['attributes'] == [
+        {
+            'key': 'service.name',
+            'value': {'stringValue': 'pneumatic-file-service'},
+        },
+        {
+            'key': 'deployment.environment',
+            'value': {'stringValue': 'Production'},
+        },
+        {'key': 'account_id', 'value': {'stringValue': '42'}},
+        {'key': 'event_category', 'value': {'stringValue': 'audit'}},
+    ]
 
 
 def test_build__any_record__expected_scope():
 
+    # arrange
+    records = [('1-0', make_event())]
+
     # act
-    payload = build_sample_payload([('1-0', make_event())])
+    payload = build_otlp_payload(
+        records=records,
+        service_name='pneumatic-backend',
+        service_version='1.0.0',
+        environment='Production',
+        observed_ns=1788862535000000000,
+    )
 
     # assert
     scope_log = payload['resourceLogs'][0]['scopeLogs'][0]
@@ -172,37 +218,61 @@ def test_build__any_record__expected_scope():
 
 def test_build__known_ts__expected_time_unix_nano():
 
+    # arrange
+    records = [('1-0', make_event(ts=EVENT_TS))]
+
     # act
-    payload = build_sample_payload([('1-0', make_event(ts=EVENT_TS))])
+    payload = build_otlp_payload(
+        records=records,
+        service_name='pneumatic-backend',
+        service_version='1.0.0',
+        environment='Production',
+        observed_ns=1788862535000000000,
+    )
 
     # assert
-    record = otlp_first_record(payload)
-    assert record['timeUnixNano'] == EVENT_TS_NANO
-    assert record['observedTimeUnixNano'] == str(OBSERVED_NS)
+    record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
+    assert record['timeUnixNano'] == '1788862530123456000'
+    assert record['observedTimeUnixNano'] == '1788862535000000000'
 
 
 def test_build__non_utc_ts__converted_to_utc():
 
     # arrange
-    event = make_event(ts=EVENT_TS.astimezone(timezone(timedelta(hours=3))))
+    moscow = timezone(timedelta(hours=3))
+    records = [('1-0', make_event(ts=EVENT_TS.astimezone(moscow)))]
 
     # act
-    payload = build_sample_payload([('1-0', event)])
+    payload = build_otlp_payload(
+        records=records,
+        service_name='pneumatic-backend',
+        service_version='1.0.0',
+        environment='Production',
+        observed_ns=1788862535000000000,
+    )
 
     # assert
-    assert otlp_first_record(payload)['timeUnixNano'] == EVENT_TS_NANO
+    record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
+    assert record['timeUnixNano'] == '1788862530123456000'
 
 
 def test_build__naive_ts__treated_as_utc():
 
     # arrange
-    event = make_event(ts=EVENT_TS.replace(tzinfo=None))
+    records = [('1-0', make_event(ts=EVENT_TS.replace(tzinfo=None)))]
 
     # act
-    payload = build_sample_payload([('1-0', event)])
+    payload = build_otlp_payload(
+        records=records,
+        service_name='pneumatic-backend',
+        service_version='1.0.0',
+        environment='Production',
+        observed_ns=1788862535000000000,
+    )
 
     # assert
-    assert otlp_first_record(payload)['timeUnixNano'] == EVENT_TS_NANO
+    record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
+    assert record['timeUnixNano'] == '1788862530123456000'
 
 
 @pytest.mark.parametrize(
@@ -216,13 +286,19 @@ def test_build__naive_ts__treated_as_utc():
 def test_build__category__expected_severity(category, number, text):
 
     # arrange
-    event = make_event(category=category)
+    records = [('1-0', make_event(category=category))]
 
     # act
-    payload = build_sample_payload([('1-0', event)])
+    payload = build_otlp_payload(
+        records=records,
+        service_name='pneumatic-backend',
+        service_version='1.0.0',
+        environment='Production',
+        observed_ns=1788862535000000000,
+    )
 
     # assert
-    record = otlp_first_record(payload)
+    record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
     assert record['severityNumber'] == number
     assert record['severityText'] == text
 
@@ -233,54 +309,78 @@ def test_build__unknown_category__info_severity():
         category: it is sent as INFO rather than failing the batch. """
 
     # arrange
-    event = make_event(category='loud')
+    records = [('1-0', make_event(category='loud'))]
 
     # act
-    payload = build_sample_payload([('1-0', event)])
+    payload = build_otlp_payload(
+        records=records,
+        service_name='pneumatic-backend',
+        service_version='1.0.0',
+        environment='Production',
+        observed_ns=1788862535000000000,
+    )
 
     # assert
-    record = otlp_first_record(payload)
+    record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
     assert record['severityNumber'] == 9
     assert record['severityText'] == 'INFO'
 
 
 def test_build__event_with_object__body_holds_type_and_object():
 
+    # arrange
+    records = [('1-0', make_event())]
+
     # act
-    payload = build_sample_payload([('1-0', make_event())])
+    payload = build_otlp_payload(
+        records=records,
+        service_name='pneumatic-backend',
+        service_version='1.0.0',
+        environment='Production',
+        observed_ns=1788862535000000000,
+    )
 
     # assert
-    assert otlp_first_record(payload)['body'] == {
-        'stringValue': 'workflow.run workflow:9001',
-    }
+    record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
+    assert record['body'] == {'stringValue': 'workflow.run workflow:9001'}
 
 
 def test_build__object_without_id__body_holds_object_type():
 
     # arrange
-    event = make_event(object=EventObject(type='workflow'))
+    records = [('1-0', make_event(object=EventObject(type='workflow')))]
 
     # act
-    payload = build_sample_payload([('1-0', event)])
+    payload = build_otlp_payload(
+        records=records,
+        service_name='pneumatic-backend',
+        service_version='1.0.0',
+        environment='Production',
+        observed_ns=1788862535000000000,
+    )
 
     # assert
-    assert otlp_first_record(payload)['body'] == {
-        'stringValue': 'workflow.run workflow',
-    }
+    record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
+    assert record['body'] == {'stringValue': 'workflow.run workflow'}
 
 
 def test_build__event_without_object__body_is_the_type_only():
 
     # arrange
-    event = make_event(object=None)
+    records = [('1-0', make_event(object=None))]
 
     # act
-    payload = build_sample_payload([('1-0', event)])
+    payload = build_otlp_payload(
+        records=records,
+        service_name='pneumatic-backend',
+        service_version='1.0.0',
+        environment='Production',
+        observed_ns=1788862535000000000,
+    )
 
     # assert
-    assert otlp_first_record(payload)['body'] == {
-        'stringValue': 'workflow.run',
-    }
+    record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
+    assert record['body'] == {'stringValue': 'workflow.run'}
 
 
 def test_build__event_body__free_of_pii():
@@ -290,14 +390,20 @@ def test_build__event_body__free_of_pii():
 
     # arrange
     event = make_event(payload={'workflow_name': 'Onboarding: Ann'})
+    records = [('1-0', event)]
 
     # act
-    payload = build_sample_payload([('1-0', event)])
+    payload = build_otlp_payload(
+        records=records,
+        service_name='pneumatic-backend',
+        service_version='1.0.0',
+        environment='Production',
+        observed_ns=1788862535000000000,
+    )
 
     # assert
-    assert otlp_first_record(payload)['body'] == {
-        'stringValue': 'workflow.run workflow:9001',
-    }
+    record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
+    assert record['body'] == {'stringValue': 'workflow.run workflow:9001'}
 
 
 def test_build__stream_id__used_as_the_event_id():
@@ -306,17 +412,26 @@ def test_build__stream_id__used_as_the_event_id():
         is the key of idempotency for a repeated delivery. """
 
     # arrange
-    event = make_event(id='stale-value')
+    records = [('1788830100123-0', make_event(id='stale-value'))]
 
     # act
-    payload = build_sample_payload([('1788830100123-0', event)])
+    payload = build_otlp_payload(
+        records=records,
+        service_name='pneumatic-backend',
+        service_version='1.0.0',
+        environment='Production',
+        observed_ns=1788862535000000000,
+    )
 
     # assert
-    attributes = otlp_attributes(otlp_first_record(payload))
-    assert attributes['event.id'] == {'stringValue': '1788830100123-0'}
+    record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
+    assert record['attributes'][0] == {
+        'key': 'event.id',
+        'value': {'stringValue': '1788830100123-0'},
+    }
 
 
-def test_build__filled_event__expected_attribute_keys():
+def test_build__filled_event__expected_attributes():
 
     """ The account and the category are resource attributes (index
         labels) and are not repeated on the record. """
@@ -326,26 +441,72 @@ def test_build__filled_event__expected_attribute_keys():
         task_id=7002,
         payload={'workflow_event_id': 555, 'template_id': 12},
     )
+    records = [('1-0', event)]
 
     # act
-    payload = build_sample_payload([('1-0', event)])
+    payload = build_otlp_payload(
+        records=records,
+        service_name='pneumatic-backend',
+        service_version='1.0.0',
+        environment='Production',
+        observed_ns=1788862535000000000,
+    )
 
     # assert
-    assert list(otlp_attributes(otlp_first_record(payload))) == [
-        'event.id',
-        'event.type',
-        'actor.type',
-        'actor.id',
-        'object.type',
-        'object.id',
-        'workflow_id',
-        'task_id',
-        'request_id',
-        'payload.workflow_event_id',
-        'payload.template_id',
-        'pii.actor.email',
-        'pii.ip',
-        'pii.user_agent',
+    record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
+    assert record['attributes'] == [
+        {'key': 'event.id', 'value': {'stringValue': '1-0'}},
+        {'key': 'event.type', 'value': {'stringValue': 'workflow.run'}},
+        {'key': 'actor.type', 'value': {'stringValue': 'user'}},
+        {'key': 'actor.id', 'value': {'stringValue': '17'}},
+        {'key': 'object.type', 'value': {'stringValue': 'workflow'}},
+        {'key': 'object.id', 'value': {'stringValue': '9001'}},
+        {'key': 'workflow_id', 'value': {'stringValue': '9001'}},
+        {'key': 'task_id', 'value': {'stringValue': '7002'}},
+        {
+            'key': 'request_id',
+            'value': {'stringValue': '3f9c2c1e6d0b4a0f9e2b7c1d5a6e8f90'},
+        },
+        {'key': 'payload.workflow_event_id', 'value': {'stringValue': '555'}},
+        {'key': 'payload.template_id', 'value': {'stringValue': '12'}},
+        {
+            'key': 'pii.actor.email',
+            'value': {'stringValue': 'ann@example.com'},
+        },
+        {'key': 'pii.ip', 'value': {'stringValue': '203.0.113.7'}},
+        {'key': 'pii.user_agent', 'value': {'stringValue': 'Mozilla/5.0'}},
+    ]
+
+
+def test_build__event_without_actor__no_actor_attributes():
+
+    # arrange
+    records = [('1-0', make_event(actor=None))]
+
+    # act
+    payload = build_otlp_payload(
+        records=records,
+        service_name='pneumatic-backend',
+        service_version='1.0.0',
+        environment='Production',
+        observed_ns=1788862535000000000,
+    )
+
+    # assert
+    record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
+    assert record['attributes'] == [
+        {'key': 'event.id', 'value': {'stringValue': '1-0'}},
+        {'key': 'event.type', 'value': {'stringValue': 'workflow.run'}},
+        {'key': 'object.type', 'value': {'stringValue': 'workflow'}},
+        {'key': 'object.id', 'value': {'stringValue': '9001'}},
+        {'key': 'workflow_id', 'value': {'stringValue': '9001'}},
+        {
+            'key': 'request_id',
+            'value': {'stringValue': '3f9c2c1e6d0b4a0f9e2b7c1d5a6e8f90'},
+        },
+        {'key': 'payload.template_id', 'value': {'stringValue': '12'}},
+        {'key': 'pii.ip', 'value': {'stringValue': '203.0.113.7'}},
+        {'key': 'pii.user_agent', 'value': {'stringValue': 'Mozilla/5.0'}},
     ]
 
 
@@ -356,25 +517,43 @@ def test_build__pii_paths__moved_to_the_pii_namespace():
         payload={'workflow_name': 'Onboarding: Ann', 'template_id': 12},
         pii=(*ACTOR_PII, 'payload.workflow_name'),
     )
+    records = [('1-0', event)]
 
     # act
-    payload = build_sample_payload([('1-0', event)])
+    payload = build_otlp_payload(
+        records=records,
+        service_name='pneumatic-backend',
+        service_version='1.0.0',
+        environment='Production',
+        observed_ns=1788862535000000000,
+    )
 
     # assert
-    attributes = otlp_attributes(otlp_first_record(payload))
-    assert attributes['pii.actor.email'] == {
-        'stringValue': 'ann@example.com',
-    }
-    assert attributes['pii.ip'] == {'stringValue': '203.0.113.7'}
-    assert attributes['pii.user_agent'] == {'stringValue': 'Mozilla/5.0'}
-    assert attributes['pii.payload.workflow_name'] == {
-        'stringValue': 'Onboarding: Ann',
-    }
-    assert 'actor.email' not in attributes
-    assert 'ip' not in attributes
-    assert 'user_agent' not in attributes
-    assert 'payload.workflow_name' not in attributes
-    assert attributes['payload.template_id'] == {'stringValue': '12'}
+    record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
+    assert record['attributes'] == [
+        {'key': 'event.id', 'value': {'stringValue': '1-0'}},
+        {'key': 'event.type', 'value': {'stringValue': 'workflow.run'}},
+        {'key': 'actor.type', 'value': {'stringValue': 'user'}},
+        {'key': 'actor.id', 'value': {'stringValue': '17'}},
+        {'key': 'object.type', 'value': {'stringValue': 'workflow'}},
+        {'key': 'object.id', 'value': {'stringValue': '9001'}},
+        {'key': 'workflow_id', 'value': {'stringValue': '9001'}},
+        {
+            'key': 'request_id',
+            'value': {'stringValue': '3f9c2c1e6d0b4a0f9e2b7c1d5a6e8f90'},
+        },
+        {'key': 'payload.template_id', 'value': {'stringValue': '12'}},
+        {
+            'key': 'pii.actor.email',
+            'value': {'stringValue': 'ann@example.com'},
+        },
+        {'key': 'pii.ip', 'value': {'stringValue': '203.0.113.7'}},
+        {'key': 'pii.user_agent', 'value': {'stringValue': 'Mozilla/5.0'}},
+        {
+            'key': 'pii.payload.workflow_name',
+            'value': {'stringValue': 'Onboarding: Ann'},
+        },
+    ]
 
 
 def test_build__empty_pii_list_in_the_record__registry_wins():
@@ -384,21 +563,39 @@ def test_build__empty_pii_list_in_the_record__registry_wins():
         leave as a plain attribute past the collector rule. """
 
     # arrange
-    event = make_event(pii=())
+    records = [('1-0', make_event(pii=()))]
 
     # act
-    payload = build_sample_payload([('1-0', event)])
+    payload = build_otlp_payload(
+        records=records,
+        service_name='pneumatic-backend',
+        service_version='1.0.0',
+        environment='Production',
+        observed_ns=1788862535000000000,
+    )
 
     # assert
-    attributes = otlp_attributes(otlp_first_record(payload))
-    assert attributes['pii.actor.email'] == {
-        'stringValue': 'ann@example.com',
-    }
-    assert attributes['pii.ip'] == {'stringValue': '203.0.113.7'}
-    assert attributes['pii.user_agent'] == {'stringValue': 'Mozilla/5.0'}
-    assert 'actor.email' not in attributes
-    assert 'ip' not in attributes
-    assert 'user_agent' not in attributes
+    record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
+    assert record['attributes'] == [
+        {'key': 'event.id', 'value': {'stringValue': '1-0'}},
+        {'key': 'event.type', 'value': {'stringValue': 'workflow.run'}},
+        {'key': 'actor.type', 'value': {'stringValue': 'user'}},
+        {'key': 'actor.id', 'value': {'stringValue': '17'}},
+        {'key': 'object.type', 'value': {'stringValue': 'workflow'}},
+        {'key': 'object.id', 'value': {'stringValue': '9001'}},
+        {'key': 'workflow_id', 'value': {'stringValue': '9001'}},
+        {
+            'key': 'request_id',
+            'value': {'stringValue': '3f9c2c1e6d0b4a0f9e2b7c1d5a6e8f90'},
+        },
+        {'key': 'payload.template_id', 'value': {'stringValue': '12'}},
+        {
+            'key': 'pii.actor.email',
+            'value': {'stringValue': 'ann@example.com'},
+        },
+        {'key': 'pii.ip', 'value': {'stringValue': '203.0.113.7'}},
+        {'key': 'pii.user_agent', 'value': {'stringValue': 'Mozilla/5.0'}},
+    ]
 
 
 def test_build__undeclared_event_type__actor_pii_still_moved(
@@ -414,17 +611,39 @@ def test_build__undeclared_event_type__actor_pii_still_moved(
     report_error_mock = mocker.patch(
         'src.logs.events.registry.report_error',
     )
-    event = make_event(type='nope.nope', pii=())
+    records = [('1-0', make_event(type='nope.nope', pii=()))]
 
     # act
-    payload = build_sample_payload([('1-0', event)])
+    payload = build_otlp_payload(
+        records=records,
+        service_name='pneumatic-backend',
+        service_version='1.0.0',
+        environment='Production',
+        observed_ns=1788862535000000000,
+    )
 
     # assert
-    attributes = otlp_attributes(otlp_first_record(payload))
-    assert attributes['pii.actor.email'] == {
-        'stringValue': 'ann@example.com',
-    }
-    assert 'actor.email' not in attributes
+    record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
+    assert record['attributes'] == [
+        {'key': 'event.id', 'value': {'stringValue': '1-0'}},
+        {'key': 'event.type', 'value': {'stringValue': 'nope.nope'}},
+        {'key': 'actor.type', 'value': {'stringValue': 'user'}},
+        {'key': 'actor.id', 'value': {'stringValue': '17'}},
+        {'key': 'object.type', 'value': {'stringValue': 'workflow'}},
+        {'key': 'object.id', 'value': {'stringValue': '9001'}},
+        {'key': 'workflow_id', 'value': {'stringValue': '9001'}},
+        {
+            'key': 'request_id',
+            'value': {'stringValue': '3f9c2c1e6d0b4a0f9e2b7c1d5a6e8f90'},
+        },
+        {'key': 'payload.template_id', 'value': {'stringValue': '12'}},
+        {
+            'key': 'pii.actor.email',
+            'value': {'stringValue': 'ann@example.com'},
+        },
+        {'key': 'pii.ip', 'value': {'stringValue': '203.0.113.7'}},
+        {'key': 'pii.user_agent', 'value': {'stringValue': 'Mozilla/5.0'}},
+    ]
     report_error_mock.assert_called_once_with(
         message='Unknown event type',
         data={'event_type': 'nope.nope'},
@@ -449,30 +668,61 @@ def test_build__empty_values__attributes_dropped():
         ip=None,
         user_agent=None,
     )
+    records = [('1-0', event)]
 
     # act
-    payload = build_sample_payload([('1-0', event)])
+    payload = build_otlp_payload(
+        records=records,
+        service_name='pneumatic-backend',
+        service_version='1.0.0',
+        environment='Production',
+        observed_ns=1788862535000000000,
+    )
 
     # assert
-    assert otlp_attributes(otlp_first_record(payload)) == {
-        'event.id': {'stringValue': '1-0'},
-        'event.type': {'stringValue': 'workflow.run'},
-        'actor.type': {'stringValue': 'system'},
-    }
+    record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
+    assert record['attributes'] == [
+        {'key': 'event.id', 'value': {'stringValue': '1-0'}},
+        {'key': 'event.type', 'value': {'stringValue': 'workflow.run'}},
+        {'key': 'actor.type', 'value': {'stringValue': 'system'}},
+    ]
 
 
 def test_build__empty_payload__no_payload_attributes():
 
     # arrange
-    event = make_event(payload={})
+    records = [('1-0', make_event(payload={}))]
 
     # act
-    payload = build_sample_payload([('1-0', event)])
+    payload = build_otlp_payload(
+        records=records,
+        service_name='pneumatic-backend',
+        service_version='1.0.0',
+        environment='Production',
+        observed_ns=1788862535000000000,
+    )
 
     # assert
-    attributes = otlp_attributes(otlp_first_record(payload))
-    assert 'payload.template_id' not in attributes
-    assert attributes['event.type'] == {'stringValue': 'workflow.run'}
+    record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
+    assert record['attributes'] == [
+        {'key': 'event.id', 'value': {'stringValue': '1-0'}},
+        {'key': 'event.type', 'value': {'stringValue': 'workflow.run'}},
+        {'key': 'actor.type', 'value': {'stringValue': 'user'}},
+        {'key': 'actor.id', 'value': {'stringValue': '17'}},
+        {'key': 'object.type', 'value': {'stringValue': 'workflow'}},
+        {'key': 'object.id', 'value': {'stringValue': '9001'}},
+        {'key': 'workflow_id', 'value': {'stringValue': '9001'}},
+        {
+            'key': 'request_id',
+            'value': {'stringValue': '3f9c2c1e6d0b4a0f9e2b7c1d5a6e8f90'},
+        },
+        {
+            'key': 'pii.actor.email',
+            'value': {'stringValue': 'ann@example.com'},
+        },
+        {'key': 'pii.ip', 'value': {'stringValue': '203.0.113.7'}},
+        {'key': 'pii.user_agent', 'value': {'stringValue': 'Mozilla/5.0'}},
+    ]
 
 
 def test_build__payload_that_is_a_list__kept_under_one_key():
@@ -482,20 +732,32 @@ def test_build__payload_that_is_a_list__kept_under_one_key():
         batch. """
 
     # arrange
-    event = make_event(payload=[1, 'two'])
+    records = [('1-0', make_event(payload=[1, 'two']))]
 
     # act
-    payload = build_sample_payload([('1-0', event)])
+    payload = build_otlp_payload(
+        records=records,
+        service_name='pneumatic-backend',
+        service_version='1.0.0',
+        environment='Production',
+        observed_ns=1788862535000000000,
+    )
 
     # assert
-    attributes = otlp_attributes(otlp_first_record(payload))
-    assert attributes['payload.value'] == {'stringValue': '[1, "two"]'}
+    record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
+    assert record['attributes'][8] == {
+        'key': 'payload.value',
+        'value': {'stringValue': '[1, "two"]'},
+    }
 
 
 def test_payload_values__string_payload__kept_under_one_key():
 
+    # arrange
+    payload = 'plain text'
+
     # act
-    values = _payload_values('plain text')
+    values = _payload_values(payload=payload)
 
     # assert
     assert values == {'payload.value': 'plain text'}
@@ -503,8 +765,11 @@ def test_payload_values__string_payload__kept_under_one_key():
 
 def test_payload_values__empty_list__no_values():
 
+    # arrange
+    payload = []
+
     # act
-    values = _payload_values([])
+    values = _payload_values(payload=payload)
 
     # assert
     assert values == {}
@@ -516,33 +781,62 @@ def test_build__ids__sent_as_strings():
         gives Loki labels of different types. """
 
     # arrange
-    event = make_event(task_id=7002)
+    records = [('1-0', make_event(task_id=7002))]
 
     # act
-    payload = build_sample_payload([('1-0', event)])
+    payload = build_otlp_payload(
+        records=records,
+        service_name='pneumatic-backend',
+        service_version='1.0.0',
+        environment='Production',
+        observed_ns=1788862535000000000,
+    )
 
     # assert
-    attributes = otlp_attributes(otlp_first_record(payload))
-    assert attributes['actor.id'] == {'stringValue': '17'}
-    assert attributes['object.id'] == {'stringValue': '9001'}
-    assert attributes['workflow_id'] == {'stringValue': '9001'}
-    assert attributes['task_id'] == {'stringValue': '7002'}
-    assert otlp_resource_attributes(payload['resourceLogs'][0])[
-        'account_id'
-    ] == {'stringValue': '42'}
+    resource_log = payload['resourceLogs'][0]
+    record = resource_log['scopeLogs'][0]['logRecords'][0]
+    assert record['attributes'][3] == {
+        'key': 'actor.id',
+        'value': {'stringValue': '17'},
+    }
+    assert record['attributes'][5] == {
+        'key': 'object.id',
+        'value': {'stringValue': '9001'},
+    }
+    assert record['attributes'][6] == {
+        'key': 'workflow_id',
+        'value': {'stringValue': '9001'},
+    }
+    assert record['attributes'][7] == {
+        'key': 'task_id',
+        'value': {'stringValue': '7002'},
+    }
+    assert resource_log['resource']['attributes'][3] == {
+        'key': 'account_id',
+        'value': {'stringValue': '42'},
+    }
 
 
 def test_build__bool_in_the_payload__bool_value():
 
     # arrange
-    event = make_event(payload={'with_attachments': True})
+    records = [('1-0', make_event(payload={'with_attachments': True}))]
 
     # act
-    payload = build_sample_payload([('1-0', event)])
+    payload = build_otlp_payload(
+        records=records,
+        service_name='pneumatic-backend',
+        service_version='1.0.0',
+        environment='Production',
+        observed_ns=1788862535000000000,
+    )
 
     # assert
-    attributes = otlp_attributes(otlp_first_record(payload))
-    assert attributes['payload.with_attachments'] == {'boolValue': True}
+    record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
+    assert record['attributes'][8] == {
+        'key': 'payload.with_attachments',
+        'value': {'boolValue': True},
+    }
 
 
 def test_build__nested_payload__json_string():
@@ -551,16 +845,27 @@ def test_build__nested_payload__json_string():
     event = make_event(
         payload={'fields': {'name': 'Ann'}, 'group_ids': [1, 2]},
     )
+    records = [('1-0', event)]
 
     # act
-    payload = build_sample_payload([('1-0', event)])
+    payload = build_otlp_payload(
+        records=records,
+        service_name='pneumatic-backend',
+        service_version='1.0.0',
+        environment='Production',
+        observed_ns=1788862535000000000,
+    )
 
     # assert
-    attributes = otlp_attributes(otlp_first_record(payload))
-    assert attributes['payload.fields'] == {
-        'stringValue': '{"name": "Ann"}',
+    record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
+    assert record['attributes'][8] == {
+        'key': 'payload.fields',
+        'value': {'stringValue': '{"name": "Ann"}'},
     }
-    assert attributes['payload.group_ids'] == {'stringValue': '[1, 2]'}
+    assert record['attributes'][9] == {
+        'key': 'payload.group_ids',
+        'value': {'stringValue': '[1, 2]'},
+    }
 
 
 def test_build__time_string_in_the_payload__kept_as_is():
@@ -570,30 +875,45 @@ def test_build__time_string_in_the_payload__kept_as_is():
 
     # arrange
     event = make_event(payload={'created': '2026-09-08T10:15:30.123Z'})
+    records = [('1-0', event)]
 
     # act
-    payload = build_sample_payload([('1-0', event)])
+    payload = build_otlp_payload(
+        records=records,
+        service_name='pneumatic-backend',
+        service_version='1.0.0',
+        environment='Production',
+        observed_ns=1788862535000000000,
+    )
 
     # assert
-    record = otlp_first_record(payload)
-    assert otlp_attributes(record)['payload.created'] == {
-        'stringValue': '2026-09-08T10:15:30.123Z',
+    record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
+    assert record['attributes'][8] == {
+        'key': 'payload.created',
+        'value': {'stringValue': '2026-09-08T10:15:30.123Z'},
     }
-    assert record['timeUnixNano'] == EVENT_TS_NANO
+    assert record['timeUnixNano'] == '1788862530123456000'
 
 
 def test_build__datetime_in_the_payload__rfc3339_string():
 
     # arrange
-    event = make_event(payload={'created': EVENT_TS})
+    records = [('1-0', make_event(payload={'created': EVENT_TS}))]
 
     # act
-    payload = build_sample_payload([('1-0', event)])
+    payload = build_otlp_payload(
+        records=records,
+        service_name='pneumatic-backend',
+        service_version='1.0.0',
+        environment='Production',
+        observed_ns=1788862535000000000,
+    )
 
     # assert
-    attributes = otlp_attributes(otlp_first_record(payload))
-    assert attributes['payload.created'] == {
-        'stringValue': '2026-09-08T10:15:30.123456Z',
+    record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
+    assert record['attributes'][8] == {
+        'key': 'payload.created',
+        'value': {'stringValue': '2026-09-08T10:15:30.123456Z'},
     }
 
 
@@ -608,23 +928,35 @@ def test_build__too_many_payload_keys__collapsed_into_extra():
     event = make_event(
         payload={f'key_{index:02d}': index for index in range(80)},
     )
+    records = [('1-0', event)]
+    extra = {f'key_{index:02d}': index for index in range(48, 80)}
 
     # act
-    payload = build_sample_payload([('1-0', event)])
+    payload = build_otlp_payload(
+        records=records,
+        service_name='pneumatic-backend',
+        service_version='1.0.0',
+        environment='Production',
+        observed_ns=1788862535000000000,
+    )
 
     # assert
-    attributes = otlp_attributes(otlp_first_record(payload))
-    extra = json.loads(attributes['payload.extra']['stringValue'])
+    record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
+    attributes = record['attributes']
     assert len(attributes) == MAX_ATTRIBUTES
-    assert attributes['payload.key_00'] == {'stringValue': '0'}
-    assert attributes['payload.key_47'] == {'stringValue': '47'}
-    assert 'payload.key_48' not in attributes
-    assert 'payload.key_79' not in attributes
-    assert len(extra) == 32
-    assert extra['key_48'] == 48
-    assert extra['key_79'] == 79
-    assert attributes['pii.actor.email'] == {
-        'stringValue': 'ann@example.com',
+    assert attributes[8] == {
+        'key': 'payload.key_00',
+        'value': {'stringValue': '0'},
+    }
+    assert attributes[55] == {
+        'key': 'payload.key_47',
+        'value': {'stringValue': '47'},
+    }
+    assert attributes[56]['key'] == 'payload.extra'
+    assert json.loads(attributes[56]['value']['stringValue']) == extra
+    assert attributes[57] == {
+        'key': 'pii.actor.email',
+        'value': {'stringValue': 'ann@example.com'},
     }
 
 
@@ -637,26 +969,38 @@ def test_build__too_many_payload_keys__pii_kept_outside_extra():
         payload=values,
         pii=(*ACTOR_PII, 'payload.workflow_name'),
     )
+    records = [('1-0', event)]
+    extra = {f'key_{index:02d}': index for index in range(47, 80)}
 
     # act
-    payload = build_sample_payload([('1-0', event)])
+    payload = build_otlp_payload(
+        records=records,
+        service_name='pneumatic-backend',
+        service_version='1.0.0',
+        environment='Production',
+        observed_ns=1788862535000000000,
+    )
 
     # assert
-    attributes = otlp_attributes(otlp_first_record(payload))
-    extra = json.loads(attributes['payload.extra']['stringValue'])
-    assert attributes['pii.payload.workflow_name'] == {
-        'stringValue': 'Onboarding: Ann',
+    record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
+    attributes = record['attributes']
+    assert len(attributes) == MAX_ATTRIBUTES
+    assert attributes[55]['key'] == 'payload.extra'
+    assert json.loads(attributes[55]['value']['stringValue']) == extra
+    assert attributes[59] == {
+        'key': 'pii.payload.workflow_name',
+        'value': {'stringValue': 'Onboarding: Ann'},
     }
-    assert 'workflow_name' not in extra
 
 
 def test_fit_limit__within_the_limit__payload_untouched():
 
     # arrange
     payload = {'payload.a': 1, 'payload.b': 2}
+    reserved = MAX_ATTRIBUTES - 2
 
     # act
-    kept, extra = _fit_limit(reserved=MAX_ATTRIBUTES - 2, payload=payload)
+    kept, extra = _fit_limit(reserved=reserved, payload=payload)
 
     # assert
     assert kept == {'payload.a': 1, 'payload.b': 2}
@@ -670,9 +1014,10 @@ def test_fit_limit__reserved_over_the_limit__whole_payload_in_extra():
 
     # arrange
     payload = {'payload.a': 1, 'payload.b': 2}
+    reserved = MAX_ATTRIBUTES
 
     # act
-    kept, extra = _fit_limit(reserved=MAX_ATTRIBUTES, payload=payload)
+    kept, extra = _fit_limit(reserved=reserved, payload=payload)
 
     # assert
     assert kept == {}
@@ -686,9 +1031,10 @@ def test_fit_limit__one_slot_left__extra_takes_it():
 
     # arrange
     payload = {'payload.a': 1, 'payload.b': 2}
+    reserved = MAX_ATTRIBUTES - 1
 
     # act
-    kept, extra = _fit_limit(reserved=MAX_ATTRIBUTES - 1, payload=payload)
+    kept, extra = _fit_limit(reserved=reserved, payload=payload)
 
     # assert
     assert kept == {}
@@ -707,31 +1053,45 @@ def test_build__nested_and_numeric_values__otlp_scalars():
     ]
 
     # act
-    payload = build_sample_payload(records)
+    payload = build_otlp_payload(
+        records=records,
+        service_name='pneumatic-backend',
+        service_version='1.0.0',
+        environment='Production',
+        observed_ns=1788862535000000000,
+    )
 
     # assert
     second = payload['resourceLogs'][1]['scopeLogs'][0]['logRecords'][0]
-    assert second['timeUnixNano'] == EVENT_TS_NANO
-    assert otlp_attributes(second) == {
-        'event.id': {'stringValue': '2-0'},
-        'event.type': {'stringValue': 'workflow.run'},
-        'actor.type': {'stringValue': 'user'},
-        'actor.id': {'stringValue': '17'},
-        'object.type': {'stringValue': 'workflow'},
-        'object.id': {'stringValue': '9001'},
-        'workflow_id': {'stringValue': '9001'},
-        'request_id': {'stringValue': '3f9c2c1e6d0b4a0f9e2b7c1d5a6e8f90'},
-        'payload.nested': {'stringValue': '{"a": [1, 2]}'},
-        'pii.actor.email': {'stringValue': 'ann@example.com'},
-        'pii.ip': {'stringValue': '203.0.113.7'},
-        'pii.user_agent': {'stringValue': 'Mozilla/5.0'},
-    }
+    assert second['timeUnixNano'] == '1788862530123456000'
+    assert second['attributes'] == [
+        {'key': 'event.id', 'value': {'stringValue': '2-0'}},
+        {'key': 'event.type', 'value': {'stringValue': 'workflow.run'}},
+        {'key': 'actor.type', 'value': {'stringValue': 'user'}},
+        {'key': 'actor.id', 'value': {'stringValue': '17'}},
+        {'key': 'object.type', 'value': {'stringValue': 'workflow'}},
+        {'key': 'object.id', 'value': {'stringValue': '9001'}},
+        {'key': 'workflow_id', 'value': {'stringValue': '9001'}},
+        {
+            'key': 'request_id',
+            'value': {'stringValue': '3f9c2c1e6d0b4a0f9e2b7c1d5a6e8f90'},
+        },
+        {'key': 'payload.nested', 'value': {'stringValue': '{"a": [1, 2]}'}},
+        {
+            'key': 'pii.actor.email',
+            'value': {'stringValue': 'ann@example.com'},
+        },
+        {'key': 'pii.ip', 'value': {'stringValue': '203.0.113.7'}},
+        {'key': 'pii.user_agent', 'value': {'stringValue': 'Mozilla/5.0'}},
+    ]
     assert json.loads(json.dumps(payload)) == payload
 
 
 def test_build__sample_events__matches_the_collector_fixture():
 
-    """ The fixture is the body a live collector accepted (P3-T1). """
+    """ The fixture is the body a live collector accepted (P3-T1),
+        read at its own moment: the moment of reading is the one
+        field the builder takes from the caller. """
 
     # arrange
     fixture_path = os.path.join(
@@ -739,6 +1099,10 @@ def test_build__sample_events__matches_the_collector_fixture():
     )
     with open(fixture_path, encoding='utf-8') as fixture:
         sample = json.load(fixture)
+    first_sample = sample['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
+    first_sample['observedTimeUnixNano'] = '1788862535000000000'
+    second_sample = sample['resourceLogs'][1]['scopeLogs'][0]['logRecords'][0]
+    second_sample['observedTimeUnixNano'] = '1788862535000000000'
     first = make_event(
         type='workflow.run',
         category=EventCategory.AUDIT,
@@ -776,12 +1140,16 @@ def test_build__sample_events__matches_the_collector_fixture():
         user_agent='Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
         request_id='b41d7e0a9c3f4d2eb8a15c60f7d92311',
     )
+    records = [('1788830100123-0', first), ('1788830110654-0', second)]
 
     # act
-    payload = build_sample_payload([
-        ('1788830100123-0', first),
-        ('1788830110654-0', second),
-    ])
+    payload = build_otlp_payload(
+        records=records,
+        service_name='pneumatic-backend',
+        service_version='1.0.0',
+        environment='Production',
+        observed_ns=1788862535000000000,
+    )
 
     # assert
-    assert scrub_times(payload) == scrub_times(sample)
+    assert payload == sample

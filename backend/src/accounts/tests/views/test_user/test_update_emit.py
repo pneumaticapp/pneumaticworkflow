@@ -275,7 +275,7 @@ def test_put__escalate_privileges__no_event(
     send_user_updated_mock.assert_not_called()
 
 
-def test_put__blank_photo_over_null__not_emit(
+def test_put__blank_photo_over_null__no_event(
     mocker,
     identify_mock,
     api_client,
@@ -289,7 +289,7 @@ def test_put__blank_photo_over_null__not_emit(
     account = create_test_account()
     create_test_owner(account=account)
     user = create_test_not_admin(account=account, photo=None)
-    mocker.patch(
+    send_user_updated_mock = mocker.patch(
         'src.accounts.services.user.send_user_updated_notification.delay',
     )
     api_client.token_authenticate(user)
@@ -308,3 +308,9 @@ def test_put__blank_photo_over_null__not_emit(
     # assert
     assert response.status_code == 200
     assert fake_stream.events == []
+    identify_mock.assert_called_once_with(user)
+    send_user_updated_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        user_data=mocker.ANY,
+    )

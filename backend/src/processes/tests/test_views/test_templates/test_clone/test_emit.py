@@ -129,3 +129,38 @@ def test_clone__template__event_keeps_request_context(
     assert event.user_agent == 'Chrome/141'
     assert event.request_id == 'audit-template-5'
     create_integrations_mock.assert_called_once_with(template=clone)
+
+
+def test_clone__template_of_another_account__no_event(
+    mocker,
+    api_client,
+    fake_stream,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    template = create_test_template(
+        user=owner,
+        is_active=True,
+        tasks_count=1,
+    )
+    another_account = create_test_account(name='Another Company')
+    another_owner = create_test_owner(
+        account=another_account,
+        email='another_owner@pneumatic.app',
+    )
+    api_client.token_authenticate(another_owner)
+    create_integrations_mock = mocker.patch(
+        'src.processes.services.templates.integrations.'
+        'TemplateIntegrationsService.create_integrations_for_template',
+    )
+
+    # act
+    response = api_client.post(f'/templates/{template.id}/clone')
+
+    # assert
+    assert response.status_code == 404
+    assert Template.objects.count() == 1
+    assert fake_stream.events == []
+    create_integrations_mock.assert_not_called()

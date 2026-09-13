@@ -105,13 +105,12 @@ class PaymentViewSet(
         except StripeServiceException as ex:
             raise_validation_error(message=ex.message)
         else:
+            if payment_link:
+                return self.response_ok({'payment_link': payment_link})
             AuditEventService.purchase_made(
                 request=request,
                 products=slz.validated_data['products'],
-                checkout_required=bool(payment_link),
             )
-            if payment_link:
-                return self.response_ok({'payment_link': payment_link})
             return self.response_ok()
 
     @action(methods=('GET',), detail=False)

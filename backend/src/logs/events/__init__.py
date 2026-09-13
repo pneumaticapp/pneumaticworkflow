@@ -1,10 +1,10 @@
 from src.logs.events.emitter import emit
-from src.logs.events.services import AuditEventService
 from src.logs.events.schema import (
     Actor,
     Event,
     EventObject,
 )
+from src.logs.events.services import AuditEventService
 
 __all__ = [
     'Actor',

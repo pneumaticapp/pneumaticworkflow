@@ -293,17 +293,17 @@ class BaseSSOService(SignUpMixin, CacheMixin, EncryptionMixin, ABC):
             user_ip=user_ip,
         )
         self.save_tokens_for_user(user)
-        if is_returning:
-            AuditEventService.user_logged_in(
-                user=user,
-                source=self.source,
-            )
         AnalyticService.users_logged_in(
             user=user,
             is_superuser=False,
             auth_type=AuthTokenType.USER,
             source=self.source,
         )
+        if is_returning:
+            AuditEventService.user_logged_in(
+                user=user,
+                source=self.source,
+            )
         return user, token
 
     def _activate_invited_user(

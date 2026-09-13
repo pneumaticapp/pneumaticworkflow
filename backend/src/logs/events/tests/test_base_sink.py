@@ -4,16 +4,17 @@ from src.logs.events.exceptions import (
     SinkPermanentError,
     SinkTemporaryError,
 )
-from src.logs.events.tests.fakes import FakeSink, make_event
+from src.logs.events.tests.fixtures import FakeSink, make_event
 
 
 def test_send__no_records__nothing_sent():
 
     # arrange
     sink = FakeSink()
+    records = []
 
     # act
-    sink.send([])
+    sink.send(records=records)
 
     # assert
     assert sink.handled == []
@@ -26,7 +27,7 @@ def test_send__records_delivered__no_error():
     records = [('1-0', make_event())]
 
     # act
-    sink.send(records)
+    sink.send(records=records)
 
     # assert
     assert sink.handled == []
@@ -41,7 +42,7 @@ def test_send__transport_error__classified_by_the_subclass():
 
     # act
     with pytest.raises(SinkTemporaryError) as ex:
-        sink.send(records)
+        sink.send(records=records)
 
     # assert
     assert str(ex.value) == 'connection reset'
@@ -60,7 +61,7 @@ def test_send__handler_returns__temporary_error_raised():
 
     # act
     with pytest.raises(SinkTemporaryError) as ex:
-        sink.send(records)
+        sink.send(records=records)
 
     # assert
     assert str(ex.value) == (
@@ -79,7 +80,7 @@ def test_send__handler_returns__original_error_kept_as_cause():
 
     # act
     with pytest.raises(SinkTemporaryError) as ex:
-        sink.send(records)
+        sink.send(records=records)
 
     # assert
     assert ex.value.__cause__ is error
@@ -99,7 +100,7 @@ def test_send__permanent_error_from_the_handler__not_wrapped():
 
     # act
     with pytest.raises(SinkPermanentError) as ex:
-        sink.send(records)
+        sink.send(records=records)
 
     # assert
     assert str(ex.value) == 'rejected for good'

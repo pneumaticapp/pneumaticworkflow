@@ -34,6 +34,25 @@ class LogoutReason:
     IDENTITY_PROVIDER = 'identity_provider'
 
 
+class LoginFailedReason:
+
+    """ Why a sign in was refused, the reason of a user.login_failed
+        event. One value per refusing branch, so that an alert can
+        tell a brute force burst from a deactivated account. """
+
+    BAD_CREDENTIALS = 'bad_credentials'
+    VERIFICATION_EXPIRED = 'verification_expired'
+    SIGNUP_DISABLED = 'signup_disabled'
+    SSO_REQUIRED = 'sso_required'
+
+    LITERALS = Literal[
+        BAD_CREDENTIALS,
+        VERIFICATION_EXPIRED,
+        SIGNUP_DISABLED,
+        SSO_REQUIRED,
+    ]
+
+
 class ActorType:
 
     USER = 'user'
@@ -235,7 +254,7 @@ AUTH_TYPE_ACTOR_TYPES = {
 }
 
 
-def actor_type_from_auth(auth_type: Optional[str]) -> str:
+def actor_type_from_auth(auth_type: Optional[str]) -> ActorType.LITERALS:
 
     """ Convert AuthTokenType value to the event actor type.
         An unknown value is the system: the lookup default answers

@@ -11,7 +11,7 @@ from src.logs.events import reporting
 from src.logs.events import stream as stream_module
 from src.logs.events.emitter import _write, reset_circuit
 from src.logs.events.sinks import otlp as otlp_sink
-from src.logs.events.tests.fakes import FakeEventStream
+from src.logs.events.tests.fixtures import FakeEventStream
 
 
 @pytest.fixture(autouse=True)
@@ -79,7 +79,11 @@ def scheduled_stream(mocker, events_enabled):
 
     """ In memory stream instead of Redis, with the pipeline on and
         the writes still deferred to the commit: for the tests of the
-        deferral itself. """
+        deferral itself.
+
+        The patch of get_stream is not asserted: it is the environment
+        of every test that takes the fixture, and what an action wrote
+        is read back from the stream itself. """
 
     stream = FakeEventStream()
     mocker.patch(

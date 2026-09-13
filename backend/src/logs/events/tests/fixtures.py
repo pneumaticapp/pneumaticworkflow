@@ -5,10 +5,6 @@ from datetime import datetime, timezone
 from time import monotonic
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
-from django.conf import settings
-from django.core.serializers.json import DjangoJSONEncoder
-from django.forms import MultiWidget
-
 from src.authentication.enums import AuthTokenType
 from src.logs.events.enums import (
     ActorType,
@@ -19,39 +15,23 @@ from src.logs.events.exceptions import SinkTemporaryError
 from src.logs.events.mixins import EventEmitMixin
 from src.logs.events.schema import Actor, Event, EventObject
 from src.logs.events.sinks.base import BaseSink
-from src.logs.events.sinks.otlp import (
-    DEFAULT_TIMEOUT,
-    JSON_HEADERS,
-    LOGS_PATH,
-)
-from src.logs.events.sinks.otlp_payload import build_otlp_payload
 from src.logs.events.stream import (
     AUTOCLAIM_START,
     DEAD_MAXLEN,
     DEAD_SUFFIX,
     EventStream,
+    ParsedEntries,
 )
 from src.processes.enums import WorkflowEventType
 
 Entries = List[Tuple[str, Event]]
 
 EVENT_TS = datetime(2026, 9, 8, 10, 15, 30, 123456, tzinfo=timezone.utc)
-EVENT_TS_NANO = '1788862530123456000'
-OBSERVED_NS = 1788862535000000000
 SERVICE_NAME = 'pneumatic-backend'
-SERVICE_VERSION = '1.0.0'
-ENVIRONMENT = 'Production'
 SMOKE_ACCOUNT_ID = 7
-TIME_KEYS = ('timeUnixNano', 'observedTimeUnixNano')
-FILE_SERVICE_NAME = 'pneumatic-file-service'
-FILE_SERVICE_FILE_ID = '0f8fad5b-d9cb-469f-a165-70867728950e'
 UNIT_STREAM_URL = 'redis://localhost:6379/4'
 UNIT_STREAM_KEY = 'pneumatic:events-unit'
-UNIT_STREAM_DEAD_KEY = 'pneumatic:events-unit:dead'
 FIXTURES_DIR = os.path.join(os.path.dirname(__file__), 'fixtures')
-FILE_SERVICE_RECORD_PATH = os.path.join(
-    FIXTURES_DIR, 'file_service_record.json',
-)
 
 
 @dataclass
@@ -94,9 +74,6 @@ class FakeEventStream:
     def dead_key(self) -> str:
         return f'{self.key}{DEAD_SUFFIX}'
 
-    def close(self) -> None:
-        pass
-
     def xadd(self, event: Event) -> str:
         self._sequence += 1
         entry_id = f'{self._sequence}-0'
@@ -109,7 +86,7 @@ class FakeEventStream:
     def ensure_group(self) -> None:
         self.group_created = True
 
-    def read_pending(self, consumer: str, count: int) -> Entries:
+    def read_pending(self, consumer: str, count: int) -> ParsedEntries:
         now = monotonic()
         entries = []
         for entry in self._pending_of(consumer)[:count]:
@@ -117,14 +94,14 @@ class FakeEventStream:
             # Reading own pending list resets idle, as XREADGROUP does.
             entry.delivered_at = now
             entries.append((entry.entry_id, entry.event))
-        return entries
+        return ParsedEntries(events=entries)
 
-    def read_new(self, consumer: str, count: int) -> Entries:
+    def read_new(self, consumer: str, count: int) -> ParsedEntries:
         entries = self.events[self._delivered:self._delivered + count]
         self._delivered += len(entries)
         for entry_id, event in entries:
             self.pending[entry_id] = PendingEntry(entry_id, event, consumer)
-        return list(entries)
+        return ParsedEntries(events=list(entries))
 
     def autoclaim(
         self,
@@ -132,7 +109,7 @@ class FakeEventStream:
         min_idle_ms: int,
         count: int,
         start_id: str = AUTOCLAIM_START,
-    ) -> Entries:
+    ) -> ParsedEntries:
         now = monotonic()
         claimed = []
         for entry in self._sorted_pending():
@@ -143,7 +120,7 @@ class FakeEventStream:
             entry.consumer = consumer
             entry.delivered_at = now
             claimed.append((entry.entry_id, entry.event))
-        return claimed
+        return ParsedEntries(events=claimed)
 
     def ack(self, ids: Iterable[str]) -> int:
         acked = 0
@@ -278,17 +255,6 @@ def make_unit_stream() -> EventStream:
     )
 
 
-def stream_fields(event: Event) -> Dict[str, str]:
-
-    """ The fields of a stream record exactly as xadd writes them,
-        for the answers of a mocked Redis client. """
-
-    return {
-        'type': event.type,
-        'data': json.dumps(event.to_dict(), cls=DjangoJSONEncoder),
-    }
-
-
 def event_name_values() -> Set[str]:
 
     """ Every constant of EventName. """
@@ -368,85 +334,6 @@ def expected_workflow_events() -> Tuple[Tuple[int, str, str], ...]:
     )
 
 
-def build_sink_body(records: Entries, observed_ns: int) -> bytes:
-
-    """ The bytes OTLPSink posts for the records: the payload of the
-        settings the sink reads, encoded the way _send does. """
-
-    payload = build_otlp_payload(
-        records,
-        service_name=settings.LOGS_SERVICE_NAME,
-        service_version=settings.LOGS_SERVICE_VERSION,
-        environment=settings.CONFIGURATION_CURRENT,
-        observed_ns=observed_ns,
-    )
-    return json.dumps(payload, cls=DjangoJSONEncoder).encode()
-
-
-def build_sample_payload(records: Entries) -> Dict[str, Any]:
-
-    """ build_otlp_payload with the sample service and moment. """
-
-    return build_otlp_payload(
-        records,
-        service_name=SERVICE_NAME,
-        service_version=SERVICE_VERSION,
-        environment=ENVIRONMENT,
-        observed_ns=OBSERVED_NS,
-    )
-
-
-def dead_letter_pipeline(client_mock, acked: int):
-
-    """ The pipeline EventStream.dead_letter runs on the client: the
-        xack answer is the last item of execute(). Returns the
-        pipeline mock for the asserts. """
-
-    pipe = client_mock.pipeline.return_value
-    pipe.execute.return_value = [acked]
-    return pipe
-
-
-def otlp_records(payload: Dict[str, Any]) -> List[Dict[str, Any]]:
-
-    """ Every log record of the request, in the order of the body. """
-
-    records = []
-    for resource_log in payload['resourceLogs']:
-        for scope_log in resource_log['scopeLogs']:
-            records.extend(scope_log['logRecords'])
-    return records
-
-
-def otlp_first_record(payload: Dict[str, Any]) -> Dict[str, Any]:
-    return otlp_records(payload)[0]
-
-
-def otlp_attributes(node: Dict[str, Any]) -> Dict[str, Any]:
-
-    """ Attribute list of a record or of a resource as a dict. """
-
-    return {item['key']: item['value'] for item in node['attributes']}
-
-
-def otlp_resource_attributes(resource_log: Dict[str, Any]) -> Dict[str, Any]:
-    return otlp_attributes(resource_log['resource'])
-
-
-def scrub_times(node: Any) -> Any:
-
-    """ Times differ from run to run, the shape does not. """
-
-    if isinstance(node, dict):
-        return {
-            key: ('<ns>' if key in TIME_KEYS else scrub_times(value))
-            for key, value in node.items()
-        }
-    if isinstance(node, list):
-        return [scrub_times(item) for item in node]
-    return node
-
-
 class FakeSink(BaseSink):
 
     """ Concrete BaseSink for the tests of its template method.
@@ -455,8 +342,6 @@ class FakeSink(BaseSink):
         answers it with, a temporary error of the same text unless
         given. classify=False makes _handle_error return instead of
         raising, which is the contract every sink has to keep. """
-
-    name = 'fake'
 
     def __init__(
         self,
@@ -481,23 +366,6 @@ class FakeSink(BaseSink):
             raise SinkTemporaryError(str(exc))
 
 
-SINK_ENDPOINT = 'http://otel-collector:4318'
-SINK_URL = SINK_ENDPOINT + LOGS_PATH
-
-
-def assert_posted(post_mock, records: Entries, observed_ns: int = OBSERVED_NS):
-
-    """ The one POST OTLPSink makes for a batch, to the sample
-        endpoint of the sink tests. """
-
-    post_mock.assert_called_once_with(
-        SINK_URL,
-        data=build_sink_body(records, observed_ns),
-        headers=JSON_HEADERS,
-        timeout=DEFAULT_TIMEOUT,
-    )
-
-
 class FakeEmittingService(EventEmitMixin):
 
     """ Smallest service the mixin serves: a user and an auth type,
@@ -506,32 +374,3 @@ class FakeEmittingService(EventEmitMixin):
     def __init__(self, user=None, auth_type=AuthTokenType.USER):
         self.user = user
         self.auth_type = auth_type
-
-
-def admin_form_data(page) -> Dict[str, Any]:
-
-    """ What a browser posts back from an admin change page without
-        touching a field: every initial value in the format of its
-        widget, the hidden initial inputs of date_joined and the
-        management forms of the inlines. """
-
-    form = page.context['adminform'].form
-    data: Dict[str, Any] = {}
-    for name, form_field in form.fields.items():
-        value = form.initial.get(name)
-        if isinstance(form_field.widget, MultiWidget):
-            parts = form_field.widget.decompress(value)
-            data[f'{name}_0'] = parts[0] or ''
-            data[f'{name}_1'] = parts[1] or ''
-        elif value is True:
-            data[name] = 'on'
-        elif value is not None and value is not False:
-            data[name] = value
-
-    data['initial-date_joined_0'] = data['date_joined_0']
-    data['initial-date_joined_1'] = data['date_joined_1']
-    for inline in page.context['inline_admin_formsets']:
-        management_form = inline.formset.management_form
-        for name, value in management_form.initial.items():
-            data[management_form.add_prefix(name)] = value
-    return data

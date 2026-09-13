@@ -10,7 +10,7 @@ _last_reports: Dict[str, float] = {}
 def report_error(
     message: str,
     data: Dict[str, Any],
-    level: str = SentryLogLevel.ERROR,
+    level: SentryLogLevel.LITERALS = SentryLogLevel.ERROR,
     key: Optional[str] = None,
 ) -> None:
 

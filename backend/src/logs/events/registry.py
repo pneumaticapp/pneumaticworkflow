@@ -13,7 +13,7 @@ from src.logs.events.reporting import report_error
 from src.logs.events.schema import is_valid_pii_path
 from src.utils.logging import SentryLogLevel
 
-EVENT_NAME_PATTERN = re.compile(r'^[a-z_]+\.[a-z_]+$')
+EVENT_NAME_PATTERN = re.compile(r'^[a-z_]+\.[a-z_]+\Z')
 
 # Personal data sets of the declaration table below. A path names a
 # field of the record: "ip", "actor.email", "payload.<key>".
@@ -31,16 +31,13 @@ TARGET_PII = (*ACTOR_PII, 'payload.target_email')
 USER_UPDATE_PII = (*TARGET_PII, 'payload.previous_email')
 FILE_PII = (*ACTOR_PII, 'payload.filename')
 URL_PII = (*ACTOR_PII, 'payload.url')
-# The reason of a login as is free text typed by a staff member: it
-# names people and tickets as often as not.
-LOGIN_AS_PII = (*TARGET_PII, 'payload.reason')
 
 
 @dataclass(frozen=True)
 class EventType:
 
     name: str
-    category: str
+    category: EventCategory.LITERALS
     pii: Tuple[str, ...] = ()
     description: str = ''
 
@@ -134,7 +131,7 @@ DECLARATIONS = (
     (EventName.USER_LOGOUT, _AUDIT, ACTOR_PII, 'User signed out'),
     (EventName.USER_LOGIN_FAILED, _AUDIT, ACTOR_PII,
      'Sign in attempt failed'),
-    (EventName.USER_LOGIN_AS, _AUDIT, LOGIN_AS_PII,
+    (EventName.USER_LOGIN_AS, _AUDIT, TARGET_PII,
      'Superuser signed in as a user'),
     (EventName.TENANT_LOGIN_AS, _AUDIT, ACTOR_PII,
      'Master account signed in as a tenant'),

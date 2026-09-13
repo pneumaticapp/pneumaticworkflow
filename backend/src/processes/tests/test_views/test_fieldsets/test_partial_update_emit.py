@@ -119,3 +119,31 @@ def test_partial_update__invalid_layout__no_event(
     assert response.data['details']['name'] == 'layout'
     assert response.data['details']['reason'] == message
     assert fake_stream.events == []
+
+
+def test_partial_update__fieldset_of_another_account__no_event(
+    api_client,
+    fake_stream,
+):
+
+    # arrange
+    account = create_test_account()
+    fieldset = create_test_shared_fieldset(account=account, name='Contacts')
+    another_account = create_test_account(name='Another Company')
+    another_owner = create_test_owner(
+        account=another_account,
+        email='another_owner@pneumatic.app',
+    )
+    api_client.token_authenticate(another_owner)
+
+    # act
+    response = api_client.patch(
+        f'/fieldsets/{fieldset.id}',
+        data={'name': 'Clients'},
+    )
+
+    # assert
+    assert response.status_code == 404
+    fieldset.refresh_from_db()
+    assert fieldset.name == 'Contacts'
+    assert fake_stream.events == []

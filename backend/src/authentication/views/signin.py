@@ -17,10 +17,7 @@ from src.accounts.tokens import (
 )
 from src.analysis.mixins import BaseIdentifyMixin
 from src.analysis.services import AnalyticService
-from src.authentication.enums import (
-    AuthTokenType,
-    LoginFailedReason,
-)
+from src.authentication.enums import AuthTokenType
 from src.authentication.messages import (
     MSG_AU_0002,
     MSG_AU_0003,
@@ -38,6 +35,7 @@ from src.generics.mixins.views import (
     BaseResponseMixin,
 )
 from src.logs.events import AuditEventService
+from src.logs.events.enums import LoginFailedReason
 from src.notifications.tasks import send_verification_notification
 
 UserModel = get_user_model()
@@ -58,7 +56,7 @@ class TokenObtainPairCustomView(
         user = authenticate(**request.data)
 
         if not user:
-            self.emit_login_failed(
+            AuditEventService.login_failed(
                 request=request,
                 reason=LoginFailedReason.BAD_CREDENTIALS,
             )
@@ -67,7 +65,7 @@ class TokenObtainPairCustomView(
         try:
             self.check_sso_restrictions(user)
         except ValidationError:
-            self.emit_login_failed(
+            AuditEventService.login_failed(
                 request=request,
                 reason=LoginFailedReason.SSO_REQUIRED,
             )
@@ -83,7 +81,7 @@ class TokenObtainPairCustomView(
                 token=str(VerificationToken.for_user(owner)),
                 logo_lg=user.account.logo_lg,
             )
-            self.emit_login_failed(
+            AuditEventService.login_failed(
                 request=request,
                 reason=LoginFailedReason.VERIFICATION_EXPIRED,
             )
@@ -133,6 +131,5 @@ class SuperuserEmailTokenView(
         AuditEventService.superuser_logged_in_as(
             request=request,
             user=user,
-            reason=request.data.get('reason'),
         )
         return self.response_ok({'token': token})

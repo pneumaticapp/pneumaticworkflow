@@ -196,3 +196,47 @@ def test_get_client_ip__real_ip_and_private_header__real_ip_wins(
 
     # assert
     assert result == '198.51.100.4'
+
+
+def test_get_user_agent_header__empty_string__none(request_factory):
+
+    # arrange
+    request = request_factory.get('/', HTTP_USER_AGENT='')
+
+    # act
+    user_agent = get_user_agent_header(request=request)
+
+    # assert
+    assert user_agent is None
+
+
+def test_get_client_ip__padded_forwarded_for__stripped(request_factory):
+
+    # arrange
+    request = request_factory.get(
+        '/',
+        HTTP_X_FORWARDED_FOR=' 5.6.7.8 , 10.0.0.1',
+        REMOTE_ADDR='127.0.0.1',
+    )
+
+    # act
+    ip = get_client_ip(request=request)
+
+    # assert
+    assert ip == '5.6.7.8'
+
+
+def test_get_client_ip__ipv6_real_ip__kept(request_factory):
+
+    # arrange
+    request = request_factory.get(
+        '/',
+        HTTP_X_REAL_IP='2001:db8::1',
+        REMOTE_ADDR='127.0.0.1',
+    )
+
+    # act
+    ip = get_client_ip(request=request)
+
+    # assert
+    assert ip == '2001:db8::1'

@@ -16,10 +16,7 @@ from src.accounts.services.exceptions import (
     UserServiceException,
 )
 from src.accounts.services.user import UserService
-from src.authentication.enums import (
-    AuthTokenType,
-    LoginFailedReason,
-)
+from src.authentication.enums import AuthTokenType
 from src.authentication.messages import MSG_AU_0016
 from src.authentication.services.user_auth import AuthService
 from src.authentication.tokens import PneumaticToken
@@ -216,9 +213,9 @@ class SignUpMixin:
 
 class LoginEventMixin:
 
-    """ The sign in events of a login view: which provider signed
-        somebody in, and which refusal to journal when it did not.
-        Every view that mixes this in names its audit_source.
+    """ The sign in event of a login view: which provider signed
+        somebody in. Every view that mixes this in names its
+        audit_source.
 
         The SSO providers built on BaseSSOService journal the login in
         the service instead, where the new and the returning person
@@ -231,18 +228,6 @@ class LoginEventMixin:
             user=user,
             source=self.audit_source,
             request=request,
-        )
-
-    def emit_login_failed(
-        self,
-        request,
-        reason: LoginFailedReason.LITERALS,
-        email: Optional[str] = None,
-    ):
-        AuditEventService.login_failed(
-            request=request,
-            reason=reason,
-            email=email,
         )
 
 

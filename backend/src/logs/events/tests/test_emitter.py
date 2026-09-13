@@ -1,5 +1,4 @@
 import logging
-from time import monotonic
 
 import pytest
 import redis
@@ -14,9 +13,9 @@ from src.logs.events.emitter import (
     CIRCUIT_OPEN_SECONDS,
     NO_ACCOUNT,
     _build_event,
+    _present_pii,
     _report_stream_error,
     _write,
-    _present_pii,
     emit,
 )
 from src.logs.events.enums import ActorType, EventCategory, EventName
@@ -25,8 +24,8 @@ from src.logs.events.registry import (
     ACTOR_PII,
     EventType,
 )
-from src.logs.events.schema import Actor, EventObject
-from src.logs.events.tests.fakes import make_event, make_smoke_event
+from src.logs.events.schema import Actor, Event, EventObject
+from src.logs.events.tests.fixtures import make_event, make_smoke_event
 from src.utils.logging import SentryLogLevel
 
 
@@ -39,7 +38,7 @@ def test_emit__enabled__event_in_the_stream(
 
     # act
     emit(
-        EventName.USER_LOGIN,
+        event_type=EventName.USER_LOGIN,
         account_id=5,
         actor=actor,
         event_object=EventObject(type='user', id=1),
@@ -66,7 +65,7 @@ def test_emit__pipeline_off__nothing_written(
     settings.LOGS_BACKEND = LogsBackend.NONE
 
     # act
-    emit(EventName.USER_LOGIN, account_id=5)
+    emit(event_type=EventName.USER_LOGIN, account_id=5)
 
     # assert
     assert fake_stream.events == []
@@ -82,7 +81,7 @@ def test_emit__unknown_type__raise(
 
     # act
     with pytest.raises(UnknownEventTypeError) as ex:
-        emit('nope.nope', account_id=5)
+        emit(event_type='nope.nope', account_id=5)
 
     # assert
     assert str(ex.value) == 'Unknown event type: nope.nope'
@@ -105,7 +104,7 @@ def test_emit__open_transaction__nothing_written_before_commit(
     )
 
     # act
-    emit(EventName.USER_LOGIN, account_id=5)
+    emit(event_type=EventName.USER_LOGIN, account_id=5)
 
     # assert
     assert scheduled_stream.events == []
@@ -124,7 +123,7 @@ def test_emit__committed_transaction__callback_writes_the_event(
         'src.logs.events.emitter.transaction.on_commit',
         side_effect=callbacks.append,
     )
-    emit(EventName.USER_LOGIN, account_id=5)
+    emit(event_type=EventName.USER_LOGIN, account_id=5)
 
     # act
     callbacks[0]()
@@ -136,6 +135,7 @@ def test_emit__committed_transaction__callback_writes_the_event(
 
 
 def test_emit__stream_error__request_not_broken(
+    settings,
     fake_stream,
     mocker,
 ):
@@ -145,6 +145,7 @@ def test_emit__stream_error__request_not_broken(
         would drop every callback registered after this one. """
 
     # arrange
+    settings.LOGS_SERVICE_NAME = 'pneumatic-test'
     error = redis.ConnectionError('down')
     xadd_mock = mocker.patch.object(
         fake_stream,
@@ -157,15 +158,22 @@ def test_emit__stream_error__request_not_broken(
     moment = timezone.now()
 
     # act
-    emit(EventName.USER_LOGIN, account_id=5, ts=moment)
+    emit(event_type=EventName.USER_LOGIN, account_id=5, ts=moment)
 
     # assert
     xadd_mock.assert_called_once_with(
-        _build_event(EventName.USER_LOGIN, account_id=5, ts=moment),
+        Event(
+            type=EventName.USER_LOGIN,
+            category=EventCategory.AUDIT,
+            service='pneumatic-test',
+            ts=moment,
+            account_id=5,
+            actor=Actor(type=ActorType.SYSTEM),
+        ),
     )
     capture_sentry_message_mock.assert_called_once_with(
         message='Events stream is unavailable',
-        data={'error': repr(error), 'dropped': 0},
+        data={'error': 'ConnectionError', 'dropped': 0},
         level=SentryLogLevel.ERROR,
     )
 
@@ -196,13 +204,13 @@ def test_emit__stream_error_twice__reported_once(
     )
 
     # act
-    emit(EventName.USER_LOGIN, account_id=5)
-    emit(EventName.USER_LOGIN, account_id=5)
+    emit(event_type=EventName.USER_LOGIN, account_id=5)
+    emit(event_type=EventName.USER_LOGIN, account_id=5)
 
     # assert
     capture_sentry_message_mock.assert_called_once_with(
         message='Events stream is unavailable',
-        data={'error': repr(error), 'dropped': 0},
+        data={'error': 'ConnectionError', 'dropped': 0},
         level=SentryLogLevel.ERROR,
     )
     assert xadd_mock.call_count == 2
@@ -234,13 +242,13 @@ def test_emit__misconfigured_url__request_not_broken(
     )
 
     # act
-    emit(EventName.USER_LOGIN, account_id=5)
+    emit(event_type=EventName.USER_LOGIN, account_id=5)
 
     # assert
     get_stream_mock.assert_called_once_with()
     capture_sentry_message_mock.assert_called_once_with(
         message='Events stream is unavailable',
-        data={'error': repr(error), 'dropped': 0},
+        data={'error': 'ValueError', 'dropped': 0},
         level=SentryLogLevel.ERROR,
     )
 
@@ -268,19 +276,21 @@ def test_write__failed_write__next_write_dropped(mocker):
     )
     first_event = make_smoke_event(1)
     second_event = make_smoke_event(2)
-    _write(first_event)
+    _write(event=first_event)
 
     # act
-    _write(second_event)
+    _write(event=second_event)
 
     # assert
     assert emitter_module._circuit.dropped == 1
-    assert emitter_module._circuit.is_open(100.0 + CIRCUIT_OPEN_SECONDS - 0.1)
+    assert emitter_module._circuit.is_open(
+        now=100.0 + CIRCUIT_OPEN_SECONDS - 0.1,
+    )
     get_stream_mock.assert_called_once_with()
     stream_mock.xadd.assert_called_once_with(first_event)
     report_error_mock.assert_called_once_with(
         message='Events stream is unavailable',
-        data={'error': repr(error), 'dropped': 0},
+        data={'error': 'ConnectionError', 'dropped': 0},
     )
     assert monotonic_mock.call_count == 2
     monotonic_mock.assert_has_calls([mocker.call(), mocker.call()])
@@ -313,16 +323,16 @@ def test_write__window_passed__written_and_recovery_logged(
     first_event = make_smoke_event(1)
     second_event = make_smoke_event(2)
     third_event = make_smoke_event(3)
-    _write(first_event)
-    _write(second_event)
+    _write(event=first_event)
+    _write(event=second_event)
 
     # act
-    _write(third_event)
+    _write(event=third_event)
 
     # assert
     assert emitter_module._circuit.dropped == 0
     assert caplog.messages == [
-        f'Events stream is unavailable: {error}',
+        'Events stream is unavailable: ConnectionError',
         'Events stream is back, events dropped meanwhile: 1',
     ]
     assert get_stream_mock.call_count == 2
@@ -334,7 +344,7 @@ def test_write__window_passed__written_and_recovery_logged(
     ])
     report_error_mock.assert_called_once_with(
         message='Events stream is unavailable',
-        data={'error': repr(error), 'dropped': 0},
+        data={'error': 'ConnectionError', 'dropped': 0},
     )
     assert monotonic_mock.call_count == 3
     monotonic_mock.assert_has_calls([
@@ -360,7 +370,7 @@ def test_write__healthy_stream__nothing_logged(mocker, caplog):
     event = make_smoke_event()
 
     # act
-    _write(event)
+    _write(event=event)
 
     # assert
     assert caplog.messages == []
@@ -375,26 +385,46 @@ def test_report_stream_error__dropped_events__count_in_the_report(
     caplog,
 ):
 
+    """ Only the class of the error leaves: the text of a Redis error
+        may carry the connection URL, and the password with it. """
+
     # arrange
     caplog.set_level(logging.WARNING, logger='pneumatic.events')
-    error = redis.ConnectionError('down')
+    error = redis.ConnectionError(
+        'Error connecting to redis://:secret@redis:6379/4',
+    )
+    monotonic_mock = mocker.patch(
+        'src.logs.events.emitter.monotonic',
+        return_value=100.0,
+    )
+    get_stream_mock = mocker.patch('src.logs.events.emitter.get_stream')
     report_error_mock = mocker.patch(
         'src.logs.events.emitter.report_error',
     )
-    emitter_module._circuit.trip(monotonic())
-    _write(make_event())
-    _write(make_event())
-    _write(make_event())
+    first_event = make_event()
+    second_event = make_event()
+    third_event = make_event()
+    emitter_module._circuit.trip(now=100.0)
+    _write(event=first_event)
+    _write(event=second_event)
+    _write(event=third_event)
 
     # act
-    _report_stream_error(error)
+    _report_stream_error(exc=error)
 
     # assert
-    assert caplog.messages == [f'Events stream is unavailable: {error}']
+    assert caplog.messages == ['Events stream is unavailable: ConnectionError']
     report_error_mock.assert_called_once_with(
         message='Events stream is unavailable',
-        data={'error': repr(error), 'dropped': 3},
+        data={'error': 'ConnectionError', 'dropped': 3},
     )
+    get_stream_mock.assert_not_called()
+    assert monotonic_mock.call_count == 3
+    monotonic_mock.assert_has_calls([
+        mocker.call(),
+        mocker.call(),
+        mocker.call(),
+    ])
 
 
 def test_build_event__explicit_actor__wins(
@@ -414,7 +444,7 @@ def test_build_event__explicit_actor__wins(
 
     # act
     event = _build_event(
-        EventName.USER_LOGIN,
+        event_type=EventName.USER_LOGIN,
         account_id=5,
         actor=actor,
         request=request,
@@ -446,7 +476,7 @@ def test_build_event__request_user__actor_from_the_request(
 
     # act
     event = _build_event(
-        EventName.USER_LOGIN,
+        event_type=EventName.USER_LOGIN,
         account_id=5,
         request=request,
     )
@@ -471,7 +501,7 @@ def test_build_event__anonymous_request__actor_from_the_context(
 
     # act
     event = _build_event(
-        EventName.USER_LOGIN,
+        event_type=EventName.USER_LOGIN,
         account_id=5,
         request=request,
     )
@@ -490,7 +520,10 @@ def test_build_event__no_request_no_context__system_actor():
     account_id = 5
 
     # act
-    event = _build_event(EventName.USER_LOGIN, account_id=account_id)
+    event = _build_event(
+        event_type=EventName.USER_LOGIN,
+        account_id=account_id,
+    )
 
     # assert
     assert event.actor == Actor(type=ActorType.SYSTEM)
@@ -511,7 +544,7 @@ def test_build_event__request__ip_and_agent_from_the_request(
 
     # act
     event = _build_event(
-        EventName.USER_LOGIN,
+        event_type=EventName.USER_LOGIN,
         account_id=5,
         request=request,
     )
@@ -536,7 +569,7 @@ def test_build_event__request_without_headers__values_from_context(
 
     # act
     event = _build_event(
-        EventName.USER_LOGIN,
+        event_type=EventName.USER_LOGIN,
         account_id=5,
         request=request,
     )
@@ -553,7 +586,10 @@ def test_build_event__no_request__values_from_context(request_context):
     account_id = 5
 
     # act
-    event = _build_event(EventName.USER_LOGIN, account_id=account_id)
+    event = _build_event(
+        event_type=EventName.USER_LOGIN,
+        account_id=account_id,
+    )
 
     # assert
     assert event.ip == '9.9.9.9'
@@ -567,7 +603,10 @@ def test_build_event__no_request_no_context__empty_request_fields():
     account_id = 5
 
     # act
-    event = _build_event(EventName.USER_LOGIN, account_id=account_id)
+    event = _build_event(
+        event_type=EventName.USER_LOGIN,
+        account_id=account_id,
+    )
 
     # assert
     assert event.ip is None
@@ -583,7 +622,7 @@ def test_build_event__registry__category_and_present_pii():
 
     # act
     event = _build_event(
-        EventName.USER_DEACTIVATE,
+        event_type=EventName.USER_DEACTIVATE,
         account_id=5,
         actor=actor,
         payload=payload,
@@ -614,7 +653,7 @@ def test_build_event__filled_fields__all_declared_pii(
 
     # act
     event = _build_event(
-        EventName.USER_DEACTIVATE,
+        event_type=EventName.USER_DEACTIVATE,
         account_id=5,
         request=request,
         payload={'target_email': 'target@test.test'},
@@ -650,7 +689,7 @@ def test_build_event__type_without_declared_actor_pii__pii_added(
     )
 
     # act
-    event = _build_event('system.test', account_id=5)
+    event = _build_event(event_type='system.test', account_id=5)
 
     # assert
     assert event.pii == ACTOR_PII
@@ -677,7 +716,7 @@ def test_build_event__unresolvable_pii_path__dropped(
     )
 
     # act
-    event = _build_event('system.test', account_id=5)
+    event = _build_event(event_type='system.test', account_id=5)
 
     # assert
     assert event.pii == ACTOR_PII
@@ -690,7 +729,7 @@ def test_build_event__secret_in_the_payload__redacted():
 
     # act
     event = _build_event(
-        EventName.API_KEY_CREATE,
+        event_type=EventName.API_KEY_CREATE,
         account_id=5,
         payload=payload,
     )
@@ -706,7 +745,7 @@ def test_build_event__given_ts__used():
 
     # act
     event = _build_event(
-        EventName.WORKFLOW_RUN,
+        event_type=EventName.WORKFLOW_RUN,
         account_id=5,
         workflow_id=11,
         task_id=22,
@@ -729,7 +768,7 @@ def test_build_event__no_ts__now(mocker):
     )
 
     # act
-    event = _build_event(EventName.USER_LOGIN, account_id=5)
+    event = _build_event(event_type=EventName.USER_LOGIN, account_id=5)
 
     # assert
     assert event.ts == moment
@@ -747,7 +786,10 @@ def test_build_event__account_not_given__no_account_marker():
     account_id = None
 
     # act
-    event = _build_event(EventName.USER_LOGOUT, account_id=account_id)
+    event = _build_event(
+        event_type=EventName.USER_LOGOUT,
+        account_id=account_id,
+    )
 
     # assert
     assert event.account_id == NO_ACCOUNT
@@ -763,7 +805,7 @@ def test_build_event__settings__service_name_of_the_backend(settings):
 
     # act
     event = _build_event(
-        EventName.USER_LOGIN,
+        event_type=EventName.USER_LOGIN,
         account_id=5,
         actor=Actor(type=ActorType.SYSTEM),
     )
@@ -781,7 +823,10 @@ def test_present_pii__empty_string__not_listed():
     event = make_event(user_agent='', ip=None)
 
     # act
-    result = _present_pii(('actor.email', 'ip', 'user_agent'), event)
+    result = _present_pii(
+        paths=('actor.email', 'ip', 'user_agent'),
+        event=event,
+    )
 
     # assert
     assert result == ('actor.email',)

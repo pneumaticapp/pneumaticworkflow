@@ -733,16 +733,6 @@ class UserService(
                 changed.add('subordinates')
         return sorted(changed)
 
-    @staticmethod
-    def _blank_as_none(value):
-
-        """ A nullable text field is empty both as NULL and as '': a
-            profile without a photo stores NULL and the client sends it
-            back as an empty string. Only '' is folded, so that False
-            and 0 stay values of their own. """
-
-        return None if value == '' else value
-
     def _publish_user_event(
         self,
         event_type: str,

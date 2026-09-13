@@ -23,13 +23,6 @@ from tests.fixtures.unit import (
     EMITTER_STREAM_KEY,
 )
 
-REDIS_ERRORS = (
-    redis.exceptions.ConnectionError('refused by redis-py'),
-    redis.exceptions.TimeoutError('redis-py timeout'),
-    redis.exceptions.ResponseError('WRONGTYPE'),
-    TimeoutError('asyncio timeout'),
-)
-
 
 @pytest.mark.asyncio
 async def test_emit__enabled__record_written(
@@ -43,7 +36,7 @@ async def test_emit__enabled__record_written(
     mock_events_redis_from_url.return_value = client_mock
 
     # act
-    await events_emitter.emit(sample_event)
+    await events_emitter.emit(event=sample_event)
 
     # assert
     mock_events_redis_from_url.assert_called_once_with(
@@ -74,7 +67,7 @@ async def test_emit__disabled__redis_untouched(
     )
 
     # act
-    await emitter.emit(sample_event)
+    await emitter.emit(event=sample_event)
 
     # assert
     mock_events_redis_from_url.assert_not_called()
@@ -97,12 +90,18 @@ async def test_emit__write_failed__circuit_open_and_no_raise(
     mock_emitter_now.return_value = 100.0
 
     # act
-    await events_emitter.emit(sample_event)
+    await events_emitter.emit(event=sample_event)
 
     # assert
     assert events_emitter.circuit.open_until == 100.0 + CIRCUIT_OPEN_SECONDS
     assert events_emitter.circuit.is_open(100.0 + CIRCUIT_OPEN_SECONDS - 1)
     assert events_emitter.circuit.dropped == 1
+    mock_events_redis_from_url.assert_called_once_with(
+        EMITTER_REDIS_URL,
+        decode_responses=True,
+        socket_connect_timeout=CONNECT_TIMEOUT,
+        socket_timeout=SOCKET_TIMEOUT,
+    )
     client_mock.xadd.assert_awaited_once_with(
         name=EMITTER_STREAM_KEY,
         fields=sample_stream_fields,
@@ -132,10 +131,16 @@ async def test_emit__write_failed__password_not_logged(
     mock_emitter_now.return_value = 100.0
 
     # act
-    await events_emitter.emit(sample_event)
+    await events_emitter.emit(event=sample_event)
 
     # assert
     assert EMITTER_REDIS_PASSWORD not in caplog.text
+    mock_events_redis_from_url.assert_called_once_with(
+        EMITTER_REDIS_URL,
+        decode_responses=True,
+        socket_connect_timeout=CONNECT_TIMEOUT,
+        socket_timeout=SOCKET_TIMEOUT,
+    )
     client_mock.xadd.assert_awaited_once_with(
         name=EMITTER_STREAM_KEY,
         fields=sample_stream_fields,
@@ -162,10 +167,16 @@ async def test_emit__write_failed__host_not_logged(
     mock_emitter_now.return_value = 100.0
 
     # act
-    await events_emitter.emit(sample_event)
+    await events_emitter.emit(event=sample_event)
 
     # assert
     assert EMITTER_REDIS_HOST not in caplog.text
+    mock_events_redis_from_url.assert_called_once_with(
+        EMITTER_REDIS_URL,
+        decode_responses=True,
+        socket_connect_timeout=CONNECT_TIMEOUT,
+        socket_timeout=SOCKET_TIMEOUT,
+    )
     client_mock.xadd.assert_awaited_once_with(
         name=EMITTER_STREAM_KEY,
         fields=sample_stream_fields,
@@ -188,12 +199,18 @@ async def test_emit__circuit_open__dropped_not_written(
     client_mock.xadd.side_effect = [ConnectionError('refused'), None]
     mock_events_redis_from_url.return_value = client_mock
     mock_emitter_now.side_effect = [100.0, 101.0]
-    await events_emitter.emit(sample_event)
+    await events_emitter.emit(event=sample_event)
 
     # act
-    await events_emitter.emit(sample_event)
+    await events_emitter.emit(event=sample_event)
 
     # assert
+    mock_events_redis_from_url.assert_called_once_with(
+        EMITTER_REDIS_URL,
+        decode_responses=True,
+        socket_connect_timeout=CONNECT_TIMEOUT,
+        socket_timeout=SOCKET_TIMEOUT,
+    )
     client_mock.xadd.assert_awaited_once_with(
         name=EMITTER_STREAM_KEY,
         fields=sample_stream_fields,
@@ -202,6 +219,7 @@ async def test_emit__circuit_open__dropped_not_written(
     )
     assert events_emitter.circuit.dropped == 2
     assert mock_emitter_now.call_count == 2
+    mock_emitter_now.assert_has_calls([call(), call()])
 
 
 @pytest.mark.asyncio
@@ -223,13 +241,19 @@ async def test_emit__window_passed__written_and_recovery_logged(
         101.0,
         100.0 + CIRCUIT_OPEN_SECONDS,
     ]
-    await events_emitter.emit(sample_event)
-    await events_emitter.emit(sample_event)
+    await events_emitter.emit(event=sample_event)
+    await events_emitter.emit(event=sample_event)
 
     # act
-    await events_emitter.emit(sample_event)
+    await events_emitter.emit(event=sample_event)
 
     # assert
+    mock_events_redis_from_url.assert_called_once_with(
+        EMITTER_REDIS_URL,
+        decode_responses=True,
+        socket_connect_timeout=CONNECT_TIMEOUT,
+        socket_timeout=SOCKET_TIMEOUT,
+    )
     assert client_mock.xadd.await_count == 2
     client_mock.xadd.assert_has_awaits(
         [
@@ -249,6 +273,7 @@ async def test_emit__window_passed__written_and_recovery_logged(
     )
     assert events_emitter.circuit.dropped == 0
     assert mock_emitter_now.call_count == 3
+    mock_emitter_now.assert_has_calls([call(), call(), call()])
     assert caplog.messages == [
         'Events stream is unavailable, events are dropped: ConnectionError',
         'Events stream is back, events dropped meanwhile: 2',
@@ -277,10 +302,16 @@ async def test_emit__write_hangs__timeout_opens_circuit(
     events_emitter.timeout = 0.01
 
     # act
-    await events_emitter.emit(sample_event)
+    await events_emitter.emit(event=sample_event)
 
     # assert
     assert events_emitter.circuit.is_open(100.0)
+    mock_events_redis_from_url.assert_called_once_with(
+        EMITTER_REDIS_URL,
+        decode_responses=True,
+        socket_connect_timeout=CONNECT_TIMEOUT,
+        socket_timeout=SOCKET_TIMEOUT,
+    )
     client_mock.xadd.assert_awaited_once_with(
         name=EMITTER_STREAM_KEY,
         fields=sample_stream_fields,
@@ -307,10 +338,16 @@ async def test_emit__healthy_stream__nothing_logged(
     mock_events_redis_from_url.return_value = client_mock
 
     # act
-    await events_emitter.emit(sample_event)
+    await events_emitter.emit(event=sample_event)
 
     # assert
     assert caplog.messages == []
+    mock_events_redis_from_url.assert_called_once_with(
+        EMITTER_REDIS_URL,
+        decode_responses=True,
+        socket_connect_timeout=CONNECT_TIMEOUT,
+        socket_timeout=SOCKET_TIMEOUT,
+    )
     client_mock.xadd.assert_awaited_once_with(
         name=EMITTER_STREAM_KEY,
         fields=sample_stream_fields,
@@ -329,13 +366,19 @@ async def test_close__client_opened__pool_closed(
     # arrange
     client_mock = AsyncMock()
     mock_events_redis_from_url.return_value = client_mock
-    await events_emitter.emit(sample_event)
+    await events_emitter.emit(event=sample_event)
 
     # act
     await events_emitter.close()
 
     # assert
     client_mock.aclose.assert_awaited_once_with()
+    mock_events_redis_from_url.assert_called_once_with(
+        EMITTER_REDIS_URL,
+        decode_responses=True,
+        socket_connect_timeout=CONNECT_TIMEOUT,
+        socket_timeout=SOCKET_TIMEOUT,
+    )
     client_mock.xadd.assert_awaited_once_with(
         name=EMITTER_STREAM_KEY,
         fields=sample_stream_fields,
@@ -359,11 +402,17 @@ async def test_close__never_opened__nothing_to_close(
 def test_get_event_emitter__called_twice__same_instance_of_the_settings(
     clear_event_emitter_cache,
     mock_emitter_settings,
+    mocker,
 ):
     # arrange
     mock_emitter_settings.return_value.LOGS_REDIS_URL = EMITTER_REDIS_URL
     mock_emitter_settings.return_value.LOGS_STREAM_MAXLEN = EMITTER_MAXLEN
     mock_emitter_settings.return_value.logs_enabled = False
+    event_emitter_init_mock = mocker.patch.object(
+        EventEmitter,
+        '__init__',
+        return_value=None,
+    )
 
     # act
     first = get_event_emitter()
@@ -371,10 +420,12 @@ def test_get_event_emitter__called_twice__same_instance_of_the_settings(
 
     # assert
     assert first is second
-    assert first._url == EMITTER_REDIS_URL
-    assert first._key == EMITTER_STREAM_KEY
-    assert first._maxlen == EMITTER_MAXLEN
-    assert first._enabled is False
+    event_emitter_init_mock.assert_called_once_with(
+        url=EMITTER_REDIS_URL,
+        key=EMITTER_STREAM_KEY,
+        maxlen=EMITTER_MAXLEN,
+        enabled=False,
+    )
     mock_emitter_settings.assert_called_once_with()
 
 
@@ -392,16 +443,21 @@ async def test_close_event_emitter__cached__closed_and_forgotten(
     mock_emitter_settings.return_value.logs_enabled = True
     client_mock = AsyncMock()
     mock_events_redis_from_url.return_value = client_mock
-    first = get_event_emitter()
-    await first.emit(sample_event)
+    await get_event_emitter().emit(event=sample_event)
 
     # act
     await close_event_emitter()
 
     # assert
     client_mock.aclose.assert_awaited_once_with()
-    assert get_event_emitter() is not first
-    assert mock_emitter_settings.call_count == 2
+    assert get_event_emitter.cache_info().currsize == 0
+    mock_emitter_settings.assert_called_once_with()
+    mock_events_redis_from_url.assert_called_once_with(
+        EMITTER_REDIS_URL,
+        decode_responses=True,
+        socket_connect_timeout=CONNECT_TIMEOUT,
+        socket_timeout=SOCKET_TIMEOUT,
+    )
     client_mock.xadd.assert_awaited_once_with(
         name=EMITTER_STREAM_KEY,
         fields=sample_stream_fields,
@@ -411,34 +467,174 @@ async def test_close_event_emitter__cached__closed_and_forgotten(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize('error', REDIS_ERRORS, ids=lambda e: type(e).__name__)
-async def test_emit__redis_py_error__circuit_open_not_raised(
+async def test_emit__redis_connection_error__circuit_open_not_raised(
     events_emitter,
     mock_events_redis_from_url,
     mock_emitter_now,
     sample_event,
+    sample_stream_fields,
     caplog,
-    error,
 ):
-    """The errors of redis-py are not OSErrors, and the TimeoutError of
-    asyncio.wait_for is one: each of them has to open the circuit rather
-    than reach the endpoint."""
+    """The errors of redis-py are not OSErrors: each of them has to open
+    the circuit rather than reach the endpoint."""
 
     # arrange
     caplog.set_level(logging.WARNING)
     client_mock = AsyncMock()
-    client_mock.xadd.side_effect = error
+    client_mock.xadd.side_effect = redis.exceptions.ConnectionError(
+        'refused by redis-py',
+    )
     mock_events_redis_from_url.return_value = client_mock
     mock_emitter_now.return_value = 100.0
 
     # act
-    await events_emitter.emit(sample_event)
+    await events_emitter.emit(event=sample_event)
 
     # assert
     assert events_emitter.circuit.open_until == 100.0 + CIRCUIT_OPEN_SECONDS
+    assert events_emitter.circuit.dropped == 1
+    mock_events_redis_from_url.assert_called_once_with(
+        EMITTER_REDIS_URL,
+        decode_responses=True,
+        socket_connect_timeout=CONNECT_TIMEOUT,
+        socket_timeout=SOCKET_TIMEOUT,
+    )
+    client_mock.xadd.assert_awaited_once_with(
+        name=EMITTER_STREAM_KEY,
+        fields=sample_stream_fields,
+        maxlen=EMITTER_MAXLEN,
+        approximate=True,
+    )
+    mock_emitter_now.assert_called_once_with()
     assert caplog.messages == [
-        'Events stream is unavailable, events are dropped: '
-        f'{type(error).__name__}',
+        'Events stream is unavailable, events are dropped: ConnectionError',
+    ]
+
+
+@pytest.mark.asyncio
+async def test_emit__redis_timeout_error__circuit_open_not_raised(
+    events_emitter,
+    mock_events_redis_from_url,
+    mock_emitter_now,
+    sample_event,
+    sample_stream_fields,
+    caplog,
+):
+    # arrange
+    caplog.set_level(logging.WARNING)
+    client_mock = AsyncMock()
+    client_mock.xadd.side_effect = redis.exceptions.TimeoutError(
+        'redis-py timeout',
+    )
+    mock_events_redis_from_url.return_value = client_mock
+    mock_emitter_now.return_value = 100.0
+
+    # act
+    await events_emitter.emit(event=sample_event)
+
+    # assert
+    assert events_emitter.circuit.open_until == 100.0 + CIRCUIT_OPEN_SECONDS
+    assert events_emitter.circuit.dropped == 1
+    mock_events_redis_from_url.assert_called_once_with(
+        EMITTER_REDIS_URL,
+        decode_responses=True,
+        socket_connect_timeout=CONNECT_TIMEOUT,
+        socket_timeout=SOCKET_TIMEOUT,
+    )
+    client_mock.xadd.assert_awaited_once_with(
+        name=EMITTER_STREAM_KEY,
+        fields=sample_stream_fields,
+        maxlen=EMITTER_MAXLEN,
+        approximate=True,
+    )
+    mock_emitter_now.assert_called_once_with()
+    assert caplog.messages == [
+        'Events stream is unavailable, events are dropped: TimeoutError',
+    ]
+
+
+@pytest.mark.asyncio
+async def test_emit__redis_response_error__circuit_open_not_raised(
+    events_emitter,
+    mock_events_redis_from_url,
+    mock_emitter_now,
+    sample_event,
+    sample_stream_fields,
+    caplog,
+):
+    # arrange
+    caplog.set_level(logging.WARNING)
+    client_mock = AsyncMock()
+    client_mock.xadd.side_effect = redis.exceptions.ResponseError(
+        'WRONGTYPE',
+    )
+    mock_events_redis_from_url.return_value = client_mock
+    mock_emitter_now.return_value = 100.0
+
+    # act
+    await events_emitter.emit(event=sample_event)
+
+    # assert
+    assert events_emitter.circuit.open_until == 100.0 + CIRCUIT_OPEN_SECONDS
+    assert events_emitter.circuit.dropped == 1
+    mock_events_redis_from_url.assert_called_once_with(
+        EMITTER_REDIS_URL,
+        decode_responses=True,
+        socket_connect_timeout=CONNECT_TIMEOUT,
+        socket_timeout=SOCKET_TIMEOUT,
+    )
+    client_mock.xadd.assert_awaited_once_with(
+        name=EMITTER_STREAM_KEY,
+        fields=sample_stream_fields,
+        maxlen=EMITTER_MAXLEN,
+        approximate=True,
+    )
+    mock_emitter_now.assert_called_once_with()
+    assert caplog.messages == [
+        'Events stream is unavailable, events are dropped: ResponseError',
+    ]
+
+
+@pytest.mark.asyncio
+async def test_emit__asyncio_timeout_error__circuit_open_not_raised(
+    events_emitter,
+    mock_events_redis_from_url,
+    mock_emitter_now,
+    sample_event,
+    sample_stream_fields,
+    caplog,
+):
+    """The TimeoutError of asyncio.wait_for is an OSError of its own
+    kind: raised from the write, it opens the circuit too."""
+
+    # arrange
+    caplog.set_level(logging.WARNING)
+    client_mock = AsyncMock()
+    client_mock.xadd.side_effect = TimeoutError('asyncio timeout')
+    mock_events_redis_from_url.return_value = client_mock
+    mock_emitter_now.return_value = 100.0
+
+    # act
+    await events_emitter.emit(event=sample_event)
+
+    # assert
+    assert events_emitter.circuit.open_until == 100.0 + CIRCUIT_OPEN_SECONDS
+    assert events_emitter.circuit.dropped == 1
+    mock_events_redis_from_url.assert_called_once_with(
+        EMITTER_REDIS_URL,
+        decode_responses=True,
+        socket_connect_timeout=CONNECT_TIMEOUT,
+        socket_timeout=SOCKET_TIMEOUT,
+    )
+    client_mock.xadd.assert_awaited_once_with(
+        name=EMITTER_STREAM_KEY,
+        fields=sample_stream_fields,
+        maxlen=EMITTER_MAXLEN,
+        approximate=True,
+    )
+    mock_emitter_now.assert_called_once_with()
+    assert caplog.messages == [
+        'Events stream is unavailable, events are dropped: TimeoutError',
     ]
 
 
@@ -459,7 +655,7 @@ async def test_emit__bad_url__circuit_open_not_raised(
     mock_emitter_now.return_value = 100.0
 
     # act
-    await events_emitter.emit(sample_event)
+    await events_emitter.emit(event=sample_event)
 
     # assert
     assert events_emitter.circuit.open_until == 100.0 + CIRCUIT_OPEN_SECONDS
@@ -470,6 +666,7 @@ async def test_emit__bad_url__circuit_open_not_raised(
         socket_connect_timeout=CONNECT_TIMEOUT,
         socket_timeout=SOCKET_TIMEOUT,
     )
+    mock_emitter_now.assert_called_once_with()
     assert caplog.messages == [
         'Events stream is unavailable, events are dropped: ValueError',
     ]

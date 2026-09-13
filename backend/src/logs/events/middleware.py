@@ -1,6 +1,7 @@
 import re
 from uuid import uuid4
 
+from django.http import HttpRequest, HttpResponse
 from django.utils.deprecation import MiddlewareMixin
 
 from src.logs.events.context import (
@@ -21,7 +22,7 @@ class EventContextMiddleware(MiddlewareMixin):
     """ Give every request a correlation id and publish its ip,
         user agent and actor to the contextvar read by emit(). """
 
-    def __call__(self, request):
+    def __call__(self, request: HttpRequest) -> HttpResponse:
         try:
             return super().__call__(request)
         finally:
@@ -31,27 +32,31 @@ class EventContextMiddleware(MiddlewareMixin):
             # request of the same thread.
             self._reset(request)
 
-    def process_request(self, request) -> None:
+    def process_request(self, request: HttpRequest) -> None:
         request.request_id = self._request_id(request)
         request._event_context_token = set_context(
             context_from_request(request),
         )
 
-    def process_response(self, request, response):
+    def process_response(
+        self,
+        request: HttpRequest,
+        response: HttpResponse,
+    ) -> HttpResponse:
         request_id = getattr(request, 'request_id', None)
         if request_id:
             response[REQUEST_ID_HEADER] = request_id
         return response
 
     @staticmethod
-    def _request_id(request) -> str:
+    def _request_id(request: HttpRequest) -> str:
         request_id = request.META.get(REQUEST_ID_META)
         if request_id and REQUEST_ID_PATTERN.match(request_id):
             return request_id
         return uuid4().hex
 
     @staticmethod
-    def _reset(request) -> None:
+    def _reset(request: HttpRequest) -> None:
         token = getattr(request, '_event_context_token', None)
         if token is None:
             return

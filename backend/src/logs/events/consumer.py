@@ -13,7 +13,12 @@ from src.logs.events.exceptions import (
     SinkTemporaryError,
 )
 from src.logs.events.sinks.base import BaseSink
-from src.logs.events.stream import Entries, EventStream, consumer_name
+from src.logs.events.stream import (
+    Entries,
+    EventStream,
+    ParsedEntries,
+    consumer_name,
+)
 
 logger = logging.getLogger('pneumatic.events.consumer')
 
@@ -47,12 +52,17 @@ class ConsumerStats:
 
     """ Result of a single tick, also the source of the log line.
         failed is read by the beat task: a batch left pending after
-        every attempt is a delivery outage worth a Sentry message. """
+        every attempt is a delivery outage worth a Sentry message.
+        So are vanished (records trimmed off the stream while they
+        were pending, that is lost) and malformed (records parked in
+        the dead letter because they are not events). """
 
     delivered: int = 0
     acked: int = 0
     dead: int = 0
     claimed: int = 0
+    vanished: int = 0
+    malformed: int = 0
     failed: bool = False
     duration_ms: int = 0
 
@@ -115,35 +125,38 @@ class EventsConsumer:
         # Injected so that tests spend no time in backoff.
         self.sleep = sleep
 
-    def _autoclaim(self, stats: ConsumerStats) -> Entries:
+    def _autoclaim(self, stats: ConsumerStats) -> ParsedEntries:
 
         """ Entries of dead consumers, counted as claimed on the way:
             the one source whose entries the stats tell apart. """
 
-        entries = self.stream.autoclaim(
+        parsed = self.stream.autoclaim(
             consumer=self.consumer,
             min_idle_ms=self.idle_ms,
             count=self.batch_size,
         )
-        stats.claimed += len(entries)
-        return entries
+        stats.claimed += len(parsed.events)
+        return parsed
 
     def _drain(
         self,
-        read: Callable[[], Entries],
+        read: Callable[[], ParsedEntries],
         stats: ConsumerStats,
         budget: TickBudget,
     ) -> None:
 
         """ Deliver batch after batch until the source runs dry or the
-            tick budget is spent. """
+            tick budget is spent. The stream has already cleared the
+            entries that are not events, they are only counted. """
 
         while not budget.spent():
-            entries = read()
-            if not entries:
+            parsed = read()
+            stats.vanished += len(parsed.vanished)
+            stats.malformed += len(parsed.malformed)
+            if not parsed.events:
                 return
             budget.take()
-            self._deliver(entries, stats, budget)
+            self._deliver(parsed.events, stats, budget)
 
     def _deliver(
         self,

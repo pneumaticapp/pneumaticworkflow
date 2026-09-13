@@ -37,7 +37,7 @@ def test_terminate_workflow__user_action__emit_workflow_terminate(
         'src.processes.services.workflow_action.GuestJWTAuthService'
         '.deactivate_task_guest_cache',
     )
-    analytics_mock = mocker.patch(
+    workflows_terminated_mock = mocker.patch(
         'src.processes.services.workflow_action.AnalyticService'
         '.workflows_terminated',
     )
@@ -76,7 +76,7 @@ def test_terminate_workflow__user_action__emit_workflow_terminate(
         account_id=account.id,
     )
     deactivate_guest_mock.assert_called_once_with(task_id=task.id)
-    analytics_mock.assert_called_once_with(
+    workflows_terminated_mock.assert_called_once_with(
         user=owner,
         workflow=workflow,
         is_superuser=False,
@@ -102,7 +102,7 @@ def test_terminate_workflow__api_key_auth__emit_api_key_actor_type(
         'src.processes.services.workflow_action.GuestJWTAuthService'
         '.deactivate_task_guest_cache',
     )
-    analytics_mock = mocker.patch(
+    workflows_terminated_mock = mocker.patch(
         'src.processes.services.workflow_action.AnalyticService'
         '.workflows_terminated',
     )
@@ -144,7 +144,7 @@ def test_terminate_workflow__api_key_auth__emit_api_key_actor_type(
         account_id=account.id,
     )
     deactivate_guest_mock.assert_called_once_with(task_id=task.id)
-    analytics_mock.assert_called_once_with(
+    workflows_terminated_mock.assert_called_once_with(
         user=owner,
         workflow=workflow,
         is_superuser=False,
@@ -179,7 +179,7 @@ def test_terminate_workflow__deleted_workflow__event_keeps_the_name(
         'src.processes.services.workflow_action.GuestJWTAuthService'
         '.deactivate_task_guest_cache',
     )
-    analytics_mock = mocker.patch(
+    workflows_terminated_mock = mocker.patch(
         'src.processes.services.workflow_action.AnalyticService'
         '.workflows_terminated',
     )
@@ -217,7 +217,7 @@ def test_terminate_workflow__deleted_workflow__event_keeps_the_name(
         account_id=account.id,
     )
     deactivate_guest_mock.assert_called_once_with(task_id=task.id)
-    analytics_mock.assert_called_once_with(
+    workflows_terminated_mock.assert_called_once_with(
         user=owner,
         workflow=workflow,
         is_superuser=False,

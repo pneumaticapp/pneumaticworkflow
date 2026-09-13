@@ -4,8 +4,69 @@ from src.logs.events.enums import (
     EventName,
     EventObjectType,
 )
+from src.logs.events.mixins import EventEmitMixin
 from src.logs.events.schema import Actor, EventObject
-from src.logs.events.tests.fakes import FakeEmittingService
+from src.logs.events.tests.fixtures import FakeEmittingService
+
+
+def test_blank_as_none__empty_string__none():
+
+    # arrange
+    value = ''
+
+    # act
+    result = EventEmitMixin._blank_as_none(value=value)
+
+    # assert
+    assert result is None
+
+
+def test_blank_as_none__none__none():
+
+    # arrange
+    value = None
+
+    # act
+    result = EventEmitMixin._blank_as_none(value=value)
+
+    # assert
+    assert result is None
+
+
+def test_blank_as_none__text__same_text():
+
+    # arrange
+    value = 'https://photo.test/ann.png'
+
+    # act
+    result = EventEmitMixin._blank_as_none(value=value)
+
+    # assert
+    assert result == 'https://photo.test/ann.png'
+
+
+def test_blank_as_none__false__false():
+
+    # arrange
+    value = False
+
+    # act
+    result = EventEmitMixin._blank_as_none(value=value)
+
+    # assert
+    assert result is False
+
+
+def test_blank_as_none__zero__zero():
+
+    # arrange
+    value = 0
+
+    # act
+    result = EventEmitMixin._blank_as_none(value=value)
+
+    # assert
+    assert result == 0
 
 
 def test_event_actor__no_user__system():

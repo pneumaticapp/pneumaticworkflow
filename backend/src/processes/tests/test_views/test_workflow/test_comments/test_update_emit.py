@@ -8,15 +8,14 @@ from src.logs.events.enums import (
     EventObjectType,
 )
 from src.logs.events.schema import Actor, EventObject
-from src.processes.services.events import (
-    CommentService,
-    WorkflowEventService,
-)
+from src.processes.enums import WorkflowEventType
+from src.processes.services.events import CommentService
 from src.processes.services.exceptions import (
     CommentServiceException,
 )
 from src.processes.tests.fixtures import (
     create_test_account,
+    create_test_event,
     create_test_owner,
     create_test_workflow,
 )
@@ -31,19 +30,16 @@ def test_partial_update__comment__emit_comment_update(
     fake_stream,
 ):
 
-    """ The comment is created through the workflow events, so its
-        task.comment record comes first in the stream. """
-
     # arrange
     account = create_test_account()
     owner = create_test_owner(account=account)
     workflow = create_test_workflow(user=owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
-    comment = WorkflowEventService.comment_created_event(
+    comment = create_test_event(
+        workflow=workflow,
         user=owner,
+        type_event=WorkflowEventType.COMMENT,
         task=task,
-        text='Some comment',
-        after_create_actions=False,
     )
     comment_service_init_mock = mocker.patch.object(
         CommentService,
@@ -64,8 +60,7 @@ def test_partial_update__comment__emit_comment_update(
 
     # assert
     assert response.status_code == 200
-    assert len(fake_stream.events) == 2
-    assert fake_stream.events[0][1].type == EventName.TASK_COMMENT
+    assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
     assert event.type == EventName.TASK_COMMENT_UPDATE
     assert event.category == EventCategory.AUDIT
@@ -109,12 +104,10 @@ def test_partial_update__comment_without_task__no_task_name(
     account = create_test_account()
     owner = create_test_owner(account=account)
     workflow = create_test_workflow(user=owner, tasks_count=1)
-    task = workflow.tasks.get(number=1)
-    comment = WorkflowEventService.comment_created_event(
+    comment = create_test_event(
+        workflow=workflow,
         user=owner,
-        task=task,
-        text='Some comment',
-        after_create_actions=False,
+        type_event=WorkflowEventType.COMMENT,
     )
     comment.task = None
     comment.save(update_fields=['task'])
@@ -137,8 +130,7 @@ def test_partial_update__comment_without_task__no_task_name(
 
     # assert
     assert response.status_code == 200
-    assert len(fake_stream.events) == 2
-    assert fake_stream.events[0][1].type == EventName.TASK_COMMENT
+    assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
     assert event.type == EventName.TASK_COMMENT_UPDATE
     assert event.category == EventCategory.AUDIT
@@ -177,12 +169,10 @@ def test_partial_update__service_exception__no_comment_update_event(
     account = create_test_account()
     owner = create_test_owner(account=account)
     workflow = create_test_workflow(user=owner, tasks_count=1)
-    task = workflow.tasks.get(number=1)
-    comment = WorkflowEventService.comment_created_event(
+    comment = create_test_event(
+        workflow=workflow,
         user=owner,
-        task=task,
-        text='Some comment',
-        after_create_actions=False,
+        type_event=WorkflowEventType.COMMENT,
     )
     message = 'some message'
     comment_service_init_mock = mocker.patch.object(
@@ -207,8 +197,7 @@ def test_partial_update__service_exception__no_comment_update_event(
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['message'] == message
     assert response.data['details'] == {}
-    assert len(fake_stream.events) == 1
-    assert fake_stream.last_event().type == EventName.TASK_COMMENT
+    assert fake_stream.events == []
     comment_service_init_mock.assert_called_once_with(
         instance=comment,
         user=owner,

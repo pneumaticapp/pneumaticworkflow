@@ -17,7 +17,7 @@ from django.contrib.admin.models import (
 )
 from django.core.exceptions import ObjectDoesNotExist
 
-from src.logs.events.emitter import emit
+from src.logs.events.emitter import emit, logs_enabled
 from src.logs.events.enums import EventName, EventObjectType
 from src.logs.events.schema import Actor, EventObject
 
@@ -53,12 +53,16 @@ def publish_log_entry(
 
         The admin site writes the row inside the request that made the
         change, so emit() finds the address and the browser of the
-        superuser in the context of that request. """
+        superuser in the context of that request.
+
+        With the journal off nothing is read: the content type, the
+        edited row and the superuser each cost a query. """
 
     event_type = EVENT_TYPES.get(instance.action_flag)
-    if not created or event_type is None:
+    if not created or event_type is None or not logs_enabled():
         return
     label = _model_label(instance)
+    object_type = OBJECT_TYPES.get(label, EventObjectType.OTHER)
     payload: Dict[str, Any] = {'model': label}
     payload.update(
         _changes(_parse_change_message(instance.change_message)),
@@ -68,8 +72,11 @@ def publish_log_entry(
         account_id=_account_id(instance, label),
         actor=Actor.from_user(instance.user),
         event_object=EventObject(
-            type=OBJECT_TYPES.get(label, EventObjectType.OTHER),
-            id=_object_id(instance.object_id),
+            type=object_type,
+            id=(
+                None if object_type == EventObjectType.INVITE
+                else _object_id(instance.object_id)
+            ),
         ),
         payload=payload,
     )

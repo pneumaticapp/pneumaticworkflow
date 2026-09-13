@@ -142,7 +142,7 @@ class DatasetViewSet(
         AuditEventService.dataset_created(
             request=request,
             dataset=dataset,
-            items_count=len(serializer.validated_data.get('items') or ()),
+            items_count=len(serializer.validated_data['items']),
         )
         response_serializer = DatasetSerializer(dataset)
         return self.response_created(response_serializer.data)

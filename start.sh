@@ -474,8 +474,9 @@ echo "Pneumatic Workflow started successfully!"
 echo "The application is available at $FRONTEND_URL"
 if [ "${LOGS_BACKEND_VALUE:-}" = local ]; then
     GRAFANA_PORT_VALUE=$(grep -E '^\s*GRAFANA_PORT=\S' "$ENV_FILE" | tail -1 | cut -d= -f2- | tr -d '[:space:]')
+    GRAFANA_ADMIN_USER_VALUE=$(grep -E '^\s*GRAFANA_ADMIN_USER=\S' "$ENV_FILE" | tail -1 | cut -d= -f2- | tr -d '[:space:]')
     echo "The audit journal (Grafana) is available at http://127.0.0.1:${GRAFANA_PORT_VALUE:-3000} on this machine,"
-    echo "user admin, the password is GRAFANA_ADMIN_PASSWORD in .env"
+    echo "user ${GRAFANA_ADMIN_USER_VALUE:-admin}, the password is GRAFANA_ADMIN_PASSWORD in .env"
 fi
 print_warning "Please wait a few minutes for all services to fully start"
 print_warning ""

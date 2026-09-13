@@ -13,8 +13,10 @@
 #
 # start.sh adds this file and the profile of the collector on its own when
 # .env says LOGS_BACKEND=elasticsearch. Running `docker compose` by hand, put
-# both into .env:
+# all three into .env - the profile starts the collector, LOGS_BACKEND picks
+# its mode file:
 #
+#   LOGS_BACKEND=elasticsearch
 #   COMPOSE_FILE=docker-compose.yml:logging/elasticsearch/docker-compose.collector-elasticsearch.yml
 #   COMPOSE_PROFILES=logs-elasticsearch
 #

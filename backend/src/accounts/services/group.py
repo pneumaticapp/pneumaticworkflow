@@ -184,10 +184,7 @@ class UserGroupService(EventEmitMixin, BaseModelService):
             send_notification_task=send_new_task_websocket,
         )
 
-    def _send_removed_users_notifications(
-        self,
-        user_ids: List[int],
-    ):
+    def _send_removed_users_notifications(self, user_ids: List[int]):
         self._send_users_notification(
             user_ids=user_ids,
             send_notification_task=send_task_deleted_notification,
@@ -293,15 +290,14 @@ class UserGroupService(EventEmitMixin, BaseModelService):
                 group_id=self.instance.id,
             ).update(value=new_name)
 
-        # Read before the write below: the photo is nullable in the
-        # row and an empty string in the request, and the two mean the
-        # same picture.
         changed_fields = []
         if added_users_ids or removed_users_ids:
             changed_fields.append('users')
         if new_name is not None and new_name != self.instance.name:
             changed_fields.append('name')
-        if 'photo' in update_kwargs and (new_photo or '') != (old_photo or ''):
+        if 'photo' in update_kwargs and (
+            self._blank_as_none(new_photo) != self._blank_as_none(old_photo)
+        ):
             changed_fields.append('photo')
 
         if (

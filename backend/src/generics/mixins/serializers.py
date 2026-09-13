@@ -81,8 +81,6 @@ class ChangedFieldsMixin:
     always_changed_fields: Tuple[str, ...] = ()
 
     def get_changed_fields(self) -> List[str]:
-        if self.instance is None:
-            return []
         return sorted(
             name for name, value in self.validated_data.items()
             if name in self.always_changed_fields

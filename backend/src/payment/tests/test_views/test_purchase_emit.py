@@ -11,11 +11,7 @@ from src.logs.events.schema import Actor, EventObject
 from src.payment import messages
 from src.payment.stripe.exceptions import StripeServiceException
 from src.payment.stripe.service import StripeService
-from src.payment.tests.fixtures import (
-    create_test_invoice_price,
-    create_test_product,
-    create_test_recurring_price,
-)
+from src.payment.tests.fixtures import create_test_recurring_price
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_owner,
@@ -25,26 +21,20 @@ from src.utils.validation import ErrorCode
 pytestmark = pytest.mark.django_db
 
 
-def test_purchase__payment_link__emit_checkout_required(
+def test_purchase__payment_link__no_event(
     mocker,
     api_client,
     fake_stream,
 ):
 
+    """ A payment link is no purchase yet: nothing is paid until the
+        user completes the payment page. """
+
     # arrange
-    account = create_test_account()
-    owner = create_test_owner(account=account)
-    recurring_price = create_test_recurring_price(
-        product=create_test_product(code='premium', stripe_id='prod_1'),
-    )
-    invoice_price = create_test_invoice_price(
-        product=create_test_product(
-            code='addon',
-            stripe_id='prod_2',
-            is_subscription=False,
-        ),
-    )
+    owner = create_test_owner()
+    price = create_test_recurring_price()
     success_url = 'http://localhost/success/'
+    payment_link = 'checkout.stripe.com'
     stripe_service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
@@ -53,7 +43,7 @@ def test_purchase__payment_link__emit_checkout_required(
     create_purchase_mock = mocker.patch.object(
         StripeService,
         attribute='create_purchase',
-        return_value='checkout.stripe.com',
+        return_value=payment_link,
     )
     api_client.token_authenticate(user=owner)
 
@@ -62,38 +52,15 @@ def test_purchase__payment_link__emit_checkout_required(
         path='/payment/purchase',
         data={
             'success_url': success_url,
-            'products': [
-                {'code': recurring_price.code, 'quantity': 3},
-                {'code': invoice_price.code, 'quantity': 1},
-            ],
+            'products': [{'code': price.code, 'quantity': 3}],
         },
         format='json',
     )
 
     # assert
     assert response.status_code == 200
-    assert response.data['payment_link'] == 'checkout.stripe.com'
-    assert len(fake_stream.events) == 1
-    event = fake_stream.last_event()
-    assert event.type == EventName.BILLING_PURCHASE
-    assert event.category == EventCategory.AUDIT
-    assert event.account_id == account.id
-    assert event.actor == Actor(
-        type=ActorType.USER,
-        id=owner.id,
-        email=owner.email,
-    )
-    assert event.object == EventObject(
-        type=EventObjectType.ACCOUNT,
-        id=account.id,
-    )
-    assert event.payload == {
-        'products': {
-            recurring_price.code: 3,
-            invoice_price.code: 1,
-        },
-        'checkout_required': True,
-    }
+    assert response.data['payment_link'] == payment_link
+    assert fake_stream.events == []
     stripe_service_init_mock.assert_called_once_with(
         user=owner,
         auth_type=AuthTokenType.USER,
@@ -101,10 +68,7 @@ def test_purchase__payment_link__emit_checkout_required(
     )
     create_purchase_mock.assert_called_once_with(
         success_url=success_url,
-        products=[
-            {'code': recurring_price.code, 'quantity': 3},
-            {'code': invoice_price.code, 'quantity': 1},
-        ],
+        products=[{'code': price.code, 'quantity': 3}],
     )
 
 
@@ -159,7 +123,6 @@ def test_purchase__off_session__emit_checkout_not_required(
     )
     assert event.payload == {
         'products': {price.code: 2},
-        'checkout_required': False,
     }
     stripe_service_init_mock.assert_called_once_with(
         user=owner,
@@ -226,7 +189,6 @@ def test_purchase__repeated_code__emit_summed_quantity(
     )
     assert event.payload == {
         'products': {price.code: 6},
-        'checkout_required': False,
     }
     stripe_service_init_mock.assert_called_once_with(
         user=owner,

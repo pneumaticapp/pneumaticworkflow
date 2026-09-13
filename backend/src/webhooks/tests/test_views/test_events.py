@@ -37,7 +37,6 @@ def test_list__ok(api_client, mocker):
     service_init_mock.assert_called_once_with(
         user=user,
         is_superuser=False,
-        auth_type=AuthTokenType.USER,
     )
     service_mock.assert_called_once()
 
@@ -69,7 +68,6 @@ def test_retrieve__ok(api_client, mocker):
     service_init_mock.assert_called_once_with(
         user=user,
         is_superuser=False,
-        auth_type=AuthTokenType.USER,
     )
     service_mock.assert_called_once_with(event=event)
 
@@ -128,7 +126,6 @@ def test_retrieve__invalid_event__not_found(api_client, mocker):
     service_init_mock.assert_called_once_with(
         user=user,
         is_superuser=False,
-        auth_type=AuthTokenType.USER,
     )
     service_mock.assert_called_once_with(event=event)
 

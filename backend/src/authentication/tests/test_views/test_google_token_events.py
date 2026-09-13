@@ -5,10 +5,7 @@ from django.contrib.auth import get_user_model
 
 from src.accounts.enums import SourceType, UserStatus
 from src.authentication.entities import UserData
-from src.authentication.enums import (
-    AuthTokenType,
-    LoginFailedReason,
-)
+from src.authentication.enums import AuthTokenType
 from src.authentication.messages import MSG_AU_0016
 from src.authentication.services.google import GoogleAuthService
 from src.logs.events.schema import Actor, EventObject
@@ -17,6 +14,7 @@ from src.logs.events.enums import (
     ActorType,
     EventName,
     EventObjectType,
+    LoginFailedReason,
 )
 from src.processes.services.system_workflows import (
     SystemWorkflowService,
@@ -267,7 +265,7 @@ def test_google_token__new_user__emit_user_signup_only(
     update_contacts_mock.assert_called_once_with(new_user.id)
 
 
-def test_google_token__inactive_user__emit_login_failed(
+def test_google_token__signup_disabled__emit_login_failed(
     mocker,
     api_client,
     settings,
@@ -436,4 +434,75 @@ def test_google_token__sso_required__emit_login_failed(
     )
     get_auth_token_mock.assert_not_called()
     save_tokens_mock.assert_not_called()
+    update_contacts_mock.assert_not_called()
+
+
+def test_google_token__save_tokens_fails__no_event(
+    mocker,
+    api_client,
+    settings,
+    fake_stream,
+):
+
+    """ The login is journalled after the rest of the sign in: a
+        callback that breaks on the way leaves no login behind. """
+
+    # arrange
+    settings.PROJECT_CONF = {**settings.PROJECT_CONF, 'GOOGLE_AUTH': True}
+    user = create_test_owner(email='sso@pneumatic.app')
+    google_auth_service_init_mock = mocker.patch.object(
+        GoogleAuthService,
+        attribute='__init__',
+        return_value=None,
+    )
+    get_user_data_mock = mocker.patch(
+        'src.authentication.services.google.'
+        'GoogleAuthService.get_user_data',
+        return_value=UserData(
+            email=user.email,
+            first_name='John',
+            last_name='Doe',
+            company_name='',
+            photo=None,
+            job_title='',
+        ),
+    )
+    get_auth_token_mock = mocker.patch(
+        'src.authentication.services.user_auth.'
+        'AuthService.get_auth_token',
+        return_value='sso-token',
+    )
+    save_tokens_mock = mocker.patch(
+        'src.authentication.services.google.'
+        'GoogleAuthService.save_tokens_for_user',
+        side_effect=ConnectionError,
+    )
+    update_contacts_mock = mocker.patch(
+        'src.authentication.tasks.'
+        'update_google_contacts.delay',
+    )
+    auth_response = {
+        'code': '4/0AbUR2VMeHxU...',
+        'state': 'random_state_string',
+    }
+
+    # act
+    with pytest.raises(ConnectionError):
+        api_client.get(
+            path='/auth/google/token',
+            data=auth_response,
+            HTTP_USER_AGENT='Some/Mozilla',
+            HTTP_X_REAL_IP='128.18.0.99',
+        )
+
+    # assert
+    assert fake_stream.events == []
+    google_auth_service_init_mock.assert_called_once_with()
+    get_user_data_mock.assert_called_once_with(auth_response=auth_response)
+    get_auth_token_mock.assert_called_once_with(
+        user=user,
+        user_agent='Some/Mozilla',
+        user_ip='128.18.0.99',
+    )
+    save_tokens_mock.assert_called_once_with(user)
     update_contacts_mock.assert_not_called()

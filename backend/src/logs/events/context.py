@@ -2,6 +2,8 @@ from contextvars import ContextVar, Token
 from dataclasses import dataclass
 from typing import Optional
 
+from django.http import HttpRequest
+
 from src.authentication.enums import AuthTokenType
 from src.logs.events.enums import actor_type_from_auth
 from src.logs.events.schema import Actor
@@ -9,8 +11,6 @@ from src.utils.http import (
     get_client_ip,
     get_user_agent_header,
 )
-
-CONTEXT_VAR_NAME = 'pneumatic_event_context'
 
 
 @dataclass
@@ -25,7 +25,10 @@ class RequestContext:
     actor: Optional[Actor] = None
 
 
-_context: ContextVar = ContextVar(CONTEXT_VAR_NAME, default=None)
+_context: ContextVar[Optional[RequestContext]] = ContextVar(
+    'pneumatic_event_context',
+    default=None,
+)
 
 
 def set_context(context: RequestContext) -> Token:
@@ -43,7 +46,7 @@ def get_context() -> Optional[RequestContext]:
     return _context.get()
 
 
-def context_from_request(request) -> RequestContext:
+def context_from_request(request: HttpRequest) -> RequestContext:
 
     """ Build the context of an incoming request.
 
@@ -68,7 +71,7 @@ def context_from_request(request) -> RequestContext:
     return context
 
 
-def merge_context(request) -> RequestContext:
+def merge_context(request: Optional[HttpRequest]) -> RequestContext:
 
     """ What the pipeline knows about the current request.
 

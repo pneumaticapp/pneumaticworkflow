@@ -9,6 +9,7 @@ from src.logs.events.enums import (
 from src.logs.events.schema import Actor, EventObject
 from src.processes.tests.fixtures import (
     create_test_account,
+    create_test_not_admin,
     create_test_owner,
 )
 
@@ -83,3 +84,28 @@ def test_partial_update__same_values__no_event(
     assert response.status_code == 200
     assert fake_stream.events == []
     group_mock.assert_called_once_with(user=owner, account=account)
+
+
+def test_partial_update__not_admin__no_event(
+    api_client,
+    group_mock,
+    fake_stream,
+):
+
+    # arrange
+    account = create_test_account(name='Old name')
+    create_test_owner(account=account)
+    user = create_test_not_admin(account=account)
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.put(
+        '/accounts/account',
+        data={'name': 'New name'},
+        format='json',
+    )
+
+    # assert
+    assert response.status_code == 403
+    assert fake_stream.events == []
+    group_mock.assert_not_called()

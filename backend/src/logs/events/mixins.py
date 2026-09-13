@@ -1,8 +1,8 @@
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 from src.authentication.enums import AuthTokenType
 from src.logs.events.emitter import emit
-from src.logs.events.enums import ActorType
+from src.logs.events.enums import ActorType, EventObjectType
 from src.logs.events.schema import Actor, EventObject
 
 
@@ -22,12 +22,22 @@ class EventEmitMixin:
     user = None
     auth_type: AuthTokenType.LITERALS = AuthTokenType.USER
 
+    @staticmethod
+    def _blank_as_none(value: Any) -> Any:
+
+        """ A nullable text field is empty both as NULL and as '': a
+            profile without a photo stores NULL and the client sends it
+            back as an empty string. Only '' is folded, so that False
+            and 0 stay values of their own. """
+
+        return None if value == '' else value
+
     def _publish(
         self,
         event_type: str,
         *,
         account_id: int,
-        object_type: str,
+        object_type: EventObjectType.LITERALS,
         object_id: Optional[Union[int, str]] = None,
         payload: Optional[dict] = None,
         actor: Optional[Actor] = None,

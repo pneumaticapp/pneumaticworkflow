@@ -5,7 +5,6 @@ import redis
 from src.logs.enums import LogsBackend
 from src.logs.events.consumer import (
     LOCK_EXPIRE,
-    MAX_ATTEMPTS,
     ConsumerStats,
 )
 from src.logs.events.tasks import (
@@ -13,26 +12,6 @@ from src.logs.events.tasks import (
     MAX_SECONDS,
     consume_events,
 )
-
-
-def test_max_seconds__otlp_timeouts__budget_of_the_lock():
-
-    """ The reading budget of a tick leaves room for the slowest
-        batch the OTLP sink may still be sending: three sends of
-        13.05 s with two pauses of the longest Retry-After between
-        them, out of the 120 s of the lock.
-
-        The expected value is a literal on purpose: computing it with
-        tick_budget() again would compare the function with itself,
-        and a change to DEFAULT_TIMEOUT or MAX_RETRY_AFTER would pass
-        unnoticed. """
-
-    # act
-    budget = MAX_SECONDS
-
-    # assert
-    assert round(budget, 2) == 60.85
-    assert budget < LOCK_EXPIRE
 
 
 def test_consume_events__pipeline_off__lock_not_taken(mocker, settings):
@@ -87,9 +66,7 @@ def test_consume_events__lock_acquired__consumer_runs_once(
 ):
 
     # arrange
-    events_enabled.LOGS_OTLP_ENDPOINT = 'http://otel-collector:4318'
     events_enabled.LOGS_CONSUMER_BATCH_SIZE = 500
-    events_enabled.LOGS_CONSUMER_IDLE_MS = 30000
     periodic_lock_mock = mocker.patch(
         'src.logs.events.tasks.periodic_lock',
     )
@@ -125,24 +102,26 @@ def test_consume_events__lock_acquired__consumer_runs_once(
         stream=stream_mock,
         sink=sink_mock,
         batch_size=500,
-        idle_ms=30000,
         max_seconds=MAX_SECONDS,
     )
     consumer_mock.run_once.assert_called_once_with()
     report_error_mock.assert_not_called()
 
 
-def test_consume_events__redis_error__reported_to_sentry(
+def test_consume_events__redis_error__only_error_class_reported(
     mocker,
     events_enabled,
     caplog,
 ):
 
     """ A Redis outage is logged every tick and reported once a
-        minute, without a traceback flood in the Celery log. """
+        minute, without a traceback flood in the Celery log. The text
+        of the error may hold the connection URL with the password:
+        neither the log nor Sentry gets it. """
 
     # arrange
     caplog.set_level(logging.WARNING, logger='pneumatic.events.consumer')
+    events_enabled.LOGS_CONSUMER_BATCH_SIZE = 500
     periodic_lock_mock = mocker.patch(
         'src.logs.events.tasks.periodic_lock',
     )
@@ -157,7 +136,9 @@ def test_consume_events__redis_error__reported_to_sentry(
         'src.logs.events.tasks.get_sink',
         return_value=sink_mock,
     )
-    error = redis.ConnectionError('connection refused')
+    error = redis.ConnectionError(
+        'Error connecting to redis://:secret@redis:6379/4',
+    )
     consumer_mock = mocker.Mock()
     consumer_mock.run_once.side_effect = error
     consumer_class_mock = mocker.patch(
@@ -170,17 +151,16 @@ def test_consume_events__redis_error__reported_to_sentry(
     consume_events()
 
     # assert
-    assert caplog.messages == [f'Events consumer tick failed: {error}']
+    assert caplog.messages == ['Events consumer tick failed: ConnectionError']
     report_error_mock.assert_called_once_with(
         message='Events consumer tick failed',
-        data={'error': repr(error)},
+        data={'error': 'ConnectionError'},
     )
     consumer_mock.run_once.assert_called_once_with()
     consumer_class_mock.assert_called_once_with(
         stream=stream_mock,
         sink=sink_mock,
-        batch_size=events_enabled.LOGS_CONSUMER_BATCH_SIZE,
-        idle_ms=events_enabled.LOGS_CONSUMER_IDLE_MS,
+        batch_size=500,
         max_seconds=MAX_SECONDS,
     )
     get_stream_mock.assert_called_once_with()
@@ -220,7 +200,7 @@ def test_consume_events__os_error__reported_not_raised(
     # assert
     report_error_mock.assert_called_once_with(
         message='Events consumer tick failed',
-        data={'error': repr(error)},
+        data={'error': 'OSError'},
     )
     get_stream_mock.assert_called_once_with()
     get_sink_mock.assert_not_called()
@@ -239,6 +219,7 @@ def test_consume_events__batch_left_pending__delivery_failure_reported(
         message a minute for as long as the receiver stays down. """
 
     # arrange
+    events_enabled.LOGS_CONSUMER_BATCH_SIZE = 500
     periodic_lock_mock = mocker.patch(
         'src.logs.events.tasks.periodic_lock',
     )
@@ -273,7 +254,6 @@ def test_consume_events__batch_left_pending__delivery_failure_reported(
     report_error_mock.assert_called_once_with(
         message='Events consumer left a batch pending',
         data={
-            'attempts': MAX_ATTEMPTS,
             'delivered': 1000,
             'duration_ms': 4500,
         },
@@ -282,8 +262,122 @@ def test_consume_events__batch_left_pending__delivery_failure_reported(
     consumer_class_mock.assert_called_once_with(
         stream=stream_mock,
         sink=sink_mock,
-        batch_size=events_enabled.LOGS_CONSUMER_BATCH_SIZE,
-        idle_ms=events_enabled.LOGS_CONSUMER_IDLE_MS,
+        batch_size=500,
+        max_seconds=MAX_SECONDS,
+    )
+    get_stream_mock.assert_called_once_with()
+    get_sink_mock.assert_called_once_with()
+    periodic_lock_mock.assert_called_once_with(
+        LOCK_ID, lock_expire=LOCK_EXPIRE,
+    )
+
+
+def test_consume_events__vanished_entries__reported(
+    mocker,
+    events_enabled,
+):
+
+    """ A record trimmed off the stream while it was pending is an
+        event lost to LOGS_STREAM_MAXLEN: worth a message. """
+
+    # arrange
+    events_enabled.LOGS_CONSUMER_BATCH_SIZE = 500
+    periodic_lock_mock = mocker.patch(
+        'src.logs.events.tasks.periodic_lock',
+    )
+    periodic_lock_mock.return_value.__enter__.return_value = True
+    stream_mock = mocker.Mock()
+    get_stream_mock = mocker.patch(
+        'src.logs.events.tasks.get_stream',
+        return_value=stream_mock,
+    )
+    sink_mock = mocker.Mock()
+    get_sink_mock = mocker.patch(
+        'src.logs.events.tasks.get_sink',
+        return_value=sink_mock,
+    )
+    consumer_mock = mocker.Mock()
+    consumer_mock.run_once.return_value = ConsumerStats(vanished=2)
+    consumer_class_mock = mocker.patch(
+        'src.logs.events.tasks.EventsConsumer',
+        return_value=consumer_mock,
+    )
+    report_error_mock = mocker.patch('src.logs.events.tasks.report_error')
+
+    # act
+    consume_events()
+
+    # assert
+    report_error_mock.assert_called_once_with(
+        message='Events consumer cleared undeliverable entries',
+        data={
+            'vanished': 2,
+            'malformed': 0,
+        },
+    )
+    consumer_mock.run_once.assert_called_once_with()
+    consumer_class_mock.assert_called_once_with(
+        stream=stream_mock,
+        sink=sink_mock,
+        batch_size=500,
+        max_seconds=MAX_SECONDS,
+    )
+    get_stream_mock.assert_called_once_with()
+    get_sink_mock.assert_called_once_with()
+    periodic_lock_mock.assert_called_once_with(
+        LOCK_ID, lock_expire=LOCK_EXPIRE,
+    )
+
+
+def test_consume_events__malformed_entries__reported(
+    mocker,
+    events_enabled,
+):
+
+    # arrange
+    events_enabled.LOGS_CONSUMER_BATCH_SIZE = 500
+    periodic_lock_mock = mocker.patch(
+        'src.logs.events.tasks.periodic_lock',
+    )
+    periodic_lock_mock.return_value.__enter__.return_value = True
+    stream_mock = mocker.Mock()
+    get_stream_mock = mocker.patch(
+        'src.logs.events.tasks.get_stream',
+        return_value=stream_mock,
+    )
+    sink_mock = mocker.Mock()
+    get_sink_mock = mocker.patch(
+        'src.logs.events.tasks.get_sink',
+        return_value=sink_mock,
+    )
+    consumer_mock = mocker.Mock()
+    consumer_mock.run_once.return_value = ConsumerStats(
+        delivered=3,
+        acked=4,
+        malformed=1,
+    )
+    consumer_class_mock = mocker.patch(
+        'src.logs.events.tasks.EventsConsumer',
+        return_value=consumer_mock,
+    )
+    report_error_mock = mocker.patch('src.logs.events.tasks.report_error')
+
+    # act
+    consume_events()
+
+    # assert
+    report_error_mock.assert_called_once_with(
+        message='Events consumer cleared undeliverable entries',
+        data={
+            'vanished': 0,
+            'malformed': 1,
+        },
+    )
+    consumer_mock.run_once.assert_called_once_with()
+    consumer_class_mock.assert_called_once_with(
+        stream=stream_mock,
+        sink=sink_mock,
+        batch_size=500,
         max_seconds=MAX_SECONDS,
     )
     get_stream_mock.assert_called_once_with()
@@ -319,10 +413,10 @@ def test_consume_events__lock_unavailable__reported_not_raised(
     consume_events()
 
     # assert
-    assert caplog.messages == [f'Events consumer tick failed: {error}']
+    assert caplog.messages == ['Events consumer tick failed: ConnectionError']
     report_error_mock.assert_called_once_with(
         message='Events consumer tick failed',
-        data={'error': repr(error)},
+        data={'error': 'ConnectionError'},
     )
     consumer_class_mock.assert_not_called()
     periodic_lock_mock.assert_called_once_with(

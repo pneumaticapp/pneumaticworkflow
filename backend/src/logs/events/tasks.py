@@ -4,14 +4,13 @@ from celery import shared_task
 from django.conf import settings
 
 from src.celery_app import periodic_lock
-from src.logs.enums import LogsBackend
 from src.logs.events.consumer import (
     LOCK_EXPIRE,
-    MAX_ATTEMPTS,
     ConsumerStats,
     EventsConsumer,
     tick_budget,
 )
+from src.logs.events.emitter import logs_enabled
 from src.logs.events.reporting import report_error
 from src.logs.events.sinks.otlp import (
     DEFAULT_TIMEOUT,
@@ -41,7 +40,7 @@ def consume_events() -> None:
         that fails every 5 seconds is a Sentry flood, so every error
         is logged on each tick and reported once a minute. """
 
-    if settings.LOGS_BACKEND == LogsBackend.NONE:
+    if not logs_enabled():
         return
     # The lock lives in the cache, and the cache is the same Redis as
     # the buffer: the outage the tick is built to survive breaks the
@@ -56,6 +55,8 @@ def consume_events() -> None:
         return
     if stats.failed:
         _report_failed_delivery(stats)
+    if stats.vanished or stats.malformed:
+        _report_cleared_entries(stats)
 
 
 def _run_tick() -> ConsumerStats:
@@ -63,17 +64,21 @@ def _run_tick() -> ConsumerStats:
         stream=get_stream(),
         sink=get_sink(),
         batch_size=settings.LOGS_CONSUMER_BATCH_SIZE,
-        idle_ms=settings.LOGS_CONSUMER_IDLE_MS,
         max_seconds=MAX_SECONDS,
     )
     return consumer.run_once()
 
 
 def _report_tick_error(message: str, exc: Exception) -> None:
-    logger.warning('%s: %s', message, exc)
+
+    """ Only the class of the error leaves: the text of a Redis error
+        may carry the connection URL, and the password with it. """
+
+    error = type(exc).__name__
+    logger.warning('%s: %s', message, error)
     report_error(
         message=message,
-        data={'error': repr(exc)},
+        data={'error': error},
     )
 
 
@@ -85,8 +90,23 @@ def _report_failed_delivery(stats: ConsumerStats) -> None:
     report_error(
         message='Events consumer left a batch pending',
         data={
-            'attempts': MAX_ATTEMPTS,
             'delivered': stats.delivered,
             'duration_ms': stats.duration_ms,
+        },
+    )
+
+
+def _report_cleared_entries(stats: ConsumerStats) -> None:
+
+    """ The stream already logged the entries it cleared. A vanished
+        one was trimmed off the stream while it was pending, an event
+        lost to LOGS_STREAM_MAXLEN; a malformed one sits in the dead
+        letter. Either is worth a message, once a minute. """
+
+    report_error(
+        message='Events consumer cleared undeliverable entries',
+        data={
+            'vanished': stats.vanished,
+            'malformed': stats.malformed,
         },
     )

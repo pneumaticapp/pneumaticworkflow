@@ -119,3 +119,40 @@ def test_destroy__service_exception__no_event(
     assert TemplatePreset.objects.filter(id=preset.id).exists()
     assert fake_stream.events == []
     service_delete_mock.assert_called_once_with()
+
+
+def test_destroy__preset_of_another_account__no_event(
+    api_client,
+    fake_stream,
+):
+
+    """ The permission looks the preset up in the account of the user,
+        so a preset of another account is forbidden. """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    template = create_test_template(
+        user=owner,
+        is_active=True,
+        tasks_count=1,
+    )
+    preset = create_test_template_preset(
+        template=template,
+        author=owner,
+        type=PresetType.PERSONAL,
+    )
+    another_account = create_test_account(name='Another Company')
+    another_owner = create_test_owner(
+        account=another_account,
+        email='another_owner@pneumatic.app',
+    )
+    api_client.token_authenticate(another_owner)
+
+    # act
+    response = api_client.delete(f'/templates/presets/{preset.id}')
+
+    # assert
+    assert response.status_code == 403
+    assert TemplatePreset.objects.filter(id=preset.id).exists()
+    assert fake_stream.events == []

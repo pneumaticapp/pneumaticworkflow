@@ -4,10 +4,7 @@ from hashlib import sha256
 import pytest
 
 from src.accounts.enums import SourceType
-from src.authentication.enums import (
-    AuthTokenType,
-    LoginFailedReason,
-)
+from src.authentication.enums import AuthTokenType
 from src.authentication.messages import MSG_AU_0016
 from src.logs.events.schema import Actor, EventObject
 from src.logs.events.emitter import NO_ACCOUNT
@@ -16,6 +13,7 @@ from src.logs.events.enums import (
     EventCategory,
     EventName,
     EventObjectType,
+    LoginFailedReason,
 )
 from src.processes.tests.fixtures import (
     create_test_admin,
@@ -232,6 +230,7 @@ def test_signin__unknown_email__emit_login_failed_with_same_reason(
 ):
 
     # arrange
+
     # sha256 of 'ghost@pneumatic.app', an address of nobody
     email_hash = sha256(b'ghost@pneumatic.app').hexdigest()
     users_logged_in_mock = mocker.patch(
@@ -273,6 +272,7 @@ def test_signin__uppercase_email_with_spaces__emit_same_hash(
 ):
 
     # arrange
+
     # sha256 of 'owner@pneumatic.app', the normalized address
     email_hash = sha256(b'owner@pneumatic.app').hexdigest()
     users_logged_in_mock = mocker.patch(

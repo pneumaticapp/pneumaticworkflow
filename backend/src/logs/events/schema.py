@@ -11,6 +11,7 @@ from src.authentication.enums import AuthTokenType
 from src.logs.events.enums import (
     ActorType,
     EventCategory,
+    EventObjectType,
     actor_type_from_auth,
 )
 from src.logs.events.reporting import report_error
@@ -50,6 +51,7 @@ SECRET_KEY_NAMES = ('session', 'refresh', 'access', 'private')
 KEY_WORD = re.compile(r'[A-Z]?[a-z0-9]+|[A-Z]+(?![a-z])')
 NOT_ALPHANUMERIC = re.compile(r'[^a-z0-9]')
 QUERY_MARK = '?'
+USERINFO_MARK = '@'
 
 
 def format_ts(value: datetime) -> str:
@@ -119,7 +121,7 @@ class Actor:
 @dataclass
 class EventObject:
 
-    type: str
+    type: EventObjectType.LITERALS
     id: Optional[Union[int, str]] = None
 
     def to_dict(self) -> Dict[str, Any]:
@@ -280,8 +282,8 @@ def normalize_payload(payload: Optional[dict]) -> dict:
         # size marker alone leaves the operator with an event nobody
         # can explain. Throttled, an emitter loop would flood Sentry.
         report_error(
-            'Event payload dropped: over the size limit',
-            {'size': size, 'limit': PAYLOAD_MAX_BYTES},
+            message='Event payload dropped: over the size limit',
+            data={'size': size, 'limit': PAYLOAD_MAX_BYTES},
             level=SentryLogLevel.WARNING,
         )
         return {TRUNCATED_KEY: True, SIZE_KEY: size}
@@ -301,8 +303,8 @@ def _normalize_dict(value: dict, depth: Optional[int]) -> Dict[str, Any]:
 
 def _normalize_value(value: Any, depth: Optional[int]) -> Any:
 
-    """ One pass over the payload: secrets out, query strings off,
-        long strings cut, unknown types stringified.
+    """ One pass over the payload: secrets out, credentials and query
+        strings off urls, long strings cut, unknown types stringified.
 
         depth is NO_DEPTH_LIMIT inside a container that is being
         collapsed into a JSON string: whatever it holds ends up in
@@ -311,7 +313,7 @@ def _normalize_value(value: Any, depth: Optional[int]) -> Any:
     if value is None or isinstance(value, (bool, int, float)):
         return value
     if isinstance(value, str):
-        return without_query(value)[:PAYLOAD_STR_MAX]
+        return without_url_secrets(value)[:PAYLOAD_STR_MAX]
     if isinstance(value, dict):
         if _too_deep(depth):
             return _collapse(_normalize_dict(value, NO_DEPTH_LIMIT))
@@ -369,23 +371,43 @@ def _is_secret_key(name: str) -> bool:
     return any(word in words for word in SECRET_KEY_WORDS)
 
 
-def without_query(value: str) -> str:
+def without_url_secrets(value: str) -> str:
 
-    """ Cut the query string off a URL value: access tokens and
-        signatures ride there ("...?access_token=abc").
+    """ Cut the credential and the query string off a URL value: a
+        password rides in the authority ("https://user:pass@host"),
+        access tokens and signatures in the query ("...?token=abc").
         Anything that is not an absolute URL is left alone: a plain
-        string may hold a question mark for its own reasons. """
+        string may hold a question mark or an at sign for its own
+        reasons, an e-mail address above all. """
 
-    if QUERY_MARK not in value:
+    if QUERY_MARK not in value and USERINFO_MARK not in value:
         return value
     try:
         parts = urlsplit(value)
     except ValueError:
         return value
-    if not (parts.scheme and parts.netloc and parts.query):
+    if not (parts.scheme and parts.netloc):
         return value
+    if USERINFO_MARK not in parts.netloc and not parts.query:
+        return value
+    return urlunsplit(parts._replace(
+        netloc=parts.netloc.rpartition(USERINFO_MARK)[2],
+        query='',
+    ))
+
+
+def without_userinfo(url: str) -> str:
+
+    """ The url without the user:password part of its authority: the
+        OTLP sink names its endpoint by it in logs and in Sentry. The
+        host and the port are kept as written, an IPv6 host with its
+        brackets. """
+
+    parts = urlsplit(url)
+    if USERINFO_MARK not in parts.netloc:
+        return url
     return urlunsplit(
-        (parts.scheme, parts.netloc, parts.path, '', parts.fragment),
+        parts._replace(netloc=parts.netloc.rpartition(USERINFO_MARK)[2]),
     )
 
 

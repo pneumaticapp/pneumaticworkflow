@@ -9,6 +9,7 @@ from src.logs.events.enums import (
 from src.logs.events.schema import Actor, EventObject
 from src.processes.tests.fixtures import (
     create_test_account,
+    create_test_not_admin,
     create_test_owner,
     create_test_template,
 )
@@ -194,3 +195,23 @@ def test_export__filters__event_keeps_request_context(
     assert event.user_agent == 'Chrome/141'
     assert event.request_id == 'audit-template-4'
     assert event.pii == ('actor.email', 'ip', 'user_agent')
+
+
+def test_export__not_admin__no_event(
+    api_client,
+    fake_stream,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    not_admin = create_test_not_admin(account=account)
+    create_test_template(user=owner, is_active=True, tasks_count=1)
+    api_client.token_authenticate(not_admin)
+
+    # act
+    response = api_client.get('/templates/export')
+
+    # assert
+    assert response.status_code == 403
+    assert fake_stream.events == []

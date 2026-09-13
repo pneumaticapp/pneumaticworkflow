@@ -23,7 +23,10 @@ from src.processes.tests.fixtures import (
 pytestmark = pytest.mark.django_db
 
 
-def test_workflow_run_event__ok__emit_workflow_run(mocker):
+def test_workflow_run_event__ok__emit_workflow_run(
+    mocker,
+    events_enabled,
+):
 
     # arrange
     user = create_test_owner()
@@ -57,7 +60,10 @@ def test_workflow_run_event__ok__emit_workflow_run(mocker):
     )
 
 
-def test_task_complete_event__ok__emit_task_complete(mocker):
+def test_task_complete_event__ok__emit_task_complete(
+    mocker,
+    events_enabled,
+):
 
     # arrange
     user = create_test_owner()
@@ -92,7 +98,10 @@ def test_task_complete_event__ok__emit_task_complete(mocker):
     )
 
 
-def test_task_started_event__no_user__emit_system_actor(mocker):
+def test_task_started_event__no_user__emit_system_actor(
+    mocker,
+    events_enabled,
+):
 
     # arrange
     user = create_test_owner()
@@ -126,7 +135,10 @@ def test_task_started_event__no_user__emit_system_actor(mocker):
     )
 
 
-def test_workflow_urgent_event__not_urgent__emit_workflow_not_urgent(mocker):
+def test_workflow_urgent_event__not_urgent__emit_workflow_not_urgent(
+    mocker,
+    events_enabled,
+):
 
     # arrange
     user = create_test_owner()
@@ -165,6 +177,7 @@ def test_workflow_urgent_event__not_urgent__emit_workflow_not_urgent(mocker):
 def test_workflow_run_event__emit_error_in_production__event_created(
     mocker,
     settings,
+    events_enabled,
 ):
 
     # arrange
@@ -219,6 +232,7 @@ def test_workflow_run_event__emit_error_in_production__event_created(
 def test_workflow_run_event__bug_in_the_pipeline__raises(
     mocker,
     settings,
+    events_enabled,
 ):
 
     """ Only the errors of the pipeline are swallowed. A TypeError of
@@ -274,6 +288,7 @@ def test_workflow_run_event__bug_in_the_pipeline__raises(
 def test_workflow_run_event__emit_error_in_testing__raises(
     mocker,
     settings,
+    events_enabled,
 ):
 
     # arrange
@@ -323,6 +338,7 @@ def test_workflow_run_event__emit_error_in_testing__raises(
 def test_workflow_run_event__type_missing_in_the_adapter__raises(
     mocker,
     settings,
+    events_enabled,
 ):
 
     """ A WorkflowEventType constant nobody mapped breaks the tests

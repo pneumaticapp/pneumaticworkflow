@@ -1,7 +1,6 @@
 import logging
 import time
 from typing import Dict, List, Optional, Tuple
-from urllib.parse import urlsplit, urlunsplit
 
 import requests
 from django.conf import settings
@@ -11,7 +10,7 @@ from src.logs.events.exceptions import (
     SinkTemporaryError,
 )
 from src.logs.events.reporting import report_error
-from src.logs.events.schema import Event, dump_json
+from src.logs.events.schema import Event, dump_json, without_userinfo
 from src.logs.events.sinks.base import BaseSink
 from src.logs.events.sinks.otlp_payload import build_otlp_payload
 from src.utils.logging import SentryLogLevel
@@ -43,8 +42,6 @@ class OTLPSink(BaseSink):
         The consumer sees only SinkTemporaryError (keep the batch
         pending and try again) or SinkPermanentError (dead letter);
         every transport detail stays in this class. """
-
-    name = 'otlp'
 
     def __init__(
         self,
@@ -113,7 +110,11 @@ class OTLPSink(BaseSink):
 
         return f'{self.display_url}: {type(exc).__name__}'
 
-    def _temporary_error(self, response, status: int) -> SinkTemporaryError:
+    def _temporary_error(
+        self,
+        response: requests.Response,
+        status: int,
+    ) -> SinkTemporaryError:
         return SinkTemporaryError(
             f'{self.display_url} answered {status}',
             retry_after=self._retry_after(response),
@@ -121,23 +122,28 @@ class OTLPSink(BaseSink):
 
     def _permanent_error(
         self,
-        response,
+        response: requests.Response,
         status: int,
         count: int,
     ) -> SinkPermanentError:
-        body = self._body_prefix(response)
+
+        """ The answer of the collector quotes the records it refused,
+            personal data included: its first bytes go to the local
+            log line only, a warning so that it is not an event of
+            Sentry of its own. The report and the text of the error,
+            which the consumer logs as an error, carry the status. """
+
         message = f'{self.display_url} answered {status} for {count} records'
-        logger.error('%s: %s', message, body)
+        logger.warning('%s: %s', message, self._body_prefix(response))
         report_error(
             message='OTLP endpoint rejected the batch',
             data={
                 'url': self.display_url,
                 'status': status,
                 'records': count,
-                'body': body,
             },
         )
-        return SinkPermanentError(f'{message}: {body}')
+        return SinkPermanentError(message)
 
     def _build_error(self, exc: Exception, count: int) -> SinkPermanentError:
         message = f'OTLP batch cannot be built ({count} records): {exc!r}'
@@ -148,7 +154,11 @@ class OTLPSink(BaseSink):
         )
         return SinkPermanentError(message)
 
-    def _report_rejected(self, response, count: int) -> None:
+    def _report_rejected(
+        self,
+        response: requests.Response,
+        count: int,
+    ) -> None:
 
         """ A 2xx with partialSuccess means the collector took the
             batch but dropped some records. Sending them again would
@@ -174,7 +184,7 @@ class OTLPSink(BaseSink):
         )
 
     @staticmethod
-    def _retry_after(response) -> Optional[float]:
+    def _retry_after(response: requests.Response) -> Optional[float]:
 
         """ Honour the header only when it asks for a short pause:
             a longer one belongs to the next tick, not to this one.
@@ -189,10 +199,10 @@ class OTLPSink(BaseSink):
         return None
 
     @staticmethod
-    def _body_prefix(response) -> str:
+    def _body_prefix(response: requests.Response) -> str:
 
         """ First bytes of the answer: enough to tell a schema error
-            from a wrong path, short enough for Sentry. """
+            from a wrong path, short enough for a log line. """
 
         try:
             return response.content[:BODY_LIMIT].decode(
@@ -202,7 +212,7 @@ class OTLPSink(BaseSink):
             return ''
 
     @staticmethod
-    def _rejected_records(response) -> int:
+    def _rejected_records(response: requests.Response) -> int:
         try:
             body = response.json()
         except ValueError:
@@ -214,19 +224,6 @@ class OTLPSink(BaseSink):
             return int(partial.get(REJECTED_RECORDS_KEY) or 0)
         except (AttributeError, TypeError, ValueError):
             return 0
-
-
-def without_userinfo(url: str) -> str:
-
-    """ The url without the user:password part of its authority. """
-
-    parts = urlsplit(url)
-    if not parts.username and not parts.password:
-        return url
-    host = parts.hostname or ''
-    if parts.port is not None:
-        host = f'{host}:{parts.port}'
-    return urlunsplit(parts._replace(netloc=host))
 
 
 _sinks: Dict[str, OTLPSink] = {}

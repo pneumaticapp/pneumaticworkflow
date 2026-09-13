@@ -1,4 +1,5 @@
 import pytest
+from rest_framework_simplejwt.exceptions import TokenError
 
 from src.accounts.tokens import ResetPasswordToken
 from src.authentication.messages import MSG_AU_0012
@@ -149,6 +150,33 @@ def test_confirm__valid_token__emit_password_reset(
     assert event.ip == '10.10.0.4'
     change_password_mock.assert_called_once_with(password='new-pass-1')
     expire_tokens_mock.assert_called_once_with(user)
+
+
+def test_confirm__invalid_token__no_event(
+    mocker,
+    api_client,
+    expire_tokens_mock,
+    fake_stream,
+):
+
+    # arrange
+    change_password_mock = mocker.patch(
+        'src.accounts.services.user.UserService.change_password',
+    )
+    data = {
+        'new_password': 'new-pass-1',
+        'confirm_new_password': 'new-pass-1',
+        'token': 'not-a-token',
+    }
+
+    # act
+    with pytest.raises(TokenError):
+        api_client.post('/auth/reset-password/confirm', data)
+
+    # assert
+    assert fake_stream.events == []
+    change_password_mock.assert_not_called()
+    expire_tokens_mock.assert_not_called()
 
 
 def test_change_password__authenticated__emit_password_change(

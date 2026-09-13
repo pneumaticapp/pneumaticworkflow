@@ -8,8 +8,10 @@ from src.logs.events.enums import (
     EventObjectType,
 )
 from src.logs.events.schema import Actor, EventObject
+from src.processes.models.templates.template import Template
 from src.processes.tests.fixtures import (
     create_test_account,
+    create_test_not_admin,
     create_test_owner,
     create_test_template,
 )
@@ -131,3 +133,33 @@ def test_destroy__template__event_keeps_request_context(
         is_superuser=False,
         auth_type=AuthTokenType.USER,
     )
+
+
+def test_destroy__not_admin__no_event(
+    mocker,
+    api_client,
+    fake_stream,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    not_admin = create_test_not_admin(account=account)
+    template = create_test_template(
+        user=owner,
+        is_active=True,
+        tasks_count=1,
+    )
+    api_client.token_authenticate(not_admin)
+    templates_deleted_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.templates_deleted',
+    )
+
+    # act
+    response = api_client.delete(f'/templates/{template.id}')
+
+    # assert
+    assert response.status_code == 403
+    assert Template.objects.filter(id=template.id).exists()
+    assert fake_stream.events == []
+    templates_deleted_mock.assert_not_called()

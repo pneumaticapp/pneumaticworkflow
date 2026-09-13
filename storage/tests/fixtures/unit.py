@@ -14,6 +14,7 @@ from starlette.responses import PlainTextResponse, Response
 from starlette.routing import Route
 from starlette.testclient import TestClient
 
+from src.domain.entities import FileRecord
 from src.infra.adapters.storage_service import (
     StorageService,
     StorageServiceHolder,
@@ -722,6 +723,31 @@ def mock_events_file_access_denied(mocker):
         'RequestEvents.file_access_denied',
         new_callable=AsyncMock,
     )
+
+
+@pytest.fixture
+def make_file_record():
+    """Factory for the file record the endpoint tests download."""
+
+    def _factory(
+        *,
+        filename: str = 'report.pdf',
+        content_type: str = 'application/pdf',
+        size: int = 10,
+        user_id: int | None = 1,
+        account_id: int = 1,
+    ) -> FileRecord:
+        return FileRecord(
+            file_id=API_FILE_ID,
+            filename=filename,
+            content_type=content_type,
+            size=size,
+            user_id=user_id,
+            account_id=account_id,
+            created_at=datetime(2024, 1, 1, tzinfo=UTC),
+        )
+
+    return _factory
 
 
 # --- request_id fixtures ---

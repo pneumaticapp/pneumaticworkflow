@@ -18,6 +18,7 @@ from src.processes.tests.fixtures import (
     create_test_account,
     create_test_owner,
 )
+from src.utils.validation import ErrorCode
 
 pytestmark = pytest.mark.django_db
 
@@ -293,3 +294,46 @@ def test_create__published_template__event_keeps_request_context(
         is_superuser=False,
         auth_type=AuthTokenType.USER,
     )
+
+
+def test_create__name_null__no_event(
+    mocker,
+    api_client,
+    fake_stream,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    api_client.token_authenticate(owner)
+    templates_created_mock = mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_created',
+    )
+    kickoff_created_mock = mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_kickoff_created',
+    )
+
+    # act
+    response = api_client.post(
+        path='/templates',
+        data={
+            'name': None,
+            'is_active': True,
+            'kickoff': {},
+            'tasks': [],
+        },
+    )
+
+    # assert
+    assert response.status_code == 400
+    message = 'This field may not be null.'
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == message
+    assert response.data['details']['name'] == 'name'
+    assert response.data['details']['reason'] == message
+    assert Template.objects.count() == 0
+    assert fake_stream.events == []
+    templates_created_mock.assert_not_called()
+    kickoff_created_mock.assert_not_called()

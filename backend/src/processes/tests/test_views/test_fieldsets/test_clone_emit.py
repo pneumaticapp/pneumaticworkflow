@@ -87,3 +87,27 @@ def test_clone__service_exception__no_event(
     assert response.data['details'] == {}
     assert fake_stream.events == []
     get_clone_mock.assert_called_once_with()
+
+
+def test_clone__fieldset_of_another_account__no_event(
+    api_client,
+    fake_stream,
+):
+
+    # arrange
+    account = create_test_account()
+    fieldset = create_test_shared_fieldset(account=account)
+    another_account = create_test_account(name='Another Company')
+    another_owner = create_test_owner(
+        account=another_account,
+        email='another_owner@pneumatic.app',
+    )
+    api_client.token_authenticate(another_owner)
+
+    # act
+    response = api_client.post(f'/fieldsets/{fieldset.id}/clone')
+
+    # assert
+    assert response.status_code == 404
+    assert FieldsetTemplate.objects.count() == 1
+    assert fake_stream.events == []

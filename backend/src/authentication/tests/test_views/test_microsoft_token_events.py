@@ -5,10 +5,7 @@ from django.contrib.auth import get_user_model
 
 from src.accounts.enums import SourceType, UserStatus
 from src.authentication.entities import UserData
-from src.authentication.enums import (
-    AuthTokenType,
-    LoginFailedReason,
-)
+from src.authentication.enums import AuthTokenType
 from src.authentication.messages import MSG_AU_0016
 from src.authentication.services.microsoft import MicrosoftAuthService
 from src.logs.events.schema import Actor, EventObject
@@ -17,6 +14,7 @@ from src.logs.events.enums import (
     ActorType,
     EventName,
     EventObjectType,
+    LoginFailedReason,
 )
 from src.processes.services.system_workflows import (
     SystemWorkflowService,
@@ -275,7 +273,7 @@ def test_microsoft_token__new_user__emit_user_signup_only(
     update_contacts_mock.assert_called_once_with(new_user.id)
 
 
-def test_microsoft_token__inactive_user__emit_login_failed(
+def test_microsoft_token__signup_disabled__emit_login_failed(
     mocker,
     api_client,
     settings,
@@ -451,5 +449,84 @@ def test_microsoft_token__sso_required__emit_login_failed(
     get_user_data_mock.assert_called_once_with(auth_response=auth_response)
     get_auth_token_mock.assert_not_called()
     apply_photo_mock.assert_not_called()
+    save_tokens_mock.assert_not_called()
+    update_contacts_mock.assert_not_called()
+
+
+def test_microsoft_token__photo_upload_fails__no_event(
+    mocker,
+    api_client,
+    settings,
+    fake_stream,
+):
+
+    """ The login is journalled after the rest of the sign in: a
+        callback that breaks on the way leaves no login behind. """
+
+    # arrange
+    settings.PROJECT_CONF = {**settings.PROJECT_CONF, 'MS_AUTH': True}
+    user = create_test_owner(email='sso@pneumatic.app')
+    user_data = UserData(
+        email=user.email,
+        first_name='',
+        last_name='',
+        company_name='',
+        photo=None,
+        job_title='',
+    )
+    microsoft_auth_service_init_mock = mocker.patch.object(
+        MicrosoftAuthService,
+        attribute='__init__',
+        return_value=None,
+    )
+    get_user_data_mock = mocker.patch(
+        'src.authentication.services.microsoft.'
+        'MicrosoftAuthService.get_user_data',
+        return_value=user_data,
+    )
+    get_auth_token_mock = mocker.patch(
+        'src.authentication.services.user_auth.'
+        'AuthService.get_auth_token',
+        return_value='sso-token',
+    )
+    apply_photo_mock = mocker.patch(
+        'src.authentication.services.microsoft.'
+        'MicrosoftAuthService.apply_photo_to_user',
+        side_effect=ConnectionError,
+    )
+    save_tokens_mock = mocker.patch(
+        'src.authentication.services.microsoft.'
+        'MicrosoftAuthService.save_tokens_for_user',
+    )
+    update_contacts_mock = mocker.patch(
+        'src.authentication.tasks.'
+        'update_microsoft_contacts.delay',
+    )
+    auth_response = {
+        'code': '0.Ab0Aa_jrV8Qkv...9UWtS972sufQ',
+        'client_info': 'eyJ1aWQi...0YjY2ZGFkIn0',
+        'state': 'KvpfgTSUmwtOaPny',
+        'session_state': '0d046a4b-061a-4de5-be04-472a06763149',
+    }
+
+    # act
+    with pytest.raises(ConnectionError):
+        api_client.get(
+            path='/auth/microsoft/token',
+            data=auth_response,
+            HTTP_USER_AGENT='Some/Mozilla',
+            HTTP_X_REAL_IP='128.18.0.99',
+        )
+
+    # assert
+    assert fake_stream.events == []
+    microsoft_auth_service_init_mock.assert_called_once_with()
+    get_user_data_mock.assert_called_once_with(auth_response=auth_response)
+    get_auth_token_mock.assert_called_once_with(
+        user=user,
+        user_agent='Some/Mozilla',
+        user_ip='128.18.0.99',
+    )
+    apply_photo_mock.assert_called_once_with(user, user_data)
     save_tokens_mock.assert_not_called()
     update_contacts_mock.assert_not_called()

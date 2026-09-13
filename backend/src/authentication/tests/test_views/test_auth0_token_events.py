@@ -5,18 +5,21 @@ from django.contrib.auth import get_user_model
 
 from src.accounts.enums import SourceType
 from src.authentication.enums import AuthTokenType
+from src.authentication.messages import MSG_AU_0009
 from src.authentication.services.auth0 import Auth0Service
+from src.authentication.services.exceptions import TokenInvalidOrExpired
 from src.generics.mixins.services import EncryptionMixin
-from src.logs.events.schema import Actor, EventObject
 from src.logs.events.enums import (
     ActorType,
     EventName,
     EventObjectType,
 )
+from src.logs.events.schema import Actor, EventObject
 from src.processes.tests.fixtures import (
     create_invited_user,
     create_test_owner,
 )
+from src.utils.validation import ErrorCode
 
 UserModel = get_user_model()
 
@@ -370,3 +373,57 @@ def test_auth0_token__invited_user__emit_user_login(
         source=SourceType.AUTH0,
     )
     identify_mock.assert_called_once_with(invited_user)
+
+
+def test_auth0_token__authenticate_failed__no_event(
+    mocker,
+    api_client,
+    identify_mock,
+    settings,
+    fake_stream,
+):
+
+    # arrange
+    settings.PROJECT_CONF = {**settings.PROJECT_CONF, 'SSO_AUTH': True}
+    auth0_service_init_mock = mocker.patch.object(
+        Auth0Service,
+        attribute='__init__',
+        return_value=None,
+    )
+    get_first_access_token_mock = mocker.patch(
+        'src.authentication.services.auth0.'
+        'Auth0Service._get_first_access_token',
+        side_effect=TokenInvalidOrExpired(),
+    )
+    get_user_profile_mock = mocker.patch(
+        'src.authentication.services.auth0.'
+        'Auth0Service._get_user_profile',
+    )
+    users_logged_in_mock = mocker.patch(
+        'src.authentication.services.base_sso.'
+        'AnalyticService.users_logged_in',
+    )
+    domain = 'dev-123456.auth0.com'
+    state = f'{uuid4()}{EncryptionMixin.encrypt(domain)}'
+    code = '0.Ab0Aa_jrV8Qkv...9UWtS972sufQ'
+
+    # act
+    response = api_client.get(
+        path='/auth/auth0/token',
+        data={
+            'code': code,
+            'state': state,
+        },
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == str(MSG_AU_0009)
+    assert response.data['details'] == {}
+    assert fake_stream.events == []
+    auth0_service_init_mock.assert_called_once_with(domain=domain)
+    get_first_access_token_mock.assert_called_once_with(code, state)
+    get_user_profile_mock.assert_not_called()
+    users_logged_in_mock.assert_not_called()
+    identify_mock.assert_not_called()

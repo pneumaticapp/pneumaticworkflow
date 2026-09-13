@@ -32,9 +32,9 @@ groups:
 
   # ---------------------------------------------------------------------
   # Sign-ins and file access. One minute is the shortest useful interval:
-  # the consumer ticks every 5 s (LOGS_CONSUMER_INTERVAL_SECONDS) and the
-  # collector batches for 2 s, so an event reaches Loki about 7 s after it
-  # happens.
+  # the consumer ticks every 5 s (CONSUMER_INTERVAL_SECONDS in
+  # backend/src/logs/enums.py) and the collector batches for 2 s, so an
+  # event reaches Loki about 7 s after it happens.
   # ---------------------------------------------------------------------
   - orgId: 1
     name: Security

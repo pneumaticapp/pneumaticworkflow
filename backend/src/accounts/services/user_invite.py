@@ -147,9 +147,9 @@ class UserInviteService(
         self,
         user: UserModel,
         invited_from: SourceType.LITERALS,
-    ) -> UserInvite:
+    ):
 
-        return UserInvite.objects.create(
+        UserInvite.objects.create(
             invited_user=user,
             account_id=self.account.id,  # TODO or another user acc ?
             email=user.email,
@@ -161,7 +161,6 @@ class UserInviteService(
         self,
         event_type: str,
         user: UserModel,
-        invite: Optional[UserInvite],
         is_transfer: bool,
     ) -> None:
 
@@ -169,15 +168,14 @@ class UserInviteService(
             another account: then the e-mail offers a transfer instead
             of a sign up.
 
-            A resend reads the invite of the user, and a row a
-            superuser deleted by hand leaves none: the event still
-            has to be written, with no object id. """
+            No object id: the id of an invite is the key that accepts
+            it, the accept endpoint asks for nothing else, and the
+            journal leaves the deployment. """
 
         self._publish(
             event_type,
             account_id=self.account.id,
             object_type=EventObjectType.INVITE,
-            object_id=str(invite.id) if invite else None,
             payload={
                 'target_email': user.email,
                 'invited_user_id': user.id,
@@ -314,7 +312,7 @@ class UserInviteService(
                 photo=photo,
                 password=another_account_user.password,
             )
-            invite = self._create_user_invite(
+            self._create_user_invite(
                 user=current_account_user,
                 invited_from=invited_from,
             )
@@ -324,7 +322,6 @@ class UserInviteService(
             self._publish_invite(
                 EventName.INVITE_CREATE,
                 user=current_account_user,
-                invite=invite,
                 is_transfer=True,
             )
             self._user_transfer_actions(
@@ -360,7 +357,7 @@ class UserInviteService(
                 last_name=last_name,
                 photo=photo,
             )
-            invite = self._create_user_invite(
+            self._create_user_invite(
                 user=user,
                 invited_from=invited_from,
             )
@@ -370,7 +367,6 @@ class UserInviteService(
             self._publish_invite(
                 EventName.INVITE_CREATE,
                 user=user,
-                invite=invite,
                 is_transfer=False,
             )
             if self.send_email:
@@ -448,7 +444,6 @@ class UserInviteService(
             self._publish_invite(
                 EventName.INVITE_RESEND,
                 user=user,
-                invite=user.invite,
                 is_transfer=another_account_user is not None,
             )
 
@@ -497,7 +492,6 @@ class UserInviteService(
                 EventName.INVITE_ACCEPT,
                 account_id=user.account_id,
                 object_type=EventObjectType.INVITE,
-                object_id=str(invite.id),
                 payload={'invited_by_id': invite.invited_by_id},
                 actor=Actor.from_user(user),
             )

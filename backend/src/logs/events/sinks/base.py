@@ -16,8 +16,6 @@ class BaseSink(ABC):
         through _handle_error(), so the consumer sees only
         SinkTemporaryError and SinkPermanentError. """
 
-    name = ''
-
     def send(self, records: List[Tuple[str, Event]]) -> None:
         if not records:
             return

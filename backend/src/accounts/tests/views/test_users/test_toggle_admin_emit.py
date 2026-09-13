@@ -166,3 +166,71 @@ def test_toggle_admin__api_request__event_keeps_request_context(
         account_id=owner.account_id,
         user_data=mocker.ANY,
     )
+
+
+def test_toggle_admin__not_admin__no_event(
+    mocker,
+    identify_mock,
+    api_client,
+    fake_stream,
+):
+
+    # arrange
+    account = create_test_account()
+    create_test_owner(account=account)
+    user = create_test_not_admin(account=account)
+    target = create_test_not_admin(
+        account=account,
+        email='target@test.test',
+    )
+    send_user_updated_mock = mocker.patch(
+        'src.accounts.services.user.send_user_updated_notification.delay',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(f'/accounts/users/{target.id}/toggle-admin')
+
+    # assert
+    assert response.status_code == 403
+    target.refresh_from_db()
+    assert target.is_admin is False
+    assert fake_stream.events == []
+    identify_mock.assert_not_called()
+    send_user_updated_mock.assert_not_called()
+
+
+def test_toggle_admin__user_of_another_account__no_event(
+    mocker,
+    identify_mock,
+    api_client,
+    fake_stream,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    other_account = create_test_account(name='Other')
+    create_test_owner(
+        account=other_account,
+        email='other_owner@test.test',
+    )
+    target = create_test_not_admin(
+        account=other_account,
+        email='target@test.test',
+    )
+    send_user_updated_mock = mocker.patch(
+        'src.accounts.services.user.send_user_updated_notification.delay',
+    )
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.post(f'/accounts/users/{target.id}/toggle-admin')
+
+    # assert
+    assert response.status_code == 404
+    target.refresh_from_db()
+    assert target.is_admin is False
+    assert fake_stream.events == []
+    identify_mock.assert_not_called()
+    send_user_updated_mock.assert_not_called()

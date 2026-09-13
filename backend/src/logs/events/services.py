@@ -1,11 +1,12 @@
 from hashlib import sha256
 from typing import Any, Dict, List, Optional, Union
 
-from src.logs.events.emitter import NO_ACCOUNT, emit
+from src.logs.events.emitter import NO_ACCOUNT, emit, logs_enabled
 from src.logs.events.enums import (
     ActorType,
     EventName,
     EventObjectType,
+    LoginFailedReason,
 )
 from src.logs.events.schema import Actor, EventObject
 
@@ -39,7 +40,7 @@ class AuditEventService:
         cls,
         event_type: str,
         request,
-        object_type: str,
+        object_type: EventObjectType.LITERALS,
         object_id: Optional[Union[int, str]] = None,
         payload: Optional[Dict[str, Any]] = None,
         workflow_id: Optional[int] = None,
@@ -76,19 +77,20 @@ class AuditEventService:
         cls,
         event_type: str,
         user,
-        source: str,
         request=None,
+        payload: Optional[Dict[str, Any]] = None,
     ) -> None:
 
-        """ A person signing in or signing up: the person is both the
-            actor and the object, and the source names the provider. """
+        """ A person acting on themselves without an authenticated
+            request: signing in, signing up, following a link from an
+            e-mail. The person is both the actor and the object. """
 
         emit(
             event_type,
             account_id=user.account_id,
             actor=Actor.from_user(user),
             event_object=cls._user_object(user),
-            payload={'source': source},
+            payload=payload,
             request=request,
         )
 
@@ -135,40 +137,25 @@ class AuditEventService:
         )
 
     @classmethod
-    def _fieldset_event(
+    def _named_object_event(
         cls,
         event_type: str,
         request,
-        fieldset_id: int,
-        name: str,
-        extra: Optional[Dict[str, Any]] = None,
-    ) -> None:
-        cls._request_event(
-            event_type,
-            request=request,
-            object_type=EventObjectType.FIELDSET,
-            object_id=fieldset_id,
-            payload={'name': name, **(extra or {})},
-        )
-
-    @classmethod
-    def _dataset_event(
-        cls,
-        event_type: str,
-        request,
-        dataset_id: int,
+        object_type: EventObjectType.LITERALS,
+        object_id: int,
         name: str,
         extra: Optional[Dict[str, Any]] = None,
     ) -> None:
 
-        """ Names and counts only: the values of the rows are the data
-            of the customer, and the dataset itself keeps them. """
+        """ A fieldset or a dataset: names and counts only, the values
+            of the fields and the rows are the data of the customer, and
+            the object itself keeps them. """
 
         cls._request_event(
             event_type,
             request=request,
-            object_type=EventObjectType.DATASET,
-            object_id=dataset_id,
+            object_type=object_type,
+            object_id=object_id,
             payload={'name': name, **(extra or {})},
         )
 
@@ -195,6 +182,8 @@ class AuditEventService:
         """ No text, neither the old nor the new one: a comment is the
             content of the customer, and the workflow event keeps it. """
 
+        if not logs_enabled():
+            return
         payload = {'workflow_name': comment.workflow.name}
         if comment.task is not None:
             payload['task_name'] = comment.task.name
@@ -216,6 +205,8 @@ class AuditEventService:
         checklist,
         selection_id: int,
     ) -> None:
+        if not logs_enabled():
+            return
         task = checklist.task
         cls._request_event(
             event_type,
@@ -255,8 +246,8 @@ class AuditEventService:
         cls._user_event(
             EventName.USER_LOGIN,
             user=user,
-            source=source,
             request=request,
+            payload={'source': source},
         )
 
     @classmethod
@@ -264,15 +255,15 @@ class AuditEventService:
         cls._user_event(
             EventName.USER_SIGNUP,
             user=user,
-            source=source,
             request=request,
+            payload={'source': source},
         )
 
     @classmethod
     def login_failed(
         cls,
         request,
-        reason: str,
+        reason: LoginFailedReason.LITERALS,
         email: Optional[str] = None,
     ) -> None:
 
@@ -313,21 +304,13 @@ class AuditEventService:
         )
 
     @classmethod
-    def superuser_logged_in_as(
-        cls,
-        request,
-        user,
-        reason: Optional[str],
-    ) -> None:
+    def superuser_logged_in_as(cls, request, user) -> None:
         emit(
             EventName.USER_LOGIN_AS,
             account_id=user.account_id,
             actor=cls._actor(request),
             event_object=cls._user_object(user),
-            payload={
-                'target_email': user.email,
-                'reason': reason,
-            },
+            payload={'target_email': user.email},
             request=request,
         )
 
@@ -378,11 +361,9 @@ class AuditEventService:
             carries no authentication: the link names the person, so
             the person is the actor. """
 
-        emit(
+        cls._user_event(
             EventName.USER_PASSWORD_RESET,
-            account_id=user.account_id,
-            actor=Actor.from_user(user),
-            event_object=cls._user_object(user),
+            user=user,
             request=request,
         )
 
@@ -450,13 +431,11 @@ class AuditEventService:
         """ The link in the e-mail names the person, and the request
             carries no authentication: the person is the actor. """
 
-        emit(
+        cls._user_event(
             EventName.USER_UNSUBSCRIBE,
-            account_id=user.account_id,
-            actor=Actor.from_user(user),
-            event_object=cls._user_object(user),
-            payload={'email_type': email_type},
+            user=user,
             request=request,
+            payload={'email_type': email_type},
         )
 
     @classmethod
@@ -525,14 +504,9 @@ class AuditEventService:
         cls,
         request,
         products: List[Dict[str, Any]],
-        checkout_required: bool,
     ) -> None:
 
-        """ checkout_required: no card on file, the user got a link to
-            the payment page and the subscription is not paid yet. The
-            link itself stays out, it opens that page for anybody.
-
-            The products are a mapping of the price code to the
+        """ The products are a mapping of the price code to the
             quantity, not a list of objects: normalize_payload turns a
             container nested that deep into one JSON string. A code sent
             twice is one key holding the sum, the way Stripe is asked
@@ -551,7 +525,6 @@ class AuditEventService:
             object_id=request.user.account_id,
             payload={
                 'products': quantity_by_code,
-                'checkout_required': checkout_required,
             },
         )
 
@@ -738,47 +711,52 @@ class AuditEventService:
 
     @classmethod
     def fieldset_created(cls, request, fieldset) -> None:
-        cls._fieldset_event(
+        cls._named_object_event(
             EventName.FIELDSET_CREATE,
             request=request,
-            fieldset_id=fieldset.id,
+            object_type=EventObjectType.FIELDSET,
+            object_id=fieldset.id,
             name=fieldset.name,
         )
 
     @classmethod
     def fieldset_updated(cls, request, fieldset) -> None:
-        cls._fieldset_event(
+        cls._named_object_event(
             EventName.FIELDSET_UPDATE,
             request=request,
-            fieldset_id=fieldset.id,
+            object_type=EventObjectType.FIELDSET,
+            object_id=fieldset.id,
             name=fieldset.name,
         )
 
     @classmethod
     def fieldset_cloned(cls, request, clone, source_fieldset_id: int) -> None:
-        cls._fieldset_event(
+        cls._named_object_event(
             EventName.FIELDSET_CLONE,
             request=request,
-            fieldset_id=clone.id,
+            object_type=EventObjectType.FIELDSET,
+            object_id=clone.id,
             name=clone.name,
             extra={'source_fieldset_id': source_fieldset_id},
         )
 
     @classmethod
     def fieldset_deleted(cls, request, fieldset) -> None:
-        cls._fieldset_event(
+        cls._named_object_event(
             EventName.FIELDSET_DELETE,
             request=request,
-            fieldset_id=fieldset.id,
+            object_type=EventObjectType.FIELDSET,
+            object_id=fieldset.id,
             name=fieldset.name,
         )
 
     @classmethod
     def dataset_created(cls, request, dataset, items_count: int) -> None:
-        cls._dataset_event(
+        cls._named_object_event(
             EventName.DATASET_CREATE,
             request=request,
-            dataset_id=dataset.id,
+            object_type=EventObjectType.DATASET,
+            object_id=dataset.id,
             name=dataset.name,
             extra={'items_count': items_count},
         )
@@ -790,20 +768,22 @@ class AuditEventService:
         dataset,
         changed_fields: List[str],
     ) -> None:
-        cls._dataset_event(
+        cls._named_object_event(
             EventName.DATASET_UPDATE,
             request=request,
-            dataset_id=dataset.id,
+            object_type=EventObjectType.DATASET,
+            object_id=dataset.id,
             name=dataset.name,
             extra={'changed_fields': changed_fields},
         )
 
     @classmethod
     def dataset_deleted(cls, request, dataset) -> None:
-        cls._dataset_event(
+        cls._named_object_event(
             EventName.DATASET_DELETE,
             request=request,
-            dataset_id=dataset.id,
+            object_type=EventObjectType.DATASET,
+            object_id=dataset.id,
             name=dataset.name,
         )
 
@@ -814,10 +794,11 @@ class AuditEventService:
         dataset,
         items_count: int,
     ) -> None:
-        cls._dataset_event(
+        cls._named_object_event(
             EventName.DATASET_ITEMS_ADD,
             request=request,
-            dataset_id=dataset.id,
+            object_type=EventObjectType.DATASET,
+            object_id=dataset.id,
             name=dataset.name,
             extra={'items_count': items_count},
         )
@@ -829,10 +810,11 @@ class AuditEventService:
         dataset,
         items_count: int,
     ) -> None:
-        cls._dataset_event(
+        cls._named_object_event(
             EventName.DATASET_ITEMS_REPLACE,
             request=request,
-            dataset_id=dataset.id,
+            object_type=EventObjectType.DATASET,
+            object_id=dataset.id,
             name=dataset.name,
             extra={'items_count': items_count},
         )

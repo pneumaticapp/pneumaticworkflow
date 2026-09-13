@@ -14,7 +14,7 @@ def test_report_error__first_call__sent_with_the_error_level(mocker):
     )
 
     # act
-    report_error('Something failed', {'error': 'boom'})
+    report_error(message='Something failed', data={'error': 'boom'})
 
     # assert
     capture_sentry_message_mock.assert_called_once_with(
@@ -38,8 +38,8 @@ def test_report_error__given_level__honoured(mocker):
 
     # act
     report_error(
-        'Something failed',
-        {'error': 'boom'},
+        message='Something failed',
+        data={'error': 'boom'},
         level=SentryLogLevel.WARNING,
     )
 
@@ -64,10 +64,10 @@ def test_report_error__same_message_within_the_interval__sent_once(
     capture_sentry_message_mock = mocker.patch(
         'src.logs.events.reporting.capture_sentry_message',
     )
-    report_error('Something failed', {'error': 'first'})
+    report_error(message='Something failed', data={'error': 'first'})
 
     # act
-    report_error('Something failed', {'error': 'second'})
+    report_error(message='Something failed', data={'error': 'second'})
 
     # assert
     capture_sentry_message_mock.assert_called_once_with(
@@ -92,12 +92,12 @@ def test_report_error__interval_passed__sent_again(mocker):
     capture_sentry_message_mock = mocker.patch(
         'src.logs.events.reporting.capture_sentry_message',
     )
-    report_error('Something failed', {'error': 'first'})
+    report_error(message='Something failed', data={'error': 'first'})
 
     # act
     report_error(
-        'Something failed',
-        {'error': 'second'},
+        message='Something failed',
+        data={'error': 'second'},
         level=SentryLogLevel.WARNING,
     )
 
@@ -132,10 +132,10 @@ def test_report_error__different_messages__each_sent(mocker):
     capture_sentry_message_mock = mocker.patch(
         'src.logs.events.reporting.capture_sentry_message',
     )
-    report_error('Stream failed', {'error': 'stream'})
+    report_error(message='Stream failed', data={'error': 'stream'})
 
     # act
-    report_error('Collector failed', {'error': 'collector'})
+    report_error(message='Collector failed', data={'error': 'collector'})
 
     # assert
     assert capture_sentry_message_mock.call_count == 2
@@ -166,9 +166,21 @@ def test_report_error__same_message_different_keys__each_sent(mocker):
     )
 
     # act
-    report_error('Unknown event type', {'event_type': 'a.b'}, key='a.b')
-    report_error('Unknown event type', {'event_type': 'c.d'}, key='c.d')
-    report_error('Unknown event type', {'event_type': 'a.b'}, key='a.b')
+    report_error(
+        message='Unknown event type',
+        data={'event_type': 'a.b'},
+        key='a.b',
+    )
+    report_error(
+        message='Unknown event type',
+        data={'event_type': 'c.d'},
+        key='c.d',
+    )
+    report_error(
+        message='Unknown event type',
+        data={'event_type': 'a.b'},
+        key='a.b',
+    )
 
     # assert
     assert capture_sentry_message_mock.call_count == 2

@@ -9,6 +9,7 @@ from django.contrib.admin.models import (
 )
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
+from django.forms import MultiWidget
 from django.urls import reverse
 from django.utils import timezone
 
@@ -17,7 +18,10 @@ from src.accounts.models import (
     APIKey,
     SystemMessage,
     UserGroup,
+    UserInvite,
 )
+from src.logs.enums import LogsBackend
+from src.logs.events.admin_site import publish_log_entry
 from src.logs.events.enums import (
     ActorType,
     EventCategory,
@@ -25,8 +29,8 @@ from src.logs.events.enums import (
     EventObjectType,
 )
 from src.logs.events.schema import Actor, EventObject
-from src.logs.events.tests.fakes import admin_form_data
 from src.processes.tests.fixtures import (
+    create_invited_user,
     create_test_account,
     create_test_admin,
     create_test_api_key,
@@ -674,7 +678,28 @@ def test_publish_log_entry__admin_change_form__is_admin_in_changed_fields(
         args=[user.id],
     )
     page = client.get(path=url)
-    data = admin_form_data(page)
+
+    # What a browser posts back without touching a field: every
+    # initial value in the format of its widget, the hidden initial
+    # inputs of date_joined and the management forms of the inlines.
+    form = page.context['adminform'].form
+    data = {}
+    for name, form_field in form.fields.items():
+        value = form.initial.get(name)
+        if isinstance(form_field.widget, MultiWidget):
+            parts = form_field.widget.decompress(value)
+            data[f'{name}_0'] = parts[0] or ''
+            data[f'{name}_1'] = parts[1] or ''
+        elif value is True:
+            data[name] = 'on'
+        elif value is not None and value is not False:
+            data[name] = value
+    data['initial-date_joined_0'] = data['date_joined_0']
+    data['initial-date_joined_1'] = data['date_joined_1']
+    for inline in page.context['inline_admin_formsets']:
+        management_form = inline.formset.management_form
+        for name, value in management_form.initial.items():
+            data[management_form.add_prefix(name)] = value
     del data['is_admin']
 
     # act
@@ -702,3 +727,84 @@ def test_publish_log_entry__admin_change_form__is_admin_in_changed_fields(
         'model': 'accounts.user',
         'changed_fields': ['is_admin'],
     }
+
+
+def test_publish_log_entry__user_invite__no_object_id(fake_stream):
+
+    """ The id of an invite is the key that accepts it: anybody who
+        reads the journal could join the account with it. """
+
+    # arrange
+    staff = create_test_owner()
+    client_account = create_test_account(name='Client')
+    admin = create_test_admin(account=client_account)
+    invited_user = create_invited_user(
+        user=admin,
+        email='invited@test.test',
+    )
+    invite = UserInvite.objects.get(invited_user=invited_user)
+
+    # act
+    LogEntry.objects.log_action(
+        user_id=staff.id,
+        content_type_id=ContentType.objects.get_for_model(
+            model=UserInvite,
+        ).pk,
+        object_id=invite.id,
+        object_repr='Invite',
+        action_flag=CHANGE,
+        change_message=json.dumps([{'changed': {'fields': ['status']}}]),
+    )
+
+    # assert
+    assert len(fake_stream.events) == 1
+    event = fake_stream.last_event()
+    assert event.type == EventName.ADMIN_UPDATE
+    assert event.account_id == client_account.id
+    assert event.actor == Actor(
+        type=ActorType.USER,
+        id=staff.id,
+        email=staff.email,
+    )
+    assert event.object == EventObject(
+        type=EventObjectType.INVITE,
+        id=None,
+    )
+    assert event.payload == {
+        'model': 'accounts.userinvite',
+        'changed_fields': ['status'],
+    }
+
+
+def test_publish_log_entry__logs_disabled__not_emitted(
+    mocker,
+    settings,
+    django_assert_num_queries,
+):
+
+    """ With the journal off the receiver reads nothing: the content
+        type, the edited row and the superuser each cost a query. """
+
+    # arrange
+    settings.LOGS_BACKEND = LogsBackend.NONE
+    emit_mock = mocker.patch('src.logs.events.admin_site.emit')
+    staff = create_test_owner()
+    client_account = create_test_account(name='Client')
+    user = create_test_admin(account=client_account)
+    entry = LogEntry.objects.log_action(
+        user_id=staff.id,
+        content_type_id=ContentType.objects.get_for_model(
+            model=UserModel,
+        ).pk,
+        object_id=user.id,
+        object_repr=str(user),
+        action_flag=CHANGE,
+        change_message=json.dumps([{'changed': {'fields': ['is_admin']}}]),
+    )
+
+    # act
+    with django_assert_num_queries(0):
+        publish_log_entry(sender=LogEntry, instance=entry, created=True)
+
+    # assert
+    emit_mock.assert_not_called()

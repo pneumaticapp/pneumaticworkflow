@@ -2,7 +2,7 @@
 
 import io
 from datetime import UTC, datetime
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import Mock
 
 import pytest
 
@@ -294,100 +294,60 @@ async def test_file_access_denied__foreign_account__file_account_in_payload(
     mock_request_events_now.assert_called_once_with()
 
 
-@pytest.mark.asyncio
-async def test_get_request_events__request__process_emitter(
+async def test_get_request_events__headers__context_from_the_request(
     mocker,
     make_context_request,
-    actor_user,
-    mock_request_events_now,
+    capturing_emitter,
 ):
+    """The dependency is where a request becomes the context of a
+    record: address, browser and correlation id come from it, the
+    writer is the one of the process."""
+
     # arrange
-    emitter_mock = AsyncMock()
     get_event_emitter_mock = mocker.patch(
         'src.shared_kernel.events.request_events.get_event_emitter',
-        return_value=emitter_mock,
+        return_value=capturing_emitter,
+    )
+    request_events_init_mock = mocker.patch.object(
+        RequestEvents,
+        '__init__',
+        return_value=None,
     )
     request = make_context_request(
         headers={'x-real-ip': '203.0.113.7', 'user-agent': 'Mozilla/5.0'},
         request_id='req-1',
     )
-    command = UploadFileCommand(
-        file_stream=io.BytesIO(b''),
-        filename='a.txt',
-        content_type='text/plain',
-        size=0,
-        user_id=17,
-        account_id=42,
-    )
 
     # act
-    events = await get_request_events(request)
-    await events.file_upload(user=actor_user, file_id=FILE_ID, file=command)
+    events = await get_request_events(request=request)
 
     # assert
     assert isinstance(events, RequestEvents)
     get_event_emitter_mock.assert_called_once_with()
-    emitter_mock.emit.assert_awaited_once_with(
-        Event(
-            type=EventName.FILE_UPLOAD,
-            service=SERVICE_NAME,
-            ts=datetime(2026, 9, 9, 12, 0, 0, 123, tzinfo=UTC),
-            account_id=42,
-            actor=Actor(type=ActorType.USER, id=17),
-            file_id=FILE_ID,
-            context=RequestContext(
-                ip='203.0.113.7',
-                user_agent='Mozilla/5.0',
-                request_id='req-1',
-            ),
-            payload={
-                'filename': 'a.txt',
-                'size': 0,
-                'content_type': 'text/plain',
-            },
+    request_events_init_mock.assert_called_once_with(
+        emitter=capturing_emitter,
+        context=RequestContext(
+            ip='203.0.113.7',
+            user_agent='Mozilla/5.0',
+            request_id='req-1',
         ),
-    )
-    mock_request_events_now.assert_called_once_with()
-
-
-async def test_get_request_events__headers__context_from_the_request(
-    mocker,
-    make_context_request,
-):
-    """The dependency is where a request becomes the context of a
-    record: address, browser and correlation id come from it."""
-
-    # arrange
-    emitter_mock = AsyncMock()
-    mocker.patch(
-        'src.shared_kernel.events.request_events.get_event_emitter',
-        return_value=emitter_mock,
-    )
-    request = make_context_request(
-        headers={'x-real-ip': '203.0.113.7', 'user-agent': 'Mozilla/5.0'},
-        request_id='req-1',
-    )
-
-    # act
-    events = await get_request_events(request)
-
-    # assert
-    assert events._context == RequestContext(
-        ip='203.0.113.7',
-        user_agent='Mozilla/5.0',
-        request_id='req-1',
     )
 
 
 async def test_get_request_events__no_user_agent__none_in_the_context(
     mocker,
     make_context_request,
+    capturing_emitter,
 ):
     # arrange
-    emitter_mock = AsyncMock()
-    mocker.patch(
+    get_event_emitter_mock = mocker.patch(
         'src.shared_kernel.events.request_events.get_event_emitter',
-        return_value=emitter_mock,
+        return_value=capturing_emitter,
+    )
+    request_events_init_mock = mocker.patch.object(
+        RequestEvents,
+        '__init__',
+        return_value=None,
     )
     request = make_context_request(
         headers={'x-real-ip': '203.0.113.7'},
@@ -395,29 +355,49 @@ async def test_get_request_events__no_user_agent__none_in_the_context(
     )
 
     # act
-    events = await get_request_events(request)
+    await get_request_events(request=request)
 
     # assert
-    assert events._context.user_agent is None
-    assert events._context.ip == '203.0.113.7'
+    get_event_emitter_mock.assert_called_once_with()
+    request_events_init_mock.assert_called_once_with(
+        emitter=capturing_emitter,
+        context=RequestContext(
+            ip='203.0.113.7',
+            user_agent=None,
+            request_id='req-1',
+        ),
+    )
 
 
 async def test_get_request_events__no_client__fallback_address(
     mocker,
     make_context_request,
+    capturing_emitter,
 ):
     """No header and no socket: the record still carries an address."""
 
     # arrange
-    emitter_mock = AsyncMock()
-    mocker.patch(
+    get_event_emitter_mock = mocker.patch(
         'src.shared_kernel.events.request_events.get_event_emitter',
-        return_value=emitter_mock,
+        return_value=capturing_emitter,
+    )
+    request_events_init_mock = mocker.patch.object(
+        RequestEvents,
+        '__init__',
+        return_value=None,
     )
     request = make_context_request(has_client=False, request_id='req-1')
 
     # act
-    events = await get_request_events(request)
+    await get_request_events(request=request)
 
     # assert
-    assert events._context.ip == FALLBACK_IP
+    get_event_emitter_mock.assert_called_once_with()
+    request_events_init_mock.assert_called_once_with(
+        emitter=capturing_emitter,
+        context=RequestContext(
+            ip=FALLBACK_IP,
+            user_agent=None,
+            request_id='req-1',
+        ),
+    )

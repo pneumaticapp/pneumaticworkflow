@@ -31,9 +31,10 @@ def test_logout_user__user_found__emit_system_logout(
     account = create_test_account()
     user = create_test_admin(account=account)
     okta_sub = '00uid4BxXw6I6TV4m0g3'
-    caches_mock = mocker.patch(
+    cache_mock = mocker.Mock()
+    mocker.patch(
         'src.authentication.services.okta_logout.caches',
-        new={'default': mocker.Mock()},
+        new={'default': cache_mock},
     )
     expire_all_tokens_mock = mocker.patch(
         'src.authentication.services.okta_logout.'
@@ -63,7 +64,7 @@ def test_logout_user__user_found__emit_system_logout(
         'reason': LogoutReason.IDENTITY_PROVIDER,
     }
     assert event.pii == ()
-    caches_mock['default'].delete.assert_called_once_with(
+    cache_mock.delete.assert_called_once_with(
         f'okta_sub_to_user_{okta_sub}',
     )
     expire_all_tokens_mock.assert_called_once_with(user)
@@ -77,9 +78,10 @@ def test_logout_user__expire_tokens_failed__no_event(
     # arrange
     user = create_test_admin()
     okta_sub = '00uid4BxXw6I6TV4m0g3'
-    caches_mock = mocker.patch(
+    cache_mock = mocker.Mock()
+    mocker.patch(
         'src.authentication.services.okta_logout.caches',
-        new={'default': mocker.Mock()},
+        new={'default': cache_mock},
     )
     expire_all_tokens_mock = mocker.patch(
         'src.authentication.services.okta_logout.'
@@ -98,7 +100,7 @@ def test_logout_user__expire_tokens_failed__no_event(
     # assert
     assert str(ex.value) == 'broken'
     assert fake_stream.events == []
-    caches_mock['default'].delete.assert_called_once_with(
+    cache_mock.delete.assert_called_once_with(
         f'okta_sub_to_user_{okta_sub}',
     )
     expire_all_tokens_mock.assert_called_once_with(user)

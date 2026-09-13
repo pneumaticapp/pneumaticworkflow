@@ -24,11 +24,14 @@ def test_actor_type_from_auth__known_token__expected_actor(
     actor_type,
 ):
 
+    # arrange
+    expected = actor_type
+
     # act
-    result = actor_type_from_auth(auth_type)
+    result = actor_type_from_auth(auth_type=auth_type)
 
     # assert
-    assert result == actor_type
+    assert result == expected
 
 
 def test_actor_type_from_auth__no_token__system():
@@ -36,8 +39,11 @@ def test_actor_type_from_auth__no_token__system():
     """ Celery, a management command and any other call outside a
         request have no token type at all. """
 
+    # arrange
+    auth_type = None
+
     # act
-    result = actor_type_from_auth(None)
+    result = actor_type_from_auth(auth_type=auth_type)
 
     # assert
     assert result == ActorType.SYSTEM
@@ -45,8 +51,11 @@ def test_actor_type_from_auth__no_token__system():
 
 def test_actor_type_from_auth__empty_token__system():
 
+    # arrange
+    auth_type = ''
+
     # act
-    result = actor_type_from_auth('')
+    result = actor_type_from_auth(auth_type=auth_type)
 
     # assert
     assert result == ActorType.SYSTEM
@@ -57,8 +66,11 @@ def test_actor_type_from_auth__unknown_token__system():
     """ A new authentication type must not invent an actor type: an
         auditor reads "system" and looks for the source elsewhere. """
 
+    # arrange
+    auth_type = 'Something'
+
     # act
-    result = actor_type_from_auth('Something')
+    result = actor_type_from_auth(auth_type=auth_type)
 
     # assert
     assert result == ActorType.SYSTEM

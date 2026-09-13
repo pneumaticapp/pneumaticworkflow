@@ -18,7 +18,7 @@ def test_call__request_id_header__reused(request_factory, mocker):
     middleware = EventContextMiddleware(lambda inner: HttpResponse())
 
     # act
-    response = middleware(request)
+    response = middleware(request=request)
 
     # assert
     assert request.request_id == 'abc'
@@ -38,7 +38,7 @@ def test_call__no_request_id__uuid_generated(request_factory, mocker):
     middleware = EventContextMiddleware(lambda inner: HttpResponse())
 
     # act
-    response = middleware(request)
+    response = middleware(request=request)
 
     # assert
     assert request.request_id == generated.hex
@@ -49,6 +49,8 @@ def test_call__no_request_id__uuid_generated(request_factory, mocker):
 def test_call__two_requests__different_ids(request_factory, mocker):
 
     # arrange
+    first_request = request_factory.get('/')
+    second_request = request_factory.get('/')
     first_uuid = UUID('11111111111111111111111111111111')
     second_uuid = UUID('22222222222222222222222222222222')
     uuid4_mock = mocker.patch(
@@ -58,8 +60,8 @@ def test_call__two_requests__different_ids(request_factory, mocker):
     middleware = EventContextMiddleware(lambda inner: HttpResponse())
 
     # act
-    first = middleware(request_factory.get('/'))
-    second = middleware(request_factory.get('/'))
+    first = middleware(request=first_request)
+    second = middleware(request=second_request)
 
     # assert
     assert first[REQUEST_ID_HEADER] == first_uuid.hex
@@ -86,7 +88,7 @@ def test_call__unsafe_request_id__generated_instead(
     middleware = EventContextMiddleware(lambda inner: HttpResponse())
 
     # act
-    response = middleware(request)
+    response = middleware(request=request)
 
     # assert
     assert response[REQUEST_ID_HEADER] == generated.hex
@@ -108,7 +110,7 @@ def test_call__request_id_with_a_new_line__generated_instead(
     middleware = EventContextMiddleware(lambda inner: HttpResponse())
 
     # act
-    response = middleware(request)
+    response = middleware(request=request)
 
     # assert
     assert response[REQUEST_ID_HEADER] == generated.hex
@@ -126,7 +128,7 @@ def test_request_id__sixty_four_characters__accepted(
     uuid4_mock = mocker.patch('src.logs.events.middleware.uuid4')
 
     # act
-    request_id = EventContextMiddleware._request_id(request)
+    request_id = EventContextMiddleware._request_id(request=request)
 
     # assert
     assert request_id == given
@@ -147,7 +149,7 @@ def test_request_id__sixty_five_characters__generated_instead(
     )
 
     # act
-    request_id = EventContextMiddleware._request_id(request)
+    request_id = EventContextMiddleware._request_id(request=request)
 
     # assert
     assert request_id == generated.hex
@@ -172,7 +174,7 @@ def test_request_id__trailing_new_line__generated_instead(
     )
 
     # act
-    request_id = EventContextMiddleware._request_id(request)
+    request_id = EventContextMiddleware._request_id(request=request)
 
     # assert
     assert request_id == generated.hex
@@ -187,13 +189,17 @@ def test_process_response__no_request_id__no_header(request_factory):
 
     # arrange
     request = request_factory.get('/')
+    response = HttpResponse()
     middleware = EventContextMiddleware(lambda inner: HttpResponse())
 
     # act
-    response = middleware.process_response(request, HttpResponse())
+    result = middleware.process_response(
+        request=request,
+        response=response,
+    )
 
     # assert
-    assert response.has_header(REQUEST_ID_HEADER) is False
+    assert result.has_header(REQUEST_ID_HEADER) is False
     assert get_context() is None
 
 
@@ -219,7 +225,7 @@ def test_call__inside_the_view__context_available(
     middleware = EventContextMiddleware(view)
 
     # act
-    middleware(request)
+    middleware(request=request)
 
     # assert
     assert captured['context'].ip == '1.2.3.4'
@@ -244,7 +250,7 @@ def test_call__view_exception__context_reset(request_factory, mocker):
 
     # act
     with pytest.raises(ValueError) as ex:
-        middleware(request)
+        middleware(request=request)
 
     # assert
     assert str(ex.value) == 'boom'
@@ -252,13 +258,47 @@ def test_call__view_exception__context_reset(request_factory, mocker):
     uuid4_mock.assert_not_called()
 
 
+def test_call__context_build_failed__original_error_raised(
+    request_factory,
+    mocker,
+):
+
+    """ process_request raised before the token was stored: the reset
+        finds no token and lets the original error out instead of
+        hiding it under one of its own. """
+
+    # arrange
+    request = request_factory.get('/', HTTP_X_REQUEST_ID='abc')
+    context_from_request_mock = mocker.patch(
+        'src.logs.events.middleware.context_from_request',
+        side_effect=ValueError('boom'),
+    )
+    uuid4_mock = mocker.patch('src.logs.events.middleware.uuid4')
+    get_response_mock = mocker.Mock()
+    middleware = EventContextMiddleware(get_response_mock)
+
+    # act
+    with pytest.raises(ValueError) as ex:
+        middleware(request=request)
+
+    # assert
+    assert str(ex.value) == 'boom'
+    assert get_context() is None
+    context_from_request_mock.assert_called_once_with(request)
+    get_response_mock.assert_not_called()
+    uuid4_mock.assert_not_called()
+
+
 @pytest.mark.django_db
 def test_call__installed_in_the_project__request_id_in_response(api_client):
+
+    # arrange
+    request_id = 'abc'
 
     # act
     response = api_client.get(
         '/accounts/users/privileges',
-        HTTP_X_REQUEST_ID='abc',
+        HTTP_X_REQUEST_ID=request_id,
         HTTP_X_REAL_IP='1.2.3.4',
     )
 
@@ -287,7 +327,7 @@ def test_request_id__allowed_punctuation__reused(
     middleware = EventContextMiddleware(lambda inner: HttpResponse())
 
     # act
-    response = middleware(request)
+    response = middleware(request=request)
 
     # assert
     assert request.request_id == given

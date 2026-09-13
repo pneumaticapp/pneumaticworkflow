@@ -9,16 +9,19 @@ from src.logs.events.schema import (
     PAYLOAD_STR_MAX,
     REDACTED_VALUE,
     normalize_payload,
-    without_query,
+    without_url_secrets,
 )
-from src.logs.events.tests.fakes import EVENT_TS
+from src.logs.events.tests.fixtures import EVENT_TS
 from src.utils.logging import SentryLogLevel
 
 
 def test_normalize_payload__none__empty_dict():
 
+    # arrange
+    payload = None
+
     # act
-    result = normalize_payload(None)
+    result = normalize_payload(payload=payload)
 
     # assert
     assert result == {}
@@ -26,8 +29,11 @@ def test_normalize_payload__none__empty_dict():
 
 def test_normalize_payload__empty_dict__empty_dict():
 
+    # arrange
+    payload = {}
+
     # act
-    result = normalize_payload({})
+    result = normalize_payload(payload=payload)
 
     # assert
     assert result == {}
@@ -74,7 +80,7 @@ def test_normalize_payload__secret_key__value_redacted(key):
     payload = {key: 'super-secret-value'}
 
     # act
-    result = normalize_payload(payload)
+    result = normalize_payload(payload=payload)
 
     # assert
     assert result == {key: REDACTED_VALUE}
@@ -99,7 +105,7 @@ def test_normalize_payload__lookalike_key__value_kept(key):
     payload = {key: 'plain-value'}
 
     # act
-    result = normalize_payload(payload)
+    result = normalize_payload(payload=payload)
 
     # assert
     assert result == {key: 'plain-value'}
@@ -111,7 +117,7 @@ def test_normalize_payload__harmless_keys__kept():
     payload = {'name': 'Ann', 'template_id': 12, 'with_attachments': True}
 
     # act
-    result = normalize_payload(payload)
+    result = normalize_payload(payload=payload)
 
     # assert
     assert result == {
@@ -129,7 +135,7 @@ def test_normalize_payload__secret_in_a_nested_dict__value_redacted():
     }
 
     # act
-    result = normalize_payload(payload)
+    result = normalize_payload(payload=payload)
 
     # assert
     assert result == {
@@ -145,7 +151,7 @@ def test_normalize_payload__url_with_query__query_dropped():
     payload = {'url': 'https://api.test/v1/hook?access_token=abc&x=1'}
 
     # act
-    result = normalize_payload(payload)
+    result = normalize_payload(payload=payload)
 
     # assert
     assert result == {'url': 'https://api.test/v1/hook'}
@@ -157,10 +163,87 @@ def test_normalize_payload__url_with_fragment__fragment_kept():
     payload = {'url': 'https://api.test/v1?token=abc#part'}
 
     # act
-    result = normalize_payload(payload)
+    result = normalize_payload(payload=payload)
 
     # assert
     assert result == {'url': 'https://api.test/v1#part'}
+
+
+def test_normalize_payload__url_with_userinfo__credential_dropped():
+
+    """ A password rides in the authority of a webhook url as often
+        as a token rides in its query. """
+
+    # arrange
+    payload = {'url': 'https://user:pass@hooks.test/hook'}
+
+    # act
+    result = normalize_payload(payload=payload)
+
+    # assert
+    assert result == {'url': 'https://hooks.test/hook'}
+
+
+def test_normalize_payload__url_with_userinfo_and_port__port_kept():
+
+    # arrange
+    payload = {'url': 'https://user:pass@hooks.test:8443/hook'}
+
+    # act
+    result = normalize_payload(payload=payload)
+
+    # assert
+    assert result == {'url': 'https://hooks.test:8443/hook'}
+
+
+def test_normalize_payload__url_with_userinfo_and_query__both_dropped():
+
+    # arrange
+    payload = {'url': 'https://user:pass@hooks.test/hook?token=abc'}
+
+    # act
+    result = normalize_payload(payload=payload)
+
+    # assert
+    assert result == {'url': 'https://hooks.test/hook'}
+
+
+def test_normalize_payload__url_without_userinfo__kept_as_is():
+
+    # arrange
+    payload = {'url': 'https://hooks.test:8443/hook'}
+
+    # act
+    result = normalize_payload(payload=payload)
+
+    # assert
+    assert result == {'url': 'https://hooks.test:8443/hook'}
+
+
+def test_normalize_payload__at_sign_in_url_path__kept_as_is():
+
+    # arrange
+    payload = {'url': 'https://blog.test/@ann'}
+
+    # act
+    result = normalize_payload(payload=payload)
+
+    # assert
+    assert result == {'url': 'https://blog.test/@ann'}
+
+
+def test_normalize_payload__email_address__kept_as_is():
+
+    """ An address is not a url: its at sign is no credential. """
+
+    # arrange
+    payload = {'email': 'ann@test.test'}
+
+    # act
+    result = normalize_payload(payload=payload)
+
+    # assert
+    assert result == {'email': 'ann@test.test'}
 
 
 def test_normalize_payload__question_mark_in_plain_text__kept():
@@ -169,7 +252,7 @@ def test_normalize_payload__question_mark_in_plain_text__kept():
     payload = {'name': 'Is it done?'}
 
     # act
-    result = normalize_payload(payload)
+    result = normalize_payload(payload=payload)
 
     # assert
     assert result == {'name': 'Is it done?'}
@@ -184,7 +267,7 @@ def test_normalize_payload__unparsable_url__kept_as_is():
     payload = {'url': 'http://[oops?token=abc'}
 
     # act
-    result = normalize_payload(payload)
+    result = normalize_payload(payload=payload)
 
     # assert
     assert result == {'url': 'http://[oops?token=abc'}
@@ -196,7 +279,7 @@ def test_normalize_payload__secret_in_a_too_deep_url__query_dropped():
     payload = {'a': {'b': {'url': 'https://api.test/v1?token=abc'}}}
 
     # act
-    result = normalize_payload(payload)
+    result = normalize_payload(payload=payload)
 
     # assert
     assert result == {'a': {'b': '{"url": "https://api.test/v1"}'}}
@@ -214,7 +297,7 @@ def test_normalize_payload__django_types__serialized():
     }
 
     # act
-    result = normalize_payload(payload)
+    result = normalize_payload(payload=payload)
 
     # assert
     assert result == {
@@ -231,7 +314,7 @@ def test_normalize_payload__long_string__trimmed():
     payload = {'name': 'x' * (PAYLOAD_STR_MAX + 100)}
 
     # act
-    result = normalize_payload(payload)
+    result = normalize_payload(payload=payload)
 
     # assert
     assert result == {'name': 'x' * PAYLOAD_STR_MAX}
@@ -243,7 +326,7 @@ def test_normalize_payload__too_deep_value__json_string():
     payload = {'a': {'b': {'c': 1}}, 'list': [[1, 2]]}
 
     # act
-    result = normalize_payload(payload)
+    result = normalize_payload(payload=payload)
 
     # assert
     assert result == {'a': {'b': '{"c": 1}'}, 'list': ['[1, 2]']}
@@ -258,7 +341,7 @@ def test_normalize_payload__unknown_type__string():
     payload = {'obj': range(3)}
 
     # act
-    result = normalize_payload(payload)
+    result = normalize_payload(payload=payload)
 
     # assert
     assert result == {'obj': 'range(0, 3)'}
@@ -275,7 +358,7 @@ def test_normalize_payload__unencodable_value_too_deep__string():
     payload = {'a': {'b': {'obj': range(3)}}}
 
     # act
-    result = normalize_payload(payload)
+    result = normalize_payload(payload=payload)
 
     # assert
     assert result == {'a': {'b': '{"obj": "range(0, 3)"}'}}
@@ -291,7 +374,7 @@ def test_normalize_payload__nesting_below_the_limit__collapsed_whole():
     payload = {'a': {'b': {'c': {'d': 1}}}, 'list': {'x': [[1, 2]]}}
 
     # act
-    result = normalize_payload(payload)
+    result = normalize_payload(payload=payload)
 
     # assert
     assert result == {
@@ -309,7 +392,7 @@ def test_normalize_payload__secret_below_the_limit__value_redacted():
     payload = {'a': {'b': {'auth': {'token': 'secret-value'}}}}
 
     # act
-    result = normalize_payload(payload)
+    result = normalize_payload(payload=payload)
 
     # assert
     assert result == {'a': {'b': '{"auth": {"token": "[redacted]"}}'}}
@@ -325,7 +408,7 @@ def test_normalize_payload__too_deep_long_string__string_cut():
     payload = {'a': {'b': {'text': 'y' * (PAYLOAD_STR_MAX + 100)}}}
 
     # act
-    result = normalize_payload(payload)
+    result = normalize_payload(payload=payload)
 
     # assert
     assert json.loads(result['a']['b']) == {
@@ -348,13 +431,13 @@ def test_normalize_payload__oversized__replaced_by_size_marker(mocker):
     )
 
     # act
-    result = normalize_payload(payload)
+    result = normalize_payload(payload=payload)
 
     # assert
     assert result == {'_truncated': True, '_size': 40550}
     report_error_mock.assert_called_once_with(
-        'Event payload dropped: over the size limit',
-        {'size': 40550, 'limit': PAYLOAD_MAX_BYTES},
+        message='Event payload dropped: over the size limit',
+        data={'size': 40550, 'limit': PAYLOAD_MAX_BYTES},
         level=SentryLogLevel.WARNING,
     )
 
@@ -374,7 +457,7 @@ def test_normalize_payload__at_the_size_limit__kept(mocker):
     )
 
     # act
-    result = normalize_payload(payload)
+    result = normalize_payload(payload=payload)
 
     # assert
     assert result == payload
@@ -382,14 +465,17 @@ def test_normalize_payload__at_the_size_limit__kept(mocker):
     report_error_mock.assert_not_called()
 
 
-def test_without_query__relative_url__kept_as_it_is():
+def test_without_url_secrets__relative_url__kept_as_it_is():
 
     """ Only an absolute url is a url: a path with a query string is
         a plain string to the normalizer, and a caller that puts a
         token there has to cut it itself. """
 
+    # arrange
+    value = '/hook?token=x'
+
     # act
-    result = without_query('/hook?token=x')
+    result = without_url_secrets(value=value)
 
     # assert
     assert result == '/hook?token=x'

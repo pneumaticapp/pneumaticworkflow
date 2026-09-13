@@ -209,7 +209,7 @@ def test_complete_authentication__token_fails__no_login_published(mocker):
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    mocker.patch.object(
+    auth0_service_init_mock = mocker.patch.object(
         Auth0Service,
         attribute='__init__',
         return_value=None,
@@ -222,27 +222,34 @@ def test_complete_authentication__token_fails__no_login_published(mocker):
         Auth0Service,
         attribute='save_tokens_for_user',
     )
+    users_logged_in_mock = mocker.patch(
+        'src.authentication.services.base_sso.AnalyticService'
+        '.users_logged_in',
+    )
     user_logged_in_mock = mocker.patch(
         'src.authentication.services.base_sso.AuditEventService'
         '.user_logged_in',
     )
     service = Auth0Service()
+    user_data = {'email': user.email}
 
     # act
     with pytest.raises(ConnectionError):
         service._complete_authentication(
-            user_data={'email': user.email},
+            user_data=user_data,
             user_agent='Mozilla/5.0',
             user_ip='10.0.0.1',
         )
 
     # assert
+    auth0_service_init_mock.assert_called_once_with()
     get_auth_token_mock.assert_called_once_with(
         user=user,
         user_agent='Mozilla/5.0',
         user_ip='10.0.0.1',
     )
     save_tokens_for_user_mock.assert_not_called()
+    users_logged_in_mock.assert_not_called()
     user_logged_in_mock.assert_not_called()
 
 
@@ -253,12 +260,12 @@ def test_complete_authentication__save_tokens_fails__no_login_published(
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    mocker.patch.object(
+    auth0_service_init_mock = mocker.patch.object(
         Auth0Service,
         attribute='__init__',
         return_value=None,
     )
-    mocker.patch(
+    get_auth_token_mock = mocker.patch(
         'src.authentication.services.user_auth.AuthService.get_auth_token',
         return_value='token',
     )
@@ -267,20 +274,92 @@ def test_complete_authentication__save_tokens_fails__no_login_published(
         attribute='save_tokens_for_user',
         side_effect=ConnectionError,
     )
+    users_logged_in_mock = mocker.patch(
+        'src.authentication.services.base_sso.AnalyticService'
+        '.users_logged_in',
+    )
     user_logged_in_mock = mocker.patch(
         'src.authentication.services.base_sso.AuditEventService'
         '.user_logged_in',
     )
     service = Auth0Service()
+    user_data = {'email': user.email}
 
     # act
     with pytest.raises(ConnectionError):
         service._complete_authentication(
-            user_data={'email': user.email},
+            user_data=user_data,
             user_agent='Mozilla/5.0',
             user_ip='10.0.0.1',
         )
 
     # assert
+    auth0_service_init_mock.assert_called_once_with()
+    get_auth_token_mock.assert_called_once_with(
+        user=user,
+        user_agent='Mozilla/5.0',
+        user_ip='10.0.0.1',
+    )
     save_tokens_for_user_mock.assert_called_once_with(user)
+    users_logged_in_mock.assert_not_called()
+    user_logged_in_mock.assert_not_called()
+
+
+def test_complete_authentication__analytics_fails__no_login_published(
+    mocker,
+):
+
+    """ The login is journalled after the rest of the sign in, the
+        analytics included: a failure on the way leaves no login. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    auth0_service_init_mock = mocker.patch.object(
+        Auth0Service,
+        attribute='__init__',
+        return_value=None,
+    )
+    get_auth_token_mock = mocker.patch(
+        'src.authentication.services.user_auth.AuthService.get_auth_token',
+        return_value='token',
+    )
+    save_tokens_for_user_mock = mocker.patch.object(
+        Auth0Service,
+        attribute='save_tokens_for_user',
+    )
+    users_logged_in_mock = mocker.patch(
+        'src.authentication.services.base_sso.AnalyticService'
+        '.users_logged_in',
+        side_effect=ConnectionError,
+    )
+    user_logged_in_mock = mocker.patch(
+        'src.authentication.services.base_sso.AuditEventService'
+        '.user_logged_in',
+    )
+    service = Auth0Service()
+    user_data = {'email': user.email}
+
+    # act
+    with pytest.raises(ConnectionError):
+        service._complete_authentication(
+            user_data=user_data,
+            user_agent='Mozilla/5.0',
+            user_ip='10.0.0.1',
+        )
+
+    # assert
+    auth0_service_init_mock.assert_called_once_with()
+    get_auth_token_mock.assert_called_once_with(
+        user=user,
+        user_agent='Mozilla/5.0',
+        user_ip='10.0.0.1',
+    )
+    save_tokens_for_user_mock.assert_called_once_with(user)
+    users_logged_in_mock.assert_called_once_with(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+        source=SourceType.AUTH0,
+    )
     user_logged_in_mock.assert_not_called()

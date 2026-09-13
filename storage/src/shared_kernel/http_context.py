@@ -1,8 +1,7 @@
 """What a request says about its client: address, agent, correlation id.
 
-Read by the middleware (request id, rate limit) and by the audit
-journal. It lives outside both so that neither depends on the other:
-the rate limiter has no business importing the journal.
+Read by the request id middleware and by the audit journal. It lives
+outside both so that neither depends on the other.
 """
 
 import ipaddress

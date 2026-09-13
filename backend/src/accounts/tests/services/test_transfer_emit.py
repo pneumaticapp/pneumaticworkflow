@@ -1,5 +1,7 @@
 import pytest
 
+from src.accounts.services.reassign import ReassignService
+from src.accounts.services.user import UserService
 from src.accounts.services.user_transfer import UserTransferService
 from src.accounts.tokens import TransferToken
 from src.logs.events.enums import (
@@ -12,6 +14,7 @@ from src.logs.events.schema import Actor, EventObject
 from src.processes.tests.fixtures import (
     create_invited_user,
     create_test_account,
+    create_test_admin,
     create_test_owner,
 )
 
@@ -156,3 +159,52 @@ def test_accept_transfer__activation_failed__no_event(
     get_valid_prev_user_mock.assert_called_once_with()
     deactivate_prev_user_mock.assert_called_once_with()
     activate_user_mock.assert_called_once_with()
+
+
+def test_deactivate_prev_user__user_left__reassign_actor_prev_user(mocker):
+
+    """ The reassignment happens in the account the person leaves, and
+        there they are the previous user: a vacation it switches off is
+        journalled as their doing. """
+
+    # arrange
+    prev_account = create_test_account(name='prev')
+    prev_owner = create_test_owner(account=prev_account)
+    prev_user = create_test_admin(
+        account=prev_account,
+        email='transferred@test.test',
+    )
+    reassign_service_init_mock = mocker.patch.object(
+        ReassignService,
+        attribute='__init__',
+        return_value=None,
+    )
+    reassign_everywhere_mock = mocker.patch.object(
+        ReassignService,
+        attribute='reassign_everywhere',
+    )
+    remove_user_from_draft_mock = mocker.patch(
+        'src.accounts.services.user_transfer.remove_user_from_draft',
+    )
+    deactivate_mock = mocker.patch.object(
+        UserService,
+        attribute='deactivate',
+    )
+    service = UserTransferService()
+    service.prev_user = prev_user
+
+    # act
+    service._deactivate_prev_user()
+
+    # assert
+    reassign_service_init_mock.assert_called_once_with(
+        old_user=prev_user,
+        new_user=prev_owner,
+        request_user=prev_user,
+    )
+    reassign_everywhere_mock.assert_called_once_with()
+    remove_user_from_draft_mock.assert_called_once_with(
+        account_id=prev_account.id,
+        user_id=prev_user.id,
+    )
+    deactivate_mock.assert_called_once_with(skip_validation=True)

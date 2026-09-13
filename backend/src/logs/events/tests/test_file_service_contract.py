@@ -14,15 +14,10 @@ from typing_extensions import get_args
 from src.logs.events.enums import ActorType, EventCategory, EventName
 from src.logs.events.registry import resolve_event_type
 from src.logs.events.schema import Event
-from src.logs.events.tests.fakes import (
-    FILE_SERVICE_FILE_ID,
-    FILE_SERVICE_NAME,
-    build_sample_payload,
+from src.logs.events.sinks.otlp_payload import build_otlp_payload
+from src.logs.events.tests.fixtures import (
     load_file_service_contract,
     load_file_service_record,
-    otlp_attributes,
-    otlp_first_record,
-    otlp_resource_attributes,
 )
 
 
@@ -32,17 +27,17 @@ def test_from_dict__file_service_record__parsed():
     data = load_file_service_record()
 
     # act
-    event = Event.from_dict(data)
+    event = Event.from_dict(data=data)
 
     # assert
     assert event.type == EventName.FILE_DOWNLOAD
-    assert event.service == FILE_SERVICE_NAME
+    assert event.service == 'pneumatic-file-service'
     assert event.account_id == 42
     assert event.actor.type == 'user'
     assert event.actor.id == 17
     assert event.actor.email is None
     assert event.object.type == 'file'
-    assert event.object.id == FILE_SERVICE_FILE_ID
+    assert event.object.id == '0f8fad5b-d9cb-469f-a165-70867728950e'
     assert event.payload['filename'] == 'Contract Ann Smith.pdf'
     assert event.pii == ('ip', 'user_agent', 'payload.filename')
 
@@ -53,7 +48,34 @@ def test_to_dict__file_service_record__round_trip():
     data = load_file_service_record()
 
     # act
-    restored = Event.from_dict(data).to_dict()
+    restored = Event.from_dict(data=data).to_dict()
+
+    # assert
+    assert restored == data
+
+
+def test_to_dict__upload_record__round_trip():
+
+    """ Every record the file service writes has to survive the trip
+        through the consumer unchanged, not just the download one. """
+
+    # arrange
+    data = load_file_service_record(name='file_service_upload_record.json')
+
+    # act
+    restored = Event.from_dict(data=data).to_dict()
+
+    # assert
+    assert restored == data
+
+
+def test_to_dict__denied_record__round_trip():
+
+    # arrange
+    data = load_file_service_record(name='file_service_denied_record.json')
+
+    # act
+    restored = Event.from_dict(data=data).to_dict()
 
     # assert
     assert restored == data
@@ -65,10 +87,10 @@ def test_resolve__file_service_record__category_of_the_registry():
         is asked for the personal fields only: the two must agree. """
 
     # arrange
-    event = Event.from_dict(load_file_service_record())
+    event = Event.from_dict(data=load_file_service_record())
 
     # act
-    declared = resolve_event_type(event.type)
+    declared = resolve_event_type(name=event.type)
 
     # assert
     assert declared.category == EventCategory.AUDIT
@@ -84,59 +106,100 @@ def test_resolve__file_service_record__category_of_the_registry():
 def test_build__file_service_record__own_service_name():
 
     # arrange
-    event = Event.from_dict(load_file_service_record())
+    records = [('1-0', Event.from_dict(data=load_file_service_record()))]
 
     # act
-    payload = build_sample_payload([('1-0', event)])
+    payload = build_otlp_payload(
+        records=records,
+        service_name='pneumatic-backend',
+        service_version='1.0.0',
+        environment='Production',
+        observed_ns=1788862535000000000,
+    )
 
     # assert
-    resource = otlp_resource_attributes(payload['resourceLogs'][0])
-    assert resource['service.name'] == {'stringValue': FILE_SERVICE_NAME}
-    assert resource['account_id'] == {'stringValue': '42'}
-    assert resource['event_category'] == {
-        'stringValue': EventCategory.AUDIT,
-    }
+    assert payload['resourceLogs'][0]['resource']['attributes'] == [
+        {
+            'key': 'service.name',
+            'value': {'stringValue': 'pneumatic-file-service'},
+        },
+        {
+            'key': 'deployment.environment',
+            'value': {'stringValue': 'Production'},
+        },
+        {'key': 'account_id', 'value': {'stringValue': '42'}},
+        {'key': 'event_category', 'value': {'stringValue': 'audit'}},
+    ]
 
 
 def test_build__file_service_record__filename_in_the_pii_namespace():
 
     # arrange
-    event = Event.from_dict(load_file_service_record())
+    records = [('1-0', Event.from_dict(data=load_file_service_record()))]
 
     # act
-    payload = build_sample_payload([('1-0', event)])
+    payload = build_otlp_payload(
+        records=records,
+        service_name='pneumatic-backend',
+        service_version='1.0.0',
+        environment='Production',
+        observed_ns=1788862535000000000,
+    )
 
     # assert
-    attributes = otlp_attributes(otlp_first_record(payload))
-    assert attributes['pii.payload.filename'] == {
-        'stringValue': 'Contract Ann Smith.pdf',
+    record = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0]
+    assert record['body'] == {
+        'stringValue': (
+            'file.download file:0f8fad5b-d9cb-469f-a165-70867728950e'
+        ),
     }
-    assert 'payload.filename' not in attributes
-    assert attributes['pii.ip'] == {'stringValue': '203.0.113.7'}
-    assert 'ip' not in attributes
-    assert 'actor.email' not in attributes
-    assert 'pii.actor.email' not in attributes
-    assert attributes['object.id'] == {'stringValue': FILE_SERVICE_FILE_ID}
-    assert attributes['payload.size'] == {'stringValue': '12345'}
-    assert attributes['payload.is_owner'] == {'boolValue': True}
-    assert otlp_first_record(payload)['body'] == {
-        'stringValue': f'file.download file:{FILE_SERVICE_FILE_ID}',
-    }
+    assert record['attributes'] == [
+        {'key': 'event.id', 'value': {'stringValue': '1-0'}},
+        {'key': 'event.type', 'value': {'stringValue': 'file.download'}},
+        {'key': 'actor.type', 'value': {'stringValue': 'user'}},
+        {'key': 'actor.id', 'value': {'stringValue': '17'}},
+        {'key': 'object.type', 'value': {'stringValue': 'file'}},
+        {
+            'key': 'object.id',
+            'value': {
+                'stringValue': '0f8fad5b-d9cb-469f-a165-70867728950e',
+            },
+        },
+        {
+            'key': 'request_id',
+            'value': {'stringValue': '3f9c2c1e6d0b4a0f9e2b7c1d5a6e8f90'},
+        },
+        {'key': 'payload.size', 'value': {'stringValue': '12345'}},
+        {
+            'key': 'payload.content_type',
+            'value': {'stringValue': 'application/pdf'},
+        },
+        {'key': 'payload.is_owner', 'value': {'boolValue': True}},
+        {'key': 'pii.ip', 'value': {'stringValue': '203.0.113.7'}},
+        {
+            'key': 'pii.user_agent',
+            'value': {'stringValue': 'Mozilla/5.0 (X11; Linux x86_64)'},
+        },
+        {
+            'key': 'pii.payload.filename',
+            'value': {'stringValue': 'Contract Ann Smith.pdf'},
+        },
+    ]
 
 
 def test_from_dict__upload_record__parsed():
 
     # arrange
-    data = load_file_service_record('file_service_upload_record.json')
+    data = load_file_service_record(name='file_service_upload_record.json')
 
     # act
-    event = Event.from_dict(data)
+    event = Event.from_dict(data=data)
 
     # assert
     assert event.type == EventName.FILE_UPLOAD
-    assert event.service == FILE_SERVICE_NAME
+    assert event.service == 'pneumatic-file-service'
     assert event.object.type == 'file'
-    assert event.object.id == FILE_SERVICE_FILE_ID
+    assert event.object.id == '0f8fad5b-d9cb-469f-a165-70867728950e'
     assert event.payload == {
         'filename': 'Contract Ann Smith.pdf',
         'size': 12345,
@@ -148,11 +211,13 @@ def test_resolve__upload_record__category_of_the_registry():
 
     # arrange
     event = Event.from_dict(
-        load_file_service_record('file_service_upload_record.json'),
+        data=load_file_service_record(
+            name='file_service_upload_record.json',
+        ),
     )
 
     # act
-    declared = resolve_event_type(event.type)
+    declared = resolve_event_type(name=event.type)
 
     # assert
     assert declared.category == EventCategory.AUDIT
@@ -170,10 +235,10 @@ def test_from_dict__denied_record__parsed():
         account of the person reaching for it. """
 
     # arrange
-    data = load_file_service_record('file_service_denied_record.json')
+    data = load_file_service_record(name='file_service_denied_record.json')
 
     # act
-    event = Event.from_dict(data)
+    event = Event.from_dict(data=data)
 
     # assert
     assert event.type == EventName.FILE_ACCESS_DENIED
@@ -185,11 +250,13 @@ def test_resolve__denied_record__category_of_the_registry():
 
     # arrange
     event = Event.from_dict(
-        load_file_service_record('file_service_denied_record.json'),
+        data=load_file_service_record(
+            name='file_service_denied_record.json',
+        ),
     )
 
     # act
-    declared = resolve_event_type(event.type)
+    declared = resolve_event_type(name=event.type)
 
     # assert
     assert declared.category == EventCategory.AUDIT
@@ -199,30 +266,6 @@ def test_resolve__denied_record__category_of_the_registry():
         'user_agent',
         'payload.filename',
     )
-
-
-def test_to_dict__every_file_record__round_trip():
-
-    """ Every record the file service writes has to survive the trip
-        through the consumer unchanged, not just the download one. """
-
-    # arrange
-    names = (
-        'file_service_record.json',
-        'file_service_upload_record.json',
-        'file_service_denied_record.json',
-    )
-
-    # act
-    restored = [
-        Event.from_dict(load_file_service_record(name)).to_dict()
-        for name in names
-    ]
-
-    # assert
-    assert restored[0] == load_file_service_record(names[0])
-    assert restored[1] == load_file_service_record(names[1])
-    assert restored[2] == load_file_service_record(names[2])
 
 
 def test_stream_key__file_service_contract__backend_reads_that_stream():

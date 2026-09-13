@@ -142,7 +142,9 @@ def _body(event: Event) -> str:
 
     """ Short line without PII. Nothing strips the record on the
         way out, so the body is the one field every reader of the
-        journal sees whether or not it wants personal data. """
+        journal sees whether or not it wants personal data. An id
+        that is itself a secret, the key of an invite, never reaches
+        the object of an event: the writers leave it empty. """
 
     if event.object is None:
         return event.type

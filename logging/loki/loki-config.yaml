@@ -7,8 +7,8 @@
 # in the `pneumatic-logs` compose network together with Grafana; the collector
 # is the single member of both networks and the only writer. The application
 # containers (backend, celery, nginx, ...) are NOT in `pneumatic-logs` and
-# cannot reach port 3100 at all - see docker-compose.yml. They do reach the
-# collector (its OTLP receiver has no authentication either), but a webhook
+# cannot reach port 3100 at all - see logging/compose/logs.yml. They do reach
+# the collector (its OTLP receiver has no authentication either), but a webhook
 # body is not an OTLP request, so a tenant admin pointing the webhook
 # deliverer at either cannot forge a record.
 auth_enabled: false

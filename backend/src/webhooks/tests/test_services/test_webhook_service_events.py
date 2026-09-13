@@ -28,7 +28,7 @@ def test_subscribe__all_events__emit_webhook_subscribe(mocker):
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.webhooks_subscribed',
     )
-    analysis_mock = mocker.patch(
+    accounts_webhooks_subscribed_mock = mocker.patch(
         'src.analysis.services.AnalyticService.'
         'accounts_webhooks_subscribed',
     )
@@ -50,7 +50,7 @@ def test_subscribe__all_events__emit_webhook_subscribe(mocker):
         payload={'url': url, 'event': ALL_EVENTS},
     )
     webhooks_subscribed_mock.assert_called_once_with()
-    analysis_mock.assert_called_once_with(
+    accounts_webhooks_subscribed_mock.assert_called_once_with(
         user=user,
         is_superuser=False,
     )
@@ -66,7 +66,7 @@ def test_subscribe__api_key_auth__emit_api_key_actor_type(mocker):
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.webhooks_subscribed',
     )
-    analysis_mock = mocker.patch(
+    accounts_webhooks_subscribed_mock = mocker.patch(
         'src.analysis.services.AnalyticService.'
         'accounts_webhooks_subscribed',
     )
@@ -88,7 +88,7 @@ def test_subscribe__api_key_auth__emit_api_key_actor_type(mocker):
         payload={'url': url, 'event': ALL_EVENTS},
     )
     webhooks_subscribed_mock.assert_called_once_with()
-    analysis_mock.assert_called_once_with(
+    accounts_webhooks_subscribed_mock.assert_called_once_with(
         user=user,
         is_superuser=False,
     )
@@ -105,7 +105,7 @@ def test_subscribe_event__single_event__emit_webhook_subscribe(mocker):
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.webhooks_subscribed',
     )
-    analysis_mock = mocker.patch(
+    accounts_webhooks_subscribed_mock = mocker.patch(
         'src.analysis.services.AnalyticService.'
         'accounts_webhooks_subscribed',
     )
@@ -127,7 +127,7 @@ def test_subscribe_event__single_event__emit_webhook_subscribe(mocker):
         payload={'url': url, 'event': event},
     )
     webhooks_subscribed_mock.assert_called_once_with()
-    analysis_mock.assert_called_once_with(
+    accounts_webhooks_subscribed_mock.assert_called_once_with(
         user=user,
         is_superuser=False,
     )

@@ -6,10 +6,11 @@ from typing import Optional, Tuple
 
 from django.conf import settings
 from django.db import transaction
+from django.http import HttpRequest
 from django.utils import timezone
 
-from src.logs.events.context import merge_context
 from src.logs.enums import LogsBackend
+from src.logs.events.context import merge_context
 from src.logs.events.enums import ActorType
 from src.logs.events.registry import resolve_event_type
 from src.logs.events.reporting import report_error
@@ -52,6 +53,15 @@ class StreamCircuit:
 _circuit = StreamCircuit()
 
 
+def logs_enabled() -> bool:
+
+    """ Whether the journal is on. A caller that has to read the
+        database to build a payload asks this first: with the journal
+        off (the default) the reads would be wasted. """
+
+    return settings.LOGS_BACKEND != LogsBackend.NONE
+
+
 def emit(
     event_type: str,
     *,
@@ -61,7 +71,7 @@ def emit(
     payload: Optional[dict] = None,
     workflow_id: Optional[int] = None,
     task_id: Optional[int] = None,
-    request=None,
+    request: Optional[HttpRequest] = None,
     ts: Optional[datetime] = None,
 ):
 
@@ -74,7 +84,7 @@ def emit(
         configurations (see resolve_event_type) so that a typo
         breaks tests instead of production. """
 
-    if settings.LOGS_BACKEND == LogsBackend.NONE:
+    if not logs_enabled():
         return
     event = _build_event(
         event_type,
@@ -99,7 +109,7 @@ def _build_event(
     payload: Optional[dict] = None,
     workflow_id: Optional[int] = None,
     task_id: Optional[int] = None,
-    request=None,
+    request: Optional[HttpRequest] = None,
     ts: Optional[datetime] = None,
 ) -> Event:
 
@@ -180,12 +190,16 @@ def _write(event: Event):
 def _report_stream_error(exc: Exception) -> None:
 
     """ A Redis outage happens on every single request: the log line
-        shows all of them, Sentry gets the throttled one. """
+        shows all of them, Sentry gets the throttled one.
 
-    logger.warning('Events stream is unavailable: %s', exc)
+        Only the class of the error leaves: the text of a Redis error
+        may carry the connection URL, and the password with it. """
+
+    error = type(exc).__name__
+    logger.warning('Events stream is unavailable: %s', error)
     report_error(
         message='Events stream is unavailable',
-        data={'error': repr(exc), 'dropped': _circuit.dropped},
+        data={'error': error, 'dropped': _circuit.dropped},
     )
 
 

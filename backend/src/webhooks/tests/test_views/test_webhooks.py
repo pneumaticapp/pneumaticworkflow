@@ -1,13 +1,16 @@
 import pytest
 
 from src.authentication.enums import AuthTokenType
-from src.logs.events.schema import Actor, EventObject
 from src.logs.events.enums import (
     ActorType,
     EventName,
     EventObjectType,
 )
-from src.processes.tests.fixtures import create_test_user
+from src.logs.events.schema import Actor, EventObject
+from src.processes.tests.fixtures import (
+    create_test_owner,
+    create_test_user,
+)
 from src.utils.validation import ErrorCode
 from src.webhooks.services import ALL_EVENTS
 
@@ -110,13 +113,13 @@ def test_subscribe__api_key__emit_api_key_actor(
         the browser from the middleware context. """
 
     # arrange
-    user = create_test_user()
+    user = create_test_owner()
     api_client.token_authenticate(user, token_type=AuthTokenType.API)
     webhooks_subscribed_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.webhooks_subscribed',
     )
-    analysis_mock = mocker.patch(
+    accounts_webhooks_subscribed_mock = mocker.patch(
         'src.analysis.services.AnalyticService.'
         'accounts_webhooks_subscribed',
     )
@@ -149,7 +152,88 @@ def test_subscribe__api_key__emit_api_key_actor(
     assert event.user_agent == 'Firefox'
     assert event.request_id == 'audit-webhook-1'
     webhooks_subscribed_mock.assert_called_once_with()
-    analysis_mock.assert_called_once_with(
+    accounts_webhooks_subscribed_mock.assert_called_once_with(
         user=user,
         is_superuser=False,
     )
+
+
+def test_subscribe__url_with_userinfo__credential_not_in_payload(
+    api_client,
+    mocker,
+    fake_stream,
+):
+
+    """ A password in the authority of the address stays in the
+        subscription and never reaches the journal. """
+
+    # arrange
+    user = create_test_owner()
+    api_client.token_authenticate(user)
+    webhooks_subscribed_mock = mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.webhooks_subscribed',
+    )
+    accounts_webhooks_subscribed_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'accounts_webhooks_subscribed',
+    )
+    url = 'https://user:secret@test.test/hook'
+
+    # act
+    response = api_client.post(
+        path='/webhooks/subscribe',
+        data={'url': url},
+    )
+
+    # assert
+    assert response.status_code == 204
+    assert len(fake_stream.events) == 1
+    event = fake_stream.last_event()
+    assert event.type == EventName.WEBHOOK_SUBSCRIBE
+    assert event.payload == {
+        'url': 'https://test.test/hook',
+        'event': ALL_EVENTS,
+    }
+    webhooks_subscribed_mock.assert_called_once_with()
+    accounts_webhooks_subscribed_mock.assert_called_once_with(
+        user=user,
+        is_superuser=False,
+    )
+
+
+def test_subscribe__invalid_url__no_event(
+    api_client,
+    mocker,
+    fake_stream,
+):
+
+    # arrange
+    user = create_test_owner()
+    api_client.token_authenticate(user)
+    webhooks_subscribed_mock = mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.webhooks_subscribed',
+    )
+    accounts_webhooks_subscribed_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'accounts_webhooks_subscribed',
+    )
+    url = 'undefined'
+
+    # act
+    response = api_client.post(
+        path='/webhooks/subscribe',
+        data={'url': url},
+    )
+
+    # assert
+    assert response.status_code == 400
+    message = 'Enter a valid URL.'
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == message
+    assert response.data['details']['name'] == 'url'
+    assert response.data['details']['reason'] == message
+    assert fake_stream.events == []
+    webhooks_subscribed_mock.assert_not_called()
+    accounts_webhooks_subscribed_mock.assert_not_called()

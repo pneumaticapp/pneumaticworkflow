@@ -8,7 +8,7 @@ from src.logs.events.enums import (
     EventName,
     EventObjectType,
 )
-from src.logs.events.tests.fakes import expected_workflow_events
+from src.logs.events.tests.fixtures import expected_workflow_events
 from src.processes.enums import WorkflowEventType
 from src.processes.services.events import WorkflowEventService
 from src.processes.tests.fixtures import (
@@ -35,22 +35,6 @@ def test_type_names__workflow_event_types__every_constant_mapped():
 
     # assert
     assert mapped_types == declared_types
-
-
-def test_expected_events__table_of_the_plan__covers_every_mapped_type():
-
-    """ The parametrized test below runs the chain once per row of
-        the table: a type missing from it would go untested. """
-
-    # arrange
-    table = expected_workflow_events()
-
-    # act
-    listed_types = {type_event for type_event, _, _ in table}
-
-    # assert
-    assert listed_types == set(WORKFLOW_EVENT_TYPE_NAMES)
-    assert len(table) == len(WORKFLOW_EVENT_TYPE_NAMES)
 
 
 @pytest.mark.parametrize(

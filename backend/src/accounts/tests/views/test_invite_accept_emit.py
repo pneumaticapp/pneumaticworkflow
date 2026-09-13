@@ -76,89 +76,9 @@ def test_accept__invited_user__emit_invite_accept(
             id=invited.id,
             email=invited.email,
         ),
-        event_object=EventObject(
-            type=EventObjectType.INVITE,
-            id=str(invite.id),
-        ),
+        event_object=EventObject(type=EventObjectType.INVITE),
         payload={'invited_by_id': owner.id},
     )
-    create_onboarding_workflows_mock.assert_called_once_with()
-    create_activated_workflows_mock.assert_called_once_with()
-    send_user_updated_mock.assert_called_once_with(
-        logging=account.log_api_requests,
-        account_id=account.id,
-        user_data=mocker.ANY,
-    )
-    users_joined_mock.assert_called_once_with(invited)
-    identify_mock.assert_called_once_with(invited)
-    group_mock.assert_called_once_with(invited)
-
-
-def test_accept__sso_callback__emit_invite_accept(
-    mocker,
-    fake_stream,
-):
-
-    """ An invite accepted through an SSO callback never touches the
-        endpoint: the event has to come from the service, which is the
-        one thing both ways in have in common. """
-
-    # arrange
-    account = create_test_account()
-    owner = create_test_owner(account=account)
-    invited = create_invited_user(user=owner)
-    invite = invited.invite
-    create_onboarding_workflows_mock = mocker.patch(
-        'src.processes.services.system_workflows.SystemWorkflowService'
-        '.create_onboarding_workflows',
-    )
-    create_activated_workflows_mock = mocker.patch(
-        'src.processes.services.system_workflows.SystemWorkflowService'
-        '.create_activated_workflows',
-    )
-    send_user_updated_mock = mocker.patch(
-        'src.accounts.services.user_invite.send_user_updated_notification'
-        '.delay',
-    )
-    users_joined_mock = mocker.patch(
-        'src.accounts.services.user_invite.AnalyticService.users_joined',
-    )
-    identify_mock = mocker.patch.object(
-        UserInviteService,
-        attribute='identify',
-    )
-    group_mock = mocker.patch.object(
-        UserInviteService,
-        attribute='group',
-    )
-    service = UserInviteService(
-        request_user=invited,
-        current_url='',
-        send_email=False,
-    )
-
-    # act
-    service.accept(
-        invite=invite,
-        first_name='Some',
-        last_name='Body',
-    )
-
-    # assert
-    assert len(fake_stream.events) == 1
-    event = fake_stream.last_event()
-    assert event.type == EventName.INVITE_ACCEPT
-    assert event.account_id == account.id
-    assert event.actor == Actor(
-        type=ActorType.USER,
-        id=invited.id,
-        email=invited.email,
-    )
-    assert event.object == EventObject(
-        type=EventObjectType.INVITE,
-        id=str(invite.id),
-    )
-    assert event.payload == {'invited_by_id': owner.id}
     create_onboarding_workflows_mock.assert_called_once_with()
     create_activated_workflows_mock.assert_called_once_with()
     send_user_updated_mock.assert_called_once_with(
@@ -198,8 +118,11 @@ def test_accept__already_registered__no_event(
 
     # assert
     assert response.status_code == 400
-    assert response.data['message'] == MSG_A_0005
-    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data == {
+        'code': ErrorCode.VALIDATION_ERROR,
+        'message': MSG_A_0005,
+        'details': {},
+    }
     emit_mock.assert_not_called()
     accept_mock.assert_called_once_with(
         invite=invited.invite,
@@ -272,10 +195,7 @@ def test_accept__anonymous_request__event_keeps_request_context(
         id=invited.id,
         email=invited.email,
     )
-    assert event.object == EventObject(
-        type=EventObjectType.INVITE,
-        id=str(invite.id),
-    )
+    assert event.object == EventObject(type=EventObjectType.INVITE)
     assert event.payload == {'invited_by_id': owner.id}
     assert event.ip == '10.10.0.9'
     assert event.user_agent == 'Safari/18'

@@ -1,4 +1,4 @@
-from typing_extensions import Literal, get_args
+from typing_extensions import Literal
 
 
 class AccountEventType:
@@ -60,9 +60,9 @@ class LogsBackend:
         ELASTICSEARCH,
         NONE,
     ]
-    VALUES = set(get_args(LITERALS))
 
 
+DEFAULT_STREAM_MAXLEN = 250000
 DEFAULT_CONSUMER_BATCH_SIZE = 1000
 DEFAULT_CONSUMER_IDLE_MS = 60000
-DEFAULT_CONSUMER_INTERVAL_SECONDS = 5
+CONSUMER_INTERVAL_SECONDS = 5

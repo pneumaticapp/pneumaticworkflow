@@ -3,8 +3,9 @@
 #
 # Personal data leaves with the record, see the note in base.yaml.
 #
-# Only the collector starts in this mode, the bundled Loki and Grafana do not:
-#   docker compose --profile logs-otlp up -d
+# Only the collector starts in this mode, the bundled Loki and Grafana do not.
+# The profile does not choose this file, LOGS_BACKEND does:
+#   LOGS_BACKEND=otlp docker compose --profile logs-otlp up -d
 exporters:
   otlp_http/external:
     endpoint: ${env:LOGS_OTLP_EXPORT_ENDPOINT}

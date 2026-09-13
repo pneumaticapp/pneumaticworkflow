@@ -7,7 +7,7 @@ from typing import (
 
 from django.conf import settings
 
-from src.logs.events.emitter import emit
+from src.logs.events.emitter import emit, logs_enabled
 from src.logs.events.enums import (
     ActorType,
     EventName,
@@ -72,8 +72,13 @@ def emit_workflow_event(event: 'WorkflowEvent') -> None:
 
         Only EventsError is caught: an undeclared type and a broken
         registry belong to the pipeline, while a TypeError from the
-        caller is a bug and has to surface. """
+        caller is a bug and has to surface.
 
+        With the journal off nothing is built: the kwargs of an event
+        nobody writes, and a report about them, would be wasted. """
+
+    if not logs_enabled():
+        return
     try:
         emit(**workflow_event_to_kwargs(event))
     except EventsError as ex:

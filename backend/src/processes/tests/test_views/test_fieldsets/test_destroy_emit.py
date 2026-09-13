@@ -87,3 +87,27 @@ def test_destroy__fieldset_in_use__no_event(
     assert response.data['details'] == {}
     assert FieldsetTemplate.objects.filter(id=fieldset.id).exists()
     assert fake_stream.events == []
+
+
+def test_destroy__fieldset_of_another_account__no_event(
+    api_client,
+    fake_stream,
+):
+
+    # arrange
+    account = create_test_account()
+    fieldset = create_test_shared_fieldset(account=account)
+    another_account = create_test_account(name='Another Company')
+    another_owner = create_test_owner(
+        account=another_account,
+        email='another_owner@pneumatic.app',
+    )
+    api_client.token_authenticate(another_owner)
+
+    # act
+    response = api_client.delete(f'/fieldsets/{fieldset.id}')
+
+    # assert
+    assert response.status_code == 404
+    assert FieldsetTemplate.objects.filter(id=fieldset.id).exists()
+    assert fake_stream.events == []

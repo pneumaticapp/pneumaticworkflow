@@ -1,11 +1,13 @@
 import ipaddress
 from typing import Optional
 
+from django.http import HttpRequest
+
 FORWARDED_SEPARATOR = ','
 USER_AGENT_MAX = 500
 
 
-def get_client_ip(request) -> Optional[str]:
+def get_client_ip(request: HttpRequest) -> Optional[str]:
 
     """ Address of whoever made the request.
 
@@ -40,7 +42,7 @@ def get_client_ip(request) -> Optional[str]:
     )
 
 
-def get_user_agent_header(request) -> Optional[str]:
+def get_user_agent_header(request: HttpRequest) -> Optional[str]:
 
     """ Raw User-Agent header, trimmed to a sane length.
 

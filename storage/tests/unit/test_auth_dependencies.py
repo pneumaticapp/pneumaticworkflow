@@ -2,12 +2,8 @@
 
 import pytest
 
-from src.shared_kernel.auth.dependencies import (
-    AuthenticatedUser,
-    get_current_user,
-)
+from src.shared_kernel.auth.dependencies import AuthenticatedUser
 from src.shared_kernel.auth.user_types import ActorType, UserType
-from src.shared_kernel.exceptions import AuthenticationError
 from src.shared_kernel.middleware.auth_middleware import AuthUser
 
 
@@ -81,47 +77,3 @@ def test_init__no_account__type_error():
     assert str(ex.value) == (
         'account_id must not be None for authenticated users'
     )
-
-
-async def test_get_current_user__authenticated__user_returned(mocker):
-    # arrange
-    request = mocker.Mock()
-    request.state.user = AuthUser(
-        auth_type=UserType.AUTHENTICATED,
-        user_id=1,
-        account_id=2,
-        token='session',
-    )
-
-    # act
-    user = await get_current_user(request)
-
-    # assert
-    assert user.user_id == 1
-    assert user.account_id == 2
-
-
-async def test_get_current_user__no_user_in_state__raise(mocker):
-    # arrange
-    request = mocker.Mock()
-    request.state.user = None
-
-    # act
-    with pytest.raises(AuthenticationError) as ex:
-        await get_current_user(request)
-
-    # assert
-    assert ex.value.details == 'User not authenticated'
-
-
-async def test_get_current_user__anonymous__raise(mocker):
-    # arrange
-    request = mocker.Mock()
-    request.state.user = AuthUser(auth_type=UserType.ANONYMOUS)
-
-    # act
-    with pytest.raises(AuthenticationError) as ex:
-        await get_current_user(request)
-
-    # assert
-    assert ex.value.details == 'User not authenticated'

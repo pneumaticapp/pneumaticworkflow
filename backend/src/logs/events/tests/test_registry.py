@@ -15,7 +15,7 @@ from src.logs.events.registry import (
     resolve_event_type,
     validate_registry,
 )
-from src.logs.events.tests.fakes import event_name_values
+from src.logs.events.tests.fixtures import event_name_values
 from src.utils.logging import SentryLogLevel
 
 
@@ -34,13 +34,14 @@ def test_validate_registry__shipped_declaration__ok():
 def test_validate_registry__duplicated_name__raise(mocker):
 
     # arrange
-    event_types_mock = mocker.patch.object(
+    event_types = (
+        EventType(name='user.login', category=EventCategory.AUDIT),
+        EventType(name='user.login', category=EventCategory.AUDIT),
+    )
+    mocker.patch.object(
         registry_module,
         attribute='EVENT_TYPES',
-        new=(
-            EventType(name='user.login', category=EventCategory.AUDIT),
-            EventType(name='user.login', category=EventCategory.AUDIT),
-        ),
+        new=event_types,
     )
 
     # act
@@ -49,16 +50,18 @@ def test_validate_registry__duplicated_name__raise(mocker):
 
     # assert
     assert str(ex.value) == 'Duplicated event type: user.login'
-    assert len(event_types_mock) == 2
 
 
 def test_validate_registry__name_without_domain__raise(mocker):
 
     # arrange
-    event_types_mock = mocker.patch.object(
+    event_types = (
+        EventType(name='user_login', category=EventCategory.AUDIT),
+    )
+    mocker.patch.object(
         registry_module,
         attribute='EVENT_TYPES',
-        new=(EventType(name='user_login', category=EventCategory.AUDIT),),
+        new=event_types,
     )
 
     # act
@@ -67,16 +70,39 @@ def test_validate_registry__name_without_domain__raise(mocker):
 
     # assert
     assert str(ex.value) == 'Invalid event type name: user_login'
-    assert len(event_types_mock) == 1
+
+
+def test_validate_registry__name_with_trailing_newline__raise(mocker):
+
+    """ The whole name has to match: "$" of a plain match would let
+        a trailing newline through. """
+
+    # arrange
+    event_types = (
+        EventType(name='user.login\n', category=EventCategory.AUDIT),
+    )
+    mocker.patch.object(
+        registry_module,
+        attribute='EVENT_TYPES',
+        new=event_types,
+    )
+
+    # act
+    with pytest.raises(EventsError) as ex:
+        validate_registry()
+
+    # assert
+    assert str(ex.value) == 'Invalid event type name: user.login\n'
 
 
 def test_validate_registry__undeclared_category__raise(mocker):
 
     # arrange
-    event_types_mock = mocker.patch.object(
+    event_types = (EventType(name='user.login', category='loud'),)
+    mocker.patch.object(
         registry_module,
         attribute='EVENT_TYPES',
-        new=(EventType(name='user.login', category='loud'),),
+        new=event_types,
     )
 
     # act
@@ -87,22 +113,22 @@ def test_validate_registry__undeclared_category__raise(mocker):
     assert str(ex.value) == (
         'Invalid category "loud" of the event type: user.login'
     )
-    assert len(event_types_mock) == 1
 
 
 def test_validate_registry__pii_path_of_unknown_field__raise(mocker):
 
     # arrange
-    event_types_mock = mocker.patch.object(
+    event_types = (
+        EventType(
+            name='user.login',
+            category=EventCategory.AUDIT,
+            pii=('workflow_id.value',),
+        ),
+    )
+    mocker.patch.object(
         registry_module,
         attribute='EVENT_TYPES',
-        new=(
-            EventType(
-                name='user.login',
-                category=EventCategory.AUDIT,
-                pii=('workflow_id.value',),
-            ),
-        ),
+        new=event_types,
     )
 
     # act
@@ -114,22 +140,51 @@ def test_validate_registry__pii_path_of_unknown_field__raise(mocker):
         'Invalid pii path "workflow_id.value" of the event type: '
         'user.login'
     )
-    assert len(event_types_mock) == 1
+
+
+def test_validate_registry__pii_root_with_a_field__raise(mocker):
+
+    """ ip and user_agent are values, not namespaces: "ip.x" names
+        nothing and would leave the address as a plain attribute. """
+
+    # arrange
+    event_types = (
+        EventType(
+            name='user.login',
+            category=EventCategory.AUDIT,
+            pii=('ip.x',),
+        ),
+    )
+    mocker.patch.object(
+        registry_module,
+        attribute='EVENT_TYPES',
+        new=event_types,
+    )
+
+    # act
+    with pytest.raises(EventsError) as ex:
+        validate_registry()
+
+    # assert
+    assert str(ex.value) == (
+        'Invalid pii path "ip.x" of the event type: user.login'
+    )
 
 
 def test_validate_registry__pii_namespace_without_field__raise(mocker):
 
     # arrange
-    event_types_mock = mocker.patch.object(
+    event_types = (
+        EventType(
+            name='user.login',
+            category=EventCategory.AUDIT,
+            pii=('payload',),
+        ),
+    )
+    mocker.patch.object(
         registry_module,
         attribute='EVENT_TYPES',
-        new=(
-            EventType(
-                name='user.login',
-                category=EventCategory.AUDIT,
-                pii=('payload',),
-            ),
-        ),
+        new=event_types,
     )
 
     # act
@@ -140,28 +195,28 @@ def test_validate_registry__pii_namespace_without_field__raise(mocker):
     assert str(ex.value) == (
         'Invalid pii path "payload" of the event type: user.login'
     )
-    assert len(event_types_mock) == 1
 
 
 def test_validate_registry__every_pii_form__ok(mocker):
 
     # arrange
-    event_types_mock = mocker.patch.object(
-        registry_module,
-        attribute='EVENT_TYPES',
-        new=(
-            EventType(
-                name='user.login',
-                category=EventCategory.AUDIT,
-                pii=(
-                    'ip',
-                    'user_agent',
-                    'actor.email',
-                    'object.id',
-                    'payload.target_email',
-                ),
+    event_types = (
+        EventType(
+            name='user.login',
+            category=EventCategory.AUDIT,
+            pii=(
+                'ip',
+                'user_agent',
+                'actor.email',
+                'object.id',
+                'payload.target_email',
             ),
         ),
+    )
+    mocker.patch.object(
+        registry_module,
+        attribute='EVENT_TYPES',
+        new=event_types,
     )
 
     # act
@@ -169,7 +224,30 @@ def test_validate_registry__every_pii_form__ok(mocker):
 
     # assert
     assert result is None
-    assert len(event_types_mock) == 1
+
+
+def test_event_type__actor_pii_declared__not_duplicated():
+
+    """ A type that declares a path of ACTOR_PII itself keeps its own
+        order, and the rest of ACTOR_PII follows once. """
+
+    # arrange
+    pii = ('ip', 'payload.name')
+
+    # act
+    event_type = EventType(
+        name='user.login',
+        category=EventCategory.AUDIT,
+        pii=pii,
+    )
+
+    # assert
+    assert event_type.pii == (
+        'ip',
+        'payload.name',
+        'actor.email',
+        'user_agent',
+    )
 
 
 def test_registry__event_names__one_declaration_per_constant():
@@ -214,10 +292,7 @@ def test_registry__workflow_type__declares_the_names_as_personal(name):
     assert event_type.pii == expected_pii
 
 
-def test_registry__login_as__reason_declared_as_personal():
-
-    """ The reason is free text typed by a staff member: it names
-        people and tickets as often as not. """
+def test_registry__login_as__target_email_declared_as_personal():
 
     # arrange
     name = EventName.USER_LOGIN_AS
@@ -231,7 +306,6 @@ def test_registry__login_as__reason_declared_as_personal():
         'ip',
         'user_agent',
         'payload.target_email',
-        'payload.reason',
     )
     assert event_type.category == EventCategory.AUDIT
 
@@ -288,10 +362,11 @@ def test_resolve__unknown_type_in_strict_mode__raise(settings):
 
     # arrange
     settings.LOGS_STRICT = True
+    name = 'nope.nope'
 
     # act
     with pytest.raises(UnknownEventTypeError) as ex:
-        resolve_event_type('nope.nope')
+        resolve_event_type(name=name)
 
     # assert
     assert str(ex.value) == 'Unknown event type: nope.nope'
@@ -308,12 +383,13 @@ def test_resolve__unknown_type_in_running_deployment__debug_category(
 
     # arrange
     settings.LOGS_STRICT = False
+    name = 'nope.nope'
     report_error_mock = mocker.patch(
         'src.logs.events.registry.report_error',
     )
 
     # act
-    event_type = resolve_event_type('nope.nope')
+    event_type = resolve_event_type(name=name)
 
     # assert
     assert event_type.name == 'nope.nope'
@@ -338,13 +414,15 @@ def test_resolve__two_unknown_types__reported_under_their_own_keys(
 
     # arrange
     settings.LOGS_STRICT = False
+    first_name = 'nope.nope'
+    second_name = 'other.other'
     report_error_mock = mocker.patch(
         'src.logs.events.registry.report_error',
     )
 
     # act
-    resolve_event_type('nope.nope')
-    resolve_event_type('other.other')
+    resolve_event_type(name=first_name)
+    resolve_event_type(name=second_name)
 
     # assert
     assert report_error_mock.call_count == 2
