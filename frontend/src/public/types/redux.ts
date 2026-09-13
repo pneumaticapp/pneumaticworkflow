@@ -15,6 +15,7 @@ import {
 import { ITask, ITaskListItem, ITasksSettings } from './tasks';
 import { EPermissionObjectType, TObjectPermissionsById } from './permissions';
 import { IApiKeyItem, IIntegrationDetailed, IIntegrationListItem } from './integrations';
+import { IAIAgent, IAIModel, IAIProvider } from './ai';
 import { ESettingsTabs } from './profile';
 import { IHighlightsItem, EHighlightsDateFilter } from './highlights';
 import { EDashboardTimeRange, IGettingStartedChecklist } from './dashboard';
@@ -64,6 +65,7 @@ export interface IApplicationState {
   task: IStoreTask;
   team: ITeamStore;
   groups: IGroupsStore;
+  ai: IAIStore;
   tenants: ITenantsStore;
   datasets: IDatasetsStore;
   fieldsets: IFieldsetsStore;
@@ -353,6 +355,27 @@ export type ITeamStore = {
   recentInvitedUsers: TUserListItem[];
   invitesUsersList: UserInvite[];
 };
+
+export interface IAIStore {
+  providers: {
+    isLoading: boolean;
+    /** Distinguishes "no providers yet" from "not fetched yet" — the Create AI Agent gate needs that. */
+    isLoaded: boolean;
+    list: IAIProvider[];
+  };
+  agents: {
+    isLoading: boolean;
+    isLoaded: boolean;
+    list: IAIAgent[];
+  };
+  models: {
+    isLoading: boolean;
+    /** Provider the loaded models belong to; guards against a stale response landing. */
+    providerId: number | null;
+    list: IAIModel[];
+  };
+  isSaving: boolean;
+}
 
 export type IGroupsStore = {
   isLoading: boolean;

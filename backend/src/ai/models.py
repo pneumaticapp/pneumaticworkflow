@@ -1,18 +1,29 @@
+from django.contrib.auth import get_user_model
 from django.core.validators import (
     MaxValueValidator,
     MinValueValidator,
 )
 from django.db import models
+from django.db.models import Q, UniqueConstraint
 
+from src.accounts.models import AccountBaseMixin
 from src.ai.enums import (
+    AIVendor,
     OpenAiModel,
     OpenAIPromptTarget,
     OpenAIRole,
 )
 from src.ai.querysets import (
+    AIAgentQuerySet,
+    AIProviderQuerySet,
     OpenAiPromptMessageQueryset,
     OpenAiPromptQueryset,
 )
+from src.generics.managers import BaseSoftDeleteManager
+from src.generics.mixins.services import EncryptionMixin
+from src.generics.models import SoftDeleteModel
+
+UserModel = get_user_model()
 
 
 class OpenAiPrompt(models.Model):
@@ -158,3 +169,85 @@ class OpenAiMessage(models.Model):
 
     def __str__(self):
         return 'Prompt message'
+
+
+class AIProvider(
+    SoftDeleteModel,
+    AccountBaseMixin,
+    EncryptionMixin,
+):
+
+    API_KEY_PREFIX_DISPLAY_LENGTH = 14
+
+    class Meta:
+        ordering = ('id',)
+
+    name = models.CharField(
+        max_length=255,
+        help_text='Display name of the provider',
+    )
+    base_url = models.URLField(max_length=1024)
+    api_key_encrypted = models.TextField()
+    vendor = models.CharField(
+        max_length=50,
+        choices=AIVendor.CHOICES,
+        default=AIVendor.OPENAI_COMPATIBLE,
+        help_text='Detected vendor of the provider API',
+    )
+    is_active = models.BooleanField(default=True)
+
+    objects = BaseSoftDeleteManager.from_queryset(AIProviderQuerySet)()
+
+    @property
+    def api_key(self) -> str:
+        return self.decrypt(self.api_key_encrypted)
+
+    @api_key.setter
+    def api_key(self, value: str):
+        self.api_key_encrypted = self.encrypt(value)
+
+    @property
+    def api_key_prefix(self) -> str:
+        return self.api_key[:self.API_KEY_PREFIX_DISPLAY_LENGTH]
+
+    def __str__(self):
+        return self.name
+
+
+class AIAgent(
+    SoftDeleteModel,
+    AccountBaseMixin,
+):
+
+    class Meta:
+        ordering = ('name',)
+        constraints = [
+            UniqueConstraint(
+                fields=('account', 'name'),
+                condition=Q(is_deleted=False),
+                name='aiagent_name_account_unique',
+            ),
+        ]
+
+    name = models.CharField(max_length=255)
+    photo = models.URLField(max_length=1024, null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    system_prompt = models.TextField(null=False, blank=False)
+    provider = models.ForeignKey(
+        AIProvider,
+        on_delete=models.CASCADE,
+        related_name='ai_agents',
+        help_text='NULL means the platform default connection',
+    )
+    model = models.CharField(max_length=200)
+    user = models.OneToOneField(
+        UserModel,
+        on_delete=models.CASCADE,
+        related_name='ai_agent',
+        help_text='The user the AI agent runs on',
+    )
+
+    objects = BaseSoftDeleteManager.from_queryset(AIAgentQuerySet)()
+
+    def __str__(self):
+        return self.name

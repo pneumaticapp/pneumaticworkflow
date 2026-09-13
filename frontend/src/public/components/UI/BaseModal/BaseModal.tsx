@@ -38,7 +38,13 @@ export function BaseModal({
   useEffect(() => {
     if (isOpen) {
       setIsVisible(true);
+      // Locking the page hides its scrollbar, which widens the layout and shifts everything
+      // sideways. Padding the body by the width that disappeared keeps it still.
+      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
       document.body.style.overflow = 'hidden';
+      if (scrollbarWidth > 0) {
+        document.body.style.paddingRight = `${scrollbarWidth}px`;
+      }
       const timer = setTimeout(() => {
         setShowClass(true);
       }, 10);
@@ -49,6 +55,7 @@ export function BaseModal({
     const timer = setTimeout(() => {
       setIsVisible(false);
       document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
     }, 150);
     return () => clearTimeout(timer);
   }, [isOpen]);
@@ -111,12 +118,19 @@ interface IModalPartProps {
   className?: string;
   toggle?(): void;
   tag?: keyof JSX.IntrinsicElements;
+  titleTag?: keyof JSX.IntrinsicElements;
 }
 
-export function ModalHeader({ children, className = '', toggle, tag: Tag = 'div' }: IModalPartProps) {
+export function ModalHeader({
+  children,
+  className = '',
+  toggle,
+  tag: Tag = 'div',
+  titleTag: TitleTag = 'p',
+}: IModalPartProps) {
   return (
     <Tag className={classnames(styles['modal-header'], className)}>
-      <p className={styles['title']}>{children}</p>
+      <TitleTag className={styles['title']}>{children}</TitleTag>
       {toggle && (
         <button type="button" onClick={toggle} className={styles['close-button']} aria-label="Close modal">
           <ClearIcon />
