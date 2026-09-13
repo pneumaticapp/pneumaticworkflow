@@ -13,6 +13,7 @@ import { loadAIProviderModels } from '../../../../redux/ai/slice';
 import { getAIProviderModelsState, getAIProviders } from '../../../../redux/selectors/ai';
 import { IAIAgentFormProps, IAIAgentFormValues } from './types';
 
+import fieldStyles from '../../../UI/Fields/common/styles.css';
 import styles from './CreateUserModal.css';
 
 const REQUIRED_ERROR = 'team.create-ai-agent-modal.validation-required';
@@ -86,7 +87,11 @@ function SystemPromptField() {
 
   return (
     <label className={styles['modal__textarea-field']} htmlFor="ai-agent-system-prompt">
-      <span>{formatMessage({ id: 'team.create-ai-agent-modal.system-prompt' })}</span>
+      {/* The field is required by the API, and the marker comes from the same style the other
+          fields get through their isRequired prop. */}
+      <span className={fieldStyles['title_required']}>
+        {formatMessage({ id: 'team.create-ai-agent-modal.system-prompt' })}
+      </span>
       <textarea {...field} id="ai-agent-system-prompt" rows={5} />
       {meta.touched && meta.error && (
         <span className={styles['modal__error']}>{formatMessage({ id: meta.error })}</span>
@@ -164,12 +169,7 @@ export function CreateAIAgentForm({
           return undefined;
         })();
 
-        const resetFormOnReopen = (
-          <ResetFormOnReopen
-            isOpen={isOpen}
-            latestAvatarActionRef={latestAvatarActionRef}
-          />
-        );
+        const resetFormOnReopen = <ResetFormOnReopen isOpen={isOpen} latestAvatarActionRef={latestAvatarActionRef} />;
 
         if (!isActive) return resetFormOnReopen;
 
@@ -185,14 +185,11 @@ export function CreateAIAgentForm({
                 <div className={styles['modal__avatar-actions']}>
                   <label htmlFor="ai-agent-avatar-upload">
                     {formatMessage({ id: 'team.create-ai-agent-modal.upload' })}
-                    <input
-                      id="ai-agent-avatar-upload"
-                      type="file"
-                      accept="image/*"
-                      onChange={handleAvatarUpload}
-                    />
+                    <input id="ai-agent-avatar-upload" type="file" accept="image/*" onChange={handleAvatarUpload} />
                   </label>
-                  <span className={styles['modal__avatar-separator']} aria-hidden>•</span>
+                  <span className={styles['modal__avatar-separator']} aria-hidden>
+                    •
+                  </span>
                   <button
                     type="button"
                     onClick={() => {
