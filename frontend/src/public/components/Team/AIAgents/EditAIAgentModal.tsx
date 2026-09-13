@@ -52,12 +52,10 @@ export function EditAIAgentModal({ agent, onClose }: IEditAIAgentModalProps) {
       isOpen
       toggle={onClose}
       className={`${modalStyles['modal__dialog']} ${modalStyles['modal__dialog--ai-agent']}`}
-      contentClassName={`${modalStyles['modal__content']} ${modalStyles['modal__content--ai-agent']}`}
+      contentClassName={modalStyles['modal__content']}
     >
       <ModalHeader toggle={onClose} className={modalStyles['modal__header']} titleTag="div">
-        <div data-testid="edit-ai-agent-modal-header">
-          {formatMessage({ id: 'team.ai-agents.edit-modal-title' })}
-        </div>
+        <div data-testid="edit-ai-agent-modal-header">{formatMessage({ id: 'team.ai-agents.edit-modal-title' })}</div>
       </ModalHeader>
 
       <CreateAIAgentForm

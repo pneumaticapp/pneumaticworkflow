@@ -14,17 +14,13 @@
   height: auto;
 }
 
-.modal__content--ai-agent {
-  min-height: calc(100vh - 3.2rem);
-}
-
 .modal__content > form {
   flex: 1 1 auto;
   height: auto;
 }
 
 .modal__body {
-  padding-top: 2.4rem;
+  padding-top: 1.6rem;
   overflow: visible;
 }
 
@@ -99,11 +95,11 @@
 }
 
 .modal__agent-avatar {
-  margin-bottom: 3.2rem;
+  margin-bottom: 2.4rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.6rem;
+  gap: 1.2rem;
 }
 
 .modal__avatar-preview {
@@ -111,8 +107,8 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  width: 8rem;
-  height: 8rem;
+  width: 6.4rem;
+  height: 6.4rem;
   color: var(--pneumatic-color-black72);
   background-color: var(--pneumatic-color-black16);
   border-radius: 50%;
@@ -130,7 +126,7 @@
   display: flex;
   align-items: center;
   gap: 0.8rem;
-  height: 4rem;
+  height: 2.4rem;
   text-transform: uppercase;
   color: var(--pneumatic-color-link-dark);
 
@@ -172,7 +168,7 @@
 }
 
 .modal__section-title {
-  margin: 2.4rem 0 0.8rem;
+  margin: 1.6rem 0 0.8rem;
   text-transform: uppercase;
   color: var(--pneumatic-color-black48);
 
@@ -194,9 +190,9 @@
   }
 
   textarea {
-    padding: 1.6rem;
+    padding: 1.2rem 1.6rem;
     width: 100%;
-    min-height: 12rem;
+    min-height: 8.8rem;
     resize: vertical;
     color: var(--pneumatic-color-black100);
     border: 0.1rem solid var(--pneumatic-color-black16);
