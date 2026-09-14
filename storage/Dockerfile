@@ -20,4 +20,5 @@ RUN poetry install --no-interaction --no-ansi --no-root --only=main \
 
 COPY . .
 
-ENV PYTHONPATH=/app
+ENV PYTHONPATH=/app \
+    PYTHONUNBUFFERED=1
