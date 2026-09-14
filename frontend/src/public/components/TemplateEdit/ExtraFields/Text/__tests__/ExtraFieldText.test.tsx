@@ -76,4 +76,18 @@ describe('ExtraFieldText rulesets badge', () => {
 
     expect(screen.getByText(formatMsg('fieldsets.field-rulesets-badge', { count: 1 }))).toBeInTheDocument();
   });
+
+  it('ProcessRun mode: does not render rulesets badge even when field has rulesets', () => {
+    const field = makeExtraField({
+      type: EExtraFieldType.Text,
+      apiName: 'text-1',
+      rulesets: [
+        { apiName: 'rs-1', name: 'Rule 1', type: EFieldRuleType.Validator, message: '', groupsOr: [], order: 0 },
+      ],
+    });
+
+    renderWithIntl(<ExtraFieldText {...baseProps} field={field} mode={EExtraFieldMode.ProcessRun} />);
+
+    expect(screen.queryByText(/Rulesets:/)).not.toBeInTheDocument();
+  });
 });

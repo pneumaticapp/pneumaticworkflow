@@ -204,5 +204,20 @@ describe('FieldWithName', () => {
         {},
       );
     });
+
+    it('ProcessRun mode: does not render rulesets badge even when field has rulesets', () => {
+      render(
+        React.createElement(FieldWithName, {
+          ...baseProps,
+          mode: EExtraFieldMode.ProcessRun,
+          field: makeExtraField({
+            name: 'Test',
+            rulesets: [ruleset],
+          }),
+        }),
+      );
+
+      expect(screen.queryByTestId('rulesets-badge')).not.toBeInTheDocument();
+    });
   });
 });
