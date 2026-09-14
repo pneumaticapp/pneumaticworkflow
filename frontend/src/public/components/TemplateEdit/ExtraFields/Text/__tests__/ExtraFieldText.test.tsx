@@ -10,8 +10,7 @@ import { createIntl, createIntlCache, IntlProvider } from 'react-intl';
 
 const cache = createIntlCache();
 const intl = createIntl({ locale: 'en-US', messages: enMessages }, cache);
-const formatMsg = (id: string, values?: Record<string, string | number>) =>
-  intl.formatMessage({ id }, values);
+const formatMsg = (id: string, values?: Record<string, string | number>) => intl.formatMessage({ id }, values);
 
 const baseProps = {
   field: makeExtraField({ type: EExtraFieldType.Text, apiName: 'text-1', name: 'Text field' }),

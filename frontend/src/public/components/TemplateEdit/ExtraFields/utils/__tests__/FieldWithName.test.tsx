@@ -180,10 +180,7 @@ describe('FieldWithName', () => {
 
       const badgeMock = FieldsetRulesetsBadge as jest.Mock;
       expect(badgeMock).toHaveBeenCalledTimes(1);
-      expect(badgeMock).toHaveBeenCalledWith(
-        expect.objectContaining({ rulesets }),
-        {},
-      );
+      expect(badgeMock).toHaveBeenCalledWith(expect.objectContaining({ rulesets }), {});
     });
 
     it('empty rulesets: badge is called with empty array', () => {
@@ -199,10 +196,7 @@ describe('FieldWithName', () => {
 
       const badgeMock = FieldsetRulesetsBadge as jest.Mock;
       expect(badgeMock).toHaveBeenCalledTimes(1);
-      expect(badgeMock).toHaveBeenCalledWith(
-        expect.objectContaining({ rulesets: [] }),
-        {},
-      );
+      expect(badgeMock).toHaveBeenCalledWith(expect.objectContaining({ rulesets: [] }), {});
     });
 
     it('ProcessRun mode: does not render rulesets badge even when field has rulesets', () => {

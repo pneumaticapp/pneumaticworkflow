@@ -129,8 +129,7 @@ export const FieldWithName = forwardRef<HTMLInputElement, IKickoffFormFieldWithN
       isLabelLeft && styles['kick-off-input__field_label-left'],
     );
 
-    const rulesetsBadge =
-      mode === EExtraFieldMode.Kickoff ? <FieldsetRulesetsBadge rulesets={rulesets} /> : null;
+    const rulesetsBadge = mode === EExtraFieldMode.Kickoff ? <FieldsetRulesetsBadge rulesets={rulesets} /> : null;
 
     const fieldLabelElement = (
       <FieldLabel
