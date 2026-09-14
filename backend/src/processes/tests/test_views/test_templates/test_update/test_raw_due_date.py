@@ -14,6 +14,7 @@ from src.processes.tests.fixtures import (
     create_test_template,
     create_test_user,
 )
+from src.utils.validation import ErrorCode
 
 pytestmark = pytest.mark.django_db
 
@@ -318,3 +319,307 @@ def test_update__change_api_name__validation_error(api_client, mocker):
     assert response.data['message'] == message
     assert response.data['details']['reason'] == message
     assert response.data['details']['api_name'] == due_date_api_name
+
+
+def test_update__create__after_prev_task_completed__ok(
+    api_client,
+    mocker,
+):
+
+    # arrange
+    user = create_test_user()
+    api_client.token_authenticate(user)
+    template = create_test_template(
+        user=user,
+        tasks_count=2,
+        is_active=True,
+    )
+    tasks = list(template.tasks.order_by('number'))
+    task_1 = tasks[0]
+    task_2 = tasks[1]
+    api_name = 'raw-due-date-1'
+    duration = '01:00:00'
+    duration_months = 2
+    mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.template_updated',
+    )
+
+    # act
+    response = api_client.put(
+        f'/templates/{template.id}',
+        data={
+            'id': template.id,
+            'name': template.name,
+            'is_active': True,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {},
+            'tasks': [
+                {
+                    'id': task_1.id,
+                    'number': 1,
+                    'name': 'First step',
+                    'api_name': task_1.api_name,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+                {
+                    'id': task_2.id,
+                    'number': 2,
+                    'name': 'Second step',
+                    'api_name': task_2.api_name,
+                    'raw_due_date': {
+                        'api_name': api_name,
+                        'duration': duration,
+                        'duration_months': duration_months,
+                        'rule': DueDateRule.AFTER_PREVIOUS_TASK_COMPLETED,
+                        'source_id': None,
+                    },
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                    'conditions': [
+                        {
+                            'order': 0,
+                            'action': 'start_task',
+                            'rules': [
+                                {
+                                    'predicates': [
+                                        {
+                                            'operator': 'completed_or_skipped',
+                                            'field_type': 'task',
+                                            'field': task_1.api_name,
+                                            'value': None,
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    data = response.data['tasks'][1]['raw_due_date']
+    assert data['api_name'] == api_name
+    assert data['rule'] == DueDateRule.AFTER_PREVIOUS_TASK_COMPLETED
+    assert data['duration'] == duration
+    assert data['duration_months'] == duration_months
+    assert data['source_id'] is None
+    assert RawDueDateTemplate.objects.filter(
+        api_name=api_name,
+        template_id=template.id,
+        task_id=task_2.id,
+        rule=DueDateRule.AFTER_PREVIOUS_TASK_COMPLETED,
+        source_id=None,
+        duration=timedelta(hours=1),
+        duration_months=duration_months,
+    ).exists()
+
+
+def test_update__change_to_prev_task_completed__clears_source_id__ok(
+    api_client,
+    mocker,
+):
+
+    # arrange
+    user = create_test_user()
+    api_client.token_authenticate(user)
+    template = create_test_template(
+        user=user,
+        tasks_count=2,
+        is_active=True,
+    )
+    tasks = list(template.tasks.order_by('number'))
+    task_1 = tasks[0]
+    task_2 = tasks[1]
+    raw_due_date = RawDueDateTemplate.objects.create(
+        duration=timedelta(hours=1),
+        duration_months=0,
+        rule=DueDateRule.AFTER_TASK_COMPLETED,
+        source_id=task_1.api_name,
+        template=template,
+        task=task_2,
+    )
+    mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.template_updated',
+    )
+
+    # act
+    response = api_client.put(
+        f'/templates/{template.id}',
+        data={
+            'id': template.id,
+            'name': template.name,
+            'is_active': True,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {},
+            'tasks': [
+                {
+                    'id': task_1.id,
+                    'number': 1,
+                    'name': 'First step',
+                    'api_name': task_1.api_name,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+                {
+                    'id': task_2.id,
+                    'number': 2,
+                    'name': 'Second step',
+                    'api_name': task_2.api_name,
+                    'raw_due_date': {
+                        'api_name': raw_due_date.api_name,
+                        'duration': '01:00:00',
+                        'duration_months': 0,
+                        'rule': DueDateRule.AFTER_PREVIOUS_TASK_COMPLETED,
+                    },
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                    'conditions': [
+                        {
+                            'order': 0,
+                            'action': 'start_task',
+                            'rules': [
+                                {
+                                    'predicates': [
+                                        {
+                                            'operator': 'completed_or_skipped',
+                                            'field_type': 'task',
+                                            'field': task_1.api_name,
+                                            'value': None,
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    data = response.data['tasks'][1]['raw_due_date']
+    assert data['rule'] == DueDateRule.AFTER_PREVIOUS_TASK_COMPLETED
+    assert data['source_id'] is None
+    raw_due_date.refresh_from_db()
+    assert raw_due_date.rule == DueDateRule.AFTER_PREVIOUS_TASK_COMPLETED
+    assert raw_due_date.source_id is None
+
+
+def test_update__after_prev_task_completed__no_parents__error(
+    api_client,
+    mocker,
+):
+
+    """ Task without parents cannot use previous step completed """
+
+    # arrange
+    user = create_test_user()
+    api_client.token_authenticate(user)
+    template = create_test_template(
+        user=user,
+        tasks_count=2,
+        is_active=True,
+    )
+    tasks = list(template.tasks.order_by('number'))
+    task_1 = tasks[0]
+    task_2 = tasks[1]
+    api_name = 'raw-due-date-1'
+    mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.template_updated',
+    )
+
+    # act
+    response = api_client.put(
+        f'/templates/{template.id}',
+        data={
+            'id': template.id,
+            'name': template.name,
+            'is_active': True,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {},
+            'tasks': [
+                {
+                    'id': task_1.id,
+                    'number': 1,
+                    'name': 'First step',
+                    'api_name': task_1.api_name,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+                {
+                    'id': task_2.id,
+                    'number': 2,
+                    'name': 'Second step',
+                    'api_name': task_2.api_name,
+                    'raw_due_date': {
+                        'api_name': api_name,
+                        'duration': '01:00:00',
+                        'duration_months': 0,
+                        'rule': DueDateRule.AFTER_PREVIOUS_TASK_COMPLETED,
+                        'source_id': None,
+                    },
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert
+    message = messages.MSG_PT_0075(name='Second step')
+    assert response.status_code == 400
+    assert response.data['message'] == message
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['details']['api_name'] == api_name
+    assert response.data['details']['reason'] == message
+

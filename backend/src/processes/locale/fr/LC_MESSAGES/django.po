@@ -547,3 +547,6 @@ msgstr "L'utilisateur ou le groupe spécifié pour un champ de type \"Utilisateu
 
 msgid "Guest"
 msgstr "Invité"
+
+msgid "Task \"{name}\": the \"Previous task completed\" rule requires a previous task condition."
+msgstr "Tâche « {name} » : la règle « Tâche précédente terminée » nécessite une condition de tâche précédente."

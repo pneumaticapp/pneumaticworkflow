@@ -545,6 +545,9 @@ class DueDateRule:
     AFTER_WORKFLOW_STARTED = 'after workflow started'
     AFTER_TASK_STARTED = 'after task started'
     AFTER_TASK_COMPLETED = 'after task completed'
+    AFTER_PREVIOUS_TASK_COMPLETED = (
+        'after previous task completed'
+    )
 
     TASK_RULES = {
         AFTER_TASK_STARTED,
@@ -562,6 +565,7 @@ class DueDateRule:
         AFTER_WORKFLOW_STARTED,
         AFTER_TASK_STARTED,
         AFTER_TASK_COMPLETED,
+        AFTER_PREVIOUS_TASK_COMPLETED,
     ]
     CHOICES = (
         (BEFORE_FIELD, BEFORE_FIELD),
@@ -569,6 +573,10 @@ class DueDateRule:
         (AFTER_WORKFLOW_STARTED, AFTER_WORKFLOW_STARTED),
         (AFTER_TASK_STARTED, AFTER_TASK_STARTED),
         (AFTER_TASK_COMPLETED, AFTER_TASK_COMPLETED),
+        (
+            AFTER_PREVIOUS_TASK_COMPLETED,
+            AFTER_PREVIOUS_TASK_COMPLETED,
+        ),
     )
 
 
