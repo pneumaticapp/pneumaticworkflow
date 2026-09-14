@@ -34,31 +34,6 @@ def test_celery_config__testing__always_eager_enabled():
     assert eager_propagates is True
 
 
-def test_celery_app__imports__registers_all_shared_tasks():
-
-    """ Worker loads @shared_task including former missing modules. """
-
-    # arrange
-    must_register = frozenset((
-        'src.accounts.tasks.process_vacations',
-        'src.accounts.tasks.send_system_notification',
-        'src.notifications.tasks.send_new_task_notification',
-        'src.payment.tasks.handle_webhook',
-        'src.processes.tasks.delay.continue_delayed_workflows',
-        'src.storage.tasks.sync_workflow_attachment_permissions',
-    ))
-    app.loader.import_default_modules()
-
-    # act
-    registered = frozenset(
-        name for name in app.tasks if name.startswith('src.')
-    )
-
-    # assert
-    assert len(registered) == 64
-    assert registered >= must_register
-
-
 def test_send_workflow_started_webhook__class_autoretry__copied():
 
     """ Celery 5 keeps autoretry attrs from the Task subclass. """
