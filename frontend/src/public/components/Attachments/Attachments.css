@@ -1,9 +1,9 @@
 .comment-attachments {
   position: relative;
-  margin-top: 1.6rem;
   display: flex;
   flex-flow: column;
   width: 100%;
+  margin-top: 1.6rem;
 }
 
 .comment-attachments_loading {
@@ -12,26 +12,23 @@
 }
 
 .comment-attachments__images-list {
-  margin: -0.4rem;
   display: flex;
   flex-flow: row wrap;
   width: 100%;
-}
-
-.comment-attachments__images-list {
+  margin: -0.4rem;
   margin-bottom: 1.6rem;
 }
 
 .images-list__image-container {
   position: relative;
-  margin: 0.4rem;
   display: flex;
+  align-items: center;
+  justify-content: center;
   width: 8rem;
   height: 8rem;
+  margin: 0.4rem;
   background: var(--pneumatic-color-white);
   border-radius: 0.8rem;
-  justify-content: center;
-  align-items: center;
 }
 
 .images-list__image-container:last-child {
@@ -52,8 +49,8 @@
 .image {
   width: 100%;
   height: 100%;
-  border-radius: 0.8rem;
   object-fit: cover;
+  border-radius: 0.8rem;
 }
 
 .image__delete-button {
@@ -62,8 +59,8 @@
   top: 0;
   right: 0;
   display: flex;
-  cursor: pointer;
   color: var(--pneumatic-color-black88);
+  cursor: pointer;
   transition: 0.1s ease-in-out fill;
 
   &:hover {
@@ -96,19 +93,19 @@
 }
 
 .document {
-  margin-right: 1rem;
   display: flex;
   flex: 1;
-  overflow: hidden;
   min-width: 0;
-  cursor: pointer;
+  margin-right: 1rem;
+  overflow: hidden;
   color: var(--pneumatic-color-link-dark);
+  cursor: pointer;
   transition: color 0.1s ease-in-out;
 }
 
 .document_not-clickable {
-  cursor: default;
   pointer-events: none;
+  cursor: default;
 }
 
 .document:hover {
@@ -116,21 +113,21 @@
 }
 
 .document__filename {
-  overflow: hidden;
-  min-width: 0;
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   text-align: left;
   white-space: nowrap;
-  text-overflow: ellipsis;
   direction: rtl;
 }
 
 .document__filename-text {
-  direction: ltr;
-  unicode-bidi: embed;
   font-family: Nunito, sans-serif;
   font-size: 1.5rem;
   line-height: 2rem;
+  direction: ltr;
+  unicode-bidi: embed;
 }
 
 .document .document__icon {
@@ -142,8 +139,8 @@
   all: unset;
   display: flex;
   flex-shrink: 0;
-  cursor: pointer;
   color: var(--pneumatic-color-black88);
+  cursor: pointer;
   transition: 0.1s ease-in-out fill;
 
   &:hover {

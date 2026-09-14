@@ -6,11 +6,15 @@ export interface IGetTokenResponse {
 }
 
 export function getToken(username: string, password: string) {
-  return commonRequest<IGetTokenResponse>('jwtObtain', {
-    method: 'POST',
-    data: mapRequestBody({username, password}),
-  }, {
-    type: 'local',
-    shouldThrow: true,
-  });
+  return commonRequest<IGetTokenResponse>(
+    'jwtObtain',
+    {
+      method: 'POST',
+      data: mapRequestBody({ username, password }),
+    },
+    {
+      type: 'local',
+      shouldThrow: true,
+    },
+  );
 }

@@ -1,4 +1,3 @@
-/* eslint-disable */
 /* prettier-ignore */
 import * as React from 'react';
 import classnames from 'classnames';
@@ -16,11 +15,8 @@ export interface IRadioButtonProps {
   id?: string;
 }
 
-type TRadioButtonProps = IRadioButtonProps & Pick<React.HTMLProps<HTMLInputElement>,
-| 'checked'
-| 'disabled'
-| 'onChange'
->;
+type TRadioButtonProps = IRadioButtonProps &
+  Pick<React.HTMLProps<HTMLInputElement>, 'checked' | 'disabled' | 'onChange'>;
 
 export function RadioButton({
   title,
@@ -33,7 +29,6 @@ export function RadioButton({
   // tslint:disable-next-line: trailing-comma
   ...props
 }: TRadioButtonProps) {
-
   const titleClassNames = classnames(
     styles['radio__title'],
     isRequired && commonStyles['title_required'],
@@ -42,10 +37,7 @@ export function RadioButton({
 
   return (
     <div className={containerClassName}>
-      <label className={classnames(
-        styles['radio'],
-        labelClassName,
-      )}>
+      <label className={classnames(styles['radio'], labelClassName)}>
         <input
           type="radio"
           className={styles['radio__input']}
@@ -55,11 +47,7 @@ export function RadioButton({
           {...props}
         />
         <span className={styles['radio__box']}></span>
-        {title && (
-          <span className={titleClassNames}>
-            {title}
-          </span>
-        )}
+        {title && <span className={titleClassNames}>{title}</span>}
       </label>
     </div>
   );
@@ -68,10 +56,5 @@ export function RadioButton({
 export function FormikRadioButton(props: TRadioButtonProps & FieldHookConfig<boolean>) {
   const [field] = useField({ name: props.name, type: 'radio' });
 
-  return (
-    <RadioButton
-      {...props}
-      {...field}
-    />
-  );
+  return <RadioButton {...props} {...field} />;
 }

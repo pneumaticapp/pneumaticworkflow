@@ -31,55 +31,62 @@ export function SelectReportsModal({
 }: ISelectReportsModalProps) {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
-  
+
   const allUsers = getNotDeletedUsers(useSelector(getUsers));
-  
+
   // Filter out the current user so they can't be their own report
-  const selectableUsers = useMemo(() => allUsers.filter(user => user.id !== currentUserId), [allUsers, currentUserId]);
+  const selectableUsers = useMemo(
+    () => allUsers.filter((user) => user.id !== currentUserId),
+    [allUsers, currentUserId],
+  );
 
   const [selectedReports, setSelectedReports] = useState<TUsersDropdownOption[]>(() => {
-    return currentReportIds.map(id => {
-      const report = selectableUsers.find(u => u.id === id);
-      if (report) {
-        return {
-          id: report.id,
-          optionType: EOptionTypes.User,
-          label: getUserFullName(report),
-          value: String(report.id),
-        } as TUsersDropdownOption;
-      }
-      return null;
-    }).filter(Boolean) as TUsersDropdownOption[];
+    return currentReportIds
+      .map((id) => {
+        const report = selectableUsers.find((u) => u.id === id);
+        if (report) {
+          return {
+            id: report.id,
+            optionType: EOptionTypes.User,
+            label: getUserFullName(report),
+            value: String(report.id),
+          } as TUsersDropdownOption;
+        }
+        return null;
+      })
+      .filter(Boolean) as TUsersDropdownOption[];
   });
 
-  const selectionsDropdownOption: TUsersDropdownOption[] = useMemo(() => selectableUsers.map((item) => ({
-    ...item,
-    optionType: EOptionTypes.User,
-    label: getUserFullName(item),
-    value: String(item.id),
-  })), [selectableUsers]);
+  const selectionsDropdownOption: TUsersDropdownOption[] = useMemo(
+    () =>
+      selectableUsers.map((item) => ({
+        ...item,
+        optionType: EOptionTypes.User,
+        label: getUserFullName(item),
+        value: String(item.id),
+      })),
+    [selectableUsers],
+  );
 
   const handleConfirm = useCallback(() => {
-    onConfirm(selectedReports.map(opt => Number(opt.id)));
+    onConfirm(selectedReports.map((opt) => Number(opt.id)));
   }, [selectedReports, onConfirm]);
 
   const handleAddReport = useCallback((option: TUsersDropdownOption) => {
-    setSelectedReports(prev => {
-      if (prev.find(p => p.id === option.id)) return prev;
+    setSelectedReports((prev) => {
+      if (prev.find((p) => p.id === option.id)) return prev;
       return [...prev, option];
     });
   }, []);
 
   const handleRemoveReport = useCallback((option: TUsersDropdownOption) => {
-    setSelectedReports(prev => prev.filter(p => p.id !== option.id));
+    setSelectedReports((prev) => prev.filter((p) => p.id !== option.id));
   }, []);
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <div className={styles['select-reports-modal']}>
-        <p className={styles['select-reports-modal__title']}>
-          Select Reports
-        </p>
+        <p className={styles['select-reports-modal__title']}>Select Reports</p>
 
         <div className={styles['select-reports-modal__content']}>
           <UsersDropdownComponent

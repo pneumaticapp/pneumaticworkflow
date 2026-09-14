@@ -1,4 +1,3 @@
-/* eslint-disable */
 /* prettier-ignore */
 import * as React from 'react';
 
@@ -10,14 +9,7 @@ export interface IProcessStartIconProps extends React.SVGAttributes<SVGElement> 
 
 export function ProcessStartIcon({ fill = '#39a0ed', size = 'lg', ...rest }: IProcessStartIconProps) {
   const largeIcon = (
-    <svg
-      width="36"
-      height="36"
-      viewBox="0 0 36 36"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      {...rest}
-    >
+    <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" {...rest}>
       <path
         fillRule="evenodd"
         clipRule="evenodd"
@@ -35,7 +27,11 @@ export function ProcessStartIcon({ fill = '#39a0ed', size = 'lg', ...rest }: IPr
 
   const smallIcon = (
     <svg width="20" height="20" viewBox="0 0 20 20" fill={fill} xmlns="http://www.w3.org/2000/svg" {...rest}>
-      <path fillRule="evenodd" clipRule="evenodd" d="M1 10C1 5.02944 5.02944 1 10 1C14.9706 1 19 5.02944 19 10C19 14.9706 14.9706 19 10 19C5.02944 19 1 14.9706 1 10ZM9.53 7.152C9.22173 6.95933 8.83319 6.94913 8.51523 7.12536C8.19728 7.30158 8 7.63648 8 8V12C8 12.3635 8.19728 12.6984 8.51523 12.8746C8.83319 13.0509 9.22173 13.0407 9.53 12.848L12.53 10.848C12.8224 10.6653 13 10.3448 13 10C13 9.65521 12.8224 9.33474 12.53 9.152L9.53 7.152Z"/>
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M1 10C1 5.02944 5.02944 1 10 1C14.9706 1 19 5.02944 19 10C19 14.9706 14.9706 19 10 19C5.02944 19 1 14.9706 1 10ZM9.53 7.152C9.22173 6.95933 8.83319 6.94913 8.51523 7.12536C8.19728 7.30158 8 7.63648 8 8V12C8 12.3635 8.19728 12.6984 8.51523 12.8746C8.83319 13.0509 9.22173 13.0407 9.53 12.848L12.53 10.848C12.8224 10.6653 13 10.3448 13 10C13 9.65521 12.8224 9.33474 12.53 9.152L9.53 7.152Z"
+      />
     </svg>
   );
 

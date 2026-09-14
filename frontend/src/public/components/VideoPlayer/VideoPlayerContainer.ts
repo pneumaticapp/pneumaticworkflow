@@ -1,4 +1,3 @@
-/* eslint-disable */
 /* prettier-ignore */
 import { connect } from 'react-redux';
 import { IVideoPlayerProps, VideoPlayer } from './VideoPlayer';

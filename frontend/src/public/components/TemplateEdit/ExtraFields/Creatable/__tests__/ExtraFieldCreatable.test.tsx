@@ -68,8 +68,7 @@ jest.mock('../../../KickoffRedux/utils/getEmptySelection', () => ({
 
 describe('ExtraFieldCreatable', () => {
   const mockEditField = jest.fn();
-  const getFieldWithNameMock = (): jest.Mock =>
-    require('../../utils/FieldWithName').FieldWithName;
+  const getFieldWithNameMock = (): jest.Mock => require('../../utils/FieldWithName').FieldWithName;
 
   const kickoffSelections: IExtraFieldSelection[] = [
     { key: 1, value: 'High', isSelected: false, apiName: 'opt-1' },
@@ -128,13 +127,7 @@ describe('ExtraFieldCreatable', () => {
   });
 
   it('ProcessRun: renders DropdownList with string selections as options', () => {
-    render(
-      <ExtraFieldCreatable
-        {...baseKickoffProps}
-        field={processRunField}
-        mode={EExtraFieldMode.ProcessRun}
-      />,
-    );
+    render(<ExtraFieldCreatable {...baseKickoffProps} field={processRunField} mode={EExtraFieldMode.ProcessRun} />);
 
     const mock = DropdownList as jest.Mock;
     expect(mock).toHaveBeenCalledTimes(1);

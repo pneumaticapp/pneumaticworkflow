@@ -27,7 +27,7 @@ describe('acceptInvite', () => {
       '/accounts/invites/123/accept/',
       {
         method: 'POST',
-        data: '{"first_name":"Test","last_name":"User","password":"test_pwd","timezone":""}'
+        data: '{"first_name":"Test","last_name":"User","password":"test_pwd","timezone":""}',
       },
       {
         type: 'local',

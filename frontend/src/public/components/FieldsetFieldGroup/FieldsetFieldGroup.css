@@ -1,7 +1,7 @@
 .fieldset-group {
+  padding-left: 16px;
   margin-top: 16px;
   margin-bottom: 16px;
-  padding-left: 16px;
   border-left: 3px solid var(--pneumatic-color-link);
 }
 

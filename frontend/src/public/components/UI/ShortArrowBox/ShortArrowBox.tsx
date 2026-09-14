@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 import React from 'react';
 import { ShortArrowIcon } from '../../icons';
 import styles from './ShortArrowBox.css';

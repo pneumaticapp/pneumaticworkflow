@@ -24,7 +24,11 @@ export function TaskCardHeader({ task, viewMode, workflowLog, openWorkflowLogPop
   };
 
   if (viewMode === ETaskCardViewMode.Guest) {
-    return <Header size="4" tag="h1" className={styles['guest-task-name']}>{task.name}</Header>;
+    return (
+      <Header size="4" tag="h1" className={styles['guest-task-name']}>
+        {task.name}
+      </Header>
+    );
   }
 
   return (
@@ -32,7 +36,10 @@ export function TaskCardHeader({ task, viewMode, workflowLog, openWorkflowLogPop
       <div className={styles.pretitle}>
         {task.workflow.templateName}
         <div className={styles.dot} />
-        <Tooltip content={formatMessage({ id: 'workflows.name' })} containerClassName={styles['workflow-name-container']}>
+        <Tooltip
+          content={formatMessage({ id: 'workflows.name' })}
+          containerClassName={styles['workflow-name-container']}
+        >
           <span>
             <Link
               innerRef={workflowLinkRef}
@@ -50,12 +57,16 @@ export function TaskCardHeader({ task, viewMode, workflowLog, openWorkflowLogPop
           {task.isUrgent && (
             <div className={styles['task-name__urgent-marker']}>{formatMessage({ id: 'workflows.card-urgent' })}</div>
           )}
-          {showLinkToTaskDetail
-            ? <Link to={redirectToTaskUrl}>{sanitizeText(task.name)}</Link>
-            : sanitizeText(task.name)}
+          {showLinkToTaskDetail ? (
+            <Link to={redirectToTaskUrl}>{sanitizeText(task.name)}</Link>
+          ) : (
+            sanitizeText(task.name)
+          )}
         </Header>
       </div>
-      <span className={styles.date}><DateFormat date={task.dateStarted} /></span>
+      <span className={styles.date}>
+        <DateFormat date={task.dateStarted} />
+      </span>
     </>
   );
 }

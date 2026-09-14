@@ -14,12 +14,7 @@ export interface IStepNameProps {
   loadTemplateVariables(payload: TLoadTemplateVariablesPayload): void;
 }
 
-export function StepNameComponent({
-  initialStepName,
-  templateId,
-  variables,
-  loadTemplateVariables,
-}: IStepNameProps) {
+export function StepNameComponent({ initialStepName, templateId, variables, loadTemplateVariables }: IStepNameProps) {
   React.useEffect(() => {
     if (!variables) {
       loadTemplateVariables({ templateId });

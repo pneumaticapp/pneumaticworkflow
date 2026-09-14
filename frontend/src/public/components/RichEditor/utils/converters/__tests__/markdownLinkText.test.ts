@@ -36,12 +36,9 @@ describe('attachment markdown regex', () => {
   });
 
   it('matches only the first attachment when two are on the same line', () => {
-    const markdown =
-      '![a](url1 "entityType:file") ![b](url2 "entityType:file")';
+    const markdown = '![a](url1 "entityType:file") ![b](url2 "entityType:file")';
     const firstMatch = parseAttachmentMarkdownFromStart(markdown);
-    const secondMatch = parseAttachmentMarkdownFromStart(
-      markdown.slice(firstMatch?.[0].length ?? 0).trimStart(),
-    );
+    const secondMatch = parseAttachmentMarkdownFromStart(markdown.slice(firstMatch?.[0].length ?? 0).trimStart());
 
     expect(firstMatch?.[1]).toBe('a');
     expect(firstMatch?.[2]).toBe('url1');
@@ -63,9 +60,7 @@ describe('general markdown link regex', () => {
   it('matches only the first link when two are on the same line', () => {
     const markdown = '[a](url1) [b](url2)';
     const firstMatch = parseGeneralMarkdownLinkFromStart(markdown);
-    const secondMatch = parseGeneralMarkdownLinkFromStart(
-      markdown.slice(firstMatch?.[0].length ?? 0).trimStart(),
-    );
+    const secondMatch = parseGeneralMarkdownLinkFromStart(markdown.slice(firstMatch?.[0].length ?? 0).trimStart());
 
     expect(firstMatch?.[1]).toBe('a');
     expect(firstMatch?.[2]).toBe('url1');

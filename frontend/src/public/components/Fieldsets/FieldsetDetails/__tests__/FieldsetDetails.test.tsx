@@ -49,13 +49,12 @@ jest.mock('../../../../redux/fieldsets/slice', () => ({
 }));
 
 jest.mock('../../../UI', () => ({
-  ModifyDropdown: jest.fn(
-    (props: { onEdit?: () => void; onDelete?: () => void; onClone?: () => void }) =>
-      React.createElement(
-        'div',
-        { 'data-testid': 'modify-dropdown' },
-        React.createElement('button', { 'data-testid': 'modify-clone', onClick: props.onClone }),
-      ),
+  ModifyDropdown: jest.fn((props: { onEdit?: () => void; onDelete?: () => void; onClone?: () => void }) =>
+    React.createElement(
+      'div',
+      { 'data-testid': 'modify-dropdown' },
+      React.createElement('button', { 'data-testid': 'modify-clone', onClick: props.onClone }),
+    ),
   ),
   Button: jest.fn((props: { label: string; onClick?: () => void; disabled?: boolean }) =>
     React.createElement(
@@ -361,10 +360,7 @@ describe('FieldsetDetails', () => {
       const textarea = screen.getByLabelText(formatMsg('fieldsets.settings.description'));
       expect(textarea).toHaveValue('Test desc');
       const filterMock = getFilterSelectMock();
-      expect(filterMock).toHaveBeenCalledWith(
-        expect.objectContaining({ selectedOption: 'left' }),
-        {},
-      );
+      expect(filterMock).toHaveBeenCalledWith(expect.objectContaining({ selectedOption: 'left' }), {});
     });
 
     it('syncs title from fieldset', () => {
@@ -722,9 +718,7 @@ describe('FieldsetDetails', () => {
         const all = screen.getAllByTestId('filter-placeholder');
         return all[all.length - 1];
       };
-      expect(getFieldsPlaceholder()).toHaveTextContent(
-        formatMsg('fieldsets.rule-fields-placeholder'),
-      );
+      expect(getFieldsPlaceholder()).toHaveTextContent(formatMsg('fieldsets.rule-fields-placeholder'));
 
       userEvent.click(screen.getByTestId('filter-option-field-1'));
       userEvent.click(screen.getByTestId('filter-option-field-3'));
@@ -804,9 +798,7 @@ describe('FieldsetDetails', () => {
 
       userEvent.click(screen.getByTestId('modify-clone'));
 
-      expect(mockDispatch).toHaveBeenCalledWith(
-        cloneFieldsetAction({ id: 10 }),
-      );
+      expect(mockDispatch).toHaveBeenCalledWith(cloneFieldsetAction({ id: 10 }));
       expect(NotificationManager.warning).not.toHaveBeenCalled();
     });
 
@@ -818,9 +810,7 @@ describe('FieldsetDetails', () => {
 
       userEvent.click(screen.getByTestId('modify-clone'));
 
-      expect(mockDispatch).not.toHaveBeenCalledWith(
-        cloneFieldsetAction({ id: 10 }),
-      );
+      expect(mockDispatch).not.toHaveBeenCalledWith(cloneFieldsetAction({ id: 10 }));
     });
   });
 
@@ -885,10 +875,7 @@ describe('FieldsetDetails', () => {
     it('disables Settings Label Position when isLinked', () => {
       renderWithState(makeLoadedState({ usage: LINKED_USAGE }));
       const filterMock = getFilterSelectMock();
-      expect(filterMock).toHaveBeenCalledWith(
-        expect.objectContaining({ isDisabled: true }),
-        {},
-      );
+      expect(filterMock).toHaveBeenCalledWith(expect.objectContaining({ isDisabled: true }), {});
     });
 
     it('hides Save bar when isLinked', () => {

@@ -1,8 +1,5 @@
 import { ETaskListCompletionStatus, ETaskStatus } from '../../../../types/tasks';
-import {
-  shouldDecrementCounterOnDeleted,
-  shouldRemoveTaskOnDeleted,
-} from '../shouldRemoveTaskOnDeleted';
+import { shouldDecrementCounterOnDeleted, shouldRemoveTaskOnDeleted } from '../shouldRemoveTaskOnDeleted';
 
 describe('shouldRemoveTaskOnDeleted', () => {
   it('always removes active tasks', () => {

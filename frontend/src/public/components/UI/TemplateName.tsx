@@ -17,19 +17,11 @@ export const TemplateName = ({ isLegacyTemplate, legacyTemplateName, templateNam
     const postfix = formatMessage({ id: 'legacy-template' });
     const result = legacyTemplateName ? `${sanitizeText(legacyTemplateName)} ${postfix}` : postfix;
 
-    return (
-      <span {...rest}>
-        {result}
-      </span>
-    );
+    return <span {...rest}>{result}</span>;
   }
 
   if (templateName) {
-    return (
-      <span {...rest}>
-        {sanitizeText(templateName)}
-      </span>
-    );
+    return <span {...rest}>{sanitizeText(templateName)}</span>;
   }
 
   return null;

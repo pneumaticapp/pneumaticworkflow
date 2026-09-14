@@ -22,13 +22,13 @@
 }
 
 .vacation-active {
-  padding: 1.6rem;
   display: flex;
   flex-direction: column;
+  gap: 1.6rem;
+  align-items: flex-start;
+  padding: 1.6rem;
   background: var(--pneumatic-color-beige);
   border-radius: 0.8rem;
-  align-items: flex-start;
-  gap: 1.6rem;
 }
 
 .vacation-active p {
@@ -56,15 +56,15 @@
 }
 
 .selected-users {
-  margin-top: 0.8rem;
   display: flex;
   flex-wrap: wrap;
   gap: 0.8rem;
+  margin-top: 0.8rem;
 }
 
 .vacation-actions {
-  margin-top: 2.4rem;
   display: flex;
-  align-items: center;
   gap: 1.6rem;
+  align-items: center;
+  margin-top: 2.4rem;
 }

@@ -17,21 +17,19 @@ jest.mock('../../TemplateEdit/ExtraFields', () => ({
   ExtraFieldIntl: jest.fn(({ field, editField }: TExtraFieldIntlMockProps) => (
     <div data-testid={`extra-field-${field.apiName}`}>
       <span>{field.name}</span>
-      <button
-        type="button"
-        onClick={() => editField({ value: `value-for-${field.apiName}` })}
-      >
+      <button type="button" onClick={() => editField({ value: `value-for-${field.apiName}` })}>
         edit {field.apiName}
       </button>
     </div>
   )),
 }));
 
-const makeField = (apiName: string, order = 0) => makeExtraField({
-  apiName,
-  name: `Field ${apiName}`,
-  ...(order !== 0 && { order }),
-});
+const makeField = (apiName: string, order = 0) =>
+  makeExtraField({
+    apiName,
+    name: `Field ${apiName}`,
+    ...(order !== 0 && { order }),
+  });
 
 const baseProps = {
   fields: [] as IExtraField[],
@@ -85,22 +83,15 @@ describe('FieldsetFieldGroup', () => {
       expect(screen.getByText(ERROR_TEXT)).toBeInTheDocument();
     });
 
-    it.each<'' | null | undefined>(['', null, undefined])(
-      'does not render for falsy validationError = %p',
-      (value) => {
-        render(<FieldsetFieldGroup {...baseProps} validationError={value} />);
+    it.each<'' | null | undefined>(['', null, undefined])('does not render for falsy validationError = %p', (value) => {
+      render(<FieldsetFieldGroup {...baseProps} validationError={value} />);
 
-        expect(screen.queryByText(ERROR_TEXT)).not.toBeInTheDocument();
-      },
-    );
+      expect(screen.queryByText(ERROR_TEXT)).not.toBeInTheDocument();
+    });
   });
 
   it('renders all provided fields in the original array order, without re-sorting', () => {
-    const fields = [
-      makeField('email', 5),
-      makeField('phone', 1),
-      makeField('city', 3),
-    ];
+    const fields = [makeField('email', 5), makeField('phone', 1), makeField('city', 3)];
 
     render(<FieldsetFieldGroup {...baseProps} fields={fields} />);
 
@@ -116,29 +107,19 @@ describe('FieldsetFieldGroup', () => {
 
   it('routes edits to the specific apiName when editing a field', () => {
     const collected: Array<{ apiName: string; changedProps: Partial<IExtraField> }> = [];
-    const onEditField = jest.fn(
-      (apiName: string) => (changedProps: Partial<IExtraField>) => {
-        collected.push({ apiName, changedProps });
-      },
-    );
+    const onEditField = jest.fn((apiName: string) => (changedProps: Partial<IExtraField>) => {
+      collected.push({ apiName, changedProps });
+    });
 
     const fields = [makeField('email'), makeField('phone'), makeField('city')];
 
-    render(
-      <FieldsetFieldGroup {...baseProps} fields={fields} onEditField={onEditField} />,
-    );
+    render(<FieldsetFieldGroup {...baseProps} fields={fields} onEditField={onEditField} />);
 
     expect(onEditField).toHaveBeenCalledTimes(3);
-    expect(onEditField.mock.calls.map(([apiName]) => apiName)).toEqual([
-      'email',
-      'phone',
-      'city',
-    ]);
+    expect(onEditField.mock.calls.map(([apiName]) => apiName)).toEqual(['email', 'phone', 'city']);
 
     userEvent.click(screen.getByRole('button', { name: 'edit phone' }));
 
-    expect(collected).toEqual([
-      { apiName: 'phone', changedProps: { value: 'value-for-phone' } },
-    ]);
+    expect(collected).toEqual([{ apiName: 'phone', changedProps: { value: 'value-for-phone' } }]);
   });
 });

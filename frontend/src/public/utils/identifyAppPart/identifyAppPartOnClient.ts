@@ -5,20 +5,18 @@ import { getBrowserConfig } from '../getConfig';
 import { history } from '../history';
 
 export const identifyAppPartOnClient = (): EAppPart => {
-  const { config: { formSubdomain } } = getBrowserConfig();
+  const {
+    config: { formSubdomain },
+  } = getBrowserConfig();
 
   const identifyAppPartMap = [
     {
       // Forms: path-based (domain.com/forms/*) or subdomain (form.domain.com/*)
-      check: () => isFormPath(
-        window.location.hostname,
-        window.location.pathname,
-        formSubdomain,
-      ),
+      check: () => isFormPath(window.location.hostname, window.location.pathname, formSubdomain),
       appPart: EAppPart.PublicFormApp,
     },
     {
-      check: () => GUEST_URLS.some(url => history.location.pathname.includes(url)),
+      check: () => GUEST_URLS.some((url) => history.location.pathname.includes(url)),
       appPart: EAppPart.GuestTaskApp,
     },
     {

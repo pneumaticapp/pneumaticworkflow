@@ -38,21 +38,13 @@ describe('WorkflowControllsComponents', () => {
 
   const renderResumeOption = (status: EWorkflowStatus) => {
     render(
-      <WorkflowControllsComponents
-        workflow={createWorkflow(status)}
-        timezone="UTC"
-      >
+      <WorkflowControllsComponents workflow={createWorkflow(status)} timezone="UTC">
         {(options: TDropdownOption[]) => {
           const option = options.find(({ label }) => label === RESUME_LABEL);
 
           expect(option).toBeDefined();
 
-          return (
-            <span
-              aria-label={RESUME_LABEL}
-              data-hidden={String(Boolean(option?.isHidden))}
-            />
-          );
+          return <span aria-label={RESUME_LABEL} data-hidden={String(Boolean(option?.isHidden))} />;
         }}
       </WorkflowControllsComponents>,
     );
@@ -81,15 +73,9 @@ describe('WorkflowControllsComponents', () => {
     },
   ];
 
-  it.each(cases)(
-    'sets resume hidden=$isHidden for $name workflow',
-    ({ status, isHidden }: TResumeCase) => {
-      renderResumeOption(status);
+  it.each(cases)('sets resume hidden=$isHidden for $name workflow', ({ status, isHidden }: TResumeCase) => {
+    renderResumeOption(status);
 
-      expect(screen.getByLabelText(RESUME_LABEL)).toHaveAttribute(
-        'data-hidden',
-        String(isHidden),
-      );
-    },
-  );
+    expect(screen.getByLabelText(RESUME_LABEL)).toHaveAttribute('data-hidden', String(isHidden));
+  });
 });
