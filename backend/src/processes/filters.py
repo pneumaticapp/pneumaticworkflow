@@ -4,10 +4,7 @@ from django_filters import (
     OrderingFilter,
 )
 from django_filters.constants import EMPTY_VALUES
-from django_filters.rest_framework import (
-    FilterSet,
-    IsoDateTimeFilter,
-)
+from django_filters.rest_framework import FilterSet
 
 from src.generics.filters import (
     DefaultOrderingFilter,
@@ -26,36 +23,6 @@ class TemplateOrderingFilter(OrderingFilter):
             ordering.extend(value)
 
         return super().filter(qs, ordering)
-
-
-class WorkflowDurationFilter(FilterSet):
-    date_from = IsoDateTimeFilter(method='filter_date_from')
-    date_to = IsoDateTimeFilter(method='filter_date_to')
-
-    def filter_date_from(self, queryset, name, value):
-        if value:
-            return queryset.workflows_updated_from(value, as_combine=True)
-        return queryset
-
-    def filter_date_to(self, queryset, name, value):
-        if value:
-            return queryset.workflows_updated_to(value, as_combine=True)
-        return queryset
-
-
-class WorkflowSuccessRateFilter(FilterSet):
-    date_from = IsoDateTimeFilter(method='filter_date_from')
-    date_to = IsoDateTimeFilter(method='filter_date_to')
-
-    def filter_date_from(self, queryset, name, value):
-        if value:
-            return queryset.workflows_updated_from(value, as_combine=True)
-        return queryset
-
-    def filter_date_to(self, queryset, name, value):
-        if value:
-            return queryset.workflows_updated_to(value, as_combine=True)
-        return queryset
 
 
 class WorkflowWebhookFilterSet(FilterSet):

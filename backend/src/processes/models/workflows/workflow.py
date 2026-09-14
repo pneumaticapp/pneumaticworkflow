@@ -4,7 +4,6 @@ from typing import Dict, Optional
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.db.models import Q
-from django.utils import timezone
 
 from src.accounts.models import AccountBaseMixin
 from src.generics.managers import BaseSoftDeleteManager
@@ -43,7 +42,6 @@ class Workflow(
         choices=WorkflowStatus.CHOICES,
         default=WorkflowStatus.RUNNING,
     )
-    status_updated = models.DateTimeField(db_index=True)
     is_external = models.BooleanField(default=False)
     is_urgent = models.BooleanField(default=False)
     is_legacy_template = models.BooleanField(
@@ -81,12 +79,6 @@ class Workflow(
 
     def is_version_lower(self, version):
         return version > self.version
-
-    def save(self, update_fields=None, **kwargs):
-        if update_fields is not None and 'status' in update_fields:
-            self.status_updated = timezone.now()
-            update_fields.append('status_updated')
-        super().save(update_fields=update_fields, **kwargs)
 
     def _get_kickoff(self):
         kickoff = self.kickoff.prefetch_related('output__selections').first()
