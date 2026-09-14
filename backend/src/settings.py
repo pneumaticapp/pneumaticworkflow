@@ -536,6 +536,8 @@ class Common(Configuration):
         'src.processes.tasks.update_workflow',
         'src.processes.tasks.webhooks',
         'src.reports.tasks',
+        'src.analysis.tasks',
+        'src.ai.tasks',
         'src.storage.tasks',
     ]
 

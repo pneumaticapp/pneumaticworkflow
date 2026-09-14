@@ -5,23 +5,25 @@ from urllib.parse import urlparse
 import requests
 from django.contrib.auth import get_user_model
 
+from src.ai.enums import AIAgentActionType
 from src.ai.exceptions import (
     AIProviderConnectionException,
     AIProviderInvalidResponseException,
     AIProviderRequestFailedException,
     AIServiceException,
 )
-from src.ai.models import AIProvider
-from src.logs.enums import RequestDirection
-from src.logs.service import AccountLogService
+from src.ai.models import AIAgent, AIAgentAction, AIProvider
+from src.processes.models.workflows.task import Task
 
 UserModel = get_user_model()
 
 
 class BaseVendor(ABC):
     request_timeout = 10
+    completion_timeout = 200
     _secret_headers = (
         'Authorization',
+        'authorization',
         'api-key',
         'x-api-key',
         'x-goog-api-key',
@@ -31,10 +33,14 @@ class BaseVendor(ABC):
         self,
         instance: AIProvider,
         user: UserModel,
+        agent: Optional[AIAgent] = None,
+        task: Optional[Task] = None,
     ):
         self.instance = instance
         self.user = user
         self.account = user.account
+        self.agent = agent
+        self.task = task
 
     def _create_url(self, path: str) -> str:
         return f'{self.instance.base_url}/{path}'
@@ -52,6 +58,41 @@ class BaseVendor(ABC):
         """List of models as dicts with keys `slug` and `name`."""
 
         pass
+
+    @abstractmethod
+    def get_completion(
+        self,
+        system_message: str,
+        user_message: str,
+        model: str,
+    ) -> str:
+
+        """Send a chat request and return the model text response."""
+
+        pass
+
+    def _get_safe_headers(self, headers: Optional[dict]) -> Optional[dict]:
+        if not headers:
+            return headers
+        data = dict(headers)
+        for key in list(data):
+            if key.lower() in self._secret_headers:
+                data[key] = '***'
+        return data
+
+    def _create_action(
+        self,
+        action: str,
+        message: Optional[str] = None,
+    ) -> Optional[AIAgentAction]:
+        if not (self.agent and self.task):
+            return None
+        return AIAgentAction.objects.create(
+            agent=self.agent,
+            task=self.task,
+            action=action,
+            message=message,
+        )
 
     @abstractmethod
     def _parse_error(
@@ -77,11 +118,15 @@ class BaseVendor(ABC):
         self,
         method: str,
         url: str,
-        **kwargs,
+        headers: Optional[dict] = None,
+        json: Optional[dict] = None,
+        params: Optional[dict] = None,
+        timeout: Optional[int] = None,
     ) -> Tuple[int, dict]:
         """Send an HTTP request and return status with JSON body."""
 
-        kwargs.setdefault('timeout', self.request_timeout)
+        if timeout is None:
+            timeout = self.request_timeout
         http_status = 0
         response_data = None
         parsed = urlparse(url)
@@ -90,7 +135,10 @@ class BaseVendor(ABC):
                 response = requests.request(
                     method=method,
                     url=url,
-                    **kwargs,
+                    headers=headers,
+                    json=json,
+                    params=params,
+                    timeout=timeout,
                 )
             except requests.RequestException as ex:
                 response_data = {'error': str(ex)}
@@ -116,62 +164,21 @@ class BaseVendor(ABC):
                 raise AIProviderInvalidResponseException from ex
             return http_status, response_data
         finally:
-            if self.account.log_api_requests:
-                self._log_api_request(
-                    method=method,
-                    url=url,
-                    scheme=parsed.scheme,
-                    http_status=http_status,
-                    request_kwargs=kwargs,
-                    response_data=response_data,
-                )
-
-    def _log_api_request(
-        self,
-        method: str,
-        url: str,
-        scheme: str,
-        http_status: int,
-        request_kwargs: dict,
-        response_data: Optional[dict],
-    ):
-
-        AccountLogService().api_request(
-            user=self.user,
-            ip='',
-            user_agent='',
-            auth_token='',
-            scheme=scheme or 'https',
-            method=method.upper(),
-            title=f'AI provider request: {self.instance.name}',
-            path=url,
-            http_status=http_status,
-            request_data=self._build_request_log_data(request_kwargs),
-            response_data=response_data,
-            direction=RequestDirection.SENT,
-            contractor=self.instance.name,
-        )
-
-    def _build_request_log_data(
-        self,
-        request_kwargs: dict,
-    ) -> Optional[dict]:
-
-        headers = dict(request_kwargs.get('headers') or {})
-        secret_names = {name.lower() for name in self._secret_headers}
-        for key in list(headers):
-            if key.lower() in secret_names:
-                headers[key] = '***'
-        log_data = {}
-        if headers:
-            log_data['headers'] = headers
-        json_body = request_kwargs.get('json')
-        if json_body is not None:
-            log_data['json'] = json_body
-        data = request_kwargs.get('data')
-        if data is not None:
-            log_data['data'] = data
-        params = request_kwargs.get('params')
-        if params is not None:
-            log_data['params'] = params
-        return log_data or None
+            message = json.dumps(
+                {
+                    'method': method,
+                    'url': url,
+                    'scheme': parsed.scheme,
+                    'http_status': http_status,
+                    'headers': self._get_safe_headers(headers),
+                    'json': json,
+                    'params': params,
+                    'timeout': timeout,
+                    'response_data': response_data,
+                },
+                default=str,
+            )
+            self._create_action(
+                action=AIAgentActionType.REQUEST,
+                message=message,
+            )

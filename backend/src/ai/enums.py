@@ -140,3 +140,24 @@ class OpenAIPromptTarget:
     CHOICES = (
         (GET_STEPS, 'Get template steps'),
     )
+
+
+class AIAgentActionType:
+
+    TASK_IN_PROGRESS = 'task_in_progress'
+    READING_DESCRIPTION = 'reading_description'
+    REQUEST = 'request'
+    ERROR = 'error'
+
+    CHOICES = (
+        (TASK_IN_PROGRESS, 'Task in progress'),
+        (READING_DESCRIPTION, 'Reading task description'),
+        (REQUEST, 'Request'),
+        (ERROR, 'Error'),
+    )
+    LITERALS = Literal[
+        TASK_IN_PROGRESS,
+        READING_DESCRIPTION,
+        REQUEST,
+        ERROR,
+    ]

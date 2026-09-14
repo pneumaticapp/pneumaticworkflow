@@ -1,6 +1,7 @@
 from typing import Any, List, Optional
 from urllib.parse import parse_qs, urlparse
 
+from src.ai.enums import OpenAIRole
 from src.ai.services.vendors.base import BaseVendor
 
 
@@ -73,15 +74,12 @@ class AzureOpenAIVendor(BaseVendor):
 
     def get_models(self) -> List[dict]:
         path = 'deployments' if self._is_legacy() else 'models'
-        kwargs = {
-            'method': 'GET',
-            'url': self._create_url(path),
-            'headers': self._auth_headers(),
-        }
-        params = self._request_params()
-        if params:
-            kwargs['params'] = params
-        _status, payload = self._request(**kwargs)
+        _status, payload = self._request(
+            method='GET',
+            url=self._create_url(path),
+            headers=self._auth_headers(),
+            params=self._request_params(),
+        )
         return self._parse_models(payload)
 
     def _parse_models(self, payload: Any) -> List[dict]:
@@ -113,3 +111,60 @@ class AzureOpenAIVendor(BaseVendor):
                 },
             )
         return models
+
+    def get_completion(
+        self,
+        system_message: str,
+        user_message: str,
+        model: str,
+    ) -> str:
+        if self._is_legacy():
+            path = f'deployments/{model}/chat/completions'
+        else:
+            path = 'chat/completions'
+        _status, payload = self._request(
+            method='POST',
+            url=self._create_url(path),
+            headers=self._auth_headers(),
+            json={
+                'model': model,
+                'messages': [
+                    {
+                        'role': OpenAIRole.SYSTEM,
+                        'content': system_message,
+                    },
+                    {
+                        'role': OpenAIRole.USER,
+                        'content': user_message,
+                    },
+                ],
+            },
+            timeout=self.completion_timeout,
+            params=self._request_params(),
+        )
+        return self._parse_completion(payload)
+
+    def _parse_completion(self, payload: Any) -> str:
+        """Parse an Azure OpenAI chat completion payload.
+
+        Docs: https://learn.microsoft.com/en-us/azure/foundry/openai/latest
+
+        Example:
+
+            {
+                "id": "chatcmpl-123",
+                "object": "chat.completion",
+                "choices": [
+                    {
+                        "index": 0,
+                        "message": {
+                            "role": "assistant",
+                            "content": "Hello!"
+                        },
+                        "finish_reason": "stop"
+                    }
+                ]
+            }
+
+        """
+        return payload['choices'][0]['message']['content']

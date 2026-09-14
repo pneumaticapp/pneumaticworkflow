@@ -9,6 +9,7 @@ nginx/logs
 nginx/keys
 nginx/config/nginx.conf
 firebase-push.json
+plan.md
 
 # Playwright / E2E
 frontend/e2e
@@ -22,3 +23,4 @@ frontend/test-results
 .agents/
 .agent/
 .antigravity/
+.plans/

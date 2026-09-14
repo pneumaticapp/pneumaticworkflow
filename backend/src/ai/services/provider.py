@@ -1,9 +1,9 @@
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 from urllib.parse import urlparse
 
 from src.ai.enums import AIVendor
 from src.ai.exceptions import AIProviderInUseException
-from src.ai.models import AIProvider
+from src.ai.models import AIAgent, AIProvider
 from src.ai.serializers import AIModelSerializer
 from src.ai.services.vendors.anthropic import AnthropicVendor
 from src.ai.services.vendors.azure import AzureOpenAIVendor
@@ -13,6 +13,7 @@ from src.ai.services.vendors.openai_compatible import (
 )
 from src.generics.base.service import BaseModelService
 from src.generics.mixins.services import CacheMixin, EncryptionMixin
+from src.processes.models.workflows.task import Task
 
 
 class AIProviderService(
@@ -103,3 +104,23 @@ class AIProviderService(
             models = vendor.get_models()
             self._set_cache(key=cache_key, value=models)
         return models
+
+    def get_completion(
+        self,
+        system_message: str,
+        user_message: str,
+        model: str,
+        agent: Optional[AIAgent] = None,
+        task: Optional[Task] = None,
+    ) -> str:
+        vendor = self._get_vendor_cls(
+            instance=self.instance,
+            user=self.user,
+            agent=agent,
+            task=task,
+        )
+        return vendor.get_completion(
+            system_message=system_message,
+            user_message=user_message,
+            model=model,
+        )

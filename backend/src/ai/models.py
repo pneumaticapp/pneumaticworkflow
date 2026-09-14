@@ -8,12 +8,14 @@ from django.db.models import Q, UniqueConstraint
 
 from src.accounts.models import AccountBaseMixin
 from src.ai.enums import (
+    AIAgentActionType,
     AIVendor,
     OpenAiModel,
     OpenAIPromptTarget,
     OpenAIRole,
 )
 from src.ai.querysets import (
+    AIAgentActionQuerySet,
     AIAgentQuerySet,
     AIProviderQuerySet,
     OpenAiPromptMessageQueryset,
@@ -251,3 +253,37 @@ class AIAgent(
 
     def __str__(self):
         return self.name
+
+
+class AIAgentAction(models.Model):
+
+    class Meta:
+        ordering = ('-date_created', 'id')
+        indexes = [
+            models.Index(
+                fields=('agent', 'task', 'action', 'date_created'),
+                name='aiagentaction_claim_idx',
+            ),
+        ]
+
+    agent = models.ForeignKey(
+        AIAgent,
+        on_delete=models.CASCADE,
+        related_name='actions',
+    )
+    task = models.ForeignKey(
+        'processes.Task',
+        on_delete=models.CASCADE,
+        related_name='ai_agent_actions',
+    )
+    action = models.CharField(
+        max_length=50,
+        choices=AIAgentActionType.CHOICES,
+    )
+    message = models.TextField(null=True, blank=True)
+    date_created = models.DateTimeField(auto_now_add=True)
+
+    objects = AIAgentActionQuerySet.as_manager()
+
+    def __str__(self):
+        return f'{self.action} ({self.agent_id}/{self.task_id})'
