@@ -5,15 +5,15 @@ import {
 } from '../../../../utils/createId';
 import {
   EFieldRuleType,
-  IFieldRuleGroupAnd,
+  IFieldRuleShowGroupAnd,
+  IFieldRuleValidatorGroupAnd,
   IFieldRuleGroupOr,
   IFieldRuleSet,
 } from '../../../../types/fieldset';
 import { isOperatorWithoutValue } from '../RuleBase/utils';
 
-export const createEmptyFieldRule = (): IFieldRuleGroupAnd => ({
+export const createEmptyFieldRule = (): IFieldRuleValidatorGroupAnd => ({
   apiName: createFieldRuleGroupAndApiName(),
-  field: null,
   operator: null,
   value: '',
 });
@@ -44,8 +44,8 @@ export const isFieldRulesetValid = (
     return false;
   }
 
-  return rules.every((rule) => {
-    if (ruleSet.type === EFieldRuleType.Show) {
+  if (ruleSet.type === EFieldRuleType.Show) {
+    return rules.every((rule: IFieldRuleShowGroupAnd) => {
       if (!rule.field) {
         return false;
       }
@@ -53,9 +53,11 @@ export const isFieldRulesetValid = (
         return false;
       }
       return true;
-    }
+    });
+  }
 
-    if (ruleSet.type === EFieldRuleType.Validator) {
+  if (ruleSet.type === EFieldRuleType.Validator) {
+    return rules.every((rule: IFieldRuleValidatorGroupAnd) => {
       if (!rule.operator) {
         return false;
       }
@@ -63,8 +65,8 @@ export const isFieldRulesetValid = (
         return false;
       }
       return true;
-    }
+    });
+  }
 
-    return true;
-  });
+  return true;
 };

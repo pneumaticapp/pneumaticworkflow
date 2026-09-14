@@ -6,7 +6,7 @@ import { makeExtraField } from '../../../../__stubs__/fields.factory';
 import {
   makeFieldRuleSet,
   makeFieldRuleGroupOr,
-  makeFieldRuleGroupAnd,
+  makeFieldRuleShowGroupAnd,
   makeFieldsetCatalogItem,
   makeFieldsetRuleset,
   makeFieldsetField,
@@ -53,7 +53,7 @@ describe('getFieldsWithFilteredRulesets', () => {
         makeFieldRuleSet({
           type: EFieldRuleType.Show,
           groupsOr: [makeFieldRuleGroupOr({
-            groupsAnd: [makeFieldRuleGroupAnd({ field: 'field_b' })],
+            groupsAnd: [makeFieldRuleShowGroupAnd({ field: 'field_b' })],
           })],
         }),
       ],
@@ -71,7 +71,7 @@ describe('getFieldsWithFilteredRulesets', () => {
         makeFieldRuleSet({
           type: EFieldRuleType.Show,
           groupsOr: [makeFieldRuleGroupOr({
-            groupsAnd: [makeFieldRuleGroupAnd({ field: 'field_c' })],
+            groupsAnd: [makeFieldRuleShowGroupAnd({ field: 'field_c' })],
           })],
         }),
       ],
@@ -105,7 +105,7 @@ describe('getFieldsWithFilteredRulesets', () => {
     const showRuleset = makeFieldRuleSet({
       type: EFieldRuleType.Show,
       groupsOr: [makeFieldRuleGroupOr({
-        groupsAnd: [makeFieldRuleGroupAnd({ field: 'field_b' })],
+        groupsAnd: [makeFieldRuleShowGroupAnd({ field: 'field_b' })],
       })],
     });
     const validatorRuleset = makeFieldRuleSet({ type: EFieldRuleType.Validator });

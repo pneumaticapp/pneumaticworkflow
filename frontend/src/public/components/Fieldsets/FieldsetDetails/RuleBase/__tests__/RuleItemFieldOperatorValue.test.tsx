@@ -5,7 +5,7 @@ import { RuleItemFieldOperatorValue } from '../RuleItemFieldOperatorValue';
 import { EExtraFieldType } from '../../../../../types/template';
 import { intlMock } from '../../../../../__stubs__/intlMock';
 import { EFieldRuleOperator } from '../../../../../types/fieldset';
-import { makeFieldRuleGroupAnd } from '../../../../../__stubs__/fieldsets.factory';
+import { makeFieldRuleShowGroupAnd } from '../../../../../__stubs__/fieldsets.factory';
 
 jest.mock('react-intl', () => {
   const actualIntl = jest.requireActual('react-intl');
@@ -54,7 +54,7 @@ describe('RuleItemFieldOperatorValue component', () => {
     jest.clearAllMocks();
   });
 
-  const mockGroupAndRule = makeFieldRuleGroupAnd({
+  const mockGroupAndRule = makeFieldRuleShowGroupAnd({
     apiName: 'and_1',
     field: 'field_1',
     operator: EFieldRuleOperator.Equal,

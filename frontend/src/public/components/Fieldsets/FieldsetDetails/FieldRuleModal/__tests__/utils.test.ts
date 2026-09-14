@@ -23,7 +23,6 @@ const makeValidRuleset = (overrides: Partial<IFieldRuleSet> = {}): IFieldRuleSet
       groupsAnd: [
         {
           apiName: 'and-1',
-          field: null,
           operator: EFieldRuleOperator.Equal,
           value: '100',
         },
@@ -35,13 +34,13 @@ const makeValidRuleset = (overrides: Partial<IFieldRuleSet> = {}): IFieldRuleSet
 
 describe('FieldRuleModal utils', () => {
   describe('createEmptyFieldRule', () => {
-    it('creates a rule with operator null by default', () => {
+    it('creates a validator rule without field property', () => {
       const rule = createEmptyFieldRule();
 
       expect(rule.apiName).toBeTruthy();
       expect(rule.operator).toBeNull();
-      expect(rule.field).toBeNull();
       expect(rule.value).toBe('');
+      expect('field' in rule).toBe(false);
     });
   });
 
@@ -100,7 +99,6 @@ describe('FieldRuleModal utils', () => {
           apiName: 'or-1',
           groupsAnd: [{
             apiName: 'and-1',
-            field: null,
             operator: EFieldRuleOperator.Equal,
             value: '',
           }],
@@ -125,7 +123,7 @@ describe('FieldRuleModal utils', () => {
           apiName: 'or-1',
           groupsAnd: [{
             apiName: 'and-1',
-            field: null,
+            field: '',
             operator: EFieldRuleOperator.Equal,
             value: 'test',
           }],

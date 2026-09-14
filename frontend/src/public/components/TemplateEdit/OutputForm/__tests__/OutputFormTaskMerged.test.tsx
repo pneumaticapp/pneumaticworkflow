@@ -9,7 +9,7 @@ import {
   makeFieldsetCatalogItem,
   makeFieldRuleSet,
   makeFieldRuleGroupOr,
-  makeFieldRuleGroupAnd,
+  makeFieldRuleShowGroupAnd,
 } from '../../../../__stubs__/fieldsets.factory';
 import { makeTemplateTaskClient } from '../../../../__stubs__/templates.factory';
 import { IExtraField, ITemplateTaskClient, EExtraFieldType } from '../../../../types/template';
@@ -439,7 +439,7 @@ describe('OutputFormTaskMerged', () => {
               makeFieldRuleGroupOr({
                 apiName: 'or-1',
                 groupsAnd: [
-                  makeFieldRuleGroupAnd({
+                  makeFieldRuleShowGroupAnd({
                     apiName: 'and-1',
                     field: 'f-a',
                     operator: EFieldRuleOperator.Equal,

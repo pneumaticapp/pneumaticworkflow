@@ -9,7 +9,7 @@ import {
   makeFieldsetField,
   makeFieldRuleSet,
   makeFieldRuleGroupOr,
-  makeFieldRuleGroupAnd,
+  makeFieldRuleShowGroupAnd,
 } from '../../../../__stubs__/fieldsets.factory';
 import { IExtraField, ITemplateKickoffClient, ITemplateClient, EExtraFieldType } from '../../../../types/template';
 import { IFieldsetCatalogItem, EFieldRuleType, EFieldRuleOperator } from '../../../../types/fieldset';
@@ -425,7 +425,7 @@ describe('KickoffRedux', () => {
               makeFieldRuleGroupOr({
                 apiName: 'or-1',
                 groupsAnd: [
-                  makeFieldRuleGroupAnd({
+                  makeFieldRuleShowGroupAnd({
                     apiName: 'and-1',
                     field: 'f-a',
                     operator: EFieldRuleOperator.Equal,

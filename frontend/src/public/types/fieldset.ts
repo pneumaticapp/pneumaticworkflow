@@ -63,12 +63,20 @@ export enum EFieldRuleType {
   Validator = 'validator',
 }
 
-export interface IFieldRuleGroupAnd {
+export interface IFieldRuleShowGroupAnd {
   apiName: string;
-  field?: string | null;
+  field: string;
+  operator: EFieldRuleOperator;
+  value: string;
+}
+
+export interface IFieldRuleValidatorGroupAnd {
+  apiName: string;
   operator: EFieldRuleOperator | null;
   value: string;
 }
+
+export type IFieldRuleGroupAnd = IFieldRuleShowGroupAnd | IFieldRuleValidatorGroupAnd;
 
 export interface IFieldRuleGroupOr {
   apiName: string;

@@ -11,7 +11,8 @@ import {
   IFieldsetRuleGroupAnd,
   IFieldsetRuleGroupOr,
   IFieldRuleSet,
-  IFieldRuleGroupAnd,
+  IFieldRuleShowGroupAnd,
+  IFieldRuleValidatorGroupAnd,
   IFieldRuleGroupOr,
   EFieldRuleType,
   EFieldRuleOperator,
@@ -121,9 +122,20 @@ export const makeFieldsetTaskAPI = (overrides: Partial<IFieldsetTaskAPI> = {}): 
   ...overrides,
 });
 
-export const makeFieldRuleGroupAnd = (overrides: Partial<IFieldRuleGroupAnd> = {}): IFieldRuleGroupAnd => ({
+export const makeFieldRuleShowGroupAnd = (
+  overrides: Partial<IFieldRuleShowGroupAnd> = {},
+): IFieldRuleShowGroupAnd => ({
   apiName: 'field-rule-and-1',
-  field: null,
+  field: '',
+  operator: EFieldRuleOperator.Equal,
+  value: '',
+  ...overrides,
+});
+
+export const makeFieldRuleValidatorGroupAnd = (
+  overrides: Partial<IFieldRuleValidatorGroupAnd> = {},
+): IFieldRuleValidatorGroupAnd => ({
+  apiName: 'field-rule-and-1',
   operator: EFieldRuleOperator.Equal,
   value: '',
   ...overrides,
@@ -131,7 +143,7 @@ export const makeFieldRuleGroupAnd = (overrides: Partial<IFieldRuleGroupAnd> = {
 
 export const makeFieldRuleGroupOr = (overrides: Partial<IFieldRuleGroupOr> = {}): IFieldRuleGroupOr => ({
   apiName: 'field-rule-or-1',
-  groupsAnd: [makeFieldRuleGroupAnd()],
+  groupsAnd: [makeFieldRuleValidatorGroupAnd()],
   ...overrides,
 });
 

@@ -5,7 +5,7 @@ import { RuleItemOperatorValue } from '../RuleItemOperatorValue';
 import { intlMock } from '../../../../../__stubs__/intlMock';
 import { EFieldRuleOperator } from '../../../../../types/fieldset';
 import { EExtraFieldType } from '../../../../../types/template';
-import { makeFieldRuleGroupAnd } from '../../../../../__stubs__/fieldsets.factory';
+import { makeFieldRuleValidatorGroupAnd } from '../../../../../__stubs__/fieldsets.factory';
 
 jest.mock('react-intl', () => {
   const actualIntl = jest.requireActual('react-intl');
@@ -43,7 +43,7 @@ describe('RuleItemOperatorValue component', () => {
     jest.clearAllMocks();
   });
 
-  const mockGroupAndRule = makeFieldRuleGroupAnd({
+  const mockGroupAndRule = makeFieldRuleValidatorGroupAnd({
     apiName: 'and_1',
     operator: EFieldRuleOperator.Equal,
     value: '^[0-9]+$',
@@ -100,7 +100,7 @@ describe('RuleItemOperatorValue component', () => {
   });
 
   it('highlights value input error on blur and removes highlight on focus when value is empty', () => {
-    const emptyValueRule = makeFieldRuleGroupAnd({
+    const emptyValueRule = makeFieldRuleValidatorGroupAnd({
       apiName: 'and_1',
       operator: EFieldRuleOperator.Equal,
       value: '',

@@ -1,10 +1,12 @@
-import React from 'react';
+import * as React from 'react';
+import { useMemo } from 'react';
 
 import { ETaskStatus } from '../../redux/actions';
 import { EInputNameBackgroundColor } from '../../types/workflow';
 import { isArrayWithItems } from '../../utils/helpers';
 import { IntlMessages } from '../IntlMessages';
 import { MergedOutputList } from '../MergedOutputList';
+import { getVisibleFieldsByShowRules } from '../../utils/fieldShowVisibility';
 import { ITaskOutputFieldsProps } from './types';
 
 import styles from './TaskCard.css';
@@ -20,11 +22,10 @@ export function TaskOutputFields({
   status,
   taskId,
 }: ITaskOutputFieldsProps) {
-  const visibleOutputs = outputValues.filter((field) => !field.isHidden);
-  const visibleFieldsets = fieldsetOutputValues.map((fieldset) => ({
-    ...fieldset,
-    fields: fieldset.fields.filter((field) => !field.isHidden),
-  }));
+  const { visibleFields: visibleOutputs, visibleFieldsets } = useMemo(
+    () => getVisibleFieldsByShowRules(outputValues, fieldsetOutputValues),
+    [outputValues, fieldsetOutputValues],
+  );
 
   if ((!isArrayWithItems(visibleOutputs) && !isArrayWithItems(visibleFieldsets)) || status === ETaskStatus.Completed) {
     return null;

@@ -6,9 +6,14 @@ import { enMessages } from '../../../lang/locales/en_US';
 
 import { WorkflowEditPopup } from '../WorkflowEditPopup';
 import { IExtraField } from '../../../types/template';
-import { IFieldsetRuntime } from '../../../types/fieldset';
+import { IFieldsetRuntime, EFieldRuleOperator, EFieldRuleType } from '../../../types/fieldset';
 import { makeExtraField } from '../../../__stubs__/fields.factory';
-import { makeFieldsetRuntime } from '../../../__stubs__/fieldsets.factory';
+import {
+  makeFieldsetRuntime,
+  makeFieldRuleShowGroupAnd,
+  makeFieldRuleGroupOr,
+  makeFieldRuleSet,
+} from '../../../__stubs__/fieldsets.factory';
 import { MergedOutputList } from '../../MergedOutputList';
 import { RichText } from '../../RichText';
 import { InputWithVariables } from '../../TemplateEdit/InputWithVariables';
@@ -462,6 +467,120 @@ describe('WorkflowEditPopup', () => {
 
       expect(RichText as jest.Mock).toHaveBeenCalledTimes(1);
       expect(RichText as jest.Mock).toHaveBeenCalledWith(expect.objectContaining({ text: '**Bold description**' }), {});
+    });
+  });
+
+  describe('Field show rulesets: dynamic visibility when filling kickoff form', () => {
+    it('dynamically shows and hides field in MergedOutputList when dependent field changes', () => {
+      const triggerField = makeExtraField({ apiName: 'trigger-status', value: 'draft' });
+      const showRuleset = makeFieldRuleSet({
+        type: EFieldRuleType.Show,
+        groupsOr: [
+          makeFieldRuleGroupOr({
+            groupsAnd: [
+              makeFieldRuleShowGroupAnd({
+                field: 'trigger-status',
+                operator: EFieldRuleOperator.Equal,
+                value: 'approved',
+              }),
+            ],
+          }),
+        ],
+      });
+      const conditionalField = makeExtraField({
+        apiName: 'approved-notes',
+        isHidden: true,
+        rulesets: [showRuleset],
+      });
+
+      const workflow = {
+        ...baseWorkflow,
+        kickoff: {
+          description: '',
+          fields: [triggerField, conditionalField],
+          fieldsets: [],
+        },
+        loadedFieldsets: [],
+      };
+
+      renderWithIntl(<WorkflowEditPopup {...baseProps} workflow={workflow} />);
+
+      const mergedMock = MergedOutputList as jest.Mock;
+      let lastCallProps = mergedMock.mock.calls[mergedMock.mock.calls.length - 1][0];
+
+      expect(lastCallProps.fields).toHaveLength(1);
+      expect(lastCallProps.fields[0].apiName).toBe('trigger-status');
+
+      act(() => {
+        lastCallProps.onEditField('trigger-status')({ value: 'approved' });
+      });
+
+      lastCallProps = mergedMock.mock.calls[mergedMock.mock.calls.length - 1][0];
+      expect(lastCallProps.fields).toHaveLength(2);
+      expect(lastCallProps.fields.map((f: IExtraField) => f.apiName)).toEqual(['trigger-status', 'approved-notes']);
+
+      act(() => {
+        lastCallProps.onEditField('trigger-status')({ value: 'rejected' });
+      });
+
+      lastCallProps = mergedMock.mock.calls[mergedMock.mock.calls.length - 1][0];
+      expect(lastCallProps.fields).toHaveLength(1);
+      expect(lastCallProps.fields[0].apiName).toBe('trigger-status');
+    });
+
+    it('hidden required field with show rule does not block start, but requires value when shown', () => {
+      const triggerField = makeExtraField({ apiName: 'plan-type', value: 'free' });
+      const showRuleset = makeFieldRuleSet({
+        type: EFieldRuleType.Show,
+        groupsOr: [
+          makeFieldRuleGroupOr({
+            groupsAnd: [
+              makeFieldRuleShowGroupAnd({
+                field: 'plan-type',
+                operator: EFieldRuleOperator.Equal,
+                value: 'enterprise',
+              }),
+            ],
+          }),
+        ],
+      });
+      const enterpriseLicenseField = makeExtraField({
+        apiName: 'license-key',
+        isRequired: true,
+        value: '',
+        isHidden: true,
+        rulesets: [showRuleset],
+      });
+
+      const workflow = {
+        ...baseWorkflow,
+        kickoff: {
+          description: '',
+          fields: [triggerField, enterpriseLicenseField],
+          fieldsets: [],
+        },
+        loadedFieldsets: [],
+      };
+
+      renderWithIntl(<WorkflowEditPopup {...baseProps} workflow={workflow} />);
+
+      const startButton = screen.getByRole('button', { name: START_LABEL });
+      expect(startButton).toBeEnabled();
+
+      const mergedMock = MergedOutputList as jest.Mock;
+      const lastCallProps = mergedMock.mock.calls[mergedMock.mock.calls.length - 1][0];
+
+      act(() => {
+        lastCallProps.onEditField('plan-type')({ value: 'enterprise' });
+      });
+
+      expect(startButton).toBeDisabled();
+
+      act(() => {
+        lastCallProps.onEditField('license-key')({ value: 'XYZ-12345' });
+      });
+
+      expect(startButton).toBeEnabled();
     });
   });
 });

@@ -3,6 +3,7 @@ import { Dispatch } from 'redux';
 import { IExtraField } from '../../../types/template';
 import {
   IFieldRuleSet,
+  IFieldRuleShowGroupAnd,
   EFieldRuleType,
   IUpdateFieldsetParams,
   IFieldsetCatalogItem,
@@ -62,7 +63,7 @@ export function getFieldsWithFilteredRulesets(
       if (ruleset.type !== EFieldRuleType.Show) return true;
 
       return ruleset.groupsOr.every((groupOr) =>
-        groupOr.groupsAnd.every((groupAnd) => groupAnd.field !== deletedFieldApiName),
+        groupOr.groupsAnd.every((groupAnd: IFieldRuleShowGroupAnd) => groupAnd.field !== deletedFieldApiName),
       );
     });
 
