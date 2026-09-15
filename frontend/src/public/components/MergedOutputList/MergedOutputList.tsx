@@ -49,27 +49,27 @@ export function MergedOutputList({
         if (mergedOutput.kind === 'fieldset') {
           const {
             apiNameBinding: fieldsetApiName,
-            name: fieldsetName,
+            title: fieldsetTitle,
             description: fieldsetDescription,
             fields: fieldsetFields,
             labelPosition: fieldsetLabelPosition,
           } = mergedOutput.data;
 
           return (
-          <FieldsetFieldGroup
-            key={fieldsetApiName}
-            title={fieldsetName}
-            description={fieldsetDescription}
-            fields={fieldsetFields}
-            onEditField={onEditFieldsetField}
-            mode={EExtraFieldMode.ProcessRun}
-            labelBackgroundColor={labelBackgroundColor}
-            accountId={accountId}
-            fieldClassName={fieldClassName}
-            labelPosition={isDesktop ? fieldsetLabelPosition : EFieldLabelPosition.Top}
-            isDisabled={isDisabled}
-            onUploadStateChange={onUploadStateChange}
-          />
+            <FieldsetFieldGroup
+              key={fieldsetApiName}
+              title={fieldsetTitle}
+              description={fieldsetDescription}
+              fields={fieldsetFields}
+              onEditField={onEditFieldsetField}
+              mode={EExtraFieldMode.ProcessRun}
+              labelBackgroundColor={labelBackgroundColor}
+              accountId={accountId}
+              fieldClassName={fieldClassName}
+              labelPosition={isDesktop ? fieldsetLabelPosition : EFieldLabelPosition.Top}
+              isDisabled={isDisabled}
+              onUploadStateChange={onUploadStateChange}
+            />
           );
         }
 

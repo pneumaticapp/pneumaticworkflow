@@ -1,4 +1,4 @@
-import { IExtraField, IKickoffClient } from '../types/template';
+import { IExtraField, IRuntimeKickoffClient } from '../types/template';
 import { isArrayWithItems } from './helpers';
 import { IRunWorkflow } from '../components/WorkflowEditPopup/types';
 import { ExtraFieldsHelper } from '../components/TemplateEdit/ExtraFields/utils/ExtraFieldsHelper';
@@ -162,7 +162,7 @@ export const mapEndOfDayTsp = (fields: IExtraField[]): IExtraField[] => {
   }));
 };
 
-export const getNormalizedKickoff = (kickoff: Pick<IKickoffClient, 'fields'>): { [key: string]: string } => {
+export const getNormalizedKickoff = (kickoff: Pick<IRuntimeKickoffClient, 'fields'>): { [key: string]: string } => {
   const mappedKickoffFields = new ExtraFieldsHelper(kickoff.fields).normalizeFieldsValues();
   const mappedKickoff = isArrayWithItems(mappedKickoffFields) ? Object.assign({}, ...mappedKickoffFields) : null;
   return mappedKickoff;
@@ -236,10 +236,20 @@ export const mapBackandworkflowLogToRedux = (workflowLog: IWorkflowLogItem[], ti
 };
 
 export const mapTspToString = (output: IExtraField[], timezone: string): IExtraField[] => {
-  return output.map((item) => ({
-    ...item,
-    value: item.type === 'date' && typeof item.value === 'string' ? toDateString(item.value, timezone) : item.value,
-  }));
+  return output.map((item) => {
+    if (item.type !== 'date' || item.value == null || item.value === '') {
+      return item;
+    }
+
+    if (typeof item.value !== 'string' && typeof item.value !== 'number') {
+      return item;
+    }
+
+    return {
+      ...item,
+      value: toDateString(item.value, timezone),
+    };
+  });
 };
 
 export const formatTaskDatesForRedux = <T extends TFormatTaskDates>(

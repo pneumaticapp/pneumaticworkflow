@@ -9,6 +9,7 @@ import { INIT_STATE, reducer } from '../reducer';
 import {
   authUserFail,
   authUserSuccess,
+  editCurrentAccountSuccess,
   loginUser,
   registerUserSuccess,
   TAuthActions,
@@ -56,6 +57,20 @@ describe('auth reducer', () => {
     const result = reducer(INIT_STATE, action);
 
     expect(result).toEqual({ ...INIT_STATE, error: EAuthUserFailType.Common, loading: false });
+  });
+  it('upon successful account edit, stores the saved logos', () => {
+    const action = editCurrentAccountSuccess({
+      name: 'User Corp',
+      logoSm: 'https://cdn.pneumatic.app/logo-sm.png',
+      logoLg: 'https://cdn.pneumatic.app/logo-lg.png',
+    });
+    const state = { ...INIT_STATE, loading: true };
+
+    const result = reducer(state, action);
+
+    expect(result.account.logoSm).toBe('https://cdn.pneumatic.app/logo-sm.png');
+    expect(result.account.logoLg).toBe('https://cdn.pneumatic.app/logo-lg.png');
+    expect(result.loading).toBe(false);
   });
   it('upon successful user registration, returns a new state with user data', () => {
     const action = registerUserSuccess(mockUser);

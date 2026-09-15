@@ -182,6 +182,32 @@ describe('ExtraFieldFile', () => {
 
       expect(screen.getByDisplayValue('Attachments')).toBeInTheDocument();
     });
+
+    it('uses a textarea for a long field name without allowing line breaks', () => {
+      const fieldName = `AttachmentField${'1'.repeat(100)}`;
+
+      render(
+        React.createElement(ExtraFieldFile as React.FC<any>, {
+          ...baseProps,
+          mode: EExtraFieldMode.Kickoff,
+          field: createFileField({ name: fieldName }),
+        }),
+      );
+
+      const fieldNameInput = screen.getByDisplayValue(fieldName);
+
+      expect(fieldNameInput.tagName).toBe('TEXTAREA');
+      expect(fieldNameInput).toHaveAttribute('rows', '1');
+
+      fireEvent.change(fieldNameInput, { target: { value: 'Updated attachments' } });
+
+      expect(editFieldMock).toHaveBeenCalledWith({ name: 'Updated attachments' });
+
+      fireEvent.change(fieldNameInput, { target: { value: 'Attachment\r\nfiles' } });
+
+      expect(editFieldMock).toHaveBeenLastCalledWith({ name: 'Attachment files' });
+      expect(fireEvent.keyDown(fieldNameInput, { key: 'Enter' })).toBe(false);
+    });
   });
 
   describe('upload handling', () => {
@@ -223,16 +249,11 @@ describe('ExtraFieldFile', () => {
       );
 
       await act(async () => {
-        resolveUpload([
-          { id: 'new-1', name: 'uploaded.pdf', url: 'https://files.example.com/new-1', size: 100 },
-        ]);
+        resolveUpload([{ id: 'new-1', name: 'uploaded.pdf', url: 'https://files.example.com/new-1', size: 100 }]);
       });
 
       expect(editFieldMock).toHaveBeenCalledWith({
-        value: [
-          '[server.pdf](https://files.example.com/att-2)',
-          '[uploaded.pdf](https://files.example.com/new-1)',
-        ],
+        value: ['[server.pdf](https://files.example.com/att-2)', '[uploaded.pdf](https://files.example.com/new-1)'],
         attachments: [
           updatedAttachments[0],
           { id: 'new-1', name: 'uploaded.pdf', url: 'https://files.example.com/new-1', size: 100 },
@@ -244,9 +265,10 @@ describe('ExtraFieldFile', () => {
       let resolveUpload: (files: TUploadedFile[]) => void = () => undefined;
       const onUploadStateChange = jest.fn();
       (uploadFiles as jest.Mock).mockImplementation(
-        () => new Promise<TUploadedFile[]>((resolve) => {
-          resolveUpload = resolve;
-        }),
+        () =>
+          new Promise<TUploadedFile[]>((resolve) => {
+            resolveUpload = resolve;
+          }),
       );
       const { container, unmount } = render(
         React.createElement(ExtraFieldFile as React.FC<any>, {
@@ -262,9 +284,7 @@ describe('ExtraFieldFile', () => {
       unmount();
 
       await act(async () => {
-        resolveUpload([
-          { id: 'new-1', name: 'uploaded.pdf', url: 'https://files.example.com/new-1', size: 100 },
-        ]);
+        resolveUpload([{ id: 'new-1', name: 'uploaded.pdf', url: 'https://files.example.com/new-1', size: 100 }]);
       });
 
       expect(editFieldMock).not.toHaveBeenCalled();
@@ -277,9 +297,10 @@ describe('ExtraFieldFile', () => {
       const firstUploadStateChange = jest.fn();
       const nextUploadStateChange = jest.fn();
       (uploadFiles as jest.Mock).mockImplementation(
-        () => new Promise<TUploadedFile[]>((resolve) => {
-          resolveUpload = resolve;
-        }),
+        () =>
+          new Promise<TUploadedFile[]>((resolve) => {
+            resolveUpload = resolve;
+          }),
       );
       const { container, rerender } = render(
         React.createElement(ExtraFieldFile as React.FC<any>, {
@@ -300,14 +321,14 @@ describe('ExtraFieldFile', () => {
       );
 
       await act(async () => {
-        resolveUpload([
-          { id: 'new-1', name: 'uploaded.pdf', url: 'https://files.example.com/new-1', size: 100 },
-        ]);
+        resolveUpload([{ id: 'new-1', name: 'uploaded.pdf', url: 'https://files.example.com/new-1', size: 100 }]);
       });
 
-      expect(editFieldMock).toHaveBeenCalledWith(expect.objectContaining({
-        attachments: [expect.objectContaining({ id: 'new-1' })],
-      }));
+      expect(editFieldMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          attachments: [expect.objectContaining({ id: 'new-1' })],
+        }),
+      );
       expect(firstUploadStateChange).toHaveBeenCalledWith(true);
       expect(nextUploadStateChange).toHaveBeenCalledWith(false);
     });

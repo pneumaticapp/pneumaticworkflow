@@ -36,13 +36,14 @@ const makeField = (apiName: string, value: string): IExtraField => ({
   groupId: null,
 });
 
-const makeTask = (output: IExtraField[], overrides: Partial<ITask> = {}): ITask => ({
-  id: 1,
-  dateStarted: '2024-01-01',
-  output,
-  fieldsets: [],
-  ...overrides,
-} as ITask);
+const makeTask = (output: IExtraField[], overrides: Partial<ITask> = {}): ITask =>
+  ({
+    id: 1,
+    dateStarted: '2024-01-01',
+    output,
+    fieldsets: [],
+    ...overrides,
+  }) as ITask;
 
 let hookResult: ReturnType<typeof useTaskOutput>;
 let renderedFieldsetValues: ReturnType<typeof useTaskOutput>['fieldsetOutputValues'][] = [];
@@ -125,18 +126,17 @@ describe('useTaskOutput', () => {
     render(
       <HookHarness
         task={makeTask([unchangedOutput, changedOutput], {
-          fieldsets: [{
-            ...storedFieldset,
-            fields: [unchangedField, changedField],
-          }],
+          fieldsets: [
+            {
+              ...storedFieldset,
+              fields: [unchangedField, changedField],
+            },
+          ],
         })}
       />,
     );
 
-    expect(hookResult.outputValues).toEqual([
-      { ...unchangedOutput, value: 'valid local draft' },
-      changedOutput,
-    ]);
+    expect(hookResult.outputValues).toEqual([{ ...unchangedOutput, value: 'valid local draft' }, changedOutput]);
     expect(hookResult.fieldsetOutputValues[0].fields).toEqual([
       { ...unchangedField, value: 'valid local draft' },
       changedField,
@@ -156,24 +156,18 @@ describe('useTaskOutput', () => {
     });
     (fieldsetsStorage.getEntry as jest.Mock).mockReturnValue({
       taskId: 1,
-      data: [{
-        ...serverFieldset,
-        fields: [{ ...fieldsetField, value: 'legacy fieldset draft' }],
-      }],
+      data: [
+        {
+          ...serverFieldset,
+          fields: [{ ...fieldsetField, value: 'legacy fieldset draft' }],
+        },
+      ],
     });
 
-    render(
-      <HookHarness
-        task={makeTask([outputField], { fieldsets: [serverFieldset] })}
-      />,
-    );
+    render(<HookHarness task={makeTask([outputField], { fieldsets: [serverFieldset] })} />);
 
-    expect(hookResult.outputValues).toEqual([
-      { ...outputField, value: 'legacy output draft' },
-    ]);
-    expect(hookResult.fieldsetOutputValues[0].fields).toEqual([
-      { ...fieldsetField, value: 'legacy fieldset draft' },
-    ]);
+    expect(hookResult.outputValues).toEqual([{ ...outputField, value: 'legacy output draft' }]);
+    expect(hookResult.fieldsetOutputValues[0].fields).toEqual([{ ...fieldsetField, value: 'legacy fieldset draft' }]);
     expect(addOrUpdateStorageOutput).not.toHaveBeenCalled();
     expect(fieldsetsStorage.save).not.toHaveBeenCalled();
   });
@@ -181,9 +175,7 @@ describe('useTaskOutput', () => {
   it('updates output metadata without discarding valid drafts', () => {
     const firstField = { ...makeField('first-field', 'server value'), order: 0 };
     const secondField = { ...makeField('second-field', 'second value'), order: 1 };
-    const { rerender } = render(
-      <HookHarness task={makeTask([firstField, secondField])} />,
-    );
+    const { rerender } = render(<HookHarness task={makeTask([firstField, secondField])} />);
 
     act(() => {
       hookResult.editField('first-field')({ value: 'local draft' });
@@ -223,11 +215,7 @@ describe('useTaskOutput', () => {
     act(() => {
       hookResult.editField('field')({ value: 'old run draft' });
     });
-    rerender(
-      <HookHarness
-        task={makeTask([field], { dateStarted: '2024-02-01' })}
-      />,
-    );
+    rerender(<HookHarness task={makeTask([field], { dateStarted: '2024-02-01' })} />);
     act(() => {
       jest.advanceTimersByTime(300);
     });
@@ -287,22 +275,18 @@ describe('useTaskOutput', () => {
     const serverFieldset = {
       ...storedFieldset,
       title: 'Updated title',
-      fields: [
-        makeField('existing-field', 'server value'),
-        newRequiredField,
-      ],
+      fields: [makeField('existing-field', 'server value'), newRequiredField],
     };
     (fieldsetsStorage.getEntry as jest.Mock).mockReturnValue({ taskId: 1, data: [storedFieldset] });
 
     render(<HookHarness task={makeTask([], { fieldsets: [serverFieldset] })} />);
 
-    expect(hookResult.fieldsetOutputValues).toEqual([{
-      ...serverFieldset,
-      fields: [
-        makeField('existing-field', 'draft value'),
-        newRequiredField,
-      ],
-    }]);
+    expect(hookResult.fieldsetOutputValues).toEqual([
+      {
+        ...serverFieldset,
+        fields: [makeField('existing-field', 'draft value'), newRequiredField],
+      },
+    ]);
   });
 
   it('clears fieldset drafts and state when the same task restarts', () => {
@@ -316,9 +300,7 @@ describe('useTaskOutput', () => {
     };
     (fieldsetsStorage.getEntry as jest.Mock).mockReturnValue({ taskId: 1, data: [staleFieldset] });
 
-    const { rerender } = render(
-      <HookHarness task={makeTask([], { fieldsets: [serverFieldset] })} />,
-    );
+    const { rerender } = render(<HookHarness task={makeTask([], { fieldsets: [serverFieldset] })} />);
     expect(hookResult.fieldsetOutputValues).toEqual([staleFieldset]);
     jest.clearAllMocks();
 
@@ -351,9 +333,7 @@ describe('useTaskOutput', () => {
       order: 0,
       fields: [makeField('fieldset-field', 'server value')],
     } as any;
-    const { rerender } = render(
-      <HookHarness task={makeTask([], { fieldsets: [serverFieldset] })} />,
-    );
+    const { rerender } = render(<HookHarness task={makeTask([], { fieldsets: [serverFieldset] })} />);
 
     act(() => {
       hookResult.editFieldsetField('fieldset-field')({ value: 'local draft' });
@@ -361,36 +341,35 @@ describe('useTaskOutput', () => {
     rerender(
       <HookHarness
         task={makeTask([], {
-          fieldsets: [{
-            ...serverFieldset,
-            title: 'New title',
-            description: 'New description',
-            order: 2,
-          }],
+          fieldsets: [
+            {
+              ...serverFieldset,
+              title: 'New title',
+              description: 'New description',
+              order: 2,
+            },
+          ],
         })}
       />,
     );
 
-    expect(hookResult.fieldsetOutputValues).toEqual([{
-      ...serverFieldset,
-      title: 'New title',
-      description: 'New description',
-      order: 2,
-      fields: [makeField('fieldset-field', 'local draft')],
-    }]);
+    expect(hookResult.fieldsetOutputValues).toEqual([
+      {
+        ...serverFieldset,
+        title: 'New title',
+        description: 'New description',
+        order: 2,
+        fields: [makeField('fieldset-field', 'local draft')],
+      },
+    ]);
   });
 
   it('preserves sibling field drafts when another field in the same fieldset changes', () => {
     const serverFieldset = {
       apiNameBinding: 'fieldset-1',
-      fields: [
-        makeField('unchanged-field', 'unchanged server value'),
-        makeField('changed-field', 'old server value'),
-      ],
+      fields: [makeField('unchanged-field', 'unchanged server value'), makeField('changed-field', 'old server value')],
     } as any;
-    const { rerender } = render(
-      <HookHarness task={makeTask([], { fieldsets: [serverFieldset] })} />,
-    );
+    const { rerender } = render(<HookHarness task={makeTask([], { fieldsets: [serverFieldset] })} />);
 
     act(() => {
       hookResult.editFieldsetField('unchanged-field')({ value: 'local draft' });
@@ -398,30 +377,33 @@ describe('useTaskOutput', () => {
     rerender(
       <HookHarness
         task={makeTask([], {
-          fieldsets: [{
-            ...serverFieldset,
-            fields: [
-              makeField('unchanged-field', 'unchanged server value'),
-              makeField('changed-field', 'new server value'),
-            ],
-          }],
+          fieldsets: [
+            {
+              ...serverFieldset,
+              fields: [
+                makeField('unchanged-field', 'unchanged server value'),
+                makeField('changed-field', 'new server value'),
+              ],
+            },
+          ],
         })}
       />,
     );
 
-    expect(hookResult.fieldsetOutputValues).toEqual([{
-      ...serverFieldset,
-      fields: [
-        makeField('unchanged-field', 'local draft'),
-        makeField('changed-field', 'new server value'),
-      ],
-    }]);
+    expect(hookResult.fieldsetOutputValues).toEqual([
+      {
+        ...serverFieldset,
+        fields: [makeField('unchanged-field', 'local draft'), makeField('changed-field', 'new server value')],
+      },
+    ]);
     expect(fieldsetsStorage.save).toHaveBeenCalledWith(
       1,
-      [{
-        ...serverFieldset,
-        fields: [makeField('unchanged-field', 'local draft')],
-      }],
+      [
+        {
+          ...serverFieldset,
+          fields: [makeField('unchanged-field', 'local draft')],
+        },
+      ],
       expect.any(Object),
     );
   });
@@ -468,10 +450,12 @@ describe('useTaskOutput', () => {
     ]);
     expect(fieldsetsStorage.save).toHaveBeenCalledWith(
       1,
-      [{
-        ...unchangedFieldset,
-        fields: [makeField('unchanged-field', 'live draft')],
-      }],
+      [
+        {
+          ...unchangedFieldset,
+          fields: [makeField('unchanged-field', 'live draft')],
+        },
+      ],
       expect.any(Object),
     );
 
@@ -486,9 +470,7 @@ describe('useTaskOutput', () => {
       apiNameBinding: 'fieldset-1',
       fields: [makeField('fieldset-field', 'server value')],
     } as any;
-    const { unmount } = render(
-      <HookHarness task={makeTask([], { fieldsets: [fieldset] })} />,
-    );
+    const { unmount } = render(<HookHarness task={makeTask([], { fieldsets: [fieldset] })} />);
 
     act(() => {
       hookResult.editFieldsetField('fieldset-field')({ value: 'last edit' });
@@ -497,10 +479,12 @@ describe('useTaskOutput', () => {
 
     expect(fieldsetsStorage.save).toHaveBeenCalledWith(
       1,
-      [{
-        ...fieldset,
-        fields: [makeField('fieldset-field', 'last edit')],
-      }],
+      [
+        {
+          ...fieldset,
+          fields: [makeField('fieldset-field', 'last edit')],
+        },
+      ],
       expect.any(Object),
     );
   });
@@ -517,11 +501,7 @@ describe('useTaskOutput', () => {
       jest.advanceTimersByTime(300);
     });
 
-    expect(addOrUpdateStorageOutput).toHaveBeenCalledWith(
-      1,
-      [makeField('field', 'local value')],
-      expect.any(Object),
-    );
+    expect(addOrUpdateStorageOutput).toHaveBeenCalledWith(1, [makeField('field', 'local value')], expect.any(Object));
   });
 
   it('does not restore flushed drafts again during unmount', () => {
@@ -530,9 +510,7 @@ describe('useTaskOutput', () => {
       fields: [makeField('fieldset-field', 'server value')],
     } as any;
     const { unmount } = render(
-      <HookHarness
-        task={makeTask([makeField('field', 'server value')], { fieldsets: [fieldset] })}
-      />,
+      <HookHarness task={makeTask([makeField('field', 'server value')], { fieldsets: [fieldset] })} />,
     );
 
     act(() => {
@@ -566,11 +544,7 @@ describe('useTaskOutput', () => {
     });
 
     expect(addOrUpdateStorageOutput).toHaveBeenCalledTimes(1);
-    expect(addOrUpdateStorageOutput).toHaveBeenCalledWith(
-      1,
-      [makeField('field', 'local value')],
-      expect.any(Object),
-    );
+    expect(addOrUpdateStorageOutput).toHaveBeenCalledWith(1, [makeField('field', 'local value')], expect.any(Object));
     expect(removeOutputFromLocalStorage).not.toHaveBeenCalled();
   });
 });

@@ -1,5 +1,5 @@
 import { EDashboardActivityAction, EWorkflowLogEvent, ECommentType, IWorkflowDetailsKickoff } from '../types/workflow';
-import { ITemplateTaskClient, IKickoffClient, IExtraField, IFieldsetBindingClient } from '../types/template';
+import { ITemplateTaskClient, IRuntimeKickoffClient, IExtraField } from '../types/template';
 
 import { isArrayWithItems, deepCopy } from './helpers';
 import { ExtraFieldsHelper } from '../components/TemplateEdit/ExtraFields/utils/ExtraFieldsHelper';
@@ -53,7 +53,7 @@ export const moveWorkflowField = (a: number, b: number, arr: IExtraField[]) => {
   return copy;
 };
 
-export const getEditKickoff = (kickoff: IWorkflowDetailsKickoff): IKickoffClient => {
+export const getEditKickoff = (kickoff: IWorkflowDetailsKickoff): IRuntimeKickoffClient => {
   const kickoffFields = new ExtraFieldsHelper(kickoff.output).getFieldsWithValues();
   const kickoffDescritpiton = kickoff.description || '';
   const kickoffFieldsets = (kickoff.fieldsets || []).map((fieldset) => ({
@@ -64,9 +64,7 @@ export const getEditKickoff = (kickoff: IWorkflowDetailsKickoff): IKickoffClient
   return {
     description: kickoffDescritpiton,
     fields: kickoffFields,
-    // Safe cast: workflow runtime components & API only consume field values from 'fields'.
-    // Template-only properties (rules & sharedFieldsetId) are ignored during workflow execution.
-    fieldsets: kickoffFieldsets as unknown as IFieldsetBindingClient[],
+    fieldsets: kickoffFieldsets,
   };
 };
 

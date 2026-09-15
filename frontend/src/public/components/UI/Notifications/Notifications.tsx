@@ -1,4 +1,3 @@
-/* eslint-disable react/default-props-match-prop-types */
 import * as React from 'react';
 import { TransitionGroup, CSSTransition } from 'react-transition-group';
 import { injectIntl, IntlShape } from 'react-intl';

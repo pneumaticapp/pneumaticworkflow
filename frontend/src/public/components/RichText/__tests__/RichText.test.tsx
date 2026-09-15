@@ -171,6 +171,17 @@ describe('RichText', () => {
     expect(container.firstChild).toMatchSnapshot();
   });
 
+  it('embeds a YouTube link when time_continue precedes the video id', () => {
+    const props: IRichTextProps = {
+      text: 'https://www.youtube.com/watch?time_continue=68&v=Bg1n3EEsODs&feature=emb_title',
+      isMarkdownMode: true,
+    };
+
+    const { container } = render(<RichText {...props} />);
+
+    expect(container.querySelector('iframe')?.getAttribute('src')).toBe('//www.youtube.com/embed/Bg1n3EEsODs');
+  });
+
   it('RichText and loom link in text flag return text with loom iframe', () => {
     const props: IRichTextProps = {
       text: 'test1 https://www.loom.com/share/7f68fa7f01e349cab91b0c36168f68c3?t=1',
@@ -456,10 +467,7 @@ describe('RichText', () => {
 
     it('renders mixed content with images and documents correctly', () => {
       const props: IRichTextProps = {
-        text: [
-          `[photo.png](${FILE_SERVICE_URL}/aaa)`,
-          `[report.pdf](${FILE_SERVICE_URL}/bbb)`,
-        ].join('\n'),
+        text: [`[photo.png](${FILE_SERVICE_URL}/aaa)`, `[report.pdf](${FILE_SERVICE_URL}/bbb)`].join('\n'),
         isMarkdownMode: true,
       };
 

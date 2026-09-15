@@ -1,5 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
 import * as React from 'react';
 import { useIntl } from 'react-intl';
 import { IWorkflowLogItem } from '../../../../../types/workflow';
@@ -12,53 +10,42 @@ import { UserData } from '../../../../UserData';
 
 import styles from './WorkflowLogAddedPerformer.css';
 
-export interface IWorkflowLogAddedPerformerProps
-  extends Pick<IWorkflowLogItem, 'created' | 'userId' | 'targetUserId'> {}
+export interface IWorkflowLogAddedPerformerProps extends Pick<IWorkflowLogItem, 'created' | 'targetUserId'> {}
 
-export function WorkflowLogAddedPerformer({ userId, created, targetUserId }: IWorkflowLogAddedPerformerProps) {
+export function WorkflowLogAddedPerformer({ created, targetUserId }: IWorkflowLogAddedPerformerProps) {
   const { formatMessage } = useIntl();
 
   return (
-    <UserData userId={userId}>
-      {(user) => {
-        if (!user) {
-          return null;
-        }
+    <div className={styles['container']}>
+      <div className={styles['avatar']}>
+        <Avatar size="lg" sizeMobile="sm" isSystemAvatar />
+      </div>
+      <div className={styles['body']}>
+        <p className={styles['title']}>
+          <span className={styles['title__text']}>{formatMessage({ id: 'general.pneumatic' })}</span>
+          <span className={styles['title__icon']}>
+            <AddPerformerIcon />
+          </span>
+          <span className={styles['title__date']}>
+            <DateFormat date={created} />
+          </span>
+        </p>
 
-        return (
-          <div className={styles['container']}>
-            <div className={styles['avatar']}>
-              <Avatar user={user} size="lg" sizeMobile="sm" />
-            </div>
-            <div className={styles['body']}>
-              <p className={styles['title']}>
-                <span className={styles['title__text']}>{getUserFullName(user)}</span>
-                <span className={styles['title__icon']}>
-                  <AddPerformerIcon />
-                </span>
-                <span className={styles['title__date']}>
-                  <DateFormat date={created} />
-                </span>
-              </p>
+        {targetUserId && (
+          <div className={styles['text']}>
+            {formatMessage({ id: 'task.log-added-performer' })}
+            <UserData userId={targetUserId}>
+              {(user) => {
+                if (!user) {
+                  return null;
+                }
 
-              {targetUserId && (
-                <div className={styles['text']}>
-                  {formatMessage({ id: 'task.log-added-performer' })}
-                  <UserData userId={targetUserId}>
-                    {(user) => {
-                      if (!user) {
-                        return null;
-                      }
-
-                      return <span className={styles['username']}>{getUserFullName(user, { withAtSign: true })}</span>;
-                    }}
-                  </UserData>
-                </div>
-              )}
-            </div>
+                return <span className={styles['username']}>{getUserFullName(user, { withAtSign: true })}</span>;
+              }}
+            </UserData>
           </div>
-        );
-      }}
-    </UserData>
+        )}
+      </div>
+    </div>
   );
 }

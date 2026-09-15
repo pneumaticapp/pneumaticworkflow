@@ -16,7 +16,7 @@ import { Button } from '../UI/Buttons/Button';
 import { ESettingsTabs, TPasswordFields } from '../../types/profile';
 import { TITLES } from '../../constants/titles';
 import { IUpdateUserRequest } from '../../api/editProfile';
-import { validateName, validatePhone } from '../../utils/validators';
+import { validateName } from '../../utils/validators';
 import { getErrorsObject } from '../../utils/formik/getErrorsObject';
 import { Header } from '../UI/Typeography/Header';
 import { SectionTitle } from '../UI/Typeography/SectionTitle';
@@ -31,11 +31,11 @@ import { ProfileManager } from './ProfileManager';
 import { ProfileReports } from './ProfileReports';
 import { teamFetchStarted, usersFetchStarted } from '../../redux/accounts/slice';
 import { ProfileVacationFields } from './ProfileVacationFields';
+import { validateProfilePhone } from './validators';
 
 import styles from './Profile.css';
 
-const arraysEqual = (a: number[], b: number[]) =>
-  a.length === b.length && a.every((v, i) => v === b[i]);
+const arraysEqual = (a: number[], b: number[]) => a.length === b.length && a.every((v, i) => v === b[i]);
 
 export interface IProfileProps {
   user: IAuthUser;
@@ -80,19 +80,19 @@ function ProfileManagerSection({
 }: {
   currentUserId: number;
   managerId: number | null;
-  editCurrentUser: (body: IUpdateUserRequest & {
-    onSuccess?: () => void;
-    onError?: () => void;
-  }) => void;
+  editCurrentUser: (
+    body: IUpdateUserRequest & {
+      onSuccess?: () => void;
+      onError?: () => void;
+    },
+  ) => void;
 }) {
   return (
     <fieldset className={styles['fields-group']}>
       <ProfileManager
         currentUserId={currentUserId}
         managerId={managerId}
-        onManagerChange={(newManagerId, callbacks) =>
-          editCurrentUser({ managerId: newManagerId, ...callbacks })
-        }
+        onManagerChange={(newManagerId, callbacks) => editCurrentUser({ managerId: newManagerId, ...callbacks })}
       />
     </fieldset>
   );
@@ -157,7 +157,7 @@ export function Profile({
     dateFdw: String(dateFdw),
     timeformat: timeFmt.trim(),
     dateformat: `${monthFmt},${yearFmt},`,
-    absenceStatus: isUserAbsent(user) ? (user.vacation?.absenceStatus || 'vacation') : 'active',
+    absenceStatus: isUserAbsent(user) ? user.vacation?.absenceStatus || 'vacation' : 'active',
     vacationStartDate: user.vacation?.startDate || null,
     vacationEndDate: user.vacation?.endDate || null,
     substituteUserIds: user.vacation?.substituteUserIds || [],
@@ -172,22 +172,29 @@ export function Profile({
     });
   };
 
-
   const handleSubmit: FormikConfig<TProfileFields>['onSubmit'] = (values) => {
-    const { dateformat, timeformat, absenceStatus, vacationStartDate, vacationEndDate, substituteUserIds, ...userData } = values;
+    const {
+      dateformat,
+      timeformat,
+      absenceStatus,
+      vacationStartDate,
+      vacationEndDate,
+      substituteUserIds,
+      ...userData
+    } = values;
     editCurrentUser({ ...userData, dateFmt: `${dateformat} ${timeformat}` });
 
     const prevIsAbsent = isUserAbsent(user);
     const nextIsAbsent = absenceStatus !== 'active';
-    
+
     // Determine if any vacation fields have changed
-    const prevAbsenceStatus = isUserAbsent(user) ? (user.vacation?.absenceStatus || 'vacation') : 'active';
+    const prevAbsenceStatus = isUserAbsent(user) ? user.vacation?.absenceStatus || 'vacation' : 'active';
     const vacationSettingsChanged =
       absenceStatus !== prevAbsenceStatus ||
       vacationStartDate !== (user.vacation?.startDate || null) ||
       vacationEndDate !== (user.vacation?.endDate || null) ||
       !arraysEqual(substituteUserIds, user.vacation?.substituteUserIds || []);
-      
+
     if (vacationSettingsChanged) {
       if (nextIsAbsent) {
         onVacationActivate({
@@ -218,10 +225,13 @@ export function Profile({
           const errors = getErrorsObject(values, {
             firstName: validateName,
             lastName: validateName,
-            phone: validatePhone,
+            phone: validateProfilePhone,
           });
 
-          if (values.absenceStatus !== 'active' && (!values.substituteUserIds || values.substituteUserIds.length === 0)) {
+          if (
+            values.absenceStatus !== 'active' &&
+            (!values.substituteUserIds || values.substituteUserIds.length === 0)
+          ) {
             errors.substituteUserIds = formatMessage({ id: 'validation.required' });
           }
 
@@ -276,6 +286,7 @@ export function Profile({
               fieldSize="lg"
               title={formatMessage({ id: 'user.phone' })}
               containerClassName={styles['field']}
+              isRequired
             />
           </fieldset>
 
@@ -286,11 +297,7 @@ export function Profile({
           />
 
           <fieldset className={styles['fields-group']}>
-            <ProfileReports 
-              currentUserId={id} 
-              reportIds={user.reportIds || []} 
-              editCurrentUser={editCurrentUser}
-            />
+            <ProfileReports currentUserId={id} reportIds={user.reportIds || []} editCurrentUser={editCurrentUser} />
           </fieldset>
 
           <ProfileVacationFields availableUsers={availableUsers} />

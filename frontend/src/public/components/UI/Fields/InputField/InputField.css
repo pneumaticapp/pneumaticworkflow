@@ -1,8 +1,8 @@
 .container {
   position: relative;
-  margin: 0;
   display: block;
   width: 100%;
+  margin: 0;
 }
 
 .container_disabled {
@@ -16,9 +16,9 @@
 
 .title {
   position: absolute;
-  z-index: 0;
   top: 0;
   left: 12px;
+  z-index: 0;
   padding: 0 4px;
   font-size: 13px;
   line-height: 16px;
@@ -29,8 +29,8 @@
   width: 100%;
   font-size: 15px;
   line-height: 20px;
-  border: 1px solid var(--pneumatic-color-black16);
   outline: none;
+  border: 1px solid var(--pneumatic-color-black16);
   transition: 0.1s ease-in-out border-color;
 
   &:disabled {
@@ -38,7 +38,7 @@
     border-color: var(--pneumatic-color-black16);
   }
 
-  &:not(.input-field_error):not(:disabled):active,
+  &:not(.input-field_error, :disabled):active,
   &:not(.input-field_error):focus {
     border-color: var(--pneumatic-color-black48);
   }
@@ -55,8 +55,8 @@
 
 .container_lg {
   .input-field {
-    padding: 0 16px;
     height: 48px;
+    padding: 0 16px;
     border-radius: 8px;
   }
 
@@ -71,8 +71,8 @@
 
 .container_md {
   .input-field {
-    padding: 0 16px;
     height: 40px;
+    padding: 0 16px;
     border-radius: 8px;
   }
 
@@ -87,8 +87,8 @@
 
 .container_sm {
   .input-field {
-    padding: 0 16px;
     height: 32px;
+    padding: 0 16px;
     border-radius: 16px;
   }
 
@@ -116,11 +116,11 @@
   right: 0;
   bottom: 0;
   display: flex;
-  width: 50px;
-  pointer-events: none;
-  color: var(--pneumatic-color-black32);
-  justify-content: center;
   align-items: center;
+  justify-content: center;
+  width: 50px;
+  color: var(--pneumatic-color-black32);
+  pointer-events: none;
 }
 
 .password-toggle {
@@ -129,11 +129,11 @@
   right: 0;
   bottom: 0;
   display: flex;
-  width: 56px;
-  cursor: pointer;
-  color: var(--pneumatic-color-black32);
-  justify-content: center;
   align-items: center;
+  justify-content: center;
+  width: 56px;
+  color: var(--pneumatic-color-black32);
+  cursor: pointer;
 }
 
 .clear-button {
@@ -142,12 +142,12 @@
   top: 50%;
   bottom: 0;
   display: flex;
-  pointer-events: all;
-  color: var(--pneumatic-color-black16);
-  transition: color 0.1s ease-in-out;
-  transform: translateY(-50%);
-  justify-content: center;
   align-items: center;
+  justify-content: center;
+  color: var(--pneumatic-color-black16);
+  pointer-events: all;
+  transform: translateY(-50%);
+  transition: color 0.1s ease-in-out;
 
   &:hover {
     color: var(--pneumatic-color-link-hover);

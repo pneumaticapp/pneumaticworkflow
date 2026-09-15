@@ -3,6 +3,7 @@ import { commonRequest } from './commonRequest';
 
 export interface IGetActiveUsersCountResponse {
   activeUsers: number;
+  tenantsActiveUsers: number;
 }
 
 export function getActiveUsersCount() {

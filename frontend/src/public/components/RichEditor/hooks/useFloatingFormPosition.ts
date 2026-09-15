@@ -68,7 +68,6 @@ export interface IUseFloatingFormPositionResult {
   positionMode: TFloatingFormPositionMode;
 }
 
-
 export function useFloatingFormPosition(
   formRef: React.RefObject<HTMLElement | null>,
   options: IUseFloatingFormPositionOptions,
@@ -102,20 +101,10 @@ export function useFloatingFormPosition(
     const container = containerRef?.current;
 
     if (container) {
-      const position = computePositionInContainer(
-        anchorRect,
-        container,
-        offsetHeight,
-        offsetPx,
-      );
+      const position = computePositionInContainer(anchorRect, container, offsetHeight, offsetPx);
       setResult({ position, positionMode: 'absolute' });
     } else {
-      const position = computePositionInViewport(
-        anchorRect,
-        offsetHeight,
-        offsetWidth,
-        offsetPx,
-      );
+      const position = computePositionInViewport(anchorRect, offsetHeight, offsetWidth, offsetPx);
       setResult({ position, positionMode: 'fixed' });
     }
   }, [isVisible, getAnchorRectFn, anchorElement, containerRef, offsetPx, formRef]);
@@ -141,12 +130,12 @@ export function useFloatingFormPosition(
     const scrollable = anchorElement ? findScrollableElements(anchorElement) : [];
     window.addEventListener('scroll', handleScrollOrResize, true);
     window.addEventListener('resize', handleScrollOrResize);
-    scrollable.forEach(el => el.addEventListener('scroll', handleScrollOrResize, true));
+    scrollable.forEach((el) => el.addEventListener('scroll', handleScrollOrResize, true));
 
     return () => {
       window.removeEventListener('scroll', handleScrollOrResize, true);
       window.removeEventListener('resize', handleScrollOrResize);
-      scrollable.forEach(el => el.removeEventListener('scroll', handleScrollOrResize, true));
+      scrollable.forEach((el) => el.removeEventListener('scroll', handleScrollOrResize, true));
     };
   }, [isVisible, updatePosition, anchorElement]);
 

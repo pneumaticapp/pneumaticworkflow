@@ -1,7 +1,11 @@
 import { IWorkflowDetailsKickoff } from '../../../../../../types/workflow';
-import { EExtraFieldType, IKickoffClient, IFieldsetBindingClient } from '../../../../../../types/template';
+import { EExtraFieldType, ITemplateKickoffClient } from '../../../../../../types/template';
 import { IFieldsetRuntime } from '../../../../../../types/fieldset';
-import { makeFieldsetRuntime } from '../../../../../../__stubs__/fieldsets.factory';
+import {
+  makeFieldsetRuntime,
+  makeFieldsetBindingClient,
+  makeFieldsetField,
+} from '../../../../../../__stubs__/fieldsets.factory';
 import { makeExtraField } from '../../../../../../__stubs__/fields.factory';
 import { getClonedKickoff } from '../getClonedKickoff';
 
@@ -119,7 +123,7 @@ const mockWorkflowDetailKickoff: IWorkflowDetailsKickoff = {
   ],
 };
 
-const templateKickoffMock: IKickoffClient = {
+const templateKickoffMock: ITemplateKickoffClient = {
   description:
     ' youtube: \nhttps://www.youtube.com/watch?v=JZRm7NKTPhk\n loom:\nhttps://www.loom.com/share/29f210bc12484eaa81ca462381fb4415?t=0\n 404 loom:\n\nhttps://www.loom.com/share/9853f0790ad2408094a3717bfcf4a0c0\nYoutube 404 :\n\nhttps://www.youtube.com/watch?v=D6hIeqZt22g',
   fields: [
@@ -281,10 +285,7 @@ const expectedKickoff = {
       description: '',
       apiName: 'checkboxes-989',
       value: [],
-      selections: [
-        'value1',
-        'value2',
-      ],
+      selections: ['value1', 'value2'],
       attachments: [],
       order: 3,
       userId: null,
@@ -298,10 +299,7 @@ const expectedKickoff = {
       description: '',
       apiName: 'radios-990',
       value: null,
-      selections: [
-        '1',
-        '2',
-      ],
+      selections: ['1', '2'],
       attachments: [],
       order: 2,
       userId: null,
@@ -333,7 +331,7 @@ describe('getClonedKickoff', () => {
         ],
       };
 
-      const emptyTemplateKickoff: IKickoffClient = {
+      const emptyTemplateKickoff: ITemplateKickoffClient = {
         description: '',
         fields: [],
         fieldsets: [],
@@ -371,7 +369,7 @@ describe('getClonedKickoff', () => {
         ],
       };
 
-      const templateKickoff: IKickoffClient = {
+      const templateKickoff: ITemplateKickoffClient = {
         description: '',
         fields: [
           {
@@ -411,7 +409,7 @@ describe('getClonedKickoff', () => {
         ],
       };
 
-      const templateKickoff: IKickoffClient = {
+      const templateKickoff: ITemplateKickoffClient = {
         description: '',
         fields: [
           {
@@ -455,22 +453,26 @@ describe('getClonedKickoff', () => {
         ],
       };
 
-      const templateKickoff: IKickoffClient = {
+      const templateKickoff: ITemplateKickoffClient = {
         description: '',
         fields: [],
         fieldsets: [
-          makeFieldsetRuntime({
+          makeFieldsetBindingClient({
             apiNameBinding: 'fs-1',
             name: 'Fieldset 1',
             fields: [
-              makeExtraField({
+              makeFieldsetField({
                 apiName: 'fs-field-1',
                 name: 'FS Checkbox',
                 type: EExtraFieldType.Checkbox,
-                selections: ['Opt1', 'Opt2', 'Opt3'],
+                selections: [
+                  { apiName: 'Opt1', value: 'Opt1' },
+                  { apiName: 'Opt2', value: 'Opt2' },
+                  { apiName: 'Opt3', value: 'Opt3' },
+                ],
               }),
             ],
-          }) as unknown as IFieldsetBindingClient,
+          }),
         ],
       };
 
@@ -495,15 +497,15 @@ describe('getClonedKickoff', () => {
         ],
       };
 
-      const templateKickoff: IKickoffClient = {
+      const templateKickoff: ITemplateKickoffClient = {
         description: '',
         fields: [],
         fieldsets: [
-          makeFieldsetRuntime({
+          makeFieldsetBindingClient({
             apiNameBinding: 'fs-valid',
             name: 'Valid Fieldset',
             fields: [],
-          }) as unknown as IFieldsetBindingClient,
+          }),
         ],
       };
 
@@ -534,21 +536,21 @@ describe('getClonedKickoff', () => {
         ],
       };
 
-      const templateKickoff: IKickoffClient = {
+      const templateKickoff: ITemplateKickoffClient = {
         description: '',
         fields: [],
         fieldsets: [
-          makeFieldsetRuntime({
+          makeFieldsetBindingClient({
             apiNameBinding: 'raw-backend-fs',
             name: 'Template Fieldset',
             fields: [
-              makeExtraField({
+              makeFieldsetField({
                 apiName: 'raw-field-1',
                 name: 'Field 1',
                 type: EExtraFieldType.String,
               }),
             ],
-          }) as unknown as IFieldsetBindingClient,
+          }),
         ],
       };
 

@@ -1,4 +1,3 @@
-/* eslint-disable */
 /* prettier-ignore */
 import * as React from 'react';
 
@@ -18,11 +17,11 @@ export interface IPlanDetailsProgress {
 }
 
 export class PlanDetailsProgress extends React.Component<IPlanDetailsProgress> {
-  private  getPercentage() {
+  private getPercentage() {
     const { value, limit } = this.props;
 
     if (Number.isFinite(value as number) && limit) {
-      return Math.min(Math.trunc((value as number / limit) * 100), 100);
+      return Math.min(Math.trunc(((value as number) / limit) * 100), 100);
     }
 
     return undefined;

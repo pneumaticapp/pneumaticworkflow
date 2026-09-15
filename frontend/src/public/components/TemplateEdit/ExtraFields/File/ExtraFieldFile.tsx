@@ -30,9 +30,7 @@ export function ExtraFieldFile({
 }: IWorkflowExtraFieldProps) {
   const { formatMessage } = useIntl();
   const getFieldFiles = useCallback(
-    (): TUploadedFile[] => field.attachments?.length
-      ? field.attachments
-      : parseMarkdownToFiles(field.markdownValue),
+    (): TUploadedFile[] => (field.attachments?.length ? field.attachments : parseMarkdownToFiles(field.markdownValue)),
     [field.attachments, field.markdownValue],
   );
   const [filesToUpload, setFilesToUpload] = useState<TUploadedFile[]>(getFieldFiles);
@@ -76,9 +74,7 @@ export function ExtraFieldFile({
   };
 
   const updateFieldFiles = (attachments: TUploadedFile[]) => {
-    const value = attachments
-      .filter((file) => !file.isRemoved)
-      .map((file) => `[${file.name}](${file.url})`);
+    const value = attachments.filter((file) => !file.isRemoved).map((file) => `[${file.name}](${file.url})`);
 
     filesToUploadRef.current = attachments;
     setFilesToUpload(attachments);
@@ -116,9 +112,7 @@ export function ExtraFieldFile({
       return;
     }
 
-    updateFieldFiles(
-      filesToUploadRef.current.map((file) => (file.id === id ? { ...file, isRemoved: true } : file)),
-    );
+    updateFieldFiles(filesToUploadRef.current.map((file) => (file.id === id ? { ...file, isRemoved: true } : file)));
   };
 
   if (mode === EExtraFieldMode.Kickoff) {
@@ -149,9 +143,9 @@ export function ExtraFieldFile({
           isRequired={field.isRequired || false}
           isDisabled={isDisabled}
           mode={mode}
+          labelPosition={labelPosition}
           labelBackgroundColor={labelBackgroundColor}
           handleChangeName={(event) => editField({ name: event.target.value })}
-          className={kickoffStyles['kick-off-input__name_label-left_aligned-start']}
         />
       ) : (
         <div>

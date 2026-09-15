@@ -5,8 +5,6 @@ import type { TOutputChecklist } from '../../types/template';
 import type { TTaskVariable } from '../TemplateEdit/types';
 import type { TForegroundColor } from '../UI/Fields/common/types';
 
-
-
 export interface IRichEditorHandle {
   focus(): void;
   insertVariable(apiName: string, variableTitle: string, subtitle?: string): void;

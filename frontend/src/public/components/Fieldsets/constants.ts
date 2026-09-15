@@ -8,9 +8,7 @@ export const FIELDSET_RULES_MSG_FIELDS_NUMBER = 'fieldsets.rules-validation-fiel
 
 export const NUMBER_RULE_TYPES = new Set<EFieldsetRuleType>([EFieldsetRuleType.SumEqual]);
 
-export const FIELDSET_RULE_TYPES = [
-  { value: EFieldsetRuleType.SumEqual, labelKey: 'fieldsets.rule-type-sum_equal' },
-];
+export const FIELDSET_RULE_TYPES = [{ value: EFieldsetRuleType.SumEqual, labelKey: 'fieldsets.rule-type-sum_equal' }];
 
 export const FIELDSET_RULE_VALUE_PLACEHOLDER_BY_TYPE: Record<EFieldsetRuleType, string> = {
   [EFieldsetRuleType.SumEqual]: 'fieldsets.rule-value-placeholder-number',

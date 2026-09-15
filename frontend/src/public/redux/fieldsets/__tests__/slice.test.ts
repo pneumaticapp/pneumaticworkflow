@@ -1,4 +1,3 @@
-
 import fieldsetsReducer, {
   initialState,
   loadFieldsets,
@@ -12,7 +11,10 @@ import { IFieldsetCatalogItem } from '../../../types/fieldset';
 import { makeFieldsetCatalogItem } from '../../../__stubs__/fieldsets.factory';
 import { IFieldsetsStore } from '../../../types/redux';
 
-const makeStateWithList = (items: IFieldsetCatalogItem[], overrides: Partial<IFieldsetsStore> = {}): IFieldsetsStore => ({
+const makeStateWithList = (
+  items: IFieldsetCatalogItem[],
+  overrides: Partial<IFieldsetsStore> = {},
+): IFieldsetsStore => ({
   ...initialState,
   fieldsetsList: { count: items.length, offset: 0, items },
   ...overrides,
@@ -20,23 +22,24 @@ const makeStateWithList = (items: IFieldsetCatalogItem[], overrides: Partial<IFi
 
 describe('fieldsets slice', () => {
   describe('loadFieldsets', () => {
-    it('clears the list when offset is 0 (template switch)', () => {
+    it('keeps existing items when offset is 0 during initial load', () => {
+      const existingItems = [
+        makeFieldsetCatalogItem({ name: 'Fieldset from template A' }),
+        makeFieldsetCatalogItem({ id: 2, name: 'Another fieldset from template A' }),
+      ];
       const stateWithData: IFieldsetsStore = {
         ...initialState,
         fieldsetsList: {
           count: 2,
           offset: 0,
-          items: [
-            makeFieldsetCatalogItem({ name: 'Fieldset from template A' }),
-            makeFieldsetCatalogItem({ id: 2, name: 'Another fieldset from template A' }),
-          ],
+          items: existingItems,
         },
       };
 
       const result = fieldsetsReducer(stateWithData, loadFieldsets({ offset: 0 }));
 
-      expect(result.fieldsetsList.items).toEqual([]);
-      expect(result.fieldsetsList.count).toBe(0);
+      expect(result.fieldsetsList.items).toEqual(existingItems);
+      expect(result.fieldsetsList.count).toBe(2);
       expect(result.fieldsetsList.offset).toBe(0);
       expect(result.isLoading).toBe(true);
     });

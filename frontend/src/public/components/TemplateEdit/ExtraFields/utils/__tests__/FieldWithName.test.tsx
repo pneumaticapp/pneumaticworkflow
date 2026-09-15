@@ -72,10 +72,7 @@ describe('FieldWithName', () => {
 
       const mock = FieldLabel as jest.Mock;
       expect(mock).toHaveBeenCalledTimes(1);
-      expect(mock).toHaveBeenCalledWith(
-        expect.objectContaining({ className: 'custom-label-class' }),
-        {},
-      );
+      expect(mock).toHaveBeenCalledWith(expect.objectContaining({ className: 'custom-label-class' }), {});
     });
 
     it('does NOT pass className to FieldLabel when labelClassName is undefined', () => {
@@ -99,10 +96,7 @@ describe('FieldWithName', () => {
 
       const fieldMock = Field as jest.Mock;
       expect(fieldMock).toHaveBeenCalledTimes(1);
-      expect(fieldMock).toHaveBeenCalledWith(
-        expect.objectContaining({ value: 'Desc text' }),
-        {},
-      );
+      expect(fieldMock).toHaveBeenCalledWith(expect.objectContaining({ value: 'Desc text' }), {});
     });
 
     it('uses value in ProcessRun mode', () => {
@@ -115,10 +109,7 @@ describe('FieldWithName', () => {
 
       const fieldMock = Field as jest.Mock;
       expect(fieldMock).toHaveBeenCalledTimes(1);
-      expect(fieldMock).toHaveBeenCalledWith(
-        expect.objectContaining({ value: 'Val text' }),
-        {},
-      );
+      expect(fieldMock).toHaveBeenCalledWith(expect.objectContaining({ value: 'Val text' }), {});
     });
   });
 });

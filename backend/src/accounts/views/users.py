@@ -23,7 +23,6 @@ from src.accounts.permissions import (
 from src.accounts.queries import CountTemplatesByUserQuery
 from src.accounts.messages import MSG_A_0052
 from src.accounts.serializers.accounts import AccountCacheSerializer
-from src.accounts.serializers.api_key import UserAPIKeySerializer
 from src.accounts.serializers.user import (
     UserPrivilegesSerializer,
     UserSerializer,
@@ -117,12 +116,10 @@ class UsersViewSet(
         'reassign': ReassignSerializer,
         'privileges': UserPrivilegesSerializer,
         'activate_vacation': VacationActivateSerializer,
-        'api_key': UserAPIKeySerializer,
     }
     action_filterset_classes = {
         'list': UsersListFilterSet,
         'privileges': UsersListFilterSet,
-        'api_key': UsersListFilterSet,
     }
 
     def get_permissions(self):
@@ -133,7 +130,7 @@ class UsersViewSet(
                 IsAuthenticated(),
                 BillingPlanPermission(),
             )
-        if self.action in {'privileges', 'api_key'}:
+        if self.action == 'privileges':
             return (
                 AccountOwnerPermission(),
                 ExpiredSubscriptionPermission(),
@@ -181,8 +178,6 @@ class UsersViewSet(
                 'vacations',
                 'vacations__substitute_group__users',
             )
-        elif self.action == 'api_key':
-            queryset = queryset.select_related('apikey')
         return super().prefetch_queryset(
             queryset=queryset,
             extra_fields=extra_fields,
@@ -195,7 +190,9 @@ class UsersViewSet(
         user = self.request.user
         if self.action == 'transfer':
             queryset = UserModel.objects.all()
-        elif self.action in {'list', 'privileges', 'api_key'}:
+        elif self.action in {
+            'list', 'privileges',
+        }:
             queryset = (
                 UserModel.include_inactive
                 .all_account_users(account_id)
@@ -563,27 +560,6 @@ class UsersViewSet(
         return self.response_ok(
             data={'count': count},
         )
-
-    @extend_schema(
-        tags=['Accounts'],
-        summary='List users API keys',
-        description=ACCESS_ACCOUNT_OWNER,
-        parameters=USERS_LIST_PARAMS,
-        responses={
-            200: UserAPIKeySerializer(many=True),
-            401: UNAUTHORIZED,
-            403: FORBIDDEN,
-        },
-    )
-    @action(
-        detail=False,
-        methods=('get',),
-        url_path='api-key',
-    )
-    def api_key(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
-        serializer = self.get_serializer(queryset, many=True)
-        return self.response_ok(data=serializer.data)
 
     @extend_schema(
         tags=['Accounts'],

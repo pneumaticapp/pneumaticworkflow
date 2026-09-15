@@ -3,7 +3,6 @@
 import * as React from 'react';
 import classnames from 'classnames';
 
-
 import { getEmptySelection } from '../../KickoffRedux/utils/getEmptySelection';
 import { validateCheckboxAndRadioField, validateKickoffFieldName } from '../../../../utils/validators';
 import { handleSelectionBlur, recalculateDuplicateErrors } from '../utils/handleSelectionBlur';
@@ -34,6 +33,7 @@ export function ExtraFieldCheckbox({
   deleteField,
   editField,
   isDisabled = false,
+  isFieldsetReadOnly = false,
   datasetName,
   labelPosition,
   labelBackgroundColor,
@@ -51,8 +51,8 @@ export function ExtraFieldCheckbox({
   }, [selectionItems]);
 
   const [activeOptionIndex, setActiveOptionIndex] = useState<number | null>(null);
-  const [duplicateErrors, setDuplicateErrors] = useState<Record<string, string>>(
-    () => recalculateDuplicateErrors(selectionItems || []),
+  const [duplicateErrors, setDuplicateErrors] = useState<Record<string, string>>(() =>
+    recalculateDuplicateErrors(selectionItems || []),
   );
 
   const fieldNameErrorMessage = validateKickoffFieldName(name) || '';
@@ -72,19 +72,21 @@ export function ExtraFieldCheckbox({
     );
 
     return (
-      <div className={classnames(
-        fieldStyles['kickoff-create-field-container'],
-        labelPosition === EFieldLabelPosition.Left && styles['kick-off-input__field_label-left'],
-      )}>
+      <div
+        className={classnames(
+          fieldStyles['kickoff-create-field-container'],
+          labelPosition === EFieldLabelPosition.Left && styles['kick-off-input__field_label-left'],
+        )}
+      >
         {labelPosition === EFieldLabelPosition.Left ? (
           <FieldLabel
             name={name}
             isRequired={isRequired}
             isDisabled={isDisabled}
             mode={mode}
+            labelPosition={labelPosition}
             namePlaceholder={namePlaceholder}
             handleChangeName={handleChangeName}
-            className={styles['kick-off-input__name_label-left']}
           />
         ) : (
           <div className={fieldNameClassName}>
@@ -94,6 +96,7 @@ export function ExtraFieldCheckbox({
                 fieldStyles['kickoff-create-field-name-input'],
                 !isKickoffFieldNameValid && fieldStyles['kickoff-create-field-name-input_error'],
               )}
+              data-use-input
               onChange={handleChangeName}
               placeholder={namePlaceholder}
               value={name}
@@ -131,7 +134,9 @@ export function ExtraFieldCheckbox({
           editField={editField}
           isDisabled={isDisabled}
           datasetName={datasetName}
-          {...(labelPosition === EFieldLabelPosition.Left && { className: styles['kick-off-input__options-content_label-left'] })}
+          {...(labelPosition === EFieldLabelPosition.Left && {
+            className: styles['kick-off-input__options-content_label-left'],
+          })}
         >
           {customOptionsList}
           {!isDisabled && addOptionButton}
@@ -163,16 +168,27 @@ export function ExtraFieldCheckbox({
             id={`extra-field-checkbox-${optionIndex}`}
             containerClassName={fieldStyles['labeled-checkbox__checkbox']}
           />
-          <input
-            ref={(el) => (optionInputsRefs.current[optionIndex] = el as HTMLInputElement)}
-            className={fieldStyles['labeled-checkbox__input']}
-            onChange={handleChangeOption(optionIndex)}
-            onBlur={handleBlurOption(field.apiName)}
-            placeholder={namePlaceholder}
-            type="text"
-            value={value}
-            disabled={isDisabled}
-          />
+          {isFieldsetReadOnly ? (
+            <textarea
+              className={fieldStyles['labeled-checkbox__input']}
+              data-use-input
+              value={value}
+              disabled
+              rows={1}
+            />
+          ) : (
+            <input
+              ref={(el) => (optionInputsRefs.current[optionIndex] = el as HTMLInputElement)}
+              className={fieldStyles['labeled-checkbox__input']}
+              data-use-input
+              onChange={handleChangeOption(optionIndex)}
+              onBlur={handleBlurOption(field.apiName)}
+              placeholder={namePlaceholder}
+              type="text"
+              value={value}
+              disabled={isDisabled}
+            />
+          )}
           <span className={fieldStyles['measure']} />
           {isActive && !isDisabled && (selectionItems?.length || 0) > 1 && (
             <div
@@ -236,7 +252,12 @@ export function ExtraFieldCheckbox({
 
     return (
       <li key={selectionValue} className={fieldStyles['kickoff-set-field-option']}>
-        <Checkbox id={selectionValue} title={selectionValue} onChange={handleToggleOption(selectionValue)} checked={isChecked} />
+        <Checkbox
+          id={selectionValue}
+          title={selectionValue}
+          onChange={handleToggleOption(selectionValue)}
+          checked={isChecked}
+        />
       </li>
     );
   };
@@ -263,9 +284,9 @@ export function ExtraFieldCheckbox({
             isRequired={isRequired}
             isDisabled={isDisabled}
             mode={mode}
+            labelPosition={labelPosition}
             labelBackgroundColor={labelBackgroundColor}
             handleChangeName={handleChangeName}
-            className={styles['kick-off-input__name_label-left_aligned-start']}
           />
         ) : (
           <div>

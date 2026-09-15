@@ -8,7 +8,7 @@ import { Button, RouteLeavingGuard } from '../../UI';
 import { getCurrentFieldset } from '../../../redux/selectors/fieldsets';
 import { TFieldsetUnsavedChangesModalProps } from './types';
 
-export function FieldsetUnsavedChangesModal({ isChanged }: TFieldsetUnsavedChangesModalProps) {
+export function FieldsetUnsavedChangesModal({ isChanged, onSave }: TFieldsetUnsavedChangesModalProps) {
   const { formatMessage } = useIntl();
   const fieldset = useSelector(getCurrentFieldset);
 
@@ -42,6 +42,14 @@ export function FieldsetUnsavedChangesModal({ isChanged }: TFieldsetUnsavedChang
           <Button
             label={formatMessage({ id: 'fieldsets.leave-unsaved-leave' })}
             onClick={confirmLeave}
+            buttonStyle="transparent-orange"
+            size="md"
+          />
+          <Button
+            label={formatMessage({ id: 'fieldsets.leave-unsaved-save' })}
+            onClick={() => {
+              onSave(confirmLeave);
+            }}
             buttonStyle="yellow"
             size="md"
           />

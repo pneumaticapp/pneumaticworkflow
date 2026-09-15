@@ -14,7 +14,12 @@ import { START_DURATION, DEFAULT_TEMPLATE_NAME } from './constants';
 import { TemplateIntegrations } from './Integrations';
 import { ERoutes } from '../../constants/routes';
 import { TUserListItem } from '../../types/user';
-import { cleanTemplateReferences, getEmptyKickoff, getNormalizedTemplateOwners, getTemplateIdFromUrl } from '../../utils/template';
+import {
+  cleanTemplateReferences,
+  getEmptyKickoff,
+  getNormalizedTemplateOwners,
+  getTemplateIdFromUrl,
+} from '../../utils/template';
 import { checkSomeRouteIsActive, isCreateTemplate } from '../../utils/history';
 import { KickoffReduxContainer } from './KickoffRedux';
 import { moveTask } from '../../utils/workflows';
@@ -22,7 +27,13 @@ import { NotificationManager } from '../UI/Notifications';
 import { isArrayWithItems } from '../../utils/helpers';
 import { createOwnerApiName, createPerformerApiName, createTaskApiName, createUUID } from '../../utils/createId';
 import { EMoveDirections } from '../../types/workflow';
-import { ETaskPerformerType, ETemplateOwnerRole, ETemplateOwnerType, ITemplateClient, ITemplateTaskClient } from '../../types/template';
+import {
+  ETaskPerformerType,
+  ETemplateOwnerRole,
+  ETemplateOwnerType,
+  ITemplateClient,
+  ITemplateTaskClient,
+} from '../../types/template';
 import { TLoadTemplateVariablesSuccessPayload } from '../../redux/actions';
 import { ETemplateStatus, IAuthUser } from '../../types/redux';
 import { getKickoffConditions } from './TaskForm/Conditions/utils/getKickoffConditions';
@@ -259,35 +270,35 @@ export function TemplateEdit({
     };
   };
 
-  const handleChangeTemplateField = (field: keyof ITemplateClient) => (value: ITemplateClient[keyof ITemplateClient]) => {
-    const workflow = template;
-    setTemplateStatus(ETemplateStatus.Saving);
+  const handleChangeTemplateField =
+    (field: keyof ITemplateClient) => (value: ITemplateClient[keyof ITemplateClient]) => {
+      const workflow = template;
+      setTemplateStatus(ETemplateStatus.Saving);
 
-    if (field === 'isActive') {
-      const newWorkflow: ITemplateClient = {
+      if (field === 'isActive') {
+        const newWorkflow: ITemplateClient = {
+          ...workflow,
+          isActive: value as boolean,
+        };
+
+        setTemplate(newWorkflow);
+        submitDebounced();
+
+        return;
+      }
+
+      const updatedWorkflow: ITemplateClient = {
         ...workflow,
-        isActive: value as boolean,
+        [field]: value,
+        isActive: false,
       };
+
+      const newWorkflow =
+        field === 'kickoff' || field === 'tasks' ? cleanTemplateReferences(updatedWorkflow) : updatedWorkflow;
 
       setTemplate(newWorkflow);
       submitDebounced();
-
-      return;
-    }
-
-    const updatedWorkflow: ITemplateClient = {
-      ...workflow,
-      [field]: value,
-      isActive: false,
     };
-
-    const newWorkflow = (field === 'kickoff' || field === 'tasks')
-      ? cleanTemplateReferences(updatedWorkflow)
-      : updatedWorkflow;
-
-    setTemplate(newWorkflow);
-    submitDebounced();
-  };
 
   const changeTasks = (newTasks: ITemplateTaskClient[]) => {
     handleChangeTemplateField('tasks')(newTasks);
@@ -375,7 +386,9 @@ export function TemplateEdit({
   };
 
   const handleEditTaskField =
-    (targetTask: ITemplateTaskClient) => (field: keyof ITemplateTaskClient) => (value: ITemplateTaskClient[keyof ITemplateTaskClient]) => {
+    (targetTask: ITemplateTaskClient) =>
+    (field: keyof ITemplateTaskClient) =>
+    (value: ITemplateTaskClient[keyof ITemplateTaskClient]) => {
       const newTasks = tasks.map((task) => {
         if (targetTask.uuid === task.uuid) {
           return {

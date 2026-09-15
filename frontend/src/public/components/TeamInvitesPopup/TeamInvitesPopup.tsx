@@ -13,8 +13,6 @@ import { isEnvGoogleAuth, isEnvMsAuth } from '../../constants/enviroment';
 
 import styles from './TeamInvitesPopup.css';
 
-
-
 export function TeamInvitesPopup({
   children,
   isTeamInvitesOpened,
@@ -31,33 +29,41 @@ export function TeamInvitesPopup({
     }
   }, [invitesUsersList]);
 
-  const tabsListMap = useMemo(() => ({
-    [InvitesType.Google]: {
-      label: formatMessage({ id: 'team.modal-google-tab' }),
-      isActive: activeTab === InvitesType.Google,
-      content: <OAuthInvitesTab 
-        type={InvitesType.Google} 
-        users={invitesUsersList.filter((user) => user.source === InvitesType.Google)} 
-        teamUsers={teamUsers} />,
-      isVisible: isEnvGoogleAuth && invitesUsersList.some((user) => user.source === InvitesType.Google),
-    },
-    [InvitesType.Microsoft]: {
-      label: formatMessage({ id: 'team.modal-microsoft-tab' }),
-      isActive: activeTab === InvitesType.Microsoft,
-      content: <OAuthInvitesTab 
-        type={InvitesType.Microsoft} 
-        users={invitesUsersList.filter((user) => user.source === InvitesType.Microsoft)} 
-        teamUsers={teamUsers}
-      />,
-      isVisible: isEnvMsAuth && invitesUsersList.some((user) => user.source === InvitesType.Microsoft),
-    },
-    [InvitesType.Email]: {
-      label: formatMessage({ id: 'team.modal-email-tab' }),
-      content: <EmailInvitesTab />,
-      isActive: activeTab === InvitesType.Email,
-      isVisible: true,
-    },
-  }), [formatMessage, activeTab, invitesUsersList, teamUsers]);
+  const tabsListMap = useMemo(
+    () => ({
+      [InvitesType.Google]: {
+        label: formatMessage({ id: 'team.modal-google-tab' }),
+        isActive: activeTab === InvitesType.Google,
+        content: (
+          <OAuthInvitesTab
+            type={InvitesType.Google}
+            users={invitesUsersList.filter((user) => user.source === InvitesType.Google)}
+            teamUsers={teamUsers}
+          />
+        ),
+        isVisible: isEnvGoogleAuth && invitesUsersList.some((user) => user.source === InvitesType.Google),
+      },
+      [InvitesType.Microsoft]: {
+        label: formatMessage({ id: 'team.modal-microsoft-tab' }),
+        isActive: activeTab === InvitesType.Microsoft,
+        content: (
+          <OAuthInvitesTab
+            type={InvitesType.Microsoft}
+            users={invitesUsersList.filter((user) => user.source === InvitesType.Microsoft)}
+            teamUsers={teamUsers}
+          />
+        ),
+        isVisible: isEnvMsAuth && invitesUsersList.some((user) => user.source === InvitesType.Microsoft),
+      },
+      [InvitesType.Email]: {
+        label: formatMessage({ id: 'team.modal-email-tab' }),
+        content: <EmailInvitesTab />,
+        isActive: activeTab === InvitesType.Email,
+        isVisible: true,
+      },
+    }),
+    [formatMessage, activeTab, invitesUsersList, teamUsers],
+  );
 
   const filteredTabsList = useMemo(() => {
     return Object.values(InvitesType).filter((tabName) => tabsListMap[tabName].isVisible);

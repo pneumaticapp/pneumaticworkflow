@@ -26,8 +26,8 @@
   }
 
   &__footer {
-    margin-top: 32px;
     display: flex;
+    margin-top: 32px;
 
     > * + * {
       margin-left: 16px;

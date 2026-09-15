@@ -1,3 +1,6 @@
+from typing import List, Optional
+
+from django.db.models import Prefetch
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import (
     OpenApiParameter,
@@ -30,6 +33,7 @@ from src.processes.filters import FieldSetFilter
 from src.processes.models.templates.fieldset import (
     FieldsetTemplate,
 )
+from src.processes.models.templates.template import Template
 from src.processes.serializers.templates.fieldset import (
     SharedFieldsetTemplateSerializer,
 )
@@ -76,11 +80,29 @@ class SharedFieldsetTemplateViewSet(
         if getattr(self, 'swagger_fake_view', False):
             return FieldsetTemplate.objects.none()
         user = self.request.user
-        return (
+        qst = (
             FieldsetTemplate.objects
             .select_related('template')
             .shared()
             .on_account(user.account_id)
+        )
+        return self.prefetch_queryset(qst)
+
+    def prefetch_queryset(
+        self,
+        queryset,
+        extra_fields: Optional[List[str]] = None,
+    ):
+        if self.action == 'list':
+            queryset = queryset.prefetch_related(
+                Prefetch(
+                    'child_fieldsets__template',
+                    queryset=Template.objects.only('id', 'name'),
+                ),
+            )
+        return super().prefetch_queryset(
+            queryset=queryset,
+            extra_fields=extra_fields,
         )
 
     @extend_schema(

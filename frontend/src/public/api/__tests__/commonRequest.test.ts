@@ -61,7 +61,7 @@ describe('ApiError', () => {
 describe('error interceptor logic (unit)', () => {
   function extractPayload(responseData: any) {
     const data = responseData;
-    const payload = typeof data === 'string' ? { error: data } : data ?? {};
+    const payload = typeof data === 'string' ? { error: data } : (data ?? {});
     return payload;
   }
 
@@ -132,7 +132,8 @@ describe('error interceptor logic (unit)', () => {
   });
 
   it('parses JSON string into object instead of wrapping in { error } (responseType empty regression)', () => {
-    const jsonString = '{"code":"validation_error","message":"Cannot delete a fieldset template that is used in templates.","details":{}}';
+    const jsonString =
+      '{"code":"validation_error","message":"Cannot delete a fieldset template that is used in templates.","details":{}}';
 
     const error = createApiError(jsonString, 400);
 
@@ -141,4 +142,3 @@ describe('error interceptor logic (unit)', () => {
     expect((error.data as Record<string, unknown>).code).toBe('validation_error');
   });
 });
-

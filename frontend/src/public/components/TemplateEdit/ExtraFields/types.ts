@@ -19,10 +19,12 @@ export interface IWorkflowExtraFieldProps {
   moveFieldDown?(): void;
   editField(changedProps: Partial<IExtraField>): void;
   isDisabled?: boolean;
+  isFieldsetReadOnly?: boolean;
   innerRef?: Ref<HTMLInputElement>;
   accountId: number;
   datasetName?: string;
   onUploadStateChange?(isUploading: boolean): void;
+  icon?: React.ReactNode;
 }
 
 type IExtraFieldPropsBase = Omit<IWorkflowExtraFieldProps, 'showDropdown'> & {
@@ -31,12 +33,13 @@ type IExtraFieldPropsBase = Omit<IWorkflowExtraFieldProps, 'showDropdown'> & {
   id?: number;
 };
 
-export type IExtraFieldProps = IExtraFieldPropsBase & (
-  | {
-      showDropdown: true;
-      datasetOptions: { label: string; value: string }[];
-    }
-  | {
-      showDropdown: false;
-    }
-);
+export type IExtraFieldProps = IExtraFieldPropsBase &
+  (
+    | {
+        showDropdown: true;
+        datasetOptions: { label: string; value: string }[];
+      }
+    | {
+        showDropdown: false;
+      }
+  );

@@ -15,7 +15,6 @@ from src.accounts.enums import (
     UserStatus,
 )
 from src.accounts.models import (
-    APIKey,
     Contact,
     UserInvite,
 )
@@ -37,7 +36,6 @@ from src.analysis.mixins import (
 )
 from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
-from src.authentication.tokens import PneumaticToken
 from src.logs.enums import AccountEventStatus
 from src.logs.service import AccountLogService
 from src.notifications.enums import EmailProvider
@@ -153,13 +151,6 @@ class UserInviteService(
         )
 
     def _user_create_actions(self, user: UserModel):
-
-        APIKey.objects.get_or_create(
-            user=user,
-            name=user.get_full_name(),
-            account_id=user.account_id,
-            key=PneumaticToken.create(user, for_api_key=True),
-        )
         send_user_created_notification.delay(
             logging=user.account.log_api_requests,
             account_id=user.account.id,

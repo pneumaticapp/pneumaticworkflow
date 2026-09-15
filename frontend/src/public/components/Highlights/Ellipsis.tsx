@@ -14,9 +14,7 @@ export function Ellipsis({ expand }: IEllipsisProps) {
 
   return (
     <a onClick={expand} className={styles['show-more']}>
-      <span className={styles['show-more__text']}>
-        {messages['general.show-more']}
-      </span>
+      <span className={styles['show-more__text']}>{messages['general.show-more']}</span>
     </a>
   );
 }

@@ -1,4 +1,4 @@
-import { ETaskPerformerType, EExtraFieldType, IKickoffClient } from '../../../../types/template';
+import { ETaskPerformerType, EExtraFieldType, ITemplateKickoffClient } from '../../../../types/template';
 import { IFieldsetRuntime } from '../../../../types/fieldset';
 import { makeExtraField } from '../../../../__stubs__/fields.factory';
 import { makeFieldsetRuntime } from '../../../../__stubs__/fieldsets.factory';
@@ -118,9 +118,7 @@ describe('getRunnableWorkflow.', () => {
       ...templateResponseMock,
       kickoff: {
         description: '',
-        fields: [
-          makeExtraField({ apiName: 'field-ds', name: 'DS Field', type: EExtraFieldType.Checkbox, dataset: 5 }),
-        ],
+        fields: [makeExtraField({ apiName: 'field-ds', name: 'DS Field', type: EExtraFieldType.Checkbox, dataset: 5 })],
         fieldsets: [],
       },
     };
@@ -141,7 +139,10 @@ describe('getRunnableWorkflow.', () => {
             apiName: 'field-obj',
             name: 'Obj Field',
             type: EExtraFieldType.Checkbox,
-            selections: [{ value: 'A', apiName: 'sel-1' }, { value: 'B', apiName: 'sel-2' }],
+            selections: [
+              { value: 'A', apiName: 'sel-1' },
+              { value: 'B', apiName: 'sel-2' },
+            ],
           }),
         ],
         fieldsets: [],
@@ -159,7 +160,12 @@ describe('getRunnableWorkflow.', () => {
       kickoff: {
         description: '',
         fields: [
-          makeExtraField({ apiName: 'field-str', name: 'Str Field', type: EExtraFieldType.Checkbox, selections: ['A', 'B'] }),
+          makeExtraField({
+            apiName: 'field-str',
+            name: 'Str Field',
+            type: EExtraFieldType.Checkbox,
+            selections: ['A', 'B'],
+          }),
         ],
         fieldsets: [],
       },
@@ -193,14 +199,11 @@ describe('getRunnableWorkflow.', () => {
 
     type TRunnableInput = Parameters<typeof getRunnableWorkflow>[0];
     const { id, ...templateWithoutId } = templateResponseMock;
-    expect(
-      getRunnableWorkflow(templateWithoutId as unknown as TRunnableInput),
-    ).toBeNull();
+    expect(getRunnableWorkflow(templateWithoutId as unknown as TRunnableInput)).toBeNull();
   });
 
-
   it('loadDatasetsMap returns {} and does not call getDataset when there are no dataset ids', async () => {
-    const kickoff: IKickoffClient = { description: '', fields: [], fieldsets: [] };
+    const kickoff: ITemplateKickoffClient = { description: '', fields: [], fieldsets: [] };
 
     const result = await loadDatasetsMap(kickoff, []);
 
@@ -209,7 +212,7 @@ describe('getRunnableWorkflow.', () => {
   });
 
   it('loadDatasetsMap dedups dataset id shared by a kickoff field and a fieldset field', async () => {
-    const kickoff: IKickoffClient = {
+    const kickoff: ITemplateKickoffClient = {
       description: '',
       fields: [makeExtraField({ apiName: 'k-f', name: 'K', type: EExtraFieldType.Checkbox, dataset: 7 })],
       fieldsets: [],

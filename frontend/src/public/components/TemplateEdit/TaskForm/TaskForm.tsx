@@ -6,7 +6,7 @@ import { useSelector } from 'react-redux';
 import { TaskDescriptionEditor } from './TaskDescriptionEditor';
 import { scrollToElement } from '../../../utils/helpers';
 import { TUserListItem } from '../../../types/user';
-import { IKickoffClient, ITemplateTaskClient } from '../../../types/template';
+import { ITemplateKickoffClient, ITemplateTaskClient } from '../../../types/template';
 import { TTaskVariable, TTaskFormPart, ETaskFormParts } from '../types';
 import { OutputFormIntl } from '../OutputForm/OutputForm';
 import { ShowMore } from '../../UI/ShowMore';
@@ -38,7 +38,7 @@ export interface ITaskFormProps {
   accountId: number;
   isTeamInvitesModalOpen: boolean;
   tasks: ITemplateTaskClient[];
-  kickoff: IKickoffClient;
+  kickoff: ITemplateKickoffClient;
   patchTask(args: TPatchTaskPayload): void;
 }
 
@@ -63,14 +63,8 @@ export function TaskForm({
     () => getTaskVariables(kickoff, tasks, task, templateId),
     [kickoff, task, tasks, templateId],
   );
-  const templateVariables = useMemo(
-    () => getVariables({ kickoff, tasks, templateId }),
-    [kickoff, tasks, templateId],
-  );
-  const listSystemVariables = useMemo(() => [
-    ...getSystemVariables(),
-    ...listVariables,
-  ], [listVariables]);
+  const templateVariables = useMemo(() => getVariables({ kickoff, tasks, templateId }), [kickoff, tasks, templateId]);
+  const listSystemVariables = useMemo(() => [...getSystemVariables(), ...listVariables], [listVariables]);
   const taskFormPartsRefs = {
     [ETaskFormParts.AssignPerformers]: useRef<HTMLDivElement>(null),
     [ETaskFormParts.DueIn]: useRef<HTMLDivElement>(null),
@@ -110,8 +104,7 @@ export function TaskForm({
   }, [startingOrder, task.conditions, onEdit]);
 
   useLayoutEffect(() => {
-    const scrollKey =
-      scrollTarget === ETaskFormParts.Fieldsets ? ETaskFormParts.Fields : scrollTarget;
+    const scrollKey = scrollTarget === ETaskFormParts.Fieldsets ? ETaskFormParts.Fields : scrollTarget;
     const scrollTo = (scrollKey && taskFormPartsRefs[scrollKey]?.current) || wrapperRef.current;
 
     if (scrollTo) scrollToElement(scrollTo);
@@ -121,9 +114,10 @@ export function TaskForm({
     patchTask({ taskUUID: task.uuid, changedFields });
   };
 
-  const handleTaskFieldChange = (field: keyof ITemplateTaskClient) => (value: ITemplateTaskClient[keyof ITemplateTaskClient]) => {
-    setCurrentTask({ [field]: value });
-  };
+  const handleTaskFieldChange =
+    (field: keyof ITemplateTaskClient) => (value: ITemplateTaskClient[keyof ITemplateTaskClient]) => {
+      setCurrentTask({ [field]: value });
+    };
 
   const createWidget = useCallback(
     (Component, props) => {
@@ -184,7 +178,7 @@ export function TaskForm({
           patchTask={patchTask}
         />
       ),
-      widget: createWidget(TaskRenderExtraFieldsInfo, { task })
+      widget: createWidget(TaskRenderExtraFieldsInfo, { task }),
     },
     {
       formPartId: ETaskFormParts.StartsAfter,

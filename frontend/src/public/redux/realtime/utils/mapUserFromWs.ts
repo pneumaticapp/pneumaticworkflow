@@ -8,9 +8,9 @@ export function mapWsUserToListItem(user: IWsUserData): TUserListItem {
     ...userData,
     photo: user.photo ?? '',
     type: 'user',
-    phone: '',
-    status: EUserStatus.Active,
+    phone: user.phone ?? '',
+    status: user.status ?? EUserStatus.Active,
     reportIds,
-    vacation: null,
+    vacation: user.vacation ?? null,
   };
 }

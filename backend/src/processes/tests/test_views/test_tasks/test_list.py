@@ -1765,6 +1765,33 @@ def test_list__ordering_by_reversed_overdue__ok(api_client):
     assert response.data[2]['id'] == task_11.id
 
 
+def test_list__soft_deleted_performer__not_shown(api_client):
+    # arrange
+    account = create_test_account()
+    user = create_test_admin(account=account)
+    workflow = create_test_workflow(user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task.taskperformer_set.all().delete()
+
+    # Simulate the bug condition: a performer is soft-deleted
+    # but has a directly_status != DELETED
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.USER,
+        user=user,
+        directly_status=DirectlyStatus.CREATED,
+        is_deleted=True,
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get('/v3/tasks')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 0
+
+
 def test_list__filter_assigned_to__ok(api_client):
 
     # arrange

@@ -10,6 +10,7 @@ import { ArrowRightIcon } from '../../icons';
 
 import styles from './Dropdown.css';
 import { useCheckDevice } from '../../../hooks/useCheckDevice';
+import { Tooltip } from '../Tooltip';
 
 type TDropdownItemColor = 'black' | 'green' | 'red' | 'orange';
 
@@ -23,6 +24,8 @@ export type TDropdownOption = {
   customSubOption?: React.ReactElement;
   color?: TDropdownItemColor;
   isHidden?: boolean;
+  isDisabled?: boolean;
+  disabledTooltip?: string;
   size?: 'lg' | 'sm';
   className?: string;
   Icon?(props: React.SVGAttributes<SVGElement>): JSX.Element;
@@ -115,6 +118,8 @@ export function Dropdown({
         withConfirmation,
         initialConfirmationState,
         isHidden,
+        isDisabled: isOptionDisabled,
+        disabledTooltip,
         className: optionClassName,
         Icon,
         onClick,
@@ -141,7 +146,10 @@ export function Dropdown({
             direction="right"
             className={optionClassName}
           >
-            <DropdownToggle tag="button" className={classnames(styles['dropdown-item'], getDropdownItemColorClass(color))}>
+            <DropdownToggle
+              tag="button"
+              className={classnames(styles['dropdown-item'], getDropdownItemColorClass(color))}
+            >
               <span className={styles['label']}>{label}</span>
               <ArrowRightIcon className={styles['dropdown-item-icon']} />
             </DropdownToggle>
@@ -160,19 +168,21 @@ export function Dropdown({
         );
       }
 
-      return (
+      const optionContent = (
         <div key={`option-${typeof label === 'string' ? label : mapKey}`}>
           {withUpperline && <hr className={styles['line']} />}
           <ConfirmableDropdownItem
-            {...(onClick && {
-              onClick: () => {
-                onClick?.(() => setIsOpen(false));
-                closeDropdown();
-              },
-            })}
+            {...(!isOptionDisabled &&
+              onClick && {
+                onClick: () => {
+                  onClick?.(() => setIsOpen(false));
+                  closeDropdown();
+                },
+              })}
             cssModule={{
               'dropdown-item': classnames(styles['dropdown-item'], getDropdownItemColorClass(color), {
                 [styles['dropdown-item-mobile']]: isMobile && isFromBreakdownItem,
+                [styles['dropdown-item_disabled']]: isOptionDisabled,
               }),
             }}
             withConfirmation={withConfirmation}
@@ -185,6 +195,22 @@ export function Dropdown({
           </ConfirmableDropdownItem>
         </div>
       );
+
+      if (isOptionDisabled && disabledTooltip) {
+        return (
+          <Tooltip
+            key={`disabled-${typeof label === 'string' ? label : mapKey}`}
+            content={disabledTooltip}
+            placement="top"
+            interactive={false}
+            contentClassName={styles['dropdown-item-tooltip']}
+          >
+            {optionContent}
+          </Tooltip>
+        );
+      }
+
+      return optionContent;
     });
     const isWide = items.every((item) => item.size === 'lg');
     const Menu = CustomDropdownMenu || DefaultDropdownMenu;

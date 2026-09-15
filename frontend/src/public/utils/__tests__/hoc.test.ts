@@ -7,7 +7,7 @@ describe('hoc', () => {
   describe('getDisplayName', () => {
     it('accepts a component and returns its displayName', () => {
       const displayName = 'MyComponent';
-      const MyComponet: any = {displayName};
+      const MyComponet: any = { displayName };
 
       const result = getDisplayName(MyComponet);
 
@@ -15,7 +15,7 @@ describe('hoc', () => {
     });
     it('accepts a component and returns its name property if displayName is not present', () => {
       const name = 'MyComponentName';
-      const MyComponet: any = {name};
+      const MyComponet: any = { name };
 
       const result = getDisplayName(MyComponet);
 

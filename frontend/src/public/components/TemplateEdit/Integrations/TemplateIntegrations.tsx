@@ -10,7 +10,7 @@ import { TemplateIntegrationsMenu } from './Menu';
 import { ZAPIER_EMBED_CSS_HREF, ZAPIER_EMBED_SCRIPT_SRC } from '../../../constants/defaultValues';
 import { useLink } from '../../../hooks/useLink';
 import { useScript } from '../../../hooks/useScript';
-import { loadApiKey, loadWebhooks } from '../../../redux/actions';
+import { loadApiKeys, loadWebhooks } from '../../../redux/actions';
 import { getTemplateData } from '../../../redux/selectors/template';
 import { getUserApiKey } from '../../../redux/selectors/user';
 import { copyToClipboard } from '../../../utils/helpers';
@@ -131,7 +131,7 @@ export function TemplateIntegrations() {
 
   useEffect(() => {
     if (isExpanded) {
-      dispatch(loadApiKey());
+      dispatch(loadApiKeys());
       dispatch(loadWebhooks());
     }
   }, [isExpanded]);

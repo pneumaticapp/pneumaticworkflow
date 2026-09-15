@@ -1,4 +1,4 @@
-from typing import Any, Optional, Tuple
+from typing import Any, Optional, Tuple, Union
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
@@ -8,7 +8,7 @@ from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.request import Request
 
 from src.accounts.enums import UserStatus
-from src.accounts.models import APIKey, User
+from src.accounts.models import User
 from src.authentication.enums import (
     AuthTokenType,
 )
@@ -58,31 +58,20 @@ class PneumaticTokenAuthentication(TokenAuthentication):
 
     def authenticate_credentials(
         self,
-        token: str,
+        token: Union[bytes, str],
     ) -> Optional[Tuple[UserModel, PneumaticToken]]:
-        # Get active user or api key
-        cached_data = PneumaticToken.data(token)
-        if cached_data:
-            try:
-                user = UserModel.objects.get(pk=cached_data['user_id'])
-            except ObjectDoesNotExist:
-                return None
-        else:
-            try:
-                apikey = (
-                    APIKey.objects
-                    .select_related('user')
-                    .get(key=token)
-                )
-                user = apikey.user
-            except ObjectDoesNotExist:
-                return None
+        if isinstance(token, bytes):
+            token = token.decode('utf-8')
 
-            PneumaticToken.create(
-                user=user,
-                for_api_key=True,
-                token=token,
-            )
+        cached_data = PneumaticToken.data(token)
+        if not cached_data:
+            return None
+
+        try:
+            user = UserModel.objects.get(pk=cached_data['user_id'])
+        except ObjectDoesNotExist:
+            return None
+
         if user.status != UserStatus.ACTIVE:
             return None
         return user, PneumaticToken(token, user)

@@ -61,6 +61,7 @@ services:
   backend:
     build:
       context: ./backend
+    image: pneumaticworkflow/pneumatic-backend:${TAG:-src}
     container_name: pneumatic-backend
     command: >
       sh -c "python manage.py migrate &&
@@ -193,6 +194,7 @@ services:
   celery:
     build:
       context: ./backend
+    image: pneumaticworkflow/pneumatic-celery:${TAG:-src}
     container_name: pneumatic-celery
     environment:
       BACKEND_URL: ${BACKEND_URL:-http://localhost:8001}
@@ -312,6 +314,7 @@ services:
   celery-beat:
     build:
       context: ./backend
+    image: pneumaticworkflow/pneumatic-celery-beat:${TAG:-src}
     container_name: pneumatic-celery-beat
     environment:
       BACKEND_URL: ${BACKEND_URL:-http://localhost:8001}
@@ -430,6 +433,7 @@ services:
   frontend:
     build:
       context: ./frontend
+    image: pneumaticworkflow/pneumatic-frontend:${TAG:-src}
     container_name: pneumatic-frontend
     environment:
       BACKEND_PRIVATE_URL: ${BACKEND_PRIVATE_URL:-http://pneumatic-nginx/}
@@ -503,6 +507,7 @@ services:
   file-service:
     build:
       context: ./storage
+    image: pneumaticworkflow/pneumatic-file-service:${TAG:-src}
     container_name: pneumatic-file-service
     environment:
       BACKEND_PRIVATE_URL: ${BACKEND_PRIVATE_URL:-http://pneumatic-nginx/}
@@ -537,7 +542,7 @@ services:
       AUTH_TOKEN_ITERATIONS: ${FILE_AUTH_TOKEN_ITERATIONS:-1}
     command: >
       sh -c "poetry run alembic -c src/shared_kernel/database/alembic.ini upgrade head &&
-             poetry run python -m src.main"
+             poetry run uvicorn src.main:app --host 0.0.0.0 --port ${FILE_PORT:-8000} --workers ${FILE_WORKERS:-1}"
     depends_on:
       file-postgres:
         condition: service_healthy

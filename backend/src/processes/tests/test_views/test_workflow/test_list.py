@@ -2509,7 +2509,7 @@ def test_list__filter_fields_and_template__ok(api_client):
 
     # act
     response = api_client.get(
-        f'/workflows?fields={field_api_name};template_id={template_1.id}',
+        f'/workflows?fields={field_api_name}&template_id={template_1.id}',
     )
 
     # assert
@@ -2550,7 +2550,7 @@ def test_list__filter_fields_and_another_template_id__empty_list(api_client):
 
     # act
     response = api_client.get(
-        f'/workflows?fields={field_api_name};'
+        f'/workflows?fields={field_api_name}&'
         f'template_id={another_template.id}',
     )
 
@@ -2929,7 +2929,7 @@ def test_list__filter_fields_and_template_fieldset__ok(api_client):
 
     # act
     response = api_client.get(
-        f'/workflows?fields={field.api_name};template_id={template_1.id}',
+        f'/workflows?fields={field.api_name}&template_id={template_1.id}',
     )
 
     # assert
@@ -2971,7 +2971,7 @@ def test_list__filter_fields_and_another_template_id_fieldset__empty_list(
 
     # act
     response = api_client.get(
-        f'/workflows?fields={field.api_name};'
+        f'/workflows?fields={field.api_name}&'
         f'template_id={another_template.id}',
     )
 

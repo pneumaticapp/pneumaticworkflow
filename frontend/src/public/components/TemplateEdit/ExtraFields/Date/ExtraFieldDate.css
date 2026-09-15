@@ -24,23 +24,23 @@
   right: 0;
   bottom: 0;
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   width: 5rem;
-  pointer-events: none;
   color: var(--pneumatic-color-black16);
+  pointer-events: none;
 }
 
 .clear-button {
   all: unset;
   display: flex;
-  cursor: pointer;
-  pointer-events: all;
-  color: var(--pneumatic-color-black32);
-  border-radius: 50%;
-  transition: color 0.1s ease-in-out;
   align-items: center;
   justify-content: center;
+  color: var(--pneumatic-color-black32);
+  pointer-events: all;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: color 0.1s ease-in-out;
 }
 
 .clear-button:hover {

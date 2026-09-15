@@ -24,7 +24,11 @@ export function Fieldsets() {
   const dispatch = useDispatch();
   const { formatMessage } = useIntl();
 
-  const { items: fieldsetsList, count, offset } = useSelector(getFieldsetsListSelection) || { items: [], count: 0, offset: 0 };
+  const {
+    items: fieldsetsList,
+    count,
+    offset,
+  } = useSelector(getFieldsetsListSelection) || { items: [], count: 0, offset: 0 };
   const isLoading = useSelector(getFieldsetsIsLoading);
   const fieldsetsSorting = useSelector(getFieldsetsSorting);
 
@@ -41,7 +45,7 @@ export function Fieldsets() {
       <PageTitle titleId={EPageTitle.Fieldsets} withUnderline={false} />
       <InfiniteScroll
         dataLength={fieldsetsList.length}
-        next={() => dispatch(loadFieldsets({ offset: offset + 1 }))}
+        next={() => !isLoading && dispatch(loadFieldsets({ offset: offset + 1 }))}
         loader={null}
         hasMore={count > fieldsetsList.length || isLoading}
         className={classnames(styles['cards-wrapper'], { [styles['container-loading']]: isLoading })}

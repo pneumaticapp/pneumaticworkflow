@@ -15,7 +15,6 @@ class ExcludedPath:
     """
 
     WEBHOOKS_BUFFER = '/webhooks/buffer'
-    ACCOUNTS_API_KEY = '/accounts/api-key'
     ACCOUNTS_INVITES_TOKEN = '/accounts/invites/token'
     ACCOUNTS_INVITES = '/accounts/invites'
     ACCOUNTS_DIGEST_UNSUB = '/accounts/digest'
@@ -46,7 +45,6 @@ class ExcludedPath:
 
     ALL = (
         WEBHOOKS_BUFFER,
-        ACCOUNTS_API_KEY,
         ACCOUNTS_INVITES_TOKEN,
         ACCOUNTS_INVITES,
         ACCOUNTS_DIGEST_UNSUB,

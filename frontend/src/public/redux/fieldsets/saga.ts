@@ -10,8 +10,10 @@ import { ERoutes } from '../../constants/routes';
 import { isRequestCanceled } from '../../utils/isRequestCanceled';
 
 import {
-  IFieldsetCatalogItem, IGetFieldsetsResponse,
-  ICreateFieldsetParams, IUpdateFieldsetParams,
+  IFieldsetCatalogItem,
+  IGetFieldsetsResponse,
+  ICreateFieldsetParams,
+  IUpdateFieldsetParams,
 } from '../../types/fieldset';
 import { TDeleteFieldsetPayload } from './types';
 import { LIMIT_LOAD_FIELDSETS } from '../../constants/defaultValues';
@@ -48,8 +50,7 @@ function getFieldsetsRoute(): string {
 }
 
 function getFieldsetDetailRoute(fieldsetId: number): string {
-  return ERoutes.FieldsetDetail
-    .replace(':id', String(fieldsetId));
+  return ERoutes.FieldsetDetail.replace(':id', String(fieldsetId));
 }
 
 export function* loadFieldsetsSaga({ payload }: ReturnType<typeof loadFieldsets>) {
@@ -117,10 +118,16 @@ function* createFieldsetSaga({ payload }: PayloadAction<ICreateFieldsetParams>) 
 
 export function* updateFieldsetSaga({ payload }: PayloadAction<IUpdateFieldsetParams>) {
   const abortController = new AbortController();
+  const { onSuccess, ...updateParams } = payload;
 
   try {
-    const updatedFieldset: IFieldsetCatalogItem = yield call(updateFieldset, { ...payload, signal: abortController.signal });
+    const updatedFieldset: IFieldsetCatalogItem = yield call(updateFieldset, {
+      ...updateParams,
+      signal: abortController.signal,
+    });
     yield put(setCurrentFieldset(updatedFieldset));
+    NotificationManager.success({ message: 'fieldsets.save-success' });
+    onSuccess?.();
   } catch (error) {
     if (isRequestCanceled(error)) return;
     NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
