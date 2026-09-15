@@ -9,12 +9,18 @@ from src.processes.models.templates.conditions import (
     PredicateTemplate,
     RuleTemplate,
 )
+from src.generics.fields import RelatedApiNameListField
 from src.processes.models.templates.fieldset import (
     FieldsetTemplate,
-    FieldsetTemplateRule,
+    FieldSetTemplateRuleGroupAnd,
+    FieldSetTemplateRuleGroupOr,
+    FieldSetTemplateRuleSet,
 )
 from src.processes.models.templates.fields import (
     FieldTemplate,
+    FieldTemplateRuleGroupAnd,
+    FieldTemplateRuleGroupOr,
+    FieldTemplateRuleSet,
     FieldTemplateSelection,
 )
 from src.processes.models.templates.kickoff import Kickoff
@@ -36,15 +42,83 @@ class SelectionSchemaV1(serializers.ModelSerializer):
         )
 
 
-class FieldsetTemplateRuleSchemaV1(serializers.ModelSerializer):
+class FieldSetRuleGroupAndSchemaV1(serializers.ModelSerializer):
 
     class Meta:
-        model = FieldsetTemplateRule
+        model = FieldSetTemplateRuleGroupAnd
         fields = (
             'api_name',
-            'type',
+            'operator',
             'value',
         )
+
+
+class FieldSetRuleGroupOrSchemaV1(serializers.ModelSerializer):
+
+    class Meta:
+        model = FieldSetTemplateRuleGroupOr
+        fields = (
+            'api_name',
+            'groups_and',
+        )
+
+    groups_and = FieldSetRuleGroupAndSchemaV1(many=True)
+
+
+class FieldSetRuleSetSchemaV1(serializers.ModelSerializer):
+
+    class Meta:
+        model = FieldSetTemplateRuleSet
+        fields = (
+            'api_name',
+            'message',
+            'order',
+            'fields',
+            'groups_or',
+        )
+
+    fields = RelatedApiNameListField(default=list)
+    groups_or = FieldSetRuleGroupOrSchemaV1(many=True)
+
+
+class FieldRuleGroupAndSchemaV1(serializers.ModelSerializer):
+
+    class Meta:
+        model = FieldTemplateRuleGroupAnd
+        fields = (
+            'api_name',
+            'field',
+            'operator',
+            'value',
+        )
+
+
+class FieldRuleGroupOrSchemaV1(serializers.ModelSerializer):
+
+    class Meta:
+        model = FieldTemplateRuleGroupOr
+        fields = (
+            'api_name',
+            'groups_and',
+        )
+
+    groups_and = FieldRuleGroupAndSchemaV1(many=True)
+
+
+class FieldRuleSetSchemaV1(serializers.ModelSerializer):
+
+    class Meta:
+        model = FieldTemplateRuleSet
+        fields = (
+            'api_name',
+            'name',
+            'type',
+            'message',
+            'order',
+            'groups_or',
+        )
+
+    groups_or = FieldRuleGroupOrSchemaV1(many=True)
 
 
 class FieldSchemaV1(serializers.ModelSerializer):
@@ -63,7 +137,7 @@ class FieldSchemaV1(serializers.ModelSerializer):
             'default',
             'selections',
             'dataset_id',
-            'rules',
+            'rulesets',
         )
 
     selections = SelectionSchemaV1(
@@ -72,7 +146,7 @@ class FieldSchemaV1(serializers.ModelSerializer):
         allow_empty=True,
         required=False,
     )
-    rules = FieldsetTemplateRuleSchemaV1(
+    rulesets = FieldRuleSetSchemaV1(
         many=True,
         allow_null=True,
         allow_empty=True,
@@ -92,11 +166,11 @@ class FieldSetSchemaV1(serializers.ModelSerializer):
             'label_position',
             'layout',
             'fields',
-            'rules',
+            'rulesets',
         )
 
     fields = FieldSchemaV1(many=True, allow_null=True, allow_empty=True)
-    rules = FieldsetTemplateRuleSchemaV1(
+    rulesets = FieldSetRuleSetSchemaV1(
         many=True,
         allow_null=True,
         allow_empty=True,
