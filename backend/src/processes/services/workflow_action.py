@@ -11,6 +11,7 @@ from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
 from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.executor import RawSqlExecutor
+from src.logs.events import AuditEventService
 from src.notifications.tasks import (
     send_task_completed_notification,
     send_task_completed_websocket,
@@ -274,6 +275,11 @@ class WorkflowActionService:
             auth_type=self.auth_type,
         )
         self.workflow.delete()
+        AuditEventService.workflow_terminated(
+            user=self.user,
+            auth_type=self.auth_type,
+            workflow=self.workflow,
+        )
 
     def _complete_workflow(self):
 

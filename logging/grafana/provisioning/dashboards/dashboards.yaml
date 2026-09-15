@@ -1,0 +1,23 @@
+# The JSON files of the json directory are the source of the dashboards:
+# edit them, and Grafana picks the change up within updateIntervalSeconds.
+# They were generated once and have been edited by hand since, so there is
+# no generator to run and nothing to regenerate them from.
+#
+# allowUiUpdates lets an operator save a change in the Grafana interface,
+# but the file stays the source: the next edit of the file overwrites what
+# was saved. Keep a change worth keeping by copying the JSON of the panel
+# back into the file (Dashboard settings, JSON Model).
+apiVersion: 1
+
+providers:
+  - name: pneumatic
+    orgId: 1
+    folder: Pneumatic
+    folderUid: pneumatic
+    type: file
+    disableDeletion: false
+    allowUiUpdates: true
+    updateIntervalSeconds: 30
+    options:
+      path: /etc/grafana/provisioning/dashboards/json
+      foldersFromFilesStructure: false

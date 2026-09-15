@@ -2,6 +2,7 @@
 
 import re
 import urllib.parse
+from dataclasses import dataclass
 from http import HTTPStatus
 from typing import Annotated
 
@@ -37,6 +38,7 @@ from src.shared_kernel.di import (
     get_settings_dep,
     get_upload_use_case,
 )
+from src.shared_kernel.events.request_events import RequestEventsDep
 from src.shared_kernel.exceptions import (
     FileAccessDeniedError,
     FileSizeExceededError,
@@ -52,6 +54,9 @@ _RE_WHITESPACE = re.compile(r'[\s_]+')
 _RE_RANGE = re.compile(r'bytes=(\d+)-(\d*)')
 
 
+FALLBACK_FILENAME = 'unnamed_file'
+
+
 def secure_filename(filename: str | None) -> str:
     """Sanitize filename to prevent path traversal and unsafe characters.
 
@@ -59,7 +64,7 @@ def secure_filename(filename: str | None) -> str:
     control characters, path separators, and shell metacharacters.
     """
     if not filename:
-        return 'unnamed_file'
+        return FALLBACK_FILENAME
     # Keep Unicode word chars (\w), dot, dash, space
     filename = _RE_UNSAFE_CHARS.sub('_', filename)
     # Collapse multiple spaces/underscores
@@ -69,7 +74,7 @@ def secure_filename(filename: str | None) -> str:
     # Strip trailing dots/spaces (Windows FS issue)
     filename = filename.rstrip('. ')
     if not filename:
-        return 'unnamed_file'
+        return FALLBACK_FILENAME
     return filename
 
 
@@ -79,6 +84,7 @@ async def upload_file(
     current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
     use_case: Annotated[UploadFileUseCase, Depends(get_upload_use_case)],
     settings: Annotated[BaseAppSettings, Depends(get_settings_dep)],
+    events: RequestEventsDep,
 ) -> FileUploadResponse:
     """Upload file to storage.
 
@@ -87,6 +93,7 @@ async def upload_file(
         current_user: Current authenticated user.
         use_case: Upload use case dependency.
         settings: Application settings.
+        events: Records of this request for the audit journal.
 
     Returns:
         FileUploadResponse: Upload result with file ID and public URL.
@@ -115,6 +122,17 @@ async def upload_file(
 
     # Execute command
     response = await use_case.execute(command)
+
+    # The record is committed: the file exists, journal it. Awaited
+    # and not a background task: what runs after the response depends
+    # on the server (a client gone mid-response may skip it or not),
+    # and a journal entry has to mean one thing. The wait is bounded
+    # by the emit timeout and, past one failure, by the circuit.
+    await events.file_upload(
+        user=current_user,
+        file_id=response.file_id,
+        file=command,
+    )
     return FileUploadResponse(
         public_url=response.public_url,
         file_id=response.file_id,
@@ -122,11 +140,12 @@ async def upload_file(
 
 
 @router.get('/{file_id}', dependencies=[Depends(is_authenticated)])
-async def download_file(
+async def download_file(  # noqa: PLR0913
     file_id: Annotated[str, Path(min_length=1, max_length=512)],
     current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
     use_case: Annotated[DownloadFileUseCase, Depends(get_download_use_case)],
     http_client: Annotated[HttpClient, Depends(get_http_client)],
+    events: RequestEventsDep,
     range_header: Annotated[str | None, Header(alias='Range')] = None,
 ) -> StreamingResponse:
     """Download file from storage.
@@ -136,6 +155,7 @@ async def download_file(
         current_user: Current authenticated user.
         use_case: Download use case dependency.
         http_client: HTTP client for permission checks.
+        events: Records of this request for the audit journal.
         range_header: Optional HTTP Range header.
 
     Returns:
@@ -164,6 +184,10 @@ async def download_file(
             file_id=file_id,
         )
         if not has_access:
+            await events.file_access_denied(
+                user=current_user,
+                file_record=file_record,
+            )
             raise FileAccessDeniedError(file_id, current_user.user_id)
 
     # Load the file stream only if access is granted
@@ -172,22 +196,29 @@ async def download_file(
         range_header=range_header,
     )
 
-    status_code, headers = _build_response_headers(
+    plan = _plan_response(
         file_record=file_record,
         range_header=range_header,
     )
-    if status_code == HTTPStatus.REQUESTED_RANGE_NOT_SATISFIABLE:
+    if plan.status_code == HTTPStatus.REQUESTED_RANGE_NOT_SATISFIABLE:
         return StreamingResponse(
             iter([b'']),
             status_code=HTTPStatus.REQUESTED_RANGE_NOT_SATISFIABLE,
-            headers=headers,
+            headers=plan.headers,
+        )
+
+    if plan.is_from_start:
+        await events.file_download(
+            user=current_user,
+            file_record=file_record,
+            is_owner=is_owner,
         )
 
     return StreamingResponse(
         file_stream,
-        status_code=status_code,
+        status_code=plan.status_code,
         media_type=file_record.content_type,
-        headers=headers,
+        headers=plan.headers,
     )
 
 
@@ -206,13 +237,31 @@ def _check_file_ownership(
     )
 
 
-def _build_response_headers(
+@dataclass(frozen=True)
+class RangePlan:
+    """Status, headers and the first byte of a download response."""
+
+    status_code: HTTPStatus
+    headers: dict[str, str]
+    start: int = 0
+
+    @property
+    def is_from_start(self) -> bool:
+        """Whether the response begins with the first byte of the file.
+
+        Only such a response is journaled as a download: a client
+        resuming a transfer asks for the rest of the same file again.
+        """
+        return self.start == 0
+
+
+def _plan_response(
     file_record: FileRecord,
     range_header: str | None,
-) -> tuple[int, dict[str, str]]:
-    """Build status code and response headers for file download."""
+) -> RangePlan:
+    """Build status code, response headers and start for a download."""
     quoted_filename = urllib.parse.quote(
-        file_record.filename or 'unnamed_file'
+        file_record.filename or FALLBACK_FILENAME
     )
     headers = {
         'Content-Disposition': (
@@ -225,23 +274,27 @@ def _build_response_headers(
 
     if not range_header:
         headers['Content-Length'] = str(total_size)
-        return 200, headers
+        return RangePlan(status_code=HTTPStatus.OK, headers=headers)
 
     range_match = _RE_RANGE.match(range_header)
     if not range_match:
         headers['Content-Length'] = str(total_size)
-        return 200, headers
+        return RangePlan(status_code=HTTPStatus.OK, headers=headers)
 
     start = int(range_match.group(1))
     end = int(range_match.group(2)) if range_match.group(2) else total_size - 1
     end = min(end, total_size - 1)
     if start > total_size - 1 or start > end:
-        return (
-            HTTPStatus.REQUESTED_RANGE_NOT_SATISFIABLE,
-            {'Content-Range': f'bytes */{total_size}'},
+        return RangePlan(
+            status_code=HTTPStatus.REQUESTED_RANGE_NOT_SATISFIABLE,
+            headers={'Content-Range': f'bytes */{total_size}'},
         )
 
     content_length = end - start + 1
     headers['Content-Range'] = f'bytes {start}-{end}/{total_size}'
     headers['Content-Length'] = str(content_length)
-    return 206, headers
+    return RangePlan(
+        status_code=HTTPStatus.PARTIAL_CONTENT,
+        headers=headers,
+        start=start,
+    )

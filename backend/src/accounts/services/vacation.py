@@ -7,6 +7,8 @@ from django.db import transaction
 from src.accounts.enums import AbsenceStatus, UserGroupType
 from src.accounts.models import UserGroup, UserVacation
 from src.accounts.serializers.user import UserWebsocketSerializer
+from src.authentication.enums import AuthTokenType
+from src.logs.events import AuditEventService
 from src.notifications.tasks import (
     send_user_updated_notification,
     send_vacation_delegation_notification,
@@ -34,16 +36,33 @@ SUBSTITUTE_GROUP_PREFIX = 'Substitutes'
 
 class VacationDelegationService:
 
-    def __init__(self, user: 'UserModel') -> None:
+    """ user is the person on vacation. request_user is whoever turns
+        the vacation on or off: the person themselves, an admin, or
+        nobody when a scheduled task or a cleanup does it. """
+
+    def __init__(
+        self,
+        user: 'UserModel',
+        request_user: Optional['UserModel'] = None,
+        auth_type: AuthTokenType.LITERALS = AuthTokenType.USER,
+    ) -> None:
         self.user = user
+        self.request_user = request_user
+        self.auth_type = auth_type
 
     @classmethod
     def clear_substitute_groups(
-        cls, user: 'UserModel',
+        cls,
+        user: 'UserModel',
+        request_user: Optional['UserModel'] = None,
+        auth_type: AuthTokenType.LITERALS = AuthTokenType.USER,
     ) -> None:
         """Remove user from all personal (vacation substitute)
         groups. If the group becomes empty after removal,
         auto-deactivate vacation for the group owner.
+
+        request_user is whoever caused it: the vacation of the owner
+        goes off in their request, and the journal names them.
         """
         with transaction.atomic():
             personal_groups = (
@@ -62,7 +81,11 @@ class VacationDelegationService:
                         [v.user for v in group.vacation_owners.all()],
                     )
             for owner in owners_to_deactivate:
-                cls(owner).deactivate()
+                cls(
+                    owner,
+                    request_user=request_user,
+                    auth_type=auth_type,
+                ).deactivate()
 
     def _notify_substitutes(
         self,
@@ -102,7 +125,8 @@ class VacationDelegationService:
                 .first()
             )
 
-            if vacation and vacation.substitute_group_id:
+            is_update = bool(vacation and vacation.substitute_group_id)
+            if is_update:
                 task_ids = self._update_existing(
                     vacation=vacation,
                     substitute_user_ids=substitute_user_ids,
@@ -117,6 +141,17 @@ class VacationDelegationService:
                     vacation_start_date=vacation_start_date,
                     vacation_end_date=vacation_end_date,
                 )
+            AuditEventService.vacation_activated(
+                user=self.request_user,
+                auth_type=self.auth_type,
+                target=self.user,
+                substitute_user_ids=substitute_user_ids,
+                absence_status=absence_status,
+                start_date=vacation_start_date,
+                end_date=vacation_end_date,
+                delegated_tasks_count=len(task_ids),
+                is_update=is_update,
+            )
 
         # Notify after transaction commits successfully.
         # If the transaction rolls back, the exception propagates
@@ -409,6 +444,11 @@ class VacationDelegationService:
                     schedule_sync_workflow_attachment_permissions(wf.id)
 
             vacation.delete()
+            AuditEventService.vacation_deactivated(
+                user=self.request_user,
+                auth_type=self.auth_type,
+                target=self.user,
+            )
 
         send_user_updated_notification.delay(
             logging=self.user.account.log_api_requests,
