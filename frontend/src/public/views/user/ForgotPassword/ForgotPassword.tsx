@@ -12,6 +12,7 @@ import { validateEmail } from '../../../utils/validators';
 import { Header, InputField, Button } from '../../../components/UI';
 import { prepareResetPassword } from '../../../api/prepareResetPassword';
 import { getBrowserConfigEnv } from '../../../utils/getConfig';
+import { logger } from '../../../utils/logger';
 
 import styles from '../User.css';
 import { getErrorsObject } from '../../../utils/formik/getErrorsObject';
@@ -36,10 +37,14 @@ export function ForgotPassword({ loading, sendForgotPassword }: IForgotPasswordP
   }, []);
 
   const checkCaptchaNeeded = async () => {
-    const prepareResult = await prepareResetPassword();
+    try {
+      const prepareResult = await prepareResetPassword();
 
-    if (prepareResult?.showCaptcha) {
-      setShowCaptcha(true);
+      if (prepareResult?.showCaptcha) {
+        setShowCaptcha(true);
+      }
+    } catch (error) {
+      logger.error('check reset password captcha error', error);
     }
   };
 
@@ -86,7 +91,7 @@ export function ForgotPassword({ loading, sendForgotPassword }: IForgotPasswordP
               <div className={styles['form__captcha']}>
                 <ReCAPTCHA
                   sitekey={recaptchaSecret}
-                  onChange={(captcha: string | null) => captcha && setFieldValue('captcha', captcha)}
+                  onChange={(captcha: string | null) => setFieldValue('captcha', captcha || '')}
                   theme="light"
                 />
               </div>
