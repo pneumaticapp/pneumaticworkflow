@@ -139,7 +139,13 @@ export function ForgotPassword({ loading, sendForgotPassword }: IForgotPasswordP
 
 function CaptchaField({ resetSignal }: ICaptchaFieldProps) {
   const { recaptchaSecret } = getBrowserConfigEnv();
-  const { setFieldValue } = useFormikContext<TForgotPasswordValues>();
+  const { setFieldValue, validateForm } = useFormikContext<TForgotPasswordValues>();
+
+  useEffect(() => {
+    // the widget just appeared: captcha is now required, re-run validation
+    // (Formik doesn't re-validate on external state changes)
+    validateForm();
+  }, [validateForm]);
 
   useEffect(() => {
     if (resetSignal > 0) {
