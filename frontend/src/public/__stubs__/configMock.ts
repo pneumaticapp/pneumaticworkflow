@@ -3,6 +3,7 @@ export const configMock = {
   api: {
     urls: {
       registerUrl: '/path/to/register',
+      resetPasswordCaptcha: '/path/to/reset-password/captcha',
     },
   },
 };
