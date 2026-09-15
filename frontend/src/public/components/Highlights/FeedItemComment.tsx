@@ -15,16 +15,9 @@ import styles from './FeedItem.css';
 
 const MAX_TRUNCATED_COMMENT_HEIGHT = 20 * 5;
 
-export function FeedItemComment({
-  attachments,
-  isTextExpanded,
-  onExpand,
-  task,
-  text,
-  type,
-}: IFeedItemCommentProps) {
+export function FeedItemComment({ attachments, isTextExpanded, onExpand, task, text, type }: IFeedItemCommentProps) {
   const { formatMessage, messages } = useIntl();
-  const commentTextRef = useRef<HTMLSpanElement>(null);
+  const commentTextRef = useRef<HTMLDivElement>(null);
   const [isCommentExpandable, setIsCommentExpandable] = useState(true);
   const hasAttachments = Boolean(text && attachments && isArrayWithItems(attachments));
 
@@ -48,12 +41,12 @@ export function FeedItemComment({
             ? formatMessage({ id: 'task.log-returned' }, { taskName: task?.name })
             : messages['general.comment']}
         </span>
-        <span
-          className={classnames(styles['comment__text'], isTextExpanded && styles['comment__text_expanded'])}
-          ref={commentTextRef}
-        >
+        <span className={classnames(styles['comment__text'], isTextExpanded && styles['comment__text_expanded'])}>
           <TruncatedContent isTruncated={isTruncated} maxHeight={MAX_TRUNCATED_COMMENT_HEIGHT}>
-            <RichText text={text} />
+            {/* measure the untruncated content: the outer container is height-capped */}
+            <div ref={commentTextRef}>
+              <RichText text={text} />
+            </div>
           </TruncatedContent>
         </span>
       </div>
