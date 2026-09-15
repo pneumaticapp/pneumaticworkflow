@@ -1,13 +1,11 @@
 import pytest
 
-from src.accounts.enums import BillingPlanType, LeaseLevel
+from src.accounts.enums import BillingPlanType, LeaseLevel, UserType
 from src.accounts.models import Account
 from src.accounts.services.account import AccountService
 from src.authentication.enums import AuthTokenType
 from src.logs.events.enums import (
-    ActorType,
-    EventCategory,
-    EventName,
+    AccountEvents,
     EventObjectType,
 )
 from src.logs.events.schema import Actor, EventObject
@@ -74,14 +72,15 @@ def test_delete__free_plan__emit_tenant_delete_in_master_account(
     assert not Account.objects.filter(id=tenant_id).exists()
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.TENANT_DELETE
-    assert event.category == EventCategory.AUDIT
+    assert event.type == AccountEvents.TENANT_DELETE
+    assert event.category == AccountEvents.CATEGORY
     assert event.account_id == master_account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=master_owner.id,
         email=master_owner.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.ACCOUNT,
         id=tenant_id,

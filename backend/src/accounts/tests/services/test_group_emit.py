@@ -1,13 +1,12 @@
 import pytest
 
-from src.accounts.enums import BillingPlanType
+from src.accounts.enums import BillingPlanType, UserType
 from src.accounts.services.group import UserGroupService
 from src.analysis.events import GroupsAnalyticsEvent
 from src.authentication.enums import AuthTokenType
 from src.logs.events.enums import (
-    ActorType,
-    EventName,
     EventObjectType,
+    GroupEvents,
 )
 from src.logs.events.schema import Actor, EventObject
 from src.processes.tests.fixtures import (
@@ -35,7 +34,7 @@ def test_create__group__emit_group_create(mocker):
     sync_account_file_fields_mock = mocker.patch(
         'src.accounts.services.group.sync_account_file_fields',
     )
-    emit_mock = mocker.patch('src.logs.events.mixins.emit')
+    emit_mock = mocker.patch('src.logs.events.services.emit')
     service = UserGroupService(user=owner, auth_type=AuthTokenType.USER)
 
     # act
@@ -43,15 +42,18 @@ def test_create__group__emit_group_create(mocker):
 
     # assert
     emit_mock.assert_called_once_with(
-        EventName.GROUP_CREATE,
+        GroupEvents.CREATE,
         account_id=account.id,
         actor=Actor(
-            type=ActorType.USER,
             id=owner.id,
             email=owner.email,
+            user_type=UserType.USER,
         ),
+        auth_type=AuthTokenType.USER,
         event_object=EventObject(type=EventObjectType.GROUP, id=group.id),
         payload={'name': 'Sales', 'users_ids': [member.id]},
+        workflow_id=None,
+        task_id=None,
     )
     track_group_analytics_mock.assert_called_once_with(
         event=GroupsAnalyticsEvent.created,
@@ -101,7 +103,7 @@ def test_partial_update__name_and_users__emit_group_update(mocker):
     send_task_deleted_mock = mocker.patch(
         'src.notifications.tasks.send_task_deleted_notification.delay',
     )
-    emit_mock = mocker.patch('src.logs.events.mixins.emit')
+    emit_mock = mocker.patch('src.logs.events.services.emit')
     service = UserGroupService(
         user=owner,
         instance=group,
@@ -117,19 +119,22 @@ def test_partial_update__name_and_users__emit_group_update(mocker):
 
     # assert
     emit_mock.assert_called_once_with(
-        EventName.GROUP_UPDATE,
+        GroupEvents.UPDATE,
         account_id=account.id,
         actor=Actor(
-            type=ActorType.USER,
             id=owner.id,
             email=owner.email,
+            user_type=UserType.USER,
         ),
+        auth_type=AuthTokenType.USER,
         event_object=EventObject(type=EventObjectType.GROUP, id=group.id),
         payload={
             'changed_fields': ['name', 'users'],
             'added_users_ids': [member.id],
             'removed_users_ids': [],
         },
+        workflow_id=None,
+        task_id=None,
     )
     track_group_analytics_mock.assert_called_once_with(
         event=GroupsAnalyticsEvent.updated,
@@ -183,7 +188,7 @@ def test_partial_update__removed_users__emit_removed_users_ids(mocker):
     send_task_deleted_mock = mocker.patch(
         'src.notifications.tasks.send_task_deleted_notification.delay',
     )
-    emit_mock = mocker.patch('src.logs.events.mixins.emit')
+    emit_mock = mocker.patch('src.logs.events.services.emit')
     service = UserGroupService(
         user=owner,
         instance=group,
@@ -195,19 +200,22 @@ def test_partial_update__removed_users__emit_removed_users_ids(mocker):
 
     # assert
     emit_mock.assert_called_once_with(
-        EventName.GROUP_UPDATE,
+        GroupEvents.UPDATE,
         account_id=account.id,
         actor=Actor(
-            type=ActorType.USER,
             id=owner.id,
             email=owner.email,
+            user_type=UserType.USER,
         ),
+        auth_type=AuthTokenType.USER,
         event_object=EventObject(type=EventObjectType.GROUP, id=group.id),
         payload={
             'changed_fields': ['users'],
             'added_users_ids': [],
             'removed_users_ids': [member.id],
         },
+        workflow_id=None,
+        task_id=None,
     )
     track_group_analytics_mock.assert_called_once_with(
         event=GroupsAnalyticsEvent.updated,
@@ -259,7 +267,7 @@ def test_partial_update__name_only__emit_no_membership_change(mocker):
     send_task_deleted_mock = mocker.patch(
         'src.notifications.tasks.send_task_deleted_notification.delay',
     )
-    emit_mock = mocker.patch('src.logs.events.mixins.emit')
+    emit_mock = mocker.patch('src.logs.events.services.emit')
     service = UserGroupService(
         user=owner,
         instance=group,
@@ -271,19 +279,22 @@ def test_partial_update__name_only__emit_no_membership_change(mocker):
 
     # assert
     emit_mock.assert_called_once_with(
-        EventName.GROUP_UPDATE,
+        GroupEvents.UPDATE,
         account_id=account.id,
         actor=Actor(
-            type=ActorType.USER,
             id=owner.id,
             email=owner.email,
+            user_type=UserType.USER,
         ),
+        auth_type=AuthTokenType.USER,
         event_object=EventObject(type=EventObjectType.GROUP, id=group.id),
         payload={
             'changed_fields': ['name'],
             'added_users_ids': [],
             'removed_users_ids': [],
         },
+        workflow_id=None,
+        task_id=None,
     )
     track_group_analytics_mock.assert_called_once_with(
         event=GroupsAnalyticsEvent.updated,
@@ -333,7 +344,7 @@ def test_partial_update__nothing_changed__no_event(mocker):
     send_group_updated_mock = mocker.patch(
         'src.notifications.tasks.send_group_updated_notification.delay',
     )
-    emit_mock = mocker.patch('src.logs.events.mixins.emit')
+    emit_mock = mocker.patch('src.logs.events.services.emit')
     service = UserGroupService(
         user=owner,
         instance=group,
@@ -377,7 +388,7 @@ def test_delete__group__emit_group_delete(mocker):
     send_task_deleted_mock = mocker.patch(
         'src.notifications.tasks.send_task_deleted_notification.delay',
     )
-    emit_mock = mocker.patch('src.logs.events.mixins.emit')
+    emit_mock = mocker.patch('src.logs.events.services.emit')
     service = UserGroupService(
         user=owner,
         instance=group,
@@ -389,15 +400,18 @@ def test_delete__group__emit_group_delete(mocker):
 
     # assert
     emit_mock.assert_called_once_with(
-        EventName.GROUP_DELETE,
+        GroupEvents.DELETE,
         account_id=account.id,
         actor=Actor(
-            type=ActorType.USER,
             id=owner.id,
             email=owner.email,
+            user_type=UserType.USER,
         ),
+        auth_type=AuthTokenType.USER,
         event_object=EventObject(type=EventObjectType.GROUP, id=group.id),
         payload={'name': 'Sales', 'users_ids': [member.id]},
+        workflow_id=None,
+        task_id=None,
     )
     track_group_analytics_mock.assert_called_once_with(
         event=GroupsAnalyticsEvent.deleted,
@@ -439,7 +453,7 @@ def test_partial_update__blank_photo_over_null__no_event(mocker):
     sync_account_file_fields_mock = mocker.patch(
         'src.accounts.services.group.sync_account_file_fields',
     )
-    emit_mock = mocker.patch('src.logs.events.mixins.emit')
+    emit_mock = mocker.patch('src.logs.events.services.emit')
     service = UserGroupService(
         user=owner,
         instance=group,

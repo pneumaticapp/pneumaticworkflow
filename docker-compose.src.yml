@@ -1,11 +1,5 @@
 name: pneumatic
 
-# The logging stack lives in one file for both root compose
-# files and is off by default: its services start only with
-# the profile of LOGS_BACKEND, see logging/compose/logs.yml.
-include:
-  - logging/compose/logs.yml
-
 services:
   postgres:
     image: postgres:15-bookworm
@@ -656,9 +650,43 @@ services:
     networks:
       - pneumatic
 
+  # The collector of the audit journal. Off by default: it starts only
+  # with the profile named after LOGS_BACKEND, which start.sh passes on
+  # its own (by hand: COMPOSE_PROFILES, see default.env). The store it
+  # writes into lives on a machine of its own - logging/grafana for Loki
+  # and Grafana, logging/elasticsearch for Elasticsearch and Kibana.
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.160.0
+    container_name: pneumatic-otel-collector
+    profiles: ["logs-otlp", "logs-elasticsearch"]
+    command:
+      - --config=/etc/otel/base.yaml
+      - --config=/etc/otel/backend-${LOGS_BACKEND:-none}.yaml
+    environment:
+      LOGS_OTLP_EXPORT_ENDPOINT: ${LOGS_OTLP_EXPORT_ENDPOINT:-}
+      LOGS_OTLP_EXPORT_AUTH: ${LOGS_OTLP_EXPORT_AUTH:-}
+      LOGS_ELASTICSEARCH_URL: ${LOGS_ELASTICSEARCH_URL:-}
+      LOGS_ELASTICSEARCH_API_KEY: ${LOGS_ELASTICSEARCH_API_KEY:-}
+      LOGS_ELASTICSEARCH_USER: ${LOGS_ELASTICSEARCH_USER:-}
+      LOGS_ELASTICSEARCH_PASSWORD: ${LOGS_ELASTICSEARCH_PASSWORD:-}
+      LOGS_ELASTICSEARCH_CA_FILE: ${LOGS_ELASTICSEARCH_CA_FILE:-/etc/otel/es-ca.crt}
+      LOGS_ELASTICSEARCH_QUEUE_DIR: ${LOGS_ELASTICSEARCH_QUEUE_DIR:-/var/lib/otelcol/queue}
+      LOGS_ELASTICSEARCH_INDEX: ${LOGS_ELASTICSEARCH_INDEX:-logs-pneumatic.events.otel-default}
+    volumes:
+      - ./otel-collector:/etc/otel:ro
+      # The disk queue of LOGS_BACKEND=elasticsearch, see default.env
+      - otel-queue:/var/lib/otelcol
+    expose:
+      - 4318     # OTLP/HTTP receiver
+      - 13133    # health_check extension
+    networks:
+      - pneumatic
+    restart: always
+
 networks:
   pneumatic:
 
 volumes:
   backend-staticfiles:
   backend-socket:
+  otel-queue:

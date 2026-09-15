@@ -1379,7 +1379,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "topk(15, sum by (account_id, workflow_id, pii_payload_workflow_name) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | workflow_id!=\"\" [$__range])))",
+          "expr": "topk(15, sum by (account_id, workflow_id, payload_workflow_name) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | workflow_id!=\"\" [$__range])))",
           "instant": true,
           "legendFormat": "",
           "queryType": "instant",
@@ -1408,14 +1408,14 @@
               "Value": 3,
               "Value #A": 3,
               "account_id": 0,
-              "pii_payload_workflow_name": 2,
+              "payload_workflow_name": 2,
               "workflow_id": 1
             },
             "renameByName": {
               "Value": "Events",
               "Value #A": "Events",
               "account_id": "Account",
-              "pii_payload_workflow_name": "Name",
+              "payload_workflow_name": "Name",
               "workflow_id": "Workflow id"
             }
           }
@@ -1487,9 +1487,9 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "topk(10, sum by (pii_actor_email) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | actor_type=\"user\" | event_type=\"task.complete\" [$__range])))",
+          "expr": "topk(10, sum by (actor_email) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | auth_type=\"User\" | event_type=\"task.complete\" [$__range])))",
           "instant": true,
-          "legendFormat": "{{pii_actor_email}}",
+          "legendFormat": "{{actor_email}}",
           "queryType": "instant",
           "refId": "A"
         }
@@ -1515,10 +1515,10 @@
             "indexByName": {
               "Value": 1,
               "Value #A": 1,
-              "pii_actor_email": 0
+              "actor_email": 0
             },
             "renameByName": {
-              "pii_actor_email": "E-mail"
+              "actor_email": "E-mail"
             }
           }
         },
@@ -1601,9 +1601,9 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "topk(10, sum by (pii_actor_email) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | actor_type=\"user\" | event_type=\"workflow.run\" [$__range])))",
+          "expr": "topk(10, sum by (actor_email) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | auth_type=\"User\" | event_type=\"workflow.run\" [$__range])))",
           "instant": true,
-          "legendFormat": "{{pii_actor_email}}",
+          "legendFormat": "{{actor_email}}",
           "queryType": "instant",
           "refId": "A"
         }
@@ -1629,10 +1629,10 @@
             "indexByName": {
               "Value": 1,
               "Value #A": 1,
-              "pii_actor_email": 0
+              "actor_email": 0
             },
             "renameByName": {
-              "pii_actor_email": "E-mail"
+              "actor_email": "E-mail"
             }
           }
         },
@@ -1715,9 +1715,9 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "topk(10, sum by (pii_actor_email) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | actor_type=\"user\" | event_type=\"task.comment\" [$__range])))",
+          "expr": "topk(10, sum by (actor_email) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | auth_type=\"User\" | event_type=\"task.comment\" [$__range])))",
           "instant": true,
-          "legendFormat": "{{pii_actor_email}}",
+          "legendFormat": "{{actor_email}}",
           "queryType": "instant",
           "refId": "A"
         }
@@ -1743,10 +1743,10 @@
             "indexByName": {
               "Value": 1,
               "Value #A": 1,
-              "pii_actor_email": 0
+              "actor_email": 0
             },
             "renameByName": {
-              "pii_actor_email": "E-mail"
+              "actor_email": "E-mail"
             }
           }
         },

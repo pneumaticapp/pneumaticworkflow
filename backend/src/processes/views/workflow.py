@@ -363,7 +363,8 @@ class WorkflowViewSet(
         )
         if changed_fields:
             AuditEventService.workflow_updated(
-                request=request,
+                user=request.user,
+                auth_type=request.token_type,
                 workflow=workflow,
                 changed_fields=changed_fields,
                 kickoff_fields=sorted(

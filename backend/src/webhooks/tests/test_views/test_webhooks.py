@@ -1,10 +1,10 @@
 import pytest
 
+from src.accounts.enums import UserType
 from src.authentication.enums import AuthTokenType
 from src.logs.events.enums import (
-    ActorType,
-    EventName,
     EventObjectType,
+    WebhookEvents,
 )
 from src.logs.events.schema import Actor, EventObject
 from src.processes.tests.fixtures import (
@@ -102,7 +102,7 @@ def test_unsubscribe__ok(api_client, mocker):
     service_mock.assert_called_once()
 
 
-def test_subscribe__api_key__emit_api_key_actor(
+def test_subscribe__api_key__emit_api_auth_type(
     api_client,
     mocker,
     fake_stream,
@@ -136,13 +136,14 @@ def test_subscribe__api_key__emit_api_key_actor(
     assert response.status_code == 204
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.WEBHOOK_SUBSCRIBE
+    assert event.type == WebhookEvents.SUBSCRIBE
     assert event.account_id == user.account_id
     assert event.actor == Actor(
-        type=ActorType.API_KEY,
         id=user.id,
         email=user.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.API
     assert event.object == EventObject(type=EventObjectType.WEBHOOK)
     assert event.payload == {
         'url': url,
@@ -190,7 +191,7 @@ def test_subscribe__url_with_userinfo__credential_not_in_payload(
     assert response.status_code == 204
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.WEBHOOK_SUBSCRIBE
+    assert event.type == WebhookEvents.SUBSCRIBE
     assert event.payload == {
         'url': 'https://test.test/hook',
         'event': ALL_EVENTS,

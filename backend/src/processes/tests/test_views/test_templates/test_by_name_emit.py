@@ -1,11 +1,10 @@
 import pytest
 
+from src.accounts.enums import UserType
 from src.authentication.enums import AuthTokenType
 from src.logs.events.enums import (
-    ActorType,
-    EventCategory,
-    EventName,
     EventObjectType,
+    TemplateEvents,
     TemplateSource,
 )
 from src.logs.events.schema import Actor, EventObject
@@ -71,14 +70,15 @@ def test_by_name__library_template__emit_template_publish(
     assert template.is_active is True
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.TEMPLATE_PUBLISH
-    assert event.category == EventCategory.AUDIT
+    assert event.type == TemplateEvents.PUBLISH
+    assert event.category == TemplateEvents.CATEGORY
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=owner.id,
         email=owner.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.TEMPLATE,
         id=template.id,
@@ -146,14 +146,15 @@ def test_by_name__invalid_library_template__emit_template_draft_save(
     assert template.is_active is False
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.TEMPLATE_DRAFT_SAVE
-    assert event.category == EventCategory.ACTIVITY
+    assert event.type == TemplateEvents.DRAFT_SAVE
+    assert event.category == TemplateEvents.CATEGORY
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=owner.id,
         email=owner.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.TEMPLATE,
         id=template.id,

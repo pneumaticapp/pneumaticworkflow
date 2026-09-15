@@ -29,6 +29,22 @@ def _now() -> datetime:
     return datetime.now(UTC)
 
 
+def _actor(user: ActorSource) -> Actor | None:
+    """Find the person behind the request, None when there is none."""
+    user_type = user.journal_user_type
+    if user_type is None:
+        return None
+    return Actor(id=user.user_id, user_type=user_type)
+
+
+def _auth_type(user: ActorSource) -> str | None:
+    """Name the credential behind the request as the backend does."""
+    auth_type = user.journal_auth_type
+    if auth_type is None:
+        return None
+    return auth_type.value
+
+
 def _file_payload(file: FileFields) -> dict[str, Any]:
     """Build what every file record says about the file.
 
@@ -131,7 +147,8 @@ class RequestEvents:
             service=SERVICE_NAME,
             ts=_now(),
             account_id=user.account_id,
-            actor=Actor(type=user.actor_type, id=user.user_id),
+            actor=_actor(user),
+            auth_type=_auth_type(user),
             file_id=file_id,
             context=self._context,
             payload=payload,

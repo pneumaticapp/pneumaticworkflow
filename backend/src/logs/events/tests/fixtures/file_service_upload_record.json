@@ -1,14 +1,15 @@
 {
   "type": "file.upload",
-  "category": "audit",
+  "category": "files",
   "service": "pneumatic-file-service",
   "ts": "2026-09-09T12:00:00.000123Z",
   "account_id": 42,
   "actor": {
-    "type": "user",
     "id": 17,
-    "email": null
+    "email": null,
+    "user_type": "user"
   },
+  "auth_type": "User",
   "object": {
     "type": "file",
     "id": "0f8fad5b-d9cb-469f-a165-70867728950e"
@@ -22,10 +23,5 @@
     "filename": "Contract Ann Smith.pdf",
     "size": 12345,
     "content_type": "application/pdf"
-  },
-  "pii": [
-    "ip",
-    "user_agent",
-    "payload.filename"
-  ]
+  }
 }

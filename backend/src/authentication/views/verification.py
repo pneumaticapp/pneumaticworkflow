@@ -58,7 +58,7 @@ class VerificationTokenView(
                 is_superuser=request.is_superuser,
                 auth_type=AuthTokenType.USER,
             )
-            AuditEventService.account_verified(request=request, user=user)
+            AuditEventService.account_verified(user=user)
         return self.response_ok()
 
 
@@ -85,7 +85,8 @@ class VerificationTokenResendView(
                 logo_lg=user.account.logo_lg,
             )
             AuditEventService.verification_resent(
-                request=request,
+                user=request.user,
+                auth_type=request.token_type,
                 account_owner=user,
             )
 

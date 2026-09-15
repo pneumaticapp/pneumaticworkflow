@@ -18,7 +18,7 @@ unset POSTGRES_PASSWORD REDIS_PASSWORD RABBITMQ_PASSWORD
 unset CERTBOT_ENABLE CERTBOT_EMAIL NGINX_CONF_TEMPLATE
 unset FORM_DOMAIN
 unset GIT_BRANCH
-unset GRAFANA_ADMIN_PASSWORD LOGS_BACKEND
+unset LOGS_BACKEND
 
 RED='\033[0;31m'
 ORANGE='\033[0;33m'
@@ -360,56 +360,33 @@ case "$COMPOSE_FILE" in
   3) COMPOSE_LABEL="From sources (Branch: \"$GIT_BRANCH\")"; COMPOSE_ARGS=('-f' 'docker-compose.src.yml'); COMPOSE_TAG=""   ;;
 esac
 
-# 3.1.1 The logging stack follows LOGS_BACKEND of .env
-# ---------------------------------------------------
-# The root compose files include the logging stack (collector, Loki,
-# Grafana) with every service behind a profile, so it stays down unless
-# .env names a backend. Passing --profile and -f here would otherwise
-# override COMPOSE_PROFILES and COMPOSE_FILE lines in .env without
-# saying so.
-# The trailing comment of a line like `LOGS_BACKEND=local  # the bundled
-# stack` is cut off first: it is part of the value otherwise.
+# 3.1.1 The collector of the audit journal follows LOGS_BACKEND of .env
+# --------------------------------------------------------------------
+# The root compose files declare the collector behind a profile, so it
+# stays down unless .env names a backend. Passing --profile here would
+# otherwise override a COMPOSE_PROFILES line in .env without saying so.
+# The trailing comment of a line like `LOGS_BACKEND=otlp  # the Grafana
+# machine` is cut off first: it is part of the value otherwise.
 LOGS_BACKEND_VALUE=$(
     grep -E "^\s*LOGS_BACKEND=" "$ENV_FILE" 2>/dev/null | tail -1 | cut -d= -f2- | sed 's/#.*//' | tr -d '"'"'"'[:space:]'
 )
 case "${LOGS_BACKEND_VALUE:-none}" in
   none|"")
     ;;
-  local)
-    COMPOSE_ARGS+=('--profile' 'logs-local')
-    print_info "LOGS_BACKEND=local: the collector, Loki and Grafana run"
-    ;;
   otlp)
     COMPOSE_ARGS+=('--profile' 'logs-otlp')
     print_info "LOGS_BACKEND=otlp: only the collector runs"
     ;;
   elasticsearch)
-    # The collector override carries the queue on disk and every variable
-    # of the mode; without it the collector starts and delivers nothing.
-    COMPOSE_ARGS+=(
-        '--profile' 'logs-elasticsearch'
-        '-f' 'logging/elasticsearch/docker-compose.collector-elasticsearch.yml'
-    )
+    COMPOSE_ARGS+=('--profile' 'logs-elasticsearch')
     print_info "LOGS_BACKEND=elasticsearch: only the collector runs, queue on disk"
-    print_info "First start only: hand the queue volume to the collector, see logging/elasticsearch/docker-compose.collector-elasticsearch.yml"
+    print_info "First start only: hand the queue volume to the collector, see the Elasticsearch section of default.env"
     ;;
   *)
-    print_error "LOGS_BACKEND=$LOGS_BACKEND_VALUE is not one of: local, otlp, elasticsearch, none"
+    print_error "LOGS_BACKEND=$LOGS_BACKEND_VALUE is not one of: otlp, elasticsearch, none"
     exit 1
     ;;
 esac
-
-# 3.1.2 The local stack needs a Grafana password in .env
-# ------------------------------------------------------
-# An .env written by an older start.sh has no GRAFANA_ADMIN_PASSWORD, and a
-# fresh one carries it commented out; Grafana refuses to start without a
-# value (see the grafana service in logging/compose/logs.yml). The .env of
-# an installation that does not run the stack is left as it is.
-if [ "${LOGS_BACKEND_VALUE:-}" = local ] \
-    && ! grep -qE "^\s*GRAFANA_ADMIN_PASSWORD=\S" "$ENV_FILE"; then
-    set_env_var GRAFANA_ADMIN_PASSWORD "$(gen_password)"
-    print_info "GRAFANA_ADMIN_PASSWORD was missing from .env: a generated value was added"
-fi
 
 print_info "Selected configuration: $COMPOSE_LABEL"
 echo ""
@@ -472,12 +449,6 @@ fi
 echo ""
 echo "Pneumatic Workflow started successfully!"
 echo "The application is available at $FRONTEND_URL"
-if [ "${LOGS_BACKEND_VALUE:-}" = local ]; then
-    GRAFANA_PORT_VALUE=$(grep -E '^\s*GRAFANA_PORT=\S' "$ENV_FILE" | tail -1 | cut -d= -f2- | tr -d '[:space:]')
-    GRAFANA_ADMIN_USER_VALUE=$(grep -E '^\s*GRAFANA_ADMIN_USER=\S' "$ENV_FILE" | tail -1 | cut -d= -f2- | tr -d '[:space:]')
-    echo "The audit journal (Grafana) is available at http://127.0.0.1:${GRAFANA_PORT_VALUE:-3000} on this machine,"
-    echo "user ${GRAFANA_ADMIN_USER_VALUE:-admin}, the password is GRAFANA_ADMIN_PASSWORD in .env"
-fi
 print_warning "Please wait a few minutes for all services to fully start"
 print_warning ""
 

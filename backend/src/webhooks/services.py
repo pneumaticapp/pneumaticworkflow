@@ -12,8 +12,7 @@ from src.generics.mixins.services import DefaultClsCacheMixin
 from src.logs.enums import (
     AccountEventStatus,
 )
-from src.logs.events.enums import EventName, EventObjectType
-from src.logs.events.mixins import EventEmitMixin
+from src.logs.events import AuditEventService
 from src.logs.service import AccountLogService
 from src.processes.services.templates.integrations import (
     TemplateIntegrationsService,
@@ -31,7 +30,7 @@ UserModel = get_user_model()
 ALL_EVENTS = 'all'
 
 
-class WebhookService(EventEmitMixin):
+class WebhookService:
 
     def __init__(
         self,
@@ -51,21 +50,6 @@ class WebhookService(EventEmitMixin):
         if event not in self._get_events():
             raise exceptions.InvalidEventException
 
-    def _publish_webhook(self, event_type: str, url: str, event: str):
-
-        """ Who pointed which address at which event, the two
-            questions the journal has to answer about a webhook.
-            The normalizer cuts the query string off the address:
-            a receiver token rides there, and the host with the path
-            is what identifies the destination. """
-
-        self._publish(
-            event_type,
-            account_id=self.account.id,
-            object_type=EventObjectType.WEBHOOK,
-            payload={'url': url, 'event': event},
-        )
-
     def _targets(self, queryset: QuerySet) -> List[str]:
         return sorted(set(queryset.values_list('target', flat=True)))
 
@@ -80,8 +64,9 @@ class WebhookService(EventEmitMixin):
         )
         service.webhooks_unsubscribed()
         for target in targets:
-            self._publish_webhook(
-                EventName.WEBHOOK_UNSUBSCRIBE,
+            AuditEventService.webhook_unsubscribed(
+                user=self.user,
+                auth_type=self.auth_type,
                 url=target,
                 event=ALL_EVENTS,
             )
@@ -103,8 +88,9 @@ class WebhookService(EventEmitMixin):
             )
             service.webhooks_unsubscribed()
         for target in targets:
-            self._publish_webhook(
-                EventName.WEBHOOK_UNSUBSCRIBE,
+            AuditEventService.webhook_unsubscribed(
+                user=self.user,
+                auth_type=self.auth_type,
                 url=target,
                 event=event,
             )
@@ -130,8 +116,9 @@ class WebhookService(EventEmitMixin):
                 user=self.user,
                 is_superuser=self.is_superuser,
             )
-            self._publish_webhook(
-                EventName.WEBHOOK_SUBSCRIBE,
+            AuditEventService.webhook_subscribed(
+                user=self.user,
+                auth_type=self.auth_type,
                 url=url,
                 event=ALL_EVENTS,
             )
@@ -160,8 +147,9 @@ class WebhookService(EventEmitMixin):
                 user=self.user,
                 is_superuser=self.is_superuser,
             )
-        self._publish_webhook(
-            EventName.WEBHOOK_SUBSCRIBE,
+        AuditEventService.webhook_subscribed(
+            user=self.user,
+            auth_type=self.auth_type,
             url=url,
             event=event,
         )

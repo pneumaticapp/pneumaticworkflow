@@ -1,13 +1,13 @@
 import pytest
 from rest_framework_simplejwt.exceptions import TokenError
 
+from src.accounts.enums import UserType
 from src.accounts.tokens import ResetPasswordToken
+from src.authentication.enums import AuthTokenType
 from src.authentication.messages import MSG_AU_0012
 from src.logs.events.enums import (
-    ActorType,
-    EventCategory,
-    EventName,
     EventObjectType,
+    UserEvents,
 )
 from src.logs.events.schema import Actor, EventObject
 from src.processes.tests.fixtures import create_test_owner
@@ -51,10 +51,11 @@ def test_reset_password__known_address__emit_reset_request(
     assert response.status_code == 204
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.USER_PASSWORD_RESET_REQUEST
-    assert event.category == EventCategory.AUDIT
+    assert event.type == UserEvents.PASSWORD_RESET_REQUEST
+    assert event.category == UserEvents.CATEGORY
     assert event.account_id == user.account_id
-    assert event.actor == Actor(type=ActorType.GUEST)
+    assert event.actor is None
+    assert event.auth_type is None
     assert event.object == EventObject(type=EventObjectType.USER, id=user.id)
     assert event.payload == {'target_email': user.email}
     assert event.ip == '10.10.0.3'
@@ -138,13 +139,14 @@ def test_confirm__valid_token__emit_password_reset(
     assert response.status_code == 200
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.USER_PASSWORD_RESET
+    assert event.type == UserEvents.PASSWORD_RESET
     assert event.account_id == user.account_id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=user.id,
         email=user.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type is None
     assert event.object == EventObject(type=EventObjectType.USER, id=user.id)
     assert event.payload == {}
     assert event.ip == '10.10.0.4'
@@ -213,13 +215,14 @@ def test_change_password__authenticated__emit_password_change(
     assert response.status_code == 200
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.USER_PASSWORD_CHANGE
+    assert event.type == UserEvents.PASSWORD_CHANGE
     assert event.account_id == user.account_id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=user.id,
         email=user.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(type=EventObjectType.USER, id=user.id)
     assert event.payload == {}
     assert event.ip == '10.10.0.5'

@@ -37,9 +37,7 @@ from src.analysis.mixins import (
 from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
 from src.logs.enums import AccountEventStatus
-from src.logs.events.enums import EventName, EventObjectType
-from src.logs.events.mixins import EventEmitMixin
-from src.logs.events.schema import Actor
+from src.logs.events import AuditEventService
 from src.logs.service import AccountLogService
 from src.notifications.enums import EmailProvider
 from src.notifications.tasks import (
@@ -58,7 +56,6 @@ UserModel = get_user_model()
 
 
 class UserInviteService(
-    EventEmitMixin,
     BaseIdentifyMixin,
 ):
 
@@ -72,9 +69,6 @@ class UserInviteService(
     ):
         self.account = request_user.account
         self.request_user = request_user
-        # EventEmitMixin names the person the service acts for user;
-        # here that person is the request user.
-        self.user = request_user
         self.current_url = current_url
         self.is_superuser = is_superuser
         self.auth_type = auth_type
@@ -155,32 +149,6 @@ class UserInviteService(
             email=user.email,
             invited_by=self.request_user,
             invited_from=invited_from,
-        )
-
-    def _publish_invite(
-        self,
-        event_type: str,
-        user: UserModel,
-        is_transfer: bool,
-    ) -> None:
-
-        """ Who was invited, and whether the person already works in
-            another account: then the e-mail offers a transfer instead
-            of a sign up.
-
-            No object id: the id of an invite is the key that accepts
-            it, the accept endpoint asks for nothing else, and the
-            journal leaves the deployment. """
-
-        self._publish(
-            event_type,
-            account_id=self.account.id,
-            object_type=EventObjectType.INVITE,
-            payload={
-                'target_email': user.email,
-                'invited_user_id': user.id,
-                'is_transfer': is_transfer,
-            },
         )
 
     def _user_create_actions(self, user: UserModel):
@@ -319,9 +287,10 @@ class UserInviteService(
             if groups:
                 current_account_user.user_groups.set(groups)
             self._user_create_actions(current_account_user)
-            self._publish_invite(
-                EventName.INVITE_CREATE,
-                user=current_account_user,
+            AuditEventService.invite_created(
+                user=self.request_user,
+                auth_type=self.auth_type,
+                invited_user=current_account_user,
                 is_transfer=True,
             )
             self._user_transfer_actions(
@@ -364,9 +333,10 @@ class UserInviteService(
             if groups:
                 user.user_groups.set(groups)
             self._user_create_actions(user)
-            self._publish_invite(
-                EventName.INVITE_CREATE,
-                user=user,
+            AuditEventService.invite_created(
+                user=self.request_user,
+                auth_type=self.auth_type,
+                invited_user=user,
                 is_transfer=False,
             )
             if self.send_email:
@@ -441,9 +411,10 @@ class UserInviteService(
                 )
             else:
                 self._user_invite_actions(user)
-            self._publish_invite(
-                EventName.INVITE_RESEND,
-                user=user,
+            AuditEventService.invite_resent(
+                user=self.request_user,
+                auth_type=self.auth_type,
+                invited_user=user,
                 is_transfer=another_account_user is not None,
             )
 
@@ -488,12 +459,9 @@ class UserInviteService(
             # Published here and not in the view: the endpoint is not
             # the only way in, an SSO callback accepts the invite of
             # an invited person through the same method.
-            self._publish(
-                EventName.INVITE_ACCEPT,
-                account_id=user.account_id,
-                object_type=EventObjectType.INVITE,
-                payload={'invited_by_id': invite.invited_by_id},
-                actor=Actor.from_user(user),
+            AuditEventService.invite_accepted(
+                invited_user=user,
+                invited_by_id=invite.invited_by_id,
             )
         if (
             user.account.billing_sync

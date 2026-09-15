@@ -3,12 +3,12 @@ import pytest
 from src.accounts.enums import (
     BillingPlanType,
     LeaseLevel,
+    UserType,
 )
 from src.authentication.enums import AuthTokenType
 from src.logs.events.schema import Actor, EventObject
 from src.logs.events.enums import (
-    ActorType,
-    EventName,
+    AccountEvents,
     EventObjectType,
 )
 from src.processes.tests.fixtures import (
@@ -55,18 +55,21 @@ def test_token__master_account__emit_tenant_login_as(
     # assert
     assert response.status_code == 200
     emit_mock.assert_called_once_with(
-        EventName.TENANT_LOGIN_AS,
+        AccountEvents.TENANT_LOGIN_AS,
         account_id=tenant_account.id,
         actor=Actor(
-            type=ActorType.USER,
             id=master_account_owner.id,
             email=master_account_owner.email,
+            user_type=UserType.USER,
         ),
+        auth_type=AuthTokenType.USER,
         event_object=EventObject(
             type=EventObjectType.ACCOUNT,
             id=tenant_account.id,
         ),
         payload={'master_account_id': master_account.id},
+        workflow_id=None,
+        task_id=None,
     )
     get_auth_token_mock.assert_called_once_with(
         user=tenant_account_owner,
@@ -126,13 +129,14 @@ def test_token__master_account__event_keeps_request_context(
     assert response.status_code == 200
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.TENANT_LOGIN_AS
+    assert event.type == AccountEvents.TENANT_LOGIN_AS
     assert event.account_id == tenant_account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=master_account_owner.id,
         email=master_account_owner.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.ACCOUNT,
         id=tenant_account.id,

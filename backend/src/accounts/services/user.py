@@ -1,6 +1,6 @@
 # ruff: noqa: PLC0415
 import re
-from typing import Optional, List
+from typing import Any, List, Optional
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -34,8 +34,7 @@ from src.accounts.services.vacation import VacationDelegationService
 from src.analysis.mixins import BaseIdentifyMixin
 from src.analysis.services import AnalyticService
 from src.generics.base.service import BaseModelService
-from src.logs.events.enums import EventName, EventObjectType
-from src.logs.events.mixins import EventEmitMixin
+from src.logs.events import AuditEventService
 from src.notifications.tasks import (
     send_user_created_notification,
     send_user_deleted_notification,
@@ -57,7 +56,6 @@ UserModel = get_user_model()
 
 
 class UserService(
-    EventEmitMixin,
     BaseModelService,
     BaseIdentifyMixin,
 ):
@@ -441,7 +439,11 @@ class UserService(
 
         self.instance.is_admin = not self.instance.is_admin
         self.instance.save(update_fields=['is_admin'])
-        self._publish_admin_toggle()
+        AuditEventService.user_admin_toggled(
+            user=self.user,
+            auth_type=self.auth_type,
+            target=self.instance,
+        )
         self.identify(self.instance)
         send_user_updated_notification.delay(
             logging=self.account.log_api_requests,
@@ -462,17 +464,11 @@ class UserService(
         # Refresh to clear stale prefetch cache (e.g. subordinates)
         # so the WS payload reflects the post-deactivation state.
         self.instance.refresh_from_db()
-        # One point for every entry of the deactivation: the user
-        # endpoint, its deprecated twin, a declined invite and a
-        # transfer to another account. In the last two the actor is
-        # the deactivated person themselves; a service without a
-        # user is a background job (see EventEmitMixin).
-        self._publish_user_event(
-            EventName.USER_DEACTIVATE,
-            payload={
-                'target_email': self.instance.email,
-                'status_before': status_before,
-            },
+        AuditEventService.user_deactivated(
+            user=self.user,
+            auth_type=self.auth_type,
+            target=self.instance,
+            status_before=status_before,
         )
         send_user_deleted_notification.delay(
             logging=self.account.log_api_requests,
@@ -668,13 +664,26 @@ class UserService(
             account_id=self.account.id,
             user_data=ws_data,
         )
-        self._publish_update(
+        AuditEventService.user_updated(
+            user=self.user,
+            auth_type=self.auth_type,
+            target=self.instance,
             changed_fields=changed_fields,
             previous_email=previous_email,
             group_changes=group_changes,
         )
 
         return self.instance
+
+    @staticmethod
+    def _blank_as_none(value: Any) -> Any:
+
+        """ A nullable text field is empty both as NULL and as '': a
+            profile without a photo stores NULL and the client sends it
+            back as an empty string. Only '' is folded, so that False
+            and 0 stay values of their own. """
+
+        return None if value == '' else value
 
     def _group_changes(self, user_groups: Optional[list]) -> dict:
 
@@ -732,73 +741,6 @@ class UserService(
             if before != {user.id for user in subordinates}:
                 changed.add('subordinates')
         return sorted(changed)
-
-    def _publish_user_event(
-        self,
-        event_type: str,
-        payload: Optional[dict] = None,
-    ) -> None:
-        self._publish(
-            event_type,
-            account_id=self.instance.account_id,
-            object_type=EventObjectType.USER,
-            object_id=self.instance.id,
-            payload=payload,
-        )
-
-    def _publish_admin_toggle(self) -> None:
-        self._publish_user_event(
-            EventName.USER_ADMIN_TOGGLE,
-            payload={
-                'is_admin': self.instance.is_admin,
-                'target_email': self.instance.email,
-            },
-        )
-
-    def _publish_password_event(self) -> None:
-
-        """ The owner changing their own password and somebody else
-            setting it are two different records: an alert watches the
-            second one. """
-
-        if self.user is not None and self.user.id == self.instance.id:
-            self._publish_user_event(EventName.USER_PASSWORD_CHANGE)
-            return
-        self._publish_user_event(
-            EventName.USER_PASSWORD_SET,
-            payload={'target_email': self.instance.email},
-        )
-
-    def _publish_update(
-        self,
-        changed_fields: List[str],
-        previous_email: str,
-        group_changes: dict,
-    ) -> None:
-
-        """ One user.update naming every changed field, and apart from
-            it the records an alert watches for: the admin permission
-            and a password. An admin edit of the user reaches both of
-            them through here and not through toggle_admin or the
-            password views, and without them a grant of admin made this
-            way would not be seen by the alert. """
-
-        if not changed_fields:
-            return
-        payload = {
-            'target_email': self.instance.email,
-            'changed_fields': changed_fields,
-            **group_changes,
-        }
-        if 'email' in changed_fields:
-            payload['previous_email'] = previous_email
-        if 'manager' in changed_fields:
-            payload['manager_id'] = self.instance.manager_id
-        self._publish_user_event(EventName.USER_UPDATE, payload=payload)
-        if 'is_admin' in changed_fields:
-            self._publish_admin_toggle()
-        if 'password' in changed_fields:
-            self._publish_password_event()
 
     def _update_subordinates(
         self,

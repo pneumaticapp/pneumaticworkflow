@@ -5,7 +5,12 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from src.shared_kernel.auth.user_types import ActorType, UserType
+from src.shared_kernel.auth.public_token import EmbedToken, PublicToken
+from src.shared_kernel.auth.user_types import (
+    JournalAuthType,
+    JournalUserType,
+    UserType,
+)
 from src.shared_kernel.middleware.auth_middleware import AuthUser
 
 
@@ -354,7 +359,7 @@ async def test_authenticate_token__api_key_token__is_api_key(
     # assert
     assert result is not None
     assert result.is_api_key is True
-    assert result.actor_type == ActorType.API_KEY
+    assert result.journal_auth_type == JournalAuthType.API
     token_data_mock.assert_called_once_with(token)
 
 
@@ -377,22 +382,89 @@ async def test_authenticate_token__session_token__not_api_key(
     # assert
     assert result is not None
     assert result.is_api_key is False
-    assert result.actor_type == ActorType.USER
+    assert result.journal_auth_type == JournalAuthType.USER
     token_data_mock.assert_called_once_with(token)
 
 
-def test_auth_user__authenticated__actor_user():
+@pytest.mark.asyncio
+async def test_authenticate_public_token__shared_token__not_embed(
+    auth_middleware,
+    mocker,
+):
+    # arrange
+    token = PublicToken(token='a' * PublicToken.token_length)
+    get_token_mock = mocker.patch(
+        'src.shared_kernel.middleware.auth_middleware.'
+        'PublicAuthService.get_token',
+        return_value=token,
+    )
+    authenticate_mock = mocker.patch(
+        'src.shared_kernel.middleware.auth_middleware.'
+        'PublicAuthService.authenticate_public_token',
+        new_callable=AsyncMock,
+        return_value={'account_id': 2},
+    )
+
+    # act
+    result = await auth_middleware.authenticate_public_token('Token a')
+
+    # assert
+    assert result is not None
+    assert result.auth_type == UserType.PUBLIC_TOKEN
+    assert result.user_id is None
+    assert result.account_id == 2
+    assert result.token == str(token)
+    assert result.is_embed_token is False
+    assert result.journal_auth_type == JournalAuthType.SHARED
+    get_token_mock.assert_called_once_with('Token a')
+    authenticate_mock.assert_awaited_once_with(token)
+
+
+@pytest.mark.asyncio
+async def test_authenticate_public_token__embed_token__is_embed(
+    auth_middleware,
+    mocker,
+):
+    # arrange
+    token = EmbedToken(token='b' * EmbedToken.token_length)
+    get_token_mock = mocker.patch(
+        'src.shared_kernel.middleware.auth_middleware.'
+        'PublicAuthService.get_token',
+        return_value=token,
+    )
+    authenticate_mock = mocker.patch(
+        'src.shared_kernel.middleware.auth_middleware.'
+        'PublicAuthService.authenticate_public_token',
+        new_callable=AsyncMock,
+        return_value={'account_id': 2},
+    )
+
+    # act
+    result = await auth_middleware.authenticate_public_token('Token b')
+
+    # assert
+    assert result is not None
+    assert result.auth_type == UserType.PUBLIC_TOKEN
+    assert result.is_embed_token is True
+    assert result.journal_auth_type == JournalAuthType.EMBEDDED
+    get_token_mock.assert_called_once_with('Token b')
+    authenticate_mock.assert_awaited_once_with(token)
+
+
+def test_auth_user__authenticated__journal_user_with_user_auth():
     # arrange
     user = AuthUser(auth_type=UserType.AUTHENTICATED, user_id=1, account_id=2)
 
     # act
-    result = user.actor_type
+    user_type = user.journal_user_type
+    auth_type = user.journal_auth_type
 
     # assert
-    assert result == ActorType.USER
+    assert user_type == JournalUserType.USER
+    assert auth_type == JournalAuthType.USER
 
 
-def test_auth_user__api_key__actor_api_key():
+def test_auth_user__api_key__journal_user_with_api_auth():
     # arrange
     user = AuthUser(
         auth_type=UserType.AUTHENTICATED,
@@ -402,29 +474,65 @@ def test_auth_user__api_key__actor_api_key():
     )
 
     # act
-    result = user.actor_type
+    user_type = user.journal_user_type
+    auth_type = user.journal_auth_type
 
     # assert
-    assert result == ActorType.API_KEY
+    assert user_type == JournalUserType.USER
+    assert auth_type == JournalAuthType.API
 
 
-def test_auth_user__guest_token__actor_guest():
+def test_auth_user__guest_token__journal_guest_with_guest_auth():
     # arrange
     user = AuthUser(auth_type=UserType.GUEST_TOKEN, user_id=1, account_id=2)
 
     # act
-    result = user.actor_type
+    user_type = user.journal_user_type
+    auth_type = user.journal_auth_type
 
     # assert
-    assert result == ActorType.GUEST
+    assert user_type == JournalUserType.GUEST
+    assert auth_type == JournalAuthType.GUEST
 
 
-def test_auth_user__public_token__actor_guest():
+def test_auth_user__public_token__no_journal_user_with_shared_auth():
     # arrange
     user = AuthUser(auth_type=UserType.PUBLIC_TOKEN, account_id=2)
 
     # act
-    result = user.actor_type
+    user_type = user.journal_user_type
+    auth_type = user.journal_auth_type
 
     # assert
-    assert result == ActorType.GUEST
+    assert user_type is None
+    assert auth_type == JournalAuthType.SHARED
+
+
+def test_auth_user__embed_token__no_journal_user_with_embedded_auth():
+    # arrange
+    user = AuthUser(
+        auth_type=UserType.PUBLIC_TOKEN,
+        account_id=2,
+        is_embed_token=True,
+    )
+
+    # act
+    user_type = user.journal_user_type
+    auth_type = user.journal_auth_type
+
+    # assert
+    assert user_type is None
+    assert auth_type == JournalAuthType.EMBEDDED
+
+
+def test_auth_user__anonymous__no_journal_user_no_auth():
+    # arrange
+    user = AuthUser(auth_type=UserType.ANONYMOUS)
+
+    # act
+    user_type = user.journal_user_type
+    auth_type = user.journal_auth_type
+
+    # assert
+    assert user_type is None
+    assert auth_type is None

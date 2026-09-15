@@ -9,9 +9,9 @@ from django.conf import settings
 
 from src.logs.events.emitter import emit, logs_enabled
 from src.logs.events.enums import (
-    ActorType,
-    EventName,
     EventObjectType,
+    TaskEvents,
+    WorkflowEvents,
 )
 from src.logs.events.exceptions import (
     EventsError,
@@ -26,37 +26,37 @@ if TYPE_CHECKING:
 
 
 WORKFLOW_EVENT_TYPE_NAMES: Dict[int, str] = {
-    WorkflowEventType.RUN: EventName.WORKFLOW_RUN,
-    WorkflowEventType.COMPLETE: EventName.WORKFLOW_COMPLETE,
-    WorkflowEventType.TASK_START: EventName.TASK_START,
-    WorkflowEventType.TASK_COMPLETE: EventName.TASK_COMPLETE,
-    WorkflowEventType.TASK_REVERT: EventName.TASK_REVERT,
-    WorkflowEventType.COMMENT: EventName.TASK_COMMENT,
-    WorkflowEventType.ENDED: EventName.WORKFLOW_ENDED,
-    WorkflowEventType.DELAY: EventName.WORKFLOW_DELAY,
-    WorkflowEventType.REVERT: EventName.WORKFLOW_REVERT,
-    WorkflowEventType.TASK_SKIP: EventName.TASK_SKIP,
+    WorkflowEventType.RUN: WorkflowEvents.RUN,
+    WorkflowEventType.COMPLETE: WorkflowEvents.COMPLETE,
+    WorkflowEventType.TASK_START: TaskEvents.START,
+    WorkflowEventType.TASK_COMPLETE: TaskEvents.COMPLETE,
+    WorkflowEventType.TASK_REVERT: TaskEvents.REVERT,
+    WorkflowEventType.COMMENT: TaskEvents.COMMENT,
+    WorkflowEventType.ENDED: WorkflowEvents.ENDED,
+    WorkflowEventType.DELAY: WorkflowEvents.DELAY,
+    WorkflowEventType.REVERT: WorkflowEvents.REVERT,
+    WorkflowEventType.TASK_SKIP: TaskEvents.SKIP,
     WorkflowEventType.ENDED_BY_CONDITION:
-        EventName.WORKFLOW_ENDED_BY_CONDITION,
-    WorkflowEventType.URGENT: EventName.WORKFLOW_URGENT,
-    WorkflowEventType.NOT_URGENT: EventName.WORKFLOW_NOT_URGENT,
+        WorkflowEvents.ENDED_BY_CONDITION,
+    WorkflowEventType.URGENT: WorkflowEvents.URGENT,
+    WorkflowEventType.NOT_URGENT: WorkflowEvents.NOT_URGENT,
     WorkflowEventType.TASK_SKIP_NO_PERFORMERS:
-        EventName.TASK_SKIP_NO_PERFORMERS,
+        TaskEvents.SKIP_NO_PERFORMERS,
     WorkflowEventType.TASK_PERFORMER_CREATED:
-        EventName.TASK_PERFORMER_CREATED,
+        TaskEvents.PERFORMER_CREATED,
     WorkflowEventType.TASK_PERFORMER_DELETED:
-        EventName.TASK_PERFORMER_DELETED,
-    WorkflowEventType.FORCE_RESUME: EventName.WORKFLOW_FORCE_RESUME,
-    WorkflowEventType.FORCE_DELAY: EventName.WORKFLOW_FORCE_DELAY,
-    WorkflowEventType.DUE_DATE_CHANGED: EventName.TASK_DUE_DATE_CHANGED,
+        TaskEvents.PERFORMER_DELETED,
+    WorkflowEventType.FORCE_RESUME: WorkflowEvents.FORCE_RESUME,
+    WorkflowEventType.FORCE_DELAY: WorkflowEvents.FORCE_DELAY,
+    WorkflowEventType.DUE_DATE_CHANGED: TaskEvents.DUE_DATE_CHANGED,
     WorkflowEventType.SUB_WORKFLOW_RUN:
-        EventName.WORKFLOW_SUB_WORKFLOW_RUN,
+        WorkflowEvents.SUB_WORKFLOW_RUN,
     WorkflowEventType.TASK_PERFORMER_GROUP_CREATED:
-        EventName.TASK_PERFORMER_GROUP_CREATED,
+        TaskEvents.PERFORMER_GROUP_CREATED,
     WorkflowEventType.TASK_PERFORMER_GROUP_DELETED:
-        EventName.TASK_PERFORMER_GROUP_DELETED,
-    WorkflowEventType.TASK_DELAY: EventName.TASK_DELAY,
-    WorkflowEventType.TASK_DELEGATION: EventName.TASK_DELEGATION,
+        TaskEvents.PERFORMER_GROUP_DELETED,
+    WorkflowEventType.TASK_DELAY: TaskEvents.DELAY,
+    WorkflowEventType.TASK_DELEGATION: TaskEvents.DELEGATION,
 }
 
 
@@ -122,18 +122,21 @@ def workflow_event_to_kwargs(event: 'WorkflowEvent') -> Dict[str, Any]:
     }
 
 
-def _actor(event: 'WorkflowEvent') -> Actor:
+def _actor(event: 'WorkflowEvent') -> Optional[Actor]:
 
     """ Events of a delay, a skip or a template condition have no
-        user: they are made by the workflow engine itself. """
+        user: they are made by the workflow engine itself, and the
+        record has no actor. The workflow event keeps no auth type,
+        so the record has none either: the actor tells a person from
+        the engine, not the credential. """
 
     if event.user_id is None:
-        return Actor(type=ActorType.SYSTEM)
+        return None
     user = _cached_relation(event, 'user')
     return Actor(
-        type=ActorType.USER,
         id=event.user_id,
         email=user.email if user is not None else None,
+        user_type=user.type if user is not None else None,
     )
 
 

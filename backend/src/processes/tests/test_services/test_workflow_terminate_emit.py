@@ -1,11 +1,10 @@
 import pytest
 
+from src.accounts.enums import UserType
 from src.authentication.enums import AuthTokenType
 from src.logs.events.enums import (
-    ActorType,
-    EventCategory,
-    EventName,
     EventObjectType,
+    WorkflowEvents,
 )
 from src.logs.events.schema import Actor, EventObject
 from src.processes.models.workflows.workflow import Workflow
@@ -42,7 +41,7 @@ def test_terminate_workflow__user_action__emit_workflow_terminate(
         '.workflows_terminated',
     )
     emit_mock = mocker.patch(
-        'src.logs.events.mixins.emit',
+        'src.logs.events.services.emit',
     )
     service = WorkflowActionService(user=owner, workflow=workflow)
 
@@ -52,13 +51,14 @@ def test_terminate_workflow__user_action__emit_workflow_terminate(
     # assert
     assert not Workflow.objects.filter(id=workflow.id).exists()
     emit_mock.assert_called_once_with(
-        EventName.WORKFLOW_TERMINATE,
+        WorkflowEvents.TERMINATE,
         account_id=account.id,
         actor=Actor(
-            type=ActorType.USER,
             id=owner.id,
             email=owner.email,
+            user_type=UserType.USER,
         ),
+        auth_type=AuthTokenType.USER,
         event_object=EventObject(
             type=EventObjectType.WORKFLOW,
             id=workflow.id,
@@ -68,6 +68,7 @@ def test_terminate_workflow__user_action__emit_workflow_terminate(
             'workflow_name': workflow.name,
             'template_id': workflow.template_id,
         },
+        task_id=None,
     )
     send_task_deleted_mock.assert_called_once_with(
         task_id=task.id,
@@ -84,7 +85,7 @@ def test_terminate_workflow__user_action__emit_workflow_terminate(
     )
 
 
-def test_terminate_workflow__api_key_auth__emit_api_key_actor_type(
+def test_terminate_workflow__api_key_auth__emit_api_auth_type(
     mocker,
 ):
 
@@ -107,7 +108,7 @@ def test_terminate_workflow__api_key_auth__emit_api_key_actor_type(
         '.workflows_terminated',
     )
     emit_mock = mocker.patch(
-        'src.logs.events.mixins.emit',
+        'src.logs.events.services.emit',
     )
     service = WorkflowActionService(
         user=owner,
@@ -120,13 +121,14 @@ def test_terminate_workflow__api_key_auth__emit_api_key_actor_type(
 
     # assert
     emit_mock.assert_called_once_with(
-        EventName.WORKFLOW_TERMINATE,
+        WorkflowEvents.TERMINATE,
         account_id=account.id,
         actor=Actor(
-            type=ActorType.API_KEY,
             id=owner.id,
             email=owner.email,
+            user_type=UserType.USER,
         ),
+        auth_type=AuthTokenType.API,
         event_object=EventObject(
             type=EventObjectType.WORKFLOW,
             id=workflow.id,
@@ -136,6 +138,7 @@ def test_terminate_workflow__api_key_auth__emit_api_key_actor_type(
             'workflow_name': workflow.name,
             'template_id': workflow.template_id,
         },
+        task_id=None,
     )
     send_task_deleted_mock.assert_called_once_with(
         task_id=task.id,
@@ -192,14 +195,15 @@ def test_terminate_workflow__deleted_workflow__event_keeps_the_name(
     assert not Workflow.objects.filter(id=workflow.id).exists()
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.WORKFLOW_TERMINATE
-    assert event.category == EventCategory.AUDIT
+    assert event.type == WorkflowEvents.TERMINATE
+    assert event.category == WorkflowEvents.CATEGORY
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=owner.id,
         email=owner.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.WORKFLOW,
         id=workflow.id,
@@ -209,7 +213,6 @@ def test_terminate_workflow__deleted_workflow__event_keeps_the_name(
         'workflow_name': 'Onboarding of Ann Smith',
         'template_id': workflow.template_id,
     }
-    assert event.pii == ('actor.email', 'payload.workflow_name')
     send_task_deleted_mock.assert_called_once_with(
         task_id=task.id,
         task_data=task_data,

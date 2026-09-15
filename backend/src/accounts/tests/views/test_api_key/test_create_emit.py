@@ -1,9 +1,10 @@
 import pytest
 
+from src.accounts.enums import UserType
 from src.accounts.services.api_key import APIKeyService
+from src.authentication.enums import AuthTokenType
 from src.logs.events.enums import (
-    ActorType,
-    EventName,
+    ApiKeyEvents,
     EventObjectType,
 )
 from src.logs.events.schema import Actor, EventObject, to_json
@@ -48,13 +49,14 @@ def test_create__api_keys_endpoint__event_has_no_raw_key(
     record = to_json(event.to_dict())
     assert response.data['token'] not in record
     assert 'token' not in event.payload
-    assert event.type == EventName.API_KEY_CREATE
+    assert event.type == ApiKeyEvents.CREATE
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=owner.id,
         email=owner.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.API_KEY,
         id=response.data['id'],

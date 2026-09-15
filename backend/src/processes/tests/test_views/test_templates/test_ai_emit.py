@@ -1,11 +1,10 @@
 import pytest
 
+from src.accounts.enums import UserType
 from src.authentication.enums import AuthTokenType
 from src.logs.events.enums import (
-    ActorType,
-    EventCategory,
-    EventName,
     EventObjectType,
+    TemplateEvents,
 )
 from src.logs.events.schema import Actor, EventObject
 from src.processes.services.exceptions import OpenAiServiceException
@@ -61,14 +60,15 @@ def test_ai__template_generated__emit_template_ai_generate(
     assert response.status_code == 200
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.TEMPLATE_AI_GENERATE
-    assert event.category == EventCategory.ACTIVITY
+    assert event.type == TemplateEvents.AI_GENERATE
+    assert event.category == TemplateEvents.CATEGORY
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=owner.id,
         email=owner.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.TEMPLATE,
         id=None,
@@ -77,7 +77,6 @@ def test_ai__template_generated__emit_template_ai_generate(
     assert event.ip == '10.10.0.22'
     assert event.user_agent == 'Chrome/141'
     assert event.request_id == 'audit-template-22'
-    assert event.pii == ('actor.email', 'ip', 'user_agent')
     open_ai_service_init_mock.assert_called_once_with(
         ident=owner.id,
         user=owner,

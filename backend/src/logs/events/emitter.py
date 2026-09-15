@@ -2,16 +2,14 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime
 from time import monotonic
-from typing import Optional, Tuple
+from typing import Optional
 
 from django.conf import settings
 from django.db import transaction
-from django.http import HttpRequest
 from django.utils import timezone
 
 from src.logs.enums import LogsBackend
-from src.logs.events.context import merge_context
-from src.logs.events.enums import ActorType
+from src.logs.events.context import RequestContext, get_context
 from src.logs.events.registry import resolve_event_type
 from src.logs.events.reporting import report_error
 from src.logs.events.schema import (
@@ -19,7 +17,6 @@ from src.logs.events.schema import (
     Event,
     EventObject,
     normalize_payload,
-    pii_value,
 )
 from src.logs.events.stream import get_stream
 
@@ -67,16 +64,22 @@ def emit(
     *,
     account_id: Optional[int],
     actor: Optional[Actor] = None,
+    auth_type: Optional[str] = None,
     event_object: Optional[EventObject] = None,
     payload: Optional[dict] = None,
     workflow_id: Optional[int] = None,
     task_id: Optional[int] = None,
-    request: Optional[HttpRequest] = None,
     ts: Optional[datetime] = None,
 ):
 
     """ Publish an event to the stream after the current transaction
-        commits.
+        commits. No actor is the system: a task, a command, a callback
+        of an identity provider.
+
+        The address, the browser and the request id come from the
+        context EventContextMiddleware published for the current
+        request; a call outside a request (a task, a command) has
+        none, and the record carries none.
 
         Writing never raises: it happens in an on_commit callback and
         is wrapped in _write. Building can raise UnknownEventTypeError
@@ -90,11 +93,11 @@ def emit(
         event_type,
         account_id=account_id,
         actor=actor,
+        auth_type=auth_type,
         event_object=event_object,
         payload=payload,
         workflow_id=workflow_id,
         task_id=task_id,
-        request=request,
         ts=ts,
     )
     _schedule(event)
@@ -105,22 +108,20 @@ def _build_event(
     *,
     account_id: Optional[int],
     actor: Optional[Actor] = None,
+    auth_type: Optional[str] = None,
     event_object: Optional[EventObject] = None,
     payload: Optional[dict] = None,
     workflow_id: Optional[int] = None,
     task_id: Optional[int] = None,
-    request: Optional[HttpRequest] = None,
     ts: Optional[datetime] = None,
 ) -> Event:
 
-    """ Fill an event from the registry, the request and the context.
-
-        The caller always wins, then the request it handles, then the
-        context published by EventContextMiddleware. """
+    """ Fill an event from the registry and the context of the
+        request: the address, the browser and the request id. """
 
     declared = resolve_event_type(event_type)
-    context = merge_context(request)
-    event = Event(
+    context = get_context() or RequestContext()
+    return Event(
         type=event_type,
         category=declared.category,
         service=settings.LOGS_SERVICE_NAME,
@@ -131,7 +132,8 @@ def _build_event(
         # NO_ACCOUNT is the documented value for an event that has no
         # account, a failed sign in above all.
         account_id=NO_ACCOUNT if account_id is None else account_id,
-        actor=actor or context.actor or Actor(ActorType.SYSTEM),
+        actor=actor,
+        auth_type=auth_type,
         object=event_object,
         payload=normalize_payload(payload),
         workflow_id=workflow_id,
@@ -140,8 +142,6 @@ def _build_event(
         user_agent=context.user_agent,
         request_id=context.request_id,
     )
-    event.pii = _present_pii(declared.pii, event)
-    return event
 
 
 def reset_circuit():
@@ -201,18 +201,3 @@ def _report_stream_error(exc: Exception) -> None:
         message='Events stream is unavailable',
         data={'error': error, 'dropped': _circuit.dropped},
     )
-
-
-def _present_pii(paths: Tuple[str, ...], event: Event) -> Tuple[str, ...]:
-
-    """ Keep only the personal data the event really carries: the
-        list is the audit answer to "what left the system" and must
-        not name empty fields. The paths come from
-        EventType.pii, the one list the sink reads too. """
-
-    return tuple(path for path in paths if _has_value(event, path))
-
-
-def _has_value(event: Event, path: str) -> bool:
-    value = pii_value(event, path)
-    return value is not None and value != ''

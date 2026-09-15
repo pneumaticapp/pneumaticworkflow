@@ -6,12 +6,10 @@ from src.accounts.enums import AbsenceStatus
 from src.accounts.models import UserVacation
 from src.accounts.tasks import process_vacations
 from src.logs.events.enums import (
-    ActorType,
-    EventCategory,
-    EventName,
     EventObjectType,
+    UserEvents,
 )
-from src.logs.events.schema import Actor, EventObject
+from src.logs.events.schema import EventObject
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
@@ -51,10 +49,11 @@ def test_process_vacations__start_date_reached__emit_system_activate(
     # assert
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.USER_VACATION_ACTIVATE
-    assert event.category == EventCategory.AUDIT
+    assert event.type == UserEvents.VACATION_ACTIVATE
+    assert event.category == UserEvents.CATEGORY
     assert event.account_id == account.id
-    assert event.actor == Actor(type=ActorType.SYSTEM)
+    assert event.actor is None
+    assert event.auth_type is None
     assert event.object == EventObject(
         type=EventObjectType.USER,
         id=owner.id,
@@ -102,10 +101,11 @@ def test_process_vacations__end_date_passed__emit_system_deactivate(
     assert not UserVacation.objects.filter(user=owner).exists()
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.USER_VACATION_DEACTIVATE
-    assert event.category == EventCategory.AUDIT
+    assert event.type == UserEvents.VACATION_DEACTIVATE
+    assert event.category == UserEvents.CATEGORY
     assert event.account_id == account.id
-    assert event.actor == Actor(type=ActorType.SYSTEM)
+    assert event.actor is None
+    assert event.auth_type is None
     assert event.object == EventObject(
         type=EventObjectType.USER,
         id=owner.id,

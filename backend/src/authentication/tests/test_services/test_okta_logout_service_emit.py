@@ -4,13 +4,11 @@ from django.core.exceptions import ObjectDoesNotExist
 from src.accounts.enums import SourceType
 from src.authentication.services.okta_logout import OktaLogoutService
 from src.logs.events.enums import (
-    ActorType,
-    EventCategory,
-    EventName,
     EventObjectType,
     LogoutReason,
+    UserEvents,
 )
-from src.logs.events.schema import Actor, EventObject
+from src.logs.events.schema import EventObject
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
@@ -51,10 +49,11 @@ def test_logout_user__user_found__emit_system_logout(
     # assert
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.USER_LOGOUT
-    assert event.category == EventCategory.AUDIT
+    assert event.type == UserEvents.LOGOUT
+    assert event.category == UserEvents.CATEGORY
     assert event.account_id == account.id
-    assert event.actor == Actor(type=ActorType.SYSTEM)
+    assert event.actor is None
+    assert event.auth_type is None
     assert event.object == EventObject(
         type=EventObjectType.USER,
         id=user.id,
@@ -63,7 +62,6 @@ def test_logout_user__user_found__emit_system_logout(
         'source': SourceType.OKTA,
         'reason': LogoutReason.IDENTITY_PROVIDER,
     }
-    assert event.pii == ()
     cache_mock.delete.assert_called_once_with(
         f'okta_sub_to_user_{okta_sub}',
     )

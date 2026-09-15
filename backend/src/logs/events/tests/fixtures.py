@@ -5,14 +5,14 @@ from datetime import datetime, timezone
 from time import monotonic
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
+from src.accounts.enums import UserType
 from src.authentication.enums import AuthTokenType
 from src.logs.events.enums import (
-    ActorType,
+    EVENT_CLASSES,
     EventCategory,
-    EventName,
+    event_names_of,
 )
 from src.logs.events.exceptions import SinkTemporaryError
-from src.logs.events.mixins import EventEmitMixin
 from src.logs.events.schema import Actor, Event, EventObject
 from src.logs.events.sinks.base import BaseSink
 from src.logs.events.stream import (
@@ -174,14 +174,18 @@ def make_event(**kwargs) -> Event:
 
     fields: Dict[str, Any] = {
         'type': 'workflow.run',
-        'category': EventCategory.AUDIT,
+        'category': EventCategory.WORKFLOWS,
         'service': SERVICE_NAME,
         'ts': EVENT_TS,
         'account_id': 42,
-        'actor': Actor(type=ActorType.USER, id=17, email='ann@example.com'),
+        'actor': Actor(
+            id=17,
+            email='ann@example.com',
+            user_type=UserType.USER,
+        ),
+        'auth_type': AuthTokenType.USER,
         'object': EventObject(type='workflow', id=9001),
         'payload': {'template_id': 12},
-        'pii': ('actor.email', 'ip', 'user_agent'),
         'workflow_id': 9001,
         'task_id': None,
         'ip': '203.0.113.7',
@@ -224,10 +228,9 @@ def make_smoke_event(number: int = 0) -> Event:
 
     return Event(
         type='system.smoke',
-        category=EventCategory.DEBUG,
+        category=EventCategory.OTHER,
         ts=EVENT_TS,
         account_id=SMOKE_ACCOUNT_ID,
-        actor=Actor(type=ActorType.SYSTEM),
         object=EventObject(type='account', id=SMOKE_ACCOUNT_ID),
         payload={'number': number},
     )
@@ -257,11 +260,12 @@ def make_unit_stream() -> EventStream:
 
 def event_name_values() -> Set[str]:
 
-    """ Every constant of EventName. """
+    """ Every event type name of every events class. """
 
     return {
-        value for key, value in vars(EventName).items()
-        if key.isupper()
+        name
+        for events_class in EVENT_CLASSES
+        for name in event_names_of(events_class)
     }
 
 
@@ -272,65 +276,65 @@ def expected_workflow_events() -> Tuple[Tuple[int, str, str], ...]:
         purpose: reading the answer out of the registry would compare
         it with itself. """
 
-    audit = EventCategory.AUDIT
-    activity = EventCategory.ACTIVITY
+    workflows = EventCategory.WORKFLOWS
+    tasks = EventCategory.TASKS
     return (
-        (WorkflowEventType.RUN, 'workflow.run', audit),
-        (WorkflowEventType.COMPLETE, 'workflow.complete', audit),
-        (WorkflowEventType.TASK_START, 'task.start', activity),
-        (WorkflowEventType.TASK_COMPLETE, 'task.complete', audit),
-        (WorkflowEventType.TASK_REVERT, 'task.revert', audit),
-        (WorkflowEventType.COMMENT, 'task.comment', activity),
-        (WorkflowEventType.ENDED, 'workflow.ended', audit),
-        (WorkflowEventType.DELAY, 'workflow.delay', activity),
-        (WorkflowEventType.REVERT, 'workflow.revert', audit),
-        (WorkflowEventType.TASK_SKIP, 'task.skip', activity),
+        (WorkflowEventType.RUN, 'workflow.run', workflows),
+        (WorkflowEventType.COMPLETE, 'workflow.complete', workflows),
+        (WorkflowEventType.TASK_START, 'task.start', tasks),
+        (WorkflowEventType.TASK_COMPLETE, 'task.complete', tasks),
+        (WorkflowEventType.TASK_REVERT, 'task.revert', tasks),
+        (WorkflowEventType.COMMENT, 'task.comment', tasks),
+        (WorkflowEventType.ENDED, 'workflow.ended', workflows),
+        (WorkflowEventType.DELAY, 'workflow.delay', workflows),
+        (WorkflowEventType.REVERT, 'workflow.revert', workflows),
+        (WorkflowEventType.TASK_SKIP, 'task.skip', tasks),
         (
             WorkflowEventType.ENDED_BY_CONDITION,
             'workflow.ended_by_condition',
-            activity,
+            workflows,
         ),
-        (WorkflowEventType.URGENT, 'workflow.urgent', activity),
-        (WorkflowEventType.NOT_URGENT, 'workflow.not_urgent', activity),
+        (WorkflowEventType.URGENT, 'workflow.urgent', workflows),
+        (WorkflowEventType.NOT_URGENT, 'workflow.not_urgent', workflows),
         (
             WorkflowEventType.TASK_SKIP_NO_PERFORMERS,
             'task.skip_no_performers',
-            activity,
+            tasks,
         ),
         (
             WorkflowEventType.TASK_PERFORMER_CREATED,
             'task.performer_created',
-            audit,
+            tasks,
         ),
         (
             WorkflowEventType.TASK_PERFORMER_DELETED,
             'task.performer_deleted',
-            audit,
+            tasks,
         ),
-        (WorkflowEventType.FORCE_RESUME, 'workflow.force_resume', activity),
-        (WorkflowEventType.FORCE_DELAY, 'workflow.force_delay', activity),
+        (WorkflowEventType.FORCE_RESUME, 'workflow.force_resume', workflows),
+        (WorkflowEventType.FORCE_DELAY, 'workflow.force_delay', workflows),
         (
             WorkflowEventType.DUE_DATE_CHANGED,
             'task.due_date_changed',
-            activity,
+            tasks,
         ),
         (
             WorkflowEventType.SUB_WORKFLOW_RUN,
             'workflow.sub_workflow_run',
-            activity,
+            workflows,
         ),
         (
             WorkflowEventType.TASK_PERFORMER_GROUP_CREATED,
             'task.performer_group_created',
-            audit,
+            tasks,
         ),
         (
             WorkflowEventType.TASK_PERFORMER_GROUP_DELETED,
             'task.performer_group_deleted',
-            audit,
+            tasks,
         ),
-        (WorkflowEventType.TASK_DELAY, 'task.delay', activity),
-        (WorkflowEventType.TASK_DELEGATION, 'task.delegation', audit),
+        (WorkflowEventType.TASK_DELAY, 'task.delay', tasks),
+        (WorkflowEventType.TASK_DELEGATION, 'task.delegation', tasks),
     )
 
 
@@ -364,13 +368,3 @@ class FakeSink(BaseSink):
             raise self.raises
         if self.classify:
             raise SinkTemporaryError(str(exc))
-
-
-class FakeEmittingService(EventEmitMixin):
-
-    """ Smallest service the mixin serves: a user and an auth type,
-        for the tests of the actor it builds and of _publish. """
-
-    def __init__(self, user=None, auth_type=AuthTokenType.USER):
-        self.user = user
-        self.auth_type = auth_type

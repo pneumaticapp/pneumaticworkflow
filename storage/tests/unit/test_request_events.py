@@ -8,6 +8,10 @@ import pytest
 
 from src.application.dto import UploadFileCommand
 from src.domain.entities import FileRecord
+from src.shared_kernel.auth.user_types import (
+    JournalAuthType,
+    JournalUserType,
+)
 from src.shared_kernel.events.request_events import (
     RequestEvents,
     get_request_events,
@@ -16,7 +20,6 @@ from src.shared_kernel.events.schema import (
     PAYLOAD_STR_MAX,
     SERVICE_NAME,
     Actor,
-    ActorType,
     Event,
     EventName,
     RequestContext,
@@ -151,7 +154,8 @@ async def test_file_upload__command__upload_record(
             service=SERVICE_NAME,
             ts=datetime(2026, 9, 9, 12, 0, 0, 123, tzinfo=UTC),
             account_id=42,
-            actor=Actor(type=ActorType.USER, id=17),
+            actor=Actor(id=17, user_type=JournalUserType.USER),
+            auth_type='User',
             file_id=FILE_ID,
             context=sample_context,
             payload={
@@ -165,13 +169,20 @@ async def test_file_upload__command__upload_record(
 
 
 @pytest.mark.asyncio
-async def test_file_upload__api_key__actor_api_key(
+async def test_file_upload__api_key__user_with_api_auth(
     request_events,
     capturing_emitter,
     mock_request_events_now,
 ):
+    """An API key is still the user: the key is the auth type."""
+
     # arrange
-    user = Mock(user_id=17, account_id=42, actor_type=ActorType.API_KEY)
+    user = Mock(
+        user_id=17,
+        account_id=42,
+        journal_user_type=JournalUserType.USER,
+        journal_auth_type=JournalAuthType.API,
+    )
     command = UploadFileCommand(
         file_stream=io.BytesIO(b''),
         filename='a.txt',
@@ -190,20 +201,76 @@ async def test_file_upload__api_key__actor_api_key(
 
     # assert
     assert capturing_emitter.events[0].actor == Actor(
-        type=ActorType.API_KEY,
         id=17,
+        user_type=JournalUserType.USER,
     )
+    assert capturing_emitter.events[0].auth_type == 'API'
     mock_request_events_now.assert_called_once_with()
 
 
 @pytest.mark.asyncio
-async def test_file_upload__public_token__guest_without_user(
+async def test_file_upload__guest_token__guest_actor(
     request_events,
     capturing_emitter,
     mock_request_events_now,
 ):
     # arrange
-    user = Mock(user_id=None, account_id=42, actor_type=ActorType.GUEST)
+    user = Mock(
+        user_id=17,
+        account_id=42,
+        journal_user_type=JournalUserType.GUEST,
+        journal_auth_type=JournalAuthType.GUEST,
+    )
+    command = UploadFileCommand(
+        file_stream=io.BytesIO(b''),
+        filename='a.txt',
+        content_type='text/plain',
+        size=0,
+        user_id=17,
+        account_id=42,
+    )
+
+    # act
+    await request_events.file_upload(
+        user=user,
+        file_id=FILE_ID,
+        file=command,
+    )
+
+    # assert
+    assert capturing_emitter.events[0].actor == Actor(
+        id=17,
+        user_type=JournalUserType.GUEST,
+    )
+    assert capturing_emitter.events[0].auth_type == 'Guest'
+    mock_request_events_now.assert_called_once_with()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ('journal_auth_type', 'auth_type'),
+    [
+        (JournalAuthType.SHARED, 'Shared'),
+        (JournalAuthType.EMBEDDED, 'Embedded'),
+    ],
+)
+async def test_file_upload__public_token__no_actor(
+    request_events,
+    capturing_emitter,
+    mock_request_events_now,
+    journal_auth_type,
+    auth_type,
+):
+    """A shared or an embedded form acts for the account, nobody is
+    behind it: the record has no actor, the auth type says which."""
+
+    # arrange
+    user = Mock(
+        user_id=None,
+        account_id=42,
+        journal_user_type=None,
+        journal_auth_type=journal_auth_type,
+    )
     command = UploadFileCommand(
         file_stream=io.BytesIO(b''),
         filename='a.txt',
@@ -221,10 +288,9 @@ async def test_file_upload__public_token__guest_without_user(
     )
 
     # assert
-    assert capturing_emitter.events[0].actor == Actor(
-        type=ActorType.GUEST,
-        id=None,
-    )
+    assert capturing_emitter.events[0].actor is None
+    assert capturing_emitter.events[0].auth_type == auth_type
+    assert capturing_emitter.events[0].to_dict()['actor'] is None
     assert capturing_emitter.events[0].account_id == 42
     mock_request_events_now.assert_called_once_with()
 

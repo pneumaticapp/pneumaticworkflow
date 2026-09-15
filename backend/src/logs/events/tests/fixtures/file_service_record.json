@@ -1,11 +1,19 @@
 {
   "type": "file.download",
-  "category": "audit",
+  "category": "files",
   "service": "pneumatic-file-service",
   "ts": "2026-09-09T12:00:00.000123Z",
   "account_id": 42,
-  "actor": {"type": "user", "id": 17, "email": null},
-  "object": {"type": "file", "id": "0f8fad5b-d9cb-469f-a165-70867728950e"},
+  "actor": {
+    "id": 17,
+    "email": null,
+    "user_type": "user"
+  },
+  "auth_type": "User",
+  "object": {
+    "type": "file",
+    "id": "0f8fad5b-d9cb-469f-a165-70867728950e"
+  },
   "workflow_id": null,
   "task_id": null,
   "ip": "203.0.113.7",
@@ -16,6 +24,5 @@
     "size": 12345,
     "content_type": "application/pdf",
     "is_owner": true
-  },
-  "pii": ["ip", "user_agent", "payload.filename"]
+  }
 }

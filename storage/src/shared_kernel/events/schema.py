@@ -5,12 +5,11 @@ from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Any, Protocol
 
-from src.shared_kernel.auth.user_types import ActorType
+from src.shared_kernel.auth.user_types import JournalAuthType, JournalUserType
 
 TS_FORMAT = '%Y-%m-%dT%H:%M:%S.%f'
 TS_SUFFIX = 'Z'
 OBJECT_TYPE_FILE = 'file'
-FILE_PII = ('ip', 'user_agent', 'payload.filename')
 
 STREAM_KEY = 'pneumatic:events'
 PAYLOAD_STR_MAX = 2000
@@ -26,9 +25,9 @@ class EventName(StrEnum):
 
 
 class EventCategory(StrEnum):
-    """Category of the backend registry; every file type is audit."""
+    """Category of the backend registry; every file type is files."""
 
-    AUDIT = 'audit'
+    FILES = 'files'
 
 
 class ActorSource(Protocol):
@@ -46,7 +45,11 @@ class ActorSource(Protocol):
         """Tenant of the actor, the journal the record belongs to."""
 
     @property
-    def actor_type(self) -> ActorType:
+    def journal_user_type(self) -> JournalUserType | None:
+        """Kind of the person behind the request, None for no person."""
+
+    @property
+    def journal_auth_type(self) -> JournalAuthType | None:
         """Kind of the credential behind the request."""
 
 
@@ -94,18 +97,24 @@ def cut(value: str | None) -> str | None:
 
 @dataclass(frozen=True)
 class Actor:
-    """Who acted.
+    """The person who acted: a user of the account or a guest.
 
-    The e-mail is never known here: the token cache holds no address,
-    and the backend records of the same actor.id carry it.
+    How the person was authenticated is not part of the actor, it is
+    Event.auth_type. The e-mail is never known here: the token cache
+    holds no address, and the backend records of the same actor.id
+    carry it.
     """
 
-    type: ActorType
     id: int | None
+    user_type: JournalUserType
 
     def to_dict(self) -> dict[str, Any]:
         """Actor part of the envelope."""
-        return {'type': self.type.value, 'id': self.id, 'email': None}
+        return {
+            'id': self.id,
+            'email': None,
+            'user_type': self.user_type.value,
+        }
 
 
 @dataclass(frozen=True)
@@ -125,11 +134,17 @@ class Event:
     service: str
     ts: datetime
     account_id: int
-    actor: Actor
+    # None when no person is behind the request: a public or an embed
+    # token acts for the account, not for a user of it.
+    actor: Actor | None
+    # The credential behind the request, an AuthTokenType value of the
+    # backend: a session, an API key, a guest link, a shared or an
+    # embedded form. None for an anonymous request.
+    auth_type: str | None
     file_id: str
     context: RequestContext
     payload: dict[str, Any] = field(default_factory=dict)
-    category: EventCategory = EventCategory.AUDIT
+    category: EventCategory = EventCategory.FILES
 
     def to_dict(self) -> dict[str, Any]:
         """Build the envelope as the backend consumer expects it."""
@@ -139,7 +154,8 @@ class Event:
             'service': self.service,
             'ts': format_ts(self.ts),
             'account_id': self.account_id,
-            'actor': self.actor.to_dict(),
+            'actor': self.actor.to_dict() if self.actor else None,
+            'auth_type': self.auth_type,
             'object': {'type': OBJECT_TYPE_FILE, 'id': self.file_id},
             'workflow_id': None,
             'task_id': None,
@@ -147,5 +163,4 @@ class Event:
             'user_agent': self.context.user_agent,
             'request_id': self.context.request_id,
             'payload': dict(self.payload),
-            'pii': list(FILE_PII),
         }

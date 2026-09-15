@@ -1,11 +1,10 @@
 import pytest
 
+from src.accounts.enums import UserType
 from src.authentication.enums import AuthTokenType
 from src.logs.events.enums import (
-    ActorType,
-    EventCategory,
-    EventName,
     EventObjectType,
+    TemplateEvents,
 )
 from src.logs.events.schema import Actor, EventObject
 from src.processes.models.templates.template import Template
@@ -45,13 +44,14 @@ def test_destroy__template__emit_template_delete(
     # assert
     assert response.status_code == 204
     emit_mock.assert_called_once_with(
-        EventName.TEMPLATE_DELETE,
+        TemplateEvents.DELETE,
         account_id=account.id,
         actor=Actor(
-            type=ActorType.USER,
             id=owner.id,
             email=owner.email,
+            user_type=UserType.USER,
         ),
+        auth_type=AuthTokenType.USER,
         event_object=EventObject(
             type=EventObjectType.TEMPLATE,
             id=template.id,
@@ -63,7 +63,6 @@ def test_destroy__template__emit_template_delete(
         },
         workflow_id=None,
         task_id=None,
-        request=mocker.ANY,
     )
     templates_deleted_mock.assert_called_once_with(
         user=owner,
@@ -107,14 +106,15 @@ def test_destroy__template__event_keeps_request_context(
     assert response.status_code == 204
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.TEMPLATE_DELETE
-    assert event.category == EventCategory.AUDIT
+    assert event.type == TemplateEvents.DELETE
+    assert event.category == TemplateEvents.CATEGORY
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=owner.id,
         email=owner.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.TEMPLATE,
         id=template.id,

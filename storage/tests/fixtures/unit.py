@@ -28,7 +28,11 @@ from src.shared_kernel.auth.redis_client import (
     get_redis_client,
 )
 from src.shared_kernel.auth.token_auth import _compute_pbkdf2
-from src.shared_kernel.auth.user_types import ActorType, UserType
+from src.shared_kernel.auth.user_types import (
+    JournalAuthType,
+    JournalUserType,
+    UserType,
+)
 from src.shared_kernel.database.models import FileRecordORM
 from src.shared_kernel.events.emitter import EventEmitter, get_event_emitter
 from src.shared_kernel.events.request_events import RequestEvents
@@ -544,7 +548,8 @@ def backend_denied_contract_record():
 
 @pytest.fixture
 def backend_service_contract():
-    """The names both writers agree on: the stream and the actor types."""
+    """The names both writers agree on: the stream, the user and the
+    auth types."""
     return _read_contract(BACKEND_SERVICE_CONTRACT_PATH)
 
 
@@ -556,7 +561,8 @@ def sample_upload_event(sample_context):
         service=SERVICE_NAME,
         ts=CONTRACT_TS,
         account_id=42,
-        actor=Actor(type=ActorType.USER, id=17),
+        actor=Actor(id=17, user_type=JournalUserType.USER),
+        auth_type=JournalAuthType.USER.value,
         file_id=CONTRACT_FILE_ID,
         context=sample_context,
         payload={
@@ -575,7 +581,8 @@ def sample_denied_event(sample_context):
         service=SERVICE_NAME,
         ts=CONTRACT_TS,
         account_id=42,
-        actor=Actor(type=ActorType.USER, id=17),
+        actor=Actor(id=17, user_type=JournalUserType.USER),
+        auth_type=JournalAuthType.USER.value,
         file_id=CONTRACT_FILE_ID,
         context=sample_context,
         payload={
@@ -605,7 +612,8 @@ def sample_event(sample_context):
         service=SERVICE_NAME,
         ts=CONTRACT_TS,
         account_id=42,
-        actor=Actor(type=ActorType.USER, id=17),
+        actor=Actor(id=17, user_type=JournalUserType.USER),
+        auth_type=JournalAuthType.USER.value,
         file_id=CONTRACT_FILE_ID,
         context=sample_context,
         payload={
@@ -666,8 +674,13 @@ def request_events(capturing_emitter, sample_context):
 
 @pytest.fixture
 def actor_user():
-    """The actor of the contract record."""
-    return Mock(user_id=17, account_id=42, actor_type=ActorType.USER)
+    """The actor of the contract record: a user with a session."""
+    return Mock(
+        user_id=17,
+        account_id=42,
+        journal_user_type=JournalUserType.USER,
+        journal_auth_type=JournalAuthType.USER,
+    )
 
 
 @pytest.fixture

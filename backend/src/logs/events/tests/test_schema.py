@@ -4,13 +4,14 @@ from datetime import datetime, timedelta, timezone
 import pytest
 from django.core.serializers.json import DjangoJSONEncoder
 
-from src.logs.events.enums import ActorType, EventObjectType
+from src.accounts.enums import UserType
+from src.authentication.enums import AuthTokenType
+from src.logs.events.enums import EventObjectType
 from src.logs.events.schema import (
     Actor,
     Event,
     EventObject,
     dump_json,
-    pii_value,
     to_json,
     without_userinfo,
 )
@@ -30,11 +31,16 @@ def test_to_dict__filled_event__expected_json():
     assert data == {
         'id': '1725790000000-0',
         'type': 'workflow.run',
-        'category': 'audit',
+        'category': 'workflows',
         'service': 'pneumatic-backend',
         'ts': '2026-09-08T10:15:30.123456Z',
         'account_id': 42,
-        'actor': {'type': 'user', 'id': 17, 'email': 'ann@example.com'},
+        'actor': {
+            'id': 17,
+            'email': 'ann@example.com',
+            'user_type': 'user',
+        },
+        'auth_type': 'User',
         'object': {'type': 'workflow', 'id': 9001},
         'workflow_id': 9001,
         'task_id': None,
@@ -42,7 +48,6 @@ def test_to_dict__filled_event__expected_json():
         'user_agent': 'Mozilla/5.0',
         'request_id': '3f9c2c1e6d0b4a0f9e2b7c1d5a6e8f90',
         'payload': {'template_id': 12},
-        'pii': ['actor.email', 'ip', 'user_agent'],
     }
 
 
@@ -94,7 +99,7 @@ def test_from_dict__to_dict_result__round_trip():
 def test_from_dict__event_without_actor_and_object__both_none():
 
     # arrange
-    event = make_event(actor=None, object=None, pii=(), payload={}, id=None)
+    event = make_event(actor=None, object=None, payload={}, id=None)
     data = event.to_dict()
 
     # act
@@ -111,7 +116,7 @@ def test_from_dict__record_without_optional_keys__defaults():
     # arrange
     data = {
         'type': 'system.smoke',
-        'category': 'debug',
+        'category': 'other',
         'service': 'pneumatic-backend',
         'ts': '2026-09-08T10:15:30.123456Z',
         'account_id': 7,
@@ -122,7 +127,8 @@ def test_from_dict__record_without_optional_keys__defaults():
 
     # assert
     assert restored.payload == {}
-    assert restored.pii == ()
+    assert restored.actor is None
+    assert restored.auth_type is None
     assert restored.service == 'pneumatic-backend'
     assert restored.id is None
     assert restored.ts.tzinfo == timezone.utc
@@ -231,11 +237,61 @@ def test_event_object_from_dict__filled_dict__object():
     assert event_object == EventObject(type=EventObjectType.GROUP, id=5)
 
 
-@pytest.mark.django_db
-def test_actor_from_user__no_auth_type__user_actor():
+def test_to_dict__system_event__no_actor_and_no_auth_type():
 
-    """ A service that does not know the auth type acts for a person
-        signed in to a browser session. """
+    """ The system has no actor and no credential: both keys are
+        written as null, so that a record is read by eye as one of
+        the same shape. """
+
+    # arrange
+    event = make_event(actor=None, auth_type=None)
+
+    # act
+    data = event.to_dict()
+
+    # assert
+    assert data['actor'] is None
+    assert data['auth_type'] is None
+
+
+def test_from_dict__auth_type__read_back():
+
+    # arrange
+    data = make_event(auth_type=AuthTokenType.API).to_dict()
+
+    # act
+    restored = Event.from_dict(data=data)
+
+    # assert
+    assert restored.auth_type == 'API'
+
+
+def test_from_dict__guest_actor__user_type_read_back():
+
+    # arrange
+    data = make_event(
+        actor=Actor(id=3, email='guest@test.test', user_type=UserType.GUEST),
+        auth_type=AuthTokenType.GUEST,
+    ).to_dict()
+
+    # act
+    restored = Event.from_dict(data=data)
+
+    # assert
+    assert restored.actor == Actor(
+        id=3,
+        email='guest@test.test',
+        user_type='guest',
+    )
+    assert restored.auth_type == 'Guest'
+
+
+@pytest.mark.django_db
+def test_actor_from_user__user__id_email_and_type():
+
+    """ How the person was authenticated is not part of the actor:
+        the same person is the same actor behind a session and behind
+        an API key. """
 
     # arrange
     user = create_test_owner()
@@ -244,7 +300,11 @@ def test_actor_from_user__no_auth_type__user_actor():
     actor = Actor.from_user(user=user)
 
     # assert
-    assert actor == Actor(type=ActorType.USER, id=user.id, email=user.email)
+    assert actor == Actor(
+        id=user.id,
+        email=user.email,
+        user_type=UserType.USER,
+    )
 
 
 def test_to_json__value_no_encoder_knows__its_text():
@@ -275,45 +335,6 @@ def test_dump_json__value_no_encoder_knows__raise():
     assert str(ex.value) == (
         'Object of type object is not JSON serializable'
     )
-
-
-@pytest.mark.parametrize(
-    ('path', 'expected'),
-    [
-        ('ip', '203.0.113.7'),
-        ('user_agent', 'Mozilla/5.0'),
-        ('actor.email', 'ann@example.com'),
-        ('actor.id', 17),
-        ('object.id', 9001),
-        ('payload.template_id', 12),
-        ('payload.missing', None),
-        ('ip.value', None),
-        ('nothing', None),
-    ],
-)
-def test_pii_value__path__field_of_the_record(path, expected):
-
-    # arrange
-    event = make_event()
-
-    # act
-    result = pii_value(event=event, path=path)
-
-    # assert
-    assert result == expected
-
-
-def test_pii_value__no_actor__none():
-
-    # arrange
-    event = make_event(actor=None)
-    path = 'actor.email'
-
-    # act
-    result = pii_value(event=event, path=path)
-
-    # assert
-    assert result is None
 
 
 @pytest.mark.parametrize(

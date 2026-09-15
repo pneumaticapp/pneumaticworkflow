@@ -1,11 +1,11 @@
 import pytest
 
+from src.accounts.enums import UserType
+from src.authentication.enums import AuthTokenType
 from src.generics.exceptions import BaseServiceException
 from src.logs.events.enums import (
-    ActorType,
-    EventCategory,
-    EventName,
     EventObjectType,
+    TemplateEvents,
 )
 from src.logs.events.schema import Actor, EventObject
 from src.processes.models.templates.fieldset import FieldsetTemplate
@@ -37,14 +37,15 @@ def test_create__shared_fieldset__emit_fieldset_create(
     assert fieldset.name == 'Contacts'
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.FIELDSET_CREATE
-    assert event.category == EventCategory.AUDIT
+    assert event.type == TemplateEvents.FIELDSET_CREATE
+    assert event.category == TemplateEvents.CATEGORY
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=owner.id,
         email=owner.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.FIELDSET,
         id=fieldset.id,

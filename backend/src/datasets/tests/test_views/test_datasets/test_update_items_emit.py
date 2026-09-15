@@ -1,12 +1,12 @@
 import pytest
 
+from src.accounts.enums import UserType
+from src.authentication.enums import AuthTokenType
 from src.datasets.exceptions import DataSetServiceException
 from src.datasets.messages import MSG_DS_0002
 from src.datasets.services.dataset import DataSetService
 from src.logs.events.enums import (
-    ActorType,
-    EventCategory,
-    EventName,
+    DatasetEvents,
     EventObjectType,
 )
 from src.logs.events.schema import Actor, EventObject
@@ -48,14 +48,15 @@ def test_update_items__one_item__emit_dataset_items_replace(
     assert dataset.items.count() == 1
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.DATASET_ITEMS_REPLACE
-    assert event.category == EventCategory.AUDIT
+    assert event.type == DatasetEvents.ITEMS_REPLACE
+    assert event.category == DatasetEvents.CATEGORY
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=owner.id,
         email=owner.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.DATASET,
         id=dataset.id,

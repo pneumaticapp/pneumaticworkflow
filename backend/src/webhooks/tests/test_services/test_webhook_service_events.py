@@ -1,11 +1,11 @@
 import pytest
 
+from src.accounts.enums import UserType
 from src.authentication.enums import AuthTokenType
 from src.logs.events.schema import Actor, EventObject
 from src.logs.events.enums import (
-    ActorType,
-    EventName,
     EventObjectType,
+    WebhookEvents,
 )
 from src.processes.tests.fixtures import create_test_owner
 from src.webhooks.enums import HookEvent
@@ -23,7 +23,7 @@ def test_subscribe__all_events__emit_webhook_subscribe(mocker):
     # arrange
     user = create_test_owner()
     url = 'https://192.0.2.1/hook'
-    emit_mock = mocker.patch('src.logs.events.mixins.emit')
+    emit_mock = mocker.patch('src.logs.events.services.emit')
     webhooks_subscribed_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.webhooks_subscribed',
@@ -39,15 +39,18 @@ def test_subscribe__all_events__emit_webhook_subscribe(mocker):
 
     # assert
     emit_mock.assert_called_once_with(
-        EventName.WEBHOOK_SUBSCRIBE,
+        WebhookEvents.SUBSCRIBE,
         account_id=user.account_id,
         actor=Actor(
-            type=ActorType.USER,
             id=user.id,
             email=user.email,
+            user_type=UserType.USER,
         ),
+        auth_type=AuthTokenType.USER,
         event_object=EventObject(type=EventObjectType.WEBHOOK),
         payload={'url': url, 'event': ALL_EVENTS},
+        workflow_id=None,
+        task_id=None,
     )
     webhooks_subscribed_mock.assert_called_once_with()
     accounts_webhooks_subscribed_mock.assert_called_once_with(
@@ -56,12 +59,12 @@ def test_subscribe__all_events__emit_webhook_subscribe(mocker):
     )
 
 
-def test_subscribe__api_key_auth__emit_api_key_actor_type(mocker):
+def test_subscribe__api_key_auth__emit_api_auth_type(mocker):
 
     # arrange
     user = create_test_owner()
     url = 'https://192.0.2.1/hook'
-    emit_mock = mocker.patch('src.logs.events.mixins.emit')
+    emit_mock = mocker.patch('src.logs.events.services.emit')
     webhooks_subscribed_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.webhooks_subscribed',
@@ -77,15 +80,18 @@ def test_subscribe__api_key_auth__emit_api_key_actor_type(mocker):
 
     # assert
     emit_mock.assert_called_once_with(
-        EventName.WEBHOOK_SUBSCRIBE,
+        WebhookEvents.SUBSCRIBE,
         account_id=user.account_id,
         actor=Actor(
-            type=ActorType.API_KEY,
             id=user.id,
             email=user.email,
+            user_type=UserType.USER,
         ),
+        auth_type=AuthTokenType.API,
         event_object=EventObject(type=EventObjectType.WEBHOOK),
         payload={'url': url, 'event': ALL_EVENTS},
+        workflow_id=None,
+        task_id=None,
     )
     webhooks_subscribed_mock.assert_called_once_with()
     accounts_webhooks_subscribed_mock.assert_called_once_with(
@@ -100,7 +106,7 @@ def test_subscribe_event__single_event__emit_webhook_subscribe(mocker):
     user = create_test_owner()
     event = HookEvent.WORKFLOW_STARTED
     url = 'https://192.0.2.1/hook'
-    emit_mock = mocker.patch('src.logs.events.mixins.emit')
+    emit_mock = mocker.patch('src.logs.events.services.emit')
     webhooks_subscribed_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.webhooks_subscribed',
@@ -116,15 +122,18 @@ def test_subscribe_event__single_event__emit_webhook_subscribe(mocker):
 
     # assert
     emit_mock.assert_called_once_with(
-        EventName.WEBHOOK_SUBSCRIBE,
+        WebhookEvents.SUBSCRIBE,
         account_id=user.account_id,
         actor=Actor(
-            type=ActorType.USER,
             id=user.id,
             email=user.email,
+            user_type=UserType.USER,
         ),
+        auth_type=AuthTokenType.USER,
         event_object=EventObject(type=EventObjectType.WEBHOOK),
         payload={'url': url, 'event': event},
+        workflow_id=None,
+        task_id=None,
     )
     webhooks_subscribed_mock.assert_called_once_with()
     accounts_webhooks_subscribed_mock.assert_called_once_with(
@@ -139,7 +148,7 @@ def test_unsubscribe__all_events__emit_webhook_unsubscribe(mocker):
     user = create_test_owner()
     url = 'https://192.0.2.1/hook'
     create_test_webhooks(user=user, url=url)
-    emit_mock = mocker.patch('src.logs.events.mixins.emit')
+    emit_mock = mocker.patch('src.logs.events.services.emit')
     webhooks_unsubscribed_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.webhooks_unsubscribed',
@@ -151,15 +160,18 @@ def test_unsubscribe__all_events__emit_webhook_unsubscribe(mocker):
 
     # assert
     emit_mock.assert_called_once_with(
-        EventName.WEBHOOK_UNSUBSCRIBE,
+        WebhookEvents.UNSUBSCRIBE,
         account_id=user.account_id,
         actor=Actor(
-            type=ActorType.USER,
             id=user.id,
             email=user.email,
+            user_type=UserType.USER,
         ),
+        auth_type=AuthTokenType.USER,
         event_object=EventObject(type=EventObjectType.WEBHOOK),
         payload={'url': url, 'event': ALL_EVENTS},
+        workflow_id=None,
+        task_id=None,
     )
     webhooks_unsubscribed_mock.assert_called_once_with()
 
@@ -183,7 +195,7 @@ def test_unsubscribe__two_targets__emit_an_event_per_target(mocker):
         event=HookEvent.WORKFLOW_COMPLETED,
         url=second_url,
     )
-    emit_mock = mocker.patch('src.logs.events.mixins.emit')
+    emit_mock = mocker.patch('src.logs.events.services.emit')
     webhooks_unsubscribed_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.webhooks_unsubscribed',
@@ -197,26 +209,32 @@ def test_unsubscribe__two_targets__emit_an_event_per_target(mocker):
     assert emit_mock.call_count == 2
     emit_mock.assert_has_calls([
         mocker.call(
-            EventName.WEBHOOK_UNSUBSCRIBE,
+            WebhookEvents.UNSUBSCRIBE,
             account_id=user.account_id,
             actor=Actor(
-                type=ActorType.USER,
                 id=user.id,
                 email=user.email,
+                user_type=UserType.USER,
             ),
+            auth_type=AuthTokenType.USER,
             event_object=EventObject(type=EventObjectType.WEBHOOK),
             payload={'url': first_url, 'event': ALL_EVENTS},
+            workflow_id=None,
+            task_id=None,
         ),
         mocker.call(
-            EventName.WEBHOOK_UNSUBSCRIBE,
+            WebhookEvents.UNSUBSCRIBE,
             account_id=user.account_id,
             actor=Actor(
-                type=ActorType.USER,
                 id=user.id,
                 email=user.email,
+                user_type=UserType.USER,
             ),
+            auth_type=AuthTokenType.USER,
             event_object=EventObject(type=EventObjectType.WEBHOOK),
             payload={'url': second_url, 'event': ALL_EVENTS},
+            workflow_id=None,
+            task_id=None,
         ),
     ])
     webhooks_unsubscribed_mock.assert_called_once_with()
@@ -226,7 +244,7 @@ def test_unsubscribe__no_subscriptions__no_event(mocker):
 
     # arrange
     user = create_test_owner()
-    emit_mock = mocker.patch('src.logs.events.mixins.emit')
+    emit_mock = mocker.patch('src.logs.events.services.emit')
     webhooks_unsubscribed_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.webhooks_unsubscribed',
@@ -248,7 +266,7 @@ def test_unsubscribe_event__single_event__emit_webhook_unsubscribe(mocker):
     event = HookEvent.WORKFLOW_STARTED
     url = 'https://192.0.2.1/hook'
     create_test_webhook(user=user, event=event, url=url)
-    emit_mock = mocker.patch('src.logs.events.mixins.emit')
+    emit_mock = mocker.patch('src.logs.events.services.emit')
     webhooks_unsubscribed_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.webhooks_unsubscribed',
@@ -260,15 +278,18 @@ def test_unsubscribe_event__single_event__emit_webhook_unsubscribe(mocker):
 
     # assert
     emit_mock.assert_called_once_with(
-        EventName.WEBHOOK_UNSUBSCRIBE,
+        WebhookEvents.UNSUBSCRIBE,
         account_id=user.account_id,
         actor=Actor(
-            type=ActorType.USER,
             id=user.id,
             email=user.email,
+            user_type=UserType.USER,
         ),
+        auth_type=AuthTokenType.USER,
         event_object=EventObject(type=EventObjectType.WEBHOOK),
         payload={'url': url, 'event': event},
+        workflow_id=None,
+        task_id=None,
     )
     webhooks_unsubscribed_mock.assert_called_once_with()
 
@@ -288,7 +309,7 @@ def test_unsubscribe_event__other_subscriptions_remain__emit_only(mocker):
         event=HookEvent.WORKFLOW_COMPLETED,
         url=url,
     )
-    emit_mock = mocker.patch('src.logs.events.mixins.emit')
+    emit_mock = mocker.patch('src.logs.events.services.emit')
     webhooks_unsubscribed_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.webhooks_unsubscribed',
@@ -300,15 +321,18 @@ def test_unsubscribe_event__other_subscriptions_remain__emit_only(mocker):
 
     # assert
     emit_mock.assert_called_once_with(
-        EventName.WEBHOOK_UNSUBSCRIBE,
+        WebhookEvents.UNSUBSCRIBE,
         account_id=user.account_id,
         actor=Actor(
-            type=ActorType.USER,
             id=user.id,
             email=user.email,
+            user_type=UserType.USER,
         ),
+        auth_type=AuthTokenType.USER,
         event_object=EventObject(type=EventObjectType.WEBHOOK),
         payload={'url': url, 'event': event},
+        workflow_id=None,
+        task_id=None,
     )
     webhooks_unsubscribed_mock.assert_not_called()
 
@@ -317,7 +341,7 @@ def test_unsubscribe_event__no_subscription__no_event(mocker):
 
     # arrange
     user = create_test_owner()
-    emit_mock = mocker.patch('src.logs.events.mixins.emit')
+    emit_mock = mocker.patch('src.logs.events.services.emit')
     webhooks_unsubscribed_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.webhooks_unsubscribed',

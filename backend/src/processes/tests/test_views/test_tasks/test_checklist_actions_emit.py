@@ -1,12 +1,12 @@
 import pytest
 from django.utils import timezone
 
+from src.accounts.enums import UserType
+from src.authentication.enums import AuthTokenType
 from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.logs.events.enums import (
-    ActorType,
-    EventCategory,
-    EventName,
     EventObjectType,
+    TaskEvents,
 )
 from src.logs.events.schema import Actor, EventObject
 from src.processes.models.workflows.checklist import ChecklistSelection
@@ -64,14 +64,15 @@ def test_mark__performer__emit_checklist_mark(
     assert response.status_code == 200
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.TASK_CHECKLIST_MARK
-    assert event.category == EventCategory.ACTIVITY
+    assert event.type == TaskEvents.CHECKLIST_MARK
+    assert event.category == TaskEvents.CATEGORY
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=owner.id,
         email=owner.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.CHECKLIST,
         id=checklist.id,
@@ -131,14 +132,15 @@ def test_mark__guest__emit_guest_actor(
     assert response.status_code == 200
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.TASK_CHECKLIST_MARK
-    assert event.category == EventCategory.ACTIVITY
+    assert event.type == TaskEvents.CHECKLIST_MARK
+    assert event.category == TaskEvents.CATEGORY
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.GUEST,
         id=guest.id,
         email=guest.email,
+        user_type=UserType.GUEST,
     )
+    assert event.auth_type == AuthTokenType.GUEST
     assert event.object == EventObject(
         type=EventObjectType.CHECKLIST,
         id=checklist.id,
@@ -275,14 +277,15 @@ def test_unmark__performer__emit_checklist_unmark(
     assert response.status_code == 200
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.TASK_CHECKLIST_UNMARK
-    assert event.category == EventCategory.ACTIVITY
+    assert event.type == TaskEvents.CHECKLIST_UNMARK
+    assert event.category == TaskEvents.CATEGORY
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=owner.id,
         email=owner.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.CHECKLIST,
         id=checklist.id,
@@ -342,14 +345,15 @@ def test_unmark__guest__emit_guest_actor(
     assert response.status_code == 200
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.TASK_CHECKLIST_UNMARK
-    assert event.category == EventCategory.ACTIVITY
+    assert event.type == TaskEvents.CHECKLIST_UNMARK
+    assert event.category == TaskEvents.CATEGORY
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.GUEST,
         id=guest.id,
         email=guest.email,
+        user_type=UserType.GUEST,
     )
+    assert event.auth_type == AuthTokenType.GUEST
     assert event.object == EventObject(
         type=EventObjectType.CHECKLIST,
         id=checklist.id,

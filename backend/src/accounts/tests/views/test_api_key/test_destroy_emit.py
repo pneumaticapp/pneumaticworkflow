@@ -1,9 +1,10 @@
 import pytest
 
+from src.accounts.enums import UserType
 from src.accounts.services.api_key import APIKeyService
+from src.authentication.enums import AuthTokenType
 from src.logs.events.enums import (
-    ActorType,
-    EventName,
+    ApiKeyEvents,
     EventObjectType,
 )
 from src.logs.events.schema import Actor, EventObject, to_json
@@ -36,13 +37,14 @@ def test_destroy__api_keys_endpoint__event_has_no_raw_key(
     event = fake_stream.last_event()
     record = to_json(event.to_dict())
     assert api_key.token not in record
-    assert event.type == EventName.API_KEY_REVOKE
+    assert event.type == ApiKeyEvents.REVOKE
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=owner.id,
         email=owner.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.API_KEY,
         id=api_key.id,

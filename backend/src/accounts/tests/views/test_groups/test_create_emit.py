@@ -1,15 +1,14 @@
 import pytest
 
-from src.accounts.enums import BillingPlanType
+from src.accounts.enums import BillingPlanType, UserType
 from src.accounts.models import UserGroup
 from src.accounts.services.exceptions import UserGroupServiceException
 from src.accounts.services.group import UserGroupService
 from src.analysis.events import GroupsAnalyticsEvent
 from src.authentication.enums import AuthTokenType
 from src.logs.events.enums import (
-    ActorType,
-    EventName,
     EventObjectType,
+    GroupEvents,
 )
 from src.logs.events.schema import Actor, EventObject
 from src.processes.tests.fixtures import (
@@ -59,13 +58,14 @@ def test_create__groups_endpoint__event_keeps_request_context(
     assert response.status_code == 200
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.GROUP_CREATE
+    assert event.type == GroupEvents.CREATE
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=owner.id,
         email=owner.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     group = UserGroup.objects.get(account=account, name='Sales')
     assert event.object == EventObject(
         type=EventObjectType.GROUP,

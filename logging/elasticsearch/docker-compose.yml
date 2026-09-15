@@ -2,9 +2,9 @@
 #
 # This file belongs to the STORAGE machine, not to the machine that runs
 # Pneumatic. The application side is one collector config
-# (logging/otel/backend-elasticsearch.yaml, its header lists what has to be
-# prepared) plus a few variables in the .env of that machine, described in
-# the Elasticsearch section of default.env.
+# (otel-collector/backend-elasticsearch.yaml in the root of the repository)
+# plus a few variables in the .env of that machine, described in the
+# Elasticsearch section of default.env.
 #
 #   cp elasticsearch.env.example .env   # then fill every REQUIRED line in
 #   ./scripts/make-certs.sh             # CA + node certificates
@@ -14,7 +14,7 @@
 # Everything that holds data is a named docker volume: a missing bind-mount
 # source is created as root:root and a container that runs as uid 1000 cannot
 # write into it, while an empty named volume inherits owner and mode from the
-# image. Same reasoning as loki-data in logging/compose/logs.yml.
+# image. Same reasoning as loki-data in logging/grafana/docker-compose.yml.
 name: pneumatic-es
 
 services:

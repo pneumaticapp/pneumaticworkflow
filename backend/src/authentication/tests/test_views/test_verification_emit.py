@@ -1,12 +1,11 @@
 import pytest
 
+from src.accounts.enums import UserType
 from src.accounts.tokens import VerificationToken
 from src.authentication import messages
 from src.authentication.enums import AuthTokenType
 from src.logs.events.enums import (
-    ActorType,
-    EventCategory,
-    EventName,
+    AccountEvents,
     EventObjectType,
 )
 from src.logs.events.schema import Actor, EventObject
@@ -44,14 +43,15 @@ def test_verify__not_verified__emit_account_verify(
     assert account.is_verified is True
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.ACCOUNT_VERIFY
-    assert event.category == EventCategory.AUDIT
+    assert event.type == AccountEvents.VERIFY
+    assert event.category == AccountEvents.CATEGORY
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=owner.id,
         email=owner.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type is None
     assert event.object == EventObject(
         type=EventObjectType.ACCOUNT,
         id=account.id,
@@ -148,14 +148,15 @@ def test_resend__not_verified__emit_verification_resend(
     assert response.data['email'] == owner.email
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.ACCOUNT_VERIFICATION_RESEND
-    assert event.category == EventCategory.ACTIVITY
+    assert event.type == AccountEvents.VERIFICATION_RESEND
+    assert event.category == AccountEvents.CATEGORY
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=admin.id,
         email=admin.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.ACCOUNT,
         id=account.id,

@@ -1,14 +1,15 @@
 import pytest
 
+from src.accounts.enums import UserType
 from src.logs.enums import LogsBackend
 from src.logs.events.adapters.workflow import (
     emit_workflow_event,
     workflow_event_to_kwargs,
 )
 from src.logs.events.enums import (
-    ActorType,
-    EventName,
     EventObjectType,
+    TaskEvents,
+    WorkflowEvents,
 )
 from src.logs.events.exceptions import UnknownEventTypeError
 from src.logs.events.schema import Actor, EventObject
@@ -42,12 +43,12 @@ def test_to_kwargs__event_with_a_task__task_object():
     kwargs = workflow_event_to_kwargs(event=event)
 
     # assert
-    assert kwargs['event_type'] == EventName.TASK_COMPLETE
+    assert kwargs['event_type'] == TaskEvents.COMPLETE
     assert kwargs['account_id'] == user.account_id
     assert kwargs['actor'] == Actor(
-        type=ActorType.USER,
         id=user.id,
         email=user.email,
+        user_type=UserType.USER,
     )
     assert kwargs['event_object'] == EventObject(
         type=EventObjectType.TASK,
@@ -80,7 +81,7 @@ def test_to_kwargs__event_without_a_task__workflow_object():
     kwargs = workflow_event_to_kwargs(event=event)
 
     # assert
-    assert kwargs['event_type'] == EventName.WORKFLOW_RUN
+    assert kwargs['event_type'] == WorkflowEvents.RUN
     assert kwargs['event_object'] == EventObject(
         type=EventObjectType.WORKFLOW,
         id=workflow.id,
@@ -94,10 +95,10 @@ def test_to_kwargs__event_without_a_task__workflow_object():
     }
 
 
-def test_to_kwargs__event_without_a_user__system_actor():
+def test_to_kwargs__event_without_a_user__no_actor():
 
     """ A delay, a skip or a template condition is made by the
-        workflow engine itself. """
+        workflow engine itself: the record has no actor. """
 
     # arrange
     user = create_test_owner()
@@ -108,9 +109,7 @@ def test_to_kwargs__event_without_a_user__system_actor():
     kwargs = workflow_event_to_kwargs(event=event)
 
     # assert
-    assert kwargs['actor'] == Actor(type=ActorType.SYSTEM)
-    assert kwargs['actor'].id is None
-    assert kwargs['actor'].email is None
+    assert kwargs['actor'] is None
 
 
 def test_to_kwargs__comment_event__payload_without_the_text():
@@ -134,7 +133,7 @@ def test_to_kwargs__comment_event__payload_without_the_text():
 
     # assert
     assert event.text == 'Secret customer data'
-    assert kwargs['event_type'] == EventName.TASK_COMMENT
+    assert kwargs['event_type'] == TaskEvents.COMMENT
     assert kwargs['payload'] == {
         'workflow_event_id': event.id,
         'with_attachments': False,
@@ -162,7 +161,7 @@ def test_to_kwargs__performer_event__target_user_in_the_payload():
     kwargs = workflow_event_to_kwargs(event=event)
 
     # assert
-    assert kwargs['event_type'] == EventName.TASK_PERFORMER_CREATED
+    assert kwargs['event_type'] == TaskEvents.PERFORMER_CREATED
     assert kwargs['payload'] == {
         'workflow_event_id': event.id,
         'with_attachments': False,
@@ -195,7 +194,7 @@ def test_to_kwargs__performer_group_event__target_group_in_the_payload():
     kwargs = workflow_event_to_kwargs(event=event)
 
     # assert
-    assert kwargs['event_type'] == EventName.TASK_PERFORMER_GROUP_CREATED
+    assert kwargs['event_type'] == TaskEvents.PERFORMER_GROUP_CREATED
     assert kwargs['payload'] == {
         'workflow_event_id': event.id,
         'with_attachments': False,
@@ -225,7 +224,7 @@ def test_to_kwargs__performer_group_deleted__target_group_in_the_payload():
     kwargs = workflow_event_to_kwargs(event=event)
 
     # assert
-    assert kwargs['event_type'] == EventName.TASK_PERFORMER_GROUP_DELETED
+    assert kwargs['event_type'] == TaskEvents.PERFORMER_GROUP_DELETED
     assert kwargs['payload']['target_group_id'] == group.id
 
 
@@ -247,12 +246,12 @@ def test_to_kwargs__event_with_ids_only__no_extra_query(
         kwargs = workflow_event_to_kwargs(event=stored)
 
     # assert
-    assert kwargs['event_type'] == EventName.WORKFLOW_RUN
+    assert kwargs['event_type'] == WorkflowEvents.RUN
     assert kwargs['payload'] == {
         'workflow_event_id': event.id,
         'with_attachments': False,
     }
-    assert kwargs['actor'] == Actor(type=ActorType.USER, id=user.id)
+    assert kwargs['actor'] == Actor(id=user.id)
 
 
 def test_to_kwargs__undeclared_type__raise():
@@ -314,7 +313,7 @@ def test_emit_workflow_event__valid_event__emit_called(mocker, settings):
         type_event=WorkflowEventType.TASK_COMPLETE,
         task=task,
     )
-    settings.LOGS_BACKEND = LogsBackend.LOCAL
+    settings.LOGS_BACKEND = LogsBackend.OTLP
     emit_mock = mocker.patch('src.logs.events.adapters.workflow.emit')
     report_error_mock = mocker.patch(
         'src.logs.events.adapters.workflow.report_error',
@@ -325,9 +324,13 @@ def test_emit_workflow_event__valid_event__emit_called(mocker, settings):
 
     # assert
     emit_mock.assert_called_once_with(
-        event_type=EventName.TASK_COMPLETE,
+        event_type=TaskEvents.COMPLETE,
         account_id=user.account_id,
-        actor=Actor(type=ActorType.USER, id=user.id, email=user.email),
+        actor=Actor(
+            id=user.id,
+            email=user.email,
+            user_type=UserType.USER,
+        ),
         event_object=EventObject(type=EventObjectType.TASK, id=task.id),
         workflow_id=workflow.id,
         task_id=task.id,
@@ -356,7 +359,7 @@ def test_emit_workflow_event__unknown_type_strict__raise(mocker, settings):
         user=user,
         type_event=999,
     )
-    settings.LOGS_BACKEND = LogsBackend.LOCAL
+    settings.LOGS_BACKEND = LogsBackend.OTLP
     settings.LOGS_STRICT = True
     emit_mock = mocker.patch('src.logs.events.adapters.workflow.emit')
     report_error_mock = mocker.patch(
@@ -389,7 +392,7 @@ def test_emit_workflow_event__unknown_type_not_strict__reported(
         user=user,
         type_event=999,
     )
-    settings.LOGS_BACKEND = LogsBackend.LOCAL
+    settings.LOGS_BACKEND = LogsBackend.OTLP
     settings.LOGS_STRICT = False
     emit_mock = mocker.patch('src.logs.events.adapters.workflow.emit')
     report_error_mock = mocker.patch(

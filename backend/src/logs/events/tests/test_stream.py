@@ -1076,7 +1076,7 @@ def test_to_event__category_not_string__none():
 
     # arrange
     data = make_event().to_dict()
-    data['category'] = ['audit']
+    data['category'] = ['users']
     fields = {'data': json.dumps(data)}
 
     # act

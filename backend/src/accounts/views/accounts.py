@@ -99,7 +99,8 @@ class AccountView(
         service.partial_update(**slz.validated_data, force_save=True)
         if changed_fields:
             AuditEventService.account_updated(
-                request=request,
+                user=request.user,
+                auth_type=request.token_type,
                 account=instance,
                 changed_fields=changed_fields,
             )

@@ -18,21 +18,6 @@ class LogsConfig(AppConfig):
             the third sends a personal field outside the pii.*
             namespace that names one. Failing here turns every one of
             them into a deployment that refuses to start.
-
-            The receiver of the admin site log is connected here and
-            not by a decorator: the module imports LogEntry, which is
-            not importable before the apps are loaded.
         """
 
         validate_registry()
-        from django.contrib.admin.models import LogEntry  # noqa: PLC0415
-        from django.db.models.signals import post_save  # noqa: PLC0415
-
-        from src.logs.events.admin_site import (  # noqa: PLC0415
-            publish_log_entry,
-        )
-        post_save.connect(
-            publish_log_entry,
-            sender=LogEntry,
-            dispatch_uid='src.logs.events.admin_site.publish_log_entry',
-        )

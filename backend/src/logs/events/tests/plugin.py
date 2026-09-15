@@ -55,7 +55,7 @@ def events_enabled(settings):
 
     """ Turn the pipeline on: tests run with LOGS_BACKEND='none'. """
 
-    settings.LOGS_BACKEND = LogsBackend.LOCAL
+    settings.LOGS_BACKEND = LogsBackend.OTLP
     return settings
 
 

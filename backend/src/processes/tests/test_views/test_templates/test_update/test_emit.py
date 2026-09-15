@@ -1,11 +1,10 @@
 import pytest
 
+from src.accounts.enums import UserType
 from src.authentication.enums import AuthTokenType
 from src.logs.events.enums import (
-    ActorType,
-    EventCategory,
-    EventName,
     EventObjectType,
+    TemplateEvents,
 )
 from src.logs.events.schema import Actor, EventObject
 from src.processes.enums import (
@@ -94,13 +93,14 @@ def test_update__published_template__emit_template_publish(
     assert response.status_code == 200
     template.refresh_from_db()
     emit_mock.assert_called_once_with(
-        EventName.TEMPLATE_PUBLISH,
+        TemplateEvents.PUBLISH,
         account_id=account.id,
         actor=Actor(
-            type=ActorType.USER,
             id=owner.id,
             email=owner.email,
+            user_type=UserType.USER,
         ),
+        auth_type=AuthTokenType.USER,
         event_object=EventObject(
             type=EventObjectType.TEMPLATE,
             id=template.id,
@@ -112,7 +112,6 @@ def test_update__published_template__emit_template_publish(
         },
         workflow_id=None,
         task_id=None,
-        request=mocker.ANY,
     )
     update_workflows_mock.assert_called_once_with(
         template_id=template.id,
@@ -191,13 +190,14 @@ def test_update__draft__emit_template_draft_save_with_draft_name(
     template.refresh_from_db()
     assert template.name == 'Published name'
     emit_mock.assert_called_once_with(
-        EventName.TEMPLATE_DRAFT_SAVE,
+        TemplateEvents.DRAFT_SAVE,
         account_id=account.id,
         actor=Actor(
-            type=ActorType.USER,
             id=owner.id,
             email=owner.email,
+            user_type=UserType.USER,
         ),
+        auth_type=AuthTokenType.USER,
         event_object=EventObject(
             type=EventObjectType.TEMPLATE,
             id=template.id,
@@ -209,7 +209,6 @@ def test_update__draft__emit_template_draft_save_with_draft_name(
         },
         workflow_id=None,
         task_id=None,
-        request=mocker.ANY,
     )
     update_workflows_mock.assert_not_called()
     template_updated_mock.assert_called_once_with(template=template)
@@ -264,14 +263,15 @@ def test_update__draft__event_keeps_request_context(
     saved = Template.objects.get(id=template.id)
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.TEMPLATE_DRAFT_SAVE
-    assert event.category == EventCategory.ACTIVITY
+    assert event.type == TemplateEvents.DRAFT_SAVE
+    assert event.category == TemplateEvents.CATEGORY
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=owner.id,
         email=owner.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.TEMPLATE,
         id=saved.id,

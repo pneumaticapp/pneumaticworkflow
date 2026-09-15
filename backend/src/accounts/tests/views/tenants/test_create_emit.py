@@ -1,15 +1,13 @@
 import pytest
 
-from src.accounts.enums import BillingPlanType, LeaseLevel
+from src.accounts.enums import BillingPlanType, LeaseLevel, UserType
 from src.accounts.messages import MSG_A_0025
 from src.accounts.services.account import AccountService
 from src.accounts.services.exceptions import AccountServiceException
 from src.accounts.services.user import UserService
 from src.authentication.enums import AuthTokenType
 from src.logs.events.enums import (
-    ActorType,
-    EventCategory,
-    EventName,
+    AccountEvents,
     EventObjectType,
 )
 from src.logs.events.schema import Actor, EventObject
@@ -103,14 +101,15 @@ def test_create__free_plan__emit_tenant_create_in_master_account(
     assert response.status_code == 200
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.TENANT_CREATE
-    assert event.category == EventCategory.AUDIT
+    assert event.type == AccountEvents.TENANT_CREATE
+    assert event.category == AccountEvents.CATEGORY
     assert event.account_id == master_account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=master_owner.id,
         email=master_owner.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.ACCOUNT,
         id=tenant_account.id,
@@ -121,7 +120,6 @@ def test_create__free_plan__emit_tenant_create_in_master_account(
     }
     assert event.ip == '10.10.0.12'
     assert event.user_agent == 'Chrome/141'
-    assert event.pii == ('actor.email', 'ip', 'user_agent', 'payload.name')
     account_service_init_mock.assert_called_once_with(
         is_superuser=False,
         auth_type=AuthTokenType.USER,

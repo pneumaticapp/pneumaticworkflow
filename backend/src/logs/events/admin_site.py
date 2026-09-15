@@ -1,39 +1,17 @@
 """ Audit events of the Django admin site.
 
     A superuser changes users, accounts and groups there directly, past
-    every service that publishes an event. The admin site writes a
-    LogEntry for each addition, change and deletion it makes, whatever
-    the model and whether a ModelAdmin saves it itself or through a
-    bulk action, so one receiver of that row covers all of them. """
+    every service that publishes an event. The admin site reports each
+    addition, change and deletion it makes to the log_* hooks of the
+    ModelAdmin - the change form, the password form, the inlines and
+    the "delete selected" action all go through them - so the hooks
+    are where the journal is written from. JournaledAdminMixin adds
+    that to the ModelAdmin of a model worth journaling. """
 
-import json
-from typing import Any, Dict, Iterable, List, Optional, Union
+from typing import Any, Dict, Iterable, List
 
-from django.contrib.admin.models import (
-    ADDITION,
-    CHANGE,
-    DELETION,
-    LogEntry,
-)
-from django.core.exceptions import ObjectDoesNotExist
+from src.logs.events.services import AuditEventService
 
-from src.logs.events.emitter import emit, logs_enabled
-from src.logs.events.enums import EventName, EventObjectType
-from src.logs.events.schema import Actor, EventObject
-
-EVENT_TYPES: Dict[int, str] = {
-    ADDITION: EventName.ADMIN_CREATE,
-    CHANGE: EventName.ADMIN_UPDATE,
-    DELETION: EventName.ADMIN_DELETE,
-}
-OBJECT_TYPES: Dict[str, str] = {
-    'accounts.account': EventObjectType.ACCOUNT,
-    'accounts.user': EventObjectType.USER,
-    'accounts.usergroup': EventObjectType.GROUP,
-    'accounts.apikey': EventObjectType.API_KEY,
-    'accounts.userinvite': EventObjectType.INVITE,
-}
-ACCOUNT_MODEL = 'accounts.account'
 # The password form of the user admin names its two inputs, not the
 # field they set.
 PASSWORD_FIELDS: Dict[str, str] = {
@@ -42,93 +20,67 @@ PASSWORD_FIELDS: Dict[str, str] = {
 }
 
 
-def publish_log_entry(
-    sender: Any,
-    instance: LogEntry,
-    created: bool,
-    **kwargs,
-) -> None:
+class JournaledAdminMixin:
 
-    """ post_save receiver of LogEntry, connected in LogsConfig.ready.
+    """ Publish an audit event for every row the admin site writes.
 
-        The admin site writes the row inside the request that made the
-        change, so emit() finds the address and the browser of the
-        superuser in the context of that request.
+        The three hooks keep writing the LogEntry the admin site shows
+        in its history, then publish the same fact to the journal. The
+        deletion hook runs before the delete, so the row and its
+        account are still there. """
 
-        With the journal off nothing is read: the content type, the
-        edited row and the superuser each cost a query. """
+    # The hooks are called positionally by the admin site, so the
+    # second argument is named after what it is, not "object".
 
-    event_type = EVENT_TYPES.get(instance.action_flag)
-    if not created or event_type is None or not logs_enabled():
-        return
-    label = _model_label(instance)
-    object_type = OBJECT_TYPES.get(label, EventObjectType.OTHER)
-    payload: Dict[str, Any] = {'model': label}
-    payload.update(
-        _changes(_parse_change_message(instance.change_message)),
-    )
-    emit(
-        event_type,
-        account_id=_account_id(instance, label),
-        actor=Actor.from_user(instance.user),
-        event_object=EventObject(
-            type=object_type,
-            id=(
-                None if object_type == EventObjectType.INVITE
-                else _object_id(instance.object_id)
-            ),
-        ),
-        payload=payload,
-    )
+    def log_addition(self, request, instance, message):
+        entry = super().log_addition(request, instance, message)
+        AuditEventService.admin_created(
+            user=request.user,
+            target=instance,
+            model=_model_label(instance),
+            changes=_changes(message),
+        )
+        return entry
 
+    def log_change(self, request, instance, message):
+        entry = super().log_change(request, instance, message)
+        AuditEventService.admin_updated(
+            user=request.user,
+            target=instance,
+            model=_model_label(instance),
+            changes=_changes(message),
+        )
+        return entry
 
-def _model_label(entry: LogEntry) -> str:
-    if entry.content_type_id is None:
-        return ''
-    return f'{entry.content_type.app_label}.{entry.content_type.model}'
+    def log_deletion(self, request, instance, object_repr):
+        entry = super().log_deletion(request, instance, object_repr)
+        AuditEventService.admin_deleted(
+            user=request.user,
+            target=instance,
+            model=_model_label(instance),
+        )
+        return entry
 
 
-def _object_id(value: Optional[str]) -> Optional[Union[int, str]]:
-    if value is None:
-        return None
-    return int(value) if value.isdigit() else value
+def _model_label(instance: Any) -> str:
+    opts = instance._meta
+    return f'{opts.app_label}.{opts.model_name}'
 
 
-def _account_id(entry: LogEntry, label: str) -> int:
+def _changes(messages: Any) -> Dict[str, Any]:
 
-    """ The account the changed row belongs to, so that the account
-        sees what a superuser did to it. A row of no account, a product
-        or a system message, goes to the account of the superuser.
+    """ Names of the changed fields and the inline rows touched, from
+        the message the admin site builds for its own log
+        (construct_change_message).
 
-        A deleted row is still in the table here: the admin site logs
-        a deletion before it deletes. A row logged by anything else
-        after a delete falls back to the account of whoever wrote the
-        log. """
-
-    object_id = _object_id(entry.object_id)
-    if label == ACCOUNT_MODEL and isinstance(object_id, int):
-        return object_id
-    try:
-        edited = entry.get_edited_object()
-    except (ObjectDoesNotExist, AttributeError, ValueError):
-        edited = None
-    account_id = getattr(edited, 'account_id', None)
-    if account_id is None:
-        return entry.user.account_id
-    return account_id
-
-
-def _changes(messages: Optional[list]) -> Dict[str, Any]:
-
-    """ Names of the changed fields and the inline rows touched.
-
-        The message the admin site stores also holds the text form of
-        each inline row, and that is the e-mail of a user as often as
-        not: only the model and the field names are kept.
+        The message also holds the text form of each inline row, and
+        that is the e-mail of a user as often as not: only the model
+        and the field names are kept.
 
         An inline change is one line, "changed Group: name, photo", and
         not an object: normalize_payload turns an object inside a list
-        into one JSON string anyway. """
+        into one JSON string anyway. A message that is plain text says
+        nothing about fields and is read as no changes. """
 
     if not isinstance(messages, list):
         return {}
@@ -163,15 +115,3 @@ def _field_names(fields: Iterable[Any]) -> List[str]:
     return sorted({
         PASSWORD_FIELDS.get(str(name), str(name)) for name in fields
     })
-
-
-def _parse_change_message(value: str) -> Any:
-
-    """ The JSON the admin site stores in LogEntry.change_message. A
-        row written by hand may hold plain text instead: it says
-        nothing about fields, so it is read as no changes. """
-
-    try:
-        return json.loads(value or '[]')
-    except ValueError:
-        return None

@@ -1,11 +1,11 @@
 import pytest
 
+from src.accounts.enums import UserType
 from src.authentication.enums import AuthTokenType
 from src.logs.events.schema import Actor, EventObject
 from src.logs.events.enums import (
-    ActorType,
-    EventName,
     EventObjectType,
+    UserEvents,
 )
 from src.processes.tests.fixtures import create_test_owner
 
@@ -32,18 +32,18 @@ def test_signout__user_token__emit_user_logout(
     # assert
     assert response.status_code == 204
     emit_mock.assert_called_once_with(
-        EventName.USER_LOGOUT,
+        UserEvents.LOGOUT,
         account_id=user.account_id,
         actor=Actor(
-            type=ActorType.USER,
             id=user.id,
             email=user.email,
+            user_type=UserType.USER,
         ),
+        auth_type=AuthTokenType.USER,
         event_object=EventObject(type=EventObjectType.USER, id=user.id),
         payload={'auth_type': AuthTokenType.USER},
         workflow_id=None,
         task_id=None,
-        request=mocker.ANY,
     )
     expire_token_mock.assert_called_once_with(token)
 
@@ -76,13 +76,14 @@ def test_signout__user_token__event_keeps_request_context(
     assert response.status_code == 204
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.USER_LOGOUT
+    assert event.type == UserEvents.LOGOUT
     assert event.account_id == user.account_id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=user.id,
         email=user.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.USER,
         id=user.id,
@@ -114,18 +115,18 @@ def test_signout__api_key__emit_user_logout_with_api_key_actor(
     # assert
     assert response.status_code == 204
     emit_mock.assert_called_once_with(
-        EventName.USER_LOGOUT,
+        UserEvents.LOGOUT,
         account_id=user.account_id,
         actor=Actor(
-            type=ActorType.API_KEY,
             id=user.id,
             email=user.email,
+            user_type=UserType.USER,
         ),
+        auth_type=AuthTokenType.API,
         event_object=EventObject(type=EventObjectType.USER, id=user.id),
         payload={'auth_type': AuthTokenType.API},
         workflow_id=None,
         task_id=None,
-        request=mocker.ANY,
     )
     expire_token_mock.assert_not_called()
 

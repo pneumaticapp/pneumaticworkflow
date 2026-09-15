@@ -146,7 +146,8 @@ class TenantsViewSet(
                     raise_validation_error(message=ex.message)
             instance.delete()
             AuditEventService.tenant_deleted(
-                request=self.request,
+                user=self.request.user,
+                auth_type=self.request.token_type,
                 tenant=instance,
             )
             account_service = AccountService(
@@ -286,7 +287,8 @@ class TenantsViewSet(
                     auth_type=request.token_type,
                 )
                 AuditEventService.tenant_created(
-                    request=request,
+                    user=request.user,
+                    auth_type=request.token_type,
                     tenant=tenant_account,
                 )
         response_slz = self.serializer_class(instance=tenant_account)

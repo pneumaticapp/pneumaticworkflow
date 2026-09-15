@@ -176,7 +176,8 @@ class SharedFieldsetTemplateViewSet(
             raise_validation_error(message=ex.message)
         else:
             AuditEventService.fieldset_created(
-                request=request,
+                user=request.user,
+                auth_type=request.token_type,
                 fieldset=fieldset,
             )
             response_serializer = SharedFieldsetTemplateSerializer(fieldset)
@@ -233,7 +234,11 @@ class SharedFieldsetTemplateViewSet(
         except BaseServiceException as ex:
             raise_validation_error(message=ex.message)
         fieldset.refresh_from_db()
-        AuditEventService.fieldset_updated(request=request, fieldset=fieldset)
+        AuditEventService.fieldset_updated(
+            user=request.user,
+            auth_type=request.token_type,
+            fieldset=fieldset,
+        )
         response_serializer = SharedFieldsetTemplateSerializer(fieldset)
         return self.response_ok(response_serializer.data)
 
@@ -262,7 +267,8 @@ class SharedFieldsetTemplateViewSet(
         except BaseServiceException as ex:
             raise_validation_error(message=ex.message)
         AuditEventService.fieldset_deleted(
-            request=request,
+            user=request.user,
+            auth_type=request.token_type,
             fieldset=fieldset,
         )
         return self.response_ok()
@@ -294,7 +300,8 @@ class SharedFieldsetTemplateViewSet(
             raise_validation_error(message=ex.message)
         else:
             AuditEventService.fieldset_cloned(
-                request=request,
+                user=request.user,
+                auth_type=request.token_type,
                 clone=clone,
                 source_fieldset_id=fieldset.id,
             )

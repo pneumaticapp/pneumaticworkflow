@@ -1,12 +1,12 @@
 import pytest
 
+from src.accounts.enums import UserType
 from src.logs.enums import LogsBackend
 from src.logs.events.adapters.workflow import WORKFLOW_EVENT_TYPE_NAMES
 from src.logs.events.enums import (
-    ActorType,
     EventCategory,
-    EventName,
     EventObjectType,
+    WorkflowEvents,
 )
 from src.logs.events.tests.fixtures import expected_workflow_events
 from src.processes.enums import WorkflowEventType
@@ -91,17 +91,17 @@ def test_workflow_run_event__pipeline_enabled__filled_event(
     # assert
     event = fake_stream.last_event()
     assert len(fake_stream.events) == 1
-    assert event.type == EventName.WORKFLOW_RUN
-    assert event.category == EventCategory.AUDIT
+    assert event.type == WorkflowEvents.RUN
+    assert event.category == EventCategory.WORKFLOWS
     assert event.account_id == user.account_id
     assert event.workflow_id == workflow.id
-    assert event.actor.type == ActorType.USER
     assert event.actor.id == user.id
     assert event.actor.email == user.email
+    assert event.actor.user_type == UserType.USER
+    assert event.auth_type is None
     assert event.object.type == EventObjectType.WORKFLOW
     assert event.object.id == workflow.id
     assert event.payload['workflow_name'] == workflow.name
-    assert event.pii == ('actor.email', 'payload.workflow_name')
 
 
 def test_workflow_run_event__pipeline_off__nothing_written(

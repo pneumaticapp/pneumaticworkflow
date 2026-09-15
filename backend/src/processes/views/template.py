@@ -437,7 +437,8 @@ class TemplateViewSet(
             )
         response_data = serializer.get_response_data()
         AuditEventService.template_saved(
-            request=request,
+            user=request.user,
+            auth_type=request.token_type,
             template=template,
             name=response_data['name'],
         )
@@ -505,7 +506,8 @@ class TemplateViewSet(
         response_serializer = self.get_serializer(instance=template)
         response_data = response_serializer.get_response_data()
         AuditEventService.template_saved(
-            request=request,
+            user=request.user,
+            auth_type=request.token_type,
             template=template,
             name=response_data['name'],
         )
@@ -532,7 +534,8 @@ class TemplateViewSet(
         with transaction.atomic():
             clone = serializer.save_as_draft()
         AuditEventService.template_cloned(
-            request=request,
+            user=request.user,
+            auth_type=request.token_type,
             template=clone,
             name=template_data_clone['name'],
         )
@@ -752,7 +755,8 @@ class TemplateViewSet(
             is_superuser=request.is_superuser,
         )
         AuditEventService.template_deleted(
-            request=request,
+            user=request.user,
+            auth_type=request.token_type,
             template=template,
         )
         return self.response_ok()
@@ -937,7 +941,10 @@ class TemplateViewSet(
         except OpenAiServiceException as ex:
             raise_validation_error(message=ex.message)
         else:
-            AuditEventService.template_generated_with_ai(request=request)
+            AuditEventService.template_generated_with_ai(
+                user=request.user,
+                auth_type=request.token_type,
+            )
             return self.response_ok(data)
 
     @extend_schema(
@@ -969,7 +976,8 @@ class TemplateViewSet(
             raise_validation_error(message=ex.message)
         else:
             AuditEventService.template_saved(
-                request=request,
+                user=request.user,
+                auth_type=request.token_type,
                 template=template,
                 name=template.name,
                 source=TemplateSource.BY_STEPS,
@@ -1022,7 +1030,8 @@ class TemplateViewSet(
             raise_validation_error(message=ex.message)
         else:
             AuditEventService.template_saved(
-                request=request,
+                user=request.user,
+                auth_type=request.token_type,
                 template=template,
                 name=template.name,
                 source=TemplateSource.LIBRARY,
@@ -1051,7 +1060,8 @@ class TemplateViewSet(
         else:
             template.delete()
         AuditEventService.template_draft_discarded(
-            request=request,
+            user=request.user,
+            auth_type=request.token_type,
             template=template,
             template_deleted=template_deleted,
         )
@@ -1090,7 +1100,8 @@ class TemplateViewSet(
         # the pages with offset, and only the first one is the action.
         if not filter_slz.validated_data.get('offset'):
             AuditEventService.templates_exported(
-                request=request,
+                user=request.user,
+                auth_type=request.token_type,
                 filters=dict(filter_slz.validated_data),
             )
         return self.paginated_response(queryset)
@@ -1151,7 +1162,8 @@ class TemplateViewSet(
         except TemplatePresetServiceException as ex:
             raise_validation_error(message=ex.message)
         AuditEventService.template_preset_created(
-            request=request,
+            user=request.user,
+            auth_type=request.token_type,
             preset=preset,
         )
         return self.response_ok(self.get_serializer(preset).data)

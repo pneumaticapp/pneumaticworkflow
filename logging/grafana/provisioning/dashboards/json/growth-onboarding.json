@@ -1186,7 +1186,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "(count by (account_id) (sum by (account_id, actor_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | actor_type=\"user\" [$__range])))) and sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=\"user.signup\" [$__range]))",
+          "expr": "(count by (account_id) (sum by (account_id, actor_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | auth_type=\"User\" [$__range])))) and sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | event_type=\"user.signup\" [$__range]))",
           "instant": true,
           "legendFormat": "{{account_id}}",
           "queryType": "instant",

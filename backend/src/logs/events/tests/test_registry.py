@@ -2,13 +2,18 @@ import pytest
 
 from src.logs.events import registry as registry_module
 from src.logs.events.adapters.workflow import WORKFLOW_EVENT_TYPE_NAMES
-from src.logs.events.enums import EventCategory, EventName
+from src.logs.events.enums import (
+    EVENT_CLASSES,
+    EventCategory,
+    FileEvents,
+    TemplateEvents,
+    UserEvents,
+)
 from src.logs.events.exceptions import (
     EventsError,
     UnknownEventTypeError,
 )
 from src.logs.events.registry import (
-    ACTOR_PII,
     EVENT_TYPES,
     REGISTRY,
     EventType,
@@ -35,8 +40,8 @@ def test_validate_registry__duplicated_name__raise(mocker):
 
     # arrange
     event_types = (
-        EventType(name='user.login', category=EventCategory.AUDIT),
-        EventType(name='user.login', category=EventCategory.AUDIT),
+        EventType(name='user.login', category=EventCategory.USERS),
+        EventType(name='user.login', category=EventCategory.USERS),
     )
     mocker.patch.object(
         registry_module,
@@ -56,7 +61,7 @@ def test_validate_registry__name_without_domain__raise(mocker):
 
     # arrange
     event_types = (
-        EventType(name='user_login', category=EventCategory.AUDIT),
+        EventType(name='user_login', category=EventCategory.USERS),
     )
     mocker.patch.object(
         registry_module,
@@ -79,7 +84,7 @@ def test_validate_registry__name_with_trailing_newline__raise(mocker):
 
     # arrange
     event_types = (
-        EventType(name='user.login\n', category=EventCategory.AUDIT),
+        EventType(name='user.login\n', category=EventCategory.USERS),
     )
     mocker.patch.object(
         registry_module,
@@ -115,15 +120,16 @@ def test_validate_registry__undeclared_category__raise(mocker):
     )
 
 
-def test_validate_registry__pii_path_of_unknown_field__raise(mocker):
+def test_validate_registry__constant_without_a_row__raise(mocker):
+
+    """ A constant of an events class that the table does not
+        declare would fail every emit under LOGS_STRICT: the start
+        of the process has to name it. """
 
     # arrange
-    event_types = (
-        EventType(
-            name='user.login',
-            category=EventCategory.AUDIT,
-            pii=('workflow_id.value',),
-        ),
+    event_types = tuple(
+        event_type for event_type in EVENT_TYPES
+        if event_type.name != UserEvents.LOGIN
     )
     mocker.patch.object(
         registry_module,
@@ -137,125 +143,17 @@ def test_validate_registry__pii_path_of_unknown_field__raise(mocker):
 
     # assert
     assert str(ex.value) == (
-        'Invalid pii path "workflow_id.value" of the event type: '
-        'user.login'
-    )
-
-
-def test_validate_registry__pii_root_with_a_field__raise(mocker):
-
-    """ ip and user_agent are values, not namespaces: "ip.x" names
-        nothing and would leave the address as a plain attribute. """
-
-    # arrange
-    event_types = (
-        EventType(
-            name='user.login',
-            category=EventCategory.AUDIT,
-            pii=('ip.x',),
-        ),
-    )
-    mocker.patch.object(
-        registry_module,
-        attribute='EVENT_TYPES',
-        new=event_types,
-    )
-
-    # act
-    with pytest.raises(EventsError) as ex:
-        validate_registry()
-
-    # assert
-    assert str(ex.value) == (
-        'Invalid pii path "ip.x" of the event type: user.login'
-    )
-
-
-def test_validate_registry__pii_namespace_without_field__raise(mocker):
-
-    # arrange
-    event_types = (
-        EventType(
-            name='user.login',
-            category=EventCategory.AUDIT,
-            pii=('payload',),
-        ),
-    )
-    mocker.patch.object(
-        registry_module,
-        attribute='EVENT_TYPES',
-        new=event_types,
-    )
-
-    # act
-    with pytest.raises(EventsError) as ex:
-        validate_registry()
-
-    # assert
-    assert str(ex.value) == (
-        'Invalid pii path "payload" of the event type: user.login'
-    )
-
-
-def test_validate_registry__every_pii_form__ok(mocker):
-
-    # arrange
-    event_types = (
-        EventType(
-            name='user.login',
-            category=EventCategory.AUDIT,
-            pii=(
-                'ip',
-                'user_agent',
-                'actor.email',
-                'object.id',
-                'payload.target_email',
-            ),
-        ),
-    )
-    mocker.patch.object(
-        registry_module,
-        attribute='EVENT_TYPES',
-        new=event_types,
-    )
-
-    # act
-    result = validate_registry()
-
-    # assert
-    assert result is None
-
-
-def test_event_type__actor_pii_declared__not_duplicated():
-
-    """ A type that declares a path of ACTOR_PII itself keeps its own
-        order, and the rest of ACTOR_PII follows once. """
-
-    # arrange
-    pii = ('ip', 'payload.name')
-
-    # act
-    event_type = EventType(
-        name='user.login',
-        category=EventCategory.AUDIT,
-        pii=pii,
-    )
-
-    # assert
-    assert event_type.pii == (
-        'ip',
-        'payload.name',
-        'actor.email',
-        'user_agent',
+        'Event type user.login of UserEvents is not declared '
+        'in the registry'
     )
 
 
 def test_registry__event_names__one_declaration_per_constant():
 
-    """ EventName is the list of the types the code emits, the
-        registry is the list of the types the pipeline accepts: a
-        constant without a declaration fails every emit under
-        LOGS_STRICT, a declaration without a constant is dead. """
+    """ The events classes list the types the code emits, the
+        registry lists the types the pipeline accepts: a constant
+        without a declaration fails every emit under LOGS_STRICT, a
+        declaration without a constant is dead. """
 
     # arrange
     names = event_name_values()
@@ -268,94 +166,83 @@ def test_registry__event_names__one_declaration_per_constant():
     assert len(EVENT_TYPES) == len(REGISTRY)
 
 
+@pytest.mark.parametrize('events_class', EVENT_CLASSES)
+def test_registry__events_class__category_of_the_class(events_class):
+
+    # arrange
+    names = event_name_values() & set(vars(events_class).values())
+
+    # act
+    categories = {REGISTRY[name].category for name in names}
+
+    # assert
+    assert categories == {events_class.CATEGORY}
+
+
 @pytest.mark.parametrize('name', sorted(WORKFLOW_EVENT_TYPE_NAMES.values()))
-def test_registry__workflow_type__declares_the_names_as_personal(name):
+def test_registry__workflow_type__described(name):
 
-    """ The adapter puts workflow_name and task_name into the payload
-        of all 24 mapped types, and both routinely carry a person's
-        name. A type that does not declare them sends them as plain
-        attributes past the redaction rule of the collector. """
+    """ The adapter maps all 24 workflow event types onto a declared
+        type of the workflows or the tasks category. """
 
     # arrange
-    expected_pii = (
-        'actor.email',
-        'ip',
-        'user_agent',
-        'payload.workflow_name',
-        'payload.task_name',
-    )
+    categories = {EventCategory.WORKFLOWS, EventCategory.TASKS}
 
     # act
     event_type = REGISTRY[name]
 
     # assert
-    assert event_type.pii == expected_pii
+    assert event_type.category in categories
+    assert event_type.description != ''
 
 
-def test_registry__login_as__target_email_declared_as_personal():
+def test_registry__login_as__users_category():
 
     # arrange
-    name = EventName.USER_LOGIN_AS
+    name = UserEvents.LOGIN_AS
 
     # act
     event_type = REGISTRY[name]
 
     # assert
-    assert event_type.pii == (
-        'actor.email',
-        'ip',
-        'user_agent',
-        'payload.target_email',
-    )
-    assert event_type.category == EventCategory.AUDIT
+    assert event_type.category == EventCategory.USERS
+    assert event_type.description == 'Superuser signed in as a user'
 
 
-def test_registry__template_clone__activity_with_the_name_as_personal():
+def test_registry__template_clone__templates_category():
 
     # arrange
-    name = EventName.TEMPLATE_CLONE
+    name = TemplateEvents.CLONE
 
     # act
     event_type = REGISTRY[name]
 
     # assert
-    assert event_type.pii == (
-        'actor.email',
-        'ip',
-        'user_agent',
-        'payload.name',
-    )
-    assert event_type.category == EventCategory.ACTIVITY
+    assert event_type.category == EventCategory.TEMPLATES
 
 
 @pytest.mark.parametrize(
     'name',
     (
-        EventName.FILE_UPLOAD,
-        EventName.FILE_DOWNLOAD,
-        EventName.FILE_ACCESS_DENIED,
+        FileEvents.UPLOAD,
+        FileEvents.DOWNLOAD,
+        FileEvents.ACCESS_DENIED,
     ),
 )
-def test_registry__file_type__audit_with_the_filename_as_personal(name):
+def test_registry__file_type__files_category(name):
 
-    """ The file service writes these records; the sink asks this
-        registry for the personal fields, so the declaration here is
-        what keeps the file name out of an external backend. """
+    """ The file service writes these records into the same stream;
+        the backend declares them so that the consumer files them
+        under a category of their own. """
 
     # arrange
-    expected_pii = (
-        'actor.email',
-        'ip',
-        'user_agent',
-        'payload.filename',
-    )
+    expected_category = EventCategory.FILES
 
     # act
     event_type = REGISTRY[name]
 
     # assert
-    assert event_type.category == EventCategory.AUDIT
-    assert event_type.pii == expected_pii
+    assert event_type.category == expected_category
 
 
 def test_resolve__unknown_type_in_strict_mode__raise(settings):
@@ -372,14 +259,14 @@ def test_resolve__unknown_type_in_strict_mode__raise(settings):
     assert str(ex.value) == 'Unknown event type: nope.nope'
 
 
-def test_resolve__unknown_type_in_running_deployment__debug_category(
+def test_resolve__unknown_type_in_running_deployment__other_category(
     mocker,
     settings,
 ):
 
     """ A typo must not break a user request outside the strict
-        configurations, and the personal fields of the actor are kept
-        declared: an empty list would send them as plain attributes. """
+        configurations: the event is filed under OTHER and the type
+        is reported. """
 
     # arrange
     settings.LOGS_STRICT = False
@@ -392,9 +279,11 @@ def test_resolve__unknown_type_in_running_deployment__debug_category(
     event_type = resolve_event_type(name=name)
 
     # assert
-    assert event_type.name == 'nope.nope'
-    assert event_type.category == EventCategory.DEBUG
-    assert event_type.pii == ACTOR_PII
+    assert event_type == EventType(
+        name='nope.nope',
+        category=EventCategory.OTHER,
+    )
+    assert event_type.description == ''
     report_error_mock.assert_called_once_with(
         message='Unknown event type',
         data={'event_type': 'nope.nope'},
@@ -440,47 +329,3 @@ def test_resolve__two_unknown_types__reported_under_their_own_keys(
             key='unknown-event-type:other.other',
         ),
     ])
-
-
-@pytest.mark.parametrize(
-    ('name', 'pii'),
-    (
-        (
-            EventName.USER_PASSWORD_RESET_REQUEST,
-            ('actor.email', 'ip', 'user_agent', 'payload.target_email'),
-        ),
-        (EventName.USER_PASSWORD_RESET, ('actor.email', 'ip', 'user_agent')),
-        (EventName.USER_PASSWORD_CHANGE, ('actor.email', 'ip', 'user_agent')),
-        (EventName.ACCOUNT_UPDATE, ('actor.email', 'ip', 'user_agent')),
-        (
-            EventName.USER_CREATE,
-            ('actor.email', 'ip', 'user_agent', 'payload.target_email'),
-        ),
-        (EventName.USER_TRANSFER, ('actor.email', 'ip', 'user_agent')),
-        (
-            EventName.INVITE_CREATE,
-            ('actor.email', 'ip', 'user_agent', 'payload.target_email'),
-        ),
-        (
-            EventName.INVITE_RESEND,
-            ('actor.email', 'ip', 'user_agent', 'payload.target_email'),
-        ),
-    ),
-)
-def test_registry__account_and_password_type__audit_with_declared_pii(
-    name,
-    pii,
-):
-
-    """ The address of the person an admin or a guest acts upon is
-        personal data like the address of the actor. """
-
-    # arrange
-    expected_category = EventCategory.AUDIT
-
-    # act
-    event_type = REGISTRY[name]
-
-    # assert
-    assert event_type.category == expected_category
-    assert event_type.pii == pii

@@ -2,13 +2,12 @@ from datetime import date
 
 import pytest
 
-from src.accounts.enums import AbsenceStatus
+from src.accounts.enums import AbsenceStatus, UserType
 from src.accounts.messages import MSG_A_0049, MSG_A_0052
+from src.authentication.enums import AuthTokenType
 from src.logs.events.enums import (
-    ActorType,
-    EventCategory,
-    EventName,
     EventObjectType,
+    UserEvents,
 )
 from src.logs.events.schema import Actor, EventObject
 from src.processes.tests.fixtures import (
@@ -58,14 +57,15 @@ def test_user_activate_vacation__self__emit_actor_is_the_user(
     assert response.status_code == 200
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.USER_VACATION_ACTIVATE
-    assert event.category == EventCategory.AUDIT
+    assert event.type == UserEvents.VACATION_ACTIVATE
+    assert event.category == UserEvents.CATEGORY
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=user.id,
         email=user.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.USER,
         id=user.id,
@@ -125,14 +125,15 @@ def test_users_activate_vacation__admin_for_user__emit_actor_is_admin(
     assert response.status_code == 200
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.USER_VACATION_ACTIVATE
-    assert event.category == EventCategory.AUDIT
+    assert event.type == UserEvents.VACATION_ACTIVATE
+    assert event.category == UserEvents.CATEGORY
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=owner.id,
         email=owner.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.USER,
         id=user.id,
@@ -221,14 +222,15 @@ def test_users_deactivate_vacation__admin_for_user__emit_actor_is_admin(
     assert response.status_code == 200
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.USER_VACATION_DEACTIVATE
-    assert event.category == EventCategory.AUDIT
+    assert event.type == UserEvents.VACATION_DEACTIVATE
+    assert event.category == UserEvents.CATEGORY
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=owner.id,
         email=owner.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.USER,
         id=user.id,
@@ -270,14 +272,15 @@ def test_user_deactivate_vacation__self__emit_actor_is_the_user(
     assert response.status_code == 200
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.USER_VACATION_DEACTIVATE
-    assert event.category == EventCategory.AUDIT
+    assert event.type == UserEvents.VACATION_DEACTIVATE
+    assert event.category == UserEvents.CATEGORY
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=user.id,
         email=user.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.USER,
         id=user.id,

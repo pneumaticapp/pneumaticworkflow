@@ -16,8 +16,7 @@ from src.analysis.events import GroupsAnalyticsEvent
 from src.analysis.tasks import track_group_analytics
 from src.executor import RawSqlExecutor
 from src.generics.base.service import BaseModelService
-from src.logs.events.enums import EventName, EventObjectType
-from src.logs.events.mixins import EventEmitMixin
+from src.logs.events import AuditEventService
 from src.notifications.tasks import (
     send_group_created_notification,
     send_group_deleted_notification,
@@ -50,16 +49,7 @@ from src.storage.utils import sync_account_file_fields
 UserModel = get_user_model()
 
 
-class UserGroupService(EventEmitMixin, BaseModelService):
-
-    def _publish_group(self, event_type: str, payload: dict) -> None:
-        self._publish(
-            event_type,
-            account_id=self.instance.account_id,
-            object_type=EventObjectType.GROUP,
-            object_id=self.instance.id,
-            payload=payload,
-        )
+class UserGroupService(BaseModelService):
 
     def _get_template_ids(self) -> List[int]:
         template_owner_ids = TemplateOwner.objects.filter(
@@ -134,12 +124,11 @@ class UserGroupService(EventEmitMixin, BaseModelService):
             account_id=self.user.account_id,
             group_data=GroupWebsocketSerializer(self.instance).data,
         )
-        self._publish_group(
-            EventName.GROUP_CREATE,
-            payload={
-                'name': self.instance.name,
-                'users_ids': list(users or ()),
-            },
+        AuditEventService.group_created(
+            user=self.user,
+            auth_type=self.auth_type,
+            group=self.instance,
+            users_ids=list(users or ()),
         )
 
     def _send_users_notification(
@@ -295,9 +284,10 @@ class UserGroupService(EventEmitMixin, BaseModelService):
             changed_fields.append('users')
         if new_name is not None and new_name != self.instance.name:
             changed_fields.append('name')
-        if 'photo' in update_kwargs and (
-            self._blank_as_none(new_photo) != self._blank_as_none(old_photo)
-        ):
+        # A photo is empty both as NULL and as '': the row stores NULL
+        # and the client sends it back as an empty string.
+        photo_changed = (new_photo or None) != (old_photo or None)
+        if 'photo' in update_kwargs and photo_changed:
             changed_fields.append('photo')
 
         if (
@@ -340,15 +330,14 @@ class UserGroupService(EventEmitMixin, BaseModelService):
             account_id=self.user.account_id,
             group_data=GroupWebsocketSerializer(self.instance).data,
         )
-        if changed_fields:
-            self._publish_group(
-                EventName.GROUP_UPDATE,
-                payload={
-                    'changed_fields': sorted(changed_fields),
-                    'added_users_ids': added_users_ids or [],
-                    'removed_users_ids': removed_users_ids or [],
-                },
-            )
+        AuditEventService.group_updated(
+            user=self.user,
+            auth_type=self.auth_type,
+            group=self.instance,
+            changed_fields=changed_fields,
+            added_users_ids=added_users_ids or [],
+            removed_users_ids=removed_users_ids or [],
+        )
 
         if added_users_ids:
             self._send_added_users_notifications(added_users_ids)
@@ -401,12 +390,11 @@ class UserGroupService(EventEmitMixin, BaseModelService):
             is_superuser=self.is_superuser,
         )
         self.instance.delete()
-        self._publish_group(
-            EventName.GROUP_DELETE,
-            payload={
-                'name': self.instance.name,
-                'users_ids': users,
-            },
+        AuditEventService.group_deleted(
+            user=self.user,
+            auth_type=self.auth_type,
+            group=self.instance,
+            users_ids=users,
         )
         # Revoke PERFORMER_GROUP view permissions.  After soft-delete
         # the group is no longer active, so sync_performer_group calls

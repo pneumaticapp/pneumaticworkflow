@@ -2,7 +2,7 @@
   "annotations": {
     "list": []
   },
-  "description": "Is the journal itself healthy: how much comes in, from where, and the things that should never happen - event types nobody declared (the registry downgrades them to debug and reports to Sentry), payloads dropped for size, and the delay between an event and its delivery to the store.",
+  "description": "Is the journal itself healthy: how much comes in, from where, and the things that should never happen - event types nobody declared (the registry files them under the other category and reports to Sentry), payloads dropped for size, and the delay between an event and its delivery to the store.",
   "editable": false,
   "graphTooltip": 1,
   "id": null,
@@ -245,7 +245,7 @@
         "type": "loki",
         "uid": "pneumatic-loki"
       },
-      "description": "Records of category debug that are not the smoke test: an event type the registry does not declare. Red means a typo or a service ahead of the backend.",
+      "description": "Records of category other that are not the smoke test: an event type the registry does not declare. Red means a typo or a service ahead of the backend.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -302,7 +302,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "sum(count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", event_category=\"debug\"} [$__range]))",
+          "expr": "sum(count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", event_category=\"other\"} [$__range]))",
           "instant": true,
           "legendFormat": "",
           "queryType": "instant",
@@ -568,7 +568,7 @@
         "type": "loki",
         "uid": "pneumatic-loki"
       },
-      "description": "audit, activity, http and debug records in each time bucket.",
+      "description": "Records of each category (the kind of object: workflows, tasks, users, accounts, groups, api_keys, templates, datasets, billing, webhooks, files, admin, other) in each time bucket.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -997,7 +997,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "sum by (service_name, event_type) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", event_category=\"debug\"} [$__range]))",
+          "expr": "sum by (service_name, event_type) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", event_category=\"other\"} [$__range]))",
           "instant": true,
           "legendFormat": "",
           "queryType": "instant",
@@ -1104,7 +1104,7 @@
           },
           "direction": "backward",
           "editorMode": "code",
-          "expr": "{service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | payload__truncated=\"true\" or payload_extra!=\"\" | line_format \"{{.event_type}} {{.actor_type}}:{{.actor_id}} {{.object_type}}:{{.object_id}}\"",
+          "expr": "{service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | payload__truncated=\"true\" or payload_extra!=\"\" | line_format \"{{.event_type}} {{.auth_type}}:{{.actor_id}} {{.object_type}}:{{.object_id}}\"",
           "legendFormat": "",
           "queryType": "range",
           "refId": "A"
@@ -1251,7 +1251,7 @@
           },
           "direction": "backward",
           "editorMode": "code",
-          "expr": "{service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | label_format observed_ms=\"{{ div (int .observed_timestamp) 1000000 }}\" | line_format \"{{.event_type}} {{.actor_type}}:{{.actor_id}} {{.object_type}}:{{.object_id}}\"",
+          "expr": "{service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | label_format observed_ms=\"{{ div (int .observed_timestamp) 1000000 }}\" | line_format \"{{.event_type}} {{.auth_type}}:{{.actor_id}} {{.object_type}}:{{.object_id}}\"",
           "legendFormat": "",
           "maxLines": 50,
           "queryType": "range",

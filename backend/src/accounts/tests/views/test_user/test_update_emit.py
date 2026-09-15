@@ -1,11 +1,11 @@
 import pytest
 
+from src.accounts.enums import UserType
 from src.accounts.messages import MSG_A_0046
+from src.authentication.enums import AuthTokenType
 from src.logs.events.enums import (
-    ActorType,
-    EventCategory,
-    EventName,
     EventObjectType,
+    UserEvents,
 )
 from src.logs.events.schema import Actor, EventObject
 from src.processes.tests.fixtures import (
@@ -53,14 +53,15 @@ def test_put__name_changed__emit_user_update_on_self(
     assert response.status_code == 200
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.USER_UPDATE
-    assert event.category == EventCategory.AUDIT
+    assert event.type == UserEvents.UPDATE
+    assert event.category == UserEvents.CATEGORY
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=user.id,
         email=user.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.USER,
         id=user.id,
@@ -106,29 +107,31 @@ def test_put__password_sent__emit_update_then_password_change(
     assert response.status_code == 200
     assert len(fake_stream.events) == 2
     actor = Actor(
-        type=ActorType.USER,
         id=user.id,
         email=user.email,
+        user_type=UserType.USER,
     )
     event_object = EventObject(
         type=EventObjectType.USER,
         id=user.id,
     )
     update_event = fake_stream.events[0][1]
-    assert update_event.type == EventName.USER_UPDATE
-    assert update_event.category == EventCategory.AUDIT
+    assert update_event.type == UserEvents.UPDATE
+    assert update_event.category == UserEvents.CATEGORY
     assert update_event.account_id == account.id
     assert update_event.actor == actor
+    assert update_event.auth_type == AuthTokenType.USER
     assert update_event.object == event_object
     assert update_event.payload == {
         'target_email': user.email,
         'changed_fields': ['password'],
     }
     password_event = fake_stream.events[1][1]
-    assert password_event.type == EventName.USER_PASSWORD_CHANGE
-    assert password_event.category == EventCategory.AUDIT
+    assert password_event.type == UserEvents.PASSWORD_CHANGE
+    assert password_event.category == UserEvents.CATEGORY
     assert password_event.account_id == account.id
     assert password_event.actor == actor
+    assert password_event.auth_type == AuthTokenType.USER
     assert password_event.object == event_object
     assert password_event.payload == {}
     identify_mock.assert_called_once_with(user)
@@ -166,28 +169,30 @@ def test_put__admin_revokes_own_admin__emit_update_then_admin_toggle(
     assert response.status_code == 200
     assert len(fake_stream.events) == 2
     actor = Actor(
-        type=ActorType.USER,
         id=user.id,
         email=user.email,
+        user_type=UserType.USER,
     )
     event_object = EventObject(
         type=EventObjectType.USER,
         id=user.id,
     )
     update_event = fake_stream.events[0][1]
-    assert update_event.type == EventName.USER_UPDATE
+    assert update_event.type == UserEvents.UPDATE
     assert update_event.account_id == account.id
     assert update_event.actor == actor
+    assert update_event.auth_type == AuthTokenType.USER
     assert update_event.object == event_object
     assert update_event.payload == {
         'target_email': user.email,
         'changed_fields': ['is_admin'],
     }
     toggle_event = fake_stream.events[1][1]
-    assert toggle_event.type == EventName.USER_ADMIN_TOGGLE
-    assert toggle_event.category == EventCategory.AUDIT
+    assert toggle_event.type == UserEvents.ADMIN_TOGGLE
+    assert toggle_event.category == UserEvents.CATEGORY
     assert toggle_event.account_id == account.id
     assert toggle_event.actor == actor
+    assert toggle_event.auth_type == AuthTokenType.USER
     assert toggle_event.object == event_object
     assert toggle_event.payload == {
         'is_admin': False,

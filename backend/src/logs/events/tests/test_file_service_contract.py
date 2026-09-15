@@ -3,15 +3,20 @@
     fixtures/file_service_*_record.json are the contract between the
     two writers: the file service tests build their records and compare
     them with these files, the tests below read them back the way the
-    consumer does. fixtures/file_service_contract.json adds the two
-    names both sides keep as constants of their own, the stream and the
-    actor types. A change on either side breaks the other side's test
-    instead of the dead letter of a running deployment. """
+    consumer does. fixtures/file_service_contract.json adds the names
+    both sides keep as constants of their own: the stream, the user
+    types and the auth types. A change on either side breaks the other
+    side's test instead of the dead letter of a running deployment. """
 
 from django.conf import settings
 from typing_extensions import get_args
 
-from src.logs.events.enums import ActorType, EventCategory, EventName
+from src.accounts.enums import UserType
+from src.authentication.enums import AuthTokenType
+from src.logs.events.enums import (
+    EventCategory,
+    FileEvents,
+)
 from src.logs.events.registry import resolve_event_type
 from src.logs.events.schema import Event
 from src.logs.events.sinks.otlp_payload import build_otlp_payload
@@ -30,16 +35,17 @@ def test_from_dict__file_service_record__parsed():
     event = Event.from_dict(data=data)
 
     # assert
-    assert event.type == EventName.FILE_DOWNLOAD
+    assert event.type == FileEvents.DOWNLOAD
+    assert event.category == EventCategory.FILES
     assert event.service == 'pneumatic-file-service'
     assert event.account_id == 42
-    assert event.actor.type == 'user'
     assert event.actor.id == 17
     assert event.actor.email is None
+    assert event.actor.user_type == UserType.USER
+    assert event.auth_type == AuthTokenType.USER
     assert event.object.type == 'file'
     assert event.object.id == '0f8fad5b-d9cb-469f-a165-70867728950e'
     assert event.payload['filename'] == 'Contract Ann Smith.pdf'
-    assert event.pii == ('ip', 'user_agent', 'payload.filename')
 
 
 def test_to_dict__file_service_record__round_trip():
@@ -84,7 +90,7 @@ def test_to_dict__denied_record__round_trip():
 def test_resolve__file_service_record__category_of_the_registry():
 
     """ The sink groups by the category of the record, the registry
-        is asked for the personal fields only: the two must agree. """
+        declares the type: the two must agree. """
 
     # arrange
     event = Event.from_dict(data=load_file_service_record())
@@ -93,14 +99,8 @@ def test_resolve__file_service_record__category_of_the_registry():
     declared = resolve_event_type(name=event.type)
 
     # assert
-    assert declared.category == EventCategory.AUDIT
+    assert declared.category == EventCategory.FILES
     assert declared.category == event.category
-    assert declared.pii == (
-        'actor.email',
-        'ip',
-        'user_agent',
-        'payload.filename',
-    )
 
 
 def test_build__file_service_record__own_service_name():
@@ -128,11 +128,11 @@ def test_build__file_service_record__own_service_name():
             'value': {'stringValue': 'Production'},
         },
         {'key': 'account_id', 'value': {'stringValue': '42'}},
-        {'key': 'event_category', 'value': {'stringValue': 'audit'}},
+        {'key': 'event_category', 'value': {'stringValue': 'files'}},
     ]
 
 
-def test_build__file_service_record__filename_in_the_pii_namespace():
+def test_build__file_service_record__record_attributes():
 
     # arrange
     records = [('1-0', Event.from_dict(data=load_file_service_record()))]
@@ -156,8 +156,9 @@ def test_build__file_service_record__filename_in_the_pii_namespace():
     assert record['attributes'] == [
         {'key': 'event.id', 'value': {'stringValue': '1-0'}},
         {'key': 'event.type', 'value': {'stringValue': 'file.download'}},
-        {'key': 'actor.type', 'value': {'stringValue': 'user'}},
         {'key': 'actor.id', 'value': {'stringValue': '17'}},
+        {'key': 'actor.user_type', 'value': {'stringValue': 'user'}},
+        {'key': 'auth_type', 'value': {'stringValue': 'User'}},
         {'key': 'object.type', 'value': {'stringValue': 'file'}},
         {
             'key': 'object.id',
@@ -165,9 +166,18 @@ def test_build__file_service_record__filename_in_the_pii_namespace():
                 'stringValue': '0f8fad5b-d9cb-469f-a165-70867728950e',
             },
         },
+        {'key': 'ip', 'value': {'stringValue': '203.0.113.7'}},
+        {
+            'key': 'user_agent',
+            'value': {'stringValue': 'Mozilla/5.0 (X11; Linux x86_64)'},
+        },
         {
             'key': 'request_id',
             'value': {'stringValue': '3f9c2c1e6d0b4a0f9e2b7c1d5a6e8f90'},
+        },
+        {
+            'key': 'payload.filename',
+            'value': {'stringValue': 'Contract Ann Smith.pdf'},
         },
         {'key': 'payload.size', 'value': {'stringValue': '12345'}},
         {
@@ -175,15 +185,6 @@ def test_build__file_service_record__filename_in_the_pii_namespace():
             'value': {'stringValue': 'application/pdf'},
         },
         {'key': 'payload.is_owner', 'value': {'boolValue': True}},
-        {'key': 'pii.ip', 'value': {'stringValue': '203.0.113.7'}},
-        {
-            'key': 'pii.user_agent',
-            'value': {'stringValue': 'Mozilla/5.0 (X11; Linux x86_64)'},
-        },
-        {
-            'key': 'pii.payload.filename',
-            'value': {'stringValue': 'Contract Ann Smith.pdf'},
-        },
     ]
 
 
@@ -196,7 +197,7 @@ def test_from_dict__upload_record__parsed():
     event = Event.from_dict(data=data)
 
     # assert
-    assert event.type == EventName.FILE_UPLOAD
+    assert event.type == FileEvents.UPLOAD
     assert event.service == 'pneumatic-file-service'
     assert event.object.type == 'file'
     assert event.object.id == '0f8fad5b-d9cb-469f-a165-70867728950e'
@@ -220,13 +221,8 @@ def test_resolve__upload_record__category_of_the_registry():
     declared = resolve_event_type(name=event.type)
 
     # assert
-    assert declared.category == EventCategory.AUDIT
-    assert declared.pii == (
-        'actor.email',
-        'ip',
-        'user_agent',
-        'payload.filename',
-    )
+    assert declared.category == EventCategory.FILES
+    assert declared.category == event.category
 
 
 def test_from_dict__denied_record__parsed():
@@ -241,7 +237,7 @@ def test_from_dict__denied_record__parsed():
     event = Event.from_dict(data=data)
 
     # assert
-    assert event.type == EventName.FILE_ACCESS_DENIED
+    assert event.type == FileEvents.ACCESS_DENIED
     assert event.account_id == 42
     assert event.payload['file_account_id'] == 99
 
@@ -259,13 +255,8 @@ def test_resolve__denied_record__category_of_the_registry():
     declared = resolve_event_type(name=event.type)
 
     # assert
-    assert declared.category == EventCategory.AUDIT
-    assert declared.pii == (
-        'actor.email',
-        'ip',
-        'user_agent',
-        'payload.filename',
-    )
+    assert declared.category == EventCategory.FILES
+    assert declared.category == event.category
 
 
 def test_stream_key__file_service_contract__backend_reads_that_stream():
@@ -284,16 +275,33 @@ def test_stream_key__file_service_contract__backend_reads_that_stream():
     assert stream_key == contract['stream_key']
 
 
-def test_actor_types__file_service_contract__known_to_the_backend():
+def test_user_types__file_service_contract__known_to_the_backend():
 
-    """ Every actor type the file service may write is one the backend
-        declares. The backend has one more of its own, system. """
+    """ Every user type the file service may put into an actor is one
+        the backend declares. """
 
     # arrange
     contract = load_file_service_contract()
 
     # act
-    unknown = set(contract['actor_types']) - set(get_args(ActorType.LITERALS))
+    unknown = set(contract['user_types']) - set(get_args(UserType.LITERALS))
+
+    # assert
+    assert unknown == set()
+
+
+def test_auth_types__file_service_contract__known_to_the_backend():
+
+    """ Every auth type the file service may write is one the backend
+        declares. The backend has one more of its own, the webhook. """
+
+    # arrange
+    contract = load_file_service_contract()
+
+    # act
+    unknown = (
+        set(contract['auth_types']) - set(get_args(AuthTokenType.LITERALS))
+    )
 
     # assert
     assert unknown == set()

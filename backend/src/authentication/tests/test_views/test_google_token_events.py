@@ -1,9 +1,8 @@
-from hashlib import sha256
 
 import pytest
 from django.contrib.auth import get_user_model
 
-from src.accounts.enums import SourceType, UserStatus
+from src.accounts.enums import SourceType, UserStatus, UserType
 from src.authentication.entities import UserData
 from src.authentication.enums import AuthTokenType
 from src.authentication.messages import MSG_AU_0016
@@ -11,10 +10,9 @@ from src.authentication.services.google import GoogleAuthService
 from src.logs.events.schema import Actor, EventObject
 from src.logs.events.emitter import NO_ACCOUNT
 from src.logs.events.enums import (
-    ActorType,
-    EventName,
     EventObjectType,
     LoginFailedReason,
+    UserEvents,
 )
 from src.processes.services.system_workflows import (
     SystemWorkflowService,
@@ -87,13 +85,14 @@ def test_google_token__existent_user__emit_user_login(
     assert response.status_code == 200
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.USER_LOGIN
+    assert event.type == UserEvents.LOGIN
     assert event.account_id == user.account_id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=user.id,
         email=user.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.USER,
         id=user.id,
@@ -212,13 +211,14 @@ def test_google_token__new_user__emit_user_signup_only(
     new_user = UserModel.objects.get(email=email)
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.USER_SIGNUP
+    assert event.type == UserEvents.SIGNUP
     assert event.account_id == new_user.account_id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=new_user.id,
         email=email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.USER,
         id=new_user.id,
@@ -312,10 +312,6 @@ def test_google_token__signup_disabled__emit_login_failed(
     )
     emit_mock = mocker.patch('src.logs.events.services.emit')
 
-    # sha256 of the profile address "sso@pneumatic.app": an SSO
-    # callback carries no address in the body, the view passes it.
-    email_hash = sha256(user.email.encode()).hexdigest()
-
     # act
     response = api_client.get(
         path='/auth/google/token',
@@ -328,15 +324,13 @@ def test_google_token__signup_disabled__emit_login_failed(
     # assert
     assert response.status_code == 401
     emit_mock.assert_called_once_with(
-        EventName.USER_LOGIN_FAILED,
+        UserEvents.LOGIN_FAILED,
         account_id=NO_ACCOUNT,
-        actor=Actor(type=ActorType.GUEST),
         event_object=EventObject(type=EventObjectType.USER),
         payload={
-            'email_hash': email_hash,
+            'email': user.email,
             'reason': LoginFailedReason.SIGNUP_DISABLED,
         },
-        request=mocker.ANY,
     )
     google_auth_service_init_mock.assert_called_once_with()
     get_user_data_mock.assert_called_once_with(
@@ -401,7 +395,6 @@ def test_google_token__sso_required__emit_login_failed(
         'src.authentication.tasks.'
         'update_google_contacts.delay',
     )
-    email_hash = sha256(user.email.encode()).hexdigest()
 
     # act
     response = api_client.get(
@@ -417,12 +410,13 @@ def test_google_token__sso_required__emit_login_failed(
     assert response.data[0] == MSG_AU_0016
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.USER_LOGIN_FAILED
+    assert event.type == UserEvents.LOGIN_FAILED
     assert event.account_id == NO_ACCOUNT
-    assert event.actor == Actor(type=ActorType.GUEST)
+    assert event.actor is None
+    assert event.auth_type is None
     assert event.object == EventObject(type=EventObjectType.USER)
     assert event.payload == {
-        'email_hash': email_hash,
+        'email': user.email,
         'reason': LoginFailedReason.SSO_REQUIRED,
     }
     google_auth_service_init_mock.assert_called_once_with()

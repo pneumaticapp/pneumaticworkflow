@@ -1,11 +1,10 @@
 import pytest
 
+from src.accounts.enums import UserType
 from src.authentication.enums import AuthTokenType
 from src.logs.events.enums import (
-    ActorType,
-    EventCategory,
-    EventName,
     EventObjectType,
+    TaskEvents,
 )
 from src.logs.events.schema import Actor, EventObject
 from src.processes.enums import WorkflowEventType
@@ -59,14 +58,15 @@ def test_destroy__comment__emit_comment_delete(
     assert response.status_code == 200
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.TASK_COMMENT_DELETE
-    assert event.category == EventCategory.AUDIT
+    assert event.type == TaskEvents.COMMENT_DELETE
+    assert event.category == TaskEvents.CATEGORY
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=owner.id,
         email=owner.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.COMMENT,
         id=comment.id,
@@ -123,14 +123,15 @@ def test_destroy__comment_without_task__no_task_name(
     assert response.status_code == 200
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.TASK_COMMENT_DELETE
-    assert event.category == EventCategory.AUDIT
+    assert event.type == TaskEvents.COMMENT_DELETE
+    assert event.category == TaskEvents.CATEGORY
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=owner.id,
         email=owner.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.COMMENT,
         id=comment.id,

@@ -4,26 +4,26 @@ import pytest
 import redis
 from django.utils import timezone
 
+from src.accounts.enums import UserType
 from src.authentication.enums import AuthTokenType
 from src.logs.enums import LogsBackend
 from src.logs.events import emitter as emitter_module
-from src.logs.events import mixins as mixins_module
 from src.logs.events import services as services_module
 from src.logs.events.emitter import (
     CIRCUIT_OPEN_SECONDS,
     NO_ACCOUNT,
     _build_event,
-    _present_pii,
     _report_stream_error,
     _write,
     emit,
 )
-from src.logs.events.enums import ActorType, EventCategory, EventName
-from src.logs.events.exceptions import UnknownEventTypeError
-from src.logs.events.registry import (
-    ACTOR_PII,
-    EventType,
+from src.logs.events.enums import (
+    ApiKeyEvents,
+    EventCategory,
+    UserEvents,
+    WorkflowEvents,
 )
+from src.logs.events.exceptions import UnknownEventTypeError
 from src.logs.events.schema import Actor, Event, EventObject
 from src.logs.events.tests.fixtures import make_event, make_smoke_event
 from src.utils.logging import SentryLogLevel
@@ -34,13 +34,14 @@ def test_emit__enabled__event_in_the_stream(
 ):
 
     # arrange
-    actor = Actor(type=ActorType.USER, id=1, email='user@test.test')
+    actor = Actor(id=1, email='user@test.test', user_type=UserType.USER)
 
     # act
     emit(
-        event_type=EventName.USER_LOGIN,
+        event_type=UserEvents.LOGIN,
         account_id=5,
         actor=actor,
+        auth_type=AuthTokenType.USER,
         event_object=EventObject(type='user', id=1),
         payload={'source': 'email'},
     )
@@ -48,10 +49,11 @@ def test_emit__enabled__event_in_the_stream(
     # assert
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.USER_LOGIN
-    assert event.category == EventCategory.AUDIT
+    assert event.type == UserEvents.LOGIN
+    assert event.category == EventCategory.USERS
     assert event.account_id == 5
     assert event.actor == actor
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(type='user', id=1)
     assert event.payload == {'source': 'email'}
 
@@ -65,7 +67,7 @@ def test_emit__pipeline_off__nothing_written(
     settings.LOGS_BACKEND = LogsBackend.NONE
 
     # act
-    emit(event_type=EventName.USER_LOGIN, account_id=5)
+    emit(event_type=UserEvents.LOGIN, account_id=5)
 
     # assert
     assert fake_stream.events == []
@@ -104,7 +106,7 @@ def test_emit__open_transaction__nothing_written_before_commit(
     )
 
     # act
-    emit(event_type=EventName.USER_LOGIN, account_id=5)
+    emit(event_type=UserEvents.LOGIN, account_id=5)
 
     # assert
     assert scheduled_stream.events == []
@@ -123,14 +125,14 @@ def test_emit__committed_transaction__callback_writes_the_event(
         'src.logs.events.emitter.transaction.on_commit',
         side_effect=callbacks.append,
     )
-    emit(event_type=EventName.USER_LOGIN, account_id=5)
+    emit(event_type=UserEvents.LOGIN, account_id=5)
 
     # act
     callbacks[0]()
 
     # assert
     assert len(scheduled_stream.events) == 1
-    assert scheduled_stream.last_event().type == EventName.USER_LOGIN
+    assert scheduled_stream.last_event().type == UserEvents.LOGIN
     on_commit_mock.assert_called_once_with(callbacks[0])
 
 
@@ -158,17 +160,16 @@ def test_emit__stream_error__request_not_broken(
     moment = timezone.now()
 
     # act
-    emit(event_type=EventName.USER_LOGIN, account_id=5, ts=moment)
+    emit(event_type=UserEvents.LOGIN, account_id=5, ts=moment)
 
     # assert
     xadd_mock.assert_called_once_with(
         Event(
-            type=EventName.USER_LOGIN,
-            category=EventCategory.AUDIT,
+            type=UserEvents.LOGIN,
+            category=EventCategory.USERS,
             service='pneumatic-test',
             ts=moment,
             account_id=5,
-            actor=Actor(type=ActorType.SYSTEM),
         ),
     )
     capture_sentry_message_mock.assert_called_once_with(
@@ -204,8 +205,8 @@ def test_emit__stream_error_twice__reported_once(
     )
 
     # act
-    emit(event_type=EventName.USER_LOGIN, account_id=5)
-    emit(event_type=EventName.USER_LOGIN, account_id=5)
+    emit(event_type=UserEvents.LOGIN, account_id=5)
+    emit(event_type=UserEvents.LOGIN, account_id=5)
 
     # assert
     capture_sentry_message_mock.assert_called_once_with(
@@ -242,7 +243,7 @@ def test_emit__misconfigured_url__request_not_broken(
     )
 
     # act
-    emit(event_type=EventName.USER_LOGIN, account_id=5)
+    emit(event_type=UserEvents.LOGIN, account_id=5)
 
     # assert
     get_stream_mock.assert_called_once_with()
@@ -427,167 +428,56 @@ def test_report_stream_error__dropped_events__count_in_the_report(
     ])
 
 
-def test_build_event__explicit_actor__wins(
+def test_build_event__actor_and_auth_type__written_as_given(
     request_context,
-    request_factory,
-    mocker,
 ):
 
+    """ Who acts and how they were authenticated come from the
+        caller only: the context of the request names neither. """
+
     # arrange
-    actor = Actor(type=ActorType.SYSTEM)
-    request = request_factory.get('/')
-    request.user = mocker.Mock(
-        is_authenticated=True,
-        id=1,
-        email='user@test.test',
-    )
+    actor = Actor(id=3, email='guest@test.test', user_type=UserType.GUEST)
 
     # act
     event = _build_event(
-        event_type=EventName.USER_LOGIN,
+        event_type=UserEvents.LOGIN,
         account_id=5,
         actor=actor,
-        request=request,
+        auth_type=AuthTokenType.GUEST,
     )
 
     # assert
     assert event.actor == actor
+    assert event.auth_type == AuthTokenType.GUEST
 
 
-def test_build_event__request_user__actor_from_the_request(
-    request_context,
-    request_factory,
-    mocker,
-):
+def test_build_event__no_actor__system_record(request_context):
 
-    """ Deviation from 5.1 of the plan: the specification keeps the
-        e-mail for the user actor only, the emitter fills it for an
-        api_key too. The address is the one of the key owner and it
-        is declared personal, so it leaves in the pii.* namespace. """
-
-    # arrange
-    request = request_factory.get('/')
-    request.user = mocker.Mock(
-        is_authenticated=True,
-        id=3,
-        email='req@test.test',
-    )
-    request.token_type = AuthTokenType.API
-
-    # act
-    event = _build_event(
-        event_type=EventName.USER_LOGIN,
-        account_id=5,
-        request=request,
-    )
-
-    # assert
-    assert event.actor == Actor(
-        type=ActorType.API_KEY,
-        id=3,
-        email='req@test.test',
-    )
-
-
-def test_build_event__anonymous_request__actor_from_the_context(
-    request_context,
-    request_factory,
-    mocker,
-):
-
-    # arrange
-    request = request_factory.get('/')
-    request.user = mocker.Mock(is_authenticated=False)
-
-    # act
-    event = _build_event(
-        event_type=EventName.USER_LOGIN,
-        account_id=5,
-        request=request,
-    )
-
-    # assert
-    assert event.actor == Actor(
-        type=ActorType.USER,
-        id=77,
-        email='ctx@test.test',
-    )
-
-
-def test_build_event__no_request_no_context__system_actor():
+    """ A task, a callback or an anonymous request: no actor and no
+        credential, whatever the context of the request holds. """
 
     # arrange
     account_id = 5
 
     # act
     event = _build_event(
-        event_type=EventName.USER_LOGIN,
+        event_type=UserEvents.LOGIN,
         account_id=account_id,
     )
 
     # assert
-    assert event.actor == Actor(type=ActorType.SYSTEM)
+    assert event.actor is None
+    assert event.auth_type is None
 
 
-def test_build_event__request__ip_and_agent_from_the_request(
-    request_context,
-    request_factory,
-):
-
-    # arrange
-    request = request_factory.get(
-        '/',
-        HTTP_X_REAL_IP='1.2.3.4',
-        HTTP_USER_AGENT='Firefox',
-    )
-    request.request_id = 'req-1'
-
-    # act
-    event = _build_event(
-        event_type=EventName.USER_LOGIN,
-        account_id=5,
-        request=request,
-    )
-
-    # assert
-    assert event.ip == '1.2.3.4'
-    assert event.user_agent == 'Firefox'
-    assert event.request_id == 'req-1'
-
-
-def test_build_event__request_without_headers__values_from_context(
-    request_context,
-    request_factory,
-):
-
-    """ A Celery request object or a call made deep in a service still
-        gets the address of the request being handled. """
-
-    # arrange
-    request = request_factory.get('/')
-    request.META.pop('REMOTE_ADDR', None)
-
-    # act
-    event = _build_event(
-        event_type=EventName.USER_LOGIN,
-        account_id=5,
-        request=request,
-    )
-
-    # assert
-    assert event.ip == '9.9.9.9'
-    assert event.user_agent == 'Chrome'
-    assert event.request_id == 'ctx-request'
-
-
-def test_build_event__no_request__values_from_context(request_context):
+def test_build_event__context__values_from_context(request_context):
 
     # arrange
     account_id = 5
 
     # act
     event = _build_event(
-        event_type=EventName.USER_LOGIN,
+        event_type=UserEvents.LOGIN,
         account_id=account_id,
     )
 
@@ -597,14 +487,14 @@ def test_build_event__no_request__values_from_context(request_context):
     assert event.request_id == 'ctx-request'
 
 
-def test_build_event__no_request_no_context__empty_request_fields():
+def test_build_event__no_context__empty_request_fields():
 
     # arrange
     account_id = 5
 
     # act
     event = _build_event(
-        event_type=EventName.USER_LOGIN,
+        event_type=UserEvents.LOGIN,
         account_id=account_id,
     )
 
@@ -614,112 +504,49 @@ def test_build_event__no_request_no_context__empty_request_fields():
     assert event.request_id is None
 
 
-def test_build_event__registry__category_and_present_pii():
+def test_build_event__registry__category_of_the_type():
 
     # arrange
-    actor = Actor(type=ActorType.SYSTEM)
     payload = {'target_email': 'target@test.test'}
 
     # act
     event = _build_event(
-        event_type=EventName.USER_DEACTIVATE,
+        event_type=UserEvents.DEACTIVATE,
         account_id=5,
-        actor=actor,
         payload=payload,
     )
 
     # assert
-    assert event.category == EventCategory.AUDIT
-    assert event.pii == ('payload.target_email',)
+    assert event.category == EventCategory.USERS
+    assert event.payload == payload
 
 
-def test_build_event__filled_fields__all_declared_pii(
-    request_context,
-    request_factory,
+def test_build_event__unknown_type_not_strict__other_category(
+    settings,
     mocker,
 ):
 
+    """ A typo in a running deployment files the event under OTHER
+        instead of breaking the request. """
+
     # arrange
-    request = request_factory.get(
-        '/',
-        HTTP_X_REAL_IP='1.2.3.4',
-        HTTP_USER_AGENT='Firefox',
-    )
-    request.user = mocker.Mock(
-        is_authenticated=True,
-        id=1,
-        email='actor@test.test',
+    settings.LOGS_STRICT = False
+    report_error_mock = mocker.patch(
+        'src.logs.events.registry.report_error',
     )
 
     # act
-    event = _build_event(
-        event_type=EventName.USER_DEACTIVATE,
-        account_id=5,
-        request=request,
-        payload={'target_email': 'target@test.test'},
-    )
+    event = _build_event(event_type='nope.nope', account_id=5)
 
     # assert
-    assert event.pii == (
-        'actor.email',
-        'ip',
-        'user_agent',
-        'payload.target_email',
+    assert event.type == 'nope.nope'
+    assert event.category == EventCategory.OTHER
+    report_error_mock.assert_called_once_with(
+        message='Unknown event type',
+        data={'event_type': 'nope.nope'},
+        level=SentryLogLevel.WARNING,
+        key='unknown-event-type:nope.nope',
     )
-
-
-def test_build_event__type_without_declared_actor_pii__pii_added(
-    request_context,
-    mocker,
-):
-
-    """ The e-mail, the address and the user agent belong to whoever
-        made the request whatever the type is, and a type that forgot
-        to declare them would leak them as plain attributes. """
-
-    # arrange
-    mocker.patch.dict(
-        'src.logs.events.registry.REGISTRY',
-        {
-            'system.test': EventType(
-                name='system.test',
-                category=EventCategory.DEBUG,
-            ),
-        },
-    )
-
-    # act
-    event = _build_event(event_type='system.test', account_id=5)
-
-    # assert
-    assert event.pii == ACTOR_PII
-
-
-def test_build_event__unresolvable_pii_path__dropped(
-    request_context,
-    mocker,
-):
-
-    """ A path no field of the event answers is not reported as
-        personal data that left the system. """
-
-    # arrange
-    mocker.patch.dict(
-        'src.logs.events.registry.REGISTRY',
-        {
-            'system.test': EventType(
-                name='system.test',
-                category=EventCategory.DEBUG,
-                pii=('workflow_id.value',),
-            ),
-        },
-    )
-
-    # act
-    event = _build_event(event_type='system.test', account_id=5)
-
-    # assert
-    assert event.pii == ACTOR_PII
 
 
 def test_build_event__secret_in_the_payload__redacted():
@@ -729,7 +556,7 @@ def test_build_event__secret_in_the_payload__redacted():
 
     # act
     event = _build_event(
-        event_type=EventName.API_KEY_CREATE,
+        event_type=ApiKeyEvents.CREATE,
         account_id=5,
         payload=payload,
     )
@@ -745,7 +572,7 @@ def test_build_event__given_ts__used():
 
     # act
     event = _build_event(
-        event_type=EventName.WORKFLOW_RUN,
+        event_type=WorkflowEvents.RUN,
         account_id=5,
         workflow_id=11,
         task_id=22,
@@ -768,7 +595,7 @@ def test_build_event__no_ts__now(mocker):
     )
 
     # act
-    event = _build_event(event_type=EventName.USER_LOGIN, account_id=5)
+    event = _build_event(event_type=UserEvents.LOGIN, account_id=5)
 
     # assert
     assert event.ts == moment
@@ -787,7 +614,7 @@ def test_build_event__account_not_given__no_account_marker():
 
     # act
     event = _build_event(
-        event_type=EventName.USER_LOGOUT,
+        event_type=UserEvents.LOGOUT,
         account_id=account_id,
     )
 
@@ -805,48 +632,27 @@ def test_build_event__settings__service_name_of_the_backend(settings):
 
     # act
     event = _build_event(
-        event_type=EventName.USER_LOGIN,
+        event_type=UserEvents.LOGIN,
         account_id=5,
-        actor=Actor(type=ActorType.SYSTEM),
     )
 
     # assert
     assert event.service == 'pneumatic-test'
 
 
-def test_present_pii__empty_string__not_listed():
-
-    """ The list is the audit answer to "what left": an empty user
-        agent is nothing that left. """
-
-    # arrange
-    event = make_event(user_agent='', ip=None)
-
-    # act
-    result = _present_pii(
-        paths=('actor.email', 'ip', 'user_agent'),
-        event=event,
-    )
-
-    # assert
-    assert result == ('actor.email',)
-
-
 def test_emit__patched_name__the_one_the_callers_import():
 
     """ The tests of the services and the views patch
-        src.logs.events.services.emit and src.logs.events.mixins.emit:
-        a module that imported the function from the package instead
-        would leave those patches intercepting nothing, and every
-        "no event" assert would pass for the wrong reason. """
+        src.logs.events.services.emit: a module that imported the
+        function from the package instead would leave those patches
+        intercepting nothing, and every "no event" assert would pass
+        for the wrong reason. """
 
     # arrange
     name = 'emit'
 
     # act
     services_emit = getattr(services_module, name)
-    mixins_emit = getattr(mixins_module, name)
 
     # assert
     assert services_emit is emit
-    assert mixins_emit is emit

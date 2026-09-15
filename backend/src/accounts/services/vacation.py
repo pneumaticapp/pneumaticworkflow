@@ -8,9 +8,7 @@ from src.accounts.enums import AbsenceStatus, UserGroupType
 from src.accounts.models import UserGroup, UserVacation
 from src.accounts.serializers.user import UserWebsocketSerializer
 from src.authentication.enums import AuthTokenType
-from src.logs.events.enums import ActorType, EventName, EventObjectType
-from src.logs.events.mixins import EventEmitMixin
-from src.logs.events.schema import Actor
+from src.logs.events import AuditEventService
 from src.notifications.tasks import (
     send_user_updated_notification,
     send_vacation_delegation_notification,
@@ -36,7 +34,7 @@ UserModel = get_user_model()
 SUBSTITUTE_GROUP_PREFIX = 'Substitutes'
 
 
-class VacationDelegationService(EventEmitMixin):
+class VacationDelegationService:
 
     """ user is the person on vacation. request_user is whoever turns
         the vacation on or off: the person themselves, an admin, or
@@ -51,29 +49,6 @@ class VacationDelegationService(EventEmitMixin):
         self.user = user
         self.request_user = request_user
         self.auth_type = auth_type
-
-    def _event_actor(self) -> Actor:
-
-        """ Whoever turns the vacation on or off, not self.user: here
-            that is the person the vacation belongs to, and the mixin
-            would take them for the actor of somebody else's edit. """
-
-        if self.request_user is None:
-            return Actor(type=ActorType.SYSTEM)
-        return Actor.from_user(self.request_user, self.auth_type)
-
-    def _publish_vacation(
-        self,
-        event_type: str,
-        payload: Optional[dict] = None,
-    ) -> None:
-        self._publish(
-            event_type,
-            account_id=self.user.account_id,
-            object_type=EventObjectType.USER,
-            object_id=self.user.id,
-            payload={'target_email': self.user.email, **(payload or {})},
-        )
 
     @classmethod
     def clear_substitute_groups(
@@ -166,16 +141,16 @@ class VacationDelegationService(EventEmitMixin):
                     vacation_start_date=vacation_start_date,
                     vacation_end_date=vacation_end_date,
                 )
-            self._publish_vacation(
-                EventName.USER_VACATION_ACTIVATE,
-                payload={
-                    'substitute_user_ids': sorted(substitute_user_ids),
-                    'absence_status': absence_status,
-                    'start_date': vacation_start_date,
-                    'end_date': vacation_end_date,
-                    'delegated_tasks_count': len(task_ids),
-                    'is_update': is_update,
-                },
+            AuditEventService.vacation_activated(
+                user=self.request_user,
+                auth_type=self.auth_type,
+                target=self.user,
+                substitute_user_ids=substitute_user_ids,
+                absence_status=absence_status,
+                start_date=vacation_start_date,
+                end_date=vacation_end_date,
+                delegated_tasks_count=len(task_ids),
+                is_update=is_update,
             )
 
         # Notify after transaction commits successfully.
@@ -469,7 +444,11 @@ class VacationDelegationService(EventEmitMixin):
                     schedule_sync_workflow_attachment_permissions(wf.id)
 
             vacation.delete()
-            self._publish_vacation(EventName.USER_VACATION_DEACTIVATE)
+            AuditEventService.vacation_deactivated(
+                user=self.request_user,
+                auth_type=self.auth_type,
+                target=self.user,
+            )
 
         send_user_updated_notification.delay(
             logging=self.user.account.log_api_requests,

@@ -144,7 +144,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "count by (account_id) (sum by (account_id, actor_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | actor_type=\"user\" [$__range])))",
+          "expr": "count by (account_id) (sum by (account_id, actor_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | auth_type=\"User\" [$__range])))",
           "instant": true,
           "legendFormat": "",
           "queryType": "instant",
@@ -427,7 +427,7 @@
         "type": "loki",
         "uid": "pneumatic-loki"
       },
-      "description": "Distinct users (actor_type = user) behind the events of each account over the time range.",
+      "description": "Distinct users (auth_type = User, a browser session) behind the events of each account over the time range.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -486,7 +486,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "count by (account_id) (sum by (account_id, actor_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | actor_type=\"user\" [$__range])))",
+          "expr": "count by (account_id) (sum by (account_id, actor_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | auth_type=\"User\" [$__range])))",
           "instant": true,
           "legendFormat": "{{account_id}}",
           "queryType": "instant",
@@ -851,7 +851,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "topk(50, sum by (account_id, actor_id, pii_actor_email) (count_over_time({service_name=\"pneumatic-backend\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | actor_type=\"user\" [$__range])))",
+          "expr": "topk(50, sum by (account_id, actor_id, actor_email) (count_over_time({service_name=\"pneumatic-backend\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | auth_type=\"User\" [$__range])))",
           "instant": true,
           "legendFormat": "",
           "queryType": "instant",
@@ -863,7 +863,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "sum by (account_id, actor_id, pii_actor_email) (count_over_time({service_name=\"pneumatic-backend\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | actor_type=\"user\" | event_type=\"user.login\" [$__range]))",
+          "expr": "sum by (account_id, actor_id, actor_email) (count_over_time({service_name=\"pneumatic-backend\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | auth_type=\"User\" | event_type=\"user.login\" [$__range]))",
           "instant": true,
           "legendFormat": "",
           "queryType": "instant",
@@ -875,7 +875,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "sum by (account_id, actor_id, pii_actor_email) (count_over_time({service_name=\"pneumatic-backend\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | actor_type=\"user\" | event_type=\"workflow.run\" [$__range]))",
+          "expr": "sum by (account_id, actor_id, actor_email) (count_over_time({service_name=\"pneumatic-backend\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | auth_type=\"User\" | event_type=\"workflow.run\" [$__range]))",
           "instant": true,
           "legendFormat": "",
           "queryType": "instant",
@@ -887,7 +887,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "sum by (account_id, actor_id, pii_actor_email) (count_over_time({service_name=\"pneumatic-backend\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | actor_type=\"user\" | event_type=\"task.complete\" [$__range]))",
+          "expr": "sum by (account_id, actor_id, actor_email) (count_over_time({service_name=\"pneumatic-backend\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | auth_type=\"User\" | event_type=\"task.complete\" [$__range]))",
           "instant": true,
           "legendFormat": "",
           "queryType": "instant",
@@ -899,7 +899,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "sum by (account_id, actor_id, pii_actor_email) (count_over_time({service_name=\"pneumatic-backend\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | actor_type=\"user\" | event_type=\"task.comment\" [$__range]))",
+          "expr": "sum by (account_id, actor_id, actor_email) (count_over_time({service_name=\"pneumatic-backend\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | auth_type=\"User\" | event_type=\"task.comment\" [$__range]))",
           "instant": true,
           "legendFormat": "",
           "queryType": "instant",
@@ -911,7 +911,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "max by (account_id, actor_id, pii_actor_email) (max_over_time({service_name=\"pneumatic-backend\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | actor_type=\"user\" | unwrap observed_timestamp | __error__=\"\" [$__range])) / 1000000",
+          "expr": "max by (account_id, actor_id, actor_email) (max_over_time({service_name=\"pneumatic-backend\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | auth_type=\"User\" | unwrap observed_timestamp | __error__=\"\" [$__range])) / 1000000",
           "instant": true,
           "legendFormat": "",
           "queryType": "instant",
@@ -945,7 +945,7 @@
               "Value #F": 8,
               "account_id": 0,
               "actor_id": 1,
-              "pii_actor_email": 2
+              "actor_email": 2
             },
             "renameByName": {
               "Value #A": "Events",
@@ -956,7 +956,7 @@
               "Value #F": "Last activity",
               "account_id": "Account",
               "actor_id": "User id",
-              "pii_actor_email": "E-mail"
+              "actor_email": "E-mail"
             }
           }
         }
@@ -1050,8 +1050,8 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "sum by (pii_actor_email) (count_over_time({service_name=\"pneumatic-backend\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | actor_type=\"user\" [$__auto]))",
-          "legendFormat": "{{pii_actor_email}}",
+          "expr": "sum by (actor_email) (count_over_time({service_name=\"pneumatic-backend\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | auth_type=\"User\" [$__auto]))",
+          "legendFormat": "{{actor_email}}",
           "queryType": "range",
           "refId": "A"
         }
@@ -1122,8 +1122,8 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "sum by (pii_actor_email) (count_over_time({service_name=\"pneumatic-backend\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | actor_type=\"user\" [$__auto]))",
-          "legendFormat": "{{pii_actor_email}}",
+          "expr": "sum by (actor_email) (count_over_time({service_name=\"pneumatic-backend\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | auth_type=\"User\" [$__auto]))",
+          "legendFormat": "{{actor_email}}",
           "queryType": "range",
           "refId": "A"
         }
@@ -1195,9 +1195,9 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "topk(10, sum by (pii_actor_email) (count_over_time({service_name=\"pneumatic-backend\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | event_type=\"user.login\" [$__range])))",
+          "expr": "topk(10, sum by (actor_email) (count_over_time({service_name=\"pneumatic-backend\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | event_type=\"user.login\" [$__range])))",
           "instant": true,
-          "legendFormat": "{{pii_actor_email}}",
+          "legendFormat": "{{actor_email}}",
           "queryType": "instant",
           "refId": "A"
         }
@@ -1223,10 +1223,10 @@
             "indexByName": {
               "Value": 1,
               "Value #A": 1,
-              "pii_actor_email": 0
+              "actor_email": 0
             },
             "renameByName": {
-              "pii_actor_email": "E-mail"
+              "actor_email": "E-mail"
             }
           }
         },
@@ -1309,9 +1309,9 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "topk(10, sum by (pii_actor_email) (count_over_time({service_name=\"pneumatic-backend\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | actor_type=\"user\" | event_type=\"workflow.run\" [$__range])))",
+          "expr": "topk(10, sum by (actor_email) (count_over_time({service_name=\"pneumatic-backend\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | auth_type=\"User\" | event_type=\"workflow.run\" [$__range])))",
           "instant": true,
-          "legendFormat": "{{pii_actor_email}}",
+          "legendFormat": "{{actor_email}}",
           "queryType": "instant",
           "refId": "A"
         }
@@ -1337,10 +1337,10 @@
             "indexByName": {
               "Value": 1,
               "Value #A": 1,
-              "pii_actor_email": 0
+              "actor_email": 0
             },
             "renameByName": {
-              "pii_actor_email": "E-mail"
+              "actor_email": "E-mail"
             }
           }
         },
@@ -1423,9 +1423,9 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "topk(10, sum by (pii_actor_email) (count_over_time({service_name=\"pneumatic-backend\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | actor_type=\"user\" | event_type=\"task.complete\" [$__range])))",
+          "expr": "topk(10, sum by (actor_email) (count_over_time({service_name=\"pneumatic-backend\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | auth_type=\"User\" | event_type=\"task.complete\" [$__range])))",
           "instant": true,
-          "legendFormat": "{{pii_actor_email}}",
+          "legendFormat": "{{actor_email}}",
           "queryType": "instant",
           "refId": "A"
         }
@@ -1451,10 +1451,10 @@
             "indexByName": {
               "Value": 1,
               "Value #A": 1,
-              "pii_actor_email": 0
+              "actor_email": 0
             },
             "renameByName": {
-              "pii_actor_email": "E-mail"
+              "actor_email": "E-mail"
             }
           }
         },
@@ -1577,21 +1577,71 @@
           },
           {
             "selected": false,
-            "text": "audit",
-            "value": "audit"
+            "text": "workflows",
+            "value": "workflows"
           },
           {
             "selected": false,
-            "text": "activity",
-            "value": "activity"
+            "text": "tasks",
+            "value": "tasks"
           },
           {
             "selected": false,
-            "text": "debug",
-            "value": "debug"
+            "text": "users",
+            "value": "users"
+          },
+          {
+            "selected": false,
+            "text": "accounts",
+            "value": "accounts"
+          },
+          {
+            "selected": false,
+            "text": "groups",
+            "value": "groups"
+          },
+          {
+            "selected": false,
+            "text": "api_keys",
+            "value": "api_keys"
+          },
+          {
+            "selected": false,
+            "text": "templates",
+            "value": "templates"
+          },
+          {
+            "selected": false,
+            "text": "datasets",
+            "value": "datasets"
+          },
+          {
+            "selected": false,
+            "text": "billing",
+            "value": "billing"
+          },
+          {
+            "selected": false,
+            "text": "webhooks",
+            "value": "webhooks"
+          },
+          {
+            "selected": false,
+            "text": "files",
+            "value": "files"
+          },
+          {
+            "selected": false,
+            "text": "admin",
+            "value": "admin"
+          },
+          {
+            "selected": false,
+            "text": "other",
+            "value": "other"
           }
         ],
-        "query": "audit,activity,debug",
+        "query": "workflows,tasks,users,accounts,groups,api_keys,templates,datasets,billing,webhooks,files,admin,other",
         "queryValue": "",
         "skipUrlSync": false,
         "type": "custom"

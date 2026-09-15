@@ -1,9 +1,9 @@
 import pytest
 
+from src.accounts.enums import UserType
+from src.authentication.enums import AuthTokenType
 from src.logs.events.enums import (
-    ActorType,
-    EventCategory,
-    EventName,
+    DatasetEvents,
     EventObjectType,
 )
 from src.logs.events.schema import Actor, EventObject
@@ -36,14 +36,15 @@ def test_destroy__owner__emit_dataset_item_delete(
     assert dataset.items.count() == 0
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.DATASET_ITEM_DELETE
-    assert event.category == EventCategory.AUDIT
+    assert event.type == DatasetEvents.ITEM_DELETE
+    assert event.category == DatasetEvents.CATEGORY
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=owner.id,
         email=owner.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.DATASET_ITEM,
         id=item.id,

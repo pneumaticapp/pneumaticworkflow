@@ -1,10 +1,10 @@
 import pytest
 
+from src.accounts.enums import UserType
+from src.authentication.enums import AuthTokenType
 from src.logs.events.enums import (
-    ActorType,
-    EventCategory,
-    EventName,
     EventObjectType,
+    TemplateEvents,
 )
 from src.logs.events.schema import Actor, EventObject
 from src.processes.models.templates.template import Template
@@ -50,14 +50,15 @@ def test_discard_changes__template_with_tasks__emit_draft_discard(
     assert template.is_deleted is False
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.TEMPLATE_DRAFT_DISCARD
-    assert event.category == EventCategory.ACTIVITY
+    assert event.type == TemplateEvents.DRAFT_DISCARD
+    assert event.category == TemplateEvents.CATEGORY
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=owner.id,
         email=owner.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.TEMPLATE,
         id=template.id,
@@ -100,14 +101,15 @@ def test_discard_changes__template_without_tasks__emit_template_deleted(
     assert not Template.objects.filter(id=template.id).exists()
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.TEMPLATE_DRAFT_DISCARD
-    assert event.category == EventCategory.ACTIVITY
+    assert event.type == TemplateEvents.DRAFT_DISCARD
+    assert event.category == TemplateEvents.CATEGORY
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=owner.id,
         email=owner.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.TEMPLATE,
         id=template.id,

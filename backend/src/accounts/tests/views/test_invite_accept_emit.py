@@ -1,14 +1,14 @@
 import pytest
 
+from src.accounts.enums import UserType
 from src.accounts.services.exceptions import (
     AlreadyRegisteredException,
 )
 from src.accounts.services.user_invite import UserInviteService
 from src.accounts.messages import MSG_A_0005
 from src.logs.events.enums import (
-    ActorType,
-    EventName,
     EventObjectType,
+    UserEvents,
 )
 from src.logs.events.schema import Actor, EventObject
 from src.processes.tests.fixtures import (
@@ -54,7 +54,7 @@ def test_accept__invited_user__emit_invite_accept(
         UserInviteService,
         attribute='group',
     )
-    emit_mock = mocker.patch('src.logs.events.mixins.emit')
+    emit_mock = mocker.patch('src.logs.events.services.emit')
 
     # act
     response = api_client.post(
@@ -69,15 +69,18 @@ def test_accept__invited_user__emit_invite_accept(
     # assert
     assert response.status_code == 200
     emit_mock.assert_called_once_with(
-        EventName.INVITE_ACCEPT,
+        UserEvents.INVITE_ACCEPT,
         account_id=account.id,
         actor=Actor(
-            type=ActorType.USER,
             id=invited.id,
             email=invited.email,
+            user_type=UserType.USER,
         ),
+        auth_type=None,
         event_object=EventObject(type=EventObjectType.INVITE),
         payload={'invited_by_id': owner.id},
+        workflow_id=None,
+        task_id=None,
     )
     create_onboarding_workflows_mock.assert_called_once_with()
     create_activated_workflows_mock.assert_called_once_with()
@@ -104,7 +107,7 @@ def test_accept__already_registered__no_event(
         'src.accounts.services.user_invite.UserInviteService.accept',
         side_effect=AlreadyRegisteredException(),
     )
-    emit_mock = mocker.patch('src.logs.events.mixins.emit')
+    emit_mock = mocker.patch('src.logs.events.services.emit')
 
     # act
     response = api_client.post(
@@ -188,13 +191,14 @@ def test_accept__anonymous_request__event_keeps_request_context(
     assert response.status_code == 200
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.INVITE_ACCEPT
+    assert event.type == UserEvents.INVITE_ACCEPT
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=invited.id,
         email=invited.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type is None
     assert event.object == EventObject(type=EventObjectType.INVITE)
     assert event.payload == {'invited_by_id': owner.id}
     assert event.ip == '10.10.0.9'

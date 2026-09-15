@@ -13,7 +13,12 @@ from src.shared_kernel.auth import (
     PublicAuthService,
 )
 from src.shared_kernel.auth.guest_token import GuestToken
-from src.shared_kernel.auth.user_types import ActorType, UserType
+from src.shared_kernel.auth.public_token import EmbedToken
+from src.shared_kernel.auth.user_types import (
+    JournalAuthType,
+    JournalUserType,
+    UserType,
+)
 from src.shared_kernel.browser_utils import (
     is_browser_navigation,
     redirect_to_login,
@@ -26,7 +31,7 @@ logger = logging.getLogger(__name__)
 class AuthUser:
     """Unified user class."""
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         auth_type: UserType,
         user_id: int | None = None,
@@ -34,6 +39,7 @@ class AuthUser:
         token: str | None = None,
         *,
         is_api_key: bool = False,
+        is_embed_token: bool = False,
     ) -> None:
         """Initialize authenticated user.
 
@@ -44,6 +50,9 @@ class AuthUser:
             token: Optional authentication token.
             is_api_key: The token is a permanent API key of the user,
                 not a session (for_api_key of the token cache).
+            is_embed_token: The public token is the embed one (the
+                kickoff form of a template embedded into another site),
+                not a shared link.
 
         """
         self.auth_type = auth_type
@@ -51,13 +60,42 @@ class AuthUser:
         self.account_id = account_id
         self.token = token
         self.is_api_key = is_api_key
+        self.is_embed_token = is_embed_token
 
     @property
-    def actor_type(self) -> ActorType:
-        """Who acted, for the audit journal."""
+    def journal_user_type(self) -> JournalUserType | None:
+        """Kind of the person who acted, for the audit journal.
+
+        None when no person is behind the request: a public or an
+        embed token, or nobody at all.
+        """
         if self.auth_type == UserType.AUTHENTICATED:
-            return ActorType.API_KEY if self.is_api_key else ActorType.USER
-        return ActorType.GUEST
+            return JournalUserType.USER
+        if self.auth_type == UserType.GUEST_TOKEN:
+            return JournalUserType.GUEST
+        return None
+
+    @property
+    def journal_auth_type(self) -> JournalAuthType | None:
+        """Credential behind the request, for the audit journal.
+
+        None for an anonymous request, the only one without any.
+        """
+        if self.auth_type == UserType.AUTHENTICATED:
+            return (
+                JournalAuthType.API
+                if self.is_api_key
+                else JournalAuthType.USER
+            )
+        if self.auth_type == UserType.GUEST_TOKEN:
+            return JournalAuthType.GUEST
+        if self.auth_type == UserType.PUBLIC_TOKEN:
+            return (
+                JournalAuthType.EMBEDDED
+                if self.is_embed_token
+                else JournalAuthType.SHARED
+            )
+        return None
 
     @property
     def is_anonymous(self) -> bool:
@@ -181,6 +219,7 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
                         user_id=None,
                         account_id=auth_data['account_id'],
                         token=str(token),
+                        is_embed_token=isinstance(token, EmbedToken),
                     )
         except (ValueError, KeyError, TypeError) as e:
             # Handle specific public token errors

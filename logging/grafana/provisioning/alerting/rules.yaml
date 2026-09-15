@@ -105,8 +105,8 @@ groups:
             user.login_failed events across the whole installation. A single
             person mistyping a password does not get here; a spread of
             addresses or of target e-mails does. The Critical events dashboard
-            breaks it down by source address and by the hash of the e-mail that
-            was tried - the e-mail itself is never stored.
+            breaks it down by source address and by the e-mail that was tried,
+            as typed and lower-cased.
         isPaused: false
 
       - uid: pneumatic-bruteforce-source
@@ -123,7 +123,7 @@ groups:
             model:
               datasource: *loki_datasource
               editorMode: code
-              expr: 'sum by (pii_ip) (count_over_time({service_name="pneumatic-backend"} | event_type="user.login_failed" [10m]))'
+              expr: 'sum by (ip) (count_over_time({service_name="pneumatic-backend"} | event_type="user.login_failed" [10m]))'
               intervalMs: 1000
               maxDataPoints: 43200
               queryType: instant

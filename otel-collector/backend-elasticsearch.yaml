@@ -6,7 +6,7 @@
 # The store and its setup live in logging/elasticsearch: the header of its
 # docker-compose.yml lists the steps. What THIS machine needs - the CA file,
 # the queue volume and every variable of the mode - is described once, in the
-# header of logging/elasticsearch/docker-compose.collector-elasticsearch.yml.
+# Elasticsearch section of default.env.
 
 extensions:
   # The queue lives on disk, not in memory: a collector restart used to drop

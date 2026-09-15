@@ -1,14 +1,14 @@
 import pytest
 
+from src.accounts.enums import UserType
 from src.accounts.services.reassign import ReassignService
 from src.accounts.services.user import UserService
 from src.accounts.services.user_transfer import UserTransferService
 from src.accounts.tokens import TransferToken
+from src.authentication.enums import AuthTokenType
 from src.logs.events.enums import (
-    ActorType,
-    EventCategory,
-    EventName,
     EventObjectType,
+    UserEvents,
 )
 from src.logs.events.schema import Actor, EventObject
 from src.processes.tests.fixtures import (
@@ -80,14 +80,15 @@ def test_accept_transfer__valid_token__emit_in_the_new_account(
     # assert
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.USER_TRANSFER
-    assert event.category == EventCategory.AUDIT
+    assert event.type == UserEvents.TRANSFER
+    assert event.category == UserEvents.CATEGORY
     assert event.account_id == new_account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=new_user.id,
         email='transferred@test.test',
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.USER,
         id=new_user.id,

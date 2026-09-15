@@ -236,7 +236,11 @@ class UsersViewSet(
             raise_validation_error(message=ex.message)
         # Here and not in UserService.create: the sign up and the tenant
         # owner go through the same method and are not an admin action.
-        AuditEventService.user_created(request=request, user=user)
+        AuditEventService.user_created(
+            user=request.user,
+            auth_type=request.token_type,
+            target=user,
+        )
         return self.response_ok(UserSerializer(instance=user).data)
 
     @extend_schema(
@@ -387,7 +391,8 @@ class UsersViewSet(
         except ReassignServiceException as ex:
             raise_validation_error(message=ex.message)
         AuditEventService.user_reassigned(
-            request=request,
+            user=request.user,
+            auth_type=request.token_type,
             **serializer.validated_data,
         )
         return self.response_ok()

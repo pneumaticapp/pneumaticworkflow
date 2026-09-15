@@ -1,10 +1,10 @@
 import pytest
 
+from src.accounts.enums import UserType
+from src.authentication.enums import AuthTokenType
 from src.logs.events.enums import (
-    ActorType,
-    EventCategory,
-    EventName,
     EventObjectType,
+    TemplateEvents,
 )
 from src.logs.events.schema import Actor, EventObject
 from src.processes.tests.fixtures import (
@@ -35,18 +35,18 @@ def test_export__no_filters__emit_template_export(
     # assert
     assert response.status_code == 200
     emit_mock.assert_called_once_with(
-        EventName.TEMPLATE_EXPORT,
+        TemplateEvents.EXPORT,
         account_id=account.id,
         actor=Actor(
-            type=ActorType.USER,
             id=owner.id,
             email=owner.email,
+            user_type=UserType.USER,
         ),
+        auth_type=AuthTokenType.USER,
         event_object=EventObject(type=EventObjectType.TEMPLATE),
         payload={'filters': {'is_active': None, 'is_public': None}},
         workflow_id=None,
         task_id=None,
-        request=mocker.ANY,
     )
 
 
@@ -70,13 +70,14 @@ def test_export__filters__emit_the_filters_of_the_request(
     # assert
     assert response.status_code == 200
     emit_mock.assert_called_once_with(
-        EventName.TEMPLATE_EXPORT,
+        TemplateEvents.EXPORT,
         account_id=account.id,
         actor=Actor(
-            type=ActorType.USER,
             id=owner.id,
             email=owner.email,
+            user_type=UserType.USER,
         ),
+        auth_type=AuthTokenType.USER,
         event_object=EventObject(type=EventObjectType.TEMPLATE),
         payload={
             'filters': {
@@ -87,7 +88,6 @@ def test_export__filters__emit_the_filters_of_the_request(
         },
         workflow_id=None,
         task_id=None,
-        request=mocker.ANY,
     )
 
 
@@ -109,13 +109,14 @@ def test_export__first_page__emit_template_export(
     # assert
     assert response.status_code == 200
     emit_mock.assert_called_once_with(
-        EventName.TEMPLATE_EXPORT,
+        TemplateEvents.EXPORT,
         account_id=account.id,
         actor=Actor(
-            type=ActorType.USER,
             id=owner.id,
             email=owner.email,
+            user_type=UserType.USER,
         ),
+        auth_type=AuthTokenType.USER,
         event_object=EventObject(type=EventObjectType.TEMPLATE),
         payload={
             'filters': {
@@ -127,7 +128,6 @@ def test_export__first_page__emit_template_export(
         },
         workflow_id=None,
         task_id=None,
-        request=mocker.ANY,
     )
 
 
@@ -179,14 +179,15 @@ def test_export__filters__event_keeps_request_context(
     assert response.status_code == 200
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.TEMPLATE_EXPORT
-    assert event.category == EventCategory.AUDIT
+    assert event.type == TemplateEvents.EXPORT
+    assert event.category == TemplateEvents.CATEGORY
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=owner.id,
         email=owner.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(type=EventObjectType.TEMPLATE)
     assert event.payload == {
         'filters': {'is_active': True, 'is_public': None},
@@ -194,7 +195,6 @@ def test_export__filters__event_keeps_request_context(
     assert event.ip == '10.10.0.16'
     assert event.user_agent == 'Chrome/141'
     assert event.request_id == 'audit-template-4'
-    assert event.pii == ('actor.email', 'ip', 'user_agent')
 
 
 def test_export__not_admin__no_event(

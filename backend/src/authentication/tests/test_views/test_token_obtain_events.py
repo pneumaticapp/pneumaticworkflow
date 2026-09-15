@@ -1,19 +1,16 @@
 from datetime import timedelta
-from hashlib import sha256
 
 import pytest
 
-from src.accounts.enums import SourceType
+from src.accounts.enums import SourceType, UserType
 from src.authentication.enums import AuthTokenType
 from src.authentication.messages import MSG_AU_0016
 from src.logs.events.schema import Actor, EventObject
 from src.logs.events.emitter import NO_ACCOUNT
 from src.logs.events.enums import (
-    ActorType,
-    EventCategory,
-    EventName,
     EventObjectType,
     LoginFailedReason,
+    UserEvents,
 )
 from src.processes.tests.fixtures import (
     create_test_admin,
@@ -51,16 +48,16 @@ def test_signin__valid_credentials__emit_user_login(
     # assert
     assert response.status_code == 200
     emit_mock.assert_called_once_with(
-        EventName.USER_LOGIN,
+        UserEvents.LOGIN,
         account_id=user.account_id,
         actor=Actor(
-            type=ActorType.USER,
             id=user.id,
             email=user.email,
+            user_type=UserType.USER,
         ),
+        auth_type=AuthTokenType.USER,
         event_object=EventObject(type=EventObjectType.USER, id=user.id),
         payload={'source': SourceType.EMAIL},
-        request=mocker.ANY,
     )
     identify_mock.assert_called_once_with(user)
     users_logged_in_mock.assert_called_once_with(
@@ -103,14 +100,15 @@ def test_signin__valid_credentials__event_keeps_request_context(
     assert response.status_code == 200
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.USER_LOGIN
-    assert event.category == EventCategory.AUDIT
+    assert event.type == UserEvents.LOGIN
+    assert event.category == UserEvents.CATEGORY
     assert event.account_id == user.account_id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=user.id,
         email=user.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.USER,
         id=user.id,
@@ -128,7 +126,7 @@ def test_signin__valid_credentials__event_keeps_request_context(
     )
 
 
-def test_signin__wrong_password__emit_login_failed_without_email(
+def test_signin__wrong_password__emit_login_failed(
     mocker,
     api_client,
     identify_mock,
@@ -138,7 +136,6 @@ def test_signin__wrong_password__emit_login_failed_without_email(
     user = create_test_owner()
     user.set_password('12345')
     user.save(update_fields=['password'])
-    email_hash = sha256(user.email.encode()).hexdigest()
     users_logged_in_mock = mocker.patch(
         'src.authentication.views.signin.'
         'AnalyticService.users_logged_in',
@@ -157,15 +154,13 @@ def test_signin__wrong_password__emit_login_failed_without_email(
     # assert
     assert response.status_code == 403
     emit_mock.assert_called_once_with(
-        EventName.USER_LOGIN_FAILED,
+        UserEvents.LOGIN_FAILED,
         account_id=NO_ACCOUNT,
-        actor=Actor(type=ActorType.GUEST),
         event_object=EventObject(type=EventObjectType.USER),
         payload={
-            'email_hash': email_hash,
+            'email': user.email,
             'reason': LoginFailedReason.BAD_CREDENTIALS,
         },
-        request=mocker.ANY,
     )
     identify_mock.assert_not_called()
     users_logged_in_mock.assert_not_called()
@@ -186,7 +181,6 @@ def test_signin__wrong_password__event_keeps_request_context(
     user = create_test_owner()
     user.set_password('12345')
     user.save(update_fields=['password'])
-    email_hash = sha256(user.email.encode()).hexdigest()
     users_logged_in_mock = mocker.patch(
         'src.authentication.views.signin.'
         'AnalyticService.users_logged_in',
@@ -208,12 +202,13 @@ def test_signin__wrong_password__event_keeps_request_context(
     assert response.status_code == 403
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.USER_LOGIN_FAILED
+    assert event.type == UserEvents.LOGIN_FAILED
     assert event.account_id == NO_ACCOUNT
-    assert event.actor == Actor(type=ActorType.GUEST)
+    assert event.actor is None
+    assert event.auth_type is None
     assert event.object == EventObject(type=EventObjectType.USER)
     assert event.payload == {
-        'email_hash': email_hash,
+        'email': user.email,
         'reason': LoginFailedReason.BAD_CREDENTIALS,
     }
     assert event.ip == '10.10.0.22'
@@ -230,9 +225,6 @@ def test_signin__unknown_email__emit_login_failed_with_same_reason(
 ):
 
     # arrange
-
-    # sha256 of 'ghost@pneumatic.app', an address of nobody
-    email_hash = sha256(b'ghost@pneumatic.app').hexdigest()
     users_logged_in_mock = mocker.patch(
         'src.authentication.views.signin.'
         'AnalyticService.users_logged_in',
@@ -251,30 +243,25 @@ def test_signin__unknown_email__emit_login_failed_with_same_reason(
     # assert
     assert response.status_code == 403
     emit_mock.assert_called_once_with(
-        EventName.USER_LOGIN_FAILED,
+        UserEvents.LOGIN_FAILED,
         account_id=NO_ACCOUNT,
-        actor=Actor(type=ActorType.GUEST),
         event_object=EventObject(type=EventObjectType.USER),
         payload={
-            'email_hash': email_hash,
+            'email': 'ghost@pneumatic.app',
             'reason': LoginFailedReason.BAD_CREDENTIALS,
         },
-        request=mocker.ANY,
     )
     identify_mock.assert_not_called()
     users_logged_in_mock.assert_not_called()
 
 
-def test_signin__uppercase_email_with_spaces__emit_same_hash(
+def test_signin__uppercase_email_with_spaces__emit_normalized_email(
     mocker,
     api_client,
     identify_mock,
 ):
 
     # arrange
-
-    # sha256 of 'owner@pneumatic.app', the normalized address
-    email_hash = sha256(b'owner@pneumatic.app').hexdigest()
     users_logged_in_mock = mocker.patch(
         'src.authentication.views.signin.'
         'AnalyticService.users_logged_in',
@@ -293,15 +280,13 @@ def test_signin__uppercase_email_with_spaces__emit_same_hash(
     # assert
     assert response.status_code == 403
     emit_mock.assert_called_once_with(
-        EventName.USER_LOGIN_FAILED,
+        UserEvents.LOGIN_FAILED,
         account_id=NO_ACCOUNT,
-        actor=Actor(type=ActorType.GUEST),
         event_object=EventObject(type=EventObjectType.USER),
         payload={
-            'email_hash': email_hash,
+            'email': 'owner@pneumatic.app',
             'reason': LoginFailedReason.BAD_CREDENTIALS,
         },
-        request=mocker.ANY,
     )
     identify_mock.assert_not_called()
     users_logged_in_mock.assert_not_called()
@@ -319,7 +304,6 @@ def test_signin__sso_required__emit_login_failed_sso_required(
     user = create_test_admin()
     user.set_password('12345')
     user.save(update_fields=['password'])
-    email_hash = sha256(user.email.encode()).hexdigest()
     users_logged_in_mock = mocker.patch(
         'src.authentication.views.signin.'
         'AnalyticService.users_logged_in',
@@ -339,15 +323,13 @@ def test_signin__sso_required__emit_login_failed_sso_required(
     assert response.status_code == 400
     assert response.data[0] == MSG_AU_0016
     emit_mock.assert_called_once_with(
-        EventName.USER_LOGIN_FAILED,
+        UserEvents.LOGIN_FAILED,
         account_id=NO_ACCOUNT,
-        actor=Actor(type=ActorType.GUEST),
         event_object=EventObject(type=EventObjectType.USER),
         payload={
-            'email_hash': email_hash,
+            'email': user.email,
             'reason': LoginFailedReason.SSO_REQUIRED,
         },
-        request=mocker.ANY,
     )
     identify_mock.assert_not_called()
     users_logged_in_mock.assert_not_called()
@@ -368,7 +350,6 @@ def test_signin__verification_timed_out__emit_login_failed_inactive(
     account.is_verified = False
     account.date_joined = user.date_joined - timedelta(weeks=3)
     account.save(update_fields=['is_verified', 'date_joined'])
-    email_hash = sha256(user.email.encode()).hexdigest()
     send_verification_mock = mocker.patch(
         'src.authentication.views.signin.'
         'send_verification_notification.delay',
@@ -387,15 +368,13 @@ def test_signin__verification_timed_out__emit_login_failed_inactive(
     # assert
     assert response.status_code == 403
     emit_mock.assert_called_once_with(
-        EventName.USER_LOGIN_FAILED,
+        UserEvents.LOGIN_FAILED,
         account_id=NO_ACCOUNT,
-        actor=Actor(type=ActorType.GUEST),
         event_object=EventObject(type=EventObjectType.USER),
         payload={
-            'email_hash': email_hash,
+            'email': user.email,
             'reason': LoginFailedReason.VERIFICATION_EXPIRED,
         },
-        request=mocker.ANY,
     )
     identify_mock.assert_not_called()
     send_verification_mock.assert_called_once_with(

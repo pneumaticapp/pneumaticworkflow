@@ -2,18 +2,13 @@ import json
 import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, Dict, Optional, Union
 from urllib.parse import urlsplit, urlunsplit
 
 from django.core.serializers.json import DjangoJSONEncoder
 
-from src.authentication.enums import AuthTokenType
-from src.logs.events.enums import (
-    ActorType,
-    EventCategory,
-    EventObjectType,
-    actor_type_from_auth,
-)
+from src.accounts.enums import UserType
+from src.logs.events.enums import EventCategory, EventObjectType
 from src.logs.events.reporting import report_error
 from src.utils.logging import SentryLogLevel
 
@@ -79,15 +74,20 @@ def parse_ts(value: str) -> datetime:
 @dataclass
 class Actor:
 
-    type: ActorType.LITERALS
+    """ The person who acted: a user of the account or a guest of
+        one task. Nobody, the system, is no actor at all: the actor
+        of the record is then null. How the person was authenticated
+        is not part of the actor, it is Event.auth_type. """
+
     id: Optional[int] = None
     email: Optional[str] = None
+    user_type: Optional[UserType.LITERALS] = None
 
     def to_dict(self) -> Dict[str, Any]:
         return {
-            'type': self.type,
             'id': self.id,
             'email': self.email,
+            'user_type': self.user_type,
         }
 
     @classmethod
@@ -95,27 +95,14 @@ class Actor:
         if not data:
             return None
         return cls(
-            type=data['type'],
             id=data.get('id'),
             email=data.get('email'),
+            user_type=data.get('user_type'),
         )
 
     @classmethod
-    def from_user(
-        cls,
-        user,
-        auth_type: Optional[str] = None,
-    ) -> 'Actor':
-
-        """ The person behind a request or a service call. The
-            auth type tells a browser session from an API key; a
-            service that does not know it is a user session. """
-
-        return cls(
-            type=actor_type_from_auth(auth_type or AuthTokenType.USER),
-            id=user.id,
-            email=user.email,
-        )
+    def from_user(cls, user) -> 'Actor':
+        return cls(id=user.id, email=user.email, user_type=user.type)
 
 
 @dataclass
@@ -148,14 +135,12 @@ class Event:
     ts: datetime
     account_id: int
     actor: Optional[Actor] = None
+    # The credential behind the request, an AuthTokenType value: a
+    # session, an API key, a guest link, a public form, a webhook.
+    # None for the system and for an anonymous request.
+    auth_type: Optional[str] = None
     object: Optional[EventObject] = None
     payload: Dict[str, Any] = field(default_factory=dict)
-    # What the registry declared as personal data when the event was
-    # built. The sink does not read it back from the record: it asks
-    # the registry again, so a hand written record cannot hide a
-    # field from the pii.* namespace. Kept for reading a record of
-    # the stream by eye and for the audit answer "what left".
-    pii: Tuple[str, ...] = ()
     # Which service wrote the record: the OTLP resource service.name.
     # Every writer fills it, the sink groups records by it.
     service: str = ''
@@ -180,6 +165,7 @@ class Event:
             'ts': format_ts(self.ts),
             'account_id': self.account_id,
             'actor': self.actor.to_dict() if self.actor else None,
+            'auth_type': self.auth_type,
             'object': self.object.to_dict() if self.object else None,
             'workflow_id': self.workflow_id,
             'task_id': self.task_id,
@@ -187,7 +173,6 @@ class Event:
             'user_agent': self.user_agent,
             'request_id': self.request_id,
             'payload': self.payload,
-            'pii': list(self.pii),
         }
         if self.id is not None:
             data['id'] = self.id
@@ -201,9 +186,9 @@ class Event:
             ts=parse_ts(data['ts']),
             account_id=data['account_id'],
             actor=Actor.from_dict(data.get('actor')),
+            auth_type=data.get('auth_type'),
             object=EventObject.from_dict(data.get('object')),
             payload=data.get('payload') or {},
-            pii=tuple(data.get('pii') or ()),
             service=data['service'],
             workflow_id=data.get('workflow_id'),
             task_id=data.get('task_id'),
@@ -212,57 +197,6 @@ class Event:
             request_id=data.get('request_id'),
             id=data.get('id'),
         )
-
-
-PII_ROOTS = ('ip', 'user_agent')
-PII_NAMESPACES = ('actor', 'object', 'payload')
-
-
-def split_pii_path(path: str) -> Tuple[str, str]:
-
-    """ Split a personal data path into its head and its tail.
-
-        A path names a field of a record: a root of the record itself
-        ("ip"), or a key inside one of its namespaces
-        ("actor.email", "payload.filename"). The registry validating
-        a declaration and the emitter filling Event.pii both split
-        them here; the sink matches whole paths against attribute
-        keys named after them (otlp_payload._extract_pii).
-    """
-
-    head, _, tail = path.partition('.')
-    return head, tail
-
-
-def is_valid_pii_path(path: str) -> bool:
-
-    """ Whether a path can name a field at all.
-
-        An unresolvable path is dropped without a word and the field
-        then leaves as a plain attribute, outside the pii.* namespace
-        that tells a receiver what is personal: a typo is a silent
-        data leak.
-    """
-
-    head, tail = split_pii_path(path)
-    if head in PII_ROOTS:
-        return not tail
-    return head in PII_NAMESPACES and bool(tail)
-
-
-def pii_value(event: 'Event', path: str) -> Any:
-
-    """ The value a valid personal data path points at, or None. """
-
-    head, tail = split_pii_path(path)
-    if head == 'payload':
-        return event.payload.get(tail)
-    if head in ('actor', 'object'):
-        holder = getattr(event, head, None)
-        return getattr(holder, tail, None) if holder else None
-    if tail:
-        return None
-    return getattr(event, head, None)
 
 
 def normalize_payload(payload: Optional[dict]) -> dict:

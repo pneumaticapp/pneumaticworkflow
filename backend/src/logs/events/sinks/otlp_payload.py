@@ -6,15 +6,12 @@ The transport that sends it lives in sinks/otlp.py.
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
-from src.logs.events.enums import EventCategory
-from src.logs.events.registry import resolve_event_type
 from src.logs.events.schema import Event, format_ts, to_json
 
 SCOPE_NAME = 'pneumatic.events'
 SCOPE_VERSION = '1'
 
 PAYLOAD_PREFIX = 'payload.'
-PII_PREFIX = 'pii.'
 EXTRA_ATTRIBUTE = 'payload.extra'
 # Loki keeps up to 128 structured metadata entries per line; half of
 # that leaves room for the labels the collector adds on its way.
@@ -22,13 +19,9 @@ MAX_ATTRIBUTES = 60
 # One resourceLogs per (service, account_id, category).
 GroupKey = Tuple[str, Any, str]
 
-SEVERITY_INFO = (9, 'INFO')
-SEVERITY_DEBUG = (5, 'DEBUG')
-CATEGORY_SEVERITY = {
-    EventCategory.AUDIT: SEVERITY_INFO,
-    EventCategory.ACTIVITY: SEVERITY_INFO,
-    EventCategory.DEBUG: SEVERITY_DEBUG,
-}
+# Every record of the journal is a fact, not a problem: one level
+# for all of them. The category tells them apart, not the severity.
+SEVERITY_NUMBER, SEVERITY_TEXT = 9, 'INFO'
 
 EPOCH = datetime(1970, 1, 1, tzinfo=timezone.utc)
 SECOND_NS = 1000000000
@@ -47,8 +40,7 @@ def build_otlp_payload(
     """ Build an OTLP/HTTP JSON logs request out of stream records.
 
         No network and no clock: the moment of reading comes in as
-        observed_ns. The only thing read from the outside is the
-        registry, and only for the personal data paths (_pii_paths).
+        observed_ns.
 
         Records are grouped by (service, account_id, category) into
         separate resourceLogs: Loki takes index labels from resource
@@ -125,14 +117,11 @@ def _log_record(
     event: Event,
     observed: str,
 ) -> Dict[str, Any]:
-    severity_number, severity_text = CATEGORY_SEVERITY.get(
-        event.category, SEVERITY_INFO,
-    )
     return {
         'timeUnixNano': _to_unix_nano(event.ts),
         'observedTimeUnixNano': observed,
-        'severityNumber': severity_number,
-        'severityText': severity_text,
+        'severityNumber': SEVERITY_NUMBER,
+        'severityText': SEVERITY_TEXT,
         'body': {'stringValue': _body(event)},
         'attributes': _record_attributes(record_id, event),
     }
@@ -140,11 +129,9 @@ def _log_record(
 
 def _body(event: Event) -> str:
 
-    """ Short line without PII. Nothing strips the record on the
-        way out, so the body is the one field every reader of the
-        journal sees whether or not it wants personal data. An id
-        that is itself a secret, the key of an invite, never reaches
-        the object of an event: the writers leave it empty. """
+    """ Short line: the type and the object. An id that is itself a
+        secret, the key of an invite, never reaches the object of an
+        event: the writers leave it empty. """
 
     if event.object is None:
         return event.type
@@ -159,30 +146,13 @@ def _record_attributes(
 ) -> List[Dict[str, Any]]:
     plain = _plain_values(record_id, event)
     payload = _payload_values(event.payload)
-    pii = _extract_pii(_pii_paths(event), plain, payload)
-    payload, extra = _fit_limit(len(plain) + len(pii), payload)
+    payload, extra = _fit_limit(len(plain), payload)
 
     attributes = [_attr(key, value) for key, value in plain.items()]
     attributes += [_attr(key, value) for key, value in payload.items()]
     if extra:
         attributes.append(_attr(EXTRA_ATTRIBUTE, extra))
-    attributes += [_attr(key, value) for key, value in pii.items()]
     return attributes
-
-
-def _pii_paths(event: Event) -> Tuple[str, ...]:
-
-    """ The personal fields of the type as the registry of this
-        process declares them, not as the record of the stream claims.
-
-        Whoever can write into the stream could otherwise hand in
-        an event with a filled e-mail and an empty pii list, and it
-        would arrive at the receiver as a plain attribute, outside
-        the namespace that says "this is personal data". For a type
-        nobody declared the registry answers ACTOR_PII, which is the
-        safe side. """
-
-    return resolve_event_type(event.type).pii
 
 
 def _plain_values(record_id: str, event: Event) -> Dict[str, Any]:
@@ -198,9 +168,10 @@ def _plain_values(record_id: str, event: Event) -> Dict[str, Any]:
         'event.type': event.type,
     }
     if event.actor is not None:
-        values['actor.type'] = event.actor.type
         values['actor.id'] = event.actor.id
         values['actor.email'] = event.actor.email
+        values['actor.user_type'] = event.actor.user_type
+    values['auth_type'] = event.auth_type
     if event.object is not None:
         values['object.type'] = event.object.type
         values['object.id'] = event.object.id
@@ -233,42 +204,13 @@ def _payload_values(payload: Any) -> Dict[str, Any]:
     }
 
 
-def _extract_pii(
-    paths: Tuple[str, ...],
-    plain: Dict[str, Any],
-    payload: Dict[str, Any],
-) -> Dict[str, Any]:
-
-    """ Move the declared personal fields into the pii.* namespace
-        and remove them from their original place, so that one prefix
-        names every personal attribute of a record. Nothing deletes
-        them on the way out; a receiver that does not want them drops
-        the prefix.
-
-        A path is matched against the attribute keys directly and not
-        split the way schema.split_pii_path splits it: _plain_values
-        and _payload_values name their keys after the paths on
-        purpose ("actor.email", "payload.filename"), so the lookup is
-        the whole resolution. Renaming a key there without renaming
-        the path here leaves a personal field outside the namespace,
-        which is what test_registry pins. """
-
-    pii: Dict[str, Any] = {}
-    for path in paths:
-        source = plain if path in plain else payload
-        if path in source:
-            pii[PII_PREFIX + path] = source.pop(path)
-    return pii
-
-
 def _fit_limit(
     reserved: int,
     payload: Dict[str, Any],
 ) -> Tuple[Dict[str, Any], Optional[Dict[str, Any]]]:
 
     """ Keep at most MAX_ATTRIBUTES attributes per record: the tail of
-        the payload collapses into a single payload.extra JSON string.
-        Only non PII keys get here, the pii.* ones are already out. """
+        the payload collapses into a single payload.extra JSON string. """
 
     if reserved + len(payload) <= MAX_ATTRIBUTES:
         return payload, None

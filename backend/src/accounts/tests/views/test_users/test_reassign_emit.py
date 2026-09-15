@@ -1,14 +1,13 @@
 import pytest
 
+from src.accounts.enums import UserType
 from src.accounts.messages import MSG_A_0004
 from src.accounts.services.exceptions import ReassignUserSameUser
 from src.accounts.services.reassign import ReassignService
 from src.authentication.enums import AuthTokenType
 from src.logs.events.enums import (
-    ActorType,
-    EventCategory,
-    EventName,
     EventObjectType,
+    UserEvents,
 )
 from src.logs.events.schema import Actor, EventObject
 from src.processes.tests.fixtures import (
@@ -65,14 +64,15 @@ def test_reassign__user_to_user__emit_user_reassign(
     assert response.status_code == 204
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.USER_REASSIGN
-    assert event.category == EventCategory.AUDIT
+    assert event.type == UserEvents.REASSIGN
+    assert event.category == UserEvents.CATEGORY
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=owner.id,
         email=owner.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.USER,
         id=old_user.id,
@@ -134,14 +134,15 @@ def test_reassign__group_to_group__emit_group_object(
     assert response.status_code == 204
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.USER_REASSIGN
-    assert event.category == EventCategory.AUDIT
+    assert event.type == UserEvents.REASSIGN
+    assert event.category == UserEvents.CATEGORY
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=owner.id,
         email=owner.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.GROUP,
         id=old_group.id,
@@ -195,14 +196,15 @@ def test_reassign__user_to_group__emit_user_object(
     assert response.status_code == 204
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.USER_REASSIGN
-    assert event.category == EventCategory.AUDIT
+    assert event.type == UserEvents.REASSIGN
+    assert event.category == UserEvents.CATEGORY
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=owner.id,
         email=owner.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.USER,
         id=old_user.id,

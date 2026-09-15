@@ -2,7 +2,7 @@
   "annotations": {
     "list": []
   },
-  "description": "The events a security officer wants to see first: failed sign-ins and brute force attempts, staff signing in on behalf of users and tenants, API keys, admin rights, new users, invites, transfers, deactivations and password resets, deletions and exports, webhook subscriptions (an outbound channel for the data) and refused file downloads, cross-account attempts among them. Everything here is category audit.",
+  "description": "The events a security officer wants to see first: failed sign-ins and brute force attempts, staff signing in on behalf of users and tenants, API keys, admin rights, new users, invites, transfers, deactivations and password resets, deletions and exports, webhook subscriptions (an outbound channel for the data) and refused file downloads, cross-account attempts among them. The panels pick events by type, so they cut across the users, api_keys, accounts, groups, templates, workflows, datasets, webhooks and files categories.",
   "editable": false,
   "graphTooltip": 1,
   "id": null,
@@ -41,7 +41,7 @@
         "type": "loki",
         "uid": "pneumatic-loki"
       },
-      "description": "user.login_failed. The e-mail of the attempt is stored hashed only.",
+      "description": "user.login_failed. The e-mail of the attempt is stored as typed, lower-cased.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -886,7 +886,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "count(sum by (pii_ip) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=\"user.login_failed\" [$__range])) >= 5)",
+          "expr": "count(sum by (ip) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=\"user.login_failed\" [$__range])) >= 5)",
           "instant": true,
           "legendFormat": "",
           "queryType": "instant",
@@ -1242,8 +1242,8 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "sum by (pii_ip) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=\"user.login_failed\" [10m]))",
-          "legendFormat": "{{pii_ip}}",
+          "expr": "sum by (ip) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=\"user.login_failed\" [10m]))",
+          "legendFormat": "{{ip}}",
           "queryType": "range",
           "refId": "A"
         }
@@ -1316,7 +1316,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "topk(10, sum by (pii_ip, payload_reason) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=\"user.login_failed\" [$__range])))",
+          "expr": "topk(10, sum by (ip, payload_reason) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=\"user.login_failed\" [$__range])))",
           "instant": true,
           "legendFormat": "",
           "queryType": "instant",
@@ -1345,13 +1345,13 @@
               "Value": 2,
               "Value #A": 2,
               "payload_reason": 1,
-              "pii_ip": 0
+              "ip": 0
             },
             "renameByName": {
               "Value": "Attempts",
               "Value #A": "Attempts",
               "payload_reason": "Reason",
-              "pii_ip": "IP address"
+              "ip": "IP address"
             }
           }
         }
@@ -1363,7 +1363,7 @@
         "type": "loki",
         "uid": "pneumatic-loki"
       },
-      "description": "Ten e-mails with the most failed attempts. The e-mail itself is never stored, only its SHA-256; the first twelve characters tell the targets apart.",
+      "description": "Ten e-mails with the most failed attempts, as typed and lower-cased. A failed sign-in has no actor, so the address is the only thing that tells the targets apart.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1423,7 +1423,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "topk(10, sum by (h) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=\"user.login_failed\" | label_format h=\"{{ substr 0 12 .payload_email_hash }}\" [$__range])))",
+          "expr": "topk(10, sum by (payload_email) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=\"user.login_failed\" [$__range])))",
           "instant": true,
           "legendFormat": "",
           "queryType": "instant",
@@ -1451,12 +1451,12 @@
             "indexByName": {
               "Value": 1,
               "Value #A": 1,
-              "h": 0
+              "payload_email": 0
             },
             "renameByName": {
               "Value": "Attempts",
               "Value #A": "Attempts",
-              "h": "E-mail hash"
+              "payload_email": "E-mail"
             }
           }
         }
@@ -1541,7 +1541,7 @@
           },
           "direction": "backward",
           "editorMode": "code",
-          "expr": "{service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=~\"user.login_as|tenant.login_as\" | line_format \"{{.event_type}} {{.actor_type}}:{{.actor_id}} {{.object_type}}:{{.object_id}}\"",
+          "expr": "{service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=~\"user.login_as|tenant.login_as\" | line_format \"{{.event_type}} {{.auth_type}}:{{.actor_id}} {{.object_type}}:{{.object_id}}\"",
           "legendFormat": "",
           "queryType": "range",
           "refId": "A"
@@ -1566,11 +1566,11 @@
                 "Time",
                 "event_type",
                 "account_id",
-                "pii_actor_email",
-                "pii_payload_target_email",
+                "actor_email",
+                "payload_target_email",
                 "object_type",
                 "object_id",
-                "pii_ip"
+                "ip"
               ]
             }
           }
@@ -1585,18 +1585,18 @@
               "event_type": 1,
               "object_id": 6,
               "object_type": 5,
-              "pii_actor_email": 3,
-              "pii_ip": 7,
-              "pii_payload_target_email": 4
+              "actor_email": 3,
+              "ip": 7,
+              "payload_target_email": 4
             },
             "renameByName": {
               "account_id": "Account",
               "event_type": "Event type",
               "object_id": "Object id",
               "object_type": "Object type",
-              "pii_actor_email": "Staff e-mail",
-              "pii_ip": "IP address",
-              "pii_payload_target_email": "Target user"
+              "actor_email": "Staff e-mail",
+              "ip": "IP address",
+              "payload_target_email": "Target user"
             }
           }
         }
@@ -1668,7 +1668,7 @@
           },
           "direction": "backward",
           "editorMode": "code",
-          "expr": "{service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=~\"api_key.create|api_key.revoke|user.admin_toggle|user.deactivate|user.create|user.transfer|invite.create|user.password_reset|user.password_change|user.password_set|user.reassign|user.vacation_activate|user.vacation_deactivate|tenant.create|admin.create|admin.update|admin.delete\" | line_format \"{{.event_type}} {{.actor_type}}:{{.actor_id}} {{.object_type}}:{{.object_id}}\"",
+          "expr": "{service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=~\"api_key.create|api_key.revoke|user.admin_toggle|user.deactivate|user.create|user.transfer|invite.create|user.password_reset|user.password_change|user.password_set|user.reassign|user.vacation_activate|user.vacation_deactivate|tenant.create|admin.create|admin.update|admin.delete\" | line_format \"{{.event_type}} {{.auth_type}}:{{.actor_id}} {{.object_type}}:{{.object_id}}\"",
           "legendFormat": "",
           "queryType": "range",
           "refId": "A"
@@ -1693,13 +1693,13 @@
                 "Time",
                 "event_type",
                 "account_id",
-                "actor_type",
-                "pii_actor_email",
+                "auth_type",
+                "actor_email",
                 "object_type",
                 "object_id",
-                "pii_payload_name",
-                "pii_payload_target_email",
-                "pii_ip"
+                "payload_name",
+                "payload_target_email",
+                "ip"
               ]
             }
           }
@@ -1711,25 +1711,25 @@
             "indexByName": {
               "Time": 0,
               "account_id": 2,
-              "actor_type": 3,
+              "auth_type": 3,
               "event_type": 1,
               "object_id": 6,
               "object_type": 5,
-              "pii_actor_email": 4,
-              "pii_ip": 9,
-              "pii_payload_name": 7,
-              "pii_payload_target_email": 8
+              "actor_email": 4,
+              "ip": 9,
+              "payload_name": 7,
+              "payload_target_email": 8
             },
             "renameByName": {
               "account_id": "Account",
-              "actor_type": "Actor type",
+              "auth_type": "Auth type",
               "event_type": "Event type",
               "object_id": "Object id",
               "object_type": "Object type",
-              "pii_actor_email": "Actor e-mail",
-              "pii_ip": "IP address",
-              "pii_payload_name": "Name",
-              "pii_payload_target_email": "Target user"
+              "actor_email": "Actor e-mail",
+              "ip": "IP address",
+              "payload_name": "Name",
+              "payload_target_email": "Target user"
             }
           }
         }
@@ -1801,7 +1801,7 @@
           },
           "direction": "backward",
           "editorMode": "code",
-          "expr": "{service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=~\"group.delete|template.delete|template.export|workflow.terminate|tenant.delete|task.comment_delete|fieldset.delete|dataset.delete\" | line_format \"{{.event_type}} {{.actor_type}}:{{.actor_id}} {{.object_type}}:{{.object_id}}\"",
+          "expr": "{service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=~\"group.delete|template.delete|template.export|workflow.terminate|tenant.delete|task.comment_delete|fieldset.delete|dataset.delete\" | line_format \"{{.event_type}} {{.auth_type}}:{{.actor_id}} {{.object_type}}:{{.object_id}}\"",
           "legendFormat": "",
           "queryType": "range",
           "refId": "A"
@@ -1826,12 +1826,12 @@
                 "Time",
                 "event_type",
                 "account_id",
-                "pii_actor_email",
+                "actor_email",
                 "object_type",
                 "object_id",
-                "pii_payload_name",
-                "pii_payload_workflow_name",
-                "pii_ip"
+                "payload_name",
+                "payload_workflow_name",
+                "ip"
               ]
             }
           }
@@ -1846,20 +1846,20 @@
               "event_type": 1,
               "object_id": 5,
               "object_type": 4,
-              "pii_actor_email": 3,
-              "pii_ip": 8,
-              "pii_payload_name": 6,
-              "pii_payload_workflow_name": 7
+              "actor_email": 3,
+              "ip": 8,
+              "payload_name": 6,
+              "payload_workflow_name": 7
             },
             "renameByName": {
               "account_id": "Account",
               "event_type": "Event type",
               "object_id": "Object id",
               "object_type": "Object type",
-              "pii_actor_email": "Actor e-mail",
-              "pii_ip": "IP address",
-              "pii_payload_name": "Name",
-              "pii_payload_workflow_name": "Workflow name"
+              "actor_email": "Actor e-mail",
+              "ip": "IP address",
+              "payload_name": "Name",
+              "payload_workflow_name": "Workflow name"
             }
           }
         }
@@ -1931,7 +1931,7 @@
           },
           "direction": "backward",
           "editorMode": "code",
-          "expr": "{service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=~\"webhook.subscribe|webhook.unsubscribe\" | line_format \"{{.event_type}} {{.actor_type}}:{{.actor_id}} {{.object_type}}:{{.object_id}}\"",
+          "expr": "{service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=~\"webhook.subscribe|webhook.unsubscribe\" | line_format \"{{.event_type}} {{.auth_type}}:{{.actor_id}} {{.object_type}}:{{.object_id}}\"",
           "legendFormat": "",
           "queryType": "range",
           "refId": "A"
@@ -1956,10 +1956,10 @@
                 "Time",
                 "event_type",
                 "account_id",
-                "pii_actor_email",
+                "actor_email",
                 "object_id",
-                "pii_payload_url",
-                "pii_ip"
+                "payload_url",
+                "ip"
               ]
             }
           }
@@ -1973,17 +1973,17 @@
               "account_id": 2,
               "event_type": 1,
               "object_id": 4,
-              "pii_actor_email": 3,
-              "pii_ip": 6,
-              "pii_payload_url": 5
+              "actor_email": 3,
+              "ip": 6,
+              "payload_url": 5
             },
             "renameByName": {
               "account_id": "Account",
               "event_type": "Event type",
               "object_id": "Object id",
-              "pii_actor_email": "Actor e-mail",
-              "pii_ip": "IP address",
-              "pii_payload_url": "URL"
+              "actor_email": "Actor e-mail",
+              "ip": "IP address",
+              "payload_url": "URL"
             }
           }
         }
@@ -2074,7 +2074,7 @@
           },
           "direction": "backward",
           "editorMode": "code",
-          "expr": "{service_name=\"pneumatic-file-service\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=\"file.access_denied\" | label_format cross=\"{{ if ne .payload_file_account_id .account_id }}yes{{ else }}no{{ end }}\" | line_format \"{{.event_type}} {{.actor_type}}:{{.actor_id}} {{.object_type}}:{{.object_id}}\"",
+          "expr": "{service_name=\"pneumatic-file-service\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=\"file.access_denied\" | label_format cross=\"{{ if ne .payload_file_account_id .account_id }}yes{{ else }}no{{ end }}\" | line_format \"{{.event_type}} {{.auth_type}}:{{.actor_id}} {{.object_type}}:{{.object_id}}\"",
           "legendFormat": "",
           "queryType": "range",
           "refId": "A"
@@ -2098,14 +2098,14 @@
               "names": [
                 "Time",
                 "account_id",
-                "actor_type",
+                "auth_type",
                 "actor_id",
                 "object_id",
-                "pii_payload_filename",
+                "payload_filename",
                 "payload_file_account_id",
                 "cross",
-                "pii_ip",
-                "pii_user_agent"
+                "ip",
+                "user_agent"
               ]
             }
           }
@@ -2118,24 +2118,24 @@
               "Time": 0,
               "account_id": 1,
               "actor_id": 3,
-              "actor_type": 2,
+              "auth_type": 2,
               "cross": 7,
               "object_id": 4,
               "payload_file_account_id": 6,
-              "pii_ip": 8,
-              "pii_payload_filename": 5,
-              "pii_user_agent": 9
+              "ip": 8,
+              "payload_filename": 5,
+              "user_agent": 9
             },
             "renameByName": {
               "account_id": "Account",
               "actor_id": "Actor id",
-              "actor_type": "Actor type",
+              "auth_type": "Auth type",
               "cross": "Cross-account",
               "object_id": "File",
               "payload_file_account_id": "File account",
-              "pii_ip": "IP address",
-              "pii_payload_filename": "File name",
-              "pii_user_agent": "User agent"
+              "ip": "IP address",
+              "payload_filename": "File name",
+              "user_agent": "User agent"
             }
           }
         }

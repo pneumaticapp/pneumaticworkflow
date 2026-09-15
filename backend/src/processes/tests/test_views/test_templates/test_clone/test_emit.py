@@ -1,10 +1,10 @@
 import pytest
 
+from src.accounts.enums import UserType
+from src.authentication.enums import AuthTokenType
 from src.logs.events.enums import (
-    ActorType,
-    EventCategory,
-    EventName,
     EventObjectType,
+    TemplateEvents,
 )
 from src.logs.events.schema import Actor, EventObject
 from src.processes.models.templates.template import Template
@@ -49,13 +49,14 @@ def test_clone__template__emit_template_clone(
     clone = Template.objects.get(id=response.data['id'])
     assert clone.id != template.id
     emit_mock.assert_called_once_with(
-        EventName.TEMPLATE_CLONE,
+        TemplateEvents.CLONE,
         account_id=account.id,
         actor=Actor(
-            type=ActorType.USER,
             id=owner.id,
             email=owner.email,
+            user_type=UserType.USER,
         ),
+        auth_type=AuthTokenType.USER,
         event_object=EventObject(
             type=EventObjectType.TEMPLATE,
             id=clone.id,
@@ -67,7 +68,6 @@ def test_clone__template__emit_template_clone(
         },
         workflow_id=None,
         task_id=None,
-        request=mocker.ANY,
     )
     create_integrations_mock.assert_called_once_with(template=clone)
 
@@ -108,14 +108,15 @@ def test_clone__template__event_keeps_request_context(
     clone = Template.objects.get(id=response.data['id'])
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.TEMPLATE_CLONE
-    assert event.category == EventCategory.ACTIVITY
+    assert event.type == TemplateEvents.CLONE
+    assert event.category == TemplateEvents.CATEGORY
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=owner.id,
         email=owner.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.TEMPLATE,
         id=clone.id,

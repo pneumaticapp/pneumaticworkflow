@@ -1,10 +1,10 @@
 import pytest
 
+from src.accounts.enums import UserType
+from src.authentication.enums import AuthTokenType
 from src.logs.events.enums import (
-    ActorType,
-    EventCategory,
-    EventName,
     EventObjectType,
+    TemplateEvents,
 )
 from src.logs.events.schema import Actor, EventObject
 from src.processes.models.templates.system_template import SystemTemplate
@@ -72,14 +72,15 @@ def test_import_templates__two_templates__emit_template_library_import(
     assert SystemTemplate.objects.count() == 2
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.TEMPLATE_LIBRARY_IMPORT
-    assert event.category == EventCategory.AUDIT
+    assert event.type == TemplateEvents.LIBRARY_IMPORT
+    assert event.category == TemplateEvents.CATEGORY
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=staff.id,
         email=staff.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.SYSTEM_TEMPLATE,
         id=None,
@@ -88,7 +89,6 @@ def test_import_templates__two_templates__emit_template_library_import(
     assert event.ip == '10.10.0.26'
     assert event.user_agent == 'Chrome/141'
     assert event.request_id == 'audit-template-26'
-    assert event.pii == ('actor.email', 'ip', 'user_agent')
 
 
 def test_import_templates__empty_templates__no_event(

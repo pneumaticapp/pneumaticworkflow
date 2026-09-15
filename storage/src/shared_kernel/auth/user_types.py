@@ -12,15 +12,35 @@ class UserType(StrEnum):
     GUEST_TOKEN = 'guest_token'  # Guest token  # noqa: S105
 
 
-class ActorType(StrEnum):
-    """Who acted, in the vocabulary of the backend (ActorType there).
+class JournalUserType(StrEnum):
+    """Kind of the person who acted, for the audit journal.
+
+    The vocabulary of the backend (UserType there): a user of the
+    account or a guest of one task. A request without a person, a
+    public or an embed token, has no actor at all.
 
     Part of the event contract: file_service_contract.json in the
-    backend fixtures lists these values, test_events_schema.py pins
-    them here and test_file_service_contract.py checks that the backend
-    declares every one of them.
+    backend fixtures lists these values under user_types and
+    test_events_schema.py pins them here.
     """
 
     USER = 'user'
-    API_KEY = 'api_key'
     GUEST = 'guest'
+
+
+class JournalAuthType(StrEnum):
+    """Credential behind the request, for the audit journal.
+
+    The vocabulary of the backend (AuthTokenType there), without the
+    webhook the file service never sees.
+
+    Part of the event contract: file_service_contract.json in the
+    backend fixtures lists these values under auth_types and
+    test_events_schema.py pins them here.
+    """
+
+    USER = 'User'
+    API = 'API'
+    GUEST = 'Guest'
+    SHARED = 'Shared'
+    EMBEDDED = 'Embedded'

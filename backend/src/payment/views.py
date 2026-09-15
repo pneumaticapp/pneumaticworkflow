@@ -108,7 +108,8 @@ class PaymentViewSet(
             if payment_link:
                 return self.response_ok({'payment_link': payment_link})
             AuditEventService.purchase_made(
-                request=request,
+                user=request.user,
+                auth_type=request.token_type,
                 products=slz.validated_data['products'],
             )
             return self.response_ok()
@@ -131,7 +132,6 @@ class PaymentViewSet(
         except StripeServiceException as ex:
             raise_validation_error(message=ex.message)
         AuditEventService.payment_confirmed(
-            request=request,
             user=token.user,
             auth_type=token['auth_type'],
             subscription_data=subscription_data,
@@ -226,7 +226,10 @@ class SubscriptionViewSet(
         except StripeServiceException as ex:
             raise_validation_error(message=ex.message)
         else:
-            AuditEventService.subscription_cancelled(request=request)
+            AuditEventService.subscription_cancelled(
+                user=request.user,
+                auth_type=request.token_type,
+            )
             return self.response_ok()
 
 

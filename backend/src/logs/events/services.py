@@ -1,26 +1,59 @@
-from hashlib import sha256
+from datetime import date
 from typing import Any, Dict, List, Optional, Union
 
+from src.authentication.enums import AuthTokenType
 from src.logs.events.emitter import NO_ACCOUNT, emit, logs_enabled
 from src.logs.events.enums import (
-    ActorType,
-    EventName,
+    AccountEvents,
+    AdminEvents,
+    ApiKeyEvents,
+    BillingEvents,
+    DatasetEvents,
     EventObjectType,
+    GroupEvents,
     LoginFailedReason,
+    LogoutReason,
+    TaskEvents,
+    TemplateEvents,
+    UserEvents,
+    WebhookEvents,
+    WorkflowEvents,
 )
 from src.logs.events.schema import Actor, EventObject
 
 USERNAME_PARAM = 'username'
+ADMIN_ACCOUNT_MODEL = 'accounts.account'
+# Rows of the admin site the journal knows an object type for; any
+# other model is OTHER and named in the payload.
+ADMIN_OBJECT_TYPES: Dict[str, str] = {
+    ADMIN_ACCOUNT_MODEL: EventObjectType.ACCOUNT,
+    'accounts.user': EventObjectType.USER,
+    'accounts.usergroup': EventObjectType.GROUP,
+    'accounts.apikey': EventObjectType.API_KEY,
+    'accounts.userinvite': EventObjectType.INVITE,
+}
 
 
 class AuditEventService:
 
     """ Audit events of the actions that leave no WorkflowEvent behind.
 
-        A view calls one method here and stays free of the details:
-        which type the action is, what its object is and which of its
-        data belongs in the journal. The workflow events reach the
-        stream through WorkflowEventService instead.
+        One method per action, called from the view or the service
+        where the action happens. The caller passes who acts - user
+        and auth_type, the way a view reads them from the request and
+        a service takes them in its constructor - and the object the
+        action is about; what goes into the journal is decided here
+        and nowhere else. The user becomes the actor of the record,
+        the auth type is written next to it as it is: a session, an
+        API key, a guest link. A user of None is the system - a
+        background job, a task of the queue, a management command -
+        and the record has no actor. Only the methods such a caller
+        reaches accept it: the ones that take the account from the
+        object instead of the user.
+
+        The address, the browser and the request id are not passed:
+        emit() reads them from the context EventContextMiddleware
+        publishes for the current request.
 
         The model arguments are deliberately not annotated: the journal
         knows no model of any app, and importing them here only to name
@@ -28,375 +61,366 @@ class AuditEventService:
         around. """
 
     @staticmethod
-    def _actor(request) -> Actor:
-        return Actor.from_user(request.user, request.token_type)
+    def _actor(user) -> Optional[Actor]:
+        return None if user is None else Actor.from_user(user)
 
     @staticmethod
     def _user_object(user) -> EventObject:
         return EventObject(type=EventObjectType.USER, id=user.id)
 
     @classmethod
-    def _request_event(
+    def _event(
         cls,
         event_type: str,
-        request,
+        *,
+        user,
+        auth_type: Optional[str],
         object_type: EventObjectType.LITERALS,
         object_id: Optional[Union[int, str]] = None,
         payload: Optional[Dict[str, Any]] = None,
         workflow_id: Optional[int] = None,
         task_id: Optional[int] = None,
+        account_id: Optional[int] = None,
     ) -> None:
 
-        """ The common shape: the authenticated user of the request
-            acts on an object of their own account. """
+        """ The common shape: user acts on an object of an account.
+            The account is the one of the user unless the caller names
+            another: a system action has no user to take it from, and
+            no credential either - a service built without a user
+            still carries the default auth type of its constructor,
+            which says nothing about who acted. """
 
         emit(
             event_type,
-            account_id=request.user.account_id,
-            actor=cls._actor(request),
+            account_id=user.account_id if account_id is None else account_id,
+            actor=cls._actor(user),
+            auth_type=auth_type if user is not None else None,
             event_object=EventObject(type=object_type, id=object_id),
             payload=payload,
             workflow_id=workflow_id,
             task_id=task_id,
-            request=request,
         )
-
-    @staticmethod
-    def _email_hash(value: Any) -> str:
-
-        """ Hash of a normalized address, the only form a sign in
-            address is allowed to take in a failed attempt event: a
-            raw address of a person who never signed in is personal
-            data the product has no reason to keep. """
-
-        normalized = str(value or '').strip().lower()
-        return sha256(normalized.encode('utf-8')).hexdigest()
 
     @classmethod
     def _user_event(
         cls,
         event_type: str,
         user,
-        request=None,
         payload: Optional[Dict[str, Any]] = None,
+        auth_type: Optional[str] = None,
     ) -> None:
 
         """ A person acting on themselves without an authenticated
             request: signing in, signing up, following a link from an
-            e-mail. The person is both the actor and the object. """
+            e-mail. The person is both the actor and the object. A
+            sign in or a sign up ends with a session, so those name
+            it; a link from an e-mail carries no credential. """
 
         emit(
             event_type,
             account_id=user.account_id,
             actor=Actor.from_user(user),
+            auth_type=auth_type,
             event_object=cls._user_object(user),
             payload=payload,
-            request=request,
         )
 
-    @classmethod
-    def _template_event(
-        cls,
-        event_type: str,
-        request,
-        template,
-        name: str,
-        extra: Optional[Dict[str, Any]] = None,
-    ) -> None:
-        cls._request_event(
-            event_type,
-            request=request,
-            object_type=EventObjectType.TEMPLATE,
-            object_id=template.id,
-            payload={
-                'name': name,
-                'version': template.version,
-                'is_active': template.is_active,
-                **(extra or {}),
-            },
-        )
+    # Authentication
 
     @classmethod
-    def _template_preset_event(
-        cls,
-        event_type: str,
-        request,
-        preset,
-    ) -> None:
-        cls._request_event(
-            event_type,
-            request=request,
-            object_type=EventObjectType.TEMPLATE_PRESET,
-            object_id=preset.id,
-            payload={
-                'name': preset.name,
-                'template_id': preset.template_id,
-                'type': preset.type,
-                'is_default': preset.is_default,
-            },
-        )
-
-    @classmethod
-    def _named_object_event(
-        cls,
-        event_type: str,
-        request,
-        object_type: EventObjectType.LITERALS,
-        object_id: int,
-        name: str,
-        extra: Optional[Dict[str, Any]] = None,
-    ) -> None:
-
-        """ A fieldset or a dataset: names and counts only, the values
-            of the fields and the rows are the data of the customer, and
-            the object itself keeps them. """
-
-        cls._request_event(
-            event_type,
-            request=request,
-            object_type=object_type,
-            object_id=object_id,
-            payload={'name': name, **(extra or {})},
-        )
-
-    @classmethod
-    def _dataset_item_event(
-        cls,
-        event_type: str,
-        request,
-        item_id: int,
-        dataset_id: int,
-        extra: Optional[Dict[str, Any]] = None,
-    ) -> None:
-        cls._request_event(
-            event_type,
-            request=request,
-            object_type=EventObjectType.DATASET_ITEM,
-            object_id=item_id,
-            payload={'dataset_id': dataset_id, **(extra or {})},
-        )
-
-    @classmethod
-    def _comment_event(cls, event_type: str, request, comment) -> None:
-
-        """ No text, neither the old nor the new one: a comment is the
-            content of the customer, and the workflow event keeps it. """
-
-        if not logs_enabled():
-            return
-        payload = {'workflow_name': comment.workflow.name}
-        if comment.task is not None:
-            payload['task_name'] = comment.task.name
-        cls._request_event(
-            event_type,
-            request=request,
-            object_type=EventObjectType.COMMENT,
-            object_id=comment.id,
-            payload=payload,
-            workflow_id=comment.workflow_id,
-            task_id=comment.task_id,
-        )
-
-    @classmethod
-    def _checklist_event(
-        cls,
-        event_type: str,
-        request,
-        checklist,
-        selection_id: int,
-    ) -> None:
-        if not logs_enabled():
-            return
-        task = checklist.task
-        cls._request_event(
-            event_type,
-            request=request,
-            object_type=EventObjectType.CHECKLIST,
-            object_id=checklist.id,
-            payload={
-                'workflow_name': task.workflow.name,
-                'task_name': task.name,
-                'checklist_api_name': checklist.api_name,
-                'selection_id': selection_id,
-            },
-            workflow_id=task.workflow_id,
-            task_id=task.id,
-        )
-
-    @classmethod
-    def _tenant_event(cls, event_type: str, request, tenant) -> None:
-
-        """ Into the master account: the tenant is what the master
-            account did, and a deleted tenant has no journal of its own
-            to look in. """
-
-        cls._request_event(
-            event_type,
-            request=request,
-            object_type=EventObjectType.ACCOUNT,
-            object_id=tenant.id,
-            payload={
-                'name': tenant.tenant_name,
-                'billing_plan': tenant.billing_plan,
-            },
-        )
-
-    @classmethod
-    def user_logged_in(cls, user, source: str, request=None) -> None:
+    def user_logged_in(cls, user, source: str) -> None:
         cls._user_event(
-            EventName.USER_LOGIN,
-            user=user,
-            request=request,
-            payload={'source': source},
+            UserEvents.LOGIN,
+            user,
+            {'source': source},
+            auth_type=AuthTokenType.USER,
         )
 
     @classmethod
-    def user_signed_up(cls, user, source: str, request=None) -> None:
+    def user_signed_up(cls, user, source: str) -> None:
         cls._user_event(
-            EventName.USER_SIGNUP,
-            user=user,
-            request=request,
-            payload={'source': source},
+            UserEvents.SIGNUP,
+            user,
+            {'source': source},
+            auth_type=AuthTokenType.USER,
         )
 
     @classmethod
     def login_failed(
         cls,
-        request,
         reason: LoginFailedReason.LITERALS,
-        email: Optional[str] = None,
+        email: Optional[str],
     ) -> None:
 
         """ One event for every rejected attempt, so that the payload
             cannot tell an unknown address from a wrong password: both
-            reach here with the same reason, and the address is present
-            as a hash only. A password sign in carries the address in
-            the request body, an SSO callback in the provider profile:
-            the caller passes it when the body has none. A failed sign
-            in belongs to no account: NO_ACCOUNT keeps those events in
-            a bucket of their own, the one an alert on a brute force
-            burst is built on. """
+            reach here with the same reason. The attempt is anonymous:
+            no actor and no auth type. A failed sign in belongs to no
+            account: NO_ACCOUNT keeps those events in a bucket of their
+            own, the one an alert on a brute force burst is built on. """
 
-        if email is None:
-            email = request.data.get(USERNAME_PARAM)
         emit(
-            EventName.USER_LOGIN_FAILED,
+            UserEvents.LOGIN_FAILED,
             account_id=NO_ACCOUNT,
-            actor=Actor(type=ActorType.GUEST),
             event_object=EventObject(type=EventObjectType.USER),
             payload={
-                'email_hash': cls._email_hash(email),
+                'email': (email or '').strip().lower(),
                 'reason': reason,
             },
-            request=request,
         )
 
     @classmethod
-    def user_logged_out(cls, request) -> None:
-        cls._request_event(
-            EventName.USER_LOGOUT,
-            request=request,
+    def user_logged_out(cls, user, auth_type: Optional[str]) -> None:
+        cls._event(
+            UserEvents.LOGOUT,
+            user=user,
+            auth_type=auth_type,
             object_type=EventObjectType.USER,
-            object_id=request.user.id,
+            object_id=user.id,
             # Not "token_type": normalize_payload treats every key
             # holding "token" as a secret and replaces its value.
-            payload={'auth_type': request.token_type},
+            payload={'auth_type': auth_type},
         )
 
     @classmethod
-    def superuser_logged_in_as(cls, request, user) -> None:
-        emit(
-            EventName.USER_LOGIN_AS,
-            account_id=user.account_id,
-            actor=cls._actor(request),
-            event_object=cls._user_object(user),
-            payload={'target_email': user.email},
-            request=request,
+    def user_logged_out_by_provider(cls, target, source: str) -> None:
+
+        """ The identity provider ended the sessions, not the person:
+            the actor is the system. """
+
+        cls._event(
+            UserEvents.LOGOUT,
+            user=None,
+            auth_type=None,
+            object_type=EventObjectType.USER,
+            object_id=target.id,
+            payload={
+                'source': source,
+                'reason': LogoutReason.IDENTITY_PROVIDER,
+            },
+            account_id=target.account_id,
         )
 
     @classmethod
-    def tenant_logged_in_as(
-        cls,
-        master_user,
-        tenant_account,
-        auth_type: str,
-    ) -> None:
+    def superuser_logged_in_as(cls, user, auth_type, target) -> None:
+        cls._event(
+            UserEvents.LOGIN_AS,
+            user=user,
+            auth_type=auth_type,
+            object_type=EventObjectType.USER,
+            object_id=target.id,
+            payload={'target_email': target.email},
+            account_id=target.account_id,
+        )
 
-        """ The request is not passed: the call comes from a service,
-            and emit() takes the address and the browser from the
-            context the middleware published for the same request. """
+    @classmethod
+    def tenant_logged_in_as(cls, user, auth_type, tenant_account) -> None:
 
-        emit(
-            EventName.TENANT_LOGIN_AS,
+        """ Into the journal of the tenant: it is the account somebody
+            from the master account got into. """
+
+        cls._event(
+            AccountEvents.TENANT_LOGIN_AS,
+            user=user,
+            auth_type=auth_type,
+            object_type=EventObjectType.ACCOUNT,
+            object_id=tenant_account.id,
+            payload={'master_account_id': user.account_id},
             account_id=tenant_account.id,
-            actor=Actor.from_user(master_user, auth_type),
-            event_object=EventObject(
-                type=EventObjectType.ACCOUNT, id=tenant_account.id,
-            ),
-            payload={'master_account_id': master_user.account_id},
         )
 
     @classmethod
-    def password_reset_requested(cls, request, user) -> None:
+    def password_reset_requested(cls, target) -> None:
 
         """ Somebody asked for a reset e-mail of the user. The request
-            is anonymous, so the actor is a guest and the address the
-            e-mail went to is the target. Only an address that belongs
-            to somebody gets here: an unknown one sends no e-mail and
-            leaves nothing in any account. """
+            is anonymous, so the record has no actor, and the address
+            the e-mail went to is the target. Only an address that
+            belongs to somebody gets here: an unknown one sends no
+            e-mail and leaves nothing in any account. """
 
         emit(
-            EventName.USER_PASSWORD_RESET_REQUEST,
-            account_id=user.account_id,
-            actor=Actor(type=ActorType.GUEST),
-            event_object=cls._user_object(user),
-            payload={'target_email': user.email},
-            request=request,
+            UserEvents.PASSWORD_RESET_REQUEST,
+            account_id=target.account_id,
+            event_object=cls._user_object(target),
+            payload={'target_email': target.email},
         )
 
     @classmethod
-    def password_reset(cls, request, user) -> None:
+    def password_reset(cls, user) -> None:
 
-        """ The holder of a reset link set a new password. The request
-            carries no authentication: the link names the person, so
-            the person is the actor. """
+        """ The holder of a reset link set a new password. The link
+            names the person, so the person is the actor. """
 
-        cls._user_event(
-            EventName.USER_PASSWORD_RESET,
+        cls._user_event(UserEvents.PASSWORD_RESET, user)
+
+    @classmethod
+    def password_changed(cls, user, auth_type: Optional[str]) -> None:
+        cls._event(
+            UserEvents.PASSWORD_CHANGE,
             user=user,
-            request=request,
-        )
-
-    @classmethod
-    def password_changed(cls, request) -> None:
-        cls._request_event(
-            EventName.USER_PASSWORD_CHANGE,
-            request=request,
+            auth_type=auth_type,
             object_type=EventObjectType.USER,
-            object_id=request.user.id,
+            object_id=user.id,
         )
 
     @classmethod
-    def user_created(cls, request, user) -> None:
+    def password_set(cls, user, auth_type: Optional[str], target) -> None:
+
+        """ The owner changing their own password and somebody else
+            setting it are two different records: an alert watches the
+            second one. """
+
+        if user is not None and user.id == target.id:
+            cls.password_changed(user, auth_type)
+            return
+        cls._event(
+            UserEvents.PASSWORD_SET,
+            user=user,
+            auth_type=auth_type,
+            object_type=EventObjectType.USER,
+            object_id=target.id,
+            payload={'target_email': target.email},
+            account_id=target.account_id,
+        )
+
+    # Accounts, users, groups, invites and API keys
+
+    @classmethod
+    def user_created(cls, user, auth_type, target) -> None:
 
         """ An admin added a user to the account directly, without an
             invite: the sign up of an account owner is user.signup. """
 
-        cls._request_event(
-            EventName.USER_CREATE,
-            request=request,
+        cls._event(
+            UserEvents.CREATE,
+            user=user,
+            auth_type=auth_type,
+            object_type=EventObjectType.USER,
+            object_id=target.id,
+            payload={
+                'target_email': target.email,
+                'is_admin': target.is_admin,
+            },
+        )
+
+    @classmethod
+    def user_updated(
+        cls,
+        user,
+        auth_type: Optional[str],
+        target,
+        changed_fields: List[str],
+        previous_email: str,
+        group_changes: Dict[str, List[int]],
+    ) -> None:
+
+        """ One user.update naming every changed field, and apart from
+            it the records an alert watches for: the admin permission
+            and a password. An admin edit of the user reaches both of
+            them through here, and without them a grant of admin made
+            this way would not be seen by the alert. Nothing changed,
+            nothing is written. """
+
+        if not changed_fields:
+            return
+        payload: Dict[str, Any] = {
+            'target_email': target.email,
+            'changed_fields': changed_fields,
+            **group_changes,
+        }
+        if 'email' in changed_fields:
+            payload['previous_email'] = previous_email
+        if 'manager' in changed_fields:
+            payload['manager_id'] = target.manager_id
+        cls._event(
+            UserEvents.UPDATE,
+            user=user,
+            auth_type=auth_type,
+            object_type=EventObjectType.USER,
+            object_id=target.id,
+            payload=payload,
+            account_id=target.account_id,
+        )
+        if 'is_admin' in changed_fields:
+            cls.user_admin_toggled(user, auth_type, target)
+        if 'password' in changed_fields:
+            cls.password_set(user, auth_type, target)
+
+    @classmethod
+    def user_admin_toggled(
+        cls,
+        user,
+        auth_type: Optional[str],
+        target,
+    ) -> None:
+
+        """ Granting admin is the privilege escalation the journal
+            exists for: a record of its own, whichever way it was
+            granted. """
+
+        cls._event(
+            UserEvents.ADMIN_TOGGLE,
+            user=user,
+            auth_type=auth_type,
+            object_type=EventObjectType.USER,
+            object_id=target.id,
+            payload={
+                'is_admin': target.is_admin,
+                'target_email': target.email,
+            },
+            account_id=target.account_id,
+        )
+
+    @classmethod
+    def user_deactivated(
+        cls,
+        user,
+        auth_type: Optional[str],
+        target,
+        status_before: str,
+    ) -> None:
+
+        """ Every way out goes through here: the user endpoint, its
+            deprecated twin, a declined invite and a transfer to
+            another account. In the last two the actor is the person
+            themselves. """
+
+        cls._event(
+            UserEvents.DEACTIVATE,
+            user=user,
+            auth_type=auth_type,
+            object_type=EventObjectType.USER,
+            object_id=target.id,
+            payload={
+                'target_email': target.email,
+                'status_before': status_before,
+            },
+            account_id=target.account_id,
+        )
+
+    @classmethod
+    def user_transferred(cls, user, auth_type, prev_user) -> None:
+
+        """ Into the journal of the account the person moved to; the
+            payload names where they came from. """
+
+        cls._event(
+            UserEvents.TRANSFER,
+            user=user,
+            auth_type=auth_type,
             object_type=EventObjectType.USER,
             object_id=user.id,
             payload={
-                'target_email': user.email,
-                'is_admin': user.is_admin,
+                'prev_account_id': prev_user.account_id,
+                'prev_user_id': prev_user.id,
             },
         )
 
     @classmethod
     def user_reassigned(
         cls,
-        request,
+        user,
+        auth_type,
         old_user=None,
         new_user=None,
         old_group=None,
@@ -412,9 +436,10 @@ class AuditEventService:
             object_type, object_id = EventObjectType.USER, old_user.id
         else:
             object_type, object_id = EventObjectType.GROUP, old_group.id
-        cls._request_event(
-            EventName.USER_REASSIGN,
-            request=request,
+        cls._event(
+            UserEvents.REASSIGN,
+            user=user,
+            auth_type=auth_type,
             object_type=object_type,
             object_id=object_id,
             payload={
@@ -426,22 +451,75 @@ class AuditEventService:
         )
 
     @classmethod
-    def user_unsubscribed(cls, request, user, email_type: str) -> None:
+    def user_unsubscribed(cls, user, email_type: str) -> None:
 
         """ The link in the e-mail names the person, and the request
             carries no authentication: the person is the actor. """
 
         cls._user_event(
-            EventName.USER_UNSUBSCRIBE,
+            UserEvents.UNSUBSCRIBE,
+            user,
+            {'email_type': email_type},
+        )
+
+    @classmethod
+    def vacation_activated(
+        cls,
+        user,
+        auth_type: Optional[str],
+        target,
+        substitute_user_ids: List[int],
+        absence_status: str,
+        start_date: Optional[date],
+        end_date: Optional[date],
+        delegated_tasks_count: int,
+        is_update: bool,
+    ) -> None:
+
+        """ target is the person on vacation, user whoever turns it on:
+            the person themselves, an admin, or nobody for a scheduled
+            task. """
+
+        cls._event(
+            UserEvents.VACATION_ACTIVATE,
             user=user,
-            request=request,
-            payload={'email_type': email_type},
+            auth_type=auth_type,
+            object_type=EventObjectType.USER,
+            object_id=target.id,
+            payload={
+                'target_email': target.email,
+                'substitute_user_ids': sorted(substitute_user_ids),
+                'absence_status': absence_status,
+                'start_date': start_date,
+                'end_date': end_date,
+                'delegated_tasks_count': delegated_tasks_count,
+                'is_update': is_update,
+            },
+            account_id=target.account_id,
+        )
+
+    @classmethod
+    def vacation_deactivated(
+        cls,
+        user,
+        auth_type: Optional[str],
+        target,
+    ) -> None:
+        cls._event(
+            UserEvents.VACATION_DEACTIVATE,
+            user=user,
+            auth_type=auth_type,
+            object_type=EventObjectType.USER,
+            object_id=target.id,
+            payload={'target_email': target.email},
+            account_id=target.account_id,
         )
 
     @classmethod
     def account_updated(
         cls,
-        request,
+        user,
+        auth_type,
         account,
         changed_fields: List[str],
     ) -> None:
@@ -449,60 +527,317 @@ class AuditEventService:
         """ Names of the fields only: the values are the name and the
             logos of the company, and the account itself keeps them. """
 
-        cls._request_event(
-            EventName.ACCOUNT_UPDATE,
-            request=request,
+        cls._event(
+            AccountEvents.UPDATE,
+            user=user,
+            auth_type=auth_type,
             object_type=EventObjectType.ACCOUNT,
             object_id=account.id,
             payload={'changed_fields': changed_fields},
         )
 
     @classmethod
-    def account_verified(cls, request, user) -> None:
+    def account_verified(cls, user) -> None:
 
         """ The link carries no authentication: it names the person it
             was sent to, so the person is the actor. """
 
         emit(
-            EventName.ACCOUNT_VERIFY,
+            AccountEvents.VERIFY,
             account_id=user.account_id,
             actor=Actor.from_user(user),
             event_object=EventObject(
                 type=EventObjectType.ACCOUNT, id=user.account_id,
             ),
-            request=request,
         )
 
     @classmethod
-    def verification_resent(cls, request, account_owner) -> None:
-        cls._request_event(
-            EventName.ACCOUNT_VERIFICATION_RESEND,
-            request=request,
+    def verification_resent(cls, user, auth_type, account_owner) -> None:
+        cls._event(
+            AccountEvents.VERIFICATION_RESEND,
+            user=user,
+            auth_type=auth_type,
             object_type=EventObjectType.ACCOUNT,
             object_id=account_owner.account_id,
             payload={'target_email': account_owner.email},
         )
 
     @classmethod
-    def tenant_created(cls, request, tenant) -> None:
-        cls._tenant_event(
-            EventName.TENANT_CREATE,
-            request=request,
-            tenant=tenant,
+    def _tenant_event(cls, event_type: str, user, auth_type, tenant) -> None:
+
+        """ Into the master account: the tenant is what the master
+            account did, and a deleted tenant has no journal of its own
+            to look in. """
+
+        cls._event(
+            event_type,
+            user=user,
+            auth_type=auth_type,
+            object_type=EventObjectType.ACCOUNT,
+            object_id=tenant.id,
+            payload={
+                'name': tenant.tenant_name,
+                'billing_plan': tenant.billing_plan,
+            },
         )
 
     @classmethod
-    def tenant_deleted(cls, request, tenant) -> None:
-        cls._tenant_event(
-            EventName.TENANT_DELETE,
-            request=request,
-            tenant=tenant,
+    def tenant_created(cls, user, auth_type, tenant) -> None:
+        cls._tenant_event(AccountEvents.TENANT_CREATE, user, auth_type, tenant)
+
+    @classmethod
+    def tenant_deleted(cls, user, auth_type, tenant) -> None:
+        cls._tenant_event(AccountEvents.TENANT_DELETE, user, auth_type, tenant)
+
+    @classmethod
+    def _invite_event(
+        cls,
+        event_type: str,
+        user,
+        auth_type,
+        invited_user,
+        is_transfer: bool,
+    ) -> None:
+
+        """ Who was invited, and whether the person already works in
+            another account: then the e-mail offers a transfer instead
+            of a sign up.
+
+            No object id: the id of an invite is the key that accepts
+            it, the accept endpoint asks for nothing else, and the
+            journal leaves the deployment. """
+
+        cls._event(
+            event_type,
+            user=user,
+            auth_type=auth_type,
+            object_type=EventObjectType.INVITE,
+            payload={
+                'target_email': invited_user.email,
+                'invited_user_id': invited_user.id,
+                'is_transfer': is_transfer,
+            },
         )
+
+    @classmethod
+    def invite_created(
+        cls,
+        user,
+        auth_type,
+        invited_user,
+        is_transfer: bool,
+    ) -> None:
+        cls._invite_event(
+            UserEvents.INVITE_CREATE,
+            user,
+            auth_type,
+            invited_user,
+            is_transfer,
+        )
+
+    @classmethod
+    def invite_resent(
+        cls,
+        user,
+        auth_type,
+        invited_user,
+        is_transfer: bool,
+    ) -> None:
+        cls._invite_event(
+            UserEvents.INVITE_RESEND,
+            user,
+            auth_type,
+            invited_user,
+            is_transfer,
+        )
+
+    @classmethod
+    def invite_accepted(cls, invited_user, invited_by_id: int) -> None:
+
+        """ The invited person is the actor: accepting is what they
+            did, whether through the endpoint or an SSO callback. """
+
+        cls._event(
+            UserEvents.INVITE_ACCEPT,
+            user=invited_user,
+            auth_type=None,
+            object_type=EventObjectType.INVITE,
+            payload={'invited_by_id': invited_by_id},
+        )
+
+    @classmethod
+    def _group_event(
+        cls,
+        event_type: str,
+        user,
+        auth_type,
+        group,
+        payload: Dict[str, Any],
+    ) -> None:
+        cls._event(
+            event_type,
+            user=user,
+            auth_type=auth_type,
+            object_type=EventObjectType.GROUP,
+            object_id=group.id,
+            payload=payload,
+            account_id=group.account_id,
+        )
+
+    @classmethod
+    def group_created(
+        cls,
+        user,
+        auth_type,
+        group,
+        users_ids: List[int],
+    ) -> None:
+        cls._group_event(
+            GroupEvents.CREATE,
+            user,
+            auth_type,
+            group,
+            payload={'name': group.name, 'users_ids': users_ids},
+        )
+
+    @classmethod
+    def group_updated(
+        cls,
+        user,
+        auth_type,
+        group,
+        changed_fields: List[str],
+        added_users_ids: List[int],
+        removed_users_ids: List[int],
+    ) -> None:
+
+        """ Nothing changed, nothing is written. """
+
+        if not changed_fields:
+            return
+        cls._group_event(
+            GroupEvents.UPDATE,
+            user,
+            auth_type,
+            group,
+            payload={
+                'changed_fields': sorted(changed_fields),
+                'added_users_ids': added_users_ids,
+                'removed_users_ids': removed_users_ids,
+            },
+        )
+
+    @classmethod
+    def group_deleted(
+        cls,
+        user,
+        auth_type,
+        group,
+        users_ids: List[int],
+    ) -> None:
+        cls._group_event(
+            GroupEvents.DELETE,
+            user,
+            auth_type,
+            group,
+            payload={'name': group.name, 'users_ids': users_ids},
+        )
+
+    @classmethod
+    def _api_key_event(cls, event_type: str, user, auth_type, api_key) -> None:
+
+        """ The payload names the key and its owner and nothing else.
+            Neither the raw key nor api_key.token may be put here: the
+            journal leaves the deployment, and a key that reaches a log
+            backend is a key an operator can sign in with. """
+
+        cls._event(
+            event_type,
+            user=user,
+            auth_type=auth_type,
+            object_type=EventObjectType.API_KEY,
+            object_id=api_key.id,
+            payload={
+                'name': api_key.name,
+                'target_user_id': api_key.user_id,
+            },
+            account_id=api_key.account_id,
+        )
+
+    @classmethod
+    def api_key_created(cls, user, auth_type, api_key) -> None:
+        cls._api_key_event(ApiKeyEvents.CREATE, user, auth_type, api_key)
+
+    @classmethod
+    def api_key_revoked(cls, user, auth_type, api_key) -> None:
+        cls._api_key_event(ApiKeyEvents.REVOKE, user, auth_type, api_key)
+
+    # Django admin site: a superuser editing the rows directly
+
+    @classmethod
+    def _admin_event(
+        cls,
+        event_type: str,
+        user,
+        target,
+        model: str,
+        changes: Optional[Dict[str, Any]] = None,
+    ) -> None:
+
+        """ Into the account the row belongs to, so that the account
+            sees what a superuser did to it: an account row is its own
+            account, a row of no account (a product, a system message)
+            goes to the account of the superuser. No object id for an
+            invite: its id is the key that accepts it. """
+
+        object_type = ADMIN_OBJECT_TYPES.get(model, EventObjectType.OTHER)
+        if model == ADMIN_ACCOUNT_MODEL:
+            account_id = target.id
+        else:
+            account_id = getattr(target, 'account_id', None)
+        cls._event(
+            event_type,
+            user=user,
+            auth_type=None,
+            object_type=object_type,
+            object_id=(
+                None if object_type == EventObjectType.INVITE else target.pk
+            ),
+            payload={'model': model, **(changes or {})},
+            account_id=account_id,
+        )
+
+    @classmethod
+    def admin_created(
+        cls,
+        user,
+        target,
+        model: str,
+        changes: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        cls._admin_event(AdminEvents.CREATE, user, target, model, changes)
+
+    @classmethod
+    def admin_updated(
+        cls,
+        user,
+        target,
+        model: str,
+        changes: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        cls._admin_event(AdminEvents.UPDATE, user, target, model, changes)
+
+    @classmethod
+    def admin_deleted(cls, user, target, model: str) -> None:
+        cls._admin_event(AdminEvents.DELETE, user, target, model)
+
+    # Billing
 
     @classmethod
     def purchase_made(
         cls,
-        request,
+        user,
+        auth_type,
         products: List[Dict[str, Any]],
     ) -> None:
 
@@ -518,29 +853,28 @@ class AuditEventService:
             quantity_by_code[code] = (
                 quantity_by_code.get(code, 0) + product['quantity']
             )
-        cls._request_event(
-            EventName.BILLING_PURCHASE,
-            request=request,
+        cls._event(
+            BillingEvents.PURCHASE,
+            user=user,
+            auth_type=auth_type,
             object_type=EventObjectType.ACCOUNT,
-            object_id=request.user.account_id,
-            payload={
-                'products': quantity_by_code,
-            },
+            object_id=user.account_id,
+            payload={'products': quantity_by_code},
         )
 
     @classmethod
-    def subscription_cancelled(cls, request) -> None:
-        cls._request_event(
-            EventName.BILLING_SUBSCRIPTION_CANCEL,
-            request=request,
+    def subscription_cancelled(cls, user, auth_type) -> None:
+        cls._event(
+            BillingEvents.SUBSCRIPTION_CANCEL,
+            user=user,
+            auth_type=auth_type,
             object_type=EventObjectType.ACCOUNT,
-            object_id=request.user.account_id,
+            object_id=user.account_id,
         )
 
     @classmethod
     def payment_confirmed(
         cls,
-        request,
         user,
         auth_type: Optional[str],
         subscription_data: Optional[Dict[str, Any]],
@@ -555,21 +889,90 @@ class AuditEventService:
                 'billing_plan': subscription_data.get('billing_plan'),
                 'max_users': subscription_data.get('max_users'),
             }
-        emit(
-            EventName.BILLING_PAYMENT_CONFIRM,
-            account_id=user.account_id,
-            actor=Actor.from_user(user, auth_type),
-            event_object=EventObject(
-                type=EventObjectType.ACCOUNT, id=user.account_id,
-            ),
+        cls._event(
+            BillingEvents.PAYMENT_CONFIRM,
+            user=user,
+            auth_type=auth_type,
+            object_type=EventObjectType.ACCOUNT,
+            object_id=user.account_id,
             payload=payload,
-            request=request,
+        )
+
+    # Webhooks
+
+    @classmethod
+    def _webhook_event(
+        cls,
+        event_type: str,
+        user,
+        auth_type,
+        url: str,
+        event: str,
+    ) -> None:
+
+        """ Who pointed which address at which event, the two
+            questions the journal has to answer about a webhook.
+            normalize_payload cuts the query string off the address:
+            a receiver token rides there, and the host with the path
+            is what identifies the destination. """
+
+        cls._event(
+            event_type,
+            user=user,
+            auth_type=auth_type,
+            object_type=EventObjectType.WEBHOOK,
+            payload={'url': url, 'event': event},
+        )
+
+    @classmethod
+    def webhook_subscribed(cls, user, auth_type, url: str, event: str) -> None:
+        cls._webhook_event(
+            WebhookEvents.SUBSCRIBE, user, auth_type, url, event,
+        )
+
+    @classmethod
+    def webhook_unsubscribed(
+        cls,
+        user,
+        auth_type,
+        url: str,
+        event: str,
+    ) -> None:
+        cls._webhook_event(
+            WebhookEvents.UNSUBSCRIBE, user, auth_type, url, event,
+        )
+
+    # Templates
+
+    @classmethod
+    def _template_event(
+        cls,
+        event_type: str,
+        user,
+        auth_type,
+        template,
+        name: str,
+        extra: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        cls._event(
+            event_type,
+            user=user,
+            auth_type=auth_type,
+            object_type=EventObjectType.TEMPLATE,
+            object_id=template.id,
+            payload={
+                'name': name,
+                'version': template.version,
+                'is_active': template.is_active,
+                **(extra or {}),
+            },
         )
 
     @classmethod
     def template_saved(
         cls,
-        request,
+        user,
+        auth_type,
         template,
         name: str,
         source: Optional[str] = None,
@@ -584,41 +987,46 @@ class AuditEventService:
             editor: steps typed in one form or a library template. """
 
         cls._template_event(
-            EventName.TEMPLATE_PUBLISH if template.is_active
-            else EventName.TEMPLATE_DRAFT_SAVE,
-            request=request,
-            template=template,
+            TemplateEvents.PUBLISH if template.is_active
+            else TemplateEvents.DRAFT_SAVE,
+            user,
+            auth_type,
+            template,
             name=name,
             extra={'source': source} if source else None,
         )
 
     @classmethod
-    def template_cloned(cls, request, template, name: str) -> None:
+    def template_cloned(cls, user, auth_type, template, name: str) -> None:
         cls._template_event(
-            EventName.TEMPLATE_CLONE,
-            request=request,
-            template=template,
-            name=name,
+            TemplateEvents.CLONE, user, auth_type, template, name=name,
         )
 
     @classmethod
-    def template_deleted(cls, request, template) -> None:
+    def template_deleted(cls, user, auth_type, template) -> None:
         cls._template_event(
-            EventName.TEMPLATE_DELETE,
-            request=request,
-            template=template,
+            TemplateEvents.DELETE,
+            user,
+            auth_type,
+            template,
             name=template.name,
         )
 
     @classmethod
-    def templates_exported(cls, request, filters: Dict[str, Any]) -> None:
+    def templates_exported(
+        cls,
+        user,
+        auth_type,
+        filters: Dict[str, Any],
+    ) -> None:
 
         """ No object id: the export is a bulk read, the filters say
             what left the account. """
 
-        cls._request_event(
-            EventName.TEMPLATE_EXPORT,
-            request=request,
+        cls._event(
+            TemplateEvents.EXPORT,
+            user=user,
+            auth_type=auth_type,
             object_type=EventObjectType.TEMPLATE,
             payload={'filters': filters},
         )
@@ -626,7 +1034,8 @@ class AuditEventService:
     @classmethod
     def template_draft_discarded(
         cls,
-        request,
+        user,
+        auth_type,
         template,
         template_deleted: bool,
     ) -> None:
@@ -635,30 +1044,38 @@ class AuditEventService:
             to: discarding its draft deletes the template itself. """
 
         cls._template_event(
-            EventName.TEMPLATE_DRAFT_DISCARD,
-            request=request,
-            template=template,
+            TemplateEvents.DRAFT_DISCARD,
+            user,
+            auth_type,
+            template,
             name=template.name,
             extra={'template_deleted': template_deleted},
         )
 
     @classmethod
-    def template_generated_with_ai(cls, request) -> None:
+    def template_generated_with_ai(cls, user, auth_type) -> None:
 
         """ No payload: the description is text the user typed, and the
             generated template is not saved until the user saves it. """
 
-        cls._request_event(
-            EventName.TEMPLATE_AI_GENERATE,
-            request=request,
+        cls._event(
+            TemplateEvents.AI_GENERATE,
+            user=user,
+            auth_type=auth_type,
             object_type=EventObjectType.TEMPLATE,
         )
 
     @classmethod
-    def template_filled_from_library(cls, request, system_template) -> None:
-        cls._request_event(
-            EventName.TEMPLATE_LIBRARY_FILL,
-            request=request,
+    def template_filled_from_library(
+        cls,
+        user,
+        auth_type,
+        system_template,
+    ) -> None:
+        cls._event(
+            TemplateEvents.LIBRARY_FILL,
+            user=user,
+            auth_type=auth_type,
             object_type=EventObjectType.SYSTEM_TEMPLATE,
             object_id=system_template.id,
             payload={'name': system_template.name},
@@ -667,73 +1084,125 @@ class AuditEventService:
     @classmethod
     def library_templates_imported(
         cls,
-        request,
+        user,
+        auth_type,
         templates_count: int,
     ) -> None:
-        cls._request_event(
-            EventName.TEMPLATE_LIBRARY_IMPORT,
-            request=request,
+        cls._event(
+            TemplateEvents.LIBRARY_IMPORT,
+            user=user,
+            auth_type=auth_type,
             object_type=EventObjectType.SYSTEM_TEMPLATE,
             payload={'templates_count': templates_count},
         )
 
     @classmethod
-    def template_preset_created(cls, request, preset) -> None:
-        cls._template_preset_event(
-            EventName.TEMPLATE_PRESET_CREATE,
-            request=request,
-            preset=preset,
+    def _template_preset_event(
+        cls,
+        event_type: str,
+        user,
+        auth_type,
+        preset,
+    ) -> None:
+        cls._event(
+            event_type,
+            user=user,
+            auth_type=auth_type,
+            object_type=EventObjectType.TEMPLATE_PRESET,
+            object_id=preset.id,
+            payload={
+                'name': preset.name,
+                'template_id': preset.template_id,
+                'type': preset.type,
+                'is_default': preset.is_default,
+            },
         )
 
     @classmethod
-    def template_preset_updated(cls, request, preset) -> None:
+    def template_preset_created(cls, user, auth_type, preset) -> None:
         cls._template_preset_event(
-            EventName.TEMPLATE_PRESET_UPDATE,
-            request=request,
-            preset=preset,
+            TemplateEvents.PRESET_CREATE, user, auth_type, preset,
         )
 
     @classmethod
-    def template_preset_deleted(cls, request, preset) -> None:
+    def template_preset_updated(cls, user, auth_type, preset) -> None:
         cls._template_preset_event(
-            EventName.TEMPLATE_PRESET_DELETE,
-            request=request,
-            preset=preset,
+            TemplateEvents.PRESET_UPDATE, user, auth_type, preset,
         )
 
     @classmethod
-    def template_preset_set_default(cls, request, preset) -> None:
+    def template_preset_deleted(cls, user, auth_type, preset) -> None:
         cls._template_preset_event(
-            EventName.TEMPLATE_PRESET_SET_DEFAULT,
-            request=request,
-            preset=preset,
+            TemplateEvents.PRESET_DELETE, user, auth_type, preset,
         )
 
     @classmethod
-    def fieldset_created(cls, request, fieldset) -> None:
+    def template_preset_set_default(cls, user, auth_type, preset) -> None:
+        cls._template_preset_event(
+            TemplateEvents.PRESET_SET_DEFAULT, user, auth_type, preset,
+        )
+
+    # Fieldsets and datasets
+
+    @classmethod
+    def _named_object_event(
+        cls,
+        event_type: str,
+        user,
+        auth_type,
+        object_type: EventObjectType.LITERALS,
+        object_id: int,
+        name: str,
+        extra: Optional[Dict[str, Any]] = None,
+    ) -> None:
+
+        """ A fieldset or a dataset: names and counts only, the values
+            of the fields and the rows are the data of the customer, and
+            the object itself keeps them. """
+
+        cls._event(
+            event_type,
+            user=user,
+            auth_type=auth_type,
+            object_type=object_type,
+            object_id=object_id,
+            payload={'name': name, **(extra or {})},
+        )
+
+    @classmethod
+    def fieldset_created(cls, user, auth_type, fieldset) -> None:
         cls._named_object_event(
-            EventName.FIELDSET_CREATE,
-            request=request,
+            TemplateEvents.FIELDSET_CREATE,
+            user,
+            auth_type,
             object_type=EventObjectType.FIELDSET,
             object_id=fieldset.id,
             name=fieldset.name,
         )
 
     @classmethod
-    def fieldset_updated(cls, request, fieldset) -> None:
+    def fieldset_updated(cls, user, auth_type, fieldset) -> None:
         cls._named_object_event(
-            EventName.FIELDSET_UPDATE,
-            request=request,
+            TemplateEvents.FIELDSET_UPDATE,
+            user,
+            auth_type,
             object_type=EventObjectType.FIELDSET,
             object_id=fieldset.id,
             name=fieldset.name,
         )
 
     @classmethod
-    def fieldset_cloned(cls, request, clone, source_fieldset_id: int) -> None:
+    def fieldset_cloned(
+        cls,
+        user,
+        auth_type,
+        clone,
+        source_fieldset_id: int,
+    ) -> None:
         cls._named_object_event(
-            EventName.FIELDSET_CLONE,
-            request=request,
+            TemplateEvents.FIELDSET_CLONE,
+            user,
+            auth_type,
             object_type=EventObjectType.FIELDSET,
             object_id=clone.id,
             name=clone.name,
@@ -741,20 +1210,28 @@ class AuditEventService:
         )
 
     @classmethod
-    def fieldset_deleted(cls, request, fieldset) -> None:
+    def fieldset_deleted(cls, user, auth_type, fieldset) -> None:
         cls._named_object_event(
-            EventName.FIELDSET_DELETE,
-            request=request,
+            TemplateEvents.FIELDSET_DELETE,
+            user,
+            auth_type,
             object_type=EventObjectType.FIELDSET,
             object_id=fieldset.id,
             name=fieldset.name,
         )
 
     @classmethod
-    def dataset_created(cls, request, dataset, items_count: int) -> None:
+    def dataset_created(
+        cls,
+        user,
+        auth_type,
+        dataset,
+        items_count: int,
+    ) -> None:
         cls._named_object_event(
-            EventName.DATASET_CREATE,
-            request=request,
+            DatasetEvents.CREATE,
+            user,
+            auth_type,
             object_type=EventObjectType.DATASET,
             object_id=dataset.id,
             name=dataset.name,
@@ -764,13 +1241,15 @@ class AuditEventService:
     @classmethod
     def dataset_updated(
         cls,
-        request,
+        user,
+        auth_type,
         dataset,
         changed_fields: List[str],
     ) -> None:
         cls._named_object_event(
-            EventName.DATASET_UPDATE,
-            request=request,
+            DatasetEvents.UPDATE,
+            user,
+            auth_type,
             object_type=EventObjectType.DATASET,
             object_id=dataset.id,
             name=dataset.name,
@@ -778,10 +1257,11 @@ class AuditEventService:
         )
 
     @classmethod
-    def dataset_deleted(cls, request, dataset) -> None:
+    def dataset_deleted(cls, user, auth_type, dataset) -> None:
         cls._named_object_event(
-            EventName.DATASET_DELETE,
-            request=request,
+            DatasetEvents.DELETE,
+            user,
+            auth_type,
             object_type=EventObjectType.DATASET,
             object_id=dataset.id,
             name=dataset.name,
@@ -790,13 +1270,15 @@ class AuditEventService:
     @classmethod
     def dataset_items_added(
         cls,
-        request,
+        user,
+        auth_type,
         dataset,
         items_count: int,
     ) -> None:
         cls._named_object_event(
-            EventName.DATASET_ITEMS_ADD,
-            request=request,
+            DatasetEvents.ITEMS_ADD,
+            user,
+            auth_type,
             object_type=EventObjectType.DATASET,
             object_id=dataset.id,
             name=dataset.name,
@@ -806,13 +1288,15 @@ class AuditEventService:
     @classmethod
     def dataset_items_replaced(
         cls,
-        request,
+        user,
+        auth_type,
         dataset,
         items_count: int,
     ) -> None:
         cls._named_object_event(
-            EventName.DATASET_ITEMS_REPLACE,
-            request=request,
+            DatasetEvents.ITEMS_REPLACE,
+            user,
+            auth_type,
             object_type=EventObjectType.DATASET,
             object_id=dataset.id,
             name=dataset.name,
@@ -820,42 +1304,58 @@ class AuditEventService:
         )
 
     @classmethod
-    def dataset_item_created(cls, request, item) -> None:
+    def _dataset_item_event(
+        cls,
+        event_type: str,
+        user,
+        auth_type,
+        item,
+        extra: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        cls._event(
+            event_type,
+            user=user,
+            auth_type=auth_type,
+            object_type=EventObjectType.DATASET_ITEM,
+            object_id=item.id,
+            payload={'dataset_id': item.dataset_id, **(extra or {})},
+        )
+
+    @classmethod
+    def dataset_item_created(cls, user, auth_type, item) -> None:
         cls._dataset_item_event(
-            EventName.DATASET_ITEM_CREATE,
-            request=request,
-            item_id=item.id,
-            dataset_id=item.dataset_id,
+            DatasetEvents.ITEM_CREATE, user, auth_type, item,
         )
 
     @classmethod
     def dataset_item_updated(
         cls,
-        request,
+        user,
+        auth_type,
         item,
         changed_fields: List[str],
     ) -> None:
         cls._dataset_item_event(
-            EventName.DATASET_ITEM_UPDATE,
-            request=request,
-            item_id=item.id,
-            dataset_id=item.dataset_id,
+            DatasetEvents.ITEM_UPDATE,
+            user,
+            auth_type,
+            item,
             extra={'changed_fields': changed_fields},
         )
 
     @classmethod
-    def dataset_item_deleted(cls, request, item) -> None:
+    def dataset_item_deleted(cls, user, auth_type, item) -> None:
         cls._dataset_item_event(
-            EventName.DATASET_ITEM_DELETE,
-            request=request,
-            item_id=item.id,
-            dataset_id=item.dataset_id,
+            DatasetEvents.ITEM_DELETE, user, auth_type, item,
         )
+
+    # Workflows and tasks changed in place
 
     @classmethod
     def workflow_updated(
         cls,
-        request,
+        user,
+        auth_type,
         workflow,
         changed_fields: List[str],
         kickoff_fields: List[str],
@@ -872,9 +1372,10 @@ class AuditEventService:
         }
         if kickoff_fields:
             payload['kickoff_fields'] = kickoff_fields
-        cls._request_event(
-            EventName.WORKFLOW_UPDATE,
-            request=request,
+        cls._event(
+            WorkflowEvents.UPDATE,
+            user=user,
+            auth_type=auth_type,
             object_type=EventObjectType.WORKFLOW,
             object_id=workflow.id,
             payload=payload,
@@ -882,45 +1383,119 @@ class AuditEventService:
         )
 
     @classmethod
-    def comment_updated(cls, request, comment) -> None:
-        cls._comment_event(
-            EventName.TASK_COMMENT_UPDATE,
-            request=request,
-            comment=comment,
+    def workflow_terminated(cls, user, auth_type, workflow) -> None:
+
+        """ The only workflow action that leaves no WorkflowEvent
+            behind. Published after the delete: a delete that fails
+            raises before it, and the delete is a soft one, so the name
+            and the template are still there. """
+
+        cls._event(
+            WorkflowEvents.TERMINATE,
+            user=user,
+            auth_type=auth_type,
+            object_type=EventObjectType.WORKFLOW,
+            object_id=workflow.id,
+            payload={
+                'workflow_name': workflow.name,
+                'template_id': workflow.template_id,
+            },
+            workflow_id=workflow.id,
+            account_id=workflow.account_id,
         )
 
     @classmethod
-    def comment_deleted(cls, request, comment) -> None:
+    def _comment_event(cls, event_type: str, user, auth_type, comment) -> None:
+
+        """ No text, neither the old nor the new one: a comment is the
+            content of the customer, and the workflow event keeps it.
+            With the journal off nothing is read: the workflow and the
+            task each cost a query. """
+
+        if not logs_enabled():
+            return
+        payload = {'workflow_name': comment.workflow.name}
+        if comment.task is not None:
+            payload['task_name'] = comment.task.name
+        cls._event(
+            event_type,
+            user=user,
+            auth_type=auth_type,
+            object_type=EventObjectType.COMMENT,
+            object_id=comment.id,
+            payload=payload,
+            workflow_id=comment.workflow_id,
+            task_id=comment.task_id,
+        )
+
+    @classmethod
+    def comment_updated(cls, user, auth_type, comment) -> None:
         cls._comment_event(
-            EventName.TASK_COMMENT_DELETE,
-            request=request,
-            comment=comment,
+            TaskEvents.COMMENT_UPDATE, user, auth_type, comment,
+        )
+
+    @classmethod
+    def comment_deleted(cls, user, auth_type, comment) -> None:
+        cls._comment_event(
+            TaskEvents.COMMENT_DELETE, user, auth_type, comment,
+        )
+
+    @classmethod
+    def _checklist_event(
+        cls,
+        event_type: str,
+        user,
+        auth_type,
+        checklist,
+        selection_id: int,
+    ) -> None:
+        if not logs_enabled():
+            return
+        task = checklist.task
+        cls._event(
+            event_type,
+            user=user,
+            auth_type=auth_type,
+            object_type=EventObjectType.CHECKLIST,
+            object_id=checklist.id,
+            payload={
+                'workflow_name': task.workflow.name,
+                'task_name': task.name,
+                'checklist_api_name': checklist.api_name,
+                'selection_id': selection_id,
+            },
+            workflow_id=task.workflow_id,
+            task_id=task.id,
         )
 
     @classmethod
     def checklist_item_marked(
         cls,
-        request,
+        user,
+        auth_type,
         checklist,
         selection_id: int,
     ) -> None:
         cls._checklist_event(
-            EventName.TASK_CHECKLIST_MARK,
-            request=request,
-            checklist=checklist,
+            TaskEvents.CHECKLIST_MARK,
+            user,
+            auth_type,
+            checklist,
             selection_id=selection_id,
         )
 
     @classmethod
     def checklist_item_unmarked(
         cls,
-        request,
+        user,
+        auth_type,
         checklist,
         selection_id: int,
     ) -> None:
         cls._checklist_event(
-            EventName.TASK_CHECKLIST_UNMARK,
-            request=request,
-            checklist=checklist,
+            TaskEvents.CHECKLIST_UNMARK,
+            user,
+            auth_type,
+            checklist,
             selection_id=selection_id,
         )

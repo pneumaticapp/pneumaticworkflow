@@ -3,14 +3,10 @@
 #
 # Loki has no authentication of its own here (auth_enabled: false means "single
 # tenant", not "log in first"), so the only thing standing between the audit
-# journal and anything that can send an HTTP request is the network. Loki lives
-# in the `pneumatic-logs` compose network together with Grafana; the collector
-# is the single member of both networks and the only writer. The application
-# containers (backend, celery, nginx, ...) are NOT in `pneumatic-logs` and
-# cannot reach port 3100 at all - see logging/compose/logs.yml. They do reach
-# the collector (its OTLP receiver has no authentication either), but a webhook
-# body is not an OTLP request, so a tenant admin pointing the webhook
-# deliverer at either cannot forge a record.
+# journal and anything that can send an HTTP request is the network. Loki runs
+# on the machine of logging/grafana/docker-compose.yml, and LOKI_BIND there
+# names the interface it listens on: one that only the application machine
+# reaches. Grafana, the only reader, talks to it inside the compose network.
 auth_enabled: false
 
 server:
@@ -42,8 +38,8 @@ schema_config:
         period: 24h
 
 limits_config:
-  # Structured metadata carries event_type, actor_id, request_id, payload_*,
-  # pii_* without turning them into index labels.
+  # Structured metadata carries event_type, actor_id, actor_email, ip,
+  # request_id, payload_* without turning them into index labels.
   allow_structured_metadata: true
   # An audit journal must not have a delete button. `disabled` makes
   # /loki/api/v1/delete answer 400 "deletion is not available" instead of 204,

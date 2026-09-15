@@ -1,13 +1,12 @@
 import pytest
 
+from src.accounts.enums import UserType
 from src.accounts.tokens import DigestUnsubscribeToken
 from src.accounts.views.unsubscribes import DIGEST_SUBSCRIPTION_FIELD
 from src.authentication.enums import AuthTokenType
 from src.logs.events.enums import (
-    ActorType,
-    EventCategory,
-    EventName,
     EventObjectType,
+    UserEvents,
 )
 from src.logs.events.schema import Actor, EventObject
 from src.processes.tests.fixtures import (
@@ -46,14 +45,15 @@ def test_unsubscribe__valid_token__emit_actor_is_token_user(
     assert user.is_digest_subscriber is False
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.USER_UNSUBSCRIBE
-    assert event.category == EventCategory.AUDIT
+    assert event.type == UserEvents.UNSUBSCRIBE
+    assert event.category == UserEvents.CATEGORY
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=user.id,
         email=user.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type is None
     assert event.object == EventObject(
         type=EventObjectType.USER,
         id=user.id,

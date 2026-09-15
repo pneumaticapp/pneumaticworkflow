@@ -2,7 +2,7 @@
   "annotations": {
     "list": []
   },
-  "description": "Who reaches the installation from outside the browser: API keys (actor_type api_key), webhook subscriptions that push events to outside URLs, and guests coming through public and embedded links (actor_type guest).",
+  "description": "Who reaches the installation from outside the browser: API keys (auth_type API), webhook subscriptions that push events to outside URLs, and guest and public links: guest links (auth_type Guest), shared forms (Shared) and embedded forms (Embedded).",
   "editable": false,
   "graphTooltip": 1,
   "id": null,
@@ -94,7 +94,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "sum(count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | actor_type=\"api_key\" [$__range]))",
+          "expr": "sum(count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | auth_type=\"API\" [$__range]))",
           "instant": true,
           "legendFormat": "",
           "queryType": "instant",
@@ -162,7 +162,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "count(sum by (actor_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | actor_type=\"api_key\" [$__range])))",
+          "expr": "count(sum by (actor_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | auth_type=\"API\" [$__range])))",
           "instant": true,
           "legendFormat": "",
           "queryType": "instant",
@@ -381,7 +381,7 @@
         "type": "loki",
         "uid": "pneumatic-loki"
       },
-      "description": "Records whose actor is a guest: public and embedded links, and the failed sign-ins of nobody in particular.",
+      "description": "Records that came through a guest or public link: guest links (auth_type Guest), shared forms (Shared) and embedded forms (Embedded). Failed sign-ins carry no auth type and are not counted.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -434,14 +434,14 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "sum(count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | actor_type=\"guest\" [$__range]))",
+          "expr": "sum(count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | auth_type=~\"Guest|Shared|Embedded\" [$__range]))",
           "instant": true,
           "legendFormat": "",
           "queryType": "instant",
           "refId": "A"
         }
       ],
-      "title": "Guest events",
+      "title": "Guest and public link events",
       "type": "stat"
     },
     {
@@ -462,7 +462,7 @@
         "type": "loki",
         "uid": "pneumatic-loki"
       },
-      "description": "People, API keys, guests and the system in each time bucket.",
+      "description": "Browser sessions (User), API keys (API), guest links (Guest), public and embedded forms (Shared, Embedded), the Stripe webhook (Webhook) and, as none, the system and anonymous requests in each time bucket.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -518,7 +518,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "user"
+              "options": "User"
             },
             "properties": [
               {
@@ -533,7 +533,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "api_key"
+              "options": "API"
             },
             "properties": [
               {
@@ -548,7 +548,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "guest"
+              "options": "Guest"
             },
             "properties": [
               {
@@ -563,7 +563,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "system"
+              "options": "none"
             },
             "properties": [
               {
@@ -605,13 +605,13 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "sum by (actor_type) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} [$__auto]))",
-          "legendFormat": "{{actor_type}}",
+          "expr": "sum by (auth) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | label_format auth=\"{{ if .auth_type }}{{ .auth_type }}{{ else }}none{{ end }}\" [$__auto]))",
+          "legendFormat": "{{auth}}",
           "queryType": "range",
           "refId": "A"
         }
       ],
-      "title": "Events by actor type",
+      "title": "Events by auth type",
       "type": "timeseries"
     },
     {
@@ -701,7 +701,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | actor_type=\"api_key\" [$__auto]))",
+          "expr": "sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | auth_type=\"API\" [$__auto]))",
           "legendFormat": "account {{account_id}}",
           "queryType": "range",
           "refId": "A"
@@ -837,7 +837,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "topk(20, sum by (account_id, actor_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | actor_type=\"api_key\" [$__range])))",
+          "expr": "topk(20, sum by (account_id, actor_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | auth_type=\"API\" [$__range])))",
           "instant": true,
           "legendFormat": "",
           "queryType": "instant",
@@ -849,7 +849,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "max by (account_id, actor_id) (max_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | actor_type=\"api_key\" | unwrap observed_timestamp | __error__=\"\" [$__range])) / 1000000",
+          "expr": "max by (account_id, actor_id) (max_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | auth_type=\"API\" | unwrap observed_timestamp | __error__=\"\" [$__range])) / 1000000",
           "instant": true,
           "legendFormat": "",
           "queryType": "instant",
@@ -955,7 +955,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "topk(15, sum by (event_type) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | actor_type=\"api_key\" [$__range])))",
+          "expr": "topk(15, sum by (event_type) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | auth_type=\"API\" [$__range])))",
           "instant": true,
           "legendFormat": "{{event_type}}",
           "queryType": "instant",
@@ -1070,7 +1070,7 @@
           },
           "direction": "backward",
           "editorMode": "code",
-          "expr": "{service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=~\"api_key.create|api_key.revoke\" | line_format \"{{.event_type}} {{.actor_type}}:{{.actor_id}} {{.object_type}}:{{.object_id}}\"",
+          "expr": "{service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=~\"api_key.create|api_key.revoke\" | line_format \"{{.event_type}} {{.auth_type}}:{{.actor_id}} {{.object_type}}:{{.object_id}}\"",
           "legendFormat": "",
           "queryType": "range",
           "refId": "A"
@@ -1095,11 +1095,11 @@
                 "Time",
                 "event_type",
                 "account_id",
-                "pii_actor_email",
+                "actor_email",
                 "object_id",
-                "pii_payload_name",
+                "payload_name",
                 "payload_target_user_id",
-                "pii_ip"
+                "ip"
               ]
             }
           }
@@ -1114,18 +1114,18 @@
               "event_type": 1,
               "object_id": 4,
               "payload_target_user_id": 6,
-              "pii_actor_email": 3,
-              "pii_ip": 7,
-              "pii_payload_name": 5
+              "actor_email": 3,
+              "ip": 7,
+              "payload_name": 5
             },
             "renameByName": {
               "account_id": "Account",
               "event_type": "Event type",
               "object_id": "Key id",
               "payload_target_user_id": "For user",
-              "pii_actor_email": "Actor e-mail",
-              "pii_ip": "IP address",
-              "pii_payload_name": "Name"
+              "actor_email": "Actor e-mail",
+              "ip": "IP address",
+              "payload_name": "Name"
             }
           }
         }
@@ -1197,7 +1197,7 @@
           },
           "direction": "backward",
           "editorMode": "code",
-          "expr": "{service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=~\"webhook.subscribe|webhook.unsubscribe\" | line_format \"{{.event_type}} {{.actor_type}}:{{.actor_id}} {{.object_type}}:{{.object_id}}\"",
+          "expr": "{service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=~\"webhook.subscribe|webhook.unsubscribe\" | line_format \"{{.event_type}} {{.auth_type}}:{{.actor_id}} {{.object_type}}:{{.object_id}}\"",
           "legendFormat": "",
           "queryType": "range",
           "refId": "A"
@@ -1222,10 +1222,10 @@
                 "Time",
                 "event_type",
                 "account_id",
-                "pii_actor_email",
+                "actor_email",
                 "object_id",
-                "pii_payload_url",
-                "pii_ip"
+                "payload_url",
+                "ip"
               ]
             }
           }
@@ -1239,17 +1239,17 @@
               "account_id": 2,
               "event_type": 1,
               "object_id": 4,
-              "pii_actor_email": 3,
-              "pii_ip": 6,
-              "pii_payload_url": 5
+              "actor_email": 3,
+              "ip": 6,
+              "payload_url": 5
             },
             "renameByName": {
               "account_id": "Account",
               "event_type": "Event type",
               "object_id": "Object id",
-              "pii_actor_email": "Actor e-mail",
-              "pii_ip": "IP address",
-              "pii_payload_url": "URL"
+              "actor_email": "Actor e-mail",
+              "ip": "IP address",
+              "payload_url": "URL"
             }
           }
         }
@@ -1266,7 +1266,7 @@
       },
       "id": 16,
       "panels": [],
-      "title": "Guests",
+      "title": "Guest and public links",
       "type": "row"
     },
     {
@@ -1274,7 +1274,7 @@
         "type": "loki",
         "uid": "pneumatic-loki"
       },
-      "description": "Records with a guest actor per account in each time bucket.",
+      "description": "Records that came through a guest or public link (guest links, shared forms, embedded forms) per account in each time bucket.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1356,13 +1356,13 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | actor_type=\"guest\" [$__auto]))",
+          "expr": "sum by (account_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | auth_type=~\"Guest|Shared|Embedded\" [$__auto]))",
           "legendFormat": "account {{account_id}}",
           "queryType": "range",
           "refId": "A"
         }
       ],
-      "title": "Guest activity by account",
+      "title": "Guest and public link activity by account",
       "type": "timeseries"
     },
     {
@@ -1370,7 +1370,7 @@
         "type": "loki",
         "uid": "pneumatic-loki"
       },
-      "description": "Event types produced by guests.",
+      "description": "Event types produced through guest and public links (guest links, shared forms, embedded forms).",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1429,14 +1429,14 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "topk(15, sum by (event_type) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | actor_type=\"guest\" [$__range])))",
+          "expr": "topk(15, sum by (event_type) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | auth_type=~\"Guest|Shared|Embedded\" [$__range])))",
           "instant": true,
           "legendFormat": "{{event_type}}",
           "queryType": "instant",
           "refId": "A"
         }
       ],
-      "title": "What guests do",
+      "title": "What guest and public links do",
       "transformations": [
         {
           "id": "labelsToFields",

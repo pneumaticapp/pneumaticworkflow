@@ -1,10 +1,10 @@
 import pytest
 
+from src.accounts.enums import UserType
+from src.authentication.enums import AuthTokenType
 from src.logs.events.enums import (
-    ActorType,
-    EventCategory,
-    EventName,
     EventObjectType,
+    UserEvents,
 )
 from src.logs.events.schema import Actor, EventObject
 from src.processes.tests.fixtures import (
@@ -31,7 +31,7 @@ def test_toggle_admin__grant__emit_admin_toggle_with_true(
     send_user_updated_mock = mocker.patch(
         'src.accounts.services.user.send_user_updated_notification.delay',
     )
-    emit_mock = mocker.patch('src.logs.events.mixins.emit')
+    emit_mock = mocker.patch('src.logs.events.services.emit')
 
     # act
     response = api_client.post(
@@ -41,15 +41,18 @@ def test_toggle_admin__grant__emit_admin_toggle_with_true(
     # assert
     assert response.status_code == 204
     emit_mock.assert_called_once_with(
-        EventName.USER_ADMIN_TOGGLE,
+        UserEvents.ADMIN_TOGGLE,
         account_id=owner.account_id,
         actor=Actor(
-            type=ActorType.USER,
             id=owner.id,
             email=owner.email,
+            user_type=UserType.USER,
         ),
+        auth_type=AuthTokenType.USER,
         event_object=EventObject(type=EventObjectType.USER, id=target.id),
         payload={'is_admin': True, 'target_email': target.email},
+        workflow_id=None,
+        task_id=None,
     )
     identify_mock.assert_called_once_with(target)
     send_user_updated_mock.assert_called_once_with(
@@ -73,7 +76,7 @@ def test_toggle_admin__revoke__emit_admin_toggle_with_false(
     send_user_updated_mock = mocker.patch(
         'src.accounts.services.user.send_user_updated_notification.delay',
     )
-    emit_mock = mocker.patch('src.logs.events.mixins.emit')
+    emit_mock = mocker.patch('src.logs.events.services.emit')
 
     # act
     response = api_client.post(
@@ -83,15 +86,18 @@ def test_toggle_admin__revoke__emit_admin_toggle_with_false(
     # assert
     assert response.status_code == 204
     emit_mock.assert_called_once_with(
-        EventName.USER_ADMIN_TOGGLE,
+        UserEvents.ADMIN_TOGGLE,
         account_id=owner.account_id,
         actor=Actor(
-            type=ActorType.USER,
             id=owner.id,
             email=owner.email,
+            user_type=UserType.USER,
         ),
+        auth_type=AuthTokenType.USER,
         event_object=EventObject(type=EventObjectType.USER, id=target.id),
         payload={'is_admin': False, 'target_email': target.email},
+        workflow_id=None,
+        task_id=None,
     )
     identify_mock.assert_called_once_with(target)
     send_user_updated_mock.assert_called_once_with(
@@ -135,14 +141,15 @@ def test_toggle_admin__api_request__event_keeps_request_context(
     assert response.status_code == 204
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.USER_ADMIN_TOGGLE
-    assert event.category == EventCategory.AUDIT
+    assert event.type == UserEvents.ADMIN_TOGGLE
+    assert event.category == UserEvents.CATEGORY
     assert event.account_id == owner.account_id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=owner.id,
         email=owner.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.USER,
         id=target.id,
@@ -154,12 +161,6 @@ def test_toggle_admin__api_request__event_keeps_request_context(
     assert event.ip == '10.10.0.7'
     assert event.user_agent == 'Chrome/141'
     assert event.request_id == 'audit-toggle-1'
-    assert event.pii == (
-        'actor.email',
-        'ip',
-        'user_agent',
-        'payload.target_email',
-    )
     identify_mock.assert_called_once_with(target)
     send_user_updated_mock.assert_called_once_with(
         logging=account.log_api_requests,

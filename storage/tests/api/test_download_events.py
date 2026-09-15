@@ -519,11 +519,12 @@ def test_download__events_stream_unavailable__file_served(
             'data': json.dumps(
                 {
                     'type': 'file.download',
-                    'category': 'audit',
+                    'category': 'files',
                     'service': 'pneumatic-file-service',
                     'ts': '2026-09-09T12:00:00.000123Z',
                     'account_id': 1,
-                    'actor': {'type': 'user', 'id': 1, 'email': None},
+                    'actor': {'id': 1, 'email': None, 'user_type': 'user'},
+                    'auth_type': 'User',
                     'object': {'type': 'file', 'id': FILE_ID},
                     'workflow_id': None,
                     'task_id': None,
@@ -536,7 +537,6 @@ def test_download__events_stream_unavailable__file_served(
                         'content_type': 'application/pdf',
                         'is_owner': True,
                     },
-                    'pii': ['ip', 'user_agent', 'payload.filename'],
                 },
             ),
         },

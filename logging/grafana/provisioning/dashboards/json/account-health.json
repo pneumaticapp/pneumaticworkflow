@@ -302,7 +302,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "count(sum by (actor_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | actor_type=\"user\" [7d])))",
+          "expr": "count(sum by (actor_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | auth_type=\"User\" [7d])))",
           "instant": true,
           "legendFormat": "",
           "queryType": "instant",
@@ -370,7 +370,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "count(sum by (actor_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | actor_type=\"user\" [30d])))",
+          "expr": "count(sum by (actor_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | auth_type=\"User\" [30d])))",
           "instant": true,
           "legendFormat": "",
           "queryType": "instant",
@@ -438,7 +438,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "count(count by (account_id) (sum by (account_id, actor_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | actor_type=\"user\" [30d]))) == 1)",
+          "expr": "count(count by (account_id) (sum by (account_id, actor_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | auth_type=\"User\" [30d]))) == 1)",
           "instant": true,
           "legendFormat": "",
           "queryType": "instant",
@@ -588,7 +588,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "count(sum by (actor_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | actor_type=\"user\" [7d])))",
+          "expr": "count(sum by (actor_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | auth_type=\"User\" [7d])))",
           "legendFormat": "users",
           "queryType": "range",
           "refId": "B"
@@ -1036,7 +1036,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "count by (account_id) (sum by (account_id, actor_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | actor_type=\"user\" [30d])))",
+          "expr": "count by (account_id) (sum by (account_id, actor_id) (count_over_time({service_name=~\"pneumatic-.*\", deployment_environment=~\"$environment\"} | auth_type=\"User\" [30d])))",
           "instant": true,
           "legendFormat": "",
           "queryType": "instant",

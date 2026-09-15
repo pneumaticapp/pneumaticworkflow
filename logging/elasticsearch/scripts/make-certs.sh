@@ -93,7 +93,7 @@ MSYS_NO_PATHCONV=1 docker run --rm -v "$CERT_DIR:/certs" --entrypoint sh "$IMAGE
 cat <<EOF
 
 Done. Files are in $CERT_DIR:
-  ca/ca.crt        give this one to the collector (logging/otel/es-ca.crt on
+  ca/ca.crt        give this one to the collector (otel-collector/es-ca.crt on
                    the application machine) and to every browser that opens
                    Kibana
   ca/ca.key        never leaves this machine, back it up separately

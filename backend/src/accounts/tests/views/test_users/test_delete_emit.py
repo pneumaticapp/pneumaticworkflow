@@ -1,10 +1,10 @@
 import pytest
 
-from src.accounts.enums import UserStatus
+from src.accounts.enums import UserStatus, UserType
+from src.authentication.enums import AuthTokenType
 from src.logs.events.enums import (
-    ActorType,
-    EventName,
     EventObjectType,
+    UserEvents,
 )
 from src.logs.events.schema import Actor, EventObject
 from src.processes.tests.fixtures import (
@@ -37,7 +37,7 @@ def test_delete__deprecated_endpoint__emit_user_deactivate(
     send_user_deleted_mock = mocker.patch(
         'src.notifications.tasks.send_user_deleted_notification.delay',
     )
-    emit_mock = mocker.patch('src.logs.events.mixins.emit')
+    emit_mock = mocker.patch('src.logs.events.services.emit')
 
     # act
     response = api_client.post(f'/accounts/users/{target.id}/delete')
@@ -45,18 +45,21 @@ def test_delete__deprecated_endpoint__emit_user_deactivate(
     # assert
     assert response.status_code == 204
     emit_mock.assert_called_once_with(
-        EventName.USER_DEACTIVATE,
+        UserEvents.DEACTIVATE,
         account_id=account.id,
         actor=Actor(
-            type=ActorType.USER,
             id=owner.id,
             email=owner.email,
+            user_type=UserType.USER,
         ),
+        auth_type=AuthTokenType.USER,
         event_object=EventObject(type=EventObjectType.USER, id=target.id),
         payload={
             'target_email': target.email,
             'status_before': UserStatus.ACTIVE,
         },
+        workflow_id=None,
+        task_id=None,
     )
     identify_mock.assert_called_once_with(target)
     identify_users_mock.assert_called_once_with(user_ids=(owner.id,))

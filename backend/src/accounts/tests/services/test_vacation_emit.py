@@ -2,15 +2,13 @@ from datetime import date
 
 import pytest
 
-from src.accounts.enums import AbsenceStatus
+from src.accounts.enums import AbsenceStatus, UserType
 from src.accounts.models import UserVacation
 from src.accounts.services.vacation import VacationDelegationService
 from src.authentication.enums import AuthTokenType
 from src.logs.events.enums import (
-    ActorType,
-    EventCategory,
-    EventName,
     EventObjectType,
+    UserEvents,
 )
 from src.logs.events.schema import Actor, EventObject
 from src.processes.tests.fixtures import (
@@ -66,14 +64,15 @@ def test_activate__new_vacation__emit_vacation_activate(
     # assert
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.USER_VACATION_ACTIVATE
-    assert event.category == EventCategory.AUDIT
+    assert event.type == UserEvents.VACATION_ACTIVATE
+    assert event.category == UserEvents.CATEGORY
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=owner.id,
         email=owner.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.USER,
         id=user.id,
@@ -87,7 +86,6 @@ def test_activate__new_vacation__emit_vacation_activate(
         'delegated_tasks_count': 0,
         'is_update': False,
     }
-    assert event.pii == ('actor.email', 'payload.target_email')
     send_user_updated_mock.assert_called_once_with(
         logging=account.log_api_requests,
         account_id=account.id,
@@ -141,14 +139,15 @@ def test_activate__active_task_without_delegation__emit_delegated_count(
     # assert
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.USER_VACATION_ACTIVATE
-    assert event.category == EventCategory.AUDIT
+    assert event.type == UserEvents.VACATION_ACTIVATE
+    assert event.category == UserEvents.CATEGORY
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=admin.id,
         email=admin.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.USER,
         id=owner.id,
@@ -227,14 +226,15 @@ def test_activate__existing_vacation__emit_is_update_true(
     # assert
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.USER_VACATION_ACTIVATE
-    assert event.category == EventCategory.AUDIT
+    assert event.type == UserEvents.VACATION_ACTIVATE
+    assert event.category == UserEvents.CATEGORY
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=user.id,
         email=user.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.USER,
         id=user.id,
@@ -256,7 +256,7 @@ def test_activate__existing_vacation__emit_is_update_true(
     send_delegation_mock.assert_not_called()
 
 
-def test_activate__no_request_user__emit_system_actor(
+def test_activate__no_request_user__emit_no_actor(
     mocker,
     fake_stream,
 ):
@@ -283,10 +283,11 @@ def test_activate__no_request_user__emit_system_actor(
     # assert
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.USER_VACATION_ACTIVATE
-    assert event.category == EventCategory.AUDIT
+    assert event.type == UserEvents.VACATION_ACTIVATE
+    assert event.category == UserEvents.CATEGORY
     assert event.account_id == account.id
-    assert event.actor == Actor(type=ActorType.SYSTEM)
+    assert event.actor is None
+    assert event.auth_type is None
     assert event.object == EventObject(
         type=EventObjectType.USER,
         id=user.id,
@@ -300,7 +301,6 @@ def test_activate__no_request_user__emit_system_actor(
         'delegated_tasks_count': 0,
         'is_update': False,
     }
-    assert event.pii == ('payload.target_email',)
     send_user_updated_mock.assert_called_once_with(
         logging=account.log_api_requests,
         account_id=account.id,
@@ -338,14 +338,15 @@ def test_activate__api_key_auth__emit_api_key_actor(
     # assert
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.USER_VACATION_ACTIVATE
-    assert event.category == EventCategory.AUDIT
+    assert event.type == UserEvents.VACATION_ACTIVATE
+    assert event.category == UserEvents.CATEGORY
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.API_KEY,
         id=owner.id,
         email=owner.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.API
     assert event.object == EventObject(
         type=EventObjectType.USER,
         id=user.id,
@@ -436,20 +437,20 @@ def test_deactivate__existing_vacation__emit_vacation_deactivate(
     assert not UserVacation.objects.filter(user=user).exists()
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.USER_VACATION_DEACTIVATE
-    assert event.category == EventCategory.AUDIT
+    assert event.type == UserEvents.VACATION_DEACTIVATE
+    assert event.category == UserEvents.CATEGORY
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=owner.id,
         email=owner.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.USER,
         id=user.id,
     )
     assert event.payload == {'target_email': user.email}
-    assert event.pii == ('actor.email', 'payload.target_email')
     send_user_updated_mock.assert_called_once_with(
         logging=account.log_api_requests,
         account_id=account.id,
@@ -457,7 +458,7 @@ def test_deactivate__existing_vacation__emit_vacation_deactivate(
     )
 
 
-def test_deactivate__no_request_user__emit_system_actor(
+def test_deactivate__no_request_user__emit_no_actor(
     mocker,
     fake_stream,
 ):
@@ -483,10 +484,11 @@ def test_deactivate__no_request_user__emit_system_actor(
     # assert
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.USER_VACATION_DEACTIVATE
-    assert event.category == EventCategory.AUDIT
+    assert event.type == UserEvents.VACATION_DEACTIVATE
+    assert event.category == UserEvents.CATEGORY
     assert event.account_id == account.id
-    assert event.actor == Actor(type=ActorType.SYSTEM)
+    assert event.actor is None
+    assert event.auth_type is None
     assert event.object == EventObject(
         type=EventObjectType.USER,
         id=user.id,
@@ -553,10 +555,11 @@ def test_clear_substitute_groups__last_substitute__emit_system_deactivate(
     assert not UserVacation.objects.filter(user=owner).exists()
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.USER_VACATION_DEACTIVATE
-    assert event.category == EventCategory.AUDIT
+    assert event.type == UserEvents.VACATION_DEACTIVATE
+    assert event.category == UserEvents.CATEGORY
     assert event.account_id == account.id
-    assert event.actor == Actor(type=ActorType.SYSTEM)
+    assert event.actor is None
+    assert event.auth_type is None
     assert event.object == EventObject(
         type=EventObjectType.USER,
         id=owner.id,

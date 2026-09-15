@@ -1,12 +1,11 @@
 import pytest
 
-from src.accounts.enums import UserStatus
+from src.accounts.enums import UserStatus, UserType
 from src.accounts.services.user import UserService
 from src.authentication.enums import AuthTokenType
 from src.logs.events.enums import (
-    ActorType,
-    EventName,
     EventObjectType,
+    UserEvents,
 )
 from src.logs.events.schema import Actor, EventObject
 from src.processes.tests.fixtures import (
@@ -37,7 +36,7 @@ def test_deactivate__service_call__emit_user_deactivate(
     send_user_deleted_mock = mocker.patch(
         'src.notifications.tasks.send_user_deleted_notification.delay',
     )
-    emit_mock = mocker.patch('src.logs.events.mixins.emit')
+    emit_mock = mocker.patch('src.logs.events.services.emit')
     service = UserService(instance=target, user=owner)
 
     # act
@@ -47,18 +46,21 @@ def test_deactivate__service_call__emit_user_deactivate(
     target.refresh_from_db()
     assert target.status == UserStatus.INACTIVE
     emit_mock.assert_called_once_with(
-        EventName.USER_DEACTIVATE,
+        UserEvents.DEACTIVATE,
         account_id=account.id,
         actor=Actor(
-            type=ActorType.USER,
             id=owner.id,
             email=owner.email,
+            user_type=UserType.USER,
         ),
+        auth_type=AuthTokenType.USER,
         event_object=EventObject(type=EventObjectType.USER, id=target.id),
         payload={
             'target_email': target.email,
             'status_before': UserStatus.ACTIVE,
         },
+        workflow_id=None,
+        task_id=None,
     )
     identify_mock.assert_called_once_with(target)
 
@@ -79,7 +81,7 @@ def test_deactivate__service_call__emit_user_deactivate(
     )
 
 
-def test_deactivate__api_key_auth__emit_api_key_actor_type(
+def test_deactivate__api_key_auth__emit_api_auth_type(
     mocker,
     identify_mock,
     group_mock,
@@ -98,7 +100,7 @@ def test_deactivate__api_key_auth__emit_api_key_actor_type(
     send_user_deleted_mock = mocker.patch(
         'src.notifications.tasks.send_user_deleted_notification.delay',
     )
-    emit_mock = mocker.patch('src.logs.events.mixins.emit')
+    emit_mock = mocker.patch('src.logs.events.services.emit')
     service = UserService(
         instance=target,
         user=owner,
@@ -110,18 +112,21 @@ def test_deactivate__api_key_auth__emit_api_key_actor_type(
 
     # assert
     emit_mock.assert_called_once_with(
-        EventName.USER_DEACTIVATE,
+        UserEvents.DEACTIVATE,
         account_id=account.id,
         actor=Actor(
-            type=ActorType.API_KEY,
             id=owner.id,
             email=owner.email,
+            user_type=UserType.USER,
         ),
+        auth_type=AuthTokenType.API,
         event_object=EventObject(type=EventObjectType.USER, id=target.id),
         payload={
             'target_email': target.email,
             'status_before': UserStatus.ACTIVE,
         },
+        workflow_id=None,
+        task_id=None,
     )
     identify_mock.assert_called_once_with(target)
     identify_users_mock.assert_called_once_with(user_ids=(owner.id,))
@@ -139,7 +144,7 @@ def test_deactivate__api_key_auth__emit_api_key_actor_type(
     )
 
 
-def test_deactivate__no_user__emit_system_actor(
+def test_deactivate__no_user__emit_no_actor(
     mocker,
     identify_mock,
     group_mock,
@@ -160,7 +165,7 @@ def test_deactivate__no_user__emit_system_actor(
     send_user_deleted_mock = mocker.patch(
         'src.notifications.tasks.send_user_deleted_notification.delay',
     )
-    emit_mock = mocker.patch('src.logs.events.mixins.emit')
+    emit_mock = mocker.patch('src.logs.events.services.emit')
     service = UserService(account=account, instance=target)
 
     # act
@@ -168,14 +173,17 @@ def test_deactivate__no_user__emit_system_actor(
 
     # assert
     emit_mock.assert_called_once_with(
-        EventName.USER_DEACTIVATE,
+        UserEvents.DEACTIVATE,
         account_id=account.id,
-        actor=Actor(type=ActorType.SYSTEM),
+        actor=None,
+        auth_type=None,
         event_object=EventObject(type=EventObjectType.USER, id=target.id),
         payload={
             'target_email': target.email,
             'status_before': UserStatus.ACTIVE,
         },
+        workflow_id=None,
+        task_id=None,
     )
 
     # No user, no account analytics: only the target is identified.

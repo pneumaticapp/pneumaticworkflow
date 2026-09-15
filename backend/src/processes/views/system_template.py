@@ -122,7 +122,8 @@ class SystemTemplateViewSet(
         )
         data = service.get_from_sys_template(system_template)
         AuditEventService.template_filled_from_library(
-            request=request,
+            user=request.user,
+            auth_type=request.token_type,
             system_template=system_template,
         )
         return self.response_ok(data)
@@ -178,7 +179,8 @@ class SystemTemplatesImportViewSet(
         )
         service.import_library_templates(data=slz.validated_data['templates'])
         AuditEventService.library_templates_imported(
-            request=request,
+            user=request.user,
+            auth_type=request.token_type,
             templates_count=len(slz.validated_data['templates']),
         )
         return self.response_ok()

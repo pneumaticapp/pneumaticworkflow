@@ -1,10 +1,10 @@
 import pytest
 
+from src.accounts.enums import UserType
+from src.authentication.enums import AuthTokenType
 from src.logs.events.enums import (
-    ActorType,
-    EventCategory,
-    EventName,
     EventObjectType,
+    TemplateEvents,
 )
 from src.logs.events.schema import Actor, EventObject
 from src.processes.enums import PresetType
@@ -62,14 +62,15 @@ def test_preset__created__emit_template_preset_create(
     preset = TemplatePreset.objects.get(id=response.data['id'])
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.TEMPLATE_PRESET_CREATE
-    assert event.category == EventCategory.ACTIVITY
+    assert event.type == TemplateEvents.PRESET_CREATE
+    assert event.category == TemplateEvents.CATEGORY
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=owner.id,
         email=owner.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.TEMPLATE_PRESET,
         id=preset.id,
@@ -83,12 +84,6 @@ def test_preset__created__emit_template_preset_create(
     assert event.ip == '10.10.0.27'
     assert event.user_agent == 'Chrome/141'
     assert event.request_id == 'audit-template-27'
-    assert event.pii == (
-        'actor.email',
-        'ip',
-        'user_agent',
-        'payload.name',
-    )
 
 
 def test_preset__service_exception__no_event(

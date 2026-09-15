@@ -1,9 +1,9 @@
 # LOGS_BACKEND=otlp: forward events to an OTLP/HTTP receiver outside this
-# machine (the customer's own observability stack).
+# machine: the customer's own observability stack, or the Loki of
+# logging/grafana/docker-compose.yml (its endpoint is http://<host>:3100/otlp).
 #
 # Personal data leaves with the record, see the note in base.yaml.
 #
-# Only the collector starts in this mode, the bundled Loki and Grafana do not.
 # The profile does not choose this file, LOGS_BACKEND does:
 #   LOGS_BACKEND=otlp docker compose --profile logs-otlp up -d
 exporters:

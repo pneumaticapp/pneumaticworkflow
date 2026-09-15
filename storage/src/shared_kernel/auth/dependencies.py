@@ -34,6 +34,7 @@ class AuthenticatedUser(AuthUser):
             account_id=auth_user.account_id,
             token=auth_user.token,
             is_api_key=auth_user.is_api_key,
+            is_embed_token=auth_user.is_embed_token,
         )
 
 

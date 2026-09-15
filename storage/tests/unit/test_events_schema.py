@@ -1,12 +1,15 @@
 """Tests for the records of the audit journal."""
 
+from dataclasses import replace
 from datetime import UTC, datetime, timedelta, timezone
 
+from src.shared_kernel.auth.user_types import (
+    JournalAuthType,
+    JournalUserType,
+)
 from src.shared_kernel.events.schema import (
-    FILE_PII,
     STREAM_KEY,
     Actor,
-    ActorType,
     format_ts,
 )
 
@@ -88,13 +91,33 @@ def test_to_dict__denied_record__matches_backend_contract(
     assert result == backend_denied_contract_record
 
 
-def test_to_dict__any_record__personal_fields_declared(sample_event):
+def test_to_dict__no_actor__actor_null(sample_event):
+    """A shared form acts for the account, not for a person."""
+
+    # arrange
+    event = replace(
+        sample_event,
+        actor=None,
+        auth_type=JournalAuthType.SHARED.value,
+    )
+
+    # act
+    result = event.to_dict()
+
+    # assert
+    assert result['actor'] is None
+    assert result['auth_type'] == 'Shared'
+
+
+def test_to_dict__any_record__auth_type_after_actor(sample_event):
+    """The key order is the one of the backend writer."""
+
     # act
     result = sample_event.to_dict()
 
     # assert
-    assert result['pii'] == list(FILE_PII)
-    assert result['pii'] == ['ip', 'user_agent', 'payload.filename']
+    assert list(result)[5:7] == ['actor', 'auth_type']
+    assert 'pii' not in result
 
 
 def test_to_dict__payload__copied_not_shared(sample_event):
@@ -108,24 +131,24 @@ def test_to_dict__payload__copied_not_shared(sample_event):
 
 def test_actor_to_dict__any_actor__email_never_known():
     # arrange
-    actor = Actor(type=ActorType.API_KEY, id=17)
+    actor = Actor(id=17, user_type=JournalUserType.USER)
 
     # act
     result = actor.to_dict()
 
     # assert
-    assert result == {'type': 'api_key', 'id': 17, 'email': None}
+    assert result == {'id': 17, 'email': None, 'user_type': 'user'}
 
 
-def test_actor_to_dict__public_token__no_user():
+def test_actor_to_dict__guest_token__guest():
     # arrange
-    actor = Actor(type=ActorType.GUEST, id=None)
+    actor = Actor(id=17, user_type=JournalUserType.GUEST)
 
     # act
     result = actor.to_dict()
 
     # assert
-    assert result == {'type': 'guest', 'id': None, 'email': None}
+    assert result == {'id': 17, 'email': None, 'user_type': 'guest'}
 
 
 def test_stream_key__backend_contract__same_stream(backend_service_contract):
@@ -138,11 +161,23 @@ def test_stream_key__backend_contract__same_stream(backend_service_contract):
     assert result == backend_service_contract['stream_key']
 
 
-def test_actor_type__backend_contract__same_values(backend_service_contract):
-    """A type the backend does not declare must not reach the stream."""
+def test_user_type__backend_contract__same_values(backend_service_contract):
+    """A user type the backend does not declare must not reach the
+    stream."""
 
     # act
-    result = sorted(member.value for member in ActorType)
+    result = sorted(member.value for member in JournalUserType)
 
     # assert
-    assert result == sorted(backend_service_contract['actor_types'])
+    assert result == sorted(backend_service_contract['user_types'])
+
+
+def test_auth_type__backend_contract__same_values(backend_service_contract):
+    """An auth type the backend does not declare must not reach the
+    stream."""
+
+    # act
+    result = sorted(member.value for member in JournalAuthType)
+
+    # assert
+    assert result == sorted(backend_service_contract['auth_types'])

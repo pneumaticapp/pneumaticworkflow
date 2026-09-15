@@ -3,13 +3,12 @@ from datetime import timedelta
 import pytest
 from django.utils import timezone
 
+from src.accounts.enums import UserType
 from src.analysis.actions import WorkflowActions
 from src.authentication.enums import AuthTokenType
 from src.logs.events.enums import (
-    ActorType,
-    EventCategory,
-    EventName,
     EventObjectType,
+    WorkflowEvents,
 )
 from src.logs.events.schema import Actor, EventObject
 from src.processes.enums import WorkflowEventType
@@ -54,14 +53,15 @@ def test_partial_update__name__emit_workflow_update(
     assert response.status_code == 200
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.WORKFLOW_UPDATE
-    assert event.category == EventCategory.AUDIT
+    assert event.type == WorkflowEvents.UPDATE
+    assert event.category == WorkflowEvents.CATEGORY
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=owner.id,
         email=owner.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.WORKFLOW,
         id=workflow.id,
@@ -122,14 +122,15 @@ def test_partial_update__kickoff__emit_sorted_kickoff_fields(
     assert response.status_code == 200
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.WORKFLOW_UPDATE
-    assert event.category == EventCategory.AUDIT
+    assert event.type == WorkflowEvents.UPDATE
+    assert event.category == WorkflowEvents.CATEGORY
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=owner.id,
         email=owner.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.WORKFLOW,
         id=workflow.id,
@@ -175,14 +176,15 @@ def test_partial_update__due_date__emit_workflow_update(
     assert response.status_code == 200
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.WORKFLOW_UPDATE
-    assert event.category == EventCategory.AUDIT
+    assert event.type == WorkflowEvents.UPDATE
+    assert event.category == WorkflowEvents.CATEGORY
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=owner.id,
         email=owner.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.WORKFLOW,
         id=workflow.id,
@@ -250,16 +252,17 @@ def test_partial_update__all_fields__changed_fields_in_fixed_order(
         type=WorkflowEventType.URGENT,
     )
     assert len(fake_stream.events) == 2
-    assert fake_stream.events[0][1].type == EventName.WORKFLOW_URGENT
+    assert fake_stream.events[0][1].type == WorkflowEvents.URGENT
     event = fake_stream.events[1][1]
-    assert event.type == EventName.WORKFLOW_UPDATE
-    assert event.category == EventCategory.AUDIT
+    assert event.type == WorkflowEvents.UPDATE
+    assert event.category == WorkflowEvents.CATEGORY
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=owner.id,
         email=owner.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.WORKFLOW,
         id=workflow.id,
@@ -340,16 +343,17 @@ def test_partial_update__is_urgent__workflow_urgent_then_update(
         type=WorkflowEventType.URGENT,
     )
     assert len(fake_stream.events) == 2
-    assert fake_stream.events[0][1].type == EventName.WORKFLOW_URGENT
+    assert fake_stream.events[0][1].type == WorkflowEvents.URGENT
     event = fake_stream.events[1][1]
-    assert event.type == EventName.WORKFLOW_UPDATE
-    assert event.category == EventCategory.AUDIT
+    assert event.type == WorkflowEvents.UPDATE
+    assert event.category == WorkflowEvents.CATEGORY
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=owner.id,
         email=owner.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.WORKFLOW,
         id=workflow.id,
@@ -433,16 +437,17 @@ def test_partial_update__unmark_urgent__not_urgent_then_update(
         type=WorkflowEventType.NOT_URGENT,
     )
     assert len(fake_stream.events) == 2
-    assert fake_stream.events[0][1].type == EventName.WORKFLOW_NOT_URGENT
+    assert fake_stream.events[0][1].type == WorkflowEvents.NOT_URGENT
     event = fake_stream.events[1][1]
-    assert event.type == EventName.WORKFLOW_UPDATE
-    assert event.category == EventCategory.AUDIT
+    assert event.type == WorkflowEvents.UPDATE
+    assert event.category == WorkflowEvents.CATEGORY
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=owner.id,
         email=owner.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.WORKFLOW,
         id=workflow.id,

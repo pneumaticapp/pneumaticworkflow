@@ -186,7 +186,7 @@ def test_settings__logs_on_url_not_redis__raise_error():
     with pytest.raises(ValidationError, match='LOGS_REDIS_URL'):
         BaseAppSettings(
             DJANGO_SECRET_KEY='test-key',
-            LOGS_BACKEND='local',
+            LOGS_BACKEND='otlp',
             LOGS_REDIS_URL='http://redis:6379/4',
         )
 
@@ -195,7 +195,7 @@ def test_settings__logs_on_rediss_url__accepted():
     # arrange
     settings = BaseAppSettings(
         DJANGO_SECRET_KEY='test-key',
-        LOGS_BACKEND='local',
+        LOGS_BACKEND='otlp',
         LOGS_REDIS_URL='rediss://:pw@redis:6380/4',
     )
 

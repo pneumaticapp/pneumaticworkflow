@@ -110,14 +110,12 @@ class GoogleAuthViewSet(
                     is_signup = True
                 else:
                     AuditEventService.login_failed(
-                        request=request,
                         reason=LoginFailedReason.SIGNUP_DISABLED,
                         email=user_data['email'],
                     )
                     raise AuthenticationFailed(MSG_AU_0003) from err
             except ValidationError:
                 AuditEventService.login_failed(
-                    request=request,
                     reason=LoginFailedReason.SSO_REQUIRED,
                     email=user.email,
                 )

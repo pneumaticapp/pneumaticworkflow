@@ -114,7 +114,8 @@ class CheckListViewSet(
         else:
             if is_marked:
                 AuditEventService.checklist_item_marked(
-                    request=request,
+                    user=request.user,
+                    auth_type=request.token_type,
                     checklist=checklist,
                     selection_id=request_slz.validated_data['selection_id'],
                 )
@@ -154,7 +155,8 @@ class CheckListViewSet(
         else:
             if is_unmarked:
                 AuditEventService.checklist_item_unmarked(
-                    request=request,
+                    user=request.user,
+                    auth_type=request.token_type,
                     checklist=checklist,
                     selection_id=request_slz.validated_data['selection_id'],
                 )

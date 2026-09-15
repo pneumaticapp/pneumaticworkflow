@@ -5,11 +5,11 @@ from datetime import UTC, datetime
 from unittest.mock import ANY, AsyncMock
 
 from src.application.dto import UploadFileCommand
+from src.shared_kernel.auth.user_types import JournalUserType
 from src.shared_kernel.config import BaseAppSettings
 from src.shared_kernel.events.schema import (
     SERVICE_NAME,
     Actor,
-    ActorType,
     Event,
     EventName,
     RequestContext,
@@ -56,7 +56,8 @@ def test_upload__ok__upload_journaled(
             service=SERVICE_NAME,
             ts=datetime(2026, 9, 9, 12, 0, 0, 123, tzinfo=UTC),
             account_id=1,
-            actor=Actor(type=ActorType.USER, id=1),
+            actor=Actor(id=1, user_type=JournalUserType.USER),
+            auth_type='User',
             file_id='12345678-1234-5678-1234-567812345679',
             context=RequestContext(
                 ip='testclient',
@@ -205,11 +206,12 @@ def test_upload__events_stream_unavailable__file_uploaded(
             'data': json.dumps(
                 {
                     'type': 'file.upload',
-                    'category': 'audit',
+                    'category': 'files',
                     'service': 'pneumatic-file-service',
                     'ts': '2026-09-09T12:00:00.000123Z',
                     'account_id': 1,
-                    'actor': {'type': 'user', 'id': 1, 'email': None},
+                    'actor': {'id': 1, 'email': None, 'user_type': 'user'},
+                    'auth_type': 'User',
                     'object': {
                         'type': 'file',
                         'id': '12345678-1234-5678-1234-567812345679',
@@ -224,7 +226,6 @@ def test_upload__events_stream_unavailable__file_uploaded(
                         'size': 17,
                         'content_type': 'text/plain',
                     },
-                    'pii': ['ip', 'user_agent', 'payload.filename'],
                 },
             ),
         },

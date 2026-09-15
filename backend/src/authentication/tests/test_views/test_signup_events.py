@@ -1,13 +1,11 @@
 import pytest
 from django.contrib.auth import get_user_model
 
-from src.accounts.enums import SourceType
+from src.accounts.enums import SourceType, UserType
 from src.authentication.enums import AuthTokenType
 from src.logs.events.enums import (
-    ActorType,
-    EventCategory,
-    EventName,
     EventObjectType,
+    UserEvents,
 )
 from src.logs.events.schema import Actor, EventObject
 from src.processes.services.system_workflows import (
@@ -84,14 +82,15 @@ def test_create__email_signup__emit_user_signup_only(
     new_user = UserModel.objects.get(email=email)
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.USER_SIGNUP
-    assert event.category == EventCategory.AUDIT
+    assert event.type == UserEvents.SIGNUP
+    assert event.category == UserEvents.CATEGORY
     assert event.account_id == new_user.account_id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=new_user.id,
         email=email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.USER,
         id=new_user.id,

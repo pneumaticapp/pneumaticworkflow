@@ -4,33 +4,31 @@ from typing import Dict, Set, Tuple
 
 from django.conf import settings
 
-from src.logs.events.enums import EventCategory, EventName
+from src.logs.events.enums import (
+    EVENT_CLASSES,
+    AccountEvents,
+    AdminEvents,
+    ApiKeyEvents,
+    BillingEvents,
+    DatasetEvents,
+    EventCategory,
+    FileEvents,
+    GroupEvents,
+    TaskEvents,
+    TemplateEvents,
+    UserEvents,
+    WebhookEvents,
+    WorkflowEvents,
+    event_names_of,
+)
 from src.logs.events.exceptions import (
     EventsError,
     UnknownEventTypeError,
 )
 from src.logs.events.reporting import report_error
-from src.logs.events.schema import is_valid_pii_path
 from src.utils.logging import SentryLogLevel
 
 EVENT_NAME_PATTERN = re.compile(r'^[a-z_]+\.[a-z_]+\Z')
-
-# Personal data sets of the declaration table below. A path names a
-# field of the record: "ip", "actor.email", "payload.<key>".
-ACTOR_PII = ('actor.email', 'ip', 'user_agent')
-WORKFLOW_PII = (
-    *ACTOR_PII,
-    'payload.workflow_name',
-    'payload.task_name',
-)
-WORKFLOW_NAME_PII = (*ACTOR_PII, 'payload.workflow_name')
-NAMED_PII = (*ACTOR_PII, 'payload.name')
-TARGET_PII = (*ACTOR_PII, 'payload.target_email')
-# The address a user had before an edit: the one thing that tells an
-# account takeover from an ordinary change of the address.
-USER_UPDATE_PII = (*TARGET_PII, 'payload.previous_email')
-FILE_PII = (*ACTOR_PII, 'payload.filename')
-URL_PII = (*ACTOR_PII, 'payload.url')
 
 
 @dataclass(frozen=True)
@@ -38,233 +36,159 @@ class EventType:
 
     name: str
     category: EventCategory.LITERALS
-    pii: Tuple[str, ...] = ()
     description: str = ''
 
-    def __post_init__(self) -> None:
 
-        """ Fold ACTOR_PII into the declared list once, at import.
-
-            The actor e-mail, the ip and the user agent are personal
-            data of whoever made the request whatever the type is, and
-            a type that forgot to declare them would leak them as
-            plain attributes. Both ends of the pipeline read this one
-            list, the emitter to fill Event.pii and the sink to move
-            the same paths into the pii.* namespace; two lists would
-            disagree and a personal field would end up outside that
-            namespace. Folding it here rather than in a property
-            keeps it off the path of every single event. """
-
-        object.__setattr__(self, 'pii', self.pii + tuple(
-            path for path in ACTOR_PII if path not in self.pii
-        ))
-
-
-# Short names of the categories, for the width of the table below.
-_AUDIT = EventCategory.AUDIT
-_ACTIVITY = EventCategory.ACTIVITY
-
-# The declaration table: one row per event type, as
-# (name, category, personal data, description).
-#
-# The first block holds one row per WorkflowEventType constant,
-# mapped by adapters/workflow.py; a new constant there needs a row
-# here. A name that is not declared in this table fails the tests
-# through LOGS_STRICT (resolve_event_type).
+# The declaration table: the events of each class with a description.
+# The category comes from the class. A name that is not declared here
+# fails the tests through LOGS_STRICT (resolve_event_type), and a
+# constant of a class that has no row here fails the start of the
+# process (validate_registry).
 DECLARATIONS = (
-    (EventName.WORKFLOW_RUN, _AUDIT, WORKFLOW_PII, 'Workflow started'),
-    (EventName.WORKFLOW_COMPLETE, _AUDIT, WORKFLOW_PII, 'Workflow completed'),
-    (EventName.TASK_START, _ACTIVITY, WORKFLOW_PII, 'Task started'),
-    (EventName.TASK_COMPLETE, _AUDIT, WORKFLOW_PII, 'Task completed'),
-    (EventName.TASK_REVERT, _AUDIT, WORKFLOW_PII,
-     'Task returned to the previous performer'),
-    (EventName.TASK_COMMENT, _ACTIVITY, WORKFLOW_PII,
-     'Comment added to a task'),
-    (EventName.WORKFLOW_ENDED, _AUDIT, WORKFLOW_PII,
-     'Workflow ended by a user'),
-    (EventName.WORKFLOW_DELAY, _ACTIVITY, WORKFLOW_PII, 'Workflow delayed'),
-    (EventName.WORKFLOW_REVERT, _AUDIT, WORKFLOW_PII,
-     'Workflow returned to a previous task'),
-    (EventName.TASK_SKIP, _ACTIVITY, WORKFLOW_PII, 'Task skipped'),
-    (EventName.WORKFLOW_ENDED_BY_CONDITION, _ACTIVITY, WORKFLOW_PII,
-     'Workflow ended by a condition'),
-    (EventName.WORKFLOW_URGENT, _ACTIVITY, WORKFLOW_PII,
-     'Workflow marked as urgent'),
-    (EventName.WORKFLOW_NOT_URGENT, _ACTIVITY, WORKFLOW_PII,
-     'Workflow urgent mark removed'),
-    (EventName.TASK_SKIP_NO_PERFORMERS, _ACTIVITY, WORKFLOW_PII,
-     'Task skipped because it has no performers'),
-    (EventName.TASK_PERFORMER_CREATED, _AUDIT, WORKFLOW_PII,
-     'Task performer added'),
-    (EventName.TASK_PERFORMER_DELETED, _AUDIT, WORKFLOW_PII,
-     'Task performer removed'),
-    (EventName.WORKFLOW_FORCE_RESUME, _ACTIVITY, WORKFLOW_PII,
-     'Workflow resumed manually'),
-    (EventName.WORKFLOW_FORCE_DELAY, _ACTIVITY, WORKFLOW_PII,
-     'Workflow delayed manually'),
-    (EventName.TASK_DUE_DATE_CHANGED, _ACTIVITY, WORKFLOW_PII,
-     'Task due date changed'),
-    (EventName.WORKFLOW_SUB_WORKFLOW_RUN, _ACTIVITY, WORKFLOW_PII,
-     'Sub-workflow started'),
-    (EventName.TASK_PERFORMER_GROUP_CREATED, _AUDIT, WORKFLOW_PII,
-     'Task performer group added'),
-    (EventName.TASK_PERFORMER_GROUP_DELETED, _AUDIT, WORKFLOW_PII,
-     'Task performer group removed'),
-    (EventName.TASK_DELAY, _ACTIVITY, WORKFLOW_PII, 'Task delayed'),
-    (EventName.TASK_DELEGATION, _AUDIT, WORKFLOW_PII,
-     'Task delegated to another performer'),
-
-    # Workflows and tasks changed in place
-    (EventName.WORKFLOW_UPDATE, _AUDIT, WORKFLOW_NAME_PII,
-     'Workflow name, kickoff fields or due date changed'),
-    (EventName.TASK_COMMENT_UPDATE, _AUDIT, WORKFLOW_PII,
-     'Comment edited by its author'),
-    (EventName.TASK_COMMENT_DELETE, _AUDIT, WORKFLOW_PII,
-     'Comment deleted by its author'),
-    (EventName.TASK_CHECKLIST_MARK, _ACTIVITY, WORKFLOW_PII,
-     'Checklist item marked'),
-    (EventName.TASK_CHECKLIST_UNMARK, _ACTIVITY, WORKFLOW_PII,
-     'Checklist item unmarked'),
-
-    # Authentication
-    (EventName.USER_LOGIN, _AUDIT, ACTOR_PII, 'User signed in'),
-    (EventName.USER_LOGOUT, _AUDIT, ACTOR_PII, 'User signed out'),
-    (EventName.USER_LOGIN_FAILED, _AUDIT, ACTOR_PII,
-     'Sign in attempt failed'),
-    (EventName.USER_LOGIN_AS, _AUDIT, TARGET_PII,
-     'Superuser signed in as a user'),
-    (EventName.TENANT_LOGIN_AS, _AUDIT, ACTOR_PII,
-     'Master account signed in as a tenant'),
-    (EventName.USER_SIGNUP, _AUDIT, ACTOR_PII, 'User signed up'),
-    (EventName.USER_PASSWORD_RESET_REQUEST, _AUDIT, TARGET_PII,
-     'Password reset e-mail requested'),
-    (EventName.USER_PASSWORD_RESET, _AUDIT, ACTOR_PII,
-     'Password set through a reset link'),
-    (EventName.USER_PASSWORD_CHANGE, _AUDIT, ACTOR_PII,
-     'Password changed by its owner'),
-
-    # Accounts, users, groups and API keys
-    (EventName.ACCOUNT_UPDATE, _AUDIT, ACTOR_PII,
-     'Account settings changed'),
-    (EventName.ACCOUNT_VERIFY, _AUDIT, ACTOR_PII,
-     'Account verified through the e-mail link'),
-    (EventName.ACCOUNT_VERIFICATION_RESEND, _ACTIVITY, TARGET_PII,
-     'Account verification e-mail sent again'),
-    (EventName.TENANT_CREATE, _AUDIT, NAMED_PII,
-     'Tenant account created'),
-    (EventName.TENANT_DELETE, _AUDIT, NAMED_PII,
-     'Tenant account deleted'),
-    (EventName.USER_CREATE, _AUDIT, TARGET_PII,
-     'User created by an admin'),
-    (EventName.USER_UPDATE, _AUDIT, USER_UPDATE_PII,
-     'User profile, permissions, groups or manager changed'),
-    (EventName.USER_PASSWORD_SET, _AUDIT, TARGET_PII,
-     'Password of a user set by somebody else'),
-    (EventName.USER_DEACTIVATE, _AUDIT, TARGET_PII, 'User deactivated'),
-    (EventName.USER_ADMIN_TOGGLE, _AUDIT, TARGET_PII,
-     'User admin permission changed'),
-    (EventName.USER_TRANSFER, _AUDIT, ACTOR_PII,
-     'User moved over from another account'),
-    (EventName.USER_REASSIGN, _AUDIT, ACTOR_PII,
-     'Tasks and templates handed over to another user or group'),
-    (EventName.USER_VACATION_ACTIVATE, _AUDIT, TARGET_PII,
-     'Vacation turned on, tasks delegated to substitutes'),
-    (EventName.USER_VACATION_DEACTIVATE, _AUDIT, TARGET_PII,
-     'Vacation turned off, delegation withdrawn'),
-    (EventName.USER_UNSUBSCRIBE, _AUDIT, ACTOR_PII,
-     'E-mail subscription turned off through a link'),
-    (EventName.INVITE_CREATE, _AUDIT, TARGET_PII, 'User invited'),
-    (EventName.INVITE_RESEND, _AUDIT, TARGET_PII, 'Invite sent again'),
-    (EventName.INVITE_ACCEPT, _AUDIT, ACTOR_PII, 'Invite accepted'),
-    (EventName.GROUP_CREATE, _AUDIT, NAMED_PII, 'Group created'),
-    (EventName.GROUP_UPDATE, _AUDIT, ACTOR_PII, 'Group updated'),
-    (EventName.GROUP_DELETE, _AUDIT, NAMED_PII, 'Group deleted'),
-    (EventName.API_KEY_CREATE, _AUDIT, NAMED_PII, 'API key created'),
-    (EventName.API_KEY_REVOKE, _AUDIT, NAMED_PII, 'API key revoked'),
-
-    # Templates and workflows
-    (EventName.TEMPLATE_PUBLISH, _AUDIT, NAMED_PII, 'Template published'),
-    (EventName.TEMPLATE_DRAFT_SAVE, _ACTIVITY, NAMED_PII,
-     'Template draft saved'),
-    (EventName.TEMPLATE_CLONE, _ACTIVITY, NAMED_PII,
-     'Template cloned into a new draft'),
-    (EventName.TEMPLATE_DELETE, _AUDIT, NAMED_PII, 'Template deleted'),
-    (EventName.TEMPLATE_EXPORT, _AUDIT, ACTOR_PII, 'Templates exported'),
-    (EventName.TEMPLATE_DRAFT_DISCARD, _ACTIVITY, NAMED_PII,
-     'Template draft changes discarded'),
-    (EventName.TEMPLATE_AI_GENERATE, _ACTIVITY, ACTOR_PII,
-     'Template generated with AI'),
-    (EventName.TEMPLATE_LIBRARY_FILL, _ACTIVITY, NAMED_PII,
-     'Template filled from a library template'),
-    (EventName.TEMPLATE_LIBRARY_IMPORT, _AUDIT, ACTOR_PII,
-     'Library templates imported by staff'),
-    (EventName.TEMPLATE_PRESET_CREATE, _ACTIVITY, NAMED_PII,
-     'Template preset created'),
-    (EventName.TEMPLATE_PRESET_UPDATE, _ACTIVITY, NAMED_PII,
-     'Template preset changed'),
-    (EventName.TEMPLATE_PRESET_DELETE, _ACTIVITY, NAMED_PII,
-     'Template preset deleted'),
-    (EventName.TEMPLATE_PRESET_SET_DEFAULT, _ACTIVITY, NAMED_PII,
-     'Template preset made the default one'),
-    (EventName.FIELDSET_CREATE, _AUDIT, NAMED_PII,
-     'Shared fieldset created'),
-    (EventName.FIELDSET_UPDATE, _AUDIT, NAMED_PII,
-     'Shared fieldset changed'),
-    (EventName.FIELDSET_CLONE, _ACTIVITY, NAMED_PII,
-     'Shared fieldset cloned'),
-    (EventName.FIELDSET_DELETE, _AUDIT, NAMED_PII,
-     'Shared fieldset deleted'),
-    (EventName.WORKFLOW_TERMINATE, _AUDIT, WORKFLOW_NAME_PII,
-     'Workflow deleted'),
-
-    # Datasets
-    (EventName.DATASET_CREATE, _AUDIT, NAMED_PII, 'Dataset created'),
-    (EventName.DATASET_UPDATE, _AUDIT, NAMED_PII, 'Dataset changed'),
-    (EventName.DATASET_DELETE, _AUDIT, NAMED_PII, 'Dataset deleted'),
-    (EventName.DATASET_ITEMS_ADD, _AUDIT, NAMED_PII,
-     'Rows added to a dataset'),
-    (EventName.DATASET_ITEMS_REPLACE, _AUDIT, NAMED_PII,
-     'Rows of a dataset replaced'),
-    (EventName.DATASET_ITEM_CREATE, _AUDIT, ACTOR_PII,
-     'Dataset row created'),
-    (EventName.DATASET_ITEM_UPDATE, _AUDIT, ACTOR_PII,
-     'Dataset row changed'),
-    (EventName.DATASET_ITEM_DELETE, _AUDIT, ACTOR_PII,
-     'Dataset row deleted'),
-
-    # Billing
-    (EventName.BILLING_PURCHASE, _AUDIT, ACTOR_PII,
-     'Subscription purchased or checkout started'),
-    (EventName.BILLING_SUBSCRIPTION_CANCEL, _AUDIT, ACTOR_PII,
-     'Subscription cancelled'),
-    (EventName.BILLING_PAYMENT_CONFIRM, _AUDIT, ACTOR_PII,
-     'Payment confirmed through the checkout link'),
-
-    # Django admin site
-    (EventName.ADMIN_CREATE, _AUDIT, ACTOR_PII,
-     'Row created in the admin site'),
-    (EventName.ADMIN_UPDATE, _AUDIT, ACTOR_PII,
-     'Row changed in the admin site'),
-    (EventName.ADMIN_DELETE, _AUDIT, ACTOR_PII,
-     'Row deleted in the admin site'),
-
-    # Webhooks
-    (EventName.WEBHOOK_SUBSCRIBE, _AUDIT, URL_PII,
-     'Webhook subscription created'),
-    (EventName.WEBHOOK_UNSUBSCRIBE, _AUDIT, URL_PII,
-     'Webhook subscription removed'),
-
-    # Files
-    (EventName.FILE_UPLOAD, _AUDIT, FILE_PII,
-     'File uploaded to the file service'),
-    (EventName.FILE_DOWNLOAD, _AUDIT, FILE_PII,
-     'File handed out by the file service'),
-    (EventName.FILE_ACCESS_DENIED, _AUDIT, FILE_PII,
-     'File download refused by the permission check'),
+    (WorkflowEvents, (
+        (WorkflowEvents.RUN, 'Workflow started'),
+        (WorkflowEvents.COMPLETE, 'Workflow completed'),
+        (WorkflowEvents.ENDED, 'Workflow ended by a user'),
+        (WorkflowEvents.DELAY, 'Workflow delayed'),
+        (WorkflowEvents.REVERT, 'Workflow returned to a previous task'),
+        (WorkflowEvents.ENDED_BY_CONDITION, 'Workflow ended by a condition'),
+        (WorkflowEvents.URGENT, 'Workflow marked as urgent'),
+        (WorkflowEvents.NOT_URGENT, 'Workflow urgent mark removed'),
+        (WorkflowEvents.FORCE_RESUME, 'Workflow resumed manually'),
+        (WorkflowEvents.FORCE_DELAY, 'Workflow delayed manually'),
+        (WorkflowEvents.SUB_WORKFLOW_RUN, 'Sub-workflow started'),
+        (WorkflowEvents.UPDATE,
+         'Workflow name, kickoff fields or due date changed'),
+        (WorkflowEvents.TERMINATE, 'Workflow deleted'),
+    )),
+    (TaskEvents, (
+        (TaskEvents.START, 'Task started'),
+        (TaskEvents.COMPLETE, 'Task completed'),
+        (TaskEvents.REVERT, 'Task returned to the previous performer'),
+        (TaskEvents.COMMENT, 'Comment added to a task'),
+        (TaskEvents.SKIP, 'Task skipped'),
+        (TaskEvents.SKIP_NO_PERFORMERS,
+         'Task skipped because it has no performers'),
+        (TaskEvents.PERFORMER_CREATED, 'Task performer added'),
+        (TaskEvents.PERFORMER_DELETED, 'Task performer removed'),
+        (TaskEvents.DUE_DATE_CHANGED, 'Task due date changed'),
+        (TaskEvents.PERFORMER_GROUP_CREATED, 'Task performer group added'),
+        (TaskEvents.PERFORMER_GROUP_DELETED, 'Task performer group removed'),
+        (TaskEvents.DELAY, 'Task delayed'),
+        (TaskEvents.DELEGATION, 'Task delegated to another performer'),
+        (TaskEvents.COMMENT_UPDATE, 'Comment edited by its author'),
+        (TaskEvents.COMMENT_DELETE, 'Comment deleted by its author'),
+        (TaskEvents.CHECKLIST_MARK, 'Checklist item marked'),
+        (TaskEvents.CHECKLIST_UNMARK, 'Checklist item unmarked'),
+    )),
+    (UserEvents, (
+        (UserEvents.LOGIN, 'User signed in'),
+        (UserEvents.LOGOUT, 'User signed out'),
+        (UserEvents.LOGIN_FAILED, 'Sign in attempt failed'),
+        (UserEvents.LOGIN_AS, 'Superuser signed in as a user'),
+        (UserEvents.SIGNUP, 'User signed up'),
+        (UserEvents.PASSWORD_RESET_REQUEST,
+         'Password reset e-mail requested'),
+        (UserEvents.PASSWORD_RESET, 'Password set through a reset link'),
+        (UserEvents.PASSWORD_CHANGE, 'Password changed by its owner'),
+        (UserEvents.CREATE, 'User created by an admin'),
+        (UserEvents.UPDATE,
+         'User profile, permissions, groups or manager changed'),
+        (UserEvents.PASSWORD_SET, 'Password of a user set by somebody else'),
+        (UserEvents.DEACTIVATE, 'User deactivated'),
+        (UserEvents.ADMIN_TOGGLE, 'User admin permission changed'),
+        (UserEvents.TRANSFER, 'User moved over from another account'),
+        (UserEvents.REASSIGN,
+         'Tasks and templates handed over to another user or group'),
+        (UserEvents.VACATION_ACTIVATE,
+         'Vacation turned on, tasks delegated to substitutes'),
+        (UserEvents.VACATION_DEACTIVATE,
+         'Vacation turned off, delegation withdrawn'),
+        (UserEvents.UNSUBSCRIBE,
+         'E-mail subscription turned off through a link'),
+        (UserEvents.INVITE_CREATE, 'User invited'),
+        (UserEvents.INVITE_RESEND, 'Invite sent again'),
+        (UserEvents.INVITE_ACCEPT, 'Invite accepted'),
+    )),
+    (AccountEvents, (
+        (AccountEvents.UPDATE, 'Account settings changed'),
+        (AccountEvents.VERIFY, 'Account verified through the e-mail link'),
+        (AccountEvents.VERIFICATION_RESEND,
+         'Account verification e-mail sent again'),
+        (AccountEvents.TENANT_CREATE, 'Tenant account created'),
+        (AccountEvents.TENANT_DELETE, 'Tenant account deleted'),
+        (AccountEvents.TENANT_LOGIN_AS,
+         'Master account signed in as a tenant'),
+    )),
+    (GroupEvents, (
+        (GroupEvents.CREATE, 'Group created'),
+        (GroupEvents.UPDATE, 'Group updated'),
+        (GroupEvents.DELETE, 'Group deleted'),
+    )),
+    (ApiKeyEvents, (
+        (ApiKeyEvents.CREATE, 'API key created'),
+        (ApiKeyEvents.REVOKE, 'API key revoked'),
+    )),
+    (TemplateEvents, (
+        (TemplateEvents.PUBLISH, 'Template published'),
+        (TemplateEvents.DRAFT_SAVE, 'Template draft saved'),
+        (TemplateEvents.CLONE, 'Template cloned into a new draft'),
+        (TemplateEvents.DELETE, 'Template deleted'),
+        (TemplateEvents.EXPORT, 'Templates exported'),
+        (TemplateEvents.DRAFT_DISCARD, 'Template draft changes discarded'),
+        (TemplateEvents.AI_GENERATE, 'Template generated with AI'),
+        (TemplateEvents.LIBRARY_FILL,
+         'Template filled from a library template'),
+        (TemplateEvents.LIBRARY_IMPORT,
+         'Library templates imported by staff'),
+        (TemplateEvents.PRESET_CREATE, 'Template preset created'),
+        (TemplateEvents.PRESET_UPDATE, 'Template preset changed'),
+        (TemplateEvents.PRESET_DELETE, 'Template preset deleted'),
+        (TemplateEvents.PRESET_SET_DEFAULT,
+         'Template preset made the default one'),
+        (TemplateEvents.FIELDSET_CREATE, 'Shared fieldset created'),
+        (TemplateEvents.FIELDSET_UPDATE, 'Shared fieldset changed'),
+        (TemplateEvents.FIELDSET_CLONE, 'Shared fieldset cloned'),
+        (TemplateEvents.FIELDSET_DELETE, 'Shared fieldset deleted'),
+    )),
+    (DatasetEvents, (
+        (DatasetEvents.CREATE, 'Dataset created'),
+        (DatasetEvents.UPDATE, 'Dataset changed'),
+        (DatasetEvents.DELETE, 'Dataset deleted'),
+        (DatasetEvents.ITEMS_ADD, 'Rows added to a dataset'),
+        (DatasetEvents.ITEMS_REPLACE, 'Rows of a dataset replaced'),
+        (DatasetEvents.ITEM_CREATE, 'Dataset row created'),
+        (DatasetEvents.ITEM_UPDATE, 'Dataset row changed'),
+        (DatasetEvents.ITEM_DELETE, 'Dataset row deleted'),
+    )),
+    (BillingEvents, (
+        (BillingEvents.PURCHASE,
+         'Subscription purchased or checkout started'),
+        (BillingEvents.SUBSCRIPTION_CANCEL, 'Subscription cancelled'),
+        (BillingEvents.PAYMENT_CONFIRM,
+         'Payment confirmed through the checkout link'),
+    )),
+    (WebhookEvents, (
+        (WebhookEvents.SUBSCRIBE, 'Webhook subscription created'),
+        (WebhookEvents.UNSUBSCRIBE, 'Webhook subscription removed'),
+    )),
+    (FileEvents, (
+        (FileEvents.UPLOAD, 'File uploaded to the file service'),
+        (FileEvents.DOWNLOAD, 'File handed out by the file service'),
+        (FileEvents.ACCESS_DENIED,
+         'File download refused by the permission check'),
+    )),
+    (AdminEvents, (
+        (AdminEvents.CREATE, 'Row created in the admin site'),
+        (AdminEvents.UPDATE, 'Row changed in the admin site'),
+        (AdminEvents.DELETE, 'Row deleted in the admin site'),
+    )),
 )
 
 EVENT_TYPES: Tuple[EventType, ...] = tuple(
-    EventType(*declaration) for declaration in DECLARATIONS
+    EventType(name, events_class.CATEGORY, description)
+    for events_class, rows in DECLARATIONS
+    for name, description in rows
 )
 
 REGISTRY: Dict[str, EventType] = {
@@ -276,9 +200,9 @@ def resolve_event_type(name: str) -> EventType:
 
     """ Return the declared event type.
         A typo has to break tests, but it must not break a user
-        request in a running deployment: there the event is
-        downgraded to the debug category and reported to Sentry
-        once a minute per name for as long as it is emitted.
+        request in a running deployment: there the event is filed
+        under the OTHER category and reported to Sentry once a
+        minute per name for as long as it is emitted.
 
         The switch is the explicit LOGS_STRICT flag, not the name
         of the environment: ENVIRONMENT is optional and falls back
@@ -296,17 +220,14 @@ def resolve_event_type(name: str) -> EventType:
         level=SentryLogLevel.WARNING,
         key=f'unknown-event-type:{name}',
     )
-    # ACTOR_PII, not an empty tuple: the sink moves declared paths
-    # into the pii.* namespace, the one prefix a receiver can drop
-    # or a reader can avoid. An undeclared type with an empty list
-    # would send the e-mail and the ip as plain attributes, which
-    # nothing downstream can tell from the rest of the record.
-    return EventType(name, EventCategory.DEBUG, ACTOR_PII)
+    return EventType(name, EventCategory.OTHER)
 
 
 def validate_registry() -> None:
 
-    """ Raise EventsError if the registry declaration is broken. """
+    """ Raise EventsError if the registry declaration is broken:
+        a duplicated or malformed name, a category that is not one,
+        or a constant of an events class that has no row here. """
 
     names: Set[str] = set()
     for event_type in EVENT_TYPES:
@@ -320,21 +241,11 @@ def validate_registry() -> None:
                 f'Invalid category "{event_type.category}" '
                 f'of the event type: {name}',
             )
-        _validate_pii(event_type)
         names.add(name)
-
-
-def _validate_pii(event_type: EventType) -> None:
-
-    """ An unresolvable path is dropped by the emitter without a word,
-        and the field then leaves as a plain attribute, outside the
-        pii.* namespace a receiver drops by. A typo here is a silent
-        data leak, so it has to break the build instead. """
-
-    for path in event_type.pii:
-        if is_valid_pii_path(path):
-            continue
-        raise EventsError(
-            f'Invalid pii path "{path}" of the event type: '
-            f'{event_type.name}',
-        )
+    for events_class in EVENT_CLASSES:
+        for name in event_names_of(events_class):
+            if name not in names:
+                raise EventsError(
+                    f'Event type {name} of {events_class.__name__} '
+                    f'is not declared in the registry',
+                )

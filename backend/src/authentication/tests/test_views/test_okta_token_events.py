@@ -3,16 +3,15 @@ from uuid import uuid4
 import pytest
 from django.contrib.auth import get_user_model
 
-from src.accounts.enums import SourceType
+from src.accounts.enums import SourceType, UserType
 from src.authentication.enums import AuthTokenType
 from src.authentication.messages import MSG_AU_0009
 from src.authentication.services.exceptions import TokenInvalidOrExpired
 from src.authentication.services.okta import OktaService
 from src.generics.mixins.services import EncryptionMixin
 from src.logs.events.enums import (
-    ActorType,
-    EventName,
     EventObjectType,
+    UserEvents,
 )
 from src.logs.events.schema import Actor, EventObject
 from src.processes.tests.fixtures import (
@@ -94,13 +93,14 @@ def test_okta_token__existent_user__emit_user_login(
     assert response.status_code == 200
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.USER_LOGIN
+    assert event.type == UserEvents.LOGIN
     assert event.account_id == user.account_id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=user.id,
         email=user.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.USER,
         id=user.id,
@@ -209,13 +209,14 @@ def test_okta_token__new_user__emit_user_signup_only(
     assert new_user.account_id == owner.account_id
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.USER_SIGNUP
+    assert event.type == UserEvents.SIGNUP
     assert event.account_id == owner.account_id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=new_user.id,
         email=email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.USER,
         id=new_user.id,
@@ -333,19 +334,19 @@ def test_okta_token__invited_user__emit_user_login(
     # assert
     assert response.status_code == 200
     emit_mock.assert_called_once_with(
-        EventName.USER_LOGIN,
+        UserEvents.LOGIN,
         account_id=invited_user.account_id,
         actor=Actor(
-            type=ActorType.USER,
             id=invited_user.id,
             email=invited_user.email,
+            user_type=UserType.USER,
         ),
+        auth_type=AuthTokenType.USER,
         event_object=EventObject(
             type=EventObjectType.USER,
             id=invited_user.id,
         ),
         payload={'source': SourceType.OKTA},
-        request=mocker.ANY,
     )
     okta_service_init_mock.assert_called_once_with(domain=domain)
     get_first_access_token_mock.assert_called_once_with(

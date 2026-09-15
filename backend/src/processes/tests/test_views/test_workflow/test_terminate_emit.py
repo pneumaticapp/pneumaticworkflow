@@ -1,11 +1,10 @@
 import pytest
 
+from src.accounts.enums import UserType
 from src.authentication.enums import AuthTokenType
 from src.logs.events.enums import (
-    ActorType,
-    EventCategory,
-    EventName,
     EventObjectType,
+    WorkflowEvents,
 )
 from src.logs.events.schema import Actor, EventObject
 from src.processes.models.workflows.workflow import Workflow
@@ -67,14 +66,15 @@ def test_destroy__account_owner__emit_workflow_terminate(
     assert not Workflow.objects.filter(id=workflow.id).exists()
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.WORKFLOW_TERMINATE
-    assert event.category == EventCategory.AUDIT
+    assert event.type == WorkflowEvents.TERMINATE
+    assert event.category == WorkflowEvents.CATEGORY
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=owner.id,
         email=owner.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.WORKFLOW,
         id=workflow.id,

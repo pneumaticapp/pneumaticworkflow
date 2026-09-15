@@ -97,7 +97,8 @@ class TemplatePresetViewSet(
         except TemplatePresetServiceException as ex:
             raise_validation_error(message=ex.message)
         AuditEventService.template_preset_updated(
-            request=request,
+            user=request.user,
+            auth_type=request.token_type,
             preset=preset,
         )
         return self.response_ok(self.get_serializer(preset).data)
@@ -144,7 +145,8 @@ class TemplatePresetViewSet(
         except TemplatePresetServiceException as ex:
             raise_validation_error(message=ex.message)
         AuditEventService.template_preset_deleted(
-            request=request,
+            user=request.user,
+            auth_type=request.token_type,
             preset=preset,
         )
         return self.response_ok()
@@ -175,7 +177,8 @@ class TemplatePresetViewSet(
         except TemplatePresetServiceException as ex:
             raise_validation_error(message=ex.message)
         AuditEventService.template_preset_set_default(
-            request=request,
+            user=request.user,
+            auth_type=request.token_type,
             preset=preset,
         )
         return self.response_ok()

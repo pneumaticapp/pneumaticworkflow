@@ -1,11 +1,10 @@
 import pytest
 
+from src.accounts.enums import UserType
 from src.authentication.enums import AuthTokenType
 from src.logs.events.enums import (
-    ActorType,
-    EventCategory,
-    EventName,
     EventObjectType,
+    TemplateEvents,
 )
 from src.logs.events.schema import Actor, EventObject
 from src.processes.enums import (
@@ -75,13 +74,14 @@ def test_create__published_template__emit_template_publish(
     assert response.status_code == 200
     template = Template.objects.get(id=response.data['id'])
     emit_mock.assert_called_once_with(
-        EventName.TEMPLATE_PUBLISH,
+        TemplateEvents.PUBLISH,
         account_id=account.id,
         actor=Actor(
-            type=ActorType.USER,
             id=owner.id,
             email=owner.email,
+            user_type=UserType.USER,
         ),
+        auth_type=AuthTokenType.USER,
         event_object=EventObject(
             type=EventObjectType.TEMPLATE,
             id=template.id,
@@ -93,7 +93,6 @@ def test_create__published_template__emit_template_publish(
         },
         workflow_id=None,
         task_id=None,
-        request=mocker.ANY,
     )
     templates_created_mock.assert_called_once_with(
         user=owner,
@@ -152,13 +151,14 @@ def test_create__draft__emit_template_draft_save(
     assert response.status_code == 200
     template = Template.objects.get(id=response.data['id'])
     emit_mock.assert_called_once_with(
-        EventName.TEMPLATE_DRAFT_SAVE,
+        TemplateEvents.DRAFT_SAVE,
         account_id=account.id,
         actor=Actor(
-            type=ActorType.USER,
             id=owner.id,
             email=owner.email,
+            user_type=UserType.USER,
         ),
+        auth_type=AuthTokenType.USER,
         event_object=EventObject(
             type=EventObjectType.TEMPLATE,
             id=template.id,
@@ -170,7 +170,6 @@ def test_create__draft__emit_template_draft_save(
         },
         workflow_id=None,
         task_id=None,
-        request=mocker.ANY,
     )
     templates_created_mock.assert_called_once_with(
         user=owner,
@@ -250,14 +249,15 @@ def test_create__published_template__event_keeps_request_context(
     template = Template.objects.get(id=response.data['id'])
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.TEMPLATE_PUBLISH
-    assert event.category == EventCategory.AUDIT
+    assert event.type == TemplateEvents.PUBLISH
+    assert event.category == TemplateEvents.CATEGORY
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=owner.id,
         email=owner.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.TEMPLATE,
         id=template.id,
@@ -270,12 +270,6 @@ def test_create__published_template__event_keeps_request_context(
     assert event.ip == '10.10.0.13'
     assert event.user_agent == 'Chrome/141'
     assert event.request_id == 'audit-template-1'
-    assert event.pii == (
-        'actor.email',
-        'ip',
-        'user_agent',
-        'payload.name',
-    )
     templates_created_mock.assert_called_once_with(
         user=owner,
         template=template,

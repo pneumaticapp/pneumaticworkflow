@@ -2,7 +2,7 @@
   "annotations": {
     "list": []
   },
-  "description": "Find the events you are after. The index labels narrow the streams (service, environment, account, category); the other filters run over the structured metadata of every record: the event type, the kind of actor, a substring of the actor id or e-mail, of the object id, of the workflow id, of the request id, and a free text search (regular expression, case insensitive) over the names, e-mails, IP and user agent. Every filter left empty matches everything.",
+  "description": "Find the events you are after. The index labels narrow the streams (service, environment, account, category); the other filters run over the structured metadata of every record: the event type, the auth type (the credential the request came with), a substring of the actor id or e-mail, of the object id, of the workflow id, of the request id, and a free text search (regular expression, case insensitive) over the names, e-mails, IP and user agent. Every filter left empty matches everything.",
   "editable": false,
   "graphTooltip": 0,
   "id": null,
@@ -81,7 +81,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "sum(count_over_time({service_name=~\"$service\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | event_type=~\"$event_type\" | actor_type=~\"$actor_type\" | actor_id=~\".*$actor.*\" or pii_actor_email=~\".*$actor.*\" | object_id=~\".*$object_id.*\" | workflow_id=~\".*$workflow_id.*\" | request_id=~\".*$request_id.*\" | line_format \"{{.event_type}} {{.actor_type}}:{{.actor_id}} {{.pii_actor_email}} {{.object_type}}:{{.object_id}} workflow:{{.workflow_id}} task:{{.task_id}} request:{{.request_id}} {{.pii_payload_name}} {{.pii_payload_workflow_name}} {{.pii_payload_task_name}} {{.pii_payload_filename}} {{.pii_payload_target_email}} {{.payload_reason}} {{.pii_ip}} {{.pii_user_agent}}\" |~ \"(?i)$search\" [$__range]))",
+          "expr": "sum(count_over_time({service_name=~\"$service\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | event_type=~\"$event_type\" | auth_type=~\"$auth_type\" | actor_id=~\".*$actor.*\" or actor_email=~\".*$actor.*\" | object_id=~\".*$object_id.*\" | workflow_id=~\".*$workflow_id.*\" | request_id=~\".*$request_id.*\" | line_format \"{{.event_type}} {{.auth_type}}:{{.actor_id}} {{.actor_email}} {{.object_type}}:{{.object_id}} workflow:{{.workflow_id}} task:{{.task_id}} request:{{.request_id}} {{.payload_name}} {{.payload_workflow_name}} {{.payload_task_name}} {{.payload_filename}} {{.payload_target_email}} {{.payload_reason}} {{.ip}} {{.user_agent}}\" |~ \"(?i)$search\" [$__range]))",
           "instant": true,
           "legendFormat": "",
           "queryType": "instant",
@@ -149,7 +149,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "count(sum by (account_id) (count_over_time({service_name=~\"$service\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | event_type=~\"$event_type\" | actor_type=~\"$actor_type\" | actor_id=~\".*$actor.*\" or pii_actor_email=~\".*$actor.*\" | object_id=~\".*$object_id.*\" | workflow_id=~\".*$workflow_id.*\" | request_id=~\".*$request_id.*\" | line_format \"{{.event_type}} {{.actor_type}}:{{.actor_id}} {{.pii_actor_email}} {{.object_type}}:{{.object_id}} workflow:{{.workflow_id}} task:{{.task_id}} request:{{.request_id}} {{.pii_payload_name}} {{.pii_payload_workflow_name}} {{.pii_payload_task_name}} {{.pii_payload_filename}} {{.pii_payload_target_email}} {{.payload_reason}} {{.pii_ip}} {{.pii_user_agent}}\" |~ \"(?i)$search\" [$__range])))",
+          "expr": "count(sum by (account_id) (count_over_time({service_name=~\"$service\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | event_type=~\"$event_type\" | auth_type=~\"$auth_type\" | actor_id=~\".*$actor.*\" or actor_email=~\".*$actor.*\" | object_id=~\".*$object_id.*\" | workflow_id=~\".*$workflow_id.*\" | request_id=~\".*$request_id.*\" | line_format \"{{.event_type}} {{.auth_type}}:{{.actor_id}} {{.actor_email}} {{.object_type}}:{{.object_id}} workflow:{{.workflow_id}} task:{{.task_id}} request:{{.request_id}} {{.payload_name}} {{.payload_workflow_name}} {{.payload_task_name}} {{.payload_filename}} {{.payload_target_email}} {{.payload_reason}} {{.ip}} {{.user_agent}}\" |~ \"(?i)$search\" [$__range])))",
           "instant": true,
           "legendFormat": "",
           "queryType": "instant",
@@ -217,7 +217,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "count(sum by (actor_id) (count_over_time({service_name=~\"$service\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | event_type=~\"$event_type\" | actor_type=~\"$actor_type\" | actor_id=~\".*$actor.*\" or pii_actor_email=~\".*$actor.*\" | object_id=~\".*$object_id.*\" | workflow_id=~\".*$workflow_id.*\" | request_id=~\".*$request_id.*\" | line_format \"{{.event_type}} {{.actor_type}}:{{.actor_id}} {{.pii_actor_email}} {{.object_type}}:{{.object_id}} workflow:{{.workflow_id}} task:{{.task_id}} request:{{.request_id}} {{.pii_payload_name}} {{.pii_payload_workflow_name}} {{.pii_payload_task_name}} {{.pii_payload_filename}} {{.pii_payload_target_email}} {{.payload_reason}} {{.pii_ip}} {{.pii_user_agent}}\" |~ \"(?i)$search\" [$__range])))",
+          "expr": "count(sum by (actor_id) (count_over_time({service_name=~\"$service\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | event_type=~\"$event_type\" | auth_type=~\"$auth_type\" | actor_id=~\".*$actor.*\" or actor_email=~\".*$actor.*\" | object_id=~\".*$object_id.*\" | workflow_id=~\".*$workflow_id.*\" | request_id=~\".*$request_id.*\" | line_format \"{{.event_type}} {{.auth_type}}:{{.actor_id}} {{.actor_email}} {{.object_type}}:{{.object_id}} workflow:{{.workflow_id}} task:{{.task_id}} request:{{.request_id}} {{.payload_name}} {{.payload_workflow_name}} {{.payload_task_name}} {{.payload_filename}} {{.payload_target_email}} {{.payload_reason}} {{.ip}} {{.user_agent}}\" |~ \"(?i)$search\" [$__range])))",
           "instant": true,
           "legendFormat": "",
           "queryType": "instant",
@@ -285,7 +285,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "count(sum by (event_type) (count_over_time({service_name=~\"$service\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | event_type=~\"$event_type\" | actor_type=~\"$actor_type\" | actor_id=~\".*$actor.*\" or pii_actor_email=~\".*$actor.*\" | object_id=~\".*$object_id.*\" | workflow_id=~\".*$workflow_id.*\" | request_id=~\".*$request_id.*\" | line_format \"{{.event_type}} {{.actor_type}}:{{.actor_id}} {{.pii_actor_email}} {{.object_type}}:{{.object_id}} workflow:{{.workflow_id}} task:{{.task_id}} request:{{.request_id}} {{.pii_payload_name}} {{.pii_payload_workflow_name}} {{.pii_payload_task_name}} {{.pii_payload_filename}} {{.pii_payload_target_email}} {{.payload_reason}} {{.pii_ip}} {{.pii_user_agent}}\" |~ \"(?i)$search\" [$__range])))",
+          "expr": "count(sum by (event_type) (count_over_time({service_name=~\"$service\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | event_type=~\"$event_type\" | auth_type=~\"$auth_type\" | actor_id=~\".*$actor.*\" or actor_email=~\".*$actor.*\" | object_id=~\".*$object_id.*\" | workflow_id=~\".*$workflow_id.*\" | request_id=~\".*$request_id.*\" | line_format \"{{.event_type}} {{.auth_type}}:{{.actor_id}} {{.actor_email}} {{.object_type}}:{{.object_id}} workflow:{{.workflow_id}} task:{{.task_id}} request:{{.request_id}} {{.payload_name}} {{.payload_workflow_name}} {{.payload_task_name}} {{.payload_filename}} {{.payload_target_email}} {{.payload_reason}} {{.ip}} {{.user_agent}}\" |~ \"(?i)$search\" [$__range])))",
           "instant": true,
           "legendFormat": "",
           "queryType": "instant",
@@ -382,7 +382,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "sum by (event_type) (count_over_time({service_name=~\"$service\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | event_type=~\"$event_type\" | actor_type=~\"$actor_type\" | actor_id=~\".*$actor.*\" or pii_actor_email=~\".*$actor.*\" | object_id=~\".*$object_id.*\" | workflow_id=~\".*$workflow_id.*\" | request_id=~\".*$request_id.*\" | line_format \"{{.event_type}} {{.actor_type}}:{{.actor_id}} {{.pii_actor_email}} {{.object_type}}:{{.object_id}} workflow:{{.workflow_id}} task:{{.task_id}} request:{{.request_id}} {{.pii_payload_name}} {{.pii_payload_workflow_name}} {{.pii_payload_task_name}} {{.pii_payload_filename}} {{.pii_payload_target_email}} {{.payload_reason}} {{.pii_ip}} {{.pii_user_agent}}\" |~ \"(?i)$search\" [$__auto]))",
+          "expr": "sum by (event_type) (count_over_time({service_name=~\"$service\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | event_type=~\"$event_type\" | auth_type=~\"$auth_type\" | actor_id=~\".*$actor.*\" or actor_email=~\".*$actor.*\" | object_id=~\".*$object_id.*\" | workflow_id=~\".*$workflow_id.*\" | request_id=~\".*$request_id.*\" | line_format \"{{.event_type}} {{.auth_type}}:{{.actor_id}} {{.actor_email}} {{.object_type}}:{{.object_id}} workflow:{{.workflow_id}} task:{{.task_id}} request:{{.request_id}} {{.payload_name}} {{.payload_workflow_name}} {{.payload_task_name}} {{.payload_filename}} {{.payload_target_email}} {{.payload_reason}} {{.ip}} {{.user_agent}}\" |~ \"(?i)$search\" [$__auto]))",
           "legendFormat": "{{event_type}}",
           "queryType": "range",
           "refId": "A"
@@ -455,7 +455,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "topk(15, sum by (event_type) (count_over_time({service_name=~\"$service\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | event_type=~\"$event_type\" | actor_type=~\"$actor_type\" | actor_id=~\".*$actor.*\" or pii_actor_email=~\".*$actor.*\" | object_id=~\".*$object_id.*\" | workflow_id=~\".*$workflow_id.*\" | request_id=~\".*$request_id.*\" | line_format \"{{.event_type}} {{.actor_type}}:{{.actor_id}} {{.pii_actor_email}} {{.object_type}}:{{.object_id}} workflow:{{.workflow_id}} task:{{.task_id}} request:{{.request_id}} {{.pii_payload_name}} {{.pii_payload_workflow_name}} {{.pii_payload_task_name}} {{.pii_payload_filename}} {{.pii_payload_target_email}} {{.payload_reason}} {{.pii_ip}} {{.pii_user_agent}}\" |~ \"(?i)$search\" [$__range])))",
+          "expr": "topk(15, sum by (event_type) (count_over_time({service_name=~\"$service\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | event_type=~\"$event_type\" | auth_type=~\"$auth_type\" | actor_id=~\".*$actor.*\" or actor_email=~\".*$actor.*\" | object_id=~\".*$object_id.*\" | workflow_id=~\".*$workflow_id.*\" | request_id=~\".*$request_id.*\" | line_format \"{{.event_type}} {{.auth_type}}:{{.actor_id}} {{.actor_email}} {{.object_type}}:{{.object_id}} workflow:{{.workflow_id}} task:{{.task_id}} request:{{.request_id}} {{.payload_name}} {{.payload_workflow_name}} {{.payload_task_name}} {{.payload_filename}} {{.payload_target_email}} {{.payload_reason}} {{.ip}} {{.user_agent}}\" |~ \"(?i)$search\" [$__range])))",
           "instant": true,
           "legendFormat": "{{event_type}}",
           "queryType": "instant",
@@ -643,7 +643,7 @@
           },
           "direction": "backward",
           "editorMode": "code",
-          "expr": "{service_name=~\"$service\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | event_type=~\"$event_type\" | actor_type=~\"$actor_type\" | actor_id=~\".*$actor.*\" or pii_actor_email=~\".*$actor.*\" | object_id=~\".*$object_id.*\" | workflow_id=~\".*$workflow_id.*\" | request_id=~\".*$request_id.*\" | line_format \"{{.event_type}} {{.actor_type}}:{{.actor_id}} {{.pii_actor_email}} {{.object_type}}:{{.object_id}} workflow:{{.workflow_id}} task:{{.task_id}} request:{{.request_id}} {{.pii_payload_name}} {{.pii_payload_workflow_name}} {{.pii_payload_task_name}} {{.pii_payload_filename}} {{.pii_payload_target_email}} {{.payload_reason}} {{.pii_ip}} {{.pii_user_agent}}\" |~ \"(?i)$search\"",
+          "expr": "{service_name=~\"$service\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | event_type=~\"$event_type\" | auth_type=~\"$auth_type\" | actor_id=~\".*$actor.*\" or actor_email=~\".*$actor.*\" | object_id=~\".*$object_id.*\" | workflow_id=~\".*$workflow_id.*\" | request_id=~\".*$request_id.*\" | line_format \"{{.event_type}} {{.auth_type}}:{{.actor_id}} {{.actor_email}} {{.object_type}}:{{.object_id}} workflow:{{.workflow_id}} task:{{.task_id}} request:{{.request_id}} {{.payload_name}} {{.payload_workflow_name}} {{.payload_task_name}} {{.payload_filename}} {{.payload_target_email}} {{.payload_reason}} {{.ip}} {{.user_agent}}\" |~ \"(?i)$search\"",
           "legendFormat": "",
           "queryType": "range",
           "refId": "A"
@@ -669,15 +669,15 @@
                 "account_id",
                 "service_name",
                 "event_type",
-                "actor_type",
+                "auth_type",
                 "actor_id",
-                "pii_actor_email",
+                "actor_email",
                 "object_type",
                 "object_id",
                 "workflow_id",
                 "task_id",
                 "request_id",
-                "pii_ip"
+                "ip"
               ]
             }
           }
@@ -690,12 +690,12 @@
               "Time": 0,
               "account_id": 1,
               "actor_id": 5,
-              "actor_type": 4,
+              "auth_type": 4,
               "event_type": 3,
               "object_id": 8,
               "object_type": 7,
-              "pii_actor_email": 6,
-              "pii_ip": 12,
+              "actor_email": 6,
+              "ip": 12,
               "request_id": 11,
               "service_name": 2,
               "task_id": 10,
@@ -704,12 +704,12 @@
             "renameByName": {
               "account_id": "Account",
               "actor_id": "Actor id",
-              "actor_type": "Actor type",
+              "auth_type": "Auth type",
               "event_type": "Event type",
               "object_id": "Object id",
               "object_type": "Object type",
-              "pii_actor_email": "E-mail",
-              "pii_ip": "IP address",
+              "actor_email": "E-mail",
+              "ip": "IP address",
               "request_id": "Request id",
               "service_name": "Service",
               "task_id": "Task id",
@@ -767,7 +767,7 @@
           },
           "direction": "backward",
           "editorMode": "code",
-          "expr": "{service_name=~\"$service\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | event_type=~\"$event_type\" | actor_type=~\"$actor_type\" | actor_id=~\".*$actor.*\" or pii_actor_email=~\".*$actor.*\" | object_id=~\".*$object_id.*\" | workflow_id=~\".*$workflow_id.*\" | request_id=~\".*$request_id.*\" | line_format \"{{.event_type}} {{.actor_type}}:{{.actor_id}} {{.pii_actor_email}} {{.object_type}}:{{.object_id}} workflow:{{.workflow_id}} task:{{.task_id}} request:{{.request_id}} {{.pii_payload_name}} {{.pii_payload_workflow_name}} {{.pii_payload_task_name}} {{.pii_payload_filename}} {{.pii_payload_target_email}} {{.payload_reason}} {{.pii_ip}} {{.pii_user_agent}}\" |~ \"(?i)$search\"",
+          "expr": "{service_name=~\"$service\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | event_type=~\"$event_type\" | auth_type=~\"$auth_type\" | actor_id=~\".*$actor.*\" or actor_email=~\".*$actor.*\" | object_id=~\".*$object_id.*\" | workflow_id=~\".*$workflow_id.*\" | request_id=~\".*$request_id.*\" | line_format \"{{.event_type}} {{.auth_type}}:{{.actor_id}} {{.actor_email}} {{.object_type}}:{{.object_id}} workflow:{{.workflow_id}} task:{{.task_id}} request:{{.request_id}} {{.payload_name}} {{.payload_workflow_name}} {{.payload_task_name}} {{.payload_filename}} {{.payload_target_email}} {{.payload_reason}} {{.ip}} {{.user_agent}}\" |~ \"(?i)$search\"",
           "legendFormat": "",
           "queryType": "range",
           "refId": "A"
@@ -913,21 +913,71 @@
           },
           {
             "selected": false,
-            "text": "audit",
-            "value": "audit"
+            "text": "workflows",
+            "value": "workflows"
           },
           {
             "selected": false,
-            "text": "activity",
-            "value": "activity"
+            "text": "tasks",
+            "value": "tasks"
           },
           {
             "selected": false,
-            "text": "debug",
-            "value": "debug"
+            "text": "users",
+            "value": "users"
+          },
+          {
+            "selected": false,
+            "text": "accounts",
+            "value": "accounts"
+          },
+          {
+            "selected": false,
+            "text": "groups",
+            "value": "groups"
+          },
+          {
+            "selected": false,
+            "text": "api_keys",
+            "value": "api_keys"
+          },
+          {
+            "selected": false,
+            "text": "templates",
+            "value": "templates"
+          },
+          {
+            "selected": false,
+            "text": "datasets",
+            "value": "datasets"
+          },
+          {
+            "selected": false,
+            "text": "billing",
+            "value": "billing"
+          },
+          {
+            "selected": false,
+            "text": "webhooks",
+            "value": "webhooks"
+          },
+          {
+            "selected": false,
+            "text": "files",
+            "value": "files"
+          },
+          {
+            "selected": false,
+            "text": "admin",
+            "value": "admin"
+          },
+          {
+            "selected": false,
+            "text": "other",
+            "value": "other"
           }
         ],
-        "query": "audit,activity,debug",
+        "query": "workflows,tasks,users,accounts,groups,api_keys,templates,datasets,billing,webhooks,files,admin,other",
         "queryValue": "",
         "skipUrlSync": false,
         "type": "custom"
@@ -1463,9 +1513,10 @@
         },
         "hide": 0,
         "includeAll": true,
-        "label": "Actor type",
+        "description": "The credential the request came with: User (browser session), API (API key), Guest (guest link), Shared (public form), Embedded (embedded form), Webhook (Stripe webhook). Records of the system and of anonymous requests carry no auth type and match only All.",
+        "label": "Auth type",
         "multi": true,
-        "name": "actor_type",
+        "name": "auth_type",
         "options": [
           {
             "selected": true,
@@ -1474,26 +1525,36 @@
           },
           {
             "selected": false,
-            "text": "user",
-            "value": "user"
+            "text": "User",
+            "value": "User"
           },
           {
             "selected": false,
-            "text": "api_key",
-            "value": "api_key"
+            "text": "API",
+            "value": "API"
           },
           {
             "selected": false,
-            "text": "guest",
-            "value": "guest"
+            "text": "Guest",
+            "value": "Guest"
           },
           {
             "selected": false,
-            "text": "system",
-            "value": "system"
+            "text": "Shared",
+            "value": "Shared"
+          },
+          {
+            "selected": false,
+            "text": "Embedded",
+            "value": "Embedded"
+          },
+          {
+            "selected": false,
+            "text": "Webhook",
+            "value": "Webhook"
           }
         ],
-        "query": "user,api_key,guest,system",
+        "query": "User,API,Guest,Shared,Embedded,Webhook",
         "queryValue": "",
         "skipUrlSync": false,
         "type": "custom"

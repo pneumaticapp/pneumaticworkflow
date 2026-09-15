@@ -66,9 +66,9 @@ class AuthService:
             auth_type=auth_type,
         )
         AuditEventService.tenant_logged_in_as(
-            master_user=master_user,
-            tenant_account=tenant_account,
+            user=master_user,
             auth_type=auth_type,
+            tenant_account=tenant_account,
         )
         return token
 

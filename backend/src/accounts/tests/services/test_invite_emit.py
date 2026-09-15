@@ -1,17 +1,21 @@
 import pytest
 
-from src.accounts.enums import BillingPlanType, SourceType, UserStatus
+from src.accounts.enums import (
+    BillingPlanType,
+    SourceType,
+    UserStatus,
+    UserType,
+)
 from src.accounts.models import UserInvite
 from src.accounts.services.exceptions import (
     AlreadyAcceptedInviteException,
     UsersLimitInvitesException,
 )
 from src.accounts.services.user_invite import UserInviteService
+from src.authentication.enums import AuthTokenType
 from src.logs.events.enums import (
-    ActorType,
-    EventCategory,
-    EventName,
     EventObjectType,
+    UserEvents,
 )
 from src.logs.events.schema import Actor, EventObject
 from src.processes.tests.fixtures import (
@@ -52,14 +56,15 @@ def test_invite_user__new_person__emit_invite_create(
     invite = UserInvite.objects.get(email='invited@test.test')
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.INVITE_CREATE
-    assert event.category == EventCategory.AUDIT
+    assert event.type == UserEvents.INVITE_CREATE
+    assert event.category == UserEvents.CATEGORY
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=owner.id,
         email=owner.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(type=EventObjectType.INVITE)
     assert event.payload == {
         'target_email': 'invited@test.test',
@@ -107,13 +112,14 @@ def test_invite_user__person_of_another_account__emit_transfer_invite(
     invite = UserInvite.objects.get(account=account, email='moving@test.test')
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.INVITE_CREATE
+    assert event.type == UserEvents.INVITE_CREATE
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=owner.id,
         email=owner.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(type=EventObjectType.INVITE)
     assert event.payload == {
         'target_email': 'moving@test.test',
@@ -181,13 +187,14 @@ def test_resend_invite__invited_person__emit_invite_resend(
     # assert
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.INVITE_RESEND
+    assert event.type == UserEvents.INVITE_RESEND
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=owner.id,
         email=owner.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(type=EventObjectType.INVITE)
     assert event.payload == {
         'target_email': 'invited@test.test',
@@ -227,13 +234,14 @@ def test_resend_invite__person_of_another_account__transfer_resent(
     # assert
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.INVITE_RESEND
+    assert event.type == UserEvents.INVITE_RESEND
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=owner.id,
         email=owner.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(type=EventObjectType.INVITE)
     assert event.payload == {
         'target_email': 'moving@test.test',
@@ -362,13 +370,14 @@ def test_accept__sso_callback__emit_invite_accept(
     # assert
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.INVITE_ACCEPT
+    assert event.type == UserEvents.INVITE_ACCEPT
     assert event.account_id == account.id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=invited.id,
         email=invited.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type is None
     assert event.object == EventObject(type=EventObjectType.INVITE)
     assert event.payload == {'invited_by_id': owner.id}
     create_onboarding_workflows_mock.assert_called_once_with()
@@ -402,7 +411,7 @@ def test_decline__invited_user__emit_actor_is_the_invited_user(
     send_user_deleted_mock = mocker.patch(
         'src.notifications.tasks.send_user_deleted_notification.delay',
     )
-    emit_mock = mocker.patch('src.logs.events.mixins.emit')
+    emit_mock = mocker.patch('src.logs.events.services.emit')
     service = UserInviteService(request_user=invited)
 
     # act
@@ -410,18 +419,21 @@ def test_decline__invited_user__emit_actor_is_the_invited_user(
 
     # assert
     emit_mock.assert_called_once_with(
-        EventName.USER_DEACTIVATE,
+        UserEvents.DEACTIVATE,
         account_id=account.id,
         actor=Actor(
-            type=ActorType.USER,
             id=invited.id,
             email=invited.email,
+            user_type=UserType.USER,
         ),
+        auth_type=AuthTokenType.USER,
         event_object=EventObject(type=EventObjectType.USER, id=invited.id),
         payload={
             'target_email': invited.email,
             'status_before': UserStatus.INVITED,
         },
+        workflow_id=None,
+        task_id=None,
     )
     identify_mock.assert_called_once_with(invited)
     identify_users_mock.assert_called_once_with(user_ids=(owner.id,))

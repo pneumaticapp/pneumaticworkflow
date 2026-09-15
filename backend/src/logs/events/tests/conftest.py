@@ -9,8 +9,6 @@ from src.logs.events.context import (
     reset_context,
     set_context,
 )
-from src.logs.events.enums import ActorType
-from src.logs.events.schema import Actor
 from src.logs.events.tests.plugin import (  # noqa: F401
     events_enabled,
     fake_stream,
@@ -43,11 +41,6 @@ def request_context():
             request_id='ctx-request',
             ip='9.9.9.9',
             user_agent='Chrome',
-            actor=Actor(
-                type=ActorType.USER,
-                id=77,
-                email='ctx@test.test',
-            ),
         ),
     )
     yield

@@ -177,7 +177,7 @@
         "type": "loki",
         "uid": "pneumatic-loki"
       },
-      "description": "Distinct users (actor_type = user) behind the events over the time range. API keys, guests and system actions are not counted.",
+      "description": "Distinct users (auth_type = User, a browser session) behind the events over the time range. API keys, guests, forms, webhooks and system actions are not counted.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -230,7 +230,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "count(sum by (actor_id) (count_over_time({service_name=~\"$service\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | actor_type=\"user\" [$__range])))",
+          "expr": "count(sum by (actor_id) (count_over_time({service_name=~\"$service\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | auth_type=\"User\" [$__range])))",
           "instant": true,
           "legendFormat": "",
           "queryType": "instant",
@@ -1126,7 +1126,7 @@
         "type": "loki",
         "uid": "pneumatic-loki"
       },
-      "description": "Who produces the events: people in the browser (user), integrations (api_key), guest links (guest) and the system itself (system).",
+      "description": "The credential behind the events: browser sessions (User), API keys (API), guest links (Guest), public forms (Shared), embedded forms (Embedded) and the Stripe webhook (Webhook); none is the system itself and anonymous requests, which carry no auth type.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1185,14 +1185,14 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "sum by (actor_type) (count_over_time({service_name=~\"$service\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} [$__range]))",
+          "expr": "sum by (auth) (count_over_time({service_name=~\"$service\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | label_format auth=\"{{ if .auth_type }}{{ .auth_type }}{{ else }}none{{ end }}\" [$__range]))",
           "instant": true,
-          "legendFormat": "{{actor_type}}",
+          "legendFormat": "{{auth}}",
           "queryType": "instant",
           "refId": "A"
         }
       ],
-      "title": "Events by actor type",
+      "title": "Events by auth type",
       "type": "piechart"
     },
     {
@@ -1467,7 +1467,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "topk(15, sum by (account_id, actor_id, pii_actor_email) (count_over_time({service_name=\"pneumatic-backend\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | actor_type=\"user\" [$__range])))",
+          "expr": "topk(15, sum by (account_id, actor_id, actor_email) (count_over_time({service_name=\"pneumatic-backend\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | auth_type=\"User\" [$__range])))",
           "instant": true,
           "legendFormat": "",
           "queryType": "instant",
@@ -1497,14 +1497,14 @@
               "Value #A": 3,
               "account_id": 0,
               "actor_id": 1,
-              "pii_actor_email": 2
+              "actor_email": 2
             },
             "renameByName": {
               "Value": "Events",
               "Value #A": "Events",
               "account_id": "Account",
               "actor_id": "User id",
-              "pii_actor_email": "E-mail"
+              "actor_email": "E-mail"
             }
           }
         }
@@ -1529,7 +1529,7 @@
         "type": "loki",
         "uid": "pneumatic-loki"
       },
-      "description": "Ten addresses with the most user.login_failed events over the time range and the reason the backend gave. A failed sign-in has no actor; the e-mail is stored hashed only.",
+      "description": "Ten addresses with the most user.login_failed events over the time range and the reason the backend gave. A failed sign-in has no actor; the e-mail is stored as typed, lower-cased.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1589,7 +1589,7 @@
             "uid": "pneumatic-loki"
           },
           "editorMode": "code",
-          "expr": "topk(10, sum by (pii_ip, payload_reason) (count_over_time({service_name=~\"$service\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=\"user.login_failed\" [$__range])))",
+          "expr": "topk(10, sum by (ip, payload_reason) (count_over_time({service_name=~\"$service\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=\"user.login_failed\" [$__range])))",
           "instant": true,
           "legendFormat": "",
           "queryType": "instant",
@@ -1618,13 +1618,13 @@
               "Value": 2,
               "Value #A": 2,
               "payload_reason": 1,
-              "pii_ip": 0
+              "ip": 0
             },
             "renameByName": {
               "Value": "Attempts",
               "Value #A": "Attempts",
               "payload_reason": "Reason",
-              "pii_ip": "IP address"
+              "ip": "IP address"
             }
           }
         }
@@ -1696,7 +1696,7 @@
           },
           "direction": "backward",
           "editorMode": "code",
-          "expr": "{service_name=~\"$service\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=~\"user.login_as|tenant.login_as\" | line_format \"{{.event_type}} {{.actor_type}}:{{.actor_id}} {{.object_type}}:{{.object_id}}\"",
+          "expr": "{service_name=~\"$service\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=~\"user.login_as|tenant.login_as\" | line_format \"{{.event_type}} {{.auth_type}}:{{.actor_id}} {{.object_type}}:{{.object_id}}\"",
           "legendFormat": "",
           "queryType": "range",
           "refId": "A"
@@ -1721,11 +1721,11 @@
                 "Time",
                 "event_type",
                 "account_id",
-                "pii_actor_email",
-                "pii_payload_target_email",
+                "actor_email",
+                "payload_target_email",
                 "object_type",
                 "object_id",
-                "pii_ip"
+                "ip"
               ]
             }
           }
@@ -1740,18 +1740,18 @@
               "event_type": 1,
               "object_id": 6,
               "object_type": 5,
-              "pii_actor_email": 3,
-              "pii_ip": 7,
-              "pii_payload_target_email": 4
+              "actor_email": 3,
+              "ip": 7,
+              "payload_target_email": 4
             },
             "renameByName": {
               "account_id": "Account",
               "event_type": "Event type",
               "object_id": "Object id",
               "object_type": "Object type",
-              "pii_actor_email": "Staff e-mail",
-              "pii_ip": "IP address",
-              "pii_payload_target_email": "Target user"
+              "actor_email": "Staff e-mail",
+              "ip": "IP address",
+              "payload_target_email": "Target user"
             }
           }
         }
@@ -1823,7 +1823,7 @@
           },
           "direction": "backward",
           "editorMode": "code",
-          "expr": "{service_name=~\"$service\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=~\"api_key.create|api_key.revoke|user.admin_toggle|user.deactivate|group.create|group.update|group.delete|webhook.subscribe|webhook.unsubscribe|template.delete|workflow.terminate|user.update|user.password_set|user.reassign|user.vacation_activate|user.vacation_deactivate|tenant.create|tenant.delete|admin.create|admin.update|admin.delete|billing.purchase|billing.subscription_cancel|billing.payment_confirm\" | line_format \"{{.event_type}} {{.actor_type}}:{{.actor_id}} {{.object_type}}:{{.object_id}}\"",
+          "expr": "{service_name=~\"$service\", deployment_environment=~\"$environment\", account_id=~\"$account_id\"} | event_type=~\"api_key.create|api_key.revoke|user.admin_toggle|user.deactivate|group.create|group.update|group.delete|webhook.subscribe|webhook.unsubscribe|template.delete|workflow.terminate|user.update|user.password_set|user.reassign|user.vacation_activate|user.vacation_deactivate|tenant.create|tenant.delete|admin.create|admin.update|admin.delete|billing.purchase|billing.subscription_cancel|billing.payment_confirm\" | line_format \"{{.event_type}} {{.auth_type}}:{{.actor_id}} {{.object_type}}:{{.object_id}}\"",
           "legendFormat": "",
           "queryType": "range",
           "refId": "A"
@@ -1848,13 +1848,13 @@
                 "Time",
                 "event_type",
                 "account_id",
-                "actor_type",
-                "pii_actor_email",
+                "auth_type",
+                "actor_email",
                 "object_type",
                 "object_id",
-                "pii_payload_name",
-                "pii_payload_target_email",
-                "pii_ip"
+                "payload_name",
+                "payload_target_email",
+                "ip"
               ]
             }
           }
@@ -1866,25 +1866,25 @@
             "indexByName": {
               "Time": 0,
               "account_id": 2,
-              "actor_type": 3,
+              "auth_type": 3,
               "event_type": 1,
               "object_id": 6,
               "object_type": 5,
-              "pii_actor_email": 4,
-              "pii_ip": 9,
-              "pii_payload_name": 7,
-              "pii_payload_target_email": 8
+              "actor_email": 4,
+              "ip": 9,
+              "payload_name": 7,
+              "payload_target_email": 8
             },
             "renameByName": {
               "account_id": "Account",
-              "actor_type": "Actor type",
+              "auth_type": "Auth type",
               "event_type": "Event type",
               "object_id": "Object id",
               "object_type": "Object type",
-              "pii_actor_email": "Actor e-mail",
-              "pii_ip": "IP address",
-              "pii_payload_name": "Name",
-              "pii_payload_target_email": "Target user"
+              "actor_email": "Actor e-mail",
+              "ip": "IP address",
+              "payload_name": "Name",
+              "payload_target_email": "Target user"
             }
           }
         }
@@ -2732,7 +2732,7 @@
           },
           "direction": "backward",
           "editorMode": "code",
-          "expr": "{service_name=~\"$service\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | line_format \"{{.event_type}} {{.actor_type}}:{{.actor_id}} {{.object_type}}:{{.object_id}}\"",
+          "expr": "{service_name=~\"$service\", deployment_environment=~\"$environment\", account_id=~\"$account_id\", event_category=~\"$category\"} | line_format \"{{.event_type}} {{.auth_type}}:{{.actor_id}} {{.object_type}}:{{.object_id}}\"",
           "legendFormat": "",
           "queryType": "range",
           "refId": "A"
@@ -2758,9 +2758,9 @@
                 "account_id",
                 "service_name",
                 "event_type",
-                "actor_type",
+                "auth_type",
                 "actor_id",
-                "pii_actor_email",
+                "actor_email",
                 "object_type",
                 "object_id",
                 "workflow_id",
@@ -2777,11 +2777,11 @@
               "Time": 0,
               "account_id": 1,
               "actor_id": 5,
-              "actor_type": 4,
+              "auth_type": 4,
               "event_type": 3,
               "object_id": 8,
               "object_type": 7,
-              "pii_actor_email": 6,
+              "actor_email": 6,
               "request_id": 10,
               "service_name": 2,
               "workflow_id": 9
@@ -2789,11 +2789,11 @@
             "renameByName": {
               "account_id": "Account",
               "actor_id": "Actor id",
-              "actor_type": "Actor type",
+              "auth_type": "Auth type",
               "event_type": "Event type",
               "object_id": "Object id",
               "object_type": "Object type",
-              "pii_actor_email": "Actor e-mail",
+              "actor_email": "Actor e-mail",
               "request_id": "Request id",
               "service_name": "Service",
               "workflow_id": "Workflow id"
@@ -2940,21 +2940,71 @@
           },
           {
             "selected": false,
-            "text": "audit",
-            "value": "audit"
+            "text": "workflows",
+            "value": "workflows"
           },
           {
             "selected": false,
-            "text": "activity",
-            "value": "activity"
+            "text": "tasks",
+            "value": "tasks"
           },
           {
             "selected": false,
-            "text": "debug",
-            "value": "debug"
+            "text": "users",
+            "value": "users"
+          },
+          {
+            "selected": false,
+            "text": "accounts",
+            "value": "accounts"
+          },
+          {
+            "selected": false,
+            "text": "groups",
+            "value": "groups"
+          },
+          {
+            "selected": false,
+            "text": "api_keys",
+            "value": "api_keys"
+          },
+          {
+            "selected": false,
+            "text": "templates",
+            "value": "templates"
+          },
+          {
+            "selected": false,
+            "text": "datasets",
+            "value": "datasets"
+          },
+          {
+            "selected": false,
+            "text": "billing",
+            "value": "billing"
+          },
+          {
+            "selected": false,
+            "text": "webhooks",
+            "value": "webhooks"
+          },
+          {
+            "selected": false,
+            "text": "files",
+            "value": "files"
+          },
+          {
+            "selected": false,
+            "text": "admin",
+            "value": "admin"
+          },
+          {
+            "selected": false,
+            "text": "other",
+            "value": "other"
           }
         ],
-        "query": "audit,activity,debug",
+        "query": "workflows,tasks,users,accounts,groups,api_keys,templates,datasets,billing,webhooks,files,admin,other",
         "queryValue": "",
         "skipUrlSync": false,
         "type": "custom"

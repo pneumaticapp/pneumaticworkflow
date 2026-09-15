@@ -1,10 +1,11 @@
 import pytest
 
+from src.accounts.enums import UserType
+from src.authentication.enums import AuthTokenType
 from src.logs.events.schema import Actor, EventObject
 from src.logs.events.enums import (
-    ActorType,
-    EventName,
     EventObjectType,
+    UserEvents,
 )
 from src.processes.tests.fixtures import create_test_owner
 
@@ -38,19 +39,21 @@ def test_superuser_token__ok__emit_user_login_as(
     # assert
     assert response.status_code == 200
     emit_mock.assert_called_once_with(
-        EventName.USER_LOGIN_AS,
+        UserEvents.LOGIN_AS,
         account_id=target_user.account_id,
         actor=Actor(
-            type=ActorType.USER,
             id=superuser.id,
             email=superuser.email,
+            user_type=UserType.USER,
         ),
+        auth_type=AuthTokenType.USER,
         event_object=EventObject(
             type=EventObjectType.USER,
             id=target_user.id,
         ),
         payload={'target_email': target_user.email},
-        request=mocker.ANY,
+        workflow_id=None,
+        task_id=None,
     )
     get_superuser_auth_token_mock.assert_called_once_with(target_user)
 
@@ -88,13 +91,14 @@ def test_superuser_token__ok__event_keeps_request_context(
     assert response.status_code == 200
     assert len(fake_stream.events) == 1
     event = fake_stream.last_event()
-    assert event.type == EventName.USER_LOGIN_AS
+    assert event.type == UserEvents.LOGIN_AS
     assert event.account_id == target_user.account_id
     assert event.actor == Actor(
-        type=ActorType.USER,
         id=superuser.id,
         email=superuser.email,
+        user_type=UserType.USER,
     )
+    assert event.auth_type == AuthTokenType.USER
     assert event.object == EventObject(
         type=EventObjectType.USER,
         id=target_user.id,
@@ -103,12 +107,6 @@ def test_superuser_token__ok__event_keeps_request_context(
     assert event.ip == '10.10.0.23'
     assert event.user_agent == 'Chrome/141'
     assert event.request_id == 'audit-login-as-1'
-    assert event.pii == (
-        'actor.email',
-        'ip',
-        'user_agent',
-        'payload.target_email',
-    )
     get_superuser_auth_token_mock.assert_called_once_with(target_user)
 
 

@@ -47,7 +47,6 @@ class UnsubscribeDigestView(
                 )
                 if was_subscribed:
                     AuditEventService.user_unsubscribed(
-                        request=request,
                         user=user,
                         email_type=DIGEST_SUBSCRIPTION_FIELD,
                     )
@@ -83,7 +82,6 @@ class UnsubscribeEmailView(
                 user.save(update_fields=[email_type])
                 if was_subscribed:
                     AuditEventService.user_unsubscribed(
-                        request=request,
                         user=user,
                         email_type=email_type,
                     )

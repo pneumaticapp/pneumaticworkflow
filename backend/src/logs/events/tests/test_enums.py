@@ -1,92 +1,56 @@
 import pytest
 
-from src.authentication.enums import AuthTokenType
 from src.logs.events.enums import (
-    AUTH_TYPE_ACTOR_TYPES,
-    ActorType,
-    actor_type_from_auth,
+    EVENT_CLASSES,
+    AccountEvents,
+    EventCategory,
+    UserEvents,
+    event_names_of,
 )
 
 
-@pytest.mark.parametrize(
-    ('auth_type', 'actor_type'),
-    [
-        (AuthTokenType.USER, ActorType.USER),
-        (AuthTokenType.API, ActorType.API_KEY),
-        (AuthTokenType.GUEST, ActorType.GUEST),
-        (AuthTokenType.PUBLIC, ActorType.GUEST),
-        (AuthTokenType.EMBEDDED, ActorType.GUEST),
-        (AuthTokenType.WEBHOOK, ActorType.SYSTEM),
-    ],
-)
-def test_actor_type_from_auth__known_token__expected_actor(
-    auth_type,
-    actor_type,
-):
+def test_event_names_of__events_class__constants_without_category():
 
     # arrange
-    expected = actor_type
+    events_class = AccountEvents
 
     # act
-    result = actor_type_from_auth(auth_type=auth_type)
+    names = event_names_of(events_class=events_class)
 
     # assert
-    assert result == expected
+    assert names == (
+        'account.update',
+        'account.verify',
+        'account.verification_resend',
+        'tenant.create',
+        'tenant.delete',
+        'tenant.login_as',
+    )
 
 
-def test_actor_type_from_auth__no_token__system():
-
-    """ Celery, a management command and any other call outside a
-        request have no token type at all. """
+def test_event_names_of__invites_class__invites_among_user_events():
 
     # arrange
-    auth_type = None
+    events_class = UserEvents
 
     # act
-    result = actor_type_from_auth(auth_type=auth_type)
+    names = event_names_of(events_class=events_class)
 
     # assert
-    assert result == ActorType.SYSTEM
+    assert 'user.login' in names
+    assert 'invite.create' in names
+    assert EventCategory.USERS not in names
 
 
-def test_actor_type_from_auth__empty_token__system():
+@pytest.mark.parametrize('events_class', EVENT_CLASSES)
+def test_event_classes__every_class__category_is_declared(events_class):
 
     # arrange
-    auth_type = ''
+    declared = EventCategory.VALUES
 
     # act
-    result = actor_type_from_auth(auth_type=auth_type)
+    category = events_class.CATEGORY
 
     # assert
-    assert result == ActorType.SYSTEM
-
-
-def test_actor_type_from_auth__unknown_token__system():
-
-    """ A new authentication type must not invent an actor type: an
-        auditor reads "system" and looks for the source elsewhere. """
-
-    # arrange
-    auth_type = 'Something'
-
-    # act
-    result = actor_type_from_auth(auth_type=auth_type)
-
-    # assert
-    assert result == ActorType.SYSTEM
-
-
-def test_auth_type_actor_types__every_token_type__mapped():
-
-    """ A new authentication type needs a line in the mapping, or its
-        requests would all be reported as made by the system. """
-
-    # arrange
-    declared = set(AuthTokenType.LITERALS.__args__)
-
-    # act
-    mapped = set(AUTH_TYPE_ACTOR_TYPES)
-
-    # assert
-    assert mapped == declared
-    assert AUTH_TYPE_ACTOR_TYPES[AuthTokenType.WEBHOOK] == ActorType.SYSTEM
+    assert category in declared
+    assert category != EventCategory.OTHER

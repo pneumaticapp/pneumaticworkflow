@@ -1,9 +1,10 @@
 import pytest
 
+from src.accounts.enums import UserType
 from src.logs.events.enums import (
-    ActorType,
-    EventName,
     EventObjectType,
+    TaskEvents,
+    WorkflowEvents,
 )
 from src.logs.events.exceptions import (
     EventsError,
@@ -41,9 +42,9 @@ def test_workflow_run_event__ok__emit_workflow_run(
 
     # assert
     emit_mock.assert_called_once_with(
-        event_type=EventName.WORKFLOW_RUN,
+        event_type=WorkflowEvents.RUN,
         account_id=user.account_id,
-        actor=Actor(type=ActorType.USER, id=user.id, email=user.email),
+        actor=Actor(id=user.id, email=user.email, user_type=UserType.USER),
         event_object=EventObject(
             type=EventObjectType.WORKFLOW,
             id=workflow.id,
@@ -80,9 +81,9 @@ def test_task_complete_event__ok__emit_task_complete(
 
     # assert
     emit_mock.assert_called_once_with(
-        event_type=EventName.TASK_COMPLETE,
+        event_type=TaskEvents.COMPLETE,
         account_id=user.account_id,
-        actor=Actor(type=ActorType.USER, id=user.id, email=user.email),
+        actor=Actor(id=user.id, email=user.email, user_type=UserType.USER),
         event_object=EventObject(type=EventObjectType.TASK, id=task.id),
         workflow_id=workflow.id,
         task_id=task.id,
@@ -98,7 +99,7 @@ def test_task_complete_event__ok__emit_task_complete(
     )
 
 
-def test_task_started_event__no_user__emit_system_actor(
+def test_task_started_event__no_user__emit_no_actor(
     mocker,
     events_enabled,
 ):
@@ -117,9 +118,9 @@ def test_task_started_event__no_user__emit_system_actor(
 
     # assert
     emit_mock.assert_called_once_with(
-        event_type=EventName.TASK_START,
+        event_type=TaskEvents.START,
         account_id=user.account_id,
-        actor=Actor(type=ActorType.SYSTEM),
+        actor=None,
         event_object=EventObject(type=EventObjectType.TASK, id=task.id),
         workflow_id=workflow.id,
         task_id=task.id,
@@ -155,9 +156,9 @@ def test_workflow_urgent_event__not_urgent__emit_workflow_not_urgent(
 
     # assert
     emit_mock.assert_called_once_with(
-        event_type=EventName.WORKFLOW_NOT_URGENT,
+        event_type=WorkflowEvents.NOT_URGENT,
         account_id=user.account_id,
-        actor=Actor(type=ActorType.USER, id=user.id, email=user.email),
+        actor=Actor(id=user.id, email=user.email, user_type=UserType.USER),
         event_object=EventObject(
             type=EventObjectType.WORKFLOW,
             id=workflow.id,
@@ -202,9 +203,9 @@ def test_workflow_run_event__emit_error_in_production__event_created(
     # assert
     assert WorkflowEvent.objects.filter(id=event.id).exists()
     emit_mock.assert_called_once_with(
-        event_type=EventName.WORKFLOW_RUN,
+        event_type=WorkflowEvents.RUN,
         account_id=user.account_id,
-        actor=Actor(type=ActorType.USER, id=user.id, email=user.email),
+        actor=Actor(id=user.id, email=user.email, user_type=UserType.USER),
         event_object=EventObject(
             type=EventObjectType.WORKFLOW,
             id=workflow.id,
@@ -265,9 +266,9 @@ def test_workflow_run_event__bug_in_the_pipeline__raises(
         type=WorkflowEventType.RUN,
     )
     emit_mock.assert_called_once_with(
-        event_type=EventName.WORKFLOW_RUN,
+        event_type=WorkflowEvents.RUN,
         account_id=user.account_id,
-        actor=Actor(type=ActorType.USER, id=user.id, email=user.email),
+        actor=Actor(id=user.id, email=user.email, user_type=UserType.USER),
         event_object=EventObject(
             type=EventObjectType.WORKFLOW,
             id=workflow.id,
@@ -315,9 +316,9 @@ def test_workflow_run_event__emit_error_in_testing__raises(
     event = WorkflowEvent.objects.get(workflow_id=workflow.id)
     assert event.type == WorkflowEventType.RUN
     emit_mock.assert_called_once_with(
-        event_type=EventName.WORKFLOW_RUN,
+        event_type=WorkflowEvents.RUN,
         account_id=user.account_id,
-        actor=Actor(type=ActorType.USER, id=user.id, email=user.email),
+        actor=Actor(id=user.id, email=user.email, user_type=UserType.USER),
         event_object=EventObject(
             type=EventObjectType.WORKFLOW,
             id=workflow.id,

@@ -76,7 +76,6 @@ class SignUpMixin:
         AuditEventService.user_signed_up(
             user=user,
             source=self.audit_source or self.source,
-            request=self._get_request(),
         )
 
     def join_existing_account(
@@ -227,7 +226,6 @@ class LoginEventMixin:
         AuditEventService.user_logged_in(
             user=user,
             source=self.audit_source,
-            request=request,
         )
 
 

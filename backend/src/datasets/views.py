@@ -140,7 +140,8 @@ class DatasetViewSet(
         except DataSetServiceException as ex:
             raise_validation_error(message=ex.message)
         AuditEventService.dataset_created(
-            request=request,
+            user=request.user,
+            auth_type=request.token_type,
             dataset=dataset,
             items_count=len(serializer.validated_data['items']),
         )
@@ -200,7 +201,8 @@ class DatasetViewSet(
         dataset.refresh_from_db()
         if changed_fields:
             AuditEventService.dataset_updated(
-                request=request,
+                user=request.user,
+                auth_type=request.token_type,
                 dataset=dataset,
                 changed_fields=changed_fields,
             )
@@ -231,7 +233,11 @@ class DatasetViewSet(
             service.delete()
         except DataSetServiceException as ex:
             raise_validation_error(message=ex.message)
-        AuditEventService.dataset_deleted(request=request, dataset=dataset)
+        AuditEventService.dataset_deleted(
+            user=request.user,
+            auth_type=request.token_type,
+            dataset=dataset,
+        )
         return self.response_ok()
 
     @extend_schema(
@@ -263,7 +269,8 @@ class DatasetViewSet(
         except DataSetServiceException as ex:
             raise_validation_error(message=ex.message)
         AuditEventService.dataset_items_added(
-            request=request,
+            user=request.user,
+            auth_type=request.token_type,
             dataset=dataset,
             items_count=len(serializer.validated_data),
         )
@@ -300,7 +307,8 @@ class DatasetViewSet(
         except DataSetServiceException as ex:
             raise_validation_error(message=ex.message)
         AuditEventService.dataset_items_replaced(
-            request=request,
+            user=request.user,
+            auth_type=request.token_type,
             dataset=dataset,
             items_count=len(serializer.validated_data),
         )
@@ -338,7 +346,11 @@ class DatasetViewSet(
             )
         except DataSetServiceException as ex:
             raise_validation_error(message=ex.message)
-        AuditEventService.dataset_item_created(request=request, item=item)
+        AuditEventService.dataset_item_created(
+            user=request.user,
+            auth_type=request.token_type,
+            item=item,
+        )
         response_serializer = self.get_serializer(instance=item)
         return self.response_created(response_serializer.data)
 
@@ -405,7 +417,8 @@ class DatasetItemViewSet(
         item.refresh_from_db()
         if changed_fields:
             AuditEventService.dataset_item_updated(
-                request=request,
+                user=request.user,
+                auth_type=request.token_type,
                 item=item,
                 changed_fields=changed_fields,
             )
@@ -432,5 +445,9 @@ class DatasetItemViewSet(
             auth_type=request.token_type,
         )
         service.delete()
-        AuditEventService.dataset_item_deleted(request=request, item=item)
+        AuditEventService.dataset_item_deleted(
+            user=request.user,
+            auth_type=request.token_type,
+            item=item,
+        )
         return self.response_ok()

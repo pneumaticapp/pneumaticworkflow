@@ -6,11 +6,11 @@
 # and a list it finds in both is replaced, not appended.
 #
 # Personal data, in every mode: the record is delivered as it was written,
-# pii.* attributes included. The deployments these modes were written for -
-# our own store on a machine of ours, a self-hosted installation writing into
-# the journal of the company that runs it, the bundled Loki - keep the data
-# with its owner, so there is nothing to strip. A receiver outside the
-# owner's organisation (a managed observability vendor) is a processor
+# actor e-mail, IP and user agent included. The deployments these modes were
+# written for - our own store on a machine of ours, a self-hosted installation
+# writing into the journal of the company that runs it - keep the data with
+# its owner, so there is nothing to strip. A receiver outside the owner's
+# organisation (a managed observability vendor) is a processor
 # relationship: settle it in the contract, not by dropping half of every
 # record by default.
 receivers:
