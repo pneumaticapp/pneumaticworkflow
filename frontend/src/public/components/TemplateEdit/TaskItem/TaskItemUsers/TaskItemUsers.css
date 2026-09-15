@@ -1,8 +1,8 @@
 .card-users {
-  margin-right: 5px;
-  margin-bottom: 16px;
   display: flex;
   align-items: center;
+  margin-right: 5px;
+  margin-bottom: 16px;
   cursor: pointer;
 }
 

@@ -110,7 +110,9 @@ export const VariableList = ({
                   <Tooltip
                     interactive={false}
                     containerClassName={styles['condition__tooltop']}
-                    content={<TooltipRichContent title={displayTitle} subtitle={displaySubtitle || ''} variables={variables} />}
+                    content={
+                      <TooltipRichContent title={displayTitle} subtitle={displaySubtitle || ''} variables={variables} />
+                    }
                     key={apiName}
                   >
                     <p

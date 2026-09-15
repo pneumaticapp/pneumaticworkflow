@@ -51,7 +51,9 @@ export const Button = React.forwardRef(
         {...rest}
       >
         <Loader isLoading={isLoading} spinnerColor={loaderColorMap[buttonStyle]} />
-        {Icon && <Icon className={classnames(styles['icon'], isLoading && styles['button-inner_hidden'], iconClassName)} />}
+        {Icon && (
+          <Icon className={classnames(styles['icon'], isLoading && styles['button-inner_hidden'], iconClassName)} />
+        )}
         {label && (
           <span className={classnames(isLoading && styles['button-inner_hidden'], labelClassName)}>{label}</span>
         )}
@@ -61,12 +63,7 @@ export const Button = React.forwardRef(
 );
 
 type TButtonStyle =
-  | 'yellow'
-  | 'black'
-  | 'transparent-yellow'
-  | 'transparent-orange'
-  | 'transparent-black'
-  | 'link-dark-text';
+  'yellow' | 'black' | 'transparent-yellow' | 'transparent-orange' | 'transparent-black' | 'link-dark-text';
 
 type TButtonConditionalProps =
   | {

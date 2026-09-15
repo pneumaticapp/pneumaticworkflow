@@ -1,16 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import {
-  $getSelection,
-  $isRangeSelection,
-  COMMAND_PRIORITY_HIGH,
-  PASTE_COMMAND,
-} from 'lexical';
+import { $getSelection, $isRangeSelection, COMMAND_PRIORITY_HIGH, PASTE_COMMAND } from 'lexical';
 
 import { parseTextWithVariables, removeUnknownVariableTokens } from '../../converters/variableMarkdown';
 import type { TTaskVariable } from '../../../TemplateEdit/types';
-
-
 
 const PLAIN_TEXT_PARSE_OPTIONS = {
   variablesOnly: true,
@@ -37,10 +30,7 @@ export function PlainTextPastePlugin({ templateVariables }: IPlainTextPastePlugi
           const selection = $getSelection();
           if (!$isRangeSelection(selection)) return;
 
-          const preparedText = removeUnknownVariableTokens(
-            plainText,
-            templateVariablesRef.current,
-          );
+          const preparedText = removeUnknownVariableTokens(plainText, templateVariablesRef.current);
 
           if (preparedText.trim() === '') {
             if (!selection.isCollapsed()) {
@@ -49,11 +39,7 @@ export function PlainTextPastePlugin({ templateVariables }: IPlainTextPastePlugi
             return;
           }
 
-          const nodes = parseTextWithVariables(
-            preparedText,
-            templateVariablesRef.current,
-            PLAIN_TEXT_PARSE_OPTIONS,
-          );
+          const nodes = parseTextWithVariables(preparedText, templateVariablesRef.current, PLAIN_TEXT_PARSE_OPTIONS);
 
           selection.insertNodes(nodes);
         });

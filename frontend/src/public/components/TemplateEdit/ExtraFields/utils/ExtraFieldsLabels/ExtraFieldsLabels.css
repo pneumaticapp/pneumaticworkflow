@@ -1,19 +1,19 @@
 .extra-field-label {
-  padding: 0.1rem 0.8rem;
   display: inline-block;
-  overflow: hidden;
+  justify-content: space-between;
   max-width: 20ch;
+  padding: 0.1rem 0.8rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-size: 1.3rem;
   line-height: 1.6rem;
   vertical-align: middle;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  user-select: all;
   color: var(--pneumatic-color-black72);
+  white-space: nowrap;
+  user-select: all;
   background: var(--pneumatic-color-black16);
   border: 0;
   border-radius: 1.4rem;
-  justify-content: space-between;
 }
 
 .extra-field-label_m-4 {

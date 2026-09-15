@@ -23,7 +23,11 @@ export function Datasets() {
   const dispatch = useDispatch();
   const { formatMessage } = useIntl();
 
-  const { items: datasetsList, count, offset } = useSelector(getDatasetsListSelection) || { items: [], count: 0, offset: 0 };
+  const {
+    items: datasetsList,
+    count,
+    offset,
+  } = useSelector(getDatasetsListSelection) || { items: [], count: 0, offset: 0 };
   const isLoading = useSelector(getDatasetsIsLoading);
   const datasetsSorting = useSelector(getDatasetsSorting);
 

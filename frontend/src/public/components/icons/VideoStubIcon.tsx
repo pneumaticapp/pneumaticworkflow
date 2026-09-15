@@ -1,16 +1,9 @@
-/* eslint-disable */
 /* prettier-ignore */
 import * as React from 'react';
 
 export function VideoStubIcon() {
   return (
-    <svg
-      width="160"
-      height="100"
-      viewBox="0 0 160 100"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
+    <svg width="160" height="100" viewBox="0 0 160 100" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect width="160" height="100" fill="#979795" />
       <path
         fillRule="evenodd"

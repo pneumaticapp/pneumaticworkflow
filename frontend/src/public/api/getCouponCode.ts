@@ -8,7 +8,9 @@ export interface IGetCouponCodeResponse {
 }
 
 export function getCouponCode(couponCode: string) {
-  const { api: { urls } } = getBrowserConfigEnv();
+  const {
+    api: { urls },
+  } = getBrowserConfigEnv();
 
   return commonRequest<IGetCouponCodeResponse>(
     urls.getCouponCode.replace(':code', couponCode),

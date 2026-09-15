@@ -1,8 +1,8 @@
 /* stylelint-disable declaration-no-important */
 .top-wrapper {
   position: sticky;
-  z-index: 1030;
   top: 0;
+  z-index: 1030;
 
   @media (--mobile) {
     position: unset;
@@ -22,17 +22,17 @@
 
 .top-bar {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
   width: 100%;
   height: 2.4rem;
   font-size: 1.3rem;
   line-height: 1.6rem;
+  color: var(--pneumatic-color-white);
   text-align: center;
   white-space: pre-line;
-  color: var(--pneumatic-color-white);
   background: var(--pneumatic-color-black72);
-  justify-content: center;
-  align-items: center;
-  flex-wrap: wrap;
 
   @media (--mobile) {
     height: 3.2rem;
@@ -44,10 +44,10 @@
   background-color: var(--pneumatic-color-notification4);
 
   span {
-    margin: 0 0.8rem;
     display: inline-block;
     width: 0.5rem;
     height: 0.5rem;
+    margin: 0 0.8rem;
     background-color: var(--pneumatic-color-white);
     border-radius: 50%;
   }
@@ -85,18 +85,18 @@
 }
 
 .navbar {
-  backdrop-filter: blur(0.4rem);
-  padding: 3.2rem 3.2rem 3.2rem 10.4rem !important;
   display: flex;
-  height: auto;
-  background: var(--navbar-background-color);
-  align-items: center;
   flex-flow: row nowrap !important;
+  align-items: center;
+  height: auto;
+  padding: 3.2rem 3.2rem 3.2rem 10.4rem !important;
+  background: var(--navbar-background-color);
+  backdrop-filter: blur(0.4rem);
   transition: padding-left 0.2s ease-out;
 
   @media (--mobile) {
-    padding: 0 !important;
     flex-wrap: wrap !important;
+    padding: 0 !important;
   }
 }
 
@@ -121,32 +121,32 @@
   min-height: 4rem;
 
   @media (--mobile) {
-    margin-top: 3rem;
-    padding: 0 1.5rem;
-    width: 100%;
     order: 2;
+    width: 100%;
+    padding: 0 1.5rem;
+    margin-top: 3rem;
   }
 }
 
 .navbar-right {
-  margin-left: auto;
   display: flex;
-  width: auto;
   flex-shrink: 0;
   align-items: center;
+  align-self: flex-start;
   justify-content: flex-end;
+  width: auto;
   min-height: 4rem;
+  margin-left: auto;
   text-align: right;
   white-space: nowrap;
-  align-self: flex-start;
 
   @media (--mobile) {
-    margin-top: 1.6rem;
-    padding: 0 1.6rem 0 6.4rem;
+    order: 1;
     width: 100% !important;
     max-width: 100%;
     height: 6.4rem;
-    order: 1;
+    padding: 0 1.6rem 0 6.4rem;
+    margin-top: 1.6rem;
   }
 
   img {
@@ -167,8 +167,8 @@
 .search {
   position: relative;
   display: flex;
-  justify-content: flex-end;
   flex-grow: 1;
+  justify-content: flex-end;
 }
 
 .search_desktop {
@@ -249,18 +249,18 @@
 
 .notification_counter_container {
   position: absolute;
-  z-index: 1;
   bottom: 0.8rem;
+  z-index: 1;
   display: flex;
-  width: 2.9rem;
   justify-content: flex-end;
+  width: 2.9rem;
 }
 
 .notification_counter_container__counter {
-  padding: 0.2rem 0.4rem;
   min-width: 2rem;
   max-width: 2.9rem;
   height: 2rem;
+  padding: 0.2rem 0.4rem;
   font-size: 1.1rem;
   font-weight: bold;
   line-height: 1.6rem;
@@ -283,6 +283,6 @@
 
 .user-name-item {
   font-weight: bold;
-  cursor: default;
   pointer-events: none;
+  cursor: default;
 }

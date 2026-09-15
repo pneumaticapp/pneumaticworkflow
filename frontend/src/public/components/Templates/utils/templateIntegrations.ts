@@ -4,7 +4,5 @@ import { EIntegrations } from '../../../types/integrations';
 export const TEMPLATE_CARD_INTEGRATIONS_EXCLUDE = [EIntegrations.Webhooks];
 
 export function hasTemplateCardIntegrations(templateIntegrations: EIntegrations[]) {
-  return templateIntegrations.some(
-    integration => !TEMPLATE_CARD_INTEGRATIONS_EXCLUDE.includes(integration),
-  );
+  return templateIntegrations.some((integration) => !TEMPLATE_CARD_INTEGRATIONS_EXCLUDE.includes(integration));
 }

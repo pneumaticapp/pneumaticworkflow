@@ -1,10 +1,10 @@
 .container {
   position: relative;
-  margin-top: -16px;
   display: flex;
-  height: 16px;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
+  height: 16px;
+  margin-top: -16px;
 }
 
 .inner-wrapper {
@@ -17,17 +17,17 @@
 
 .add-entity-button {
   z-index: 1;
-  padding: 0;
   display: flex;
+  align-items: center;
+  justify-content: center;
   width: 32px;
   height: 32px;
+  padding: 0;
   color: var(--pneumatic-color-link);
   background-color: white;
   border: 0;
   border-radius: 50%;
-  box-shadow: 0 8px 8px rgba(98, 98, 95, 0.08);
-  align-items: center;
-  justify-content: center;
+  box-shadow: 0 8px 8px rgb(98 98 95 / 8%);
   transition: all 0.1s ease-in-out;
 
   &:hover {
@@ -36,17 +36,17 @@
 }
 
 .entities {
-  padding: 8px 4px;
   display: flex;
+  align-items: center;
+  padding: 8px 4px;
   background-color: white;
   border-radius: 16px;
-  align-items: center;
 }
 
 .entities-close-button {
-  margin: 0 4px;
-  padding: 0;
   display: flex;
+  padding: 0;
+  margin: 0 4px;
   color: var(--pneumatic-color-link);
   background-color: transparent;
   border: 0;
@@ -58,8 +58,8 @@
 }
 
 .entity {
-  margin: 0 4px;
   padding: 0;
+  margin: 0 4px;
   font-size: 13px;
   font-weight: bold;
   color: var(--pneumatic-color-black72);

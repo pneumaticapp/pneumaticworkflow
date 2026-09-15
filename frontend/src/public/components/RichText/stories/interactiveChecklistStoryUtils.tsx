@@ -67,12 +67,7 @@ export const createStoryTask = ({
   };
 };
 
-const toggleStoryChecklistItem = (
-  task: ITask,
-  listApiName: string,
-  itemApiName: string,
-  isChecked: boolean,
-): ITask => {
+const toggleStoryChecklistItem = (task: ITask, listApiName: string, itemApiName: string, isChecked: boolean): ITask => {
   const checklist = task.checklists[listApiName];
   const item = checklist?.items[itemApiName];
 
@@ -146,16 +141,7 @@ export const InteractiveRichText = ({ task: initialTask, ...props }: IInteractiv
     setTask((currentTask) => toggleStoryChecklistItem(currentTask, listApiName, itemApiName, isChecked));
   };
 
-  const renderExtensions = useMemo(
-    () => createStoryChecklistExtensions(task, handleToggleItem),
-    [task],
-  );
+  const renderExtensions = useMemo(() => createStoryChecklistExtensions(task, handleToggleItem), [task]);
 
-  return (
-    <RichText
-      {...props}
-      interactiveChecklists
-      renderExtensions={renderExtensions}
-    />
-  );
+  return <RichText {...props} interactiveChecklists renderExtensions={renderExtensions} />;
 };

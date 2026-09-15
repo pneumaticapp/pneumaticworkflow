@@ -31,36 +31,36 @@ export function RichText({
   const safeText = text ?? '';
   const isCollapsed = Boolean(maxLines) && !isExpanded;
   const isTruncated = useRichTextLineClamp(containerRef, maxLines, isExpanded, safeText);
-  const containerStyle = maxLines
-    ? ({ '--rich-text-line-clamp': maxLines } as React.CSSProperties)
-    : undefined;
+  const containerStyle = maxLines ? ({ '--rich-text-line-clamp': maxLines } as React.CSSProperties) : undefined;
 
   const markdownIt = React.useMemo(
-    () => createRichTextMarkdownIt({
-      embedVideos,
-      hideIcon,
-      interactiveChecklists,
-      checkboxPlaceholderClassName: styles['checklist__inactive-placeholder'],
-      videoClassName: styles['video'],
-      videoContainerClassName: styles['video__container'],
-      mentionClassName: styles['mention'],
-      variables,
-      formatMessage,
-      badgeClassName: badgeStyles['badge'],
-      specificityBadgeClassName: badgeStyles['specifity'],
-    }),
+    () =>
+      createRichTextMarkdownIt({
+        embedVideos,
+        hideIcon,
+        interactiveChecklists,
+        checkboxPlaceholderClassName: styles['checklist__inactive-placeholder'],
+        videoClassName: styles['video'],
+        videoContainerClassName: styles['video__container'],
+        mentionClassName: styles['mention'],
+        variables,
+        formatMessage,
+        badgeClassName: badgeStyles['badge'],
+        specificityBadgeClassName: badgeStyles['specifity'],
+      }),
     [embedVideos, hideIcon, interactiveChecklists, variables, formatMessage],
   );
 
   const preparedText = React.useMemo(
-    () => prepareRichTextHtml(safeText, {
-      variables,
-      formatMessage,
-      mentionClassName: styles['mention'],
-      badgeClassName: badgeStyles['badge'],
-      specificityBadgeClassName: badgeStyles['specifity'],
-      replaceInlineTokens: !isMarkdownMode,
-    }),
+    () =>
+      prepareRichTextHtml(safeText, {
+        variables,
+        formatMessage,
+        mentionClassName: styles['mention'],
+        badgeClassName: badgeStyles['badge'],
+        specificityBadgeClassName: badgeStyles['specifity'],
+        replaceInlineTokens: !isMarkdownMode,
+      }),
     [safeText, variables, formatMessage, isMarkdownMode],
   );
 
@@ -80,12 +80,13 @@ export function RichText({
     setIsRendered(true);
   }, []);
 
-  const handleExpand = React.useCallback((
-    event: React.MouseEvent<HTMLButtonElement> | React.KeyboardEvent<HTMLButtonElement>,
-  ) => {
-    event.preventDefault();
-    setIsExpanded(true);
-  }, []);
+  const handleExpand = React.useCallback(
+    (event: React.MouseEvent<HTMLButtonElement> | React.KeyboardEvent<HTMLButtonElement>) => {
+      event.preventDefault();
+      setIsExpanded(true);
+    },
+    [],
+  );
 
   if (!text) {
     return null;
@@ -95,12 +96,8 @@ export function RichText({
     <>
       <div
         ref={containerRef}
-        className={classnames(
-          styles['markdown-content'],
-          isCollapsed && styles['collapsed-content'],
-        )}
+        className={classnames(styles['markdown-content'], isCollapsed && styles['collapsed-content'])}
         style={containerStyle}
-        /* eslint-disable-next-line react/no-danger */
         dangerouslySetInnerHTML={{ __html: renderedHtml }}
       />
       {isMarkdownMode && isRendered && renderExtensions}
@@ -111,12 +108,7 @@ export function RichText({
 
   if (needsWrapper) {
     return (
-      <div
-        className={classnames(
-          className,
-          maxLines && isCollapsed && styles['collapsed-content'],
-        )}
-        >
+      <div className={classnames(className, maxLines && isCollapsed && styles['collapsed-content'])}>
         {isCollapsed && isTruncated && <RichTextMoreLink onExpand={handleExpand} />}
         {content}
       </div>

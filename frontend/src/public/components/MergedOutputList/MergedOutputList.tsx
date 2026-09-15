@@ -56,20 +56,20 @@ export function MergedOutputList({
           } = mergedOutput.data;
 
           return (
-          <FieldsetFieldGroup
-            key={fieldsetApiName}
-            title={fieldsetTitle}
-            description={fieldsetDescription}
-            fields={fieldsetFields}
-            onEditField={onEditFieldsetField}
-            mode={EExtraFieldMode.ProcessRun}
-            labelBackgroundColor={labelBackgroundColor}
-            accountId={accountId}
-            fieldClassName={fieldClassName}
-            labelPosition={isDesktop ? fieldsetLabelPosition : EFieldLabelPosition.Top}
-            isDisabled={isDisabled}
-            onUploadStateChange={onUploadStateChange}
-          />
+            <FieldsetFieldGroup
+              key={fieldsetApiName}
+              title={fieldsetTitle}
+              description={fieldsetDescription}
+              fields={fieldsetFields}
+              onEditField={onEditFieldsetField}
+              mode={EExtraFieldMode.ProcessRun}
+              labelBackgroundColor={labelBackgroundColor}
+              accountId={accountId}
+              fieldClassName={fieldClassName}
+              labelPosition={isDesktop ? fieldsetLabelPosition : EFieldLabelPosition.Top}
+              isDisabled={isDisabled}
+              onUploadStateChange={onUploadStateChange}
+            />
           );
         }
 

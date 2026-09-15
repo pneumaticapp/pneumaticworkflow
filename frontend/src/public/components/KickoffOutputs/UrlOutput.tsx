@@ -8,13 +8,9 @@ import styles from './KickoffOutputs.css';
 
 export interface IUrlOutputProps extends IExtraField {}
 
-export function UrlOutput({
-  name,
-  value,
-}: IExtraField) {
-
+export function UrlOutput({ name, value }: IExtraField) {
   const renderValue = () => {
-    const href = value as string || undefined;
+    const href = (value as string) || undefined;
 
     return (
       <a target="_blank" href={href} className={styles['output__url']}>
@@ -25,9 +21,7 @@ export function UrlOutput({
 
   return (
     <p className={styles['output']}>
-      <span className={styles['output__name']}>
-        {name}
-      </span>
+      <span className={styles['output__name']}>{name}</span>
       {renderValue()}
     </p>
   );

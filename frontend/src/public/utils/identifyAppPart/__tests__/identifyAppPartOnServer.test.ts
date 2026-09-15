@@ -9,14 +9,15 @@ jest.mock('../../getConfig', () => ({
 
 import { getConfig } from '../../getConfig';
 
-const makeRequest = (overrides: Record<string, unknown> = {}) => ({
-  baseUrl: '',
-  path: '/',
-  hostname: 'localhost',
-  url: '/',
-  headers: {},
-  ...overrides,
-} as any);
+const makeRequest = (overrides: Record<string, unknown> = {}) =>
+  ({
+    baseUrl: '',
+    path: '/',
+    hostname: 'localhost',
+    url: '/',
+    headers: {},
+    ...overrides,
+  }) as any;
 
 describe('identifyAppPartOnServer', () => {
   const mockGetConfig = getConfig as jest.Mock;

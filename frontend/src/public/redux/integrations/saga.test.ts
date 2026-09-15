@@ -48,7 +48,7 @@ describe('integrations saga', () => {
 
       expect(generator.next().value).toEqual(call(createApiKey, 'Test'));
       expect(generator.next(mockResponse as any).value).toEqual(
-        put(createApiKeySuccess({ apiKey: { id: 1, name: 'Test' } as any, rawKey: 'pn_live_123' }))
+        put(createApiKeySuccess({ apiKey: { id: 1, name: 'Test' } as any, rawKey: 'pn_live_123' })),
       );
       expect(generator.next().done).toBe(true);
     });

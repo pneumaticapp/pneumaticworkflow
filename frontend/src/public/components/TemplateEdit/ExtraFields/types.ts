@@ -33,12 +33,13 @@ type IExtraFieldPropsBase = Omit<IWorkflowExtraFieldProps, 'showDropdown'> & {
   id?: number;
 };
 
-export type IExtraFieldProps = IExtraFieldPropsBase & (
-  | {
-      showDropdown: true;
-      datasetOptions: { label: string; value: string }[];
-    }
-  | {
-      showDropdown: false;
-    }
-);
+export type IExtraFieldProps = IExtraFieldPropsBase &
+  (
+    | {
+        showDropdown: true;
+        datasetOptions: { label: string; value: string }[];
+      }
+    | {
+        showDropdown: false;
+      }
+  );

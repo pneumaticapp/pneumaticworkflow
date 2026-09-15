@@ -8,10 +8,8 @@ export function CollectPaymentDetails() {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(collectPaymentDetails())
+    dispatch(collectPaymentDetails());
   }, []);
 
-  return (
-    <GeneralLoader />
-  );
+  return <GeneralLoader />;
 }

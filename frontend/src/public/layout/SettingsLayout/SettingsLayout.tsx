@@ -1,5 +1,3 @@
-/* eslint-disable no-restricted-syntax */
-/* eslint-disable react/sort-comp */
 import * as React from 'react';
 import { matchPath } from 'react-router-dom';
 

@@ -2,9 +2,9 @@
   margin: 0;
   font-size: 13px;
   line-height: 16px;
+  color: #979795;
   text-align: center;
   white-space: nowrap;
-  color: #979795;
 
   @media (--mobile) {
     white-space: normal;
@@ -13,7 +13,7 @@
 
 .verification-reminder__link {
   span {
-    cursor: pointer;
     color: #fec336;
+    cursor: pointer;
   }
 }

@@ -1,4 +1,3 @@
-/* eslint-disable */
 /* prettier-ignore */
 import produce from 'immer';
 import { IGeneralStore } from '../../types/redux';

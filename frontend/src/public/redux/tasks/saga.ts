@@ -16,7 +16,8 @@ import {
 } from 'redux-saga/effects';
 
 import { PayloadAction } from '@reduxjs/toolkit';
-import { ETaskListActions ,
+import {
+  ETaskListActions,
   setTaskListStatus,
   changeTaskList,
   setTaskListDetailedTaskId,
@@ -43,13 +44,7 @@ import { getUserTasks } from '../../api/getUserTasks';
 import { checkSomeRouteIsActive, history } from '../../utils/history';
 import { IStoreTasks } from '../../types/redux';
 import { logger } from '../../utils/logger';
-import {
-  getTaskList,
-  getTasksSearchText,
-  getTasksSettings,
-  getTasksSorting,
-  getTasksStore,
-} from '../selectors/tasks';
+import { getTaskList, getTasksSearchText, getTasksSettings, getTasksSorting, getTasksStore } from '../selectors/tasks';
 import { loadCurrentTask } from '../task/actions';
 import { ETaskListCompletionStatus, ITaskListItem, ITemplateStep, TTaskListItemResponse } from '../../types/tasks';
 import { getErrorMessage } from '../../utils/getErrorMessage';
@@ -331,10 +326,7 @@ export function* handleAddTask(newTask: ITaskListItem) {
   yield refreshTasksFilters();
 }
 
-export function* handleRemoveTask(
-  taskId: number,
-  shouldDecrementCounter: boolean = true,
-) {
+export function* handleRemoveTask(taskId: number, shouldDecrementCounter: boolean = true) {
   if (shouldDecrementCounter) {
     yield put(loadTasksCount());
   }

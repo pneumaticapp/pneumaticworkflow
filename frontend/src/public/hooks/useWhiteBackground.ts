@@ -1,11 +1,11 @@
-import React from "react";
+import React from 'react';
 
 export function useWhiteBackground() {
   React.useEffect(() => {
-    document.body.style.background = "white";
+    document.body.style.background = 'white';
 
     return () => {
-      document.body.style.background = "unset";
+      document.body.style.background = 'unset';
     };
   }, []);
 }

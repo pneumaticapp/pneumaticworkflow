@@ -13,17 +13,12 @@ const sentryDsnMap: { [key in TEnvironment]: string | null } = {
   prod: PROD_SENTRY_DSN,
 };
 
-export const initSentry = (
-  getConfig: () => { env?: TEnvironment },
-  app: TSentryApp,
-) => {
+export const initSentry = (getConfig: () => { env?: TEnvironment }, app: TSentryApp) => {
   const { env = 'local' } = getConfig();
   const dsn = sentryDsnMap[env];
   if (!dsn) return;
 
-  const release = typeof envSentryRelease === 'string'
-    ? envSentryRelease
-    : undefined;
+  const release = typeof envSentryRelease === 'string' ? envSentryRelease : undefined;
 
   Sentry.init({
     dsn,

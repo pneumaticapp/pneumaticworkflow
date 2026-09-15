@@ -55,9 +55,10 @@ const createMockAuthUser = (overrides: Partial<IAuthUser> = {}): IAuthUser => ({
   ...overrides,
 });
 
-const createMockState = (authUserOverrides: Partial<IAuthUser> = {}): IApplicationState => ({
-  authUser: createMockAuthUser(authUserOverrides),
-} as IApplicationState);
+const createMockState = (authUserOverrides: Partial<IAuthUser> = {}): IApplicationState =>
+  ({
+    authUser: createMockAuthUser(authUserOverrides),
+  }) as IApplicationState;
 
 describe('user selectors', () => {
   describe('getIsAdmin', () => {

@@ -5,7 +5,7 @@ export enum EPaywallReminderType {
   Blocked = 'paywall-blocked',
 }
 
-export function getPaywallType(billingPlan: ESubscriptionPlan, isBlocked?: boolean,): EPaywallReminderType | null {
+export function getPaywallType(billingPlan: ESubscriptionPlan, isBlocked?: boolean): EPaywallReminderType | null {
   if (isBlocked) {
     return EPaywallReminderType.Blocked;
   }
