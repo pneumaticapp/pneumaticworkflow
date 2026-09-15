@@ -27,6 +27,7 @@ export function ForgotPassword({ loading, sendForgotPassword }: IForgotPasswordP
   const { formatMessage } = useIntl();
   const { recaptchaSecret } = getBrowserConfigEnv();
   const [showCaptcha, setShowCaptcha] = useState(false);
+  const [isCheckingCaptcha, setIsCheckingCaptcha] = useState(isEnvCaptcha);
   const prevLoadingRef = useRef(loading);
 
   useEffect(() => {
@@ -47,6 +48,8 @@ export function ForgotPassword({ loading, sendForgotPassword }: IForgotPasswordP
   }, [loading]);
 
   const checkCaptchaNeeded = async () => {
+    setIsCheckingCaptcha(true);
+
     try {
       const prepareResult = await prepareResetPassword();
 
@@ -55,6 +58,8 @@ export function ForgotPassword({ loading, sendForgotPassword }: IForgotPasswordP
       }
     } catch (error) {
       logger.error('check reset password captcha error', error);
+    } finally {
+      setIsCheckingCaptcha(false);
     }
   };
 
@@ -113,7 +118,7 @@ export function ForgotPassword({ loading, sendForgotPassword }: IForgotPasswordP
               isLoading={loading}
               className={styles['form__submit']}
               size="lg"
-              disabled={!isValid || !dirty}
+              disabled={!isValid || !dirty || isCheckingCaptcha}
               label={formatMessage({ id: 'user.password-forgot-button' })}
             />
           </form>
