@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React, { createRef, type MutableRefObject, type ReactElement } from 'react';
 import { render, waitFor, act } from '@testing-library/react';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
@@ -13,7 +13,6 @@ import {
   $createRangeSelection,
   $setSelection,
 } from 'lexical';
-import type { MutableRefObject } from 'react';
 import type { LexicalEditor } from 'lexical';
 import { CopyAttachmentPlugin } from '../CopyAttachmentPlugin';
 import { SetEditorRefPlugin } from '../../SetEditorRefPlugin';
@@ -28,23 +27,17 @@ interface SerializedNode {
 }
 
 function collectTypes(nodes: SerializedNode[]): string[] {
-  const types: string[] = [];
-  for (const n of nodes) {
-    types.push(n.type);
-    if (n.children) types.push(...collectTypes(n.children));
-  }
-  return types;
+  return nodes.reduce<string[]>(
+    (types, node) => [...types, node.type, ...(node.children ? collectTypes(node.children) : [])],
+    [],
+  );
 }
 
 function findNodeDeep(nodes: SerializedNode[], type: string): SerializedNode | undefined {
-  for (const n of nodes) {
-    if (n.type === type) return n;
-    if (n.children) {
-      const found = findNodeDeep(n.children, type);
-      if (found) return found;
-    }
-  }
-  return undefined;
+  return nodes.reduce<SerializedNode | undefined>((found, node) => {
+    if (found || node.type === type) return found ?? node;
+    return node.children ? findNodeDeep(node.children, type) : undefined;
+  }, undefined);
 }
 
 beforeAll(() => {
@@ -95,7 +88,7 @@ function createClipboardEvent(type: 'copy' | 'cut'): ClipboardEvent {
   } as unknown as ClipboardEvent;
 }
 
-function TestHarness({ editorRef }: { editorRef: MutableRefObject<LexicalEditor | null> }): React.ReactElement {
+function TestHarness({ editorRef }: { editorRef: MutableRefObject<LexicalEditor | null> }): ReactElement {
   return (
     <LexicalComposer initialConfig={initialConfig}>
       <RichTextPlugin contentEditable={<ContentEditable />} ErrorBoundary={LexicalErrorBoundary} />
@@ -106,7 +99,7 @@ function TestHarness({ editorRef }: { editorRef: MutableRefObject<LexicalEditor 
 }
 
 async function setupEditor(): Promise<LexicalEditor> {
-  const editorRef = React.createRef<LexicalEditor | null>() as MutableRefObject<LexicalEditor | null>;
+  const editorRef = createRef<LexicalEditor | null>() as MutableRefObject<LexicalEditor | null>;
   render(<TestHarness editorRef={editorRef} />);
   await waitFor(() => expect(editorRef.current).not.toBeNull());
   return editorRef.current!;
@@ -226,8 +219,17 @@ describe('CopyAttachmentPlugin', () => {
     const event = createClipboardEvent('cut');
     let result: boolean | undefined;
 
-    act(() => {
+    await act(async () => {
+      let removeUpdateListener = () => {};
+      const reconciled = new Promise<void>((resolve) => {
+        removeUpdateListener = editor.registerUpdateListener(() => {
+          removeUpdateListener();
+          resolve();
+        });
+      });
+
       result = editor.dispatchCommand(CUT_COMMAND, event);
+      await reconciled;
     });
 
     expect(result).toBe(true);
