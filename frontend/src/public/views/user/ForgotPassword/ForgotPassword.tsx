@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Formik, FormikConfig } from 'formik';
 import { NavLink } from 'react-router-dom';
 import { useIntl } from 'react-intl';
@@ -27,6 +27,7 @@ export function ForgotPassword({ loading, sendForgotPassword }: IForgotPasswordP
   const { formatMessage } = useIntl();
   const { recaptchaSecret } = getBrowserConfigEnv();
   const [showCaptcha, setShowCaptcha] = useState(false);
+  const prevLoadingRef = useRef(loading);
 
   useEffect(() => {
     document.title = TITLES.ForgotPassword;
@@ -35,6 +36,15 @@ export function ForgotPassword({ loading, sendForgotPassword }: IForgotPasswordP
       checkCaptchaNeeded();
     }
   }, []);
+
+  useEffect(() => {
+    // re-check after a completed request: the backend counts each attempt,
+    // so a retry on the same page may require captcha
+    if (isEnvCaptcha && prevLoadingRef.current && !loading) {
+      checkCaptchaNeeded();
+    }
+    prevLoadingRef.current = loading;
+  }, [loading]);
 
   const checkCaptchaNeeded = async () => {
     try {

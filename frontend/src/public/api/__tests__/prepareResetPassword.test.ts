@@ -15,7 +15,7 @@ describe('prepareResetPassword', () => {
 
     expect(result).toEqual({ showCaptcha: true });
     expect(commonRequest).toHaveBeenCalledWith(
-      undefined,
+      '/path/to/reset-password/captcha',
       {},
       {
         type: 'local',
