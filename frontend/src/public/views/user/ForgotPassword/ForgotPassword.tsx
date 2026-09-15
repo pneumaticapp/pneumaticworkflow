@@ -1,7 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Formik, FormikConfig } from 'formik';
 import { NavLink } from 'react-router-dom';
 import { useIntl } from 'react-intl';
+import ReCAPTCHA from 'react-google-recaptcha';
 
 import { ERoutes } from '../../../constants/routes';
 import { TITLES } from '../../../constants/titles';
@@ -9,26 +10,43 @@ import { IntlMessages } from '../../../components/IntlMessages';
 import { TForgotPassword } from '../../../redux/actions';
 import { validateEmail } from '../../../utils/validators';
 import { Header, InputField, Button } from '../../../components/UI';
+import { prepareResetPassword } from '../../../api/prepareResetPassword';
+import { getBrowserConfigEnv } from '../../../utils/getConfig';
 
 import styles from '../User.css';
 import { getErrorsObject } from '../../../utils/formik/getErrorsObject';
-import { isEnvSignup } from '../../../constants/enviroment';
+import { isEnvCaptcha, isEnvSignup } from '../../../constants/enviroment';
 
 const INITIAL_VALUES_FORMIK: TForgotPasswordValues = {
   email: '',
+  captcha: '',
 };
 
 export function ForgotPassword({ loading, sendForgotPassword }: IForgotPasswordProps) {
   const { formatMessage } = useIntl();
+  const { recaptchaSecret } = getBrowserConfigEnv();
+  const [showCaptcha, setShowCaptcha] = useState(false);
 
   useEffect(() => {
     document.title = TITLES.ForgotPassword;
+
+    if (isEnvCaptcha) {
+      checkCaptchaNeeded();
+    }
   }, []);
 
-  const handleSubmitForm: FormikConfig<TForgotPasswordValues>['onSubmit'] = (values) => {
-    const { email } = values;
+  const checkCaptchaNeeded = async () => {
+    const prepareResult = await prepareResetPassword();
 
-    sendForgotPassword({ email });
+    if (prepareResult?.showCaptcha) {
+      setShowCaptcha(true);
+    }
+  };
+
+  const handleSubmitForm: FormikConfig<TForgotPasswordValues>['onSubmit'] = (values) => {
+    const { email, captcha } = values;
+
+    sendForgotPassword({ email, captcha });
   };
 
   return (
@@ -45,10 +63,14 @@ export function ForgotPassword({ loading, sendForgotPassword }: IForgotPasswordP
             email: validateEmail,
           });
 
+          if (showCaptcha && !values.captcha) {
+            errors.captcha = 'Failed verification captcha';
+          }
+
           return errors;
         }}
       >
-        {({ values, errors, handleChange, handleSubmit, isValid, dirty }) => (
+        {({ values, errors, handleChange, handleSubmit, setFieldValue, isValid, dirty }) => (
           <form className={styles['form']} onSubmit={handleSubmit}>
             <InputField
               name="email"
@@ -59,6 +81,16 @@ export function ForgotPassword({ loading, sendForgotPassword }: IForgotPasswordP
               showErrorIfTouched
               containerClassName={styles['form__field']}
             />
+
+            {isEnvCaptcha && showCaptcha && (
+              <div className={styles['form__captcha']}>
+                <ReCAPTCHA
+                  sitekey={recaptchaSecret}
+                  onChange={(captcha: string | null) => captcha && setFieldValue('captcha', captcha)}
+                  theme="light"
+                />
+              </div>
+            )}
 
             <Button
               type="submit"
@@ -98,4 +130,5 @@ export interface IForgotPasswordProps {
 
 export type TForgotPasswordValues = {
   email: string;
+  captcha: string;
 };

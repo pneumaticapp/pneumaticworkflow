@@ -58,7 +58,7 @@ export interface IUserCredentials {
   rememberMe?: boolean;
 }
 
-export type TForgotPassword = Pick<IUserCredentials, 'email'>;
+export type TForgotPassword = Pick<IUserCredentials, 'email'> & { captcha?: string };
 export type TChangePassword = IConfirmChangePassword;
 
 export interface IUserRegister {
