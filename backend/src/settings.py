@@ -554,6 +554,8 @@ class Common(Configuration):
     # OpenAI
     OPENAI_API_KEY = env.get('OPENAI_API_KEY')
     OPENAI_API_ORG = env.get('OPENAI_API_ORG')
+    AI_HTTP_PROXY = env.get('AI_HTTP_PROXY') or None
+    AI_HTTPS_PROXY = env.get('AI_HTTPS_PROXY') or None
 
     # Microsoft auth
     MS_CLIENT_ID = env.get('MS_CLIENT_ID')

@@ -4,6 +4,7 @@ from typing import List, Optional, Tuple
 from urllib.parse import urlparse
 
 import requests
+from django.conf import settings
 from django.contrib.auth import get_user_model
 
 from src.ai.enums import AIAgentActionType
@@ -72,6 +73,18 @@ class BaseVendor(ABC):
 
         pass
 
+    def _get_proxies(self) -> Optional[dict]:
+        http_proxy = settings.AI_HTTP_PROXY
+        https_proxy = settings.AI_HTTPS_PROXY or http_proxy
+        if not http_proxy and not https_proxy:
+            return None
+        proxies = {}
+        if http_proxy:
+            proxies['http'] = http_proxy
+        if https_proxy:
+            proxies['https'] = https_proxy
+        return proxies
+
     def _get_safe_headers(self, headers: Optional[dict]) -> Optional[dict]:
         if not headers:
             return headers
@@ -131,6 +144,7 @@ class BaseVendor(ABC):
         http_status = 0
         response_data = None
         parsed = urlparse(url)
+        proxies = self._get_proxies()
         try:
             try:
                 response = requests.request(
@@ -140,6 +154,7 @@ class BaseVendor(ABC):
                     data=data,
                     params=params,
                     timeout=timeout,
+                    proxies=proxies,
                 )
             except requests.RequestException as ex:
                 response_data = {'error': str(ex)}
@@ -175,6 +190,7 @@ class BaseVendor(ABC):
                     'data': data or {},
                     'params': params or {},
                     'timeout': timeout,
+                    'proxies': bool(proxies),
                     'response_data': response_data or {},
                 },
                 default=str,
