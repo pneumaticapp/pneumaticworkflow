@@ -7,6 +7,7 @@ from src.ai.models import AIAgent, AIProvider
 from src.ai.serializers import AIModelSerializer
 from src.ai.services.vendors.anthropic import AnthropicVendor
 from src.ai.services.vendors.azure import AzureOpenAIVendor
+from src.ai.services.vendors.cursor import CursorVendor
 from src.ai.services.vendors.gemini import GeminiVendor
 from src.ai.services.vendors.openai_compatible import (
     OpenAICompatibleVendor,
@@ -31,6 +32,7 @@ class AIProviderService(
             AIVendor.ANTHROPIC: AnthropicVendor,
             AIVendor.GEMINI: GeminiVendor,
             AIVendor.AZURE_OPENAI: AzureOpenAIVendor,
+            AIVendor.CURSOR: CursorVendor,
         }
         return vendor_classes.get(
             self.instance.vendor,

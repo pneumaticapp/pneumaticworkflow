@@ -126,6 +126,9 @@ class BaseVendor(ABC):
             message = error.get('message')
             if isinstance(message, str) and message:
                 return message
+        error = response_data.get('message')
+        if isinstance(error, str):
+            return error
         return None
 
     def _request(
