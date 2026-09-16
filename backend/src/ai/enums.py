@@ -19,6 +19,7 @@ class AIVendor:
     HUGGINGFACE = 'huggingface'
     SAMBANOVA = 'sambanova'
     NVIDIA_NIM = 'nvidia_nim'
+    CURSOR = 'cursor'
     OPENAI_COMPATIBLE = 'openai_compatible'
 
     CHOICES = (
@@ -38,6 +39,7 @@ class AIVendor:
         (HUGGINGFACE, 'Hugging Face'),
         (SAMBANOVA, 'SambaNova'),
         (NVIDIA_NIM, 'NVIDIA NIM'),
+        (CURSOR, 'Cursor'),
         (OPENAI_COMPATIBLE, 'OpenAI compatible'),
     )
 
@@ -59,6 +61,7 @@ class AIVendor:
         'router.huggingface.co': HUGGINGFACE,
         'api.sambanova.ai': SAMBANOVA,
         'integrate.api.nvidia.com': NVIDIA_NIM,
+        'api.cursor.com': CURSOR,
     }
 
     NAME_BY_CODE = {
@@ -78,6 +81,7 @@ class AIVendor:
         HUGGINGFACE: 'Hugging Face',
         SAMBANOVA: 'SambaNova',
         NVIDIA_NIM: 'NVIDIA NIM',
+        CURSOR: 'Cursor',
         OPENAI_COMPATIBLE: 'OpenAI compatible',
     }
 
@@ -98,6 +102,7 @@ class AIVendor:
         HUGGINGFACE,
         SAMBANOVA,
         NVIDIA_NIM,
+        CURSOR,
         OPENAI_COMPATIBLE,
     ]
 

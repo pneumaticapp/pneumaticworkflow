@@ -1,3 +1,4 @@
+import json
 from abc import ABC, abstractmethod
 from typing import List, Optional, Tuple
 from urllib.parse import urlparse
@@ -119,7 +120,7 @@ class BaseVendor(ABC):
         method: str,
         url: str,
         headers: Optional[dict] = None,
-        json: Optional[dict] = None,
+        data: Optional[dict] = None,
         params: Optional[dict] = None,
         timeout: Optional[int] = None,
     ) -> Tuple[int, dict]:
@@ -136,7 +137,7 @@ class BaseVendor(ABC):
                     method=method,
                     url=url,
                     headers=headers,
-                    json=json,
+                    data=data,
                     params=params,
                     timeout=timeout,
                 )
@@ -170,11 +171,11 @@ class BaseVendor(ABC):
                     'url': url,
                     'scheme': parsed.scheme,
                     'http_status': http_status,
-                    'headers': self._get_safe_headers(headers),
-                    'json': json,
-                    'params': params,
+                    'headers': self._get_safe_headers(headers) or {},
+                    'data': data or {},
+                    'params': params or {},
                     'timeout': timeout,
-                    'response_data': response_data,
+                    'response_data': response_data or {},
                 },
                 default=str,
             )

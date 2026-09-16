@@ -101,7 +101,7 @@ class AnthropicVendor(BaseVendor):
             method='POST',
             url=self._create_url('messages'),
             headers=self._auth_headers(),
-            json={
+            data={
                 'model': model,
                 'max_tokens': self.DEFAULT_MAX_TOKENS,
                 'system': system_message,
