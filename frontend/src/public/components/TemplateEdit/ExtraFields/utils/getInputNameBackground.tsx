@@ -1,4 +1,3 @@
-/* eslint-disable */
 /* prettier-ignore */
 import { EInputNameBackgroundColor } from '../../../../types/workflow';
 
@@ -11,7 +10,6 @@ import styles from '../../KickoffRedux/KickoffRedux.css';
 */
 
 export const getInputNameBackground = (labelBackgroundColor?: EInputNameBackgroundColor) => {
-
   if (!labelBackgroundColor) {
     return undefined;
   }

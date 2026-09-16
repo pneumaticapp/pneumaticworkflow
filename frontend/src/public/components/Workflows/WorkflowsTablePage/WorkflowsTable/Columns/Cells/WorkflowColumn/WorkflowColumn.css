@@ -5,21 +5,21 @@
 }
 
 .dropdown-wrapper {
-  margin-right: 16px;
-  width: 20px;
   flex-shrink: 0;
+  width: 20px;
+  margin-right: 16px;
 }
 
 .urgent-wrapper {
-  margin-right: 16px;
   display: flex;
-  width: 20px;
   flex-shrink: 0;
+  width: 20px;
+  margin-right: 16px;
 }
 
 .card-more {
-  cursor: pointer;
   color: var(--pneumatic-color-black32);
+  cursor: pointer;
   transition: color 0.1s ease-in-out;
 
   &.card-more_active,
@@ -41,10 +41,10 @@
 
 .workflow-link {
   overflow: hidden;
+  text-overflow: ellipsis;
   font-size: 15px;
   font-weight: bold;
   line-height: 20px;
-  text-overflow: ellipsis;
   color: var(--pneumatic-color-black100);
   transition: color 0.1s ease-in-out;
 

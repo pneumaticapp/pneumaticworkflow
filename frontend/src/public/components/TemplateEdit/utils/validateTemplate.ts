@@ -1,4 +1,3 @@
-/* eslint-disable */
 /* prettier-ignore */
 import { IntlShape } from 'react-intl';
 

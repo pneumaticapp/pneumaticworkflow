@@ -71,9 +71,7 @@ describe('logger', () => {
       logger.error('error in', { module: 'auth' });
 
       expect(mockCaptureException).toHaveBeenCalledTimes(1);
-      expect(mockCaptureException).toHaveBeenCalledWith(
-        new Error('error in {"module":"auth"}'),
-      );
+      expect(mockCaptureException).toHaveBeenCalledWith(new Error('error in {"module":"auth"}'));
     });
   });
 

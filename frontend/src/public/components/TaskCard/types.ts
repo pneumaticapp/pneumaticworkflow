@@ -57,21 +57,11 @@ export type ITaskCardWrapperProps = Omit<ITaskCardProps, 'task'> & {
   task: ITask | null;
 };
 
-export type TTaskCardHeaderProps = Pick<
-  ITaskCardProps,
-  'task' | 'viewMode' | 'workflowLog' | 'openWorkflowLogPopup'
->;
+export type TTaskCardHeaderProps = Pick<ITaskCardProps, 'task' | 'viewMode' | 'workflowLog' | 'openWorkflowLogPopup'>;
 
 export type TTaskPerformersProps = Pick<
   ITaskCardProps,
-  | 'task'
-  | 'viewMode'
-  | 'workflow'
-  | 'status'
-  | 'users'
-  | 'authUser'
-  | 'addTaskPerformer'
-  | 'removeTaskPerformer'
+  'task' | 'viewMode' | 'workflow' | 'status' | 'users' | 'authUser' | 'addTaskPerformer' | 'removeTaskPerformer'
 >;
 
 export interface ITaskOutputFieldsProps {

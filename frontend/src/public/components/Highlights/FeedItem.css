@@ -1,7 +1,7 @@
 .feed-item__container {
   position: relative;
-  margin-bottom: 1.6rem;
   padding: 3.4rem 3.2rem 1.6rem;
+  margin-bottom: 1.6rem;
   background: var(--pneumatic-color-white);
   border-radius: 2.4rem;
 
@@ -11,9 +11,9 @@
 }
 
 .feed-item__body {
-  margin: 0 -1.6rem;
-  padding: 1.6rem 2.4rem 1.6rem 1.6rem;
   display: flex;
+  padding: 1.6rem 2.4rem 1.6rem 1.6rem;
+  margin: 0 -1.6rem;
   cursor: pointer;
   background: var(--pneumatic-color-beige);
   border-radius: 1.6rem;
@@ -28,9 +28,9 @@
 }
 
 .header__comment {
-  margin: 0;
-  flex-flow: column;
   display: flex;
+  flex-flow: column;
+  margin: 0;
 }
 
 .comment__title {
@@ -54,8 +54,8 @@
 .show-more span {
   @mixin text-base;
 
-  cursor: pointer;
   color: var(--pneumatic-color-link);
+  cursor: pointer;
   transition: color 0.1s ease-in-out;
 }
 
@@ -64,26 +64,26 @@
 }
 
 .feed-item__icon {
-  margin-right: 0.8rem;
   display: flex;
   flex-shrink: 0;
   width: 2rem;
   height: 2rem;
+  margin-right: 0.8rem;
   line-height: 1.8rem;
 }
 
 .feed-item__content {
   display: flex;
-  flex-flow: column;
   flex: 65 1 auto;
+  flex-flow: column;
   align-self: auto;
 }
 
 .feed-item__header {
-  margin-bottom: 1.6rem;
   display: flex;
-  height: 2rem;
   align-items: center;
+  height: 2rem;
+  margin-bottom: 1.6rem;
 
   @media (--mobile) {
     height: auto;
@@ -95,32 +95,32 @@
 }
 
 .header__info {
-  margin-right: 2rem;
   flex-grow: 1;
+  margin-right: 2rem;
 }
 
 .info__performer {
-  margin-bottom: 0;
   display: flex;
+  margin-bottom: 0;
 }
 
 .performer__name {
   @mixin text-base;
   @mixin text-truncate;
 
-  margin-right: 0.8rem;
-  min-width: 0;
   flex: 0 1 auto;
+  min-width: 0;
+  margin-right: 0.8rem;
   color: var(--pneumatic-color-black100);
 }
 
 .performer__datetime {
   @mixin text-small bold;
 
-  align-self: center;
   flex-shrink: 0;
-  cursor: pointer;
+  align-self: center;
   color: var(--pneumatic-color-black48);
+  cursor: pointer;
 }
 
 .info__task {
@@ -166,9 +166,9 @@
 }
 
 .performer__icon {
-  margin-right: 0.8rem;
-  height: 2rem;
   align-self: start;
+  height: 2rem;
+  margin-right: 0.8rem;
 
   & svg {
     vertical-align: top;
@@ -200,8 +200,8 @@
 }
 
 .card-more {
-  cursor: pointer;
   color: var(--pneumatic-color-black16);
+  cursor: pointer;
   transition: color 0.1s ease-in-out;
 
   &.card-more_active,

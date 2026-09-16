@@ -69,7 +69,8 @@ describe('CreateUserModal', () => {
     passwordInput: screen.getByLabelText(getTranslatedText('team.create-user-modal.password')) as HTMLInputElement,
   });
 
-  const getSubmitButton = () => screen.getByRole('button', { name: getTranslatedText('team.create-user-modal.submit') });
+  const getSubmitButton = () =>
+    screen.getByRole('button', { name: getTranslatedText('team.create-user-modal.submit') });
 
   const getCopyButton = () => screen.getByRole('button', { name: getTranslatedText('team.create-user-modal.copy') });
 
@@ -126,13 +127,17 @@ describe('CreateUserModal', () => {
     it('displays submit button', async () => {
       await openModal();
 
-      expect(screen.getByRole('button', { name: getTranslatedText('team.create-user-modal.submit') })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: getTranslatedText('team.create-user-modal.submit') }),
+      ).toBeInTheDocument();
     });
 
     it('displays password copy button', async () => {
       await openModal();
 
-      expect(screen.getByRole('button', { name: getTranslatedText('team.create-user-modal.copy') })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: getTranslatedText('team.create-user-modal.copy') }),
+      ).toBeInTheDocument();
     });
   });
 

@@ -1,12 +1,12 @@
 .return-to__container {
   position: relative;
-  margin-left: -0.4rem;
-  padding-right: 4rem;
   display: flex;
+  padding-right: 4rem;
+  margin-left: -0.4rem;
 
   .return-to__dropdown-container {
-    margin: 4px;
     width: 100%;
+    margin: 4px;
   }
 }
 
@@ -15,8 +15,8 @@
 
   p {
     overflow: hidden;
-    white-space: nowrap;
     text-overflow: ellipsis;
+    white-space: nowrap;
 
     span {
       /* stylelint-disable-next-line declaration-no-important */

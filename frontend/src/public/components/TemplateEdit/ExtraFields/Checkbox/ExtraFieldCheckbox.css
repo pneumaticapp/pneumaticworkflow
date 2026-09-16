@@ -16,18 +16,18 @@
 .kickoff-create-field-name {
   position: relative;
   display: inline-flex;
-  align-items: flex-end;
   gap: 2px;
+  align-items: flex-end;
   max-width: 100%;
 }
 
 .kickoff-create-field-name-input {
-  padding: 0 4px 0 0;
   min-width: 0;
+  padding: 0 4px 0 0;
+  overflow-wrap: break-word;
   resize: none;
   border: none;
   field-sizing: content;
-  overflow-wrap: break-word;
 
   @mixin text-base;
 
@@ -46,9 +46,9 @@
 }
 
 .kickoff-create-field-container__error-message {
+  display: block;
   margin-top: 4px;
   margin-bottom: 0;
-  display: block;
   font-family: Nunito, sans-serif;
   font-size: 13px;
   line-height: 16px;
@@ -56,23 +56,23 @@
 }
 
 .kickoff-create-field-options {
-  margin: 0;
   padding: 0;
+  margin: 0;
   list-style: none;
 }
 
 .kickoff-create-field-option {
-  margin: 0 0 8px;
   display: flex;
   flex-flow: column;
   align-items: flex-start;
+  margin: 0 0 8px;
 }
 
 .kickoff-create-field-option__labeled-checkbox {
   display: flex;
-  width: 100%;
   flex-flow: row nowrap;
   align-items: center;
+  width: 100%;
 }
 
 .labeled-checkbox__remove-icon {
@@ -99,10 +99,10 @@
 .kickoff-create-field-add-option {
   @mixin btn-field-action;
 
-  margin: 0;
-  padding: 0;
-  overflow: visible;
   width: auto;
+  padding: 0;
+  margin: 0;
+  overflow: visible;
 }
 
 .kickoff-set-field-container {
@@ -112,23 +112,23 @@
 
 .kickoff-set-field-name {
   position: relative;
-  margin-bottom: 8px;
-  padding-right: 4px;
   display: inline-block;
+  padding-right: 4px;
+  margin-bottom: 8px;
   color: var(--pneumatic-color-black100);
 }
 
 .kickoff-set-field-options {
-  margin: 0;
   padding: 0;
+  margin: 0;
   list-style: none;
 }
 
 .kickoff-set-field-option {
-  margin: 0 0 8px;
   display: flex;
   flex-flow: column;
   align-items: flex-start;
+  margin: 0 0 8px;
 }
 
 .kickoff-set-field-option__error-text {

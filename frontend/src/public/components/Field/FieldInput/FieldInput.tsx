@@ -83,10 +83,7 @@ export function FieldInput({
   return (
     <div className={styles['icon-container']}>
       {shouldReplaceWithLabel && (
-        <label
-          htmlFor={inputId}
-          className={classnames(inputClassName, labelReplacementClassName)}
-        >
+        <label htmlFor={inputId} className={classnames(inputClassName, labelReplacementClassName)}>
           {labelReplacementValue}
           &nbsp;
         </label>

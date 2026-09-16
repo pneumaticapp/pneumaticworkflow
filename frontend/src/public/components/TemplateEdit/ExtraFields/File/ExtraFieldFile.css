@@ -14,8 +14,8 @@
 .extra-field-files-grid__images-grid {
   display: flex;
   flex-flow: row wrap;
-  width: 100%;
   gap: 0.8rem;
+  width: 100%;
 
   &:not(:last-child) {
     margin-bottom: 0.8rem;
@@ -32,24 +32,24 @@
 }
 
 .extra-field-files-document-grid__document-container {
-  margin-bottom: 0.8rem;
   display: flex;
-  align-items: center;
   flex-flow: row nowrap;
+  align-items: center;
+  margin-bottom: 0.8rem;
 }
 
 .extra-field-document {
   margin-right: 1rem;
   overflow: hidden;
+  text-overflow: ellipsis;
   font-family: Nunito, sans-serif;
   font-size: 1.5rem;
   line-height: 2rem;
+  color: #fec336;
+  overflow-wrap: anywhere;
   white-space: pre-wrap;
   white-space: nowrap;
-  text-overflow: ellipsis;
-  word-break: break-word;
   cursor: pointer;
-  color: #fec336;
   transition: color 0.1s ease-in-out;
 }
 
@@ -62,16 +62,16 @@
 }
 
 .extra-field-document__delete-button {
-  padding: 0;
   display: flex;
+  padding: 0;
   cursor: pointer;
   background: none;
   border: none;
 }
 
 .delete-button {
-  cursor: pointer;
   color: var(--pneumatic-color-black16);
+  cursor: pointer;
   transition: 0.1s ease-in-out fill;
 
   &:hover {
@@ -82,12 +82,12 @@
 .images-list__image-container {
   position: relative;
   display: flex;
+  align-items: center;
+  justify-content: center;
   width: 8rem;
   height: 8rem;
   background: white;
   border-radius: 0.8rem;
-  justify-content: center;
-  align-items: center;
 }
 
 .images-list__image-container:last-child {
@@ -112,8 +112,8 @@
   position: absolute;
   top: -0.6rem;
   right: -0.6rem;
-  padding: 0;
   display: flex;
+  padding: 0;
 }
 
 .extra-filed-file__upload-button {
@@ -138,9 +138,9 @@
 .extra-field-file__ref {
   position: absolute;
   z-index: -1;
-  overflow: hidden;
   width: 0.01rem;
   height: 0.01rem;
+  overflow: hidden;
   opacity: 0;
 }
 
@@ -155,25 +155,25 @@
 }
 
 .extra-field-file__conteiner--template {
-  max-width: calc(100% - 4rem);
   flex-grow: 1;
+  max-width: calc(100% - 4rem);
 }
 
 .extra-field-file__input--template {
   position: relative;
   display: inline-flex;
-  align-items: flex-end;
   gap: 2px;
+  align-items: flex-end;
   max-width: 100%;
 }
 
 .extra-field-file__input-name--template {
-  padding: 0 0.4rem 0 0;
   min-width: 0;
+  padding: 0 0.4rem 0 0;
+  overflow-wrap: break-word;
   resize: none;
   border: none;
   field-sizing: content;
-  overflow-wrap: break-word;
 
   @mixin text-base;
 
@@ -199,9 +199,9 @@
 }
 
 .extra-field-file__error-message--template {
+  display: block;
   margin-top: 0.4rem;
   margin-bottom: 0;
-  display: block;
   font-family: Nunito, sans-serif;
   font-size: 1.3rem;
   line-height: 1.6rem;
@@ -209,10 +209,10 @@
 }
 
 .extra-field-file__upload-button-conteiner {
-  margin: 0;
-  padding: 0;
   width: fit-content;
   width: min-content;
+  padding: 0;
+  margin: 0;
   white-space: nowrap;
 
   .extra-field-file__upload-button--template {
@@ -224,9 +224,9 @@
 }
 
 .extra-field-file__field-name {
-  margin-bottom: 0.8rem;
-  padding-right: 0.4rem;
   display: inline-block;
   max-width: 100%;
+  padding-right: 0.4rem;
+  margin-bottom: 0.8rem;
   overflow-wrap: anywhere;
 }

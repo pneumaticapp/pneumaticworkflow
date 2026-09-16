@@ -98,14 +98,9 @@ export const ATTACHMENT_INLINE: TextMatchTransformer = {
   importRegExp: ATTACHMENT_IMPORT_RE,
   regExp: ATTACHMENT_IMPORT_RE,
   getEndIndex: (textNode, match) =>
-    getMarkdownLinkMatchEndIndex(
-      textNode.getTextContent(),
-      match.index ?? 0,
-      parseAttachmentMarkdownFromStart,
-    ),
+    getMarkdownLinkMatchEndIndex(textNode.getTextContent(), match.index ?? 0, parseAttachmentMarkdownFromStart),
   replace: (replaceNode, match) => {
-    const parsedMatch =
-      parseAttachmentMarkdownFromStart(replaceNode.getTextContent()) ?? match;
+    const parsedMatch = parseAttachmentMarkdownFromStart(replaceNode.getTextContent()) ?? match;
     const node = createAttachmentNodeFromMatch(parsedMatch);
     replaceNode.replace(node);
     const next = node.getNextSibling();

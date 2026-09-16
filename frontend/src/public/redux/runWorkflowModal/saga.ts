@@ -15,7 +15,6 @@ import { RawPerformer } from '../../types/template';
 import { TUserListItem } from '../../types/user';
 
 function* runWorkflow({ payload: workflow }: TRunWorkflow) {
-
   try {
     const usersList: TUserListItem[] = yield select(getUsers);
     const setUsers = new Map<number, string>(usersList.map((user) => [user.id, user.email]));

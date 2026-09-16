@@ -33,7 +33,7 @@ export const DashboardLayoutComponent: React.FC = ({ children }) => {
         id: mode,
         label: intl.formatMessage({ id: mode }),
       })),
-    [intl]
+    [intl],
   );
 
   const handleSetTimeRange = React.useCallback(
@@ -41,14 +41,14 @@ export const DashboardLayoutComponent: React.FC = ({ children }) => {
       dispatch(setDashboardSettingsManuallyChanged());
       dispatch(setDashboardTimeRange(newTimeRange));
     },
-    [dispatch]
+    [dispatch],
   );
 
   const handleSetDashboardMode = React.useCallback(
     (newDashboardMode: EDashboardModes) => {
       dispatch(setDashboardMode(newDashboardMode));
     },
-    [dispatch]
+    [dispatch],
   );
 
   const leftContent = (

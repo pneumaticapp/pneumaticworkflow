@@ -1,6 +1,6 @@
 .container {
-  padding: 16px;
   min-height: 88px;
+  padding: 16px;
   cursor: pointer;
   background-color: var(--pneumatic-color-beige);
   border-radius: 16px;
@@ -36,11 +36,11 @@
 .task-name {
   margin: 0;
   overflow: hidden;
+  text-overflow: ellipsis;
   font-size: 13px;
   line-height: 16px;
-  white-space: nowrap;
-  text-overflow: ellipsis;
   color: var(--pneumatic-color-black48);
+  white-space: nowrap;
 }
 
 .due-in {
@@ -58,22 +58,22 @@
 .workflow-name {
   margin: 0;
   overflow: hidden;
+  text-overflow: ellipsis;
   font-size: 15px;
   font-weight: bold;
   line-height: 20px;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  word-break: break-word;
   color: var(--pneumatic-color-black100);
+  overflow-wrap: anywhere;
+  white-space: nowrap;
   transition: all 0.2s ease-in-out;
 
   @supports (-webkit-line-clamp: 2) {
     /* stylelint-disable-next-line property-no-vendor-prefix, value-no-vendor-prefix */
     display: -webkit-box;
     overflow: hidden;
-    white-space: initial;
     text-overflow: ellipsis;
     -webkit-line-clamp: 2;
+    white-space: initial;
     /* stylelint-disable-next-line property-no-vendor-prefix */
     -webkit-box-orient: vertical;
   }

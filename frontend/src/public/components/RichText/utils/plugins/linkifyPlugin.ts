@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, no-restricted-syntax, no-continue, no-plusplus */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import Autolinker from 'autolinker';
 import type MarkdownIt from 'markdown-it';
 
@@ -86,7 +86,7 @@ export const linkifyInlineChildren = (
     }
 
     let text = token.content;
-    let {level} = token;
+    let { level } = token;
 
     for (const link of links) {
       const pos = text.indexOf(link.text);
@@ -102,9 +102,7 @@ export const linkifyInlineChildren = (
         result.push(textToken);
       }
 
-      const embedHtml = embedVideos
-        ? renderLinkHtml(link.url, link.text, true, embedVideoOptions)
-        : null;
+      const embedHtml = embedVideos ? renderLinkHtml(link.url, link.text, true, embedVideoOptions) : null;
 
       if (embedHtml?.includes('<iframe')) {
         const htmlToken = createMarkdownToken('html_inline', '', 0);
@@ -113,7 +111,10 @@ export const linkifyInlineChildren = (
         result.push(htmlToken);
       } else {
         const linkOpen = createMarkdownToken('link_open', 'a', 1);
-        linkOpen.attrs = [['href', link.url], ['target', '_blank']];
+        linkOpen.attrs = [
+          ['href', link.url],
+          ['target', '_blank'],
+        ];
         linkOpen.level = level++;
 
         const linkText = createMarkdownToken('text', '', 0);

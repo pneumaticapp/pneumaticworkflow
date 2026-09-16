@@ -16,7 +16,7 @@ export type TEditorAttachment = {
 };
 
 export enum EEditorBlock {
-  Unstyled  = 'unstyled',
+  Unstyled = 'unstyled',
   HeaderOne = 'header-one',
   HeaderTwo = 'header-two',
   HeaderThree = 'header-three',
@@ -28,9 +28,9 @@ export enum EEditorBlock {
   Blockquote = 'blockquote',
   Code = 'code-block',
   Atomic = 'atomic',
-};
+}
 
 export enum EEditorStyle {
   Bold = 'BOLD',
   Italic = 'ITALIC',
-};
+}

@@ -51,12 +51,11 @@ export function ProfileVacationFields({ availableUsers }: IProfileVacationFields
     setFieldValue('substituteUserIds', nextIds);
   };
 
-  const {
-    mapUserOptions,
-    selectedUserOptions,
-    handleAddUser,
-    handleRemoveUser,
-  } = useSubstituteUsers(availableUsers, values.substituteUserIds, onSubstituteChange);
+  const { mapUserOptions, selectedUserOptions, handleAddUser, handleRemoveUser } = useSubstituteUsers(
+    availableUsers,
+    values.substituteUserIds,
+    onSubstituteChange,
+  );
 
   const validateDates = (start: string | null, end: string | null): boolean => {
     if (start && end && end < start) {

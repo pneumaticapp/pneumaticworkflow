@@ -29,7 +29,7 @@ export function VacationSettingsModal({ isOpen, onClose, user }: IVacationSettin
   const { authUser } = useSelector(getAuthUser);
 
   const availableUsers: TUserListItem[] = useSelector(getAccountsUsers).filter(
-    (u: TUserListItem) => u.id !== user?.id && u.status === 'active'
+    (u: TUserListItem) => u.id !== user?.id && u.status === 'active',
   );
 
   const handleActivate = async (data: IVacationActivateRequest) => {
@@ -40,11 +40,13 @@ export function VacationSettingsModal({ isOpen, onClose, user }: IVacationSettin
       NotificationManager.success({ message: formatMessage({ id: 'user-info.vacation.activated-success' }) });
       dispatch(teamFetchStarted({}));
       dispatch(usersFetchStarted());
-      
+
       if (authUser.id === user.id && result) {
-        dispatch(vacationSuccess({
-          vacation: result.vacation || null,
-        }));
+        dispatch(
+          vacationSuccess({
+            vacation: result.vacation || null,
+          }),
+        );
       }
 
       onClose();
@@ -65,9 +67,11 @@ export function VacationSettingsModal({ isOpen, onClose, user }: IVacationSettin
       dispatch(usersFetchStarted());
 
       if (authUser.id === user.id && result) {
-        dispatch(vacationSuccess({
-          vacation: result.vacation || null,
-        }));
+        dispatch(
+          vacationSuccess({
+            vacation: result.vacation || null,
+          }),
+        );
       }
 
       onClose();
@@ -79,11 +83,7 @@ export function VacationSettingsModal({ isOpen, onClose, user }: IVacationSettin
   };
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      width="lg"
-    >
+    <Modal isOpen={isOpen} onClose={onClose} width="lg">
       {user ? (
         <div className={styles['modal-body']}>
           <VacationSettings

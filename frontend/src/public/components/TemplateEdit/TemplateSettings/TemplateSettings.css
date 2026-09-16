@@ -4,25 +4,25 @@
 
   margin-bottom: 1.6rem;
   font-weight: 800;
-  letter-spacing: -1%;
   color: var(--pneumatic-color-black100);
+  letter-spacing: -1%;
 }
 
 .description .textarea {
   @mixin text-base;
 
+  min-height: 12rem;
   padding: 1rem 1.6rem;
   overflow: hidden;
-  min-height: 12rem;
+  color: var(--pneumatic-color-black100);
   cursor: text;
   resize: none;
-  color: var(--pneumatic-color-black100);
   background: var(--pneumatic-color-black4);
   border: 0.1rem solid var(--pneumatic-color-black16);
   border-radius: 0.6rem;
 
   &:focus {
-    border-color: var(--pneumatic-color--black48);
+    border-color: var(--pneumatic-color-black48);
   }
 }
 
