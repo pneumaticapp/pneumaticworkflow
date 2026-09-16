@@ -448,7 +448,7 @@ services:
       LOGS_CONSUMER_BATCH_SIZE: ${LOGS_CONSUMER_BATCH_SIZE:-1000}
     volumes:
       - ./backend:/pneumatic_backend
-    command: celery --pidfile= --app src.celery_app:app beat -l warning -S django
+    command: celery --app src.celery_app:app beat -l warning -S django
     depends_on:
       postgres:
         condition: service_started
