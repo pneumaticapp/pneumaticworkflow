@@ -38,7 +38,6 @@ from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
 from src.logs.enums import AccountEventStatus
 from src.logs.service import AccountLogService
-from src.notifications.enums import EmailProvider
 from src.notifications.tasks import (
     send_user_created_notification,
     send_user_updated_notification,
@@ -161,21 +160,19 @@ class UserInviteService(
 
         self.identify(user)
         invite_token = self._get_invite_token(user)
-        if settings.EMAIL_PROVIDER == EmailProvider.SMTP:
-            send_invite_notification.delay(
-                user_id=user.id,
-                user_email=user.email,
-                account_id=self.account.id,
-                token=invite_token,
-                logo_lg=self.account.logo_lg,
-                logging=self.account.log_api_requests,
-            )
-        else:
-            AnalyticService.users_invited(
-                invite_to=user,
-                is_superuser=self.is_superuser,
-                invite_token=invite_token,
-            )
+        send_invite_notification.delay(
+            user_id=user.id,
+            user_email=user.email,
+            account_id=self.account.id,
+            token=invite_token,
+            logo_lg=self.account.logo_lg,
+            logging=self.account.log_api_requests,
+        )
+        AnalyticService.users_invited(
+            invite_to=user,
+            is_superuser=self.is_superuser,
+            invite_token=invite_token,
+        )
         if self.account.log_api_requests:
             AccountLogService().email_message(
                 title=f'Email to: {user.email}: Invite sent',

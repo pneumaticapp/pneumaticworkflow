@@ -646,6 +646,7 @@ def test_validate_limit_invites__not_premium_plan__not_raise(plan):
 
 
 def test__user_invite_actions__ok(mocker):
+
     # arrange
     request_user = create_test_user()
     invited_user = create_invited_user(user=request_user)
@@ -665,6 +666,9 @@ def test__user_invite_actions__ok(mocker):
     )
     users_invite_sent_mock = mocker.patch(
         'src.analysis.services.AnalyticService.users_invite_sent',
+    )
+    send_invite_notification_mock = mocker.patch(
+        'src.accounts.services.user_invite.send_invite_notification.delay',
     )
     email_message_log = mocker.patch(
         'src.logs.service.AccountLogService.email_message',
@@ -687,6 +691,14 @@ def test__user_invite_actions__ok(mocker):
         invite_token=invite_token_str,
     )
     email_message_log.assert_not_called()
+    send_invite_notification_mock.assert_called_once_with(
+        user_id=invited_user.id,
+        user_email=invited_user.email,
+        account_id=request_user.account.id,
+        token=invite_token_str,
+        logo_lg=request_user.account.logo_lg,
+        logging=request_user.account.log_api_requests,
+    )
     users_invite_sent_mock.assert_called_once_with(
         invite_from=request_user,
         invite_to=invited_user,
@@ -716,6 +728,9 @@ def test__user_invite_actions__enable_logging__create_event(mocker):
     )
     users_invite_sent_mock = mocker.patch(
         'src.analysis.services.AnalyticService.users_invite_sent',
+    )
+    mocker.patch(
+        'src.accounts.services.user_invite.send_invite_notification.delay',
     )
     email_message_log = mocker.patch(
         'src.logs.service.AccountLogService.email_message',
