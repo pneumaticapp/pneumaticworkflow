@@ -114,7 +114,7 @@ class OpenAICompatibleVendor(BaseVendor):
             method='POST',
             url=self._create_url('chat/completions'),
             headers=self._auth_headers(),
-            json={
+            data={
                 'model': model,
                 'messages': [
                     {
