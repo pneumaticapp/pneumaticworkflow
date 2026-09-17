@@ -122,10 +122,10 @@ export const sendForgotPasswordSuccess: (payload?: void) => TSendForgotPasswordS
   void
 >(EAuthActions.ForgotPasswordSuccess);
 
-export type TSendForgotPasswordFail = ITypedReduxAction<EAuthActions.ForgotPasswordFail, void>;
-export const sendForgotPasswordFail: (payload?: void) => TSendForgotPasswordFail = actionGenerator<
+export type TSendForgotPasswordFail = ITypedReduxAction<EAuthActions.ForgotPasswordFail, boolean>;
+export const sendForgotPasswordFail: (payload?: boolean) => TSendForgotPasswordFail = actionGenerator<
   EAuthActions.ForgotPasswordFail,
-  void
+  boolean
 >(EAuthActions.ForgotPasswordFail);
 
 export type TSendResetPassword = ITypedReduxAction<EAuthActions.ResetPassword, IConfirmResetPassword>;

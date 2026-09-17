@@ -1,3 +1,5 @@
+import { put } from 'redux-saga/effects';
+
 import { configMock } from '../../../__stubs__/configMock';
 jest.mock('../../../utils/getConfig', () => ({
   getBrowserConfigEnv: jest.fn().mockReturnValue(configMock),
@@ -10,7 +12,7 @@ import {
   registerWithEmailPassword,
   registerWithInvite,
 } from '../saga';
-import { registerUser, registerUserInvited } from '../actions';
+import { registerUser, registerUserInvited, sendForgotPassword, sendForgotPasswordFail } from '../actions';
 import { setJwtCookie } from '../../../utils/authCookie';
 import { setOAuthRegistrationCompleted } from '../../../api/setOAuthRegistrationCompleted';
 import { getOAuthId, getOAuthType } from '../../../utils/auth';
@@ -292,6 +294,57 @@ describe('saga', () => {
 
       expect(mockGetErrorMessage).toHaveBeenCalledWith(fsError);
       expect(mockNotifyApiError).toHaveBeenCalledWith(fsError, { message: 'file-service.permission-denied' });
+    });
+  });
+
+  describe('sendPasswordReset', () => {
+    let sendPasswordResetSaga: any;
+
+    const mockNotifyApiError = jest.fn();
+
+    beforeEach(() => {
+      jest.resetModules();
+      jest.clearAllMocks();
+
+      jest.mock('../../../utils/getConfig', () => ({
+        getBrowserConfigEnv: jest.fn().mockReturnValue(configMock),
+        getBrowserConfig: jest.fn().mockReturnValue(configMock),
+      }));
+      jest.mock('../../../components/UI/Notifications', () => ({
+        NotificationManager: { success: jest.fn(), notifyApiError: mockNotifyApiError },
+      }));
+      jest.mock('../../../utils/logger', () => ({
+        logger: { error: jest.fn(), info: jest.fn() },
+      }));
+      jest.mock('../../../utils/getErrorMessage', () => ({
+        getErrorMessage: jest.fn(() => 'error'),
+      }));
+
+      const saga = require('../saga');
+      sendPasswordResetSaga = saga.sendPasswordReset;
+    });
+
+    it('marks captcha as required without a notification when the API returns a captcha error', () => {
+      const captchaError = { response: { status: 400, data: { captcha: ['This field is required.'] } } };
+
+      const gen = sendPasswordResetSaga(sendForgotPassword({ email: 'example@pneumatic.app' }));
+      gen.next();
+      const { value } = gen.throw(captchaError);
+
+      expect(value).toEqual(put(sendForgotPasswordFail(true)));
+      expect(gen.next().done).toBe(true);
+      expect(mockNotifyApiError).not.toHaveBeenCalled();
+    });
+
+    it('notifies and fails as usual on any other error', () => {
+      const error = new Error('boom');
+
+      const gen = sendPasswordResetSaga(sendForgotPassword({ email: 'example@pneumatic.app' }));
+      gen.next();
+      const { value } = gen.throw(error);
+
+      expect(mockNotifyApiError).toHaveBeenCalledWith(error, { message: 'error' });
+      expect(value).toEqual(put(sendForgotPasswordFail()));
     });
   });
 });

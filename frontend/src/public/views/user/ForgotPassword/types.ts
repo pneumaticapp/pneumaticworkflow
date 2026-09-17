@@ -2,6 +2,7 @@ import { TForgotPassword } from '../../../redux/actions';
 
 export interface IForgotPasswordProps {
   loading?: boolean;
+  isCaptchaRequired?: boolean;
   sendForgotPassword(payload: TForgotPassword): void;
 }
 

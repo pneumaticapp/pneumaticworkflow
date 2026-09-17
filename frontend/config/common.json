@@ -34,7 +34,6 @@
       "deleteUser": "/api/accounts/users/:id/delete",
       "registerUrl": "/api/auth/signup",
       "resetPassword": "/api/auth/reset-password",
-      "getResetPasswordCaptcha": "/api/auth/reset-password/captcha",
       "resetPasswordSet": "/api/auth/reset-password/confirm",
       "signOut": "/api/auth/signout",
       "oAuthGoogle": "/oauth/google",
