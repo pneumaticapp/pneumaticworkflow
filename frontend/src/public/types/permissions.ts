@@ -1,4 +1,3 @@
-/** Object types the permissions API can answer for (backend PermissionObjectType). */
 export enum EPermissionObjectType {
   Workflow = 'workflow',
 }

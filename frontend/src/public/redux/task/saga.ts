@@ -125,8 +125,6 @@ function* fetchTask({ payload: { taskId, viewMode } }: TLoadCurrentTask) {
     yield put(setCurrentTask(formattedTask));
 
     if (viewMode !== ETaskCardViewMode.Guest) {
-      // Sub-workflow cards carry the same controls as the workflows page, so they need the same
-      // permissions. Guests are skipped: the endpoint is not available to a guest token.
       const subWorkflowIds = (task.subWorkflows || []).map(({ id }) => id);
       if (subWorkflowIds.length) {
         yield put(

@@ -70,7 +70,6 @@ export interface IApplicationState {
   permissions: IPermissionsStore;
 }
 
-/** Effective permissions of the current user, kept per object type and keyed by object id. */
 export type IPermissionsStore = {
   [objType in EPermissionObjectType]: TObjectPermissionsById;
 } & {

@@ -361,8 +361,6 @@ function* fetchWorkflowsList({ payload: offset = 0 }: PayloadAction<number>) {
     const items = offset > 0 ? uniqBy([...workflowsList.items, ...formattedResults], 'id') : formattedResults;
 
     yield put(changeWorkflowsList({ count, offset, items: mapWorkflowsAddComputedPropsToRedux(items) }));
-    // Asked per page and not awaited: the list renders at once and the controls appear as soon
-    // as the permissions for that page arrive.
     yield put(
       loadObjectPermissions({
         objType: EPermissionObjectType.Workflow,

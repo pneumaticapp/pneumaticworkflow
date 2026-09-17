@@ -73,8 +73,6 @@ export function mapStateToProps({
     fullscreenImage: { isOpen: isFullscreenImageOpen },
   },
 }: IApplicationState): TStoreProps {
-  // Editing the workflow is the same right the controls need, so it comes from the same answer
-  // and stays false until the permissions request for this workflow lands.
   const canEdit = workflow ? Boolean(permissions[EPermissionObjectType.Workflow][workflow.id]?.hasChange) : false;
 
   return {
