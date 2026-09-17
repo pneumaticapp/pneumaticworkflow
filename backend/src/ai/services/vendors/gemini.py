@@ -96,7 +96,7 @@ class GeminiVendor(BaseVendor):
             method='POST',
             url=self._create_url(self._completion_path(model)),
             headers=self._auth_headers(),
-            json={
+            data={
                 'systemInstruction': {
                     'parts': [{'text': system_message}],
                 },
