@@ -1,23 +1,15 @@
 import { createAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { IPermissionsStore } from '../../types/redux';
-import { EPermissionObjectType, IObjectPermissionResponseItem } from '../../types/permissions';
+import { EPermissionObjectType } from '../../types/permissions';
 import { EAuthActions, TAuthUserResult } from '../auth/actions';
+
+import { ILoadObjectPermissionsPayload, ISetObjectPermissionsPayload } from './types';
 
 const initialState: IPermissionsStore = {
   userId: null,
   [EPermissionObjectType.Workflow]: {},
 };
-
-export interface ILoadObjectPermissionsPayload {
-  objType: EPermissionObjectType;
-  objIds: number[];
-}
-
-export interface ISetObjectPermissionsPayload {
-  objType: EPermissionObjectType;
-  permissions: IObjectPermissionResponseItem[];
-}
 
 export const loadObjectPermissions = createAction<ILoadObjectPermissionsPayload>('permissions/loadObjectPermissions');
 

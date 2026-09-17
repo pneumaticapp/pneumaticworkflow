@@ -5,7 +5,8 @@ import { getUserObjectPermissions } from '../../api/getUserObjectPermissions';
 import { IObjectPermissionResponseItem } from '../../types/permissions';
 import { logger } from '../../utils/logger';
 
-import { ILoadObjectPermissionsPayload, loadObjectPermissions, setObjectPermissions } from './slice';
+import { loadObjectPermissions, setObjectPermissions } from './slice';
+import { ILoadObjectPermissionsPayload } from './types';
 
 export function* fetchObjectPermissions({
   payload: { objType, objIds },
