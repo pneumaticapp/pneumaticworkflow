@@ -187,12 +187,9 @@ services:
       - backend-socket:/tmp/gunicorn
       - backend-staticfiles:/pneumatic_backend/staticfiles
     depends_on:
-      postgres:
-        condition: service_started
-      rabbitmq:
-        condition: service_started
-      redis:
-        condition: service_started
+      - postgres
+      - rabbitmq
+      - redis
     healthcheck:
       test: ["CMD", "pg_isready", "-h", postgres]
       interval: 5s
@@ -320,15 +317,9 @@ services:
     command: >
       sh -c "celery --app src.celery_app:app worker -l warning"
     depends_on:
-      postgres:
-        condition: service_started
-      rabbitmq:
-        condition: service_started
-      redis:
-        condition: service_started
-      otel-collector:
-        condition: service_started
-        required: false
+      - postgres
+      - rabbitmq
+      - redis
     networks:
       - pneumatic
     restart: always
@@ -450,12 +441,9 @@ services:
       - ./backend:/pneumatic_backend
     command: celery --app src.celery_app:app beat -l warning -S django
     depends_on:
-      postgres:
-        condition: service_started
-      rabbitmq:
-        condition: service_started
-      redis:
-        condition: service_started
+      - postgres
+      - rabbitmq
+      - redis
     networks:
       - pneumatic
     restart: always
