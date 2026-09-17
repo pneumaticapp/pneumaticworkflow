@@ -1,6 +1,7 @@
 import { put } from 'redux-saga/effects';
 
 import { configMock } from '../../../__stubs__/configMock';
+import { ApiError } from '../../../api/commonRequest';
 jest.mock('../../../utils/getConfig', () => ({
   getBrowserConfigEnv: jest.fn().mockReturnValue(configMock),
   getBrowserConfig: jest.fn().mockReturnValue(configMock),
@@ -325,7 +326,7 @@ describe('saga', () => {
     });
 
     it('marks captcha as required without a notification when the API returns a captcha error', () => {
-      const captchaError = { response: { status: 400, data: { captcha: ['This field is required.'] } } };
+      const captchaError = new ApiError('', { captcha: ['This field is required.'] }, 400);
 
       const gen = sendPasswordResetSaga(sendForgotPassword({ email: 'example@pneumatic.app' }));
       gen.next();

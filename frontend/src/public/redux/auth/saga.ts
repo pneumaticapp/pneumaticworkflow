@@ -375,7 +375,7 @@ export function* sendPasswordReset({ payload }: TSendForgotPassword) {
     });
     yield put(sendForgotPasswordSuccess());
   } catch (error) {
-    if (error?.response?.data?.captcha) {
+    if (error?.data?.captcha) {
       yield put(sendForgotPasswordFail(true));
       return;
     }
