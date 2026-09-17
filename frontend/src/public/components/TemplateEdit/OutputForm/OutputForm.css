@@ -42,12 +42,12 @@
 }
 
 .flow__fieldset-icon-dropdown-menu {
-  padding: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
   width: max-content;
   min-width: 18rem;
   max-height: 24rem;
+  padding: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .flow__fieldset-dropdown-panel {
@@ -61,14 +61,14 @@
 }
 
 .flow__fieldset-readonly-description {
-  margin: 0;
-  padding: 0;
   width: 100%;
+  padding: 0;
+  margin: 0;
   font-family: Nunito, sans-serif;
   font-size: 1.3rem;
   line-height: 2rem;
-  word-break: break-word;
   color: var(--pneumatic-color-black48);
+  overflow-wrap: anywhere;
 }
 
 .flow__fieldset-nested-fields {
@@ -76,9 +76,8 @@
 }
 
 .flow__fieldset-header {
-  word-break: break-word;
-  overflow-wrap: anywhere;
   color: var(--pneumatic-color-black100);
+  overflow-wrap: anywhere;
 }
 
 .flow__fieldset-label {
@@ -87,11 +86,11 @@
 }
 
 .flow__fieldset-title-edit {
-  margin-top: 0.2rem;
-  padding-left: 1.2rem;
   display: inline-flex;
-  align-items: center;
   gap: 0.4rem;
+  align-items: center;
+  padding-left: 1.2rem;
+  margin-top: 0.2rem;
 
   @mixin text-small;
 }
@@ -102,8 +101,8 @@
 
 .flow__fieldset-title-input {
   resize: none;
-  border: none;
   outline: none;
+  border: none;
   field-sizing: content;
 
   &::placeholder {

@@ -1,4 +1,3 @@
-/* eslint-disable */
 /* prettier-ignore */
 import { getQueryStringParams, history } from '../../../utils/history';
 export const UTM_LOCKALSTORAGE_KEY = 'utm';
@@ -12,14 +11,7 @@ export interface IUserUtm {
   gclid?: string;
 }
 
-const UTM_PARAMS = [
-  'utm_source',
-  'utm_medium',
-  'utm_campaign',
-  'utm_term',
-  'utm_content',
-  'gclid',
-];
+const UTM_PARAMS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid'];
 
 export const saveUTMParams = () => {
   const queryString = history.location.search;

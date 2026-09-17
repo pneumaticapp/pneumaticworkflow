@@ -12,7 +12,12 @@ import { trackInviteTeamInPage } from '../../utils/analytics';
 import { getUserFullName } from '../../utils/users';
 import UserDataWithGroup from '../UserDataWithGroup';
 import { EBgColorTypes, UserPerformer } from '../UI/UserPerformer';
-import { EOptionTypes, getUsersDropdownOptionValue, TUsersDropdownOption, UsersDropdown } from '../UI/form/UsersDropdown';
+import {
+  EOptionTypes,
+  getUsersDropdownOptionValue,
+  TUsersDropdownOption,
+  UsersDropdown,
+} from '../UI/form/UsersDropdown';
 import { GuestController } from './GuestsController';
 import { ETaskCardViewMode, TTaskPerformersProps } from './types';
 
@@ -31,12 +36,9 @@ export function TaskPerformers({
   const { formatMessage } = useIntl();
   const groups = useSelector(getRegularGroupsList);
   const guestsControllerRef = useRef<ElementRef<typeof GuestController> | null>(null);
-  const canEditPerformers = status !== ETaskStatus.Completed
-    && workflow?.status !== EWorkflowStatus.Finished
-    && !task.isReadOnlyViewer;
-  const canRemovePerformer = canEditPerformers
-    && task.performers.length > 1
-    && viewMode !== ETaskCardViewMode.Guest;
+  const canEditPerformers =
+    status !== ETaskStatus.Completed && workflow?.status !== EWorkflowStatus.Finished && !task.isReadOnlyViewer;
+  const canRemovePerformer = canEditPerformers && task.performers.length > 1 && viewMode !== ETaskCardViewMode.Guest;
 
   useEffect(() => {
     guestsControllerRef.current?.updateDropdownPosition();
@@ -50,25 +52,28 @@ export function TaskPerformers({
   });
   const userOptions = users.map((user) => mapOption(user, EOptionTypes.User));
   const selectedUsers = users
-    .filter((user) => task.performers.some(
-      ({ sourceId, type }) => Number(sourceId) === user.id && type === ETemplateOwnerType.User,
-    ))
+    .filter((user) =>
+      task.performers.some(({ sourceId, type }) => Number(sourceId) === user.id && type === ETemplateOwnerType.User),
+    )
     .map((user) => mapOption(user, EOptionTypes.User));
   const groupOptions = groups.map((group) => ({
     ...mapOption(group, EOptionTypes.Group),
     type: ETaskPerformerType.UserGroup,
   }));
   const selectedGroups = groups
-    .filter((group) => task.performers.some(
-      ({ sourceId, type }) => Number(sourceId) === group.id && type === ETemplateOwnerType.UserGroup,
-    ))
+    .filter((group) =>
+      task.performers.some(
+        ({ sourceId, type }) => Number(sourceId) === group.id && type === ETemplateOwnerType.UserGroup,
+      ),
+    )
     .map((group) => mapOption(group, EOptionTypes.Group));
-  const changePerformer = (
-    callback: TTaskPerformersProps['addTaskPerformer'] | TTaskPerformersProps['removeTaskPerformer'],
-  ) => ({ id, optionType }: TUsersDropdownOption) => callback({
-    taskId: task.id,
-    userId: { sourceId: id, type: optionType as unknown as ETemplateOwnerType },
-  });
+  const changePerformer =
+    (callback: TTaskPerformersProps['addTaskPerformer'] | TTaskPerformersProps['removeTaskPerformer']) =>
+    ({ id, optionType }: TUsersDropdownOption) =>
+      callback({
+        taskId: task.id,
+        userId: { sourceId: id, type: optionType as unknown as ETemplateOwnerType },
+      });
 
   return (
     <>
@@ -82,17 +87,25 @@ export function TaskPerformers({
           value={[...selectedUsers, ...selectedGroups]}
           onChange={changePerformer(addTaskPerformer)}
           onChangeSelected={changePerformer(removeTaskPerformer)}
-          onUsersInvited={(invitedUsers: TUserListItem[]) => invitedUsers.forEach((user) => addTaskPerformer({
-            taskId: task.id,
-            userId: { sourceId: user.id, type: ETemplateOwnerType.User },
-          }))}
+          onUsersInvited={(invitedUsers: TUserListItem[]) =>
+            invitedUsers.forEach((user) =>
+              addTaskPerformer({
+                taskId: task.id,
+                userId: { sourceId: user.id, type: ETemplateOwnerType.User },
+              }),
+            )
+          }
           onClickInvite={() => trackInviteTeamInPage('Task card')}
           inviteLabel={formatMessage({ id: 'template.invite-team-member' })}
           title={formatMessage({ id: 'task.add-performer' })}
         />
       )}
       {canEditPerformers && viewMode !== ETaskCardViewMode.Guest && (
-        <GuestController ref={guestsControllerRef} taskId={task.id} className={classnames(styles['guest-dropdown'], 'no-print')} />
+        <GuestController
+          ref={guestsControllerRef}
+          taskId={task.id}
+          className={classnames(styles['guest-dropdown'], 'no-print')}
+        />
       )}
       {task.performers.map((performer) => {
         const onClick = canRemovePerformer

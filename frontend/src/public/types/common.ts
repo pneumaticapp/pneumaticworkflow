@@ -1,7 +1,7 @@
 export type TMenuType = 'menu-default' | 'menu-sub-hidden' | 'menu-hidden';
 
 export type TColorType =
-  'light.purple'
+  | 'light.purple'
   | 'light.blue'
   | 'light.green'
   | 'light.orange'

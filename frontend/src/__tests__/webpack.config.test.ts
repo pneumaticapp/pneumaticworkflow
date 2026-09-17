@@ -49,7 +49,12 @@ describe('webpack.config.js', () => {
 
   const loadConfig = (envOverrides: Record<string, string> = {}) => {
     Object.assign(process.env, envOverrides);
-    return require('../../webpack.config.js') as { plugins: IWebpackPlugin[]; entry: unknown; mode: string; devtool: string };
+    return require('../../webpack.config.js') as {
+      plugins: IWebpackPlugin[];
+      entry: unknown;
+      mode: string;
+      devtool: string;
+    };
   };
 
   describe('DefinePlugin configuration', () => {
@@ -57,9 +62,7 @@ describe('webpack.config.js', () => {
       process.env.NODE_ENV = 'production';
       const config = loadConfig({ NODE_ENV: 'production' });
 
-      const definePlugin = config.plugins.find(
-        (p: IWebpackPlugin) => p.constructor.name === 'DefinePlugin',
-      );
+      const definePlugin = config.plugins.find((p: IWebpackPlugin) => p.constructor.name === 'DefinePlugin');
 
       expect(definePlugin).toBeDefined();
       expect(definePlugin!.definitions).toEqual({
@@ -74,9 +77,7 @@ describe('webpack.config.js', () => {
         BACKEND_URL: 'https://example.com',
       });
 
-      const definePlugin = config.plugins.find(
-        (p: IWebpackPlugin) => p.constructor.name === 'DefinePlugin',
-      );
+      const definePlugin = config.plugins.find((p: IWebpackPlugin) => p.constructor.name === 'DefinePlugin');
 
       expect(definePlugin!.definitions).not.toHaveProperty('process.env');
       const definedKeys = Object.keys(definePlugin!.definitions!);
@@ -89,9 +90,7 @@ describe('webpack.config.js', () => {
     it('main template does not have mcsRunEnv property', () => {
       const config = loadConfig({ NODE_ENV: 'production' });
 
-      const htmlPlugins = config.plugins.filter(
-        (p: IWebpackPlugin) => p.constructor.name === 'HtmlWebpackPlugin',
-      );
+      const htmlPlugins = config.plugins.filter((p: IWebpackPlugin) => p.constructor.name === 'HtmlWebpackPlugin');
 
       const mainPlugin = htmlPlugins.find((p: IWebpackPlugin) => p.options?.filename === 'main.ejs');
       expect(mainPlugin).toBeDefined();
@@ -101,9 +100,7 @@ describe('webpack.config.js', () => {
     it('forms template does not have mcsRunEnv property', () => {
       const config = loadConfig({ NODE_ENV: 'production' });
 
-      const htmlPlugins = config.plugins.filter(
-        (p: IWebpackPlugin) => p.constructor.name === 'HtmlWebpackPlugin',
-      );
+      const htmlPlugins = config.plugins.filter((p: IWebpackPlugin) => p.constructor.name === 'HtmlWebpackPlugin');
 
       const formsPlugin = htmlPlugins.find((p: IWebpackPlugin) => p.options?.filename === 'forms.ejs');
       expect(formsPlugin).toBeDefined();
@@ -126,8 +123,7 @@ describe('webpack.config.js', () => {
 
       const hasSentryPlugin = config.plugins.some(
         (p: IWebpackPlugin) =>
-          p.constructor.name.toLowerCase().includes('sentry') ||
-          (p.options && p.options.authToken),
+          p.constructor.name.toLowerCase().includes('sentry') || (p.options && p.options.authToken),
       );
       expect(hasSentryPlugin).toBe(false);
     });

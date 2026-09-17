@@ -65,9 +65,7 @@ describe('DateFilter', () => {
 
     userEvent.click(screen.getByRole('textbox'));
 
-    const dayButtons = document.querySelectorAll(
-      '.react-datepicker__day:not(.react-datepicker__day--outside-month)',
-    );
+    const dayButtons = document.querySelectorAll('.react-datepicker__day:not(.react-datepicker__day--outside-month)');
     expect(dayButtons.length).toBeGreaterThan(1);
 
     await act(async () => {

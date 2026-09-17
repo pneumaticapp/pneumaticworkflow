@@ -5,9 +5,9 @@
 
 .field-column__file-item {
   margin-right: 0.4rem;
+  color: var(--pneumatic-color-link-dark);
   text-decoration: none;
   cursor: pointer;
-  color: var(--pneumatic-color-link-dark);
   transition: color 0.1s ease-in-out;
 }
 
@@ -17,18 +17,18 @@
 
 .field-column__file-item svg {
   position: relative;
-  margin-right: 0.8rem;
   display: inline;
+  margin-right: 0.8rem;
 }
 
 .field-column__image-icon {
-  fill: var(--pneumatic-color-link-dark);
   top: -0.1rem;
+  fill: var(--pneumatic-color-link-dark);
 }
 
 .field-column__document-icon {
-  fill: var(--pneumatic-color-link-dark);
   top: -0.15rem;
+  fill: var(--pneumatic-color-link-dark);
 }
 
 .field-column__file-item:hover svg {
@@ -36,8 +36,8 @@
 }
 
 .field-column__url {
-  text-decoration: none;
   color: var(--pneumatic-color-link-dark);
+  text-decoration: none;
   transition: color 0.1s ease-in-out;
 }
 

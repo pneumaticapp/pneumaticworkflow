@@ -38,22 +38,16 @@ function createGlobalVariableRegex(): RegExp {
   return new RegExp(variableRegex.source, `${variableRegex.flags}g`);
 }
 
-export function isKnownVariableApiName(
-  apiName: string,
-  templateVariables?: TTaskVariable[],
-): boolean {
+export function isKnownVariableApiName(apiName: string, templateVariables?: TTaskVariable[]): boolean {
   const normalized = apiName.trim();
   if (normalized === '') return false;
 
   return templateVariables?.some((variable) => variable.apiName === normalized) ?? false;
 }
 
-export function removeUnknownVariableTokens(
-  text: string,
-  templateVariables?: TTaskVariable[],
-): string {
+export function removeUnknownVariableTokens(text: string, templateVariables?: TTaskVariable[]): string {
   return text.replace(createGlobalVariableRegex(), (match, apiName: string) =>
-    (isKnownVariableApiName(apiName, templateVariables) ? match : ''),
+    isKnownVariableApiName(apiName, templateVariables) ? match : '',
   );
 }
 
@@ -135,13 +129,10 @@ export function parseTextWithVariables(
   return nodes;
 }
 
-export function createVariableTransformer(
-  templateVariables?: TTaskVariable[],
-): TextMatchTransformer {
+export function createVariableTransformer(templateVariables?: TTaskVariable[]): TextMatchTransformer {
   return {
     dependencies: [VariableNode],
-    export: (node) =>
-      $isVariableNode(node) ? `{{${node.getApiName()}}}` : null,
+    export: (node) => ($isVariableNode(node) ? `{{${node.getApiName()}}}` : null),
     importRegExp: variableRegex,
     regExp: variableRegex,
     replace: (textNode, match) => {

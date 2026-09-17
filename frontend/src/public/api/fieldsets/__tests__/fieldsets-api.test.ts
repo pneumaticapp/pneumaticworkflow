@@ -1,4 +1,3 @@
-
 jest.mock('../../../utils/getConfig', () => {
   const config = require('../../../../../config/common.json');
   return {
@@ -96,11 +95,9 @@ describe('fieldsets API clients', () => {
       await getFieldsets({});
 
       expect(commonRequest).toHaveBeenCalledTimes(1);
-      expect(commonRequest).toHaveBeenCalledWith(
-        MOCK_URLS.fieldsets,
-        expect.objectContaining({ method: 'GET' }),
-        { shouldThrow: true },
-      );
+      expect(commonRequest).toHaveBeenCalledWith(MOCK_URLS.fieldsets, expect.objectContaining({ method: 'GET' }), {
+        shouldThrow: true,
+      });
     });
 
     it('adds limit and offset to query string', async () => {
@@ -215,7 +212,6 @@ describe('fieldsets API clients', () => {
       );
     });
   });
-
 
   describe('cloneFieldset', () => {
     it('calls commonRequest with POST, URL with substituted id, no body, shouldThrow', async () => {

@@ -6,7 +6,9 @@ export type TRemoveNotificationItemRequest = {
 };
 
 export function removeNotificationItem(data: TRemoveNotificationItemRequest) {
-  const { api: { urls } } = getBrowserConfigEnv();
+  const {
+    api: { urls },
+  } = getBrowserConfigEnv();
 
   return commonRequest(
     urls.removeNotificationItem.replace(':id', String(data.notificationId)),

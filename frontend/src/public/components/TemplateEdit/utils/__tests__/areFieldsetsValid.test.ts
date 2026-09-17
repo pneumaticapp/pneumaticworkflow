@@ -19,9 +19,7 @@ describe('areFieldsetsValid', () => {
   });
 
   it('returns false when a fieldset title is only whitespace', () => {
-    const fieldsets = [
-      makeFieldsetBindingClient({ title: '   ' }),
-    ];
+    const fieldsets = [makeFieldsetBindingClient({ title: '   ' })];
     expect(areFieldsetsValid(fieldsets)).toBe(false);
   });
 

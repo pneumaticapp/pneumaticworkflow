@@ -1,4 +1,3 @@
-/* eslint-disable */
 /* prettier-ignore */
 import * as React from 'react';
 
@@ -13,12 +12,7 @@ export function CreatableIcon({ fill = 'currentColor', ...rest }: TCreatableIcon
         fill={fill}
         d="M18 15V13H29V15H18ZM18 27H29V25H18V27ZM29 21H18V19H29V21Z"
       />
-      <path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        fill={fill}
-        d="M17 14H15V26H17L14 29L11 26H13V14H11L14 11L17 14Z"
-      />
+      <path fillRule="evenodd" clipRule="evenodd" fill={fill} d="M17 14H15V26H17L14 29L11 26H13V14H11L14 11L17 14Z" />
     </svg>
   );
 }

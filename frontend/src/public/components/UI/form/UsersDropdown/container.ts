@@ -4,13 +4,16 @@ import { IApplicationState } from '../../../../types/redux';
 import { openTeamInvitesPopup } from '../../../../redux/team/slice';
 import { TUsersDropdownOption, IUsersDropdownProps, UsersDropdownComponent } from './UsersDropdown';
 
-type TStoreProps = Pick<IUsersDropdownProps<TUsersDropdownOption>, 'isTeamInvitesModalOpen' | 'recentInvitedUsers' | 'isAdmin' | 'users'>;
+type TStoreProps = Pick<
+  IUsersDropdownProps<TUsersDropdownOption>,
+  'isTeamInvitesModalOpen' | 'recentInvitedUsers' | 'isAdmin' | 'users'
+>;
 type TDispatchProps = Pick<IUsersDropdownProps<TUsersDropdownOption>, 'openTeamInvitesPopup'>;
 
 function mapStateToProps({
   team: { isInvitesPopupOpen: isTeamInvitesModalOpen, recentInvitedUsers },
   authUser: { isAdmin },
-  accounts: { users }
+  accounts: { users },
 }: IApplicationState): TStoreProps {
   return {
     users,

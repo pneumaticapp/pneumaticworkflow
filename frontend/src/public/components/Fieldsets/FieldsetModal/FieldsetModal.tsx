@@ -11,11 +11,7 @@ import {
   createFieldsetAction,
   updateFieldsetAction,
 } from '../../../redux/fieldsets/slice';
-import {
-  isCreateModalOpen,
-  isEditModalOpen,
-  getCurrentFieldset,
-} from '../../../redux/selectors/fieldsets';
+import { isCreateModalOpen, isEditModalOpen, getCurrentFieldset } from '../../../redux/selectors/fieldsets';
 
 import { EFieldsetModalType, IFieldsetModalProps } from './types';
 import styles from './FieldsetModal.css';
@@ -103,9 +99,7 @@ export function FieldsetModal({ type }: IFieldsetModalProps) {
         <Header tag="p" size="6" className={styles['fieldset-modal__title']}>
           {formatMessage({ id: title })}
         </Header>
-        <p className={styles['fieldset-modal__description']}>
-          {formatMessage({ id: description })}
-        </p>
+        <p className={styles['fieldset-modal__description']}>{formatMessage({ id: description })}</p>
         <form onSubmit={handleSubmit} data-autofocus-first-field>
           <InputField
             autoFocus
