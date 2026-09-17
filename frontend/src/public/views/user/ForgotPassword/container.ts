@@ -1,6 +1,7 @@
 import { connect } from 'react-redux';
 
-import { ForgotPassword, IForgotPasswordProps } from './ForgotPassword';
+import { ForgotPassword } from './ForgotPassword';
+import { IForgotPasswordProps } from './types';
 import { IApplicationState } from '../../../types/redux';
 import { sendForgotPassword } from '../../../redux/auth/actions';
 

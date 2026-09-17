@@ -7,7 +7,6 @@ import ReCAPTCHA from 'react-google-recaptcha';
 import { ERoutes } from '../../../constants/routes';
 import { TITLES } from '../../../constants/titles';
 import { IntlMessages } from '../../../components/IntlMessages';
-import { TForgotPassword } from '../../../redux/actions';
 import { validateEmail } from '../../../utils/validators';
 import { Header, InputField, Button } from '../../../components/UI';
 import { getResetPasswordCaptcha } from '../../../api/getResetPasswordCaptcha';
@@ -17,6 +16,8 @@ import { logger } from '../../../utils/logger';
 import styles from '../User.css';
 import { getErrorsObject } from '../../../utils/formik/getErrorsObject';
 import { isEnvCaptcha, isEnvSignup } from '../../../constants/enviroment';
+
+import { ICaptchaFieldProps, IForgotPasswordProps, TForgotPasswordValues } from './types';
 
 const INITIAL_VALUES_FORMIK: TForgotPasswordValues = {
   email: '',
@@ -163,18 +164,4 @@ function CaptchaField({ resetSignal }: ICaptchaFieldProps) {
       />
     </div>
   );
-}
-
-export interface IForgotPasswordProps {
-  loading?: boolean;
-  sendForgotPassword(payload: TForgotPassword): void;
-}
-
-export type TForgotPasswordValues = {
-  email: string;
-  captcha: string;
-};
-
-interface ICaptchaFieldProps {
-  resetSignal: number;
 }
