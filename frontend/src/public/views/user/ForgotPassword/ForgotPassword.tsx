@@ -40,8 +40,6 @@ export function ForgotPassword({ loading, sendForgotPassword }: IForgotPasswordP
   }, []);
 
   useEffect(() => {
-    // re-check after a completed request: the backend counts each attempt,
-    // so a retry on the same page may require captcha
     if (isEnvCaptcha && prevLoadingRef.current && !loading) {
       checkCaptchaNeeded();
       // captcha tokens are single-use: force a fresh challenge for a retry
@@ -143,8 +141,7 @@ function CaptchaField({ resetSignal }: ICaptchaFieldProps) {
   const { setFieldValue, validateForm } = useFormikContext<TForgotPasswordValues>();
 
   useEffect(() => {
-    // the widget just appeared: captcha is now required, re-run validation
-    // (Formik doesn't re-validate on external state changes)
+    // Formik doesn't re-validate on external state changes
     validateForm();
   }, [validateForm]);
 
