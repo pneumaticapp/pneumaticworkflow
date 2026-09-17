@@ -10,7 +10,7 @@ import { IntlMessages } from '../../../components/IntlMessages';
 import { TForgotPassword } from '../../../redux/actions';
 import { validateEmail } from '../../../utils/validators';
 import { Header, InputField, Button } from '../../../components/UI';
-import { prepareResetPassword } from '../../../api/prepareResetPassword';
+import { getResetPasswordCaptcha } from '../../../api/getResetPasswordCaptcha';
 import { getBrowserConfigEnv } from '../../../utils/getConfig';
 import { logger } from '../../../utils/logger';
 
@@ -53,9 +53,9 @@ export function ForgotPassword({ loading, sendForgotPassword }: IForgotPasswordP
     setIsCheckingCaptcha(true);
 
     try {
-      const prepareResult = await prepareResetPassword();
+      const result = await getResetPasswordCaptcha();
 
-      if (prepareResult?.showCaptcha) {
+      if (result?.showCaptcha) {
         setShowCaptcha(true);
       }
     } catch (error) {

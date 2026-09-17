@@ -1,17 +1,17 @@
 import { commonRequest } from './commonRequest';
 import { getBrowserConfigEnv } from '../utils/getConfig';
 
-export interface IPrepareResetPasswordResponse {
+export interface IGetResetPasswordCaptchaResponse {
   showCaptcha: boolean;
 }
 
-export function prepareResetPassword() {
+export function getResetPasswordCaptcha() {
   const {
     api: { urls },
   } = getBrowserConfigEnv();
 
-  return commonRequest<IPrepareResetPasswordResponse>(
-    urls.resetPasswordCaptcha,
+  return commonRequest<IGetResetPasswordCaptchaResponse>(
+    urls.getResetPasswordCaptcha,
     {},
     {
       type: 'local',
