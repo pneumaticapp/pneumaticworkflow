@@ -19,10 +19,13 @@ export function getUserObjectPermissions({ objType, objIds }: IGetUserObjectPerm
     api: { urls },
   } = getBrowserConfigEnv();
 
-  const queryString = `obj_type=${objType}&obj_ids=${objIds.join(',')}`;
+  const params = new URLSearchParams({
+    obj_type: objType,
+    obj_ids: objIds.join(','),
+  });
 
   return commonRequest<IObjectPermissionResponseItem[]>(
-    `${urls.userObjectPermissions}?${queryString}`,
+    `${urls.getUserObjectPermissions}?${params}`,
     {},
     { shouldThrow: true },
   );
