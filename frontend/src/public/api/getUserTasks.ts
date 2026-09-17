@@ -1,6 +1,11 @@
 import { commonRequest } from './commonRequest';
 import { getBrowserConfigEnv } from '../utils/getConfig';
-import { TTaskListItemResponse, ETaskListSorting, ETaskListCompletionStatus, ETaskListCompleteSorting } from '../types/tasks';
+import {
+  TTaskListItemResponse,
+  ETaskListSorting,
+  ETaskListCompletionStatus,
+  ETaskListCompleteSorting,
+} from '../types/tasks';
 import { ETimeouts } from '../constants/defaultValues';
 
 export interface IGetTasksResponse {

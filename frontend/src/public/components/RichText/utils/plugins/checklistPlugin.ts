@@ -27,11 +27,7 @@ const getLineText = (state: IChecklistBlockState, line: number): string => {
 
 export const checklistPlugin = (
   md: MarkdownIt,
-  {
-    interactiveChecklists,
-    renderCheckPlaceholder,
-    renderProgressbarPlaceholder,
-  }: IChecklistPluginOptions,
+  { interactiveChecklists, renderCheckPlaceholder, renderProgressbarPlaceholder }: IChecklistPluginOptions,
 ): void => {
   md.block.ruler.before('paragraph', 'pneumatic_checklist', (state, startLine, endLine, silent) => {
     const blockState = state as IChecklistBlockState;
@@ -55,7 +51,9 @@ export const checklistPlugin = (
       const currentLineText = getLineText(blockState, currentLine);
       const blockEndMatch = CLIST_END_RE.exec(currentLineText);
       const currentContentStart = currentLine === startLine ? match[0].length : 0;
-      const currentContentEnd = blockEndMatch ? blockEndMatch.index ?? currentLineText.length : currentLineText.length;
+      const currentContentEnd = blockEndMatch
+        ? (blockEndMatch.index ?? currentLineText.length)
+        : currentLineText.length;
 
       totalLabelContent += currentLineText.slice(currentContentStart, currentContentEnd);
 

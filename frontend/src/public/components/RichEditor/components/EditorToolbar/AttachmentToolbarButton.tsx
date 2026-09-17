@@ -33,11 +33,7 @@ const AttachmentToolbarButton = memo(function AttachmentToolbarButton({
 
   return (
     <div className={styles['button-wrapper']}>
-      <CustomTooltip
-        target={buttonRef}
-        tooltipText={tooltipText}
-        isModal={isModal}
-      />
+      <CustomTooltip target={buttonRef} tooltipText={tooltipText} isModal={isModal} />
       <button
         ref={buttonRef}
         type="button"

@@ -97,7 +97,7 @@ function WorkflowEditPopupComponent({
     isLoading ||
     Boolean(validateWorkflowName(workflowName)) ||
     !checkExtraFieldsAreValid(kickoffState?.fields) ||
-    fieldsetStates.some(fieldset => !checkExtraFieldsAreValid(fieldset.fields));
+    fieldsetStates.some((fieldset) => !checkExtraFieldsAreValid(fieldset.fields));
 
   const handleToggleIsUrgent = () => setIsUrgent(!isUrgent);
 

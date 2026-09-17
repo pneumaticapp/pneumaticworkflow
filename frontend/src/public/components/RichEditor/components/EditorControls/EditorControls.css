@@ -4,10 +4,10 @@
 
 .controls {
   display: flex;
-  width: 100%;
-  pointer-events: none;
   align-items: center;
   justify-content: space-between;
+  width: 100%;
+  pointer-events: none;
 }
 
 .controls__send-button {

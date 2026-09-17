@@ -12,11 +12,19 @@ export interface IConfirmResetPasswordResponse {
 }
 
 export function confirmResetPassword(token: string) {
-  const { config: { api: { urls }}} = getBrowserConfig();
+  const {
+    config: {
+      api: { urls },
+    },
+  } = getBrowserConfig();
   const url = `${urls.resetPassword}?token=${token}`;
 
-  return commonRequest<IConfirmResetPasswordResponse>(url, {}, {
-    type: 'local',
-    shouldThrow: true,
-  });
+  return commonRequest<IConfirmResetPasswordResponse>(
+    url,
+    {},
+    {
+      type: 'local',
+      shouldThrow: true,
+    },
+  );
 }

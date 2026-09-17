@@ -25,4 +25,4 @@ export const NEW_PASSWORD_RULES: IRule[] = [
 export const validateOldPassword = validateFieldCreator(OLD_PASSWORD_RULES);
 export const validateNewPassword = validateFieldCreator(NEW_PASSWORD_RULES);
 export const validateProfilePhone = (value: string) =>
-  (isEmpty(value) ? 'validation.phone-number-empty' : validatePhone(value));
+  isEmpty(value) ? 'validation.phone-number-empty' : validatePhone(value);

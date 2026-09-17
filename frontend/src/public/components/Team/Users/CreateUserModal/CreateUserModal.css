@@ -5,8 +5,8 @@
 }
 
 .modal__dropdown--required p::after {
-  content: '*';
   color: var(--pneumatic-color-warning);
+  content: '*';
 }
 
 .modal__option--selected {

@@ -44,8 +44,9 @@ import { InterceptorError } from '../commonRequest';
 
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 const mockInstance = mockedAxios.create.mock.results[0].value;
-const responseErrorHandler = mockInstance.interceptors.response.use.mock.calls[0][1] as
-  (error: AxiosError) => Promise<never>;
+const responseErrorHandler = mockInstance.interceptors.response.use.mock.calls[0][1] as (
+  error: AxiosError,
+) => Promise<never>;
 
 function makeAxiosError(data: Record<string, string>, status: number): AxiosError {
   return {

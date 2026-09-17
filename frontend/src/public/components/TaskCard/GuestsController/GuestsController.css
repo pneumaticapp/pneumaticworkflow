@@ -14,8 +14,8 @@
 .help {
   margin-bottom: 16px;
   line-height: 20px;
-  text-align: center;
   color: var(--pneumatic-color-black48);
+  text-align: center;
 }
 
 .link {

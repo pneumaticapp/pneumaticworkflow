@@ -8,7 +8,9 @@ type Fields = { [key: string]: string };
 export type TRunPublicFornResponse = { redirectUrl: string | null };
 
 export function runPublicForm(captcha: string, fields: Fields) {
-  const { api: { urls } } = getBrowserConfigEnv();
+  const {
+    api: { urls },
+  } = getBrowserConfigEnv();
   const url = urls.runPublicForm;
 
   const { ajs_anonymous_id: anonymousId } = parseCookies(document.cookie);
@@ -17,8 +19,8 @@ export function runPublicForm(captcha: string, fields: Fields) {
     url,
     {
       method: 'POST',
-      data: mapRequestBody({ captcha, fields, anonymousId }, 'default', {ignorePropertyMapToSnakeCase: ['fields']}),
+      data: mapRequestBody({ captcha, fields, anonymousId }, 'default', { ignorePropertyMapToSnakeCase: ['fields'] }),
     },
-    { shouldThrow: true, },
+    { shouldThrow: true },
   );
 }

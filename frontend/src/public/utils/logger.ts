@@ -8,7 +8,11 @@ function findError(args: unknown[]): Error | undefined {
 function logError(...args: unknown[]): void {
   // Temporary: redirect expected API errors to info level (PR #14 will remove this
   // by eliminating duplicate logger.error calls in sagas)
-  if (args.some((arg) => (typeof arg === 'string' || typeof arg === 'object') && arg !== null && isExpectedClientError(arg))) {
+  if (
+    args.some(
+      (arg) => (typeof arg === 'string' || typeof arg === 'object') && arg !== null && isExpectedClientError(arg),
+    )
+  ) {
     logInfo(...args);
     return;
   }
@@ -21,9 +25,7 @@ function logError(...args: unknown[]): void {
     const message =
       args.length === 1 && typeof args[0] === 'string'
         ? args[0]
-        : args
-          .map((a) => (typeof a === 'object' && a !== null ? JSON.stringify(a) : String(a)))
-          .join(' ');
+        : args.map((a) => (typeof a === 'object' && a !== null ? JSON.stringify(a) : String(a))).join(' ');
     sentryCaptureException(new Error(message));
   }
 }

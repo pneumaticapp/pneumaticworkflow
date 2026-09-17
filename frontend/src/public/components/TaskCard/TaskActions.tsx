@@ -57,9 +57,13 @@ export function TaskActions({
           {completedAt ? (
             <>
               {formatMessage({ id: 'task.completed-with-date' })}
-              <span className={styles['completed__text-date']}><DateFormat date={completedAt} /></span>
+              <span className={styles['completed__text-date']}>
+                <DateFormat date={completedAt} />
+              </span>
             </>
-          ) : formatMessage({ id: 'task.completed' })}
+          ) : (
+            formatMessage({ id: 'task.completed' })
+          )}
         </p>
       </div>
     );
@@ -107,16 +111,21 @@ export function TaskActions({
       />
       <div className={classnames(styles.buttons, 'no-print')}>
         <div className={styles['buttons__complete']}>
-          {embeddedWorkflowsComplete ? completeButton : (
+          {embeddedWorkflowsComplete ? (
+            completeButton
+          ) : (
             <Tooltip content={formatMessage({ id: 'task.need-complete-embedded-processes' })}>
               <div>{completeButton}</div>
             </Tooltip>
           )}
         </div>
         {viewMode !== ETaskCardViewMode.Guest && task.revertTasks.length > 0 && (
-          <Tooltip content={embeddedWorkflowsComplete
-            ? formatMessage({ id: 'tasks.task-return-hint' })
-            : formatMessage({ id: 'task.need-return-embedded-processes' })}
+          <Tooltip
+            content={
+              embeddedWorkflowsComplete
+                ? formatMessage({ id: 'tasks.task-return-hint' })
+                : formatMessage({ id: 'task.need-return-embedded-processes' })
+            }
           >
             <div>
               <Button

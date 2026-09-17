@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { EExtraFieldType, IExtraField, TExtraFieldValue } from '../../../../types/template';
 import { getEndOfDayTsp } from '../../../../utils/dateTime';
 import { parseMarkdownToFiles } from '../../../../utils/parseMarkdownFiles';

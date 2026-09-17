@@ -26,15 +26,8 @@ jest.mock('../../../layout', () => ({
 }));
 
 describe('FieldsetsView — fieldsets routing contract', () => {
-
   const renderWithRoute = (url: string) => {
-    return render(
-      React.createElement(
-        MemoryRouter,
-        { initialEntries: [url] },
-        React.createElement(FieldsetsView),
-      ),
-    );
+    return render(React.createElement(MemoryRouter, { initialEntries: [url] }, React.createElement(FieldsetsView)));
   };
 
   beforeEach(() => {

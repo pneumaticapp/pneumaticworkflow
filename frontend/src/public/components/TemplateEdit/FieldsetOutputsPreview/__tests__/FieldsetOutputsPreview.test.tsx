@@ -6,8 +6,7 @@ import { makeFieldsetBindingClient, makeFieldsetField } from '../../../../__stub
 import { FieldsetOutputsPreview } from '../FieldsetOutputsPreview';
 
 describe('FieldsetOutputsPreview', () => {
-  const getFieldsetButton = (fieldsetName: string) =>
-    screen.getByRole('button', { name: new RegExp(fieldsetName) });
+  const getFieldsetButton = (fieldsetName: string) => screen.getByRole('button', { name: new RegExp(fieldsetName) });
 
   it('returns null when fieldsets array is empty', () => {
     const { container } = render(

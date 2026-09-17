@@ -1,5 +1,10 @@
 import { IntlShape } from 'react-intl';
-import { EExtraFieldType, ETaskPerformerType, ITemplateTaskClient, ITemplateTaskPerformer } from '../../../../types/template';
+import {
+  EExtraFieldType,
+  ETaskPerformerType,
+  ITemplateTaskClient,
+  ITemplateTaskPerformer,
+} from '../../../../types/template';
 import { TUserListItem } from '../../../../types/user';
 import { getUserFullName } from '../../../../utils/users';
 import { TTaskVariable } from '../../types';

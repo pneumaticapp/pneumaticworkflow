@@ -1,4 +1,3 @@
-/* eslint-disable import/no-extraneous-dependencies */
 import * as path from 'path';
 import express from 'express';
 import webpack from 'webpack';
@@ -19,6 +18,7 @@ import { SSOProvider } from './types';
 const webpackConfig = require('../../webpack.config');
 
 const { NODE_ENV = 'development' } = process.env;
+
 const devMode = NODE_ENV !== 'production';
 
 const isSSOAuth = process.env.SSO_AUTH !== 'no';

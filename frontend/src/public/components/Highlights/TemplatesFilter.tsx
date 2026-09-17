@@ -43,14 +43,17 @@ export function TemplatesFilter({
 
   const [isShowAllVisibleState, setShowAllVisibleState] = useState(isTemplatesNumberExceeded);
 
-  const setSearchInputRef = useCallback((node: HTMLInputElement | null) => {
-    if (!node || hasFocusedSearchRef.current || isFiltersLoading) {
-      return;
-    }
+  const setSearchInputRef = useCallback(
+    (node: HTMLInputElement | null) => {
+      if (!node || hasFocusedSearchRef.current || isFiltersLoading) {
+        return;
+      }
 
-    node.focus();
-    hasFocusedSearchRef.current = true;
-  }, [isFiltersLoading]);
+      node.focus();
+      hasFocusedSearchRef.current = true;
+    },
+    [isFiltersLoading],
+  );
 
   useEffect(() => {
     setShowAllVisibleState(isSearchFilled ? false : isTemplatesNumberExceeded);
@@ -101,12 +104,7 @@ export function TemplatesFilter({
         />
       )}
       {isFiltersLoading && <div className={classnames('loading', styles['filter__spinner'])} />}
-      <div
-        className={classnames(
-          styles['filter__options'],
-          isFiltersLoading && styles['filter__options--disabled'],
-        )}
-      >
+      <div className={classnames(styles['filter__options'], isFiltersLoading && styles['filter__options--disabled'])}>
         {truncatedTemplates.map((template) => (
           <Checkbox
             key={template.id}
