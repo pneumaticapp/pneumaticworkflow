@@ -52,6 +52,7 @@ from src.processes.serializers.workflows.mixins import (
 from src.processes.serializers.workflows.task import (
     WorkflowCurrentTaskSerializer,
 )
+from src.processes.services.tasks.field_ruleset import FieldRuleSetService
 from src.processes.services.urgent import (
     UrgentService,
 )
@@ -290,6 +291,11 @@ class WorkflowUpdateSerializer(
                         fields_values=fields_values,
                     )
                     self.instance.save(update_fields=['name'])
+                # Kickoff values changed, so show flags on task and
+                # kickoff fields may flip
+                FieldRuleSetService.apply_show_rulesets_for_workflow(
+                    self.instance,
+                )
 
             if update_tasks_kwargs:
                 self._update_tasks(
@@ -403,6 +409,7 @@ class WorkflowDetailsSerializer(
                 queryset=DatasetItem.objects.order_by('order'),
                 to_attr='dataset_values',
             ),
+            'rulesets__groups_or__groups_and',
         ]
         kickoff = (
             KickoffValue.objects
@@ -420,6 +427,8 @@ class WorkflowDetailsSerializer(
                         *field_prefetches,
                     ),
                 ),
+                'fieldsets__rulesets__groups_or__groups_and',
+                'fieldsets__rulesets__fields',
             ).first()
         )
         if kickoff:

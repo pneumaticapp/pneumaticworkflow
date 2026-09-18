@@ -233,7 +233,7 @@ class PredicateTemplateSerializer(
             elif field_type == FieldType.DATE:
                 try:
                     datetime.fromtimestamp(int(value), tz=tz.utc)
-                except (TypeError, ValueError):
+                except (TypeError, ValueError, OverflowError, OSError):
                     raise_validation_error(
                         message=MSG_PT_0080,
                         api_name=api_name,

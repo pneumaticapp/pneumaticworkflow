@@ -17,6 +17,7 @@ from src.processes.models.templates.fieldset import (
     FieldSetTemplateRuleSet,
 )
 from src.processes.services.exceptions import (
+    FieldsetTemplateRuleSetServiceException,
     FieldsetTemplateRuleSumMaxFieldsNotNumber,
     FieldsetTemplateRuleSumMaxInvalidValue,
 )
@@ -371,6 +372,95 @@ def test__get_valid_fields__empty_fields_api_names__ok():
 
     # assert
     assert result == []
+
+
+def test__get_valid_fields__unknown_api_name__exception():
+
+    """
+    Unknown api_name is rejected instead of being dropped from the M2M
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user)
+    fieldset = FieldsetTemplate.objects.create(
+        account=account,
+        template=template,
+        name='Fieldset',
+    )
+    ruleset = FieldSetTemplateRuleSet.objects.create(
+        fieldset=fieldset,
+        account=account,
+        template=template,
+        api_name='fieldset-ruleset-1',
+    )
+    service = FieldsetTemplateRuleSetService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+        instance=ruleset,
+    )
+
+    # act
+    with pytest.raises(FieldsetTemplateRuleSetServiceException) as ex:
+        service._get_valid_fields(fields_api_names=['missing'])
+
+    # assert
+    assert ex.value.message == fs_messages.MSG_FS_0005(
+        rule=ruleset.api_name,
+        field='missing',
+    )
+
+
+def test__get_valid_fields__known_and_unknown__exception():
+
+    """
+    One existing field and one unknown api_name → exception, not a partial M2M
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user)
+    fieldset = FieldsetTemplate.objects.create(
+        account=account,
+        template=template,
+        name='Fieldset',
+    )
+    ruleset = FieldSetTemplateRuleSet.objects.create(
+        fieldset=fieldset,
+        account=account,
+        template=template,
+        api_name='fieldset-ruleset-1',
+    )
+    field = FieldTemplate.objects.create(
+        account=account,
+        template=template,
+        fieldset=fieldset,
+        name='Field 1',
+        type=FieldType.NUMBER,
+        order=1,
+        api_name='field-1',
+    )
+    service = FieldsetTemplateRuleSetService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+        instance=ruleset,
+    )
+
+    # act
+    with pytest.raises(FieldsetTemplateRuleSetServiceException) as ex:
+        service._get_valid_fields(
+            fields_api_names=[field.api_name, 'missing'],
+        )
+
+    # assert
+    assert ex.value.message == fs_messages.MSG_FS_0005(
+        rule=ruleset.api_name,
+        field='missing',
+    )
 
 
 def test__create_instance__default_params__ok():

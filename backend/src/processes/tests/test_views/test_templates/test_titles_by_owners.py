@@ -495,7 +495,6 @@ def test_titles_by_owners__kickoff_fieldset__ok(api_client):
     assert len(fieldset_data['rulesets']) == 1
 
     rule_data = fieldset_data['rulesets'][0]
-    assert rule_data['type'] == ruleset.type
     assert rule_data['api_name'] == ruleset.api_name
     assert rule_data['fields'] == [fieldset_field.api_name]
     assert rule_data['groups_or'][0]['groups_and'][0]['operator'] == (

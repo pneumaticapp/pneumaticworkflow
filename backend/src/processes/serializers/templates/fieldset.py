@@ -155,6 +155,7 @@ class SharedFieldsetTemplateSerializer(
             'label_position',
             'layout',
             'rulesets',
+            'rules',
             'fields',
             'usage',
         )
@@ -226,6 +227,9 @@ class SharedFieldsetTemplateSerializer(
             'conditions inside each group with AND.'
         ),
     )
+    rules = SerializerMethodField(
+        help_text='Deprecated. Use `rulesets` instead.',
+    )
     fields = FieldTemplateSerializer(
         many=True,
         required=False,
@@ -260,3 +264,26 @@ class SharedFieldsetTemplateSerializer(
                 .values('id', 'name')
             )
         return FieldsetUsageSerializer(qst, many=True).data
+
+    def get_rules(self, instance: FieldsetTemplate) -> list:
+
+        """ Flat summary for the frontend catalog card. Maps each
+            ruleset to the old {type, value, fields} shape so the
+            existing FieldsetCard component can render without
+            changes until 48849 migrates to rulesets. """
+
+        result = []
+        for rs in instance.rulesets.all():
+            for group_or in rs.groups_or.all():
+                for group_and in group_or.groups_and.all():
+                    result.append({
+                        'api_name': rs.api_name,
+                        'type': group_and.operator,
+                        'value': group_and.value,
+                        'fields': list(
+                            rs.fields.values_list(
+                                'api_name', flat=True,
+                            ),
+                        ),
+                    })
+        return result

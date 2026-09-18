@@ -15,7 +15,9 @@ from src.processes.models.templates.fieldset import (
     FieldSetTemplateRuleGroupOr,
     FieldSetTemplateRuleSet,
 )
+from src.processes.messages.fieldset import MSG_FS_0005
 from src.processes.services.exceptions import (
+    FieldsetTemplateRuleSetServiceException,
     FieldsetTemplateRuleSumMaxFieldsNotNumber,
     FieldsetTemplateRuleSumMaxInvalidValue,
 )
@@ -90,13 +92,25 @@ class FieldsetTemplateRuleSetService(BaseModelService):
         **kwargs,
     ) -> List[FieldTemplate]:
 
-        return list(
+        available_fields = list(
             FieldTemplate.objects
             .filter(
                 fieldset_id=self.instance.fieldset_id,
                 api_name__in=fields_api_names,
             ),
         )
+        failed_api_names = (
+            set(fields_api_names)
+            - {field.api_name for field in available_fields}
+        )
+        if failed_api_names:
+            raise FieldsetTemplateRuleSetServiceException(
+                message=MSG_FS_0005(
+                    rule=self.instance.api_name,
+                    field=failed_api_names.pop(),
+                ),
+            )
+        return available_fields
 
     def _set_fields(self, fields_api_names: List[str], **kwargs):
         if fields_api_names:

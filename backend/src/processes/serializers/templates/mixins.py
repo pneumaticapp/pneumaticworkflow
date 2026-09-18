@@ -309,6 +309,7 @@ class FieldsetMixin:
                     if (
                         fieldset_data.get('fields')
                         or fieldset_data.get('rulesets')
+                        or fieldset_data.get('rules')
                     ):
                         fieldset = service.create(
                             name=(

@@ -16,10 +16,12 @@ from src.generics.mixins.serializers import (
 from src.processes.enums import FieldRuleOperator, FieldRuleType, FieldType
 from src.processes.messages.template import (
     MSG_PT_0075,
+    MSG_PT_0078,
     MSG_PT_0079,
     MSG_PT_0080,
 )
 from src.processes.models.templates.fields import (
+    FieldTemplate,
     FieldTemplateRuleGroupAnd,
     FieldTemplateRuleGroupOr,
     FieldTemplateRuleSet,
@@ -102,14 +104,55 @@ class FieldTemplateRuleGroupAndSerializer(
         )
         if ruleset_type == FieldRuleType.SHOW and not attrs.get('field'):
             raise ValidationError(MSG_PT_0079)
+        if (
+            ruleset_type == FieldRuleType.SHOW
+            and attrs.get('field')
+            and self.context.get('field')
+            and not self._source_field(attrs)
+        ):
+            raise ValidationError(MSG_PT_0079)
+        source = self._source_field(attrs)
+        if source and attrs.get('operator'):
+            allowed = FieldRuleOperator.ALLOWED_OPERATORS.get(
+                source.type, set(),
+            )
+            if attrs['operator'] not in allowed:
+                raise ValidationError(
+                    MSG_PT_0078(
+                        field=source,
+                        operator=attrs['operator'],
+                        field_type=source.type,
+                    ),
+                )
         return attrs
 
+    def _source_field(self, data: Dict[str, Any]):
+
+        """ The condition compares data['field'], not the ruleset owner.
+            Validator rules leave it empty and read the owner itself. """
+
+        owner = self.context.get('field')
+        source_api_name = data.get('field')
+        if not owner:
+            return None
+        if not source_api_name or source_api_name == owner.api_name:
+            return owner
+        qst = FieldTemplate.objects.filter(
+            account_id=owner.account_id,
+            api_name=source_api_name,
+        )
+        if owner.template_id:
+            qst = qst.filter(template_id=owner.template_id)
+        else:
+            qst = qst.filter(fieldset_id=owner.fieldset_id)
+        return qst.first()
+
     def additional_validate_value(self, value, data: Dict[str, Any]):
-        field = self.context.get('field')
-        if field and field.type == FieldType.DATE and value:
+        source = self._source_field(data)
+        if source and source.type == FieldType.DATE and value:
             try:
                 datetime.fromtimestamp(int(value), tz=tz.utc)
-            except (TypeError, ValueError):
+            except (TypeError, ValueError, OverflowError, OSError):
                 self.raise_validation_error(
                     message=MSG_PT_0080,
                     api_name=data.get('api_name'),

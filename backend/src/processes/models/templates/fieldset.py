@@ -3,6 +3,11 @@ from django.db.models import Q, UniqueConstraint
 
 from src.accounts.models import AccountBaseMixin
 from src.generics.managers import BaseSoftDeleteManager
+from src.processes.querysets import (
+    FieldSetTemplateRuleSetQuerySet,
+    FieldSetTemplateRuleGroupOrQuerySet,
+    FieldSetTemplateRuleGroupAndQuerySet,
+)
 from src.processes.enums import FieldSetRuleOperator
 from src.processes.models.base import BaseApiNameModel
 from src.processes.models.mixins import (
@@ -12,7 +17,8 @@ from src.processes.models.templates.kickoff import Kickoff
 from src.processes.models.templates.template import Template
 from src.processes.models.templates.task import TaskTemplate
 from src.processes.querysets import (
-    FieldsetTemplateQuerySet, FieldsetTemplateRuleQuerySet,
+    FieldsetTemplateQuerySet,
+    FieldsetTemplateRuleQuerySet,
 )
 
 
@@ -113,16 +119,12 @@ class FieldSetTemplateRuleSet(
     BaseApiNameModel,
     AccountBaseMixin,
 ):
+    """ Uniqueness enforced by a NULLS NOT DISTINCT index
+        in migration 0260_add_template_rulesets (Raw SQL).
+        Django 2.2 cannot express this via ORM constraints. """
 
     class Meta:
         ordering = ['order', 'id']
-        constraints = [
-            UniqueConstraint(
-                fields=['template', 'api_name', 'account'],
-                condition=Q(is_deleted=False),
-                name='fieldsetruleset_fieldset_api_name_unique',
-            ),
-        ]
 
     api_name_prefix = 'fieldset-ruleset'
     template = models.ForeignKey(
@@ -149,24 +151,22 @@ class FieldSetTemplateRuleSet(
         related_name='fieldset_rulesets',
     )
 
+    objects = BaseSoftDeleteManager.from_queryset(
+        FieldSetTemplateRuleSetQuerySet,
+    )()
+
     def __str__(self):
-        return f'{self.type} / {self.api_name}'
+        return self.api_name
 
 
 class FieldSetTemplateRuleGroupOr(
     BaseApiNameModel,
     AccountBaseMixin,
 ):
+    """ Uniqueness: see FieldSetTemplateRuleSet docstring. """
 
     class Meta:
         ordering = ['id']
-        constraints = [
-            UniqueConstraint(
-                fields=['api_name', 'template', 'account'],
-                condition=Q(is_deleted=False),
-                name='fieldset_rulegroupor_field_rule_api_name_unique',
-            ),
-        ]
 
     api_name_prefix = 'fieldset-rule-group-or'
     template = models.ForeignKey(
@@ -182,6 +182,10 @@ class FieldSetTemplateRuleGroupOr(
         related_name='groups_or',
     )
 
+    objects = BaseSoftDeleteManager.from_queryset(
+        FieldSetTemplateRuleGroupOrQuerySet,
+    )()
+
     def __str__(self):
         return self.api_name
 
@@ -190,16 +194,10 @@ class FieldSetTemplateRuleGroupAnd(
     BaseApiNameModel,
     AccountBaseMixin,
 ):
+    """ Uniqueness: see FieldSetTemplateRuleSet docstring. """
 
     class Meta:
         ordering = ['id']
-        constraints = [
-            UniqueConstraint(
-                fields=['template', 'api_name', 'account'],
-                condition=Q(is_deleted=False),
-                name='fieldset_rulegroupand_group_or_api_name_unique',
-            ),
-        ]
 
     api_name_prefix = 'fieldset-rule-group-and'
     template = models.ForeignKey(
@@ -219,6 +217,10 @@ class FieldSetTemplateRuleGroupAnd(
         choices=FieldSetRuleOperator.CHOICES,
     )
     value = models.CharField(max_length=200, null=True, blank=True)
+
+    objects = BaseSoftDeleteManager.from_queryset(
+        FieldSetTemplateRuleGroupAndQuerySet,
+    )()
 
     def __str__(self):
         return f'{self.operator} {self.value}'

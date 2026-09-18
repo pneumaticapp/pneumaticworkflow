@@ -215,7 +215,7 @@ class FieldTemplateSerializer(
         if data.get('description') is None:
             data['description'] = ''
         if data['type'] not in FieldType.TYPES_WITH_SELECTIONS:
-            data.pop('selections', None)
+            data['selections'] = []
             data.pop('dataset', None)
         return data
 
@@ -346,6 +346,6 @@ class FieldTemplateListSerializer(ModelSerializer):
         if data.get('description') is None:
             data['description'] = ''
         if data['type'] not in FieldType.TYPES_WITH_SELECTIONS:
-            data.pop('selections', None)
+            data['selections'] = []
             data.pop('dataset', None)
         return data

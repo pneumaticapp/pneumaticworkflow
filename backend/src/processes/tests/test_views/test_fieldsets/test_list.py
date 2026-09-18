@@ -2,6 +2,8 @@
 import pytest
 from datetime import timedelta
 
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 
 from src.accounts.enums import BillingPlanType
@@ -25,7 +27,10 @@ from src.processes.tests.fixtures import (
     create_test_owner,
     create_test_template,
 )
-from src.processes.models.templates.fieldset import FieldsetTemplate
+from src.processes.models.templates.fieldset import (
+    FieldsetTemplate,
+    FieldSetTemplateRuleSet,
+)
 from src.utils.validation import ErrorCode
 
 pytestmark = pytest.mark.django_db
@@ -801,6 +806,97 @@ def test_list_fieldsets__soft_deleted__ok(api_client):
     # assert
     assert response.status_code == 200
     assert len(response.data) == 0
+
+
+def test_list_fieldsets__rulesets__no_n_plus_one(api_client):
+
+    """ Query count does not grow with the number of fieldsets """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    create_test_shared_fieldset(
+        account=account,
+        name='Fieldset 1',
+        api_name='fieldset-1',
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
+        rule_value='10',
+        field_rule_type=FieldRuleType.SHOW,
+        field_rule_value='text',
+    )
+    api_client.token_authenticate(user=user)
+    api_client.get('/fieldsets')
+
+    # act
+    with CaptureQueriesContext(connection) as one_fieldset:
+        first_response = api_client.get('/fieldsets')
+
+    create_test_shared_fieldset(
+        account=account,
+        name='Fieldset 2',
+        api_name='fieldset-2',
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
+        rule_value='10',
+        field_rule_type=FieldRuleType.SHOW,
+        field_rule_value='text',
+    )
+    create_test_shared_fieldset(
+        account=account,
+        name='Fieldset 3',
+        api_name='fieldset-3',
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
+        rule_value='10',
+        field_rule_type=FieldRuleType.SHOW,
+        field_rule_value='text',
+    )
+
+    with CaptureQueriesContext(connection) as three_fieldsets:
+        second_response = api_client.get('/fieldsets')
+
+    # assert
+    assert first_response.status_code == 200
+    assert second_response.status_code == 200
+    assert len(first_response.data) == 1
+    assert len(second_response.data) == 3
+    assert len(three_fieldsets) == len(one_fieldset)
+
+
+def test_list_fieldsets__soft_deleted_rulesets__excluded(api_client):
+
+    """ Soft-deleted rulesets are excluded from a live fieldset """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    fieldset = create_test_shared_fieldset(
+        account=account,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
+        rule_value='10',
+        field_rule_type=FieldRuleType.SHOW,
+        field_rule_value='text',
+    )
+    field = fieldset.fields.get()
+    ruleset = fieldset.rulesets.get()
+    field_ruleset = field.rulesets.get()
+    FieldSetTemplateRuleSet.objects.filter(id=ruleset.id).update(
+        is_deleted=True,
+    )
+    FieldTemplateRuleSet.objects.filter(id=field_ruleset.id).update(
+        is_deleted=True,
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get('/fieldsets')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 1
+    fieldset_data = response.data[0]
+    assert fieldset_data['id'] == fieldset.id
+    assert fieldset_data['rulesets'] == []
+    assert len(fieldset_data['fields']) == 1
+    assert fieldset_data['fields'][0]['rulesets'] == []
 
 
 def test_list_fieldsets__not_shared__empty_list(api_client):

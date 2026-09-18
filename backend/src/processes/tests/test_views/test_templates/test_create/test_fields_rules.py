@@ -670,3 +670,175 @@ def test_create_task_field_rules__validator_types_with_selections__ok(
     assert group_and_data['field'] is None
     assert group_and_data['operator'] == operator
     assert group_and_data['value'] == value
+
+
+def test_create_task_field_rules__show_date_owner_string_source__ok(
+    api_client,
+):
+
+    """
+    SHOW on a DATE field that compares a STRING source.
+    Value is not a timestamp — must be 200, the owner type is irrelevant.
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    source_api_name = 'field-status'
+    owner_api_name = 'field-due'
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        '/templates',
+        data={
+            'name': 'Template',
+            'is_active': True,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {},
+            'tasks': [
+                {
+                    'number': 1,
+                    'name': 'First step',
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                    'fields': [
+                        {
+                            'type': FieldType.STRING,
+                            'name': 'Status',
+                            'order': 1,
+                            'api_name': source_api_name,
+                        },
+                        {
+                            'type': FieldType.DATE,
+                            'name': 'Due',
+                            'order': 2,
+                            'api_name': owner_api_name,
+                            'rulesets': [
+                                {
+                                    'name': 'Show when yes',
+                                    'type': FieldRuleType.SHOW,
+                                    'groups_or': [
+                                        {
+                                            'groups_and': [
+                                                {
+                                                    'field': source_api_name,
+                                                    'operator': (
+                                                        FieldRuleOperator
+                                                        .EQUAL
+                                                    ),
+                                                    'value': 'yes',
+                                                },
+                                            ],
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    owner_data = response.data['tasks'][0]['fields'][0]
+    assert owner_data['api_name'] == owner_api_name
+    group_and_data = owner_data['rulesets'][0]['groups_or'][0]['groups_and'][0]
+    assert group_and_data['field'] == source_api_name
+    assert group_and_data['value'] == 'yes'
+
+
+def test_create_task_field_rules__show_string_owner_date_source__validation_error(  # noqa: E501
+    api_client,
+):
+
+    """
+    SHOW on a STRING field that compares a DATE source.
+    Value is not a timestamp — must be 400 MSG_PT_0080.
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    source_api_name = 'field-due'
+    owner_api_name = 'field-note'
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        '/templates',
+        data={
+            'name': 'Template',
+            'is_active': True,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {},
+            'tasks': [
+                {
+                    'number': 1,
+                    'name': 'First step',
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                    'fields': [
+                        {
+                            'type': FieldType.DATE,
+                            'name': 'Due',
+                            'order': 1,
+                            'api_name': source_api_name,
+                        },
+                        {
+                            'type': FieldType.STRING,
+                            'name': 'Note',
+                            'order': 2,
+                            'api_name': owner_api_name,
+                            'rulesets': [
+                                {
+                                    'name': 'Show after date',
+                                    'type': FieldRuleType.SHOW,
+                                    'groups_or': [
+                                        {
+                                            'groups_and': [
+                                                {
+                                                    'field': source_api_name,
+                                                    'operator': (
+                                                        FieldRuleOperator
+                                                        .GREATER_THAN
+                                                    ),
+                                                    'value': '2020-01-01',
+                                                },
+                                            ],
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['message'] == MSG_PT_0080

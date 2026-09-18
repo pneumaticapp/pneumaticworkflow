@@ -7,6 +7,7 @@ from src.processes.enums import FieldType
 from src.processes.messages.fieldset import MSG_FS_0015, MSG_FS_0016
 from src.processes.models.templates.fields import (
     FieldTemplate,
+    FieldTemplateRuleGroupAnd,
     FieldTemplateRuleSet,
 )
 from src.processes.models.templates.fieldset import FieldsetTemplate
@@ -57,6 +58,7 @@ class FieldTemplateService(BaseModelService):
 
     def partial_update(self, **update_kwargs) -> Model:
         self._validate(**update_kwargs)
+        old_type = self.instance.type
         selections_data = update_kwargs.pop('selections', None)
         rulesets_data = update_kwargs.pop('rulesets', None)
         result = super().partial_update(**update_kwargs)
@@ -65,7 +67,44 @@ class FieldTemplateService(BaseModelService):
             self.create_selections(selections_data=selections_data)
         if rulesets_data is not None:
             self.update_rulesets(rulesets_data=rulesets_data)
+        new_type = update_kwargs.get('type', old_type)
+        if new_type != old_type:
+            self._revalidate_dependent_rulesets()
         return result
+
+    def _revalidate_dependent_rulesets(self):
+
+        """ Field type changed — check that field-level and
+            fieldset-level rulesets referencing this field are
+            still valid for the new type. """
+
+        # Lazy import avoids circular dependency
+        from src.processes.services.fieldsets.fieldset_rule import (  # noqa: PLC0415
+            FieldsetTemplateRuleSetService,
+        )
+        api_name = self.instance.api_name
+
+        # Field-level: show/validator rules that read this field
+        for group_and in FieldTemplateRuleGroupAnd.objects.filter(
+            group_or__ruleset__template=self.instance.template,
+            field=api_name,
+        ).select_related('group_or__ruleset'):
+            FieldTemplateRuleSetService(
+                user=self.user,
+                instance=group_and.group_or.ruleset,
+            )._validate(group_and)
+
+        # Fieldset-level: sum rules where this field participates
+        if self.instance.fieldset_id:
+            for ruleset in self.instance.fieldset.rulesets.filter(
+                fields=self.instance,
+            ).prefetch_related('groups_or__groups_and'):
+                for group_or in ruleset.groups_or.all():
+                    for group_and in group_or.groups_and.all():
+                        FieldsetTemplateRuleSetService(
+                            user=self.user,
+                            instance=ruleset,
+                        )._validate(group_and)
 
     def _create_instance(
         self,

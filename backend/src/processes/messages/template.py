@@ -100,7 +100,7 @@ MSG_PT_0043 = lambda task, user_id: format_lazy(
 # Translators: Field type inconsistent with condition operator
 MSG_PT_0044 = lambda task, operator, field_type: format_lazy(
     _(
-        'Task "{task}": operator "{operator}" can\'t be use '
+        'Task "{task}": operator "{operator}" can\'t be used '
         'with type of field "{field_type}".',
     ),
     task=task,
@@ -316,7 +316,7 @@ MSG_PT_0074 = lambda name, step_name: format_lazy(
 MSG_PT_0075 = lambda task_name, field_name, api_name: format_lazy(
     _(
         'Task "{task_name}": The output field "{field_name}" '
-        'rule contains a duplicate api_name "{api_name}".'
+        'rule contains a duplicate api_name "{api_name}". '
         'Recreate the rule or change its api_name.',
     ),
     task_name=task_name,
@@ -335,7 +335,7 @@ MSG_PT_0076 = lambda task_name, field_name, api_name: format_lazy(
 
 MSG_PT_0078 = lambda field, operator, field_type: format_lazy(
     _(
-        'Field "{field}": rule operator "{operator}" can\'t be use '
+        'Field "{field}": rule operator "{operator}" can\'t be used '
         'with type of field "{field_type}".',
     ),
     field=field,
