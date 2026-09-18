@@ -2,7 +2,7 @@ import pytest
 
 from src.processes.enums import (
     FieldSetLayout,
-    FieldSetRuleType,
+    FieldSetRuleOperator,
     FieldType,
     LabelPosition,
     OwnerRole,
@@ -100,7 +100,7 @@ def test_clone__kickoff_and_task_fieldsets__ok(api_client):
     assert clone_fieldsets_1['layout'] == FieldSetLayout.VERTICAL
     assert clone_fieldsets_1['order'] == 1
     assert isinstance(clone_fieldsets_1['fields'], list)
-    assert clone_fieldsets_1['rules'] == []
+    assert clone_fieldsets_1['rulesets'] == []
     assert clone_fieldsets_1['shared_fieldset_id'] == shared.id
 
     assert len(response.data['tasks'][0]['fieldsets']) == 1
@@ -112,7 +112,7 @@ def test_clone__kickoff_and_task_fieldsets__ok(api_client):
     assert clone_fieldsets_2['layout'] == FieldSetLayout.VERTICAL
     assert clone_fieldsets_2['order'] == 2
     assert isinstance(clone_fieldsets_2['fields'], list)
-    assert clone_fieldsets_2['rules'] == []
+    assert clone_fieldsets_2['rulesets'] == []
     assert clone_fieldsets_2['shared_fieldset_id'] == shared.id
 
 
@@ -273,12 +273,12 @@ def test_clone__fieldset_with_rules__ok(api_client):
     shared = create_test_shared_fieldset(
         account=user.account,
         name='Fieldset with rules',
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='100',
     )
     field = shared.fields.first()
-    rule = shared.rules.first()
-    field.rules.add(rule)
+    ruleset = shared.rulesets.first()
+    ruleset.fields.add(field)
     api_client.token_authenticate(user)
 
     create_response = api_client.post(
@@ -324,11 +324,13 @@ def test_clone__fieldset_with_rules__ok(api_client):
     # assert
     assert response.status_code == 200
     fieldset = response.data['kickoff']['fieldsets'][0]
-    rules = fieldset['rules']
+    rules = fieldset['rulesets']
     assert len(rules) == 1
     rule_data = rules[0]
-    assert rule_data['type'] == FieldSetRuleType.SUM_EQUAL
-    assert rule_data['value'] == '100'
+    assert rule_data['groups_or'][0]['groups_and'][0]['operator'] == (
+        FieldSetRuleOperator.SUM_EQUAL
+    )
+    assert rule_data['groups_or'][0]['groups_and'][0]['value'] == '100'
     clone_field_api_names = [f['api_name'] for f in fieldset['fields']]
     assert len(clone_field_api_names) == 1
     assert rule_data['fields'] == clone_field_api_names
@@ -467,7 +469,7 @@ def test_clone__fieldset_rule_multi_fields__ok(api_client):
     user = create_test_owner(account=account)
     shared = create_test_shared_fieldset(
         account=account,
-        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_operator=FieldSetRuleOperator.SUM_EQUAL,
         rule_value='200',
     )
     shared.fields.all().delete()
@@ -485,9 +487,8 @@ def test_clone__fieldset_rule_multi_fields__ok(api_client):
         type=FieldType.NUMBER,
         order=2,
     )
-    rule = shared.rules.first()
-    field_1.rules.add(rule)
-    field_2.rules.add(rule)
+    ruleset = shared.rulesets.first()
+    ruleset.fields.add(field_1, field_2)
 
     api_client.token_authenticate(user)
     create_response = api_client.post(
@@ -536,9 +537,11 @@ def test_clone__fieldset_rule_multi_fields__ok(api_client):
     # assert
     assert response.status_code == 200
     clone_fieldsets = response.data['kickoff']['fieldsets'][0]
-    rule_data = clone_fieldsets['rules'][0]
-    assert rule_data['type'] == FieldSetRuleType.SUM_EQUAL
-    assert rule_data['value'] == '200'
+    rule_data = clone_fieldsets['rulesets'][0]
+    assert rule_data['groups_or'][0]['groups_and'][0]['operator'] == (
+        FieldSetRuleOperator.SUM_EQUAL
+    )
+    assert rule_data['groups_or'][0]['groups_and'][0]['value'] == '200'
     clone_fields = clone_fieldsets['fields']
     clone_field_api_names = [f['api_name'] for f in clone_fields]
     assert set(rule_data['fields']) == set(clone_field_api_names)

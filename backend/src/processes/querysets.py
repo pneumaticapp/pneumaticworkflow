@@ -1410,3 +1410,63 @@ class FieldSetQuerySet(AccountBaseQuerySet):
 class FieldSetRuleQuerySet(AccountBaseQuerySet):
 
     pass
+
+
+class FieldTemplateRuleSetQuerySet(AccountBaseQuerySet):
+
+    pass
+
+
+class FieldTemplateRuleGroupOrQuerySet(AccountBaseQuerySet):
+
+    pass
+
+
+class FieldTemplateRuleGroupAndQuerySet(AccountBaseQuerySet):
+
+    pass
+
+
+class FieldSetTemplateRuleSetQuerySet(AccountBaseQuerySet):
+
+    pass
+
+
+class FieldSetTemplateRuleGroupOrQuerySet(AccountBaseQuerySet):
+
+    pass
+
+
+class FieldSetTemplateRuleGroupAndQuerySet(AccountBaseQuerySet):
+
+    pass
+
+
+class FieldRuleSetQuerySet(AccountBaseQuerySet):
+
+    pass
+
+
+class FieldRuleGroupOrQuerySet(AccountBaseQuerySet):
+
+    pass
+
+
+class FieldRuleGroupAndQuerySet(AccountBaseQuerySet):
+
+    pass
+
+
+class FieldSetRuleSetQuerySet(AccountBaseQuerySet):
+
+    pass
+
+
+class FieldSetRuleGroupOrQuerySet(AccountBaseQuerySet):
+
+    pass
+
+
+class FieldSetRuleGroupAndQuerySet(AccountBaseQuerySet):
+
+    pass

@@ -3,10 +3,15 @@ from django.db.models import Q, UniqueConstraint
 
 from src.accounts.models import AccountBaseMixin
 from src.generics.managers import BaseSoftDeleteManager
+from src.processes.querysets import (
+    FieldSetTemplateRuleSetQuerySet,
+    FieldSetTemplateRuleGroupOrQuerySet,
+    FieldSetTemplateRuleGroupAndQuerySet,
+)
+from src.processes.enums import FieldSetRuleOperator
 from src.processes.models.base import BaseApiNameModel
 from src.processes.models.mixins import (
-    BaseFieldSetMixin,
-    BaseFieldSetRuleMixin,
+    BaseFieldSetMixin, BaseFieldSetRuleMixin,
 )
 from src.processes.models.templates.kickoff import Kickoff
 from src.processes.models.templates.template import Template
@@ -27,7 +32,7 @@ class FieldsetTemplate(
         ordering = ['-id']
         constraints = [
             UniqueConstraint(
-                fields=['api_name', 'template', 'is_shared'],
+                fields=['api_name', 'template', 'is_shared', 'account'],
                 condition=Q(is_deleted=False),
                 name='fieldsettemplate_template_api_name_is_shared_unique',
             ),
@@ -82,6 +87,8 @@ class FieldsetTemplateRule(
     AccountBaseMixin,
 ):
 
+    # TODO Deprecated
+
     class Meta:
         ordering = ['-id']
         constraints = [
@@ -106,3 +113,114 @@ class FieldsetTemplateRule(
 
     def __str__(self):
         return self.name
+
+
+class FieldSetTemplateRuleSet(
+    BaseApiNameModel,
+    AccountBaseMixin,
+):
+    """ Uniqueness enforced by a NULLS NOT DISTINCT index
+        in migration 0260_add_template_rulesets (Raw SQL).
+        Django 2.2 cannot express this via ORM constraints. """
+
+    class Meta:
+        ordering = ['order', 'id']
+
+    api_name_prefix = 'fieldset-ruleset'
+    template = models.ForeignKey(
+        Template,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='fieldset_rulesets',
+    )
+    fieldset = models.ForeignKey(
+        FieldsetTemplate,
+        on_delete=models.CASCADE,
+        related_name='rulesets',
+    )
+    message = models.TextField(
+        null=True,
+        blank=True,
+        help_text='custom error message for a type="validator"',
+    )
+    order = models.PositiveIntegerField(default=0)
+    fields = models.ManyToManyField(
+        'processes.FieldTemplate',
+        blank=True,
+        related_name='fieldset_rulesets',
+    )
+
+    objects = BaseSoftDeleteManager.from_queryset(
+        FieldSetTemplateRuleSetQuerySet,
+    )()
+
+    def __str__(self):
+        return self.api_name
+
+
+class FieldSetTemplateRuleGroupOr(
+    BaseApiNameModel,
+    AccountBaseMixin,
+):
+    """ Uniqueness: see FieldSetTemplateRuleSet docstring. """
+
+    class Meta:
+        ordering = ['id']
+
+    api_name_prefix = 'fieldset-rule-group-or'
+    template = models.ForeignKey(
+        Template,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='fieldset_ruleset_groups_or',
+    )
+    fieldset_rule = models.ForeignKey(
+        FieldSetTemplateRuleSet,
+        on_delete=models.CASCADE,
+        related_name='groups_or',
+    )
+
+    objects = BaseSoftDeleteManager.from_queryset(
+        FieldSetTemplateRuleGroupOrQuerySet,
+    )()
+
+    def __str__(self):
+        return self.api_name
+
+
+class FieldSetTemplateRuleGroupAnd(
+    BaseApiNameModel,
+    AccountBaseMixin,
+):
+    """ Uniqueness: see FieldSetTemplateRuleSet docstring. """
+
+    class Meta:
+        ordering = ['id']
+
+    api_name_prefix = 'fieldset-rule-group-and'
+    template = models.ForeignKey(
+        Template,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='fieldset_rules_group_and',
+    )
+    group_or = models.ForeignKey(
+        FieldSetTemplateRuleGroupOr,
+        on_delete=models.CASCADE,
+        related_name='groups_and',
+    )
+    operator = models.CharField(
+        max_length=50,
+        choices=FieldSetRuleOperator.CHOICES,
+    )
+    value = models.CharField(max_length=200, null=True, blank=True)
+
+    objects = BaseSoftDeleteManager.from_queryset(
+        FieldSetTemplateRuleGroupAndQuerySet,
+    )()
+
+    def __str__(self):
+        return f'{self.operator} {self.value}'
