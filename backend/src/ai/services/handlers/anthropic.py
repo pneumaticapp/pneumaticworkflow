@@ -1,18 +1,12 @@
 from typing import Any, List, Optional
 
 from src.ai.enums import OpenAIRole
-from src.ai.services.vendors.base import BaseVendor
+from src.ai.services.handlers.base import BaseHandler
 
 
-class AnthropicVendor(BaseVendor):
+class AnthropicHandler(BaseHandler):
     API_VERSION = '2023-06-01'
     DEFAULT_MAX_TOKENS = 1024
-
-    def _api_base(self) -> str:
-        base = super()._api_base()
-        if base.endswith('/v1'):
-            return base
-        return f'{base}/v1'
 
     def _auth_headers(self) -> dict:
         return {
@@ -51,7 +45,7 @@ class AnthropicVendor(BaseVendor):
     def get_models(self) -> List[dict]:
         _status, payload = self._request(
             method='GET',
-            url=self._create_url('models'),
+            url=self.get_models_url(),
             headers=self._auth_headers(),
         )
         return self._parse_models(payload)
@@ -99,7 +93,7 @@ class AnthropicVendor(BaseVendor):
     ) -> str:
         _status, payload = self._request(
             method='POST',
-            url=self._create_url('messages'),
+            url=self.get_chat_url(),
             headers=self._auth_headers(),
             data={
                 'model': model,

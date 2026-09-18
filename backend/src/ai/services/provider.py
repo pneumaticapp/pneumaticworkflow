@@ -1,20 +1,13 @@
-from typing import List, Optional, Tuple
-from urllib.parse import urlparse
-
-from src.ai.enums import AIVendor
+from typing import List, Optional
 from src.ai.exceptions import AIProviderInUseException
 from src.ai.models import AIAgent, AIProvider
 from src.ai.serializers import AIModelSerializer
-from src.ai.services.vendors.anthropic import AnthropicVendor
-from src.ai.services.vendors.azure import AzureOpenAIVendor
-from src.ai.services.vendors.cursor import CursorVendor
-from src.ai.services.vendors.gemini import GeminiVendor
-from src.ai.services.vendors.openai_compatible import (
-    OpenAICompatibleVendor,
-)
+from src.ai.services.handlers import BaseHandler
+
 from src.generics.base.service import BaseModelService
 from src.generics.mixins.services import CacheMixin, EncryptionMixin
 from src.processes.models.workflows.task import Task
+from src.ai.services.config import AI_VENDORS_CONFIG
 
 
 class AIProviderService(
@@ -26,45 +19,19 @@ class AIProviderService(
     cache_timeout = 86400  # 1 day
     serializer_cls = AIModelSerializer
 
-    @property
-    def _get_vendor_cls(self):
-        vendor_classes = {
-            AIVendor.ANTHROPIC: AnthropicVendor,
-            AIVendor.GEMINI: GeminiVendor,
-            AIVendor.AZURE_OPENAI: AzureOpenAIVendor,
-            AIVendor.CURSOR: CursorVendor,
-        }
-        return vendor_classes.get(
-            self.instance.vendor,
-            OpenAICompatibleVendor,
-        )
-
-    def _identify_vendor(
-        self,
-        base_url: str,
-    ) -> Tuple[str, str]:
-
-        hostname = (urlparse(base_url).hostname or '').lower()
-        vendor = AIVendor.CODE_BY_HOST.get(hostname)
-        if vendor is None:
-            vendor = AIVendor.OPENAI_COMPATIBLE
-        name = AIVendor.NAME_BY_CODE[vendor]
-        return name, vendor
-
     def _create_instance(
         self,
+        name: str,
+        vendor: str,
         base_url: str,
         api_key: str,
-        is_active: bool = True,
         **kwargs,
     ):
-        name, vendor = self._identify_vendor(base_url)
         self.instance = AIProvider.objects.create(
             account=self.account,
             name=name,
             vendor=vendor,
             base_url=base_url,
-            is_active=is_active,
             api_key_encrypted=self.encrypt(api_key),
         )
         return self.instance
@@ -79,11 +46,6 @@ class AIProviderService(
             update_kwargs['api_key_encrypted'] = self.encrypt(
                 update_kwargs.pop('api_key'),
             )
-        if 'base_url' in update_kwargs:
-            name, vendor = self._identify_vendor(update_kwargs['base_url'])
-            update_kwargs['vendor'] = vendor
-            update_kwargs['name'] = name
-            self._delete_cache(key=self.instance.name)
         return super().partial_update(
             force_save=force_save,
             **update_kwargs,
@@ -95,15 +57,28 @@ class AIProviderService(
         self._delete_cache(key=self.instance.name)
         super().delete()
 
+    def _get_handler(
+        self,
+        agent: Optional[AIAgent] = None,
+        task: Optional[Task] = None,
+    ) -> BaseHandler:
+
+        config = AI_VENDORS_CONFIG[self.instance.type]
+        handler_cls = config['handler']
+        return handler_cls(
+            provider=self.instance,
+            account=self.account,
+            config=config,
+            agent=agent,
+            task=task,
+        )
+
     def get_models(self) -> List[dict]:
         cache_key = f'{self.user.id}_{self.instance.name}'
         models = self._get_cache(key=cache_key, default=[])
         if not models:
-            vendor = self._get_vendor_cls(
-                instance=self.instance,
-                user=self.user,
-            )
-            models = vendor.get_models()
+            handler = self._get_handler()
+            models = handler.get_models()
             self._set_cache(key=cache_key, value=models)
         return models
 
@@ -112,16 +87,11 @@ class AIProviderService(
         system_message: str,
         user_message: str,
         model: str,
-        agent: Optional[AIAgent] = None,
-        task: Optional[Task] = None,
+        agent: AIAgent,
+        task: Task,
     ) -> str:
-        vendor = self._get_vendor_cls(
-            instance=self.instance,
-            user=self.user,
-            agent=agent,
-            task=task,
-        )
-        return vendor.get_completion(
+        handler = self._get_handler(agent=agent, task=task)
+        return handler.get_completion(
             system_message=system_message,
             user_message=user_message,
             model=model,

@@ -7,12 +7,14 @@ from rest_framework.viewsets import GenericViewSet
 from src.accounts.permissions import (
     UserIsAdminOrAccountOwner,
 )
+from src.ai.enums import AIVendor
 from src.ai.exceptions import AIServiceException
 from src.ai.models import AIAgent, AIProvider
 from src.ai.serializers import (
     AIAgentSerializer,
     AIModelSerializer,
     AIProviderSerializer,
+    AIVendorSerializer,
 )
 from src.ai.services.agent import AIAgentService
 from src.ai.services.provider import AIProviderService
@@ -219,6 +221,34 @@ class AIProviderViewSet(
         except AIServiceException as ex:
             raise_validation_error(message=ex.message)
         serializer = self.get_serializer(instance=models, many=True)
+        return self.response_ok(serializer.data)
+
+
+class AIVendorViewSet(
+    CustomViewSetMixin,
+    GenericViewSet,
+):
+    serializer_class = AIVendorSerializer
+    permission_classes = (
+        UserIsAuthenticated,
+    )
+
+    @extend_schema(
+        tags=['AI'],
+        summary='List AI vendors',
+        description=ACCESS_AI,
+        responses={
+            200: AIVendorSerializer(many=True),
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+        },
+    )
+    def list(self, request, *args, **kwargs):
+        data = [
+            {'slug': code, 'name': name}
+            for code, name in AIVendor.CHOICES
+        ]
+        serializer = self.get_serializer(data, many=True)
         return self.response_ok(serializer.data)
 
 

@@ -121,7 +121,7 @@ def test_create__full_data__ok(api_client, mocker):
         'name',
         'base_url',
         'api_key_prefix',
-        'vendor',
+        'type',
         'is_active',
         'usage',
     }

@@ -1,19 +1,20 @@
 from typing import Any, List
-from urllib.parse import urlparse
 
-from src.ai.services.vendors.openai_compatible import OpenAICompatibleVendor
+from src.ai.services.handlers.openai import OpenAIHandler
 
 
-class CursorVendor(OpenAICompatibleVendor):
+class CursorHandler(OpenAIHandler):
 
-    def _create_url(self, path: str) -> str:
-        parsed = urlparse(self.instance.base_url)
-        return f'{parsed.scheme}://{parsed.netloc}/v1/{path}'
+    def get_models_url(self) -> str:
+        return f'{self.instance.base_url}/v1/models'
+
+    def get_chat_url(self, **kwargs) -> str:
+        return f'{self.instance.base_url}/v1/chat/completions'
 
     def get_models(self) -> List[dict]:
         _status, payload = self._request(
             method='GET',
-            url=self._create_url('models'),
+            url=self.get_models_url(),
             headers=self._auth_headers(),
         )
         return self._parse_models(payload)

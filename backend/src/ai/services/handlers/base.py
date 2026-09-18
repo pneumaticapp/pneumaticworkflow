@@ -7,6 +7,7 @@ import requests
 from django.conf import settings
 from django.contrib.auth import get_user_model
 
+from src.accounts.models import Account
 from src.ai.enums import AIAgentActionType
 from src.ai.exceptions import (
     AIProviderConnectionException,
@@ -15,14 +16,20 @@ from src.ai.exceptions import (
     AIServiceException,
 )
 from src.ai.models import AIAgent, AIAgentAction, AIProvider
+from src.ai.services.entities import ProviderConfig
 from src.processes.models.workflows.task import Task
 
 UserModel = get_user_model()
 
 
-class BaseVendor(ABC):
+class BaseHandler(ABC):
+
     request_timeout = 10
     completion_timeout = 200
+    DEFAULT_ENDPOINTS = {
+        'models': 'models',
+        'chat': 'chat/completions',
+    }
     _secret_headers = (
         'Authorization',
         'authorization',
@@ -33,19 +40,27 @@ class BaseVendor(ABC):
 
     def __init__(
         self,
-        instance: AIProvider,
-        user: UserModel,
+        provider: AIProvider,
+        account: Account,
+        config: ProviderConfig,
         agent: Optional[AIAgent] = None,
         task: Optional[Task] = None,
     ):
-        self.instance = instance
-        self.user = user
-        self.account = user.account
+        self.provider = provider
+        self.account = account
+        self.config = config
         self.agent = agent
         self.task = task
 
-    def _create_url(self, path: str) -> str:
-        return f'{self.instance.base_url}/{path}'
+    def get_models_url(self) -> str:
+        endpoints = self.config.get('endpoints')
+        path = endpoints.get('models') or self.DEFAULT_ENDPOINTS['models']
+        return f'{self.provider.base_url}/{path}'
+
+    def get_chat_url(self, **kwargs) -> str:
+        endpoints = self.config.get('endpoints')
+        path = endpoints.get('chat') or self.DEFAULT_ENDPOINTS['chat']
+        return f'{self.provider.base_url}/{path.format(**kwargs)}'
 
     @abstractmethod
     def _auth_headers(self) -> dict:
@@ -94,20 +109,6 @@ class BaseVendor(ABC):
                 data[key] = '***'
         return data
 
-    def _create_action(
-        self,
-        action: str,
-        message: Optional[str] = None,
-    ) -> Optional[AIAgentAction]:
-        if not (self.agent and self.task):
-            return None
-        return AIAgentAction.objects.create(
-            agent=self.agent,
-            task=self.task,
-            action=action,
-            message=message,
-        )
-
     @abstractmethod
     def _parse_error(
         self,
@@ -140,6 +141,7 @@ class BaseVendor(ABC):
         params: Optional[dict] = None,
         timeout: Optional[int] = None,
     ) -> Tuple[int, dict]:
+
         """Send an HTTP request and return status with JSON body."""
 
         if timeout is None:
@@ -198,7 +200,10 @@ class BaseVendor(ABC):
                 },
                 default=str,
             )
-            self._create_action(
+            AIAgentAction.objects.create(
+                account=self.account,
+                agent=self.agent,
+                task=self.task,
                 action=AIAgentActionType.REQUEST,
                 message=message,
             )

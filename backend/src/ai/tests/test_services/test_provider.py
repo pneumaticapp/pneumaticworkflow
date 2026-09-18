@@ -32,7 +32,7 @@ def test_create__cursor__get_models__ok():
 
     # assert
     assert provider.name == AIVendor.NAME_BY_CODE[AIVendor.CURSOR]
-    assert provider.vendor == AIVendor.CURSOR
+    assert provider.type == AIVendor.CURSOR
     assert provider.base_url == base_url
     assert provider.api_key == api_key
     assert models

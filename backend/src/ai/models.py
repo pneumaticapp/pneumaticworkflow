@@ -193,8 +193,7 @@ class AIProvider(
     vendor = models.CharField(
         max_length=50,
         choices=AIVendor.CHOICES,
-        default=AIVendor.OPENAI_COMPATIBLE,
-        help_text='Detected vendor of the provider API',
+        help_text='Detected type of the provider API',
     )
     is_active = models.BooleanField(default=True)
 
@@ -255,7 +254,10 @@ class AIAgent(
         return self.name
 
 
-class AIAgentAction(models.Model):
+class AIAgentAction(
+    SoftDeleteModel,
+    AccountBaseMixin,
+):
 
     class Meta:
         ordering = ('-date_created', 'id')
@@ -268,11 +270,15 @@ class AIAgentAction(models.Model):
 
     agent = models.ForeignKey(
         AIAgent,
+        null=True,
+        blank=True,
         on_delete=models.CASCADE,
         related_name='actions',
     )
     task = models.ForeignKey(
         'processes.Task',
+        null=True,
+        blank=True,
         on_delete=models.CASCADE,
         related_name='ai_agent_actions',
     )

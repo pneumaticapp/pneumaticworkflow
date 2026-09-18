@@ -1,16 +1,8 @@
 from typing import Any, List, Optional
-from urllib.parse import urlparse
-
-from src.ai.services.vendors.base import BaseVendor
+from src.ai.services.handlers.base import BaseHandler
 
 
-class GeminiVendor(BaseVendor):
-    def _api_base(self) -> str:
-        base = super()._api_base()
-        path = (urlparse(base).path or '').rstrip('/')
-        if path.startswith('/v1'):
-            return base
-        return f'{base}/v1beta'
+class GeminiHandler(BaseHandler):
 
     def _auth_headers(self) -> dict:
         return {
@@ -81,7 +73,7 @@ class GeminiVendor(BaseVendor):
     def get_models(self) -> List[dict]:
         _status, payload = self._request(
             method='GET',
-            url=self._create_url('models'),
+            url=self.get_models_url(),
             headers=self._auth_headers(),
         )
         return self._parse_models(payload)
@@ -94,7 +86,7 @@ class GeminiVendor(BaseVendor):
     ) -> str:
         _status, payload = self._request(
             method='POST',
-            url=self._create_url(self._completion_path(model)),
+            url=self.get_chat_url(model=model),
             headers=self._auth_headers(),
             data={
                 'systemInstruction': {
@@ -110,10 +102,6 @@ class GeminiVendor(BaseVendor):
             timeout=self.completion_timeout,
         )
         return self._parse_completion(payload)
-
-    def _completion_path(self, model: str) -> str:
-        slug = model if model.startswith('models/') else f'models/{model}'
-        return f'{slug}:generateContent'
 
     def _parse_completion(self, payload: Any) -> str:
         """Parse a Gemini generateContent payload.

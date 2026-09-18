@@ -51,7 +51,7 @@ class AIProviderSerializer(
             'base_url',
             'api_key',
             'api_key_prefix',
-            'vendor',
+            'type',
             'is_active',
             'usage',
         )
@@ -91,10 +91,10 @@ class AIProviderSerializer(
         help_text='Secret API key prefix for the provider',
         example='sk-or-v1-744afb981...',
     )
-    vendor = DocChoiceField(
+    type = DocChoiceField(
         choices=AIVendor.CHOICES,
         read_only=True,
-        help_text='Detected vendor of the provider API',
+        help_text='Detected type of the provider API',
         example=AIVendor.OPENROUTER,
     )
     usage = UsageSerializer(
@@ -120,6 +120,22 @@ class AIModelSerializer(
     slug = DocCharField(
         help_text='Model identifier in OpenRouter-style format',
         example='openai/gpt-4o',
+    )
+
+
+class AIVendorSerializer(
+    CustomValidationErrorMixin,
+    Serializer,
+):
+
+    slug = DocChoiceField(
+        choices=AIVendor.CHOICES,
+        help_text='Vendor identifier',
+        example=AIVendor.OPENROUTER,
+    )
+    name = DocCharField(
+        help_text='Display name of the vendor',
+        example='OpenRouter',
     )
 
 
