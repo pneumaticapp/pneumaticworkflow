@@ -679,6 +679,26 @@ class WorkflowEventType:
         TASK_DELAY,
     ]
 
+    HIGHLIGHT_TYPES = (
+        COMMENT,
+        TASK_COMPLETE,
+        RUN,
+        COMPLETE,
+        ENDED,
+        TASK_REVERT,
+        REVERT,
+        URGENT,
+        NOT_URGENT,
+        TASK_PERFORMER_CREATED,
+        TASK_PERFORMER_DELETED,
+        TASK_PERFORMER_GROUP_CREATED,
+        TASK_PERFORMER_GROUP_DELETED,
+        FORCE_DELAY,
+        FORCE_RESUME,
+        DUE_DATE_CHANGED,
+        SUB_WORKFLOW_RUN,
+    )
+
 
 class WorkflowEventActionType:
 

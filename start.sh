@@ -18,6 +18,7 @@ unset POSTGRES_PASSWORD REDIS_PASSWORD RABBITMQ_PASSWORD
 unset CERTBOT_ENABLE CERTBOT_EMAIL NGINX_CONF_TEMPLATE
 unset FORM_DOMAIN
 unset GIT_BRANCH
+unset LOGS_BACKEND
 
 RED='\033[0;31m'
 ORANGE='\033[0;33m'
@@ -27,6 +28,21 @@ NC='\033[0m'
 print_error()   { echo -e "${RED}$1${NC}"; }
 print_warning() { echo -e "${ORANGE}$1${NC}"; }
 print_info()    { echo -e "${GREEN}$1${NC}"; }
+
+gen_password() {
+    openssl rand -base64 "${1:-32}" | tr -d "=+/" | cut -c1-"${2:-25}"
+}
+
+set_env_var() {
+    local name="$1" value="$2"
+    if grep -qE "^#?\s*${name}=" "$ENV_FILE"; then
+        sed -i "s|^#\?\s*${name}=.*|${name}=${value}|" "$ENV_FILE"
+    else
+        [ -z "$(tail -c1 "$ENV_FILE")" ] || echo "" >> "$ENV_FILE"
+        echo "${name}=${value}" >> "$ENV_FILE"
+    fi
+}
+
 strip_invisible() {
     local s
     # Remove ANSI/VT escape sequences (e.g. bracket paste mode: \e[200~ ... \e[201~)
@@ -201,12 +217,12 @@ if [ ! -f ".env" ]; then
     if [ "$ADDRESS_IS_LOCALHOST" = false ]; then
 
         # 2.5.1 Generate passwords (not needed for localhost)
-        POSTGRES_PASSWORD=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-25)
-        REDIS_PASSWORD=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-25)
-        RABBITMQ_PASSWORD=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-25)
-        SEAWEEDFS_ACCESS_KEY=$(openssl rand -base64 24 | tr -d "=+/" | cut -c1-20)
-        SEAWEEDFS_SECRET_KEY=$(openssl rand -base64 48 | tr -d "=+/" | cut -c1-40)
-        FILE_POSTGRES_PASSWORD=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-25)
+        POSTGRES_PASSWORD=$(gen_password)
+        REDIS_PASSWORD=$(gen_password)
+        RABBITMQ_PASSWORD=$(gen_password)
+        SEAWEEDFS_ACCESS_KEY=$(gen_password 24 20)
+        SEAWEEDFS_SECRET_KEY=$(gen_password 48 40)
+        FILE_POSTGRES_PASSWORD=$(gen_password)
 
         # 2.5.2 Write passwords to .env
         sed -i "s|^#\?\s*POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$POSTGRES_PASSWORD|"                  "$ENV_FILE"
@@ -342,6 +358,34 @@ case "$COMPOSE_FILE" in
   1) COMPOSE_LABEL="Stable (recommended)";   COMPOSE_ARGS=('-f' 'docker-compose.yml');     COMPOSE_TAG="stable" ;;
   2) COMPOSE_LABEL="Latest";                 COMPOSE_ARGS=('-f' 'docker-compose.yml');     COMPOSE_TAG="latest" ;;
   3) COMPOSE_LABEL="From sources (Branch: \"$GIT_BRANCH\")"; COMPOSE_ARGS=('-f' 'docker-compose.src.yml'); COMPOSE_TAG=""   ;;
+esac
+
+# 3.1.1 The collector of the audit journal follows LOGS_BACKEND of .env
+# --------------------------------------------------------------------
+# The root compose files declare the collector behind a profile, so it
+# stays down unless .env names a backend. Passing --profile here would
+# otherwise override a COMPOSE_PROFILES line in .env without saying so.
+# The trailing comment of a line like `LOGS_BACKEND=otlp  # the Grafana
+# machine` is cut off first: it is part of the value otherwise.
+LOGS_BACKEND_VALUE=$(
+    grep -E "^\s*LOGS_BACKEND=" "$ENV_FILE" 2>/dev/null | tail -1 | cut -d= -f2- | sed 's/#.*//' | tr -d '"'"'"'[:space:]'
+)
+case "${LOGS_BACKEND_VALUE:-none}" in
+  none|"")
+    ;;
+  otlp)
+    COMPOSE_ARGS+=('--profile' 'logs-otlp')
+    print_info "LOGS_BACKEND=otlp: only the collector runs"
+    ;;
+  elasticsearch)
+    COMPOSE_ARGS+=('--profile' 'logs-elasticsearch')
+    print_info "LOGS_BACKEND=elasticsearch: only the collector runs, queue on disk"
+    print_info "First start only: hand the queue volume to the collector, see the Elasticsearch section of default.env"
+    ;;
+  *)
+    print_error "LOGS_BACKEND=$LOGS_BACKEND_VALUE is not one of: otlp, elasticsearch, none"
+    exit 1
+    ;;
 esac
 
 print_info "Selected configuration: $COMPOSE_LABEL"

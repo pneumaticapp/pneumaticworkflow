@@ -42,3 +42,25 @@ class RequestDirection:
         (RECEIVED, RECEIVED),
         (SENT, SENT),
     )
+
+
+class LogsBackend:
+
+    """ Value of LOGS_BACKEND: where the collector sends the events.
+        NONE switches the whole pipeline off, emit() writes nothing. """
+
+    OTLP = 'otlp'
+    ELASTICSEARCH = 'elasticsearch'
+    NONE = 'none'
+
+    LITERALS = Literal[
+        OTLP,
+        ELASTICSEARCH,
+        NONE,
+    ]
+
+
+DEFAULT_STREAM_MAXLEN = 250000
+DEFAULT_CONSUMER_BATCH_SIZE = 1000
+DEFAULT_CONSUMER_IDLE_MS = 60000
+CONSUMER_INTERVAL_SECONDS = 5
