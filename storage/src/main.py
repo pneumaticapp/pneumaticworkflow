@@ -140,7 +140,7 @@ app = FastAPI(
     ],
     openapi_tags=[
         {
-            'name': 'files',
+            'name': 'Files',
             'description': ('Upload, download, and manage file attachments'),
         },
     ],
