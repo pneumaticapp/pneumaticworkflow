@@ -73,7 +73,6 @@ export interface IApplicationState {
 export type IPermissionsStore = {
   [objType in EPermissionObjectType]: TObjectPermissionsById;
 } & {
-  /** Principal the cached answers belong to; another one invalidates all of them. */
   userId: number | null;
 };
 

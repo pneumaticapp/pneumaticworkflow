@@ -50,7 +50,6 @@ describe('WorkflowControllsComponents', () => {
 
   beforeEach(() => {
     (useDispatch as jest.Mock).mockReturnValue(jest.fn());
-    // The only value the component reads from the store is "may this user change the workflow".
     (useSelector as jest.Mock).mockReturnValue(true);
   });
 

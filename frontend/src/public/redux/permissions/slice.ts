@@ -17,10 +17,7 @@ const permissionsSlice = createSlice({
   name: 'permissions',
   initialState,
   reducers: {
-    /**
-     * Merged, never replaced: list pages arrive one after another and each page must keep the
-     * permissions already resolved for the pages before it.
-     */
+    // Merge, never replace: pages arrive one by one and must keep earlier results.
     setObjectPermissions: (state, action: PayloadAction<ISetObjectPermissionsPayload>) => {
       const { objType, permissions } = action.payload;
 
@@ -30,11 +27,8 @@ const permissionsSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    /**
-     * Only a logout resets the whole store, but supermode and tenant switching replace the
-     * signed-in user in place. Answers cached for the previous principal would then be read for
-     * the new one until its own request lands, so they are dropped as soon as the user changes.
-     */
+    // Supermode and tenant switching replace the signed-in user in place; their cached
+    // permissions must not be read for the new one.
     builder.addMatcher(
       (action): action is PayloadAction<TAuthUserResult> => action.type === EAuthActions.AuthUserSuccess,
       (state, action) => {
