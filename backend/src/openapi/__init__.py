@@ -2,6 +2,7 @@
 
 # Registers OpenApiAuthenticationExtension subclasses.
 from src.openapi import auth_extensions as _auth_extensions  # noqa: F401
+from src.openapi import field_extensions as _field_extensions  # noqa: F401
 from src.openapi.entities import PermissionDoc
 from src.openapi.helpers import (
     LIMIT_OFFSET_LEGACY_NOTE,
