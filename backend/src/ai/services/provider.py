@@ -22,9 +22,9 @@ class AIProviderService(
     def _create_instance(
         self,
         name: str,
-        vendor: str,
         base_url: str,
         api_key: str,
+        vendor: Optional[str] = None,
         **kwargs,
     ):
         self.instance = AIProvider.objects.create(

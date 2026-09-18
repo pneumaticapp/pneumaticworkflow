@@ -62,7 +62,6 @@ class AIProviderSerializer(
         example=1,
     )
     name = DocCharField(
-        read_only=True,
         max_length=255,
         help_text='Display name of the provider',
         example='OpenRouter',

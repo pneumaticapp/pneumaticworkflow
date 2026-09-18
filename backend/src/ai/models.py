@@ -193,6 +193,7 @@ class AIProvider(
     vendor = models.CharField(
         max_length=50,
         choices=AIVendor.CHOICES,
+        default=AIVendor.OPENAI_COMPATIBLE,
         help_text='Detected type of the provider API',
     )
     is_active = models.BooleanField(default=True)
