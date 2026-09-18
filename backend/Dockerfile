@@ -1,4 +1,4 @@
-FROM python:3.7.11-bullseye
+FROM python:3.8.20-bullseye
 
 LABEL org.opencontainers.image.title="Pneumatic API" \
       org.opencontainers.image.source="https://github.com/pneumaticapp/pneumaticworkflow/backend" \

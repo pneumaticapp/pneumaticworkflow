@@ -8,6 +8,14 @@ describe('mapFieldsetBindingsToClient', () => {
     expect(mapFieldsetBindingsToClient([])).toEqual([]);
   });
 
+  it('returns an empty array when undefined or null is provided', () => {
+    const undefinedInput = undefined as unknown as Parameters<typeof mapFieldsetBindingsToClient>[0];
+    const nullInput = null as unknown as Parameters<typeof mapFieldsetBindingsToClient>[0];
+
+    expect(mapFieldsetBindingsToClient(undefinedInput)).toEqual([]);
+    expect(mapFieldsetBindingsToClient(nullInput)).toEqual([]);
+  });
+
   it('renames apiName to apiNameBinding and drops apiName', () => {
     const result = mapFieldsetBindingsToClient([makeFieldsetBinding({ apiName: 'catalog-abc' })]);
 
@@ -62,6 +70,14 @@ describe('mapFieldsetBindingsToClient', () => {
 describe('mapFieldsetTaskAPIToRuntime', () => {
   it('returns an empty array for empty input', () => {
     expect(mapFieldsetTaskAPIToRuntime([])).toEqual([]);
+  });
+
+  it('returns an empty array when undefined or null is provided in runtime', () => {
+    const undefinedInput = undefined as unknown as Parameters<typeof mapFieldsetTaskAPIToRuntime>[0];
+    const nullInput = null as unknown as Parameters<typeof mapFieldsetTaskAPIToRuntime>[0];
+
+    expect(mapFieldsetTaskAPIToRuntime(undefinedInput)).toEqual([]);
+    expect(mapFieldsetTaskAPIToRuntime(nullInput)).toEqual([]);
   });
 
   it('renames apiName to apiNameBinding and drops both id and apiName', () => {
