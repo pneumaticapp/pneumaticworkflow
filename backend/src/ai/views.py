@@ -13,6 +13,7 @@ from src.ai.models import AIAgent, AIProvider
 from src.ai.serializers import (
     AIAgentSerializer,
     AIModelSerializer,
+    AIProviderByVendorSerializer,
     AIProviderSerializer,
     AIVendorSerializer,
 )
@@ -32,6 +33,7 @@ from src.openapi import (
 )
 from src.openapi.examples import (
     AI_AGENT_CREATE_EXAMPLE,
+    AI_PROVIDER_BY_VENDOR_EXAMPLE,
     AI_PROVIDER_CREATE_EXAMPLE,
 )
 from src.utils.validation import raise_validation_error
@@ -44,13 +46,16 @@ class AIProviderViewSet(
     serializer_class = AIProviderSerializer
     action_serializer_classes = {
         'models': AIModelSerializer,
+        'by_vendor': AIProviderByVendorSerializer,
     }
     action_paginator_classes = {
         'list': LimitOffsetPagination,
     }
 
     def get_permissions(self):
-        if self.action in ('create', 'partial_update', 'destroy'):
+        if self.action in (
+            'create', 'partial_update', 'destroy', 'by_vendor',
+        ):
             return (
                 UserIsAuthenticated(),
                 UserIsAdminOrAccountOwner(),
@@ -118,6 +123,35 @@ class AIProviderViewSet(
         except AIServiceException as ex:
             raise_validation_error(message=ex.message)
         response_serializer = self.get_serializer(instance=provider)
+        return self.response_created(response_serializer.data)
+
+    @extend_schema(
+        tags=['AI'],
+        summary='Create AI provider by vendor',
+        description=ACCESS_AI_ADMIN,
+        request=AIProviderByVendorSerializer,
+        examples=[AI_PROVIDER_BY_VENDOR_EXAMPLE],
+        responses={
+            201: AIProviderSerializer,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+        },
+    )
+    @action(methods=['post'], detail=False, url_path='by-vendor')
+    def by_vendor(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        service = AIProviderService(
+            user=request.user,
+            is_superuser=request.is_superuser,
+            auth_type=request.token_type,
+        )
+        try:
+            provider = service.create_by_vendor(**serializer.validated_data)
+        except AIServiceException as ex:
+            raise_validation_error(message=ex.message)
+        response_serializer = AIProviderSerializer(instance=provider)
         return self.response_created(response_serializer.data)
 
     @extend_schema(

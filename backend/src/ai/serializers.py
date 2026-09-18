@@ -107,6 +107,25 @@ class AIProviderSerializer(
         return value.rstrip('/')
 
 
+class AIProviderByVendorSerializer(
+    CustomValidationErrorMixin,
+    Serializer,
+):
+
+    api_key = DocCharField(
+        help_text=(
+            'Secret API key for the provider. '
+            'Write-only — never returned in responses'
+        ),
+        example='sk-or-v1-example',
+    )
+    vendor = DocChoiceField(
+        choices=AIVendor.CHOICES,
+        help_text='Vendor identifier',
+        example=AIVendor.OPENROUTER,
+    )
+
+
 class AIModelSerializer(
     CustomValidationErrorMixin,
     Serializer,

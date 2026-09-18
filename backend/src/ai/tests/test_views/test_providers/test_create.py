@@ -2,8 +2,8 @@ import pytest
 from rest_framework.fields import BooleanField, CharField, Field, URLField
 
 from src.ai.exceptions import AIServiceException
-from src.ai.models import AIProvider
 from src.ai.services.provider import AIProviderService
+from src.ai.tests.fixtures import create_test_provider
 from src.authentication.enums import AuthTokenType
 from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.processes.models.workflows.task import TaskPerformer
@@ -33,14 +33,7 @@ def test_create__minimal_data__ok(api_client, mocker):
         'base_url': 'https://openrouter.ai/api/v1',
         'api_key': 'sk-or-v1-example',
     }
-    provider = AIProvider(
-        account=account,
-        name='OpenRouter',
-        base_url='https://openrouter.ai/api/v1',
-        is_active=True,
-    )
-    provider.api_key = 'sk-or-v1-example'
-    provider.save()
+    provider = create_test_provider(account=account)
     ai_provider_service_init_mock = mocker.patch.object(
         AIProviderService,
         attribute='__init__',
@@ -92,14 +85,7 @@ def test_create__full_data__ok(api_client, mocker):
         'api_key': 'sk-or-v1-example',
         'is_active': False,
     }
-    provider = AIProvider(
-        account=account,
-        name='OpenRouter',
-        base_url='https://openrouter.ai/api/v1',
-        is_active=False,
-    )
-    provider.api_key = 'sk-or-v1-example'
-    provider.save()
+    provider = create_test_provider(account=account, is_active=False)
     ai_provider_service_init_mock = mocker.patch.object(
         AIProviderService,
         attribute='__init__',

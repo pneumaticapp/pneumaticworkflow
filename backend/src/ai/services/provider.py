@@ -1,4 +1,5 @@
 from typing import List, Optional
+from src.ai.enums import AIVendor
 from src.ai.exceptions import AIProviderInUseException
 from src.ai.models import AIAgent, AIProvider
 from src.ai.serializers import AIModelSerializer
@@ -35,6 +36,19 @@ class AIProviderService(
             api_key_encrypted=self.encrypt(api_key),
         )
         return self.instance
+
+    def create_by_vendor(
+        self,
+        api_key: str,
+        vendor: AIVendor.LITERALS,
+    ) -> AIProvider:
+        config = AI_VENDORS_CONFIG[vendor]
+        return self.create(
+            name=config['name'],
+            base_url=config['base_url'],
+            api_key=api_key,
+            vendor=vendor,
+        )
 
     def partial_update(
         self,
