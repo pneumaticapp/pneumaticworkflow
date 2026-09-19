@@ -348,7 +348,7 @@ export function* setTaskReverted({ payload: { viewMode, taskId, comment, clearOu
 
     const outputTaskIds = clearOutputTaskIds ?? [taskId];
     removeOutputsFromLocalStorage(outputTaskIds);
-    outputTaskIds.forEach(fieldsetsStorage.remove);
+    outputTaskIds.forEach((outputTaskId) => fieldsetsStorage.remove(outputTaskId));
 
     NotificationManager.success({ message: 'tasks.task-success-revert' });
 
