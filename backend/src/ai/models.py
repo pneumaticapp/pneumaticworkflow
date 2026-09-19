@@ -282,6 +282,13 @@ class AIAgentAction(
         on_delete=models.CASCADE,
         related_name='ai_agent_actions',
     )
+    notification = models.OneToOneField(
+        'accounts.Notification',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='ai_agent_action',
+    )
     action = models.CharField(
         max_length=50,
         choices=AIAgentActionType.CHOICES,

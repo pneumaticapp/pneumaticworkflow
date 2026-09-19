@@ -107,16 +107,19 @@ class AIAgentActionType:
     READING_DESCRIPTION = 'reading_description'
     REQUEST = 'request'
     ERROR = 'error'
+    MENTION_IN_PROGRESS = 'mention_in_progress'
 
     CHOICES = (
         (TASK_IN_PROGRESS, 'Task in progress'),
         (READING_DESCRIPTION, 'Reading task description'),
         (REQUEST, 'Request'),
         (ERROR, 'Error'),
+        (MENTION_IN_PROGRESS, 'Mention in progress'),
     )
     LITERALS = Literal[
         TASK_IN_PROGRESS,
         READING_DESCRIPTION,
         REQUEST,
         ERROR,
+        MENTION_IN_PROGRESS,
     ]

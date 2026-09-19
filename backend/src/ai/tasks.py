@@ -1,7 +1,13 @@
 from celery import shared_task
 from typing import List, Tuple
+from django.db import transaction
 from django.db.models import Exists, OuterRef
 
+from src.accounts.enums import (
+    NotificationStatus,
+    NotificationType,
+)
+from src.accounts.models import Notification
 from src.celery_app import periodic_lock
 
 from src.ai.enums import AIAgentActionType
@@ -38,11 +44,6 @@ def claim_new_ai_tasks() -> List[Tuple[int, int]]:
     claimed = []
     for performer in performers:
         agent = performer.user.ai_agent
-        AIAgentAction.objects.create(
-            agent=agent,
-            task=performer.task,
-            action=AIAgentActionType.TASK_IN_PROGRESS,
-        )
         claimed.append((performer.task_id, agent.id))
     return claimed
 
@@ -50,7 +51,11 @@ def claim_new_ai_tasks() -> List[Tuple[int, int]]:
 @shared_task(ignore_result=True)
 def execute_ai_agent_task(task_id: int, agent_id: int) -> None:
     """Read the task description and execute it. Implementation later."""
-    return
+    AIAgentAction.objects.create(
+        agent_id=agent_id,
+        task_id=task_id,
+        action=AIAgentActionType.TASK_IN_PROGRESS,
+    )
 
 
 @shared_task(ignore_result=True)
@@ -64,3 +69,57 @@ def dispatch_ai_agent_tasks() -> None:
         claimed = claim_new_ai_tasks()
         for task_id, agent_id in claimed:
             execute_ai_agent_task.delay(task_id=task_id, agent_id=agent_id)
+
+
+def claim_new_ai_mentions() -> List[Tuple[int, int]]:
+    notifications = (
+        Notification.objects
+        .filter(
+            type=NotificationType.MENTION,
+            ai_agent_action__isnull=True,
+            user__is_ai=True,
+            user__ai_agent__is_active=True,
+        )
+        .select_related('user__ai_agent', 'task')
+    )
+    claimed = []
+    for notification in notifications:
+        agent = notification.user.ai_agent
+        claimed.append((notification.id, agent.id))
+    return claimed
+
+
+@shared_task(ignore_result=True)
+def execute_ai_agent_mention(notification_id: int, agent_id: int) -> None:
+
+    """ Handle an AI agent mention. Implementation later.
+        In answer create workflow event with mention to author
+    """
+    notification = Notification.objects.filter(id=notification_id).first()
+    if notification:
+        with transaction.atomic():
+            notification.status = NotificationStatus.READ
+            notification.save(update_fields=['status'])
+            AIAgentAction.objects.create(
+                account_id=notification.account_id,
+                agent_id=agent_id,
+                task=notification.task,
+                action=AIAgentActionType.MENTION_IN_PROGRESS,
+                notification_id=notification_id,
+            )
+
+
+@shared_task(ignore_result=True)
+def dispatch_ai_agent_mentions() -> None:
+
+    """ Dispatch unread mention notifications to AI agents """
+
+    with periodic_lock('dispatch_ai_agent_mentions') as acquired:
+        if not acquired:
+            return
+        claimed = claim_new_ai_mentions()
+        for notification_id, agent_id in claimed:
+            execute_ai_agent_mention.delay(
+                notification_id=notification_id,
+                agent_id=agent_id,
+            )
