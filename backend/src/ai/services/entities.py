@@ -1,6 +1,5 @@
-from typing import Dict, Type
+from typing import Dict, Callable
 from typing_extensions import TypedDict
-from src.ai.services.handlers.base import BaseHandler
 
 
 class ProviderConfig(TypedDict):
@@ -8,5 +7,5 @@ class ProviderConfig(TypedDict):
     name: str
     slug: str
     base_url: str
-    handler: Type[BaseHandler]
+    handler: Callable
     endpoints: Dict[str, str]

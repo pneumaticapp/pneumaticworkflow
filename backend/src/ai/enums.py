@@ -19,7 +19,7 @@ class AIVendor:
     SAMBANOVA = 'sambanova'
     NVIDIA_NIM = 'nvidia_nim'
     CURSOR = 'cursor'
-    OPENAI_COMPATIBLE = 'openai_compatible'
+    CUSTOM = 'custom'
 
     CHOICES = (
         (OPENAI, 'OpenAI'),
@@ -57,7 +57,7 @@ class AIVendor:
         SAMBANOVA,
         NVIDIA_NIM,
         CURSOR,
-        OPENAI_COMPATIBLE,
+        CUSTOM,
     ]
 
 

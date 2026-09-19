@@ -51,7 +51,7 @@ class AIProviderSerializer(
             'base_url',
             'api_key',
             'api_key_prefix',
-            'type',
+            'vendor',
             'is_active',
             'usage',
         )
@@ -90,7 +90,7 @@ class AIProviderSerializer(
         help_text='Secret API key prefix for the provider',
         example='sk-or-v1-744afb981...',
     )
-    type = DocChoiceField(
+    vendor = DocChoiceField(
         choices=AIVendor.CHOICES,
         read_only=True,
         help_text='Detected type of the provider API',

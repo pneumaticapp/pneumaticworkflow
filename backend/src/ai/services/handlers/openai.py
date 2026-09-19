@@ -8,9 +8,9 @@ class OpenAIHandler(BaseHandler):
 
     def _auth_headers(self) -> dict:
         headers = {
-            'Authorization': f'Bearer {self.instance.api_key}',
+            'Authorization': f'Bearer {self.provider.api_key}',
         }
-        if self.instance.type == AIVendor.OPENROUTER:
+        if self.provider.vendor == AIVendor.OPENROUTER:
             headers['HTTP-Referer'] = (
                 getattr(settings, 'FRONTEND_URL', None)
                 or 'https://pneumatic.app'

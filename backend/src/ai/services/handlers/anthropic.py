@@ -10,7 +10,7 @@ class AnthropicHandler(BaseHandler):
 
     def _auth_headers(self) -> dict:
         return {
-            'x-api-key': self.instance.api_key,
+            'x-api-key': self.provider.api_key,
             'anthropic-version': self.API_VERSION,
             'content-type': 'application/json',
         }

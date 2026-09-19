@@ -28,13 +28,15 @@ class AIProviderService(
         vendor: Optional[str] = None,
         **kwargs,
     ):
-        self.instance = AIProvider.objects.create(
+        self.instance = AIProvider(
             account=self.account,
             name=name,
-            vendor=vendor,
             base_url=base_url,
             api_key_encrypted=self.encrypt(api_key),
         )
+        if vendor:
+            self.instance.vendor = vendor
+            self.instance.save()
         return self.instance
 
     def create_by_vendor(
@@ -71,13 +73,18 @@ class AIProviderService(
         self._delete_cache(key=self.instance.name)
         super().delete()
 
+    def _get_vendor(self):
+        if self.instance.vendor == AIVendor.CUSTOM:
+            return AIVendor.OPENAI
+        return self.instance.vendor
+
     def _get_handler(
         self,
         agent: Optional[AIAgent] = None,
         task: Optional[Task] = None,
     ) -> BaseHandler:
 
-        config = AI_VENDORS_CONFIG[self.instance.type]
+        config = AI_VENDORS_CONFIG[self._get_vendor()]
         handler_cls = config['handler']
         return handler_cls(
             provider=self.instance,

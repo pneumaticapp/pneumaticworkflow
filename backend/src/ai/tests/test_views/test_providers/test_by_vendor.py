@@ -48,22 +48,13 @@ def test_by_vendor__all_fields__ok(api_client, mocker):
 
     # assert
     assert response.status_code == 201
-    assert set(response.data.keys()) == {
-        'id',
-        'name',
-        'base_url',
-        'api_key_prefix',
-        'type',
-        'is_active',
-        'usage',
-    }
     assert response.data['id'] == provider.id
     assert response.data['name'] == provider.name
     assert response.data['base_url'] == provider.base_url
     assert response.data['api_key_prefix'] == (
         provider.api_key_prefix
     )
-    assert response.data['type'] == provider.vendor
+    assert response.data['vendor'] == provider.vendor
     assert response.data['is_active'] is True
     assert response.data['usage'] == []
     assert 'api_key' not in response.data

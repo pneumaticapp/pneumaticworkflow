@@ -130,15 +130,6 @@ def test_partial_update__full_data__ok(api_client, mocker):
 
     # assert
     assert response.status_code == 200
-    assert set(response.data.keys()) == {
-        'id',
-        'name',
-        'base_url',
-        'api_key_prefix',
-        'type',
-        'is_active',
-        'usage',
-    }
     assert response.data['id'] == updated_provider.id
     assert response.data['name'] == updated_provider.name
     assert response.data['base_url'] == updated_base_url

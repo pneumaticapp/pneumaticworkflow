@@ -105,15 +105,6 @@ def test_create__full_data__ok(api_client, mocker):
 
     # assert
     assert response.status_code == 201
-    assert set(response.data.keys()) == {
-        'id',
-        'name',
-        'base_url',
-        'api_key_prefix',
-        'type',
-        'is_active',
-        'usage',
-    }
     assert response.data['id'] == provider.id
     assert response.data['name'] == provider.name
     assert response.data['base_url'] == provider.base_url

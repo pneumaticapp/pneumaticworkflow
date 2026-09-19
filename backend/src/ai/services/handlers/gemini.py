@@ -6,7 +6,7 @@ class GeminiHandler(BaseHandler):
 
     def _auth_headers(self) -> dict:
         return {
-            'x-goog-api-key': self.instance.api_key,
+            'x-goog-api-key': self.provider.api_key,
             'content-type': 'application/json',
         }
 
