@@ -10,10 +10,10 @@ from django.contrib.auth import get_user_model
 from src.accounts.models import Account
 from src.ai.enums import AIAgentActionType
 from src.ai.exceptions import (
+    AIHandlerException,
     AIProviderConnectionException,
     AIProviderInvalidResponseException,
     AIProviderRequestFailedException,
-    AIServiceException,
 )
 from src.ai.models import AIAgent, AIAgentAction, AIProvider
 from src.ai.services.entities import ProviderConfig
@@ -177,7 +177,7 @@ class BaseHandler(ABC):
                 if error_message is None:
                     raise AIProviderRequestFailedException
                 message = f'"{error_message}" ({http_status})'
-                raise AIServiceException(message=message)
+                raise AIHandlerException(message=message)
             try:
                 response_data = response.json()
             except ValueError as ex:

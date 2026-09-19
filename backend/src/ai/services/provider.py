@@ -1,6 +1,11 @@
 from typing import List, Optional
 from src.ai.enums import AIVendor
-from src.ai.exceptions import AIProviderInUseException
+from src.ai.exceptions import (
+    AIHandlerException,
+    AIProviderException,
+    AIProviderInUseException,
+)
+from src.ai.messages import MSG_AI_0006, MSG_AI_0007, MSG_AI_0008
 from src.ai.models import AIAgent, AIProvider
 from src.ai.serializers import AIModelSerializer
 from src.ai.services.handlers import BaseHandler
@@ -78,6 +83,37 @@ class AIProviderService(
             return AIVendor.OPENAI
         return self.instance.vendor
 
+    def _get_first_model(self) -> str:
+        try:
+            models = self.get_models()
+        except AIHandlerException as ex:
+            raise AIProviderException(
+                message=MSG_AI_0006(error=str(ex)),
+            ) from ex
+        if not models:
+            raise AIProviderException(message=MSG_AI_0006(error='empty list'))
+        return models[0]['slug']
+
+    def _create_first_completion(self, model: str):
+        try:
+            response = self.get_completion(
+                system_message='You are a office employee.',
+                user_message='Say "Hello world"',
+                model=model,
+            )
+        except AIHandlerException as ex:
+            raise AIProviderException(
+                message=MSG_AI_0007(error=str(ex)),
+            ) from ex
+        if not response:
+            raise AIProviderException(
+                message=MSG_AI_0008(model=model),
+            )
+
+    def _create_actions(self, **kwargs):
+        model = self._get_first_model()
+        self._create_first_completion(model=model)
+
     def _get_handler(
         self,
         agent: Optional[AIAgent] = None,
@@ -108,8 +144,8 @@ class AIProviderService(
         system_message: str,
         user_message: str,
         model: str,
-        agent: AIAgent,
-        task: Task,
+        agent: Optional[AIAgent] = None,
+        task: Optional[Task] = None,
     ) -> str:
         handler = self._get_handler(agent=agent, task=task)
         return handler.get_completion(

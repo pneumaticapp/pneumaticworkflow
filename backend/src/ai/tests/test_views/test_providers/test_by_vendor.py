@@ -2,7 +2,7 @@ import pytest
 from rest_framework.fields import Field
 
 from src.ai.enums import AIVendor
-from src.ai.exceptions import AIServiceException
+from src.ai.exceptions import AIProviderException
 from src.ai.services.provider import AIProviderService
 from src.ai.tests.fixtures import create_test_provider
 from src.authentication.enums import AuthTokenType
@@ -257,7 +257,7 @@ def test_by_vendor__service_exception__validation_error(
     mocker,
 ):
 
-    """ Service raises AIServiceException """
+    """ Service raises AIProviderException """
 
     # arrange
     account = create_test_account()
@@ -275,7 +275,7 @@ def test_by_vendor__service_exception__validation_error(
     )
     create_by_vendor_mock = mocker.patch(
         'src.ai.views.AIProviderService.create_by_vendor',
-        side_effect=AIServiceException(
+        side_effect=AIProviderException(
             message=error_message,
         ),
     )

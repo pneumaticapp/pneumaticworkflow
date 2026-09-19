@@ -8,7 +8,11 @@ from src.accounts.permissions import (
     UserIsAdminOrAccountOwner,
 )
 from src.ai.enums import AIVendor
-from src.ai.exceptions import AIServiceException
+from src.ai.exceptions import (
+    AIAgentException,
+    AIHandlerException,
+    AIProviderException,
+)
 from src.ai.models import AIAgent, AIProvider
 from src.ai.serializers import (
     AIAgentSerializer,
@@ -120,7 +124,7 @@ class AIProviderViewSet(
         )
         try:
             provider = service.create(**serializer.validated_data)
-        except AIServiceException as ex:
+        except AIProviderException as ex:
             raise_validation_error(message=ex.message)
         response_serializer = self.get_serializer(instance=provider)
         return self.response_created(response_serializer.data)
@@ -149,7 +153,7 @@ class AIProviderViewSet(
         )
         try:
             provider = service.create_by_vendor(**serializer.validated_data)
-        except AIServiceException as ex:
+        except AIProviderException as ex:
             raise_validation_error(message=ex.message)
         response_serializer = AIProviderSerializer(instance=provider)
         return self.response_created(response_serializer.data)
@@ -199,7 +203,7 @@ class AIProviderViewSet(
         )
         try:
             provider = service.partial_update(**serializer.validated_data)
-        except AIServiceException as ex:
+        except AIProviderException as ex:
             raise_validation_error(message=ex.message)
         response_serializer = self.get_serializer(provider)
         return self.response_ok(response_serializer.data)
@@ -226,7 +230,7 @@ class AIProviderViewSet(
         )
         try:
             service.delete()
-        except AIServiceException as ex:
+        except AIProviderException as ex:
             raise_validation_error(message=ex.message)
         return self.response_ok()
 
@@ -252,7 +256,7 @@ class AIProviderViewSet(
         )
         try:
             models = service.get_models()
-        except AIServiceException as ex:
+        except AIHandlerException as ex:
             raise_validation_error(message=ex.message)
         serializer = self.get_serializer(instance=models, many=True)
         return self.response_ok(serializer.data)
@@ -350,7 +354,7 @@ class AIAgentViewSet(
         )
         try:
             agent = service.create(**serializer.validated_data)
-        except AIServiceException as ex:
+        except AIAgentException as ex:
             raise_validation_error(message=ex.message)
         response_serializer = AIAgentSerializer(agent)
         return self.response_created(response_serializer.data)
@@ -400,7 +404,7 @@ class AIAgentViewSet(
         )
         try:
             agent = service.partial_update(**serializer.validated_data)
-        except AIServiceException as ex:
+        except AIAgentException as ex:
             raise_validation_error(message=ex.message)
         response_serializer = AIAgentSerializer(agent)
         return self.response_ok(response_serializer.data)
@@ -427,6 +431,6 @@ class AIAgentViewSet(
         )
         try:
             service.delete()
-        except AIServiceException as ex:
+        except AIAgentException as ex:
             raise_validation_error(message=ex.message)
         return self.response_ok()

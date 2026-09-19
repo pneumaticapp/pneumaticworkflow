@@ -13,26 +13,41 @@ class AIServiceException(BaseServiceException):
     pass
 
 
-class AIProviderConnectionException(AIServiceException):
+class AIHandlerException(AIServiceException):
+
+    pass
+
+
+class AIProviderException(AIServiceException):
+
+    pass
+
+
+class AIAgentException(AIServiceException):
+
+    pass
+
+
+class AIProviderConnectionException(AIHandlerException):
 
     default_message = MSG_AI_0001
 
 
-class AIProviderRequestFailedException(AIServiceException):
+class AIProviderRequestFailedException(AIHandlerException):
 
     default_message = MSG_AI_0002
 
 
-class AIProviderInvalidResponseException(AIServiceException):
+class AIProviderInvalidResponseException(AIHandlerException):
 
     default_message = MSG_AI_0003
 
 
-class AIAgentNameNotUniqueException(AIServiceException):
+class AIAgentNameNotUniqueException(AIAgentException):
 
     default_message = MSG_AI_0004
 
 
-class AIProviderInUseException(AIServiceException):
+class AIProviderInUseException(AIProviderException):
 
     default_message = MSG_AI_0005

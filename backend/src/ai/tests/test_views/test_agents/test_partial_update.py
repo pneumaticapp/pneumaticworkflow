@@ -1,6 +1,6 @@
 import pytest
 
-from src.ai.exceptions import AIServiceException
+from src.ai.exceptions import AIAgentException
 from src.ai.services.agent import AIAgentService
 from src.ai.tests.fixtures import (
     create_test_agent,
@@ -102,7 +102,7 @@ def test_partial_update__service_exc__validation_error(
     )
     partial_update_mock = mocker.patch(
         'src.ai.views.AIAgentService.partial_update',
-        side_effect=AIServiceException(
+        side_effect=AIAgentException(
             message=error_message,
         ),
     )

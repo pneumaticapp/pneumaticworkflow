@@ -1,7 +1,7 @@
 import pytest
 from rest_framework.fields import BooleanField, CharField, Field, URLField
 
-from src.ai.exceptions import AIServiceException
+from src.ai.exceptions import AIProviderException
 from src.ai.services.provider import AIProviderService
 from src.ai.tests.fixtures import create_test_provider
 from src.authentication.enums import AuthTokenType
@@ -523,7 +523,7 @@ def test_create__service_exception__validation_error(api_client, mocker):
     )
     create_mock = mocker.patch(
         'src.ai.views.AIProviderService.create',
-        side_effect=AIServiceException(message=error_message),
+        side_effect=AIProviderException(message=error_message),
     )
     api_client.token_authenticate(user=user)
 
