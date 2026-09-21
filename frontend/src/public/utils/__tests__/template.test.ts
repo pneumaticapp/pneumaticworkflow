@@ -358,6 +358,19 @@ describe('template utilities', () => {
 
       expect(result.kickoff.fieldsets).toEqual([]);
     });
+
+    it('defaults task fields to empty array when fields is missing or undefined', () => {
+      const templateResponse = createMockTemplateResponse();
+      const taskWithoutFields = {
+        ...templateResponse.tasks[0],
+        fields: undefined,
+      };
+      Object.assign(templateResponse, { tasks: [taskWithoutFields] });
+
+      const result = getNormalizedTemplate(templateResponse, true, mockUsers, ESubscriptionPlan.Premium);
+
+      expect(result.tasks[0].fields).toEqual([]);
+    });
   });
 
   describe('mapTemplateRequest', () => {
