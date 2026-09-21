@@ -38,11 +38,21 @@ export interface IAIProvider {
   usage: IAIProviderUsageItem[];
 }
 
-/** Only the base URL and the key are writable — name and vendor are detected server-side. */
 export interface ICreateAIProviderRequest {
+  name: string;
   baseUrl: string;
   apiKey: string;
   isActive?: boolean;
+}
+
+export interface ICreateAIProviderByVendorRequest {
+  vendor: string;
+  apiKey: string;
+}
+
+export interface IAIVendor {
+  slug: string;
+  name: string;
 }
 
 export type TUpdateAIProviderRequest = Partial<ICreateAIProviderRequest>;
