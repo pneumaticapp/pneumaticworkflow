@@ -20,8 +20,10 @@ from src.shared_kernel.middleware.rate_limit import RateLimitMiddleware
 from src.shared_kernel.middleware.security_headers import (
     SecurityHeadersMiddleware,
 )
+from src.shared_kernel.sentry import init_sentry
 
 settings = get_settings()
+init_sentry()
 
 
 # ── Constants ────────────────────────────────────────────────
@@ -40,9 +42,6 @@ Pass the key in the `Authorization` header:
 ```http
 Authorization: Bearer <your_api_key>
 ```
-
-Or click the **Authorize** button above and paste your key \
-to test endpoints directly.
 
 ### Key Capabilities
 - **Direct Uploads:** Upload attachments for workflows, tasks, \
@@ -140,7 +139,7 @@ app = FastAPI(
     ],
     openapi_tags=[
         {
-            'name': 'files',
+            'name': 'Files',
             'description': ('Upload, download, and manage file attachments'),
         },
     ],

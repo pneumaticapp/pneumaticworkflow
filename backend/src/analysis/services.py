@@ -105,32 +105,6 @@ class AnalyticService:
         )
 
     @classmethod
-    def users_invited(
-        cls,
-        invite_to: UserModel,
-        invite_token: str,
-        is_superuser: bool,
-    ) -> bool:
-
-        """ Sent always to trigger the sending of an invitation email
-            is_superuser may be "master account" for tenant """
-
-        return cls._track(
-            user_id=invite_to.id,
-            event=UserAnalyticsEvent.invited,
-            properties={
-                'text': 'Invitation sent by email',
-                'first_name': invite_to.first_name,
-                'last_name': invite_to.last_name,
-                'email': invite_to.email,
-                'invite_token': invite_token,
-                'account_id': invite_to.account_id,
-                'category': EventCategory.users,
-            },
-            is_superuser=False,
-        )
-
-    @classmethod
     def users_joined(
         cls,
         user: UserModel,
