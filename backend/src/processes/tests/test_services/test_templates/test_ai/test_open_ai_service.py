@@ -30,6 +30,7 @@ from src.processes.services.templates.ai import (
     OpenAiService,
 )
 from src.processes.tests.fixtures import (
+    create_test_owner,
     create_test_user,
 )
 
@@ -738,3 +739,87 @@ def test_get_template_data__not_steps__raise_exception(mocker):
         description=description,
         success=False,
     )
+
+
+def test_get_template_data__generated__emit_template_generated_with_ai(mocker):
+
+    # arrange
+    user = create_test_owner()
+    description = 'My lovely business process'
+    template_data = {'name': description}
+    get_template_data_mock = mocker.patch(
+        'src.processes.services.templates.'
+        'ai.OpenAiService._get_template_data',
+        return_value=template_data,
+    )
+    template_generation_init_mock = mocker.patch(
+        'src.processes.services.templates.'
+        'ai.AnalyticService.template_generation_init',
+    )
+    template_generated_with_ai_mock = mocker.patch(
+        'src.processes.services.templates.'
+        'ai.AuditEventService.template_generated_with_ai',
+    )
+    service = OpenAiService(
+        ident=user.id,
+        user=user,
+        auth_type=AuthTokenType.API,
+    )
+
+    # act
+    result = service.get_template_data(user_description=description)
+
+    # assert
+    assert result == template_data
+    get_template_data_mock.assert_called_once_with(description)
+    template_generation_init_mock.assert_called_once_with(
+        user=user,
+        auth_type=AuthTokenType.API,
+        is_superuser=False,
+        description=description,
+        success=True,
+    )
+    template_generated_with_ai_mock.assert_called_once_with(
+        user=user,
+        auth_type=AuthTokenType.API,
+    )
+
+
+def test_get_template_data__service_exception__not_emit(mocker):
+
+    # arrange
+    user = create_test_owner()
+    description = 'My lovely business process'
+    get_template_data_mock = mocker.patch(
+        'src.processes.services.templates.'
+        'ai.OpenAiService._get_template_data',
+        side_effect=OpenAiServiceFailed,
+    )
+    template_generation_init_mock = mocker.patch(
+        'src.processes.services.templates.'
+        'ai.AnalyticService.template_generation_init',
+    )
+    template_generated_with_ai_mock = mocker.patch(
+        'src.processes.services.templates.'
+        'ai.AuditEventService.template_generated_with_ai',
+    )
+    service = OpenAiService(
+        ident=user.id,
+        user=user,
+        auth_type=AuthTokenType.USER,
+    )
+
+    # act
+    with pytest.raises(OpenAiServiceFailed):
+        service.get_template_data(user_description=description)
+
+    # assert
+    get_template_data_mock.assert_called_once_with(description)
+    template_generation_init_mock.assert_called_once_with(
+        user=user,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+        description=description,
+        success=False,
+    )
+    template_generated_with_ai_mock.assert_not_called()

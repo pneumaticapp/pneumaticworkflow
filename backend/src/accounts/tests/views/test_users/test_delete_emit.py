@@ -1,0 +1,77 @@
+import pytest
+
+from src.accounts.enums import UserStatus, UserType
+from src.authentication.enums import AuthTokenType
+from src.logs.events.enums import (
+    EventObjectType,
+    UserEvents,
+)
+from src.logs.events.schema import Actor, EventObject
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_admin,
+    create_test_owner,
+)
+
+pytestmark = pytest.mark.django_db
+
+
+def test_delete__deprecated_endpoint__emit_user_deactivate(
+    mocker,
+    identify_mock,
+    group_mock,
+    api_client,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    target = create_test_admin(account=account)
+    api_client.token_authenticate(owner)
+    identify_users_mock = mocker.patch(
+        'src.accounts.services.account.identify_users.delay',
+    )
+    send_user_deactivated_mock = mocker.patch(
+        'src.notifications.tasks.send_user_deactivated_notification.delay',
+    )
+    send_user_deleted_mock = mocker.patch(
+        'src.notifications.tasks.send_user_deleted_notification.delay',
+    )
+    emit_mock = mocker.patch('src.logs.events.services.emit')
+
+    # act
+    response = api_client.post(f'/accounts/users/{target.id}/delete')
+
+    # assert
+    assert response.status_code == 204
+    emit_mock.assert_called_once_with(
+        UserEvents.DEACTIVATE,
+        account_id=account.id,
+        actor=Actor(
+            id=owner.id,
+            email=owner.email,
+            user_type=UserType.USER,
+        ),
+        auth_type=AuthTokenType.USER,
+        event_object=EventObject(type=EventObjectType.USER, id=target.id),
+        payload={
+            'target_email': target.email,
+            'status_before': UserStatus.ACTIVE,
+        },
+        workflow_id=None,
+        task_id=None,
+    )
+    identify_mock.assert_called_once_with(target)
+    identify_users_mock.assert_called_once_with(user_ids=(owner.id,))
+    group_mock.assert_called_once_with(user=target, account=account)
+    send_user_deactivated_mock.assert_called_once_with(
+        user_id=target.id,
+        user_email=target.email,
+        account_id=account.id,
+        logo_lg=account.logo_lg,
+    )
+    send_user_deleted_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        user_data=mocker.ANY,
+    )

@@ -8,6 +8,8 @@ from rest_framework.serializers import ValidationError
 from src.accounts.models import UserGroup
 from src.analysis.services import AnalyticService
 from src.generics.base.service import BaseModelService
+from src.logs.events import AuditEventService
+from src.logs.events.enums import TemplateSource
 from src.processes.enums import (
     OwnerRole,
     OwnerType,
@@ -157,6 +159,11 @@ class TemplateService(BaseModelService):
             auth_type=self.auth_type,
             is_superuser=self.is_superuser,
         )
+        AuditEventService.template_filled_from_library(
+            user=self.user,
+            auth_type=self.auth_type,
+            system_template=sys_template,
+        )
         return data
 
     def create_template_by_steps(
@@ -203,6 +210,13 @@ class TemplateService(BaseModelService):
                 user=self.user,
                 auth_type=self.auth_type,
                 is_superuser=self.is_superuser,
+            )
+            AuditEventService.template_saved(
+                user=self.user,
+                auth_type=self.auth_type,
+                template=self.instance,
+                name=self.instance.name,
+                source=TemplateSource.BY_STEPS,
             )
             return self.instance
 
@@ -294,5 +308,12 @@ class TemplateService(BaseModelService):
             template=template,
             auth_type=self.auth_type,
             is_superuser=self.is_superuser,
+        )
+        AuditEventService.template_saved(
+            user=self.user,
+            auth_type=self.auth_type,
+            template=template,
+            name=template.name,
+            source=TemplateSource.LIBRARY,
         )
         return template

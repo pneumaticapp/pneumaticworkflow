@@ -5,6 +5,7 @@ from django.contrib.auth import get_user_model
 from django.db import IntegrityError, transaction
 
 from src.generics.base.service import BaseModelService
+from src.logs.events import AuditEventService
 from src.processes.enums import LabelPosition, FieldSetLayout
 from src.processes.messages.fieldset import (
     MSG_FS_0014,
@@ -96,7 +97,7 @@ class FieldSetTemplateService(BaseModelService):
         """ Creates a shared FieldSetTemplate
             that is not linked to a template. """
 
-        return super().create(
+        fieldset = super().create(
             name=name,
             title=title,
             description=description,
@@ -106,6 +107,12 @@ class FieldSetTemplateService(BaseModelService):
             is_shared=True,
             **kwargs,
         )
+        AuditEventService.fieldset_created(
+            user=self.user,
+            auth_type=self.auth_type,
+            fieldset=fieldset,
+        )
+        return fieldset
 
     def create_from_shared(
         self,
@@ -280,6 +287,11 @@ class FieldSetTemplateService(BaseModelService):
             if rules_data is not None:
                 self.update_rules(rules_data=rules_data)
             self._validate_rules()
+            AuditEventService.fieldset_updated(
+                user=self.user,
+                auth_type=self.auth_type,
+                fieldset=self.instance,
+            )
             return self.instance
 
     def partial_update_instance(
@@ -301,6 +313,11 @@ class FieldSetTemplateService(BaseModelService):
         if self.instance.kickoff_id or self.instance.task_id:
             raise FieldsetTemplateInUseException
         self.instance.delete()
+        AuditEventService.fieldset_deleted(
+            user=self.user,
+            auth_type=self.auth_type,
+            fieldset=self.instance,
+        )
 
     @staticmethod
     def _replace_api_names(shared_fieldset_data: dict) -> dict:
@@ -456,4 +473,12 @@ class FieldSetTemplateService(BaseModelService):
             shared_fieldset_data=instance_data,
         )
         clone_data['name'] = clone_data['name'] + ' - clone'
-        return self.create_shared_fieldset(**clone_data)
+        source_fieldset_id = self.instance.id
+        clone = super().create(is_shared=True, **clone_data)
+        AuditEventService.fieldset_cloned(
+            user=self.user,
+            auth_type=self.auth_type,
+            clone=clone,
+            source_fieldset_id=source_fieldset_id,
+        )
+        return clone

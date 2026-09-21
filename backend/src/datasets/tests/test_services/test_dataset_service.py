@@ -666,3 +666,287 @@ def test__create_actions__sends_created_notification__ok(mocker):
         account_id=account.id,
         dataset_data=serialized_data,
     )
+
+
+def test__create_actions__items__emit_dataset_created(mocker):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    dataset = create_test_dataset(
+        account=account,
+        items_count=0,
+    )
+    service = DataSetService(
+        user=user,
+        instance=dataset,
+    )
+    items = [
+        {'value': 'Item 1', 'order': 1},
+        {'value': 'Item 2', 'order': 2},
+    ]
+    serialized_data = mocker.Mock()
+    dataset_serializer_mock = mocker.patch(
+        'src.datasets.services.dataset.DatasetSerializer',
+        return_value=mocker.Mock(data=serialized_data),
+    )
+    send_dataset_created_notification_mock = mocker.patch(
+        'src.notifications.tasks.'
+        'send_dataset_created_notification.delay',
+    )
+    dataset_created_mock = mocker.patch(
+        'src.datasets.services.dataset.AuditEventService.dataset_created',
+    )
+
+    # act
+    service._create_actions(
+        name=dataset.name,
+        items=items,
+    )
+
+    # assert
+    dataset_serializer_mock.assert_called_once_with(dataset)
+    send_dataset_created_notification_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        dataset_data=serialized_data,
+    )
+    dataset_created_mock.assert_called_once_with(
+        user=user,
+        auth_type=service.auth_type,
+        dataset=dataset,
+        items_count=2,
+    )
+
+
+def test__create_actions__no_items__emit_zero_items_count(mocker):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    dataset = create_test_dataset(
+        account=account,
+        items_count=0,
+    )
+    service = DataSetService(
+        user=user,
+        instance=dataset,
+    )
+    serialized_data = mocker.Mock()
+    dataset_serializer_mock = mocker.patch(
+        'src.datasets.services.dataset.DatasetSerializer',
+        return_value=mocker.Mock(data=serialized_data),
+    )
+    send_dataset_created_notification_mock = mocker.patch(
+        'src.notifications.tasks.'
+        'send_dataset_created_notification.delay',
+    )
+    dataset_created_mock = mocker.patch(
+        'src.datasets.services.dataset.AuditEventService.dataset_created',
+    )
+
+    # act
+    service._create_actions(name=dataset.name)
+
+    # assert
+    dataset_serializer_mock.assert_called_once_with(dataset)
+    send_dataset_created_notification_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        dataset_data=serialized_data,
+    )
+    dataset_created_mock.assert_called_once_with(
+        user=user,
+        auth_type=service.auth_type,
+        dataset=dataset,
+        items_count=0,
+    )
+
+
+def test_partial_update__name_changed__emit_dataset_updated(mocker):
+
+    """ Items are not named: the rows write their own events. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    dataset = create_test_dataset(
+        account=account,
+        items_count=0,
+        name='Old name',
+        description='Same description',
+    )
+    service = DataSetService(
+        user=user,
+        instance=dataset,
+    )
+    items = [{'value': 'Item 1', 'order': 1}]
+    serialized_data = mocker.Mock()
+    dataset_serializer_mock = mocker.patch(
+        'src.datasets.services.dataset.DatasetSerializer',
+        return_value=mocker.Mock(data=serialized_data),
+    )
+    send_dataset_updated_notification_mock = mocker.patch(
+        'src.notifications.tasks.'
+        'send_dataset_updated_notification.delay',
+    )
+    update_items_mock = mocker.patch(
+        'src.datasets.services.dataset.DataSetService.update_items',
+    )
+    dataset_updated_mock = mocker.patch(
+        'src.datasets.services.dataset.AuditEventService.dataset_updated',
+    )
+
+    # act
+    service.partial_update(
+        name='New name',
+        description='Same description',
+        items=items,
+    )
+
+    # assert
+    update_items_mock.assert_called_once_with(items_data=items)
+    dataset_serializer_mock.assert_called_once_with(dataset)
+    send_dataset_updated_notification_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        dataset_data=serialized_data,
+    )
+    dataset_updated_mock.assert_called_once_with(
+        user=user,
+        auth_type=service.auth_type,
+        dataset=dataset,
+        changed_fields=['name'],
+    )
+
+
+def test_partial_update__same_values__not_emit(mocker):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    dataset = create_test_dataset(
+        account=account,
+        items_count=0,
+        name='Same name',
+    )
+    service = DataSetService(
+        user=user,
+        instance=dataset,
+    )
+    items = [{'value': 'Item 1', 'order': 1}]
+    serialized_data = mocker.Mock()
+    dataset_serializer_mock = mocker.patch(
+        'src.datasets.services.dataset.DatasetSerializer',
+        return_value=mocker.Mock(data=serialized_data),
+    )
+    send_dataset_updated_notification_mock = mocker.patch(
+        'src.notifications.tasks.'
+        'send_dataset_updated_notification.delay',
+    )
+    update_items_mock = mocker.patch(
+        'src.datasets.services.dataset.DataSetService.update_items',
+    )
+    dataset_updated_mock = mocker.patch(
+        'src.datasets.services.dataset.AuditEventService.dataset_updated',
+    )
+
+    # act
+    service.partial_update(
+        name='Same name',
+        items=items,
+    )
+
+    # assert
+    update_items_mock.assert_called_once_with(items_data=items)
+    dataset_serializer_mock.assert_called_once_with(dataset)
+    send_dataset_updated_notification_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        dataset_data=serialized_data,
+    )
+    dataset_updated_mock.assert_not_called()
+
+
+def test__delete__not_used__emit_dataset_deleted(mocker):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    dataset = create_test_dataset(account=account)
+    service = DataSetService(
+        user=user,
+        instance=dataset,
+    )
+    serialized_data = mocker.Mock()
+    dataset_serializer_mock = mocker.patch(
+        'src.datasets.services.dataset.DatasetSerializer',
+        return_value=mocker.Mock(data=serialized_data),
+    )
+    send_dataset_deleted_notification_mock = mocker.patch(
+        'src.notifications.tasks.'
+        'send_dataset_deleted_notification.delay',
+    )
+    dataset_deleted_mock = mocker.patch(
+        'src.datasets.services.dataset.AuditEventService.dataset_deleted',
+    )
+
+    # act
+    service.delete()
+
+    # assert
+    dataset_serializer_mock.assert_called_once_with(dataset)
+    send_dataset_deleted_notification_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        dataset_data=serialized_data,
+    )
+    dataset_deleted_mock.assert_called_once_with(
+        user=user,
+        auth_type=service.auth_type,
+        dataset=dataset,
+    )
+
+
+def test_update_items__omitted_item__emit_dataset_item_deleted(mocker):
+
+    """ The omitted rows go in one bulk delete, which passes no
+        DataSetItemService: their events are written here. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    dataset = create_test_dataset(
+        account=account,
+        items_count=2,
+    )
+    kept_item, omitted_item = dataset.items.order_by('order')
+    service = DataSetService(
+        user=user,
+        instance=dataset,
+    )
+    partial_update_mock = mocker.patch(
+        'src.datasets.services.dataset.'
+        'DataSetItemService.partial_update',
+    )
+    dataset_item_deleted_mock = mocker.patch(
+        'src.datasets.services.dataset.'
+        'AuditEventService.dataset_item_deleted',
+    )
+
+    # act
+    service.update_items(
+        items_data=[{'id': kept_item.id, 'value': 'Kept', 'order': 1}],
+    )
+
+    # assert
+    partial_update_mock.assert_called_once_with(
+        value='Kept',
+        order=1,
+    )
+    assert not dataset.items.filter(id=omitted_item.id).exists()
+    dataset_item_deleted_mock.assert_called_once_with(
+        user=user,
+        auth_type=service.auth_type,
+        item=omitted_item,
+    )

@@ -8,6 +8,7 @@ from src.datasets.exceptions import DataSetServiceException
 from src.datasets.messages import (
     MSG_DS_0002,
 )
+from src.logs.events import AuditEventService
 
 
 UserModel = get_user_model()
@@ -34,12 +35,23 @@ class DataSetItemService(BaseModelService):
             ) from ex
         return self.instance
 
+    def _create_actions(self, **kwargs):
+        AuditEventService.dataset_item_created(
+            user=self.user,
+            auth_type=self.auth_type,
+            item=self.instance,
+        )
+
     def partial_update(
         self,
         force_save: bool = True,
         **update_kwargs,
     ) -> DatasetItem:
 
+        changed_fields = sorted(
+            name for name, value in update_kwargs.items()
+            if getattr(self.instance, name) != value
+        )
         self.update_fields.update(update_kwargs.keys())
         for field_name, value in update_kwargs.items():
             setattr(self.instance, field_name, value)
@@ -50,4 +62,19 @@ class DataSetItemService(BaseModelService):
                 raise DataSetServiceException(
                     message=MSG_DS_0002(value=self.instance.value),
                 ) from ex
+            if changed_fields:
+                AuditEventService.dataset_item_updated(
+                    user=self.user,
+                    auth_type=self.auth_type,
+                    item=self.instance,
+                    changed_fields=changed_fields,
+                )
         return self.instance
+
+    def delete(self):
+        super().delete()
+        AuditEventService.dataset_item_deleted(
+            user=self.user,
+            auth_type=self.auth_type,
+            item=self.instance,
+        )

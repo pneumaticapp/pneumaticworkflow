@@ -5,6 +5,7 @@ from rest_framework.generics import (
     RetrieveAPIView,
 )
 
+from src.accounts.enums import SourceType
 from src.accounts.tokens import (
     VerificationToken,
 )
@@ -22,6 +23,7 @@ from src.generics.mixins.views import (
     AnonymousAccountMixin,
     BaseResponseMixin,
 )
+from src.logs.events import AuditEventService
 from src.notifications.tasks import send_verification_notification
 
 UserModel = get_user_model()
@@ -41,6 +43,7 @@ class SignUpView(
         PrivateApiPermission,
         SignupPermission,
     )
+    audit_source = SourceType.EMAIL
 
     def retrieve(self, request, *args, **kwargs):
         if not settings.PROJECT_CONF['CAPTCHA']:
@@ -51,6 +54,15 @@ class SignUpView(
         return self.response_ok({'show_captcha': show_captcha})
 
     def after_signup(self, user: UserModel):
+
+        """ No super(): the account log row and the Slack ping of
+            the mixin belong to the SSO sign ups, an e-mail sign up
+            leaves the journal entry only. """
+
+        AuditEventService.user_signed_up(
+            user=user,
+            source=self.audit_source,
+        )
         account = user.account
         if settings.VERIFICATION_CHECK and not account.is_verified:
             send_verification_notification.delay(

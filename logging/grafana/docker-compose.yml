@@ -1,0 +1,87 @@
+# Loki + Grafana for the Pneumatic audit journal.
+#
+# This file belongs to the machine that STORES the journal, not to the machine
+# that runs Pneumatic - the same split as logging/elasticsearch. The
+# application side is two lines in its .env, described in the Logging section
+# of default.env:
+#
+#   LOGS_BACKEND=otlp
+#   LOGS_OTLP_EXPORT_ENDPOINT=http://<this machine>:3100/otlp
+#
+#   cp grafana.env.example .env      # then fill every REQUIRED line in
+#   docker compose up -d
+#
+# Grafana provisions its datasource, the dashboards and the alert rules from
+# ./provisioning on every start; the Loki config is ../loki/loki-config.yaml.
+#
+# Loki has no authentication of its own (auth_enabled: false in its config
+# means "single tenant", not "log in first"), so the only thing between the
+# journal and anything that can send an HTTP request is the network. LOKI_BIND
+# names the interface Loki listens on; keep it one that only the application
+# machine reaches - a private network, a VPN, a firewall rule. Grafana is the
+# only reader and talks to Loki inside the compose network.
+#
+# A developer runs this stack next to the application: with the default
+# LOKI_BIND=127.0.0.1 the collector of a stack on the same machine reaches it
+# through the host, LOGS_OTLP_EXPORT_ENDPOINT=http://host.docker.internal:3100/otlp
+# (add `extra_hosts: ["host.docker.internal:host-gateway"]` to the collector
+# on Linux).
+#
+# Everything that holds data is a named docker volume: a missing bind-mount
+# source is created as root:root and a container that runs as another uid
+# cannot write into it, while an empty named volume inherits owner and mode
+# from the image.
+
+name: pneumatic-grafana
+
+services:
+  loki:
+    image: grafana/loki:3.7.7
+    container_name: pneumatic-loki
+    command:
+      - -config.file=/etc/loki/loki-config.yaml
+      - -config.expand-env=true
+    environment:
+      LOGS_RETENTION_PERIOD: ${LOGS_RETENTION_PERIOD:-365d}
+    volumes:
+      - ../loki/loki-config.yaml:/etc/loki/loki-config.yaml:ro
+      - loki-data:/loki
+    ports:
+      - "${LOKI_BIND:-127.0.0.1}:${LOKI_PORT:-3100}:3100"
+    networks:
+      - pneumatic-grafana
+    restart: always
+
+  grafana:
+    image: grafana/grafana:12.4.10
+    container_name: pneumatic-grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?set GRAFANA_ADMIN_PASSWORD in .env}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: ${GRAFANA_HOME_DASHBOARD:-/etc/grafana/provisioning/dashboards/json/project-overview.json}
+    volumes:
+      - ./provisioning:/etc/grafana/provisioning:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "${GRAFANA_BIND:-127.0.0.1}:${GRAFANA_PORT:-3000}:3000"
+    depends_on:
+      - loki
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health | grep -q '\"database\": *\"ok\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    networks:
+      - pneumatic-grafana
+    restart: always
+
+networks:
+  pneumatic-grafana:
+
+volumes:
+  loki-data:
+  grafana-data:

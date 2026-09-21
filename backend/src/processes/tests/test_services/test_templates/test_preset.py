@@ -470,3 +470,176 @@ class TestTemplatePresetService:
         # assert
         assert preset.is_default is True
         reset_default_mock.assert_called_once_with()
+
+    def test_create_actions__created__emit_template_preset_created(
+        self,
+        mocker,
+    ):
+
+        # arrange
+        account = create_test_account()
+        user = create_test_admin(account=account)
+        template = create_test_template(
+            user=user,
+            is_active=True,
+        )
+        preset = create_test_template_preset(
+            template=template,
+            author=user,
+            type=PresetType.PERSONAL,
+        )
+        service = TemplatePresetService(
+            user=user,
+            instance=preset,
+            auth_type=AuthTokenType.API,
+        )
+        template_preset_created_mock = mocker.patch(
+            'src.processes.services.templates.preset.'
+            'AuditEventService.template_preset_created',
+        )
+
+        # act
+        service._create_actions(
+            template=template,
+            name=preset.name,
+        )
+
+        # assert
+        template_preset_created_mock.assert_called_once_with(
+            user=user,
+            auth_type=AuthTokenType.API,
+            preset=preset,
+        )
+
+    def test_partial_update__name__emit_template_preset_updated(
+        self,
+        mocker,
+    ):
+
+        # arrange
+        account = create_test_account()
+        user = create_test_admin(account=account)
+        template = create_test_template(
+            user=user,
+            is_active=True,
+        )
+        preset = create_test_template_preset(
+            template=template,
+            author=user,
+            name='Old view',
+            type=PresetType.PERSONAL,
+        )
+        service = TemplatePresetService(
+            user=user,
+            instance=preset,
+            auth_type=AuthTokenType.API,
+        )
+        template_preset_updated_mock = mocker.patch(
+            'src.processes.services.templates.preset.'
+            'AuditEventService.template_preset_updated',
+        )
+
+        # act
+        service.partial_update(
+            name='Sales view',
+            force_save=True,
+        )
+
+        # assert
+        template_preset_updated_mock.assert_called_once_with(
+            user=user,
+            auth_type=AuthTokenType.API,
+            preset=preset,
+        )
+        assert preset.name == 'Sales view'
+
+    def test_set_default__not_default__emit_set_default_only(
+        self,
+        mocker,
+    ):
+
+        """ Setting the default bypasses partial_update, so it is not
+            journaled as an update too. """
+
+        # arrange
+        account = create_test_account()
+        user = create_test_admin(account=account)
+        template = create_test_template(
+            user=user,
+            is_active=True,
+        )
+        preset = create_test_template_preset(
+            template=template,
+            author=user,
+            is_default=False,
+            type=PresetType.PERSONAL,
+        )
+        service = TemplatePresetService(
+            user=user,
+            instance=preset,
+            auth_type=AuthTokenType.API,
+        )
+        reset_default_presets_mock = mocker.patch.object(
+            TemplatePresetService,
+            attribute='_reset_default_presets',
+        )
+        template_preset_updated_mock = mocker.patch(
+            'src.processes.services.templates.preset.'
+            'AuditEventService.template_preset_updated',
+        )
+        template_preset_set_default_mock = mocker.patch(
+            'src.processes.services.templates.preset.'
+            'AuditEventService.template_preset_set_default',
+        )
+
+        # act
+        service.set_default()
+
+        # assert
+        preset.refresh_from_db()
+        assert preset.is_default is True
+        reset_default_presets_mock.assert_called_once_with()
+        template_preset_set_default_mock.assert_called_once_with(
+            user=user,
+            auth_type=AuthTokenType.API,
+            preset=preset,
+        )
+        template_preset_updated_mock.assert_not_called()
+
+    def test_delete__existing__emit_template_preset_deleted(
+        self,
+        mocker,
+    ):
+
+        # arrange
+        account = create_test_account()
+        user = create_test_admin(account=account)
+        template = create_test_template(
+            user=user,
+            is_active=True,
+        )
+        preset = create_test_template_preset(
+            template=template,
+            author=user,
+            type=PresetType.PERSONAL,
+        )
+        service = TemplatePresetService(
+            user=user,
+            instance=preset,
+            auth_type=AuthTokenType.API,
+        )
+        template_preset_deleted_mock = mocker.patch(
+            'src.processes.services.templates.preset.'
+            'AuditEventService.template_preset_deleted',
+        )
+
+        # act
+        service.delete()
+
+        # assert
+        assert preset.is_deleted is True
+        template_preset_deleted_mock.assert_called_once_with(
+            user=user,
+            auth_type=AuthTokenType.API,
+            preset=preset,
+        )
