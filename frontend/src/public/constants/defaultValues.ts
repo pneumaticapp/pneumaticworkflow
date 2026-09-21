@@ -33,6 +33,7 @@ export const numberRegex = /^-?(?:0(?:[.,]\d+)?|[1-9]\d*(?:[.,]\d+)?)$/;
 export const urlWithProtocolRegex = /((https?|ftp):\/\/)[a-z0-9.-]+\.[a-z]{2,}(\/\S*?(?=\.*(?:\s|,|$)))?/gi;
 export const couponRegex = /([A-Za-z0-9\+\-\_])+/;
 export const hostNameRegex = /(^https?:\/\/)(www[0-9]?\.)?([^/:]+)/i;
+export const httpProtocolRegex = /^https?:\/\//i;
 export const mentionsRegex = /\[((?:[^\]\\]|\\.)+)\|([0-9]+)\]/;
 export const variableRegex = /\{\{\s?([а-яa-z0-9\-_]+)\s?\}\}/i;
 export const youtubeVideoRegexp =

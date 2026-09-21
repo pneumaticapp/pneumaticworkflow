@@ -1,11 +1,11 @@
-import React, { useEffect } from 'react';
+import * as React from 'react';
+import { useEffect } from 'react';
 import { Formik, FormikConfig } from 'formik';
 import { useIntl } from 'react-intl';
 
 import { EOAuthType } from '../../../types/auth';
 import { ERoutes } from '../../../constants/routes';
 import { TITLES } from '../../../constants/titles';
-import { getOAuthUrl } from '../../../api/getGoogleAuthUrl';
 import { IntlMessages } from '../../../components/IntlMessages';
 import { EAuthUserFailType } from '../../../redux/actions';
 import { NavLink } from '../../../components/NavLink';
@@ -14,6 +14,7 @@ import { getQueryStringParams, history } from '../../../utils/history';
 import { Button, FormikCheckbox, Header, InputField } from '../../../components/UI';
 import { GoogleButton, MicrosoftButton, SSOButton } from '../../../components/OAuthButtons';
 import { saveUTMParams } from '../utils/utmParams';
+import { handleOAuthClick } from '../utils/handleOAuthClick';
 import { getErrorsObject } from '../../../utils/formik/getErrorsObject';
 import { isEnvGoogleAuth, isEnvMsAuth, isEnvSSOAuth, isEnvSignup, envSSOProvider } from '../../../constants/enviroment';
 import { ILoginProps, TLoginValues } from './types';
@@ -52,16 +53,6 @@ export function Login({ loading, error, loginUser, setRedirectUrl }: ILoginProps
     return '';
   };
 
-  const handleOAuthSignInClick = (type: EOAuthType) => async (e: React.MouseEvent) => {
-    e.preventDefault();
-
-    const result = await getOAuthUrl(type);
-
-    if (result && 'redirectUri' in result) {
-      window.location.assign(result.redirectUri);
-    }
-  };
-
   const handleSubmitForm: FormikConfig<TLoginValues>['onSubmit'] = (values) => {
     const { email, password, rememberMe } = values;
 
@@ -78,21 +69,21 @@ export function Login({ loading, error, loginUser, setRedirectUrl }: ILoginProps
         {isEnvGoogleAuth && (
           <GoogleButton
             label={formatMessage({ id: 'user.sign-up-google' })}
-            onClick={handleOAuthSignInClick(EOAuthType.Google)}
+            onClick={handleOAuthClick(EOAuthType.Google, formatMessage)}
             className={styles['oauth__button']}
           />
         )}
         {isEnvMsAuth && (
           <MicrosoftButton
             label={formatMessage({ id: 'user.sign-up-microsoft' })}
-            onClick={handleOAuthSignInClick(EOAuthType.Microsoft)}
+            onClick={handleOAuthClick(EOAuthType.Microsoft, formatMessage)}
             className={styles['oauth__button']}
           />
         )}
         {isEnvSSOAuth && (
           <SSOButton
             label={formatMessage({ id: 'user.sign-up-sso' })}
-            onClick={handleOAuthSignInClick(typeSSOProvider)}
+            onClick={handleOAuthClick(typeSSOProvider, formatMessage)}
             className={styles['oauth__button']}
           />
         )}
