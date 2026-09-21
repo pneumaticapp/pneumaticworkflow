@@ -18,6 +18,7 @@ httpx = "0.28.1"
 redis = "6.2.0"
 alembic = "1.16.4"
 PyJWT = "2.10.0"
+sentry-sdk = "2.35.0"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "1.18.2"

@@ -48,6 +48,12 @@ class BaseAppSettings(BaseSettings):
         """Strip trailing slash from URLs."""
         return v.rstrip('/')
 
+    @field_validator('SENTRY_DSN', 'SENTRY_ENVIRONMENT', mode='before')
+    @classmethod
+    def empty_str_to_none(cls, v: str | None) -> str | None:
+        """Treat empty env values (docker-compose defaults) as unset."""
+        return v or None
+
     @field_validator('LOGS_REDIS_URL', mode='after')
     @classmethod
     def require_redis_url(cls, v: str, info: ValidationInfo) -> str:
@@ -121,6 +127,12 @@ class BaseAppSettings(BaseSettings):
     BUCKET_PREFIX: str = 'pneumatic-dev-test'
     MAX_FILE_SIZE: int = 104857600
     CHUNK_SIZE: int = 1048576  # 1MB chunks for file streaming
+
+    # ── Sentry ───────────────────────────────────────────────
+    SENTRY_DSN: str | None = None
+    SENTRY_ENVIRONMENT: str | None = None
+    # Tracing is off by default; only Production sends traces.
+    SENTRY_TRACES_SAMPLE_RATE: float = 0.0
 
     # ── Redis ────────────────────────────────────────────────
     AUTH_REDIS_URL: str = 'redis://:redis_password@redis:6379/1'
@@ -202,6 +214,7 @@ class ProductionSettings(BaseAppSettings):
     HSTS_ENABLED: bool = True
     RATE_LIMIT_ENABLED: bool = True
     RELOAD: bool = False
+    SENTRY_TRACES_SAMPLE_RATE: float = 0.2
     # WORKERS read from env (default 1, but Production
     # deployments typically set WORKERS=4+ via env var)
 

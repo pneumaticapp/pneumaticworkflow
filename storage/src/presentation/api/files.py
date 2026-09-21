@@ -46,7 +46,7 @@ from src.shared_kernel.exceptions import (
 from src.shared_kernel.permissions import is_authenticated
 from src.shared_kernel.security import sanitize_content_type
 
-router = APIRouter(prefix='', tags=['files'])
+router = APIRouter(prefix='', tags=['Files'])
 
 # Pre-compiled patterns for secure_filename
 _RE_UNSAFE_CHARS = re.compile(r'[^\w.\- ]', re.UNICODE)
