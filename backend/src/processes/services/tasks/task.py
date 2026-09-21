@@ -349,6 +349,18 @@ class TaskService(
                         )
             elif rule == DueDateRule.AFTER_WORKFLOW_STARTED:
                 start_date = self.instance.workflow.date_created
+            elif rule == DueDateRule.AFTER_PREVIOUS_TASK_COMPLETED:
+                if self.instance.parents:
+                    prev_task = Task.objects.filter(
+                        workflow_id=self.instance.workflow_id,
+                        api_name__in=self.instance.parents,
+                    ).exclude(
+                        date_completed__isnull=True,
+                    ).order_by('-date_completed', '-id').first()
+                    if prev_task:
+                        start_date = prev_task.date_completed
+                else:
+                    start_date = self.instance.workflow.date_created
 
             if start_date:
                 due_date = start_date + duration

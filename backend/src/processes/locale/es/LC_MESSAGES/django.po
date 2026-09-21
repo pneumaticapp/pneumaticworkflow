@@ -547,3 +547,6 @@ msgstr "El usuario o grupo especificado para un campo de tipo \"Usuario\" no exi
 
 msgid "Guest"
 msgstr "Invitado"
+
+msgid "Task \"{name}\": the \"Previous task completed\" rule requires a previous task condition."
+msgstr "Tarea \"{name}\": la regla \"Tarea anterior completada\" requiere una condición de tarea anterior."

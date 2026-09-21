@@ -312,3 +312,10 @@ MSG_PT_0074 = lambda name, step_name: format_lazy(
     name=name,
     step_name=step_name,
 )
+MSG_PT_0075 = lambda name: format_lazy(
+    _(
+        'Task "{name}": the "Previous task completed" rule '
+        'requires a previous task condition.',
+    ),
+    name=name,
+)
