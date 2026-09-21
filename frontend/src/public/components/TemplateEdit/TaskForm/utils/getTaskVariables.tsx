@@ -67,7 +67,7 @@ function getVariablesFromSelectedFieldsets(
     const subtitle = getSubtitle(taskFieldset);
     const richSubtitle = getRichSubtitle(taskFieldset);
 
-    return taskFieldset.fields.map((field) => getVariableFromField(field, subtitle, richSubtitle));
+    return (taskFieldset.fields || []).map((field) => getVariableFromField(field, subtitle, richSubtitle));
   });
 }
 

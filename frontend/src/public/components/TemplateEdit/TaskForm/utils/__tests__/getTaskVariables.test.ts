@@ -266,6 +266,22 @@ describe('getKickoffVariables with fieldsets', () => {
 
     expect(vars.map((v) => v.apiName)).toEqual(['client-name-3967', 'assignee-fs', 'kickoff-date-fs']);
   });
+
+  it('handles fieldset with undefined fields without crashing', () => {
+    const kickoff: ITemplateKickoffClient = {
+      ...mockKikoff,
+      fieldsets: [
+        makeFieldsetBindingClient({
+          apiNameBinding: 'fs-with-undefined-fields',
+          fields: undefined,
+        }),
+      ],
+    };
+
+    const taskVariables = getKickoffVariables(kickoff);
+
+    expect(taskVariables.map((variable) => variable.apiName)).toEqual(['client-name-3967']);
+  });
 });
 
 describe('getSystemVariables', () => {

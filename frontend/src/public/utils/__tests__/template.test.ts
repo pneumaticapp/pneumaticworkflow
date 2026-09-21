@@ -829,5 +829,13 @@ describe('template utilities', () => {
 
       expect(validApiNames.size).toBe(0);
     });
+
+    it('handles undefined fields and fieldsets without crashing', () => {
+      const validApiNames = new Set<string>();
+
+      collectFieldApiNames(undefined, undefined, validApiNames);
+
+      expect(validApiNames.size).toBe(0);
+    });
   });
 });
