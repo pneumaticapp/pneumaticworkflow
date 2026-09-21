@@ -1086,16 +1086,6 @@
           },
           {
             "selected": false,
-            "text": "dataset.items_add",
-            "value": "dataset.items_add"
-          },
-          {
-            "selected": false,
-            "text": "dataset.items_replace",
-            "value": "dataset.items_replace"
-          },
-          {
-            "selected": false,
             "text": "dataset.update",
             "value": "dataset.update"
           },
@@ -1495,7 +1485,7 @@
             "value": "workflow.urgent"
           }
         ],
-        "query": "account.update,account.verification_resend,account.verify,admin.create,admin.delete,admin.update,api_key.create,api_key.revoke,billing.payment_confirm,billing.purchase,billing.subscription_cancel,dataset.create,dataset.delete,dataset.item_create,dataset.item_delete,dataset.item_update,dataset.items_add,dataset.items_replace,dataset.update,fieldset.clone,fieldset.create,fieldset.delete,fieldset.update,file.access_denied,file.download,file.upload,group.create,group.delete,group.update,invite.accept,invite.create,invite.resend,task.checklist_mark,task.checklist_unmark,task.comment,task.comment_delete,task.comment_update,task.complete,task.delay,task.delegation,task.due_date_changed,task.performer_created,task.performer_deleted,task.performer_group_created,task.performer_group_deleted,task.revert,task.skip,task.skip_no_performers,task.start,template.ai_generate,template.clone,template.delete,template.draft_discard,template.draft_save,template.export,template.library_fill,template.library_import,template.publish,template_preset.create,template_preset.delete,template_preset.set_default,template_preset.update,tenant.create,tenant.delete,tenant.login_as,user.admin_toggle,user.create,user.deactivate,user.login,user.login_as,user.login_failed,user.logout,user.password_change,user.password_reset,user.password_reset_request,user.password_set,user.reassign,user.signup,user.transfer,user.unsubscribe,user.update,user.vacation_activate,user.vacation_deactivate,webhook.subscribe,webhook.unsubscribe,workflow.complete,workflow.delay,workflow.ended,workflow.ended_by_condition,workflow.force_delay,workflow.force_resume,workflow.not_urgent,workflow.revert,workflow.run,workflow.sub_workflow_run,workflow.terminate,workflow.update,workflow.urgent",
+        "query": "account.update,account.verification_resend,account.verify,admin.create,admin.delete,admin.update,api_key.create,api_key.revoke,billing.payment_confirm,billing.purchase,billing.subscription_cancel,dataset.create,dataset.delete,dataset.item_create,dataset.item_delete,dataset.item_update,dataset.update,fieldset.clone,fieldset.create,fieldset.delete,fieldset.update,file.access_denied,file.download,file.upload,group.create,group.delete,group.update,invite.accept,invite.create,invite.resend,task.checklist_mark,task.checklist_unmark,task.comment,task.comment_delete,task.comment_update,task.complete,task.delay,task.delegation,task.due_date_changed,task.performer_created,task.performer_deleted,task.performer_group_created,task.performer_group_deleted,task.revert,task.skip,task.skip_no_performers,task.start,template.ai_generate,template.clone,template.delete,template.draft_discard,template.draft_save,template.export,template.library_fill,template.library_import,template.publish,template_preset.create,template_preset.delete,template_preset.set_default,template_preset.update,tenant.create,tenant.delete,tenant.login_as,user.admin_toggle,user.create,user.deactivate,user.login,user.login_as,user.login_failed,user.logout,user.password_change,user.password_reset,user.password_reset_request,user.password_set,user.reassign,user.signup,user.transfer,user.unsubscribe,user.update,user.vacation_activate,user.vacation_deactivate,webhook.subscribe,webhook.unsubscribe,workflow.complete,workflow.delay,workflow.ended,workflow.ended_by_condition,workflow.force_delay,workflow.force_resume,workflow.not_urgent,workflow.revert,workflow.run,workflow.sub_workflow_run,workflow.terminate,workflow.update,workflow.urgent",
         "queryValue": "",
         "skipUrlSync": false,
         "type": "custom"

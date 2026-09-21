@@ -3586,3 +3586,250 @@ def test_get_mentioned_users_ids__check_timeout__ok():
     # assert
     assert len(mentioned_ids) == 1
     assert mentioned_ids[0] == user.id
+
+
+def test_update__text__emit_comment_updated(mocker):
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    workflow = create_test_workflow(
+        user=account_owner,
+        tasks_count=1,
+    )
+    task = workflow.tasks.get(number=1)
+    event = WorkflowEvent.objects.create(
+        account=account,
+        type=WorkflowEventType.COMMENT,
+        text='Old text',
+        with_attachments=False,
+        workflow=workflow,
+        task=task,
+        user=account_owner,
+    )
+    refresh_attachments_mock = mocker.patch(
+        'src.processes.services.events.refresh_attachments',
+    )
+    send_event_updated_mock = mocker.patch(
+        'src.processes.services.events.'
+        'CommentService._send_event_updated',
+    )
+    sync_perms_mock = mocker.patch(
+        'src.processes.services.events.'
+        'schedule_sync_workflow_attachment_permissions',
+    )
+    comment_edited_analysis_mock = mocker.patch(
+        'src.processes.services.events.'
+        'AnalyticService.comment_edited',
+    )
+    comment_updated_mock = mocker.patch(
+        'src.processes.services.events.'
+        'AuditEventService.comment_updated',
+    )
+    service = CommentService(
+        instance=event,
+        user=account_owner,
+    )
+
+    # act
+    service.update(
+        text='New text',
+        force_save=True,
+    )
+
+    # assert
+    refresh_attachments_mock.assert_called_once_with(
+        source=event,
+        user=account_owner,
+    )
+    send_event_updated_mock.assert_called_once_with()
+    sync_perms_mock.assert_called_once_with(workflow.id)
+    comment_edited_analysis_mock.assert_called_once_with(
+        text='New text',
+        user=account_owner,
+        is_superuser=False,
+        auth_type=service.auth_type,
+        workflow=workflow,
+    )
+    comment_updated_mock.assert_called_once_with(
+        user=account_owner,
+        auth_type=service.auth_type,
+        comment=event,
+    )
+
+
+def test_update__inactive_task__not_emit(mocker):
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    workflow = create_test_workflow(
+        user=account_owner,
+        tasks_count=1,
+    )
+    task = workflow.tasks.get(number=1)
+    task.status = TaskStatus.COMPLETED
+    task.save()
+    event = WorkflowEvent.objects.create(
+        account=account,
+        type=WorkflowEventType.COMMENT,
+        text='Old text',
+        with_attachments=False,
+        workflow=workflow,
+        task=task,
+        user=account_owner,
+    )
+    refresh_attachments_mock = mocker.patch(
+        'src.processes.services.events.refresh_attachments',
+    )
+    send_event_updated_mock = mocker.patch(
+        'src.processes.services.events.'
+        'CommentService._send_event_updated',
+    )
+    sync_perms_mock = mocker.patch(
+        'src.processes.services.events.'
+        'schedule_sync_workflow_attachment_permissions',
+    )
+    comment_edited_analysis_mock = mocker.patch(
+        'src.processes.services.events.'
+        'AnalyticService.comment_edited',
+    )
+    comment_updated_mock = mocker.patch(
+        'src.processes.services.events.'
+        'AuditEventService.comment_updated',
+    )
+    service = CommentService(
+        instance=event,
+        user=account_owner,
+    )
+
+    # act
+    with pytest.raises(exceptions.CommentedTaskNotActive):
+        service.update(
+            text='New text',
+            force_save=True,
+        )
+
+    # assert
+    refresh_attachments_mock.assert_not_called()
+    send_event_updated_mock.assert_not_called()
+    sync_perms_mock.assert_not_called()
+    comment_edited_analysis_mock.assert_not_called()
+    comment_updated_mock.assert_not_called()
+
+
+def test_delete__active_task__emit_comment_deleted(mocker):
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    workflow = create_test_workflow(
+        user=account_owner,
+        tasks_count=1,
+    )
+    task = workflow.tasks.get(number=1)
+    event = WorkflowEvent.objects.create(
+        account=account,
+        type=WorkflowEventType.COMMENT,
+        text='Old text',
+        clear_text='Clear text',
+        with_attachments=False,
+        workflow=workflow,
+        task=task,
+        user=account_owner,
+    )
+    send_event_updated_mock = mocker.patch(
+        'src.processes.services.events.'
+        'CommentService._send_event_updated',
+    )
+    sync_perms_mock = mocker.patch(
+        'src.processes.services.events.'
+        'schedule_sync_workflow_attachment_permissions',
+    )
+    comment_deleted_analysis_mock = mocker.patch(
+        'src.processes.services.events.'
+        'AnalyticService.comment_deleted',
+    )
+    comment_deleted_mock = mocker.patch(
+        'src.processes.services.events.'
+        'AuditEventService.comment_deleted',
+    )
+    service = CommentService(
+        instance=event,
+        user=account_owner,
+    )
+
+    # act
+    service.delete()
+
+    # assert
+    event.refresh_from_db()
+    assert event.status == CommentStatus.DELETED
+    send_event_updated_mock.assert_called_once_with()
+    sync_perms_mock.assert_called_once_with(workflow.id)
+    comment_deleted_analysis_mock.assert_called_once_with(
+        text='Clear text',
+        user=account_owner,
+        is_superuser=False,
+        auth_type=service.auth_type,
+        workflow=workflow,
+    )
+    comment_deleted_mock.assert_called_once_with(
+        user=account_owner,
+        auth_type=service.auth_type,
+        comment=event,
+    )
+
+
+def test_delete__inactive_task__not_emit(mocker):
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    workflow = create_test_workflow(
+        user=account_owner,
+        tasks_count=1,
+    )
+    task = workflow.tasks.get(number=1)
+    task.status = TaskStatus.COMPLETED
+    task.save()
+    event = WorkflowEvent.objects.create(
+        account=account,
+        type=WorkflowEventType.COMMENT,
+        text='Old text',
+        clear_text='Clear text',
+        with_attachments=False,
+        workflow=workflow,
+        task=task,
+        user=account_owner,
+    )
+    send_event_updated_mock = mocker.patch(
+        'src.processes.services.events.'
+        'CommentService._send_event_updated',
+    )
+    sync_perms_mock = mocker.patch(
+        'src.processes.services.events.'
+        'schedule_sync_workflow_attachment_permissions',
+    )
+    comment_deleted_analysis_mock = mocker.patch(
+        'src.processes.services.events.'
+        'AnalyticService.comment_deleted',
+    )
+    comment_deleted_mock = mocker.patch(
+        'src.processes.services.events.'
+        'AuditEventService.comment_deleted',
+    )
+    service = CommentService(
+        instance=event,
+        user=account_owner,
+    )
+
+    # act
+    with pytest.raises(exceptions.CommentedTaskNotActive):
+        service.delete()
+
+    # assert
+    send_event_updated_mock.assert_not_called()
+    sync_perms_mock.assert_not_called()
+    comment_deleted_analysis_mock.assert_not_called()
+    comment_deleted_mock.assert_not_called()

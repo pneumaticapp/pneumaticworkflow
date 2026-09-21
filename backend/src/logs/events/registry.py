@@ -155,8 +155,6 @@ DECLARATIONS = (
         (DatasetEvents.CREATE, 'Dataset created'),
         (DatasetEvents.UPDATE, 'Dataset changed'),
         (DatasetEvents.DELETE, 'Dataset deleted'),
-        (DatasetEvents.ITEMS_ADD, 'Rows added to a dataset'),
-        (DatasetEvents.ITEMS_REPLACE, 'Rows of a dataset replaced'),
         (DatasetEvents.ITEM_CREATE, 'Dataset row created'),
         (DatasetEvents.ITEM_UPDATE, 'Dataset row changed'),
         (DatasetEvents.ITEM_DELETE, 'Dataset row deleted'),

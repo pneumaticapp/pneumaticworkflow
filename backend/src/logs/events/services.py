@@ -186,19 +186,21 @@ class AuditEventService:
     def user_logged_out_by_provider(cls, target, source: str) -> None:
 
         """ The identity provider ended the sessions, not the person:
-            the actor is the system. """
+            the actor is the system. A provider that does not say whose
+            sessions ended leaves target None, and the record goes to
+            the NO_ACCOUNT bucket. """
 
         cls._event(
             UserEvents.LOGOUT,
             user=None,
             auth_type=None,
             object_type=EventObjectType.USER,
-            object_id=target.id,
+            object_id=None if target is None else target.id,
             payload={
                 'source': source,
                 'reason': LogoutReason.IDENTITY_PROVIDER,
             },
-            account_id=target.account_id,
+            account_id=NO_ACCOUNT if target is None else target.account_id,
         )
 
     @classmethod
@@ -1265,42 +1267,6 @@ class AuditEventService:
             object_type=EventObjectType.DATASET,
             object_id=dataset.id,
             name=dataset.name,
-        )
-
-    @classmethod
-    def dataset_items_added(
-        cls,
-        user,
-        auth_type,
-        dataset,
-        items_count: int,
-    ) -> None:
-        cls._named_object_event(
-            DatasetEvents.ITEMS_ADD,
-            user,
-            auth_type,
-            object_type=EventObjectType.DATASET,
-            object_id=dataset.id,
-            name=dataset.name,
-            extra={'items_count': items_count},
-        )
-
-    @classmethod
-    def dataset_items_replaced(
-        cls,
-        user,
-        auth_type,
-        dataset,
-        items_count: int,
-    ) -> None:
-        cls._named_object_event(
-            DatasetEvents.ITEMS_REPLACE,
-            user,
-            auth_type,
-            object_type=EventObjectType.DATASET,
-            object_id=dataset.id,
-            name=dataset.name,
-            extra={'items_count': items_count},
         )
 
     @classmethod

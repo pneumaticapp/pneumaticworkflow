@@ -7,6 +7,7 @@ from django.utils import timezone
 from src.accounts.models import UserGroup
 from src.analysis.services import AnalyticService
 from src.generics.base.service import BaseModelService
+from src.logs.events import AuditEventService
 from src.logs.events.adapters.workflow import emit_workflow_event
 from src.notifications.tasks import (
     send_comment_notification,
@@ -856,6 +857,11 @@ class CommentService(BaseModelService):
             auth_type=self.auth_type,
             workflow=self.instance.workflow,
         )
+        AuditEventService.comment_updated(
+            user=self.user,
+            auth_type=self.auth_type,
+            comment=self.instance,
+        )
 
         return self.instance
 
@@ -893,6 +899,11 @@ class CommentService(BaseModelService):
             is_superuser=self.is_superuser,
             auth_type=self.auth_type,
             workflow=self.instance.workflow,
+        )
+        AuditEventService.comment_deleted(
+            user=self.user,
+            auth_type=self.auth_type,
+            comment=self.instance,
         )
         return self.instance
 

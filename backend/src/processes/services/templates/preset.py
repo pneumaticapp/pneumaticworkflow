@@ -3,6 +3,7 @@ from typing import Any, Dict, List, Optional
 from django.contrib.auth import get_user_model
 
 from src.generics.base.service import BaseModelService
+from src.logs.events import AuditEventService
 from src.processes.enums import PresetType
 from src.processes.models.templates.preset import (
     TemplatePreset,
@@ -43,6 +44,13 @@ class TemplatePresetService(BaseModelService):
         if fields:
             self._create_or_update_preset_fields(fields_data=fields)
 
+    def _create_actions(self, **kwargs):
+        AuditEventService.template_preset_created(
+            user=self.user,
+            auth_type=self.auth_type,
+            preset=self.instance,
+        )
+
     def partial_update(
         self,
         force_save: bool = False,
@@ -59,11 +67,30 @@ class TemplatePresetService(BaseModelService):
         if fields:
             self._create_or_update_preset_fields(fields_data=fields)
 
+        AuditEventService.template_preset_updated(
+            user=self.user,
+            auth_type=self.auth_type,
+            preset=self.instance,
+        )
         return result
 
     def set_default(self) -> TemplatePreset:
-        self.partial_update(is_default=True, force_save=True)
+        super().partial_update(is_default=True, force_save=True)
+        self._reset_default_presets()
+        AuditEventService.template_preset_set_default(
+            user=self.user,
+            auth_type=self.auth_type,
+            preset=self.instance,
+        )
         return self.instance
+
+    def delete(self):
+        super().delete()
+        AuditEventService.template_preset_deleted(
+            user=self.user,
+            auth_type=self.auth_type,
+            preset=self.instance,
+        )
 
     def _reset_default_presets(self) -> None:
         queryset = (

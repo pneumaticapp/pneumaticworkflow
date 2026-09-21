@@ -19,7 +19,6 @@ from src.generics.exceptions import BaseServiceException
 from src.generics.filters import PneumaticFilterBackend
 from src.generics.mixins.views import CustomViewSetMixin
 from src.generics.permissions import UserIsAuthenticated
-from src.logs.events import AuditEventService
 from src.openapi import (
     ACCESS_ADMIN,
     EMPTY,
@@ -175,11 +174,6 @@ class SharedFieldsetTemplateViewSet(
         except BaseServiceException as ex:
             raise_validation_error(message=ex.message)
         else:
-            AuditEventService.fieldset_created(
-                user=request.user,
-                auth_type=request.token_type,
-                fieldset=fieldset,
-            )
             response_serializer = SharedFieldsetTemplateSerializer(fieldset)
             return self.response_created(response_serializer.data)
 
@@ -234,11 +228,6 @@ class SharedFieldsetTemplateViewSet(
         except BaseServiceException as ex:
             raise_validation_error(message=ex.message)
         fieldset.refresh_from_db()
-        AuditEventService.fieldset_updated(
-            user=request.user,
-            auth_type=request.token_type,
-            fieldset=fieldset,
-        )
         response_serializer = SharedFieldsetTemplateSerializer(fieldset)
         return self.response_ok(response_serializer.data)
 
@@ -266,11 +255,6 @@ class SharedFieldsetTemplateViewSet(
             service.delete()
         except BaseServiceException as ex:
             raise_validation_error(message=ex.message)
-        AuditEventService.fieldset_deleted(
-            user=request.user,
-            auth_type=request.token_type,
-            fieldset=fieldset,
-        )
         return self.response_ok()
 
     @extend_schema(
@@ -295,15 +279,9 @@ class SharedFieldsetTemplateViewSet(
             auth_type=request.token_type,
         )
         try:
-            clone = service.get_clone()
+            fieldset = service.get_clone()
         except BaseServiceException as ex:
             raise_validation_error(message=ex.message)
         else:
-            AuditEventService.fieldset_cloned(
-                user=request.user,
-                auth_type=request.token_type,
-                clone=clone,
-                source_fieldset_id=fieldset.id,
-            )
-            response_serializer = SharedFieldsetTemplateSerializer(clone)
+            response_serializer = SharedFieldsetTemplateSerializer(fieldset)
             return self.response_created(response_serializer.data)

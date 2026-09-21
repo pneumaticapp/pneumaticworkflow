@@ -3,6 +3,7 @@ from typing import Dict
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 
+from src.logs.events import AuditEventService
 from src.processes.models.templates.checklist import (
     ChecklistTemplate,
 )
@@ -74,27 +75,37 @@ class ChecklistService(BaseWorkflowService):
     def mark(
         self,
         selection_id: int,
-    ) -> bool:
-
-        """ Whether the item was marked now. """
-
+    ):
         selection = self._get_selection(selection_id)
         selection_service = ChecklistSelectionService(
             instance=selection,
             user=self.user,
         )
-        return selection_service.mark()
+        is_changing = not selection.is_selected
+        selection_service.mark()
+        if is_changing:
+            AuditEventService.checklist_item_marked(
+                user=self.user,
+                auth_type=self.auth_type,
+                checklist=self.instance,
+                selection_id=selection_id,
+            )
 
     def unmark(
         self,
         selection_id: int,
-    ) -> bool:
-
-        """ Whether the item was unmarked now. """
-
+    ):
         selection = self._get_selection(selection_id)
         selection_service = ChecklistSelectionService(
             instance=selection,
             user=self.user,
         )
-        return selection_service.unmark()
+        is_changing = selection.is_selected
+        selection_service.unmark()
+        if is_changing:
+            AuditEventService.checklist_item_unmarked(
+                user=self.user,
+                auth_type=self.auth_type,
+                checklist=self.instance,
+                selection_id=selection_id,
+            )

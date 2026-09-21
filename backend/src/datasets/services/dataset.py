@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from django.db import IntegrityError
 
 from src.generics.base.service import BaseModelService
+from src.logs.events import AuditEventService
 from src.notifications.tasks import (
     send_dataset_created_notification,
     send_dataset_deleted_notification,
@@ -43,11 +44,21 @@ class DataSetService(BaseModelService):
         if items:
             self.create_items(items_data=items)
 
-    def _create_actions(self, **kwargs):
+    def _create_actions(
+        self,
+        items: Optional[List[Dict]] = None,
+        **kwargs,
+    ):
         send_dataset_created_notification.delay(
             logging=self.account.log_api_requests,
             account_id=self.account.id,
             dataset_data=DatasetSerializer(self.instance).data,
+        )
+        AuditEventService.dataset_created(
+            user=self.user,
+            auth_type=self.auth_type,
+            dataset=self.instance,
+            items_count=len(items or ()),
         )
 
     def partial_update(
@@ -56,6 +67,10 @@ class DataSetService(BaseModelService):
     ) -> Dataset:
 
         items_data = update_kwargs.pop('items', None)
+        changed_fields = sorted(
+            name for name, value in update_kwargs.items()
+            if getattr(self.instance, name) != value
+        )
         try:
             result = super().partial_update(
                 force_save=True,
@@ -70,6 +85,13 @@ class DataSetService(BaseModelService):
             account_id=self.account.id,
             dataset_data=DatasetSerializer(self.instance).data,
         )
+        if changed_fields:
+            AuditEventService.dataset_updated(
+                user=self.user,
+                auth_type=self.auth_type,
+                dataset=self.instance,
+                changed_fields=changed_fields,
+            )
         return result
 
     def delete(self) -> None:
@@ -79,6 +101,11 @@ class DataSetService(BaseModelService):
             dataset_data=DatasetSerializer(self.instance).data,
         )
         self.instance.delete()
+        AuditEventService.dataset_deleted(
+            user=self.user,
+            auth_type=self.auth_type,
+            dataset=self.instance,
+        )
 
     def create_items(
         self,
@@ -130,3 +157,10 @@ class DataSetService(BaseModelService):
                 items_ids.add(dataset_item.id)
 
         self.instance.items.exclude(id__in=items_ids).delete()
+        for item_id, item in existing_items.items():
+            if item_id not in items_ids:
+                AuditEventService.dataset_item_deleted(
+                    user=self.user,
+                    auth_type=self.auth_type,
+                    item=item,
+                )

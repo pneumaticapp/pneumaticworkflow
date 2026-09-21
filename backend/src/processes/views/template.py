@@ -27,7 +27,6 @@ from src.generics.mixins.views import (
 )
 from src.generics.permissions import UserIsAuthenticated
 from src.logs.events import AuditEventService
-from src.logs.events.enums import TemplateSource
 from src.openapi import (
     ACCESS_ACCOUNT_OWNER,
     ACCESS_ADMIN,
@@ -941,10 +940,6 @@ class TemplateViewSet(
         except OpenAiServiceException as ex:
             raise_validation_error(message=ex.message)
         else:
-            AuditEventService.template_generated_with_ai(
-                user=request.user,
-                auth_type=request.token_type,
-            )
             return self.response_ok(data)
 
     @extend_schema(
@@ -975,13 +970,6 @@ class TemplateViewSet(
         except TemplateServiceException as ex:
             raise_validation_error(message=ex.message)
         else:
-            AuditEventService.template_saved(
-                user=request.user,
-                auth_type=request.token_type,
-                template=template,
-                name=template.name,
-                source=TemplateSource.BY_STEPS,
-            )
             slz = TemplateSerializer(instance=template)
             return self.response_ok(slz.get_response_data())
 
@@ -1029,13 +1017,6 @@ class TemplateViewSet(
         except TemplateServiceException as ex:
             raise_validation_error(message=ex.message)
         else:
-            AuditEventService.template_saved(
-                user=request.user,
-                auth_type=request.token_type,
-                template=template,
-                name=template.name,
-                source=TemplateSource.LIBRARY,
-            )
             slz = TemplateSerializer(instance=template)
             return self.response_ok(slz.get_response_data())
 
@@ -1161,11 +1142,7 @@ class TemplateViewSet(
             )
         except TemplatePresetServiceException as ex:
             raise_validation_error(message=ex.message)
-        AuditEventService.template_preset_created(
-            user=request.user,
-            auth_type=request.token_type,
-            preset=preset,
-        )
+
         return self.response_ok(self.get_serializer(preset).data)
 
 

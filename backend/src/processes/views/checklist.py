@@ -11,7 +11,6 @@ from src.accounts.permissions import (
 from src.analysis.mixins import BaseIdentifyMixin
 from src.generics.mixins.views import CustomViewSetMixin
 from src.generics.permissions import IsAuthenticated
-from src.logs.events import AuditEventService
 from src.openapi import (
     ACCESS_CHECKLIST,
     FORBIDDEN,
@@ -106,19 +105,12 @@ class CheckListViewSet(
                 is_superuser=request.is_superuser,
                 auth_type=request.token_type,
             )
-            is_marked = checklist_service.mark(
+            checklist_service.mark(
                 selection_id=request_slz.validated_data['selection_id'],
             )
         except ChecklistServiceException as ex:
             raise_validation_error(message=ex.message)
         else:
-            if is_marked:
-                AuditEventService.checklist_item_marked(
-                    user=request.user,
-                    auth_type=request.token_type,
-                    checklist=checklist,
-                    selection_id=request_slz.validated_data['selection_id'],
-                )
             slz = self.get_serializer(instance=checklist_service.instance)
             return self.response_ok(slz.data)
 
@@ -147,18 +139,11 @@ class CheckListViewSet(
                 is_superuser=request.is_superuser,
                 auth_type=request.token_type,
             )
-            is_unmarked = checklist_service.unmark(
+            checklist_service.unmark(
                 selection_id=request_slz.validated_data['selection_id'],
             )
         except ChecklistServiceException as ex:
             raise_validation_error(message=ex.message)
         else:
-            if is_unmarked:
-                AuditEventService.checklist_item_unmarked(
-                    user=request.user,
-                    auth_type=request.token_type,
-                    checklist=checklist,
-                    selection_id=request_slz.validated_data['selection_id'],
-                )
             slz = self.get_serializer(instance=checklist_service.instance)
             return self.response_ok(slz.data)

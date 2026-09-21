@@ -119,36 +119,24 @@ class ChecklistSelectionService(BaseWorkflowService):
         )
         self.update_fields.add('value')
 
-    def mark(self) -> bool:
-
-        """ Whether the item was marked now: marking one that is
-            marked already writes nothing. """
-
-        task = self.instance.checklist.task
-        self._validate_permission_to_mark(user=self.user, task=task)
-        if self.instance.is_selected:
-            return False
-        self.partial_update(
-            date_selected=timezone.now(),
-            selected_user_id=self.user.id,
-            force_save=True,
-        )
-        self._update_marked_count(task)
-        return True
-
-    def unmark(self) -> bool:
-
-        """ Whether the item was unmarked now: unmarking one that is
-            not marked writes nothing. """
-
+    def mark(self):
         task = self.instance.checklist.task
         self._validate_permission_to_mark(user=self.user, task=task)
         if not self.instance.is_selected:
-            return False
-        self.partial_update(
-            date_selected=None,
-            selected_user_id=self.user.id,
-            force_save=True,
-        )
-        self._update_marked_count(task)
-        return True
+            self.partial_update(
+                date_selected=timezone.now(),
+                selected_user_id=self.user.id,
+                force_save=True,
+            )
+            self._update_marked_count(task)
+
+    def unmark(self):
+        task = self.instance.checklist.task
+        self._validate_permission_to_mark(user=self.user, task=task)
+        if self.instance.is_selected:
+            self.partial_update(
+                date_selected=None,
+                selected_user_id=self.user.id,
+                force_save=True,
+            )
+            self._update_marked_count(task)

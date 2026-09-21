@@ -6,6 +6,7 @@ from rest_framework.serializers import ValidationError
 
 from src.accounts.enums import BillingPlanType
 from src.authentication.enums import AuthTokenType
+from src.logs.events.enums import TemplateSource
 from src.processes.enums import (
     OwnerRole,
     OwnerType,
@@ -26,9 +27,12 @@ from src.processes.services.templates.template import (
 )
 from src.processes.tests.fixtures import (
     create_test_account,
+    create_test_owner,
+    create_test_system_template,
     create_test_template,
     create_test_user,
 )
+from src.utils.logging import SentryLogLevel
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db
@@ -885,3 +889,213 @@ def test_fill_template_data__fieldset_fields__register_placeholders():
         'Direct {{direct-field}} and nested {{nested-kickoff-field}}'
     )
     assert data['tasks'][1]['description'] == 'Use {{nested-task-field}}'
+
+
+def test_get_from_sys_template__library__emit_template_filled_from_library(
+    mocker,
+):
+
+    # arrange
+    user = create_test_owner()
+    auth_type = AuthTokenType.API
+    service = TemplateService(
+        user=user,
+        auth_type=auth_type,
+    )
+    sys_template = create_test_system_template()
+    fill_template_data_mock = mocker.patch(
+        'src.processes.services.templates.template.'
+        'TemplateService.fill_template_data',
+    )
+    library_template_opened_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'library_template_opened',
+    )
+    template_filled_from_library_mock = mocker.patch(
+        'src.processes.services.templates.template.'
+        'AuditEventService.template_filled_from_library',
+    )
+
+    # act
+    service.get_from_sys_template(sys_template=sys_template)
+
+    # assert
+    fill_template_data_mock.assert_called_once_with(
+        initial_data=sys_template.template,
+    )
+    library_template_opened_mock.assert_called_once_with(
+        user=user,
+        sys_template=sys_template,
+        auth_type=auth_type,
+        is_superuser=False,
+    )
+    template_filled_from_library_mock.assert_called_once_with(
+        user=user,
+        auth_type=auth_type,
+        system_template=sys_template,
+    )
+
+
+def test_create_template_by_steps__valid__emit_template_saved(mocker):
+
+    # arrange
+    user = create_test_owner()
+    auth_type = AuthTokenType.API
+    service = TemplateService(
+        user=user,
+        auth_type=auth_type,
+    )
+    name = 'Template name'
+    tasks = [
+        {
+            'number': 1,
+            'name': 'Step 1',
+            'description': 'description 1',
+        },
+    ]
+    template_generated_from_landing_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'template_generated_from_landing',
+    )
+    template_saved_mock = mocker.patch(
+        'src.processes.services.templates.template.'
+        'AuditEventService.template_saved',
+    )
+
+    # act
+    template = service.create_template_by_steps(
+        name=name,
+        tasks=tasks,
+    )
+
+    # assert
+    template_generated_from_landing_mock.assert_called_once_with(
+        template=template,
+        user=user,
+        auth_type=auth_type,
+        is_superuser=False,
+    )
+    template_saved_mock.assert_called_once_with(
+        user=user,
+        auth_type=auth_type,
+        template=template,
+        name=name,
+        source=TemplateSource.BY_STEPS,
+    )
+
+
+def test_create_template_by_steps__validation_error__not_emit(mocker):
+
+    # arrange
+    user = create_test_owner()
+    service = TemplateService(user=user)
+    name = 'Template name'
+    tasks = [
+        {
+            'number': 1,
+            'name': 'Step 1',
+        },
+    ]
+    fill_template_data_mock = mocker.patch(
+        'src.processes.services.templates.template.'
+        'TemplateService.fill_template_data',
+        return_value={
+            'name': name,
+            'tasks': tasks,
+        },
+    )
+    capture_sentry_message_mock = mocker.patch(
+        'src.processes.services.templates.template.'
+        'capture_sentry_message',
+    )
+    template_generated_from_landing_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'template_generated_from_landing',
+    )
+    template_saved_mock = mocker.patch(
+        'src.processes.services.templates.template.'
+        'AuditEventService.template_saved',
+    )
+
+    # act
+    with pytest.raises(ValidationError):
+        service.create_template_by_steps(
+            name=name,
+            tasks=tasks,
+        )
+
+    # assert
+    fill_template_data_mock.assert_called_once_with(
+        initial_data={
+            'name': name,
+            'is_active': True,
+            'tasks': tasks,
+        },
+    )
+    capture_sentry_message_mock.assert_called_once_with(
+        message=f'Create template by steps failed ({user.account.id})',
+        level=SentryLogLevel.ERROR,
+        data={
+            'initial_data': {
+                'name': name,
+                'tasks': tasks,
+            },
+            'error': mocker.ANY,
+        },
+    )
+    template_generated_from_landing_mock.assert_not_called()
+    template_saved_mock.assert_not_called()
+
+
+def test_create_template_from_library_template__valid__emit_template_saved(
+    mocker,
+):
+
+    # arrange
+    user = create_test_owner()
+    auth_type = AuthTokenType.API
+    service = TemplateService(
+        user=user,
+        auth_type=auth_type,
+    )
+    system_template = create_test_system_template()
+    template = create_test_template(
+        user=user,
+        name='Library template',
+    )
+    create_template_from_sys_template_mock = mocker.patch(
+        'src.processes.services.templates.template.'
+        'TemplateService.create_template_from_sys_template',
+        return_value=template,
+    )
+    template_created_from_landing_library_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'template_created_from_landing_library',
+    )
+    template_saved_mock = mocker.patch(
+        'src.processes.services.templates.template.'
+        'AuditEventService.template_saved',
+    )
+
+    # act
+    service.create_template_from_library_template(
+        system_template=system_template,
+    )
+
+    # assert
+    create_template_from_sys_template_mock.assert_called_once_with(
+        system_template=system_template,
+    )
+    template_created_from_landing_library_mock.assert_called_once_with(
+        user=user,
+        template=template,
+        auth_type=auth_type,
+        is_superuser=False,
+    )
+    template_saved_mock.assert_called_once_with(
+        user=user,
+        auth_type=auth_type,
+        template=template,
+        name='Library template',
+        source=TemplateSource.LIBRARY,
+    )

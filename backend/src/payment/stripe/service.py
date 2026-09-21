@@ -18,6 +18,7 @@ from src.accounts.enums import BillingPlanType
 from src.accounts.models import Account
 from src.accounts.services.account import AccountService
 from src.authentication.enums import AuthTokenType
+from src.logs.events import AuditEventService
 from src.payment.models import Price
 from src.payment.services.account import (
     AccountSubscriptionService,
@@ -680,6 +681,12 @@ class StripeService(StripeMixin):
                     cancel_url=cancel_url,
                     products=products,
                 )
+            else:
+                AuditEventService.purchase_made(
+                    user=self.user,
+                    auth_type=self.auth_type,
+                    products=products,
+                )
         else:
             return self._get_checkout_link(
                 success_url=success_url,
@@ -748,6 +755,11 @@ class StripeService(StripeMixin):
             auth_type=self.auth_type,
         )
         account_service.partial_update(**data)
+        AuditEventService.payment_confirmed(
+            user=self.user,
+            auth_type=self.auth_type,
+            subscription_data=subscription_data,
+        )
 
     def increase_subscription(self, quantity: int):
 

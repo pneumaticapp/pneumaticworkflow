@@ -123,3 +123,157 @@ def test__delete__ok():
 
     # assert
     assert not DatasetItem.objects.filter(id=item_id).exists()
+
+
+def test__create_actions__created__emit_dataset_item_created(mocker):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    dataset = create_test_dataset(
+        account=account,
+        items_count=1,
+    )
+    item = dataset.items.get()
+    service = DataSetItemService(
+        user=user,
+        instance=item,
+    )
+    dataset_item_created_mock = mocker.patch(
+        'src.datasets.services.dataset_item.'
+        'AuditEventService.dataset_item_created',
+    )
+
+    # act
+    service._create_actions(
+        dataset_id=dataset.id,
+        value=item.value,
+    )
+
+    # assert
+    dataset_item_created_mock.assert_called_once_with(
+        user=user,
+        auth_type=service.auth_type,
+        item=item,
+    )
+
+
+def test__partial_update__changed_fields__emit_dataset_item_updated(mocker):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    dataset = create_test_dataset(
+        account=account,
+        items_count=1,
+    )
+    item = dataset.items.get()
+    service = DataSetItemService(
+        user=user,
+        instance=item,
+    )
+    dataset_item_updated_mock = mocker.patch(
+        'src.datasets.services.dataset_item.'
+        'AuditEventService.dataset_item_updated',
+    )
+
+    # act
+    service.partial_update(
+        value='Renamed',
+        order=item.order + 1,
+    )
+
+    # assert
+    dataset_item_updated_mock.assert_called_once_with(
+        user=user,
+        auth_type=service.auth_type,
+        item=item,
+        changed_fields=['order', 'value'],
+    )
+
+
+def test__partial_update__same_values__not_emit(mocker):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    dataset = create_test_dataset(
+        account=account,
+        items_count=1,
+    )
+    item = dataset.items.get()
+    service = DataSetItemService(
+        user=user,
+        instance=item,
+    )
+    dataset_item_updated_mock = mocker.patch(
+        'src.datasets.services.dataset_item.'
+        'AuditEventService.dataset_item_updated',
+    )
+
+    # act
+    service.partial_update(
+        value=item.value,
+        order=item.order,
+    )
+
+    # assert
+    dataset_item_updated_mock.assert_not_called()
+
+
+def test__partial_update__duplicate_value__not_emit(mocker):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    dataset = create_test_dataset(
+        account=account,
+        items_count=2,
+    )
+    item = dataset.items.get(order=1)
+    service = DataSetItemService(
+        user=user,
+        instance=item,
+    )
+    dataset_item_updated_mock = mocker.patch(
+        'src.datasets.services.dataset_item.'
+        'AuditEventService.dataset_item_updated',
+    )
+
+    # act
+    with pytest.raises(DataSetServiceException):
+        service.partial_update(value='Item 2')
+
+    # assert
+    dataset_item_updated_mock.assert_not_called()
+
+
+def test__delete__existing_item__emit_dataset_item_deleted(mocker):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    dataset = create_test_dataset(
+        account=account,
+        items_count=1,
+    )
+    item = dataset.items.get()
+    service = DataSetItemService(
+        user=user,
+        instance=item,
+    )
+    dataset_item_deleted_mock = mocker.patch(
+        'src.datasets.services.dataset_item.'
+        'AuditEventService.dataset_item_deleted',
+    )
+
+    # act
+    service.delete()
+
+    # assert
+    assert not DatasetItem.objects.filter(id=item.id).exists()
+    dataset_item_deleted_mock.assert_called_once_with(
+        user=user,
+        auth_type=service.auth_type,
+        item=item,
+    )

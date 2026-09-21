@@ -268,8 +268,6 @@ class DatasetEvents:
     CREATE = 'dataset.create'
     UPDATE = 'dataset.update'
     DELETE = 'dataset.delete'
-    ITEMS_ADD = 'dataset.items_add'
-    ITEMS_REPLACE = 'dataset.items_replace'
     ITEM_CREATE = 'dataset.item_create'
     ITEM_UPDATE = 'dataset.item_update'
     ITEM_DELETE = 'dataset.item_delete'

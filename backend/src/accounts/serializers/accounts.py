@@ -5,7 +5,6 @@ from rest_framework.exceptions import ValidationError
 from src.accounts.messages import MSG_A_0003
 from src.accounts.models import Account
 from src.generics.fields import TimeStampField
-from src.generics.mixins.serializers import ChangedFieldsMixin
 from src.generics.serializers import CustomValidationErrorMixin
 
 UserModel = get_user_model()
@@ -22,7 +21,6 @@ class AccountCacheSerializer(serializers.ModelSerializer):
 
 
 class AccountSerializer(
-    ChangedFieldsMixin,
     CustomValidationErrorMixin,
     serializers.ModelSerializer,
 ):

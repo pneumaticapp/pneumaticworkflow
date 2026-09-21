@@ -23,6 +23,7 @@ from src.generics.mixins.views import (
     AnonymousAccountMixin,
     BaseResponseMixin,
 )
+from src.logs.events import AuditEventService
 from src.notifications.tasks import send_verification_notification
 
 UserModel = get_user_model()
@@ -58,7 +59,10 @@ class SignUpView(
             the mixin belong to the SSO sign ups, an e-mail sign up
             leaves the journal entry only. """
 
-        self.emit_signup(user)
+        AuditEventService.user_signed_up(
+            user=user,
+            source=self.audit_source,
+        )
         account = user.account
         if settings.VERIFICATION_CHECK and not account.is_verified:
             send_verification_notification.delay(

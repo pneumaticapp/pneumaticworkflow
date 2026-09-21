@@ -227,6 +227,32 @@ def test_user_logged_out_by_provider__target__no_actor(fake_stream):
     }
 
 
+def test_user_logged_out_by_provider__no_target__no_account_bucket(
+    fake_stream,
+):
+
+    """ Auth0 calls the logout from the browser without a token. """
+
+    # act
+    AuditEventService.user_logged_out_by_provider(
+        target=None,
+        source='auth0',
+    )
+
+    # assert
+    event = fake_stream.last_event()
+    assert len(fake_stream.events) == 1
+    assert event.type == UserEvents.LOGOUT
+    assert event.account_id == NO_ACCOUNT
+    assert event.actor is None
+    assert event.auth_type is None
+    assert event.object == EventObject(type=EventObjectType.USER, id=None)
+    assert event.payload == {
+        'source': 'auth0',
+        'reason': LogoutReason.IDENTITY_PROVIDER,
+    }
+
+
 def test_superuser_logged_in_as__target__target_account_and_email(
     fake_stream,
 ):
@@ -2339,62 +2365,6 @@ def test_dataset_deleted__dataset__dataset_object(fake_stream):
         id=dataset.id,
     )
     assert event.payload == {'name': 'Cities'}
-
-
-def test_dataset_items_added__dataset__items_count_in_the_payload(
-    fake_stream,
-):
-
-    # arrange
-    account = create_test_account()
-    owner = create_test_owner(account=account)
-    dataset = create_test_dataset(account=account, name='Cities')
-
-    # act
-    AuditEventService.dataset_items_added(
-        user=owner,
-        auth_type=AuthTokenType.USER,
-        dataset=dataset,
-        items_count=3,
-    )
-
-    # assert
-    event = fake_stream.last_event()
-    assert len(fake_stream.events) == 1
-    assert event.type == DatasetEvents.ITEMS_ADD
-    assert event.object == EventObject(
-        type=EventObjectType.DATASET,
-        id=dataset.id,
-    )
-    assert event.payload == {'name': 'Cities', 'items_count': 3}
-
-
-def test_dataset_items_replaced__dataset__items_count_in_the_payload(
-    fake_stream,
-):
-
-    # arrange
-    account = create_test_account()
-    owner = create_test_owner(account=account)
-    dataset = create_test_dataset(account=account, name='Cities')
-
-    # act
-    AuditEventService.dataset_items_replaced(
-        user=owner,
-        auth_type=AuthTokenType.USER,
-        dataset=dataset,
-        items_count=4,
-    )
-
-    # assert
-    event = fake_stream.last_event()
-    assert len(fake_stream.events) == 1
-    assert event.type == DatasetEvents.ITEMS_REPLACE
-    assert event.object == EventObject(
-        type=EventObjectType.DATASET,
-        id=dataset.id,
-    )
-    assert event.payload == {'name': 'Cities', 'items_count': 4}
 
 
 def test_dataset_item_created__item__item_object(fake_stream):

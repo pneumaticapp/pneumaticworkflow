@@ -64,15 +64,6 @@ class SignUpMixin:
                 send_new_signup_notification,
             )
             send_new_signup_notification.delay(user.account_id)
-        self.emit_signup(user)
-
-    def emit_signup(self, user: UserModel) -> None:
-
-        """ The one place every sign up source goes through, so the
-            user.signup event is published here and nowhere else.
-            A service has no request: the address and the browser
-            then come from the context of the middleware. """
-
         AuditEventService.user_signed_up(
             user=user,
             source=self.audit_source or self.source,
