@@ -317,8 +317,6 @@ class Common(Configuration):
             '```http\n'
             'Authorization: Bearer <your_api_key>\n'
             '```\n\n'
-            'Or click the **Authorize** button above and paste your key '
-            'to test endpoints directly.\n\n'
 
             '### Why Use the API?\n'
             '- **Custom Dashboards:** Pull live task counts and workflow '

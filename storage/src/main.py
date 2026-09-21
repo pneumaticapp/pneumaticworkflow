@@ -43,9 +43,6 @@ Pass the key in the `Authorization` header:
 Authorization: Bearer <your_api_key>
 ```
 
-Or click the **Authorize** button above and paste your key \
-to test endpoints directly.
-
 ### Key Capabilities
 - **Direct Uploads:** Upload attachments for workflows, tasks, \
 and system templates.
@@ -142,7 +139,7 @@ app = FastAPI(
     ],
     openapi_tags=[
         {
-            'name': 'files',
+            'name': 'Files',
             'description': ('Upload, download, and manage file attachments'),
         },
     ],
