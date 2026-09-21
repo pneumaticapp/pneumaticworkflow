@@ -20,6 +20,7 @@ from src.processes.models.workflows.task import Task, TaskPerformer
 from src.processes.models.workflows.workflow import Workflow
 from src.permissions.enums import PermissionSource
 from src.processes.services.events import WorkflowEventService
+from src.processes.services.workflow_action import WorkflowActionService
 from src.processes.services.workflow_permissions import (
     WorkflowPermissionService,
 )
@@ -142,9 +143,12 @@ class VacationDelegationService:
         for user's direct tasks and regular group tasks.
 
         Returns (task_ids, wf_ids) — the full set of
-        delegated task IDs and their workflow IDs.
+        delegated task IDs and their workflow IDs. Tasks skipped
+        because the workflow starter became a performer
+        are not included in task_ids.
         """
         task_ids = set(existing_task_ids or ())
+        new_task_ids: Set[int] = set()
         wf_ids: Set[int] = set()
 
         # 1. Create group performers for user's direct tasks
@@ -178,6 +182,7 @@ class VacationDelegationService:
                 ignore_conflicts=True,
             )
             task_ids |= new_direct_task_ids
+            new_task_ids |= new_direct_task_ids
             wf_ids |= {p.task.workflow_id for p in user_performers}
             for p in user_performers:
                 WorkflowEventService.task_delegation_event(
@@ -226,6 +231,7 @@ class VacationDelegationService:
                     ignore_conflicts=True,
                 )
                 task_ids |= new_group_task_ids
+                new_task_ids |= new_group_task_ids
                 new_group_tasks = list(
                     Task.objects.filter(
                         id__in=new_group_task_ids,
@@ -241,7 +247,54 @@ class VacationDelegationService:
                         substitute_group=group,
                     )
 
+        task_ids -= self._skip_tasks_for_starter(
+            group=group,
+            task_ids=new_task_ids,
+        )
         return task_ids, wf_ids
+
+    def _skip_tasks_for_starter(
+        self,
+        group: 'UserGroup',
+        task_ids: Set[int],
+    ) -> Set[int]:
+        """Apply the "skip for starter" rule to delegated tasks
+        whose workflow starter is a member of the substitute group.
+        The delegation adds performers after the task start,
+        so the check in WorkflowActionService.start_task
+        does not see them.
+
+        task_ids must contain only active or delayed tasks,
+        as the callers select them.
+
+        Returns IDs of skipped tasks.
+        """
+        if not task_ids:
+            return set()
+        tasks = (
+            Task.objects
+            .filter(
+                id__in=task_ids,
+                skip_for_starter=True,
+                workflow__workflow_starter__in=group.users.all(),
+            )
+            .order_by('id')
+        )
+        skipped_task_ids: Set[int] = set()
+        account_owner = self.user.account.get_owner()
+        for task in tasks:
+            # The workflow is loaded here, not by select_related:
+            # the skip of the previous task of the same workflow
+            # may delay the workflow or complete it by a condition
+            if task.workflow.is_completed:
+                continue
+            service = WorkflowActionService(
+                user=account_owner,
+                workflow=task.workflow,
+            )
+            if service.skip_delegated_task_for_starter(task=task):
+                skipped_task_ids.add(task.id)
+        return skipped_task_ids
 
     def _update_existing(
         self,
@@ -277,6 +330,12 @@ class VacationDelegationService:
             existing_task_ids.add(task_id)
             existing_wf_ids.add(wf_id)
 
+        # Substitutes may have changed: the workflow starter
+        # can be a new substitute for already delegated tasks
+        existing_task_ids = existing_task_ids - self._skip_tasks_for_starter(
+            group=group,
+            task_ids=existing_task_ids,
+        )
         task_ids, new_wf_ids = self.delegate_tasks(
             group=group,
             existing_task_ids=existing_task_ids,

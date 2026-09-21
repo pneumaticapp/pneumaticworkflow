@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Callable, Iterable, List, Optional, Tuple
+from typing import Callable, Iterable, List, Optional, Set, Tuple
 
 from django.contrib.auth import get_user_model
 from django.db import transaction
@@ -737,6 +737,60 @@ class WorkflowActionService:
             except exceptions.UserAlreadyCompleteTask:
                 pass
 
+    def _is_task_skipped_for_starter(
+        self,
+        task: Task,
+        performers_user_ids: Set[int],
+    ) -> bool:
+
+        """ The starter is a performer and there is nobody else
+            to wait for: "skip for starter" skips the whole task.
+            With RCBA and other performers the task is completed
+            only for the starter (see "_complete_task_for_starter") """
+
+        starter_id = self.workflow.workflow_starter_id
+        if starter_id not in performers_user_ids:
+            return False
+        return (
+            not task.require_completion_by_all
+            or performers_user_ids == {starter_id}
+        )
+
+    def skip_delegated_task_for_starter(self, task: Task) -> bool:
+
+        """ Apply "skip for starter" to an active or delayed task
+            that the workflow starter got after the task start,
+            e.g. as a vacation substitute. The rule is the same
+            as in the "start_task" method.
+
+            Returns True if the task is skipped """
+
+        if not task.skip_for_starter:
+            return False
+        performers_user_ids = {
+            user['id']
+            for user in self._get_all_performers_users(task=task)
+        }
+        if self.workflow.workflow_starter_id not in performers_user_ids:
+            return False
+        if not self._is_task_skipped_for_starter(
+            task=task,
+            performers_user_ids=performers_user_ids,
+        ):
+            self._complete_task_for_starter(task=task)
+            if task.is_active and task.can_be_completed():
+                self.complete_task(task=task)
+            return False
+
+        delay = task.get_active_delay()
+        if delay:
+            delay.end_date = timezone.now()
+            delay.save(update_fields=['end_date'])
+        self._send_task_deleted(task=task)
+        self._task_skip_for_starter(task=task, is_returned=False)
+        self.check_delay_workflow()
+        return True
+
     def start_task(
         self,
         task: Task,
@@ -761,26 +815,18 @@ class WorkflowActionService:
             self._task_skip_no_performers(task, is_returned=is_returned)
             return
 
-        if task.skip_for_starter and not self.workflow.is_external:
-            starter = self.workflow.workflow_starter
-            performers_user_ids = {user['id'] for user in performers_users}
-
-            if starter.id in performers_user_ids:
-                performers_user_ids.remove(starter.id)
-                task_rcba = task.require_completion_by_all
-                if task_rcba:
-                    # if performers_user_ids exists then complete task
-                    # only for starter in the "continue_task" method
-                    # using "_complete_task_for_starter" method
-                    if not performers_user_ids:
-                        self._task_skip_for_starter(
-                            task=task,
-                            is_returned=is_returned,
-                        )
-                        return
-                else:
-                    self._task_skip_for_starter(task, is_returned=is_returned)
-                    return
+        # With RCBA and other performers the task is completed
+        # only for the starter in the "continue_task" method
+        if (
+            task.skip_for_starter
+            and not self.workflow.is_external
+            and self._is_task_skipped_for_starter(
+                task=task,
+                performers_user_ids={user['id'] for user in performers_users},
+            )
+        ):
+            self._task_skip_for_starter(task=task, is_returned=is_returned)
+            return
 
         if is_returned:
             self.continue_workflow(task=task, is_returned=is_returned)
