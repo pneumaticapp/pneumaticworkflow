@@ -1,5 +1,5 @@
 const MOCK_URLS = {
-  userObjectPermissions: '/accounts/user/permission',
+  getUserObjectPermissions: '/accounts/user/permission',
 };
 
 jest.mock('../../utils/getConfig', () => ({
@@ -29,7 +29,7 @@ describe('getUserObjectPermissions', () => {
     });
 
     expect(commonRequest).toHaveBeenCalledWith(
-      '/accounts/user/permission?obj_type=workflow&obj_ids=1,2,3',
+      '/accounts/user/permission?obj_type=workflow&obj_ids=1%2C2%2C3',
       {},
       { shouldThrow: true },
     );

@@ -61,10 +61,6 @@ export function WorkflowControllsComponents({
   const { formatMessage } = useIntl();
   const [isUrgent, setIsUrgent] = React.useState(workflow.isUrgent);
 
-  // Permissions arrive after the list itself, so an unresolved workflow shows no controls until
-  // the answer lands. The options are still built either way: getSnoozeOptions calls useSelector
-  // under the hood, so returning early here would change the hook count between renders once the
-  // permission flips.
   const canControlWorkflow = useSelector(getCanChangeWorkflow(workflow.id));
 
   const workflowId = workflow.id;
