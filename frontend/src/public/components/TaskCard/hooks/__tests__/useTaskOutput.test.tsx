@@ -195,31 +195,6 @@ describe('useTaskOutput', () => {
     });
   });
 
-  it('does not stamp server fingerprints onto legacy drafts after a definition-only update', () => {
-    const legacyField = makeField('legacy-field', 'server value');
-    const otherField = makeField('other-field', 'other value');
-    (outputStorage.getEntry as jest.Mock).mockReturnValue({
-      taskId: 1,
-      data: [{ ...legacyField, value: 'legacy draft' }],
-    });
-    (getOutputFromStorage as jest.Mock).mockReturnValue([{ ...legacyField, value: 'legacy draft' }]);
-
-    const { rerender } = render(<HookHarness task={makeTask([legacyField, otherField])} />);
-    rerender(<HookHarness task={makeTask([{ ...legacyField, name: 'Renamed' }, otherField])} />);
-
-    act(() => {
-      hookResult.editField('legacy-field')({ value: 'fresh edit' });
-    });
-    act(() => {
-      jest.advanceTimersByTime(300);
-    });
-
-    expect(addOrUpdateStorageOutput).toHaveBeenCalledWith(1, expect.any(Array), {
-      dateStarted: '2024-01-01',
-      fieldFingerprints: { 'legacy-field': getTaskOutputFingerprint([{ ...legacyField, name: 'Renamed' }]) },
-    });
-  });
-
   it('keeps legacy restored fieldset fields session-scoped when an unrelated field is edited', () => {
     const legacyField = makeField('legacy-field', 'server value');
     const editedField = makeField('edited-field', 'server value');
@@ -252,6 +227,29 @@ describe('useTaskOutput', () => {
     });
   });
 
+  it('stamps every fieldset binding when several fieldsets share the field apiName', () => {
+    const sharedField = makeField('shared-field', 'server value');
+    const firstFieldset = { apiNameBinding: 'fieldset-1', fields: [sharedField] } as any;
+    const secondFieldset = { apiNameBinding: 'fieldset-2', fields: [sharedField] } as any;
+
+    render(<HookHarness task={makeTask([], { fieldsets: [firstFieldset, secondFieldset] })} />);
+
+    act(() => {
+      hookResult.editFieldsetField('shared-field')({ value: 'fresh edit' });
+    });
+    act(() => {
+      jest.advanceTimersByTime(300);
+    });
+
+    expect(fieldsetsStorage.save).toHaveBeenCalledWith(1, expect.any(Array), {
+      dateStarted: '2024-01-01',
+      fieldFingerprints: {
+        'fieldset-1': { 'shared-field': getTaskOutputFingerprint([sharedField]) },
+        'fieldset-2': { 'shared-field': getTaskOutputFingerprint([sharedField]) },
+      },
+    });
+  });
+
   it('drops a stored fieldset draft without crashing when the server no longer has that fieldset', () => {
     const draftField = makeField('removed-field', 'stale draft');
     (fieldsetsStorage.getEntry as jest.Mock).mockReturnValue({
@@ -265,6 +263,31 @@ describe('useTaskOutput', () => {
 
     expect(() => render(<HookHarness task={makeTask([], { fieldsets: [] })} />)).not.toThrow();
     expect(hookResult.fieldsetOutputValues).toEqual([]);
+  });
+
+  it('does not stamp server fingerprints onto legacy drafts after a definition-only update', () => {
+    const legacyField = makeField('legacy-field', 'server value');
+    const otherField = makeField('other-field', 'other value');
+    (outputStorage.getEntry as jest.Mock).mockReturnValue({
+      taskId: 1,
+      data: [{ ...legacyField, value: 'legacy draft' }],
+    });
+    (getOutputFromStorage as jest.Mock).mockReturnValue([{ ...legacyField, value: 'legacy draft' }]);
+
+    const { rerender } = render(<HookHarness task={makeTask([legacyField, otherField])} />);
+    rerender(<HookHarness task={makeTask([{ ...legacyField, name: 'Renamed' }, otherField])} />);
+
+    act(() => {
+      hookResult.editField('legacy-field')({ value: 'fresh edit' });
+    });
+    act(() => {
+      jest.advanceTimersByTime(300);
+    });
+
+    expect(addOrUpdateStorageOutput).toHaveBeenCalledWith(1, expect.any(Array), {
+      dateStarted: '2024-01-01',
+      fieldFingerprints: { 'legacy-field': getTaskOutputFingerprint([{ ...legacyField, name: 'Renamed' }]) },
+    });
   });
 
   it('updates output metadata without discarding valid drafts', () => {

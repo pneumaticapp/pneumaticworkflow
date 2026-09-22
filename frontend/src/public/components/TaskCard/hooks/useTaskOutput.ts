@@ -337,26 +337,29 @@ export function useTaskOutput(task: ITask) {
   };
 
   const editFieldsetField = (apiName: string) => (changedProps: Partial<IExtraField>) => {
-    const serverFieldset = task.fieldsets?.find((fieldset) =>
-      fieldset.fields.some((field) => field.apiName === apiName),
-    );
-    const serverField = serverFieldset?.fields.find((field) => field.apiName === apiName);
+    const matchingFieldsets =
+      task.fieldsets?.filter((fieldset) => fieldset.fields.some((field) => field.apiName === apiName)) ?? [];
 
-    if (serverFieldset && serverField) {
-      const serverFingerprint = getTaskOutputFingerprint([serverField]);
+    // The edit lands in every fieldset with this apiName, so each binding gets its own stamp.
+    matchingFieldsets.forEach((fieldset) => {
+      const serverField = fieldset.fields.find((field) => field.apiName === apiName);
+
+      if (!serverField) return;
+
+      const fingerprint = getTaskOutputFingerprint([serverField]);
       const syncState = fieldsetSyncStateRef.current;
-      syncState.fieldFingerprints[serverFieldset.apiNameBinding] = {
-        ...syncState.fieldFingerprints[serverFieldset.apiNameBinding],
-        [apiName]: serverFingerprint,
+      syncState.fieldFingerprints[fieldset.apiNameBinding] = {
+        ...syncState.fieldFingerprints[fieldset.apiNameBinding],
+        [apiName]: fingerprint,
       };
       syncState.validatedFingerprints = {
         ...syncState.validatedFingerprints,
-        [serverFieldset.apiNameBinding]: {
-          ...syncState.validatedFingerprints[serverFieldset.apiNameBinding],
-          [apiName]: serverFingerprint,
+        [fieldset.apiNameBinding]: {
+          ...syncState.validatedFingerprints[fieldset.apiNameBinding],
+          [apiName]: fingerprint,
         },
       };
-    }
+    });
 
     setFieldsetOutputValues((previousFieldsets) => {
       const nextFieldsets = previousFieldsets.map((fieldset) => ({
