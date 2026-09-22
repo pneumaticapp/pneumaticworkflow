@@ -34,6 +34,8 @@ class Command(BaseCommand):
             self._ensure_reminder_task_notification,
             self._ensure_process_vacations,
             self._ensure_delegate_vacation_tasks,
+            self._ensure_dispatch_ai_agent_tasks,
+            self._ensure_dispatch_ai_agent_mentions,
         )
 
         for task_func in tasks:
@@ -188,4 +190,26 @@ class Command(BaseCommand):
             ),
             schedule_obj=schedule,
             schedule_field="crontab",
+        )
+
+    def _ensure_dispatch_ai_agent_tasks(self):
+        schedule, _ = IntervalSchedule.objects.get_or_create(
+            every=30,
+            period=IntervalSchedule.SECONDS,
+        )
+        self._create_or_skip_task(
+            name="Dispatch AI agent tasks",
+            task_path="src.ai.tasks.dispatch_ai_agent_tasks",
+            schedule_obj=schedule,
+        )
+
+    def _ensure_dispatch_ai_agent_mentions(self):
+        schedule, _ = IntervalSchedule.objects.get_or_create(
+            every=10,
+            period=IntervalSchedule.SECONDS,
+        )
+        self._create_or_skip_task(
+            name="Dispatch AI agent mentions",
+            task_path="src.ai.tasks.dispatch_ai_agent_mentions",
+            schedule_obj=schedule,
         )
