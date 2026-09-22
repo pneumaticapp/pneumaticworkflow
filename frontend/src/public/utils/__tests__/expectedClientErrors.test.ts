@@ -42,4 +42,11 @@ describe('isExpectedClientError', () => {
   it('returns false for object without any expected pattern', () => {
     expect(isExpectedClientError({ detail: 'Not found', status: 404 })).toBe(false);
   });
+
+  it('returns false for circular object without crashing', () => {
+    const circular: Record<string, unknown> = { detail: 'some error' };
+    circular.self = circular;
+
+    expect(isExpectedClientError(circular)).toBe(false);
+  });
 });

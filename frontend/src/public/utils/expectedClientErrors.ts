@@ -36,7 +36,11 @@ export function isExpectedClientError(responseData: string | object): boolean {
   }
 
   if (typeof responseData === 'object' && responseData !== null) {
-    return EXPECTED_CLIENT_ERROR_REGEX.test(JSON.stringify(responseData));
+    try {
+      return EXPECTED_CLIENT_ERROR_REGEX.test(JSON.stringify(responseData));
+    } catch {
+      return false;
+    }
   }
 
   return false;
