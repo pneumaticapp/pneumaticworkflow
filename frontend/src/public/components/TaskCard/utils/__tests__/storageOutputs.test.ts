@@ -155,6 +155,10 @@ describe('storageOutputs', () => {
       '[{"taskId":1,"data":{}}]',
       '[{"taskId":1,"data":null}]',
       '[{"taskId":1,"data":"oops"}]',
+      '[{"taskId":1,"data":[null]}]',
+      '[{"taskId":"1","data":[]}]',
+      '[{"taskId":1,"data":[],"metadata":{}}]',
+      '[{"taskId":1,"data":[],"metadata":{"dateStarted":1,"fieldFingerprints":{}}}]',
     ])('get returns undefined for corrupted value %p and does not throw', (raw) => {
       localStorage.setItem(FIELDSETS_STORAGE_KEY, raw);
       localStorage.setItem(OUTPUT_STORAGE_KEY, raw);
@@ -164,6 +168,41 @@ describe('storageOutputs', () => {
 
       expect(fieldsetsStorage.get(1)).toBeUndefined();
       expect(outputStorage.get(1)).toBeUndefined();
+    });
+
+    it('rejects fieldset drafts whose fields are not an array', () => {
+      localStorage.setItem(
+        FIELDSETS_STORAGE_KEY,
+        JSON.stringify([{ taskId: 1, data: [{ apiNameBinding: 'fs-1', fields: {} }] }]),
+      );
+
+      expect(fieldsetsStorage.getEntry(1)).toBeUndefined();
+    });
+
+    it('rejects fieldset drafts with non-nested fingerprints metadata', () => {
+      const fieldsets = [makeFieldsetRuntime({ apiNameBinding: 'fs-1', fields: [makeExtraField({ apiName: 'a' })] })];
+      localStorage.setItem(
+        FIELDSETS_STORAGE_KEY,
+        JSON.stringify([
+          { taskId: 1, data: fieldsets, metadata: { dateStarted: null, fieldFingerprints: { 'fs-1': 'flat' } } },
+        ]),
+      );
+
+      expect(fieldsetsStorage.getEntry(1)).toBeUndefined();
+    });
+
+    it('keeps valid entries next to malformed ones', () => {
+      const outputs = [makeExtraField({ apiName: 'valid' })];
+      localStorage.setItem(
+        OUTPUT_STORAGE_KEY,
+        JSON.stringify([
+          { taskId: 1, data: {} },
+          { taskId: 2, data: outputs },
+        ]),
+      );
+
+      expect(outputStorage.get(1)).toBeUndefined();
+      expect(outputStorage.get(2)).toEqual(outputs);
     });
   });
 });

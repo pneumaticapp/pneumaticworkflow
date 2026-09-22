@@ -22,7 +22,38 @@ export type TFieldsetDraftMetadata = {
   fieldFingerprints: Record<string, Record<string, string>>;
 };
 
-function createTaskStorage<T, TMetadata>(storageKey: string) {
+type TStorageValidators<T, TMetadata> = {
+  isValidData: (data: unknown) => data is T;
+  isValidMetadata: (metadata: unknown) => metadata is TMetadata;
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const isStoredField = (field: unknown): field is IExtraField => isRecord(field) && typeof field.apiName === 'string';
+
+const isStoredFields = (data: unknown): data is IExtraField[] => Array.isArray(data) && data.every(isStoredField);
+
+const isStoredFieldsets = (data: unknown): data is IFieldsetRuntime[] =>
+  Array.isArray(data) &&
+  data.every(
+    (fieldset) => isRecord(fieldset) && typeof fieldset.apiNameBinding === 'string' && isStoredFields(fieldset.fields),
+  );
+
+const isDraftMetadata = (metadata: unknown): metadata is { dateStarted: string | null; fieldFingerprints: unknown } =>
+  isRecord(metadata) &&
+  (typeof metadata.dateStarted === 'string' || metadata.dateStarted === null) &&
+  isRecord(metadata.fieldFingerprints);
+
+const isOutputDraftMetadata = (metadata: unknown): metadata is TOutputDraftMetadata => isDraftMetadata(metadata);
+
+const isFieldsetDraftMetadata = (metadata: unknown): metadata is TFieldsetDraftMetadata =>
+  isDraftMetadata(metadata) && Object.values(metadata.fieldFingerprints as Record<string, unknown>).every(isRecord);
+
+function createTaskStorage<T, TMetadata>(
+  storageKey: string,
+  { isValidData, isValidMetadata }: TStorageValidators<T, TMetadata>,
+) {
   function getAll(): TStorageEntry<T, TMetadata>[] {
     try {
       const savedDataString = localStorage.getItem(storageKey);
@@ -31,15 +62,22 @@ function createTaskStorage<T, TMetadata>(storageKey: string) {
         return [];
       }
 
-      const savedData = JSON.parse(savedDataString) as TRawStorageEntry<T, TMetadata>[];
+      const savedData: unknown = JSON.parse(savedDataString);
 
       if (!Array.isArray(savedData)) {
         return [];
       }
 
-      return savedData.flatMap(({ taskId, data, output, metadata }) => {
+      return savedData.flatMap((entry: unknown) => {
+        if (!isRecord(entry) || typeof entry.taskId !== 'number') return [];
+
+        const { taskId, data, output, metadata } = entry as TRawStorageEntry<unknown, unknown>;
         const entryData = data ?? output;
-        return Array.isArray(entryData) ? [{ taskId, data: entryData, metadata }] : [];
+
+        if (!isValidData(entryData)) return [];
+        if (metadata === undefined) return [{ taskId, data: entryData }];
+
+        return isValidMetadata(metadata) ? [{ taskId, data: entryData, metadata }] : [];
       });
     } catch {
       return [];
@@ -92,10 +130,17 @@ function createTaskStorage<T, TMetadata>(storageKey: string) {
   };
 }
 
-export const outputStorage = createTaskStorage<IExtraField[], TOutputDraftMetadata>('tasks_outputs');
+export const outputStorage = createTaskStorage<IExtraField[], TOutputDraftMetadata>('tasks_outputs', {
+  isValidData: isStoredFields,
+  isValidMetadata: isOutputDraftMetadata,
+});
 
 export const fieldsetsStorage = createTaskStorage<IFieldsetRuntime[], TFieldsetDraftMetadata>(
   'tasks_fieldsets_outputs',
+  {
+    isValidData: isStoredFieldsets,
+    isValidMetadata: isFieldsetDraftMetadata,
+  },
 );
 
 export const addOrUpdateStorageOutput = outputStorage.save;
