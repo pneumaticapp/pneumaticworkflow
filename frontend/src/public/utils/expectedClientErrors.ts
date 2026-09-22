@@ -37,7 +37,16 @@ export function isExpectedClientError(responseData: string | object): boolean {
 
   if (typeof responseData === 'object' && responseData !== null) {
     try {
-      return EXPECTED_CLIENT_ERROR_REGEX.test(JSON.stringify(responseData));
+      const visitedErrorNodes = new WeakSet<object>();
+      return EXPECTED_CLIENT_ERROR_REGEX.test(
+        JSON.stringify(responseData, (_key, value) => {
+          if (typeof value === 'object' && value !== null) {
+            if (visitedErrorNodes.has(value)) return undefined;
+            visitedErrorNodes.add(value);
+          }
+          return value;
+        }),
+      );
     } catch {
       return false;
     }
