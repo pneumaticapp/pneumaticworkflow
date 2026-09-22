@@ -33,15 +33,13 @@ class AIProviderService(
         vendor: Optional[str] = None,
         **kwargs,
     ):
-        self.instance = AIProvider(
+        self.instance = AIProvider.objects.create(
             account=self.account,
             name=name,
             base_url=base_url,
             api_key_encrypted=self.encrypt(api_key),
+            vendor=vendor or AIVendor.CUSTOM,
         )
-        if vendor:
-            self.instance.vendor = vendor
-            self.instance.save()
         return self.instance
 
     def create_by_vendor(
