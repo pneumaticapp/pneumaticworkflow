@@ -54,9 +54,7 @@ describe('getTaskOutputFingerprint', () => {
       groupId: null,
     };
     const emptyValues = [undefined, null, '', []];
-    const fingerprints = emptyValues.map((value) =>
-      getTaskOutputFingerprint([{ ...field, value }]),
-    );
+    const fingerprints = emptyValues.map((value) => getTaskOutputFingerprint([{ ...field, value }]));
 
     expect(new Set(fingerprints).size).toBe(1);
   });
@@ -73,11 +71,13 @@ describe('getTaskOutputFingerprint', () => {
     };
 
     expect(getTaskOutputFingerprint([fileField])).toBe(
-      getTaskOutputFingerprint([{
-        ...fileField,
-        attachments: [],
-        markdownValue: '',
-      }]),
+      getTaskOutputFingerprint([
+        {
+          ...fileField,
+          attachments: [],
+          markdownValue: '',
+        },
+      ]),
     );
   });
 
@@ -99,14 +99,20 @@ describe('getTaskOutputFingerprint', () => {
       markdownValue: '[file.pdf](https://files.example/file.pdf)',
     };
 
-    expect(getTaskOutputFingerprint([{
-      ...fileField,
-      attachments: [{ ...baseAttachment }],
-    }])).toBe(
-      getTaskOutputFingerprint([{
-        ...fileField,
-        attachments: [{ ...baseAttachment, isRemoved: false }],
-      }]),
+    expect(
+      getTaskOutputFingerprint([
+        {
+          ...fileField,
+          attachments: [{ ...baseAttachment }],
+        },
+      ]),
+    ).toBe(
+      getTaskOutputFingerprint([
+        {
+          ...fileField,
+          attachments: [{ ...baseAttachment, isRemoved: false }],
+        },
+      ]),
     );
   });
 
@@ -120,9 +126,7 @@ describe('getTaskOutputFingerprint', () => {
       groupId: null,
     };
 
-    expect(
-      getTaskOutputFingerprint([{ ...base, value: 'https://a.example' }]),
-    ).not.toBe(
+    expect(getTaskOutputFingerprint([{ ...base, value: 'https://a.example' }])).not.toBe(
       getTaskOutputFingerprint([{ ...base, value: 'https://b.example' }]),
     );
   });
@@ -147,9 +151,7 @@ describe('getTaskOutputFingerprint', () => {
       groupId: null,
     };
 
-    expect(getTaskOutputFingerprint([field])).toBe(
-      getTaskOutputFingerprint([{ ...field, [property]: metadataValue }]),
-    );
+    expect(getTaskOutputFingerprint([field])).toBe(getTaskOutputFingerprint([{ ...field, [property]: metadataValue }]));
   });
 
   it.each([
@@ -171,6 +173,66 @@ describe('getTaskOutputFingerprint', () => {
 
     expect(getTaskOutputFingerprint([field])).not.toBe(
       getTaskOutputFingerprint([{ ...field, [property]: submittedValue }]),
+    );
+  });
+
+  it('returns the same fingerprint for a file field when files arrive as markdown or as attachments', () => {
+    const fileField = {
+      apiName: 'file-field',
+      name: 'File',
+      type: EExtraFieldType.File,
+      order: 1,
+      value: [],
+      userId: null,
+      groupId: null,
+    };
+    const attachment = { id: 'file-id', name: 'file.pdf', url: 'https://files.example/file.pdf', size: 100 };
+
+    expect(
+      getTaskOutputFingerprint([{ ...fileField, markdownValue: '[file.pdf](https://files.example/file.pdf)' }]),
+    ).toBe(getTaskOutputFingerprint([{ ...fileField, attachments: [attachment] }]));
+  });
+
+  it('returns the same fingerprint for a file field when attachments arrive in a different order', () => {
+    const fileField = {
+      apiName: 'file-field',
+      name: 'File',
+      type: EExtraFieldType.File,
+      order: 1,
+      value: [],
+      userId: null,
+      groupId: null,
+    };
+    const firstFile = { id: 'a', name: 'a.pdf', url: 'https://files.example/a.pdf', size: 1 };
+    const secondFile = { id: 'b', name: 'b.pdf', url: 'https://files.example/b.pdf', size: 1 };
+
+    expect(getTaskOutputFingerprint([{ ...fileField, attachments: [firstFile, secondFile] }])).toBe(
+      getTaskOutputFingerprint([{ ...fileField, attachments: [secondFile, firstFile] }]),
+    );
+  });
+
+  it('returns a different fingerprint for a file field when the file set changes', () => {
+    const fileField = {
+      apiName: 'file-field',
+      name: 'File',
+      type: EExtraFieldType.File,
+      order: 1,
+      value: [],
+      userId: null,
+      groupId: null,
+    };
+    const attachment = { id: 'file-id', name: 'file.pdf', url: 'https://files.example/file.pdf', size: 100 };
+
+    expect(getTaskOutputFingerprint([{ ...fileField, attachments: [attachment] }])).not.toBe(
+      getTaskOutputFingerprint([
+        {
+          ...fileField,
+          attachments: [
+            attachment,
+            { id: 'other', name: 'other.pdf', url: 'https://files.example/other.pdf', size: 1 },
+          ],
+        },
+      ]),
     );
   });
 });
