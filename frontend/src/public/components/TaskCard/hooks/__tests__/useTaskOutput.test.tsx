@@ -227,6 +227,21 @@ describe('useTaskOutput', () => {
     });
   });
 
+  it('drops a stored fieldset draft without crashing when the server no longer has that fieldset', () => {
+    const draftField = makeField('removed-field', 'stale draft');
+    (fieldsetsStorage.getEntry as jest.Mock).mockReturnValue({
+      taskId: 1,
+      data: [{ apiNameBinding: 'removed-fieldset', fields: [draftField] }],
+      metadata: {
+        dateStarted: '2024-01-01',
+        fieldFingerprints: { 'removed-fieldset': { 'removed-field': 'old-fingerprint' } },
+      },
+    });
+
+    expect(() => render(<HookHarness task={makeTask([], { fieldsets: [] })} />)).not.toThrow();
+    expect(hookResult.fieldsetOutputValues).toEqual([]);
+  });
+
   it('updates output metadata without discarding valid drafts', () => {
     const firstField = { ...makeField('first-field', 'server value'), order: 0 };
     const secondField = { ...makeField('second-field', 'second value'), order: 1 };

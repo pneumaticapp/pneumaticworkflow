@@ -210,11 +210,15 @@ export function useTaskOutput(task: ITask) {
           savedFieldsets = storedEntry.data
             .map((fieldset) => ({
               ...fieldset,
-              fields: fieldset.fields.filter(
-                (field) =>
+              fields: fieldset.fields.filter((field) => {
+                const serverFingerprint = fieldFingerprints[fieldset.apiNameBinding]?.[field.apiName];
+
+                return (
+                  serverFingerprint !== undefined &&
                   storedEntry.metadata?.fieldFingerprints[fieldset.apiNameBinding]?.[field.apiName] ===
-                  fieldFingerprints[fieldset.apiNameBinding]?.[field.apiName],
-              ),
+                    serverFingerprint
+                );
+              }),
             }))
             .filter((fieldset) => fieldset.fields.length > 0);
           validatedFingerprints = Object.fromEntries(
@@ -223,7 +227,7 @@ export function useTaskOutput(task: ITask) {
               Object.fromEntries(
                 fieldset.fields.map((field) => [
                   field.apiName,
-                  fieldFingerprints[fieldset.apiNameBinding][field.apiName],
+                  fieldFingerprints[fieldset.apiNameBinding]?.[field.apiName],
                 ]),
               ),
             ]),
@@ -248,11 +252,14 @@ export function useTaskOutput(task: ITask) {
         savedFieldsets = savedFieldsets
           .map((fieldset) => ({
             ...fieldset,
-            fields: fieldset.fields.filter(
-              (field) =>
-                syncState.fieldFingerprints[fieldset.apiNameBinding]?.[field.apiName] ===
-                fieldFingerprints[fieldset.apiNameBinding]?.[field.apiName],
-            ),
+            fields: fieldset.fields.filter((field) => {
+              const serverFingerprint = fieldFingerprints[fieldset.apiNameBinding]?.[field.apiName];
+
+              return (
+                serverFingerprint !== undefined &&
+                syncState.fieldFingerprints[fieldset.apiNameBinding]?.[field.apiName] === serverFingerprint
+              );
+            }),
           }))
           .filter((fieldset) => fieldset.fields.length > 0);
         validatedFingerprints = Object.fromEntries(
