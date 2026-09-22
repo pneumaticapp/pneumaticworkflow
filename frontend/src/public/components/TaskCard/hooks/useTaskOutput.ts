@@ -155,7 +155,7 @@ export function useTaskOutput(task: ITask) {
     } else if (isServerOutputDefinitionChanged) {
       const pendingStorageOutput = pendingStorageOutputRef.current;
       storageOutput = pendingStorageOutput?.taskId === id ? pendingStorageOutput.output : getOutputFromStorage(id);
-      validatedFingerprints = fieldFingerprints;
+      validatedFingerprints = syncState.validatedFingerprints;
     }
 
     const outputFieldsWithValues = sortFieldsByOrder(
