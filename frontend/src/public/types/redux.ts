@@ -13,6 +13,7 @@ import {
   IWorkflowDetailsClient,
 } from './workflow';
 import { ITask, ITaskListItem, ITasksSettings } from './tasks';
+import { EPermissionObjectType, TObjectPermissionsById } from './permissions';
 import { IApiKeyItem, IIntegrationDetailed, IIntegrationListItem } from './integrations';
 import { ESettingsTabs } from './profile';
 import { IHighlightsItem, EHighlightsDateFilter } from './highlights';
@@ -66,7 +67,14 @@ export interface IApplicationState {
   tenants: ITenantsStore;
   datasets: IDatasetsStore;
   fieldsets: IFieldsetsStore;
+  permissions: IPermissionsStore;
 }
+
+export type IPermissionsStore = {
+  [objType in EPermissionObjectType]: TObjectPermissionsById;
+} & {
+  userId: number | null;
+};
 
 export enum ELoggedState {
   LoggedIn = 'logged-in',

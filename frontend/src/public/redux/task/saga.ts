@@ -98,6 +98,8 @@ import { getTaskWorkflowLog } from '../../api/getTaskWorkflowLog';
 import { sendTaskComment } from '../../api/sendTaskComment';
 import { getWorkflowAddComputedPropsToRedux } from '../../components/Workflows/utils/getWorfkflowClientProperties';
 import { ISendWorkflowLogComment } from '../workflows/types';
+import { EPermissionObjectType } from '../../types/permissions';
+import { loadObjectPermissions } from '../permissions/slice';
 
 function* fetchTask({ payload: { taskId, viewMode } }: TLoadCurrentTask) {
   const {
@@ -123,6 +125,16 @@ function* fetchTask({ payload: { taskId, viewMode } }: TLoadCurrentTask) {
     yield put(setCurrentTask(formattedTask));
 
     if (viewMode !== ETaskCardViewMode.Guest) {
+      const subWorkflowIds = (task.subWorkflows || []).map(({ id }) => id);
+      if (subWorkflowIds.length) {
+        yield put(
+          loadObjectPermissions({
+            objType: EPermissionObjectType.Workflow,
+            objIds: subWorkflowIds,
+          }),
+        );
+      }
+
       yield loadTaskWorkflow(task.workflow.id, task.id);
     } else {
       yield put(

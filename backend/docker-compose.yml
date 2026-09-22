@@ -110,6 +110,7 @@ services:
       CIO_WEBHOOK_API_KEY: ${CIO_WEBHOOK_API_KEY:-}
       CIO_TRANSACTIONAL_API_KEY: ${CIO_TRANSACTIONAL_API_KEY:-}
       CIO_TEMPLATE__RESET_PASSWORD: ${CIO_TEMPLATE__RESET_PASSWORD:-}
+      CIO_TEMPLATE__INVITE: ${CIO_TEMPLATE__INVITE:-}
       CIO_TEMPLATE__USER_DEACTIVATED: ${CIO_TEMPLATE__USER_DEACTIVATED:-}
       CIO_TEMPLATE__NEW_TASK: ${CIO_TEMPLATE__NEW_TASK:-}
       CIO_TEMPLATE__TASK_RETURNED: ${CIO_TEMPLATE__TASK_RETURNED:-}
@@ -221,6 +222,7 @@ services:
       CIO_WEBHOOK_API_KEY: ${CIO_WEBHOOK_API_KEY:-}
       CIO_TRANSACTIONAL_API_KEY: ${CIO_TRANSACTIONAL_API_KEY:-}
       CIO_TEMPLATE__RESET_PASSWORD: ${CIO_TEMPLATE__RESET_PASSWORD:-}
+      CIO_TEMPLATE__INVITE: ${CIO_TEMPLATE__INVITE:-}
       CIO_TEMPLATE__USER_DEACTIVATED: ${CIO_TEMPLATE__USER_DEACTIVATED:-}
       CIO_TEMPLATE__NEW_TASK: ${CIO_TEMPLATE__NEW_TASK:-}
       CIO_TEMPLATE__TASK_RETURNED: ${CIO_TEMPLATE__TASK_RETURNED:-}
@@ -275,7 +277,7 @@ services:
       ENABLE_LOGGING: ${ENABLE_LOGGING:-no}
     volumes:
       - ./:/pneumatic_backend
-    command: celery --pidfile= --app src.celery_app:app beat -l warning -S django
+    command: celery --app src.celery_app:app beat -l warning -S django
     depends_on:
       - postgres
       - rabbitmq
