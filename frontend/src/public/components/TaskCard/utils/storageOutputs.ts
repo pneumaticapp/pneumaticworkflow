@@ -39,7 +39,7 @@ function createTaskStorage<T, TMetadata>(storageKey: string) {
 
       return savedData.flatMap(({ taskId, data, output, metadata }) => {
         const entryData = data ?? output;
-        return entryData === undefined ? [] : [{ taskId, data: entryData, metadata }];
+        return Array.isArray(entryData) ? [{ taskId, data: entryData, metadata }] : [];
       });
     } catch {
       return [];
@@ -102,4 +102,3 @@ export const addOrUpdateStorageOutput = outputStorage.save;
 export const getOutputFromStorage = outputStorage.get;
 export const removeOutputFromLocalStorage = outputStorage.remove;
 export const removeOutputsFromLocalStorage = outputStorage.removeMany;
-

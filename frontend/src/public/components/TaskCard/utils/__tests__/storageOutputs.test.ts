@@ -34,7 +34,11 @@ describe('storageOutputs', () => {
   it('keeps outputStorage and fieldsetsStorage isolated from each other', () => {
     const outputs: IExtraField[] = [makeExtraField({ apiName: 'plain', name: 'Field plain', value: 'plain-value' })];
     const fieldsets: IFieldsetRuntime[] = [
-      makeFieldsetRuntime({ apiNameBinding: 'fs-1', name: 'Fieldset fs-1', fields: [makeExtraField({ apiName: 'fs-field', name: 'Field fs-field', value: 'fs-value' })] }),
+      makeFieldsetRuntime({
+        apiNameBinding: 'fs-1',
+        name: 'Fieldset fs-1',
+        fields: [makeExtraField({ apiName: 'fs-field', name: 'Field fs-field', value: 'fs-value' })],
+      }),
     ];
 
     expect(getOutputFromStorage(1)).toBeUndefined();
@@ -56,8 +60,20 @@ describe('storageOutputs', () => {
   });
 
   it('remove deletes only the entry for the given taskId, leaving other tasks intact', () => {
-    const fs1: IFieldsetRuntime[] = [makeFieldsetRuntime({ apiNameBinding: 'fs-1', name: 'Fieldset fs-1', fields: [makeExtraField({ apiName: 'a', name: 'Field a', value: 'task-1-value' })] })];
-    const fs2: IFieldsetRuntime[] = [makeFieldsetRuntime({ apiNameBinding: 'fs-2', name: 'Fieldset fs-2', fields: [makeExtraField({ apiName: 'b', name: 'Field b', value: 'task-2-value' })] })];
+    const fs1: IFieldsetRuntime[] = [
+      makeFieldsetRuntime({
+        apiNameBinding: 'fs-1',
+        name: 'Fieldset fs-1',
+        fields: [makeExtraField({ apiName: 'a', name: 'Field a', value: 'task-1-value' })],
+      }),
+    ];
+    const fs2: IFieldsetRuntime[] = [
+      makeFieldsetRuntime({
+        apiNameBinding: 'fs-2',
+        name: 'Fieldset fs-2',
+        fields: [makeExtraField({ apiName: 'b', name: 'Field b', value: 'task-2-value' })],
+      }),
+    ];
 
     fieldsetsStorage.save(1, fs1);
     fieldsetsStorage.save(2, fs2);
@@ -96,6 +112,9 @@ describe('storageOutputs', () => {
       'not a json',
       '{"taskId":1,"data":[]}',
       'null',
+      '[{"taskId":1,"data":{}}]',
+      '[{"taskId":1,"data":null}]',
+      '[{"taskId":1,"data":"oops"}]',
     ])('get returns undefined for corrupted value %p and does not throw', (raw) => {
       localStorage.setItem(FIELDSETS_STORAGE_KEY, raw);
       localStorage.setItem(OUTPUT_STORAGE_KEY, raw);
