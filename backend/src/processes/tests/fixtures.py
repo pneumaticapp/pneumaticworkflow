@@ -178,6 +178,7 @@ def create_test_user(
     language: Language.LITERALS = settings.LANGUAGE_CODE,
     date_fmt: str = UserDateFormat.PY_USA_12,
     date_fdw: int = UserFirstDayWeek.SUNDAY,
+    is_ai: bool = False,
 ) -> UserModel:
 
     """
@@ -207,6 +208,7 @@ def create_test_user(
         language=language,
         date_fmt=date_fmt,
         date_fdw=date_fdw,
+        is_ai=is_ai,
     )
 
 

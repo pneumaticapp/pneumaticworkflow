@@ -359,39 +359,6 @@ class Common(Configuration):
         'SERVERS': [{'url': '/', 'description': 'Pneumatic Core API Server'}],
         'TAGS': [
             {
-                'name': 'Auth',
-                'description': (
-                    'Sign in, token obtain/refresh, password '
-                    'management, and user context'
-                ),
-            },
-            {
-                'name': 'Templates',
-                'description': (
-                    'Create, configure, and manage workflow templates'
-                ),
-            },
-            {
-                'name': 'Templates Public',
-                'description': (
-                    'Public and embedded templates for external forms'
-                ),
-            },
-            {
-                'name': 'Workflows',
-                'description': (
-                    'Running workflow instances — complete, return, '
-                    'snooze, comment, and track progress'
-                ),
-            },
-            {
-                'name': 'Tasks',
-                'description': (
-                    'Task operations — complete, revert, manage '
-                    'performers, due dates, and events'
-                ),
-            },
-            {
                 'name': 'Accounts',
                 'description': (
                     'Account settings, users, invites, groups, '
@@ -399,14 +366,21 @@ class Common(Configuration):
                 ),
             },
             {
+                'name': 'AI',
+                'description': (
+                    'AI providers and agents for account-level '
+                    'model configuration'
+                ),
+            },
+            {
                 'name': 'Attachments',
                 'description': 'File attachments linked to workflows',
             },
             {
-                'name': 'Webhooks',
+                'name': 'Auth',
                 'description': (
-                    'Subscribe to workflow events and manage '
-                    'webhook endpoints'
+                    'Sign in, token obtain/refresh, password '
+                    'management, and user context'
                 ),
             },
             {
@@ -423,13 +397,46 @@ class Common(Configuration):
                 ),
             },
             {
+                'name': 'Reports',
+                'description': (
+                    'Dashboard highlights and workflow analytics'
+                ),
+            },
+            {
+                'name': 'Tasks',
+                'description': (
+                    'Task operations — complete, revert, manage '
+                    'performers, due dates, and events'
+                ),
+            },
+            {
+                'name': 'Templates',
+                'description': (
+                    'Create, configure, and manage workflow templates'
+                ),
+            },
+            {
+                'name': 'Templates Public',
+                'description': (
+                    'Public and embedded templates for external forms'
+                ),
+            },
+            {
                 'name': 'Tenants',
                 'description': 'Multi-tenant workspace management',
             },
             {
-                'name': 'Reports',
+                'name': 'Webhooks',
                 'description': (
-                    'Dashboard highlights and workflow analytics'
+                    'Subscribe to workflow events and manage '
+                    'webhook endpoints'
+                ),
+            },
+            {
+                'name': 'Workflows',
+                'description': (
+                    'Running workflow instances — complete, return, '
+                    'snooze, comment, and track progress'
                 ),
             },
         ],
@@ -527,6 +534,8 @@ class Common(Configuration):
         'src.processes.tasks.update_workflow',
         'src.processes.tasks.webhooks',
         'src.reports.tasks',
+        'src.analysis.tasks',
+        'src.ai.tasks',
         'src.storage.tasks',
     ]
 
@@ -543,6 +552,8 @@ class Common(Configuration):
     # OpenAI
     OPENAI_API_KEY = env.get('OPENAI_API_KEY')
     OPENAI_API_ORG = env.get('OPENAI_API_ORG')
+    AI_HTTP_PROXY = env.get('AI_HTTP_PROXY') or None
+    AI_HTTPS_PROXY = env.get('AI_HTTPS_PROXY') or None
 
     # Microsoft auth
     MS_CLIENT_ID = env.get('MS_CLIENT_ID')

@@ -16,6 +16,7 @@ class APIKeySerializer(
         super().__init__(*args, **kwargs)
         request = self.context.get('request')
         if request and request.method == 'GET':
+            # TODO use write_only=True for a "token" field instead of this
             self.fields.pop('token', None)
 
     class Meta:
