@@ -172,6 +172,61 @@ describe('useTaskOutput', () => {
     expect(fieldsetsStorage.save).not.toHaveBeenCalled();
   });
 
+  it('keeps legacy restored fields session-scoped when an unrelated field is edited', () => {
+    const legacyField = makeField('legacy-field', 'server value');
+    const editedField = makeField('edited-field', 'server value');
+    (outputStorage.getEntry as jest.Mock).mockReturnValue({
+      taskId: 1,
+      data: [{ ...legacyField, value: 'legacy draft' }],
+    });
+
+    render(<HookHarness task={makeTask([legacyField, editedField])} />);
+
+    act(() => {
+      hookResult.editField('edited-field')({ value: 'fresh edit' });
+    });
+    act(() => {
+      jest.advanceTimersByTime(300);
+    });
+
+    expect(addOrUpdateStorageOutput).toHaveBeenCalledWith(1, expect.any(Array), {
+      dateStarted: '2024-01-01',
+      fieldFingerprints: { 'edited-field': getTaskOutputFingerprint([editedField]) },
+    });
+  });
+
+  it('keeps legacy restored fieldset fields session-scoped when an unrelated field is edited', () => {
+    const legacyField = makeField('legacy-field', 'server value');
+    const editedField = makeField('edited-field', 'server value');
+    const serverFieldset = {
+      apiNameBinding: 'fieldset-1',
+      fields: [legacyField, editedField],
+    } as any;
+    (fieldsetsStorage.getEntry as jest.Mock).mockReturnValue({
+      taskId: 1,
+      data: [
+        {
+          ...serverFieldset,
+          fields: [{ ...legacyField, value: 'legacy draft' }],
+        },
+      ],
+    });
+
+    render(<HookHarness task={makeTask([], { fieldsets: [serverFieldset] })} />);
+
+    act(() => {
+      hookResult.editFieldsetField('edited-field')({ value: 'fresh edit' });
+    });
+    act(() => {
+      jest.advanceTimersByTime(300);
+    });
+
+    expect(fieldsetsStorage.save).toHaveBeenCalledWith(1, expect.any(Array), {
+      dateStarted: '2024-01-01',
+      fieldFingerprints: { 'fieldset-1': { 'edited-field': getTaskOutputFingerprint([editedField]) } },
+    });
+  });
+
   it('updates output metadata without discarding valid drafts', () => {
     const firstField = { ...makeField('first-field', 'server value'), order: 0 };
     const secondField = { ...makeField('second-field', 'second value'), order: 1 };
