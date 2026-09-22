@@ -156,7 +156,7 @@ class BaseHandler(ABC):
                     method=method,
                     url=url,
                     headers=headers,
-                    data=data,
+                    json=data,
                     params=params,
                     timeout=timeout,
                     proxies=proxies,
