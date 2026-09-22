@@ -9,7 +9,6 @@ class AIVendor:
     GEMINI = 'gemini'
     GROQ = 'groq'
     XAI = 'xai'
-    AZURE_OPENAI = 'azure_openai'
     TOGETHER = 'together'
     FIREWORKS = 'fireworks'
     DEEPSEEK = 'deepseek'
@@ -19,7 +18,8 @@ class AIVendor:
     HUGGINGFACE = 'huggingface'
     SAMBANOVA = 'sambanova'
     NVIDIA_NIM = 'nvidia_nim'
-    OPENAI_COMPATIBLE = 'openai_compatible'
+    CURSOR = 'cursor'
+    CUSTOM = 'custom'
 
     CHOICES = (
         (OPENAI, 'OpenAI'),
@@ -28,7 +28,6 @@ class AIVendor:
         (GEMINI, 'Gemini'),
         (GROQ, 'Groq'),
         (XAI, 'xAI'),
-        (AZURE_OPENAI, 'Azure OpenAI'),
         (TOGETHER, 'Together'),
         (FIREWORKS, 'Fireworks'),
         (DEEPSEEK, 'DeepSeek'),
@@ -38,48 +37,8 @@ class AIVendor:
         (HUGGINGFACE, 'Hugging Face'),
         (SAMBANOVA, 'SambaNova'),
         (NVIDIA_NIM, 'NVIDIA NIM'),
-        (OPENAI_COMPATIBLE, 'OpenAI compatible'),
+        (CURSOR, 'Cursor'),
     )
-
-    CODE_BY_HOST = {
-        'api.openai.com': OPENAI,
-        'openrouter.ai': OPENROUTER,
-        'api.anthropic.com': ANTHROPIC,
-        'generativelanguage.googleapis.com': GEMINI,
-        'api.groq.com': GROQ,
-        'api.x.ai': XAI,
-        'openai.azure.com': AZURE_OPENAI,
-        'api.together.ai': TOGETHER,
-        'api.together.xyz': TOGETHER,
-        'api.fireworks.ai': FIREWORKS,
-        'api.deepseek.com': DEEPSEEK,
-        'api.mistral.ai': MISTRAL,
-        'api.cerebras.ai': CEREBRAS,
-        'api.perplexity.ai': PERPLEXITY,
-        'router.huggingface.co': HUGGINGFACE,
-        'api.sambanova.ai': SAMBANOVA,
-        'integrate.api.nvidia.com': NVIDIA_NIM,
-    }
-
-    NAME_BY_CODE = {
-        OPENAI: 'OpenAI',
-        OPENROUTER: 'OpenRouter',
-        ANTHROPIC: 'Anthropic',
-        GEMINI: 'Gemini',
-        GROQ: 'Groq',
-        XAI: 'xAI',
-        AZURE_OPENAI: 'Azure OpenAI',
-        TOGETHER: 'Together',
-        FIREWORKS: 'Fireworks',
-        DEEPSEEK: 'DeepSeek',
-        MISTRAL: 'Mistral',
-        CEREBRAS: 'Cerebras',
-        PERPLEXITY: 'Perplexity',
-        HUGGINGFACE: 'Hugging Face',
-        SAMBANOVA: 'SambaNova',
-        NVIDIA_NIM: 'NVIDIA NIM',
-        OPENAI_COMPATIBLE: 'OpenAI compatible',
-    }
 
     LITERALS = Literal[
         OPENAI,
@@ -88,7 +47,6 @@ class AIVendor:
         GEMINI,
         GROQ,
         XAI,
-        AZURE_OPENAI,
         TOGETHER,
         FIREWORKS,
         DEEPSEEK,
@@ -98,7 +56,8 @@ class AIVendor:
         HUGGINGFACE,
         SAMBANOVA,
         NVIDIA_NIM,
-        OPENAI_COMPATIBLE,
+        CURSOR,
+        CUSTOM,
     ]
 
 
@@ -140,3 +99,27 @@ class OpenAIPromptTarget:
     CHOICES = (
         (GET_STEPS, 'Get template steps'),
     )
+
+
+class AIAgentActionType:
+
+    TASK_IN_PROGRESS = 'task_in_progress'
+    READING_DESCRIPTION = 'reading_description'
+    REQUEST = 'request'
+    ERROR = 'error'
+    MENTION_IN_PROGRESS = 'mention_in_progress'
+
+    CHOICES = (
+        (TASK_IN_PROGRESS, 'Task in progress'),
+        (READING_DESCRIPTION, 'Reading task description'),
+        (REQUEST, 'Request'),
+        (ERROR, 'Error'),
+        (MENTION_IN_PROGRESS, 'Mention in progress'),
+    )
+    LITERALS = Literal[
+        TASK_IN_PROGRESS,
+        READING_DESCRIPTION,
+        REQUEST,
+        ERROR,
+        MENTION_IN_PROGRESS,
+    ]

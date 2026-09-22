@@ -18,6 +18,8 @@ from src.accounts.permissions import (
 from src.accounts.serializers.user import (
     ContactRequestSerializer,
     ContactResponseSerializer,
+    UserPermissionRequestSerializer,
+    UserPermissionResponseSerializer,
     UserSerializer,
     VacationActivateSerializer,
 )
@@ -44,9 +46,14 @@ from src.openapi import (
     CONTACTS_PARAMS,
     FORBIDDEN,
     UNAUTHORIZED,
+    USER_PERMISSION_PARAMS,
     UserCountersSerializer,
     VALIDATION_ERROR,
 )
+from src.permissions.exceptions import (
+    UserObjectPermissionServiceException,
+)
+from src.permissions.services import UserObjectPermissionService
 from src.processes.models.workflows.task import Task
 from src.storage.utils import sync_account_file_fields
 from src.utils.validation import raise_validation_error
@@ -69,6 +76,7 @@ class UserViewSet(
     action_serializer_classes = {
         'contacts': ContactResponseSerializer,
         'activate_vacation': VacationActivateSerializer,
+        'permission': UserPermissionResponseSerializer,
     }
 
     def get_serializer_context(self, **kwargs):
@@ -80,7 +88,10 @@ class UserViewSet(
         return context
 
     def get_permissions(self):
-        method = self.request.method
+        # The view is instantiated without a request when the OpenAPI
+        # schema is generated (drf-spectacular, openapi tests).
+        request = getattr(self, 'request', None)
+        method = request.method if request is not None else None
         if self.action is None and method == 'PUT':
             return (
                 UserIsAuthenticated(),
@@ -90,6 +101,14 @@ class UserViewSet(
         if self.action == 'list':
             return (
                 IsAuthenticated(),
+                BillingPlanPermission(),
+            )
+        if self.action == 'permission':
+            # Read-only check of what the user may do with objects.
+            # ExpiredSubscriptionPermission is intentionally omitted:
+            # the response must stay available to render the UI.
+            return (
+                UserIsAuthenticated(),
                 BillingPlanPermission(),
             )
         if self.action in {
@@ -153,6 +172,31 @@ class UserViewSet(
         slz.is_valid(raise_exception=True)
         return self.paginated_response(
             self.filter_queryset(self.get_queryset()),
+        )
+
+    @extend_schema(
+        tags=['Accounts'],
+        summary='Get current user permissions for objects',
+        description=ACCESS_AUTH_BASIC,
+        parameters=USER_PERMISSION_PARAMS,
+        responses={
+            200: UserPermissionResponseSerializer(many=True),
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+        },
+    )
+    @action(methods=('GET',), detail=False)
+    def permission(self, request, *args, **kwargs):
+        slz = UserPermissionRequestSerializer(data=request.GET)
+        slz.is_valid(raise_exception=True)
+        service = UserObjectPermissionService(user=request.user)
+        try:
+            data = service.get_permissions(**slz.validated_data)
+        except UserObjectPermissionServiceException as ex:
+            raise_validation_error(message=ex.message)
+        return self.response_ok(
+            self.get_serializer(instance=data, many=True).data,
         )
 
     @extend_schema(

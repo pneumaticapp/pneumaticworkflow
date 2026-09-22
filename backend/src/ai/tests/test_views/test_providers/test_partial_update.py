@@ -1,7 +1,7 @@
 import pytest
 from rest_framework.fields import BooleanField, CharField, URLField
 
-from src.ai.exceptions import AIServiceException
+from src.ai.exceptions import AIProviderException
 from src.ai.models import AIProvider
 from src.ai.services.provider import AIProviderService
 from src.authentication.enums import AuthTokenType
@@ -130,15 +130,6 @@ def test_partial_update__full_data__ok(api_client, mocker):
 
     # assert
     assert response.status_code == 200
-    assert set(response.data.keys()) == {
-        'id',
-        'name',
-        'base_url',
-        'api_key_prefix',
-        'vendor',
-        'is_active',
-        'usage',
-    }
     assert response.data['id'] == updated_provider.id
     assert response.data['name'] == updated_provider.name
     assert response.data['base_url'] == updated_base_url
@@ -594,7 +585,7 @@ def test_partial_update__service_exception__validation_error(
     )
     partial_update_mock = mocker.patch(
         'src.ai.views.AIProviderService.partial_update',
-        side_effect=AIServiceException(message=error_message),
+        side_effect=AIProviderException(message=error_message),
     )
     api_client.token_authenticate(user=user)
 

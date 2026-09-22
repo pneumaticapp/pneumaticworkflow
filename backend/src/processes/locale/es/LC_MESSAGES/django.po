@@ -547,3 +547,18 @@ msgstr "El usuario o grupo especificado para un campo de tipo \"Usuario\" no exi
 
 msgid "Guest"
 msgstr "Invitado"
+
+msgid "You must specify a source step for a performer of type \"manager\"."
+msgstr "Debes especificar un paso de origen para un ejecutante de tipo \"manager\"."
+
+#, python-brace-format
+msgid "Task \"{name}\": A manager performer cannot reference its own step."
+msgstr "Tarea \"{name}\": Un ejecutante de tipo \"manager\" no puede hacer referencia a su propio paso."
+
+#, python-brace-format
+msgid "Task \"{name}\": The manager performer references a non-existent step \"{step_name}\"."
+msgstr "Tarea \"{name}\": El ejecutante de tipo \"manager\" hace referencia a un paso inexistente \"{step_name}\"."
+
+#, python-brace-format
+msgid "Task \"{name}\": Disable \"Required completion by all\" on step \"{step_name}\" to use a manager performer."
+msgstr "Tarea \"{name}\": Desactiva \"Finalización requerida por todos\" en el paso \"{step_name}\" para usar un ejecutante de tipo \"manager\"."

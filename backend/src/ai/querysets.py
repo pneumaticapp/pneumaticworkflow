@@ -28,3 +28,15 @@ class AIProviderQuerySet(AccountBaseQuerySet):
 
 class AIAgentQuerySet(AccountBaseQuerySet):
     pass
+
+
+class AIAgentActionQuerySet(QuerySet):
+
+    def by_agent(self, agent_id: int):
+        return self.filter(agent_id=agent_id)
+
+    def by_task(self, task_id: int):
+        return self.filter(task_id=task_id)
+
+    def by_action(self, action: str):
+        return self.filter(action=action)

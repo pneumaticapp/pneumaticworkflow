@@ -172,7 +172,6 @@ class Common(Configuration):
         'corsheaders',
 
         'django_extensions',
-        'djcelery_email',
         'django_json_widget',
         'django_filters',
         'django_celery_beat',
@@ -318,8 +317,6 @@ class Common(Configuration):
             '```http\n'
             'Authorization: Bearer <your_api_key>\n'
             '```\n\n'
-            'Or click the **Authorize** button above and paste your key '
-            'to test endpoints directly.\n\n'
 
             '### Why Use the API?\n'
             '- **Custom Dashboards:** Pull live task counts and workflow '
@@ -528,13 +525,18 @@ class Common(Configuration):
     CELERY_BROKER_URL = env.get('CELERY_BROKER_URL')
     CELERY_IMPORTS = [
         'src.accounts.tasks',
+        'src.analysis.tasks',
         'src.authentication.tasks',
+        'src.notifications.tasks',
+        'src.payment.tasks',
         'src.processes.tasks.delay',
         'src.processes.tasks.tasks',
         'src.processes.tasks.update_workflow',
         'src.processes.tasks.webhooks',
         'src.reports.tasks',
         'src.analysis.tasks',
+        'src.ai.tasks',
+        'src.storage.tasks',
     ]
 
     # reCaptcha
@@ -550,6 +552,8 @@ class Common(Configuration):
     # OpenAI
     OPENAI_API_KEY = env.get('OPENAI_API_KEY')
     OPENAI_API_ORG = env.get('OPENAI_API_ORG')
+    AI_HTTP_PROXY = env.get('AI_HTTP_PROXY') or None
+    AI_HTTPS_PROXY = env.get('AI_HTTPS_PROXY') or None
 
     # Microsoft auth
     MS_CLIENT_ID = env.get('MS_CLIENT_ID')
@@ -633,8 +637,6 @@ class Common(Configuration):
 
 
 class Testing(Common):
-
-    TEST_RUNNER = 'djcelery.contrib.test_runner.CeleryTestSuiteRunner'
 
     # CELERY_ALWAYS_EAGER mean that Celery will not schedule tasks
     # to run as it would regularly do, via sending a message to the broker.

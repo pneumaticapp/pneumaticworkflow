@@ -1,6 +1,6 @@
 import pytest
 
-from src.ai.exceptions import AIServiceException
+from src.ai.exceptions import AIProviderException
 from src.ai.messages import MSG_AI_0005
 from src.ai.models import AIAgent, AIProvider
 from src.ai.services.provider import AIProviderService
@@ -331,7 +331,7 @@ def test_destroy__service_exception__validation_error(api_client, mocker):
     )
     delete_mock = mocker.patch(
         'src.ai.views.AIProviderService.delete',
-        side_effect=AIServiceException(message=error_message),
+        side_effect=AIProviderException(message=error_message),
     )
     api_client.token_authenticate(user=user)
 

@@ -32,6 +32,7 @@ export const initSentry = (getConfig: () => { env?: TEnvironment }, app: TSentry
       return event;
     },
     ignoreErrors: [
+      /ResizeObserver loop/,
       /^Loading chunk \d+ failed\./,
       /^Loading CSS chunk \d+ failed\./,
       /ChunkLoadError/,

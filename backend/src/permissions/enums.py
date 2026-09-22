@@ -35,3 +35,15 @@ class PermissionSource:
         WORKFLOW_VIEWER,
         VACATION,
     ]
+
+
+class PermissionObjectType:
+    """Object types supported by the user permissions API."""
+
+    WORKFLOW = 'workflow'
+
+    CHOICES = (
+        (WORKFLOW, 'Workflow'),
+    )
+
+    LITERALS = Literal[WORKFLOW]

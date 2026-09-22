@@ -62,7 +62,6 @@ class AIProviderSerializer(
         example=1,
     )
     name = DocCharField(
-        read_only=True,
         max_length=255,
         help_text='Display name of the provider',
         example='OpenRouter',
@@ -94,7 +93,7 @@ class AIProviderSerializer(
     vendor = DocChoiceField(
         choices=AIVendor.CHOICES,
         read_only=True,
-        help_text='Detected vendor of the provider API',
+        help_text='Detected type of the provider API',
         example=AIVendor.OPENROUTER,
     )
     usage = UsageSerializer(
@@ -106,6 +105,25 @@ class AIProviderSerializer(
 
     def validate_base_url(self, value):
         return value.rstrip('/')
+
+
+class AIProviderByVendorSerializer(
+    CustomValidationErrorMixin,
+    Serializer,
+):
+
+    api_key = DocCharField(
+        help_text=(
+            'Secret API key for the provider. '
+            'Write-only — never returned in responses'
+        ),
+        example='sk-or-v1-example',
+    )
+    vendor = DocChoiceField(
+        choices=AIVendor.CHOICES,
+        help_text='Vendor identifier',
+        example=AIVendor.OPENROUTER,
+    )
 
 
 class AIModelSerializer(
@@ -120,6 +138,22 @@ class AIModelSerializer(
     slug = DocCharField(
         help_text='Model identifier in OpenRouter-style format',
         example='openai/gpt-4o',
+    )
+
+
+class AIVendorSerializer(
+    CustomValidationErrorMixin,
+    Serializer,
+):
+
+    slug = DocChoiceField(
+        choices=AIVendor.CHOICES,
+        help_text='Vendor identifier',
+        example=AIVendor.OPENROUTER,
+    )
+    name = DocCharField(
+        help_text='Display name of the vendor',
+        example='OpenRouter',
     )
 
 

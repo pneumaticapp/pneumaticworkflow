@@ -1,6 +1,6 @@
 import pytest
 
-from src.ai.exceptions import AIServiceException
+from src.ai.exceptions import AIHandlerException
 from src.ai.models import AIProvider
 from src.ai.services.provider import AIProviderService
 from src.authentication.enums import AuthTokenType
@@ -314,7 +314,7 @@ def test_models__service_exception__validation_error(api_client, mocker):
     )
     get_models_mock = mocker.patch(
         'src.ai.views.AIProviderService.get_models',
-        side_effect=AIServiceException(message=error_message),
+        side_effect=AIHandlerException(message=error_message),
         create=True,
     )
     api_client.token_authenticate(user=user)
