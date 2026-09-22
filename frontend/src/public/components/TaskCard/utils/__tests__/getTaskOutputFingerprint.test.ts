@@ -211,6 +211,25 @@ describe('getTaskOutputFingerprint', () => {
     );
   });
 
+  it('returns the same fingerprint for a file field when only the derived value array differs', () => {
+    const fileField = {
+      apiName: 'file-field',
+      name: 'File',
+      type: EExtraFieldType.File,
+      order: 1,
+      userId: null,
+      groupId: null,
+      markdownValue: '[file.pdf](https://files.example/file.pdf)',
+    };
+    const attachment = { id: 'file-id', name: 'file.pdf', url: 'https://files.example/file.pdf', size: 100 };
+
+    expect(getTaskOutputFingerprint([{ ...fileField, value: [] }])).toBe(
+      getTaskOutputFingerprint([
+        { ...fileField, attachments: [attachment], value: ['[file.pdf](https://files.example/file.pdf)'] },
+      ]),
+    );
+  });
+
   it('returns a different fingerprint for a file field when the file set changes', () => {
     const fileField = {
       apiName: 'file-field',

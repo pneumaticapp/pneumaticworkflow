@@ -43,7 +43,8 @@ export function getTaskOutputFingerprint(output: IExtraField[]): string {
         };
 
         if (type === EExtraFieldType.File) {
-          return { ...normalized, markdownValue: '', attachments: getCanonicalAttachments(field) };
+          // value is derived from the file list; the canonical attachments cover it.
+          return { ...normalized, value: null, markdownValue: '', attachments: getCanonicalAttachments(field) };
         }
 
         return {
