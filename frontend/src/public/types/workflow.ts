@@ -10,7 +10,7 @@ import {
   ITableViewFields,
   TTemplatePreset,
 } from './template';
-import { IFieldsetRuntime } from './fieldset';
+import { IFieldsetRuntime, IFieldsetTaskAPI } from './fieldset';
 import { EProgressbarColor } from '../components/Workflows/utils/getWorfkflowClientProperties';
 
 export type WorkflowWithDateFields = {
@@ -32,7 +32,15 @@ export type WorkflowWithTsp<T> = Omit<T, keyof WorkflowWithDateFields> &
     tasks: TaskWithTsp<IWorkflowTaskItem>[];
   };
 
-export type TWorkflowDetailsResponse = WorkflowWithTsp<IWorkflowDetails>;
+export type TWorkflowDetailsKickoffResponse = Omit<IWorkflowDetailsKickoff, 'fieldsets'> & {
+  fieldsets: IFieldsetTaskAPI[];
+};
+
+export type TWorkflowDetailsResponse = WorkflowWithTsp<
+  Omit<IWorkflowDetails, 'kickoff'> & {
+    kickoff: TWorkflowDetailsKickoffResponse;
+  }
+>;
 export interface IWorkflowClientProperties {
   tasks: IWorkflowTaskClient[];
   completedTasks: IWorkflowTaskClient[];
@@ -88,7 +96,7 @@ export interface IWorkflowDetailsKickoff {
   id: number;
   description: string | null;
   output: IExtraField[];
-  fieldsets?: IFieldsetRuntime[];
+  fieldsets: IFieldsetRuntime[];
 }
 
 export interface IWorkflowLogItem {

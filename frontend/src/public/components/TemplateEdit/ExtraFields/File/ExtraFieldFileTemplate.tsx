@@ -5,6 +5,7 @@ import { useIntl } from 'react-intl';
 import { EFieldLabelPosition } from '../../../../types/fieldset';
 import { validateKickoffFieldName } from '../../../../utils/validators';
 import { IntlMessages } from '../../../IntlMessages';
+import { FieldsetRulesetsBadge } from '../../../Fieldsets/FieldsetRulesetsBadge/FieldsetRulesetsBadge';
 import { PencilSmallIcon } from '../../../icons';
 import { Button } from '../../../UI/Buttons/Button';
 import { FieldLabel } from '../utils/FieldLabel';
@@ -34,14 +35,18 @@ export function ExtraFieldFileTemplate({
       )}
     >
       {labelPosition === EFieldLabelPosition.Left ? (
-        <FieldLabel
-          name={field.name}
-          isRequired={field.isRequired || false}
-          isDisabled={isDisabled}
-          mode={EExtraFieldMode.Kickoff}
-          namePlaceholder={namePlaceholder}
-          handleChangeName={(event) => editField({ name: event.target.value })}
-        />
+        <div className={kickoffStyles['field-label-wrapper']}>
+          <FieldLabel
+            name={field.name}
+            isRequired={field.isRequired || false}
+            isDisabled={isDisabled}
+            mode={EExtraFieldMode.Kickoff}
+            labelPosition={labelPosition}
+            namePlaceholder={namePlaceholder}
+            handleChangeName={(event) => editField({ name: event.target.value })}
+          />
+          <FieldsetRulesetsBadge rulesets={field.rulesets} />
+        </div>
       ) : (
         <div className={styles['extra-field-file__input--template']}>
           <textarea
@@ -95,6 +100,7 @@ export function ExtraFieldFileTemplate({
           className={styles['extra-field-file__upload-button--template']}
         />
       </div>
+      {labelPosition !== EFieldLabelPosition.Left && <FieldsetRulesetsBadge rulesets={field.rulesets} />}
     </div>
   );
 }

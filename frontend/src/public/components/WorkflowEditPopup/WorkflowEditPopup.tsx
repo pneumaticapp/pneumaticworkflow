@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState, FormEvent, MouseEvent } from 'react';
+import { useState, useMemo, FormEvent, MouseEvent } from 'react';
 import classnames from 'classnames';
 import { Form, Modal, ModalBody, ModalHeader } from 'reactstrap';
 import { useIntl } from 'react-intl';
@@ -20,6 +20,7 @@ import { getInitialKickoff } from './utils/getInitialKickoff';
 import { PlayLogoIcon } from '../icons';
 import { validateWorkflowName } from '../../utils/validators';
 import { checkExtraFieldsAreValid } from './utils/areKickoffFieldsValid';
+import { updateFieldsHidden, getVisibleFields } from '../../utils/fieldShowVisibility';
 import { IRunWorkflow } from './types';
 import { Button } from '../UI/Buttons/Button';
 import { RichText } from '../RichText';
@@ -93,11 +94,21 @@ function WorkflowEditPopupComponent({
     );
   };
 
+  const { fields: updatedKickoffFields, fieldsets: updatedFieldsets } = useMemo(
+    () => updateFieldsHidden(kickoffState?.fields || [], fieldsetStates),
+    [kickoffState?.fields, fieldsetStates],
+  );
+
+  const { visibleFields: visibleKickoffFields, visibleFieldsets } = getVisibleFields(
+    updatedKickoffFields,
+    updatedFieldsets,
+  );
+
   const isWorkflowsStartButtonDisabled =
     isLoading ||
     Boolean(validateWorkflowName(workflowName)) ||
-    !checkExtraFieldsAreValid(kickoffState?.fields) ||
-    fieldsetStates.some((fieldset) => !checkExtraFieldsAreValid(fieldset.fields));
+    !checkExtraFieldsAreValid(visibleKickoffFields) ||
+    visibleFieldsets.some((fieldset) => !checkExtraFieldsAreValid(fieldset.fields));
 
   const handleToggleIsUrgent = () => setIsUrgent(!isUrgent);
 
@@ -207,10 +218,10 @@ function WorkflowEditPopupComponent({
 
   const handleRunWorkflow = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const allFieldsetFields = fieldsetStates.flatMap((fs) => fs.fields);
+    const allFieldsetFields = updatedFieldsets.flatMap((fieldset) => fieldset.fields);
     const mergedKickoff = {
       ...kickoffState,
-      fields: [...kickoffState.fields, ...allFieldsetFields],
+      fields: [...updatedKickoffFields, ...allFieldsetFields],
     };
     onRunWorkflow({
       ...workflow,
@@ -220,8 +231,6 @@ function WorkflowEditPopupComponent({
       dueDate: undefined,
     });
   };
-
-  const visibleKickoffFields = kickoffState?.fields.filter((field) => !field.isHidden);
 
   return (
     <div className={styles['popup']}>
@@ -252,7 +261,7 @@ function WorkflowEditPopupComponent({
               toolipText={formatMessage({ id: 'kickoff.workflow-name-tooltip' })}
               foregroundColor="beige"
             />
-            {kickoffState && (isArrayWithItems(visibleKickoffFields) || isArrayWithItems(fieldsetStates)) && (
+            {kickoffState && (isArrayWithItems(visibleKickoffFields) || isArrayWithItems(visibleFieldsets)) && (
               <div className={styles['popup__kickoff']}>
                 <SectionTitle className={styles['section-title']}>
                   {formatMessage({ id: 'template.kick-off-form-title' })}
@@ -266,7 +275,7 @@ function WorkflowEditPopupComponent({
                 <div className={styles['kickoff__inputs']}>
                   <MergedOutputList
                     fields={visibleKickoffFields || []}
-                    fieldsets={fieldsetStates}
+                    fieldsets={visibleFieldsets}
                     onEditField={handleEditField}
                     onEditFieldsetField={handleEditFieldsetField}
                     labelBackgroundColor={EInputNameBackgroundColor.OrchidWhite}

@@ -1,5 +1,4 @@
-import * as React from 'react';
-import { useState } from 'react';
+import React, { useState, ReactNode } from 'react';
 import classnames from 'classnames';
 import { UncontrolledDropdown, DropdownToggle, DropdownMenu } from 'reactstrap';
 import OutsideClickHandler from 'react-outside-click-handler';
@@ -16,7 +15,7 @@ type TDropdownItemColor = 'black' | 'green' | 'red' | 'orange';
 
 export type TDropdownOption = {
   mapKey?: string;
-  label: React.ReactNode;
+  label: ReactNode | ((closeDropdown?: () => void) => ReactNode);
   withConfirmation?: boolean;
   initialConfirmationState?: TDropdownItemState;
   withUpperline?: boolean;
@@ -128,6 +127,9 @@ export function Dropdown({
       if (isHidden) return null;
 
       const renderOptionContent = () => {
+        if (typeof label === 'function') {
+          return label(closeDropdown);
+        }
         if (typeof label === 'string') {
           return (
             <>
