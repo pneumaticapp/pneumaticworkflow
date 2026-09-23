@@ -10,11 +10,13 @@ from src.processes.enums import (
     DirectlyStatus,
     PerformerType,
     TaskStatus,
+    WorkflowEventType,
     WorkflowStatus,
     TemplateType,
     FieldType,
 )
 from src.processes.models.workflows.conditions import Condition
+from src.processes.models.workflows.event import WorkflowEvent
 from src.processes.models.workflows.task import Delay, TaskPerformer
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.models.workflows.fields import TaskField
@@ -6147,7 +6149,7 @@ def test_start_task__skip_for_starter_is_performer__skip(mocker):
     )
     get_all_performers_mock.assert_called_once_with(task)
     skip_for_starter_mock.assert_called_once_with(
-        task,
+        task=task,
         is_returned=False,
     )
     continue_wf_mock.assert_not_called()
@@ -6222,7 +6224,7 @@ def test_start_task__skip_for_starter_with_others_performers__skip(
     )
     get_all_performers_mock.assert_called_once_with(task)
     skip_for_starter_mock.assert_called_once_with(
-        task,
+        task=task,
         is_returned=False,
     )
     continue_wf_mock.assert_not_called()
@@ -6500,7 +6502,7 @@ def test_start_task__skip_for_starter_is_returned__skip(
     )
     get_all_performers_mock.assert_called_once_with(task)
     skip_for_starter_mock.assert_called_once_with(
-        task,
+        task=task,
         is_returned=True,
     )
     continue_wf_mock.assert_not_called()
@@ -8994,6 +8996,815 @@ def test_complete_task_for_starter__external__noop(mocker):
     # assert
     get_performers_for_user_mock.assert_not_called()
     complete_performers_for_user_mock.assert_not_called()
+
+
+def test_is_task_skipped_for_starter__starter_not_performer__false():
+
+    # arrange
+    account = create_test_account()
+    starter = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    workflow = create_test_workflow(
+        user=starter,
+        tasks_count=1,
+    )
+    task = workflow.tasks.get(number=1)
+    service = WorkflowActionService(
+        user=starter,
+        workflow=workflow,
+    )
+
+    # act
+    result = service._is_task_skipped_for_starter(
+        task=task,
+        performers_user_ids={user.id},
+    )
+
+    # assert
+    assert result is False
+
+
+def test_is_task_skipped_for_starter__not_rcba__true():
+
+    # arrange
+    account = create_test_account()
+    starter = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    workflow = create_test_workflow(
+        user=starter,
+        tasks_count=1,
+    )
+    task = workflow.tasks.get(number=1)
+    service = WorkflowActionService(
+        user=starter,
+        workflow=workflow,
+    )
+
+    # act
+    result = service._is_task_skipped_for_starter(
+        task=task,
+        performers_user_ids={starter.id, user.id},
+    )
+
+    # assert
+    assert result is True
+
+
+def test_is_task_skipped_for_starter__rcba_only_starter__true():
+
+    # arrange
+    account = create_test_account()
+    starter = create_test_owner(account=account)
+    workflow = create_test_workflow(
+        user=starter,
+        tasks_count=1,
+    )
+    task = workflow.tasks.get(number=1)
+    task.require_completion_by_all = True
+    task.save(update_fields=['require_completion_by_all'])
+    service = WorkflowActionService(
+        user=starter,
+        workflow=workflow,
+    )
+
+    # act
+    result = service._is_task_skipped_for_starter(
+        task=task,
+        performers_user_ids={starter.id},
+    )
+
+    # assert
+    assert result is True
+
+
+def test_is_task_skipped_for_starter__rcba_other_performers__false():
+
+    # arrange
+    account = create_test_account()
+    starter = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    workflow = create_test_workflow(
+        user=starter,
+        tasks_count=1,
+    )
+    task = workflow.tasks.get(number=1)
+    task.require_completion_by_all = True
+    task.save(update_fields=['require_completion_by_all'])
+    service = WorkflowActionService(
+        user=starter,
+        workflow=workflow,
+    )
+
+    # act
+    result = service._is_task_skipped_for_starter(
+        task=task,
+        performers_user_ids={starter.id, user.id},
+    )
+
+    # assert
+    assert result is False
+
+
+def test_is_task_skipped_for_starter__no_starter__false():
+
+    """Workflow starter is deleted"""
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(
+        user=owner,
+        tasks_count=1,
+    )
+    workflow.workflow_starter = None
+    workflow.save(update_fields=['workflow_starter'])
+    task = workflow.tasks.get(number=1)
+    service = WorkflowActionService(
+        user=owner,
+        workflow=workflow,
+    )
+
+    # act
+    result = service._is_task_skipped_for_starter(
+        task=task,
+        performers_user_ids={owner.id},
+    )
+
+    # assert
+    assert result is False
+
+
+def test_skip_delegated_task_for_starter__not_rcba__skip(mocker):
+
+    """Starter got the task through a substitute group"""
+
+    # arrange
+    account = create_test_account()
+    starter = create_test_owner(account=account)
+    vacation_user = create_test_admin(account=account)
+    workflow = create_test_workflow(
+        user=starter,
+        tasks_count=1,
+    )
+    task = workflow.tasks.get(number=1)
+    task.skip_for_starter = True
+    task.save(update_fields=['skip_for_starter'])
+    task.taskperformer_set.all().delete()
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        user_id=vacation_user.id,
+    )
+    substitute_group = create_test_group(
+        account=account,
+        users=[starter],
+    )
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        group_id=substitute_group.id,
+        type=PerformerType.GROUP,
+    )
+    send_task_deleted_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '._send_task_deleted',
+    )
+    task_skip_for_starter_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '._task_skip_for_starter',
+    )
+    check_delay_workflow_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '.check_delay_workflow',
+    )
+    complete_task_for_starter_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '._complete_task_for_starter',
+    )
+    complete_task_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '.complete_task',
+    )
+    service = WorkflowActionService(
+        user=starter,
+        workflow=workflow,
+    )
+
+    # act
+    result = service.skip_delegated_task_for_starter(task=task)
+
+    # assert
+    assert result is True
+    send_task_deleted_mock.assert_called_once_with(task=task)
+    task_skip_for_starter_mock.assert_called_once_with(
+        task=task,
+        is_returned=False,
+    )
+    check_delay_workflow_mock.assert_called_once_with()
+    complete_task_for_starter_mock.assert_not_called()
+    complete_task_mock.assert_not_called()
+
+
+def test_skip_delegated_task_for_starter__rcba_only_starter__skip(mocker):
+
+    """With RCBA the task is skipped if the starter is the only
+    performer, same as in the "start_task" method"""
+
+    # arrange
+    account = create_test_account()
+    starter = create_test_owner(account=account)
+    workflow = create_test_workflow(
+        user=starter,
+        tasks_count=1,
+    )
+    task = workflow.tasks.get(number=1)
+    task.skip_for_starter = True
+    task.require_completion_by_all = True
+    task.save(update_fields=['skip_for_starter', 'require_completion_by_all'])
+    task.taskperformer_set.all().delete()
+    substitute_group = create_test_group(
+        account=account,
+        users=[starter],
+    )
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        group_id=substitute_group.id,
+        type=PerformerType.GROUP,
+    )
+    send_task_deleted_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '._send_task_deleted',
+    )
+    task_skip_for_starter_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '._task_skip_for_starter',
+    )
+    check_delay_workflow_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '.check_delay_workflow',
+    )
+    complete_task_for_starter_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '._complete_task_for_starter',
+    )
+    complete_task_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '.complete_task',
+    )
+    service = WorkflowActionService(
+        user=starter,
+        workflow=workflow,
+    )
+
+    # act
+    result = service.skip_delegated_task_for_starter(task=task)
+
+    # assert
+    assert result is True
+    send_task_deleted_mock.assert_called_once_with(task=task)
+    task_skip_for_starter_mock.assert_called_once_with(
+        task=task,
+        is_returned=False,
+    )
+    check_delay_workflow_mock.assert_called_once_with()
+    complete_task_for_starter_mock.assert_not_called()
+    complete_task_mock.assert_not_called()
+
+
+def test_skip_delegated_task_for_starter__rcba_other_perfs__complete_starter(
+    mocker,
+):
+
+    """With RCBA and other performers only the starter part
+    is completed, same as in the "start_task" method"""
+
+    # arrange
+    account = create_test_account()
+    starter = create_test_owner(account=account)
+    vacation_user = create_test_admin(account=account)
+    workflow = create_test_workflow(
+        user=starter,
+        tasks_count=1,
+    )
+    task = workflow.tasks.get(number=1)
+    task.skip_for_starter = True
+    task.require_completion_by_all = True
+    task.save(update_fields=['skip_for_starter', 'require_completion_by_all'])
+    task.taskperformer_set.all().delete()
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        user_id=vacation_user.id,
+    )
+    substitute_group = create_test_group(
+        account=account,
+        users=[starter],
+    )
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        group_id=substitute_group.id,
+        type=PerformerType.GROUP,
+    )
+    send_task_deleted_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '._send_task_deleted',
+    )
+    task_skip_for_starter_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '._task_skip_for_starter',
+    )
+    check_delay_workflow_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '.check_delay_workflow',
+    )
+    complete_task_for_starter_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '._complete_task_for_starter',
+    )
+    complete_task_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '.complete_task',
+    )
+    service = WorkflowActionService(
+        user=starter,
+        workflow=workflow,
+    )
+
+    # act
+    result = service.skip_delegated_task_for_starter(task=task)
+
+    # assert
+    assert result is False
+    complete_task_for_starter_mock.assert_called_once_with(task=task)
+    complete_task_mock.assert_not_called()
+    send_task_deleted_mock.assert_not_called()
+    task_skip_for_starter_mock.assert_not_called()
+    check_delay_workflow_mock.assert_not_called()
+
+
+def test_skip_delegated_task_for_starter__rcba_last_starter__complete_task(
+    mocker,
+):
+
+    """With RCBA the task is completed if the others
+    have already completed it"""
+
+    # arrange
+    account = create_test_account()
+    starter = create_test_owner(account=account)
+    vacation_user = create_test_admin(account=account)
+    workflow = create_test_workflow(
+        user=starter,
+        tasks_count=1,
+    )
+    task = workflow.tasks.get(number=1)
+    task.skip_for_starter = True
+    task.require_completion_by_all = True
+    task.save(update_fields=['skip_for_starter', 'require_completion_by_all'])
+    task.taskperformer_set.all().delete()
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        user_id=vacation_user.id,
+        is_completed=True,
+    )
+    substitute_group = create_test_group(
+        account=account,
+        users=[starter],
+    )
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        group_id=substitute_group.id,
+        type=PerformerType.GROUP,
+    )
+    send_task_deleted_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '._send_task_deleted',
+    )
+    task_skip_for_starter_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '._task_skip_for_starter',
+    )
+    check_delay_workflow_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '.check_delay_workflow',
+    )
+    complete_task_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '.complete_task',
+    )
+    service = WorkflowActionService(
+        user=starter,
+        workflow=workflow,
+    )
+
+    # act
+    result = service.skip_delegated_task_for_starter(task=task)
+
+    # assert
+    assert result is False
+    assert TaskPerformer.objects.filter(
+        task_id=task.id,
+        user_id=starter.id,
+        type=PerformerType.GROUP_USER,
+        is_completed=True,
+    ).exists()
+    complete_task_mock.assert_called_once_with(task=task)
+    send_task_deleted_mock.assert_not_called()
+    task_skip_for_starter_mock.assert_not_called()
+    check_delay_workflow_mock.assert_not_called()
+
+
+def test_skip_delegated_task_for_starter__rcba_delayed__not_complete_task(
+    mocker,
+):
+
+    """Delayed task is not completed, it waits for the resume"""
+
+    # arrange
+    account = create_test_account()
+    starter = create_test_owner(account=account)
+    vacation_user = create_test_admin(account=account)
+    workflow = create_test_workflow(
+        user=starter,
+        tasks_count=1,
+    )
+    task = workflow.tasks.get(number=1)
+    task.skip_for_starter = True
+    task.require_completion_by_all = True
+    task.status = TaskStatus.DELAYED
+    task.save(
+        update_fields=[
+            'skip_for_starter',
+            'require_completion_by_all',
+            'status',
+        ],
+    )
+    task.taskperformer_set.all().delete()
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        user_id=vacation_user.id,
+        is_completed=True,
+    )
+    substitute_group = create_test_group(
+        account=account,
+        users=[starter],
+    )
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        group_id=substitute_group.id,
+        type=PerformerType.GROUP,
+    )
+    send_task_deleted_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '._send_task_deleted',
+    )
+    task_skip_for_starter_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '._task_skip_for_starter',
+    )
+    check_delay_workflow_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '.check_delay_workflow',
+    )
+    complete_task_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '.complete_task',
+    )
+    service = WorkflowActionService(
+        user=starter,
+        workflow=workflow,
+    )
+
+    # act
+    result = service.skip_delegated_task_for_starter(task=task)
+
+    # assert
+    assert result is False
+    assert TaskPerformer.objects.filter(
+        task_id=task.id,
+        user_id=starter.id,
+        type=PerformerType.GROUP_USER,
+        is_completed=True,
+    ).exists()
+    complete_task_mock.assert_not_called()
+    send_task_deleted_mock.assert_not_called()
+    task_skip_for_starter_mock.assert_not_called()
+    check_delay_workflow_mock.assert_not_called()
+
+
+def test_skip_delegated_task_for_starter__delayed__end_delay_and_skip(
+    mocker,
+):
+
+    """Skip happens before the delay, as in the "start_task" method,
+    so the active delay is ended"""
+
+    # arrange
+    account = create_test_account()
+    starter = create_test_owner(account=account)
+    vacation_user = create_test_admin(account=account)
+    workflow = create_test_workflow(
+        user=starter,
+        tasks_count=1,
+    )
+    task = workflow.tasks.get(number=1)
+    task.skip_for_starter = True
+    task.status = TaskStatus.DELAYED
+    task.save(update_fields=['skip_for_starter', 'status'])
+    delay = Delay.objects.create(
+        task=task,
+        workflow=workflow,
+        duration=timedelta(days=1),
+        start_date=timezone.now(),
+    )
+    task.taskperformer_set.all().delete()
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        user_id=vacation_user.id,
+    )
+    substitute_group = create_test_group(
+        account=account,
+        users=[starter],
+    )
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        group_id=substitute_group.id,
+        type=PerformerType.GROUP,
+    )
+    current_date = timezone.now()
+    timezone_now_mock = mocker.patch(
+        'src.processes.services.workflow_action.timezone.now',
+        return_value=current_date,
+    )
+    send_task_deleted_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '._send_task_deleted',
+    )
+    task_skip_for_starter_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '._task_skip_for_starter',
+    )
+    check_delay_workflow_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '.check_delay_workflow',
+    )
+    service = WorkflowActionService(
+        user=starter,
+        workflow=workflow,
+    )
+
+    # act
+    result = service.skip_delegated_task_for_starter(task=task)
+
+    # assert
+    assert result is True
+    delay.refresh_from_db()
+    assert delay.end_date == current_date
+    timezone_now_mock.assert_called_once_with()
+    send_task_deleted_mock.assert_called_once_with(task=task)
+    task_skip_for_starter_mock.assert_called_once_with(
+        task=task,
+        is_returned=False,
+    )
+    check_delay_workflow_mock.assert_called_once_with()
+
+
+def test_skip_delegated_task_for_starter__next_task_delayed__workflow_delayed(
+    mocker,
+):
+
+    """The next task starts with a delay after the skip,
+    no active tasks left: the workflow becomes delayed"""
+
+    # arrange
+    account = create_test_account()
+    starter = create_test_owner(account=account)
+    vacation_user = create_test_admin(account=account)
+    workflow = create_test_workflow(
+        user=starter,
+        tasks_count=2,
+        with_delay=True,
+    )
+    task_1 = workflow.tasks.get(number=1)
+    task_1.skip_for_starter = True
+    task_1.save(update_fields=['skip_for_starter'])
+    task_1.taskperformer_set.all().delete()
+    TaskPerformer.objects.create(
+        task_id=task_1.id,
+        user_id=vacation_user.id,
+    )
+    substitute_group = create_test_group(
+        account=account,
+        users=[starter],
+    )
+    TaskPerformer.objects.create(
+        task_id=task_1.id,
+        group_id=substitute_group.id,
+        type=PerformerType.GROUP,
+    )
+    task_1_data = task_1.get_data_for_list()
+    task_2 = workflow.tasks.get(number=2)
+    after_create_actions_mock = mocker.patch(
+        'src.processes.services.events.'
+        'WorkflowEventService._after_create_actions',
+    )
+    send_task_deleted_notification_mock = mocker.patch(
+        'src.notifications.tasks.send_task_deleted_notification.delay',
+    )
+    service = WorkflowActionService(
+        user=starter,
+        workflow=workflow,
+    )
+
+    # act
+    result = service.skip_delegated_task_for_starter(task=task_1)
+
+    # assert
+    assert result is True
+    task_1.refresh_from_db()
+    task_2.refresh_from_db()
+    workflow.refresh_from_db()
+    assert task_1.status == TaskStatus.SKIPPED
+    assert task_2.status == TaskStatus.DELAYED
+    assert workflow.status == WorkflowStatus.DELAYED
+    skip_event = WorkflowEvent.objects.get(
+        task=task_1,
+        type=WorkflowEventType.TASK_SKIP,
+    )
+    delay_event = WorkflowEvent.objects.get(
+        task=task_2,
+        type=WorkflowEventType.TASK_DELAY,
+    )
+    assert after_create_actions_mock.call_count == 2
+    after_create_actions_mock.assert_has_calls(
+        [
+            mocker.call(skip_event),
+            mocker.call(delay_event),
+        ],
+    )
+    send_task_deleted_notification_mock.assert_called_once_with(
+        task_id=task_1.id,
+        recipients=[
+            (starter.id, starter.email),
+            (vacation_user.id, vacation_user.email),
+        ],
+        account_id=account.id,
+        task_data=task_1_data,
+    )
+
+
+def test_skip_delegated_task_for_starter__starter_not_performer__false(
+    mocker,
+):
+
+    # arrange
+    account = create_test_account()
+    starter = create_test_owner(account=account)
+    vacation_user = create_test_admin(account=account)
+    substitute = create_test_not_admin(account=account)
+    workflow = create_test_workflow(
+        user=starter,
+        tasks_count=1,
+    )
+    task = workflow.tasks.get(number=1)
+    task.skip_for_starter = True
+    task.save(update_fields=['skip_for_starter'])
+    task.taskperformer_set.all().delete()
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        user_id=vacation_user.id,
+    )
+    substitute_group = create_test_group(
+        account=account,
+        users=[substitute],
+    )
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        group_id=substitute_group.id,
+        type=PerformerType.GROUP,
+    )
+    send_task_deleted_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '._send_task_deleted',
+    )
+    task_skip_for_starter_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '._task_skip_for_starter',
+    )
+    check_delay_workflow_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '.check_delay_workflow',
+    )
+    complete_task_for_starter_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '._complete_task_for_starter',
+    )
+    service = WorkflowActionService(
+        user=starter,
+        workflow=workflow,
+    )
+
+    # act
+    result = service.skip_delegated_task_for_starter(task=task)
+
+    # assert
+    assert result is False
+    send_task_deleted_mock.assert_not_called()
+    task_skip_for_starter_mock.assert_not_called()
+    check_delay_workflow_mock.assert_not_called()
+    complete_task_for_starter_mock.assert_not_called()
+
+
+def test_skip_delegated_task_for_starter__no_starter__false(mocker):
+
+    """Workflow starter is deleted"""
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(
+        user=owner,
+        tasks_count=1,
+    )
+    workflow.workflow_starter = None
+    workflow.save(update_fields=['workflow_starter'])
+    task = workflow.tasks.get(number=1)
+    task.skip_for_starter = True
+    task.save(update_fields=['skip_for_starter'])
+    send_task_deleted_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '._send_task_deleted',
+    )
+    task_skip_for_starter_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '._task_skip_for_starter',
+    )
+    check_delay_workflow_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '.check_delay_workflow',
+    )
+    complete_task_for_starter_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '._complete_task_for_starter',
+    )
+    service = WorkflowActionService(
+        user=owner,
+        workflow=workflow,
+    )
+
+    # act
+    result = service.skip_delegated_task_for_starter(task=task)
+
+    # assert
+    assert result is False
+    send_task_deleted_mock.assert_not_called()
+    task_skip_for_starter_mock.assert_not_called()
+    check_delay_workflow_mock.assert_not_called()
+    complete_task_for_starter_mock.assert_not_called()
+
+
+def test_skip_delegated_task_for_starter__not_skip_flag__false(mocker):
+
+    # arrange
+    account = create_test_account()
+    starter = create_test_owner(account=account)
+    workflow = create_test_workflow(
+        user=starter,
+        tasks_count=1,
+    )
+    task = workflow.tasks.get(number=1)
+    get_all_performers_users_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '._get_all_performers_users',
+    )
+    send_task_deleted_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '._send_task_deleted',
+    )
+    task_skip_for_starter_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '._task_skip_for_starter',
+    )
+    check_delay_workflow_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '.check_delay_workflow',
+    )
+    complete_task_for_starter_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '._complete_task_for_starter',
+    )
+    service = WorkflowActionService(
+        user=starter,
+        workflow=workflow,
+    )
+
+    # act
+    result = service.skip_delegated_task_for_starter(task=task)
+
+    # assert
+    assert result is False
+    get_all_performers_users_mock.assert_not_called()
+    send_task_deleted_mock.assert_not_called()
+    task_skip_for_starter_mock.assert_not_called()
+    check_delay_workflow_mock.assert_not_called()
+    complete_task_for_starter_mock.assert_not_called()
 
 
 def test__get_incompleted_performers_users__no_performers__empty():
