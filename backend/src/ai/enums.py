@@ -8,17 +8,7 @@ class AIVendor:
     ANTHROPIC = 'anthropic'
     GEMINI = 'gemini'
     GROQ = 'groq'
-    XAI = 'xai'
-    TOGETHER = 'together'
-    FIREWORKS = 'fireworks'
     DEEPSEEK = 'deepseek'
-    MISTRAL = 'mistral'
-    CEREBRAS = 'cerebras'
-    PERPLEXITY = 'perplexity'
-    HUGGINGFACE = 'huggingface'
-    SAMBANOVA = 'sambanova'
-    NVIDIA_NIM = 'nvidia_nim'
-    CURSOR = 'cursor'
     CUSTOM = 'custom'
 
     CHOICES = (
@@ -27,17 +17,7 @@ class AIVendor:
         (ANTHROPIC, 'Anthropic'),
         (GEMINI, 'Gemini'),
         (GROQ, 'Groq'),
-        (XAI, 'xAI'),
-        (TOGETHER, 'Together'),
-        (FIREWORKS, 'Fireworks'),
         (DEEPSEEK, 'DeepSeek'),
-        (MISTRAL, 'Mistral'),
-        (CEREBRAS, 'Cerebras'),
-        (PERPLEXITY, 'Perplexity'),
-        (HUGGINGFACE, 'Hugging Face'),
-        (SAMBANOVA, 'SambaNova'),
-        (NVIDIA_NIM, 'NVIDIA NIM'),
-        (CURSOR, 'Cursor'),
     )
 
     LITERALS = Literal[
@@ -46,17 +26,7 @@ class AIVendor:
         ANTHROPIC,
         GEMINI,
         GROQ,
-        XAI,
-        TOGETHER,
-        FIREWORKS,
         DEEPSEEK,
-        MISTRAL,
-        CEREBRAS,
-        PERPLEXITY,
-        HUGGINGFACE,
-        SAMBANOVA,
-        NVIDIA_NIM,
-        CURSOR,
         CUSTOM,
     ]
 
@@ -104,13 +74,19 @@ class OpenAIPromptTarget:
 class AIAgentActionType:
 
     TASK_IN_PROGRESS = 'task_in_progress'
+    TASK_COMPLETED = 'task_completed'
+    AI_REQUEST = 'ai_request'
+    AI_RESPONSE = 'ai_response'
     READING_DESCRIPTION = 'reading_description'
     REQUEST = 'request'
     ERROR = 'error'
     MENTION_IN_PROGRESS = 'mention_in_progress'
 
     CHOICES = (
+        (AI_RESPONSE, 'AI response'),
+        (AI_REQUEST, 'AI request user message'),
         (TASK_IN_PROGRESS, 'Task in progress'),
+        (TASK_COMPLETED, 'Task completed'),
         (READING_DESCRIPTION, 'Reading task description'),
         (REQUEST, 'Request'),
         (ERROR, 'Error'),
@@ -118,7 +94,10 @@ class AIAgentActionType:
     )
     LITERALS = Literal[
         TASK_IN_PROGRESS,
+        TASK_COMPLETED,
         READING_DESCRIPTION,
+        AI_RESPONSE,
+        AI_REQUEST,
         REQUEST,
         ERROR,
         MENTION_IN_PROGRESS,
