@@ -37,8 +37,7 @@ export interface ITemplatesFilterProps {
 
 export interface IFeedItemHeaderProps extends IHighlightsItem {}
 
-export interface IFeedItemCommentProps
-  extends Pick<IFeedItemHeaderProps, 'attachments' | 'task' | 'text' | 'type'> {
+export interface IFeedItemCommentProps extends Pick<IFeedItemHeaderProps, 'attachments' | 'task' | 'text' | 'type'> {
   isTextExpanded: boolean;
   onExpand: () => void;
 }
@@ -49,5 +48,4 @@ export interface IFeedItemOutputsProps extends Pick<IFeedItemHeaderProps, 'task'
   onExpand: () => void;
 }
 
-export interface IPerformerChangeProps
-  extends Pick<IFeedItemHeaderProps, 'targetGroupId' | 'targetUserId' | 'type'> {}
+export interface IPerformerChangeProps extends Pick<IFeedItemHeaderProps, 'targetGroupId' | 'targetUserId' | 'type'> {}

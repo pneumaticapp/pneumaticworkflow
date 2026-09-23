@@ -290,6 +290,43 @@ describe('useTaskOutput', () => {
     });
   });
 
+  it('does not stamp server fingerprints onto legacy drafts when an unrelated output changes', () => {
+    const legacyField = makeField('legacy-field', 'server value');
+    const otherField = makeField('other-field', 'old server value');
+    const legacyDraft = [{ ...legacyField, value: 'legacy draft' }];
+    (outputStorage.getEntry as jest.Mock).mockReturnValue({ taskId: 1, data: legacyDraft });
+    (getOutputFromStorage as jest.Mock).mockReturnValue(legacyDraft);
+
+    const { rerender } = render(<HookHarness task={makeTask([legacyField, otherField])} />);
+    rerender(<HookHarness task={makeTask([legacyField, makeField('other-field', 'new server value')])} />);
+
+    expect(hookResult.outputValues).toEqual([
+      { ...legacyField, value: 'legacy draft' },
+      makeField('other-field', 'new server value'),
+    ]);
+    expect(addOrUpdateStorageOutput).toHaveBeenCalledWith(1, legacyDraft, {
+      dateStarted: '2024-01-01',
+      fieldFingerprints: {},
+    });
+  });
+
+  it('does not stamp server fingerprints onto legacy fieldset drafts after a metadata-only update', () => {
+    const legacyField = makeField('legacy-field', 'server value');
+    const serverFieldset = { apiNameBinding: 'fieldset-1', title: 'Old title', fields: [legacyField] } as any;
+    const legacyDraft = [{ ...serverFieldset, fields: [{ ...legacyField, value: 'legacy draft' }] }];
+    (fieldsetsStorage.getEntry as jest.Mock).mockReturnValue({ taskId: 1, data: legacyDraft });
+    (fieldsetsStorage.get as jest.Mock).mockReturnValue(legacyDraft);
+
+    const { rerender } = render(<HookHarness task={makeTask([], { fieldsets: [serverFieldset] })} />);
+    rerender(<HookHarness task={makeTask([], { fieldsets: [{ ...serverFieldset, title: 'New title' }] })} />);
+
+    expect(hookResult.fieldsetOutputValues[0].fields).toEqual([{ ...legacyField, value: 'legacy draft' }]);
+    expect(fieldsetsStorage.save).toHaveBeenCalledWith(1, legacyDraft, {
+      dateStarted: '2024-01-01',
+      fieldFingerprints: {},
+    });
+  });
+
   it('updates output metadata without discarding valid drafts', () => {
     const firstField = { ...makeField('first-field', 'server value'), order: 0 };
     const secondField = { ...makeField('second-field', 'second value'), order: 1 };
@@ -367,11 +404,12 @@ describe('useTaskOutput', () => {
       makeField('unchanged-field', 'local value'),
       makeField('changed-field', 'new server value'),
     ]);
-    expect(addOrUpdateStorageOutput).toHaveBeenCalledWith(
-      1,
-      [makeField('unchanged-field', 'local value')],
-      expect.any(Object),
-    );
+    expect(addOrUpdateStorageOutput).toHaveBeenCalledWith(1, [makeField('unchanged-field', 'local value')], {
+      dateStarted: '2024-01-01',
+      fieldFingerprints: {
+        'unchanged-field': getTaskOutputFingerprint([makeField('unchanged-field', 'prefilled server value')]),
+      },
+    });
 
     act(() => {
       jest.advanceTimersByTime(300);
@@ -522,7 +560,14 @@ describe('useTaskOutput', () => {
           fields: [makeField('unchanged-field', 'local draft')],
         },
       ],
-      expect.any(Object),
+      {
+        dateStarted: '2024-01-01',
+        fieldFingerprints: {
+          'fieldset-1': {
+            'unchanged-field': getTaskOutputFingerprint([makeField('unchanged-field', 'unchanged server value')]),
+          },
+        },
+      },
     );
   });
 

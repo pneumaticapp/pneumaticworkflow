@@ -362,9 +362,7 @@ describe('WorkflowEditPopup', () => {
 
       userEvent.click(screen.getByRole('button', { name: START_LABEL }));
 
-      expect(baseProps.onRunWorkflow).toHaveBeenCalledWith(
-        expect.objectContaining({ ancestorTaskId: 77 }),
-      );
+      expect(baseProps.onRunWorkflow).toHaveBeenCalledWith(expect.objectContaining({ ancestorTaskId: 77 }));
     });
 
     it('submits no ancestorTaskId for a standalone run', () => {

@@ -31,7 +31,7 @@ const buildWorkflow = (overrides: Partial<IRunWorkflow> = {}): IRunWorkflow =>
     performersCount: 1,
     kickoff: { description: '', fields: [], fieldsets: [] },
     ...overrides,
-  } as IRunWorkflow);
+  }) as IRunWorkflow;
 
 /** One active task assigned to somebody else, so the redirect target is the workflows list. */
 const runProcessResponse = {

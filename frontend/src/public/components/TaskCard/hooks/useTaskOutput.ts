@@ -144,7 +144,9 @@ export function useTaskOutput(task: ITask) {
         (field) => syncState.fieldFingerprints[field.apiName] === fieldFingerprints[field.apiName],
       );
       validatedFingerprints = Object.fromEntries(
-        (storageOutput ?? []).map((field) => [field.apiName, fieldFingerprints[field.apiName]]),
+        (storageOutput ?? [])
+          .filter((field) => syncState.validatedFingerprints[field.apiName] === fieldFingerprints[field.apiName])
+          .map((field) => [field.apiName, fieldFingerprints[field.apiName]]),
       );
 
       if (savedOutput) {
@@ -262,15 +264,19 @@ export function useTaskOutput(task: ITask) {
           }))
           .filter((fieldset) => fieldset.fields.length > 0);
         validatedFingerprints = Object.fromEntries(
-          savedFieldsets.map((fieldset) => [
-            fieldset.apiNameBinding,
-            Object.fromEntries(
-              fieldset.fields.map((field) => [
-                field.apiName,
-                fieldFingerprints[fieldset.apiNameBinding]?.[field.apiName],
-              ]),
-            ),
-          ]),
+          savedFieldsets
+            .map((fieldset): [string, Record<string, string>] => [
+              fieldset.apiNameBinding,
+              Object.fromEntries(
+                fieldset.fields
+                  .map((field) => [field.apiName, fieldFingerprints[fieldset.apiNameBinding]?.[field.apiName]])
+                  .filter(
+                    ([apiName, serverFingerprint]) =>
+                      syncState.validatedFingerprints[fieldset.apiNameBinding]?.[apiName] === serverFingerprint,
+                  ),
+              ),
+            ])
+            .filter(([, fingerprints]) => Object.keys(fingerprints).length > 0),
         );
         saveFieldsetsToStorageDebounced.cancel();
         fieldsetsStorage.save(id, savedFieldsets, { dateStarted, fieldFingerprints: validatedFingerprints });

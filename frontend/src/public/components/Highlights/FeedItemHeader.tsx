@@ -56,13 +56,7 @@ export function FeedItemHeader({
     case EWorkflowLogEvent.RemovedPerformer:
     case EWorkflowLogEvent.AddedPerformerGroup:
     case EWorkflowLogEvent.RemovedPerformerGroup:
-      return (
-        <PerformerChange
-          targetGroupId={targetGroupId}
-          targetUserId={targetUserId}
-          type={type}
-        />
-      );
+      return <PerformerChange targetGroupId={targetGroupId} targetUserId={targetUserId} type={type} />;
 
     case EWorkflowLogEvent.WorkflowSnoozedManually:
       return (
