@@ -326,7 +326,15 @@ describe('saga', () => {
     });
 
     it('marks captcha as required without a notification when the API returns a captcha error', () => {
-      const captchaError = new ApiError('', { captcha: ['This field is required.'] }, 400);
+      const captchaError = new ApiError(
+        'This field may not be blank.',
+        {
+          code: 'validation_error',
+          message: 'This field may not be blank.',
+          details: { name: 'captcha', reason: 'This field may not be blank.' },
+        },
+        400,
+      );
 
       const gen = sendPasswordResetSaga(sendForgotPassword({ email: 'example@pneumatic.app' }));
       gen.next();
@@ -335,6 +343,25 @@ describe('saga', () => {
       expect(value).toEqual(put(sendForgotPasswordFail(true)));
       expect(gen.next().done).toBe(true);
       expect(mockNotifyApiError).not.toHaveBeenCalled();
+    });
+
+    it('notifies as usual on a validation error of another field', () => {
+      const emailError = new ApiError(
+        'Enter a valid email address.',
+        {
+          code: 'validation_error',
+          message: 'Enter a valid email address.',
+          details: { name: 'email', reason: 'Enter a valid email address.' },
+        },
+        400,
+      );
+
+      const gen = sendPasswordResetSaga(sendForgotPassword({ email: 'example@pneumatic.app' }));
+      gen.next();
+      const { value } = gen.throw(emailError);
+
+      expect(mockNotifyApiError).toHaveBeenCalledWith(emailError, { message: 'error' });
+      expect(value).toEqual(put(sendForgotPasswordFail()));
     });
 
     it('notifies and fails as usual on any other error', () => {
