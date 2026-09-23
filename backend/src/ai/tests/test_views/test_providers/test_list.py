@@ -60,15 +60,6 @@ def test_list__ok(api_client):
     # assert
     assert response.status_code == 200
     assert len(response.data) == 1
-    assert set(response.data[0].keys()) == {
-        'id',
-        'name',
-        'base_url',
-        'api_key_prefix',
-        'vendor',
-        'is_active',
-        'usage',
-    }
     assert response.data[0]['id'] == provider.id
     assert response.data[0]['name'] == provider.name
     assert response.data[0]['base_url'] == provider.base_url

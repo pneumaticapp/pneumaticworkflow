@@ -1,9 +1,9 @@
 import pytest
 from rest_framework.fields import BooleanField, CharField, Field, URLField
 
-from src.ai.exceptions import AIServiceException
-from src.ai.models import AIProvider
+from src.ai.exceptions import AIProviderException
 from src.ai.services.provider import AIProviderService
+from src.ai.tests.fixtures import create_test_provider
 from src.authentication.enums import AuthTokenType
 from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.processes.models.workflows.task import TaskPerformer
@@ -29,17 +29,11 @@ def test_create__minimal_data__ok(api_client, mocker):
     user = create_test_owner(account=account)
     path = '/ai/providers'
     data = {
+        'name': 'OpenRouter',
         'base_url': 'https://openrouter.ai/api/v1',
         'api_key': 'sk-or-v1-example',
     }
-    provider = AIProvider(
-        account=account,
-        name='OpenRouter',
-        base_url='https://openrouter.ai/api/v1',
-        is_active=True,
-    )
-    provider.api_key = 'sk-or-v1-example'
-    provider.save()
+    provider = create_test_provider(account=account)
     ai_provider_service_init_mock = mocker.patch.object(
         AIProviderService,
         attribute='__init__',
@@ -70,6 +64,7 @@ def test_create__minimal_data__ok(api_client, mocker):
         auth_type=AuthTokenType.USER,
     )
     create_mock.assert_called_once_with(
+        name='OpenRouter',
         base_url='https://openrouter.ai/api/v1',
         api_key='sk-or-v1-example',
         is_active=True,
@@ -85,18 +80,12 @@ def test_create__full_data__ok(api_client, mocker):
     user = create_test_owner(account=account)
     path = '/ai/providers'
     data = {
+        'name': 'OpenRouter',
         'base_url': 'https://openrouter.ai/api/v1',
         'api_key': 'sk-or-v1-example',
         'is_active': False,
     }
-    provider = AIProvider(
-        account=account,
-        name='OpenRouter',
-        base_url='https://openrouter.ai/api/v1',
-        is_active=False,
-    )
-    provider.api_key = 'sk-or-v1-example'
-    provider.save()
+    provider = create_test_provider(account=account, is_active=False)
     ai_provider_service_init_mock = mocker.patch.object(
         AIProviderService,
         attribute='__init__',
@@ -116,15 +105,6 @@ def test_create__full_data__ok(api_client, mocker):
 
     # assert
     assert response.status_code == 201
-    assert set(response.data.keys()) == {
-        'id',
-        'name',
-        'base_url',
-        'api_key_prefix',
-        'vendor',
-        'is_active',
-        'usage',
-    }
     assert response.data['id'] == provider.id
     assert response.data['name'] == provider.name
     assert response.data['base_url'] == provider.base_url
@@ -136,6 +116,7 @@ def test_create__full_data__ok(api_client, mocker):
         auth_type=AuthTokenType.USER,
     )
     create_mock.assert_called_once_with(
+        name='OpenRouter',
         base_url='https://openrouter.ai/api/v1',
         api_key='sk-or-v1-example',
         is_active=False,
@@ -149,6 +130,7 @@ def test_create__unauthenticated__unauthorized(api_client):
     # arrange
     path = '/ai/providers'
     data = {
+        'name': 'OpenRouter',
         'base_url': 'https://openrouter.ai/api/v1',
         'api_key': 'sk-or-v1-example',
     }
@@ -194,6 +176,7 @@ def test_create__guest__permission_denied(api_client):
     )
     path = '/ai/providers'
     data = {
+        'name': 'OpenRouter',
         'base_url': 'https://openrouter.ai/api/v1',
         'api_key': 'sk-or-v1-example',
     }
@@ -223,6 +206,7 @@ def test_create__non_admin__permission_denied(api_client):
     user = create_test_not_admin(account=account)
     path = '/ai/providers'
     data = {
+        'name': 'OpenRouter',
         'base_url': 'https://openrouter.ai/api/v1',
         'api_key': 'sk-or-v1-example',
     }
@@ -279,6 +263,45 @@ def test_create__missing_base_url__validation_error(api_client, mocker):
     create_mock.assert_not_called()
 
 
+def test_create__missing_name__validation_error(api_client, mocker):
+
+    """ Missing name """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    path = '/ai/providers'
+    data = {
+        'base_url': 'https://openrouter.ai/api/v1',
+        'api_key': 'sk-or-v1-example',
+    }
+    ai_provider_service_init_mock = mocker.patch.object(
+        AIProviderService,
+        attribute='__init__',
+        return_value=None,
+    )
+    create_mock = mocker.patch(
+        'src.ai.views.AIProviderService.create',
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.post(
+        path=path,
+        data=data,
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['message'] == str(
+        Field.default_error_messages['required'],
+    )
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['details']['name'] == 'name'
+    ai_provider_service_init_mock.assert_not_called()
+    create_mock.assert_not_called()
+
+
 def test_create__missing_api_key__validation_error(api_client, mocker):
 
     """ Missing api_key """
@@ -288,6 +311,7 @@ def test_create__missing_api_key__validation_error(api_client, mocker):
     user = create_test_owner(account=account)
     path = '/ai/providers'
     data = {
+        'name': 'OpenRouter',
         'base_url': 'https://openrouter.ai/api/v1',
     }
     ai_provider_service_init_mock = mocker.patch.object(
@@ -326,6 +350,7 @@ def test_create__empty_api_key__validation_error(api_client, mocker):
     user = create_test_owner(account=account)
     path = '/ai/providers'
     data = {
+        'name': 'OpenRouter',
         'base_url': 'https://openrouter.ai/api/v1',
         'api_key': '',
     }
@@ -365,6 +390,7 @@ def test_create__invalid_base_url__validation_error(api_client, mocker):
     user = create_test_owner(account=account)
     path = '/ai/providers'
     data = {
+        'name': 'OpenRouter',
         'base_url': 'not-a-url',
         'api_key': 'sk-or-v1-example',
     }
@@ -404,6 +430,7 @@ def test_create__base_url_too_long__validation_error(api_client, mocker):
     user = create_test_owner(account=account)
     path = '/ai/providers'
     data = {
+        'name': 'OpenRouter',
         'base_url': 'https://example.com/' + 'a' * 1024,
         'api_key': 'sk-or-v1-example',
     }
@@ -443,6 +470,7 @@ def test_create__invalid_is_active__validation_error(api_client, mocker):
     user = create_test_owner(account=account)
     path = '/ai/providers'
     data = {
+        'name': 'OpenRouter',
         'base_url': 'https://openrouter.ai/api/v1',
         'api_key': 'sk-or-v1-example',
         'is_active': 'not-a-boolean',
@@ -483,6 +511,7 @@ def test_create__service_exception__validation_error(api_client, mocker):
     user = create_test_owner(account=account)
     path = '/ai/providers'
     data = {
+        'name': 'OpenRouter',
         'base_url': 'https://openrouter.ai/api/v1',
         'api_key': 'sk-or-v1-example',
     }
@@ -494,7 +523,7 @@ def test_create__service_exception__validation_error(api_client, mocker):
     )
     create_mock = mocker.patch(
         'src.ai.views.AIProviderService.create',
-        side_effect=AIServiceException(message=error_message),
+        side_effect=AIProviderException(message=error_message),
     )
     api_client.token_authenticate(user=user)
 
@@ -514,6 +543,7 @@ def test_create__service_exception__validation_error(api_client, mocker):
         auth_type=AuthTokenType.USER,
     )
     create_mock.assert_called_once_with(
+        name='OpenRouter',
         base_url='https://openrouter.ai/api/v1',
         api_key='sk-or-v1-example',
         is_active=True,

@@ -7,12 +7,19 @@ from rest_framework.viewsets import GenericViewSet
 from src.accounts.permissions import (
     UserIsAdminOrAccountOwner,
 )
-from src.ai.exceptions import AIServiceException
+from src.ai.enums import AIVendor
+from src.ai.exceptions import (
+    AIAgentException,
+    AIHandlerException,
+    AIProviderException,
+)
 from src.ai.models import AIAgent, AIProvider
 from src.ai.serializers import (
     AIAgentSerializer,
     AIModelSerializer,
+    AIProviderByVendorSerializer,
     AIProviderSerializer,
+    AIVendorSerializer,
 )
 from src.ai.services.agent import AIAgentService
 from src.ai.services.provider import AIProviderService
@@ -30,6 +37,7 @@ from src.openapi import (
 )
 from src.openapi.examples import (
     AI_AGENT_CREATE_EXAMPLE,
+    AI_PROVIDER_BY_VENDOR_EXAMPLE,
     AI_PROVIDER_CREATE_EXAMPLE,
 )
 from src.utils.validation import raise_validation_error
@@ -42,13 +50,16 @@ class AIProviderViewSet(
     serializer_class = AIProviderSerializer
     action_serializer_classes = {
         'models': AIModelSerializer,
+        'by_vendor': AIProviderByVendorSerializer,
     }
     action_paginator_classes = {
         'list': LimitOffsetPagination,
     }
 
     def get_permissions(self):
-        if self.action in ('create', 'partial_update', 'destroy'):
+        if self.action in (
+            'create', 'partial_update', 'destroy', 'by_vendor',
+        ):
             return (
                 UserIsAuthenticated(),
                 UserIsAdminOrAccountOwner(),
@@ -113,9 +124,38 @@ class AIProviderViewSet(
         )
         try:
             provider = service.create(**serializer.validated_data)
-        except AIServiceException as ex:
+        except AIProviderException as ex:
             raise_validation_error(message=ex.message)
         response_serializer = self.get_serializer(instance=provider)
+        return self.response_created(response_serializer.data)
+
+    @extend_schema(
+        tags=['AI'],
+        summary='Create AI provider by vendor',
+        description=ACCESS_AI_ADMIN,
+        request=AIProviderByVendorSerializer,
+        examples=[AI_PROVIDER_BY_VENDOR_EXAMPLE],
+        responses={
+            201: AIProviderSerializer,
+            400: VALIDATION_ERROR,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+        },
+    )
+    @action(methods=['post'], detail=False, url_path='by-vendor')
+    def by_vendor(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        service = AIProviderService(
+            user=request.user,
+            is_superuser=request.is_superuser,
+            auth_type=request.token_type,
+        )
+        try:
+            provider = service.create_by_vendor(**serializer.validated_data)
+        except AIProviderException as ex:
+            raise_validation_error(message=ex.message)
+        response_serializer = AIProviderSerializer(instance=provider)
         return self.response_created(response_serializer.data)
 
     @extend_schema(
@@ -163,7 +203,7 @@ class AIProviderViewSet(
         )
         try:
             provider = service.partial_update(**serializer.validated_data)
-        except AIServiceException as ex:
+        except AIProviderException as ex:
             raise_validation_error(message=ex.message)
         response_serializer = self.get_serializer(provider)
         return self.response_ok(response_serializer.data)
@@ -190,7 +230,7 @@ class AIProviderViewSet(
         )
         try:
             service.delete()
-        except AIServiceException as ex:
+        except AIProviderException as ex:
             raise_validation_error(message=ex.message)
         return self.response_ok()
 
@@ -216,9 +256,37 @@ class AIProviderViewSet(
         )
         try:
             models = service.get_models()
-        except AIServiceException as ex:
+        except AIHandlerException as ex:
             raise_validation_error(message=ex.message)
         serializer = self.get_serializer(instance=models, many=True)
+        return self.response_ok(serializer.data)
+
+
+class AIVendorViewSet(
+    CustomViewSetMixin,
+    GenericViewSet,
+):
+    serializer_class = AIVendorSerializer
+    permission_classes = (
+        UserIsAuthenticated,
+    )
+
+    @extend_schema(
+        tags=['AI'],
+        summary='List AI vendors',
+        description=ACCESS_AI,
+        responses={
+            200: AIVendorSerializer(many=True),
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+        },
+    )
+    def list(self, request, *args, **kwargs):
+        data = [
+            {'slug': code, 'name': name}
+            for code, name in AIVendor.CHOICES
+        ]
+        serializer = self.get_serializer(data, many=True)
         return self.response_ok(serializer.data)
 
 
@@ -286,7 +354,7 @@ class AIAgentViewSet(
         )
         try:
             agent = service.create(**serializer.validated_data)
-        except AIServiceException as ex:
+        except AIAgentException as ex:
             raise_validation_error(message=ex.message)
         response_serializer = AIAgentSerializer(agent)
         return self.response_created(response_serializer.data)
@@ -336,7 +404,7 @@ class AIAgentViewSet(
         )
         try:
             agent = service.partial_update(**serializer.validated_data)
-        except AIServiceException as ex:
+        except AIAgentException as ex:
             raise_validation_error(message=ex.message)
         response_serializer = AIAgentSerializer(agent)
         return self.response_ok(response_serializer.data)
@@ -363,6 +431,6 @@ class AIAgentViewSet(
         )
         try:
             service.delete()
-        except AIServiceException as ex:
+        except AIAgentException as ex:
             raise_validation_error(message=ex.message)
         return self.response_ok()

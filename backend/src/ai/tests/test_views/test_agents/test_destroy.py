@@ -1,6 +1,6 @@
 import pytest
 
-from src.ai.exceptions import AIServiceException
+from src.ai.exceptions import AIAgentException
 from src.ai.services.agent import AIAgentService
 from src.ai.tests.fixtures import (
     create_test_agent,
@@ -85,7 +85,7 @@ def test_destroy__service_exception__validation_error(
     )
     delete_mock = mocker.patch(
         'src.ai.views.AIAgentService.delete',
-        side_effect=AIServiceException(
+        side_effect=AIAgentException(
             message=error_message,
         ),
     )

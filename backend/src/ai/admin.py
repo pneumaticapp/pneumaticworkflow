@@ -105,20 +105,20 @@ class AIAgentActionAdmin(ModelAdmin):
     )
     search_fields = (
         'agent__name',
-        'message',
+        'text',
     )
     readonly_fields = (
         'agent',
         'task',
         'action',
-        'message',
+        'text',
         'date_created',
     )
     fields = (
         'agent',
         'task',
         'action',
-        'message',
+        'text',
         'date_created',
     )
     date_hierarchy = 'date_created'

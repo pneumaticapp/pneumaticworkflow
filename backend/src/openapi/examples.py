@@ -128,9 +128,19 @@ WEBHOOK_SUBSCRIBE_EXAMPLE = OpenApiExample(
     request_only=True,
 )
 
+AI_PROVIDER_BY_VENDOR_EXAMPLE = OpenApiExample(
+    'Create AI provider by vendor',
+    value={
+        'api_key': 'sk-or-v1-example',
+        'vendor': 'openrouter',
+    },
+    request_only=True,
+)
+
 AI_PROVIDER_CREATE_EXAMPLE = OpenApiExample(
     'Create AI provider',
     value={
+        'name': 'OpenRouter',
         'base_url': 'https://openrouter.ai/api/v1',
         'api_key': 'sk-or-v1-example',
         'is_active': True,
