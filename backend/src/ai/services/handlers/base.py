@@ -205,5 +205,5 @@ class BaseHandler(ABC):
                 agent=self.agent,
                 task=self.task,
                 action=AIAgentActionType.REQUEST,
-                message=message,
+                text=message,
             )

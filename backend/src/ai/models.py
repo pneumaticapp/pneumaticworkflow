@@ -293,7 +293,7 @@ class AIAgentAction(
         max_length=50,
         choices=AIAgentActionType.CHOICES,
     )
-    message = models.TextField(null=True, blank=True)
+    text = models.TextField(null=True, blank=True)
     date_created = models.DateTimeField(auto_now_add=True)
 
     objects = AIAgentActionQuerySet.as_manager()

@@ -57,7 +57,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('is_deleted', models.BooleanField(default=False)),
                 ('action', models.CharField(choices=[('task_in_progress', 'Task in progress'), ('reading_description', 'Reading task description'), ('request', 'Request'), ('error', 'Error'), ('mention_in_progress', 'Mention in progress')], max_length=50)),
-                ('message', models.TextField(blank=True, null=True)),
+                ('text', models.TextField(blank=True, null=True)),
                 ('date_created', models.DateTimeField(auto_now_add=True)),
                 ('account', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='accounts.Account')),
                 ('agent', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='actions', to='ai.AIAgent')),

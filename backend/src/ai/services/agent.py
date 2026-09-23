@@ -3,11 +3,13 @@ from typing import Optional
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError, transaction
 from django.utils.crypto import get_random_string
-
+from src.accounts.enums import NotificationStatus
+from src.accounts.models import Notification
 from src.accounts.services.user import UserService
 from src.ai.exceptions import AIAgentNameNotUniqueException
-from src.ai.models import AIAgent
+from src.ai.models import AIAgent, AIAgentAction
 from src.generics.base.service import BaseModelService
+from src.ai.enums import AIAgentActionType
 
 UserModel = get_user_model()
 
@@ -102,3 +104,31 @@ class AIAgentService(BaseModelService):
         with transaction.atomic():
             self.instance.user.delete()
             self.instance.delete()
+
+    def complete_task(self, task_id: int):
+        AIAgentAction.objects.create(
+            agent_id=self.instance.id,
+            task_id=task_id,
+            action=AIAgentActionType.TASK_IN_PROGRESS,
+        )
+
+        AIAgentAction.objects.create(
+            agent_id=self.instance.id,
+            task_id=task_id,
+            action=AIAgentActionType.TASK_COMPLETED,
+            text='',
+        )
+
+    def reply_to_comment(self, notification_id: int):
+
+        notification = Notification.objects.filter(id=notification_id).first()
+        if notification:
+            notification.status = NotificationStatus.READ
+            notification.save(update_fields=['status'])
+            AIAgentAction.objects.create(
+                account_id=notification.account_id,
+                agent_id=self.instance.id,
+                task=notification.task,
+                action=AIAgentActionType.MENTION_IN_PROGRESS,
+                notification_id=notification_id,
+            )

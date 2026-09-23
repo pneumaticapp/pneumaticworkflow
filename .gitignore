@@ -11,6 +11,7 @@ nginx/config/nginx.conf
 firebase-push.json
 plan.md
 GEMINI.md
+celerybeat.pid
 
 # Playwright / E2E
 frontend/e2e
