@@ -1,6 +1,6 @@
 import json
 from abc import ABC, abstractmethod
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Any
 from urllib.parse import urlparse
 
 import requests
@@ -26,6 +26,7 @@ class BaseHandler(ABC):
 
     request_timeout = 10
     completion_timeout = 200
+    models_params: Optional[dict] = None
     DEFAULT_ENDPOINTS = {
         'models': 'models',
         'chat': 'chat/completions',
@@ -70,11 +71,18 @@ class BaseHandler(ABC):
         pass
 
     @abstractmethod
-    def get_models(self) -> List[dict]:
-
-        """List of models as dicts with keys `slug` and `name`."""
+    def _parse_models(self, payload: Any) -> List[dict]:
 
         pass
+
+    def get_models(self) -> List[dict]:
+        _status, payload = self._request(
+            method='GET',
+            url=self.get_models_url(),
+            headers=self._auth_headers(),
+            params=self.models_params,
+        )
+        return self._parse_models(payload)
 
     @abstractmethod
     def get_completion(

@@ -4,6 +4,8 @@ from src.ai.services.handlers.base import BaseHandler
 
 class GeminiHandler(BaseHandler):
 
+    models_params = {'pageSize': 1000}
+
     def _auth_headers(self) -> dict:
         return {
             'x-goog-api-key': self.provider.api_key,
@@ -52,31 +54,41 @@ class GeminiHandler(BaseHandler):
                         "name": "models/gemini-2.0-flash",
                         "displayName": "Gemini 2.0 Flash",
                         "supportedGenerationMethods": [
-                            "generateContent"
+                            "generateContent",
+                            "countTokens"
+                        ]
+                    },
+                    {
+                        "name": "models/gemini-embedding-001",
+                        "displayName": "Gemini Embedding 001",
+                        "supportedGenerationMethods": [
+                            "embedContent"
                         ]
                     }
-                ]
+                ],
+                "nextPageToken": ""
             }
 
+        The slug is stored without the "models/" prefix
+        because the chat endpoint template already contains it.
+
         """
-        raw_models = payload.get('models')
+        raw_models = payload.get('models') or []
         models = []
         for item in raw_models:
+            if not self._is_chat_model(item):
+                continue
             models.append(
                 {
-                    'slug': item['name'],
+                    'slug': item['name'].removeprefix('models/'),
                     'name': item['displayName'],
                 },
             )
         return models
 
-    def get_models(self) -> List[dict]:
-        _status, payload = self._request(
-            method='GET',
-            url=self.get_models_url(),
-            headers=self._auth_headers(),
-        )
-        return self._parse_models(payload)
+    def _is_chat_model(self, item: dict) -> bool:
+        methods = item.get('supportedGenerationMethods') or []
+        return 'generateContent' in methods
 
     def get_completion(
         self,

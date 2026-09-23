@@ -7,6 +7,7 @@ from src.ai.services.handlers.base import BaseHandler
 class AnthropicHandler(BaseHandler):
     API_VERSION = '2023-06-01'
     DEFAULT_MAX_TOKENS = 1024
+    models_params = {'limit': 1000}
 
     def _auth_headers(self) -> dict:
         return {
@@ -41,14 +42,6 @@ class AnthropicHandler(BaseHandler):
             http_status=http_status,
             response_data=response_data,
         )
-
-    def get_models(self) -> List[dict]:
-        _status, payload = self._request(
-            method='GET',
-            url=self.get_models_url(),
-            headers=self._auth_headers(),
-        )
-        return self._parse_models(payload)
 
     def _parse_models(self, payload: Any) -> List[dict]:
 

@@ -1,22 +1,30 @@
 from typing import Any, List, Optional
-from django.conf import settings
-from src.ai.enums import AIVendor, OpenAIRole
+from src.ai.enums import OpenAIRole
 from src.ai.services.handlers.base import BaseHandler
 
 
 class OpenAIHandler(BaseHandler):
 
+    NON_CHAT_MODEL_KEYWORDS = (
+        'embed',
+        'whisper',
+        'tts',
+        'transcribe',
+        'dall-e',
+        'image',
+        'moderation',
+        'realtime',
+        'audio',
+        'sora',
+        'davinci',
+        'babbage',
+        'guard',
+    )
+
     def _auth_headers(self) -> dict:
-        headers = {
+        return {
             'Authorization': f'Bearer {self.provider.api_key}',
         }
-        if self.provider.vendor == AIVendor.OPENROUTER:
-            headers['HTTP-Referer'] = (
-                getattr(settings, 'FRONTEND_URL', None)
-                or 'https://pneumatic.app'
-            )
-            headers['X-Title'] = 'Pneumatic'
-        return headers
 
     def _parse_error(
         self,
@@ -44,14 +52,6 @@ class OpenAIHandler(BaseHandler):
             response_data=response_data,
         )
 
-    def get_models(self) -> List[dict]:
-        _status, payload = self._request(
-            method='GET',
-            url=self.get_models_url(),
-            headers=self._auth_headers(),
-        )
-        return self._parse_models(payload)
-
     def _parse_models(self, payload: Any) -> List[dict]:
         """Parse an OpenAI-compatible models list payload.
 
@@ -77,13 +77,25 @@ class OpenAIHandler(BaseHandler):
         raw_models = payload['data']
         models = []
         for item in raw_models:
-            models.append(
-                {
-                    'slug': item['id'],
-                    'name': item.get('name', item['id']),
-                },
-            )
+            if self._is_chat_model(item):
+                models.append(
+                    {
+                        'slug': item['id'],
+                        'name': item.get('name', item['id']),
+                    },
+                )
         return models
+
+    def _is_chat_model(self, item: dict) -> bool:
+
+        """The models list has no model type field,
+        so non-chat models are detected by keywords in the id."""
+
+        model_id = item['id'].lower()
+        return not any(
+            keyword in model_id
+            for keyword in self.NON_CHAT_MODEL_KEYWORDS
+        )
 
     def get_completion(
         self,
