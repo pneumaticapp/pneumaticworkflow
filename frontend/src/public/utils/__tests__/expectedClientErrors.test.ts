@@ -23,6 +23,10 @@ describe('isExpectedClientError', () => {
     expect(isExpectedClientError({ detail: 'You do not have permission to perform this action.' })).toBe(true);
   });
 
+  it('returns true for "Permission denied"', () => {
+    expect(isExpectedClientError({ detail: 'Permission denied. You are not a template owner or viewer.' })).toBe(true);
+  });
+
   it('returns true for throttled request', () => {
     expect(isExpectedClientError('Request was throttled. Expected available in 30 seconds.')).toBe(true);
   });
