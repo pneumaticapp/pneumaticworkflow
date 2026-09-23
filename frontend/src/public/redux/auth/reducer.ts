@@ -41,6 +41,7 @@ const EMPTY_USER: IAuthUser = {
   phone: '',
   photo: '',
   loading: false,
+  isResetPasswordCaptchaRequired: false,
   status: EUserStatus.Active,
   invitedUser,
   isAccountOwner: true,
@@ -114,6 +115,12 @@ export const reducer = (state = INIT_STATE, action: TAuthActions | { type: strin
         draftState.loading = false;
       });
     case EAuthActions.ForgotPasswordFail:
+      return {
+        ...state,
+        error: EAuthUserFailType.Common,
+        loading: false,
+        isResetPasswordCaptchaRequired: Boolean(action.payload) || state.isResetPasswordCaptchaRequired,
+      };
     case EAuthActions.ResetPasswordFail:
     case EAuthActions.ChangePasswordFail:
       return { ...state, error: EAuthUserFailType.Common, loading: false };
