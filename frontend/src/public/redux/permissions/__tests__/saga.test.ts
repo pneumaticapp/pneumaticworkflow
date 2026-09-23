@@ -10,14 +10,14 @@ jest.mock('../../../api/getUserObjectPermissions', () => ({
   getUserObjectPermissions: jest.fn(),
 }));
 
-const runFetch = async (objIds: number[]) => {
+const runFetch = async (objIds: number[], getState: () => unknown = () => ({ permissions: { userId: 1 } })) => {
   const dispatched: unknown[] = [];
 
   function* wrapper() {
     yield call(fetchObjectPermissions, loadObjectPermissions({ objType: EPermissionObjectType.Workflow, objIds }));
   }
 
-  await runSaga({ dispatch: (action) => dispatched.push(action) }, wrapper).toPromise();
+  await runSaga({ dispatch: (action) => dispatched.push(action), getState }, wrapper).toPromise();
 
   return dispatched;
 };
@@ -65,6 +65,17 @@ describe('fetchObjectPermissions', () => {
     (getUserObjectPermissions as jest.Mock).mockRejectedValue(new Error('network'));
 
     const dispatched = await runFetch([1]);
+
+    expect(dispatched).toEqual([]);
+  });
+
+  it('drops the response when the signed-in user changes mid-flight', async () => {
+    const permissions = [{ id: 1, hasView: true, hasChange: true }];
+    (getUserObjectPermissions as jest.Mock).mockResolvedValue(permissions);
+    const userIds = [1, 2];
+    let selectCall = 0;
+
+    const dispatched = await runFetch([1], () => ({ permissions: { userId: userIds[Math.min(selectCall++, 1)] } }));
 
     expect(dispatched).toEqual([]);
   });

@@ -14,19 +14,28 @@ import { getAttachmentTypeByFilename, getAttachmentTypeByUrl } from '../componen
  * parseMarkdownToFiles("[Google](https://docs.google.com/...)")
  * // → [] (not a file-service link)
  */
-export function parseMarkdownToFiles(markdownValue: string | null | undefined): TUploadedFile[] {
+export function parseMarkdownLinks(markdownValue: string | null | undefined): Array<{ name: string; url: string }> {
   if (!markdownValue) return [];
 
-  const { api: { fileServiceUrl } = { fileServiceUrl: '' } } = getBrowserConfigEnv() || {};
   // Matches both [name](url) and ![name](url) / ![name](url "title")
   const regex = /!?\[([^\]]+)\]\(([^)"]+)(?:\s+"[^"]*")?\)/g;
-  const files: TUploadedFile[] = [];
+  const links: Array<{ name: string; url: string }> = [];
   let match = regex.exec(markdownValue);
 
   while (match !== null) {
     const [, name, rawUrl] = match;
-    const url = rawUrl.trim();
+    links.push({ name, url: rawUrl.trim() });
+    match = regex.exec(markdownValue);
+  }
 
+  return links;
+}
+
+export function parseMarkdownToFiles(markdownValue: string | null | undefined): TUploadedFile[] {
+  const { api: { fileServiceUrl } = { fileServiceUrl: '' } } = getBrowserConfigEnv() || {};
+  const files: TUploadedFile[] = [];
+
+  parseMarkdownLinks(markdownValue).forEach(({ name, url }) => {
     if (fileServiceUrl && (url === fileServiceUrl || url.startsWith(`${fileServiceUrl}/`))) {
       const fileId = url.split('?')[0].split('#')[0].split('/').filter(Boolean).pop() || url;
       const isImageByName = getAttachmentTypeByFilename(name) === 'image';
@@ -41,9 +50,7 @@ export function parseMarkdownToFiles(markdownValue: string | null | undefined): 
         thumbnailUrl: isImage ? url : undefined,
       });
     }
-
-    match = regex.exec(markdownValue);
-  }
+  });
 
   return files;
 }
