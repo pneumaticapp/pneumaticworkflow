@@ -165,6 +165,8 @@
       "vacationUserDeactivate": "/accounts/users/:id/deactivate-vacation",
       "wsEvents": "/ws/events",
       "aiProviders": "/ai/providers",
+      "createAIProviderByVendor": "/ai/providers/by-vendor",
+      "getAIVendors": "/ai/vendors",
       "aiProvider": "/ai/providers/:id",
       "aiProviderModels": "/ai/providers/:id/models",
       "aiAgents": "/ai/agents",

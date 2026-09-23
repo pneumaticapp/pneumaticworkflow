@@ -5,8 +5,12 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import { intlMock } from '../../../../__stubs__/intlMock';
 import { AIProviders } from '../AIProviders';
-import { createAIProvider, deleteAIProvider, loadAIProviders } from '../../../../redux/ai/slice';
+import { deleteAIProvider, loadAIProviders } from '../../../../redux/ai/slice';
 import { EAIVendor, IAIProvider } from '../../../../types/ai';
+
+jest.mock('../../../../api/ai', () => ({
+  getAIVendors: jest.fn().mockResolvedValue([]),
+}));
 
 jest.mock('../../../UI', () => ({
   Tooltip: ({ children, content }: any) => (
@@ -127,25 +131,14 @@ describe('AIProviders', () => {
     expect(screen.getByTestId('ai-provider-usage-1')).toHaveTextContent('Research assistant, Support bot');
   });
 
-  it('creates a provider from the modal with trimmed base URL and key', () => {
+  it('opens the create modal on the add button', () => {
     render(<AIProviders />);
+
+    expect(screen.queryByTestId('create-ai-provider-modal')).not.toBeInTheDocument();
 
     userEvent.click(screen.getByTestId('create-ai-provider-btn'));
 
-    const submit = screen.getByTestId('submit-create-ai-provider');
-    expect(submit).toBeDisabled();
-
-    userEvent.type(screen.getByTestId('ai-provider-base-url-input'), '  https://openrouter.ai/api/v1  ');
-    expect(submit).toBeDisabled();
-
-    userEvent.type(screen.getByTestId('ai-provider-api-key-input'), ' sk-or-v1-secret ');
-    expect(submit).toBeEnabled();
-
-    userEvent.click(submit);
-
-    expect(mockDispatch).toHaveBeenCalledWith(
-      createAIProvider({ baseUrl: 'https://openrouter.ai/api/v1', apiKey: 'sk-or-v1-secret' }),
-    );
+    expect(screen.getByTestId('create-ai-provider-modal')).toBeInTheDocument();
   });
 
   it('shows the loading state before the first response', () => {

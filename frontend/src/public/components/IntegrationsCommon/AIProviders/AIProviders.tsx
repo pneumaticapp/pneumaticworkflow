@@ -4,13 +4,13 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import { IAIProvider } from '../../../types/ai';
 import { Button } from '../../UI/Buttons/Button';
-import { InputField } from '../../UI/Fields/InputField';
 import { Header } from '../../UI/Typeography/Header';
 import { Modal } from '../../UI/Modal/Modal';
 import { Tooltip } from '../../UI';
-import { createAIProvider, deleteAIProvider, loadAIProviders } from '../../../redux/ai/slice';
-import { getAIProvidersState, getIsAISaving } from '../../../redux/selectors/ai';
+import { deleteAIProvider, loadAIProviders } from '../../../redux/ai/slice';
+import { getAIProvidersState } from '../../../redux/selectors/ai';
 
+import { CreateAIProviderModal } from './CreateAIProviderModal';
 import styles from './AIProviders.css';
 
 const KEY_MASK = '••••••••';
@@ -80,35 +80,15 @@ export function AIProviders() {
   const dispatch = useDispatch();
 
   const { list: providers, isLoading, isLoaded } = useSelector(getAIProvidersState);
-  const isSaving = useSelector(getIsAISaving);
 
   const [confirmDeleteId, setConfirmDeleteId] = React.useState<number | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
-  const [baseUrl, setBaseUrl] = React.useState('');
-  const [apiKey, setApiKey] = React.useState('');
 
   React.useEffect(() => {
     dispatch(loadAIProviders());
   }, [dispatch]);
 
-  const resetCreateForm = React.useCallback(() => {
-    setIsCreateModalOpen(false);
-    setBaseUrl('');
-    setApiKey('');
-  }, []);
-
-  const handleCreateSubmit = React.useCallback(
-    (e: React.FormEvent<HTMLFormElement>) => {
-      e.preventDefault();
-      if (!baseUrl.trim() || !apiKey.trim()) {
-        return;
-      }
-
-      dispatch(createAIProvider({ baseUrl: baseUrl.trim(), apiKey: apiKey.trim() }));
-      resetCreateForm();
-    },
-    [baseUrl, apiKey, dispatch, resetCreateForm],
-  );
+  const closeCreateModal = React.useCallback(() => setIsCreateModalOpen(false), []);
 
   const handleDelete = React.useCallback(() => {
     if (confirmDeleteId !== null) {
@@ -153,56 +133,7 @@ export function AIProviders() {
       )}
 
       {/* Create AI provider modal */}
-      <Modal isOpen={isCreateModalOpen} onClose={resetCreateForm} width="sm">
-        <div data-testid="create-ai-provider-modal">
-          <Header tag="p" size="6" className={styles['create-modal__title']}>
-            {formatMessage({ id: 'ai-providers.create-modal-title' })}
-          </Header>
-          <p className={styles['create-modal__description']}>
-            {formatMessage({ id: 'ai-providers.create-modal-description' })}
-          </p>
-          <form onSubmit={handleCreateSubmit} data-autofocus-first-field>
-            <div className={styles['create-modal__fields']}>
-              <InputField
-                autoFocus
-                title={formatMessage({ id: 'ai-providers.base-url-label' })}
-                value={baseUrl}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setBaseUrl(e.target.value)}
-                placeholder={formatMessage({ id: 'ai-providers.base-url-placeholder' })}
-                fieldSize="md"
-                data-testid="ai-provider-base-url-input"
-              />
-              <InputField
-                title={formatMessage({ id: 'ai-providers.api-key-label' })}
-                value={apiKey}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setApiKey(e.target.value)}
-                placeholder={formatMessage({ id: 'ai-providers.api-key-placeholder' })}
-                fieldSize="md"
-                data-testid="ai-provider-api-key-input"
-              />
-            </div>
-            <div className={styles['create-modal__footer']}>
-              <Button
-                type="submit"
-                size="md"
-                buttonStyle="yellow"
-                disabled={!baseUrl.trim() || !apiKey.trim() || isSaving}
-                isLoading={isSaving}
-                label={formatMessage({ id: 'ai-providers.add' })}
-                data-testid="submit-create-ai-provider"
-              />
-              <button
-                type="button"
-                className="cancel-button"
-                onClick={resetCreateForm}
-                data-testid="cancel-create-ai-provider"
-              >
-                {formatMessage({ id: 'integrations.cancel' })}
-              </button>
-            </div>
-          </form>
-        </div>
-      </Modal>
+      <CreateAIProviderModal isOpen={isCreateModalOpen} onClose={closeCreateModal} />
 
       {/* Delete confirmation modal */}
       <Modal isOpen={confirmDeleteId !== null} onClose={() => setConfirmDeleteId(null)} width="sm">

@@ -4,6 +4,7 @@ import { PayloadAction } from '@reduxjs/toolkit';
 import {
   createAIAgent as createAIAgentApi,
   createAIProvider as createAIProviderApi,
+  createAIProviderByVendor as createAIProviderByVendorApi,
   deleteAIAgent as deleteAIAgentApi,
   deleteAIProvider as deleteAIProviderApi,
   getAIAgents as getAIAgentsApi,
@@ -11,7 +12,14 @@ import {
   getAIProviders as getAIProvidersApi,
   updateAIAgent as updateAIAgentApi,
 } from '../../api/ai';
-import { IAIAgent, IAIModel, IAIProvider, ICreateAIAgentRequest, ICreateAIProviderRequest } from '../../types/ai';
+import {
+  IAIAgent,
+  IAIModel,
+  IAIProvider,
+  ICreateAIAgentRequest,
+  ICreateAIProviderByVendorRequest,
+  ICreateAIProviderRequest,
+} from '../../types/ai';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { getErrorMessage } from '../../utils/getErrorMessage';
 import { logger } from '../../utils/logger';
@@ -19,6 +27,7 @@ import { logger } from '../../utils/logger';
 import {
   createAIAgent,
   createAIProvider,
+  createAIProviderByVendor,
   deleteAIAgent,
   deleteAIProvider,
   loadAIAgents,
@@ -92,6 +101,21 @@ function* createAIProviderSaga({ payload }: PayloadAction<ICreateAIProviderReque
   }
 }
 
+function* createAIProviderByVendorSaga({ payload }: PayloadAction<ICreateAIProviderByVendorRequest>) {
+  yield put(savingStarted());
+
+  try {
+    yield createAIProviderByVendorApi(payload);
+    yield fetchAIProviders();
+    NotificationManager.success({ message: 'ai-providers.created' });
+  } catch (error) {
+    NotificationManager.warning({ message: getErrorMessage(error) });
+    logger.error('failed to create AI provider by vendor', error);
+  } finally {
+    yield put(savingFinished());
+  }
+}
+
 function* deleteAIProviderSaga({ payload: id }: PayloadAction<number>) {
   yield put(savingStarted());
 
@@ -159,6 +183,7 @@ function* deleteAIAgentSaga({ payload: id }: PayloadAction<number>) {
 export function* watchAIProviders() {
   yield takeEvery(loadAIProviders, fetchAIProviders);
   yield takeEvery(createAIProvider, createAIProviderSaga);
+  yield takeEvery(createAIProviderByVendor, createAIProviderByVendorSaga);
   yield takeEvery(deleteAIProvider, deleteAIProviderSaga);
   // takeLatest: switching providers in the agent form must drop the previous models request.
   yield takeLatest(loadAIProviderModels, fetchAIProviderModels);

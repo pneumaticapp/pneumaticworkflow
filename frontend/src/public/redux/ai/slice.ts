@@ -1,7 +1,14 @@
 import { createAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { IAIStore } from '../../types/redux';
-import { IAIAgent, IAIModel, IAIProvider, ICreateAIAgentRequest, ICreateAIProviderRequest } from '../../types/ai';
+import {
+  IAIAgent,
+  IAIModel,
+  IAIProvider,
+  ICreateAIAgentRequest,
+  ICreateAIProviderByVendorRequest,
+  ICreateAIProviderRequest,
+} from '../../types/ai';
 
 const initialState: IAIStore = {
   providers: {
@@ -24,6 +31,7 @@ const initialState: IAIStore = {
 
 export const loadAIProviders = createAction<void>('ai/loadAIProviders');
 export const createAIProvider = createAction<ICreateAIProviderRequest>('ai/createAIProvider');
+export const createAIProviderByVendor = createAction<ICreateAIProviderByVendorRequest>('ai/createAIProviderByVendor');
 export const deleteAIProvider = createAction<number>('ai/deleteAIProvider');
 export const loadAIProviderModels = createAction<number>('ai/loadAIProviderModels');
 

@@ -106,6 +106,16 @@
   color: var(--pneumatic-color-black48);
 }
 
+.create-modal__tabs {
+  margin-bottom: 1.6rem;
+}
+
+.create-modal__info {
+  margin-top: 1.6rem;
+  font-size: 1.2rem;
+  color: var(--pneumatic-color-black48);
+}
+
 .create-modal__fields {
   display: flex;
   flex-direction: column;

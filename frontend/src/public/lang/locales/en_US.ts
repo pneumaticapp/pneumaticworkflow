@@ -1403,8 +1403,15 @@ export const enMessages = {
   'ai-providers.delete-disabled-tooltip': 'This provider is used by AI agents: {agents}. Remove those agents first.',
   'ai-providers.create-modal-title': 'Add AI provider',
   'ai-providers.create-modal-description':
-    'Paste the base URL of the provider API and your secret key. ' +
-    'The provider is detected automatically and becomes available to the whole account.',
+    'Pick a vendor and paste your secret key, or switch to the custom setup to enter the connection details yourself. ' +
+    'The provider becomes available to the whole account.',
+  'ai-providers.tab-vendor': 'By vendor',
+  'ai-providers.tab-custom': 'Custom',
+  'ai-providers.vendor-label': 'Vendor',
+  'ai-providers.vendor-placeholder': 'Select a vendor',
+  'ai-providers.name-label': 'Name',
+  'ai-providers.name-placeholder': 'OpenRouter',
+  'ai-providers.connection-check-info': 'One request will be sent to the vendor to verify the connection.',
   'ai-providers.base-url-label': 'Base URL',
   'ai-providers.base-url-placeholder': 'https://openrouter.ai/api/v1',
   'ai-providers.api-key-label': 'API key',
