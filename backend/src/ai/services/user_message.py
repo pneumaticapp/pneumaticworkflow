@@ -1,8 +1,14 @@
 from typing import Optional
 from src.processes.enums import FieldType
 from src.processes.models.workflows.event import WorkflowEvent
+from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.task import Task
 
+
+FIELD_VALUE_FORMAT_MAP = {
+    FieldType.STRING: 'single line of plain text, 140 characters maximum',
+    FieldType.TEXT: 'multiline plain text, markdown is allowed',
+}
 
 RESPONSE_FORMAT_PROMPT = (
     '# RESPONSE FORMAT\n'
@@ -74,6 +80,20 @@ class TaskUserMessageService:
         """ Content of the files attached to the task. Not implemented yet """
 
         return ''
+
+    def _get_field_prompt_by_type(self, field: TaskField) -> str:
+
+        """ Description of the single answer section """
+
+        lines = [
+            f'api_name: {field.api_name}',
+            f'Name: {field.name}',
+            'Required: yes' if field.is_required else 'Required: no',
+        ]
+        if field.description:
+            lines.append(f'Description: {field.description}')
+        lines.append(f'Value format: {FIELD_VALUE_FORMAT_MAP[field.type]}')
+        return '\n'.join(lines)
 
     def _get_response_format_message(self) -> str:
 
