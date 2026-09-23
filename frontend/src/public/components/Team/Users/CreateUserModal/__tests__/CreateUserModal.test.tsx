@@ -239,7 +239,7 @@ describe('CreateUserModal', () => {
       await waitFor(() => {
         expect(mockDispatch).toHaveBeenCalledWith(loadAIProviderModels(1));
       });
-      expect(screen.getByText('OpenRouter — https://openrouter.ai/api/v1')).toBeInTheDocument();
+      expect(screen.getByText('OpenRouter — sk-or-v1-01234')).toBeInTheDocument();
     });
 
     it('clears the avatar input after upload so the same file can be selected again', async () => {
@@ -371,7 +371,7 @@ describe('CreateUserModal', () => {
       await openAIAgentTab();
 
       await userEvent.click(getDropdownControl('team.create-ai-agent-modal.provider'));
-      await userEvent.click(screen.getByText('OpenRouter — https://openrouter.ai/api/v1'));
+      await userEvent.click(screen.getByText('OpenRouter — sk-or-v1-01234'));
       await waitFor(() => expect(mockDispatch).toHaveBeenCalledWith(loadAIProviderModels(1)));
 
       await userEvent.click(getDropdownControl('team.create-ai-agent-modal.model'));
@@ -379,7 +379,7 @@ describe('CreateUserModal', () => {
       expect(screen.getByText('GPT-4o')).toBeInTheDocument();
 
       await userEvent.click(getDropdownControl('team.create-ai-agent-modal.provider'));
-      await userEvent.click(screen.getByText('OpenAI compatible — https://llm.internal.example.com/v1'));
+      await userEvent.click(screen.getByText('OpenAI compatible — secret-key-abc'));
 
       await waitFor(() => expect(mockDispatch).toHaveBeenCalledWith(loadAIProviderModels(2)));
       expect(screen.queryByText('GPT-4o')).not.toBeInTheDocument();
