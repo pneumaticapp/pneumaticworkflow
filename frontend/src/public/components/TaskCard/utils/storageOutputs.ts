@@ -30,7 +30,14 @@ type TStorageValidators<T, TMetadata> = {
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
-const isStoredField = (field: unknown): field is IExtraField => isRecord(field) && typeof field.apiName === 'string';
+const isStoredAttachment = (attachment: unknown) =>
+  isRecord(attachment) && typeof attachment.name === 'string' && typeof attachment.url === 'string';
+
+const isStoredAttachments = (attachments: unknown) =>
+  attachments == null || (Array.isArray(attachments) && attachments.every(isStoredAttachment));
+
+const isStoredField = (field: unknown): field is IExtraField =>
+  isRecord(field) && typeof field.apiName === 'string' && isStoredAttachments(field.attachments);
 
 const isStoredFields = (data: unknown): data is IExtraField[] => Array.isArray(data) && data.every(isStoredField);
 

@@ -191,6 +191,37 @@ describe('storageOutputs', () => {
       expect(fieldsetsStorage.getEntry(1)).toBeUndefined();
     });
 
+    it.each<[string, unknown]>([
+      ['a string', 'file.png'],
+      ['an object', { name: 'file.png', url: 'https://files/1' }],
+      ['an array with null', [null]],
+      ['an array with an item without url', [{ name: 'file.png' }]],
+    ])('rejects drafts whose field attachments are %s', (_, attachments) => {
+      const field = { ...makeExtraField({ apiName: 'file' }), attachments };
+      localStorage.setItem(OUTPUT_STORAGE_KEY, JSON.stringify([{ taskId: 1, data: [field] }]));
+      localStorage.setItem(
+        FIELDSETS_STORAGE_KEY,
+        JSON.stringify([{ taskId: 1, data: [{ apiNameBinding: 'fs-1', fields: [field] }] }]),
+      );
+
+      expect(outputStorage.getEntry(1)).toBeUndefined();
+      expect(fieldsetsStorage.getEntry(1)).toBeUndefined();
+    });
+
+    it('accepts drafts with valid or absent field attachments', () => {
+      const outputs = [
+        {
+          ...makeExtraField({ apiName: 'file' }),
+          attachments: [{ id: '1', name: 'a.png', url: 'https://files/1', size: 1 }],
+        },
+        { ...makeExtraField({ apiName: 'empty' }), attachments: null },
+        makeExtraField({ apiName: 'text' }),
+      ];
+      localStorage.setItem(OUTPUT_STORAGE_KEY, JSON.stringify([{ taskId: 1, data: outputs }]));
+
+      expect(outputStorage.get(1)).toEqual(outputs);
+    });
+
     it('keeps valid entries next to malformed ones', () => {
       const outputs = [makeExtraField({ apiName: 'valid' })];
       localStorage.setItem(
