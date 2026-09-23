@@ -199,7 +199,7 @@ class Command(BaseCommand):
         )
         self._create_or_skip_task(
             name="Dispatch AI agent tasks",
-            task_path="src.ai.tasks.dispatch_ai_agent_tasks",
+            task_path="src.ai.tasks.dispatch_ai_agent_new_tasks",
             schedule_obj=schedule,
         )
 
@@ -210,6 +210,6 @@ class Command(BaseCommand):
         )
         self._create_or_skip_task(
             name="Dispatch AI agent mentions",
-            task_path="src.ai.tasks.dispatch_ai_agent_mentions",
+            task_path="src.ai.tasks.dispatch_ai_agent_new_notifications",
             schedule_obj=schedule,
         )
