@@ -104,7 +104,6 @@ class TestSendDigest:
             date_created=date_from + timedelta(days=2),
         )
         second_workflow.refresh_from_db()
-        second_workflow.status_updated = date_from + timedelta(days=2)
         second_workflow.date_completed = date_to - timedelta(days=1)
         second_workflow.save()
         email_service_digest = mocker.patch(
@@ -411,7 +410,6 @@ class TestSendDigest:
             date_created=date_from + timedelta(days=2),
         )
         second_workflow.refresh_from_db()
-        second_workflow.status_updated = date_from + timedelta(days=2)
         second_workflow.date_completed = date_to - timedelta(days=1)
         second_workflow.save()
         email_service_digest = mocker.patch(
