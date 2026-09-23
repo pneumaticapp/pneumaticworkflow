@@ -95,6 +95,8 @@ export const ruMessages = {
   'user.sign-up-google': 'Google',
   'user.sign-in-google': 'Google',
   'user.sign-up-sso': 'SSO',
+  'user.oauth-unavailable':
+    'Вход через {type} временно недоступен. Пожалуйста, используйте электронную почту и пароль.',
   'user.id': 'ID',
   'user.email': 'Электронная почта',
   'user.email-work': 'Рабочий электронный адрес',
