@@ -13,8 +13,7 @@ import styles from './FeedItem.css';
 
 export function PerformerChange({ targetGroupId, targetUserId, type }: IPerformerChangeProps) {
   const { formatMessage } = useIntl();
-  const isGroup =
-    type === EWorkflowLogEvent.AddedPerformerGroup || type === EWorkflowLogEvent.RemovedPerformerGroup;
+  const isGroup = type === EWorkflowLogEvent.AddedPerformerGroup || type === EWorkflowLogEvent.RemovedPerformerGroup;
 
   if (isGroup) {
     if (!targetGroupId) {

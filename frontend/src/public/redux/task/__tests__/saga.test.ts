@@ -1,9 +1,5 @@
 import { setTaskCompleted, setTaskReverted } from '../saga';
-import {
-  ETaskActions,
-  TSetTaskCompleted,
-  setTaskReverted as createSetTaskRevertedAction,
-} from '../actions';
+import { ETaskActions, TSetTaskCompleted, setTaskReverted as createSetTaskRevertedAction } from '../actions';
 import { ETaskCardViewMode } from '../../../components/TaskCard';
 import { completeTask } from '../../../api/completeTask';
 import { revertTask } from '../../../api/revertTask';
@@ -62,11 +58,13 @@ describe('setTaskReverted — output draft cleanup', () => {
 
   it('keeps field and fieldset drafts when reverting a task fails', () => {
     const taskId = 42;
-    const generator = setTaskReverted(createSetTaskRevertedAction({
-      taskId,
-      viewMode: ETaskCardViewMode.Single,
-      comment: '',
-    }));
+    const generator = setTaskReverted(
+      createSetTaskRevertedAction({
+        taskId,
+        viewMode: ETaskCardViewMode.Single,
+        comment: '',
+      }),
+    );
 
     generator.next();
     generator.next({ authUser: { id: 1 } } as any);
@@ -80,12 +78,14 @@ describe('setTaskReverted — output draft cleanup', () => {
 
   it('clears field and fieldset drafts after reverting succeeds', () => {
     const taskId = 42;
-    const generator = setTaskReverted(createSetTaskRevertedAction({
-      taskId,
-      viewMode: ETaskCardViewMode.Single,
-      comment: '',
-      clearOutputTaskIds: [taskId, 41],
-    }));
+    const generator = setTaskReverted(
+      createSetTaskRevertedAction({
+        taskId,
+        viewMode: ETaskCardViewMode.Single,
+        comment: '',
+        clearOutputTaskIds: [taskId, 41],
+      }),
+    );
 
     generator.next();
     generator.next({ authUser: { id: 1 } } as any);

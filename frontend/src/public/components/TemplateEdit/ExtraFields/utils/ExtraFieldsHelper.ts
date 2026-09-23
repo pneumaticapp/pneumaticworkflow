@@ -76,18 +76,14 @@ export class ExtraFieldsHelper {
     defaultValue: TExtraFieldValue,
     fieldApiName: string,
   ) => {
-    const normalizedInitialValue = initialValue === '' || (Array.isArray(initialValue) && initialValue.length === 0)
-      ? null
-      : initialValue;
+    const normalizedInitialValue =
+      initialValue === '' || (Array.isArray(initialValue) && initialValue.length === 0) ? null : initialValue;
     const storageField = this.getStorageField(fieldApiName);
     const storageValue = storageField?.value;
-    const normalizedStorageValue = storageValue === '' || (Array.isArray(storageValue) && storageValue.length === 0)
-      ? null
-      : storageValue;
+    const normalizedStorageValue =
+      storageValue === '' || (Array.isArray(storageValue) && storageValue.length === 0) ? null : storageValue;
 
-    return storageField
-      ? normalizedStorageValue ?? defaultValue
-      : normalizedInitialValue ?? defaultValue;
+    return storageField ? (normalizedStorageValue ?? defaultValue) : (normalizedInitialValue ?? defaultValue);
   };
 
   private fieldValuesDispatch: TFieldDispatchRecord = {
@@ -115,8 +111,8 @@ export class ExtraFieldsHelper {
       }
       const storageField = this.getStorageField(field.apiName);
       const storageAttachments = storageField
-        ? storageField.attachments?.filter(({ isRemoved }) => !isRemoved)
-          ?? parseMarkdownToFiles(storageField.markdownValue)
+        ? (storageField.attachments?.filter(({ isRemoved }) => !isRemoved) ??
+          parseMarkdownToFiles(storageField.markdownValue))
         : null;
       const attachments = storageAttachments ?? initialAttachments ?? [];
       const value = attachments.map(({ name, url }) => `[${name}](${url})`);

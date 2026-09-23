@@ -49,9 +49,8 @@ export function FeedItemOutputs({ kickoff, isTextExpanded, onExpand, task, type 
         viewMode={EKickoffOutputsViewModes.Short}
         isTruncated={!isTextExpanded}
       />
-      {filteredOutputs.length + filteredFieldsets.flatMap((fieldset) => fieldset.fields).length > 1
-        && !isTextExpanded
-        && <Ellipsis expand={onExpand} />}
+      {filteredOutputs.length + filteredFieldsets.flatMap((fieldset) => fieldset.fields).length > 1 &&
+        !isTextExpanded && <Ellipsis expand={onExpand} />}
     </>
   );
 }
