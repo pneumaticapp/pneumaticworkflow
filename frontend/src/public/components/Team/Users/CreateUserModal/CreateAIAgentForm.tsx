@@ -113,7 +113,7 @@ export function CreateAIAgentForm({
   const modelsState = useSelector(getAIProviderModelsState);
 
   const providerOptions = providers.map((provider) => ({
-    label: `${provider.name} — ${provider.baseUrl}`,
+    label: `${provider.name} — ${provider.apiKeyPrefix}`,
     value: String(provider.id),
   }));
 
