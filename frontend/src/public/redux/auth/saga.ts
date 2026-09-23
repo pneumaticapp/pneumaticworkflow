@@ -8,7 +8,6 @@ import {
   EAuthActions,
   editCurrentAccountSuccess,
   editCurrentUserSuccess,
-  IConfirmResetPassword,
   profileEditFailed,
   registerUserSuccess,
   sendForgotPasswordFail,
@@ -398,19 +397,16 @@ export function* sendPasswordChange({ payload }: TSendChangePassword) {
   }
 }
 
-const resetPasswordSetAsync = (body: IConfirmResetPassword) =>
-  resetPasswordSet(body)
-    .then((data) => data)
-    .catch((e) => e);
-
 export function* sendPasswordResetConfirm({ payload }: TSendResetPassword) {
   try {
-    const loginUser: IResetPasswordSetResponse = yield call(resetPasswordSetAsync, payload);
+    const loginUser: IResetPasswordSetResponse = yield call(resetPasswordSet, payload);
     setJwtCookie(loginUser.token);
     yield put(sendResetPasswordSuccess(loginUser));
     window.location.replace(ERoutes.Main);
-  } catch (e) {
-    logger.error(e);
+  } catch (error) {
+    const message = getErrorMessage(error);
+    logger.error(message, error);
+    NotificationManager.notifyApiError(error, { message });
     yield put(sendResetPasswordFail());
   }
 }

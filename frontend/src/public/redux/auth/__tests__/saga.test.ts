@@ -15,6 +15,7 @@ import { setJwtCookie } from '../../../utils/authCookie';
 import { setOAuthRegistrationCompleted } from '../../../api/setOAuthRegistrationCompleted';
 import { getOAuthId, getOAuthType } from '../../../utils/auth';
 import { EOAuthType } from '../../../types/auth';
+import { EAuthActions } from '../actions';
 
 const auth = {
   createUserWithEmail: jest.fn(),
@@ -29,6 +30,30 @@ jest.mock('../../../api/auth', () => ({
     return auth;
   },
 }));
+jest.mock('../../../api/resetPasswordSet', () => ({
+  resetPasswordSet: jest.fn(),
+}));
+jest.mock('../../../components/UI/Notifications', () => ({
+  NotificationManager: { notifyApiError: jest.fn(), success: jest.fn(), warning: jest.fn() },
+}));
+jest.mock('../../../utils/getErrorMessage', () => ({
+  getErrorMessage: jest.fn(),
+}));
+jest.mock('../../../utils/logger', () => ({
+  logger: { error: jest.fn(), info: jest.fn() },
+}));
+
+interface IDispatchedAction {
+  type: string;
+  payload?: unknown;
+}
+
+const { sendPasswordResetConfirm } = require('../saga');
+const { runSaga } = require('redux-saga');
+const { resetPasswordSet } = require('../../../api/resetPasswordSet');
+const { NotificationManager } = require('../../../components/UI/Notifications');
+const { getErrorMessage } = require('../../../utils/getErrorMessage');
+const { logger } = require('../../../utils/logger');
 
 const mockRegisterData = {
   email: 'example@pneumatic.app',
@@ -292,6 +317,71 @@ describe('saga', () => {
 
       expect(mockGetErrorMessage).toHaveBeenCalledWith(fsError);
       expect(mockNotifyApiError).toHaveBeenCalledWith(fsError, { message: 'file-service.permission-denied' });
+    });
+  });
+
+  describe('sendPasswordResetConfirm', () => {
+    const mockLocationReplace = jest.fn();
+    const originalLocation = window.location;
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+
+      Object.defineProperty(window, 'location', {
+        configurable: true,
+        value: { ...originalLocation, replace: mockLocationReplace },
+      });
+    });
+
+    afterEach(() => {
+      Object.defineProperty(window, 'location', {
+        configurable: true,
+        value: originalLocation,
+      });
+    });
+
+    it('on successful API response sets JWT cookie, dispatches success and redirects to main', async () => {
+      const mockToken = 'jwt-token-123';
+      const mockPayload = { newPassword: 'NewPass1!', confirmNewPassword: 'NewPass1!', token: 'reset-token-abc' };
+      resetPasswordSet.mockResolvedValueOnce({ token: mockToken });
+
+      const dispatched: IDispatchedAction[] = [];
+      await runSaga({ dispatch: (action: IDispatchedAction) => dispatched.push(action) }, sendPasswordResetConfirm, {
+        type: EAuthActions.ResetPassword,
+        payload: mockPayload,
+      }).toPromise();
+
+      expect(resetPasswordSet).toHaveBeenCalledWith(mockPayload);
+      expect(resetPasswordSet).toHaveBeenCalledTimes(1);
+      expect(setJwtCookie).toHaveBeenCalledWith(mockToken);
+      expect(setJwtCookie).toHaveBeenCalledTimes(1);
+      expect(dispatched).toEqual([{ type: EAuthActions.ResetPasswordSuccess, payload: { token: mockToken } }]);
+      expect(mockLocationReplace).toHaveBeenCalledWith('/dashboard/');
+      expect(mockLocationReplace).toHaveBeenCalledTimes(1);
+      expect(NotificationManager.notifyApiError).not.toHaveBeenCalled();
+    });
+
+    it('on API error logs, shows notification and dispatches fail', async () => {
+      const mockError = new Error('Token expired');
+      const mockPayload = { newPassword: 'NewPass1!', confirmNewPassword: 'NewPass1!', token: 'expired-token' };
+      resetPasswordSet.mockRejectedValueOnce(mockError);
+      getErrorMessage.mockReturnValue('Token expired');
+
+      const dispatched: IDispatchedAction[] = [];
+      await runSaga({ dispatch: (action: IDispatchedAction) => dispatched.push(action) }, sendPasswordResetConfirm, {
+        type: EAuthActions.ResetPassword,
+        payload: mockPayload,
+      }).toPromise();
+
+      expect(getErrorMessage).toHaveBeenCalledWith(mockError);
+      expect(getErrorMessage).toHaveBeenCalledTimes(1);
+      expect(logger.error).toHaveBeenCalledWith('Token expired', mockError);
+      expect(logger.error).toHaveBeenCalledTimes(1);
+      expect(NotificationManager.notifyApiError).toHaveBeenCalledWith(mockError, { message: 'Token expired' });
+      expect(NotificationManager.notifyApiError).toHaveBeenCalledTimes(1);
+      expect(dispatched).toEqual([{ type: EAuthActions.ResetPasswordFail }]);
+      expect(setJwtCookie).not.toHaveBeenCalled();
+      expect(mockLocationReplace).not.toHaveBeenCalled();
     });
   });
 });
