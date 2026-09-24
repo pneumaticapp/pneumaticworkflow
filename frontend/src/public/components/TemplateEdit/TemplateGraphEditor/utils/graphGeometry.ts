@@ -9,6 +9,8 @@ export const GRAPH_LANE_PITCH = GRAPH_NODE_WIDTH + GRAPH_COLUMN_GAP;
 export const GRAPH_ROW_GAP = 96;
 export const GRAPH_SKIP_LANE_GAP = 32;
 export const GRAPH_SKIP_LANE_STEP = 32;
+/** Smallest distance between a routing alley and the card edge it runs past. */
+export const GRAPH_LANE_CLEARANCE = 16;
 /** Perpendicular run off a card face before the first turn (Miro-style, 1rem). */
 export const GRAPH_EDGE_STANDOFF = 32;
 /** Same-column Check If sits in the next free column, not along the gray stem. */
@@ -103,11 +105,7 @@ export interface IGraphHandleAnchor {
   y: number;
 }
 
-export function offsetAlongFace(
-  point: IGraphHandleAnchor,
-  face: TGraphFace,
-  distance: number,
-): IGraphHandleAnchor {
+export function offsetAlongFace(point: IGraphHandleAnchor, face: TGraphFace, distance: number): IGraphHandleAnchor {
   if (distance <= 0) {
     return point;
   }
@@ -130,11 +128,7 @@ export function offsetAlongFace(
 const STANDOFF_STRIP_EPSILON = 0.5;
 
 /** Move an X that sits on a side handle or in its standoff strip out to the standoff. */
-export function snapOutOfStandoffStrip(
-  x: number,
-  handleX: number,
-  standoffX: number,
-): number {
+export function snapOutOfStandoffStrip(x: number, handleX: number, standoffX: number): number {
   if (Math.abs(handleX - standoffX) < STANDOFF_STRIP_EPSILON) {
     return x;
   }
@@ -199,12 +193,11 @@ export function preferredFaces(source: TGraphNode, target: TGraphNode): { source
   const to = getGraphNodeBox(target);
   const gapBelow = to.y - from.bottom;
   const gapAbove = from.y - to.bottom;
-  const facing: { source: TGraphFace; target: TGraphFace } = to.centerX >= from.centerX
-    ? { source: 'right', target: 'left' }
-    : { source: 'left', target: 'right' };
+  const facing: { source: TGraphFace; target: TGraphFace } =
+    to.centerX >= from.centerX ? { source: 'right', target: 'left' } : { source: 'left', target: 'right' };
   const onStem = isJunctionNode(source)
     ? sharesStemX(from, to) || isHorizontallyOver(from, to)
-    : (overlapsHorizontally(from, to) || isCardNode(source));
+    : overlapsHorizontally(from, to) || isCardNode(source);
 
   if (gapBelow >= 0) {
     if (onStem) {

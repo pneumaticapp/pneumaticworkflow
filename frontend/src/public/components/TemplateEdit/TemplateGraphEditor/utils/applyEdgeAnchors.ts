@@ -20,6 +20,8 @@ import {
   isCardNode,
 } from './graphGeometry';
 
+const GUTTER_PASS_LIMIT = 6;
+
 interface IVerticalSpan {
   top: number;
   bottom: number;
@@ -39,22 +41,20 @@ function spansOverlap(first: IVerticalSpan, second: IVerticalSpan): boolean {
   return first.bottom > second.top && second.bottom > first.top;
 }
 
-function getLaneStartX(
-  nodes: TGraphNode[],
-  span: IVerticalSpan,
-  side: TGraphLaneSide,
-  gap: number,
-): number {
-  const start = nodes.reduce((edge, node) => {
-    const box = getGraphNodeBox(node);
-    const overlapsSpan = box.bottom > span.top && box.y < span.bottom;
+function getLaneStartX(nodes: TGraphNode[], span: IVerticalSpan, side: TGraphLaneSide, gap: number): number {
+  const start = nodes.reduce(
+    (edge, node) => {
+      const box = getGraphNodeBox(node);
+      const overlapsSpan = box.bottom > span.top && box.y < span.bottom;
 
-    if (!overlapsSpan) {
-      return edge;
-    }
+      if (!overlapsSpan) {
+        return edge;
+      }
 
-    return side === 'right' ? Math.max(edge, box.right) : Math.min(edge, box.x);
-  }, side === 'right' ? 0 : Number.POSITIVE_INFINITY);
+      return side === 'right' ? Math.max(edge, box.right) : Math.min(edge, box.x);
+    },
+    side === 'right' ? 0 : Number.POSITIVE_INFINITY,
+  );
 
   return side === 'right' ? start + gap : start - gap;
 }
@@ -65,9 +65,7 @@ interface ITakenLane {
 }
 
 function isLaneTaken(laneX: number, span: IVerticalSpan, taken: ITakenLane[], minGap: number): boolean {
-  return taken.some(
-    (item) => spansOverlap(item.span, span) && Math.abs(item.laneX - laneX) < minGap,
-  );
+  return taken.some((item) => spansOverlap(item.span, span) && Math.abs(item.laneX - laneX) < minGap);
 }
 
 function columnHitsCard(nodes: TGraphNode[], laneX: number, span: IVerticalSpan): boolean {
@@ -150,15 +148,7 @@ function assignSideLanes(nodes: TGraphNode[], edges: TGraphEdge[]): Map<string, 
     const gap = isCheckIf ? GRAPH_CHECK_IF_LANE_GAP : GRAPH_SKIP_LANE_GAP;
     const stepSize = isCheckIf ? GRAPH_LANE_PITCH : GRAPH_SKIP_LANE_STEP;
     const minGap = isCheckIf ? GRAPH_NODE_WIDTH : GRAPH_SKIP_LANE_STEP;
-    const laneX = findFreeLane(
-      getLaneStartX(nodes, span, side, gap),
-      span,
-      taken,
-      side,
-      nodes,
-      stepSize,
-      minGap,
-    );
+    const laneX = findFreeLane(getLaneStartX(nodes, span, side, gap), span, taken, side, nodes, stepSize, minGap);
 
     lanes.set(edge.id, laneX);
     taken.push({ span, laneX });
@@ -240,13 +230,7 @@ function routePass(nodes: TGraphNode[], edges: TGraphEdge[]): TGraphEdge[] {
 
     const isDetour = isLaneRoutedGraphEdge(edge);
     const deltaX = getGraphNodeBox(target).centerX - getGraphNodeBox(source).centerX;
-    const kind = pathKindForHandles(
-      source,
-      assigned.sourceHandle,
-      assigned.targetHandle,
-      isDetour,
-      deltaX,
-    );
+    const kind = pathKindForHandles(source, assigned.sourceHandle, assigned.targetHandle, isDetour, deltaX);
 
     return withPathKind(edge, kind, {
       sourceHandle: assigned.sourceHandle,
@@ -266,11 +250,7 @@ function routePass(nodes: TGraphNode[], edges: TGraphEdge[]): TGraphEdge[] {
   });
 }
 
-function withVerticalDetours(
-  nodes: TGraphNode[],
-  edges: TGraphEdge[],
-  xIds: Set<string>,
-): TGraphEdge[] {
+function withVerticalDetours(nodes: TGraphNode[], edges: TGraphEdge[], xIds: Set<string>): TGraphEdge[] {
   const nodeById = new Map(nodes.map((node) => [node.id, node]));
 
   return edges.map((edge) => {
@@ -338,9 +318,15 @@ export function applyEdgeAnchors(nodes: TGraphNode[], edges: TGraphEdge[]): TGra
     laid = routePass(nodes, routed);
   }
 
-  const gutterPlan = planObstacleDetours(nodes, laid);
+  // Moving one line frees its old alley and crowds another, so the gutter pass repeats until it
+  // stops finding work. The cap keeps a pathological graph from looping.
+  for (let pass = 0; pass < GUTTER_PASS_LIMIT; pass += 1) {
+    const gutterPlan = planObstacleDetours(nodes, laid);
 
-  if (gutterPlan.gutters.size > 0) {
+    if (gutterPlan.gutters.size === 0) {
+      break;
+    }
+
     laid = withGutterDetours(laid, gutterPlan.gutters);
   }
 
