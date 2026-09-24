@@ -3,6 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 
 import { GRAPH_APPROVAL_LADDER_TEMPLATE } from './fixtures/graphApprovalLadderTemplate';
 import { GRAPH_SHOWCASE_TEMPLATE } from './fixtures/graphShowcaseTemplate';
+import { GRAPH_TEMPLATE_259 } from './fixtures/graphTemplate259';
 import { GRAPH_WEAVE_TEMPLATE } from './fixtures/graphWeaveTemplate';
 import { TemplateGraphEditor } from './TemplateGraphEditor';
 
@@ -47,6 +48,16 @@ export const WeaveConditions: Story = {
 export const ApprovalLadder: Story = {
   args: {
     template: GRAPH_APPROVAL_LADDER_TEMPLATE,
+    onTaskEdit: () => undefined,
+    onTaskDelete: () => undefined,
+    onKickoffEdit: () => undefined,
+    onAddTask: () => undefined,
+  },
+};
+
+export const Template259StressTest: Story = {
+  args: {
+    template: GRAPH_TEMPLATE_259,
     onTaskEdit: () => undefined,
     onTaskDelete: () => undefined,
     onKickoffEdit: () => undefined,
