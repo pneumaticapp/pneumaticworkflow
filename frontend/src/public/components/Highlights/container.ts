@@ -1,4 +1,3 @@
-import { startOfToday, endOfToday, isValid } from 'date-fns';
 import { connect } from 'react-redux';
 import { AnyAction } from 'redux';
 
@@ -16,6 +15,8 @@ import { HighlightsFeed, IHighlightsFeedProps } from './HighlightsFeed';
 import { withSyncedQueryString } from '../../HOCs/withSyncedQueryString';
 import { EHighlightsDateFilter } from '../../types/highlights';
 import { getActiveUsers } from '../../utils/users';
+import { getTodayDateRange } from '../../utils/highlightsDateRange';
+import { parseDateQueryParam, serializeDateQueryParam } from './utils/dateQueryParam';
 
 type THighlightsFeedStoreProps = Pick<
   IHighlightsFeedProps,
@@ -97,40 +98,32 @@ const SyncedHiglights = withSyncedQueryString<THighlightsFeedStoreProps>([
   {
     propName: 'startDate',
     queryParamName: 'start-date',
-    defaultAction: setFilters({ startDate: startOfToday() }),
+    defaultAction: setFilters({ startDate: getTodayDateRange('').startDate }),
     createAction: (startDateQuery: string) => {
-      const formattedDateQuery = startDateQuery
-        .replace(/\(.*?\)/, '')
-        .replace('GMT ', 'GMT+')
-        .trim();
-      const startDate = new Date(formattedDateQuery);
+      const startDate = parseDateQueryParam(startDateQuery);
 
-      if (!isValid(startDate)) {
+      if (!startDate) {
         return { type: 'EMPTY_ACTION' } as AnyAction;
       }
 
       return setFilters({ startDate });
     },
-    getQueryParamByProp: (propValue: string) => propValue,
+    getQueryParamByProp: serializeDateQueryParam,
   },
   {
     propName: 'endDate',
     queryParamName: 'end-date',
-    defaultAction: setFilters({ endDate: endOfToday() }),
+    defaultAction: setFilters({ endDate: getTodayDateRange('').endDate }),
     createAction: (endDateQuery: string) => {
-      const formattedendDateQuery = endDateQuery
-        .replace(/\(.*?\)/, '')
-        .replace('GMT ', 'GMT+')
-        .trim();
-      const endDate = new Date(formattedendDateQuery);
+      const endDate = parseDateQueryParam(endDateQuery);
 
-      if (!isValid(endDate)) {
+      if (!endDate) {
         return { type: 'EMPTY_ACTION' } as AnyAction;
       }
 
       return setFilters({ endDate });
     },
-    getQueryParamByProp: (propValue: string) => propValue,
+    getQueryParamByProp: serializeDateQueryParam,
   },
   {
     propName: 'usersFilter',
