@@ -34,6 +34,13 @@ export function FieldInput({
     Object.entries(rest).filter(([key]) => key !== 'defaultValue'),
   ) as TNumericFormatRest;
 
+  const getInputClassName = (visibleDisplayClassName: string) =>
+    classnames(
+      inputClassName,
+      shouldReplaceWithLabel ? styles['input_hidden'] : visibleDisplayClassName,
+      isFromConditionValueField && styles['input_condition-value'],
+    );
+
   const input = isNumericField ? (
     <NumericFormat
       value={valueString}
@@ -49,11 +56,7 @@ export function FieldInput({
       getInputRef={innerRef}
       disabled={disabled}
       placeholder={placeholder}
-      className={inputClassName}
-      style={{
-        display: shouldReplaceWithLabel ? 'none' : 'block',
-        ...(isFromConditionValueField ? { width: '100%', padding: '0.8rem' } : {}),
-      }}
+      className={getInputClassName(styles['input_block'])}
       onBlur={onBlur}
       onKeyDown={onKeyDown}
       onPaste={onPaste}
@@ -64,13 +67,12 @@ export function FieldInput({
     <input
       ref={innerRef}
       type={type}
-      style={{ display: shouldReplaceWithLabel ? 'none' : 'inline' }}
       value={valueString}
       onChange={onChange}
       onBlur={onBlur}
       onKeyDown={onKeyDown}
       placeholder={placeholder}
-      className={inputClassName}
+      className={getInputClassName(styles['input_inline'])}
       disabled={disabled}
       onPaste={onPaste}
       {...rest}
