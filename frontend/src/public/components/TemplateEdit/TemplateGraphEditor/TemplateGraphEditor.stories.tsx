@@ -1,6 +1,7 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 
+import { GRAPH_APPROVAL_LADDER_TEMPLATE } from './fixtures/graphApprovalLadderTemplate';
 import { GRAPH_SHOWCASE_TEMPLATE } from './fixtures/graphShowcaseTemplate';
 import { GRAPH_WEAVE_TEMPLATE } from './fixtures/graphWeaveTemplate';
 import { TemplateGraphEditor } from './TemplateGraphEditor';
@@ -35,6 +36,17 @@ export const AllVariants: Story = {
 export const WeaveConditions: Story = {
   args: {
     template: GRAPH_WEAVE_TEMPLATE,
+    onTaskEdit: () => undefined,
+    onTaskDelete: () => undefined,
+    onKickoffEdit: () => undefined,
+    onAddTask: () => undefined,
+  },
+};
+
+/** Many Check If lines converging on a few approvals, the densest routing the editor has to solve. */
+export const ApprovalLadder: Story = {
+  args: {
+    template: GRAPH_APPROVAL_LADDER_TEMPLATE,
     onTaskEdit: () => undefined,
     onTaskDelete: () => undefined,
     onKickoffEdit: () => undefined,
