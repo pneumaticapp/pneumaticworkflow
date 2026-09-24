@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { IntlProvider } from 'react-intl';
@@ -41,12 +41,18 @@ describe('ExtraFieldDropdown', () => {
     jest.clearAllMocks();
   });
 
-  const getRequiredSwitch = () => screen.getByRole('switch', { name: 'Required', hidden: true });
-  const getHiddenSwitch = () => screen.getByRole('switch', { name: 'Hidden', hidden: true });
+  const openDropdown = () => userEvent.click(screen.getByRole('button'));
+  const openDatasetSubmenu = () => {
+    openDropdown();
+    userEvent.click(screen.getByRole('button', { name: 'Datasets' }));
+  };
+  const getRequiredSwitch = () => screen.getByRole('switch', { name: 'Required' });
+  const getHiddenSwitch = () => screen.getByRole('switch', { name: 'Hidden' });
 
   describe('Render', () => {
     it('renders Hidden switch', () => {
       renderWithIntl(<ExtraFieldDropdown {...baseProps} isHidden={false} />);
+      openDropdown();
 
       expect(getHiddenSwitch()).toBeInTheDocument();
     });
@@ -55,18 +61,21 @@ describe('ExtraFieldDropdown', () => {
   describe('Required / Hidden mutual exclusion', () => {
     it('Required switch is disabled when field is hidden', () => {
       renderWithIntl(<ExtraFieldDropdown {...baseProps} isHidden={true} />);
+      openDropdown();
 
       expect(getRequiredSwitch()).toBeDisabled();
     });
 
     it('Hidden switch is disabled when field is required', () => {
       renderWithIntl(<ExtraFieldDropdown {...baseProps} isRequired={true} />);
+      openDropdown();
 
       expect(getHiddenSwitch()).toBeDisabled();
     });
 
     it('Required switch is disabled when isRequiredDisabled', () => {
       renderWithIntl(<ExtraFieldDropdown {...baseProps} isRequiredDisabled={true} />);
+      openDropdown();
 
       expect(getRequiredSwitch()).toBeDisabled();
     });
@@ -76,6 +85,7 @@ describe('ExtraFieldDropdown', () => {
     it('toggling Hidden on calls onEditField with isHidden=true', () => {
       const onEditField = jest.fn();
       renderWithIntl(<ExtraFieldDropdown {...baseProps} isHidden={false} onEditField={onEditField} />);
+      openDropdown();
 
       userEvent.click(getHiddenSwitch());
 
@@ -86,6 +96,7 @@ describe('ExtraFieldDropdown', () => {
     it('toggling Hidden off calls onEditField with isHidden=false', () => {
       const onEditField = jest.fn();
       renderWithIntl(<ExtraFieldDropdown {...baseProps} isHidden={true} onEditField={onEditField} />);
+      openDropdown();
 
       userEvent.click(getHiddenSwitch());
 
@@ -108,6 +119,7 @@ describe('ExtraFieldDropdown', () => {
 
     it('calls onDatasetSelect with dataset id when dataset option is clicked', () => {
       renderWithIntl(<ExtraFieldDropdown {...datasetProps} />);
+      openDatasetSubmenu();
 
       userEvent.click(screen.getByText('Dataset A'));
 
@@ -115,6 +127,7 @@ describe('ExtraFieldDropdown', () => {
     });
     it('renders dataset sub-options when datasetOptions is provided', () => {
       renderWithIntl(<ExtraFieldDropdown {...datasetProps} />);
+      openDatasetSubmenu();
 
       expect(screen.getByText('Dataset A')).toBeInTheDocument();
       expect(screen.getByText('Dataset B')).toBeInTheDocument();
