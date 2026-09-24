@@ -8,7 +8,7 @@ const restoreLegacyParam = (queryParam: string): string =>
   queryParam.replace(LEGACY_TIMEZONE_NAME_PATTERN, '').replace(LEGACY_GMT_SIGN_PATTERN, 'GMT+').trim();
 
 export const parseDateQueryParam = (queryParam: string): Date | null => {
-  if (!queryParam) {
+  if (!queryParam.trim()) {
     return null;
   }
 

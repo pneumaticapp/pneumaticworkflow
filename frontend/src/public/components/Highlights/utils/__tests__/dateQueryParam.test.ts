@@ -33,8 +33,9 @@ describe('date query params', () => {
     expect(serializeDateQueryParam(undefined)).toBe('');
   });
 
-  it('returns null for an empty or unparsable param', () => {
+  it('returns null for an empty, whitespace-only or unparsable param', () => {
     expect(parseDateQueryParam('')).toBeNull();
+    expect(parseDateQueryParam(' ')).toBeNull();
     expect(parseDateQueryParam('not-a-date')).toBeNull();
   });
 });
