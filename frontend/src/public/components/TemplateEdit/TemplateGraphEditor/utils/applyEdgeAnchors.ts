@@ -314,9 +314,23 @@ function movesAnyEdge(edges: TGraphEdge[], gutters: Map<string, IGutterDetour>):
   });
 }
 
-export function applyEdgeAnchors(nodes: TGraphNode[], edges: TGraphEdge[]): TGraphEdge[] {
+interface IEdgeAnchorOptions {
+  /** Search for clear alleys around the cards. Off while a card is in flight, where it is too slow. */
+  settleObstacles?: boolean;
+}
+
+export function applyEdgeAnchors(
+  nodes: TGraphNode[],
+  edges: TGraphEdge[],
+  { settleObstacles = true }: IEdgeAnchorOptions = {},
+): TGraphEdge[] {
   let routed = markCheckIfLanes(nodes, markDetourEdges(nodes, edges));
   let laid = routePass(nodes, routed);
+
+  if (!settleObstacles) {
+    return laid;
+  }
+
   const wrapPlan = planCheckIfCardWraps(nodes, laid);
 
   if (wrapPlan.size > 0) {

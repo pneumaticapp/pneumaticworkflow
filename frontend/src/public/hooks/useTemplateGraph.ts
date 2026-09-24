@@ -36,7 +36,6 @@ interface IUseTemplateGraphResult {
   edges: TGraphEdge[];
   onNodesChange: (changes: NodeChange[]) => void;
   onEdgesChange: (changes: EdgeChange[]) => void;
-  onNodeDrag: NodeDragHandler;
   onNodeDragStop: NodeDragHandler;
   /** At least one card position is stored, so the layout differs from the automatic one. */
   hasCustomLayout: boolean;
@@ -117,13 +116,6 @@ export function useTemplateGraph(template: ITemplateClient): IUseTemplateGraphRe
     [onNodesChange, setEdges, setNodes],
   );
 
-  const onNodeDrag = useCallback<NodeDragHandler>(
-    (_, movedNode) => {
-      applyMove(movedNode);
-    },
-    [applyMove],
-  );
-
   const onNodeDragStop = useCallback<NodeDragHandler>(
     (_, movedNode) => {
       if (movedNode.type === EGraphNodeType.Junction) {
@@ -142,7 +134,6 @@ export function useTemplateGraph(template: ITemplateClient): IUseTemplateGraphRe
     edges: edges as TGraphEdge[],
     onNodesChange: handleNodesChange,
     onEdgesChange,
-    onNodeDrag,
     onNodeDragStop,
     hasCustomLayout,
     resetLayout,

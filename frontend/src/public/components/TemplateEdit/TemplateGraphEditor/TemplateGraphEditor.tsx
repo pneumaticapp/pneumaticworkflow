@@ -44,7 +44,7 @@ export const TemplateGraphEditor = ({
   onKickoffEdit,
   onAddTask,
 }: ITemplateGraphEditorProps) => {
-  const { nodes, edges, onNodesChange, onEdgesChange, onNodeDrag, onNodeDragStop, hasCustomLayout, resetLayout } =
+  const { nodes, edges, onNodesChange, onEdgesChange, onNodeDragStop, hasCustomLayout, resetLayout } =
     useTemplateGraph(template);
   const [focusedNodeId, setFocusedNodeId] = useState<string | null>(null);
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
@@ -165,7 +165,6 @@ export const TemplateGraphEditor = ({
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onNodeDragStop={onNodeDragStop}
-        onNodeDrag={onNodeDrag}
         onNodeClick={handleNodeClick}
         onNodeMouseEnter={handleNodeMouseEnter}
         onNodeMouseLeave={handleNodeMouseLeave}
