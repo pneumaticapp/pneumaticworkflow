@@ -823,12 +823,13 @@ function findCrowdedEdges(
 export function planObstacleDetours(
   nodes: TGraphNode[],
   edges: TGraphEdge[],
+  includeCrowded: boolean = true,
 ): { xIds: Set<string>; gutters: Map<string, IGutterDetour> } {
   const nodeById = new Map(nodes.map((node) => [node.id, node]));
   const gutters = new Map<string, IGutterDetour>();
   const { xIds, gutterEdges } = classifyDetours(nodes, edges, nodeById);
   const hitting = new Set([...xIds, ...gutterEdges.map((edge) => edge.id)]);
-  const crowded = findCrowdedEdges(nodes, edges, nodeById, hitting);
+  const crowded = includeCrowded ? findCrowdedEdges(nodes, edges, nodeById, hitting) : [];
   const moving = [...gutterEdges, ...crowded];
   const pending = new Set([...xIds, ...moving.map((edge) => edge.id)]);
   const { xLanes, yLanes } = collectLaneUsage(nodes, edges, pending);
@@ -866,7 +867,8 @@ export function planObstacleDetours(
 
     // A crowded gutter is better served by lines running closer together than by two lines
     // landing on the very same alley, so the spacing requirement is relaxed step by step.
-    const detour = LANE_PITCH_LADDER.reduce<IGutterDetour | null>((found, pitch) => found ?? planWith(pitch), null);
+    const spaced = LANE_PITCH_LADDER.reduce<IGutterDetour | null>((found, pitch) => found ?? planWith(pitch), null);
+    const detour = spaced ?? (hitting.has(edge.id) ? planWith(0) : null);
 
     // An edge that found nowhere better keeps its route, so its lanes have to go back on the books
     // or the next edge in the queue will happily settle on top of it.

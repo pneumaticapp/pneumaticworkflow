@@ -21,6 +21,7 @@ import {
 } from './graphGeometry';
 
 const GUTTER_PASS_LIMIT = 6;
+const CROWDED_EDGE_LIMIT = 100;
 
 interface IVerticalSpan {
   top: number;
@@ -332,12 +333,13 @@ export function applyEdgeAnchors(
   }
 
   const wrapPlan = planCheckIfCardWraps(nodes, laid);
+  const includeCrowded = edges.length <= CROWDED_EDGE_LIMIT;
 
   if (wrapPlan.size > 0) {
     laid = withGutterDetours(laid, wrapPlan);
   }
 
-  const firstPlan = planObstacleDetours(nodes, laid);
+  const firstPlan = planObstacleDetours(nodes, laid, includeCrowded);
 
   if (firstPlan.xIds.size > 0) {
     routed = withVerticalDetours(nodes, routed, firstPlan.xIds);
@@ -347,7 +349,7 @@ export function applyEdgeAnchors(
   // Moving one line frees its old alley and crowds another, so the gutter pass repeats until it
   // stops finding work. The cap keeps a pathological graph from looping.
   for (let pass = 0; pass < GUTTER_PASS_LIMIT; pass += 1) {
-    const gutterPlan = planObstacleDetours(nodes, laid);
+    const gutterPlan = planObstacleDetours(nodes, laid, includeCrowded);
 
     if (!movesAnyEdge(laid, gutterPlan.gutters)) {
       break;
