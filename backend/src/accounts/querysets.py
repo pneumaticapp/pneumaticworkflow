@@ -259,7 +259,12 @@ class AccountSystemTemplateQuerySet(BaseQuerySet):
 
 
 class APIKeyQuerySet(AccountBaseQuerySet):
-    pass
+
+    def active(self):
+        return self.filter(is_active=True)
+
+    def by_user(self, user_id):
+        return self.filter(user_id=user_id)
 
 
 class NotificationsQuerySet(AccountBaseQuerySet):

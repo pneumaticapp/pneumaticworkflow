@@ -1,16 +1,25 @@
-import { setTaskCompleted } from '../saga';
-import { ETaskActions, TSetTaskCompleted } from '../actions';
+import { setTaskCompleted, setTaskReverted } from '../saga';
+import { ETaskActions, TSetTaskCompleted, setTaskReverted as createSetTaskRevertedAction } from '../actions';
 import { ETaskCardViewMode } from '../../../components/TaskCard';
 import { completeTask } from '../../../api/completeTask';
-import { fieldsetsStorage } from '../../../components/TaskCard/utils/storageOutputs';
+import { revertTask } from '../../../api/revertTask';
+import {
+  fieldsetsStorage,
+  removeOutputFromLocalStorage,
+  removeOutputsFromLocalStorage,
+} from '../../../components/TaskCard/utils/storageOutputs';
 
 jest.mock('../../../api/completeTask', () => ({
   completeTask: jest.fn(),
 }));
 
+jest.mock('../../../api/revertTask');
+
 jest.mock('../../../components/TaskCard/utils/storageOutputs', () => ({
   outputStorage: { remove: jest.fn() },
   fieldsetsStorage: { remove: jest.fn() },
+  removeOutputFromLocalStorage: jest.fn(),
+  removeOutputsFromLocalStorage: jest.fn(),
 }));
 
 jest.mock('../../../utils/mappers', () => ({
@@ -41,6 +50,54 @@ jest.mock('../../../components/TaskCard', () => ({
 jest.mock('../../../utils/history', () => ({
   history: { push: jest.fn(), replace: jest.fn() },
 }));
+
+describe('setTaskReverted — output draft cleanup', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('keeps field and fieldset drafts when reverting a task fails', () => {
+    const taskId = 42;
+    const generator = setTaskReverted(
+      createSetTaskRevertedAction({
+        taskId,
+        viewMode: ETaskCardViewMode.Single,
+        comment: '',
+      }),
+    );
+
+    generator.next();
+    generator.next({ authUser: { id: 1 } } as any);
+    generator.next();
+    generator.throw(new Error('Revert failed'));
+
+    expect(revertTask).toHaveBeenCalledWith({ id: taskId, comment: '' });
+    expect(removeOutputsFromLocalStorage).not.toHaveBeenCalled();
+    expect(fieldsetsStorage.remove).not.toHaveBeenCalled();
+  });
+
+  it('clears field and fieldset drafts after reverting succeeds', () => {
+    const taskId = 42;
+    const generator = setTaskReverted(
+      createSetTaskRevertedAction({
+        taskId,
+        viewMode: ETaskCardViewMode.Single,
+        comment: '',
+        clearOutputTaskIds: [taskId, 41],
+      }),
+    );
+
+    generator.next();
+    generator.next({ authUser: { id: 1 } } as any);
+    generator.next();
+    generator.next();
+
+    expect(removeOutputsFromLocalStorage).toHaveBeenCalledWith([taskId, 41]);
+    expect(fieldsetsStorage.remove).toHaveBeenCalledTimes(2);
+    expect(fieldsetsStorage.remove).toHaveBeenCalledWith(taskId);
+    expect(fieldsetsStorage.remove).toHaveBeenCalledWith(41);
+  });
+});
 
 describe('setTaskCompleted — fieldsets draft cleanup', () => {
   beforeEach(() => {
@@ -83,6 +140,7 @@ describe('setTaskCompleted — fieldsets draft cleanup', () => {
 
     step(saga);
 
+    expect(removeOutputFromLocalStorage).toHaveBeenCalledWith(TASK_ID);
     expect(fieldsetsStorage.remove).toHaveBeenCalledTimes(1);
     expect(fieldsetsStorage.remove).toHaveBeenCalledWith(TASK_ID);
   });
@@ -92,6 +150,7 @@ describe('setTaskCompleted — fieldsets draft cleanup', () => {
 
     stepThrow(saga, new Error('API error'));
 
+    expect(removeOutputFromLocalStorage).not.toHaveBeenCalled();
     expect(fieldsetsStorage.remove).not.toHaveBeenCalled();
   });
 });

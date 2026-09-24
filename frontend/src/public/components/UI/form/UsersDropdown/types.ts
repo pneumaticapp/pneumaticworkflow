@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 
 import { IDropdownListProps, IFormatOptionLabelMeta, TDropdownOptionBase } from '../../DropdownList';
 import { ETaskPerformerType } from '../../../../types/template';
-import { TUserListItem } from '../../../../types/user';
+import { EUserStatus, TUserListItem } from '../../../../types/user';
 
 export enum EOptionTypes {
   Group = ETaskPerformerType.UserGroup,
@@ -17,6 +17,8 @@ export enum EOptionTypes {
 export type TUsersDropdownOption = TDropdownOptionBase & {
   firstName?: string;
   lastName?: string;
+  email?: string;
+  status?: EUserStatus;
   id: number;
   optionType: EOptionTypes;
 };

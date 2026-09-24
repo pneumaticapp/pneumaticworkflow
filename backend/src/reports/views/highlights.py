@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from drf_spectacular.utils import extend_schema
 from rest_framework.generics import ListAPIView
 
 from src.accounts.permissions import (
@@ -10,6 +11,12 @@ from src.generics.mixins.views import BasePrefetchMixin
 from src.generics.permissions import (
     UserIsAuthenticated,
 )
+from src.openapi import (
+    ACCESS_HIGHLIGHTS,
+    FORBIDDEN,
+    HIGHLIGHTS_PARAMS,
+    UNAUTHORIZED,
+)
 from src.processes.models.workflows.event import WorkflowEvent
 from src.reports.serializers import (
     EventHighlightsSerializer,
@@ -19,6 +26,17 @@ from src.reports.serializers import (
 UserModel = get_user_model()
 
 
+@extend_schema(
+    tags=['Reports'],
+    summary='Workflow highlights',
+    description=ACCESS_HIGHLIGHTS,
+    parameters=HIGHLIGHTS_PARAMS,
+    responses={
+        200: EventHighlightsSerializer(many=True),
+        401: UNAUTHORIZED,
+        403: FORBIDDEN,
+    },
+)
 class HighlightsView(
     ListAPIView,
     BasePrefetchMixin,

@@ -13,7 +13,7 @@ import { IDeleteComment } from '../../api/workflows/deleteComment';
 import { IEditComment } from '../../api/workflows/editComment';
 
 import { IStoreWorkflows, IWorkflowLog, IWorkflowsList } from '../../types/redux';
-import { IKickoffClient, ITemplateTitleBaseWithCount, TTemplatePreset } from '../../types/template';
+import { IRuntimeKickoffClient, ITemplateTitleBaseWithCount, TTemplatePreset } from '../../types/template';
 import { ITemplateStep } from '../../types/tasks';
 import {
   EWorkflowsLoadingStatus,
@@ -64,7 +64,7 @@ export const initialWorkflowsFilters: IWorkflowsSettings['values'] = {
 const initialWorkflowEdit = {
   workflow: {
     name: '',
-    kickoff: { description: '', fields: [], fieldsets: [] } as IKickoffClient,
+    kickoff: { description: '', fields: [], fieldsets: [] } as IRuntimeKickoffClient,
   },
   isWorkflowNameEditing: false,
   isKickoffEditing: false,
@@ -190,13 +190,11 @@ const workflowsSlice = createSlice({
     },
     loadFilterTemplatesSuccess: (state, action: PayloadAction<ITemplateTitleBaseWithCount[]>) => {
       state.workflowsSettings.templateList.isLoading = false;
-      state.workflowsSettings.templateList.items = action.payload.map(
-        (template, index) => ({
-          ...template,
-          steps: state.workflowsSettings.templateList.items[index]?.steps || [],
-          areStepsLoading: false,
-        }),
-      );
+      state.workflowsSettings.templateList.items = action.payload.map((template, index) => ({
+        ...template,
+        steps: state.workflowsSettings.templateList.items[index]?.steps || [],
+        areStepsLoading: false,
+      }));
     },
     loadFilterTemplatesFailed: (state) => {
       state.workflowsSettings.templateList.isLoading = false;
@@ -245,7 +243,6 @@ const workflowsSlice = createSlice({
 
     setFilterTemplateTasks: (state, action: PayloadAction<string[]>) => {
       updateWorkflowsFilterValue(state, 'tasksApiNamesFilter', action.payload);
-
     },
     setFilterPerformers: (state, action: PayloadAction<number[]>) => {
       updateWorkflowsFilterValue(state, 'performersIdsFilter', action.payload);
@@ -289,6 +286,9 @@ const workflowsSlice = createSlice({
     clearWorkflow: (state) => {
       state.workflow = null;
       state.workflowEdit = initialWorkflowEdit;
+      state.workflowLog.isOpen = false;
+      state.workflowLog.isOnlyAttachmentsShown = false;
+      state.workflowLog.workflowId = null;
     },
     setCurrentPerformersCounters: (state, action: PayloadAction<TUserCounter[]>) => {
       state.workflowsSettings.counters.performersCounters = action.payload;
@@ -304,7 +304,10 @@ const workflowsSlice = createSlice({
         });
       });
     },
-    patchWorkflowInList: (state, action: PayloadAction<{ workflowId: number; changedFields: Partial<IWorkflowClient> }>) => {
+    patchWorkflowInList: (
+      state,
+      action: PayloadAction<{ workflowId: number; changedFields: Partial<IWorkflowClient> }>,
+    ) => {
       const newListItems = state.workflowsList.items.map((workflow) => {
         if (workflow.id !== action.payload.workflowId) {
           return workflow;
@@ -315,7 +318,10 @@ const workflowsSlice = createSlice({
 
       state.workflowsList.items = newListItems;
     },
-    patchWorkflowDetailed: (state, action: PayloadAction<{ workflowId: number; changedFields: Partial<IWorkflowDetailsClient> }>) => {
+    patchWorkflowDetailed: (
+      state,
+      action: PayloadAction<{ workflowId: number; changedFields: Partial<IWorkflowDetailsClient> }>,
+    ) => {
       if (state.workflow?.id === action.payload.workflowId) {
         state.workflow = { ...state.workflow, ...action.payload.changedFields };
       }

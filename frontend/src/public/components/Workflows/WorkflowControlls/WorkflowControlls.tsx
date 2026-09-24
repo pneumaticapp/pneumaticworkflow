@@ -16,7 +16,7 @@ import {
   ReturnToIcon,
 } from '../../icons';
 import { isArrayWithItems } from '../../../utils/helpers';
-import { getAuthUser } from '../../../redux/selectors/user';
+import { getCanChangeWorkflow } from '../../../redux/selectors/permissions';
 import { EWorkflowStatus, IPassedTask, IWorkflowClient, IWorkflowDetailsClient } from '../../../types/workflow';
 import { NotificationManager } from '../../UI/Notifications';
 import {
@@ -31,8 +31,6 @@ import {
 import { getSnoozeOptions } from '../utils/getSnoozeOptions';
 import { getTemplateEditRoute } from '../../../utils/routes';
 import { history } from '../../../utils/history';
-
-import { checkCanControlWorkflow } from './utils/checkCanControlWorkflow';
 
 import styles from './WorkflowControlls.css';
 
@@ -63,12 +61,7 @@ export function WorkflowControllsComponents({
   const { formatMessage } = useIntl();
   const [isUrgent, setIsUrgent] = React.useState(workflow.isUrgent);
 
-  const { authUser } = useSelector(getAuthUser);
-  const canControlWorkflow = checkCanControlWorkflow(authUser, workflow.owners);
-
-  if (!canControlWorkflow) {
-    return <>{children([])}</>;
-  }
+  const canControlWorkflow = useSelector(getCanChangeWorkflow(workflow.id));
 
   const workflowId = workflow.id;
   const templateId = workflow.template?.id;
@@ -78,9 +71,7 @@ export function WorkflowControllsComponents({
   const canCloneWorkflow = Boolean(workflow.template?.isActive);
   const canEndWorkflow = workflow.finalizable && workflow.status !== EWorkflowStatus.Finished;
   const canSnoozeWorkflow = workflow.status === EWorkflowStatus.Running;
-  const canResumeWorkflow =
-    workflow.status === EWorkflowStatus.Snoozed ||
-    workflow.status === EWorkflowStatus.Finished;
+  const canResumeWorkflow = workflow.status === EWorkflowStatus.Snoozed || workflow.status === EWorkflowStatus.Finished;
 
   const handleOnClone = () => {
     if (!workflow.template) {
@@ -261,5 +252,5 @@ export function WorkflowControllsComponents({
     },
   ];
 
-  return <>{children(options)}</>;
+  return <>{children(canControlWorkflow ? options : [])}</>;
 }

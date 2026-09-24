@@ -7,10 +7,7 @@ import { getUserById } from './utils/getUserById';
 type TStoreProps = Pick<IUserdataProps, 'user'>;
 type TOwnProps = Pick<IUserdataProps, 'userId'>;
 
-const mapStateToProps = (
-  { accounts: { users } }: IApplicationState,
-  { userId }: TOwnProps,
-): TStoreProps => {
+const mapStateToProps = ({ accounts: { users } }: IApplicationState, { userId }: TOwnProps): TStoreProps => {
   return { user: getUserById(users, userId) };
 };
 

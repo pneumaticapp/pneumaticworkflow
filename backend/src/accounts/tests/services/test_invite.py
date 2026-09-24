@@ -38,7 +38,6 @@ from src.processes.tests.fixtures import (
     create_invited_user,
     create_test_account,
     create_test_group,
-    create_test_owner,
     create_test_user,
     create_test_workflow,
 )
@@ -377,11 +376,6 @@ def test_user_create_actions__premium__ok(mocker, plan):
     # arrange
     account = create_test_account(plan=plan)
     request_user = create_test_user(account=account)
-    key = '!@#W32423'
-    create_key_mock = mocker.patch(
-        'src.accounts.services.user_invite.PneumaticToken.create',
-        return_value=key,
-    )
     current_url = 'http://current.test'
     is_superuser = False
     workflow = create_test_workflow(request_user, tasks_count=1)
@@ -408,13 +402,7 @@ def test_user_create_actions__premium__ok(mocker, plan):
     assert not WorkflowPermissionService(workflow).has_view(user=invited_user)
     template = workflow.template
     assert invited_user not in template.owners.all()
-    assert APIKey.objects.get(
-        user=invited_user,
-        name='User Invited',
-        account_id=account.id,
-        key=key,
-    )
-    create_key_mock.assert_called_once_with(invited_user, for_api_key=True)
+    assert not APIKey.objects.filter(user=invited_user).exists()
     send_user_created_mock.assert_called_once_with(
         logging=invited_user.account.log_api_requests,
         account_id=invited_user.account_id,
@@ -444,11 +432,6 @@ def test_user_create_actions__freemium__ok(mocker):
     is_superuser = False
     workflow = create_test_workflow(request_user, tasks_count=1)
     invited_user = create_invited_user(user=request_user)
-    key = '!@#W32423'
-    create_key_mock = mocker.patch(
-        'src.accounts.services.user_invite.PneumaticToken.create',
-        return_value=key,
-    )
     send_user_created_mock = mocker.patch(
         'src.notifications.tasks.send_user_created_notification.delay',
     )
@@ -467,13 +450,7 @@ def test_user_create_actions__freemium__ok(mocker):
     assert not WorkflowPermissionService(workflow).has_view(user=invited_user)
     template = workflow.template
     assert invited_user not in template.owners.all()
-    assert APIKey.objects.get(
-        user=invited_user,
-        name='',
-        account_id=account.id,
-        key=key,
-    )
-    create_key_mock.assert_called_once_with(invited_user, for_api_key=True)
+    assert not APIKey.objects.filter(user=invited_user).exists()
     send_user_created_mock.assert_called_once_with(
         logging=invited_user.account.log_api_requests,
         account_id=invited_user.account_id,
@@ -668,6 +645,7 @@ def test_validate_limit_invites__not_premium_plan__not_raise(plan):
 
 
 def test__user_invite_actions__ok(mocker):
+
     # arrange
     request_user = create_test_user()
     invited_user = create_invited_user(user=request_user)
@@ -682,11 +660,11 @@ def test__user_invite_actions__ok(mocker):
         '_get_invite_token',
         return_value=invite_token_str,
     )
-    users_invited_mock = mocker.patch(
-        'src.analysis.services.AnalyticService.users_invited',
-    )
     users_invite_sent_mock = mocker.patch(
         'src.analysis.services.AnalyticService.users_invite_sent',
+    )
+    send_invite_notification_mock = mocker.patch(
+        'src.accounts.services.user_invite.send_invite_notification.delay',
     )
     email_message_log = mocker.patch(
         'src.logs.service.AccountLogService.email_message',
@@ -703,63 +681,15 @@ def test__user_invite_actions__ok(mocker):
     # assert
     identify_mock.assert_called_once_with(invited_user)
     invite_token_mock.assert_called_once_with(invited_user)
-    users_invited_mock.assert_called_once_with(
-        invite_to=invited_user,
-        is_superuser=is_superuser,
-        invite_token=invite_token_str,
-    )
     email_message_log.assert_not_called()
-    users_invite_sent_mock.assert_called_once_with(
-        invite_from=request_user,
-        invite_to=invited_user,
-        current_url=current_url,
-        is_superuser=is_superuser,
+    send_invite_notification_mock.assert_called_once_with(
+        user_id=invited_user.id,
+        user_email=invited_user.email,
+        account_id=request_user.account.id,
+        token=invite_token_str,
+        logo_lg=request_user.account.logo_lg,
+        logging=request_user.account.log_api_requests,
     )
-
-
-def test__user_invite_actions__enable_logging__create_event(mocker):
-    # arrange
-    account = create_test_account(log_api_requests=True)
-    request_user = create_test_owner(account=account)
-    invited_user = create_invited_user(user=request_user)
-    current_url = 'http://current.test'
-    is_superuser = False
-    invite_token_str = '!@#wweqasd'
-    identify_mock = mocker.patch(
-        'src.accounts.services.user_invite.UserInviteService.identify',
-    )
-    invite_token_mock = mocker.patch(
-        'src.accounts.services.user_invite.UserInviteService.'
-        '_get_invite_token',
-        return_value=invite_token_str,
-    )
-    users_invited_mock = mocker.patch(
-        'src.analysis.services.AnalyticService.users_invited',
-    )
-    users_invite_sent_mock = mocker.patch(
-        'src.analysis.services.AnalyticService.users_invite_sent',
-    )
-    email_message_log = mocker.patch(
-        'src.logs.service.AccountLogService.email_message',
-    )
-    service = UserInviteService(
-        current_url=current_url,
-        is_superuser=is_superuser,
-        request_user=request_user,
-    )
-
-    # act
-    service._user_invite_actions(user=invited_user)
-
-    # assert
-    identify_mock.assert_called_once_with(invited_user)
-    invite_token_mock.assert_called_once_with(invited_user)
-    users_invited_mock.assert_called_once_with(
-        invite_to=invited_user,
-        is_superuser=is_superuser,
-        invite_token=invite_token_str,
-    )
-    email_message_log.assert_called_once()
     users_invite_sent_mock.assert_called_once_with(
         invite_from=request_user,
         invite_to=invited_user,
@@ -775,17 +705,8 @@ def test__user_transfer_actions__ok(mocker):
     user_to_transfer = create_test_user(email='transfer@test.test')
     current_url = 'http://current.test'
     is_superuser = False
-    invite_token_str = '!@#wweqasd'
     identify_mock = mocker.patch(
         'src.accounts.services.user_invite.UserInviteService.identify',
-    )
-    invite_token_mock = mocker.patch(
-        'src.accounts.services.user_invite.UserInviteService.'
-        '_get_invite_token',
-        return_value=invite_token_str,
-    )
-    users_invited_mock = mocker.patch(
-        'src.analysis.services.AnalyticService.users_invited',
     )
     users_invite_sent_mock = mocker.patch(
         'src.analysis.services.AnalyticService.users_invite_sent',
@@ -804,12 +725,6 @@ def test__user_transfer_actions__ok(mocker):
 
     # assert
     identify_mock.assert_called_once_with(invited_user)
-    invite_token_mock.assert_called_once_with(user_to_transfer)
-    users_invited_mock.assert_called_once_with(
-        invite_to=user_to_transfer,
-        is_superuser=is_superuser,
-        invite_token=invite_token_str,
-    )
     users_invite_sent_mock.assert_called_once_with(
         invite_from=request_user,
         invite_to=user_to_transfer,

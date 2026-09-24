@@ -1,6 +1,7 @@
 from typing import List, Optional
 
 from django.db.models import Prefetch
+from drf_spectacular.utils import extend_schema
 from rest_framework.viewsets import GenericViewSet
 
 from src.accounts.permissions import (
@@ -14,6 +15,7 @@ from src.navigation.models import Menu, MenuItem
 from src.navigation.serializers import (
     MenuSerializer,
 )
+from src.openapi import ACCESS_AUTH_LITE, FORBIDDEN, NOT_FOUND, UNAUTHORIZED
 
 
 class MenuViewSet(
@@ -45,6 +47,17 @@ class MenuViewSet(
     def get_queryset(self):
         return self.prefetch_queryset(self.queryset)
 
+    @extend_schema(
+        tags=['Pages'],
+        summary='Get menu by slug',
+        description=ACCESS_AUTH_LITE,
+        responses={
+            200: MenuSerializer,
+            401: UNAUTHORIZED,
+            403: FORBIDDEN,
+            404: NOT_FOUND,
+        },
+    )
     def retrieve(self, *args, **kwargs):
         instance = self.get_object()
         slz = self.get_serializer(instance=instance)

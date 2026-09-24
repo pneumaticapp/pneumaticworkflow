@@ -53,8 +53,7 @@ describe('parseMarkdownToFiles', () => {
 
   describe('multiple files parsing', () => {
     it('parses multiple comma-separated file-service links', () => {
-      const input =
-        `[doc.pdf](${FILE_SERVICE_URL}/aaa), [photo.jpg](${FILE_SERVICE_URL}/bbb)`;
+      const input = `[doc.pdf](${FILE_SERVICE_URL}/aaa), [photo.jpg](${FILE_SERVICE_URL}/bbb)`;
 
       const result = parseMarkdownToFiles(input);
 
@@ -215,20 +214,16 @@ describe('parseMarkdownToFiles', () => {
       expect(result[0].thumbnailUrl).toBe(`${FILE_SERVICE_URL}/abc-123`);
     });
 
-    it.each([
-      ['document.pdf'],
-      ['report.docx'],
-      ['data.xlsx'],
-      ['archive.zip'],
-      ['script.js'],
-      ['readme.txt'],
-    ])('does not set thumbnailUrl for non-image file %s', (filename) => {
-      const input = `[${filename}](${FILE_SERVICE_URL}/abc-123)`;
+    it.each([['document.pdf'], ['report.docx'], ['data.xlsx'], ['archive.zip'], ['script.js'], ['readme.txt']])(
+      'does not set thumbnailUrl for non-image file %s',
+      (filename) => {
+        const input = `[${filename}](${FILE_SERVICE_URL}/abc-123)`;
 
-      const result = parseMarkdownToFiles(input);
+        const result = parseMarkdownToFiles(input);
 
-      expect(result[0].thumbnailUrl).toBeUndefined();
-    });
+        expect(result[0].thumbnailUrl).toBeUndefined();
+      },
+    );
 
     it('sets thumbnailUrl only for image files in mixed list', () => {
       const input = [

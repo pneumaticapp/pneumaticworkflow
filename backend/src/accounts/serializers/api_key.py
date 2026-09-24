@@ -1,43 +1,45 @@
-from django.contrib.auth import get_user_model
-from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
 
-from src.accounts.models import (
-    APIKey,
-)
-
-UserModel = get_user_model()
+from src.accounts.models import APIKey
+from src.generics.mixins.serializers import AdditionalValidationMixin
 
 
-class APIKeyListSerializer(serializers.ModelSerializer):
+class APIKeySerializer(
+    AdditionalValidationMixin,
+    serializers.ModelSerializer,
+):
+    """Single serializer for list, retrieve and create."""
+
+    prefix = serializers.SerializerMethodField()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        request = self.context.get('request')
+        if request and request.method == 'GET':
+            self.fields.pop('token', None)
+
     class Meta:
         model = APIKey
         fields = (
             'id',
             'name',
-            'key',
+            'prefix',
+            'token',
+            'date_created',
+            'last_used_at',
+            'expires_at',
+            'is_active',
+        )
+        read_only_fields = (
+            'id',
+            'prefix',
+            'token',
+            'date_created',
+            'last_used_at',
+            'expires_at',
+            'is_active',
         )
 
-
-class UserAPIKeySerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = UserModel
-        fields = (
-            'first_name',
-            'last_name',
-            'email',
-            'is_admin',
-            'is_account_owner',
-            'api_key',
-            'type',
-            'status',
-        )
-
-    api_key = serializers.SerializerMethodField()
-
-    def get_api_key(self, obj) -> str:
-        try:
-            return obj.apikey.key
-        except ObjectDoesNotExist:
-            return None
+    def get_prefix(self, obj: APIKey) -> str:
+        n = APIKey.API_KEY_PREFIX_DISPLAY_LENGTH
+        return obj.token[:n] if obj.token else ''

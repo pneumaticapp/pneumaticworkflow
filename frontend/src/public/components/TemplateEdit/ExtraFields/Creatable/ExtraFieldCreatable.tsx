@@ -45,6 +45,7 @@ export function ExtraFieldCreatable({
   editField,
   deleteField,
   isDisabled = false,
+  isFieldsetReadOnly = false,
   labelBackgroundColor,
   labelPosition,
   innerRef,
@@ -64,16 +65,20 @@ export function ExtraFieldCreatable({
   const selectionValues = field.selections as string[];
 
   const dropdownSelections: IDropdownSelection[] = useMemo(
-    () => (selectionValues || []).map((selectionValue) => ({
-      value: selectionValue,
-      label: selectionValue,
-    } as IDropdownSelection)),
+    () =>
+      (selectionValues || []).map(
+        (selectionValue) =>
+          ({
+            value: selectionValue,
+            label: selectionValue,
+          }) as IDropdownSelection,
+      ),
     [selectionValues],
   );
 
   const [activeOptionIndex, setActiveOptionIndex] = useState<number | null>(null);
-  const [duplicateErrors, setDuplicateErrors] = useState<Record<string, string>>(
-    () => recalculateDuplicateErrors(selectionItems || []),
+  const [duplicateErrors, setDuplicateErrors] = useState<Record<string, string>>(() =>
+    recalculateDuplicateErrors(selectionItems || []),
   );
 
   const handleSelectableChange = (inputValue: IDropdownSelection) => {
@@ -141,16 +146,27 @@ export function ExtraFieldCreatable({
         onMouseLeave={() => setActiveOptionIndex(null)}
       >
         <div className={inputStyles['kickoff-create-field__input-container']}>
-          <input
-            ref={(el) => (optionInputsRefs.current[optionIndex] = el as HTMLInputElement)}
-            className={inputStyles['kickoff-create-field-option__input']}
-            onChange={handleChangeOption(optionIndex)}
-            onBlur={handleBlurOption(apiName)}
-            placeholder={namePlaceholder}
-            type="text"
-            value={value}
-            disabled={isDisabled}
-          />
+          {isFieldsetReadOnly ? (
+            <textarea
+              className={inputStyles['kickoff-create-field-option__input']}
+              data-use-input
+              value={value}
+              disabled
+              rows={1}
+            />
+          ) : (
+            <input
+              ref={(el) => (optionInputsRefs.current[optionIndex] = el as HTMLInputElement)}
+              className={inputStyles['kickoff-create-field-option__input']}
+              data-use-input
+              onChange={handleChangeOption(optionIndex)}
+              onBlur={handleBlurOption(apiName)}
+              placeholder={namePlaceholder}
+              type="text"
+              value={value}
+              disabled={isDisabled}
+            />
+          )}
           <span className={inputStyles['measure']} />
           {isActive && !isDisabled && (selectionItems?.length || 0) > 1 && (
             <div
@@ -184,7 +200,6 @@ export function ExtraFieldCreatable({
       isDisabled={isDisabled}
       icon={<ArrowDropdownIcon />}
       labelPosition={labelPosition}
-      {...(labelPosition === EFieldLabelPosition.Left && { labelClassName: styles['kick-off-input__name_label-left_centered'] })}
       innerRef={innerRef}
     />
   );
@@ -225,12 +240,10 @@ export function ExtraFieldCreatable({
             isDisabled={isDisabled}
             icon={<ArrowDropdownIcon />}
             labelPosition={labelPosition}
-            labelClassName={styles['kick-off-input__name_label-left_centered']}
             innerRef={innerRef}
-          />
-          <div className={inputStyles['kickoff-create-field-options-wrapper_label-left']}>
+          >
             {optionsContent}
-          </div>
+          </FieldWithName>
         </div>
       );
     }
@@ -261,9 +274,9 @@ export function ExtraFieldCreatable({
             isRequired={isRequired || false}
             isDisabled={isDisabled}
             mode={mode}
+            labelPosition={labelPosition}
             labelBackgroundColor={labelBackgroundColor}
             handleChangeName={handleChangeName}
-            className={styles['kick-off-input__name_label-left_centered']}
           />
         ) : (
           <div className={fieldNameClassName}>

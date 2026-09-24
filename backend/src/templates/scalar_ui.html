@@ -1,0 +1,146 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Pneumatic API Documentation (Scalar)</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <script>
+      // Core API and Files API are separate services with a schema each;
+      // the page merges both schemas into one document.
+      const CORE_SCHEMA_URL = '/api/schema/?format=json';
+      const FILES_SCHEMA_URL = '/files/openapi.json';
+      const SCALAR_URL = 'https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.25.81';
+      const SCHEMA_REF_PREFIX = '#/components/schemas/';
+      const HTTP_METHODS = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace'];
+
+      // Scalar configuration
+      const configuration = {
+        theme: 'default',
+        metaData: {
+          title: 'Pneumatic Workflow API',
+        },
+        hideModels: false,
+        hideDownloadButton: false,
+        showSidebar: false,
+        defaultOpenFirstTag: false,
+        hideDarkModeToggle: false,
+        layout: 'modern',
+        showDeveloperTools: 'never',
+        hideClientButton: true,
+        hideTestRequestButton: true,
+      };
+
+      async function fetchSchema(url) {
+        const response = await fetch(url, { headers: { Accept: 'application/json' } });
+        if (!response.ok) {
+          throw new Error(`${url} answered ${response.status}`);
+        }
+        return response.json();
+      }
+
+      function renameRefs(node, renames) {
+        if (Array.isArray(node)) {
+          node.forEach((item) => renameRefs(item, renames));
+          return;
+        }
+        if (!node || typeof node !== 'object') {
+          return;
+        }
+        Object.entries(node).forEach(([key, value]) => {
+          if (key === '$ref' && typeof value === 'string' && value.startsWith(SCHEMA_REF_PREFIX)) {
+            const name = value.slice(SCHEMA_REF_PREFIX.length);
+            if (renames[name]) {
+              node[key] = SCHEMA_REF_PREFIX + renames[name];
+            }
+          } else {
+            renameRefs(value, renames);
+          }
+        });
+      }
+
+      function mergeSchemas(core, files) {
+        const coreComponents = core.components;
+        const filesSchemas = files.components.schemas;
+
+        // Both services define ValidationError, with different shapes.
+        const renames = {};
+        Object.keys(filesSchemas).forEach((name) => {
+          if (name in coreComponents.schemas) {
+            renames[name] = `Files${name}`;
+          }
+        });
+        renameRefs(files.paths, renames);
+        renameRefs(filesSchemas, renames);
+        Object.entries(filesSchemas).forEach(([name, schema]) => {
+          coreComponents.schemas[renames[name] || name] = schema;
+        });
+
+        // Files API declares security once for the whole document.
+        Object.values(files.paths).forEach((pathItem) => {
+          HTTP_METHODS.forEach((method) => {
+            const operation = pathItem[method];
+            if (operation && !operation.security) {
+              operation.security = files.security;
+            }
+          });
+        });
+
+        Object.assign(core.paths, files.paths);
+        coreComponents.securitySchemes = {
+          ...files.components.securitySchemes,
+          ...coreComponents.securitySchemes,
+        };
+        core.tags = core.tags || [];
+        const coreTags = new Set(core.tags.map((tag) => tag.name));
+        core.tags.push(...(files.tags || []).filter((tag) => !coreTags.has(tag.name)));
+        return core;
+      }
+
+      async function loadSchema() {
+        const [core, files] = await Promise.allSettled([
+          fetchSchema(CORE_SCHEMA_URL),
+          fetchSchema(FILES_SCHEMA_URL),
+        ]);
+        if (core.status === 'rejected') {
+          throw core.reason;
+        }
+        if (files.status === 'rejected') {
+          // Core API stays documented while the file service is down.
+          console.warn('Files API schema is unavailable:', files.reason);
+          return core.value;
+        }
+        return mergeSchemas(core.value, files.value);
+      }
+
+      function mountScalar(schema) {
+        // Scalar reads the schema and the configuration of this element
+        // once, when its script loads, so the script is added last.
+        const reference = document.createElement('script');
+        reference.id = 'api-reference';
+        reference.type = 'application/json';
+        reference.dataset.configuration = JSON.stringify(configuration);
+        reference.textContent = JSON.stringify(schema);
+        document.body.appendChild(reference);
+
+        const scalar = document.createElement('script');
+        scalar.src = SCALAR_URL;
+        document.body.appendChild(scalar);
+      }
+
+      loadSchema()
+        .then(mountScalar)
+        .catch((error) => {
+          document.body.textContent = `API documentation is unavailable: ${error.message}`;
+        });
+    </script>
+  </body>
+</html>

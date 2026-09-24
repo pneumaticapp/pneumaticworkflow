@@ -151,3 +151,15 @@ class LibraryTemplateImportSerializer(
         del attrs['intro']
         del attrs['steps']
         return attrs
+
+
+class LibraryTemplatesImportRequestSerializer(
+    CustomValidationErrorMixin,
+    serializers.Serializer,
+):
+    """Request body for library template import endpoint."""
+
+    templates = LibraryTemplateImportSerializer(
+        many=True,
+        allow_empty=False,
+    )

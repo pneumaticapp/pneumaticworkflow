@@ -1,3 +1,4 @@
+from drf_spectacular.utils import extend_schema
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
 from rest_framework.permissions import AllowAny
 from rest_framework.viewsets import GenericViewSet
@@ -9,6 +10,7 @@ from src.pages.serializers import (
 )
 
 
+@extend_schema(tags=['Pages'])
 class PublicPageViewSet(
     CustomViewSetMixin,
     ListModelMixin,

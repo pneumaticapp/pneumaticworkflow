@@ -1,15 +1,15 @@
 .skeleton {
+  width: 100%;
   margin-bottom: 16px;
   overflow: visible;
-  width: 100%;
 }
 
 .skeleton__data {
   position: relative;
   display: flex;
+  flex-flow: column;
   align-items: center;
   overflow: hidden;
-  flex-flow: column;
 
   &.is-white {
     background-color: red;

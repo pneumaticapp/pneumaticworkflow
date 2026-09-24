@@ -37,6 +37,7 @@ interface IFilterSelectCommonProps<
   optionLabelKey: LabelKey;
   containerClassname?: string;
   selectAllLabel?: string;
+  id?: string;
   resetFilter(): void;
   selectAll?(): void;
   Icon?(props: SVGAttributes<SVGElement>): JSX.Element;

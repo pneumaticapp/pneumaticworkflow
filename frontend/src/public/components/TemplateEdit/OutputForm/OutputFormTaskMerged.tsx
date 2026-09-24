@@ -37,7 +37,6 @@ export interface IOutputFormTaskMergedOwnProps {
   intl: IntlShape;
 }
 
-
 export function OutputFormTaskMerged({
   task,
   fieldsetsCatalogLoading,
@@ -62,10 +61,7 @@ export function OutputFormTaskMerged({
   const datasetOptions = useDatasetOptions(task.fields || []);
 
   const saveOutputOrders = useCallback(
-    async (
-      rows: TMergedTaskOutputRow[],
-      allFieldsSource?: IExtraField[],
-    ) => {
+    async (rows: TMergedTaskOutputRow[], allFieldsSource?: IExtraField[]) => {
       const allFields = allFieldsSource ?? task.fields ?? [];
       const { nextFields, nextFieldsets } = normalizeMergedTaskOutputOrders(rows, allFields);
       patchTask({
@@ -80,10 +76,7 @@ export function OutputFormTaskMerged({
     (type: EExtraFieldType) => {
       const newField = getEmptyField(type, formatMessage, -1);
       const mergedTaskFields = [...(task.fields || []), newField];
-      const rowsWithNew = buildMergedTaskOutputRows(
-        mergedTaskFields,
-        task.fieldsets || [],
-      );
+      const rowsWithNew = buildMergedTaskOutputRows(mergedTaskFields, task.fieldsets || []);
       saveOutputOrders(rowsWithNew, mergedTaskFields).catch(() => undefined);
     },
     [formatMessage, saveOutputOrders, task.fieldsets, task.fields],
@@ -124,13 +117,22 @@ export function OutputFormTaskMerged({
   );
 
   const handleRemoveFieldset = useCallback(
-    (sharedFieldsetId: number) => {
-      const rows = buildRowsWithRemovedFieldset(task.fields || [], task.fieldsets || [], sharedFieldsetId);
+    (apiNameBinding: string) => {
+      const rows = buildRowsWithRemovedFieldset(task.fields || [], task.fieldsets || [], apiNameBinding);
       saveOutputOrders(rows).catch(() => undefined);
     },
     [saveOutputOrders, task.fieldsets, task.fields],
   );
 
+  const handleEditFieldsetTitle = useCallback(
+    (apiNameBinding: string, title: string) => {
+      const nextFieldsets = (task.fieldsets || []).map((fieldset) =>
+        fieldset.apiNameBinding === apiNameBinding ? { ...fieldset, title } : fieldset,
+      );
+      patchTask({ taskUUID: task.uuid, changedFields: { fieldsets: nextFieldsets } });
+    },
+    [patchTask, task.fieldsets, task.uuid],
+  );
 
   const isEmpty = !isArrayWithItems(task.fields) && !(task.fieldsets || []).length;
 
@@ -140,12 +142,7 @@ export function OutputFormTaskMerged({
         {ExtraFieldsMap.map((field) => (
           <ExtraFieldIcon {...field} key={field.id} onClick={() => handleCreateField(field.id)} />
         ))}
-        <FieldsetIconPicker
-          fieldsetsCatalogLoading={fieldsetsCatalogLoading}
-          selectedFieldsetIds={(task.fieldsets || []).map((fieldset) => fieldset.sharedFieldsetId)}
-          onSelectFieldset={handleAddFieldset}
-          onRemoveFieldset={handleRemoveFieldset}
-        />
+        <FieldsetIconPicker fieldsetsCatalogLoading={fieldsetsCatalogLoading} onSelectFieldset={handleAddFieldset} />
       </div>
 
       {!isEmpty && (
@@ -160,6 +157,7 @@ export function OutputFormTaskMerged({
             accountId={accountId}
             formatMessage={formatMessage}
             innerRef={outputRef}
+            onEditFieldsetTitle={handleEditFieldsetTitle}
           />
         </div>
       )}

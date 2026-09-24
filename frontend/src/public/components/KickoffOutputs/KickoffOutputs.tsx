@@ -96,13 +96,14 @@ export function KickoffOutputs({
     const OutputComponent = outputsMap[output.type];
     const value = output.type === EExtraFieldType.User ? output.userId || output.groupId : output.value;
     const hasValue = Array.isArray(value) ? value.length > 0 : Boolean(value);
-    const isEmpty = !(hasValue || output.attachments?.length);
+    const hasFileValue = output.type === EExtraFieldType.File && Boolean(output.markdownValue);
+    const isEmpty = !(hasValue || output.attachments?.length || hasFileValue);
     return !isEmpty ? <OutputComponent key={key} {...output} /> : null;
   };
 
   const renderFieldsetGroup = (fieldset: IFieldsetRuntime, children: React.ReactNode, key?: string) => (
     <div key={key} className={styles['fieldset-output-group']}>
-      {fieldset.name && <p className={styles['fieldset-output-group__title']}>{fieldset.name}</p>}
+      <p className={styles['fieldset-output-group__title']}>{fieldset.title}</p>
       {fieldset.description && <p className={styles['fieldset-output-group__description']}>{fieldset.description}</p>}
       {children}
     </div>

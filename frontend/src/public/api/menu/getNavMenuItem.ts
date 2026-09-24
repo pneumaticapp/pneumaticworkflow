@@ -1,4 +1,3 @@
-/* eslint-disable */
 /* prettier-ignore */
 import { commonRequest } from '../commonRequest';
 import { getBrowserConfigEnv } from '../../utils/getConfig';
@@ -19,7 +18,9 @@ export interface IAPIMenuItemSub {
 }
 
 export function getNavMenuItem(slug: string) {
-  const { api: { urls }} = getBrowserConfigEnv();
+  const {
+    api: { urls },
+  } = getBrowserConfigEnv();
   const url = urls.getNavMenuItem.replace(':slug', String(slug));
 
   return commonRequest<IAPIMenuItem>(url, {}, { shouldThrow: true });

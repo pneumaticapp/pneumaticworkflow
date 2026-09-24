@@ -14,6 +14,8 @@ export type TDropdownOption = {
   customSubOption?: ReactElement;
   color?: TDropdownItemColor;
   isHidden?: boolean;
+  isDisabled?: boolean;
+  disabledTooltip?: string;
   size?: 'lg' | 'sm';
   className?: string;
   Icon?(props: SVGAttributes<SVGElement>): JSX.Element;

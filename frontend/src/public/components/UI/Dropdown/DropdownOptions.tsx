@@ -4,6 +4,7 @@ import classnames from 'classnames';
 import { useCheckDevice } from '../../../hooks/useCheckDevice';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { ArrowRightIcon } from '../../icons';
+import { Tooltip } from '../Tooltip';
 import { ConfirmableDropdownItem } from './ConfirmableDropdownItem';
 import { Dropdown } from './Dropdown';
 import { IDropdownOptionsProps } from './types';
@@ -31,6 +32,7 @@ export function DropdownOptions({ options, closeDropdown, isFromBreakdownItem }:
           styles['dropdown-item'],
           getDropdownItemColorClass(option.color),
           isMobile && isFromBreakdownItem && styles['dropdown-item-mobile'],
+          option.isDisabled && styles['dropdown-item_disabled'],
         );
         const subOptions = Array.isArray(option.subOptions) && isArrayWithItems(option.subOptions)
           ? option.subOptions
@@ -71,7 +73,7 @@ export function DropdownOptions({ options, closeDropdown, isFromBreakdownItem }:
           );
         }
 
-        return (
+        const optionNode = (
           <React.Fragment key={`option-${key}`}>
             {option.withUpperline && <hr className={styles['line']} />}
             <ConfirmableDropdownItem
@@ -79,7 +81,7 @@ export function DropdownOptions({ options, closeDropdown, isFromBreakdownItem }:
               withConfirmation={option.withConfirmation}
               initialConfirmationState={option.initialConfirmationState}
               closeDropdown={closeDropdown}
-              onClick={option.onClick ? () => {
+              onClick={!option.isDisabled && option.onClick ? () => {
                 option.onClick?.(closeDropdown);
                 closeDropdown();
               } : undefined}
@@ -88,6 +90,22 @@ export function DropdownOptions({ options, closeDropdown, isFromBreakdownItem }:
             </ConfirmableDropdownItem>
           </React.Fragment>
         );
+
+        if (option.isDisabled && option.disabledTooltip) {
+          return (
+            <Tooltip
+              key={`disabled-${key}`}
+              content={option.disabledTooltip}
+              placement="top"
+              interactive={false}
+              contentClassName={styles['dropdown-item-tooltip']}
+            >
+              <div>{optionNode}</div>
+            </Tooltip>
+          );
+        }
+
+        return optionNode;
       })}
     </>
   );

@@ -7,16 +7,31 @@ import { IFieldsetRuntime } from '../../../../types/fieldset';
 const OUTPUT_STORAGE_KEY = 'tasks_outputs';
 const FIELDSETS_STORAGE_KEY = 'tasks_fieldsets_outputs';
 
-
 describe('storageOutputs', () => {
   beforeEach(() => {
     localStorage.clear();
   });
 
+  it('persists draft metadata with the stored output', () => {
+    const outputs = [makeExtraField({ apiName: 'plain', value: 'draft' })];
+    const metadata = {
+      dateStarted: '2024-01-01',
+      fieldFingerprints: { plain: 'server-fingerprint' },
+    };
+
+    outputStorage.save(1, outputs, metadata);
+
+    expect(outputStorage.getEntry(1)).toEqual({ taskId: 1, data: outputs, metadata });
+  });
+
   it('keeps outputStorage and fieldsetsStorage isolated from each other', () => {
     const outputs: IExtraField[] = [makeExtraField({ apiName: 'plain', name: 'Field plain', value: 'plain-value' })];
     const fieldsets: IFieldsetRuntime[] = [
-      makeFieldsetRuntime({ apiNameBinding: 'fs-1', name: 'Fieldset fs-1', fields: [makeExtraField({ apiName: 'fs-field', name: 'Field fs-field', value: 'fs-value' })] }),
+      makeFieldsetRuntime({
+        apiNameBinding: 'fs-1',
+        name: 'Fieldset fs-1',
+        fields: [makeExtraField({ apiName: 'fs-field', name: 'Field fs-field', value: 'fs-value' })],
+      }),
     ];
 
     outputStorage.save(1, outputs);
@@ -57,8 +72,20 @@ describe('storageOutputs', () => {
   });
 
   it('subsequent save for the same taskId replaces the entry without duplicating', () => {
-    fieldsetsStorage.save(1, [makeFieldsetRuntime({ apiNameBinding: 'fs', name: 'Fieldset fs', fields: [makeExtraField({ apiName: 'a', name: 'Field a', value: 'v1' })] })]);
-    fieldsetsStorage.save(1, [makeFieldsetRuntime({ apiNameBinding: 'fs', name: 'Fieldset fs', fields: [makeExtraField({ apiName: 'a', name: 'Field a', value: 'v2' })] })]);
+    fieldsetsStorage.save(1, [
+      makeFieldsetRuntime({
+        apiNameBinding: 'fs',
+        name: 'Fieldset fs',
+        fields: [makeExtraField({ apiName: 'a', name: 'Field a', value: 'v1' })],
+      }),
+    ]);
+    fieldsetsStorage.save(1, [
+      makeFieldsetRuntime({
+        apiNameBinding: 'fs',
+        name: 'Fieldset fs',
+        fields: [makeExtraField({ apiName: 'a', name: 'Field a', value: 'v2' })],
+      }),
+    ]);
 
     const raw = localStorage.getItem(FIELDSETS_STORAGE_KEY);
     if (raw === null) {
@@ -78,8 +105,20 @@ describe('storageOutputs', () => {
   });
 
   it('remove deletes only the entry for the given taskId, leaving other tasks intact', () => {
-    const fs1: IFieldsetRuntime[] = [makeFieldsetRuntime({ apiNameBinding: 'fs-1', name: 'Fieldset fs-1', fields: [makeExtraField({ apiName: 'a', name: 'Field a', value: 'task-1-value' })] })];
-    const fs2: IFieldsetRuntime[] = [makeFieldsetRuntime({ apiNameBinding: 'fs-2', name: 'Fieldset fs-2', fields: [makeExtraField({ apiName: 'b', name: 'Field b', value: 'task-2-value' })] })];
+    const fs1: IFieldsetRuntime[] = [
+      makeFieldsetRuntime({
+        apiNameBinding: 'fs-1',
+        name: 'Fieldset fs-1',
+        fields: [makeExtraField({ apiName: 'a', name: 'Field a', value: 'task-1-value' })],
+      }),
+    ];
+    const fs2: IFieldsetRuntime[] = [
+      makeFieldsetRuntime({
+        apiNameBinding: 'fs-2',
+        name: 'Fieldset fs-2',
+        fields: [makeExtraField({ apiName: 'b', name: 'Field b', value: 'task-2-value' })],
+      }),
+    ];
 
     fieldsetsStorage.save(1, fs1);
     fieldsetsStorage.save(2, fs2);
@@ -90,11 +129,36 @@ describe('storageOutputs', () => {
     expect(fieldsetsStorage.get(2)).toEqual(fs2);
   });
 
+  it('reads drafts saved with the legacy output property', () => {
+    const outputs = [makeExtraField({ apiName: 'legacy', value: 'draft' })];
+    localStorage.setItem(OUTPUT_STORAGE_KEY, JSON.stringify([{ taskId: 1, output: outputs }]));
+
+    expect(outputStorage.get(1)).toEqual(outputs);
+  });
+
+  it('removes multiple output drafts and clears empty storage', () => {
+    outputStorage.save(1, [makeExtraField({ apiName: 'first' })]);
+    outputStorage.save(2, [makeExtraField({ apiName: 'second' })]);
+
+    outputStorage.removeMany([1, 2]);
+
+    expect(outputStorage.get(1)).toBeUndefined();
+    expect(outputStorage.get(2)).toBeUndefined();
+    expect(localStorage.getItem(OUTPUT_STORAGE_KEY)).toBeNull();
+  });
+
   describe('corrupted localStorage data', () => {
     it.each<string>([
       'not a json',
       '{"taskId":1,"data":[]}',
       'null',
+      '[{"taskId":1,"data":{}}]',
+      '[{"taskId":1,"data":null}]',
+      '[{"taskId":1,"data":"oops"}]',
+      '[{"taskId":1,"data":[null]}]',
+      '[{"taskId":"1","data":[]}]',
+      '[{"taskId":1,"data":[],"metadata":{}}]',
+      '[{"taskId":1,"data":[],"metadata":{"dateStarted":1,"fieldFingerprints":{}}}]',
     ])('get returns undefined for corrupted value %p and does not throw', (raw) => {
       localStorage.setItem(FIELDSETS_STORAGE_KEY, raw);
       localStorage.setItem(OUTPUT_STORAGE_KEY, raw);
@@ -104,6 +168,72 @@ describe('storageOutputs', () => {
 
       expect(fieldsetsStorage.get(1)).toBeUndefined();
       expect(outputStorage.get(1)).toBeUndefined();
+    });
+
+    it('rejects fieldset drafts whose fields are not an array', () => {
+      localStorage.setItem(
+        FIELDSETS_STORAGE_KEY,
+        JSON.stringify([{ taskId: 1, data: [{ apiNameBinding: 'fs-1', fields: {} }] }]),
+      );
+
+      expect(fieldsetsStorage.getEntry(1)).toBeUndefined();
+    });
+
+    it('rejects fieldset drafts with non-nested fingerprints metadata', () => {
+      const fieldsets = [makeFieldsetRuntime({ apiNameBinding: 'fs-1', fields: [makeExtraField({ apiName: 'a' })] })];
+      localStorage.setItem(
+        FIELDSETS_STORAGE_KEY,
+        JSON.stringify([
+          { taskId: 1, data: fieldsets, metadata: { dateStarted: null, fieldFingerprints: { 'fs-1': 'flat' } } },
+        ]),
+      );
+
+      expect(fieldsetsStorage.getEntry(1)).toBeUndefined();
+    });
+
+    it.each<[string, unknown]>([
+      ['a string', 'file.png'],
+      ['an object', { name: 'file.png', url: 'https://files/1' }],
+      ['an array with null', [null]],
+      ['an array with an item without url', [{ name: 'file.png' }]],
+    ])('rejects drafts whose field attachments are %s', (_, attachments) => {
+      const field = { ...makeExtraField({ apiName: 'file' }), attachments };
+      localStorage.setItem(OUTPUT_STORAGE_KEY, JSON.stringify([{ taskId: 1, data: [field] }]));
+      localStorage.setItem(
+        FIELDSETS_STORAGE_KEY,
+        JSON.stringify([{ taskId: 1, data: [{ apiNameBinding: 'fs-1', fields: [field] }] }]),
+      );
+
+      expect(outputStorage.getEntry(1)).toBeUndefined();
+      expect(fieldsetsStorage.getEntry(1)).toBeUndefined();
+    });
+
+    it('accepts drafts with valid or absent field attachments', () => {
+      const outputs = [
+        {
+          ...makeExtraField({ apiName: 'file' }),
+          attachments: [{ id: '1', name: 'a.png', url: 'https://files/1', size: 1 }],
+        },
+        { ...makeExtraField({ apiName: 'empty' }), attachments: null },
+        makeExtraField({ apiName: 'text' }),
+      ];
+      localStorage.setItem(OUTPUT_STORAGE_KEY, JSON.stringify([{ taskId: 1, data: outputs }]));
+
+      expect(outputStorage.get(1)).toEqual(outputs);
+    });
+
+    it('keeps valid entries next to malformed ones', () => {
+      const outputs = [makeExtraField({ apiName: 'valid' })];
+      localStorage.setItem(
+        OUTPUT_STORAGE_KEY,
+        JSON.stringify([
+          { taskId: 1, data: {} },
+          { taskId: 2, data: outputs },
+        ]),
+      );
+
+      expect(outputStorage.get(1)).toBeUndefined();
+      expect(outputStorage.get(2)).toEqual(outputs);
     });
   });
 });

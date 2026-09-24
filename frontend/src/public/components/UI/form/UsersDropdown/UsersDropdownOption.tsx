@@ -1,8 +1,9 @@
 import React from 'react';
+import classnames from 'classnames';
 
 import { Avatar, Checkbox, DropdownOption, TAvatarUser } from '../..';
 import { BoldPlusIcon } from '../../../icons';
-import { isUserAbsent, TUserListItem } from '../../../../types/user';
+import { EUserStatus, isUserAbsent, TUserListItem } from '../../../../types/user';
 import { getUserById } from '../../../UserData/utils/getUserById';
 import { isUsersDropdownOptionSelected } from './usersDropdownOptionValue';
 import { EOptionTypes, IUsersDropdownOptionProps, TUsersDropdownOption } from './types';
@@ -62,8 +63,12 @@ export function UsersDropdownOption({
   const isSelected = isUsersDropdownOptionSelected(formatOptionLabelMeta.selectValue, option);
   const currentUser: TUserListItem | TUsersDropdownOption | null =
     option.optionType !== EOptionTypes.Group ? getUserById(users, Number(option.id)) : option;
+  const isInvited = currentUser?.status === EUserStatus.Invited || option.status === EUserStatus.Invited;
+  const displayLabel = isInvited
+    ? currentUser?.email || option.email || String(option.label).replace(/\s*\(invited user\)\s*$/i, '')
+    : option.label;
   const label = (
-    <div className={styles['user-option__content']} title={option.label as string}>
+    <div className={styles['user-option__content']} title={displayLabel as string}>
       {formatOptionLabelMeta.context === 'menu' && (
         <Avatar
           size="sm"
@@ -72,8 +77,8 @@ export function UsersDropdownOption({
           isEmpty={option.optionType !== EOptionTypes.User && option.optionType !== EOptionTypes.Group}
         />
       )}
-      <p className={styles['user-option__label']}>
-        {option.label}
+      <p className={classnames(styles['user-option__label'], isInvited && styles['user-option__label_invited'])}>
+        {displayLabel}
         {isUserAbsent(currentUser as TUserListItem) && (
           <span className={styles['user-option__badge']}>
             {(currentUser as TUserListItem)?.vacation?.absenceStatus === 'sick_leave' ? ' 🏥' : ' ✈️'}
@@ -94,6 +99,9 @@ export function UsersDropdownOption({
           }}
           title={label}
           checked={isSelected}
+          containerClassName={styles['user-option__checkbox']}
+          labelClassName={styles['user-option__checkbox-label']}
+          titleClassName={styles['user-option__checkbox-title']}
         />
       ) : label}
     />

@@ -73,6 +73,16 @@
   justify-content: space-between;
 }
 
+.dropdown-item_disabled {
+  pointer-events: none;
+  opacity: 0.32;
+}
+
+.dropdown-item-tooltip {
+  padding: 0.4rem 0.8rem;
+  text-align: center;
+}
+
 .dropdown-item_black {
   color: var(--pneumatic-color-black100);
 }

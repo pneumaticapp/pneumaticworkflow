@@ -2,7 +2,7 @@ import {
   ITemplate,
   ITemplateClient,
   ITemplateTaskClient,
-  IKickoffClient,
+  ITemplateKickoffClient,
   ITemplateRequest,
   ITemplateTaskRequest,
   ITemplateResponse,
@@ -44,7 +44,7 @@ export function getTemplateIdFromUrl(url: string) {
   return Number(template) ? template : null;
 }
 
-export function getEmptyKickoff(): IKickoffClient {
+export function getEmptyKickoff(): ITemplateKickoffClient {
   return {
     description: '',
     fields: [],

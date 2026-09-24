@@ -1,6 +1,7 @@
-import { IWorkflowLogItem } from "../../types/workflow";
-import { ETaskStatus } from "../../types/tasks";
-import { EUserGroupType } from "../team/types";
+import { IWorkflowLogItem } from '../../types/workflow';
+import { ETaskStatus } from '../../types/tasks';
+import { EUserStatus, IUserVacation } from '../../types/user';
+import { EUserGroupType } from '../team/types';
 
 export interface IWsEnvelopeBase {
   id: string;
@@ -20,6 +21,7 @@ export enum ERealtimeEnvelopeType {
   GROUP_CREATED = 'group_created',
   GROUP_UPDATED = 'group_updated',
   GROUP_DELETED = 'group_deleted',
+  ACCOUNT_PLAN_CHANGED = 'account_plan_changed',
 }
 
 export type IRealtimeWsEnvelope =
@@ -35,13 +37,13 @@ export type IRealtimeWsEnvelope =
   | (IWsEnvelopeBase & { type: ERealtimeEnvelopeType.GROUP_CREATED; data: IWsGroupData })
   | (IWsEnvelopeBase & { type: ERealtimeEnvelopeType.GROUP_UPDATED; data: IWsGroupData })
   | (IWsEnvelopeBase & { type: ERealtimeEnvelopeType.GROUP_DELETED; data: IWsGroupData })
+  // account events
+  | (IWsEnvelopeBase & { type: ERealtimeEnvelopeType.ACCOUNT_PLAN_CHANGED; data: IWsAccountPlanChangedData })
   // notification events
   | (IWsEnvelopeBase & { type: ERealtimeEnvelopeType.NOTIFICATION_CREATED; data: IWsNotificationCreatedData })
   // process events
   | (IWsEnvelopeBase & { type: ERealtimeEnvelopeType.EVENT_CREATED; data: IWsEventCreatedData })
-  | (IWsEnvelopeBase & { type: ERealtimeEnvelopeType.EVENT_UPDATED; data: IWsEventUpdatedData })
-
-
+  | (IWsEnvelopeBase & { type: ERealtimeEnvelopeType.EVENT_UPDATED; data: IWsEventUpdatedData });
 
 // ======================= event
 
@@ -104,7 +106,6 @@ export interface IWsDueDateChangedData {
   };
   workflow: IWsNotificationWorkflowRef;
 }
-
 
 export interface IWsUrgentData {
   id: number;
@@ -212,10 +213,13 @@ export interface IWsUserData {
   lastName: string;
   email: string;
   photo: string | null;
+  phone?: string;
+  status?: EUserStatus;
   isAdmin: boolean;
   isAccountOwner: boolean;
   managerId: number | null;
   subordinatesIds: number[];
+  vacation?: IUserVacation | null;
 }
 
 export interface IWsGroupData {
@@ -226,18 +230,23 @@ export interface IWsGroupData {
   users: number[];
 }
 
+export interface IWsAccountPlanChangedData {
+  activeUsers: number;
+  tenantsActiveUsers: number;
+}
+
 // ======================= utils
 
 export interface IWsNotificationTaskRef {
   id: number;
   name: string;
 }
-  
+
 export interface IWsNotificationDelay {
   estimatedEndDateTsp: number;
   duration: string;
 }
-  
+
 export interface IWsNotificationWorkflowRef {
   id: number;
   name: string;
@@ -285,9 +294,7 @@ export function isNotificationDataType(type: string): type is TNotificationDataT
 
 export type TNotificationWsEventType = TNotificationDataType;
 
-export const NOTIFICATION_WS_TYPES: ReadonlySet<TNotificationWsEventType> = new Set(
-  NOTIFICATION_DATA_TYPES,
-);
+export const NOTIFICATION_WS_TYPES: ReadonlySet<TNotificationWsEventType> = new Set(NOTIFICATION_DATA_TYPES);
 
 export function isNotificationWsEventType(type: string): type is TNotificationWsEventType {
   return NOTIFICATION_WS_TYPES.has(type as TNotificationWsEventType);
@@ -300,6 +307,4 @@ export type INotificationWsEnvelope = {
 
 export type TRealtimeEventType = ERealtimeEnvelopeType;
 
-export const REALTIME_EVENT_TYPES: readonly ERealtimeEnvelopeType[] = Object.values(
-  ERealtimeEnvelopeType,
-);
+export const REALTIME_EVENT_TYPES: readonly ERealtimeEnvelopeType[] = Object.values(ERealtimeEnvelopeType);

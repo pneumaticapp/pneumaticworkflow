@@ -1,14 +1,13 @@
+jest.mock('../../../utils/getConfig', () => {
+  const config = require('../../../../../config/common.json');
+  return {
+    getBrowserConfigEnv: jest.fn().mockReturnValue({
+      api: { urls: config.api.urls },
+    }),
+  };
+});
 
-const MOCK_URLS = {
-  fieldsets: '/fieldsets',
-  fieldset: '/fieldsets/:id',
-};
-
-jest.mock('../../../utils/getConfig', () => ({
-  getBrowserConfigEnv: jest.fn().mockReturnValue({
-    api: { urls: MOCK_URLS },
-  }),
-}));
+const MOCK_URLS = require('../../../../../config/common.json').api.urls;
 
 jest.mock('../../commonRequest');
 
@@ -23,6 +22,7 @@ import { getFieldset } from '../getFieldset';
 import { getFieldsets } from '../getFieldsets';
 import { updateFieldset } from '../updateFieldset';
 import { deleteFieldset } from '../deleteFieldset';
+import { cloneFieldset } from '../cloneFieldset';
 import { EFieldsetsSorting } from '../../../types/fieldset';
 
 describe('fieldsets API clients', () => {
@@ -95,11 +95,9 @@ describe('fieldsets API clients', () => {
       await getFieldsets({});
 
       expect(commonRequest).toHaveBeenCalledTimes(1);
-      expect(commonRequest).toHaveBeenCalledWith(
-        MOCK_URLS.fieldsets,
-        expect.objectContaining({ method: 'GET' }),
-        { shouldThrow: true },
-      );
+      expect(commonRequest).toHaveBeenCalledWith(MOCK_URLS.fieldsets, expect.objectContaining({ method: 'GET' }), {
+        shouldThrow: true,
+      });
     });
 
     it('adds limit and offset to query string', async () => {
@@ -212,6 +210,30 @@ describe('fieldsets API clients', () => {
         { method: 'DELETE' },
         { shouldThrow: true, responseType: 'empty' },
       );
+    });
+  });
+
+  describe('cloneFieldset', () => {
+    it('calls commonRequest with POST, URL with substituted id, no body, shouldThrow', async () => {
+      const mockResponse = { id: 42, name: 'Clone of Test' };
+      (commonRequest as jest.Mock).mockResolvedValue(mockResponse);
+
+      const result = await cloneFieldset(5);
+
+      const expectedUrl = MOCK_URLS.cloneFieldset.replace(':id', '5');
+
+      expect(commonRequest).toHaveBeenCalledTimes(1);
+      expect(commonRequest).toHaveBeenCalledWith(
+        expectedUrl,
+        {
+          method: 'POST',
+        },
+        {
+          shouldThrow: true,
+        },
+      );
+
+      expect(result).toBe(mockResponse);
     });
   });
 });

@@ -2,7 +2,7 @@ import { TUserId } from './user';
 import { TUploadedFile } from '../utils/uploadFiles';
 import { ITask, ITemplateStep, TaskWithTsp } from './tasks';
 import {
-  IKickoffClient,
+  IRuntimeKickoffClient,
   IExtraField,
   ITemplateTitle,
   ETemplateOwnerType,
@@ -73,7 +73,7 @@ export interface IWorkflowDetails {
 
 export interface IWorkflowEditData {
   name?: string;
-  kickoff?: IKickoffClient | null;
+  kickoff?: IRuntimeKickoffClient | null;
 }
 
 export interface IWorkflowEdit {
@@ -115,8 +115,10 @@ export interface IWorkflowDelay {
   startDate: string;
 }
 
-export interface IWorkflowLogTask
-  extends Pick<ITask, 'id' | 'name' | 'description' | 'output' | 'fieldsets' | 'performers' | 'dueDate'> {
+export interface IWorkflowLogTask extends Pick<
+  ITask,
+  'id' | 'name' | 'description' | 'output' | 'fieldsets' | 'performers' | 'dueDate'
+> {
   number: number;
   delay: IWorkflowDelay | null;
 }

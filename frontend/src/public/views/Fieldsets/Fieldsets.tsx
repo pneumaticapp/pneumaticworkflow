@@ -12,7 +12,10 @@ const Fieldsets = loadable(
 );
 
 const FieldsetDetails = loadable(
-  () => import(/* webpackChunkName: "fieldsetDetails", webpackPrefetch: true */ '../../components/Fieldsets/FieldsetDetails'),
+  () =>
+    import(
+      /* webpackChunkName: "fieldsetDetails", webpackPrefetch: true */ '../../components/Fieldsets/FieldsetDetails'
+    ),
   { fallback: <Loader isLoading /> },
 );
 
@@ -21,15 +24,8 @@ export const FieldsetsView = () => {
     <TemplatesLayout>
       <React.Suspense fallback={<div className="loading" />}>
         <Switch>
-          <Route
-            path={ERoutes.FieldsetDetail}
-            component={FieldsetDetails}
-          />
-          <Route
-            exact
-            path={ERoutes.Fieldsets}
-            component={Fieldsets}
-          />
+          <Route path={ERoutes.FieldsetDetail} component={FieldsetDetails} />
+          <Route exact path={ERoutes.Fieldsets} component={Fieldsets} />
           <Redirect to={ERoutes.Error} />
         </Switch>
       </React.Suspense>

@@ -20,12 +20,7 @@ const VARIABLE_INLINE_RE = new RegExp(`^${variableRegex.source}`, variableRegex.
 
 export const variablePlugin = (
   md: MarkdownIt,
-  {
-    variables,
-    formatMessage,
-    badgeClassName,
-    specificityBadgeClassName,
-  }: IVariablePluginOptions,
+  { variables, formatMessage, badgeClassName, specificityBadgeClassName }: IVariablePluginOptions,
 ): void => {
   md.inline.ruler.before('link', 'pneumatic_variable', (state, silent) => {
     const match = VARIABLE_INLINE_RE.exec(state.src.slice(state.pos));
@@ -65,13 +60,11 @@ export const variablePlugin = (
 
   md.renderer.rules.pneumatic_variable = (tokens, idx) => {
     const token = tokens[idx];
-    const {
-      badgeClassName: variableBadgeClassName,
-      specificityBadgeClassName: variableSpecificityBadgeClassName,
-    } = token.meta as {
-      badgeClassName: string;
-      specificityBadgeClassName: string;
-    };
+    const { badgeClassName: variableBadgeClassName, specificityBadgeClassName: variableSpecificityBadgeClassName } =
+      token.meta as {
+        badgeClassName: string;
+        specificityBadgeClassName: string;
+      };
 
     return `<span class="${variableBadgeClassName} ${variableSpecificityBadgeClassName}">${md.utils.escapeHtml(token.content)}</span>`;
   };

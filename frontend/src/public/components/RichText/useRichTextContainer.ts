@@ -4,20 +4,20 @@ import { useDispatch } from 'react-redux';
 import { openFullscreenImage } from '../../redux/general/actions';
 import styles from './RichText.css';
 
-export const useRichTextContainer = (
-  containerRef: React.RefObject<HTMLDivElement | null>,
-  html: string,
-) => {
+export const useRichTextContainer = (containerRef: React.RefObject<HTMLDivElement | null>, html: string) => {
   const dispatch = useDispatch();
 
-  const handleClick = React.useCallback((event: MouseEvent) => {
-    const target = event.target as Element;
-    const url = target.getAttribute('src');
-    if (target.tagName === 'IMG' && url) {
-      event.stopImmediatePropagation();
-      dispatch(openFullscreenImage({ url }));
-    }
-  }, [dispatch]);
+  const handleClick = React.useCallback(
+    (event: MouseEvent) => {
+      const target = event.target as Element;
+      const url = target.getAttribute('src');
+      if (target.tagName === 'IMG' && url) {
+        event.stopImmediatePropagation();
+        dispatch(openFullscreenImage({ url }));
+      }
+    },
+    [dispatch],
+  );
 
   React.useEffect(() => {
     const container = containerRef.current;

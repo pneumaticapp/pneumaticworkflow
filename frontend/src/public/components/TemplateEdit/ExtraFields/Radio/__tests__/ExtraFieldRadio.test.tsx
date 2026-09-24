@@ -120,13 +120,7 @@ describe('ExtraFieldRadio', () => {
   });
 
   it('ProcessRun: renders RadioButton for each string selection', () => {
-    render(
-      <ExtraFieldRadio
-        {...baseKickoffProps}
-        field={processRunField}
-        mode={EExtraFieldMode.ProcessRun}
-      />,
-    );
+    render(<ExtraFieldRadio {...baseKickoffProps} field={processRunField} mode={EExtraFieldMode.ProcessRun} />);
 
     const mock = RadioButton as jest.Mock;
     expect(mock).toHaveBeenCalledTimes(3);
@@ -170,7 +164,7 @@ describe('ExtraFieldRadio', () => {
       );
     });
 
-    it('ProcessRun + labelPosition=Left: renders FieldLabel with aligned-start class', () => {
+    it('ProcessRun + labelPosition=Left: renders FieldLabel with labelPosition=Left prop', () => {
       render(
         <ExtraFieldRadio
           {...baseKickoffProps}
@@ -184,7 +178,7 @@ describe('ExtraFieldRadio', () => {
       expect(fieldLabelMock).toHaveBeenCalledTimes(1);
       expect(fieldLabelMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          className: expect.stringContaining('aligned-start'),
+          labelPosition: EFieldLabelPosition.Left,
         }),
         {},
       );

@@ -7,7 +7,6 @@ export enum ERoutes {
   Register = '/auth/signup/',
   SignUpInvite = '/auth/signup/invite/',
 
-
   ForgotPassword = '/auth/forgot-password/',
   ResetPassword = '/auth/reset-password/',
   ExpiredInvite = '/auth/expired-invite/',

@@ -626,28 +626,13 @@ def test_create_related__no_groups__ok(mocker):
     # arrange
     user = create_test_user()
     user.account.accountsignupdata_set.get().delete()
-    key = '!@#q2qwe'
-    create_token_mock = mocker.patch(
-        'src.accounts.services.user.PneumaticToken.create',
-        return_value=key,
-    )
     user_data = {'key': 'value'}
     service = UserService(instance=user)
-
     # act
     service._create_related(**user_data)
 
     # assert
-    assert APIKey.objects.get(
-        user=user,
-        name=user.get_full_name(),
-        account=user.account,
-        key=key,
-    )
-    create_token_mock.assert_called_once_with(
-        user=user,
-        for_api_key=True,
-    )
+    assert not APIKey.objects.filter(user=user).exists()
 
 
 def test_create_related__groups__ok(mocker):
@@ -657,13 +642,6 @@ def test_create_related__groups__ok(mocker):
     user = create_test_admin(account=account)
     group = create_test_group(account=account, users=[owner])
 
-    account.accountsignupdata_set.get().delete()
-    key = '!@#q2qwe'
-    create_token_mock = mocker.patch(
-        'src.accounts.services.user.PneumaticToken.create',
-        return_value=key,
-    )
-
     user_data = {'key': 'value', 'user_groups': [group]}
     service = UserService(instance=user)
 
@@ -671,16 +649,8 @@ def test_create_related__groups__ok(mocker):
     service._create_related(**user_data)
 
     # assert
-    assert APIKey.objects.get(
-        user=user,
-        name=user.get_full_name(),
-        account=user.account,
-        key=key,
-    )
-    create_token_mock.assert_called_once_with(
-        user=user,
-        for_api_key=True,
-    )
+    assert not APIKey.objects.filter(user=user).exists()
+    assert list(user.user_groups.all()) == [group]
     assert user.user_groups.count() == 1
     assert user.user_groups.first().id == group.id
 

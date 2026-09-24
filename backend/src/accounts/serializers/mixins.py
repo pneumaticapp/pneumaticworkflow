@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING, List
 
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 if TYPE_CHECKING:
@@ -14,6 +15,9 @@ class VacationSerializer(serializers.Serializer):
     absence_status = serializers.CharField(read_only=True)
     substitute_user_ids = serializers.SerializerMethodField()
 
+    @extend_schema_field(
+        serializers.ListField(child=serializers.IntegerField()),
+    )
     def get_substitute_user_ids(
         self,
         instance: 'UserVacation',

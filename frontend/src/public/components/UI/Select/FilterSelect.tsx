@@ -31,6 +31,7 @@ export function FilterSelect<
     flatGroupedOptions,
     containerClassname,
     selectAllLabel,
+    id,
     resetFilter,
     Icon,
     isMultiple,
@@ -106,6 +107,7 @@ export function FilterSelect<
           hasSelectedOptions && styles['filter-select__dropdown_clearable'],
         )}
         toggleProps={{
+          ...(id && { id }),
           className: classnames(
             styles['active-value'],
             toggleClassName,

@@ -32,6 +32,7 @@ export function ExtraFieldRadio({
   deleteField,
   editField,
   isDisabled = false,
+  isFieldsetReadOnly = false,
   datasetName,
   labelPosition,
   labelBackgroundColor,
@@ -47,8 +48,8 @@ export function ExtraFieldRadio({
   }, [selectionItems]);
 
   const [activeOptionIndex, setActiveOptionIndex] = useState<number | null>(null);
-  const [duplicateErrors, setDuplicateErrors] = useState<Record<string, string>>(
-    () => recalculateDuplicateErrors(selectionItems || []),
+  const [duplicateErrors, setDuplicateErrors] = useState<Record<string, string>>(() =>
+    recalculateDuplicateErrors(selectionItems || []),
   );
 
   const fieldNameErrorMessage = validateKickoffFieldName(name) || '';
@@ -68,19 +69,21 @@ export function ExtraFieldRadio({
     );
 
     return (
-      <div className={classnames(
-        fieldStyles['kickoff-create-field-container'],
-        labelPosition === EFieldLabelPosition.Left && styles['kick-off-input__field_label-left'],
-      )}>
+      <div
+        className={classnames(
+          fieldStyles['kickoff-create-field-container'],
+          labelPosition === EFieldLabelPosition.Left && styles['kick-off-input__field_label-left'],
+        )}
+      >
         {labelPosition === EFieldLabelPosition.Left ? (
           <FieldLabel
             name={name}
             isRequired={isRequired}
             isDisabled={isDisabled}
             mode={mode}
+            labelPosition={labelPosition}
             namePlaceholder={namePlaceholder}
             handleChangeName={handleChangeName}
-            className={styles['kick-off-input__name_label-left']}
           />
         ) : (
           <div className={fieldNameClassName}>
@@ -90,6 +93,7 @@ export function ExtraFieldRadio({
                 fieldStyles['kickoff-create-field-name-input'],
                 !isKickoffFieldNameValid && fieldStyles['kickoff-create-field-name-input_error'],
               )}
+              data-use-input
               onChange={handleChangeName}
               placeholder={namePlaceholder}
               value={name}
@@ -127,7 +131,9 @@ export function ExtraFieldRadio({
           editField={editField}
           isDisabled={isDisabled}
           datasetName={datasetName}
-          {...(labelPosition === EFieldLabelPosition.Left && { className: styles['kick-off-input__options-content_label-left'] })}
+          {...(labelPosition === EFieldLabelPosition.Left && {
+            className: styles['kick-off-input__options-content_label-left'],
+          })}
         >
           {customOptionsList}
           {!isDisabled && addOptionButton}
@@ -158,16 +164,27 @@ export function ExtraFieldRadio({
             id={`extra-field-radio-${optionIndex}`}
             containerClassName={fieldStyles['connected_radio']}
           />
-          <input
-            ref={(el) => (optionInputsRefs.current[optionIndex] = el as HTMLInputElement)}
-            className={fieldStyles['labeled-checkbox__input']}
-            onChange={handleChangeOption(optionIndex)}
-            onBlur={handleBlurOption(field.apiName)}
-            placeholder={namePlaceholder}
-            type="text"
-            value={value}
-            disabled={isDisabled}
-          />
+          {isFieldsetReadOnly ? (
+            <textarea
+              className={fieldStyles['labeled-checkbox__input']}
+              data-use-input
+              value={value}
+              disabled
+              rows={1}
+            />
+          ) : (
+            <input
+              ref={(el) => (optionInputsRefs.current[optionIndex] = el as HTMLInputElement)}
+              className={fieldStyles['labeled-checkbox__input']}
+              data-use-input
+              onChange={handleChangeOption(optionIndex)}
+              onBlur={handleBlurOption(field.apiName)}
+              placeholder={namePlaceholder}
+              type="text"
+              value={value}
+              disabled={isDisabled}
+            />
+          )}
           <span className={fieldStyles['measure']} />
           {isActive && !isDisabled && (selectionItems?.length || 0) > 1 && (
             <div
@@ -231,7 +248,12 @@ export function ExtraFieldRadio({
 
     return (
       <li key={selectionValue} className={fieldStyles['kickoff-set-field-option']}>
-        <RadioButton id={`${field.apiName}-${selectionValue}`} title={selectionValue} onChange={handleToggleOption(selectionValue)} checked={isChecked} />
+        <RadioButton
+          id={`${field.apiName}-${selectionValue}`}
+          title={selectionValue}
+          onChange={handleToggleOption(selectionValue)}
+          checked={isChecked}
+        />
       </li>
     );
   };
@@ -256,9 +278,9 @@ export function ExtraFieldRadio({
             isRequired={isRequired}
             isDisabled={isDisabled}
             mode={mode}
+            labelPosition={labelPosition}
             labelBackgroundColor={labelBackgroundColor}
             handleChangeName={handleChangeName}
-            className={styles['kick-off-input__name_label-left_aligned-start']}
           />
         ) : (
           <div>

@@ -17,12 +17,11 @@ const EXPECTED_AUTH_PATTERNS = [
   'Authentication credentials were not provided',
   'You do not have permission',
   'Request was throttled',
+  'Invalid login or password',
 ];
 
 // Validation — user input errors, not code bugs
-const EXPECTED_VALIDATION_PATTERNS = [
-  'validation_error',
-];
+const EXPECTED_VALIDATION_PATTERNS = ['validation_error'];
 
 const ALL_EXPECTED_PATTERNS = [...EXPECTED_AUTH_PATTERNS, ...EXPECTED_VALIDATION_PATTERNS];
 const EXPECTED_CLIENT_ERROR_REGEX = new RegExp(ALL_EXPECTED_PATTERNS.join('|'));

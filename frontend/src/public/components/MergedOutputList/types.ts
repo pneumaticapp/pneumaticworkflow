@@ -10,4 +10,6 @@ export interface IMergedOutputListProps {
   labelBackgroundColor: EInputNameBackgroundColor;
   fieldClassName?: string;
   accountId: number;
+  isDisabled?: boolean;
+  onUploadStateChange?(apiName: string, isUploading: boolean): void;
 }

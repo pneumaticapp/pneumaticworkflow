@@ -1,11 +1,7 @@
 import { HeadingNode, QuoteNode } from '@lexical/rich-text';
 import { ListNode, ListItemNode } from '@lexical/list';
 import { LinkNode } from '@lexical/link';
-import {
-  ImageAttachmentNode,
-  VideoAttachmentNode,
-  FileAttachmentNode,
-} from './attachments';
+import { ImageAttachmentNode, VideoAttachmentNode, FileAttachmentNode } from './attachments';
 import { MentionNode } from './MentionNode';
 import { VariableNode } from './VariableNode';
 import { ChecklistNode } from './ChecklistNode';
@@ -35,9 +31,5 @@ export {
 } from './ChecklistItemNode';
 export type { SerializedChecklistItemNode, TChecklistItemNodePayload } from './ChecklistItemNode';
 
-export {
-  ChecklistNode,
-  $createChecklistNode,
-  $isChecklistNode,
-} from './ChecklistNode';
+export { ChecklistNode, $createChecklistNode, $isChecklistNode } from './ChecklistNode';
 export type { SerializedChecklistNode, TChecklistNodePayload } from './ChecklistNode';

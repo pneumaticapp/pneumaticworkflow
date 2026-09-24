@@ -112,6 +112,7 @@ services:
       CIO_WEBHOOK_API_KEY: ${CIO_WEBHOOK_API_KEY:-}
       CIO_TRANSACTIONAL_API_KEY: ${CIO_TRANSACTIONAL_API_KEY:-}
       CIO_TEMPLATE__RESET_PASSWORD: ${CIO_TEMPLATE__RESET_PASSWORD:-}
+      CIO_TEMPLATE__INVITE: ${CIO_TEMPLATE__INVITE:-}
       CIO_TEMPLATE__USER_DEACTIVATED: ${CIO_TEMPLATE__USER_DEACTIVATED:-}
       CIO_TEMPLATE__NEW_TASK: ${CIO_TEMPLATE__NEW_TASK:-}
       CIO_TEMPLATE__TASK_RETURNED: ${CIO_TEMPLATE__TASK_RETURNED:-}
@@ -237,6 +238,7 @@ services:
       CIO_WEBHOOK_API_KEY: ${CIO_WEBHOOK_API_KEY:-}
       CIO_TRANSACTIONAL_API_KEY: ${CIO_TRANSACTIONAL_API_KEY:-}
       CIO_TEMPLATE__RESET_PASSWORD: ${CIO_TEMPLATE__RESET_PASSWORD:-}
+      CIO_TEMPLATE__INVITE: ${CIO_TEMPLATE__INVITE:-}
       CIO_TEMPLATE__USER_DEACTIVATED: ${CIO_TEMPLATE__USER_DEACTIVATED:-}
       CIO_TEMPLATE__NEW_TASK: ${CIO_TEMPLATE__NEW_TASK:-}
       CIO_TEMPLATE__TASK_RETURNED: ${CIO_TEMPLATE__TASK_RETURNED:-}
@@ -357,6 +359,7 @@ services:
       CIO_WEBHOOK_API_KEY: ${CIO_WEBHOOK_API_KEY:-}
       CIO_TRANSACTIONAL_API_KEY: ${CIO_TRANSACTIONAL_API_KEY:-}
       CIO_TEMPLATE__RESET_PASSWORD: ${CIO_TEMPLATE__RESET_PASSWORD:-}
+      CIO_TEMPLATE__INVITE: ${CIO_TEMPLATE__INVITE:-}
       CIO_TEMPLATE__USER_DEACTIVATED: ${CIO_TEMPLATE__USER_DEACTIVATED:-}
       CIO_TEMPLATE__NEW_TASK: ${CIO_TEMPLATE__NEW_TASK:-}
       CIO_TEMPLATE__TASK_RETURNED: ${CIO_TEMPLATE__TASK_RETURNED:-}
@@ -419,7 +422,7 @@ services:
       FILE_POSTGRES_PORT: ${FILE_POSTGRES_PORT:-5432}
     volumes:
       - ./backend:/pneumatic_backend
-    command: celery --pidfile= --app src.celery_app:app beat -l warning -S django
+    command: celery --app src.celery_app:app beat -l warning -S django
     depends_on:
       - postgres
       - rabbitmq
@@ -504,7 +507,7 @@ services:
   file-service:
     build:
       context: ./storage
-    image: pneumaticworkflow/file-service:${TAG:-stable}
+    image: pneumaticworkflow/pneumatic-file-service:${TAG:-stable}
     container_name: pneumatic-file-service
     environment:
       DEBUG: ${FILE_DEBUG:-false}
@@ -537,9 +540,11 @@ services:
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-django_secret_django_secret_django_secret}
       AUTH_TOKEN_ITERATIONS: ${FILE_AUTH_TOKEN_ITERATIONS:-1}
       BACKEND_PRIVATE_URL: ${BACKEND_PRIVATE_URL:-http://pneumatic-nginx/}
+      SENTRY_DSN: ${SENTRY_FILE_DSN:-}
+      SENTRY_ENVIRONMENT: ${ENVIRONMENT:-Production}
     command: >
       sh -c "poetry run alembic -c src/shared_kernel/database/alembic.ini upgrade head &&
-             poetry run python -m src.main"
+             poetry run uvicorn src.main:app --host 0.0.0.0 --port ${FILE_PORT:-8000} --workers ${FILE_WORKERS:-1}"
     depends_on:
       file-postgres:
         condition: service_healthy

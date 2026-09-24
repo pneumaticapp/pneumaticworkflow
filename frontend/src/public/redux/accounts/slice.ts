@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction, createAction } from '@reduxjs/toolkit';
 
 import { EDeleteUserModalState, IAccounts, IAccountPlan } from '../../types/redux';
-import { EUserListSorting, TUserListItem, ICreateUserRequest } from '../../types/user';
+import { EUserListSorting, EUserStatus, TUserListItem, ICreateUserRequest } from '../../types/user';
 import { ESubscriptionPlan } from '../../types/account';
 
 import {
@@ -32,7 +32,7 @@ const initialState: IAccounts = {
     billingPlan: ESubscriptionPlan.Unknown,
     trialIsActive: true,
     isSubscribed: false,
-    tenantsActiveUsers: null
+    tenantsActiveUsers: null,
   },
   isLoading: false,
   users: [],
@@ -45,9 +45,8 @@ const initialState: IAccounts = {
   isCreateUserModalOpen: false,
 };
 
-
 function setUserProperties(users: TUserListItem[], userId: number, changedProps: Partial<TUserListItem>) {
-  return users.map(user => {
+  return users.map((user) => {
     if (user.id === userId) {
       return {
         ...user,
@@ -58,6 +57,34 @@ function setUserProperties(users: TUserListItem[], userId: number, changedProps:
     return user;
   });
 }
+
+const getUserNameForSorting = (user: TUserListItem) => (user.firstName || user.email).toLowerCase();
+
+function sortUsers(users: TUserListItem[], sorting: EUserListSorting) {
+  const sorted = users.slice().sort((user1, user2) => {
+    if (getUserNameForSorting(user1) === getUserNameForSorting(user2)) return 0;
+
+    return getUserNameForSorting(user1) > getUserNameForSorting(user2) ? 1 : -1;
+  });
+
+  if (sorting === EUserListSorting.NameDesc) {
+    return sorted.reverse();
+  }
+
+  if (sorting === EUserListSorting.Status) {
+    return sorted.sort((user1, user2) => {
+      const user1Status = user1.status === EUserStatus.Invited ? 1 : 0;
+      const user2Status = user2.status === EUserStatus.Invited ? 1 : 0;
+
+      return user1Status - user2Status;
+    });
+  }
+
+  return sorted;
+}
+
+const getActiveUsersCount = (users: TUserListItem[]) =>
+  users.filter((user) => user.status === EUserStatus.Active && user.type === 'user').length;
 
 const accountsSlice = createSlice({
   name: 'accounts',
@@ -79,6 +106,7 @@ const accountsSlice = createSlice({
     teamFetchFinished: (state, action: PayloadAction<TUserListItem[]>) => {
       state.team.isLoading = false;
       state.team.list = action.payload;
+      state.planInfo.activeUsers = getActiveUsersCount(action.payload);
     },
 
     usersFetchFailed: (state) => {
@@ -89,10 +117,12 @@ const accountsSlice = createSlice({
     usersFetchFinished: (state, action: PayloadAction<TUserListItem[]>) => {
       state.isLoading = false;
       state.users = action.payload;
+      state.planInfo.activeUsers = getActiveUsersCount(action.payload);
     },
 
     activeUsersCountFetchFinished: (state, action: PayloadAction<TActiveUsersCountFetchFinishedPayload>) => {
       state.planInfo.activeUsers = action.payload.activeUsers;
+      state.planInfo.tenantsActiveUsers = action.payload.tenantsActiveUsers;
     },
 
     setCurrentPlan: (state, action: PayloadAction<IAccountPlan>) => {
@@ -119,16 +149,17 @@ const accountsSlice = createSlice({
     changeUserManager: (state, action: PayloadAction<{ id: number; managerId: number | null }>) => {
       const { id: userId, managerId } = action.payload;
 
-      const updateList = (list: TUserListItem[]) => list.map(user => {
-        if (user.id === userId) return { ...user, managerId };
-        if (user.reportIds && user.reportIds.includes(userId) && user.id !== managerId) {
-          return { ...user, reportIds: user.reportIds.filter(id => id !== userId) };
-        }
-        if (user.id === managerId && (!user.reportIds || !user.reportIds.includes(userId))) {
-          return { ...user, reportIds: [...(user.reportIds || []), userId] };
-        }
-        return user;
-      });
+      const updateList = (list: TUserListItem[]) =>
+        list.map((user) => {
+          if (user.id === userId) return { ...user, managerId };
+          if (user.reportIds && user.reportIds.includes(userId) && user.id !== managerId) {
+            return { ...user, reportIds: user.reportIds.filter((id) => id !== userId) };
+          }
+          if (user.id === managerId && (!user.reportIds || !user.reportIds.includes(userId))) {
+            return { ...user, reportIds: [...(user.reportIds || []), userId] };
+          }
+          return user;
+        });
 
       state.team.list = updateList(state.team.list);
       state.users = updateList(state.users);
@@ -137,29 +168,30 @@ const accountsSlice = createSlice({
     changeUserReports: (state, action: PayloadAction<{ id: number; reportIds: number[] }>) => {
       const { id: userId, reportIds } = action.payload;
 
-      const updateList = (list: TUserListItem[]) => list.map(user => {
-        if (user.id === userId) return { ...user, reportIds };
+      const updateList = (list: TUserListItem[]) =>
+        list.map((user) => {
+          if (user.id === userId) return { ...user, reportIds };
 
-        let newReportIds = user.reportIds;
-        if (user.id !== userId && user.reportIds) {
-          const filtered = user.reportIds.filter(rId => !reportIds.includes(rId));
-          if (filtered.length !== user.reportIds.length) {
-            newReportIds = filtered;
+          let newReportIds = user.reportIds;
+          if (user.id !== userId && user.reportIds) {
+            const filtered = user.reportIds.filter((rId) => !reportIds.includes(rId));
+            if (filtered.length !== user.reportIds.length) {
+              newReportIds = filtered;
+            }
           }
-        }
 
-        let newManagerId = user.managerId;
-        if (reportIds.includes(user.id)) {
-          newManagerId = userId;
-        } else if (user.managerId === userId && !reportIds.includes(user.id)) {
-          newManagerId = null;
-        }
+          let newManagerId = user.managerId;
+          if (reportIds.includes(user.id)) {
+            newManagerId = userId;
+          } else if (user.managerId === userId && !reportIds.includes(user.id)) {
+            newManagerId = null;
+          }
 
-        if (newReportIds !== user.reportIds || newManagerId !== user.managerId) {
-          return { ...user, reportIds: newReportIds, managerId: newManagerId };
-        }
-        return user;
-      });
+          if (newReportIds !== user.reportIds || newManagerId !== user.managerId) {
+            return { ...user, reportIds: newReportIds, managerId: newManagerId };
+          }
+          return user;
+        });
 
       state.team.list = updateList(state.team.list);
       state.users = updateList(state.users);
@@ -195,28 +227,37 @@ const accountsSlice = createSlice({
 
     upsertUserFromWs: (state, action: PayloadAction<TUserListItem>) => {
       const user = action.payload;
+      const hasLocalUsers = Boolean(state.users.length || state.team.list.length);
       const upsertList = (list: TUserListItem[]) => {
         const hasUser = list.some((item) => item.id === user.id);
-        if (!hasUser) {
-          return [...list, user];
-        }
-        return list.map((item) => (item.id === user.id ? { ...item, ...user } : item));
+        const nextList = hasUser
+          ? list.map((item) => (item.id === user.id ? { ...item, ...user } : item))
+          : [...list, user];
+
+        return sortUsers(nextList, state.userListSorting);
       };
 
       state.users = upsertList(state.users);
       state.team.list = upsertList(state.team.list);
+      if (hasLocalUsers) {
+        state.planInfo.activeUsers = getActiveUsersCount(state.team.list.length ? state.team.list : state.users);
+      }
     },
 
     removeUserFromWs: (state, action: PayloadAction<number>) => {
+      const hasLocalUsers = Boolean(state.users.length || state.team.list.length);
       const removeFromList = (list: TUserListItem[]) => list.filter((item) => item.id !== action.payload);
       state.users = removeFromList(state.users);
       state.team.list = removeFromList(state.team.list);
+      if (hasLocalUsers) {
+        state.planInfo.activeUsers = getActiveUsersCount(state.team.list.length ? state.team.list : state.users);
+      }
     },
   },
 });
 
 export const usersFetchStarted = createAction('accounts/usersFetchStarted', (payload?: TUsersFetchPayload) => ({
-  payload
+  payload,
 }));
 export const teamFetchStarted = createAction<ITeamFetchStartedProps>('accounts/teamFetchStarted');
 export const loadChangeUserAdmin = createAction<IChangeUserAdminProps>('accounts/loadChangeUserAdmin');

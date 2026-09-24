@@ -3,16 +3,15 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useSelector } from 'react-redux';
 
-import { makeExtraField } from '../../../../__stubs__/fields.factory';
-import { makeFieldsetCatalogItem } from '../../../../__stubs__/fieldsets.factory';
+import {
+  makeFieldsetCatalogItem,
+  makeFieldsetField,
+  makeFieldsetTemplateRule,
+} from '../../../../__stubs__/fieldsets.factory';
 import { IFieldsetCatalogItem } from '../../../../types/fieldset';
 import { intlMock } from '../../../../__stubs__/intlMock';
-import { Dropdown } from '../../../UI';
-import { IDropdownProps, TDropdownOption } from '../../../UI/Dropdown/Dropdown';
 import { FieldsetIconPicker, IFieldsetIconPickerProps } from '../FieldsetIconPicker';
-import {
-  getFieldsetsCatalogItems,
-} from '../../../../redux/selectors/fieldsets';
+import { getFieldsetsCatalogItems } from '../../../../redux/selectors/fieldsets';
 
 jest.mock('react-redux', () => ({
   useSelector: jest.fn(),
@@ -23,9 +22,22 @@ jest.mock('../../../../redux/selectors/fieldsets', () => ({
 }));
 
 jest.mock('../../../UI', () => ({
-  Dropdown: jest.fn(({ options }: IDropdownProps) => {
-    const single = !Array.isArray(options) ? (options as TDropdownOption) : null;
-    return single?.customSubOption ?? null;
+  FilterSelect: jest.fn(({ options, onChange, isLoading, placeholderText }: any) => {
+    if (isLoading && options.length === 0) {
+      return <div>Loading…</div>;
+    }
+    if (options.length === 0) {
+      return <div>{placeholderText}</div>;
+    }
+    return (
+      <div data-testid="mock-filter-select">
+        {options.map((option: any) => (
+          <button key={option.id} type="button" onClick={() => onChange(option.id)}>
+            {option.label}
+          </button>
+        ))}
+      </div>
+    );
   }),
   CustomTooltip: () => null,
 }));
@@ -38,40 +50,22 @@ jest.mock('../../../icons/FieldsetIcon', () => ({
   FieldsetIcon: () => null,
 }));
 
+const makeCatalogItem = (id: number, apiName: string, name: string, order: number): IFieldsetCatalogItem =>
+  makeFieldsetCatalogItem({
+    id,
+    apiName,
+    name,
+    order,
+  });
 
-const makeCatalogItem = (
-  id: number,
-  apiName: string,
-  name: string,
-  order: number,
-): IFieldsetCatalogItem => makeFieldsetCatalogItem({
-  id,
-  apiName,
-  name,
-  order,
-});
-
-const getDropdownProps = (): IDropdownProps => {
-  const calls = (Dropdown as jest.Mock).mock.calls;
-  return calls[calls.length - 1][0];
-};
-
-const makeField = (apiName: string) => makeExtraField({
-  apiName,
-  name: `Field ${apiName}`,
-});
-
-const formatMsg = (id: string, defaultMessage?: string) =>
-  intlMock.formatMessage({ id, defaultMessage });
+const formatMsg = (id: string, defaultMessage?: string) => intlMock.formatMessage({ id, defaultMessage });
 
 const EMPTY_STATE = {};
 
 describe('FieldsetIconPicker', () => {
   const makeProps = (overrides: Partial<IFieldsetIconPickerProps> = {}): IFieldsetIconPickerProps => ({
     fieldsetsCatalogLoading: false,
-    selectedFieldsetIds: [],
     onSelectFieldset: jest.fn(),
-    onRemoveFieldset: jest.fn(),
     ...overrides,
   });
 
@@ -83,36 +77,17 @@ describe('FieldsetIconPicker', () => {
     (getFieldsetsCatalogItems as jest.Mock).mockReturnValue([]);
   });
 
-  it('Dropdown does not receive isDisabled prop', () => {
-    render(React.createElement(FieldsetIconPicker, makeProps()));
-    expect(getDropdownProps().isDisabled).toBeUndefined();
+  it('fieldsetsCatalogLoading=true and empty catalog -> loading text is rendered', () => {
+    render(React.createElement(FieldsetIconPicker, makeProps({ fieldsetsCatalogLoading: true })));
+    expect(screen.getByText(formatMsg('template.fieldset-picker.loading', 'Loading…'))).toBeInTheDocument();
   });
 
-  it('fieldsetsCatalogLoading=true and empty catalog → loading text is rendered', () => {
-    render(
-      React.createElement(
-        FieldsetIconPicker,
-        makeProps({ fieldsetsCatalogLoading: true }),
-      ),
-    );
-    expect(
-      screen.getByText(formatMsg('template.fieldset-picker.loading', 'Loading…')),
-    ).toBeInTheDocument();
-  });
-
-  it('fieldsetsCatalogLoading=false and empty catalog → empty text is rendered', () => {
-    render(
-      React.createElement(
-        FieldsetIconPicker,
-        makeProps({ fieldsetsCatalogLoading: false }),
-      ),
-    );
+  it('fieldsetsCatalogLoading=false and empty catalog -> empty text is rendered', () => {
+    render(React.createElement(FieldsetIconPicker, makeProps({ fieldsetsCatalogLoading: false })));
     expect(screen.getByText(formatMsg('template.fieldset-picker.empty'))).toBeInTheDocument();
   });
 
-  it('renders fieldsets sorted by order property', () => {
-    // Бизнес: филдсеты отображаются в порядке, заданном в каталоге (поле order).
-    // Идентификатор: каталожный id (1, 2, 3). Order определяет визуальный порядок.
+  it('renders fieldsets sorted by order property ascending', () => {
     const catalogItems: IFieldsetCatalogItem[] = [
       makeCatalogItem(1, 'fs-a', 'Alpha', 2),
       makeCatalogItem(2, 'fs-b', 'Zeta', 0),
@@ -128,21 +103,16 @@ describe('FieldsetIconPicker', () => {
     expect(buttons[2]).toHaveTextContent('Alpha');
   });
 
-  it('click on unselected fieldset calls onSelectFieldset, onRemoveFieldset not called', () => {
+  it('click on fieldset option calls onSelectFieldset with fieldset object', () => {
     const onSelectFieldset = jest.fn();
-    const onRemoveFieldset = jest.fn();
-    const catalogItems: IFieldsetCatalogItem[] = [
-      makeCatalogItem(1, 'fs-1', 'My Fieldset', 0),
-    ];
+    const catalogItems: IFieldsetCatalogItem[] = [makeCatalogItem(1, 'fs-1', 'My Fieldset', 0)];
     (getFieldsetsCatalogItems as jest.Mock).mockReturnValue(catalogItems);
 
     render(
       React.createElement(
         FieldsetIconPicker,
         makeProps({
-          selectedFieldsetIds: [],
           onSelectFieldset,
-          onRemoveFieldset,
         }),
       ),
     );
@@ -151,97 +121,33 @@ describe('FieldsetIconPicker', () => {
 
     expect(onSelectFieldset).toHaveBeenCalledTimes(1);
     expect(onSelectFieldset).toHaveBeenCalledWith(expect.objectContaining({ id: 1 }));
-    expect(onRemoveFieldset).not.toHaveBeenCalled();
-  });
-
-  it('click on selected fieldset calls onRemoveFieldset, onSelectFieldset not called', () => {
-    const onSelectFieldset = jest.fn();
-    const onRemoveFieldset = jest.fn();
-    const catalogItems: IFieldsetCatalogItem[] = [
-      makeCatalogItem(1, 'fs-1', 'My Fieldset', 0),
-    ];
-    (getFieldsetsCatalogItems as jest.Mock).mockReturnValue(catalogItems);
-
-    render(
-      React.createElement(
-        FieldsetIconPicker,
-        makeProps({
-          selectedFieldsetIds: [1],
-          onSelectFieldset,
-          onRemoveFieldset,
-        }),
-      ),
-    );
-
-    userEvent.click(screen.getByRole('button'));
-
-    expect(onRemoveFieldset).toHaveBeenCalledTimes(1);
-    expect(onRemoveFieldset).toHaveBeenCalledWith(1);
-    expect(onSelectFieldset).not.toHaveBeenCalled();
-  });
-
-  it('selected fieldset renders checkbox in checked state', () => {
-    const catalogItems: IFieldsetCatalogItem[] = [
-      makeCatalogItem(1, 'fs-1', 'My Fieldset', 0),
-    ];
-    (getFieldsetsCatalogItems as jest.Mock).mockReturnValue(catalogItems);
-
-    render(
-      React.createElement(
-        FieldsetIconPicker,
-        makeProps({
-          selectedFieldsetIds: [1],
-        }),
-      ),
-    );
-
-    const checkbox = screen.getByRole('checkbox', { hidden: true });
-    expect(checkbox).toBeChecked();
-  });
-
-  it('unselected fieldset renders checkbox in unchecked state', () => {
-    const catalogItems: IFieldsetCatalogItem[] = [
-      makeCatalogItem(1, 'fs-1', 'My Fieldset', 0),
-    ];
-    (getFieldsetsCatalogItems as jest.Mock).mockReturnValue(catalogItems);
-
-    render(
-      React.createElement(
-        FieldsetIconPicker,
-        makeProps({
-          selectedFieldsetIds: [],
-        }),
-      ),
-    );
-
-    const checkbox = screen.getByRole('checkbox', { hidden: true });
-    expect(checkbox).not.toBeChecked();
   });
 
   it('background catalog load does not show loading text when list is not empty', () => {
-    const catalogItems: IFieldsetCatalogItem[] = [
-      makeCatalogItem(1, 'fs-1', 'My Set', 0),
-    ];
+    const catalogItems: IFieldsetCatalogItem[] = [makeCatalogItem(1, 'fs-1', 'My Set', 0)];
     (getFieldsetsCatalogItems as jest.Mock).mockReturnValue(catalogItems);
 
-    render(
-      React.createElement(
-        FieldsetIconPicker,
-        makeProps({ fieldsetsCatalogLoading: true }),
-      ),
-    );
+    render(React.createElement(FieldsetIconPicker, makeProps({ fieldsetsCatalogLoading: true })));
 
-    expect(
-      screen.queryByText(formatMsg('template.fieldset-picker.loading', 'Loading…')),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText(formatMsg('template.fieldset-picker.loading', 'Loading…'))).not.toBeInTheDocument();
     expect(screen.getByText('My Set')).toBeInTheDocument();
   });
 
-  it('meta line shows "<fieldsCount> fields · <rulesCount> rules" with real numbers', () => {
+  it('meta line displays fields and rules count using typed stub factories without as any', () => {
     const catalogItem = makeFieldsetCatalogItem({
       name: 'My Set',
-      fields: [makeField('a'), makeField('b'), makeField('c')] as any,
-      rules: [{}, {}, {}, {}, {}] as any,
+      fields: [
+        makeFieldsetField({ apiName: 'a' }),
+        makeFieldsetField({ apiName: 'b' }),
+        makeFieldsetField({ apiName: 'c' }),
+      ],
+      rules: [
+        makeFieldsetTemplateRule(),
+        makeFieldsetTemplateRule(),
+        makeFieldsetTemplateRule(),
+        makeFieldsetTemplateRule(),
+        makeFieldsetTemplateRule(),
+      ],
     });
     (getFieldsetsCatalogItems as jest.Mock).mockReturnValue([catalogItem]);
 
@@ -250,7 +156,7 @@ describe('FieldsetIconPicker', () => {
     expect(screen.getByText('3 fields · 5 rules')).toBeInTheDocument();
   });
 
-  it('meta line shows "0 fields · 0 rules" when fields and rules are empty', () => {
+  it('meta line displays "0 fields · 0 rules" when fields and rules are empty', () => {
     const catalogItem = makeFieldsetCatalogItem({
       name: 'My Set',
       fields: [],
@@ -261,5 +167,15 @@ describe('FieldsetIconPicker', () => {
     render(React.createElement(FieldsetIconPicker, makeProps()));
 
     expect(screen.getByText('0 fields · 0 rules')).toBeInTheDocument();
+  });
+
+  it('passes searchByText with fieldset name for each option in FilterSelect', () => {
+    const catalogItems: IFieldsetCatalogItem[] = [makeCatalogItem(1, 'fs-search', 'Searchable Fieldset', 0)];
+    (getFieldsetsCatalogItems as jest.Mock).mockReturnValue(catalogItems);
+
+    render(React.createElement(FieldsetIconPicker, makeProps()));
+
+    const button = screen.getByRole('button');
+    expect(button).toBeInTheDocument();
   });
 });

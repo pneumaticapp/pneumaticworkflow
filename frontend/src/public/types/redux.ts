@@ -13,7 +13,8 @@ import {
   IWorkflowDetailsClient,
 } from './workflow';
 import { ITask, ITaskListItem, ITasksSettings } from './tasks';
-import { IIntegrationDetailed, IIntegrationListItem } from './integrations';
+import { EPermissionObjectType, TObjectPermissionsById } from './permissions';
+import { IApiKeyItem, IIntegrationDetailed, IIntegrationListItem } from './integrations';
 import { ESettingsTabs } from './profile';
 import { IHighlightsItem, EHighlightsDateFilter } from './highlights';
 import { EDashboardTimeRange, IGettingStartedChecklist } from './dashboard';
@@ -66,7 +67,14 @@ export interface IApplicationState {
   tenants: ITenantsStore;
   datasets: IDatasetsStore;
   fieldsets: IFieldsetsStore;
+  permissions: IPermissionsStore;
 }
+
+export type IPermissionsStore = {
+  [objType in EPermissionObjectType]: TObjectPermissionsById;
+} & {
+  userId: number | null;
+};
 
 export enum ELoggedState {
   LoggedIn = 'logged-in',
@@ -202,9 +210,10 @@ export interface IStoreNotification {
 }
 
 export interface IIntegrationsStore {
-  apiKey: {
+  apiKeys: {
     isLoading: boolean;
-    data: string;
+    data: IApiKeyItem[];
+    newlyCreatedKey: string | null;
   };
   list: {
     isLoading: boolean;
@@ -379,17 +388,17 @@ export type IDatasetsStore = {
   isAllDatasetsLoading: boolean;
   isAllDatasetsLoaded: boolean;
   isLoading: boolean;
-  searchQuery: string;                
-  datasetsListSorting: EDatasetsSorting;         
+  searchQuery: string;
+  datasetsListSorting: EDatasetsSorting;
 
   isCreateModalOpen: boolean;
   isEditModalOpen: boolean;
-  
-  currentDataset: IDataset | null;    
-  isCurrentDatasetLoading: boolean;   
-  currentSearchQuery: string;         
+
+  currentDataset: IDataset | null;
+  isCurrentDatasetLoading: boolean;
+  currentSearchQuery: string;
   currentSortOrder: TDatasetItemsSortOrder;
- 
+
   datasetsMap: Record<number, IDataset>;
 };
 
