@@ -1,5 +1,6 @@
 import { GRAPH_APPROVAL_LADDER_TEMPLATE } from '../../fixtures/graphApprovalLadderTemplate';
 import { GRAPH_SHOWCASE_TEMPLATE } from '../../fixtures/graphShowcaseTemplate';
+import { GRAPH_TEMPLATE_259 } from '../../fixtures/graphTemplate259';
 import { EGraphNodeType } from '../../types';
 import { buildTemplateGraph } from '../buildTemplateGraph';
 import { GRAPH_JUNCTION_SIZE, GRAPH_NODE_WIDTH } from '../graphGeometry';
@@ -75,6 +76,22 @@ describe('applyMovedCard', () => {
   it('should anchor every line while a card is still in flight', () => {
     const graph = buildTemplateGraph(GRAPH_APPROVAL_LADDER_TEMPLATE);
     const task = graph.nodes.find((node) => node.id === 'source-3');
+
+    expect(task).toBeDefined();
+
+    const next = applyMovedCard(graph.nodes, graph.edges, {
+      ...task!,
+      position: { x: (task?.position.x ?? 0) + 160, y: task?.position.y ?? 0 },
+      dragging: true,
+    });
+
+    expect(next.edges).toHaveLength(graph.edges.length);
+    expect(next.edges.every((edge) => edge.data?.sourceAnchor && edge.data?.targetAnchor)).toBe(true);
+  });
+
+  it('should keep the large template fully anchored while a card is in flight', () => {
+    const graph = buildTemplateGraph(GRAPH_TEMPLATE_259);
+    const task = graph.nodes.find((node) => node.id === 'template-259-task-20');
 
     expect(task).toBeDefined();
 
