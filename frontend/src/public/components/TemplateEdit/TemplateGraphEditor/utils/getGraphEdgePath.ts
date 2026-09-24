@@ -26,12 +26,14 @@ interface IGraphEdgePathParams {
 
 export interface IGraphEdgePath {
   path: string;
+  /** The corners behind `path`, so collision checks need not parse the string back. */
+  points: IPoint[];
   /** Middle of the longest straight run, so a badge never lands on a corner. */
   centerX: number;
   centerY: number;
 }
 
-interface IPoint {
+export interface IPoint {
   x: number;
   y: number;
 }
@@ -73,6 +75,7 @@ function withPath(points: IPoint[]): IGraphEdgePath {
 
   return {
     path: buildPath(points),
+    points,
     centerX: center.x,
     centerY: center.y,
   };
