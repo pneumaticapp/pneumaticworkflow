@@ -3,7 +3,7 @@ import { isConditionalGraphEdge, isLaneRoutedGraphEdge } from './edgeStyles';
 import { isCheckIfJunctionId, isCheckIfStemEdge } from './graphConstants';
 import { markCheckIfLanes, markDetourEdges, pickDetourSide } from './applyEdgeDetours';
 import { assignEdgeHandles } from './assignEdgeHandles';
-import { CARD_HIT_INSET, planCheckIfCardWraps, planObstacleDetours } from './graphPathCollision';
+import { CARD_HIT_INSET, IGutterDetour, planCheckIfCardWraps, planObstacleDetours } from './graphPathCollision';
 import {
   GRAPH_CHECK_IF_LANE_GAP,
   GRAPH_EDGE_SIDEWAYS_THRESHOLD,
@@ -302,6 +302,18 @@ function withGutterDetours(
   });
 }
 
+/**
+ * A settled layout still yields a plan every time, because each line is re-offered the alley it
+ * already occupies. Only a plan that actually moves something is worth another pass.
+ */
+function movesAnyEdge(edges: TGraphEdge[], gutters: Map<string, IGutterDetour>): boolean {
+  return edges.some((edge) => {
+    const detour = gutters.get(edge.id);
+
+    return detour != null && (detour.laneX !== edge.data?.laneX || detour.laneY !== edge.data?.laneY);
+  });
+}
+
 export function applyEdgeAnchors(nodes: TGraphNode[], edges: TGraphEdge[]): TGraphEdge[] {
   let routed = markCheckIfLanes(nodes, markDetourEdges(nodes, edges));
   let laid = routePass(nodes, routed);
@@ -323,7 +335,7 @@ export function applyEdgeAnchors(nodes: TGraphNode[], edges: TGraphEdge[]): TGra
   for (let pass = 0; pass < GUTTER_PASS_LIMIT; pass += 1) {
     const gutterPlan = planObstacleDetours(nodes, laid);
 
-    if (gutterPlan.gutters.size === 0) {
+    if (!movesAnyEdge(laid, gutterPlan.gutters)) {
       break;
     }
 
