@@ -10,6 +10,7 @@ import {
   GRAPH_SKIP_LANE_STEP,
   faceFromHandle,
   getGraphNodeBox,
+  IGraphNodeBox,
   getHandleAnchor,
   isCardNode,
   offsetAlongFace,
@@ -74,8 +75,21 @@ function byDistanceTo(preferred: number) {
   return (first: number, second: number): number => Math.abs(first - preferred) - Math.abs(second - preferred);
 }
 
+/** Lanes land on whole pixels, so rounding is enough to spot the repeats in one pass. */
 function dedupe(values: number[]): number[] {
-  return values.filter((value, index) => values.findIndex((other) => Math.abs(other - value) < 0.5) === index);
+  const seen = new Set<number>();
+
+  return values.filter((value) => {
+    const key = Math.round(value);
+
+    if (seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+
+    return true;
+  });
 }
 
 export function isVerticalSegment(segment: IPathSegment): boolean {
@@ -86,8 +100,7 @@ export function isHorizontalSegment(segment: IPathSegment): boolean {
   return Math.abs(segment.a.y - segment.b.y) < 0.5;
 }
 
-export function segmentHitsCard(segment: IPathSegment, card: TGraphNode): boolean {
-  const box = getGraphNodeBox(card);
+export function segmentHitsBox(segment: IPathSegment, box: IGraphNodeBox): boolean {
   const minX = Math.min(segment.a.x, segment.b.x);
   const maxX = Math.max(segment.a.x, segment.b.x);
   const minY = Math.min(segment.a.y, segment.b.y);
@@ -99,6 +112,10 @@ export function segmentHitsCard(segment: IPathSegment, card: TGraphNode): boolea
     maxY > box.y + CARD_HIT_INSET &&
     minY < box.bottom - CARD_HIT_INSET
   );
+}
+
+export function segmentHitsCard(segment: IPathSegment, card: TGraphNode): boolean {
+  return segmentHitsBox(segment, getGraphNodeBox(card));
 }
 
 /** A vertical run sitting exactly on a card side reads as a border, not as a line. */
@@ -288,12 +305,11 @@ interface IYInterval {
 
 const BORDER_GLUE = 4;
 
-function occupiedYIntervals(cards: TGraphNode[], fromX: number, toX: number): IYInterval[] {
+function occupiedYIntervals(boxes: IGraphNodeBox[], fromX: number, toX: number): IYInterval[] {
   const minX = Math.min(fromX, toX);
   const maxX = Math.max(fromX, toX);
 
-  return cards
-    .map((card) => getGraphNodeBox(card))
+  return boxes
     .filter((box) => maxX > box.x + CARD_HIT_INSET && minX < box.right - CARD_HIT_INSET)
     .map((box) => ({ top: box.y, bottom: box.bottom }))
     .sort((first, second) => first.top - second.top);
@@ -372,6 +388,26 @@ function buildGaps(occupied: IYInterval[], preferredY: number): IGap[] {
   return gaps;
 }
 
+/** Horizontal alleys clear of every card, nearest to `preferredY` first, whoever else uses them. */
+function listGeometryYs(
+  fromX: number,
+  toX: number,
+  preferredY: number,
+  nodes: TGraphNode[],
+  ignoreIds: Set<string>,
+): number[] {
+  const boxes = nodes.filter((node) => isCardNode(node) && !ignoreIds.has(node.id)).map(getGraphNodeBox);
+  const occupied = mergeYIntervals(occupiedYIntervals(boxes, fromX, toX));
+
+  const clearsCards = (y: number): boolean =>
+    !occupied.some((interval) => yCollidesInterval(y, interval)) &&
+    !boxes.some((box) => segmentHitsBox({ a: { x: fromX, y }, b: { x: toX, y } }, box));
+
+  const candidates = [preferredY, ...buildGaps(occupied, preferredY).flatMap(gapSlots)];
+
+  return dedupe(candidates).filter(clearsCards).sort(byDistanceTo(preferredY));
+}
+
 /** Horizontal alleys the edge can cross on, nearest to `preferredY` first. */
 export function listClearYs(
   fromX: number,
@@ -382,18 +418,9 @@ export function listClearYs(
   taken: ILaneReservation[],
   pitch: number = GRAPH_SKIP_LANE_STEP,
 ): number[] {
-  const cards = nodes.filter((node) => isCardNode(node) && !ignoreIds.has(node.id));
-  const occupied = mergeYIntervals(occupiedYIntervals(cards, fromX, toX));
   const span = { from: fromX, to: toX };
 
-  const isFree = (y: number): boolean =>
-    !isLaneReserved(y, span, taken, pitch) &&
-    !occupied.some((interval) => yCollidesInterval(y, interval)) &&
-    !cards.some((card) => segmentHitsCard({ a: { x: fromX, y }, b: { x: toX, y } }, card));
-
-  const candidates = [preferredY, ...buildGaps(occupied, preferredY).flatMap(gapSlots)];
-
-  return dedupe(candidates).filter(isFree).sort(byDistanceTo(preferredY));
+  return listGeometryYs(fromX, toX, preferredY, nodes, ignoreIds).filter((y) => !isLaneReserved(y, span, taken, pitch));
 }
 
 export function pickClearY(
@@ -486,6 +513,13 @@ function longRuns(
   return { xRuns, yRuns };
 }
 
+function getEdgeAnchors(edge: TGraphEdge, source: TGraphNode, target: TGraphNode): IPathPoint[] {
+  return [
+    edge.data?.sourceAnchor ?? getHandleAnchor(source, edge.sourceHandle),
+    edge.data?.targetAnchor ?? getHandleAnchor(target, edge.targetHandle),
+  ];
+}
+
 /** The stretches an edge really owns, with the shared runs at either junction taken out. */
 function edgeRuns(
   edge: TGraphEdge,
@@ -493,10 +527,9 @@ function edgeRuns(
   target: TGraphNode,
   minLength: number,
 ): { xRuns: ILaneReservation[]; yRuns: ILaneReservation[] } {
-  const from = edge.data?.sourceAnchor ?? getHandleAnchor(source, edge.sourceHandle);
-  const to = edge.data?.targetAnchor ?? getHandleAnchor(target, edge.targetHandle);
+  const segments = getEdgePathSegments(edge, source, target);
 
-  return longRuns(trimDocks(getEdgePathSegments(edge, source, target), [from, to]), minLength);
+  return longRuns(trimDocks(segments, getEdgeAnchors(edge, source, target)), minLength);
 }
 
 /** Alleys the settled edges already run along, so a detour does not land on top of a neighbour. */
@@ -526,6 +559,71 @@ function collectLaneUsage(
 }
 
 /**
+ * Alleys come sorted by how close they sit to the natural one, so once the nearest few are taken
+ * the row is crowded and another column is the better bet than a far-off alley in this one.
+ */
+const LANE_Y_TRIES = 6;
+
+interface ICandidateShape {
+  hitsCard: boolean;
+  xRuns: ILaneReservation[];
+  yRuns: ILaneReservation[];
+}
+
+interface IDetourMemo {
+  shapeOf: (laneX: number, laneY: number) => ICandidateShape;
+  geometryYsOf: (laneX: number) => number[];
+}
+
+/**
+ * Neither the shape of a candidate route nor the alleys a column offers depend on how much room
+ * is being demanded between lines, yet the spacing rungs ask for both again and again. Working
+ * each out once keeps the search affordable.
+ */
+function createDetourMemo(context: IDetourContext, to: IPathPoint): IDetourMemo {
+  const { edge, source, target, nodes, ignoreIds } = context;
+  const shapes = new Map<string, ICandidateShape>();
+  const geometryYs = new Map<number, number[]>();
+  const cardBoxes = foreignCards(nodes, source.id, target.id).map(getGraphNodeBox);
+  const anchors = getEdgeAnchors(edge, source, target);
+
+  return {
+    shapeOf: (laneX, laneY) => {
+      const key = `${laneX}|${laneY}`;
+      const cached = shapes.get(key);
+
+      if (cached) {
+        return cached;
+      }
+
+      const candidate = withGutterPath(edge, laneX, laneY === to.y ? undefined : laneY);
+      const segments = getEdgePathSegments(candidate, source, target);
+      const shape: ICandidateShape = {
+        hitsCard: segments.some((segment) => cardBoxes.some((box) => segmentHitsBox(segment, box))),
+        ...longRuns(trimDocks(segments, anchors), LANE_CONFLICT_MIN),
+      };
+
+      shapes.set(key, shape);
+
+      return shape;
+    },
+    geometryYsOf: (laneX) => {
+      const cached = geometryYs.get(laneX);
+
+      if (cached) {
+        return cached;
+      }
+
+      const ys = listGeometryYs(laneX, to.x, to.y, nodes, ignoreIds);
+
+      geometryYs.set(laneX, ys);
+
+      return ys;
+    },
+  };
+}
+
+/**
  * Try each free alley pair and keep the first whose rebuilt path clears every card and every
  * alley a neighbour already uses. Validating the finished path, rather than the planned alleys
  * alone, also covers the run the line makes before its first turn.
@@ -536,22 +634,36 @@ function searchDetour(
   to: IPathPoint,
   taken: { xLanes: ILaneReservation[]; yLanes: ILaneReservation[] },
   pitch: number,
+  memo: IDetourMemo,
 ): IGutterDetour | null {
-  const { edge, source, target, nodes, ignoreIds } = context;
-
   const isClean = (laneX: number, laneY: number): boolean => {
-    const candidate = withGutterPath(edge, laneX, laneY === to.y ? undefined : laneY);
-
-    if (classifyCardHit(candidate, source, target, nodes)) {
-      return false;
-    }
-
-    const { xRuns, yRuns } = edgeRuns(candidate, source, target, LANE_CONFLICT_MIN);
+    const { hitsCard, xRuns, yRuns } = memo.shapeOf(laneX, laneY);
 
     return (
+      !hitsCard &&
       !xRuns.some((run) => isLaneReserved(run.at, run, taken.xLanes, pitch)) &&
       !yRuns.some((run) => isLaneReserved(run.at, run, taken.yLanes, pitch))
     );
+  };
+
+  const findCleanY = (laneX: number): number | null => {
+    const span = { from: laneX, to: to.x };
+    const ys = memo.geometryYsOf(laneX);
+    let tried = 0;
+
+    for (let index = 0; index < ys.length && tried < LANE_Y_TRIES; index += 1) {
+      const laneY = ys[index];
+
+      if (!isLaneReserved(laneY, span, taken.yLanes, pitch)) {
+        tried += 1;
+
+        if (isClean(laneX, laneY)) {
+          return laneY;
+        }
+      }
+    }
+
+    return null;
   };
 
   return laneXs.reduce<IGutterDetour | null>((found, laneX) => {
@@ -559,9 +671,7 @@ function searchDetour(
       return found;
     }
 
-    const clean = listClearYs(laneX, to.x, to.y, nodes, ignoreIds, taken.yLanes, pitch).find((laneY) =>
-      isClean(laneX, laneY),
-    );
+    const clean = findCleanY(laneX);
 
     if (clean == null) {
       return null;
@@ -746,10 +856,12 @@ export function planObstacleDetours(
       }),
     );
 
+    const memo = createDetourMemo(context, to);
+
     const planWith = (pitch: number): IGutterDetour | null => {
       const free = laneXs.filter((laneX) => isGutterFree(laneX, fromExit, span, nodes, ignoreIds, xLanes, pitch));
 
-      return searchDetour(context, free, to, { xLanes, yLanes }, pitch);
+      return searchDetour(context, free, to, { xLanes, yLanes }, pitch, memo);
     };
 
     // A crowded gutter is better served by lines running closer together than by two lines
