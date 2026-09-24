@@ -80,3 +80,95 @@ export const scrollToElement = (
     scroll();
   });
 };
+
+export type TScrollWhenStableOptions = {
+  behavior?: TScrollBehavior;
+  topOffset?: number;
+  timeout?: number;
+  settleFrames?: number;
+  settleTimeout?: number;
+  driftThreshold?: number;
+};
+
+const SETTLE_FRAMES = 2;
+const SETTLE_TIMEOUT = 250;
+const SCROLL_TIMEOUT = 2000;
+const DRIFT_THRESHOLD = 4;
+const STABLE_TOLERANCE = 1;
+const ABORT_EVENTS = ['wheel', 'touchstart', 'keydown'];
+
+export const scrollToElementWhenStable = (element: HTMLElement, options: TScrollWhenStableOptions = {}) => {
+  const {
+    behavior = 'smooth',
+    topOffset,
+    timeout = SCROLL_TIMEOUT,
+    settleFrames = SETTLE_FRAMES,
+    settleTimeout = SETTLE_TIMEOUT,
+    driftThreshold = DRIFT_THRESHOLD,
+  } = options;
+
+  const startedAt = Date.now();
+
+  let frameId: number | null = null;
+  let stableFrames = 0;
+  let previousTop: number | null = null;
+  let scrolledTop: number | null = null;
+  let isCancelled = false;
+
+  const cancel = () => {
+    if (isCancelled) {
+      return;
+    }
+
+    isCancelled = true;
+
+    if (frameId !== null) {
+      window.cancelAnimationFrame(frameId);
+      frameId = null;
+    }
+
+    ABORT_EVENTS.forEach((eventName) => window.removeEventListener(eventName, cancel));
+  };
+
+  const scroll = (top: number, scrollBehavior: TScrollBehavior) => {
+    scrolledTop = top;
+    scrollContainerTo(getScrollParent(element), top, scrollBehavior);
+  };
+
+  const tick = () => {
+    if (isCancelled) {
+      return;
+    }
+
+    const container = getScrollParent(element);
+    const top = getScrollTargetTop(element, container, topOffset);
+    const elapsed = Date.now() - startedAt;
+
+    if (scrolledTop === null) {
+      stableFrames = previousTop !== null && Math.abs(top - previousTop) <= STABLE_TOLERANCE ? stableFrames + 1 : 0;
+      previousTop = top;
+
+      if (stableFrames >= settleFrames || elapsed >= settleTimeout || elapsed >= timeout) {
+        scroll(top, behavior);
+      }
+    } else if (Math.abs(top - scrolledTop) > driftThreshold) {
+      scroll(top, 'auto');
+      cancel();
+
+      return;
+    }
+
+    if (elapsed >= timeout && scrolledTop !== null) {
+      cancel();
+
+      return;
+    }
+
+    frameId = window.requestAnimationFrame(tick);
+  };
+
+  ABORT_EVENTS.forEach((eventName) => window.addEventListener(eventName, cancel, { passive: true }));
+  frameId = window.requestAnimationFrame(tick);
+
+  return cancel;
+};
