@@ -89,24 +89,10 @@ function isCollinear(previous: IPoint, current: IPoint, next: IPoint): boolean {
   return onVertical || onHorizontal;
 }
 
-function isBetweenOnAxis(previous: IPoint, current: IPoint, next: IPoint): boolean {
-  if (almostEqual(previous.x, current.x) && almostEqual(current.x, next.x)) {
-    const minY = Math.min(previous.y, next.y);
-    const maxY = Math.max(previous.y, next.y);
-
-    return current.y >= minY - AXIS_EPSILON && current.y <= maxY + AXIS_EPSILON;
-  }
-
-  if (almostEqual(previous.y, current.y) && almostEqual(current.y, next.y)) {
-    const minX = Math.min(previous.x, next.x);
-    const maxX = Math.max(previous.x, next.x);
-
-    return current.x >= minX - AXIS_EPSILON && current.x <= maxX + AXIS_EPSILON;
-  }
-
-  return false;
-}
-
+/**
+ * Three points on one axis collapse to a straight run. When the middle one sits outside the span
+ * it is a spur the line would walk out and back along, so dropping it also removes the doubling.
+ */
 function simplifyPoints(points: IPoint[]): IPoint[] {
   const unique: IPoint[] = [];
 
@@ -126,7 +112,7 @@ function simplifyPoints(points: IPoint[]): IPoint[] {
     const previous = simplified[simplified.length - 1];
     const next = unique[index + 1];
 
-    if (previous && next && isCollinear(previous, point, next) && isBetweenOnAxis(previous, point, next)) {
+    if (previous && next && isCollinear(previous, point, next)) {
       return;
     }
 
@@ -209,12 +195,13 @@ function isOutwardX(face: TGraphFace, fromX: number, toX: number): boolean {
   return true;
 }
 
+/** A lane inside the standoff strip, or right on the handle, is pushed out to the standoff. */
 function nudgeLaneX(laneX: number, startX: number, standoffX: number, face: TGraphFace): number {
-  if (face === 'right' && laneX > startX && laneX < standoffX) {
+  if (face === 'right' && laneX >= startX && laneX < standoffX) {
     return standoffX;
   }
 
-  if (face === 'left' && laneX < startX && laneX > standoffX) {
+  if (face === 'left' && laneX <= startX && laneX > standoffX) {
     return standoffX;
   }
 
