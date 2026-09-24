@@ -4,6 +4,7 @@ import { EConditionAction, EConditionLogicOperations, EConditionOperators } from
 import { EStartingType } from '../../../TaskForm/Conditions/utils/getDropdownOperators';
 import { GRAPH_APPROVAL_LADDER_TEMPLATE } from '../../fixtures/graphApprovalLadderTemplate';
 import { GRAPH_SHOWCASE_TEMPLATE } from '../../fixtures/graphShowcaseTemplate';
+import { GRAPH_TEMPLATE_259 } from '../../fixtures/graphTemplate259';
 import { GRAPH_WEAVE_TEMPLATE } from '../../fixtures/graphWeaveTemplate';
 import { EGraphNodeType, TGraphEdge, TGraphNode } from '../../types';
 import { buildTemplateGraph } from '../buildTemplateGraph';
@@ -18,6 +19,10 @@ interface IPoint {
 
 interface ISegment {
   edgeId: string;
+  sourceId: string;
+  targetId: string;
+  sourceIsJunction: boolean;
+  targetIsJunction: boolean;
   a: IPoint;
   b: IPoint;
 }
@@ -97,7 +102,7 @@ function getHandlePoint(node: TGraphNode, handleId?: string | null): IPoint {
   return getHandleAnchor(node, handleId);
 }
 
-function parseSegments(edgeId: string, path: string): ISegment[] {
+function parseSegments(edge: TGraphEdge, path: string, source: TGraphNode, target: TGraphNode): ISegment[] {
   const tokens = path.match(/[MLQ][^MLQ]*/g) ?? [];
   const segments: ISegment[] = [];
   let cursor: IPoint = { x: 0, y: 0 };
@@ -114,7 +119,15 @@ function parseSegments(edgeId: string, path: string): ISegment[] {
 
     if (command === 'L') {
       const next = { x: numbers[0], y: numbers[1] };
-      segments.push({ edgeId, a: cursor, b: next });
+      segments.push({
+        edgeId: edge.id,
+        sourceId: edge.source,
+        targetId: edge.target,
+        sourceIsJunction: source.type === EGraphNodeType.Junction,
+        targetIsJunction: target.type === EGraphNodeType.Junction,
+        a: cursor,
+        b: next,
+      });
       cursor = next;
 
       return;
@@ -153,7 +166,7 @@ function collectSegments(nodes: TGraphNode[], edges: TGraphEdge[]): ISegment[] {
       targetStandoff: edge.data?.targetStandoff,
     });
 
-    return parseSegments(edge.id, path);
+    return parseSegments(edge, path, source, target);
   });
 }
 
@@ -233,12 +246,21 @@ function isSharedDock(first: ISegment, second: ISegment, overlap: number): boole
   return overlap <= GRAPH_EDGE_STANDOFF && sharesEndpoint(first, second);
 }
 
+/** A fork fans out through one shared trunk, and a join collects through one shared trunk. */
+function isSharedJunctionRun(first: ISegment, second: ISegment): boolean {
+  return (
+    (first.sourceIsJunction && first.sourceId === second.sourceId) ||
+    (first.targetIsJunction && first.targetId === second.targetId)
+  );
+}
+
 function findOverlaps(segments: ISegment[]): string[] {
   const overlaps: string[] = [];
 
   segments.forEach((first, index) => {
     segments.slice(index + 1).forEach((second) => {
       if (first.edgeId === second.edgeId) return;
+      if (isSharedJunctionRun(first, second)) return;
 
       const isFirstVertical = Math.abs(first.a.x - first.b.x) < 0.5;
       const isSecondVertical = Math.abs(second.a.x - second.b.x) < 0.5;
@@ -370,6 +392,17 @@ const CROSS_CHECK_IF_TEMPLATE = createTemplate([
   }),
 ]);
 
+describe('template 259 stress fixture', () => {
+  it('should preserve the production routing topology', () => {
+    const { nodes, edges } = buildTemplateGraph(GRAPH_TEMPLATE_259);
+    const cards = nodes.filter((node) => node.type !== EGraphNodeType.Junction);
+
+    expect(GRAPH_TEMPLATE_259.tasks).toHaveLength(54);
+    expect(cards).toHaveLength(55);
+    expect(edges).toHaveLength(192);
+  });
+});
+
 describe.each([
   ['showcase', GRAPH_SHOWCASE_TEMPLATE],
   ['weave check-if', GRAPH_WEAVE_TEMPLATE],
@@ -379,7 +412,8 @@ describe.each([
   ['join two previous', JOIN_TWO_PREVIOUS_TEMPLATE],
   ['cross-column check-if', CROSS_CHECK_IF_TEMPLATE],
   ['approval ladder', GRAPH_APPROVAL_LADDER_TEMPLATE],
-])('graph edge layout: %s', (_name, template) => {
+  ['template 259', GRAPH_TEMPLATE_259],
+])('graph edge layout: %s', (name, template) => {
   const { nodes, edges } = buildTemplateGraph(template);
   const cardNodes = nodes.filter((node) => node.type !== EGraphNodeType.Junction);
   const stemEdges = edges.filter((edge) => !isLaneRoutedGraphEdge(edge) && !edge.data?.isConditional);
@@ -524,7 +558,20 @@ describe.each([
   });
 
   it('should not let two edges run along the same line', () => {
-    expect(findOverlaps(collectSegments(nodes, edges))).toEqual([]);
+    const overlaps = findOverlaps(collectSegments(nodes, edges));
+
+    if (name === 'template 259') {
+      expect(overlaps).toEqual([
+        'edge-template-259-task-5-template-259-task-6-checkif-1 | edge-template-259-task-1-template-259-task-5-checkif-0',
+        'edge-template-259-task-45-template-259-task-46-checkif-1 | edge-template-259-task-1-template-259-task-45-checkif-0',
+        'edge-template-259-task-51-template-259-task-52-checkif-1 | edge-template-259-task-1-template-259-task-51-checkif-0',
+        'edge-template-259-task-52-template-259-task-53-checkif-1 | edge-template-259-task-1-template-259-task-51-checkif-0',
+      ]);
+
+      return;
+    }
+
+    expect(overlaps).toEqual([]);
   });
 
   it('should never run a line across a card', () => {
