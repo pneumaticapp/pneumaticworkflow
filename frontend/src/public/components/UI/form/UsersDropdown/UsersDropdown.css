@@ -1,11 +1,8 @@
 .invite-user-option {
   display: flex;
   align-items: center;
-  font-weight: bold;
-  color: var(--pneumatic-color-black100);
-
   &__icon {
-    margin-right: 8px;
+    margin-right: 0.8rem;
   }
 }
 

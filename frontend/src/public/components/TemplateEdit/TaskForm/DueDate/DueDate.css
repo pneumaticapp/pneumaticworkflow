@@ -1,12 +1,3 @@
-/* stylelint-disable selector-max-compound-selectors */
-.container {
-  :global {
-    .react-select .react-select__control {
-      min-height: 40px;
-    }
-  }
-}
-
 .rule {
   margin-top: 8px;
   display: flex;

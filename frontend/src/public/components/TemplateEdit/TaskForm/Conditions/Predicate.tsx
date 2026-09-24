@@ -97,7 +97,6 @@ export function Predicate({
                   operator: isStartingOrder ? EConditionOperators.Completed : undefined,
                 });
               }}
-              isClearable={false}
               options={options}
             />
           </div>
@@ -118,9 +117,8 @@ export function Predicate({
                     ...(shouldClearValue && { value: undefined }),
                   });
                 }}
-                isClearable={false}
                 options={dropdownOperators}
-                classNames={{ menu: () => styles['condition-rule__operator-menu'] }}
+                menuClassName={styles['condition-rule__operator-menu']}
                 formatOptionLabel={(option: IDropdownOperator, { context }) =>
                   context === 'menu'
                     ? getFormattedDropdownOption({

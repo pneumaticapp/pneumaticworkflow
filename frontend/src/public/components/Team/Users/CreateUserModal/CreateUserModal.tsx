@@ -1,5 +1,4 @@
-import * as React from 'react';
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { Formik } from 'formik';
 import { useIntl } from 'react-intl';
 import { useDispatch } from 'react-redux';
@@ -18,17 +17,6 @@ import { createUser } from '../../../../redux/accounts/slice';
 import { ICreateUserModalProps, IStatusOption, EUserRole, ICreateUserFormValues } from './types';
 
 import styles from './CreateUserModal.css';
-
-const formatStatusOption = (
-  { label, value }: IStatusOption,
-  { context }: { context: string },
-  selectedValue: IStatusOption['value'],
-) => {
-  if (context === 'menu' && value === selectedValue) {
-    return <span className={styles['modal__option--selected']}>{label}</span>;
-  }
-  return label;
-};
 
 export function CreateUserModal({ isOpen, onClose }: ICreateUserModalProps) {
   const { formatMessage } = useIntl();
@@ -77,10 +65,6 @@ export function CreateUserModal({ isOpen, onClose }: ICreateUserModalProps) {
         }}
       >
         {({ values, handleSubmit: formikSubmit, isValid, dirty }) => {
-          const currentStatusValue = values.role;
-          const renderStatusOption = (option: IStatusOption, { context }: { context: string }) =>
-            formatStatusOption(option, { context }, currentStatusValue);
-
           return (
             <form onSubmit={formikSubmit}>
               <ModalBody>
@@ -111,7 +95,6 @@ export function CreateUserModal({ isOpen, onClose }: ICreateUserModalProps) {
                     label={formatMessage({ id: 'team.create-user-modal.status' })}
                     options={statusOptions}
                     className={styles['modal__dropdown--required']}
-                    formatOptionLabel={renderStatusOption}
                   />
 
                   <div className={styles['modal__password-field']}>

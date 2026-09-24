@@ -1,81 +1,73 @@
-import * as React from 'react';
-import { useState } from 'react';
-import { DropdownItemProps, DropdownItem } from 'reactstrap';
+import React, { useState } from 'react';
+import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 import OutsideClickHandler from 'react-outside-click-handler';
 
+import { IConfirmableDropdownItemProps, TDropdownItemState } from './types';
+
 import styles from './Dropdown.css';
 
-export type TDropdownItemState = "option" | "confirmation";
-
-export interface IConfirmableDropdownItemProps extends DropdownItemProps {
-  withConfirmation?: boolean;
-  initialConfirmationState?: TDropdownItemState;
-  closeDropdown(): void;
-}
-
 export function ConfirmableDropdownItem({
+  children,
+  className,
+  cssModule,
   withConfirmation,
-  initialConfirmationState = "option",
+  initialConfirmationState = 'option',
   closeDropdown,
-  ...dropdownItemProps
+  onClick,
 }: IConfirmableDropdownItemProps) {
-  const { formatMessage } = useIntl()
-  const [dropdownItemState, setDropdownItemState] = useState<TDropdownItemState>(initialConfirmationState)
+  const { formatMessage } = useIntl();
+  const [state, setState] = useState<TDropdownItemState>(initialConfirmationState);
+  const itemClassName = classnames(cssModule?.['dropdown-item'], className);
 
   if (!withConfirmation) {
-    return <DropdownItem {...dropdownItemProps} tag={dropdownItemProps.onClick ? "button" : "span"} />
+    if (!onClick) return <span className={itemClassName}>{children}</span>;
+
+    return (
+      <button type="button" className={itemClassName} onClick={onClick}>
+        {children}
+      </button>
+    );
   }
 
-  const handleConfirm: React.AllHTMLAttributes<HTMLButtonElement>['onClick'] = event => {
-    event.stopPropagation();
-    dropdownItemProps.onClick?.(event);
-  }
-
-  const handleReject: React.AllHTMLAttributes<HTMLButtonElement>['onClick'] = event => {
-    event.stopPropagation();
-    setDropdownItemState("option");
-    if (initialConfirmationState === "confirmation") {
-      closeDropdown();
-    }
-  }
-
-  const renderContent = () => {
-    const contentMap = {
-      option: dropdownItemProps.children,
-      confirmation: (
-        <div className={styles['dropdown-confirm']}>
-          <span>
-            {formatMessage({ id: 'dropdown.are-you-sure' })}
-          </span>
-          {' '}
-          <button type="button" onClick={handleConfirm} className={styles['dropdown-confirm-option']}>
-            {formatMessage({ id: 'dropdown.yes' })}
-          </button>
-          {' / '}
-          <button type="button" onClick={handleReject} className={styles['dropdown-confirm-option']}>
-            {formatMessage({ id: 'dropdown.no' })}
-          </button>
-        </div>
-      ),
-    }
-
-    return contentMap[dropdownItemState];
-  }
+  const rejectConfirmation = () => {
+    setState('option');
+    if (initialConfirmationState === 'confirmation') closeDropdown();
+  };
 
   return (
-    <OutsideClickHandler onOutsideClick={() => {
-      if (initialConfirmationState === "option") {
-        setDropdownItemState("option")
-      }
-    }}>
-      <DropdownItem
-        {...dropdownItemProps}
-        tag={dropdownItemState === "confirmation" ? "div" : "button"}
-        onClick={() => setDropdownItemState("confirmation")}
-      >
-        {renderContent()}
-      </DropdownItem>
+    <OutsideClickHandler onOutsideClick={() => setState(initialConfirmationState)}>
+      {state === 'option' ? (
+        <button type="button" className={itemClassName} onClick={() => setState('confirmation')}>
+          {children}
+        </button>
+      ) : (
+        <div className={itemClassName}>
+          <span className={styles['dropdown-confirm']}>
+            {formatMessage({ id: 'dropdown.are-you-sure' })}{' '}
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                onClick?.();
+              }}
+              className={styles['dropdown-confirm-option']}
+            >
+              {formatMessage({ id: 'dropdown.yes' })}
+            </button>{' / '}
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                rejectConfirmation();
+              }}
+              className={styles['dropdown-confirm-option']}
+            >
+              {formatMessage({ id: 'dropdown.no' })}
+            </button>
+          </span>
+        </div>
+      )}
     </OutsideClickHandler>
   );
 }
