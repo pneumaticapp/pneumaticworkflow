@@ -134,9 +134,7 @@ function checkIfFaces(
   const to = getGraphNodeBox(target);
 
   if (isJunctionNode(target) && isCardNode(source)) {
-    const sourceFace: TGraphFace = to.centerX < from.centerX - GRAPH_EDGE_SIDEWAYS_THRESHOLD
-      ? 'left'
-      : 'right';
+    const sourceFace: TGraphFace = to.centerX < from.centerX - GRAPH_EDGE_SIDEWAYS_THRESHOLD ? 'left' : 'right';
     const approach = checkIfApproach(from, to);
 
     return { source: sourceFace, target: approach.stacked ?? approach.side };
@@ -207,7 +205,11 @@ interface IBranchItem {
   sideFace: TGraphFace;
 }
 
-function firstOpenFace(preferred: TGraphFace, used: Set<TGraphFace>): TGraphFace {
+function firstOpenFace(
+  preferred: TGraphFace,
+  used: Set<TGraphFace>,
+  forbidden: Set<TGraphFace> = new Set(),
+): TGraphFace {
   const seen = new Set<TGraphFace>();
   const order = [preferred, ...FACE_FALLBACK].filter((face) => {
     if (seen.has(face)) {
@@ -219,20 +221,18 @@ function firstOpenFace(preferred: TGraphFace, used: Set<TGraphFace>): TGraphFace
     return true;
   });
 
-  return order.find((face) => !used.has(face)) ?? preferred;
+  return order.find((face) => !used.has(face)) ?? order.find((face) => !forbidden.has(face)) ?? preferred;
 }
 
-function assignJunctionBranchFaces(
-  items: IBranchItem[],
-  blocked: TGraphFace[] = [],
-): Map<string, TGraphFace> {
+function assignJunctionBranchFaces(items: IBranchItem[], blocked: TGraphFace[] = []): Map<string, TGraphFace> {
   const stacked = items.filter((item) => item.stackedFace);
   const side = items.filter((item) => !item.stackedFace);
   const faces = new Map<string, TGraphFace>();
   const used = new Set<TGraphFace>(blocked);
+  const forbidden = new Set<TGraphFace>(blocked);
 
   const take = (id: string, preferred: TGraphFace) => {
-    const face = firstOpenFace(preferred, used);
+    const face = firstOpenFace(preferred, used, forbidden);
     used.add(face);
     faces.set(id, face);
   };
@@ -244,9 +244,7 @@ function assignJunctionBranchFaces(
       }
     });
   } else {
-    const closest = stacked.reduce((best, item) => (
-      Math.abs(item.dx) < Math.abs(best.dx) ? item : best
-    ));
+    const closest = stacked.reduce((best, item) => (Math.abs(item.dx) < Math.abs(best.dx) ? item : best));
 
     stacked.forEach((item) => {
       if (item.id === closest.id && item.stackedFace) {
@@ -330,9 +328,9 @@ export function assignEdgeHandles(nodes: TGraphNode[], edges: TGraphEdge[]): Map
       return;
     }
 
-    const outgoing = edges.filter((edge) => (
-      edge.source === node.id && !handles.has(edge.id) && !isConditionalGraphEdge(edge)
-    ));
+    const outgoing = edges.filter(
+      (edge) => edge.source === node.id && !handles.has(edge.id) && !isConditionalGraphEdge(edge),
+    );
     const originX = getGraphNodeBox(node).centerX;
     const sourceFaces = assignJunctionBranchFaces(
       outgoing.flatMap((edge) => {
@@ -344,12 +342,14 @@ export function assignEdgeHandles(nodes: TGraphNode[], edges: TGraphEdge[]): Map
         const preferred = preferredFaces(node, target);
         const dx = getGraphNodeBox(target).centerX - originX;
 
-        return [{
-          id: edge.id,
-          dx,
-          stackedFace: isStackedFace(preferred.source) ? preferred.source : null,
-          sideFace: dx < 0 ? 'left' : 'right',
-        }];
+        return [
+          {
+            id: edge.id,
+            dx,
+            stackedFace: isStackedFace(preferred.source) ? preferred.source : null,
+            sideFace: dx < 0 ? 'left' : 'right',
+          },
+        ];
       }),
     );
 
@@ -374,12 +374,13 @@ export function assignEdgeHandles(nodes: TGraphNode[], edges: TGraphEdge[]): Map
       return;
     }
 
-    const incoming = edges.filter((edge) => (
-      edge.target === node.id
-      && !handles.has(edge.id)
-      && !isLaneRoutedGraphEdge(edge)
-      && !isConditionalGraphEdge(edge)
-    ));
+    const incoming = edges.filter(
+      (edge) =>
+        edge.target === node.id &&
+        !handles.has(edge.id) &&
+        !isLaneRoutedGraphEdge(edge) &&
+        !isConditionalGraphEdge(edge),
+    );
     const originX = getGraphNodeBox(node).centerX;
     const targetFaces = assignJunctionBranchFaces(
       incoming.flatMap((edge) => {
@@ -391,12 +392,14 @@ export function assignEdgeHandles(nodes: TGraphNode[], edges: TGraphEdge[]): Map
         const preferred = preferredFaces(source, node);
         const dx = getGraphNodeBox(source).centerX - originX;
 
-        return [{
-          id: edge.id,
-          dx,
-          stackedFace: isStackedFace(preferred.target) ? preferred.target : null,
-          sideFace: dx < 0 ? 'left' : 'right',
-        }];
+        return [
+          {
+            id: edge.id,
+            dx,
+            stackedFace: isStackedFace(preferred.target) ? preferred.target : null,
+            sideFace: dx < 0 ? 'left' : 'right',
+          },
+        ];
       }),
     );
 
@@ -423,9 +426,9 @@ export function assignEdgeHandles(nodes: TGraphNode[], edges: TGraphEdge[]): Map
       return;
     }
 
-    const inbound = edges.find((edge) => (
-      edge.target === node.id && !handles.has(edge.id) && isConditionalGraphEdge(edge)
-    ));
+    const inbound = edges.find(
+      (edge) => edge.target === node.id && !handles.has(edge.id) && isConditionalGraphEdge(edge),
+    );
     const card = inbound ? nodeById.get(inbound.source) : undefined;
 
     if (inbound && card) {
@@ -444,9 +447,9 @@ export function assignEdgeHandles(nodes: TGraphNode[], edges: TGraphEdge[]): Map
       return;
     }
 
-    const outbound = edges.find((edge) => (
-      edge.source === node.id && !handles.has(edge.id) && isConditionalGraphEdge(edge)
-    ));
+    const outbound = edges.find(
+      (edge) => edge.source === node.id && !handles.has(edge.id) && isConditionalGraphEdge(edge),
+    );
     const card = outbound ? nodeById.get(outbound.target) : undefined;
 
     if (outbound && card) {
@@ -465,9 +468,9 @@ export function assignEdgeHandles(nodes: TGraphNode[], edges: TGraphEdge[]): Map
       return;
     }
 
-    const outgoing = edges.filter((edge) => (
-      edge.source === node.id && !handles.has(edge.id) && isConditionalGraphEdge(edge)
-    ));
+    const outgoing = edges.filter(
+      (edge) => edge.source === node.id && !handles.has(edge.id) && isConditionalGraphEdge(edge),
+    );
     const originX = getGraphNodeBox(node).centerX;
     const blocked = checkIfStemFace.get(node.id);
     const sourceFaces = assignJunctionBranchFaces(
@@ -487,12 +490,14 @@ export function assignEdgeHandles(nodes: TGraphNode[], edges: TGraphEdge[]): Map
           stackedFace = 'top';
         }
 
-        return [{
-          id: edge.id,
-          dx,
-          stackedFace,
-          sideFace: dx < 0 ? 'left' : 'right',
-        }];
+        return [
+          {
+            id: edge.id,
+            dx,
+            stackedFace,
+            sideFace: dx < 0 ? 'left' : 'right',
+          },
+        ];
       }),
       blocked ? [blocked] : [],
     );
@@ -518,9 +523,9 @@ export function assignEdgeHandles(nodes: TGraphNode[], edges: TGraphEdge[]): Map
       return;
     }
 
-    const incoming = edges.filter((edge) => (
-      edge.target === node.id && !handles.has(edge.id) && isConditionalGraphEdge(edge)
-    ));
+    const incoming = edges.filter(
+      (edge) => edge.target === node.id && !handles.has(edge.id) && isConditionalGraphEdge(edge),
+    );
     const originX = getGraphNodeBox(node).centerX;
     const blocked = checkIfStemFace.get(node.id);
     const targetFaces = assignJunctionBranchFaces(
@@ -533,12 +538,14 @@ export function assignEdgeHandles(nodes: TGraphNode[], edges: TGraphEdge[]): Map
         const dx = getGraphNodeBox(source).centerX - originX;
         const approach = checkIfApproach(getGraphNodeBox(source), getGraphNodeBox(node));
 
-        return [{
-          id: edge.id,
-          dx,
-          stackedFace: approach.stacked,
-          sideFace: approach.side,
-        }];
+        return [
+          {
+            id: edge.id,
+            dx,
+            stackedFace: approach.stacked,
+            sideFace: approach.side,
+          },
+        ];
       }),
       blocked ? [blocked] : [],
     );
