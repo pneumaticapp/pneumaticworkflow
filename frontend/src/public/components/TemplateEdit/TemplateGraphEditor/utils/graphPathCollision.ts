@@ -233,8 +233,11 @@ function firstObstacleNearX(fromX: number, toX: number, y: number, cards: TGraph
 }
 
 const GUTTER_SEARCH_STEPS = 24;
-/** Comfortable spacing first, then progressively tighter, and finally overlap as a last resort. */
-const LANE_PITCH_LADDER = [GRAPH_SKIP_LANE_STEP, GRAPH_LANE_CLEARANCE, GRAPH_LANE_CLEARANCE / 2, 0];
+/**
+ * Comfortable spacing first, then progressively tighter. The last rung still keeps lines off each
+ * other: a route sitting exactly on a neighbour is no improvement on the one the edge already has.
+ */
+const LANE_PITCH_LADDER = [GRAPH_SKIP_LANE_STEP, GRAPH_LANE_CLEARANCE, GRAPH_LANE_CLEARANCE / 2, 1];
 
 /** Columns worth trying for the first turn, starting at the gutter before the nearest obstacle. */
 export function listGutterCandidates(
@@ -457,6 +460,33 @@ const LANE_REGISTER_MIN = GRAPH_LANE_CLEARANCE;
  */
 const LANE_CONFLICT_MIN = GRAPH_EDGE_STANDOFF + 1;
 
+const SAME_LANE_EPSILON = 1;
+
+function isSamePoint(first: IPathPoint, second: IPathPoint): boolean {
+  return Math.abs(first.x - second.x) < SAME_LANE_EPSILON && Math.abs(first.y - second.y) < SAME_LANE_EPSILON;
+}
+
+/**
+ * Everything leaving one junction shares the short run in front of it, and so does everything
+ * arriving at one. Those stretches belong to the merge rather than to any single line, so they get
+ * cut off before lanes are compared; otherwise siblings read as permanently blocking each other.
+ */
+function trimDocks(segments: IPathSegment[], anchors: IPathPoint[]): IPathSegment[] {
+  const pull = (point: IPathPoint, towards: IPathPoint): IPathPoint => {
+    const length = Math.hypot(towards.x - point.x, towards.y - point.y);
+
+    if (length === 0 || !anchors.some((anchor) => isSamePoint(anchor, point))) {
+      return point;
+    }
+
+    const ratio = Math.min(GRAPH_EDGE_STANDOFF, length) / length;
+
+    return { x: point.x + (towards.x - point.x) * ratio, y: point.y + (towards.y - point.y) * ratio };
+  };
+
+  return segments.map((segment) => ({ a: pull(segment.a, segment.b), b: pull(segment.b, segment.a) }));
+}
+
 function longRuns(
   segments: IPathSegment[],
   minLength: number,
@@ -481,6 +511,19 @@ function longRuns(
   return { xRuns, yRuns };
 }
 
+/** The stretches an edge really owns, with the shared runs at either junction taken out. */
+function edgeRuns(
+  edge: TGraphEdge,
+  source: TGraphNode,
+  target: TGraphNode,
+  minLength: number,
+): { xRuns: ILaneReservation[]; yRuns: ILaneReservation[] } {
+  const from = edge.data?.sourceAnchor ?? getHandleAnchor(source, edge.sourceHandle);
+  const to = edge.data?.targetAnchor ?? getHandleAnchor(target, edge.targetHandle);
+
+  return longRuns(trimDocks(getEdgePathSegments(edge, source, target), [from, to]), minLength);
+}
+
 /** Alleys the settled edges already run along, so a detour does not land on top of a neighbour. */
 function collectLaneUsage(
   nodes: TGraphNode[],
@@ -499,7 +542,7 @@ function collectLaneUsage(
       return;
     }
 
-    const { xRuns, yRuns } = longRuns(getEdgePathSegments(edge, source, target), LANE_REGISTER_MIN);
+    const { xRuns, yRuns } = edgeRuns(edge, source, target, LANE_REGISTER_MIN);
     xRuns.forEach((run) => xLanes.push({ ...run, edgeId: edge.id }));
     yRuns.forEach((run) => yLanes.push({ ...run, edgeId: edge.id }));
   });
@@ -528,7 +571,7 @@ function searchDetour(
       return false;
     }
 
-    const { xRuns, yRuns } = longRuns(getEdgePathSegments(candidate, source, target), LANE_CONFLICT_MIN);
+    const { xRuns, yRuns } = edgeRuns(candidate, source, target, LANE_CONFLICT_MIN);
 
     return (
       !xRuns.some((run) => isLaneReserved(run.at, run, taken.xLanes, pitch)) &&
@@ -598,11 +641,57 @@ function classifyDetours(
   return { xIds, gutterEdges };
 }
 
-const SAME_LANE_EPSILON = 1;
-
 function sharesLane(run: ILaneReservation, settled: ILaneReservation[]): boolean {
   return settled.some(
     (lane) => Math.abs(lane.at - run.at) < SAME_LANE_EPSILON && overlapLength(run, lane) >= LANE_CONFLICT_MIN,
+  );
+}
+
+interface IDockPoint extends IPathPoint {
+  edgeId: string;
+}
+
+function getEdgeDock(edge: TGraphEdge, target: TGraphNode): IPathPoint {
+  const to = edge.data?.targetAnchor ?? getHandleAnchor(target, edge.targetHandle);
+  const targetFace = faceFromHandle(edge.data?.targetHandle ?? edge.targetHandle);
+
+  return offsetAlongFace(to, targetFace, edge.data?.targetStandoff ?? GRAPH_EDGE_STANDOFF);
+}
+
+function collectDocks(edges: TGraphEdge[], nodeById: Map<string, TGraphNode>): IDockPoint[] {
+  return edges.flatMap((edge) => {
+    const target = nodeById.get(edge.target);
+
+    return target ? [{ ...getEdgeDock(edge, target), edgeId: edge.id }] : [];
+  });
+}
+
+function segmentPassesPoint(segment: IPathSegment, point: IPathPoint): boolean {
+  if (isVerticalSegment(segment)) {
+    return (
+      Math.abs(segment.a.x - point.x) < SAME_LANE_EPSILON &&
+      point.y > Math.min(segment.a.y, segment.b.y) + SAME_LANE_EPSILON &&
+      point.y < Math.max(segment.a.y, segment.b.y) - SAME_LANE_EPSILON
+    );
+  }
+
+  return (
+    isHorizontalSegment(segment) &&
+    Math.abs(segment.a.y - point.y) < SAME_LANE_EPSILON &&
+    point.x > Math.min(segment.a.x, segment.b.x) + SAME_LANE_EPSILON &&
+    point.x < Math.max(segment.a.x, segment.b.x) - SAME_LANE_EPSILON
+  );
+}
+
+/**
+ * A line running straight through the spot where another line docks turns that approach into a
+ * shared bus. Such a line has to take its own alley and only join the dock right at the target.
+ */
+function crossesForeignDock(edge: TGraphEdge, source: TGraphNode, target: TGraphNode, docks: IDockPoint[]): boolean {
+  const foreign = docks.filter((dock) => dock.edgeId !== edge.id);
+
+  return getEdgePathSegments(edge, source, target).some((segment) =>
+    foreign.some((dock) => segmentPassesPoint(segment, dock)),
   );
 }
 
@@ -620,6 +709,7 @@ function findCrowdedEdges(
   const xLanes: ILaneReservation[] = [];
   const yLanes: ILaneReservation[] = [];
   const crowded: TGraphEdge[] = [];
+  const docks = collectDocks(edges, nodeById);
 
   edges.forEach((edge) => {
     const source = nodeById.get(edge.source);
@@ -629,9 +719,10 @@ function findCrowdedEdges(
       return;
     }
 
-    const { xRuns, yRuns } = longRuns(getEdgePathSegments(edge, source, target), LANE_CONFLICT_MIN);
+    const { xRuns, yRuns } = edgeRuns(edge, source, target, LANE_CONFLICT_MIN);
+    const collides = xRuns.some((run) => sharesLane(run, xLanes)) || yRuns.some((run) => sharesLane(run, yLanes));
 
-    if (xRuns.some((run) => sharesLane(run, xLanes)) || yRuns.some((run) => sharesLane(run, yLanes))) {
+    if (collides || crossesForeignDock(edge, source, target, docks)) {
       crowded.push(edge);
 
       return;
@@ -690,14 +781,15 @@ export function planObstacleDetours(
     // landing on the very same alley, so the spacing requirement is relaxed step by step.
     const detour = LANE_PITCH_LADDER.reduce<IGutterDetour | null>((found, pitch) => found ?? planWith(pitch), null);
 
-    if (!detour) {
-      return;
+    // An edge that found nowhere better keeps its route, so its lanes have to go back on the books
+    // or the next edge in the queue will happily settle on top of it.
+    const settled = detour ? withGutterPath(edge, detour.laneX, detour.laneY) : edge;
+
+    if (detour) {
+      gutters.set(edge.id, detour);
     }
 
-    gutters.set(edge.id, detour);
-
-    const settled = withGutterPath(edge, detour.laneX, detour.laneY);
-    const { xRuns, yRuns } = longRuns(getEdgePathSegments(settled, source, target), LANE_REGISTER_MIN);
+    const { xRuns, yRuns } = edgeRuns(settled, source, target, LANE_REGISTER_MIN);
     xRuns.forEach((run) => xLanes.push({ ...run, edgeId: edge.id }));
     yRuns.forEach((run) => yLanes.push({ ...run, edgeId: edge.id }));
   });
