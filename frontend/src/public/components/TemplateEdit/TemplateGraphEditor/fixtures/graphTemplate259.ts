@@ -51,6 +51,63 @@ const BRANCH_NAMES = [
   ['Director Approval CMP - CA', 'VP Approval CMP - CA', 'President Approval CMP - CA'],
 ] as const;
 
+const TASK_API_NAMES = [
+  'task-5f78eb',
+  'task-23d8a7',
+  'task-d22acd',
+  'task-41abb4',
+  'task-8ed8b8',
+  'task-f5094b',
+  'task-bbc83a',
+  'task-467818',
+  'task-5e090e',
+  'task-a33811',
+  'task-d13a72',
+  'task-d55893',
+  'task-e66a9a',
+  'task-b49977',
+  'task-3aebb6',
+  'task-f5e94f',
+  'task-428b4d',
+  'task-87c802',
+  'task-0378d6',
+  'task-26d96c',
+  'task-73193b',
+  'task-03d955',
+  'task-05396e',
+  'task-2849a9',
+  'task-72497c',
+  'task-b8bb80',
+  'task-c5ba54',
+  'task-ef5a91',
+  'task-eafaf4',
+  'task-812adc',
+  'task-d9c959',
+  'task-26c8a7',
+  'task-c0cb1e',
+  'task-c7794c',
+  'task-013a46',
+  'task-933a92',
+  'task-4508ce',
+  'task-9a581e',
+  'task-55eb38',
+  'task-14ea3b',
+  'task-dc6937',
+  'task-c3bacd',
+  'task-71fb64',
+  'task-096802',
+  'task-5c7920',
+  'task-9ccb56',
+  'task-c9f9f3',
+  'task-247842',
+  'task-ba6995',
+  'task-66788f',
+  'task-cmpca-dir',
+  'task-cmpca-vp',
+  'task-cmpca-pres',
+  'task-c2daa4',
+] as const;
+
 const TEMPLATE_BASE: ITemplateClient = {
   id: 259,
   name: 'ZZMIG26 B repaired copy',
@@ -74,6 +131,16 @@ const TEMPLATE_BASE: ITemplateClient = {
   performersCount: 0,
 };
 
+function taskApiName(number: number): string {
+  const apiName = TASK_API_NAMES[number - 1];
+
+  if (!apiName) {
+    throw new Error(`Missing template 259 task API name for task ${number}`);
+  }
+
+  return apiName;
+}
+
 function createField(apiName: string, name: string, type: EExtraFieldType): IExtraField {
   return { apiName, name, type, order: 0, userId: null, groupId: null };
 }
@@ -89,15 +156,15 @@ function createRule(apiName: string, field: string, fieldType: EExtraFieldType |
   };
 }
 
-function createSkipCondition(apiName: string, predecessor?: string): ICondition {
+function createSkipCondition(apiName: string, predecessors: string[]): ICondition {
   const rules: TConditionRule[] = [createRule(`${apiName}-cost`, COST_CENTER_FIELD, EExtraFieldType.String)];
 
-  if (predecessor) {
+  predecessors.forEach((predecessor, index) => {
     rules.push(
-      createRule(`${apiName}-amount`, AMOUNT_FIELD, EExtraFieldType.Number),
-      createRule(`${apiName}-task`, predecessor, EStartingType.Task),
+      createRule(`${apiName}-amount-${index}`, AMOUNT_FIELD, EExtraFieldType.Number),
+      createRule(`${apiName}-task-${index}`, predecessor, EStartingType.Task),
     );
-  }
+  });
 
   return {
     apiName,
@@ -112,7 +179,7 @@ function createTask(
   name: string,
   number: number,
   ancestors: string[],
-  predecessor?: string,
+  conditionPredecessors: string[] = [],
 ): ITemplateTaskClient {
   return {
     apiName,
@@ -126,7 +193,7 @@ function createTask(
     rawPerformers: [],
     delay: null,
     rawDueDate: createEmptyTaskDueDate(),
-    conditions: number > 2 ? [createSkipCondition(`${apiName}-skip`, predecessor)] : [],
+    conditions: number > 2 ? [createSkipCondition(`${apiName}-skip`, conditionPredecessors)] : [],
     uuid: `${apiName}-uuid`,
     checklists: [],
     revertTask: null,
@@ -136,31 +203,29 @@ function createTask(
 
 function createBranch(names: readonly string[], startNumber: number): ITemplateTaskClient[] {
   return names.map((name, index) => {
-    const apiName = `template-259-task-${startNumber + index}`;
-    const previous = index === 0 ? undefined : `template-259-task-${startNumber + index - 1}`;
-    const branchAncestors = Array.from(
-      { length: index },
-      (_, ancestorIndex) => `template-259-task-${startNumber + ancestorIndex}`,
+    const apiName = taskApiName(startNumber + index);
+    const branchAncestors = Array.from({ length: index }, (_, ancestorIndex) =>
+      taskApiName(startNumber + ancestorIndex),
     );
 
     return createTask(
       apiName,
       name,
       startNumber + index,
-      [...branchAncestors, 'template-259-task-2', 'template-259-task-1'],
-      previous,
+      [...branchAncestors, taskApiName(2), taskApiName(1)],
+      branchAncestors,
     );
   });
 }
 
 export function getGraphTemplate259(base: ITemplateClient = TEMPLATE_BASE): ITemplateClient {
-  const initiate = createTask('template-259-task-1', 'Initiate Process', 1, []);
+  const initiate = createTask(taskApiName(1), 'Initiate Process', 1, []);
   initiate.fields = [
     createField(COST_CENTER_FIELD, 'Profit/Cost Center', EExtraFieldType.String),
     createField(AMOUNT_FIELD, 'Credit Amount ($) Before Tax', EExtraFieldType.Number),
   ];
 
-  const generate = createTask('template-259-task-2', 'generate-code', 2, ['template-259-task-1']);
+  const generate = createTask(taskApiName(2), 'generate-code', 2, [taskApiName(1)]);
   let nextNumber = 3;
   const branches = BRANCH_NAMES.flatMap((names) => {
     const branch = createBranch(names, nextNumber);
@@ -170,11 +235,12 @@ export function getGraphTemplate259(base: ITemplateClient = TEMPLATE_BASE): ITem
   });
   const allBeforeSap = [initiate, generate, ...branches];
   const sapReference = createTask(
-    'template-259-task-54',
+    taskApiName(54),
     'SAP Reference',
     54,
     allBeforeSap.map((task) => task.apiName),
   );
+  sapReference.conditions = [];
   const tasks = [...allBeforeSap, sapReference];
 
   return {
