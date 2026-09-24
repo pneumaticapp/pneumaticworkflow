@@ -1,3 +1,4 @@
+import { GRAPH_APPROVAL_LADDER_TEMPLATE } from '../../fixtures/graphApprovalLadderTemplate';
 import { GRAPH_SHOWCASE_TEMPLATE } from '../../fixtures/graphShowcaseTemplate';
 import { EGraphNodeType } from '../../types';
 import { buildTemplateGraph } from '../buildTemplateGraph';
@@ -69,5 +70,35 @@ describe('applyMovedCard', () => {
     expect(intoMoved?.targetHandle).toBeDefined();
     expect(intoMoved?.data?.sourceAnchor).toBeDefined();
     expect(intoMoved?.data?.targetAnchor).toBeDefined();
+  });
+
+  it('should anchor every line while a card is still in flight', () => {
+    const graph = buildTemplateGraph(GRAPH_APPROVAL_LADDER_TEMPLATE);
+    const task = graph.nodes.find((node) => node.id === 'source-3');
+
+    expect(task).toBeDefined();
+
+    const next = applyMovedCard(graph.nodes, graph.edges, {
+      ...task!,
+      position: { x: (task?.position.x ?? 0) + 160, y: task?.position.y ?? 0 },
+      dragging: true,
+    });
+
+    expect(next.edges).toHaveLength(graph.edges.length);
+    expect(next.edges.every((edge) => edge.data?.sourceAnchor && edge.data?.targetAnchor)).toBe(true);
+  });
+
+  it('should settle the routes only once the card is dropped', () => {
+    const graph = buildTemplateGraph(GRAPH_APPROVAL_LADDER_TEMPLATE);
+    const task = graph.nodes.find((node) => node.id === 'source-3');
+    const moved = { ...task!, position: { x: (task?.position.x ?? 0) + 160, y: task?.position.y ?? 0 } };
+
+    const inFlight = applyMovedCard(graph.nodes, graph.edges, { ...moved, dragging: true });
+    const dropped = applyMovedCard(graph.nodes, graph.edges, { ...moved, dragging: false });
+
+    const alleysWhileDragging = inFlight.edges.filter((edge) => edge.data?.laneY != null).length;
+    const alleysAfterDrop = dropped.edges.filter((edge) => edge.data?.laneY != null).length;
+
+    expect(alleysAfterDrop).toBeGreaterThan(alleysWhileDragging);
   });
 });

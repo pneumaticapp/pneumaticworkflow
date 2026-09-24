@@ -81,18 +81,11 @@ describe('useTemplateGraph', () => {
 
     const taskNode = currentGraph!.nodes.find((node) => node.id === 'task-url-title');
     const nextPosition = { x: (taskNode?.position.x ?? 0) + 200, y: taskNode?.position.y ?? 0 };
-    const nodesDuringDrag = currentGraph!.nodes.map((node) =>
-      node.id === 'task-url-title' ? { ...node, position: nextPosition } : node,
-    );
 
     expect(taskNode).toBeDefined();
 
     act(() => {
-      currentGraph!.onNodeDrag(
-        {} as React.MouseEvent<Element>,
-        { ...taskNode!, position: nextPosition } as Node,
-        nodesDuringDrag as Node[],
-      );
+      currentGraph!.onNodesChange([{ id: 'task-url-title', type: 'position', dragging: true, position: nextPosition }]);
     });
 
     await waitFor(() => {
@@ -212,9 +205,7 @@ describe('useTemplateGraph', () => {
     expect(taskNode).toBeDefined();
 
     act(() => {
-      currentGraph!.onNodeDrag({} as React.MouseEvent<Element>, { ...taskNode!, position: nextPosition } as Node, [
-        { ...taskNode!, position: nextPosition } as Node,
-      ]);
+      currentGraph!.onNodesChange([{ id: 'task-linear', type: 'position', dragging: true, position: nextPosition }]);
     });
 
     await waitFor(() => {
