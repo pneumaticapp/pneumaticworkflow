@@ -399,7 +399,19 @@ describe('template 259 stress fixture', () => {
 
     expect(GRAPH_TEMPLATE_259.tasks).toHaveLength(54);
     expect(cards).toHaveLength(55);
-    expect(edges).toHaveLength(192);
+    expect(edges).toHaveLength(228);
+  });
+
+  it('should keep every check-if branch off its stem face', () => {
+    const { edges } = buildTemplateGraph(GRAPH_TEMPLATE_259);
+    const forkId = `junction-fork-checkif-${GRAPH_TEMPLATE_259.tasks[0].apiName}`;
+    const stem = edges.find((edge) => edge.target === forkId);
+    const branches = edges.filter((edge) => edge.source === forkId);
+    const stemFace = stem?.targetHandle?.replace('target-', '');
+
+    expect(stemFace).toBeDefined();
+    expect(branches.length).toBeGreaterThan(4);
+    expect(branches.every((edge) => edge.sourceHandle?.replace('source-', '') !== stemFace)).toBe(true);
   });
 });
 
@@ -562,10 +574,19 @@ describe.each([
 
     if (name === 'template 259') {
       expect(overlaps).toEqual([
-        'edge-template-259-task-5-template-259-task-6-checkif-1 | edge-template-259-task-1-template-259-task-5-checkif-0',
-        'edge-template-259-task-45-template-259-task-46-checkif-1 | edge-template-259-task-1-template-259-task-45-checkif-0',
-        'edge-template-259-task-51-template-259-task-52-checkif-1 | edge-template-259-task-1-template-259-task-51-checkif-0',
-        'edge-template-259-task-52-template-259-task-53-checkif-1 | edge-template-259-task-1-template-259-task-51-checkif-0',
+        'edge-task-d22acd-task-41abb4-checkif-1 | edge-task-5f78eb-task-d22acd-checkif-0',
+        'edge-task-5f78eb-task-d22acd-checkif-0 | edge-task-3aebb6-task-428b4d-checkif-2',
+        'edge-task-5f78eb-task-d13a72-checkif-0 | edge-task-3aebb6-task-428b4d-checkif-2',
+        'edge-task-5f78eb-task-f5e94f-checkif-0 | edge-task-3aebb6-task-428b4d-checkif-2',
+        'edge-task-5f78eb-task-b8bb80-checkif-0 | edge-task-3aebb6-task-428b4d-checkif-2',
+        'edge-task-5f78eb-task-eafaf4-checkif-0 | edge-task-3aebb6-task-428b4d-checkif-2',
+        'edge-task-5f78eb-task-c7794c-checkif-0 | edge-task-c0cb1e-task-013a46-checkif-2',
+        'edge-task-5f78eb-task-933a92-checkif-0 | edge-task-3aebb6-task-428b4d-checkif-2',
+        'edge-task-5f78eb-task-c3bacd-checkif-0 | edge-task-3aebb6-task-428b4d-checkif-2',
+        'edge-task-5f78eb-task-c3bacd-checkif-0 | edge-task-26c8a7-task-c7794c-checkif-1',
+        'edge-task-5f78eb-task-c3bacd-checkif-0 | edge-task-5c7920-task-c9f9f3-checkif-1',
+        'edge-task-5f78eb-task-c9f9f3-checkif-0 | edge-task-9ccb56-task-247842-checkif-2',
+        'edge-task-5f78eb-task-cmpca-dir-checkif-0 | edge-task-3aebb6-task-428b4d-checkif-2',
       ]);
 
       return;

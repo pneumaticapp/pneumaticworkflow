@@ -91,7 +91,8 @@ describe('applyMovedCard', () => {
 
   it('should keep the large template fully anchored while a card is in flight', () => {
     const graph = buildTemplateGraph(GRAPH_TEMPLATE_259);
-    const task = graph.nodes.find((node) => node.id === 'template-259-task-20');
+    const taskApiName = GRAPH_TEMPLATE_259.tasks.find(({ number }) => number === 20)?.apiName;
+    const task = graph.nodes.find((node) => node.id === taskApiName);
 
     expect(task).toBeDefined();
 
