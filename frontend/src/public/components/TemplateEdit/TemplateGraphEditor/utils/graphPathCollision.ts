@@ -78,31 +78,6 @@ function dedupe(values: number[]): number[] {
   return values.filter((value, index) => values.findIndex((other) => Math.abs(other - value) < 0.5) === index);
 }
 
-export function parseGraphPath(path: string): IPathSegment[] {
-  const tokens: string[] = path.match(/[MLQ][^MLQ]*/g) ?? [];
-  const segments: IPathSegment[] = [];
-  let cursor: IPathPoint = { x: 0, y: 0 };
-
-  tokens.forEach((token) => {
-    const command = token[0];
-    const numbers = (token.slice(1).match(/-?\d+(\.\d+)?/g) ?? []).map(Number);
-
-    if (command === 'M') {
-      cursor = { x: numbers[0], y: numbers[1] };
-
-      return;
-    }
-
-    if (command === 'L') {
-      const next = { x: numbers[0], y: numbers[1] };
-      segments.push({ a: cursor, b: next });
-      cursor = next;
-    }
-  });
-
-  return segments;
-}
-
 export function isVerticalSegment(segment: IPathSegment): boolean {
   return Math.abs(segment.a.x - segment.b.x) < 0.5;
 }
@@ -154,7 +129,7 @@ export function segmentCrowdsCard(segment: IPathSegment, card: TGraphNode): bool
 export function getEdgePathSegments(edge: TGraphEdge, source: TGraphNode, target: TGraphNode): IPathSegment[] {
   const from = edge.data?.sourceAnchor ?? getHandleAnchor(source, edge.sourceHandle);
   const to = edge.data?.targetAnchor ?? getHandleAnchor(target, edge.targetHandle);
-  const { path } = getGraphEdgePath({
+  const { points } = getGraphEdgePath({
     sourceX: from.x,
     sourceY: from.y,
     targetX: to.x,
@@ -168,7 +143,7 @@ export function getEdgePathSegments(edge: TGraphEdge, source: TGraphNode, target
     targetStandoff: edge.data?.targetStandoff,
   });
 
-  return parseGraphPath(path);
+  return points.slice(1).map((point, index) => ({ a: points[index], b: point }));
 }
 
 function foreignCards(nodes: TGraphNode[], sourceId: string, targetId: string): TGraphNode[] {
