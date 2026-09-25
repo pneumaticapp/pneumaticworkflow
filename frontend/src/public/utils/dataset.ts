@@ -14,10 +14,10 @@ export function getSortedAndFilteredDatasetItems(
 
   result.sort((a, b) => {
     if (sorting === EDatasetsSorting.NameAsc) {
-      return a.value.localeCompare(b.value);
+      return a.value.localeCompare(b.value, undefined, { numeric: true });
     }
     if (sorting === EDatasetsSorting.NameDesc) {
-      return b.value.localeCompare(a.value);
+      return b.value.localeCompare(a.value, undefined, { numeric: true });
     }
     if (sorting === EDatasetsSorting.DateAsc) {
       return a.order - b.order;
