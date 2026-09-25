@@ -66,19 +66,30 @@ export interface IDropdownListProps<TOption extends TDropdownOptionBase> {
   onInputChange?(value: string): void;
 }
 
-export interface IDropdownListSelectComponentsProps<TOption extends TDropdownOptionBase>
-  extends Pick<
+export interface IDropdownListSelectComponentsProps<TOption extends TDropdownOptionBase> extends Pick<
   IDropdownListProps<TOption>,
-  'controlSize' | 'title' | 'label' | 'placeholder' | 'isMulti' | 'isSearchable' | 'isDisabled'
-  | 'placement' | 'errorMessage' | 'controlClassName' | 'menuClassName' | 'noOptionsMessage'
-  | 'getOptionLabel' | 'formatOptionLabel'
-  > {
+  | 'controlSize'
+  | 'title'
+  | 'label'
+  | 'placeholder'
+  | 'isMulti'
+  | 'isSearchable'
+  | 'isDisabled'
+  | 'placement'
+  | 'errorMessage'
+  | 'controlClassName'
+  | 'menuClassName'
+  | 'noOptionsMessage'
+  | 'getOptionLabel'
+  | 'formatOptionLabel'
+> {
   selectedLabel: ReactNode;
   selectValue: TOption[];
   searchText: string;
   staticMenu: boolean;
   isMenuOpen: boolean;
   onToggleMenu(): void;
+  onCloseMenu(): void;
   onSearchChange(value: string): void;
 }
 

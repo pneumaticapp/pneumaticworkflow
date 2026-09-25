@@ -1,4 +1,4 @@
-import React, { ChangeEvent } from 'react';
+import React, { ChangeEvent, KeyboardEvent } from 'react';
 import classnames from 'classnames';
 import PerfectScrollbar from 'react-perfect-scrollbar';
 import { components } from 'react-select';
@@ -20,8 +20,17 @@ export function createDropdownListComponents<TOption extends TDropdownOptionBase
 ) {
   const SelectControl = (props: any) => {
     const {
-      controlSize, title, label, placeholder, selectedLabel, isDisabled, staticMenu, isMenuOpen,
-      onToggleMenu, errorMessage, controlClassName,
+      controlSize,
+      title,
+      label,
+      placeholder,
+      selectedLabel,
+      isDisabled,
+      staticMenu,
+      isMenuOpen,
+      onToggleMenu,
+      errorMessage,
+      controlClassName,
     } = getProps();
     const { menuIsOpen } = props;
     if (staticMenu) return null;
@@ -96,7 +105,11 @@ export function createDropdownListComponents<TOption extends TDropdownOptionBase
   };
 
   const SelectMenuList = ({ children }: any) => {
-    const { isSearchable, searchText, placeholder, onSearchChange } = getProps();
+    const { isSearchable, searchText, placeholder, onSearchChange, onCloseMenu } = getProps();
+    const handleSearchKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+      if (event.key === 'Enter') event.preventDefault();
+      if (event.key === 'Escape') onCloseMenu();
+    };
 
     return (
       <>
@@ -106,6 +119,7 @@ export function createDropdownListComponents<TOption extends TDropdownOptionBase
               <InputField
                 value={searchText}
                 onChange={(event: ChangeEvent<HTMLInputElement>) => onSearchChange(event.target.value)}
+                onKeyDown={handleSearchKeyDown}
                 onClear={() => onSearchChange('')}
                 className={styles['dropdown-list__search-input']}
                 fieldSize="md"
@@ -132,9 +146,11 @@ export function createDropdownListComponents<TOption extends TDropdownOptionBase
     const { selectValue, searchText, isDisabled, getOptionLabel, formatOptionLabel } = getProps();
     const { label: optionLabel } = data;
     const { onClick: onOptionClick, ...optionProps } = innerProps;
-    const content = formatOptionLabel
-      ? formatOptionLabel(data, { context: 'menu', selectValue, inputValue: searchText })
-      : <DropdownOption label={getOptionLabel ? getOptionLabel(data) : optionLabel} isSelected={isSelected} />;
+    const content = formatOptionLabel ? (
+      formatOptionLabel(data, { context: 'menu', selectValue, inputValue: searchText })
+    ) : (
+      <DropdownOption label={getOptionLabel ? getOptionLabel(data) : optionLabel} isSelected={isSelected} />
+    );
 
     return (
       <button
@@ -144,10 +160,7 @@ export function createDropdownListComponents<TOption extends TDropdownOptionBase
         aria-selected={isSelected}
         ref={innerRef}
         disabled={isDisabled}
-        className={classnames(
-          styles['dropdown-list__option'],
-          isFocused && styles['dropdown-list__option_focused'],
-        )}
+        className={classnames(styles['dropdown-list__option'], isFocused && styles['dropdown-list__option_focused'])}
         onClick={isDisabled ? undefined : onOptionClick}
       >
         {content}

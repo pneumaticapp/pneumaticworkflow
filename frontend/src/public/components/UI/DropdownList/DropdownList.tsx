@@ -98,7 +98,8 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
   };
 
   const handleChange = (newValue: OnChangeValue<TOption, boolean>, actionMeta: ActionMeta<TOption>) => {
-    const changedOption = actionMeta.option || (Array.isArray(newValue) ? undefined : newValue as TOption | null) || undefined;
+    const changedOption =
+      actionMeta.option || (Array.isArray(newValue) ? undefined : (newValue as TOption | null)) || undefined;
     if (changedOption?.onClick) {
       changedOption.onClick();
       handleSearchChange('');
@@ -129,6 +130,7 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
     staticMenu,
     isMenuOpen: staticMenu || isMenuOpen,
     onToggleMenu: () => setIsMenuOpen((current) => !current),
+    onCloseMenu: () => setIsMenuOpen(false),
     placement,
     errorMessage,
     controlClassName,
@@ -208,9 +210,7 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
   );
 }
 
-export function FormikDropdownList(
-  props: IDropdownListProps<TDropdownOptionBase> & FieldHookConfig<string>,
-) {
+export function FormikDropdownList(props: IDropdownListProps<TDropdownOptionBase> & FieldHookConfig<string>) {
   const { name, options, type } = props;
   const [field, meta, { setValue }] = useField(name);
 

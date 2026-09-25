@@ -21,10 +21,7 @@ describe('DropdownList', () => {
       .getAllByText(option.label)
       .find((element) => element.classList.contains(optionStyles['dropdown-option']));
 
-    expect(menuOption).toHaveClass(
-      optionStyles['dropdown-option'],
-      optionStyles['dropdown-option_selected'],
-    );
+    expect(menuOption).toHaveClass(optionStyles['dropdown-option'], optionStyles['dropdown-option_selected']);
   });
 
   it('renders compact dropdowns with the universal control', () => {
@@ -43,16 +40,11 @@ describe('DropdownList', () => {
   });
 
   it('renders the menu on the universal surface and keeps a caller menu class', () => {
-    const { container } = render(
-      <DropdownList options={[option]} title="Pick a value" menuClassName="caller-menu" />,
-    );
+    const { container } = render(<DropdownList options={[option]} title="Pick a value" menuClassName="caller-menu" />);
 
     openMenu('Pick a value');
 
-    expect(container.querySelector('.caller-menu')).toHaveClass(
-      surfaceStyles['dropdown-surface'],
-      'caller-menu',
-    );
+    expect(container.querySelector('.caller-menu')).toHaveClass(surfaceStyles['dropdown-surface'], 'caller-menu');
   });
 
   it('selects a single option and closes the menu', () => {
@@ -78,15 +70,7 @@ describe('DropdownList', () => {
 
   it('toggles selection and keeps the menu open for multi select', () => {
     const onChange = jest.fn();
-    render(
-      <DropdownList
-        isMulti
-        options={[option]}
-        value={[option]}
-        title="Pick values"
-        onChange={onChange}
-      />,
-    );
+    render(<DropdownList isMulti options={[option]} value={[option]} title="Pick values" onChange={onChange} />);
 
     openMenu('Pick values');
     fireEvent.click(screen.getByRole('option', { name: option.label }));
@@ -138,10 +122,12 @@ describe('DropdownList', () => {
     openMenu('Pick a value');
     fireEvent.keyDown(container.querySelector('input[name="dropdown-list-search"]')!, { key: 'ArrowDown' });
 
-    expect(screen.getByRole('option', { name: 'Another option' }))
-      .toHaveClass(listStyles['dropdown-list__option_focused']);
-    expect(screen.getByRole('option', { name: option.label }))
-      .not.toHaveClass(listStyles['dropdown-list__option_focused']);
+    expect(screen.getByRole('option', { name: 'Another option' })).toHaveClass(
+      listStyles['dropdown-list__option_focused'],
+    );
+    expect(screen.getByRole('option', { name: option.label })).not.toHaveClass(
+      listStyles['dropdown-list__option_focused'],
+    );
   });
 
   it('exposes the menu as a listbox and marks multi select', () => {
@@ -171,13 +157,21 @@ describe('DropdownList', () => {
     expect(screen.queryByRole('option', { name: option.label })).not.toBeInTheDocument();
   });
 
+  it('keeps Enter in the search from submitting a parent form and closes on Escape', () => {
+    render(<DropdownList isSearchable title="Pick a value" options={[option]} />);
+
+    openMenu('Pick a value');
+    const search = screen.getByRole('textbox');
+
+    expect(fireEvent.keyDown(search, { key: 'Enter' })).toBe(false);
+
+    fireEvent.keyDown(search, { key: 'Escape' });
+
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+  });
+
   it('renders grouped options under their headings', () => {
-    render(
-      <DropdownList
-        title="Pick a value"
-        options={[{ label: 'System events', options: [option] }]}
-      />,
-    );
+    render(<DropdownList title="Pick a value" options={[{ label: 'System events', options: [option] }]} />);
 
     openMenu('Pick a value');
 
@@ -211,9 +205,7 @@ describe('DropdownList', () => {
   });
 
   it('shows the error message and marks the control', () => {
-    const { container } = render(
-      <DropdownList options={[option]} label="Role" errorMessage="Role is required" />,
-    );
+    const { container } = render(<DropdownList options={[option]} label="Role" errorMessage="Role is required" />);
 
     expect(screen.getByText('Role is required')).toBeInTheDocument();
     expect(container.querySelector(`.${listStyles['dropdown-list__control_error']}`)).toBeInTheDocument();
