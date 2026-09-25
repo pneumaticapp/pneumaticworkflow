@@ -111,10 +111,6 @@
   overflow: hidden;
 }
 
-.dropdown-list__menu_left {
-  right: 0;
-}
-
 .dropdown-list__menu_static {
   position: relative;
 }

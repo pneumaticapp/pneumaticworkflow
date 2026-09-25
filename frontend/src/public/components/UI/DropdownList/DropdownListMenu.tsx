@@ -84,7 +84,7 @@ export function createDropdownListComponents<TOption extends TDropdownOptionBase
   };
 
   const SelectMenu = ({ children, ...props }: any) => {
-    const { controlSize, isMulti, staticMenu, placement, menuClassName } = getProps();
+    const { controlSize, isMulti, staticMenu, menuClassName } = getProps();
 
     return (
       <components.Menu {...props}>
@@ -93,7 +93,6 @@ export function createDropdownListComponents<TOption extends TDropdownOptionBase
           aria-multiselectable={isMulti || undefined}
           className={classnames(
             styles[`dropdown-list__menu_${controlSize}`],
-            placement === 'left' && styles['dropdown-list__menu_left'],
             staticMenu && styles['dropdown-list__menu_static'],
             menuClassName,
           )}

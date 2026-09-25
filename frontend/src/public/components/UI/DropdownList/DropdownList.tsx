@@ -11,12 +11,13 @@ import {
   TControlSize,
   TDropdownOptionBase,
   TDropdownOptionGroup,
+  TPlacement,
 } from './types';
 import { flattenOptions, getDefaultOptionValue, getOptionSearchText, toArray } from './utils';
 
 import styles from './DropdownList.css';
 
-const getReactSelectStyles = (staticMenu: boolean, controlSize: TControlSize) => ({
+const getReactSelectStyles = (staticMenu: boolean, controlSize: TControlSize, placement?: TPlacement) => ({
   container: (base: any) => ({ ...base, width: '100%' }),
   control: (base: any) => ({
     ...base,
@@ -28,6 +29,7 @@ const getReactSelectStyles = (staticMenu: boolean, controlSize: TControlSize) =>
   menu: (base: any) => ({
     ...base,
     ...(staticMenu ? { position: 'relative', top: 'auto' } : null),
+    ...(placement === 'left' && !staticMenu ? { left: 'auto', right: 0 } : null),
     margin: 0,
     zIndex: 1000,
     width: 'auto',
@@ -187,7 +189,7 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
           tabSelectsValue={false}
           isClearable={false}
           backspaceRemovesValue={false}
-          styles={getReactSelectStyles(staticMenu, controlSize)}
+          styles={getReactSelectStyles(staticMenu, controlSize, placement)}
           menuIsOpen={staticMenu || isMenuOpen}
           onMenuOpen={() => setIsMenuOpen(true)}
           onMenuClose={() => setIsMenuOpen(false)}

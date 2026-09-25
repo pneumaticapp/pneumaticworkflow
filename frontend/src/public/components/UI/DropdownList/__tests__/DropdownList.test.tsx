@@ -170,6 +170,22 @@ describe('DropdownList', () => {
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
   });
 
+  it('right-aligns a left-placement menu', () => {
+    render(<DropdownList controlSize="sm" placement="left" title="Sort by" options={[option]} />);
+
+    openMenu('Sort by');
+    const surface = screen.getByRole('listbox');
+    const menuWrapper = surface.parentElement as Element;
+    const emotionCss = Array.from(document.querySelectorAll('style[data-emotion]'))
+      .map((el) => el.textContent || '')
+      .join('');
+    const menuRule = Array.from(menuWrapper.classList)
+      .map((cls) => emotionCss.split('}').find((rule) => rule.startsWith(`.${cls}{`)))
+      .find(Boolean);
+
+    expect(menuRule).toContain('right:0');
+  });
+
   it('renders grouped options under their headings', () => {
     render(<DropdownList title="Pick a value" options={[{ label: 'System events', options: [option] }]} />);
 
