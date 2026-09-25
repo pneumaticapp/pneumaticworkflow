@@ -36,7 +36,11 @@ export function Dropdown({
   const [menuElement, setMenuElement] = useState<HTMLDivElement | null>(null);
   const { isDesktop } = useCheckDevice();
   const resolvedPlacement = placement || (direction === 'right' ? 'bottom-end' : 'bottom-start');
-  const { styles: popperStyles, attributes, update } = usePopper(referenceElement, menuElement, {
+  const {
+    styles: popperStyles,
+    attributes,
+    update,
+  } = usePopper(referenceElement, menuElement, {
     placement: resolvedPlacement,
     strategy: menuPositionFixed ? 'fixed' : 'absolute',
     modifiers: [{ name: 'preventOverflow', options: { rootBoundary: 'viewport' } }],
@@ -48,7 +52,9 @@ export function Dropdown({
   };
 
   useImperativeHandle(dropdownRef, () => ({
-    updateDropdownPosition: () => { update?.(); },
+    updateDropdownPosition: () => {
+      update?.();
+    },
     closeDropdown,
   }));
 
@@ -78,39 +84,41 @@ export function Dropdown({
     };
   }, [closeDropdown, isOpen, menuElement, referenceElement]);
 
-  const renderedContent = typeof children === 'function'
-    ? children({ closeDropdown })
-    : children || (options && (
-      <DropdownOptions
-        options={options}
-        closeDropdown={closeDropdown}
-        isFromBreakdownItem={isFromBreakdownItem}
-      />
-    ));
+  const renderedContent =
+    typeof children === 'function'
+      ? children({ closeDropdown })
+      : children ||
+        (options && (
+          <DropdownOptions options={options} closeDropdown={closeDropdown} isFromBreakdownItem={isFromBreakdownItem} />
+        ));
   const menuContent = renderMenuContent?.(renderedContent) || renderedContent;
-  const isWide = options && !Array.isArray(options)
-    ? Boolean(options.customSubOption)
-    : Boolean(options?.length && options.every((option) => option.size === 'lg'));
-  const hasSubmenu = Boolean(Array.isArray(options) && options.some((option) => (
-    option.customSubOption || (Array.isArray(option.subOptions) && option.subOptions.length)
-  )));
-  const menu = isOpen && menuContent ? (
-    <DropdownSurface
-      ref={setMenuElement}
-      role="menu"
-      tabIndex={-1}
-      className={classnames(
-        styles['dropdown-menu'],
-        isWide && styles['dropdown-menu_wide'],
-        hasSubmenu && styles['dropdown-menu_with-submenu'],
-        menuClassName,
-      )}
-      style={popperStyles.popper}
-      {...attributes.popper}
-    >
-      {menuContent}
-    </DropdownSurface>
-  ) : null;
+  const isWide =
+    options && !Array.isArray(options)
+      ? Boolean(options.customSubOption)
+      : Boolean(options?.length && options.every((option) => option.size === 'lg'));
+  const hasSubmenu = Boolean(
+    Array.isArray(options) &&
+    options.some((option) => option.customSubOption || (Array.isArray(option.subOptions) && option.subOptions.length)),
+  );
+  const menu =
+    isOpen && menuContent ? (
+      <DropdownSurface
+        ref={setMenuElement}
+        role="menu"
+        tabIndex={-1}
+        onClick={(event) => event.stopPropagation()}
+        className={classnames(
+          styles['dropdown-menu'],
+          isWide && styles['dropdown-menu_wide'],
+          hasSubmenu && styles['dropdown-menu_with-submenu'],
+          menuClassName,
+        )}
+        style={popperStyles.popper}
+        {...attributes.popper}
+      >
+        {menuContent}
+      </DropdownSurface>
+    ) : null;
   let portalTarget: Element | null | undefined;
   if (typeof document !== 'undefined') {
     portalTarget = typeof menuContainer === 'string' ? document.querySelector(menuContainer) : menuContainer;

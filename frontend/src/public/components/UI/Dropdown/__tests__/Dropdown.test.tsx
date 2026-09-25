@@ -11,12 +11,7 @@ import styles from '../Dropdown.css';
 describe('Dropdown', () => {
   it('opens, runs an option action, and closes through the universal base', () => {
     const onEdit = jest.fn();
-    render(
-      <Dropdown
-        renderToggle={() => 'Actions'}
-        options={[{ label: 'Edit', onClick: onEdit }]}
-      />,
-    );
+    render(<Dropdown renderToggle={() => 'Actions'} options={[{ label: 'Edit', onClick: onEdit }]} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Actions' }));
     fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
@@ -25,10 +20,22 @@ describe('Dropdown', () => {
     expect(screen.queryByRole('menu')).not.toBeInTheDocument();
   });
 
-  it('closes on Escape and restores focus to the toggle', () => {
+  it('does not propagate menu clicks to ancestor handlers', () => {
+    const onCardClick = jest.fn();
     render(
-      <Dropdown renderToggle={() => 'Actions'} options={[{ label: 'Edit' }]} />,
+      <div onClick={onCardClick}>
+        <Dropdown renderToggle={() => 'Actions'} options={[{ label: 'Edit' }]} />
+      </div>,
     );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Actions' }));
+    fireEvent.click(screen.getByRole('menu'));
+
+    expect(onCardClick).not.toHaveBeenCalled();
+  });
+
+  it('closes on Escape and restores focus to the toggle', () => {
+    render(<Dropdown renderToggle={() => 'Actions'} options={[{ label: 'Edit' }]} />);
     const toggle = screen.getByRole('button', { name: 'Actions' });
 
     fireEvent.click(toggle);
@@ -42,13 +49,15 @@ describe('Dropdown', () => {
     render(
       <Dropdown
         renderToggle={() => 'Actions'}
-        options={[{
-          label: 'More',
-          subOptions: [
-            { label: 'First action', size: 'lg' },
-            { label: 'Second action', size: 'lg' },
-          ],
-        }]}
+        options={[
+          {
+            label: 'More',
+            subOptions: [
+              { label: 'First action', size: 'lg' },
+              { label: 'Second action', size: 'lg' },
+            ],
+          },
+        ]}
       />,
     );
 
@@ -98,10 +107,12 @@ describe('Dropdown', () => {
     render(
       <Dropdown
         renderToggle={() => 'Actions'}
-        options={[{
-          label: 'Level one',
-          subOptions: [{ label: 'Level two', subOptions: [{ label: 'Leaf action', onClick: onLeaf }] }],
-        }]}
+        options={[
+          {
+            label: 'Level one',
+            subOptions: [{ label: 'Level two', subOptions: [{ label: 'Leaf action', onClick: onLeaf }] }],
+          },
+        ]}
       />,
     );
 
