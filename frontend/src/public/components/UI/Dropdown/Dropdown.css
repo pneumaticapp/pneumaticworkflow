@@ -5,7 +5,19 @@
 
 .dropdown-toggle {
   all: unset;
+  box-sizing: border-box;
   display: flex;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 0.2rem solid var(--pneumatic-color-black48);
+    outline-offset: 0.2rem;
+    border-radius: 0.4rem;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+  }
 }
 
 .dropdown-toggle-centered {
@@ -19,75 +31,46 @@
 
 .dropdown-menu {
   z-index: 1000;
-  display: none;
-  width: 19.2rem;
-  padding: 0.5rem 0;
+  width: var(--dropdown-menu-width, 19.2rem);
+  overflow: var(--dropdown-menu-overflow, hidden);
   font-size: 1.5rem;
-  font-weight: initial;
-  background: white;
-  border: none;
-  border-radius: 0.8rem;
-  box-shadow: 0 0.8rem 1.6rem rgb(98 98 95 / 8%);
-
-  &.is-user-selection {
-    /* stylelint-disable-next-line declaration-no-important */
-    top: -0.5rem !important;
-    padding: 0;
-  }
-}
-
-/* Resets Bootstrap placement; omit when DropdownMenu uses positionFixed so Popper can set transform/top/left. */
-.dropdown-menu_bootstrap-placement {
-  /* stylelint-disable-next-line declaration-no-important */
-  top: initial !important;
-  /* stylelint-disable-next-line declaration-no-important */
-  left: initial !important;
-  /* stylelint-disable-next-line declaration-no-important */
-  transform: initial !important;
+  font-weight: normal;
 }
 
 .dropdown-menu_wide {
-  width: 30.4rem;
+  --dropdown-menu-width: 30.4rem;
 }
 
-.dropdown-menu_show {
-  z-index: 1100;
-  display: block;
+.dropdown-menu_with-submenu {
+  --dropdown-menu-overflow: visible;
 }
 
 .dropdown-item {
   position: relative;
-  z-index: 1;
   display: flex;
   align-items: center;
   width: 100%;
-  padding: 0.5rem 1.6rem;
+  min-height: 3.2rem;
+  padding: 0.6rem 1.2rem;
+  overflow: hidden;
+  color: var(--pneumatic-color-black100);
   text-align: inherit;
   white-space: nowrap;
   cursor: pointer;
   background-color: transparent;
   border: 0;
+  border-radius: 0.4rem;
 
-  &::before {
-    position: absolute;
-    top: -0.1rem;
-    right: 0.4rem;
-    bottom: -0.1rem;
-    left: 0.4rem;
-    z-index: -1;
-    content: '';
-    background: var(--pneumatic-color-beige);
-    border-radius: 0.4rem;
-    opacity: 0;
-  }
-
-  &:hover {
+  &:hover,
+  &:focus-visible {
     color: var(--pneumatic-color-link-hover);
-
-    &::before {
-      opacity: 1;
-    }
+    outline: none;
+    background: var(--pneumatic-color-beige);
   }
+}
+
+.dropdown-item-mobile {
+  justify-content: space-between;
 }
 
 .dropdown-item_disabled {
@@ -100,63 +83,47 @@
   text-align: center;
 }
 
-.dropdown-item-mobile {
-  justify-content: space-between;
-}
-
-.dropdown-menu .dropdown-item_black {
+.dropdown-item_black {
   color: var(--pneumatic-color-black100);
 }
 
 .dropdown-item_green {
-  /* stylelint-disable-next-line declaration-no-important */
-  color: #4caf50 !important;
+  color: var(--pneumatic-color-success);
 
-  &:hover {
-    color: currentcolor;
-  }
-
-  .dropdown-item-icon {
-    color: currentcolor;
+  &:hover,
+  &:focus-visible {
+    color: var(--pneumatic-color-success);
   }
 }
 
 .dropdown-item_red {
-  /* stylelint-disable-next-line declaration-no-important */
-  color: #f44336 !important;
+  color: var(--pneumatic-color-warning);
 
-  &:hover {
-    color: currentcolor;
-  }
-
-  .dropdown-item-icon {
-    color: currentcolor;
+  &:hover,
+  &:focus-visible {
+    color: var(--pneumatic-color-warning);
   }
 }
 
 .dropdown-item_orange {
-  /* stylelint-disable-next-line declaration-no-important */
-  color: var(--pneumatic-color-link-dark) !important;
+  color: var(--pneumatic-color-link-dark);
 
-  &:hover {
-    color: currentcolor;
-  }
-
-  .dropdown-item-icon {
-    color: currentcolor;
+  &:hover,
+  &:focus-visible {
+    color: var(--pneumatic-color-link-dark);
   }
 }
 
 .dropdown-item-icon {
+  flex-shrink: 0;
   margin-left: auto;
-  color: var(--pneumatic-color-black72);
+  color: currentcolor;
 }
 
 .line {
   all: unset;
   display: block;
-  margin: 0.5rem 1.2rem;
-  border: 0;
+  margin: 0.5rem 0.8rem;
   border-top: 0.1rem solid var(--pneumatic-color-black16);
 }
 
@@ -167,10 +134,12 @@
 
 .dropdown-confirm-option {
   all: unset;
-  color: #f44336;
-  transition: all 0.1s ease-in-out;
+  color: var(--pneumatic-color-warning);
+  cursor: pointer;
+  transition: color 0.1s ease-in-out;
 
-  &:hover {
+  &:hover,
+  &:focus-visible {
     color: var(--pneumatic-color-link-hover);
   }
 }
@@ -181,9 +150,11 @@
   text-overflow: ellipsis;
 }
 
+.dropdown__submenu {
+  margin-left: -0.4rem;
+}
+
 .dropdown__custom-sub-options {
-  /* stylelint-disable-next-line declaration-no-important */
-  top: -0.4rem !important;
   padding: 0;
 
   :global .scrollbar-container {

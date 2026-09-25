@@ -2,10 +2,6 @@
 /* stylelint-disable declaration-no-important */
 .dropdown {
   margin: 16px 0;
-
-  :global .react-select__control {
-    min-height: 40px !important;
-  }
 }
 
 .dropdown-user {

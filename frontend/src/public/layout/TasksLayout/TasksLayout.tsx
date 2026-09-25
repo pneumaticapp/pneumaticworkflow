@@ -179,6 +179,7 @@ export function TasksLayoutComponent({
               isSearchShown
               isWideMenu
               noValueLabel={formatMessage({ id: 'sorting.all-templates' })}
+              searchPlaceholder={formatMessage({ id: 'sorting.search-placeholder' })}
               placeholderText={formatMessage({ id: 'sorting.no-template-found' })}
               selectedOption={templateIdFilter}
               options={optionsWithoutCount}
@@ -200,6 +201,7 @@ export function TasksLayoutComponent({
                 isLoading={areFilterStepsLoading}
                 isSearchShown
                 noValueLabel={formatMessage({ id: 'sorting.all-steps' })}
+                searchPlaceholder={formatMessage({ id: 'sorting.search-placeholder' })}
                 placeholderText={formatMessage({ id: 'sorting.no-step-found' })}
                 selectedOption={taskApiNameFilter}
                 options={getStepsFilterOptions()}
