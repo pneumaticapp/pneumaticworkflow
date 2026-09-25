@@ -103,7 +103,7 @@ export function createDropdownListComponents<TOption extends TDropdownOptionBase
     );
   };
 
-  const SelectMenuList = ({ children }: any) => {
+  const SelectMenuList = ({ children, innerRef }: any) => {
     const { isSearchable, searchText, placeholder, onSearchChange, onCloseMenu } = getProps();
     const handleSearchKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
       if (event.key === 'Enter') event.preventDefault();
@@ -133,6 +133,7 @@ export function createDropdownListComponents<TOption extends TDropdownOptionBase
           </>
         )}
         <ScrollBar
+          containerRef={innerRef}
           className={styles['dropdown-list__scrollbar']}
           options={{ suppressScrollX: true, wheelPropagation: false }}
         >
