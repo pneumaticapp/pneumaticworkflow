@@ -35,8 +35,8 @@
 }
 
 .kickoff-create-field-name-input {
-  margin-bottom: 8px;
   max-width: calc(100% - 5px);
+  margin-bottom: 8px;
   border: none;
 
   &:focus {

@@ -2,6 +2,6 @@
   --dropdown-menu-width: max-content;
   --dropdown-menu-overflow: visible;
 
-  padding: 1.6rem;
   max-width: calc(100vw - 1.6rem);
+  padding: 1.6rem;
 }

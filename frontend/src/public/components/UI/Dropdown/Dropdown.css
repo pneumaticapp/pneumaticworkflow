@@ -5,14 +5,14 @@
 
 .dropdown-toggle {
   all: unset;
-  display: flex;
   box-sizing: border-box;
+  display: flex;
   cursor: pointer;
 
   &:focus-visible {
-    border-radius: 0.4rem;
     outline: 0.2rem solid var(--pneumatic-color-black48);
     outline-offset: 0.2rem;
+    border-radius: 0.4rem;
   }
 
   &:disabled {
@@ -21,8 +21,8 @@
 }
 
 .dropdown-toggle-centered {
-  height: 100%;
   align-items: center;
+  height: 100%;
 }
 
 .dropdown-toggle-centered-container {
@@ -31,8 +31,8 @@
 
 .dropdown-menu {
   z-index: 1000;
-  overflow: var(--dropdown-menu-overflow, hidden);
   width: var(--dropdown-menu-width, 19.2rem);
+  overflow: var(--dropdown-menu-overflow, hidden);
   font-size: 1.5rem;
   font-weight: normal;
 }
@@ -47,25 +47,25 @@
 
 .dropdown-item {
   position: relative;
-  padding: 0.6rem 1.2rem;
   display: flex;
-  overflow: hidden;
+  align-items: center;
   width: 100%;
   min-height: 3.2rem;
+  padding: 0.6rem 1.2rem;
+  overflow: hidden;
+  color: var(--pneumatic-color-black100);
   text-align: inherit;
   white-space: nowrap;
   cursor: pointer;
-  color: var(--pneumatic-color-black100);
   background-color: transparent;
   border: 0;
   border-radius: 0.4rem;
-  align-items: center;
 
   &:hover,
   &:focus-visible {
     color: var(--pneumatic-color-link-hover);
-    background: var(--pneumatic-color-beige);
     outline: none;
+    background: var(--pneumatic-color-beige);
   }
 }
 
@@ -115,15 +115,15 @@
 }
 
 .dropdown-item-icon {
-  margin-left: auto;
-  color: currentColor;
   flex-shrink: 0;
+  margin-left: auto;
+  color: currentcolor;
 }
 
 .line {
   all: unset;
-  margin: 0.5rem 0.8rem;
   display: block;
+  margin: 0.5rem 0.8rem;
   border-top: 0.1rem solid var(--pneumatic-color-black16);
 }
 
@@ -134,8 +134,8 @@
 
 .dropdown-confirm-option {
   all: unset;
-  cursor: pointer;
   color: var(--pneumatic-color-warning);
+  cursor: pointer;
   transition: color 0.1s ease-in-out;
 
   &:hover,
@@ -145,8 +145,8 @@
 }
 
 .label {
-  overflow: hidden;
   min-width: 0;
+  overflow: hidden;
   text-overflow: ellipsis;
 }
 

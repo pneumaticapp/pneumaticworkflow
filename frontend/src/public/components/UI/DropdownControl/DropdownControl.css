@@ -1,10 +1,10 @@
 .dropdown-control {
-  padding: 0.6rem 0.8rem;
   display: flex;
+  align-items: center;
+  padding: 0.6rem 0.8rem;
   color: var(--pneumatic-color-black100);
   background-color: var(--pneumatic-color-black4);
   border-radius: 1.6rem;
-  align-items: center;
 
   &:hover .dropdown-control__value,
   &.is-open .dropdown-control__value {
