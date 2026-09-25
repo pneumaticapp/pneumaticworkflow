@@ -170,6 +170,22 @@ describe('DropdownList', () => {
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
   });
 
+  it('stops search keys from reaching parent overlays', () => {
+    const onParentKeyDown = jest.fn();
+    render(
+      <div onKeyDown={onParentKeyDown}>
+        <DropdownList isSearchable title="Pick a value" options={[option]} />
+      </div>,
+    );
+
+    openMenu('Pick a value');
+    const search = screen.getByRole('textbox');
+    fireEvent.keyDown(search, { key: 'Enter' });
+    fireEvent.keyDown(search, { key: 'Escape' });
+
+    expect(onParentKeyDown).not.toHaveBeenCalled();
+  });
+
   it('right-aligns a left-placement menu', () => {
     render(<DropdownList controlSize="sm" placement="left" title="Sort by" options={[option]} />);
 

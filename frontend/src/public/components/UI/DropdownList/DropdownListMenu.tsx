@@ -107,6 +107,7 @@ export function createDropdownListComponents<TOption extends TDropdownOptionBase
     const { isSearchable, searchText, placeholder, onSearchChange, onCloseMenu } = getProps();
     const handleSearchKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
       if (event.key === 'Enter') event.preventDefault();
+      if (event.key === 'Enter' || event.key === 'Escape') event.stopPropagation();
       if (event.key === 'Escape') onCloseMenu();
     };
 
