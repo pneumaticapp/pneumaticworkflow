@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, List, Optional
+from typing import TYPE_CHECKING, Dict, List, Optional
 
 from django.db.models import Q
 
@@ -8,6 +8,7 @@ from src.processes.enums import (
     FieldRuleType,
     FieldType,
     PredicateOperator,
+    PredicateType,
 )
 from src.processes.models.workflows.fields import (
     FieldRuleGroupAnd,
@@ -18,13 +19,18 @@ from src.processes.services.tasks.fields.resolvers import (
     CheckboxFieldResolver,
     DateFieldResolver,
     DropdownFieldResolver,
-    FieldRuleResolver,
     FileFieldResolver,
     GroupFieldResolver,
     NumberFieldResolver,
     StringFieldResolver,
     UserFieldResolver,
 )
+
+if TYPE_CHECKING:
+    from src.processes.models.workflows.task import Task
+    from src.processes.models.workflows.workflow import (
+        Workflow,
+    )
 
 logger = logging.getLogger(__name__)
 
@@ -36,9 +42,6 @@ OPERATOR_MAP = {
     ),
 }
 
-# FieldType does not define GROUP; the string matches
-# PredicateType.GROUP used by condition_check.
-_GROUP = 'group'
 
 
 class FieldRuleSetCheckService:
@@ -62,7 +65,7 @@ class FieldRuleSetCheckService:
         FieldType.CHECKBOX: CheckboxFieldResolver,
         FieldType.USER: UserFieldResolver,
         FieldType.DATE: DateFieldResolver,
-        _GROUP: GroupFieldResolver,
+        PredicateType.GROUP: GroupFieldResolver,
     }
 
     @classmethod
@@ -134,7 +137,7 @@ class FieldRuleSetCheckService:
     def _get_source_fields(
         cls,
         rulesets_by_field: Dict[
-            int, List[FieldRuleSet]
+            int, List[FieldRuleSet],
         ],
         workflow_id: int,
     ) -> Dict[str, TaskField]:
@@ -175,7 +178,7 @@ class FieldRuleSetCheckService:
         if not fields:
             return
         rulesets_by_field: Dict[
-            int, List[FieldRuleSet]
+            int, List[FieldRuleSet],
         ] = {}
         show_rulesets = (
             FieldRuleSet.objects
@@ -217,15 +220,15 @@ class FieldRuleSetCheckService:
             )
 
     @classmethod
-    def apply_show_rulesets_for_task(cls, task):
+    def apply_show_rulesets_for_task(
+        cls, task: 'Task',
+    ):
 
-        """ Every field of the task, not only the ones just
-            submitted: a field hidden by a show rule is not
-            sent by the client, so filtering by the payload
-            would never let it reappear.
-
-            Fieldset fields carry no task FK, they are
-            reached through the fieldset. """
+        """ All task fields, not only the submitted ones:
+            a hidden field is never sent by the client, so
+            filtering by payload would never unhide it.
+            Fieldset fields have no task FK — reached via
+            fieldset. """
 
         cls.apply_show_rulesets(
             list(
@@ -240,13 +243,12 @@ class FieldRuleSetCheckService:
 
     @classmethod
     def apply_show_rulesets_for_workflow(
-        cls, workflow,
+        cls, workflow: 'Workflow',
     ):
 
-        """ Every field of the workflow, including kickoff
-            and kickoff-fieldset fields: a show target can
-            sit on the kickoff (Note) and still read another
-            kickoff field. """
+        """ All workflow fields including kickoff and
+            kickoff-fieldset: a show target can sit on
+            the kickoff and read another kickoff field. """
 
         cls.apply_show_rulesets(
             list(

@@ -11,15 +11,15 @@ from src.processes.services.condition_check.comparator import (
 )
 
 
-def _parse_date(value):
-    if isinstance(value, str):
-        with contextlib.suppress(ValueError):
-            value = int(value)
-    if isinstance(value, int):
-        try:
-            return datetime.fromtimestamp(value, tz=tz.utc)
-        except (ValueError, TypeError):
-            pass
+def _parse_date(
+    value: Optional[str],
+) -> Optional[datetime]:
+    if value is None:
+        return None
+    with contextlib.suppress(ValueError, TypeError, OSError):
+        return datetime.fromtimestamp(
+            float(value), tz=tz.utc,
+        )
     return None
 
 
