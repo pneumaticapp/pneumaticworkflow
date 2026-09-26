@@ -157,20 +157,23 @@ describe('DropdownList', () => {
     expect(screen.queryByRole('option', { name: option.label })).not.toBeInTheDocument();
   });
 
-  it('keeps Enter in the search from submitting a parent form and closes on Escape', () => {
-    render(<DropdownList isSearchable title="Pick a value" options={[option]} />);
+  it('keeps Enter in the search from submitting a parent form and selects the focused option', () => {
+    const onChange = jest.fn();
+    render(<DropdownList isSearchable title="Pick a value" options={[option]} onChange={onChange} />);
 
     openMenu('Pick a value');
     const search = screen.getByRole('textbox');
+    fireEvent.keyDown(search, { key: 'ArrowDown' });
 
     expect(fireEvent.keyDown(search, { key: 'Enter' })).toBe(false);
+    expect(onChange).toHaveBeenCalledWith(option, { action: 'select-option', option });
 
     fireEvent.keyDown(search, { key: 'Escape' });
 
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
   });
 
-  it('stops search keys from reaching parent overlays', () => {
+  it('stops search Escape from reaching parent overlays', () => {
     const onParentKeyDown = jest.fn();
     render(
       <div onKeyDown={onParentKeyDown}>
@@ -179,9 +182,7 @@ describe('DropdownList', () => {
     );
 
     openMenu('Pick a value');
-    const search = screen.getByRole('textbox');
-    fireEvent.keyDown(search, { key: 'Enter' });
-    fireEvent.keyDown(search, { key: 'Escape' });
+    fireEvent.keyDown(screen.getByRole('textbox'), { key: 'Escape' });
 
     expect(onParentKeyDown).not.toHaveBeenCalled();
   });
