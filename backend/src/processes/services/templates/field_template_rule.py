@@ -6,6 +6,7 @@ from src.generics.base.service import BaseModelService
 from src.processes.enums import FieldRuleOperator
 from src.processes.messages.template import MSG_PT_0078
 from src.processes.models.templates.fields import (
+    FieldTemplate,
     FieldTemplateRuleGroupAnd,
     FieldTemplateRuleGroupOr,
     FieldTemplateRuleSet,
@@ -50,11 +51,36 @@ class FieldTemplateRuleSetService(BaseModelService):
         if groups_or is not None:
             self._set_groups_or(groups_or_data=groups_or)
 
+    def _get_source_field(
+        self,
+        group_and: FieldTemplateRuleGroupAnd,
+    ) -> Optional[FieldTemplate]:
+
+        """ The condition compares group_and.field, not the ruleset owner.
+            Validator rules leave it empty and read the owner itself. """
+
+        owner = self.instance.field
+        if not group_and.field or group_and.field == owner.api_name:
+            return owner
+        qst = FieldTemplate.objects.filter(
+            account=self.account,
+            api_name=group_and.field,
+        )
+        if owner.template_id:
+            qst = qst.filter(template_id=owner.template_id)
+        else:
+            qst = qst.filter(fieldset_id=owner.fieldset_id)
+        return qst.first()
+
     def _validate(
         self,
         group_and: FieldTemplateRuleGroupAnd,
     ):
-        field = self.instance.field
+        field = self._get_source_field(group_and=group_and)
+        if field is None:
+            # Source field is created later in the same request; the
+            # operator is re-checked when the rule is saved again.
+            return
         allowed_operators = FieldRuleOperator.ALLOWED_OPERATORS[field.type]
         if group_and.operator not in allowed_operators:
             raise FieldTemplateRuleSetServiceException(

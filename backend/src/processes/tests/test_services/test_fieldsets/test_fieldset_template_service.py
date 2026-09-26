@@ -1,6 +1,7 @@
 import pytest
 from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
+    FieldRuleOperator,
     FieldSetLayout,
     FieldSetRuleOperator,
     FieldType,
@@ -16,9 +17,13 @@ from src.processes.models.templates.fieldset import (
 from src.processes.models.templates.fields import (
     FieldTemplate,
     FieldTemplateSelection,
+    FieldTemplateRuleSet,
+    FieldTemplateRuleGroupOr,
+    FieldTemplateRuleGroupAnd,
 )
 from src.processes.services.exceptions import (
     FieldsetTemplateInUseException,
+    FieldsetTemplateServiceException,
     FieldsetTemplateSharedIdMissing,
     FieldsetTemplateTemplateIdMissing,
 )
@@ -1552,6 +1557,169 @@ def test__replace_api_names__fields_and_rules__ok(mocker):
     )
 
 
+def test__replace_api_names__rule_on_later_field__ok(mocker):
+
+    """
+    Rule references a field declared after it in the list
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    source_api_name = 'old-source'
+    shared_fieldset_data = {
+        'api_name': 'old-fs',
+        'fields': [
+            {
+                'api_name': 'old-target',
+                'name': 'Target',
+                'rulesets': [
+                    {
+                        'api_name': 'old-field-ruleset',
+                        'groups_or': [
+                            {
+                                'api_name': 'old-field-group-or',
+                                'groups_and': [
+                                    {
+                                        'api_name': 'old-field-group-and',
+                                        'field': source_api_name,
+                                        'operator': FieldRuleOperator.EQUAL,
+                                        'value': 'yes',
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+            {
+                'api_name': source_api_name,
+                'name': 'Source',
+            },
+        ],
+        'rulesets': [],
+    }
+    new_target_api = 'new-target'
+    new_source_api = 'new-source'
+    create_api_name_mock = mocker.patch(
+        'src.processes.services.fieldsets.fieldset.create_api_name',
+        side_effect=[
+            'new-fs',
+            new_target_api,
+            new_source_api,
+            'new-field-ruleset',
+            'new-field-group-or',
+            'new-field-group-and',
+        ],
+    )
+
+    # act
+    result = service._replace_api_names(
+        shared_fieldset_data=shared_fieldset_data,
+    )
+
+    # assert
+    assert result['fields'][0]['api_name'] == new_target_api
+    assert result['fields'][1]['api_name'] == new_source_api
+    ruleset_data = result['fields'][0]['rulesets'][0]
+    group_and_data = ruleset_data['groups_or'][0]['groups_and'][0]
+    assert group_and_data['field'] == new_source_api
+    assert create_api_name_mock.call_count == 6
+    create_api_name_mock.assert_has_calls(
+        [
+            mocker.call(FieldsetTemplate.api_name_prefix),
+            mocker.call(FieldTemplate.api_name_prefix),
+            mocker.call(FieldTemplateRuleSet.api_name_prefix),
+            mocker.call(FieldTemplateRuleGroupOr.api_name_prefix),
+            mocker.call(FieldTemplateRuleGroupAnd.api_name_prefix),
+        ],
+        any_order=True,
+    )
+
+
+def test__replace_api_names__rule_on_outer_field__keep_api_name(mocker):
+
+    """
+    Rule references a field outside the fieldset, api_name is kept
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    outer_api_name = 'kickoff-field-1'
+    shared_fieldset_data = {
+        'api_name': 'old-fs',
+        'fields': [
+            {
+                'api_name': 'old-target',
+                'name': 'Target',
+                'rulesets': [
+                    {
+                        'api_name': 'old-field-ruleset',
+                        'groups_or': [
+                            {
+                                'api_name': 'old-field-group-or',
+                                'groups_and': [
+                                    {
+                                        'api_name': 'old-field-group-and',
+                                        'field': outer_api_name,
+                                        'operator': FieldRuleOperator.EQUAL,
+                                        'value': 'yes',
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+        'rulesets': [
+            {
+                'api_name': 'old-fieldset-ruleset',
+                'fields': ['old-target', outer_api_name],
+                'groups_or': [],
+            },
+        ],
+    }
+    new_target_api = 'new-target'
+    create_api_name_mock = mocker.patch(
+        'src.processes.services.fieldsets.fieldset.create_api_name',
+        side_effect=[
+            'new-fs',
+            new_target_api,
+            'new-field-ruleset',
+            'new-field-group-or',
+            'new-field-group-and',
+            'new-fieldset-ruleset',
+        ],
+    )
+
+    # act
+    result = service._replace_api_names(
+        shared_fieldset_data=shared_fieldset_data,
+    )
+
+    # assert
+    ruleset_data = result['fields'][0]['rulesets'][0]
+    group_and_data = ruleset_data['groups_or'][0]['groups_and'][0]
+    assert group_and_data['field'] == outer_api_name
+    assert result['rulesets'][0]['fields'] == [
+        new_target_api,
+        outer_api_name,
+    ]
+    assert create_api_name_mock.call_count == 6
+
+
 def test__replace_api_names__no_fields_key__ok(mocker):
 
     """
@@ -2312,3 +2480,215 @@ def test__get_clone__ok(mocker):
         shared_fieldset_data=instance_data,
     )
     create_shared_fieldset_mock.assert_called_once_with(**result_data)
+
+
+def test_create__duplicate_ruleset_api_name__raise_exception():
+
+    """
+    Duplicate ruleset api_name on the same fieldset
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    kickoff = template.kickoff_instance
+    shared_fieldset = create_test_shared_fieldset(account=account)
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    ruleset_api_name = 'fs-ruleset'
+
+    # act
+    with pytest.raises(FieldsetTemplateServiceException) as ex:
+        service.create(
+            name=shared_fieldset.name,
+            is_shared=False,
+            shared_fieldset_id=shared_fieldset.id,
+            template_id=template.id,
+            kickoff_id=kickoff.id,
+            api_name='fs-kickoff',
+            fields=[],
+            rulesets=[
+                {
+                    'api_name': ruleset_api_name,
+                    'fields': [],
+                    'groups_or': [
+                        {
+                            'api_name': 'g-or-1',
+                            'groups_and': [
+                                {
+                                    'api_name': 'g-and-1',
+                                    'operator':
+                                        FieldSetRuleOperator.SUM_EQUAL,
+                                    'value': '100',
+                                },
+                            ],
+                        },
+                    ],
+                },
+                {
+                    'api_name': ruleset_api_name,
+                    'fields': [],
+                    'groups_or': [
+                        {
+                            'api_name': 'g-or-2',
+                            'groups_and': [
+                                {
+                                    'api_name': 'g-and-2',
+                                    'operator':
+                                        FieldSetRuleOperator.SUM_EQUAL,
+                                    'value': '200',
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        )
+
+    # assert
+    assert ex.value.message == fs_messages.MSG_FS_0014(
+        name='Kickoff',
+        api_name=ruleset_api_name,
+    )
+
+
+def test_create__duplicate_field_api_name__raise_exception():
+
+    """
+    Duplicate field api_name across kickoff and task fieldsets
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    kickoff = template.kickoff_instance
+    task = template.tasks.first()
+    shared_fieldset = create_test_shared_fieldset(account=account)
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    field_name = 'Fieldset field'
+    field_api_name = 'field-api-name'
+    service.create(
+        name=shared_fieldset.name,
+        is_shared=False,
+        shared_fieldset_id=shared_fieldset.id,
+        template_id=template.id,
+        kickoff_id=kickoff.id,
+        api_name='fs-kickoff',
+        fields=[
+            {
+                'name': field_name,
+                'type': FieldType.STRING,
+                'order': 1,
+                'api_name': field_api_name,
+            },
+        ],
+    )
+
+    # act
+    with pytest.raises(FieldsetTemplateServiceException) as ex:
+        service.create(
+            name=shared_fieldset.name,
+            is_shared=False,
+            shared_fieldset_id=shared_fieldset.id,
+            template_id=template.id,
+            task_id=task.id,
+            api_name='fs-task',
+            fields=[
+                {
+                    'name': field_name,
+                    'type': FieldType.STRING,
+                    'order': 1,
+                    'api_name': field_api_name,
+                },
+            ],
+        )
+
+    # assert
+    assert ex.value.message == fs_messages.MSG_FS_0015(
+        name=task.name,
+        field_name=field_name,
+        api_name=field_api_name,
+    )
+
+
+def test_create__duplicate_selection_api_name__raise_exception():
+
+    """
+    Duplicate selection api_name across kickoff and task fieldsets
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    kickoff = template.kickoff_instance
+    task = template.tasks.first()
+    shared_fieldset = create_test_shared_fieldset(account=account)
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    selection_api_name = 'selection-1'
+    service.create(
+        name=shared_fieldset.name,
+        is_shared=False,
+        shared_fieldset_id=shared_fieldset.id,
+        template_id=template.id,
+        kickoff_id=kickoff.id,
+        api_name='fs-kickoff',
+        fields=[
+            {
+                'name': 'Dropdown field',
+                'type': FieldType.DROPDOWN,
+                'order': 1,
+                'api_name': 'field-dropdown-kickoff',
+                'selections': [
+                    {
+                        'value': 'Option B',
+                        'api_name': selection_api_name,
+                    },
+                ],
+            },
+        ],
+    )
+
+    # act
+    with pytest.raises(FieldsetTemplateServiceException) as ex:
+        service.create(
+            name=shared_fieldset.name,
+            is_shared=False,
+            shared_fieldset_id=shared_fieldset.id,
+            template_id=template.id,
+            task_id=task.id,
+            api_name='fs-task',
+            fields=[
+                {
+                    'name': 'Dropdown field',
+                    'type': FieldType.DROPDOWN,
+                    'order': 1,
+                    'api_name': 'field-dropdown-task',
+                    'selections': [
+                        {
+                            'value': 'Option B',
+                            'api_name': selection_api_name,
+                        },
+                    ],
+                },
+            ],
+        )
+
+    # assert
+    assert ex.value.message == fs_messages.MSG_FS_0016(
+        name=task.name,
+        api_name=selection_api_name,
+    )

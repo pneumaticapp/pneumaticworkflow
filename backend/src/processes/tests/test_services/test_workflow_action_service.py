@@ -8,6 +8,8 @@ from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
     ConditionAction,
     DirectlyStatus,
+    FieldRuleOperator,
+    FieldRuleType,
     PerformerType,
     TaskStatus,
     WorkflowStatus,
@@ -17,9 +19,14 @@ from src.processes.enums import (
 from src.processes.models.workflows.conditions import Condition
 from src.processes.models.workflows.task import Delay, TaskPerformer
 from src.processes.models.workflows.workflow import Workflow
-from src.processes.models.workflows.fields import TaskField
+from src.processes.models.workflows.fields import (
+    FieldRuleGroupAnd,
+    FieldRuleGroupOr,
+    FieldRuleSet,
+    TaskField,
+)
 from src.processes.services import exceptions
-from src.processes.services.tasks.field import TaskFieldService
+from src.processes.services.tasks.fields.field import TaskFieldService
 from src.processes.services.tasks.task import TaskService
 from src.processes.services.workflow_action import WorkflowActionService
 from src.processes.tests.fixtures import (
@@ -3526,7 +3533,7 @@ def test_complete_task_for_user__one_user_performer__ok(mocker):
         return_value=None,
     )
     partial_update_field_mock = mocker.patch(
-        'src.processes.services.tasks.field.TaskFieldService'
+        'src.processes.services.tasks.fields.field.TaskFieldService'
         '.partial_update',
     )
     send_task_completed_websocket_mock = mocker.patch(
@@ -3619,7 +3626,7 @@ def test_complete_task_for_user__with_fields_values__ok(mocker):
         return_value=None,
     )
     partial_update_field_mock = mocker.patch(
-        'src.processes.services.tasks.field.TaskFieldService'
+        'src.processes.services.tasks.fields.field.TaskFieldService'
         '.partial_update',
     )
     send_task_completed_websocket_mock = mocker.patch(
@@ -3683,6 +3690,175 @@ def test_complete_task_for_user__with_fields_values__ok(mocker):
     )
 
 
+def create_show_rule(field, source_api_name, value):
+
+    """ A show ruleset on `field` reading `source_api_name`. """
+
+    ruleset = FieldRuleSet.objects.create(
+        account=field.account,
+        workflow=field.workflow,
+        field=field,
+        api_name=f'{field.api_name}-ruleset-1',
+        name='Show rule',
+        type=FieldRuleType.SHOW,
+    )
+    group_or = FieldRuleGroupOr.objects.create(
+        account=field.account,
+        workflow=field.workflow,
+        ruleset=ruleset,
+        api_name=f'{field.api_name}-group-or-1',
+    )
+    FieldRuleGroupAnd.objects.create(
+        account=field.account,
+        workflow=field.workflow,
+        group_or=group_or,
+        api_name=f'{field.api_name}-group-and-1',
+        field=source_api_name,
+        operator=FieldRuleOperator.EQUAL,
+        value=value,
+    )
+    return ruleset
+
+
+def test_complete_task_for_user__show_rule_fails__hidden_before_event(mocker):
+
+    """ is_hidden has to be recalculated before the event snapshot,
+        otherwise events and highlights freeze the previous flag. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    source_field = TaskField.objects.create(
+        task=task,
+        workflow=workflow,
+        account=account,
+        name='Source',
+        type=FieldType.STRING,
+        api_name='source-field-1',
+        order=0,
+    )
+    target_field = TaskField.objects.create(
+        task=task,
+        workflow=workflow,
+        account=account,
+        name='Target',
+        type=FieldType.STRING,
+        api_name='target-field-1',
+        order=1,
+    )
+    create_show_rule(target_field, source_field.api_name, 'yes')
+    mocker.patch(
+        'src.processes.services.workflow_action.Task.can_be_completed',
+        return_value=True,
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '.complete_task',
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.AnalyticService'
+        '.task_completed',
+    )
+    flag_at_event = {}
+
+    def capture(**kwargs):
+        flag_at_event['is_hidden'] = TaskField.objects.get(
+            id=target_field.id,
+        ).is_hidden
+
+    mocker.patch(
+        'src.processes.services.workflow_action.WorkflowEventService'
+        '.task_complete_event',
+        side_effect=capture,
+    )
+    service = WorkflowActionService(
+        user=user,
+        workflow=workflow,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+
+    # act
+    service.complete_task_for_user(
+        task=task,
+        fields_values={
+            'source-field-1': 'no',
+            'target-field-1': '',
+        },
+    )
+
+    # assert
+    target_field.refresh_from_db()
+    assert target_field.is_hidden is True
+    assert flag_at_event['is_hidden'] is True
+
+
+def test_complete_task_for_user__target_not_submitted__recalculated(mocker):
+
+    """ A field hidden by a show rule is not sent by the client, so the
+        recalculation must not be limited to the submitted values. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    source_field = TaskField.objects.create(
+        task=task,
+        workflow=workflow,
+        account=account,
+        name='Source',
+        type=FieldType.STRING,
+        api_name='source-field-1',
+        order=0,
+    )
+    target_field = TaskField.objects.create(
+        task=task,
+        workflow=workflow,
+        account=account,
+        name='Target',
+        type=FieldType.STRING,
+        api_name='target-field-1',
+        order=1,
+        is_hidden=True,
+    )
+    create_show_rule(target_field, source_field.api_name, 'yes')
+    mocker.patch(
+        'src.processes.services.workflow_action.Task.can_be_completed',
+        return_value=True,
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '.complete_task',
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.AnalyticService'
+        '.task_completed',
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.WorkflowEventService'
+        '.task_complete_event',
+    )
+    service = WorkflowActionService(
+        user=user,
+        workflow=workflow,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+
+    # act
+    service.complete_task_for_user(
+        task=task,
+        fields_values={'source-field-1': 'yes'},
+    )
+
+    # assert
+    target_field.refresh_from_db()
+    assert target_field.is_hidden is False
+
+
 def test_complete_task_for_user__workflow_delayed__raise_exception(mocker):
 
     """Attempting to complete a task on a delayed workflow.
@@ -3702,7 +3878,7 @@ def test_complete_task_for_user__workflow_delayed__raise_exception(mocker):
         return_value=None,
     )
     partial_update_field_mock = mocker.patch(
-        'src.processes.services.tasks.field.TaskFieldService'
+        'src.processes.services.tasks.fields.field.TaskFieldService'
         '.partial_update',
     )
     complete_task_mock = mocker.patch(
@@ -3773,7 +3949,7 @@ def test_complete_task_for_user__workflow_completed__raise_exception(mocker):
         return_value=None,
     )
     partial_update_field_mock = mocker.patch(
-        'src.processes.services.tasks.field.TaskFieldService'
+        'src.processes.services.tasks.fields.field.TaskFieldService'
         '.partial_update',
     )
     complete_task_mock = mocker.patch(
@@ -3856,7 +4032,7 @@ def test_complete_task_for_user__task_inactive__raise_exception(
         return_value=None,
     )
     partial_update_field_mock = mocker.patch(
-        'src.processes.services.tasks.field.TaskFieldService'
+        'src.processes.services.tasks.fields.field.TaskFieldService'
         '.partial_update',
     )
     complete_task_mock = mocker.patch(
@@ -3933,7 +4109,7 @@ def test_complete_task_for_user__user_not_performer__raise(mocker):
         return_value=None,
     )
     partial_update_field_mock = mocker.patch(
-        'src.processes.services.tasks.field.TaskFieldService'
+        'src.processes.services.tasks.fields.field.TaskFieldService'
         '.partial_update',
     )
     complete_task_mock = mocker.patch(
@@ -4017,7 +4193,7 @@ def test_complete_task_for_user__checklist_incomplete__raise_exception(
         return_value=None,
     )
     partial_update_field_mock = mocker.patch(
-        'src.processes.services.tasks.field.TaskFieldService'
+        'src.processes.services.tasks.fields.field.TaskFieldService'
         '.partial_update',
     )
     complete_task_mock = mocker.patch(
@@ -4098,7 +4274,7 @@ def test_complete_task_for_user__sub_wf_running__raise_exception(mocker):
         return_value=None,
     )
     partial_update_field_mock = mocker.patch(
-        'src.processes.services.tasks.field.TaskFieldService'
+        'src.processes.services.tasks.fields.field.TaskFieldService'
         '.partial_update',
     )
     complete_task_mock = mocker.patch(
@@ -4173,7 +4349,7 @@ def test_complete_task_for_user__account_owner_no_performer__force_complete(
         return_value=None,
     )
     partial_update_field_mock = mocker.patch(
-        'src.processes.services.tasks.field.TaskFieldService'
+        'src.processes.services.tasks.fields.field.TaskFieldService'
         '.partial_update',
     )
     complete_task_mock = mocker.patch(
@@ -4258,7 +4434,7 @@ def test_complete_task_for_user__user_performer_last_completion__ok(
         return_value=None,
     )
     partial_update_field_mock = mocker.patch(
-        'src.processes.services.tasks.field.TaskFieldService'
+        'src.processes.services.tasks.fields.field.TaskFieldService'
         '.partial_update',
     )
     task_can_be_completed_mock = mocker.patch(
@@ -4344,7 +4520,7 @@ def test_complete_task_for_user__user_performer_first_completion__ok(
         return_value=None,
     )
     partial_update_field_mock = mocker.patch(
-        'src.processes.services.tasks.field.TaskFieldService'
+        'src.processes.services.tasks.fields.field.TaskFieldService'
         '.partial_update',
     )
     task_can_be_completed_mock = mocker.patch(
@@ -4443,7 +4619,7 @@ def test_complete_task_for_user__guest_performer_first_completion__ok(
         return_value=None,
     )
     partial_update_field_mock = mocker.patch(
-        'src.processes.services.tasks.field.TaskFieldService'
+        'src.processes.services.tasks.fields.field.TaskFieldService'
         '.partial_update',
     )
     task_can_be_completed_mock = mocker.patch(
@@ -4544,7 +4720,7 @@ def test_complete_task_for_user__group_performer_one_user__ok(mocker):
         return_value=None,
     )
     partial_update_field_mock = mocker.patch(
-        'src.processes.services.tasks.field.TaskFieldService'
+        'src.processes.services.tasks.fields.field.TaskFieldService'
         '.partial_update',
     )
     send_task_completed_websocket_mock = mocker.patch(
@@ -4633,7 +4809,7 @@ def test_complete_task_for_user__group_user__checklist_incomplete__raise(
         return_value=None,
     )
     partial_update_field_mock = mocker.patch(
-        'src.processes.services.tasks.field.TaskFieldService'
+        'src.processes.services.tasks.fields.field.TaskFieldService'
         '.partial_update',
     )
     complete_task_mock = mocker.patch(
@@ -4741,7 +4917,7 @@ def test_complete_task_for_user__group_with_output__ok(mocker):
         return_value=None,
     )
     partial_update_field_mock = mocker.patch(
-        'src.processes.services.tasks.field.TaskFieldService'
+        'src.processes.services.tasks.fields.field.TaskFieldService'
         '.partial_update',
     )
     send_task_completed_websocket_mock = mocker.patch(
@@ -4836,7 +5012,7 @@ def test_complete_task_for_user__group_can_complete__ok(mocker):
         return_value=None,
     )
     partial_update_field_mock = mocker.patch(
-        'src.processes.services.tasks.field.TaskFieldService'
+        'src.processes.services.tasks.fields.field.TaskFieldService'
         '.partial_update',
     )
     send_task_completed_websocket_mock = mocker.patch(
@@ -4935,7 +5111,7 @@ def test_complete_task_for_user__rcba_and_guest_first_completion__ok(
         return_value=None,
     )
     partial_update_field_mock = mocker.patch(
-        'src.processes.services.tasks.field.TaskFieldService'
+        'src.processes.services.tasks.fields.field.TaskFieldService'
         '.partial_update',
     )
     can_be_completed_mock = mocker.patch(
@@ -5032,7 +5208,7 @@ def test_complete_task_for_user__account_owner_not_performer__ok(mocker):
         return_value=None,
     )
     partial_update_field_mock = mocker.patch(
-        'src.processes.services.tasks.field.TaskFieldService'
+        'src.processes.services.tasks.fields.field.TaskFieldService'
         '.partial_update',
     )
     send_task_completed_websocket_mock = mocker.patch(
@@ -5121,7 +5297,7 @@ def test_complete_task_for_user__user_and_group_performer__ok(mocker):
         return_value=None,
     )
     partial_update_field_mock = mocker.patch(
-        'src.processes.services.tasks.field.TaskFieldService'
+        'src.processes.services.tasks.fields.field.TaskFieldService'
         '.partial_update',
     )
     send_task_completed_websocket_mock = mocker.patch(
@@ -5219,7 +5395,7 @@ def test_complete_task_for_user__rcba_user_and_group_performer__ok(mocker):
         return_value=None,
     )
     mocker.patch(
-        'src.processes.services.tasks.field.TaskFieldService'
+        'src.processes.services.tasks.fields.field.TaskFieldService'
         '.partial_update',
     )
     can_be_completed_mock = mocker.patch(
@@ -5324,7 +5500,7 @@ def test_complete_task_for_user__rcba_user_and_group_already_completed__raise(
         return_value=None,
     )
     partial_update_field_mock = mocker.patch(
-        'src.processes.services.tasks.field.TaskFieldService'
+        'src.processes.services.tasks.fields.field.TaskFieldService'
         '.partial_update',
     )
     can_be_completed_mock = mocker.patch(
@@ -5410,7 +5586,7 @@ def test_complete_task_for_user__account_owner_in_group__ok(mocker):
         return_value=None,
     )
     partial_update_field_mock = mocker.patch(
-        'src.processes.services.tasks.field.TaskFieldService'
+        'src.processes.services.tasks.fields.field.TaskFieldService'
         '.partial_update',
     )
     send_task_completed_websocket_mock = mocker.patch(

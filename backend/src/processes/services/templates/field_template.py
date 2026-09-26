@@ -1,12 +1,16 @@
 from typing import Optional, List, Dict
+from django.db import IntegrityError, transaction
 from django.db.models import Model
 
 from src.generics.base.service import BaseModelService
 from src.processes.enums import FieldType
+from src.processes.messages.fieldset import MSG_FS_0015, MSG_FS_0016
 from src.processes.models.templates.fields import (
     FieldTemplate,
+    FieldTemplateRuleGroupAnd,
     FieldTemplateRuleSet,
 )
+from src.processes.models.templates.fieldset import FieldsetTemplate
 from src.processes.services.exceptions import (
     FieldTemplateSelectionsRequired,
     FieldTemplateUserMustBeRequired, FieldTemplateServiceException,
@@ -34,12 +38,27 @@ class FieldTemplateService(BaseModelService):
         if field_type == FieldType.USER and kwargs.get('is_required') is False:
             raise FieldTemplateUserMustBeRequired
 
+    def _get_step_name(self, fieldset_id: Optional[int] = None) -> str:
+        fieldset = None
+        if fieldset_id:
+            fieldset = FieldsetTemplate.objects.filter(id=fieldset_id).first()
+        elif self.instance and self.instance.fieldset_id:
+            fieldset = self.instance.fieldset
+        if not fieldset:
+            return 'Kickoff'
+        if fieldset.kickoff_id:
+            return 'Kickoff'
+        if fieldset.task_id:
+            return fieldset.task.name
+        return 'Kickoff'
+
     def create(self, **kwargs) -> Model:
         self._validate(**kwargs)
         return super().create(**kwargs)
 
     def partial_update(self, **update_kwargs) -> Model:
         self._validate(**update_kwargs)
+        old_type = self.instance.type
         selections_data = update_kwargs.pop('selections', None)
         rulesets_data = update_kwargs.pop('rulesets', None)
         result = super().partial_update(**update_kwargs)
@@ -48,7 +67,44 @@ class FieldTemplateService(BaseModelService):
             self.create_selections(selections_data=selections_data)
         if rulesets_data is not None:
             self.update_rulesets(rulesets_data=rulesets_data)
+        new_type = update_kwargs.get('type', old_type)
+        if new_type != old_type:
+            self._revalidate_dependent_rulesets()
         return result
+
+    def _revalidate_dependent_rulesets(self):
+
+        """ Field type changed — check that field-level and
+            fieldset-level rulesets referencing this field are
+            still valid for the new type. """
+
+        # Lazy import avoids circular dependency
+        from src.processes.services.fieldsets.fieldset_rule import (  # noqa: PLC0415
+            FieldsetTemplateRuleSetService,
+        )
+        api_name = self.instance.api_name
+
+        # Field-level: show/validator rules that read this field
+        for group_and in FieldTemplateRuleGroupAnd.objects.filter(
+            group_or__ruleset__template=self.instance.template,
+            field=api_name,
+        ).select_related('group_or__ruleset'):
+            FieldTemplateRuleSetService(
+                user=self.user,
+                instance=group_and.group_or.ruleset,
+            )._validate(group_and)
+
+        # Fieldset-level: sum rules where this field participates
+        if self.instance.fieldset_id:
+            for ruleset in self.instance.fieldset.rulesets.filter(
+                fields=self.instance,
+            ).prefetch_related('groups_or__groups_and'):
+                for group_or in ruleset.groups_or.all():
+                    for group_and in group_or.groups_and.all():
+                        FieldsetTemplateRuleSetService(
+                            user=self.user,
+                            instance=ruleset,
+                        )._validate(group_and)
 
     def _create_instance(
         self,
@@ -87,7 +143,18 @@ class FieldTemplateService(BaseModelService):
         }
         if api_name:
             params['api_name'] = api_name
-        self.instance = FieldTemplate.objects.create(**params)
+        step_name = self._get_step_name(fieldset_id=fieldset_id)
+        try:
+            with transaction.atomic():
+                self.instance = FieldTemplate.objects.create(**params)
+        except IntegrityError as ex:
+            raise FieldTemplateServiceException(
+                message=MSG_FS_0015(
+                    name=step_name,
+                    field_name=name,
+                    api_name=api_name,
+                ),
+            ) from ex
         return self.instance
 
     def _create_related(
@@ -107,12 +174,21 @@ class FieldTemplateService(BaseModelService):
             is_superuser=self.is_superuser,
             auth_type=self.auth_type,
         )
+        step_name = self._get_step_name()
         for selection_data in selections_data:
-            service.create(
-                field_template_id=self.instance.id,
-                template_id=self.instance.template_id,
-                **selection_data,
-            )
+            try:
+                service.create(
+                    field_template_id=self.instance.id,
+                    template_id=self.instance.template_id,
+                    **selection_data,
+                )
+            except IntegrityError as ex:
+                raise FieldTemplateServiceException(
+                    message=MSG_FS_0016(
+                        name=step_name,
+                        api_name=selection_data.get('api_name'),
+                    ),
+                ) from ex
 
     def create_ruleset(
         self,
