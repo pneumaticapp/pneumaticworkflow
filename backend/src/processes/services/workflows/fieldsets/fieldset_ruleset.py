@@ -172,6 +172,7 @@ class FieldSetRuleSetService(BaseModelService):
             return True
 
         expected_values = []
+        operators = []
         for group_or in groups_or:
             groups_and = list(group_or.groups_and.all())
             if not groups_and:
@@ -184,9 +185,9 @@ class FieldSetRuleSetService(BaseModelService):
             expected_values.extend(
                 str(group_and.value) for group_and in groups_and
             )
-            operators = [
+            operators.extend(
                 group_and.operator for group_and in groups_and
-            ]
+            )
         if not expected_values:
             return True
         raise FieldsetServiceException(

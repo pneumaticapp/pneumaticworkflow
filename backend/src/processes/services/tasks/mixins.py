@@ -1,4 +1,6 @@
-from typing import Dict, List, Optional
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Dict, List, Optional
 
 from django.contrib.auth import get_user_model
 
@@ -13,23 +15,31 @@ from src.processes.models.workflows.conditions import (
     Rule,
 )
 
+if TYPE_CHECKING:
+    from src.processes.models.workflows.fields import (
+        TaskField,
+    )
+    from src.processes.models.workflows.fieldset import (
+        FieldSet,
+    )
+
 UserModel = get_user_model()
 
 
 class RuleSetVersionMixin:
 
-    """ The fieldset branch of the task and kickoff version services is
-        the same, only the parent object differs. """
+    """ The fieldset branch of the task and kickoff version
+        services is the same, only the parent differs. """
 
     def _update_fieldset_rulesets(
         self,
-        fieldset,
+        fieldset: FieldSet,
         version: int,
         rulesets_data: Optional[List[Dict]] = None,
     ):
 
-        # A snapshot taken before rulesets existed carries no such key.
-        # Absent means "nothing is known", an empty list means "none".
+        # Absent key = snapshot predates rulesets, keep as-is.
+        # Empty list = no rulesets, delete all.
         if rulesets_data is None:
             return
         api_names = set()
@@ -49,13 +59,15 @@ class RuleSetVersionMixin:
 
     def _update_field_rulesets(
         self,
-        field,
+        field: TaskField,
         rulesets_data: Optional[List[Dict]],
         version: int,
     ):
 
+        if rulesets_data is None:
+            return
         api_names = set()
-        for ruleset_data in rulesets_data or []:
+        for ruleset_data in rulesets_data:
             service = FieldRuleSetVersionService(
                 user=self.user,
                 is_superuser=self.is_superuser,
