@@ -2229,6 +2229,28 @@ def test_update__duplicate_ruleset_api_name__validation_error(
                                         },
                                     ],
                                 },
+                                {
+                                    'api_name': ruleset_api_name,
+                                    'name': 'Duplicate',
+                                    'type': FieldRuleType.SHOW,
+                                    'groups_or': [
+                                        {
+                                            'groups_and': [
+                                                {
+                                                    'field': (
+                                                        source_field
+                                                        .api_name
+                                                    ),
+                                                    'operator': (
+                                                        FieldRuleOperator
+                                                        .EQUAL
+                                                    ),
+                                                    'value': 'dup',
+                                                },
+                                            ],
+                                        },
+                                    ],
+                                },
                             ],
                         },
                         {
@@ -2236,28 +2258,6 @@ def test_update__duplicate_ruleset_api_name__validation_error(
                             'type': FieldType.STRING,
                             'order': 3,
                             'api_name': 'field-3',
-                            'rulesets': [
-                                {
-                                    'api_name': ruleset_api_name,
-                                    'name': 'Duplicate ruleset',
-                                    'type': FieldRuleType.SHOW,
-                                    'groups_or': [
-                                        {
-                                            'groups_and': [
-                                                {
-                                                    'field': (
-                                                        source_field.api_name
-                                                    ),
-                                                    'operator': (
-                                                        FieldRuleOperator.EQUAL
-                                                    ),
-                                                    'value': 'yes',
-                                                },
-                                            ],
-                                        },
-                                    ],
-                                },
-                            ],
                         },
                     ],
                 },
@@ -2269,7 +2269,7 @@ def test_update__duplicate_ruleset_api_name__validation_error(
     assert response.status_code == 400
     message = MSG_PT_0075(
         task_name=step_name,
-        field_name=field_name,
+        field_name=target_field.name,
         api_name=ruleset_api_name,
     )
     assert response.data['message'] == message

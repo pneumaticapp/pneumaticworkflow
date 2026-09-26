@@ -1030,7 +1030,7 @@ def test_list__kickoff_field_non_selection_type_no_selections_key(
     assert len(fields) == 1
     field_data = fields[0]
     assert field_data['type'] == FieldType.STRING
-    assert 'selections' not in field_data
+    assert field_data['selections'] == []
 
 
 def test_list__kickoff_field_with_dataset__ok(api_client):

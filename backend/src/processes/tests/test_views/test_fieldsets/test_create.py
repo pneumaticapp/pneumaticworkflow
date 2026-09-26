@@ -1003,14 +1003,38 @@ def test_create__field_rule_validator_by_field_type__ok(
     field_response = response.data['fields'][0]
     ruleset_data = field_response['rulesets'][0]
     assert ruleset_data['type'] == FieldRuleType.VALIDATOR
-    fieldset_service_create_mock.assert_called_once()
-    call_kwargs = fieldset_service_create_mock.call_args[1]
-    field_payload = call_kwargs['fields'][0]
-    ruleset_payload = field_payload['rulesets'][0]
-    assert ruleset_payload['type'] == FieldRuleType.VALIDATOR
-    group_and_payload = ruleset_payload['groups_or'][0]['groups_and'][0]
-    assert group_and_payload['operator'] == operator
-    assert group_and_payload['value'] == value
+    fieldset_service_create_mock.assert_called_once_with(
+        name='Validator Fieldset',
+        order=0,
+        rulesets=[],
+        fields=[
+            {
+                'name': 'Field',
+                'type': field_type,
+                'api_name': 'field-1',
+                'order': 1,
+                'rulesets': [
+                    {
+                        'name': 'Some name',
+                        'type': FieldRuleType.VALIDATOR,
+                        'message': 'Value is invalid',
+                        'order': 1,
+                        'groups_or': [
+                            {
+                                'groups_and': [
+                                    {
+                                        'field': None,
+                                        'operator': operator,
+                                        'value': value,
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+    )
 
 
 def test_create__field_rule_validator_user_field__ok(api_client, mocker):
@@ -1074,14 +1098,39 @@ def test_create__field_rule_validator_user_field__ok(api_client, mocker):
     field_response = response.data['fields'][0]
     ruleset_data = field_response['rulesets'][0]
     assert ruleset_data['type'] == FieldRuleType.VALIDATOR
-    fieldset_service_create_mock.assert_called_once()
-    call_kwargs = fieldset_service_create_mock.call_args[1]
-    field_payload = call_kwargs['fields'][0]
-    ruleset_payload = field_payload['rulesets'][0]
-    assert ruleset_payload['type'] == FieldRuleType.VALIDATOR
-    group_and_payload = ruleset_payload['groups_or'][0]['groups_and'][0]
-    assert group_and_payload['operator'] == operator
-    assert group_and_payload['value'] == value
+    fieldset_service_create_mock.assert_called_once_with(
+        name='Validator User Fieldset',
+        order=0,
+        rulesets=[],
+        fields=[
+            {
+                'name': 'Field',
+                'type': FieldType.USER,
+                'is_required': True,
+                'api_name': 'field-1',
+                'order': 1,
+                'rulesets': [
+                    {
+                        'name': 'Some name',
+                        'type': FieldRuleType.VALIDATOR,
+                        'message': 'Value is invalid',
+                        'order': 1,
+                        'groups_or': [
+                            {
+                                'groups_and': [
+                                    {
+                                        'field': None,
+                                        'operator': operator,
+                                        'value': value,
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+    )
 
 
 @pytest.mark.parametrize(
@@ -1160,14 +1209,42 @@ def test_create__field_rule_validator_types_with_selections__ok(
     field_response = response.data['fields'][0]
     ruleset_data = field_response['rulesets'][0]
     assert ruleset_data['type'] == FieldRuleType.VALIDATOR
-    fieldset_service_create_mock.assert_called_once()
-    call_kwargs = fieldset_service_create_mock.call_args[1]
-    field_payload = call_kwargs['fields'][0]
-    ruleset_payload = field_payload['rulesets'][0]
-    assert ruleset_payload['type'] == FieldRuleType.VALIDATOR
-    group_and_payload = ruleset_payload['groups_or'][0]['groups_and'][0]
-    assert group_and_payload['operator'] == operator
-    assert group_and_payload['value'] == value
+    fieldset_service_create_mock.assert_called_once_with(
+        name='Validator Selections Fieldset',
+        order=0,
+        rulesets=[],
+        fields=[
+            {
+                'name': 'Field',
+                'type': field_type,
+                'api_name': 'field-1',
+                'order': 1,
+                'selections': [
+                    {'value': 'First'},
+                    {'value': 'Second'},
+                ],
+                'rulesets': [
+                    {
+                        'name': 'Some name',
+                        'type': FieldRuleType.VALIDATOR,
+                        'message': 'Value is invalid',
+                        'order': 1,
+                        'groups_or': [
+                            {
+                                'groups_and': [
+                                    {
+                                        'field': None,
+                                        'operator': operator,
+                                        'value': value,
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+    )
 
 
 def test_create__field_rule_show_file_field__ok(api_client, mocker):
@@ -1231,12 +1308,41 @@ def test_create__field_rule_show_file_field__ok(api_client, mocker):
     assert response.status_code == 201
     field_with_ruleset = response.data['fields'][0]
     assert field_with_ruleset['rulesets'][0]['type'] == FieldRuleType.SHOW
-    fieldset_service_create_mock.assert_called_once()
-    call_kwargs = fieldset_service_create_mock.call_args[1]
-    file_payload = call_kwargs['fields'][1]
-    ruleset_payload = file_payload['rulesets'][0]
-    assert ruleset_payload['type'] == FieldRuleType.SHOW
-    group_and_payload = ruleset_payload['groups_or'][0]['groups_and'][0]
-    assert group_and_payload['field'] == source_api_name
-    assert group_and_payload['operator'] == FieldRuleOperator.EXIST
-    assert group_and_payload['value'] is None
+    fieldset_service_create_mock.assert_called_once_with(
+        name='Show File Fieldset',
+        order=0,
+        rulesets=[],
+        fields=[
+            {
+                'name': 'Image original',
+                'type': FieldType.FILE,
+                'api_name': source_api_name,
+                'order': 1,
+                'rulesets': [],
+            },
+            {
+                'name': 'Image resized',
+                'type': FieldType.FILE,
+                'api_name': 'file-1',
+                'order': 2,
+                'rulesets': [
+                    {
+                        'name': 'Some name',
+                        'type': FieldRuleType.SHOW,
+                        'order': 1,
+                        'groups_or': [
+                            {
+                                'groups_and': [
+                                    {
+                                        'field': source_api_name,
+                                        'operator': FieldRuleOperator.EXIST,
+                                        'value': None,
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+    )
