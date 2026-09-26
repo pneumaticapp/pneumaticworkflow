@@ -127,6 +127,13 @@ from src.webhooks.enums import HookEvent
 
 UserModel = get_user_model()
 
+# Read twice: on retrieve and on the complete response
+FIELDSET_RULESET_PREFETCH = (
+    'fieldsets__rulesets__groups_or__groups_and',
+    'fieldsets__rulesets__fields',
+    'fieldsets__fields__rulesets__groups_or__groups_and',
+)
+
 
 @extend_schema_view(
     get=extend_schema(
@@ -329,6 +336,7 @@ class TaskViewSet(
                             queryset=DatasetItem.objects.order_by('order'),
                             to_attr='dataset_values',
                         ),
+                        'rulesets__groups_or__groups_and',
                     ),
                 ),
                 Prefetch(
@@ -341,6 +349,7 @@ class TaskViewSet(
                     queryset=DatasetItem.objects.order_by('order'),
                     to_attr='dataset_values',
                 ),
+                *FIELDSET_RULESET_PREFETCH,
             ).select_related(
                 'workflow',
             )
@@ -737,6 +746,7 @@ class TaskViewSet(
                             to_attr='dataset_values',
                         ),
                         'storage_attachments',
+                        'rulesets__groups_or__groups_and',
                     ),
                 ),
                 Prefetch(
@@ -749,6 +759,7 @@ class TaskViewSet(
                     queryset=DatasetItem.objects.order_by('order'),
                     to_attr='dataset_values',
                 ),
+                *FIELDSET_RULESET_PREFETCH,
             ).get(pk=task.pk),
             context={'user': request.user},
         )
