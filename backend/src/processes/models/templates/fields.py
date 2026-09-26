@@ -3,6 +3,11 @@ from django.db.models import Q, UniqueConstraint
 
 from src.accounts.models import AccountBaseMixin
 from src.generics.managers import BaseSoftDeleteManager
+from src.processes.querysets import (
+    FieldTemplateRuleSetQuerySet,
+    FieldTemplateRuleGroupOrQuerySet,
+    FieldTemplateRuleGroupAndQuerySet,
+)
 from src.processes.enums import FieldRuleType, FieldRuleOperator
 from src.processes.models.base import BaseApiNameModel
 from src.processes.models.mixins import (
@@ -123,16 +128,12 @@ class FieldTemplateRuleSet(
     BaseApiNameModel,
     AccountBaseMixin,
 ):
+    """ Unique on (field_id, api_name) WHERE NOT is_deleted.
+        Enforced by a NULLS NOT DISTINCT index in migration
+        0260_add_template_rulesets (Raw SQL; Django 2.2 limitation). """
 
     class Meta:
         ordering = ['order', 'id']
-        constraints = [
-            UniqueConstraint(
-                fields=['template', 'api_name', 'account'],
-                condition=Q(is_deleted=False),
-                name='fieldtemplateruleset_field_api_name_unique',
-            ),
-        ]
 
     api_name_prefix = 'field-ruleset'
     template = models.ForeignKey(
@@ -159,6 +160,10 @@ class FieldTemplateRuleSet(
     )
     order = models.PositiveIntegerField(default=0)
 
+    objects = BaseSoftDeleteManager.from_queryset(
+        FieldTemplateRuleSetQuerySet,
+    )()
+
     def __str__(self):
         return self.api_name
 
@@ -167,16 +172,10 @@ class FieldTemplateRuleGroupOr(
     BaseApiNameModel,
     AccountBaseMixin,
 ):
+    """ Uniqueness: see FieldTemplateRuleSet docstring. """
 
     class Meta:
         ordering = ['id']
-        constraints = [
-            UniqueConstraint(
-                fields=['api_name', 'template', 'account'],
-                condition=Q(is_deleted=False),
-                name='rulegroupor_field_rule_api_name_unique',
-            ),
-        ]
 
     api_name_prefix = 'field-rule-group-or'
     template = models.ForeignKey(
@@ -192,6 +191,10 @@ class FieldTemplateRuleGroupOr(
         related_name='groups_or',
     )
 
+    objects = BaseSoftDeleteManager.from_queryset(
+        FieldTemplateRuleGroupOrQuerySet,
+    )()
+
     def __str__(self):
         return self.api_name
 
@@ -200,16 +203,10 @@ class FieldTemplateRuleGroupAnd(
     BaseApiNameModel,
     AccountBaseMixin,
 ):
+    """ Uniqueness: see FieldTemplateRuleSet docstring. """
 
     class Meta:
         ordering = ['id']
-        constraints = [
-            UniqueConstraint(
-                fields=['template', 'api_name', 'account'],
-                condition=Q(is_deleted=False),
-                name='rulegroupand_group_or_api_name_unique',
-            ),
-        ]
 
     api_name_prefix = 'field-rule-group-and'
     group_or = models.ForeignKey(
@@ -233,6 +230,10 @@ class FieldTemplateRuleGroupAnd(
         max_length=200,
         null=True,
     )
+
+    objects = BaseSoftDeleteManager.from_queryset(
+        FieldTemplateRuleGroupAndQuerySet,
+    )()
 
     def __str__(self):
         return self.api_name
