@@ -20,7 +20,7 @@ from src.processes.models.workflows.raw_due_date import RawDueDate
 from src.processes.models.workflows.task import Delay
 from src.authentication.enums import AuthTokenType
 from src.processes.services.tasks.checklist import ChecklistService
-from src.processes.services.tasks.field import TaskFieldService
+from src.processes.services.tasks.fields.field import TaskFieldService
 from src.processes.services.tasks.task import TaskService
 from src.processes.services.workflows.fieldsets.fieldset import FieldSetService
 from src.processes.tests.fixtures import (
@@ -1551,7 +1551,7 @@ def test_create_fields_from_template__outside_fs__ok(mocker):
         return_value=None,
     )
     task_field_service_create_mock = mocker.patch(
-        'src.processes.services.tasks.field.TaskFieldService.create',
+        'src.processes.services.tasks.fields.field.TaskFieldService.create',
     )
     service = TaskService(user=user, instance=task)
 
@@ -1685,7 +1685,7 @@ def test_create_conditions_from_template__no_conditions__ok(mocker):
     workflow = create_test_workflow(user=user, template=template)
     task = workflow.tasks.get(number=1)
     create_rules_mock = mocker.patch(
-        'src.processes.services.tasks.mixins.ConditionMixin.create_rulesets',
+        'src.processes.services.tasks.mixins.ConditionMixin.create_rules',
     )
     service = TaskService(user=user, instance=task)
 
@@ -1711,7 +1711,7 @@ def test_create_conditions_from_template__with_conditions__ok(mocker):
     workflow = create_test_workflow(user=user, template=template)
     task = workflow.tasks.get(number=2)
     create_rules_mock = mocker.patch(
-        'src.processes.services.tasks.mixins.ConditionMixin.create_rulesets',
+        'src.processes.services.tasks.mixins.ConditionMixin.create_rules',
     )
     service = TaskService(user=user, instance=task)
 
@@ -2117,7 +2117,7 @@ def test_create_fields_from_template__deleted_fieldsets__skip(mocker):
         return_value=None,
     )
     task_field_service_create_mock = mocker.patch(
-        'src.processes.services.tasks.field.TaskFieldService.create',
+        'src.processes.services.tasks.fields.field.TaskFieldService.create',
     )
     service = TaskService(user=user, instance=task)
 
