@@ -46,8 +46,11 @@ from src.processes.services.condition_check.service import (
 from src.processes.services.events import (
     WorkflowEventService,
 )
-from src.processes.services.tasks.field import (
+from src.processes.services.tasks.fields.field import (
     TaskFieldService,
+)
+from src.processes.services.tasks.fields.field_ruleset_check import (
+    FieldRuleSetCheckService,
 )
 from src.processes.services.tasks.task import TaskService
 from src.processes.services.workflows.fieldsets.fieldset import FieldSetService
@@ -453,6 +456,10 @@ class WorkflowActionService:
             fields_values = self.workflow.get_kickoff_fields_markdown_values()
 
             task_service.insert_fields_values(fields_values=fields_values)
+
+        # After kickoff values are in, including fields that live on
+        # the kickoff itself (a fieldset Note has no task FK)
+        FieldRuleSetCheckService.apply_show_rulesets_for_workflow(self.workflow)
 
         WorkflowEventService.workflow_run_event(
             workflow=self.workflow,
@@ -968,6 +975,13 @@ class WorkflowActionService:
                         auth_type=self.auth_type,
                     )
                     service.validate_rules()
+            # Before the event snapshot, otherwise events and highlights
+            # freeze the previous is_hidden.
+            # Workflow-wide: a show rule on the next task may read a
+            # field just completed on this one.
+            FieldRuleSetCheckService.apply_show_rulesets_for_workflow(
+                self.workflow,
+            )
             AnalyticService.task_completed(
                 user=self.user,
                 is_superuser=self.is_superuser,

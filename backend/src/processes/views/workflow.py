@@ -161,9 +161,7 @@ class WorkflowViewSet(
             'resume',
             'partial_update',
         ):
-            extra_fields = [
-                'kickoff__output__selections',
-            ]
+            extra_fields = None
         else:
             extra_fields = None
         return super().prefetch_queryset(

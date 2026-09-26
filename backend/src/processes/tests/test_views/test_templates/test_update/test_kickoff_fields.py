@@ -975,5 +975,5 @@ def test_update__kickoff_field_non_selection_type_no_selections_no_dataset__ok(
     response_field = data['kickoff']['fields'][0]
     assert response_field['type'] == request_data['type']
     assert 'dataset' not in response_field
-    assert 'selections' not in response_field
+    assert response_field['selections'] == []
     template_updated_mock.assert_called_once_with(template=template)

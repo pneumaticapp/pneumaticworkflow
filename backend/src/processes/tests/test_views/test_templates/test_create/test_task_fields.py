@@ -79,7 +79,7 @@ class TestCreateTemplateTaskFields:
         assert response_data['is_required'] is False
         assert response_data['is_hidden'] is False
         assert response_data['default'] == ''
-        assert 'selections' not in response_data
+        assert response_data['selections'] == []
 
         field = FieldTemplate.objects.get(api_name=response_data['api_name'])
         assert field.type == request_data['type']
@@ -152,7 +152,7 @@ class TestCreateTemplateTaskFields:
         assert response_data['is_required'] == request_data['is_required']
         assert response_data['is_hidden'] == request_data['is_hidden']
         assert response_data['default'] == request_data['default']
-        assert 'selections' not in response_data
+        assert response_data['selections'] == []
 
         field = FieldTemplate.objects.get(api_name=response_data['api_name'])
         assert field.type == request_data['type']
@@ -864,4 +864,4 @@ def test_create__task_field_non_selection_type_no_selections_no_dataset__ok(
     response_field = data['tasks'][0]['fields'][0]
     assert response_field['type'] == request_data['type']
     assert 'dataset' not in response_field
-    assert 'selections' not in response_field
+    assert response_field['selections'] == []
