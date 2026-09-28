@@ -74,7 +74,8 @@ export function ConditionValueField({
         onChange={(e: ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
           changeRuleValue(e.target.value);
         }}
-        {...(isNumberType && { isNumericField, isFromConditionValueField: true })}
+        isFromConditionValueField
+        {...(isNumberType && { isNumericField })}
       />
     );
   }
