@@ -127,7 +127,7 @@ def test_list_fieldsets__all_data__ok(api_client):
     assert field_data['default'] == ''
     assert field_data['order'] == field.order
     assert 'dataset' not in field_data
-    assert field_data['selections'] == []
+    assert 'selections' not in field_data
 
     assert len(field_data['rulesets']) == 1
     field_rule_data = field_data['rulesets'][0]
