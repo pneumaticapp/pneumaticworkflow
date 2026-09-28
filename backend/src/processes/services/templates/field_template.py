@@ -1,6 +1,6 @@
 from typing import Optional, List, Dict
 from django.db import IntegrityError, transaction
-from django.db.models import Model
+from django.db.models import Model, Q
 
 from src.generics.base.service import BaseModelService
 from src.processes.enums import FieldType
@@ -88,7 +88,9 @@ class FieldTemplateService(BaseModelService):
         # Field-level: show/validator rules that read this field
         for group_and in FieldTemplateRuleGroupAnd.objects.filter(
             group_or__ruleset__template=self.instance.template,
-            field=api_name,
+        ).filter(
+            Q(field=api_name)
+            | Q(field__isnull=True, group_or__ruleset__field=self.instance)
         ).select_related('group_or__ruleset'):
             FieldTemplateRuleSetService(
                 user=self.user,
