@@ -162,10 +162,13 @@ class FieldSetTemplateService(BaseModelService):
         self,
         fields_data: List[Dict],
     ):
+        # Pass 1: create fields without rulesets so that
+        # every source field exists before rules are validated.
+        deferred_rulesets = []
         for field_data in fields_data:
             field_data_dict = dict(field_data)
-            # Field-level rulesets are not created here yet.
             field_data_dict.pop('id', None)
+            field_rulesets = field_data_dict.pop('rulesets', None)
             service = FieldTemplateService(
                 user=self.user,
                 is_superuser=self.is_superuser,
@@ -179,7 +182,25 @@ class FieldSetTemplateService(BaseModelService):
                     **field_data_dict,
                 )
             except FieldTemplateServiceException as ex:
-                raise FieldsetTemplateServiceException(ex.message) from ex
+                raise FieldsetTemplateServiceException(
+                    ex.message,
+                ) from ex
+            if field_rulesets:
+                deferred_rulesets.append(
+                    (service, field_rulesets),
+                )
+
+        # Pass 2: add rulesets — all source fields exist,
+        # _validate() can check operators against field types.
+        for service, rulesets_data in deferred_rulesets:
+            try:
+                service.create_rulesets(
+                    rulesets_data=rulesets_data,
+                )
+            except FieldTemplateServiceException as ex:
+                raise FieldsetTemplateServiceException(
+                    ex.message,
+                ) from ex
 
     def _update_fields(
         self,
