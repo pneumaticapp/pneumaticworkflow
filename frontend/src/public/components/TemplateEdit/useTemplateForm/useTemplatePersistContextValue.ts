@@ -16,7 +16,6 @@ import { useTemplateField } from './contexts';
 import { getChangedFields, getUnconsumedPendingEdits } from './templateFormUtils';
 import { ITemplateFormPersistProviderProps, ITemplatePersistContextValue } from './types';
 
-/** Batches rapid keystrokes before Redux synchronization and persistence. */
 export const TEMPLATE_FORM_PERSIST_DEBOUNCE_MS = 350;
 
 type TConsumedPending = {
@@ -24,32 +23,10 @@ type TConsumedPending = {
   isUserEdit: boolean;
   pendingUserEdits: Partial<ITemplateClient>;
   explicitFields?: Partial<ITemplateClient>;
-  /** Formik snapshot covered by the in-flight autosave patch. */
   dispatchedValues?: ITemplateClient;
 };
 
-/**
- * Single save point for every user edit on the Edit Template page.
- *
- * On each Formik values change we compute a shallow top-level diff and — only
- * when the change was initiated by a user via the wrapped `setFieldValue`/
- * `setValues` (i.e. `dirtyRef` is true) — dispatch `patchTemplate`. The
- * `patchTemplate` saga owns the actual debounce + API call. External
- * reinitializes (template load, save response with server-stamped fields,
- * owners normalization, ...) update `previousValuesRef` but never dispatch, so
- * they cannot cause a save loop.
- *
- * When a user edit touches a non-activation field, the wrapped `setFieldValue`/
- * `setValues` flip `isActive` to false in Formik synchronously (see
- * `applyImmediateDeactivation`) so controls like `RouteLeavingGuard` react
- * immediately. The saga makes the same call server-side but only reinitializes
- * Formik after the save round-trip.
- *
- * On unmount a dedicated cleanup calls `flushPersist` with the latest Formik
- * snapshot so edits made just before leaving the page are not lost. Call
- * `abandonPendingChanges` before navigating away after "Discard changes" so
- * those edits are not re-dispatched.
- */
+// External Formik reinitializes never dispatch a save, so they cannot cause a save loop.
 export function useTemplatePersistContextValue({
   dirtyRef,
   pendingUserEditsRef,
@@ -84,16 +61,12 @@ export function useTemplatePersistContextValue({
 
   useEffect(() => {
     persistBaselineSyncRefRef.current.current = (reduxTemplate) => {
-      // While an explicit submit has consumed pending edits and is waiting for
-      // confirm/revert, keep the pre-submit baseline so a Redux reinitialize from
-      // the in-flight patch does not collapse the diff we need to restore.
+      // While an explicit submit waits for confirm/revert, keep the pre-submit baseline.
       if (consumedPendingRef.current) {
         return;
       }
 
-      // Baseline must mirror the latest Redux snapshot for every field so
-      // server-stamped or normalized values (dateUpdated, owners, ...) are not
-      // diffed as user edits on the next flush.
+      // Mirror the latest Redux snapshot so server-stamped fields are not diffed as user edits.
       latestReduxBaselineRef.current = reduxTemplate;
       previousValuesRef.current = { ...reduxTemplate };
     };
@@ -120,8 +93,7 @@ export function useTemplatePersistContextValue({
       };
     }
 
-    // Explicit submit flows advance the baseline immediately so the autosave
-    // effect does not re-dispatch the same diff while the patch is in flight.
+    // Advance the baseline immediately so autosave does not re-dispatch the same diff.
     if (mode === 'consume') {
       previousValuesRef.current = valuesRef.current;
     }
@@ -147,12 +119,8 @@ export function useTemplatePersistContextValue({
     const savedValues = consumed?.dispatchedValues ?? valuesRef.current;
     const hasNewerReduxBaseline = latestBaseline && latestBaseline !== consumed?.previousBaseline;
 
-    // Prefer a fresh Redux snapshot with server-stamped fields. If baseline sync
-    // was skipped while this save was in flight, the ref still points at the
-    // pre-edit snapshot, so fall back to the form snapshot that was dispatched.
-    previousValuesRef.current = hasNewerReduxBaseline
-      ? { ...latestBaseline }
-      : savedValues;
+    // Fall back to the dispatched form snapshot when the Redux baseline is still pre-edit.
+    previousValuesRef.current = hasNewerReduxBaseline ? { ...latestBaseline } : savedValues;
 
     if (Object.keys(pendingUserEditsRefRef.current.current).length === 0) {
       dirtyRefRef.current.current = false;
@@ -197,57 +165,53 @@ export function useTemplatePersistContextValue({
 
       if (valuesChangedByExplicitRevert) {
         setValuesRef.current(revertedValues);
-        // The wrapped setter marks every call as a user edit. A failed explicit
-        // save is a system revert, so restore the consumed dirty state.
+        // A failed explicit save is a system revert, not a user edit.
         pendingUserEditsRefRef.current.current = { ...consumed.pendingUserEdits };
         dirtyRefRef.current.current = consumed.isUserEdit;
       }
     }
 
-    // When explicit fields (e.g. isActive) were reverted in Formik, the values
-    // effect will re-queue autosave. Otherwise consumed user edits are still
-    // visible but no longer match the restored baseline — flush now so they
-    // are not stranded without autosave (e.g. failed activation in
-    // TemplateControlls never flips isActive in Formik before the patch).
+    // Flush consumed user edits that no longer match the restored baseline so they are not stranded.
     if (requeue && previousValuesRef.current !== valuesRef.current && !valuesChangedByExplicitRevert) {
       flushPersistRef.current();
     }
   }, []);
 
-  const consumePendingChanges = useCallback((explicitFields?: Partial<ITemplateClient>) => {
-    const changedFields = takePendingChanges('consume');
+  const consumePendingChanges = useCallback(
+    (explicitFields?: Partial<ITemplateClient>) => {
+      const changedFields = takePendingChanges('consume');
 
-    if (explicitFields && Object.keys(explicitFields).length > 0) {
-      if (consumedPendingRef.current) {
-        consumedPendingRef.current.explicitFields = explicitFields;
-      } else {
-        consumedPendingRef.current = {
-          previousBaseline: previousValuesRef.current,
-          isUserEdit: false,
-          pendingUserEdits: {},
-          explicitFields,
-        };
-        previousValuesRef.current = valuesRef.current;
+      if (explicitFields && Object.keys(explicitFields).length > 0) {
+        if (consumedPendingRef.current) {
+          consumedPendingRef.current.explicitFields = explicitFields;
+        } else {
+          consumedPendingRef.current = {
+            previousBaseline: previousValuesRef.current,
+            isUserEdit: false,
+            pendingUserEdits: {},
+            explicitFields,
+          };
+          previousValuesRef.current = valuesRef.current;
+        }
+
+        if (explicitFields.isActive === true && pendingUserEditsRefRef.current.current.isActive === false) {
+          const pendingWithoutInactiveFlag = { ...pendingUserEditsRefRef.current.current };
+          delete pendingWithoutInactiveFlag.isActive;
+          pendingUserEditsRefRef.current.current = pendingWithoutInactiveFlag;
+        }
       }
 
-      if (explicitFields.isActive === true && pendingUserEditsRefRef.current.current.isActive === false) {
-        const pendingWithoutInactiveFlag = { ...pendingUserEditsRefRef.current.current };
-        delete pendingWithoutInactiveFlag.isActive;
-        pendingUserEditsRefRef.current.current = pendingWithoutInactiveFlag;
-      }
-    }
-
-    return changedFields;
-  }, [takePendingChanges]);
+      return changedFields;
+    },
+    [takePendingChanges],
+  );
 
   const flushPersist = useCallback(() => {
     if (previousValuesRef.current === valuesRef.current) {
       return;
     }
 
-    // Skip duplicate flushes for the same Formik snapshot while a patch is
-    // already queued. A newer edit changes `valuesRef`, which supersedes the
-    // in-flight patch via `takeLatest` and advances this editor's request generation.
+    // Skip duplicate flushes for a snapshot the queued patch already covers.
     if (pendingDispatchRef.current?.dispatchedValues === valuesRef.current) {
       return;
     }
@@ -274,8 +238,7 @@ export function useTemplatePersistContextValue({
               return;
             }
             pendingDispatchRef.current = null;
-            // Keep edits pending for the explicit Retry action. Re-dispatching
-            // here retries every failed API call forever.
+            // A failed save is retried explicitly, not re-dispatched here.
             revertConsumedChanges(false);
           },
         }),
@@ -303,10 +266,7 @@ export function useTemplatePersistContextValue({
       return undefined;
     }
 
-    if (
-      dirtyRefRef.current.current
-      && Object.keys(getChangedFields(previousValuesRef.current, values)).length > 0
-    ) {
+    if (dirtyRefRef.current.current && Object.keys(getChangedFields(previousValuesRef.current, values)).length > 0) {
       dispatchRef.current(setTemplateStatus(ETemplateStatus.Saving));
     }
 
@@ -319,9 +279,12 @@ export function useTemplatePersistContextValue({
     };
   }, [values, flushPersist]);
 
-  useEffect(() => () => {
-    flushPersistRef.current();
-  }, []);
+  useEffect(
+    () => () => {
+      flushPersistRef.current();
+    },
+    [],
+  );
 
   const persistContextValue = useMemo<ITemplatePersistContextValue>(
     () => ({
@@ -331,7 +294,13 @@ export function useTemplatePersistContextValue({
       revertConsumedChanges,
       abandonPendingChanges,
     }),
-    [consumePendingChanges, getRetryExplicitPatch, confirmConsumedChanges, revertConsumedChanges, abandonPendingChanges],
+    [
+      consumePendingChanges,
+      getRetryExplicitPatch,
+      confirmConsumedChanges,
+      revertConsumedChanges,
+      abandonPendingChanges,
+    ],
   );
 
   return persistContextValue;

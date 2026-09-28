@@ -72,15 +72,14 @@ export function mergePreservedTasks(
   }
 
   const sortedServerAdded = [...serverAddedTasks].sort((a, b) => a.number - b.number);
-  const preservedOrderNumber = (task: ITemplateTaskClient) =>
-    incomingByUuid.get(task.uuid)?.number ?? task.number;
+  const preservedOrderNumber = (task: ITemplateTaskClient) => incomingByUuid.get(task.uuid)?.number ?? task.number;
 
   const insertState = { serverIndex: 0 };
 
   const interleaved = mergedFromPreserved.reduce<ITemplateTaskClient[]>((result, preserved) => {
     while (
-      insertState.serverIndex < sortedServerAdded.length
-      && sortedServerAdded[insertState.serverIndex].number < preservedOrderNumber(preserved)
+      insertState.serverIndex < sortedServerAdded.length &&
+      sortedServerAdded[insertState.serverIndex].number < preservedOrderNumber(preserved)
     ) {
       result.push(sortedServerAdded[insertState.serverIndex]);
       insertState.serverIndex += 1;
@@ -144,8 +143,7 @@ export function getUnconsumedPendingEdits(
   const remainder: Partial<ITemplateClient> = {};
 
   (Object.keys(current) as (keyof ITemplateClient)[]).forEach((key) => {
-    // Redux normalization recreates nested arrays/objects after every save.
-    // Only keep edits whose value actually changed while the request was in flight.
+    // Redux normalization recreates nested objects after every save; keep only edits whose value actually changed.
     if (JSON.stringify(current[key]) !== JSON.stringify(consumed[key])) {
       (remainder[key] as ITemplateClient[keyof ITemplateClient]) = current[key];
     }
@@ -165,7 +163,6 @@ export function resolveTemplateIdentity(
   return initialValues.id;
 }
 
-/** Stable key for every source property represented in `getVariables()`. */
 export function getTemplateVariablesFingerprint(values: ITemplateClient): string {
   const getFieldSignature = (field: {
     apiName?: string;
@@ -212,9 +209,7 @@ export function hasTemplateIdentityChanged(
 
   // First id assignment after create — same template session.
   const isCreateSessionIdentity = (identity: string | number | undefined) =>
-    identity === undefined
-    || identity === 'create'
-    || (typeof identity === 'string' && identity.startsWith('create:'));
+    identity === undefined || identity === 'create' || (typeof identity === 'string' && identity.startsWith('create:'));
 
   if (isCreateSessionIdentity(previousIdentity) && typeof nextIdentity === 'number') {
     return false;
@@ -223,12 +218,7 @@ export function hasTemplateIdentityChanged(
   return previousIdentity !== undefined || nextIdentity !== undefined;
 }
 
-/**
- * Stable React key for `<TemplateForm />` across create → first-id autosave.
- * Prefers the create-session key so the tree does not remount when Redux assigns
- * an id (matching `hasTemplateIdentityChanged`). Clears that key only when the
- * template identity truly changes (another template / create flow).
- */
+// Keep the create-session key so the tree does not remount when Redux assigns the first id.
 export function resolveTemplateFormMountKey({
   previousIdentity,
   nextIdentity,

@@ -39,12 +39,8 @@ export interface ITemplateFieldContextValue {
 
 export interface ITemplatePersistContextValue {
   consumePendingChanges(explicitFields?: Partial<ITemplateClient>): Partial<ITemplateClient>;
-  /** Fields from a failed explicit submit (e.g. activation) to merge into the next retry. */
   getRetryExplicitPatch(): Partial<ITemplateClient>;
-  /** Clears a revert snapshot after an explicit `patchTemplate` succeeds. */
   confirmConsumedChanges(): void;
-  /** Restores the persist baseline and re-queues autosave when an explicit `patchTemplate` fails. */
   revertConsumedChanges(): void;
-  /** Drops uncommitted edits without dispatching (e.g. after "Discard changes"). */
   abandonPendingChanges(): void;
 }

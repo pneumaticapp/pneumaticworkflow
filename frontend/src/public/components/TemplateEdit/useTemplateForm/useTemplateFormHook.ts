@@ -14,22 +14,7 @@ import {
 } from './templateFormUtils';
 import { TSetFieldValue, TSetValues } from './types';
 
-/**
- * Root Formik context for the whole Edit Template page.
- *
- * The entire template (name, description, kickoff, tasks, owners, share
- * settings, toggles, ...) lives in a single Formik state. Every field binds to
- * it via `useTemplateField`; nothing dispatches Redux field updates from
- * individual inputs anymore. Saving happens from one place only —
- * `TemplateFormPersistProvider` — which dispatches a single `patchTemplate`
- * action for user edits (the saga then debounces + saves). Explicit "submit"
- * flows (e.g. activating the template) still go through `patchTemplate` with
- * callbacks, so both onChange and submit share one save path.
- */
-export function useTemplateForm(
-  initialValues: ITemplateClient,
-  templateIdentityKey?: string | number,
-) {
+export function useTemplateForm(initialValues: ITemplateClient, templateIdentityKey?: string | number) {
   const dirtyRef = useRef(false);
   const pendingUserEditsRef = useRef<Partial<ITemplateClient>>({});
   const lastSyncedInitialValuesRef = useRef(initialValues);
@@ -53,10 +38,7 @@ export function useTemplateForm(
   }
   lastTemplateIdentityRef.current = resolvedIdentity;
 
-  // Redux `template` updates must be merged into Formik without discarding edits
-  // that still live only in the form (e.g. typed while a save is in flight).
-  // Wrapped setters accumulate those edits in `pendingUserEditsRef` because a
-  // Redux snapshot can land in the same render and overwrite Formik state.
+  // Edits made while a save is in flight live only in Formik and must survive Redux merges.
   if (lastSyncedInitialValuesRef.current !== initialValues) {
     const rawPending = dirtyRef.current ? pendingUserEditsRef.current : {};
 
@@ -66,9 +48,7 @@ export function useTemplateForm(
       pendingUserEditsRef.current = getChangedFields(initialValues, mergedValues);
       dirtyRef.current = true;
 
-      // Optimistic `setTemplate` from autosave can land while the user is still
-      // typing. Skip a redundant Formik write when the merged snapshot already
-      // matches what the form is showing.
+      // Skip a redundant Formik write when the merged snapshot already matches the form.
       const resyncDiff = getChangedFields(formik.values, mergedValues);
       if (Object.keys(resyncDiff).length > 0) {
         formik.setValues(mergedValues, false);
@@ -85,50 +65,44 @@ export function useTemplateForm(
     lastSyncedInitialValuesRef.current = initialValues;
   }
 
-  const setFieldValue = useCallback<TSetFieldValue>(
-    (field, value, shouldValidate) => {
-      const currentFormik = formikRef.current;
-      dirtyRef.current = true;
-      const currentValues = overlayPendingEdits(
-        currentFormik.values,
-        pendingUserEditsRef.current,
-        lastSyncedInitialValuesRef.current,
-      );
-      let nextValues = setNestedFieldValue(currentValues, field, value);
-      const runCleanup = shouldRunReferenceCleanup(field, currentValues, nextValues);
+  const setFieldValue = useCallback<TSetFieldValue>((field, value, shouldValidate) => {
+    const currentFormik = formikRef.current;
+    dirtyRef.current = true;
+    const currentValues = overlayPendingEdits(
+      currentFormik.values,
+      pendingUserEditsRef.current,
+      lastSyncedInitialValuesRef.current,
+    );
+    let nextValues = setNestedFieldValue(currentValues, field, value);
+    const runCleanup = shouldRunReferenceCleanup(field, currentValues, nextValues);
 
-      if (runCleanup) {
-        nextValues = applyReferenceCleanup(nextValues);
-      }
+    if (runCleanup) {
+      nextValues = applyReferenceCleanup(nextValues);
+    }
 
-      nextValues = applyImmediateDeactivation(currentValues, nextValues);
-      pendingUserEditsRef.current = getChangedFields(lastSyncedInitialValuesRef.current, nextValues);
+    nextValues = applyImmediateDeactivation(currentValues, nextValues);
+    pendingUserEditsRef.current = getChangedFields(lastSyncedInitialValuesRef.current, nextValues);
 
-      if (runCleanup || nextValues.isActive !== currentValues.isActive) {
-        currentFormik.setValues(nextValues, shouldValidate);
-      } else {
-        currentFormik.setFieldValue(field, value, shouldValidate);
-      }
-    },
-    [],
-  );
-
-  const setValues = useCallback<TSetValues>(
-    (values, shouldValidate) => {
-      const currentFormik = formikRef.current;
-      dirtyRef.current = true;
-      const currentValues = overlayPendingEdits(
-        currentFormik.values,
-        pendingUserEditsRef.current,
-        lastSyncedInitialValuesRef.current,
-      );
-      const updatedValues = typeof values === 'function' ? values(currentValues) : values;
-      const nextValues = applyImmediateDeactivation(currentValues, updatedValues);
-      pendingUserEditsRef.current = getChangedFields(lastSyncedInitialValuesRef.current, nextValues);
+    if (runCleanup || nextValues.isActive !== currentValues.isActive) {
       currentFormik.setValues(nextValues, shouldValidate);
-    },
-    [],
-  );
+    } else {
+      currentFormik.setFieldValue(field, value, shouldValidate);
+    }
+  }, []);
+
+  const setValues = useCallback<TSetValues>((values, shouldValidate) => {
+    const currentFormik = formikRef.current;
+    dirtyRef.current = true;
+    const currentValues = overlayPendingEdits(
+      currentFormik.values,
+      pendingUserEditsRef.current,
+      lastSyncedInitialValuesRef.current,
+    );
+    const updatedValues = typeof values === 'function' ? values(currentValues) : values;
+    const nextValues = applyImmediateDeactivation(currentValues, updatedValues);
+    pendingUserEditsRef.current = getChangedFields(lastSyncedInitialValuesRef.current, nextValues);
+    currentFormik.setValues(nextValues, shouldValidate);
+  }, []);
 
   return { formik, setFieldValue, setValues, dirtyRef, pendingUserEditsRef, persistBaselineSyncRef };
 }

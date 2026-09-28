@@ -1,27 +1,12 @@
 import React, { createContext, useContext } from 'react';
 
-import {
-  ITaskFormScopeProviderProps,
-  ITemplateFieldContextValue,
-  ITemplatePersistContextValue,
-} from './types';
+import { ITaskFormScopeProviderProps, ITemplateFieldContextValue, ITemplatePersistContextValue } from './types';
 
 export const TemplateFieldContext = createContext<ITemplateFieldContextValue | null>(null);
 const TemplatePersistContext = createContext<ITemplatePersistContextValue | null>(null);
 const TaskFormScopeContext = createContext<string | null>(null);
 
-/**
- * Access the root Edit Template form state + the wrapped setters.
- *
- * `setFieldValue` / `setValues` mark the form as user-dirty before delegating
- * to Formik, so `TemplateFormPersistProvider` knows which value changes come
- * from user edits (and should be saved) vs. external reinitializes from the
- * server (which must not re-trigger a save — otherwise the server-stamped
- * `dateUpdated`/`publicUrl` fields would cause an infinite save loop).
- *
- * Use this instead of `useFormikContext().setFieldValue` everywhere on the
- * Edit Template page so saving stays centralized.
- */
+// The wrapped setters mark the form as user-dirty so the persist provider does not save server reinitializes (infinite save loop).
 export function useTemplateField(): ITemplateFieldContextValue {
   const ctx = useContext(TemplateFieldContext);
 
@@ -44,19 +29,10 @@ export function useTemplatePersist(): ITemplatePersistContextValue {
 
 export { TemplatePersistContext };
 
-/**
- * Scopes the task form sections to a single task inside the root `ITemplate`
- * Formik context. Descendants call `useTaskForm()` (no args) and get the
- * matching task + updaters bound to `tasks[index].<field>`.
- */
 export function TaskFormScopeProvider({ taskUuid, children }: ITaskFormScopeProviderProps) {
   return <TaskFormScopeContext.Provider value={taskUuid}>{children}</TaskFormScopeContext.Provider>;
 }
 
-/**
- * Returns the uuid of the task currently scoped via `TaskFormScopeProvider`.
- * Throws if used outside the provider.
- */
 export function useTaskFormScope(): string {
   const taskUuid = useContext(TaskFormScopeContext);
 

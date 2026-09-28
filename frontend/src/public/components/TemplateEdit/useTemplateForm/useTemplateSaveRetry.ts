@@ -4,21 +4,11 @@ import { useDispatch } from 'react-redux';
 import { patchTemplate, saveTemplate } from '../../../redux/actions';
 import { useTemplatePersist } from './contexts';
 
-/**
- * Retries a failed template save using the current Formik state.
- *
- * Autosave reads from Redux, but user edits land in Formik first and only reach
- * Redux after `TemplateFormPersistProvider` flushes. Retrying with `saveTemplate`
- * alone can persist a stale Redux snapshot and drop in-flight Formik edits.
- */
+// Retry from the Formik state: Redux can hold a stale snapshot and drop in-flight edits.
 export function useTemplateSaveRetry(): () => void {
   const dispatch = useDispatch();
-  const {
-    consumePendingChanges,
-    getRetryExplicitPatch,
-    confirmConsumedChanges,
-    revertConsumedChanges,
-  } = useTemplatePersist();
+  const { consumePendingChanges, getRetryExplicitPatch, confirmConsumedChanges, revertConsumedChanges } =
+    useTemplatePersist();
 
   return useCallback(() => {
     const pendingChanges = consumePendingChanges();

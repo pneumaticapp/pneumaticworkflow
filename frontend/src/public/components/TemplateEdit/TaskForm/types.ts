@@ -1,6 +1,6 @@
 import type { ReactNode, RefObject } from 'react';
 
-import { IKickoffClient, ITemplateTaskClient } from '../../../types/template';
+import { ITemplateKickoffClient, ITemplateTaskClient } from '../../../types/template';
 import { TUserListItem } from '../../../types/user';
 import { ETaskFormParts, TTaskFormPart, TTaskVariable } from '../types';
 
@@ -20,7 +20,7 @@ export interface ITaskFormSectionsProps {
   accountId: number;
   isSubscribed: boolean;
   isTeamInvitesModalOpen: boolean;
-  kickoff: IKickoffClient;
+  kickoff: ITemplateKickoffClient;
   listVariables: TTaskVariable[];
   scrollTarget: TTaskFormPart;
   tasks: ITemplateTaskClient[];
@@ -40,7 +40,7 @@ export interface IUseTaskFormPartsProps {
   accountId: number;
   isSubscribed: boolean;
   isTeamInvitesModalOpen: boolean;
-  kickoff: IKickoffClient;
+  kickoff: ITemplateKickoffClient;
   listVariables: TTaskVariable[];
   isFieldsSectionShown: boolean;
   tasks: ITemplateTaskClient[];

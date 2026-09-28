@@ -97,8 +97,8 @@ export const setPerformersCounts = <T extends { rawPerformers: ITemplateTaskPerf
 };
 
 export function haveSameKickoffFields(
-  nextFields: IKickoffClient['fields'] | undefined,
-  previousFields: IKickoffClient['fields'] | undefined,
+  nextFields: ITemplateKickoffClient['fields'] | undefined,
+  previousFields: ITemplateKickoffClient['fields'] | undefined,
 ): boolean {
   const next = nextFields ?? [];
   const previous = previousFields ?? [];

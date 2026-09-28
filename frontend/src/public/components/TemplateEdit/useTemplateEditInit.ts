@@ -127,13 +127,7 @@ export function useTemplateEditInit({
       return;
     }
 
-    // Build from the current Formik values, not the Redux `template` prop.
-    // Field edits live in Formik until `TemplateFormPersistProvider` flushes
-    // them to Redux, so the Redux snapshot can lag behind. Formik uses
-    // `enableReinitialize`, so a `setTemplate` built from the stale Redux
-    // prop would reset Formik to that snapshot and discard any uncommitted
-    // edits. Spreading from `formik.values` carries those edits into the
-    // new Redux state so the reinitialize is a no-op for them.
+    // Build from Formik values: the Redux snapshot lags behind and enableReinitialize would discard uncommitted edits.
     const currentValues = formikValuesRef.current;
     const newTemplateOwners = getNormalizedTemplateOwners(currentValues.owners, accessConditions, users);
     dispatch(setTemplate({ ...currentValues, owners: newTemplateOwners }));
@@ -144,19 +138,20 @@ export function useTemplateEditInit({
       const currentValues = formikValuesRef.current;
 
       if (currentValues.id) {
-        dispatch(loadTemplateVariablesSuccess({
-          templateId: currentValues.id,
-          variables: getVariables({
-            kickoff: currentValues.kickoff,
-            tasks: currentValues.tasks,
+        dispatch(
+          loadTemplateVariablesSuccess({
             templateId: currentValues.id,
+            variables: getVariables({
+              kickoff: currentValues.kickoff,
+              tasks: currentValues.tasks,
+              templateId: currentValues.id,
+            }),
           }),
-        }));
+        );
       }
     };
 
-    // Populate immediately whenever the persisted template identity changes.
-    // Subsequent metadata edits within that template remain debounced.
+    // Populate immediately on identity change; subsequent metadata edits remain debounced.
     const currentTemplateId = formikValuesRef.current.id ?? null;
     if (lastVariablesTemplateIdRef.current !== currentTemplateId) {
       lastVariablesTemplateIdRef.current = currentTemplateId;

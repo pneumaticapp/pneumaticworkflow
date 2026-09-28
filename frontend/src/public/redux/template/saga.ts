@@ -1,4 +1,3 @@
-/* tslint:disable:max-file-line-count */
 import {
   actionChannel,
   ActionChannelEffect,
@@ -55,7 +54,12 @@ import { getFieldsetsCatalogIsLoading, getIsCatalogLoaded } from '../selectors/f
 import { logger } from '../../utils/logger';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { updateTemplate } from '../../api/updateTemplate';
-import { cleanTemplateReferences, getNormalizedTemplate, haveSameKickoffFields, mapTemplateRequest } from '../../utils/template';
+import {
+  cleanTemplateReferences,
+  getNormalizedTemplate,
+  haveSameKickoffFields,
+  mapTemplateRequest,
+} from '../../utils/template';
 import { getErrorMessage, isPaidFeatureError } from '../../utils/getErrorMessage';
 import { insertId } from '../../utils/templates/insertId';
 import { ETemplateStatus } from '../../types/redux';
@@ -110,7 +114,7 @@ function* setTemplateByTemplateResponse(template: ITemplateResponse) {
   yield put(setTemplate(normalizedTemplate));
 }
 
-function* fetchTemplate({ payload: id }: TLoadTemplate) {
+export function* fetchTemplate({ payload: id }: TLoadTemplate) {
   if (!Number.isInteger(id)) {
     history.replace(ERoutes.Templates);
     NotificationManager.warning({ message: 'template.not-found' });
@@ -145,13 +149,7 @@ function* fetchTemplate({ payload: id }: TLoadTemplate) {
 }
 
 function* patchTemplateSaga({
-  payload: {
-    changedFields,
-    onSuccess,
-    onFailed,
-    requestId,
-    templateSnapshot,
-  },
+  payload: { changedFields, onSuccess, onFailed, requestId, templateSnapshot },
 }: TPatchTemplate) {
   if (Object.keys(changedFields).length === 0) {
     return;
@@ -163,14 +161,12 @@ function* patchTemplateSaga({
   yield put(setTemplateStatus(ETemplateStatus.Saving));
 
   const nonDeactivativeFields: (keyof ITemplateClient)[] = ['isActive', 'isPublic', 'publicUrl'];
-  let shouldDeactivateTemplate = changedFields.isActive === true
-    ? false
-    : Object.keys(changedFields).some((key) => !nonDeactivativeFields.includes(key as keyof ITemplateClient));
+  let shouldDeactivateTemplate =
+    changedFields.isActive === true
+      ? false
+      : Object.keys(changedFields).some((key) => !nonDeactivativeFields.includes(key as keyof ITemplateClient));
 
-  if (
-    Object.keys(changedFields).length === 1
-    && Object.prototype.hasOwnProperty.call(changedFields, 'kickoff')
-  ) {
+  if (Object.keys(changedFields).length === 1 && Object.prototype.hasOwnProperty.call(changedFields, 'kickoff')) {
     const kickoffChanged = changedFields.kickoff;
     const previousKickoff = reduxTemplate.kickoff;
 
@@ -186,14 +182,14 @@ function* patchTemplateSaga({
     ...(shouldDeactivateTemplate && { isActive: false }),
   };
 
-  const needsCleanup = Object.prototype.hasOwnProperty.call(changedFields, 'tasks')
-    || Object.prototype.hasOwnProperty.call(changedFields, 'kickoff');
+  const needsCleanup =
+    Object.prototype.hasOwnProperty.call(changedFields, 'tasks') ||
+    Object.prototype.hasOwnProperty.call(changedFields, 'kickoff');
   const newTemplate = needsCleanup ? cleanTemplateReferences(mergedTemplate) : mergedTemplate;
 
   yield put(setTemplate(newTemplate));
 
-  // Formik autosave is already debounced before it reaches Redux. Legacy
-  // patchTemplate callers still rely on the saga-level debounce.
+  // Formik autosave is debounced upstream; only legacy patchTemplate callers need the saga-level debounce.
   if (requestId === undefined) {
     yield delay(350);
   }
@@ -202,12 +198,14 @@ function* patchTemplateSaga({
     return;
   }
 
-  yield put(saveTemplate({
-    onSuccess,
-    onFailed,
-    requestId,
-    templateSnapshot: templateSnapshot ? newTemplate : undefined,
-  }));
+  yield put(
+    saveTemplate({
+      onSuccess,
+      onFailed,
+      requestId,
+      templateSnapshot: templateSnapshot ? newTemplate : undefined,
+    }),
+  );
 }
 
 function* patchTaskSaga({ payload: { taskUUID, changedFields } }: TPatchTask) {
@@ -293,8 +291,7 @@ function* fetchSaveTemplate(
     ERoutes.Templates,
   );
 
-  // An unmount flush may run after navigation has already committed. It must
-  // save the captured Formik snapshot without depending on the current route.
+  // An unmount flush may run after navigation committed, so it must not depend on the current route.
   if (!isTemplatePage && !templateSnapshot) return;
 
   if (!isAutosavePersistRequestCurrent(requestId)) {
@@ -304,8 +301,7 @@ function* fetchSaveTemplate(
   const isSubscribed: ReturnType<typeof getIsUserSubsribed> = yield select(getIsUserSubsribed);
   const users: ReturnType<typeof getUsers> = yield select(getUsers);
 
-  const editingTemplate: ReturnType<typeof getTemplateData> =
-    templateSnapshot || (yield select(getTemplateData));
+  const editingTemplate: ReturnType<typeof getTemplateData> = templateSnapshot || (yield select(getTemplateData));
   const templateRequest = mapTemplateRequest(editingTemplate);
 
   const isTemplateCreated = !templateRequest.id;
@@ -318,11 +314,9 @@ function* fetchSaveTemplate(
 
   if (!isAutosavePersistRequestCurrent(requestId)) {
     if (savedTemplate) {
-      const canSyncEditorState = !templateSnapshot || checkSomeRouteIsActive(
-        ERoutes.TemplatesCreate,
-        ERoutes.TemplatesCreateAI,
-        ERoutes.TemplatesEdit,
-      );
+      const canSyncEditorState =
+        !templateSnapshot ||
+        checkSomeRouteIsActive(ERoutes.TemplatesCreate, ERoutes.TemplatesCreateAI, ERoutes.TemplatesEdit);
 
       if (canSyncEditorState) {
         yield mergeSupersededCreateResponse(savedTemplate, isTemplateCreated);
@@ -335,11 +329,9 @@ function* fetchSaveTemplate(
   const lastTemplateState: ReturnType<typeof getTemplateData> = yield select(getTemplateData);
 
   if (!savedTemplate) {
-    const canSyncEditorState = !templateSnapshot || checkSomeRouteIsActive(
-      ERoutes.TemplatesCreate,
-      ERoutes.TemplatesCreateAI,
-      ERoutes.TemplatesEdit,
-    );
+    const canSyncEditorState =
+      !templateSnapshot ||
+      checkSomeRouteIsActive(ERoutes.TemplatesCreate, ERoutes.TemplatesCreateAI, ERoutes.TemplatesEdit);
 
     if (isTemplatePage && canSyncEditorState) {
       yield put(setTemplate({ ...lastTemplateState, isActive: false }));
@@ -350,13 +342,11 @@ function* fetchSaveTemplate(
     return;
   }
 
-  // Do not repopulate the editor store or redirect after the page has been
-  // left. The server save is complete; only mounted editor state needs syncing.
-  if (templateSnapshot && !checkSomeRouteIsActive(
-    ERoutes.TemplatesCreate,
-    ERoutes.TemplatesCreateAI,
-    ERoutes.TemplatesEdit,
-  )) {
+  // Only a mounted editor needs store repopulation or a redirect after save.
+  if (
+    templateSnapshot &&
+    !checkSomeRouteIsActive(ERoutes.TemplatesCreate, ERoutes.TemplatesCreateAI, ERoutes.TemplatesEdit)
+  ) {
     onSuccess?.();
     return;
   }
@@ -497,13 +487,7 @@ export function* watchSaveTemplate() {
   );
   while (true) {
     const { payload }: TSaveTemplate = yield take(autosaveChannel);
-    yield call(
-      fetchSaveTemplate,
-      payload?.onSuccess,
-      payload?.onFailed,
-      payload?.requestId,
-      payload?.templateSnapshot,
-    );
+    yield call(fetchSaveTemplate, payload?.onSuccess, payload?.onFailed, payload?.requestId, payload?.templateSnapshot);
   }
 }
 

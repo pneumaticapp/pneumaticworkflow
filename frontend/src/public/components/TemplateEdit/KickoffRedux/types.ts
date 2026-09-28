@@ -1,6 +1,6 @@
-import { IKickoffClient } from '../../../types/template';
+import { ITemplateKickoffClient } from '../../../types/template';
 
 export interface IKickoffLabelsProps {
-  fields: IKickoffClient['fields'];
+  fields: ITemplateKickoffClient['fields'];
   onToggle(): void;
 }

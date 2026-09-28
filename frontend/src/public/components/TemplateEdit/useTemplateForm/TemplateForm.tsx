@@ -5,10 +5,6 @@ import { TemplateFieldContext } from './contexts';
 import { TemplateFormPersistProvider } from './TemplateFormPersistProvider';
 import { ITemplateFieldContextValue, ITemplateFormProps } from './types';
 
-/**
- * Bundles the Formik provider, the wrapped-setter context, and the single
- * persist provider so `TemplateEdit` only has to render `<TemplateForm .../>`.
- */
 export function TemplateForm({
   formik,
   setFieldValue,

@@ -1,8 +1,11 @@
 /// <reference types="jest" />
+import { runSaga, stdChannel } from 'redux-saga';
+import { call } from 'redux-saga/effects';
+import { fetchTemplate, watchPatchTemplate, watchSaveTemplate, createOrUpdateTemplate } from '../saga';
+import { getTemplate } from '../../../api/getTemplate';
 import { updateTemplate } from '../../../api/updateTemplate';
 import { NotificationManager } from '../../../components/UI/Notifications';
 import { logger } from '../../../utils/logger';
-import { createOrUpdateTemplate } from '../saga';
 import { allocateAutosavePersistRequest, createAutosavePersistScope } from '../persistRequest';
 import { ETemplateActions, TLoadTemplate } from '../actions';
 import { loadFieldsetsCatalog, loadFieldsetsCatalogSuccess, loadFieldsetsCatalogFailed } from '../../fieldsets/slice';
@@ -34,10 +37,16 @@ jest.mock('../../../utils/history', () => ({
 
 jest.mock('../../../api/updateTemplate', () => ({ updateTemplate: jest.fn() }));
 jest.mock('../../../components/UI/Notifications', () => ({
-  NotificationManager: { notifyApiError: jest.fn() },
+  NotificationManager: { warning: jest.fn(), notifyApiError: jest.fn() },
 }));
 jest.mock('../../../utils/logger', () => ({
-  logger: { error: jest.fn() },
+  logger: { info: jest.fn(), error: jest.fn() },
+}));
+jest.mock('../../../utils/template', () => ({
+  cleanTemplateReferences: jest.fn((template: ITemplate) => template),
+  getNormalizedTemplate: jest.fn((template: ITemplate) => template),
+  haveSameKickoffFields: jest.fn(() => false),
+  mapTemplateRequest: jest.fn((template: ITemplate) => template),
 }));
 
 describe('createOrUpdateTemplate', () => {
@@ -49,6 +58,13 @@ describe('createOrUpdateTemplate', () => {
     saga.next();
     allocateAutosavePersistRequest(scope);
     const result = saga.throw(new Error('stale request failed'));
+
+    expect(result.done).toBe(true);
+    expect(updateTemplate).toHaveBeenCalledTimes(1);
+    expect(logger.error).not.toHaveBeenCalled();
+    expect(NotificationManager.notifyApiError).not.toHaveBeenCalled();
+  });
+});
 
 jest.mock('../../../api/createTemplate', () => ({
   createTemplate: jest.fn(),

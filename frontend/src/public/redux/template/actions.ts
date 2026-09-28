@@ -54,9 +54,7 @@ export type TSaveTemplatePayload =
   | {
       onSuccess?(): void;
       onFailed?(): void;
-      /** Autosave generation from `TemplateFormPersistProvider`; stale saves are skipped after discard. */
       requestId?: TAutosavePersistRequest;
-      /** Immutable form snapshot used when the editor unmounts before the save runs. */
       templateSnapshot?: ITemplateClient;
     }
   | undefined;
@@ -100,9 +98,7 @@ export type TPatchTemplatePayload = {
   changedFields: Partial<ITemplateClient>;
   onSuccess?(): void;
   onFailed?(): void;
-  /** Autosave generation from `TemplateFormPersistProvider`; stale saves are skipped after discard. */
   requestId?: TAutosavePersistRequest;
-  /** Immutable form snapshot used instead of reading potentially reset Redux state. */
   templateSnapshot?: ITemplateClient;
 };
 export type TPatchTemplate = ITypedReduxAction<ETemplateActions.PatchTemplate, TPatchTemplatePayload>;
@@ -141,45 +137,36 @@ export const setIsAITemplateModalOpened: (payload: boolean) => TSetIsAITemplateM
   boolean
 >(ETemplateActions.SetIsAITemplateModalOpened);
 
-export type TSetAITemplateGenerationStatus = ITypedReduxAction<ETemplateActions.SetAITemplateGenerationStatus, TAITemplateGenerationStatus>;
-export const setAITemplateGenerationStatus: (payload: TAITemplateGenerationStatus) => TSetAITemplateGenerationStatus = actionGenerator<
+export type TSetAITemplateGenerationStatus = ITypedReduxAction<
   ETemplateActions.SetAITemplateGenerationStatus,
   TAITemplateGenerationStatus
->(ETemplateActions.SetAITemplateGenerationStatus);
+>;
+export const setAITemplateGenerationStatus: (payload: TAITemplateGenerationStatus) => TSetAITemplateGenerationStatus =
+  actionGenerator<ETemplateActions.SetAITemplateGenerationStatus, TAITemplateGenerationStatus>(
+    ETemplateActions.SetAITemplateGenerationStatus,
+  );
 
 export type TSetAITemplateDataPayload = { template: ITemplateClient | null };
-export type TSetAITemplateData = ITypedReduxAction<
-  ETemplateActions.SetAITemplateData,
-  TSetAITemplateDataPayload
->;
+export type TSetAITemplateData = ITypedReduxAction<ETemplateActions.SetAITemplateData, TSetAITemplateDataPayload>;
 export const setAITemplateData: (payload: TSetAITemplateDataPayload) => TSetAITemplateData = actionGenerator<
   ETemplateActions.SetAITemplateData,
   TSetAITemplateDataPayload
 >(ETemplateActions.SetAITemplateData);
 
 export type TGenerateAITemplatePayload = { description: string };
-export type TGenerateAITemplate = ITypedReduxAction<
-  ETemplateActions.GenerateAITemplate,
-  TGenerateAITemplatePayload
->;
+export type TGenerateAITemplate = ITypedReduxAction<ETemplateActions.GenerateAITemplate, TGenerateAITemplatePayload>;
 export const generateAITemplate: (payload: TGenerateAITemplatePayload) => TGenerateAITemplate = actionGenerator<
   ETemplateActions.GenerateAITemplate,
   TGenerateAITemplatePayload
 >(ETemplateActions.GenerateAITemplate);
 
-export type TStopAITemplateGeneration = ITypedReduxAction<
-  ETemplateActions.StopAITemplateGeneration,
-  void
->;
+export type TStopAITemplateGeneration = ITypedReduxAction<ETemplateActions.StopAITemplateGeneration, void>;
 export const stopAITemplateGeneration: (payload?: void) => TStopAITemplateGeneration = actionGenerator<
   ETemplateActions.StopAITemplateGeneration,
   void
 >(ETemplateActions.StopAITemplateGeneration);
 
-export type TApplyAITemplate = ITypedReduxAction<
-  ETemplateActions.ApplyAITemplate,
-  void
->;
+export type TApplyAITemplate = ITypedReduxAction<ETemplateActions.ApplyAITemplate, void>;
 export const applyAITemplate: (payload?: void) => TApplyAITemplate = actionGenerator<
   ETemplateActions.ApplyAITemplate,
   void
@@ -187,12 +174,9 @@ export const applyAITemplate: (payload?: void) => TApplyAITemplate = actionGener
 
 type TDiscardChangesPayload = {
   templateId: number;
-  onSuccess?(): void; 
-}
-export type TDiscardChanges = ITypedReduxAction<
-  ETemplateActions.DiscardChanges,
-  TDiscardChangesPayload
->;
+  onSuccess?(): void;
+};
+export type TDiscardChanges = ITypedReduxAction<ETemplateActions.DiscardChanges, TDiscardChangesPayload>;
 export const discardTemplateChanges: (payload: TDiscardChangesPayload) => TDiscardChanges = actionGenerator<
   ETemplateActions.DiscardChanges,
   TDiscardChangesPayload
