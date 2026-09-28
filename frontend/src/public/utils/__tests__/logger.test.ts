@@ -75,6 +75,17 @@ describe('logger', () => {
       expect(mockCaptureException).toHaveBeenCalledTimes(1);
       expect(mockCaptureException).toHaveBeenCalledWith(new Error('error in {"module":"auth"}'));
     });
+
+    it('handles circular objects without crashing', () => {
+      const circular: Record<string, unknown> = { name: 'test' };
+      circular.self = circular;
+
+      logger.error('crash with', circular);
+
+      expect(console.error).toHaveBeenCalledTimes(1);
+      expect(mockCaptureException).toHaveBeenCalledTimes(1);
+      expect(mockCaptureException).toHaveBeenCalledWith(new Error('crash with [non-serializable object]'));
+    });
   });
 
   describe('logInfo', () => {

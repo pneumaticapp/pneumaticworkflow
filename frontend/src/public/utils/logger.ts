@@ -29,7 +29,18 @@ function logError(...args: unknown[]): void {
     const message =
       args.length === 1 && typeof args[0] === 'string'
         ? args[0]
-        : args.map((a) => (typeof a === 'object' && a !== null ? JSON.stringify(a) : String(a))).join(' ');
+        : args
+            .map((a) => {
+              if (typeof a === 'object' && a !== null) {
+                try {
+                  return JSON.stringify(a);
+                } catch {
+                  return '[non-serializable object]';
+                }
+              }
+              return String(a);
+            })
+            .join(' ');
     sentryCaptureException(new Error(message));
   }
 }
